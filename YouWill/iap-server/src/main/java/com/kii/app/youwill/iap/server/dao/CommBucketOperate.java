@@ -1,6 +1,5 @@
 package com.kii.app.youwill.iap.server.dao;
 
-import com.kii.app.youwill.iap.server.factory.TokenInfo;
 import com.kii.app.youwill.iap.server.web.AppContext;
 import com.kii.platform.ufp.bucket.*;
 import com.kii.platform.ufp.errors.KiiException;
@@ -30,13 +29,11 @@ import java.util.Map;
 public class CommBucketOperate {
 
 
-	private BucketClient getBucketClient(){
-		return context.getBucketClient();
-	};
+	@Autowired
+	private BucketClient bucketClient;
 
-	private ACLClient getACLClient(){
-		return context.getACLClient();
-	}
+	@Autowired
+	private ACLClient  aclClient;
 
 	@Autowired
 	private AppContext context;
@@ -48,9 +45,8 @@ public class CommBucketOperate {
 
 		try {
 
-			TokenInfo token=context.getTokenInfo();
 
-			return getBucketClient().getDataObject(token.getAccessToken(), context.getCurrScope(), new BucketID(bucketName), BucketType.DEFAULT, new ObjectID(id));
+			return bucketClient.getDataObject(context.getAccessToken(), context.getCurrScope(), new BucketID(bucketName), BucketType.DEFAULT, new ObjectID(id));
 		} catch (KiiException e) {
 			throw new KiiRuntimeException(e);
 		}
@@ -67,8 +63,7 @@ public class CommBucketOperate {
 			}
 
 			EntityTagID entityTagID = new EntityTagID(version);
-			TokenInfo token=context.getTokenInfo();
-			getBucketClient().updateDataObjectPartial(token.getAccessToken(), context.getCurrScope(),
+			bucketClient.updateDataObjectPartial(context.getAccessToken(), context.getCurrScope(),
 					new BucketID(bucketName), BucketType.DEFAULT, new ObjectID(id), entityTagID, newObj);
 
 		} catch (KiiException e) {
@@ -87,8 +82,7 @@ public class CommBucketOperate {
 			for (Map.Entry<String, Object> entry : newValues.entrySet()) {
 				newObj.put(entry.getKey(), entry.getValue());
 			}
-			TokenInfo token=context.getTokenInfo();
-			getBucketClient().updateDataObjectPartial(token.getAccessToken(), context.getCurrScope(), new BucketID(bucketName), BucketType.DEFAULT, new ObjectID(id), newObj);
+			bucketClient.updateDataObjectPartial(context.getAccessToken(), context.getCurrScope(), new BucketID(bucketName), BucketType.DEFAULT, new ObjectID(id), newObj);
 
 		} catch (KiiException e) {
 			throw new KiiRuntimeException(e);
@@ -101,9 +95,8 @@ public class CommBucketOperate {
 	public ObjectID addObject(String bucketName, JSONObject newObj) {
 		try {
 
-			TokenInfo token=context.getTokenInfo();
-			ObjectCreationResponse response= getBucketClient().createDataObject(
-					token.getAccessToken(),
+			ObjectCreationResponse response= bucketClient.createDataObject(
+					context.getAccessToken(),
 					context.getCurrScope(),
 					new BucketID(bucketName),
 					BucketType.DEFAULT, DataType.APPLICATION_JSON, newObj);
@@ -150,8 +143,7 @@ public class CommBucketOperate {
 			queryRequest.setPaginationKey(new PaginationKey(pageToken));
 		}
 		try {
-			TokenInfo token=context.getTokenInfo();
-			QueryResponse queryResponse = getBucketClient().query(token.getAccessToken(),
+			QueryResponse queryResponse = bucketClient.query(context.getAccessToken(),
 					context.getCurrScope(), new BucketID(bucketID),
 					BucketType.DEFAULT, queryRequest);
 

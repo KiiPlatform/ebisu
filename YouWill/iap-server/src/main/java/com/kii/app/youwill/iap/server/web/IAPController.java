@@ -8,6 +8,7 @@ import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 
 @RestController
+@RequestMapping(value="/iap",produces="application/json")
 public class IAPController {
 
 	@Autowired
@@ -23,7 +25,7 @@ public class IAPController {
 	private AppContext appContext;
 
 
-	@RequestMappingProp("start-order")
+	@RequestMapping("/startOrder/product/{productID}")
 	public String createTransaction(@PathVariable("appID") String appID,
 									@PathVariable("productID") String productID,
 									@RequestBody String context) {
@@ -41,7 +43,7 @@ public class IAPController {
 
 
 
-	@RequestMappingProp("finish-order")
+	@RequestMapping("/finishOrder/order/{orderID}")
 	public String finishTransaction(@PathVariable("appID") String appID,
 											 @PathVariable("orderID") String orderID,
 											 @RequestBody String context) {

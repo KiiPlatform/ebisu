@@ -3,7 +3,6 @@ package com.kii.app.youwill.iap.server.dao.impl;
 import com.kii.app.youwill.iap.server.dao.ACLOperate;
 import com.kii.app.youwill.iap.server.dao.KiiRuntimeException;
 import com.kii.app.youwill.iap.server.factory.Product;
-import com.kii.app.youwill.iap.server.factory.TokenInfo;
 import com.kii.app.youwill.iap.server.web.AppContext;
 import com.kii.platform.ufp.bucket.BucketID;
 import com.kii.platform.ufp.bucket.BucketType;
@@ -28,12 +27,11 @@ import java.util.Set;
 @Product
 public class ACLOperateImpl implements ACLOperate {
 
-	private ACLClient getACLClient(){
-		return context.getACLClient();
-	}
+	@Autowired
+	private ACLClient aclClient;
 
 	private UserID getCurrUserID(){
-		return context.getUserIDByToken();
+		return context.getCurrUserID();
 	}
 
 	@Autowired
@@ -42,9 +40,8 @@ public class ACLOperateImpl implements ACLOperate {
 
 
 	private Map<Verb,Set<Subject>> getBucketACL(String bucketName,ObjectID objID){
-			TokenInfo token=context.getTokenInfo();
 
-			Map<Verb, Set<Subject>>  verbMap= getACLClient().get(token.getAccessToken(), context.getCurrScope(),
+			Map<Verb, Set<Subject>>  verbMap= aclClient.get(context.getAccessToken(), context.getCurrScope(),
 					BucketType.DEFAULT, new BucketID(bucketName), objID, null);
 
 			return verbMap;
@@ -54,9 +51,8 @@ public class ACLOperateImpl implements ACLOperate {
 
 	protected  void addBucketACL(String bucketName,ObjectID objID,UserID userID,Verb verb){
 		try {
-			TokenInfo token=context.getTokenInfo();
 
-			getACLClient().grant(token.getAccessToken(),context.getCurrScope(),
+			aclClient.grant(context.getAccessToken(),context.getCurrScope(),
 					BucketType.DEFAULT,new BucketID(bucketName),objID,null,verb,
 					userID);
 
@@ -67,9 +63,8 @@ public class ACLOperateImpl implements ACLOperate {
 
 	protected  void removeBucketACL(String bucketName,ObjectID objID,UserID userID,Verb verb){
 		try {
-			TokenInfo token=context.getTokenInfo();
 
-			getACLClient().revoke(token.getAccessToken(),context.getCurrScope(),
+			aclClient.revoke(context.getAccessToken(),context.getCurrScope(),
 					BucketType.DEFAULT,new BucketID(bucketName),objID,null,verb,
 					userID);
 

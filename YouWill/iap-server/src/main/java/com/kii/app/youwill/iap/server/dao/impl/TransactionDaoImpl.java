@@ -50,11 +50,11 @@ public class TransactionDaoImpl implements TransactionDao {
 		String transactionID=param.getTransactionID();
 		if(StringUtils.isBlank(transactionID)) {
 
-			transactionID = uuidGeneral.getUUID(appContext.getUserIDByToken().toString());
+			transactionID = uuidGeneral.getUUID(appContext.getCurrUserID().toString());
 		}
 
 		Transaction transaction=new Transaction(product,
-				appContext.getUserIDByToken(),
+				appContext.getCurrUserID(),
 				CurrencyType.CNY);
 		transaction.setTransactionID(transactionID);
 		transaction.setPayType(param.getPayType());
