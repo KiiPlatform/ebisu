@@ -1,4 +1,4 @@
 China-projects
 ==============
 
-This repos includes all ongoing project of China team
+This repos includes all ongoing projects of China team
