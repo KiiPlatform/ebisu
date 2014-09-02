@@ -1,0 +1,4 @@
+{
+  "errorCode": "NOT_IMPLEMENTED",
+  "message": "Generic error - The server either does not recognise the request method, or it lacks the ability to fulfill the request"
+}

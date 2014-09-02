@@ -1,0 +1,4 @@
+{
+  "errorCode": "REQUESTED_RANGE_NOT_SATISFIABLE",
+  "message": "Generic error - The server cannot supply the requested resource subset"
+}

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"  ?>
+<alipay>
+<is_success>T</is_success>
+<request>
+<param name="trade_no">2010073000030344</param>
+<param name="service">single_trade_query</param>
+<param name="partner">2088002007018916</param>
+</request>
+<response>
+<trade>
+<body>合同催款通知</body>
+<buyer_email>ltrade008@alitest.com</buyer_email>
+<buyer_id>2088102002723445</buyer_id>
+<discount>0.00</discount>
+<gmt_create>2010-07-30 12:26:33</gmt_create>
+<gmt_last_modified_time>2010-07-30 12:30:29 </gmt_last_modified_time>
+<gmt_payment>2010-07-30 12:30:29</gmt_payment>
+<is_total_fee_adjust>F</is_total_fee_adjust>
+<out_trade_no>1280463992953</out_trade_no> <payment_type>1</payment_type>
+<price>1.00</price>
+<quantity>1</quantity>
+<seller_email>chao.chenc1@alipay.com</seller_email>
+<seller_id>2088002007018916</seller_id>
+<subject>合同催款通知</subject>
+<total_fee>1.00</total_fee>
+<trade_no>2010073000030344</trade_no>
+<trade_status>TRADE_FINISHED</trade_status>
+<use_coupon>F</use_coupon>
+</trade>
+</response>
+<sign>56ae9c3286886f76e57e0993625c71fe</sign>
+<sign_type>MD5</sign_type>
+</alipay>

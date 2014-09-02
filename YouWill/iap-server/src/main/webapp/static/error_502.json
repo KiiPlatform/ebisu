@@ -1,0 +1,4 @@
+{
+  "errorCode": "BAD_GATEWAY",
+  "message": "Generic error - An invalid response was received from upstream server"
+}

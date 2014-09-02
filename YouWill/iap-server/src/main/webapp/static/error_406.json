@@ -1,0 +1,4 @@
+{
+  "errorCode": "NOT_ACCEPTABLE",
+  "message": "Generic error - The requested resource is only capable of generating content not acceptable according to the Accept headers sent in the request"
+}

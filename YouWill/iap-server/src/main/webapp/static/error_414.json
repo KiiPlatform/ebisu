@@ -1,0 +1,4 @@
+{
+  "errorCode": "REQUEST_URI_TOO_LONG",
+  "message": "Generic error - The URI provided was too long for the server to process"
+}

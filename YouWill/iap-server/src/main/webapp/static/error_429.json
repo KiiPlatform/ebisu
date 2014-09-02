@@ -1,0 +1,4 @@
+{
+  "errorCode": "TOO_MANY_REQUESTS",
+  "message": "Generic error - Too many requests have been received"
+}

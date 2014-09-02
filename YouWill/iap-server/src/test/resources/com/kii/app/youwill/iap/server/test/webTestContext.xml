@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+       http://www.springframework.org/schema/aop
+	   http://www.springframework.org/schema/aop/spring-aop.xsd
+
+       http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+
+
+    <context:component-scan base-package="com.kii.app.youwill.iap.server">
+
+        <context:exclude-filter type="assignable" expression="com.kii.app.youwill.iap.server.web.AppContextBean" />
+        <context:exclude-filter type="assignable" expression="com.kii.app.youwill.iap.server.dao.impl.AlipayQueryAccessHelper" />
+        <context:exclude-filter type="assignable" expression="com.kii.app.youwill.iap.server.dao.impl.PaypalQueryAccessHelper" />
+
+
+    </context:component-scan>
+
+
+    <bean
+            class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+        <property name="messageConverters">
+            <util:list id="beanList">
+                <ref bean="stringHttpMessageConverter" />
+            </util:list>
+        </property>
+    </bean>
+
+    <bean id="stringHttpMessageConverter"
+          class="org.springframework.http.converter.StringHttpMessageConverter" />
+
+
+    <bean id="exceptionResolver"
+          class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver" />
+
+    <!--
+    bean id="handlerMapping" class="RequestMappingForPropConfigHandlerMapping" / -->
+
+
+    <mvc:interceptors>
+        <bean class="com.kii.app.youwill.iap.server.web.KiiAppInterceptorAdapter" />
+    </mvc:interceptors>
+
+    <bean class="com.kii.app.youwill.iap.server.mock.MockAppContext"  />
+
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+                <value>classpath:com/kii/app/youwill/iap/server/iapserver-cfg.properties</value>
+                <value>classpath:com/kii/app/youwill/iap/server/iapserver-endpoint.properties</value>
+                <value>classpath:com/kii/app/youwill/iap/server/iapserver-test-payserver-cfg.properties</value>
+
+            </list>
+        </property>
+    </bean>
+
+    <aop:aspectj-autoproxy/>
+
+    <bean class="com.kii.app.youwill.iap.server.aop.KiiScopeManagerAdape"/>
+
+    <bean class="com.kii.app.youwill.iap.server.mock.MockClientFactory" />
+
+    <bean id="restProvider"
+          class="com.kii.platform.ufp.client.springrest.impl.apache.HttpComponentsRestTemplateProvider"/>
+
+
+
+</beans>
