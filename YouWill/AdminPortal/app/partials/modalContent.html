@@ -1,0 +1,147 @@
+<div data-ng-init="init()">
+  <div class="modal-header bg-primary">
+    <h3 class="modal-title"><span data-ng-bind="title"></span></h3>
+  </div>
+  <div class="modal-body">
+    <div flow-init="{singleFile:true}"
+         flow-name="uploader.flow"
+         flow-files-submitted="uploader.flow.upload()"
+         flow-file-added="!!{png:1,gif:1,jpg:1,jpeg:1}[$file.getExtension()]">
+      <div class="drop" flow-drop flow-drag-enter="style={background:'#add8e6'}" flow-drag-leave="style={}"
+           ng-style="style">
+        <span class="btn btn-default" flow-btn>Upload Thumbnail</span>
+        <b>OR</b>
+        Drag And Drop your images here
+      </div>
+      <div row>
+        <div class="col-sm-4">
+          <div class="gallery-box">
+            <span ng-show="uploader.flow.files.length" class="title">{{uploader.flow.files[0].name}}</span>
+
+            <div class="thumbnail" ng-show="!uploader.flow.files.length && virgin">
+              <img src="http://www.placehold.it/200x150/EFEFEF/AAAAAA&text=no+image"/>
+            </div>
+            <div class="thumbnail" ng-show="!uploader.flow.files.length && !virgin">
+              <img ng-src="{{productImgURL}}"ng-hide="imgLoading" imageonload>
+              <i class="fa fa-spin fa-spinner fa-3x text-center" data-ng-show="imgLoading" style="margin-top: 60px"></i>
+            </div>
+            <div class="thumbnail" ng-show="uploader.flow.files.length">
+              <img flow-img="uploader.flow.files[0]"/>
+            </div>
+            <div class="progress progress-striped" ng-class="{active: uploader.flow.files[0].isUploading()}">
+              <div class="progress-bar" role="progressbar"
+                   aria-valuenow="{{uploader.flow.files[0].progress() * 100}}"
+                   aria-valuemin="0"
+                   aria-valuemax="100"
+                   ng-style="{width: (uploader.flow.files[0].progress() * 100) + '%'}">
+                <span class="sr-only">{{file.progress()}}% Complete</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-8">
+          <form class="form-horizontal" role="form">
+            <div class="form-group col-sm-12" style="margin-top: 20px">
+              <label class="col-sm-4 control-label text-right">ProductID</label>
+
+              <div class="col-sm-8">
+                <input required type="text" class="form-control" ng-model="product.productID">
+              </div>
+            </div>
+            <div class="form-group col-sm-12">
+              <label class="col-sm-4 control-label text-right">Name</label>
+
+              <div class="col-sm-8">
+                <input required type="text" class="form-control" ng-model="product.name">
+              </div>
+            </div>
+            <div class="form-group col-sm-12">
+              <label class="col-sm-4 control-label text-right">Description</label>
+
+              <div class="col-sm-8">
+                <input required type="text" class="form-control" ng-model="product.description">
+              </div>
+            </div>
+            <div class="form-group col-sm-12">
+              <label class="col-sm-4 control-label text-right">Category</label>
+
+              <div class="col-sm-8">
+                <input required type="text" class="form-control" ng-model="product.category">
+              </div>
+            </div>
+            <div class="form-group col-sm-12">
+              <label class="col-sm-4 control-label text-right">Price</label>
+
+              <div class="col-sm-8">
+                <input required type="text" class="form-control" ng-model="product.price">
+              </div>
+            </div>
+            <div class="form-group col-sm-12">
+              <label class="col-sm-4 control-label text-right">App ID</label>
+
+              <div class="col-sm-8">
+                <input required type="text" class="form-control" ng-model="product.appID">
+              </div>
+            </div>
+            <div class="form-group col-sm-12">
+              <label class="col-sm-4 control-label text-right">Version</label>
+
+              <div class="col-sm-8">
+                <input required type="text" class="form-control" ng-model="product.version">
+              </div>
+            </div>
+            <div class="form-group col-sm-12">
+              <label class="col-sm-4 control-label text-right">Version Code</label>
+
+              <div class="col-sm-8">
+                <input required type="text" class="form-control" ng-model="product.versionCode">
+              </div>
+            </div>
+            <div class="form-group col-sm-12">
+              <label class="col-sm-4 control-label text-right">Author</label>
+
+              <div class="col-sm-8">
+                <input required type="text" class="form-control" ng-model="product.author">
+              </div>
+            </div>
+            <div class="form-group col-sm-12">
+              <label class="col-sm-4 control-label text-right">Rate</label>
+
+              <div class="col-sm-8">
+                <input required type="text" class="form-control" ng-model="product.rate">
+              </div>
+            </div>
+            <div class="form-group col-sm-12">
+              <label class="col-sm-4 control-label text-right">Consume Type</label>
+
+              <div class="col-sm-8">
+                <div class="btn-group">
+                  <label class="btn btn-primary" ng-model="product.consumeType" btn-radio="'Consumable'">Consumable</label>
+                  <label class="btn btn-primary" ng-model="product.consumeType" btn-radio="'Permanent'">Permanent</label>
+                </div>
+              </div>
+            </div>
+            <div class="form-group col-sm-12">
+              <div class="col-sm-12">
+                <div class="text-right">
+                  <div class="btn-group">
+                    <label class="btn btn-default" style="width: 120px" ng-model="product.isNew" btn-checkbox>New</label>
+                    <label class="btn btn-default" style="width: 120px" ng-model="product.valid"
+                           btn-checkbox>Valid</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <p ng-hide="alertShow">Please fill in all the blankets</p>
+    <alert type="danger" ng-show="alertShow">Please fill in all the blankets</alert>
+  </div>
+  <div class="modal-footer">
+    <button ng-show="virgin" style="width: 100px" class="btn btn-primary" ng-click="create()"><span ng-show="!btnLoading">Create</span><i class="fa fa-spinner fa-spin" ng-show="btnLoading"></i></button>
+    <button ng-show="!virgin" style="width: 100px" class="btn btn-primary" ng-click="create()"><span ng-show="!btnLoading">Save</span><i class="fa fa-spinner fa-spin" ng-show="btnLoading"></i></button>
+    <button style="width: 100px" class="btn btn-warning" ng-click="cancel()">Cancel</button>
+  </div>
+</div>

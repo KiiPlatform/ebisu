@@ -1,0 +1,26 @@
+<div class="col-sm-offset-1 col-sm-10 jumbotron" ng-init="init()">
+  <div ng-show="loading" class="spinner"></div>
+  <div class="panel panel-default" ng-show="!loading">
+    <div class="panel-heading">
+      <div class="row">
+        <div class="col-sm-6">
+          <h2 class="panel-title" style="margin-top: 5px">Transaction</h2>
+        </div>
+        <div class="col-sm-6 text-right">
+          <i style="cursor: pointer" class="fa fa-plus-square fa-2x" ng-click="openModal()"></i>
+        </div>
+      </div>
+    </div>
+    <div>
+      <table width="100%" class="table table-bordered table-striped table-hover" style="margin-bottom: -0px">
+        <thead><tr><th ng-repeat="field in fields" ng-show="field.list" style="width: 14.29%">{{field.name}}</th></tr></thead>
+        <tbody>
+        <tr ng-repeat="transaction in transactions[currentPage - 1]" style="cursor: pointer" ng-click="openModal(transaction)">
+          <td ng-repeat="field in fields" style="width: 12.25%" ng-show="field.list">{{transaction._customInfo[field.value]}}</td>
+        </tr>
+        </tbody>
+      </table>
+      <pagination items-per-page="pageLimit" total-items="totalItems" ng-model="currentPage" max-size="maxSize" boundary-links="true" rotate="false" num-pages="numPages"></pagination>
+    </div>
+  </div>
+</div>
