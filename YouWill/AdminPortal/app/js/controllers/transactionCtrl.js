@@ -14,14 +14,15 @@ app.controller('transactionCtrl', function($scope, $rootScope, $modal, $location
       $scope.fields = [
         {name: "TransactionID", value: "transactionID", create: true, list: true},
         {name: "ProductID", value: "productID", create: true, list: true},
-        {name: "PaymentID", value: "paymentID", create: true, list: true},
-        {name: "Payment Method", value: "paymentMethod", create: true, list: true},
+        {name: "AppID", value: "appID", create: true, list: true},
+        {name: "UserID", value: "userID", create: true, list: true},
         {name: "Product Name", value: "productName", create: true, list: true},
-        {name: "Transaction Creation Time", value: "transactionCreationTime", create: false, list: false, time: true},
-        {name: "Transaction Update Time", value: "transactionUpdateTime", create: false, list: false, time: true},
-        {name: "Payment Time", value: "paymentTime", create: false, list: false, time: true},
-        {name: "Transaction Status", value: "transactionStatus", create: true, list: true, radio: true},
-        {name: "Payment Status", value: "paymentStatus", create: true, list: true, radio: true}
+        {name: "Price", value: "price", create: true, list: true},
+        {name: "Created Date", value: "createdDate", create: false, list: false, time: true},
+        {name: "Update Date", value: "updateDate", create: false, list: false, time: true},
+        {name: "Pay Complete Date", value: "payCompleteDate", create: false, list: false, time: true},
+        {name: "Pay Type", value: "payType", create: true, list: true, payType: true},
+        {name: "Pay Status", value: "payStatus", create: true, list: true, radio: true}
       ]
     }
   }
@@ -117,8 +118,8 @@ app.controller('transactionCtrl', function($scope, $rootScope, $modal, $location
         console.log("transaction creation")
         $scope.virgin = true;
         $scope.transaction = {
-          transactionStatus: 'pending',
-          paymentStatus: 'pending'
+          payType: 'alipay',
+          payStatus: 'pending'
         };
         $scope.title = "New Transaction";
         $scope.fields = fields;
@@ -140,12 +141,22 @@ app.controller('transactionCtrl', function($scope, $rootScope, $modal, $location
         }
       })
       if ($scope.virgin){
-        obj.set("transactionCreationTime", new Date() / 1000);
+        obj.set("createdDate", new Date() / 1000);
       }
-      obj.set("transactionUpdateTime", new Date() / 1000);
-      if ($scope.transaction.paymentStatus == "completed" && $scope.transactionCopy.paymentStatus == "pending") {
-        console.log("payment status modified")
-        obj.set("paymentTime", new Date() / 1000);
+      obj.set("updateDate", new Date() / 1000);
+      if(!$scope.virgin){
+        console.log("updated a transaction")
+        if ($scope.transaction.payStatus == "completed" && $scope.transactionCopy.payStatus == "pending") {
+          console.log("payment status modified")
+          obj.set("payCompleteDate", new Date() / 1000);
+        }
+      }
+      else {
+        console.log("created a new transaction")
+        if ($scope.transaction.payStatus == "completed") {
+          console.log("payment status modified")
+          obj.set("payCompleteDate", new Date() / 1000);
+        }
       }
       obj.save({
         success: function(theObject) {

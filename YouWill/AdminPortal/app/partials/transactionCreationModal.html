@@ -6,7 +6,7 @@
     <form class="form-horizontal" role="form">
       <div class="form-group col-sm-12" ng-repeat="field in fields" ng-show="field.create && virgin">
         <label class="col-sm-4 control-label text-right">{{field.name}}</label>
-        <div class="col-sm-6" ng-hide="field.radio">
+        <div class="col-sm-6" ng-hide="field.radio || field.payType">
           <input required type="text" class="form-control" ng-model="transaction[field.value]">
         </div>
         <div class="col-sm-6" ng-show="field.radio">
@@ -15,10 +15,16 @@
             <label class="btn btn-primary" ng-model="transaction[field.value]" btn-radio="'completed'">Completed</label>
           </div>
         </div>
+        <div class="col-sm-6" ng-show="field.payType">
+          <div class="btn-group">
+            <label class="btn btn-primary" ng-model="transaction[field.value]" btn-radio="'alipay'">Alipay</label>
+            <label class="btn btn-primary" ng-model="transaction[field.value]" btn-radio="'paypal'">Paypal</label>
+          </div>
+        </div>
       </div>
       <div class="form-group col-sm-12" ng-repeat="field in fields" ng-show="!virgin">
         <label class="col-sm-4 control-label text-right">{{field.name}}</label>
-        <div class="col-sm-6" ng-hide="field.radio || field.time">
+        <div class="col-sm-6" ng-hide="field.radio || field.time || field.payType">
           <label required type="text" class="form-control">{{transaction[field.value]}}</label>
         </div>
         <div class="col-sm-6" ng-show="field.time">
@@ -28,6 +34,12 @@
           <div class="btn-group">
             <label class="btn btn-primary" ng-model="transaction[field.value]" btn-radio="'pending'">Pending</label>
             <label class="btn btn-primary" ng-model="transaction[field.value]" btn-radio="'completed'">Completed</label>
+          </div>
+        </div>
+        <div class="col-sm-6" ng-show="field.payType">
+          <div class="btn-group">
+            <label class="btn btn-primary" ng-model="transaction[field.value]" btn-radio="'alipay'">Alipay</label>
+            <label class="btn btn-primary" ng-model="transaction[field.value]" btn-radio="'paypal'">Paypal</label>
           </div>
         </div>
       </div>

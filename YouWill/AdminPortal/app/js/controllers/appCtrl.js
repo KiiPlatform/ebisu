@@ -22,6 +22,10 @@ app.controller('appCtrl', function ($scope, localStorageService, $rootScope) {
         },
         failure: function (theUser, errorString) {
           console.log("error authenticating: " + errorString);
+          $scope.loginError = true;
+          $scope.errorMsg = "Error Authenticating: " + errorString;
+          $scope.loggingIn = false;
+          $scope.$apply();
         }
       })
     }

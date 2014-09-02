@@ -13,7 +13,7 @@
     </div>
     <div>
       <table width="100%" class="table table-bordered table-striped table-hover" style="margin-bottom: -0px">
-        <thead><tr><th ng-repeat="field in fields" ng-show="field.list" style="width: 14.29%">{{field.name}}</th></tr></thead>
+        <thead><tr><th ng-repeat="field in fields" ng-show="field.list" style="width: 12.25%">{{field.name}}</th></tr></thead>
         <tbody>
         <tr ng-repeat="transaction in transactions[currentPage - 1]" style="cursor: pointer" ng-click="openModal(transaction)">
           <td ng-repeat="field in fields" style="width: 12.25%" ng-show="field.list">{{transaction._customInfo[field.value]}}</td>
