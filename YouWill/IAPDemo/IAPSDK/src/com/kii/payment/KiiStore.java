@@ -20,10 +20,15 @@ public class KiiStore {
 
     private static final String TAG = KiiStore.class.getName();
 
-    public static List<KiiProduct> listProducts(KiiQuery query) {
+    static {
+        Kii.initialize("c99e04f1", "3ebdc0472c0c705bc50eaf1756061b8b", Kii.Site.CN);
+    }
+
+    public static List<KiiProduct> listProducts(KiiQuery query, String appId) {
+        KiiClause clause = KiiClause.equals("appId", appId);
         KiiQuery localQuery = query;
         if (localQuery == null) {
-            localQuery = new KiiQuery();
+            localQuery = new KiiQuery(clause);
         }
         try {
             KiiQueryResult<KiiObject> result = Kii.bucket("products").query(localQuery);
@@ -39,10 +44,11 @@ public class KiiStore {
         return null;
     }
 
-    public static List<KiiReceipt> listReceipts(KiiQuery query, KiiUser user) {
+    public static List<KiiReceipt> listReceipts(KiiQuery query, KiiUser user, String appId) {
         KiiQuery localQuery = query;
+        KiiClause clause = KiiClause.equals("appId", appId);
         if (localQuery == null) {
-            localQuery = new KiiQuery();
+            localQuery = new KiiQuery(clause);
         }
         try {
             KiiQueryResult<KiiObject> result = user.bucket("receipts").query(localQuery);
@@ -57,9 +63,9 @@ public class KiiStore {
         return null;
     }
 
-    public static KiiReceipt getReceipt(KiiProduct product, KiiUser user) {
+    public static KiiReceipt getReceipt(KiiProduct product, KiiUser user, String appId) {
         KiiQuery query = new KiiQuery(KiiClause.equals("product_id", product.getId()));
-        List<KiiReceipt> receipts = listReceipts(query, user);
+        List<KiiReceipt> receipts = listReceipts(query, user, appId);
         return (receipts != null && receipts.size() > 0) ? receipts.get(0) : null;
     }
 
