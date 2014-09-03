@@ -14,6 +14,7 @@ public @interface KiiScope {
 
 	ScopeType scope() default  ScopeType.CurrUser;
 
+	ScopeType right() default ScopeType.CurrUser;
 
 	String username() default "";
 

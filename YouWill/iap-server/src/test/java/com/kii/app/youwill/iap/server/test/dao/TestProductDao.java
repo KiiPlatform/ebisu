@@ -80,6 +80,8 @@ public class TestProductDao extends BaseTest {
 				eq(BucketType.DEFAULT),
 				argThat(new Resp()))).thenReturn(getQueryResponse("prod1", "12.34"));
 
+		appContext.exitApp();
+
 	}
 
 	private QueryRequest getQueryRequest(String prodID) {

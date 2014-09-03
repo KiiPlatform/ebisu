@@ -17,6 +17,7 @@ import com.kii.platform.ufp.ufe.query.clauses.Clause;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,14 +105,12 @@ public class TestConfigDao extends BaseTest {
 		}
 	}
 
-	@Test
-	public void testConfig() throws BucketNotFoundException, JSONException {
-
+	@Before
+	public void before() throws BucketNotFoundException, JSONException {
 
 		super.initRequest();
 
-
-		appContext.su();
+		appContext.asApp();
 
 		when(bucketClient.query(
 				eq(new AccessToken("adminToken")),
@@ -120,6 +119,15 @@ public class TestConfigDao extends BaseTest {
 				eq(BucketType.DEFAULT),
 				argThat(new QueryReq()))).thenReturn(getQueryResponse());
 
+		appContext.exitApp();
+
+
+	}
+
+	@Test
+	public void testConfig() throws BucketNotFoundException, JSONException {
+
+		super.initRequest();
 
 
 		assertEquals(store.getAlipayConfig().getPartnerID(), "alipayPartner");
@@ -137,18 +145,6 @@ public class TestConfigDao extends BaseTest {
 	@Test
 	public void testSandConfig() throws BucketNotFoundException, JSONException {
 		super.initRequestWithSandbox();
-
-
-		appContext.su();
-
-		when(bucketClient.query(
-				eq(new AccessToken("adminToken")),
-				argThat(new ScopeCompare(appContext.getCurrScope())),
-				eq(new BucketID(BUCKET)),
-				eq(BucketType.DEFAULT),
-				argThat(new QueryReq()))).thenReturn(getQueryResponse());
-
-
 
 		assertEquals(store.getPaypalConfig().getSecret(),"paypaySand");
 

@@ -46,19 +46,31 @@ public class KiiScopeManagerAdape  {
 
 				case Admin:
 					appContext.asApp();
-					result = joinPoint.proceed();
 					break;
 				case CurrUser:
-					result = joinPoint.proceed();
 					break;
 //			case SpecUser:
 //				appContext.sudo(scope.username());
 
 			}
 
+		switch(scope.right()){
+			case Admin:
+				appContext.su();
+				break;
+			case CurrUser:
+				break;
+
+		}
+
+		result = joinPoint.proceed();
+
 
 		if(scope.scope()!= ScopeType.CurrUser){
 			appContext.exitApp();
+		}
+		if(scope.right()!=ScopeType.CurrUser){
+			appContext.exit();
 		}
 
 		return result;

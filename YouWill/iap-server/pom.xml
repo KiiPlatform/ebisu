@@ -170,9 +170,6 @@
                     <webApp>
                         <contextPath>/api</contextPath>
                     </webApp>
-                    <!--
-                    <jettyXml>src/test/jetty/jetty.xml,src/test/jetty/jetty-http.xml,src/test/jetty/jetty-ssl.xml,src/test/jetty/jetty-https.xml</jettyXml>
-                    -->
                 </configuration>
                 <executions>
                     <execution>

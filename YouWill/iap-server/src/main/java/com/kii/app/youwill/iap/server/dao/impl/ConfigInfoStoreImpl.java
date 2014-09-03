@@ -8,7 +8,6 @@ import com.kii.app.youwill.iap.server.entity.AlipayConfig;
 import com.kii.app.youwill.iap.server.entity.ConfigInfo;
 import com.kii.app.youwill.iap.server.entity.PaypalConfig;
 import com.kii.app.youwill.iap.server.web.AppContext;
-import com.kii.platform.ufp.bucket.BucketID;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.codehaus.jettison.json.JSONObject;
@@ -30,7 +29,7 @@ import java.util.List;
  * Created by ethan on 14-7-25.
  */
 @Component
-@KiiScope(scope= ScopeType.Admin)
+@KiiScope(scope= ScopeType.Admin,right=ScopeType.Admin)
 public class ConfigInfoStoreImpl implements ConfigInfoStore {
 
 
@@ -61,12 +60,9 @@ public class ConfigInfoStoreImpl implements ConfigInfoStore {
 
 
 	public static final String BUCKET = "configure";
-	private static final BucketID BUCKET_ID = new BucketID(BUCKET);
 
 
 	private ConfigInfo getConfigInfo() {
-
-		context.su();
 
 		List<JSONObject> list=bucketDao.queryAll(BUCKET);
 

@@ -17,8 +17,6 @@
         <context:exclude-filter type="assignable" expression="com.kii.app.youwill.iap.server.factory.KiiAppFactory" />
         <context:exclude-filter type="assignable" expression="com.kii.app.youwill.iap.server.dao.impl.AlipayQueryAccessHelper" />
         <context:exclude-filter type="assignable" expression="com.kii.app.youwill.iap.server.dao.impl.PaypalQueryAccessHelper" />
-
-
     </context:component-scan>
 
     <bean class="com.kii.app.youwill.iap.server.web.AppContext"  />
