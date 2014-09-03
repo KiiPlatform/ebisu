@@ -110,7 +110,7 @@ public class TestCreateOrder extends BaseWebTest {
 
 
 		this.mockMvc.perform(
-				post("/apps/"+appID+"/iap/startOrder/product/"+ UtilForTest.prodID)
+				post("/iap/startOrder/product/"+ UtilForTest.prodID)
 				.content(req.toString())
 				.accept(MediaType.parseMediaType("application/json;charset=UTF-8"))
 				.header("x-kii-appid",appID)

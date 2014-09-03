@@ -271,7 +271,7 @@ public class TestFinishOrder extends BaseWebTest {
 		req.put("verifySign",sha1Str);
 
 		this.mockMvc.perform(
-				post("/apps/"+appID+"/iap/finishOrder/order/"+tranID)
+				post("/iap/finishOrder/order/"+tranID)
 						.content(req.toString())
 						.accept(MediaType.parseMediaType("application/json;charset=UTF-8"))
 						.header("x-kii-appid",appID)

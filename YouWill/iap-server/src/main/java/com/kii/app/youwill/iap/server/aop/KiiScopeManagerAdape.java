@@ -26,7 +26,6 @@ public class KiiScopeManagerAdape  {
 	@PostConstruct
 	public void init(){
 
-		appContext.toString();
 
 	}
 
@@ -59,7 +58,7 @@ public class KiiScopeManagerAdape  {
 
 
 		if(scope.scope()!= ScopeType.CurrUser){
-			appContext.exit();
+			appContext.exitApp();
 		}
 
 		return result;

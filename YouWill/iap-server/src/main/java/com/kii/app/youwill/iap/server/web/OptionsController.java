@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 public class OptionsController {
 
 
-	@RequestMapping(method = RequestMethod.OPTIONS, value="/**")
+	@RequestMapping(method = RequestMethod.OPTIONS, value="/iap/**")
 	public void accessEverything(HttpServletResponse response){
 
 

@@ -147,7 +147,7 @@ public class TestErrorCodeForFinishOrder extends BaseWebTest {
 
 
 		this.mockMvc.perform(
-				post("/apps/" + appID + "/iap/finishOrder/order/" + orderID)
+				post("/iap/finishOrder/order/" + orderID)
 						.content(req.toString())
 						.accept(MediaType.parseMediaType("application/json;charset=UTF-8"))
 						.header("x-kii-appid", appID)
@@ -225,7 +225,7 @@ public class TestErrorCodeForFinishOrder extends BaseWebTest {
 //		req.put("paymentID","foo");
 
 		this.mockMvc.perform(
-				post("/apps/" + appID + "/iap/finishOrder/order/" + orderID)
+				post("/iap/finishOrder/order/" + orderID)
 						.content(req.toString())
 						.accept(MediaType.parseMediaType("application/json;charset=UTF-8"))
 						.header("x-kii-appid",appID)

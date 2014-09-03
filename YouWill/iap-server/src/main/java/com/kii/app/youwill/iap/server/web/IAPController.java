@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 
 @RestController
-@RequestMapping(value="/iap",produces="application/json")
+@RequestMapping(value="/iap")
 public class IAPController {
 
 	@Autowired
@@ -25,8 +25,8 @@ public class IAPController {
 	private AppContext appContext;
 
 
-	@RequestMapping("/startOrder/product/{productID}")
-	public String createTransaction(@PathVariable("appID") String appID,
+	@RequestMapping(value="/startOrder/product/{productID}",produces="application/json")
+	public String createTransaction(
 									@PathVariable("productID") String productID,
 									@RequestBody String context) {
 
@@ -43,8 +43,8 @@ public class IAPController {
 
 
 
-	@RequestMapping("/finishOrder/order/{orderID}")
-	public String finishTransaction(@PathVariable("appID") String appID,
+	@RequestMapping(value="/finishOrder/order/{orderID}",produces="application/json")
+	public String finishTransaction(
 											 @PathVariable("orderID") String orderID,
 											 @RequestBody String context) {
 

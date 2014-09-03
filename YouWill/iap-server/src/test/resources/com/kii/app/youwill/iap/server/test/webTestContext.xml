@@ -23,9 +23,11 @@
 
     </context:component-scan>
 
+    <mvc:annotation-driven />
+
 
     <bean
-            class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+        class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
         <property name="messageConverters">
             <util:list id="beanList">
                 <ref bean="stringHttpMessageConverter" />
@@ -40,20 +42,17 @@
     <bean id="exceptionResolver"
           class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver" />
 
-    <!--
-    bean id="handlerMapping" class="RequestMappingForPropConfigHandlerMapping" / -->
 
-
+<!--
     <mvc:interceptors>
         <bean class="com.kii.app.youwill.iap.server.web.KiiAppInterceptorAdapter" />
     </mvc:interceptors>
-
-    <bean class="com.kii.app.youwill.iap.server.mock.MockAppContext"  />
+-->
 
     <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="locations">
             <list>
-                <value>classpath:com/kii/app/youwill/iap/server/iapserver-cfg.properties</value>
+                <value>classpath:com/kii/app/youwill/iap/server/test/iapserver-test-cfg.properties</value>
                 <value>classpath:com/kii/app/youwill/iap/server/iapserver-test-payserver-cfg.properties</value>
 
             </list>

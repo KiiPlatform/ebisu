@@ -95,7 +95,7 @@ public class TestErrorCodeForStartOrder extends BaseWebTest {
 
 
 		this.mockMvc.perform(
-				post("/apps/" + appID + "/iap/startOrder/product/" + prodID)
+				post("/iap/startOrder/product/" + prodID)
 						.content(req.toString())
 						.accept(MediaType.parseMediaType("application/json;charset=UTF-8"))
 						.header("x-kii-appkey", appKey)
@@ -110,7 +110,7 @@ public class TestErrorCodeForStartOrder extends BaseWebTest {
 	@Test
 	public void testAPPKeyError() throws Exception {
 		this.mockMvc.perform(
-				post("/apps/" + appID + "/iap/startOrder/product/" + prodID)
+				post( "/iap/startOrder/product/" + prodID)
 						.content(req.toString())
 						.accept(MediaType.parseMediaType("application/json;charset=UTF-8"))
 						.header("x-kii-appid", appID)
@@ -126,7 +126,7 @@ public class TestErrorCodeForStartOrder extends BaseWebTest {
 	public void testNoTokenError() throws Exception {
 
 		this.mockMvc.perform(
-				post("/apps/" + appID + "/iap/startOrder/product/" + prodID)
+				post("/iap/startOrder/product/" + prodID)
 						.content(req.toString())
 						.accept(MediaType.parseMediaType("application/json;charset=UTF-8"))
 						.header("x-kii-appid", appID)
@@ -144,7 +144,7 @@ public class TestErrorCodeForStartOrder extends BaseWebTest {
 		sign = "nullProduct";
 
 		this.mockMvc.perform(
-				post("/apps/" + appID + "/iap/startOrder/product/" + prodID)
+				post( "/iap/startOrder/product/" + prodID)
 						.content(req.toString())
 						.accept(MediaType.parseMediaType("application/json;charset=UTF-8"))
 						.header("x-kii-appid", appID)
@@ -166,7 +166,7 @@ public class TestErrorCodeForStartOrder extends BaseWebTest {
 
 
 		this.mockMvc.perform(
-				post("/apps/" + appID + "/iap/startOrder/product/" + prodID)
+				post("/iap/startOrder/product/" + prodID)
 						.content(req.toString())
 						.accept(MediaType.parseMediaType("application/json;charset=UTF-8"))
 						.header("x-kii-appid", appID)
@@ -186,7 +186,7 @@ public class TestErrorCodeForStartOrder extends BaseWebTest {
 
 
 		this.mockMvc.perform(
-				post("/apps/" + appID + "/iap/startOrder/product/" + prodID)
+				post("/iap/startOrder/product/" + prodID)
 						.content(req.toString())
 						.accept(MediaType.parseMediaType("application/json;charset=UTF-8"))
 						.header("x-kii-appid", appID)
@@ -206,7 +206,7 @@ public class TestErrorCodeForStartOrder extends BaseWebTest {
 		sign = null;
 
 		this.mockMvc.perform(
-				post("/apps/" + appID + "/iap/startOrder/product/" + prodID)
+				post("/iap/startOrder/product/" + prodID)
 						.content(req.toString())
 						.accept(MediaType.parseMediaType("application/json;charset=UTF-8"))
 						.header("x-kii-appid", appID)
@@ -227,7 +227,7 @@ public class TestErrorCodeForStartOrder extends BaseWebTest {
 
 
 		this.mockMvc.perform(
-				post("/apps/" + appID + "/iap/startOrder/product/" + prodID)
+				post("/iap/startOrder/product/" + prodID)
 						.content(req.toString())
 						.accept(MediaType.parseMediaType("application/json;charset=UTF-8"))
 						.header("x-kii-appid", appID)
@@ -250,7 +250,7 @@ public class TestErrorCodeForStartOrder extends BaseWebTest {
 
 
 		this.mockMvc.perform(
-				post("/apps/" + appID + "/iap/startOrder/product/" + prodID)
+				post("/iap/startOrder/product/" + prodID)
 						.content(req.toString())
 						.accept(MediaType.parseMediaType("application/json;charset=UTF-8"))
 						.header("x-kii-appid", appID)
