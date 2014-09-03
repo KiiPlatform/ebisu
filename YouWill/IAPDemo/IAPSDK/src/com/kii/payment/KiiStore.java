@@ -20,10 +20,6 @@ public class KiiStore {
 
     private static final String TAG = KiiStore.class.getName();
 
-    static {
-        Kii.initialize("c99e04f1", "3ebdc0472c0c705bc50eaf1756061b8b", Kii.Site.CN);
-    }
-
     public static List<KiiProduct> listProducts(KiiQuery query, String appId) {
         KiiClause clause = KiiClause.equals("appId", appId);
         KiiQuery localQuery = query;

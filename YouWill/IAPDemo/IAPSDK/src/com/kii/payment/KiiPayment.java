@@ -147,6 +147,7 @@ public class KiiPayment {
                                 : "0"));
                         nameValuePairs.add(new BasicNameValuePair("sign", signature));
                         nameValuePairs.add(new BasicNameValuePair("user_id", order.userId));
+                        nameValuePairs.add(new BasicNameValuePair("youwill_app_id", YouWillIAPSDK.gYouWillAppId));
                         Utils.log(TAG, "post parameter is " + EntityUtils
                                 .toString(new UrlEncodedFormEntity(nameValuePairs)));
                         request.setEntity(new UrlEncodedFormEntity(nameValuePairs, "UTF-8"));
@@ -186,6 +187,8 @@ public class KiiPayment {
         sb.append(order.productName);
         sb.append("user_id");
         sb.append(order.userId);
+        sb.append("youwill_app_id");
+        sb.append(YouWillIAPSDK.gYouWillAppId);
         return KiiStore.buildHash(sb.toString(), Kii.getAppKey());
     }
 
@@ -405,6 +408,7 @@ public class KiiPayment {
             nameValuePairs.add(new BasicNameValuePair("app_id", Kii.getAppId()));
             nameValuePairs.add(new BasicNameValuePair("method", "finished_order"));
             nameValuePairs.add(new BasicNameValuePair("is_sandbox", sandbox_mode ? "1" : "0"));
+            nameValuePairs.add(new BasicNameValuePair("youwill_app_id", YouWillIAPSDK.gYouWillAppId));
             nameValuePairs.add(new BasicNameValuePair("transaction_id", transactionId));
             nameValuePairs.add(new BasicNameValuePair("sign", signature));
             if (!TextUtils.isEmpty(payid)) {
@@ -433,6 +437,8 @@ public class KiiPayment {
         sb.append(Kii.getAppId());
         sb.append("is_sandbox");
         sb.append(sandbox_mode ? 1 : 0);
+        sb.append("youwill_app_id");
+        sb.append(YouWillIAPSDK.gYouWillAppId);
         sb.append("method");
         sb.append("finished_order");
         if (!TextUtils.isEmpty(payid)) {
