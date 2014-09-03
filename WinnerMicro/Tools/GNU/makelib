@@ -1,0 +1,36 @@
+#!/bin/sh
+# Compile the following libs
+
+sed 's/TOOL_GNU = 0/TOOL_GNU = 1/' ../tool_chain.def > temp
+mv -f temp ../tool_chain.def
+
+cd ../../Src/Wlan
+make clean;make;
+if [ $? -ne 0 ]; then
+	exit 1
+fi
+cd -
+
+cd ../../Src/Sys
+make clean;make;
+if [ $? -ne 0 ]; then
+	exit 1
+fi
+cd -
+
+cd ../../Src/Drivers/litepoint/
+make clean;make;
+if [ $? -ne 0 ]; then
+	exit 1
+fi
+cd -
+
+make clean -f packlib;make -f packlib
+#make clean;make
+cd ../../Lib
+rm -f wlan.lib
+rm -f sys.lib
+rm -f litepoint.lib
+cd -
+
+sdk.sh
