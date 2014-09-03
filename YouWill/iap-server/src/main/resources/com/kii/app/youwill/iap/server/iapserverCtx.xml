@@ -14,7 +14,6 @@
     <context:component-scan base-package="com.kii.app.youwill.iap.server">
         <context:exclude-filter type="annotation"
                                 expression="org.springframework.stereotype.Controller"/>
-        <context:exclude-filter type="assignable" expression="com.kii.app.youwill.iap.server.web.WebAppConfig" />
 
         <context:exclude-filter type="regex" expression="com.kii.app.youwill.iap.server.test.*" />
         <context:exclude-filter type="regex" expression="com.kii.app.youwill.iap.server.mock.*" />
@@ -32,6 +31,8 @@
     </bean>
 
     <aop:aspectj-autoproxy/>
+
+    <bean class="com.kii.app.youwill.iap.server.factory.KiiAppFactory" />
 
     <bean class="com.kii.app.youwill.iap.server.aop.KiiScopeManagerAdape"/>
 
