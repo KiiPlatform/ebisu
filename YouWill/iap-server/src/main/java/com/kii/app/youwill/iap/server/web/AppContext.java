@@ -49,6 +49,11 @@ public class AppContext {
 	}
 
 
+	public AppID getAppID(){
+		return appID;
+	}
+
+
 	private ClientID clientID;
 	@Value("${iap-server.kii.client-id}")
 	public void setClientID(String id){
@@ -70,7 +75,7 @@ public class AppContext {
 	@Autowired
 	private UserClient user;
 
-	private ThreadLocal<TokenInfo> local = new ThreadLocal<TokenInfo>();
+	protected ThreadLocal<TokenInfo> local = new ThreadLocal<TokenInfo>();
 
 	@PostConstruct
 	public void initAdminToken(){
@@ -166,7 +171,7 @@ public class AppContext {
 		return local.get().isSandbox();
 	}
 
-	private class TokenInfo {
+	protected class TokenInfo {
 
 
 		private String token;

@@ -5,6 +5,7 @@ import com.kii.app.youwill.iap.server.test.BaseTest;
 import com.kii.app.youwill.iap.server.web.AppContext;
 import com.kii.platform.ufp.bucket.BucketID;
 import com.kii.platform.ufp.bucket.BucketType;
+import com.kii.platform.ufp.bucket.ObjectScope;
 import com.kii.platform.ufp.bucket.PaginationKey;
 import com.kii.platform.ufp.oauth2.AccessToken;
 import com.kii.platform.ufp.ufe.QueryRequest;
@@ -22,7 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
 /**
@@ -84,6 +86,23 @@ public class TestConfigDao extends BaseTest {
 	}
 
 
+	private static class ScopeCompare extends ArgumentMatcher<ObjectScope>{
+
+		ObjectScope val=null;
+		public ScopeCompare(ObjectScope scope){
+			val=scope;
+		}
+
+		@Override
+		public boolean matches(Object argument) {
+			ObjectScope scope=(ObjectScope)argument;
+
+			assertEquals(scope.getAppID(),val.getAppID());
+			assertEquals(scope.getUserID(),val.getUserID());
+
+			return true;
+		}
+	}
 
 	@Test
 	public void testConfig() throws BucketNotFoundException, JSONException {
@@ -92,11 +111,11 @@ public class TestConfigDao extends BaseTest {
 		super.initRequest();
 
 
-		appContext.asApp();
+		appContext.su();
 
 		when(bucketClient.query(
 				eq(new AccessToken("adminToken")),
-				eq(appContext.getCurrScope()),
+				argThat(new ScopeCompare(appContext.getCurrScope())),
 				eq(new BucketID(BUCKET)),
 				eq(BucketType.DEFAULT),
 				argThat(new QueryReq()))).thenReturn(getQueryResponse());
@@ -118,11 +137,11 @@ public class TestConfigDao extends BaseTest {
 		super.initRequestWithSandbox();
 
 
-		appContext.asApp();
+		appContext.su();
 
 		when(bucketClient.query(
 				eq(new AccessToken("adminToken")),
-				eq(appContext.getCurrScope()),
+				argThat(new ScopeCompare(appContext.getCurrScope())),
 				eq(new BucketID(BUCKET)),
 				eq(BucketType.DEFAULT),
 				argThat(new QueryReq()))).thenReturn(getQueryResponse());

@@ -2,7 +2,6 @@ package com.kii.app.youwill.iap.server.dao.impl;
 
 import com.kii.app.youwill.iap.server.dao.ACLOperate;
 import com.kii.app.youwill.iap.server.dao.KiiRuntimeException;
-import com.kii.app.youwill.iap.server.factory.Product;
 import com.kii.app.youwill.iap.server.web.AppContext;
 import com.kii.platform.ufp.bucket.BucketID;
 import com.kii.platform.ufp.bucket.BucketType;
@@ -24,7 +23,6 @@ import java.util.Set;
  * Created by ethan on 14-8-15.
  */
 @Component
-@Product
 public class ACLOperateImpl implements ACLOperate {
 
 	@Autowired

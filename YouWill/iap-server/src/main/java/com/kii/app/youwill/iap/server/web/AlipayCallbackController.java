@@ -9,6 +9,7 @@ import com.kii.app.youwill.iap.server.entity.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletRequest;
@@ -30,7 +31,7 @@ public class AlipayCallbackController {
 	private TransactionDao transactionDao;
 
 
-	@RequestMappingProp("alipay-callback")
+	@RequestMapping("/iap/callback/alipay")
 	public ResponseEntity<String> callback(@RequestParam Map<String,String> allRequestParams,HttpServletResponse response){
 
 /*
@@ -118,7 +119,7 @@ extra_common_param=%E4%BD%A0 %E5%A5%BD%EF%BC%8C%E8%BF%99%E6%98%AF%E6%B5%8B%E8% A
 
 	private static final String SIGN_TMP="service=${service}&v=${v}&sec_id=${sec_id}&notify_data=${notify_data}";
 
-	@RequestMappingProp("alipay-mobile-callback")
+	@RequestMapping("/iap/callback/alipay")
 	public ResponseEntity<String> callbackForMobile(HttpServletRequest request,@RequestParam Map<String,String> allRequestParams,HttpServletResponse response){
 
 

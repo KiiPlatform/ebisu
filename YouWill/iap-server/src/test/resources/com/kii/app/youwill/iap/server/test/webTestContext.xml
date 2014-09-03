@@ -17,7 +17,6 @@
 
     <context:component-scan base-package="com.kii.app.youwill.iap.server">
 
-        <context:exclude-filter type="assignable" expression="com.kii.app.youwill.iap.server.web.AppContextBean" />
         <context:exclude-filter type="assignable" expression="com.kii.app.youwill.iap.server.dao.impl.AlipayQueryAccessHelper" />
         <context:exclude-filter type="assignable" expression="com.kii.app.youwill.iap.server.dao.impl.PaypalQueryAccessHelper" />
 
@@ -55,7 +54,6 @@
         <property name="locations">
             <list>
                 <value>classpath:com/kii/app/youwill/iap/server/iapserver-cfg.properties</value>
-                <value>classpath:com/kii/app/youwill/iap/server/iapserver-endpoint.properties</value>
                 <value>classpath:com/kii/app/youwill/iap/server/iapserver-test-payserver-cfg.properties</value>
 
             </list>

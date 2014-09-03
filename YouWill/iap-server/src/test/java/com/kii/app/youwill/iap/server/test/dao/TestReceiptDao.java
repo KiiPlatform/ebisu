@@ -125,7 +125,7 @@ public class TestReceiptDao extends BaseTest {
 		QueryReq  jsonReq=new QueryReq(appContext.isSandBox());
 
 		when(bucketClient.query(
-				eq(appContext.getTokenInfo().getAccessToken()),
+				eq(appContext.getAccessToken()),
 				eq(appContext.getCurrScope()),
 				eq(new BucketID(BUCKET)),
 				eq(BucketType.DEFAULT),
@@ -139,7 +139,7 @@ public class TestReceiptDao extends BaseTest {
 		resp.setNextPaginationKey(new PaginationKey(""));
 
 		when(bucketClient.query(
-				eq(appContext.getTokenInfo().getAccessToken()),
+				eq(appContext.getAccessToken()),
 				eq(appContext.getCurrScope()),
 				eq(new BucketID(BUCKET)),
 				eq(BucketType.DEFAULT),
@@ -163,7 +163,7 @@ public class TestReceiptDao extends BaseTest {
 		QueryReq  jsonReq=new QueryReq(appContext.isSandBox());
 
 		when(bucketClient.query(
-				eq(appContext.getTokenInfo().getAccessToken()),
+				eq(appContext.getAccessToken()),
 				eq(appContext.getCurrScope()),
 				eq(new BucketID(BUCKET)),
 				eq(BucketType.DEFAULT),
@@ -177,7 +177,7 @@ public class TestReceiptDao extends BaseTest {
 		resp.setNextPaginationKey(new PaginationKey(""));
 
 		when(bucketClient.query(
-				eq(appContext.getTokenInfo().getAccessToken()),
+				eq(appContext.getAccessToken()),
 				eq(appContext.getCurrScope()),
 				eq(new BucketID(BUCKET)),
 				eq(BucketType.DEFAULT),

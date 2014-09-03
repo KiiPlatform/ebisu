@@ -74,7 +74,7 @@ public class TestProductDao extends BaseTest {
 		appContext.asApp();
 
 		when(bucketClient.query(
-				eq(appContext.getTokenInfo().getAccessToken()),
+				eq(appContext.getAccessToken()),
 				eq(appContext.getCurrScope()),
 				eq(new BucketID(BUCKET)),
 				eq(BucketType.DEFAULT),

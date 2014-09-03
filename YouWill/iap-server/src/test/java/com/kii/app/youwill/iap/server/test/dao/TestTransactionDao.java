@@ -194,7 +194,7 @@ public class TestTransactionDao extends BaseTest {
 
 
 		when(bucketClient.createDataObject(
-				eq(appContext.getTokenInfo().getAccessToken()),
+				eq(appContext.getAccessToken()),
 				eq(appContext.getCurrScope()),
 				eq(new BucketID(BUCKET)),
 				eq(BucketType.DEFAULT),
@@ -205,7 +205,7 @@ public class TestTransactionDao extends BaseTest {
 		QueryReq queryReq=new QueryReq();
 
 		when(bucketClient.query(
-				eq(appContext.getTokenInfo().getAccessToken()),
+				eq(appContext.getAccessToken()),
 				eq(appContext.getCurrScope()),
 				eq(new BucketID(BUCKET)),
 				eq(BucketType.DEFAULT),
@@ -257,7 +257,7 @@ public class TestTransactionDao extends BaseTest {
 		TestObj  jsonReq=new TestObj(token,true);
 
 		when(bucketClient.createDataObject(
-				eq(appContext.getTokenInfo().getAccessToken()),
+				eq(appContext.getAccessToken()),
 				eq(appContext.getCurrScope()),
 				eq(new BucketID(BUCKET)),
 				eq(BucketType.DEFAULT),
@@ -268,7 +268,7 @@ public class TestTransactionDao extends BaseTest {
 		QueryReq queryReq=new QueryReq(true);
 
 		when(bucketClient.query(
-				eq(appContext.getTokenInfo().getAccessToken()),
+				eq(appContext.getAccessToken()),
 				eq(appContext.getCurrScope()),
 				eq(new BucketID(BUCKET)),
 				eq(BucketType.DEFAULT),

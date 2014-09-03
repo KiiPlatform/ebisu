@@ -7,7 +7,6 @@ import com.kii.app.youwill.iap.server.dao.TransactionDao;
 import com.kii.app.youwill.iap.server.dao.impl.AlipayQueryAccessHelper;
 import com.kii.app.youwill.iap.server.dao.impl.PaypalQueryAccessHelper;
 import com.kii.app.youwill.iap.server.entity.*;
-import com.kii.app.youwill.iap.server.factory.TokenInfo;
 import com.kii.app.youwill.iap.server.web.AppContext;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jettison.json.JSONException;
@@ -42,8 +41,7 @@ public class IAPService {
 
 
 	public JSONObject startOrderTransaction(StartTransactionParam param){
-		TokenInfo token=context.getTokenInfo();
-		if(!param.valid(token.getAppID().toString(), configStore.getIAPSecurityKey())){
+		if(!param.valid(context.getAppID().toString(), configStore.getIAPSecurityKey())){
 			throw new ServiceException(IAPErrorCode.SIGN_INVALID);
 		}
 
@@ -93,9 +91,8 @@ public class IAPService {
 
 	public String finishOrder(FinishTransactionParam param ) {
 
-		TokenInfo token = context.getTokenInfo();
 
-		if (!param.valid(token.getAppID().toString(), configStore.getIAPSecurityKey())) {
+		if (!param.valid(context.getAppID().toString(), configStore.getIAPSecurityKey())) {
 			throw new ServiceException(IAPErrorCode.SIGN_INVALID);
 		}
 

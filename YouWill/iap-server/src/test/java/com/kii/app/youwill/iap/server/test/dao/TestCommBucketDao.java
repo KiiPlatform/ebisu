@@ -68,7 +68,7 @@ public class TestCommBucketDao extends BaseTest {
 
 
 		when(bucketClient.query(
-				eq(appContext.getTokenInfo().getAccessToken()),
+				eq(appContext.getAccessToken()),
 //				eq(appContext.getCurrScope()),
 				argThat(new ArgumentMatcher<ObjectScope>() {
 					@Override
@@ -149,7 +149,7 @@ public class TestCommBucketDao extends BaseTest {
 
 
 		when(bucketClient.createDataObject(
-				eq(appContext.getTokenInfo().getAccessToken()),
+				eq(appContext.getAccessToken()),
 				eq(new ObjectScope(new AppID(appID),new UserID(token))),
 				eq(new BucketID(bucketName)),
 				eq(BucketType.DEFAULT),
@@ -166,7 +166,7 @@ public class TestCommBucketDao extends BaseTest {
 
 
 		when(bucketClient.createDataObject(
-				eq(appContext.getTokenInfo().getAccessToken()),
+				eq(appContext.getAccessToken()),
 				eq(new ObjectScope(new AppID(appID))),
 				eq(new BucketID(bucketName)),
 				eq(BucketType.DEFAULT),

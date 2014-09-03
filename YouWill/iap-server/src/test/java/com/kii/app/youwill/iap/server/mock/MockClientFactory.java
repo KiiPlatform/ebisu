@@ -6,12 +6,13 @@ import com.kii.app.youwill.iap.server.entity.AlipayQueryResult;
 import com.kii.app.youwill.iap.server.entity.PaypalQueryResult;
 import com.kii.app.youwill.iap.server.test.web.UtilForTest;
 import com.kii.platform.ufp.app.AppID;
-import com.kii.platform.ufp.app.ParameterName;
 import com.kii.platform.ufp.errors.UserNotFoundException;
 import com.kii.platform.ufp.oauth2.AccessToken;
+import com.kii.platform.ufp.oauth2.ClientID;
+import com.kii.platform.ufp.oauth2.ClientSecret;
 import com.kii.platform.ufp.ufe.UserDataRetrievalResponse;
 import com.kii.platform.ufp.ufe.client.http.stateless.ACLClient;
-import com.kii.platform.ufp.ufe.client.http.stateless.AppClient;
+import com.kii.platform.ufp.ufe.client.http.stateless.AuthClient;
 import com.kii.platform.ufp.ufe.client.http.stateless.BucketClient;
 import com.kii.platform.ufp.ufe.client.http.stateless.UserClient;
 import com.kii.platform.ufp.ufe.errors.AppConfigParameterNotFoundException;
@@ -23,8 +24,8 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ResourceLoader;
 
 import java.io.IOException;
@@ -37,14 +38,11 @@ import static org.mockito.Mockito.when;
 /**
  * Created by ethan on 14-8-19.
  */
+@Configuration
 public class MockClientFactory {
 
 	@Autowired
 	private ResourceLoader loader;
-
-	@Value("${iap-server.kii-parameter.name}")
-	private String name;
-
 
 
 	@Bean
@@ -131,15 +129,14 @@ public class MockClientFactory {
 	}
 
 	@Bean
-	public AppClient getAppClient() throws AppConfigParameterNotFoundException {
+	public AuthClient getAuthClient() throws AppConfigParameterNotFoundException {
 
+		AuthClient auth=Mockito.mock(AuthClient.class);
 
-		AppClient client= Mockito.mock(AppClient.class);
+		AuthClient.AdminAuthResponse resp=new AuthClient.AdminAuthResponse(new AccessToken("adminToken"),null);
 
-		ParameterName param=new ParameterName(name);
+		when(auth.loginAsAppAdmin(eq(new AppID("mockAppID")),eq(new ClientID("clientID")),eq(new ClientSecret("secret")))).thenReturn(resp);
 
-		when(client.getParameter(any(AccessToken.class),any(AppID.class),eq(param))).thenReturn("adminToken");
-
-		return client;
+		return auth;
 	}
 }

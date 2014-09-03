@@ -30,12 +30,12 @@ public abstract  class BaseTest  {
 	@Autowired
 	private ApplicationContext ctx;
 
-
-
+//
+//
 	protected String appID="mockAppID";
-
+//
 	protected String token="mockToken";
-
+//
 	protected String appKey="mockAppKey";
 
 
@@ -47,9 +47,9 @@ public abstract  class BaseTest  {
 
 		HttpServletRequest request= Mockito.mock(HttpServletRequest.class);
 
-		when(request.getHeader(eq("x-kii-appid"))).thenReturn(appID);
-
-		when(request.getHeader(eq("x-kii-appkey"))).thenReturn(appKey);
+//		when(request.getHeader(eq("x-kii-appid"))).thenReturn(appID);
+//
+//		when(request.getHeader(eq("x-kii-appkey"))).thenReturn(appKey);
 
 		when(request.getHeader(eq("Authorization"))).thenReturn("Bears "+token);
 
@@ -70,9 +70,9 @@ public abstract  class BaseTest  {
 
 		HttpServletRequest request= Mockito.mock(HttpServletRequest.class);
 
-		when(request.getHeader(eq("x-kii-appid"))).thenReturn(appID);
-
-		when(request.getHeader(eq("x-kii-appkey"))).thenReturn(appKey);
+//		when(request.getHeader(eq("x-kii-appid"))).thenReturn(appID);
+//
+//		when(request.getHeader(eq("x-kii-appkey"))).thenReturn(appKey);
 
 		when(request.getHeader(eq("Authorization"))).thenReturn("Bears "+token);
 
