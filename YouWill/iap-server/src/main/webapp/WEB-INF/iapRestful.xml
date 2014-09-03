@@ -45,4 +45,12 @@
 		class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver" />
 
 
+
+	<mvc:interceptors>
+		<bean class="com.kii.app.youwill.iap.server.web.KiiAppInterceptorAdapter" />
+	</mvc:interceptors>
+
+
+
+
 </beans>

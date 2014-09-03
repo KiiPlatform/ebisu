@@ -23,7 +23,7 @@
 
     </context:component-scan>
 
-    <mvc:annotation-driven />
+    <context:annotation-config/>
 
 
     <bean
@@ -68,6 +68,9 @@
     <bean id="restProvider"
           class="com.kii.platform.ufp.client.springrest.impl.apache.HttpComponentsRestTemplateProvider"/>
 
+    <mvc:interceptors>
+        <bean class="com.kii.app.youwill.iap.server.web.KiiAppInterceptorAdapter" />
+    </mvc:interceptors>
 
 
 </beans>

@@ -39,8 +39,7 @@ public class IAPOrderOper {
 	}
 
 	private String appID;
-
-	private String appKey;
+//
 
 	private AccessToken token;
 
@@ -57,7 +56,7 @@ public class IAPOrderOper {
 
  */
 		this.appID=info.appID;
-		this.appKey=info.appKey;
+//		this.appKey=info.appKey;
 		this.userSecKey=secKey;
 		this.token=token;
 
@@ -74,14 +73,14 @@ public class IAPOrderOper {
 	}
 
 
-	private String CREATE_ORDER="http://${2}/api/apps/${0}/iap/startOrder/product/${1}";
+	private String CREATE_ORDER="http://${2}/api/iap/startOrder/product/${1}";
 
 	public CreateOrderResponse doStartOrder(String productID,PayType payType,String price,String transactionID)  {
 
 		HttpPost post=new HttpPost();
 
-		post.addHeader("x-kii-appid",appID);
-		post.addHeader("x-kii-appkey",appKey);
+//		post.addHeader("x-kii-appid",appID);
+//		post.addHeader("x-kii-appkey",appKey);
 		post.addHeader("Authorization","Bearer "+token.toString());
 		post.addHeader("Content-Type","application/json");
 
@@ -144,7 +143,7 @@ public class IAPOrderOper {
 		}
 	}
 
-	private String FINISH_ORDER="http://${2}/api/apps/${0}/iap/finishOrder/order/${1}";
+	private String FINISH_ORDER="http://${2}/api/iap/finishOrder/order/${1}";
 
 
 	public  OrderStatus doFinishAlipayOrder(String orderID){
@@ -175,8 +174,8 @@ public class IAPOrderOper {
 
 		HttpPost post=new HttpPost();
 
-		post.addHeader("x-kii-appid",appID);
-		post.addHeader("x-kii-appkey",appKey);
+//		post.addHeader("x-kii-appid",appID);
+//		post.addHeader("x-kii-appkey",appKey);
 		post.addHeader("Authorization","Bearer "+token);
 		post.addHeader("Content-Type","application/json");
 
@@ -217,7 +216,7 @@ public class IAPOrderOper {
 
 		StringBuffer sb=new StringBuffer();
 		sb.append("appID").append(appID)
-				.append("appKey").append(appKey)
+				.append("secKey").append(userSecKey)
 				.append("orderID").append(orderID)
 				.append("paymentID").append(paymentID);
 		sb.append(userSecKey);
