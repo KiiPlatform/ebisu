@@ -20,8 +20,8 @@ public class KiiStore {
 
     private static final String TAG = KiiStore.class.getName();
 
-    public static List<KiiProduct> listProducts(KiiQuery query, String appId) {
-        KiiClause clause = KiiClause.equals("appId", appId);
+    public static List<KiiProduct> listProducts(KiiQuery query) {
+        KiiClause clause = KiiClause.equals("appId", YouWillIAPSDK.gYouWillAppId);
         KiiQuery localQuery = query;
         if (localQuery == null) {
             localQuery = new KiiQuery(clause);
@@ -40,9 +40,9 @@ public class KiiStore {
         return null;
     }
 
-    public static List<KiiReceipt> listReceipts(KiiQuery query, KiiUser user, String appId) {
+    public static List<KiiReceipt> listReceipts(KiiQuery query, KiiUser user) {
         KiiQuery localQuery = query;
-        KiiClause clause = KiiClause.equals("appId", appId);
+        KiiClause clause = KiiClause.equals("appId", YouWillIAPSDK.gYouWillAppId);
         if (localQuery == null) {
             localQuery = new KiiQuery(clause);
         }
@@ -61,10 +61,9 @@ public class KiiStore {
 
     public static KiiReceipt getReceipt(KiiProduct product, KiiUser user, String appId) {
         KiiQuery query = new KiiQuery(KiiClause.equals("product_id", product.getId()));
-        List<KiiReceipt> receipts = listReceipts(query, user, appId);
+        List<KiiReceipt> receipts = listReceipts(query, user);
         return (receipts != null && receipts.size() > 0) ? receipts.get(0) : null;
     }
-
 
 
     public static String toHexString(byte[] b) {
@@ -81,8 +80,8 @@ public class KiiStore {
 
     public static String buildHash(String params, String key) {
         try {
-            Utils.log(TAG, "buildHash, params is " + params );
-            Utils.log(TAG, "buildHash, key is " + key );
+            Utils.log(TAG, "buildHash, params is " + params);
+            Utils.log(TAG, "buildHash, key is " + key);
             String data = params + key;
             MessageDigest md5 = MessageDigest.getInstance("MD5");
             md5.update(data.getBytes("UTF-8"));
