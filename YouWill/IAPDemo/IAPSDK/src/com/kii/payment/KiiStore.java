@@ -56,7 +56,7 @@ public class KiiStore {
         return null;
     }
 
-    public static KiiReceipt getReceipt(KiiProduct product, KiiUser user, String appId) {
+    public static KiiReceipt getReceipt(KiiProduct product, KiiUser user) {
         List<KiiReceipt> receipts = listReceipts(KiiClause.equals("product_id", product.getId()),
                 user);
         return (receipts != null && receipts.size() > 0) ? receipts.get(0) : null;

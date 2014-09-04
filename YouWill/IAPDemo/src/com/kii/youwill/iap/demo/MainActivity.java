@@ -165,7 +165,7 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
             // TODO Auto-generated method stub
             for (KiiProduct product : products) {
                 KiiReceipt receipt = KiiStore
-                        .getReceipt(product, KiiUser.getCurrentUser(), Constants.APP_ID);
+                        .getReceipt(product, KiiUser.getCurrentUser());
                 receipts.add(receipt);
             }
             return null;
