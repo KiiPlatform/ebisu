@@ -75,8 +75,10 @@
     <orderEntry type="jdk" jdkName="Android API 20 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="android-support-v4" level="project" />
+    <orderEntry type="library" exported="" name="universal-image-loader-1.9.0-with-sources" level="project" />
     <orderEntry type="library" exported="" name="KiiSDK 2.1 - ANDROID KiiCloudStorageSDK-release_v2.1.26-5c9ec87" level="project" />
     <orderEntry type="library" exported="" name="KiiSDK 2.1 - ANDROID KiiAnalyticsSDK-v2.1.6-a73ef4b" level="project" />
+    <orderEntry type="module" module-name="IAPSDK" exported="" />
   </component>
 </module>
 
