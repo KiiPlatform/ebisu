@@ -117,7 +117,7 @@
             <snapshots />
             <id>kii-snapshots</id>
             <name>libs-snapshots</name>
-            <url>https://maven.kii.com/artifactory/libs-snapshots</url>
+            <url>https://maven.kii.com/artifactory/libs-snapshot</url>
         </repository>
     </repositories>
 
@@ -218,6 +218,7 @@
                     <source>1.7</source>
                     <target>1.7</target>
                     <debug>true</debug>
+                    <encoding>UTF-8</encoding>
                     <debuglevel>source,lines,vars</debuglevel>
                     <showDeprecation>true</showDeprecation>
                     <showWarnings>true</showWarnings>
