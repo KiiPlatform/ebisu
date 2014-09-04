@@ -20,12 +20,11 @@ public class KiiStore {
 
     private static final String TAG = KiiStore.class.getName();
 
-    public static List<KiiProduct> listProducts(KiiQuery query) {
-        KiiClause clause = KiiClause.equals("appId", YouWillIAPSDK.gYouWillAppId);
-        KiiQuery localQuery = query;
-        if (localQuery == null) {
-            localQuery = new KiiQuery(clause);
-        }
+    public static List<KiiProduct> listProducts(KiiClause clause) {
+        KiiClause appFilterClause = KiiClause.equals("appId", YouWillIAPSDK.gYouWillAppId);
+
+        KiiQuery localQuery = new KiiQuery(
+                clause == null ? appFilterClause : clause.and(appFilterClause));
         try {
             KiiQueryResult<KiiObject> result = Kii.bucket("products").query(localQuery);
             List<KiiProduct> products = new ArrayList<KiiProduct>();
@@ -40,12 +39,10 @@ public class KiiStore {
         return null;
     }
 
-    public static List<KiiReceipt> listReceipts(KiiQuery query, KiiUser user) {
-        KiiQuery localQuery = query;
-        KiiClause clause = KiiClause.equals("appId", YouWillIAPSDK.gYouWillAppId);
-        if (localQuery == null) {
-            localQuery = new KiiQuery(clause);
-        }
+    public static List<KiiReceipt> listReceipts(KiiClause clause, KiiUser user) {
+        KiiClause appFilterClause = KiiClause.equals("appId", YouWillIAPSDK.gYouWillAppId);
+        KiiQuery localQuery = new KiiQuery(
+                clause == null ? appFilterClause : clause.and(appFilterClause));
         try {
             KiiQueryResult<KiiObject> result = user.bucket("receipts").query(localQuery);
             List<KiiReceipt> receipts = new ArrayList<KiiReceipt>();
@@ -60,8 +57,8 @@ public class KiiStore {
     }
 
     public static KiiReceipt getReceipt(KiiProduct product, KiiUser user, String appId) {
-        KiiQuery query = new KiiQuery(KiiClause.equals("product_id", product.getId()));
-        List<KiiReceipt> receipts = listReceipts(query, user);
+        List<KiiReceipt> receipts = listReceipts(KiiClause.equals("product_id", product.getId()),
+                user);
         return (receipts != null && receipts.size() > 0) ? receipts.get(0) : null;
     }
 
