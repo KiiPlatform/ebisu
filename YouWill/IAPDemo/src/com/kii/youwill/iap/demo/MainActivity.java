@@ -9,6 +9,7 @@ import com.kii.payment.KiiPaymentCallback;
 import com.kii.payment.KiiProduct;
 import com.kii.payment.KiiReceipt;
 import com.kii.payment.KiiStore;
+import com.kii.payment.YouWillIAPSDK;
 import com.kii.youwill.iap.demo.utils.Constants;
 import com.kii.youwill.iap.demo.utils.LogUtil;
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -56,6 +57,7 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        YouWillIAPSDK.init(Constants.APP_ID);
         setContentView(R.layout.activity_main);
         mAdapter = new ProductAdapter();
         mList = (ListView) findViewById(R.id.list);
