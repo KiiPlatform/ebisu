@@ -24,7 +24,7 @@ public class KiiStore {
         KiiClause appFilterClause = KiiClause.equals("appId", YouWillIAPSDK.gYouWillAppId);
 
         KiiQuery localQuery = new KiiQuery(
-                clause == null ? appFilterClause : clause.and(appFilterClause));
+                clause == null ? appFilterClause : clause);
         try {
             KiiQueryResult<KiiObject> result = Kii.bucket("products").query(localQuery);
             List<KiiProduct> products = new ArrayList<KiiProduct>();
@@ -42,7 +42,7 @@ public class KiiStore {
     public static List<KiiReceipt> listReceipts(KiiClause clause, KiiUser user) {
         KiiClause appFilterClause = KiiClause.equals("appId", YouWillIAPSDK.gYouWillAppId);
         KiiQuery localQuery = new KiiQuery(
-                clause == null ? appFilterClause : clause.and(appFilterClause));
+                clause == null ? appFilterClause : clause);
         try {
             KiiQueryResult<KiiObject> result = user.bucket("receipts").query(localQuery);
             List<KiiReceipt> receipts = new ArrayList<KiiReceipt>();
