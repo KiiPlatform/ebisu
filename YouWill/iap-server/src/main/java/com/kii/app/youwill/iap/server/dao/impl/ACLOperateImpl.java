@@ -7,7 +7,7 @@ import com.kii.platform.ufp.bucket.BucketID;
 import com.kii.platform.ufp.bucket.BucketType;
 import com.kii.platform.ufp.bucket.ObjectID;
 import com.kii.platform.ufp.errors.KiiException;
-import com.kii.platform.ufp.ufe.acl.Subject;
+import com.kii.platform.ufp.ufe.acl.SubjectData;
 import com.kii.platform.ufp.ufe.acl.Verb;
 import com.kii.platform.ufp.ufe.client.http.stateless.ACLClient;
 import com.kii.platform.ufp.user.UserID;
@@ -37,9 +37,9 @@ public class ACLOperateImpl implements ACLOperate {
 
 
 
-	private Map<Verb,Set<Subject>> getBucketACL(String bucketName,ObjectID objID){
+	private Map<Verb,Set<SubjectData>> getBucketACL(String bucketName,ObjectID objID){
 
-			Map<Verb, Set<Subject>>  verbMap= aclClient.get(context.getAccessToken(), context.getCurrScope(),
+			Map<Verb, Set<SubjectData>>  verbMap= aclClient.get(context.getAccessToken(), context.getCurrScope(),
 					BucketType.DEFAULT, new BucketID(bucketName), objID, null);
 
 			return verbMap;
@@ -117,13 +117,13 @@ public class ACLOperateImpl implements ACLOperate {
 	public Map<ObjectRight,Set<UserID>>  getObjectACLs(String bucketName,ObjectID id) {
 
 
-		Map<Verb,Set<Subject>>   verbMap=getBucketACL(bucketName,id);
+		Map<Verb,Set<SubjectData>>   verbMap=getBucketACL(bucketName,id);
 
 		Map<ObjectRight,Set<UserID>>  verbUserMap=new HashMap<ObjectRight,Set<UserID>>();
-		for(Map.Entry<Verb,Set<Subject>> entry:verbMap.entrySet()){
+		for(Map.Entry<Verb,Set<SubjectData>> entry:verbMap.entrySet()){
 
 			Set<UserID> setUser=new HashSet<UserID>();
-			for(Subject sub:entry.getValue()){
+			for(SubjectData sub:entry.getValue()){
 				setUser.add(sub.getUserID());
 			}
 			verbUserMap.put(ObjectRight.valueOf(entry.getKey().name()),setUser);
