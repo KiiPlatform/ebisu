@@ -18,6 +18,8 @@
 #define KII_APPKEY_SIZE 32
 #define KII_NETBUF_SIZE 2048
 
+#define KII_OBJECTID_SIZE 36
+
 
 #define STR_POST "POST "
 #define STR_HTTP "  HTTP/1.1"

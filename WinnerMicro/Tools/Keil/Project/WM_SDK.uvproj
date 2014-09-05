@@ -1222,6 +1222,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\Src\Kii\kii_object.c</FilePath>
             </File>
+            <File>
+              <FileName>kii_user.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Src\Kii\kii_user.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

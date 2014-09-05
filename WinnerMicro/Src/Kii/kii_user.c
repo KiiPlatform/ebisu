@@ -3,7 +3,7 @@
 
 #include "kii_def.h"
 #include "kii_meta.h"
-#include "kii_object.h"
+#include "kii_user.h"
 #include "kii_hal.h"
 extern char g_netBuf[KII_NETBUF_SIZE];
 extern kii_meta_struct g_kiiMeta;
@@ -13,21 +13,7 @@ extern char *kii_getHost(void);
 extern char *kii_getAppID(void);
 extern char * kii_getAppKey(void);
 
-
-/*****************************************************************************
-*
-*  kiiObj_create
-*
-*  \param: bucketName: the input of bucket name
-*               jsonObject: the input of object with json format
-*               objectID: the output of objectID
-*
-*  \return 0:success, -1: failure
-*
-*  \brief  create object
-*
-*****************************************************************************/
-int kiiObj_create(char *bucketName, char *jsonObject, char *objectID)
+int kiiUser_logIn(char *userName, char *password)
 {
     int socketNum;
     char * p1;
@@ -40,13 +26,9 @@ int kiiObj_create(char *bucketName, char *jsonObject, char *objectID)
     memset(buf, 0, KII_NETBUF_SIZE);
     strcpy(buf, STR_POST);
     // url
-    //strcpy(buf+strlen(buf), "http://");
-    //strcpy(buf+strlen(buf), kii_getHost());
-    strcpy(buf+strlen(buf), "/api/apps/");
-    strcpy(buf+strlen(buf), kii_getAppID());
-    strcpy(buf+strlen(buf), "/users/me/buckets/");
-    strcpy(buf+strlen(buf),bucketName);
-    strcpy(buf+strlen(buf), "/objects");
+   // strcpy(buf+strlen(buf), "http://");
+   // strcpy(buf+strlen(buf), kii_getHost());
+    strcpy(buf+strlen(buf), "/api/oauth2/token");
     strcpy(buf+strlen(buf), STR_HTTP);
    strcpy(buf+strlen(buf), STR_CRLF);
    //Connection
@@ -65,26 +47,18 @@ int kiiObj_create(char *bucketName, char *jsonObject, char *objectID)
    strcpy(buf+strlen(buf), STR_CRLF);
    //content-type	
     strcpy(buf+strlen(buf), STR_CONTENT_TYPE);
-    strcpy(buf+strlen(buf), "application/vnd.");
-    strcpy(buf+strlen(buf), kii_getAppID());
-    strcpy(buf+strlen(buf), ".mydata+json");
-   strcpy(buf+strlen(buf), STR_CRLF);
-   //Authorization
-    strcpy(buf+strlen(buf), STR_AUTHORIZATION);
-    strcpy(buf+strlen(buf),  " Bearer ");
-    strcpy(buf+strlen(buf), g_kiiMeta.accessToken); //the access token musb be checked before calling kiiObj_create
+    strcpy(buf+strlen(buf), "application/json");
    strcpy(buf+strlen(buf), STR_CRLF);
     //Content-Length
    strcpy(buf+strlen(buf), STR_CONTENT_LENGTH);
-   sprintf(buf+strlen(buf), "%d", strlen(jsonObject));
+   sprintf(buf+strlen(buf), "%d", strlen(userName)+strlen(password)+30);
    strcpy(buf+strlen(buf), STR_CRLF);
    strcpy(buf+strlen(buf), STR_CRLF);
-    if ((strlen(buf)+strlen(jsonObject)) > KII_NETBUF_SIZE)
-    {
-        KII_DEBUG("kii-error: buffer overflow!\r\n");
-        return -1;
-    }
-   strcpy(buf+strlen(buf), jsonObject);
+   strcpy(buf+strlen(buf), "{\"username\":\"");
+   strcpy(buf+strlen(buf), userName);
+   strcpy(buf+strlen(buf), "\", \"password\":\"");
+   strcpy(buf+strlen(buf), password);
+   strcpy(buf+strlen(buf), "\"}\n");
 
     if (kiiHAL_dns(kii_getHost(), ipBuf) < 0)
     {
@@ -125,13 +99,12 @@ int kiiObj_create(char *bucketName, char *jsonObject, char *objectID)
         return -1;
     }
 
-    p1 = strstr(buf, "objectID");
+    p1 = strstr(buf, "access_token");
     p1 = strstr(p1, ":");
     p1 = strstr(p1, "\"");
-	
     if (p1 == NULL)
     {
-        KII_DEBUG("kii-error: get objectID fail\r\n");
+        KII_DEBUG("kii-error: log in fail\r\n");
 	 kiiHAL_socketClose(socketNum);
         return -1;
     }
@@ -139,15 +112,14 @@ int kiiObj_create(char *bucketName, char *jsonObject, char *objectID)
     p2 = strstr(p1, "\"");
     if (p2 == NULL)
     {
-        KII_DEBUG("kii-error: get objectID fail\r\n");
+        KII_DEBUG("kii-error: log in fail\r\n");
 	 kiiHAL_socketClose(socketNum);
         return -1;
     }
-    memset(objectID, 0, KII_OBJECTID_SIZE+1);
-    memcpy(objectID, p1, p2-p1);
+    memset(g_kiiMeta.accessToken, 0, sizeof(g_kiiMeta.accessToken));
+    memcpy(g_kiiMeta.accessToken, p1, p2-p1);	
+    KII_DEBUG("kii-info: accessToken:\"%s\"\r\n", g_kiiMeta.accessToken);
      kiiHAL_socketClose(socketNum);
     return 0;
 }
-
-
 
