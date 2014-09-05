@@ -44,6 +44,7 @@ extern int demo_wps_get_pin(char *buf);
 extern int CreateHttpDemoTask(char *buf);
 extern int CreateMCastDemoTask(char *buf);
 extern int CreateSockFwupDemoTask(char *buf);
+extern int kiiDemo_test(char *buf);
 int demo_console_show_help(char *buf);
 static int demo_modify_baudrate(char *buf);
 static int demo_clear_test_len(char *buf);
@@ -121,6 +122,9 @@ static struct demo_console_info_t  console_tbl[] =
 #endif //DEMO_HTTP
 #if (DEMO_RAW_SOCKET_CLIENT||DEMO_STD_SOCKET_CLIENT||DEMO_HTTP)
 	{(char *)REMOTE_IP, demo_set_remote_ip,	"Set remoteIP parameter (the server IP address for these Demos); For example,remoteip=192.168.1.112"},
+#endif	
+#if DEMO_KII
+	{"t-kii", kiiDemo_test, "Kii demo test"},
 #endif	
 	{"baudrate", 	demo_modify_baudrate,		"Set baudrate of UART for this console; For example,baudrate=115200;"},
 	{"closeuart", 	demo_close_uart,				"Close this console"},

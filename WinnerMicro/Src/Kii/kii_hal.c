@@ -1,20 +1,21 @@
 #include <string.h>
 #include "wm_include.h"
+#include "api.h"
 
 #include "kii_def.h"
 
 
-int kiiHAL_dns(char *host, char *buf)
+int kiiHAL_dns(char *host, unsigned char *buf)
 {
     int ret = 0;
     ip_addr_t addr;
 
     if (netconn_gethostbyname(host, &addr) == 0)
     {
-        buf[0] = (addr.addr>> 24) & 0xff;
-        buf[1] = (addr.addr>> 16) & 0xff;
-        buf[2] = (addr.addr>> 8) & 0xff;
-        buf[3] = addr.addr& 0xff;
+        buf[0] = addr.addr& 0xff;
+        buf[1] = (addr.addr>> 8) & 0xff;
+        buf[2] = (addr.addr>> 16) & 0xff;
+        buf[3] = (addr.addr>> 24) & 0xff;
     }
 	else
     {
@@ -55,9 +56,7 @@ int kiiHAL_connect(int socketNum, char *saData)
 
 	memset(&pin, 0, sizeof(struct sockaddr));
 	pin.sin_family=AF_INET; //use IPv4
-
-	memcpy((char *)&pin.sin_addr.s_addr, (char *)saData, 4);
-
+	memcpy((char *)&pin.sin_addr.s_addr, saData, 4);
 	pin.sin_port=htons(80);
 	if (connect(socketNum, (struct sockaddr *)&pin, sizeof(struct sockaddr)) != 0)
 	{
@@ -67,28 +66,38 @@ int kiiHAL_connect(int socketNum, char *saData)
 }
 
 
-int kiiHAL_socketSend(int socketNum, unsigned char * buf, int len)
+int kiiHAL_socketSend(int socketNum, char * buf, int len)
 {
     int ret;
-	
+
       ret = send(socketNum, buf , len, 0);
       if (ret < 0)
       	{
       	    ret = -1;
       	}
+
+    KII_DEBUG("\r\n ========send data start=====\r\n");
+    KII_DEBUG("%s", buf);
+    KII_DEBUG("\r\n ========send data end=====\r\n");
+
 	  return ret;
 }
 
 
-int kiiHAL_socketRecv(int socketNum, unsigned char * buf, int len)
+int kiiHAL_socketRecv(int socketNum, char * buf, int len)
 {
     int ret;
-	
+
      ret = recv(socketNum, buf, len, 0);
      if (ret < 0)
      	{
      	    ret =-1;
      	}
+
+    KII_DEBUG("\r\n ========recv data start=====\r\n");
+    KII_DEBUG("%s", buf);
+    KII_DEBUG("\r\n ========recv data end=====\r\n");
+
     return ret;
 }
 

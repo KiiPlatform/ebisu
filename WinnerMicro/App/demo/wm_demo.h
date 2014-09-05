@@ -5,7 +5,7 @@
 #define DEMO_OFF		0
 
 //demo 控制台，演示demo的时候必须打开该项
-#define DEMO_CONSOLE				DEMO_OFF
+#define DEMO_CONSOLE				DEMO_ON
 
 //socket demo，分为raw接口和标准接口,下面的5个宏可以同时打开，
 //演示的时候，演示完一个socket demo，模块需要复位才能演示下一个socket demo
@@ -16,7 +16,7 @@
 #define DEMO_STD_SOCKET_SER_SEL    (DEMO_OFF && TLS_CONFIG_SOCKET_STD)    //标准接口socket server, select 方式
 
 //联网demo，可以用一键配置联网，也可以主动用接口联网
-#define DEMO_CONNECT_NET			DEMO_OFF
+#define DEMO_CONNECT_NET			DEMO_ON
 
 //多播广播demo
 #define DEMO_UDP_MULTI_CAST        	(DEMO_OFF && TLS_CONFIG_SOCKET_STD) 
@@ -47,6 +47,8 @@
 
 //加解密demo
 #define DEMO_ENCRYPT				DEMO_OFF
+//kii cloud demo
+#define DEMO_KII				       DEMO_ON
 
 ////////////////////////////////////////////////////////////////
 

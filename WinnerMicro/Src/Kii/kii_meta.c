@@ -25,6 +25,13 @@ void kii_meta_init(void)
     {
         memset(&g_kiiMeta, 0, sizeof(g_kiiMeta));
     }
+#if 1 //just for test
+    strcpy(g_kiiMeta.mark, "kiicloud");
+    strcpy(g_kiiMeta.accessToken, "ghhRrxuUfVyyp7ZXaidXe6F00MuFbVrfsVgONXI1gyE");
+    strcpy(g_kiiMeta.deviceID, "test1");
+    strcpy(g_kiiMeta.deviceVendorID, "abcdef");
+    strcpy(g_kiiMeta.password, "123456");
+#endif
 }
 
 /*****************************************************************************
@@ -40,7 +47,7 @@ void kii_meta_init(void)
 *****************************************************************************/
 void kii_meta_write(void)
 {
-    tls_fls_write(TLS_FLASH_KII_META_ADDR, (u8 *)&g_kiiMeta, sizeof(g_kiiMeta));
+    tls_fls_write(TLS_FLASH_KII_META_ADDR, (u8*)&g_kiiMeta, sizeof(g_kiiMeta));
 }
 
 /*****************************************************************************
@@ -56,7 +63,7 @@ void kii_meta_write(void)
 *****************************************************************************/
 void kii_meta_read(void)
 {
-    tls_fls_read(TLS_FLASH_KII_META_ADDR, &g_kiiMeta, sizeof(g_kiiMeta));
+    tls_fls_read(TLS_FLASH_KII_META_ADDR, (u8*)&g_kiiMeta, sizeof(g_kiiMeta));
 }
 
 
