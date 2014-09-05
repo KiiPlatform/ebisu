@@ -265,7 +265,7 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
             mLoader.displayImage(product.getThumbnail(), iv);
             TextView tv1 = (TextView) view.findViewById(R.id.text1);
             TextView tv2 = (TextView) view.findViewById(R.id.text2);
-            tv1.setText("￥"+product.getPrice());
+            tv1.setText("￥" + product.getPrice());
             tv2.setText((receipt == null ? "Not bought" : "Bought"));
             return view;
         }
