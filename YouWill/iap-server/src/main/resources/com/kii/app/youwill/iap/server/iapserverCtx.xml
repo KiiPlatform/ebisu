@@ -25,7 +25,7 @@
         <property name="locations">
             <list>
             <value>classpath:com/kii/app/youwill/iap/server/iapserver-cfg.properties</value>
-            <value>classpath:com/kii/app/youwill/iap/server/iapserver-${spring.profiles.active}-payserver-cfg.properties</value>
+            <value>classpath:com/kii/app/youwill/iap/server/iapserver-product-payserver-cfg.properties</value>
             </list>
         </property>
     </bean>
