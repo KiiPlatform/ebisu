@@ -33,9 +33,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Currency;
 import java.util.List;
 import java.util.Locale;
 
@@ -267,13 +265,7 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
             mLoader.displayImage(product.getThumbnail(), iv);
             TextView tv1 = (TextView) view.findViewById(R.id.text1);
             TextView tv2 = (TextView) view.findViewById(R.id.text2);
-            Currency currency = product.getCurrency();
-            NumberFormat format = NumberFormat.getInstance();
-            format.setCurrency(currency);
-            format.setMaximumFractionDigits(currency.getDefaultFractionDigits());
-            format.setMinimumFractionDigits(currency.getDefaultFractionDigits());
-            tv1.setText(product.getLocalizedName(Locale.getDefault()) + " : "
-                    + currency.getSymbol() + "" + format.format(product.getPrice()));
+            tv1.setText("￥"+product.getPrice());
             tv2.setText((receipt == null ? "Not bought" : "Bought"));
             return view;
         }

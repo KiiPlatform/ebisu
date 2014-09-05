@@ -21,12 +21,12 @@ public class KiiStore {
     private static final String TAG = KiiStore.class.getName();
 
     public static List<KiiProduct> listProducts(KiiClause clause) {
-        KiiClause appFilterClause = KiiClause.equals("appId", YouWillIAPSDK.gYouWillAppId);
+        KiiClause appFilterClause = KiiClause.equals("appID", YouWillIAPSDK.gYouWillAppId);
 
         KiiQuery localQuery = new KiiQuery(
                 clause == null ? appFilterClause : clause);
         try {
-            KiiQueryResult<KiiObject> result = Kii.bucket("products").query(localQuery);
+            KiiQueryResult<KiiObject> result = Kii.bucket("product").query(localQuery);
             List<KiiProduct> products = new ArrayList<KiiProduct>();
             for (KiiObject object : result.getResult()) {
                 Utils.log(TAG, "listProducts, get object is " + object.toJSON());
@@ -40,7 +40,7 @@ public class KiiStore {
     }
 
     public static List<KiiReceipt> listReceipts(KiiClause clause, KiiUser user) {
-        KiiClause appFilterClause = KiiClause.equals("appId", YouWillIAPSDK.gYouWillAppId);
+        KiiClause appFilterClause = KiiClause.equals("appID", YouWillIAPSDK.gYouWillAppId);
         KiiQuery localQuery = new KiiQuery(
                 clause == null ? appFilterClause : clause);
         try {
