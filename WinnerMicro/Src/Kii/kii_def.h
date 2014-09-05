@@ -5,9 +5,9 @@
 #define KII_DEBUG_SUPPORT    1
 
 #if KII_DEBUG_SUPPORT
-#define KII_DEBUG print
+#define KII_DEBUG printf
 #else
-#define KII_DEBUG if (0) print
+#define KII_DEBUG if (0) printf
 #endif
 
 
@@ -28,9 +28,6 @@
 #define STR_CONTENT_LENGTH "Content-Length: "
 #define STR_CRLF "\r\n"
 
-
-
-void kii_init(char *site, char *appID, char *appKey);
 
 #endif
 
