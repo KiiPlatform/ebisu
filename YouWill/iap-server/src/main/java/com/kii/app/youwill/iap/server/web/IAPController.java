@@ -30,7 +30,7 @@ public class IAPController {
 									@PathVariable("productID") String productID,
 									@RequestBody String context) {
 
-
+        System.out.println("Context:" + context);
 		StartTransactionParam param=new StartTransactionParam(context);
 
 		param.setProductID(productID);

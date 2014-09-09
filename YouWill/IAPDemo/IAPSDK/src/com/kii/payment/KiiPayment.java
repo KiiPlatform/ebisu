@@ -1,24 +1,4 @@
-
 package com.kii.payment;
-
-import java.lang.reflect.Field;
-import java.math.BigDecimal;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Currency;
-import java.util.List;
-import java.util.Locale;
-
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -32,14 +12,25 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
-
 import com.alipay.android.app.sdk.AliPay;
 import com.kii.cloud.storage.Kii;
-import com.paypal.android.sdk.payments.PayPalConfiguration;
-import com.paypal.android.sdk.payments.PayPalPayment;
-import com.paypal.android.sdk.payments.PayPalService;
-import com.paypal.android.sdk.payments.PaymentActivity;
-import com.paypal.android.sdk.payments.PaymentConfirmation;
+import com.paypal.android.sdk.payments.*;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by tian on 3/9/14.
@@ -63,6 +54,8 @@ public class KiiPayment {
 
     private String payid = null;
 
+    public String token;
+
     public KiiPayment(Activity activity, KiiOrder order, KiiPaymentCallback callback) {
         this.context = activity;
         this.order = order;
@@ -80,7 +73,7 @@ public class KiiPayment {
     }
 
     public KiiPayment(android.support.v4.app.Fragment fragment, KiiOrder order,
-            KiiPaymentCallback callback) {
+                      KiiPaymentCallback callback) {
         this.context = fragment.getActivity();
         this.order = order;
         this.callback = callback;
@@ -104,6 +97,8 @@ public class KiiPayment {
     }
 
     public void pay() {
+        /*
+        LOG: use Alipay only
         Currency currency = order.currency;
         if (currency.getCurrencyCode().contentEquals(
                 Currency.getInstance(Locale.CHINA).getCurrencyCode())) {
@@ -111,6 +106,9 @@ public class KiiPayment {
         } else {
             order.payType = KiiOrder.PAYPAL;
         }
+        */
+        order.payType = KiiOrder.ALIPAY;
+
         getTransactionFromServer();
     }
 
@@ -129,37 +127,42 @@ public class KiiPayment {
             public void run() {
                 try {
                     HttpClient client = new DefaultHttpClient();
-                    HttpPost request = new HttpPost(Constants.PLATFORM_API_URL);
+                    HttpPost request = new HttpPost(Constants.PLATFORM_EXTENSION_URL + "startOrder/product/" + order.getProductId());
                     Utils.log(TAG, "get params from server: " + request.getURI());
-                        String signature = buildTransactionSignature();
-                        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
-                        nameValuePairs.add(new BasicNameValuePair("app_id", Kii.getAppId()));
-                        nameValuePairs.add(new BasicNameValuePair("method",
-                                "get_transaction_params"));
-                        nameValuePairs.add(new BasicNameValuePair("pay_type", order.payType));
-                        nameValuePairs.add(new BasicNameValuePair("price", sandbox_mode
-                                && order.payType.contentEquals(KiiOrder.ALIPAY) ? "0.01"
-                                : Double.toString(order.price)));
-                        nameValuePairs.add(new BasicNameValuePair("product_id", order.productId));
-                        nameValuePairs
-                                .add(new BasicNameValuePair("product_name", order.productName));
-                        nameValuePairs.add(new BasicNameValuePair("is_sandbox", sandbox_mode ? "1"
-                                : "0"));
-                        nameValuePairs.add(new BasicNameValuePair("sign", signature));
-                        nameValuePairs.add(new BasicNameValuePair("user_id", order.userId));
-                        nameValuePairs.add(new BasicNameValuePair("youwill_app_id", YouWillIAPSDK.gYouWillAppId));
-                        Utils.log(TAG, "post parameter is " + EntityUtils
-                                .toString(new UrlEncodedFormEntity(nameValuePairs)));
-                        request.setEntity(new UrlEncodedFormEntity(nameValuePairs, "UTF-8"));
-                        HttpResponse response = client.execute(request);
-                        String result = EntityUtils.toString(response.getEntity());
-                        Utils.log(TAG, "response code is "
-                                + response.getStatusLine().getStatusCode());
-                        Utils.log(TAG, "result is " + result);
-                        Message msg = handler.obtainMessage(MSG_GET_PARAMS);
-                        msg.obj = result;
-                        handler.sendMessage(msg);
-                        return;
+                    request.setHeader("Authorization", "Bearer " + token);
+                    request.setHeader("x-kii-appid", Kii.getAppId());
+                    request.setHeader("x-kii-appkey", "3ebdc0472c0c705bc50eaf1756061b8b");
+
+                    JSONObject jsonObj = new JSONObject();
+
+                    String signature = buildTransactionSignature();
+                    jsonObj.put("verifySign", signature);
+                    jsonObj.put("app_id", Kii.getAppId());
+                    jsonObj.put("method",
+                            "get_transaction_params");
+                    jsonObj.put("payType", order.payType);
+                    jsonObj.put("price", sandbox_mode
+                            && order.payType.contentEquals(KiiOrder.ALIPAY) ? "0.01"
+                            : Double.toString(order.price));
+                    jsonObj.put("product_id", order.productId);
+                    jsonObj.put("product_name", order.productName);
+                    jsonObj.put("is_sandbox", sandbox_mode ? "1" : "0");
+                    jsonObj.put("sign", signature);
+                    jsonObj.put("user_id", order.userId);
+                    jsonObj.put("youwill_app_id", YouWillIAPSDK.gYouWillAppId);
+
+                    Utils.log(TAG, "post parameter is " + jsonObj.toString());
+
+                    request.setEntity(new StringEntity(jsonObj.toString()));
+                    HttpResponse response = client.execute(request);
+                    String result = EntityUtils.toString(response.getEntity());
+                    Utils.log(TAG, "response code is "
+                            + response.getStatusLine().getStatusCode());
+                    Utils.log(TAG, "result is " + result);
+                    Message msg = handler.obtainMessage(MSG_GET_PARAMS);
+                    msg.obj = result;
+                    handler.sendMessage(msg);
+                    return;
                 } catch (Exception e) {
                     e.printStackTrace();
                     callback.onError(KiiPaymentResultCode.ERROR_NETWORK_EXCEPTION);
@@ -303,16 +306,7 @@ public class KiiPayment {
             try {
                 Utils.log(TAG, "data is " + data);
                 JSONObject object = new JSONObject(data);
-                transactionId = object.getString("transaction_id");
-                alipayPublicKey = object.getString("alipay_public_key");
-                String partner = object.getString("alipay_partner_id");
-                String sellerId = object.getString("alipay_seller_id");
-                info = buildAliPayOrder(order.subject, order.body, Double
-                        .toString(order.price), transactionId, partner, sellerId);
-                String privateKey = object.getString("alipay_rsa_signature");
-                String sign = Rsa.sign(info, privateKey);
-                sign = URLEncoder.encode(sign);
-                info += "&sign=\"" + sign + "\"&" + getAliPaySignType();
+                info = object.getString("url");
             } catch (JSONException e) {
                 e.printStackTrace();
                 handler.sendEmptyMessage(MSG_PAY_FAILED);
@@ -337,44 +331,6 @@ public class KiiPayment {
                 handler.sendMessage(msg);
             }
         }.start();
-    }
-
-    private static String buildAliPayOrder(String subject, String body, String price,
-            String tradeNo, String partner,
-            String sellerId) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("partner=\"");
-        sb.append(partner);
-        sb.append("\"&out_trade_no=\"");
-        sb.append(tradeNo);
-        sb.append("\"&subject=\"");
-        sb.append(subject);
-        sb.append("\"&body=\"");
-        sb.append(body);
-        sb.append("\"&total_fee=\"");
-        sb.append(price);
-        sb.append("\"&notify_url=\"");
-
-        // 网址需要做URL编码
-        sb.append(URLEncoder.encode(Utils.getNotifyUrl()));
-        sb.append("\"&service=\"mobile.securitypay.pay");
-        sb.append("\"&_input_charset=\"UTF-8");
-        sb.append("\"&return_url=\"");
-        sb.append(URLEncoder.encode("http://m.alipay.com"));
-        sb.append("\"&payment_type=\"1");
-        sb.append("\"&seller_id=\"");
-        sb.append(sellerId);
-
-        // 如果show_url值为空，可不传
-        // sb.append("\"&show_url=\"");
-        sb.append("\"&it_b_pay=\"1m");
-        sb.append("\"");
-
-        return new String(sb);
-    }
-
-    private static String getAliPaySignType() {
-        return "sign_type=\"RSA\"";
     }
 
     private void finishTransactionAsyncTask() {

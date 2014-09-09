@@ -9,7 +9,7 @@ import com.kii.app.youwill.iap.server.entity.Product;
 import com.kii.app.youwill.iap.server.service.IAPErrorCode;
 import com.kii.app.youwill.iap.server.service.ServiceException;
 import com.kii.app.youwill.iap.server.web.AppContext;
-import com.kii.platform.ufp.ufe.query.BucketQuery;
+import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -30,16 +30,17 @@ public class ProductDaoImpl implements ProductDao {
 
 	@Override
 	public Product getProductByID(String productID) {
-
-
-		BucketQuery query=new BucketQuery(BucketQuery.qEquals("productID", productID));
-
-		CommBucketOperate.QueryResult result=commDao.query(BUCKET_ID,query);
-
-		if(result.getResultList().size()!=1){
+        JSONObject obj = null;
+        System.out.println("=====productID: " + productID);
+        try {
+            obj = commDao.getObjByID(BUCKET_ID, productID);
+        } catch (Exception e) {
+            //
+        }
+		if(obj == null){
 			throw new ServiceException(IAPErrorCode.PRODUCT_NOT_FOUND);
 		}
-		return new Product(result.getResultList().get(0));
+		return new Product(obj);
 
 	}
 }

@@ -1,5 +1,6 @@
 package com.kii.app.youwill.iap.server.dao.impl;
 
+import com.kii.app.youwill.iap.server.alipay.*;
 import com.kii.app.youwill.iap.server.aop.KiiScope;
 import com.kii.app.youwill.iap.server.aop.ScopeType;
 import com.kii.app.youwill.iap.server.dao.*;
@@ -16,6 +17,8 @@ import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -45,32 +48,83 @@ public class TransactionDaoImpl implements TransactionDao {
 	private String BUCKET_ID="transaction";
 
 
-	@Override public String createNewOrder(Product product,StartTransactionParam param) {
+    @Override public String createNewOrder(Product product,StartTransactionParam param) {
+        if(param.getPayType()== PayType.alipay){
+            return createNewOrderForAliPay(product, param);
+        }else if(param.getPayType()==PayType.paypal){
+            return startNewTransaction(product, param);
+        } else {
+            return null;
+        }
+    }
 
-		String transactionID=param.getTransactionID();
-		if(StringUtils.isBlank(transactionID)) {
+	private String createNewOrderForAliPay(Product product,StartTransactionParam param) {
+        String transactionID = startNewTransaction(product, param);
 
-			transactionID = uuidGeneral.getUUID(appContext.getCurrUserID().toString());
-		}
+        StringBuilder sb = new StringBuilder();
+        sb.append("partner=\"");
+        sb.append(YouWillAlipayConfig.partner);
+        sb.append("\"&out_trade_no=\"");
+        sb.append(transactionID);
+        sb.append("\"&subject=\"");
+        sb.append(product.getProductName());
+        sb.append("\"&body=\"");
+        sb.append(product.getDescription());
+        sb.append("\"&total_fee=\"");
+        sb.append(product.getPrice());
 
-		Transaction transaction=new Transaction(product,
-				appContext.getCurrUserID(),
-				CurrencyType.CNY);
-		transaction.setTransactionID(transactionID);
-		transaction.setPayType(param.getPayType());
-		transaction.setPrice(param.getPrice());
-		if(appContext.isSandBox()) {
-			transaction.setSandBox(appContext.isSandBox());
-		}
+        try {
+            sb.append("\"&notify_url=\"");
+            sb.append(URLEncoder.encode("http://payment.kiicloud.com/log_notify.php", "UTF-8"));
+            sb.append("\"&return_url=\"");
+            sb.append(URLEncoder.encode("http://m.alipay.com", "UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        sb.append("\"&service=\"mobile.securitypay.pay");
+        sb.append("\"&_input_charset=\"UTF-8");
+        sb.append("\"&payment_type=\"1");
+        sb.append("\"&seller_id=\"");
+        sb.append(YouWillAlipayConfig.partner);
 
-		ObjectID id=commDao.addObject(BUCKET_ID, transaction.getJsonObject());
+        sb.append("\"&it_b_pay=\"1m\"");
+        String sign = RSA.sign(sb.toString(), YouWillAlipayConfig.private_key, "UTF-8");
 
-		aclOper.removeObjectACLForSpecUser(BUCKET_ID, id, ACLOperate.ObjectRight.Write, ACLOperate.SpecUser.ANY_AUTHENTICATED_USER);
+        try {
+            sign = URLEncoder.encode(sign, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
 
-		aclOper.removeObjectACLForSpecUser(BUCKET_ID,id, ACLOperate.ObjectRight.Read ,ACLOperate.SpecUser.ANY_AUTHENTICATED_USER);
-
-		return transactionID;
+        sb.append("&sign=\"" + sign + "\"&sign_type=\"RSA\"");
+        return sb.toString();
 	}
+
+    private String startNewTransaction(Product product,StartTransactionParam param) {
+        String transactionID=param.getTransactionID();
+        if(StringUtils.isBlank(transactionID)) {
+
+            transactionID = uuidGeneral.getUUID(appContext.getCurrUserID().toString());
+        }
+
+        Transaction transaction=new Transaction(product,
+                appContext.getCurrUserID(),
+                CurrencyType.CNY);
+        transaction.setTransactionID(transactionID);
+        transaction.setPayType(param.getPayType());
+        transaction.setPrice(param.getPrice());
+        if(appContext.isSandBox()) {
+            transaction.setSandBox(appContext.isSandBox());
+        }
+
+        ObjectID id=commDao.addObject(BUCKET_ID, transaction.getJsonObject());
+
+        aclOper.removeObjectACLForSpecUser(BUCKET_ID, id, ACLOperate.ObjectRight.Write, ACLOperate.SpecUser.ANY_AUTHENTICATED_USER);
+
+        aclOper.removeObjectACLForSpecUser(BUCKET_ID,id, ACLOperate.ObjectRight.Read ,ACLOperate.SpecUser.ANY_AUTHENTICATED_USER);
+
+        return transactionID;
+    }
 
 
 	@Override public Transaction getOrderByTransactionID(String transactionID) {

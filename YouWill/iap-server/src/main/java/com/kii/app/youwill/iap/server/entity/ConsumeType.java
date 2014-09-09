@@ -5,6 +5,6 @@ package com.kii.app.youwill.iap.server.entity;
  */
 public enum ConsumeType {
 
-    permanent, consumable,periodical;
+    permanent, consumable, periodical;
 
 }
