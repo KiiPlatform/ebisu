@@ -124,7 +124,7 @@ app.controller('productManagementCtrl', function ($scope, $rootScope, $location,
         $scope.product = {
           isNew: false,
           valid: false,
-          consumeType: "Consumable"
+          consumeType: "consumable"
         };
         $scope.title = "New Product";
       }
