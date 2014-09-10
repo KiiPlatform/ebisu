@@ -22,6 +22,7 @@
 
 
 #define STR_POST "POST "
+#define STR_PUT "PUT "
 #define STR_HTTP "  HTTP/1.1"
 #define STR_AUTHORIZATION "Authorization:"
 #define STR_CONTENT_TYPE "content-type:"

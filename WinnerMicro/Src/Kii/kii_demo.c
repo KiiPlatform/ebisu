@@ -11,6 +11,12 @@
 
 #define STR_BUCKET "myBucket"
 #define STR_JSONOBJECT "{\"score\":\"1800\", \"name\":\"game1\"}\n"
+#define STR_JSONOBJECT_PARTIALLY_UPDATE "{\"score\":\"1900\"}\n"
+#define STR_JSONOBJECT_FULLY_UPDATE "{\"score\":\"1000\"}\n"
+#define STR_OBJECT_ID "WinnerMicroTestObj"
+
+
+extern int kiiUser_logIn(char *userName, char *password);
 
 int kiiDemo_test(char *buf)
 {
@@ -39,6 +45,38 @@ int kiiDemo_test(char *buf)
     {
         printf("kii object is created, objectID:\"%s\"\r\n", objectID);
     }
+
+    if (kiiObj_createWithID(STR_BUCKET, STR_JSONOBJECT, STR_OBJECT_ID) < 0)
+    {
+        printf("kii object fully update error!\r\n");
+        //return WM_FAILED;
+    }
+    else
+    {
+        printf("kii object is fully updated, objectID:\"%s\"\r\n", STR_OBJECT_ID);
+    }
+
+    if (kiiObj_partiallyUpdate(STR_BUCKET, STR_JSONOBJECT_PARTIALLY_UPDATE, objectID) < 0)
+    {
+        printf("kii object partially update error!\r\n");
+        //return WM_FAILED;
+    }
+    else
+    {
+        printf("kii object is partially updated, objectID:\"%s\"\r\n", objectID);
+    }
+	
+    if (kiiObj_fullyUpdate(STR_BUCKET, STR_JSONOBJECT_FULLY_UPDATE, objectID) < 0)
+    {
+        printf("kii object fully update error!\r\n");
+        //return WM_FAILED;
+    }
+    else
+    {
+        printf("kii object is fully updated, objectID:\"%s\"\r\n", objectID);
+    }
+
+	
 
 /*	
     if (kiiDev_checkRegistered() == 0)
