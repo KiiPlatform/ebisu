@@ -153,17 +153,17 @@ int kiiObj_create(char *bucketName, char *jsonObject, char *objectID)
 
 int kiiObj_createWithID(char *bucketName, char *jsonObject, char *objectID)
 {
-    kiiObj_update(bucketName, jsonObject, objectID, KIIOBJ_CREATE_WITH_ID);
+    return kiiObj_update(bucketName, jsonObject, objectID, KIIOBJ_CREATE_WITH_ID);
 }
 
 int kiiObj_fullyUpdate(char *bucketName, char *jsonObject, char *objectID)
 {
-    kiiObj_update(bucketName, jsonObject, objectID, KIIOBJ_FULLY_UPDATE);
+    return kiiObj_update(bucketName, jsonObject, objectID, KIIOBJ_FULLY_UPDATE);
 }
 
 int kiiObj_partiallyUpdate(char *bucketName, char *jsonObject, char *objectID)
 {
-    kiiObj_update(bucketName, jsonObject, objectID, KIIOBJ_PARTIALLY_UPDATE);
+    return kiiObj_update(bucketName, jsonObject, objectID, KIIOBJ_PARTIALLY_UPDATE);
 }
 
 
