@@ -5,8 +5,8 @@ package com.kii.payment;
  */
 public class Constants {
 
-    //public static final String PLATFORM_EXTENSION_URL = "http://192.168.1.104:8080/api/iap/";
-    public static final String PLATFORM_EXTENSION_URL = "http://118.102.25.205:8080/iap-webapp/api/iap/";
+    //public static final String PLATFORM_EXTENSION_URL = "http://192.168.1.106:8080/api/iap/";
+    public static final String PLATFORM_EXTENSION_URL = "http://118.102.25.205:8080/iap-webapp/iap/";
 //    public static final String PLATFORM_EXTENSION_URL = "http://172.16.5.57/";
     static final String KEY_APP_DISTRIBUTION_ID = "com.kii.DISTRIBUTION_ID";
 
@@ -25,4 +25,6 @@ public class Constants {
     }
 
     static final String PLATFORM_API_URL = PLATFORM_EXTENSION_URL + "index";
+
+    public static final String PLATFORM_CALLBACK_URL = "http://118.102.25.205:8080/iap-webapp/iap/callback/alipay/%s/app/%s";
 }

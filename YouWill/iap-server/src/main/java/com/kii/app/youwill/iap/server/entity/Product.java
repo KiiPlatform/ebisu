@@ -29,7 +29,7 @@ orther customer fields in key:value pair
         super(json);
 
         try {
-            this.productID = json.getString("productID");
+            this.productID = json.getString("_id");// use _id for productID json.getString("productID");
             this.productName = json.getString("name");
             this.description = json.getString("description");
             this.price = json.getString("price");

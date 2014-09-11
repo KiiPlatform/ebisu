@@ -31,11 +31,10 @@ public class ProductDaoImpl implements ProductDao {
 	@Override
 	public Product getProductByID(String productID) {
         JSONObject obj = null;
-        System.out.println("=====productID: " + productID);
         try {
             obj = commDao.getObjByID(BUCKET_ID, productID);
         } catch (Exception e) {
-            //
+            e.printStackTrace();
         }
 		if(obj == null){
 			throw new ServiceException(IAPErrorCode.PRODUCT_NOT_FOUND);

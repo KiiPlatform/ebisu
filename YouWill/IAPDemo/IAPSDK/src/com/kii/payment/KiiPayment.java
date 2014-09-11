@@ -7,6 +7,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
@@ -107,6 +108,7 @@ public class KiiPayment {
             order.payType = KiiOrder.PAYPAL;
         }
         */
+
         order.payType = KiiOrder.ALIPAY;
 
         getTransactionFromServer();
@@ -137,7 +139,10 @@ public class KiiPayment {
 
                     String signature = buildTransactionSignature();
                     jsonObj.put("verifySign", signature);
+                    jsonObj.put("author_id", "YouWill");
                     jsonObj.put("app_id", Kii.getAppId());
+                    jsonObj.put("notify_url",
+                            String.format(Constants.PLATFORM_CALLBACK_URL, "YouWill", Kii.getAppId()));
                     jsonObj.put("method",
                             "get_transaction_params");
                     jsonObj.put("payType", order.payType);
@@ -165,6 +170,7 @@ public class KiiPayment {
                     return;
                 } catch (Exception e) {
                     e.printStackTrace();
+                    handler.sendEmptyMessage(MSG_PAY_FAILED);
                     callback.onError(KiiPaymentResultCode.ERROR_NETWORK_EXCEPTION);
                 }
             }
@@ -211,7 +217,7 @@ public class KiiPayment {
 
     private String alipayPublicKey;
 
-    private Handler handler = new Handler() {
+    private Handler handler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
@@ -262,6 +268,9 @@ public class KiiPayment {
                 case MSG_UNION_PAY_FINISHED:
                     break;
                 case MSG_PAY_FAILED:
+                    if (progressDialog != null) {
+                        progressDialog.dismiss();
+                    }
                     callback.onError(KiiPaymentResultCode.ERROR_UNKNOWN_ERROR);
                     break;
             }
@@ -278,7 +287,8 @@ public class KiiPayment {
             int imemoEnd = strRet.indexOf("}", imemoStart);
             tradeStatus = strRet.substring(imemoStart, imemoEnd);
             if (tradeStatus.equals("9000")) {
-                finishTransactionAsyncTask();
+                //TODO: we don't need it.
+                //finishTransactionAsyncTask();
             } else {
                 if (callback != null) {
                     int alipayErrorCode = 0;

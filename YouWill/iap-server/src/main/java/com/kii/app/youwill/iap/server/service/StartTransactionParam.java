@@ -10,94 +10,114 @@ import org.codehaus.jettison.json.JSONObject;
  */
 public class StartTransactionParam {
 
-	String productID;
+    String productID;
 
-	PayType payType;
+    PayType payType;
 
-	String verifySign;
+    String verifySign;
 
-	private String price;
+    private String price;
 
-	private String transactionID;
+    private String transactionID;
 
+    private String notifyURL;
 
-	public StartTransactionParam(String  context) {
-		try {
-			JSONObject json=new JSONObject(context);
+    private String appID;
 
-			payType = PayType.valueOf(json.getString("payType"));
-			verifySign = json.getString("verifySign");
-
-			price = json.getString("price");
+    private String authorID;
 
 
-			if (json.has("transactionID")) {
-				transactionID = json.getString("transactionID");
-			}
-		} catch (Exception e) {
-			throw new ServiceException(IAPErrorCode.FORMAT_INVALID);
-		}
-	}
+    public StartTransactionParam(String context) {
+        try {
+            JSONObject json = new JSONObject(context);
 
-	public void setProductID(String id) {
-		this.productID = id;
-	}
+            payType = PayType.valueOf(json.getString("payType"));
+            verifySign = json.getString("verifySign");
 
+            price = json.getString("price");
 
-	public boolean valid(String appID, String secKey) {
+            notifyURL = json.optString("notify_url");
+            appID = json.optString("app_id");
+            authorID = json.optString("author_id");
 
+            if (json.has("transactionID")) {
+                transactionID = json.getString("transactionID");
+            }
+        } catch (Exception e) {
+            throw new ServiceException(IAPErrorCode.FORMAT_INVALID);
+        }
+    }
 
-		StringBuilder sb = new StringBuilder();
-
-		sb.append("appID").append(appID);
-		sb.append("secKey").append(secKey);
-
-		sb.append("productID").append(productID);
-		sb.append("payType").append(payType.name());
-		if (StringUtils.isNotBlank(price)) {
-			sb.append("price").append(price);
-		}
-		if (StringUtils.isNotBlank(transactionID)) {
-			sb.append("transactionID").append(transactionID);
-		}
+    public void setProductID(String id) {
+        this.productID = id;
+    }
 
 
-		return  DigestUtils.sha1Hex(sb.toString()).equals(verifySign);
-	}
-
-	public String getProductID() {
-		return productID;
-	}
-
-	public PayType getPayType() {
-		return payType;
-	}
-
-	public String getPrice() {
-		return price;
-	}
+    public boolean valid(String appID, String secKey) {
 
 
+        StringBuilder sb = new StringBuilder();
 
-	public void setPayType(PayType payType) {
-		this.payType = payType;
-	}
+        sb.append("appID").append(appID);
+        sb.append("secKey").append(secKey);
+
+        sb.append("productID").append(productID);
+        sb.append("payType").append(payType.name());
+        if (StringUtils.isNotBlank(price)) {
+            sb.append("price").append(price);
+        }
+        if (StringUtils.isNotBlank(transactionID)) {
+            sb.append("transactionID").append(transactionID);
+        }
 
 
-	public String getVerifySign() {
-		return verifySign;
-	}
+        return DigestUtils.sha1Hex(sb.toString()).equals(verifySign);
+    }
 
-	public void setVerifySign(String verifySign) {
-		this.verifySign = verifySign;
-	}
+    public String getProductID() {
+        return productID;
+    }
 
-	public void setPrice(String price) {
-		this.price = price;
-	}
+    public PayType getPayType() {
+        return payType;
+    }
 
-	public String getTransactionID() {
-		return transactionID;
-	}
+    public String getPrice() {
+        return price;
+    }
+
+    public String getNotifyURL() {
+        return notifyURL;
+    }
+
+
+    public void setPayType(PayType payType) {
+        this.payType = payType;
+    }
+
+
+    public String getVerifySign() {
+        return verifySign;
+    }
+
+    public void setVerifySign(String verifySign) {
+        this.verifySign = verifySign;
+    }
+
+    public void setPrice(String price) {
+        this.price = price;
+    }
+
+    public String getTransactionID() {
+        return transactionID;
+    }
+
+    public String getAppID() {
+        return appID;
+    }
+
+    public String getAuthorID() {
+        return authorID;
+    }
 
 }

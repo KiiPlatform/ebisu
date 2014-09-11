@@ -84,7 +84,6 @@ public class AppContext {
 
 	}
 
-
 	public void bindRequest(HttpServletRequest request){
 
 		String auth = request.getHeader("Authorization");
@@ -104,18 +103,24 @@ public class AppContext {
 		}
 
 
-		local.set(new TokenInfo(tokenStr,isSandBox));
+
+		local.set(new TokenInfo(tokenStr,isSandBox,getUserIDByToken(new AccessToken(tokenStr))));
 
 		isAdminLocal.set(false);
-		asAppLocal.set(false);
+
 	}
 
+    public UserID getCurrUserID(){
 
-	public UserID getCurrUserID() {
+        return local.get().userID;
+    }
+
+
+	private UserID getUserIDByToken(AccessToken token) {
 
 		try {
 
-			return  user.getUser(new AccessToken(local.get().getAccessToken())).getUserID();
+			return  user.getUser(new AccessToken(token)).getUserID();
 
 		} catch (UserNotFoundException e) {
 			throw new ServiceException(IAPErrorCode.USER_NOT_FOUND);
@@ -126,26 +131,34 @@ public class AppContext {
 
 	private ThreadLocal<Boolean> isAdminLocal=new ThreadLocal<Boolean>();
 
-	private ThreadLocal<Boolean> asAppLocal=new ThreadLocal<Boolean>();
+    private ThreadLocal<UserID>  asUserLocal=new ThreadLocal<UserID>();
+
+    public void sudo(UserID userID) {
+        asUserLocal.set(userID);
+    }
 
 
 	public ObjectScope getCurrScope() {
 
-		if(asAppLocal.get()){
-			return new ObjectScope(appID);
 
-		}else {
-			UserID id = getCurrUserID();
-			return new ObjectScope(appID, id);
-		}
+       UserID id=asUserLocal.get();
+       if(id==null) {
+          id = this.local.get().userID;
+       }
+        if(id.toString().equals("app")){
+            return new ObjectScope(appID);
+        }else {
+            return new ObjectScope(appID, id);
+        }
 	}
 
 	public void asApp(){
-		asAppLocal.set(true);
+        asUserLocal.set(new UserID("app"));
 	}
 
-	public void exitApp(){
-		asAppLocal.set(false);
+	public void exitScope(){
+
+        asUserLocal.remove();
 	}
 
 	public void su(){
@@ -171,7 +184,17 @@ public class AppContext {
 		return local.get().isSandbox();
 	}
 
-	protected class TokenInfo {
+    public void initWithAdmin() {
+
+        boolean isSandBox=false;
+
+        local.set(new TokenInfo(adminToken.toString(), isSandBox,null));
+        System.out.println("AdminToken: " + local.get().getAccessToken());
+        isAdminLocal.set(true);
+    }
+
+
+    protected class TokenInfo {
 
 
 		private String token;
@@ -179,10 +202,15 @@ public class AppContext {
 
 		final boolean isSandbox;
 
-		public TokenInfo(String token,boolean isSandBox) {
+        UserID userID;
+
+		public TokenInfo(String token,boolean isSandBox,UserID userID) {
 			this.token=token;
 			this.isSandbox=isSandBox;
+            this.userID=userID;
 		}
+
+
 
 		public AccessToken getAccessToken() {
 			return new AccessToken(token);

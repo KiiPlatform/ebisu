@@ -67,7 +67,7 @@ public class KiiScopeManagerAdape  {
 
 
 		if(scope.scope()!= ScopeType.CurrUser){
-			appContext.exitApp();
+			appContext.exitScope();
 		}
 		if(scope.right()!=ScopeType.CurrUser){
 			appContext.exit();

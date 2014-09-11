@@ -14,4 +14,5 @@ public enum TradeStatus {
 	TRADE_REFUSE,
 	TRADE_REFUSE_DEALING,
 	TRADE_CANCEL,
+    TRADE_UNKNOWN,
 }

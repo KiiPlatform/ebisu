@@ -65,6 +65,14 @@ is_sandbox
 			json.put("currency",this.getCurrency().name());
 			json.put("productID",this.getProductID());
 
+            if (authorID != null) {
+                json.put("authorID", authorID);
+            }
+
+            if (appID != null) {
+                json.put("appID", appID);
+            }
+
 			return json;
 		} catch (JSONException e) {
 			throw new ServiceException(IAPErrorCode.FORMAT_INVALID);
@@ -82,12 +90,18 @@ is_sandbox
 
 	}
 
+    public Transaction(Product product,UserID userID, String authorID, String appID) {
+        this(product, userID, CurrencyType.CNY);
+        this.authorID = authorID;
+        this.appID = appID;
+    }
+
 	public Transaction(JSONObject json) {
 
 		super(json);
 
 		try {
-			this.transactionID = json.getString("transactionID");
+			this.transactionID = json.getString("_id");
 			this.productID = json.getString("productID");
 			this.userID = json.getString("userID");
 			this.payStatus = OrderStatus.valueOf(json.getString("payStatus"));
@@ -137,6 +151,10 @@ is_sandbox
 	private boolean isSandBox;
 
 	private PayType payType;
+
+    private String authorID;
+
+    private String appID;
 
 
 	public String getPrice() {
@@ -205,4 +223,12 @@ is_sandbox
 	public void setTransactionID(String transactionID) {
 		this.transactionID = transactionID;
 	}
+
+    public String getAppID() {
+        return appID;
+    }
+
+    public String getAuthorID() {
+        return authorID;
+    }
 }

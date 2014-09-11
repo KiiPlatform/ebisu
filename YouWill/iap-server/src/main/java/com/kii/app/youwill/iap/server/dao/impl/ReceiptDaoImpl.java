@@ -9,8 +9,13 @@ import com.kii.app.youwill.iap.server.web.AppContext;
 import com.kii.platform.ufp.bucket.ObjectID;
 import com.kii.platform.ufp.ufe.query.BucketQuery;
 import com.kii.platform.ufp.ufe.query.clauses.EqualsClause;
+import com.kii.platform.ufp.user.UserID;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.Map;
 
 /**
  * Created by ethan on 14-7-25.
@@ -29,19 +34,20 @@ public class ReceiptDaoImpl implements ReceiptDao {
 	@Autowired
 	private ACLOperate aclOper;
 
+	@Override
+    public ObjectID createNewReceipt(Receipt receipt,UserID userID) {
 
-	@Override public ObjectID createNewReceipt(Receipt receipt) {
-
+        System.out.println("UserID:" + userID.toString());
+        appContext.sudo(userID);
 
 		ObjectID id=commDao.addObject(BUCKET_NAME, receipt.getJsonObject());
 
 //		aclOper.removeObjectACLForCurrUser(BUCKET_NAME, id, ACLOperate.ObjectRight.Write);
 
+        appContext.exitScope();
 		return id;
 
 	}
-
-
 
 	@Override public boolean existProduct(String id) {
 

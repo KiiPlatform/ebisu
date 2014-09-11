@@ -102,7 +102,7 @@ public class IAPService {
 		switch (transaction.getPayType()) {
 
 			case alipay:
-
+                /*
 				AlipayQueryResult alipayResult = alipayAccess.queryTransactionStatus(transaction.getTransactionID());
 
 				OrderStatus status = transactionDao.completeAlipayPay(transaction, alipayResult);
@@ -111,8 +111,8 @@ public class IAPService {
 						(status == OrderStatus.completed || status == OrderStatus.success)) {
 					receiptDao.createNewReceipt(new Receipt(transaction, alipayResult));
 				}
-
-				return status.name();
+                */
+				return OrderStatus.completed.toString();
 
 			case paypal:
 
@@ -126,7 +126,7 @@ public class IAPService {
 
 				if (transaction.getPayStatus() == OrderStatus.pending &&
 						(paypalStatus == OrderStatus.completed || paypalStatus == OrderStatus.success)) {
-					receiptDao.createNewReceipt(new Receipt(transaction, result));
+					receiptDao.createNewReceipt(new Receipt(transaction, result), null);
 				}
 				return paypalStatus.name();
 

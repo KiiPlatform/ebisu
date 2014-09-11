@@ -10,42 +10,40 @@ import javax.servlet.http.HttpServletResponse;
  * Created by ethan on 14-8-4.
  */
 
-public class KiiAppInterceptorAdapter  extends HandlerInterceptorAdapter {
+public class KiiAppInterceptorAdapter extends HandlerInterceptorAdapter {
 
-	@Autowired
-	private AppContext ctx;
+    private static String ALIPAY_CALLBACK_URL = "/iap/callback/alipay/";
 
-
-
-
-	@Override
-	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
-			throws Exception {
+    @Autowired
+    private AppContext ctx;
 
 
-		if(request.getMethod().equals("POST")
-				||request.getMethod().equals("GET")) {
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
+            throws Exception {
+        if (isIAPCallback(request)) {
+            ctx.initWithAdmin();
+        } else if (request.getMethod().equals("POST")
+                || request.getMethod().equals("GET")) {
+            ctx.bindRequest(request);
+            response.setHeader("Access-Control-Allow-Origin", "*");
+        }
+        return true;
+    }
+
+    private boolean isIAPCallback(HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        String callBackURL = request.getContextPath() + ALIPAY_CALLBACK_URL;
+        return requestURI.startsWith(callBackURL);
+    }
+
+    @Override
+    public void afterCompletion(
+            HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
+            throws Exception {
 
 
-			ctx.bindRequest(request);
-			response.setHeader("Access-Control-Allow-Origin","*");
-
-
-		}
-
-
-		return true;
-	}
-
-	@Override
-	public void afterCompletion(
-			HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
-			throws Exception {
-
-
-
-	}
-
+    }
 
 
 }

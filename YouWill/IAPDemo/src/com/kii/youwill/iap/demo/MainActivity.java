@@ -278,16 +278,16 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
         public void onSuccess() {
             // TODO
             LogUtil.log(TAG, "payment success for order: " + order);
-            Toast.makeText(MainActivity.this, String
-                            .format(getString(R.string.buy_success), order.getSubject()),
-                    Toast.LENGTH_SHORT).show();
+            //Toast.makeText(MainActivity.this, String
+            //                .format(getString(R.string.buy_success), order.getSubject()),
+            //        Toast.LENGTH_SHORT).show();
         }
 
         @Override
         public void onError(int errorCode) {
             LogUtil.log(TAG, "payment error, error code is " + errorCode);
-            Toast.makeText(MainActivity.this, KiiPayment
-                    .getErrorMessage(MainActivity.this, errorCode), Toast.LENGTH_SHORT).show();
+            //Toast.makeText(MainActivity.this, KiiPayment
+            //        .getErrorMessage(MainActivity.this, errorCode), Toast.LENGTH_SHORT).show();
         }
     };
 
