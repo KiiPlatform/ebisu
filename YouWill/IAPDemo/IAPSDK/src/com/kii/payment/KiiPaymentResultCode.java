@@ -38,4 +38,6 @@ public final class KiiPaymentResultCode {
     public static final int INVALID_PAYPAL_PARAMETER = 115;
     public static final int INVALID_PAYPAL_PARAMETER2 = 116;
     public static final int PAYPAL_VERIFY_FAILED = 117;
+
+    public static final int ALIPAY_VERIFY_FAILED = 200;
 }

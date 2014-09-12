@@ -13,7 +13,7 @@ public interface ReceiptDao {
 
 	ObjectID createNewReceipt(Receipt receipt,UserID userID);
 
-	boolean existProduct(String id);
+	boolean existProduct(String productID, UserID userID);
 
 
 }

@@ -71,7 +71,7 @@ public class TestProductDao extends BaseTest {
 
 		super.initRequest();
 
-		appContext.asApp();
+		//appContext.asApp();
 
 		when(bucketClient.query(
 				eq(appContext.getAccessToken()),
@@ -80,7 +80,7 @@ public class TestProductDao extends BaseTest {
 				eq(BucketType.DEFAULT),
 				argThat(new Resp()))).thenReturn(getQueryResponse("prod1", "12.34"));
 
-		appContext.exitApp();
+		//appContext.exitApp();
 
 	}
 

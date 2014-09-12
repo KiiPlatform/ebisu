@@ -7,7 +7,6 @@ public class Constants {
 
     //public static final String PLATFORM_EXTENSION_URL = "http://192.168.1.106:8080/api/iap/";
     public static final String PLATFORM_EXTENSION_URL = "http://118.102.25.205:8080/iap-webapp/iap/";
-//    public static final String PLATFORM_EXTENSION_URL = "http://172.16.5.57/";
     static final String KEY_APP_DISTRIBUTION_ID = "com.kii.DISTRIBUTION_ID";
 
     static final class ALIPAY_RESULT_CODE {
@@ -24,7 +23,10 @@ public class Constants {
         public static final int NETWORK_EXCEPTION = 6002;
     }
 
-    static final String PLATFORM_API_URL = PLATFORM_EXTENSION_URL + "index";
+    public static final String GET_PARAM_URL = PLATFORM_EXTENSION_URL + "startOrder/product/%s";
+
+    public static final String QUERY_ORDER_URL = PLATFORM_EXTENSION_URL + "queryOrder/order/%s";
 
     public static final String PLATFORM_CALLBACK_URL = "http://118.102.25.205:8080/iap-webapp/iap/callback/alipay/%s/app/%s";
+
 }

@@ -30,11 +30,8 @@
         </property>
     </bean>
 
-    <aop:aspectj-autoproxy/>
 
     <bean class="com.kii.app.youwill.iap.server.factory.KiiAppFactory" />
-
-    <bean class="com.kii.app.youwill.iap.server.aop.KiiScopeManagerAdape"/>
 
     <bean id="restProvider"
           class="com.kii.platform.ufp.client.springrest.impl.apache.HttpComponentsRestTemplateProvider"/>

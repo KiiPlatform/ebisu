@@ -57,7 +57,7 @@ public abstract  class BaseTest  {
 		when(request.getRequestURI()).thenReturn("/sandbox/mock");
 
 
-		appContext.bindRequest(request);
+		//appContext.bindRequest(request);
 
 
 	}
@@ -80,7 +80,7 @@ public abstract  class BaseTest  {
 		when(request.getRequestURI()).thenReturn("/mock");
 
 
-		appContext.bindRequest(request);
+		//appContext.bindRequest(request);
 
 	}
 

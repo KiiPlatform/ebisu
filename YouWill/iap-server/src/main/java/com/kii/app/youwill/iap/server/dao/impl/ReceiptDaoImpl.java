@@ -1,6 +1,5 @@
 package com.kii.app.youwill.iap.server.dao.impl;
 
-import com.kii.app.youwill.iap.server.aop.KiiScope;
 import com.kii.app.youwill.iap.server.dao.ACLOperate;
 import com.kii.app.youwill.iap.server.dao.CommBucketOperate;
 import com.kii.app.youwill.iap.server.dao.ReceiptDao;
@@ -21,7 +20,6 @@ import java.util.Map;
  * Created by ethan on 14-7-25.
  */
 @Component
-@KiiScope
 public class ReceiptDaoImpl implements ReceiptDao {
 
 	private static final String BUCKET_NAME = "receipt";
@@ -36,7 +34,6 @@ public class ReceiptDaoImpl implements ReceiptDao {
 
 	@Override
     public ObjectID createNewReceipt(Receipt receipt,UserID userID) {
-
         System.out.println("UserID:" + userID.toString());
         appContext.sudo(userID);
 
@@ -49,19 +46,21 @@ public class ReceiptDaoImpl implements ReceiptDao {
 
 	}
 
-	@Override public boolean existProduct(String id) {
+	@Override public boolean existProduct(String productID, UserID userID) {
+
+        appContext.sudo(userID);
 
 		BucketQuery query=null;
 
 		if(appContext.isSandBox()) {
 		    query = new BucketQuery(BucketQuery.qAnd(
-					new EqualsClause("productID", id),
+					new EqualsClause("productID", productID),
 					new EqualsClause("isSandbox", appContext.isSandBox())));
 		}else{
-			query = new BucketQuery(BucketQuery.qEquals("productID",id));
-
+			query = new BucketQuery(BucketQuery.qEquals("productID",productID));
 		}
 		CommBucketOperate.QueryResult result=commDao.query(BUCKET_NAME,query);
+        appContext.exitScope();
 
 		return !result.getResultList().isEmpty();
 

@@ -1,18 +1,4 @@
-
 package com.kii.youwill.iap.demo;
-
-import com.kii.cloud.storage.KiiUser;
-import com.kii.cloud.storage.callback.KiiUserCallBack;
-import com.kii.payment.KiiOrder;
-import com.kii.payment.KiiPayment;
-import com.kii.payment.KiiPaymentCallback;
-import com.kii.payment.KiiProduct;
-import com.kii.payment.KiiReceipt;
-import com.kii.payment.KiiStore;
-import com.kii.payment.YouWillIAPSDK;
-import com.kii.youwill.iap.demo.utils.Constants;
-import com.kii.youwill.iap.demo.utils.LogUtil;
-import com.nostra13.universalimageloader.core.ImageLoader;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -20,22 +6,21 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.text.TextUtils;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.BaseAdapter;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.util.Log;
+import android.view.*;
+import android.widget.*;
+import com.kii.cloud.storage.KiiUser;
+import com.kii.cloud.storage.callback.KiiUserCallBack;
+import com.kii.payment.*;
+import com.kii.youwill.iap.demo.utils.Constants;
+import com.kii.youwill.iap.demo.utils.LogUtil;
+import com.nostra13.universalimageloader.core.ImageLoader;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 public class MainActivity extends Activity implements View.OnClickListener, KiiPaymentCallback,
         AdapterView.OnItemClickListener {
@@ -55,7 +40,7 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        YouWillIAPSDK.init(Constants.APP_ID);
+        YouWillIAPSDK.init("YouWill", Constants.APP_ID);
         setContentView(R.layout.activity_main);
         mAdapter = new ProductAdapter();
         mList = (ListView) findViewById(R.id.list);
@@ -100,9 +85,6 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (currentPayment != null) {
-            currentPayment.handleActivityResult(requestCode, resultCode, data);
-        }
     }
 
     @Override
@@ -134,10 +116,8 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
                 public void onLoginCompleted(int token, KiiUser user, Exception exception) {
                     LogUtil.log(TAG, "log in complete: " + token + ", " + user);
                     if (exception == null) {
-                        order = new KiiOrder(product, user, Locale.US);
+                        order = new KiiOrder(product, user);
                         currentPayment = new KiiPayment(MainActivity.this, order, mCallback);
-                        currentPayment.enableSandboxMode(true);
-                        currentPayment.token = Settings.getToken(MainActivity.this);
                         currentPayment.pay();
                     } else {
                         // TODO
@@ -163,11 +143,7 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
         @Override
         protected Void doInBackground(Void... params) {
             // TODO Auto-generated method stub
-            for (KiiProduct product : products) {
-                KiiReceipt receipt = KiiStore
-                        .getReceipt(product, KiiUser.getCurrentUser());
-                receipts.add(receipt);
-            }
+            KiiStore.listReceipts(null, KiiUser.getCurrentUser());
             return null;
         }
 
@@ -278,17 +254,25 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
         public void onSuccess() {
             // TODO
             LogUtil.log(TAG, "payment success for order: " + order);
-            //Toast.makeText(MainActivity.this, String
-            //                .format(getString(R.string.buy_success), order.getSubject()),
-            //        Toast.LENGTH_SHORT).show();
+            Message msg = handler.obtainMessage();
+            msg.obj = String.format(getString(R.string.buy_success), order.getSubject());
+            handler.sendMessage(msg);
         }
 
         @Override
         public void onError(int errorCode) {
             LogUtil.log(TAG, "payment error, error code is " + errorCode);
-            //Toast.makeText(MainActivity.this, KiiPayment
-            //        .getErrorMessage(MainActivity.this, errorCode), Toast.LENGTH_SHORT).show();
+            Message msg = handler.obtainMessage();
+            msg.obj = KiiPayment.getErrorMessage(MainActivity.this, errorCode);
+            handler.sendMessage(msg);
         }
     };
 
+    Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            Toast.makeText(MainActivity.this, (String) msg.obj, Toast.LENGTH_SHORT).show();
+        }
+    };
 }

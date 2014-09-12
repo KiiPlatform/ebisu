@@ -10,9 +10,20 @@ public class YouWillIAPSDK {
         Kii.initialize("c99e04f1", "3ebdc0472c0c705bc50eaf1756061b8b", Kii.Site.CN);
     }
 
-    protected static String gYouWillAppId = null;
+    private static String gYouWillAppId = null;
 
-    public static void init(String appId) {
+    private static String gAuthorId = null;
+
+    public static void init(String authorId, String appId) {
+        gAuthorId = authorId;
         gYouWillAppId = appId;
+    }
+
+    public static String getYouWillAppID() {
+        return gYouWillAppId;
+    }
+
+    public static String getAuthorID() {
+        return gAuthorId;
     }
 }

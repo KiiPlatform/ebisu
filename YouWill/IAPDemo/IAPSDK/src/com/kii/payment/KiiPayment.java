@@ -5,7 +5,6 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -14,104 +13,128 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
 import com.alipay.android.app.sdk.AliPay;
-import com.kii.cloud.storage.Kii;
-import com.paypal.android.sdk.payments.*;
+import com.kii.payment.impl.PrefUtil;
 import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
-import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.lang.reflect.Field;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.URL;
+import java.net.URLConnection;
 
 /**
  * Created by tian on 3/9/14.
+ * Modified by Richard
  */
 @SuppressLint("NewApi")
 public class KiiPayment {
 
     private static final String TAG = KiiPayment.class.getName();
 
-    public static final int REQUEST_PAYPAL = 0x9323;
-
     private Activity context;
-
-    private Object startActivityObject;
 
     private KiiOrder order;
 
     private KiiPaymentCallback callback;
 
-    private boolean sandbox_mode = false;
+    private String mTransactionInfo;
 
-    private String payid = null;
+    private static String STATUS_COMPLETED = "completed";
 
-    public String token;
-
+    /**
+     * @param activity
+     * @param order
+     * @param callback
+     */
     public KiiPayment(Activity activity, KiiOrder order, KiiPaymentCallback callback) {
         this.context = activity;
         this.order = order;
         this.callback = callback;
-        this.startActivityObject = activity;
         init();
     }
 
+    /**
+     * @param fragment
+     * @param order
+     * @param callback
+     */
     public KiiPayment(Fragment fragment, KiiOrder order, KiiPaymentCallback callback) {
         this.context = fragment.getActivity();
         this.order = order;
         this.callback = callback;
-        this.startActivityObject = fragment;
+
         init();
     }
 
+    /**
+     * @param fragment
+     * @param order
+     * @param callback
+     */
     public KiiPayment(android.support.v4.app.Fragment fragment, KiiOrder order,
                       KiiPaymentCallback callback) {
         this.context = fragment.getActivity();
         this.order = order;
         this.callback = callback;
-        this.startActivityObject = fragment;
+
         init();
+    }
+
+    /**
+     * @param context
+     * @param errorCode
+     * @return
+     */
+    public static String getErrorMessage(Context context, int errorCode) {
+        try {
+            Class<?> c = Class.forName(context.getApplicationContext().getPackageName()
+                    + ".R$string");
+            if (c != null) {
+                Field field = c.getField(sErrorMap.get(errorCode));
+                Object property = field.get(c);
+                return context.getString((Integer) property);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "未知错误";
     }
 
     private void init() {
         Utils.setContextRef(context);
-        if (sandbox_mode && order.payType.contentEquals(KiiOrder.ALIPAY)) {
-            order.price = 0.01;
-        }
     }
 
-    public void enableSandboxMode(boolean value) {
-        sandbox_mode = value;
-    }
-
-    public boolean isInSandbox() {
-        return sandbox_mode;
-    }
-
+    /**
+     *
+     */
     public void pay() {
-        /*
-        LOG: use Alipay only
-        Currency currency = order.currency;
-        if (currency.getCurrencyCode().contentEquals(
-                Currency.getInstance(Locale.CHINA).getCurrencyCode())) {
-            order.payType = KiiOrder.ALIPAY;
-        } else {
-            order.payType = KiiOrder.PAYPAL;
+        //TODO: check client and cloud status.
+        //clearCachedResult();
+        String orderID = PrefUtil.getCachedTransactionID(context, order.getProductId());
+        if (!TextUtils.isEmpty(orderID)) {
+            confirmWithCloud(orderID);
+            return;
         }
-        */
-
         order.payType = KiiOrder.ALIPAY;
-
         getTransactionFromServer();
+    }
+
+    public String getTransactionInfo() {
+        return mTransactionInfo;
+    }
+
+    public void clearCachedResult() {
+        PrefUtil.clearCachedResult(context, order.getProductId());
+    }
+
+    public int getRetryNum() {
+        return PrefUtil.getRetryNum(context, order.getProductId());
     }
 
     private ProgressDialog progressDialog;
@@ -122,52 +145,46 @@ public class KiiPayment {
         }
         progressDialog.setCancelable(false);
         progressDialog.setIndeterminate(true);
-        progressDialog.setTitle(Utils.getStringResId("fetching_transaction_from_server"));
+        progressDialog.setTitle(Utils.getStringResId("kii_payment_fetching_transaction_from_cloud"));
         progressDialog.show();
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     HttpClient client = new DefaultHttpClient();
-                    HttpPost request = new HttpPost(Constants.PLATFORM_EXTENSION_URL + "startOrder/product/" + order.getProductId());
-                    Utils.log(TAG, "get params from server: " + request.getURI());
-                    request.setHeader("Authorization", "Bearer " + token);
-                    request.setHeader("x-kii-appid", Kii.getAppId());
-                    request.setHeader("x-kii-appkey", "3ebdc0472c0c705bc50eaf1756061b8b");
+                    String url = String.format(Constants.GET_PARAM_URL, order.getProductId());
+                    HttpPost request = new HttpPost(url);
 
                     JSONObject jsonObj = new JSONObject();
-
-                    String signature = buildTransactionSignature();
-                    jsonObj.put("verifySign", signature);
-                    jsonObj.put("author_id", "YouWill");
-                    jsonObj.put("app_id", Kii.getAppId());
+                    jsonObj.put("author_id", YouWillIAPSDK.getAuthorID());
+                    jsonObj.put("app_id", YouWillIAPSDK.getYouWillAppID());
                     jsonObj.put("notify_url",
-                            String.format(Constants.PLATFORM_CALLBACK_URL, "YouWill", Kii.getAppId()));
-                    jsonObj.put("method",
-                            "get_transaction_params");
+                            String.format(Constants.PLATFORM_CALLBACK_URL,
+                                    YouWillIAPSDK.getAuthorID(), YouWillIAPSDK.getYouWillAppID()));
                     jsonObj.put("payType", order.payType);
-                    jsonObj.put("price", sandbox_mode
-                            && order.payType.contentEquals(KiiOrder.ALIPAY) ? "0.01"
-                            : Double.toString(order.price));
-                    jsonObj.put("product_id", order.productId);
-                    jsonObj.put("product_name", order.productName);
-                    jsonObj.put("is_sandbox", sandbox_mode ? "1" : "0");
-                    jsonObj.put("sign", signature);
+                    jsonObj.put("price", Double.toString(order.price));
+                    jsonObj.put("is_sandbox", "0");
                     jsonObj.put("user_id", order.userId);
-                    jsonObj.put("youwill_app_id", YouWillIAPSDK.gYouWillAppId);
 
                     Utils.log(TAG, "post parameter is " + jsonObj.toString());
-
                     request.setEntity(new StringEntity(jsonObj.toString()));
+
                     HttpResponse response = client.execute(request);
                     String result = EntityUtils.toString(response.getEntity());
-                    Utils.log(TAG, "response code is "
-                            + response.getStatusLine().getStatusCode());
+
                     Utils.log(TAG, "result is " + result);
-                    Message msg = handler.obtainMessage(MSG_GET_PARAMS);
-                    msg.obj = result;
-                    handler.sendMessage(msg);
-                    return;
+
+                    JSONObject object = new JSONObject(result);
+                    int errorCode = object.getInt("errorCode");
+                    if (errorCode == 1001) {
+                        handler.sendEmptyMessage(MSG_PRODUCT_ALREADY_PURCHASED);
+                    } else {
+                        String orderInfo = object.getString("url");
+                        Message msg = handler.obtainMessage(MSG_GET_PARAMS);
+                        msg.obj = orderInfo;
+                        handler.sendMessage(msg);
+                    }
+
                 } catch (Exception e) {
                     e.printStackTrace();
                     handler.sendEmptyMessage(MSG_PAY_FAILED);
@@ -177,45 +194,17 @@ public class KiiPayment {
         }).start();
     }
 
-    private String buildTransactionSignature() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("app_id");
-        sb.append(Kii.getAppId());
-        sb.append("is_sandbox");
-        sb.append(sandbox_mode ? 1 : 0);
-        sb.append("method");
-        sb.append("get_transaction_params");
-        sb.append("pay_type");
-        sb.append(order.payType);
-        sb.append("price");
-        sb.append(sandbox_mode && order.payType.contentEquals(KiiOrder.ALIPAY) ? "0.01"
-                : order.price);
-        sb.append("product_id");
-        sb.append(order.productId);
-        sb.append("product_name");
-        sb.append(order.productName);
-        sb.append("user_id");
-        sb.append(order.userId);
-        sb.append("youwill_app_id");
-        sb.append(YouWillIAPSDK.gYouWillAppId);
-        return KiiStore.buildHash(sb.toString(), Kii.getAppKey());
-    }
-
     private static final int MSG_GET_PARAMS = 0;
 
     private static final int MSG_FINISH_TRANSACTION = 1;
 
-    private static final int MSG_ALIPAY_FINISHED = 2;
-
-    private static final int MSG_PAYPAL_FINISHED = 3;
-
-    private static final int MSG_UNION_PAY_FINISHED = 4;
+    private static final int MSG_ALIPAY_CLIENT_FINISHED = 2;
 
     private static final int MSG_PAY_FAILED = 5;
 
-    private String transactionId;
+    private static final int MSG_ALIPAY_CONFIRM_CLOUD_FAILED = 6;
 
-    private String alipayPublicKey;
+    private static final int  MSG_PRODUCT_ALREADY_PURCHASED = 1001;
 
     private Handler handler = new Handler(Looper.getMainLooper()) {
         @Override
@@ -225,47 +214,23 @@ public class KiiPayment {
                     if (progressDialog != null) {
                         progressDialog.dismiss();
                     }
-                    String result = (String) msg.obj;
-                    try {
-                        JSONObject object = new JSONObject(result);
-                        if (object.has("code")) {
-                            callback.onError(object.getInt("code"));
-                            return;
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    if (order.payType.contentEquals(KiiOrder.UNION_PAY)) {
-                        // TODO
-                    } else if (order.payType.contentEquals(KiiOrder.ALIPAY)) {
-                        payWithAlipay(msg);
-                    } else if (order.payType.contentEquals(KiiOrder.PAYPAL)) {
-                        payWithPaypal(msg);
-                    }
+                    payWithAlipay((String) msg.obj);
                     break;
                 case MSG_FINISH_TRANSACTION:
                     if (progressDialog != null) {
                         progressDialog.dismiss();
                     }
-                    try {
-                        String data = (String) msg.obj;
-                        JSONObject object = new JSONObject(data);
-                        if (object.getBoolean("result")) {
-                            callback.onSuccess();
-                        } else {
-                            callback.onError(object.getInt("code"));
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        callback.onError(KiiPaymentResultCode.ERROR_NETWORK_EXCEPTION);
-                    }
+                    callback.onSuccess();
                     break;
-                case MSG_ALIPAY_FINISHED:
+                case MSG_ALIPAY_CLIENT_FINISHED:
                     handleAlipayFinishStatus(msg);
                     break;
-                case MSG_PAYPAL_FINISHED:
-                    break;
-                case MSG_UNION_PAY_FINISHED:
+
+                case MSG_ALIPAY_CONFIRM_CLOUD_FAILED:
+                    if (progressDialog != null) {
+                        progressDialog.dismiss();
+                    }
+                    callback.onError(KiiPaymentResultCode.ALIPAY_VERIFY_FAILED);
                     break;
                 case MSG_PAY_FAILED:
                     if (progressDialog != null) {
@@ -273,28 +238,50 @@ public class KiiPayment {
                     }
                     callback.onError(KiiPaymentResultCode.ERROR_UNKNOWN_ERROR);
                     break;
+                case MSG_PRODUCT_ALREADY_PURCHASED:
+                    if (progressDialog != null) {
+                        progressDialog.dismiss();
+                    }
+                    callback.onError(KiiPaymentResultCode.PRODUCT_ALREADY_BOUGHT);
+                    break;
             }
         }
     };
+
+    private void payWithAlipay(final String orderInfo) {
+        new Thread() {
+            public void run() {
+                Utils.log(TAG, "orderInfo is " + orderInfo);
+                AliPay alipay = new AliPay(context, handler);
+                String result = alipay.pay(orderInfo);
+                Message msg = new Message();
+                msg.what = MSG_ALIPAY_CLIENT_FINISHED;
+                msg.obj = result;
+                handler.sendMessage(msg);
+            }
+        }.start();
+    }
 
     private void handleAlipayFinishStatus(Message msg) {
         String strRet = (String) msg.obj;
         Utils.log(TAG, "handleAlipayFinishedStatus, strRet is " + strRet);
         try {
-            String tradeStatus = "resultStatus={";
-            int imemoStart = strRet.indexOf("resultStatus=");
-            imemoStart += tradeStatus.length();
-            int imemoEnd = strRet.indexOf("}", imemoStart);
-            tradeStatus = strRet.substring(imemoStart, imemoEnd);
+            JSONObject jsonObject = BaseHelper.string2JSON(strRet, ";");
+            String tradeStatus = jsonObject.getString("resultStatus");
+            tradeStatus = tradeStatus.substring(1, tradeStatus.length() - 1);
             if (tradeStatus.equals("9000")) {
-                //TODO: we don't need it.
-                //finishTransactionAsyncTask();
+                String result = jsonObject.getString("result");
+                result = result.substring(1, result.length() - 1);
+                jsonObject = BaseHelper.string2JSON(result, "&");
+                String transactionID = jsonObject.getString("out_trade_no").replace("\"", "");
+                confirmWithCloud(transactionID);
             } else {
                 if (callback != null) {
                     int alipayErrorCode = 0;
                     try {
                         alipayErrorCode = Integer.parseInt(tradeStatus);
                     } catch (Exception e) {
+                        e.printStackTrace();
                     }
                     if (sAlipayMap.get(alipayErrorCode) != 0) {
                         callback.onError(sAlipayMap.get(alipayErrorCode));
@@ -305,185 +292,51 @@ public class KiiPayment {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            callback.onError(KiiPaymentResultCode.ERROR_UNKNOWN_ERROR);
         }
 
     }
 
-    private void payWithAlipay(Message msg) {
-        String info = null;
-        if (msg.obj != null) {
-            String data = (String) msg.obj;
-            try {
-                Utils.log(TAG, "data is " + data);
-                JSONObject object = new JSONObject(data);
-                info = object.getString("url");
-            } catch (JSONException e) {
-                e.printStackTrace();
-                handler.sendEmptyMessage(MSG_PAY_FAILED);
-            }
-        } else {
-            handler.sendEmptyMessage(MSG_PAY_FAILED);
-        }
-        final String orderInfo = info;
-        new Thread() {
-            public void run() {
-                if (orderInfo == null) {
-                    // TODO: send error message
-                    return;
-                }
-                Utils.log(TAG, "orderInfo is " + orderInfo);
-                AliPay alipay = new AliPay(context, handler);
-                String result = alipay.pay(orderInfo);
-                Message msg = new Message();
-                msg.what = MSG_ALIPAY_FINISHED;
-                Utils.log(TAG, "result is " + result);
-                msg.obj = result;
-                handler.sendMessage(msg);
-            }
-        }.start();
-    }
-
-    private void finishTransactionAsyncTask() {
+    private void confirmWithCloud(final String orderID) {
         if (progressDialog == null) {
             progressDialog = new ProgressDialog(context);
         }
         progressDialog.setCancelable(false);
         progressDialog.setIndeterminate(true);
-        progressDialog.setTitle(Utils.getStringResId("finishing_transaction"));
+        progressDialog.setTitle(Utils.getStringResId("kii_payment_confirm_payment_from_cloud"));
         progressDialog.show();
+
+        PrefUtil.cacheClientPaymentStatus(context, order.getProductId(), orderID);
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    finishTransaction();
+                    URL url = new URL(String.format(Constants.QUERY_ORDER_URL, orderID));
+                    URLConnection conn = url.openConnection();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    String result = reader.readLine();
+                    Log.e("test", "result: " + result);
+                    JSONObject jsonObject = new JSONObject(result);
+                    String payStatus = jsonObject.optString("payStatus");
+                    if (STATUS_COMPLETED.equals(payStatus)) {
+                        Log.e("test", "Confirmed with Cloud.");
+                        mTransactionInfo = result;
+                        clearCachedResult();
+                        handler.sendEmptyMessage(MSG_FINISH_TRANSACTION);
+                    } else {
+                        Log.e("test", "Cloud status: " + payStatus);
+                        handler.sendEmptyMessage(MSG_ALIPAY_CONFIRM_CLOUD_FAILED);
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
+                    Log.e("test", "Error while querying order.");
+                    handler.sendEmptyMessage(MSG_ALIPAY_CONFIRM_CLOUD_FAILED);
                 }
+
             }
         }).start();
     }
 
-    private void finishTransaction() {
-        String result = null;
-        try {
-            HttpClient client = new DefaultHttpClient();
-            HttpPost request = new HttpPost(Constants.PLATFORM_API_URL);
-            Utils.log(TAG, "finish order: " + request.getURI());
-            String signature = buildFinishSignature();
-            List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
-            nameValuePairs.add(new BasicNameValuePair("app_id", Kii.getAppId()));
-            nameValuePairs.add(new BasicNameValuePair("method", "finished_order"));
-            nameValuePairs.add(new BasicNameValuePair("is_sandbox", sandbox_mode ? "1" : "0"));
-            nameValuePairs.add(new BasicNameValuePair("youwill_app_id", YouWillIAPSDK.gYouWillAppId));
-            nameValuePairs.add(new BasicNameValuePair("transaction_id", transactionId));
-            nameValuePairs.add(new BasicNameValuePair("sign", signature));
-            if (!TextUtils.isEmpty(payid)) {
-                nameValuePairs.add(new BasicNameValuePair("payid", payid));
-            }
-            request.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-            Utils.log(
-                    TAG,
-                    "finish order, entity is "
-                            + EntityUtils.toString(new UrlEncodedFormEntity(nameValuePairs)));
-            HttpResponse response = client.execute(request);
-            result = EntityUtils.toString(response.getEntity());
-            Utils.log(TAG, "response code is " + response.getStatusLine().getStatusCode());
-            Utils.log(TAG, "result is " + result);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Message msg = handler.obtainMessage(MSG_FINISH_TRANSACTION);
-        msg.obj = result;
-        handler.sendMessage(msg);
-    }
-
-    private String buildFinishSignature() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("app_id");
-        sb.append(Kii.getAppId());
-        sb.append("is_sandbox");
-        sb.append(sandbox_mode ? 1 : 0);
-        sb.append("youwill_app_id");
-        sb.append(YouWillIAPSDK.gYouWillAppId);
-        sb.append("method");
-        sb.append("finished_order");
-        if (!TextUtils.isEmpty(payid)) {
-            sb.append("payid");
-            sb.append(payid);
-        }
-        sb.append("transaction_id");
-        sb.append(transactionId);
-        return KiiStore.buildHash(sb.toString(), Kii.getAppKey());
-    }
-
-    private void payWithPaypal(Message msg) {
-        String s = (String) msg.obj;
-        Log.e(TAG, s);
-        String CONFIG_CLIENT_ID = null;
-        try {
-            JSONObject json = new JSONObject(s);
-            transactionId = json.getString("transaction_id");
-            if (sandbox_mode) {
-                CONFIG_CLIENT_ID = json.optString("paypal_sandbox_client_id");
-            } else {
-                CONFIG_CLIENT_ID = json.optString("paypal_client_id");
-            }
-        } catch (JSONException e) {
-        }
-        PayPalPayment thingToBuy = new PayPalPayment(new BigDecimal(order.price), order.currency
-                .getCurrencyCode(), transactionId, PayPalPayment.PAYMENT_INTENT_SALE);
-        PayPalConfiguration config = new PayPalConfiguration();
-        if (sandbox_mode) {
-            config.environment(PayPalConfiguration.ENVIRONMENT_SANDBOX);
-        } else {
-            config.environment(PayPalConfiguration.ENVIRONMENT_PRODUCTION);
-        }
-        config.clientId(CONFIG_CLIENT_ID);
-        Intent intent = new Intent(context, PayPalService.class);
-        intent.putExtra(PayPalService.EXTRA_PAYPAL_CONFIGURATION, config);
-        context.startService(intent);
-        intent = new Intent(context, PaymentActivity.class);
-        intent.putExtra(PaymentActivity.EXTRA_PAYMENT, thingToBuy);
-        if (startActivityObject instanceof Activity) {
-            ((Activity) startActivityObject).startActivityForResult(intent, REQUEST_PAYPAL);
-        } else if (startActivityObject instanceof Fragment) {
-            ((Fragment) startActivityObject).startActivityForResult(intent, REQUEST_PAYPAL);
-        } else if (startActivityObject instanceof android.support.v4.app.Fragment) {
-            ((android.support.v4.app.Fragment) startActivityObject).startActivityForResult(intent,
-                    REQUEST_PAYPAL);
-        }
-    }
-
-    public boolean handleActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_PAYPAL) {
-            handlePaypalActivityResult(requestCode, resultCode, data);
-            return true;
-        }
-        return false;
-    }
-
-    private void handlePaypalActivityResult(int requestCode, int resultCode, Intent data) {
-
-        if (resultCode == Activity.RESULT_OK) {
-            context.stopService(new Intent(context, PayPalService.class));
-            PaymentConfirmation confirm = data
-                    .getParcelableExtra(PaymentActivity.EXTRA_RESULT_CONFIRMATION);
-            if (confirm != null) {
-                try {
-                    JSONObject json = confirm.toJSONObject();
-                    Log.i(TAG, json.toString(4));
-                    payid = json.getJSONObject("response").getString("id");
-                    finishTransactionAsyncTask();
-                } catch (JSONException e) {
-                    Log.e(TAG, "an extremely unlikely failure occurred: ", e);
-                }
-            }
-        } else if (resultCode == Activity.RESULT_CANCELED) {
-            Log.i(TAG, "The user canceled.");
-        } else if (resultCode == PaymentActivity.RESULT_EXTRAS_INVALID) {
-            Log.i(TAG, "An invalid payment was submitted. Please see the docs.");
-        }
-    }
 
     private static final SparseIntArray sAlipayMap = new SparseIntArray();
 
@@ -558,22 +411,8 @@ public class KiiPayment {
             sErrorMap.put(KiiPaymentResultCode.INVALID_PAYPAL_PARAMETER, "kii_payment_error_paypal_parameters");
             sErrorMap.put(KiiPaymentResultCode.INVALID_PAYPAL_PARAMETER2, "kii_payment_error_paypal_parameters");
             sErrorMap.put(KiiPaymentResultCode.PAYPAL_VERIFY_FAILED, "kii_payment_error_verify_paypal_failed");
+            sErrorMap.put(KiiPaymentResultCode.ALIPAY_VERIFY_FAILED, "kii_payment_error_verify_alipay_failed");
         }
-    }
-
-    public static String getErrorMessage(Context context, int errorCode) {
-        try {
-            Class<?> c = Class.forName(context.getApplicationContext().getPackageName()
-                    + ".R$string");
-            if (c != null) {
-                Field field = c.getField(sErrorMap.get(errorCode));
-                Object property = field.get(c);
-                return context.getString((Integer) property);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return "未知错误";
     }
 
 }

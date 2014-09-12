@@ -162,7 +162,7 @@ public class TestCommBucketDao extends BaseTest {
 		assertThat(id.toString(), is("fooID"));
 
 		//switch object scope.
-		appContext.asApp();
+		//appContext.asApp();
 
 
 		when(bucketClient.createDataObject(

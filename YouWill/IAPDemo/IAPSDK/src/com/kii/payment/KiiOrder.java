@@ -78,10 +78,6 @@ public class KiiOrder {
 
     public static final String ALIPAY = "alipay";
 
-    public static final String PAYPAL = "paypal";
-
-    public static final String UNION_PAY = "unionpay";
-
     @Override
     public String toString() {
         return "id: " + id + ", subject: " + subject + ", body: " + body + ", price:" + price + ", " +
@@ -98,7 +94,7 @@ public class KiiOrder {
             productId = object.optString("product_id");
             userId = object.optString("user_id");
             currency = Currency.getInstance(object.optString("currency"));
-            payType = object.optString("pay_type");
+            payType = ALIPAY;
             consumeType = object.optInt("consume_type");
         } catch (JSONException e) {
             e.printStackTrace();
@@ -110,75 +106,11 @@ public class KiiOrder {
         body = product.getDescription();
         price = product.getPrice();
         productId = product.getId();
-        userId = user.toUri().toString();
-        currency = product.getCurrency();
-        productDescription = product.getLocalizedDescription();
-        consumeType = product.getConsumeType().ordinal();
-    }
-
-
-    public KiiOrder(KiiProduct product, KiiUser user, Locale locale) {
-        subject = product.getLocalizedName(locale);
-        body = product.getLocalizedDescription(locale);
-        price = product.getPrice();
-        productId = product.getId();
         userId = user.toUri().getLastPathSegment();
-        currency = product.getCurrency();
+        //currency = product.getCurrency();
+        //productDescription = product.getLocalizedDescription();
         consumeType = product.getConsumeType().ordinal();
-        productName = product.getLocalizedName(locale);
-        productDescription = product.getLocalizedDescription(locale);
+        payType = ALIPAY;
     }
 
-    public KiiOrder() {
-
-    }
-
-    public static class Builder {
-
-        private KiiOrder order;
-
-        public Builder() {
-            order = new KiiOrder();
-        }
-
-        public Builder setSubject(String subject) {
-            order.subject = subject;
-            return this;
-        }
-
-        public Builder setBody(String body) {
-            order.body = body;
-            return this;
-        }
-
-        public Builder setPrice(int price) {
-            order.price = price;
-            return this;
-        }
-
-        public Builder setId(String id) {
-            order.id = id;
-            return this;
-        }
-
-        public Builder setUserId(String userId) {
-            order.userId = userId;
-            return this;
-        }
-
-        public Builder setCurrency(Currency currency) {
-            order.currency = currency;
-            return this;
-        }
-
-        public Builder setPayType(String payType) {
-            order.payType = payType;
-            return this;
-        }
-
-        public KiiOrder create() {
-            return order;
-        }
-
-    }
 }

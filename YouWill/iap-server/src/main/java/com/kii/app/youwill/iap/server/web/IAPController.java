@@ -39,9 +39,10 @@ public class IAPController {
 
 	}
 
-
-
-
+    @RequestMapping(value="/queryOrder/order/{orderID}",produces="application/json")
+    public String queryOrderStatus(@PathVariable("orderID") String orderID) {
+        return service.queryTransaction(orderID);
+    }
 
 	@RequestMapping(value="/finishOrder/order/{orderID}",produces="application/json")
 	public String finishTransaction(

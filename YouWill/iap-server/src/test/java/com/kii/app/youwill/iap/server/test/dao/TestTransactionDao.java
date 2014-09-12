@@ -186,7 +186,7 @@ public class TestTransactionDao extends BaseTest {
 		super.initRequest();
 
 
-		appContext.asApp();
+		//appContext.asApp();
 
 
 		ObjectCreationResponse resp=new ObjectCreationResponse();
@@ -247,7 +247,7 @@ public class TestTransactionDao extends BaseTest {
 		assertEquals(appContext.isSandBox(), true);
 
 
-		appContext.asApp();
+		//appContext.asApp();
 
 
 		ObjectCreationResponse resp=new ObjectCreationResponse();

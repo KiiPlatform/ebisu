@@ -23,8 +23,11 @@ public class ServiceException extends RuntimeException{
 	}
 
 	public HttpStatus getHttpStatus(){
-
-		return  HttpStatus.valueOf(errorCode.code);
+        try {
+            return HttpStatus.valueOf(errorCode.code);
+        } catch (Exception e) {
+            return HttpStatus.INTERNAL_SERVER_ERROR;
+        }
 	}
 
 	public JSONObject getErrorCode(){

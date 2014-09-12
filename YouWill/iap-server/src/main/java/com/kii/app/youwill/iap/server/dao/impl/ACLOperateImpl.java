@@ -25,111 +25,84 @@ import java.util.Set;
 @Component
 public class ACLOperateImpl implements ACLOperate {
 
-	@Autowired
-	private ACLClient aclClient;
+    @Autowired
+    private ACLClient aclClient;
 
-	private UserID getCurrUserID(){
-		return context.getCurrUserID();
-	}
-
-	@Autowired
-	private AppContext context;
+    @Autowired
+    private AppContext context;
 
 
+    private Map<Verb, Set<SubjectData>> getBucketACL(String bucketName, ObjectID objID) {
 
-	private Map<Verb,Set<SubjectData>> getBucketACL(String bucketName,ObjectID objID){
+        Map<Verb, Set<SubjectData>> verbMap = aclClient.get(context.getAccessToken(), context.getCurrScope(),
+                BucketType.DEFAULT, new BucketID(bucketName), objID, null);
 
-			Map<Verb, Set<SubjectData>>  verbMap= aclClient.get(context.getAccessToken(), context.getCurrScope(),
-					BucketType.DEFAULT, new BucketID(bucketName), objID, null);
-
-			return verbMap;
-
-
-	}
-
-	protected  void addBucketACL(String bucketName,ObjectID objID,UserID userID,Verb verb){
-		try {
-
-			aclClient.grant(context.getAccessToken(),context.getCurrScope(),
-					BucketType.DEFAULT,new BucketID(bucketName),objID,null,verb,
-					userID);
-
-		}catch(KiiException e){
-			throw new KiiRuntimeException(e);
-		}
-	}
-
-	protected  void removeBucketACL(String bucketName,ObjectID objID,UserID userID,Verb verb){
-		try {
-
-			aclClient.revoke(context.getAccessToken(),context.getCurrScope(),
-					BucketType.DEFAULT,new BucketID(bucketName),objID,null,verb,
-					userID);
-
-		}catch(KiiException e){
-			throw new KiiRuntimeException(e);
-		}
-	}
-
-	public void addBucketACLToCurrUser(String bucketName,BucketRight verb){
-
-		addBucketACL(bucketName,null,getCurrUserID(),verb.getVerb());
-	}
-
-	public void addObjectACLToCurrUser(String bucketName,ObjectID objID,ObjectRight verb){
-		addBucketACL(bucketName,objID,getCurrUserID(),verb.getVerb());
-
-	}
-
-	public void removeBucketACLForCurrUser(String bucketName,BucketRight verb){
-		removeBucketACL(bucketName, null, getCurrUserID(), verb.getVerb());
-
-	}
-
-	public void removeObjectACLForCurrUser(String bucketName,ObjectID objID,ObjectRight verb){
-		removeBucketACL(bucketName,objID,getCurrUserID(),verb.getVerb());
-
-	}
+        return verbMap;
 
 
+    }
 
-	public void addBucketACLToSpecUser(String bucketName,BucketRight verb,SpecUser specUser){
+    protected void addBucketACL(String bucketName, ObjectID objID, UserID userID, Verb verb) {
+        try {
 
-		addBucketACL(bucketName,null,specUser.getUserID(),verb.getVerb());
-	}
+            aclClient.grant(context.getAccessToken(), context.getCurrScope(),
+                    BucketType.DEFAULT, new BucketID(bucketName), objID, null, verb,
+                    userID);
 
-	public void addObjectACLToSpecUser(String bucketName,ObjectID objID,ObjectRight verb,SpecUser specUser){
-		addBucketACL(bucketName,objID,specUser.getUserID(),verb.getVerb());
+        } catch (KiiException e) {
+            throw new KiiRuntimeException(e);
+        }
+    }
 
-	}
+    protected void removeBucketACL(String bucketName, ObjectID objID, UserID userID, Verb verb) {
+        try {
 
-	public void removeBucketACLForSpecUser(String bucketName,BucketRight verb,SpecUser specUser){
-		removeBucketACL(bucketName,null,specUser.getUserID(),verb.getVerb());
+            aclClient.revoke(context.getAccessToken(), context.getCurrScope(),
+                    BucketType.DEFAULT, new BucketID(bucketName), objID, null, verb,
+                    userID);
 
-	}
+        } catch (KiiException e) {
+            throw new KiiRuntimeException(e);
+        }
+    }
 
-	public void removeObjectACLForSpecUser(String bucketName,ObjectID objID,ObjectRight verb,SpecUser specUser){
-		removeBucketACL(bucketName,objID,specUser.getUserID(),verb.getVerb());
+    public void addBucketACLToSpecUser(String bucketName, BucketRight verb, SpecUser specUser) {
 
-	}
+        addBucketACL(bucketName, null, specUser.getUserID(), verb.getVerb());
+    }
+
+    public void addObjectACLToSpecUser(String bucketName, ObjectID objID, ObjectRight verb, SpecUser specUser) {
+        addBucketACL(bucketName, objID, specUser.getUserID(), verb.getVerb());
+
+    }
+
+    public void removeBucketACLForSpecUser(String bucketName, BucketRight verb, SpecUser specUser) {
+        removeBucketACL(bucketName, null, specUser.getUserID(), verb.getVerb());
+
+    }
+
+    public void removeObjectACLForSpecUser(String bucketName, ObjectID objID, ObjectRight verb, SpecUser specUser) {
+        removeBucketACL(bucketName, objID, specUser.getUserID(), verb.getVerb());
+
+    }
 
 
-	public Map<ObjectRight,Set<UserID>>  getObjectACLs(String bucketName,ObjectID id) {
+    public Map<ObjectRight, Set<UserID>> getObjectACLs(String bucketName, ObjectID id) {
 
 
-		Map<Verb,Set<SubjectData>>   verbMap=getBucketACL(bucketName,id);
+        Map<Verb, Set<SubjectData>> verbMap = getBucketACL(bucketName, id);
 
-		Map<ObjectRight,Set<UserID>>  verbUserMap=new HashMap<ObjectRight,Set<UserID>>();
-		for(Map.Entry<Verb,Set<SubjectData>> entry:verbMap.entrySet()){
+        Map<ObjectRight, Set<UserID>> verbUserMap = new HashMap<ObjectRight, Set<UserID>>();
+        for (Map.Entry<Verb, Set<SubjectData>> entry : verbMap.entrySet()) {
 
-			Set<UserID> setUser=new HashSet<UserID>();
-			for(SubjectData sub:entry.getValue()){
-				setUser.add(sub.getUserID());
-			}
-			verbUserMap.put(ObjectRight.valueOf(entry.getKey().name()),setUser);
+            Set<UserID> setUser = new HashSet<UserID>();
+            for (SubjectData sub : entry.getValue()) {
+                setUser.add(sub.getUserID());
+            }
+            verbUserMap.put(ObjectRight.valueOf(entry.getKey().name()), setUser);
 
-		}
-		return verbUserMap;
+        }
+        return verbUserMap;
 
-	}
+    }
 }

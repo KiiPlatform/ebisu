@@ -1,7 +1,5 @@
 package com.kii.app.youwill.iap.server.dao.impl;
 
-import com.kii.app.youwill.iap.server.aop.KiiScope;
-import com.kii.app.youwill.iap.server.aop.ScopeType;
 import com.kii.app.youwill.iap.server.dao.CommBucketOperate;
 import com.kii.app.youwill.iap.server.dao.ConfigInfoStore;
 import com.kii.app.youwill.iap.server.entity.AlipayConfig;
@@ -29,7 +27,6 @@ import java.util.List;
  * Created by ethan on 14-7-25.
  */
 @Component
-@KiiScope(scope= ScopeType.Admin,right=ScopeType.Admin)
 public class ConfigInfoStoreImpl implements ConfigInfoStore {
 
 

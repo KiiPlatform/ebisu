@@ -110,7 +110,7 @@ public class TestConfigDao extends BaseTest {
 
 		super.initRequest();
 
-		appContext.asApp();
+		//appContext.asApp();
 
 		when(bucketClient.query(
 				eq(new AccessToken("adminToken")),
@@ -119,7 +119,7 @@ public class TestConfigDao extends BaseTest {
 				eq(BucketType.DEFAULT),
 				argThat(new QueryReq()))).thenReturn(getQueryResponse());
 
-		appContext.exitApp();
+		//appContext.exitApp();
 
 
 	}

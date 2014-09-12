@@ -48,14 +48,6 @@ public interface ACLOperate {
 		}
 	}
 
-	public void addBucketACLToCurrUser(String bucketName,BucketRight verb);
-
-	public void addObjectACLToCurrUser(String bucketName,ObjectID objID,ObjectRight verb);
-
-	public void removeBucketACLForCurrUser(String bucketName,BucketRight verb);
-
-	public void removeObjectACLForCurrUser(String bucketName,ObjectID objID,ObjectRight verb);
-
 	public enum SpecUser{
 		ANONYMOUS_USER,ANY_AUTHENTICATED_USER;
 

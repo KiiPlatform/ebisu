@@ -19,15 +19,11 @@ public class KiiReceipt {
     }
 
     public String getTransactionId() {
-        return (mObject != null && mObject.has("transaction_id")) ? mObject.getString("transaction_id") : null;
+        return (mObject != null && mObject.has("transactionID")) ? mObject.getString("transactionID") : null;
     }
 
     public int getQuantity() {
         return (mObject != null && mObject.has("quantity")) ? mObject.getInt("quantity") : 0;
-    }
-
-    public double getUnityPrice() {
-        return (mObject != null && mObject.has("unity_price")) ? mObject.getInt("unity_price") : 0;
     }
 
     public double getPrice() {
@@ -40,21 +36,16 @@ public class KiiReceipt {
     }
 
     public String getProductName() {
-        return (mObject != null && mObject.has("product_name")) ? mObject.getString("product_name") : null;
+        return (mObject != null && mObject.has("subject")) ? mObject.getString("subject") : null;
     }
 
 
     public String getProductId() {
-        return (mObject != null && mObject.has("product_id")) ? mObject.getString("product_id") : null;
+        return (mObject != null && mObject.has("productID")) ? mObject.getString("productID") : null;
     }
 
     public String getDescription() {
-        return (mObject != null && mObject.has("description")) ? mObject.getString("description") : null;
-    }
-
-    public KiiProduct.CONSUME_TYPE getConsumeType() {
-        return (mObject != null && mObject.has("consume_type")) ?
-                KiiProduct.CONSUME_TYPE.values()[mObject.getInt("consume_type")] : KiiProduct.CONSUME_TYPE.NONE;
+        return (mObject != null && mObject.has("body")) ? mObject.getString("body") : null;
     }
 
     public long getCreatedTime() {

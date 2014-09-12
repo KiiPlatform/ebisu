@@ -2,8 +2,6 @@ package com.kii.app.youwill.iap.server.dao.impl;
 
 import com.kii.app.youwill.iap.server.alipay.RSA;
 import com.kii.app.youwill.iap.server.alipay.YouWillAlipayConfig;
-import com.kii.app.youwill.iap.server.aop.KiiScope;
-import com.kii.app.youwill.iap.server.aop.ScopeType;
 import com.kii.app.youwill.iap.server.common.IAPUtils;
 import com.kii.app.youwill.iap.server.dao.ACLOperate;
 import com.kii.app.youwill.iap.server.dao.CommBucketOperate;
@@ -16,6 +14,7 @@ import com.kii.app.youwill.iap.server.service.StartTransactionParam;
 import com.kii.app.youwill.iap.server.service.UUIDGeneral;
 import com.kii.app.youwill.iap.server.web.AppContext;
 import com.kii.platform.ufp.bucket.ObjectID;
+import com.kii.platform.ufp.user.UserID;
 import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -30,7 +29,6 @@ import java.util.Map;
  * Created by ethan on 14-7-25.
  */
 @Component
-@KiiScope(scope = ScopeType.Admin)
 public class TransactionDaoImpl implements TransactionDao {
 
     @Autowired
@@ -106,7 +104,7 @@ public class TransactionDaoImpl implements TransactionDao {
 
     private String startNewTransaction(Product product, StartTransactionParam param) {
         Transaction transaction = new Transaction(product,
-                appContext.getCurrUserID(),
+                new UserID(param.getUserID()),
                 param.getAuthorID(), param.getAppID());
         transaction.setPayType(param.getPayType());
         transaction.setPrice(param.getPrice());

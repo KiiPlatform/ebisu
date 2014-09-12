@@ -75,7 +75,6 @@ public class AppContext {
 	@Autowired
 	private UserClient user;
 
-	protected ThreadLocal<TokenInfo> local = new ThreadLocal<TokenInfo>();
 
 	@PostConstruct
 	public void initAdminToken(){
@@ -83,53 +82,6 @@ public class AppContext {
 		adminToken=auth.loginAsAppAdmin(appID,clientID,secret).getAccessToken();
 
 	}
-
-	public void bindRequest(HttpServletRequest request){
-
-		String auth = request.getHeader("Authorization");
-
-		if(StringUtils.isBlank(auth)){
-			throw new ServiceException(IAPErrorCode.TOKEN_IS_NULL);
-		}
-
-		String tokenStr = StringUtils.substringAfterLast(auth, " ");
-
-
-		boolean isSandBox=false;
-
-		String uri=request.getRequestURI();
-		if(uri.contains("/sandbox/")){
-			isSandBox=true;
-		}
-
-
-
-		local.set(new TokenInfo(tokenStr,isSandBox,getUserIDByToken(new AccessToken(tokenStr))));
-
-		isAdminLocal.set(false);
-
-	}
-
-    public UserID getCurrUserID(){
-
-        return local.get().userID;
-    }
-
-
-	private UserID getUserIDByToken(AccessToken token) {
-
-		try {
-
-			return  user.getUser(new AccessToken(token)).getUserID();
-
-		} catch (UserNotFoundException e) {
-			throw new ServiceException(IAPErrorCode.USER_NOT_FOUND);
-		}
-
-	}
-
-
-	private ThreadLocal<Boolean> isAdminLocal=new ThreadLocal<Boolean>();
 
     private ThreadLocal<UserID>  asUserLocal=new ThreadLocal<UserID>();
 
@@ -140,89 +92,33 @@ public class AppContext {
 
 	public ObjectScope getCurrScope() {
 
-
        UserID id=asUserLocal.get();
-       if(id==null) {
-          id = this.local.get().userID;
-       }
-        if(id.toString().equals("app")){
+
+       if(id==null){
             return new ObjectScope(appID);
-        }else {
+       }else {
             return new ObjectScope(appID, id);
-        }
+       }
 	}
 
-	public void asApp(){
-        asUserLocal.set(new UserID("app"));
-	}
 
 	public void exitScope(){
 
         asUserLocal.remove();
 	}
 
-	public void su(){
-		isAdminLocal.set(true);
-	}
-
-	public void exit(){
-		isAdminLocal.set(false);
-	}
 
 
 	public AccessToken getAccessToken() {
 
-		if(isAdminLocal.get()){
-			return adminToken;
-
-		}else {
-			return local.get().getAccessToken();
-		}
+		return adminToken;
 	}
 
 	public boolean isSandBox() {
-		return local.get().isSandbox();
+		return false;
 	}
 
-    public void initWithAdmin() {
-
-        boolean isSandBox=false;
-
-        local.set(new TokenInfo(adminToken.toString(), isSandBox,null));
-        System.out.println("AdminToken: " + local.get().getAccessToken());
-        isAdminLocal.set(true);
-    }
 
 
-    protected class TokenInfo {
-
-
-		private String token;
-
-
-		final boolean isSandbox;
-
-        UserID userID;
-
-		public TokenInfo(String token,boolean isSandBox,UserID userID) {
-			this.token=token;
-			this.isSandbox=isSandBox;
-            this.userID=userID;
-		}
-
-
-
-		public AccessToken getAccessToken() {
-			return new AccessToken(token);
-		}
-
-
-
-		public boolean isSandbox(){
-			return isSandbox;
-		}
-
-
-	}
 
 }

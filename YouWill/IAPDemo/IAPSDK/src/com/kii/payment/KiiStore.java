@@ -21,7 +21,7 @@ public class KiiStore {
     private static final String TAG = KiiStore.class.getName();
 
     public static List<KiiProduct> listProducts(KiiClause clause) {
-        KiiClause appFilterClause = KiiClause.equals("appID", YouWillIAPSDK.gYouWillAppId);
+        KiiClause appFilterClause = KiiClause.equals("appID", YouWillIAPSDK.getYouWillAppID());
 
         KiiQuery localQuery = new KiiQuery(
                 clause == null ? appFilterClause : clause);
@@ -40,11 +40,11 @@ public class KiiStore {
     }
 
     public static List<KiiReceipt> listReceipts(KiiClause clause, KiiUser user) {
-        KiiClause appFilterClause = KiiClause.equals("appID", YouWillIAPSDK.gYouWillAppId);
+        KiiClause appFilterClause = KiiClause.equals("appID", YouWillIAPSDK.getYouWillAppID());
         KiiQuery localQuery = new KiiQuery(
                 clause == null ? appFilterClause : clause);
         try {
-            KiiQueryResult<KiiObject> result = user.bucket("receipts").query(localQuery);
+            KiiQueryResult<KiiObject> result = user.bucket("receipt").query(localQuery);
             List<KiiReceipt> receipts = new ArrayList<KiiReceipt>();
             for (KiiObject object : result.getResult()) {
                 receipts.add(new KiiReceipt(object));
@@ -56,14 +56,14 @@ public class KiiStore {
         return null;
     }
 
-    public static KiiReceipt getReceipt(KiiProduct product, KiiUser user) {
-        List<KiiReceipt> receipts = listReceipts(KiiClause.equals("product_id", product.getId()),
+    public static KiiReceipt getReceipt(String productID, KiiUser user) {
+        List<KiiReceipt> receipts = listReceipts(KiiClause.equals("productID", productID),
                 user);
         return (receipts != null && receipts.size() > 0) ? receipts.get(0) : null;
     }
 
 
-    public static String toHexString(byte[] b) {
+    private static String toHexString(byte[] b) {
         StringBuilder sb = new StringBuilder(b.length * 2);
         for (int i = 0; i < b.length; i++) {
             sb.append(HEX_DIGITS[(b[i] & 0xf0) >>> 4]);
@@ -75,7 +75,7 @@ public class KiiStore {
     private static final char HEX_DIGITS[] = {'0', '1', '2', '3', '4', '5',
             '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 
-    public static String buildHash(String params, String key) {
+    private static String buildHash(String params, String key) {
         try {
             Utils.log(TAG, "buildHash, params is " + params);
             Utils.log(TAG, "buildHash, key is " + key);

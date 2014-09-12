@@ -1,8 +1,6 @@
 package com.kii.app.youwill.iap.server.dao.impl;
 
 
-import com.kii.app.youwill.iap.server.aop.KiiScope;
-import com.kii.app.youwill.iap.server.aop.ScopeType;
 import com.kii.app.youwill.iap.server.dao.CommBucketOperate;
 import com.kii.app.youwill.iap.server.dao.ProductDao;
 import com.kii.app.youwill.iap.server.entity.Product;
@@ -17,7 +15,6 @@ import org.springframework.stereotype.Component;
  * Created by ethan on 14-7-25.
  */
 @Component
-@KiiScope(scope= ScopeType.Admin)
 public class ProductDaoImpl implements ProductDao {
 
 	@Autowired

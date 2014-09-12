@@ -26,23 +26,23 @@ public class StartTransactionParam {
 
     private String authorID;
 
+    private String userID;
+
 
     public StartTransactionParam(String context) {
         try {
             JSONObject json = new JSONObject(context);
 
             payType = PayType.valueOf(json.getString("payType"));
-            verifySign = json.getString("verifySign");
-
             price = json.getString("price");
-
-            notifyURL = json.optString("notify_url");
-            appID = json.optString("app_id");
-            authorID = json.optString("author_id");
-
+            notifyURL = json.getString("notify_url");
+            appID = json.getString("app_id");
+            authorID = json.getString("author_id");
+            userID = json.getString("user_id");
             if (json.has("transactionID")) {
                 transactionID = json.getString("transactionID");
             }
+            verifySign = json.optString("verifySign");
         } catch (Exception e) {
             throw new ServiceException(IAPErrorCode.FORMAT_INVALID);
         }
@@ -120,4 +120,7 @@ public class StartTransactionParam {
         return authorID;
     }
 
+    public String getUserID() {
+        return userID;
+    }
 }

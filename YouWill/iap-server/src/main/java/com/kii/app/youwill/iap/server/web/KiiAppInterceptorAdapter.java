@@ -21,13 +21,6 @@ public class KiiAppInterceptorAdapter extends HandlerInterceptorAdapter {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws Exception {
-        if (isIAPCallback(request)) {
-            ctx.initWithAdmin();
-        } else if (request.getMethod().equals("POST")
-                || request.getMethod().equals("GET")) {
-            ctx.bindRequest(request);
-            response.setHeader("Access-Control-Allow-Origin", "*");
-        }
         return true;
     }
 
