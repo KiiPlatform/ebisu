@@ -27,7 +27,7 @@ static int kiiObj_update(char *bucketName, char *jsonObject, char *dataType, cha
 *
 *  \param  bucketName - the input of bucket name
 *               jsonObject - the input of object with json format
-*               dataType - the input of data type, it can be set NULL if object is not an specific data type in the platform
+*               dataType - the input of data type, the format should be like "mydata",  it can be set NULL if object is not an specific data type in the platform
 *               objectID - the output of objectID
 *
 *  \return 0:success; -1: failure
@@ -142,7 +142,7 @@ int kiiObj_create(char *bucketName, char *jsonObject, char *dataType, char *obje
 *
 *  \param  bucketName - the input of bucket name
 *               jsonObject - the input of object with json format
-*               dataType - the input of data type, it can be set NULL if object is not an specific data type in the platform
+*               dataType - the input of data type, the format should be like "mydata",  it can be set NULL if object is not an specific data type in the platform
 *               objectID - the input of objectID
 *
 *  \return  0:success; -1: failure
@@ -162,7 +162,7 @@ int kiiObj_createWithID(char *bucketName, char *jsonObject, char *dataType, char
 *
 *  \param  bucketName - the input of bucket name
 *               jsonObject - the input of object with json format
-*               dataType - the input of data type, it can be set NULL if object is not an specific data type in the platform
+*               dataType - the input of data type, the format should be like "mydata",  it can be set NULL if object is not an specific data type in the platform
 *               objectID - the input of objectID
 *
 *  \return  0:success; -1: failure
@@ -199,7 +199,7 @@ int kiiObj_partiallyUpdate(char *bucketName, char *jsonObject, char *objectID)
 *
 *  \param  bucketName - the input of bucket name
 *               jsonObject - the input of object with json format
-*               dataType - the input of data type, it can be set NULL if object is not an specific data type in the platform
+*               dataType - the input of data type, the format should be like "mydata",  it can be set NULL if object is not an specific data type in the platform
 *               objectID - the input of objectID
 *               updateOrCreateWithID - kind of "kiiObj_updateType_e" type
 *

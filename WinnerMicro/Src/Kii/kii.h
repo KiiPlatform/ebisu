@@ -12,7 +12,7 @@
 #define KII_PASSWORD_SIZE        50  //Matches ^[\\u0020-\\u007E]{4,50}
 #define KII_OBJECTID_SIZE 36
 #define KII_DATA_TPYE_SIZE 36
-#define KII_UPLOAD_ID_SIZE 20
+#define KII_UPLOAD_ID_SIZE 46
 #define KII_BUCKET_NAME_SIZE 20
 
 #define KII_SEND_BUF_SIZE 2048
