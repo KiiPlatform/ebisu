@@ -3,6 +3,8 @@ package com.kii.payment;
 import com.kii.cloud.storage.Kii;
 
 /**
+ * Class to perform initialization.
+ *
  * Created by Evan on 14-9-3.
  */
 public class YouWillIAPSDK {
@@ -14,6 +16,12 @@ public class YouWillIAPSDK {
 
     private static String gAuthorId = null;
 
+    /**
+     * Set the authorID and the appID
+     *
+     * @param authorId
+     * @param appId
+     */
     public static void init(String authorId, String appId) {
         gAuthorId = authorId;
         gYouWillAppId = appId;

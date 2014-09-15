@@ -5,11 +5,19 @@ import com.kii.cloud.storage.KiiObject;
 import java.util.Currency;
 
 /**
+ * This class represents the receipt of a payment given to the user.
+ *
  * Created by tian on 2/27/14.
  */
 public class KiiReceipt {
+
     private KiiObject mObject;
 
+    /**
+     * Constructs an KiiReceipt with the specified KiiObject
+     *
+     * @param object
+     */
     public KiiReceipt(KiiObject object) {
         mObject = object;
     }
@@ -30,15 +38,9 @@ public class KiiReceipt {
         return (mObject != null && mObject.has("price")) ? mObject.getInt("price") : 0;
     }
 
-    public Currency getCurrency() {
-        return (mObject != null && mObject.has("currency")) ? Currency
-                .getInstance(mObject.getString("currency")) : null;
-    }
-
     public String getProductName() {
         return (mObject != null && mObject.has("subject")) ? mObject.getString("subject") : null;
     }
-
 
     public String getProductId() {
         return (mObject != null && mObject.has("productID")) ? mObject.getString("productID") : null;

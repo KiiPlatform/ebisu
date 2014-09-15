@@ -13,6 +13,7 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
 import com.alipay.android.app.sdk.AliPay;
+import com.kii.payment.impl.BaseHelper;
 import com.kii.payment.impl.PrefUtil;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -48,9 +49,11 @@ public class KiiPayment {
     private static String STATUS_COMPLETED = "completed";
 
     /**
-     * @param activity
-     * @param order
-     * @param callback
+     * Constructs an instance of KiiPayment with the specified order.
+     *
+     * @param activity - the host activity
+     * @param order - order to pay
+     * @param callback - callback listener
      */
     public KiiPayment(Activity activity, KiiOrder order, KiiPaymentCallback callback) {
         this.context = activity;
@@ -60,9 +63,11 @@ public class KiiPayment {
     }
 
     /**
-     * @param fragment
-     * @param order
-     * @param callback
+     * Constructs an instance of KiiPayment with the specified order.
+     *
+     * @param fragment - the host fragment
+     * @param order - the order to pay
+     * @param callback - callback listener
      */
     public KiiPayment(Fragment fragment, KiiOrder order, KiiPaymentCallback callback) {
         this.context = fragment.getActivity();
@@ -73,9 +78,11 @@ public class KiiPayment {
     }
 
     /**
-     * @param fragment
-     * @param order
-     * @param callback
+     * Constructs an instance of KiiPayment with the specified order.
+     *
+     * @param fragment - the host fragment
+     * @param order - the order to pay
+     * @param callback - callback listener
      */
     public KiiPayment(android.support.v4.app.Fragment fragment, KiiOrder order,
                       KiiPaymentCallback callback) {
@@ -87,9 +94,11 @@ public class KiiPayment {
     }
 
     /**
-     * @param context
-     * @param errorCode
-     * @return
+     * Get detail error information by errorCode.
+     *
+     * @param context - application context
+     * @param errorCode - the errorCode
+     * @return the error message
      */
     public static String getErrorMessage(Context context, int errorCode) {
         try {
@@ -111,7 +120,7 @@ public class KiiPayment {
     }
 
     /**
-     *
+     * Pay the order through AliPay.
      */
     public void pay() {
         //TODO: check client and cloud status.
@@ -125,14 +134,26 @@ public class KiiPayment {
         getTransactionFromServer();
     }
 
+    /**
+     * Get the transaction information after the payment is successful.
+     *
+     * @return - the transaction information in json format.
+     */
     public String getTransactionInfo() {
         return mTransactionInfo;
     }
 
+    /**
+     * Clear cached result related to the specified order.
+     */
     public void clearCachedResult() {
         PrefUtil.clearCachedResult(context, order.getProductId());
     }
 
+    /**
+     * Return the number of retrying to confirm the payment with cloud.
+     * @return
+     */
     public int getRetryNum() {
         return PrefUtil.getRetryNum(context, order.getProductId());
     }

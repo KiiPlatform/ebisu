@@ -9,6 +9,8 @@ import org.json.JSONObject;
 import com.kii.cloud.storage.KiiUser;
 
 /**
+ * KiiOrder class
+ *
  * Created by tian on 2/27/14.
  */
 public class KiiOrder {
@@ -84,9 +86,14 @@ public class KiiOrder {
                 "productId: " + productId + ", userId: " + userId + ", currency: " + currency;
     }
 
-    public KiiOrder(String string) {
+    /**
+     * Constructs an instance of KiiOrder with the specified order in json string. The json string might contains
+     * contains the following fields: subject, body, price, id, product_id, user_id, currency, consume_type.
+     * @param order
+     */
+    public KiiOrder(String order) {
         try {
-            JSONObject object = new JSONObject(string);
+            JSONObject object = new JSONObject(order);
             subject = object.optString("subject");
             body = object.optString("body");
             price = object.optInt("price");
@@ -101,14 +108,18 @@ public class KiiOrder {
         }
     }
 
+    /**
+     * Constructs an instance of KiiOrder with the specified KiiProduct and KiiUser.
+     *
+     * @param product
+     * @param user
+     */
     public KiiOrder(KiiProduct product, KiiUser user) {
         subject = product.getName();
         body = product.getDescription();
         price = product.getPrice();
         productId = product.getId();
         userId = user.toUri().getLastPathSegment();
-        //currency = product.getCurrency();
-        //productDescription = product.getLocalizedDescription();
         consumeType = product.getConsumeType().ordinal();
         payType = ALIPAY;
     }

@@ -1,6 +1,8 @@
 package com.kii.payment;
 
 /**
+ * Utility class used to defined all the constants.
+ *
  * Created by tian on 13-7-23.
  */
 public class Constants {

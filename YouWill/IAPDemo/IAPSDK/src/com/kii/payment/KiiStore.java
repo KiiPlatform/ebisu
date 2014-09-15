@@ -14,12 +14,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * This is a utility class to access KiiProduct, and KiiReceipt from KiiCloud.
+ *
  * Created by tian on 2/27/14.
  */
 public class KiiStore {
 
     private static final String TAG = KiiStore.class.getName();
 
+    /**
+     * List KiiProduct controlled by the specified KiiClause.
+     *
+     * @param clause
+     * @return
+     */
     public static List<KiiProduct> listProducts(KiiClause clause) {
         KiiClause appFilterClause = KiiClause.equals("appID", YouWillIAPSDK.getYouWillAppID());
 
@@ -39,6 +47,13 @@ public class KiiStore {
         return null;
     }
 
+    /**
+     * List KiiReceipt of the KiiUser, controlled by the specified KiiClause.
+     *
+     * @param clause
+     * @param user
+     * @return
+     */
     public static List<KiiReceipt> listReceipts(KiiClause clause, KiiUser user) {
         KiiClause appFilterClause = KiiClause.equals("appID", YouWillIAPSDK.getYouWillAppID());
         KiiQuery localQuery = new KiiQuery(
@@ -56,6 +71,12 @@ public class KiiStore {
         return null;
     }
 
+    /**
+     * Get a KiiReceipt of the KiiUser for one particular KiiProduct, specified by the productID.
+     * @param productID
+     * @param user
+     * @return
+     */
     public static KiiReceipt getReceipt(String productID, KiiUser user) {
         List<KiiReceipt> receipts = listReceipts(KiiClause.equals("productID", productID),
                 user);

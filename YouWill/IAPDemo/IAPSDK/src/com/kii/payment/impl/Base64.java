@@ -1,4 +1,4 @@
-package com.kii.payment;
+package com.kii.payment.impl;
 
 /**
  * Created by tian on 14-1-3.

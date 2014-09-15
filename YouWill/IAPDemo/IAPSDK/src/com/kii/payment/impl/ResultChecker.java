@@ -1,4 +1,4 @@
-package com.kii.payment;
+package com.kii.payment.impl;
 
 import org.json.JSONObject;
 

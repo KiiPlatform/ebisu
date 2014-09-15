@@ -4,11 +4,11 @@
  * author: shiqun.shi@alipay.com
  */
 
-package com.kii.payment;
+package com.kii.payment.impl;
 
 import org.json.JSONObject;
 
-class BaseHelper {
+public class BaseHelper {
 
     /**
      * Alipay return value to json
@@ -17,7 +17,7 @@ class BaseHelper {
      * @param split
      * @return
      */
-    static JSONObject string2JSON(String str, String split) {
+    public static JSONObject string2JSON(String str, String split) {
         JSONObject json = new JSONObject();
         try {
             String[] arrStr = str.split(split);

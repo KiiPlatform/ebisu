@@ -4,7 +4,7 @@
  * author: shiqun.shi@alipay.com
  */
 
-package com.kii.payment;
+package com.kii.payment.impl;
 
 final class AlixId {
     private static final int BASE_ID = 0;

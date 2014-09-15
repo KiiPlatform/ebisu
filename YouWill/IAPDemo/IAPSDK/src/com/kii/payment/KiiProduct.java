@@ -14,6 +14,11 @@ public class KiiProduct {
 
     private KiiObject mObject;
 
+    /**
+     * Constructs an instance of KiiProduct with the specified KiiObject.
+     *
+     * @param object - product from KiiCloud.
+     */
     public KiiProduct(KiiObject object) {
         mObject = object;
     }
@@ -46,6 +51,12 @@ public class KiiProduct {
         none, permanent, consumable, periodical;
     }
 
+    /**
+     * Get the consume type of the product. If the consume type is CONSUME_TYPE.permanent, it can only be purchased
+     * ONCE by one particular user. if the type is CONSUME_TYPE.consumable, it can be purchased multiple times.
+     *
+     * @return consume type
+     */
     public CONSUME_TYPE getConsumeType() {
         try {
             return CONSUME_TYPE.valueOf(mObject.getString("consumeType"));
@@ -57,7 +68,10 @@ public class KiiProduct {
     }
 
     /**
+     * Determine if the product has been purchased or not by the specified KiiUser
      *
+     * @param user
+     * @return true if the user has purchased the product.
      */
     public boolean isPurchased(KiiUser user) {
         if (user == null) {
