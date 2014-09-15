@@ -1,51 +1,52 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "kii.h"
 #include "kii_def.h"
-#include "kii_meta.h"
 #include "kii_object.h"
 #include "kii_hal.h"
-extern char g_netBuf[KII_NETBUF_SIZE];
-extern kii_meta_struct g_kiiMeta;
+
+extern kii_data_struct g_kii_data;
+
+static char mBucketName[KII_BUCKET_NAME_SIZE+1];
+static char mObjectID[KII_OBJECTID_SIZE+1];
+static char mDataType[KII_DATA_TPYE_SIZE+1];
+static char mUploadID[KII_UPLOAD_ID_SIZE+1];
+
+static unsigned int mObjBodyTotalLength;
+static unsigned int mObjBodyCurrentPosition;
+static int mSocketNum;
 
 
-extern char *kii_getHost(void);
-extern char *kii_getAppID(void);
-extern char * kii_getAppKey(void);
-
-static int kiiObj_update(char *bucketName, char *jsonObject, char *objectID, int updateOrCreateWithID);
+static int kiiObj_update(char *bucketName, char *jsonObject, char *dataType, char *objectID, int updateOrCreateWithID);
 
 
 /*****************************************************************************
 *
 *  kiiObj_create
 *
-*  \param: bucketName: the input of bucket name
-*               jsonObject: the input of object with json format
-*               objectID: the output of objectID
+*  \param  bucketName - the input of bucket name
+*               jsonObject - the input of object with json format
+*               dataType - the input of data type, it can be set NULL if object is not an specific data type in the platform
+*               objectID - the output of objectID
 *
-*  \return 0:success, -1: failure
+*  \return 0:success; -1: failure
 *
 *  \brief  create object
 *
 *****************************************************************************/
-int kiiObj_create(char *bucketName, char *jsonObject, char *objectID)
+int kiiObj_create(char *bucketName, char *jsonObject, char *dataType, char *objectID)
 {
-    int socketNum;
     char * p1;
     char * p2;
     char *buf;
-    unsigned char ipBuf[4];
 
-    buf = g_netBuf;
-	
-    memset(buf, 0, KII_NETBUF_SIZE);
+    buf = g_kii_data.sendBuf;
+    memset(buf, 0, KII_SEND_BUF_SIZE);
     strcpy(buf, STR_POST);
     // url
-    //strcpy(buf+strlen(buf), "http://");
-    //strcpy(buf+strlen(buf), kii_getHost());
     strcpy(buf+strlen(buf), "/api/apps/");
-    strcpy(buf+strlen(buf), kii_getAppID());
+    strcpy(buf+strlen(buf), g_kii_data.appID);
     strcpy(buf+strlen(buf), "/users/me/buckets/");
     strcpy(buf+strlen(buf),bucketName);
     strcpy(buf+strlen(buf), "/objects");
@@ -55,151 +56,165 @@ int kiiObj_create(char *bucketName, char *jsonObject, char *objectID)
    strcpy(buf+strlen(buf), "Connection: Keep-Alive\r\n");
    //Host
    strcpy(buf+strlen(buf), "Host: ");
-   strcpy(buf+strlen(buf), kii_getHost());
+   strcpy(buf+strlen(buf), g_kii_data.host);
    strcpy(buf+strlen(buf), STR_CRLF);
     //x-kii-appid
     strcpy(buf+strlen(buf), STR_KII_APPID);
-    strcpy(buf+strlen(buf), kii_getAppID()); 
+    strcpy(buf+strlen(buf), g_kii_data.appID); 
    strcpy(buf+strlen(buf), STR_CRLF);
     //x-kii-appkey 
     strcpy(buf+strlen(buf), STR_KII_APPKEY);
-    strcpy(buf+strlen(buf), kii_getAppKey());
+    strcpy(buf+strlen(buf), g_kii_data.appKey);
    strcpy(buf+strlen(buf), STR_CRLF);
    //content-type	
-    strcpy(buf+strlen(buf), STR_CONTENT_TYPE);
-    strcpy(buf+strlen(buf), "application/vnd.");
-    strcpy(buf+strlen(buf), kii_getAppID());
-    strcpy(buf+strlen(buf), ".mydata+json");
+   strcpy(buf+strlen(buf), STR_CONTENT_TYPE);
+   if (dataType !=NULL)
+   {
+       if (strlen(dataType) > 0)
+       {
+           strcpy(buf+strlen(buf), "application/vnd.");
+           strcpy(buf+strlen(buf), g_kii_data.appID);
+           strcpy(buf+strlen(buf), ".");
+           strcpy(buf+strlen(buf), dataType);
+           strcpy(buf+strlen(buf), "+json");
+       }
+        else
+	{
+           strcpy(buf+strlen(buf), "application/json");
+       }
+   }
+   else
+   {
+       strcpy(buf+strlen(buf), "application/json");
+   }
    strcpy(buf+strlen(buf), STR_CRLF);
    //Authorization
     strcpy(buf+strlen(buf), STR_AUTHORIZATION);
     strcpy(buf+strlen(buf),  " Bearer ");
-    strcpy(buf+strlen(buf), g_kiiMeta.accessToken); //the access token musb be checked before calling kiiObj_create
+    strcpy(buf+strlen(buf), g_kii_data.accessToken); 
    strcpy(buf+strlen(buf), STR_CRLF);
     //Content-Length
    strcpy(buf+strlen(buf), STR_CONTENT_LENGTH);
-   sprintf(buf+strlen(buf), "%d", strlen(jsonObject));
+   sprintf(buf+strlen(buf), "%d", strlen(jsonObject)+1);
    strcpy(buf+strlen(buf), STR_CRLF);
    strcpy(buf+strlen(buf), STR_CRLF);
-    if ((strlen(buf)+strlen(jsonObject)) > KII_NETBUF_SIZE)
+    if ((strlen(buf)+strlen(jsonObject)+1) > KII_SEND_BUF_SIZE)
     {
-        KII_DEBUG("kii-error: buffer overflow!\r\n");
+        KII_DEBUG("kii-error: buffer overflow !\r\n");
         return -1;
     }
    strcpy(buf+strlen(buf), jsonObject);
+   strcpy(buf+strlen(buf), STR_LF);
+   
+    g_kii_data.sendDataLen = strlen(buf);
 
-    if (kiiHAL_dns(kii_getHost(), ipBuf) < 0)
+    if (kiiHal_transfer() != 0)
     {
-        KII_DEBUG("kii-error: dns failed !\r\n");
+        KII_DEBUG("kii-error: transfer data error !\r\n");
         return -1;
     }
-    KII_DEBUG("Host ip:%d.%d.%d.%d\r\n", ipBuf[3], ipBuf[2], ipBuf[1], ipBuf[0]);
-		
-    socketNum = kiiHAL_socketCreate();
-    if (socketNum < 0)
-    {
-        KII_DEBUG("kii-error: create socket failed !\r\n");
-        return -1;
-    }
-	
-	
-    if (kiiHAL_connect(socketNum, (char*)ipBuf) < 0)
-    {
-        KII_DEBUG("kii-error: connect to server failed \r\n");
-	 kiiHAL_socketClose(socketNum);
-        return -1;
-    }
-    
-    if (kiiHAL_socketSend(socketNum, buf, strlen(buf)) < 0)
-    {
-        
-        KII_DEBUG("kii-error: send data fail\r\n");
-	 kiiHAL_socketClose(socketNum);
-        return -1;
-    }
+    buf = g_kii_data.rcvdBuf;
 
-    memset(buf, 0, KII_NETBUF_SIZE);
-	
-    if (kiiHAL_socketRecv(socketNum, buf, KII_NETBUF_SIZE) < 0)
-    {
-        KII_DEBUG("kii-error: recv data fail\r\n");
-	 kiiHAL_socketClose(socketNum);
-        return -1;
-    }
-
-    p1 = strstr(buf, "objectID");
+    p1 = strstr(buf, "HTTP/1.1 201");
+    p1 = strstr(p1, "objectID");
     p1 = strstr(p1, ":");
     p1 = strstr(p1, "\"");
 	
     if (p1 == NULL)
     {
-        KII_DEBUG("kii-error: get objectID fail\r\n");
-	 kiiHAL_socketClose(socketNum);
-        return -1;
+	 return -1;
     }
     p1 +=1;
     p2 = strstr(p1, "\"");
     if (p2 == NULL)
     {
-        KII_DEBUG("kii-error: get objectID fail\r\n");
-	 kiiHAL_socketClose(socketNum);
-        return -1;
+	 return -1;
     }
     memset(objectID, 0, KII_OBJECTID_SIZE+1);
     memcpy(objectID, p1, p2-p1);
-     kiiHAL_socketClose(socketNum);
+	
     return 0;
 }
 
-int kiiObj_createWithID(char *bucketName, char *jsonObject, char *objectID)
+/*****************************************************************************
+*
+*  kiiObj_createWithID
+*
+*  \param  bucketName - the input of bucket name
+*               jsonObject - the input of object with json format
+*               dataType - the input of data type, it can be set NULL if object is not an specific data type in the platform
+*               objectID - the input of objectID
+*
+*  \return  0:success; -1: failure
+*
+*  \brief  create a new object with an ID
+*
+*****************************************************************************/
+int kiiObj_createWithID(char *bucketName, char *jsonObject, char *dataType, char *objectID)
 {
-    return kiiObj_update(bucketName, jsonObject, objectID, KIIOBJ_CREATE_WITH_ID);
+    return kiiObj_update(bucketName, jsonObject, dataType, objectID, KIIOBJ_CREATE_WITH_ID);
 }
 
-int kiiObj_fullyUpdate(char *bucketName, char *jsonObject, char *objectID)
-{
-    return kiiObj_update(bucketName, jsonObject, objectID, KIIOBJ_FULLY_UPDATE);
-}
-
-int kiiObj_partiallyUpdate(char *bucketName, char *jsonObject, char *objectID)
-{
-    return kiiObj_update(bucketName, jsonObject, objectID, KIIOBJ_PARTIALLY_UPDATE);
-}
-
-
-/*
-
-int kiiObj_uploadBody(char *objectID,  unsigned char *buf, unsigned int lenght, unsigned int currentPosition, unsigned int totalLengh)
-{
-}
-
-*/
 
 /*****************************************************************************
 *
-*  kiiObj_update
+*  kiiObj_fullyUpdate
 *
-*  \param: bucketName: the input of bucket name
-*               jsonObject: the input of object with json format
-*               objectID: the input of objectID
-*               updateOrCreateWithID: "kiiObj_updateType_e" type
+*  \param  bucketName - the input of bucket name
+*               jsonObject - the input of object with json format
+*               dataType - the input of data type, it can be set NULL if object is not an specific data type in the platform
+*               objectID - the input of objectID
 *
-*  \return 0:success, -1: failure
+*  \return  0:success; -1: failure
 *
-*  \brief  create object
+*  \brief  fully update an object
 *
 *****************************************************************************/
-
-static int kiiObj_update(char *bucketName, char *jsonObject, char *objectID, int updateOrCreateWithID)
+int kiiObj_fullyUpdate(char *bucketName, char *jsonObject, char *dataType, char *objectID)
 {
-    int socketNum;
+    return kiiObj_update(bucketName, jsonObject, dataType, objectID, KIIOBJ_FULLY_UPDATE);
+}
+
+/*****************************************************************************
+*
+*  kiiObj_partiallyUpdate
+*
+*  \param  bucketName - the input of bucket name
+*               jsonObject - the input of object with json format
+*               objectID - the input of objectID
+*
+*  \return  0:success; -1: failure
+*
+*  \brief  partially update an object
+*
+*****************************************************************************/
+int kiiObj_partiallyUpdate(char *bucketName, char *jsonObject, char *objectID)
+{
+    return kiiObj_update(bucketName, jsonObject, NULL, objectID, KIIOBJ_PARTIALLY_UPDATE);
+}
+
+/*****************************************************************************
+*
+*  kiiObj_fullyUpdate
+*
+*  \param  bucketName - the input of bucket name
+*               jsonObject - the input of object with json format
+*               dataType - the input of data type, it can be set NULL if object is not an specific data type in the platform
+*               objectID - the input of objectID
+*               updateOrCreateWithID - kind of "kiiObj_updateType_e" type
+*
+*  \return  0:success; -1: failure
+*
+*  \brief  partially/fully update an object, or create a new object with an id
+*
+*****************************************************************************/
+static int kiiObj_update(char *bucketName, char *jsonObject, char *dataType, char *objectID, int updateOrCreateWithID)
+{
     char * p;
     char *buf;
-    unsigned char ipBuf[4];
 
-    buf = g_netBuf;
-	
-    memset(buf, 0, KII_NETBUF_SIZE);
+    buf = g_kii_data.sendBuf;
+    memset(buf, 0, KII_SEND_BUF_SIZE);
     if (updateOrCreateWithID != KIIOBJ_PARTIALLY_UPDATE)
     {
         strcpy(buf, STR_PUT);
@@ -209,10 +224,8 @@ static int kiiObj_update(char *bucketName, char *jsonObject, char *objectID, int
         strcpy(buf, STR_POST);
     }
     // url
-    //strcpy(buf+strlen(buf), "http://");
-    //strcpy(buf+strlen(buf), kii_getHost());
     strcpy(buf+strlen(buf), "/api/apps/");
-    strcpy(buf+strlen(buf), kii_getAppID());
+    strcpy(buf+strlen(buf), g_kii_data.appID);
     strcpy(buf+strlen(buf), "/users/me/buckets/");
     strcpy(buf+strlen(buf),bucketName);
     strcpy(buf+strlen(buf), "/objects/");
@@ -223,20 +236,20 @@ static int kiiObj_update(char *bucketName, char *jsonObject, char *objectID, int
    strcpy(buf+strlen(buf), "Connection: Keep-Alive\r\n");
    //Host
    strcpy(buf+strlen(buf), "Host: ");
-   strcpy(buf+strlen(buf), kii_getHost());
+   strcpy(buf+strlen(buf), g_kii_data.host);
    strcpy(buf+strlen(buf), STR_CRLF);
     //x-kii-appid
     strcpy(buf+strlen(buf), STR_KII_APPID);
-    strcpy(buf+strlen(buf), kii_getAppID()); 
+    strcpy(buf+strlen(buf), g_kii_data.appID); 
    strcpy(buf+strlen(buf), STR_CRLF);
     //x-kii-appkey 
     strcpy(buf+strlen(buf), STR_KII_APPKEY);
-    strcpy(buf+strlen(buf), kii_getAppKey());
+    strcpy(buf+strlen(buf), g_kii_data.appKey);
    strcpy(buf+strlen(buf), STR_CRLF);
    //Authorization
     strcpy(buf+strlen(buf), STR_AUTHORIZATION);
     strcpy(buf+strlen(buf),  " Bearer ");
-    strcpy(buf+strlen(buf), g_kiiMeta.accessToken); //the access token musb be checked before calling kiiObj_create
+    strcpy(buf+strlen(buf), g_kii_data.accessToken); 
    strcpy(buf+strlen(buf), STR_CRLF);
    if (updateOrCreateWithID == KIIOBJ_PARTIALLY_UPDATE)
    {
@@ -249,10 +262,27 @@ static int kiiObj_update(char *bucketName, char *jsonObject, char *objectID, int
    {
        //content-type	
         strcpy(buf+strlen(buf), STR_CONTENT_TYPE);
-        strcpy(buf+strlen(buf), "application/vnd.");
-        strcpy(buf+strlen(buf), kii_getAppID());
-        strcpy(buf+strlen(buf), ".mydata+json");
+	   if (dataType !=NULL)
+	   {
+	       if (strlen(dataType) > 0)
+	       {
+	           strcpy(buf+strlen(buf), "application/vnd.");
+	           strcpy(buf+strlen(buf), g_kii_data.appID);
+	           strcpy(buf+strlen(buf), ".");
+	           strcpy(buf+strlen(buf), dataType);
+	           strcpy(buf+strlen(buf), "+json");
+	       }
+	        else
+		{
+	           strcpy(buf+strlen(buf), "application/json");
+	       }
+	   }
+	   else
+	   {
+	       strcpy(buf+strlen(buf), "application/json");
+	   }
         strcpy(buf+strlen(buf), STR_CRLF);
+		
         if (updateOrCreateWithID == KIIOBJ_FULLY_UPDATE)
         {
             //strcpy(buf+strlen(buf),  "If-Match:1");
@@ -261,72 +291,487 @@ static int kiiObj_update(char *bucketName, char *jsonObject, char *objectID, int
    }
     //Content-Length
    strcpy(buf+strlen(buf), STR_CONTENT_LENGTH);
-   sprintf(buf+strlen(buf), "%d", strlen(jsonObject));
+   sprintf(buf+strlen(buf), "%d", strlen(jsonObject)+1);
    strcpy(buf+strlen(buf), STR_CRLF);
    strcpy(buf+strlen(buf), STR_CRLF);
-    if ((strlen(buf)+strlen(jsonObject)) > KII_NETBUF_SIZE)
+    if ((strlen(buf)+strlen(jsonObject)+1) > KII_SEND_BUF_SIZE)
     {
         KII_DEBUG("kii-error: buffer overflow!\r\n");
         return -1;
     }
    strcpy(buf+strlen(buf), jsonObject);
+   strcpy(buf+strlen(buf), STR_LF);
 
-    if (kiiHAL_dns(kii_getHost(), ipBuf) < 0)
+    g_kii_data.sendDataLen = strlen(buf);
+
+    if (kiiHal_transfer() != 0)
+    {
+        KII_DEBUG("kii-error: transfer data error !\r\n");
+        return -1;
+    }
+    buf = g_kii_data.rcvdBuf;
+
+    p = strstr(buf, "HTTP/1.1 200");
+    if (p != NULL)
+    {
+	 return 0;
+    }
+	
+    p = strstr(buf, "HTTP/1.1 201");
+    if (p != NULL)
+    {
+	 return 0;
+    }
+
+    return -1;
+}
+
+
+/*****************************************************************************
+*
+*  kiiObj_uploadBodyAtOnce
+*
+*  \param: bucketName - the input of bucket name
+*               objectID - the input of objectID
+*               dataType - the input of data type, it must not be NULL, the format should be like "image/jpg"
+*               data - raw data
+*               length - raw data length
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  upload object body at once
+*
+*****************************************************************************/
+int kiiObj_uploadBodyAtOnce(char *bucketName, char *objectID,  char *dataType, unsigned char *data, unsigned int length)
+{
+    char * p;
+    char *buf;
+
+    buf = g_kii_data.sendBuf;
+    memset(buf, 0, KII_SEND_BUF_SIZE);
+    strcpy(buf, STR_PUT);
+    // url
+    strcpy(buf+strlen(buf), "/api/apps/");
+    strcpy(buf+strlen(buf), g_kii_data.appID);
+    strcpy(buf+strlen(buf), "/users/me/buckets/");
+    strcpy(buf+strlen(buf),bucketName);
+    strcpy(buf+strlen(buf), "/objects/");
+    strcpy(buf+strlen(buf),objectID);
+    strcpy(buf+strlen(buf), "/body");
+    strcpy(buf+strlen(buf), STR_HTTP);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Connection
+   strcpy(buf+strlen(buf), "Connection: Keep-Alive\r\n");
+   //Host
+   strcpy(buf+strlen(buf), "Host: ");
+   strcpy(buf+strlen(buf), g_kii_data.host);
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //x-kii-appid
+    strcpy(buf+strlen(buf), STR_KII_APPID);
+    strcpy(buf+strlen(buf), g_kii_data.appID); 
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //x-kii-appkey 
+    strcpy(buf+strlen(buf), STR_KII_APPKEY);
+    strcpy(buf+strlen(buf), g_kii_data.appKey);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //content-type	
+   strcpy(buf+strlen(buf), STR_CONTENT_TYPE);
+   strcpy(buf+strlen(buf), dataType);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Authorization
+    strcpy(buf+strlen(buf), STR_AUTHORIZATION);
+    strcpy(buf+strlen(buf),  " Bearer ");
+    strcpy(buf+strlen(buf), g_kii_data.accessToken); 
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //Content-Length
+   strcpy(buf+strlen(buf), STR_CONTENT_LENGTH);
+   sprintf(buf+strlen(buf), "%d", length);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   strcpy(buf+strlen(buf), STR_CRLF);
+    if ((strlen(buf)+length) > KII_SEND_BUF_SIZE)
+    {
+        KII_DEBUG("kii-error: buffer overflow !\r\n");
+        return -1;
+    }
+    g_kii_data.sendDataLen = strlen(buf) + length;
+    memcpy(buf+strlen(buf), data, length);
+    //memcpy(buf + g_kii_data.sendDataLen -1, STR_LF, 1);
+    if (kiiHal_transfer() != 0)
+    {
+        KII_DEBUG("kii-error: transfer data error !\r\n");
+        return -1;
+    }
+    buf = g_kii_data.rcvdBuf;
+    p = strstr(buf, "HTTP/1.1 200");
+    if (p != NULL)
+    {
+        return 0;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+/*****************************************************************************
+*
+*  kiiObj_uploadBodyInit
+*
+*  \param: bucketName - the input of bucket name
+*               objectID - the input of objectID
+*               dataType - the input of data type, it must not be NULL, the format should be like "image/jpg"
+*               totalLength - the total of data length
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  init uploading an object body in multiple pieces
+*
+*****************************************************************************/
+int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsigned int totalLength)
+{
+    char * p1;
+    char * p2;
+    char *buf;
+    unsigned char ipBuf[4];
+
+    
+    memset(mBucketName, 0, sizeof(mBucketName));
+    strcpy(mBucketName, bucketName);
+    memset(mObjectID, 0, sizeof(mObjectID));
+    strcpy(mObjectID, objectID);
+    memset(mDataType, 0, sizeof(mDataType));
+    strcpy(mDataType, dataType);
+    mObjBodyTotalLength = totalLength;
+    mObjBodyCurrentPosition = 0;
+	
+    buf = g_kii_data.sendBuf;
+    memset(buf, 0, KII_SEND_BUF_SIZE);
+    strcpy(buf, STR_POST);
+    // url
+    strcpy(buf+strlen(buf), "/api/apps/");
+    strcpy(buf+strlen(buf), g_kii_data.appID);
+    strcpy(buf+strlen(buf), "/users/me/buckets/");
+    strcpy(buf+strlen(buf),mBucketName);
+    strcpy(buf+strlen(buf), "/objects/");
+    strcpy(buf+strlen(buf),mObjectID);
+    strcpy(buf+strlen(buf), "/body/uploads");
+    strcpy(buf+strlen(buf), STR_HTTP);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //accept
+   strcpy(buf+strlen(buf), STR_ACCEPT);
+   strcpy(buf+strlen(buf), "application/vnd.kii.startobjectbodyuploadresponse+json");
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Connection
+   strcpy(buf+strlen(buf), "Connection: Keep-Alive\r\n");
+   //Host
+   strcpy(buf+strlen(buf), "Host: ");
+   strcpy(buf+strlen(buf), g_kii_data.host);
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //x-kii-appid
+    strcpy(buf+strlen(buf), STR_KII_APPID);
+    strcpy(buf+strlen(buf), g_kii_data.appID); 
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //x-kii-appkey 
+    strcpy(buf+strlen(buf), STR_KII_APPKEY);
+    strcpy(buf+strlen(buf), g_kii_data.appKey);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //content-type	
+   strcpy(buf+strlen(buf), STR_CONTENT_TYPE);
+   strcpy(buf+strlen(buf), "application/vnd.kii.startobjectbodyuploadrequest+json");
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Authorization
+    strcpy(buf+strlen(buf), STR_AUTHORIZATION);
+    strcpy(buf+strlen(buf),  " Bearer ");
+    strcpy(buf+strlen(buf), g_kii_data.accessToken); 
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //Content-Length
+   strcpy(buf+strlen(buf), STR_CONTENT_LENGTH);
+   sprintf(buf+strlen(buf), "%d", strlen(STR_EMPTY_JSON)+1);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   strcpy(buf+strlen(buf), STR_EMPTY_JSON);
+   strcpy(buf+strlen(buf), STR_LF);
+   
+    g_kii_data.sendDataLen = strlen(buf);
+
+
+    if (kiiHAL_dns(g_kii_data.host, ipBuf) < 0)
     {
         KII_DEBUG("kii-error: dns failed !\r\n");
         return -1;
     }
     KII_DEBUG("Host ip:%d.%d.%d.%d\r\n", ipBuf[3], ipBuf[2], ipBuf[1], ipBuf[0]);
 		
-    socketNum = kiiHAL_socketCreate();
-    if (socketNum < 0)
+    mSocketNum = kiiHAL_socketCreate();
+    if (mSocketNum < 0)
     {
         KII_DEBUG("kii-error: create socket failed !\r\n");
         return -1;
     }
 	
 	
-    if (kiiHAL_connect(socketNum, (char*)ipBuf) < 0)
+    if (kiiHAL_connect(mSocketNum, (char*)ipBuf) < 0)
     {
         KII_DEBUG("kii-error: connect to server failed \r\n");
-	 kiiHAL_socketClose(socketNum);
+	 kiiHAL_socketClose(mSocketNum);
         return -1;
     }
     
-    if (kiiHAL_socketSend(socketNum, buf, strlen(buf)) < 0)
+    if (kiiHAL_socketSend(mSocketNum, g_kii_data.sendBuf, g_kii_data.sendDataLen) < 0)
     {
         
         KII_DEBUG("kii-error: send data fail\r\n");
-	 kiiHAL_socketClose(socketNum);
+	 kiiHAL_socketClose(mSocketNum);
         return -1;
     }
 
-    memset(buf, 0, KII_NETBUF_SIZE);
-	
-    if (kiiHAL_socketRecv(socketNum, buf, KII_NETBUF_SIZE) < 0)
+    memset(g_kii_data.rcvdBuf, 0, KII_RECV_BUF_SIZE);
+    g_kii_data.rcvdCounter = kiiHAL_socketRecv(mSocketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
+    if (g_kii_data.rcvdCounter < 0)
     {
         KII_DEBUG("kii-error: recv data fail\r\n");
-	 kiiHAL_socketClose(socketNum);
+	 kiiHAL_socketClose(mSocketNum);
         return -1;
     }
 
-    kiiHAL_socketClose(socketNum);
+    buf = g_kii_data.rcvdBuf;
 
-    p = strstr(buf, "HTTP/1.1 200");
-    if (p == buf)
+    p1 = strstr(buf, "HTTP/1.1 200");
+    p1 = strstr(p1, "uploadID");
+    p1 = strstr(p1, ":");
+    p1 = strstr(p1, "\"");
+	
+    if (p1 == NULL)
     {
-        KII_DEBUG("kii-info: update object success\r\n");
-	 return 0;
+	 kiiHAL_socketClose(mSocketNum);
+	 return -1;
+    }
+    p1 +=1;
+    p2 = strstr(p1, "\"");
+    if (p2 == NULL)
+    {
+	 kiiHAL_socketClose(mSocketNum);
+	 return -1;
     }
 	
-    p = strstr(buf, "HTTP/1.1 201");
-    if (p == buf)
+    memset(mUploadID, 0, sizeof(mUploadID));
+    memcpy(mUploadID, p1, p2-p1);
+    KII_DEBUG("kii-info: upload ID:%s\r\n", mUploadID);
+	
+    return 0;
+}
+
+
+/*****************************************************************************
+*
+*  kiiObj_uploadBody
+*
+*  \param: data - the piece of data to be uploaded
+*               length - the piece of data length
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  upload a piece of data
+*
+*****************************************************************************/
+int kiiObj_uploadBody(unsigned char *data, unsigned int length)
+{
+    char * p1;
+    char *buf;
+	
+    buf = g_kii_data.sendBuf;
+    memset(buf, 0, KII_SEND_BUF_SIZE);
+    strcpy(buf, STR_PUT);
+    // url
+    strcpy(buf+strlen(buf), "/api/apps/");
+    strcpy(buf+strlen(buf), g_kii_data.appID);
+    strcpy(buf+strlen(buf), "/users/me/buckets/");
+    strcpy(buf+strlen(buf),mBucketName);
+    strcpy(buf+strlen(buf), "/objects/");
+    strcpy(buf+strlen(buf),mObjectID);
+    strcpy(buf+strlen(buf), "/body/uploads/");
+    strcpy(buf+strlen(buf), mUploadID);
+    strcpy(buf+strlen(buf), "/data");
+    strcpy(buf+strlen(buf), STR_HTTP);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //accept
+   strcpy(buf+strlen(buf), STR_ACCEPT);
+   strcpy(buf+strlen(buf), "application/json, application/*+json");
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Connection
+   strcpy(buf+strlen(buf), "Connection: Keep-Alive\r\n");
+   //Host
+   strcpy(buf+strlen(buf), "Host: ");
+   strcpy(buf+strlen(buf), g_kii_data.host);
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //x-kii-appid
+    strcpy(buf+strlen(buf), STR_KII_APPID);
+    strcpy(buf+strlen(buf), g_kii_data.appID); 
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //x-kii-appkey 
+    strcpy(buf+strlen(buf), STR_KII_APPKEY);
+    strcpy(buf+strlen(buf), g_kii_data.appKey);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //content-type	
+   strcpy(buf+strlen(buf), STR_CONTENT_TYPE);
+   strcpy(buf+strlen(buf), mDataType);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //content-range
+   strcpy(buf+strlen(buf), STR_CONTENT_RANGE);
+   strcpy(buf+strlen(buf), "bytes=");
+   sprintf(buf+strlen(buf), "%d", mObjBodyCurrentPosition);
+   mObjBodyCurrentPosition +=length;
+   strcpy(buf+strlen(buf), "-");
+   sprintf(buf+strlen(buf), "%d", mObjBodyCurrentPosition-1);
+   strcpy(buf+strlen(buf), "/");
+   sprintf(buf+strlen(buf), "%d", mObjBodyTotalLength);
+  strcpy(buf+strlen(buf), STR_CRLF);
+      //Authorization
+    strcpy(buf+strlen(buf), STR_AUTHORIZATION);
+    strcpy(buf+strlen(buf),  " Bearer ");
+    strcpy(buf+strlen(buf), g_kii_data.accessToken); 
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //Content-Length
+   strcpy(buf+strlen(buf), STR_CONTENT_LENGTH);
+   sprintf(buf+strlen(buf), "%d", length);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   strcpy(buf+strlen(buf), STR_CRLF);
+    if ((strlen(buf)+length ) > KII_SEND_BUF_SIZE)
     {
-        KII_DEBUG("kii-info: create object success\r\n");
-	 return 0;
+        KII_DEBUG("kii-error: buffer overflow !\r\n");
+	 kiiHAL_socketClose(mSocketNum);
+        return -1;
+    }
+    g_kii_data.sendDataLen = strlen(buf) + length;
+    memcpy(buf+strlen(buf), data, length);
+    //memcpy(buf + g_kii_data.sendDataLen -1, STR_LF, 1);
+
+    if (kiiHAL_socketSend(mSocketNum, g_kii_data.sendBuf, g_kii_data.sendDataLen) < 0)
+    {
+        
+        KII_DEBUG("kii-error: send data fail\r\n");
+	 kiiHAL_socketClose(mSocketNum);
+        return -1;
     }
 
-    KII_DEBUG("kii-error: create or update object fail\r\n");
-    return -1;
+    memset(g_kii_data.rcvdBuf, 0, KII_RECV_BUF_SIZE);
+    g_kii_data.rcvdCounter = kiiHAL_socketRecv(mSocketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
+    if (g_kii_data.rcvdCounter < 0)
+    {
+        KII_DEBUG("kii-error: recv data fail\r\n");
+	 kiiHAL_socketClose(mSocketNum);
+        return -1;
+    }
+
+    buf = g_kii_data.rcvdBuf;
+
+    p1 = strstr(buf, "HTTP/1.1 204");
+    if (p1 == NULL)
+    {
+        KII_DEBUG("kii-error: upload body failed !\r\n");
+	 kiiHAL_socketClose(mSocketNum);
+	 return -1;
+    }
+    else
+    {
+        return 0;
+    }
 }
+
+
+/*****************************************************************************
+*
+*  kiiObj_uploadBody
+*
+*  \param: committed - 0: cancelled; 1: committed
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  commit or cancel this uploading
+*
+*****************************************************************************/
+int kiiObj_uploadBodyCommit(int committed)
+{
+    char * p1;
+    char *buf;
+	
+    buf = g_kii_data.sendBuf;
+    memset(buf, 0, KII_SEND_BUF_SIZE);
+    strcpy(buf, STR_POST);
+    // url
+    strcpy(buf+strlen(buf), "/api/apps/");
+    strcpy(buf+strlen(buf), g_kii_data.appID);
+    strcpy(buf+strlen(buf), "/users/me/buckets/");
+    strcpy(buf+strlen(buf),mBucketName);
+    strcpy(buf+strlen(buf), "/objects/");
+    strcpy(buf+strlen(buf),mObjectID);
+    strcpy(buf+strlen(buf), "/body/uploads/");
+    strcpy(buf+strlen(buf), mUploadID);
+    strcpy(buf+strlen(buf), "/status/");
+    if (committed == 1)
+    {
+        strcpy(buf+strlen(buf), "committed");
+    }
+    else
+    {
+        strcpy(buf+strlen(buf), "cancelled");
+    }
+    strcpy(buf+strlen(buf), STR_HTTP);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Connection
+   strcpy(buf+strlen(buf), "Connection: Keep-Alive\r\n");
+   //Host
+   strcpy(buf+strlen(buf), "Host: ");
+   strcpy(buf+strlen(buf), g_kii_data.host);
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //x-kii-appid
+    strcpy(buf+strlen(buf), STR_KII_APPID);
+    strcpy(buf+strlen(buf), g_kii_data.appID); 
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //x-kii-appkey 
+    strcpy(buf+strlen(buf), STR_KII_APPKEY);
+    strcpy(buf+strlen(buf), g_kii_data.appKey);
+   strcpy(buf+strlen(buf), STR_CRLF);
+      //Authorization
+    strcpy(buf+strlen(buf), STR_AUTHORIZATION);
+    strcpy(buf+strlen(buf),  " Bearer ");
+    strcpy(buf+strlen(buf), g_kii_data.accessToken); 
+   strcpy(buf+strlen(buf), STR_CRLF);
+   strcpy(buf+strlen(buf), STR_CRLF);
+
+    g_kii_data.sendDataLen = strlen(buf);
+
+    if (kiiHAL_socketSend(mSocketNum, g_kii_data.sendBuf, g_kii_data.sendDataLen) < 0)
+    {
+        
+        KII_DEBUG("kii-error: send data fail\r\n");
+	 kiiHAL_socketClose(mSocketNum);
+        return -1;
+    }
+
+    memset(g_kii_data.rcvdBuf, 0, KII_RECV_BUF_SIZE);
+    g_kii_data.rcvdCounter = kiiHAL_socketRecv(mSocketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
+    if (g_kii_data.rcvdCounter < 0)
+    {
+        KII_DEBUG("kii-error: recv data fail\r\n");
+	 kiiHAL_socketClose(mSocketNum);
+        return -1;
+    }
+
+     kiiHAL_socketClose(mSocketNum);
+    buf = g_kii_data.rcvdBuf;
+
+    p1 = strstr(buf, "HTTP/1.1 204");
+    if (p1 == NULL)
+    {
+	 return -1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+
+
 

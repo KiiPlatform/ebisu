@@ -1,6 +1,8 @@
 #ifndef KII_DEF_H
 #define KII_DEF_H
 
+#include "kii.h"
+
 //#define KII_CLOUD_SUPPORT  1
 #define KII_DEBUG_SUPPORT    1
 
@@ -11,14 +13,9 @@
 #endif
 
 
-
-#define KII_SITE_SIZE 2
-#define KII_HOST_SIZE 32
-#define KII_APPID_SIZE 8
-#define KII_APPKEY_SIZE 32
-#define KII_NETBUF_SIZE 2048
-
-#define KII_OBJECTID_SIZE 36
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
 
 
 #define STR_POST "POST "
@@ -29,7 +26,26 @@
 #define STR_KII_APPID "x-kii-appid:"
 #define STR_KII_APPKEY "x-kii-appkey:"
 #define STR_CONTENT_LENGTH "Content-Length: "
+#define STR_ACCEPT "Accept:"
+#define STR_CONTENT_RANGE "Content-Range:"
+#define STR_EMPTY_JSON "{ }"
 #define STR_CRLF "\r\n"
+#define STR_LF "\n"
+
+
+
+typedef struct {
+    char accessToken[KII_ACCESS_TOKEN_SIZE+1];
+    char host[KII_HOST_SIZE+1];
+    char appID[KII_APPID_SIZE+1];
+    char appKey[KII_APPKEY_SIZE+1];
+    char rcvdBuf[KII_SEND_BUF_SIZE];
+    int rcvdCounter;
+    char sendBuf[KII_SEND_BUF_SIZE];
+    int sendDataLen;
+    int sendCounter;
+} kii_data_struct;
+
 
 
 #endif
