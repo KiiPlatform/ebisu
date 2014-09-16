@@ -3,5 +3,7 @@
 
     <string name="app_name">YouWillSandbox</string>
     <string name="hello_world">Hello world!</string>
+    <string name="input_package">Input package name</string>
+    <string name="input_key">Input key</string>
 
 </resources>
