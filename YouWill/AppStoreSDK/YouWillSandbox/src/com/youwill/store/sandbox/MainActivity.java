@@ -16,6 +16,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         findViewById(R.id.confirm).setOnClickListener(this);
+        packageNameEdit = (EditText)findViewById(R.id.package_edit);
+        keyEdit = (EditText)findViewById(R.id.key_edit);
     }
 
     @Override

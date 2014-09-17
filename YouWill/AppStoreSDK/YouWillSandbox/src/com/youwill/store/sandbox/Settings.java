@@ -26,7 +26,7 @@ public class Settings {
         SharedPreferences pref = getPrefs(context);
         SharedPreferences.Editor editor = pref.edit();
         editor.putString(packageName, key);
-        editor.commit();
+        editor.apply();
     }
 
     public static String getAppKey(Context context, String packageName) {
