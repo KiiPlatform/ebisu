@@ -69,9 +69,20 @@ public class TransactionDaoImpl implements TransactionDao {
         sb.append("\"&out_trade_no=\"");
         sb.append(transactionID);
         sb.append("\"&subject=\"");
-        sb.append(product.getProductName());
+        try {
+            sb.append(URLEncoder.encode(product.getProductName(), "UTF-8"));
+        } catch (Exception e) {
+            sb.append(product.getProductName());
+            e.printStackTrace();
+        }
         sb.append("\"&body=\"");
-        sb.append(product.getDescription());
+        try {
+            sb.append(URLEncoder.encode(product.getDescription(), "UTF-8"));
+        } catch (Exception e) {
+            sb.append(product.getDescription());
+            e.printStackTrace();
+        }
+
         sb.append("\"&total_fee=\"");
         sb.append(product.getPrice());
 
