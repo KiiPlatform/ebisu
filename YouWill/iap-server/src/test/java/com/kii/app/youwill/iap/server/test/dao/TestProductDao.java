@@ -7,7 +7,7 @@ import com.kii.app.youwill.iap.server.entity.Product;
 import com.kii.app.youwill.iap.server.web.AppContext;
 import com.kii.platform.ufp.bucket.BucketID;
 import com.kii.platform.ufp.bucket.BucketType;
-import com.kii.platform.ufp.bucket.PaginationKey;
+import com.kii.platform.ufp.pagination.PaginationKey;
 import com.kii.platform.ufp.ufe.QueryRequest;
 import com.kii.platform.ufp.ufe.QueryResponse;
 import com.kii.platform.ufp.ufe.client.http.stateless.BucketClient;

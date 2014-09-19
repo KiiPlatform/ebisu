@@ -3,6 +3,7 @@ package com.kii.app.youwill.iap.server.test.web;
 import com.kii.app.youwill.iap.server.entity.PayType;
 import com.kii.platform.ufp.bucket.*;
 import com.kii.platform.ufp.oauth2.AccessToken;
+import com.kii.platform.ufp.scope.ObjectScope;
 import com.kii.platform.ufp.ufe.ObjectCreationResponse;
 import com.kii.platform.ufp.ufe.QueryRequest;
 import org.apache.commons.codec.digest.DigestUtils;

@@ -4,7 +4,7 @@ import com.kii.app.youwill.iap.server.entity.ConsumeType;
 import com.kii.app.youwill.iap.server.entity.CurrencyType;
 import com.kii.app.youwill.iap.server.entity.OrderStatus;
 import com.kii.app.youwill.iap.server.entity.PayType;
-import com.kii.platform.ufp.bucket.PaginationKey;
+import com.kii.platform.ufp.pagination.PaginationKey;
 import com.kii.platform.ufp.ufe.QueryResponse;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
