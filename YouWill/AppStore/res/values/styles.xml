@@ -29,7 +29,7 @@
 
     <style name="footer_style">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">65px</item>
+        <item name="android:layout_height">66px</item>
         <item name="android:layout_alignParentBottom">true</item>
         <item name="android:layout_centerHorizontal">true</item>
         <item name="android:background">@color/footer_bg</item>
