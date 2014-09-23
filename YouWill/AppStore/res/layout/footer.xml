@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/footer_bar"
+              style="@style/footer_style"
+        >
+    <RadioGroup android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:orientation="horizontal">
+        <RadioButton
+                android:id="@+id/hot_button"
+                style="@style/footer_item_style"
+                android:checked="true"
+                android:drawableTop="@drawable/hot_button"
+                android:text="@string/hot_sale"/>
+
+        <RadioButton
+                android:id="@+id/categories_button"
+                style="@style/footer_item_style"
+                android:drawableTop="@drawable/categories_button"
+                android:text="@string/categories"/>
+
+        <RadioButton
+                android:id="@+id/purchased_button"
+                style="@style/footer_item_style"
+                android:drawableTop="@drawable/purchased_button"
+                android:text="@string/purchased"/>
+
+        <RadioButton
+                android:id="@+id/upgrade_button"
+                style="@style/footer_item_style"
+                android:drawableTop="@drawable/upgrade_button"
+                android:text="@string/upgrade"/>
+
+
+    </RadioGroup>
+</LinearLayout>

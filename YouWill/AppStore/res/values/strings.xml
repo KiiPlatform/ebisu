@@ -4,5 +4,10 @@
     <string name="app_name">AppStore</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="hot_sale">热销</string>
+    <string name="categories">分类</string>
+    <string name="purchased">已购</string>
+    <string name="upgrade">更新</string>
+    <string name="search">搜索</string>
 
 </resources>

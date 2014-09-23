@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                style="@style/header_style">
+    <FrameLayout android:layout_width="180px"
+                 android:layout_height="28px"
+                 android:layout_alignParentRight="true"
+                 android:layout_marginTop="35px"
+                 android:layout_marginRight="23px"
+            >
+        <EditText android:layout_width="180px"
+                  android:layout_height="28px"
+                  android:background="@drawable/search_bg"
+                  android:textSize="12px"
+                  android:id="@+id/search_edit"
+                  android:textColor="@color/search_text_color"
+                  android:textColorHint="@color/search_hint_color"
+                  android:paddingLeft="34px"
+                  android:paddingRight="24px"
+                  android:hint="@string/search"
+                />
+        <ImageView android:layout_width="20px"
+                   android:layout_height="20px"
+                   android:id="@+id/search_button"
+                   android:src="@drawable/search_icon"
+                   android:layout_gravity="center_vertical|left"
+                   android:layout_marginLeft="9px"
+                />
+        <ImageView android:layout_width="20px"
+                   android:layout_height="20px"
+                   android:id="@+id/delete_button"
+                   android:src="@drawable/search_delete"
+                   android:layout_gravity="center_vertical|right"
+                   android:layout_marginRight="3px"
+                />
+    </FrameLayout>
+</RelativeLayout>
