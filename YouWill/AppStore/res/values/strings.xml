@@ -9,5 +9,8 @@
     <string name="purchased">已购</string>
     <string name="upgrade">更新</string>
     <string name="search">搜索</string>
+    <string name="show_all">显示全部</string>
+    <string name="latest_items">最新上架</string>
+    <string name="good_items">最受好评</string>
 
 </resources>

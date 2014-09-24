@@ -4,4 +4,7 @@
     <color name="title_bg_color">#ffffff</color>
     <color name="search_text_color">#ff000000</color>
     <color name="search_hint_color">#666666</color>
+    <color name="background_color">#ffffffff</color>
+    <color name="show_all_color">#ff666666</color>
+
 </resources>
