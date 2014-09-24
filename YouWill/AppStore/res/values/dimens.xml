@@ -4,5 +4,6 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="action_bar_height">72px</dimen>
+    <dimen name="app_icon_side_length">88px</dimen>
 
 </resources>
