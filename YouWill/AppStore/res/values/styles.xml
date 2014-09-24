@@ -64,6 +64,8 @@
         <item name="android:layout_marginRight">23px</item>
         <item name="android:layout_alignParentRight">true</item>
         <item name="android:layout_centerVertical">true</item>
+        <item name="android:drawableRight">@drawable/right_arrow</item>
+        <item name="android:drawablePadding">5px</item>
     </style>
     <style name="left_label_style">
         <item name="android:layout_width">wrap_content</item>
@@ -85,6 +87,8 @@
         <item name="android:layout_alignParentLeft">true</item>
         <item name="android:layout_gravity">left</item>
         <item name="android:textColor">@color/app_name_text_color</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">end</item>
     </style>
     <style name="app_size_text_style">
         <item name="android:layout_width">wrap_content</item>

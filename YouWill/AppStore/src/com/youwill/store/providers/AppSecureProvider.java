@@ -1,5 +1,7 @@
 package com.youwill.store.providers;
 
+import com.youwill.store.utils.Settings;
+
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.database.Cursor;

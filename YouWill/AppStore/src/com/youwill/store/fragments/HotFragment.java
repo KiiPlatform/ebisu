@@ -5,6 +5,9 @@ import com.youwill.store.view.fancycoverflow.FancyCoverFlow;
 import com.youwill.store.view.fancycoverflow.FancyCoverFlowAdapter;
 
 import android.app.Fragment;
+import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -13,6 +16,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by tian on 14-9-23:下午11:01.
@@ -26,6 +32,7 @@ public class HotFragment extends Fragment implements View.OnClickListener {
     FancyCoverFlow coverFlow;
 
     LinearLayoutManager mLinearLayoutManager;
+    LinearLayoutManager mLinearLayoutManager2;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -36,10 +43,22 @@ public class HotFragment extends Fragment implements View.OnClickListener {
     }
 
     private void initView(View view) {
+        applications = getActivity().getPackageManager()
+                .getInstalledApplications(PackageManager.GET_META_DATA);
+        mLinearLayoutManager = new LinearLayoutManager(getActivity());
+        mLinearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+        mLinearLayoutManager2 = new LinearLayoutManager(getActivity());
+        mLinearLayoutManager2.setOrientation(LinearLayoutManager.HORIZONTAL);
         latestView = (RecyclerView) view.findViewById(R.id.latest_horizontal_view);
         goodView = (RecyclerView) view.findViewById(R.id.good_horizontal_view);
         view.findViewById(R.id.show_all_good).setOnClickListener(this);
         view.findViewById(R.id.show_all_new).setOnClickListener(this);
+        latestView = (RecyclerView) view.findViewById(R.id.latest_horizontal_view);
+        goodView = (RecyclerView) view.findViewById(R.id.good_horizontal_view);
+        goodView.setLayoutManager(mLinearLayoutManager2);
+        latestView.setLayoutManager(mLinearLayoutManager);
+        latestView.setAdapter(new AppAdapter());
+        goodView.setAdapter(new AppAdapter());
     }
 
     @Override
@@ -67,6 +86,34 @@ public class HotFragment extends Fragment implements View.OnClickListener {
             size = (TextView) itemView.findViewById(R.id.size);
         }
     }
+
+    private List<ApplicationInfo> applications = new ArrayList<ApplicationInfo>();
+
+    private class AppAdapter extends RecyclerView.Adapter<ViewHolder> {
+
+        @Override
+        public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
+            View v = getActivity().getLayoutInflater().inflate(R.layout.application_item, viewGroup,
+                    false);
+            ViewHolder vh = new ViewHolder(v);
+            return vh;
+        }
+
+        @Override
+        public void onBindViewHolder(ViewHolder viewHolder, int i) {
+            Context context = getActivity();
+            ApplicationInfo info = applications.get(i);
+            viewHolder.icon.setImageDrawable(context.getPackageManager().getApplicationIcon(info));
+            viewHolder.name.setText(context.getPackageManager().getApplicationLabel(info));
+            viewHolder.size.setText("100K");
+        }
+
+        @Override
+        public int getItemCount() {
+            return applications.size();
+        }
+    }
+
 
     private class CoverFlowAdapter extends FancyCoverFlowAdapter {
 
