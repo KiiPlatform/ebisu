@@ -26,6 +26,7 @@
               format="dimension"/>
         <attr name="topImageClickEnable"
               format="boolean"/>
+        <attr name="enableReflection" format="boolean"/>
         <attr name="coverflowGravity"
               format="enum">
             <enum name="top"

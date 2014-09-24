@@ -1,13 +1,17 @@
 package com.youwill.store.fragments;
 
+import com.youwill.store.MainActivity;
 import com.youwill.store.R;
-import com.youwill.store.view.fancycoverflow.FancyCoverFlow;
-import com.youwill.store.view.fancycoverflow.FancyCoverFlowAdapter;
+import com.youwill.store.utils.LogUtils;
+import com.youwill.store.view.imagecoverflow.CoverFlowAdapter;
+import com.youwill.store.view.imagecoverflow.CoverFlowView;
 
 import android.app.Fragment;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -29,10 +33,13 @@ public class HotFragment extends Fragment implements View.OnClickListener {
 
     RecyclerView goodView;
 
-    FancyCoverFlow coverFlow;
-
     LinearLayoutManager mLinearLayoutManager;
+
     LinearLayoutManager mLinearLayoutManager2;
+
+    CoverFlowView coverFlow;
+
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -59,6 +66,27 @@ public class HotFragment extends Fragment implements View.OnClickListener {
         latestView.setLayoutManager(mLinearLayoutManager);
         latestView.setAdapter(new AppAdapter());
         goodView.setAdapter(new AppAdapter());
+        coverFlow = (CoverFlowView<HomeCoverFlowAdapter>)view.findViewById(R.id.coverflow);
+        HomeCoverFlowAdapter adapter = new HomeCoverFlowAdapter();
+        coverFlow.setAdapter(adapter);
+        coverFlow.setCoverFlowListener(new CoverFlowView.CoverFlowListener() {
+            @Override
+            public void imageOnTop(CoverFlowView coverFlowView, int position, float left, float top,
+                    float right, float bottom) {
+
+            }
+
+            @Override
+            public void topImageClicked(CoverFlowView coverFlowView, int position) {
+                LogUtils.d(TAG, "topImageCLicked: " + position);
+            }
+
+            @Override
+            public void invalidationCompleted() {
+
+            }
+        });
+        coverFlow.setReflectionHeight(0);
     }
 
     @Override
@@ -114,27 +142,30 @@ public class HotFragment extends Fragment implements View.OnClickListener {
         }
     }
 
-
-    private class CoverFlowAdapter extends FancyCoverFlowAdapter {
-
-        @Override
-        public View getCoverFlowItem(int position, View reusableView, ViewGroup parent) {
-            return null;
-        }
+    private class HomeCoverFlowAdapter extends CoverFlowAdapter {
 
         @Override
         public int getCount() {
-            return 0;
+            LogUtils.d(TAG, "getCount!!!");
+            return 3;
         }
 
         @Override
-        public Object getItem(int position) {
-            return null;
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return 0;
+        public Bitmap getImage(int position) {
+            LogUtils.d(TAG, "getImage for position: " + position);
+            switch (position % 3) {
+                case 0:
+                    return ((BitmapDrawable) (getResources().getDrawable(R.drawable.cover_flow1)))
+                            .getBitmap();
+                case 1:
+                    return ((BitmapDrawable) (getResources().getDrawable(R.drawable.cover_flow2)))
+                            .getBitmap();
+                case 2:
+                    return ((BitmapDrawable) (getResources().getDrawable(R.drawable.cover_flow3)))
+                            .getBitmap();
+            }
+            return ((BitmapDrawable) (getResources().getDrawable(R.drawable.cover_flow1)))
+                    .getBitmap();
         }
     }
 
