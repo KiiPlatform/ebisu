@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content">
+    <ImageView style="@style/application_icon_style"
+               android:id="@+id/icon"/>
+    <TextView style="@style/app_name_text_style"
+              android:id="@+id/name"
+              android:layout_marginTop="8px"/>
+    <TextView style="@style/app_size_text_style"
+              android:id="@+id/size"
+              android:layout_marginTop="9px"
+            />
+</LinearLayout>

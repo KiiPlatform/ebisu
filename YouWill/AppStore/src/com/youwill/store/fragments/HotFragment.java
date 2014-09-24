@@ -1,6 +1,8 @@
 package com.youwill.store.fragments;
 
 import com.youwill.store.R;
+import com.youwill.store.view.fancycoverflow.FancyCoverFlow;
+import com.youwill.store.view.fancycoverflow.FancyCoverFlowAdapter;
 
 import android.app.Fragment;
 import android.os.Bundle;
@@ -9,6 +11,8 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 /**
  * Created by tian on 14-9-23:下午11:01.
@@ -18,6 +22,8 @@ public class HotFragment extends Fragment implements View.OnClickListener {
     RecyclerView latestView;
 
     RecyclerView goodView;
+
+    FancyCoverFlow coverFlow;
 
     LinearLayoutManager mLinearLayoutManager;
 
@@ -45,4 +51,44 @@ public class HotFragment extends Fragment implements View.OnClickListener {
                 break;
         }
     }
+
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+
+        private ImageView icon;
+
+        private TextView name;
+
+        private TextView size;
+
+        public ViewHolder(View itemView) {
+            super(itemView);
+            icon = (ImageView) itemView.findViewById(R.id.icon);
+            name = (TextView) itemView.findViewById(R.id.name);
+            size = (TextView) itemView.findViewById(R.id.size);
+        }
+    }
+
+    private class CoverFlowAdapter extends FancyCoverFlowAdapter {
+
+        @Override
+        public View getCoverFlowItem(int position, View reusableView, ViewGroup parent) {
+            return null;
+        }
+
+        @Override
+        public int getCount() {
+            return 0;
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return null;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return 0;
+        }
+    }
+
 }
