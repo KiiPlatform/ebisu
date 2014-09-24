@@ -12,5 +12,6 @@
     <string name="show_all">显示全部</string>
     <string name="latest_items">最新上架</string>
     <string name="good_items">最受好评</string>
+    <string name="kii_store_secure">应用安全保护</string>
 
 </resources>

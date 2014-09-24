@@ -1,27 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.youwill.store"
-    android:versionCode="1"
-    android:versionName="1.0" >
+          package="com.youwill.store"
+          android:versionCode="1"
+          android:versionName="1.0">
 
     <uses-sdk
-        android:minSdkVersion="18"
-        android:targetSdkVersion="21" />
-
+            android:minSdkVersion="18"
+            android:targetSdkVersion="21"/>
+    <permission
+            android:name="com.kii.app.secure"
+            android:label="Kii Store Secure"
+            android:description="@string/kii_store_secure"
+            android:protectionLevel="normal"
+            />
     <application
-        android:allowBackup="true"
-        android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+            android:allowBackup="true"
+            android:icon="@drawable/ic_launcher"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
-            android:screenOrientation="landscape"
-            android:label="@string/app_name" >
+                android:name=".MainActivity"
+                android:screenOrientation="landscape"
+                android:label="@string/app_name">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <provider android:authorities="com.kii.store.sandbox.check"
+                  android:name=".providers.AppSecureProvider"
+                  android:exported="true"
+                  android:permission="com.kii.app.secure"
+                />
+        <provider android:authorities="com.youwill.store"
+                  android:name=".providers.AppProvider"
+                  android:exported="false"
+                />
+
     </application>
 
 </manifest>
