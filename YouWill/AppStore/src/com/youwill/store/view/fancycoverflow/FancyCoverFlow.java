@@ -70,7 +70,8 @@ public class FancyCoverFlow extends Gallery {
     private int maxRotation = 75;
 
     /**
-     * Factor (0-1) that defines how much the unselected children should be scaled down. 1 means no scaledown.
+     * Factor (0-1) that defines how much the unselected children should be scaled down. 1 means no
+     * scaledown.
      */
     private float unselectedScale;
 
@@ -118,11 +119,13 @@ public class FancyCoverFlow extends Gallery {
     private void applyXmlAttributes(AttributeSet attrs) {
         TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.FancyCoverFlow);
 
-        this.actionDistance = a.getInteger(R.styleable.FancyCoverFlow_actionDistance, ACTION_DISTANCE_AUTO);
+        this.actionDistance = a
+                .getInteger(R.styleable.FancyCoverFlow_actionDistance, ACTION_DISTANCE_AUTO);
         this.scaleDownGravity = a.getFloat(R.styleable.FancyCoverFlow_scaleDownGravity, 1.0f);
         this.maxRotation = a.getInteger(R.styleable.FancyCoverFlow_maxRotation, 45);
         this.unselectedAlpha = a.getFloat(R.styleable.FancyCoverFlow_unselectedAlpha, 0.3f);
-        this.unselectedSaturation = a.getFloat(R.styleable.FancyCoverFlow_unselectedSaturation, 0.0f);
+        this.unselectedSaturation = a
+                .getFloat(R.styleable.FancyCoverFlow_unselectedSaturation, 0.0f);
         this.unselectedScale = a.getFloat(R.styleable.FancyCoverFlow_unselectedScale, 0.75f);
     }
 
@@ -136,7 +139,8 @@ public class FancyCoverFlow extends Gallery {
 
     public void setReflectionRatio(float reflectionRatio) {
         if (reflectionRatio <= 0 || reflectionRatio > 0.5f) {
-            throw new IllegalArgumentException("reflectionRatio may only be in the interval (0, 0.5]");
+            throw new IllegalArgumentException(
+                    "reflectionRatio may only be in the interval (0, 0.5]");
         }
 
         this.reflectionRatio = reflectionRatio;
@@ -174,31 +178,29 @@ public class FancyCoverFlow extends Gallery {
      * Use this to provide a {@link FancyCoverFlowAdapter} to the coverflow. This
      * method will throw an {@link ClassCastException} if the passed adapter does not
      * subclass {@link FancyCoverFlowAdapter}.
-     *
-     * @param adapter
      */
     @Override
     public void setAdapter(SpinnerAdapter adapter) {
         if (!(adapter instanceof FancyCoverFlowAdapter)) {
-            throw new ClassCastException(FancyCoverFlow.class.getSimpleName() + " only works in conjunction with a " + FancyCoverFlowAdapter.class.getSimpleName());
+            throw new ClassCastException(
+                    FancyCoverFlow.class.getSimpleName() + " only works in conjunction with a "
+                            + FancyCoverFlowAdapter.class.getSimpleName());
         }
 
         super.setAdapter(adapter);
     }
 
     /**
-     * Returns the maximum rotation that is applied to items left and right of the center of the coverflow.
-     *
-     * @return
+     * Returns the maximum rotation that is applied to items left and right of the center of the
+     * coverflow.
      */
     public int getMaxRotation() {
         return maxRotation;
     }
 
     /**
-     * Sets the maximum rotation that is applied to items left and right of the center of the coverflow.
-     *
-     * @param maxRotation
+     * Sets the maximum rotation that is applied to items left and right of the center of the
+     * coverflow.
      */
     public void setMaxRotation(int maxRotation) {
         this.maxRotation = maxRotation;
@@ -206,8 +208,6 @@ public class FancyCoverFlow extends Gallery {
 
     /**
      * TODO: Write doc
-     *
-     * @return
      */
     public float getUnselectedAlpha() {
         return this.unselectedAlpha;
@@ -215,8 +215,6 @@ public class FancyCoverFlow extends Gallery {
 
     /**
      * TODO: Write doc
-     *
-     * @return
      */
     public float getUnselectedScale() {
         return unselectedScale;
@@ -224,8 +222,6 @@ public class FancyCoverFlow extends Gallery {
 
     /**
      * TODO: Write doc
-     *
-     * @param unselectedScale
      */
     public void setUnselectedScale(float unselectedScale) {
         this.unselectedScale = unselectedScale;
@@ -233,8 +229,6 @@ public class FancyCoverFlow extends Gallery {
 
     /**
      * TODO: Doc
-     *
-     * @return
      */
     public float getScaleDownGravity() {
         return scaleDownGravity;
@@ -242,8 +236,6 @@ public class FancyCoverFlow extends Gallery {
 
     /**
      * TODO: Doc
-     *
-     * @param scaleDownGravity
      */
     public void setScaleDownGravity(float scaleDownGravity) {
         this.scaleDownGravity = scaleDownGravity;
@@ -251,8 +243,6 @@ public class FancyCoverFlow extends Gallery {
 
     /**
      * TODO: Write doc
-     *
-     * @return
      */
     public int getActionDistance() {
         return actionDistance;
@@ -260,8 +250,6 @@ public class FancyCoverFlow extends Gallery {
 
     /**
      * TODO: Write doc
-     *
-     * @param actionDistance
      */
     public void setActionDistance(int actionDistance) {
         this.actionDistance = actionDistance;
@@ -269,8 +257,6 @@ public class FancyCoverFlow extends Gallery {
 
     /**
      * TODO: Write doc
-     *
-     * @param unselectedAlpha
      */
     @Override
     public void setUnselectedAlpha(float unselectedAlpha) {
@@ -280,8 +266,6 @@ public class FancyCoverFlow extends Gallery {
 
     /**
      * TODO: Write doc
-     *
-     * @return
      */
     public float getUnselectedSaturation() {
         return unselectedSaturation;
@@ -289,8 +273,6 @@ public class FancyCoverFlow extends Gallery {
 
     /**
      * TODO: Write doc
-     *
-     * @param unselectedSaturation
      */
     public void setUnselectedSaturation(float unselectedSaturation) {
         this.unselectedSaturation = unselectedSaturation;
@@ -317,10 +299,12 @@ public class FancyCoverFlow extends Gallery {
         final int childCenter = item.getLeft() + childWidth / 2;
 
         // Use coverflow width when its defined as automatic.
-        final int actionDistance = (this.actionDistance == ACTION_DISTANCE_AUTO) ? (int) ((coverFlowWidth + childWidth) / 2.0f) : this.actionDistance;
+        final int actionDistance = (this.actionDistance == ACTION_DISTANCE_AUTO) ? (int) (
+                (coverFlowWidth + childWidth) / 2.0f) : this.actionDistance;
 
         // Calculate the abstract amount for all effects.
-        final float effectsAmount = Math.min(1.0f, Math.max(-1.0f, (1.0f / actionDistance) * (childCenter - coverFlowCenter)));
+        final float effectsAmount = Math.min(1.0f,
+                Math.max(-1.0f, (1.0f / actionDistance) * (childCenter - coverFlowCenter)));
 
         // Clear previous transformations and set transformation type (matrix + alpha).
         t.clear();
@@ -335,7 +319,8 @@ public class FancyCoverFlow extends Gallery {
         // Saturation
         if (this.unselectedSaturation != 1) {
             // Pass over saturation to the wrapper.
-            final float saturationAmount = (this.unselectedSaturation - 1) * Math.abs(effectsAmount) + 1;
+            final float saturationAmount = (this.unselectedSaturation - 1) * Math.abs(effectsAmount)
+                    + 1;
             item.setSaturation(saturationAmount);
         }
 
@@ -369,6 +354,7 @@ public class FancyCoverFlow extends Gallery {
     // =============================================================================
 
     public static class LayoutParams extends Gallery.LayoutParams {
+
         public LayoutParams(Context c, AttributeSet attrs) {
             super(c, attrs);
         }
