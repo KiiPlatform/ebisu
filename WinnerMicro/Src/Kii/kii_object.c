@@ -495,14 +495,14 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
     g_kii_data.sendDataLen = strlen(buf);
 
 
-    if (kiiHAL_dns(g_kii_data.host, ipBuf) < 0)
+    if (kiiHal_dns(g_kii_data.host, ipBuf) < 0)
     {
         KII_DEBUG("kii-error: dns failed !\r\n");
         return -1;
     }
     KII_DEBUG("Host ip:%d.%d.%d.%d\r\n", ipBuf[3], ipBuf[2], ipBuf[1], ipBuf[0]);
 		
-    mSocketNum = kiiHAL_socketCreate();
+    mSocketNum = kiiHal_socketCreate();
     if (mSocketNum < 0)
     {
         KII_DEBUG("kii-error: create socket failed !\r\n");
@@ -510,27 +510,27 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
     }
 	
 	
-    if (kiiHAL_connect(mSocketNum, (char*)ipBuf) < 0)
+    if (kiiHal_connect(mSocketNum, (char*)ipBuf) < 0)
     {
         KII_DEBUG("kii-error: connect to server failed \r\n");
-	 kiiHAL_socketClose(mSocketNum);
+	 kiiHal_socketClose(mSocketNum);
         return -1;
     }
     
-    if (kiiHAL_socketSend(mSocketNum, g_kii_data.sendBuf, g_kii_data.sendDataLen) < 0)
+    if (kiiHal_socketSend(mSocketNum, g_kii_data.sendBuf, g_kii_data.sendDataLen) < 0)
     {
         
         KII_DEBUG("kii-error: send data fail\r\n");
-	 kiiHAL_socketClose(mSocketNum);
+	 kiiHal_socketClose(mSocketNum);
         return -1;
     }
 
     memset(g_kii_data.rcvdBuf, 0, KII_RECV_BUF_SIZE);
-    g_kii_data.rcvdCounter = kiiHAL_socketRecv(mSocketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
+    g_kii_data.rcvdCounter = kiiHal_socketRecv(mSocketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
     if (g_kii_data.rcvdCounter < 0)
     {
         KII_DEBUG("kii-error: recv data fail\r\n");
-	 kiiHAL_socketClose(mSocketNum);
+	 kiiHal_socketClose(mSocketNum);
         return -1;
     }
 
@@ -543,14 +543,14 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
 	
     if (p1 == NULL)
     {
-	 kiiHAL_socketClose(mSocketNum);
+	 kiiHal_socketClose(mSocketNum);
 	 return -1;
     }
     p1 +=1;
     p2 = strstr(p1, "\"");
     if (p2 == NULL)
     {
-	 kiiHAL_socketClose(mSocketNum);
+	 kiiHal_socketClose(mSocketNum);
 	 return -1;
     }
 	
@@ -639,27 +639,27 @@ int kiiObj_uploadBody(unsigned char *data, unsigned int length)
     if ((strlen(buf)+length ) > KII_SEND_BUF_SIZE)
     {
         KII_DEBUG("kii-error: buffer overflow !\r\n");
-	 kiiHAL_socketClose(mSocketNum);
+	 kiiHal_socketClose(mSocketNum);
         return -1;
     }
     g_kii_data.sendDataLen = strlen(buf) + length;
     memcpy(buf+strlen(buf), data, length);
     //memcpy(buf + g_kii_data.sendDataLen -1, STR_LF, 1);
 
-    if (kiiHAL_socketSend(mSocketNum, g_kii_data.sendBuf, g_kii_data.sendDataLen) < 0)
+    if (kiiHal_socketSend(mSocketNum, g_kii_data.sendBuf, g_kii_data.sendDataLen) < 0)
     {
         
         KII_DEBUG("kii-error: send data fail\r\n");
-	 kiiHAL_socketClose(mSocketNum);
+	 kiiHal_socketClose(mSocketNum);
         return -1;
     }
 
     memset(g_kii_data.rcvdBuf, 0, KII_RECV_BUF_SIZE);
-    g_kii_data.rcvdCounter = kiiHAL_socketRecv(mSocketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
+    g_kii_data.rcvdCounter = kiiHal_socketRecv(mSocketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
     if (g_kii_data.rcvdCounter < 0)
     {
         KII_DEBUG("kii-error: recv data fail\r\n");
-	 kiiHAL_socketClose(mSocketNum);
+	 kiiHal_socketClose(mSocketNum);
         return -1;
     }
 
@@ -669,7 +669,7 @@ int kiiObj_uploadBody(unsigned char *data, unsigned int length)
     if (p1 == NULL)
     {
         KII_DEBUG("kii-error: upload body failed !\r\n");
-	 kiiHAL_socketClose(mSocketNum);
+	 kiiHal_socketClose(mSocketNum);
 	 return -1;
     }
     else
@@ -741,24 +741,24 @@ int kiiObj_uploadBodyCommit(int committed)
 
     g_kii_data.sendDataLen = strlen(buf);
 
-    if (kiiHAL_socketSend(mSocketNum, g_kii_data.sendBuf, g_kii_data.sendDataLen) < 0)
+    if (kiiHal_socketSend(mSocketNum, g_kii_data.sendBuf, g_kii_data.sendDataLen) < 0)
     {
         
         KII_DEBUG("kii-error: send data fail\r\n");
-	 kiiHAL_socketClose(mSocketNum);
+	 kiiHal_socketClose(mSocketNum);
         return -1;
     }
 
     memset(g_kii_data.rcvdBuf, 0, KII_RECV_BUF_SIZE);
-    g_kii_data.rcvdCounter = kiiHAL_socketRecv(mSocketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
+    g_kii_data.rcvdCounter = kiiHal_socketRecv(mSocketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
     if (g_kii_data.rcvdCounter < 0)
     {
         KII_DEBUG("kii-error: recv data fail\r\n");
-	 kiiHAL_socketClose(mSocketNum);
+	 kiiHal_socketClose(mSocketNum);
         return -1;
     }
 
-     kiiHAL_socketClose(mSocketNum);
+     kiiHal_socketClose(mSocketNum);
     buf = g_kii_data.rcvdBuf;
 
     p1 = strstr(buf, "HTTP/1.1 204");

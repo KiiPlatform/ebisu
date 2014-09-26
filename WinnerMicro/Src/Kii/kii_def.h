@@ -20,6 +20,7 @@
 
 #define STR_POST "POST "
 #define STR_PUT "PUT "
+#define STR_GET "GET "
 #define STR_HTTP "  HTTP/1.1"
 #define STR_AUTHORIZATION "Authorization:"
 #define STR_CONTENT_TYPE "content-type:"
@@ -35,6 +36,9 @@
 
 
 typedef struct {
+	char vendorDeviceID[KII_DEVICE_VENDOR_ID+1];
+	char deviceID[KII_DEVICE_ID+1];
+	char password[KII_PASSWORD_SIZE+1];
     char accessToken[KII_ACCESS_TOKEN_SIZE+1];
     char host[KII_HOST_SIZE+1];
     char appID[KII_APPID_SIZE+1];
