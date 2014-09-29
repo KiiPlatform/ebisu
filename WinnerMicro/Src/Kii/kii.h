@@ -19,7 +19,8 @@
 #define KII_RECV_BUF_SIZE 2048
 
 
-typedef void (* recvPushMessageCallback)(char* jsonBuf);
+typedef void (* kiiPush_recvMessageCallback)(char* jsonBuf);
+
 
 
 extern int kii_init(char *site, char *appID, char *appKey);
@@ -35,7 +36,7 @@ extern int kiiObj_uploadBodyAtOnce(char *bucketName, char *objectID,  char *data
 extern int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsigned int totalLength);
 extern int kiiObj_uploadBody(unsigned char *data, unsigned int length);
 extern int kiiObj_uploadBodyCommit(int committed);
-extern int KiiPush_init(unsigned int taskPrio, recvPushMessageCallback callback);
+extern int KiiPush_init(unsigned int taskPrio, kiiPush_recvMessageCallback callback);
 
 
 #endif

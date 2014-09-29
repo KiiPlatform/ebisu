@@ -4,6 +4,7 @@
 
 #include "kii.h"
 #include "kii_def.h"
+#include "kii_hal.h"
 
 extern kii_data_struct g_kii_data;
 
@@ -253,16 +254,11 @@ void kiiHal_delayMs(unsigned int ms)
 	OSTimeDly (ms*OS_TICKS_PER_SEC/1000);
 }
 
-int kiiHal_taskCreate(tls_os_task_t *task,
-      const char* name,
-      void (*entry)(void* param), 
-      void* param,
-      unsigned char *stk_start,
-      unsigned int stk_size,
-      unsigned int prio,
-      unsigned int flag)
+
+
+int kiiHal_taskCreate(const char* name, KiiHal_taskEntry pEntry, void* param, unsigned char *stk_start, unsigned int stk_size, unsigned int prio)
 {
-	if (tls_os_task_create(task, name, entry, param, stk_start, stk_size, prio, flag) == TLS_OS_SUCCESS)
+	if (tls_os_task_create(NULL,name, pEntry, param, stk_start, stk_size, prio, 0) == TLS_OS_SUCCESS)
 	{
 	    return 0;
 	}
@@ -270,6 +266,24 @@ int kiiHal_taskCreate(tls_os_task_t *task,
         {
             return -1;
         }
+
+}
+
+//0:net up
+//-1 net down
+int kiiHal_getNetState(void)
+{
+    struct tls_ethif * ethif;
+	
+    ethif = tls_netif_get_ethif();
+    if (ethif->status)
+    {
+        return 0;
+    }
+   else
+   {
+       return -1;
+   }
 
 }
 

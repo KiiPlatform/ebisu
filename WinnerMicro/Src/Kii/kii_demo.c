@@ -20,7 +20,8 @@
 
 extern int kiiUser_logIn(char *userName, char *password);
 
-int kiiDemo_test(char *buf)
+
+void kiiDemo_testObject(void)
 {
     int ret;
     char objectID[KII_OBJECTID_SIZE+1];
@@ -33,18 +34,18 @@ int kiiDemo_test(char *buf)
     if (ret < 0)
     {
     	    printf("kii init error\r\n");
-	    return WM_FAILED;
+	    return;
     }
 
     if (kiiUser_logIn("test1", "123456") != 0)
     {
-	    return WM_FAILED;
+	    return;
     }
 
     if (kiiObj_create(STR_BUCKET, STR_JSONOBJECT, NULL, objectID) < 0)
     {
         printf("kii create object without data type failed !\r\n");
-        return WM_FAILED;
+        return;
     }
     else
     {
@@ -54,7 +55,7 @@ int kiiDemo_test(char *buf)
     if (kiiObj_create(STR_BUCKET, STR_JSONOBJECT, STR_MEDIA_TYPE, objectID) < 0)
     {
         printf("kii create object with data type failed !\r\n");
-        return WM_FAILED;
+        return;
     }
     else
     {
@@ -166,9 +167,47 @@ int kiiDemo_test(char *buf)
     {
         printf("kii object upload multiple pieces body cancelled successfully !\r\n");
     }
+}
 
+void PushMessageCallback(char* jsonBuf)
+{
+}
+
+
+void kiiDemo_testPush(void)
+{
+	u8 mac_addr[8];
+	char vendorID[KII_DEVICE_VENDOR_ID+1] ;
+        int i;	
+
+	memset(mac_addr,0,sizeof(mac_addr));
+	tls_get_mac_addr(mac_addr);
+	memset(vendorID, 0, sizeof(vendorID));
+	for(i=0; i<6; i++)
+	{
+	   sprintf(vendorID+strlen(vendorID), "%02x", mac_addr[i]);
+	}
+
+	printf("mac:%s\r\n", vendorID);
 	
+	if (kiiDev_getToken(vendorID, "123456") != 0)
+	{
+		if (kiiDev_register(vendorID, "Winner", "123456") == 0)
+		{
+		    if (KiiPush_init(DEMO_KII_TASK_PRIO, PushMessageCallback) == 0)
+		    {
+		     }
+		}
+	}
+
+}
+
+int kiiDemo_test(char *buf)
+{
+    kiiDemo_testObject();
+    kiiDemo_testPush();
     return WM_SUCCESS;
+
 }
 
 

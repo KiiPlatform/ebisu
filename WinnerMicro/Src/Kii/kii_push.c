@@ -1,15 +1,12 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "wm_include.h"
-
 #include "kii.h"
 #include "kii_def.h"
 #include "kii_hal.h"
 #include "kii_push.h"
 
 extern kii_data_struct g_kii_data;
-
 static kii_push_struct m_kii_push;
 
 
@@ -348,22 +345,20 @@ static unsigned int  mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];
 
 static void kiiPush_task(void *sdata)
 {
-    recvPushMessageCallback callback;
-    struct tls_ethif * ethif;
+    kiiPush_recvMessageCallback callback;
     unsigned char netConnected = 0;
     int socketNum;
     unsigned char ipBuf[4];
     int rcvdCounter;
 
-    callback = (recvPushMessageCallback) sdata;
+    callback = (kiiPush_recvMessageCallback) sdata;
     
 	for(;;)
 	{
 	    if (netConnected == 0)
 	    {
   	        kiiHal_delayMs(1000);
-		ethif = tls_netif_get_ethif();
-		if (ethif->status)
+		if (kiiHal_getNetState() == 0)
 		{
         		if (kiiHal_dns(m_kii_push.host, ipBuf) < 0)
         		{
@@ -413,7 +408,7 @@ static void kiiPush_task(void *sdata)
 }
 
 
-int KiiPush_init(unsigned int taskPrio, recvPushMessageCallback callback)
+int KiiPush_init(unsigned int taskPrio, kiiPush_recvMessageCallback callback)
 {
 	kiiPush_endpointState_e endpointState;
 
@@ -432,13 +427,12 @@ int KiiPush_init(unsigned int taskPrio, recvPushMessageCallback callback)
 	if (endpointState == KIIPUSH_ENDPOINT_READY)
 	{
 	    
-		tls_os_task_create(NULL, NULL,
-				kiiPush_task,
+		kiiHal_taskCreate(NULL,
+			                        kiiPush_task,
 						(void *)callback,
 						(void *)mKiiPush_taskStk,
 						KIIPUSH_TASK_STK_SIZE * sizeof(unsigned char), 
-						taskPrio,
-						0);
+						taskPrio);
 	    
 		return 0;
 	}
