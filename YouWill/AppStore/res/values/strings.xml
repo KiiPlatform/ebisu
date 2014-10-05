@@ -13,5 +13,7 @@
     <string name="latest_items">最新上架</string>
     <string name="good_items">最受好评</string>
     <string name="kii_store_secure">应用安全保护</string>
+    <string name="input_comment">输入评论</string>
+    <string name="submit_comment">提交评论</string>
 
 </resources>

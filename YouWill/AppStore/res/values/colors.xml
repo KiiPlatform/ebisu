@@ -8,5 +8,6 @@
     <color name="show_all_color">#ff666666</color>
     <color name="app_name_text_color">#ff000000</color>
     <color name="app_size_text_color">#666666</color>
-
+    <color name="top_bar_green">#48b4c6</color>
+    <color name="white">#ffffff</color>
 </resources>
