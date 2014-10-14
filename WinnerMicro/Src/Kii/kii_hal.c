@@ -256,6 +256,23 @@ void kiiHal_delayMs(unsigned int ms)
 
 
 
+/*****************************************************************************
+*
+*  kiiHal_taskCreate
+*
+*  \param  name - task name
+*              pEntry - the entry function
+*              param - an optional data area which can be used to pass parameters to
+*                           the task when the task first executes
+*              stk_start -  the pointer to the task's bottom of stack
+*              stk_size - stack size
+*              prio - the priority of the task
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  create task
+*
+*****************************************************************************/
 int kiiHal_taskCreate(const char* name, KiiHal_taskEntry pEntry, void* param, unsigned char *stk_start, unsigned int stk_size, unsigned int prio)
 {
 	if (tls_os_task_create(NULL,name, pEntry, param, stk_start, stk_size, prio, 0) == TLS_OS_SUCCESS)
@@ -269,8 +286,17 @@ int kiiHal_taskCreate(const char* name, KiiHal_taskEntry pEntry, void* param, un
 
 }
 
-//0:net up
-//-1 net down
+/*****************************************************************************
+*
+*  kiiHal_getNetState
+*
+*  \param: none
+*
+*  \return 0:net up; -1: net down
+*
+*  \brief  get the net state
+*
+*****************************************************************************/
 int kiiHal_getNetState(void)
 {
     struct tls_ethif * ethif;

@@ -23,19 +23,224 @@ typedef void (* kiiPush_recvMessageCallback)(char* jsonBuf);
 
 
 
+/*****************************************************************************
+*
+*  kii_init
+*
+*  \param  site - the input of site name, should be one of "CN", "JP", "US", "SG"
+*              appID - the input of Application ID
+*              objectID - the input of Application Key
+*
+*  \return  0:success; -1: failure
+*
+*  \brief  Kii initialize
+*
+*****************************************************************************/
 extern int kii_init(char *site, char *appID, char *appKey);
 
+
+/*****************************************************************************
+*
+*  kiiDev_getToken
+*
+*  \param  vendorDeviceID - the input of identification of the device
+*               password - the input of password
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  get token
+*
+*****************************************************************************/
 extern int kiiDev_getToken(char *deviceVendorID, char *password);
+
+
+/*****************************************************************************
+*
+*  kiiDev_register
+*
+*  \param  vendorDeviceID - the input of identification of the device
+*               deviceType - the input of device type
+*               password - the input of password
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  register device
+*
+*****************************************************************************/
 extern int kiiDev_register(char *vendorDeviceID, char *deviceType, char *password);
 
+
+/*****************************************************************************
+*
+*  kiiObj_create
+*
+*  \param  bucketName - the input of bucket name
+*               jsonObject - the input of object with json format
+*               dataType - the input of data type, the format should be like "mydata",  it can be set NULL if object is not an specific data type in the platform
+*               objectID - the output of objectID
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  create object
+*
+*****************************************************************************/
 extern int kiiObj_create(char *bucketName, char *jsonObject, char *dataType, char *objectID);
+
+
+/*****************************************************************************
+*
+*  kiiObj_createWithID
+*
+*  \param  bucketName - the input of bucket name
+*               jsonObject - the input of object with json format
+*               dataType - the input of data type, the format should be like "mydata",  it can be set NULL if object is not an specific data type in the platform
+*               objectID - the input of objectID
+*
+*  \return  0:success; -1: failure
+*
+*  \brief  create a new object with an ID
+*
+*****************************************************************************/
 extern int kiiObj_createWithID(char *bucketName, char *jsonObject, char *dataType, char *objectID);
+
+
+/*****************************************************************************
+*
+*  kiiObj_fullyUpdate
+*
+*  \param  bucketName - the input of bucket name
+*               jsonObject - the input of object with json format
+*               dataType - the input of data type, the format should be like "mydata",  it can be set NULL if object is not an specific data type in the platform
+*               objectID - the input of objectID
+*
+*  \return  0:success; -1: failure
+*
+*  \brief  fully update an object
+*
+*****************************************************************************/
 extern int kiiObj_fullyUpdate(char *bucketName, char *jsonObject, char *dataType, char *objectID);
+
+
+/*****************************************************************************
+*
+*  kiiObj_partiallyUpdate
+*
+*  \param  bucketName - the input of bucket name
+*               jsonObject - the input of object with json format
+*               objectID - the input of objectID
+*
+*  \return  0:success; -1: failure
+*
+*  \brief  partially update an object
+*
+*****************************************************************************/
 extern int kiiObj_partiallyUpdate(char *bucketName, char *jsonObject, char *objectID);
+
+
+/*****************************************************************************
+*
+*  kiiObj_uploadBodyAtOnce
+*
+*  \param: bucketName - the input of bucket name
+*               objectID - the input of objectID
+*               dataType - the input of data type, it must not be NULL, the format should be like "image/jpg"
+*               data - raw data
+*               length - raw data length
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  upload object body at once
+*
+*****************************************************************************/
 extern int kiiObj_uploadBodyAtOnce(char *bucketName, char *objectID,  char *dataType, unsigned char *data, unsigned int length);
+
+
+/*****************************************************************************
+*
+*  kiiObj_uploadBodyInit
+*
+*  \param: bucketName - the input of bucket name
+*               objectID - the input of objectID
+*               dataType - the input of data type, it must not be NULL, the format should be like "image/jpg"
+*               totalLength - the total of data length
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  init uploading an object body in multiple pieces
+*
+*****************************************************************************/
 extern int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsigned int totalLength);
+
+
+/*****************************************************************************
+*
+*  kiiObj_uploadBody
+*
+*  \param: data - the piece of data to be uploaded
+*               length - the piece of data length
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  upload a piece of data
+*
+*****************************************************************************/
 extern int kiiObj_uploadBody(unsigned char *data, unsigned int length);
+
+
+/*****************************************************************************
+*
+*  kiiObj_uploadBody
+*
+*  \param: committed - 0: cancelled; 1: committed
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  commit or cancel this uploading
+*
+*****************************************************************************/
 extern int kiiObj_uploadBodyCommit(int committed);
+
+
+/*****************************************************************************
+*
+*  kiiPush_subscribeBucket
+*
+*  \param: bucketID - the bucket ID
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  subscribe bucket
+*
+*****************************************************************************/
+extern int kiiPush_subscribeBucket(char *bucketID);
+
+
+/*****************************************************************************
+*
+*  kiiPush_subscribeTopic
+*
+*  \param: topicID - the topic ID
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  subscribe topic
+*
+*****************************************************************************/
+extern int kiiPush_subscribeTopic(char *topicID);
+
+
+/*****************************************************************************
+*
+*  KiiPush_init
+*
+*  \param: taskPrio - the priority of task
+*               callback - the call back function for processing the push message received
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  init push
+*
+*****************************************************************************/
 extern int KiiPush_init(unsigned int taskPrio, kiiPush_recvMessageCallback callback);
 
 

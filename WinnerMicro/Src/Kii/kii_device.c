@@ -9,7 +9,18 @@
 
 extern kii_data_struct g_kii_data;
 
-
+/*****************************************************************************
+*
+*  kiiDev_getToken
+*
+*  \param  vendorDeviceID - the input of identification of the device
+*               password - the input of password
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  get token
+*
+*****************************************************************************/
 int kiiDev_getToken(char *vendorDeviceID, char *password)
 {
     char * p1;
@@ -118,6 +129,19 @@ int kiiDev_getToken(char *vendorDeviceID, char *password)
 }
 
 
+/*****************************************************************************
+*
+*  kiiDev_register
+*
+*  \param  vendorDeviceID - the input of identification of the device
+*               deviceType - the input of device type
+*               password - the input of password
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  register device
+*
+*****************************************************************************/
 int kiiDev_register(char *vendorDeviceID, char *deviceType, char *password)
 {
     char * p1;

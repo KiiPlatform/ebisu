@@ -9,8 +9,22 @@
 extern kii_data_struct g_kii_data;
 static kii_push_struct m_kii_push;
 
+#define    KIIPUSH_TASK_STK_SIZE      256
+static unsigned int  mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];     
 
 
+
+/*****************************************************************************
+*
+*  kiiPush_install
+*
+*  \param: none
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  register installation of a device
+*
+*****************************************************************************/
 int kiiPush_install(void)
 {
     char * p1;
@@ -102,6 +116,20 @@ int kiiPush_install(void)
 
 
 
+
+/*****************************************************************************
+*
+*  kiiPush_retrieveEndpoint
+*
+*  \param: none
+*
+*  \return KIIPUSH_ENDPOINT_READY
+*             KIIPUSH_ENDPOINT_UNAVAILABLE
+*             KIIPUSH_ENDPOINT_ERROR
+*
+*  \brief  retrieve MQTT endpoint
+*
+*****************************************************************************/
 kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
 {
     char * p1;
@@ -188,8 +216,19 @@ kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
 }
 
 
-/*
-int kiiPush_subscribeTopic(void)
+
+/*****************************************************************************
+*
+*  kiiPush_subscribeBucket
+*
+*  \param: bucketID - the bucket ID
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  subscribe bucket
+*
+*****************************************************************************/
+int kiiPush_subscribeBucket(char *bucketID)
 {
     char * p1;
     char * p2;
@@ -201,9 +240,9 @@ int kiiPush_subscribeTopic(void)
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/users/me/topics/");
-    strcpy(buf+strlen(buf),m_kii_push.topic);
-    strcpy(buf+strlen(buf), "/push/subscriptions/users");
+    strcpy(buf+strlen(buf), "/buckets/");
+    strcpy(buf+strlen(buf),bucketID);
+    strcpy(buf+strlen(buf), "/filters/all/push/subscriptions/things");
     strcpy(buf+strlen(buf), STR_HTTP);
    strcpy(buf+strlen(buf), STR_CRLF);
    //Connection
@@ -250,24 +289,33 @@ int kiiPush_subscribeTopic(void)
 }
 
 
-int kiiPush_pushMessage( char *jsonObject)
+
+/*****************************************************************************
+*
+*  kiiPush_subscribeTopic
+*
+*  \param: topicID - the topic ID
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  subscribe topic
+*
+*****************************************************************************/
+int kiiPush_subscribeTopic(char *topicID)
 {
     char * p1;
     char * p2;
     char *buf;
-    char pushBuf1[16];
-    char pushBuf2[256];
-    int contentLength;
-	
+
     buf = g_kii_data.sendBuf;
     memset(buf, 0, KII_SEND_BUF_SIZE);
     strcpy(buf, STR_POST);
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/users/me/topics/");
-    strcpy(buf+strlen(buf),mTopic);
-    strcpy(buf+strlen(buf), "/push/messages");
+    strcpy(buf+strlen(buf), "/topics/");
+    strcpy(buf+strlen(buf),topicID);
+    strcpy(buf+strlen(buf), "/push/subscriptions/things");
     strcpy(buf+strlen(buf), STR_HTTP);
    strcpy(buf+strlen(buf), STR_CRLF);
    //Connection
@@ -284,39 +332,12 @@ int kiiPush_pushMessage( char *jsonObject)
     strcpy(buf+strlen(buf), STR_KII_APPKEY);
     strcpy(buf+strlen(buf), g_kii_data.appKey);
    strcpy(buf+strlen(buf), STR_CRLF);
-    //accept
-   strcpy(buf+strlen(buf), STR_ACCEPT);
-   strcpy(buf+strlen(buf), "application/vnd.kii.SendPushMessageResponse+json");
-   strcpy(buf+strlen(buf), STR_CRLF);
-   //content-type	
-   strcpy(buf+strlen(buf), STR_CONTENT_TYPE);
-   strcpy(buf+strlen(buf), "application/vnd.kii.SendPushMessageRequest+json");
-   strcpy(buf+strlen(buf), STR_CRLF);
    //Authorization
     strcpy(buf+strlen(buf), STR_AUTHORIZATION);
     strcpy(buf+strlen(buf),  " Bearer ");
     strcpy(buf+strlen(buf), g_kii_data.accessToken); 
    strcpy(buf+strlen(buf), STR_CRLF);
-   //Content-Length
-   memset(pushBuf1, 0, sizeof(pushBuf1));
-   memset(pushBuf2, 0, sizeof(pushBuf2));
-   strcpy(pushBuf1, "{\"data\": " );
-   strcpy(pushBuf2, ", \"sendToProduction\": false, \"gcm\": {\"enabled\": \"false\"}, \"apns\": {\"enabled\": \"false\"}}"  
-   strcpy(buf+strlen(buf), STR_CONTENT_LENGTH);
-   contentLength = strlen(pushBuf1) + strlen(pushBuf2) + strlen(jsonObject) + 1;
-   sprintf(buf+strlen(buf), "%d", contentLength);
    strcpy(buf+strlen(buf), STR_CRLF);
-   strcpy(buf+strlen(buf), STR_CRLF);
-
-    if ((strlen(buf)+contentLength) > KII_SEND_BUF_SIZE)
-    {
-        KII_DEBUG("kii-error: buffer overflow !\r\n");
-        return -1;
-    }
-   strcpy(buf+strlen(buf), pushBuf1);
-   strcpy(buf+strlen(buf), jsonObject);
-   strcpy(buf+strlen(buf), pushBuf2);
-   strcpy(buf+strlen(buf), STR_LF);
    
     g_kii_data.sendDataLen = strlen(buf);
 
@@ -327,9 +348,10 @@ int kiiPush_pushMessage( char *jsonObject)
     }
     buf = g_kii_data.rcvdBuf;
 
-    p1 = strstr(buf, "HTTP/1.1 200");
+    p1 = strstr(buf, "HTTP/1.1 204");
+    p2 = strstr(buf, "HTTP/1.1 409");
 	
-    if (p1 != NULL)
+    if (p1 != NULL  || p2 != NULL)
     {
 	 return 0;
     }
@@ -338,10 +360,6 @@ int kiiPush_pushMessage( char *jsonObject)
 	return -1;
     }
 }
-*/
-
-#define    KIIPUSH_TASK_STK_SIZE      256
-static unsigned int  mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];     
 
 static void kiiPush_task(void *sdata)
 {
@@ -408,6 +426,18 @@ static void kiiPush_task(void *sdata)
 }
 
 
+/*****************************************************************************
+*
+*  KiiPush_init
+*
+*  \param: taskPrio - the priority of task
+*               callback - the call back function for processing the push message received
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  init push
+*
+*****************************************************************************/
 int KiiPush_init(unsigned int taskPrio, kiiPush_recvMessageCallback callback)
 {
 	kiiPush_endpointState_e endpointState;

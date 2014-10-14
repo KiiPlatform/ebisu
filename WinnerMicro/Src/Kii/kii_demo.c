@@ -169,37 +169,45 @@ void kiiDemo_testObject(void)
     }
 }
 
-void PushMessageCallback(char* jsonBuf)
+void kiiDemo_pushMessageCallback(char* jsonBuf)
 {
+    printf("%s", jsonBuf);    
 }
 
 
 void kiiDemo_testPush(void)
 {
-	u8 mac_addr[8];
-	char vendorID[KII_DEVICE_VENDOR_ID+1] ;
-        int i;	
-
-	memset(mac_addr,0,sizeof(mac_addr));
-	tls_get_mac_addr(mac_addr);
-	memset(vendorID, 0, sizeof(vendorID));
-	for(i=0; i<6; i++)
-	{
-	   sprintf(vendorID+strlen(vendorID), "%02x", mac_addr[i]);
-	}
-
-	printf("mac:%s\r\n", vendorID);
+    #define BUCKET_NAME  "LedControl"
+    #define DEVICE_TYPE "Led"
+    #define PASSWORD "123456"
 	
-	if (kiiDev_getToken(vendorID, "123456") != 0)
-	{
-		if (kiiDev_register(vendorID, "Winner", "123456") == 0)
-		{
-		    if (KiiPush_init(DEMO_KII_TASK_PRIO, PushMessageCallback) == 0)
-		    {
-		     }
-		}
-	}
+    unsigned char mac_addr[8];
+    char vendorID[KII_DEVICE_VENDOR_ID+1] ;
+    int i;	
+    int ret = 0;
 
+    memset(mac_addr,0,sizeof(mac_addr));
+    tls_get_mac_addr(mac_addr);
+    memset(vendorID, 0, sizeof(vendorID));
+    for(i=0; i<6; i++)
+    {
+        sprintf(vendorID+strlen(vendorID), "%02x", mac_addr[i]);
+    }
+	
+    if (kiiDev_getToken(vendorID, PASSWORD) != 0)
+    {
+        ret = kiiDev_register(vendorID, DEVICE_TYPE, PASSWORD);
+    }
+
+    if (ret == 0)
+    {
+        kiiPush_subscribeBucket(BUCKET_NAME);
+        KiiPush_init(DEMO_KII_TASK_PRIO, kiiDemo_pushMessageCallback);
+    }
+    else
+    {
+        printf("device activation error!\r\n");
+    }
 }
 
 int kiiDemo_test(char *buf)
