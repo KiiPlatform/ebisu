@@ -10,4 +10,5 @@
     <color name="app_size_text_color">#666666</color>
     <color name="top_bar_green">#48b4c6</color>
     <color name="white">#ffffff</color>
+    <color name="cate_top_bg">#e8eae9</color>
 </resources>

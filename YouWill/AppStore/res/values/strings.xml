@@ -15,5 +15,8 @@
     <string name="kii_store_secure">应用安全保护</string>
     <string name="input_comment">输入评论</string>
     <string name="submit_comment">提交评论</string>
-
+    <string name="age_cate_1">0-3岁</string>
+    <string name="age_cate_2">3-6岁</string>
+    <string name="age_cate_3">6-12岁</string>
+    <string name="age_cate_4">12岁以上</string>
 </resources>
