@@ -28,6 +28,7 @@
 #define STR_KII_APPKEY "x-kii-appkey:"
 #define STR_CONTENT_LENGTH "Content-Length: "
 #define STR_ACCEPT "Accept:"
+#define STR_RANGE "Range:"
 #define STR_CONTENT_RANGE "Content-Range:"
 #define STR_EMPTY_JSON "{ }"
 #define STR_CRLF "\r\n"

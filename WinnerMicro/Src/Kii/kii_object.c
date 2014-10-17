@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "kii.h"
 #include "kii_def.h"
@@ -773,5 +774,204 @@ int kiiObj_uploadBodyCommit(int committed)
 }
 
 
+/*****************************************************************************
+*
+*  kiiObj_retrieve
+*
+*  \param  bucketName - the input of bucket name
+*               objectID - the input of objectID
+*               jsonObject - the output of object with json format
+*               length - the buffer length of jsonObject
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  retrieve object with objectID
+*
+*****************************************************************************/
+int kiiObj_retrieve(char *bucketName, char *objectID,  char *jsonObject, int length)
+{
+    char * p1;
+    char * p2;
+    char *buf;
+
+    buf = g_kii_data.sendBuf;
+    memset(buf, 0, KII_SEND_BUF_SIZE);
+    strcpy(buf, STR_GET);
+    // url
+    strcpy(buf+strlen(buf), "/api/apps/");
+    strcpy(buf+strlen(buf), g_kii_data.appID);
+    strcpy(buf+strlen(buf), "/users/me/buckets/");
+    strcpy(buf+strlen(buf),bucketName);
+    strcpy(buf+strlen(buf), "/objects/");
+    strcpy(buf+strlen(buf),objectID);
+    strcpy(buf+strlen(buf), STR_HTTP);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Connection
+   strcpy(buf+strlen(buf), "Connection: Keep-Alive\r\n");
+   //Host
+   strcpy(buf+strlen(buf), "Host: ");
+   strcpy(buf+strlen(buf), g_kii_data.host);
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //x-kii-appid
+    strcpy(buf+strlen(buf), STR_KII_APPID);
+    strcpy(buf+strlen(buf), g_kii_data.appID); 
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //x-kii-appkey 
+    strcpy(buf+strlen(buf), STR_KII_APPKEY);
+    strcpy(buf+strlen(buf), g_kii_data.appKey);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Authorization
+    strcpy(buf+strlen(buf), STR_AUTHORIZATION);
+    strcpy(buf+strlen(buf),  " Bearer ");
+    strcpy(buf+strlen(buf), g_kii_data.accessToken); 
+   strcpy(buf+strlen(buf), STR_CRLF);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   
+    g_kii_data.sendDataLen = strlen(buf);
+
+    if (kiiHal_transfer() != 0)
+    {
+        KII_DEBUG("kii-error: transfer data error !\r\n");
+        return -1;
+    }
+    buf = g_kii_data.rcvdBuf;
+
+    p1 = strstr(buf, "HTTP/1.1 200");
+    p1 = strstr(p1, "{");
+    p2 = strstr(p1, "}");
+	
+    if (p1 == NULL || p2 == NULL)
+    {
+	 return -1;
+    }
+
+    p2++;
+    if ((p2-p1) > length)
+    {
+        KII_DEBUG("kii-error: jsonObjectBuf overflow !\r\n");
+	return -1;
+    }
+    memset(jsonObject, 0, length);
+    memcpy(jsonObject, p1, p2-p1);
+    return 0;
+}
+
+
+
+/*****************************************************************************
+*
+*  kiiObj_downloadBody
+*
+*  \param  bucketName - the input of bucket name
+*               objectID - the input of objectID
+*               position - the downloading position of body
+*               length - the downloading length of body
+*               data - the output data of received body
+*               actualLength - the actual length of received body
+*               totalLength - the output of total length of body
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  download an object in multiple pieces
+*
+*****************************************************************************/
+int kiiObj_downloadBody(char *bucketName, char *objectID,  unsigned int position,  unsigned int length, unsigned char *data, unsigned int *actualLength, unsigned int *totalLength)
+{
+    char * p1;
+//    char * p2;
+    char *buf;
+
+    buf = g_kii_data.sendBuf;
+    memset(buf, 0, KII_SEND_BUF_SIZE);
+    strcpy(buf, STR_GET);
+    // url
+    strcpy(buf+strlen(buf), "/api/apps/");
+    strcpy(buf+strlen(buf), g_kii_data.appID);
+    strcpy(buf+strlen(buf), "/users/me/buckets/");
+    strcpy(buf+strlen(buf),bucketName);
+    strcpy(buf+strlen(buf), "/objects/");
+    strcpy(buf+strlen(buf),objectID);
+    strcpy(buf+strlen(buf), "/body");
+    strcpy(buf+strlen(buf), STR_HTTP);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Connection
+   strcpy(buf+strlen(buf), "Connection: Keep-Alive\r\n");
+   //Host
+   strcpy(buf+strlen(buf), "Host: ");
+   strcpy(buf+strlen(buf), g_kii_data.host);
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //x-kii-appid
+    strcpy(buf+strlen(buf), STR_KII_APPID);
+    strcpy(buf+strlen(buf), g_kii_data.appID); 
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //x-kii-appkey 
+    strcpy(buf+strlen(buf), STR_KII_APPKEY);
+    strcpy(buf+strlen(buf), g_kii_data.appKey);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Accept
+    strcpy(buf+strlen(buf), STR_ACCEPT);
+   strcpy(buf+strlen(buf), "*/*");
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Range
+    strcpy(buf+strlen(buf), STR_RANGE);
+     strcpy(buf+strlen(buf), "bytes=");
+    sprintf(buf+strlen(buf), "%d", position);
+    strcpy(buf+strlen(buf), "-");
+    sprintf(buf+strlen(buf), "%d", position+length);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Authorization
+    strcpy(buf+strlen(buf), STR_AUTHORIZATION);
+    strcpy(buf+strlen(buf),  " Bearer ");
+    strcpy(buf+strlen(buf), g_kii_data.accessToken); 
+   strcpy(buf+strlen(buf), STR_CRLF);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   
+    g_kii_data.sendDataLen = strlen(buf);
+
+    if (kiiHal_transfer() != 0)
+    {
+        KII_DEBUG("kii-error: transfer data error !\r\n");
+        return -1;
+    }
+    buf = g_kii_data.rcvdBuf;
+
+    p1 = strstr(buf, "HTTP/1.1 206");
+    if (p1 == NULL)
+    {
+	 return -1;
+    }
+
+    p1 = strstr(buf, STR_CONTENT_RANGE);
+    p1 = strstr(p1, "/");
+    if (p1 == NULL)
+    {
+	 return -1;
+    }
+    p1++;
+    *totalLength = atoi(p1);
+
+    p1 = strstr(buf, STR_CONTENT_LENGTH);
+    if (p1 == NULL)
+    {
+	 return -1;
+    }
+    p1 = p1+strlen(STR_CONTENT_LENGTH);
+    *actualLength = atoi(p1);
+	
+    p1 = strstr(buf, "\r\n\r\n");
+    if (p1 == NULL)
+    {
+	 return -1;
+    }
+    p1 +=4;	
+    if (p1+ (*actualLength) > buf + KII_RECV_BUF_SIZE)
+    {
+	KII_DEBUG("kii-error: receiving buffer overflow !\r\n");
+	return -1;
+    }
+    memset(data, 0, length);
+    memcpy(data, p1, *actualLength);
+    return 0;
+}
 
 
