@@ -19,11 +19,23 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-
+        createDatabase(db);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
+    }
+
+    protected void createDatabase(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS "
+                        + AppProvider.TABLE_APPS
+                        + " ("
+                        + "_id INTEGER PRIMARY KEY, "
+                        + AppProvider.APP_ID + " TEXT NOT NULL UNIQUE,"
+                        + AppProvider.APP_PACKAGE + " TEXT,"
+                        + AppProvider.APP_INFO + " TEXT"
+                        + " );"
+        );
     }
 }

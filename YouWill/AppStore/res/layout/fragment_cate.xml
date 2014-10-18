@@ -33,4 +33,12 @@
             android:id="@+id/cate_btn_4"
             android:text="@string/age_cate_4" />
     </RadioGroup>
+
+    <GridView
+        android:id="@+id/cate_grid"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:numColumns="3"
+        android:stretchMode="columnWidth"
+        />
 </LinearLayout>

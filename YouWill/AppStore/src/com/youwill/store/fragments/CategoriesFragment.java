@@ -12,12 +12,12 @@ import com.youwill.store.R;
 import com.youwill.store.utils.Settings;
 
 /**
- * Created by tian on 14-9-23:下午11:01.
+ * Created by Evan on 14-9-23:下午11:01.
  */
 public class CategoriesFragment extends Fragment implements View.OnClickListener {
 
     private static final String KEY_LAST_CATE = "last_category";
-    RadioButton [] cates = new RadioButton[4];
+    RadioButton [] cate_btns = new RadioButton[4];
     int current_cate = -1;
 
     @Override
@@ -29,19 +29,19 @@ public class CategoriesFragment extends Fragment implements View.OnClickListener
     }
 
     private void initView(View view) {
-        cates[0] = (RadioButton) view.findViewById(R.id.cate_btn_1);
-        cates[1] = (RadioButton) view.findViewById(R.id.cate_btn_2);
-        cates[2] = (RadioButton) view.findViewById(R.id.cate_btn_3);
-        cates[3] = (RadioButton) view.findViewById(R.id.cate_btn_4);
+        cate_btns[0] = (RadioButton) view.findViewById(R.id.cate_btn_1);
+        cate_btns[1] = (RadioButton) view.findViewById(R.id.cate_btn_2);
+        cate_btns[2] = (RadioButton) view.findViewById(R.id.cate_btn_3);
+        cate_btns[3] = (RadioButton) view.findViewById(R.id.cate_btn_4);
 
-        for (RadioButton btn : cates) {
+        for (RadioButton btn : cate_btns) {
             btn.setOnClickListener(this);
         }
         int last_cate = Settings.getPrefs(getActivity()).getInt(KEY_LAST_CATE, 0);
         if (last_cate < 0 || last_cate > 3) {
             last_cate = 0;
         }
-        cates[last_cate].setChecked(true);
+        cate_btns[last_cate].setChecked(true);
         switchCate(last_cate);
     }
 
@@ -69,6 +69,7 @@ public class CategoriesFragment extends Fragment implements View.OnClickListener
             return;
         }
         current_cate = index;
+        cate_btns[index].setChecked(true);
         SharedPreferences pref = Settings.getPrefs(getActivity());
         SharedPreferences.Editor editor = pref.edit();
         editor.putInt(KEY_LAST_CATE, current_cate);
