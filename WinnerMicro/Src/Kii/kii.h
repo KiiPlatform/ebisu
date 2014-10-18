@@ -203,6 +203,43 @@ extern int kiiObj_uploadBodyCommit(int committed);
 
 /*****************************************************************************
 *
+*  kiiObj_retrieve
+*
+*  \param  bucketName - the input of bucket name
+*               objectID - the input of objectID
+*               jsonObject - the output of object with json format
+*               length - the buffer length of jsonObject
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  retrieve object with objectID
+*
+*****************************************************************************/
+extern int kiiObj_retrieve(char *bucketName, char *objectID,  char *jsonObject, int length);
+
+
+/*****************************************************************************
+*
+*  kiiObj_downloadBody
+*
+*  \param  bucketName - the input of bucket name
+*               objectID - the input of objectID
+*               position - the downloading position of body
+*               length - the downloading length of body
+*               data - the output data of received body
+*               actualLength - the actual length of received body
+*               totalLength - the output of total length of body
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  download an object in multiple pieces
+*
+*****************************************************************************/
+extern int kiiObj_downloadBody(char *bucketName, char *objectID,  unsigned int position,  unsigned int length, unsigned char *data, unsigned int *actualLength, unsigned int *totalLength);
+
+
+/*****************************************************************************
+*
 *  kiiPush_subscribeBucket
 *
 *  \param: bucketID - the bucket ID
