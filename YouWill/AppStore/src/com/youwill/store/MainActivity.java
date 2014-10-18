@@ -5,6 +5,7 @@ import com.youwill.store.fragments.CategoriesFragment;
 import com.youwill.store.fragments.HotFragment;
 import com.youwill.store.fragments.PurchasedFragment;
 import com.youwill.store.fragments.UpgradeFragment;
+import com.youwill.store.utils.DataUtils;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -53,6 +54,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     .add(R.id.fragments, currentFragment, String.valueOf(currentFragmentIndex))
                     .commit();
         }
+        DataUtils.loadApps(this);
     }
 
     @Override
@@ -85,6 +87,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
         currentFragmentIndex = v.getId();
         currentFragment = fragment;
+        DataUtils.loadApps(this);
     }
 
 }

@@ -11,14 +11,6 @@ import android.net.Uri;
  * Created by tian on 14-9-24:上午11:26.
  */
 public class AppProvider extends ContentProvider {
-    public static final String AUTHORITY = "com.youwill.store";
-    public static final Uri URI_APPS = Uri.parse("content://" + AUTHORITY + "/apps");
-
-    public static final String TABLE_APPS = "apps";
-    public static final String APP_ID = "appid";
-    public static final String APP_INFO = "info";
-    public static final String APP_PACKAGE = "package";
-
     public static final UriMatcher uriMatcher;
     private static final int ID_APPS = 0;
 
@@ -26,7 +18,7 @@ public class AppProvider extends ContentProvider {
 
     static {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-        uriMatcher.addURI(AUTHORITY, "apps", ID_APPS);
+        uriMatcher.addURI(YouWill.AUTHORITY, "apps", ID_APPS);
     }
 
 
@@ -42,7 +34,7 @@ public class AppProvider extends ContentProvider {
         SQLiteDatabase mDB = mDBHelper.getWritableDatabase();
         switch (uriMatcher.match(uri)) {
             case ID_APPS: {
-                Cursor c = mDB.query(TABLE_APPS,projection, selection, selectionArgs, null, null, sortOrder);
+                Cursor c = mDB.query(YouWill.Application.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
                 c.setNotificationUri(getContext().getContentResolver(), uri);
                 return c;
             }
@@ -60,7 +52,7 @@ public class AppProvider extends ContentProvider {
         SQLiteDatabase mDB = mDBHelper.getWritableDatabase();
         switch (uriMatcher.match(uri)) {
             case ID_APPS:
-                mDB.insertWithOnConflict(TABLE_APPS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                mDB.insertWithOnConflict(YouWill.Application.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 break;
         }

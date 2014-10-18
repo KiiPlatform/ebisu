@@ -29,12 +29,12 @@ public class DBHelper extends SQLiteOpenHelper {
 
     protected void createDatabase(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS "
-                        + AppProvider.TABLE_APPS
+                        + YouWill.Application.TABLE_NAME
                         + " ("
                         + "_id INTEGER PRIMARY KEY, "
-                        + AppProvider.APP_ID + " TEXT NOT NULL UNIQUE,"
-                        + AppProvider.APP_PACKAGE + " TEXT,"
-                        + AppProvider.APP_INFO + " TEXT"
+                        + YouWill.Application.APP_ID + " TEXT NOT NULL UNIQUE,"
+                        + YouWill.Application.APP_PACKAGE + " TEXT,"
+                        + YouWill.Application.APP_INFO + " TEXT"
                         + " );"
         );
     }

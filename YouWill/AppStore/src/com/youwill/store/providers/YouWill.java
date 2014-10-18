@@ -8,15 +8,19 @@ import android.provider.BaseColumns;
  */
 public class YouWill {
 
-    public static final String AUTHORITY = "com.youwill";
+    public static final String AUTHORITY = "com.youwill.store";
 
     public static class Application implements BaseColumns {
 
-        public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/applications");
+        public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/apps");
 
-        public static final String TABLE_NAME = "app";
+        public static final String TABLE_NAME = "apps";
 
         public static final String APP_ID = "app_id";
+
+        public static final String APP_PACKAGE = "package";
+
+        public static final String APP_INFO = "info";
 
         public static final String NAME = "name";
 
