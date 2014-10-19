@@ -43,6 +43,7 @@ public class AppReceiver extends BroadcastReceiver {
             }
         } else if (intent.getAction().equals(Intent.ACTION_PACKAGE_ADDED)) {
             String packageName = intent.getData().getSchemeSpecificPart();
+            LogUtils.d("onReceive, package name is " + packageName);
             Cursor c = null;
             try {
                 c = context.getContentResolver().query(YouWill.Application.CONTENT_URI,
@@ -57,7 +58,7 @@ public class AppReceiver extends BroadcastReceiver {
                             context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), filename);
                     file.delete();
                 }
-            } catch (Exception e) {
+            } catch (Exception ignored) {
 
             } finally {
                 Utils.closeSilently(c);
