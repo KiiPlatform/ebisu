@@ -23,6 +23,9 @@ public class DownloadAgent {
 
     private static DownloadAgent instance;
 
+    private DownloadAgent() {
+    }
+
     public static DownloadAgent getInstance() {
         if (instance == null) {
             synchronized (DownloadAgent.class) {
