@@ -60,7 +60,6 @@ public class AppGridAdapter extends CursorAdapter {
         } else {
             priceStr = context.getString(R.string.price_free);
         }
-        Log.e("Test",priceStr);
         price_btn.setText(priceStr);
         tv = (TextView) view.findViewById(R.id.app_grid_name);
         tv.setText(appInfo.optString("name"));
