@@ -54,6 +54,16 @@ public class YouWill {
 
         public static final String UPLOAD_TIME = "upload_time";
 
+        public static final String RECOMMEND_TYPE = "recommend_type";
+
+        public static final String RECOMMEND_WEIGHT = "recommend_weight";
+
+        public static final int RECOMMEND_TYPE_LINE1 = 1;
+
+        public static final int RECOMMEND_TYPE_LINE2 = 2;
+
+        public static final int RECOMMEND_TYPE_COVER_FLOW = 3;
+
     }
 
     public static class Developer implements BaseColumns {

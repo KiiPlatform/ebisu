@@ -53,7 +53,8 @@ public class DownloadAgent {
         Cursor c = null;
         try {
             c = context.getContentResolver().query(YouWill.Application.CONTENT_URI,
-                    new String[]{YouWill.Application.APP_INFO}, YouWill.Application.APP_ID + "=?",
+                    new String[]{YouWill.Application.APP_INFO, YouWill.Application.APP_PACKAGE},
+                    YouWill.Application.APP_ID + "=?",
                     new String[]{appId}, null);
             if (c != null && c.moveToFirst()) {
                 JSONObject app = new JSONObject(c.getString(0));
@@ -61,6 +62,7 @@ public class DownloadAgent {
                 String name = app.optString("name");
                 String icon = app.optString("icon");
                 int size = app.optInt("size");
+
                 DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
                 request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE
                         | DownloadManager.Request.NETWORK_WIFI);
@@ -71,8 +73,9 @@ public class DownloadAgent {
                 request.setNotificationVisibility(
                         DownloadManager.Request.VISIBILITY_VISIBLE);
                 request.setVisibleInDownloadsUi(true);
+                String filename = url.substring(url.lastIndexOf('/') + 1, url.length());
                 request.setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS,
-                        "apk");
+                        filename);
                 request.setTitle(context.getString(R.string.downloading_apk_prompt) + name);
             }
         } catch (Exception e) {

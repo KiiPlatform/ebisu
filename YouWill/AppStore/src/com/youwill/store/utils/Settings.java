@@ -33,8 +33,8 @@ public class Settings {
         return getPrefs(context).getString(packageName, "");
     }
 
-    public static void saveDownloadId(Context context, long downloadId, String appId) {
-        getPrefs(context).edit().putString(Long.toString(downloadId), appId).apply();
+    public static void saveDownloadId(Context context, long id, String appId) {
+        getPrefs(context).edit().putString(Long.toString(id), appId);
     }
 
     public static String getDownloadApp(Context context, long downloadId) {

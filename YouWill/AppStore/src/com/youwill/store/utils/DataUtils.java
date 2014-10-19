@@ -1,19 +1,17 @@
 package com.youwill.store.utils;
 
-import android.content.ContentValues;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.text.TextUtils;
-import android.util.Log;
-
 import com.kii.cloud.storage.Kii;
 import com.kii.cloud.storage.KiiObject;
 import com.kii.cloud.storage.callback.KiiQueryCallBack;
 import com.kii.cloud.storage.query.KiiQuery;
 import com.kii.cloud.storage.query.KiiQueryResult;
-import com.youwill.store.providers.AppProvider;
 import com.youwill.store.providers.YouWill;
 
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.text.TextUtils;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +20,11 @@ import java.util.List;
  * Created by Evan on 14/10/18.
  */
 public class DataUtils {
+
     private static final String LOG_TAG = "DataUtils";
+
     private static final String KEY_LAST_GET_APPS_TIME = "last_apps_timestamp";
+
     private static final long GET_APPS_TIME_WINDOW = 20 * 60 * 1000; // 20 minutes
 
     public static void loadApps(final Context context) {
@@ -34,7 +35,8 @@ public class DataUtils {
         KiiQuery all_query = new KiiQuery();
         Kii.bucket("apps").query(new KiiQueryCallBack<KiiObject>() {
             @Override
-            public void onQueryCompleted(int token, KiiQueryResult<KiiObject> result, Exception exception) {
+            public void onQueryCompleted(int token, KiiQueryResult<KiiObject> result,
+                    Exception exception) {
                 if (exception != null) {
                     // Error handling
                     Log.e(LOG_TAG, Log.getStackTraceString(exception));
@@ -69,11 +71,15 @@ public class DataUtils {
             String appId = obj.getString("app_id");
             String packageName = obj.getString("package");
             String info = obj.toString();
+            int recommendType = obj.getInt("recommend_type", -1);
+            int recommendWeight = obj.getInt("recommend_weight", -1);
             if (!TextUtils.isEmpty(appId) && !TextUtils.isEmpty(packageName)) {
                 ContentValues values = new ContentValues();
                 values.put(YouWill.Application.APP_ID, appId);
                 values.put(YouWill.Application.APP_PACKAGE, packageName);
                 values.put(YouWill.Application.APP_INFO, info);
+                values.put(YouWill.Application.RECOMMEND_TYPE, recommendType);
+                values.put(YouWill.Application.RECOMMEND_WEIGHT, recommendWeight);
                 valuesArrayList.add(values);
             }
         }
