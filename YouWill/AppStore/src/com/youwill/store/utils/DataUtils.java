@@ -32,37 +32,28 @@ public class DataUtils {
         if (System.currentTimeMillis() - last_time < GET_APPS_TIME_WINDOW) {
             return;
         }
-        KiiQuery all_query = new KiiQuery();
-        Kii.bucket("apps").query(new KiiQueryCallBack<KiiObject>() {
+        new Thread() {
             @Override
-            public void onQueryCompleted(int token, KiiQueryResult<KiiObject> result,
-                    Exception exception) {
-                if (exception != null) {
-                    // Error handling
-                    Log.e(LOG_TAG, Log.getStackTraceString(exception));
-                    return;
-                }
-
-                List<KiiObject> objLists = result.getResult();
-                storeAppsToDB(context, objLists);
-
-                while (result.hasNext()) {
-                    try {
-                        result = result.getNextQueryResult();
-                    } catch (Exception e) {
-                        Log.e(LOG_TAG, Log.getStackTraceString(exception));
-                        break;
-                    }
-                    objLists = result.getResult();
+            public void run() {
+                try {
+                    KiiQueryResult<KiiObject> result = Kii.bucket("apps")
+                            .query(null);
+                    List<KiiObject> objLists = result.getResult();
                     storeAppsToDB(context, objLists);
+                    while (result.hasNext()) {
+                        result = result.getNextQueryResult();
+                        objLists = result.getResult();
+                        storeAppsToDB(context, objLists);
+                    }
+                    SharedPreferences pref = Settings.getPrefs(context);
+                    SharedPreferences.Editor editor = pref.edit();
+                    editor.putLong(KEY_LAST_GET_APPS_TIME, System.currentTimeMillis());
+                    editor.commit();
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, Log.getStackTraceString(e));
                 }
-
-                SharedPreferences pref = Settings.getPrefs(context);
-                SharedPreferences.Editor editor = pref.edit();
-                editor.putLong(KEY_LAST_GET_APPS_TIME, System.currentTimeMillis());
-                editor.commit();
             }
-        }, all_query);
+        }.start();
     }
 
     private static void storeAppsToDB(Context context, List<KiiObject> objLists) {
