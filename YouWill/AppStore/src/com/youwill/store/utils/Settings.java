@@ -32,4 +32,12 @@ public class Settings {
     public static String getAppKey(Context context, String packageName) {
         return getPrefs(context).getString(packageName, "");
     }
+
+    public static void saveDownloadId(Context context, long downloadId, String appId) {
+        getPrefs(context).edit().putString(Long.toString(downloadId), appId).apply();
+    }
+
+    public static String getDownloadApp(Context context, long downloadId) {
+        return getPrefs(context).getString(Long.toString(downloadId), "");
+    }
 }

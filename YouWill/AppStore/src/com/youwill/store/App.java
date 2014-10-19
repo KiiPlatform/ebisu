@@ -1,10 +1,11 @@
 package com.youwill.store;
 
-import android.app.Application;
-
 import com.kii.cloud.storage.Kii;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+import com.youwill.store.net.DownloadAgent;
+
+import android.app.Application;
 
 /**
  * Created by Evan on 14/10/19.
@@ -17,5 +18,6 @@ public class App extends Application {
         ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(this)
                 .build();
         ImageLoader.getInstance().init(config);
+        DownloadAgent.getInstance().init(this);
     }
 }

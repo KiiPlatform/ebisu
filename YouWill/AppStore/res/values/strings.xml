@@ -20,4 +20,5 @@
     <string name="age_cate_3">6-12岁</string>
     <string name="age_cate_4">12岁以上</string>
     <string name="price_free">免费</string>
+    <string name="downloading_apk_prompt">正在下载</string>
 </resources>
