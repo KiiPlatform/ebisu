@@ -48,6 +48,23 @@ public class AppProvider extends ContentProvider {
     }
 
     @Override
+    public int bulkInsert(Uri uri, ContentValues[] values) {
+        int count = 0;
+        SQLiteDatabase mDB = mDBHelper.getWritableDatabase();
+        switch (uriMatcher.match(uri)) {
+            case ID_APPS: {
+                for (ContentValues value : values) {
+                    mDB.insertWithOnConflict(YouWill.Application.TABLE_NAME, null, value, SQLiteDatabase.CONFLICT_REPLACE);
+                    count++;
+                }
+                getContext().getContentResolver().notifyChange(uri, null);
+            }
+            break;
+        }
+        return count;
+    }
+
+    @Override
     public Uri insert(Uri uri, ContentValues values) {
         SQLiteDatabase mDB = mDBHelper.getWritableDatabase();
         switch (uriMatcher.match(uri)) {

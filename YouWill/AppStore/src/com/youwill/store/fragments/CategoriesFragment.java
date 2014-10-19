@@ -7,6 +7,7 @@ import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,12 +32,6 @@ public class CategoriesFragment extends Fragment implements View.OnClickListener
     AppGridAdapter mAdapter;
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        mAdapter = new AppGridAdapter(getActivity(), null, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_cate, container, false);
@@ -59,6 +54,7 @@ public class CategoriesFragment extends Fragment implements View.OnClickListener
         }
         cate_btns[last_cate].setChecked(true);
         mGrid = (GridView) view.findViewById(R.id.cate_grid);
+        mAdapter = new AppGridAdapter(getActivity(), null, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
         mGrid.setAdapter(mAdapter);
         switchCate(last_cate);
     }
