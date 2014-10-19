@@ -6,8 +6,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.CursorAdapter;
 import android.widget.ImageView;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -49,5 +51,20 @@ public class AppGridAdapter extends CursorAdapter {
         ImageView iconView = (ImageView) view.findViewById(R.id.app_grid_icon);
         String iconUrl = appInfo.optString("icon");
         ImageLoader.getInstance().displayImage(iconUrl, iconView, Utils.iconDisplayOptions);
+        Button price_btn = (Button) view.findViewById(R.id.app_grid_price);
+        int price = appInfo.optInt("price");
+        String priceStr;
+        if (price > 0) {
+            float p = (float)price;
+            priceStr = String.format("￥%.2f",p);
+        } else {
+            priceStr = context.getString(R.string.price_free);
+        }
+        Log.e("Test",priceStr);
+        price_btn.setText(priceStr);
+        tv = (TextView) view.findViewById(R.id.app_grid_name);
+        tv.setText(appInfo.optString("name"));
+        RatingBar bar = (RatingBar) view.findViewById(R.id.app_grid_rate);
+        bar.setRating(4);
     }
 }
