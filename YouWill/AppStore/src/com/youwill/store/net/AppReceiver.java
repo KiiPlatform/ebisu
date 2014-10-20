@@ -1,17 +1,12 @@
 package com.youwill.store.net;
 
-import com.youwill.store.providers.YouWill;
 import com.youwill.store.utils.LogUtils;
 import com.youwill.store.utils.Settings;
-import com.youwill.store.utils.Utils;
-
-import org.json.JSONObject;
 
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.text.TextUtils;
@@ -44,24 +39,14 @@ public class AppReceiver extends BroadcastReceiver {
         } else if (intent.getAction().equals(Intent.ACTION_PACKAGE_ADDED)) {
             String packageName = intent.getData().getSchemeSpecificPart();
             LogUtils.d("onReceive, package name is " + packageName);
-            Cursor c = null;
             try {
-                c = context.getContentResolver().query(YouWill.Application.CONTENT_URI,
-                        new String[]{YouWill.Application.APP_INFO},
-                        YouWill.Application.APP_PACKAGE + "=?", new String[]{packageName}, null);
-                if (c != null && c.moveToFirst()) {
-                    //the package has been installed, delete the downloaded package;
-                    JSONObject app = new JSONObject(c.getString(0));
-                    String url = app.optString("apk_url");
-                    String filename = url.substring(url.lastIndexOf('/') + 1, url.length());
-                    File file = new File(
-                            context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), filename);
-                    file.delete();
-                }
+                //the package has been installed, delete the downloaded package;
+                String filename = packageName + ".apk";
+                File file = new File(
+                        context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), filename);
+                file.delete();
             } catch (Exception ignored) {
 
-            } finally {
-                Utils.closeSilently(c);
             }
         }
     }

@@ -68,12 +68,12 @@ public class DownloadAgent {
                         | DownloadManager.Request.NETWORK_WIFI);
                 MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
                 String mimeString = mimeTypeMap
-                        .getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(url));
+                        .getMimeTypeFromExtension("apk");
                 request.setMimeType(mimeString);
                 request.setNotificationVisibility(
                         DownloadManager.Request.VISIBILITY_VISIBLE);
                 request.setVisibleInDownloadsUi(true);
-                String filename = url.substring(url.lastIndexOf('/') + 1, url.length());
+                String filename = c.getString(1) + ".apk";
                 request.setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS,
                         filename);
                 request.setTitle(context.getString(R.string.downloading_apk_prompt) + name);
