@@ -192,12 +192,13 @@ int kiiHal_transfer(void)
     int socketNum;
     unsigned char ipBuf[4];
 
+    KII_DEBUG("kii-info: host ""%s""\r\n", g_kii_data.host);
     if (kiiHal_dns(g_kii_data.host, ipBuf) < 0)
     {
         KII_DEBUG("kii-error: dns failed !\r\n");
         return -1;
     }
-    KII_DEBUG("Host ip:%d.%d.%d.%d\r\n", ipBuf[3], ipBuf[2], ipBuf[1], ipBuf[0]);
+    KII_DEBUG("Host ip:%d.%d.%d.%d\r\n", ipBuf[0], ipBuf[1], ipBuf[2], ipBuf[3]);
 		
     socketNum = kiiHal_socketCreate();
     if (socketNum < 0)

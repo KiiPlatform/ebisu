@@ -62,7 +62,7 @@ int kiiDev_getToken(char *vendorDeviceID, char *password)
    strcpy(buf+strlen(buf), STR_CRLF);
 
    memset(jsonBuf, 0, sizeof(jsonBuf));
-   strcpy(jsonBuf, "{\"username\":\"VENDOR_THING_ID:\"");
+   strcpy(jsonBuf, "{\"username\":\"VENDOR_THING_ID:");
    strcpy(jsonBuf+strlen(jsonBuf), vendorDeviceID);
    strcpy(jsonBuf+strlen(jsonBuf), "\",\"password\":\"");
    strcpy(jsonBuf+strlen(jsonBuf), password);
@@ -187,7 +187,7 @@ int kiiDev_register(char *vendorDeviceID, char *deviceType, char *password)
    strcpy(jsonBuf+strlen(jsonBuf), vendorDeviceID);
    strcpy(jsonBuf+strlen(jsonBuf), "\",\"_thingType\": \"");
    strcpy(jsonBuf+strlen(jsonBuf), deviceType);
-   strcpy(jsonBuf+strlen(jsonBuf), "\",\"password\":\"");
+   strcpy(jsonBuf+strlen(jsonBuf), "\",\"_password\":\"");
    strcpy(jsonBuf+strlen(jsonBuf), password);
    strcpy(jsonBuf+strlen(jsonBuf), "\"}");
    
@@ -230,7 +230,7 @@ int kiiDev_register(char *vendorDeviceID, char *deviceType, char *password)
     }
     memcpy(g_kii_data.accessToken, p1, p2-p1);
 	
-    p1 = strstr(p2, "_thingID");
+    p1 = strstr(buf, "_thingID");
     p1 = strstr(p1, ":");
     p1 = strstr(p1, "\"");
 	

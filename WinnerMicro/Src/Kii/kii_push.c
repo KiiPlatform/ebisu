@@ -64,12 +64,10 @@ int kiiPush_install(void)
     strcpy(buf+strlen(buf),  " Bearer ");
     strcpy(buf+strlen(buf), g_kii_data.accessToken); 
    strcpy(buf+strlen(buf), STR_CRLF);
-
+   // Json object
    memset(jsonBuf, 0, sizeof(jsonBuf));
-    strcpy(jsonBuf, "{\"installationRegistrationID\":\"");
-   strcpy(buf+strlen(buf),  g_kii_data.deviceID);
-    strcpy(jsonBuf+strlen(buf), "\",\"deviceType\":\"IOT_MQTT\", \"development\":false}");
-
+   strcpy(jsonBuf, "{\"installationType\":\"MQTT\", \"development\":false}");
+   
     //Content-Length
    strcpy(buf+strlen(buf), STR_CONTENT_LENGTH);
    sprintf(buf+strlen(buf), "%d", strlen(jsonBuf)+1);
@@ -133,8 +131,8 @@ int kiiPush_install(void)
 kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
 {
     char * p1;
+    char * p2;
     char *buf;
-    char jsonBuf[256];
 
     buf = g_kii_data.sendBuf;
     memset(buf, 0, KII_SEND_BUF_SIZE);
@@ -161,33 +159,12 @@ kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
     strcpy(buf+strlen(buf), STR_KII_APPKEY);
     strcpy(buf+strlen(buf), g_kii_data.appKey);
    strcpy(buf+strlen(buf), STR_CRLF);
-   //content-type	
-   strcpy(buf+strlen(buf), STR_CONTENT_TYPE);
-   strcpy(buf+strlen(buf), "application/vnd.kii.InstallationCreationRequest+json");
-   strcpy(buf+strlen(buf), STR_CRLF);
    //Authorization
     strcpy(buf+strlen(buf), STR_AUTHORIZATION);
     strcpy(buf+strlen(buf),  " Bearer ");
     strcpy(buf+strlen(buf), g_kii_data.accessToken); 
    strcpy(buf+strlen(buf), STR_CRLF);
-
-   memset(jsonBuf, 0, sizeof(jsonBuf));
-    strcpy(jsonBuf, "{\"installationRegistrationID\":\"");
-   strcpy(jsonBuf+strlen(jsonBuf),  g_kii_data.deviceID);
-    strcpy(jsonBuf+strlen(jsonBuf), "\",\"deviceType\":\"IOT_MQTT\", \"development\":false}");
-
-    //Content-Length
-   strcpy(buf+strlen(buf), STR_CONTENT_LENGTH);
-   sprintf(buf+strlen(buf), "%d", strlen(jsonBuf)+1);
    strcpy(buf+strlen(buf), STR_CRLF);
-   strcpy(buf+strlen(buf), STR_CRLF);
-    if ((strlen(buf)+strlen(jsonBuf)+1) > KII_SEND_BUF_SIZE)
-    {
-        KII_DEBUG("kii-error: buffer overflow !\r\n");
-        return KIIPUSH_ENDPOINT_ERROR;
-    }
-   strcpy(buf+strlen(buf), jsonBuf);
-   strcpy(buf+strlen(buf), STR_LF);
    
     g_kii_data.sendDataLen = strlen(buf);
 
@@ -202,6 +179,78 @@ kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
 	
     if (p1 != NULL)
     {
+        //get username
+        p1 = strstr(buf, "username");
+        p1 = strstr(p1, ":");
+        p1 = strstr(p1, "\"");
+
+        if (p1 == NULL)
+        {
+	     return  KIIPUSH_ENDPOINT_ERROR;
+        }
+        p1 +=1;
+        p2 = strstr(p1, "\"");
+        if (p2 == NULL)
+        {
+	     return KIIPUSH_ENDPOINT_ERROR;
+        }
+        memset(m_kii_push.username, 0, KII_PUSH_USERNAME+1);
+        memcpy(m_kii_push.username, p1, p2-p1);
+
+	//get password
+	p1 = strstr(buf, "password");
+	p1 = strstr(p1, ":");
+	p1 = strstr(p1, "\"");
+	
+	if (p1 == NULL)
+	{
+	 return  KIIPUSH_ENDPOINT_ERROR;
+	}
+	p1 +=1;
+	p2 = strstr(p1, "\"");
+	if (p2 == NULL)
+	{
+	 return KIIPUSH_ENDPOINT_ERROR;
+	}
+	memset(m_kii_push.password, 0, KII_PUSH_PASSWORD+1);
+	memcpy(m_kii_push.password, p1, p2-p1);
+    
+	//get host
+	p1 = strstr(buf, "host");
+	p1 = strstr(p1, ":");
+	p1 = strstr(p1, "\"");
+	
+	if (p1 == NULL)
+	{
+	 return  KIIPUSH_ENDPOINT_ERROR;
+	}
+	p1 +=1;
+	p2 = strstr(p1, "\"");
+	if (p2 == NULL)
+	{
+	 return KIIPUSH_ENDPOINT_ERROR;
+	}
+	memset(m_kii_push.host, 0, KII_PUSH_PASSWORD+1);
+	memcpy(m_kii_push.host, p1, p2-p1);
+
+	 //get mqttTopic
+	 p1 = strstr(buf, "mqttTopic");
+	 p1 = strstr(p1, ":");
+	 p1 = strstr(p1, "\"");
+	 
+	 if (p1 == NULL)
+	 {
+	  return  KIIPUSH_ENDPOINT_ERROR;
+	 }
+	 p1 +=1;
+	 p2 = strstr(p1, "\"");
+	 if (p2 == NULL)
+	 {
+	  return KIIPUSH_ENDPOINT_ERROR;
+	 }
+	 memset(m_kii_push.mqttTopic, 0, KII_PUSH_MQTTTOPIC_SIZE+1);
+	 memcpy(m_kii_push.mqttTopic, p1, p2-p1);
+
 	 return KIIPUSH_ENDPOINT_READY;
     }
 	
@@ -370,6 +419,12 @@ static void kiiPush_task(void *sdata)
     int rcvdCounter;
 
     callback = (kiiPush_recvMessageCallback) sdata;
+
+    KII_DEBUG("kii-info: installationID:%s\r\n", m_kii_push.installationID);
+    KII_DEBUG("kii-info: mqttTopic:%s\r\n", m_kii_push.mqttTopic);
+    KII_DEBUG("kii-info: host:%s\r\n", m_kii_push.host);
+    KII_DEBUG("kii-info: username:%s\r\n", m_kii_push.username);
+    KII_DEBUG("kii-info: password:%s\r\n", m_kii_push.password);
     
 	for(;;)
 	{
@@ -383,7 +438,7 @@ static void kiiPush_task(void *sdata)
         			KII_DEBUG("kii-error: push dns failed !\r\n");
         			continue;
         		}
-        		KII_DEBUG("Push host ip:%d.%d.%d.%d\r\n", ipBuf[3], ipBuf[2], ipBuf[1], ipBuf[0]);
+        		KII_DEBUG("Push host ip:%d.%d.%d.%d\r\n", ipBuf[0], ipBuf[1], ipBuf[2], ipBuf[3]);
         			
         		socketNum = kiiHal_socketCreate();
         		if (socketNum < 0)
@@ -446,8 +501,14 @@ int KiiPush_init(unsigned int taskPrio, kiiPush_recvMessageCallback callback)
 
         if (kiiPush_install() != 0)
         {
+        
+	   KII_DEBUG("kii-error: push installation failed !\r\n");
             return -1;
         }
+	else
+	{
+            KII_DEBUG("kii-error: push installation success !\r\n");
+	}
 
 	do {
 		endpointState = kiiPush_retrieveEndpoint() ;

@@ -2,7 +2,7 @@
 #define KII_H
 
 #define KII_SITE_SIZE 2
-#define KII_HOST_SIZE 32
+#define KII_HOST_SIZE 64
 #define KII_APPID_SIZE 8
 #define KII_APPKEY_SIZE 32
 

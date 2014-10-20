@@ -27,7 +27,8 @@ int kii_init(char *site, char *appID, char *appKey) {
 		if (strcmp(site, "CN") == 0) {
 			strcpy(g_kii_data.host, "api-cn2.kii.com");
 		} else if (strcmp(site, "JP") == 0) {
-			strcpy(g_kii_data.host, "api-jp.kii.com");
+			//strcpy(g_kii_data.host, "api-jp.kii.com");
+			strcpy(g_kii_data.host, "api-development-jp.internal.kii.com");
 		} else if (strcmp(site, "US") == 0) {
 			strcpy(g_kii_data.host, "api.kii.com");
 		} else if (strcmp(site, "SG") == 0) {

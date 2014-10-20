@@ -2,12 +2,16 @@
 #include "wm_include.h"
 
 #include "kii.h"
-//#include "kii_def.h"
 
+#if 0
 #define STR_SITE "CN"
 #define STR_APPID "41532a0f"
 #define STR_APPKEY "72894abd7ab2f3fee1ec9814976e57c6"
-
+#else
+#define STR_SITE "JP"
+#define STR_APPID "f25bd5bf"
+#define STR_APPKEY "3594109968d7adf522c9991c0be51137"
+#endif
 
 #define STR_BUCKET "myBucket"
 #define STR_MEDIA_TYPE "myData"
@@ -28,15 +32,15 @@ void kiiDemo_testObject(void)
     static unsigned char objectMultiplePiecesBody1[20];
     static unsigned char objectMultiplePiecesBody2[30];
     static unsigned char objectBody[20];
-    
-    printf("kii demo test.\r\n");
+
+    printf("kii demo object test.\r\n");
     ret = kii_init(STR_SITE, STR_APPID, STR_APPKEY);
     if (ret < 0)
     {
     	    printf("kii init error\r\n");
 	    return;
     }
-
+	
     if (kiiUser_logIn("test1", "123456") != 0)
     {
 	    return;
@@ -185,6 +189,15 @@ void kiiDemo_testPush(void)
     char vendorID[KII_DEVICE_VENDOR_ID+1] ;
     int i;	
     int ret = 0;
+    char objectID[KII_OBJECTID_SIZE+1];
+
+    printf("kii demo push test.\r\n");
+    ret = kii_init(STR_SITE, STR_APPID, STR_APPKEY);
+    if (ret < 0)
+    {
+    	    printf("kii init error\r\n");
+	    return;
+    }
 
     memset(mac_addr,0,sizeof(mac_addr));
     tls_get_mac_addr(mac_addr);
@@ -194,25 +207,63 @@ void kiiDemo_testPush(void)
         sprintf(vendorID+strlen(vendorID), "%02x", mac_addr[i]);
     }
 	
+    //strcpy(vendorID+strlen(vendorID), "12");
+	
+    printf("verdorID:""%s""\r\n", vendorID);
+
+	
     if (kiiDev_getToken(vendorID, PASSWORD) != 0)
     {
+        printf("Get token failed, try to register it\r\n");
         ret = kiiDev_register(vendorID, DEVICE_TYPE, PASSWORD);
     }
+	
 
     if (ret == 0)
     {
-        kiiPush_subscribeBucket(BUCKET_NAME);
-        KiiPush_init(DEMO_KII_TASK_PRIO, kiiDemo_pushMessageCallback);
+        printf("device activation success !\r\n");
     }
     else
     {
         printf("device activation error!\r\n");
+	return;
+    }
+
+    if (kiiObj_create(BUCKET_NAME, STR_JSONOBJECT, NULL, objectID) < 0)
+    {
+	printf("kii create object without data type failed !\r\n");
+	//return;
+    }
+    else
+    {
+	printf("kii object is created without data type, objectID:\"%s\"\r\n", objectID);
+    }
+
+    if (kiiPush_subscribeBucket("AppLedControl") < 0)
+    {
+ 	printf("Subscribe bucket error !\r\n");
+	return;
+    }
+    else
+    {
+	printf("Subscribe bucket success !\r\n");
+    }
+	
+    if (KiiPush_init(DEMO_KII_TASK_PRIO, kiiDemo_pushMessageCallback) < 0)
+    {
+	printf("Init push error !\r\n");
+	return;
+    }
+    else
+    {
+	printf("Init push success !\r\n");
     }
 }
 
+
 int kiiDemo_test(char *buf)
 {
-    kiiDemo_testObject();
+    //kiiDemo_testObject();
     kiiDemo_testPush();
     return WM_SUCCESS;
 
