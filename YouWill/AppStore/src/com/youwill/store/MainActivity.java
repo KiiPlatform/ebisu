@@ -3,33 +3,21 @@ package com.youwill.store;
 import com.youwill.store.fragments.CategoriesFragment;
 import com.youwill.store.fragments.HotFragment;
 import com.youwill.store.fragments.PurchasedFragment;
+import com.youwill.store.fragments.SearchFragment;
 import com.youwill.store.fragments.UpgradeFragment;
-import com.youwill.store.providers.YouWill;
 import com.youwill.store.utils.DataUtils;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.content.Context;
-import android.database.Cursor;
+import android.app.FragmentTransaction;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.AutoCompleteTextView;
-import android.widget.CursorAdapter;
-import android.widget.TextView;
+import android.widget.EditText;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class MainActivity extends Activity implements View.OnClickListener,
-        AdapterView.OnItemClickListener {
+public class MainActivity extends Activity implements View.OnClickListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -41,11 +29,13 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
     private Map<Integer, Fragment> fragments = new HashMap<Integer, Fragment>(4);
 
-    private AutoCompleteTextView searchEdit;
+    private EditText searchEdit;
 
     private View searchButton;
 
     private View deleteButton;
+
+    private SearchFragment mSearchFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +49,8 @@ public class MainActivity extends Activity implements View.OnClickListener,
         findViewById(R.id.categories_button).setOnClickListener(this);
         findViewById(R.id.upgrade_button).setOnClickListener(this);
         findViewById(R.id.purchased_button).setOnClickListener(this);
+        mSearchFragment = (SearchFragment) Fragment
+                .instantiate(this, SearchFragment.class.getName());
         if (savedInstanceState == null) {
             fragments.put(R.id.hot_button,
                     Fragment.instantiate(this, HotFragment.class.getName()));
@@ -80,30 +72,11 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
     private void initHeader() {
         View header = findViewById(R.id.main_header);
-        searchEdit = (AutoCompleteTextView) header.findViewById(R.id.search_edit);
-        searchEdit.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                startQuery();
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
+        searchEdit = (EditText) header.findViewById(R.id.search_edit);
         searchButton = header.findViewById(R.id.search_button);
         deleteButton = header.findViewById(R.id.delete_button);
         searchButton.setOnClickListener(this);
         deleteButton.setOnClickListener(this);
-        mAdapter = new SearchAdapter();
-        startQuery();
-        searchEdit.setAdapter(mAdapter);
     }
 
     @Override
@@ -119,13 +92,39 @@ public class MainActivity extends Activity implements View.OnClickListener,
                 switchFragment(v);
                 break;
             case R.id.search_button:
-                //TODO
+                showSearchFragment();
                 break;
             case R.id.delete_button:
                 searchEdit.setText("");
                 break;
         }
 
+    }
+
+    private void showSearchFragment() {
+        if (mSearchFragment.isAdded()) {
+            mSearchFragment.beginSearch(searchEdit.getText().toString());
+        } else {
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+            transaction.add(R.id.fragments, mSearchFragment);
+            transaction.addToBackStack(null);
+            transaction.commit();
+            searchEdit.post(new Runnable() {
+                @Override
+                public void run() {
+                    mSearchFragment.beginSearch(searchEdit.getText().toString());
+                }
+            });
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (mSearchFragment.isAdded()) {
+            getFragmentManager().popBackStack();
+        } else {
+            finish();
+        }
     }
 
     private void switchFragment(View v) {
@@ -144,70 +143,5 @@ public class MainActivity extends Activity implements View.OnClickListener,
         currentFragment = fragment;
         DataUtils.loadApps(this);
     }
-
-    private Cursor mCursor;
-
-    private SearchAdapter mAdapter;
-
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        mCursor.moveToPosition(position);
-        //TODO: launch app detail activity;
-    }
-
-    private void startQuery() {
-        if (TextUtils.isEmpty(searchEdit.getText().toString())) {
-            mCursor = null;
-            mAdapter.changeCursor(mCursor);
-        } else {
-            mCursor = getContentResolver().query(YouWill.Application.CONTENT_URI, COLUMNS,
-                    YouWill.Application.SEARCH_FIELD + " LIKE %" + searchEdit.getText() + "%", null,
-                    null);
-            mAdapter.changeCursor(mCursor);
-        }
-        mAdapter.notifyDataSetChanged();
-    }
-
-    private class SearchAdapter extends CursorAdapter {
-
-        public SearchAdapter() {
-            super(MainActivity.this, mCursor, true);
-        }
-
-        @Override
-        public View newView(Context context, Cursor cursor, ViewGroup parent) {
-            return null;
-        }
-
-        @Override
-        public void bindView(View view, Context context, Cursor cursor) {
-
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            mCursor.moveToPosition(position);
-            View v = convertView;
-            if (v == null) {
-                v = getLayoutInflater().inflate(R.layout.search_list_item, parent, false);
-            }
-            TextView nameView = (TextView) v.findViewById(R.id.name);
-            try {
-                JSONObject app = new JSONObject(mCursor.getString(2));
-                String appName = app.optString("name");
-                nameView.setText(appName);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            return v;
-        }
-    }
-
-    private static final String[] COLUMNS = new String[]{
-            YouWill.Application.APP_ID,         //0
-            YouWill.Application.APP_PACKAGE,    //1
-            YouWill.Application.APP_INFO,       //2
-    };
-
 
 }
