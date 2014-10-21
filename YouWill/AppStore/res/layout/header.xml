@@ -8,7 +8,7 @@
                  android:layout_marginTop="35px"
                  android:layout_marginRight="23px"
             >
-        <EditText android:layout_width="180px"
+        <AutoCompleteTextView android:layout_width="180px"
                   android:layout_height="28px"
                   android:background="@drawable/search_bg"
                   android:textSize="12px"

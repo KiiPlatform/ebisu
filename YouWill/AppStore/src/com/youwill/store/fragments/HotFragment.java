@@ -55,6 +55,8 @@ public class HotFragment extends Fragment implements View.OnClickListener {
 
     private HomeCoverFlowAdapter mCoverFlowAdapter;
 
+
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
@@ -180,13 +182,19 @@ public class HotFragment extends Fragment implements View.OnClickListener {
         public void onBindViewHolder(ViewHolder viewHolder, int i) {
             AppItem item = items.get(i);
             try {
-                JSONObject app = new JSONObject(item.json);
+                final JSONObject app = new JSONObject(item.json);
                 String url = app.getString("icon");
                 String name = app.getString("name");
                 int size = app.getInt("apk_size");
                 ImageLoader.getInstance().displayImage(url, viewHolder.icon);
                 viewHolder.name.setText(name);
                 viewHolder.size.setText(Utils.getFileSizeString(size));
+                viewHolder.icon.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        //TODO: launch app detail activity
+                    }
+                });
             } catch (Exception ignored) {
 
             }

@@ -40,4 +40,8 @@ public class Settings {
     public static String getDownloadApp(Context context, long downloadId) {
         return getPrefs(context).getString(Long.toString(downloadId), "");
     }
+
+    public static void deleteDownloadAppRecord(Context context, long downloadId) {
+        getPrefs(context).edit().remove(Long.toString(downloadId));
+    }
 }

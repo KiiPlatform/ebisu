@@ -2,8 +2,6 @@ package com.youwill.store.utils;
 
 import com.kii.cloud.storage.Kii;
 import com.kii.cloud.storage.KiiObject;
-import com.kii.cloud.storage.callback.KiiQueryCallBack;
-import com.kii.cloud.storage.query.KiiQuery;
 import com.kii.cloud.storage.query.KiiQueryResult;
 import com.youwill.store.providers.YouWill;
 
@@ -64,6 +62,7 @@ public class DataUtils {
             String info = obj.toString();
             int recommendType = obj.getInt("recommend_type", -1);
             int recommendWeight = obj.getInt("recommend_weight", -1);
+            String searchField = obj.getString("name") + ";" + obj.getString("description");
             if (!TextUtils.isEmpty(appId) && !TextUtils.isEmpty(packageName)) {
                 ContentValues values = new ContentValues();
                 values.put(YouWill.Application.APP_ID, appId);
@@ -71,6 +70,7 @@ public class DataUtils {
                 values.put(YouWill.Application.APP_INFO, info);
                 values.put(YouWill.Application.RECOMMEND_TYPE, recommendType);
                 values.put(YouWill.Application.RECOMMEND_WEIGHT, recommendWeight);
+                values.put(YouWill.Application.SEARCH_FIELD, searchField);
                 valuesArrayList.add(values);
             }
         }

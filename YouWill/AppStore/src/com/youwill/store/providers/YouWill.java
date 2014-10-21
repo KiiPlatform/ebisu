@@ -64,6 +64,8 @@ public class YouWill {
 
         public static final int RECOMMEND_TYPE_COVER_FLOW = 3;
 
+        public static final String SEARCH_FIELD = "search_field";
+
     }
 
     public static class Developer implements BaseColumns {
