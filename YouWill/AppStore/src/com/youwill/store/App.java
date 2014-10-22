@@ -4,6 +4,7 @@ import com.kii.cloud.storage.Kii;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.youwill.store.net.DownloadAgent;
+import com.youwill.store.utils.AppUtils;
 
 import android.app.Application;
 
@@ -19,5 +20,11 @@ public class App extends Application {
                 .build();
         ImageLoader.getInstance().init(config);
         DownloadAgent.getInstance().init(this);
+        new Thread() {
+            @Override
+            public void run() {
+                AppUtils.fetchAllPackages(App.this);
+            }
+        }.start();
     }
 }

@@ -41,5 +41,23 @@ public class DBHelper extends SQLiteOpenHelper {
                         + YouWill.Application.SEARCH_FIELD + " TEXT"
                         + " );"
         );
+        db.execSQL("CREATE TABLE IF NOT EXISTS "
+                        + YouWill.Purchased.TABLE_NAME
+                        + " ("
+                        + "_id INTEGER PRIMARY KEY, "
+                        + YouWill.Purchased.APP_ID + " TEXT NOT NULL UNIQUE,"
+                        + YouWill.Purchased.APP_KEY + " TEXT"
+                        + " );"
+        );
+        /**
+         * Mockup data
+         */
+        db.execSQL("insert into purchased values (1, 'f363bc5c', 'test');");
+        db.execSQL("insert into purchased values (2, 'a7e0a105', 'test');");
+        db.execSQL("insert into purchased values (3, '1fbe85a3', 'test');");
+        db.execSQL("insert into purchased values (4, '255ab961', 'test');");
+        db.execSQL("insert into purchased values (5, '58ec3c91', 'test');");
+        db.execSQL("insert into purchased values (6, '471f6a0a', 'test');");
+        db.execSQL("insert into purchased values (7, 'a6b9f9ed', 'test');");
     }
 }

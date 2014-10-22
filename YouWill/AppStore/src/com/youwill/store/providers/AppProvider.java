@@ -13,12 +13,14 @@ import android.net.Uri;
 public class AppProvider extends ContentProvider {
     public static final UriMatcher uriMatcher;
     private static final int ID_APPS = 0;
+    private static final int ID_PURCHASED = 1;
 
     private DBHelper mDBHelper = null;
 
     static {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         uriMatcher.addURI(YouWill.AUTHORITY, "apps", ID_APPS);
+        uriMatcher.addURI(YouWill.AUTHORITY, "purchased", ID_PURCHASED);
     }
 
 
@@ -35,6 +37,11 @@ public class AppProvider extends ContentProvider {
         switch (uriMatcher.match(uri)) {
             case ID_APPS: {
                 Cursor c = mDB.query(YouWill.Application.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
+                c.setNotificationUri(getContext().getContentResolver(), uri);
+                return c;
+            }
+            case ID_PURCHASED: {
+
                 c.setNotificationUri(getContext().getContentResolver(), uri);
                 return c;
             }

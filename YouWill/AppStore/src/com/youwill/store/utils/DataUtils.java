@@ -48,7 +48,7 @@ public class DataUtils {
                     editor.putLong(KEY_LAST_GET_APPS_TIME, System.currentTimeMillis());
                     editor.commit();
                 } catch (Exception e) {
-                    Log.e(LOG_TAG, Log.getStackTraceString(e));
+                    LogUtils.e(LOG_TAG, Log.getStackTraceString(e));
                 }
             }
         }.start();

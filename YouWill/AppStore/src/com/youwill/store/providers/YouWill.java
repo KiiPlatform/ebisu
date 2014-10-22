@@ -90,7 +90,7 @@ public class YouWill {
 
         public static final String COMMENT_ID = "comment_id";
 
-        public static final String APPLICATION_ID = "app_id";
+        public static final String APP_ID = "app_id";
 
         public static final String USER_ID = "user_id";
 
@@ -106,13 +106,26 @@ public class YouWill {
 
         public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/recommends");
 
-        public static final String APPLICATION_ID = "app_id";
+        public static final String APP_ID = "app_id";
 
         public static final String TYPE = "type";
 
         public static final String COMMENT = "comment";
 
         public static final String RECOMMEND_ORDER = "recommend_order";
+    }
+
+    public static class Purchased implements BaseColumns {
+
+        public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/purchased");
+
+        public static final String TABLE_NAME = "purchased";
+
+        public static final String VIEW_NAME = "purchased_view";
+
+        public static final String APP_ID = "app_id";
+
+        public static final String APP_KEY = "app_key";
     }
 
 

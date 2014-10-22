@@ -7,7 +7,6 @@ import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -88,7 +87,7 @@ public class CategoriesFragment extends Fragment implements View.OnClickListener
         SharedPreferences.Editor editor = pref.edit();
         editor.putInt(KEY_LAST_CATE, current_cate);
         editor.commit();
-        getLoaderManager().restartLoader(0, null, this);
+        getLoaderManager().restartLoader(getClass().hashCode(), null, this);
     }
 
     @Override

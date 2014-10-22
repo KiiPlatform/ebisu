@@ -59,7 +59,7 @@ public class SearchFragment extends Fragment
     public void beginSearch(String keyword) {
         Bundle args = new Bundle();
         args.putString("keyword", keyword);
-        getLoaderManager().restartLoader(0, args, this);
+        getLoaderManager().restartLoader(getClass().hashCode(), args, this);
     }
 
     @Override
@@ -70,7 +70,6 @@ public class SearchFragment extends Fragment
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         mAdapter.swapCursor(null);
-
     }
 
     @Override
