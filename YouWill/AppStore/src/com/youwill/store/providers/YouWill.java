@@ -44,7 +44,7 @@ public class YouWill {
 
         public static final String DEVELOPER_URL = "developer_url";
 
-        public static final String CATEGORY = "category";
+        public static final String AGE_CATEGORY = "age_category";
 
         public static final String SUPPORT_IAP = "support_iap";
 

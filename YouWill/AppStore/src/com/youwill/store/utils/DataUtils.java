@@ -60,17 +60,19 @@ public class DataUtils {
             String appId = obj.getString("app_id");
             String packageName = obj.getString("package");
             String info = obj.toString();
-            int recommendType = obj.getInt("recommend_type", -1);
-            int recommendWeight = obj.getInt("recommend_weight", -1);
-            String searchField = obj.getString("name") + ";" + obj.getString("description");
             if (!TextUtils.isEmpty(appId) && !TextUtils.isEmpty(packageName)) {
                 ContentValues values = new ContentValues();
+                int recommendType = obj.getInt("recommend_type", -1);
+                int recommendWeight = obj.getInt("recommend_weight", -1);
+                int category = obj.getInt("category_id", -1);
+                String searchField = obj.getString("name") + ";" + obj.getString("description");
                 values.put(YouWill.Application.APP_ID, appId);
                 values.put(YouWill.Application.APP_PACKAGE, packageName);
                 values.put(YouWill.Application.APP_INFO, info);
                 values.put(YouWill.Application.RECOMMEND_TYPE, recommendType);
                 values.put(YouWill.Application.RECOMMEND_WEIGHT, recommendWeight);
                 values.put(YouWill.Application.SEARCH_FIELD, searchField);
+                values.put(YouWill.Application.AGE_CATEGORY, category);
                 valuesArrayList.add(values);
             }
         }

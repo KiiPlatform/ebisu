@@ -35,6 +35,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         + YouWill.Application.APP_ID + " TEXT NOT NULL UNIQUE,"
                         + YouWill.Application.APP_PACKAGE + " TEXT,"
                         + YouWill.Application.APP_INFO + " TEXT, "
+                        + YouWill.Application.AGE_CATEGORY + " INTEGER, "
                         + YouWill.Application.RECOMMEND_TYPE + " INTEGER, "
                         + YouWill.Application.RECOMMEND_WEIGHT + " INTEGER, "
                         + YouWill.Application.SEARCH_FIELD + " TEXT"

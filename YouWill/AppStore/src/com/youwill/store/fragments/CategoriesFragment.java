@@ -88,13 +88,12 @@ public class CategoriesFragment extends Fragment implements View.OnClickListener
         SharedPreferences.Editor editor = pref.edit();
         editor.putInt(KEY_LAST_CATE, current_cate);
         editor.commit();
-        getLoaderManager().initLoader(0, null, this);
+        getLoaderManager().restartLoader(0, null, this);
     }
 
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-        String select = null;
-
+        String select = YouWill.Application.AGE_CATEGORY + "=" + current_cate;
         return new CursorLoader(getActivity(), YouWill.Application.CONTENT_URI, null, select, null, null);
     }
 
