@@ -16,6 +16,7 @@
 
     <include
             android:id="@+id/main_footer"
-            layout="@layout/footer"/>
+            layout="@layout/footer"
+            />
 
 </RelativeLayout>
