@@ -23,4 +23,8 @@
     <string name="downloading_apk_prompt">正在下载</string>
     <string name="refresh">刷新</string>
     <string name="log_in_success">登录成功</string>
+    <string name="download_button">下载</string>
+    <string name="uninstall_button">卸载</string>
+    <string name="open_button">打开</string>
+    <string name="upgrade_button">升级</string>
 </resources>

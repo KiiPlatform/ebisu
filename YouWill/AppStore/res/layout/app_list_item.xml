@@ -51,7 +51,7 @@
         android:layout_centerVertical="true"
         android:layout_toLeftOf="@id/right_btn"
         android:layout_marginRight="12px"
-        android:textColor="@color/white"
+        android:textColor="@color/blue_button_text"
         android:textSize="11px" />
 
     <TextView

@@ -5,6 +5,7 @@ import android.app.LoaderManager;
 import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Loader;
+import android.content.pm.PackageInfo;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -21,6 +22,7 @@ import android.widget.TextView;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.youwill.store.R;
 import com.youwill.store.providers.YouWill;
+import com.youwill.store.utils.AppUtils;
 import com.youwill.store.utils.Utils;
 
 import org.json.JSONException;
@@ -95,6 +97,23 @@ public class PurchasedFragment extends ListFragment implements LoaderManager.Loa
             tv.setText(appInfo.optString("name"));
             RatingBar bar = (RatingBar) view.findViewById(R.id.app_grid_rate);
             bar.setRating(4);
+            String packageName = appInfo.optString("package","DUMMY_PACKAGE");
+            Button leftBtn = (Button) view.findViewById(R.id.left_btn);
+            Button rightBtn = (Button) view.findViewById(R.id.right_btn);
+            PackageInfo packageInfo = AppUtils.gLocalApps.get(packageName);
+            if (packageInfo != null) {
+                leftBtn.setVisibility(View.VISIBLE);
+                leftBtn.setText(context.getString(R.string.uninstall_button));
+                int versionCode = appInfo.optInt("version_code");
+                if (versionCode > packageInfo.versionCode) {
+                    rightBtn.setText(context.getString(R.string.upgrade_button));
+                } else {
+                    rightBtn.setText(context.getString(R.string.open_button));
+                }
+            } else {
+                leftBtn.setVisibility(View.INVISIBLE);
+                rightBtn.setText(context.getString(R.string.download_button));
+            }
         }
     }
 }
