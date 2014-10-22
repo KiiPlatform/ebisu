@@ -43,12 +43,23 @@
         android:textColor="@color/white"
         android:textSize="11px" />
 
+    <Button
+        android:id="@+id/left_btn"
+        android:layout_width="72px"
+        android:layout_height="32px"
+        android:background="@drawable/blue_stroke_button"
+        android:layout_centerVertical="true"
+        android:layout_toLeftOf="@id/right_btn"
+        android:layout_marginRight="12px"
+        android:textColor="@color/white"
+        android:textSize="11px" />
+
     <TextView
         android:id="@+id/app_grid_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_toRightOf="@id/app_grid_icon"
-        android:layout_toLeftOf="@id/app_grid_price"
+        android:layout_toLeftOf="@id/left_btn"
         android:maxLines="2"
         android:textStyle="bold"
         android:textSize="13px"
