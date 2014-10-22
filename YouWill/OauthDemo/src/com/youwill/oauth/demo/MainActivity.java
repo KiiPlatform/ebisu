@@ -133,9 +133,7 @@ public class MainActivity extends Activity {
         parameters.put("client_id", Constants.CLIENT_ID);
         parameters.put("response_type", "code");
         parameters.put("redirect_uri", Constants.REDIRECT_URL);
-        parameters.put("display", "mobile");
-        return Constants.OAUTH_URL + "?" + encodeUrl(parameters)
-                + "&state=foobar";
+        return Constants.OAUTH_URL + "?" + encodeUrl(parameters) + "&state=foobar";
     }
 
     public static Bundle parseUrl(String url) {
