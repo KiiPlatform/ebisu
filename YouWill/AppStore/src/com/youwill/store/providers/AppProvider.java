@@ -41,7 +41,7 @@ public class AppProvider extends ContentProvider {
                 return c;
             }
             case ID_PURCHASED: {
-
+                Cursor c = mDB.query(YouWill.Purchased.VIEW_NAME, projection, selection, selectionArgs, null, null, sortOrder);
                 c.setNotificationUri(getContext().getContentResolver(), uri);
                 return c;
             }

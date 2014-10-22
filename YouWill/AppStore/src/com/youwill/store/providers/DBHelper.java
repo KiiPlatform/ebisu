@@ -49,6 +49,19 @@ public class DBHelper extends SQLiteOpenHelper {
                         + YouWill.Purchased.APP_KEY + " TEXT"
                         + " );"
         );
+        db.execSQL("CREATE VIEW IF NOT EXISTS "
+                        + YouWill.Purchased.VIEW_NAME
+                        + " AS "
+                        + " SELECT * FROM "
+                        + YouWill.Application.TABLE_NAME
+                        + ","
+                        + YouWill.Purchased.TABLE_NAME
+                        + " WHERE "
+                        + YouWill.Application.TABLE_NAME
+                        + ".app_id = "
+                        + YouWill.Purchased.TABLE_NAME
+                        + ".app_id;"
+        );
         /**
          * Mockup data
          */
