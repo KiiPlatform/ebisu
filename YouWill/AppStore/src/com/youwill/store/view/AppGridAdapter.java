@@ -2,7 +2,6 @@ package com.youwill.store.view;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,7 +30,7 @@ public class AppGridAdapter extends CursorAdapter {
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup viewGroup) {
-        return LayoutInflater.from(context).inflate(R.layout.app_grid_itme, viewGroup, false);
+        return LayoutInflater.from(context).inflate(R.layout.app_grid_item, viewGroup, false);
     }
 
     @Override

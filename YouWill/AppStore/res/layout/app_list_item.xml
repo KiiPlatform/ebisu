@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:layout_alignParentBottom="true"
+        android:layout_marginLeft="23px"
+        android:layout_marginRight="23px"
+        android:background="@color/list_divider" />
+
+    <TextView
+        android:id="@+id/app_grid_pos"
+        android:layout_width="16px"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:textSize="12px"
+        android:textColor="#999999"
+        android:layout_marginLeft="21px"
+        android:layout_marginRight="10px"
+        android:gravity="center" />
+
+    <com.youwill.store.view.RoundCornerImageView
+        android:id="@+id/app_grid_icon"
+        android:layout_width="70px"
+        android:layout_height="70px"
+        android:layout_marginTop="9px"
+        android:layout_marginBottom="10px"
+        android:layout_toRightOf="@id/app_grid_pos"
+        android:layout_marginRight="12px" />
+
+    <Button
+        android:id="@+id/right_btn"
+        android:layout_width="72px"
+        android:layout_height="32px"
+        android:background="@drawable/orange_button"
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="36px"
+        android:textColor="@color/white"
+        android:textSize="11px" />
+
+    <TextView
+        android:id="@+id/app_grid_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/app_grid_icon"
+        android:layout_toLeftOf="@id/app_grid_price"
+        android:maxLines="2"
+        android:textStyle="bold"
+        android:textSize="13px"
+        android:layout_marginTop="13px" />
+
+    <RatingBar
+        android:id="@+id/app_grid_rate"
+        android:layout_width="wrap_content"
+        android:layout_height="11px"
+        android:layout_marginTop="9px"
+        android:isIndicator="true"
+        android:numStars="5"
+        android:layout_toRightOf="@id/app_grid_icon"
+        android:layout_below="@id/app_grid_name"
+        android:progressDrawable="@drawable/star_rating_bar_small" />
+</RelativeLayout>
