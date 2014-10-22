@@ -6,10 +6,12 @@ import com.youwill.store.fragments.PurchasedFragment;
 import com.youwill.store.fragments.SearchFragment;
 import com.youwill.store.fragments.UpgradeFragment;
 import com.youwill.store.utils.DataUtils;
+import com.youwill.store.utils.Settings;
 
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
@@ -142,6 +144,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
         currentFragmentIndex = v.getId();
         currentFragment = fragment;
         DataUtils.loadApps(this);
+        if (currentFragmentIndex == R.id.upgrade_button && !Settings.isLoggedIn(this)) {
+            startActivity(new Intent(this, LogInActivity.class));
+        }
     }
 
 }

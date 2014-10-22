@@ -62,13 +62,20 @@ public class MainActivity extends Activity {
 
         @Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
-
-            if (url.startsWith(Constants.REDIRECT_URL)) {
-                handleRedirectUrl(view, url);
-                view.stopLoading();
-                return;
-            }
+            Log.d(TAG, "onPageStarted, url is " + url);
+//            if (url.startsWith(Constants.REDIRECT_URL)) {
+//                handleRedirectUrl(view, url);
+//                view.stopLoading();
+//                return;
+//            }
             super.onPageStarted(view, url, favicon);
+        }
+
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            Log.d(TAG, "shouldOverrideUrlLoading? " + url);
+            view.loadUrl(url);
+            return true;
         }
     }
 
@@ -133,7 +140,7 @@ public class MainActivity extends Activity {
         parameters.put("client_id", Constants.CLIENT_ID);
         parameters.put("response_type", "code");
         parameters.put("redirect_uri", Constants.REDIRECT_URL);
-        return Constants.OAUTH_URL + "?" + encodeUrl(parameters) + "&state=foobar";
+        return Constants.OAUTH_URL; //+ "?" + encodeUrl(parameters) + "&state=foobar";
     }
 
     public static Bundle parseUrl(String url) {

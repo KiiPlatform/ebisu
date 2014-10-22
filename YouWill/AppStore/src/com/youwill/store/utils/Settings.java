@@ -3,6 +3,7 @@ package com.youwill.store.utils;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.text.TextUtils;
 
 /**
  * Created by tian on 14-9-16:下午9:30.
@@ -43,5 +44,32 @@ public class Settings {
 
     public static void deleteDownloadAppRecord(Context context, long downloadId) {
         getPrefs(context).edit().remove(Long.toString(downloadId));
+    }
+
+    public static final String USER_ID_KEY = "user_id";
+
+    public static void setUserId(Context context, String userId) {
+        getPrefs(context).edit().putString(USER_ID_KEY, userId).apply();
+    }
+
+    public static String getUserId(Context context) {
+        return getPrefs(context).getString(USER_ID_KEY, "");
+    }
+
+    public static final String TOKEN_KEY = "token";
+
+    public static void setToken(Context context, String token) {
+        getPrefs(context).edit().putString(TOKEN_KEY, token).apply();
+    }
+
+    public static String getToken(Context context) {
+        return getPrefs(context).getString(TOKEN_KEY, "");
+    }
+
+    public static boolean isLoggedIn(Context context) {
+        if (TextUtils.isEmpty(getToken(context)) || TextUtils.isEmpty(getUserId(context))) {
+            return false;
+        }
+        return true;
     }
 }
