@@ -18,19 +18,22 @@ import com.youwill.store.providers.YouWill;
 import com.youwill.store.utils.AppUtils;
 import com.youwill.store.utils.Utils;
 
-import org.json.JSONException;
 import org.json.JSONObject;
+
 
 /**
  * Created by Evan on 14/10/23.
  */
-public class AppListAdapter  extends CursorAdapter {
+public class AppListAdapter extends CursorAdapter implements View.OnClickListener {
     public static final int TYPE_PURCHASED = 0;
     public static final int TYPE_UPGRADE = 1;
 
+    protected Context mContext;
     int mType;
+
     public AppListAdapter(Context context, Cursor c, int type) {
         super(context, c, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
+        mContext = context;
         mType = type;
     }
 
@@ -60,13 +63,18 @@ public class AppListAdapter  extends CursorAdapter {
         tv.setText(appInfo.optString("name"));
         RatingBar bar = (RatingBar) view.findViewById(R.id.app_grid_rate);
         bar.setRating(4);
-        String packageName = appInfo.optString("package","DUMMY_PACKAGE");
+        String packageName = appInfo.optString("package", "DUMMY_PACKAGE");
         Button leftBtn = (Button) view.findViewById(R.id.left_btn);
         Button rightBtn = (Button) view.findViewById(R.id.right_btn);
         PackageInfo packageInfo = AppUtils.gLocalApps.get(packageName);
         if (packageInfo != null) {
-            leftBtn.setVisibility(View.VISIBLE);
+            if (mType == TYPE_UPGRADE)
+                leftBtn.setVisibility(View.INVISIBLE);
+            else
+                leftBtn.setVisibility(View.VISIBLE);
             leftBtn.setText(context.getString(R.string.uninstall_button));
+            leftBtn.setTag(packageName);
+            leftBtn.setOnClickListener(this);
             int versionCode = appInfo.optInt("version_code");
             if (versionCode > packageInfo.versionCode) {
                 rightBtn.setText(context.getString(R.string.upgrade_button));
@@ -76,6 +84,17 @@ public class AppListAdapter  extends CursorAdapter {
         } else {
             leftBtn.setVisibility(View.INVISIBLE);
             rightBtn.setText(context.getString(R.string.download_button));
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.left_btn: {
+                String packageName = (String) v.getTag();
+                AppUtils.uninstallApp(mContext, packageName);
+            }
+                break;
         }
     }
 }

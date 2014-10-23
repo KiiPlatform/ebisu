@@ -6,7 +6,6 @@ import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,7 +36,7 @@ public class UpgradeFragment extends ListFragment implements LoaderManager.Loade
     @Override
     public void onStart() {
         super.onStart();
-        mAdapter = new AppListAdapter(getActivity(), null, AppListAdapter.TYPE_PURCHASED);
+        mAdapter = new AppListAdapter(getActivity(), null, AppListAdapter.TYPE_UPGRADE);
         setListAdapter(mAdapter);
         getLoaderManager().initLoader(getClass().hashCode(), null, this);
     }
