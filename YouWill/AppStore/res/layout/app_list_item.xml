@@ -75,4 +75,16 @@
         android:layout_toRightOf="@id/app_grid_icon"
         android:layout_below="@id/app_grid_name"
         android:progressDrawable="@drawable/star_rating_bar_small" />
+
+    <ProgressBar
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:id="@+id/app_list_progress"
+        android:layout_width="match_parent"
+        android:layout_height="7px"
+        android:layout_marginTop="9px"
+        android:layout_toRightOf="@id/app_grid_icon"
+        android:layout_toLeftOf="@id/left_btn"
+        android:progress="20"
+        android:progressDrawable="@drawable/progress_bar_bg"
+        android:layout_below="@id/app_grid_rate" />
 </RelativeLayout>
