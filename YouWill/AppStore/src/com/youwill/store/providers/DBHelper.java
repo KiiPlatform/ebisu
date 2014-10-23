@@ -49,20 +49,6 @@ public class DBHelper extends SQLiteOpenHelper {
                         + YouWill.Purchased.APP_KEY + " TEXT"
                         + " );"
         );
-        db.execSQL("CREATE VIEW IF NOT EXISTS "
-                        + YouWill.Purchased.VIEW_NAME
-                        + " AS "
-                        + " SELECT * FROM "
-                        + YouWill.Application.TABLE_NAME
-                        + ","
-                        + YouWill.Purchased.TABLE_NAME
-                        + " WHERE "
-                        + YouWill.Application.TABLE_NAME
-                        + ".app_id = "
-                        + YouWill.Purchased.TABLE_NAME
-                        + ".app_id;"
-        );
-
         db.execSQL("CREATE TABLE IF NOT EXISTS "
                         + YouWill.Downloads.TABLE_NAME
                         + " ("
@@ -71,6 +57,12 @@ public class DBHelper extends SQLiteOpenHelper {
                         + YouWill.Downloads.PACKAGE_NAME + " TEXT NOT NULL,"
                         + YouWill.Downloads.DOWNLOAD_ID + " INTEGER"
                         + ");"
+        );
+        db.execSQL("CREATE VIEW IF NOT EXISTS "
+                        + YouWill.Purchased.VIEW_NAME
+                        + " AS "
+                        + " SELECT * FROM purchased LEFT JOIN apps ON purchased.app_id = apps.app_id "
+                        + " LEFT JOIN downloads ON purchased.app_id = downloads.app_id;"
         );
     }
 }

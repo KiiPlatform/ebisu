@@ -38,7 +38,7 @@ public class AppProvider extends ContentProvider {
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
-            String sortOrder) {
+                        String sortOrder) {
         SQLiteDatabase database = mDBHelper.getWritableDatabase();
         switch (uriMatcher.match(uri)) {
             case ID_APPS: {
@@ -84,6 +84,7 @@ public class AppProvider extends ContentProvider {
                 }
                 getContext().getContentResolver().notifyChange(uri, null);
             }
+            break;
             case ID_PURCHASED: {
                 for (ContentValues value : values) {
                     database.insertWithOnConflict(YouWill.Purchased.TABLE_NAME, null, value, SQLiteDatabase.CONFLICT_REPLACE);
