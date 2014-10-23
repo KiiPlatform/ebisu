@@ -9,10 +9,15 @@ import org.json.JSONObject;
 import android.app.DownloadManager;
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.Handler;
 import android.webkit.MimeTypeMap;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by tian on 14/10/19:下午1:46.
@@ -24,6 +29,8 @@ public class DownloadAgent {
     private static DownloadAgent instance;
 
     private DownloadAgent() {
+        mDownloadProgressMap = new HashMap<String, Integer>();
+        mCursorMap = new HashMap<Long, Cursor>();
     }
 
     public static DownloadAgent getInstance() {
@@ -41,18 +48,25 @@ public class DownloadAgent {
         this.context = context;
     }
 
-    public void beginDownload(String appId) {
+    public long beginDownload(String appId) {
         DownloadManager manager = (DownloadManager) context
                 .getSystemService(Context.DOWNLOAD_SERVICE);
         ContentValues cv = new ContentValues(3);
         DownloadManager.Request request = buildDownloadRequest(appId, cv);
         if (request == null) {
-            return;
+            return -1;
         }
         long id = manager.enqueue(request);
         cv.put(YouWill.Downloads.DOWNLOAD_ID, id);
         cv.put(YouWill.Downloads.APP_ID, appId);
         context.getContentResolver().insert(YouWill.Downloads.CONTENT_URI, cv);
+        mDownloadProgressMap.put(appId, 0);
+        DownloadManager.Query q = new DownloadManager.Query();
+        q.setFilterById(id);
+        Cursor cursor = manager.query(q);
+        mCursorMap.put(id, cursor);
+        cursor.registerContentObserver(mObserver);
+        return id;
     }
 
     private DownloadManager.Request buildDownloadRequest(String appId, ContentValues cv) {
@@ -91,4 +105,19 @@ public class DownloadAgent {
         }
         return null;
     }
+
+    private Map<String, Integer> mDownloadProgressMap;
+
+    private Map<Long, Cursor> mCursorMap;
+
+    public Map<String, Integer> getDownloadProgressMap() {
+        return mDownloadProgressMap;
+    }
+
+    private ContentObserver mObserver = new ContentObserver(new Handler()) {
+        @Override
+        public void onChange(boolean selfChange) {
+            
+        }
+    };
 }
