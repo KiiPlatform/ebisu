@@ -11,9 +11,14 @@ import android.net.Uri;
  * Created by tian on 14-9-24:上午11:26.
  */
 public class AppProvider extends ContentProvider {
+
     public static final UriMatcher uriMatcher;
+
     private static final int ID_APPS = 0;
+
     private static final int ID_PURCHASED = 1;
+
+    private static final int ID_DOWNLOADS = 2;
 
     private DBHelper mDBHelper = null;
 
@@ -21,6 +26,7 @@ public class AppProvider extends ContentProvider {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         uriMatcher.addURI(YouWill.AUTHORITY, "apps", ID_APPS);
         uriMatcher.addURI(YouWill.AUTHORITY, "purchased", ID_PURCHASED);
+        uriMatcher.addURI(YouWill.AUTHORITY, "downloads", ID_DOWNLOADS);
     }
 
 
@@ -32,16 +38,27 @@ public class AppProvider extends ContentProvider {
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
-                        String sortOrder) {
-        SQLiteDatabase mDB = mDBHelper.getWritableDatabase();
+            String sortOrder) {
+        SQLiteDatabase database = mDBHelper.getWritableDatabase();
         switch (uriMatcher.match(uri)) {
             case ID_APPS: {
-                Cursor c = mDB.query(YouWill.Application.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder);
+                Cursor c = database
+                        .query(YouWill.Application.TABLE_NAME, projection, selection, selectionArgs,
+                                null, null, sortOrder);
                 c.setNotificationUri(getContext().getContentResolver(), uri);
                 return c;
             }
             case ID_PURCHASED: {
-                Cursor c = mDB.query(YouWill.Purchased.VIEW_NAME, projection, selection, selectionArgs, null, null, sortOrder);
+                Cursor c = database
+                        .query(YouWill.Purchased.VIEW_NAME, projection, selection, selectionArgs,
+                                null, null, sortOrder);
+                c.setNotificationUri(getContext().getContentResolver(), uri);
+                return c;
+            }
+            case ID_DOWNLOADS: {
+                Cursor c = database
+                        .query(YouWill.Downloads.TABLE_NAME, projection, selection, selectionArgs,
+                                null, null, sortOrder);
                 c.setNotificationUri(getContext().getContentResolver(), uri);
                 return c;
             }
@@ -57,11 +74,12 @@ public class AppProvider extends ContentProvider {
     @Override
     public int bulkInsert(Uri uri, ContentValues[] values) {
         int count = 0;
-        SQLiteDatabase mDB = mDBHelper.getWritableDatabase();
+        SQLiteDatabase database = mDBHelper.getWritableDatabase();
         switch (uriMatcher.match(uri)) {
             case ID_APPS: {
                 for (ContentValues value : values) {
-                    mDB.insertWithOnConflict(YouWill.Application.TABLE_NAME, null, value, SQLiteDatabase.CONFLICT_REPLACE);
+                    database.insertWithOnConflict(YouWill.Application.TABLE_NAME, null, value,
+                            SQLiteDatabase.CONFLICT_REPLACE);
                     count++;
                 }
                 getContext().getContentResolver().notifyChange(uri, null);
@@ -73,10 +91,16 @@ public class AppProvider extends ContentProvider {
 
     @Override
     public Uri insert(Uri uri, ContentValues values) {
-        SQLiteDatabase mDB = mDBHelper.getWritableDatabase();
+        SQLiteDatabase database = mDBHelper.getWritableDatabase();
         switch (uriMatcher.match(uri)) {
             case ID_APPS:
-                mDB.insertWithOnConflict(YouWill.Application.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                database.insertWithOnConflict(YouWill.Application.TABLE_NAME, null, values,
+                        SQLiteDatabase.CONFLICT_REPLACE);
+                getContext().getContentResolver().notifyChange(uri, null);
+                break;
+            case ID_DOWNLOADS:
+                database.insertWithOnConflict(YouWill.Downloads.TABLE_NAME, null, values,
+                        SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 break;
         }
@@ -85,11 +109,28 @@ public class AppProvider extends ContentProvider {
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
-        return 0;
+        int ret = 0;
+        SQLiteDatabase database = mDBHelper.getWritableDatabase();
+        switch (uriMatcher.match(uri)) {
+            case ID_DOWNLOADS:
+                ret = database.delete(YouWill.Downloads.TABLE_NAME, selection, selectionArgs);
+                getContext().getContentResolver().notifyChange(uri, null);
+                break;
+        }
+        return ret;
     }
 
     @Override
     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
-        return 0;
+        int ret = 0;
+        SQLiteDatabase database = mDBHelper.getWritableDatabase();
+        switch (uriMatcher.match(uri)) {
+            case ID_DOWNLOADS:
+                ret = database
+                        .update(YouWill.Downloads.TABLE_NAME, values, selection, selectionArgs);
+                getContext().getContentResolver().notifyChange(uri, null);
+                break;
+        }
+        return ret;
     }
 }

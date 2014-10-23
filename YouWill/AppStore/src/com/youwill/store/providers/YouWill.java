@@ -128,5 +128,18 @@ public class YouWill {
         public static final String APP_KEY = "app_key";
     }
 
+    public static class Downloads implements BaseColumns {
+
+        public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/downloads");
+
+        public static final String TABLE_NAME = "downloads";
+
+        public static final String APP_ID = "app_id";
+
+        public static final String DOWNLOAD_ID = "download_id";
+
+        public static final String PACKAGE_NAME = "package_name";
+    }
+
 
 }
