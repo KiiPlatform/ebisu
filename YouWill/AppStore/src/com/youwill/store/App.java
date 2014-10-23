@@ -5,6 +5,8 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.youwill.store.net.DownloadAgent;
 import com.youwill.store.utils.AppUtils;
+import com.youwill.store.utils.DataUtils;
+import com.youwill.store.utils.Settings;
 
 import android.app.Application;
 
@@ -24,6 +26,9 @@ public class App extends Application {
             @Override
             public void run() {
                 AppUtils.fetchAllPackages(App.this);
+                if (Settings.isLoggedIn(App.this)) {
+                    DataUtils.getPurchasedList(App.this);
+                }
             }
         }.start();
     }

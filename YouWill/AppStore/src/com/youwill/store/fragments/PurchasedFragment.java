@@ -46,6 +46,7 @@ public class PurchasedFragment extends ListFragment implements LoaderManager.Loa
         mAdapter = new AppListAdapter(getActivity(), null, AppListAdapter.TYPE_PURCHASED);
         setListAdapter(mAdapter);
         getListView().setDivider(new ColorDrawable(Color.TRANSPARENT));
+        getLoaderManager().initLoader(getClass().hashCode(), null, this);
         String not_login = getActivity().getString(R.string.purchased_not_login);
         String login_pattern = getActivity().getString(R.string.login_pattern);
         int pos = not_login.indexOf(login_pattern);
@@ -55,7 +56,6 @@ public class PurchasedFragment extends ListFragment implements LoaderManager.Loa
         if (pos >= 0) {
             mNotLoggedInEmptyText.setSpan(loginSpan, pos, pos + length, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
         }
-        getLoaderManager().initLoader(getClass().hashCode(), null, this);
     }
 
     @Override
