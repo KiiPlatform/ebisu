@@ -55,12 +55,12 @@ public class PurchasedFragment extends ListFragment implements LoaderManager.Loa
         if (pos >= 0) {
             mNotLoggedInEmptyText.setSpan(loginSpan, pos, pos + length, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
         }
+        getLoaderManager().initLoader(getClass().hashCode(), null, this);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        getLoaderManager().restartLoader(getClass().hashCode(), null, this);
         if (Settings.isLoggedIn(getActivity())) {
             emptyTextView.setText(getActivity().getString(R.string.no_purchased_apps));
         } else {
@@ -70,10 +70,6 @@ public class PurchasedFragment extends ListFragment implements LoaderManager.Loa
 
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-        //TODO Next 3 lines are for testing only, should remove later
-        if (!Settings.isLoggedIn(getActivity())) {
-            return new CursorLoader(getActivity(), YouWill.Purchased.CONTENT_URI, null, "1=0", null, null);
-        }
         return new CursorLoader(getActivity(), YouWill.Purchased.CONTENT_URI, null, null, null, null);
     }
 

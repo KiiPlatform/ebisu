@@ -62,6 +62,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         + YouWill.Purchased.TABLE_NAME
                         + ".app_id;"
         );
+
         db.execSQL("CREATE TABLE IF NOT EXISTS "
                         + YouWill.Downloads.TABLE_NAME
                         + " ("
@@ -71,15 +72,5 @@ public class DBHelper extends SQLiteOpenHelper {
                         + YouWill.Downloads.DOWNLOAD_ID + " INTEGER"
                         + ");"
         );
-        /**
-         * Mockup data
-         */
-        db.execSQL("insert into purchased values (1, 'f363bc5c', 'test');");
-        db.execSQL("insert into purchased values (2, 'a7e0a105', 'test');");
-        db.execSQL("insert into purchased values (3, '1fbe85a3', 'test');");
-        db.execSQL("insert into purchased values (4, '255ab961', 'test');");
-        db.execSQL("insert into purchased values (5, '58ec3c91', 'test');");
-        db.execSQL("insert into purchased values (6, '471f6a0a', 'test');");
-        db.execSQL("insert into purchased values (7, 'a6b9f9ed', 'test');");
     }
 }

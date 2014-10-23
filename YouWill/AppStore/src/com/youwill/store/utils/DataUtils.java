@@ -5,6 +5,7 @@ import com.kii.cloud.storage.KiiObject;
 import com.kii.cloud.storage.query.KiiQueryResult;
 import com.youwill.store.providers.YouWill;
 
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -80,6 +81,25 @@ public class DataUtils {
             ContentValues[] values = valuesArrayList.toArray(new ContentValues[0]);
             context.getContentResolver().bulkInsert(YouWill.Application.CONTENT_URI, values);
         }
+    }
+
+    public static void getPurchasedList(final Context context) {
+        ContentResolver cr = context.getContentResolver();
+        cr.delete(YouWill.Purchased.CONTENT_URI, null, null);
+        ContentValues[] values = new ContentValues[7];
+        for (int i = 0; i < 7; i++) {
+            ContentValues v = new ContentValues();
+            v.put("app_key", "test");
+            values[i] = v;
+        }
+        values[0].put("app_id", "f363bc5c");
+        values[1].put("app_id", "a7e0a105");
+        values[2].put("app_id", "1fbe85a3");
+        values[3].put("app_id", "255ab961");
+        values[4].put("app_id", "58ec3c91");
+        values[5].put("app_id", "471f6a0a");
+        values[6].put("app_id", "a6b9f9ed");
+        cr.bulkInsert(YouWill.Purchased.CONTENT_URI, values);
     }
 
 }

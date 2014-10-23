@@ -84,6 +84,13 @@ public class AppProvider extends ContentProvider {
                 }
                 getContext().getContentResolver().notifyChange(uri, null);
             }
+            case ID_PURCHASED: {
+                for (ContentValues value : values) {
+                    database.insertWithOnConflict(YouWill.Purchased.TABLE_NAME, null, value, SQLiteDatabase.CONFLICT_REPLACE);
+                    count++;
+                }
+                getContext().getContentResolver().notifyChange(uri, null);
+            }
             break;
         }
         return count;
@@ -103,6 +110,10 @@ public class AppProvider extends ContentProvider {
                         SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 break;
+            case ID_PURCHASED:
+                database.insertWithOnConflict(YouWill.Purchased.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                getContext().getContentResolver().notifyChange(uri, null);
+                break;
         }
         return null;
     }
@@ -112,6 +123,14 @@ public class AppProvider extends ContentProvider {
         int ret = 0;
         SQLiteDatabase database = mDBHelper.getWritableDatabase();
         switch (uriMatcher.match(uri)) {
+            case ID_APPS:
+                ret = database.delete(YouWill.Application.TABLE_NAME, selection, selectionArgs);
+                getContext().getContentResolver().notifyChange(uri, null);
+                break;
+            case ID_PURCHASED:
+                ret = database.delete(YouWill.Purchased.TABLE_NAME, selection, selectionArgs);
+                getContext().getContentResolver().notifyChange(uri, null);
+                break;
             case ID_DOWNLOADS:
                 ret = database.delete(YouWill.Downloads.TABLE_NAME, selection, selectionArgs);
                 getContext().getContentResolver().notifyChange(uri, null);
