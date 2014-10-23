@@ -3,8 +3,10 @@ package com.youwill.store.utils;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 
 import com.youwill.store.providers.YouWill;
 
@@ -34,5 +36,11 @@ public class AppUtils {
         ContentResolver mCR = context.getContentResolver();
         mCR.delete(YouWill.LocalApps.CONTENT_URI, null, null);
         mCR.bulkInsert(YouWill.LocalApps.CONTENT_URI, values);
+    }
+
+    public static void uninstallApp(Context context, String packageName) {
+        Uri uri = Uri.parse("package:" + packageName);
+        Intent intent = new Intent(Intent.ACTION_UNINSTALL_PACKAGE, uri);
+        context.startActivity(intent);
     }
 }
