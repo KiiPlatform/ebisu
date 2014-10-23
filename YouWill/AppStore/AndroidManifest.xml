@@ -48,7 +48,7 @@
                 android:exported="false"/>
 
         <receiver
-                android:name=".net.AppReceiver"
+                android:name="com.youwill.store.net.AppReceiver"
                 android:enabled="true"
                 android:exported="true"
                 >
@@ -61,6 +61,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.DOWNLOAD_COMPLETE"/>
             </intent-filter>
+            <uses-permission android:name="android.permission.INTERNET" />
         </receiver>
     </application>
 

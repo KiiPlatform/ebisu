@@ -1,5 +1,14 @@
 package com.youwill.store.view;
 
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.youwill.store.R;
+import com.youwill.store.net.DownloadAgent;
+import com.youwill.store.providers.YouWill;
+import com.youwill.store.utils.Utils;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.content.Context;
 import android.database.Cursor;
 import android.view.LayoutInflater;
@@ -10,14 +19,6 @@ import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
-
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.youwill.store.R;
-import com.youwill.store.providers.YouWill;
-import com.youwill.store.utils.Utils;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  * Created by Evan on 14/10/19.
@@ -60,6 +61,13 @@ public class AppGridAdapter extends CursorAdapter {
             priceStr = context.getString(R.string.price_free);
         }
         price_btn.setText(priceStr);
+        final String appId = cursor.getString(cursor.getColumnIndex(YouWill.Application.APP_ID));
+        price_btn.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                DownloadAgent.getInstance().beginDownload(appId);
+            }
+        });
         tv = (TextView) view.findViewById(R.id.app_grid_name);
         tv.setText(appInfo.optString("name"));
         RatingBar bar = (RatingBar) view.findViewById(R.id.app_grid_rate);
