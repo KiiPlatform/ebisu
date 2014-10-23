@@ -33,8 +33,9 @@ public class DBHelper extends SQLiteOpenHelper {
                         + " ("
                         + "_id INTEGER PRIMARY KEY, "
                         + YouWill.Application.APP_ID + " TEXT NOT NULL UNIQUE,"
-                        + YouWill.Application.APP_PACKAGE + " TEXT,"
+                        + YouWill.Application.PACKAGE_NAME + " TEXT,"
                         + YouWill.Application.APP_INFO + " TEXT, "
+                        + YouWill.Application.VERSION_CODE + " INTEGER,"
                         + YouWill.Application.AGE_CATEGORY + " INTEGER, "
                         + YouWill.Application.RECOMMEND_TYPE + " INTEGER, "
                         + YouWill.Application.RECOMMEND_WEIGHT + " INTEGER, "
@@ -49,20 +50,6 @@ public class DBHelper extends SQLiteOpenHelper {
                         + YouWill.Purchased.APP_KEY + " TEXT"
                         + " );"
         );
-        db.execSQL("CREATE VIEW IF NOT EXISTS "
-                        + YouWill.Purchased.VIEW_NAME
-                        + " AS "
-                        + " SELECT * FROM "
-                        + YouWill.Application.TABLE_NAME
-                        + ","
-                        + YouWill.Purchased.TABLE_NAME
-                        + " WHERE "
-                        + YouWill.Application.TABLE_NAME
-                        + ".app_id = "
-                        + YouWill.Purchased.TABLE_NAME
-                        + ".app_id;"
-        );
-
         db.execSQL("CREATE TABLE IF NOT EXISTS "
                         + YouWill.Downloads.TABLE_NAME
                         + " ("
@@ -72,5 +59,36 @@ public class DBHelper extends SQLiteOpenHelper {
                         + YouWill.Downloads.DOWNLOAD_ID + " INTEGER"
                         + ");"
         );
+        db.execSQL("CREATE TABLE IF NOT EXISTS "
+                        + YouWill.LocalApps.TABLE_NAME
+                        + " ("
+                        + "_id INTEGER PRIMARY KEY,"
+                        + YouWill.LocalApps.PACKAGE_NAME + " TEXT NOT NULL,"
+                        + YouWill.LocalApps.VERSION_CODE + " INTEGER"
+                        + ");"
+        );
+
+        db.execSQL("CREATE VIEW IF NOT EXISTS "
+                        + YouWill.Purchased.VIEW_NAME
+                        + " AS "
+                        + " SELECT * FROM purchased INNER JOIN apps ON purchased.app_id = apps.app_id "
+                        + " LEFT JOIN downloads ON purchased.app_id = downloads.app_id;"
+        );
+
+        db.execSQL("CREATE VIEW IF NOT EXISTS "
+                        + YouWill.Upgrade.VIEW_NAME
+                        + " AS "
+                        + " SELECT * FROM localapps INNER JOIN "
+                        + " apps ON localapps.package_name = apps.package_name AND apps.version_code > localapps.version_code"
+                        + " LEFT JOIN downloads ON apps.app_id = downloads.app_id;"
+        );
+
+        db.execSQL("CREATE UNIQUE INDEX apps_id ON apps(app_id);");
+        db.execSQL("CREATE UNIQUE INDEX apps_package ON apps(package_name);");
+        db.execSQL("CREATE UNIQUE INDEX apps_version ON apps(version_code);");
+        db.execSQL("CREATE UNIQUE INDEX purchased_id ON purchased(app_id);");
+        db.execSQL("CREATE UNIQUE INDEX downloads_id ON purchased(app_id);");
+        db.execSQL("CREATE UNIQUE INDEX localapps_package ON apps(package_name);");
+        db.execSQL("CREATE UNIQUE INDEX localapps_version ON apps(version_code);");
     }
 }

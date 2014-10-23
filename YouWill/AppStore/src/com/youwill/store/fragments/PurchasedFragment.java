@@ -45,7 +45,6 @@ public class PurchasedFragment extends ListFragment implements LoaderManager.Loa
         super.onStart();
         mAdapter = new AppListAdapter(getActivity(), null, AppListAdapter.TYPE_PURCHASED);
         setListAdapter(mAdapter);
-        getListView().setDivider(new ColorDrawable(Color.TRANSPARENT));
         getLoaderManager().initLoader(getClass().hashCode(), null, this);
         String not_login = getActivity().getString(R.string.purchased_not_login);
         String login_pattern = getActivity().getString(R.string.login_pattern);

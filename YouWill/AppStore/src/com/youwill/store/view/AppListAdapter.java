@@ -45,7 +45,7 @@ public class AppListAdapter  extends CursorAdapter {
         JSONObject appInfo = null;
         try {
             appInfo = new JSONObject(app_info_str);
-        } catch (JSONException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         if (appInfo == null) {

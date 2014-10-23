@@ -133,7 +133,7 @@ public class HotFragment extends Fragment implements View.OnClickListener {
 
     private static final String[] COLUMNS = new String[]{
             YouWill.Application.APP_ID,         //0
-            YouWill.Application.APP_PACKAGE,    //1
+            YouWill.Application.PACKAGE_NAME,    //1
             YouWill.Application.APP_INFO,       //2
     };
 

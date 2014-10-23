@@ -66,14 +66,16 @@ public class DataUtils {
                 int recommendType = obj.getInt("recommend_type", -1);
                 int recommendWeight = obj.getInt("recommend_weight", -1);
                 int category = obj.getInt("category_id", -1);
+                int version_code = obj.getInt("version_code");
                 String searchField = obj.getString("name") + ";" + obj.getString("description");
                 values.put(YouWill.Application.APP_ID, appId);
-                values.put(YouWill.Application.APP_PACKAGE, packageName);
+                values.put(YouWill.Application.PACKAGE_NAME, packageName);
                 values.put(YouWill.Application.APP_INFO, info);
                 values.put(YouWill.Application.RECOMMEND_TYPE, recommendType);
                 values.put(YouWill.Application.RECOMMEND_WEIGHT, recommendWeight);
                 values.put(YouWill.Application.SEARCH_FIELD, searchField);
                 values.put(YouWill.Application.AGE_CATEGORY, category);
+                values.put(YouWill.Application.VERSION_CODE, version_code);
                 valuesArrayList.add(values);
             }
         }
@@ -86,8 +88,8 @@ public class DataUtils {
     public static void getPurchasedList(final Context context) {
         ContentResolver cr = context.getContentResolver();
         cr.delete(YouWill.Purchased.CONTENT_URI, null, null);
-        ContentValues[] values = new ContentValues[7];
-        for (int i = 0; i < 7; i++) {
+        ContentValues[] values = new ContentValues[8];
+        for (int i = 0; i < values.length; i++) {
             ContentValues v = new ContentValues();
             v.put("app_key", "test");
             values[i] = v;
@@ -99,6 +101,7 @@ public class DataUtils {
         values[4].put("app_id", "58ec3c91");
         values[5].put("app_id", "471f6a0a");
         values[6].put("app_id", "a6b9f9ed");
+        values[7].put("app_id", "7a73c752");
         cr.bulkInsert(YouWill.Purchased.CONTENT_URI, values);
     }
 

@@ -73,7 +73,7 @@ public class DownloadAgent {
         Cursor c = null;
         try {
             c = context.getContentResolver().query(YouWill.Application.CONTENT_URI,
-                    new String[]{YouWill.Application.APP_INFO, YouWill.Application.APP_PACKAGE},
+                    new String[]{YouWill.Application.APP_INFO, YouWill.Application.PACKAGE_NAME},
                     YouWill.Application.APP_ID + "=?",
                     new String[]{appId}, null);
             if (c != null && c.moveToFirst()) {

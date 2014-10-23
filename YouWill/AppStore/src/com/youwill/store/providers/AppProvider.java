@@ -20,6 +20,10 @@ public class AppProvider extends ContentProvider {
 
     private static final int ID_DOWNLOADS = 2;
 
+    private static final int ID_LOCALAPPS = 3;
+
+    private static final int ID_UPGRADE = 4;
+
     private DBHelper mDBHelper = null;
 
     static {
@@ -27,6 +31,8 @@ public class AppProvider extends ContentProvider {
         uriMatcher.addURI(YouWill.AUTHORITY, "apps", ID_APPS);
         uriMatcher.addURI(YouWill.AUTHORITY, "purchased", ID_PURCHASED);
         uriMatcher.addURI(YouWill.AUTHORITY, "downloads", ID_DOWNLOADS);
+        uriMatcher.addURI(YouWill.AUTHORITY, "local_apps", ID_LOCALAPPS);
+        uriMatcher.addURI(YouWill.AUTHORITY, "upgrade", ID_UPGRADE);
     }
 
 
@@ -38,7 +44,7 @@ public class AppProvider extends ContentProvider {
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
-            String sortOrder) {
+                        String sortOrder) {
         SQLiteDatabase database = mDBHelper.getWritableDatabase();
         switch (uriMatcher.match(uri)) {
             case ID_APPS: {
@@ -58,6 +64,20 @@ public class AppProvider extends ContentProvider {
             case ID_DOWNLOADS: {
                 Cursor c = database
                         .query(YouWill.Downloads.TABLE_NAME, projection, selection, selectionArgs,
+                                null, null, sortOrder);
+                c.setNotificationUri(getContext().getContentResolver(), uri);
+                return c;
+            }
+            case ID_LOCALAPPS: {
+                Cursor c = database
+                        .query(YouWill.LocalApps.TABLE_NAME, projection, selection, selectionArgs,
+                                null, null, sortOrder);
+                c.setNotificationUri(getContext().getContentResolver(), uri);
+                return c;
+            }
+            case ID_UPGRADE: {
+                Cursor c = database
+                        .query(YouWill.Upgrade.VIEW_NAME, projection, selection, selectionArgs,
                                 null, null, sortOrder);
                 c.setNotificationUri(getContext().getContentResolver(), uri);
                 return c;
@@ -84,9 +104,18 @@ public class AppProvider extends ContentProvider {
                 }
                 getContext().getContentResolver().notifyChange(uri, null);
             }
+            break;
             case ID_PURCHASED: {
                 for (ContentValues value : values) {
                     database.insertWithOnConflict(YouWill.Purchased.TABLE_NAME, null, value, SQLiteDatabase.CONFLICT_REPLACE);
+                    count++;
+                }
+                getContext().getContentResolver().notifyChange(uri, null);
+            }
+            break;
+            case ID_LOCALAPPS: {
+                for (ContentValues value : values) {
+                    database.insertWithOnConflict(YouWill.LocalApps.TABLE_NAME, null, value, SQLiteDatabase.CONFLICT_REPLACE);
                     count++;
                 }
                 getContext().getContentResolver().notifyChange(uri, null);
@@ -114,6 +143,10 @@ public class AppProvider extends ContentProvider {
                 database.insertWithOnConflict(YouWill.Purchased.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 break;
+            case ID_LOCALAPPS:
+                database.insertWithOnConflict(YouWill.LocalApps.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                getContext().getContentResolver().notifyChange(uri, null);
+                break;
         }
         return null;
     }
@@ -133,6 +166,10 @@ public class AppProvider extends ContentProvider {
                 break;
             case ID_DOWNLOADS:
                 ret = database.delete(YouWill.Downloads.TABLE_NAME, selection, selectionArgs);
+                getContext().getContentResolver().notifyChange(uri, null);
+                break;
+            case ID_LOCALAPPS:
+                ret = database.delete(YouWill.LocalApps.TABLE_NAME, selection, selectionArgs);
                 getContext().getContentResolver().notifyChange(uri, null);
                 break;
         }
