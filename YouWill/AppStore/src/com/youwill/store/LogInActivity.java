@@ -14,6 +14,8 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLDecoder;
 
 /**
@@ -80,23 +82,27 @@ public class LogInActivity extends Activity {
     public static Bundle decodeUrl(String s) {
         Bundle params = new Bundle();
         if (s != null) {
-            String array[] = s.split("&");
-            for (String parameter : array) {
-                if (TextUtils.isEmpty(parameter)) {
-                    continue;
-                }
-                String v[] = parameter.split("=");
-                if (v.length < 2) {
-                    continue;
-                }
-                try {
+            try {
+                URL u = new URL(s);
+                String queryParams = u.getQuery();
+                String array[] = queryParams.split("&");
+                for (String parameter : array) {
+                    if (TextUtils.isEmpty(parameter)) {
+                        continue;
+                    }
+                    String v[] = parameter.split("=");
+                    if (v.length < 2) {
+                        continue;
+                    }
                     params.putString(URLDecoder.decode(v[0], "UTF-8"),
                             URLDecoder.decode(v[1], "UTF-8"));
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-
                 }
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
             }
+
         }
         return params;
     }

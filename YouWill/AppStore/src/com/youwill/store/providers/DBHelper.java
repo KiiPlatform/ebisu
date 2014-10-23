@@ -62,5 +62,15 @@ public class DBHelper extends SQLiteOpenHelper {
                         + YouWill.Purchased.TABLE_NAME
                         + ".app_id;"
         );
+
+        db.execSQL("CREATE TABLE IF NOT EXISTS "
+                        + YouWill.Downloads.TABLE_NAME
+                        + " ("
+                        + "_id INTEGER PRIMARY KEY,"
+                        + YouWill.Downloads.APP_ID + " TEXT NOT NULL UNIQUE,"
+                        + YouWill.Downloads.PACKAGE_NAME + " TEXT NOT NULL,"
+                        + YouWill.Downloads.DOWNLOAD_ID + " INTEGER"
+                        + ");"
+        );
     }
 }
