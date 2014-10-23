@@ -18,7 +18,7 @@ public class YouWill {
 
         public static final String APP_ID = "app_id";
 
-        public static final String APP_PACKAGE = "package";
+        public static final String PACKAGE_NAME = "package_name";
 
         public static final String APP_INFO = "info";
 
@@ -139,6 +139,24 @@ public class YouWill {
         public static final String DOWNLOAD_ID = "download_id";
 
         public static final String PACKAGE_NAME = "package_name";
+    }
+
+    public static class LocalApps implements BaseColumns {
+
+        public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/local_apps");
+
+        public static final String TABLE_NAME = "localapps";
+
+        public static final String PACKAGE_NAME = "package_name";
+
+        public static final String VERSION_CODE = "version_code";
+    }
+
+    public static class Upgrade implements BaseColumns {
+
+        public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/upgrade");
+
+        public static final String VIEW_NAME = "upgrade";
     }
 
 
