@@ -65,7 +65,10 @@ public class AppListAdapter  extends CursorAdapter {
         Button rightBtn = (Button) view.findViewById(R.id.right_btn);
         PackageInfo packageInfo = AppUtils.gLocalApps.get(packageName);
         if (packageInfo != null) {
-            leftBtn.setVisibility(View.VISIBLE);
+            if (mType == TYPE_UPGRADE)
+                leftBtn.setVisibility(View.INVISIBLE);
+            else
+                leftBtn.setVisibility(View.VISIBLE);
             leftBtn.setText(context.getString(R.string.uninstall_button));
             int versionCode = appInfo.optInt("version_code");
             if (versionCode > packageInfo.versionCode) {

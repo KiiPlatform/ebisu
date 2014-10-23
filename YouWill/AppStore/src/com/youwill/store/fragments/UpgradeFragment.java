@@ -37,7 +37,7 @@ public class UpgradeFragment extends ListFragment implements LoaderManager.Loade
     @Override
     public void onStart() {
         super.onStart();
-        mAdapter = new AppListAdapter(getActivity(), null, AppListAdapter.TYPE_PURCHASED);
+        mAdapter = new AppListAdapter(getActivity(), null, AppListAdapter.TYPE_UPGRADE);
         setListAdapter(mAdapter);
         getLoaderManager().initLoader(getClass().hashCode(), null, this);
     }
