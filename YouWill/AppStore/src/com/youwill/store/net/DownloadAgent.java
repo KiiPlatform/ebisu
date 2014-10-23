@@ -2,6 +2,7 @@ package com.youwill.store.net;
 
 import com.youwill.store.R;
 import com.youwill.store.providers.YouWill;
+import com.youwill.store.utils.Constants;
 import com.youwill.store.utils.LogUtils;
 import com.youwill.store.utils.Utils;
 
@@ -10,11 +11,13 @@ import org.json.JSONObject;
 import android.app.DownloadManager;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
+import android.support.v4.content.LocalBroadcastManager;
 import android.webkit.MimeTypeMap;
 
 import java.util.HashMap;
@@ -147,6 +150,8 @@ public class DownloadAgent {
             }
             mDownloadProgressMap.put(appId, percentage);
             LogUtils.d(TAG, "onProgressUpdate, update " + appId + " to " + percentage);
+            LocalBroadcastManager.getInstance(context)
+                    .sendBroadcast(new Intent(Constants.INTENT_DOWNLOAD_PROGRESS_CHANGED));
         }
     };
 
