@@ -2,6 +2,7 @@ package com.youwill.store.net;
 
 import com.youwill.store.R;
 import com.youwill.store.providers.YouWill;
+import com.youwill.store.utils.LogUtils;
 import com.youwill.store.utils.Utils;
 
 import org.json.JSONObject;
@@ -31,6 +32,7 @@ public class DownloadAgent {
     private DownloadAgent() {
         mDownloadProgressMap = new HashMap<String, Integer>();
         mCursorMap = new HashMap<Long, Cursor>();
+        mIdMap = new HashMap<Long, String>();
     }
 
     public static DownloadAgent getInstance() {
@@ -61,11 +63,14 @@ public class DownloadAgent {
         cv.put(YouWill.Downloads.APP_ID, appId);
         context.getContentResolver().insert(YouWill.Downloads.CONTENT_URI, cv);
         mDownloadProgressMap.put(appId, 0);
-        DownloadManager.Query q = new DownloadManager.Query();
-        q.setFilterById(id);
-        Cursor cursor = manager.query(q);
+        DownloadManager.Query query = new DownloadManager.Query();
+        query.setFilterById(id);
+        Cursor cursor = manager.query(query);
         mCursorMap.put(id, cursor);
-        cursor.registerContentObserver(mObserver);
+        Uri uri = Uri
+                .withAppendedPath(Uri.parse("content://downloads/my_downloads"), Long.toString(id));
+        context.getContentResolver().registerContentObserver(uri, true, mObserver);
+        mIdMap.put(id, appId);
         return id;
     }
 
@@ -110,14 +115,46 @@ public class DownloadAgent {
 
     private Map<Long, Cursor> mCursorMap;
 
+    private Map<Long, String> mIdMap;
+
     public Map<String, Integer> getDownloadProgressMap() {
         return mDownloadProgressMap;
     }
 
+    private static final String TAG = DownloadAgent.class.getName();
+
     private ContentObserver mObserver = new ContentObserver(new Handler()) {
+
         @Override
-        public void onChange(boolean selfChange) {
-            
+        public void onChange(boolean selfChange, Uri uri) {
+            LogUtils.d(TAG, "onChange, uri is " + uri);
+            long id = Long.parseLong(uri.getLastPathSegment());
+            DownloadManager.Query query = new DownloadManager.Query();
+            query.setFilterById(id);
+            DownloadManager manager = (DownloadManager) context
+                    .getSystemService(Context.DOWNLOAD_SERVICE);
+            Cursor cursor = manager.query(query);
+            cursor.moveToFirst();
+//            dumpCursor(cursor);
+            int total = cursor
+                    .getInt(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+            int current = cursor
+                    .getInt(cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
+            String appId = mIdMap.get(id);
+            int percentage = 0;
+            if (total != 0) {
+                percentage = (int) ((float) current / (float) total * 100);
+            }
+            mDownloadProgressMap.put(appId, percentage);
+            LogUtils.d(TAG, "onProgressUpdate, update " + appId + " to " + percentage);
         }
     };
+
+    private void dumpCursor(Cursor cursor) {
+        cursor.moveToFirst();
+        for (String column : cursor.getColumnNames()) {
+            LogUtils.d(TAG, "column: " + column + ":\t\t\t\t" + cursor
+                    .getString(cursor.getColumnIndex(column)));
+        }
+    }
 }
