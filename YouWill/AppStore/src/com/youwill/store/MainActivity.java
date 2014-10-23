@@ -176,9 +176,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         currentFragmentIndex = v.getId();
         currentFragment = fragment;
         DataUtils.loadApps(this);
-        if (currentFragmentIndex == R.id.upgrade_button && !Settings.isLoggedIn(this)) {
-            startActivity(new Intent(this, LogInActivity.class));
-        }
     }
 
 }
