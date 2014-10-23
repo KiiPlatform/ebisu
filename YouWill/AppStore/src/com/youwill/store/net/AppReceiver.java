@@ -1,5 +1,6 @@
 package com.youwill.store.net;
 
+import com.youwill.store.utils.AppUtils;
 import com.youwill.store.utils.LogUtils;
 
 import android.app.DownloadManager;
@@ -24,11 +25,7 @@ public class AppReceiver extends BroadcastReceiver {
             DownloadManager manager = (DownloadManager) context
                     .getSystemService(Context.DOWNLOAD_SERVICE);
             Uri uri = manager.getUriForDownloadedFile(downloadId);
-            Intent installIntent = new Intent(Intent.ACTION_VIEW)
-                    .setDataAndType(uri,
-                            "application/vnd.android.package-archive");
-            installIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(installIntent);
+            AppUtils.installApp(context, uri);
         } else if (intent.getAction().equals(Intent.ACTION_PACKAGE_ADDED)) {
             String packageName = intent.getData().getSchemeSpecificPart();
             LogUtils.d("onReceive, package name is " + packageName);

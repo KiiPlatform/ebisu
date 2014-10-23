@@ -51,6 +51,7 @@
         android:layout_centerVertical="true"
         android:layout_toLeftOf="@id/right_btn"
         android:layout_marginRight="12px"
+        android:layout_marginLeft="12px"
         android:textColor="@color/blue_button_text"
         android:textSize="11px" />
 
@@ -84,7 +85,7 @@
         android:layout_marginTop="9px"
         android:layout_toRightOf="@id/app_grid_icon"
         android:layout_toLeftOf="@id/left_btn"
-        android:progress="20"
+        android:max="100"
         android:progressDrawable="@drawable/progress_bar_bg"
         android:layout_below="@id/app_grid_rate" />
 </RelativeLayout>

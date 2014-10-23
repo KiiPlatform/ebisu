@@ -25,6 +25,7 @@ public class App extends Application {
         new Thread() {
             @Override
             public void run() {
+                DownloadAgent.getInstance().loadDownloads();
                 AppUtils.fetchAllPackages(App.this);
                 if (Settings.isLoggedIn(App.this)) {
                     DataUtils.getPurchasedList(App.this);

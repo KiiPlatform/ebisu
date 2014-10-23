@@ -41,6 +41,15 @@ public class AppUtils {
     public static void uninstallApp(Context context, String packageName) {
         Uri uri = Uri.parse("package:" + packageName);
         Intent intent = new Intent(Intent.ACTION_UNINSTALL_PACKAGE, uri);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent);
+    }
+
+    public static void installApp(Context context, Uri fileUri) {
+        Intent installIntent = new Intent(Intent.ACTION_VIEW)
+                .setDataAndType(fileUri,
+                        "application/vnd.android.package-archive");
+        installIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(installIntent);
     }
 }

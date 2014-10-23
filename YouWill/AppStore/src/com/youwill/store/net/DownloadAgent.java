@@ -14,6 +14,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
@@ -33,8 +34,7 @@ public class DownloadAgent {
     private static DownloadAgent instance;
 
     private DownloadAgent() {
-        mDownloadProgressMap = new HashMap<String, Integer>();
-        mCursorMap = new HashMap<Long, Cursor>();
+        mDownloadProgressMap = new HashMap<String, DownloadInfo>();
         mIdMap = new HashMap<Long, String>();
     }
 
@@ -65,16 +65,26 @@ public class DownloadAgent {
         cv.put(YouWill.Downloads.DOWNLOAD_ID, id);
         cv.put(YouWill.Downloads.APP_ID, appId);
         context.getContentResolver().insert(YouWill.Downloads.CONTENT_URI, cv);
-        mDownloadProgressMap.put(appId, 0);
-        DownloadManager.Query query = new DownloadManager.Query();
-        query.setFilterById(id);
-        Cursor cursor = manager.query(query);
-        mCursorMap.put(id, cursor);
+        registerDownloadId(appId, id);
+        return id;
+    }
+
+    public void loadDownloads() {
+        Cursor c = context.getContentResolver().query(YouWill.Downloads.CONTENT_URI, new String[]{YouWill.Downloads.APP_ID, YouWill.Downloads.DOWNLOAD_ID}, null, null, null);
+        while (c.moveToNext()) {
+            String appId = c.getString(0);
+            long downloadId = c.getLong(1);
+            registerDownloadId(appId, downloadId);
+        }
+        Utils.closeSilently(c);
+    }
+
+    private void registerDownloadId(String appId, long id) {
         Uri uri = Uri
                 .withAppendedPath(Uri.parse("content://downloads/my_downloads"), Long.toString(id));
-        context.getContentResolver().registerContentObserver(uri, true, mObserver);
+        context.getContentResolver().registerContentObserver(uri, false, mObserver);
         mIdMap.put(id, appId);
-        return id;
+        updateDownloadInfo(id);
     }
 
     private DownloadManager.Request buildDownloadRequest(String appId, ContentValues cv) {
@@ -114,13 +124,11 @@ public class DownloadAgent {
         return null;
     }
 
-    private Map<String, Integer> mDownloadProgressMap;
-
-    private Map<Long, Cursor> mCursorMap;
+    private Map<String, DownloadInfo> mDownloadProgressMap;
 
     private Map<Long, String> mIdMap;
 
-    public Map<String, Integer> getDownloadProgressMap() {
+    public Map<String, DownloadInfo> getDownloadProgressMap() {
         return mDownloadProgressMap;
     }
 
@@ -131,35 +139,47 @@ public class DownloadAgent {
         @Override
         public void onChange(boolean selfChange, Uri uri) {
             LogUtils.d(TAG, "onChange, uri is " + uri);
-            long id = Long.parseLong(uri.getLastPathSegment());
-            DownloadManager.Query query = new DownloadManager.Query();
-            query.setFilterById(id);
-            DownloadManager manager = (DownloadManager) context
-                    .getSystemService(Context.DOWNLOAD_SERVICE);
-            Cursor cursor = manager.query(query);
-            cursor.moveToFirst();
-//            dumpCursor(cursor);
+            long id;
+            try {
+                id = Long.parseLong(uri.getLastPathSegment());
+            } catch (Exception e) {
+                return;
+            }
+            updateDownloadInfo(id);
+        }
+    };
+
+    private void updateDownloadInfo(long downloadId) {
+        DownloadManager.Query query = new DownloadManager.Query();
+        query.setFilterById(downloadId);
+        DownloadManager manager = (DownloadManager) context
+                .getSystemService(Context.DOWNLOAD_SERVICE);
+        Cursor cursor = manager.query(query);
+        if (cursor.moveToFirst()) {
+//            DatabaseUtils.dumpCursor(cursor);
+            String appId = mIdMap.get(downloadId);
+            DownloadInfo info = mDownloadProgressMap.get(appId);
+            if (info == null)
+                info = new DownloadInfo();
             int total = cursor
                     .getInt(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
             int current = cursor
                     .getInt(cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
-            String appId = mIdMap.get(id);
+            info.status = cursor
+                    .getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
+            if (info.status == DownloadManager.STATUS_SUCCESSFUL) {
+                info.fileUri = Uri.parse(cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)));
+            }
             int percentage = 0;
             if (total != 0) {
                 percentage = (int) ((float) current / (float) total * 100);
             }
-            mDownloadProgressMap.put(appId, percentage);
+            info.percentage = percentage;
+            mDownloadProgressMap.put(appId, info);
             LogUtils.d(TAG, "onProgressUpdate, update " + appId + " to " + percentage);
             LocalBroadcastManager.getInstance(context)
                     .sendBroadcast(new Intent(Constants.INTENT_DOWNLOAD_PROGRESS_CHANGED));
         }
-    };
-
-    private void dumpCursor(Cursor cursor) {
-        cursor.moveToFirst();
-        for (String column : cursor.getColumnNames()) {
-            LogUtils.d(TAG, "column: " + column + ":\t\t\t\t" + cursor
-                    .getString(cursor.getColumnIndex(column)));
-        }
+        Utils.closeSilently(cursor);
     }
 }
