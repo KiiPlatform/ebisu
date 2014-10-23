@@ -1,5 +1,6 @@
 package com.youwill.store;
 
+import com.youwill.store.utils.DataUtils;
 import com.youwill.store.utils.LogUtils;
 import com.youwill.store.utils.Settings;
 
@@ -56,6 +57,12 @@ public class LogInActivity extends Activity {
         @Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
             if (shouldFinish(url)) {
+                new Thread(){
+                    @Override
+                    public void run() {
+                        DataUtils.getPurchasedList(getApplicationContext());
+                    }
+                }.start();
                 Toast.makeText(LogInActivity.this, R.string.log_in_success, Toast.LENGTH_SHORT)
                         .show();
                 setResult(RESULT_OK);
