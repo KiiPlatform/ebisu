@@ -30,7 +30,7 @@ public abstract class FancyCoverFlowAdapter extends BaseAdapter {
 
     @Override
     public final View getView(int i, View reusableView, ViewGroup viewGroup) {
-        FancyCoverFlow coverFlow = (FancyCoverFlow) viewGroup;
+//        FancyCoverFlow coverFlow = (FancyCoverFlow) viewGroup;
 
         View wrappedView = null;
         FancyCoverFlowItemWrapper coverFlowItem;
@@ -49,13 +49,13 @@ public abstract class FancyCoverFlowAdapter extends BaseAdapter {
             throw new NullPointerException("getCoverFlowItem() was expected to return a view, but null was returned.");
         }
 
-        final boolean isReflectionEnabled = coverFlow.isReflectionEnabled();
-        coverFlowItem.setReflectionEnabled(isReflectionEnabled);
-
-        if(isReflectionEnabled) {
-            coverFlowItem.setReflectionGap(coverFlow.getReflectionGap());
-            coverFlowItem.setReflectionRatio(coverFlow.getReflectionRatio());
-        }
+//        final boolean isReflectionEnabled = coverFlow.isReflectionEnabled();
+//        coverFlowItem.setReflectionEnabled(isReflectionEnabled);
+//
+//        if(isReflectionEnabled) {
+//            coverFlowItem.setReflectionGap(coverFlow.getReflectionGap());
+//            coverFlowItem.setReflectionRatio(coverFlow.getReflectionRatio());
+//        }
 
 
         coverFlowItem.addView(wrappedView);

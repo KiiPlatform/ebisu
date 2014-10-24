@@ -24,12 +24,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
-import android.graphics.LinearGradient;
-import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.Shader;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.View;
@@ -198,10 +193,6 @@ class FancyCoverFlowItemWrapper extends ViewGroup {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
                 if (childView.isDirty()) {
                     childView.draw(this.wrappedViewDrawingCanvas);
-
-                    if (this.isReflectionEnabled) {
-                        this.createReflectedImages();
-                    }
                 }
             } else {
                 childView.draw(this.wrappedViewDrawingCanvas);
@@ -231,32 +222,4 @@ class FancyCoverFlowItemWrapper extends ViewGroup {
         }
     }
 
-    /**
-     * Creates the reflected images.
-     *
-     * @return true, if successful
-     */
-    private void createReflectedImages() {
-
-        final int width = this.wrappedViewBitmap.getWidth();
-        final int height = this.wrappedViewBitmap.getHeight();
-
-
-        final Matrix matrix = new Matrix();
-        matrix.postScale(1, -1);
-
-
-        final int scaledDownHeight = (int) (height * originalScaledownFactor);
-        final int invertedHeight = height - scaledDownHeight - reflectionGap;
-        final int invertedBitmapSourceTop = scaledDownHeight - invertedHeight;
-        final Bitmap invertedBitmap = Bitmap.createBitmap(this.wrappedViewBitmap, 0, invertedBitmapSourceTop, width, invertedHeight, matrix, true);
-
-        this.wrappedViewDrawingCanvas.drawBitmap(invertedBitmap, 0, scaledDownHeight + reflectionGap, null);
-
-        final Paint paint = new Paint();
-        final LinearGradient shader = new LinearGradient(0, height * imageReflectionRatio + reflectionGap, 0, height, 0x70ffffff, 0x00ffffff, Shader.TileMode.CLAMP);
-        paint.setShader(shader);
-        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
-        this.wrappedViewDrawingCanvas.drawRect(0, height * (1 - imageReflectionRatio), width, height, paint);
-    }
 }

@@ -14,11 +14,15 @@ import android.app.Application;
  * Created by Evan on 14/10/19.
  */
 public class App extends Application {
+
+    private static final int DISK_CACHE_SIZE = 100 * 1024 * 1024;
+
     @Override
     public void onCreate() {
         super.onCreate();
         Kii.initialize("c99e04f1", "3ebdc0472c0c705bc50eaf1756061b8b", Kii.Site.CN);
         ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(this)
+                .diskCacheSize(DISK_CACHE_SIZE)
                 .build();
         ImageLoader.getInstance().init(config);
         DownloadAgent.getInstance().init(this);

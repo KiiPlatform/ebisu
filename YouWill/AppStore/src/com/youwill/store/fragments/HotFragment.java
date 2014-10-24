@@ -2,23 +2,29 @@ package com.youwill.store.fragments;
 
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.assist.FailReason;
+import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import com.youwill.store.MainActivity;
 import com.youwill.store.R;
 import com.youwill.store.providers.YouWill;
+import com.youwill.store.utils.LogUtils;
 import com.youwill.store.utils.Utils;
 import com.youwill.store.view.fancycoverflow.FancyCoverFlow;
 import com.youwill.store.view.fancycoverflow.FancyCoverFlowAdapter;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Fragment;
 import android.content.AsyncQueryHandler;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,7 +32,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by tian on 14-9-23:下午11:01.
@@ -215,17 +223,21 @@ public class HotFragment extends Fragment implements View.OnClickListener {
 
         @Override
         public View getCoverFlowItem(int position, View reusableView, ViewGroup parent) {
+            LogUtils.d("getCoverFlowItem, position is " + position);
             AppItem item = coverFlowItems.get(position);
-            ImageView imageView = new ImageView(parent.getContext());
+            ImageView imageView = (ImageView) reusableView;
+            if (imageView == null) {
+                imageView = new ImageView(parent.getContext());
+            }
             imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
             imageView.setLayoutParams(new FancyCoverFlow.LayoutParams(477, 239));
-            try {
-                JSONObject app = new JSONObject(item.json);
-                final String url = app.optString("recommend_image");
-                ImageLoader.getInstance().displayImage(url, imageView);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+//            File file = ImageLoader.getInstance().getDiskCache().get(item.image);
+//            if (file != null && file.exists()) {
+//                imageView.setImageBitmap(ImageLoader.getInstance().loadImageSync(item.image));
+//            } else {
+//                ImageLoader.getInstance().displayImage(item.image, imageView);
+//            }
+            imageView.setImageBitmap(coverFlowImageMap.get(item.image));
             return imageView;
         }
 //
@@ -257,6 +269,8 @@ public class HotFragment extends Fragment implements View.OnClickListener {
         String packageName;
 
         String json;
+
+        String image;
     }
 
     List<AppItem> coverFlowItems = new ArrayList<AppItem>();
@@ -275,9 +289,10 @@ public class HotFragment extends Fragment implements View.OnClickListener {
                 switch (token) {
                     case YouWill.Application.RECOMMEND_TYPE_COVER_FLOW:
                         coverFlowItems = parseCursor(cursor);
-                        if (!coverFlowItems.isEmpty()) {
-                            coverFlow.setAdapter(mCoverFlowAdapter);
-                        }
+//                        if (!coverFlowItems.isEmpty()) {
+//                            coverFlow.setAdapter(mCoverFlowAdapter);
+//                            mCoverFlowAdapter.notifyDataSetChanged();
+//                        }
                         break;
                     case YouWill.Application.RECOMMEND_TYPE_LINE1:
                         recommend1Items = parseCursor(cursor);
@@ -299,8 +314,47 @@ public class HotFragment extends Fragment implements View.OnClickListener {
             item.appId = cursor.getString(0);
             item.packageName = cursor.getString(1);
             item.json = cursor.getString(2);
+            try {
+                JSONObject app = new JSONObject(item.json);
+                item.image = app.getString("recommend_image");
+                if (!TextUtils.isEmpty(item.image)) {
+                    ImageLoader.getInstance().loadImage(item.image, mListener);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
             items.add(item);
         }
         return items;
     }
+
+    private Map<String, Bitmap> coverFlowImageMap = new HashMap<String, Bitmap>();
+
+    private ImageLoadingListener mListener = new ImageLoadingListener() {
+        @Override
+        public void onLoadingStarted(String imageUri, View view) {
+
+        }
+
+        @Override
+        public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
+            //retry
+            ImageLoader.getInstance().loadImage(imageUri, mListener);
+        }
+
+        @Override
+        public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+            coverFlowImageMap.put(imageUri, loadedImage);
+            if (coverFlowImageMap.size() == coverFlowItems.size()) {
+                coverFlow.setAdapter(mCoverFlowAdapter);
+            }
+        }
+
+        @Override
+        public void onLoadingCancelled(String imageUri, View view) {
+            //retry
+            ImageLoader.getInstance().loadImage(imageUri, mListener);
+        }
+    };
+
 }
