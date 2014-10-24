@@ -62,7 +62,7 @@ public class YouWill {
 
         public static final int RECOMMEND_TYPE_LINE2 = 2;
 
-        public static final int RECOMMEND_TYPE_COVER_FLOW = 3;
+        public static final int RECOMMEND_TYPE_COVER_FLOW = 0;
 
         public static final String SEARCH_FIELD = "search_field";
 

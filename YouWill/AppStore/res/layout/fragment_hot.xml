@@ -8,18 +8,29 @@
                   android:layout_width="match_parent"
                   android:layout_height="wrap_content"
                   android:background="@color/background_color">
-        <com.youwill.store.view.imagecoverflow.CoverFlowView
-                xmlns:imageCoverFlow="http://schemas.android.com/apk/res-auto"
-                android:id="@+id/coverflow"
+        <!--<com.youwill.store.view.imagecoverflow.CoverFlowView-->
+        <!--xmlns:imageCoverFlow="http://schemas.android.com/apk/res-auto"-->
+        <!--android:id="@+id/coverflow"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="239px"-->
+        <!--android:layout_marginTop="11px"-->
+        <!--imageCoverFlow:coverflowGravity="center_vertical"-->
+        <!--imageCoverFlow:coverflowLayoutMode="wrap_content"-->
+        <!--imageCoverFlow:enableReflection="false"-->
+        <!--imageCoverFlow:visibleImage="3"-->
+        <!--/>-->
+        <com.youwill.store.view.fancycoverflow.FancyCoverFlow
                 android:layout_width="match_parent"
                 android:layout_height="239px"
                 android:layout_marginTop="11px"
-                imageCoverFlow:coverflowGravity="center_vertical"
-                imageCoverFlow:coverflowLayoutMode="wrap_content"
-                imageCoverFlow:enableReflection="false"
-                imageCoverFlow:visibleImage="3"
+                android:id="@+id/coverflow"
+                xmlns:fcf="http://schemas.android.com/apk/res-auto"
+                fcf:maxRotation="30"
+                fcf:unselectedAlpha="0.9"
+                fcf:unselectedSaturation="1.0"
+                fcf:unselectedScale="0.5"
+                fcf:scaleDownGravity="0.2"
                 />
-
         <RelativeLayout android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="23px"

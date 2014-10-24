@@ -1,15 +1,13 @@
 package com.youwill.store.fragments;
 
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.core.assist.FailReason;
-import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import com.youwill.store.MainActivity;
 import com.youwill.store.R;
 import com.youwill.store.providers.YouWill;
-import com.youwill.store.utils.LogUtils;
 import com.youwill.store.utils.Utils;
-import com.youwill.store.view.imagecoverflow.CoverFlowAdapter;
-import com.youwill.store.view.imagecoverflow.CoverFlowView;
+import com.youwill.store.view.fancycoverflow.FancyCoverFlow;
+import com.youwill.store.view.fancycoverflow.FancyCoverFlowAdapter;
 
 import org.json.JSONObject;
 
@@ -17,8 +15,6 @@ import android.app.Fragment;
 import android.content.AsyncQueryHandler;
 import android.database.ContentObserver;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.widget.LinearLayoutManager;
@@ -45,7 +41,7 @@ public class HotFragment extends Fragment implements View.OnClickListener {
 
     LinearLayoutManager mLinearLayoutManager2;
 
-    CoverFlowView coverFlow;
+    FancyCoverFlow coverFlow;
 
     AppAdapter recommend1Adapter;
 
@@ -55,7 +51,7 @@ public class HotFragment extends Fragment implements View.OnClickListener {
 
     private HomeCoverFlowAdapter mCoverFlowAdapter;
 
-
+    private DisplayImageOptions coverFlowOption;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -82,27 +78,12 @@ public class HotFragment extends Fragment implements View.OnClickListener {
         latestView.setAdapter(recommend1Adapter);
         recommend2Adapter = new AppAdapter(recommend2Items);
         goodView.setAdapter(recommend2Adapter);
-        coverFlow = (CoverFlowView<HomeCoverFlowAdapter>) view.findViewById(R.id.coverflow);
+        coverFlow = (FancyCoverFlow) view.findViewById(R.id.coverflow);
+        coverFlow.setSpacing(0);
         mCoverFlowAdapter = new HomeCoverFlowAdapter();
-//        coverFlow.setAdapter(mCoverFlowAdapter);
-        coverFlow.setCoverFlowListener(new CoverFlowView.CoverFlowListener() {
-            @Override
-            public void imageOnTop(CoverFlowView coverFlowView, int position, float left, float top,
-                    float right, float bottom) {
-
-            }
-
-            @Override
-            public void topImageClicked(CoverFlowView coverFlowView, int position) {
-                LogUtils.d(TAG, "topImageCLicked: " + position);
-            }
-
-            @Override
-            public void invalidationCompleted() {
-
-            }
-        });
-        coverFlow.setReflectionHeight(0);
+        coverFlowOption = new DisplayImageOptions.Builder()
+                .showImageOnLoading(R.drawable.cover_flow1).showImageOnFail(R.drawable.cover_flow1)
+                .showImageForEmptyUri(R.drawable.cover_flow1).resetViewBeforeLoading(true).build();
         initQueryHandler();
         startQuery();
         getActivity().getContentResolver()
@@ -207,32 +188,63 @@ public class HotFragment extends Fragment implements View.OnClickListener {
         }
     }
 
-    private class HomeCoverFlowAdapter extends CoverFlowAdapter {
+    private class HomeCoverFlowAdapter extends FancyCoverFlowAdapter {
 
         @Override
         public int getCount() {
-            LogUtils.d(TAG, "getCount!!!");
             return coverFlowItems.size();
         }
 
         @Override
-        public Bitmap getImage(int position) {
-            AppItem item = coverFlowItems.get(position);
-            try {
-                JSONObject app = new JSONObject(item.json);
-                final String url = app.optString("recommend_image");
-                if (ImageLoader.getInstance().getDiskCache().get(url) != null) {
-                    return ImageLoader.getInstance().loadImageSync(url);
-                } else {
-                    ImageLoader.getInstance().loadImage(url, listener);
-                }
-            } catch (Exception ignored) {
-
-            }
-            //TODO: add default picture for cover flow
-            return ((BitmapDrawable) (getResources().getDrawable(R.drawable.cover_flow1)))
-                    .getBitmap();
+        public Object getItem(int position) {
+            return null;
         }
+
+        @Override
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        @Override
+        public View getCoverFlowItem(int position, View reusableView, ViewGroup parent) {
+            AppItem item = coverFlowItems.get(position);
+            ImageView imageView = null;
+            if (reusableView != null) {
+                imageView = (ImageView) reusableView;
+            } else {
+                imageView = new ImageView(parent.getContext());
+                imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                imageView.setLayoutParams(new FancyCoverFlow.LayoutParams(477, 239));
+                try {
+                    JSONObject app = new JSONObject(item.json);
+                    final String url = app.optString("recommend_image");
+                    ImageLoader.getInstance().displayImage(url, imageView);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            return imageView;
+        }
+//
+//        @Override
+//        public Bitmap getImage(int position) {
+//            AppItem item = coverFlowItems.get(position);
+//            try {
+//                JSONObject app = new JSONObject(item.json);
+//                final String url = app.optString("recommend_image");
+//                File file = ImageLoader.getInstance().getDiskCache().get(url);
+//                if (file.exists()) {
+//                    ImageLoader.getInstance().loadImageSync(url);
+//                } else {
+//                    ImageLoader.getInstance().loadImage(url, listener);
+//                }
+//            } catch (Exception ignored) {
+//
+//            }
+//            //TODO: add default picture for cover flow
+//            return ((BitmapDrawable) (getResources().getDrawable(R.drawable.cover_flow1)))
+//                    .getBitmap();
+//        }
     }
 
     private class AppItem {
@@ -250,28 +262,6 @@ public class HotFragment extends Fragment implements View.OnClickListener {
 
     List<AppItem> recommend2Items = new ArrayList<AppItem>();
 
-    private ImageLoadingListener listener = new ImageLoadingListener() {
-        @Override
-        public void onLoadingStarted(String s, View view) {
-
-        }
-
-        @Override
-        public void onLoadingFailed(String s, View view, FailReason failReason) {
-
-        }
-
-        @Override
-        public void onLoadingComplete(String s, View view, Bitmap bitmap) {
-            mCoverFlowAdapter.notifyDataSetChanged();
-        }
-
-        @Override
-        public void onLoadingCancelled(String s, View view) {
-
-        }
-    };
-
     private AsyncQueryHandler mQueryHandler;
 
     private void initQueryHandler() {
@@ -284,7 +274,6 @@ public class HotFragment extends Fragment implements View.OnClickListener {
                         coverFlowItems = parseCursor(cursor);
                         if (!coverFlowItems.isEmpty()) {
                             coverFlow.setAdapter(mCoverFlowAdapter);
-                            mCoverFlowAdapter.notifyDataSetChanged();
                         }
                         break;
                     case YouWill.Application.RECOMMEND_TYPE_LINE1:
@@ -307,6 +296,7 @@ public class HotFragment extends Fragment implements View.OnClickListener {
             item.appId = cursor.getString(0);
             item.packageName = cursor.getString(1);
             item.json = cursor.getString(2);
+            items.add(item);
         }
         return items;
     }

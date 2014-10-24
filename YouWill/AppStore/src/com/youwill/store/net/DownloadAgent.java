@@ -1,6 +1,5 @@
 package com.youwill.store.net;
 
-import com.youwill.store.R;
 import com.youwill.store.providers.YouWill;
 import com.youwill.store.utils.Constants;
 import com.youwill.store.utils.LogUtils;
@@ -14,7 +13,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
@@ -179,7 +177,6 @@ public class DownloadAgent {
                 .getSystemService(Context.DOWNLOAD_SERVICE);
         Cursor cursor = manager.query(query);
         if (cursor.moveToFirst()) {
-//            DatabaseUtils.dumpCursor(cursor);
             String appId = mIdMap.get(downloadId);
             DownloadInfo info = mDownloadProgressMap.get(appId);
             if (info == null)
