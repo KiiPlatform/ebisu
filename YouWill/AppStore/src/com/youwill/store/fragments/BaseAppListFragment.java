@@ -10,6 +10,7 @@ import android.content.Loader;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,7 +26,7 @@ import com.youwill.store.view.AppListAdapter;
 public abstract class BaseAppListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
     AppListAdapter mAdapter;
     TextView emptyTextView;
-    BroadcastReceiver mReciver = new BroadcastReceiver() {
+    BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             getListView().invalidateViews();
@@ -43,13 +44,13 @@ public abstract class BaseAppListFragment extends ListFragment implements Loader
     @Override
     public void onResume() {
         super.onResume();
-        getActivity().registerReceiver(mReciver, new IntentFilter(Constants.INTENT_DOWNLOAD_PROGRESS_CHANGED));
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mReceiver, new IntentFilter(Constants.INTENT_DOWNLOAD_PROGRESS_CHANGED));
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        getActivity().unregisterReceiver(mReciver);
+        LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mReceiver);
     }
 
     @Override

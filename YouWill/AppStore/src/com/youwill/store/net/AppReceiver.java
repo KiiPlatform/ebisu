@@ -38,6 +38,7 @@ public class AppReceiver extends BroadcastReceiver {
             } catch (Exception ignored) {
 
             }
+            DownloadAgent.getInstance().removeDownloadAfterInstall(packageName);
         }
     }
 }
