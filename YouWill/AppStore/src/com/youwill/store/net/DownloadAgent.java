@@ -79,6 +79,29 @@ public class DownloadAgent {
         Utils.closeSilently(c);
     }
 
+    public void removeDownloadAfterInstall(String packageName) {
+        Cursor c = context.getContentResolver().query(YouWill.Downloads.CONTENT_URI,
+                new String[]{YouWill.Downloads.APP_ID, YouWill.Downloads.DOWNLOAD_ID},
+                YouWill.Downloads.PACKAGE_NAME + "=(?)",
+                new String[]{packageName},
+                null);
+        String appId = null;
+        if (c.moveToFirst()) {
+            appId = c.getString(0);
+            long downloadId = c.getLong(1);
+            DownloadManager manager = (DownloadManager) context
+                    .getSystemService(Context.DOWNLOAD_SERVICE);
+            manager.remove(downloadId);
+        }
+        Utils.closeSilently(c);
+        if (appId != null) {
+            mIdMap.remove(appId);
+            context.getContentResolver().delete(YouWill.Downloads.CONTENT_URI,
+                    YouWill.Downloads.APP_ID + "=(?)",
+                    new String[]{appId});
+        }
+    }
+
     private void registerDownloadId(String appId, long id) {
         Uri uri = Uri
                 .withAppendedPath(Uri.parse("content://downloads/my_downloads"), Long.toString(id));
@@ -113,7 +136,7 @@ public class DownloadAgent {
                 String filename = c.getString(1) + ".apk";
                 request.setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS,
                         filename);
-                request.setTitle(context.getString(R.string.downloading_apk_prompt) + name);
+                request.setTitle(name);
                 return request;
             }
         } catch (Exception e) {
