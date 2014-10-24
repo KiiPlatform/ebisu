@@ -22,6 +22,7 @@
                   android:paddingLeft="34px"
                   android:paddingRight="24px"
                   android:hint="@string/search"
+                  android:singleLine="true"
                 />
         <ImageView android:layout_width="20px"
                    android:layout_height="20px"
