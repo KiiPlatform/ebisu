@@ -24,12 +24,6 @@
                 android:layout_height="239px"
                 android:layout_marginTop="11px"
                 android:id="@+id/coverflow"
-                xmlns:fcf="http://schemas.android.com/apk/res-auto"
-                fcf:maxRotation="30"
-                fcf:unselectedAlpha="0.9"
-                fcf:unselectedSaturation="1.0"
-                fcf:unselectedScale="0.5"
-                fcf:scaleDownGravity="0.2"
                 />
         <RelativeLayout android:layout_width="match_parent"
                         android:layout_height="wrap_content"

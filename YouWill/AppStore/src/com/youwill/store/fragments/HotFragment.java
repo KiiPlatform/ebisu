@@ -78,9 +78,17 @@ public class HotFragment extends Fragment implements View.OnClickListener {
         latestView.setAdapter(recommend1Adapter);
         recommend2Adapter = new AppAdapter(recommend2Items);
         goodView.setAdapter(recommend2Adapter);
-        coverFlow = (FancyCoverFlow) view.findViewById(R.id.coverflow);
-        coverFlow.setSpacing(0);
         mCoverFlowAdapter = new HomeCoverFlowAdapter();
+        coverFlow = (FancyCoverFlow) view.findViewById(R.id.coverflow);
+        coverFlow.setSpacing(-150);
+        coverFlow.setActionDistance(FancyCoverFlow.ACTION_DISTANCE_AUTO);
+        coverFlow.setAdapter(mCoverFlowAdapter);
+        this.coverFlow.setUnselectedAlpha(1.0f);
+        this.coverFlow.setUnselectedSaturation(0.0f);
+        this.coverFlow.setUnselectedScale(0.5f);
+        this.coverFlow.setMaxRotation(0);
+        this.coverFlow.setScaleDownGravity(0.2f);
+        this.coverFlow.setActionDistance(FancyCoverFlow.ACTION_DISTANCE_AUTO);
         coverFlowOption = new DisplayImageOptions.Builder()
                 .showImageOnLoading(R.drawable.cover_flow1).showImageOnFail(R.drawable.cover_flow1)
                 .showImageForEmptyUri(R.drawable.cover_flow1).resetViewBeforeLoading(true).build();
@@ -208,20 +216,15 @@ public class HotFragment extends Fragment implements View.OnClickListener {
         @Override
         public View getCoverFlowItem(int position, View reusableView, ViewGroup parent) {
             AppItem item = coverFlowItems.get(position);
-            ImageView imageView = null;
-            if (reusableView != null) {
-                imageView = (ImageView) reusableView;
-            } else {
-                imageView = new ImageView(parent.getContext());
-                imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                imageView.setLayoutParams(new FancyCoverFlow.LayoutParams(477, 239));
-                try {
-                    JSONObject app = new JSONObject(item.json);
-                    final String url = app.optString("recommend_image");
-                    ImageLoader.getInstance().displayImage(url, imageView);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            ImageView imageView = new ImageView(parent.getContext());
+            imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            imageView.setLayoutParams(new FancyCoverFlow.LayoutParams(477, 239));
+            try {
+                JSONObject app = new JSONObject(item.json);
+                final String url = app.optString("recommend_image");
+                ImageLoader.getInstance().displayImage(url, imageView);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
             return imageView;
         }
