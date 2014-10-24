@@ -88,13 +88,13 @@ public class HotFragment extends Fragment implements View.OnClickListener {
         goodView.setAdapter(recommend2Adapter);
         mCoverFlowAdapter = new HomeCoverFlowAdapter();
         coverFlow = (FancyCoverFlow) view.findViewById(R.id.coverflow);
-        coverFlow.setSpacing(-150);
+        coverFlow.setSpacing(-100);
         coverFlow.setActionDistance(FancyCoverFlow.ACTION_DISTANCE_AUTO);
         coverFlow.setAdapter(mCoverFlowAdapter);
         this.coverFlow.setUnselectedAlpha(1.0f);
         this.coverFlow.setUnselectedSaturation(0.0f);
         this.coverFlow.setUnselectedScale(0.5f);
-        this.coverFlow.setMaxRotation(0);
+        this.coverFlow.setMaxRotation(4);
         this.coverFlow.setScaleDownGravity(0.2f);
         this.coverFlow.setActionDistance(FancyCoverFlow.ACTION_DISTANCE_AUTO);
         coverFlowOption = new DisplayImageOptions.Builder()
