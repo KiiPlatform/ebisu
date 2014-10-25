@@ -7,7 +7,7 @@ typedef void (*KiiHal_taskEntry)(void* pValue);
 int kiiHal_dns(char *host, unsigned char *buf);
 int kiiHal_socketCreate(void);
 int kiiHal_socketClose(int socket_num);
-int kiiHal_connect(int socket_num, char *sa_data);
+int kiiHal_connect(int socket_num, char *sa_data, int port);
 int kiiHal_socketSend(int socket_num, char * buf, int len);
 int kiiHal_socketRecv(int socket_num, char * buf, int len);
 int kiiHal_transfer(void);

@@ -19,7 +19,7 @@
 #define KII_RECV_BUF_SIZE 2048
 
 
-typedef void (* kiiPush_recvMessageCallback)(char* jsonBuf);
+typedef void (* kiiPush_recvMessageCallback)(char* jsonBuf, int rcvdCounter);
 
 
 

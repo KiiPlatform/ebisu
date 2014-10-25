@@ -222,7 +222,7 @@
             <RvdsVP>0</RvdsVP>
             <hadIRAM2>0</hadIRAM2>
             <hadIROM2>0</hadIROM2>
-            <StupSel>1</StupSel>
+            <StupSel>0</StupSel>
             <useUlib>0</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
@@ -235,7 +235,7 @@
             <NoZi3>0</NoZi3>
             <NoZi4>0</NoZi4>
             <NoZi5>0</NoZi5>
-            <Ro1Chk>1</Ro1Chk>
+            <Ro1Chk>0</Ro1Chk>
             <Ro2Chk>0</Ro2Chk>
             <Ro3Chk>0</Ro3Chk>
             <Ir1Chk>0</Ir1Chk>
@@ -364,7 +364,7 @@
               <MiscControls>--c99 --gnu </MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\..\Src\Drivers;..\..\..\Src\Drivers\dma;..\..\..\Src\Drivers\efuse;..\..\..\Src\Drivers\flash;..\..\..\Src\Drivers\gpio;..\..\..\Src\Drivers\hspi;..\..\..\Src\Drivers\litepoint;..\..\..\Src\Drivers\spi;..\..\..\Src\Drivers\timer;..\..\..\Src\Drivers\uart;..\..\..\Src\Drivers\watchdog;..\..\..\Src\Misc;..\..\..\Src\Network\lwip1.4.1;..\..\..\Src\Network\lwip1.4.1\include;..\..\..\Src\Network\lwip1.4.1\include\arch;..\..\..\Src\Network\lwip1.4.1\include\ipv4;..\..\..\Src\Network\lwip1.4.1\include\ipv4\lwip;..\..\..\Src\Network\lwip1.4.1\include\lwip;..\..\..\Src\Network\lwip1.4.1\include\netif;..\..\..\Src\OS\uCOS-II\ports;..\..\..\Src\OS\uCOS-II\source;..\..\..\Src\Wlan\Driver;..\..\..\Src\Wlan\Supplicant;..\..\..\Include;..\..\..\Src\Inc;..\..\..\Src\Sys;..\..\..\Src\Network\api;..\..\..\App\wm_atcmd;..\..\..\App\demo;..\..\..\Src\Common\Params;..\..\..\Src\Drivers\litepoint</IncludePath>
+              <IncludePath>..\..\..\Src\Drivers;..\..\..\Src\Drivers\dma;..\..\..\Src\Drivers\efuse;..\..\..\Src\Drivers\flash;..\..\..\Src\Drivers\gpio;..\..\..\Src\Drivers\hspi;..\..\..\Src\Drivers\litepoint;..\..\..\Src\Drivers\spi;..\..\..\Src\Drivers\timer;..\..\..\Src\Drivers\uart;..\..\..\Src\Drivers\watchdog;..\..\..\Src\Misc;..\..\..\Src\Network\lwip1.4.1;..\..\..\Src\Network\lwip1.4.1\include;..\..\..\Src\Network\lwip1.4.1\include\arch;..\..\..\Src\Network\lwip1.4.1\include\ipv4;..\..\..\Src\Network\lwip1.4.1\include\ipv4\lwip;..\..\..\Src\Network\lwip1.4.1\include\lwip;..\..\..\Src\Network\lwip1.4.1\include\netif;..\..\..\Src\OS\uCOS-II\ports;..\..\..\Src\OS\uCOS-II\source;..\..\..\Src\Wlan\Driver;..\..\..\Src\Wlan\Supplicant;..\..\..\Include;..\..\..\Src\Inc;..\..\..\Src\Sys;..\..\..\Src\Network\api;..\..\..\App\wm_atcmd;..\..\..\App\demo;..\..\..\Src\Common\Params;..\..\..\Src\Drivers\litepoint;..\..\..\Src\MQTT</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1241,6 +1241,71 @@
               <FileName>kii_push.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\Src\Kii\kii_push.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>src/MQTT</GroupName>
+          <Files>
+            <File>
+              <FileName>MQTTClient.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Src\MQTT\MQTTClient.c</FilePath>
+            </File>
+            <File>
+              <FileName>MQTTConnectClient.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Src\MQTT\MQTTConnectClient.c</FilePath>
+            </File>
+            <File>
+              <FileName>MQTTConnectServer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Src\MQTT\MQTTConnectServer.c</FilePath>
+            </File>
+            <File>
+              <FileName>MQTTDeserializePublish.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Src\MQTT\MQTTDeserializePublish.c</FilePath>
+            </File>
+            <File>
+              <FileName>MQTTFormat.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Src\MQTT\MQTTFormat.c</FilePath>
+            </File>
+            <File>
+              <FileName>MQTTPacket.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Src\MQTT\MQTTPacket.c</FilePath>
+            </File>
+            <File>
+              <FileName>MQTTSerializePublish.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Src\MQTT\MQTTSerializePublish.c</FilePath>
+            </File>
+            <File>
+              <FileName>MQTTSubscribeClient.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Src\MQTT\MQTTSubscribeClient.c</FilePath>
+            </File>
+            <File>
+              <FileName>MQTTSubscribeServer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Src\MQTT\MQTTSubscribeServer.c</FilePath>
+            </File>
+            <File>
+              <FileName>MQTTUnsubscribeClient.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Src\MQTT\MQTTUnsubscribeClient.c</FilePath>
+            </File>
+            <File>
+              <FileName>MQTTUnsubscribeServer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Src\MQTT\MQTTUnsubscribeServer.c</FilePath>
+            </File>
+            <File>
+              <FileName>WinnerMicro.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Src\MQTT\WinnerMicro.c</FilePath>
             </File>
           </Files>
         </Group>

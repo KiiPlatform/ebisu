@@ -48,7 +48,9 @@ int kiiObj_create(char *bucketName, char *jsonObject, char *dataType, char *obje
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/users/me/buckets/");
+    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    strcpy(buf+strlen(buf), "/buckets/");
     strcpy(buf+strlen(buf),bucketName);
     strcpy(buf+strlen(buf), "/objects");
     strcpy(buf+strlen(buf), STR_HTTP);
@@ -227,7 +229,9 @@ static int kiiObj_update(char *bucketName, char *jsonObject, char *dataType, cha
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/users/me/buckets/");
+    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    strcpy(buf+strlen(buf), "/buckets/");
     strcpy(buf+strlen(buf),bucketName);
     strcpy(buf+strlen(buf), "/objects/");
     strcpy(buf+strlen(buf),objectID);
@@ -354,7 +358,9 @@ int kiiObj_uploadBodyAtOnce(char *bucketName, char *objectID,  char *dataType, u
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/users/me/buckets/");
+    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    strcpy(buf+strlen(buf), "/buckets/");
     strcpy(buf+strlen(buf),bucketName);
     strcpy(buf+strlen(buf), "/objects/");
     strcpy(buf+strlen(buf),objectID);
@@ -451,7 +457,9 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/users/me/buckets/");
+    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    strcpy(buf+strlen(buf), "/buckets/");
     strcpy(buf+strlen(buf),mBucketName);
     strcpy(buf+strlen(buf), "/objects/");
     strcpy(buf+strlen(buf),mObjectID);
@@ -501,7 +509,6 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
         KII_DEBUG("kii-error: dns failed !\r\n");
         return -1;
     }
-    KII_DEBUG("Host ip:%d.%d.%d.%d\r\n", ipBuf[3], ipBuf[2], ipBuf[1], ipBuf[0]);
 		
     mSocketNum = kiiHal_socketCreate();
     if (mSocketNum < 0)
@@ -511,7 +518,7 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
     }
 	
 	
-    if (kiiHal_connect(mSocketNum, (char*)ipBuf) < 0)
+    if (kiiHal_connect(mSocketNum, (char*)ipBuf, KII_DEFAULT_PORT) < 0)
     {
         KII_DEBUG("kii-error: connect to server failed \r\n");
 	 kiiHal_socketClose(mSocketNum);
@@ -557,8 +564,7 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
 	
     memset(mUploadID, 0, sizeof(mUploadID));
     memcpy(mUploadID, p1, p2-p1);
-    KII_DEBUG("kii-info: upload ID:%s\r\n", mUploadID);
-	
+
     return 0;
 }
 
@@ -586,7 +592,9 @@ int kiiObj_uploadBody(unsigned char *data, unsigned int length)
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/users/me/buckets/");
+    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    strcpy(buf+strlen(buf), "/buckets/");
     strcpy(buf+strlen(buf),mBucketName);
     strcpy(buf+strlen(buf), "/objects/");
     strcpy(buf+strlen(buf),mObjectID);
@@ -702,7 +710,9 @@ int kiiObj_uploadBodyCommit(int committed)
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/users/me/buckets/");
+    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    strcpy(buf+strlen(buf), "/buckets/");
     strcpy(buf+strlen(buf),mBucketName);
     strcpy(buf+strlen(buf), "/objects/");
     strcpy(buf+strlen(buf),mObjectID);
@@ -800,7 +810,9 @@ int kiiObj_retrieve(char *bucketName, char *objectID,  char *jsonObject, int len
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/users/me/buckets/");
+    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    strcpy(buf+strlen(buf), "/buckets/");
     strcpy(buf+strlen(buf),bucketName);
     strcpy(buf+strlen(buf), "/objects/");
     strcpy(buf+strlen(buf),objectID);
@@ -887,7 +899,9 @@ int kiiObj_downloadBody(char *bucketName, char *objectID,  unsigned int position
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/users/me/buckets/");
+    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    strcpy(buf+strlen(buf), "/buckets/");
     strcpy(buf+strlen(buf),bucketName);
     strcpy(buf+strlen(buf), "/objects/");
     strcpy(buf+strlen(buf),objectID);

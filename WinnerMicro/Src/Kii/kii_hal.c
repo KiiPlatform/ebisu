@@ -92,13 +92,14 @@ int kiiHal_socketClose(int socketNum)
 *
 *  \param  socketNum - socket handle
 *               saData - address
+*               port - port number
 *
 *  \return  0:success; -1: failure
 *
 *  \brief  connect a TCP socket
 *
 *****************************************************************************/
-int kiiHal_connect(int socketNum, char *saData)
+int kiiHal_connect(int socketNum, char *saData, int port)
 {
     int ret = 0;
 	
@@ -107,7 +108,7 @@ int kiiHal_connect(int socketNum, char *saData)
 	memset(&pin, 0, sizeof(struct sockaddr));
 	pin.sin_family=AF_INET; //use IPv4
 	memcpy((char *)&pin.sin_addr.s_addr, saData, 4);
-	pin.sin_port=htons(80);
+	pin.sin_port=htons(port);
 	if (connect(socketNum, (struct sockaddr *)&pin, sizeof(struct sockaddr)) != 0)
 	{
 		ret = -1;
@@ -139,9 +140,9 @@ int kiiHal_socketSend(int socketNum, char * buf, int len)
       	    ret = -1;
       	}
 
-    KII_DEBUG("\r\n ========send data start=====\r\n");
-    KII_DEBUG("%s", buf);
-    KII_DEBUG("\r\n ========send data end=====\r\n");
+   // KII_DEBUG("\r\n ========send data start=====\r\n");
+   // KII_DEBUG("%s", buf);
+    //KII_DEBUG("\r\n ========send data end=====\r\n");
 
 	  return ret;
 }
@@ -162,17 +163,25 @@ int kiiHal_socketSend(int socketNum, char * buf, int len)
 int kiiHal_socketRecv(int socketNum, char * buf, int len)
 {
     int ret;
+    int i;
 
      ret = recv(socketNum, buf, len, 0);
      if (ret < 0)
      	{
      	    ret =-1;
      	}
-
-    KII_DEBUG("\r\n ========recv data start=====\r\n");
+/*
+    KII_DEBUG("\r\n ========recv data start, ret = %d=====\r\n", ret);
     KII_DEBUG("%s", buf);
-    KII_DEBUG("\r\n ========recv data end=====\r\n");
+KII_DEBUG("\r\n");
+    for (i=0; i<ret; i++)
+    {
+        KII_DEBUG("%02x", buf[i]);
+    }
+	KII_DEBUG("\r\n");
 
+    KII_DEBUG("\r\n ========recv data end=====\r\n");
+*/
     return ret;
 }
 
@@ -192,13 +201,13 @@ int kiiHal_transfer(void)
     int socketNum;
     unsigned char ipBuf[4];
 
-    KII_DEBUG("kii-info: host ""%s""\r\n", g_kii_data.host);
+    //KII_DEBUG("kii-info: host ""%s""\r\n", g_kii_data.host);
     if (kiiHal_dns(g_kii_data.host, ipBuf) < 0)
     {
         KII_DEBUG("kii-error: dns failed !\r\n");
         return -1;
     }
-    KII_DEBUG("Host ip:%d.%d.%d.%d\r\n", ipBuf[0], ipBuf[1], ipBuf[2], ipBuf[3]);
+    //KII_DEBUG("Host ip:%d.%d.%d.%d\r\n", ipBuf[0], ipBuf[1], ipBuf[2], ipBuf[3]);
 		
     socketNum = kiiHal_socketCreate();
     if (socketNum < 0)
@@ -208,7 +217,7 @@ int kiiHal_transfer(void)
     }
 	
 	
-    if (kiiHal_connect(socketNum, (char*)ipBuf) < 0)
+    if (kiiHal_connect(socketNum, (char*)ipBuf, KII_DEFAULT_PORT) < 0)
     {
         KII_DEBUG("kii-error: connect to server failed \r\n");
 	 kiiHal_socketClose(socketNum);

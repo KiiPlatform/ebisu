@@ -6,11 +6,14 @@
 #include "kii_hal.h"
 #include "kii_push.h"
 
+#include "MQTTClient.h"
+
 extern kii_data_struct g_kii_data;
 static kii_push_struct m_kii_push;
 
-#define    KIIPUSH_TASK_STK_SIZE      256
+#define    KIIPUSH_TASK_STK_SIZE      1024
 static unsigned int  mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];     
+static int m_socketNum;
 
 
 
@@ -410,11 +413,50 @@ int kiiPush_subscribeTopic(char *topicID)
     }
 }
 
+void messageArrived(MessageData* md)
+{
+}
+
+int kiiPush_mqtt(void)
+{
+	int rc = 0;
+	unsigned char buf[300];
+	unsigned char readbuf[300];
+	Network n;
+	Client c;
+
+	NewNetwork(&n);
+	if (ConnectNetwork(&n, m_kii_push.host, KII_MQTT_DEFAULT_PORT) < 0)
+	{
+	    printf("connnect net work error\r\n");
+	    return -1;
+	}
+	m_socketNum = n.my_socket;
+	MQTTClient(&c, &n, 2000, buf, 300, readbuf, 300);
+ 
+	MQTTPacket_connectData data = MQTTPacket_connectData_initializer;       
+	data.willFlag = 0;
+	data.MQTTVersion = 3;
+	data.clientID.cstring = m_kii_push.mqttTopic;
+	data.username.cstring = m_kii_push.username;
+	data.password.cstring = m_kii_push.password;
+
+	data.keepAliveInterval = 10;
+	data.cleansession = 1;
+	rc = MQTTConnect(&c, &data);
+	printf("Connected %d\n", rc);
+    
+        printf("Subscribing to %s\n", m_kii_push.mqttTopic);
+	rc = MQTTSubscribe(&c, m_kii_push.mqttTopic, QOS2, messageArrived);
+	printf("Subscribed %d\n", rc);
+
+	return 0;
+}
+
 static void kiiPush_task(void *sdata)
 {
     kiiPush_recvMessageCallback callback;
     unsigned char netConnected = 0;
-    int socketNum;
     unsigned char ipBuf[4];
     int rcvdCounter;
 
@@ -435,23 +477,13 @@ static void kiiPush_task(void *sdata)
 		{
         		if (kiiHal_dns(m_kii_push.host, ipBuf) < 0)
         		{
-        			KII_DEBUG("kii-error: push dns failed !\r\n");
+        			KII_DEBUG("kii-error: DNS error !\r\n");
         			continue;
         		}
-        		KII_DEBUG("Push host ip:%d.%d.%d.%d\r\n", ipBuf[0], ipBuf[1], ipBuf[2], ipBuf[3]);
-        			
-        		socketNum = kiiHal_socketCreate();
-        		if (socketNum < 0)
-        		{
-        			KII_DEBUG("kii-error: push create socket failed !\r\n");
-        			continue;
-        		}
-        		if (kiiHal_connect(socketNum, (char*)ipBuf) < 0)
-        		{
-        			KII_DEBUG("kii-error: push connect to server failed \r\n");
-        		        kiiHal_socketClose(socketNum);
-        			continue;
-        		}
+			if (kiiPush_mqtt() < 0)
+			{
+			    continue;
+			}
 			else 
 			{
 			    netConnected = 1;
@@ -465,16 +497,16 @@ static void kiiPush_task(void *sdata)
 	    }
 	    else
 	    {
-			rcvdCounter = kiiHal_socketRecv(socketNum, m_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE);
-			if (rcvdCounter < 0)
+			rcvdCounter = kiiHal_socketRecv(m_socketNum, m_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE);
+			if (rcvdCounter <= 0)
 			{
-				KII_DEBUG("kii-error: push recv data fail\r\n");
-			        kiiHal_socketClose(socketNum);
+				KII_DEBUG("kii-error: recv data failed\r\n");
+			        kiiHal_socketClose(m_socketNum);
 				netConnected = 0 ;
 			}
 			else
 			{
-			 callback(m_kii_push.rcvdBuf);
+			 callback(m_kii_push.rcvdBuf, rcvdCounter);
 		        }
 	    }
 	}
@@ -505,10 +537,6 @@ int KiiPush_init(unsigned int taskPrio, kiiPush_recvMessageCallback callback)
 	   KII_DEBUG("kii-error: push installation failed !\r\n");
             return -1;
         }
-	else
-	{
-            KII_DEBUG("kii-error: push installation success !\r\n");
-	}
 
 	do {
 		endpointState = kiiPush_retrieveEndpoint() ;

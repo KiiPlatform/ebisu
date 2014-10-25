@@ -35,6 +35,8 @@
 #define STR_LF "\n"
 
 
+#define KII_DEFAULT_PORT 80
+#define KII_MQTT_DEFAULT_PORT 1883
 
 typedef struct {
 	char vendorDeviceID[KII_DEVICE_VENDOR_ID+1];
