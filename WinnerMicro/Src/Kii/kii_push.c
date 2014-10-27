@@ -1,6 +1,10 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "wm_include.h"
+#include "api.h"
+
+
 #include "kii.h"
 #include "kii_def.h"
 #include "kii_hal.h"
@@ -9,7 +13,7 @@
 #include "MQTTClient.h"
 
 extern kii_data_struct g_kii_data;
-static kii_push_struct m_kii_push;
+kii_push_struct g_kii_push;
 
 #define    KIIPUSH_TASK_STK_SIZE      1024
 static unsigned int  mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];     
@@ -108,8 +112,8 @@ int kiiPush_install(void)
     {
 	 return -1;
     }
-    memset(m_kii_push.installationID, 0, KII_PUSH_INSTALLATIONID_SIZE+1);
-    memcpy(m_kii_push.installationID, p1, p2-p1);
+    memset(g_kii_push.installationID, 0, KII_PUSH_INSTALLATIONID_SIZE+1);
+    memcpy(g_kii_push.installationID, p1, p2-p1);
 
     return 0;
 }
@@ -144,7 +148,7 @@ kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
     strcpy(buf+strlen(buf), "/installations/");
-    strcpy(buf+strlen(buf), m_kii_push.installationID);
+    strcpy(buf+strlen(buf), g_kii_push.installationID);
     strcpy(buf+strlen(buf), "/mqtt-endpoint");
     strcpy(buf+strlen(buf), STR_HTTP);
    strcpy(buf+strlen(buf), STR_CRLF);
@@ -197,8 +201,8 @@ kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
         {
 	     return KIIPUSH_ENDPOINT_ERROR;
         }
-        memset(m_kii_push.username, 0, KII_PUSH_USERNAME+1);
-        memcpy(m_kii_push.username, p1, p2-p1);
+        memset(g_kii_push.username, 0, KII_PUSH_USERNAME+1);
+        memcpy(g_kii_push.username, p1, p2-p1);
 
 	//get password
 	p1 = strstr(buf, "password");
@@ -215,8 +219,8 @@ kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
 	{
 	 return KIIPUSH_ENDPOINT_ERROR;
 	}
-	memset(m_kii_push.password, 0, KII_PUSH_PASSWORD+1);
-	memcpy(m_kii_push.password, p1, p2-p1);
+	memset(g_kii_push.password, 0, KII_PUSH_PASSWORD+1);
+	memcpy(g_kii_push.password, p1, p2-p1);
     
 	//get host
 	p1 = strstr(buf, "host");
@@ -233,8 +237,8 @@ kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
 	{
 	 return KIIPUSH_ENDPOINT_ERROR;
 	}
-	memset(m_kii_push.host, 0, KII_PUSH_PASSWORD+1);
-	memcpy(m_kii_push.host, p1, p2-p1);
+	memset(g_kii_push.host, 0, KII_PUSH_PASSWORD+1);
+	memcpy(g_kii_push.host, p1, p2-p1);
 
 	 //get mqttTopic
 	 p1 = strstr(buf, "mqttTopic");
@@ -251,8 +255,8 @@ kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
 	 {
 	  return KIIPUSH_ENDPOINT_ERROR;
 	 }
-	 memset(m_kii_push.mqttTopic, 0, KII_PUSH_MQTTTOPIC_SIZE+1);
-	 memcpy(m_kii_push.mqttTopic, p1, p2-p1);
+	 memset(g_kii_push.mqttTopic, 0, KII_PUSH_MQTTTOPIC_SIZE+1);
+	 memcpy(g_kii_push.mqttTopic, p1, p2-p1);
 
 	 return KIIPUSH_ENDPOINT_READY;
     }
@@ -415,6 +419,7 @@ int kiiPush_subscribeTopic(char *topicID)
 
 void messageArrived(MessageData* md)
 {
+    printf("message arrived....................................................\r\n");
 }
 
 int kiiPush_mqtt(void)
@@ -426,7 +431,7 @@ int kiiPush_mqtt(void)
 	Client c;
 
 	NewNetwork(&n);
-	if (ConnectNetwork(&n, m_kii_push.host, KII_MQTT_DEFAULT_PORT) < 0)
+	if (ConnectNetwork(&n, g_kii_push.host, KII_MQTT_DEFAULT_PORT) < 0)
 	{
 	    printf("connnect net work error\r\n");
 	    return -1;
@@ -437,17 +442,17 @@ int kiiPush_mqtt(void)
 	MQTTPacket_connectData data = MQTTPacket_connectData_initializer;       
 	data.willFlag = 0;
 	data.MQTTVersion = 3;
-	data.clientID.cstring = m_kii_push.mqttTopic;
-	data.username.cstring = m_kii_push.username;
-	data.password.cstring = m_kii_push.password;
+	data.clientID.cstring = g_kii_push.mqttTopic;
+	data.username.cstring = g_kii_push.username;
+	data.password.cstring = g_kii_push.password;
 
-	data.keepAliveInterval = 10;
+	data.keepAliveInterval = 30;
 	data.cleansession = 1;
 	rc = MQTTConnect(&c, &data);
 	printf("Connected %d\n", rc);
     
-        printf("Subscribing to %s\n", m_kii_push.mqttTopic);
-	rc = MQTTSubscribe(&c, m_kii_push.mqttTopic, QOS2, messageArrived);
+        printf("Subscribing to %s\n", g_kii_push.mqttTopic);
+	rc = MQTTSubscribe(&c, g_kii_push.mqttTopic, QOS2, messageArrived);
 	printf("Subscribed %d\n", rc);
 
 	return 0;
@@ -459,14 +464,15 @@ static void kiiPush_task(void *sdata)
     unsigned char netConnected = 0;
     unsigned char ipBuf[4];
     int rcvdCounter;
+    static int count = 0;
 
     callback = (kiiPush_recvMessageCallback) sdata;
 
-    KII_DEBUG("kii-info: installationID:%s\r\n", m_kii_push.installationID);
-    KII_DEBUG("kii-info: mqttTopic:%s\r\n", m_kii_push.mqttTopic);
-    KII_DEBUG("kii-info: host:%s\r\n", m_kii_push.host);
-    KII_DEBUG("kii-info: username:%s\r\n", m_kii_push.username);
-    KII_DEBUG("kii-info: password:%s\r\n", m_kii_push.password);
+    KII_DEBUG("kii-info: installationID:%s\r\n", g_kii_push.installationID);
+    KII_DEBUG("kii-info: mqttTopic:%s\r\n", g_kii_push.mqttTopic);
+    KII_DEBUG("kii-info: host:%s\r\n", g_kii_push.host);
+    KII_DEBUG("kii-info: username:%s\r\n", g_kii_push.username);
+    KII_DEBUG("kii-info: password:%s\r\n", g_kii_push.password);
     
 	for(;;)
 	{
@@ -475,16 +481,22 @@ static void kiiPush_task(void *sdata)
   	        kiiHal_delayMs(1000);
 		if (kiiHal_getNetState() == 0)
 		{
-        		if (kiiHal_dns(m_kii_push.host, ipBuf) < 0)
+        		if (kiiHal_dns(g_kii_push.host, ipBuf) < 0)
         		{
         			KII_DEBUG("kii-error: DNS error !\r\n");
         			continue;
         		}
-			if (kiiPush_mqtt() < 0)
+			if (KiiMQTT_connect(KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE) < 0)
 			{
+      			KII_DEBUG("kii-error: KiiMQTT_connect error !\r\n");
 			    continue;
 			}
-			else 
+			else if (KiiMQTT_subscribe(QOS1) < 0)
+			{
+      			KII_DEBUG("kii-error: KiiMQTT_subscribe error !\r\n");
+			    continue;
+			}
+			else
 			{
 			    netConnected = 1;
 			}
@@ -495,9 +507,11 @@ static void kiiPush_task(void *sdata)
 		    continue;
 		}
 	    }
+		
 	    else
 	    {
-			rcvdCounter = kiiHal_socketRecv(m_socketNum, m_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE);
+	    /*
+			rcvdCounter = kiiHal_socketRecv(m_socketNum, g_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE);
 			if (rcvdCounter <= 0)
 			{
 				KII_DEBUG("kii-error: recv data failed\r\n");
@@ -506,8 +520,26 @@ static void kiiPush_task(void *sdata)
 			}
 			else
 			{
-			 callback(m_kii_push.rcvdBuf, rcvdCounter);
+			 callback(g_kii_push.rcvdBuf, rcvdCounter);
 		        }
+           */		        
+	    kiiHal_delayMs(1000);
+           rcvdCounter = recv(m_socketNum, g_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE, MSG_DONTWAIT);
+           if (rcvdCounter > 0)
+     	    {
+			 callback(g_kii_push.rcvdBuf, rcvdCounter);
+     	    }
+	    count++;
+	    if (count >=KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE)
+	    {
+	        count = 0;
+               if (KiiMQTT_pingReq() < 0)
+               {
+               	netConnected = 0;
+		       continue;
+               }
+	    }
+
 	    }
 	}
 }
@@ -529,7 +561,7 @@ int KiiPush_init(unsigned int taskPrio, kiiPush_recvMessageCallback callback)
 {
 	kiiPush_endpointState_e endpointState;
 
-    memset(&m_kii_push, 0, sizeof(m_kii_push));
+    memset(&g_kii_push, 0, sizeof(g_kii_push));
 
         if (kiiPush_install() != 0)
         {

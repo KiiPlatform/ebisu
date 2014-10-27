@@ -323,3 +323,4 @@ int kiiHal_getNetState(void)
 
 }
 
+

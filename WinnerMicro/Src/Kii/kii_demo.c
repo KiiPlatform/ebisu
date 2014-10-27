@@ -13,13 +13,13 @@
 #define STR_APPKEY "3594109968d7adf522c9991c0be51137"
 #endif
 
-#define STR_BUCKET "LedControl"
+#define STR_BUCKET "DevLedControl"
 #define STR_APP_BUCKET "AppLedControl"
 #define STR_MEDIA_TYPE "Led"
 #define STR_OBJECTBODY_TYPE "Firmware/bin"
-#define STR_JSONOBJECT "{\"score\":\"1800\", \"name\":\"game1\"}"
-#define STR_JSONOBJECT_PARTIALLY_UPDATE "{\"score\":\"1900\"}"
-#define STR_JSONOBJECT_FULLY_UPDATE "{\"score\":\"1000\"}"
+#define STR_JSONOBJECT "{\"Led\":\"On\"}"
+#define STR_JSONOBJECT_PARTIALLY_UPDATE "{\"Led\":\"On\"}"
+#define STR_JSONOBJECT_FULLY_UPDATE "{\"Led\":\"On\"}"
 #define STR_OBJECT_ID "WinnerMicroTestObj"
 #define DEVICE_TYPE "Led"
 #define PASSWORD "123456"
@@ -162,6 +162,9 @@ void kiiDemo_testObject(void)
 void kiiDemo_pushMessageCallback(char* jsonBuf, int rcvdCounter)
 {
 int i;
+    char objectID[KII_OBJECTID_SIZE+1];
+
+
     printf("\r\nkiiDemo_pushMessageCallback\r\n");    
 	printf("\r\n");
     for (i=0; i<rcvdCounter; i++)
@@ -169,6 +172,16 @@ int i;
         printf("%02x", jsonBuf[i]);
     }
 	printf("\r\n");
+
+    if (kiiObj_create(STR_BUCKET, STR_JSONOBJECT, STR_MEDIA_TYPE, objectID) < 0)
+    {
+        printf("kii create object with data type failed !\r\n");
+    }
+    else
+    {
+        printf("kii object is created with data type, objectID:\"%s\"\r\n", objectID);
+    }
+	
 }
 
 
@@ -249,7 +262,7 @@ int kiiDemo_test(char *buf)
 	    return WM_FAILED;
     }
 
-    kiiDemo_testObject();
+    //kiiDemo_testObject();
     kiiDemo_testPush();
     return WM_SUCCESS;
 
