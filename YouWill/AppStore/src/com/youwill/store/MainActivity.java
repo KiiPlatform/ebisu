@@ -6,12 +6,10 @@ import com.youwill.store.fragments.PurchasedFragment;
 import com.youwill.store.fragments.SearchFragment;
 import com.youwill.store.fragments.UpgradeFragment;
 import com.youwill.store.utils.DataUtils;
-import com.youwill.store.utils.Settings;
 
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
-import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -98,7 +96,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (s != null) {
+                if (s != null && mSearchFragment.isAdded()) {
                     mSearchFragment.beginSearch(s.toString());
                 }
             }
@@ -121,9 +119,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 //fall through;
             case R.id.upgrade_button:
                 switchFragment(v);
-                break;
-            case R.id.search_button:
-                showSearchFragment();
                 break;
             case R.id.delete_button:
                 searchEdit.setText("");
