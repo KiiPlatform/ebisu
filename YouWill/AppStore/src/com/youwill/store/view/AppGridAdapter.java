@@ -68,6 +68,8 @@ public class AppGridAdapter extends CursorAdapter {
                 DownloadAgent.getInstance().beginDownload(appId);
             }
         });
+        price_btn.setFocusable(false);
+        price_btn.setFocusableInTouchMode(false);
         tv = (TextView) view.findViewById(R.id.app_grid_name);
         tv.setText(appInfo.optString("name"));
         RatingBar bar = (RatingBar) view.findViewById(R.id.app_grid_rate);

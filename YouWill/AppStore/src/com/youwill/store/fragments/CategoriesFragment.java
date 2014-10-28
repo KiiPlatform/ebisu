@@ -3,6 +3,7 @@ package com.youwill.store.fragments;
 import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.CursorLoader;
+import android.content.Intent;
 import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -10,19 +11,22 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.CursorAdapter;
 import android.widget.GridView;
 import android.widget.RadioButton;
 
 import com.youwill.store.R;
+import com.youwill.store.activities.AppDetailActivity;
 import com.youwill.store.providers.YouWill;
 import com.youwill.store.utils.Settings;
 import com.youwill.store.view.AppGridAdapter;
 
+
 /**
  * Created by Evan on 14-9-23:下午11:01.
  */
-public class CategoriesFragment extends Fragment implements View.OnClickListener, LoaderManager.LoaderCallbacks<Cursor> {
+public class CategoriesFragment extends Fragment implements View.OnClickListener, LoaderManager.LoaderCallbacks<Cursor>, AdapterView.OnItemClickListener {
 
     private static final String KEY_LAST_CATE = "last_category";
     RadioButton[] cate_btns = new RadioButton[4];
@@ -55,6 +59,7 @@ public class CategoriesFragment extends Fragment implements View.OnClickListener
         mGrid = (GridView) view.findViewById(R.id.cate_grid);
         mAdapter = new AppGridAdapter(getActivity(), null, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
         mGrid.setAdapter(mAdapter);
+        mGrid.setOnItemClickListener(this);
         switchCate(last_cate);
     }
 
@@ -104,5 +109,11 @@ public class CategoriesFragment extends Fragment implements View.OnClickListener
     @Override
     public void onLoaderReset(Loader<Cursor> objectLoader) {
         mAdapter.swapCursor(null);
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        Intent intent = new Intent(getActivity(), AppDetailActivity.class);
+        startActivity(intent);
     }
 }
