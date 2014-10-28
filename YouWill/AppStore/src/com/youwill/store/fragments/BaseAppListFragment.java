@@ -14,9 +14,11 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.youwill.store.R;
+import com.youwill.store.activities.AppDetailActivity;
 import com.youwill.store.utils.Constants;
 import com.youwill.store.view.AppListAdapter;
 
@@ -61,5 +63,12 @@ public abstract class BaseAppListFragment extends ListFragment implements Loader
     @Override
     public void onLoaderReset(Loader<Cursor> objectLoader) {
         mAdapter.swapCursor(null);
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        super.onListItemClick(l, v, position, id);
+        Intent intent = new Intent(getActivity(), AppDetailActivity.class);
+        startActivity(intent);
     }
 }

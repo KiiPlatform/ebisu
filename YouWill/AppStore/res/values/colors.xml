@@ -14,4 +14,5 @@
     <color name="price_text_color">#54b0fd</color>
     <color name="list_divider">#cccccc</color>
     <color name="blue_button_text">#54b0fd</color>
+    <color name="detail_section_header">#f2f3f5</color>
 </resources>

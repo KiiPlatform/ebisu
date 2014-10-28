@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.text.style.ClickableSpan;
 import android.view.View;
 
-import com.youwill.store.LogInActivity;
+import com.youwill.store.activities.LogInActivity;
 
 /**
  * Created by Evan on 14/10/23.

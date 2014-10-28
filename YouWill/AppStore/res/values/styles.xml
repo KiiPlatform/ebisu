@@ -4,8 +4,7 @@
         Base application theme, dependent on API level. This theme is replaced
         by AppBaseTheme from res/values-vXX/styles.xml on newer devices.
     -->
-    <style name="AppBaseTheme"
-           parent="android:Theme.Light.NoTitleBar">
+    <style name="AppBaseTheme" parent="android:Theme.Light.NoTitleBar">
         <!--
             Theme customizations available in newer API levels can go in
             res/values-vXX/styles.xml, while customizations related to
@@ -14,17 +13,22 @@
     </style>
 
     <!-- Application theme. -->
-    <style name="AppTheme"
-           parent="AppBaseTheme">
+    <style name="AppTheme" parent="AppBaseTheme">
         <!-- All customizations that are NOT specific to a particular API-level can go here. -->
         <item name="android:windowNoTitle">true</item>
         <item name="android:includeFontPadding">false</item>
         <item name="android:windowFullscreen">false</item>
     </style>
 
-    <style name="SplashTheme"
-           parent="AppTheme">
+    <style name="SplashTheme" parent="AppTheme">
         <item name="android:windowFullscreen">true</item>
+    </style>
+
+    <style name="FloatWindowTheme" parent="android:Theme.Dialog">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">true</item>
     </style>
 
     <style name="footer_style">
@@ -36,6 +40,7 @@
         <item name="android:gravity">center_horizontal</item>
         <item name="android:orientation">horizontal</item>
     </style>
+
     <style name="footer_item_style">
         <item name="android:layout_width">132px</item>
         <item name="android:layout_height">49px</item>
@@ -47,6 +52,7 @@
         <item name="android:drawablePadding">3px</item>
         <item name="android:textSize">12px</item>
     </style>
+
     <style name="header_style">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/action_bar_height</item>
@@ -67,6 +73,7 @@
         <item name="android:drawableRight">@drawable/right_arrow</item>
         <item name="android:drawablePadding">5px</item>
     </style>
+
     <style name="left_label_style">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
@@ -75,10 +82,12 @@
         <item name="android:layout_alignParentLeft">true</item>
         <item name="android:layout_centerVertical">true</item>
     </style>
+
     <style name="application_icon_style">
         <item name="android:layout_width">@dimen/app_icon_side_length</item>
         <item name="android:layout_height">@dimen/app_icon_side_length</item>
     </style>
+
     <style name="app_name_text_style">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
@@ -90,6 +99,7 @@
         <item name="android:singleLine">true</item>
         <item name="android:ellipsize">end</item>
     </style>
+
     <style name="app_size_text_style">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
@@ -99,6 +109,7 @@
         <item name="android:layout_gravity">left</item>
         <item name="android:textColor">@color/app_size_text_color</item>
     </style>
+
     <style name="cate_button_style">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>

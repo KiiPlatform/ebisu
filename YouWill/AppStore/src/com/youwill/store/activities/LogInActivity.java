@@ -1,4 +1,4 @@
-package com.youwill.store;
+package com.youwill.store.activities;
 
 import com.kii.cloud.storage.Kii;
 import com.kii.cloud.storage.KiiUser;

@@ -94,6 +94,8 @@ public class AppListAdapter extends CursorAdapter implements View.OnClickListene
             leftBtn.setVisibility(View.INVISIBLE);
         }
         rightBtn.setOnClickListener(this);
+        rightBtn.setFocusable(false);
+        rightBtn.setFocusableInTouchMode(false);
         rightBtn.setTag(appInfo);
         int status = getStatus(appInfo);
         switch (status) {

@@ -35,4 +35,6 @@
     <string name="purchased_not_login">您还没有登录</string>
     <string name="login_pattern">登录</string>
     <string name="no_upgrade">所有程序已是最新</string>
+    <string name="title_activity_app_detail">AppDetailActivity</string>
+
 </resources>
