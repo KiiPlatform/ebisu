@@ -275,16 +275,16 @@ kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
 
 /*****************************************************************************
 *
-*  kiiPush_subscribeBucket
+*  kiiPush_subscribeAppBucket
 *
 *  \param: bucketID - the bucket ID
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  subscribe bucket
+*  \brief  subscribe app scope bucket
 *
 *****************************************************************************/
-int kiiPush_subscribeBucket(char *bucketID)
+int kiiPush_subscribeAppBucket(char *bucketID)
 {
     char * p1;
     char * p2;
@@ -345,6 +345,79 @@ int kiiPush_subscribeBucket(char *bucketID)
 }
 
 
+/*****************************************************************************
+*
+*  kiiPush_subscribeThingBucket
+*
+*  \param: bucketID - the bucket ID
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  subscribe thing scope bucket
+*
+*****************************************************************************/
+int kiiPush_subscribeThingBucket(char *bucketID)
+{
+    char * p1;
+    char * p2;
+    char *buf;
+
+    buf = g_kii_data.sendBuf;
+    memset(buf, 0, KII_SEND_BUF_SIZE);
+    strcpy(buf, STR_POST);
+    // url
+    strcpy(buf+strlen(buf), "/api/apps/");
+    strcpy(buf+strlen(buf), g_kii_data.appID);
+    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    strcpy(buf+strlen(buf), "/buckets/");
+    strcpy(buf+strlen(buf),bucketID);
+    strcpy(buf+strlen(buf), "/filters/all/push/subscriptions/things");
+    strcpy(buf+strlen(buf), STR_HTTP);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Connection
+   strcpy(buf+strlen(buf), "Connection: Keep-Alive\r\n");
+   //Host
+   strcpy(buf+strlen(buf), "Host: ");
+   strcpy(buf+strlen(buf), g_kii_data.host);
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //x-kii-appid
+    strcpy(buf+strlen(buf), STR_KII_APPID);
+    strcpy(buf+strlen(buf), g_kii_data.appID); 
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //x-kii-appkey 
+    strcpy(buf+strlen(buf), STR_KII_APPKEY);
+    strcpy(buf+strlen(buf), g_kii_data.appKey);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Authorization
+    strcpy(buf+strlen(buf), STR_AUTHORIZATION);
+    strcpy(buf+strlen(buf),  " Bearer ");
+    strcpy(buf+strlen(buf), g_kii_data.accessToken); 
+   strcpy(buf+strlen(buf), STR_CRLF);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   
+    g_kii_data.sendDataLen = strlen(buf);
+
+    if (kiiHal_transfer() != 0)
+    {
+        KII_DEBUG("kii-error: transfer data error !\r\n");
+        return -1;
+    }
+    buf = g_kii_data.rcvdBuf;
+
+    p1 = strstr(buf, "HTTP/1.1 204");
+    p2 = strstr(buf, "HTTP/1.1 409");
+	
+    if (p1 != NULL  || p2 != NULL)
+    {
+	 return 0;
+    }
+    else
+    {
+	return -1;
+    }
+}
+
 
 /*****************************************************************************
 *
@@ -369,6 +442,8 @@ int kiiPush_subscribeTopic(char *topicID)
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
+    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
     strcpy(buf+strlen(buf), "/topics/");
     strcpy(buf+strlen(buf),topicID);
     strcpy(buf+strlen(buf), "/push/subscriptions/things");
@@ -416,6 +491,80 @@ int kiiPush_subscribeTopic(char *topicID)
 	return -1;
     }
 }
+
+
+/*****************************************************************************
+*
+*  kiiPush_createTopic
+*
+*  \param: topicID - the topic ID
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  create topic
+*
+*****************************************************************************/
+int kiiPush_createTopic(char *topicID)
+{
+    char * p1;
+    char * p2;
+    char *buf;
+
+    buf = g_kii_data.sendBuf;
+    memset(buf, 0, KII_SEND_BUF_SIZE);
+    strcpy(buf, STR_PUT);
+    // url
+    strcpy(buf+strlen(buf), "/api/apps/");
+    strcpy(buf+strlen(buf), g_kii_data.appID);
+    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    strcpy(buf+strlen(buf), "/topics/");
+    strcpy(buf+strlen(buf),topicID);
+    strcpy(buf+strlen(buf), STR_HTTP);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Connection
+   strcpy(buf+strlen(buf), "Connection: Keep-Alive\r\n");
+   //Host
+   strcpy(buf+strlen(buf), "Host: ");
+   strcpy(buf+strlen(buf), g_kii_data.host);
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //x-kii-appid
+    strcpy(buf+strlen(buf), STR_KII_APPID);
+    strcpy(buf+strlen(buf), g_kii_data.appID); 
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //x-kii-appkey 
+    strcpy(buf+strlen(buf), STR_KII_APPKEY);
+    strcpy(buf+strlen(buf), g_kii_data.appKey);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Authorization
+    strcpy(buf+strlen(buf), STR_AUTHORIZATION);
+    strcpy(buf+strlen(buf),  " Bearer ");
+    strcpy(buf+strlen(buf), g_kii_data.accessToken); 
+   strcpy(buf+strlen(buf), STR_CRLF);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   
+    g_kii_data.sendDataLen = strlen(buf);
+
+    if (kiiHal_transfer() != 0)
+    {
+        KII_DEBUG("kii-error: transfer data error !\r\n");
+        return -1;
+    }
+    buf = g_kii_data.rcvdBuf;
+
+    p1 = strstr(buf, "HTTP/1.1 204");
+    p2 = strstr(buf, "HTTP/1.1 409");
+	
+    if (p1 != NULL  || p2 != NULL)
+    {
+	 return 0;
+    }
+    else
+    {
+	return -1;
+    }
+}
+
 
 void messageArrived(MessageData* md)
 {
@@ -527,7 +676,26 @@ static void kiiPush_task(void *sdata)
            rcvdCounter = recv(m_socketNum, g_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE, MSG_DONTWAIT);
            if (rcvdCounter > 0)
      	    {
-			 callback(g_kii_push.rcvdBuf, rcvdCounter);
+     	        if ((g_kii_push.rcvdBuf[0]&0xf0) == 0x30)
+     	        {
+     	              int value;
+			int len;
+			int topic_len;
+			char *p;
+     	    		len = KiiMQTT_decode(&g_kii_push.rcvdBuf[1], &value);
+			KII_DEBUG("decode len=%d, value=%d\r\n", len, value);
+			p = g_kii_push.rcvdBuf;
+			if ((rcvdCounter >= value+len+1) && (len > 0))
+			{
+			   p= p+1+len;
+			    topic_len = p[0] *256 + p[1];
+			    p=p+2;
+			    p = p+topic_len;
+				
+			     callback(p, value-2-topic_len);
+			}
+     	        }
+	//callback(g_kii_push.rcvdBuf, rcvdCounter);
      	    }
 	    count++;
 	    if (count >=KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE)

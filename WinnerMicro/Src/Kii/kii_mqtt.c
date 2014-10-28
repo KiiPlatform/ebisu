@@ -26,6 +26,26 @@ int KiiMQTT_encode(char* buf, int length)
 }
 
 
+int KiiMQTT_decode(char* buf, int *value)
+{
+	int i;
+	int multiplier = 1;
+	int len = 0;
+	*value = 0;
+	do
+	{
+		if (++len > 4)
+		{
+			return -1;
+		}
+		*value += (buf[i] & 127) * multiplier;
+		multiplier *= 128;
+	} while ((buf[i++] & 128) != 0);
+
+	return len;
+}
+
+
 int KiiMQTT_connect(unsigned short keepAliveInterval)
 {
     unsigned char ipBuf[4];

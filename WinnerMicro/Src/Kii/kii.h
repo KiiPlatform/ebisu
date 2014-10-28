@@ -13,7 +13,7 @@
 #define KII_OBJECTID_SIZE 36
 #define KII_DATA_TPYE_SIZE 36
 #define KII_UPLOAD_ID_SIZE 46
-#define KII_BUCKET_NAME_SIZE 20
+#define KII_BUCKET_NAME_SIZE 64
 
 #define KII_SEND_BUF_SIZE 2048
 #define KII_RECV_BUF_SIZE 2048
@@ -240,16 +240,31 @@ extern int kiiObj_downloadBody(char *bucketName, char *objectID,  unsigned int p
 
 /*****************************************************************************
 *
-*  kiiPush_subscribeBucket
+*  kiiPush_subscribeAppBucket
 *
 *  \param: bucketID - the bucket ID
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  subscribe bucket
+*  \brief  subscribe app scope bucket
 *
 *****************************************************************************/
-extern int kiiPush_subscribeBucket(char *bucketID);
+extern int kiiPush_subscribeAppBucket(char *bucketID);
+
+
+/*****************************************************************************
+*
+*  kiiPush_subscribeThingBucket
+*
+*  \param: bucketID - the bucket ID
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  subscribe thing scope bucket
+*
+*****************************************************************************/
+int kiiPush_subscribeThingBucket(char *bucketID);
+
 
 
 /*****************************************************************************
@@ -264,6 +279,21 @@ extern int kiiPush_subscribeBucket(char *bucketID);
 *
 *****************************************************************************/
 extern int kiiPush_subscribeTopic(char *topicID);
+
+
+/*****************************************************************************
+*
+*  kiiPush_createTopic
+*
+*  \param: topicID - the topic ID
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  create topic
+*
+*****************************************************************************/
+int kiiPush_createTopic(char *topicID);
+
 
 
 /*****************************************************************************
