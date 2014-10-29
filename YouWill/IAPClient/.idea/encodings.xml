@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false">
+    <file url="file://$PROJECT_DIR$/IAPDemo/libs/universal-image-loader-1.9.0-with-sources.jar" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/AndroidManifest.xml" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/java/com/kii/youwill/iap/demo/IAPApplication.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/java/com/kii/youwill/iap/demo/LogInActivity.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/java/com/kii/youwill/iap/demo/MainActivity.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/java/com/kii/youwill/iap/demo/RegisterActivity.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/java/com/kii/youwill/iap/demo/Settings.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/java/com/kii/youwill/iap/demo/utils" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/java/com/kii/youwill/iap/demo/view" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/drawable" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/drawable-hdpi/ic_launcher.png" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/drawable-hdpi/kii_payment_dialog_bg_click.9.png" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/drawable-hdpi/kii_payment_dialog_bg_normal.9.png" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/drawable-hdpi/kii_payment_dialog_cut_line.png" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/drawable-hdpi/kii_payment_dialog_split_h.png" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/drawable-hdpi/kii_payment_dialog_split_v.png" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/drawable-hdpi/kii_payment_popup_bg.9.png" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/drawable-hdpi/kii_payment_refresh.9.png" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/drawable-hdpi/kii_payment_refresh_push.9.png" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/drawable-hdpi/kii_payment_title.png" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/drawable-hdpi/kii_payment_title_background.9.png" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/layout/activity_main.xml" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/layout/kii_payment_alipay.xml" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/layout/kii_payment_alipay_title.xml" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/layout/kii_payment_dialog_alert.xml" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/layout/log_in_activity.xml" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/layout/product_list_item.xml" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/layout/register_activity.xml" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/menu/main.xml" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/values/dimens.xml" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/values/kii_payment_colorlist.xml" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/values/kii_payment_strings.xml" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/values/kii_payment_styles.xml" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/values/strings.xml" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPDemo/src/main/res/values/styles.xml" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPSDK/libs/KiiCloudStorageSDK_release_v2.1.28.jar" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPSDK/libs/alipay.jar" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/alipay/android/app/lib/ResourceMap.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/Constants.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/KiiOrder.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/KiiPayment.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/KiiPaymentCallback.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/KiiPaymentResultCode.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/KiiProduct.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/KiiReceipt.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/KiiStore.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/Utils.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/YouWillIAPSDK.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/impl" charset="UTF-8" />
+  </component>
+</project>
+

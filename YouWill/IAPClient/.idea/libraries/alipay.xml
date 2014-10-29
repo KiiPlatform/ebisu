@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="alipay">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/IAPDemo/build/exploded-aar/IAPClient/IAPSDK/unspecified/libs/alipay.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

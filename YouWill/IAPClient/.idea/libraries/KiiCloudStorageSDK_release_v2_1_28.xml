@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="KiiCloudStorageSDK_release_v2.1.28">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/IAPDemo/build/exploded-aar/IAPClient/IAPSDK/unspecified/libs/KiiCloudStorageSDK_release_v2.1.28.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

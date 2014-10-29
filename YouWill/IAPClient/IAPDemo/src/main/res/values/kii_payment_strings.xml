@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="kii_choosepayment_type">选择支付方式</string>
+	<string name="kii_alipay">支付宝</string>
+	<string name="kii_paypal">Paypal</string>
+	<string name="kii_unionpay">银联</string>
+    <string name="kii_payment_confirm_title">确认</string>
+    <string name="kii_payment_ensure">确定</string>
+    <string name="kii_payment_cancel">取消</string>
+    <string name="kii_payment_content_description_icon">图标</string>
+    <string name="kii_payment_refresh">刷新</string>
+    <string name="kii_payment_processing">加载中</string>
+    <string name="kii_payment_download">下载</string>
+    <string name="kii_payment_download_fail">下载APK失败</string>
+    <string name="kii_payment_cancel_install_msp">你取消了安装支付宝支付服务</string>
+    <string name="kii_payment_cancel_install_alipay">你取消了安装Paypal钱包</string>
+    <string name="kii_payment_redo">重试</string>
+    <string name="kii_payment_install_msp">你尚未安装支付宝移动快捷支付服务，请立即安装</string>
+    <string name="kii_payment_install_alipay">你尚未安装支付宝钱包，请立即安装</string>
+    <string name="kii_payment_success">支付成功</string>
+    <string name="kii_payment_error_remote_server_exception">支付失败，系统异常！</string>
+    <string name="kii_payment_error_data_format">支付失败，数据格式错误！</string>
+    <string name="kii_payment_error_account_frozen">支付失败，该用户绑定的支付宝账户被冻结或不允许支付！</string>
+    <string name="kii_payment_error_account_not_bind">支付失败，该用户已解除绑定！</string>
+    <string name="kii_payment_error_bind_failed">支付失败，绑定失败或没有绑定！</string>
+    <string name="kii_payment_error_pay_failed">订单支付失败！</string>
+    <string name="kii_payment_error_need_rebind">支付失败，需要重新绑定账户！</string>
+    <string name="kii_payment_error_server_upgrading">支付失败，支付服务正在进行升级操作！</string>
+    <string name="kii_payment_error_payment_cancelled">支付失败，用户中途取消支付操作！</string>
+    <string name="kii_payment_error_network_exception">支付失败，网络连接异常！</string>
+    <string name="kii_payment_error_invalid_order">支付失败，订单错误！</string>
+    <string name="kii_payment_error_unknown">支付失败，未知错误信息！</string>
+    <string name="kii_payment_verify_paypal">Paypal支付确认中</string>
+    <string name="kii_payment_error_product_not_found">未找到产品!</string>
+    <string name="kii_payment_error_product_already_bought">您已购买该产品!</string>
+    <string name="kii_payment_error_alipay_not_support">不支持支付宝支付！</string>
+    <string name="kii_payment_error_paypal_not_support">不支持PayPal支付!</string>
+    <string name="kii_payment_error_unknown_payment">支付方式未知!</string>
+    <string name="kii_payment_error_create_order_failed">订单创建失败!</string>
+    <string name="kii_payment_error_order_not_exist">订单不存在!</string>
+    <string name="kii_payment_error_update_order_failed">更新订单失败!</string>
+    <string name="kii_payment_error_create_receipt_failed">创建收据失败!</string>
+    <string name="kii_payment_error_paypal_parameters">无效的PayPal信息!</string>
+    <string name="kii_payment_error_verify_paypal_failed">无法确认PayPal支付!</string>
+    <string name="kii_payment_error_verify_alipay_failed">抱歉，支付尚未确认，请稍后再试!</string>
+
+    <string name="kii_payment_fetching_transaction_from_cloud">创建订单</string>
+    <string name="kii_payment_confirm_payment_from_cloud">支付确认</string>
+</resources>
