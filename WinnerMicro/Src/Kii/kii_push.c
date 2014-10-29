@@ -9,15 +9,16 @@
 #include "kii_def.h"
 #include "kii_hal.h"
 #include "kii_push.h"
-
-#include "MQTTClient.h"
+#include "kii_mqtt.h"
 
 extern kii_data_struct g_kii_data;
 kii_push_struct g_kii_push;
 
 #define    KIIPUSH_TASK_STK_SIZE      1024
+#define    KIIPUSH_PINGREQ_TASK_STK_SIZE      100
+
 static unsigned int  mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];     
-static int m_socketNum;
+static unsigned int  mKiiPush_pingReqTaskStk[KIIPUSH_PINGREQ_TASK_STK_SIZE];     
 
 
 
@@ -117,9 +118,6 @@ int kiiPush_install(void)
 
     return 0;
 }
-
-
-
 
 
 /*****************************************************************************
@@ -566,54 +564,11 @@ int kiiPush_createTopic(char *topicID)
 }
 
 
-void messageArrived(MessageData* md)
-{
-    printf("message arrived....................................................\r\n");
-}
-
-int kiiPush_mqtt(void)
-{
-	int rc = 0;
-	unsigned char buf[300];
-	unsigned char readbuf[300];
-	Network n;
-	Client c;
-
-	NewNetwork(&n);
-	if (ConnectNetwork(&n, g_kii_push.host, KII_MQTT_DEFAULT_PORT) < 0)
-	{
-	    printf("connnect net work error\r\n");
-	    return -1;
-	}
-	m_socketNum = n.my_socket;
-	MQTTClient(&c, &n, 2000, buf, 300, readbuf, 300);
- 
-	MQTTPacket_connectData data = MQTTPacket_connectData_initializer;       
-	data.willFlag = 0;
-	data.MQTTVersion = 3;
-	data.clientID.cstring = g_kii_push.mqttTopic;
-	data.username.cstring = g_kii_push.username;
-	data.password.cstring = g_kii_push.password;
-
-	data.keepAliveInterval = 30;
-	data.cleansession = 1;
-	rc = MQTTConnect(&c, &data);
-	printf("Connected %d\n", rc);
-    
-        printf("Subscribing to %s\n", g_kii_push.mqttTopic);
-	rc = MQTTSubscribe(&c, g_kii_push.mqttTopic, QOS2, messageArrived);
-	printf("Subscribed %d\n", rc);
-
-	return 0;
-}
-
 static void kiiPush_task(void *sdata)
 {
     kiiPush_recvMessageCallback callback;
     unsigned char netConnected = 0;
     unsigned char ipBuf[4];
-    int rcvdCounter;
-    static int count = 0;
 
     callback = (kiiPush_recvMessageCallback) sdata;
 
@@ -623,93 +578,84 @@ static void kiiPush_task(void *sdata)
     KII_DEBUG("kii-info: username:%s\r\n", g_kii_push.username);
     KII_DEBUG("kii-info: password:%s\r\n", g_kii_push.password);
     
-	for(;;)
-	{
-	    if (netConnected == 0)
-	    {
-  	        kiiHal_delayMs(1000);
-		if (kiiHal_getNetState() == 0)
-		{
-        		if (kiiHal_dns(g_kii_push.host, ipBuf) < 0)
-        		{
-        			KII_DEBUG("kii-error: DNS error !\r\n");
-        			continue;
-        		}
-			if (KiiMQTT_connect(KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE) < 0)
-			{
-      			KII_DEBUG("kii-error: KiiMQTT_connect error !\r\n");
-			    continue;
-			}
-			else if (KiiMQTT_subscribe(QOS1) < 0)
-			{
-      			KII_DEBUG("kii-error: KiiMQTT_subscribe error !\r\n");
-			    continue;
-			}
-			else
-			{
-			    netConnected = 1;
-			}
-		}
-		else
-		{
-		    kiiHal_delayMs(1000);
-		    continue;
-		}
-	    }
-		
-	    else
-	    {
-	    /*
-			rcvdCounter = kiiHal_socketRecv(m_socketNum, g_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE);
-			if (rcvdCounter <= 0)
-			{
-				KII_DEBUG("kii-error: recv data failed\r\n");
-			        kiiHal_socketClose(m_socketNum);
-				netConnected = 0 ;
-			}
-			else
-			{
-			 callback(g_kii_push.rcvdBuf, rcvdCounter);
-		        }
-           */		        
-	    kiiHal_delayMs(1000);
-           rcvdCounter = recv(m_socketNum, g_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE, MSG_DONTWAIT);
-           if (rcvdCounter > 0)
-     	    {
-     	        if ((g_kii_push.rcvdBuf[0]&0xf0) == 0x30)
-     	        {
-     	              int value;
-			int len;
-			int topic_len;
-			char *p;
-     	    		len = KiiMQTT_decode(&g_kii_push.rcvdBuf[1], &value);
-			KII_DEBUG("decode len=%d, value=%d\r\n", len, value);
-			p = g_kii_push.rcvdBuf;
-			if ((rcvdCounter >= value+len+1) && (len > 0))
-			{
-			   p= p+1+len;
-			    topic_len = p[0] *256 + p[1];
-			    p=p+2;
-			    p = p+topic_len;
-				
-			     callback(p, value-2-topic_len);
-			}
-     	        }
-	//callback(g_kii_push.rcvdBuf, rcvdCounter);
-     	    }
-	    count++;
-	    if (count >=KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE)
-	    {
-	        count = 0;
-               if (KiiMQTT_pingReq() < 0)
-               {
-               	netConnected = 0;
-		       continue;
-               }
-	    }
+    for(;;)
+    {
+        if (netConnected == 0)
+        {
+            kiiHal_delayMs(1000);
+            if (kiiHal_getNetState() == 0)
+            {
+                if (kiiHal_dns(g_kii_push.host, ipBuf) < 0)
+                {
+                    KII_DEBUG("kii-error: DNS error !\r\n");
+                    continue;
+                }
+                if (KiiMQTT_connect(KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE) < 0)
+                {
+                    KII_DEBUG("kii-error: MQTT connect error !\r\n");
+                    continue;
+                }
+                else if (KiiMQTT_subscribe(QOS1) < 0)
+                {
+                    KII_DEBUG("kii-error: MQTT subscribe error !\r\n");
+                    continue;
+                }
+                else
+                {
+                    netConnected = 1;
+                }
+            }
+            else
+            {
+                kiiHal_delayMs(1000);
+                continue;
+            }
+        }
+        else
+        {
+            memset(g_kii_push.rcvdBuf, 0, KII_PUSH_RECV_BUF_SIZE);
+            g_kii_push.rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE);
+            if (g_kii_push.rcvdCounter > 0)
+            {
+                if ((g_kii_push.rcvdBuf[0]&0xf0) == 0x30)
+                {
+                    int remainingLen;
+                    int byteLen;
+                    int topicLen;
+                    char *p;
+                    byteLen = KiiMQTT_decode(&g_kii_push.rcvdBuf[1], &remainingLen);
+                    KII_DEBUG("decode byteLen=%d, remainingLen=%d\r\n", byteLen, remainingLen);
+                    p = g_kii_push.rcvdBuf;
+                    if (( g_kii_push.rcvdCounter >= remainingLen+byteLen+1) && (byteLen > 0)) //fixed head byte1+remaining length bytes + remaining bytes
+                    {
+                        p++; //skip fixed header byte1
+                        p +=byteLen; //skip remaining length bytes
+                        topicLen = p[0] *256 + p[1]; //get topic length
+                        p=p+2; //skip 2 topic length bytes
+                        p = p+topicLen; //skip topic
+                        callback(p, remainingLen-2-topicLen);
+                    }
+                 }
+                else if ((g_kii_push.rcvdBuf[0]&0xf0) == 0xd0)
+                {
+                    KII_DEBUG("ping resp\r\n");
+                }
+            }
+        }
+    }
+}
 
-	    }
-	}
+
+static void kiiPush_pingReqTask(void *sdata)
+{
+    for(;;)
+    {
+        if (g_kii_push.mqttSocket >= 0)
+        {
+            KiiMQTT_pingReq();
+        }		
+       kiiHal_delayMs(KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE*1000);
+    }
 }
 
 
@@ -718,6 +664,7 @@ static void kiiPush_task(void *sdata)
 *  KiiPush_init
 *
 *  \param: taskPrio - the priority of task
+*               pingReqTaskPrio - the priority of ping req task
 *               callback - the call back function for processing the push message received
 *
 *  \return 0:success; -1: failure
@@ -725,40 +672,45 @@ static void kiiPush_task(void *sdata)
 *  \brief  init push
 *
 *****************************************************************************/
-int KiiPush_init(unsigned int taskPrio, kiiPush_recvMessageCallback callback)
+int KiiPush_init(unsigned int taskPrio, unsigned int pingReqTaskPrio, kiiPush_recvMessageCallback callback)
 {
 	kiiPush_endpointState_e endpointState;
 
     memset(&g_kii_push, 0, sizeof(g_kii_push));
+    g_kii_push.mqttSocket = -1;
 
-        if (kiiPush_install() != 0)
-        {
-        
-	   KII_DEBUG("kii-error: push installation failed !\r\n");
-            return -1;
-        }
+    if (kiiPush_install() != 0)
+    {
+        KII_DEBUG("kii-error: push installation failed !\r\n");
+        return -1;
+    }
+	
+    do {
+        kiiHal_delayMs(1000);
+        endpointState = kiiPush_retrieveEndpoint() ;
+    }while((endpointState == KIIPUSH_ENDPOINT_UNAVAILABLE));
 
-	do {
-		endpointState = kiiPush_retrieveEndpoint() ;
-                kiiHal_delayMs(1000);
-	}while((endpointState == KIIPUSH_ENDPOINT_UNAVAILABLE));
-
-	if (endpointState == KIIPUSH_ENDPOINT_READY)
-	{
-	    
-		kiiHal_taskCreate(NULL,
-			                        kiiPush_task,
+    if (endpointState == KIIPUSH_ENDPOINT_READY)
+    {
+        kiiHal_taskCreate(NULL,
+			                      kiiPush_task,
 						(void *)callback,
 						(void *)mKiiPush_taskStk,
 						KIIPUSH_TASK_STK_SIZE * sizeof(unsigned char), 
 						taskPrio);
 	    
-		return 0;
-	}
-	else
-	{
-	    return -1;
-	}
+        kiiHal_taskCreate(NULL,
+			                     kiiPush_pingReqTask,
+						NULL,
+						(void *)mKiiPush_pingReqTaskStk,
+						KIIPUSH_PINGREQ_TASK_STK_SIZE * sizeof(unsigned char), 
+						pingReqTaskPrio);
+        return 0;
+    }
+    else
+    {
+        return -1;
+    }
 }
 
 

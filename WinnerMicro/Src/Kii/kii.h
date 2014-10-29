@@ -301,6 +301,7 @@ int kiiPush_createTopic(char *topicID);
 *  KiiPush_init
 *
 *  \param: taskPrio - the priority of task
+*               pingReqTaskPrio - the priority of ping req task
 *               callback - the call back function for processing the push message received
 *
 *  \return 0:success; -1: failure
@@ -308,8 +309,7 @@ int kiiPush_createTopic(char *topicID);
 *  \brief  init push
 *
 *****************************************************************************/
-extern int KiiPush_init(unsigned int taskPrio, kiiPush_recvMessageCallback callback);
-
+int KiiPush_init(unsigned int taskPrio, unsigned int pingReqTaskPrio, kiiPush_recvMessageCallback callback);
 
 #endif
 

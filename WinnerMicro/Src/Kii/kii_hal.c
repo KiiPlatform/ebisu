@@ -66,22 +66,23 @@ int kiiHal_socketCreate(void)
 *
 *  kiiHal_socketClose
 *
-*  \param  socketNum - socket handle
+*  \param  socketNum - socket handle pointer
 *
 *  \return  0:success; -1: failure
 *
 *  \brief  Closes a socket
 *
 *****************************************************************************/
-int kiiHal_socketClose(int socketNum)
+int kiiHal_socketClose(int *socketNum)
 {
     int ret = 0;
 	
-    if (closesocket(socketNum) !=  0)
-    	{
+    if (closesocket(*socketNum) !=  0)
+    {
     	ret = -1;
-    	}
-	return ret;
+    }
+    *socketNum = -1;
+    return ret;
 }
 
 
@@ -140,8 +141,8 @@ int kiiHal_socketSend(int socketNum, char * buf, int len)
       	    ret = -1;
       	}
 
-   // KII_DEBUG("\r\n ========send data start=====\r\n");
-   // KII_DEBUG("%s", buf);
+    //KII_DEBUG("\r\n ========send data start=====\r\n");
+    //KII_DEBUG("%s", buf);
     //KII_DEBUG("\r\n ========send data end=====\r\n");
 
 	  return ret;
@@ -163,25 +164,17 @@ int kiiHal_socketSend(int socketNum, char * buf, int len)
 int kiiHal_socketRecv(int socketNum, char * buf, int len)
 {
     int ret;
-    int i;
 
      ret = recv(socketNum, buf, len, 0);
      if (ret < 0)
      	{
      	    ret =-1;
      	}
-/*
-    KII_DEBUG("\r\n ========recv data start, ret = %d=====\r\n", ret);
-    KII_DEBUG("%s", buf);
-KII_DEBUG("\r\n");
-    for (i=0; i<ret; i++)
-    {
-        KII_DEBUG("%02x", buf[i]);
-    }
-	KII_DEBUG("\r\n");
 
-    KII_DEBUG("\r\n ========recv data end=====\r\n");
-*/
+    //KII_DEBUG("\r\n ========recv data start, ret = %d=====\r\n", ret);
+    //KII_DEBUG("%s", buf);
+    //KII_DEBUG("\r\n ========recv data end=====\r\n");
+
     return ret;
 }
 
@@ -220,7 +213,7 @@ int kiiHal_transfer(void)
     if (kiiHal_connect(socketNum, (char*)ipBuf, KII_DEFAULT_PORT) < 0)
     {
         KII_DEBUG("kii-error: connect to server failed \r\n");
-	 kiiHal_socketClose(socketNum);
+	 kiiHal_socketClose(&socketNum);
         return -1;
     }
     
@@ -228,7 +221,7 @@ int kiiHal_transfer(void)
     {
         
         KII_DEBUG("kii-error: send data fail\r\n");
-	 kiiHal_socketClose(socketNum);
+	 kiiHal_socketClose(&socketNum);
         return -1;
     }
 
@@ -237,12 +230,12 @@ int kiiHal_transfer(void)
     if (g_kii_data.rcvdCounter < 0)
     {
         KII_DEBUG("kii-error: recv data fail\r\n");
-	 kiiHal_socketClose(socketNum);
+	 kiiHal_socketClose(&socketNum);
         return -1;
     }
     else
     {
-	 kiiHal_socketClose(socketNum);
+	 kiiHal_socketClose(&socketNum);
         return 0;
     }
 }
