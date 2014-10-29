@@ -34,12 +34,6 @@ public class AppListAdapter extends CursorAdapter implements View.OnClickListene
     public static final int TYPE_PURCHASED = 0;
     public static final int TYPE_UPGRADE = 1;
 
-    public static final int APP_STATUS_NONE = 0;
-    public static final int APP_STATUS_INSTALLED = -1;
-    public static final int APP_STATUS_CAN_UPGRADE = -2;
-
-    private static final String DUMMY_PACKAGE_NAME = "Dummy_package_name";
-
     protected Context mContext;
     int mType;
 
@@ -79,7 +73,7 @@ public class AppListAdapter extends CursorAdapter implements View.OnClickListene
         Button rightBtn = (Button) view.findViewById(R.id.right_btn);
         ProgressBar progressBar = (ProgressBar) view.findViewById(R.id.app_list_progress);
         progressBar.setVisibility(View.GONE);
-        String packageName = appInfo.optString("package", DUMMY_PACKAGE_NAME);
+        String packageName = appInfo.optString("package", Utils.DUMMY_PACKAGE_NAME);
 
         PackageInfo packageInfo = AppUtils.gLocalApps.get(packageName);
         if (packageInfo != null) {
@@ -97,16 +91,16 @@ public class AppListAdapter extends CursorAdapter implements View.OnClickListene
         rightBtn.setFocusable(false);
         rightBtn.setFocusableInTouchMode(false);
         rightBtn.setTag(appInfo);
-        int status = getStatus(appInfo);
+        int status = Utils.getStatus(appInfo);
         switch (status) {
-            case APP_STATUS_NONE:
+            case Utils.APP_STATUS_NONE:
             case DownloadManager.STATUS_FAILED:
                 rightBtn.setText(context.getString(R.string.download_button));
                 break;
-            case APP_STATUS_INSTALLED:
+            case Utils.APP_STATUS_INSTALLED:
                 rightBtn.setText(context.getString(R.string.open_button));
                 break;
-            case APP_STATUS_CAN_UPGRADE:
+            case Utils.APP_STATUS_CAN_UPGRADE:
                 rightBtn.setText(context.getString(R.string.upgrade_button));
                 break;
             case DownloadManager.STATUS_PAUSED:
@@ -134,37 +128,6 @@ public class AppListAdapter extends CursorAdapter implements View.OnClickListene
         }
     }
 
-    protected int getStatus(JSONObject appInfo) {
-        String packageName = appInfo.optString("package", DUMMY_PACKAGE_NAME);
-        PackageInfo packageInfo = AppUtils.gLocalApps.get(packageName);
-        boolean needDownload = false;
-        int status = APP_STATUS_NONE;
-        if (packageInfo != null) {
-            int versionCode = appInfo.optInt("version_code");
-            if (versionCode > packageInfo.versionCode) {
-                needDownload = true;
-                status = APP_STATUS_CAN_UPGRADE;
-            } else {
-                status = APP_STATUS_INSTALLED;
-            }
-        } else {
-            needDownload = true;
-            status = APP_STATUS_NONE;
-        }
-        if (needDownload) {
-            String appId;
-            try {
-                appId = appInfo.getString("app_id");
-            } catch (JSONException e) {
-                return status;
-            }
-            DownloadInfo info = DownloadAgent.getInstance().getDownloadProgressMap().get(appId);
-            if (info != null) {
-                status = info.status;
-            }
-        }
-        return status;
-    }
 
     @Override
     public void onClick(View v) {
@@ -183,7 +146,7 @@ public class AppListAdapter extends CursorAdapter implements View.OnClickListene
     }
 
     protected void clickRightButton(JSONObject appInfo) {
-        int status = getStatus(appInfo);
+        int status = Utils.getStatus(appInfo);
         String appId;
         try {
             appId = appInfo.getString("app_id");
@@ -191,14 +154,14 @@ public class AppListAdapter extends CursorAdapter implements View.OnClickListene
             return;
         }
         switch (status) {
-            case APP_STATUS_NONE:
+            case Utils.APP_STATUS_NONE:
             case DownloadManager.STATUS_FAILED:
-            case APP_STATUS_CAN_UPGRADE:
+            case Utils.APP_STATUS_CAN_UPGRADE:
             case DownloadManager.STATUS_PAUSED:
                 DownloadAgent.getInstance().beginDownload(appId);
                 break;
-            case APP_STATUS_INSTALLED: {
-                String packageName = appInfo.optString("package", DUMMY_PACKAGE_NAME);
+            case Utils.APP_STATUS_INSTALLED: {
+                String packageName = appInfo.optString("package", Utils.DUMMY_PACKAGE_NAME);
                 Intent LaunchIntent = mContext.getPackageManager().getLaunchIntentForPackage(packageName);
                 mContext.startActivity(LaunchIntent);
             }

@@ -2,12 +2,16 @@ package com.youwill.store.fragments;
 
 import android.app.Fragment;
 import android.app.LoaderManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +23,7 @@ import android.widget.RadioButton;
 import com.youwill.store.R;
 import com.youwill.store.activities.AppDetailActivity;
 import com.youwill.store.providers.YouWill;
+import com.youwill.store.utils.Constants;
 import com.youwill.store.utils.Settings;
 import com.youwill.store.view.AppGridAdapter;
 
@@ -33,6 +38,14 @@ public class CategoriesFragment extends Fragment implements View.OnClickListener
     int current_cate = -1;
     GridView mGrid;
     AppGridAdapter mAdapter;
+
+    BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (mGrid != null)
+                mGrid.invalidateViews();
+        }
+    };
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -61,6 +74,18 @@ public class CategoriesFragment extends Fragment implements View.OnClickListener
         mGrid.setAdapter(mAdapter);
         mGrid.setOnItemClickListener(this);
         switchCate(last_cate);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mReceiver, new IntentFilter(Constants.INTENT_DOWNLOAD_PROGRESS_CHANGED));
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mReceiver);
     }
 
 
