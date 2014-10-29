@@ -171,14 +171,13 @@ void kiiDemo_testObject(void)
 #endif
 void kiiDemo_pushMessageCallback(char* jsonBuf, int rcvdCounter)
 {
-    int i;
     char * p1;
     char * p2;
 
     char objectID[KII_OBJECTID_SIZE+1];
     char bucketName[KII_BUCKET_NAME_SIZE+1];
 
-
+    printf("push message callback: jsonbuf:\r\n%s\r\n", jsonBuf);
     p1 = strstr(jsonBuf, "objectID");
     if (p1 != NULL)
     {
@@ -220,7 +219,6 @@ void kiiDemo_pushMessageCallback(char* jsonBuf, int rcvdCounter)
 	    char vendorID[KII_DEVICE_VENDOR_ID+1] ;
 	    int i;	
 
-	    printf("Device on boarding ...\r\n");
 	    memset(mac_addr,0,sizeof(mac_addr));
 	    tls_get_mac_addr(mac_addr);
 	    memset(vendorID, 0, sizeof(vendorID));
@@ -290,7 +288,7 @@ void kiiDemo_testPush(void)
     }
 
 	
-    if (KiiPush_init(DEMO_KII_TASK_PRIO, kiiDemo_pushMessageCallback) < 0)
+    if (KiiPush_init(DEMO_KII_TASK_PRIO, DEMO_KII_PINGREQ_TASK_PRIO, kiiDemo_pushMessageCallback) < 0)
     {
 	printf("Init push error !\r\n");
 	return;
@@ -360,4 +358,18 @@ int kiiDemo_test(char *buf)
 
 }
 
+#if 0
+int gpio_isr_test(char *buf)
+{
+	u16 gpio_pin;
+	
+	gpio_pin = DEMO_ISR_IO;
 
+	//²âÊÔÖÐ¶Ï
+	tls_gpio_cfg(gpio_pin, TLS_GPIO_DIR_INPUT, TLS_GPIO_ATTR_PULLLOW);
+	tls_gpio_isr_register(demo_gpio_isr_callback,NULL);
+	tls_gpio_int_enable(gpio_pin, TLS_GPIO_INT_TRIG_RISING_EDGE);
+	printf("\ntest gpio %d rising isr\n",gpio_pin);
+	return WM_SUCCESS;
+}
+#endif

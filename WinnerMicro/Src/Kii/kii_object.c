@@ -521,7 +521,7 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
     if (kiiHal_connect(mSocketNum, (char*)ipBuf, KII_DEFAULT_PORT) < 0)
     {
         KII_DEBUG("kii-error: connect to server failed \r\n");
-	 kiiHal_socketClose(mSocketNum);
+	 kiiHal_socketClose(&mSocketNum);
         return -1;
     }
     
@@ -529,7 +529,7 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
     {
         
         KII_DEBUG("kii-error: send data fail\r\n");
-	 kiiHal_socketClose(mSocketNum);
+	 kiiHal_socketClose(&mSocketNum);
         return -1;
     }
 
@@ -538,7 +538,7 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
     if (g_kii_data.rcvdCounter < 0)
     {
         KII_DEBUG("kii-error: recv data fail\r\n");
-	 kiiHal_socketClose(mSocketNum);
+	 kiiHal_socketClose(&mSocketNum);
         return -1;
     }
 
@@ -551,14 +551,14 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
 	
     if (p1 == NULL)
     {
-	 kiiHal_socketClose(mSocketNum);
+	 kiiHal_socketClose(&mSocketNum);
 	 return -1;
     }
     p1 +=1;
     p2 = strstr(p1, "\"");
     if (p2 == NULL)
     {
-	 kiiHal_socketClose(mSocketNum);
+	 kiiHal_socketClose(&mSocketNum);
 	 return -1;
     }
 	
@@ -648,7 +648,7 @@ int kiiObj_uploadBody(unsigned char *data, unsigned int length)
     if ((strlen(buf)+length ) > KII_SEND_BUF_SIZE)
     {
         KII_DEBUG("kii-error: buffer overflow !\r\n");
-	 kiiHal_socketClose(mSocketNum);
+	 kiiHal_socketClose(&mSocketNum);
         return -1;
     }
     g_kii_data.sendDataLen = strlen(buf) + length;
@@ -659,7 +659,7 @@ int kiiObj_uploadBody(unsigned char *data, unsigned int length)
     {
         
         KII_DEBUG("kii-error: send data fail\r\n");
-	 kiiHal_socketClose(mSocketNum);
+	 kiiHal_socketClose(&mSocketNum);
         return -1;
     }
 
@@ -668,7 +668,7 @@ int kiiObj_uploadBody(unsigned char *data, unsigned int length)
     if (g_kii_data.rcvdCounter < 0)
     {
         KII_DEBUG("kii-error: recv data fail\r\n");
-	 kiiHal_socketClose(mSocketNum);
+	 kiiHal_socketClose(&mSocketNum);
         return -1;
     }
 
@@ -678,7 +678,7 @@ int kiiObj_uploadBody(unsigned char *data, unsigned int length)
     if (p1 == NULL)
     {
         KII_DEBUG("kii-error: upload body failed !\r\n");
-	 kiiHal_socketClose(mSocketNum);
+	 kiiHal_socketClose(&mSocketNum);
 	 return -1;
     }
     else
@@ -756,7 +756,7 @@ int kiiObj_uploadBodyCommit(int committed)
     {
         
         KII_DEBUG("kii-error: send data fail\r\n");
-	 kiiHal_socketClose(mSocketNum);
+	 kiiHal_socketClose(&mSocketNum);
         return -1;
     }
 
@@ -765,11 +765,11 @@ int kiiObj_uploadBodyCommit(int committed)
     if (g_kii_data.rcvdCounter < 0)
     {
         KII_DEBUG("kii-error: recv data fail\r\n");
-	 kiiHal_socketClose(mSocketNum);
+	 kiiHal_socketClose(&mSocketNum);
         return -1;
     }
 
-     kiiHal_socketClose(mSocketNum);
+     kiiHal_socketClose(&mSocketNum);
     buf = g_kii_data.rcvdBuf;
 
     p1 = strstr(buf, "HTTP/1.1 204");
