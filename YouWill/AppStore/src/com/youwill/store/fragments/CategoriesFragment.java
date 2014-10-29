@@ -138,7 +138,13 @@ public class CategoriesFragment extends Fragment implements View.OnClickListener
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        Cursor cursor = (Cursor)mAdapter.getItem(position);
+        if (cursor == null) {
+            return;
+        }
+        String appId = cursor.getString(cursor.getColumnIndex(YouWill.Application.APP_ID));
         Intent intent = new Intent(getActivity(), AppDetailActivity.class);
+        intent.putExtra(AppDetailActivity.EXTRA_APPID, appId);
         startActivity(intent);
     }
 }

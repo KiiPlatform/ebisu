@@ -19,6 +19,7 @@ import android.widget.TextView;
 
 import com.youwill.store.R;
 import com.youwill.store.activities.AppDetailActivity;
+import com.youwill.store.providers.YouWill;
 import com.youwill.store.utils.Constants;
 import com.youwill.store.view.AppListAdapter;
 
@@ -68,7 +69,13 @@ public abstract class BaseAppListFragment extends ListFragment implements Loader
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
+        Cursor cursor = (Cursor)mAdapter.getItem(position);
+        if (cursor == null) {
+            return;
+        }
+        String appId = cursor.getString(cursor.getColumnIndex(YouWill.Application.APP_ID));
         Intent intent = new Intent(getActivity(), AppDetailActivity.class);
+        intent.putExtra(AppDetailActivity.EXTRA_APPID, appId);
         startActivity(intent);
     }
 }

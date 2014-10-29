@@ -16,6 +16,23 @@
         android:layout_height="185px"
         android:background="@color/white">
 
+        <com.youwill.store.view.RoundCornerImageView
+            android:id="@+id/app_detail_icon"
+            android:layout_width="136px"
+            android:layout_height="136px"
+            android:layout_marginLeft="30px"
+            android:layout_marginTop="25px"
+            android:layout_marginRight="19px" />
+
+        <TextView
+            android:id="@+id/app_detail_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16px"
+            android:layout_marginTop="27px"
+            android:layout_toRightOf="@id/app_detail_icon"
+            android:textColor="#161616" />
+
     </RelativeLayout>
 
     <View
