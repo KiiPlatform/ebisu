@@ -6,6 +6,7 @@ import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import com.youwill.store.MainActivity;
 import com.youwill.store.R;
+import com.youwill.store.activities.AppDetailActivity;
 import com.youwill.store.providers.YouWill;
 import com.youwill.store.utils.LogUtils;
 import com.youwill.store.utils.Utils;
@@ -17,6 +18,7 @@ import org.json.JSONObject;
 
 import android.app.Fragment;
 import android.content.AsyncQueryHandler;
+import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -177,7 +179,7 @@ public class HotFragment extends Fragment implements View.OnClickListener {
 
         @Override
         public void onBindViewHolder(ViewHolder viewHolder, int i) {
-            AppItem item = items.get(i);
+            final AppItem item = items.get(i);
             try {
                 final JSONObject app = new JSONObject(item.json);
                 String url = app.getString("icon");
@@ -189,7 +191,10 @@ public class HotFragment extends Fragment implements View.OnClickListener {
                 viewHolder.icon.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        //TODO: launch app detail activity
+                        String appId = item.appId;
+                        Intent intent = new Intent(getActivity(), AppDetailActivity.class);
+                        intent.putExtra(AppDetailActivity.EXTRA_APPID, appId);
+                        startActivity(intent);
                     }
                 });
             } catch (Exception ignored) {
@@ -224,7 +229,7 @@ public class HotFragment extends Fragment implements View.OnClickListener {
         @Override
         public View getCoverFlowItem(int position, View reusableView, ViewGroup parent) {
             LogUtils.d("getCoverFlowItem, position is " + position);
-            AppItem item = coverFlowItems.get(position);
+            final AppItem item = coverFlowItems.get(position);
             ImageView imageView = (ImageView) reusableView;
             if (imageView == null) {
                 imageView = new ImageView(parent.getContext());
@@ -238,6 +243,15 @@ public class HotFragment extends Fragment implements View.OnClickListener {
 //                ImageLoader.getInstance().displayImage(item.image, imageView);
 //            }
             imageView.setImageBitmap(coverFlowImageMap.get(item.image));
+            imageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String appId = item.appId;
+                    Intent intent = new Intent(getActivity(), AppDetailActivity.class);
+                    intent.putExtra(AppDetailActivity.EXTRA_APPID, appId);
+                    startActivity(intent);
+                }
+            });
             return imageView;
         }
 //
