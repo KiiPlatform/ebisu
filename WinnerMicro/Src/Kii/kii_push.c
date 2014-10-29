@@ -567,7 +567,6 @@ int kiiPush_createTopic(char *topicID)
 static void kiiPush_task(void *sdata)
 {
     kiiPush_recvMessageCallback callback;
-    unsigned char netConnected = 0;
     unsigned char ipBuf[4];
 
     callback = (kiiPush_recvMessageCallback) sdata;
@@ -577,10 +576,11 @@ static void kiiPush_task(void *sdata)
     KII_DEBUG("kii-info: host:%s\r\n", g_kii_push.host);
     KII_DEBUG("kii-info: username:%s\r\n", g_kii_push.username);
     KII_DEBUG("kii-info: password:%s\r\n", g_kii_push.password);
-    
+
+    g_kii_push.connected = 0;
     for(;;)
     {
-        if (netConnected == 0)
+        if (g_kii_push.connected == 0)
         {
             kiiHal_delayMs(1000);
             if (kiiHal_getNetState() == 0)
@@ -602,7 +602,7 @@ static void kiiPush_task(void *sdata)
                 }
                 else
                 {
-                    netConnected = 1;
+                   g_kii_push.connected = 1;
                 }
             }
             else
@@ -641,6 +641,10 @@ static void kiiPush_task(void *sdata)
                     KII_DEBUG("ping resp\r\n");
                 }
             }
+	     else
+	     { 
+                g_kii_push.connected = 0;
+	     }
         }
     }
 }
@@ -650,7 +654,7 @@ static void kiiPush_pingReqTask(void *sdata)
 {
     for(;;)
     {
-        if (g_kii_push.mqttSocket >= 0)
+        if (g_kii_push.connected == 1)
         {
             KiiMQTT_pingReq();
         }		

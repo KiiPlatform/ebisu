@@ -30,6 +30,7 @@ typedef struct {
 	int rcvdCounter;
        char sendBuf[KII_PUSH_SEND_BUF_SIZE];
        int mqttSocket;
+       char connected;
 } kii_push_struct;
 
 
