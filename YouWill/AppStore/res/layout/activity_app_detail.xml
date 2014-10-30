@@ -94,15 +94,63 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@drawable/bottom_bg"
-            android:paddingTop="16px"
-            android:paddingBottom="17px"
+
             >
-        <android.support.v7.widget.RecyclerView
-                android:id="@+id/pic_layout"
-                android:layout_width="match_parent"
-                android:layout_height="191px"
-                android:background="#ffffff"
-                android:scrollbarStyle="insideOverlay"
-                />
+        <ScrollView android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+            <LinearLayout android:layout_width="match_parent"
+                          android:layout_height="wrap_content"
+                          android:orientation="vertical"
+                          android:paddingTop="16px">
+                <android.support.v7.widget.RecyclerView
+                        android:id="@+id/pic_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="191px"
+                        android:background="#ffffff"
+                        android:scrollbarStyle="insideOverlay"
+                        android:visibility="gone"
+                        />
+                <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1px"
+                        android:background="@drawable/divider_horizontal"
+                        android:layout_marginLeft="11px"
+                        android:layout_marginRight="11px"
+                        android:layout_marginTop="17px"
+                        android:layout_marginBottom="15px"/>
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="11px"
+                        android:textSize="13px"
+                        android:textColor="#333333"
+                        android:text="@string/app_detail_desc"/>
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="11px"
+                        android:textSize="12px"
+                        android:textColor="#767676"
+                        android:id="@+id/app_detail_desc"
+                        android:layout_marginTop="15px"
+                        android:layout_marginBottom="10px"/>
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="11px"
+                        android:textSize="13px"
+                        android:textColor="#333333"
+                        android:text="@string/app_upgrade_comment"/>
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="11px"
+                        android:textSize="12px"
+                        android:textColor="#767676"
+                        android:id="@+id/app_detail_upgrade"
+                        android:layout_marginTop="15px"
+                        android:layout_marginBottom="10px"/>
+            </LinearLayout>
+        </ScrollView>
     </FrameLayout>
 </LinearLayout>

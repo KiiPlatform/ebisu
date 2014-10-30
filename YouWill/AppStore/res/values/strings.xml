@@ -39,5 +39,8 @@
     <string name="download_count">次下载</string>
     <string name="version_prompt">版本：</string>
     <string name="update_time">更新：</string>
+    <string name="app_detail_desc">应用详情</string>
+    <string name="app_upgrade_comment">更新说明</string>
+    <string name="none">无</string>
 
 </resources>

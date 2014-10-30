@@ -98,8 +98,12 @@ public class AppDetailActivity extends Activity implements View.OnClickListener 
                 .format("YYYY-MM-dd", updateTime);
         info.append(updateTimeString);
         tv.setText(info.toString());
+        tv = (TextView) findViewById(R.id.app_detail_desc);
+        tv.setText(mAppInfo.optString("description"));
+        tv = (TextView) findViewById(R.id.app_detail_upgrade);
+        tv.setText(mAppInfo.optString("upgrade_info", getString(R.string.none)));
         JSONArray thumbnails = mAppInfo.optJSONArray("thumbnails");
-        if (thumbnails!=null && thumbnails.length()>0) {
+        if (thumbnails != null && thumbnails.length() > 0) {
             for (int i = 0; i < thumbnails.length(); i++) {
                 mPics.add(thumbnails.optString(i));
             }
@@ -115,6 +119,9 @@ public class AppDetailActivity extends Activity implements View.OnClickListener 
         mRecyclerView.setLayoutManager(mLinearLayoutManager);
         PicAdapter adapter = new PicAdapter();
         mRecyclerView.setAdapter(adapter);
+        if (adapter.getItemCount() > 0) {
+            mRecyclerView.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
