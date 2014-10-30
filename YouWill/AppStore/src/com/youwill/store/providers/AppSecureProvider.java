@@ -1,11 +1,12 @@
 package com.youwill.store.providers;
 
-import com.youwill.store.utils.Settings;
+import org.json.JSONObject;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.MatrixCursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 
 /**
@@ -13,17 +14,32 @@ import android.net.Uri;
  */
 public class AppSecureProvider extends ContentProvider {
 
+    private DBHelper mDBHelper = null;
+
     @Override
     public boolean onCreate() {
+        mDBHelper = new DBHelper(getContext());
         return true;
     }
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
             String sortOrder) {
-        String key = Settings.getAppKey(getContext(), selection);
+        SQLiteDatabase database = mDBHelper.getWritableDatabase();
+        Cursor c = database
+                .query(YouWill.Application.TABLE_NAME, new String[]{YouWill.Application.APP_INFO},
+                        YouWill.Application.PACKAGE_NAME + "=" + selection, null,
+                        null, null, null);
         MatrixCursor cursor = new MatrixCursor(new String[]{"key"});
-        cursor.addRow(new String[]{key});
+        if (c != null && c.moveToFirst()) {
+            String appInfo = c.getString(0);
+            try {
+                JSONObject object = new JSONObject(appInfo);
+                cursor.addRow(new String[]{object.optString("protect_key")});
+            } catch (Exception e) {
+
+            }
+        }
         return cursor;
     }
 

@@ -23,17 +23,6 @@ public class Settings {
         return gContext.getSharedPreferences(PREF_NAME, code);
     }
 
-    public static void saveAppKey(Context context, String packageName, String key) {
-        SharedPreferences pref = getPrefs(context);
-        SharedPreferences.Editor editor = pref.edit();
-        editor.putString(packageName, key);
-        editor.apply();
-    }
-
-    public static String getAppKey(Context context, String packageName) {
-        return getPrefs(context).getString(packageName, "");
-    }
-
     public static void saveDownloadId(Context context, long id, String appId) {
         getPrefs(context).edit().putString(Long.toString(id), appId);
     }
