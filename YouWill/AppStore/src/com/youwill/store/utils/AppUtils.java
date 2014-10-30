@@ -1,5 +1,14 @@
 package com.youwill.store.utils;
 
+import com.youwill.store.R;
+import com.youwill.store.net.DownloadAgent;
+import com.youwill.store.net.DownloadInfo;
+import com.youwill.store.providers.YouWill;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import android.app.DownloadManager;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -7,8 +16,7 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-
-import com.youwill.store.providers.YouWill;
+import android.widget.Button;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,5 +59,74 @@ public class AppUtils {
                         "application/vnd.android.package-archive");
         installIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(installIntent);
+    }
+
+    public static void bindButton(Context context, JSONObject appInfo, Button price_btn) {
+        int status = Utils.getStatus(appInfo);
+        switch (status) {
+            case Utils.APP_STATUS_NONE: {
+                int price = appInfo.optInt("price");
+                String priceStr;
+                if (price > 0) {
+                    float p = (float) price;
+                    priceStr = String.format("￥%.2f", p);
+                } else {
+                    priceStr = context.getString(R.string.price_free);
+                }
+                price_btn.setText(priceStr);
+            }
+            break;
+            case DownloadManager.STATUS_FAILED:
+                price_btn.setText(context.getString(R.string.download_button));
+                break;
+            case Utils.APP_STATUS_INSTALLED:
+                price_btn.setText(context.getString(R.string.open_button));
+                break;
+            case Utils.APP_STATUS_CAN_UPGRADE:
+                price_btn.setText(context.getString(R.string.upgrade_button));
+                break;
+            case DownloadManager.STATUS_PAUSED:
+                price_btn.setText(context.getString(R.string.resume_button));
+                break;
+            case DownloadManager.STATUS_PENDING:
+            case DownloadManager.STATUS_RUNNING:
+                price_btn.setText(context.getString(R.string.downloading_button));
+                break;
+            case DownloadManager.STATUS_SUCCESSFUL:
+                price_btn.setText(context.getString(R.string.install_button));
+                break;
+        }
+    }
+
+    public static void clickPriceButton(Context context, JSONObject appInfo) {
+        int status = Utils.getStatus(appInfo);
+        String appId;
+        try {
+            appId = appInfo.getString("app_id");
+        } catch (JSONException e) {
+            return;
+        }
+        switch (status) {
+            case Utils.APP_STATUS_NONE:
+            case DownloadManager.STATUS_FAILED:
+            case Utils.APP_STATUS_CAN_UPGRADE:
+            case DownloadManager.STATUS_PAUSED:
+                DownloadAgent.getInstance().beginDownload(appId);
+                break;
+            case Utils.APP_STATUS_INSTALLED: {
+                String packageName = appInfo.optString("package", Utils.DUMMY_PACKAGE_NAME);
+                Intent LaunchIntent = context.getPackageManager().getLaunchIntentForPackage(packageName);
+                context.startActivity(LaunchIntent);
+            }
+            break;
+            case DownloadManager.STATUS_PENDING:
+            case DownloadManager.STATUS_RUNNING:
+                break;
+            case DownloadManager.STATUS_SUCCESSFUL: {
+                DownloadInfo info = DownloadAgent.getInstance().getDownloadProgressMap().get(appId);
+                installApp(context, info.fileUri);
+            }
+            break;
+        }
     }
 }

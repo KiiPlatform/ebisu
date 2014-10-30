@@ -47,7 +47,7 @@ public class DataUtils {
                     SharedPreferences pref = Settings.getPrefs(context);
                     SharedPreferences.Editor editor = pref.edit();
                     editor.putLong(KEY_LAST_GET_APPS_TIME, System.currentTimeMillis());
-                    editor.commit();
+                    editor.apply();
                 } catch (Exception e) {
                     LogUtils.e(LOG_TAG, Log.getStackTraceString(e));
                 }
@@ -80,7 +80,8 @@ public class DataUtils {
             }
         }
         if (valuesArrayList.size() > 0) {
-            ContentValues[] values = valuesArrayList.toArray(new ContentValues[0]);
+            ContentValues[] values = valuesArrayList
+                    .toArray(new ContentValues[valuesArrayList.size()]);
             context.getContentResolver().bulkInsert(YouWill.Application.CONTENT_URI, values);
         }
     }

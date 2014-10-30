@@ -193,7 +193,7 @@ public class HotFragment extends Fragment implements View.OnClickListener {
                     public void onClick(View v) {
                         String appId = item.appId;
                         Intent intent = new Intent(getActivity(), AppDetailActivity.class);
-                        intent.putExtra(AppDetailActivity.EXTRA_APPID, appId);
+                        intent.putExtra(AppDetailActivity.EXTRA_APP_ID, appId);
                         startActivity(intent);
                     }
                 });
@@ -248,7 +248,7 @@ public class HotFragment extends Fragment implements View.OnClickListener {
                 public void onClick(View v) {
                     String appId = item.appId;
                     Intent intent = new Intent(getActivity(), AppDetailActivity.class);
-                    intent.putExtra(AppDetailActivity.EXTRA_APPID, appId);
+                    intent.putExtra(AppDetailActivity.EXTRA_APP_ID, appId);
                     startActivity(intent);
                 }
             });

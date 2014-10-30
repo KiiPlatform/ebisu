@@ -1,54 +1,99 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@android:color/transparent"
-    android:orientation="vertical">
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@android:color/transparent"
+              android:orientation="vertical">
 
     <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="42px"
-        android:background="@drawable/top_bar_bg">
+            android:layout_width="match_parent"
+            android:layout_height="42px"
+            android:background="@drawable/top_bar_bg">
 
     </RelativeLayout>
 
     <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="185px"
-        android:background="@color/white">
+            android:layout_width="match_parent"
+            android:layout_height="185px"
+            android:background="@color/white">
 
         <com.youwill.store.view.RoundCornerImageView
-            android:id="@+id/app_detail_icon"
-            android:layout_width="136px"
-            android:layout_height="136px"
-            android:layout_marginLeft="30px"
-            android:layout_marginTop="25px"
-            android:layout_marginRight="19px" />
+                android:id="@+id/app_detail_icon"
+                android:layout_width="136px"
+                android:layout_height="136px"
+                android:layout_marginLeft="30px"
+                android:layout_marginTop="25px"
+                android:layout_marginRight="19px"/>
 
         <TextView
-            android:id="@+id/app_detail_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="16px"
-            android:layout_marginTop="27px"
-            android:layout_toRightOf="@id/app_detail_icon"
-            android:textColor="#161616" />
+                android:id="@+id/app_detail_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16px"
+                android:layout_marginTop="27px"
+                android:layout_toRightOf="@id/app_detail_icon"
+                android:textColor="#161616"/>
+
+
+        <TextView
+                android:id="@+id/app_detail_developer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12px"
+                android:layout_marginTop="6px"
+                android:layout_toRightOf="@id/app_detail_icon"
+                android:layout_below="@id/app_detail_name"
+                android:textColor="#999999"/>
+
+        <RatingBar
+                android:id="@+id/app_detail_rate"
+                android:layout_width="wrap_content"
+                android:layout_height="11px"
+                android:layout_marginTop="9px"
+                android:isIndicator="true"
+                android:numStars="5"
+                android:layout_toRightOf="@id/app_detail_icon"
+                android:layout_below="@id/app_detail_developer"
+                android:progressDrawable="@drawable/star_rating_bar_small" />
+
+        <TextView
+                android:id="@+id/app_detail_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="11px"
+                android:layout_marginTop="24px"
+                android:layout_toRightOf="@id/app_detail_icon"
+                android:layout_below="@id/app_detail_rate"
+                android:textColor="#999999"/>
+
+        <Button
+                android:id="@+id/app_detail_price"
+                android:layout_width="59px"
+                android:layout_height="24px"
+                android:layout_marginTop="8px"
+                android:background="@drawable/price_frame"
+                android:layout_toRightOf="@id/app_detail_icon"
+                android:layout_below="@id/app_detail_info"
+                android:textColor="@color/price_text_color"
+                android:textSize="11px" />
 
     </RelativeLayout>
 
     <View
-        android:layout_width="match_parent"
-        android:layout_height="1px"
-        android:background="@color/list_divider" />
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:background="@color/list_divider"/>
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="29px"
-        android:background="@color/detail_section_header">
+            android:layout_width="match_parent"
+            android:layout_height="29px"
+            android:background="@color/detail_section_header">
 
     </LinearLayout>
 
     <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/bottom_bg" />
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bottom_bg">
+
+    </FrameLayout>
 </LinearLayout>

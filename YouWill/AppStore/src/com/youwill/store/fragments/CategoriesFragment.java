@@ -144,7 +144,7 @@ public class CategoriesFragment extends Fragment implements View.OnClickListener
         }
         String appId = cursor.getString(cursor.getColumnIndex(YouWill.Application.APP_ID));
         Intent intent = new Intent(getActivity(), AppDetailActivity.class);
-        intent.putExtra(AppDetailActivity.EXTRA_APPID, appId);
+        intent.putExtra(AppDetailActivity.EXTRA_APP_ID, appId);
         startActivity(intent);
     }
 }

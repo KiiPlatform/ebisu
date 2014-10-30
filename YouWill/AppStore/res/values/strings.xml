@@ -36,5 +36,8 @@
     <string name="login_pattern">登录</string>
     <string name="no_upgrade">所有程序已是最新</string>
     <string name="title_activity_app_detail">AppDetailActivity</string>
+    <string name="download_count">次下载</string>
+    <string name="version_prompt">版本：</string>
+    <string name="update_time">更新：</string>
 
 </resources>

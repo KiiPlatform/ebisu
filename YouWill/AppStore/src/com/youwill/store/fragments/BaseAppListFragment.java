@@ -1,5 +1,11 @@
 package com.youwill.store.fragments;
 
+import com.youwill.store.R;
+import com.youwill.store.activities.AppDetailActivity;
+import com.youwill.store.providers.YouWill;
+import com.youwill.store.utils.Constants;
+import com.youwill.store.view.AppListAdapter;
+
 import android.app.ListFragment;
 import android.app.LoaderManager;
 import android.content.BroadcastReceiver;
@@ -16,12 +22,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import com.youwill.store.R;
-import com.youwill.store.activities.AppDetailActivity;
-import com.youwill.store.providers.YouWill;
-import com.youwill.store.utils.Constants;
-import com.youwill.store.view.AppListAdapter;
 
 /**
  * Created by Evan on 14/10/24.
@@ -75,7 +75,7 @@ public abstract class BaseAppListFragment extends ListFragment implements Loader
         }
         String appId = cursor.getString(cursor.getColumnIndex(YouWill.Application.APP_ID));
         Intent intent = new Intent(getActivity(), AppDetailActivity.class);
-        intent.putExtra(AppDetailActivity.EXTRA_APPID, appId);
+        intent.putExtra(AppDetailActivity.EXTRA_APP_ID, appId);
         startActivity(intent);
     }
 }
