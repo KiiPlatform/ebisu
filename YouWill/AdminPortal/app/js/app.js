@@ -9,7 +9,8 @@ var app = angular.module('myApp', [
   'myApp.directives',
   'ui.bootstrap',
   'LocalStorageModule',
-  'flow'
+  'flow',
+  'mgo-angular-wizard'
 ]).
 config(['$routeProvider', function($routeProvider) {
   $routeProvider.when('/config', {templateUrl: 'partials/config.html', controller: 'configCtrl'});
