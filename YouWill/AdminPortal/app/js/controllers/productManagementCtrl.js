@@ -76,6 +76,27 @@ app.controller('productManagementCtrl', function ($scope, $rootScope, $location,
     bucket.executeQuery(query, queryCallbacks);
   }
 
+  $scope.openProductCreationModal = function(){
+    var modalInstance = $modal.open({
+        templateUrl: './partials/productCreationModal.html',
+        controller: ProductCreationModalInstanceCtrl,
+        size: 'lg',
+        backdrop: 'static'
+      }
+    );
+    modalInstance.result.then(function(){
+
+    }, function(){
+
+    });
+  }
+
+  var ProductCreationModalInstanceCtrl = function ($scope, $modalInstance) {
+    $scope.apkUpload = function(){
+      console.log('start to upload apk');
+    }
+  }
+
   $scope.openModal = function (product) {
     var modalInstance = $modal.open({
       templateUrl: './partials/modalContent.html',
@@ -156,6 +177,22 @@ app.controller('productManagementCtrl', function ($scope, $rootScope, $location,
           console.log("Object and body saved!");
           console.log(theObject);
           $scope.btnLoading = false;
+          theObject.publishBody({
+            success: function (obj, publishedUrl) {
+              obj.set("iconUrl", publishedUrl);
+              obj.save({
+                success: function(completeObj) {
+                  console.log("obj with icon url: ", completeObj);
+                },
+                failure: function (completeObj, errorString){
+
+                }
+              })
+            },
+            failure: function(obj, errorString) {
+              console.log(errorString);
+            }
+          })
           $modalInstance.close();
         },
         failure: function (obj, anErrorString) {
@@ -170,15 +207,6 @@ app.controller('productManagementCtrl', function ($scope, $rootScope, $location,
         $scope.btnLoading = true;
         var appBucket = Kii.bucketWithName("product");
         var obj = ($scope.virgin == true) ? appBucket.createObject() : product;
-//        obj.set("productID", $scope.product.productID);
-//        obj.set("name", $scope.product.name);
-//        obj.set("description", $scope.product.description);
-//        obj.set("category", $scope.product.category);
-//        obj.set("price", $scope.product.price);
-//        obj.set("new", $scope.product.new);
-//        obj.set("recommended", $scope.product.recommended);
-//        obj.set("consumable", $scope.product.consumable);
-//        obj.set("valid", $scope.product.valid);
         $scope.fields.map(function (field) {
           eval("obj.set('" + field.value + "', $scope.product." + field.value + ")")
         })

@@ -7,6 +7,10 @@ app.controller('appCtrl', function ($scope, localStorageService, $rootScope) {
     $scope.stranger = true;
     $scope.loggingIn = false;
     $scope.loginError = false;
+    $scope.loginForm = {
+      "userName" : undefined,
+      "password" : undefined
+    }
     var accessToken = localStorageService.get("accessToken");
     if (accessToken) {
       $scope.loggingIn = true;
@@ -78,6 +82,7 @@ app.controller('appCtrl', function ($scope, localStorageService, $rootScope) {
 
   // Perform the login action when the user submits the login form
   $scope.doLogin = function () {
+    console.log($scope.loginForm.userName);
     $scope.loggingIn = true;
     KiiUser.authenticate($scope.loginForm.userName, $scope.loginForm.password, {
       success: function (theUser) {

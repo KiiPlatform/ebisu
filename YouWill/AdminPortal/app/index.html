@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="css/app.css"/>
   <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="bower_components/fontawesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="bower_components/angular-wizard/dist/angular-wizard.min.css">
   <script src="bower_components/html5-boilerplate/js/vendor/modernizr-2.6.2.min.js"></script>
   <!--library-->
   <script src="bower_components/angular/angular.min.js"></script>
@@ -23,6 +24,8 @@
   <script src="bower_components/angular-local-storage/angular-local-storage.min.js"></script>
   <script src="bower_components/flow.js/dist/flow.min.js"></script>
   <script src="bower_components/ng-flow/dist/ng-flow.min.js"></script>
+  <script src="bower_components/lodash/dist/lodash.underscore.min.js"></script>
+  <script src="bower_components/angular-wizard/dist/angular-wizard.min.js"></script>
 
   <script src="js/app.js"></script>
   <script src="js/services.js"></script>
@@ -62,8 +65,8 @@
             <input required type="text" class="form-control" ng-model="loginForm.userName" placeholder="User Name">
             <input required type="password" class="form-control" ng-model="loginForm.password" placeholder="Password">
           </div>
-          <button class="btn btn-primary" ng-click="doLogin()">Log In</button>
-          <button class="btn btn-default" ng-click="doRegister()">Register</button>
+          <button ng-disabled="!loginForm.userName || !loginForm.password" class="btn btn-primary" ng-click="doLogin()">Log In</button>
+          <button ng-disabled="!loginForm.userName || !loginForm.password" class="btn btn-default" ng-click="doRegister()">Register</button>
         </form>
         <ul class="nav navbar-nav navbar-right" ng-show="!stranger && !loggingIn">
           <li class="row">
