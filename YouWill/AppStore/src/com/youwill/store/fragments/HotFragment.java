@@ -76,8 +76,6 @@ public class HotFragment extends Fragment implements View.OnClickListener {
         mLinearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
         mLinearLayoutManager2 = new LinearLayoutManager(getActivity());
         mLinearLayoutManager2.setOrientation(LinearLayoutManager.HORIZONTAL);
-        latestView = (RecyclerView) view.findViewById(R.id.latest_horizontal_view);
-        goodView = (RecyclerView) view.findViewById(R.id.good_horizontal_view);
         view.findViewById(R.id.show_all_good).setOnClickListener(this);
         view.findViewById(R.id.show_all_new).setOnClickListener(this);
         latestView = (RecyclerView) view.findViewById(R.id.latest_horizontal_view);

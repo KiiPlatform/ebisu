@@ -53,7 +53,7 @@
                 android:numStars="5"
                 android:layout_toRightOf="@id/app_detail_icon"
                 android:layout_below="@id/app_detail_developer"
-                android:progressDrawable="@drawable/star_rating_bar_small" />
+                android:progressDrawable="@drawable/star_rating_bar_small"/>
 
         <TextView
                 android:id="@+id/app_detail_info"
@@ -74,7 +74,7 @@
                 android:layout_toRightOf="@id/app_detail_icon"
                 android:layout_below="@id/app_detail_info"
                 android:textColor="@color/price_text_color"
-                android:textSize="11px" />
+                android:textSize="11px"/>
 
     </RelativeLayout>
 
@@ -93,7 +93,16 @@
     <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/bottom_bg">
-
+            android:background="@drawable/bottom_bg"
+            android:paddingTop="16px"
+            android:paddingBottom="17px"
+            >
+        <android.support.v7.widget.RecyclerView
+                android:id="@+id/pic_layout"
+                android:layout_width="match_parent"
+                android:layout_height="191px"
+                android:background="#ffffff"
+                android:scrollbarStyle="insideOverlay"
+                />
     </FrameLayout>
 </LinearLayout>

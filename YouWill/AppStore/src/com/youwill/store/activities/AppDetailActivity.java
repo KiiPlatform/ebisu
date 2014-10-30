@@ -6,27 +6,40 @@ import com.youwill.store.providers.YouWill;
 import com.youwill.store.utils.AppUtils;
 import com.youwill.store.utils.Utils;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import android.app.Activity;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
-public class AppDetailActivity extends Activity implements View.OnClickListener{
+import java.util.ArrayList;
+import java.util.List;
+
+public class AppDetailActivity extends Activity implements View.OnClickListener {
 
     public static final String EXTRA_APP_ID = "appId";
 
     String mAppId;
 
     JSONObject mAppInfo;
+
+    RecyclerView mRecyclerView;
+
+    LinearLayoutManager mLinearLayoutManager;
+
+    private List<String> mPics = new ArrayList<String>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,11 +98,23 @@ public class AppDetailActivity extends Activity implements View.OnClickListener{
                 .format("YYYY-MM-dd", updateTime);
         info.append(updateTimeString);
         tv.setText(info.toString());
-        RatingBar ratingBar = (RatingBar)findViewById(R.id.app_detail_rate);
+        JSONArray thumbnails = mAppInfo.optJSONArray("thumbnails");
+        if (thumbnails!=null && thumbnails.length()>0) {
+            for (int i = 0; i < thumbnails.length(); i++) {
+                mPics.add(thumbnails.optString(i));
+            }
+        }
+        RatingBar ratingBar = (RatingBar) findViewById(R.id.app_detail_rate);
         ratingBar.setRating((float) mAppInfo.optDouble("rating_score"));
         Button price_btn = (Button) findViewById(R.id.app_detail_price);
         AppUtils.bindButton(this, mAppInfo, price_btn);
         price_btn.setOnClickListener(this);
+        mRecyclerView = (RecyclerView) findViewById(R.id.pic_layout);
+        mLinearLayoutManager = new LinearLayoutManager(this);
+        mLinearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+        mRecyclerView.setLayoutManager(mLinearLayoutManager);
+        PicAdapter adapter = new PicAdapter();
+        mRecyclerView.setAdapter(adapter);
     }
 
     @Override
@@ -98,6 +123,37 @@ public class AppDetailActivity extends Activity implements View.OnClickListener{
             case R.id.app_detail_price:
                 AppUtils.clickPriceButton(this, mAppInfo);
                 break;
+        }
+    }
+
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+
+        private ImageView mImageView;
+
+        public ViewHolder(View itemView) {
+            super(itemView);
+            mImageView = (ImageView) itemView;
+        }
+
+    }
+
+    private class PicAdapter extends RecyclerView.Adapter<ViewHolder> {
+
+        @Override
+        public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
+            View v = getLayoutInflater().inflate(R.layout.app_detail_pic_item, viewGroup,
+                    false);
+            return new ViewHolder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(ViewHolder viewHolder, int i) {
+            ImageLoader.getInstance().displayImage(mPics.get(i), viewHolder.mImageView);
+        }
+
+        @Override
+        public int getItemCount() {
+            return mPics.size();
         }
     }
 }
