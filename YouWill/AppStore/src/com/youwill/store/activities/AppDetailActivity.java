@@ -104,7 +104,7 @@ public class AppDetailActivity extends Activity implements View.OnClickListener 
         tv = (TextView) findViewById(R.id.app_detail_desc);
         tv.setText(mAppInfo.optString("description"));
         tv = (TextView) findViewById(R.id.app_detail_upgrade);
-        tv.setText(mAppInfo.optString("upgrade_info", getString(R.string.none)));
+        tv.setText(mAppInfo.optString("what_is_new", getString(R.string.none)));
         JSONArray thumbnails = mAppInfo.optJSONArray("thumbnails");
         if (thumbnails != null && thumbnails.length() > 0) {
             for (int i = 0; i < thumbnails.length(); i++) {
