@@ -21,6 +21,15 @@ android {
     compileSdkVersion 21
     buildToolsVersion "20.0.0"
 
+    signingConfigs {
+        zhimawuConfig {
+            storeFile file("appstore.keystore")
+            storePassword "/qJ=h=k13,"
+            keyAlias "appstore"
+            keyPassword "x;#%2b(Qp8"
+        }
+    }
+
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'

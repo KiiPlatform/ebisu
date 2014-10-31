@@ -93,7 +93,10 @@ public class AppDetailActivity extends Activity implements View.OnClickListener 
         info.append(downloadCountString).append(" ");
         info.append(getString(R.string.version_prompt)).append(mAppInfo
                 .optString("version_name")).append(" ");
-        long updateTime = mAppInfo.optLong("update_time");
+        long updateTime = mAppInfo.optLong("_modified", -1);
+        if (updateTime<0) {
+            updateTime = mAppInfo.optLong("_created");
+        }
         String updateTimeString = getString(R.string.update_time) + DateFormat
                 .format("YYYY-MM-dd", updateTime);
         info.append(updateTimeString);
