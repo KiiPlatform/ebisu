@@ -1,5 +1,6 @@
 package com.youwill.store.fragments;
 
+import android.widget.AdapterView;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
@@ -41,7 +42,7 @@ import java.util.Map;
 /**
  * Created by tian on 14-9-23:下午11:01.
  */
-public class HotFragment extends Fragment implements View.OnClickListener {
+public class HotFragment extends Fragment implements View.OnClickListener, AdapterView.OnItemClickListener {
 
     RecyclerView latestView;
 
@@ -91,12 +92,13 @@ public class HotFragment extends Fragment implements View.OnClickListener {
         coverFlow.setSpacing(-100);
         coverFlow.setActionDistance(FancyCoverFlow.ACTION_DISTANCE_AUTO);
         coverFlow.setAdapter(mCoverFlowAdapter);
-        this.coverFlow.setUnselectedAlpha(1.0f);
-        this.coverFlow.setUnselectedSaturation(0.0f);
-        this.coverFlow.setUnselectedScale(0.5f);
-        this.coverFlow.setMaxRotation(4);
-        this.coverFlow.setScaleDownGravity(0.2f);
-        this.coverFlow.setActionDistance(FancyCoverFlow.ACTION_DISTANCE_AUTO);
+        coverFlow.setUnselectedAlpha(1.0f);
+        coverFlow.setUnselectedSaturation(0.0f);
+        coverFlow.setUnselectedScale(0.5f);
+        coverFlow.setMaxRotation(4);
+        coverFlow.setScaleDownGravity(0.2f);
+        coverFlow.setActionDistance(FancyCoverFlow.ACTION_DISTANCE_AUTO);
+        coverFlow.setOnItemClickListener(this);
         coverFlowOption = new DisplayImageOptions.Builder()
                 .showImageOnLoading(R.drawable.cover_flow1).showImageOnFail(R.drawable.cover_flow1)
                 .showImageForEmptyUri(R.drawable.cover_flow1).resetViewBeforeLoading(true).build();
@@ -142,6 +144,14 @@ public class HotFragment extends Fragment implements View.OnClickListener {
             case R.id.show_all_new:
                 break;
         }
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+        String appId = coverFlowItems.get(i).appId;
+        Intent intent = new Intent(getActivity(), AppDetailActivity.class);
+        intent.putExtra(AppDetailActivity.EXTRA_APP_ID, appId);
+        startActivity(intent);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -241,15 +251,6 @@ public class HotFragment extends Fragment implements View.OnClickListener {
 //                ImageLoader.getInstance().displayImage(item.image, imageView);
 //            }
             imageView.setImageBitmap(coverFlowImageMap.get(item.image));
-            imageView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    String appId = item.appId;
-                    Intent intent = new Intent(getActivity(), AppDetailActivity.class);
-                    intent.putExtra(AppDetailActivity.EXTRA_APP_ID, appId);
-                    startActivity(intent);
-                }
-            });
             return imageView;
         }
 //
@@ -308,11 +309,13 @@ public class HotFragment extends Fragment implements View.OnClickListener {
                         break;
                     case YouWill.Application.RECOMMEND_TYPE_LINE1:
                         recommend1Items = parseCursor(cursor);
-                        recommend1Adapter.notifyDataSetChanged();
+                        recommend1Adapter = new AppAdapter(recommend1Items);
+                        goodView.setAdapter(recommend1Adapter);
                         break;
                     case YouWill.Application.RECOMMEND_TYPE_LINE2:
                         recommend2Items = parseCursor(cursor);
-                        recommend2Adapter.notifyDataSetChanged();
+                        recommend2Adapter = new AppAdapter(recommend2Items);
+                        latestView.setAdapter(recommend2Adapter);
                         break;
                 }
             }

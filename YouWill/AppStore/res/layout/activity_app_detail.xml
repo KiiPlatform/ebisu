@@ -68,7 +68,7 @@
         <Button
                 android:id="@+id/app_detail_price"
                 android:layout_width="59px"
-                android:layout_height="24px"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="8px"
                 android:background="@drawable/price_frame"
                 android:layout_toRightOf="@id/app_detail_icon"
