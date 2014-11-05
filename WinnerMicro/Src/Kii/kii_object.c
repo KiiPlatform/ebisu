@@ -28,12 +28,12 @@ static int kiiObj_update(char *bucketName, char *jsonObject, char *dataType, cha
 *
 *  \param  bucketName - the input of bucket name
 *               jsonObject - the input of object with json format
-*               dataType - the input of data type, the format should be like "mydata",  it can be set NULL if object is not an specific data type in the platform
+*               dataType - the input of data type, the format should be like "mydata"
 *               objectID - the output of objectID
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  create object
+*  \brief  Creates object
 *
 *****************************************************************************/
 int kiiObj_create(char *bucketName, char *jsonObject, char *dataType, char *objectID)
@@ -71,25 +71,11 @@ int kiiObj_create(char *bucketName, char *jsonObject, char *dataType, char *obje
    strcpy(buf+strlen(buf), STR_CRLF);
    //content-type	
    strcpy(buf+strlen(buf), STR_CONTENT_TYPE);
-   if (dataType !=NULL)
-   {
-       if (strlen(dataType) > 0)
-       {
-           strcpy(buf+strlen(buf), "application/vnd.");
-           strcpy(buf+strlen(buf), g_kii_data.appID);
-           strcpy(buf+strlen(buf), ".");
-           strcpy(buf+strlen(buf), dataType);
-           strcpy(buf+strlen(buf), "+json");
-       }
-        else
-	{
-           strcpy(buf+strlen(buf), "application/json");
-       }
-   }
-   else
-   {
-       strcpy(buf+strlen(buf), "application/json");
-   }
+   strcpy(buf+strlen(buf), "application/vnd.");
+   strcpy(buf+strlen(buf), g_kii_data.appID);
+   strcpy(buf+strlen(buf), ".");
+   strcpy(buf+strlen(buf), dataType);
+   strcpy(buf+strlen(buf), "+json");
    strcpy(buf+strlen(buf), STR_CRLF);
    //Authorization
     strcpy(buf+strlen(buf), STR_AUTHORIZATION);
@@ -145,12 +131,12 @@ int kiiObj_create(char *bucketName, char *jsonObject, char *dataType, char *obje
 *
 *  \param  bucketName - the input of bucket name
 *               jsonObject - the input of object with json format
-*               dataType - the input of data type, the format should be like "mydata",  it can be set NULL if object is not an specific data type in the platform
+*               dataType - the input of data type, the format should be like "mydata"
 *               objectID - the input of objectID
 *
 *  \return  0:success; -1: failure
 *
-*  \brief  create a new object with an ID
+*  \brief  Creates a new object with an ID
 *
 *****************************************************************************/
 int kiiObj_createWithID(char *bucketName, char *jsonObject, char *dataType, char *objectID)
@@ -165,12 +151,12 @@ int kiiObj_createWithID(char *bucketName, char *jsonObject, char *dataType, char
 *
 *  \param  bucketName - the input of bucket name
 *               jsonObject - the input of object with json format
-*               dataType - the input of data type, the format should be like "mydata",  it can be set NULL if object is not an specific data type in the platform
+*               dataType - the input of data type, the format should be like "mydata"
 *               objectID - the input of objectID
 *
 *  \return  0:success; -1: failure
 *
-*  \brief  fully update an object
+*  \brief  Fully updates an object
 *
 *****************************************************************************/
 int kiiObj_fullyUpdate(char *bucketName, char *jsonObject, char *dataType, char *objectID)
@@ -188,7 +174,7 @@ int kiiObj_fullyUpdate(char *bucketName, char *jsonObject, char *dataType, char 
 *
 *  \return  0:success; -1: failure
 *
-*  \brief  partially update an object
+*  \brief  Partially updates an object
 *
 *****************************************************************************/
 int kiiObj_partiallyUpdate(char *bucketName, char *jsonObject, char *objectID)
@@ -202,13 +188,13 @@ int kiiObj_partiallyUpdate(char *bucketName, char *jsonObject, char *objectID)
 *
 *  \param  bucketName - the input of bucket name
 *               jsonObject - the input of object with json format
-*               dataType - the input of data type, the format should be like "mydata",  it can be set NULL if object is not an specific data type in the platform
+*               dataType - the input of data type, the format should be like "mydata"
 *               objectID - the input of objectID
 *               updateOrCreateWithID - kind of "kiiObj_updateType_e" type
 *
 *  \return  0:success; -1: failure
 *
-*  \brief  partially/fully update an object, or create a new object with an id
+*  \brief  Partially/fully updates an object, or creates a new object with an id
 *
 *****************************************************************************/
 static int kiiObj_update(char *bucketName, char *jsonObject, char *dataType, char *objectID, int updateOrCreateWithID)
@@ -338,13 +324,13 @@ static int kiiObj_update(char *bucketName, char *jsonObject, char *dataType, cha
 *
 *  \param: bucketName - the input of bucket name
 *               objectID - the input of objectID
-*               dataType - the input of data type, it must not be NULL, the format should be like "image/jpg"
+*               dataType - the input of data type, the format should be like "image/jpg"
 *               data - raw data
 *               length - raw data length
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  upload object body at once
+*  \brief  Uploads object body at once
 *
 *****************************************************************************/
 int kiiObj_uploadBodyAtOnce(char *bucketName, char *objectID,  char *dataType, unsigned char *data, unsigned int length)
@@ -426,12 +412,12 @@ int kiiObj_uploadBodyAtOnce(char *bucketName, char *objectID,  char *dataType, u
 *
 *  \param: bucketName - the input of bucket name
 *               objectID - the input of objectID
-*               dataType - the input of data type, it must not be NULL, the format should be like "image/jpg"
+*               dataType - the input of data type, the format should be like "image/jpg"
 *               totalLength - the total of data length
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  init uploading an object body in multiple pieces
+*  \brief  Initializes "uploading an object body in multiple pieces"
 *
 *****************************************************************************/
 int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsigned int totalLength)
@@ -578,7 +564,7 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  upload a piece of data
+*  \brief  Uploads a piece of data
 *
 *****************************************************************************/
 int kiiObj_uploadBody(unsigned char *data, unsigned int length)
@@ -696,7 +682,7 @@ int kiiObj_uploadBody(unsigned char *data, unsigned int length)
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  commit or cancel this uploading
+*  \brief  Commits or cancels this uploading
 *
 *****************************************************************************/
 int kiiObj_uploadBodyCommit(int committed)
@@ -795,10 +781,10 @@ int kiiObj_uploadBodyCommit(int committed)
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  retrieve object with objectID
+*  \brief  Retrieves object with objectID
 *
 *****************************************************************************/
-int kiiObj_retrieve(char *bucketName, char *objectID,  char *jsonObject, int length)
+int kiiObj_retrieve(char *bucketName, char *objectID,  char *jsonObject, unsigned int length)
 {
     char * p1;
     char * p2;
@@ -880,11 +866,11 @@ int kiiObj_retrieve(char *bucketName, char *objectID,  char *jsonObject, int len
 *               length - the downloading length of body
 *               data - the output data of received body
 *               actualLength - the actual length of received body
-*               totalLength - the output of total length of body
+*               totalLength - the output of total body length
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  download an object in multiple pieces
+*  \brief  Downloads an object body in multiple pieces
 *
 *****************************************************************************/
 int kiiObj_downloadBody(char *bucketName, char *objectID,  unsigned int position,  unsigned int length, unsigned char *data, unsigned int *actualLength, unsigned int *totalLength)

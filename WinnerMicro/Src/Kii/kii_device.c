@@ -18,7 +18,7 @@ extern kii_data_struct g_kii_data;
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  get token
+*  \brief  Gets token
 *
 *****************************************************************************/
 int kiiDev_getToken(char *vendorDeviceID, char *password)
@@ -139,7 +139,7 @@ int kiiDev_getToken(char *vendorDeviceID, char *password)
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  register device
+*  \brief  Registers device
 *
 *****************************************************************************/
 int kiiDev_register(char *vendorDeviceID, char *deviceType, char *password)

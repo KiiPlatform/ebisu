@@ -12,164 +12,187 @@
 #define STR_APPID "f25bd5bf"
 #define STR_APPKEY "3594109968d7adf522c9991c0be51137"
 #endif
-#if 0
+
 #define STR_BUCKET "DevLedControl"
-#define STR_APP_BUCKET "AppLedControl"
-#define STR_MEDIA_TYPE "Led"
-#define STR_OBJECTBODY_TYPE "Firmware/bin"
-#define STR_JSONOBJECT "{\"Led\":\"On\"}"
 #define STR_JSONOBJECT_PARTIALLY_UPDATE "{\"Led\":\"On\"}"
 #define STR_JSONOBJECT_FULLY_UPDATE "{\"Led\":\"On\"}"
 #define STR_OBJECT_ID "WinnerMicroTestObj"
-#define DEVICE_TYPE "Led"
-#define PASSWORD "123456"
-#endif
+
 #define STR_BUCKET_FIRWAREUPGRADE "WM_FirmwareUpgrade"
 #define STR_BUCKET_FROM_SERVER "LedControl"
 #define STR_BUCKET_TO_SERVER "LedState"
 #define STR_MEDIA_TYPE "Led"
 #define STR_OBJECTBODY_TYPE "Firmware/bin"
 #define STR_JSONOBJECT "{\"Led\":\"On\"}"
-#define DEVICE_TYPE "Led"
-#define PASSWORD "123456"
-
+#define STR_DEVICE_TYPE "Led"
+#define STR_PASSWORD "123456"
 #define STR_THING_TOPIC   "WinnerMicro_Led"
-#if 0
+
+char mVendorID[KII_DEVICE_VENDOR_ID+1] ;
+
 void kiiDemo_testObject(void)
 {
     char objectID[KII_OBJECTID_SIZE+1];
+    char jsonObject[512];
     static unsigned char objectMultiplePiecesBody1[20];
     static unsigned char objectMultiplePiecesBody2[30];
-    static unsigned char objectBody[20];
+    static unsigned char objectBody[512];
+    int i;
+    unsigned int bodyPosition;
+    unsigned int bodyLength;
+    unsigned int  bodyActualLength;
+    unsigned int bodyTotalLength;
+    unsigned char *bodyP;
+
 
     printf("kii demo object test.\r\n");
 
-    if (kiiObj_create(STR_BUCKET, STR_JSONOBJECT, NULL, objectID) < 0)
-    {
-        printf("kii create object without data type failed !\r\n");
-    }
-    else
-    {
-        printf("kii object is created without data type, objectID:\"%s\"\r\n", objectID);
-    }
-
     if (kiiObj_create(STR_BUCKET, STR_JSONOBJECT, STR_MEDIA_TYPE, objectID) < 0)
     {
-        printf("kii create object with data type failed !\r\n");
+        printf("Create object failed\r\n");
     }
     else
     {
-        printf("kii object is created with data type, objectID:\"%s\"\r\n", objectID);
-    }
-
-    if (kiiObj_createWithID(STR_BUCKET, STR_JSONOBJECT, NULL, STR_OBJECT_ID) < 0)
-    {
-        printf("kii object with ID and without data type failed !\r\n");
-    }
-    else
-    {
-        printf("kii object is created with ID and without data type , objectID:\"%s\"\r\n", STR_OBJECT_ID);
+        printf("Create object success, objectID:\"%s\"\r\n", objectID);
     }
 
     if (kiiObj_createWithID(STR_BUCKET, STR_JSONOBJECT, STR_MEDIA_TYPE, STR_OBJECT_ID) < 0)
     {
-        printf("kii object with ID and data type failed !\r\n");
+        printf("Create object with ID failed\r\n");
     }
     else
     {
-        printf("kii object is created with ID and data type, objectID:\"%s\"\r\n", STR_OBJECT_ID);
+        printf("Create object with ID success, objectID:\"%s\"\r\n", STR_OBJECT_ID);
     }
 
     if (kiiObj_partiallyUpdate(STR_BUCKET, STR_JSONOBJECT_PARTIALLY_UPDATE, objectID) < 0)
     {
-        printf("kii object partially update failed !\r\n");
+        printf("Partially update object failed\r\n");
     }
     else
     {
-        printf("kii object is partially updated, objectID:\"%s\"\r\n", objectID);
+        printf("Partially updated object success, objectID:\"%s\"\r\n", objectID);
     }
-	
-    if (kiiObj_fullyUpdate(STR_BUCKET, STR_JSONOBJECT_FULLY_UPDATE, NULL,  objectID) < 0)
-    {
-        printf("kii object fully update without data type failed !\r\n");
-    }
-    else
-    {
-        printf("kii object is fully updated without data type, objectID:\"%s\"\r\n", objectID);
-    }
-
 
     if (kiiObj_fullyUpdate(STR_BUCKET, STR_JSONOBJECT_FULLY_UPDATE, STR_MEDIA_TYPE,  objectID) < 0)
     {
-        printf("kii object fully update with data type failed !\r\n");
+        printf("Fully update object failed\r\n");
     }
     else
     {
-        printf("kii object is fully updated with data type, objectID:\"%s\"\r\n", objectID);
+        printf("Fully updated object success, objectID:\"%s\"\r\n", objectID);
     }
 	
-    if (kiiObj_fullyUpdate(STR_BUCKET, STR_JSONOBJECT_FULLY_UPDATE, STR_MEDIA_TYPE,  objectID) < 0)
-    {
-        printf("kii object fully update with data type failed !\r\n");
-    }
-    else
-    {
-        printf("kii object is fully updated with data type, objectID:\"%s\"\r\n", objectID);
-    }
-
     memset(objectBody, 'T', sizeof(objectBody));
     if (kiiObj_uploadBodyAtOnce(STR_BUCKET, objectID,  STR_OBJECTBODY_TYPE, objectBody, sizeof(objectBody)) < 0)
     {
-        printf("kii object upload body at once  failed !\r\n");
+        printf("Upload object body at once failed\r\n");
     }
     else
     {
-        printf("kii object body is uploaded at once, objectID:\"%s\"\r\n", objectID);
+        printf("Uploaded object body at once success, objectID:\"%s\"\r\n", objectID);
     }
 
-
-    memset(objectMultiplePiecesBody1, 'U', sizeof(objectMultiplePiecesBody1));
-    memset(objectMultiplePiecesBody2, 'E', sizeof(objectMultiplePiecesBody2));
     if (kiiObj_uploadBodyInit(STR_BUCKET, objectID, STR_OBJECTBODY_TYPE, sizeof(objectMultiplePiecesBody1)+sizeof(objectMultiplePiecesBody2)) < 0)
     {
-        printf("kii object upload mutiple pieces body init failed !\r\n");
+        printf("Initialize uploading mutiple pieces object body failed\r\n");
     }
     else if (kiiObj_uploadBody(objectMultiplePiecesBody1, sizeof(objectMultiplePiecesBody1)) < 0)
     {
-        printf("kii object upload mutiple pieces of 1 failed !\r\n");
+        printf("Upload mutiple pieces object body of part 1failed\r\n");
     }
     else if (kiiObj_uploadBody(objectMultiplePiecesBody2, sizeof(objectMultiplePiecesBody2)) < 0)
     {
-        printf("kii object upload mutiple pieces of 2 failed !\r\n");
-    }
-    else if (kiiObj_uploadBodyCommit(1) < 0)
-    {
-        printf("kii object upload multiple pieces body commit failed !\r\n");
-    }
-    else
-    {
-        printf("kii object upload multiple pieces body successfully !\r\n");
-    }
-
-    if (kiiObj_uploadBodyInit(STR_BUCKET, objectID, STR_OBJECTBODY_TYPE, sizeof(objectMultiplePiecesBody1)+sizeof(objectMultiplePiecesBody2)) < 0)
-    {
-        printf("kii object upload mutiple pieces body init failed !\r\n");
-    }
-    else if (kiiObj_uploadBody(objectMultiplePiecesBody1, sizeof(objectMultiplePiecesBody1)) < 0)
-    {
-        printf("kii object upload mutiple pieces of 1 failed !\r\n");
+        printf("Upload mutiple pieces object body of part 2failed\r\n");
     }
     else if (kiiObj_uploadBodyCommit(0) < 0)
     {
-        printf("kii object upload multiple pieces body cancelled failed !\r\n");
+        printf("Cancel uploadding multiple pieces object body failed\r\n");
     }
     else
     {
-        printf("kii object upload multiple pieces body cancelled successfully !\r\n");
+        printf("Upload then cancel  multiple pieces object body success\r\n");
+    }
+
+    for (i = 0; i< sizeof(objectMultiplePiecesBody1); i++)
+    {
+        objectMultiplePiecesBody1[i] = i;
+    }
+    for ( ; i< (sizeof(objectMultiplePiecesBody1)+sizeof(objectMultiplePiecesBody2)); i++)
+    {
+        objectMultiplePiecesBody1[i] = i;
+    }
+    if (kiiObj_uploadBodyInit(STR_BUCKET, objectID, STR_OBJECTBODY_TYPE, sizeof(objectMultiplePiecesBody1)+sizeof(objectMultiplePiecesBody2)) < 0)
+    {
+        printf("Initialize uploading mutiple pieces object body failed\r\n");
+    }
+    else if (kiiObj_uploadBody(objectMultiplePiecesBody1, sizeof(objectMultiplePiecesBody1)) < 0)
+    {
+        printf("Upload mutiple pieces object body of part 1failed\r\n");
+    }
+    else if (kiiObj_uploadBody(objectMultiplePiecesBody2, sizeof(objectMultiplePiecesBody2)) < 0)
+    {
+        printf("Upload mutiple pieces object body of part 2failed\r\n");
+    }
+    else if (kiiObj_uploadBodyCommit(1) < 0)
+    {
+        printf("Commit uploadding multiple pieces object body failed\r\n");
+    }
+    else
+    {
+        printf("Upload and commit  multiple pieces object body success\r\n");
+    }
+
+
+    memset(jsonObject, 0, sizeof(jsonObject));
+    if (kiiObj_retrieve(STR_BUCKET, objectID, jsonObject, sizeof(jsonObject)) < 0)
+    {
+        printf("Retrieve object failed, objectID:\"%s\"\r\n", objectID);
+    }
+    else
+    {
+	printf("Retrieve object  success, objectID:\"%s\"\r\njsonObject:\"%s\"\r\n", objectID, jsonObject);
+    }
+
+   printf("Testing downloading object body ...\r\n");
+    memset(objectBody, 0, sizeof(objectBody));
+    bodyPosition = 0;
+    bodyLength = 5;
+    bodyP = objectBody;
+    if (kiiObj_downloadBody(STR_BUCKET, objectID,  bodyPosition,  bodyLength, bodyP, &bodyActualLength, &bodyTotalLength) < 0)
+    {
+        printf("Download object body failed, objectID:\"%s\"\r\n", objectID);
+    }
+    else
+    {
+	printf("objectID:\"%s\"\r\n", objectID);
+	printf("bodyTotalLength:%d\r\n", bodyTotalLength);
+        do {
+		printf("bodyPosition:%d\r\n", bodyPosition);
+		printf("bodyLength:%d\r\n", bodyLength);
+		printf("bodyActualLength:%d\r\n", bodyActualLength);
+		bodyPosition +=bodyActualLength;
+		bodyP += bodyActualLength;
+		if (kiiObj_downloadBody(STR_BUCKET, objectID,  bodyPosition,  bodyLength, bodyP, &bodyActualLength, &bodyTotalLength) < 0)
+		{
+			printf("Download object body failed, objectID:\"%s\"\r\n", objectID);
+			bodyTotalLength = 0;
+			break;
+		}
+        }while((bodyPosition + bodyActualLength) < bodyTotalLength);
+	if (bodyTotalLength > 0)
+	{
+	    printf("Object body:\"");
+	    for (i=0; i<bodyTotalLength; i++)
+	    {
+	        printf("%d ", objectBody[i]);
+	    }
+ 	    printf("\"\r\n");
+	}
     }
 }
-#endif
-void kiiDemo_pushMessageCallback(char* jsonBuf, int rcvdCounter)
+
+void kiiDemo_pushCallback(char* jsonBuf, int rcvdCounter)
 {
     char * p1;
     char * p2;
@@ -177,7 +200,7 @@ void kiiDemo_pushMessageCallback(char* jsonBuf, int rcvdCounter)
     char objectID[KII_OBJECTID_SIZE+1];
     char bucketName[KII_BUCKET_NAME_SIZE+1];
 
-    printf("push message callback: jsonbuf:\r\n%s\r\n", jsonBuf);
+    printf("Push callback: jsonbuf:\r\n%s\r\n", jsonBuf);
     p1 = strstr(jsonBuf, "objectID");
     if (p1 != NULL)
     {
@@ -201,67 +224,24 @@ void kiiDemo_pushMessageCallback(char* jsonBuf, int rcvdCounter)
 
 	if (strcmp(bucketName, STR_BUCKET_FIRWAREUPGRADE) == 0)
 	{
-	        printf("firmware upgrade... !\r\n");
+	        printf("Firmware upgrade... !\r\n");
 	}
 	else if (strcmp(bucketName, STR_BUCKET_FROM_SERVER) == 0)
 	{
-/*	
-	    if (kiiObj_create(STR_BUCKET_TO_SERVER, STR_JSONOBJECT, STR_MEDIA_TYPE, objectID) < 0)
+	    if (kiiObj_createWithID(STR_BUCKET_TO_SERVER, STR_JSONOBJECT, STR_MEDIA_TYPE, mVendorID) < 0)
 	    {
-	        printf("kii create object with data type failed !\r\n");
+	        printf("Create object with ID failed\r\n");
 	    }
 	    else
 	    {
-	        printf("kii object is created with data type, objectID:\"%s\"\r\n", objectID);
-	    }
-*/
-	    unsigned char mac_addr[8];
-	    char vendorID[KII_DEVICE_VENDOR_ID+1] ;
-	    int i;	
-
-	    memset(mac_addr,0,sizeof(mac_addr));
-	    tls_get_mac_addr(mac_addr);
-	    memset(vendorID, 0, sizeof(vendorID));
-	    for(i=0; i<6; i++)
-	    {
-	        sprintf(vendorID+strlen(vendorID), "%02x", mac_addr[i]);
-	    }
-
-	    if (kiiObj_createWithID(STR_BUCKET_TO_SERVER, STR_JSONOBJECT, STR_MEDIA_TYPE, vendorID) < 0)
-	    {
-	        printf("kii object with ID and data type failed !\r\n");
-	    }
-	    else
-	    {
-	        printf("kii object is created with ID and data type, objectID:\"%s\"\r\n", vendorID);
+	        printf("Create object with ID success\r\n");
 	    }
 	}
 	else
 	{
+ 	    printf("Invalid bucket ID\r\n");
 	}
 
-#if 0	
-    printf("\r\nkiiDemo_pushMessageCallback\r\n");    
-/*	
-	printf("\r\n");
-    for (i=0; i<rcvdCounter; i++)
-    {
-        printf("%02x", jsonBuf[i]);
-    }
-*/
-	printf("\r\n=========================\r\n");
-       printf("%s", jsonBuf);
-	printf("\r\n=========================\r\n");
-    if (kiiObj_create(STR_BUCKET_TO_SERVER, STR_JSONOBJECT, STR_MEDIA_TYPE, objectID) < 0)
-    {
-        printf("kii create object with data type failed !\r\n");
-    }
-    else
-    {
-        printf("kii object is created with data type, objectID:\"%s\"\r\n", objectID);
-    }
-
-#endif	
 }
 
 
@@ -269,26 +249,42 @@ void kiiDemo_testPush(void)
 {
     if (kiiPush_createTopic(STR_THING_TOPIC) < 0)
     {
- 	printf("create bucket ""%s""error !\r\n", STR_THING_TOPIC);
+ 	printf("Create thing topic failed, topic:\"%s\"\r\n", STR_THING_TOPIC);
+    }
+    else
+    {
+	printf("Create thing topic success, topic:\"%s\"\r\n", STR_THING_TOPIC);
     }
 
     if (kiiPush_subscribeTopic(STR_THING_TOPIC) < 0)
     {
- 	printf("subscribe bucket ""%s""error !\r\n", STR_THING_TOPIC);
+ 	printf("Subscribe thing topic failed, topic:\"%s\"\r\n", STR_THING_TOPIC);
+    }
+    else
+    {
+	printf("Subscribe thing topic success, topic:\"%s\"\r\n", STR_THING_TOPIC);
     }
 
     if (kiiPush_subscribeAppBucket(STR_BUCKET_FIRWAREUPGRADE) < 0)
     {
- 	printf("Subscribe bucket ""%s""error !\r\n", STR_BUCKET_FIRWAREUPGRADE);
+	printf("Subscribe app bucket failed, bucket name::\"%s\"\r\n", STR_BUCKET_FIRWAREUPGRADE);
+    }
+    else
+    {
+	printf("Subscribe app bucket success, bucket name::\"%s\"\r\n", STR_BUCKET_FIRWAREUPGRADE);
     }
 
     if (kiiPush_subscribeThingBucket(STR_BUCKET_FROM_SERVER) < 0)
     {
- 	printf("Subscribe bucket ""%s""error !\r\n", STR_BUCKET_FROM_SERVER);
+	printf("Subscribe thing bucket failed, bucket name::\"%s\"\r\n", STR_BUCKET_FROM_SERVER);
+    }
+    else
+    {
+	printf("Subscribe thing bucket success, bucket name::\"%s\"\r\n", STR_BUCKET_FROM_SERVER);
     }
 
 	
-    if (KiiPush_init(DEMO_KII_TASK_PRIO, DEMO_KII_PINGREQ_TASK_PRIO, kiiDemo_pushMessageCallback) < 0)
+    if (KiiPush_init(DEMO_KII_PUSH_RECV_MSG_TASK_PRIO, DEMO_KII_PUSH_PINGREQ_TASK_PRIO, kiiDemo_pushCallback) < 0)
     {
 	printf("Init push error !\r\n");
 	return;
@@ -302,74 +298,58 @@ void kiiDemo_testPush(void)
 int kiiDemo_OnBoarding(void)
 {
     unsigned char mac_addr[8];
-    char vendorID[KII_DEVICE_VENDOR_ID+1] ;
     int i;	
 
     printf("Device on boarding ...\r\n");
     memset(mac_addr,0,sizeof(mac_addr));
     tls_get_mac_addr(mac_addr);
-    memset(vendorID, 0, sizeof(vendorID));
+    memset(mVendorID, 0, sizeof(mVendorID));
     for(i=0; i<6; i++)
     {
-        sprintf(vendorID+strlen(vendorID), "%02x", mac_addr[i]);
+        sprintf(mVendorID+strlen(mVendorID), "%02x", mac_addr[i]);
     }
 	
-    //strcpy(vendorID+strlen(vendorID), "12");
+    //strcpy(mVendorID+strlen(mVendorID), "12");
 	
-    printf("verdorID:""%s""\r\n", vendorID);
+    printf("verdorID:""%s""\r\n", mVendorID);
 
 	
-    if (kiiDev_getToken(vendorID, PASSWORD) != 0)
+    if (kiiDev_getToken(mVendorID, STR_PASSWORD) != 0)
     {
-        printf("Get token failed, try to register\r\n");
-        if (kiiDev_register(vendorID, DEVICE_TYPE, PASSWORD) != 0)
+        if (kiiDev_register(mVendorID, STR_DEVICE_TYPE, STR_PASSWORD) != 0)
         {
+            printf("Onboarding failed\r\n");
 	    return -1;
         }
 	else
 	{
+            printf("Register thing success\r\n");
 	    return 0;
 	}
     }
     else
     {
-	    return 0;
+        printf("Get thing token success\r\n");
+	return 0;
     }
 }
 
 int kiiDemo_test(char *buf)
 {
-    printf("Kii demo test for firmware upgrade\r\n");
-	
     if (kii_init(STR_SITE, STR_APPID, STR_APPKEY) < 0)
     {
-    	    printf("kii init failed\r\n");
-	    return WM_FAILED;
+       printf("Kii init failed\r\n");
+       return WM_FAILED;
     }
+
     if (kiiDemo_OnBoarding() != 0)
     {
-    	    printf("device on bording failed\r\n");
+    	    printf("Device onbording failed\r\n");
 	    return WM_FAILED;
     }
 
-    //kiiDemo_testObject();
+    kiiDemo_testObject();
     kiiDemo_testPush();
     return WM_SUCCESS;
-
 }
 
-#if 0
-int gpio_isr_test(char *buf)
-{
-	u16 gpio_pin;
-	
-	gpio_pin = DEMO_ISR_IO;
-
-	//²âÊÔÖÐ¶Ï
-	tls_gpio_cfg(gpio_pin, TLS_GPIO_DIR_INPUT, TLS_GPIO_ATTR_PULLLOW);
-	tls_gpio_isr_register(demo_gpio_isr_callback,NULL);
-	tls_gpio_int_enable(gpio_pin, TLS_GPIO_INT_TRIG_RISING_EDGE);
-	printf("\ntest gpio %d rising isr\n",gpio_pin);
-	return WM_SUCCESS;
-}
-#endif

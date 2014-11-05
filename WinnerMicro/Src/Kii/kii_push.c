@@ -30,10 +30,10 @@ static unsigned int  mKiiPush_pingReqTaskStk[KIIPUSH_PINGREQ_TASK_STK_SIZE];
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  register installation of a device
+*  \brief  Registers installation of a device
 *
 *****************************************************************************/
-int kiiPush_install(void)
+static int kiiPush_install(void)
 {
     char * p1;
     char * p2;
@@ -130,10 +130,10 @@ int kiiPush_install(void)
 *             KIIPUSH_ENDPOINT_UNAVAILABLE
 *             KIIPUSH_ENDPOINT_ERROR
 *
-*  \brief  retrieve MQTT endpoint
+*  \brief  Retrieves MQTT endpoint
 *
 *****************************************************************************/
-kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
+static kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
 {
     char * p1;
     char * p2;
@@ -279,7 +279,7 @@ kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  subscribe app scope bucket
+*  \brief  Subscribes app scope bucket
 *
 *****************************************************************************/
 int kiiPush_subscribeAppBucket(char *bucketID)
@@ -351,7 +351,7 @@ int kiiPush_subscribeAppBucket(char *bucketID)
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  subscribe thing scope bucket
+*  \brief  Subscribes thing scope bucket
 *
 *****************************************************************************/
 int kiiPush_subscribeThingBucket(char *bucketID)
@@ -425,7 +425,7 @@ int kiiPush_subscribeThingBucket(char *bucketID)
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  subscribe topic
+*  \brief  Subscribes thing scope topic
 *
 *****************************************************************************/
 int kiiPush_subscribeTopic(char *topicID)
@@ -499,7 +499,7 @@ int kiiPush_subscribeTopic(char *topicID)
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  create topic
+*  \brief  Creates thing scope topic
 *
 *****************************************************************************/
 int kiiPush_createTopic(char *topicID)
@@ -564,12 +564,23 @@ int kiiPush_createTopic(char *topicID)
 }
 
 
-static void kiiPush_task(void *sdata)
+/*****************************************************************************
+*
+*  kiiPush_recvMsgTask
+*
+*  \param: sdata - an optional data, points to callback function
+*
+*  \return none
+*
+*  \brief  Receives message task
+*
+*****************************************************************************/
+static void kiiPush_recvMsgTask(void *sdata)
 {
-    kiiPush_recvMessageCallback callback;
+    kiiPush_recvMsgCallback callback;
     unsigned char ipBuf[4];
 
-    callback = (kiiPush_recvMessageCallback) sdata;
+    callback = (kiiPush_recvMsgCallback) sdata;
 
     KII_DEBUG("kii-info: installationID:%s\r\n", g_kii_push.installationID);
     KII_DEBUG("kii-info: mqttTopic:%s\r\n", g_kii_push.mqttTopic);
@@ -650,6 +661,17 @@ static void kiiPush_task(void *sdata)
 }
 
 
+/*****************************************************************************
+*
+*  kiiPush_pingReqTask
+*
+*  \param: sdata - an optional data, points to callback function
+*
+*  \return none
+*
+*  \brief  "PINGREQ" task
+*
+*****************************************************************************/
 static void kiiPush_pingReqTask(void *sdata)
 {
     for(;;)
@@ -667,16 +689,16 @@ static void kiiPush_pingReqTask(void *sdata)
 *
 *  KiiPush_init
 *
-*  \param: taskPrio - the priority of task
-*               pingReqTaskPrio - the priority of ping req task
+*  \param: recvMsgtaskPrio - the priority of task for receiving message
+*               pingReqTaskPrio - the priority of task for "PINGREQ" task
 *               callback - the call back function for processing the push message received
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  init push
+*  \brief  Initializes push
 *
 *****************************************************************************/
-int KiiPush_init(unsigned int taskPrio, unsigned int pingReqTaskPrio, kiiPush_recvMessageCallback callback)
+int KiiPush_init(unsigned int recvMsgtaskPrio, unsigned int pingReqTaskPrio, kiiPush_recvMsgCallback callback)
 {
 	kiiPush_endpointState_e endpointState;
 
@@ -697,11 +719,11 @@ int KiiPush_init(unsigned int taskPrio, unsigned int pingReqTaskPrio, kiiPush_re
     if (endpointState == KIIPUSH_ENDPOINT_READY)
     {
         kiiHal_taskCreate(NULL,
-			                      kiiPush_task,
+			                      kiiPush_recvMsgTask,
 						(void *)callback,
 						(void *)mKiiPush_taskStk,
 						KIIPUSH_TASK_STK_SIZE * sizeof(unsigned char), 
-						taskPrio);
+						recvMsgtaskPrio);
 	    
         kiiHal_taskCreate(NULL,
 			                     kiiPush_pingReqTask,

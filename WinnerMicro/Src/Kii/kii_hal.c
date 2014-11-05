@@ -17,7 +17,7 @@ extern kii_data_struct g_kii_data;
 *
 *  \return  0:success; -1: failure
 *
-*  \brief  get host IP address
+*  \brief  Gets host IP address
 *
 *****************************************************************************/
 int kiiHal_dns(char *host, unsigned char *buf)
@@ -47,7 +47,7 @@ int kiiHal_dns(char *host, unsigned char *buf)
 *
 *  \return  socket handle
 *
-*  \brief  create socket
+*  \brief  Creates socket
 *
 *****************************************************************************/
 int kiiHal_socketCreate(void)
@@ -97,7 +97,7 @@ int kiiHal_socketClose(int *socketNum)
 *
 *  \return  0:success; -1: failure
 *
-*  \brief  connect a TCP socket
+*  \brief  Connects a TCP socket
 *
 *****************************************************************************/
 int kiiHal_connect(int socketNum, char *saData, int port)
@@ -128,7 +128,7 @@ int kiiHal_connect(int socketNum, char *saData, int port)
 *
 *  \return  Number of bytes sent
 *
-*  \brief  sends data out to the internet
+*  \brief  Sends data out to the internet
 *
 *****************************************************************************/
 int kiiHal_socketSend(int socketNum, char * buf, int len)
@@ -249,7 +249,7 @@ int kiiHal_transfer(void)
 *
 *  \return  none
 *
-*  \brief  delay ms, the minimal precision is 10ms for WinnerMicro
+*  \brief  Delay ms, the minimal precision is 10ms for WinnerMicro
 *
 *****************************************************************************/
 void kiiHal_delayMs(unsigned int ms)
@@ -273,7 +273,7 @@ void kiiHal_delayMs(unsigned int ms)
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  create task
+*  \brief  Creates task
 *
 *****************************************************************************/
 int kiiHal_taskCreate(const char* name, KiiHal_taskEntry pEntry, void* param, unsigned char *stk_start, unsigned int stk_size, unsigned int prio)
@@ -297,7 +297,7 @@ int kiiHal_taskCreate(const char* name, KiiHal_taskEntry pEntry, void* param, un
 *
 *  \return 0:net up; -1: net down
 *
-*  \brief  get the net state
+*  \brief  Gets the net state
 *
 *****************************************************************************/
 int kiiHal_getNetState(void)

@@ -4,7 +4,7 @@
 #include "kii.h"
 
 //#define KII_CLOUD_SUPPORT  1
-#define KII_DEBUG_SUPPORT    1
+//#define KII_DEBUG_SUPPORT    1
 
 #if KII_DEBUG_SUPPORT
 #define KII_DEBUG printf

@@ -9,6 +9,18 @@
 
 extern kii_push_struct g_kii_push;
 
+/*****************************************************************************
+*
+*  KiiMQTT_encode
+*
+*  \param  buf - the input of buffer to be encoded
+*               length - the buffer length
+*
+*  \return the number of bytes written to buffer
+*
+*  \brief  Encodes the message length according to the MQTT algorithm
+*
+*****************************************************************************/
 int KiiMQTT_encode(char* buf, int length)
 {
 	int rc = 0;
@@ -26,6 +38,18 @@ int KiiMQTT_encode(char* buf, int length)
 }
 
 
+/*****************************************************************************
+*
+*  KiiMQTT_decode
+*
+*  \param  buf - the input of buffer to be dencoded
+*               value - the decoded length returned
+*
+*  \return the number of bytes written to buffer
+*
+*  \brief  Decodes the message length according to the MQTT algorithm
+*
+*****************************************************************************/
 int KiiMQTT_decode(char* buf, int *value)
 {
 	int i = 0;
@@ -46,6 +70,17 @@ int KiiMQTT_decode(char* buf, int *value)
 }
 
 
+/*****************************************************************************
+*
+*  KiiMQTT_connect
+*
+*  \param  keepAliveInterval -  keep alive in seconds
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  Connects to MQTT broker
+*
+*****************************************************************************/
 int KiiMQTT_connect(unsigned short keepAliveInterval)
 {
     unsigned char ipBuf[4];
@@ -175,6 +210,18 @@ int KiiMQTT_connect(unsigned short keepAliveInterval)
     }
 }
 
+
+/*****************************************************************************
+*
+*  KiiMQTT_subscribe
+*
+*  \param  qos -  QoS value, 0, 1 or 2
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  Subscribes MQTT topic
+*
+*****************************************************************************/
 int KiiMQTT_subscribe(enum QoS qos)
 {
     char buf[256];
@@ -259,6 +306,17 @@ int KiiMQTT_subscribe(enum QoS qos)
 }
 
 
+/*****************************************************************************
+*
+*  KiiMQTT_pingReq
+*
+*  \param  None
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  Sends "PINGREQ"
+*
+*****************************************************************************/
 int KiiMQTT_pingReq(void)
 {
 //	  int i;

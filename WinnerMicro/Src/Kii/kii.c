@@ -15,7 +15,7 @@ kii_data_struct g_kii_data;
 *
 *  \return  0:success; -1: failure
 *
-*  \brief  Kii initialize
+*  \brief  Initializes Kii 
 *
 *****************************************************************************/
 int kii_init(char *site, char *appID, char *appKey) {
