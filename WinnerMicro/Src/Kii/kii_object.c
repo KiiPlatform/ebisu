@@ -253,25 +253,11 @@ static int kiiObj_update(char *bucketName, char *jsonObject, char *dataType, cha
    {
        //content-type	
         strcpy(buf+strlen(buf), STR_CONTENT_TYPE);
-	   if (dataType !=NULL)
-	   {
-	       if (strlen(dataType) > 0)
-	       {
-	           strcpy(buf+strlen(buf), "application/vnd.");
-	           strcpy(buf+strlen(buf), g_kii_data.appID);
-	           strcpy(buf+strlen(buf), ".");
-	           strcpy(buf+strlen(buf), dataType);
-	           strcpy(buf+strlen(buf), "+json");
-	       }
-	        else
-		{
-	           strcpy(buf+strlen(buf), "application/json");
-	       }
-	   }
-	   else
-	   {
-	       strcpy(buf+strlen(buf), "application/json");
-	   }
+        strcpy(buf+strlen(buf), "application/vnd.");
+        strcpy(buf+strlen(buf), g_kii_data.appID);
+        strcpy(buf+strlen(buf), ".");
+        strcpy(buf+strlen(buf), dataType);
+        strcpy(buf+strlen(buf), "+json");
         strcpy(buf+strlen(buf), STR_CRLF);
 		
         if (updateOrCreateWithID == KIIOBJ_FULLY_UPDATE)
