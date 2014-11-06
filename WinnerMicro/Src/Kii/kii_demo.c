@@ -13,20 +13,35 @@
 #define STR_APPKEY "3594109968d7adf522c9991c0be51137"
 #endif
 
-#define STR_BUCKET "DevLedControl"
-#define STR_JSONOBJECT_PARTIALLY_UPDATE "{\"Led\":\"On\"}"
-#define STR_JSONOBJECT_FULLY_UPDATE "{\"Led\":\"On\"}"
-#define STR_OBJECT_ID "WinnerMicroTestObj"
+//for data management test
+#define STR_TEST_BUCKET "TestBucket"
+#define STR_TEST_JSONOBJECT "{\"score\":\"300\", \"name\":\"game1\"}"
+#define STR_TEST_JSONOBJECT_PARTIALLY_UPDATE "{\"score\":\"100\"}"
+#define STR_TEST_JSONOBJECT_FULLY_UPDATE "{\"score\":\"200\", \"name\":\"game1\"}"
+#define STR_TEST_OBJECT_ID "TestObject"
+#define STR_TEST_MEDIA_TYPE "Mydata"
+#define STR_TEST_OBJECTBODY_TYPE "Mydata/Raw"
+#define STR_TEST_THING_TOPIC   "TestTopic"
 
-#define STR_BUCKET_FIRWAREUPGRADE "WM_FirmwareUpgrade"
-#define STR_BUCKET_FROM_SERVER "LedControl"
-#define STR_BUCKET_TO_SERVER "LedState"
-#define STR_MEDIA_TYPE "Led"
-#define STR_OBJECTBODY_TYPE "Firmware/bin"
-#define STR_JSONOBJECT "{\"Led\":\"On\"}"
+//Thing onboarding
 #define STR_DEVICE_TYPE "Led"
 #define STR_PASSWORD "123456"
-#define STR_THING_TOPIC   "WinnerMicro_Led"
+
+//remote control
+#define STR_LED_BUCKET_CONTROL  "LedControl"    //thing scope
+#define STR_LED_BUCKET_STATUS  "LedStatus"    //thing scope
+#define STR_LED_OBJECT_ID "Led"
+#define STR_LED_JSONOBJECT_LEDON "{\"Led\":\"ON\"}"
+#define STR_LED_JSONOBJECT_LEDOFF "{\"Led\":\"OFF\"}"
+#define STR_LED_MEDIA_TYPE "Led"
+
+//remote control
+#define STR_LED_BUCKET_FIRWAREUPGRADE "WM_FirmwareUpgrade" //app scope
+
+//check alive
+#define STR_BUCKET_KEEP_ALIVE "KeepAlive" //thing scope
+
+
 
 char mVendorID[KII_DEVICE_VENDOR_ID+1] ;
 
@@ -47,7 +62,7 @@ void kiiDemo_testObject(void)
 
     printf("kii demo object test.\r\n");
 
-    if (kiiObj_create(STR_BUCKET, STR_JSONOBJECT, STR_MEDIA_TYPE, objectID) < 0)
+    if (kiiObj_create(STR_TEST_BUCKET, STR_TEST_JSONOBJECT, STR_TEST_MEDIA_TYPE, objectID) < 0)
     {
         printf("Create object failed\r\n");
     }
@@ -56,16 +71,16 @@ void kiiDemo_testObject(void)
         printf("Create object success, objectID:\"%s\"\r\n", objectID);
     }
 
-    if (kiiObj_createWithID(STR_BUCKET, STR_JSONOBJECT, STR_MEDIA_TYPE, STR_OBJECT_ID) < 0)
+    if (kiiObj_createWithID(STR_TEST_BUCKET, STR_TEST_JSONOBJECT, STR_TEST_MEDIA_TYPE, STR_TEST_OBJECT_ID) < 0)
     {
         printf("Create object with ID failed\r\n");
     }
     else
     {
-        printf("Create object with ID success, objectID:\"%s\"\r\n", STR_OBJECT_ID);
+        printf("Create object with ID success, objectID:\"%s\"\r\n", STR_TEST_OBJECT_ID);
     }
 
-    if (kiiObj_partiallyUpdate(STR_BUCKET, STR_JSONOBJECT_PARTIALLY_UPDATE, objectID) < 0)
+    if (kiiObj_partiallyUpdate(STR_TEST_BUCKET, STR_TEST_JSONOBJECT_PARTIALLY_UPDATE, objectID) < 0)
     {
         printf("Partially update object failed\r\n");
     }
@@ -74,7 +89,7 @@ void kiiDemo_testObject(void)
         printf("Partially updated object success, objectID:\"%s\"\r\n", objectID);
     }
 
-    if (kiiObj_fullyUpdate(STR_BUCKET, STR_JSONOBJECT_FULLY_UPDATE, STR_MEDIA_TYPE,  objectID) < 0)
+    if (kiiObj_fullyUpdate(STR_TEST_BUCKET, STR_TEST_JSONOBJECT_FULLY_UPDATE, STR_TEST_MEDIA_TYPE,  objectID) < 0)
     {
         printf("Fully update object failed\r\n");
     }
@@ -84,7 +99,7 @@ void kiiDemo_testObject(void)
     }
 	
     memset(objectBody, 'T', sizeof(objectBody));
-    if (kiiObj_uploadBodyAtOnce(STR_BUCKET, objectID,  STR_OBJECTBODY_TYPE, objectBody, sizeof(objectBody)) < 0)
+    if (kiiObj_uploadBodyAtOnce(STR_TEST_BUCKET, objectID,  STR_TEST_OBJECTBODY_TYPE, objectBody, sizeof(objectBody)) < 0)
     {
         printf("Upload object body at once failed\r\n");
     }
@@ -93,7 +108,7 @@ void kiiDemo_testObject(void)
         printf("Uploaded object body at once success, objectID:\"%s\"\r\n", objectID);
     }
 
-    if (kiiObj_uploadBodyInit(STR_BUCKET, objectID, STR_OBJECTBODY_TYPE, sizeof(objectMultiplePiecesBody1)+sizeof(objectMultiplePiecesBody2)) < 0)
+    if (kiiObj_uploadBodyInit(STR_TEST_BUCKET, objectID, STR_TEST_OBJECTBODY_TYPE, sizeof(objectMultiplePiecesBody1)+sizeof(objectMultiplePiecesBody2)) < 0)
     {
         printf("Initialize uploading mutiple pieces object body failed\r\n");
     }
@@ -122,7 +137,7 @@ void kiiDemo_testObject(void)
     {
         objectMultiplePiecesBody1[i] = i;
     }
-    if (kiiObj_uploadBodyInit(STR_BUCKET, objectID, STR_OBJECTBODY_TYPE, sizeof(objectMultiplePiecesBody1)+sizeof(objectMultiplePiecesBody2)) < 0)
+    if (kiiObj_uploadBodyInit(STR_TEST_BUCKET, objectID, STR_TEST_OBJECTBODY_TYPE, sizeof(objectMultiplePiecesBody1)+sizeof(objectMultiplePiecesBody2)) < 0)
     {
         printf("Initialize uploading mutiple pieces object body failed\r\n");
     }
@@ -145,7 +160,7 @@ void kiiDemo_testObject(void)
 
 
     memset(jsonObject, 0, sizeof(jsonObject));
-    if (kiiObj_retrieve(STR_BUCKET, objectID, jsonObject, sizeof(jsonObject)) < 0)
+    if (kiiObj_retrieve(STR_TEST_BUCKET, objectID, jsonObject, sizeof(jsonObject)) < 0)
     {
         printf("Retrieve object failed, objectID:\"%s\"\r\n", objectID);
     }
@@ -159,7 +174,7 @@ void kiiDemo_testObject(void)
     bodyPosition = 0;
     bodyLength = 5;
     bodyP = objectBody;
-    if (kiiObj_downloadBody(STR_BUCKET, objectID,  bodyPosition,  bodyLength, bodyP, &bodyActualLength, &bodyTotalLength) < 0)
+    if (kiiObj_downloadBody(STR_TEST_BUCKET, objectID,  bodyPosition,  bodyLength, bodyP, &bodyActualLength, &bodyTotalLength) < 0)
     {
         printf("Download object body failed, objectID:\"%s\"\r\n", objectID);
     }
@@ -173,7 +188,7 @@ void kiiDemo_testObject(void)
 		printf("bodyActualLength:%d\r\n", bodyActualLength);
 		bodyPosition +=bodyActualLength;
 		bodyP += bodyActualLength;
-		if (kiiObj_downloadBody(STR_BUCKET, objectID,  bodyPosition,  bodyLength, bodyP, &bodyActualLength, &bodyTotalLength) < 0)
+		if (kiiObj_downloadBody(STR_TEST_BUCKET, objectID,  bodyPosition,  bodyLength, bodyP, &bodyActualLength, &bodyTotalLength) < 0)
 		{
 			printf("Download object body failed, objectID:\"%s\"\r\n", objectID);
 			bodyTotalLength = 0;
@@ -192,6 +207,7 @@ void kiiDemo_testObject(void)
     }
 }
 
+
 void kiiDemo_pushCallback(char* jsonBuf, int rcvdCounter)
 {
     char * p1;
@@ -199,15 +215,16 @@ void kiiDemo_pushCallback(char* jsonBuf, int rcvdCounter)
 
     char objectID[KII_OBJECTID_SIZE+1];
     char bucketName[KII_BUCKET_NAME_SIZE+1];
+    char jsonObject[512];
 
-    printf("Push callback: jsonbuf:\r\n%s\r\n", jsonBuf);
+    //printf("Push callback: jsonbuf:\r\n%s\r\n", jsonBuf);
     p1 = strstr(jsonBuf, "objectID");
     if (p1 != NULL)
     {
         p1 +=8+3;
         p2 = strstr(p1, "\"");
-	memset(objectID, 0 ,sizeof(objectID));
-	memcpy(objectID, p1, p2-p1);
+        memset(objectID, 0 ,sizeof(objectID));
+        memcpy(objectID, p1, p2-p1);
     }
 
     p1 = strstr(jsonBuf, "bucketID");
@@ -215,74 +232,72 @@ void kiiDemo_pushCallback(char* jsonBuf, int rcvdCounter)
     {
         p1 +=8+3;
         p2 = strstr(p1, "\"");
-	memset(bucketName, 0 ,sizeof(bucketName));
-	memcpy(bucketName, p1, p2-p1);
+        memset(bucketName, 0 ,sizeof(bucketName));
+        memcpy(bucketName, p1, p2-p1);
     }
 
-      printf("bucketID:%s\r\n", bucketName);
-      printf("objectID:%s\r\n", objectID);
+    //printf("bucketID:%s\r\n", bucketName);
+    //printf("objectID:%s\r\n", objectID);
 
-	if (strcmp(bucketName, STR_BUCKET_FIRWAREUPGRADE) == 0)
-	{
-	        printf("Firmware upgrade... !\r\n");
-	}
-	else if (strcmp(bucketName, STR_BUCKET_FROM_SERVER) == 0)
-	{
-	    if (kiiObj_createWithID(STR_BUCKET_TO_SERVER, STR_JSONOBJECT, STR_MEDIA_TYPE, mVendorID) < 0)
-	    {
-	        printf("Create object with ID failed\r\n");
-	    }
-	    else
-	    {
-	        printf("Create object with ID success\r\n");
-	    }
-	}
-	else
-	{
- 	    printf("Invalid bucket ID\r\n");
-	}
-
+    if (strcmp(bucketName, STR_LED_BUCKET_FIRWAREUPGRADE) == 0)
+    {
+        printf("Firmware upgrade... \r\n");
+        //TODO: get url and and upgrade firmware
+    }
+    else if (strcmp(bucketName, STR_LED_BUCKET_CONTROL) == 0)
+    {
+        //printf("Remote control led... \r\n");
+        //retrieve object
+        memset(jsonObject, 0, sizeof(jsonObject));
+        if (kiiObj_retrieve(STR_LED_BUCKET_CONTROL, objectID, jsonObject, sizeof(jsonObject)) < 0)
+        {
+            printf("Retrieve object failed, objectID:\"%s\"\r\n", objectID);
+        }
+        else
+        {
+            //printf("Retrieve object  success, objectID:\"%s\"\r\njsonObject:\"%s\"\r\n", objectID, jsonObject);
+            if (strstr(jsonObject, "\"Led\":\"ON") != NULL)
+            {
+                printf("Led on ...\r\n");
+                //TODO: switch on led
+                if (kiiObj_createWithID(STR_LED_BUCKET_STATUS, STR_LED_JSONOBJECT_LEDON, STR_LED_MEDIA_TYPE, STR_LED_OBJECT_ID) < 0)
+                {
+                    printf("Create object with ID failed\r\n");
+                }
+            }
+            else if (strstr(jsonObject, "\"Led\":\"OFF") != NULL)
+            {
+                //TODO: switch off led
+                printf("Led off ...\r\n");
+                if (kiiObj_createWithID(STR_LED_BUCKET_STATUS, STR_LED_JSONOBJECT_LEDOFF, STR_LED_MEDIA_TYPE, STR_LED_OBJECT_ID) < 0)
+                {
+                    printf("Create object with ID failed\r\n");
+                }
+            }
+            else
+            {
+                printf("Invalid Led command\r\n");
+            }
+        }
+    }
+    else
+    {
+        printf("Invalid bucket ID\r\n");
+    }
 }
 
 
 void kiiDemo_testPush(void)
 {
-    if (kiiPush_createTopic(STR_THING_TOPIC) < 0)
+    if (kiiPush_subscribeAppBucket(STR_LED_BUCKET_FIRWAREUPGRADE) < 0)
     {
- 	printf("Create thing topic failed, topic:\"%s\"\r\n", STR_THING_TOPIC);
-    }
-    else
-    {
-	printf("Create thing topic success, topic:\"%s\"\r\n", STR_THING_TOPIC);
+	printf("Subscribe app bucket failed, bucket name::\"%s\"\r\n", STR_LED_BUCKET_FIRWAREUPGRADE);
     }
 
-    if (kiiPush_subscribeTopic(STR_THING_TOPIC) < 0)
+    if (kiiPush_subscribeThingBucket(STR_LED_BUCKET_CONTROL) < 0)
     {
- 	printf("Subscribe thing topic failed, topic:\"%s\"\r\n", STR_THING_TOPIC);
+	printf("Subscribe thing bucket failed, bucket name::\"%s\"\r\n", STR_LED_BUCKET_CONTROL);
     }
-    else
-    {
-	printf("Subscribe thing topic success, topic:\"%s\"\r\n", STR_THING_TOPIC);
-    }
-
-    if (kiiPush_subscribeAppBucket(STR_BUCKET_FIRWAREUPGRADE) < 0)
-    {
-	printf("Subscribe app bucket failed, bucket name::\"%s\"\r\n", STR_BUCKET_FIRWAREUPGRADE);
-    }
-    else
-    {
-	printf("Subscribe app bucket success, bucket name::\"%s\"\r\n", STR_BUCKET_FIRWAREUPGRADE);
-    }
-
-    if (kiiPush_subscribeThingBucket(STR_BUCKET_FROM_SERVER) < 0)
-    {
-	printf("Subscribe thing bucket failed, bucket name::\"%s\"\r\n", STR_BUCKET_FROM_SERVER);
-    }
-    else
-    {
-	printf("Subscribe thing bucket success, bucket name::\"%s\"\r\n", STR_BUCKET_FROM_SERVER);
-    }
-
 	
     if (KiiPush_init(DEMO_KII_PUSH_RECV_MSG_TASK_PRIO, DEMO_KII_PUSH_PINGREQ_TASK_PRIO, kiiDemo_pushCallback) < 0)
     {
@@ -334,6 +349,28 @@ int kiiDemo_OnBoarding(void)
     }
 }
 
+
+void kiiDemo_testTopic(void)
+{
+    if (kiiPush_createTopic(STR_TEST_THING_TOPIC) < 0)
+    {
+ 	printf("Create thing topic failed, topic:\"%s\"\r\n", STR_TEST_THING_TOPIC);
+    }
+    else
+    {
+	printf("Create thing topic success, topic:\"%s\"\r\n", STR_TEST_THING_TOPIC);
+    }
+
+    if (kiiPush_subscribeTopic(STR_TEST_THING_TOPIC) < 0)
+    {
+ 	printf("Subscribe thing topic failed, topic:\"%s\"\r\n", STR_TEST_THING_TOPIC);
+    }
+    else
+    {
+	printf("Subscribe thing topic success, topic:\"%s\"\r\n", STR_TEST_THING_TOPIC);
+    }
+}
+
 int kiiDemo_test(char *buf)
 {
     if (kii_init(STR_SITE, STR_APPID, STR_APPKEY) < 0)
@@ -349,6 +386,7 @@ int kiiDemo_test(char *buf)
     }
 
     kiiDemo_testObject();
+    kiiDemo_testTopic();
     kiiDemo_testPush();
     return WM_SUCCESS;
 }
