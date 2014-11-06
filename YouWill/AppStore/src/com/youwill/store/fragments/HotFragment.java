@@ -1,6 +1,5 @@
 package com.youwill.store.fragments;
 
-import android.widget.AdapterView;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
@@ -31,6 +30,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -331,7 +331,7 @@ public class HotFragment extends Fragment implements View.OnClickListener, Adapt
             item.json = cursor.getString(2);
             try {
                 JSONObject app = new JSONObject(item.json);
-                item.image = app.getString("recommend_image");
+                item.image = app.optString("recommend_image");
                 if (!TextUtils.isEmpty(item.image)) {
                     ImageLoader.getInstance().loadImage(item.image, mListener);
                 }
