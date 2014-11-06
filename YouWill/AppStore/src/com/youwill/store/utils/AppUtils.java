@@ -54,7 +54,6 @@ public class AppUtils {
     }
 
     public static void installApp(Context context, Uri fileUri) {
-        LogUtils.d("installApp, fileUri is " + fileUri);
         Intent installIntent = new Intent(Intent.ACTION_VIEW)
                 .setDataAndType(fileUri,
                         "application/vnd.android.package-archive");

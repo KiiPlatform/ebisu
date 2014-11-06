@@ -42,7 +42,8 @@ import java.util.Map;
 /**
  * Created by tian on 14-9-23:下午11:01.
  */
-public class HotFragment extends Fragment implements View.OnClickListener, AdapterView.OnItemClickListener {
+public class HotFragment extends Fragment
+        implements View.OnClickListener, AdapterView.OnItemClickListener {
 
     RecyclerView latestView;
 
@@ -221,58 +222,37 @@ public class HotFragment extends Fragment implements View.OnClickListener, Adapt
 
         @Override
         public int getCount() {
-            return coverFlowItems.size();
+            if (coverFlowItems.isEmpty()) {
+                return 0;
+            }
+            return Integer.MAX_VALUE;
         }
 
         @Override
         public Object getItem(int position) {
-            return null;
+            int pos = position % coverFlowItems.size();
+            return coverFlowItems.get(pos);
         }
 
         @Override
         public long getItemId(int position) {
-            return 0;
+            return position;
         }
 
         @Override
         public View getCoverFlowItem(int position, View reusableView, ViewGroup parent) {
-            LogUtils.d("getCoverFlowItem, position is " + position);
-            final AppItem item = coverFlowItems.get(position);
+            LogUtils.d(TAG, "getCoverFlowItem, position is " + position);
+            int pos = position % coverFlowItems.size();
+            final AppItem item = coverFlowItems.get(pos);
             ImageView imageView = (ImageView) reusableView;
             if (imageView == null) {
                 imageView = new ImageView(parent.getContext());
             }
             imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
             imageView.setLayoutParams(new FancyCoverFlow.LayoutParams(477, 239));
-//            File file = ImageLoader.getInstance().getDiskCache().get(item.image);
-//            if (file != null && file.exists()) {
-//                imageView.setImageBitmap(ImageLoader.getInstance().loadImageSync(item.image));
-//            } else {
-//                ImageLoader.getInstance().displayImage(item.image, imageView);
-//            }
             imageView.setImageBitmap(coverFlowImageMap.get(item.image));
             return imageView;
         }
-//
-//        @Override
-//        public Bitmap getImage(int position) {
-//            AppItem item = coverFlowItems.get(position);
-//            try {
-//                JSONObject app = new JSONObject(item.json);
-//                final String url = app.optString("recommend_image");
-//                File file = ImageLoader.getInstance().getDiskCache().get(url);
-//                if (file.exists()) {
-//                    ImageLoader.getInstance().loadImageSync(url);
-//                } else {
-//                    ImageLoader.getInstance().loadImage(url, listener);
-//                }
-//            } catch (Exception ignored) {
-//
-//            }
-//            //TODO: add default picture for cover flow
-//            return ((BitmapDrawable) (getResources().getDrawable(R.drawable.cover_flow1)))
-//                    .getBitmap();
-//        }
     }
 
     private class AppItem {
@@ -302,10 +282,10 @@ public class HotFragment extends Fragment implements View.OnClickListener, Adapt
                 switch (token) {
                     case YouWill.Application.RECOMMEND_TYPE_COVER_FLOW:
                         coverFlowItems = parseCursor(cursor);
-//                        if (!coverFlowItems.isEmpty()) {
-//                            coverFlow.setAdapter(mCoverFlowAdapter);
-//                            mCoverFlowAdapter.notifyDataSetChanged();
-//                        }
+                        coverFlow.setAdapter(mCoverFlowAdapter);
+                        coverFlow.setSelection(10000, true);
+                        LogUtils.d(TAG, "onQueryComplete, selection is " + coverFlow
+                                .getSelectedItemPosition());
                         break;
                     case YouWill.Application.RECOMMEND_TYPE_LINE1:
                         recommend1Items = parseCursor(cursor);
@@ -362,6 +342,7 @@ public class HotFragment extends Fragment implements View.OnClickListener, Adapt
             coverFlowImageMap.put(imageUri, loadedImage);
             if (coverFlowImageMap.size() == coverFlowItems.size()) {
                 coverFlow.setAdapter(mCoverFlowAdapter);
+                coverFlow.setSelection(10000);
             }
         }
 
