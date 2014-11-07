@@ -153,7 +153,8 @@ public class HotFragment extends Fragment
 
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-        String appId = coverFlowItems.get(i).appId;
+        int pos = i % coverFlowItems.size();
+        String appId = coverFlowItems.get(pos).appId;
         Intent intent = new Intent(getActivity(), AppDetailActivity.class);
         intent.putExtra(AppDetailActivity.EXTRA_APP_ID, appId);
         startActivity(intent);
