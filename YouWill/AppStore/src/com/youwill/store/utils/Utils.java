@@ -4,11 +4,14 @@ import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.youwill.store.net.DownloadAgent;
 import com.youwill.store.net.DownloadInfo;
 
-import android.content.pm.PackageInfo;
-import android.os.Bundle;
-
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.Bundle;
 
 import java.io.Closeable;
 
@@ -18,7 +21,9 @@ import java.io.Closeable;
 public class Utils {
 
     public static final int APP_STATUS_NONE = 0;
+
     public static final int APP_STATUS_INSTALLED = -1;
+
     public static final int APP_STATUS_CAN_UPGRADE = -2;
 
     public static final String DUMMY_PACKAGE_NAME = "Dummy_package_name";
@@ -68,8 +73,8 @@ public class Utils {
     }
 
     private static String format(final long value,
-                                 final long divider,
-                                 final String unit) {
+            final long divider,
+            final String unit) {
         final double result =
                 divider > 1 ? (double) value / (double) divider : (double) value;
         return String.format("%.1f %s", Double.valueOf(result), unit);
@@ -108,5 +113,17 @@ public class Utils {
         return status;
     }
 
-
+    public static boolean isNetworkAvailable(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) context
+                .getSystemService(Context.CONNECTIVITY_SERVICE);
+        try {
+            NetworkInfo info = connectivityManager.getActiveNetworkInfo();
+            if (info!=null) {
+                return info.isConnected();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

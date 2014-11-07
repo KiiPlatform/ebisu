@@ -68,7 +68,9 @@ public class DownloadAgent {
     }
 
     public void loadDownloads() {
-        Cursor c = context.getContentResolver().query(YouWill.Downloads.CONTENT_URI, new String[]{YouWill.Downloads.APP_ID, YouWill.Downloads.DOWNLOAD_ID}, null, null, null);
+        Cursor c = context.getContentResolver().query(YouWill.Downloads.CONTENT_URI,
+                new String[]{YouWill.Downloads.APP_ID, YouWill.Downloads.DOWNLOAD_ID}, null, null,
+                null);
         while (c.moveToNext()) {
             String appId = c.getString(0);
             long downloadId = c.getLong(1);
@@ -179,8 +181,9 @@ public class DownloadAgent {
         if (cursor.moveToFirst()) {
             String appId = mIdMap.get(downloadId);
             DownloadInfo info = mDownloadProgressMap.get(appId);
-            if (info == null)
+            if (info == null) {
                 info = new DownloadInfo();
+            }
             int total = cursor
                     .getInt(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
             int current = cursor
@@ -188,7 +191,8 @@ public class DownloadAgent {
             info.status = cursor
                     .getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
             if (info.status == DownloadManager.STATUS_SUCCESSFUL) {
-                info.fileUri = Uri.parse(cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)));
+                info.fileUri = Uri.parse(cursor
+                        .getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)));
             }
             int percentage = 0;
             if (total != 0) {

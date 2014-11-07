@@ -6,18 +6,19 @@ import com.youwill.store.fragments.PurchasedFragment;
 import com.youwill.store.fragments.SearchFragment;
 import com.youwill.store.fragments.UpgradeFragment;
 import com.youwill.store.utils.DataUtils;
+import com.youwill.store.utils.Utils;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.SparseArray;
 import android.view.View;
 import android.widget.EditText;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class MainActivity extends Activity implements View.OnClickListener {
 
@@ -29,13 +30,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private Fragment currentFragment;
 
-    private Map<Integer, Fragment> fragments = new HashMap<Integer, Fragment>(4);
+    private SparseArray<Fragment> fragments = new SparseArray<Fragment>(4);
 
     private EditText searchEdit;
-
-    private View searchButton;
-
-    private View deleteButton;
 
     private SearchFragment mSearchFragment;
 
@@ -72,11 +69,26 @@ public class MainActivity extends Activity implements View.OnClickListener {
         initHeader();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (!Utils.isNetworkAvailable(this)) {
+            new AlertDialog.Builder(this).setIcon(android.R.drawable.ic_dialog_alert)
+                    .setTitle(R.string.network_unavailable)
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            finish();
+                        }
+                    }).setCancelable(false).show();
+        }
+    }
+
     private void initHeader() {
         View header = findViewById(R.id.main_header);
         searchEdit = (EditText) header.findViewById(R.id.search_edit);
-        searchButton = header.findViewById(R.id.search_button);
-        deleteButton = header.findViewById(R.id.delete_button);
+        View searchButton = header.findViewById(R.id.search_button);
+        View deleteButton = header.findViewById(R.id.delete_button);
         searchButton.setOnClickListener(this);
         deleteButton.setOnClickListener(this);
         deleteButton.requestFocus();

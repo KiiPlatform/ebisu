@@ -8,7 +8,6 @@ import com.youwill.store.MainActivity;
 import com.youwill.store.R;
 import com.youwill.store.activities.AppDetailActivity;
 import com.youwill.store.providers.YouWill;
-import com.youwill.store.utils.LogUtils;
 import com.youwill.store.utils.Utils;
 import com.youwill.store.view.fancycoverflow.FancyCoverFlow;
 import com.youwill.store.view.fancycoverflow.FancyCoverFlowAdapter;
@@ -64,6 +63,7 @@ public class HotFragment extends Fragment
     private HomeCoverFlowAdapter mCoverFlowAdapter;
 
     private DisplayImageOptions coverFlowOption;
+
     private DisplayImageOptions appOption;
 
     @Override
@@ -246,7 +246,6 @@ public class HotFragment extends Fragment
 
         @Override
         public View getCoverFlowItem(int position, View reusableView, ViewGroup parent) {
-            LogUtils.d(TAG, "getCoverFlowItem, position is " + position);
             int pos = position % coverFlowItems.size();
             final AppItem item = coverFlowItems.get(pos);
             ImageView imageView = (ImageView) reusableView;
@@ -289,8 +288,6 @@ public class HotFragment extends Fragment
                         coverFlowItems = parseCursor(cursor);
                         coverFlow.setAdapter(mCoverFlowAdapter);
                         coverFlow.setSelection(10000, true);
-                        LogUtils.d(TAG, "onQueryComplete, selection is " + coverFlow
-                                .getSelectedItemPosition());
                         break;
                     case YouWill.Application.RECOMMEND_TYPE_LINE1:
                         recommend1Items = parseCursor(cursor);
