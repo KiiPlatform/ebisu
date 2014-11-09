@@ -84,6 +84,8 @@ public class AppDetailActivity extends Activity implements View.OnClickListener 
     }
 
     protected void initViews() {
+        ImageView closeView = (ImageView)findViewById(R.id.close);
+        closeView.setOnClickListener(this);
         ImageView iconView = (ImageView) findViewById(R.id.app_detail_icon);
         String iconUrl = mAppInfo.optString("icon");
         ImageLoader.getInstance().displayImage(iconUrl, iconView, Utils.iconDisplayOptions);
@@ -144,6 +146,9 @@ public class AppDetailActivity extends Activity implements View.OnClickListener 
                 AppUtils.bindButton(this, mAppInfo, mPriceBtn);
                 AppUtils.bindProgress(mAppId, mProgressBar, Utils.getStatus(mAppInfo));
                 mHandler.sendEmptyMessageDelayed(MSG_UPDATE_PROGRESS, DELAY_TIME);
+                break;
+            case R.id.close:
+                finish();
                 break;
         }
     }

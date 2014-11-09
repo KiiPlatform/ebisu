@@ -8,7 +8,15 @@
             android:layout_width="match_parent"
             android:layout_height="42px"
             android:background="@drawable/top_bar_bg">
-
+        <ImageView
+                android:layout_width="29px"
+                android:layout_height="29px"
+                android:src="@drawable/app_detail_close"
+                android:id="@+id/close"
+                android:layout_marginTop="7px"
+                android:layout_marginBottom="6px"
+                android:layout_marginRight="17px"
+                android:layout_alignParentRight="true"/>
     </RelativeLayout>
 
     <RelativeLayout
