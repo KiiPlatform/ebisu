@@ -1,20 +1,5 @@
 package com.youwill.store.view;
 
-import android.app.DownloadManager;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.database.Cursor;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.CursorAdapter;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.RatingBar;
-import android.widget.TextView;
-
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.youwill.store.R;
 import com.youwill.store.net.DownloadAgent;
@@ -26,15 +11,34 @@ import com.youwill.store.utils.Utils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.DownloadManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.database.Cursor;
+import android.text.TextUtils;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.CursorAdapter;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.RatingBar;
+import android.widget.TextView;
+
 
 /**
  * Created by Evan on 14/10/23.
  */
 public class AppListAdapter extends CursorAdapter implements View.OnClickListener {
+
     public static final int TYPE_PURCHASED = 0;
+
     public static final int TYPE_UPGRADE = 1;
 
     protected Context mContext;
+
     int mType;
 
     public AppListAdapter(Context context, Cursor c, int type) {
@@ -60,6 +64,10 @@ public class AppListAdapter extends CursorAdapter implements View.OnClickListene
         if (appInfo == null) {
             return;
         }
+        String appId = appInfo.optString("app_id");
+        if (TextUtils.isEmpty(appId)) {
+            return;
+        }
         TextView tv = (TextView) view.findViewById(R.id.app_grid_pos);
         tv.setText(String.valueOf(cursor.getPosition() + 1));
         ImageView iconView = (ImageView) view.findViewById(R.id.app_grid_icon);
@@ -77,10 +85,11 @@ public class AppListAdapter extends CursorAdapter implements View.OnClickListene
 
         PackageInfo packageInfo = AppUtils.gLocalApps.get(packageName);
         if (packageInfo != null) {
-            if (mType == TYPE_UPGRADE)
+            if (mType == TYPE_UPGRADE) {
                 leftBtn.setVisibility(View.INVISIBLE);
-            else
+            } else {
                 leftBtn.setVisibility(View.VISIBLE);
+            }
             leftBtn.setText(context.getString(R.string.uninstall_button));
             leftBtn.setTag(packageName);
             leftBtn.setOnClickListener(this);
@@ -116,16 +125,7 @@ public class AppListAdapter extends CursorAdapter implements View.OnClickListene
                 rightBtn.setText(context.getString(R.string.install_button));
                 break;
         }
-        if (status > 0) {
-            String appId;
-            try {
-                appId = appInfo.getString("app_id");
-            } catch (JSONException e) {
-                return;
-            }
-            DownloadInfo info = DownloadAgent.getInstance().getDownloadProgressMap().get(appId);
-            progressBar.setProgress(info.percentage);
-        }
+        AppUtils.bindProgress(appId, progressBar, status);
     }
 
 
@@ -162,7 +162,8 @@ public class AppListAdapter extends CursorAdapter implements View.OnClickListene
                 break;
             case Utils.APP_STATUS_INSTALLED: {
                 String packageName = appInfo.optString("package", Utils.DUMMY_PACKAGE_NAME);
-                Intent LaunchIntent = mContext.getPackageManager().getLaunchIntentForPackage(packageName);
+                Intent LaunchIntent = mContext.getPackageManager()
+                        .getLaunchIntentForPackage(packageName);
                 mContext.startActivity(LaunchIntent);
             }
             break;

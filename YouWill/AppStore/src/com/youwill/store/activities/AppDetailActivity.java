@@ -41,6 +41,8 @@ public class AppDetailActivity extends Activity implements View.OnClickListener 
 
     private List<String> mPics = new ArrayList<String>();
 
+    private Button mPriceBtn;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -113,9 +115,9 @@ public class AppDetailActivity extends Activity implements View.OnClickListener 
         }
         RatingBar ratingBar = (RatingBar) findViewById(R.id.app_detail_rate);
         ratingBar.setRating((float) mAppInfo.optDouble("rating_score"));
-        Button price_btn = (Button) findViewById(R.id.app_detail_price);
-        AppUtils.bindButton(this, mAppInfo, price_btn);
-        price_btn.setOnClickListener(this);
+        mPriceBtn = (Button) findViewById(R.id.app_detail_price);
+        AppUtils.bindButton(this, mAppInfo, mPriceBtn);
+        mPriceBtn.setOnClickListener(this);
         mRecyclerView = (RecyclerView) findViewById(R.id.pic_layout);
         mLinearLayoutManager = new LinearLayoutManager(this);
         mLinearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
@@ -132,6 +134,7 @@ public class AppDetailActivity extends Activity implements View.OnClickListener 
         switch (v.getId()) {
             case R.id.app_detail_price:
                 AppUtils.clickPriceButton(this, mAppInfo);
+                AppUtils.bindButton(this, mAppInfo, mPriceBtn);
                 break;
         }
     }

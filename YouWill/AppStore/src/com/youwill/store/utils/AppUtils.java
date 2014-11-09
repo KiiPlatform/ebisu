@@ -16,7 +16,9 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,7 +63,7 @@ public class AppUtils {
         context.startActivity(installIntent);
     }
 
-    public static void bindButton(Context context, JSONObject appInfo, Button price_btn) {
+    public static void bindButton(Context context, JSONObject appInfo, Button button) {
         int status = Utils.getStatus(appInfo);
         switch (status) {
             case Utils.APP_STATUS_NONE: {
@@ -73,27 +75,27 @@ public class AppUtils {
                 } else {
                     priceStr = context.getString(R.string.price_free);
                 }
-                price_btn.setText(priceStr);
+                button.setText(priceStr);
             }
             break;
             case DownloadManager.STATUS_FAILED:
-                price_btn.setText(context.getString(R.string.download_button));
+                button.setText(context.getString(R.string.download_button));
                 break;
             case Utils.APP_STATUS_INSTALLED:
-                price_btn.setText(context.getString(R.string.open_button));
+                button.setText(context.getString(R.string.open_button));
                 break;
             case Utils.APP_STATUS_CAN_UPGRADE:
-                price_btn.setText(context.getString(R.string.upgrade_button));
+                button.setText(context.getString(R.string.upgrade_button));
                 break;
             case DownloadManager.STATUS_PAUSED:
-                price_btn.setText(context.getString(R.string.resume_button));
+                button.setText(context.getString(R.string.resume_button));
                 break;
             case DownloadManager.STATUS_PENDING:
             case DownloadManager.STATUS_RUNNING:
-                price_btn.setText(context.getString(R.string.downloading_button));
+                button.setText(context.getString(R.string.downloading_button));
                 break;
             case DownloadManager.STATUS_SUCCESSFUL:
-                price_btn.setText(context.getString(R.string.install_button));
+                button.setText(context.getString(R.string.install_button));
                 break;
         }
     }
@@ -128,5 +130,16 @@ public class AppUtils {
             }
             break;
         }
+    }
+
+    public static void bindProgress(String appId, ProgressBar progressBar, int status) {
+        if (status == DownloadManager.STATUS_PAUSED || status == DownloadManager.STATUS_PENDING
+                || status == DownloadManager.STATUS_RUNNING) {
+            progressBar.setVisibility(View.VISIBLE);
+        } else {
+            progressBar.setVisibility(View.GONE);
+        }
+        DownloadInfo info = DownloadAgent.getInstance().getDownloadProgressMap().get(appId);
+        progressBar.setProgress(info.percentage);
     }
 }
