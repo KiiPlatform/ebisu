@@ -28,7 +28,9 @@ import java.util.List;
  * Created by Evan on 14/10/22.
  */
 public class AppUtils {
-    public static final HashMap<String, PackageInfo> gLocalApps = new HashMap<String, PackageInfo>();
+
+    public static final HashMap<String, PackageInfo> gLocalApps
+            = new HashMap<String, PackageInfo>();
 
     public static void fetchAllPackages(Context context) {
         PackageManager pm = context.getPackageManager();
@@ -117,7 +119,8 @@ public class AppUtils {
                 break;
             case Utils.APP_STATUS_INSTALLED: {
                 String packageName = appInfo.optString("package", Utils.DUMMY_PACKAGE_NAME);
-                Intent LaunchIntent = context.getPackageManager().getLaunchIntentForPackage(packageName);
+                Intent LaunchIntent = context.getPackageManager()
+                        .getLaunchIntentForPackage(packageName);
                 context.startActivity(LaunchIntent);
             }
             break;
@@ -140,6 +143,8 @@ public class AppUtils {
             progressBar.setVisibility(View.GONE);
         }
         DownloadInfo info = DownloadAgent.getInstance().getDownloadProgressMap().get(appId);
-        progressBar.setProgress(info.percentage);
+        if (info != null) {
+            progressBar.setProgress(info.percentage);
+        }
     }
 }

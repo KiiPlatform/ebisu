@@ -12,6 +12,8 @@ import org.json.JSONObject;
 import android.app.Activity;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -21,6 +23,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
@@ -42,6 +45,8 @@ public class AppDetailActivity extends Activity implements View.OnClickListener 
     private List<String> mPics = new ArrayList<String>();
 
     private Button mPriceBtn;
+
+    private ProgressBar mProgressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,7 +101,7 @@ public class AppDetailActivity extends Activity implements View.OnClickListener 
         info.append(getString(R.string.version_prompt)).append(mAppInfo
                 .optString("version_name")).append(" ");
         long updateTime = mAppInfo.optLong("_modified", -1);
-        if (updateTime<0) {
+        if (updateTime < 0) {
             updateTime = mAppInfo.optLong("_created");
         }
         String updateTimeString = getString(R.string.update_time) + DateFormat
@@ -117,6 +122,8 @@ public class AppDetailActivity extends Activity implements View.OnClickListener 
         ratingBar.setRating((float) mAppInfo.optDouble("rating_score"));
         mPriceBtn = (Button) findViewById(R.id.app_detail_price);
         AppUtils.bindButton(this, mAppInfo, mPriceBtn);
+        mProgressBar = (ProgressBar) findViewById(R.id.app_detail_progress);
+        AppUtils.bindProgress(mAppId, mProgressBar, Utils.getStatus(mAppInfo));
         mPriceBtn.setOnClickListener(this);
         mRecyclerView = (RecyclerView) findViewById(R.id.pic_layout);
         mLinearLayoutManager = new LinearLayoutManager(this);
@@ -135,8 +142,38 @@ public class AppDetailActivity extends Activity implements View.OnClickListener 
             case R.id.app_detail_price:
                 AppUtils.clickPriceButton(this, mAppInfo);
                 AppUtils.bindButton(this, mAppInfo, mPriceBtn);
+                AppUtils.bindProgress(mAppId, mProgressBar, Utils.getStatus(mAppInfo));
+                mHandler.sendEmptyMessageDelayed(MSG_UPDATE_PROGRESS, DELAY_TIME);
                 break;
         }
+    }
+
+    private static final int MSG_UPDATE_PROGRESS = 0;
+
+    private static final int DELAY_TIME = 1000;
+
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_UPDATE_PROGRESS:
+                    AppUtils.bindProgress(mAppId, mProgressBar, Utils.getStatus(mAppInfo));
+                    AppUtils.bindButton(AppDetailActivity.this, mAppInfo, mPriceBtn);
+                    sendEmptyMessageDelayed(MSG_UPDATE_PROGRESS, DELAY_TIME);
+                    break;
+            }
+        }
+    };
+
+    @Override
+    protected void onDestroy() {
+        try {
+            mHandler.removeMessages(MSG_UPDATE_PROGRESS);
+            mHandler = null;
+        } catch (Exception e) {
+
+        }
+        super.onDestroy();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

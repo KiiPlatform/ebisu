@@ -75,6 +75,19 @@
                 android:layout_below="@id/app_detail_info"
                 android:textColor="@color/price_text_color"
                 android:textSize="11px"/>
+        <ProgressBar
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:id="@+id/app_detail_progress"
+                android:layout_width="match_parent"
+                android:layout_height="7px"
+                android:layout_marginTop="2px"
+                android:layout_marginLeft="6px"
+                android:layout_marginRight="27px"
+                android:layout_toRightOf="@id/app_detail_price"
+                android:max="100"
+                android:progressDrawable="@drawable/progress_bar_bg"
+                android:layout_alignTop="@id/app_detail_price"
+                />
 
     </RelativeLayout>
 
