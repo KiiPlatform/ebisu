@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ImageView xmlns:android="http://schemas.android.com/apk/res/android"
-           android:layout_width="100px"
-           android:layout_height="200px"
+           android:layout_width="191px"
+           android:layout_height="262px"
            android:layout_marginRight="6px"
            android:layout_marginLeft="6px"/>
