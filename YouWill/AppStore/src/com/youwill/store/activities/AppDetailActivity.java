@@ -84,7 +84,7 @@ public class AppDetailActivity extends Activity implements View.OnClickListener 
     }
 
     protected void initViews() {
-        ImageView closeView = (ImageView)findViewById(R.id.close);
+        ImageView closeView = (ImageView) findViewById(R.id.close);
         closeView.setOnClickListener(this);
         ImageView iconView = (ImageView) findViewById(R.id.app_detail_icon);
         String iconUrl = mAppInfo.optString("icon");
@@ -135,6 +135,7 @@ public class AppDetailActivity extends Activity implements View.OnClickListener 
         mRecyclerView.setAdapter(adapter);
         if (adapter.getItemCount() > 0) {
             mRecyclerView.setVisibility(View.VISIBLE);
+            mRecyclerView.scrollToPosition(10000);
         }
     }
 
@@ -196,19 +197,20 @@ public class AppDetailActivity extends Activity implements View.OnClickListener 
 
         @Override
         public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
-            View v = getLayoutInflater().inflate(R.layout.app_detail_pic_item, viewGroup,
+            View v = getLayoutInflater().inflate(R.layout.app_detail_pic_item_portrait, viewGroup,
                     false);
             return new ViewHolder(v);
         }
 
         @Override
         public void onBindViewHolder(ViewHolder viewHolder, int i) {
-            ImageLoader.getInstance().displayImage(mPics.get(i), viewHolder.mImageView);
+            ImageLoader.getInstance()
+                    .displayImage(mPics.get(i % mPics.size()), viewHolder.mImageView);
         }
 
         @Override
         public int getItemCount() {
-            return mPics.size();
+            return Integer.MAX_VALUE;
         }
     }
 }
