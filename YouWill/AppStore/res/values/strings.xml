@@ -43,5 +43,8 @@
     <string name="app_upgrade_comment">更新说明</string>
     <string name="none">无</string>
     <string name="network_unavailable">网络不可用！</string>
+    <string name="loading">加载中，请稍后......</string>
+    <string name="invalid_iap_product">抱歉，程序内购数据错误，无法购买！</string>
+    <string name="please_login">请使用优悦账户登录之后再试！</string>
 
 </resources>

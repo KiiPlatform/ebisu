@@ -1,17 +1,18 @@
 package com.youwill.store.utils;
 
-import com.nostra13.universalimageloader.core.DisplayImageOptions;
-import com.youwill.store.net.DownloadAgent;
-import com.youwill.store.net.DownloadInfo;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
+import android.app.Activity;
+import android.app.DialogFragment;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.youwill.store.fragments.ProgressDialogFragment;
+import com.youwill.store.net.DownloadAgent;
+import com.youwill.store.net.DownloadInfo;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.Closeable;
 
@@ -73,8 +74,8 @@ public class Utils {
     }
 
     private static String format(final long value,
-            final long divider,
-            final String unit) {
+                                 final long divider,
+                                 final String unit) {
         final double result =
                 divider > 1 ? (double) value / (double) divider : (double) value;
         return String.format("%.1f %s", Double.valueOf(result), unit);
@@ -118,12 +119,25 @@ public class Utils {
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
         try {
             NetworkInfo info = connectivityManager.getActiveNetworkInfo();
-            if (info!=null) {
+            if (info != null) {
                 return info.isConnected();
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         return false;
+    }
+
+    private static DialogFragment mProgressDialog = null;
+
+    public static void showProgressDialog(Activity activity, String title, boolean isCancelable) {
+        mProgressDialog = ProgressDialogFragment.newInstance(title, isCancelable);
+        mProgressDialog.show(activity.getFragmentManager(), "dialog");
+    }
+
+    public static void dismissProgressDialog() {
+        if (mProgressDialog != null) {
+            mProgressDialog.dismiss();
+        }
     }
 }

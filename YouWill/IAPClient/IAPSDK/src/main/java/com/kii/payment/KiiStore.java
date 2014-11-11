@@ -22,6 +22,22 @@ public class KiiStore {
 
     private static final String TAG = KiiStore.class.getName();
 
+    public static KiiProduct getProductByID(String id) {
+        KiiClause clause = KiiClause.equals("_id", id);
+        KiiQuery localQuery = new KiiQuery(clause);
+        KiiProduct product = null;
+        try {
+            KiiQueryResult<KiiObject> result = Kii.bucket("product").query(localQuery);
+
+            if (result.getResult().size() > 0) {
+                product = new KiiProduct(result.getResult().get(0));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return product;
+    }
+
     /**
      * List KiiProduct controlled by the specified KiiClause.
      *
@@ -58,6 +74,7 @@ public class KiiStore {
         KiiClause appFilterClause = KiiClause.equals("appID", YouWillIAPSDK.getYouWillAppID());
         KiiQuery localQuery = new KiiQuery(
                 clause == null ? appFilterClause : clause);
+        localQuery.sortByDesc("_created");
         try {
             KiiQueryResult<KiiObject> result = user.bucket("receipt").query(localQuery);
             List<KiiReceipt> receipts = new ArrayList<KiiReceipt>();

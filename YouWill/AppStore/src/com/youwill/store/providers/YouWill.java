@@ -160,4 +160,21 @@ public class YouWill {
     }
 
 
+    public static class Receipts implements BaseColumns {
+        public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/receipts");
+
+        public static final String TABLE_NAME = "receipts";
+
+        public static final String PRODUCT_ID = "product_id";
+
+        public static final String TRANSACTION_ID = "transaction_id";
+
+        public static final String TOTAL_FEE = "total_fee";
+
+        public static final String  SUBJECT = "subject";
+
+        public static final String  BUYER_EMAIL = "buy_email";
+
+        public static final String  GMT_PAYMENT = "gmt_payment";
+    }
 }

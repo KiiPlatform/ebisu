@@ -69,7 +69,7 @@ public class AppUtils {
         int status = Utils.getStatus(appInfo);
         switch (status) {
             case Utils.APP_STATUS_NONE: {
-                int price = appInfo.optInt("price");
+                double price = appInfo.optDouble("price");
                 String priceStr;
                 if (price > 0) {
                     float p = (float) price;
