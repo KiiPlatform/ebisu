@@ -33,6 +33,7 @@ public class AppReceiver extends BroadcastReceiver {
             LogUtils.d("onReceive, package name is " + packageName);
             try {
                 //the package has been installed, delete the downloaded package;
+                AppUtils.updateLocalApp(context, packageName);
                 String filename = packageName + ".apk";
                 File file = new File(
                         context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), filename);
@@ -41,6 +42,10 @@ public class AppReceiver extends BroadcastReceiver {
 
             }
             DownloadAgent.getInstance().removeDownloadAfterInstall(packageName);
+        } else if (intent.getAction().equals(Intent.ACTION_PACKAGE_REMOVED)) {
+            String packageName = intent.getData().getSchemeSpecificPart();
+            LogUtils.d("uninstall, package name is " + packageName);
+            AppUtils.deleteLocalApp(context, packageName);
         }
     }
 }

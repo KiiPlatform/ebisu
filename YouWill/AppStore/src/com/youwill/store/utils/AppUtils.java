@@ -36,18 +36,40 @@ public class AppUtils {
         PackageManager pm = context.getPackageManager();
         List<PackageInfo> packageInfos = pm.getInstalledPackages(0);
         ArrayList<ContentValues> valuesArrayList = new ArrayList<ContentValues>();
-        for (PackageInfo mInfo : packageInfos) {
-            String packageName = mInfo.packageName;
-            gLocalApps.put(packageName, mInfo);
+        for (PackageInfo info : packageInfos) {
+            String packageName = info.packageName;
+            gLocalApps.put(packageName, info);
             ContentValues value = new ContentValues();
             value.put(YouWill.LocalApps.PACKAGE_NAME, packageName);
-            value.put(YouWill.LocalApps.VERSION_CODE, mInfo.versionCode);
+            value.put(YouWill.LocalApps.VERSION_CODE, info.versionCode);
             valuesArrayList.add(value);
         }
         ContentValues[] values = valuesArrayList.toArray(new ContentValues[0]);
-        ContentResolver mCR = context.getContentResolver();
-        mCR.delete(YouWill.LocalApps.CONTENT_URI, null, null);
-        mCR.bulkInsert(YouWill.LocalApps.CONTENT_URI, values);
+        ContentResolver resolver = context.getContentResolver();
+        resolver.delete(YouWill.LocalApps.CONTENT_URI, null, null);
+        resolver.bulkInsert(YouWill.LocalApps.CONTENT_URI, values);
+    }
+
+    public static void updateLocalApp(Context context, String packageName) {
+        PackageManager pm = context.getPackageManager();
+        try {
+            PackageInfo info = pm.getPackageInfo(packageName, 0);
+            gLocalApps.put(packageName, info);
+            ContentValues value = new ContentValues();
+            value.put(YouWill.LocalApps.PACKAGE_NAME, packageName);
+            value.put(YouWill.LocalApps.VERSION_CODE, info.versionCode);
+            ContentResolver resolver = context.getContentResolver();
+            resolver.insert(YouWill.LocalApps.CONTENT_URI, value);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void deleteLocalApp(Context context, String packageName) {
+        gLocalApps.remove(packageName);
+        ContentResolver resolver = context.getContentResolver();
+        resolver.delete(YouWill.LocalApps.CONTENT_URI, YouWill.LocalApps.PACKAGE_NAME + "=?",
+                new String[]{packageName});
     }
 
     public static void uninstallApp(Context context, String packageName) {

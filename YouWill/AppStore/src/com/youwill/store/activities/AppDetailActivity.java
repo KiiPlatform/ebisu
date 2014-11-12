@@ -1,5 +1,21 @@
 package com.youwill.store.activities;
 
+import com.kii.cloud.storage.KiiUser;
+import com.kii.cloud.storage.callback.KiiUserCallBack;
+import com.kii.payment.*;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.youwill.store.R;
+import com.youwill.store.providers.YouWill;
+import com.youwill.store.utils.AppUtils;
+import com.youwill.store.utils.DataUtils;
+import com.youwill.store.utils.LogUtils;
+import com.youwill.store.utils.Settings;
+import com.youwill.store.utils.Utils;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.database.Cursor;
@@ -13,23 +29,18 @@ import android.text.format.DateFormat;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.*;
-import com.kii.cloud.storage.KiiUser;
-import com.kii.cloud.storage.callback.KiiUserCallBack;
-import com.kii.payment.*;
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.youwill.store.R;
-import com.youwill.store.providers.YouWill;
-import com.youwill.store.utils.*;
-import com.youwill.store.utils.Utils;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.RatingBar;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class AppDetailActivity extends Activity implements View.OnClickListener, DialogInterface.OnCancelListener {
+public class AppDetailActivity extends Activity
+        implements View.OnClickListener, DialogInterface.OnCancelListener {
 
     public static final String EXTRA_APP_ID = "appId";
 
@@ -86,8 +97,9 @@ public class AppDetailActivity extends Activity implements View.OnClickListener,
             return;
         }
 
-        c = getContentResolver().query(YouWill.Purchased.CONTENT_URI, null, YouWill.Purchased.APP_ID + "=(?)",
-                new String[]{mAppId}, null);
+        c = getContentResolver()
+                .query(YouWill.Purchased.CONTENT_URI, null, YouWill.Purchased.APP_ID + "=(?)",
+                        new String[]{mAppId}, null);
         if (c != null && c.moveToFirst()) {
             String appID = c.getString(c.getColumnIndex(YouWill.Purchased.APP_ID));
             mIsPurchased = mAppId.equals(appID) && (c.getCount() == 1);
@@ -98,8 +110,6 @@ public class AppDetailActivity extends Activity implements View.OnClickListener,
             }
         }
         Utils.closeSilently(c);
-
-
         initViews();
     }
 
@@ -211,7 +221,8 @@ public class AppDetailActivity extends Activity implements View.OnClickListener,
             @Override
             public void onError(int errorCode) {
                 LogUtils.d("KiiPaymentCallback.onError");
-                Message msg = mHandler.obtainMessage(MSG_IAP_ERROR, KiiPayment.getErrorMessage(AppDetailActivity.this, errorCode));
+                Message msg = mHandler.obtainMessage(MSG_IAP_ERROR,
+                        KiiPayment.getErrorMessage(AppDetailActivity.this, errorCode));
                 mHandler.sendMessage(msg);
             }
         };
@@ -220,7 +231,8 @@ public class AppDetailActivity extends Activity implements View.OnClickListener,
             public void onLoginCompleted(int token, KiiUser user, Exception exception) {
                 if (exception == null) {
                     KiiOrder order = new KiiOrder(mIAPProduct, user);
-                    KiiPayment currentPayment = new KiiPayment(AppDetailActivity.this, order, paymentCallback);
+                    KiiPayment currentPayment = new KiiPayment(AppDetailActivity.this, order,
+                            paymentCallback);
                     currentPayment.pay();
                 } else {
                     mHandler.sendEmptyMessage(MSG_LOGIN_ERROR);
@@ -260,10 +272,12 @@ public class AppDetailActivity extends Activity implements View.OnClickListener,
                     break;
                 case MSG_INVALID_IAP_PRODUCT:
                     Utils.dismissProgressDialog();
-                    Toast.makeText(AppDetailActivity.this, getString(R.string.invalid_iap_product), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(AppDetailActivity.this, getString(R.string.invalid_iap_product),
+                            Toast.LENGTH_SHORT).show();
                     break;
                 case MSG_LOGIN_ERROR:
-                    Toast.makeText(AppDetailActivity.this, getString(R.string.please_login), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(AppDetailActivity.this, getString(R.string.please_login),
+                            Toast.LENGTH_SHORT).show();
                     break;
                 case MSG_IAP_SUCCESS:
                     postIAP();

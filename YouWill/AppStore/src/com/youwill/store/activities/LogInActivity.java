@@ -29,9 +29,14 @@ public class LogInActivity extends Activity {
             public void onLoginCompleted(KiiSocialConnect.SocialNetwork network, KiiUser user,
                     Exception exception) {
                 super.onLoginCompleted(network, user, exception);
-                LogUtils.d("onLogInComplete, user is " + user.toJSON());
-                Settings.setUserId(LogInActivity.this, user.getID());
-                Settings.setToken(LogInActivity.this, user.getAccessToken());
+                if (user != null) {
+                    LogUtils.d("onLogInComplete, user is " + user.toJSON());
+                    Settings.setUserId(LogInActivity.this, user.getID());
+                    Settings.setToken(LogInActivity.this, user.getAccessToken());
+                }
+                if (exception!=null) {
+                    exception.printStackTrace();
+                }
             }
 
             @Override
