@@ -20,11 +20,10 @@ import com.kii.payment.*;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.youwill.store.R;
 import com.youwill.store.providers.YouWill;
-import com.youwill.store.utils.AppUtils;
-import com.youwill.store.utils.LogUtils;
-import com.youwill.store.utils.Settings;
+import com.youwill.store.utils.*;
 import com.youwill.store.utils.Utils;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -51,6 +50,8 @@ public class AppDetailActivity extends Activity implements View.OnClickListener,
     private KiiProduct mIAPProduct;
 
     private boolean mIAPIsCancelled = false;
+
+    private boolean mIsPurchased = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +85,21 @@ public class AppDetailActivity extends Activity implements View.OnClickListener,
             finish();
             return;
         }
+
+        c = getContentResolver().query(YouWill.Purchased.CONTENT_URI, null, YouWill.Purchased.APP_ID + "=(?)",
+                new String[]{mAppId}, null);
+        if (c != null && c.moveToFirst()) {
+            String appID = c.getString(c.getColumnIndex(YouWill.Purchased.APP_ID));
+            mIsPurchased = mAppId.equals(appID) && (c.getCount() == 1);
+            try {
+                mAppInfo.put("is_purchased", mIsPurchased);
+            } catch (JSONException e) {
+                LogUtils.e("Error: " + e);
+            }
+        }
+        Utils.closeSilently(c);
+
+
         initViews();
     }
 
@@ -148,15 +164,11 @@ public class AppDetailActivity extends Activity implements View.OnClickListener,
         switch (v.getId()) {
             case R.id.app_detail_price:
                 double price = mAppInfo.optDouble("price");
-                boolean isPurchased = false;
-                if ((price > 0) && !isPurchased) {
+                if ((price > 0) && !mIsPurchased) {
                     String iapID = mAppInfo.optString("iap_id");
-                    launchIAP(iapID, price);
+                    checkIAP(iapID, price);
                 } else {
-                    AppUtils.clickPriceButton(this, mAppInfo);
-                    AppUtils.bindButton(this, mAppInfo, mPriceBtn);
-                    AppUtils.bindProgress(mAppId, mProgressBar, Utils.getStatus(mAppInfo));
-                    mHandler.sendEmptyMessageDelayed(MSG_UPDATE_PROGRESS, DELAY_TIME);
+                    refreshAppStatus();
                 }
                 break;
             case R.id.close:
@@ -165,7 +177,14 @@ public class AppDetailActivity extends Activity implements View.OnClickListener,
         }
     }
 
-    private void launchIAP(final String iapID, final double price) {
+    private void refreshAppStatus() {
+        AppUtils.clickPriceButton(this, mAppInfo);
+        AppUtils.bindButton(this, mAppInfo, mPriceBtn);
+        AppUtils.bindProgress(mAppId, mProgressBar, Utils.getStatus(mAppInfo));
+        mHandler.sendEmptyMessageDelayed(MSG_UPDATE_PROGRESS, DELAY_TIME);
+    }
+
+    private void checkIAP(final String iapID, final double price) {
         Utils.showProgressDialog(this, "", true);
         mIAPIsCancelled = false;
         new Thread(new Runnable() {
@@ -190,9 +209,10 @@ public class AppDetailActivity extends Activity implements View.OnClickListener,
             }
 
             @Override
-            public void onError(int i) {
+            public void onError(int errorCode) {
                 LogUtils.d("KiiPaymentCallback.onError");
-                mHandler.sendEmptyMessage(MSG_IAP_ERROR);
+                Message msg = mHandler.obtainMessage(MSG_IAP_ERROR, KiiPayment.getErrorMessage(AppDetailActivity.this, errorCode));
+                mHandler.sendMessage(msg);
             }
         };
         KiiUser.loginWithToken(new KiiUserCallBack() {
@@ -215,11 +235,11 @@ public class AppDetailActivity extends Activity implements View.OnClickListener,
 
     private static final int MSG_INVALID_IAP_PRODUCT = 101;
 
-    private static final int  MSG_IAP_SUCCESS = 200;
+    private static final int MSG_IAP_SUCCESS = 200;
 
-    private static final int  MSG_IAP_ERROR = 201;
+    private static final int MSG_IAP_ERROR = 201;
 
-    private static final int  MSG_LOGIN_ERROR = 202;
+    private static final int MSG_LOGIN_ERROR = 202;
 
     private static final int DELAY_TIME = 1000;
 
@@ -245,9 +265,27 @@ public class AppDetailActivity extends Activity implements View.OnClickListener,
                 case MSG_LOGIN_ERROR:
                     Toast.makeText(AppDetailActivity.this, getString(R.string.please_login), Toast.LENGTH_SHORT).show();
                     break;
+                case MSG_IAP_SUCCESS:
+                    postIAP();
+                    break;
+                case MSG_IAP_ERROR:
+                    String text = (String) msg.obj;
+                    Toast.makeText(AppDetailActivity.this, text, Toast.LENGTH_SHORT).show();
+                    break;
             }
         }
     };
+
+    private void postIAP() {
+        mIsPurchased = true;
+        DataUtils.appendPurchasedApp(this, mAppId);
+        try {
+            mAppInfo.put("is_purchased", mIsPurchased);
+        } catch (JSONException e) {
+            LogUtils.e("Error: " + e);
+        }
+        refreshAppStatus();
+    }
 
     @Override
     protected void onDestroy() {

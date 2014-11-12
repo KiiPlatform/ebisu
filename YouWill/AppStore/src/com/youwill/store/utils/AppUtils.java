@@ -72,8 +72,13 @@ public class AppUtils {
                 double price = appInfo.optDouble("price");
                 String priceStr;
                 if (price > 0) {
-                    float p = (float) price;
-                    priceStr = String.format("￥%.2f", p);
+                    boolean isPurchased = appInfo.optBoolean("is_purchased", false);
+                    if (isPurchased) {
+                        priceStr = context.getString(R.string.download_button);
+                    } else {
+                        float p = (float) price;
+                        priceStr = String.format("￥%.2f", p);
+                    }
                 } else {
                     priceStr = context.getString(R.string.price_free);
                 }

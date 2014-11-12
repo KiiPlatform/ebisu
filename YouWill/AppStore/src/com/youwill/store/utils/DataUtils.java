@@ -1,16 +1,19 @@
 package com.youwill.store.utils;
 
-import com.kii.cloud.storage.Kii;
-import com.kii.cloud.storage.KiiObject;
-import com.kii.cloud.storage.query.KiiQueryResult;
-import com.youwill.store.providers.YouWill;
-
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.text.TextUtils;
 import android.util.Log;
+import com.kii.cloud.storage.Kii;
+import com.kii.cloud.storage.KiiObject;
+import com.kii.cloud.storage.KiiUser;
+import com.kii.cloud.storage.callback.KiiUserCallBack;
+import com.kii.cloud.storage.query.KiiQueryResult;
+import com.kii.payment.KiiReceipt;
+import com.kii.payment.KiiStore;
+import com.youwill.store.providers.YouWill;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -87,23 +90,55 @@ public class DataUtils {
     }
 
     public static void getPurchasedList(final Context context) {
+        KiiUser.loginWithToken(new KiiUserCallBack() {
+            @Override
+            public void onLoginCompleted(int token, final KiiUser user, Exception exception) {
+                if (exception == null) {
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            refreshPurchasedList(context, user);
+                        }
+                    }.start();
+
+                } else {
+                    LogUtils.d("loginWithToken failed with exception: " + exception);
+                }
+            }
+        }, Settings.getToken(context));
+    }
+
+    private static void refreshPurchasedList(Context context, KiiUser user) {
+        LogUtils.d("refreshPurchasedList.");
+        if ((user == null) || (context == null)) {
+            LogUtils.d("refreshPurchasedList, user:" + user + "; context: " + context);
+            return;
+        }
+
+        List<KiiReceipt> receipts = KiiStore.listReceipts(null, user);
+
         ContentResolver cr = context.getContentResolver();
         cr.delete(YouWill.Purchased.CONTENT_URI, null, null);
-        ContentValues[] values = new ContentValues[8];
-        for (int i = 0; i < values.length; i++) {
+        List<ContentValues> values = new ArrayList<ContentValues>();
+        int i = 0;
+        for (KiiReceipt receipt : receipts) {
             ContentValues v = new ContentValues();
-            v.put("app_key", "test");
-            values[i] = v;
+            String app = receipt.getFieldByName("app");
+            if (app == null) {
+                continue;
+            }
+            v.put("app_id", app);
+            values.add(v);
         }
-        values[0].put("app_id", "f363bc5c");
-        values[1].put("app_id", "a7e0a105");
-        values[2].put("app_id", "1fbe85a3");
-        values[3].put("app_id", "255ab961");
-        values[4].put("app_id", "f4f3e0e9");
-        values[5].put("app_id", "471f6a0a");
-        values[6].put("app_id", "a6b9f9ed");
-        values[7].put("app_id", "7a73c752");
-        cr.bulkInsert(YouWill.Purchased.CONTENT_URI, values);
+
+        cr.bulkInsert(YouWill.Purchased.CONTENT_URI, values.toArray(new ContentValues[values.size()]));
+    }
+
+    public static void appendPurchasedApp(Context context, String appID) {
+        ContentResolver cr = context.getContentResolver();
+        ContentValues v = new ContentValues();
+        v.put("app_id", appID);
+        cr.insert(YouWill.Purchased.CONTENT_URI, v);
     }
 
 }

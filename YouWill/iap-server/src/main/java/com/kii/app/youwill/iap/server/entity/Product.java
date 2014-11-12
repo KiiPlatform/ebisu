@@ -36,6 +36,9 @@ orther customer fields in key:value pair
             if (json.has("valid")) {
                 this.valid = json.getBoolean("valid");
             }
+            if (json.has("app")) {
+                app = json.getString("app");
+            }
             this.consumeType = ConsumeType.valueOf(json.getString("consumeType"));
 
         } catch (JSONException e) {
@@ -56,6 +59,12 @@ orther customer fields in key:value pair
     private ConsumeType consumeType;
 
     private CurrencyType currency;
+
+    private String app;
+
+    public String getApp() {
+        return app;
+    }
 
 
     public String getPrice() {

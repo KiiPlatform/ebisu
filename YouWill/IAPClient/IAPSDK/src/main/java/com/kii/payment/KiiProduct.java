@@ -1,11 +1,7 @@
 package com.kii.payment;
 
-import android.util.Log;
 import com.kii.cloud.storage.KiiObject;
 import com.kii.cloud.storage.KiiUser;
-
-import java.util.Currency;
-import java.util.Locale;
 
 /**
  * Created by tian on 14-2-26.
@@ -45,6 +41,10 @@ public class KiiProduct {
 
     public double getPrice() {
         return (mObject != null && mObject.has("price")) ? mObject.getDouble("price") : 0;
+    }
+
+    public String getFieldByName(String fieldName) {
+        return (mObject != null && mObject.has(fieldName)) ? mObject.getString(fieldName) : null;
     }
 
     public enum CONSUME_TYPE {

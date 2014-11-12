@@ -2,11 +2,9 @@ package com.kii.payment;
 
 import com.kii.cloud.storage.KiiObject;
 
-import java.util.Currency;
-
 /**
  * This class represents the receipt of a payment given to the user.
- *
+ * <p/>
  * Created by tian on 2/27/14.
  */
 public class KiiReceipt {
@@ -52,5 +50,9 @@ public class KiiReceipt {
 
     public long getCreatedTime() {
         return mObject != null ? mObject.getCreatedTime() : -1;
+    }
+
+    public String getFieldByName(String fieldName) {
+        return (mObject != null && mObject.has(fieldName)) ? mObject.getString(fieldName) : null;
     }
 }

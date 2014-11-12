@@ -72,7 +72,9 @@ int consume_type;
                 obj.put("isSandbox", this.isSandbox);
             }
             obj.put("paymentID", this.paymentID);
-
+            if (app != null) {
+                obj.put("app", app);
+            }
             return obj;
         } catch (JSONException e) {
             throw new ServiceException(IAPErrorCode.FORMAT_INVALID);
@@ -126,6 +128,9 @@ int consume_type;
 
     public Receipt(Transaction transaction, Map<String, String> callbackParams) {
         this.transactionID = transaction.getTransactionID();
+        if (transaction.getApp() != null) {
+            this.app = transaction.getApp();
+        }
         this.price = callbackParams.get("price");
         this.currency = CurrencyType.CNY;
         this.productID = transaction.getProductID();
@@ -153,6 +158,8 @@ int consume_type;
     private boolean isSandbox;
 
     private String paymentID;
+
+    private String app;
 
     private Map<String, String> additionalFields;
 

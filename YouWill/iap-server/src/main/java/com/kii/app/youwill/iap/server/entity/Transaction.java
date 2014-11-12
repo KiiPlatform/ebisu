@@ -16,7 +16,7 @@ import java.util.Map;
 public class Transaction extends KiiEntity {
 
     /*
-	transaction_id
+    transaction_id
 product_id
 user_id
 transaction_type
@@ -30,40 +30,40 @@ pay_completedate
 is_sandbox
      */
 
-	public Map<String,Object> getPaymentUpdate() {
+    public Map<String, Object> getPaymentUpdate() {
 
-		Map<String,Object> map=new HashMap<String,Object>();
-		map.put("payStatus", this.getPayStatus().name());
-		map.put("payCompleteDate", this.getPayCompleteDate());
+        Map<String, Object> map = new HashMap<String, Object>();
+        map.put("payStatus", this.getPayStatus().name());
+        map.put("payCompleteDate", this.getPayCompleteDate());
 
-		return map;
-	}
+        return map;
+    }
 
-	public JSONObject getJsonObject() {
+    public JSONObject getJsonObject() {
 
 
-		try{
-			JSONObject json=new JSONObject();
+        try {
+            JSONObject json = new JSONObject();
 
-			json.put("transactionID",this.getTransactionID());
-			json.put("price",this.getPrice());
-			json.put("userID",this.getUserID());
-			json.put("payStatus",this.getPayStatus().name());
-			json.put("createdDate",this.getCreatedDate().getTime());
+            json.put("transactionID", this.getTransactionID());
+            json.put("price", this.getPrice());
+            json.put("userID", this.getUserID());
+            json.put("payStatus", this.getPayStatus().name());
+            json.put("createdDate", this.getCreatedDate().getTime());
 
-			if(this.getModifyDate()!=null) {
-				json.put("updatedDate", this.getModifyDate().getTime());
-			}
-			if(this.getPayCompleteDate()!=null) {
-				json.put("payCompleteDate", this.getPayCompleteDate().getTime());
-			}
-			json.put("payType",this.getPayType().name());
-			if(this.isSandBox()) {
-				json.put("isSandbox", this.isSandBox());
-			}
+            if (this.getModifyDate() != null) {
+                json.put("updatedDate", this.getModifyDate().getTime());
+            }
+            if (this.getPayCompleteDate() != null) {
+                json.put("payCompleteDate", this.getPayCompleteDate().getTime());
+            }
+            json.put("payType", this.getPayType().name());
+            if (this.isSandBox()) {
+                json.put("isSandbox", this.isSandBox());
+            }
 
-			json.put("currency",this.getCurrency().name());
-			json.put("productID",this.getProductID());
+            json.put("currency", this.getCurrency().name());
+            json.put("productID", this.getProductID());
 
             if (authorID != null) {
                 json.put("authorID", authorID);
@@ -73,156 +73,173 @@ is_sandbox
                 json.put("appID", appID);
             }
 
-			return json;
-		} catch (JSONException e) {
-			throw new ServiceException(IAPErrorCode.FORMAT_INVALID);
-		}
-	}
+            if (app != null) {
+                json.put("app", app);
+            }
 
-	public Transaction(Product product,UserID userID,CurrencyType currency){
-		this.productID=product.getProductID();
-		this.transactionStatus=OrderStatus.pending;
-		this.payStatus=OrderStatus.pending;
-		this.createdDate=new Date();
+            return json;
+        } catch (JSONException e) {
+            throw new ServiceException(IAPErrorCode.FORMAT_INVALID);
+        }
+    }
 
-		this.userID=userID.toString();
-		this.currency=currency;
+    public Transaction(Product product, UserID userID, CurrencyType currency) {
+        this.productID = product.getProductID();
+        this.app = product.getApp();
+        this.transactionStatus = OrderStatus.pending;
+        this.payStatus = OrderStatus.pending;
+        this.createdDate = new Date();
+        this.userID = userID.toString();
+        this.currency = currency;
 
-	}
+    }
 
-    public Transaction(Product product,UserID userID, String authorID, String appID) {
+    public Transaction(Product product, UserID userID, String authorID, String appID) {
         this(product, userID, CurrencyType.CNY);
         this.authorID = authorID;
         this.appID = appID;
     }
 
-	public Transaction(JSONObject json) {
+    public Transaction(JSONObject json) {
 
-		super(json);
+        super(json);
 
-		try {
-			this.transactionID = json.getString("_id");
-			this.productID = json.getString("productID");
-			this.userID = json.getString("userID");
-			this.payStatus = OrderStatus.valueOf(json.getString("payStatus"));
-			this.price = json.getString("price");
+        try {
+            this.transactionID = json.getString("_id");
+            this.productID = json.getString("productID");
+            this.userID = json.getString("userID");
+            this.payStatus = OrderStatus.valueOf(json.getString("payStatus"));
+            this.price = json.getString("price");
 
-			this.createdDate = new Date(json.getLong("createdDate"));
-			if(json.has("updateDate")) {
-				this.modifyDate = new Date(json.getLong("updatedDate"));
-			}
-			if(json.has("payCompleteDate")) {
-				this.payCompleteDate = new Date(json.getLong("payCompleteDate"));
-			}
-			if(json.has("isSandBox")) {
-				this.isSandBox = json.getBoolean("isSandbox");
-			}
-			if(json.has("payType")) {
-				this.payType = PayType.valueOf(json.getString("payType"));
-			}
-			this.currency=CurrencyType.valueOf(json.getString("currency"));
+            this.createdDate = new Date(json.getLong("createdDate"));
+            if (json.has("updateDate")) {
+                this.modifyDate = new Date(json.getLong("updatedDate"));
+            }
+            if (json.has("payCompleteDate")) {
+                this.payCompleteDate = new Date(json.getLong("payCompleteDate"));
+            }
+            if (json.has("isSandBox")) {
+                this.isSandBox = json.getBoolean("isSandbox");
+            }
+            if (json.has("payType")) {
+                this.payType = PayType.valueOf(json.getString("payType"));
+            }
 
-		} catch (JSONException e) {
-			throw new ServiceException(IAPErrorCode.FORMAT_INVALID);
-		}
-	}
+            if (json.has("app")) {
+                this.app = json.getString("app");
+            }
+            this.currency = CurrencyType.valueOf(json.getString("currency"));
+
+        } catch (JSONException e) {
+            throw new ServiceException(IAPErrorCode.FORMAT_INVALID);
+        }
+    }
 
 
-	private String transactionID;
+    private String transactionID;
 
-	private String productID;
+    private String productID;
 
-	private String userID;
+    private String userID;
 
-	private OrderStatus transactionStatus;
+    private OrderStatus transactionStatus;
 
-	private OrderStatus payStatus;
+    private OrderStatus payStatus;
 
-	private CurrencyType currency;
+    private CurrencyType currency;
 
-	private String price;
+    private String price;
 
-	private Date createdDate;
+    private Date createdDate;
 
-	private Date modifyDate;
+    private Date modifyDate;
 
-	private Date payCompleteDate;
+    private Date payCompleteDate;
 
-	private boolean isSandBox;
+    private boolean isSandBox;
 
-	private PayType payType;
+    private PayType payType;
 
     private String authorID;
 
     private String appID;
 
+    /* the field app is different from appID
+     * if the IAP item is an application, then the app is the app_id of the application,
+     * while appID means which application the IAP item belongs to.
+     *  */
+    private String app;
 
-	public String getPrice() {
-		return price;
-	}
+    public String getApp() {
+        return app;
+    }
 
-	public Date getCreatedDate() {
-		return createdDate;
-	}
+    public String getPrice() {
+        return price;
+    }
 
-	public Date getModifyDate() {
-		return modifyDate;
-	}
+    public Date getCreatedDate() {
+        return createdDate;
+    }
 
-	public Date getPayCompleteDate() {
-		return payCompleteDate;
-	}
+    public Date getModifyDate() {
+        return modifyDate;
+    }
 
-	public boolean isSandBox() {
-		return isSandBox;
-	}
+    public Date getPayCompleteDate() {
+        return payCompleteDate;
+    }
 
-	public PayType getPayType() {
-		return payType;
-	}
+    public boolean isSandBox() {
+        return isSandBox;
+    }
 
-	public String getTransactionID() {
-		return transactionID;
-	}
+    public PayType getPayType() {
+        return payType;
+    }
 
-	public String getProductID() {
-		return productID;
-	}
+    public String getTransactionID() {
+        return transactionID;
+    }
 
-	public String getUserID() {
-		return userID;
-	}
+    public String getProductID() {
+        return productID;
+    }
 
-
-	public OrderStatus getTransactionStatus() {
-		return transactionStatus;
-	}
-
-	public void setPayType(PayType payType) {
-		this.payType = payType;
-	}
-
-	public OrderStatus getPayStatus() {
-		return payStatus;
-	}
-
-	public void setSandBox(boolean sandBox) {
-		this.isSandBox = sandBox;
-	}
+    public String getUserID() {
+        return userID;
+    }
 
 
-	public CurrencyType getCurrency() {
-		return currency;
-	}
+    public OrderStatus getTransactionStatus() {
+        return transactionStatus;
+    }
 
-	public void setPrice(String price) {
-		this.price = price;
-	}
+    public void setPayType(PayType payType) {
+        this.payType = payType;
+    }
+
+    public OrderStatus getPayStatus() {
+        return payStatus;
+    }
+
+    public void setSandBox(boolean sandBox) {
+        this.isSandBox = sandBox;
+    }
 
 
-	public void setTransactionID(String transactionID) {
-		this.transactionID = transactionID;
-	}
+    public CurrencyType getCurrency() {
+        return currency;
+    }
+
+    public void setPrice(String price) {
+        this.price = price;
+    }
+
+
+    public void setTransactionID(String transactionID) {
+        this.transactionID = transactionID;
+    }
 
     public String getAppID() {
         return appID;

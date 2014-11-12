@@ -7,7 +7,7 @@ package com.kii.payment;
  */
 public class Constants {
 
-    //public static final String PLATFORM_EXTENSION_URL = "http://192.168.1.106:8080/api/iap/";
+    //public static final String PLATFORM_EXTENSION_URL = "http://192.168.1.110:8080/api/iap/";
     public static final String PLATFORM_EXTENSION_URL = "http://118.102.25.205:8080/iap-webapp/iap/";
     static final String KEY_APP_DISTRIBUTION_ID = "com.kii.DISTRIBUTION_ID";
 

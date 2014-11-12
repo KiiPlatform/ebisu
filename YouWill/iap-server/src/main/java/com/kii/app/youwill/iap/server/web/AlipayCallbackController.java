@@ -46,8 +46,11 @@ public class AlipayCallbackController {
             @RequestParam Map<String, String> allRequestParams, HttpServletResponse response) {
 
         if (AlipayNotify.verify(allRequestParams)) {
+        //if (true) {
             String tradeStatus = allRequestParams.get("trade_status");
             String transactionID = allRequestParams.get("out_trade_no");
+            //tradeStatus = "TRADE_SUCCESS";
+            //transactionID = "7da07ea0-6a22-11e4-ab1c-90b8d0235395";
             if ("TRADE_FINISHED".equals(tradeStatus)
                     || "TRADE_SUCCESS".equals(tradeStatus)) {
                 Transaction transaction = transactionDao.getOrderByTransactionID(transactionID);

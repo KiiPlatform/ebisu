@@ -11,7 +11,7 @@ import java.util.Date;
  * Created by ethan on 14-8-1.
  */
 public class KiiEntity {
-	/*
+    /*
 	_id ... The object's internal identifier assigned by Kii Cloud or explicitly by you.
 _version ... The version of the object.
 _dataType ... The data type of the object.
@@ -21,74 +21,74 @@ _modified ... The object's last updated date in UNIX time (msec)
 
 	 */
 
-	public KiiEntity(){
+    public KiiEntity() {
 
-	}
+    }
 
-	public KiiEntity(JSONObject json){
-		try{
-			id=json.getString("_id");
-			version=json.getString("_version");
-			ownerID=json.getString("_owner");
-			created=new Date(json.getLong("_created"));
-			modified=new Date(json.getLong("_modified"));
+    public KiiEntity(JSONObject json) {
+        try {
+            id = json.getString("_id");
+            version = json.getString("_version");
+            ownerID = json.getString("_owner");
+            created = new Date(json.getLong("_created"));
+            modified = new Date(json.getLong("_modified"));
 
-	}catch(JSONException e){
+        } catch (JSONException e) {
 
-		throw new ServiceException(IAPErrorCode.FORMAT_INVALID);
-	}
+            throw new ServiceException(IAPErrorCode.FORMAT_INVALID);
+        }
 
-	}
+    }
 
-	private String id;
+    private String id;
 
-	private String version;
+    private String version;
 
-	private String ownerID;
+    private String ownerID;
 
-	private Date created;
+    private Date created;
 
-	private Date modified;
+    private Date modified;
 
-	public String getId() {
-		return id;
-	}
+    public String getId() {
+        return id;
+    }
 
-	public void setId(String id) {
-		this.id = id;
-	}
+    public void setId(String id) {
+        this.id = id;
+    }
 
-	public String getVersion() {
-		return version;
-	}
+    public String getVersion() {
+        return version;
+    }
 
-	public void setVersion(String version) {
-		this.version = version;
-	}
+    public void setVersion(String version) {
+        this.version = version;
+    }
 
-	public String getOwnerID() {
-		return ownerID;
-	}
+    public String getOwnerID() {
+        return ownerID;
+    }
 
-	public void setOwnerID(String ownerID) {
-		this.ownerID = ownerID;
-	}
+    public void setOwnerID(String ownerID) {
+        this.ownerID = ownerID;
+    }
 
-	public Date getCreated() {
-		return created;
-	}
+    public Date getCreated() {
+        return created;
+    }
 
-	public void setCreated(Date created) {
-		this.created = created;
-	}
+    public void setCreated(Date created) {
+        this.created = created;
+    }
 
-	public Date getModified() {
-		return modified;
-	}
+    public Date getModified() {
+        return modified;
+    }
 
-	public void setModified(Date modified) {
-		this.modified = modified;
-	}
+    public void setModified(Date modified) {
+        this.modified = modified;
+    }
 
 
 }
