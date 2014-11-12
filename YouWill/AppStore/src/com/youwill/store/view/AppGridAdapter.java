@@ -58,7 +58,6 @@ public class AppGridAdapter extends CursorAdapter implements View.OnClickListene
         price_btn.setTag(appInfo);
         AppUtils.bindButton(context, appInfo, price_btn);
 
-        final String appId = cursor.getString(cursor.getColumnIndex(YouWill.Application.APP_ID));
         price_btn.setOnClickListener(this);
         price_btn.setFocusable(false);
         price_btn.setFocusableInTouchMode(false);
@@ -73,6 +72,8 @@ public class AppGridAdapter extends CursorAdapter implements View.OnClickListene
         switch (v.getId()) {
             case R.id.app_grid_price:
                 AppUtils.clickPriceButton(mContext, (JSONObject) v.getTag());
+                break;
+            default:
                 break;
         }
     }

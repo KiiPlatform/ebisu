@@ -121,6 +121,8 @@ public class AppProvider extends ContentProvider {
                 getContext().getContentResolver().notifyChange(uri, null);
             }
             break;
+            default:
+                break;
         }
         return count;
     }
@@ -147,6 +149,8 @@ public class AppProvider extends ContentProvider {
                 database.insertWithOnConflict(YouWill.LocalApps.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 break;
+            default:
+                break;
         }
         return null;
     }
@@ -172,6 +176,8 @@ public class AppProvider extends ContentProvider {
                 ret = database.delete(YouWill.LocalApps.TABLE_NAME, selection, selectionArgs);
                 getContext().getContentResolver().notifyChange(uri, null);
                 break;
+            default:
+                break;
         }
         return ret;
     }
@@ -185,6 +191,8 @@ public class AppProvider extends ContentProvider {
                 ret = database
                         .update(YouWill.Downloads.TABLE_NAME, values, selection, selectionArgs);
                 getContext().getContentResolver().notifyChange(uri, null);
+                break;
+            default:
                 break;
         }
         return ret;

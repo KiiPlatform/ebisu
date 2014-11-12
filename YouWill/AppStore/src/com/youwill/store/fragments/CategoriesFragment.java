@@ -1,5 +1,12 @@
 package com.youwill.store.fragments;
 
+import com.youwill.store.R;
+import com.youwill.store.activities.AppDetailActivity;
+import com.youwill.store.providers.YouWill;
+import com.youwill.store.utils.Constants;
+import com.youwill.store.utils.Settings;
+import com.youwill.store.view.AppGridAdapter;
+
 import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.BroadcastReceiver;
@@ -19,13 +26,6 @@ import android.widget.AdapterView;
 import android.widget.CursorAdapter;
 import android.widget.GridView;
 import android.widget.RadioButton;
-
-import com.youwill.store.R;
-import com.youwill.store.activities.AppDetailActivity;
-import com.youwill.store.providers.YouWill;
-import com.youwill.store.utils.Constants;
-import com.youwill.store.utils.Settings;
-import com.youwill.store.view.AppGridAdapter;
 
 
 /**
@@ -103,6 +103,8 @@ public class CategoriesFragment extends Fragment implements View.OnClickListener
                 break;
             case R.id.cate_btn_4:
                 switchCate(3);
+                break;
+            default:
                 break;
         }
     }

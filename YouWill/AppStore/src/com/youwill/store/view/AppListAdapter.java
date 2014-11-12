@@ -103,6 +103,8 @@ public class AppListAdapter extends CursorAdapter implements View.OnClickListene
         int status = Utils.getStatus(appInfo);
         switch (status) {
             case Utils.APP_STATUS_NONE:
+                rightBtn.setText(context.getString(R.string.download_button));
+                break;
             case DownloadManager.STATUS_FAILED:
                 rightBtn.setText(context.getString(R.string.download_button));
                 break;
@@ -124,6 +126,8 @@ public class AppListAdapter extends CursorAdapter implements View.OnClickListene
             case DownloadManager.STATUS_SUCCESSFUL:
                 rightBtn.setText(context.getString(R.string.install_button));
                 break;
+            default:
+                break;
         }
         AppUtils.bindProgress(appId, progressBar, status);
     }
@@ -142,6 +146,8 @@ public class AppListAdapter extends CursorAdapter implements View.OnClickListene
                 clickRightButton(appInfo);
             }
             break;
+            default:
+                break;
         }
     }
 
@@ -175,6 +181,8 @@ public class AppListAdapter extends CursorAdapter implements View.OnClickListene
                 AppUtils.installApp(mContext, info.fileUri);
             }
             break;
+            default:
+                break;
         }
     }
 }

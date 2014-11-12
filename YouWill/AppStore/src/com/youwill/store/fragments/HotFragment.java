@@ -259,7 +259,7 @@ public class HotFragment extends Fragment
         }
     }
 
-    private class AppItem {
+    private static class AppItem {
 
         String appId;
 
@@ -298,6 +298,8 @@ public class HotFragment extends Fragment
                         recommend2Items = parseCursor(cursor);
                         recommend2Adapter = new AppAdapter(recommend2Items);
                         latestView.setAdapter(recommend2Adapter);
+                        break;
+                    default:
                         break;
                 }
             }

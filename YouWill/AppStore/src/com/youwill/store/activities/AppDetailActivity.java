@@ -2,7 +2,11 @@ package com.youwill.store.activities;
 
 import com.kii.cloud.storage.KiiUser;
 import com.kii.cloud.storage.callback.KiiUserCallBack;
-import com.kii.payment.*;
+import com.kii.payment.KiiOrder;
+import com.kii.payment.KiiPayment;
+import com.kii.payment.KiiPaymentCallback;
+import com.kii.payment.KiiProduct;
+import com.kii.payment.KiiStore;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.youwill.store.R;
 import com.youwill.store.providers.YouWill;
@@ -184,6 +188,8 @@ public class AppDetailActivity extends Activity
             case R.id.close:
                 finish();
                 break;
+            default:
+                break;
         }
     }
 
@@ -285,6 +291,8 @@ public class AppDetailActivity extends Activity
                 case MSG_IAP_ERROR:
                     String text = (String) msg.obj;
                     Toast.makeText(AppDetailActivity.this, text, Toast.LENGTH_SHORT).show();
+                    break;
+                default:
                     break;
             }
         }

@@ -37,7 +37,9 @@ public class AppReceiver extends BroadcastReceiver {
                 String filename = packageName + ".apk";
                 File file = new File(
                         context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), filename);
-                file.delete();
+                if (!file.delete()) {
+                    LogUtils.d("delete failed!");
+                }
             } catch (Exception ignored) {
 
             }

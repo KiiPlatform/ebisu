@@ -29,7 +29,7 @@ import java.util.List;
  */
 public class AppUtils {
 
-    public static final HashMap<String, PackageInfo> gLocalApps
+    public static HashMap<String, PackageInfo> gLocalApps
             = new HashMap<String, PackageInfo>();
 
     public static void fetchAllPackages(Context context) {
@@ -126,6 +126,8 @@ public class AppUtils {
             case DownloadManager.STATUS_SUCCESSFUL:
                 button.setText(context.getString(R.string.install_button));
                 break;
+            default:
+                break;
         }
     }
 
@@ -139,8 +141,11 @@ public class AppUtils {
         }
         switch (status) {
             case Utils.APP_STATUS_NONE:
+                //fall through
             case DownloadManager.STATUS_FAILED:
+                //fall through
             case Utils.APP_STATUS_CAN_UPGRADE:
+                //fall through
             case DownloadManager.STATUS_PAUSED:
                 DownloadAgent.getInstance().beginDownload(appId);
                 break;
@@ -152,6 +157,7 @@ public class AppUtils {
             }
             break;
             case DownloadManager.STATUS_PENDING:
+                break;
             case DownloadManager.STATUS_RUNNING:
                 break;
             case DownloadManager.STATUS_SUCCESSFUL: {
@@ -159,6 +165,8 @@ public class AppUtils {
                 installApp(context, info.fileUri);
             }
             break;
+            default:
+                break;
         }
     }
 
