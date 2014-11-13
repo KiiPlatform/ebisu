@@ -19,41 +19,41 @@
         android:layout_centerVertical="true"
         android:textSize="12px"
         android:textColor="#999999"
-        android:layout_marginLeft="21px"
-        android:layout_marginRight="10px"
+        android:layout_marginLeft="28px"
+        android:layout_marginRight="13px"
         android:gravity="center" />
 
-    <com.youwill.store.view.RoundCornerImageView
+    <ImageView
         android:id="@+id/app_grid_icon"
-        android:layout_width="70px"
-        android:layout_height="70px"
-        android:layout_marginTop="9px"
+        android:layout_width="92px"
+        android:layout_height="92px"
+        android:layout_marginTop="18px"
         android:layout_marginBottom="10px"
         android:layout_toRightOf="@id/app_grid_pos"
-        android:layout_marginRight="12px" />
+        android:layout_marginRight="15px" />
 
     <Button
         android:id="@+id/right_btn"
-        android:layout_width="72px"
-        android:layout_height="32px"
+        android:layout_width="90px"
+        android:layout_height="38px"
         android:background="@drawable/orange_button"
         android:layout_centerVertical="true"
         android:layout_alignParentRight="true"
         android:layout_marginRight="36px"
         android:textColor="@color/white"
-        android:textSize="11px" />
+        android:textSize="8pt" />
 
     <Button
         android:id="@+id/left_btn"
-        android:layout_width="72px"
-        android:layout_height="32px"
+        android:layout_width="90px"
+        android:layout_height="38px"
         android:background="@drawable/blue_stroke_button"
         android:layout_centerVertical="true"
         android:layout_toLeftOf="@id/right_btn"
         android:layout_marginRight="12px"
         android:layout_marginLeft="12px"
         android:textColor="@color/blue_button_text"
-        android:textSize="11px" />
+        android:textSize="8pt" />
 
     <TextView
         android:id="@+id/app_grid_name"
@@ -63,14 +63,14 @@
         android:layout_toLeftOf="@id/left_btn"
         android:maxLines="2"
         android:textStyle="bold"
-        android:textSize="13px"
-        android:layout_marginTop="13px" />
+        android:textSize="8pt"
+        android:layout_marginTop="23px" />
 
     <RatingBar
         android:id="@+id/app_grid_rate"
         android:layout_width="wrap_content"
-        android:layout_height="11px"
-        android:layout_marginTop="9px"
+        android:layout_height="15px"
+        android:layout_marginTop="10px"
         android:isIndicator="true"
         android:numStars="5"
         android:layout_toRightOf="@id/app_grid_icon"

@@ -7,31 +7,31 @@
 
     <TextView
         android:id="@+id/app_grid_pos"
-        android:layout_width="16px"
+        android:layout_width="15px"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
-        android:textSize="12px"
+        android:textSize="7pt"
         android:textColor="#999999"
-        android:layout_marginLeft="12px"
-        android:layout_marginRight="10px"
+        android:layout_marginLeft="18px"
+        android:layout_marginRight="11px"
         android:gravity="center" />
 
-    <com.youwill.store.view.RoundCornerImageView
+    <ImageView
         android:id="@+id/app_grid_icon"
-        android:layout_width="70px"
-        android:layout_height="70px"
+        android:layout_width="91px"
+        android:layout_height="91px"
         android:layout_toRightOf="@id/app_grid_pos"
         android:layout_marginRight="12px" />
 
     <Button
         android:id="@+id/app_grid_price"
-        android:layout_width="59px"
-        android:layout_height="24px"
+        android:layout_width="77px"
+        android:layout_height="30px"
         android:background="@drawable/price_frame"
         android:layout_centerVertical="true"
         android:layout_alignParentRight="true"
         android:textColor="@color/price_text_color"
-        android:textSize="11px" />
+        android:textSize="7pt" />
 
     <TextView
         android:id="@+id/app_grid_name"
@@ -41,13 +41,13 @@
         android:layout_toLeftOf="@id/app_grid_price"
         android:maxLines="2"
         android:textStyle="bold"
-        android:textSize="13px"
+        android:textSize="8pt"
         android:paddingTop="4px" />
 
     <RatingBar
         android:id="@+id/app_grid_rate"
         android:layout_width="wrap_content"
-        android:layout_height="11px"
+        android:layout_height="15px"
         android:layout_marginTop="9px"
         android:isIndicator="true"
         android:numStars="5"

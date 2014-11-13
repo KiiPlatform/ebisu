@@ -116,7 +116,7 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:paddingTop">10px</item>
         <item name="android:paddingBottom">9px</item>
-        <item name="android:textSize">13px</item>
+        <item name="android:textSize">8pt</item>
         <item name="android:gravity">center_vertical</item>
         <item name="android:textColor">@color/cate_btn_text</item>
         <item name="android:textStyle">normal</item>
