@@ -46,5 +46,6 @@
     <string name="loading">加载中，请稍后......</string>
     <string name="invalid_iap_product">抱歉，程序内购数据错误，无法购买！</string>
     <string name="please_login">请使用优悦账户登录之后再试！</string>
+    <string name="log_in">登录</string>
 
 </resources>

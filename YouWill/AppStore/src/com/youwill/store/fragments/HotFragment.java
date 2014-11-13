@@ -252,9 +252,9 @@ public class HotFragment extends Fragment
             if (imageView == null) {
                 imageView = new ImageView(parent.getContext());
             }
-            imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-            imageView.setLayoutParams(new FancyCoverFlow.LayoutParams(477, 239));
+            imageView.setLayoutParams(new FancyCoverFlow.LayoutParams(512, 257));
             imageView.setImageBitmap(coverFlowImageMap.get(item.image));
+//            imageView.setImageDrawable(getResources().getDrawable(R.drawable.cover_flow1));
             return imageView;
         }
     }

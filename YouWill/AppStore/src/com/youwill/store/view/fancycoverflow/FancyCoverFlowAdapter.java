@@ -46,20 +46,16 @@ public abstract class FancyCoverFlowAdapter extends BaseAdapter {
         wrappedView = this.getCoverFlowItem(i, wrappedView, viewGroup);
 
         if (wrappedView == null) {
-            throw new NullPointerException("getCoverFlowItem() was expected to return a view, but null was returned.");
+            throw new NullPointerException(
+                    "getCoverFlowItem() was expected to return a view, but null was returned.");
         }
-
-//        final boolean isReflectionEnabled = coverFlow.isReflectionEnabled();
-//        coverFlowItem.setReflectionEnabled(isReflectionEnabled);
-//
-//        if(isReflectionEnabled) {
-//            coverFlowItem.setReflectionGap(coverFlow.getReflectionGap());
-//            coverFlowItem.setReflectionRatio(coverFlow.getReflectionRatio());
-//        }
-
 
         coverFlowItem.addView(wrappedView);
         coverFlowItem.setLayoutParams(wrappedView.getLayoutParams());
+//        ViewGroup.LayoutParams params = wrappedView.getLayoutParams();
+//        LogUtils.d("CoverFlowAdapter", "set layout param: " + params.width + ", " + params.height);
+//        params = coverFlowItem.getLayoutParams();
+//        LogUtils.d("CoverFlowAdapter", "item layout param: " + params.width + ", " + params.height);
 
         return coverFlowItem;
     }

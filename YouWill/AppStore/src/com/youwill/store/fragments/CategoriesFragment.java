@@ -23,7 +23,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.CursorAdapter;
 import android.widget.GridView;
 import android.widget.RadioButton;
 
@@ -70,7 +69,7 @@ public class CategoriesFragment extends Fragment implements View.OnClickListener
         }
         cate_btns[last_cate].setChecked(true);
         mGrid = (GridView) view.findViewById(R.id.cate_grid);
-        mAdapter = new AppGridAdapter(getActivity(), null, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
+        mAdapter = new AppGridAdapter(getActivity(), null, 0);
         mGrid.setAdapter(mAdapter);
         mGrid.setOnItemClickListener(this);
         switchCate(last_cate);

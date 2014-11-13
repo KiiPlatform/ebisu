@@ -6,6 +6,7 @@ import com.youwill.store.fragments.PurchasedFragment;
 import com.youwill.store.fragments.SearchFragment;
 import com.youwill.store.fragments.UpgradeFragment;
 import com.youwill.store.utils.DataUtils;
+import com.youwill.store.utils.Settings;
 import com.youwill.store.utils.Utils;
 
 import android.app.Activity;
@@ -13,12 +14,15 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.SparseArray;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 public class MainActivity extends Activity implements View.OnClickListener {
 
@@ -36,6 +40,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private SearchFragment mSearchFragment;
 
+    private TextView mLogInView;
+
+    private ImageView mSettingsView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,6 +56,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
         findViewById(R.id.categories_button).setOnClickListener(this);
         findViewById(R.id.upgrade_button).setOnClickListener(this);
         findViewById(R.id.purchased_button).setOnClickListener(this);
+        mLogInView = (TextView) findViewById(R.id.log_in_text);
+        mSettingsView = (ImageView) findViewById(R.id.settings_button);
+        mLogInView.setOnClickListener(this);
+        mSettingsView.setOnClickListener(this);
         mSearchFragment = (SearchFragment) Fragment
                 .instantiate(this, SearchFragment.class.getName());
         if (savedInstanceState == null) {
@@ -135,6 +147,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
             case R.id.delete_button:
                 searchEdit.setText("");
                 break;
+            case R.id.settings_button:
+                //TODO
+                break;
+            case R.id.log_in_text:
+                //TODO
+                break;
+            default:
+                break;
         }
 
     }
@@ -185,4 +205,17 @@ public class MainActivity extends Activity implements View.OnClickListener {
         DataUtils.loadApps(this);
     }
 
+    private SharedPreferences.OnSharedPreferenceChangeListener mListener
+            = new SharedPreferences.OnSharedPreferenceChangeListener() {
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+            if (key.contentEquals(Settings.USER_ID_KEY)) {
+                if (Settings.isLoggedIn(MainActivity.this)) {
+                    //TODO
+                } else {
+                    mLogInView.setText(R.string.log_in);
+                }
+            }
+        }
+    };
 }
