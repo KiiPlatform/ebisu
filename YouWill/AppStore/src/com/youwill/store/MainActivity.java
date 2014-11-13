@@ -1,5 +1,6 @@
 package com.youwill.store;
 
+import com.youwill.store.activities.LogInActivity;
 import com.youwill.store.fragments.CategoriesFragment;
 import com.youwill.store.fragments.HotFragment;
 import com.youwill.store.fragments.PurchasedFragment;
@@ -14,6 +15,7 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
@@ -151,7 +153,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 //TODO
                 break;
             case R.id.log_in_text:
-                //TODO
+                if (!Settings.isLoggedIn(this)) {
+                    startActivity(new Intent(this, LogInActivity.class));
+                }
                 break;
             default:
                 break;
