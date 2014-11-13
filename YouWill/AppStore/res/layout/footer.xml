@@ -11,7 +11,7 @@
                 android:layout_width="wrap_content"
                 android:orientation="horizontal"
                 android:layout_below="@id/divider"
-            android:layout_centerHorizontal="true">
+                android:layout_centerHorizontal="true">
         <RadioButton
                 android:id="@+id/hot_button"
                 style="@style/footer_item_style"
