@@ -28,7 +28,7 @@ public class AppGridAdapter extends CursorAdapter implements View.OnClickListene
     protected Context mContext;
 
     public AppGridAdapter(Context context, Cursor c, int flags) {
-        super(context, c, flags);
+        super(context, c, 0);
         mContext = context;
     }
 

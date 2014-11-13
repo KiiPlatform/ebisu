@@ -42,7 +42,7 @@ public class AppListAdapter extends CursorAdapter implements View.OnClickListene
     int mType;
 
     public AppListAdapter(Context context, Cursor c, int type) {
-        super(context, c, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
+        super(context, c, 0);
         mContext = context;
         mType = type;
     }
