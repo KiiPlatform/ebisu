@@ -1,6 +1,7 @@
 package com.youwill.store;
 
 import com.youwill.store.activities.LogInActivity;
+import com.youwill.store.activities.SettingsActivity;
 import com.youwill.store.fragments.CategoriesFragment;
 import com.youwill.store.fragments.HotFragment;
 import com.youwill.store.fragments.PurchasedFragment;
@@ -150,7 +151,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 searchEdit.setText("");
                 break;
             case R.id.settings_button:
-                //TODO
+                startActivity(new Intent(this, SettingsActivity.class));
                 break;
             case R.id.log_in_text:
                 if (!Settings.isLoggedIn(this)) {

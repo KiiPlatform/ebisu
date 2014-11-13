@@ -42,6 +42,13 @@
                 android:name=".activities.AppDetailActivity"
                 android:theme="@style/FloatWindowTheme"
                 android:screenOrientation="landscape"/>
+        <activity android:name=".activities.SettingsActivity"
+                  android:theme="@style/FloatWindowTheme"
+                  android:screenOrientation="landscape"/>
+
+        <activity android:name=".activities.AboutActivity"
+                  android:theme="@style/FloatWindowTheme"
+                  android:screenOrientation="landscape"/>
         <activity
                 android:name=".activities.LogIn2Activity"
                 android:screenOrientation="landscape"/>
