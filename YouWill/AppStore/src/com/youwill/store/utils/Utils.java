@@ -145,8 +145,8 @@ public class Utils {
 
     private static DialogFragment mProgressDialog = null;
 
-    public static void showProgressDialog(Activity activity, String title, boolean isCancelable) {
-        mProgressDialog = ProgressDialogFragment.newInstance(title, isCancelable);
+    public static void showProgressDialog(Activity activity, String title) {
+        mProgressDialog = ProgressDialogFragment.newInstance(title);
         mProgressDialog.show(activity.getFragmentManager(), "dialog");
     }
 

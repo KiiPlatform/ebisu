@@ -140,7 +140,7 @@ public class DownloadAgent {
                 return request;
             }
         } catch (Exception e) {
-
+            LogUtils.e(e);
         } finally {
             Utils.closeSilently(c);
         }

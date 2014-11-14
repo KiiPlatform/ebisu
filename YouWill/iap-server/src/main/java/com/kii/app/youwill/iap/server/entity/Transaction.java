@@ -77,9 +77,39 @@ is_sandbox
                 json.put("app", app);
             }
 
+            putAdditionalFields(json);
             return json;
         } catch (JSONException e) {
             throw new ServiceException(IAPErrorCode.FORMAT_INVALID);
+        }
+    }
+
+    /*
+    * save additional fields from IAP product. */
+    private void putAdditionalFields(JSONObject json) {
+        if (product == null) {
+            return;
+        }
+
+        String[] additionalFields = new String[]{
+                "name",
+                "developer_id",
+                "developer_name",
+                "category_id",
+                "category_name",
+                "recommend_name",
+                "recommend_type",
+                "recommend_weight",
+        };
+        for (String field : additionalFields) {
+            String value = product.getFieldByName(field);
+            if (value != null) {
+                try {
+                    json.put(field, value);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -91,6 +121,9 @@ is_sandbox
         this.createdDate = new Date();
         this.userID = userID.toString();
         this.currency = currency;
+        /* additional fields for analytics */
+        this.product = product;
+
 
     }
 
@@ -135,6 +168,8 @@ is_sandbox
         }
     }
 
+
+    private Product product;
 
     private String transactionID;
 

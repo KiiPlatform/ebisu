@@ -47,7 +47,8 @@ public class DBHelper extends SQLiteOpenHelper {
                         + " ("
                         + "_id INTEGER PRIMARY KEY, "
                         + YouWill.Purchased.APP_ID + " TEXT NOT NULL UNIQUE,"
-                        + YouWill.Purchased.APP_KEY + " TEXT"
+                        + YouWill.Purchased.APP_KEY + " TEXT,"
+                        + YouWill.Purchased.IS_PURCHASED + " tinyint(1) default 1"
                         + " );"
         );
         db.execSQL("CREATE TABLE IF NOT EXISTS "
@@ -81,6 +82,13 @@ public class DBHelper extends SQLiteOpenHelper {
                         + " SELECT * FROM localapps INNER JOIN "
                         + " apps ON localapps.package_name = apps.package_name AND apps.version_code > localapps.version_code"
                         + " LEFT JOIN downloads ON apps.app_id = downloads.app_id;"
+        );
+
+        db.execSQL("CREATE VIEW IF NOT EXISTS "
+                        + YouWill.Application.PURCHASED_VIEW_NAME
+                        + " AS "
+                        + " SELECT * FROM apps LEFT JOIN purchased ON purchased.app_id = apps.app_id "
+                        + " LEFT JOIN downloads ON purchased.app_id = downloads.app_id;"
         );
 
         db.execSQL("CREATE UNIQUE INDEX apps_id ON apps(app_id);");

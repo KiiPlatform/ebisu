@@ -61,8 +61,20 @@ public class LogUtils {
     }
 
     public static void e(String tag, String msg) {
+        e(tag, msg, null);
+    }
+
+    public static void e(Exception e) {
+        e(TAG, "Error", e);
+    }
+
+    public static void e(String tag, String msg, Exception e) {
         if (isLoggable(android.util.Log.ERROR)) {
-            android.util.Log.e(tag, msg);
+            if (e == null) {
+                android.util.Log.e(tag, msg);
+            } else {
+                android.util.Log.e(tag, msg, e);
+            }
         }
     }
 

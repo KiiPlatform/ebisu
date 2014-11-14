@@ -25,8 +25,11 @@ _modified ... The object's last updated date in UNIX time (msec)
 
     }
 
+    private JSONObject jsonObject;
+
     public KiiEntity(JSONObject json) {
         try {
+            jsonObject = json;
             id = json.getString("_id");
             version = json.getString("_version");
             ownerID = json.getString("_owner");
@@ -88,6 +91,13 @@ _modified ... The object's last updated date in UNIX time (msec)
 
     public void setModified(Date modified) {
         this.modified = modified;
+    }
+
+    public String getFieldByName(String name) {
+        if (jsonObject == null) {
+            return null;
+        }
+        return jsonObject.optString(name, null);
     }
 
 

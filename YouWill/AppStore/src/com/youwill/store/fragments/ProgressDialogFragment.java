@@ -3,7 +3,6 @@ package com.youwill.store.fragments;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.TextUtils;
 import com.youwill.store.R;
@@ -23,24 +22,16 @@ public class ProgressDialogFragment extends DialogFragment {
         }
 
         ProgressDialog mProgressDialog = new ProgressDialog(getActivity(), getTheme());
-        mProgressDialog.setCancelable(isCancelable);
+        mProgressDialog.setCancelable(false);
         mProgressDialog.setIndeterminate(true);
         mProgressDialog.setTitle(title);
         return mProgressDialog;
     }
 
-    @Override
-    public void onCancel(DialogInterface dialog) {
-        if (getActivity() instanceof DialogInterface.OnCancelListener) {
-            ((DialogInterface.OnCancelListener) getActivity()).onCancel(dialog);
-        }
-    }
-
-    public static ProgressDialogFragment newInstance(String title, boolean isCancelable) {
+    public static ProgressDialogFragment newInstance(String title) {
         ProgressDialogFragment fragment = new ProgressDialogFragment();
         Bundle args = new Bundle();
         args.putString("title", title);
-        args.putBoolean("isCancelable", isCancelable);
         fragment.setArguments(args);
         return fragment;
     }

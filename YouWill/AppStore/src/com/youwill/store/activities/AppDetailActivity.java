@@ -1,27 +1,6 @@
 package com.youwill.store.activities;
 
-import com.kii.cloud.storage.KiiUser;
-import com.kii.cloud.storage.callback.KiiUserCallBack;
-import com.kii.payment.KiiOrder;
-import com.kii.payment.KiiPayment;
-import com.kii.payment.KiiPaymentCallback;
-import com.kii.payment.KiiProduct;
-import com.kii.payment.KiiStore;
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.youwill.store.R;
-import com.youwill.store.providers.YouWill;
-import com.youwill.store.utils.AppUtils;
-import com.youwill.store.utils.DataUtils;
-import com.youwill.store.utils.LogUtils;
-import com.youwill.store.utils.Settings;
-import com.youwill.store.utils.Utils;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.app.Activity;
-import android.content.DialogInterface;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
@@ -33,18 +12,24 @@ import android.text.format.DateFormat;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.RatingBar;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
+import com.kii.cloud.storage.KiiUser;
+import com.kii.cloud.storage.callback.KiiUserCallBack;
+import com.kii.payment.*;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.youwill.store.R;
+import com.youwill.store.providers.YouWill;
+import com.youwill.store.utils.*;
+import com.youwill.store.utils.Utils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AppDetailActivity extends Activity
-        implements View.OnClickListener, DialogInterface.OnCancelListener {
+        implements View.OnClickListener {
 
     public static final String EXTRA_APP_ID = "appId";
 
@@ -63,8 +48,6 @@ public class AppDetailActivity extends Activity
     private ProgressBar mProgressBar;
 
     private KiiProduct mIAPProduct;
-
-    private boolean mIAPIsCancelled = false;
 
     private boolean mIsPurchased = false;
 
@@ -101,19 +84,25 @@ public class AppDetailActivity extends Activity
             return;
         }
 
-        c = getContentResolver()
-                .query(YouWill.Purchased.CONTENT_URI, null, YouWill.Purchased.APP_ID + "=(?)",
-                        new String[]{mAppId}, null);
-        if (c != null && c.moveToFirst()) {
-            String appID = c.getString(c.getColumnIndex(YouWill.Purchased.APP_ID));
-            mIsPurchased = mAppId.equals(appID) && (c.getCount() == 1);
-            try {
-                mAppInfo.put("is_purchased", mIsPurchased);
-            } catch (JSONException e) {
-                LogUtils.e("Error: " + e);
+        if (getIntent().getExtras().containsKey("is_purchased")) {
+            mIsPurchased = getIntent().getBooleanExtra("is_purchased", false);
+        } else {
+            c = getContentResolver()
+                    .query(YouWill.Purchased.CONTENT_URI, null, YouWill.Purchased.APP_ID + "=(?)",
+                            new String[]{mAppId}, null);
+            if (c != null && c.moveToFirst()) {
+                String appID = c.getString(c.getColumnIndex(YouWill.Purchased.APP_ID));
+                int isPurchased = c.getInt(c.getColumnIndex(YouWill.Purchased.IS_PURCHASED));
+                mIsPurchased = (isPurchased == 1) && mAppId.equals(appID) && (c.getCount() == 1);
+                try {
+                    mAppInfo.put("is_purchased", mIsPurchased);
+                } catch (JSONException e) {
+                    LogUtils.e("Error: " + e);
+                }
             }
+            Utils.closeSilently(c);
         }
-        Utils.closeSilently(c);
+
         initViews();
     }
 
@@ -201,8 +190,7 @@ public class AppDetailActivity extends Activity
     }
 
     private void checkIAP(final String iapID, final double price) {
-        Utils.showProgressDialog(this, "", true);
-        mIAPIsCancelled = false;
+        Utils.showProgressDialog(this, "");
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -272,9 +260,7 @@ public class AppDetailActivity extends Activity
                     break;
                 case MSG_VALID_IAP_PRODUCT:
                     Utils.dismissProgressDialog();
-                    if (!mIAPIsCancelled) {
-                        launchPayment();
-                    }
+                    launchPayment();
                     break;
                 case MSG_INVALID_IAP_PRODUCT:
                     Utils.dismissProgressDialog();
@@ -318,12 +304,6 @@ public class AppDetailActivity extends Activity
 
         }
         super.onDestroy();
-    }
-
-    @Override
-    public void onCancel(DialogInterface dialog) {
-        mIAPIsCancelled = true;
-        LogUtils.d("IAP is cancelled.");
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

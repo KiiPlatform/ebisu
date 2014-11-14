@@ -49,7 +49,7 @@ public class AppProvider extends ContentProvider {
         switch (uriMatcher.match(uri)) {
             case ID_APPS: {
                 Cursor c = database
-                        .query(YouWill.Application.TABLE_NAME, projection, selection, selectionArgs,
+                        .query(YouWill.Application.PURCHASED_VIEW_NAME, projection, selection, selectionArgs,
                                 null, null, sortOrder);
                 c.setNotificationUri(getContext().getContentResolver(), uri);
                 return c;

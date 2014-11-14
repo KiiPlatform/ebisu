@@ -146,6 +146,8 @@ public class CategoriesFragment extends Fragment implements View.OnClickListener
         String appId = cursor.getString(cursor.getColumnIndex(YouWill.Application.APP_ID));
         Intent intent = new Intent(getActivity(), AppDetailActivity.class);
         intent.putExtra(AppDetailActivity.EXTRA_APP_ID, appId);
+        int isPurchased = cursor.getInt(cursor.getColumnIndex(YouWill.Purchased.IS_PURCHASED));
+        intent.putExtra("is_purchased", isPurchased == 1);
         startActivity(intent);
     }
 }

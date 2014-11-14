@@ -16,6 +16,8 @@ public class YouWill {
 
         public static final String TABLE_NAME = "apps";
 
+        public static final String PURCHASED_VIEW_NAME = "apps_purchased";
+
         public static final String APP_ID = "app_id";
 
         public static final String PACKAGE_NAME = "package_name";
@@ -126,6 +128,8 @@ public class YouWill {
         public static final String APP_ID = "app_id";
 
         public static final String APP_KEY = "app_key";
+
+        public static final String IS_PURCHASED = "is_purchased";
     }
 
     public static class Downloads implements BaseColumns {
@@ -157,24 +161,5 @@ public class YouWill {
         public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/upgrade");
 
         public static final String VIEW_NAME = "upgrade";
-    }
-
-
-    public static class Receipts implements BaseColumns {
-        public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/receipts");
-
-        public static final String TABLE_NAME = "receipts";
-
-        public static final String PRODUCT_ID = "product_id";
-
-        public static final String TRANSACTION_ID = "transaction_id";
-
-        public static final String TOTAL_FEE = "total_fee";
-
-        public static final String  SUBJECT = "subject";
-
-        public static final String  BUYER_EMAIL = "buy_email";
-
-        public static final String  GMT_PAYMENT = "gmt_payment";
     }
 }
