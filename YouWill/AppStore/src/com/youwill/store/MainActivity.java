@@ -60,6 +60,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         findViewById(R.id.upgrade_button).setOnClickListener(this);
         findViewById(R.id.purchased_button).setOnClickListener(this);
         mLogInView = (TextView) findViewById(R.id.log_in_text);
+        setLogInText();
         mSettingsView = (ImageView) findViewById(R.id.settings_button);
         mLogInView.setOnClickListener(this);
         mSettingsView.setOnClickListener(this);
@@ -215,12 +216,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             if (key.contentEquals(Settings.USER_ID_KEY)) {
-                if (Settings.isLoggedIn(MainActivity.this)) {
-                    //TODO
-                } else {
-                    mLogInView.setText(R.string.log_in);
-                }
+                setLogInText();
             }
         }
     };
+
+    public void setLogInText() {
+        if (Settings.isLoggedIn(this)) {
+            mLogInView.setText(Settings.getNick(this));
+        } else {
+            mLogInView.setText(R.string.log_in);
+        }
+    }
 }

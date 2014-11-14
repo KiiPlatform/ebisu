@@ -61,4 +61,13 @@ public class Settings {
         }
         return true;
     }
+
+    public static final String NICK = "nick";
+    public static void setNick(Context context, String nick) {
+        getPrefs(context).edit().putString(NICK, nick).apply();
+    }
+
+    public static String getNick(Context context) {
+        return getPrefs(context).getString(NICK, "");
+    }
 }

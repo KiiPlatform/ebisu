@@ -33,6 +33,7 @@ public class LogInActivity extends Activity {
                     LogUtils.d("onLogInComplete, user is " + user.toJSON());
                     Settings.setUserId(LogInActivity.this, user.getID());
                     Settings.setToken(LogInActivity.this, user.getAccessToken());
+                    Settings.setNick(LogInActivity.this, user.getUsername());
                 }
                 if (exception!=null) {
                     exception.printStackTrace();
