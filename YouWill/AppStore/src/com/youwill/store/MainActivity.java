@@ -1,16 +1,5 @@
 package com.youwill.store;
 
-import com.youwill.store.activities.LogInActivity;
-import com.youwill.store.activities.SettingsActivity;
-import com.youwill.store.fragments.CategoriesFragment;
-import com.youwill.store.fragments.HotFragment;
-import com.youwill.store.fragments.PurchasedFragment;
-import com.youwill.store.fragments.SearchFragment;
-import com.youwill.store.fragments.UpgradeFragment;
-import com.youwill.store.utils.DataUtils;
-import com.youwill.store.utils.Settings;
-import com.youwill.store.utils.Utils;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
@@ -20,12 +9,19 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.SparseArray;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import com.youwill.store.activities.LogInActivity;
+import com.youwill.store.activities.SettingsActivity;
+import com.youwill.store.fragments.*;
+import com.youwill.store.utils.DataUtils;
+import com.youwill.store.utils.Settings;
+import com.youwill.store.utils.Utils;
 
 public class MainActivity extends Activity implements View.OnClickListener {
 
@@ -83,6 +79,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
         DataUtils.loadApps(this);
         initHeader();
+
+        Settings.registerListener(this, mListener);
+    }
+
+    @Override
+    protected void onDestroy() {
+        Settings.unregisterListener(this, mListener);
+        super.onDestroy();
     }
 
     @Override
@@ -217,6 +221,15 @@ public class MainActivity extends Activity implements View.OnClickListener {
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             if (key.contentEquals(Settings.USER_ID_KEY)) {
                 setLogInText();
+            }
+
+            if (key.contentEquals(Settings.TOKEN_KEY) && !TextUtils.isEmpty(Settings.getToken(MainActivity.this))) {
+                new Thread() {
+                    @Override
+                    public void run() {
+                        DataUtils.getPurchasedList(getApplicationContext());
+                    }
+                }.start();
             }
         }
     };

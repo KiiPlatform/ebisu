@@ -63,11 +63,20 @@ public class Settings {
     }
 
     public static final String NICK = "nick";
+
     public static void setNick(Context context, String nick) {
         getPrefs(context).edit().putString(NICK, nick).apply();
     }
 
     public static String getNick(Context context) {
         return getPrefs(context).getString(NICK, "");
+    }
+
+    public static void registerListener(Context context, SharedPreferences.OnSharedPreferenceChangeListener listener) {
+        getPrefs(context).registerOnSharedPreferenceChangeListener(listener);
+    }
+
+    public static void unregisterListener(Context context, SharedPreferences.OnSharedPreferenceChangeListener listener) {
+        getPrefs(context).unregisterOnSharedPreferenceChangeListener(listener);
     }
 }

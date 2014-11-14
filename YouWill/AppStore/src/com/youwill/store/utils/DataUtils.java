@@ -90,22 +90,27 @@ public class DataUtils {
     }
 
     public static void getPurchasedList(final Context context) {
-        KiiUser.loginWithToken(new KiiUserCallBack() {
-            @Override
-            public void onLoginCompleted(int token, final KiiUser user, Exception exception) {
-                if (exception == null) {
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            refreshPurchasedList(context, user);
-                        }
-                    }.start();
+        KiiUser currentUser = KiiUser.getCurrentUser();
+        if (currentUser != null && currentUser.isLoggedIn()) {
+            refreshPurchasedList(context, currentUser);
+        } else {
+            KiiUser.loginWithToken(new KiiUserCallBack() {
+                @Override
+                public void onLoginCompleted(int token, final KiiUser user, Exception exception) {
+                    if (exception == null) {
+                        new Thread() {
+                            @Override
+                            public void run() {
+                                refreshPurchasedList(context, user);
+                            }
+                        }.start();
 
-                } else {
-                    LogUtils.d("loginWithToken failed with exception: " + exception);
+                    } else {
+                        LogUtils.d("loginWithToken failed with exception: " + exception);
+                    }
                 }
-            }
-        }, Settings.getToken(context));
+            }, Settings.getToken(context));
+        }
     }
 
     private static void refreshPurchasedList(Context context, KiiUser user) {
