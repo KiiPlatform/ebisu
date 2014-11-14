@@ -1,18 +1,21 @@
 package com.youwill.store.utils;
 
-import android.app.Activity;
-import android.app.DialogFragment;
-import android.content.Context;
-import android.content.pm.PackageInfo;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.Bundle;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.youwill.store.fragments.ProgressDialogFragment;
 import com.youwill.store.net.DownloadAgent;
 import com.youwill.store.net.DownloadInfo;
+
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import android.app.Activity;
+import android.app.DialogFragment;
+import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.Bundle;
 
 import java.io.Closeable;
 
@@ -140,4 +143,17 @@ public class Utils {
             mProgressDialog.dismiss();
         }
     }
+
+    public static String getVersionName(Context context) {
+        PackageManager pm = context.getPackageManager();
+        String versionName = "Unknown";
+        try {
+            PackageInfo pi = pm.getPackageInfo(context.getPackageName(), 0);
+            versionName = pi.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+        }
+        return versionName;
+    }
+
+
 }

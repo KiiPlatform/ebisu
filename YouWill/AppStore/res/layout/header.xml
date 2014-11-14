@@ -48,7 +48,7 @@
                 android:focusableInTouchMode="true"/>
         <EditText
                 android:layout_width="227px"
-                android:layout_height="36px"
+                android:layout_height="wrap_content"
                 android:background="@drawable/search_bg"
                 android:textSize="8pt"
                 android:id="@+id/search_edit"
