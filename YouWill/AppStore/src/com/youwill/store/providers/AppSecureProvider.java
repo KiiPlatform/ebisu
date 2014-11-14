@@ -1,7 +1,5 @@
 package com.youwill.store.providers;
 
-import org.json.JSONObject;
-
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -27,15 +25,14 @@ public class AppSecureProvider extends ContentProvider {
             String sortOrder) {
         SQLiteDatabase database = mDBHelper.getWritableDatabase();
         Cursor c = database
-                .query(YouWill.Application.TABLE_NAME, new String[]{YouWill.Application.APP_INFO},
-                        YouWill.Application.PACKAGE_NAME + "=" + selection, null,
-                        null, null, null);
+                .query(YouWill.Purchased.VIEW_NAME, projection,
+                        YouWill.Application.PACKAGE_NAME + "=" + selection, selectionArgs,
+                        null, null, sortOrder);
         MatrixCursor cursor = new MatrixCursor(new String[]{"key"});
         if (c != null && c.moveToFirst()) {
-            String appInfo = c.getString(0);
             try {
-                JSONObject object = new JSONObject(appInfo);
-                cursor.addRow(new String[]{object.optString("protect_key")});
+                cursor.addRow(
+                        new String[]{c.getString(c.getColumnIndex(YouWill.Purchased.APP_KEY))});
             } catch (Exception e) {
 
             }
