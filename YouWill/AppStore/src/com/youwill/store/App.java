@@ -1,6 +1,5 @@
 package com.youwill.store;
 
-import android.app.Application;
 import com.kii.cloud.storage.Kii;
 import com.kii.payment.YouWillIAPSDK;
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -10,12 +9,19 @@ import com.youwill.store.utils.AppUtils;
 import com.youwill.store.utils.DataUtils;
 import com.youwill.store.utils.Settings;
 
+import android.app.Application;
+
 /**
  * Created by Evan on 14/10/19.
  */
 public class App extends Application {
 
     private static final int DISK_CACHE_SIZE = 100 * 1024 * 1024;
+    private static App sInstance;
+
+    public static App getInstance() {
+        return sInstance;
+    }
 
     @Override
     public void onCreate() {
@@ -39,5 +45,6 @@ public class App extends Application {
                 }
             }
         }.start();
+        sInstance = this;
     }
 }

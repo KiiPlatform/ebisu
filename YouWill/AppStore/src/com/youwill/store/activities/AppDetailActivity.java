@@ -349,7 +349,8 @@ public class AppDetailActivity extends Activity
         @Override
         public void onBindViewHolder(ViewHolder viewHolder, int i) {
             ImageLoader.getInstance()
-                    .displayImage(mPics.get(i % mPics.size()), viewHolder.mImageView);
+                    .displayImage(mPics.get(i % mPics.size()), viewHolder.mImageView,
+                            Utils.detailDisplayOptions);
         }
 
         @Override
@@ -357,4 +358,5 @@ public class AppDetailActivity extends Activity
             return Integer.MAX_VALUE;
         }
     }
+
 }

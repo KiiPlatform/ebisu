@@ -1,6 +1,7 @@
 package com.youwill.store.utils;
 
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.youwill.store.R;
 import com.youwill.store.fragments.ProgressDialogFragment;
 import com.youwill.store.net.DownloadAgent;
 import com.youwill.store.net.DownloadInfo;
@@ -33,6 +34,17 @@ public class Utils {
     public static final String DUMMY_PACKAGE_NAME = "Dummy_package_name";
 
     public static final DisplayImageOptions iconDisplayOptions = new DisplayImageOptions.Builder()
+            .showImageOnLoading(R.drawable.default_app_icon)
+            .showImageOnFail(R.drawable.default_app_icon)
+            .showImageForEmptyUri(R.drawable.default_app_icon)
+            .cacheInMemory(true)
+            .cacheOnDisk(true)
+            .build();
+
+    public static final DisplayImageOptions detailDisplayOptions = new DisplayImageOptions.Builder()
+            .showImageOnLoading(R.drawable.default_content_image)
+            .showImageOnFail(R.drawable.default_content_image)
+            .showImageForEmptyUri(R.drawable.default_content_image)
             .cacheInMemory(true)
             .cacheOnDisk(true)
             .build();

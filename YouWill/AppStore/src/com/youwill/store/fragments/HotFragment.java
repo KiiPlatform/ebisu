@@ -64,8 +64,6 @@ public class HotFragment extends Fragment
 
     private DisplayImageOptions coverFlowOption;
 
-    private DisplayImageOptions appOption;
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
@@ -104,9 +102,6 @@ public class HotFragment extends Fragment
         coverFlowOption = new DisplayImageOptions.Builder()
                 .showImageOnLoading(R.drawable.cover_flow1).showImageOnFail(R.drawable.cover_flow1)
                 .showImageForEmptyUri(R.drawable.cover_flow1).resetViewBeforeLoading(true).build();
-        appOption = new DisplayImageOptions.Builder()
-                .showImageOnLoading(R.drawable.ic_launcher).showImageOnFail(R.drawable.ic_launcher)
-                .showImageForEmptyUri(R.drawable.ic_launcher).resetViewBeforeLoading(true).build();
         initQueryHandler();
         startQuery();
         getActivity().getContentResolver()
@@ -199,7 +194,8 @@ public class HotFragment extends Fragment
                 String url = app.getString("icon");
                 String name = app.getString("name");
                 int size = app.getInt("apk_size");
-                ImageLoader.getInstance().displayImage(url, viewHolder.icon);
+                ImageLoader.getInstance()
+                        .displayImage(url, viewHolder.icon, Utils.iconDisplayOptions);
                 viewHolder.name.setText(name);
                 viewHolder.size.setText(Utils.getFileSizeString(size));
                 viewHolder.icon.setOnClickListener(new View.OnClickListener() {
