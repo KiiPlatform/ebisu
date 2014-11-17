@@ -52,8 +52,8 @@
                 android:id="@+id/version"
                 />
         <TextView
-                android:layout_width="160px"
-                android:layout_height="43px"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:text="@string/check_update"
                 android:textSize="10pt"
                 android:textColor="@color/white"
