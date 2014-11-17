@@ -1,5 +1,16 @@
 package com.youwill.store;
 
+import com.youwill.store.activities.LogInActivity;
+import com.youwill.store.activities.SettingsActivity;
+import com.youwill.store.fragments.CategoriesFragment;
+import com.youwill.store.fragments.HotFragment;
+import com.youwill.store.fragments.PurchasedFragment;
+import com.youwill.store.fragments.SearchFragment;
+import com.youwill.store.fragments.UpgradeFragment;
+import com.youwill.store.utils.DataUtils;
+import com.youwill.store.utils.Settings;
+import com.youwill.store.utils.Utils;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
@@ -14,14 +25,7 @@ import android.text.TextWatcher;
 import android.util.SparseArray;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
-import com.youwill.store.activities.LogInActivity;
-import com.youwill.store.activities.SettingsActivity;
-import com.youwill.store.fragments.*;
-import com.youwill.store.utils.DataUtils;
-import com.youwill.store.utils.Settings;
-import com.youwill.store.utils.Utils;
 
 public class MainActivity extends Activity implements View.OnClickListener {
 
@@ -41,8 +45,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private TextView mLogInView;
 
-    private ImageView mSettingsView;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,9 +59,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         findViewById(R.id.purchased_button).setOnClickListener(this);
         mLogInView = (TextView) findViewById(R.id.log_in_text);
         setLogInText();
-        mSettingsView = (ImageView) findViewById(R.id.settings_button);
         mLogInView.setOnClickListener(this);
-        mSettingsView.setOnClickListener(this);
+        findViewById(R.id.settings_button).setOnClickListener(this);
         mSearchFragment = (SearchFragment) Fragment
                 .instantiate(this, SearchFragment.class.getName());
         if (savedInstanceState == null) {
@@ -204,12 +205,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
 
         Fragment fragment = fragments.get(v.getId());
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
         if (fragment.isAdded()) {
-            getFragmentManager().beginTransaction().hide(currentFragment).show(fragment).commit();
+            ft.hide(currentFragment).show(fragment);
         } else {
-            getFragmentManager().beginTransaction().hide(currentFragment)
-                    .add(R.id.fragments, fragment, String.valueOf(v.getId())).commit();
+            ft.hide(currentFragment).add(R.id.fragments, fragment, String.valueOf(v.getId()));
         }
+        ft.commitAllowingStateLoss();
+        getFragmentManager().executePendingTransactions();
         currentFragmentIndex = v.getId();
         currentFragment = fragment;
         DataUtils.loadApps(this);
@@ -223,7 +226,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 setLogInText();
             }
 
-            if (key.contentEquals(Settings.TOKEN_KEY) && !TextUtils.isEmpty(Settings.getToken(MainActivity.this))) {
+            if (key.contentEquals(Settings.TOKEN_KEY) && !TextUtils
+                    .isEmpty(Settings.getToken(MainActivity.this))) {
                 new Thread() {
                     @Override
                     public void run() {
@@ -241,4 +245,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
             mLogInView.setText(R.string.log_in);
         }
     }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+    }
+
 }
