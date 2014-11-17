@@ -87,7 +87,7 @@ is_sandbox
     /*
     * save additional fields from IAP product. */
     private void putAdditionalFields(JSONObject json) {
-        if (product == null) {
+        if (product == null || (product.getApp() == null)) {
             return;
         }
 

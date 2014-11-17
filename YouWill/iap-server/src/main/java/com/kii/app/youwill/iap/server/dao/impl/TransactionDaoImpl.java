@@ -21,8 +21,11 @@ import org.springframework.stereotype.Component;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -48,6 +51,12 @@ public class TransactionDaoImpl implements TransactionDao {
     private String BUCKET_ID = "transaction";
 
     private static String[] ADDITIONAL_FIELDS = new String[]{"total_fee", "buyer_email", "seller_email",};
+
+    private static DateFormat FMT_DAY = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+    private static DateFormat FMT_MONTH = new SimpleDateFormat("yyyy-MM", Locale.US);
+    private static DateFormat FMT_YEAR = new SimpleDateFormat("yyyy", Locale.US);
+    private static DateFormat FMT_WEEK = new SimpleDateFormat("ww", Locale.US);
+
 
     @Override
     public String createNewOrder(Product product, StartTransactionParam param) {
@@ -194,7 +203,15 @@ public class TransactionDaoImpl implements TransactionDao {
             }
 
             map.put("payStatus", status.name());
-            map.put("payCompleteDate", IAPUtils.convertAlipayDate(callbackParams.get("gmt_payment")).getTime());
+            Date paymentDate = IAPUtils.convertAlipayDate(callbackParams.get("gmt_payment"));
+            map.put("payCompleteDate", paymentDate.getTime());
+            //fields for report
+            map.put("pay_day", FMT_DAY.format(paymentDate));
+            map.put("pay_month", FMT_MONTH.format(paymentDate));
+            map.put("pay_year", FMT_YEAR.format(paymentDate));
+            map.put("pay_week", FMT_WEEK.format(paymentDate));
+
+
             map.put("alipayTradeNo", callbackParams.get("trade_no"));
             map.put("modifyDate", System.currentTimeMillis());
 

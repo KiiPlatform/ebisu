@@ -1,5 +1,6 @@
 package com.youwill.store.utils;
 
+import android.app.FragmentTransaction;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.youwill.store.R;
 import com.youwill.store.fragments.ProgressDialogFragment;
@@ -147,7 +148,10 @@ public class Utils {
 
     public static void showProgressDialog(Activity activity, String title) {
         mProgressDialog = ProgressDialogFragment.newInstance(title);
-        mProgressDialog.show(activity.getFragmentManager(), "dialog");
+        //mProgressDialog.show(activity.getFragmentManager(), "dialog");
+        FragmentTransaction ft = activity.getFragmentManager().beginTransaction();
+        ft.add(mProgressDialog, "dialog");
+        ft.commitAllowingStateLoss();
     }
 
     public static void dismissProgressDialog() {
