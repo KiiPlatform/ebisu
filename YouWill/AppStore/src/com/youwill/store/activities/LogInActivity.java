@@ -35,7 +35,7 @@ public class LogInActivity extends Activity {
                     Settings.setToken(LogInActivity.this, user.getAccessToken());
                     Settings.setNick(LogInActivity.this, user.getUsername());
                 }
-                if (exception!=null) {
+                if (exception != null) {
                     exception.printStackTrace();
                 }
             }
@@ -57,11 +57,16 @@ public class LogInActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == KiiSocialNetworkConnector.REQUEST_CODE && resultCode == RESULT_OK) {
-            Kii.socialConnect(KiiSocialConnect.SocialNetwork.SOCIALNETWORK_CONNECTOR)
-                    .respondAuthOnActivityResult(
-                            requestCode,
-                            resultCode,
-                            data);
+            KiiSocialConnect connect = Kii.socialConnect(
+                    KiiSocialConnect.SocialNetwork.SOCIALNETWORK_CONNECTOR);
+            connect.respondAuthOnActivityResult(requestCode, resultCode, data);
+            Bundle bundle = connect.getAccessTokenBundle();
+            for (String key : bundle.keySet()) {
+                LogUtils.d("onActivityResult, key is " + key + ", value is " + bundle.get(key)
+                        .toString());
+            }
+            Settings.setYouWillToken(this, bundle.getString("oauth_token"));
+            Settings.setYouWillId(this, bundle.getString("provider_user_id"));
         }
         finish();
     }
