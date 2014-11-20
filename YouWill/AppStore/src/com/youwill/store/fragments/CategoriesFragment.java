@@ -30,25 +30,32 @@ import android.widget.RadioButton;
 /**
  * Created by Evan on 14-9-23:下午11:01.
  */
-public class CategoriesFragment extends Fragment implements View.OnClickListener, LoaderManager.LoaderCallbacks<Cursor>, AdapterView.OnItemClickListener {
+public class CategoriesFragment extends Fragment
+        implements View.OnClickListener, LoaderManager.LoaderCallbacks<Cursor>,
+        AdapterView.OnItemClickListener {
 
     private static final String KEY_LAST_CATE = "last_category";
+
     RadioButton[] cate_btns = new RadioButton[4];
+
     int current_cate = -1;
+
     GridView mGrid;
+
     AppGridAdapter mAdapter;
 
     BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (mGrid != null)
+            if (mGrid != null) {
                 mGrid.invalidateViews();
+            }
         }
     };
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+            Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_cate, container, false);
         initView(view);
         return view;
@@ -78,7 +85,9 @@ public class CategoriesFragment extends Fragment implements View.OnClickListener
     @Override
     public void onResume() {
         super.onResume();
-        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mReceiver, new IntentFilter(Constants.INTENT_DOWNLOAD_PROGRESS_CHANGED));
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mReceiver,
+                new IntentFilter(Constants.INTENT_DOWNLOAD_PROGRESS_CHANGED));
+        getLoaderManager().restartLoader(getClass().hashCode(), null, this);
     }
 
     @Override
@@ -124,7 +133,8 @@ public class CategoriesFragment extends Fragment implements View.OnClickListener
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
         String select = YouWill.Application.AGE_CATEGORY + "=" + current_cate;
-        return new CursorLoader(getActivity(), YouWill.Application.CONTENT_URI, null, select, null, null);
+        return new CursorLoader(getActivity(), YouWill.Application.CONTENT_URI, null, select, null,
+                null);
     }
 
     @Override
@@ -139,7 +149,7 @@ public class CategoriesFragment extends Fragment implements View.OnClickListener
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Cursor cursor = (Cursor)mAdapter.getItem(position);
+        Cursor cursor = (Cursor) mAdapter.getItem(position);
         if (cursor == null) {
             return;
         }

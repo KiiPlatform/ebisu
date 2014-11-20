@@ -1,5 +1,9 @@
 package com.youwill.store.fragments;
 
+import com.youwill.store.R;
+import com.youwill.store.providers.YouWill;
+import com.youwill.store.view.AppListAdapter;
+
 import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
@@ -7,10 +11,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
-import com.youwill.store.R;
-import com.youwill.store.providers.YouWill;
-import com.youwill.store.view.AppListAdapter;
 
 /**
  * Created by tian on 14-9-23:下午11:02.
@@ -30,6 +30,13 @@ public class UpgradeFragment extends BaseAppListFragment {
         mAdapter = new AppListAdapter(getActivity(), null, AppListAdapter.TYPE_UPGRADE);
         setListAdapter(mAdapter);
         getLoaderManager().initLoader(getClass().hashCode(), null, this);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        getLoaderManager().restartLoader(getClass().hashCode(), null, this);
+
     }
 
     @Override
