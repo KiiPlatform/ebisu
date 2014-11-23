@@ -52,7 +52,7 @@
         android:layout_toLeftOf="@id/right_btn"
         android:layout_marginRight="12px"
         android:layout_marginLeft="12px"
-        android:textColor="@color/blue_button_text"
+        android:textColor="@color/white"
         android:textSize="8pt" />
 
     <TextView

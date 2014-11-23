@@ -54,6 +54,10 @@
         <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:paddingTop="10px"
+                android:paddingBottom="10px"
+                android:paddingLeft="35px"
+                android:paddingRight="35px"
                 android:text="@string/check_update"
                 android:textSize="10pt"
                 android:textColor="@color/white"

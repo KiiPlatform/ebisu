@@ -48,7 +48,7 @@
     <string name="please_login">请使用优悦账户登录之后再试！</string>
     <string name="log_in">登录</string>
     <string name="settings">设置</string>
-    <string name="clear_cache">清除缓存</string>
+    <string name="clear_cache">清除商店缓存</string>
     <string name="about">关于</string>
     <string name="log_in_account">账号登录</string>
     <string name="log_out">账号退出</string>

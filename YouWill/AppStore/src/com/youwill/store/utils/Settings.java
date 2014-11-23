@@ -72,11 +72,33 @@ public class Settings {
         return getPrefs(context).getString(NICK, "");
     }
 
-    public static void registerListener(Context context, SharedPreferences.OnSharedPreferenceChangeListener listener) {
+    public static void registerListener(Context context,
+            SharedPreferences.OnSharedPreferenceChangeListener listener) {
         getPrefs(context).registerOnSharedPreferenceChangeListener(listener);
     }
 
-    public static void unregisterListener(Context context, SharedPreferences.OnSharedPreferenceChangeListener listener) {
+    public static void unregisterListener(Context context,
+            SharedPreferences.OnSharedPreferenceChangeListener listener) {
         getPrefs(context).unregisterOnSharedPreferenceChangeListener(listener);
+    }
+
+    public static final String YOU_WILL_TOKEN = "youwill_token";
+
+    public static void setYouWillToken(Context context, String youWillToken) {
+        getPrefs(context).edit().putString(YOU_WILL_TOKEN, youWillToken).apply();
+    }
+
+    public static String getYouWillToken(Context context) {
+        return getPrefs(context).getString(YOU_WILL_TOKEN, "");
+    }
+
+    public static final String YOU_WILL_ID = "youwill_id";
+
+    public static void setYouWillId(Context context, String id) {
+        getPrefs(context).edit().putString(YOU_WILL_ID, id).apply();
+    }
+
+    public static String getYouWillId(Context context) {
+        return getPrefs(context).getString(YOU_WILL_ID, "");
     }
 }

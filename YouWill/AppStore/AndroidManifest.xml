@@ -58,6 +58,11 @@
                 android:label="@string/app_name"
                 android:screenOrientation="landscape"/>
 
+        <activity
+                android:name="com.alipay.android.app.sdk.WapPayActivity"
+                android:screenOrientation="portrait" >
+        </activity>
+        
         <provider
                 android:name=".providers.AppSecureProvider"
                 android:authorities="com.kii.store.sandbox.check"

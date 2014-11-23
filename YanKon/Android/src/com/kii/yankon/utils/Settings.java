@@ -3,7 +3,7 @@ package com.kii.yankon.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import com.kii.yankon.YanKonApplication;
+import com.kii.yankon.App;
 
 /**
  * Created by tian on 14-9-17:上午7:43.
@@ -18,7 +18,7 @@ public class Settings {
 
     public static SharedPreferences getPrefs() {
         if (gContext == null) {
-            gContext = YanKonApplication.getInstance();
+            gContext = App.getApp();
         }
         int code = Context.MODE_MULTI_PROCESS;
         return gContext.getSharedPreferences(PREF_NAME, code);
