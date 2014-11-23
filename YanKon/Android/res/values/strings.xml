@@ -2,12 +2,19 @@
 <resources>
 
     <string name="app_name">YanKon</string>
-    <string name="title_section1">Section 1</string>
-    <string name="title_section2">Section 2</string>
-    <string name="title_section3">Section 3</string>
+    <string name="title_section1">Lights</string>
+    <string name="title_section2">Scenes</string>
+    <string name="title_section3">Schedule</string>
+    <string name="title_section4">Actions</string>
+    <string name="title_section5">Colors</string>
+    <string name="title_section6">Account</string>
+    <string name="title_section7">Settings</string>
+    <string name="drawer_title">Menu</string>
+
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="action_example">Example action</string>
     <string name="action_settings">Settings</string>
+    <string name="guide_skip">Skip</string>
 
 </resources>
