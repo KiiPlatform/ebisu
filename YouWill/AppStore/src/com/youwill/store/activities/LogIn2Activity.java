@@ -4,7 +4,6 @@ import com.kii.cloud.storage.Kii;
 import com.kii.cloud.storage.social.KiiSocialConnect;
 import com.kii.cloud.storage.social.connector.KiiSocialNetworkConnector;
 import com.youwill.store.R;
-import com.youwill.store.utils.DataUtils;
 import com.youwill.store.utils.LogUtils;
 import com.youwill.store.utils.Settings;
 
@@ -53,6 +52,7 @@ public class LogIn2Activity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == KiiSocialNetworkConnector.REQUEST_CODE && resultCode == RESULT_OK) {
+
             Kii.socialConnect(KiiSocialConnect.SocialNetwork.SOCIALNETWORK_CONNECTOR)
                     .respondAuthOnActivityResult(
                             requestCode,
@@ -130,12 +130,6 @@ public class LogIn2Activity extends Activity {
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
             LogUtils.d("onPageStarted, url is " + url);
             if (shouldFinish(url)) {
-                new Thread(){
-                    @Override
-                    public void run() {
-                        DataUtils.getPurchasedList(getApplicationContext());
-                    }
-                }.start();
                 Toast.makeText(LogIn2Activity.this, R.string.log_in_success, Toast.LENGTH_SHORT)
                         .show();
                 setResult(RESULT_OK);
@@ -145,5 +139,6 @@ public class LogIn2Activity extends Activity {
             }
         }
     }
+
 
 }

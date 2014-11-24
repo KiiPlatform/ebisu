@@ -69,7 +69,7 @@ public class Settings {
     }
 
     public static String getNick(Context context) {
-        return getPrefs(context).getString(NICK, "");
+        return getPrefs(context).getString(NICK, "YouWill用户");
     }
 
     public static void registerListener(Context context,
@@ -82,23 +82,4 @@ public class Settings {
         getPrefs(context).unregisterOnSharedPreferenceChangeListener(listener);
     }
 
-    public static final String YOU_WILL_TOKEN = "youwill_token";
-
-    public static void setYouWillToken(Context context, String youWillToken) {
-        getPrefs(context).edit().putString(YOU_WILL_TOKEN, youWillToken).apply();
-    }
-
-    public static String getYouWillToken(Context context) {
-        return getPrefs(context).getString(YOU_WILL_TOKEN, "");
-    }
-
-    public static final String YOU_WILL_ID = "youwill_id";
-
-    public static void setYouWillId(Context context, String id) {
-        getPrefs(context).edit().putString(YOU_WILL_ID, id).apply();
-    }
-
-    public static String getYouWillId(Context context) {
-        return getPrefs(context).getString(YOU_WILL_ID, "");
-    }
 }
