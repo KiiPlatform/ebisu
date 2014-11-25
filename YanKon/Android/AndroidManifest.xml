@@ -26,6 +26,10 @@
         <activity
             android:name=".GuideActivity"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
+        <activity
+                android:name=".LightsActivity"
+                android:theme="@android:style/Theme.NoTitleBar" />
+
     </application>
 
 </manifest>
