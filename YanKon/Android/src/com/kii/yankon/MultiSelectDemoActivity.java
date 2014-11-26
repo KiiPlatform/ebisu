@@ -22,10 +22,6 @@ public class MultiSelectDemoActivity extends Activity
         implements AbsListView.MultiChoiceModeListener, AdapterView.OnItemClickListener,
         AdapterView.OnItemLongClickListener {
 
-    private ListView mListView;
-
-    private static final String TAG = MultiSelectDemoActivity.class.getSimpleName();
-
     private SparseBooleanArray mCheckedMap = new SparseBooleanArray();
 
     private DemoListAdapter mAdapter;
@@ -34,11 +30,11 @@ public class MultiSelectDemoActivity extends Activity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_multi_select_demo);
-        mListView = (ListView) findViewById(R.id.list);
+        ListView listView = (ListView) findViewById(R.id.list);
         mAdapter = new DemoListAdapter();
-        mListView.setAdapter(mAdapter);
-        mListView.setOnItemClickListener(this);
-        mListView.setOnItemLongClickListener(this);
+        listView.setAdapter(mAdapter);
+        listView.setOnItemClickListener(this);
+        listView.setOnItemLongClickListener(this);
     }
 
     private ActionMode mActionMode;
