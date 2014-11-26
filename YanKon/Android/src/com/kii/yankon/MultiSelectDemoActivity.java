@@ -54,6 +54,7 @@ public class MultiSelectDemoActivity extends Activity
     @Override
     public boolean onCreateActionMode(ActionMode mode, Menu menu) {
         mode.getMenuInflater().inflate(R.menu.menu_multi_select_demo, menu);
+        mode.setTitle("Delete mode");
         return true;
     }
 
@@ -183,7 +184,6 @@ public class MultiSelectDemoActivity extends Activity
 
         if (hasCheckedItems && mActionMode == null) {
             mActionMode = startActionMode(this);
-            mActionMode.setTitle("Delete mode");
         } else if (!hasCheckedItems && mActionMode != null) {
             mActionMode.finish();
         }
