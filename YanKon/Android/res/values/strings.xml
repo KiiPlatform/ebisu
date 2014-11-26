@@ -19,5 +19,9 @@
     <string name="hello_world">Hello world!</string>
     <string name="action_delete">Delete</string>
     <string name="delete_mode">删除</string>
+    <string name="searching">Searching...</string>
+    <string name="menu_sort">Sort By</string>
+    <string name="menu_add_lights">Add Lights</string>
+    <string name="menu_remove_lights">Remove Lights</string>
 
 </resources>

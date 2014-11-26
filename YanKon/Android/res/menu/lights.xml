@@ -1,0 +1,23 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.kii.yankon.MainActivity" >
+
+    <item
+        android:id="@+id/action_sort"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="@string/menu_sort"/>
+
+    <item
+        android:id="@+id/action_add"
+        android:orderInCategory="101"
+        android:showAsAction="never"
+        android:title="@string/menu_add_lights"/>
+
+    <item
+        android:id="@+id/action_remove"
+        android:orderInCategory="102"
+        android:showAsAction="never"
+        android:title="@string/menu_remove_lights"/>
+
+</menu>

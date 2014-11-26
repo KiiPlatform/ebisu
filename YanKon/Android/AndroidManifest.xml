@@ -35,7 +35,7 @@
             android:name="com.kii.yankon.GuideActivity"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
         <activity
-            android:name="com.kii.yankon.LightsActivity"
+            android:name=".AddLightsActivity"
             android:theme="@android:style/Theme.NoTitleBar" />
         <activity
             android:name="com.kii.yankon.MultiSelectDemoActivity"
