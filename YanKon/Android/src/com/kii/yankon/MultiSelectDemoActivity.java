@@ -10,7 +10,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
@@ -19,7 +18,7 @@ import android.widget.Toast;
 
 
 public class MultiSelectDemoActivity extends Activity
-        implements AbsListView.MultiChoiceModeListener, AdapterView.OnItemClickListener,
+        implements ActionMode.Callback, AdapterView.OnItemClickListener,
         AdapterView.OnItemLongClickListener {
 
     private SparseBooleanArray mCheckedMap = new SparseBooleanArray();
@@ -43,13 +42,6 @@ public class MultiSelectDemoActivity extends Activity
             "Action", "Adventure", "Animation", "Children", "Comedy", "Documentary", "Drama",
             "Foreign", "History", "Independent", "Romance", "Sci-Fi", "Television", "Thriller"
     };
-
-    @Override
-    public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
-        setSubtitle(mode);
-        mCheckedMap.put(position, checked);
-        mAdapter.notifyDataSetChanged();
-    }
 
     @Override
     public boolean onCreateActionMode(ActionMode mode, Menu menu) {
