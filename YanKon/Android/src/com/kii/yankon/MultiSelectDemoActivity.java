@@ -109,10 +109,6 @@ public class MultiSelectDemoActivity extends Activity
         return true;
     }
 
-    private void handleItemChecked(int position, long id, boolean isChecked) {
-        onItemCheckedStateChanged(mActionMode, position, id, isChecked);
-    }
-
     private class DemoListAdapter extends BaseAdapter {
 
         @Override
