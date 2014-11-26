@@ -1,9 +1,10 @@
 package com.kii.yankon;
 
+import com.kii.yankon.widget.BaseMultiSelectAdapter;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.os.Bundle;
-import android.util.SparseBooleanArray;
 import android.view.ActionMode;
 import android.view.Gravity;
 import android.view.Menu;
@@ -11,7 +12,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,9 +21,7 @@ public class MultiSelectDemoActivity extends Activity
         implements ActionMode.Callback, AdapterView.OnItemClickListener,
         AdapterView.OnItemLongClickListener {
 
-    private SparseBooleanArray mCheckedMap = new SparseBooleanArray();
-
-    private DemoListAdapter mAdapter;
+    private BaseMultiSelectAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +58,7 @@ public class MultiSelectDemoActivity extends Activity
         switch (item.getItemId()) {
             case R.id.action_delete:
                 new AlertDialog.Builder(this).setTitle(
-                        String.format("%d items will be deleted!", getSelectedCount()))
+                        String.format("%d items will be deleted!", mAdapter.getSelectedCount()))
                         .setPositiveButton(android.R.string.ok, null)
                         .setNegativeButton(android.R.string.cancel, null).show();
                 break;
@@ -72,7 +70,7 @@ public class MultiSelectDemoActivity extends Activity
 
     @Override
     public void onDestroyActionMode(ActionMode mode) {
-        clearSelection();
+        mAdapter.clearSelection();
         mActionMode = null;
     }
 
@@ -98,7 +96,7 @@ public class MultiSelectDemoActivity extends Activity
         return true;
     }
 
-    private class DemoListAdapter extends BaseAdapter {
+    public class DemoListAdapter extends BaseMultiSelectAdapter {
 
         @Override
         public int getCount() {
@@ -131,10 +129,11 @@ public class MultiSelectDemoActivity extends Activity
             tv.setText(getItem(position));
             return view;
         }
+
     }
 
     private void setSubtitle(ActionMode mode) {
-        final int checkedCount = mCheckedMap.size();
+        final int checkedCount = mAdapter.getSelectedCount();
         switch (checkedCount) {
             case 0:
                 mode.setSubtitle(null);
@@ -148,31 +147,13 @@ public class MultiSelectDemoActivity extends Activity
         }
     }
 
-    private void switchChecked(int position, boolean checked) {
-        if (checked) {
-            mCheckedMap.put(position, true);
-        } else {
-            mCheckedMap.delete(position);
-        }
-        mAdapter.notifyDataSetChanged();
-    }
 
-    private void toggleSelection(int position) {
-        switchChecked(position, !mCheckedMap.get(position));
-    }
 
-    private void clearSelection() {
-        mCheckedMap = new SparseBooleanArray();
-        mAdapter.notifyDataSetChanged();
-    }
 
-    private int getSelectedCount() {
-        return mCheckedMap.size();
-    }
 
     private void onListItemSelected(int position) {
-        toggleSelection(position);
-        boolean hasCheckedItems = getSelectedCount() > 0;
+        mAdapter.toggleSelection(position);
+        boolean hasCheckedItems = mAdapter.getSelectedCount() > 0;
 
         if (hasCheckedItems && mActionMode == null) {
             mActionMode = startActionMode(this);
