@@ -3,11 +3,10 @@ package com.kii.yankon;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.os.Bundle;
-import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.ActionMode;
+import android.view.Gravity;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +15,7 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 public class MultiSelectDemoActivity extends Activity
@@ -57,10 +57,7 @@ public class MultiSelectDemoActivity extends Activity
 
     @Override
     public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu_multi_select_demo, menu);
-        mode.setTitle(R.string.delete_mode);
-        setSubtitle(mode);
+        mode.getMenuInflater().inflate(R.menu.menu_multi_select_demo, menu);
         return true;
     }
 
@@ -74,7 +71,7 @@ public class MultiSelectDemoActivity extends Activity
         switch (item.getItemId()) {
             case R.id.action_delete:
                 new AlertDialog.Builder(this).setTitle(
-                        String.format("%d items will be deleted!", mListView.getCheckedItemCount()))
+                        String.format("%d items will be deleted!", getSelectedCount()))
                         .setPositiveButton(android.R.string.ok, null)
                         .setNegativeButton(android.R.string.cancel, null).show();
                 break;
@@ -86,34 +83,33 @@ public class MultiSelectDemoActivity extends Activity
 
     @Override
     public void onDestroyActionMode(ActionMode mode) {
-
+        clearSelection();
+        mActionMode = null;
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Log.d(TAG, "item " + position + " is clicked!");
         if (mActionMode == null) {
-            //work as normal
+            /*no items selected, so perform item click actions
+             * like moving to next activity */
+            Toast toast = Toast.makeText(getApplicationContext(), "Item "
+                            + (position + 1) + ": " + mAdapter.getItem(position),
+                    Toast.LENGTH_SHORT);
+            toast.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
+            toast.show();
+
         } else {
-            boolean isChecked = !mCheckedMap.get(position);
-            handleItemChecked(position, id, isChecked);
+            onListItemSelected(position);
         }
     }
 
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-        if (mActionMode != null) {
-            return false;
-        }
-        mListView.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE_MODAL);
-        mListView.setMultiChoiceModeListener(this);
-        mActionMode = startActionMode(this);
-        handleItemChecked(position, id, true);
+        onListItemSelected(position);
         return true;
     }
 
     private void handleItemChecked(int position, long id, boolean isChecked) {
-        mListView.setItemChecked(position, true);
         onItemCheckedStateChanged(mActionMode, position, id, isChecked);
     }
 
@@ -153,7 +149,7 @@ public class MultiSelectDemoActivity extends Activity
     }
 
     private void setSubtitle(ActionMode mode) {
-        final int checkedCount = mListView.getCheckedItemCount();
+        final int checkedCount = mCheckedMap.size();
         switch (checkedCount) {
             case 0:
                 mode.setSubtitle(null);
@@ -164,6 +160,44 @@ public class MultiSelectDemoActivity extends Activity
             default:
                 mode.setSubtitle("" + checkedCount + " items selected");
                 break;
+        }
+    }
+
+    private void switchChecked(int position, boolean checked) {
+        if (checked) {
+            mCheckedMap.put(position, true);
+        } else {
+            mCheckedMap.delete(position);
+        }
+        mAdapter.notifyDataSetChanged();
+    }
+
+    private void toggleSelection(int position) {
+        switchChecked(position, !mCheckedMap.get(position));
+    }
+
+    private void clearSelection() {
+        mCheckedMap = new SparseBooleanArray();
+        mAdapter.notifyDataSetChanged();
+    }
+
+    private int getSelectedCount() {
+        return mCheckedMap.size();
+    }
+
+    private void onListItemSelected(int position) {
+        toggleSelection(position);
+        boolean hasCheckedItems = getSelectedCount() > 0;
+
+        if (hasCheckedItems && mActionMode == null) {
+            mActionMode = startActionMode(this);
+            mActionMode.setTitle("Delete mode");
+        } else if (!hasCheckedItems && mActionMode != null) {
+            mActionMode.finish();
+        }
+
+        if (mActionMode != null) {
+            setSubtitle(mActionMode);
         }
     }
 }
