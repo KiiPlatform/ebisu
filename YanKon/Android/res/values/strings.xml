@@ -23,5 +23,6 @@
     <string name="menu_sort">Sort By</string>
     <string name="menu_add_lights">Add Lights</string>
     <string name="menu_remove_lights">Remove Lights</string>
+    <string name="title_activity_color_picker">ColorPickerActivity</string>
 
 </resources>
