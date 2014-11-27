@@ -24,5 +24,6 @@
     <string name="menu_sort">Sort By</string>
     <string name="menu_new">New</string>
     <string name="title_activity_color_picker">ColorPickerActivity</string>
+    <string name="color_name_hint">Color name</string>
 
 </resources>

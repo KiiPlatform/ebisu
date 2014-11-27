@@ -52,11 +52,12 @@ public class YanKonProvider extends ContentProvider {
     @Override
     public Uri insert(Uri uri, ContentValues values) {
         SQLiteDatabase database = mDBHelper.getWritableDatabase();
+        long cid = 0;
         switch (uriMatcher.match(uri)) {
             case ID_COLORS:
-                database.insertWithOnConflict(TABLE_COLORS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                cid = database.insertWithOnConflict(TABLE_COLORS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
-                break;
+                return Uri.withAppendedPath(uri, String.valueOf(cid));
         }
         throw new UnsupportedOperationException("Not yet implemented");
     }
