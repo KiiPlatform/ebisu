@@ -1,39 +1,52 @@
 package com.kii.yankon;
 
+import com.larswerkman.holocolorpicker.ColorPicker;
+import com.larswerkman.holocolorpicker.OpacityBar;
+import com.larswerkman.holocolorpicker.SVBar;
+import com.larswerkman.holocolorpicker.SaturationBar;
+import com.larswerkman.holocolorpicker.ValueBar;
+
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+
+import butterknife.ButterKnife;
+import butterknife.InjectView;
 
 
-public class ColorPickerActivity extends Activity {
+public class ColorPickerActivity extends Activity implements ColorPicker.OnColorChangedListener {
+
+    @InjectView(R.id.picker)
+    ColorPicker mPicker;
+
+    @InjectView(R.id.svbar)
+    SVBar mSVBar;
+
+    @InjectView(R.id.opacitybar)
+    OpacityBar mOpacityBar;
+
+    @InjectView(R.id.saturationbar)
+    SaturationBar mSaturationBar;
+
+    @InjectView(R.id.valuebar)
+    ValueBar mValueBar;
+
+    private int mColorValue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_color_picker);
+        ButterKnife.inject(this);
+        mPicker.addSVBar(mSVBar);
+        mPicker.addOpacityBar(mOpacityBar);
+        mPicker.addSaturationBar(mSaturationBar);
+        mPicker.addValueBar(mValueBar);
+        mPicker.setOldCenterColor(mPicker.getColor());
+        mPicker.setOnColorChangedListener(this);
     }
 
-
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_color_picker, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
+    public void onColorChanged(int i) {
+        mColorValue = i;
     }
 }

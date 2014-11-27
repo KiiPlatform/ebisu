@@ -1,5 +1,9 @@
 package com.kii.yankon.fragments;
 
+import com.kii.yankon.AddLightsActivity;
+import com.kii.yankon.ColorPickerActivity;
+import com.kii.yankon.R;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -8,9 +12,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-
-import com.kii.yankon.AddLightsActivity;
-import com.kii.yankon.R;
 
 /**
  * Created by Evan on 14/11/26.
@@ -47,7 +48,7 @@ public class LightsFragment extends PlaceholderFragment {
                 startActivity(new Intent(getActivity(), AddLightsActivity.class));
                 return true;
             case R.id.action_remove:
-                startActivity(new Intent(getActivity(), MultiSelectDemoActivity.class));
+                startActivity(new Intent(getActivity(), ColorPickerActivity.class));
                 return true;
         }
         return super.onOptionsItemSelected(item);
