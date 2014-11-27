@@ -42,6 +42,13 @@
             android:name="com.kii.yankon.ColorPickerActivity"
             android:label="@string/title_activity_color_picker" >
         </activity>
+
+        <provider
+            android:name="com.kii.yankon.provider.YanKonProvider"
+            android:authorities="com.kii.yankon"
+            android:enabled="true"
+            android:exported="false" >
+        </provider>
     </application>
 
 </manifest>
