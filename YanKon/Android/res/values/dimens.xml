@@ -11,4 +11,6 @@
     <dimen name="navigation_drawer_width">240dp</dimen>
     <dimen name="cover_flow_corner_radius">5dp</dimen>
     <dimen name="cover_flow_width">300dp</dimen>
+
+
 </resources>

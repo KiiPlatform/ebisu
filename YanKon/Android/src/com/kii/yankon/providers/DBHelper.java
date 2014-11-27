@@ -53,7 +53,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "_id INTEGER PRIMARY KEY, "
                         + "UUID TEXT NOT NULL,"
                         + "name TEXT,"
-                        + "value INTEGER,"
+                        + "value INTEGER"
                         + ");"
         );
         db.execSQL("CREATE VIEW IF NOT EXISTS lights_view AS SELECT * FROM lights LEFT JOIN models ON lights.model=models._id "
@@ -101,22 +101,22 @@ public class DBHelper extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put("UUID", UUID.randomUUID().toString());
         values.put("name", "Red");
-        values.put("name", Color.RED);
+        values.put("value", Color.RED);
         db.insert("colors", null, values);
         values = new ContentValues();
         values.put("UUID", UUID.randomUUID().toString());
         values.put("name", "Green");
-        values.put("name", Color.GREEN);
+        values.put("value", Color.GREEN);
         db.insert("colors", null, values);
         values = new ContentValues();
         values.put("UUID", UUID.randomUUID().toString());
         values.put("name", "Blue");
-        values.put("name", Color.BLUE);
+        values.put("value", Color.BLUE);
         db.insert("colors", null, values);
         values = new ContentValues();
         values.put("UUID", UUID.randomUUID().toString());
         values.put("name", "Black");
-        values.put("name", Color.BLACK);
+        values.put("value", Color.BLACK);
         db.insert("colors", null, values);
     }
 

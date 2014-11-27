@@ -12,7 +12,10 @@ public class YanKonProvider extends ContentProvider {
     public static final String AUTHORITY = "com.kii.yankon";
     public static final UriMatcher uriMatcher;
 
+    public static final Uri URI_COLORS = Uri.parse("content://" + AUTHORITY + "/colors");
+
     public static final String TABLE_COLORS = "colors";
+
 
     private static final int ID_COLORS = 0;
 

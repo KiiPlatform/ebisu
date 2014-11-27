@@ -2,9 +2,13 @@ package com.kii.yankon.fragments;
 
 import android.app.Activity;
 import android.app.ListFragment;
+import android.app.LoaderManager;
+import android.content.Loader;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.widget.CursorAdapter;
 
 import com.kii.yankon.MainActivity;
 import com.kii.yankon.R;
@@ -12,7 +16,7 @@ import com.kii.yankon.R;
 /**
  * Created by Evan on 14/11/26.
  */
-public class BaseListFragment extends ListFragment {
+public class BaseListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
     /**
      * The fragment argument representing the section number for this
      * fragment.
@@ -21,6 +25,7 @@ public class BaseListFragment extends ListFragment {
 
 
     protected MainActivity parentActivity;
+    protected CursorAdapter mAdapter = null;
 
     /**
      * Returns a new instance of this fragment for the given section number.
@@ -50,5 +55,24 @@ public class BaseListFragment extends ListFragment {
         super.onCreateOptionsMenu(menu, inflater);
         menu.clear();
         inflater.inflate(R.menu.common, menu);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        if (mAdapter != null) {
+            mAdapter.swapCursor(cursor);
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        if (mAdapter != null) {
+            mAdapter.swapCursor(null);
+        }
     }
 }
