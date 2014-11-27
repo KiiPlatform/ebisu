@@ -3,6 +3,7 @@
 *.ap_
 # Files for the Dalvik VM
 *.dex
+*.swp
 # Java class files
 *.class
 # Generated files
