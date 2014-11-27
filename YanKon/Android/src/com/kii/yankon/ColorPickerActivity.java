@@ -15,7 +15,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 
 
-public class ColorPickerActivity extends Activity implements ColorPicker.OnColorChangedListener, View.OnClickListener {
+public class ColorPickerActivity extends Activity implements View.OnClickListener {
 
     private static final String TAG = ColorPickerActivity.class.getSimpleName();
 
@@ -38,7 +38,6 @@ public class ColorPickerActivity extends Activity implements ColorPicker.OnColor
     @InjectView(R.id.edit)
     EditText mEdit;
 
-    private int mColorValue;
     int id;
 
     @Override
@@ -57,16 +56,10 @@ public class ColorPickerActivity extends Activity implements ColorPicker.OnColor
         int color = getIntent().getIntExtra(EXTRA_COLOR, Color.WHITE);
         id = getIntent().getIntExtra(EXTRA_ID, -1);
         mPicker.setOldCenterColor(color);
-        mPicker.setNewCenterColor(color);
+        mPicker.setColor(color);
         mPicker.addSVBar(svBar);
         mPicker.addValueBar(valueBar);
-        mPicker.setOnColorChangedListener(this);
         mConfirmButton.setOnClickListener(this);
-    }
-
-    @Override
-    public void onColorChanged(int i) {
-        mColorValue = i;
     }
 
     @Override
@@ -74,7 +67,7 @@ public class ColorPickerActivity extends Activity implements ColorPicker.OnColor
         switch (v.getId()) {
             case R.id.confirm_button:
                 Intent intent = new Intent();
-                intent.putExtra(EXTRA_COLOR, mColorValue);
+                intent.putExtra(EXTRA_COLOR, mPicker.getColor());
                 intent.putExtra(EXTRA_NAME, mEdit.getText().toString());
                 intent.putExtra(EXTRA_ID, id);
                 setResult(RESULT_OK, intent);
