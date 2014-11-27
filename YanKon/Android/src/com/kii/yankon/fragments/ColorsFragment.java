@@ -10,11 +10,11 @@ import com.kii.yankon.R;
 /**
  * Created by Evan on 14/11/26.
  */
-public class LightsFragment extends BaseListFragment {
+public class ColorsFragment extends BaseListFragment {
 
 
-    public static LightsFragment newInstance(int sectionNumber) {
-        LightsFragment fragment = new LightsFragment();
+    public static ColorsFragment newInstance(int sectionNumber) {
+        ColorsFragment fragment = new ColorsFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_SECTION_NUMBER, sectionNumber);
         fragment.setArguments(args);

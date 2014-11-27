@@ -3,12 +3,13 @@
 
     <string name="app_name">YanKon</string>
     <string name="title_section1">Lights</string>
-    <string name="title_section2">Scenes</string>
-    <string name="title_section3">Schedule</string>
-    <string name="title_section4">Actions</string>
-    <string name="title_section5">Colors</string>
-    <string name="title_section6">Account</string>
-    <string name="title_section7">Settings</string>
+    <string name="title_section2">Groups</string>
+    <string name="title_section3">Scenes</string>
+    <string name="title_section4">Schedule</string>
+    <string name="title_section5">Actions</string>
+    <string name="title_section6">Colors</string>
+    <string name="title_section7">Account</string>
+    <string name="title_section8">Settings</string>
     <string name="drawer_title">Menu</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
@@ -23,5 +24,6 @@
     <string name="menu_sort">Sort By</string>
     <string name="menu_add_lights">Add Lights</string>
     <string name="menu_remove_lights">Remove Lights</string>
+    <string name="menu_new">New</string>
 
 </resources>

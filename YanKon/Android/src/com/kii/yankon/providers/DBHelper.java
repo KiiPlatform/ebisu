@@ -1,8 +1,12 @@
-package com.kii.yankon.provider;
+package com.kii.yankon.providers;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.Color;
+
+import java.util.UUID;
 
 /**
  * Created by Evan on 14/11/27.
@@ -94,6 +98,26 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "created_time INTEGER"
                         + ");"
         );
+        ContentValues values = new ContentValues();
+        values.put("UUID", UUID.randomUUID().toString());
+        values.put("name", "Red");
+        values.put("name", Color.RED);
+        db.insert("colors", null, values);
+        values = new ContentValues();
+        values.put("UUID", UUID.randomUUID().toString());
+        values.put("name", "Green");
+        values.put("name", Color.GREEN);
+        db.insert("colors", null, values);
+        values = new ContentValues();
+        values.put("UUID", UUID.randomUUID().toString());
+        values.put("name", "Blue");
+        values.put("name", Color.BLUE);
+        db.insert("colors", null, values);
+        values = new ContentValues();
+        values.put("UUID", UUID.randomUUID().toString());
+        values.put("name", "Black");
+        values.put("name", Color.BLACK);
+        db.insert("colors", null, values);
     }
 
 }

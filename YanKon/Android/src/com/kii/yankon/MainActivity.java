@@ -11,6 +11,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.kii.yankon.fragments.ColorsFragment;
 import com.kii.yankon.fragments.LightsFragment;
 import com.kii.yankon.fragments.PlaceholderFragment;
 import com.kii.yankon.utils.Settings;
@@ -60,6 +61,9 @@ public class MainActivity extends Activity
             case 0:
                 fragment = LightsFragment.newInstance(position + 1);
                 break;
+            case 5:
+                fragment = ColorsFragment.newInstance(position + 1);
+                break;
             default:
                 fragment = PlaceholderFragment.newInstance(position + 1);
                 break;
@@ -91,6 +95,9 @@ public class MainActivity extends Activity
                 break;
             case 7:
                 mTitle = getString(R.string.title_section7);
+                break;
+            case 8:
+                mTitle = getString(R.string.title_section8);
                 break;
         }
     }

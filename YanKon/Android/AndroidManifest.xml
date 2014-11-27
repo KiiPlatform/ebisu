@@ -44,7 +44,7 @@
         </activity>
 
         <provider
-            android:name="com.kii.yankon.provider.YanKonProvider"
+            android:name="com.kii.yankon.providers.YanKonProvider"
             android:authorities="com.kii.yankon"
             android:enabled="true"
             android:exported="false" >
