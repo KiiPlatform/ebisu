@@ -1,15 +1,13 @@
 package com.kii.yankon;
 
+import com.larswerkman.holocolorpicker.ColorPicker;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
-
-import com.larswerkman.holocolorpicker.ColorPicker;
-import com.larswerkman.holocolorpicker.SVBar;
-import com.larswerkman.holocolorpicker.ValueBar;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -29,11 +27,11 @@ public class ColorPickerActivity extends Activity implements View.OnClickListene
     @InjectView(R.id.confirm_button)
     View mConfirmButton;
 
-    @InjectView(R.id.svbar)
-    SVBar svBar;
-
-    @InjectView(R.id.valuebar)
-    ValueBar valueBar;
+//    @InjectView(R.id.svbar)
+//    SVBar svBar;
+//
+//    @InjectView(R.id.valuebar)
+//    ValueBar valueBar;
 
     @InjectView(R.id.edit)
     EditText mEdit;
@@ -57,8 +55,8 @@ public class ColorPickerActivity extends Activity implements View.OnClickListene
         id = getIntent().getIntExtra(EXTRA_ID, -1);
         mPicker.setOldCenterColor(color);
         mPicker.setColor(color);
-        mPicker.addSVBar(svBar);
-        mPicker.addValueBar(valueBar);
+//        mPicker.addSVBar(svBar);
+//        mPicker.addValueBar(valueBar);
         mConfirmButton.setOnClickListener(this);
     }
 
