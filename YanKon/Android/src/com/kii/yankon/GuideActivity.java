@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 
 /**
  * Created by Evan on 14/11/23.
@@ -59,8 +60,14 @@ public class GuideActivity extends Activity implements View.OnClickListener {
                 inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
             }
             view = inflater.inflate(R.layout.guide_content, container, false);
+            TextView tv = (TextView) view.findViewById(R.id.guide_text);
+            tv.setText("App Intro (" + String.valueOf(position + 1) + "/3)");
             Button button = (Button) view.findViewById(R.id.guide_skip);
-            button.setText(getString(R.string.guide_skip));
+            if (position == 2) {
+                button.setText(getString(R.string.guide_done));
+            } else {
+                button.setText(getString(R.string.guide_skip));
+            }
             button.setOnClickListener(GuideActivity.this);
             ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
             container.addView(view, params);

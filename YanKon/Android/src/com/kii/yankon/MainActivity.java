@@ -23,6 +23,13 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.kii.yankon.fragments.ActionsFragment;
+import com.kii.yankon.fragments.ColorsFragment;
+import com.kii.yankon.fragments.LightsFragment;
+import com.kii.yankon.fragments.PlaceholderFragment;
+import com.kii.yankon.fragments.SettingsFragment;
+import com.kii.yankon.utils.Settings;
+
 public class MainActivity extends Activity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks {
 
@@ -77,6 +84,9 @@ public class MainActivity extends Activity
             case 0:
                 fragment = LightsFragment.newInstance(position + 1);
                 break;
+            case 4:
+                fragment = ActionsFragment.newInstance(position + 1);
+                break;
             case 5:
                 fragment = ColorsFragment.newInstance(position + 1);
                 break;
@@ -86,6 +96,9 @@ public class MainActivity extends Activity
                 } else {
                     fragment = LogInFragment.newInstance(position + 1);
                 }
+                break;
+            case 7:
+                fragment = SettingsFragment.newInstance(position + 1);
                 break;
             default:
                 fragment = PlaceholderFragment.newInstance(position + 1);

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="settings">
+        <item>Firmware Upgrade</item>
+        <item>Tutorial</item>
+        <item>Product Info</item>
+        <item>About</item>
+    </array>
+
+</resources>
