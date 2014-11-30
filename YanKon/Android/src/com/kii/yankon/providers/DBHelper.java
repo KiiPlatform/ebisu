@@ -39,6 +39,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "color_rel TEXT,"
                         + "color INTEGER,"
                         + "model INTEGER,"
+                        + "is_mine BOOL,"
                         + "owned_time INTEGER"
                         + ");"
         );

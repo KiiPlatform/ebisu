@@ -14,7 +14,7 @@
         <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:paddingTop="2dp"
             android:paddingLeft="2dp"
             android:paddingRight="2dp"
@@ -23,7 +23,7 @@
 
             <ImageView
                 android:layout_width="match_parent"
-                android:layout_height="235dp"
+                android:layout_height="216dp"
                 android:id="@+id/light_image"
                 android:adjustViewBounds="false"
                 android:scaleType="fitXY"
@@ -34,6 +34,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:id="@+id/light_title"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
                 android:textAppearance="@android:style/TextAppearance.Large"
                 android:singleLine="true"
                 android:text="Title" />
@@ -43,6 +45,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:id="@+id/light_desc"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
                 android:textAppearance="@android:style/TextAppearance.Medium"
                 android:text="Desc" />
 
