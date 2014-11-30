@@ -11,6 +11,8 @@ import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
+import android.text.TextUtils;
+import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -75,18 +77,30 @@ public class LogInFragment extends BaseFragment implements View.OnClickListener 
                 //TODO
                 break;
             case R.id.button_register:
-                KiiUser.builderWithEmail(emailEdit.getText().toString()).build()
-                        .register(mUserCallBack, passwordEdit.getText().toString());
-                showProgress();
+                if (isInputValid()) {
+                    KiiUser.builderWithEmail(emailEdit.getText().toString()).build()
+                            .register(mUserCallBack, passwordEdit.getText().toString());
+                    showProgress();
+                }
                 break;
             case R.id.button_log_in:
-                KiiUser.logIn(mUserCallBack, emailEdit.getText().toString(),
-                        passwordEdit.getText().toString());
-                showProgress();
+                if (isInputValid()) {
+                    KiiUser.logIn(mUserCallBack, emailEdit.getText().toString(),
+                            passwordEdit.getText().toString());
+                    showProgress();
+                }
                 break;
             default:
                 break;
         }
+    }
+
+    private boolean isInputValid() {
+        String email = emailEdit.getText().toString();
+        if (!TextUtils.isEmpty(email) && Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            return !TextUtils.isEmpty(passwordEdit.getText().toString());
+        }
+        return false;
     }
 
     private KiiUserCallBack mUserCallBack = new KiiUserCallBack() {
