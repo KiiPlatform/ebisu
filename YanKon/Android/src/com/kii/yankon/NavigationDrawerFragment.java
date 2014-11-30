@@ -1,16 +1,16 @@
 
 package com.kii.yankon;
 
-import android.app.Activity;
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.Fragment;
-import android.support.v4.app.ActionBarDrawerToggle;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -92,7 +93,7 @@ public class NavigationDrawerFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+                             Bundle savedInstanceState) {
         mDrawerListView = (ListView) inflater.inflate(
                 R.layout.fragment_navigation_drawer, container, false);
         mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -101,20 +102,39 @@ public class NavigationDrawerFragment extends Fragment {
                 selectItem(position);
             }
         });
-        mDrawerListView.setAdapter(new ArrayAdapter<String>(
-                getActionBar().getThemedContext(),
+        final int[] icons = new int[]{
+                R.drawable.menu_lights,
+                R.drawable.menu_groups,
+                R.drawable.menu_scenes,
+                R.drawable.menu_schdules,
+                R.drawable.menu_actions,
+                R.drawable.menu_colors,
+                R.drawable.menu_accounts,
+                R.drawable.menu_settings
+        };
+        final String[] items = new String[]{
+                getString(R.string.title_section1),
+                getString(R.string.title_section2),
+                getString(R.string.title_section3),
+                getString(R.string.title_section4),
+                getString(R.string.title_section5),
+                getString(R.string.title_section6),
+                getString(R.string.title_section7),
+                getString(R.string.title_section8),
+        };
+        ArrayAdapter adapter = new ArrayAdapter(getActionBar().getThemedContext(),
                 android.R.layout.simple_list_item_activated_1,
-                android.R.id.text1,
-                new String[] {
-                        getString(R.string.title_section1),
-                        getString(R.string.title_section2),
-                        getString(R.string.title_section3),
-                        getString(R.string.title_section4),
-                        getString(R.string.title_section5),
-                        getString(R.string.title_section6),
-                        getString(R.string.title_section7),
-                        getString(R.string.title_section8),
-                }));
+                android.R.id.text1, items) {
+
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                TextView view = (TextView) super.getView(position, convertView, parent);
+                view.setCompoundDrawablesWithIntrinsicBounds(icons[position], 0, 0, 0);
+                return view;
+            }
+        };
+
+        mDrawerListView.setAdapter(adapter);
         mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
         return mDrawerListView;
     }
@@ -127,8 +147,8 @@ public class NavigationDrawerFragment extends Fragment {
      * Users of this fragment must call this method to set up the navigation
      * drawer interactions.
      *
-     * @param fragmentId The android:id of this fragment in its activity's
-     *            layout.
+     * @param fragmentId   The android:id of this fragment in its activity's
+     *                     layout.
      * @param drawerLayout The DrawerLayout containing this fragment's UI.
      */
     public void setUp(int fragmentId, DrawerLayout drawerLayout) {
@@ -158,40 +178,40 @@ public class NavigationDrawerFragment extends Fragment {
                                                   * "close drawer" description
                                                   * for accessibility
                                                   */
-                ) {
-                    @Override
-                    public void onDrawerClosed(View drawerView) {
-                        super.onDrawerClosed(drawerView);
-                        if (!isAdded()) {
-                            return;
-                        }
+        ) {
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+                if (!isAdded()) {
+                    return;
+                }
 
-                        getActivity().invalidateOptionsMenu(); // calls
-                                                               // onPrepareOptionsMenu()
-                    }
+                getActivity().invalidateOptionsMenu(); // calls
+                // onPrepareOptionsMenu()
+            }
 
-                    @Override
-                    public void onDrawerOpened(View drawerView) {
-                        super.onDrawerOpened(drawerView);
-                        if (!isAdded()) {
-                            return;
-                        }
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                if (!isAdded()) {
+                    return;
+                }
 
-                        if (!mUserLearnedDrawer) {
-                            // The user manually opened the drawer; store this
-                            // flag to prevent auto-showing
-                            // the navigation drawer automatically in the
-                            // future.
-                            mUserLearnedDrawer = true;
-                            SharedPreferences sp = PreferenceManager
-                                    .getDefaultSharedPreferences(getActivity());
-                            sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
-                        }
+                if (!mUserLearnedDrawer) {
+                    // The user manually opened the drawer; store this
+                    // flag to prevent auto-showing
+                    // the navigation drawer automatically in the
+                    // future.
+                    mUserLearnedDrawer = true;
+                    SharedPreferences sp = PreferenceManager
+                            .getDefaultSharedPreferences(getActivity());
+                    sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
+                }
 
-                        getActivity().invalidateOptionsMenu(); // calls
-                                                               // onPrepareOptionsMenu()
-                    }
-                };
+                getActivity().invalidateOptionsMenu(); // calls
+                // onPrepareOptionsMenu()
+            }
+        };
 
         // If the user hasn't 'learned' about the drawer, open it to introduce
         // them to the drawer,
