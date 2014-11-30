@@ -14,6 +14,7 @@ import android.view.MenuItem;
 import com.kii.yankon.fragments.ColorsFragment;
 import com.kii.yankon.fragments.LightsFragment;
 import com.kii.yankon.fragments.PlaceholderFragment;
+import com.kii.yankon.fragments.SettingsFragment;
 import com.kii.yankon.utils.Settings;
 
 public class MainActivity extends Activity
@@ -63,6 +64,9 @@ public class MainActivity extends Activity
                 break;
             case 5:
                 fragment = ColorsFragment.newInstance(position + 1);
+                break;
+            case 7:
+                fragment = SettingsFragment.newInstance(position + 1);
                 break;
             default:
                 fragment = PlaceholderFragment.newInstance(position + 1);
