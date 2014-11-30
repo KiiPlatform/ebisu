@@ -22,7 +22,7 @@ public class BaseListFragment extends ListFragment implements LoaderManager.Load
      * fragment.
      */
     public static final String ARG_SECTION_NUMBER = "section_number";
-
+    public static final int MENU_DELETE = 1;
 
     protected MainActivity parentActivity;
     protected CursorAdapter mAdapter = null;
@@ -48,6 +48,12 @@ public class BaseListFragment extends ListFragment implements LoaderManager.Load
         parentActivity = ((MainActivity) activity);
         parentActivity.onSectionAttached(
                 getArguments().getInt(ARG_SECTION_NUMBER));
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        registerForContextMenu(getListView());
     }
 
     @Override
