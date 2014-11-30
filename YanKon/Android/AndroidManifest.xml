@@ -37,7 +37,6 @@
                 android:theme="@android:style/Theme.NoTitleBar.Fullscreen"/>
         <activity
                 android:name="com.kii.yankon.AddLightsActivity"
-                android:theme="@android:style/Theme.NoTitleBar"
                 android:parentActivityName=".MainActivity">
             <meta-data
                     android:name="android.support.PARENT_ACTIVITY"
