@@ -26,5 +26,6 @@
     <string name="title_activity_color_picker">ColorPickerActivity</string>
     <string name="color_name_hint">Color name</string>
     <string name="menu_delete">Delete</string>
+    <string name="guide_done">Done</string>
 
 </resources>
