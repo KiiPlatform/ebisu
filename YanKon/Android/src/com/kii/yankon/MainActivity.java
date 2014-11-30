@@ -11,6 +11,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.kii.yankon.fragments.ActionsFragment;
 import com.kii.yankon.fragments.ColorsFragment;
 import com.kii.yankon.fragments.LightsFragment;
 import com.kii.yankon.fragments.PlaceholderFragment;
@@ -61,6 +62,9 @@ public class MainActivity extends Activity
         switch (position) {
             case 0:
                 fragment = LightsFragment.newInstance(position + 1);
+                break;
+            case 4:
+                fragment = ActionsFragment.newInstance(position + 1);
                 break;
             case 5:
                 fragment = ColorsFragment.newInstance(position + 1);
