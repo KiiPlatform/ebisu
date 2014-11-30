@@ -1,20 +1,27 @@
-
 package com.kii.yankon;
+
+import com.kii.yankon.fragments.ColorsFragment;
+import com.kii.yankon.fragments.LightsFragment;
+import com.kii.yankon.fragments.LogInFragment;
+import com.kii.yankon.fragments.PlaceholderFragment;
+import com.kii.yankon.fragments.ProfileFragment;
+import com.kii.yankon.utils.Constants;
+import com.kii.yankon.utils.Settings;
 
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.DrawerLayout;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-
-import com.kii.yankon.fragments.ColorsFragment;
-import com.kii.yankon.fragments.LightsFragment;
-import com.kii.yankon.fragments.PlaceholderFragment;
-import com.kii.yankon.utils.Settings;
 
 public class MainActivity extends Activity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks {
@@ -50,6 +57,15 @@ public class MainActivity extends Activity
             finish();
             return;
         }
+        IntentFilter filter = new IntentFilter(Constants.INTENT_LOGGED_IN);
+        filter.addAction(Constants.INTENT_LOGGED_OUT);
+        LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, filter);
+    }
+
+    @Override
+    protected void onDestroy() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
+        super.onDestroy();
     }
 
     @Override
@@ -63,6 +79,13 @@ public class MainActivity extends Activity
                 break;
             case 5:
                 fragment = ColorsFragment.newInstance(position + 1);
+                break;
+            case 6:
+                if (Settings.isLoggedIn()) {
+                    fragment = ProfileFragment.newInstance(position + 1);
+                } else {
+                    fragment = LogInFragment.newInstance(position + 1);
+                }
                 break;
             default:
                 fragment = PlaceholderFragment.newInstance(position + 1);
@@ -127,4 +150,15 @@ public class MainActivity extends Activity
         return super.onOptionsItemSelected(item);
     }
 
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            Log.d("MainActivity", "onReceive, action is " + action);
+            if (action.equals(Constants.INTENT_LOGGED_IN) ||
+                    action.equals(Constants.INTENT_LOGGED_OUT)) {
+                onNavigationDrawerItemSelected(6);
+            }
+        }
+    };
 }

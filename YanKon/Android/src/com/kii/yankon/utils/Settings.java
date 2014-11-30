@@ -1,9 +1,9 @@
 package com.kii.yankon.utils;
 
+import com.kii.yankon.App;
+
 import android.content.Context;
 import android.content.SharedPreferences;
-
-import com.kii.yankon.App;
 
 /**
  * Created by tian on 14-9-17:上午7:43.
@@ -48,5 +48,33 @@ public class Settings {
             editor.apply();
         }
         return isFirst;
+    }
+
+    public static void saveToken(String token) {
+        getPrefs().edit().putString(TOKEN_KEY, token).apply();
+    }
+
+    public static String getToken() {
+        return getPrefs().getString(TOKEN_KEY, null);
+    }
+
+    public static boolean isLoggedIn() {
+        return getToken() != null;
+    }
+
+    public static final String EMAIL = "email";
+
+    public static void saveEmail(String email) {
+        getPrefs().edit().putString(EMAIL, email).apply();
+    }
+
+    public static String getEmail() {
+        return getPrefs().getString(EMAIL, "");
+    }
+
+    public static void logOut() {
+        saveEmail(null);
+        saveToken(null);
+        getPrefs().edit().commit();
     }
 }
