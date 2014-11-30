@@ -27,5 +27,6 @@
     <string name="color_name_hint">Color name</string>
     <string name="menu_delete">Delete</string>
     <string name="guide_done">Done</string>
+    <string name="save">Save</string>
 
 </resources>
