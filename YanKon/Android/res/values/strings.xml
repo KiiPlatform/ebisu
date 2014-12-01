@@ -40,5 +40,7 @@
     <string name="input_action_name">Input action name</string>
     <string name="edit_action">Edit Action</string>
     <string name="add_action">Add Action</string>
+    <string name="set_light_name">Set light name</string>
+    <string name="input_dialog_empty">The field is empty</string>
 
 </resources>

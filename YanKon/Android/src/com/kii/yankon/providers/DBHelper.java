@@ -40,11 +40,13 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "color INTEGER,"
                         + "model INTEGER,"
                         + "is_mine BOOL,"
+                        + "is_on BOOL,"
                         + "owned_time INTEGER"
                         + ");"
         );
         db.execSQL("CREATE TABLE IF NOT EXISTS models ("
                         + "_id INTEGER PRIMARY KEY, "
+                        + "model TEXT,"
                         + "name TEXT,"
                         + "pic TEXT,"
                         + "des TEXT"
@@ -58,7 +60,9 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "created_time INTEGER"
                         + ");"
         );
-        db.execSQL("CREATE VIEW IF NOT EXISTS lights_view AS SELECT * FROM lights LEFT JOIN models ON lights.model=models._id "
+        db.execSQL("CREATE VIEW IF NOT EXISTS lights_view AS SELECT "
+                + "lights.*,models.name AS m_name, colors.name AS c_name, colors.value"
+                + " FROM lights LEFT JOIN models ON lights.model=models.model "
                 + " LEFT JOIN colors ON lights.color_rel = colors.UUID;");
         db.execSQL("CREATE TABLE IF NOT EXISTS light_groups ("
                         + "_id INTEGER PRIMARY KEY, "
@@ -124,6 +128,10 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("value", Color.BLACK);
         values.put("created_time", 4);
         db.insert("colors", null, values);
+        values = new ContentValues();
+        values.put("name", "Model YZ");
+        values.put("model", "model1");
+        db.insert("models", null, values);
     }
 
 }

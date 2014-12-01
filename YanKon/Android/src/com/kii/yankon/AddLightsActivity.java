@@ -1,6 +1,10 @@
 package com.kii.yankon;
 
 import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentTransaction;
+import android.content.ContentValues;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.view.PagerAdapter;
 import android.view.LayoutInflater;
@@ -10,7 +14,9 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.kii.yankon.fragments.InputDialogFragment;
 import com.kii.yankon.model.Light;
+import com.kii.yankon.providers.YanKonProvider;
 import com.pixplicity.multiviewpager.MultiViewPager;
 
 import java.util.ArrayList;
@@ -21,12 +27,13 @@ import java.util.List;
 /**
  * Created by tian on 14/11/24:下午11:50.
  */
-public class AddLightsActivity extends Activity implements View.OnClickListener {
+public class AddLightsActivity extends Activity implements View.OnClickListener, InputDialogFragment.InputDialogInterface {
 
     private MultiViewPager mPager;
     private List<Light> mLights = new ArrayList<Light>();
     private LightsAdapter mAdapter;
     private HashMap<String, Light> lightMacMap = new HashMap<String, Light>();
+    private Light currLight = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,27 +45,27 @@ public class AddLightsActivity extends Activity implements View.OnClickListener 
 
         Light l = new Light();
         l.name = "Unknown1";
-        l.model = "Model YZ";
+        l.model = "model1";
         l.mac = "1";
         addLight(l);
         l = new Light();
         l.name = "Unknown2";
-        l.model = "Model YZ";
+        l.model = "model1";
         l.mac = "2";
         addLight(l);
         l = new Light();
         l.name = "Unknown3";
-        l.model = "Model YZ";
+        l.model = "model1";
         l.mac = "3";
         addLight(l);
         l = new Light();
         l.name = "Unknown4";
-        l.model = "Model YZ";
+        l.model = "model1";
         l.mac = "4";
         addLight(l);
         l = new Light();
         l.name = "Unknown5";
-        l.model = "Model YZ";
+        l.model = "model1";
         l.mac = "5";
         addLight(l);
 
@@ -67,7 +74,20 @@ public class AddLightsActivity extends Activity implements View.OnClickListener 
     }
 
     void addLight(Light light) {
-
+        Cursor cursor = getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "UUID=(?)", new String[]{light.mac}, null);
+        if (cursor.moveToFirst()) {
+            light.name = cursor.getString(cursor.getColumnIndex("name"));
+            light.modelName = cursor.getString(cursor.getColumnIndex("m_name"));
+            light.added = true;
+        }
+        cursor.close();
+        if (!light.added) {
+            cursor = getContentResolver().query(YanKonProvider.URI_MODELS, null, "model=(?)", new String[]{light.model}, null);
+            if (cursor.moveToFirst()) {
+                light.modelName = cursor.getString(cursor.getColumnIndex("name"));
+            }
+            cursor.close();
+        }
         mLights.add(light);
         lightMacMap.put(light.mac, light);
         mAdapter.notifyDataSetChanged();
@@ -77,9 +97,43 @@ public class AddLightsActivity extends Activity implements View.OnClickListener 
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.light_button:
-
+                currLight = (Light) v.getTag();
+                showInputNameDialog();
                 break;
         }
+    }
+
+    void showInputNameDialog() {
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        Fragment prev = getFragmentManager().findFragmentByTag("dialog");
+        if (prev != null) {
+            ft.remove(prev);
+        }
+        ft.addToBackStack(null);
+
+        InputDialogFragment newFragment = InputDialogFragment.newInstance(
+                getString(R.string.set_light_name),
+                null,
+                null
+        );
+        newFragment.show(ft, "dialog");
+    }
+
+    @Override
+    public void onInputDialogTextDone(String text) {
+        currLight.name = text;
+        currLight.added = true;
+        ContentValues values = new ContentValues();
+        values.put("UUID",currLight.mac);
+        values.put("model",currLight.model);
+        values.put("is_on",true);
+        values.put("name",text);
+        values.put("owned_time", System.currentTimeMillis());
+        getContentResolver().insert(YanKonProvider.URI_LIGHTS, values);
+        View view = mPager.findViewWithTag(currLight);
+        ViewHolder holder = new ViewHolder(view);
+        holder.title.setText(currLight.name);
+        holder.button.setEnabled(!currLight.added);
     }
 
     class LightsAdapter extends PagerAdapter {
@@ -108,11 +162,13 @@ public class AddLightsActivity extends Activity implements View.OnClickListener 
             }
             Light light = mLights.get(position);
             view = inflater.inflate(R.layout.light_cover_flow_item, container, false);
+            view.setTag(light);
             ViewHolder holder = new ViewHolder(view);
             holder.title.setText(light.name);
-            holder.description.setText(light.model);
+            holder.description.setText(light.modelName);
             holder.button.setTag(light);
             holder.button.setOnClickListener(AddLightsActivity.this);
+            holder.button.setEnabled(!light.added);
             container.addView(view);
             return view;
         }

@@ -14,18 +14,27 @@ public class YanKonProvider extends ContentProvider {
 
     public static final Uri URI_COLORS = Uri.parse("content://" + AUTHORITY + "/colors");
     public static final Uri URI_ACTIONS = Uri.parse("content://" + AUTHORITY + "/actions");
+    public static final Uri URI_LIGHTS = Uri.parse("content://" + AUTHORITY + "/lights");
+    public static final Uri URI_MODELS = Uri.parse("content://" + AUTHORITY + "/models");
 
     public static final String TABLE_COLORS = "colors";
     public static final String TABLE_ACTIONS = "actions";
+    public static final String TABLE_LIGHTS = "lights";
+    public static final String VIEW_LIGHTS = "lights_view";
+    public static final String TABLE_MODELS = "models";
 
 
     private static final int ID_COLORS = 0;
     private static final int ID_ACTIONS = 1;
+    private static final int ID_LIGHTS = 2;
+    private static final int ID_MODELS = 3;
 
     static {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         uriMatcher.addURI(AUTHORITY, "colors", ID_COLORS);
         uriMatcher.addURI(AUTHORITY, "actions", ID_ACTIONS);
+        uriMatcher.addURI(AUTHORITY, "lights", ID_LIGHTS);
+        uriMatcher.addURI(AUTHORITY, "models", ID_MODELS);
     }
 
 
@@ -49,6 +58,11 @@ public class YanKonProvider extends ContentProvider {
                         selection, selectionArgs);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return ret;
+            case ID_LIGHTS:
+                ret = database.delete(TABLE_LIGHTS,
+                        selection, selectionArgs);
+                getContext().getContentResolver().notifyChange(uri, null);
+                return ret;
         }
         throw new UnsupportedOperationException("Not yet implemented");
     }
@@ -69,6 +83,10 @@ public class YanKonProvider extends ContentProvider {
                 return Uri.withAppendedPath(uri, String.valueOf(cid));
             case ID_ACTIONS:
                 cid = database.insertWithOnConflict(TABLE_ACTIONS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                getContext().getContentResolver().notifyChange(uri, null);
+                return Uri.withAppendedPath(uri, String.valueOf(cid));
+            case ID_LIGHTS:
+                cid = database.insertWithOnConflict(TABLE_LIGHTS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return Uri.withAppendedPath(uri, String.valueOf(cid));
         }
@@ -98,6 +116,18 @@ public class YanKonProvider extends ContentProvider {
                 c.setNotificationUri(getContext().getContentResolver(), uri);
                 return c;
             }
+            case ID_LIGHTS: {
+                Cursor c = database.query(VIEW_LIGHTS, projection, selection, selectionArgs,
+                        null, null, sortOrder);
+                c.setNotificationUri(getContext().getContentResolver(), uri);
+                return c;
+            }
+            case ID_MODELS: {
+                Cursor c = database.query(TABLE_MODELS, projection, selection, selectionArgs,
+                        null, null, sortOrder);
+                c.setNotificationUri(getContext().getContentResolver(), uri);
+                return c;
+            }
         }
         throw new UnsupportedOperationException("Not yet implemented");
     }
@@ -116,6 +146,11 @@ public class YanKonProvider extends ContentProvider {
             case ID_ACTIONS:
                 ret = database
                         .update(TABLE_ACTIONS, values, selection, selectionArgs);
+                getContext().getContentResolver().notifyChange(uri, null);
+                return ret;
+            case ID_LIGHTS:
+                ret = database
+                        .update(TABLE_LIGHTS, values, selection, selectionArgs);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return ret;
         }

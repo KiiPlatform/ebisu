@@ -6,5 +6,7 @@ package com.kii.yankon.model;
 public class Light {
     public String name;
     public String model;
+    public String modelName;
     public String mac;
+    public boolean added;
 }
