@@ -126,7 +126,7 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
         ContentValues values = new ContentValues();
         values.put("UUID",currLight.mac);
         values.put("model",currLight.model);
-        values.put("is_on",true);
+        values.put("connected",true);
         values.put("name",text);
         values.put("owned_time", System.currentTimeMillis());
         getContentResolver().insert(YanKonProvider.URI_LIGHTS, values);
@@ -165,7 +165,7 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
             view.setTag(light);
             ViewHolder holder = new ViewHolder(view);
             holder.title.setText(light.name);
-            holder.description.setText(light.modelName);
+            holder.description.setText(getString(R.string.light_model_format, light.modelName));
             holder.button.setTag(light);
             holder.button.setOnClickListener(AddLightsActivity.this);
             holder.button.setEnabled(!light.added);

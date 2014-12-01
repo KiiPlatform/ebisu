@@ -22,6 +22,7 @@ import com.kii.yankon.providers.YanKonProvider;
  */
 public class LightsFragment extends BaseListFragment {
 
+    private static boolean isFirstLaunch = true;
 
     public static LightsFragment newInstance(int sectionNumber) {
         LightsFragment fragment = new LightsFragment();
@@ -51,7 +52,16 @@ public class LightsFragment extends BaseListFragment {
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(getActivity(), YanKonProvider.URI_LIGHTS, null, null, null, "owned_time asc");
+        return new CursorLoader(getActivity(), YanKonProvider.URI_LIGHTS, null, "connected OR is_mine", null, "owned_time asc");
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        super.onLoadFinished(loader, cursor);
+        if (isFirstLaunch && cursor.getCount() == 0) {
+            isFirstLaunch = false;
+            startActivity(new Intent(getActivity(), AddLightsActivity.class));
+        }
     }
 
     class LightsAdapter extends CursorAdapter {
@@ -61,7 +71,7 @@ public class LightsFragment extends BaseListFragment {
 
         @Override
         public View newView(Context context, Cursor cursor, ViewGroup parent) {
-            return LayoutInflater.from(context).inflate(android.R.layout.simple_list_item_1, parent, false);
+            return LayoutInflater.from(context).inflate(R.layout.light_item, parent, false);
         }
 
         @Override
@@ -69,6 +79,16 @@ public class LightsFragment extends BaseListFragment {
             String name = cursor.getString(cursor.getColumnIndex("name"));
             TextView tv = (TextView) view.findViewById(android.R.id.text1);
             tv.setText(name);
+            String modelName = cursor.getString(cursor.getColumnIndex("m_name"));
+            tv = (TextView) view.findViewById(android.R.id.text2);
+            tv.setText(context.getString(R.string.light_model_format, modelName));
+            View icon = view.findViewById(R.id.light_icon);
+            boolean connected = cursor.getInt(cursor.getColumnIndex("connected")) > 0;
+            if (connected) {
+                icon.setBackgroundResource(R.drawable.light_on);
+            } else {
+                icon.setBackgroundResource(R.drawable.lights_off);
+            }
         }
     }
 }

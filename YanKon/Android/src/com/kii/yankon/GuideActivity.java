@@ -16,10 +16,13 @@ import android.widget.TextView;
  */
 public class GuideActivity extends Activity implements View.OnClickListener {
     ViewPager mViewPager;
+    public static final String EXTRA_LAUNCH_NEW = "launch_new";
+    boolean launch_new = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        launch_new = getIntent().getBooleanExtra(EXTRA_LAUNCH_NEW, true);
         mViewPager = new ViewPager(this);
         setContentView(mViewPager);
         mViewPager.setAdapter(new MyAdapter());
@@ -29,7 +32,9 @@ public class GuideActivity extends Activity implements View.OnClickListener {
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.guide_skip:
-                startActivity(new Intent(this, MainActivity.class));
+                if (launch_new) {
+                    startActivity(new Intent(this, MainActivity.class));
+                }
                 finish();
                 break;
         }

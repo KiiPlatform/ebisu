@@ -41,6 +41,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "model INTEGER,"
                         + "is_mine BOOL,"
                         + "is_on BOOL,"
+                        + "connected BOOL,"
                         + "owned_time INTEGER"
                         + ");"
         );
@@ -129,7 +130,7 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("created_time", 4);
         db.insert("colors", null, values);
         values = new ContentValues();
-        values.put("name", "Model YZ");
+        values.put("name", "LYZ_17");
         values.put("model", "model1");
         db.insert("models", null, values);
     }

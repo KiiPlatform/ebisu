@@ -53,6 +53,7 @@ public class BaseListFragment extends ListFragment implements LoaderManager.Load
     @Override
     public void onStart() {
         super.onStart();
+        setEmptyText(getActivity().getString(R.string.default_no_data));
         registerForContextMenu(getListView());
     }
 
