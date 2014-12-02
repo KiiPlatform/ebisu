@@ -79,8 +79,11 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "created_time INTEGER"
                         + ");"
         );
-        db.execSQL("CREATE VIEW IF NOT EXISTS group_light_view AS SELECT * FROM light_group_rel "
-                + " LEFT JOIN lights ON light_group_rel.light_id=lights._id;");
+        db.execSQL("CREATE VIEW IF NOT EXISTS light_groups_view AS SELECT "
+                + "light_groups.*,(select count(_id) FROM light_group_rel where light_group_rel.group_id=light_groups._id) as num"
+                + " FROM light_groups;");
+        db.execSQL("CREATE VIEW IF NOT EXISTS group_light_view AS SELECT * FROM light_group_rel,lights "
+                + " WHERE light_group_rel.light_id=lights._id;");
         db.execSQL("CREATE TABLE IF NOT EXISTS scenes ("
                         + "_id INTEGER PRIMARY KEY, "
                         + "UUID TEXT NOT NULL,"

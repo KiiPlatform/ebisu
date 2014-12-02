@@ -16,18 +16,26 @@ public class YanKonProvider extends ContentProvider {
     public static final Uri URI_ACTIONS = Uri.parse("content://" + AUTHORITY + "/actions");
     public static final Uri URI_LIGHTS = Uri.parse("content://" + AUTHORITY + "/lights");
     public static final Uri URI_MODELS = Uri.parse("content://" + AUTHORITY + "/models");
+    public static final Uri URI_LIGHT_GROUPS = Uri.parse("content://" + AUTHORITY + "/light_groups");
+    public static final Uri URI_LIGHT_GROUP_REL = Uri.parse("content://" + AUTHORITY + "/light_group_rel");
 
     public static final String TABLE_COLORS = "colors";
     public static final String TABLE_ACTIONS = "actions";
     public static final String TABLE_LIGHTS = "lights";
     public static final String VIEW_LIGHTS = "lights_view";
     public static final String TABLE_MODELS = "models";
+    public static final String VIEW_LIGHT_GROUPS = "light_groups_view";
+    public static final String TABLE_LIGHT_GROUPS = "light_groups";
+    public static final String VIEW_LIGHT_GROUP_REL = "group_light_view";
+    public static final String TABLE_LIGHT_GROUP_REL = "light_group_rel";
 
 
     private static final int ID_COLORS = 0;
     private static final int ID_ACTIONS = 1;
     private static final int ID_LIGHTS = 2;
     private static final int ID_MODELS = 3;
+    private static final int ID_LIGHT_GROUPS = 4;
+    private static final int ID_LIGHT_GROUP_REL = 5;
 
     static {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
@@ -35,6 +43,8 @@ public class YanKonProvider extends ContentProvider {
         uriMatcher.addURI(AUTHORITY, "actions", ID_ACTIONS);
         uriMatcher.addURI(AUTHORITY, "lights", ID_LIGHTS);
         uriMatcher.addURI(AUTHORITY, "models", ID_MODELS);
+        uriMatcher.addURI(AUTHORITY, "light_groups", ID_LIGHT_GROUPS);
+        uriMatcher.addURI(AUTHORITY, "light_group_rel", ID_LIGHT_GROUP_REL);
     }
 
 
@@ -63,6 +73,16 @@ public class YanKonProvider extends ContentProvider {
                         selection, selectionArgs);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return ret;
+            case ID_LIGHT_GROUPS:
+                ret = database.delete(TABLE_LIGHT_GROUPS,
+                        selection, selectionArgs);
+                getContext().getContentResolver().notifyChange(uri, null);
+                return ret;
+            case ID_LIGHT_GROUP_REL:
+                ret = database.delete(TABLE_LIGHT_GROUP_REL,
+                        selection, selectionArgs);
+                getContext().getContentResolver().notifyChange(uri, null);
+                return ret;
         }
         throw new UnsupportedOperationException("Not yet implemented");
     }
@@ -87,6 +107,14 @@ public class YanKonProvider extends ContentProvider {
                 return Uri.withAppendedPath(uri, String.valueOf(cid));
             case ID_LIGHTS:
                 cid = database.insertWithOnConflict(TABLE_LIGHTS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                getContext().getContentResolver().notifyChange(uri, null);
+                return Uri.withAppendedPath(uri, String.valueOf(cid));
+            case ID_LIGHT_GROUPS:
+                cid = database.insertWithOnConflict(TABLE_LIGHT_GROUPS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                getContext().getContentResolver().notifyChange(uri, null);
+                return Uri.withAppendedPath(uri, String.valueOf(cid));
+            case ID_LIGHT_GROUP_REL:
+                cid = database.insertWithOnConflict(TABLE_LIGHT_GROUP_REL, null, values, SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return Uri.withAppendedPath(uri, String.valueOf(cid));
         }
@@ -128,6 +156,18 @@ public class YanKonProvider extends ContentProvider {
                 c.setNotificationUri(getContext().getContentResolver(), uri);
                 return c;
             }
+            case ID_LIGHT_GROUPS: {
+                Cursor c = database.query(VIEW_LIGHT_GROUPS, projection, selection, selectionArgs,
+                        null, null, sortOrder);
+                c.setNotificationUri(getContext().getContentResolver(), uri);
+                return c;
+            }
+            case ID_LIGHT_GROUP_REL: {
+                Cursor c = database.query(VIEW_LIGHT_GROUP_REL, projection, selection, selectionArgs,
+                        null, null, sortOrder);
+                c.setNotificationUri(getContext().getContentResolver(), uri);
+                return c;
+            }
         }
         throw new UnsupportedOperationException("Not yet implemented");
     }
@@ -151,6 +191,11 @@ public class YanKonProvider extends ContentProvider {
             case ID_LIGHTS:
                 ret = database
                         .update(TABLE_LIGHTS, values, selection, selectionArgs);
+                getContext().getContentResolver().notifyChange(uri, null);
+                return ret;
+            case ID_LIGHT_GROUPS:
+                ret = database
+                        .update(TABLE_LIGHT_GROUPS, values, selection, selectionArgs);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return ret;
         }

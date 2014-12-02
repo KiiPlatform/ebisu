@@ -43,6 +43,9 @@
     <string name="set_light_name">Set light name</string>
     <string name="input_dialog_empty">The field is empty</string>
     <string name="light_model_format">Model: %s</string>
+    <string name="group_num_format">Lights: %d</string>
     <string name="default_no_data">No data</string>
+    <string name="title_activity_add_light_groups">AddLightGroupsActivity</string>
+    <string name="group_name">Group name</string>
 
 </resources>
