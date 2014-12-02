@@ -108,6 +108,12 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "created_time INTEGER"
                         + ");"
         );
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS light_group_delete"
+                + " BEFORE DELETE ON light_groups"
+                + " FOR EACH ROW"
+                + " BEGIN"
+                + " DELETE FROM light_group_rel WHERE light_group_rel.group_id=old._id;"
+                + " END;");
         ContentValues values = new ContentValues();
         values.put("UUID", UUID.randomUUID().toString());
         values.put("name", "Red");
@@ -132,6 +138,9 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("value", Color.BLACK);
         values.put("created_time", 4);
         db.insert("colors", null, values);
+
+
+        //TODO Below is mock data, need to be removed
         values = new ContentValues();
         values.put("name", "LYZ_17");
         values.put("model", "model1");

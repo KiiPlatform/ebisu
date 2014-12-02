@@ -2,11 +2,15 @@ package com.kii.yankon;
 
 import android.app.Activity;
 import android.app.LoaderManager;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,10 +19,12 @@ import android.widget.CheckedTextView;
 import android.widget.CursorAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.kii.yankon.providers.YanKonProvider;
 
 import java.util.HashSet;
+import java.util.UUID;
 
 
 public class AddLightGroupsActivity extends Activity implements View.OnClickListener, LoaderManager.LoaderCallbacks<Cursor>, AdapterView.OnItemClickListener {
@@ -68,9 +74,46 @@ public class AddLightGroupsActivity extends Activity implements View.OnClickList
                 finish();
                 break;
             case R.id.group_ok:
-
+                save();
                 break;
         }
+    }
+
+    private void save() {
+        String gName = mGroupNameEdit.getText().toString();
+        if (TextUtils.isEmpty(gName)) {
+            Toast.makeText(this, getString(R.string.empty_group_name), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        ContentResolver cr = getContentResolver();
+        ContentValues values = new ContentValues();
+        values.put("name", gName);
+        if (group_id < 0) {
+            values.put("UUID", UUID.randomUUID().toString());
+            values.put("created_time", System.currentTimeMillis());
+            Uri uri = cr.insert(YanKonProvider.URI_LIGHT_GROUPS, values);
+            group_id = Integer.parseInt(uri.getLastPathSegment());
+        } else {
+            cr.update(YanKonProvider.URI_LIGHT_GROUPS, values, "_id=" + group_id, null);
+        }
+        Integer[] selArr = selectedSet.toArray(new Integer[0]);
+        for (int i = 0; i < selArr.length; i++) {
+            Integer integer = selArr[i];
+            if (orgSelectedSet.contains(integer)) {
+                orgSelectedSet.remove(integer);
+                selectedSet.remove(integer);
+            }
+        }
+        for (Integer integer : orgSelectedSet) {
+            cr.delete(YanKonProvider.URI_LIGHT_GROUP_REL, "group_id=" + group_id + " AND light_id=" + integer.intValue(), null);
+        }
+        for (Integer integer : selectedSet) {
+            values = new ContentValues();
+            values.put("group_id", group_id);
+            values.put("light_id", integer.intValue());
+            cr.insert(YanKonProvider.URI_LIGHT_GROUP_REL, values);
+        }
+        finish();
     }
 
     @Override
@@ -90,7 +133,7 @@ public class AddLightGroupsActivity extends Activity implements View.OnClickList
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        int light_id = (int)id;
+        int light_id = (int) id;
         Integer integer = Integer.valueOf(light_id);
         if (selectedSet.contains(integer)) {
             selectedSet.remove(integer);

@@ -6,11 +6,14 @@ import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.CursorAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.kii.yankon.AddLightGroupsActivity;
@@ -56,6 +59,50 @@ public class LightGroupsFragment extends BaseListFragment {
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         super.onLoadFinished(loader, cursor);
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        super.onListItemClick(l, v, position, id);
+        Cursor cursor = (Cursor) mAdapter.getItem(position);
+        String name = cursor.getString(cursor.getColumnIndex("name"));
+
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
+        Cursor cursor = (Cursor) mAdapter.getItem(info.position);
+        String name = cursor.getString(cursor.getColumnIndex("name"));
+        menu.setHeaderTitle(name);
+        menu.add(0, MENU_EDIT, 0, R.string.menu_edit);
+        menu.add(0, MENU_DELETE, 0, R.string.menu_delete);
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        super.onContextItemSelected(item);
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        switch (item.getItemId()) {
+            case MENU_EDIT: {
+                Cursor cursor = (Cursor) mAdapter.getItem(info.position);
+                int cid = cursor.getInt(cursor.getColumnIndex("_id"));
+                String name = cursor.getString(cursor.getColumnIndex("name"));
+                Intent intent = new Intent(getActivity(), AddLightGroupsActivity.class);
+                intent.putExtra(AddLightGroupsActivity.EXTRA_GROUP_NAME, name);
+                intent.putExtra(AddLightGroupsActivity.EXTRA_GROUP_ID, cid);
+                startActivity(intent);
+            }
+            break;
+            case MENU_DELETE: {
+                Cursor cursor = (Cursor) mAdapter.getItem(info.position);
+                int cid = cursor.getInt(cursor.getColumnIndex("_id"));
+                getActivity().getContentResolver().delete(YanKonProvider.URI_LIGHT_GROUPS, "_id=" + cid, null);
+            }
+            break;
+        }
+        return true;
     }
 
     class GroupsAdapter extends CursorAdapter {
