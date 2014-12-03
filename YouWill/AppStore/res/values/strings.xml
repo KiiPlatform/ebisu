@@ -57,5 +57,6 @@
     <string name="weibo">微博：http://www.weibo.com/imao</string>
     <string name="wechat">微信号：youwill521</string>
     <string name="are_you_sure_to_clear_cache">确定要清除缓存吗？</string>
+    <string name="choose_payment">选择支付方式</string>
 
 </resources>
