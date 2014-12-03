@@ -1,91 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.youwill.store"
-          android:versionCode="1"
-          android:versionName="1.0">
+    package="com.youwill.store"
+    android:versionCode="1"
+    android:versionName="1.0">
 
     <uses-sdk
-            android:minSdkVersion="15"
-            android:targetSdkVersion="21"/>
+        android:minSdkVersion="15"
+        android:targetSdkVersion="21" />
 
     <permission
-            android:name="com.kii.app.secure"
-            android:description="@string/kii_store_secure"
-            android:label="Kii Store Secure"
-            android:protectionLevel="normal"/>
+        android:name="com.kii.app.secure"
+        android:description="@string/kii_store_secure"
+        android:label="Kii Store Secure"
+        android:protectionLevel="normal" />
 
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
-            android:name=".App"
-            android:allowBackup="true"
-            android:icon="@drawable/ic_launcher"
-            android:label="@string/app_name"
-            android:theme="@style/AppTheme">
+        android:name=".App"
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme">
         <activity
-                android:name=".MainActivity"
-                android:label="@string/app_name"
-                android:screenOrientation="landscape">
+            android:name=".MainActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="landscape">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
+                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-                android:name=".activities.LogInActivity"
-                android:screenOrientation="landscape"/>
+            android:name=".activities.LogInActivity"
+            android:screenOrientation="landscape" />
 
         <activity
-                android:name=".activities.AppDetailActivity"
-                android:theme="@style/FloatWindowTheme"
-                android:screenOrientation="landscape"/>
-        <activity android:name=".activities.SettingsActivity"
-                  android:theme="@style/FloatWindowTheme"
-                  android:screenOrientation="landscape"/>
-
-        <activity android:name=".activities.AboutActivity"
-                  android:theme="@style/FloatWindowTheme"
-                  android:screenOrientation="landscape"/>
+            android:name=".activities.AppDetailActivity"
+            android:theme="@style/FloatWindowTheme"
+            android:screenOrientation="landscape" />
         <activity
-                android:name=".activities.LogIn2Activity"
-                android:screenOrientation="landscape"/>
+            android:name=".activities.SettingsActivity"
+            android:theme="@style/FloatWindowTheme"
+            android:screenOrientation="landscape" />
 
         <activity
-                android:name="com.kii.cloud.storage.social.connector.KiiSocialNetworkConnectorLoginActivity"
-                android:label="@string/app_name"
-                android:screenOrientation="landscape"/>
+            android:name=".activities.AboutActivity"
+            android:theme="@style/FloatWindowTheme"
+            android:screenOrientation="landscape" />
+        <activity
+            android:name=".activities.LogIn2Activity"
+            android:screenOrientation="landscape" />
 
         <activity
-                android:name="com.alipay.android.app.sdk.WapPayActivity"
-                android:screenOrientation="portrait" >
-        </activity>
-        
+            android:name="com.kii.cloud.storage.social.connector.KiiSocialNetworkConnectorLoginActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="landscape" />
+
+        <activity
+            android:name="com.alipay.android.app.sdk.WapPayActivity"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:name=".activities.PaymentSelectorActivity"
+            android:screenOrientation="landscape" />
+
         <provider
-                android:name=".providers.AppSecureProvider"
-                android:authorities="com.kii.store.sandbox.check"
-                android:exported="true"
-                android:permission="com.kii.app.secure"/>
+            android:name=".providers.AppSecureProvider"
+            android:authorities="com.kii.store.sandbox.check"
+            android:exported="true"
+            android:permission="com.kii.app.secure" />
         <provider
-                android:name=".providers.AppProvider"
-                android:authorities="com.youwill.store"
-                android:exported="false"/>
+            android:name=".providers.AppProvider"
+            android:authorities="com.youwill.store"
+            android:exported="false" />
 
         <receiver
-                android:name=".net.AppReceiver"
-                android:enabled="true"
-                android:exported="true">
+            android:name=".net.AppReceiver"
+            android:enabled="true"
+            android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.PACKAGE_ADDED"/>
-                <action android:name="android.intent.action.PACKAGE_REPLACED"/>
-                <action android:name="android.intent.action.PACKAGE_REMOVED"/>
+                <action android:name="android.intent.action.PACKAGE_ADDED" />
+                <action android:name="android.intent.action.PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.PACKAGE_REMOVED" />
 
-                <data android:scheme="package"/>
+                <data android:scheme="package" />
             </intent-filter>
             <intent-filter>
-                <action android:name="android.intent.action.DOWNLOAD_COMPLETE"/>
+                <action android:name="android.intent.action.DOWNLOAD_COMPLETE" />
             </intent-filter>
         </receiver>
     </application>
