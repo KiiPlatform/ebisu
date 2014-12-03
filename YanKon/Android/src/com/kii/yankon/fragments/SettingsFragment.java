@@ -38,8 +38,11 @@ public class SettingsFragment extends BaseListFragment {
     public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
         switch (position) {
-            case 1:
-                startActivity(new Intent(getActivity(), GuideActivity.class));
+            case 1: {
+                Intent intent = new Intent(getActivity(), GuideActivity.class);
+                intent.putExtra(GuideActivity.EXTRA_LAUNCH_NEW, false);
+                startActivity(intent);
+            }
                 break;
         }
     }

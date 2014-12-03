@@ -40,4 +40,7 @@ public final class KiiPaymentResultCode {
     public static final int PAYPAL_VERIFY_FAILED = 117;
 
     public static final int ALIPAY_VERIFY_FAILED = 200;
+
+    //mm message
+    public static final int ERROR_MM_INVALID_PAY_CODE = 300;
 }

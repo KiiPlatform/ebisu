@@ -81,6 +81,7 @@
     </content>
     <orderEntry type="jdk" jdkName="Android API 19 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" exported="" name="mmbilling.3.0.1" level="project" />
     <orderEntry type="library" exported="" name="universal-image-loader-1.9.0-with-sources" level="project" />
     <orderEntry type="library" exported="" name="alipay" level="project" />
     <orderEntry type="library" exported="" name="KiiCloudStorageSDK_release_v2.1.28" level="project" />

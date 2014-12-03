@@ -8,6 +8,7 @@ import com.kii.app.youwill.iap.server.dao.CommBucketOperate;
 import com.kii.app.youwill.iap.server.dao.ConfigInfoStore;
 import com.kii.app.youwill.iap.server.dao.TransactionDao;
 import com.kii.app.youwill.iap.server.entity.*;
+import com.kii.app.youwill.iap.server.mm.MMConfig;
 import com.kii.app.youwill.iap.server.service.IAPErrorCode;
 import com.kii.app.youwill.iap.server.service.ServiceException;
 import com.kii.app.youwill.iap.server.service.StartTransactionParam;
@@ -15,6 +16,7 @@ import com.kii.app.youwill.iap.server.service.UUIDGeneral;
 import com.kii.app.youwill.iap.server.web.AppContext;
 import com.kii.platform.ufp.bucket.ObjectID;
 import com.kii.platform.ufp.user.UserID;
+import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -50,7 +52,7 @@ public class TransactionDaoImpl implements TransactionDao {
 
     private String BUCKET_ID = "transaction";
 
-    private static String[] ADDITIONAL_FIELDS = new String[]{"total_fee", "buyer_email", "seller_email",};
+    private static String[] ALIPAY_ADDITIONAL_FIELDS = new String[]{"total_fee", "buyer_email", "seller_email",};
 
     private static DateFormat FMT_DAY = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
     private static DateFormat FMT_MONTH = new SimpleDateFormat("yyyy-MM", Locale.US);
@@ -60,13 +62,34 @@ public class TransactionDaoImpl implements TransactionDao {
 
     @Override
     public String createNewOrder(Product product, StartTransactionParam param) {
-        if (param.getPayType() == PayType.alipay) {
-            return createNewOrderForAliPay(product, param);
-        } else if (param.getPayType() == PayType.paypal) {
-            return startNewTransaction(product, param);
-        } else {
+        switch (param.getPayType()) {
+            case alipay:
+                return createNewOrderForAliPay(product, param);
+            case mm:
+                return createNewOrderForMM(product, param);
+            default:
+                return startNewTransaction(product, param);
+        }
+
+    }
+
+    private String createNewOrderForMM(Product product, StartTransactionParam param) {
+        String payCode = product.getFieldByName("mm_paycode");
+        if (payCode == null) {
             return null;
         }
+        String transactionID = startNewTransaction(product, param);
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("app_id", MMConfig.APP_ID);
+            jsonObject.put("app_key", MMConfig.APP_KEY);
+            jsonObject.put("transaction_id", transactionID);
+            jsonObject.put("pay_code", payCode);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return jsonObject.toString();
     }
 
     private String createNewOrderForAliPay(Product product, StartTransactionParam param) {
@@ -128,6 +151,9 @@ public class TransactionDaoImpl implements TransactionDao {
                 param.getAuthorID(), param.getAppID());
         transaction.setPayType(param.getPayType());
         transaction.setPrice(param.getPrice());
+
+        transaction.setPayCode(product.getFieldByName("mm_paycode"));
+
         if (appContext.isSandBox()) {
             transaction.setSandBox(appContext.isSandBox());
         }
@@ -216,7 +242,7 @@ public class TransactionDaoImpl implements TransactionDao {
             map.put("modifyDate", System.currentTimeMillis());
 
             //additional fields
-            for (String key : ADDITIONAL_FIELDS) {
+            for (String key : ALIPAY_ADDITIONAL_FIELDS) {
                 map.put(key, callbackParams.get(key));
             }
 
@@ -232,12 +258,9 @@ public class TransactionDaoImpl implements TransactionDao {
 
     @Override
     public OrderStatus completePaypalPay(Transaction transaction, String paymentID, PaypalQueryResult result) {
-
-
         if (transaction.getPayStatus() != OrderStatus.pending) {
             throw new ServiceException(IAPErrorCode.PAY_STATUS_INVALID);
         }
-
 
         Map<String, Object> map = new HashMap<String, Object>();
         OrderStatus status = null;
@@ -273,5 +296,45 @@ public class TransactionDaoImpl implements TransactionDao {
 
     }
 
+    public static String[] MM_FIELDS = {
+            "TransactionID",
+            "CheckID",
+            "ActionID",
+            "MSISDN",
+            "FeeMSISDN",
+            "AppID",
+            "TradeID",
+            "TotalPrice",
+            "SubsNumb",
+            "SubsSeq",
+            "ChannelID",
+            "OrderType",
+            "OrderID",
+    };
+
+    @Override
+    public OrderStatus completeMMPay(Transaction transaction, net.sf.json.JSONObject jsonObject) {
+        if (transaction.getPayStatus() != OrderStatus.pending) {
+            throw new ServiceException(IAPErrorCode.PAY_STATUS_INVALID);
+        }
+        Map<String, Object> map = new HashMap<String, Object>();
+        map.put("payStatus", OrderStatus.completed);
+        Date paymentDate = IAPUtils.convertMMPayDate(jsonObject.optString("ActionTime", ""));
+        map.put("payCompleteDate", paymentDate.getTime());
+        //fields for report
+        map.put("pay_day", FMT_DAY.format(paymentDate));
+        map.put("pay_month", FMT_MONTH.format(paymentDate));
+        map.put("pay_year", FMT_YEAR.format(paymentDate));
+        map.put("pay_week", FMT_WEEK.format(paymentDate));
+        map.put("modifyDate", System.currentTimeMillis());
+
+        for (String key : MM_FIELDS) {
+            map.put("mm" + key, jsonObject.optString(key, ""));
+        }
+        map.put("mmTotalPrice", String.format("%.2f", jsonObject.optInt("TotalPrice", 0) / 100.0));
+
+        commDao.updateParticObjWithVer(BUCKET_ID, transaction.getId(), transaction.getVersion(), map);
+        return OrderStatus.completed;
+    }
 
 }

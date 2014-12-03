@@ -33,6 +33,14 @@ public class IAPUtils {
 
 	}
 
+	public static Date convertMMPayDate(String dateStr) {
+		try {
+			return 	 DateUtils.parseDate(dateStr, "yyyyMMddHHmmss");
+		} catch (ParseException e) {
+			throw new ServiceException(IAPErrorCode.ALIPAY_SERVICE_INVALID);
+		}
+	}
+
 
 	public static String parseAlipayDate(Date date){
 		SimpleDateFormat format=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

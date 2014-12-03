@@ -23,7 +23,7 @@ String description;
 int consume_type;
 */
 
-    private static String[] ADDITIONAL_FIELDS = new String[]{
+    private static String[] ALIPAY_ADDITIONAL_FIELDS = new String[]{
             "discount",
             "payment_type",
             "subject",
@@ -52,7 +52,57 @@ int consume_type;
             "appID",
     };
 
+    public static String[] MM_FIELDS = {
+            "TransactionID",
+            "CheckID",
+            "ActionID",
+            "MSISDN",
+            "FeeMSISDN",
+            "AppID",
+            "TradeID",
+            "TotalPrice",
+            "SubsNumb",
+            "SubsSeq",
+            "ChannelID",
+            "OrderType",
+            "OrderID",
+    };
+
     public Receipt() {
+
+    }
+
+    public static Receipt createReceiptForMM(Transaction transaction, String jsonString) {
+        return new Receipt(transaction, jsonString);
+    }
+
+    private Receipt(Transaction transaction, String jsonString) {
+        this.transactionID = transaction.getTransactionID();
+        if (transaction.getApp() != null) {
+            this.app = transaction.getApp();
+        }
+
+        this.productID = transaction.getProductID();
+        this.currency = CurrencyType.CNY;
+
+        try {
+            JSONObject jsonObject = new JSONObject(jsonString);
+            this.price = String.format("%.2f", jsonObject.optInt("Price", 0) / 100.0);
+            if (transaction.isSandBox()) {
+                this.isSandbox = transaction.isSandBox();
+            }
+            this.paymentID = jsonObject.optString("OrderID");
+
+            additionalFields = new HashMap<String, String>();
+
+            for (String key : MM_FIELDS) {
+                additionalFields.put("mm" + key, jsonObject.optString(key, ""));
+            }
+            additionalFields.put("mmTotalPrice", String.format("%.2f", jsonObject.optInt("TotalPrice", 0) / 100.0));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
 
     }
 
@@ -141,7 +191,7 @@ int consume_type;
 
         additionalFields = new HashMap<String, String>();
 
-        for (String key : ADDITIONAL_FIELDS) {
+        for (String key : ALIPAY_ADDITIONAL_FIELDS) {
             additionalFields.put(key, callbackParams.get(key));
         }
     }

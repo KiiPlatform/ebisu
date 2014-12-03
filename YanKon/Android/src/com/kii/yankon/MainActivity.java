@@ -1,13 +1,5 @@
 package com.kii.yankon;
 
-import com.kii.yankon.fragments.ColorsFragment;
-import com.kii.yankon.fragments.LightsFragment;
-import com.kii.yankon.fragments.LogInFragment;
-import com.kii.yankon.fragments.PlaceholderFragment;
-import com.kii.yankon.fragments.ProfileFragment;
-import com.kii.yankon.utils.Constants;
-import com.kii.yankon.utils.Settings;
-
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
@@ -25,9 +17,13 @@ import android.view.MenuItem;
 
 import com.kii.yankon.fragments.ActionsFragment;
 import com.kii.yankon.fragments.ColorsFragment;
+import com.kii.yankon.fragments.LightGroupsFragment;
 import com.kii.yankon.fragments.LightsFragment;
+import com.kii.yankon.fragments.LogInFragment;
 import com.kii.yankon.fragments.PlaceholderFragment;
+import com.kii.yankon.fragments.ProfileFragment;
 import com.kii.yankon.fragments.SettingsFragment;
+import com.kii.yankon.utils.Constants;
 import com.kii.yankon.utils.Settings;
 
 public class MainActivity extends Activity
@@ -83,6 +79,9 @@ public class MainActivity extends Activity
         switch (position) {
             case 0:
                 fragment = LightsFragment.newInstance(position + 1);
+                break;
+            case 1:
+                fragment = LightGroupsFragment.newInstance(position + 1);
                 break;
             case 4:
                 fragment = ActionsFragment.newInstance(position + 1);

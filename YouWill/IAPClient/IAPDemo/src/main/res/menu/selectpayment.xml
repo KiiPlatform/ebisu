@@ -1,0 +1,17 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:id="@+id/group_paytype" android:checkableBehavior="single">
+        <item
+                android:id="@+id/action_pay_alipay"
+                android:orderInCategory="200"
+                android:checkable="true"
+                android:title="@string/menu_item_alipay"/>
+
+        <item
+                android:id="@+id/action_pay_mm"
+                android:orderInCategory="300"
+                android:checkable="true"
+                android:title="@string/menu_item_mm"/>
+    </group>
+
+</menu>

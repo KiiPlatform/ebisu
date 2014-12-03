@@ -77,6 +77,10 @@ is_sandbox
                 json.put("app", app);
             }
 
+            if (payCode != null) {
+                json.put("pay_code", payCode);
+            }
+
             putAdditionalFields(json);
             return json;
         } catch (JSONException e) {
@@ -204,6 +208,16 @@ is_sandbox
      * while appID means which application the IAP item belongs to.
      *  */
     private String app;
+
+    private String payCode;
+
+    public String getPayCode() {
+        return payCode;
+    }
+
+    public void setPayCode(String payCode) {
+        this.payCode = payCode;
+    }
 
     public String getApp() {
         return app;

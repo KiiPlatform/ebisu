@@ -2,6 +2,7 @@ package com.kii.app.youwill.iap.server.dao;
 
 import com.kii.app.youwill.iap.server.entity.*;
 import com.kii.app.youwill.iap.server.service.StartTransactionParam;
+import net.sf.json.JSONObject;
 
 import java.util.Map;
 
@@ -18,4 +19,5 @@ public interface TransactionDao {
     OrderStatus completePaypalPay(Transaction trans, String paymentID, PaypalQueryResult result);
 
 
+    OrderStatus completeMMPay(Transaction transaction, JSONObject jsonObject);
 }

@@ -39,11 +39,15 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "color_rel TEXT,"
                         + "color INTEGER,"
                         + "model INTEGER,"
+                        + "is_mine BOOL,"
+                        + "is_on BOOL,"
+                        + "connected BOOL,"
                         + "owned_time INTEGER"
                         + ");"
         );
         db.execSQL("CREATE TABLE IF NOT EXISTS models ("
                         + "_id INTEGER PRIMARY KEY, "
+                        + "model TEXT,"
                         + "name TEXT,"
                         + "pic TEXT,"
                         + "des TEXT"
@@ -57,7 +61,9 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "created_time INTEGER"
                         + ");"
         );
-        db.execSQL("CREATE VIEW IF NOT EXISTS lights_view AS SELECT * FROM lights LEFT JOIN models ON lights.model=models._id "
+        db.execSQL("CREATE VIEW IF NOT EXISTS lights_view AS SELECT "
+                + "lights.*,models.name AS m_name, colors.name AS c_name, colors.value"
+                + " FROM lights LEFT JOIN models ON lights.model=models.model "
                 + " LEFT JOIN colors ON lights.color_rel = colors.UUID;");
         db.execSQL("CREATE TABLE IF NOT EXISTS light_groups ("
                         + "_id INTEGER PRIMARY KEY, "
@@ -73,8 +79,11 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "created_time INTEGER"
                         + ");"
         );
-        db.execSQL("CREATE VIEW IF NOT EXISTS group_light_view AS SELECT * FROM light_group_rel "
-                + " LEFT JOIN lights ON light_group_rel.light_id=lights._id;");
+        db.execSQL("CREATE VIEW IF NOT EXISTS light_groups_view AS SELECT "
+                + "light_groups.*,(select count(_id) FROM light_group_rel where light_group_rel.group_id=light_groups._id) as num"
+                + " FROM light_groups;");
+        db.execSQL("CREATE VIEW IF NOT EXISTS group_light_view AS SELECT * FROM light_group_rel,lights "
+                + " WHERE light_group_rel.light_id=lights._id;");
         db.execSQL("CREATE TABLE IF NOT EXISTS scenes ("
                         + "_id INTEGER PRIMARY KEY, "
                         + "UUID TEXT NOT NULL,"
@@ -99,6 +108,12 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "created_time INTEGER"
                         + ");"
         );
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS light_group_delete"
+                + " BEFORE DELETE ON light_groups"
+                + " FOR EACH ROW"
+                + " BEGIN"
+                + " DELETE FROM light_group_rel WHERE light_group_rel.group_id=old._id;"
+                + " END;");
         ContentValues values = new ContentValues();
         values.put("UUID", UUID.randomUUID().toString());
         values.put("name", "Red");
@@ -123,6 +138,13 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("value", Color.BLACK);
         values.put("created_time", 4);
         db.insert("colors", null, values);
+
+
+        //TODO Below is mock data, need to be removed
+        values = new ContentValues();
+        values.put("name", "LYZ_17");
+        values.put("model", "model1");
+        db.insert("models", null, values);
     }
 
 }

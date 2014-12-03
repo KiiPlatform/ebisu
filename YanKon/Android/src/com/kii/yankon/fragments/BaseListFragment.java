@@ -22,7 +22,8 @@ public class BaseListFragment extends ListFragment implements LoaderManager.Load
      * fragment.
      */
     public static final String ARG_SECTION_NUMBER = "section_number";
-    public static final int MENU_DELETE = 1;
+    public static final int MENU_EDIT = 1;
+    public static final int MENU_DELETE = 2;
 
     protected MainActivity parentActivity;
     protected CursorAdapter mAdapter = null;
@@ -53,6 +54,7 @@ public class BaseListFragment extends ListFragment implements LoaderManager.Load
     @Override
     public void onStart() {
         super.onStart();
+        setEmptyText(getActivity().getString(R.string.default_no_data));
         registerForContextMenu(getListView());
     }
 

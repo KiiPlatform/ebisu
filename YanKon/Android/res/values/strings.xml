@@ -40,5 +40,14 @@
     <string name="input_action_name">Input action name</string>
     <string name="edit_action">Edit Action</string>
     <string name="add_action">Add Action</string>
+    <string name="set_light_name">Set light name</string>
+    <string name="input_dialog_empty">The field is empty</string>
+    <string name="light_model_format">Model: %s</string>
+    <string name="group_num_format">Lights: %d</string>
+    <string name="default_no_data">No data</string>
+    <string name="title_activity_add_light_groups">AddLightGroupsActivity</string>
+    <string name="group_name">Group name</string>
+    <string name="empty_group_name">Group name cannot be empty</string>
+    <string name="menu_edit">Edit</string>
 
 </resources>
