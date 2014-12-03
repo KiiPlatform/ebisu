@@ -1,5 +1,10 @@
 package com.kii.yankon;
 
+import com.kii.yankon.fragments.InputDialogFragment;
+import com.kii.yankon.model.Light;
+import com.kii.yankon.providers.YanKonProvider;
+import com.pixplicity.multiviewpager.MultiViewPager;
+
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
@@ -8,16 +13,12 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.view.PagerAdapter;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import com.kii.yankon.fragments.InputDialogFragment;
-import com.kii.yankon.model.Light;
-import com.kii.yankon.providers.YanKonProvider;
-import com.pixplicity.multiviewpager.MultiViewPager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -127,7 +128,7 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
         values.put("UUID",currLight.mac);
         values.put("model",currLight.model);
         values.put("connected",true);
-        values.put("is_on",true);
+        values.put("is_on", true);
         values.put("name",text);
         values.put("owned_time", System.currentTimeMillis());
         getContentResolver().insert(YanKonProvider.URI_LIGHTS, values);
@@ -192,5 +193,17 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
             description = (TextView) v.findViewById(R.id.light_desc);
             button = (Button) v.findViewById(R.id.light_button);
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                return true;
+            default:
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
