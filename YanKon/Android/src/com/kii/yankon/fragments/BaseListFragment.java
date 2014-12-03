@@ -28,6 +28,8 @@ public class BaseListFragment extends ListFragment implements LoaderManager.Load
     protected MainActivity parentActivity;
     protected CursorAdapter mAdapter = null;
 
+    public int currentEditId = -1;
+
     /**
      * Returns a new instance of this fragment for the given section number.
      */

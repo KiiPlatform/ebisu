@@ -1,15 +1,21 @@
 package com.kii.yankon.fragments;
 
+import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentTransaction;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.CursorAdapter;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -24,6 +30,8 @@ import com.kii.yankon.providers.YanKonProvider;
 public class LightsFragment extends BaseListFragment {
 
     private static boolean isFirstLaunch = true;
+
+    private static final int REQUEST_EDIT_NAME = 0x2001;
 
     public static LightsFragment newInstance(int sectionNumber) {
         LightsFragment fragment = new LightsFragment();
@@ -62,6 +70,73 @@ public class LightsFragment extends BaseListFragment {
         if (isFirstLaunch && cursor.getCount() == 0) {
             isFirstLaunch = false;
             startActivity(new Intent(getActivity(), AddLightsActivity.class));
+        }
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
+        Cursor cursor = (Cursor) mAdapter.getItem(info.position);
+        String name = cursor.getString(cursor.getColumnIndex("name"));
+        menu.setHeaderTitle(name);
+        menu.add(0, MENU_EDIT, 0, R.string.menu_edit);
+        menu.add(0, MENU_DELETE, 0, R.string.menu_delete);
+    }
+
+
+    void showEditAction(String text) {
+        FragmentTransaction ft = getActivity().getFragmentManager().beginTransaction();
+        Fragment prev = getActivity().getFragmentManager().findFragmentByTag("dialog");
+        if (prev != null) {
+            ft.remove(prev);
+        }
+        ft.addToBackStack(null);
+        InputDialogFragment newFragment = InputDialogFragment.newInstance(
+                getActivity().getString(R.string.edit_light_name),
+                text,
+                null);
+        newFragment.setTargetFragment(this, REQUEST_EDIT_NAME);
+        newFragment.show(getFragmentManager(), "dialog");
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        super.onContextItemSelected(item);
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        switch (item.getItemId()) {
+            case MENU_EDIT: {
+                Cursor cursor = (Cursor) mAdapter.getItem(info.position);
+                String name = cursor.getString(cursor.getColumnIndex("name"));
+                currentEditId = cursor.getInt(cursor.getColumnIndex("_id"));
+                showEditAction(name);
+            }
+            break;
+            case MENU_DELETE: {
+                Cursor cursor = (Cursor) mAdapter.getItem(info.position);
+                int cid = cursor.getInt(cursor.getColumnIndex("_id"));
+                getActivity().getContentResolver().delete(YanKonProvider.URI_LIGHTS, "_id=" + cid, null);
+            }
+            break;
+        }
+        return true;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode != Activity.RESULT_OK) {
+            return;
+        }
+        switch (requestCode) {
+            case REQUEST_EDIT_NAME:
+                String name = data.getStringExtra(InputDialogFragment.ARG_TEXT);
+                ContentValues values = new ContentValues();
+                values.put("name", name);
+                if (currentEditId > -1) {
+                    getActivity().getContentResolver().update(YanKonProvider.URI_LIGHTS, values, "_id=" + currentEditId, null);
+                }
+                break;
         }
     }
 

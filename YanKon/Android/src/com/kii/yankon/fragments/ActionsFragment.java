@@ -33,8 +33,6 @@ public class ActionsFragment extends BaseListFragment {
 
     private static final int REQUEST_ACTION = 0x1001;
 
-    int currentEditId = -1;
-
     public static ActionsFragment newInstance(int sectionNumber) {
         ActionsFragment fragment = new ActionsFragment();
         Bundle args = new Bundle();

@@ -50,5 +50,6 @@
     <string name="empty_group_name">Group name cannot be empty</string>
     <string name="menu_edit">Edit</string>
     <string name="action_done">Done</string>
+    <string name="edit_light_name">Edit light name</string>
 
 </resources>

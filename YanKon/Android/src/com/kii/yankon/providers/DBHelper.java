@@ -118,6 +118,12 @@ public class DBHelper extends SQLiteOpenHelper {
                 + " BEGIN"
                 + " DELETE FROM light_group_rel WHERE light_group_rel.group_id=old._id;"
                 + " END;");
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS light_delete"
+                + " BEFORE DELETE ON lights"
+                + " FOR EACH ROW"
+                + " BEGIN"
+                + " DELETE FROM light_group_rel WHERE light_group_rel.light_id=old._id;"
+                + " END;");
         ContentValues values = new ContentValues();
         values.put("UUID", UUID.randomUUID().toString());
         values.put("name", "Red");
