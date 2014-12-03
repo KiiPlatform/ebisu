@@ -65,6 +65,7 @@
             android:screenOrientation="portrait"/>
         <activity
             android:name=".activities.PaymentSelectorActivity"
+            android:theme="@style/FloatWindowTheme"
             android:screenOrientation="landscape" />
 
         <provider

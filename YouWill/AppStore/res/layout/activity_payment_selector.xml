@@ -3,29 +3,51 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/transparent"
-    >
-    <RelativeLayout
+    android:background="@android:color/transparent">
+
+    <TextView
+        android:background="@drawable/top_bar_white_bg"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/top_bar_white_bg">
-        <ImageView
-            android:layout_width="36px"
-            android:layout_height="36px"
-            android:src="@drawable/about_close"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true"
-            android:layout_marginTop="12px"
-            android:layout_marginRight="15px"
-            android:id="@+id/close"
+        android:src="@drawable/logo"
+        android:paddingTop="23px"
+        android:paddingBottom="15px"
+        android:textColor="@color/search_hint_color"
+        android:textSize="14pt"
+        android:paddingLeft="27px"
+        android:text="@string/choose_payment" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:background="@color/payment_divider" />
+
+    <RadioGroup
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/payment_group"
+        android:background="@drawable/bottom_bg">
+        <RadioButton
+            android:text="@string/kii_alipay"
+            android:id="@+id/alipay_button"
+            style="@style/select_payment_radio_button_style" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/list_divider"/>
+        <RadioButton
+            android:text="@string/kii_unionpay"
+            android:id="@+id/unionpay_button"
+            style="@style/select_payment_radio_button_style" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/list_divider"/>
+        <RadioButton
+            android:text="@string/kii_paypal"
+            android:id="@+id/paypal_button"
+            style="@style/select_payment_radio_button_style"
             />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="64px"
-            android:src="@drawable/logo"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="32px"
-            android:layout_marginBottom="48px"
-            />
-    </RelativeLayout>
+
+    </RadioGroup>
 </LinearLayout>

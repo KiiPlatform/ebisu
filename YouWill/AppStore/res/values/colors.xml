@@ -16,4 +16,6 @@
     <color name="blue_button_text">#54b0fd</color>
     <color name="detail_section_header">#f2f3f5</color>
     <color name="black">#000000</color>
+    <color name="payment_divider">#51c5d4</color>
+    <color name="dark_gray">#333333</color>
 </resources>
