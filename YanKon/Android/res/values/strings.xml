@@ -23,7 +23,7 @@
     <string name="searching">Searching...</string>
     <string name="menu_sort">Sort By</string>
     <string name="menu_new">New</string>
-    <string name="title_activity_color_picker">ColorPickerActivity</string>
+    <string name="title_activity_color_picker">Color Picker</string>
     <string name="color_name_hint">Color name</string>
     <string name="menu_delete">Delete</string>
     <string name="guide_done">Done</string>
