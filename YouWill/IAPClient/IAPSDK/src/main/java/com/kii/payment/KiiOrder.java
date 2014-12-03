@@ -1,16 +1,14 @@
 package com.kii.payment;
 
-import java.util.Currency;
-import java.util.Locale;
-
+import com.kii.cloud.storage.KiiUser;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.kii.cloud.storage.KiiUser;
+import java.util.Currency;
 
 /**
  * KiiOrder class
- *
+ * <p/>
  * Created by tian on 2/27/14.
  */
 public class KiiOrder {
@@ -46,7 +44,7 @@ public class KiiOrder {
         return currency;
     }
 
-    public String getPayType() {
+    public PayType getPayType() {
         return payType;
     }
 
@@ -70,15 +68,13 @@ public class KiiOrder {
 
     Currency currency;
 
-    String payType;
+    PayType payType;
 
     int consumeType;
 
     String productName;
 
     String productDescription;
-
-    public static final String ALIPAY = "alipay";
 
     @Override
     public String toString() {
@@ -89,6 +85,7 @@ public class KiiOrder {
     /**
      * Constructs an instance of KiiOrder with the specified order in json string. The json string might contains
      * contains the following fields: subject, body, price, id, product_id, user_id, currency, consume_type.
+     *
      * @param order
      */
     public KiiOrder(String order) {
@@ -101,7 +98,11 @@ public class KiiOrder {
             productId = object.optString("product_id");
             userId = object.optString("user_id");
             currency = Currency.getInstance(object.optString("currency"));
-            payType = ALIPAY;
+            try {
+                payType = PayType.valueOf(object.optString("pay_type"));
+            } catch (Exception e) {
+                payType = payType.unknown;
+            }
             consumeType = object.optInt("consume_type");
         } catch (JSONException e) {
             e.printStackTrace();
@@ -115,13 +116,17 @@ public class KiiOrder {
      * @param user
      */
     public KiiOrder(KiiProduct product, KiiUser user) {
+        this(product, user, PayType.alipay);
+    }
+
+    public KiiOrder(KiiProduct product, KiiUser user, PayType payType) {
         subject = product.getName();
         body = product.getDescription();
         price = product.getPrice();
         productId = product.getId();
         userId = user.toUri().getLastPathSegment();
         consumeType = product.getConsumeType().ordinal();
-        payType = ALIPAY;
+        this.payType = payType;
     }
 
 }

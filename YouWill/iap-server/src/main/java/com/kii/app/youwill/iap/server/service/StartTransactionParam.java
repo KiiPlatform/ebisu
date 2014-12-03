@@ -33,9 +33,11 @@ public class StartTransactionParam {
         try {
             JSONObject json = new JSONObject(context);
 
-            payType = PayType.valueOf(json.getString("payType"));
+            payType = PayType.valueOf(json.getString("pay_type"));
             price = json.getString("price");
-            notifyURL = json.getString("notify_url");
+            if (payType == PayType.alipay) {
+                notifyURL = json.getString("notify_url");
+            }
             appID = json.getString("app_id");
             authorID = json.getString("author_id");
             userID = json.getString("user_id");

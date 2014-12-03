@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.*;
 import android.widget.*;
 import com.kii.cloud.storage.KiiUser;
@@ -37,6 +36,8 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
 
     private List<KiiReceipt> receipts = new ArrayList<KiiReceipt>();
 
+    private PayType mPayType = PayType.mm;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,6 +47,9 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
         mList = (ListView) findViewById(R.id.list);
         mList.setAdapter(mAdapter);
         mList.setOnItemClickListener(this);
+
+        registerForContextMenu(mList);
+
         mLoader = ImageLoader.getInstance();
         new GetProductTask(this).execute();
 
@@ -56,6 +60,36 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        getMenuInflater().inflate(R.menu.selectpayment, menu);
+        switch (mPayType) {
+            case alipay:
+                menu.findItem(R.id.action_pay_alipay).setChecked(true);
+                break;
+            case mm:
+                menu.findItem(R.id.action_pay_mm).setChecked(true);
+                break;
+            default:
+                break;
+
+        }
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_pay_alipay:
+                mPayType = PayType.alipay;
+                break;
+            case R.id.action_pay_mm:
+                mPayType = PayType.mm;
+                break;
+        }
+        return super.onContextItemSelected(item);
     }
 
     @Override
@@ -116,8 +150,8 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
                 public void onLoginCompleted(int token, KiiUser user, Exception exception) {
                     LogUtil.log(TAG, "log in complete: " + token + ", " + user);
                     if (exception == null) {
-                        order = new KiiOrder(product, user);
-                        currentPayment = new KiiPayment(MainActivity.this, order, mCallback);
+                        order = new KiiOrder(product, user, mPayType);
+                        currentPayment = KiiPayment.getPayment(MainActivity.this, order, mCallback);
                         currentPayment.pay();
                     } else {
                         // TODO
@@ -187,9 +221,6 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
         @Override
         protected Void doInBackground(Void... params) {
             products.addAll(KiiStore.listProducts(null));
-            for (KiiProduct product : products) {
-                LogUtil.log(TAG, "product is " + product.getName());
-            }
             return null;
         }
 
@@ -263,7 +294,7 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
         public void onError(int errorCode) {
             LogUtil.log(TAG, "payment error, error code is " + errorCode);
             Message msg = handler.obtainMessage();
-            msg.obj = KiiPayment.getErrorMessage(MainActivity.this, errorCode);
+            msg.obj = currentPayment.getErrorMessage(MainActivity.this, errorCode);
             handler.sendMessage(msg);
         }
     };

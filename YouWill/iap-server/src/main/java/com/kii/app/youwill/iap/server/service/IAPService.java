@@ -42,7 +42,7 @@ public class IAPService {
 
     public JSONObject startOrderTransaction(StartTransactionParam param) {
         /*
-		TODO: disable validation
+        TODO: disable validation
 		if(!param.valid(context.getAppID().toString(), configStore.getIAPSecurityKey())){
 			throw new ServiceException(IAPErrorCode.SIGN_INVALID);
 		}*/
@@ -64,17 +64,26 @@ public class IAPService {
         }
 
         String data = transactionDao.createNewOrder(product, param);
+        if (data == null) {
+            throw new ServiceException(IAPErrorCode.ERROR_CREATE_TRANSACTION);
+        }
         JSONObject jsObj = new JSONObject();
         try {
             jsObj.put("payType", param.getPayType().name());
-
-            if (param.getPayType() == PayType.alipay) {
-                jsObj.put("url", data);
-                jsObj.put("errorCode", 0);
-            } else if (param.getPayType() == PayType.paypal) {
-                jsObj.put("transactionID", data);
-                jsObj.put("payInfo", this.configStore.getPaypalConfig().getPaypayJson());
-
+            switch (param.getPayType()) {
+                case alipay:
+                    jsObj.put("url", data);
+                    jsObj.put("errorCode", 0);
+                    break;
+                case mm:
+                    JSONObject jsonMM = new JSONObject(data);
+                    jsObj.put("errorCode", 0);
+                    jsObj.put("mm", jsonMM);
+                    break;
+                default:
+                    jsObj.put("transaction_id", data);
+                    jsObj.put("payInfo", this.configStore.getPaypalConfig().getPaypayJson());
+                    break;
             }
             return jsObj;
 

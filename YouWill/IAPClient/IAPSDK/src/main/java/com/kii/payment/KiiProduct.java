@@ -32,7 +32,7 @@ public class KiiProduct {
     }
 
     public String getThumbnail() {
-        return (mObject != null && mObject.has("image")) ? mObject.getString("image") : null;
+        return (mObject != null && mObject.has("iconUrl")) ? mObject.getString("iconUrl") : null;
     }
 
     public boolean isNew() {

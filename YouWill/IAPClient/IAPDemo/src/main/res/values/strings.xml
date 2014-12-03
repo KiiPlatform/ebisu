@@ -9,4 +9,7 @@
     <string name="menu_item_restore_product">Retrieve Receipt</string>
     <string name="please_wait">Please wait…</string>
     <string name="restoring_product">Restoring product…</string>
+    <string name="menu_item_mm">MM</string>
+    <string name="menu_item_egame">eGame</string>
+    <string name="menu_item_alipay">AliPay</string>
 </resources>

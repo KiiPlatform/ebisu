@@ -1,7 +1,7 @@
-package com.kii.app.youwill.iap.server.entity;
+package com.kii.payment;
 
 /**
- * Created by ethan on 14-7-28.
+ * Created by liangyx on 11/27/14.
  */
 public enum PayType {
     alipay,
