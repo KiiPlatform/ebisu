@@ -40,7 +40,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "color INTEGER,"
                         + "model INTEGER,"
                         + "is_mine BOOL,"
-                        + "is_on BOOL,"
+                        + "is_on BOOL DEFAULT 0,"
                         + "connected BOOL,"
                         + "owned_time INTEGER"
                         + ");"
@@ -79,11 +79,15 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "created_time INTEGER"
                         + ");"
         );
-        db.execSQL("CREATE VIEW IF NOT EXISTS light_groups_view AS SELECT "
-                + "light_groups.*,(select count(_id) FROM light_group_rel where light_group_rel.group_id=light_groups._id) as num"
-                + " FROM light_groups;");
+
         db.execSQL("CREATE VIEW IF NOT EXISTS group_light_view AS SELECT * FROM light_group_rel,lights "
                 + " WHERE light_group_rel.light_id=lights._id;");
+
+        db.execSQL("CREATE VIEW IF NOT EXISTS light_groups_view AS SELECT "
+                + "light_groups.*,(select count(_id) FROM light_group_rel where light_group_rel.group_id=light_groups._id) as num,"
+                + "(select sum(is_on) FROM group_light_view where group_light_view.group_id=light_groups._id) as on_num "
+                + " FROM light_groups;");
+
         db.execSQL("CREATE TABLE IF NOT EXISTS scenes ("
                         + "_id INTEGER PRIMARY KEY, "
                         + "UUID TEXT NOT NULL,"

@@ -1,37 +1,40 @@
 package com.kii.yankon;
 
-import com.kii.yankon.widget.ColorCircle;
-import com.kii.yankon.widget.ColorSlider;
-import com.kii.yankon.widget.OnColorChangedListener;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
+
+import com.kii.yankon.widget.ColorCircle;
+import com.kii.yankon.widget.ColorSlider;
+import com.kii.yankon.widget.OnColorChangedListener;
 
 
 public class ColorPickerActivity2 extends Activity implements OnColorChangedListener {
 
     /**
      * Color.
-     *
+     * <p/>
      * <p>Color as integer value, as used in setColor() and related.</p>
-     *
+     * <p/>
      * <p>Constant Value: "org.openintents.extra.COLOR"</p>
      */
-    public final static String EXTRA_COLOR = "com.kii.extra.COLOR";
-
-    public final static String EXTRA_NAME = "com.kii.extra.NAME";
-
-    public final static String EXTRA_ID = "com.kii.extra.ID";
+    public static final String EXTRA_COLOR = "color";
+    public static final String EXTRA_NAME = "name";
+    public static final String EXTRA_ID = "id";
 
     ColorCircle mColorCircle;
 
     ColorSlider mSaturation;
 
     ColorSlider mValue;
+
+    EditText mEdit;
 
     Intent mIntent;
 
@@ -42,6 +45,8 @@ public class ColorPickerActivity2 extends Activity implements OnColorChangedList
     private int id;
 
     private String name;
+
+    private int color;
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -67,11 +72,15 @@ public class ColorPickerActivity2 extends Activity implements OnColorChangedList
             mIntent = new Intent();
         }
 
-        int color = mIntent.getIntExtra(EXTRA_COLOR, Color.BLACK);
+        color = mIntent.getIntExtra(EXTRA_COLOR, Color.BLACK);
         id = mIntent.getIntExtra(EXTRA_ID, -1);
         name = mIntent.getStringExtra(EXTRA_NAME);
         Log.d(TAG, String.format("Input color is %x", color));
         initializeColor(color);
+
+        mEdit = (EditText) findViewById(R.id.edit);
+        mEdit.setVisibility(name == null ? View.GONE : View.VISIBLE);
+        mEdit.setText(name);
     }
 
     void initializeColor(int color) {
@@ -123,19 +132,39 @@ public class ColorPickerActivity2 extends Activity implements OnColorChangedList
         } else if (view == mValue) {
             mColorCircle.setColor(newColor);
         }
-
+        color = newColor;
         this.color_changed = true;
     }
 
 
     public void onColorPicked(View view, int newColor) {
-        // We can return result
+        color = newColor;
         Log.d(TAG, String.format("newColor is %x", newColor));
-        mIntent.putExtra(EXTRA_COLOR, newColor);
+    }
+
+    public void save() {
+        name = mEdit.getText().toString();
+        mIntent.putExtra(EXTRA_COLOR, color);
         mIntent.putExtra(EXTRA_ID, id);
         mIntent.putExtra(EXTRA_NAME, name);
         setResult(RESULT_OK, mIntent);
         finish();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.done, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_done:
+                save();
+                break;
+        }
+        return true;
     }
 
 }

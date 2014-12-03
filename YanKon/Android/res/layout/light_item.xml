@@ -13,9 +13,20 @@
         android:layout_marginRight="12dp"
         android:layout_centerVertical="true" />
 
+    <Switch
+        android:id="@+id/light_switch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:layout_marginLeft="12dp" />
+
     <TextView
         android:id="@android:id/text1"
         android:layout_toRightOf="@id/light_icon"
+        android:layout_toLeftOf="@id/light_switch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dip"
@@ -27,5 +38,6 @@
         android:layout_height="wrap_content"
         android:layout_below="@android:id/text1"
         android:layout_alignLeft="@android:id/text1"
+        android:layout_alignRight="@android:id/text1"
         android:textAppearance="?android:attr/textAppearanceSmall" />
 </RelativeLayout>

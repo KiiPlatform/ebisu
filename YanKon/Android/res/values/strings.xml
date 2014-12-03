@@ -49,5 +49,6 @@
     <string name="group_name">Group name</string>
     <string name="empty_group_name">Group name cannot be empty</string>
     <string name="menu_edit">Edit</string>
+    <string name="action_done">Done</string>
 
 </resources>

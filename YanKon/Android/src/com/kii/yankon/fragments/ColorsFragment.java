@@ -19,7 +19,7 @@ import android.widget.CursorAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.kii.yankon.ColorPickerActivity;
+import com.kii.yankon.ColorPickerActivity2;
 import com.kii.yankon.R;
 import com.kii.yankon.providers.YanKonProvider;
 
@@ -45,8 +45,8 @@ public class ColorsFragment extends BaseListFragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_add: {
-                Intent intent = new Intent(getActivity(), ColorPickerActivity.class);
-                intent.putExtra(ColorPickerActivity.EXTRA_NAME, "");
+                Intent intent = new Intent(getActivity(), ColorPickerActivity2.class);
+                intent.putExtra(ColorPickerActivity2.EXTRA_NAME, "");
                 startActivityForResult(intent, REQUEST_COLOR);
             }
             return true;
@@ -62,9 +62,9 @@ public class ColorsFragment extends BaseListFragment {
         }
         switch (requestCode) {
             case REQUEST_COLOR: {
-                int id = data.getIntExtra(ColorPickerActivity.EXTRA_ID, -1);
-                int color = data.getIntExtra(ColorPickerActivity.EXTRA_COLOR, Color.WHITE);
-                String name = data.getStringExtra("name");
+                int id = data.getIntExtra(ColorPickerActivity2.EXTRA_ID, -1);
+                int color = data.getIntExtra(ColorPickerActivity2.EXTRA_COLOR, Color.WHITE);
+                String name = data.getStringExtra(ColorPickerActivity2.EXTRA_NAME);
                 ContentValues values = new ContentValues();
                 values.put("name", name);
                 values.put("value", color);
@@ -125,10 +125,10 @@ public class ColorsFragment extends BaseListFragment {
         int color = cursor.getInt(cursor.getColumnIndex("value"));
         String name = cursor.getString(cursor.getColumnIndex("name"));
         int cid = cursor.getInt(cursor.getColumnIndex("_id"));
-        Intent intent = new Intent(getActivity(), ColorPickerActivity.class);
-        intent.putExtra(ColorPickerActivity.EXTRA_NAME, name);
-        intent.putExtra(ColorPickerActivity.EXTRA_ID, cid);
-        intent.putExtra(ColorPickerActivity.EXTRA_COLOR, color);
+        Intent intent = new Intent(getActivity(), ColorPickerActivity2.class);
+        intent.putExtra(ColorPickerActivity2.EXTRA_NAME, name);
+        intent.putExtra(ColorPickerActivity2.EXTRA_ID, cid);
+        intent.putExtra(ColorPickerActivity2.EXTRA_COLOR, color);
         startActivityForResult(intent, REQUEST_COLOR);
     }
 

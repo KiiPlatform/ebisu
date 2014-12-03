@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.CursorAdapter;
 import android.widget.ListView;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.kii.yankon.AddLightGroupsActivity;
@@ -125,6 +126,9 @@ public class LightGroupsFragment extends BaseListFragment {
             tv.setText(context.getString(R.string.group_num_format, num));
             View icon = view.findViewById(R.id.light_icon);
             icon.setBackgroundResource(R.drawable.light_groups);
+            int on_num = cursor.getInt(cursor.getColumnIndex("on_num"));
+            Switch light_switch = (Switch) view.findViewById(R.id.light_switch);
+            light_switch.setChecked(on_num == num);
         }
     }
 }

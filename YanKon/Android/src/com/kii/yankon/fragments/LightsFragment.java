@@ -11,6 +11,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.kii.yankon.AddLightsActivity;
@@ -89,6 +90,8 @@ public class LightsFragment extends BaseListFragment {
             } else {
                 icon.setBackgroundResource(R.drawable.lights_off);
             }
+            Switch light_switch = (Switch) view.findViewById(R.id.light_switch);
+            light_switch.setChecked(connected);
         }
     }
 }

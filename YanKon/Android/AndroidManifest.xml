@@ -25,6 +25,7 @@
         android:theme="@style/AppTheme" >
         <activity
             android:name="com.kii.yankon.MainActivity"
+            android:launchMode="singleInstance"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -44,6 +45,15 @@
         </activity>
         <activity
             android:name="com.kii.yankon.ColorPickerActivity"
+            android:label="@string/title_activity_color_picker"
+            android:parentActivityName="com.kii.yankon.MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.kii.yankon.MainActivity" />
+        </activity>
+
+        <activity
+            android:name="com.kii.yankon.ColorPickerActivity2"
             android:label="@string/title_activity_color_picker"
             android:parentActivityName="com.kii.yankon.MainActivity" >
             <meta-data

@@ -127,6 +127,7 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
         values.put("UUID",currLight.mac);
         values.put("model",currLight.model);
         values.put("connected",true);
+        values.put("is_on",true);
         values.put("name",text);
         values.put("owned_time", System.currentTimeMillis());
         getContentResolver().insert(YanKonProvider.URI_LIGHTS, values);
