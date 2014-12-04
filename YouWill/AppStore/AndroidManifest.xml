@@ -41,7 +41,18 @@
         <activity
             android:name=".activities.AppDetailActivity"
             android:theme="@style/FloatWindowTheme"
-            android:screenOrientation="landscape" />
+            android:screenOrientation="landscape"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="http"
+                    android:host="www.kii.com"
+                    android:pathPrefix="/apps" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".activities.SettingsActivity"
             android:theme="@style/FloatWindowTheme"
@@ -62,7 +73,7 @@
 
         <activity
             android:name="com.alipay.android.app.sdk.WapPayActivity"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
         <activity
             android:name=".activities.PaymentSelectorActivity"
             android:theme="@style/FloatWindowTheme"

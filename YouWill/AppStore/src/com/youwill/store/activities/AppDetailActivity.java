@@ -1,7 +1,28 @@
 package com.youwill.store.activities;
 
+import com.kii.cloud.storage.KiiUser;
+import com.kii.cloud.storage.callback.KiiUserCallBack;
+import com.kii.payment.KiiOrder;
+import com.kii.payment.KiiPayment;
+import com.kii.payment.KiiPaymentCallback;
+import com.kii.payment.KiiProduct;
+import com.kii.payment.KiiStore;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.youwill.store.R;
+import com.youwill.store.providers.YouWill;
+import com.youwill.store.utils.AppUtils;
+import com.youwill.store.utils.DataUtils;
+import com.youwill.store.utils.LogUtils;
+import com.youwill.store.utils.Settings;
+import com.youwill.store.utils.Utils;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.app.Activity;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -12,18 +33,12 @@ import android.text.format.DateFormat;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.*;
-import com.kii.cloud.storage.KiiUser;
-import com.kii.cloud.storage.callback.KiiUserCallBack;
-import com.kii.payment.*;
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.youwill.store.R;
-import com.youwill.store.providers.YouWill;
-import com.youwill.store.utils.*;
-import com.youwill.store.utils.Utils;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.RatingBar;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +73,13 @@ public class AppDetailActivity extends Activity
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND,
                 WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         getWindow().setLayout(585, 556);
-        mAppId = getIntent().getStringExtra(EXTRA_APP_ID);
+        Uri uri = getIntent().getData();
+        LogUtils.d("AppDetailActivity", "uri is " + uri);
+        if (uri != null) {
+            mAppId = uri.getLastPathSegment();
+        } else {
+            mAppId = getIntent().getStringExtra(EXTRA_APP_ID);
+        }
         if (TextUtils.isEmpty(mAppId)) {
             finish();
             return;
