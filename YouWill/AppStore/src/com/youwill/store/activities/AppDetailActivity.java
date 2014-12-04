@@ -22,7 +22,6 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -73,13 +72,7 @@ public class AppDetailActivity extends Activity
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND,
                 WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         getWindow().setLayout(585, 556);
-        Uri uri = getIntent().getData();
-        LogUtils.d("AppDetailActivity", "uri is " + uri);
-        if (uri != null) {
-            mAppId = uri.getLastPathSegment();
-        } else {
-            mAppId = getIntent().getStringExtra(EXTRA_APP_ID);
-        }
+        mAppId = getIntent().getStringExtra(EXTRA_APP_ID);
         if (TextUtils.isEmpty(mAppId)) {
             finish();
             return;

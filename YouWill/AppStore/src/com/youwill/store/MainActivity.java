@@ -1,5 +1,6 @@
 package com.youwill.store;
 
+import com.youwill.store.activities.AppDetailActivity;
 import com.youwill.store.activities.LogInActivity;
 import com.youwill.store.activities.SettingsActivity;
 import com.youwill.store.fragments.CategoriesFragment;
@@ -8,6 +9,7 @@ import com.youwill.store.fragments.PurchasedFragment;
 import com.youwill.store.fragments.SearchFragment;
 import com.youwill.store.fragments.UpgradeFragment;
 import com.youwill.store.utils.DataUtils;
+import com.youwill.store.utils.LogUtils;
 import com.youwill.store.utils.Settings;
 import com.youwill.store.utils.Utils;
 
@@ -18,6 +20,7 @@ import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -82,6 +85,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
         initHeader();
 
         Settings.registerListener(this, mListener);
+        Uri uri = getIntent().getData();
+        LogUtils.d("MainActivity", "uri is " + uri);
+        if (uri!=null) {
+            String appId = uri.getLastPathSegment();
+            Intent intent = new Intent(this, AppDetailActivity.class);
+            intent.putExtra(AppDetailActivity.EXTRA_APP_ID, appId);
+            startActivity(intent);
+        }
     }
 
     @Override
