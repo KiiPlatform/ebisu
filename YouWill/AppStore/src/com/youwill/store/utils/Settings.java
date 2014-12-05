@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.text.TextUtils;
 
+import com.kii.payment.PayType;
+
 /**
  * Created by tian on 14-9-16:下午9:30.
  */
@@ -62,6 +64,22 @@ public class Settings {
         return true;
     }
 
+    public static final String PAY_TYPE_KEY = "pay_type";
+
+    public static void setLastUsedPayType(Context context, PayType payment) {
+        getPrefs(context).edit().putString(PAY_TYPE_KEY, payment.name()).apply();
+    }
+
+    public static PayType getLastUsedPayType(Context context) {
+        String payType = getPrefs(context).getString(PAY_TYPE_KEY, null);
+        if (payType == null) {
+            return PayType.alipay;
+        } else {
+            return PayType.valueOf(payType);
+        }
+    }
+
+
     public static final String NICK = "nick";
 
     public static void setNick(Context context, String nick) {
@@ -73,12 +91,12 @@ public class Settings {
     }
 
     public static void registerListener(Context context,
-            SharedPreferences.OnSharedPreferenceChangeListener listener) {
+                                        SharedPreferences.OnSharedPreferenceChangeListener listener) {
         getPrefs(context).registerOnSharedPreferenceChangeListener(listener);
     }
 
     public static void unregisterListener(Context context,
-            SharedPreferences.OnSharedPreferenceChangeListener listener) {
+                                          SharedPreferences.OnSharedPreferenceChangeListener listener) {
         getPrefs(context).unregisterOnSharedPreferenceChangeListener(listener);
     }
 

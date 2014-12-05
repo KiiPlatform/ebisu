@@ -33,8 +33,8 @@ public class LogInActivity extends Activity implements View.OnClickListener {
         b.setText("Register");
         callback = new UserCallback();
         if (TEST_MODE) {
-            usernameEdit.setText("test123@testkii.com");
-            passwordEdit.setText("123456");
+            usernameEdit.setText("yw2000@test.com");
+            passwordEdit.setText("123123");
         }
     }
 

@@ -1,5 +1,6 @@
 package com.youwill.store.fragments;
 
+import com.kii.payment.PayType;
 import com.youwill.store.R;
 import com.youwill.store.activities.AppDetailActivity;
 import com.youwill.store.providers.YouWill;
@@ -159,5 +160,9 @@ public class CategoriesFragment extends Fragment
         int isPurchased = cursor.getInt(cursor.getColumnIndex(YouWill.Purchased.IS_PURCHASED));
         intent.putExtra("is_purchased", isPurchased == 1);
         startActivity(intent);
+    }
+
+    public void launchPayment(PayType payType) {
+        mAdapter.launchPayment(payType);
     }
 }

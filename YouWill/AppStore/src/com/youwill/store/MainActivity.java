@@ -1,5 +1,6 @@
 package com.youwill.store;
 
+import com.kii.payment.PayType;
 import com.youwill.store.activities.AppDetailActivity;
 import com.youwill.store.activities.LogInActivity;
 import com.youwill.store.activities.SettingsActivity;
@@ -8,6 +9,7 @@ import com.youwill.store.fragments.HotFragment;
 import com.youwill.store.fragments.PurchasedFragment;
 import com.youwill.store.fragments.SearchFragment;
 import com.youwill.store.fragments.UpgradeFragment;
+import com.youwill.store.utils.Constants;
 import com.youwill.store.utils.DataUtils;
 import com.youwill.store.utils.LogUtils;
 import com.youwill.store.utils.Settings;
@@ -261,4 +263,28 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onSaveInstanceState(Bundle outState) {
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case Constants.REQ_CODE_SELECT_PAYMENT:
+                if (resultCode == Activity.RESULT_OK) {
+                    PayType payType = null;
+                    try {
+                        payType = PayType.valueOf(data.getStringExtra(Constants.INTENT_EXTRA_PAY_TYPE));
+                    } catch (Exception e) {
+                        payType = PayType.alipay;
+                        LogUtils.e(e);
+                    }
+                    Settings.setLastUsedPayType(this, payType);
+                    if (currentFragment instanceof CategoriesFragment) {
+                        ((CategoriesFragment) currentFragment).launchPayment(payType);
+                    } else if (currentFragment instanceof SearchFragment) {
+                        ((SearchFragment) currentFragment).launchPayment(payType);
+                    } else {
+                        LogUtils.e("CurrentFragment cannot launch payment.");
+                    }
+                }
+                break;
+        }
+    }
 }

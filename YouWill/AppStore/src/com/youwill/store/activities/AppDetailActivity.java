@@ -7,10 +7,12 @@ import com.kii.payment.KiiPayment;
 import com.kii.payment.KiiPaymentCallback;
 import com.kii.payment.KiiProduct;
 import com.kii.payment.KiiStore;
+import com.kii.payment.PayType;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.youwill.store.R;
 import com.youwill.store.providers.YouWill;
 import com.youwill.store.utils.AppUtils;
+import com.youwill.store.utils.Constants;
 import com.youwill.store.utils.DataUtils;
 import com.youwill.store.utils.LogUtils;
 import com.youwill.store.utils.Settings;
@@ -21,6 +23,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
@@ -218,7 +221,13 @@ public class AppDetailActivity extends Activity
         }).start();
     }
 
-    private void launchPayment() {
+    private void selectPayment() {
+        startActivityForResult(new Intent(this, PaymentSelectorActivity.class),
+                Constants.REQ_CODE_SELECT_PAYMENT);
+    }
+
+
+    private void launchPayment(final PayType payType) {
         final KiiPaymentCallback paymentCallback = new KiiPaymentCallback() {
             @Override
             public void onSuccess() {
@@ -238,8 +247,8 @@ public class AppDetailActivity extends Activity
             @Override
             public void onLoginCompleted(int token, KiiUser user, Exception exception) {
                 if (exception == null) {
-                    KiiOrder order = new KiiOrder(mIAPProduct, user);
-                    KiiPayment currentPayment = new KiiPayment(AppDetailActivity.this, order,
+                    KiiOrder order = new KiiOrder(mIAPProduct, user, payType);
+                    KiiPayment currentPayment = KiiPayment.getPayment(AppDetailActivity.this, order,
                             paymentCallback);
                     currentPayment.pay();
                 } else {
@@ -254,6 +263,8 @@ public class AppDetailActivity extends Activity
     private static final int MSG_VALID_IAP_PRODUCT = 100;
 
     private static final int MSG_INVALID_IAP_PRODUCT = 101;
+
+    private static final int MSG_LAUNCH_IAP = 102;
 
     private static final int MSG_IAP_SUCCESS = 200;
 
@@ -274,7 +285,11 @@ public class AppDetailActivity extends Activity
                     break;
                 case MSG_VALID_IAP_PRODUCT:
                     Utils.dismissProgressDialog();
-                    launchPayment();
+                    selectPayment();
+                    break;
+                case MSG_LAUNCH_IAP:
+                    PayType payType = (PayType) msg.obj;
+                    launchPayment(payType);
                     break;
                 case MSG_INVALID_IAP_PRODUCT:
                     Utils.dismissProgressDialog();
@@ -310,12 +325,35 @@ public class AppDetailActivity extends Activity
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case Constants.REQ_CODE_SELECT_PAYMENT:
+                if (resultCode == Activity.RESULT_OK) {
+                    PayType payType = null;
+                    try {
+                        payType = PayType.valueOf(data.getStringExtra(Constants.INTENT_EXTRA_PAY_TYPE));
+                    } catch (Exception e) {
+                        payType = PayType.alipay;
+                        LogUtils.e(e);
+                    }
+                    Settings.setLastUsedPayType(this, payType);
+                    Message msg = mHandler.obtainMessage(MSG_LAUNCH_IAP, payType);
+                    mHandler.sendMessage(msg);
+                }
+                break;
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
+        }
+
+    }
+
+    @Override
     protected void onDestroy() {
         try {
             mHandler.removeMessages(MSG_UPDATE_PROGRESS);
             mHandler = null;
         } catch (Exception e) {
-
+            LogUtils.e(e);
         }
         super.onDestroy();
     }

@@ -1,6 +1,8 @@
 package com.youwill.store.fragments;
 
+import com.kii.payment.PayType;
 import com.youwill.store.R;
+import com.youwill.store.activities.AppDetailActivity;
 import com.youwill.store.providers.YouWill;
 import com.youwill.store.utils.LogUtils;
 import com.youwill.store.view.AppGridAdapter;
@@ -8,6 +10,7 @@ import com.youwill.store.view.AppGridAdapter;
 import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.CursorLoader;
+import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -15,6 +18,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.CursorAdapter;
 import android.widget.GridView;
 
@@ -22,11 +26,11 @@ import android.widget.GridView;
  * Created by tian on 14/10/21:下午10:49.
  */
 public class SearchFragment extends Fragment
-        implements View.OnClickListener, LoaderManager.LoaderCallbacks<Cursor> {
+        implements LoaderManager.LoaderCallbacks<Cursor>, AdapterView.OnItemClickListener {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+                             Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_search, container, false);
         initView(view);
         return view;
@@ -41,6 +45,7 @@ public class SearchFragment extends Fragment
         mAdapter = new AppGridAdapter(getActivity(), null,
                 CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
         mGrid.setAdapter(mAdapter);
+        mGrid.setOnItemClickListener(this);
 
     }
 
@@ -70,8 +75,21 @@ public class SearchFragment extends Fragment
         mAdapter.swapCursor(null);
     }
 
-    @Override
-    public void onClick(View v) {
+    public void launchPayment(PayType payType) {
+        mAdapter.launchPayment(payType);
+    }
 
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        Cursor cursor = (Cursor) mAdapter.getItem(position);
+        if (cursor == null) {
+            return;
+        }
+        String appId = cursor.getString(cursor.getColumnIndex(YouWill.Application.APP_ID));
+        Intent intent = new Intent(getActivity(), AppDetailActivity.class);
+        intent.putExtra(AppDetailActivity.EXTRA_APP_ID, appId);
+        int isPurchased = cursor.getInt(cursor.getColumnIndex(YouWill.Purchased.IS_PURCHASED));
+        intent.putExtra("is_purchased", isPurchased == 1);
+        startActivity(intent);
     }
 }
