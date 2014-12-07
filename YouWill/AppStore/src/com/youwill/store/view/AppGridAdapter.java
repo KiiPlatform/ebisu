@@ -2,6 +2,7 @@ package com.youwill.store.view;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Handler;
 import android.os.Message;
@@ -9,15 +10,19 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
+
 import com.kii.cloud.storage.KiiUser;
 import com.kii.cloud.storage.callback.KiiUserCallBack;
 import com.kii.payment.*;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.youwill.store.R;
+import com.youwill.store.activities.PaymentSelectorActivity;
 import com.youwill.store.net.DownloadAgent;
 import com.youwill.store.providers.YouWill;
 import com.youwill.store.utils.*;
+import com.youwill.store.utils.Constants;
 import com.youwill.store.utils.Utils;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -26,9 +31,11 @@ import org.json.JSONObject;
  */
 public class AppGridAdapter extends CursorAdapter implements View.OnClickListener {
 
-    protected Context mContext;
+    protected Activity mContext;
 
-    public AppGridAdapter(Context context, Cursor c, int flags) {
+    KiiProduct mCurrentProduct;
+
+    public AppGridAdapter(Activity context, Cursor c, int flags) {
         super(context, c, 0);
         mContext = context;
     }
@@ -92,13 +99,13 @@ public class AppGridAdapter extends CursorAdapter implements View.OnClickListene
     }
 
     private void checkIAP(final String iapID, final double price) {
-        Utils.showProgressDialog((Activity) mContext, "");
+        Utils.showProgressDialog(mContext, "");
         new Thread(new Runnable() {
             @Override
             public void run() {
-                KiiProduct product = KiiStore.getProductByID(iapID);
-                if ((product != null) && (product.getPrice() == price)) {
-                    Message msg = mHandler.obtainMessage(MSG_VALID_IAP_PRODUCT, product);
+                mCurrentProduct = KiiStore.getProductByID(iapID);
+                if ((mCurrentProduct != null) && (mCurrentProduct.getPrice() == price)) {
+                    Message msg = mHandler.obtainMessage(MSG_VALID_IAP_PRODUCT, mCurrentProduct);
                     mHandler.sendMessage(msg);
                 } else {
                     mHandler.sendEmptyMessage(MSG_INVALID_IAP_PRODUCT);
@@ -107,34 +114,38 @@ public class AppGridAdapter extends CursorAdapter implements View.OnClickListene
         }).start();
     }
 
+    private void selectPayment() {
+        mContext.startActivityForResult(new Intent(mContext, PaymentSelectorActivity.class),
+                Constants.REQ_CODE_SELECT_PAYMENT);
+    }
+
     private void refreshAppStatus(JSONObject appInfo, View v) {
         AppUtils.clickPriceButton(mContext, appInfo);
         AppUtils.bindButton(mContext, appInfo, (Button) v);
     }
 
-    private void launchPayment(final KiiProduct product) {
-        final KiiPaymentCallback paymentCallback = new KiiPaymentCallback() {
-            @Override
-            public void onSuccess() {
-                LogUtils.d("KiiPaymentCallback.onSuccess");
-                Message msg = mHandler.obtainMessage(MSG_IAP_SUCCESS, product.getFieldByName("app"));
-                mHandler.sendMessage(msg);
-            }
+    public void launchPayment(PayType payType) {
+        if (mCurrentProduct == null) {
+            return;
+        }
 
-            @Override
-            public void onError(int errorCode) {
-                LogUtils.d("KiiPaymentCallback.onError");
-                Message msg = mHandler.obtainMessage(MSG_IAP_ERROR,
-                        KiiPayment.getErrorMessage(mContext, errorCode));
-                mHandler.sendMessage(msg);
-            }
-        };
+        Message msg = mHandler.obtainMessage(MSG_LAUNCH_PAYMENT, payType);
+        mHandler.sendMessage(msg);
+    }
+
+    private void launchPaymentImpl(final PayType payType) {
+        if (mCurrentProduct == null) {
+            return;
+        }
+
+        final KiiPaymentCallback paymentCallback = new PaymentCallback(mCurrentProduct);
+
         KiiUser.loginWithToken(new KiiUserCallBack() {
             @Override
             public void onLoginCompleted(int token, KiiUser user, Exception exception) {
                 if (exception == null) {
-                    KiiOrder order = new KiiOrder(product, user);
-                    KiiPayment currentPayment = new KiiPayment((Activity) mContext, order,
+                    KiiOrder order = new KiiOrder(mCurrentProduct, user, payType);
+                    KiiPayment currentPayment = KiiPayment.getPayment(mContext, order,
                             paymentCallback);
                     currentPayment.pay();
                 } else {
@@ -155,6 +166,8 @@ public class AppGridAdapter extends CursorAdapter implements View.OnClickListene
 
     private static final int MSG_INVALID_IAP_PRODUCT = 101;
 
+    private static final int MSG_LAUNCH_PAYMENT = 102;
+
     private static final int MSG_IAP_SUCCESS = 200;
 
     private static final int MSG_IAP_ERROR = 201;
@@ -167,16 +180,18 @@ public class AppGridAdapter extends CursorAdapter implements View.OnClickListene
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-
                 case MSG_VALID_IAP_PRODUCT:
                     Utils.dismissProgressDialog();
-                    KiiProduct product = (KiiProduct) msg.obj;
-                    launchPayment(product);
+                    selectPayment();
                     break;
                 case MSG_INVALID_IAP_PRODUCT:
                     Utils.dismissProgressDialog();
                     Toast.makeText(mContext, mContext.getString(R.string.invalid_iap_product),
                             Toast.LENGTH_SHORT).show();
+                    break;
+                case MSG_LAUNCH_PAYMENT:
+                    PayType payType = (PayType) msg.obj;
+                    launchPaymentImpl(payType);
                     break;
                 case MSG_LOGIN_ERROR:
                     Toast.makeText(mContext, mContext.getString(R.string.please_login),
@@ -196,4 +211,27 @@ public class AppGridAdapter extends CursorAdapter implements View.OnClickListene
         }
     };
 
+    class PaymentCallback implements KiiPaymentCallback {
+
+        KiiProduct mProduct;
+
+        PaymentCallback(KiiProduct product) {
+            mProduct = product;
+        }
+
+        @Override
+        public void onSuccess() {
+            LogUtils.d("KiiPaymentCallback.onSuccess");
+            Message msg = mHandler.obtainMessage(MSG_IAP_SUCCESS, mProduct.getFieldByName("app"));
+            mHandler.sendMessage(msg);
+        }
+
+        @Override
+        public void onError(int errorCode) {
+            LogUtils.d("KiiPaymentCallback.onError");
+            Message msg = mHandler.obtainMessage(MSG_IAP_ERROR,
+                    KiiPayment.getErrorMessage(mContext, errorCode));
+            mHandler.sendMessage(msg);
+        }
+    }
 }

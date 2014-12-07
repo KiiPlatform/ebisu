@@ -50,7 +50,6 @@
     <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/Constants.java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/KiiOrder.java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/KiiPayment.java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/KiiPayment.java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/KiiPaymentCallback.java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/KiiPaymentResultCode.java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/KiiProduct.java" charset="UTF-8" />
@@ -61,3 +60,4 @@
     <file url="file://$PROJECT_DIR$/IAPSDK/src/main/java/com/kii/payment/impl" charset="UTF-8" />
   </component>
 </project>
+

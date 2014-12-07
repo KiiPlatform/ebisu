@@ -5,6 +5,7 @@
 	<string name="kii_alipay">支付宝</string>
 	<string name="kii_paypal">Paypal</string>
 	<string name="kii_unionpay">银联</string>
+    <string name="kii_mm">移动支付</string>
     <string name="kii_payment_confirm_title">确认</string>
     <string name="kii_payment_ensure">确定</string>
     <string name="kii_payment_cancel">取消</string>

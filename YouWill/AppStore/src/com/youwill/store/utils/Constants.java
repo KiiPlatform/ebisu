@@ -7,4 +7,8 @@ public class Constants {
 
     public static final String INTENT_DOWNLOAD_PROGRESS_CHANGED
             = "com.youwill.download_progress_changed";
+
+    public static final String INTENT_EXTRA_PAY_TYPE = "pay_type";
+
+    public static final int REQ_CODE_SELECT_PAYMENT = 1;
 }

@@ -155,5 +155,7 @@
         <item name="android:paddingRight">26px</item>
         <item name="android:textSize">16pt</item>
         <item name="android:textColor">@color/dark_gray</item>
+        <item name="android:button">@null</item>
+        <item name="android:drawableRight">@drawable/pay_radio</item>
     </style>
 </resources>

@@ -294,7 +294,7 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
         public void onError(int errorCode) {
             LogUtil.log(TAG, "payment error, error code is " + errorCode);
             Message msg = handler.obtainMessage();
-            msg.obj = currentPayment.getErrorMessage(MainActivity.this, errorCode);
+            msg.obj = KiiPayment.getErrorMessage(MainActivity.this, errorCode);
             handler.sendMessage(msg);
         }
     };

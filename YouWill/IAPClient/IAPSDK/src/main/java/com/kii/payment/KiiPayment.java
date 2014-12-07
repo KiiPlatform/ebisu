@@ -75,7 +75,7 @@ public abstract class KiiPayment {
      * @param errorCode - the errorCode
      * @return the error message
      */
-    public String getErrorMessage(Context context, int errorCode) {
+    public static String getErrorMessage(Context context, int errorCode) {
         try {
             Class<?> c = Class.forName(context.getApplicationContext().getPackageName()
                     + ".R$string");
