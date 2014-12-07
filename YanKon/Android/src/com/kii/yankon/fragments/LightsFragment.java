@@ -17,10 +17,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.CursorAdapter;
+import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
 
 import com.kii.yankon.AddLightsActivity;
+import com.kii.yankon.LightInfoActivity;
 import com.kii.yankon.R;
 import com.kii.yankon.providers.YanKonProvider;
 
@@ -80,7 +82,7 @@ public class LightsFragment extends BaseListFragment {
         Cursor cursor = (Cursor) mAdapter.getItem(info.position);
         String name = cursor.getString(cursor.getColumnIndex("name"));
         menu.setHeaderTitle(name);
-        menu.add(0, MENU_EDIT, 0, R.string.menu_edit);
+        menu.add(0, MENU_EDIT, 0, R.string.menu_edit_name);
         menu.add(0, MENU_DELETE, 0, R.string.menu_delete);
     }
 
@@ -138,6 +140,17 @@ public class LightsFragment extends BaseListFragment {
                 }
                 break;
         }
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        super.onListItemClick(l, v, position, id);
+        Cursor cursor = (Cursor) mAdapter.getItem(position);
+        String name = cursor.getString(cursor.getColumnIndex("name"));
+        Intent intent = new Intent(getActivity(), LightInfoActivity.class);
+        intent.putExtra(LightInfoActivity.EXTRA_LIGHT_ID, (int) id);
+        intent.putExtra(LightInfoActivity.EXTRA_NAME, name);
+        startActivity(intent);
     }
 
     class LightsAdapter extends CursorAdapter {

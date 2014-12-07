@@ -49,7 +49,11 @@
     <string name="group_name">Group name</string>
     <string name="empty_group_name">Group name cannot be empty</string>
     <string name="menu_edit">Edit</string>
+    <string name="menu_edit_name">Edit name</string>
     <string name="action_done">Done</string>
     <string name="edit_light_name">Edit light name</string>
+    <string name="title_activity_light_info">Light Info</string>
+    <string name="action_spinner_default">***Actions***</string>
+    <string name="color_spinner_custom">Custom color</string>
 
 </resources>

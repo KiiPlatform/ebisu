@@ -148,6 +148,16 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("value", Color.BLACK);
         values.put("created_time", 4);
         db.insert("colors", null, values);
+        values = new ContentValues();
+        values.put("UUID", UUID.randomUUID().toString());
+        values.put("name", "Turn On");
+        values.put("created_time", 1);
+        db.insert("actions", null, values);
+        values = new ContentValues();
+        values.put("UUID", UUID.randomUUID().toString());
+        values.put("name", "Turn Off");
+        values.put("created_time", 2);
+        db.insert("actions", null, values);
 
 
         //TODO Below is mock data, need to be removed

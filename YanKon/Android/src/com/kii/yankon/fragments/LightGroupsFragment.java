@@ -18,6 +18,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 import com.kii.yankon.AddLightGroupsActivity;
+import com.kii.yankon.LightInfoActivity;
 import com.kii.yankon.R;
 import com.kii.yankon.providers.YanKonProvider;
 
@@ -67,7 +68,10 @@ public class LightGroupsFragment extends BaseListFragment {
         super.onListItemClick(l, v, position, id);
         Cursor cursor = (Cursor) mAdapter.getItem(position);
         String name = cursor.getString(cursor.getColumnIndex("name"));
-
+        Intent intent = new Intent(getActivity(), LightInfoActivity.class);
+        intent.putExtra(LightInfoActivity.EXTRA_GROUP_ID, (int) id);
+        intent.putExtra(LightInfoActivity.EXTRA_NAME, name);
+        startActivity(intent);
     }
 
     @Override
@@ -77,7 +81,7 @@ public class LightGroupsFragment extends BaseListFragment {
         Cursor cursor = (Cursor) mAdapter.getItem(info.position);
         String name = cursor.getString(cursor.getColumnIndex("name"));
         menu.setHeaderTitle(name);
-        menu.add(0, MENU_EDIT, 0, R.string.menu_edit);
+        menu.add(0, MENU_EDIT, 0, R.string.menu_edit_name);
         menu.add(0, MENU_DELETE, 0, R.string.menu_delete);
     }
 
