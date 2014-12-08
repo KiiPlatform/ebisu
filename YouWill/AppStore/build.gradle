@@ -22,14 +22,21 @@ android {
     buildToolsVersion '21.1.1'
 
     signingConfigs {
-        zhimawuConfig {
+        appstoreConfig {
             storeFile file("appstore.keystore")
             storePassword "/qJ=h=k13,"
             keyAlias "appstore"
             keyPassword "x;#%2b(Qp8"
         }
     }
-
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.appstoreConfig
+        }
+        release {
+            signingConfig signingConfigs.appstoreConfig
+        }
+    }
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
