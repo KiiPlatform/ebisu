@@ -22,6 +22,7 @@ import com.kii.yankon.fragments.LightsFragment;
 import com.kii.yankon.fragments.LogInFragment;
 import com.kii.yankon.fragments.PlaceholderFragment;
 import com.kii.yankon.fragments.ProfileFragment;
+import com.kii.yankon.fragments.ScenesFragment;
 import com.kii.yankon.fragments.SettingsFragment;
 import com.kii.yankon.utils.Constants;
 import com.kii.yankon.utils.Settings;
@@ -82,6 +83,9 @@ public class MainActivity extends Activity
                 break;
             case 1:
                 fragment = LightGroupsFragment.newInstance(position + 1);
+                break;
+            case 2:
+                fragment = ScenesFragment.newInstance(position + 1);
                 break;
             case 4:
                 fragment = ActionsFragment.newInstance(position + 1);

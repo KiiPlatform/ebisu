@@ -92,7 +92,8 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "_id INTEGER PRIMARY KEY, "
                         + "UUID TEXT NOT NULL,"
                         + "name TEXT,"
-                        + "created_time INTEGER"
+                        + "created_time INTEGER,"
+                        + "last_used_time INTEGER"
                         + ");"
         );
         db.execSQL("CREATE TABLE IF NOT EXISTS scenes_detail ("

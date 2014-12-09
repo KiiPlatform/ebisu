@@ -55,5 +55,7 @@
     <string name="title_activity_light_info">Light Info</string>
     <string name="action_spinner_default">***Actions***</string>
     <string name="color_spinner_custom">Custom color</string>
+    <string name="never_used">Never used</string>
+    <string name="scene_name">Scene Name</string>
 
 </resources>

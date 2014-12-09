@@ -65,9 +65,8 @@
             android:enabled="true"
             android:exported="false"></provider>
 
-        <activity
-            android:name=".AddLightGroupsActivity"
-            android:label="@string/title_activity_add_light_groups"></activity>
+        <activity android:name=".AddLightGroupsActivity" />
+        <activity android:name=".AddScenesActivity" />
         <activity
             android:name=".LightInfoActivity"
             android:label="@string/title_activity_light_info"
