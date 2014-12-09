@@ -57,5 +57,10 @@
     <string name="color_spinner_custom">Custom color</string>
     <string name="never_used">Never used</string>
     <string name="scene_name">Scene Name</string>
+    <string name="Lights">Lights</string>
+    <string name="light_groups">Groups</string>
+    <string name="edit_group">Edit group</string>
+    <string name="add_group">Create new group</string>
+    <string name="empty_scene_name">Scene name cannot be empty</string>
 
 </resources>

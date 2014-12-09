@@ -9,4 +9,7 @@ public class Light {
     public String modelName;
     public String mac;
     public boolean added;
+
+    public int id;
+    public String UUID;
 }

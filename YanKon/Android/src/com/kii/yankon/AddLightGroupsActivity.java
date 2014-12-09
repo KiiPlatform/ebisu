@@ -60,6 +60,9 @@ public class AddLightGroupsActivity extends Activity implements View.OnClickList
                 selectedSet.add(integer);
             }
             cursor.close();
+            setTitle(R.string.edit_group);
+        } else {
+            setTitle(R.string.add_group);
         }
         mAdapter = new LightsAdapter(this);
         mList.setAdapter(mAdapter);
