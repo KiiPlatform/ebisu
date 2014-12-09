@@ -17,18 +17,17 @@ import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
 
-import com.kii.yankon.AddLightGroupsActivity;
-import com.kii.yankon.LightInfoActivity;
+import com.kii.yankon.AddScenesActivity;
 import com.kii.yankon.R;
 import com.kii.yankon.providers.YanKonProvider;
 
 /**
  * Created by Evan on 14/11/26.
  */
-public class LightGroupsFragment extends BaseListFragment {
+public class ScenesFragment extends BaseListFragment {
 
-    public static LightGroupsFragment newInstance(int sectionNumber) {
-        LightGroupsFragment fragment = new LightGroupsFragment();
+    public static ScenesFragment newInstance(int sectionNumber) {
+        ScenesFragment fragment = new ScenesFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_SECTION_NUMBER, sectionNumber);
         fragment.setArguments(args);
@@ -39,7 +38,7 @@ public class LightGroupsFragment extends BaseListFragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_add:
-                startActivity(new Intent(getActivity(), AddLightGroupsActivity.class));
+                startActivity(new Intent(getActivity(), AddScenesActivity.class));
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -48,14 +47,14 @@ public class LightGroupsFragment extends BaseListFragment {
     @Override
     public void onStart() {
         super.onStart();
-        mAdapter = new GroupsAdapter(getActivity());
+        mAdapter = new ScenesAdapter(getActivity());
         setListAdapter(mAdapter);
         getLoaderManager().initLoader(getClass().hashCode(), null, this);
     }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(getActivity(), YanKonProvider.URI_LIGHT_GROUPS, null, null, null, "created_time asc");
+        return new CursorLoader(getActivity(), YanKonProvider.URI_SCENES, null, null, null, "last_used_time desc");
     }
 
     @Override
@@ -66,12 +65,8 @@ public class LightGroupsFragment extends BaseListFragment {
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
-        Cursor cursor = (Cursor) mAdapter.getItem(position);
-        String name = cursor.getString(cursor.getColumnIndex("name"));
-        Intent intent = new Intent(getActivity(), LightInfoActivity.class);
-        intent.putExtra(LightInfoActivity.EXTRA_GROUP_ID, (int) id);
-        intent.putExtra(LightInfoActivity.EXTRA_NAME, name);
-        startActivity(intent);
+//        Cursor cursor = (Cursor) mAdapter.getItem(position);
+//        String name = cursor.getString(cursor.getColumnIndex("name"));
     }
 
     @Override
@@ -94,24 +89,21 @@ public class LightGroupsFragment extends BaseListFragment {
                 Cursor cursor = (Cursor) mAdapter.getItem(info.position);
                 int cid = cursor.getInt(cursor.getColumnIndex("_id"));
                 String name = cursor.getString(cursor.getColumnIndex("name"));
-                Intent intent = new Intent(getActivity(), AddLightGroupsActivity.class);
-                intent.putExtra(AddLightGroupsActivity.EXTRA_GROUP_NAME, name);
-                intent.putExtra(AddLightGroupsActivity.EXTRA_GROUP_ID, cid);
-                startActivity(intent);
+
             }
             break;
             case MENU_DELETE: {
                 Cursor cursor = (Cursor) mAdapter.getItem(info.position);
                 int cid = cursor.getInt(cursor.getColumnIndex("_id"));
-                getActivity().getContentResolver().delete(YanKonProvider.URI_LIGHT_GROUPS, "_id=" + cid, null);
+                getActivity().getContentResolver().delete(YanKonProvider.URI_SCENES, "_id=" + cid, null);
             }
             break;
         }
         return true;
     }
 
-    class GroupsAdapter extends CursorAdapter {
-        public GroupsAdapter(Context context) {
+    class ScenesAdapter extends CursorAdapter {
+        public ScenesAdapter(Context context) {
             super(context, null, 0);
         }
 
@@ -125,14 +117,18 @@ public class LightGroupsFragment extends BaseListFragment {
             String name = cursor.getString(cursor.getColumnIndex("name"));
             TextView tv = (TextView) view.findViewById(android.R.id.text1);
             tv.setText(name);
-            int num = cursor.getInt(cursor.getColumnIndex("num"));
+//            int num = cursor.getInt(cursor.getColumnIndex("num"));
             tv = (TextView) view.findViewById(android.R.id.text2);
-            tv.setText(context.getString(R.string.group_num_format, num));
+            long last_used_time = cursor.getLong(cursor.getColumnIndex("last_used_time"));
+            if (last_used_time == 0) {
+                tv.setText(context.getString(R.string.never_used));
+            } else {
+
+            }
+//            tv.setText(context.getString(R.string.group_num_format, num));
             View icon = view.findViewById(R.id.light_icon);
-            icon.setBackgroundResource(R.drawable.light_groups);
-            int on_num = cursor.getInt(cursor.getColumnIndex("on_num"));
+            icon.setBackgroundResource(R.drawable.scenes);
             Switch light_switch = (Switch) view.findViewById(R.id.light_switch);
-            light_switch.setChecked(on_num == num);
         }
     }
 }
