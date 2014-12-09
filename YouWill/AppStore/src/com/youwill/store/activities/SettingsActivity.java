@@ -60,6 +60,7 @@ public class SettingsActivity extends Activity implements View.OnClickListener {
                 break;
             case R.id.about:
                 startActivity(new Intent(this, AboutActivity.class));
+                finish();
                 break;
             case R.id.log_in_button:
                 if (Settings.isLoggedIn(this)) {
