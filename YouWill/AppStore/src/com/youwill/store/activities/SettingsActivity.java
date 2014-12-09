@@ -66,10 +66,10 @@ public class SettingsActivity extends Activity implements View.OnClickListener {
                     Settings.logOut(this);
                     LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(
                             Constants.INTENT_LOG_IN_CHANGED));
-                    finish();
                 } else {
                     startActivity(new Intent(this, LogInActivity.class));
                 }
+                finish();
                 break;
             default:
                 break;
