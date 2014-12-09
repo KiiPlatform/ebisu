@@ -380,6 +380,9 @@ public class AppDetailActivity extends Activity
 
         @Override
         public void onBindViewHolder(ViewHolder viewHolder, int i) {
+            if (mPics.size() == 0) {
+                return;
+            }
             ImageLoader.getInstance()
                     .displayImage(mPics.get(i % mPics.size()), viewHolder.mImageView,
                             Utils.detailDisplayOptions);
