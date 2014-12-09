@@ -2,6 +2,7 @@ package com.youwill.store.activities;
 
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.youwill.store.R;
+import com.youwill.store.utils.Constants;
 import com.youwill.store.utils.Settings;
 
 import android.app.Activity;
@@ -9,6 +10,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
@@ -60,7 +62,14 @@ public class SettingsActivity extends Activity implements View.OnClickListener {
                 startActivity(new Intent(this, AboutActivity.class));
                 break;
             case R.id.log_in_button:
-                startActivity(new Intent(this, LogInActivity.class));
+                if (Settings.isLoggedIn(this)) {
+                    Settings.logOut(this);
+                    LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(
+                            Constants.INTENT_LOG_IN_CHANGED));
+                    finish();
+                } else {
+                    startActivity(new Intent(this, LogInActivity.class));
+                }
                 break;
             default:
                 break;

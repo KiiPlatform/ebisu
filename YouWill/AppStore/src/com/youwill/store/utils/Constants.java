@@ -11,4 +11,6 @@ public class Constants {
     public static final String INTENT_EXTRA_PAY_TYPE = "pay_type";
 
     public static final int REQ_CODE_SELECT_PAYMENT = 1;
+
+    public static final String INTENT_LOG_IN_CHANGED = "com.youwill.log_in_status_changed";
 }

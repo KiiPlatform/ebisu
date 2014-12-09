@@ -1,11 +1,11 @@
 package com.youwill.store.utils;
 
+import com.kii.payment.PayType;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.text.TextUtils;
-
-import com.kii.payment.PayType;
 
 /**
  * Created by tian on 14-9-16:下午9:30.
@@ -100,4 +100,7 @@ public class Settings {
         getPrefs(context).unregisterOnSharedPreferenceChangeListener(listener);
     }
 
+    public static void logOut(Context context) {
+        getPrefs(context).edit().clear().commit();
+    }
 }

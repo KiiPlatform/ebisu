@@ -1,68 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-            android:orientation="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                  android:orientation="vertical"
-                  android:layout_width="match_parent"
-                  android:layout_height="wrap_content"
-                  android:background="@color/background_color">
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/background_color">
+
         <com.youwill.store.view.fancycoverflow.FancyCoverFlow
-                android:layout_width="match_parent"
-                android:layout_height="257px"
-                android:layout_marginTop="12px"
-                android:id="@+id/coverflow"
-                android:layout_marginRight="28px"
-                android:layout_marginLeft="28px"
-                />
-        <RelativeLayout android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="20px"
-                        android:layout_marginBottom="11px"
-                >
-            <TextView style="@style/left_label_style"
-                      android:text="@string/latest_items"
-                      android:textColor="#ff3300"/>
-            <TextView android:id="@+id/show_all_new"
-                      style="@style/show_all_style"
-                      android:layout_alignParentBottom="true"
-                      android:layout_marginBottom="1px"
-                    />
+            android:layout_width="match_parent"
+            android:layout_height="257px"
+            android:layout_marginTop="12px"
+            android:id="@+id/coverflow"
+            android:layout_marginRight="28px"
+            android:layout_marginLeft="28px" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20px"
+            android:layout_marginBottom="11px">
+
+            <TextView
+                style="@style/left_label_style"
+                android:text="@string/latest_items"
+                android:textColor="#ff3300" />
+
+            <TextView
+                android:id="@+id/show_all_new"
+                style="@style/show_all_style"
+                android:layout_alignParentBottom="true"
+                android:layout_marginBottom="1px"
+                android:visibility="gone" />
         </RelativeLayout>
+
         <android.support.v7.widget.RecyclerView
-                android:id="@+id/latest_horizontal_view"
-                android:layout_width="match_parent"
-                android:layout_height="169px"
-                android:background="#ffffff"
-                android:scrollbarStyle="insideOverlay"
-                android:layout_marginBottom="21px"
-                android:layout_marginLeft="28px"
-                android:layout_marginRight="28px"/>
-        <View android:layout_width="match_parent"
-              android:layout_height="1px"
-              android:background="#cccccc"/>
-        <RelativeLayout android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12px"
-                        android:layout_marginBottom="12px"
-                >
-            <TextView style="@style/left_label_style"
-                      android:text="@string/good_items"
-                      android:textColor="#ff2b85be"/>
-            <TextView android:id="@+id/show_all_good"
-                      style="@style/show_all_style"
-                      android:layout_alignParentBottom="true"
-                      android:layout_marginBottom="2px"
-                    />
+            android:id="@+id/latest_horizontal_view"
+            android:layout_width="match_parent"
+            android:layout_height="175px"
+            android:background="#ffffff"
+            android:scrollbarStyle="insideOverlay"
+            android:layout_marginBottom="21px"
+            android:layout_marginLeft="28px"
+            android:layout_marginRight="28px" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:background="#cccccc" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12px"
+            android:layout_marginBottom="12px">
+
+            <TextView
+                style="@style/left_label_style"
+                android:text="@string/good_items"
+                android:textColor="#ff2b85be" />
+
+            <TextView
+                android:id="@+id/show_all_good"
+                style="@style/show_all_style"
+                android:layout_alignParentBottom="true"
+                android:layout_marginBottom="2px"
+                android:visibility="gone" />
         </RelativeLayout>
+
         <android.support.v7.widget.RecyclerView
-                android:id="@+id/good_horizontal_view"
-                android:layout_width="match_parent"
-                android:layout_height="169px"
-                android:background="#ffffff"
-                android:scrollbarStyle="insideOverlay"
-                android:layout_marginLeft="28px"
-                android:layout_marginRight="28px"/>
+            android:id="@+id/good_horizontal_view"
+            android:layout_width="match_parent"
+            android:layout_height="175px"
+            android:background="#ffffff"
+            android:scrollbarStyle="insideOverlay"
+            android:layout_marginLeft="28px"
+            android:layout_marginRight="28px" />
     </LinearLayout>
 </ScrollView>

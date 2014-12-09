@@ -5,12 +5,14 @@ import com.kii.cloud.storage.KiiUser;
 import com.kii.cloud.storage.callback.KiiSocialCallBack;
 import com.kii.cloud.storage.social.KiiSocialConnect;
 import com.kii.cloud.storage.social.connector.KiiSocialNetworkConnector;
+import com.youwill.store.utils.Constants;
 import com.youwill.store.utils.LogUtils;
 import com.youwill.store.utils.Settings;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 
 /**
  * Created by tian on 14/10/22:下午10:51.
@@ -34,6 +36,8 @@ public class LogInActivity extends Activity {
                     Settings.setUserId(LogInActivity.this, user.getID());
                     Settings.setToken(LogInActivity.this, user.getAccessToken());
                     Settings.setNick(LogInActivity.this, user.getDisplayname());
+                    LocalBroadcastManager.getInstance(LogInActivity.this).sendBroadcast(new Intent(
+                            Constants.INTENT_LOG_IN_CHANGED));
                 }
                 if (exception != null) {
                     exception.printStackTrace();
@@ -60,12 +64,6 @@ public class LogInActivity extends Activity {
             KiiSocialConnect connect = Kii.socialConnect(
                     KiiSocialConnect.SocialNetwork.SOCIALNETWORK_CONNECTOR);
             connect.respondAuthOnActivityResult(requestCode, resultCode, data);
-            Bundle bundle = connect.getAccessTokenBundle();
-            for (String key : bundle.keySet()) {
-                LogUtils.d("onActivityResult, key is " + key + ", value is " + bundle.get(key)
-                        .toString());
-            }
-
         }
         finish();
     }
