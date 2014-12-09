@@ -58,5 +58,6 @@
     <string name="wechat">微信号：youwill521</string>
     <string name="are_you_sure_to_clear_cache">确定要清除缓存吗？</string>
     <string name="choose_payment">选择支付方式</string>
-
+    <string name="app_store_no_upgrade">没有可用更新！</string>
+    <string name="app_store_has_upgrade">找到可用更新！</string>
 </resources>

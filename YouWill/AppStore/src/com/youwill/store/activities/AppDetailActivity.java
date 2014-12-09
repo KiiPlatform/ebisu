@@ -101,24 +101,20 @@ public class AppDetailActivity extends Activity
             return;
         }
 
-        if (getIntent().getExtras().containsKey("is_purchased")) {
-            mIsPurchased = getIntent().getBooleanExtra("is_purchased", false);
-        } else {
-            c = getContentResolver()
-                    .query(YouWill.Purchased.CONTENT_URI, null, YouWill.Purchased.APP_ID + "=(?)",
-                            new String[]{mAppId}, null);
-            if (c != null && c.moveToFirst()) {
-                String appID = c.getString(c.getColumnIndex(YouWill.Purchased.APP_ID));
-                int isPurchased = c.getInt(c.getColumnIndex(YouWill.Purchased.IS_PURCHASED));
-                mIsPurchased = (isPurchased == 1) && mAppId.equals(appID) && (c.getCount() == 1);
-                try {
-                    mAppInfo.put("is_purchased", mIsPurchased);
-                } catch (JSONException e) {
-                    LogUtils.e("Error: " + e);
-                }
+        c = getContentResolver()
+                .query(YouWill.Purchased.CONTENT_URI, null, YouWill.Purchased.APP_ID + "=(?)",
+                        new String[]{mAppId}, null);
+        if (c != null && c.moveToFirst()) {
+            String appID = c.getString(c.getColumnIndex(YouWill.Purchased.APP_ID));
+            int isPurchased = c.getInt(c.getColumnIndex(YouWill.Purchased.IS_PURCHASED));
+            mIsPurchased = (isPurchased == 1) && mAppId.equals(appID) && (c.getCount() == 1);
+            try {
+                mAppInfo.put("is_purchased", mIsPurchased);
+            } catch (JSONException e) {
+                LogUtils.e("Error: " + e);
             }
-            Utils.closeSilently(c);
         }
+        Utils.closeSilently(c);
 
         initViews();
     }
@@ -331,7 +327,8 @@ public class AppDetailActivity extends Activity
                 if (resultCode == Activity.RESULT_OK) {
                     PayType payType = null;
                     try {
-                        payType = PayType.valueOf(data.getStringExtra(Constants.INTENT_EXTRA_PAY_TYPE));
+                        payType = PayType
+                                .valueOf(data.getStringExtra(Constants.INTENT_EXTRA_PAY_TYPE));
                     } catch (Exception e) {
                         payType = PayType.alipay;
                         LogUtils.e(e);

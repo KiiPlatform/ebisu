@@ -1,60 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="match_parent"
-                android:layout_height="88px"
-                android:padding="9px">
+    android:layout_width="match_parent"
+    android:layout_height="88px"
+    android:padding="9px">
 
     <TextView
-            android:id="@+id/app_grid_pos"
-            android:layout_width="26px"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:textSize="7pt"
-            android:textColor="#999999"
-            android:layout_marginLeft="18px"
-            android:layout_marginRight="0px"
-            android:gravity="center"
-            android:singleLine="true"
-            />
+        android:id="@+id/app_grid_pos"
+        android:layout_width="26px"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:textSize="7pt"
+        android:textColor="#999999"
+        android:layout_marginLeft="18px"
+        android:layout_marginRight="0px"
+        android:gravity="center"
+        android:singleLine="true" />
 
     <ImageView
-            android:id="@+id/app_grid_icon"
-            android:layout_width="91px"
-            android:layout_height="91px"
-            android:layout_toRightOf="@id/app_grid_pos"
-            android:layout_marginRight="12px"/>
+        android:id="@+id/app_grid_icon"
+        android:layout_width="91px"
+        android:layout_height="91px"
+        android:layout_toRightOf="@id/app_grid_pos"
+        android:layout_marginRight="12px" />
 
     <Button
-            android:id="@+id/app_grid_price"
-            android:layout_width="77px"
-            android:layout_height="30px"
-            android:background="@drawable/price_frame"
-            android:layout_centerVertical="true"
-            android:layout_alignParentRight="true"
-            android:textColor="@color/price_text_color"
-            android:textSize="7pt"
-            android:singleLine="true"/>
+        android:id="@+id/app_grid_price"
+        android:layout_width="77px"
+        android:layout_height="30px"
+        android:background="@drawable/price_frame"
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        android:textColor="@color/price_text_color"
+        android:textSize="7pt"
+        android:singleLine="true" />
 
     <TextView
-            android:id="@+id/app_grid_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_toRightOf="@id/app_grid_icon"
-            android:layout_toLeftOf="@id/app_grid_price"
-            android:maxLines="2"
-            android:textStyle="bold"
-            android:textSize="8pt"
-            android:paddingTop="4px"/>
+        android:id="@+id/app_grid_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/app_grid_icon"
+        android:layout_toLeftOf="@id/app_grid_price"
+        android:maxLines="2"
+        android:textStyle="bold"
+        android:textSize="8pt"
+        android:singleLine="true"
+        android:paddingTop="4px" />
 
     <RatingBar
-            android:id="@+id/app_grid_rate"
-            android:layout_width="wrap_content"
-            android:layout_height="15px"
-            android:layout_marginTop="9px"
-            android:isIndicator="true"
-            android:numStars="5"
-            android:layout_toRightOf="@id/app_grid_icon"
-            android:layout_below="@id/app_grid_name"
-            android:progressDrawable="@drawable/star_rating_bar_small"/>
+        android:id="@+id/app_grid_rate"
+        android:layout_width="wrap_content"
+        android:layout_height="15px"
+        android:layout_marginTop="9px"
+        android:isIndicator="true"
+        android:numStars="5"
+        android:layout_toRightOf="@id/app_grid_icon"
+        android:layout_below="@id/app_grid_name"
+        android:progressDrawable="@drawable/star_rating_bar_small" />
 </RelativeLayout>

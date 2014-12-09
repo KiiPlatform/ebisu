@@ -1,11 +1,5 @@
 package com.youwill.store.utils;
 
-import android.content.ContentResolver;
-import android.content.ContentValues;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.text.TextUtils;
-import android.util.Log;
 import com.kii.cloud.storage.Kii;
 import com.kii.cloud.storage.KiiObject;
 import com.kii.cloud.storage.KiiUser;
@@ -14,6 +8,13 @@ import com.kii.cloud.storage.query.KiiQueryResult;
 import com.kii.payment.KiiReceipt;
 import com.kii.payment.KiiStore;
 import com.youwill.store.providers.YouWill;
+
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.text.TextUtils;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +59,7 @@ public class DataUtils {
         }.start();
     }
 
-    private static void storeAppsToDB(Context context, List<KiiObject> objLists) {
+    public static void storeAppsToDB(Context context, List<KiiObject> objLists) {
         ArrayList<ContentValues> valuesArrayList = new ArrayList<ContentValues>();
         for (KiiObject obj : objLists) {
             String appId = obj.getString("app_id");

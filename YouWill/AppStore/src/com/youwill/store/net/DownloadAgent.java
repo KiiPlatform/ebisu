@@ -121,7 +121,6 @@ public class DownloadAgent {
                 JSONObject app = new JSONObject(c.getString(0));
                 String url = app.optString("apk_url");
                 String name = app.optString("name");
-
                 DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
                 request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE
                         | DownloadManager.Request.NETWORK_WIFI);

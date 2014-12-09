@@ -19,13 +19,16 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
-import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.SparseArray;
 import android.view.View;
@@ -86,10 +89,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
         DataUtils.loadApps(this);
         initHeader();
 
-        Settings.registerListener(this, mListener);
+//        Settings.registerListener(this, mListener);
+        IntentFilter intentFilter = new IntentFilter(Constants.INTENT_LOG_IN_CHANGED);
+        LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, intentFilter);
         Uri uri = getIntent().getData();
         LogUtils.d("MainActivity", "uri is " + uri);
-        if (uri!=null) {
+        if (uri != null) {
             String appId = uri.getLastPathSegment();
             Intent intent = new Intent(this, AppDetailActivity.class);
             intent.putExtra(AppDetailActivity.EXTRA_APP_ID, appId);
@@ -99,7 +104,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     @Override
     protected void onDestroy() {
-        Settings.unregisterListener(this, mListener);
+//        Settings.unregisterListener(this, mListener);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
         super.onDestroy();
     }
 
@@ -239,8 +245,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 setLogInText();
             }
 
-            if (key.contentEquals(Settings.TOKEN_KEY) && !TextUtils
-                    .isEmpty(Settings.getToken(MainActivity.this))) {
+            if (key.contentEquals(Settings.TOKEN_KEY) && Settings.isLoggedIn(MainActivity.this)) {
                 new Thread() {
                     @Override
                     public void run() {
@@ -259,6 +264,21 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     }
 
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            setLogInText();
+            if (Settings.isLoggedIn(context)) {
+                new Thread() {
+                    @Override
+                    public void run() {
+                        DataUtils.getPurchasedList(getApplicationContext());
+                    }
+                }.start();
+            }
+        }
+    };
+
     @Override
     protected void onSaveInstanceState(Bundle outState) {
     }
@@ -270,7 +290,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 if (resultCode == Activity.RESULT_OK) {
                     PayType payType = null;
                     try {
-                        payType = PayType.valueOf(data.getStringExtra(Constants.INTENT_EXTRA_PAY_TYPE));
+                        payType = PayType
+                                .valueOf(data.getStringExtra(Constants.INTENT_EXTRA_PAY_TYPE));
                     } catch (Exception e) {
                         payType = PayType.alipay;
                         LogUtils.e(e);

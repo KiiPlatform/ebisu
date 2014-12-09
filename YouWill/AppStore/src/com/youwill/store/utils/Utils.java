@@ -1,6 +1,5 @@
 package com.youwill.store.utils;
 
-import android.app.FragmentTransaction;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.youwill.store.R;
 import com.youwill.store.fragments.ProgressDialogFragment;
@@ -12,6 +11,7 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.app.DialogFragment;
+import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -90,8 +90,8 @@ public class Utils {
     }
 
     private static String format(final long value,
-                                 final long divider,
-                                 final String unit) {
+            final long divider,
+            final String unit) {
         final double result =
                 divider > 1 ? (double) value / (double) divider : (double) value;
         return String.format("%.1f %s", Double.valueOf(result), unit);
@@ -171,5 +171,15 @@ public class Utils {
         return versionName;
     }
 
+    public static int getVersionCode(Context context) {
+        PackageManager pm = context.getPackageManager();
+        int versionCode = 0;
+        try {
+            PackageInfo pi = pm.getPackageInfo(context.getPackageName(), 0);
+            versionCode = pi.versionCode;
+        } catch (PackageManager.NameNotFoundException e) {
+        }
+        return versionCode;
+    }
 
 }
