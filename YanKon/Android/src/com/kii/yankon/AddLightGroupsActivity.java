@@ -57,9 +57,9 @@ public class AddLightGroupsActivity extends Activity implements View.OnClickList
                 int lid = cursor.getInt(0);
                 Integer integer = Integer.valueOf(lid);
                 orgSelectedSet.add(integer);
-                selectedSet.add(integer);
             }
             cursor.close();
+            selectedSet.addAll(orgSelectedSet);
             setTitle(R.string.edit_group);
         } else {
             setTitle(R.string.add_group);

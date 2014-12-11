@@ -19,6 +19,7 @@ public class YanKonProvider extends ContentProvider {
     public static final Uri URI_LIGHT_GROUPS = Uri.parse("content://" + AUTHORITY + "/light_groups");
     public static final Uri URI_LIGHT_GROUP_REL = Uri.parse("content://" + AUTHORITY + "/light_group_rel");
     public static final Uri URI_SCENES = Uri.parse("content://" + AUTHORITY + "/scenes");
+    public static final Uri URI_SCENES_DETAIL = Uri.parse("content://" + AUTHORITY + "/scenes_detail");
 
     public static final String TABLE_COLORS = "colors";
     public static final String TABLE_ACTIONS = "actions";
@@ -30,6 +31,7 @@ public class YanKonProvider extends ContentProvider {
     public static final String VIEW_LIGHT_GROUP_REL = "group_light_view";
     public static final String TABLE_LIGHT_GROUP_REL = "light_group_rel";
     public static final String TABLE_SCENES = "scenes";
+    public static final String TABLE_SCENES_DETAIL = "scenes_detail";
 
 
     private static final int ID_COLORS = 0;
@@ -39,6 +41,7 @@ public class YanKonProvider extends ContentProvider {
     private static final int ID_LIGHT_GROUPS = 4;
     private static final int ID_LIGHT_GROUP_REL = 5;
     private static final int ID_SCENES = 6;
+    private static final int ID_SCENES_DETAIL = 7;
 
     static {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
@@ -49,6 +52,7 @@ public class YanKonProvider extends ContentProvider {
         uriMatcher.addURI(AUTHORITY, "light_groups", ID_LIGHT_GROUPS);
         uriMatcher.addURI(AUTHORITY, "light_group_rel", ID_LIGHT_GROUP_REL);
         uriMatcher.addURI(AUTHORITY, "scenes", ID_SCENES);
+        uriMatcher.addURI(AUTHORITY, "scenes_detail", ID_SCENES_DETAIL);
     }
 
 
@@ -92,6 +96,11 @@ public class YanKonProvider extends ContentProvider {
                         selection, selectionArgs);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return ret;
+            case ID_SCENES_DETAIL:
+                ret = database.delete(TABLE_SCENES_DETAIL,
+                        selection, selectionArgs);
+                getContext().getContentResolver().notifyChange(uri, null);
+                return ret;
         }
         throw new UnsupportedOperationException("Not yet implemented");
     }
@@ -128,6 +137,10 @@ public class YanKonProvider extends ContentProvider {
                 return Uri.withAppendedPath(uri, String.valueOf(cid));
             case ID_SCENES:
                 cid = database.insertWithOnConflict(TABLE_SCENES, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                getContext().getContentResolver().notifyChange(uri, null);
+                return Uri.withAppendedPath(uri, String.valueOf(cid));
+            case ID_SCENES_DETAIL:
+                cid = database.insertWithOnConflict(TABLE_SCENES_DETAIL, null, values, SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return Uri.withAppendedPath(uri, String.valueOf(cid));
         }
@@ -187,6 +200,12 @@ public class YanKonProvider extends ContentProvider {
                 c.setNotificationUri(getContext().getContentResolver(), uri);
                 return c;
             }
+            case ID_SCENES_DETAIL: {
+                Cursor c = database.query(TABLE_SCENES_DETAIL, projection, selection, selectionArgs,
+                        null, null, sortOrder);
+                c.setNotificationUri(getContext().getContentResolver(), uri);
+                return c;
+            }
         }
         throw new UnsupportedOperationException("Not yet implemented");
     }
@@ -220,6 +239,11 @@ public class YanKonProvider extends ContentProvider {
             case ID_SCENES:
                 ret = database
                         .update(TABLE_SCENES, values, selection, selectionArgs);
+                getContext().getContentResolver().notifyChange(uri, null);
+                return ret;
+            case ID_SCENES_DETAIL:
+                ret = database
+                        .update(TABLE_SCENES_DETAIL, values, selection, selectionArgs);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return ret;
         }

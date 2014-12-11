@@ -89,7 +89,10 @@ public class ScenesFragment extends BaseListFragment {
                 Cursor cursor = (Cursor) mAdapter.getItem(info.position);
                 int cid = cursor.getInt(cursor.getColumnIndex("_id"));
                 String name = cursor.getString(cursor.getColumnIndex("name"));
-
+                Intent intent = new Intent(getActivity(), AddScenesActivity.class);
+                intent.putExtra(AddScenesActivity.EXTRA_SCENE_NAME, name);
+                intent.putExtra(AddScenesActivity.EXTRA_SCENE_ID, cid);
+                startActivity(intent);
             }
             break;
             case MENU_DELETE: {

@@ -1,12 +1,16 @@
 package com.kii.yankon;
 
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.TextView;
@@ -18,6 +22,7 @@ import com.kii.yankon.providers.YanKonProvider;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.UUID;
 
 /**
  * Created by Evan on 14/12/8.
@@ -52,6 +57,8 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
         mAdapter = new SceneAdapter();
         mList.setAdapter(mAdapter);
         mList.setOnChildClickListener(this);
+        mList.expandGroup(0);
+        mList.expandGroup(1);
     }
 
     void loadContents() {
@@ -75,6 +82,20 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
             mGroups.add(l);
         }
         c.close();
+        if (scene_id >= 0) {
+            c = getContentResolver().query(YanKonProvider.URI_SCENES_DETAIL, null, "scene_id=" + scene_id, null, null);
+            while (c.moveToNext()) {
+                int light_id = c.getInt(c.getColumnIndex("light_id"));
+                if (light_id >= 0) {
+                    orgSelectedSet.add("l" + light_id);
+                } else {
+                    int group_id = c.getInt(c.getColumnIndex("group_id"));
+                    orgSelectedSet.add("g" + group_id);
+                }
+            }
+            c.close();
+            selectedSet.addAll(orgSelectedSet);
+        }
     }
 
     @Override
@@ -86,6 +107,16 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
             case R.id.scene_ok:
                 save();
                 break;
+            case R.id.light_checkbox: {
+                String key = (String) v.getTag();
+                if (selectedSet.contains(key)) {
+                    selectedSet.remove(key);
+                } else {
+                    selectedSet.add(key);
+                }
+                mList.invalidateViews();
+            }
+            break;
         }
     }
 
@@ -95,7 +126,55 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
             Toast.makeText(this, getString(R.string.empty_scene_name), Toast.LENGTH_SHORT).show();
             return;
         }
-        
+        ContentResolver cr = getContentResolver();
+        ContentValues values = new ContentValues();
+        values.put("name", gName);
+        if (scene_id < 0) {
+            values.put("UUID", UUID.randomUUID().toString());
+            values.put("created_time", System.currentTimeMillis());
+            Uri uri = cr.insert(YanKonProvider.URI_SCENES, values);
+            scene_id = Integer.parseInt(uri.getLastPathSegment());
+        } else {
+            cr.update(YanKonProvider.URI_SCENES, values, "_id=" + scene_id, null);
+        }
+        String[] selArr = selectedSet.toArray(new String[0]);
+        for (int i = 0; i < selArr.length; i++) {
+            String data = selArr[i];
+            if (orgSelectedSet.contains(data)) {
+                orgSelectedSet.remove(data);
+                selectedSet.remove(data);
+            }
+        }
+        for (String data : orgSelectedSet) {
+            if (data.length() <= 1)
+                continue;
+            ;
+            String num = data.substring(1);
+            int id = Integer.parseInt(num);
+            if (data.charAt(0) == 'l') {
+                cr.delete(YanKonProvider.URI_SCENES_DETAIL, "scene_id=" + scene_id + " AND light_id=" + id, null);
+            } else {
+                cr.delete(YanKonProvider.URI_SCENES_DETAIL, "scene_id=" + scene_id + " AND group_id=" + id, null);
+            }
+        }
+        for (String data : selectedSet) {
+            if (data.length() <= 1)
+                continue;
+            ;
+            String num = data.substring(1);
+            int id = Integer.parseInt(num);
+            values = new ContentValues();
+            values.put("scene_id", scene_id);
+            if (data.charAt(0) == 'l') {
+                values.put("light_id", id);
+                values.put("group_id", -1);
+            } else {
+                values.put("light_id", -1);
+                values.put("group_id", id);
+            }
+            cr.insert(YanKonProvider.URI_SCENES_DETAIL, values);
+        }
+        finish();
     }
 
     @Override
@@ -166,18 +245,25 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
             TextView tv = (TextView) view.findViewById(android.R.id.text1);
             String name, line2;
             View icon = view.findViewById(R.id.light_icon);
+            String key;
             if (groupPosition == 0) {
                 name = mLights.get(childPosition).name;
                 icon.setBackgroundResource(R.drawable.light_on);
                 line2 = getString(R.string.light_model_format, mLights.get(childPosition).modelName);
+                key = "l" + mLights.get(childPosition).id;
             } else {
                 name = mGroups.get(childPosition).name;
                 icon.setBackgroundResource(R.drawable.light_groups);
                 line2 = getString(R.string.group_num_format, mGroups.get(childPosition).num);
+                key = "g" + mGroups.get(childPosition).id;
             }
             tv.setText(name);
             tv = (TextView) view.findViewById(android.R.id.text2);
             tv.setText(line2);
+            CheckBox cb = (CheckBox) view.findViewById(R.id.light_checkbox);
+            cb.setOnClickListener(AddScenesActivity.this);
+            cb.setChecked(selectedSet.contains(key));
+            cb.setTag(key);
             return view;
         }
 
