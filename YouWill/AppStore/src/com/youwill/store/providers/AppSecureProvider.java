@@ -26,7 +26,7 @@ public class AppSecureProvider extends ContentProvider {
         SQLiteDatabase database = mDBHelper.getWritableDatabase();
         Cursor c = database
                 .query(YouWill.Purchased.VIEW_NAME, projection,
-                        YouWill.Application.PACKAGE_NAME + "=" + selection, selectionArgs,
+                        YouWill.Application.PACKAGE_NAME + "='" + selection + "'", selectionArgs,
                         null, null, sortOrder);
         MatrixCursor cursor = new MatrixCursor(new String[]{"key"});
         if (c != null && c.moveToFirst()) {
@@ -42,7 +42,7 @@ public class AppSecureProvider extends ContentProvider {
 
     @Override
     public String getType(Uri uri) {
-        return "vnd.android.cursor.dir/com.kii.store.sandbox.check";
+        return "vnd.android.cursor.dir/com.kii.store.check";
     }
 
     @Override

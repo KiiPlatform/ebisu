@@ -85,7 +85,7 @@
 
         <provider
             android:name=".providers.AppSecureProvider"
-            android:authorities="com.kii.store.sandbox.check"
+            android:authorities="com.kii.store.check"
             android:exported="true"
             android:permission="com.kii.app.secure" />
         <provider
