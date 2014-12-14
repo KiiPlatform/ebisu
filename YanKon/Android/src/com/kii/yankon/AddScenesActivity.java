@@ -7,6 +7,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Pair;
+import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
@@ -21,6 +23,7 @@ import com.kii.yankon.model.LightGroup;
 import com.kii.yankon.providers.YanKonProvider;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.UUID;
 
@@ -39,8 +42,10 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
     HashSet<String> selectedSet = new HashSet<String>();
     SceneAdapter mAdapter;
 
-    ArrayList<Light> mLights = new ArrayList<Light>();
-    ArrayList<LightGroup> mGroups = new ArrayList<LightGroup>();
+    HashMap<Light, LightGroup> mLightSelectedMap = new HashMap<>();
+    SparseArray<Light> mLightIdMap = new SparseArray<>();
+    SparseArray<LightGroup> mGroupIdMap = new SparseArray<>();
+    LightGroup singleChoiceGroup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +66,37 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
         mList.expandGroup(1);
     }
 
+    void addGroup(LightGroup group) {
+        group.childLights = new ArrayList<>();
+        Cursor c = null;
+        try {
+            c = getContentResolver().query(YanKonProvider.URI_LIGHT_GROUP_REL, new String[]{"light_id"}, "group_id=" + group.id, null, null);
+            while (c.moveToNext()) {
+                int light_id = c.getInt(0);
+                group.childLights.add(mLightIdMap.get(light_id));
+            }
+        } finally {
+            if (c != null)
+                c.close();
+        }
+    }
+
+    Pair<Light, LightGroup> selectGroup(LightGroup group) {
+        for (Light l : group.childLights) {
+            LightGroup dupGroup = mLightSelectedMap.get(l);
+            if (dupGroup != null) {
+                return new Pair<>(l, dupGroup);
+            }
+        }
+        for (Light l : group.childLights) {
+            mLightSelectedMap.put(l, group);
+        }
+        return null;
+    }
+
     void loadContents() {
+        singleChoiceGroup = new LightGroup();
+        singleChoiceGroup.id = -1;
         Cursor c = getContentResolver().query(YanKonProvider.URI_LIGHTS, null, null, null, null);
         while (c.moveToNext()) {
             Light l = new Light();
@@ -69,28 +104,35 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
             l.id = c.getInt(c.getColumnIndex("_id"));
             l.UUID = c.getString(c.getColumnIndex("UUID"));
             l.modelName = c.getString(c.getColumnIndex("m_name"));
-            mLights.add(l);
+            mLightIdMap.append(l.id, l);
         }
         c.close();
         c = getContentResolver().query(YanKonProvider.URI_LIGHT_GROUPS, null, null, null, null);
         while (c.moveToNext()) {
-            LightGroup l = new LightGroup();
-            l.name = c.getString(c.getColumnIndex("name"));
-            l.id = c.getInt(c.getColumnIndex("_id"));
-            l.UUID = c.getString(c.getColumnIndex("UUID"));
-            l.num = c.getInt(c.getColumnIndex("num"));
-            mGroups.add(l);
+            LightGroup group = new LightGroup();
+            group.name = c.getString(c.getColumnIndex("name"));
+            group.id = c.getInt(c.getColumnIndex("_id"));
+            group.UUID = c.getString(c.getColumnIndex("UUID"));
+            group.num = c.getInt(c.getColumnIndex("num"));
+            mGroupIdMap.append(group.id, group);
+            addGroup(group);
         }
         c.close();
         if (scene_id >= 0) {
-            c = getContentResolver().query(YanKonProvider.URI_SCENES_DETAIL, null, "scene_id=" + scene_id, null, null);
+            c = getContentResolver().query(YanKonProvider.URI_SCENES_DETAIL, null, "scene_id=" + scene_id, null, "light_id desc");
             while (c.moveToNext()) {
                 int light_id = c.getInt(c.getColumnIndex("light_id"));
                 if (light_id >= 0) {
                     orgSelectedSet.add("l" + light_id);
+                    mLightSelectedMap.put(mLightIdMap.get(light_id), singleChoiceGroup);
                 } else {
                     int group_id = c.getInt(c.getColumnIndex("group_id"));
-                    orgSelectedSet.add("g" + group_id);
+                    LightGroup g = mGroupIdMap.get(group_id);
+                    if (selectGroup(g) != null) {
+                        //TODO Show error here
+                    } else {
+                        orgSelectedSet.add("g" + group_id);
+                    }
                 }
             }
             c.close();
@@ -109,10 +151,47 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
                 break;
             case R.id.light_checkbox: {
                 String key = (String) v.getTag();
-                if (selectedSet.contains(key)) {
-                    selectedSet.remove(key);
-                } else {
-                    selectedSet.add(key);
+                String num = key.substring(1);
+                int id = Integer.parseInt(num);
+                if (key.startsWith("l")) {
+                    Light l = mLightIdMap.get(id);
+                    if (selectedSet.contains(key)) {
+                        mLightSelectedMap.remove(l);
+                        selectedSet.remove(key);
+                    } else {
+                        LightGroup g = mLightSelectedMap.get(l);
+                        if (g == null) {
+                            selectedSet.add(key);
+                            mLightSelectedMap.put(l, singleChoiceGroup);
+                        } else {
+                            Toast.makeText(AddScenesActivity.this,
+                                    "The light is already in selected group '" + g.name + "'",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                } else if (key.startsWith("g")) {
+                    LightGroup g = mGroupIdMap.get(id);
+                    if (selectedSet.contains(key)) {
+                        selectedSet.remove(key);
+                        for (Light l : g.childLights) {
+                            mLightSelectedMap.remove(l);
+                        }
+                    } else {
+                        Pair<Light, LightGroup> result = selectGroup(g);
+                        if (result == null)
+                            selectedSet.add(key);
+                        else {
+                            if (result.second == singleChoiceGroup) {
+                                Toast.makeText(AddScenesActivity.this,
+                                        "The light '" + result.first.name + "' in this group is already selected",
+                                        Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(AddScenesActivity.this,
+                                        "The light '" + result.first.name + "' in this group is duplicated with selected group '" + result.second.name + "'",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    }
                 }
                 mList.invalidateViews();
             }
@@ -196,9 +275,9 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
         @Override
         public int getChildrenCount(int groupPosition) {
             if (groupPosition == 0) {
-                return mLights.size();
+                return mLightIdMap.size();
             }
-            return mGroups.size();
+            return mGroupIdMap.size();
         }
 
         @Override
@@ -247,15 +326,17 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
             View icon = view.findViewById(R.id.light_icon);
             String key;
             if (groupPosition == 0) {
-                name = mLights.get(childPosition).name;
+                Light l = mLightIdMap.valueAt(childPosition);
+                name = l.name;
                 icon.setBackgroundResource(R.drawable.light_on);
-                line2 = getString(R.string.light_model_format, mLights.get(childPosition).modelName);
-                key = "l" + mLights.get(childPosition).id;
+                line2 = getString(R.string.light_model_format, l.modelName);
+                key = "l" + l.id;
             } else {
-                name = mGroups.get(childPosition).name;
+                LightGroup g = mGroupIdMap.valueAt(childPosition);
+                name = g.name;
                 icon.setBackgroundResource(R.drawable.light_groups);
-                line2 = getString(R.string.group_num_format, mGroups.get(childPosition).num);
-                key = "g" + mGroups.get(childPosition).id;
+                line2 = getString(R.string.group_num_format, g.num);
+                key = "g" + g.id;
             }
             tv.setText(name);
             tv = (TextView) view.findViewById(android.R.id.text2);
