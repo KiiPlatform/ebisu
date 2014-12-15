@@ -78,6 +78,7 @@
             android:background="#ffffff"
             android:scrollbarStyle="insideOverlay"
             android:layout_marginLeft="28px"
-            android:layout_marginRight="28px" />
+            android:layout_marginRight="28px"
+            android:layout_marginBottom="21px"/>
     </LinearLayout>
 </ScrollView>
