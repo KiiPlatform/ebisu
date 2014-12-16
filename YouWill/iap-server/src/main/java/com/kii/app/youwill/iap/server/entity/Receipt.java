@@ -52,7 +52,7 @@ int consume_type;
             "appID",
     };
 
-    public static String[] MM_FIELDS = {
+    private static String[] MM_FIELDS = {
             "TransactionID",
             "CheckID",
             "ActionID",
@@ -244,5 +244,47 @@ int consume_type;
 
     public void setProductID(String productID) {
         this.productID = productID;
+    }
+
+    private static String[] UNIONPAY_FIELDS = {
+            "orderTime",
+            "settleDate",
+            "exchangeRate",
+            "settleCurrency",
+            "transType",
+            "settleAmount",
+            "qn",
+    };
+
+    public static Receipt createReceiptForUnionPay(Transaction transaction, Map<String, String> params) {
+        Receipt receipt = new Receipt();
+        receipt.transactionID = transaction.getTransactionID();
+        if (transaction.getApp() != null) {
+            receipt.app = transaction.getApp();
+        }
+
+        receipt.productID = transaction.getProductID();
+        receipt.currency = CurrencyType.CNY;
+
+
+        int settleAmount = 0;
+        try {
+            settleAmount = Integer.parseInt(params.get("settleAmount"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        receipt.price = String.format("%.2f", settleAmount / 100.0);
+        if (transaction.isSandBox()) {
+            receipt.isSandbox = transaction.isSandBox();
+        }
+        receipt.paymentID = params.get("orderNumber");
+
+        receipt.additionalFields = new HashMap<String, String>();
+
+        for (String key : UNIONPAY_FIELDS) {
+            receipt.additionalFields.put("up" + key, params.get(key));
+        }
+        receipt.additionalFields.put("upsettleAmount", receipt.price);
+        return receipt;
     }
 }

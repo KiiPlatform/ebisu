@@ -20,4 +20,6 @@ public interface TransactionDao {
 
 
     OrderStatus completeMMPay(Transaction transaction, JSONObject jsonObject);
+
+    OrderStatus completeUnionPay(Transaction transaction, Map<String, String> allRequestParams);
 }

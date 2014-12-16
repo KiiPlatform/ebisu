@@ -13,6 +13,8 @@ import com.kii.app.youwill.iap.server.service.IAPErrorCode;
 import com.kii.app.youwill.iap.server.service.ServiceException;
 import com.kii.app.youwill.iap.server.service.StartTransactionParam;
 import com.kii.app.youwill.iap.server.service.UUIDGeneral;
+import com.kii.app.youwill.iap.server.unionpay.conf.UpmpConfig;
+import com.kii.app.youwill.iap.server.unionpay.service.UpmpService;
 import com.kii.app.youwill.iap.server.web.AppContext;
 import com.kii.platform.ufp.bucket.ObjectID;
 import com.kii.platform.ufp.user.UserID;
@@ -20,6 +22,7 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.DigestUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -59,6 +62,8 @@ public class TransactionDaoImpl implements TransactionDao {
     private static DateFormat FMT_YEAR = new SimpleDateFormat("yyyy", Locale.US);
     private static DateFormat FMT_WEEK = new SimpleDateFormat("ww", Locale.US);
 
+    private static DateFormat FMT_UNIONPAY = new SimpleDateFormat("yyyyMMddHHmmss");
+
 
     @Override
     public String createNewOrder(Product product, StartTransactionParam param) {
@@ -67,8 +72,52 @@ public class TransactionDaoImpl implements TransactionDao {
                 return createNewOrderForAliPay(product, param);
             case mm:
                 return createNewOrderForMM(product, param);
+            case unionpay:
+                return createNewOrderForUnionPay(product, param);
             default:
                 return startNewTransaction(product, param);
+        }
+
+    }
+
+    private String createNewOrderForUnionPay(Product product, StartTransactionParam param) {
+        String transactionID = startNewTransaction(product, param);
+
+        int price;
+        try {
+            price = (int)Math.round(Float.parseFloat(product.getPrice()) * 100);
+        } catch (Exception e) {
+            throw new ServiceException(IAPErrorCode.FORMAT_INVALID);
+        }
+
+        Map<String, String> req = new HashMap<String, String>();
+        req.put("version", UpmpConfig.VERSION);
+        req.put("charset", UpmpConfig.CHARSET);
+        req.put("transType", UpmpConfig.TRANS_TYPE);
+        req.put("merId", UpmpConfig.MER_ID);
+        req.put("backEndUrl", UpmpConfig.MER_BACK_END_URL);
+        req.put("orderDescription", product.getProductName());
+        req.put("orderTime", FMT_UNIONPAY.format(new Date()));
+        req.put("orderNumber", transactionID.replace("-", ""));
+        req.put("orderAmount", String.valueOf(price));
+        req.put("orderCurrency", "156");
+        req.put("reqReserved", transactionID);
+
+        Map<String, String> resp = new HashMap<String, String>();
+        boolean validResp = UpmpService.trade(req, resp);
+        if (validResp) {
+            JSONObject jsonObject = new JSONObject();
+            try {
+                jsonObject.put("tn", resp.get("tn"));
+                jsonObject.put("transaction_id", transactionID);
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return null;
+            }
+            return jsonObject.toString();
+
+        } else {
+            throw new ServiceException(IAPErrorCode.ERROR_PUSH_UNION_TN);
         }
 
     }
@@ -189,8 +238,6 @@ public class TransactionDaoImpl implements TransactionDao {
 
     @Override
     public OrderStatus completeAlipayPay(Transaction transaction, Map<String, String> callbackParams) {
-
-
         TradeStatus tradeStatus = TradeStatus.TRADE_UNKNOWN;
         try {
             tradeStatus = TradeStatus.valueOf(callbackParams.get("trade_status"));
@@ -296,7 +343,7 @@ public class TransactionDaoImpl implements TransactionDao {
 
     }
 
-    public static String[] MM_FIELDS = {
+    private static String[] MM_FIELDS = {
             "TransactionID",
             "CheckID",
             "ActionID",
@@ -332,6 +379,48 @@ public class TransactionDaoImpl implements TransactionDao {
             map.put("mm" + key, jsonObject.optString(key, ""));
         }
         map.put("mmTotalPrice", String.format("%.2f", jsonObject.optInt("TotalPrice", 0) / 100.0));
+
+        commDao.updateParticObjWithVer(BUCKET_ID, transaction.getId(), transaction.getVersion(), map);
+        return OrderStatus.completed;
+    }
+
+    private static String[] UNIONPAY_FIELDS = {
+            "settleDate",
+            "orderNumber",
+            "exchangeRate",
+            "settleCurrency",
+            "transType",
+            "settleAmount",
+            "qn",
+    };
+
+    @Override
+    public OrderStatus completeUnionPay(Transaction transaction, Map<String, String> params) {
+        if (transaction.getPayStatus() != OrderStatus.pending) {
+            throw new ServiceException(IAPErrorCode.PAY_STATUS_INVALID);
+        }
+
+        Map<String, Object> map = new HashMap<String, Object>();
+        map.put("payStatus", OrderStatus.completed);
+        Date paymentDate = IAPUtils.convertMMPayDate(params.get("orderTime"));
+        map.put("payCompleteDate", paymentDate.getTime());
+        //fields for report
+        map.put("pay_day", FMT_DAY.format(paymentDate));
+        map.put("pay_month", FMT_MONTH.format(paymentDate));
+        map.put("pay_year", FMT_YEAR.format(paymentDate));
+        map.put("pay_week", FMT_WEEK.format(paymentDate));
+        map.put("modifyDate", System.currentTimeMillis());
+
+        for (String key : UNIONPAY_FIELDS) {
+            map.put("up" + key, params.get(key));
+        }
+        int settleAmount = 0;
+        try {
+            settleAmount = Integer.parseInt(params.get("settleAmount"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        map.put("upsettleAmount", String.format("%.2f",  settleAmount/ 100.0));
 
         commDao.updateParticObjWithVer(BUCKET_ID, transaction.getId(), transaction.getVersion(), map);
         return OrderStatus.completed;

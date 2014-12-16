@@ -35,6 +35,8 @@ public enum IAPErrorCode {
     CANNOT_DOWNLOAD_APK(500),
     UNKNOWN_INTERNAL_ERROR(500),
 
+	//used by union pay
+	ERROR_PUSH_UNION_TN(1003),
 	;
 
 

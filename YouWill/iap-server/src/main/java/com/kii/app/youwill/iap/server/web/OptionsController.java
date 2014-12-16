@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 public class OptionsController {
 
 
-	@RequestMapping(method = RequestMethod.OPTIONS, value="/iap/**")
+	@RequestMapping(method = RequestMethod.OPTIONS, value="/util/apkparser")
 	public void accessEverything(HttpServletResponse response){
 
 
