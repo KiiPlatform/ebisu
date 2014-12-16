@@ -37,7 +37,7 @@
             android:layout_height="1dp"
             android:background="@color/list_divider"/>
         <RadioButton
-            android:enabled="false"
+            android:enabled="true"
             android:text="@string/kii_unionpay"
             android:id="@+id/unionpay_button"
             style="@style/select_payment_radio_button_style" />

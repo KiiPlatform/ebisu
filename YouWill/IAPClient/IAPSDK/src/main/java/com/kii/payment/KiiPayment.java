@@ -3,8 +3,9 @@ package com.kii.payment;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.util.SparseArray;
-import android.util.SparseIntArray;
+
 import com.kii.payment.impl.PrefUtil;
 
 import java.lang.reflect.Field;
@@ -18,6 +19,8 @@ public abstract class KiiPayment {
 
     static String STATUS_COMPLETED = "completed";
 
+    public static final int UNION_PAY_REQUEST_CODE = 10;
+
     Activity context;
 
     KiiOrder order;
@@ -28,6 +31,11 @@ public abstract class KiiPayment {
         this.context = activity;
         this.order = order;
         this.callback = callback;
+        init();
+    }
+
+    private void init() {
+        Utils.setContextRef(context);
     }
 
     /**
@@ -55,7 +63,7 @@ public abstract class KiiPayment {
             case paypal:
                 return null;
             case unionpay:
-                return null;
+                return new UnionPayPayment(activity, order, callback);
             case mm:
                 return new MMPayment(activity, order, callback);
             case egame:
@@ -66,6 +74,10 @@ public abstract class KiiPayment {
                 return null;
         }
         return null;
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        //do nothing
     }
 
     /**
@@ -134,8 +146,9 @@ public abstract class KiiPayment {
             sErrorMap.put(KiiPaymentResultCode.INVALID_PAYPAL_PARAMETER, "kii_payment_error_paypal_parameters");
             sErrorMap.put(KiiPaymentResultCode.INVALID_PAYPAL_PARAMETER2, "kii_payment_error_paypal_parameters");
             sErrorMap.put(KiiPaymentResultCode.PAYPAL_VERIFY_FAILED, "kii_payment_error_verify_paypal_failed");
-            sErrorMap.put(KiiPaymentResultCode.ALIPAY_VERIFY_FAILED, "kii_payment_error_verify_alipay_failed");
+            sErrorMap.put(KiiPaymentResultCode.PAYMENT_VERIFY_FAILED, "kii_payment_error_verify_alipay_failed");
             sErrorMap.put(KiiPaymentResultCode.ERROR_MM_INVALID_PAY_CODE, "kii_payment_mm_invalid_pay_code");
+            sErrorMap.put(KiiPaymentResultCode.ERROR_UNION_PLUGIN_INVALID, "kii_payment_union_plugin_invalid");
         }
     }
 }

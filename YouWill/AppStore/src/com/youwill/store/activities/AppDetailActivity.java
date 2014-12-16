@@ -68,6 +68,8 @@ public class AppDetailActivity extends Activity
 
     private boolean mIsPurchased = false;
 
+    private KiiPayment mCurrentPayment;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -244,9 +246,9 @@ public class AppDetailActivity extends Activity
             public void onLoginCompleted(int token, KiiUser user, Exception exception) {
                 if (exception == null) {
                     KiiOrder order = new KiiOrder(mIAPProduct, user, payType);
-                    KiiPayment currentPayment = KiiPayment.getPayment(AppDetailActivity.this, order,
+                    mCurrentPayment = KiiPayment.getPayment(AppDetailActivity.this, order,
                             paymentCallback);
-                    currentPayment.pay();
+                    mCurrentPayment.pay();
                 } else {
                     mHandler.sendEmptyMessage(MSG_LOGIN_ERROR);
                 }
@@ -342,6 +344,9 @@ public class AppDetailActivity extends Activity
                 super.onActivityResult(requestCode, resultCode, data);
         }
 
+        if (mCurrentPayment != null) {
+            mCurrentPayment.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
     @Override

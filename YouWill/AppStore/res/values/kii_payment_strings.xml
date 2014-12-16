@@ -48,4 +48,8 @@
 
     <string name="kii_payment_fetching_transaction_from_cloud">创建订单</string>
     <string name="kii_payment_confirm_payment_from_cloud">支付确认</string>
+
+    <string name="kii_payment_mm_invalid_pay_code">MM支付编码无效！</string>
+    <string name="kii_payment_union_plugin_invalid">请安装银联手机支付服务！</string>
+
 </resources>

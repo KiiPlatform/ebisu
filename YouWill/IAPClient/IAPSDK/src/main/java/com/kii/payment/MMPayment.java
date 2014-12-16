@@ -37,11 +37,6 @@ class MMPayment extends KiiPayment {
 
     public MMPayment(Activity activity, KiiOrder order, KiiPaymentCallback callback) {
         super(activity, order, callback);
-        init();
-    }
-
-    private void init() {
-        Utils.setContextRef(context);
     }
 
     @Override
@@ -57,7 +52,12 @@ class MMPayment extends KiiPayment {
         progressDialog.setCancelable(false);
         progressDialog.setIndeterminate(true);
         progressDialog.setTitle(Utils.getStringResId("kii_payment_fetching_transaction_from_cloud"));
-        progressDialog.show();
+        try {
+            progressDialog.show();
+        } catch (Exception e) {
+            Utils.log(TAG, "Error: " + e);
+        }
+
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -140,7 +140,7 @@ class MMPayment extends KiiPayment {
                     if (progressDialog != null) {
                         progressDialog.dismiss();
                     }
-                    callback.onError(KiiPaymentResultCode.ALIPAY_VERIFY_FAILED);
+                    callback.onError(KiiPaymentResultCode.PAYMENT_VERIFY_FAILED);
                     break;
                 case MSG_MM_PAY_FAILED:
                     if (progressDialog != null) {

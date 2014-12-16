@@ -147,6 +147,7 @@ is_sandbox
             this.userID = json.getString("userID");
             this.payStatus = OrderStatus.valueOf(json.getString("payStatus"));
             this.price = json.getString("price");
+            this.appID = json.optString("appID");
 
             this.createdDate = new Date(json.getLong("createdDate"));
             if (json.has("updateDate")) {

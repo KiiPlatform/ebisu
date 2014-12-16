@@ -10,9 +10,11 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseIntArray;
+
 import com.alipay.android.app.sdk.AliPay;
 import com.kii.payment.impl.BaseHelper;
 import com.kii.payment.impl.PrefUtil;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -46,7 +48,6 @@ class AliPayPayment extends KiiPayment {
      */
     public AliPayPayment(Activity activity, KiiOrder order, KiiPaymentCallback callback) {
         super(activity, order, callback);
-        init();
     }
 
     /**
@@ -58,7 +59,6 @@ class AliPayPayment extends KiiPayment {
      */
     public AliPayPayment(Fragment fragment, KiiOrder order, KiiPaymentCallback callback) {
         super(fragment.getActivity(), order, callback);
-        init();
     }
 
     /**
@@ -71,11 +71,6 @@ class AliPayPayment extends KiiPayment {
     public AliPayPayment(android.support.v4.app.Fragment fragment, KiiOrder order,
                          KiiPaymentCallback callback) {
         super(fragment.getActivity(), order, callback);
-        init();
-    }
-
-    private void init() {
-        Utils.setContextRef(context);
     }
 
     @Override
@@ -108,7 +103,12 @@ class AliPayPayment extends KiiPayment {
         progressDialog.setCancelable(false);
         progressDialog.setIndeterminate(true);
         progressDialog.setTitle(Utils.getStringResId("kii_payment_fetching_transaction_from_cloud"));
-        progressDialog.show();
+        try {
+            progressDialog.show();
+        } catch (Exception e) {
+            Utils.log(TAG, "Error: " + e);
+        }
+
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -191,7 +191,7 @@ class AliPayPayment extends KiiPayment {
                     if (progressDialog != null) {
                         progressDialog.dismiss();
                     }
-                    callback.onError(KiiPaymentResultCode.ALIPAY_VERIFY_FAILED);
+                    callback.onError(KiiPaymentResultCode.PAYMENT_VERIFY_FAILED);
                     break;
                 case MSG_PAY_FAILED:
                     if (progressDialog != null) {

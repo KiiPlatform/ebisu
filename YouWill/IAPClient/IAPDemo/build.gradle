@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.13.0'
+        classpath 'com.android.tools.build:gradle:1.0.0-rc1'
     }
 }
 apply plugin: 'android'
@@ -23,16 +23,10 @@ android {
         versionName "1.0"
     }
 
-    buildTypes {
-        release {
-            runProguard false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
-        }
-    }
-
     sourceSets {
         main {
             jniLibs.srcDirs = ['libs']
+            assets.srcDirs = ['assets']
             }
     }
 }

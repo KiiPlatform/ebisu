@@ -79,6 +79,10 @@ public class SearchFragment extends Fragment
         mAdapter.launchPayment(payType);
     }
 
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        mAdapter.onActivityResult(requestCode, resultCode, data);
+    }
+
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Cursor cursor = (Cursor) mAdapter.getItem(position);

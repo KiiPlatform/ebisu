@@ -3,10 +3,10 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.13.0'
+        classpath 'com.android.tools.build:gradle:1.0.0-rc1'
     }
 }
-apply plugin: 'android-library'
+apply plugin: 'com.android.library'
 
 repositories {
         mavenCentral()
@@ -22,15 +22,23 @@ android {
         versionCode 1
         versionName "1.0"
     }
-    buildTypes {
-        release {
-            runProguard false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
-        }
-    }
+
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:support-v4:19.1.+'
 }
+
+task clearJar(type: Delete) {
+    delete 'build/lib/IAPSDK-1.0.jar'
+}
+
+task makeJar(type: Copy) {
+    from('build/intermediates/bundles/release/')
+    into('release/')
+    include('classes.jar')
+    rename ('classes.jar', 'IAPSDK-1.0.jar')
+}
+
+makeJar.dependsOn(clearJar, build)

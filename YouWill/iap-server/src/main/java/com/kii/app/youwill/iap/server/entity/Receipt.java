@@ -94,6 +94,7 @@ int consume_type;
             this.paymentID = jsonObject.optString("OrderID");
 
             additionalFields = new HashMap<String, String>();
+            additionalFields.put("appID", transaction.getAppID());
 
             for (String key : MM_FIELDS) {
                 additionalFields.put("mm" + key, jsonObject.optString(key, ""));
@@ -280,7 +281,7 @@ int consume_type;
         receipt.paymentID = params.get("orderNumber");
 
         receipt.additionalFields = new HashMap<String, String>();
-
+        receipt.additionalFields.put("appID", transaction.getAppID());
         for (String key : UNIONPAY_FIELDS) {
             receipt.additionalFields.put("up" + key, params.get(key));
         }

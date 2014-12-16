@@ -53,7 +53,7 @@ public class KiiStore {
             KiiQueryResult<KiiObject> result = Kii.bucket("product").query(localQuery);
             List<KiiProduct> products = new ArrayList<KiiProduct>();
             for (KiiObject object : result.getResult()) {
-                Utils.log(TAG, "listProducts, get object is " + object.toJSON());
+                //Utils.log(TAG, "listProducts, get object is " + object.toJSON());
                 products.add(new KiiProduct(object));
             }
             return products;
@@ -115,8 +115,8 @@ public class KiiStore {
 
     private static String buildHash(String params, String key) {
         try {
-            Utils.log(TAG, "buildHash, params is " + params);
-            Utils.log(TAG, "buildHash, key is " + key);
+            //Utils.log(TAG, "buildHash, params is " + params);
+            //Utils.log(TAG, "buildHash, key is " + key);
             String data = params + key;
             MessageDigest md5 = MessageDigest.getInstance("MD5");
             md5.update(data.getBytes("UTF-8"));

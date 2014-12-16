@@ -12,4 +12,5 @@
     <string name="menu_item_mm">MM</string>
     <string name="menu_item_egame">eGame</string>
     <string name="menu_item_alipay">AliPay</string>
+    <string name="menu_item_union">UnionPay</string>
 </resources>
