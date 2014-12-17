@@ -12,6 +12,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.util.Arrays;
 
 /**
  * Created by Evan on 14/12/17.
@@ -38,19 +39,19 @@ public class UdpHelper implements Runnable {
             DatagramPacket datagramPacket = new DatagramPacket(message,
                     message.length);
             try {
+//                this.lock.acquire();
                 while (!IsThreadDisable) {
-                    this.lock.acquire();
-
                     datagramSocket.receive(datagramPacket);
-                    byte[] data = datagramPacket.getData();
-
+                    byte[] full_data = datagramPacket.getData();
+                    byte[] data = Arrays.copyOf(full_data, datagramPacket.getLength());
                     String str = Utils.byteArrayToString(data);
-                    Log.e(LOG_TAG, "Get data:" + str);
+                    Log.e(LOG_TAG, "Get data source:"+ datagramPacket.getAddress().toString()  + "len:" + datagramPacket.getLength() + " data:" + str);
+
                 }
             } catch (IOException e) {
                 Log.e(LOG_TAG, e.getMessage());
             } finally {
-                this.lock.release();
+//                this.lock.release();
             }
         } catch (SocketException e) {
             e.printStackTrace();

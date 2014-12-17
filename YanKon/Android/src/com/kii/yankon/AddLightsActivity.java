@@ -42,7 +42,7 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_lights);
 
-        byte[] cmd = new byte[]{00, 00, 00, 00, 19, 00, 01, 01, 00, 00, 00, 0x0a, 01, 00, 00, 00, 0x0a, 02, 00, 00, 00, 0x0a, 03, 00, 00, 00, 00, 03, 00, 00, 00};
+        byte[] cmd = new byte[]{00, 00, 00, 00, 0x19, 00, 01, 01, 00, 00, 00, 0x0a, 01, 00, 00, 00, 0x0a, 0x02, 00, 00, 00, 0x0a, 03, 00, 00, 00, 00, 03, 00, 00, 00};
         NetworkSenderService.sendCmd(this, (String)null, cmd);
 
         mPager = (MultiViewPager) findViewById(R.id.pager);
