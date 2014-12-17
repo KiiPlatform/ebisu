@@ -14,6 +14,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.kii.yankon.fragments.ActionsFragment;
 import com.kii.yankon.fragments.ColorsFragment;
@@ -24,7 +25,9 @@ import com.kii.yankon.fragments.PlaceholderFragment;
 import com.kii.yankon.fragments.ProfileFragment;
 import com.kii.yankon.fragments.ScenesFragment;
 import com.kii.yankon.fragments.SettingsFragment;
+import com.kii.yankon.services.NetworkReceiverService;
 import com.kii.yankon.utils.Constants;
+import com.kii.yankon.utils.Network;
 import com.kii.yankon.utils.Settings;
 
 public class MainActivity extends Activity
@@ -64,11 +67,22 @@ public class MainActivity extends Activity
         IntentFilter filter = new IntentFilter(Constants.INTENT_LOGGED_IN);
         filter.addAction(Constants.INTENT_LOGGED_OUT);
         LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, filter);
+        startService(new Intent(this, NetworkReceiverService.class));
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (!Network.getLocalIP(this)) {
+            Toast.makeText(this, "Network is not connected", Toast.LENGTH_SHORT).show();
+            finish();
+        }
     }
 
     @Override
     protected void onDestroy() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
+        stopService(new Intent(this, NetworkReceiverService.class));
         super.onDestroy();
     }
 

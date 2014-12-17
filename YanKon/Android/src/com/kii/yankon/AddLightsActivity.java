@@ -1,10 +1,5 @@
 package com.kii.yankon;
 
-import com.kii.yankon.fragments.InputDialogFragment;
-import com.kii.yankon.model.Light;
-import com.kii.yankon.providers.YanKonProvider;
-import com.pixplicity.multiviewpager.MultiViewPager;
-
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
@@ -19,6 +14,12 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.kii.yankon.fragments.InputDialogFragment;
+import com.kii.yankon.model.Light;
+import com.kii.yankon.providers.YanKonProvider;
+import com.kii.yankon.services.NetworkSenderService;
+import com.pixplicity.multiviewpager.MultiViewPager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,6 +41,10 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_lights);
+
+        byte[] cmd = new byte[]{00, 00, 00, 00, 19, 00, 01, 01, 00, 00, 00, 0x0a, 01, 00, 00, 00, 0x0a, 02, 00, 00, 00, 0x0a, 03, 00, 00, 00, 00, 03, 00, 00, 00};
+        NetworkSenderService.sendCmd(this, (String)null, cmd);
+
         mPager = (MultiViewPager) findViewById(R.id.pager);
 
         mAdapter = new LightsAdapter();
@@ -125,11 +130,11 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
         currLight.name = text;
         currLight.added = true;
         ContentValues values = new ContentValues();
-        values.put("UUID",currLight.mac);
-        values.put("model",currLight.model);
-        values.put("connected",true);
+        values.put("UUID", currLight.mac);
+        values.put("model", currLight.model);
+        values.put("connected", true);
         values.put("is_on", true);
-        values.put("name",text);
+        values.put("name", text);
         values.put("owned_time", System.currentTimeMillis());
         getContentResolver().insert(YanKonProvider.URI_LIGHTS, values);
         View view = mPager.findViewWithTag(currLight);
