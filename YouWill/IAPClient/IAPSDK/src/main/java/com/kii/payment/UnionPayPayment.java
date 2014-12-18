@@ -224,7 +224,7 @@ public class UnionPayPayment extends KiiPayment {
     };
 
     private void payWithUnionPay() {
-        int ret = UPPayAssistEx.startPay(context, null, null, currentUPObj.optString("tn"), "01");
+        int ret = UPPayAssistEx.startPay(context, null, null, currentUPObj.optString("tn"), "00");
         if (ret != UPPayAssistEx.PLUGIN_VALID) {
             //handler.sendEmptyMessage(MSG_UNION_PLUGIN_INVALID);
             if (!UPPayAssistEx.installUPPayPlugin(context)) {

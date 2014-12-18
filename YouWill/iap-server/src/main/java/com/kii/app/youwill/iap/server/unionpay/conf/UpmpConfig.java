@@ -15,11 +15,11 @@ public class UpmpConfig {
 
     public static String CHARSET = "UTF-8";
 
-    public static String TRADE_URL = "http://202.101.25.178:8080/gateway/merchant/trade";
+    public static String TRADE_URL = "https://mgate.unionpay.com/gateway/merchant/trade";
 
-    public static String QUERY_URL = "http://202.101.25.178:8080/gateway/merchant/query";
+    public static String QUERY_URL = "https://mgate.unionpay.com/gateway/merchant/query";
 
-    public static String MER_ID = "880000000001696";
+    public static String MER_ID = "802110048990989";
 
     public static String MER_BACK_END_URL = "http://118.102.25.205:8080/iap-webapp/iap/callback/unionpay";
 
@@ -29,7 +29,7 @@ public class UpmpConfig {
 
     public static String SIGN_TYPE = "MD5";
 
-    public static String SECURITY_KEY = "pSbz7fcwVc8iZ5rfv8b4ZC9ZAn2Oy2be";
+    public static String SECURITY_KEY = "T5tPD8tn2GDFJKOA9E5nZTwkSsmZ3pg5";
 
     public static String TRANS_TYPE = "01";
 

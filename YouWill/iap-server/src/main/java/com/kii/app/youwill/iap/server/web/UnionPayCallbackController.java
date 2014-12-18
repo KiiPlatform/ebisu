@@ -6,6 +6,7 @@ import com.kii.app.youwill.iap.server.dao.ConfigInfoStore;
 import com.kii.app.youwill.iap.server.dao.ReceiptDao;
 import com.kii.app.youwill.iap.server.dao.TransactionDao;
 import com.kii.app.youwill.iap.server.entity.*;
+import com.kii.app.youwill.iap.server.unionpay.conf.UpmpConfig;
 import com.kii.app.youwill.iap.server.unionpay.service.UpmpService;
 import com.kii.platform.ufp.user.UserID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +43,12 @@ public class UnionPayCallbackController {
 
     @RequestMapping("/iap/callback/unionpay")
     public ResponseEntity<String> callback(
-            @RequestParam Map<String, String> allRequestParams, HttpServletResponse response) {
+            @RequestParam Map<String, String> allRequestParams,
+            HttpServletRequest request, HttpServletResponse response) {
+        System.out.println("=================getQueryString");
+        System.out.println(request.getQueryString());
+        logParams(allRequestParams);
+        System.out.println("=================");
         boolean verified = UpmpService.verifySignature(allRequestParams);
         if (!verified) {
             logParams(allRequestParams);
@@ -94,7 +100,24 @@ public class UnionPayCallbackController {
         System.out.println("============================================");
     }
 
-
-
-
+    @RequestMapping("/iap/query/unionpay/{transaction_id}")
+    public ResponseEntity<String> callback(
+            @PathVariable("transaction_id") String transactionID,
+            @RequestParam Map<String, String> allRequestParams,
+            HttpServletRequest request, HttpServletResponse response) {
+        Map<String, String> req = new HashMap<String, String>();
+        req.put("version", UpmpConfig.VERSION);
+        req.put("charset", UpmpConfig.CHARSET);
+        req.put("transType", "01");
+        req.put("merId", UpmpConfig.MER_ID);
+        req.put("orderTime", "20141217153553");
+        req.put("orderNumber", "54aae09085bf11e4978a90b8d0235395");
+        Map<String, String> resp = new HashMap<String, String>();
+        boolean validResp = UpmpService.query(req, resp);
+        if (validResp) {
+            return new ResponseEntity<String>(resp.get("transStatus"), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<String>("InvalidResponse", HttpStatus.OK);
+        }
+    }
 }
