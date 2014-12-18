@@ -45,10 +45,6 @@ public class UnionPayCallbackController {
     public ResponseEntity<String> callback(
             @RequestParam Map<String, String> allRequestParams,
             HttpServletRequest request, HttpServletResponse response) {
-        System.out.println("=================getQueryString");
-        System.out.println(request.getQueryString());
-        logParams(allRequestParams);
-        System.out.println("=================");
         boolean verified = UpmpService.verifySignature(allRequestParams);
         if (!verified) {
             logParams(allRequestParams);
@@ -72,27 +68,6 @@ public class UnionPayCallbackController {
     }
 
     void logParams(Map<String, String> params) {
-        /*
-        HashMap<String, String> map = new HashMap<String, String>();
-        map.put("orderTime", "20141212155323");
-        map.put("settleDate", "1212");
-        map.put("orderNumber", "41e14fb081bb11e4a4eb90b8d0467bc7");
-        map.put("exchangeRate", "0");
-        map.put("signature", "19e9fe4eba8a14b7630229e5cf2e90bc");
-        map.put("settleCurrency", "156");
-        map.put("signMethod", "MD5");
-        map.put("transType", "01");
-        map.put("respCode", "00");
-        map.put("charset", "UTF-8");
-        map.put("sysReserved", "{traceTime=1212155323&acqCode=00215800&traceNumber=009739}");
-        map.put("version", "1.0.0");
-        map.put("settleAmount", "1");
-        map.put("transStatus", "00");
-        map.put("reqReserved", "41e14fb0-81bb-11e4-a4eb-90b8d0467bc7");
-        map.put("merId", "880000000001696");
-        map.put("qn", "201412121553230097397");
-        */
-
         System.out.println("============================================");
         for (String key : params.keySet()) {
             System.out.println(key + " : " + params.get(key));
