@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/servo/!svn/ver/31894/kiichange/trunk/payment_jobs
+END
+notify.py
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/servo/!svn/ver/31896/kiichange/trunk/payment_jobs/notify.py
+END
+calltask.py
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/servo/!svn/ver/31896/kiichange/trunk/payment_jobs/calltask.py
+END
+utils.py
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/servo/!svn/ver/31896/kiichange/trunk/payment_jobs/utils.py
+END
+tasks.py
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/servo/!svn/ver/31896/kiichange/trunk/payment_jobs/tasks.py
+END
