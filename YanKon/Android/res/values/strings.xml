@@ -62,5 +62,7 @@
     <string name="edit_group">Edit group</string>
     <string name="add_group">Create new group</string>
     <string name="empty_scene_name">Scene name cannot be empty</string>
+    <string name="brightness">Brightness</string>
+    <string name="ct">CT</string>
 
 </resources>

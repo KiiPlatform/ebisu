@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
+import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.Toast;
@@ -28,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class LightInfoActivity extends Activity implements OnColorChangedListener, AdapterView.OnItemSelectedListener, CompoundButton.OnCheckedChangeListener {
+public class LightInfoActivity extends Activity implements OnColorChangedListener, AdapterView.OnItemSelectedListener, CompoundButton.OnCheckedChangeListener, SeekBar.OnSeekBarChangeListener {
 
     public static final String EXTRA_LIGHT_ID = "light_id";
     public static final String EXTRA_GROUP_ID = "group_id";
@@ -46,6 +47,8 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
     ColorSlider mValue;
 
     Switch mSwitch;
+    SeekBar mBrightnessSeekBar;
+    SeekBar mCTSeekBar;
 
     Spinner mColorSpinner;
     List<Action> mActions;
@@ -101,6 +104,12 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
         mSwitch = (Switch) findViewById(R.id.light_switch);
         mSwitch.setChecked(is_on);
         mSwitch.setOnCheckedChangeListener(this);
+        mBrightnessSeekBar = (SeekBar) findViewById(R.id.seekbar_brightness);
+        mBrightnessSeekBar.setProgress(brightness);
+        mBrightnessSeekBar.setOnSeekBarChangeListener(this);
+        mCTSeekBar = (SeekBar) findViewById(R.id.seekbar_ct);
+        mCTSeekBar.setProgress(CT);
+        mCTSeekBar.setOnSeekBarChangeListener(this);
     }
 
     void loadColors() {
@@ -219,8 +228,39 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         is_on = isChecked;
-        ContentValues values = new ContentValues();
-        values.put("is_on", is_on);
+        ContentValues values = null;
+        if (light_id >= 0) {
+            values = new ContentValues();
+            values.put("is_on", is_on);
+        }
         saveChange(values);
+    }
+
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        if (!fromUser) {
+            return;
+        }
+        if (seekBar == mBrightnessSeekBar) {
+            brightness = progress;
+            ContentValues values = new ContentValues();
+            values.put("brightness", brightness);
+            saveChange(values);
+        } else if (seekBar == mCTSeekBar) {
+            CT = progress;
+            ContentValues values = new ContentValues();
+            values.put("CT", CT);
+            saveChange(values);
+        }
+    }
+
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+
+    }
+
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+
     }
 }
