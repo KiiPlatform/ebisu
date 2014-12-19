@@ -24,7 +24,7 @@ public class YanKonProvider extends ContentProvider {
     public static final String TABLE_COLORS = "colors";
     public static final String TABLE_ACTIONS = "actions";
     public static final String TABLE_LIGHTS = "lights";
-    public static final String VIEW_LIGHTS = "lights_view";
+//    public static final String VIEW_LIGHTS = "lights_view";
     public static final String TABLE_MODELS = "models";
     public static final String VIEW_LIGHT_GROUPS = "light_groups_view";
     public static final String TABLE_LIGHT_GROUPS = "light_groups";
@@ -171,7 +171,7 @@ public class YanKonProvider extends ContentProvider {
                 return c;
             }
             case ID_LIGHTS: {
-                Cursor c = database.query(VIEW_LIGHTS, projection, selection, selectionArgs,
+                Cursor c = database.query(TABLE_LIGHTS, projection, selection, selectionArgs,
                         null, null, sortOrder);
                 c.setNotificationUri(getContext().getContentResolver(), uri);
                 return c;

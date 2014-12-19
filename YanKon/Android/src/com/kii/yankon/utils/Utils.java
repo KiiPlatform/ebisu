@@ -2,8 +2,14 @@ package com.kii.yankon.utils;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.database.Cursor;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
+import android.widget.Toast;
+
+import com.kii.cloud.storage.KiiUser;
+import com.kii.yankon.model.Light;
+import com.kii.yankon.providers.YanKonProvider;
 
 /**
  * Created by tian on 14/11/25:上午9:00.
@@ -22,13 +28,17 @@ public class Utils {
         return dp;
     }
 
-    public static String byteArrayToString(byte[] cmd) {
+    public static String byteArrayToString(byte[] cmd, char seperator) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < cmd.length; i++) {
-            sb.append(' ');
+            sb.append(seperator);
             sb.append(Utils.ByteToHexString(cmd[i]));
         }
         return sb.toString();
+    }
+
+    public static String byteArrayToString(byte[] cmd) {
+        return byteArrayToString(cmd, ' ');
     }
 
     public static void byteArrayToString(byte[] cmd, StringBuilder sb) {
@@ -40,6 +50,30 @@ public class Utils {
 
     public static int unsignedByteToInt(byte b) {
         return (int) b & 0xFF;
+    }
+
+    public static int readInt16(byte[] data, int offset) {
+        return unsignedByteToInt(data[offset + 1]) * 256 + unsignedByteToInt(data[offset]);
+    }
+
+    public static void Int16ToByte(int data, byte[] arr, int pos) {
+        arr[pos + 1] = (byte) (data / 256);
+        arr[pos] = (byte) (data % 256);
+    }
+
+    public static int getRGBColor(byte[] data) {
+        return unsignedByteToInt(data[0]) * 256 * 256 + unsignedByteToInt(data[1]) * 256 + unsignedByteToInt(data[2]);
+    }
+
+    public static String stringFromBytes(byte[] data) {
+        int size = 0;
+        while (size < data.length) {
+            if (data[size] == 0) {
+                break;
+            }
+            size++;
+        }
+        return new String(data, 0, size);
     }
 
     public static int char2int(char c) {
@@ -70,6 +104,29 @@ public class Utils {
             ch[1] = (char) ('a' + t - 10);
         }
         return new String(ch);
+    }
+
+    public static void controlLight(Context context, int light_id) {
+        Light light = null;
+        Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "_id=" + light_id, null, null);
+        if (c != null) {
+            if (c.moveToFirst()) {
+                light = new Light();
+                light.brightness = c.getInt(c.getColumnIndex("brightness"));
+                light.CT = c.getInt(c.getColumnIndex("CT"));
+                light.color = c.getInt(c.getColumnIndex("color"));
+                light.ip = c.getString(c.getColumnIndex("IP"));
+                light.is_on = c.getInt(c.getColumnIndex("is_on")) != 0;
+            }
+            c.close();
+        }
+        if (light == null) {
+            Toast.makeText(context, "Cannot load light info", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (KiiUser.isLoggedIn()) {
+
+        }
     }
 
 }

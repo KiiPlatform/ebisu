@@ -23,7 +23,7 @@ public class NetworkReceiverService extends Service {
         super.onCreate();
         WifiManager manager = (WifiManager) this
                 .getSystemService(Context.WIFI_SERVICE);
-        udpHelper = new UdpHelper(manager);
+        udpHelper = new UdpHelper(this, manager);
         mWorkThread = new Thread(udpHelper);
         mWorkThread.start();
     }

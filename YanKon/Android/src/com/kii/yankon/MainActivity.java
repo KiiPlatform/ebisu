@@ -26,6 +26,7 @@ import com.kii.yankon.fragments.ProfileFragment;
 import com.kii.yankon.fragments.ScenesFragment;
 import com.kii.yankon.fragments.SettingsFragment;
 import com.kii.yankon.services.NetworkReceiverService;
+import com.kii.yankon.services.NetworkSenderService;
 import com.kii.yankon.utils.Constants;
 import com.kii.yankon.utils.Network;
 import com.kii.yankon.utils.Settings;
@@ -68,6 +69,7 @@ public class MainActivity extends Activity
         filter.addAction(Constants.INTENT_LOGGED_OUT);
         LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, filter);
         startService(new Intent(this, NetworkReceiverService.class));
+        NetworkSenderService.sendCmd(this, (String) null, Constants.SEARCH_LIGHTS_CMD);
     }
 
     @Override

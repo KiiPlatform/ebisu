@@ -103,7 +103,7 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
             l.name = c.getString(c.getColumnIndex("name"));
             l.id = c.getInt(c.getColumnIndex("_id"));
             l.UUID = c.getString(c.getColumnIndex("UUID"));
-            l.modelName = c.getString(c.getColumnIndex("m_name"));
+            l.model = c.getString(c.getColumnIndex("model"));
             mLightIdMap.append(l.id, l);
         }
         c.close();
@@ -329,7 +329,7 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
                 Light l = mLightIdMap.valueAt(childPosition);
                 name = l.name;
                 icon.setBackgroundResource(R.drawable.light_on);
-                line2 = getString(R.string.light_model_format, l.modelName);
+                line2 = getString(R.string.light_model_format, l.model);
                 key = "l" + l.id;
             } else {
                 LightGroup g = mGroupIdMap.valueAt(childPosition);
