@@ -12,9 +12,9 @@
         android:gravity="center_horizontal"
         android:orientation="vertical">
 
-        <Spinner
-            android:id="@+id/action_spinner"
-            android:layout_width="match_parent"
+        <Switch
+            android:id="@+id/light_switch"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
         <Spinner

@@ -25,7 +25,6 @@ import com.kii.yankon.providers.YanKonProvider;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.UUID;
 
 /**
  * Created by Evan on 14/12/8.
@@ -102,7 +101,6 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
             Light l = new Light();
             l.name = c.getString(c.getColumnIndex("name"));
             l.id = c.getInt(c.getColumnIndex("_id"));
-            l.UUID = c.getString(c.getColumnIndex("UUID"));
             l.model = c.getString(c.getColumnIndex("model"));
             mLightIdMap.append(l.id, l);
         }
@@ -112,7 +110,6 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
             LightGroup group = new LightGroup();
             group.name = c.getString(c.getColumnIndex("name"));
             group.id = c.getInt(c.getColumnIndex("_id"));
-            group.UUID = c.getString(c.getColumnIndex("UUID"));
             group.num = c.getInt(c.getColumnIndex("num"));
             mGroupIdMap.append(group.id, group);
             addGroup(group);
@@ -209,7 +206,6 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
         ContentValues values = new ContentValues();
         values.put("name", gName);
         if (scene_id < 0) {
-            values.put("UUID", UUID.randomUUID().toString());
             values.put("created_time", System.currentTimeMillis());
             Uri uri = cr.insert(YanKonProvider.URI_SCENES, values);
             scene_id = Integer.parseInt(uri.getLastPathSegment());

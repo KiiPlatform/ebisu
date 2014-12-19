@@ -22,9 +22,9 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.kii.yankon.providers.YanKonProvider;
+import com.kii.yankon.utils.Constants;
 
 import java.util.HashSet;
-import java.util.UUID;
 
 
 public class AddLightGroupsActivity extends Activity implements View.OnClickListener, LoaderManager.LoaderCallbacks<Cursor>, AdapterView.OnItemClickListener {
@@ -92,7 +92,9 @@ public class AddLightGroupsActivity extends Activity implements View.OnClickList
         ContentValues values = new ContentValues();
         values.put("name", gName);
         if (group_id < 0) {
-            values.put("UUID", UUID.randomUUID().toString());
+            values.put("brightness", Constants.DEFAULT_BRIGHTNESS);
+            values.put("CT", Constants.DEFAULT_CT);
+            values.put("color", Constants.DEFAULT_COLOR);
             values.put("created_time", System.currentTimeMillis());
             Uri uri = cr.insert(YanKonProvider.URI_LIGHT_GROUPS, values);
             group_id = Integer.parseInt(uri.getLastPathSegment());

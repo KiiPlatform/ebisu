@@ -1,5 +1,7 @@
 package com.kii.yankon.utils;
 
+import android.graphics.Color;
+
 /**
  * Created by tian on 14/11/30:下午5:46.
  */
@@ -10,6 +12,16 @@ public class Constants {
     public static final String INTENT_LOGGED_OUT = "com.kii.yankon.intent.log_out";
 
     public static final int DEFAULT_PORT = 5015;
+
+    public static final int DEFAULT_COLOR = Color.BLUE;
+
+    public static final int DEFAULT_CT = 70;
+
+    public static final int DEFAULT_BRIGHTNESS = 80;
+
+    public static final int MIN_CT = 15;
+
+    public static final int MIN_BRIGHTNESS = 15;
 
     public static final String ACTION_LIGHT_UPDATED = "com.kii.yankon.light.updated";
 

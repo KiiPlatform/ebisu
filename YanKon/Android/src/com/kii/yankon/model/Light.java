@@ -15,7 +15,6 @@ public class Light {
     public int CT;
 
     public int id = -1;
-    public String UUID;
 
     @Override
     public boolean equals(Object o) {

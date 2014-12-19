@@ -129,4 +129,7 @@ public class Utils {
         }
     }
 
+    public static void controlGroup(Context context, int group_id, boolean is_on) {
+
+    }
 }

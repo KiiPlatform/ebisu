@@ -117,7 +117,7 @@ public class UdpHelper implements Runnable {
                 case 1:
                     if (attr_id == 1) {
                         String mac = Utils.byteArrayToString(sub_data, ':');
-                        values.put("UUID", mac);
+                        values.put("MAC", mac);
                         light = Global.gLightsMacMap.get(mac);
                         if (light == null) {
                             light = new Light();
@@ -159,7 +159,7 @@ public class UdpHelper implements Runnable {
         if (light != null) {
             light.model = "model1";
             if (light.id < 0) {
-                Cursor c = mContext.getContentResolver().query(YanKonProvider.URI_LIGHTS, new String[]{"_id"}, "UUID=(?)", new String[]{light.mac}, null);
+                Cursor c = mContext.getContentResolver().query(YanKonProvider.URI_LIGHTS, new String[]{"_id"}, "MAC=(?)", new String[]{light.mac}, null);
                 if (c != null) {
                     if (c.moveToFirst()) {
                         light.id = c.getInt(0);

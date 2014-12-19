@@ -164,8 +164,8 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
         values.put("is_on", currLight.is_on);
         values.put("IP", currLight.ip);
         values.put("color", currLight.color);
-        values.put("brightness", currLight.brightness);
-        values.put("CT", currLight.CT);
+        values.put("brightness", Math.max(currLight.brightness, Constants.MIN_BRIGHTNESS));
+        values.put("CT", Math.max(currLight.CT, Constants.MIN_CT));
         values.put("name", text);
         values.put("owned_time", System.currentTimeMillis());
         getContentResolver().insert(YanKonProvider.URI_LIGHTS, values);
