@@ -21,7 +21,7 @@ public class UpmpConfig {
 
     public static String MER_ID = "802110048990989";
 
-    public static String MER_BACK_END_URL = "http://118.102.25.205:8080/iap-webapp/iap/callback/unionpay";
+    public static String MER_BACK_END_URL = "http://youwill.kiicloud.com:8080/iap-webapp/iap/callback/unionpay";
 
     //public static String MER_FRONT_END_URL = "http://www.yourdomain.com/your_path/yourBackEndUrl";
 
