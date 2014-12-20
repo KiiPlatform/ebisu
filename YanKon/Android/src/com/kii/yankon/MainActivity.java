@@ -11,11 +11,14 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.DrawerLayout;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.kii.cloud.storage.KiiUser;
+import com.kii.cloud.storage.callback.LoginCallBack;
 import com.kii.yankon.fragments.ActionsFragment;
 import com.kii.yankon.fragments.ColorsFragment;
 import com.kii.yankon.fragments.LightGroupsFragment;
@@ -32,7 +35,7 @@ import com.kii.yankon.utils.Network;
 import com.kii.yankon.utils.Settings;
 
 public class MainActivity extends Activity
-        implements NavigationDrawerFragment.NavigationDrawerCallbacks {
+        implements NavigationDrawerFragment.NavigationDrawerCallbacks, LoginCallBack {
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the
@@ -70,15 +73,14 @@ public class MainActivity extends Activity
         LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, filter);
         startService(new Intent(this, NetworkReceiverService.class));
         NetworkSenderService.sendCmd(this, (String) null, Constants.SEARCH_LIGHTS_CMD);
+
+        loginKii();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (!Network.getLocalIP(this)) {
-            Toast.makeText(this, "Network is not connected", Toast.LENGTH_SHORT).show();
-            finish();
-        }
+        Network.getLocalIP(this);
     }
 
     @Override
@@ -193,4 +195,20 @@ public class MainActivity extends Activity
             }
         }
     };
+
+    protected void loginKii() {
+        String token = Settings.getToken();
+        if (!KiiUser.isLoggedIn() && !TextUtils.isEmpty(token)) {
+            KiiUser.loginWithToken(this, token, Settings.getExp());
+        }
+    }
+
+    @Override
+    public void onLoginCompleted(KiiUser kiiUser, Exception e) {
+        if (kiiUser != null) {
+            Toast.makeText(this, "Kii logged in", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Kii login failed", Toast.LENGTH_SHORT).show();
+        }
+    }
 }

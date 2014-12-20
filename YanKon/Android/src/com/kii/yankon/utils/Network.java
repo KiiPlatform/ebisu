@@ -41,7 +41,7 @@ public class Network {
                 udpSocket.send(dataPacket);
 
                 udpSocket.close();
-                Log.e(LOG_TAG, "Send out cmd");
+                Log.e(LOG_TAG, "Send out cmd:"+ip);
             } catch (Exception e) {
                 Log.e(LOG_TAG, Log.getStackTraceString(e));
             }
@@ -49,14 +49,19 @@ public class Network {
     }
 
     public static boolean getLocalIP(Context context) {
+        Global.isWifiConnected = false;
         WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         if (!wifiManager.isWifiEnabled()) {
             return false;
         }
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        if (wifiInfo == null) {
+            return false;
+        }
         int ipAddress = wifiInfo.getIpAddress();
         Global.MY_IP = intToIp(ipAddress);
         Global.BROADCAST_IP = broadcastIP(ipAddress);
+        Global.isWifiConnected = true;
         return true;
     }
 

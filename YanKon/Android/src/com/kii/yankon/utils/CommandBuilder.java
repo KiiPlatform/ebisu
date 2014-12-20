@@ -53,4 +53,24 @@ public class CommandBuilder {
         }
         return result;
     }
+
+    public static byte[] buildLightInfo(boolean is_on, int color, int brightness, int CT) {
+        CommandBuilder cb = new CommandBuilder();
+        byte[] data = new byte[1];
+        data[0] = (byte) (is_on ? 1 : 0);
+        cb.append((byte) 10, (byte) 0, (byte) 1, data);
+        data = new byte[3];
+        data[2] = (byte) (color % 256);
+        color /= 256;
+        data[1] = (byte) (color % 256);
+        data[0] = (byte) (color / 256);
+        cb.append((byte) 10, (byte) 1, (byte) 1, data);
+        data = new byte[1];
+        data[0] = (byte) brightness;
+        cb.append((byte) 10, (byte) 2, (byte) 1, data);
+        data = new byte[1];
+        data[0] = (byte) CT;
+        cb.append((byte) 10, (byte) 3, (byte) 1, data);
+        return cb.build();
+    }
 }

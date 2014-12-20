@@ -3,6 +3,7 @@ package com.kii.yankon.utils;
 import android.content.Context;
 import android.content.res.Resources;
 import android.database.Cursor;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.widget.Toast;
@@ -10,6 +11,7 @@ import android.widget.Toast;
 import com.kii.cloud.storage.KiiUser;
 import com.kii.yankon.model.Light;
 import com.kii.yankon.providers.YanKonProvider;
+import com.kii.yankon.services.NetworkSenderService;
 
 /**
  * Created by tian on 14/11/25:上午9:00.
@@ -117,12 +119,21 @@ public class Utils {
                 light.color = c.getInt(c.getColumnIndex("color"));
                 light.ip = c.getString(c.getColumnIndex("IP"));
                 light.is_on = c.getInt(c.getColumnIndex("is_on")) != 0;
+                light.connected = c.getInt(c.getColumnIndex("connected")) != 0;
             }
             c.close();
         }
         if (light == null) {
             Toast.makeText(context, "Cannot load light info", Toast.LENGTH_SHORT).show();
             return;
+        }
+        if (light.connected) {
+            if (TextUtils.isEmpty(light.ip)) {
+                Toast.makeText(context, "Cannot get light IP", Toast.LENGTH_SHORT).show();
+            } else {
+                byte[] cmd = CommandBuilder.buildLightInfo(light.is_on, light.color, light.brightness, light.CT);
+                NetworkSenderService.sendCmd(context, light.ip, cmd);
+            }
         }
         if (KiiUser.isLoggedIn()) {
 

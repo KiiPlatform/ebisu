@@ -1,8 +1,8 @@
 package com.kii.yankon.services;
 
 import android.app.IntentService;
-import android.content.Intent;
 import android.content.Context;
+import android.content.Intent;
 
 import com.kii.yankon.utils.Network;
 

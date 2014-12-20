@@ -27,6 +27,7 @@ public class App extends Application {
         Global.gLightsMacMap = new HashMap<>();
         ContentValues values = new ContentValues();
         values.put("connected", false);
+        values.put("IP", "");
 //        getContentResolver().update(YanKonProvider.URI_LIGHTS, values, null, null);
     }
 }
