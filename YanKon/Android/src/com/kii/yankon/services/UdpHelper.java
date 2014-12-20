@@ -93,6 +93,7 @@ public class UdpHelper implements Runnable {
         Light light = Global.gLightsIpMap.get(ip);
         ContentValues values = new ContentValues();
         values.put("connected", true);
+        values.put("IP",ip);
         while (pos < data.length && pos < 6 + len) {
             int dev_id = Utils.unsignedByteToInt(data[pos]);
             int attr_id = Utils.unsignedByteToInt(data[pos + 1]);

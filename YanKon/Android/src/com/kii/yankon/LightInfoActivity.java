@@ -90,7 +90,9 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
             is_on = c.getInt(c.getColumnIndex("is_on")) != 0;
         } else {
             is_on = c.getInt(c.getColumnIndex("num")) == c.getInt(c.getColumnIndex("on_num"));
-            saveChange(null);
+            ContentValues values = new ContentValues();
+            values.put("is_on", is_on);
+            saveChange(values);
         }
         c.close();
         initializeColor(color);
@@ -154,19 +156,13 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
     }
 
     void saveChange(ContentValues values) {
-        if (values == null) {
-            if (group_id >= 0) {
-                Utils.controlGroup(this, group_id, is_on);
-            }
-            return;
-        }
         values.put("synced", false);
         if (light_id >= 0) {
             getContentResolver().update(YanKonProvider.URI_LIGHTS, values, "_id=" + light_id, null);
             Utils.controlLight(this, light_id);
         } else {
             getContentResolver().update(YanKonProvider.URI_LIGHT_GROUPS, values, "_id=" + group_id, null);
-            Utils.controlGroup(this, group_id, is_on);
+            Utils.controlGroup(this, group_id);
         }
     }
 
@@ -228,11 +224,8 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         is_on = isChecked;
-        ContentValues values = null;
-        if (light_id >= 0) {
-            values = new ContentValues();
-            values.put("is_on", is_on);
-        }
+        ContentValues values = new ContentValues();
+        values.put("is_on", is_on);
         saveChange(values);
     }
 

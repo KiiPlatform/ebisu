@@ -26,6 +26,7 @@ import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.services.NetworkSenderService;
 import com.kii.yankon.utils.Constants;
 import com.kii.yankon.utils.Global;
+import com.kii.yankon.utils.KiiSync;
 import com.pixplicity.multiviewpager.MultiViewPager;
 
 import java.util.ArrayList;
@@ -55,31 +56,31 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
         Light l = new Light();
         l.name = "Unknown1";
         l.model = "model1";
-        l.mac = "1";
+        l.mac = "11";
         Global.gLightsMacMap.put(l.mac, l);
         addLight(l);
         l = new Light();
         l.name = "Unknown2";
         l.model = "model1";
-        l.mac = "2";
+        l.mac = "22";
         Global.gLightsMacMap.put(l.mac, l);
         addLight(l);
         l = new Light();
         l.name = "Unknown3";
         l.model = "model1";
-        l.mac = "3";
+        l.mac = "33";
         Global.gLightsMacMap.put(l.mac, l);
         addLight(l);
         l = new Light();
         l.name = "Unknown4";
         l.model = "model1";
-        l.mac = "4";
+        l.mac = "44";
         Global.gLightsMacMap.put(l.mac, l);
         addLight(l);
         l = new Light();
         l.name = "Unknown5";
         l.model = "model1";
-        l.mac = "5";
+        l.mac = "55";
         Global.gLightsMacMap.put(l.mac, l);
         addLight(l);
 
@@ -169,6 +170,14 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
         values.put("name", text);
         values.put("owned_time", System.currentTimeMillis());
         getContentResolver().insert(YanKonProvider.URI_LIGHTS, values);
+        new Thread() {
+            @Override
+            public void run() {
+                Cursor c = getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "MAC=(?)", new String[]{currLight.mac}, null);
+                KiiSync.syncLights(AddLightsActivity.this, c);
+                c.close();
+            }
+        }.start();
         View view = mPager.findViewWithTag(currLight);
         ViewHolder holder = new ViewHolder(view);
         holder.title.setText(currLight.name);

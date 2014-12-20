@@ -13,6 +13,8 @@ import com.kii.yankon.model.Light;
 import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.services.NetworkSenderService;
 
+import java.util.ArrayList;
+
 /**
  * Created by tian on 14/11/25:上午9:00.
  */
@@ -108,8 +110,8 @@ public class Utils {
         return new String(ch);
     }
 
-    public static void controlLight(Context context, int light_id) {
-        Light light = null;
+    public static void controlLight(final Context context, final int light_id) {
+        final Light light;
         Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "_id=" + light_id, null, null);
         if (c != null) {
             if (c.moveToFirst()) {
@@ -120,8 +122,12 @@ public class Utils {
                 light.ip = c.getString(c.getColumnIndex("IP"));
                 light.is_on = c.getInt(c.getColumnIndex("is_on")) != 0;
                 light.connected = c.getInt(c.getColumnIndex("connected")) != 0;
+            } else {
+                light = null;
             }
             c.close();
+        } else {
+            light = null;
         }
         if (light == null) {
             Toast.makeText(context, "Cannot load light info", Toast.LENGTH_SHORT).show();
@@ -136,11 +142,65 @@ public class Utils {
             }
         }
         if (KiiUser.isLoggedIn()) {
+            new Thread() {
+                @Override
+                public void run() {
+                    Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "_id=" + light_id, null, null);
+                    boolean ret = KiiSync.syncLights(context, c);
+                    c.close();
+                    if (ret && !light.connected) {
 
+                    }
+                }
+            }.start();
         }
     }
 
-    public static void controlGroup(Context context, int group_id, boolean is_on) {
+    public static void controlGroup(final Context context, final int group_id) {
+        int brightness = Constants.DEFAULT_BRIGHTNESS;
+        int CT = Constants.DEFAULT_CT;
+        int color = Constants.DEFAULT_COLOR;
+        boolean is_on = true;
+        boolean loadedInfo =false;
+        Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUPS, null, "_id=" + group_id, null, null);
+        if (c != null) {
+            if (c.moveToFirst()) {
+                brightness = c.getInt(c.getColumnIndex("brightness"));
+                CT = c.getInt(c.getColumnIndex("CT"));
+                color = c.getInt(c.getColumnIndex("color"));
+                is_on = c.getInt(c.getColumnIndex("is_on")) != 0;
+                loadedInfo = true;
+            }
+            c.close();
+        }
+        if (!loadedInfo) {
+            Toast.makeText(context, "Cannot load group info", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        ArrayList<String> connectedLights = new ArrayList<>();
+        ArrayList<String> unconnectedLights = new ArrayList<>();
+        c = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUP_REL, null, "group_id=" + group_id, null, null);
+        if (c != null) {
+            while (c.moveToNext()) {
+                boolean connected = c.getInt(c.getColumnIndex("connected")) > 0;
+                String ip = c.getString(c.getColumnIndex("IP"));
+                String mac = c.getString(c.getColumnIndex("MAC"));
+                if (connected && !TextUtils.isEmpty(ip)) {
+                    connectedLights.add(ip);
+                } else {
+                    unconnectedLights.add(mac);
+                }
+            }
+            c.close();
+        }
+        if (connectedLights.size()>0) {
+            byte[] cmd = CommandBuilder.buildLightInfo(is_on, color, brightness, CT);
+            String[] ips = connectedLights.toArray(new String[0]);
+            NetworkSenderService.sendCmd(context, ips, cmd);
+        }
 
+        if (unconnectedLights.size()>0) {
+
+        }
     }
 }
