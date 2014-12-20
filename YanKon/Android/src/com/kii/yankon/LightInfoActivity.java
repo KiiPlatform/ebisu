@@ -92,7 +92,7 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
             is_on = c.getInt(c.getColumnIndex("num")) == c.getInt(c.getColumnIndex("on_num"));
             ContentValues values = new ContentValues();
             values.put("is_on", is_on);
-            saveChange(values);
+            saveChange(values, false);
         }
         c.close();
         initializeColor(color);
@@ -112,6 +112,13 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
         mCTSeekBar = (SeekBar) findViewById(R.id.seekbar_ct);
         mCTSeekBar.setProgress(CT);
         mCTSeekBar.setOnSeekBarChangeListener(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        ContentValues values = new ContentValues();
+        saveChange(values, true);
     }
 
     void loadColors() {
@@ -155,14 +162,14 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
         mValue.setColors(Color.WHITE, color);
     }
 
-    void saveChange(ContentValues values) {
+    void saveChange(ContentValues values, boolean doItNow) {
         values.put("synced", false);
         if (light_id >= 0) {
             getContentResolver().update(YanKonProvider.URI_LIGHTS, values, "_id=" + light_id, null);
-            Utils.controlLight(this, light_id);
+            Utils.controlLight(this, light_id, doItNow);
         } else {
             getContentResolver().update(YanKonProvider.URI_LIGHT_GROUPS, values, "_id=" + group_id, null);
-            Utils.controlGroup(this, group_id);
+            Utils.controlGroup(this, group_id, doItNow);
         }
     }
 
@@ -181,7 +188,7 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
         matchColor();
         ContentValues values = new ContentValues();
         values.put("color", color);
-        saveChange(values);
+        saveChange(values, false);
     }
 
     @Override
@@ -226,7 +233,7 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
         is_on = isChecked;
         ContentValues values = new ContentValues();
         values.put("is_on", is_on);
-        saveChange(values);
+        saveChange(values, false);
     }
 
     @Override
@@ -238,12 +245,12 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
             brightness = progress;
             ContentValues values = new ContentValues();
             values.put("brightness", brightness);
-            saveChange(values);
+            saveChange(values, false);
         } else if (seekBar == mCTSeekBar) {
             CT = progress;
             ContentValues values = new ContentValues();
             values.put("CT", CT);
-            saveChange(values);
+            saveChange(values, false);
         }
     }
 

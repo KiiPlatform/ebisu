@@ -110,7 +110,7 @@ public class Utils {
         return new String(ch);
     }
 
-    public static void controlLight(final Context context, final int light_id) {
+    public static void controlLight(final Context context, final int light_id, boolean doItNow) {
         final Light light;
         Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "_id=" + light_id, null, null);
         if (c != null) {
@@ -141,7 +141,7 @@ public class Utils {
                 NetworkSenderService.sendCmd(context, light.ip, cmd);
             }
         }
-        if (KiiUser.isLoggedIn()) {
+        if (doItNow && KiiUser.isLoggedIn()) {
             new Thread() {
                 @Override
                 public void run() {
@@ -156,7 +156,7 @@ public class Utils {
         }
     }
 
-    public static void controlGroup(final Context context, final int group_id) {
+    public static void controlGroup(final Context context, final int group_id, boolean doItNow) {
         int brightness = Constants.DEFAULT_BRIGHTNESS;
         int CT = Constants.DEFAULT_CT;
         int color = Constants.DEFAULT_COLOR;

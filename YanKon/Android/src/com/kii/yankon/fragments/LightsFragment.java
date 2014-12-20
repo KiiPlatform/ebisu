@@ -198,7 +198,7 @@ public class LightsFragment extends BaseListFragment {
                     values.put("is_on", !is_on);
                     values.put("synced", false);
                     getActivity().getContentResolver().update(YanKonProvider.URI_LIGHTS, values, "_id=" + light_id, null);
-                    Utils.controlLight(getActivity(), light_id);
+                    Utils.controlLight(getActivity(), light_id, true);
                 }
             });
         }
