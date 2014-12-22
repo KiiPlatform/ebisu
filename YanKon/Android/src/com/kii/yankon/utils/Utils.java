@@ -35,7 +35,8 @@ public class Utils {
     public static String byteArrayToString(byte[] cmd, char seperator) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < cmd.length; i++) {
-            sb.append(seperator);
+            if (seperator != 0)
+                sb.append(seperator);
             sb.append(Utils.ByteToHexString(cmd[i]));
         }
         return sb.toString();
@@ -66,7 +67,7 @@ public class Utils {
     }
 
     public static int getRGBColor(byte[] data) {
-        return unsignedByteToInt(data[0]) * 256 * 256 + unsignedByteToInt(data[1]) * 256 + unsignedByteToInt(data[2]);
+        return unsignedByteToInt(data[2]) * 256 * 256 + unsignedByteToInt(data[1]) * 256 + unsignedByteToInt(data[0]);
     }
 
     public static String stringFromBytes(byte[] data) {
@@ -98,14 +99,14 @@ public class Utils {
         if (t < 10) {
             ch[0] = (char) ('0' + t);
         } else {
-            ch[0] = (char) ('a' + t - 10);
+            ch[0] = (char) ('A' + t - 10);
         }
 
         t = a % 16;
         if (t < 10) {
             ch[1] = (char) ('0' + t);
         } else {
-            ch[1] = (char) ('a' + t - 10);
+            ch[1] = (char) ('A' + t - 10);
         }
         return new String(ch);
     }
@@ -161,7 +162,7 @@ public class Utils {
         int CT = Constants.DEFAULT_CT;
         int color = Constants.DEFAULT_COLOR;
         boolean is_on = true;
-        boolean loadedInfo =false;
+        boolean loadedInfo = false;
         Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUPS, null, "_id=" + group_id, null, null);
         if (c != null) {
             if (c.moveToFirst()) {
@@ -193,13 +194,22 @@ public class Utils {
             }
             c.close();
         }
-        if (connectedLights.size()>0) {
+        if (connectedLights.size() > 0) {
             byte[] cmd = CommandBuilder.buildLightInfo(is_on, color, brightness, CT);
             String[] ips = connectedLights.toArray(new String[0]);
             NetworkSenderService.sendCmd(context, ips, cmd);
         }
-
-        if (unconnectedLights.size()>0) {
+        if (doItNow && KiiUser.isLoggedIn()) {
+            new Thread() {
+                @Override
+                public void run() {
+                    Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUP_REL, null, "_id=" + group_id, null, null);
+                    KiiSync.syncLightGroups(context, c);
+                    c.close();
+                }
+            }.start();
+        }
+        if (unconnectedLights.size() > 0) {
 
         }
     }

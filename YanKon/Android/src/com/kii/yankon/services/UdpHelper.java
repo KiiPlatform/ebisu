@@ -117,7 +117,7 @@ public class UdpHelper implements Runnable {
                     break;
                 case 1:
                     if (attr_id == 1) {
-                        String mac = Utils.byteArrayToString(sub_data, ':');
+                        String mac = Utils.byteArrayToString(sub_data, (char)0);
                         values.put("MAC", mac);
                         light = Global.gLightsMacMap.get(mac);
                         if (light == null) {
