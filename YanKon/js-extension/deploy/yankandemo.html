@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="../jquery-1.11.1.min.js" ></script>
+<script src="../KiiSDK2.1-KiiSDK.js"  ></script>
+<script src="yankandemo.js" ></script>
+<script src="mock.js" ></script>
+<script>
+
+
+var app_id="06e806e2";
+var app_key="31afdcdfd72ade025559176a40a20875";
+var clientID="9a08dd2cf74ef414e6a5ea8033e4a0a4";
+var clientSecret="a82f1e144c111e11e4a9d62e93ef8c2a301e3efd6b6b1862ad4dac0a052a2d9e";
+
+var url= KiiSite.JP;
+
+var context=new Context(app_id,app_key,url,clientID,clientSecret,function(){});
+
+context.remote="foo";
+
+function addThing(){
+	
+	context.setUserLogin("jstest","test");
+	var thingID="abcdefghijklmn544";
+	
+	var thing=new KiiThing(thingID);
+	
+//	thing.registThing(
+//		{"_password":"123456","batchName":100,"_thingType":"Light"},
+//		function(entry){
+			context.fireFun("loginThing",{"thingID":thingID,"batchName":100});
+//		}
+//	);
+}
+
+function fireThing(){
+	context.setUserLogin("jstest","test");
+	
+	context.fireFun("fireLamp",{"thingID":"abcdefghijklmn5","action":"100"});
+	
+}
+
+</script>
+
+<li><input type="button" value="add thing" onclick="addThing()" />
+<li>fire<input type="text" id="thingID" /><input type="button" value="fireThing" onclick="fireThing()" />
+	
+
