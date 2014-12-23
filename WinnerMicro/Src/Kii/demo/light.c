@@ -313,7 +313,7 @@ int light_onBoarding(void)
 
     if (kiiDev_getToken(vendorID, STR_PASSWORD) != 0)
     {
-/*    
+    
         if (kiiDev_register(vendorID, STR_DEVICE_TYPE, STR_PASSWORD) != 0)
         {
             printf("Onboarding failed\r\n");
@@ -324,9 +324,6 @@ int light_onBoarding(void)
             printf("Register thing success\r\n");
 	    return 0;
 	}
-*/
-        printf("Get thing token failed\r\n");
-        return -1;
     }
     else
     {
