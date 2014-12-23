@@ -8,7 +8,6 @@
 
 #define KII_ACCESS_TOKEN_SIZE   44
 #define KII_DEVICE_VENDOR_ID     64 //matches [a-zA-Z0-9-_\\.]{3,64}
-#define KII_DEVICE_ID                  20
 #define KII_PASSWORD_SIZE        50  //Matches ^[\\u0020-\\u007E]{4,50}
 #define KII_OBJECTID_SIZE 36
 #define KII_DATA_TPYE_SIZE 36

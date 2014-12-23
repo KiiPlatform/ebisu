@@ -1,10 +1,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "wm_include.h"
-#include "api.h"
-
-
 #include "kii.h"
 #include "kii_def.h"
 #include "kii_hal.h"
@@ -98,21 +94,15 @@ static int kiiPush_install(void)
     }
     buf = g_kii_data.rcvdBuf;
 
-    p1 = strstr(buf, "HTTP/1.1 201");
-    p1 = strstr(p1, "installationID");
+    if ((strstr(buf, "HTTP/1.1 201") == NULL) || (strstr(buf, "{") == NULL) || (strstr(buf, "}") == NULL) )
+    {
+        return -1;    
+    }
+    p1 = strstr(buf, "\"installationID\"");
     p1 = strstr(p1, ":");
     p1 = strstr(p1, "\"");
-	
-    if (p1 == NULL)
-    {
-	 return -1;
-    }
     p1 +=1;
     p2 = strstr(p1, "\"");
-    if (p2 == NULL)
-    {
-	 return -1;
-    }
     memset(g_kii_push.installationID, 0, KII_PUSH_INSTALLATIONID_SIZE+1);
     memcpy(g_kii_push.installationID, p1, p2-p1);
 
@@ -180,93 +170,53 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
     }
     buf = g_kii_data.rcvdBuf;
 
-    p1 = strstr(buf, "HTTP/1.1 200");
-	
-    if (p1 != NULL)
+    if ((strstr(buf, "HTTP/1.1 200") != NULL) && (strstr(buf, "{") != NULL) && (strstr(buf, "}") != NULL) )
     {
         //get username
-        p1 = strstr(buf, "username");
+        p1 = strstr(buf, "\"username\"");
         p1 = strstr(p1, ":");
         p1 = strstr(p1, "\"");
-
-        if (p1 == NULL)
-        {
-	     return  KIIPUSH_ENDPOINT_ERROR;
-        }
         p1 +=1;
         p2 = strstr(p1, "\"");
-        if (p2 == NULL)
-        {
-	     return KIIPUSH_ENDPOINT_ERROR;
-        }
-        memset(g_kii_push.username, 0, KII_PUSH_USERNAME+1);
+        memset(g_kii_push.username, 0, KII_PUSH_USERNAME_SIZE+1);
         memcpy(g_kii_push.username, p1, p2-p1);
 
 	//get password
-	p1 = strstr(buf, "password");
+	p1 = strstr(buf, "\"password\"");
 	p1 = strstr(p1, ":");
 	p1 = strstr(p1, "\"");
-	
-	if (p1 == NULL)
-	{
-	 return  KIIPUSH_ENDPOINT_ERROR;
-	}
 	p1 +=1;
 	p2 = strstr(p1, "\"");
-	if (p2 == NULL)
-	{
-	 return KIIPUSH_ENDPOINT_ERROR;
-	}
-	memset(g_kii_push.password, 0, KII_PUSH_PASSWORD+1);
+	memset(g_kii_push.password, 0, KII_PUSH_PASSWORD_SIZE+1);
 	memcpy(g_kii_push.password, p1, p2-p1);
     
 	//get host
-	p1 = strstr(buf, "host");
+	p1 = strstr(buf, "\"host\"");
 	p1 = strstr(p1, ":");
 	p1 = strstr(p1, "\"");
-	
-	if (p1 == NULL)
-	{
-	 return  KIIPUSH_ENDPOINT_ERROR;
-	}
 	p1 +=1;
 	p2 = strstr(p1, "\"");
-	if (p2 == NULL)
-	{
-	 return KIIPUSH_ENDPOINT_ERROR;
-	}
-	memset(g_kii_push.host, 0, KII_PUSH_PASSWORD+1);
+	memset(g_kii_push.host, 0, KII_PUSH_HOST_SIZE+1);
 	memcpy(g_kii_push.host, p1, p2-p1);
 
 	 //get mqttTopic
-	 p1 = strstr(buf, "mqttTopic");
+	 p1 = strstr(buf, "\"mqttTopic\"");
 	 p1 = strstr(p1, ":");
 	 p1 = strstr(p1, "\"");
-	 
-	 if (p1 == NULL)
-	 {
-	  return  KIIPUSH_ENDPOINT_ERROR;
-	 }
 	 p1 +=1;
 	 p2 = strstr(p1, "\"");
-	 if (p2 == NULL)
-	 {
-	  return KIIPUSH_ENDPOINT_ERROR;
-	 }
 	 memset(g_kii_push.mqttTopic, 0, KII_PUSH_MQTTTOPIC_SIZE+1);
 	 memcpy(g_kii_push.mqttTopic, p1, p2-p1);
-
 	 return KIIPUSH_ENDPOINT_READY;
     }
-	
-    p1 = strstr(buf, "HTTP/1.1 503");
-	
-    if (p1 != NULL)
+    else if (strstr(buf, "HTTP/1.1 503") != NULL)
     {
 	 return KIIPUSH_ENDPOINT_UNAVAILABLE;
     }
-
-    return KIIPUSH_ENDPOINT_ERROR;
+    else
+    {
+	return KIIPUSH_ENDPOINT_ERROR;
+    }
 }
 
 
@@ -284,8 +234,6 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
 *****************************************************************************/
 int kiiPush_subscribeAppBucket(char *bucketID)
 {
-    char * p1;
-    char * p2;
     char *buf;
 
     buf = g_kii_data.sendBuf;
@@ -329,10 +277,7 @@ int kiiPush_subscribeAppBucket(char *bucketID)
     }
     buf = g_kii_data.rcvdBuf;
 
-    p1 = strstr(buf, "HTTP/1.1 204");
-    p2 = strstr(buf, "HTTP/1.1 409");
-	
-    if (p1 != NULL  || p2 != NULL)
+    if ((strstr(buf, "HTTP/1.1 204") != NULL)  || (strstr(buf, "HTTP/1.1 409") != NULL))
     {
 	 return 0;
     }
@@ -356,8 +301,6 @@ int kiiPush_subscribeAppBucket(char *bucketID)
 *****************************************************************************/
 int kiiPush_subscribeThingBucket(char *bucketID)
 {
-    char * p1;
-    char * p2;
     char *buf;
 
     buf = g_kii_data.sendBuf;
@@ -403,10 +346,7 @@ int kiiPush_subscribeThingBucket(char *bucketID)
     }
     buf = g_kii_data.rcvdBuf;
 
-    p1 = strstr(buf, "HTTP/1.1 204");
-    p2 = strstr(buf, "HTTP/1.1 409");
-	
-    if (p1 != NULL  || p2 != NULL)
+    if ((strstr(buf, "HTTP/1.1 204") != NULL)  || (strstr(buf, "HTTP/1.1 409") != NULL))
     {
 	 return 0;
     }
@@ -430,8 +370,6 @@ int kiiPush_subscribeThingBucket(char *bucketID)
 *****************************************************************************/
 int kiiPush_subscribeTopic(char *topicID)
 {
-    char * p1;
-    char * p2;
     char *buf;
 
     buf = g_kii_data.sendBuf;
@@ -477,10 +415,7 @@ int kiiPush_subscribeTopic(char *topicID)
     }
     buf = g_kii_data.rcvdBuf;
 
-    p1 = strstr(buf, "HTTP/1.1 204");
-    p2 = strstr(buf, "HTTP/1.1 409");
-	
-    if (p1 != NULL  || p2 != NULL)
+    if ((strstr(buf, "HTTP/1.1 204") != NULL)  || (strstr(buf, "HTTP/1.1 409") != NULL))
     {
 	 return 0;
     }
@@ -504,8 +439,6 @@ int kiiPush_subscribeTopic(char *topicID)
 *****************************************************************************/
 int kiiPush_createTopic(char *topicID)
 {
-    char * p1;
-    char * p2;
     char *buf;
 
     buf = g_kii_data.sendBuf;
@@ -550,10 +483,7 @@ int kiiPush_createTopic(char *topicID)
     }
     buf = g_kii_data.rcvdBuf;
 
-    p1 = strstr(buf, "HTTP/1.1 204");
-    p2 = strstr(buf, "HTTP/1.1 409");
-	
-    if (p1 != NULL  || p2 != NULL)
+    if ((strstr(buf, "HTTP/1.1 204") != NULL)  || (strstr(buf, "HTTP/1.1 409") != NULL))
     {
 	 return 0;
     }
@@ -578,15 +508,14 @@ int kiiPush_createTopic(char *topicID)
 static void kiiPush_recvMsgTask(void *sdata)
 {
     kiiPush_recvMsgCallback callback;
-    unsigned char ipBuf[4];
 
     callback = (kiiPush_recvMsgCallback) sdata;
 
-    KII_DEBUG("kii-info: installationID:%s\r\n", g_kii_push.installationID);
-    KII_DEBUG("kii-info: mqttTopic:%s\r\n", g_kii_push.mqttTopic);
-    KII_DEBUG("kii-info: host:%s\r\n", g_kii_push.host);
-    KII_DEBUG("kii-info: username:%s\r\n", g_kii_push.username);
-    KII_DEBUG("kii-info: password:%s\r\n", g_kii_push.password);
+    //KII_DEBUG("kii-info: installationID:%s\r\n", g_kii_push.installationID);
+    //KII_DEBUG("kii-info: mqttTopic:%s\r\n", g_kii_push.mqttTopic);
+    //KII_DEBUG("kii-info: host:%s\r\n", g_kii_push.host);
+    //KII_DEBUG("kii-info: username:%s\r\n", g_kii_push.username);
+    //KII_DEBUG("kii-info: password:%s\r\n", g_kii_push.password);
 
     g_kii_push.connected = 0;
     for(;;)
@@ -594,32 +523,17 @@ static void kiiPush_recvMsgTask(void *sdata)
         if (g_kii_push.connected == 0)
         {
             kiiHal_delayMs(1000);
-            if (kiiHal_getNetState() == 0)
+            if (KiiMQTT_connect(KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE) < 0)
             {
-                if (kiiHal_dns(g_kii_push.host, ipBuf) < 0)
-                {
-                    KII_DEBUG("kii-error: DNS error !\r\n");
-                    continue;
-                }
-                if (KiiMQTT_connect(KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE) < 0)
-                {
-                    KII_DEBUG("kii-error: MQTT connect error !\r\n");
-                    continue;
-                }
-                else if (KiiMQTT_subscribe(QOS1) < 0)
-                {
-                    KII_DEBUG("kii-error: MQTT subscribe error !\r\n");
-                    continue;
-                }
-                else
-                {
-                   g_kii_push.connected = 1;
-                }
+                continue;
+            }
+            else if (KiiMQTT_subscribe(QOS1) < 0)
+            {
+                continue;
             }
             else
             {
-                kiiHal_delayMs(1000);
-                continue;
+               g_kii_push.connected = 1;
             }
         }
         else
@@ -635,7 +549,7 @@ static void kiiPush_recvMsgTask(void *sdata)
                     int topicLen;
                     char *p;
                     byteLen = KiiMQTT_decode(&g_kii_push.rcvdBuf[1], &remainingLen);
-                    KII_DEBUG("decode byteLen=%d, remainingLen=%d\r\n", byteLen, remainingLen);
+                    //KII_DEBUG("decode byteLen=%d, remainingLen=%d\r\n", byteLen, remainingLen);
                     p = g_kii_push.rcvdBuf;
                     if (( g_kii_push.rcvdCounter >= remainingLen+byteLen+1) && (byteLen > 0)) //fixed head byte1+remaining length bytes + remaining bytes
                     {
@@ -649,7 +563,7 @@ static void kiiPush_recvMsgTask(void *sdata)
                  }
                 else if ((g_kii_push.rcvdBuf[0]&0xf0) == 0xd0)
                 {
-                    KII_DEBUG("ping resp\r\n");
+                    //KII_DEBUG("ping resp\r\n");
                 }
             }
 	     else

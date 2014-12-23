@@ -28,11 +28,6 @@ int kiiDev_getToken(char *vendorDeviceID, char *password)
     char *buf;
     char jsonBuf[256];
 
-    memset(g_kii_data.vendorDeviceID, 0, KII_DEVICE_VENDOR_ID+1);
-    strcpy(g_kii_data.vendorDeviceID, vendorDeviceID);
-    memset(g_kii_data.deviceID, 0, KII_DEVICE_ID+1);
-    memset(g_kii_data.accessToken, 0, KII_ACCESS_TOKEN_SIZE+1);
-
     buf = g_kii_data.sendBuf;
     memset(buf, 0, KII_SEND_BUF_SIZE);
     strcpy(buf, STR_POST);
@@ -90,41 +85,22 @@ int kiiDev_getToken(char *vendorDeviceID, char *password)
     }
     buf = g_kii_data.rcvdBuf;
 
-    p1 = strstr(buf, "HTTP/1.1 200");
-    p1 = strstr(p1, "id");
-    p1 = strstr(p1, ":");
-    p1 = strstr(p1, "\"");
-	
-    if (p1 == NULL)
+    if ((strstr(buf, "HTTP/1.1 200") == NULL) || (strstr(buf, "{") == NULL) || (strstr(buf, "}") == NULL) )
     {
-	 return -1;
+        return -1;    
     }
-    p1 +=1;
-    p2 = strstr(p1, "\"");
-    if (p2 == NULL)
-    {
-	 return -1;
-    }
-    memcpy(g_kii_data.deviceID, p1, p2-p1);
 
-    p1 = strstr(p2, "access_token");
+    //get access token
+    p1 = strstr(buf, "\"access_token\"");
     p1 = strstr(p1, ":");
     p1 = strstr(p1, "\"");
-	
-    if (p1 == NULL)
-    {
-	memset(g_kii_data.deviceID, 0, KII_DEVICE_ID+1);
-	 return -1;
-    }
     p1 +=1;
     p2 = strstr(p1, "\"");
-    if (p2 == NULL)
-    {
-	memset(g_kii_data.deviceID, 0, KII_DEVICE_ID+1);
-	 return -1;
-    }
+    memset(g_kii_data.accessToken, 0, KII_ACCESS_TOKEN_SIZE+1);
     memcpy(g_kii_data.accessToken, p1, p2-p1);
 
+    memset(g_kii_data.vendorDeviceID, 0, KII_DEVICE_VENDOR_ID+1);
+    strcpy(g_kii_data.vendorDeviceID, vendorDeviceID);
     return 0;
 }
 
@@ -148,11 +124,6 @@ int kiiDev_register(char *vendorDeviceID, char *deviceType, char *password)
     char * p2;
     char *buf;
     char jsonBuf[256];
-
-    memset(g_kii_data.vendorDeviceID, 0, KII_DEVICE_VENDOR_ID+1);
-    strcpy(g_kii_data.vendorDeviceID, vendorDeviceID);
-    memset(g_kii_data.deviceID, 0, KII_DEVICE_ID+1);
-    memset(g_kii_data.accessToken, 0, KII_ACCESS_TOKEN_SIZE+1);
 
     buf = g_kii_data.sendBuf;
     memset(buf, 0, KII_SEND_BUF_SIZE);
@@ -213,40 +184,22 @@ int kiiDev_register(char *vendorDeviceID, char *deviceType, char *password)
     }
     buf = g_kii_data.rcvdBuf;
 
-    p1 = strstr(buf, "HTTP/1.1 201");
-    p1 = strstr(p1, "_accessToken");
+    if ((strstr(buf, "HTTP/1.1 201") == NULL) || (strstr(buf, "{") == NULL) || (strstr(buf, "}") == NULL) )
+    {
+        return -1;    
+    }
+
+    p1 = strstr(buf, "\"_accessToken\"");
     p1 = strstr(p1, ":");
     p1 = strstr(p1, "\"");
-	
-    if (p1 == NULL)
-    {
-	 return -1;
-    }
     p1 +=1;
     p2 = strstr(p1, "\"");
-    if (p2 == NULL)
-    {
-	 return -1;
-    }
+    memset(g_kii_data.accessToken, 0, KII_ACCESS_TOKEN_SIZE+1);
     memcpy(g_kii_data.accessToken, p1, p2-p1);
-	
-    p1 = strstr(buf, "_thingID");
-    p1 = strstr(p1, ":");
-    p1 = strstr(p1, "\"");
-	
-    if (p1 == NULL)
-    {
-	memset(g_kii_data.accessToken, 0, KII_ACCESS_TOKEN_SIZE+1);
-	 return -1;
-    }
-    p1 +=1;
-    p2 = strstr(p1, "\"");
-    if (p2 == NULL)
-    {
-	memset(g_kii_data.accessToken, 0, KII_ACCESS_TOKEN_SIZE+1);
-	 return -1;
-    }
-    memcpy(g_kii_data.deviceID, p1, p2-p1);
+
+    memset(g_kii_data.vendorDeviceID, 0, KII_DEVICE_VENDOR_ID+1);
+    strcpy(g_kii_data.vendorDeviceID, vendorDeviceID);
+
     return 0;
 }
 

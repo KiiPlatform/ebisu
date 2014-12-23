@@ -104,21 +104,16 @@ int kiiObj_create(char *bucketName, char *jsonObject, char *dataType, char *obje
     }
     buf = g_kii_data.rcvdBuf;
 
-    p1 = strstr(buf, "HTTP/1.1 201");
-    p1 = strstr(p1, "objectID");
+    if ((strstr(buf, "HTTP/1.1 201") == NULL) || (strstr(buf, "{") == NULL) || (strstr(buf, "}") == NULL) )
+    {
+        return -1;    
+    }
+
+    p1 = strstr(buf, "\"objectID\"");
     p1 = strstr(p1, ":");
     p1 = strstr(p1, "\"");
-	
-    if (p1 == NULL)
-    {
-	 return -1;
-    }
     p1 +=1;
     p2 = strstr(p1, "\"");
-    if (p2 == NULL)
-    {
-	 return -1;
-    }
     memset(objectID, 0, KII_OBJECTID_SIZE+1);
     memcpy(objectID, p1, p2-p1);
 	
@@ -199,7 +194,6 @@ int kiiObj_partiallyUpdate(char *bucketName, char *jsonObject, char *objectID)
 *****************************************************************************/
 static int kiiObj_update(char *bucketName, char *jsonObject, char *dataType, char *objectID, int updateOrCreateWithID)
 {
-    char * p;
     char *buf;
 
     buf = g_kii_data.sendBuf;
@@ -288,19 +282,14 @@ static int kiiObj_update(char *bucketName, char *jsonObject, char *dataType, cha
     }
     buf = g_kii_data.rcvdBuf;
 
-    p = strstr(buf, "HTTP/1.1 200");
-    if (p != NULL)
+    if ((strstr(buf, "HTTP/1.1 200")  != NULL) || (strstr(buf, "HTTP/1.1 201")  != NULL))
     {
 	 return 0;
     }
-	
-    p = strstr(buf, "HTTP/1.1 201");
-    if (p != NULL)
+    else
     {
-	 return 0;
+        return -1;
     }
-
-    return -1;
 }
 
 
@@ -321,7 +310,6 @@ static int kiiObj_update(char *bucketName, char *jsonObject, char *dataType, cha
 *****************************************************************************/
 int kiiObj_uploadBodyAtOnce(char *bucketName, char *objectID,  char *dataType, unsigned char *data, unsigned int length)
 {
-    char * p;
     char *buf;
 
     buf = g_kii_data.sendBuf;
@@ -381,8 +369,7 @@ int kiiObj_uploadBodyAtOnce(char *bucketName, char *objectID,  char *dataType, u
         return -1;
     }
     buf = g_kii_data.rcvdBuf;
-    p = strstr(buf, "HTTP/1.1 200");
-    if (p != NULL)
+    if ((strstr(buf, "HTTP/1.1 200")) != NULL)
     {
         return 0;
     }
@@ -516,24 +503,17 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
 
     buf = g_kii_data.rcvdBuf;
 
-    p1 = strstr(buf, "HTTP/1.1 200");
-    p1 = strstr(p1, "uploadID");
+    if ((strstr(buf, "HTTP/1.1 200") == NULL) || (strstr(buf, "{") == NULL) || (strstr(buf, "}") == NULL) )
+    {
+	kiiHal_socketClose(&mSocketNum);
+        return -1;    
+    }
+
+    p1 = strstr(buf, "\"uploadID\"");
     p1 = strstr(p1, ":");
     p1 = strstr(p1, "\"");
-	
-    if (p1 == NULL)
-    {
-	 kiiHal_socketClose(&mSocketNum);
-	 return -1;
-    }
     p1 +=1;
     p2 = strstr(p1, "\"");
-    if (p2 == NULL)
-    {
-	 kiiHal_socketClose(&mSocketNum);
-	 return -1;
-    }
-	
     memset(mUploadID, 0, sizeof(mUploadID));
     memcpy(mUploadID, p1, p2-p1);
 
@@ -555,7 +535,6 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
 *****************************************************************************/
 int kiiObj_uploadBody(unsigned char *data, unsigned int length)
 {
-    char * p1;
     char *buf;
 	
     buf = g_kii_data.sendBuf;
@@ -646,16 +625,15 @@ int kiiObj_uploadBody(unsigned char *data, unsigned int length)
 
     buf = g_kii_data.rcvdBuf;
 
-    p1 = strstr(buf, "HTTP/1.1 204");
-    if (p1 == NULL)
+    if (strstr(buf, "HTTP/1.1 204")  != NULL)
     {
-        KII_DEBUG("kii-error: upload body failed !\r\n");
-	 kiiHal_socketClose(&mSocketNum);
-	 return -1;
+	return 0;
     }
     else
     {
-        return 0;
+	KII_DEBUG("kii-error: upload body failed !\r\n");
+	kiiHal_socketClose(&mSocketNum);
+	return -1;
     }
 }
 
@@ -673,7 +651,6 @@ int kiiObj_uploadBody(unsigned char *data, unsigned int length)
 *****************************************************************************/
 int kiiObj_uploadBodyCommit(int committed)
 {
-    char * p1;
     char *buf;
 	
     buf = g_kii_data.sendBuf;
@@ -744,14 +721,13 @@ int kiiObj_uploadBodyCommit(int committed)
      kiiHal_socketClose(&mSocketNum);
     buf = g_kii_data.rcvdBuf;
 
-    p1 = strstr(buf, "HTTP/1.1 204");
-    if (p1 == NULL)
+    if (strstr(buf, "HTTP/1.1 204")  != NULL)
     {
-	 return -1;
+	 return 0;
     }
     else
     {
-        return 0;
+        return -1;
     }
 }
 
@@ -819,25 +795,25 @@ int kiiObj_retrieve(char *bucketName, char *objectID,  char *jsonObject, unsigne
         return -1;
     }
     buf = g_kii_data.rcvdBuf;
-
-    p1 = strstr(buf, "HTTP/1.1 200");
-    p1 = strstr(p1, "{");
-    p2 = strstr(p1, "}");
-	
-    if (p1 == NULL || p2 == NULL)
+    if ((strstr(buf, "HTTP/1.1 200") == NULL) || (strstr(buf, "{") == NULL) || (strstr(buf, "}") == NULL) )
     {
-	 return -1;
+        return -1;    
     }
 
+    p1 = strstr(buf, "{");
+    p2 = strstr(buf, "}");
     p2++;
     if ((p2-p1) > length)
     {
         KII_DEBUG("kii-error: jsonObjectBuf overflow !\r\n");
 	return -1;
     }
-    memset(jsonObject, 0, length);
-    memcpy(jsonObject, p1, p2-p1);
-    return 0;
+    else
+    {
+        memset(jsonObject, 0, length);
+        memcpy(jsonObject, p1, p2-p1);
+        return 0;
+    }
 }
 
 
@@ -862,7 +838,6 @@ int kiiObj_retrieve(char *bucketName, char *objectID,  char *jsonObject, unsigne
 int kiiObj_downloadBody(char *bucketName, char *objectID,  unsigned int position,  unsigned int length, unsigned char *data, unsigned int *actualLength, unsigned int *totalLength)
 {
     char * p1;
-//    char * p2;
     char *buf;
 
     buf = g_kii_data.sendBuf;
@@ -921,8 +896,7 @@ int kiiObj_downloadBody(char *bucketName, char *objectID,  unsigned int position
     }
     buf = g_kii_data.rcvdBuf;
 
-    p1 = strstr(buf, "HTTP/1.1 206");
-    if (p1 == NULL)
+    if (strstr(buf, "HTTP/1.1 206") == NULL)
     {
 	 return -1;
     }
@@ -950,11 +924,26 @@ int kiiObj_downloadBody(char *bucketName, char *objectID,  unsigned int position
 	 return -1;
     }
     p1 +=4;	
-    if (p1+ (*actualLength) > buf + KII_RECV_BUF_SIZE)
+    if ((p1+ (*actualLength)) > (buf + KII_RECV_BUF_SIZE))
     {
 	KII_DEBUG("kii-error: receiving buffer overflow !\r\n");
 	return -1;
     }
+
+{
+	int tmp1;
+	int tmp2;
+	tmp1 = (buf + g_kii_data.rcvdCounter) - p1;
+	tmp2 = *actualLength;
+	KII_DEBUG("tmp1=%d\r\n", tmp1);
+	KII_DEBUG("tmp2=%d\r\n", tmp2);
+	
+    if (((buf + g_kii_data.rcvdCounter) - p1)  <  (*actualLength))
+    {
+	KII_DEBUG("kii-error: missing data !\r\n");
+	return -1;
+    }
+}
     memset(data, 0, length);
     memcpy(data, p1, *actualLength);
     return 0;

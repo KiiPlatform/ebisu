@@ -1208,39 +1208,19 @@
           <GroupName>src/kii</GroupName>
           <Files>
             <File>
-              <FileName>kii.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\Src\Kii\kii.c</FilePath>
-            </File>
-            <File>
               <FileName>kii_demo.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\Src\Kii\kii_demo.c</FilePath>
+              <FilePath>..\..\..\Src\Kii\demo\kii_demo.c</FilePath>
             </File>
             <File>
-              <FileName>kii_device.c</FileName>
+              <FileName>light.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\Src\Kii\kii_device.c</FilePath>
+              <FilePath>..\..\..\Src\Kii\demo\light.c</FilePath>
             </File>
             <File>
-              <FileName>kii_hal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\Src\Kii\kii_hal.c</FilePath>
-            </File>
-            <File>
-              <FileName>kii_object.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\Src\Kii\kii_object.c</FilePath>
-            </File>
-            <File>
-              <FileName>kii_push.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\Src\Kii\kii_push.c</FilePath>
-            </File>
-            <File>
-              <FileName>kii_mqtt.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\Src\Kii\kii_mqtt.c</FilePath>
+              <FileName>WM_SDK_Kii.lib</FileName>
+              <FileType>4</FileType>
+              <FilePath>.\objs\WM_SDK_Kii.lib</FilePath>
             </File>
           </Files>
         </Group>

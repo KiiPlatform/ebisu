@@ -24,12 +24,12 @@ extern kii_push_struct g_kii_push;
 int KiiMQTT_encode(char* buf, int length)
 {
 	int rc = 0;
+	char d;
 
 	do
 	{
-		char d = length % 128;
+		d = length % 128;
 		length /= 128;
-		/* if there are more digits to encode, set the top bit of this digit */
 		if (length > 0)
 			d |= 0x80;
 		buf[rc++] = d;
@@ -93,7 +93,7 @@ int KiiMQTT_connect(unsigned short keepAliveInterval)
         KII_DEBUG("kii-error: dns failed !\r\n");
         return -1;
     }
-    KII_DEBUG("broker ip::%d.%d.%d.%d\r\n", ipBuf[0], ipBuf[1], ipBuf[2], ipBuf[3]);
+    //KII_DEBUG("broker ip::%d.%d.%d.%d\r\n", ipBuf[0], ipBuf[1], ipBuf[2], ipBuf[3]);
 		
     g_kii_push.mqttSocket= kiiHal_socketCreate();
     if (g_kii_push.mqttSocket < 0)
@@ -159,15 +159,15 @@ int KiiMQTT_connect(unsigned short keepAliveInterval)
     memcpy(&g_kii_push.sendBuf[j], buf, i);
     j +=i;
 
-    KII_DEBUG("\r\n----------------MQTT connect send start-------------\r\n");    
-    KII_DEBUG("\r\n");
-    for (i=0; i<j; i++)
-    {
-        KII_DEBUG("%02x", g_kii_push.sendBuf[i]);
-    }
-    KII_DEBUG("\r\n");
+   // KII_DEBUG("\r\n----------------MQTT connect send start-------------\r\n");    
+    //KII_DEBUG("\r\n");
+    //for (i=0; i<j; i++)
+    //{
+    //    KII_DEBUG("%02x", g_kii_push.sendBuf[i]);
+    //}
+    //KII_DEBUG("\r\n");
 
-    KII_DEBUG("\r\n----------------MQTT connect send end-------------\r\n");    
+    //KII_DEBUG("\r\n----------------MQTT connect send end-------------\r\n");    
 
     if (kiiHal_socketSend(g_kii_push.mqttSocket, g_kii_push.sendBuf, j) < 0)
     {
@@ -187,17 +187,21 @@ int KiiMQTT_connect(unsigned short keepAliveInterval)
     }
     else
     {
-    	KII_DEBUG("\r\n----------------MQTT connect recv start-------------\r\n");    
-	KII_DEBUG("\r\n");
-    	for (i=0; i<g_kii_push.rcvdCounter; i++)
-    	{
-        	KII_DEBUG("%02x", g_kii_push.rcvdBuf[i]);
-    	}
-	KII_DEBUG("\r\n");
+    	//KII_DEBUG("\r\n----------------MQTT connect recv start-------------\r\n");    
+	//KII_DEBUG("\r\n");
+    	//for (i=0; i<g_kii_push.rcvdCounter; i++)
+    	//{
+        //	KII_DEBUG("%02x", g_kii_push.rcvdBuf[i]);
+    	//}
+	//KII_DEBUG("\r\n");
 
-    	KII_DEBUG("\r\n----------------MQTT_connect recv end-------------\r\n");    
+    	//KII_DEBUG("\r\n----------------MQTT_connect recv end-------------\r\n");    
 
-	if (g_kii_push.rcvdCounter == 4 && g_kii_push.rcvdBuf[0] == 0x20 && g_kii_push.rcvdBuf[1] == 0x02 && g_kii_push.rcvdBuf[2] == 0x00 && g_kii_push.rcvdBuf[3] == 0x00)
+	if ((g_kii_push.rcvdCounter == 4) 
+        && (g_kii_push.rcvdBuf[0] == 0x20) 
+        && (g_kii_push.rcvdBuf[1] == 0x02) 
+        && (g_kii_push.rcvdBuf[2] == 0x00)
+        && (g_kii_push.rcvdBuf[3] == 0x00))
 	{
             return 0;
 	}
@@ -254,15 +258,15 @@ int KiiMQTT_subscribe(enum QoS qos)
     memcpy(&g_kii_push.sendBuf[j], buf, i);
     j +=i;
 
-    KII_DEBUG("\r\n----------------MQTT subscribe send start-------------\r\n");    
-    KII_DEBUG("\r\n");
-    for (i=0; i<j; i++)
-    {
-        KII_DEBUG("%02x", g_kii_push.sendBuf[i]);
-    }
-    KII_DEBUG("\r\n");
+    //KII_DEBUG("\r\n----------------MQTT subscribe send start-------------\r\n");    
+    //KII_DEBUG("\r\n");
+    //for (i=0; i<j; i++)
+    //{
+    //    KII_DEBUG("%02x", g_kii_push.sendBuf[i]);
+    //}
+    //KII_DEBUG("\r\n");
 
-    KII_DEBUG("\r\n----------------MQTT subscribe send end-------------\r\n");    
+    //KII_DEBUG("\r\n----------------MQTT subscribe send end-------------\r\n");    
 
     if (kiiHal_socketSend(g_kii_push.mqttSocket, g_kii_push.sendBuf, j) < 0)
     {
@@ -282,17 +286,21 @@ int KiiMQTT_subscribe(enum QoS qos)
     }
     else
     {
-    KII_DEBUG("\r\n----------------MQTT subscribe recv start-------------\r\n");    
-	KII_DEBUG("\r\n");
-    for (i=0; i<g_kii_push.rcvdCounter; i++)
-    {
-        KII_DEBUG("%02x", g_kii_push.rcvdBuf[i]);
-    }
-	KII_DEBUG("\r\n");
+    //KII_DEBUG("\r\n----------------MQTT subscribe recv start-------------\r\n");    
+//	KII_DEBUG("\r\n");
+    //for (i=0; i<g_kii_push.rcvdCounter; i++)
+    //{
+     //   KII_DEBUG("%02x", g_kii_push.rcvdBuf[i]);
+    //}
+//	KII_DEBUG("\r\n");
 
-    KII_DEBUG("\r\n----------------MQTT subscribe recv end-------------\r\n");    
+    //KII_DEBUG("\r\n----------------MQTT subscribe recv end-------------\r\n");    
 
-	if (g_kii_push.rcvdCounter == 5 && g_kii_push.rcvdBuf[0] == 0x90 && g_kii_push.rcvdBuf[1] == 0x03 && g_kii_push.rcvdBuf[2] == 0x00 && g_kii_push.rcvdBuf[3] == 0x01)
+	if ((g_kii_push.rcvdCounter == 5)
+         && ((unsigned char)g_kii_push.rcvdBuf[0] == 0x90)
+         && (g_kii_push.rcvdBuf[1] == 0x03)
+         && (g_kii_push.rcvdBuf[2] == 0x00)
+         && (g_kii_push.rcvdBuf[3] == 0x01))
 	{
             return 0;
 	}
@@ -334,35 +342,5 @@ int KiiMQTT_pingReq(void)
     {
         return 0;
     }
-#if 0
-    memset(g_kii_push.rcvdBuf, 0, KII_PUSH_RECV_BUF_SIZE);
-    g_kii_push.rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE);
-    if (g_kii_push.rcvdCounter <= 0)
-    {
-        KII_DEBUG("kii-error: recv data fail\r\n");
-	 kiiHal_socketClose(&g_kii_push.mqttSocket);
-        return -1;
-    }
-    else
-    {
-	KII_DEBUG("\r\n");
-       for (i=0; i<g_kii_push.rcvdCounter; i++)
-       {
-           KII_DEBUG("%02x", g_kii_push.rcvdBuf[i]);
-       }
-   	KII_DEBUG("\r\n");
-
-	if (g_kii_push.rcvdCounter == 2 && g_kii_push.rcvdBuf[0] == 0xd0 && g_kii_push.rcvdBuf[1] == 0x00)
-	{
-            return 0;
-	}
-       else
-       {
-        KII_DEBUG("kii-error: invalid data format\r\n");
-	 kiiHal_socketClose(&g_kii_push.mqttSocket);
-        return -1;
-       }
-    }
-#endif	
 }
 

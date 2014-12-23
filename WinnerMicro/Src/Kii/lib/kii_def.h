@@ -3,8 +3,7 @@
 
 #include "kii.h"
 
-//#define KII_CLOUD_SUPPORT  1
-//#define KII_DEBUG_SUPPORT    1
+#define KII_DEBUG_SUPPORT    1
 
 #if KII_DEBUG_SUPPORT
 #define KII_DEBUG printf
@@ -40,7 +39,6 @@
 
 typedef struct {
 	char vendorDeviceID[KII_DEVICE_VENDOR_ID+1];
-	char deviceID[KII_DEVICE_ID+1];
 	char password[KII_PASSWORD_SIZE+1];
     char accessToken[KII_ACCESS_TOKEN_SIZE+1];
     char host[KII_HOST_SIZE+1];
