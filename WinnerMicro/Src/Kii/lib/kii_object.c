@@ -929,21 +929,12 @@ int kiiObj_downloadBody(char *bucketName, char *objectID,  unsigned int position
 	KII_DEBUG("kii-error: receiving buffer overflow !\r\n");
 	return -1;
     }
-
-{
-	int tmp1;
-	int tmp2;
-	tmp1 = (buf + g_kii_data.rcvdCounter) - p1;
-	tmp2 = *actualLength;
-	KII_DEBUG("tmp1=%d\r\n", tmp1);
-	KII_DEBUG("tmp2=%d\r\n", tmp2);
 	
     if (((buf + g_kii_data.rcvdCounter) - p1)  <  (*actualLength))
     {
 	KII_DEBUG("kii-error: missing data !\r\n");
 	return -1;
     }
-}
     memset(data, 0, length);
     memcpy(data, p1, *actualLength);
     return 0;
