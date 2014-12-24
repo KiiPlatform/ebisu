@@ -29,14 +29,14 @@ public class CommandBuilder {
         mAttrList.add(attr);
     }
 
-    public byte[] build() {
+    public byte[] build(int trans_no) {
         int len = 0;
         for (Attr attr : mAttrList) {
             len += 5 + attr.data_len;
         }
         byte[] result = new byte[6 + len];
         result[0] = 0;
-        result[1] = 0;
+        result[1] = (byte)trans_no;
         result[2] = 0;
         result[3] = 0;
         Utils.Int16ToByte(len, result, 4);
@@ -54,7 +54,7 @@ public class CommandBuilder {
         return result;
     }
 
-    public static byte[] buildLightInfo(boolean is_on, int color, int brightness, int CT) {
+    public static byte[] buildLightInfo(int trans_no, boolean is_on, int color, int brightness, int CT) {
         CommandBuilder cb = new CommandBuilder();
         byte[] data = new byte[1];
         data[0] = (byte) (is_on ? 1 : 0);
@@ -71,6 +71,6 @@ public class CommandBuilder {
         data = new byte[1];
         data[0] = (byte) CT;
         cb.append((byte) 10, (byte) 3, (byte) 1, data);
-        return cb.build();
+        return cb.build(trans_no);
     }
 }
