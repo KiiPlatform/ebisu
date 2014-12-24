@@ -138,7 +138,7 @@ public class Utils {
             if (TextUtils.isEmpty(light.ip)) {
                 Toast.makeText(context, "Cannot get light IP", Toast.LENGTH_SHORT).show();
             } else {
-                byte[] cmd = CommandBuilder.buildLightInfo(light.is_on, light.color, light.brightness, light.CT);
+                byte[] cmd = CommandBuilder.buildLightInfo(1, light.is_on, light.color, light.brightness, light.CT);
                 NetworkSenderService.sendCmd(context, light.ip, cmd);
             }
         }
@@ -195,7 +195,7 @@ public class Utils {
             c.close();
         }
         if (connectedLights.size() > 0) {
-            byte[] cmd = CommandBuilder.buildLightInfo(is_on, color, brightness, CT);
+            byte[] cmd = CommandBuilder.buildLightInfo(1, is_on, color, brightness, CT);
             String[] ips = connectedLights.toArray(new String[0]);
             NetworkSenderService.sendCmd(context, ips, cmd);
         }

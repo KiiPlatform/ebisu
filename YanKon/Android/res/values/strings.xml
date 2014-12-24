@@ -64,5 +64,6 @@
     <string name="empty_scene_name">Scene name cannot be empty</string>
     <string name="brightness">Brightness</string>
     <string name="ct">CT</string>
+    <string name="exit_prompt">Are you sure to exit?</string>
 
 </resources>

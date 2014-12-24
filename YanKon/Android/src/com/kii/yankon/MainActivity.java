@@ -2,10 +2,12 @@ package com.kii.yankon;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
@@ -88,6 +90,20 @@ public class MainActivity extends Activity
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
         stopService(new Intent(this, NetworkReceiverService.class));
         super.onDestroy();
+    }
+
+    @Override
+    public void onBackPressed() {
+        AlertDialog.Builder ab = new AlertDialog.Builder(this);
+        ab.setMessage(R.string.exit_prompt);
+        ab.setNegativeButton(android.R.string.cancel, null);
+        ab.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                finish();
+            }
+        });
+        ab.show();
     }
 
     @Override

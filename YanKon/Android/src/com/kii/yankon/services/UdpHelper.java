@@ -84,7 +84,7 @@ public class UdpHelper implements Runnable {
     }
 
     public void handleData(byte[] data, InetAddress address) {
-        if (data.length < 4 || data[2] == 0) {
+        if (data.length < 4 || data[2] == 0 || data[1] != 0) {
             return;
         }
         String ip = address.getHostAddress();
