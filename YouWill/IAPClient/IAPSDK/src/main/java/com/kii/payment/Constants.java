@@ -2,13 +2,13 @@ package com.kii.payment;
 
 /**
  * Utility class used to defined all the constants.
- *
+ * <p/>
  * Created by tian on 13-7-23.
  */
 public class Constants {
 
-    //public static final String PLATFORM_EXTENSION_URL = "http://192.168.1.113:8080/api/iap/";
-    public static final String PLATFORM_EXTENSION_URL = "http://118.102.25.205:8080/iap-webapp/iap/";
+    //public static final String PLATFORM_EXTENSION_URL = "http://192.168.1.114:8080/api/iap/";
+    public static final String PLATFORM_EXTENSION_URL = "http://youwill.kiicloud.com:8080/iap-webapp/iap/";
     static final String KEY_APP_DISTRIBUTION_ID = "com.kii.DISTRIBUTION_ID";
 
     static final class ALIPAY_RESULT_CODE {
@@ -29,6 +29,5 @@ public class Constants {
 
     public static final String QUERY_ORDER_URL = PLATFORM_EXTENSION_URL + "queryOrder/order/%s";
 
-    public static final String PLATFORM_CALLBACK_URL_ALIPAY = "http://118.102.25.205:8080/iap-webapp/iap/callback/alipay/%s/app/%s";
-    public static final String PLATFORM_CALLBACK_URL_MM = "http://118.102.25.205:8080/iap-webapp/iap/callback/";
+    public static final String PLATFORM_CALLBACK_URL_ALIPAY = "http://youwill.kiicloud.com:8080/iap-webapp/iap/callback/alipay/%s/app/%s";
 }

@@ -7,6 +7,5 @@ public class LightGroup {
     public int num;
 
     public int id;
-    public String UUID;
     public List<Light> childLights;
 }

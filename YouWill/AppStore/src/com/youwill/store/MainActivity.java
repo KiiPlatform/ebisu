@@ -297,15 +297,23 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         LogUtils.e(e);
                     }
                     Settings.setLastUsedPayType(this, payType);
-                    if (currentFragment instanceof CategoriesFragment) {
+                    if ((mSearchFragment != null) && (mSearchFragment.isVisible())) {
+                        mSearchFragment.launchPayment(payType);
+                    } else if (currentFragment instanceof CategoriesFragment) {
                         ((CategoriesFragment) currentFragment).launchPayment(payType);
-                    } else if (currentFragment instanceof SearchFragment) {
-                        ((SearchFragment) currentFragment).launchPayment(payType);
                     } else {
                         LogUtils.e("CurrentFragment cannot launch payment.");
                     }
                 }
                 break;
         }
+
+        if ((mSearchFragment != null) && (mSearchFragment.isVisible())) {
+            mSearchFragment.onActivityResult(requestCode, resultCode, data);
+        } else if (currentFragment instanceof CategoriesFragment) {
+            ((CategoriesFragment) currentFragment).onActivityResult(requestCode, resultCode, data);
+        }
     }
+
+
 }

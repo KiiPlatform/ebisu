@@ -25,10 +25,24 @@ public class YouWillAlipayConfig {
 	
 	//↓↓↓↓↓↓↓↓↓↓请在这里配置您的基本信息↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 	// 合作身份者ID，以2088开头由16位纯数字组成的字符串
-	public static String partner = "2088701768276994";
+	public static String partner = "2088411559233782";
 	// 商户的私钥
-	public static String private_key = "MIICdwIBADANBgkqhkiG9w0BAQEFAASCAmEwggJdAgEAAoGBAMWDVNo9/9kZbrLAmFP0SUy6zk0F42/SgRUTmuLQnvXQ+zcUv6OJ/gNULAfFVDdXFXuSXMVMMqzmcOgU2pY9WV5klYmq+2GIm4sEF57aTHvmuFq10iCqwlVsH99XHasKWxDi73Z+OxMCUk23RwmZa7NCapHNBbz0LMjpjX9j7IqrAgMBAAECgYAscaf3T/oxROrG6FWelpqj3GktpcSO1gRb1MSGg0ExuSu+MjoJN7Tj1N3vhbS0mzDnVIDxmHrSsyv23TJumjFwieWE5lFcSm1R/H7RljGg47zSYgJPQHYlqN6rPgytmoO9H/bgWR6qoQ3lQAo+Yv0LuPLzRNzbwyAM+1Wve7f4QQJBAOSS7tXnaSqna3xxeaq9JP13XN36hTekwdLL3W1AXbRaX5HTRGkZkGUbrPHoGVIA1Kya2KJt9wKEY+UlRBD7swsCQQDdNk4Jcm4Ie3wuN2hmwl/3aCcF0L7m06hpotFG9vKy55RrIcerSj1oIutz1506Lpo5Rhf8rMRvGbuQlzE2uUrhAkEA1tfE5gm9L/ptbWq7kWB3hEbNY1g2Hzcdd6VnW2lEqmDHs6mAg8kjj+WTiU0/f3SIcjSZqxLxOcx2mMuOTuhGQQJADh2nASdSKixnEjPq75O7t/fndZGKfQRInOUM4bBkcFIiwGtZaG7GWFzSFYROviW3Jax5X2BO8J/9vg5Hz6wnQQJBAIDGCNKngCfz5GhTUNveV7nDpgAE+aKo5v6X2gunwBLI6cBCXYxajbEcHdGWc4VWMgXotjLHlxiQ6+vmOGrLkRk=";
-	
+	public static String private_key =
+			"MIICdwIBADANBgkqhkiG9w0BAQEFAASCAmEwggJdAgEAAoGBAM4ME+qcNWhPj7ju" +
+			"o8Aujk+FHYmAqKI/Qt5T8HNT8+fusODxaj+RGZitCaSOvT/MtbYdix6lT25WUOrE" +
+			"22xKR0RbFDT2kURSWnV1zclf8uh6zCi92YiTJpq6Xc8iI5VOdiiZ+eWiRN2FrKRg" +
+			"8XxKqMEorSpS0wqKiMDg0OBomeVNAgMBAAECgYABlNgmSdKjHVE2EybQl8rh01y5" +
+			"rHIe5Ktnt282A2Pw2MUkxNWS7VMr99AGIk5TigevASULNCua5jCyzJX+i8dmPF3V" +
+			"Qa9jrp6PGok5Yzyx+Bd9ptVr7BirInsvCIP9SLTGTR/jKcXtIJhHv0+ZScX1zPzI" +
+			"d7hjFVhSHzlVnbbPIQJBAP1f8pM/BZCrI78Pbv6LT+jNTtuARDqiCbeE/lEfQGXP" +
+			"a9Igf36yS1Su1xRFVY2UlkbUcSSek3pOlK/fWzt2o5kCQQDQLpknch8yjFfF2Fkg" +
+			"ufC599s+8IxaQMJNf/9Im5c6DYpyQA9IK9CGy8BGY5N2t8GOl1i7xBZ//V7O/lNG" +
+			"Xl/VAkEA8kpkHyZu3e6p2jSaAVOa8JYTyJcZp6/39sR4pX5rCHCXPHLTOIaqvqoL" +
+			"Blle/GqQYd8Y6tmxUY3/ZUcDaROEUQJAbuGC3UmhaDDrxwq2XgHrP4HOGrXQa3m2" +
+			"g8S62ZdVcqwnozaPbSc5B7KaFGOQ9VhmFWZy8n88ZKs0xhcbj41QiQJBAOskrIee" +
+			"Oa72ollbLGrfugrzt1nBOLGHJQ7QlYIzAmitQWKGQgIVZ8qp7/6hTSyq5wGU9fol" +
+			"iEdy2u+h1uSgK94=";
+
 	// 支付宝的公钥，无需修改该值
 	public static String ali_public_key  = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCnxj/9qwVfgoUh/y2W89L6BkRAFljhNhgPdyPuBV64bfQNN1PjbCzkIM6qRdKBoLPXmKKMiFYnkd6rAoprih3/PrQEB/VsW8OoM8fxn67UDYuyBTqA23MML9q1+ilIZwBC2AQ2UBVOrFXfFl75p6/B5KsiNG9zpgmLCUYuLkxpLQIDAQAB";
 

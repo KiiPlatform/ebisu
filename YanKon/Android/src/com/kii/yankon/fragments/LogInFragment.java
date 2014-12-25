@@ -1,12 +1,6 @@
 package com.kii.yankon.fragments;
 
 
-import com.kii.cloud.storage.KiiUser;
-import com.kii.cloud.storage.callback.KiiUserCallBack;
-import com.kii.yankon.R;
-import com.kii.yankon.utils.Constants;
-import com.kii.yankon.utils.Settings;
-
 import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
@@ -20,6 +14,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.kii.cloud.storage.KiiUser;
+import com.kii.cloud.storage.callback.KiiUserCallBack;
+import com.kii.yankon.R;
+import com.kii.yankon.utils.Constants;
+import com.kii.yankon.utils.Settings;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -131,8 +131,10 @@ public class LogInFragment extends BaseFragment implements View.OnClickListener 
             dismissProgress();
             if (exception == null) {
                 Toast.makeText(getActivity(), R.string.register_success, Toast.LENGTH_SHORT).show();
+                long expires_at = user.getAccessTokenBundle().getLong("expires_at");
                 Settings.saveToken(user.getAccessToken());
                 Settings.saveEmail(user.getEmail());
+                Settings.saveExp(expires_at);
                 LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(new Intent(
                         Constants.INTENT_LOGGED_IN));
             } else {

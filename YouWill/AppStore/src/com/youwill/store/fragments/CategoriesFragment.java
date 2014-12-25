@@ -165,4 +165,8 @@ public class CategoriesFragment extends Fragment
     public void launchPayment(PayType payType) {
         mAdapter.launchPayment(payType);
     }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        mAdapter.onActivityResult(requestCode, resultCode, data);
+    }
 }

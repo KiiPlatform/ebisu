@@ -62,5 +62,17 @@
     <string name="edit_group">Edit group</string>
     <string name="add_group">Create new group</string>
     <string name="empty_scene_name">Scene name cannot be empty</string>
+    <string name="brightness">Brightness</string>
+    <string name="ct">CT</string>
+    <string name="exit_prompt">Are you sure to exit?</string>
+    <string name="title_activity_add_schedule">Schedule</string>
+    <string name="schedule_name">Schedule name</string>
+    <string name="target_label">Target</string>
+    <string name="none_target">None</string>
+    <string name="schedule_settings">Settings</string>
+    <string name="schedule_settings_format" formatted="false">State:%s BR:%d CT:%d</string>
+    <string name="state_off">Off</string>
+    <string name="state_on">On</string>
+    <string name="title_activity_pick_target">Pick target</string>
 
 </resources>

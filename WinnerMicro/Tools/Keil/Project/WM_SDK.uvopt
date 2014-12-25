@@ -673,7 +673,7 @@
 
   <Group>
     <GroupName>Include</GroupName>
-    <tvExp>1</tvExp>
+    <tvExp>0</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -2067,12 +2067,12 @@
       <GroupNumber>35</GroupNumber>
       <FileNumber>127</FileNumber>
       <FileType>1</FileType>
-      <tvExp>0</tvExp>
+      <tvExp>1</tvExp>
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\Src\Kii\kii.c</PathWithFileName>
-      <FilenameWithoutPath>kii.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\..\Src\Kii\demo\kii_demo.c</PathWithFileName>
+      <FilenameWithoutPath>kii_demo.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -2084,73 +2084,21 @@
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\Src\Kii\kii_demo.c</PathWithFileName>
-      <FilenameWithoutPath>kii_demo.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\..\Src\Kii\demo\light.c</PathWithFileName>
+      <FilenameWithoutPath>light.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
     <File>
       <GroupNumber>35</GroupNumber>
       <FileNumber>129</FileNumber>
-      <FileType>1</FileType>
+      <FileType>4</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\Src\Kii\kii_device.c</PathWithFileName>
-      <FilenameWithoutPath>kii_device.c</FilenameWithoutPath>
-      <RteFlg>0</RteFlg>
-      <bShared>0</bShared>
-    </File>
-    <File>
-      <GroupNumber>35</GroupNumber>
-      <FileNumber>130</FileNumber>
-      <FileType>1</FileType>
-      <tvExp>0</tvExp>
-      <Focus>0</Focus>
-      <tvExpOptDlg>0</tvExpOptDlg>
-      <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\Src\Kii\kii_hal.c</PathWithFileName>
-      <FilenameWithoutPath>kii_hal.c</FilenameWithoutPath>
-      <RteFlg>0</RteFlg>
-      <bShared>0</bShared>
-    </File>
-    <File>
-      <GroupNumber>35</GroupNumber>
-      <FileNumber>131</FileNumber>
-      <FileType>1</FileType>
-      <tvExp>0</tvExp>
-      <Focus>0</Focus>
-      <tvExpOptDlg>0</tvExpOptDlg>
-      <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\Src\Kii\kii_object.c</PathWithFileName>
-      <FilenameWithoutPath>kii_object.c</FilenameWithoutPath>
-      <RteFlg>0</RteFlg>
-      <bShared>0</bShared>
-    </File>
-    <File>
-      <GroupNumber>35</GroupNumber>
-      <FileNumber>132</FileNumber>
-      <FileType>1</FileType>
-      <tvExp>0</tvExp>
-      <Focus>0</Focus>
-      <tvExpOptDlg>0</tvExpOptDlg>
-      <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\Src\Kii\kii_push.c</PathWithFileName>
-      <FilenameWithoutPath>kii_push.c</FilenameWithoutPath>
-      <RteFlg>0</RteFlg>
-      <bShared>0</bShared>
-    </File>
-    <File>
-      <GroupNumber>35</GroupNumber>
-      <FileNumber>133</FileNumber>
-      <FileType>1</FileType>
-      <tvExp>0</tvExp>
-      <Focus>0</Focus>
-      <tvExpOptDlg>0</tvExpOptDlg>
-      <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\Src\Kii\kii_mqtt.c</PathWithFileName>
-      <FilenameWithoutPath>kii_mqtt.c</FilenameWithoutPath>
+      <PathWithFileName>.\objs\WM_SDK_Kii.lib</PathWithFileName>
+      <FilenameWithoutPath>WM_SDK_Kii.lib</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

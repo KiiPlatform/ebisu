@@ -109,7 +109,9 @@ static void tls_main_net_status_changed(u8 status)
 
 static void BlinkTimerProc(void)
 {
-	#define HIO_LINK	13
+//	#define HIO_LINK	13
+	#define HIO_LINK	11
+
 	static u32 div_blink = 0;
 	static u32 mode_blink = 0;
 	u32 blink[][2] = {

@@ -25,6 +25,7 @@ import com.kii.yankon.AddLightsActivity;
 import com.kii.yankon.LightInfoActivity;
 import com.kii.yankon.R;
 import com.kii.yankon.providers.YanKonProvider;
+import com.kii.yankon.utils.Utils;
 
 /**
  * Created by Evan on 14/11/26.
@@ -63,15 +64,24 @@ public class LightsFragment extends BaseListFragment {
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(getActivity(), YanKonProvider.URI_LIGHTS, null, "connected OR is_mine", null, "owned_time asc");
+        //"connected OR is_mine"
+        return new CursorLoader(getActivity(), YanKonProvider.URI_LIGHTS, null, null, null, "owned_time asc");
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         super.onLoadFinished(loader, cursor);
-        if (isFirstLaunch && cursor.getCount() == 0) {
+        if (isFirstLaunch) {
             isFirstLaunch = false;
-            startActivity(new Intent(getActivity(), AddLightsActivity.class));
+            int num = 0;
+            Cursor c = getActivity().getContentResolver().query(YanKonProvider.URI_LIGHTS, new String[]{"_id"}, null, null, null);
+            if (c != null) {
+                num = c.getCount();
+                c.close();
+            }
+            if (num == 0) {
+                startActivity(new Intent(getActivity(), AddLightsActivity.class));
+            }
         }
     }
 
@@ -168,18 +178,30 @@ public class LightsFragment extends BaseListFragment {
             String name = cursor.getString(cursor.getColumnIndex("name"));
             TextView tv = (TextView) view.findViewById(android.R.id.text1);
             tv.setText(name);
-            String modelName = cursor.getString(cursor.getColumnIndex("m_name"));
+            String modelName = cursor.getString(cursor.getColumnIndex("model"));
             tv = (TextView) view.findViewById(android.R.id.text2);
             tv.setText(context.getString(R.string.light_model_format, modelName));
             View icon = view.findViewById(R.id.light_icon);
-            boolean connected = cursor.getInt(cursor.getColumnIndex("connected")) > 0;
-            if (connected) {
+            final boolean state = cursor.getInt(cursor.getColumnIndex("state")) > 0;
+            final int light_id = cursor.getInt(cursor.getColumnIndex("_id"));
+            if (state) {
                 icon.setBackgroundResource(R.drawable.light_on);
             } else {
                 icon.setBackgroundResource(R.drawable.lights_off);
             }
-            Switch light_switch = (Switch) view.findViewById(R.id.light_switch);
-            light_switch.setChecked(connected);
+            final Switch light_switch = (Switch) view.findViewById(R.id.light_switch);
+            light_switch.setChecked(state);
+            light_switch.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    light_switch.setChecked(!state);
+                    ContentValues values = new ContentValues();
+                    values.put("state", !state);
+                    values.put("synced", false);
+                    getActivity().getContentResolver().update(YanKonProvider.URI_LIGHTS, values, "_id=" + light_id, null);
+                    Utils.controlLight(getActivity(), light_id, true);
+                }
+            });
         }
     }
 }

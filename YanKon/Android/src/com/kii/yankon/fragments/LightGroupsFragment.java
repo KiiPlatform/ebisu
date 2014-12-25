@@ -1,5 +1,6 @@
 package com.kii.yankon.fragments;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
@@ -21,6 +22,7 @@ import com.kii.yankon.AddLightGroupsActivity;
 import com.kii.yankon.LightInfoActivity;
 import com.kii.yankon.R;
 import com.kii.yankon.providers.YanKonProvider;
+import com.kii.yankon.utils.Utils;
 
 /**
  * Created by Evan on 14/11/26.
@@ -131,8 +133,21 @@ public class LightGroupsFragment extends BaseListFragment {
             View icon = view.findViewById(R.id.light_icon);
             icon.setBackgroundResource(R.drawable.light_groups);
             int on_num = cursor.getInt(cursor.getColumnIndex("on_num"));
-            Switch light_switch = (Switch) view.findViewById(R.id.light_switch);
-            light_switch.setChecked(on_num == num);
+            final Switch light_switch = (Switch) view.findViewById(R.id.light_switch);
+            final boolean state = (on_num == num);
+            final int group_id = cursor.getInt(cursor.getColumnIndex("_id"));
+            light_switch.setChecked(state);
+            light_switch.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    light_switch.setChecked(!state);
+                    ContentValues values = new ContentValues();
+                    values.put("state", !state);
+                    values.put("synced", false);
+                    getActivity().getContentResolver().update(YanKonProvider.URI_LIGHT_GROUPS, values, "_id=" + group_id, null);
+                    Utils.controlGroup(getActivity(), group_id, true);
+                }
+            });
         }
     }
 }

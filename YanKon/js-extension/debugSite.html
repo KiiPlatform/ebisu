@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="jquery-1.11.1.min.js" ></script>
+<script src="KiiSDK2.1-KiiSDK.js"  ></script>
+<script src="commons.js" ></script>
+<script src="thingHelper.js"  ></script>
+<script src="action.js"></script>
+<script src="schedule.js"></script>
+
+<script>
+
+
+
+function recordLog(log, type, done) {
+	console.log("log:"+log+" type:"+type);
+}
+
+var app_id="66221583";
+var app_key="170aad7b7440bb9ab6a986aa2ce3672d";
+
+var clientID="c09b39aa1e60c08c0ae1616e12c90b28";
+var clientSecret="6df96041b1277d53d3fe7e0da7439cfb79cbe2a65528a667f19a8553fd71033d";
+
+Kii.initializeWithSite(app_id, app_key, KiiSite.US);
+
+Kii.authenticateAsAppAdmin(clientID,clientSecret, {
+    success: function(adminContext) {
+        // adminContext : KiiAppAdminContext instance
+        // Operate entities with adminContext.
+		adminCtx=adminContext;
+
+		KiiUser.authenticate("test1", "test", {
+			success:function(user){
+				
+				theUser=user;
+				action=new FireAction(user,function(){
+			
+				});
+		
+		
+				sch=new KiiSchedule(user,function(){
+					
+				});
+		
+		
+				fillSelect("spec",Kii.bucketWithName("ThingBatchInfo"),"name",function(){
+					initSelects();
+				});
+				
+				
+		
+			},
+			failure:function(err){
+				console.log("error:"+err);
+			}
+		})
+		
+		
+    },
+    failure: function(error, statusCode) {
+        // Authentication failed.
+    }
+});
+
+function fillSpec(num){
+	if(num<0){
+		return;
+	}
+	var spec=Kii.bucketWithName("ThingBatchInfo");
+	
+	var obj=spec.createObject();
+	
+	obj.set("name","batch"+num);
+	obj.set("desc","the num "+num+"'s desc");
+	obj.set("type","type"+num%3);
+	obj.set("version","version"+num%5);
+	obj.set("defaultStatus",num%2);
+	
+	obj.save({
+		success:function(){
+			fillSpec(num-1);
+		},
+		failure:function(err){
+			console.log("error:"+err);
+		}
+	});
+}
+
+
+function fillSelect(id,bucket,key,callback){
+	
+	var sele=$("#"+id);
+	
+	bucket.executeQuery(KiiQuery.queryWithClause(null),{
+		
+		success:function(queryPerformed,resultSet){
+            for(var i=0; i<resultSet.length; i++) {
+				var opt=$("<option/>");
+				opt.append(resultSet[i].get(key));
+				sele.append(opt);
+			}
+			
+			callback();
+		},
+		failure:function(err){
+			console.log("query for fill select fail:"+err);
+		}
+	}
+	
+	
+  );
+	
+}
+
+function addThing(){
+	var thingID=$("#thingID").val();
+	var spec=$("#spec").val();
+	
+	action.registThing(thingID,spec);
+	
+}
+
+function createScene(){
+	
+	var member=$("#memberList").val();
+	var name=$("#sceneName").val();
+	
+	if(member.substr(0,5)=="thing"){
+		var type="thing";
+	}else{
+		var type="group";
+	}
+	
+	try{
+		var act=JSON.parse($("#sceneAction").val());
+	}catch(err){
+		act=null;
+	}
+	
+	action.addScene(name,member,type,act,function(){
+		loadScene();
+	});
+}
+
+
+function addToGroup(){
+	var groupName=$("#groupName").val();
+	try{
+		var act=JSON.parse($("#groupAction").val());
+	}catch(err){
+		act=null;
+	}
+	var thingID=$("#thingSele").val();
+	
+	action.addGroup(groupName,thingID,act,initSelects);
+	
+}
+
+function initSelects(){
+	var members=[];
+	var group=theUser.bucketWithName("GroupInfo");
+	group.executeQuery(KiiQuery.queryWithClause(null),{
+		success:function(query,resultSet){
+			$("#groupList").empty();
+			for(var i=0;i<resultSet.length;i++){
+				var g=resultSet[i];
+	
+				var tr=$("<tr></tr>");
+			
+				tr.append($("<td></td>").append(g.get("groupName")));
+				tr.append($("<td></td>").append(JSON.stringify(g.get("things"))));
+				tr.append($("<td></td>").append(JSON.stringify(g.get("defaultAction"))));
+				
+				$("#groupList").append(tr);
+				
+				members.push(g.get("groupName"));
+			}
+			var things=theUser.bucketWithName("ThingInfo");
+			things.executeQuery(KiiQuery.queryWithClause(null),{
+				success:function(query,resultSet){
+					$("#thingSele").empty();
+		            for(var i=0; i<resultSet.length; i++) {
+						var opt=$("<option/>");
+						opt.append(resultSet[i].get("thingID"));
+						$("#thingSele").append(opt);
+						members.push(resultSet[i].get("thingID"));
+					}
+					
+					$("#memberList").empty();
+					for(var i in members){
+						var opt=$("<option/>");
+						opt.append(members[i]);
+						$("#memberList").append(opt);
+					}
+					
+					
+					console.log("finish init");
+					
+				},
+				failure:function(err){
+					console.log("query things fail"+err);
+				}
+			});
+			
+		}
+	
+	});
+}
+
+function loadScene(){
+	
+	var scene=theUser.bucketWithName("SceneInfo");
+	scene.executeQuery(KiiQuery.queryWithClause(null),{
+		success:function(query,resultSet){
+			$("#sceneList").empty();
+			for(var i=0;i<resultSet.length;i++){
+				var g=resultSet[i];
+	
+				var tr=$("<tr></tr>");
+			
+				tr.append($("<td></td>").append(g.get("sceneName")));
+				tr.append($("<td></td>").append(JSON.stringify(g.get("members"))));
+				
+				$("#sceneList").append(tr);
+			}
+		},
+		failure:function(err){
+			console.log("query scene fail:"+err);
+		}
+	});
+	
+}
+
+function fireAction(){
+	
+	var target=$("#target").val();
+	
+	var act=JSON.parse($("#actionNow").val());
+	
+	
+	var type=target.substr(0,5);
+		
+	action.fireByCommand(target,type,act);
+	
+	
+}
+
+function fireSchedule(){
+	
+	var target=$("#target").val();
+	
+	var act=JSON.parse($("#actionNow").val());
+	
+	
+	var type=target.substr(0,5);
+		
+	var cronStr=$("#cronStr").val();
+	
+	var obj=new KiiObject();
+	obj.set("cronStr",cronStr);
+	obj.set("target",target);
+	obj.set("action",act);
+	obj.set("type",type);
+	obj.set("name",cronStr);
+	
+	sch.operateSchedule(obj,adminCtx);
+	
+	
+}
+
+function triggerSch(){
+	
+	var timeStr=$("#timeStr").val();
+	
+	var i=timeStr.indexOf(" ");
+	if(i==-1){
+		var j=timeStr.indexOf(":");
+		var h=timeStr.substring(0,j);
+		var m=timeStr.substring(j+1);
+	
+		var n=new Date();
+	    var D=n.getDate();
+		var M=n.getMonth()+1;
+	}else{
+		var t=timeStr.substring(0,i);
+		var d=timeStr.substring(i+1);
+	
+		var j=t.indexOf(":");
+		var h=t.substring(0,j);
+		var m=t.substring(j+1);
+	
+		var k=d.indexOf("/");
+		var M=d.substring(0,k);
+		var D=d.substring(k+1);
+	}
+	var time = new Date(2014, M, D, h,m, 0);
+
+	scanTheSchedule(time,function(){
+		console.log("finish");
+	});
+}
+
+</script>
+</head>
+<body>
+<li>
+	<label>thing:<input type=“text” id="thingID" /></label>
+	<label>spec:<select id="spec" ></select></label>
+    <input type="button" onclick="addThing()"  value="addThing"/>
+<table>
+	<thead onclick="loadThing" >
+		<tr>thingID</tr>
+		<tr>spec</tr>
+		<tr>defaultAction</tr>
+	</thead>
+<tbody id="thingList" >
+</tbody>
+</table>
+<li>
+	<label>create group:<input type="button" onclick="createGroup" value="createGroup" />
+	</label>
+<li>
+	<label>groupName:<input type="text" id="groupName" /></label>
+	<label>default action:<textarea id="groupAction" >{"action":1}</textarea></label>
+<li>
+	<label>add thing:<select id="thingSele" ></select></label>
+	<input type="button" onclick="addToGroup()" value="addThing" />
+<p>
+<table>
+	<thead  onclick="initSelects()" >
+		<tr>groupID</tr>
+		<tr>action</tr>
+		<tr>things</tr>
+	</thead>
+<tbody id="groupList">
+</tbody>
+</table>
+<cr/>
+<table>
+	<thead onclick="loadScene()" >
+		<tr>sceneName</tr>
+		<tr>members</tr>
+	</thead>
+<tbody id="sceneList">
+</tbody>
+</table>
+<li>
+	<label>create scene:<input type="button" onclick="createScene()" value="createScene" />
+	</label>
+<li>
+	<label>sceneName:<input type="text" id="sceneName" /></label>
+<li>
+	<label>default action:<textarea id="sceneAction">{"action":1}</textarea></label>
+	<select id="memberList"  ></select>
+
+<li>
+	<label>send to:<input type="text" id="target" ></label>
+<li><label>action:<textarea id="actionNow">{"bright":33}</textarea></label>
+<li><input type="button" value="fire" onclick="fireAction()" />
+<li><label>cron:<input id="cronStr" type="text" /></label>	
+<li><input type="button" value="fire" onclick="fireSchedule()" />
+	
+<li><lable>time:(mm:hh MM/DD)<input id="timeStr" type="text" /></label><input type="button" value="trigger" onclick="triggerSch()" />
+</body>
+</html>

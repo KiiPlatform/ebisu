@@ -91,7 +91,7 @@ is_sandbox
     /*
     * save additional fields from IAP product. */
     private void putAdditionalFields(JSONObject json) {
-        if (product == null || (product.getApp() == null)) {
+        if (product == null) {
             return;
         }
 
@@ -147,6 +147,7 @@ is_sandbox
             this.userID = json.getString("userID");
             this.payStatus = OrderStatus.valueOf(json.getString("payStatus"));
             this.price = json.getString("price");
+            this.appID = json.optString("appID");
 
             this.createdDate = new Date(json.getLong("createdDate"));
             if (json.has("updateDate")) {

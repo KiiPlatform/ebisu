@@ -23,8 +23,6 @@ import android.widget.TextView;
 import com.kii.yankon.R;
 import com.kii.yankon.providers.YanKonProvider;
 
-import java.util.UUID;
-
 /**
  * Created by Evan on 14/11/26.
  */
@@ -80,7 +78,6 @@ public class ActionsFragment extends BaseListFragment {
                 ContentValues values = new ContentValues();
                 values.put("name", name);
                 if (currentEditId == -1) {
-                    values.put("UUID", UUID.randomUUID().toString());
                     values.put("created_time", System.currentTimeMillis());
                     getActivity().getContentResolver().insert(YanKonProvider.URI_ACTIONS, values);
                 } else {

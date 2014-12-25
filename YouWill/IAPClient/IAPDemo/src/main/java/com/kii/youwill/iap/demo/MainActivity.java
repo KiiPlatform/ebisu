@@ -11,6 +11,7 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.view.*;
 import android.widget.*;
+
 import com.kii.cloud.storage.KiiUser;
 import com.kii.cloud.storage.callback.KiiUserCallBack;
 import com.kii.payment.*;
@@ -36,7 +37,7 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
 
     private List<KiiReceipt> receipts = new ArrayList<KiiReceipt>();
 
-    private PayType mPayType = PayType.mm;
+    private PayType mPayType = PayType.unionpay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +74,8 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
             case mm:
                 menu.findItem(R.id.action_pay_mm).setChecked(true);
                 break;
+            case unionpay:
+                menu.findItem(R.id.action_pay_union).setChecked(true);
             default:
                 break;
 
@@ -87,6 +90,9 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
                 break;
             case R.id.action_pay_mm:
                 mPayType = PayType.mm;
+                break;
+            case R.id.action_pay_union:
+                mPayType = PayType.unionpay;
                 break;
         }
         return super.onContextItemSelected(item);
@@ -119,6 +125,9 @@ public class MainActivity extends Activity implements View.OnClickListener, KiiP
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (currentPayment != null) {
+            currentPayment.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
     @Override

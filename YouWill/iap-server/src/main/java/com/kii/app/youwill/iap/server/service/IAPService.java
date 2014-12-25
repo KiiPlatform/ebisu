@@ -80,6 +80,11 @@ public class IAPService {
                     jsObj.put("errorCode", 0);
                     jsObj.put("mm", jsonMM);
                     break;
+                case unionpay:
+                    JSONObject jsoUnionPay = new JSONObject(data);
+                    jsObj.put("up", jsoUnionPay);
+                    jsObj.put("errorCode", 0);
+                    break;
                 default:
                     jsObj.put("transaction_id", data);
                     jsObj.put("payInfo", this.configStore.getPaypalConfig().getPaypayJson());

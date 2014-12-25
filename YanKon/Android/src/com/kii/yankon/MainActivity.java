@@ -2,19 +2,25 @@ package com.kii.yankon;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.DrawerLayout;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
+import com.kii.cloud.storage.KiiUser;
+import com.kii.cloud.storage.callback.LoginCallBack;
 import com.kii.yankon.fragments.ActionsFragment;
 import com.kii.yankon.fragments.ColorsFragment;
 import com.kii.yankon.fragments.LightGroupsFragment;
@@ -23,12 +29,16 @@ import com.kii.yankon.fragments.LogInFragment;
 import com.kii.yankon.fragments.PlaceholderFragment;
 import com.kii.yankon.fragments.ProfileFragment;
 import com.kii.yankon.fragments.ScenesFragment;
+import com.kii.yankon.fragments.ScheduleFragment;
 import com.kii.yankon.fragments.SettingsFragment;
+import com.kii.yankon.services.NetworkReceiverService;
+import com.kii.yankon.services.NetworkSenderService;
 import com.kii.yankon.utils.Constants;
+import com.kii.yankon.utils.Network;
 import com.kii.yankon.utils.Settings;
 
 public class MainActivity extends Activity
-        implements NavigationDrawerFragment.NavigationDrawerCallbacks {
+        implements NavigationDrawerFragment.NavigationDrawerCallbacks, LoginCallBack {
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the
@@ -64,12 +74,37 @@ public class MainActivity extends Activity
         IntentFilter filter = new IntentFilter(Constants.INTENT_LOGGED_IN);
         filter.addAction(Constants.INTENT_LOGGED_OUT);
         LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, filter);
+        startService(new Intent(this, NetworkReceiverService.class));
+        NetworkSenderService.sendCmd(this, (String) null, Constants.SEARCH_LIGHTS_CMD);
+
+        loginKii();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Network.getLocalIP(this);
     }
 
     @Override
     protected void onDestroy() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
+        stopService(new Intent(this, NetworkReceiverService.class));
         super.onDestroy();
+    }
+
+    @Override
+    public void onBackPressed() {
+        AlertDialog.Builder ab = new AlertDialog.Builder(this);
+        ab.setMessage(R.string.exit_prompt);
+        ab.setNegativeButton(android.R.string.cancel, null);
+        ab.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                finish();
+            }
+        });
+        ab.show();
     }
 
     @Override
@@ -86,6 +121,9 @@ public class MainActivity extends Activity
                 break;
             case 2:
                 fragment = ScenesFragment.newInstance(position + 1);
+                break;
+            case 3:
+                fragment = ScheduleFragment.newInstance(position + 1);
                 break;
             case 4:
                 fragment = ActionsFragment.newInstance(position + 1);
@@ -177,4 +215,20 @@ public class MainActivity extends Activity
             }
         }
     };
+
+    protected void loginKii() {
+        String token = Settings.getToken();
+        if (!KiiUser.isLoggedIn() && !TextUtils.isEmpty(token)) {
+            KiiUser.loginWithToken(this, token, Settings.getExp());
+        }
+    }
+
+    @Override
+    public void onLoginCompleted(KiiUser kiiUser, Exception e) {
+        if (kiiUser != null) {
+            Toast.makeText(this, "Kii logged in", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Kii login failed", Toast.LENGTH_SHORT).show();
+        }
+    }
 }

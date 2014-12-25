@@ -12,6 +12,12 @@
                 android:orderInCategory="300"
                 android:checkable="true"
                 android:title="@string/menu_item_mm"/>
+
+        <item
+            android:id="@+id/action_pay_union"
+            android:orderInCategory="400"
+            android:checkable="true"
+            android:title="@string/menu_item_union"/>
     </group>
 
 </menu>

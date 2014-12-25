@@ -1,14 +1,20 @@
 package com.kii.yankon;
 
-import com.kii.cloud.storage.Kii;
-
 import android.app.Application;
+import android.content.ContentValues;
+
+import com.kii.cloud.storage.Kii;
+import com.kii.yankon.providers.YanKonProvider;
+import com.kii.yankon.utils.Global;
+
+import java.util.HashMap;
 
 /**
  * Created by tian on 14/11/20:上午11:30.
  */
 public class App extends Application {
     private static App mApp;
+
     public static App getApp() {
         return mApp;
     }
@@ -17,6 +23,12 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
         mApp = this;
-        Kii.initialize("c99e04f1", "3ebdc0472c0c705bc50eaf1756061b8b", Kii.Site.CN);
+        Kii.initialize("06e806e2", "31afdcdfd72ade025559176a40a20875", Kii.Site.JP);
+        Global.gLightsIpMap = new HashMap<>();
+        Global.gLightsMacMap = new HashMap<>();
+        ContentValues values = new ContentValues();
+        values.put("connected", false);
+        values.put("IP", "");
+        getContentResolver().update(YanKonProvider.URI_LIGHTS, values, null, null);
     }
 }

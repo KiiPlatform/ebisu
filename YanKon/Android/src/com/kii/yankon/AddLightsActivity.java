@@ -1,17 +1,18 @@
 package com.kii.yankon;
 
-import com.kii.yankon.fragments.InputDialogFragment;
-import com.kii.yankon.model.Light;
-import com.kii.yankon.providers.YanKonProvider;
-import com.pixplicity.multiviewpager.MultiViewPager;
-
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.PagerAdapter;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,8 +21,16 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.kii.yankon.fragments.InputDialogFragment;
+import com.kii.yankon.model.Light;
+import com.kii.yankon.providers.YanKonProvider;
+import com.kii.yankon.services.NetworkSenderService;
+import com.kii.yankon.utils.Constants;
+import com.kii.yankon.utils.Global;
+import com.kii.yankon.utils.KiiSync;
+import com.pixplicity.multiviewpager.MultiViewPager;
+
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 
@@ -30,67 +39,95 @@ import java.util.List;
  */
 public class AddLightsActivity extends Activity implements View.OnClickListener, InputDialogFragment.InputDialogInterface {
 
+    private static final String LOG_TAG = "AddLightsActivity";
+
     private MultiViewPager mPager;
     private List<Light> mLights = new ArrayList<Light>();
     private LightsAdapter mAdapter;
-    private HashMap<String, Light> lightMacMap = new HashMap<String, Light>();
     private Light currLight = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_lights);
+
+
         mPager = (MultiViewPager) findViewById(R.id.pager);
 
         mAdapter = new LightsAdapter();
-
+/*
         Light l = new Light();
         l.name = "Unknown1";
         l.model = "model1";
-        l.mac = "1";
+        l.mac = "11";
+        Global.gLightsMacMap.put(l.mac, l);
         addLight(l);
         l = new Light();
         l.name = "Unknown2";
         l.model = "model1";
-        l.mac = "2";
+        l.mac = "22";
+        Global.gLightsMacMap.put(l.mac, l);
         addLight(l);
         l = new Light();
         l.name = "Unknown3";
         l.model = "model1";
-        l.mac = "3";
+        l.mac = "33";
+        Global.gLightsMacMap.put(l.mac, l);
         addLight(l);
         l = new Light();
         l.name = "Unknown4";
         l.model = "model1";
-        l.mac = "4";
+        l.mac = "44";
+        Global.gLightsMacMap.put(l.mac, l);
         addLight(l);
         l = new Light();
         l.name = "Unknown5";
         l.model = "model1";
-        l.mac = "5";
+        l.mac = "55";
+        Global.gLightsMacMap.put(l.mac, l);
         addLight(l);
-
+*/
 
         mPager.setAdapter(mAdapter);
+
+        IntentFilter filter = new IntentFilter(Constants.ACTION_LIGHT_UPDATED);
+        LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, filter);
+        NetworkSenderService.sendCmd(this, (String) null, Constants.SEARCH_LIGHTS_CMD);
+        /*
+        byte[] cmd = new byte[] {00, 00, 01, 00, 0x44, 00, 01, 01, 00, 06, 00, 0x78, (byte)0xb3, (byte)0xb9, 0x0f, (byte)0xfe, (byte)0xf1,
+                0x0a, 0x01, 0x00, 0x03, 00, 0x7f, 0x7f, 0x32, 0x0a, 02, 00, 01, 00, 0x32, 0x0a, 0x03, 00, 01, 00, 0x32, 00, 03
+                ,00, 0x20, 00, 0x59, 0x61, 0x6e, 0x6b, 0x6f, 0x6e, 0x6c, 0x65, 0x64, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00,
+                00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00};
+        NetworkSenderService.sendCmd(this, (String) null, cmd);*/
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
+    }
+
+    BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            for (Light light : Global.gLightsMacMap.values()) {
+                addLight(light);
+            }
+        }
+    };
+
     void addLight(Light light) {
-        Cursor cursor = getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "UUID=(?)", new String[]{light.mac}, null);
+        if (mLights.contains(light)) {
+            return;
+        }
+        Cursor cursor = getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "MAC=(?)", new String[]{light.mac}, null);
         if (cursor.moveToFirst()) {
             light.name = cursor.getString(cursor.getColumnIndex("name"));
-            light.modelName = cursor.getString(cursor.getColumnIndex("m_name"));
+            light.model = cursor.getString(cursor.getColumnIndex("model"));
             light.added = true;
         }
         cursor.close();
-        if (!light.added) {
-            cursor = getContentResolver().query(YanKonProvider.URI_MODELS, null, "model=(?)", new String[]{light.model}, null);
-            if (cursor.moveToFirst()) {
-                light.modelName = cursor.getString(cursor.getColumnIndex("name"));
-            }
-            cursor.close();
-        }
         mLights.add(light);
-        lightMacMap.put(light.mac, light);
         mAdapter.notifyDataSetChanged();
     }
 
@@ -124,14 +161,29 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
     public void onInputDialogTextDone(String text) {
         currLight.name = text;
         currLight.added = true;
+        Log.e(LOG_TAG, "Mac:" + currLight.mac);
         ContentValues values = new ContentValues();
-        values.put("UUID",currLight.mac);
-        values.put("model",currLight.model);
-        values.put("connected",true);
-        values.put("is_on", true);
-        values.put("name",text);
+        values.put("MAC", currLight.mac);
+        values.put("model", currLight.model);
+        values.put("connected", true);
+        values.put("state", currLight.state);
+        values.put("IP", currLight.ip);
+        values.put("color", currLight.color);
+        values.put("brightness", Math.max(currLight.brightness, Constants.MIN_BRIGHTNESS));
+        values.put("CT", Math.max(currLight.CT, Constants.MIN_CT));
+        values.put("name", text);
         values.put("owned_time", System.currentTimeMillis());
         getContentResolver().insert(YanKonProvider.URI_LIGHTS, values);
+        new Thread() {
+            @Override
+            public void run() {
+                Cursor c = getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "MAC=(?)", new String[]{currLight.mac}, null);
+                KiiSync.syncLights(AddLightsActivity.this, c);
+                c.close();
+                String result = KiiSync.registLamp(currLight.mac);
+                Log.e("Test", "Reg result:" + result);
+            }
+        }.start();
         View view = mPager.findViewWithTag(currLight);
         ViewHolder holder = new ViewHolder(view);
         holder.title.setText(currLight.name);
@@ -167,7 +219,7 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
             view.setTag(light);
             ViewHolder holder = new ViewHolder(view);
             holder.title.setText(light.name);
-            holder.description.setText(getString(R.string.light_model_format, light.modelName));
+            holder.description.setText(getString(R.string.light_model_format, light.model));
             holder.button.setTag(light);
             holder.button.setOnClickListener(AddLightsActivity.this);
             holder.button.setEnabled(!light.added);

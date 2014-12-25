@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="../jquery-1.11.1.min.js" ></script>
+<script src="../KiiSDK2.1-KiiSDK.js"  ></script>
+<script src="yankandemo.js" ></script>
+<script src="mock.js" ></script>
+<script>
+
+
+var app_id="f25bd5bf";
+var app_key="3594109968d7adf522c9991c0be51137";
+
+var clientID="ca85ad2d593feddbdfcf607185ec934f";
+var clientSecret="b076558b5be77c73162ca903d2688eab8a9c4fc63c6b36c11805954714281f55";
+
+var url= "https://api.development-jp.internal.kiiapps.com/api";
+
+
+// var app_id="2051e8e1";
+// var app_key="ecbdd72e10668d6e1c3ef2c9fda19c83";
+// var clientID="49520818ee0d213c6da79ff1dfe5db48";
+// var clientSecret="09e98e9b0e746b94f72816b508de81d088043f9bbaed74893ff8b6d66b79db66";
+// var url="https://api.kii.com/api";
+
+var thingList=[
+"demoid10081515",
+"demoid10081508",
+"demoid10081524",
+"demoid10081505",
+"demoid10101053"
+];
+
+var userList={
+"mqtt_test":"53ae324be5a0-2628-4e11-bce4-02632f93",
+"mqtt_test2":"0267251d9d60-cd88-4e11-8be4-068f7832"
+}
+
+// var userList={
+// "mqtt_test":"2cb2cfa00022-7fda-4e11-adb6-071504c7",
+// "mqtt_test2":"c805dfa00022-9bea-4e11-adb6-01c0f328"
+// }
+
+function reload(){
+	for(var i in thingList){
+		
+		var name=thingList[i];
+		
+		var li=$("<li></li>");
+		
+		li.append(name);
+		li.attr("onclick", "fillThingRel(\'"+name+"\')");
+		
+		$("#thingList").append(li);
+		
+		var opt=$("<option/>");
+		opt.append(name);
+		
+		$("#thingID").append(opt);
+	}
+	
+	for(var i in userList){
+		
+		var li=$("<li></li>");
+		
+		li.append(i);
+		li.attr("onclick", "fillUserRel(\'"+i+"\')");
+		
+		$("#userList").append(li);
+		
+		var opt=$("<option/>");
+		
+		opt.append(i);
+		// opt.attr("value",userList[i]);
+		
+		$("#userID").append(opt);
+	}
+}
+
+var context=new Context(app_id,app_key,url,clientID,clientSecret,reload);
+
+//set value,the context will call kiicloud's service extension
+//or,direct execute local js.
+// context.remote=true;
+
+function fillUserRel(userName){
+	
+	context.setUserLogin(userName,"mqtt");
+	
+	var fill=function(things){
+		$("#groupList").empty();
+
+		for(var i in things){
+			var li=$("<li></li>");
+			li.append(JSON.stringify(things[i]));
+			$("#groupList").append(li);
+		}
+	}
+	context.fireFun("getThingList",null,fill);
+
+}
+
+function fillThingRel(name){
+	
+	var fill=function(userSet){
+		$("#thingOwnUser").empty();
+		for(var i in userSet){
+			var user=userSet[i];
+			var li=$("<li></li>");
+			li.append(JSON.stringify(userSet[i]));
+			$("#thingOwnUser").append(li);
+		}
+	}
+	var param={};
+	param["thingID"]=name;
+	context.setThingLogin(name,"123456");
+	
+	context.fireFun("queryThingsOwner",param,fill);
+	
+}
+
+
+
+function bindThing(){
+	var userName=$("#userID").val();
+	context.setUserLogin(userName,"mqtt");
+	
+	var thingName=$("#thingID").val();
+	
+	var param={};
+	param["thingIDs"]=[thingName];
+	context.fireFun("addThing",param);
+	
+}
+
+function unbindThing(){
+	var userName=$("#userID").val();
+	context.setUserLogin(userName,"mqtt");
+	
+	var thingName=$("#thingID").val();
+	
+	var param={};
+	param["thingIDs"]=[thingName];
+	context.fireFun("removeThing",param);
+	
+}
+
+
+</script>
+</head>
+<body>
+<table>
+<tbody>
+<tr>
+<td><div>
+	<ul id="userList">
+	</ul>
+</div></td>
+<td><div>
+	<ul id="groupList">
+	</ul>
+</div></td>
+<td><div>
+	<ul id="thingInGroup">
+	</ul>
+</div></td>
+</tr>
+<tr>
+<td><div>
+	<ul id="thingList">
+		<li>
+	</ul>
+</div></td>
+<td><div>
+	<ul id="thingOwnGroup">
+	</ul>
+</div></td>
+<td><div>
+	<ul id="thingOwnUser">
+	</ul>
+</div></td>
+</tr>
+</tbody>
+</table>
+<li>
+	<input type="button" value="bindThing" onclick="bindThing()" />
+	<input type="button" value="unbindThing" onclick="unbindThing()" />
+<li>
+	<label>thingID:	<select  id="thingID" ></select></label>
+	<label>userID:<select id="userID" ></select></label>
+
+</body>
+</html>

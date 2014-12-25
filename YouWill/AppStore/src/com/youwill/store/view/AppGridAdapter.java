@@ -35,6 +35,8 @@ public class AppGridAdapter extends CursorAdapter implements View.OnClickListene
 
     KiiProduct mCurrentProduct;
 
+    private KiiPayment mCurrentPayment;
+
     public AppGridAdapter(Activity context, Cursor c, int flags) {
         super(context, c, 0);
         mContext = context;
@@ -133,6 +135,19 @@ public class AppGridAdapter extends CursorAdapter implements View.OnClickListene
         mHandler.sendMessage(msg);
     }
 
+    /**
+     * process union pay result.
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (mCurrentPayment == null) {
+            return;
+        }
+        mCurrentPayment.onActivityResult(requestCode, resultCode, data);
+    }
+
     private void launchPaymentImpl(final PayType payType) {
         if (mCurrentProduct == null) {
             return;
@@ -145,9 +160,9 @@ public class AppGridAdapter extends CursorAdapter implements View.OnClickListene
             public void onLoginCompleted(int token, KiiUser user, Exception exception) {
                 if (exception == null) {
                     KiiOrder order = new KiiOrder(mCurrentProduct, user, payType);
-                    KiiPayment currentPayment = KiiPayment.getPayment(mContext, order,
+                    mCurrentPayment = KiiPayment.getPayment(mContext, order,
                             paymentCallback);
-                    currentPayment.pay();
+                    mCurrentPayment.pay();
                 } else {
                     mHandler.sendEmptyMessage(MSG_LOGIN_ERROR);
                 }

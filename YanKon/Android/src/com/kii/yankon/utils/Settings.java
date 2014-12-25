@@ -1,9 +1,9 @@
 package com.kii.yankon.utils;
 
-import com.kii.yankon.App;
-
 import android.content.Context;
 import android.content.SharedPreferences;
+
+import com.kii.yankon.App;
 
 /**
  * Created by tian on 14-9-17:上午7:43.
@@ -13,6 +13,8 @@ public class Settings {
     public static final String PREF_NAME = "preferences";
 
     private static final String TOKEN_KEY = "token";
+
+    private static final String EXP_KEY = "exp";
 
     static Context gContext;
 
@@ -56,6 +58,14 @@ public class Settings {
 
     public static String getToken() {
         return getPrefs().getString(TOKEN_KEY, null);
+    }
+
+    public static void saveExp(long t) {
+        getPrefs().edit().putLong(EXP_KEY, t).apply();
+    }
+
+    public static long getExp() {
+        return getPrefs().getLong(EXP_KEY, 0L);
     }
 
     public static boolean isLoggedIn() {
