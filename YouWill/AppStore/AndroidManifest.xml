@@ -82,6 +82,9 @@
             android:name=".activities.PaymentSelectorActivity"
             android:theme="@style/FloatWindowTheme"
             android:screenOrientation="landscape" />
+        <activity android:name=".activities.ViewImageActivity"
+            android:theme="@style/ImageViewTheme"
+            android:screenOrientation="landscape"/>
 
         <provider
             android:name=".providers.AppSecureProvider"

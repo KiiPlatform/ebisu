@@ -13,4 +13,6 @@ public class Constants {
     public static final int REQ_CODE_SELECT_PAYMENT = 1;
 
     public static final String INTENT_LOG_IN_CHANGED = "com.youwill.log_in_status_changed";
+
+    public static final String  INTENT_EXTRA_URL = "url";
 }
