@@ -181,21 +181,21 @@ public class LightsFragment extends BaseListFragment {
             tv = (TextView) view.findViewById(android.R.id.text2);
             tv.setText(context.getString(R.string.light_model_format, modelName));
             View icon = view.findViewById(R.id.light_icon);
-            final boolean is_on = cursor.getInt(cursor.getColumnIndex("is_on")) > 0;
+            final boolean state = cursor.getInt(cursor.getColumnIndex("state")) > 0;
             final int light_id = cursor.getInt(cursor.getColumnIndex("_id"));
-            if (is_on) {
+            if (state) {
                 icon.setBackgroundResource(R.drawable.light_on);
             } else {
                 icon.setBackgroundResource(R.drawable.lights_off);
             }
             final Switch light_switch = (Switch) view.findViewById(R.id.light_switch);
-            light_switch.setChecked(is_on);
+            light_switch.setChecked(state);
             light_switch.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    light_switch.setChecked(!is_on);
+                    light_switch.setChecked(!state);
                     ContentValues values = new ContentValues();
-                    values.put("is_on", !is_on);
+                    values.put("state", !state);
                     values.put("synced", false);
                     getActivity().getContentResolver().update(YanKonProvider.URI_LIGHTS, values, "_id=" + light_id, null);
                     Utils.controlLight(getActivity(), light_id, true);

@@ -2,6 +2,7 @@ package com.kii.yankon;
 
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -15,11 +16,11 @@ import android.widget.CompoundButton;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.Switch;
-import android.widget.Toast;
 
 import com.kii.yankon.model.Action;
 import com.kii.yankon.model.YanKonColor;
 import com.kii.yankon.providers.YanKonProvider;
+import com.kii.yankon.utils.Constants;
 import com.kii.yankon.utils.Utils;
 import com.kii.yankon.widget.ColorCircle;
 import com.kii.yankon.widget.ColorSlider;
@@ -58,7 +59,7 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
     private int color;
     private int brightness;
     private int CT;
-    private boolean is_on;
+    private boolean state;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,25 +77,28 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
         } else if (group_id >= 0) {
             c = getContentResolver().query(YanKonProvider.URI_LIGHT_GROUPS, null, "_id=" + group_id, null, null);
         }
-        if (c == null || !c.moveToFirst()) {
-            if (c != null) {
-                c.close();
+
+        if (c != null) {
+            if (c.moveToFirst()) {
+                color = c.getInt(c.getColumnIndex("color"));
+                brightness = c.getInt(c.getColumnIndex("brightness"));
+                CT = c.getInt(c.getColumnIndex("CT"));
+                if (light_id >= 0) {
+                    state = c.getInt(c.getColumnIndex("state")) != 0;
+                } else if (group_id >= 0) {
+                    state = c.getInt(c.getColumnIndex("num")) == c.getInt(c.getColumnIndex("on_num"));
+                    ContentValues values = new ContentValues();
+                    values.put("state", state);
+                    saveChange(values, false);
+                }
             }
-            Toast.makeText(this, "Cannot load light/group info", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        color = c.getInt(c.getColumnIndex("color"));
-        brightness = c.getInt(c.getColumnIndex("brightness"));
-        CT = c.getInt(c.getColumnIndex("CT"));
-        if (light_id >= 0) {
-            is_on = c.getInt(c.getColumnIndex("is_on")) != 0;
+            c.close();
         } else {
-            is_on = c.getInt(c.getColumnIndex("num")) == c.getInt(c.getColumnIndex("on_num"));
-            ContentValues values = new ContentValues();
-            values.put("is_on", is_on);
-            saveChange(values, false);
+            state = getIntent().getBooleanExtra("state", true);
+            color = getIntent().getIntExtra("color", Constants.DEFAULT_COLOR);
+            brightness = getIntent().getIntExtra("brightness", Constants.DEFAULT_BRIGHTNESS);
+            CT = getIntent().getIntExtra("CT", Constants.DEFAULT_CT);
         }
-        c.close();
         initializeColor(color);
         loadColors();
         mColorSpinner = (Spinner) findViewById(R.id.color_spinner);
@@ -104,7 +108,7 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
         matchColor();
 
         mSwitch = (Switch) findViewById(R.id.light_switch);
-        mSwitch.setChecked(is_on);
+        mSwitch.setChecked(state);
         mSwitch.setOnCheckedChangeListener(this);
         mBrightnessSeekBar = (SeekBar) findViewById(R.id.seekbar_brightness);
         mBrightnessSeekBar.setProgress(brightness);
@@ -114,11 +118,15 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
         mCTSeekBar.setOnSeekBarChangeListener(this);
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
+    protected void saveOnExit() {
         ContentValues values = new ContentValues();
         saveChange(values, true);
+        Intent intent = new Intent();
+        intent.putExtra("state", state);
+        intent.putExtra("color", color);
+        intent.putExtra("brightness", brightness);
+        intent.putExtra("CT", CT);
+        setResult(RESULT_OK, intent);
     }
 
     void loadColors() {
@@ -167,7 +175,7 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
         if (light_id >= 0) {
             getContentResolver().update(YanKonProvider.URI_LIGHTS, values, "_id=" + light_id, null);
             Utils.controlLight(this, light_id, doItNow);
-        } else {
+        } else if (group_id >= 0) {
             getContentResolver().update(YanKonProvider.URI_LIGHT_GROUPS, values, "_id=" + group_id, null);
             Utils.controlGroup(this, group_id, doItNow);
         }
@@ -203,10 +211,17 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
     }
 
     @Override
+    public void onBackPressed() {
+        saveOnExit();
+        super.onBackPressed();
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         switch (id) {
             case android.R.id.home:
+                saveOnExit();
                 finish();
                 return true;
         }
@@ -230,9 +245,9 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
 
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        is_on = isChecked;
+        state = isChecked;
         ContentValues values = new ContentValues();
-        values.put("is_on", is_on);
+        values.put("state", state);
         saveChange(values, false);
     }
 

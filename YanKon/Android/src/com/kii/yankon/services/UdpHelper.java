@@ -135,8 +135,8 @@ public class UdpHelper implements Runnable {
                     }
                     switch (attr_id) {
                         case 0:
-                            light.is_on = sub_data[0] == 1;
-                            values.put("is_on", light.is_on);
+                            light.state = sub_data[0] == 1;
+                            values.put("state", light.state);
                             break;
                         case 1:
                             light.color = Utils.getRGBColor(sub_data);

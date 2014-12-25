@@ -54,10 +54,10 @@ public class CommandBuilder {
         return result;
     }
 
-    public static byte[] buildLightInfo(int trans_no, boolean is_on, int color, int brightness, int CT) {
+    public static byte[] buildLightInfo(int trans_no, boolean state, int color, int brightness, int CT) {
         CommandBuilder cb = new CommandBuilder();
         byte[] data = new byte[1];
-        data[0] = (byte) (is_on ? 1 : 0);
+        data[0] = (byte) (state ? 1 : 0);
         cb.append((byte) 10, (byte) 0, (byte) 1, data);
         data = new byte[3];
         data[2] = (byte) (color % 256);

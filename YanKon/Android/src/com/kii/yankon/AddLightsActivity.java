@@ -12,6 +12,7 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.PagerAdapter;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -162,7 +163,7 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
         values.put("MAC", currLight.mac);
         values.put("model", currLight.model);
         values.put("connected", true);
-        values.put("is_on", currLight.is_on);
+        values.put("state", currLight.state);
         values.put("IP", currLight.ip);
         values.put("color", currLight.color);
         values.put("brightness", Math.max(currLight.brightness, Constants.MIN_BRIGHTNESS));
@@ -176,6 +177,8 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
                 Cursor c = getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "MAC=(?)", new String[]{currLight.mac}, null);
                 KiiSync.syncLights(AddLightsActivity.this, c);
                 c.close();
+                String result = KiiSync.registLamp(currLight.mac);
+                Log.e("Test", "Reg result:" + result);
             }
         }.start();
         View view = mPager.findViewWithTag(currLight);

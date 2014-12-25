@@ -29,6 +29,7 @@ import com.kii.yankon.fragments.LogInFragment;
 import com.kii.yankon.fragments.PlaceholderFragment;
 import com.kii.yankon.fragments.ProfileFragment;
 import com.kii.yankon.fragments.ScenesFragment;
+import com.kii.yankon.fragments.ScheduleFragment;
 import com.kii.yankon.fragments.SettingsFragment;
 import com.kii.yankon.services.NetworkReceiverService;
 import com.kii.yankon.services.NetworkSenderService;
@@ -120,6 +121,9 @@ public class MainActivity extends Activity
                 break;
             case 2:
                 fragment = ScenesFragment.newInstance(position + 1);
+                break;
+            case 3:
+                fragment = ScheduleFragment.newInstance(position + 1);
                 break;
             case 4:
                 fragment = ActionsFragment.newInstance(position + 1);

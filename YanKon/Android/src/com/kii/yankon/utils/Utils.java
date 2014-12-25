@@ -121,7 +121,8 @@ public class Utils {
                 light.CT = c.getInt(c.getColumnIndex("CT"));
                 light.color = c.getInt(c.getColumnIndex("color"));
                 light.ip = c.getString(c.getColumnIndex("IP"));
-                light.is_on = c.getInt(c.getColumnIndex("is_on")) != 0;
+                light.mac = c.getString(c.getColumnIndex("MAC"));
+                light.state = c.getInt(c.getColumnIndex("state")) != 0;
                 light.connected = c.getInt(c.getColumnIndex("connected")) != 0;
             } else {
                 light = null;
@@ -138,7 +139,7 @@ public class Utils {
             if (TextUtils.isEmpty(light.ip)) {
                 Toast.makeText(context, "Cannot get light IP", Toast.LENGTH_SHORT).show();
             } else {
-                byte[] cmd = CommandBuilder.buildLightInfo(1, light.is_on, light.color, light.brightness, light.CT);
+                byte[] cmd = CommandBuilder.buildLightInfo(1, light.state, light.color, light.brightness, light.CT);
                 NetworkSenderService.sendCmd(context, light.ip, cmd);
             }
         }
@@ -149,8 +150,8 @@ public class Utils {
                     Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "_id=" + light_id, null, null);
                     boolean ret = KiiSync.syncLights(context, c);
                     c.close();
-                    if (ret && !light.connected) {
-
+                    if (!light.connected) {
+                        KiiSync.fireLamp(light.mac, light.state ? 1 : 0, light.color, light.brightness, light.CT);
                     }
                 }
             }.start();
@@ -161,7 +162,7 @@ public class Utils {
         int brightness = Constants.DEFAULT_BRIGHTNESS;
         int CT = Constants.DEFAULT_CT;
         int color = Constants.DEFAULT_COLOR;
-        boolean is_on = true;
+        boolean state = true;
         boolean loadedInfo = false;
         Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUPS, null, "_id=" + group_id, null, null);
         if (c != null) {
@@ -169,7 +170,7 @@ public class Utils {
                 brightness = c.getInt(c.getColumnIndex("brightness"));
                 CT = c.getInt(c.getColumnIndex("CT"));
                 color = c.getInt(c.getColumnIndex("color"));
-                is_on = c.getInt(c.getColumnIndex("is_on")) != 0;
+                state = c.getInt(c.getColumnIndex("state")) != 0;
                 loadedInfo = true;
             }
             c.close();
@@ -178,8 +179,9 @@ public class Utils {
             Toast.makeText(context, "Cannot load group info", Toast.LENGTH_SHORT).show();
             return;
         }
+
         ArrayList<String> connectedLights = new ArrayList<>();
-        ArrayList<String> unconnectedLights = new ArrayList<>();
+        final ArrayList<String> unconnectedLights = new ArrayList<>();
         c = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUP_REL, null, "group_id=" + group_id, null, null);
         if (c != null) {
             while (c.moveToNext()) {
@@ -195,22 +197,26 @@ public class Utils {
             c.close();
         }
         if (connectedLights.size() > 0) {
-            byte[] cmd = CommandBuilder.buildLightInfo(1, is_on, color, brightness, CT);
+            byte[] cmd = CommandBuilder.buildLightInfo(1, state, color, brightness, CT);
             String[] ips = connectedLights.toArray(new String[0]);
             NetworkSenderService.sendCmd(context, ips, cmd);
         }
         if (doItNow && KiiUser.isLoggedIn()) {
+            final boolean i_state = state;
+            final int i_color = color;
+            final int i_brightness = brightness;
+            final int i_CT = CT;
             new Thread() {
                 @Override
                 public void run() {
                     Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUP_REL, null, "_id=" + group_id, null, null);
                     KiiSync.syncLightGroups(context, c);
                     c.close();
+                    for (String mac : unconnectedLights) {
+                        KiiSync.fireLamp(mac, i_state ? 1 : 0, i_color, i_brightness, i_CT);
+                    }
                 }
             }.start();
-        }
-        if (unconnectedLights.size() > 0) {
-
         }
     }
 }

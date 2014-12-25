@@ -5,10 +5,16 @@ import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
 
+import com.kii.cloud.storage.Kii;
 import com.kii.cloud.storage.KiiBucket;
 import com.kii.cloud.storage.KiiObject;
+import com.kii.cloud.storage.KiiServerCodeEntry;
+import com.kii.cloud.storage.KiiServerCodeEntryArgument;
+import com.kii.cloud.storage.KiiServerCodeExecResult;
 import com.kii.cloud.storage.KiiUser;
 import com.kii.yankon.providers.YanKonProvider;
+
+import org.json.JSONObject;
 
 /**
  * Created by Evan on 14/12/20.
@@ -40,7 +46,7 @@ public class KiiSync {
                 lightObj.set("brightness", cursor.getInt(cursor.getColumnIndex("brightness")));
                 lightObj.set("CT", cursor.getInt(cursor.getColumnIndex("CT")));
                 lightObj.set("color", cursor.getInt(cursor.getColumnIndex("color")));
-                lightObj.set("is_on", cursor.getInt(cursor.getColumnIndex("is_on")) > 0);
+                lightObj.set("state", cursor.getInt(cursor.getColumnIndex("state")) > 0);
                 lightObj.set("owned_time", cursor.getLong(cursor.getColumnIndex("owned_time")));
                 try {
                     lightObj.saveAllFields(true);
@@ -78,7 +84,7 @@ public class KiiSync {
                 groupObj.set("brightness", cursor.getInt(cursor.getColumnIndex("brightness")));
                 groupObj.set("CT", cursor.getInt(cursor.getColumnIndex("CT")));
                 groupObj.set("color", cursor.getInt(cursor.getColumnIndex("color")));
-                groupObj.set("is_on", cursor.getInt(cursor.getColumnIndex("is_on")) > 0);
+                groupObj.set("state", cursor.getInt(cursor.getColumnIndex("state")) > 0);
                 groupObj.set("owned_time", cursor.getLong(cursor.getColumnIndex("owned_time")));
                 try {
                     groupObj.saveAllFields(true);
@@ -94,4 +100,55 @@ public class KiiSync {
         return syncResult;
     }
 
+    public static String registLamp(String MAC) {
+        String result = null;
+        KiiServerCodeEntry entry = Kii.serverCodeEntry("registLamp");
+
+        try {
+            JSONObject rawArg = new JSONObject();
+
+            rawArg.put("thingID", MAC);
+            rawArg.put("batchName", 100);
+            KiiServerCodeEntryArgument arg = KiiServerCodeEntryArgument
+                    .newArgument(rawArg);
+
+            // Execute the Server Code
+            KiiServerCodeExecResult res = entry.execute(arg);
+
+            // Parse the result.
+            JSONObject returned = res.getReturnedValue();
+            result = returned.getString("returnedValue");
+        } catch (Exception e) {
+
+        }
+        return result;
+    }
+
+    public static String fireLamp(String MAC, int state, int color, int brightness, int CT) {
+        String result = null;
+        KiiServerCodeEntry entry = Kii.serverCodeEntry("fireLamp");
+
+        try {
+            JSONObject action =  new JSONObject();
+            action.put("state",state);
+            action.put("color",color);
+            action.put("brightness",brightness);
+            action.put("CT",CT);
+            JSONObject rawArg = new JSONObject();
+            rawArg.put("thingID", MAC);
+            rawArg.put("action", action);
+            KiiServerCodeEntryArgument arg = KiiServerCodeEntryArgument
+                    .newArgument(rawArg);
+
+            // Execute the Server Code
+            KiiServerCodeExecResult res = entry.execute(arg);
+
+            // Parse the result.
+            JSONObject returned = res.getReturnedValue();
+            result = returned.getString("returnedValue");
+        } catch (Exception e) {
+
+        }
+        return result;
+    }
 }

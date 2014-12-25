@@ -8,7 +8,7 @@ public class Light {
     public String model;
     public String mac;
     public String ip;
-    public boolean is_on;
+    public boolean state;
     public int color;
     public int brightness;
     public int CT;
