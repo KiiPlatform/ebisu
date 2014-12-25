@@ -64,7 +64,8 @@ public class LightsFragment extends BaseListFragment {
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(getActivity(), YanKonProvider.URI_LIGHTS, null, "connected OR is_mine", null, "owned_time asc");
+        //"connected OR is_mine"
+        return new CursorLoader(getActivity(), YanKonProvider.URI_LIGHTS, null, null, null, "owned_time asc");
     }
 
     @Override

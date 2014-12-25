@@ -127,16 +127,18 @@ public class KiiSync {
     public static String fireLamp(String MAC, int state, int color, int brightness, int CT) {
         String result = null;
         KiiServerCodeEntry entry = Kii.serverCodeEntry("fireLamp");
-
+        Log.e(LOG_TAG, "color:" + color);
+        long colorL = color & 0x0000000000ffffffL;
         try {
-            JSONObject action =  new JSONObject();
-            action.put("state",state);
-            action.put("color",color);
-            action.put("brightness",brightness);
-            action.put("CT",CT);
+            JSONObject action = new JSONObject();
+            action.put("state", state);
+            action.put("color", colorL);
+            action.put("brightness", brightness);
+            action.put("CT", CT);
             JSONObject rawArg = new JSONObject();
             rawArg.put("thingID", MAC);
             rawArg.put("action", action);
+            Log.e(LOG_TAG, "fireLamp:" + rawArg.toString());
             KiiServerCodeEntryArgument arg = KiiServerCodeEntryArgument
                     .newArgument(rawArg);
 

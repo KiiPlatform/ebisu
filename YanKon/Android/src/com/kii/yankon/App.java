@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.ContentValues;
 
 import com.kii.cloud.storage.Kii;
+import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.utils.Global;
 
 import java.util.HashMap;
@@ -28,6 +29,6 @@ public class App extends Application {
         ContentValues values = new ContentValues();
         values.put("connected", false);
         values.put("IP", "");
-//        getContentResolver().update(YanKonProvider.URI_LIGHTS, values, null, null);
+        getContentResolver().update(YanKonProvider.URI_LIGHTS, values, null, null);
     }
 }

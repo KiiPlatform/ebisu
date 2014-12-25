@@ -73,5 +73,6 @@
     <string name="schedule_settings_format" formatted="false">State:%s BR:%d CT:%d</string>
     <string name="state_off">Off</string>
     <string name="state_on">On</string>
+    <string name="title_activity_pick_target">Pick target</string>
 
 </resources>

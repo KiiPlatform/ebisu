@@ -147,12 +147,12 @@ public class Utils {
             new Thread() {
                 @Override
                 public void run() {
-                    Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "_id=" + light_id, null, null);
-                    boolean ret = KiiSync.syncLights(context, c);
-                    c.close();
                     if (!light.connected) {
                         KiiSync.fireLamp(light.mac, light.state ? 1 : 0, light.color, light.brightness, light.CT);
                     }
+                    Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "_id=" + light_id, null, null);
+                    boolean ret = KiiSync.syncLights(context, c);
+                    c.close();
                 }
             }.start();
         }
@@ -209,12 +209,12 @@ public class Utils {
             new Thread() {
                 @Override
                 public void run() {
-                    Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUP_REL, null, "_id=" + group_id, null, null);
-                    KiiSync.syncLightGroups(context, c);
-                    c.close();
                     for (String mac : unconnectedLights) {
                         KiiSync.fireLamp(mac, i_state ? 1 : 0, i_color, i_brightness, i_CT);
                     }
+                    Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUP_REL, null, "_id=" + group_id, null, null);
+                    KiiSync.syncLightGroups(context, c);
+                    c.close();
                 }
             }.start();
         }

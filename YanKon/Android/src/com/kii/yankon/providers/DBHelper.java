@@ -130,6 +130,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "brightness INTEGER,"
                         + "CT INTEGER,"
                         + "state BOOL DEFAULT 0,"
+                        + "time INTEGER,"
                         + "synced BOOL,"
                         + "created_time INTEGER"
                         + ");"

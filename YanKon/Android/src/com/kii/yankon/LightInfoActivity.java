@@ -234,6 +234,11 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
             if (position > 0) {
                 YanKonColor c = mColors.get(position);
                 initializeColor(c.value);
+                color = c.value;
+                this.color_changed = true;
+                ContentValues values = new ContentValues();
+                values.put("color", color);
+                saveChange(values, false);
             }
         }
     }

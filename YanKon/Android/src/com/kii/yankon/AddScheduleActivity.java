@@ -12,6 +12,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.kii.yankon.providers.YanKonProvider;
@@ -23,13 +24,16 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
     public static final String EXTRA_SCHEDULE_ID = "schedule_id";
 
     private static final int REQUEST_SETTINGS = 0x1001;
+    private static final int REQUEST_TARGET = 0x1002;
     EditText mNameField;
     int schedule_id = -1;
     int color = Constants.DEFAULT_COLOR;
     int brightness = Constants.DEFAULT_BRIGHTNESS;
     int CT = Constants.DEFAULT_CT;
     int state = 0;
+    int time = 0;
     Button mTargetBtn, mSettingsBtn;
+    TimePicker mTimePicker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +46,7 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
         findViewById(R.id.schedule_cancel).setOnClickListener(this);
         findViewById(R.id.schedule_ok).setOnClickListener(this);
         mNameField = (EditText) findViewById(R.id.schedule_name);
+        mTimePicker = (TimePicker) findViewById(R.id.time_picker);
 
         schedule_id = getIntent().getIntExtra(EXTRA_SCHEDULE_ID, -1);
         if (schedule_id >= 0) {
@@ -54,11 +59,14 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
                     brightness = c.getInt(c.getColumnIndex("brightness"));
                     CT = c.getInt(c.getColumnIndex("CT"));
                     state = c.getInt(c.getColumnIndex("state"));
+                    time = c.getInt(c.getColumnIndex("time"));
                 }
                 c.close();
             }
         }
         updateSettingsInfo();
+        mTimePicker.setCurrentHour(time / 60);
+        mTimePicker.setCurrentMinute(time % 60);
     }
 
     public void updateSettingsInfo() {
@@ -83,9 +91,11 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.target_btn:
-
-                break;
+            case R.id.target_btn: {
+                Intent intent = new Intent(this, PickTargetActivity.class);
+                startActivityForResult(intent, REQUEST_TARGET);
+            }
+            break;
             case R.id.settings_btn: {
                 Intent intent = new Intent(this, LightInfoActivity.class);
                 intent.putExtra("state", state > 0);
@@ -131,6 +141,7 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
         values.put("CT", CT);
         values.put("state", state);
         values.put("enabled", true);
+        values.put("time", mTimePicker.getCurrentHour() * 60 + mTimePicker.getCurrentMinute());
         if (schedule_id < 0) {
             values.put("created_time", System.currentTimeMillis());
             Uri uri = cr.insert(YanKonProvider.URI_SCHEDULE, values);

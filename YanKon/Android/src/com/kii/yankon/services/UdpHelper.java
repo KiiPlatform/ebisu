@@ -140,15 +140,15 @@ public class UdpHelper implements Runnable {
                             break;
                         case 1:
                             light.color = Utils.getRGBColor(sub_data);
-                            values.put("color", light.color);
+//                            values.put("color", light.color);
                             break;
                         case 2:
                             light.brightness = Utils.unsignedByteToInt(sub_data[0]);
-                            values.put("brightness", light.brightness);
+//                            values.put("brightness", light.brightness);
                             break;
                         case 3:
                             light.CT = Utils.unsignedByteToInt(sub_data[0]);
-                            values.put("CT", light.CT);
+//                            values.put("CT", light.CT);
                             break;
                     }
                 }

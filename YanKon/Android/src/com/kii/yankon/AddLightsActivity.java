@@ -39,6 +39,8 @@ import java.util.List;
  */
 public class AddLightsActivity extends Activity implements View.OnClickListener, InputDialogFragment.InputDialogInterface {
 
+    private static final String LOG_TAG = "AddLightsActivity";
+
     private MultiViewPager mPager;
     private List<Light> mLights = new ArrayList<Light>();
     private LightsAdapter mAdapter;
@@ -53,7 +55,7 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
         mPager = (MultiViewPager) findViewById(R.id.pager);
 
         mAdapter = new LightsAdapter();
-
+/*
         Light l = new Light();
         l.name = "Unknown1";
         l.model = "model1";
@@ -84,7 +86,7 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
         l.mac = "55";
         Global.gLightsMacMap.put(l.mac, l);
         addLight(l);
-
+*/
 
         mPager.setAdapter(mAdapter);
 
@@ -159,6 +161,7 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
     public void onInputDialogTextDone(String text) {
         currLight.name = text;
         currLight.added = true;
+        Log.e(LOG_TAG, "Mac:" + currLight.mac);
         ContentValues values = new ContentValues();
         values.put("MAC", currLight.mac);
         values.put("model", currLight.model);
