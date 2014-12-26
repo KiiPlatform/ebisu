@@ -35,13 +35,13 @@ public class Network {
                 dataPacket.setLength(cmd.length);
                 dataPacket.setPort(Constants.DEFAULT_PORT);
 
-                InetAddress broadcastAddr  = InetAddress.getByName(ip);
+                InetAddress broadcastAddr = InetAddress.getByName(ip);
                 dataPacket.setAddress(broadcastAddr);
 
                 udpSocket.send(dataPacket);
 
                 udpSocket.close();
-                Log.e(LOG_TAG, "Send out cmd:"+ip);
+                Log.e(LOG_TAG, "Send out cmd:" + ip + " data:" + Utils.byteArrayToString(cmd));
             } catch (Exception e) {
                 Log.e(LOG_TAG, Log.getStackTraceString(e));
             }
