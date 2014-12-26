@@ -45,8 +45,8 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="http"
-                    android:host="www.kii.com"
-                    android:pathPrefix="/app" />
+                    android:host="www.youwill.com.cn"
+                    android:pathPrefix="/apps" />
             </intent-filter>
         </activity>
         <activity

@@ -388,14 +388,14 @@ public class AppDetailActivity extends Activity
             final String url = mPics.get(i % mPics.size());
             ImageLoader.getInstance()
                     .displayImage(url, viewHolder.mImageView, Utils.detailDisplayOptions);
-            viewHolder.mImageView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(AppDetailActivity.this, ViewImageActivity.class);
-                    intent.putExtra(Constants.INTENT_EXTRA_URL, url);
-                    startActivity(intent);
-                }
-            });
+//            viewHolder.mImageView.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    Intent intent = new Intent(AppDetailActivity.this, ViewImageActivity.class);
+//                    intent.putExtra(Constants.INTENT_EXTRA_URL, url);
+//                    startActivity(intent);
+//                }
+//            });
         }
 
         @Override
