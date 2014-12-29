@@ -46,7 +46,7 @@
                 <data
                     android:scheme="http"
                     android:host="www.youwill.com.cn"
-                    android:pathPrefix="/apps" />
+                    android:pathPrefix="/apps/" />
             </intent-filter>
         </activity>
         <activity
