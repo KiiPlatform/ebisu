@@ -94,19 +94,10 @@ int KiiMQTT_connect(unsigned short keepAliveInterval)
         return -1;
     }
     //KII_DEBUG("broker ip::%d.%d.%d.%d\r\n", ipBuf[0], ipBuf[1], ipBuf[2], ipBuf[3]);
-		
-    g_kii_push.mqttSocket= kiiHal_socketCreate();
-    if (g_kii_push.mqttSocket < 0)
-    {
-        KII_DEBUG("kii-error: create socket failed !\r\n");
-        return -1;
-    }
-	
 	
     if (kiiHal_connect(g_kii_push.mqttSocket, (char*)ipBuf, KII_MQTT_DEFAULT_PORT) < 0)
     {
         KII_DEBUG("kii-error: connect to server failed \r\n");
-	 kiiHal_socketClose(&g_kii_push.mqttSocket);
         return -1;
     }
 
@@ -173,7 +164,6 @@ int KiiMQTT_connect(unsigned short keepAliveInterval)
     {
         
         KII_DEBUG("kii-error: send data fail\r\n");
-	 kiiHal_socketClose(&g_kii_push.mqttSocket);
         return -1;
     }
 
@@ -182,7 +172,6 @@ int KiiMQTT_connect(unsigned short keepAliveInterval)
     if (g_kii_push.rcvdCounter <= 0)
     {
         KII_DEBUG("kii-error: recv data fail\r\n");
-	 kiiHal_socketClose(&g_kii_push.mqttSocket);
         return -1;
     }
     else
@@ -208,7 +197,6 @@ int KiiMQTT_connect(unsigned short keepAliveInterval)
        else
        {
         KII_DEBUG("kii-error: invalid data format\r\n");
-	 kiiHal_socketClose(&g_kii_push.mqttSocket);
         return -1;
        }
     }
@@ -272,7 +260,6 @@ int KiiMQTT_subscribe(enum QoS qos)
     {
         
         KII_DEBUG("kii-error: send data fail\r\n");
-	 kiiHal_socketClose(&g_kii_push.mqttSocket);
         return -1;
     }
 
@@ -281,7 +268,6 @@ int KiiMQTT_subscribe(enum QoS qos)
     if (g_kii_push.rcvdCounter <= 0)
     {
         KII_DEBUG("kii-error: recv data fail\r\n");
-	 kiiHal_socketClose(&g_kii_push.mqttSocket);
         return -1;
     }
     else
@@ -307,7 +293,6 @@ int KiiMQTT_subscribe(enum QoS qos)
        else
        {
         KII_DEBUG("kii-error: invalid data format\r\n");
-	 kiiHal_socketClose(&g_kii_push.mqttSocket);
         return -1;
        }
     }
@@ -335,7 +320,6 @@ int KiiMQTT_pingReq(void)
     {
         
         KII_DEBUG("kii-error: send data fail\r\n");
-	 kiiHal_socketClose(&g_kii_push.mqttSocket);
         return -1;
     }
     else

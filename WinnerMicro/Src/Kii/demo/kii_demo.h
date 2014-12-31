@@ -11,9 +11,19 @@
 #define STR_APPKEY "31afdcdfd72ade025559176a40a20875"
 #endif
 
+#if 0
+//for test
 #define STR_SITE "US"
 #define STR_APPID "9fd99efe"
 #define STR_APPKEY "1b2d26d22ac794611608fda4dc27e7df"
+#endif
+
+#if 1
+//for super app
+#define STR_SITE "US"
+#define STR_APPID "d07f81a2"
+#define STR_APPKEY "d017b33f77cab6f5f149fec5ec4b9776"
+#endif
 
 //for data management test
 #define STR_TEST_BUCKET "TestBucket"
