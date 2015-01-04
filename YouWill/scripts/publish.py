@@ -2,14 +2,15 @@
 __author__ = 'liangyx'
 
 import os.path, json, hashlib
-import httplib, sys
+import httplib, argparse
 
 APP_ID = 'c99e04f1'
 APP_KEY = '3ebdc0472c0c705bc50eaf1756061b8b'
 TOKEN = '_2nmV_yKvD3vwEP1dALdQG3Bd6yyDbHF0o7nW3BFF8g'
 HOST = 'api-cn2.kii.com'
-RES_ROOT = '/Users/liangyx/Downloads/YouWill/p1'
+RES_ROOT = '/Users/liangyx/Downloads/YouWill/p4'
 ROOT_FILE = 'apps.csv'
+IAP_FILE = 'iap.csv'
 
 CATEGORIES = {
     '0-3岁':0,
@@ -18,8 +19,8 @@ CATEGORIES = {
     '12岁以上':3,
 }
 
-is_overwrite = False
-publish=False
+IS_VALIDATE=True
+DEST_APP_BUCKET = 'workings'
 
 def process_app_list():
     file_name = os.path.join(RES_ROOT, ROOT_FILE)
@@ -32,8 +33,11 @@ def process_app_list():
         app = parse_app_info(line)
         if app:
             app_res =  read_app_res(app['name'])
-            log(app_res['meta']['package'])
-            publish_app(app, app_res)
+            if not IS_VALIDATE:
+                publish_app(app, app_res)
+                log(app_res['meta']['package'])
+            else:
+                print app, app_res
         else:
             print 'Error parsing app: ', line
 
@@ -119,7 +123,7 @@ def publish_app(app, app_res):
     app_object['apk_url'] = apk_url
     price = float(app['price'])
     if price > 0:
-        iap_id = create_iap_product(app_object)
+        iap_id = create_appstore_product(app_object)
         app_object['iap_id'] = iap_id
 
     clause = {
@@ -128,7 +132,7 @@ def publish_app(app, app_res):
             {"type":"eq", "field":"app_id", "value":app_object['app_id']},
         }
     }
-    create_object_if_necessary(app_object, 'apps', 'app', clause)
+    create_object_if_necessary(app_object, DEST_APP_BUCKET, 'app', clause)
 
 def create_version(params, apk_file):
     app_id = params['app_id']
@@ -230,7 +234,7 @@ def create_resources(params):
 
     return app_info
 
-def create_iap_product(app):
+def create_appstore_product(app):
     app_id = app['app_id']
     product = {
         'price': app['price'],
@@ -468,5 +472,75 @@ def log(package):
     with open('pub.log', 'a+') as f:
         f.write(package + '\n')
 
+def parse_iap_list():
+    file_name = os.path.join(RES_ROOT, IAP_FILE)
+    with open(file_name) as f:
+        lines = f.readlines()
+
+    iaps = []
+    for line in lines[1:]:
+        info = line.split(',')
+        app_name = info[0]
+        order = info[1]
+        iap_name = info[2]
+        iap_description = info[3]
+        iap_price = float(info[4])
+        is_consumable = info[5]
+        if is_consumable.strip() == 'N':
+            consume_type = 'permanent'
+        else:
+            consume_type = 'consumable'
+        iap = {'app': app_name,
+                'iap_info': {
+                    'name': iap_name,
+                    'description': iap_description,
+                    'price': iap_price,
+                    'order': order,
+                    'consumeType': consume_type,
+                    },
+                }
+        iaps.append(iap)
+
+    create_app_products(iaps)
+    print iaps
+
+def create_app_products(iaps):
+    for iap in iaps:
+        clause = {
+            "bucketQuery":{
+            "clause":
+                {"type":"eq", "field":"name", "value":iap['app']},
+            }
+        }
+        results = query(clause, 'workings')
+        if results:
+            app = results[0]
+            app_id = app['app_id']
+            iap_object = iap['iap_info']
+            iap_object['appID'] = app_id
+            iap_object['valid'] = True
+
+            iap_clause = {
+                "bucketQuery":{
+                "clause":
+                    {"type":"eq", "field":"name", "value":iap_object['name']},
+                }
+            }
+            object_id = create_object_if_necessary(iap_object, 'product', 'product', iap_clause)
+            print object_id
+
+
 if __name__=='__main__':
-    dump_redirect_urls()
+    import sys
+    parser = argparse.ArgumentParser(description='Publish applications to YouWill backend.')
+    parser.add_argument('--validate', action='store_true',
+                        help='set true to validate the resources')
+    parser.add_argument('bucket', type=str,  choices=['apps', 'workings'],
+                   help='Specify the bucket to to keep app information')
+
+
+    args = parser.parse_args()
+    DEST_APP_BUCKET = args.bucket
+    IS_VALIDATE = args.validate
+    process_app_list()
+
