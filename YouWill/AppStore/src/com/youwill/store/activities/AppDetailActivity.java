@@ -366,7 +366,7 @@ public class AppDetailActivity extends Activity
 
         public ViewHolder(View itemView) {
             super(itemView);
-            mImageView = (ImageView) itemView;
+            mImageView = (ImageView) itemView.findViewById(R.id.image);
         }
 
     }
@@ -385,9 +385,17 @@ public class AppDetailActivity extends Activity
             if (mPics.size() == 0) {
                 return;
             }
+            final String url = mPics.get(i % mPics.size());
             ImageLoader.getInstance()
-                    .displayImage(mPics.get(i % mPics.size()), viewHolder.mImageView,
-                            Utils.detailDisplayOptions);
+                    .displayImage(url, viewHolder.mImageView, Utils.detailDisplayOptions);
+//            viewHolder.mImageView.setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    Intent intent = new Intent(AppDetailActivity.this, ViewImageActivity.class);
+//                    intent.putExtra(Constants.INTENT_EXTRA_URL, url);
+//                    startActivity(intent);
+//                }
+//            });
         }
 
         @Override

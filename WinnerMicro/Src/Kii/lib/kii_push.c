@@ -10,8 +10,8 @@
 extern kii_data_struct g_kii_data;
 kii_push_struct g_kii_push;
 
-#define    KIIPUSH_TASK_STK_SIZE      1024
-#define    KIIPUSH_PINGREQ_TASK_STK_SIZE      100
+#define    KIIPUSH_TASK_STK_SIZE      2048
+#define    KIIPUSH_PINGREQ_TASK_STK_SIZE      200
 
 static unsigned int  mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];     
 static unsigned int  mKiiPush_pingReqTaskStk[KIIPUSH_PINGREQ_TASK_STK_SIZE];     
@@ -523,12 +523,20 @@ static void kiiPush_recvMsgTask(void *sdata)
         if (g_kii_push.connected == 0)
         {
             kiiHal_delayMs(1000);
+  	    g_kii_push.mqttSocket= kiiHal_socketCreate();
+	    if (g_kii_push.mqttSocket < 0)
+	    {
+		    KII_DEBUG("kii-error: create socket failed !\r\n");
+                   continue;
+	    }
             if (KiiMQTT_connect(KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE) < 0)
             {
+		kiiHal_socketClose(&g_kii_push.mqttSocket);
                 continue;
             }
             else if (KiiMQTT_subscribe(QOS1) < 0)
             {
+		kiiHal_socketClose(&g_kii_push.mqttSocket);
                 continue;
             }
             else
@@ -569,11 +577,11 @@ static void kiiPush_recvMsgTask(void *sdata)
 	     else
 	     { 
                 g_kii_push.connected = 0;
+		kiiHal_socketClose(&g_kii_push.mqttSocket);
 	     }
         }
     }
 }
-
 
 /*****************************************************************************
 *

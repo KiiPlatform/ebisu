@@ -93,10 +93,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
         db.execSQL("CREATE UNIQUE INDEX apps_id ON apps(app_id);");
         db.execSQL("CREATE UNIQUE INDEX apps_package ON apps(package_name);");
-        db.execSQL("CREATE UNIQUE INDEX apps_version ON apps(version_code);");
         db.execSQL("CREATE UNIQUE INDEX purchased_id ON purchased(app_id);");
         db.execSQL("CREATE UNIQUE INDEX downloads_id ON purchased(app_id);");
-        db.execSQL("CREATE UNIQUE INDEX localapps_package ON apps(package_name);");
-        db.execSQL("CREATE UNIQUE INDEX localapps_version ON apps(version_code);");
+        db.execSQL("CREATE UNIQUE INDEX localapps_package ON localapps(package_name);");
     }
 }

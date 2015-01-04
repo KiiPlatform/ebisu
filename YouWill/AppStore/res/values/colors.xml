@@ -18,4 +18,5 @@
     <color name="black">#000000</color>
     <color name="payment_divider">#51c5d4</color>
     <color name="dark_gray">#333333</color>
+    <color name="transparent_background">#a0000000</color>
 </resources>
