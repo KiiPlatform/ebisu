@@ -38,6 +38,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.APP_MARKET" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -47,6 +48,14 @@
                     android:scheme="http"
                     android:host="www.youwill.com.cn"
                     android:pathPrefix="/apps/" />
+                <data
+                    android:host="details"
+                    android:path=""
+                    android:scheme="market" />
+                <data
+                    android:host="market.android.com"
+                    android:path="/details"
+                    android:scheme="http" />
             </intent-filter>
         </activity>
         <activity

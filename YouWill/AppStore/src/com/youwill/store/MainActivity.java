@@ -9,6 +9,7 @@ import com.youwill.store.fragments.HotFragment;
 import com.youwill.store.fragments.PurchasedFragment;
 import com.youwill.store.fragments.SearchFragment;
 import com.youwill.store.fragments.UpgradeFragment;
+import com.youwill.store.providers.YouWill.Application;
 import com.youwill.store.utils.Constants;
 import com.youwill.store.utils.DataUtils;
 import com.youwill.store.utils.LogUtils;
@@ -25,15 +26,18 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.SparseArray;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends Activity implements View.OnClickListener {
 
@@ -89,22 +93,53 @@ public class MainActivity extends Activity implements View.OnClickListener {
         DataUtils.loadApps(this);
         initHeader();
 
-//        Settings.registerListener(this, mListener);
         IntentFilter intentFilter = new IntentFilter(Constants.INTENT_LOG_IN_CHANGED);
         LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, intentFilter);
         Uri uri = getIntent().getData();
         LogUtils.d("MainActivity", "uri is " + uri);
         if (uri != null) {
-            String appId = uri.getLastPathSegment();
-            Intent intent = new Intent(this, AppDetailActivity.class);
-            intent.putExtra(AppDetailActivity.EXTRA_APP_ID, appId);
-            startActivity(intent);
+            switch (uri.getHost()) {
+                case "www.youwill.com.cn":
+                    String appId = uri.getLastPathSegment();
+                    launchAppDetail(appId);
+                    break;
+                case "details":
+                case "market.android.com":
+                    String packageName = uri.getQueryParameter("id");
+                    if (!TextUtils.isEmpty(packageName)) {
+                        Cursor cursor = getContentResolver()
+                                .query(Application.CONTENT_URI, new String[]{Application.APP_ID},
+                                        Application.PACKAGE_NAME + "=?", new String[]{packageName},
+                                        null);
+                        try {
+                            if (cursor != null && cursor.moveToFirst()) {
+                                appId = cursor.getString(0);
+                                launchAppDetail(appId);
+                            } else {
+                                Toast.makeText(this, R.string.package_not_found, Toast.LENGTH_SHORT)
+                                        .show();
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            Toast.makeText(this, R.string.package_not_found, Toast.LENGTH_SHORT)
+                                    .show();
+                        } finally {
+                            Utils.closeSilently(cursor);
+                        }
+                    }
+                    break;
+            }
         }
+    }
+
+    private void launchAppDetail(String appId) {
+        Intent intent = new Intent(this, AppDetailActivity.class);
+        intent.putExtra(AppDetailActivity.EXTRA_APP_ID, appId);
+        startActivity(intent);
     }
 
     @Override
     protected void onDestroy() {
-//        Settings.unregisterListener(this, mListener);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
         super.onDestroy();
     }
@@ -216,7 +251,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     private void switchFragment(View v) {
-        if (mSearchFragment.isAdded()) {
+        if (mSearchFragment != null && mSearchFragment.isAdded()) {
             getFragmentManager().popBackStack();
         }
         if (currentFragmentIndex == v.getId()) {
