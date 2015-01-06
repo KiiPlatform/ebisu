@@ -9,10 +9,13 @@ import com.kii.payment.KiiReceipt;
 import com.kii.payment.KiiStore;
 import com.youwill.store.providers.YouWill;
 
+import org.json.JSONObject;
+
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -134,6 +137,7 @@ public class DataUtils {
                 continue;
             }
             v.put("app_id", app);
+            v.put("app_key", findAppKey(context, app));
             values.add(v);
         }
 
@@ -144,7 +148,26 @@ public class DataUtils {
         ContentResolver cr = context.getContentResolver();
         ContentValues v = new ContentValues();
         v.put("app_id", appID);
+        v.put("app_key", findAppKey(context, appID));
         cr.insert(YouWill.Purchased.CONTENT_URI, v);
     }
 
+    private static String findAppKey(Context context, String appId) {
+        ContentResolver cr = context.getContentResolver();
+        Cursor c = cr.query(YouWill.Application.CONTENT_URI,
+                null,
+                YouWill.Application.APP_ID + "=(?)",
+                new String[]{appId},
+                null);
+        if (c != null && c.moveToFirst()) {
+            String app_info_str = c.getString(c.getColumnIndex(YouWill.Application.APP_INFO));
+            try {
+                JSONObject object = new JSONObject(app_info_str);
+                return object.optString("protect_key");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return "";
+    }
 }
