@@ -110,8 +110,10 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
     BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            for (Light light : Global.gLightsMacMap.values()) {
-                addLight(light);
+            synchronized (Global.gLightsMacMap) {
+                for (Light light : Global.gLightsMacMap.values()) {
+                    addLight(light);
+                }
             }
         }
     };

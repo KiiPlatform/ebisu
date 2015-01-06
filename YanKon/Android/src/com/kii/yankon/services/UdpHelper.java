@@ -124,7 +124,9 @@ public class UdpHelper implements Runnable {
                             light = new Light();
                             light.mac = mac;
                             light.ip = ip;
-                            Global.gLightsMacMap.put(mac, light);
+                            synchronized (Global.gLightsMacMap) {
+                                Global.gLightsMacMap.put(mac, light);
+                            }
                             Global.gLightsIpMap.put(light.ip, light);
                         }
                     }
