@@ -23,8 +23,10 @@ import android.widget.Toast;
 
 import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.utils.Constants;
+import com.kii.yankon.utils.KiiSync;
 
 import java.util.HashSet;
+import java.util.UUID;
 
 
 public class AddLightGroupsActivity extends Activity implements View.OnClickListener, LoaderManager.LoaderCallbacks<Cursor>, AdapterView.OnItemClickListener {
@@ -92,6 +94,7 @@ public class AddLightGroupsActivity extends Activity implements View.OnClickList
         ContentValues values = new ContentValues();
         values.put("name", gName);
         if (group_id < 0) {
+            values.put("objectID", UUID.randomUUID().toString());
             values.put("brightness", Constants.DEFAULT_BRIGHTNESS);
             values.put("CT", Constants.DEFAULT_CT);
             values.put("color", Constants.DEFAULT_COLOR);
@@ -118,6 +121,7 @@ public class AddLightGroupsActivity extends Activity implements View.OnClickList
             values.put("light_id", integer.intValue());
             cr.insert(YanKonProvider.URI_LIGHT_GROUP_REL, values);
         }
+        KiiSync.asyncSyncLightGroups(this, group_id);
         finish();
     }
 

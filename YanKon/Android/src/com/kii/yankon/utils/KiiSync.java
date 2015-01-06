@@ -14,6 +14,7 @@ import com.kii.cloud.storage.KiiServerCodeExecResult;
 import com.kii.cloud.storage.KiiUser;
 import com.kii.yankon.providers.YanKonProvider;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
@@ -30,7 +31,7 @@ public class KiiSync {
         }
         boolean syncResult = true;
         KiiBucket bucket = kiiUser.bucket("lights");
-        if (cursor.moveToFirst()) {
+        if (cursor != null) {
             do {
                 boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) > 0;
                 if (synced) {
@@ -43,10 +44,10 @@ public class KiiSync {
                 lightObj.set("name", cursor.getString(cursor.getColumnIndex("name")));
                 lightObj.set("MAC", mac);
                 lightObj.set("light_id", light_id);
-                lightObj.set("brightness", cursor.getInt(cursor.getColumnIndex("brightness")));
-                lightObj.set("CT", cursor.getInt(cursor.getColumnIndex("CT")));
-                lightObj.set("color", cursor.getInt(cursor.getColumnIndex("color")));
-                lightObj.set("state", cursor.getInt(cursor.getColumnIndex("state")) > 0);
+//                lightObj.set("brightness", cursor.getInt(cursor.getColumnIndex("brightness")));
+//                lightObj.set("CT", cursor.getInt(cursor.getColumnIndex("CT")));
+//                lightObj.set("color", cursor.getInt(cursor.getColumnIndex("color")));
+//                lightObj.set("state", cursor.getInt(cursor.getColumnIndex("state")) > 0);
                 lightObj.set("owned_time", cursor.getLong(cursor.getColumnIndex("owned_time")));
                 try {
                     lightObj.saveAllFields(true);
@@ -69,15 +70,23 @@ public class KiiSync {
         }
         boolean syncResult = true;
         KiiBucket bucket = kiiUser.bucket("light_groups");
-        if (cursor.moveToFirst()) {
+        if (cursor != null) {
             do {
                 boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) > 0;
                 if (synced) {
                     continue;
                 }
                 int group_id = cursor.getInt(cursor.getColumnIndex("_id"));
+                String objectID = cursor.getString(cursor.getColumnIndex("objectID"));
+                JSONArray childLights = new JSONArray();
+                Cursor childCursor = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUP_REL, new String[]{"MAC"}, "group_id=" + group_id, null, null);
+                if (childCursor != null) {
+                    while (childCursor.moveToNext()) {
+                        childLights.put(childCursor.getString(0));
+                    }
+                    childCursor.close();
+                }
                 KiiObject groupObj;
-                String objectID = "id" + group_id;
                 groupObj = bucket.object(objectID);
                 groupObj.set("name", cursor.getString(cursor.getColumnIndex("name")));
                 groupObj.set("group_id", group_id);
@@ -85,7 +94,8 @@ public class KiiSync {
                 groupObj.set("CT", cursor.getInt(cursor.getColumnIndex("CT")));
                 groupObj.set("color", cursor.getInt(cursor.getColumnIndex("color")));
                 groupObj.set("state", cursor.getInt(cursor.getColumnIndex("state")) > 0);
-                groupObj.set("owned_time", cursor.getLong(cursor.getColumnIndex("owned_time")));
+                groupObj.set("created_time", cursor.getLong(cursor.getColumnIndex("created_time")));
+                groupObj.set("lights", childLights);
                 try {
                     groupObj.saveAllFields(true);
                     ContentValues values = new ContentValues();
@@ -100,8 +110,28 @@ public class KiiSync {
         return syncResult;
     }
 
+    public static void asyncSyncLightGroups(final Context context, final int group_id) {
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                Cursor cursor = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUPS, null, group_id > -1 ? ("_id=" + group_id) : null, null, null);
+                if (cursor != null) {
+                    while (cursor.moveToNext()) {
+                        syncLightGroups(context, cursor);
+                    }
+                    cursor.close();
+                }
+            }
+        };
+        new Thread(runnable).start();
+    }
+
     public static String registLamp(String MAC) {
         String result = null;
+        if (!KiiUser.isLoggedIn()) {
+            return result;
+        }
+
         KiiServerCodeEntry entry = Kii.serverCodeEntry("registLamp");
 
         try {
@@ -126,6 +156,9 @@ public class KiiSync {
 
     public static String fireLamp(String MAC, int state, int color, int brightness, int CT) {
         String result = null;
+        if (!KiiUser.isLoggedIn()) {
+            return result;
+        }
         KiiServerCodeEntry entry = Kii.serverCodeEntry("fireLamp");
         Log.e(LOG_TAG, "color:" + color);
         long colorL = color & 0x0000000000ffffffL;

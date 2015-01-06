@@ -212,9 +212,6 @@ public class Utils {
                     for (String mac : unconnectedLights) {
                         KiiSync.fireLamp(mac, i_state ? 1 : 0, i_color, i_brightness, i_CT);
                     }
-                    Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUP_REL, null, "_id=" + group_id, null, null);
-                    KiiSync.syncLightGroups(context, c);
-                    c.close();
                 }
             }.start();
         }
