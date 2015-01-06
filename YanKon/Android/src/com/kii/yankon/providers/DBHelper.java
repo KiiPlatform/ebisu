@@ -6,6 +6,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Color;
 
+import java.util.UUID;
+
 /**
  * Created by Evan on 14/11/27.
  */
@@ -32,6 +34,7 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE IF NOT EXISTS lights ("
                         + "_id INTEGER PRIMARY KEY, "
                         + "MAC TEXT NOT NULL,"
+                        + "ver INTEGER,"
                         + "ThingID TEXT,"
                         + "name TEXT,"
                         + "color INTEGER,"
@@ -56,6 +59,7 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE IF NOT EXISTS colors ("
                         + "_id INTEGER PRIMARY KEY, "
                         + "objectID TEXT,"
+                        + "ver INTEGER,"
                         + "name TEXT,"
                         + "value INTEGER,"
                         + "synced BOOL,"
@@ -69,6 +73,7 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE IF NOT EXISTS light_groups ("
                         + "_id INTEGER PRIMARY KEY, "
                         + "objectID TEXT,"
+                        + "ver INTEGER,"
                         + "name TEXT,"
                         + "state BOOL DEFAULT 0,"
                         + "color INTEGER,"
@@ -80,7 +85,6 @@ public class DBHelper extends SQLiteOpenHelper {
         );
         db.execSQL("CREATE TABLE IF NOT EXISTS light_group_rel ("
                         + "_id INTEGER PRIMARY KEY, "
-                        + "objectID TEXT,"
                         + "light_id INTEGER,"
                         + "group_id INTEGER,"
                         + "synced BOOL,"
@@ -99,6 +103,7 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE IF NOT EXISTS scenes ("
                         + "_id INTEGER PRIMARY KEY, "
                         + "objectID TEXT,"
+                        + "ver INTEGER,"
                         + "name TEXT,"
                         + "created_time INTEGER,"
                         + "last_used_time INTEGER"
@@ -126,6 +131,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "light_id INTEGER DEFAULT -1,"
                         + "group_id INTEGER DEFAULT -1,"
                         + "objectID TEXT,"
+                        + "ver INTEGER,"
                         + "color INTEGER,"
                         + "brightness INTEGER,"
                         + "CT INTEGER,"
@@ -138,6 +144,7 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE IF NOT EXISTS actions ("
                         + "_id INTEGER PRIMARY KEY, "
                         + "objectID TEXT,"
+                        + "ver INTEGER,"
                         + "name TEXT,"
                         + "content TEXT,"
                         + "created_time INTEGER"
@@ -156,30 +163,42 @@ public class DBHelper extends SQLiteOpenHelper {
                 + " DELETE FROM light_group_rel WHERE light_group_rel.light_id=old._id;"
                 + " END;");
         ContentValues values = new ContentValues();
+        values.put("objectID", UUID.randomUUID().toString());
+        values.put("ver", 1);
         values.put("name", "Red");
         values.put("value", Color.RED);
         values.put("created_time", 1);
         db.insert("colors", null, values);
         values = new ContentValues();
+        values.put("objectID", UUID.randomUUID().toString());
+        values.put("ver", 1);
         values.put("name", "Green");
         values.put("value", Color.GREEN);
         values.put("created_time", 2);
         db.insert("colors", null, values);
         values = new ContentValues();
+        values.put("objectID", UUID.randomUUID().toString());
+        values.put("ver", 1);
         values.put("name", "Blue");
         values.put("value", Color.BLUE);
         values.put("created_time", 3);
         db.insert("colors", null, values);
         values = new ContentValues();
+        values.put("objectID", UUID.randomUUID().toString());
+        values.put("ver", 1);
         values.put("name", "Black");
         values.put("value", Color.BLACK);
         values.put("created_time", 4);
         db.insert("colors", null, values);
         values = new ContentValues();
+        values.put("objectID", UUID.randomUUID().toString());
+        values.put("ver", 1);
         values.put("name", "Turn On");
         values.put("created_time", 1);
         db.insert("actions", null, values);
         values = new ContentValues();
+        values.put("objectID", UUID.randomUUID().toString());
+        values.put("ver", 1);
         values.put("name", "Turn Off");
         values.put("created_time", 2);
         db.insert("actions", null, values);

@@ -7,7 +7,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Pair;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,7 +22,6 @@ import com.kii.yankon.model.LightGroup;
 import com.kii.yankon.providers.YanKonProvider;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -41,10 +39,8 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
     HashSet<String> selectedSet = new HashSet<String>();
     SceneAdapter mAdapter;
 
-    HashMap<Light, LightGroup> mLightSelectedMap = new HashMap<>();
     SparseArray<Light> mLightIdMap = new SparseArray<>();
     SparseArray<LightGroup> mGroupIdMap = new SparseArray<>();
-    LightGroup singleChoiceGroup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,22 +76,7 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
         }
     }
 
-    Pair<Light, LightGroup> selectGroup(LightGroup group) {
-        for (Light l : group.childLights) {
-            LightGroup dupGroup = mLightSelectedMap.get(l);
-            if (dupGroup != null) {
-                return new Pair<>(l, dupGroup);
-            }
-        }
-        for (Light l : group.childLights) {
-            mLightSelectedMap.put(l, group);
-        }
-        return null;
-    }
-
     void loadContents() {
-        singleChoiceGroup = new LightGroup();
-        singleChoiceGroup.id = -1;
         Cursor c = getContentResolver().query(YanKonProvider.URI_LIGHTS, null, null, null, null);
         while (c.moveToNext()) {
             Light l = new Light();
@@ -121,15 +102,9 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
                 int light_id = c.getInt(c.getColumnIndex("light_id"));
                 if (light_id >= 0) {
                     orgSelectedSet.add("l" + light_id);
-                    mLightSelectedMap.put(mLightIdMap.get(light_id), singleChoiceGroup);
                 } else {
                     int group_id = c.getInt(c.getColumnIndex("group_id"));
-                    LightGroup g = mGroupIdMap.get(group_id);
-                    if (selectGroup(g) != null) {
-                        //TODO Show error here
-                    } else {
-                        orgSelectedSet.add("g" + group_id);
-                    }
+                    orgSelectedSet.add("g" + group_id);
                 }
             }
             c.close();
@@ -148,47 +123,10 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
                 break;
             case R.id.light_checkbox: {
                 String key = (String) v.getTag();
-                String num = key.substring(1);
-                int id = Integer.parseInt(num);
-                if (key.startsWith("l")) {
-                    Light l = mLightIdMap.get(id);
-                    if (selectedSet.contains(key)) {
-                        mLightSelectedMap.remove(l);
-                        selectedSet.remove(key);
-                    } else {
-                        LightGroup g = mLightSelectedMap.get(l);
-                        if (g == null) {
-                            selectedSet.add(key);
-                            mLightSelectedMap.put(l, singleChoiceGroup);
-                        } else {
-                            Toast.makeText(AddScenesActivity.this,
-                                    "The light is already in selected group '" + g.name + "'",
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                } else if (key.startsWith("g")) {
-                    LightGroup g = mGroupIdMap.get(id);
-                    if (selectedSet.contains(key)) {
-                        selectedSet.remove(key);
-                        for (Light l : g.childLights) {
-                            mLightSelectedMap.remove(l);
-                        }
-                    } else {
-                        Pair<Light, LightGroup> result = selectGroup(g);
-                        if (result == null)
-                            selectedSet.add(key);
-                        else {
-                            if (result.second == singleChoiceGroup) {
-                                Toast.makeText(AddScenesActivity.this,
-                                        "The light '" + result.first.name + "' in this group is already selected",
-                                        Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(AddScenesActivity.this,
-                                        "The light '" + result.first.name + "' in this group is duplicated with selected group '" + result.second.name + "'",
-                                        Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    }
+                if (selectedSet.contains(key)) {
+                    selectedSet.remove(key);
+                } else {
+                    selectedSet.add(key);
                 }
                 mList.invalidateViews();
             }

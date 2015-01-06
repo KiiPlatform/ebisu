@@ -55,7 +55,7 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
         mPager = (MultiViewPager) findViewById(R.id.pager);
 
         mAdapter = new LightsAdapter();
-/*
+
         Light l = new Light();
         l.name = "Unknown1";
         l.model = "model1";
@@ -86,7 +86,7 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
         l.mac = "55";
         Global.gLightsMacMap.put(l.mac, l);
         addLight(l);
-*/
+
 
         mPager.setAdapter(mAdapter);
 
