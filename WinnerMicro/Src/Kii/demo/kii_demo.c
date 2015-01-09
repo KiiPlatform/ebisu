@@ -8,12 +8,13 @@
 
 void kiiDemo_testObject(void)
 {
+    int i;
     char objectID[KII_OBJECTID_SIZE+1];
     char jsonObject[512];
     static unsigned char objectMultiplePiecesBody1[20];
     static unsigned char objectMultiplePiecesBody2[30];
     static unsigned char objectBody[512];
-    int i;
+    char uploadID[KII_UPLOAD_ID_SIZE+1];
     unsigned int bodyPosition;
     unsigned int bodyLength;
     unsigned int  bodyActualLength;
@@ -69,19 +70,25 @@ void kiiDemo_testObject(void)
         printf("Uploaded object body at once success, objectID:\"%s\"\r\n", objectID);
     }
 
-    if (kiiObj_uploadBodyInit(STR_TEST_BUCKET, objectID, STR_TEST_OBJECTBODY_TYPE, sizeof(objectMultiplePiecesBody1)+sizeof(objectMultiplePiecesBody2)) < 0)
+    if (kiiObj_uploadBodyInit(STR_TEST_BUCKET, objectID, uploadID) < 0)
     {
         printf("Initialize uploading mutiple pieces object body failed\r\n");
     }
-    else if (kiiObj_uploadBody(objectMultiplePiecesBody1, sizeof(objectMultiplePiecesBody1)) < 0)
+    else if (kiiObj_uploadBody(STR_TEST_BUCKET, objectID, uploadID,
+		                                     STR_TEST_OBJECTBODY_TYPE, 0, sizeof(objectMultiplePiecesBody1), 
+		                                     sizeof(objectMultiplePiecesBody1) + sizeof(objectMultiplePiecesBody2),
+		                                    objectMultiplePiecesBody1) < 0)
     {
         printf("Upload mutiple pieces object body of part 1failed\r\n");
     }
-    else if (kiiObj_uploadBody(objectMultiplePiecesBody2, sizeof(objectMultiplePiecesBody2)) < 0)
+    else if (kiiObj_uploadBody(STR_TEST_BUCKET, objectID, uploadID,
+		                                     STR_TEST_OBJECTBODY_TYPE, sizeof(objectMultiplePiecesBody1), sizeof(objectMultiplePiecesBody2),
+		                                     sizeof(objectMultiplePiecesBody1) + sizeof(objectMultiplePiecesBody2),
+		                                    objectMultiplePiecesBody2) < 0)
     {
         printf("Upload mutiple pieces object body of part 2failed\r\n");
     }
-    else if (kiiObj_uploadBodyCommit(0) < 0)
+    else if (kiiObj_uploadBodyCommit(STR_TEST_BUCKET, objectID, uploadID, 0) < 0)
     {
         printf("Cancel uploadding multiple pieces object body failed\r\n");
     }
@@ -98,19 +105,25 @@ void kiiDemo_testObject(void)
     {
         objectMultiplePiecesBody1[i] = i;
     }
-    if (kiiObj_uploadBodyInit(STR_TEST_BUCKET, objectID, STR_TEST_OBJECTBODY_TYPE, sizeof(objectMultiplePiecesBody1)+sizeof(objectMultiplePiecesBody2)) < 0)
+    if (kiiObj_uploadBodyInit(STR_TEST_BUCKET, objectID, uploadID) < 0)
     {
         printf("Initialize uploading mutiple pieces object body failed\r\n");
     }
-    else if (kiiObj_uploadBody(objectMultiplePiecesBody1, sizeof(objectMultiplePiecesBody1)) < 0)
+    else if (kiiObj_uploadBody(STR_TEST_BUCKET, objectID, uploadID,
+		                                     STR_TEST_OBJECTBODY_TYPE, 0, sizeof(objectMultiplePiecesBody1), 
+		                                     sizeof(objectMultiplePiecesBody1) + sizeof(objectMultiplePiecesBody2),
+		                                    objectMultiplePiecesBody1) < 0)
     {
         printf("Upload mutiple pieces object body of part 1failed\r\n");
     }
-    else if (kiiObj_uploadBody(objectMultiplePiecesBody2, sizeof(objectMultiplePiecesBody2)) < 0)
+    else if (kiiObj_uploadBody(STR_TEST_BUCKET, objectID, uploadID,
+		                                     STR_TEST_OBJECTBODY_TYPE, sizeof(objectMultiplePiecesBody1), sizeof(objectMultiplePiecesBody2),
+		                                     sizeof(objectMultiplePiecesBody1) + sizeof(objectMultiplePiecesBody2),
+		                                    objectMultiplePiecesBody2) < 0)
     {
         printf("Upload mutiple pieces object body of part 2failed\r\n");
     }
-    else if (kiiObj_uploadBodyCommit(1) < 0)
+    else if (kiiObj_uploadBodyCommit(STR_TEST_BUCKET, objectID, uploadID, 1) < 0)
     {
         printf("Commit uploadding multiple pieces object body failed\r\n");
     }
@@ -128,6 +141,22 @@ void kiiDemo_testObject(void)
     else
     {
 	printf("Retrieve object  success, objectID:\"%s\"\r\njsonObject:\"%s\"\r\n", objectID, jsonObject);
+    }
+
+    memset(objectBody, 0, sizeof(objectBody));
+    if (kiiObj_downloadBodyAtOnce(STR_TEST_BUCKET, objectID, objectBody, sizeof(objectBody), &bodyActualLength) < 0)
+    {
+        printf("Download object body at once failed, objectID:\"%s\"\r\n", objectID);
+    }
+    else
+    {
+        printf("Download object body at once success, objectID:\"%s\"\r\n", objectID);
+	printf("Object body:\"");
+        for (i=0; i<bodyActualLength; i++)
+	{
+	    printf("%d ", objectBody[i]);
+	}
+ 	printf("\"\r\n");
     }
 
    printf("Testing downloading object body ...\r\n");
@@ -207,8 +236,8 @@ int kiiDemo_test(char *buf)
 	    return 0;
     }
 
-    //kiiDemo_testObject();
-    //kiiDemo_testTopic();
+    kiiDemo_testObject();
+    kiiDemo_testTopic();
 
     if (light_initPush() < 0)
     {

@@ -9,16 +9,6 @@
 
 extern kii_data_struct g_kii_data;
 
-static char mBucketName[KII_BUCKET_NAME_SIZE+1];
-static char mObjectID[KII_OBJECTID_SIZE+1];
-static char mDataType[KII_DATA_TPYE_SIZE+1];
-static char mUploadID[KII_UPLOAD_ID_SIZE+1];
-
-static unsigned int mObjBodyTotalLength;
-static unsigned int mObjBodyCurrentPosition;
-static int mSocketNum;
-
-
 static int kiiObj_update(char *bucketName, char *jsonObject, char *dataType, char *objectID, int updateOrCreateWithID);
 
 
@@ -379,38 +369,27 @@ int kiiObj_uploadBodyAtOnce(char *bucketName, char *objectID,  char *dataType, u
     }
 }
 
+
+
 /*****************************************************************************
 *
 *  kiiObj_uploadBodyInit
 *
 *  \param: bucketName - the input of bucket name
 *               objectID - the input of objectID
-*               dataType - the input of data type, the format should be like "image/jpg"
-*               totalLength - the total of data length
+*               uploadID - the output of uploadID
 *
 *  \return 0:success; -1: failure
 *
 *  \brief  Initializes "uploading an object body in multiple pieces"
 *
 *****************************************************************************/
-int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsigned int totalLength)
+int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *uploadID)
 {
     char * p1;
     char * p2;
     char *buf;
-    unsigned char ipBuf[4];
-    int rcvdCounter;
 
-    
-    memset(mBucketName, 0, sizeof(mBucketName));
-    strcpy(mBucketName, bucketName);
-    memset(mObjectID, 0, sizeof(mObjectID));
-    strcpy(mObjectID, objectID);
-    memset(mDataType, 0, sizeof(mDataType));
-    strcpy(mDataType, dataType);
-    mObjBodyTotalLength = totalLength;
-    mObjBodyCurrentPosition = 0;
-	
     buf = g_kii_data.sendBuf;
     memset(buf, 0, KII_SEND_BUF_SIZE);
     strcpy(buf, STR_POST);
@@ -420,9 +399,9 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
     strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
     strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
     strcpy(buf+strlen(buf), "/buckets/");
-    strcpy(buf+strlen(buf),mBucketName);
+    strcpy(buf+strlen(buf), bucketName);
     strcpy(buf+strlen(buf), "/objects/");
-    strcpy(buf+strlen(buf),mObjectID);
+    strcpy(buf+strlen(buf), objectID);
     strcpy(buf+strlen(buf), "/body/uploads");
     strcpy(buf+strlen(buf), STR_HTTP);
    strcpy(buf+strlen(buf), STR_CRLF);
@@ -463,50 +442,15 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
    
     g_kii_data.sendDataLen = strlen(buf);
 
-
-    if (kiiHal_dns(g_kii_data.host, ipBuf) < 0)
+    if (kiiHal_transfer() != 0)
     {
-        KII_DEBUG("kii-error: dns failed !\r\n");
+        KII_DEBUG("kii-error: transfer data error !\r\n");
         return -1;
     }
-		
-    mSocketNum = kiiHal_socketCreate();
-    if (mSocketNum < 0)
-    {
-        KII_DEBUG("kii-error: create socket failed !\r\n");
-        return -1;
-    }
-	
-	
-    if (kiiHal_connect(mSocketNum, (char*)ipBuf, KII_DEFAULT_PORT) < 0)
-    {
-        KII_DEBUG("kii-error: connect to server failed \r\n");
-	 kiiHal_socketClose(&mSocketNum);
-        return -1;
-    }
-    
-    if (kiiHal_socketSend(mSocketNum, g_kii_data.sendBuf, g_kii_data.sendDataLen) < 0)
-    {
-        
-        KII_DEBUG("kii-error: send data fail\r\n");
-	 kiiHal_socketClose(&mSocketNum);
-        return -1;
-    }
-
-    memset(g_kii_data.rcvdBuf, 0, KII_RECV_BUF_SIZE);
-    rcvdCounter = kiiHal_socketRecv(mSocketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
-    if (rcvdCounter < 0)
-    {
-        KII_DEBUG("kii-error: recv data fail\r\n");
-	 kiiHal_socketClose(&mSocketNum);
-        return -1;
-    }
-
     buf = g_kii_data.rcvdBuf;
 
     if ((strstr(buf, "HTTP/1.1 200") == NULL) || (strstr(buf, "{") == NULL) || (strstr(buf, "}") == NULL) )
     {
-	kiiHal_socketClose(&mSocketNum);
         return -1;    
     }
 
@@ -515,8 +459,8 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
     p1 = strstr(p1, "\"");
     p1 +=1;
     p2 = strstr(p1, "\"");
-    memset(mUploadID, 0, sizeof(mUploadID));
-    memcpy(mUploadID, p1, p2-p1);
+    memset(uploadID, 0, KII_UPLOAD_ID_SIZE+1);
+    memcpy(uploadID, p1, p2-p1);
 
     return 0;
 }
@@ -526,18 +470,23 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
 *
 *  kiiObj_uploadBody
 *
-*  \param: data - the piece of data to be uploaded
-*               length - the piece of data length
+*  \param: bucketName - the input of bucket name
+*               objectID - the input of objectID
+*               uploadID - the input of uploadID
+*               dataType - the input of data type, the format should be like "image/jpg"
+*               position - data position
+*               length - this  piece of data length
+*               totalLength - the total object body length
+*               data - raw data
 *
 *  \return 0:success; -1: failure
 *
 *  \brief  Uploads a piece of data
 *
 *****************************************************************************/
-int kiiObj_uploadBody(unsigned char *data, unsigned int length)
+int kiiObj_uploadBody(char *bucketName, char *objectID, char *uploadID, char *dataType, unsigned int position,  unsigned int length, unsigned int totalLength, unsigned char *data)
 {
     char *buf;
-    int rcvdCounter;
 	
     buf = g_kii_data.sendBuf;
     memset(buf, 0, KII_SEND_BUF_SIZE);
@@ -548,11 +497,11 @@ int kiiObj_uploadBody(unsigned char *data, unsigned int length)
     strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
     strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
     strcpy(buf+strlen(buf), "/buckets/");
-    strcpy(buf+strlen(buf),mBucketName);
+    strcpy(buf+strlen(buf), bucketName);
     strcpy(buf+strlen(buf), "/objects/");
-    strcpy(buf+strlen(buf),mObjectID);
+    strcpy(buf+strlen(buf), objectID);
     strcpy(buf+strlen(buf), "/body/uploads/");
-    strcpy(buf+strlen(buf), mUploadID);
+    strcpy(buf+strlen(buf), uploadID);
     strcpy(buf+strlen(buf), "/data");
     strcpy(buf+strlen(buf), STR_HTTP);
    strcpy(buf+strlen(buf), STR_CRLF);
@@ -576,17 +525,16 @@ int kiiObj_uploadBody(unsigned char *data, unsigned int length)
    strcpy(buf+strlen(buf), STR_CRLF);
    //content-type	
    strcpy(buf+strlen(buf), STR_CONTENT_TYPE);
-   strcpy(buf+strlen(buf), mDataType);
+   strcpy(buf+strlen(buf), dataType);
    strcpy(buf+strlen(buf), STR_CRLF);
    //content-range
    strcpy(buf+strlen(buf), STR_CONTENT_RANGE);
    strcpy(buf+strlen(buf), "bytes=");
-   sprintf(buf+strlen(buf), "%d", mObjBodyCurrentPosition);
-   mObjBodyCurrentPosition +=length;
+   sprintf(buf+strlen(buf), "%d", position);
    strcpy(buf+strlen(buf), "-");
-   sprintf(buf+strlen(buf), "%d", mObjBodyCurrentPosition-1);
+   sprintf(buf+strlen(buf), "%d", position+length-1);
    strcpy(buf+strlen(buf), "/");
-   sprintf(buf+strlen(buf), "%d", mObjBodyTotalLength);
+   sprintf(buf+strlen(buf), "%d", totalLength);
   strcpy(buf+strlen(buf), STR_CRLF);
       //Authorization
     strcpy(buf+strlen(buf), STR_AUTHORIZATION);
@@ -601,30 +549,17 @@ int kiiObj_uploadBody(unsigned char *data, unsigned int length)
     if ((strlen(buf)+length ) > KII_SEND_BUF_SIZE)
     {
         KII_DEBUG("kii-error: buffer overflow !\r\n");
-	 kiiHal_socketClose(&mSocketNum);
         return -1;
     }
     g_kii_data.sendDataLen = strlen(buf) + length;
     memcpy(buf+strlen(buf), data, length);
     //memcpy(buf + g_kii_data.sendDataLen -1, STR_LF, 1);
 
-    if (kiiHal_socketSend(mSocketNum, g_kii_data.sendBuf, g_kii_data.sendDataLen) < 0)
+    if (kiiHal_transfer() != 0)
     {
-        
-        KII_DEBUG("kii-error: send data fail\r\n");
-	 kiiHal_socketClose(&mSocketNum);
+        KII_DEBUG("kii-error: transfer data error !\r\n");
         return -1;
     }
-
-    memset(g_kii_data.rcvdBuf, 0, KII_RECV_BUF_SIZE);
-    rcvdCounter = kiiHal_socketRecv(mSocketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
-    if (rcvdCounter < 0)
-    {
-        KII_DEBUG("kii-error: recv data fail\r\n");
-	 kiiHal_socketClose(&mSocketNum);
-        return -1;
-    }
-
     buf = g_kii_data.rcvdBuf;
 
     if (strstr(buf, "HTTP/1.1 204")  != NULL)
@@ -634,7 +569,6 @@ int kiiObj_uploadBody(unsigned char *data, unsigned int length)
     else
     {
 	KII_DEBUG("kii-error: upload body failed !\r\n");
-	kiiHal_socketClose(&mSocketNum);
 	return -1;
     }
 }
@@ -644,17 +578,19 @@ int kiiObj_uploadBody(unsigned char *data, unsigned int length)
 *
 *  kiiObj_uploadBody
 *
-*  \param: committed - 0: cancelled; 1: committed
+*  \param: bucketName - the input of bucket name
+*               objectID - the input of objectID
+*               uploadID - the input of uploadID
+*               committed - 0: cancelled; 1: committed
 *
 *  \return 0:success; -1: failure
 *
 *  \brief  Commits or cancels this uploading
 *
 *****************************************************************************/
-int kiiObj_uploadBodyCommit(int committed)
+int kiiObj_uploadBodyCommit(char *bucketName, char *objectID, char *uploadID, int committed)
 {
     char *buf;
-    int rcvdCounter;
 	
     buf = g_kii_data.sendBuf;
     memset(buf, 0, KII_SEND_BUF_SIZE);
@@ -665,11 +601,11 @@ int kiiObj_uploadBodyCommit(int committed)
     strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
     strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
     strcpy(buf+strlen(buf), "/buckets/");
-    strcpy(buf+strlen(buf),mBucketName);
+    strcpy(buf+strlen(buf), bucketName);
     strcpy(buf+strlen(buf), "/objects/");
-    strcpy(buf+strlen(buf),mObjectID);
+    strcpy(buf+strlen(buf), objectID);
     strcpy(buf+strlen(buf), "/body/uploads/");
-    strcpy(buf+strlen(buf), mUploadID);
+    strcpy(buf+strlen(buf), uploadID);
     strcpy(buf+strlen(buf), "/status/");
     if (committed == 1)
     {
@@ -704,24 +640,12 @@ int kiiObj_uploadBodyCommit(int committed)
 
     g_kii_data.sendDataLen = strlen(buf);
 
-    if (kiiHal_socketSend(mSocketNum, g_kii_data.sendBuf, g_kii_data.sendDataLen) < 0)
+    if (kiiHal_transfer() != 0)
     {
-        
-        KII_DEBUG("kii-error: send data fail\r\n");
-	 kiiHal_socketClose(&mSocketNum);
+        KII_DEBUG("kii-error: transfer data error !\r\n");
         return -1;
     }
 
-    memset(g_kii_data.rcvdBuf, 0, KII_RECV_BUF_SIZE);
-    rcvdCounter = kiiHal_socketRecv(mSocketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
-    if (rcvdCounter < 0)
-    {
-        KII_DEBUG("kii-error: recv data fail\r\n");
-	 kiiHal_socketClose(&mSocketNum);
-        return -1;
-    }
-
-     kiiHal_socketClose(&mSocketNum);
     buf = g_kii_data.rcvdBuf;
 
     if (strstr(buf, "HTTP/1.1 204")  != NULL)
@@ -819,6 +743,108 @@ int kiiObj_retrieve(char *bucketName, char *objectID,  char *jsonObject, unsigne
     }
 }
 
+/*****************************************************************************
+*
+*  kiiObj_downloadBodyAtOnce
+*
+*  \param  bucketName - the input of bucket name
+*               objectID - the input of objectID
+*               data - raw data
+*               length - the buffer lengh for object body
+*               actualLength - the actual length of received body
+*  \return 0:success; -1: failure
+*
+*  \brief  Downloads an object body at once
+*
+*****************************************************************************/
+int kiiObj_downloadBodyAtOnce(char *bucketName, char *objectID, unsigned char *data, unsigned int length, unsigned int *actualLength)
+{
+    char * p1;
+    char *buf;
+    unsigned long contentLengh;
+
+    buf = g_kii_data.sendBuf;
+    memset(buf, 0, KII_SEND_BUF_SIZE);
+    strcpy(buf, STR_GET);
+    // url
+    strcpy(buf+strlen(buf), "/api/apps/");
+    strcpy(buf+strlen(buf), g_kii_data.appID);
+    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    strcpy(buf+strlen(buf), "/buckets/");
+    strcpy(buf+strlen(buf),bucketName);
+    strcpy(buf+strlen(buf), "/objects/");
+    strcpy(buf+strlen(buf),objectID);
+    strcpy(buf+strlen(buf), "/body");
+    strcpy(buf+strlen(buf), STR_HTTP);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Connection
+   strcpy(buf+strlen(buf), "Connection: Keep-Alive\r\n");
+   //Host
+   strcpy(buf+strlen(buf), "Host: ");
+   strcpy(buf+strlen(buf), g_kii_data.host);
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //x-kii-appid
+    strcpy(buf+strlen(buf), STR_KII_APPID);
+    strcpy(buf+strlen(buf), g_kii_data.appID); 
+   strcpy(buf+strlen(buf), STR_CRLF);
+    //x-kii-appkey 
+    strcpy(buf+strlen(buf), STR_KII_APPKEY);
+    strcpy(buf+strlen(buf), g_kii_data.appKey);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Accept
+    strcpy(buf+strlen(buf), STR_ACCEPT);
+   strcpy(buf+strlen(buf), "*/*");
+   strcpy(buf+strlen(buf), STR_CRLF);
+   //Authorization
+    strcpy(buf+strlen(buf), STR_AUTHORIZATION);
+    strcpy(buf+strlen(buf),  " Bearer ");
+    strcpy(buf+strlen(buf), g_kii_data.accessToken); 
+   strcpy(buf+strlen(buf), STR_CRLF);
+   strcpy(buf+strlen(buf), STR_CRLF);
+   
+    g_kii_data.sendDataLen = strlen(buf);
+
+    if (kiiHal_transfer() != 0)
+    {
+        KII_DEBUG("kii-error: transfer data error !\r\n");
+        return -1;
+    }
+    buf = g_kii_data.rcvdBuf;
+
+    if (strstr(buf, "HTTP/1.1 200") == NULL)
+    {
+	 return -1;
+    }
+
+    p1 = strstr(buf, STR_CONTENT_LENGTH);
+    if (p1 == NULL)
+    {
+	 return -1;
+    }
+    p1 = p1+strlen(STR_CONTENT_LENGTH);
+    contentLengh = atoi(p1);
+	
+    p1 = strstr(buf, STR_CRLFCRLF);
+    if (p1 == NULL)
+    {
+	 return -1;
+    }
+    p1 +=4;	
+	
+    if (contentLengh > length)
+    {
+        KII_DEBUG("kii-error: the buffer of object body is too small\r\n");
+        return -1;
+    }
+    else
+    {
+        memset(data, 0, length);
+        memcpy(data, p1, contentLengh);
+        *actualLength = contentLengh;
+        return 0;
+    }
+}
 
 
 /*****************************************************************************
@@ -842,6 +868,7 @@ int kiiObj_downloadBody(char *bucketName, char *objectID,  unsigned int position
 {
     char * p1;
     char *buf;
+    unsigned long contentLengh;
 
     buf = g_kii_data.sendBuf;
     memset(buf, 0, KII_SEND_BUF_SIZE);
@@ -881,7 +908,7 @@ int kiiObj_downloadBody(char *bucketName, char *objectID,  unsigned int position
      strcpy(buf+strlen(buf), "bytes=");
     sprintf(buf+strlen(buf), "%d", position);
     strcpy(buf+strlen(buf), "-");
-    sprintf(buf+strlen(buf), "%d", position+length);
+    sprintf(buf+strlen(buf), "%d", position+length-1);
    strcpy(buf+strlen(buf), STR_CRLF);
    //Authorization
     strcpy(buf+strlen(buf), STR_AUTHORIZATION);
@@ -919,23 +946,27 @@ int kiiObj_downloadBody(char *bucketName, char *objectID,  unsigned int position
 	 return -1;
     }
     p1 = p1+strlen(STR_CONTENT_LENGTH);
-    *actualLength = atoi(p1);
+    contentLengh = atoi(p1);
 	
-    p1 = strstr(buf, "\r\n\r\n");
+    p1 = strstr(buf, STR_CRLFCRLF);
     if (p1 == NULL)
     {
 	 return -1;
     }
     p1 +=4;	
-    if ((p1+ (*actualLength)) > (buf + KII_RECV_BUF_SIZE))
+
+    if (contentLengh > length)
     {
-	KII_DEBUG("kii-error: receiving buffer overflow !\r\n");
-	return -1;
+        KII_DEBUG("kii-error: the buffer of object body is too small");
+        return -1;
     }
-	
-    memset(data, 0, length);
-    memcpy(data, p1, *actualLength);
-    return 0;
+    else
+    {
+        memset(data, 0, length);
+        memcpy(data, p1, contentLengh);
+        *actualLength = contentLengh;
+        return 0;
+    }
 }
 
 
