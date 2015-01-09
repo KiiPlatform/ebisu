@@ -76,12 +76,13 @@ int kiiHal_socketCreate(void)
 int kiiHal_socketClose(int *socketNum)
 {
     int ret = 0;
-	
+
     if (closesocket(*socketNum) !=  0)
     {
     	ret = -1;
     }
     *socketNum = -1;
+	
     return ret;
 }
 
@@ -133,19 +134,24 @@ int kiiHal_connect(int socketNum, char *saData, int port)
 *****************************************************************************/
 int kiiHal_socketSend(int socketNum, char * buf, int len)
 {
-    int ret;
-
-      ret = send(socketNum, buf , len, 0);
-      if (ret < 0)
-      	{
-      	    ret = -1;
-      	}
-
-    //KII_DEBUG("\r\n ========send data start=====\r\n");
-    //KII_DEBUG("%s", buf);
-    //KII_DEBUG("\r\n ========send data end=====\r\n");
-
-	  return ret;
+    int bytes;
+    int sent;
+	
+    bytes = 0;
+    while(bytes < len)
+    {
+        sent =  send(socketNum, buf+bytes, len-bytes, 0);
+        if (sent < 0)
+        {
+        
+            return -1;
+        }
+	else
+	{
+	    bytes += sent;
+	}
+    }
+    return bytes;
 }
 
 /*****************************************************************************
@@ -171,9 +177,6 @@ int kiiHal_socketRecv(int socketNum, char * buf, int len)
      	    ret =-1;
      	}
 
-    //KII_DEBUG("\r\n ========recv data start, ret = %d=====\r\n", ret);
-    //KII_DEBUG("%s", buf);
-    //KII_DEBUG("\r\n ========recv data end=====\r\n");
 
     return ret;
 }
@@ -193,6 +196,11 @@ int kiiHal_transfer(void)
 {
     int socketNum;
     unsigned char ipBuf[4];
+    int bytes;
+    int len;
+    char * p1;
+    char * p2;
+    unsigned long contentLengh;
 
     //KII_DEBUG("kii-info: host ""%s""\r\n", g_kii_data.host);
     if (kiiHal_dns(g_kii_data.host, ipBuf) < 0)
@@ -209,35 +217,71 @@ int kiiHal_transfer(void)
         return -1;
     }
 	
-	
     if (kiiHal_connect(socketNum, (char*)ipBuf, KII_DEFAULT_PORT) < 0)
     {
         KII_DEBUG("kii-error: connect to server failed \r\n");
 	 kiiHal_socketClose(&socketNum);
         return -1;
     }
-    
-    if (kiiHal_socketSend(socketNum, g_kii_data.sendBuf, g_kii_data.sendDataLen) < 0)
+	
+    len = kiiHal_socketSend(socketNum, g_kii_data.sendBuf, g_kii_data.sendDataLen);
+    if (len < 0)
     {
         
         KII_DEBUG("kii-error: send data fail\r\n");
-	 kiiHal_socketClose(&socketNum);
+        kiiHal_socketClose(&socketNum);
         return -1;
     }
-
+	
+    bytes = 0;
     memset(g_kii_data.rcvdBuf, 0, KII_RECV_BUF_SIZE);
-    g_kii_data.rcvdCounter = kiiHal_socketRecv(socketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
-    if (g_kii_data.rcvdCounter < 0)
+    while(bytes < KII_RECV_BUF_SIZE )
     {
-        KII_DEBUG("kii-error: recv data fail\r\n");
-	 kiiHal_socketClose(&socketNum);
-        return -1;
+        len = kiiHal_socketRecv(socketNum, g_kii_data.rcvdBuf+bytes, KII_RECV_BUF_SIZE-bytes);
+        if (len  < 0)
+        {
+            KII_DEBUG("kii-error: recv data fail\r\n");
+	    kiiHal_socketClose(&socketNum);
+            return -1;
+        }
+	else
+	{
+	     bytes +=len;
+	    p1 = strstr(g_kii_data.rcvdBuf, STR_CRLFCRLF);
+	    if (p1  != NULL)
+            {
+                 p2 = strstr(g_kii_data.rcvdBuf, STR_CONTENT_LENGTH); 
+	         if ( p2  != NULL)
+	         {
+	              p2 +=strlen(STR_CONTENT_LENGTH);
+                     contentLengh = strtoul(p2, 0 , 0);
+		     if (contentLengh > 0)
+		     {
+		         p1 +=strlen(STR_CRLFCRLF);
+			if (bytes >= (contentLengh + (p1-g_kii_data.rcvdBuf)))
+			{
+  			    kiiHal_socketClose(&socketNum);
+                            return 0;
+			}
+		     }
+		     else //should never get here
+		     {
+			 KII_DEBUG("kii-error: get content lenght failed\r\n");
+  		         kiiHal_socketClose(&socketNum);
+		         return -1;
+		     }
+	         }
+	         else
+	         {
+		     kiiHal_socketClose(&socketNum);
+		     return 0; //no content length
+                 }
+	    }
+        }
     }
-    else
-    {
-	 kiiHal_socketClose(&socketNum);
-        return 0;
-    }
+    KII_DEBUG("kii-error: receiving buffer overflow !\r\n");
+    kiiHal_socketClose(&socketNum);
+    return -1; //buffer overflow
 }
 
 

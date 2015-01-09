@@ -84,6 +84,7 @@ int KiiMQTT_decode(char* buf, int *value)
 int KiiMQTT_connect(unsigned short keepAliveInterval)
 {
     unsigned char ipBuf[4];
+    int rcvdCounter;
     char buf[256];
     int i;
     int j;
@@ -168,8 +169,8 @@ int KiiMQTT_connect(unsigned short keepAliveInterval)
     }
 
     memset(g_kii_push.rcvdBuf, 0, KII_PUSH_RECV_BUF_SIZE);
-    g_kii_push.rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE);
-    if (g_kii_push.rcvdCounter <= 0)
+    rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE);
+    if (rcvdCounter <= 0)
     {
         KII_DEBUG("kii-error: recv data fail\r\n");
         return -1;
@@ -178,7 +179,7 @@ int KiiMQTT_connect(unsigned short keepAliveInterval)
     {
     	//KII_DEBUG("\r\n----------------MQTT connect recv start-------------\r\n");    
 	//KII_DEBUG("\r\n");
-    	//for (i=0; i<g_kii_push.rcvdCounter; i++)
+    	//for (i=0; i<rcvdCounter; i++)
     	//{
         //	KII_DEBUG("%02x", g_kii_push.rcvdBuf[i]);
     	//}
@@ -186,7 +187,7 @@ int KiiMQTT_connect(unsigned short keepAliveInterval)
 
     	//KII_DEBUG("\r\n----------------MQTT_connect recv end-------------\r\n");    
 
-	if ((g_kii_push.rcvdCounter == 4) 
+	if ((rcvdCounter == 4) 
         && (g_kii_push.rcvdBuf[0] == 0x20) 
         && (g_kii_push.rcvdBuf[1] == 0x02) 
         && (g_kii_push.rcvdBuf[2] == 0x00)
@@ -217,6 +218,7 @@ int KiiMQTT_connect(unsigned short keepAliveInterval)
 int KiiMQTT_subscribe(enum QoS qos)
 {
     char buf[256];
+    int rcvdCounter;
     int i;
     int j;
 
@@ -264,8 +266,8 @@ int KiiMQTT_subscribe(enum QoS qos)
     }
 
     memset(g_kii_push.rcvdBuf, 0, KII_PUSH_RECV_BUF_SIZE);
-    g_kii_push.rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE);
-    if (g_kii_push.rcvdCounter <= 0)
+    rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE);
+    if (rcvdCounter <= 0)
     {
         KII_DEBUG("kii-error: recv data fail\r\n");
         return -1;
@@ -274,7 +276,7 @@ int KiiMQTT_subscribe(enum QoS qos)
     {
     //KII_DEBUG("\r\n----------------MQTT subscribe recv start-------------\r\n");    
 //	KII_DEBUG("\r\n");
-    //for (i=0; i<g_kii_push.rcvdCounter; i++)
+    //for (i=0; i<rcvdCounter; i++)
     //{
      //   KII_DEBUG("%02x", g_kii_push.rcvdBuf[i]);
     //}
@@ -282,7 +284,7 @@ int KiiMQTT_subscribe(enum QoS qos)
 
     //KII_DEBUG("\r\n----------------MQTT subscribe recv end-------------\r\n");    
 
-	if ((g_kii_push.rcvdCounter == 5)
+	if ((rcvdCounter == 5)
          && ((unsigned char)g_kii_push.rcvdBuf[0] == 0x90)
          && (g_kii_push.rcvdBuf[1] == 0x03)
          && (g_kii_push.rcvdBuf[2] == 0x00)

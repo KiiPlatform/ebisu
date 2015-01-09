@@ -31,6 +31,7 @@
 #define STR_CONTENT_RANGE "Content-Range: "
 #define STR_EMPTY_JSON "{ }"
 #define STR_CRLF "\r\n"
+#define STR_CRLFCRLF "\r\n\r\n"
 #define STR_LF "\n"
 
 
@@ -45,10 +46,8 @@ typedef struct {
     char appID[KII_APPID_SIZE+1];
     char appKey[KII_APPKEY_SIZE+1];
     char rcvdBuf[KII_SEND_BUF_SIZE];
-    int rcvdCounter;
     char sendBuf[KII_SEND_BUF_SIZE];
     int sendDataLen;
-    int sendCounter;
 } kii_data_struct;
 
 

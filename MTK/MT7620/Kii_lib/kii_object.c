@@ -399,6 +399,7 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
     char * p2;
     char *buf;
     unsigned char ipBuf[4];
+    int rcvdCounter;
 
     
     memset(mBucketName, 0, sizeof(mBucketName));
@@ -493,8 +494,8 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
     }
 
     memset(g_kii_data.rcvdBuf, 0, KII_RECV_BUF_SIZE);
-    g_kii_data.rcvdCounter = kiiHal_socketRecv(mSocketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
-    if (g_kii_data.rcvdCounter < 0)
+    rcvdCounter = kiiHal_socketRecv(mSocketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
+    if (rcvdCounter < 0)
     {
         KII_DEBUG("kii-error: recv data fail\r\n");
 	 kiiHal_socketClose(&mSocketNum);
@@ -536,6 +537,7 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsi
 int kiiObj_uploadBody(unsigned char *data, unsigned int length)
 {
     char *buf;
+    int rcvdCounter;
 	
     buf = g_kii_data.sendBuf;
     memset(buf, 0, KII_SEND_BUF_SIZE);
@@ -615,8 +617,8 @@ int kiiObj_uploadBody(unsigned char *data, unsigned int length)
     }
 
     memset(g_kii_data.rcvdBuf, 0, KII_RECV_BUF_SIZE);
-    g_kii_data.rcvdCounter = kiiHal_socketRecv(mSocketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
-    if (g_kii_data.rcvdCounter < 0)
+    rcvdCounter = kiiHal_socketRecv(mSocketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
+    if (rcvdCounter < 0)
     {
         KII_DEBUG("kii-error: recv data fail\r\n");
 	 kiiHal_socketClose(&mSocketNum);
@@ -652,6 +654,7 @@ int kiiObj_uploadBody(unsigned char *data, unsigned int length)
 int kiiObj_uploadBodyCommit(int committed)
 {
     char *buf;
+    int rcvdCounter;
 	
     buf = g_kii_data.sendBuf;
     memset(buf, 0, KII_SEND_BUF_SIZE);
@@ -710,8 +713,8 @@ int kiiObj_uploadBodyCommit(int committed)
     }
 
     memset(g_kii_data.rcvdBuf, 0, KII_RECV_BUF_SIZE);
-    g_kii_data.rcvdCounter = kiiHal_socketRecv(mSocketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
-    if (g_kii_data.rcvdCounter < 0)
+    rcvdCounter = kiiHal_socketRecv(mSocketNum, g_kii_data.rcvdBuf, KII_RECV_BUF_SIZE);
+    if (rcvdCounter < 0)
     {
         KII_DEBUG("kii-error: recv data fail\r\n");
 	 kiiHal_socketClose(&mSocketNum);
@@ -930,11 +933,6 @@ int kiiObj_downloadBody(char *bucketName, char *objectID,  unsigned int position
 	return -1;
     }
 	
-    if (((buf + g_kii_data.rcvdCounter) - p1)  <  (*actualLength))
-    {
-	KII_DEBUG("kii-error: missing data !\r\n");
-	return -1;
-    }
     memset(data, 0, length);
     memcpy(data, p1, *actualLength);
     return 0;
