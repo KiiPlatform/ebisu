@@ -148,7 +148,7 @@ public class Utils {
                 @Override
                 public void run() {
                     if (!light.connected) {
-                        KiiSync.fireLamp(light.mac, light.state ? 1 : 0, light.color, light.brightness, light.CT);
+//                        KiiSync.fireLamp(light.mac, light.state ? 1 : 0, light.color, light.brightness, light.CT);
                     }
                     Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "_id=" + light_id, null, null);
                     boolean ret = KiiSync.syncLights(context, c);
@@ -209,9 +209,9 @@ public class Utils {
             new Thread() {
                 @Override
                 public void run() {
-                    for (String mac : unconnectedLights) {
-                        KiiSync.fireLamp(mac, i_state ? 1 : 0, i_color, i_brightness, i_CT);
-                    }
+//                    for (String mac : unconnectedLights) {
+//                        KiiSync.fireLamp(mac, i_state ? 1 : 0, i_color, i_brightness, i_CT);
+//                    }
                 }
             }.start();
         }

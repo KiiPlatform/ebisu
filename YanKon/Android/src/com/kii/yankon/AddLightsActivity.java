@@ -182,8 +182,6 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
                 Cursor c = getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "MAC=(?)", new String[]{currLight.mac}, null);
                 KiiSync.syncLights(AddLightsActivity.this, c);
                 c.close();
-                String result = KiiSync.registLamp(currLight.mac);
-                Log.e("Test", "Reg result:" + result);
             }
         }.start();
         View view = mPager.findViewWithTag(currLight);

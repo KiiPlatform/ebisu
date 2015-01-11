@@ -42,6 +42,9 @@ public class KiiSync {
                 String mac = cursor.getString(cursor.getColumnIndex("MAC"));
                 lightObj = bucket.object(mac);
                 lightObj.set("name", cursor.getString(cursor.getColumnIndex("name")));
+                lightObj.set("model", cursor.getString(cursor.getColumnIndex("model")));
+                lightObj.set("remote_pwd", cursor.getString(cursor.getColumnIndex("remote_pwd")));
+                lightObj.set("admin_pwd", cursor.getString(cursor.getColumnIndex("admin_pwd")));
                 lightObj.set("MAC", mac);
                 lightObj.set("light_id", light_id);
 //                lightObj.set("brightness", cursor.getInt(cursor.getColumnIndex("brightness")));
@@ -125,7 +128,7 @@ public class KiiSync {
         };
         new Thread(runnable).start();
     }
-
+/*
     public static String registLamp(String MAC) {
         String result = null;
         if (!KiiUser.isLoggedIn()) {
@@ -153,8 +156,8 @@ public class KiiSync {
         }
         return result;
     }
-
-    public static String fireLamp(String MAC, int state, int color, int brightness, int CT) {
+*/
+    public static String fireLamp(JSONArray lights, int state, int color, int brightness, int CT) {
         String result = null;
         if (!KiiUser.isLoggedIn()) {
             return result;
@@ -169,7 +172,7 @@ public class KiiSync {
             action.put("brightness", brightness);
             action.put("CT", CT);
             JSONObject rawArg = new JSONObject();
-            rawArg.put("thingID", MAC);
+            rawArg.put("thing", lights);
             rawArg.put("action", action);
             Log.e(LOG_TAG, "fireLamp:" + rawArg.toString());
             KiiServerCodeEntryArgument arg = KiiServerCodeEntryArgument
