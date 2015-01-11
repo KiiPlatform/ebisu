@@ -10,8 +10,8 @@
 extern kii_data_struct g_kii_data;
 kii_push_struct g_kii_push;
 
-#define    KIIPUSH_TASK_STK_SIZE      1024
-#define    KIIPUSH_PINGREQ_TASK_STK_SIZE      100
+#define    KIIPUSH_TASK_STK_SIZE      2048
+#define    KIIPUSH_PINGREQ_TASK_STK_SIZE      200
 
 static unsigned int  mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];     
 static unsigned int  mKiiPush_pingReqTaskStk[KIIPUSH_PINGREQ_TASK_STK_SIZE];     
@@ -507,15 +507,22 @@ int kiiPush_createTopic(char *topicID)
 *****************************************************************************/
 static void *kiiPush_recvMsgTask(void *sdata)
 {
+    int remainingLen;
+    int byteLen;
+    int topicLen;
+    int totalLlen;
+    char *p;
+    int bytes;
+    int rcvdCounter;
     kiiPush_recvMsgCallback callback;
 
     callback = (kiiPush_recvMsgCallback) sdata;
 
-//    KII_DEBUG("kii-info: installationID:%s\r\n", g_kii_push.installationID);
-//    KII_DEBUG("kii-info: mqttTopic:%s\r\n", g_kii_push.mqttTopic);
-//    KII_DEBUG("kii-info: host:%s\r\n", g_kii_push.host);
-//    KII_DEBUG("kii-info: username:%s\r\n", g_kii_push.username);
-//    KII_DEBUG("kii-info: password:%s\r\n", g_kii_push.password);
+    //KII_DEBUG("kii-info: installationID:%s\r\n", g_kii_push.installationID);
+    //KII_DEBUG("kii-info: mqttTopic:%s\r\n", g_kii_push.mqttTopic);
+    //KII_DEBUG("kii-info: host:%s\r\n", g_kii_push.host);
+    //KII_DEBUG("kii-info: username:%s\r\n", g_kii_push.username);
+    //KII_DEBUG("kii-info: password:%s\r\n", g_kii_push.password);
 
     g_kii_push.connected = 0;
     for(;;)
@@ -523,36 +530,69 @@ static void *kiiPush_recvMsgTask(void *sdata)
         if (g_kii_push.connected == 0)
         {
             kiiHal_delayMs(1000);
+            g_kii_push.mqttSocket= kiiHal_socketCreate();
+            if (g_kii_push.mqttSocket < 0)
+            {
+                KII_DEBUG("kii-error: create socket failed !\r\n");
+                continue;
+            }
             if (KiiMQTT_connect(KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE) < 0)
             {
+                kiiHal_socketClose(&g_kii_push.mqttSocket);
                 continue;
             }
             else if (KiiMQTT_subscribe(QOS1) < 0)
             {
+                kiiHal_socketClose(&g_kii_push.mqttSocket);
                 continue;
             }
             else
             {
-               g_kii_push.connected = 1;
+                g_kii_push.connected = 1;
             }
         }
         else
         {
             memset(g_kii_push.rcvdBuf, 0, KII_PUSH_RECV_BUF_SIZE);
-            g_kii_push.rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE);
-            if (g_kii_push.rcvdCounter > 0)
+            rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE);
+            if (rcvdCounter > 0)
             {
                 if ((g_kii_push.rcvdBuf[0]&0xf0) == 0x30)
                 {
-                    int remainingLen;
-                    int byteLen;
-                    int topicLen;
-                    char *p;
                     byteLen = KiiMQTT_decode(&g_kii_push.rcvdBuf[1], &remainingLen);
-                    //KII_DEBUG("decode byteLen=%d, remainingLen=%d\r\n", byteLen, remainingLen);
-                    p = g_kii_push.rcvdBuf;
-                    if (( g_kii_push.rcvdCounter >= remainingLen+byteLen+1) && (byteLen > 0)) //fixed head byte1+remaining length bytes + remaining bytes
+                    if (byteLen > 0)
                     {
+                        totalLlen = remainingLen+byteLen+1; //fixed head byte1+remaining length bytes + remaining bytes
+                    }
+                    else
+                    {
+                        KII_DEBUG("kii-error: mqtt decode error\r\n");
+                        continue;
+                    }
+                    if (totalLlen > KII_PUSH_RECV_BUF_SIZE)
+                    {
+                        KII_DEBUG("kii-error: mqtt buffer overflow\r\n");
+                        continue;
+                    }
+				
+                    //KII_DEBUG("decode byteLen=%d, remainingLen=%d\r\n", byteLen, remainingLen);
+                    bytes = rcvdCounter;
+                    while ( bytes < totalLlen) 
+                    {
+                        rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf+bytes, KII_PUSH_RECV_BUF_SIZE - bytes);
+                        if (rcvdCounter > 0)
+                        {
+                            bytes += rcvdCounter;
+                        }
+                        else
+                        {
+                            bytes = -1;
+                            break;
+                        }
+                    }
+                    if (bytes >= totalLlen)
+                    {
+                        p = g_kii_push.rcvdBuf;
                         p++; //skip fixed header byte1
                         p +=byteLen; //skip remaining length bytes
                         topicLen = p[0] *256 + p[1]; //get topic length
@@ -560,20 +600,20 @@ static void *kiiPush_recvMsgTask(void *sdata)
                         p = p+topicLen; //skip topic
                         callback(p, remainingLen-2-topicLen);
                     }
-                 }
+                }
                 else if ((g_kii_push.rcvdBuf[0]&0xf0) == 0xd0)
                 {
                     //KII_DEBUG("ping resp\r\n");
                 }
             }
-	     else
-	     { 
+            else
+            { 
                 g_kii_push.connected = 0;
-	     }
+                kiiHal_socketClose(&g_kii_push.mqttSocket);
+            }
         }
     }
 }
-
 
 /*****************************************************************************
 *

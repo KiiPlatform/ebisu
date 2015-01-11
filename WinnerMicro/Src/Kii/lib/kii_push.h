@@ -27,7 +27,6 @@ typedef struct {
 	char username[KII_PUSH_USERNAME_SIZE+1];
 	char password[KII_PUSH_PASSWORD_SIZE+1];
 	char rcvdBuf[KII_PUSH_RECV_BUF_SIZE];
-	int rcvdCounter;
        char sendBuf[KII_PUSH_SEND_BUF_SIZE];
        int mqttSocket;
        char connected;

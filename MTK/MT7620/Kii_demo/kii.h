@@ -179,44 +179,52 @@ extern int kiiObj_uploadBodyAtOnce(char *bucketName, char *objectID,  char *data
 *
 *  \param: bucketName - the input of bucket name
 *               objectID - the input of objectID
-*               dataType - the input of data type, the format should be like "image/jpg"
-*               totalLength - the total of data length
+*               uploadID - the output of uploadID
 *
 *  \return 0:success; -1: failure
 *
 *  \brief  Initializes "uploading an object body in multiple pieces"
 *
 *****************************************************************************/
-extern int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *dataType, unsigned int totalLength);
+extern int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *uploadID);
 
 
 /*****************************************************************************
 *
 *  kiiObj_uploadBody
 *
-*  \param: data - the piece of data to be uploaded
-*               length - the piece of data length
+*  \param: bucketName - the input of bucket name
+*               objectID - the input of objectID
+*               uploadID - the input of uploadID
+*               dataType - the input of data type, the format should be like "image/jpg"
+*               position - data position
+*               length - this  piece of data length
+*               totalLength - the total object body length
+*               data - raw data
 *
 *  \return 0:success; -1: failure
 *
 *  \brief  Uploads a piece of data
 *
 *****************************************************************************/
-extern int kiiObj_uploadBody(unsigned char *data, unsigned int length);
+extern int kiiObj_uploadBody(char *bucketName, char *objectID, char *uploadID, char *dataType, unsigned int position,  unsigned int length, unsigned int totalLength, unsigned char *data);
 
 
 /*****************************************************************************
 *
 *  kiiObj_uploadBody
 *
-*  \param: committed - 0: cancelled; 1: committed
+*  \param: bucketName - the input of bucket name
+*               objectID - the input of objectID
+*               uploadID - the input of uploadID
+*               committed - 0: cancelled; 1: committed
 *
 *  \return 0:success; -1: failure
 *
 *  \brief  Commits or cancels this uploading
 *
 *****************************************************************************/
-extern int kiiObj_uploadBodyCommit(int committed);
+extern int kiiObj_uploadBodyCommit(char *bucketName, char *objectID, char *uploadID, int committed);
 
 
 /*****************************************************************************
@@ -234,6 +242,23 @@ extern int kiiObj_uploadBodyCommit(int committed);
 *
 *****************************************************************************/
 extern int kiiObj_retrieve(char *bucketName, char *objectID,  char *jsonObject, unsigned int length);
+
+
+/*****************************************************************************
+*
+*  kiiObj_downloadBodyAtOnce
+*
+*  \param  bucketName - the input of bucket name
+*               objectID - the input of objectID
+*               data - raw data
+*               length - the buffer lengh for object body
+*               actualLength - the actual length of received body
+*  \return 0:success; -1: failure
+*
+*  \brief  Downloads an object body at once
+*
+*****************************************************************************/
+extern int kiiObj_downloadBodyAtOnce(char *bucketName, char *objectID, unsigned char *data, unsigned int length, unsigned int *actualLength);
 
 
 /*****************************************************************************
