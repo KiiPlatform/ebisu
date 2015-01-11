@@ -1,9 +1,9 @@
 package com.kii.yankon.utils;
 
+import com.kii.yankon.App;
+
 import android.content.Context;
 import android.content.SharedPreferences;
-
-import com.kii.yankon.App;
 
 /**
  * Created by tian on 14-9-17:上午7:43.
@@ -86,5 +86,9 @@ public class Settings {
         saveEmail(null);
         saveToken(null);
         getPrefs().edit().commit();
+    }
+
+    public static boolean isServerWin() {
+        return true;
     }
 }

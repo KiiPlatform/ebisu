@@ -1,10 +1,5 @@
 package com.kii.yankon.utils;
 
-import android.content.ContentValues;
-import android.content.Context;
-import android.database.Cursor;
-import android.util.Log;
-
 import com.kii.cloud.storage.Kii;
 import com.kii.cloud.storage.KiiBucket;
 import com.kii.cloud.storage.KiiObject;
@@ -12,10 +7,19 @@ import com.kii.cloud.storage.KiiServerCodeEntry;
 import com.kii.cloud.storage.KiiServerCodeEntryArgument;
 import com.kii.cloud.storage.KiiServerCodeExecResult;
 import com.kii.cloud.storage.KiiUser;
+import com.kii.cloud.storage.query.KiiQueryResult;
+import com.kii.yankon.App;
 import com.kii.yankon.providers.YanKonProvider;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.util.Log;
+
+import java.util.List;
 
 /**
  * Created by Evan on 14/12/20.
@@ -23,6 +27,8 @@ import org.json.JSONObject;
 public class KiiSync {
 
     private static final String LOG_TAG = "KiiSync";
+
+    private static boolean isSyncing = false;
 
     public static boolean syncLights(Context context, Cursor cursor) {
         KiiUser kiiUser = KiiUser.getCurrentUser();
@@ -56,7 +62,8 @@ public class KiiSync {
                     lightObj.saveAllFields(true);
                     ContentValues values = new ContentValues();
                     values.put("synced", true);
-                    context.getContentResolver().update(YanKonProvider.URI_LIGHTS, values, "_id=" + light_id, null);
+                    context.getContentResolver()
+                            .update(YanKonProvider.URI_LIGHTS, values, "_id=" + light_id, null);
                 } catch (Exception e) {
                     syncResult = false;
                     Log.e(LOG_TAG, Log.getStackTraceString(e));
@@ -82,7 +89,9 @@ public class KiiSync {
                 int group_id = cursor.getInt(cursor.getColumnIndex("_id"));
                 String objectID = cursor.getString(cursor.getColumnIndex("objectID"));
                 JSONArray childLights = new JSONArray();
-                Cursor childCursor = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUP_REL, new String[]{"MAC"}, "group_id=" + group_id, null, null);
+                Cursor childCursor = context.getContentResolver()
+                        .query(YanKonProvider.URI_LIGHT_GROUP_REL, new String[]{"MAC"},
+                                "group_id=" + group_id, null, null);
                 if (childCursor != null) {
                     while (childCursor.moveToNext()) {
                         childLights.put(childCursor.getString(0));
@@ -103,7 +112,9 @@ public class KiiSync {
                     groupObj.saveAllFields(true);
                     ContentValues values = new ContentValues();
                     values.put("synced", true);
-                    context.getContentResolver().update(YanKonProvider.URI_LIGHT_GROUPS, values, "_id=" + group_id, null);
+                    context.getContentResolver()
+                            .update(YanKonProvider.URI_LIGHT_GROUPS, values, "_id=" + group_id,
+                                    null);
                 } catch (Exception e) {
                     syncResult = false;
                     Log.e(LOG_TAG, Log.getStackTraceString(e));
@@ -117,7 +128,9 @@ public class KiiSync {
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                Cursor cursor = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUPS, null, group_id > -1 ? ("_id=" + group_id) : null, null, null);
+                Cursor cursor = context.getContentResolver()
+                        .query(YanKonProvider.URI_LIGHT_GROUPS, null,
+                                group_id > -1 ? ("_id=" + group_id) : null, null, null);
                 if (cursor != null) {
                     while (cursor.moveToNext()) {
                         syncLightGroups(context, cursor);
@@ -128,35 +141,36 @@ public class KiiSync {
         };
         new Thread(runnable).start();
     }
-/*
-    public static String registLamp(String MAC) {
-        String result = null;
-        if (!KiiUser.isLoggedIn()) {
+
+    /*
+        public static String registLamp(String MAC) {
+            String result = null;
+            if (!KiiUser.isLoggedIn()) {
+                return result;
+            }
+
+            KiiServerCodeEntry entry = Kii.serverCodeEntry("registLamp");
+
+            try {
+                JSONObject rawArg = new JSONObject();
+
+                rawArg.put("thingID", MAC);
+                rawArg.put("batchName", 100);
+                KiiServerCodeEntryArgument arg = KiiServerCodeEntryArgument
+                        .newArgument(rawArg);
+
+                // Execute the Server Code
+                KiiServerCodeExecResult res = entry.execute(arg);
+
+                // Parse the result.
+                JSONObject returned = res.getReturnedValue();
+                result = returned.getString("returnedValue");
+            } catch (Exception e) {
+
+            }
             return result;
         }
-
-        KiiServerCodeEntry entry = Kii.serverCodeEntry("registLamp");
-
-        try {
-            JSONObject rawArg = new JSONObject();
-
-            rawArg.put("thingID", MAC);
-            rawArg.put("batchName", 100);
-            KiiServerCodeEntryArgument arg = KiiServerCodeEntryArgument
-                    .newArgument(rawArg);
-
-            // Execute the Server Code
-            KiiServerCodeExecResult res = entry.execute(arg);
-
-            // Parse the result.
-            JSONObject returned = res.getReturnedValue();
-            result = returned.getString("returnedValue");
-        } catch (Exception e) {
-
-        }
-        return result;
-    }
-*/
+    */
     public static String fireLamp(JSONArray lights, int state, int color, int brightness, int CT) {
         String result = null;
         if (!KiiUser.isLoggedIn()) {
@@ -188,5 +202,115 @@ public class KiiSync {
 
         }
         return result;
+    }
+
+    public static void sync() {
+        isSyncing = true;
+        downloadLights();
+        uploadLights();
+        isSyncing = false;
+    }
+
+    private static void uploadLights() {
+        KiiBucket bucket = getLightBucket();
+        if (bucket == null) {
+            return;
+        }
+        final Context context = App.getApp();
+        Cursor cursor = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null,
+                "synced>0 AND deleted=0", null, null);
+        if (cursor != null) {
+            do {
+                int light_id = cursor.getInt(cursor.getColumnIndex("_id"));
+                KiiObject lightObj;
+                String mac = cursor.getString(cursor.getColumnIndex("MAC"));
+                lightObj = bucket.object(mac);
+                lightObj.set("name", cursor.getString(cursor.getColumnIndex("name")));
+                lightObj.set("model", cursor.getString(cursor.getColumnIndex("model")));
+                lightObj.set("remote_pwd", cursor.getString(cursor.getColumnIndex("remote_pwd")));
+                lightObj.set("admin_pwd", cursor.getString(cursor.getColumnIndex("admin_pwd")));
+                lightObj.set("MAC", mac);
+                lightObj.set("light_id", light_id);
+//                lightObj.set("brightness", cursor.getInt(cursor.getColumnIndex("brightness")));
+//                lightObj.set("CT", cursor.getInt(cursor.getColumnIndex("CT")));
+//                lightObj.set("color", cursor.getInt(cursor.getColumnIndex("color")));
+//                lightObj.set("state", cursor.getInt(cursor.getColumnIndex("state")) > 0);
+                lightObj.set("owned_time", cursor.getLong(cursor.getColumnIndex("owned_time")));
+                try {
+                    lightObj.saveAllFields(true);
+                    ContentValues values = new ContentValues();
+                    values.put("synced", true);
+                    context.getContentResolver()
+                            .update(YanKonProvider.URI_LIGHTS, values, "_id=" + light_id, null);
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, Log.getStackTraceString(e));
+                }
+            } while (cursor.moveToNext());
+        }
+    }
+
+    private static void downloadLights() {
+        KiiBucket bucket = getLightBucket();
+        if (bucket == null) {
+            return;
+        }
+        try {
+            KiiQueryResult<KiiObject> result = bucket.query(null);
+            List<KiiObject> objList = result.getResult();
+            saveRemoteLightRecords(objList);
+            while (result.hasNext()) {
+                result = result.getNextQueryResult();
+                objList = result.getResult();
+                saveRemoteLightRecords(objList);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void saveRemoteLightRecords(List<KiiObject> objects) {
+        for (KiiObject object : objects) {
+            saveRemoteLightRecord(object);
+        }
+    }
+
+    private static void saveRemoteLightRecord(KiiObject object) {
+        ContentValues values = new ContentValues();
+        values.put("MAC", object.getString("MAC"));
+        values.put("name", object.getString("name"));
+        values.put("model", object.getString("model"));
+        values.put("remote_pwd", object.getString("remote_pwd"));
+        values.put("admin_pwd", object.getString("admin_pwd"));
+        values.put("owned_time", object.getLong("owned_time"));
+        values.put("synced", true);
+        Cursor cursor = App.getApp().getContentResolver()
+                .query(YanKonProvider.URI_LIGHTS, null, "MAC=?",
+                        new String[]{object.getString("MAC")}, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) == 1;
+            boolean deleted = cursor.getInt(cursor.getColumnIndex("deleted")) == 1;
+            if (!deleted) {
+                if (synced || Settings.isServerWin()) {
+                    App.getApp().getContentResolver()
+                            .update(YanKonProvider.URI_LIGHTS, values, "MAC=?",
+                                    new String[]{object.getString("MAC")});
+                }
+            }
+        } else {
+            //the remote record does not exist in local storage, save it
+            App.getApp().getContentResolver().insert(YanKonProvider.URI_LIGHTS, values);
+        }
+    }
+
+    private static KiiBucket getLightBucket() {
+        KiiUser kiiUser = KiiUser.getCurrentUser();
+        if (kiiUser == null) {
+            return null;
+        }
+        return kiiUser.bucket("lights");
+    }
+
+    public static boolean isSyncing() {
+        return isSyncing;
     }
 }

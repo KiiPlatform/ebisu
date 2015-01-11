@@ -48,7 +48,8 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "state BOOL DEFAULT 0,"
                         + "connected BOOL,"
                         + "synced BOOL,"
-                        + "owned_time INTEGER"
+                        + "owned_time INTEGER,"
+                        + "deleted INTEGER DEFAULT 0"
                         + ");"
         );
         db.execSQL("CREATE TABLE IF NOT EXISTS models ("

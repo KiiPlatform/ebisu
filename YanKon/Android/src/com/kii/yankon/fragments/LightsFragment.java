@@ -1,5 +1,12 @@
 package com.kii.yankon.fragments;
 
+import com.kii.yankon.AddLightsActivity;
+import com.kii.yankon.App;
+import com.kii.yankon.LightInfoActivity;
+import com.kii.yankon.R;
+import com.kii.yankon.providers.YanKonProvider;
+import com.kii.yankon.utils.Utils;
+
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
@@ -20,12 +27,6 @@ import android.widget.CursorAdapter;
 import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
-
-import com.kii.yankon.AddLightsActivity;
-import com.kii.yankon.LightInfoActivity;
-import com.kii.yankon.R;
-import com.kii.yankon.providers.YanKonProvider;
-import com.kii.yankon.utils.Utils;
 
 /**
  * Created by Evan on 14/11/26.
@@ -65,7 +66,8 @@ public class LightsFragment extends BaseListFragment {
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         //"connected OR is_mine"
-        return new CursorLoader(getActivity(), YanKonProvider.URI_LIGHTS, null, null, null, "owned_time asc");
+        return new CursorLoader(getActivity(), YanKonProvider.URI_LIGHTS, null, "deleted=0", null,
+                "owned_time asc");
     }
 
     @Override
@@ -74,7 +76,8 @@ public class LightsFragment extends BaseListFragment {
         if (isFirstLaunch) {
             isFirstLaunch = false;
             int num = 0;
-            Cursor c = getActivity().getContentResolver().query(YanKonProvider.URI_LIGHTS, new String[]{"_id"}, null, null, null);
+            Cursor c = getActivity().getContentResolver()
+                    .query(YanKonProvider.URI_LIGHTS, new String[]{"_id"}, null, null, null);
             if (c != null) {
                 num = c.getCount();
                 c.close();
@@ -86,7 +89,8 @@ public class LightsFragment extends BaseListFragment {
     }
 
     @Override
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+    public void onCreateContextMenu(ContextMenu menu, View v,
+            ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
         Cursor cursor = (Cursor) mAdapter.getItem(info.position);
@@ -115,7 +119,8 @@ public class LightsFragment extends BaseListFragment {
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         super.onContextItemSelected(item);
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item
+                .getMenuInfo();
         switch (item.getItemId()) {
             case MENU_EDIT: {
                 Cursor cursor = (Cursor) mAdapter.getItem(info.position);
@@ -127,7 +132,11 @@ public class LightsFragment extends BaseListFragment {
             case MENU_DELETE: {
                 Cursor cursor = (Cursor) mAdapter.getItem(info.position);
                 int cid = cursor.getInt(cursor.getColumnIndex("_id"));
-                getActivity().getContentResolver().delete(YanKonProvider.URI_LIGHTS, "_id=" + cid, null);
+                ContentValues cv = new ContentValues(1);
+                cv.put("deleted", 1);
+                App.getApp().getContentResolver().update(YanKonProvider.URI_LIGHTS, cv, "_id=?",
+                        new String[]{Integer.toString(cid)});
+//                getActivity().getContentResolver().delete(YanKonProvider.URI_LIGHTS, "_id=" + cid, null);
             }
             break;
         }
@@ -146,7 +155,9 @@ public class LightsFragment extends BaseListFragment {
                 ContentValues values = new ContentValues();
                 values.put("name", name);
                 if (currentEditId > -1) {
-                    getActivity().getContentResolver().update(YanKonProvider.URI_LIGHTS, values, "_id=" + currentEditId, null);
+                    getActivity().getContentResolver()
+                            .update(YanKonProvider.URI_LIGHTS, values, "_id=" + currentEditId,
+                                    null);
                 }
                 break;
         }
@@ -164,6 +175,7 @@ public class LightsFragment extends BaseListFragment {
     }
 
     class LightsAdapter extends CursorAdapter {
+
         public LightsAdapter(Context context) {
             super(context, null, 0);
         }
@@ -198,7 +210,8 @@ public class LightsFragment extends BaseListFragment {
                     ContentValues values = new ContentValues();
                     values.put("state", !state);
                     values.put("synced", false);
-                    getActivity().getContentResolver().update(YanKonProvider.URI_LIGHTS, values, "_id=" + light_id, null);
+                    getActivity().getContentResolver()
+                            .update(YanKonProvider.URI_LIGHTS, values, "_id=" + light_id, null);
                     Utils.controlLight(getActivity(), light_id, true);
                 }
             });
