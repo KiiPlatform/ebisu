@@ -54,7 +54,7 @@ public class AddLightGroupsActivity extends Activity implements View.OnClickList
         mGroupNameEdit.setText(getIntent().getStringExtra(EXTRA_GROUP_NAME));
 
         if (group_id >= 0) {
-            Cursor cursor = getContentResolver().query(YanKonProvider.URI_LIGHT_GROUP_REL, new String[]{"light_id"}, "group_id=" + group_id, null, null);
+            Cursor cursor = getContentResolver().query(YanKonProvider.URI_LIGHT_GROUP_REL, new String[]{"light_id"}, "group_id=" + group_id + " AND deleted=0", null, null);
             while (cursor.moveToNext()) {
                 int lid = cursor.getInt(0);
                 Integer integer = Integer.valueOf(lid);
@@ -93,6 +93,7 @@ public class AddLightGroupsActivity extends Activity implements View.OnClickList
         ContentResolver cr = getContentResolver();
         ContentValues values = new ContentValues();
         values.put("name", gName);
+        values.put("synced", false);
         if (group_id < 0) {
             values.put("objectID", UUID.randomUUID().toString());
             values.put("brightness", Constants.DEFAULT_BRIGHTNESS);
@@ -127,7 +128,7 @@ public class AddLightGroupsActivity extends Activity implements View.OnClickList
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(this, YanKonProvider.URI_LIGHTS, null, null, null, "owned_time asc");
+        return new CursorLoader(this, YanKonProvider.URI_LIGHTS, null, "deleted=0", null, "owned_time asc");
     }
 
     @Override
