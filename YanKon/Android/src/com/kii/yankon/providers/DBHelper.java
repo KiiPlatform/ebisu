@@ -93,7 +93,8 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "_id INTEGER PRIMARY KEY, "
                         + "light_id INTEGER,"
                         + "group_id INTEGER,"
-                        + "created_time INTEGER"
+                        + "created_time INTEGER,"
+                        + "UNIQUE(light_id, group_id)"
                         + ");"
         );
 

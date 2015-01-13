@@ -17,6 +17,7 @@ import org.json.JSONObject;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.util.List;
@@ -223,25 +224,43 @@ public class KiiSync {
                 "synced>0 AND deleted=0", null, null);
         if (cursor != null) {
             do {
-                String objectId = cursor.getString(cursor.getColumnIndex("objectID"));
+                boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) > 0;
+                if (synced) {
+                    continue;
+                }
+                int group_id = cursor.getInt(cursor.getColumnIndex("_id"));
+                String objectID = cursor.getString(cursor.getColumnIndex("objectID"));
+                JSONArray childLights = new JSONArray();
+                Cursor childCursor = context.getContentResolver()
+                        .query(YanKonProvider.URI_LIGHT_GROUP_REL, new String[]{"MAC"},
+                                "group_id=" + group_id, null, null);
+                if (childCursor != null) {
+                    while (childCursor.moveToNext()) {
+                        childLights.put(childCursor.getString(0));
+                    }
+                    childCursor.close();
+                }
                 KiiObject groupObj;
-                groupObj = bucket.object(objectId);
-                groupObj.set("state", cursor.getInt(cursor.getColumnIndex("state")));
+                groupObj = bucket.object(objectID);
                 groupObj.set("name", cursor.getString(cursor.getColumnIndex("name")));
-                groupObj.set("color", cursor.getInt(cursor.getColumnIndex("color")));
                 groupObj.set("brightness", cursor.getInt(cursor.getColumnIndex("brightness")));
                 groupObj.set("CT", cursor.getInt(cursor.getColumnIndex("CT")));
+                groupObj.set("color", cursor.getInt(cursor.getColumnIndex("color")));
+                groupObj.set("state", cursor.getInt(cursor.getColumnIndex("state")) > 0);
+                groupObj.set("created_time", cursor.getLong(cursor.getColumnIndex("created_time")));
+                groupObj.set("lights", childLights);
                 try {
                     groupObj.saveAllFields(true);
                     ContentValues values = new ContentValues();
                     values.put("synced", true);
                     context.getContentResolver()
-                            .update(YanKonProvider.URI_LIGHT_GROUPS, values, "objectID=" + objectId,
+                            .update(YanKonProvider.URI_LIGHT_GROUPS, values, "_id=" + group_id,
                                     null);
                 } catch (Exception e) {
                     Log.e(LOG_TAG, Log.getStackTraceString(e));
                 }
             } while (cursor.moveToNext());
+            cursor.close();
         }
     }
 
@@ -264,7 +283,6 @@ public class KiiSync {
                 lightObj.set("remote_pwd", cursor.getString(cursor.getColumnIndex("remote_pwd")));
                 lightObj.set("admin_pwd", cursor.getString(cursor.getColumnIndex("admin_pwd")));
                 lightObj.set("MAC", mac);
-                lightObj.set("light_id", light_id);
 //                lightObj.set("brightness", cursor.getInt(cursor.getColumnIndex("brightness")));
 //                lightObj.set("CT", cursor.getInt(cursor.getColumnIndex("CT")));
 //                lightObj.set("color", cursor.getInt(cursor.getColumnIndex("color")));
@@ -280,6 +298,7 @@ public class KiiSync {
                     Log.e(LOG_TAG, Log.getStackTraceString(e));
                 }
             } while (cursor.moveToNext());
+            cursor.close();
         }
     }
 
@@ -353,7 +372,73 @@ public class KiiSync {
             //the remote record does not exist in local storage, save it
             App.getApp().getContentResolver().insert(YanKonProvider.URI_LIGHT_GROUPS, values);
         }
+        processRel(object);
+        if (cursor != null) {
+            cursor.close();
+        }
+
     }
+
+    private static void processRel(KiiObject object) {
+        String groupId = getGroupIdByObjId(object.getString("_id"));
+
+        if (Settings.isServerWin()) {
+            App.getApp().getContentResolver()
+                    .delete(YanKonProvider.URI_LIGHT_GROUP_REL, "group_id=?",
+                            new String[]{groupId});
+        }
+        JSONArray array = object.getJsonArray("lights");
+        if (array != null && array.length() > 0) {
+            for (int i = 0; i < array.length(); i++) {
+                String mac = array.optString(i);
+                if (!TextUtils.isEmpty(mac)) {
+                    String lightId = getLightIdByMac(mac);
+                    ContentValues cv = new ContentValues(2);
+                    cv.put("light_id", lightId);
+                    cv.put("group_id", groupId);
+                    App.getApp().getContentResolver()
+                            .insert(YanKonProvider.URI_LIGHT_GROUP_REL, cv);
+                }
+            }
+        }
+        ContentValues cv = new ContentValues(1);
+        cv.put("synced", 1);
+        App.getApp().getContentResolver()
+                .update(YanKonProvider.URI_LIGHT_GROUPS, cv, "_id=?", new String[]{groupId});
+    }
+
+    private static String getLightIdByMac(String mac) {
+        Cursor cursor = App.getApp().getContentResolver()
+                .query(YanKonProvider.URI_LIGHTS, new String[]{"_id"}, "MAC=?",
+                        new String[]{mac}, null);
+        try {
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    private static String getGroupIdByObjId(String objId) {
+        Cursor cursor = App.getApp().getContentResolver()
+                .query(YanKonProvider.URI_LIGHT_GROUPS, new String[]{"_id"}, "objectID=?",
+                        new String[]{objId}, null);
+        try {
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
 
     private static void saveRemoteLightRecords(List<KiiObject> objects) {
         for (KiiObject object : objects) {
@@ -387,6 +472,9 @@ public class KiiSync {
             //the remote record does not exist in local storage, save it
             App.getApp().getContentResolver().insert(YanKonProvider.URI_LIGHTS, values);
         }
+        if (cursor != null) {
+            cursor.close();
+        }
     }
 
     private static KiiBucket getLightBucket() {
@@ -402,7 +490,7 @@ public class KiiSync {
         if (kiiUser == null) {
             return null;
         }
-        return kiiUser.bucket("groups");
+        return kiiUser.bucket("light_groups");
     }
 
     public static boolean isSyncing() {
