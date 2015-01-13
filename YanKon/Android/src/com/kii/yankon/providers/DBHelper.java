@@ -14,6 +14,7 @@ import java.util.UUID;
 public class DBHelper extends SQLiteOpenHelper {
 
     public static final int DB_VERSION = 1;
+
     public static final String DB_NAME = "yankon.sqlite";
 
     public DBHelper(Context context) {
@@ -83,6 +84,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "brightness INTEGER,"
                         + "CT INTEGER,"
                         + "synced BOOL,"
+                        + "deleted INTEGER DEFAULT 0,"
                         + "created_time INTEGER"
                         + ");"
         );
@@ -95,8 +97,9 @@ public class DBHelper extends SQLiteOpenHelper {
                         + ");"
         );
 
-        db.execSQL("CREATE VIEW IF NOT EXISTS group_light_view AS SELECT * FROM light_group_rel,lights "
-                + " WHERE light_group_rel.light_id=lights._id;");
+        db.execSQL(
+                "CREATE VIEW IF NOT EXISTS group_light_view AS SELECT * FROM light_group_rel,lights "
+                        + " WHERE light_group_rel.light_id=lights._id;");
 
         db.execSQL("CREATE VIEW IF NOT EXISTS light_groups_view AS SELECT "
                 + "light_groups.*,(select count(_id) FROM light_group_rel where light_group_rel.group_id=light_groups._id) as num,"
@@ -205,7 +208,6 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("name", "Turn Off");
         values.put("created_time", 2);
         db.insert("actions", null, values);
-
 
         //TODO Below is mock data, need to be removed
     }

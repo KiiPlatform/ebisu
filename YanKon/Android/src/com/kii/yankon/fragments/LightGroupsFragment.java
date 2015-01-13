@@ -1,5 +1,11 @@
 package com.kii.yankon.fragments;
 
+import com.kii.yankon.AddLightGroupsActivity;
+import com.kii.yankon.LightInfoActivity;
+import com.kii.yankon.R;
+import com.kii.yankon.providers.YanKonProvider;
+import com.kii.yankon.utils.Utils;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.CursorLoader;
@@ -17,12 +23,6 @@ import android.widget.CursorAdapter;
 import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
-
-import com.kii.yankon.AddLightGroupsActivity;
-import com.kii.yankon.LightInfoActivity;
-import com.kii.yankon.R;
-import com.kii.yankon.providers.YanKonProvider;
-import com.kii.yankon.utils.Utils;
 
 /**
  * Created by Evan on 14/11/26.
@@ -57,7 +57,8 @@ public class LightGroupsFragment extends BaseListFragment {
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(getActivity(), YanKonProvider.URI_LIGHT_GROUPS, null, null, null, "created_time asc");
+        return new CursorLoader(getActivity(), YanKonProvider.URI_LIGHT_GROUPS, null, "deleted=0",
+                null, "created_time asc");
     }
 
     @Override
@@ -77,7 +78,8 @@ public class LightGroupsFragment extends BaseListFragment {
     }
 
     @Override
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+    public void onCreateContextMenu(ContextMenu menu, View v,
+            ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
         Cursor cursor = (Cursor) mAdapter.getItem(info.position);
@@ -90,7 +92,8 @@ public class LightGroupsFragment extends BaseListFragment {
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         super.onContextItemSelected(item);
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item
+                .getMenuInfo();
         switch (item.getItemId()) {
             case MENU_EDIT: {
                 Cursor cursor = (Cursor) mAdapter.getItem(info.position);
@@ -105,7 +108,8 @@ public class LightGroupsFragment extends BaseListFragment {
             case MENU_DELETE: {
                 Cursor cursor = (Cursor) mAdapter.getItem(info.position);
                 int cid = cursor.getInt(cursor.getColumnIndex("_id"));
-                getActivity().getContentResolver().delete(YanKonProvider.URI_LIGHT_GROUPS, "_id=" + cid, null);
+                getActivity().getContentResolver()
+                        .delete(YanKonProvider.URI_LIGHT_GROUPS, "_id=" + cid, null);
             }
             break;
         }
@@ -113,6 +117,7 @@ public class LightGroupsFragment extends BaseListFragment {
     }
 
     class GroupsAdapter extends CursorAdapter {
+
         public GroupsAdapter(Context context) {
             super(context, null, 0);
         }
@@ -144,7 +149,9 @@ public class LightGroupsFragment extends BaseListFragment {
                     ContentValues values = new ContentValues();
                     values.put("state", !state);
                     values.put("synced", false);
-                    getActivity().getContentResolver().update(YanKonProvider.URI_LIGHT_GROUPS, values, "_id=" + group_id, null);
+                    getActivity().getContentResolver()
+                            .update(YanKonProvider.URI_LIGHT_GROUPS, values, "_id=" + group_id,
+                                    null);
                     Utils.controlGroup(getActivity(), group_id, true);
                 }
             });

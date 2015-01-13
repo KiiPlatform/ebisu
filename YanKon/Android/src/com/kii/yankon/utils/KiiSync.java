@@ -208,7 +208,41 @@ public class KiiSync {
         isSyncing = true;
         downloadLights();
         uploadLights();
+        downloadGroups();
+        uploadGroups();
         isSyncing = false;
+    }
+
+    private static void uploadGroups() {
+        KiiBucket bucket = getGroupBucket();
+        if (bucket == null) {
+            return;
+        }
+        final Context context = App.getApp();
+        Cursor cursor = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUPS, null,
+                "synced>0 AND deleted=0", null, null);
+        if (cursor != null) {
+            do {
+                String objectId = cursor.getString(cursor.getColumnIndex("objectID"));
+                KiiObject groupObj;
+                groupObj = bucket.object(objectId);
+                groupObj.set("state", cursor.getInt(cursor.getColumnIndex("state")));
+                groupObj.set("name", cursor.getString(cursor.getColumnIndex("name")));
+                groupObj.set("color", cursor.getInt(cursor.getColumnIndex("color")));
+                groupObj.set("brightness", cursor.getInt(cursor.getColumnIndex("brightness")));
+                groupObj.set("CT", cursor.getInt(cursor.getColumnIndex("CT")));
+                try {
+                    groupObj.saveAllFields(true);
+                    ContentValues values = new ContentValues();
+                    values.put("synced", true);
+                    context.getContentResolver()
+                            .update(YanKonProvider.URI_LIGHT_GROUPS, values, "objectID=" + objectId,
+                                    null);
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, Log.getStackTraceString(e));
+                }
+            } while (cursor.moveToNext());
+        }
     }
 
     private static void uploadLights() {
@@ -268,6 +302,59 @@ public class KiiSync {
         }
     }
 
+    private static void downloadGroups() {
+        KiiBucket bucket = getGroupBucket();
+        if (bucket == null) {
+            return;
+        }
+        try {
+            KiiQueryResult<KiiObject> result = bucket.query(null);
+            List<KiiObject> objList = result.getResult();
+            saveRemoteGroupRecords(objList);
+            while (result.hasNext()) {
+                result = result.getNextQueryResult();
+                objList = result.getResult();
+                saveRemoteGroupRecords(objList);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void saveRemoteGroupRecords(List<KiiObject> objects) {
+        for (KiiObject object : objects) {
+            saveRemoteGroupRecord(object);
+        }
+    }
+
+    private static void saveRemoteGroupRecord(KiiObject object) {
+        ContentValues values = new ContentValues();
+        values.put("objectID", object.getString("_id"));
+        values.put("name", object.getString("name"));
+        values.put("state", object.getInt("state"));
+        values.put("color", object.getInt("color"));
+        values.put("brightness", object.getInt("brightness"));
+        values.put("CT", object.getInt("CT"));
+        values.put("synced", true);
+        Cursor cursor = App.getApp().getContentResolver()
+                .query(YanKonProvider.URI_LIGHT_GROUPS, null, "objectID=?",
+                        new String[]{object.getString("_id")}, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) == 1;
+            boolean deleted = cursor.getInt(cursor.getColumnIndex("deleted")) == 1;
+            if (!deleted) {
+                if (synced || Settings.isServerWin()) {
+                    App.getApp().getContentResolver()
+                            .update(YanKonProvider.URI_LIGHT_GROUPS, values, "objectID=?",
+                                    new String[]{object.getString("_id")});
+                }
+            }
+        } else {
+            //the remote record does not exist in local storage, save it
+            App.getApp().getContentResolver().insert(YanKonProvider.URI_LIGHT_GROUPS, values);
+        }
+    }
+
     private static void saveRemoteLightRecords(List<KiiObject> objects) {
         for (KiiObject object : objects) {
             saveRemoteLightRecord(object);
@@ -308,6 +395,14 @@ public class KiiSync {
             return null;
         }
         return kiiUser.bucket("lights");
+    }
+
+    private static KiiBucket getGroupBucket() {
+        KiiUser kiiUser = KiiUser.getCurrentUser();
+        if (kiiUser == null) {
+            return null;
+        }
+        return kiiUser.bucket("groups");
     }
 
     public static boolean isSyncing() {
