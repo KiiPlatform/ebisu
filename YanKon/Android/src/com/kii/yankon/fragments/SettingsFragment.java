@@ -8,7 +8,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import com.kii.yankon.GuideActivity;
+import com.kii.yankon.activities.GuideActivity;
 import com.kii.yankon.R;
 
 /**

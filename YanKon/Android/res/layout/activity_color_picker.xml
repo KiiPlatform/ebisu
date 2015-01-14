@@ -8,7 +8,7 @@
               android:paddingBottom="@dimen/activity_vertical_margin"
               android:orientation="vertical"
               android:gravity="center_horizontal"
-              tools:context="com.kii.yankon.ColorPickerActivity">
+              tools:context="com.kii.yankon.activities.ColorPickerActivity">
 
     <com.larswerkman.holocolorpicker.ColorPicker
             android:id="@+id/picker"

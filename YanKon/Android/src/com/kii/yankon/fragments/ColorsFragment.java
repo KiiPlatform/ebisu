@@ -19,7 +19,7 @@ import android.widget.CursorAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.kii.yankon.ColorPickerActivity2;
+import com.kii.yankon.activities.ColorPickerActivity2;
 import com.kii.yankon.R;
 import com.kii.yankon.providers.YanKonProvider;
 

@@ -21,6 +21,7 @@ import android.widget.Toast;
 
 import com.kii.cloud.storage.KiiUser;
 import com.kii.cloud.storage.callback.LoginCallBack;
+import com.kii.yankon.activities.GuideActivity;
 import com.kii.yankon.fragments.ActionsFragment;
 import com.kii.yankon.fragments.ColorsFragment;
 import com.kii.yankon.fragments.LightGroupsFragment;

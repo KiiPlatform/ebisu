@@ -71,10 +71,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "deleted INTEGER DEFAULT 0"
                         + ");"
         );
-//        db.execSQL("CREATE VIEW IF NOT EXISTS lights_view AS SELECT "
-//                + "lights.*,models.name AS m_name, colors.name AS c_name, colors.value"
-//                + " FROM lights LEFT JOIN models ON lights.model=models.model "
-//                + " LEFT JOIN colors ON lights.color_rel = colors.UUID;");
+
         db.execSQL("CREATE TABLE IF NOT EXISTS light_groups ("
                         + "_id INTEGER PRIMARY KEY, "
                         + "objectID TEXT,"
@@ -124,6 +121,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "light_id INTEGER DEFAULT -1,"
                         + "group_id INTEGER DEFAULT -1,"
                         + "objectID TEXT,"
+                        + "state BOOL DEFAULT 0,"
                         + "color INTEGER,"
                         + "brightness INTEGER,"
                         + "CT INTEGER,"
@@ -164,12 +162,32 @@ public class DBHelper extends SQLiteOpenHelper {
                 + " FOR EACH ROW"
                 + " BEGIN"
                 + " DELETE FROM light_group_rel WHERE light_group_rel.group_id=old._id;"
+                + " DELETE FROM scenes_detail WHERE scenes_detail.group_id=old._id;"
                 + " END;");
         db.execSQL("CREATE TRIGGER IF NOT EXISTS light_delete"
                 + " BEFORE DELETE ON lights"
                 + " FOR EACH ROW"
                 + " BEGIN"
                 + " DELETE FROM light_group_rel WHERE light_group_rel.light_id=old._id;"
+                + " DELETE FROM scenes_detail WHERE scenes_detail.light_id=old._id;"
+                + " END;");
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS light_group_rel_delete"
+                + " BEFORE DELETE ON light_group_rel"
+                + " FOR EACH ROW"
+                + " BEGIN"
+                + " UPDATE light_groups SET synced=false WHERE light_groups._id=old.group_id;"
+                + " END;");
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS scenes_detail_delete"
+                + " BEFORE DELETE ON scenes_detail"
+                + " FOR EACH ROW"
+                + " BEGIN"
+                + " UPDATE scenes SET synced=false WHERE scenes._id=old.scene_id;"
+                + " END;");
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS scenes_detail_update"
+                + " BEFORE UPDATE ON scenes_detail"
+                + " FOR EACH ROW"
+                + " BEGIN"
+                + " UPDATE scenes SET synced=false WHERE scenes._id=old.scene_id;"
                 + " END;");
         ContentValues values = new ContentValues();
         values.put("objectID", UUID.randomUUID().toString());
