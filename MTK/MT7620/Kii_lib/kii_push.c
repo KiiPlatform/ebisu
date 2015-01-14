@@ -36,8 +36,13 @@ static int kiiPush_install(void)
     char *buf;
     char jsonBuf[256];
 
-    buf = g_kii_data.sendBuf;
-    memset(buf, 0, KII_SEND_BUF_SIZE);
+    buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
+    if (buf == NULL)
+    {
+        KII_DEBUG("kii-error: memory allocation failed !\r\n");
+        return -1;
+    }
+    memset(buf, 0, KII_SOCKET_BUF_SIZE);
     strcpy(buf, STR_POST);
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
@@ -77,25 +82,25 @@ static int kiiPush_install(void)
    sprintf(buf+strlen(buf), "%d", strlen(jsonBuf)+1);
    strcpy(buf+strlen(buf), STR_CRLF);
    strcpy(buf+strlen(buf), STR_CRLF);
-    if ((strlen(buf)+strlen(jsonBuf)+1) > KII_SEND_BUF_SIZE)
+    if ((strlen(buf)+strlen(jsonBuf)+1) > KII_SOCKET_BUF_SIZE)
     {
         KII_DEBUG("kii-error: buffer overflow !\r\n");
+	kiiHal_free(buf);
         return -1;
     }
    strcpy(buf+strlen(buf), jsonBuf);
    strcpy(buf+strlen(buf), STR_LF);
    
-    g_kii_data.sendDataLen = strlen(buf);
-
-    if (kiiHal_transfer() != 0)
-    {
-        KII_DEBUG("kii-error: transfer data error !\r\n");
-        return -1;
-    }
-    buf = g_kii_data.rcvdBuf;
+   if (kiiHal_transfer(buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
+   {
+	   KII_DEBUG("kii-error: transfer data error !\r\n");
+	   kiiHal_free(buf);
+	   return -1;
+   }
 
     if ((strstr(buf, "HTTP/1.1 201") == NULL) || (strstr(buf, "{") == NULL) || (strstr(buf, "}") == NULL) )
     {
+	kiiHal_free(buf);
         return -1;    
     }
     p1 = strstr(buf, "\"installationID\"");
@@ -106,6 +111,7 @@ static int kiiPush_install(void)
     memset(g_kii_push.installationID, 0, KII_PUSH_INSTALLATIONID_SIZE+1);
     memcpy(g_kii_push.installationID, p1, p2-p1);
 
+    kiiHal_free(buf);
     return 0;
 }
 
@@ -129,8 +135,13 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
     char * p2;
     char *buf;
 
-    buf = g_kii_data.sendBuf;
-    memset(buf, 0, KII_SEND_BUF_SIZE);
+    buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
+    if (buf == NULL)
+    {
+        KII_DEBUG("kii-error: memory allocation failed !\r\n");
+	return KIIPUSH_ENDPOINT_ERROR;
+    }
+    memset(buf, 0, KII_SOCKET_BUF_SIZE);
     strcpy(buf, STR_GET);
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
@@ -161,14 +172,12 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
    strcpy(buf+strlen(buf), STR_CRLF);
    strcpy(buf+strlen(buf), STR_CRLF);
    
-    g_kii_data.sendDataLen = strlen(buf);
-
-    if (kiiHal_transfer() != 0)
-    {
-        KII_DEBUG("kii-error: transfer data error !\r\n");
-        return KIIPUSH_ENDPOINT_ERROR;
-    }
-    buf = g_kii_data.rcvdBuf;
+   if (kiiHal_transfer(buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
+   {
+	   KII_DEBUG("kii-error: transfer data error !\r\n");
+	   kiiHal_free(buf);
+	   return KIIPUSH_ENDPOINT_ERROR;
+   }
 
     if ((strstr(buf, "HTTP/1.1 200") != NULL) && (strstr(buf, "{") != NULL) && (strstr(buf, "}") != NULL) )
     {
@@ -207,14 +216,17 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
 	 p2 = strstr(p1, "\"");
 	 memset(g_kii_push.mqttTopic, 0, KII_PUSH_MQTTTOPIC_SIZE+1);
 	 memcpy(g_kii_push.mqttTopic, p1, p2-p1);
+	 kiiHal_free(buf);
 	 return KIIPUSH_ENDPOINT_READY;
     }
     else if (strstr(buf, "HTTP/1.1 503") != NULL)
     {
+	kiiHal_free(buf);
 	 return KIIPUSH_ENDPOINT_UNAVAILABLE;
     }
     else
     {
+	kiiHal_free(buf);
 	return KIIPUSH_ENDPOINT_ERROR;
     }
 }
@@ -236,8 +248,13 @@ int kiiPush_subscribeAppBucket(char *bucketID)
 {
     char *buf;
 
-    buf = g_kii_data.sendBuf;
-    memset(buf, 0, KII_SEND_BUF_SIZE);
+    buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
+    if (buf == NULL)
+    {
+        KII_DEBUG("kii-error: memory allocation failed !\r\n");
+        return -1;
+    }
+    memset(buf, 0, KII_SOCKET_BUF_SIZE);
     strcpy(buf, STR_POST);
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
@@ -268,21 +285,21 @@ int kiiPush_subscribeAppBucket(char *bucketID)
    strcpy(buf+strlen(buf), STR_CRLF);
    strcpy(buf+strlen(buf), STR_CRLF);
    
-    g_kii_data.sendDataLen = strlen(buf);
-
-    if (kiiHal_transfer() != 0)
-    {
-        KII_DEBUG("kii-error: transfer data error !\r\n");
-        return -1;
-    }
-    buf = g_kii_data.rcvdBuf;
+   if (kiiHal_transfer(buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
+   {
+	   KII_DEBUG("kii-error: transfer data error !\r\n");
+	   kiiHal_free(buf);
+	   return -1;
+   }
 
     if ((strstr(buf, "HTTP/1.1 204") != NULL)  || (strstr(buf, "HTTP/1.1 409") != NULL))
     {
+	kiiHal_free(buf);
 	 return 0;
     }
     else
     {
+	kiiHal_free(buf);
 	return -1;
     }
 }
@@ -303,8 +320,13 @@ int kiiPush_subscribeThingBucket(char *bucketID)
 {
     char *buf;
 
-    buf = g_kii_data.sendBuf;
-    memset(buf, 0, KII_SEND_BUF_SIZE);
+    buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
+    if (buf == NULL)
+    {
+        KII_DEBUG("kii-error: memory allocation failed !\r\n");
+        return -1;
+    }
+    memset(buf, 0, KII_SOCKET_BUF_SIZE);
     strcpy(buf, STR_POST);
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
@@ -337,21 +359,21 @@ int kiiPush_subscribeThingBucket(char *bucketID)
    strcpy(buf+strlen(buf), STR_CRLF);
    strcpy(buf+strlen(buf), STR_CRLF);
    
-    g_kii_data.sendDataLen = strlen(buf);
-
-    if (kiiHal_transfer() != 0)
-    {
-        KII_DEBUG("kii-error: transfer data error !\r\n");
-        return -1;
-    }
-    buf = g_kii_data.rcvdBuf;
+   if (kiiHal_transfer(buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
+   {
+	   KII_DEBUG("kii-error: transfer data error !\r\n");
+	   kiiHal_free(buf);
+	   return -1;
+   }
 
     if ((strstr(buf, "HTTP/1.1 204") != NULL)  || (strstr(buf, "HTTP/1.1 409") != NULL))
     {
+	kiiHal_free(buf);
 	 return 0;
     }
     else
     {
+	kiiHal_free(buf);
 	return -1;
     }
 }
@@ -372,8 +394,13 @@ int kiiPush_subscribeTopic(char *topicID)
 {
     char *buf;
 
-    buf = g_kii_data.sendBuf;
-    memset(buf, 0, KII_SEND_BUF_SIZE);
+    buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
+    if (buf == NULL)
+    {
+        KII_DEBUG("kii-error: memory allocation failed !\r\n");
+        return -1;
+    }
+    memset(buf, 0, KII_SOCKET_BUF_SIZE);
     strcpy(buf, STR_POST);
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
@@ -406,21 +433,21 @@ int kiiPush_subscribeTopic(char *topicID)
    strcpy(buf+strlen(buf), STR_CRLF);
    strcpy(buf+strlen(buf), STR_CRLF);
    
-    g_kii_data.sendDataLen = strlen(buf);
-
-    if (kiiHal_transfer() != 0)
-    {
-        KII_DEBUG("kii-error: transfer data error !\r\n");
-        return -1;
-    }
-    buf = g_kii_data.rcvdBuf;
+   if (kiiHal_transfer(buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
+   {
+	   KII_DEBUG("kii-error: transfer data error !\r\n");
+	   kiiHal_free(buf);
+	   return -1;
+   }
 
     if ((strstr(buf, "HTTP/1.1 204") != NULL)  || (strstr(buf, "HTTP/1.1 409") != NULL))
     {
+	kiiHal_free(buf);
 	 return 0;
     }
     else
     {
+	kiiHal_free(buf);
 	return -1;
     }
 }
@@ -441,8 +468,13 @@ int kiiPush_createTopic(char *topicID)
 {
     char *buf;
 
-    buf = g_kii_data.sendBuf;
-    memset(buf, 0, KII_SEND_BUF_SIZE);
+    buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
+    if (buf == NULL)
+    {
+        KII_DEBUG("kii-error: memory allocation failed !\r\n");
+        return -1;
+    }
+    memset(buf, 0, KII_SOCKET_BUF_SIZE);
     strcpy(buf, STR_PUT);
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
@@ -474,21 +506,21 @@ int kiiPush_createTopic(char *topicID)
    strcpy(buf+strlen(buf), STR_CRLF);
    strcpy(buf+strlen(buf), STR_CRLF);
    
-    g_kii_data.sendDataLen = strlen(buf);
-
-    if (kiiHal_transfer() != 0)
-    {
-        KII_DEBUG("kii-error: transfer data error !\r\n");
-        return -1;
-    }
-    buf = g_kii_data.rcvdBuf;
+   if (kiiHal_transfer(buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
+   {
+	   KII_DEBUG("kii-error: transfer data error !\r\n");
+	   kiiHal_free(buf);
+	   return -1;
+   }
 
     if ((strstr(buf, "HTTP/1.1 204") != NULL)  || (strstr(buf, "HTTP/1.1 409") != NULL))
     {
+	kiiHal_free(buf);
 	 return 0;
     }
     else
     {
+	kiiHal_free(buf);
 	return -1;
     }
 }
@@ -553,8 +585,8 @@ static void *kiiPush_recvMsgTask(void *sdata)
         }
         else
         {
-            memset(g_kii_push.rcvdBuf, 0, KII_PUSH_RECV_BUF_SIZE);
-            rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE);
+            memset(g_kii_push.rcvdBuf, 0, KII_PUSH_SOCKET_BUF_SIZE);
+            rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf, KII_PUSH_SOCKET_BUF_SIZE);
             if (rcvdCounter > 0)
             {
                 if ((g_kii_push.rcvdBuf[0]&0xf0) == 0x30)
@@ -569,7 +601,7 @@ static void *kiiPush_recvMsgTask(void *sdata)
                         KII_DEBUG("kii-error: mqtt decode error\r\n");
                         continue;
                     }
-                    if (totalLlen > KII_PUSH_RECV_BUF_SIZE)
+                    if (totalLlen > KII_PUSH_SOCKET_BUF_SIZE)
                     {
                         KII_DEBUG("kii-error: mqtt buffer overflow\r\n");
                         continue;
@@ -579,7 +611,7 @@ static void *kiiPush_recvMsgTask(void *sdata)
                     bytes = rcvdCounter;
                     while ( bytes < totalLlen) 
                     {
-                        rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf+bytes, KII_PUSH_RECV_BUF_SIZE - bytes);
+                        rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf+bytes, KII_PUSH_SOCKET_BUF_SIZE - bytes);
                         if (rcvdCounter > 0)
                         {
                             bytes += rcvdCounter;

@@ -32,7 +32,7 @@ static int light_control(light_struct light)
 
 /*****************************************************************************
 *
-*  kiiHal_dns
+*  light_status
 *
 *  \param  *light - light struct poiter
 *

@@ -10,9 +10,11 @@ int kiiHal_socketClose(int *socket_num);
 int kiiHal_connect(int socket_num, char *sa_data, int port);
 int kiiHal_socketSend(int socket_num, char * buf, int len);
 int kiiHal_socketRecv(int socket_num, char * buf, int len);
-int kiiHal_transfer(void);
+int kiiHal_transfer(char *buf, int bufLen, int sendLen);
 void kiiHal_delayMs(unsigned int ms);
 int kiiHal_taskCreate(const char* name, KiiHal_taskEntry pEntry, void* param, unsigned char *stk_start, unsigned int stk_size, unsigned int prio);
+void *kiiHal_malloc(unsigned long size);
+void kiiHal_free(void *p);
 
 #endif
 

@@ -39,15 +39,12 @@
 #define KII_MQTT_DEFAULT_PORT 1883
 
 typedef struct {
-	char vendorDeviceID[KII_DEVICE_VENDOR_ID+1];
-	char password[KII_PASSWORD_SIZE+1];
+    char vendorDeviceID[KII_DEVICE_VENDOR_ID+1];
+    char password[KII_PASSWORD_SIZE+1];
     char accessToken[KII_ACCESS_TOKEN_SIZE+1];
     char host[KII_HOST_SIZE+1];
     char appID[KII_APPID_SIZE+1];
     char appKey[KII_APPKEY_SIZE+1];
-    char rcvdBuf[KII_SEND_BUF_SIZE];
-    char sendBuf[KII_SEND_BUF_SIZE];
-    int sendDataLen;
 } kii_data_struct;
 
 

@@ -28,8 +28,13 @@ int kiiDev_getToken(char *vendorDeviceID, char *password)
     char *buf;
     char jsonBuf[256];
 
-    buf = g_kii_data.sendBuf;
-    memset(buf, 0, KII_SEND_BUF_SIZE);
+    buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
+    if (buf == NULL)
+    {
+        KII_DEBUG("kii-error: memory allocation failed !\r\n");
+        return -1;
+    }
+    memset(buf, 0, KII_SOCKET_BUF_SIZE);
     strcpy(buf, STR_POST);
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
@@ -68,25 +73,25 @@ int kiiDev_getToken(char *vendorDeviceID, char *password)
    sprintf(buf+strlen(buf), "%d", strlen(jsonBuf)+1);
    strcpy(buf+strlen(buf), STR_CRLF);
    strcpy(buf+strlen(buf), STR_CRLF);
-    if ((strlen(buf)+strlen(jsonBuf)+1) > KII_SEND_BUF_SIZE)
+    if ((strlen(buf)+strlen(jsonBuf)+1) > KII_SOCKET_BUF_SIZE)
     {
         KII_DEBUG("kii-error: buffer overflow !\r\n");
+	kiiHal_free(buf);
         return -1;
     }
    strcpy(buf+strlen(buf), jsonBuf);
    strcpy(buf+strlen(buf), STR_LF);
    
-    g_kii_data.sendDataLen = strlen(buf);
-
-    if (kiiHal_transfer() != 0)
+    if (kiiHal_transfer(buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
     {
         KII_DEBUG("kii-error: transfer data error !\r\n");
+	kiiHal_free(buf);
         return -1;
     }
-    buf = g_kii_data.rcvdBuf;
 
     if ((strstr(buf, "HTTP/1.1 200") == NULL) || (strstr(buf, "{") == NULL) || (strstr(buf, "}") == NULL) )
     {
+	kiiHal_free(buf);
         return -1;    
     }
 
@@ -101,6 +106,7 @@ int kiiDev_getToken(char *vendorDeviceID, char *password)
 
     memset(g_kii_data.vendorDeviceID, 0, KII_DEVICE_VENDOR_ID+1);
     strcpy(g_kii_data.vendorDeviceID, vendorDeviceID);
+    kiiHal_free(buf);
     return 0;
 }
 
@@ -125,8 +131,13 @@ int kiiDev_register(char *vendorDeviceID, char *deviceType, char *password)
     char *buf;
     char jsonBuf[256];
 
-    buf = g_kii_data.sendBuf;
-    memset(buf, 0, KII_SEND_BUF_SIZE);
+    buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
+    if (buf == NULL)
+    {
+        KII_DEBUG("kii-error: memory allocation failed !\r\n");
+        return -1;
+    }
+    memset(buf, 0, KII_SOCKET_BUF_SIZE);
     strcpy(buf, STR_POST);
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
@@ -167,25 +178,25 @@ int kiiDev_register(char *vendorDeviceID, char *deviceType, char *password)
    sprintf(buf+strlen(buf), "%d", strlen(jsonBuf)+1);
    strcpy(buf+strlen(buf), STR_CRLF);
    strcpy(buf+strlen(buf), STR_CRLF);
-    if ((strlen(buf)+strlen(jsonBuf)+1) > KII_SEND_BUF_SIZE)
+    if ((strlen(buf)+strlen(jsonBuf)+1) > KII_SOCKET_BUF_SIZE)
     {
         KII_DEBUG("kii-error: buffer overflow !\r\n");
+        kiiHal_free(buf);
         return -1;
     }
    strcpy(buf+strlen(buf), jsonBuf);
    strcpy(buf+strlen(buf), STR_LF);
    
-    g_kii_data.sendDataLen = strlen(buf);
-
-    if (kiiHal_transfer() != 0)
+    if (kiiHal_transfer(buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
     {
         KII_DEBUG("kii-error: transfer data error !\r\n");
+        kiiHal_free(buf);
         return -1;
     }
-    buf = g_kii_data.rcvdBuf;
 
     if ((strstr(buf, "HTTP/1.1 201") == NULL) || (strstr(buf, "{") == NULL) || (strstr(buf, "}") == NULL) )
     {
+        kiiHal_free(buf);
         return -1;    
     }
 
@@ -200,6 +211,7 @@ int kiiDev_register(char *vendorDeviceID, char *deviceType, char *password)
     memset(g_kii_data.vendorDeviceID, 0, KII_DEVICE_VENDOR_ID+1);
     strcpy(g_kii_data.vendorDeviceID, vendorDeviceID);
 
+    kiiHal_free(buf);
     return 0;
 }
 
