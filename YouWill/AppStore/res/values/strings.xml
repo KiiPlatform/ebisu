@@ -32,7 +32,7 @@
     <string name="resume_button">恢复下载</string>
     <string name="pause_button">暂停下载</string>
     <string name="no_purchased_apps">您还没有购买下载任何程序</string>
-    <string name="purchased_not_login">您还没有登录</string>
+    <string name="purchased_not_login">请您登录优悦账号，查看已购买的应用</string>
     <string name="login_pattern">登录</string>
     <string name="no_upgrade">所有程序已是最新</string>
     <string name="title_activity_app_detail">AppDetailActivity</string>
