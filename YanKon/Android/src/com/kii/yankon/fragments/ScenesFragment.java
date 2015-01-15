@@ -17,7 +17,7 @@ import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
 
-import com.kii.yankon.AddScenesActivity;
+import com.kii.yankon.activities.AddScenesActivity;
 import com.kii.yankon.R;
 import com.kii.yankon.providers.YanKonProvider;
 

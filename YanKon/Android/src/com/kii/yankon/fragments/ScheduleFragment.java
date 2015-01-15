@@ -18,7 +18,7 @@ import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
 
-import com.kii.yankon.AddScheduleActivity;
+import com.kii.yankon.activities.AddScheduleActivity;
 import com.kii.yankon.R;
 import com.kii.yankon.providers.YanKonProvider;
 

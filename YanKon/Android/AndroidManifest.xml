@@ -37,17 +37,17 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".GuideActivity"
+            android:name=".activities.GuideActivity"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
         <activity
-            android:name=".AddLightsActivity"
+            android:name=".activities.AddLightsActivity"
             android:parentActivityName=".MainActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.kii.yankon.MainActivity" />
         </activity>
         <activity
-            android:name=".ColorPickerActivity"
+            android:name=".activities.ColorPickerActivity"
             android:label="@string/title_activity_color_picker"
             android:parentActivityName=".MainActivity" >
             <meta-data
@@ -55,7 +55,7 @@
                 android:value="com.kii.yankon.MainActivity" />
         </activity>
         <activity
-            android:name=".ColorPickerActivity2"
+            android:name=".activities.ColorPickerActivity2"
             android:label="@string/title_activity_color_picker"
             android:parentActivityName=".MainActivity" >
             <meta-data
@@ -69,10 +69,10 @@
             android:enabled="true"
             android:exported="false" />
 
-        <activity android:name=".AddLightGroupsActivity" />
-        <activity android:name=".AddScenesActivity" />
+        <activity android:name=".activities.AddLightGroupsActivity" />
+        <activity android:name=".activities.AddScenesActivity" />
         <activity
-            android:name=".LightInfoActivity"
+            android:name=".activities.LightInfoActivity"
             android:label="@string/title_activity_light_info"
             android:parentActivityName=".MainActivity" >
             <meta-data
@@ -89,7 +89,7 @@
             android:exported="false" />
 
         <activity
-            android:name=".AddScheduleActivity"
+            android:name=".activities.AddScheduleActivity"
             android:label="@string/title_activity_add_schedule"
             android:parentActivityName=".MainActivity" >
             <meta-data
@@ -97,7 +97,7 @@
                 android:value="com.kii.yankon.MainActivity" />
         </activity>
         <activity
-            android:name=".PickTargetActivity"
+            android:name=".activities.PickTargetActivity"
             android:label="@string/title_activity_pick_target" >
         </activity>
     </application>

@@ -1,4 +1,4 @@
-package com.kii.yankon;
+package com.kii.yankon.activities;
 
 import android.app.Activity;
 import android.content.ContentResolver;
@@ -15,6 +15,7 @@ import android.widget.EditText;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import com.kii.yankon.R;
 import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.utils.Constants;
 

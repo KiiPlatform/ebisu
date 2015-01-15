@@ -1,4 +1,4 @@
-package com.kii.yankon;
+package com.kii.yankon.activities;
 
 import android.app.Activity;
 import android.content.ContentValues;
@@ -17,6 +17,7 @@ import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.Switch;
 
+import com.kii.yankon.R;
 import com.kii.yankon.model.Action;
 import com.kii.yankon.model.YanKonColor;
 import com.kii.yankon.providers.YanKonProvider;

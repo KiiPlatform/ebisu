@@ -88,6 +88,7 @@ int KiiMQTT_connect(unsigned short keepAliveInterval)
     char buf[256];
     int i;
     int j;
+    int k;
 
     if (kiiHal_dns(g_kii_push.host, ipBuf) < 0)
     {
@@ -103,7 +104,7 @@ int KiiMQTT_connect(unsigned short keepAliveInterval)
     }
 
     memset(buf, 0, sizeof(buf));
-    i = 0;
+    i = 8;  //reserver 8 bytes for header
     //Variable header:Protocol Name bytes
     buf[i++] = 0x00;
     buf[i++] = 0x06;
@@ -141,35 +142,37 @@ int KiiMQTT_connect(unsigned short keepAliveInterval)
     i +=strlen(g_kii_push.password);
 
     j = 0;
-    memset(g_kii_push.sendBuf, 0, KII_PUSH_SEND_BUF_SIZE);
     //Fixed header:byte1
-    g_kii_push.sendBuf[j++] = 0x10;  
+    buf[j++] = 0x10;  
     //Fixed header:Remaining Length
-    j +=KiiMQTT_encode(&g_kii_push.sendBuf[j], i);
+    j +=KiiMQTT_encode(&buf[j], i-8);
 
     //copy the other tytes
-    memcpy(&g_kii_push.sendBuf[j], buf, i);
-    j +=i;
+    for (k=0; k<i-8; k++)
+    {
+        buf[j++] = buf[8+k];
+    }
+/*
+    KII_DEBUG("\r\n----------------MQTT connect send start-------------\r\n");    
+    KII_DEBUG("j=%d\r\n", j);       
+    KII_DEBUG("\r\n");
+    for (i=0; i<j; i++)
+    {
+        KII_DEBUG("%02x", buf[i]);
+    }
+    KII_DEBUG("\r\n");
 
-   // KII_DEBUG("\r\n----------------MQTT connect send start-------------\r\n");    
-    //KII_DEBUG("\r\n");
-    //for (i=0; i<j; i++)
-    //{
-    //    KII_DEBUG("%02x", g_kii_push.sendBuf[i]);
-    //}
-    //KII_DEBUG("\r\n");
-
-    //KII_DEBUG("\r\n----------------MQTT connect send end-------------\r\n");    
-
-    if (kiiHal_socketSend(g_kii_push.mqttSocket, g_kii_push.sendBuf, j) < 0)
+    KII_DEBUG("\r\n----------------MQTT connect send end-------------\r\n");    
+*/
+    if (kiiHal_socketSend(g_kii_push.mqttSocket, buf, j) < 0)
     {
         
         KII_DEBUG("kii-error: send data fail\r\n");
         return -1;
     }
 
-    memset(g_kii_push.rcvdBuf, 0, KII_PUSH_RECV_BUF_SIZE);
-    rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE);
+    memset(buf, 0, sizeof(buf));
+    rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, buf, sizeof(buf));
     if (rcvdCounter <= 0)
     {
         KII_DEBUG("kii-error: recv data fail\r\n");
@@ -177,21 +180,22 @@ int KiiMQTT_connect(unsigned short keepAliveInterval)
     }
     else
     {
-    	//KII_DEBUG("\r\n----------------MQTT connect recv start-------------\r\n");    
-	//KII_DEBUG("\r\n");
-    	//for (i=0; i<rcvdCounter; i++)
-    	//{
-        //	KII_DEBUG("%02x", g_kii_push.rcvdBuf[i]);
-    	//}
-	//KII_DEBUG("\r\n");
+/*
+    	KII_DEBUG("\r\n----------------MQTT connect recv start-------------\r\n");    
+	KII_DEBUG("\r\n");
+    	for (i=0; i<rcvdCounter; i++)
+    	{
+        	KII_DEBUG("%02x", buf[i]);
+    	}
+	KII_DEBUG("\r\n");
 
-    	//KII_DEBUG("\r\n----------------MQTT_connect recv end-------------\r\n");    
-
+    	KII_DEBUG("\r\n----------------MQTT_connect recv end-------------\r\n");    
+*/
 	if ((rcvdCounter == 4) 
-        && (g_kii_push.rcvdBuf[0] == 0x20) 
-        && (g_kii_push.rcvdBuf[1] == 0x02) 
-        && (g_kii_push.rcvdBuf[2] == 0x00)
-        && (g_kii_push.rcvdBuf[3] == 0x00))
+        && (buf[0] == 0x20) 
+        && (buf[1] == 0x02) 
+        && (buf[2] == 0x00)
+        && (buf[3] == 0x00))
 	{
             return 0;
 	}
@@ -221,9 +225,10 @@ int KiiMQTT_subscribe(enum QoS qos)
     int rcvdCounter;
     int i;
     int j;
+    int k;
 
     memset(buf, 0, sizeof(buf));
-    i = 0;
+    i = 8;
 
     //Variable header:Packet Identifier
     buf[i++] = 0x00;
@@ -238,35 +243,36 @@ int KiiMQTT_subscribe(enum QoS qos)
     buf[i++] = qos;
 
     j = 0;
-    memset(g_kii_push.sendBuf, 0, KII_PUSH_SEND_BUF_SIZE);
     //Fixed header: byte1
-    g_kii_push.sendBuf[j++] = 0x82;  
+    buf[j++] = 0x82;  
     //Fixed header:Remaining Length
-    j +=KiiMQTT_encode(&g_kii_push.sendBuf[j], i);
+    j +=KiiMQTT_encode(&buf[j], i-8);
 
     //copy the other tytes
-    memcpy(&g_kii_push.sendBuf[j], buf, i);
-    j +=i;
+    for (k=0; k<i-8; k++)
+    {
+        buf[j++] = buf[8+k];
+    }
+/*
+    KII_DEBUG("\r\n----------------MQTT subscribe send start-------------\r\n");    
+    KII_DEBUG("\r\n");
+    for (i=0; i<j; i++)
+    {
+        KII_DEBUG("%02x", buf[i]);
+    }
+    KII_DEBUG("\r\n");
 
-    //KII_DEBUG("\r\n----------------MQTT subscribe send start-------------\r\n");    
-    //KII_DEBUG("\r\n");
-    //for (i=0; i<j; i++)
-    //{
-    //    KII_DEBUG("%02x", g_kii_push.sendBuf[i]);
-    //}
-    //KII_DEBUG("\r\n");
-
-    //KII_DEBUG("\r\n----------------MQTT subscribe send end-------------\r\n");    
-
-    if (kiiHal_socketSend(g_kii_push.mqttSocket, g_kii_push.sendBuf, j) < 0)
+    KII_DEBUG("\r\n----------------MQTT subscribe send end-------------\r\n");    
+*/
+    if (kiiHal_socketSend(g_kii_push.mqttSocket, buf, j) < 0)
     {
         
         KII_DEBUG("kii-error: send data fail\r\n");
         return -1;
     }
 
-    memset(g_kii_push.rcvdBuf, 0, KII_PUSH_RECV_BUF_SIZE);
-    rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf, KII_PUSH_RECV_BUF_SIZE);
+    memset(buf, 0, sizeof(buf));
+    rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, buf, sizeof(buf));
     if (rcvdCounter <= 0)
     {
         KII_DEBUG("kii-error: recv data fail\r\n");
@@ -274,21 +280,22 @@ int KiiMQTT_subscribe(enum QoS qos)
     }
     else
     {
-    //KII_DEBUG("\r\n----------------MQTT subscribe recv start-------------\r\n");    
-//	KII_DEBUG("\r\n");
-    //for (i=0; i<rcvdCounter; i++)
-    //{
-     //   KII_DEBUG("%02x", g_kii_push.rcvdBuf[i]);
-    //}
-//	KII_DEBUG("\r\n");
+/*
+        KII_DEBUG("\r\n----------------MQTT subscribe recv start-------------\r\n");    
+        KII_DEBUG("\r\n");
+        for (i=0; i<rcvdCounter; i++)
+        {
+            KII_DEBUG("%02x", buf[i]);
+        }
+	  KII_DEBUG("\r\n");
 
-    //KII_DEBUG("\r\n----------------MQTT subscribe recv end-------------\r\n");    
-
+        KII_DEBUG("\r\n----------------MQTT subscribe recv end-------------\r\n");    
+*/
 	if ((rcvdCounter == 5)
-         && ((unsigned char)g_kii_push.rcvdBuf[0] == 0x90)
-         && (g_kii_push.rcvdBuf[1] == 0x03)
-         && (g_kii_push.rcvdBuf[2] == 0x00)
-         && (g_kii_push.rcvdBuf[3] == 0x01))
+         && ((unsigned char)buf[0] == 0x90)
+         && (buf[1] == 0x03)
+         && (buf[2] == 0x00)
+         && (buf[3] == 0x01))
 	{
             return 0;
 	}
@@ -314,11 +321,12 @@ int KiiMQTT_subscribe(enum QoS qos)
 *****************************************************************************/
 int KiiMQTT_pingReq(void)
 {
-//	  int i;
-    memset(g_kii_push.sendBuf, 0, KII_PUSH_SEND_BUF_SIZE);
-    g_kii_push.sendBuf[0] = 0xc0;
-    g_kii_push.sendBuf[1] = 0x00;
-    if (kiiHal_socketSend(g_kii_push.mqttSocket, g_kii_push.sendBuf, 2) < 0)
+    char buf[2];
+
+    memset(buf, 0, sizeof(buf));
+    buf[0] = 0xc0;
+    buf[1] = 0x00;
+    if (kiiHal_socketSend(g_kii_push.mqttSocket, buf, sizeof(buf)) < 0)
     {
         
         KII_DEBUG("kii-error: send data fail\r\n");

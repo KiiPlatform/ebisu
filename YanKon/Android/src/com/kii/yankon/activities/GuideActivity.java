@@ -1,4 +1,4 @@
-package com.kii.yankon;
+package com.kii.yankon.activities;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -10,6 +10,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+
+import com.kii.yankon.MainActivity;
+import com.kii.yankon.R;
 
 /**
  * Created by Evan on 14/11/23.

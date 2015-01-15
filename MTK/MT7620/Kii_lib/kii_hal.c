@@ -184,14 +184,16 @@ int kiiHal_socketRecv(int socketNum, char * buf, int len)
 *
 *  kiiHal_transfer
 *
-*  \param  none
+*  \param   buf - data buffer;
+*               bufLen - size of buffer in bytes;
+*               sendLen - the length of data to be sent;
 *
 *  \return  0:success; -1: failure
 *
 *  \brief  Sends and receives data from the internet
 *
 *****************************************************************************/
-int kiiHal_transfer(void)
+int kiiHal_transfer(char *buf, int bufLen, int sendLen)
 {
     int socketNum;
     unsigned char ipBuf[4];
@@ -223,7 +225,7 @@ int kiiHal_transfer(void)
         return -1;
     }
 	
-    len = kiiHal_socketSend(socketNum, g_kii_data.sendBuf, g_kii_data.sendDataLen);
+    len = kiiHal_socketSend(socketNum, buf, sendLen);
     if (len < 0)
     {
         
@@ -233,10 +235,10 @@ int kiiHal_transfer(void)
     }
 	
     bytes = 0;
-    memset(g_kii_data.rcvdBuf, 0, KII_RECV_BUF_SIZE);
-    while(bytes < KII_RECV_BUF_SIZE )
+    memset(buf, 0, bufLen);
+    while(bytes < bufLen )
     {
-        len = kiiHal_socketRecv(socketNum, g_kii_data.rcvdBuf+bytes, KII_RECV_BUF_SIZE-bytes);
+        len = kiiHal_socketRecv(socketNum, buf+bytes, bufLen-bytes);
         if (len  < 0)
         {
             KII_DEBUG("kii-error: recv data fail\r\n");
@@ -246,10 +248,10 @@ int kiiHal_transfer(void)
 	else
 	{
 	     bytes +=len;
-	    p1 = strstr(g_kii_data.rcvdBuf, STR_CRLFCRLF);
+	    p1 = strstr(buf, STR_CRLFCRLF);
 	    if (p1  != NULL)
             {
-                 p2 = strstr(g_kii_data.rcvdBuf, STR_CONTENT_LENGTH); 
+                 p2 = strstr(buf, STR_CONTENT_LENGTH); 
 	         if ( p2  != NULL)
 	         {
 	              p2 +=strlen(STR_CONTENT_LENGTH);
@@ -257,7 +259,7 @@ int kiiHal_transfer(void)
 		     if (contentLengh > 0)
 		     {
 		         p1 +=strlen(STR_CRLFCRLF);
-			if (bytes >= (contentLengh + (p1-g_kii_data.rcvdBuf)))
+			if (bytes >= (contentLengh + (p1-buf)))
 			{
   			    kiiHal_socketClose(&socketNum);
                             return 0;
@@ -333,5 +335,39 @@ int kiiHal_taskCreate(const char* name, KiiHal_taskEntry pEntry, void* param, un
     {
         return -1;
     }
+}
+
+
+/*****************************************************************************
+*
+*  kiiHal_malloc
+*
+*  \param  size - the size of memory to be allocated
+*
+*  \return  the address of memory
+*
+*  \brief  Allocates memory
+*
+*****************************************************************************/
+void *kiiHal_malloc(unsigned long size)
+{
+    return malloc(size);
+}
+
+
+/*****************************************************************************
+*
+*  kiiHal_free
+*
+*  \param  p - the address of memory
+*
+*  \return  none
+*
+*  \brief  Frees memory
+*
+*****************************************************************************/
+void kiiHal_free(void *p)
+{
+    free(p);
 }
 

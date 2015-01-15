@@ -1,5 +1,6 @@
-package com.kii.yankon;
+package com.kii.yankon.activities;
 
+import com.kii.yankon.R;
 import com.larswerkman.holocolorpicker.ColorPicker;
 
 import android.app.Activity;

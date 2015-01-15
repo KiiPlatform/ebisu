@@ -1,5 +1,6 @@
-package com.kii.yankon;
+package com.kii.yankon.activities;
 
+import com.kii.yankon.R;
 import com.kii.yankon.widget.ColorCircle;
 import com.kii.yankon.widget.ColorSlider;
 import com.kii.yankon.widget.OnColorChangedListener;

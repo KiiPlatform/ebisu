@@ -1,8 +1,8 @@
 package com.kii.yankon.fragments;
 
-import com.kii.yankon.AddLightsActivity;
+import com.kii.yankon.activities.AddLightsActivity;
 import com.kii.yankon.App;
-import com.kii.yankon.LightInfoActivity;
+import com.kii.yankon.activities.LightInfoActivity;
 import com.kii.yankon.R;
 import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.utils.Utils;

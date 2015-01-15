@@ -1,8 +1,9 @@
-package com.kii.yankon;
+package com.kii.yankon.activities;
 
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -17,11 +18,15 @@ import android.widget.ExpandableListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.kii.yankon.R;
 import com.kii.yankon.model.Light;
 import com.kii.yankon.model.LightGroup;
+import com.kii.yankon.model.StatusInfo;
 import com.kii.yankon.providers.YanKonProvider;
+import com.kii.yankon.utils.Constants;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -31,12 +36,15 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
 
     public static final String EXTRA_SCENE_ID = "scene_id";
     public static final String EXTRA_SCENE_NAME = "scene_name";
+    static final int REQUEST_SETTINGS = 0x1000;
 
     EditText mSceneNameEdit;
     ExpandableListView mList;
     int scene_id;
-    HashSet<String> orgSelectedSet = new HashSet<String>();
-    HashSet<String> selectedSet = new HashSet<String>();
+    HashSet<String> orgSelectedSet = new HashSet<>();
+    HashSet<String> selectedSet = new HashSet<>();
+    HashMap<String, StatusInfo> infoMap = new HashMap<>();
+    StatusInfo currStatusInfo;
     SceneAdapter mAdapter;
 
     SparseArray<Light> mLightIdMap = new SparseArray<>();
@@ -77,7 +85,7 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
     }
 
     void loadContents() {
-        Cursor c = getContentResolver().query(YanKonProvider.URI_LIGHTS, null, null, null, null);
+        Cursor c = getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "deleted=0", null, null);
         while (c.moveToNext()) {
             Light l = new Light();
             l.name = c.getString(c.getColumnIndex("name"));
@@ -86,7 +94,7 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
             mLightIdMap.append(l.id, l);
         }
         c.close();
-        c = getContentResolver().query(YanKonProvider.URI_LIGHT_GROUPS, null, null, null, null);
+        c = getContentResolver().query(YanKonProvider.URI_LIGHT_GROUPS, null, "deleted=0", null, null);
         while (c.moveToNext()) {
             LightGroup group = new LightGroup();
             group.name = c.getString(c.getColumnIndex("name"));
@@ -97,15 +105,22 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
         }
         c.close();
         if (scene_id >= 0) {
-            c = getContentResolver().query(YanKonProvider.URI_SCENES_DETAIL, null, "scene_id=" + scene_id, null, "light_id desc");
+            c = getContentResolver().query(YanKonProvider.URI_SCENES_DETAIL, null, "scene_id=" + scene_id, null, null);
             while (c.moveToNext()) {
+                StatusInfo info = new StatusInfo();
+                info.brightness = c.getInt(c.getColumnIndex("brightness"));
+                info.color = c.getInt(c.getColumnIndex("color"));
+                info.state = c.getInt(c.getColumnIndex("state")) != 0;
+                info.CT = c.getInt(c.getColumnIndex("CT"));
                 int light_id = c.getInt(c.getColumnIndex("light_id"));
                 if (light_id >= 0) {
-                    orgSelectedSet.add("l" + light_id);
+                    info.id = "l" + light_id;
                 } else {
                     int group_id = c.getInt(c.getColumnIndex("group_id"));
-                    orgSelectedSet.add("g" + group_id);
+                    info.id = "g" + group_id;
                 }
+                infoMap.put(info.id, info);
+                orgSelectedSet.add(info.id);
             }
             c.close();
             selectedSet.addAll(orgSelectedSet);
@@ -126,6 +141,12 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
                 if (selectedSet.contains(key)) {
                     selectedSet.remove(key);
                 } else {
+                    StatusInfo info = infoMap.get(key);
+                    if (info == null) {
+                        info = new StatusInfo();
+                        info.id = key;
+                        infoMap.put(info.id, info);
+                    }
                     selectedSet.add(key);
                 }
                 mList.invalidateViews();
@@ -156,6 +177,7 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
             if (orgSelectedSet.contains(data)) {
                 orgSelectedSet.remove(data);
                 selectedSet.remove(data);
+                loadInfoToContentValues(data, false);
             }
         }
         for (String data : orgSelectedSet) {
@@ -173,26 +195,86 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
         for (String data : selectedSet) {
             if (data.length() <= 1)
                 continue;
-            ;
-            String num = data.substring(1);
-            int id = Integer.parseInt(num);
-            values = new ContentValues();
-            values.put("scene_id", scene_id);
-            if (data.charAt(0) == 'l') {
-                values.put("light_id", id);
-                values.put("group_id", -1);
-            } else {
-                values.put("light_id", -1);
-                values.put("group_id", id);
-            }
-            cr.insert(YanKonProvider.URI_SCENES_DETAIL, values);
+            loadInfoToContentValues(data, true);
         }
         finish();
     }
 
+    void loadInfoToContentValues(String key, boolean create) {
+        String num = key.substring(1);
+        int id = Integer.parseInt(num);
+        ContentValues values = new ContentValues();
+        int light_id = -1, group_id = -1;
+
+        if (key.charAt(0) == 'l') {
+            light_id = id;
+        } else {
+            group_id = id;
+        }
+
+
+        StatusInfo info = infoMap.get(key);
+        if (info == null) {
+            info = new StatusInfo();
+            info.id = key;
+            infoMap.put(info.id, info);
+        }
+        values.put("state", info.state);
+        values.put("color", info.color);
+        values.put("brightness", info.brightness);
+        values.put("CT", info.CT);
+
+        if (create) {
+            values.put("scene_id", scene_id);
+            values.put("light_id", light_id);
+            values.put("group_id", group_id);
+            getContentResolver().insert(YanKonProvider.URI_SCENES_DETAIL, values);
+        } else {
+            getContentResolver().update(YanKonProvider.URI_SCENES_DETAIL, values, "scene_id=(?) AND light_id=(?) AND group_id=(?)",
+                    new String[]{String.valueOf(scene_id), String.valueOf(light_id), String.valueOf(group_id)});
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK) {
+            if (requestCode == REQUEST_SETTINGS && currStatusInfo != null) {
+                currStatusInfo.state = data.getBooleanExtra("state", true);
+                currStatusInfo.color = data.getIntExtra("color", Constants.DEFAULT_COLOR);
+                currStatusInfo.brightness = data.getIntExtra("brightness", Constants.DEFAULT_BRIGHTNESS);
+                currStatusInfo.CT = data.getIntExtra("CT", Constants.DEFAULT_CT);
+            }
+        }
+    }
+
     @Override
     public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
-        return false;
+        String key;
+        if (groupPosition == 0) {
+            Light l = mLightIdMap.valueAt(childPosition);
+            key = "l" + l.id;
+        } else {
+            LightGroup g = mGroupIdMap.valueAt(childPosition);
+            key = "g" + g.id;
+        }
+        if (selectedSet.contains(key)) {
+            StatusInfo info = infoMap.get(key);
+            if (info == null) {
+                info = new StatusInfo();
+                info.id = key;
+                infoMap.put(info.id, info);
+            }
+            currStatusInfo = info;
+            Intent intent = new Intent(this, LightInfoActivity.class);
+            intent.putExtra("state", info.state);
+            intent.putExtra("color", info.color);
+            intent.putExtra("brightness", info.brightness);
+            intent.putExtra("CT", info.CT);
+            startActivityForResult(intent, REQUEST_SETTINGS);
+        } else {
+            Toast.makeText(this, "Check the item first before set the status", Toast.LENGTH_SHORT).show();
+        }
+        return true;
     }
 
     class SceneAdapter extends BaseExpandableListAdapter {
@@ -278,13 +360,15 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
             CheckBox cb = (CheckBox) view.findViewById(R.id.light_checkbox);
             cb.setOnClickListener(AddScenesActivity.this);
             cb.setChecked(selectedSet.contains(key));
+            cb.setFocusable(false);
+            cb.setFocusableInTouchMode(false);
             cb.setTag(key);
             return view;
         }
 
         @Override
         public boolean isChildSelectable(int groupPosition, int childPosition) {
-            return false;
+            return true;
         }
     }
 }

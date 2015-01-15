@@ -1,7 +1,9 @@
-package com.kii.yankon;
+package com.kii.yankon.activities;
 
 import android.app.Activity;
 import android.os.Bundle;
+
+import com.kii.yankon.R;
 
 
 public class PickTargetActivity extends Activity {

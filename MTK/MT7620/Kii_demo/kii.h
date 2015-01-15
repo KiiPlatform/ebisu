@@ -33,8 +33,7 @@
 #define KII_UPLOAD_ID_SIZE 46
 #define KII_BUCKET_NAME_SIZE 64
 
-#define KII_SEND_BUF_SIZE 2048
-#define KII_RECV_BUF_SIZE 2048
+#define KII_SOCKET_BUF_SIZE 2048
 
 
 typedef void (* kiiPush_recvMsgCallback)(char* jsonBuf, int rcvdCounter);

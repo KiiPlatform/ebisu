@@ -1,4 +1,4 @@
-package com.kii.yankon;
+package com.kii.yankon.activities;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -21,6 +21,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.kii.yankon.R;
 import com.kii.yankon.fragments.InputDialogFragment;
 import com.kii.yankon.model.Light;
 import com.kii.yankon.providers.YanKonProvider;
