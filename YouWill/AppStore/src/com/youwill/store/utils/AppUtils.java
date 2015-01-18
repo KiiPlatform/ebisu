@@ -16,10 +16,15 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -80,11 +85,13 @@ public class AppUtils {
     }
 
     public static void installApp(Context context, Uri fileUri) {
-        Intent installIntent = new Intent(Intent.ACTION_VIEW)
-                .setDataAndType(fileUri,
-                        "application/vnd.android.package-archive");
-        installIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(installIntent);
+//        Intent installIntent = new Intent(Intent.ACTION_VIEW)
+//                .setDataAndType(fileUri,
+//                        "application/vnd.android.package-archive");
+//        installIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//        context.startActivity(installIntent);
+        LogUtils.d("installApp, uri is " + fileUri + ", filePath is " + fileUri.getPath());
+        silentInstall(fileUri.getPath());
     }
 
     public static void bindButton(Context context, JSONObject appInfo, Button button) {
@@ -181,5 +188,69 @@ public class AppUtils {
         if (info != null) {
             progressBar.setProgress(info.percentage);
         }
+    }
+
+    public static int silentInstall(String filePath) {
+        LogUtils.d("silentInstall, filePath is " + filePath);
+        File file;
+        if (filePath == null || filePath.length() == 0 || (file = new File(filePath)) == null
+                || file.length() <= 0
+                || !file.exists() || !file.isFile()) {
+            return 1;
+        }
+
+        String[] args = {"pm", "install", "-r", filePath};
+        ProcessBuilder processBuilder = new ProcessBuilder(args);
+
+        Process process = null;
+        BufferedReader successResult = null;
+        BufferedReader errorResult = null;
+        StringBuilder successMsg = new StringBuilder();
+        StringBuilder errorMsg = new StringBuilder();
+        int result;
+        try {
+            process = processBuilder.start();
+            successResult = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            errorResult = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            String s;
+
+            while ((s = successResult.readLine()) != null) {
+                successMsg.append(s);
+            }
+
+            while ((s = errorResult.readLine()) != null) {
+                errorMsg.append(s);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (successResult != null) {
+                    successResult.close();
+                }
+                if (errorResult != null) {
+                    errorResult.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (process != null) {
+                process.destroy();
+            }
+        }
+
+        if (successMsg.toString().contains("Success") || successMsg.toString()
+                .contains("success")) {
+            result = 0;
+        } else {
+            result = 2;
+        }
+
+        Log.d("YouwillInstaller", "successMsg:" + successMsg + ", ErrorMsg:" + errorMsg);
+
+        return result;
+
     }
 }
