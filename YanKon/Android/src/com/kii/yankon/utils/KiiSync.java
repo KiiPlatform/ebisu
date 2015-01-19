@@ -12,6 +12,7 @@ import com.kii.yankon.App;
 import com.kii.yankon.providers.YanKonProvider;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.content.ContentValues;
@@ -20,6 +21,7 @@ import android.database.Cursor;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -211,7 +213,55 @@ public class KiiSync {
         uploadLights();
         downloadGroups();
         uploadGroups();
+        downloadScenes();
+        uploadScenes();
         isSyncing = false;
+    }
+
+    private static void uploadScenes() {
+        KiiBucket bucket = getSceneBucket();
+        if (bucket == null) {
+            return;
+        }
+        final Context context = App.getApp();
+        Cursor cursor = context.getContentResolver().query(YanKonProvider.URI_SCENES, null,
+                "deleted=0", null, null);
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) > 0;
+                if (synced) {
+                    continue;
+                }
+                String objectID = cursor.getString(cursor.getColumnIndex("objectID"));
+                int sceneId = cursor.getInt(cursor.getColumnIndex("_id"));
+                JSONArray childItems = new JSONArray();
+                Cursor childCursor = context.getContentResolver()
+                        .query(YanKonProvider.URI_SCENES_DETAIL, null, "scene_id=" + sceneId, null,
+                                null);
+                if (childCursor != null) {
+                    while (childCursor.moveToNext()) {
+                        JSONObject childObject = new JSONObject();
+                        try {
+                            childObject.put("light_id",
+                                    childCursor.getInt(childCursor.getColumnIndex("light_id")));
+                            childObject.put("group_id",
+                                    childCursor.getInt(childCursor.getColumnIndex("group_id")));
+                            childObject.put("state",
+                                    childCursor.getInt(childCursor.getColumnIndex("state")));
+                            childObject.put("color",
+                                    childCursor.getInt(childCursor.getColumnIndex("color")));
+                            childObject.put("brightness",
+                                    childCursor.getInt(childCursor.getColumnIndex("brightness")));
+                            childObject.put("CT",
+                                    childCursor.getInt(childCursor.getColumnIndex("CT")));
+                            childItems.put(childObject);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private static void uploadGroups() {
@@ -221,9 +271,9 @@ public class KiiSync {
         }
         final Context context = App.getApp();
         Cursor cursor = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUPS, null,
-                "synced>0 AND deleted=0", null, null);
+                "deleted=0", null, null);
         if (cursor != null) {
-            do {
+            while (cursor.moveToNext()) {
                 boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) > 0;
                 if (synced) {
                     continue;
@@ -259,7 +309,7 @@ public class KiiSync {
                 } catch (Exception e) {
                     Log.e(LOG_TAG, Log.getStackTraceString(e));
                 }
-            } while (cursor.moveToNext());
+            }
             cursor.close();
         }
     }
@@ -340,10 +390,66 @@ public class KiiSync {
         }
     }
 
+    private static void downloadScenes() {
+        KiiBucket bucket = getSceneBucket();
+        if (bucket == null) {
+            return;
+        }
+        try {
+            KiiQueryResult<KiiObject> result = bucket.query(null);
+            List<KiiObject> objList = result.getResult();
+            saveRemoteSceneRecords(objList);
+            while (result.hasNext()) {
+                result = result.getNextQueryResult();
+                objList = result.getResult();
+                saveRemoteSceneRecords(objList);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void saveRemoteSceneRecords(List<KiiObject> objects) {
+        for (KiiObject object : objects) {
+            saveRemoteSceneRecord(object);
+        }
+    }
+
     private static void saveRemoteGroupRecords(List<KiiObject> objects) {
         for (KiiObject object : objects) {
             saveRemoteGroupRecord(object);
         }
+    }
+
+    private static void saveRemoteSceneRecord(KiiObject object) {
+        ContentValues values = new ContentValues();
+        values.put("objectID", object.getString("_id"));
+        values.put("name", object.getString("name"));
+        Cursor cursor = App.getApp().getContentResolver()
+                .query(YanKonProvider.URI_SCENES, null, "objectID=?",
+                        new String[]{object.getString("_id")}, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) == 1;
+            boolean deleted = cursor.getInt(cursor.getColumnIndex("deleted")) == 1;
+            if (!deleted) {
+                if (synced || Settings.isServerWin()) {
+                    App.getApp().getContentResolver()
+                            .update(YanKonProvider.URI_SCENES, values, "objectID=?",
+                                    new String[]{object.getString("_id")});
+                }
+            }
+        } else {
+            App.getApp().getContentResolver().insert(YanKonProvider.URI_SCENES, values);
+        }
+        processSceneDetail(object);
+        if (cursor != null) {
+            cursor.close();
+        }
+    }
+
+    private static void processSceneDetail(KiiObject object) {
+        //TODO: process scene detail
+
     }
 
     private static void saveRemoteGroupRecord(KiiObject object) {
@@ -491,6 +597,45 @@ public class KiiSync {
             return null;
         }
         return kiiUser.bucket("light_groups");
+    }
+
+    private static KiiBucket getSceneBucket() {
+        KiiUser kiiUser = KiiUser.getCurrentUser();
+        if (kiiUser == null) {
+            return null;
+        }
+        return kiiUser.bucket("light_scenes");
+    }
+
+    public static void getModels() {
+        KiiBucket bucket = Kii.bucket("models");
+        try {
+            KiiQueryResult<KiiObject> result = bucket.query(null);
+            List<KiiObject> objList = result.getResult();
+            saveModels(objList);
+            while (result.hasNext()) {
+                result = result.getNextQueryResult();
+                objList = result.getResult();
+                saveModels(objList);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void saveModels(List<KiiObject> objects) {
+        List<ContentValues> valuesList = new ArrayList<>(objects.size());
+        for (KiiObject object : objects) {
+            ContentValues values = new ContentValues();
+            values.put("model", object.getString("model"));
+            values.put("pic", object.getString("pic"));
+            values.put("des", object.getString("des"));
+            valuesList.add(values);
+        }
+        if (!valuesList.isEmpty()) {
+            App.getApp().getContentResolver().bulkInsert(YanKonProvider.URI_MODELS,
+                    valuesList.toArray(new ContentValues[valuesList.size()]));
+        }
     }
 
     public static boolean isSyncing() {

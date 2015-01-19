@@ -57,7 +57,8 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "_id INTEGER PRIMARY KEY, "
                         + "model TEXT,"
                         + "pic TEXT,"
-                        + "des TEXT"
+                        + "des TEXT, "
+                        + "UNIQUE(model)"
                         + ");"
         );
         db.execSQL("CREATE TABLE IF NOT EXISTS colors ("

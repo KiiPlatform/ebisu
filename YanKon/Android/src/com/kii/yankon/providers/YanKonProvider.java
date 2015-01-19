@@ -10,40 +10,70 @@ import android.net.Uri;
 public class YanKonProvider extends ContentProvider {
 
     public static final String AUTHORITY = "com.kii.yankon";
+
     public static final UriMatcher uriMatcher;
 
     public static final Uri URI_COLORS = Uri.parse("content://" + AUTHORITY + "/colors");
+
     public static final Uri URI_ACTIONS = Uri.parse("content://" + AUTHORITY + "/actions");
+
     public static final Uri URI_LIGHTS = Uri.parse("content://" + AUTHORITY + "/lights");
+
     public static final Uri URI_MODELS = Uri.parse("content://" + AUTHORITY + "/models");
-    public static final Uri URI_LIGHT_GROUPS = Uri.parse("content://" + AUTHORITY + "/light_groups");
-    public static final Uri URI_LIGHT_GROUP_REL = Uri.parse("content://" + AUTHORITY + "/light_group_rel");
+
+    public static final Uri URI_LIGHT_GROUPS = Uri
+            .parse("content://" + AUTHORITY + "/light_groups");
+
+    public static final Uri URI_LIGHT_GROUP_REL = Uri
+            .parse("content://" + AUTHORITY + "/light_group_rel");
+
     public static final Uri URI_SCENES = Uri.parse("content://" + AUTHORITY + "/scenes");
-    public static final Uri URI_SCENES_DETAIL = Uri.parse("content://" + AUTHORITY + "/scenes_detail");
+
+    public static final Uri URI_SCENES_DETAIL = Uri
+            .parse("content://" + AUTHORITY + "/scenes_detail");
+
     public static final Uri URI_SCHEDULE = Uri.parse("content://" + AUTHORITY + "/schedule");
 
     public static final String TABLE_COLORS = "colors";
+
     public static final String TABLE_ACTIONS = "actions";
+
     public static final String TABLE_LIGHTS = "lights";
+
     //    public static final String VIEW_LIGHTS = "lights_view";
     public static final String TABLE_MODELS = "models";
+
     public static final String VIEW_LIGHT_GROUPS = "light_groups_view";
+
     public static final String TABLE_LIGHT_GROUPS = "light_groups";
+
     public static final String VIEW_LIGHT_GROUP_REL = "group_light_view";
+
     public static final String TABLE_LIGHT_GROUP_REL = "light_group_rel";
+
     public static final String TABLE_SCENES = "scenes";
+
     public static final String TABLE_SCENES_DETAIL = "scenes_detail";
+
     public static final String TABLE_SCHEDULE = "schedule";
 
 
     private static final int ID_COLORS = 0;
+
     private static final int ID_ACTIONS = 1;
+
     private static final int ID_LIGHTS = 2;
+
     private static final int ID_MODELS = 3;
+
     private static final int ID_LIGHT_GROUPS = 4;
+
     private static final int ID_LIGHT_GROUP_REL = 5;
+
     private static final int ID_SCENES = 6;
+
     private static final int ID_SCENES_DETAIL = 7;
+
     private static final int ID_SCHEDULE = 8;
 
     static {
@@ -125,35 +155,48 @@ public class YanKonProvider extends ContentProvider {
         long cid = 0;
         switch (uriMatcher.match(uri)) {
             case ID_COLORS:
-                cid = database.insertWithOnConflict(TABLE_COLORS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                cid = database.insertWithOnConflict(TABLE_COLORS, null, values,
+                        SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return Uri.withAppendedPath(uri, String.valueOf(cid));
             case ID_ACTIONS:
-                cid = database.insertWithOnConflict(TABLE_ACTIONS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                cid = database.insertWithOnConflict(TABLE_ACTIONS, null, values,
+                        SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return Uri.withAppendedPath(uri, String.valueOf(cid));
             case ID_LIGHTS:
-                cid = database.insertWithOnConflict(TABLE_LIGHTS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                cid = database.insertWithOnConflict(TABLE_LIGHTS, null, values,
+                        SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return Uri.withAppendedPath(uri, String.valueOf(cid));
             case ID_LIGHT_GROUPS:
-                cid = database.insertWithOnConflict(TABLE_LIGHT_GROUPS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                cid = database.insertWithOnConflict(TABLE_LIGHT_GROUPS, null, values,
+                        SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return Uri.withAppendedPath(uri, String.valueOf(cid));
             case ID_LIGHT_GROUP_REL:
-                cid = database.insertWithOnConflict(TABLE_LIGHT_GROUP_REL, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                cid = database.insertWithOnConflict(TABLE_LIGHT_GROUP_REL, null, values,
+                        SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return Uri.withAppendedPath(uri, String.valueOf(cid));
             case ID_SCENES:
-                cid = database.insertWithOnConflict(TABLE_SCENES, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                cid = database.insertWithOnConflict(TABLE_SCENES, null, values,
+                        SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return Uri.withAppendedPath(uri, String.valueOf(cid));
             case ID_SCENES_DETAIL:
-                cid = database.insertWithOnConflict(TABLE_SCENES_DETAIL, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                cid = database.insertWithOnConflict(TABLE_SCENES_DETAIL, null, values,
+                        SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return Uri.withAppendedPath(uri, String.valueOf(cid));
             case ID_SCHEDULE:
-                cid = database.insertWithOnConflict(TABLE_SCHEDULE, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                cid = database.insertWithOnConflict(TABLE_SCHEDULE, null, values,
+                        SQLiteDatabase.CONFLICT_REPLACE);
+                getContext().getContentResolver().notifyChange(uri, null);
+                return Uri.withAppendedPath(uri, String.valueOf(cid));
+            case ID_MODELS:
+                cid = database.insertWithOnConflict(TABLE_MODELS, null, values,
+                        SQLiteDatabase.CONFLICT_REPLACE);
                 getContext().getContentResolver().notifyChange(uri, null);
                 return Uri.withAppendedPath(uri, String.valueOf(cid));
         }
@@ -168,7 +211,7 @@ public class YanKonProvider extends ContentProvider {
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection,
-                        String[] selectionArgs, String sortOrder) {
+            String[] selectionArgs, String sortOrder) {
         SQLiteDatabase database = mDBHelper.getWritableDatabase();
         switch (uriMatcher.match(uri)) {
             case ID_COLORS: {
@@ -202,8 +245,9 @@ public class YanKonProvider extends ContentProvider {
                 return c;
             }
             case ID_LIGHT_GROUP_REL: {
-                Cursor c = database.query(VIEW_LIGHT_GROUP_REL, projection, selection, selectionArgs,
-                        null, null, sortOrder);
+                Cursor c = database
+                        .query(VIEW_LIGHT_GROUP_REL, projection, selection, selectionArgs,
+                                null, null, sortOrder);
                 c.setNotificationUri(getContext().getContentResolver(), uri);
                 return c;
             }
@@ -231,7 +275,7 @@ public class YanKonProvider extends ContentProvider {
 
     @Override
     public int update(Uri uri, ContentValues values, String selection,
-                      String[] selectionArgs) {
+            String[] selectionArgs) {
         int ret = 0;
         SQLiteDatabase database = mDBHelper.getWritableDatabase();
         switch (uriMatcher.match(uri)) {
