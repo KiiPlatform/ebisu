@@ -260,6 +260,22 @@ public class KiiSync {
                         }
                     }
                 }
+                KiiObject sceneObject;
+                sceneObject = bucket.object(objectID);
+                sceneObject.set("name", cursor.getString(cursor.getColumnIndex("name")));
+                sceneObject
+                        .set("created_time", cursor.getLong(cursor.getColumnIndex("created_time")));
+                sceneObject.set("scene_detail", childItems);
+                try {
+                    sceneObject.saveAllFields(true);
+                    ContentValues values = new ContentValues();
+                    values.put("synced", true);
+                    context.getContentResolver()
+                            .update(YanKonProvider.URI_SCENES, values, "_id=" + sceneId,
+                                    null);
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, Log.getStackTraceString(e));
+                }
             }
         }
     }
@@ -448,8 +464,37 @@ public class KiiSync {
     }
 
     private static void processSceneDetail(KiiObject object) {
-        //TODO: process scene detail
-
+        String objectId = object.getString("_id");
+        if (Settings.isServerWin()) {
+            App.getApp().getContentResolver()
+                    .delete(YanKonProvider.URI_SCENES_DETAIL, "objectID=?", new String[]{objectId});
+        }
+        JSONArray array = object.getJsonArray("scene_detail");
+        if (array != null && array.length() != 0) {
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject detailObject = array.optJSONObject(i);
+                if (detailObject == null) {
+                    continue;
+                }
+                try {
+                    ContentValues values = new ContentValues();
+                    values.put("state", detailObject.getInt("state"));
+                    values.put("color", detailObject.getInt("color"));
+                    values.put("brightness", detailObject.getInt("brightness"));
+                    values.put("CT", detailObject.getInt("CT"));
+                    values.put("light_id", detailObject.getInt("light_id"));
+                    values.put("group_id", detailObject.getInt("group_id"));
+                    App.getApp().getContentResolver()
+                            .insert(YanKonProvider.URI_SCENES_DETAIL, values);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        ContentValues cv = new ContentValues(1);
+        cv.put("synced", 1);
+        App.getApp().getContentResolver()
+                .update(YanKonProvider.URI_SCENES, cv, "objectID=?", new String[]{objectId});
     }
 
     private static void saveRemoteGroupRecord(KiiObject object) {
