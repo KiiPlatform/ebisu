@@ -18,6 +18,7 @@ import org.json.JSONObject;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -278,26 +279,32 @@ public class KiiSync {
 
     private static void saveRemoteColorRecord(KiiObject object) {
         ContentValues values = new ContentValues();
-        values.put("objectID", object.getString("objectID"));
+        String objectId = object.getString("objectID");
+        values.put("objectID", objectId);
         values.put("name", object.getString("name"));
         values.put("value", object.getString("value"));
         values.put("synced", true);
+        Uri uri = YanKonProvider.URI_COLORS;
+        saveRemoteObject(values, objectId, uri);
+    }
+
+    private static void saveRemoteObject(ContentValues values, String objectId, Uri uri) {
         Cursor cursor = App.getApp().getContentResolver()
-                .query(YanKonProvider.URI_COLORS, null, "objectID=?",
-                        new String[]{object.getString("objectID")}, null);
+                .query(uri, null, "objectID=?",
+                        new String[]{objectId}, null);
         if (cursor != null && cursor.moveToFirst()) {
             boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) == 1;
             boolean deleted = cursor.getInt(cursor.getColumnIndex("deleted")) == 1;
             if (!deleted) {
                 if (synced || Settings.isServerWin()) {
                     App.getApp().getContentResolver()
-                            .update(YanKonProvider.URI_COLORS, values, "objectID=?",
-                                    new String[]{object.getString("objectID")});
+                            .update(uri, values, "objectID=?",
+                                    new String[]{objectId});
                 }
             }
         } else {
             //the remote record does not exist in local storage, save it
-            App.getApp().getContentResolver().insert(YanKonProvider.URI_COLORS, values);
+            App.getApp().getContentResolver().insert(uri, values);
         }
         if (cursor != null) {
             cursor.close();
@@ -525,28 +532,12 @@ public class KiiSync {
 
     private static void saveRemoteSceneRecord(KiiObject object) {
         ContentValues values = new ContentValues();
-        values.put("objectID", object.getString("_id"));
+        String objectId = object.getString("_id");
+        Uri uri = YanKonProvider.URI_SCENES;
+        values.put("objectID", objectId);
         values.put("name", object.getString("name"));
-        Cursor cursor = App.getApp().getContentResolver()
-                .query(YanKonProvider.URI_SCENES, null, "objectID=?",
-                        new String[]{object.getString("_id")}, null);
-        if (cursor != null && cursor.moveToFirst()) {
-            boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) == 1;
-            boolean deleted = cursor.getInt(cursor.getColumnIndex("deleted")) == 1;
-            if (!deleted) {
-                if (synced || Settings.isServerWin()) {
-                    App.getApp().getContentResolver()
-                            .update(YanKonProvider.URI_SCENES, values, "objectID=?",
-                                    new String[]{object.getString("_id")});
-                }
-            }
-        } else {
-            App.getApp().getContentResolver().insert(YanKonProvider.URI_SCENES, values);
-        }
+        saveRemoteObject(values, objectId, uri);
         processSceneDetail(object);
-        if (cursor != null) {
-            cursor.close();
-        }
     }
 
     private static void processSceneDetail(KiiObject object) {
@@ -585,35 +576,17 @@ public class KiiSync {
 
     private static void saveRemoteGroupRecord(KiiObject object) {
         ContentValues values = new ContentValues();
-        values.put("objectID", object.getString("_id"));
+        String objectId = object.getString("_id");
+        values.put("objectID", objectId);
         values.put("name", object.getString("name"));
         values.put("state", object.getInt("state"));
         values.put("color", object.getInt("color"));
         values.put("brightness", object.getInt("brightness"));
         values.put("CT", object.getInt("CT"));
         values.put("synced", true);
-        Cursor cursor = App.getApp().getContentResolver()
-                .query(YanKonProvider.URI_LIGHT_GROUPS, null, "objectID=?",
-                        new String[]{object.getString("_id")}, null);
-        if (cursor != null && cursor.moveToFirst()) {
-            boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) == 1;
-            boolean deleted = cursor.getInt(cursor.getColumnIndex("deleted")) == 1;
-            if (!deleted) {
-                if (synced || Settings.isServerWin()) {
-                    App.getApp().getContentResolver()
-                            .update(YanKonProvider.URI_LIGHT_GROUPS, values, "objectID=?",
-                                    new String[]{object.getString("_id")});
-                }
-            }
-        } else {
-            //the remote record does not exist in local storage, save it
-            App.getApp().getContentResolver().insert(YanKonProvider.URI_LIGHT_GROUPS, values);
-        }
+        Uri uri = YanKonProvider.URI_LIGHT_GROUPS;
+        saveRemoteObject(values, objectId, uri);
         processRel(object);
-        if (cursor != null) {
-            cursor.close();
-        }
-
     }
 
     private static void processRel(KiiObject object) {
