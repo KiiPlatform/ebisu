@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.kii.yankon"
     android:versionCode="1"
-    android:versionName="1.0" >
+    android:versionName="1.0">
 
     <uses-sdk
         android:minSdkVersion="14"
@@ -26,10 +26,10 @@
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/AppTheme">
         <activity
             android:name=".MainActivity"
-            android:label="@string/app_name" >
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -39,29 +39,13 @@
         <activity
             android:name=".activities.GuideActivity"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
-        <activity
-            android:name=".activities.AddLightsActivity"
-            android:parentActivityName=".MainActivity" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.kii.yankon.MainActivity" />
-        </activity>
+        <activity android:name=".activities.AddLightsActivity" />
         <activity
             android:name=".activities.ColorPickerActivity"
-            android:label="@string/title_activity_color_picker"
-            android:parentActivityName=".MainActivity" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.kii.yankon.MainActivity" />
-        </activity>
+            android:label="@string/title_activity_color_picker" />
         <activity
             android:name=".activities.ColorPickerActivity2"
-            android:label="@string/title_activity_color_picker"
-            android:parentActivityName=".MainActivity" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.kii.yankon.MainActivity" />
-        </activity>
+            android:label="@string/title_activity_color_picker" />
 
         <provider
             android:name=".providers.YanKonProvider"
@@ -73,12 +57,7 @@
         <activity android:name=".activities.AddScenesActivity" />
         <activity
             android:name=".activities.LightInfoActivity"
-            android:label="@string/title_activity_light_info"
-            android:parentActivityName=".MainActivity" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.kii.yankon.MainActivity" />
-        </activity>
+            android:label="@string/title_activity_light_info" />
 
         <service
             android:name=".services.NetworkReceiverService"
@@ -90,20 +69,13 @@
 
         <activity
             android:name=".activities.AddScheduleActivity"
-            android:label="@string/title_activity_add_schedule"
-            android:parentActivityName=".MainActivity" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.kii.yankon.MainActivity" />
-        </activity>
+            android:label="@string/title_activity_add_schedule" />
         <activity
             android:name=".activities.PickTargetActivity"
-            android:label="@string/title_activity_pick_target" >
-        </activity>
+            android:label="@string/title_activity_pick_target" />
         <activity
             android:name=".activities.AddLights2Activity"
-            android:label="@string/title_activity_add_lights2" >
-        </activity>
+            android:label="@string/title_activity_add_lights2" />
     </application>
 
 </manifest>

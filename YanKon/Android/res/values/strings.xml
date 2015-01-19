@@ -19,8 +19,8 @@
     <string name="title_activity_multi_select_demo">MultiSelectDemoActivity</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_delete">Delete</string>
-    <string name="delete_mode">删除</string>
-    <string name="searching">Searching...</string>
+    <string name="delete_mode">Delete</string>
+    <string name="searching">Searching…</string>
     <string name="menu_sort">Sort By</string>
     <string name="menu_new">New</string>
     <string name="title_activity_color_picker">Color Picker</string>
@@ -84,4 +84,7 @@
     <string name="lights_multiple_empty">Select at least 1 light first</string>
     <string name="lights_multiple_title_1light">1 light</string>
     <string name="lights_multiple_title">%d lights</string>
+    <string name="scene">Scene</string>
+    <string name="empty_schedule_name">Schedule name cannot be empty</string>
+    <string name="empty_schedule_target">Pick target first</string>
 </resources>

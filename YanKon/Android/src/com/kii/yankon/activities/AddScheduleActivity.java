@@ -19,6 +19,8 @@ import com.kii.yankon.R;
 import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.utils.Constants;
 
+import java.util.UUID;
+
 
 public class AddScheduleActivity extends Activity implements View.OnClickListener {
 
@@ -33,17 +35,23 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
     int CT = Constants.DEFAULT_CT;
     int state = 0;
     int time = 0;
+    int type = -1;
+    String targetId = null;
     Button mTargetBtn, mSettingsBtn;
     TimePicker mTimePicker;
+    View settingsRow;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_schedule);
+        getActionBar().setHomeButtonEnabled(true);
+        getActionBar().setDisplayHomeAsUpEnabled(true);
         mTargetBtn = (Button) findViewById(R.id.target_btn);
         mTargetBtn.setOnClickListener(this);
         mSettingsBtn = (Button) findViewById(R.id.settings_btn);
         mSettingsBtn.setOnClickListener(this);
+        settingsRow = findViewById(R.id.settings_row);
         findViewById(R.id.schedule_cancel).setOnClickListener(this);
         findViewById(R.id.schedule_ok).setOnClickListener(this);
         mNameField = (EditText) findViewById(R.id.schedule_name);
@@ -61,11 +69,29 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
                     CT = c.getInt(c.getColumnIndex("CT"));
                     state = c.getInt(c.getColumnIndex("state"));
                     time = c.getInt(c.getColumnIndex("time"));
+                    targetId = c.getString(c.getColumnIndex("light_id"));
+                    type = -1;
+                    if (!TextUtils.isEmpty(targetId)) {
+                        type = 0;
+                    }
+                    if (type < 0) {
+                        targetId = c.getString(c.getColumnIndex("group_id"));
+                        if (!TextUtils.isEmpty(targetId)) {
+                            type = 1;
+                        }
+                    }
+                    if (type < 0) {
+                        targetId = c.getString(c.getColumnIndex("scene_id"));
+                        if (!TextUtils.isEmpty(targetId)) {
+                            type = 2;
+                        }
+                    }
                 }
                 c.close();
             }
         }
         updateSettingsInfo();
+        updateTargetInfo();
         mTimePicker.setCurrentHour(time / 60);
         mTimePicker.setCurrentMinute(time % 60);
     }
@@ -74,6 +100,30 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
         mSettingsBtn.setTextColor(color);
         mSettingsBtn.setText(getString(R.string.schedule_settings_format,
                 state == 0 ? getString(R.string.state_off) : getString(R.string.state_on), brightness, CT));
+    }
+
+    public void updateTargetInfo() {
+        String name = getString(R.string.none_target);
+        Cursor cursor = null;
+        switch (type) {
+            case 0:
+                cursor = getContentResolver().query(YanKonProvider.URI_LIGHTS, new String[]{"name"}, "MAC=(?)", new String[]{targetId}, null);
+                break;
+            case 1:
+                cursor = getContentResolver().query(YanKonProvider.URI_LIGHT_GROUPS, new String[]{"name"}, "objectID=(?)", new String[]{targetId}, null);
+                break;
+            case 2:
+                cursor = getContentResolver().query(YanKonProvider.URI_SCENES, new String[]{"name"}, "objectID=(?)", new String[]{targetId}, null);
+                break;
+        }
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                name = cursor.getString(0);
+            }
+            cursor.close();
+        }
+        mTargetBtn.setText(name);
+        settingsRow.setVisibility(type == 2 ? View.GONE : View.VISIBLE);
     }
 
 
@@ -124,6 +174,10 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
                 brightness = data.getIntExtra("brightness", Constants.DEFAULT_BRIGHTNESS);
                 CT = data.getIntExtra("CT", Constants.DEFAULT_CT);
                 updateSettingsInfo();
+            } else if (requestCode == REQUEST_TARGET) {
+                type = data.getIntExtra("type", 0);
+                targetId = data.getStringExtra("id");
+                updateTargetInfo();
             }
         }
     }
@@ -131,7 +185,11 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
     private void save() {
         String gName = mNameField.getText().toString();
         if (TextUtils.isEmpty(gName)) {
-            Toast.makeText(this, getString(R.string.empty_scene_name), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.empty_schedule_name, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (type < 0) {
+            Toast.makeText(this, R.string.empty_schedule_target, Toast.LENGTH_SHORT).show();
             return;
         }
         ContentResolver cr = getContentResolver();
@@ -142,8 +200,23 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
         values.put("CT", CT);
         values.put("state", state);
         values.put("enabled", true);
+        values.put("light_id", "");
+        values.put("group_id", "");
+        values.put("scene_id", "");
+        switch (type) {
+            case 0:
+                values.put("light_id", targetId);
+                break;
+            case 1:
+                values.put("group_id", targetId);
+                break;
+            case 2:
+                values.put("scene_id", targetId);
+                break;
+        }
         values.put("time", mTimePicker.getCurrentHour() * 60 + mTimePicker.getCurrentMinute());
         if (schedule_id < 0) {
+            values.put("objectID", UUID.randomUUID().toString());
             values.put("created_time", System.currentTimeMillis());
             Uri uri = cr.insert(YanKonProvider.URI_SCHEDULE, values);
             schedule_id = Integer.parseInt(uri.getLastPathSegment());

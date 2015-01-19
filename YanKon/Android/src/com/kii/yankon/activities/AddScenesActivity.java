@@ -25,9 +25,9 @@ import com.kii.yankon.model.StatusInfo;
 import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.utils.Constants;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.UUID;
 
 /**
  * Created by Evan on 14/12/8.
@@ -54,6 +54,8 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_scenes);
+        getActionBar().setHomeButtonEnabled(true);
+        getActionBar().setDisplayHomeAsUpEnabled(true);
         mSceneNameEdit = (EditText) findViewById(R.id.scene_name);
         mList = (ExpandableListView) findViewById(R.id.scene_list);
         findViewById(R.id.scene_cancel).setOnClickListener(this);
@@ -69,7 +71,9 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
         mList.expandGroup(1);
     }
 
+
     void addGroup(LightGroup group) {
+        /*
         group.childLights = new ArrayList<>();
         Cursor c = null;
         try {
@@ -81,7 +85,7 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
         } finally {
             if (c != null)
                 c.close();
-        }
+        }*/
     }
 
     void loadContents() {
@@ -165,6 +169,7 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
         ContentValues values = new ContentValues();
         values.put("name", gName);
         if (scene_id < 0) {
+            values.put("objectID", UUID.randomUUID().toString());
             values.put("created_time", System.currentTimeMillis());
             Uri uri = cr.insert(YanKonProvider.URI_SCENES, values);
             scene_id = Integer.parseInt(uri.getLastPathSegment());

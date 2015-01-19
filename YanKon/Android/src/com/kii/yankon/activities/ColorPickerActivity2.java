@@ -1,10 +1,5 @@
 package com.kii.yankon.activities;
 
-import com.kii.yankon.R;
-import com.kii.yankon.widget.ColorCircle;
-import com.kii.yankon.widget.ColorSlider;
-import com.kii.yankon.widget.OnColorChangedListener;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
@@ -14,6 +9,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+
+import com.kii.yankon.R;
+import com.kii.yankon.widget.ColorCircle;
+import com.kii.yankon.widget.ColorSlider;
+import com.kii.yankon.widget.OnColorChangedListener;
 
 
 public class ColorPickerActivity2 extends Activity implements OnColorChangedListener {
@@ -66,6 +66,9 @@ public class ColorPickerActivity2 extends Activity implements OnColorChangedList
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.colorpicker);
+
+        getActionBar().setHomeButtonEnabled(true);
+        getActionBar().setDisplayHomeAsUpEnabled(true);
 
         // Get original color
         mIntent = getIntent();

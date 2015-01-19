@@ -67,6 +67,8 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_light_info);
+        getActionBar().setHomeButtonEnabled(true);
+        getActionBar().setDisplayHomeAsUpEnabled(true);
         light_id = getIntent().getIntExtra(EXTRA_LIGHT_ID, -1);
         group_id = getIntent().getIntExtra(EXTRA_GROUP_ID, -1);
         mName = getIntent().getStringExtra(EXTRA_NAME);

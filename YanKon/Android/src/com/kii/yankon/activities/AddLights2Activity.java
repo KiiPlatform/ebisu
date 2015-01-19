@@ -15,9 +15,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.CheckBox;
-import android.widget.Switch;
-import android.widget.TextView;
 
 import com.kii.yankon.R;
 import com.kii.yankon.model.Light;
@@ -25,6 +22,7 @@ import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.services.NetworkSenderService;
 import com.kii.yankon.utils.Constants;
 import com.kii.yankon.utils.Global;
+import com.kii.yankon.widget.LightItemViewHolder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -205,34 +203,18 @@ public class AddLights2Activity extends ListActivity {
             View view = convertView;
             if (view == null) {
                 view = LayoutInflater.from(mContext).inflate(R.layout.light_item, parent, false);
-                ViewHolder holder = new ViewHolder(view);
+                LightItemViewHolder holder = new LightItemViewHolder(view);
                 view.setTag(holder);
             }
             Light light = (Light) getItem(position);
-            ViewHolder holder = (ViewHolder) view.getTag();
+            LightItemViewHolder holder = (LightItemViewHolder) view.getTag();
             holder.textView1.setText(light.name);
             holder.textView2.setText(light.model);
             holder.switchButton.setChecked(light.state);
             holder.checkBox.setChecked(light.selected || light.added);
             holder.checkBox.setEnabled(!light.added);
+            holder.checkBox.setVisibility(View.VISIBLE);
             return view;
-        }
-    }
-
-    class ViewHolder {
-
-        public View icon;
-        public CheckBox checkBox;
-        public Switch switchButton;
-        public TextView textView1;
-        public TextView textView2;
-
-        public ViewHolder(View view) {
-            icon = view.findViewById(R.id.light_icon);
-            checkBox = (CheckBox) view.findViewById(R.id.light_checkbox);
-            switchButton = (Switch) view.findViewById(R.id.light_switch);
-            textView1 = (TextView) view.findViewById(android.R.id.text1);
-            textView2 = (TextView) view.findViewById(android.R.id.text2);
         }
     }
 }
