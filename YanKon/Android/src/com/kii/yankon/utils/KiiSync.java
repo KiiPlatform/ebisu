@@ -215,7 +215,93 @@ public class KiiSync {
         uploadGroups();
         downloadScenes();
         uploadScenes();
+        downloadColors();
+        uploadColors();
         isSyncing = false;
+    }
+
+    private static void uploadColors() {
+        KiiBucket bucket = getColorBucket();
+        if (bucket == null) {
+            return;
+        }
+        final Context context = App.getApp();
+        Cursor cursor = context.getContentResolver().query(YanKonProvider.URI_COLORS, null,
+                "deleted=0", null, null);
+        if (cursor != null) {
+            do {
+                int light_id = cursor.getInt(cursor.getColumnIndex("_id"));
+                KiiObject colorObject;
+                String objectID = cursor.getString(cursor.getColumnIndex("objectID"));
+                colorObject = bucket.object(objectID);
+                colorObject.set("name", cursor.getString(cursor.getColumnIndex("name")));
+                colorObject.set("value", cursor.getInt(cursor.getColumnIndex("value")));
+                colorObject.set("objectID", objectID);
+                try {
+                    colorObject.saveAllFields(true);
+                    ContentValues values = new ContentValues();
+                    values.put("synced", true);
+                    context.getContentResolver()
+                            .update(YanKonProvider.URI_LIGHTS, values, "_id=" + light_id, null);
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, Log.getStackTraceString(e));
+                }
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+    }
+
+    private static void downloadColors() {
+        KiiBucket bucket = getColorBucket();
+        if (bucket == null) {
+            return;
+        }
+        try {
+            KiiQueryResult<KiiObject> result = bucket.query(null);
+            List<KiiObject> objList = result.getResult();
+            saveRemoteColorRecords(objList);
+            while (result.hasNext()) {
+                result = result.getNextQueryResult();
+                objList = result.getResult();
+                saveRemoteColorRecords(objList);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void saveRemoteColorRecords(List<KiiObject> objects) {
+        for (KiiObject object : objects) {
+            saveRemoteColorRecord(object);
+        }
+    }
+
+    private static void saveRemoteColorRecord(KiiObject object) {
+        ContentValues values = new ContentValues();
+        values.put("objectID", object.getString("objectID"));
+        values.put("name", object.getString("name"));
+        values.put("value", object.getString("value"));
+        values.put("synced", true);
+        Cursor cursor = App.getApp().getContentResolver()
+                .query(YanKonProvider.URI_COLORS, null, "objectID=?",
+                        new String[]{object.getString("objectID")}, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) == 1;
+            boolean deleted = cursor.getInt(cursor.getColumnIndex("deleted")) == 1;
+            if (!deleted) {
+                if (synced || Settings.isServerWin()) {
+                    App.getApp().getContentResolver()
+                            .update(YanKonProvider.URI_COLORS, values, "objectID=?",
+                                    new String[]{object.getString("objectID")});
+                }
+            }
+        } else {
+            //the remote record does not exist in local storage, save it
+            App.getApp().getContentResolver().insert(YanKonProvider.URI_COLORS, values);
+        }
+        if (cursor != null) {
+            cursor.close();
+        }
     }
 
     private static void uploadScenes() {
@@ -337,7 +423,7 @@ public class KiiSync {
         }
         final Context context = App.getApp();
         Cursor cursor = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null,
-                "synced>0 AND deleted=0", null, null);
+                "deleted=0", null, null);
         if (cursor != null) {
             do {
                 int light_id = cursor.getInt(cursor.getColumnIndex("_id"));
@@ -650,6 +736,22 @@ public class KiiSync {
             return null;
         }
         return kiiUser.bucket("light_scenes");
+    }
+
+    private static KiiBucket getColorBucket() {
+        KiiUser kiiUser = KiiUser.getCurrentUser();
+        if (kiiUser == null) {
+            return null;
+        }
+        return kiiUser.bucket("colors");
+    }
+
+    private static KiiBucket getScheduleBucket() {
+        KiiUser kiiUser = KiiUser.getCurrentUser();
+        if (kiiUser == null) {
+            return null;
+        }
+        return kiiUser.bucket("schedules");
     }
 
     public static void getModels() {
