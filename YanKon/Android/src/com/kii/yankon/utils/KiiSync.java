@@ -336,9 +336,11 @@ public class KiiSync {
                         JSONObject childObject = new JSONObject();
                         try {
                             childObject.put("light_id",
-                                    childCursor.getInt(childCursor.getColumnIndex("light_id")));
+                                    getLightMacById(childCursor
+                                            .getInt(childCursor.getColumnIndex("light_id"))));
                             childObject.put("group_id",
-                                    childCursor.getInt(childCursor.getColumnIndex("group_id")));
+                                    getGroupById(childCursor
+                                            .getInt(childCursor.getColumnIndex("group_id"))));
                             childObject.put("state",
                                     childCursor.getInt(childCursor.getColumnIndex("state")));
                             childObject.put("color",
@@ -559,8 +561,8 @@ public class KiiSync {
                     values.put("color", detailObject.getInt("color"));
                     values.put("brightness", detailObject.getInt("brightness"));
                     values.put("CT", detailObject.getInt("CT"));
-                    values.put("light_id", detailObject.getInt("light_id"));
-                    values.put("group_id", detailObject.getInt("group_id"));
+                    values.put("light_id", getLightIdByMac(detailObject.getString("light_id")));
+                    values.put("group_id", getGroupIdByObjId(detailObject.getString("group_id")));
                     App.getApp().getContentResolver()
                             .insert(YanKonProvider.URI_SCENES_DETAIL, values);
                 } catch (JSONException e) {
@@ -621,6 +623,38 @@ public class KiiSync {
         Cursor cursor = App.getApp().getContentResolver()
                 .query(YanKonProvider.URI_LIGHTS, new String[]{"_id"}, "MAC=?",
                         new String[]{mac}, null);
+        try {
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    private static String getLightMacById(int lightId) {
+        Cursor cursor = App.getApp().getContentResolver()
+                .query(YanKonProvider.URI_LIGHTS, new String[]{"mac"}, "_id=?",
+                        new String[]{Integer.toString(lightId)}, null);
+        try {
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    private static String getGroupById(int groupId) {
+        Cursor cursor = App.getApp().getContentResolver()
+                .query(YanKonProvider.URI_LIGHT_GROUPS, new String[]{"objectID"}, "_id=?",
+                        new String[]{Integer.toString(groupId)}, null);
         try {
             if (cursor != null && cursor.moveToFirst()) {
                 return cursor.getString(0);
