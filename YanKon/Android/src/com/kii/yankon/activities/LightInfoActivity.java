@@ -36,11 +36,12 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
     public static final String EXTRA_LIGHT_ID = "light_id";
     public static final String EXTRA_GROUP_ID = "group_id";
     public static final String EXTRA_NAME = "name";
-
+    public static final String EXTRA_LIGHTS = "lights";
 
     int light_id = -1;
     int group_id = -1;
     String mName;
+    String[] lights;
 
     ColorCircle mColorCircle;
 
@@ -69,6 +70,7 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
         light_id = getIntent().getIntExtra(EXTRA_LIGHT_ID, -1);
         group_id = getIntent().getIntExtra(EXTRA_GROUP_ID, -1);
         mName = getIntent().getStringExtra(EXTRA_NAME);
+        lights = getIntent().getStringArrayExtra(EXTRA_LIGHTS);
         if (!TextUtils.isEmpty(mName)) {
             setTitle(mName);
         }

@@ -77,5 +77,11 @@
     <string name="title_activity_add_lights2">Add Lights</string>
     <string name="action_select_all">Select all</string>
     <string name="action_addlights_done">Done</string>
-
+    <string name="action_add_lights">Add lights</string>
+    <string name="action_multiple">Multiple Mode</string>
+    <string name="header_selected_lights">Selected lights</string>
+    <string name="header_lights_amount">Lights: %d</string>
+    <string name="lights_multiple_empty">Select at least 1 light first</string>
+    <string name="lights_multiple_title_1light">1 light</string>
+    <string name="lights_multiple_title">%d lights</string>
 </resources>

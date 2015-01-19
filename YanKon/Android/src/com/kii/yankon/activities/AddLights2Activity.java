@@ -104,7 +104,7 @@ public class AddLights2Activity extends ListActivity {
         if (mLights.contains(light)) {
             return;
         }
-        Cursor cursor = getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "MAC=(?)", new String[]{light.mac}, null);
+        Cursor cursor = getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "MAC=(?) AND deleted=0", new String[]{light.mac}, null);
         if (cursor.moveToFirst()) {
             light.name = cursor.getString(cursor.getColumnIndex("name"));
             light.model = cursor.getString(cursor.getColumnIndex("model"));
@@ -127,6 +127,7 @@ public class AddLights2Activity extends ListActivity {
         values.put("CT", Math.max(light.CT, Constants.MIN_CT));
         values.put("name", light.name);
         values.put("owned_time", System.currentTimeMillis());
+        values.put("deleted", false);
         getContentResolver().insert(YanKonProvider.URI_LIGHTS, values);
     }
 
@@ -203,7 +204,7 @@ public class AddLights2Activity extends ListActivity {
         public View getView(int position, View convertView, ViewGroup parent) {
             View view = convertView;
             if (view == null) {
-                view = LayoutInflater.from(mContext).inflate(R.layout.add_light_item, parent, false);
+                view = LayoutInflater.from(mContext).inflate(R.layout.light_item, parent, false);
                 ViewHolder holder = new ViewHolder(view);
                 view.setTag(holder);
             }
@@ -220,12 +221,14 @@ public class AddLights2Activity extends ListActivity {
 
     class ViewHolder {
 
+        public View icon;
         public CheckBox checkBox;
         public Switch switchButton;
         public TextView textView1;
         public TextView textView2;
 
         public ViewHolder(View view) {
+            icon = view.findViewById(R.id.light_icon);
             checkBox = (CheckBox) view.findViewById(R.id.light_checkbox);
             switchButton = (Switch) view.findViewById(R.id.light_switch);
             textView1 = (TextView) view.findViewById(android.R.id.text1);

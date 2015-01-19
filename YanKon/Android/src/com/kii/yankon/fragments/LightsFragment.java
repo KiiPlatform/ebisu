@@ -12,14 +12,19 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.CursorAdapter;
 import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.kii.yankon.App;
 import com.kii.yankon.R;
@@ -28,14 +33,22 @@ import com.kii.yankon.activities.LightInfoActivity;
 import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.utils.Utils;
 
+import java.util.HashSet;
+
 /**
  * Created by Evan on 14/11/26.
  */
-public class LightsFragment extends BaseListFragment {
+public class LightsFragment extends BaseListFragment implements CompoundButton.OnCheckedChangeListener {
 
     private static boolean isFirstLaunch = true;
 
     private static final int REQUEST_EDIT_NAME = 0x2001;
+
+    View headerView;
+
+    boolean inMultipleMode = false;
+
+    HashSet<String> mSelectedLights = new HashSet<>();
 
     public static LightsFragment newInstance(int sectionNumber) {
         LightsFragment fragment = new LightsFragment();
@@ -46,13 +59,77 @@ public class LightsFragment extends BaseListFragment {
     }
 
     @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        menu.clear();
+        inflater.inflate(R.menu.lights, menu);
+    }
+
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        super.onPrepareOptionsMenu(menu);
+        menu.findItem(R.id.action_select_all).setVisible(inMultipleMode);
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.action_multiple: {
+                inMultipleMode = !inMultipleMode;
+                switchMode();
+            }
+            return true;
             case R.id.action_add:
                 startActivity(new Intent(getActivity(), AddLights2Activity.class));
                 return true;
+            case R.id.action_select_all: {
+                boolean isAllSelected = true;
+                for (int i = 0; i < mAdapter.getCount(); i++) {
+                    Cursor cursor = (Cursor) mAdapter.getItem(i);
+                    String mac = cursor.getString(cursor.getColumnIndex("MAC"));
+                    if (!mSelectedLights.contains(mac)) {
+                        isAllSelected = false;
+                        mSelectedLights.add(mac);
+                    }
+                }
+                if (isAllSelected) {
+                    mSelectedLights.clear();
+                }
+                updateHeaderView();
+                getListView().invalidateViews();
+            }
+            return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        initHeaderView();
+    }
+
+    void initHeaderView() {
+        ListView lv = getListView();
+        View headerViewContainer = View.inflate(getActivity(), R.layout.lights_header, null);
+        lv.addHeaderView(headerViewContainer);
+        headerView = headerViewContainer.findViewById(R.id.light_item);
+        headerView.findViewById(R.id.light_icon).setVisibility(View.GONE);
+        TextView tv = (TextView) headerView.findViewById(android.R.id.text1);
+        tv.setText(R.string.header_selected_lights);
+        updateHeaderView();
+        switchMode();
+    }
+
+    void updateHeaderView() {
+        TextView tv = (TextView) headerView.findViewById(android.R.id.text2);
+        tv.setText(getString(R.string.header_lights_amount, mSelectedLights.size()));
+    }
+
+    void switchMode() {
+        headerView.setVisibility(inMultipleMode ? View.VISIBLE : View.GONE);
+        getActivity().invalidateOptionsMenu();
+        getListView().invalidateViews();
     }
 
     @Override
@@ -90,13 +167,26 @@ public class LightsFragment extends BaseListFragment {
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
-            ContextMenu.ContextMenuInfo menuInfo) {
+                                    ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
-        Cursor cursor = (Cursor) mAdapter.getItem(info.position);
-        String name = cursor.getString(cursor.getColumnIndex("name"));
+        String name = null;
+        if (info.position == 0) {
+            if (mSelectedLights.size() == 0) {
+                Toast.makeText(getActivity(), R.string.lights_multiple_empty, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (mSelectedLights.size() == 1) {
+                name = getString(R.string.lights_multiple_title_1light);
+            } else {
+                name = getString(R.string.lights_multiple_title, mSelectedLights.size());
+            }
+        } else {
+            Cursor cursor = (Cursor) mAdapter.getItem(info.position - 1);
+            name = cursor.getString(cursor.getColumnIndex("name"));
+            menu.add(0, MENU_EDIT, 0, R.string.menu_edit_name);
+        }
         menu.setHeaderTitle(name);
-        menu.add(0, MENU_EDIT, 0, R.string.menu_edit_name);
         menu.add(0, MENU_DELETE, 0, R.string.menu_delete);
     }
 
@@ -121,22 +211,35 @@ public class LightsFragment extends BaseListFragment {
         super.onContextItemSelected(item);
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item
                 .getMenuInfo();
+        int pos = info.position - 1;
         switch (item.getItemId()) {
             case MENU_EDIT: {
-                Cursor cursor = (Cursor) mAdapter.getItem(info.position);
+                Cursor cursor = (Cursor) mAdapter.getItem(pos);
                 String name = cursor.getString(cursor.getColumnIndex("name"));
                 currentEditId = cursor.getInt(cursor.getColumnIndex("_id"));
                 showEditAction(name);
             }
             break;
             case MENU_DELETE: {
-                Cursor cursor = (Cursor) mAdapter.getItem(info.position);
-                int cid = cursor.getInt(cursor.getColumnIndex("_id"));
-                ContentValues cv = new ContentValues(1);
-                cv.put("deleted", 1);
-                App.getApp().getContentResolver().update(YanKonProvider.URI_LIGHTS, cv, "_id=?",
-                        new String[]{Integer.toString(cid)});
-//                getActivity().getContentResolver().delete(YanKonProvider.URI_LIGHTS, "_id=" + cid, null);
+                if (info.position == 0) {
+                    for (String mac : mSelectedLights) {
+                        ContentValues cv = new ContentValues(1);
+                        cv.put("deleted", 1);
+                        App.getApp().getContentResolver().update(YanKonProvider.URI_LIGHTS, cv, "MAC=(?)",
+                                new String[]{mac});
+                    }
+                    mSelectedLights.clear();
+                } else {
+                    Cursor cursor = (Cursor) mAdapter.getItem(pos);
+                    int cid = cursor.getInt(cursor.getColumnIndex("_id"));
+                    String mac = cursor.getString(cursor.getColumnIndex("MAC"));
+                    ContentValues cv = new ContentValues(1);
+                    cv.put("deleted", 1);
+                    App.getApp().getContentResolver().update(YanKonProvider.URI_LIGHTS, cv, "_id=?",
+                            new String[]{Integer.toString(cid)});
+                    mSelectedLights.remove(mac);
+                }
+                updateHeaderView();
             }
             break;
         }
@@ -166,12 +269,49 @@ public class LightsFragment extends BaseListFragment {
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
-        Cursor cursor = (Cursor) mAdapter.getItem(position);
-        String name = cursor.getString(cursor.getColumnIndex("name"));
+        String name = null;
         Intent intent = new Intent(getActivity(), LightInfoActivity.class);
-        intent.putExtra(LightInfoActivity.EXTRA_LIGHT_ID, (int) id);
+        if (position == 0) {
+            if (mSelectedLights.size() == 0) {
+                Toast.makeText(getActivity(), R.string.lights_multiple_empty, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String[] lights = mSelectedLights.toArray(new String[mSelectedLights.size()]);
+            if (lights.length == 1) {
+                Cursor cursor = getActivity().getContentResolver().query(YanKonProvider.URI_LIGHTS,
+                        new String[]{"name", "_id"},
+                        "MAC=(?)", new String[]{lights[0]},
+                        null);
+                if (cursor != null) {
+                    if (cursor.moveToFirst()) {
+                        name = cursor.getString(0);
+                        id = cursor.getInt(1);
+                        intent.putExtra(LightInfoActivity.EXTRA_LIGHT_ID, (int) id);
+                    }
+                    cursor.close();
+                }
+            } else {
+                name = getString(R.string.lights_multiple_title, mSelectedLights.size());
+                intent.putExtra(LightInfoActivity.EXTRA_LIGHTS, lights);
+            }
+        } else {
+            Cursor cursor = (Cursor) mAdapter.getItem(position - 1);
+            name = cursor.getString(cursor.getColumnIndex("name"));
+            intent.putExtra(LightInfoActivity.EXTRA_LIGHT_ID, (int) id);
+        }
         intent.putExtra(LightInfoActivity.EXTRA_NAME, name);
         startActivity(intent);
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        String mac = (String) buttonView.getTag();
+        if (isChecked) {
+            mSelectedLights.add(mac);
+        } else {
+            mSelectedLights.remove(mac);
+        }
+        updateHeaderView();
     }
 
     class LightsAdapter extends CursorAdapter {
@@ -194,12 +334,23 @@ public class LightsFragment extends BaseListFragment {
             tv = (TextView) view.findViewById(android.R.id.text2);
             tv.setText(context.getString(R.string.light_model_format, modelName));
             View icon = view.findViewById(R.id.light_icon);
+            CheckBox checkBox = (CheckBox) view.findViewById(R.id.light_checkbox);
             final boolean state = cursor.getInt(cursor.getColumnIndex("state")) > 0;
             final int light_id = cursor.getInt(cursor.getColumnIndex("_id"));
-            if (state) {
-                icon.setBackgroundResource(R.drawable.light_on);
+            String mac = cursor.getString(cursor.getColumnIndex("MAC"));
+            if (inMultipleMode) {
+                checkBox.setVisibility(View.VISIBLE);
+                icon.setBackgroundResource(0);
+                checkBox.setTag(mac);
+                checkBox.setOnCheckedChangeListener(LightsFragment.this);
+                checkBox.setChecked(mSelectedLights.contains(mac));
             } else {
-                icon.setBackgroundResource(R.drawable.lights_off);
+                checkBox.setVisibility(View.GONE);
+                if (state) {
+                    icon.setBackgroundResource(R.drawable.light_on);
+                } else {
+                    icon.setBackgroundResource(R.drawable.lights_off);
+                }
             }
             final Switch light_switch = (Switch) view.findViewById(R.id.light_switch);
             light_switch.setChecked(state);

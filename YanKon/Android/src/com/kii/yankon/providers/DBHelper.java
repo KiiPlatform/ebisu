@@ -53,6 +53,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "deleted INTEGER DEFAULT 0"
                         + ");"
         );
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS lights_mac ON lights (MAC);");
         db.execSQL("CREATE TABLE IF NOT EXISTS models ("
                         + "_id INTEGER PRIMARY KEY, "
                         + "model TEXT,"
