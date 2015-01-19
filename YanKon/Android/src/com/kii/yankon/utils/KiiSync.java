@@ -658,29 +658,31 @@ public class KiiSync {
 
     private static void saveRemoteLightRecord(KiiObject object) {
         ContentValues values = new ContentValues();
-        values.put("MAC", object.getString("MAC"));
+        String mac = object.getString("MAC");
+        values.put("MAC", mac);
         values.put("name", object.getString("name"));
         values.put("model", object.getString("model"));
         values.put("remote_pwd", object.getString("remote_pwd"));
         values.put("admin_pwd", object.getString("admin_pwd"));
         values.put("owned_time", object.getLong("owned_time"));
         values.put("synced", true);
+        Uri uri = YanKonProvider.URI_LIGHTS;
         Cursor cursor = App.getApp().getContentResolver()
-                .query(YanKonProvider.URI_LIGHTS, null, "MAC=?",
-                        new String[]{object.getString("MAC")}, null);
+                .query(uri, null, "MAC=?",
+                        new String[]{mac}, null);
         if (cursor != null && cursor.moveToFirst()) {
             boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) == 1;
             boolean deleted = cursor.getInt(cursor.getColumnIndex("deleted")) == 1;
             if (!deleted) {
                 if (synced || Settings.isServerWin()) {
                     App.getApp().getContentResolver()
-                            .update(YanKonProvider.URI_LIGHTS, values, "MAC=?",
-                                    new String[]{object.getString("MAC")});
+                            .update(uri, values, "MAC=?",
+                                    new String[]{mac});
                 }
             }
         } else {
             //the remote record does not exist in local storage, save it
-            App.getApp().getContentResolver().insert(YanKonProvider.URI_LIGHTS, values);
+            App.getApp().getContentResolver().insert(uri, values);
         }
         if (cursor != null) {
             cursor.close();
@@ -688,43 +690,31 @@ public class KiiSync {
     }
 
     private static KiiBucket getLightBucket() {
-        KiiUser kiiUser = KiiUser.getCurrentUser();
-        if (kiiUser == null) {
-            return null;
-        }
-        return kiiUser.bucket("lights");
+        return getBucket("lights");
     }
 
     private static KiiBucket getGroupBucket() {
-        KiiUser kiiUser = KiiUser.getCurrentUser();
-        if (kiiUser == null) {
-            return null;
-        }
-        return kiiUser.bucket("light_groups");
+        return getBucket("light_groups");
     }
 
     private static KiiBucket getSceneBucket() {
-        KiiUser kiiUser = KiiUser.getCurrentUser();
-        if (kiiUser == null) {
-            return null;
-        }
-        return kiiUser.bucket("light_scenes");
+        return getBucket("light_scenes");
     }
 
     private static KiiBucket getColorBucket() {
-        KiiUser kiiUser = KiiUser.getCurrentUser();
-        if (kiiUser == null) {
-            return null;
-        }
-        return kiiUser.bucket("colors");
+        return getBucket("colors");
     }
 
     private static KiiBucket getScheduleBucket() {
+        return getBucket("schedules");
+    }
+
+    private static KiiBucket getBucket(String bucketName) {
         KiiUser kiiUser = KiiUser.getCurrentUser();
         if (kiiUser == null) {
             return null;
         }
-        return kiiUser.bucket("schedules");
+        return kiiUser.bucket(bucketName);
     }
 
     public static void getModels() {
