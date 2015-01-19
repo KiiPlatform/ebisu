@@ -1,12 +1,5 @@
 package com.kii.yankon.fragments;
 
-import com.kii.yankon.activities.AddLightsActivity;
-import com.kii.yankon.App;
-import com.kii.yankon.activities.LightInfoActivity;
-import com.kii.yankon.R;
-import com.kii.yankon.providers.YanKonProvider;
-import com.kii.yankon.utils.Utils;
-
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
@@ -27,6 +20,13 @@ import android.widget.CursorAdapter;
 import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
+
+import com.kii.yankon.App;
+import com.kii.yankon.R;
+import com.kii.yankon.activities.AddLights2Activity;
+import com.kii.yankon.activities.LightInfoActivity;
+import com.kii.yankon.providers.YanKonProvider;
+import com.kii.yankon.utils.Utils;
 
 /**
  * Created by Evan on 14/11/26.
@@ -49,7 +49,7 @@ public class LightsFragment extends BaseListFragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_add:
-                startActivity(new Intent(getActivity(), AddLightsActivity.class));
+                startActivity(new Intent(getActivity(), AddLights2Activity.class));
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -83,7 +83,7 @@ public class LightsFragment extends BaseListFragment {
                 c.close();
             }
             if (num == 0) {
-                startActivity(new Intent(getActivity(), AddLightsActivity.class));
+                startActivity(new Intent(getActivity(), AddLights2Activity.class));
             }
         }
     }

@@ -16,6 +16,7 @@ public class Light {
     public int id = -1;
     public boolean added;
     public boolean connected;
+    public boolean selected;
 
     @Override
     public boolean equals(Object o) {

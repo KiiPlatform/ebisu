@@ -74,5 +74,8 @@
     <string name="state_off">Off</string>
     <string name="state_on">On</string>
     <string name="title_activity_pick_target">Pick target</string>
+    <string name="title_activity_add_lights2">Add Lights</string>
+    <string name="action_select_all">Select all</string>
+    <string name="action_addlights_done">Done</string>
 
 </resources>
