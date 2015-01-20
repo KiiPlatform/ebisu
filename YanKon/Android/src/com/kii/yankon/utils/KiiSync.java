@@ -247,6 +247,7 @@ public class KiiSync {
                 colorObject.set("scene_id", cursor.getString(cursor.getColumnIndex("scene_id")));
                 colorObject.set("light_id", cursor.getString(cursor.getColumnIndex("light_id")));
                 colorObject.set("group_id", cursor.getString(cursor.getColumnIndex("group_id")));
+                colorObject.set("repeat", cursor.getString(cursor.getColumnIndex("repeat")));
                 colorObject.set("objectID", objectID);
                 try {
                     colorObject.saveAllFields(true);
