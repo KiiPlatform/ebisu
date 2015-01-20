@@ -218,7 +218,92 @@ public class KiiSync {
         uploadScenes();
         downloadColors();
         uploadColors();
+        downloadSchedules();
+        uploadSchedules();
         isSyncing = false;
+    }
+
+    private static void uploadSchedules() {
+        KiiBucket bucket = getScheduleBucket();
+        if (bucket == null) {
+            return;
+        }
+        Context context = App.getApp();
+        Cursor cursor = context.getContentResolver().query(YanKonProvider.URI_SCHEDULE, null,
+                "deleted=0", null, null);
+        if (cursor != null) {
+            do {
+                int light_id = cursor.getInt(cursor.getColumnIndex("_id"));
+                KiiObject colorObject;
+                String objectID = cursor.getString(cursor.getColumnIndex("objectID"));
+                colorObject = bucket.object(objectID);
+                colorObject.set("name", cursor.getString(cursor.getColumnIndex("name")));
+                colorObject.set("enabled", cursor.getInt(cursor.getColumnIndex("enabled")));
+                colorObject.set("color", cursor.getInt(cursor.getColumnIndex("color")));
+                colorObject.set("brightness", cursor.getInt(cursor.getColumnIndex("brightness")));
+                colorObject.set("CT", cursor.getInt(cursor.getColumnIndex("CT")));
+                colorObject.set("state", cursor.getInt(cursor.getColumnIndex("state")));
+                colorObject.set("time", cursor.getInt(cursor.getColumnIndex("time")));
+                colorObject.set("scene_id", cursor.getString(cursor.getColumnIndex("scene_id")));
+                colorObject.set("light_id", cursor.getString(cursor.getColumnIndex("light_id")));
+                colorObject.set("group_id", cursor.getString(cursor.getColumnIndex("group_id")));
+                colorObject.set("objectID", objectID);
+                try {
+                    colorObject.saveAllFields(true);
+                    ContentValues values = new ContentValues();
+                    values.put("synced", true);
+                    context.getContentResolver()
+                            .update(YanKonProvider.URI_SCHEDULE, values, "_id=" + light_id, null);
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, Log.getStackTraceString(e));
+                }
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+    }
+
+    private static void downloadSchedules() {
+        KiiBucket bucket = getScheduleBucket();
+        if (bucket == null) {
+            return;
+        }
+        try {
+            KiiQueryResult<KiiObject> result = bucket.query(null);
+            List<KiiObject> objList = result.getResult();
+            saveRemoteScheduleRecords(objList);
+            while (result.hasNext()) {
+                result = result.getNextQueryResult();
+                objList = result.getResult();
+                saveRemoteScheduleRecords(objList);
+            }
+        } catch (Exception e) {
+            Log.e(LOG_TAG, Log.getStackTraceString(e));
+        }
+    }
+
+    private static void saveRemoteScheduleRecords(List<KiiObject> objList) {
+        for (KiiObject object : objList) {
+            saveRemoteScheduleRecord(object);
+        }
+    }
+
+    private static void saveRemoteScheduleRecord(KiiObject object) {
+        ContentValues values = new ContentValues();
+        String objectId = object.getString("objectID");
+        values.put("objectID", objectId);
+        values.put("enabled", object.getBoolean("enabled"));
+        values.put("scene_id", object.getString("scene_id"));
+        values.put("light_id", object.getString("light_id"));
+        values.put("group_id", object.getString("group_id"));
+        values.put("color", object.getInt("color"));
+        values.put("brightness", object.getInt("brightness"));
+        values.put("CT", object.getInt("CT"));
+        values.put("state", object.getBoolean("state"));
+        values.put("time", object.getInt("time"));
+        values.put("repeat", object.getJsonArray("repeat").toString());
+        values.put("synced", true);
+        Uri uri = YanKonProvider.URI_SCHEDULE;
+        saveRemoteObject(values, objectId, uri);
     }
 
     private static void uploadColors() {
