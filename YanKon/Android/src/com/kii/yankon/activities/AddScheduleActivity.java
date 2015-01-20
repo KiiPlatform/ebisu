@@ -19,6 +19,8 @@ import com.kii.yankon.R;
 import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.utils.Constants;
 
+import org.json.JSONArray;
+
 import java.util.UUID;
 
 
@@ -28,6 +30,7 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
 
     private static final int REQUEST_SETTINGS = 0x1001;
     private static final int REQUEST_TARGET = 0x1002;
+    private static final int REQUEST_REPEAT = 0x1003;
     EditText mNameField;
     int schedule_id = -1;
     int color = Constants.DEFAULT_COLOR;
@@ -37,9 +40,10 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
     int time = 0;
     int type = -1;
     String targetId = null;
-    Button mTargetBtn, mSettingsBtn;
+    Button mTargetBtn, mSettingsBtn, mRepeatBtn;
     TimePicker mTimePicker;
     View settingsRow;
+    boolean[] repeatDays = new boolean[7];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +55,8 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
         mTargetBtn.setOnClickListener(this);
         mSettingsBtn = (Button) findViewById(R.id.settings_btn);
         mSettingsBtn.setOnClickListener(this);
+        mRepeatBtn = (Button) findViewById(R.id.repeat_btn);
+        mRepeatBtn.setOnClickListener(this);
         settingsRow = findViewById(R.id.settings_row);
         findViewById(R.id.schedule_cancel).setOnClickListener(this);
         findViewById(R.id.schedule_ok).setOnClickListener(this);
@@ -69,6 +75,15 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
                     CT = c.getInt(c.getColumnIndex("CT"));
                     state = c.getInt(c.getColumnIndex("state"));
                     time = c.getInt(c.getColumnIndex("time"));
+                    String repeat = c.getString(c.getColumnIndex("repeat"));
+                    try {
+                        JSONArray arr = new JSONArray(repeat);
+                        for (int i = 0; i < 7; i++) {
+                            repeatDays[i] = arr.optBoolean(i, false);
+                        }
+                    } catch (Exception e) {
+
+                    }
                     targetId = c.getString(c.getColumnIndex("light_id"));
                     type = -1;
                     if (!TextUtils.isEmpty(targetId)) {
@@ -92,6 +107,7 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
         }
         updateSettingsInfo();
         updateTargetInfo();
+        updateRepeatInfo();
         mTimePicker.setCurrentHour(time / 60);
         mTimePicker.setCurrentMinute(time % 60);
     }
@@ -126,6 +142,29 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
         settingsRow.setVisibility(type == 2 ? View.GONE : View.VISIBLE);
     }
 
+    public void updateRepeatInfo() {
+        int count = 0;
+        StringBuilder sb = new StringBuilder();
+        String[] dayName = getResources().getStringArray(R.array.short_days);
+        if (repeatDays != null) {
+            for (int i = 0; i < 7; i++) {
+                if (repeatDays[i]) {
+                    if (sb.length() > 0) {
+                        sb.append(", ");
+                    }
+                    sb.append(dayName[i]);
+                    count++;
+                }
+            }
+        }
+        if (count == 0) {
+            mRepeatBtn.setText(R.string.repeat_none);
+        } else if (count == 7) {
+            mRepeatBtn.setText(R.string.repeat_everyday);
+        } else {
+            mRepeatBtn.setText(sb.toString());
+        }
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -156,6 +195,12 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
                 startActivityForResult(intent, REQUEST_SETTINGS);
             }
             break;
+            case R.id.repeat_btn: {
+                Intent intent = new Intent(this, RepeatDaysActivity.class);
+                intent.putExtra("days", repeatDays);
+                startActivityForResult(intent, REQUEST_REPEAT);
+            }
+            break;
             case R.id.schedule_cancel:
                 finish();
                 break;
@@ -178,6 +223,9 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
                 type = data.getIntExtra("type", 0);
                 targetId = data.getStringExtra("id");
                 updateTargetInfo();
+            } else if (requestCode == REQUEST_REPEAT) {
+                repeatDays = data.getBooleanArrayExtra("days");
+                updateRepeatInfo();
             }
         }
     }
@@ -213,6 +261,18 @@ public class AddScheduleActivity extends Activity implements View.OnClickListene
             case 2:
                 values.put("scene_id", targetId);
                 break;
+        }
+        try {
+            JSONArray arr = new JSONArray();
+            for (int i = 0; i < 7; i++) {
+                if (repeatDays != null && repeatDays[i]) {
+                    arr.put(true);
+                } else {
+                    arr.put(false);
+                }
+            }
+            values.put("repeat", arr.toString());
+        } catch (Exception e) {
         }
         values.put("time", mTimePicker.getCurrentHour() * 60 + mTimePicker.getCurrentMinute());
         if (schedule_id < 0) {

@@ -6,5 +6,24 @@
         <item>Product Info</item>
         <item>About</item>
     </array>
+    <array name="short_days">
+        <item>MON</item>
+        <item>TUE</item>
+        <item>WED</item>
+        <item>THU</item>
+        <item>FRI</item>
+        <item>SAT</item>
+        <item>SUN</item>
+    </array>
+
+    <array name="days">
+        <item>Monday</item>
+        <item>Tuesday</item>
+        <item>Wednesday</item>
+        <item>Thursday</item>
+        <item>Friday</item>
+        <item>Saturday</item>
+        <item>Sunday</item>
+    </array>
 
 </resources>

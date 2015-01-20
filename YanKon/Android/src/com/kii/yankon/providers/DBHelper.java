@@ -145,6 +145,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "CT INTEGER,"
                         + "state BOOL DEFAULT 0,"
                         + "time INTEGER,"
+                        + "repeat TEXT,"
                         + "synced BOOL,"
                         + "created_time INTEGER,"
                         + "deleted INTEGER DEFAULT 0"

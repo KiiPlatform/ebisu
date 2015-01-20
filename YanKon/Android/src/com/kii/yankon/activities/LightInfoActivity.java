@@ -42,6 +42,7 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
     int group_id = -1;
     String mName;
     String[] lights;
+    boolean isForReturnValue = true;
 
     ColorCircle mColorCircle;
 
@@ -78,9 +79,15 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
         }
         Cursor c = null;
         if (light_id >= 0) {
+            isForReturnValue = false;
             c = getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "_id=" + light_id, null, null);
         } else if (group_id >= 0) {
+            isForReturnValue = false;
             c = getContentResolver().query(YanKonProvider.URI_LIGHT_GROUPS, null, "_id=" + group_id, null, null);
+        }
+
+        if (lights != null && lights.length > 0) {
+            isForReturnValue = false;
         }
 
         if (c != null) {
@@ -124,14 +131,14 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
     }
 
     protected void saveOnExit() {
-        ContentValues values = new ContentValues();
-        saveChange(values, true);
-        Intent intent = new Intent();
-        intent.putExtra("state", state);
-        intent.putExtra("color", color);
-        intent.putExtra("brightness", brightness);
-        intent.putExtra("CT", CT);
-        setResult(RESULT_OK, intent);
+//        ContentValues values = new ContentValues();
+//        saveChange(values, true);
+//        Intent intent = new Intent();
+//        intent.putExtra("state", state);
+//        intent.putExtra("color", color);
+//        intent.putExtra("brightness", brightness);
+//        intent.putExtra("CT", CT);
+//        setResult(RESULT_OK, intent);
     }
 
     void loadColors() {
@@ -211,8 +218,14 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_light_info, menu);
+        getMenuInflater().inflate(R.menu.light_info, menu);
         return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        menu.findItem(R.id.action_done).setVisible(isForReturnValue);
+        return super.onPrepareOptionsMenu(menu);
     }
 
     @Override
@@ -229,6 +242,16 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
                 saveOnExit();
                 finish();
                 return true;
+            case R.id.action_done: {
+                Intent intent = new Intent();
+                intent.putExtra("state", state);
+                intent.putExtra("color", color);
+                intent.putExtra("brightness", brightness);
+                intent.putExtra("CT", CT);
+                setResult(RESULT_OK, intent);
+                finish();
+            }
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }

@@ -87,4 +87,9 @@
     <string name="scene">Scene</string>
     <string name="empty_schedule_name">Schedule name cannot be empty</string>
     <string name="empty_schedule_target">Pick target first</string>
+    <string name="schedule_repeat_time">Repeat</string>
+    <string name="repeat_none">None</string>
+    <string name="title_activity_repeat_days">Repeat days</string>
+    <string name="repeat_everyday">Everyday</string>
+
 </resources>
