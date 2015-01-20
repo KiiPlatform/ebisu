@@ -3,5 +3,8 @@
 
 target 'YanKon' do
 pod "AMSlideMenu", "~> 1.5.3"
+pod 'FMDB'
+pod 'KxMenu', '~> 1'
+pod 'M13Checkbox', '~> 1.1.2'
 end
 
