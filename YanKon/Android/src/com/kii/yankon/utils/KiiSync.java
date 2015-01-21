@@ -24,6 +24,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by Evan on 14/12/20.
@@ -302,6 +303,7 @@ public class KiiSync {
         values.put("state", object.getBoolean("state"));
         values.put("time", object.getInt("time"));
         values.put("repeat", object.getJsonArray("repeat").toString());
+        values.put("deleted", object.getInt("deleted"));
         values.put("synced", true);
         Uri uri = YanKonProvider.URI_SCHEDULE;
         saveRemoteObject(values, objectId, uri);
@@ -314,7 +316,7 @@ public class KiiSync {
         }
         final Context context = App.getApp();
         Cursor cursor = context.getContentResolver().query(YanKonProvider.URI_COLORS, null,
-                "deleted=0", null, null);
+                null, null, null);
         if (cursor != null) {
             do {
                 int light_id = cursor.getInt(cursor.getColumnIndex("_id"));
@@ -324,6 +326,7 @@ public class KiiSync {
                 colorObject.set("name", cursor.getString(cursor.getColumnIndex("name")));
                 colorObject.set("value", cursor.getInt(cursor.getColumnIndex("value")));
                 colorObject.set("objectID", objectID);
+                colorObject.set("deleted", cursor.getInt(cursor.getColumnIndex("deleted")));
                 try {
                     colorObject.saveAllFields(true);
                     ContentValues values = new ContentValues();
@@ -370,6 +373,7 @@ public class KiiSync {
         values.put("name", object.getString("name"));
         values.put("value", object.getString("value"));
         values.put("synced", true);
+        values.put("deleted", object.getInt("deleted"));
         Uri uri = YanKonProvider.URI_COLORS;
         saveRemoteObject(values, objectId, uri);
     }
@@ -380,13 +384,13 @@ public class KiiSync {
                         new String[]{objectId}, null);
         if (cursor != null && cursor.moveToFirst()) {
             boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) == 1;
-            boolean deleted = cursor.getInt(cursor.getColumnIndex("deleted")) == 1;
-            if (!deleted) {
-                if (synced || Settings.isServerWin()) {
-                    App.getApp().getContentResolver()
-                            .update(uri, values, "objectID=?",
-                                    new String[]{objectId});
-                }
+            if (synced || Settings.isServerWin()) {
+                App.getApp().getContentResolver()
+                        .update(uri, values, "objectID=?",
+                                new String[]{objectId});
+            } else if (Settings.isBothWin()) {
+                values.put("objectID", UUID.randomUUID().toString());
+                App.getApp().getContentResolver().insert(uri, values);
             }
         } else {
             //the remote record does not exist in local storage, save it
@@ -404,7 +408,7 @@ public class KiiSync {
         }
         final Context context = App.getApp();
         Cursor cursor = context.getContentResolver().query(YanKonProvider.URI_SCENES, null,
-                "deleted=0", null, null);
+                null, null, null);
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) > 0;
@@ -446,6 +450,7 @@ public class KiiSync {
                 sceneObject.set("name", cursor.getString(cursor.getColumnIndex("name")));
                 sceneObject
                         .set("created_time", cursor.getLong(cursor.getColumnIndex("created_time")));
+                sceneObject.set("deleted", cursor.getInt(cursor.getColumnIndex("deleted")));
                 sceneObject.set("scene_detail", childItems);
                 try {
                     sceneObject.saveAllFields(true);
@@ -468,7 +473,7 @@ public class KiiSync {
         }
         final Context context = App.getApp();
         Cursor cursor = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUPS, null,
-                "deleted=0", null, null);
+                null, null, null);
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) > 0;
@@ -496,6 +501,7 @@ public class KiiSync {
                 groupObj.set("state", cursor.getInt(cursor.getColumnIndex("state")) > 0);
                 groupObj.set("created_time", cursor.getLong(cursor.getColumnIndex("created_time")));
                 groupObj.set("lights", childLights);
+                groupObj.set("deleted", cursor.getInt(cursor.getColumnIndex("deleted")));
                 try {
                     groupObj.saveAllFields(true);
                     ContentValues values = new ContentValues();
@@ -518,7 +524,7 @@ public class KiiSync {
         }
         final Context context = App.getApp();
         Cursor cursor = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null,
-                "deleted=0", null, null);
+                null, null, null);
         if (cursor != null) {
             do {
                 int light_id = cursor.getInt(cursor.getColumnIndex("_id"));
@@ -535,6 +541,7 @@ public class KiiSync {
 //                lightObj.set("color", cursor.getInt(cursor.getColumnIndex("color")));
 //                lightObj.set("state", cursor.getInt(cursor.getColumnIndex("state")) > 0);
                 lightObj.set("owned_time", cursor.getLong(cursor.getColumnIndex("owned_time")));
+                lightObj.set("deleted", cursor.getInt(cursor.getColumnIndex("deleted")));
                 try {
                     lightObj.saveAllFields(true);
                     ContentValues values = new ContentValues();
@@ -624,6 +631,7 @@ public class KiiSync {
         Uri uri = YanKonProvider.URI_SCENES;
         values.put("objectID", objectId);
         values.put("name", object.getString("name"));
+        values.put("deleted", object.getInt("deleted"));
         saveRemoteObject(values, objectId, uri);
         processSceneDetail(object);
     }
@@ -671,6 +679,7 @@ public class KiiSync {
         values.put("color", object.getInt("color"));
         values.put("brightness", object.getInt("brightness"));
         values.put("CT", object.getInt("CT"));
+        values.put("deleted", object.getInt("deleted"));
         values.put("synced", true);
         Uri uri = YanKonProvider.URI_LIGHT_GROUPS;
         saveRemoteObject(values, objectId, uri);
@@ -785,6 +794,7 @@ public class KiiSync {
         values.put("remote_pwd", object.getString("remote_pwd"));
         values.put("admin_pwd", object.getString("admin_pwd"));
         values.put("owned_time", object.getLong("owned_time"));
+        values.put("deleted", object.getInt("deleted"));
         values.put("synced", true);
         Uri uri = YanKonProvider.URI_LIGHTS;
         Cursor cursor = App.getApp().getContentResolver()
@@ -792,13 +802,13 @@ public class KiiSync {
                         new String[]{mac}, null);
         if (cursor != null && cursor.moveToFirst()) {
             boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) == 1;
-            boolean deleted = cursor.getInt(cursor.getColumnIndex("deleted")) == 1;
-            if (!deleted) {
-                if (synced || Settings.isServerWin()) {
-                    App.getApp().getContentResolver()
-                            .update(uri, values, "MAC=?",
-                                    new String[]{mac});
-                }
+            if (synced || Settings.isServerWin()) {
+                App.getApp().getContentResolver()
+                        .update(uri, values, "MAC=?",
+                                new String[]{mac});
+            } else if (Settings.isBothWin()) {
+                values.put("MAC", mac);
+                App.getApp().getContentResolver().insert(uri, values);
             }
         } else {
             //the remote record does not exist in local storage, save it
