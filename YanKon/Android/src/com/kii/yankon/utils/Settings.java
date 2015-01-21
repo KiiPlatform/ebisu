@@ -91,4 +91,6 @@ public class Settings {
     public static boolean isServerWin() {
         return true;
     }
+
+    public static boolean isBothWin() {return false;}
 }
