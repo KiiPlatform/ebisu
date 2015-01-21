@@ -26,4 +26,12 @@
 }
 
 
+-(void)configureLeftMenuButton:(UIButton *)button
+{
+    CGRect frame = button.frame;
+    frame = CGRectMake(0, 0, 25, 25);
+    button.frame = frame;
+    [button setBackgroundColor:[UIColor blackColor]];
+}
+
 @end

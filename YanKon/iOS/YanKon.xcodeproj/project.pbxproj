@@ -16,6 +16,8 @@
 		204370DA1A1CE04900D96242 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 204370D81A1CE04900D96242 /* Main.storyboard */; };
 		204370DC1A1CE04900D96242 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 204370DB1A1CE04900D96242 /* Images.xcassets */; };
 		204370DF1A1CE04900D96242 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 204370DD1A1CE04900D96242 /* LaunchScreen.xib */; };
+		20B0BD871A6ED702004EE954 /* AddLightsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 20B0BD861A6ED702004EE954 /* AddLightsViewController.m */; };
+		20B0BD8A1A6ED9FB004EE954 /* BasicTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 20B0BD891A6ED9FB004EE954 /* BasicTableViewCell.m */; };
 		47752FA2FE292FBA9F279FC4 /* libPods-YanKon.a in Frameworks */ = {isa = PBXBuildFile; fileRef = FAB09959CB2DCF5C1BB0AEED /* libPods-YanKon.a */; };
 /* End PBXBuildFile section */
 
@@ -37,6 +39,10 @@
 		204370DB1A1CE04900D96242 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		204370DE1A1CE04900D96242 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
 		20954D35651ABD4042B0572A /* Pods-YanKon.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YanKon.debug.xcconfig"; path = "Pods/Target Support Files/Pods-YanKon/Pods-YanKon.debug.xcconfig"; sourceTree = "<group>"; };
+		20B0BD851A6ED702004EE954 /* AddLightsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AddLightsViewController.h; sourceTree = "<group>"; };
+		20B0BD861A6ED702004EE954 /* AddLightsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AddLightsViewController.m; sourceTree = "<group>"; };
+		20B0BD881A6ED9FB004EE954 /* BasicTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BasicTableViewCell.h; sourceTree = "<group>"; };
+		20B0BD891A6ED9FB004EE954 /* BasicTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BasicTableViewCell.m; sourceTree = "<group>"; };
 		AA6A9478F5B9E4A3C54DF0DF /* Pods-YanKon.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YanKon.release.xcconfig"; path = "Pods/Target Support Files/Pods-YanKon/Pods-YanKon.release.xcconfig"; sourceTree = "<group>"; };
 		FAB09959CB2DCF5C1BB0AEED /* libPods-YanKon.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-YanKon.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -74,20 +80,16 @@
 		204370CA1A1CE04900D96242 /* YanKon */ = {
 			isa = PBXGroup;
 			children = (
-				202596A41A6C3D91007493A3 /* UIColor+CreateMethods.h */,
-				202596A51A6C3D91007493A3 /* UIColor+CreateMethods.m */,
+				20B0BD8B1A6EDC04004EE954 /* ViewControllers */,
+				20B0BD8C1A6EDC1B004EE954 /* Categories */,
 				204370CF1A1CE04900D96242 /* AppDelegate.h */,
 				204370D01A1CE04900D96242 /* AppDelegate.m */,
 				204370D81A1CE04900D96242 /* Main.storyboard */,
 				204370DB1A1CE04900D96242 /* Images.xcassets */,
 				204370DD1A1CE04900D96242 /* LaunchScreen.xib */,
 				204370CB1A1CE04900D96242 /* Supporting Files */,
-				2003026D1A6B6B88001F0667 /* MainViewController.h */,
-				2003026E1A6B6B88001F0667 /* MainViewController.m */,
-				200302701A6B6BED001F0667 /* LeftMenu.h */,
-				200302711A6B6BED001F0667 /* LeftMenu.m */,
-				202596A11A6C3571007493A3 /* LightsViewController.h */,
-				202596A21A6C3571007493A3 /* LightsViewController.m */,
+				20B0BD881A6ED9FB004EE954 /* BasicTableViewCell.h */,
+				20B0BD891A6ED9FB004EE954 /* BasicTableViewCell.m */,
 			);
 			path = YanKon;
 			sourceTree = "<group>";
@@ -99,6 +101,30 @@
 				204370CD1A1CE04900D96242 /* main.m */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		20B0BD8B1A6EDC04004EE954 /* ViewControllers */ = {
+			isa = PBXGroup;
+			children = (
+				2003026D1A6B6B88001F0667 /* MainViewController.h */,
+				2003026E1A6B6B88001F0667 /* MainViewController.m */,
+				200302701A6B6BED001F0667 /* LeftMenu.h */,
+				200302711A6B6BED001F0667 /* LeftMenu.m */,
+				202596A11A6C3571007493A3 /* LightsViewController.h */,
+				202596A21A6C3571007493A3 /* LightsViewController.m */,
+				20B0BD851A6ED702004EE954 /* AddLightsViewController.h */,
+				20B0BD861A6ED702004EE954 /* AddLightsViewController.m */,
+			);
+			name = ViewControllers;
+			sourceTree = "<group>";
+		};
+		20B0BD8C1A6EDC1B004EE954 /* Categories */ = {
+			isa = PBXGroup;
+			children = (
+				202596A41A6C3D91007493A3 /* UIColor+CreateMethods.h */,
+				202596A51A6C3D91007493A3 /* UIColor+CreateMethods.m */,
+			);
+			name = Categories;
 			sourceTree = "<group>";
 		};
 		A588AA9733719F3DC8494E84 /* Pods */ = {
@@ -223,9 +249,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				20B0BD871A6ED702004EE954 /* AddLightsViewController.m in Sources */,
 				204370D11A1CE04900D96242 /* AppDelegate.m in Sources */,
 				200302721A6B6BED001F0667 /* LeftMenu.m in Sources */,
 				202596A61A6C3D91007493A3 /* UIColor+CreateMethods.m in Sources */,
+				20B0BD8A1A6ED9FB004EE954 /* BasicTableViewCell.m in Sources */,
 				2003026F1A6B6B88001F0667 /* MainViewController.m in Sources */,
 				202596A31A6C3571007493A3 /* LightsViewController.m in Sources */,
 				204370CE1A1CE04900D96242 /* main.m in Sources */,
