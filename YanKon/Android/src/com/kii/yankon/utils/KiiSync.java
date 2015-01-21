@@ -23,6 +23,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
@@ -495,13 +496,17 @@ public class KiiSync {
                 }
                 int group_id = cursor.getInt(cursor.getColumnIndex("_id"));
                 String objectID = cursor.getString(cursor.getColumnIndex("objectID"));
-                JSONArray childLights = new JSONArray();
+                JSONObject childLights = new JSONObject();
                 Cursor childCursor = context.getContentResolver()
                         .query(YanKonProvider.URI_LIGHT_GROUP_REL, new String[]{"MAC"},
                                 "group_id=" + group_id, null, null);
                 if (childCursor != null) {
                     while (childCursor.moveToNext()) {
-                        childLights.put(childCursor.getString(0));
+                        try {
+                            childLights.put(childCursor.getString(0), true);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
                     childCursor.close();
                 }
@@ -707,10 +712,11 @@ public class KiiSync {
                     .delete(YanKonProvider.URI_LIGHT_GROUP_REL, "group_id=?",
                             new String[]{groupId});
         }
-        JSONArray array = object.getJsonArray("lights");
-        if (array != null && array.length() > 0) {
-            for (int i = 0; i < array.length(); i++) {
-                String mac = array.optString(i);
+        JSONObject array = object.getJSONObject("lights");
+        if (array != null) {
+            Iterator<String> it = array.keys();
+            while (it.hasNext()) {
+                String mac = it.next();
                 if (!TextUtils.isEmpty(mac)) {
                     String lightId = getLightIdByMac(mac);
                     ContentValues cv = new ContentValues(2);
