@@ -57,7 +57,7 @@ static Global *instance = nil;
 - (void)createDBSQL:(FMDatabase*)db
 {
     [db executeStatements:@"CREATE TABLE IF NOT EXISTS lights ("
-     "_id INTEGER PRIMARY KEY, "
+     "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
      "MAC TEXT NOT NULL,"
      "ver INTEGER,"
      "ThingID TEXT,"
@@ -78,7 +78,7 @@ static Global *instance = nil;
      ");"];
     [db executeStatements:@"CREATE UNIQUE INDEX IF NOT EXISTS lights_mac ON lights (MAC);"];
     [db executeStatements:@"CREATE TABLE IF NOT EXISTS models ("
-     "_id INTEGER PRIMARY KEY, "
+     "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
      "model TEXT,"
      "pic TEXT,"
      "des TEXT, "
@@ -86,7 +86,7 @@ static Global *instance = nil;
      ");"
      ];
     [db executeStatements:@"CREATE TABLE IF NOT EXISTS colors ("
-     "_id INTEGER PRIMARY KEY, "
+     "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
      "objectID TEXT,"
      "ver INTEGER,"
      "name TEXT,"
@@ -98,7 +98,7 @@ static Global *instance = nil;
      ];
     
     [db executeStatements:@"CREATE TABLE IF NOT EXISTS light_groups ("
-     "_id INTEGER PRIMARY KEY, "
+     "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
      "objectID TEXT,"
      "ver INTEGER,"
      "name TEXT,"
@@ -112,7 +112,7 @@ static Global *instance = nil;
      ");"
      ];
     [db executeStatements:@"CREATE TABLE IF NOT EXISTS light_group_rel ("
-     "_id INTEGER PRIMARY KEY, "
+     "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
      "light_id INTEGER,"
      "group_id INTEGER,"
      "created_time INTEGER,"
@@ -132,7 +132,7 @@ static Global *instance = nil;
      " FROM light_groups;"];
     
     [db executeStatements:@"CREATE TABLE IF NOT EXISTS scenes ("
-     "_id INTEGER PRIMARY KEY, "
+     "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
      "objectID TEXT,"
      "ver INTEGER,"
      "name TEXT,"
@@ -143,7 +143,7 @@ static Global *instance = nil;
      ");"
      ];
     [db executeStatements:@"CREATE TABLE IF NOT EXISTS scenes_detail ("
-     "_id INTEGER PRIMARY KEY, "
+     "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
      "scene_id INTEGER,"
      "light_id INTEGER DEFAULT -1,"
      "group_id INTEGER DEFAULT -1,"
@@ -157,7 +157,7 @@ static Global *instance = nil;
      ");"
      ];
     [db executeStatements:@"CREATE TABLE IF NOT EXISTS schedule ("
-     "_id INTEGER PRIMARY KEY, "
+     "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
      "enabled BOOL DEFAULT 0,"
      "name TEXT,"
      "scene_id TEXT DEFAULT NULL,"
@@ -177,7 +177,7 @@ static Global *instance = nil;
      ");"
      ];
     [db executeStatements:@"CREATE TABLE IF NOT EXISTS actions ("
-     "_id INTEGER PRIMARY KEY, "
+     "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
      "objectID TEXT,"
      "ver INTEGER,"
      "name TEXT,"

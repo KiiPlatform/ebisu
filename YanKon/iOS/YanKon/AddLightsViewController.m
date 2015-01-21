@@ -92,12 +92,30 @@
     [self updateSelectAll];
 }
 
+- (void)addLight:(Light*)light toDB:(FMDatabase*)db
+{
+    long long time = (long long)([[NSDate date] timeIntervalSince1970] * 1000);
+    [db executeUpdate:@"INSERT OR REPLACE INTO lights "
+        " (MAC,model,state,IP,color,brightness,CT,name,owned_time,connected,deleted) "
+        " values (?,?,?,?,?,?,?,?,?,1,0);",
+        light.mac,light.model,@(light.state),light.ip,
+        @(light.color),@(light.brightness),@(light.CT),light.name,@(time)];
+}
 
 - (IBAction)clickOnCancel:(id)sender {
     [self.navigationController dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (IBAction)clickOnDone:(id)sender {
+    FMDatabaseQueue *queue = [Global getFMDBQueue];
+    [queue inTransaction:^(FMDatabase *db, BOOL *rollback) {
+        for (Light *light in self.lights) {
+            if (!light.added && light.selected) {
+                [self addLight:light toDB:db];
+            }
+        }
+    }];
+    [queue close];
     [self.navigationController dismissViewControllerAnimated:YES completion:nil];
 }
 
