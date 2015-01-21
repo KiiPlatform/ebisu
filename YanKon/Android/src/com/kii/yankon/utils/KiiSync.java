@@ -306,7 +306,7 @@ public class KiiSync {
         values.put("deleted", object.getInt("deleted"));
         values.put("synced", true);
         Uri uri = YanKonProvider.URI_SCHEDULE;
-        saveRemoteObject(values, objectId, uri);
+        saveRemoteObject(values, uri, object);
     }
 
     private static void uploadColors() {
@@ -375,30 +375,43 @@ public class KiiSync {
         values.put("synced", true);
         values.put("deleted", object.getInt("deleted"));
         Uri uri = YanKonProvider.URI_COLORS;
-        saveRemoteObject(values, objectId, uri);
+        saveRemoteObject(values, uri, object);
     }
 
-    private static void saveRemoteObject(ContentValues values, String objectId, Uri uri) {
+    private static String saveRemoteObject(ContentValues values, Uri uri,
+            KiiObject object) {
+        String objectId = object.getString("objectID");
+        int objVersion = object.getInt("_version");
         Cursor cursor = App.getApp().getContentResolver()
                 .query(uri, null, "objectID=?",
                         new String[]{objectId}, null);
-        if (cursor != null && cursor.moveToFirst()) {
-            boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) == 1;
-            if (synced || Settings.isServerWin()) {
-                App.getApp().getContentResolver()
-                        .update(uri, values, "objectID=?",
-                                new String[]{objectId});
-            } else if (Settings.isBothWin()) {
-                values.put("objectID", UUID.randomUUID().toString());
+        try {
+            if (cursor != null && cursor.moveToFirst()) {
+                boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) == 1;
+                int version = cursor.getInt(cursor.getColumnIndex("ver"));
+                if (synced) {
+                    if (version != objVersion) {
+                        App.getApp().getContentResolver()
+                                .update(uri, values, "objectID=?",
+                                        new String[]{objectId});
+                    }
+                } else if (Settings.isBothWin()) {
+                    String newId = UUID.randomUUID().toString();
+                    values.put("objectID", newId);
+                    App.getApp().getContentResolver().insert(uri, values);
+                    return newId;
+                }
+            } else {
+                //the remote record does not exist in local storage, save it
                 App.getApp().getContentResolver().insert(uri, values);
             }
-        } else {
-            //the remote record does not exist in local storage, save it
-            App.getApp().getContentResolver().insert(uri, values);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
         }
-        if (cursor != null) {
-            cursor.close();
-        }
+
+        return null;
     }
 
     private static void uploadScenes() {
@@ -632,12 +645,12 @@ public class KiiSync {
         values.put("objectID", objectId);
         values.put("name", object.getString("name"));
         values.put("deleted", object.getInt("deleted"));
-        saveRemoteObject(values, objectId, uri);
-        processSceneDetail(object);
+        String newId = saveRemoteObject(values, uri, object);
+        processSceneDetail(object, newId);
     }
 
-    private static void processSceneDetail(KiiObject object) {
-        String objectId = object.getString("_id");
+    private static void processSceneDetail(KiiObject object, String newId) {
+        String objectId = newId == null ? object.getString("_id") : newId;
         if (Settings.isServerWin()) {
             App.getApp().getContentResolver()
                     .delete(YanKonProvider.URI_SCENES_DETAIL, "objectID=?", new String[]{objectId});
@@ -682,12 +695,12 @@ public class KiiSync {
         values.put("deleted", object.getInt("deleted"));
         values.put("synced", true);
         Uri uri = YanKonProvider.URI_LIGHT_GROUPS;
-        saveRemoteObject(values, objectId, uri);
-        processRel(object);
+        String newId = saveRemoteObject(values, uri, object);
+        processRel(object, newId);
     }
 
-    private static void processRel(KiiObject object) {
-        String groupId = getGroupIdByObjId(object.getString("_id"));
+    private static void processRel(KiiObject object, String newId) {
+        String groupId = newId == null ? getGroupIdByObjId(object.getString("_id")) : newId;
 
         if (Settings.isServerWin()) {
             App.getApp().getContentResolver()
