@@ -4,6 +4,7 @@ import com.kii.yankon.App;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
 /**
  * Created by tian on 14-9-17:上午7:43.
@@ -88,28 +89,29 @@ public class Settings {
         getPrefs().edit().commit();
     }
 
-    public static final int SERVER_WIN = 1;
+    public static final int SERVER_WIN = 0;
 
-    public static final int CLIENT_WIN = 2;
+    public static final int CLIENT_WIN = 1;
 
-    public static final int BOTH_WIN = 3;
+    public static final int BOTH_WIN = 2;
 
-    private static final String WIN_POLICY = "win_policy";
-
-    public static void setWinPolicy(int winPolicy) {
-        getPrefs().edit().putInt(WIN_POLICY, winPolicy).apply();
-    }
-
-    public static String getWinPolicy() {
-        return getPrefs().getString(WIN_POLICY, "server");
+    public static int getWinPolicy() {
+        int ret = 0;
+        try {
+            ret = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(App.getApp())
+                    .getString("win_policy", "0"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ret;
     }
 
     public static boolean isServerWin() {
-        return getWinPolicy().equals("server");
+        return getWinPolicy() == SERVER_WIN;
     }
 
     public static boolean isBothWin() {
-        return getWinPolicy().equals("both");
+        return getWinPolicy() == BOTH_WIN;
     }
 
 }

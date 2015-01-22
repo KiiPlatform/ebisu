@@ -7,6 +7,13 @@
         android:entries="@array/sync_policies"
         android:entryValues="@array/sync_policy_values"
         android:defaultValue="0"
-        android:summary="@string/sync_configurations"
+        />
+    <ListPreference
+        android:key="default_home_page"
+        android:title="@string/default_home_page"
+        android:dialogTitle="@string/default_home_page"
+        android:entries="@array/default_home_page_entries"
+        android:entryValues="@array/default_home_page_entry_values"
+        android:defaultValue="0"
         />
 </PreferenceScreen>

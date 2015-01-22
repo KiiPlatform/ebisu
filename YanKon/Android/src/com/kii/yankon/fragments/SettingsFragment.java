@@ -34,37 +34,38 @@ public class SettingsFragment extends PreferenceFragment implements
     @Override
     public void onResume() {
         super.onResume();
-        getPreferenceScreen().getSharedPreferences()
-                .registerOnSharedPreferenceChangeListener(this);
+        mPref.registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        getPreferenceScreen().getSharedPreferences()
-                .unregisterOnSharedPreferenceChangeListener(this);
+        mPref.unregisterOnSharedPreferenceChangeListener(this);
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // Load the preferences from an XML resource
         addPreferencesFromResource(R.xml.preferences);
         mPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
         mSyncConfigPref = (ListPreference) findPreference("win_policy");
+        mDefaultHomePref = (ListPreference) findPreference("default_home_page");
         setupSyncPolicy();
     }
 
     private void setupSyncPolicy() {
         int winPolicyIndex = 0;
+        int defaultHomePage = 0;
         try {
             winPolicyIndex = Integer.parseInt(mSyncConfigPref.getValue());
+            defaultHomePage = Integer.parseInt(mDefaultHomePref.getValue());
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
         mSyncConfigPref.setSummary(
                 getResources().getStringArray(R.array.sync_policies)[winPolicyIndex]);
+        mDefaultHomePref.setSummary(
+                getResources().getStringArray(R.array.default_home_page_entries)[defaultHomePage]);
     }
 
 

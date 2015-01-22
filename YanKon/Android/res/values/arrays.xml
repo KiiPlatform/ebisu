@@ -37,5 +37,20 @@
         <item>1</item>
         <item>2</item>
     </string-array>
-
+    <array name="default_home_page_entries">
+        <item>Lights</item>
+        <item>Groups</item>
+        <item>Scenes</item>
+        <item>Schedules</item>
+        <item>Actions</item>
+        <item>Colors</item>
+    </array>
+    <string-array name="default_home_page_entry_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+    </string-array>
 </resources>
