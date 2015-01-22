@@ -91,5 +91,6 @@
     <string name="repeat_none">None</string>
     <string name="title_activity_repeat_days">Repeat days</string>
     <string name="repeat_everyday">Everyday</string>
+    <string name="profile_sync">Sync</string>
 
 </resources>

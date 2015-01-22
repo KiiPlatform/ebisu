@@ -1,12 +1,8 @@
 package com.kii.yankon.providers;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.graphics.Color;
-
-import java.util.UUID;
 
 /**
  * Created by Evan on 14/11/27.
@@ -160,6 +156,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         + "created_time INTEGER"
                         + ");"
         );
+        /*
         db.execSQL("CREATE TRIGGER IF NOT EXISTS light_group_delete"
                 + " BEFORE DELETE ON light_groups"
                 + " FOR EACH ROW"
@@ -178,20 +175,21 @@ public class DBHelper extends SQLiteOpenHelper {
                 + " BEFORE DELETE ON light_group_rel"
                 + " FOR EACH ROW"
                 + " BEGIN"
-                + " UPDATE light_groups SET synced=false WHERE light_groups._id=old.group_id;"
+                + " UPDATE light_groups SET synced=0 WHERE light_groups._id=old.group_id;"
                 + " END;");
         db.execSQL("CREATE TRIGGER IF NOT EXISTS scenes_detail_delete"
                 + " BEFORE DELETE ON scenes_detail"
                 + " FOR EACH ROW"
                 + " BEGIN"
-                + " UPDATE scenes SET synced=false WHERE scenes._id=old.scene_id;"
+                + " UPDATE scenes SET synced=0 WHERE scenes._id=old.scene_id;"
                 + " END;");
         db.execSQL("CREATE TRIGGER IF NOT EXISTS scenes_detail_update"
                 + " BEFORE UPDATE ON scenes_detail"
                 + " FOR EACH ROW"
                 + " BEGIN"
-                + " UPDATE scenes SET synced=false WHERE scenes._id=old.scene_id;"
+                + " UPDATE scenes SET synced=0 WHERE scenes._id=old.scene_id;"
                 + " END;");
+
         ContentValues values = new ContentValues();
         values.put("objectID", UUID.randomUUID().toString());
         values.put("ver", 1);
@@ -232,7 +230,7 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("name", "Turn Off");
         values.put("created_time", 2);
         db.insert("actions", null, values);
-
+        */
         //TODO Below is mock data, need to be removed
     }
 

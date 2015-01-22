@@ -1,5 +1,12 @@
 package com.kii.yankon.utils;
 
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+import android.text.TextUtils;
+import android.util.Log;
+
 import com.kii.cloud.storage.Kii;
 import com.kii.cloud.storage.KiiBucket;
 import com.kii.cloud.storage.KiiObject;
@@ -15,13 +22,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.content.ContentValues;
-import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
-import android.text.TextUtils;
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -36,6 +36,7 @@ public class KiiSync {
 
     private static boolean isSyncing = false;
 
+    /*
     public static boolean syncLights(Context context, Cursor cursor) {
         KiiUser kiiUser = KiiUser.getCurrentUser();
         if (kiiUser == null) {
@@ -147,7 +148,7 @@ public class KiiSync {
         };
         new Thread(runnable).start();
     }
-
+    */
     /*
         public static String registLamp(String MAC) {
             String result = null;
@@ -210,7 +211,16 @@ public class KiiSync {
         return result;
     }
 
+    public static String getCursorString(Cursor cursor, int col) {
+        String s = cursor.getString(col);
+        if (s == null)
+            return "";
+        return s;
+    }
+
     public static void sync() {
+        if (isSyncing)
+            return;
         isSyncing = true;
         downloadLights();
         uploadLights();
@@ -234,7 +244,7 @@ public class KiiSync {
         Cursor cursor = context.getContentResolver().query(YanKonProvider.URI_SCHEDULE, null,
                 "deleted=0", null, null);
         if (cursor != null) {
-            do {
+            while (cursor.moveToNext()) {
                 int light_id = cursor.getInt(cursor.getColumnIndex("_id"));
                 KiiObject colorObject;
                 String objectID = cursor.getString(cursor.getColumnIndex("objectID"));
@@ -249,7 +259,16 @@ public class KiiSync {
                 colorObject.set("scene_id", cursor.getString(cursor.getColumnIndex("scene_id")));
                 colorObject.set("light_id", cursor.getString(cursor.getColumnIndex("light_id")));
                 colorObject.set("group_id", cursor.getString(cursor.getColumnIndex("group_id")));
-                colorObject.set("repeat", cursor.getString(cursor.getColumnIndex("repeat")));
+                String repeat = cursor.getString(cursor.getColumnIndex("repeat"));
+                JSONArray repeatArr = null;
+                try {
+                    repeatArr = new JSONArray(repeat);
+                } catch (Exception e) {
+                    repeatArr = new JSONArray();
+                    for (int i = 0; i < 7; i++)
+                        repeatArr.put(false);
+                }
+                colorObject.set("repeat", repeatArr);
                 colorObject.set("objectID", objectID);
                 try {
                     colorObject.saveAllFields(true);
@@ -260,7 +279,9 @@ public class KiiSync {
                 } catch (Exception e) {
                     Log.e(LOG_TAG, Log.getStackTraceString(e));
                 }
-            } while (cursor.moveToNext());
+            }
+            ;
+
             cursor.close();
         }
     }
@@ -294,7 +315,7 @@ public class KiiSync {
         ContentValues values = new ContentValues();
         String objectId = object.getString("objectID");
         values.put("objectID", objectId);
-        values.put("enabled", object.getBoolean("enabled"));
+        values.put("enabled", object.getInt("enabled"));
         values.put("scene_id", object.getString("scene_id"));
         values.put("light_id", object.getString("light_id"));
         values.put("group_id", object.getString("group_id"));
@@ -319,7 +340,11 @@ public class KiiSync {
         Cursor cursor = context.getContentResolver().query(YanKonProvider.URI_COLORS, null,
                 null, null, null);
         if (cursor != null) {
-            do {
+            while (cursor.moveToNext()) {
+                boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) > 0;
+                if (synced) {
+                    continue;
+                }
                 int light_id = cursor.getInt(cursor.getColumnIndex("_id"));
                 KiiObject colorObject;
                 String objectID = cursor.getString(cursor.getColumnIndex("objectID"));
@@ -337,7 +362,8 @@ public class KiiSync {
                 } catch (Exception e) {
                     Log.e(LOG_TAG, Log.getStackTraceString(e));
                 }
-            } while (cursor.moveToNext());
+            }
+            ;
             cursor.close();
         }
     }
@@ -380,7 +406,7 @@ public class KiiSync {
     }
 
     private static String saveRemoteObject(ContentValues values, Uri uri,
-            KiiObject object) {
+                                           KiiObject object) {
         String objectId = object.getString("objectID");
         int objVersion = object.getInt("_version");
         Cursor cursor = App.getApp().getContentResolver()
@@ -461,6 +487,7 @@ public class KiiSync {
                 }
                 KiiObject sceneObject;
                 sceneObject = bucket.object(objectID);
+                sceneObject.set("objectID", objectID);
                 sceneObject.set("name", cursor.getString(cursor.getColumnIndex("name")));
                 sceneObject
                         .set("created_time", cursor.getLong(cursor.getColumnIndex("created_time")));
@@ -516,7 +543,7 @@ public class KiiSync {
                 groupObj.set("brightness", cursor.getInt(cursor.getColumnIndex("brightness")));
                 groupObj.set("CT", cursor.getInt(cursor.getColumnIndex("CT")));
                 groupObj.set("color", cursor.getInt(cursor.getColumnIndex("color")));
-                groupObj.set("state", cursor.getInt(cursor.getColumnIndex("state")) > 0);
+                groupObj.set("state", cursor.getInt(cursor.getColumnIndex("state")));
                 groupObj.set("created_time", cursor.getLong(cursor.getColumnIndex("created_time")));
                 groupObj.set("lights", childLights);
                 groupObj.set("deleted", cursor.getInt(cursor.getColumnIndex("deleted")));
@@ -544,15 +571,19 @@ public class KiiSync {
         Cursor cursor = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null,
                 null, null, null);
         if (cursor != null) {
-            do {
+            while (cursor.moveToNext()) {
+                boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) > 0;
+                if (synced) {
+                    continue;
+                }
                 int light_id = cursor.getInt(cursor.getColumnIndex("_id"));
                 KiiObject lightObj;
                 String mac = cursor.getString(cursor.getColumnIndex("MAC"));
                 lightObj = bucket.object(mac);
                 lightObj.set("name", cursor.getString(cursor.getColumnIndex("name")));
-                lightObj.set("model", cursor.getString(cursor.getColumnIndex("model")));
-                lightObj.set("remote_pwd", cursor.getString(cursor.getColumnIndex("remote_pwd")));
-                lightObj.set("admin_pwd", cursor.getString(cursor.getColumnIndex("admin_pwd")));
+                lightObj.set("model", getCursorString(cursor, cursor.getColumnIndex("model")));
+                lightObj.set("remote_pwd", getCursorString(cursor, cursor.getColumnIndex("remote_pwd")));
+                lightObj.set("admin_pwd", getCursorString(cursor, cursor.getColumnIndex("admin_pwd")));
                 lightObj.set("MAC", mac);
 //                lightObj.set("brightness", cursor.getInt(cursor.getColumnIndex("brightness")));
 //                lightObj.set("CT", cursor.getInt(cursor.getColumnIndex("CT")));
@@ -569,7 +600,8 @@ public class KiiSync {
                 } catch (Exception e) {
                     Log.e(LOG_TAG, Log.getStackTraceString(e));
                 }
-            } while (cursor.moveToNext());
+            }
+            ;
             cursor.close();
         }
     }

@@ -24,7 +24,6 @@ import android.widget.Toast;
 import com.kii.yankon.R;
 import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.utils.Constants;
-import com.kii.yankon.utils.KiiSync;
 
 import java.util.HashSet;
 import java.util.UUID;
@@ -125,7 +124,7 @@ public class AddLightGroupsActivity extends Activity implements View.OnClickList
             values.put("light_id", integer.intValue());
             cr.insert(YanKonProvider.URI_LIGHT_GROUP_REL, values);
         }
-        KiiSync.asyncSyncLightGroups(this, group_id);
+//        KiiSync.asyncSyncLightGroups(this, group_id);
         finish();
     }
 

@@ -150,9 +150,9 @@ public class Utils {
                     if (!light.connected) {
 //                        KiiSync.fireLamp(light.mac, light.state ? 1 : 0, light.color, light.brightness, light.CT);
                     }
-                    Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "_id=" + light_id, null, null);
-                    boolean ret = KiiSync.syncLights(context, c);
-                    c.close();
+//                    Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "_id=" + light_id, null, null);
+//                    boolean ret = KiiSync.syncLights(context, c);
+//                    c.close();
                 }
             }.start();
         }

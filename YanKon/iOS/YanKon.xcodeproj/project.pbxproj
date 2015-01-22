@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		2003026F1A6B6B88001F0667 /* MainViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2003026E1A6B6B88001F0667 /* MainViewController.m */; };
 		200302721A6B6BED001F0667 /* LeftMenu.m in Sources */ = {isa = PBXBuildFile; fileRef = 200302711A6B6BED001F0667 /* LeftMenu.m */; };
+		200C6B421A70DE6D00A6BB60 /* NSData+Conversion.m in Sources */ = {isa = PBXBuildFile; fileRef = 200C6B411A70DE6D00A6BB60 /* NSData+Conversion.m */; };
 		202596A31A6C3571007493A3 /* LightsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 202596A21A6C3571007493A3 /* LightsViewController.m */; };
 		202596A61A6C3D91007493A3 /* UIColor+CreateMethods.m in Sources */ = {isa = PBXBuildFile; fileRef = 202596A51A6C3D91007493A3 /* UIColor+CreateMethods.m */; };
 		2041DEE41A6FF22D00AF94E8 /* Light.m in Sources */ = {isa = PBXBuildFile; fileRef = 2041DEE31A6FF22D00AF94E8 /* Light.m */; };
@@ -30,6 +31,8 @@
 		2003026E1A6B6B88001F0667 /* MainViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MainViewController.m; sourceTree = "<group>"; };
 		200302701A6B6BED001F0667 /* LeftMenu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LeftMenu.h; sourceTree = "<group>"; };
 		200302711A6B6BED001F0667 /* LeftMenu.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LeftMenu.m; sourceTree = "<group>"; };
+		200C6B401A70DE6D00A6BB60 /* NSData+Conversion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSData+Conversion.h"; sourceTree = "<group>"; };
+		200C6B411A70DE6D00A6BB60 /* NSData+Conversion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSData+Conversion.m"; sourceTree = "<group>"; };
 		202596A11A6C3571007493A3 /* LightsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LightsViewController.h; sourceTree = "<group>"; };
 		202596A21A6C3571007493A3 /* LightsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LightsViewController.m; sourceTree = "<group>"; };
 		202596A41A6C3D91007493A3 /* UIColor+CreateMethods.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIColor+CreateMethods.h"; sourceTree = "<group>"; };
@@ -157,6 +160,8 @@
 			children = (
 				202596A41A6C3D91007493A3 /* UIColor+CreateMethods.h */,
 				202596A51A6C3D91007493A3 /* UIColor+CreateMethods.m */,
+				200C6B401A70DE6D00A6BB60 /* NSData+Conversion.h */,
+				200C6B411A70DE6D00A6BB60 /* NSData+Conversion.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -290,6 +295,7 @@
 				205EA41C1A6FA86400BE6D01 /* Global.m in Sources */,
 				200302721A6B6BED001F0667 /* LeftMenu.m in Sources */,
 				202596A61A6C3D91007493A3 /* UIColor+CreateMethods.m in Sources */,
+				200C6B421A70DE6D00A6BB60 /* NSData+Conversion.m in Sources */,
 				20B0BD8A1A6ED9FB004EE954 /* BasicTableViewCell.m in Sources */,
 				205EA4171A6F8A0900BE6D01 /* CommandDaemon.m in Sources */,
 				2003026F1A6B6B88001F0667 /* MainViewController.m in Sources */,

@@ -12,6 +12,7 @@
 #include <ifaddrs.h>
 #include <arpa/inet.h>
 #import "Global.h"
+#import "NSData+Conversion.h"
 
 @interface CommandDaemon()<GCDAsyncUdpSocketDelegate> {
     GCDAsyncUdpSocket *socket;
@@ -169,7 +170,7 @@ static CommandDaemon *instance = nil;
     NSString *host = nil;
     uint16_t port = 0;
     [GCDAsyncUdpSocket getHost:&host port:&port fromAddress:address];
-    
+    NSLog(@"Get from:%@ Data:%@",host,[data hexadecimalString]);
     
 }
 

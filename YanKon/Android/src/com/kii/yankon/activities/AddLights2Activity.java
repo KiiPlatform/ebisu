@@ -9,12 +9,14 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.CompoundButton;
 
 import com.kii.yankon.R;
 import com.kii.yankon.model.Light;
@@ -27,7 +29,7 @@ import com.kii.yankon.widget.LightItemViewHolder;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AddLights2Activity extends ListActivity {
+public class AddLights2Activity extends ListActivity implements CompoundButton.OnCheckedChangeListener {
 
     private List<Light> mLights = new ArrayList<Light>();
     private LightsAdapter mAdapter;
@@ -114,6 +116,7 @@ public class AddLights2Activity extends ListActivity {
     }
 
     void addLightToDB(Light light) {
+        Log.e("Evan", "Add light:" + light.mac);
         ContentValues values = new ContentValues();
         values.put("MAC", light.mac);
         values.put("model", light.model);
@@ -175,6 +178,14 @@ public class AddLights2Activity extends ListActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        Light light = (Light) buttonView.getTag();
+        if (light != null) {
+            light.selected = isChecked;
+        }
+    }
+
     class LightsAdapter extends BaseAdapter {
         Context mContext = null;
 
@@ -214,6 +225,8 @@ public class AddLights2Activity extends ListActivity {
             holder.checkBox.setChecked(light.selected || light.added);
             holder.checkBox.setEnabled(!light.added);
             holder.checkBox.setVisibility(View.VISIBLE);
+            holder.checkBox.setOnCheckedChangeListener(AddLights2Activity.this);
+            holder.checkBox.setTag(light);
             return view;
         }
     }

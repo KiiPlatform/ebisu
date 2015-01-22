@@ -28,7 +28,6 @@ import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.services.NetworkSenderService;
 import com.kii.yankon.utils.Constants;
 import com.kii.yankon.utils.Global;
-import com.kii.yankon.utils.KiiSync;
 import com.pixplicity.multiviewpager.MultiViewPager;
 
 import java.util.ArrayList;
@@ -178,14 +177,6 @@ public class AddLightsActivity extends Activity implements View.OnClickListener,
         values.put("name", text);
         values.put("owned_time", System.currentTimeMillis());
         getContentResolver().insert(YanKonProvider.URI_LIGHTS, values);
-        new Thread() {
-            @Override
-            public void run() {
-                Cursor c = getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "MAC=(?)", new String[]{currLight.mac}, null);
-                KiiSync.syncLights(AddLightsActivity.this, c);
-                c.close();
-            }
-        }.start();
         View view = mPager.findViewWithTag(currLight);
         ViewHolder holder = new ViewHolder(view);
         holder.title.setText(currLight.name);

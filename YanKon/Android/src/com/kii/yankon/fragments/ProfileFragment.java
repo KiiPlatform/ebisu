@@ -1,10 +1,6 @@
 package com.kii.yankon.fragments;
 
 
-import com.kii.yankon.R;
-import com.kii.yankon.utils.Constants;
-import com.kii.yankon.utils.Settings;
-
 import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
@@ -15,6 +11,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+
+import com.kii.yankon.R;
+import com.kii.yankon.utils.Constants;
+import com.kii.yankon.utils.KiiSync;
+import com.kii.yankon.utils.Settings;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -29,6 +30,9 @@ public class ProfileFragment extends BaseFragment {
 
     @InjectView(R.id.log_out_button)
     Button logOutButton;
+
+    @InjectView(R.id.sync_button)
+    Button syncButton;
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -58,6 +62,17 @@ public class ProfileFragment extends BaseFragment {
                 Log.d("ProfileFragment", "after log out, token is " + Settings.getToken());
                 LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(new Intent(
                         Constants.INTENT_LOGGED_OUT));
+            }
+        });
+        syncButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new Thread() {
+                    @Override
+                    public void run() {
+                        KiiSync.sync();
+                    }
+                }.start();
             }
         });
         return view;
