@@ -26,11 +26,11 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.kii.yankon.App;
 import com.kii.yankon.R;
 import com.kii.yankon.activities.AddLights2Activity;
 import com.kii.yankon.activities.LightInfoActivity;
 import com.kii.yankon.providers.YanKonProvider;
+import com.kii.yankon.utils.DataHelper;
 import com.kii.yankon.utils.Utils;
 
 import java.util.HashSet;
@@ -86,10 +86,10 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
                 boolean isAllSelected = true;
                 for (int i = 0; i < mAdapter.getCount(); i++) {
                     Cursor cursor = (Cursor) mAdapter.getItem(i);
-                    String mac = cursor.getString(cursor.getColumnIndex("MAC"));
-                    if (!mSelectedLights.contains(mac)) {
+                    String lid = cursor.getString(cursor.getColumnIndex("_id"));
+                    if (!mSelectedLights.contains(lid)) {
                         isAllSelected = false;
-                        mSelectedLights.add(mac);
+                        mSelectedLights.add(lid);
                     }
                 }
                 if (isAllSelected) {
@@ -222,21 +222,15 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
             break;
             case MENU_DELETE: {
                 if (info.position == 0) {
-                    for (String mac : mSelectedLights) {
-                        ContentValues cv = new ContentValues(1);
-                        cv.put("deleted", 1);
-                        App.getApp().getContentResolver().update(YanKonProvider.URI_LIGHTS, cv, "MAC=(?)",
-                                new String[]{mac});
+                    for (String lid : mSelectedLights) {
+                        DataHelper.deleteLightById(Integer.parseInt(lid));
                     }
                     mSelectedLights.clear();
                 } else {
                     Cursor cursor = (Cursor) mAdapter.getItem(pos);
                     int cid = cursor.getInt(cursor.getColumnIndex("_id"));
                     String mac = cursor.getString(cursor.getColumnIndex("MAC"));
-                    ContentValues cv = new ContentValues(1);
-                    cv.put("deleted", 1);
-                    App.getApp().getContentResolver().update(YanKonProvider.URI_LIGHTS, cv, "_id=?",
-                            new String[]{Integer.toString(cid)});
+                    DataHelper.deleteLightById(cid);
                     mSelectedLights.remove(mac);
                 }
                 updateHeaderView();
@@ -257,6 +251,7 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
                 String name = data.getStringExtra(InputDialogFragment.ARG_TEXT);
                 ContentValues values = new ContentValues();
                 values.put("name", name);
+                values.put("synced", false);
                 if (currentEditId > -1) {
                     getActivity().getContentResolver()
                             .update(YanKonProvider.URI_LIGHTS, values, "_id=" + currentEditId,
@@ -279,14 +274,13 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
             String[] lights = mSelectedLights.toArray(new String[mSelectedLights.size()]);
             if (lights.length == 1) {
                 Cursor cursor = getActivity().getContentResolver().query(YanKonProvider.URI_LIGHTS,
-                        new String[]{"name", "_id"},
-                        "MAC=(?)", new String[]{lights[0]},
+                        new String[]{"name"},
+                        "_id=(?)", new String[]{lights[0]},
                         null);
                 if (cursor != null) {
                     if (cursor.moveToFirst()) {
                         name = cursor.getString(0);
-                        id = cursor.getInt(1);
-                        intent.putExtra(LightInfoActivity.EXTRA_LIGHT_ID, (int) id);
+                        intent.putExtra(LightInfoActivity.EXTRA_LIGHT_ID, Integer.parseInt(lights[0]));
                     }
                     cursor.close();
                 }
@@ -305,11 +299,11 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
 
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        String mac = (String) buttonView.getTag();
+        String lid = (String) buttonView.getTag();
         if (isChecked) {
-            mSelectedLights.add(mac);
+            mSelectedLights.add(lid);
         } else {
-            mSelectedLights.remove(mac);
+            mSelectedLights.remove(lid);
         }
         updateHeaderView();
     }
@@ -341,9 +335,10 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
             if (inMultipleMode) {
                 checkBox.setVisibility(View.VISIBLE);
                 icon.setBackgroundResource(0);
-                checkBox.setTag(mac);
+                String lid = String.valueOf(light_id);
+                checkBox.setTag(lid);
                 checkBox.setOnCheckedChangeListener(LightsFragment.this);
-                checkBox.setChecked(mSelectedLights.contains(mac));
+                checkBox.setChecked(mSelectedLights.contains(lid));
             } else {
                 checkBox.setVisibility(View.GONE);
                 if (state) {

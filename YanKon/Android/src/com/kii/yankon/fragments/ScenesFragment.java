@@ -20,6 +20,7 @@ import android.widget.TextView;
 import com.kii.yankon.activities.AddScenesActivity;
 import com.kii.yankon.R;
 import com.kii.yankon.providers.YanKonProvider;
+import com.kii.yankon.utils.DataHelper;
 
 /**
  * Created by Evan on 14/11/26.
@@ -54,7 +55,7 @@ public class ScenesFragment extends BaseListFragment {
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(getActivity(), YanKonProvider.URI_SCENES, null, null, null, "last_used_time desc");
+        return new CursorLoader(getActivity(), YanKonProvider.URI_SCENES, null, "deleted=0", null, "last_used_time desc");
     }
 
     @Override
@@ -98,7 +99,7 @@ public class ScenesFragment extends BaseListFragment {
             case MENU_DELETE: {
                 Cursor cursor = (Cursor) mAdapter.getItem(info.position);
                 int cid = cursor.getInt(cursor.getColumnIndex("_id"));
-                getActivity().getContentResolver().delete(YanKonProvider.URI_SCENES, "_id=" + cid, null);
+                DataHelper.deleteSceneById(cid);
             }
             break;
         }

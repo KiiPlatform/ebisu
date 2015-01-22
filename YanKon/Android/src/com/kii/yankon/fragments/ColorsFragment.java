@@ -66,6 +66,7 @@ public class ColorsFragment extends BaseListFragment {
                 ContentValues values = new ContentValues();
                 values.put("name", name);
                 values.put("value", color);
+                values.put("synced", false);
                 if (id == -1) {
                     values.put("created_time", System.currentTimeMillis());
                     getActivity().getContentResolver().insert(YanKonProvider.URI_COLORS, values);
@@ -108,7 +109,10 @@ public class ColorsFragment extends BaseListFragment {
             case MENU_DELETE: {
                 Cursor cursor = (Cursor) mAdapter.getItem(info.position);
                 int cid = cursor.getInt(cursor.getColumnIndex("_id"));
-                getActivity().getContentResolver().delete(YanKonProvider.URI_COLORS, "_id=" + cid, null);
+                ContentValues cv = new ContentValues();
+                cv.put("deleted", 1);
+                cv.put("synced", false);
+                getActivity().getContentResolver().update(YanKonProvider.URI_COLORS, cv, "_id=" + cid, null);
             }
             break;
         }

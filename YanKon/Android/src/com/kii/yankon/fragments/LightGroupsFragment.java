@@ -1,11 +1,5 @@
 package com.kii.yankon.fragments;
 
-import com.kii.yankon.activities.AddLightGroupsActivity;
-import com.kii.yankon.activities.LightInfoActivity;
-import com.kii.yankon.R;
-import com.kii.yankon.providers.YanKonProvider;
-import com.kii.yankon.utils.Utils;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.CursorLoader;
@@ -23,6 +17,13 @@ import android.widget.CursorAdapter;
 import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
+
+import com.kii.yankon.R;
+import com.kii.yankon.activities.AddLightGroupsActivity;
+import com.kii.yankon.activities.LightInfoActivity;
+import com.kii.yankon.providers.YanKonProvider;
+import com.kii.yankon.utils.DataHelper;
+import com.kii.yankon.utils.Utils;
 
 /**
  * Created by Evan on 14/11/26.
@@ -108,8 +109,7 @@ public class LightGroupsFragment extends BaseListFragment {
             case MENU_DELETE: {
                 Cursor cursor = (Cursor) mAdapter.getItem(info.position);
                 int cid = cursor.getInt(cursor.getColumnIndex("_id"));
-                getActivity().getContentResolver()
-                        .delete(YanKonProvider.URI_LIGHT_GROUPS, "_id=" + cid, null);
+                DataHelper.deleteLightGroupById(cid);
             }
             break;
         }

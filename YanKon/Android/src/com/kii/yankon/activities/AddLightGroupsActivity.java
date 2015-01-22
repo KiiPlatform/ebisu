@@ -59,8 +59,7 @@ public class AddLightGroupsActivity extends Activity implements View.OnClickList
             Cursor cursor = getContentResolver().query(YanKonProvider.URI_LIGHT_GROUP_REL, new String[]{"light_id"}, "group_id=" + group_id + " AND deleted=0", null, null);
             while (cursor.moveToNext()) {
                 int lid = cursor.getInt(0);
-                Integer integer = Integer.valueOf(lid);
-                orgSelectedSet.add(integer);
+                orgSelectedSet.add(lid);
             }
             cursor.close();
             selectedSet.addAll(orgSelectedSet);
@@ -116,15 +115,14 @@ public class AddLightGroupsActivity extends Activity implements View.OnClickList
             }
         }
         for (Integer integer : orgSelectedSet) {
-            cr.delete(YanKonProvider.URI_LIGHT_GROUP_REL, "group_id=" + group_id + " AND light_id=" + integer.intValue(), null);
+            cr.delete(YanKonProvider.URI_LIGHT_GROUP_REL, "group_id=" + group_id + " AND light_id=" + integer, null);
         }
         for (Integer integer : selectedSet) {
             values = new ContentValues();
             values.put("group_id", group_id);
-            values.put("light_id", integer.intValue());
+            values.put("light_id", integer);
             cr.insert(YanKonProvider.URI_LIGHT_GROUP_REL, values);
         }
-//        KiiSync.asyncSyncLightGroups(this, group_id);
         finish();
     }
 
@@ -145,8 +143,7 @@ public class AddLightGroupsActivity extends Activity implements View.OnClickList
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        int light_id = (int) id;
-        Integer integer = Integer.valueOf(light_id);
+        Integer integer = (int)id;
         if (selectedSet.contains(integer)) {
             selectedSet.remove(integer);
         } else {

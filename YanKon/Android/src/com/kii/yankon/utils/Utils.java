@@ -1,5 +1,6 @@
 package com.kii.yankon.utils;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -12,6 +13,9 @@ import com.kii.cloud.storage.KiiUser;
 import com.kii.yankon.model.Light;
 import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.services.NetworkSenderService;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 
@@ -142,17 +146,16 @@ public class Utils {
                 byte[] cmd = CommandBuilder.buildLightInfo(1, light.state, light.color, light.brightness, light.CT);
                 NetworkSenderService.sendCmd(context, light.ip, cmd);
             }
-        }
-        if (doItNow && KiiUser.isLoggedIn()) {
+        } else if (doItNow && KiiUser.isLoggedIn()) {
             new Thread() {
                 @Override
                 public void run() {
-                    if (!light.connected) {
-//                        KiiSync.fireLamp(light.mac, light.state ? 1 : 0, light.color, light.brightness, light.CT);
+                    JSONObject lights = new JSONObject();
+                    try {
+                        lights.put(light.mac, light.remotePassword);
+                    } catch (JSONException e) {
                     }
-//                    Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "_id=" + light_id, null, null);
-//                    boolean ret = KiiSync.syncLights(context, c);
-//                    c.close();
+                    KiiSync.fireLamp(lights, false, light.state ? 1 : 0, light.color, light.brightness, light.CT);
                 }
             }.start();
         }
@@ -181,20 +184,39 @@ public class Utils {
         }
 
         ArrayList<String> connectedLights = new ArrayList<>();
-        final ArrayList<String> unconnectedLights = new ArrayList<>();
+        final JSONObject unconnectedLights = new JSONObject();
+        StringBuilder allIds = new StringBuilder();
         c = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUP_REL, null, "group_id=" + group_id, null, null);
         if (c != null) {
             while (c.moveToNext()) {
                 boolean connected = c.getInt(c.getColumnIndex("connected")) > 0;
                 String ip = c.getString(c.getColumnIndex("IP"));
                 String mac = c.getString(c.getColumnIndex("MAC"));
+                String remotePwd = c.getString(c.getColumnIndex("remote_pwd"));
+                int _id = c.getInt(c.getColumnIndex("_id"));
+                if (allIds.length() > 0)
+                    allIds.append(',');
+                allIds.append(_id);
                 if (connected && !TextUtils.isEmpty(ip)) {
                     connectedLights.add(ip);
                 } else {
-                    unconnectedLights.add(mac);
+                    try {
+                        if (remotePwd == null)
+                            remotePwd = "";
+                        unconnectedLights.put(mac, remotePwd);
+                    } catch (JSONException e) {
+                    }
                 }
             }
             c.close();
+        }
+        if (allIds.length() > 0) {
+            ContentValues values = new ContentValues();
+            values.put("CT", CT);
+            values.put("brightness", brightness);
+            values.put("state", state);
+            values.put("color", color);
+            context.getContentResolver().update(YanKonProvider.URI_LIGHTS, values, "_id in (" + allIds.toString() + ")", null);
         }
         if (connectedLights.size() > 0) {
             byte[] cmd = CommandBuilder.buildLightInfo(1, state, color, brightness, CT);
@@ -209,9 +231,7 @@ public class Utils {
             new Thread() {
                 @Override
                 public void run() {
-//                    for (String mac : unconnectedLights) {
-//                        KiiSync.fireLamp(mac, i_state ? 1 : 0, i_color, i_brightness, i_CT);
-//                    }
+                    KiiSync.fireLamp(unconnectedLights, false, i_state ? 1 : 0, i_color, i_brightness, i_CT);
                 }
             }.start();
         }

@@ -21,6 +21,7 @@ import android.widget.TextView;
 import com.kii.yankon.activities.AddScheduleActivity;
 import com.kii.yankon.R;
 import com.kii.yankon.providers.YanKonProvider;
+import com.kii.yankon.utils.DataHelper;
 
 /**
  * Created by Evan on 14/11/26.
@@ -55,7 +56,7 @@ public class ScheduleFragment extends BaseListFragment {
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(getActivity(), YanKonProvider.URI_SCHEDULE, null, null, null, "created_time asc");
+        return new CursorLoader(getActivity(), YanKonProvider.URI_SCHEDULE, null, "deleted=0", null, "created_time asc");
     }
 
     @Override
@@ -100,7 +101,7 @@ public class ScheduleFragment extends BaseListFragment {
             case MENU_DELETE: {
                 Cursor cursor = (Cursor) mAdapter.getItem(info.position);
                 int cid = cursor.getInt(cursor.getColumnIndex("_id"));
-                getActivity().getContentResolver().delete(YanKonProvider.URI_SCHEDULE, "_id=" + cid, null);
+                DataHelper.deleteScheduleById(cid);
             }
             break;
         }

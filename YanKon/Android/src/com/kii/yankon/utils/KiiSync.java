@@ -178,7 +178,7 @@ public class KiiSync {
             return result;
         }
     */
-    public static String fireLamp(JSONArray lights, int state, int color, int brightness, int CT) {
+    public static String fireLamp(JSONObject lights, boolean verify, int state, int color, int brightness, int CT) {
         String result = null;
         if (!KiiUser.isLoggedIn()) {
             return result;
@@ -187,12 +187,16 @@ public class KiiSync {
         Log.e(LOG_TAG, "color:" + color);
         long colorL = color & 0x0000000000ffffffL;
         try {
-            JSONObject action = new JSONObject();
-            action.put("state", state);
-            action.put("color", colorL);
-            action.put("brightness", brightness);
-            action.put("CT", CT);
             JSONObject rawArg = new JSONObject();
+            JSONObject action = new JSONObject();
+            if (!verify) {
+                action.put("state", state);
+                action.put("color", colorL);
+                action.put("brightness", brightness);
+                action.put("CT", CT);
+            } else {
+                rawArg.put("verify", true);
+            }
             rawArg.put("thing", lights);
             rawArg.put("action", action);
             Log.e(LOG_TAG, "fireLamp:" + rawArg.toString());
@@ -205,6 +209,7 @@ public class KiiSync {
             // Parse the result.
             JSONObject returned = res.getReturnedValue();
             result = returned.getString("returnedValue");
+            Log.e(LOG_TAG, "FireLamp result:" + result);
         } catch (Exception e) {
 
         }
@@ -471,10 +476,10 @@ public class KiiSync {
                         JSONObject childObject = new JSONObject();
                         try {
                             childObject.put("light_id",
-                                    getLightMacById(childCursor
+                                    DataHelper.getLightMacById(childCursor
                                             .getInt(childCursor.getColumnIndex("light_id"))));
                             childObject.put("group_id",
-                                    getGroupById(childCursor
+                                    DataHelper.getGroupById(childCursor
                                             .getInt(childCursor.getColumnIndex("group_id"))));
                             childObject.put("state",
                                     childCursor.getInt(childCursor.getColumnIndex("state")));
@@ -711,8 +716,8 @@ public class KiiSync {
                     values.put("color", detailObject.getInt("color"));
                     values.put("brightness", detailObject.getInt("brightness"));
                     values.put("CT", detailObject.getInt("CT"));
-                    values.put("light_id", getLightIdByMac(detailObject.optString("light_id", null)));
-                    values.put("group_id", getGroupIdByObjId(detailObject.optString("group_id", null)));
+                    values.put("light_id", DataHelper.getLightIdByMac(detailObject.optString("light_id", null)));
+                    values.put("group_id", DataHelper.getGroupIdByObjId(detailObject.optString("group_id", null)));
                     App.getApp().getContentResolver()
                             .insert(YanKonProvider.URI_SCENES_DETAIL, values);
                 } catch (JSONException e) {
@@ -743,7 +748,7 @@ public class KiiSync {
     }
 
     private static void processRel(KiiObject object, String newId) {
-        String groupId = newId == null ? getGroupIdByObjId(object.getString("_id")) : newId;
+        String groupId = newId == null ? String.valueOf(DataHelper.getGroupIdByObjId(object.getString("objectID"))) : newId;
 
         if (Settings.isServerWin()) {
             App.getApp().getContentResolver()
@@ -756,7 +761,7 @@ public class KiiSync {
             while (it.hasNext()) {
                 String mac = it.next();
                 if (!TextUtils.isEmpty(mac)) {
-                    String lightId = getLightIdByMac(mac);
+                    int lightId = DataHelper.getLightIdByMac(mac);
                     ContentValues cv = new ContentValues(2);
                     cv.put("light_id", lightId);
                     cv.put("group_id", groupId);
@@ -769,74 +774,6 @@ public class KiiSync {
         cv.put("synced", 1);
         App.getApp().getContentResolver()
                 .update(YanKonProvider.URI_LIGHT_GROUPS, cv, "_id=?", new String[]{groupId});
-    }
-
-    private static String getLightIdByMac(String mac) {
-        if (TextUtils.isEmpty(mac))
-            return null;
-        Cursor cursor = App.getApp().getContentResolver()
-                .query(YanKonProvider.URI_LIGHTS, new String[]{"_id"}, "MAC=?",
-                        new String[]{mac}, null);
-        try {
-            if (cursor != null && cursor.moveToFirst()) {
-                return cursor.getString(0);
-            }
-            return null;
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-    }
-
-    private static String getLightMacById(int lightId) {
-        Cursor cursor = App.getApp().getContentResolver()
-                .query(YanKonProvider.URI_LIGHTS, new String[]{"mac"}, "_id=?",
-                        new String[]{Integer.toString(lightId)}, null);
-        try {
-            if (cursor != null && cursor.moveToFirst()) {
-                return cursor.getString(0);
-            }
-            return null;
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-    }
-
-    private static String getGroupById(int groupId) {
-        Cursor cursor = App.getApp().getContentResolver()
-                .query(YanKonProvider.URI_LIGHT_GROUPS, new String[]{"objectID"}, "_id=?",
-                        new String[]{Integer.toString(groupId)}, null);
-        try {
-            if (cursor != null && cursor.moveToFirst()) {
-                return cursor.getString(0);
-            }
-            return null;
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-    }
-
-    private static String getGroupIdByObjId(String objId) {
-        if (TextUtils.isEmpty(objId))
-            return null;
-        Cursor cursor = App.getApp().getContentResolver()
-                .query(YanKonProvider.URI_LIGHT_GROUPS, new String[]{"_id"}, "objectID=?",
-                        new String[]{objId}, null);
-        try {
-            if (cursor != null && cursor.moveToFirst()) {
-                return cursor.getString(0);
-            }
-            return null;
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
     }
 
 

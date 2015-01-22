@@ -178,6 +178,7 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
         ContentResolver cr = getContentResolver();
         ContentValues values = new ContentValues();
         values.put("name", gName);
+        values.put("synced",false);
         if (scene_id < 0) {
             values.put("objectID", UUID.randomUUID().toString());
             values.put("created_time", System.currentTimeMillis());
@@ -186,7 +187,7 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
         } else {
             cr.update(YanKonProvider.URI_SCENES, values, "_id=" + scene_id, null);
         }
-        String[] selArr = selectedSet.toArray(new String[0]);
+        String[] selArr = selectedSet.toArray(new String[selectedSet.size()]);
         for (int i = 0; i < selArr.length; i++) {
             String data = selArr[i];
             if (orgSelectedSet.contains(data)) {
@@ -198,7 +199,6 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
         for (String data : orgSelectedSet) {
             if (data.length() <= 1)
                 continue;
-            ;
             String num = data.substring(1);
             int id = Integer.parseInt(num);
             if (data.charAt(0) == 'l') {
@@ -226,7 +226,6 @@ public class AddScenesActivity extends Activity implements View.OnClickListener,
         } else {
             group_id = id;
         }
-
 
         StatusInfo info = infoMap.get(key);
         if (info == null) {

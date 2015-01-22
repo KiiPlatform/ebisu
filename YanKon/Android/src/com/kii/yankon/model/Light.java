@@ -8,6 +8,8 @@ public class Light {
     public String model;
     public String mac;
     public String ip;
+    public String remotePassword = "";
+    public String adminPassword = "";
     public boolean state;
     public int color;
     public int brightness;
