@@ -133,7 +133,7 @@ public class ScenesFragment extends BaseListFragment {
             View icon = view.findViewById(R.id.light_icon);
             icon.setBackgroundResource(R.drawable.scenes);
             Button applyBtn = (Button) view.findViewById(R.id.light_apply);
-            
+
         }
     }
 }
