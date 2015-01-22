@@ -42,7 +42,7 @@
 
 -(void)menuAddLights:(id)sender
 {
-    [self performSegueWithIdentifier:@"add_lights" sender:nil];
+    [self.mainSlideMenu performSegueWithIdentifier:@"add_lights" sender:nil];
 }
 
 

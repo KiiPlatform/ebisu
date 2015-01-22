@@ -187,5 +187,10 @@ static Global *instance = nil;
      ];
 }
 
++ (long long)getCurrentTime
+{
+    return (long long)([[NSDate date] timeIntervalSince1970] * 1000);
+}
+
 
 @end

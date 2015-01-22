@@ -23,4 +23,5 @@
 
 + (Global *)getInstance;
 + (FMDatabaseQueue *)getFMDBQueue;
++ (long long)getCurrentTime;
 @end

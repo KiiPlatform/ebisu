@@ -94,7 +94,7 @@
 
 - (void)addLight:(Light*)light toDB:(FMDatabase*)db
 {
-    long long time = (long long)([[NSDate date] timeIntervalSince1970] * 1000);
+    long long time = [Global getCurrentTime];
     [db executeUpdate:@"INSERT OR REPLACE INTO lights "
         " (MAC,model,state,IP,color,brightness,CT,name,owned_time,connected,deleted) "
         " values (?,?,?,?,?,?,?,?,?,1,0);",
@@ -152,7 +152,7 @@
         return;
     }
     self.allSelected = tmp;
-//    [self.selectAllButton setTitle:self.allSelected?@"Unselect All":@"Select All" forState:UIControlStateNormal];
+    [self.selectAllButton setTitle:self.allSelected?@"Clear All":@"Select All" forState:UIControlStateNormal];
 }
 
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
