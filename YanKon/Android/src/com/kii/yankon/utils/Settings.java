@@ -88,9 +88,28 @@ public class Settings {
         getPrefs().edit().commit();
     }
 
-    public static boolean isServerWin() {
-        return true;
+    public static final int SERVER_WIN = 1;
+
+    public static final int CLIENT_WIN = 2;
+
+    public static final int BOTH_WIN = 3;
+
+    private static final String WIN_POLICY = "win_policy";
+
+    public static void setWinPolicy(int winPolicy) {
+        getPrefs().edit().putInt(WIN_POLICY, winPolicy).apply();
     }
 
-    public static boolean isBothWin() {return false;}
+    public static String getWinPolicy() {
+        return getPrefs().getString(WIN_POLICY, "server");
+    }
+
+    public static boolean isServerWin() {
+        return getWinPolicy().equals("server");
+    }
+
+    public static boolean isBothWin() {
+        return getWinPolicy().equals("both");
+    }
+
 }

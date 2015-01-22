@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <ListPreference
+        android:key="win_policy"
+        android:title="@string/sync_configurations"
+        android:dialogTitle="@string/sync_configurations"
+        android:entries="@array/sync_policies"
+        android:entryValues="@array/sync_policy_values"
+        android:defaultValue="0"
+        android:summary="@string/sync_configurations"
+        />
+</PreferenceScreen>

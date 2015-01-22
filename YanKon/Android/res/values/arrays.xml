@@ -2,6 +2,8 @@
 <resources>
     <array name="settings">
         <item>Firmware Upgrade</item>
+        <item>Sync Configuration</item>
+        <item>Default Home Page</item>
         <item>Tutorial</item>
         <item>Product Info</item>
         <item>About</item>
@@ -25,5 +27,15 @@
         <item>Saturday</item>
         <item>Sunday</item>
     </array>
+    <array name="sync_policies">
+        <item>Server Win</item>
+        <item>Client Win</item>
+        <item>Both Win</item>
+    </array>
+    <string-array name="sync_policy_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
 
 </resources>
