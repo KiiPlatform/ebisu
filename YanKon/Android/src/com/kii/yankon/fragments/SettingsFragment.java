@@ -1,7 +1,9 @@
 package com.kii.yankon.fragments;
 
+import com.kii.yankon.MainActivity;
 import com.kii.yankon.R;
 
+import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
@@ -32,6 +34,14 @@ public class SettingsFragment extends PreferenceFragment implements
     }
 
     @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        MainActivity parentActivity = ((MainActivity) activity);
+        parentActivity.onSectionAttached(
+                getArguments().getInt(ARG_SECTION_NUMBER));
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         mPref.registerOnSharedPreferenceChangeListener(this);
@@ -46,6 +56,7 @@ public class SettingsFragment extends PreferenceFragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         addPreferencesFromResource(R.xml.preferences);
         mPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
         mSyncConfigPref = (ListPreference) findPreference("win_policy");

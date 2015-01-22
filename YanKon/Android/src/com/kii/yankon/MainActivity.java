@@ -67,6 +67,7 @@ public class MainActivity extends Activity
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
+        setDefaultHomePage();
 
         if (Settings.needShowGuide()) {
             startActivity(new Intent(this, GuideActivity.class));
@@ -80,6 +81,19 @@ public class MainActivity extends Activity
         NetworkSenderService.sendCmd(this, (String) null, Constants.SEARCH_LIGHTS_CMD);
 
         loginKii();
+
+    }
+
+    private void setDefaultHomePage() {
+        int index = 0;
+        try {
+            index = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(this)
+                    .getString("default_home_page", "0"));
+        } catch (Exception e) {
+
+        }
+        mNavigationDrawerFragment.setCurrentSelectedPosition(index);
+        onNavigationDrawerItemSelected(index);
     }
 
     @Override
