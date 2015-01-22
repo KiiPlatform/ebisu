@@ -92,5 +92,6 @@
     <string name="title_activity_repeat_days">Repeat days</string>
     <string name="repeat_everyday">Everyday</string>
     <string name="profile_sync">Sync</string>
+    <string name="scene_apply">Apply</string>
 
 </resources>

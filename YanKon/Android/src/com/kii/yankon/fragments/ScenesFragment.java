@@ -12,13 +12,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.CursorAdapter;
 import android.widget.ListView;
-import android.widget.Switch;
 import android.widget.TextView;
 
-import com.kii.yankon.activities.AddScenesActivity;
 import com.kii.yankon.R;
+import com.kii.yankon.activities.AddScenesActivity;
 import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.utils.DataHelper;
 
@@ -113,7 +113,7 @@ public class ScenesFragment extends BaseListFragment {
 
         @Override
         public View newView(Context context, Cursor cursor, ViewGroup parent) {
-            return LayoutInflater.from(context).inflate(R.layout.light_item, parent, false);
+            return LayoutInflater.from(context).inflate(R.layout.scene_item, parent, false);
         }
 
         @Override
@@ -132,7 +132,8 @@ public class ScenesFragment extends BaseListFragment {
 //            tv.setText(context.getString(R.string.group_num_format, num));
             View icon = view.findViewById(R.id.light_icon);
             icon.setBackgroundResource(R.drawable.scenes);
-            Switch light_switch = (Switch) view.findViewById(R.id.light_switch);
+            Button applyBtn = (Button) view.findViewById(R.id.light_apply);
+            
         }
     }
 }
