@@ -242,9 +242,13 @@ public class KiiSync {
         }
         Context context = App.getApp();
         Cursor cursor = context.getContentResolver().query(YanKonProvider.URI_SCHEDULE, null,
-                "deleted=0", null, null);
+                null, null, null);
         if (cursor != null) {
             while (cursor.moveToNext()) {
+                boolean synced = cursor.getInt(cursor.getColumnIndex("synced")) > 0;
+                if (synced) {
+                    continue;
+                }
                 int light_id = cursor.getInt(cursor.getColumnIndex("_id"));
                 KiiObject colorObject;
                 String objectID = cursor.getString(cursor.getColumnIndex("objectID"));
@@ -259,6 +263,7 @@ public class KiiSync {
                 colorObject.set("scene_id", cursor.getString(cursor.getColumnIndex("scene_id")));
                 colorObject.set("light_id", cursor.getString(cursor.getColumnIndex("light_id")));
                 colorObject.set("group_id", cursor.getString(cursor.getColumnIndex("group_id")));
+                colorObject.set("deleted", cursor.getInt(cursor.getColumnIndex("deleted")));
                 String repeat = cursor.getString(cursor.getColumnIndex("repeat"));
                 JSONArray repeatArr = null;
                 try {
@@ -322,7 +327,7 @@ public class KiiSync {
         values.put("color", object.getInt("color"));
         values.put("brightness", object.getInt("brightness"));
         values.put("CT", object.getInt("CT"));
-        values.put("state", object.getBoolean("state"));
+        values.put("state", object.getInt("state"));
         values.put("time", object.getInt("time"));
         values.put("repeat", object.getJsonArray("repeat").toString());
         values.put("deleted", object.getInt("deleted"));
@@ -539,6 +544,7 @@ public class KiiSync {
                 }
                 KiiObject groupObj;
                 groupObj = bucket.object(objectID);
+                groupObj.set("objectID", objectID);
                 groupObj.set("name", cursor.getString(cursor.getColumnIndex("name")));
                 groupObj.set("brightness", cursor.getInt(cursor.getColumnIndex("brightness")));
                 groupObj.set("CT", cursor.getInt(cursor.getColumnIndex("CT")));
@@ -705,8 +711,8 @@ public class KiiSync {
                     values.put("color", detailObject.getInt("color"));
                     values.put("brightness", detailObject.getInt("brightness"));
                     values.put("CT", detailObject.getInt("CT"));
-                    values.put("light_id", getLightIdByMac(detailObject.getString("light_id")));
-                    values.put("group_id", getGroupIdByObjId(detailObject.getString("group_id")));
+                    values.put("light_id", getLightIdByMac(detailObject.optString("light_id", null)));
+                    values.put("group_id", getGroupIdByObjId(detailObject.optString("group_id", null)));
                     App.getApp().getContentResolver()
                             .insert(YanKonProvider.URI_SCENES_DETAIL, values);
                 } catch (JSONException e) {
@@ -766,6 +772,8 @@ public class KiiSync {
     }
 
     private static String getLightIdByMac(String mac) {
+        if (TextUtils.isEmpty(mac))
+            return null;
         Cursor cursor = App.getApp().getContentResolver()
                 .query(YanKonProvider.URI_LIGHTS, new String[]{"_id"}, "MAC=?",
                         new String[]{mac}, null);
@@ -814,6 +822,8 @@ public class KiiSync {
     }
 
     private static String getGroupIdByObjId(String objId) {
+        if (TextUtils.isEmpty(objId))
+            return null;
         Cursor cursor = App.getApp().getContentResolver()
                 .query(YanKonProvider.URI_LIGHT_GROUPS, new String[]{"_id"}, "objectID=?",
                         new String[]{objId}, null);
