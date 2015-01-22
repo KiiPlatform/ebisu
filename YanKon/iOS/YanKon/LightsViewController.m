@@ -10,6 +10,15 @@
 #import "UIViewController+AMSlideMenu.h"
 #import "UIColor+CreateMethods.h"
 #import "KxMenu.h"
+#import "Global.h"
+#import "BasicTableViewCell.h"
+#import "Light.h"
+
+@interface LightsViewController() <UITableViewDataSource, UITableViewDelegate>
+
+@property (nonatomic, strong) NSMutableArray *lights;
+
+@end
 
 @implementation LightsViewController
 
@@ -18,6 +27,13 @@
 {
     [super viewDidLoad];
     [self addLeftMenuButton];
+    self.lights = [[NSMutableArray alloc] init];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [self reloadDataFromDB];
 }
 
 - (IBAction)showMenu:(id)sender {
@@ -45,5 +61,43 @@
     [self.mainSlideMenu performSegueWithIdentifier:@"add_lights" sender:nil];
 }
 
+
+-(void)reloadDataFromDB
+{
+    [self.lights removeAllObjects];
+    FMDatabaseQueue *queue = [Global getFMDBQueue];
+    [queue inDatabase:^(FMDatabase *db) {
+        FMResultSet *rs = [db executeQuery:@"select name,state,model,_id from lights where deleted=0;"];
+        while ([rs next]) {
+            Light *light = [[Light alloc] init];
+            light.name = [rs stringForColumnIndex:0];
+            light.state = [rs boolForColumnIndex:1];
+            light.model = [rs stringForColumnIndex:2];
+            light.lid = [rs intForColumnIndex:3];
+            [self.lights addObject:light];
+        }
+        [rs close];
+    }];
+    [queue close];
+    [self.tableView reloadData];
+}
+
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return [self.lights count];
+}
+
+-(UITableViewCell*)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    BasicTableViewCell* cell = (BasicTableViewCell*)[tableView dequeueReusableCellWithIdentifier:@"cell"];
+    NSUInteger pos = [indexPath row];
+    Light *light = self.lights[pos];
+    [cell.nameLabel setText:light.name];
+    [cell.descLabel setText:light.model];
+    [cell.switchButton setOn:light.state];
+    [cell.switchButton setTag:pos];
+    
+    return cell;
+}
 
 @end

@@ -160,6 +160,7 @@ public class UdpHelper implements Runnable {
         }
         //Update to light
         if (light != null) {
+            light.ip = ip;
             light.model = "model1";
             if (light.id < 0) {
                 Cursor c = mContext.getContentResolver().query(YanKonProvider.URI_LIGHTS, new String[]{"_id"}, "MAC=(?)", new String[]{light.mac}, null);

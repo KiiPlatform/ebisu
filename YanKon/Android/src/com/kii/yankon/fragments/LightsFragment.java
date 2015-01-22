@@ -331,7 +331,7 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
             CheckBox checkBox = (CheckBox) view.findViewById(R.id.light_checkbox);
             final boolean state = cursor.getInt(cursor.getColumnIndex("state")) > 0;
             final int light_id = cursor.getInt(cursor.getColumnIndex("_id"));
-            String mac = cursor.getString(cursor.getColumnIndex("MAC"));
+//            String mac = cursor.getString(cursor.getColumnIndex("MAC"));
             if (inMultipleMode) {
                 checkBox.setVisibility(View.VISIBLE);
                 icon.setBackgroundResource(0);

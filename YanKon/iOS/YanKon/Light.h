@@ -19,7 +19,7 @@
 @property (nonatomic) int brightness;
 @property (nonatomic) int CT;
 
-@property (nonatomic) int id;
+@property (nonatomic) int lid;
 @property (nonatomic) BOOL added;
 @property (nonatomic) BOOL connected;
 @property (nonatomic) BOOL selected;

@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface LightsViewController : UITableViewController
+@interface LightsViewController : UIViewController
 
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
 @end

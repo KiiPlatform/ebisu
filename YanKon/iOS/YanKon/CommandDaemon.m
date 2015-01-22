@@ -13,11 +13,13 @@
 #include <arpa/inet.h>
 #import "Global.h"
 #import "NSData+Conversion.h"
+#import "Light.h"
 
 @interface CommandDaemon()<GCDAsyncUdpSocketDelegate> {
     GCDAsyncUdpSocket *socket;
     NSString *myIP;
     NSString *broadcastIP;
+    Global *global;
 }
 @property (nonatomic, strong) Reachability* reach;
 @end
@@ -40,6 +42,7 @@ static CommandDaemon *instance = nil;
 {
     self = [super init];
     if (self) {
+        global = [Global getInstance];
         self.reach = [Reachability reachabilityForLocalWiFi];
         __weak typeof(self) weakSelf = self;
         self.reach.reachableBlock =  ^(Reachability*reach)
@@ -86,7 +89,7 @@ static CommandDaemon *instance = nil;
     NSData *data = [[NSData alloc] initWithBytes:bytes length:sizeof(bytes)];
     [self sendCMD:data toIPs:nil];
     
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 20 * NSEC_PER_SEC), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, global.scanDelay * NSEC_PER_SEC), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         [self sendSearchCMD];
     });
 
@@ -170,8 +173,96 @@ static CommandDaemon *instance = nil;
     NSString *host = nil;
     uint16_t port = 0;
     [GCDAsyncUdpSocket getHost:&host port:&port fromAddress:address];
-    NSLog(@"Get from:%@ Data:%@",host,[data hexadecimalString]);
+//    //Skip IPv6 here
+//    if ([host rangeOfString:@":"].location != NSNotFound) {
+//        return;
+//    }
+    [self handleData:data host:host];
+}
+
+- (void)handleData:(NSData*)data host:(NSString*)ip
+{
+    unsigned char* bytes = (unsigned char*)[data bytes];
+    NSLog(@"Get from:%@ Data:%@",ip,[data hexadecimalString]);
+    int dataLen = (int)[data length];
+    if (dataLen < 4 || bytes[2] == 0 || bytes[1]!=0)
+        return;
+    int len = [self readInt16:bytes pos:4];
+    int pos = 6;
+    Light *light = global.lightsIpDict[ip];
     
+    while (pos<dataLen && pos<6+len) {
+        int dev_id = bytes[pos];
+        int attr_id = bytes[pos+1];
+        int data_len = [self readInt16:bytes pos:pos+3];
+        unsigned char sub_data[data_len];
+        for (int i=0;i<data_len;i++) {
+            sub_data[i] = bytes[i+pos+5];
+        }
+        pos += 5 + data_len;
+        switch (dev_id) {
+            case 0:
+                switch (attr_id) {
+                    case 3: {
+                        NSString *name = [[NSString alloc] initWithBytes:sub_data length:data_len encoding:NSUTF8StringEncoding];
+                        light.name = name;
+                    }
+                        break;
+                }
+                break;
+            case 1:
+                switch (attr_id) {
+                    case 1: {
+                        NSString *mac = [self hexStringFromBytes:sub_data];
+                        light = global.lightsMacDict[mac];
+                        if (light == nil || light == (Light*)[NSNull null]) {
+                            light = [[Light alloc] init];
+                            light.mac = mac;
+                            light.ip = ip;
+                            [global.lightsMacDict setObject:light forKey:mac];
+                            [global.lightsIpDict setObject:light forKey:ip];
+                        }
+                    }
+                        break;
+                }
+                break;
+            case 10: {
+                if (light == nil || light == (Light*)[NSNull null]) {
+                    break;
+                }
+                switch (attr_id) {
+                    case 0:
+                        light.state = sub_data[0] > 0;
+                        break;
+                    case 1:
+                        light.color = [self getRGBColor:sub_data];
+                        break;
+                    case 2:
+                        light.brightness = sub_data[0];
+                        break;
+                    case 3:
+                        light.CT = sub_data[0];
+                        break;
+                }
+            }
+            break;
+            default:
+                break;
+        }
+    }
+    
+    if (light == nil || light == (Light*)[NSNull null] || [light.mac length] == 0) {
+        return;
+    }
+    light.ip = ip;
+    light.model = @"model1";
+    FMDatabaseQueue *queue = [Global getFMDBQueue];
+    [queue inTransaction:^(FMDatabase *db, BOOL *rollback) {
+        [db executeUpdate:@"UPDATE lights SET connected=1, IP=(?), "
+         "state=(?),color=(?),brightness=(?),CT=(?) WHERE MAC=(?);",ip,@(light.state),@(light.color),@(light.brightness),@(light.CT),light.mac];
+    }];
+    [queue close];
+    [[NSNotificationCenter defaultCenter] postNotificationName:NOTIFY_ACTIVE_LIGHTS_CHANGED object:nil];
 }
 
 - (void)udpSocketDidClose:(GCDAsyncUdpSocket *)sock withError:(NSError *)error
@@ -179,5 +270,36 @@ static CommandDaemon *instance = nil;
     
 }
 
+-(int)readInt16:(unsigned char*)bytes pos:(int)pos
+{
+    return bytes[pos+1] * 256 + bytes[pos];
+}
+
+-(int)getRGBColor:(unsigned char*)bytes
+{
+    return bytes[2] * 256 * 256 + bytes[1] * 256 + bytes[0];
+}
+
+- (NSString *)hexStringFromBytes:(unsigned char*)bytes
+{
+    /* Returns hexadecimal string of NSData. Empty string if data is empty.   */
+    
+    const unsigned char *dataBuffer = bytes;
+    
+    if (!dataBuffer)
+    {
+        return [NSString string];
+    }
+    
+    NSUInteger          dataLength  = sizeof(bytes);
+    NSMutableString     *hexString  = [NSMutableString stringWithCapacity:(dataLength * 2)];
+    
+    for (int i = 0; i < dataLength; ++i)
+    {
+        [hexString appendFormat:@"%02x", (unsigned int)dataBuffer[i]];
+    }
+    
+    return [[NSString stringWithString:hexString] uppercaseString];
+}
 
 @end

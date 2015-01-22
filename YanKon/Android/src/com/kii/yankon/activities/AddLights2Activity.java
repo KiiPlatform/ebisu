@@ -22,6 +22,7 @@ import com.kii.yankon.R;
 import com.kii.yankon.model.Light;
 import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.services.NetworkSenderService;
+import com.kii.yankon.utils.CommandBuilder;
 import com.kii.yankon.utils.Constants;
 import com.kii.yankon.utils.Global;
 import com.kii.yankon.widget.LightItemViewHolder;
@@ -217,7 +218,7 @@ public class AddLights2Activity extends ListActivity implements CompoundButton.O
                 LightItemViewHolder holder = new LightItemViewHolder(view);
                 view.setTag(holder);
             }
-            Light light = (Light) getItem(position);
+            final Light light = (Light) getItem(position);
             LightItemViewHolder holder = (LightItemViewHolder) view.getTag();
             holder.textView1.setText(light.name);
             holder.textView2.setText(light.model);
@@ -227,6 +228,13 @@ public class AddLights2Activity extends ListActivity implements CompoundButton.O
             holder.checkBox.setVisibility(View.VISIBLE);
             holder.checkBox.setOnCheckedChangeListener(AddLights2Activity.this);
             holder.checkBox.setTag(light);
+            holder.switchButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    byte[] cmd = CommandBuilder.buildLightInfo(1, isChecked, light.color, light.brightness, light.CT);
+                    NetworkSenderService.sendCmd(mContext, light.ip, cmd);
+                }
+            });
             return view;
         }
     }

@@ -26,7 +26,9 @@ static Global *instance = nil;
 {
     self = [super init];
     if (self) {
-        self.activeLights = [[NSMutableSet alloc] init];
+        self.lightsIpDict = [[NSMutableDictionary alloc] init];
+        self.lightsMacDict = [[NSMutableDictionary alloc] init];
+        self.scanDelay = DEFAULT_SCAN_DELAY;
         NSString *docdir = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0];
         self.dbPath = [docdir stringByAppendingPathComponent:@"yankon.sqlite"];
         [self createOrUpdateDB];

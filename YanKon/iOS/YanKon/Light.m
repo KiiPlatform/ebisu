@@ -10,6 +10,14 @@
 
 @implementation Light
 
+-(instancetype)init
+{
+    self = [super init];
+    if (self) {
+        self.lid = -1;
+    }
+    return self;
+}
 
 -(BOOL)isEqual:(id)object
 {
@@ -17,7 +25,7 @@
         return NO;
     }
     Light * light = object;
-    return (self.id>0 && self.id == light.id) || [self.mac isEqual:light.mac];
+    return (self.lid>0 && self.lid == light.lid) || [self.mac isEqual:light.mac];
 }
 
 @end

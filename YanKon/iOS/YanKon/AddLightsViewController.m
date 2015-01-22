@@ -24,37 +24,38 @@
 -(void)viewDidLoad
 {
     [super viewDidLoad];
+    [Global getInstance].scanDelay = 5;
     self.lights = [[NSMutableArray alloc] init];
     
     Light *l = [Light new];
     l.name = @"Unknown1";
     l.model = @"model1";
     l.mac = @"11";
-    [[Global getInstance].activeLights addObject:l];
+    [[Global getInstance].lightsMacDict setObject:l forKey:l.mac];
     [self addLightToList:l];
     l = [Light new];
     l.name = @"Unknown2";
     l.model = @"model1";
     l.mac = @"22";
-    [[Global getInstance].activeLights addObject:l];
+    [[Global getInstance].lightsMacDict setObject:l forKey:l.mac];
     [self addLightToList:l];
     l = [Light new];
     l.name = @"Unknown3";
     l.model = @"model1";
     l.mac = @"33";
-    [[Global getInstance].activeLights addObject:l];
+    [[Global getInstance].lightsMacDict setObject:l forKey:l.mac];
     [self addLightToList:l];
     l = [Light new];
     l.name = @"Unknown4";
     l.model = @"model1";
     l.mac = @"44";
-    [[Global getInstance].activeLights addObject:l];
+    [[Global getInstance].lightsMacDict setObject:l forKey:l.mac];
     [self addLightToList:l];
     l = [Light new];
     l.name = @"Unknown5";
     l.model = @"model1";
     l.mac = @"55";
-    [[Global getInstance].activeLights addObject:l];
+    [[Global getInstance].lightsMacDict setObject:l forKey:l.mac];
     [self addLightToList:l];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateFromActiveLights:) name:NOTIFY_ACTIVE_LIGHTS_CHANGED object:nil];
@@ -62,9 +63,15 @@
     self.allSelected = NO;
 }
 
+-(void)viewDidDisappear:(BOOL)animated
+{
+    [super viewDidDisappear:animated];
+    [Global getInstance].scanDelay = DEFAULT_SCAN_DELAY;
+}
+
 - (void)updateFromActiveLights:(id)sender
 {
-    NSArray *array = [[Global getInstance].activeLights allObjects];
+    NSArray *array = [[Global getInstance].lightsMacDict allValues];
     NSUInteger count = [array count];
     for (int i=0;i<count;i++) {
         [self addLightToList:array[i]];
