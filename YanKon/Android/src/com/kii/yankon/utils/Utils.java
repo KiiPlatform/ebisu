@@ -193,10 +193,10 @@ public class Utils {
                 String ip = c.getString(c.getColumnIndex("IP"));
                 String mac = c.getString(c.getColumnIndex("MAC"));
                 String remotePwd = c.getString(c.getColumnIndex("remote_pwd"));
-                int _id = c.getInt(c.getColumnIndex("_id"));
+                int light_id = c.getInt(c.getColumnIndex("light_id"));
                 if (allIds.length() > 0)
                     allIds.append(',');
-                allIds.append(_id);
+                allIds.append(light_id);
                 if (connected && !TextUtils.isEmpty(ip)) {
                     connectedLights.add(ip);
                 } else {
@@ -220,7 +220,7 @@ public class Utils {
         }
         if (connectedLights.size() > 0) {
             byte[] cmd = CommandBuilder.buildLightInfo(1, state, color, brightness, CT);
-            String[] ips = connectedLights.toArray(new String[0]);
+            String[] ips = connectedLights.toArray(new String[connectedLights.size()]);
             NetworkSenderService.sendCmd(context, ips, cmd);
         }
         if (doItNow && KiiUser.isLoggedIn()) {

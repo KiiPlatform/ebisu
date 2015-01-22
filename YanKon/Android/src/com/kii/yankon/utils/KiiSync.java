@@ -184,7 +184,6 @@ public class KiiSync {
             return result;
         }
         KiiServerCodeEntry entry = Kii.serverCodeEntry("fireLamp");
-        Log.e(LOG_TAG, "color:" + color);
         long colorL = color & 0x0000000000ffffffL;
         try {
             JSONObject rawArg = new JSONObject();

@@ -6,6 +6,7 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.util.Log;
 
 public class YanKonProvider extends ContentProvider {
 
@@ -211,7 +212,7 @@ public class YanKonProvider extends ContentProvider {
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection,
-            String[] selectionArgs, String sortOrder) {
+                        String[] selectionArgs, String sortOrder) {
         SQLiteDatabase database = mDBHelper.getWritableDatabase();
         switch (uriMatcher.match(uri)) {
             case ID_COLORS: {
@@ -275,7 +276,7 @@ public class YanKonProvider extends ContentProvider {
 
     @Override
     public int update(Uri uri, ContentValues values, String selection,
-            String[] selectionArgs) {
+                      String[] selectionArgs) {
         int ret = 0;
         SQLiteDatabase database = mDBHelper.getWritableDatabase();
         switch (uriMatcher.match(uri)) {
