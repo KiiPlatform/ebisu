@@ -92,8 +92,7 @@ public class MainActivity extends Activity
         } catch (Exception e) {
 
         }
-        mNavigationDrawerFragment.setCurrentSelectedPosition(index);
-        onNavigationDrawerItemSelected(index);
+        mNavigationDrawerFragment.selectItem(index);
     }
 
     @Override
