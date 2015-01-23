@@ -437,6 +437,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\Src\Kii\lib\kii_push.c</FilePath>
             </File>
+            <File>
+              <FileName>kii_extension.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\Src\Kii\lib\kii_extension.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

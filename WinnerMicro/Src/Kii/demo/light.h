@@ -36,6 +36,7 @@ typedef struct {
 
 int light_initPush(void);
 int light_onBoarding(void);
+int light_updateStatus(void);
 
 
 #endif

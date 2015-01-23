@@ -9,14 +9,15 @@
 
 extern kii_data_struct g_kii_data;
 
-static int kiiObj_update(char *bucketName, char *jsonObject, char *dataType, char *objectID, int updateOrCreateWithID);
+static int kiiObj_update(int scope, char *bucketName, char *jsonObject, char *dataType, char *objectID, int updateOrCreateWithID);
 
 
 /*****************************************************************************
 *
 *  kiiObj_create
 *
-*  \param  bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               jsonObject - the input of object with json format
 *               dataType - the input of data type, the format should be like "mydata"
 *               objectID - the output of objectID
@@ -26,7 +27,7 @@ static int kiiObj_update(char *bucketName, char *jsonObject, char *dataType, cha
 *  \brief  Creates object
 *
 *****************************************************************************/
-int kiiObj_create(char *bucketName, char *jsonObject, char *dataType, char *objectID)
+int kiiObj_create(int scope, char *bucketName, char *jsonObject, char *dataType, char *objectID)
 {
     char * p1;
     char * p2;
@@ -43,8 +44,11 @@ int kiiObj_create(char *bucketName, char *jsonObject, char *dataType, char *obje
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
-    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    if (scope == KII_THING_SCOPE)
+    {
+        strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+        strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    }
     strcpy(buf+strlen(buf), "/buckets/");
     strcpy(buf+strlen(buf),bucketName);
     strcpy(buf+strlen(buf), "/objects");
@@ -98,7 +102,7 @@ int kiiObj_create(char *bucketName, char *jsonObject, char *dataType, char *obje
         return -1;
     }
 
-    if ((strstr(buf, "HTTP/1.1 201") == NULL) || (strstr(buf, "{") == NULL) || (strstr(buf, "}") == NULL) )
+    if (strstr(buf, "HTTP/1.1 201") == NULL)
     {
 	kiiHal_free(buf);
         return -1;    
@@ -120,7 +124,8 @@ int kiiObj_create(char *bucketName, char *jsonObject, char *dataType, char *obje
 *
 *  kiiObj_createWithID
 *
-*  \param  bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               jsonObject - the input of object with json format
 *               dataType - the input of data type, the format should be like "mydata"
 *               objectID - the input of objectID
@@ -130,9 +135,9 @@ int kiiObj_create(char *bucketName, char *jsonObject, char *dataType, char *obje
 *  \brief  Creates a new object with an ID
 *
 *****************************************************************************/
-int kiiObj_createWithID(char *bucketName, char *jsonObject, char *dataType, char *objectID)
+int kiiObj_createWithID(int scope, char *bucketName, char *jsonObject, char *dataType, char *objectID)
 {
-    return kiiObj_update(bucketName, jsonObject, dataType, objectID, KIIOBJ_CREATE_WITH_ID);
+    return kiiObj_update(scope, bucketName, jsonObject, dataType, objectID, KIIOBJ_CREATE_WITH_ID);
 }
 
 
@@ -140,7 +145,8 @@ int kiiObj_createWithID(char *bucketName, char *jsonObject, char *dataType, char
 *
 *  kiiObj_fullyUpdate
 *
-*  \param  bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               jsonObject - the input of object with json format
 *               dataType - the input of data type, the format should be like "mydata"
 *               objectID - the input of objectID
@@ -150,16 +156,17 @@ int kiiObj_createWithID(char *bucketName, char *jsonObject, char *dataType, char
 *  \brief  Fully updates an object
 *
 *****************************************************************************/
-int kiiObj_fullyUpdate(char *bucketName, char *jsonObject, char *dataType, char *objectID)
+int kiiObj_fullyUpdate(int scope, char *bucketName, char *jsonObject, char *dataType, char *objectID)
 {
-    return kiiObj_update(bucketName, jsonObject, dataType, objectID, KIIOBJ_FULLY_UPDATE);
+    return kiiObj_update(scope, bucketName, jsonObject, dataType, objectID, KIIOBJ_FULLY_UPDATE);
 }
 
 /*****************************************************************************
 *
 *  kiiObj_partiallyUpdate
 *
-*  \param  bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               jsonObject - the input of object with json format
 *               objectID - the input of objectID
 *
@@ -168,16 +175,17 @@ int kiiObj_fullyUpdate(char *bucketName, char *jsonObject, char *dataType, char 
 *  \brief  Partially updates an object
 *
 *****************************************************************************/
-int kiiObj_partiallyUpdate(char *bucketName, char *jsonObject, char *objectID)
+int kiiObj_partiallyUpdate(int scope, char *bucketName, char *jsonObject, char *objectID)
 {
-    return kiiObj_update(bucketName, jsonObject, NULL, objectID, KIIOBJ_PARTIALLY_UPDATE);
+    return kiiObj_update(scope, bucketName, jsonObject, NULL, objectID, KIIOBJ_PARTIALLY_UPDATE);
 }
 
 /*****************************************************************************
 *
 *  kiiObj_fullyUpdate
 *
-*  \param  bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               jsonObject - the input of object with json format
 *               dataType - the input of data type, the format should be like "mydata"
 *               objectID - the input of objectID
@@ -188,7 +196,7 @@ int kiiObj_partiallyUpdate(char *bucketName, char *jsonObject, char *objectID)
 *  \brief  Partially/fully updates an object, or creates a new object with an id
 *
 *****************************************************************************/
-static int kiiObj_update(char *bucketName, char *jsonObject, char *dataType, char *objectID, int updateOrCreateWithID)
+static int kiiObj_update(int scope, char *bucketName, char *jsonObject, char *dataType, char *objectID, int updateOrCreateWithID)
 {
     char *buf;
 
@@ -210,8 +218,11 @@ static int kiiObj_update(char *bucketName, char *jsonObject, char *dataType, cha
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
-    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    if (scope == KII_THING_SCOPE)
+    {
+        strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+        strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    }
     strcpy(buf+strlen(buf), "/buckets/");
     strcpy(buf+strlen(buf),bucketName);
     strcpy(buf+strlen(buf), "/objects/");
@@ -299,7 +310,8 @@ static int kiiObj_update(char *bucketName, char *jsonObject, char *dataType, cha
 *
 *  kiiObj_uploadBodyAtOnce
 *
-*  \param: bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               objectID - the input of objectID
 *               dataType - the input of data type, the format should be like "image/jpg"
 *               data - raw data
@@ -310,7 +322,7 @@ static int kiiObj_update(char *bucketName, char *jsonObject, char *dataType, cha
 *  \brief  Uploads object body at once
 *
 *****************************************************************************/
-int kiiObj_uploadBodyAtOnce(char *bucketName, char *objectID,  char *dataType, unsigned char *data, unsigned int length)
+int kiiObj_uploadBodyAtOnce(int scope, char *bucketName, char *objectID,  char *dataType, unsigned char *data, unsigned int length)
 {
     char *buf;
 
@@ -325,8 +337,11 @@ int kiiObj_uploadBodyAtOnce(char *bucketName, char *objectID,  char *dataType, u
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
-    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    if (scope == KII_THING_SCOPE)
+    {
+        strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+        strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    }
     strcpy(buf+strlen(buf), "/buckets/");
     strcpy(buf+strlen(buf),bucketName);
     strcpy(buf+strlen(buf), "/objects/");
@@ -394,7 +409,8 @@ int kiiObj_uploadBodyAtOnce(char *bucketName, char *objectID,  char *dataType, u
 *
 *  kiiObj_uploadBodyInit
 *
-*  \param: bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               objectID - the input of objectID
 *               uploadID - the output of uploadID
 *
@@ -403,7 +419,7 @@ int kiiObj_uploadBodyAtOnce(char *bucketName, char *objectID,  char *dataType, u
 *  \brief  Initializes "uploading an object body in multiple pieces"
 *
 *****************************************************************************/
-int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *uploadID)
+int kiiObj_uploadBodyInit(int scope, char *bucketName, char *objectID, char *uploadID)
 {
     char * p1;
     char * p2;
@@ -420,8 +436,11 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *uploadID)
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
-    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    if (scope == KII_THING_SCOPE)
+    {
+        strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+        strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    }
     strcpy(buf+strlen(buf), "/buckets/");
     strcpy(buf+strlen(buf), bucketName);
     strcpy(buf+strlen(buf), "/objects/");
@@ -471,7 +490,7 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *uploadID)
         return -1;
     }
 
-    if ((strstr(buf, "HTTP/1.1 200") == NULL) || (strstr(buf, "{") == NULL) || (strstr(buf, "}") == NULL) )
+    if (strstr(buf, "HTTP/1.1 200") == NULL)
     {
 	kiiHal_free(buf);
         return -1;    
@@ -494,7 +513,8 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *uploadID)
 *
 *  kiiObj_uploadBody
 *
-*  \param: bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               objectID - the input of objectID
 *               uploadID - the input of uploadID
 *               dataType - the input of data type, the format should be like "image/jpg"
@@ -508,7 +528,7 @@ int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *uploadID)
 *  \brief  Uploads a piece of data
 *
 *****************************************************************************/
-int kiiObj_uploadBody(char *bucketName, char *objectID, char *uploadID, char *dataType, unsigned int position,  unsigned int length, unsigned int totalLength, unsigned char *data)
+int kiiObj_uploadBody(int scope, char *bucketName, char *objectID, char *uploadID, char *dataType, unsigned int position,  unsigned int length, unsigned int totalLength, unsigned char *data)
 {
     char *buf;
 	
@@ -523,8 +543,11 @@ int kiiObj_uploadBody(char *bucketName, char *objectID, char *uploadID, char *da
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
-    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    if (scope == KII_THING_SCOPE)
+    {
+        strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+        strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    }
     strcpy(buf+strlen(buf), "/buckets/");
     strcpy(buf+strlen(buf), bucketName);
     strcpy(buf+strlen(buf), "/objects/");
@@ -609,7 +632,8 @@ int kiiObj_uploadBody(char *bucketName, char *objectID, char *uploadID, char *da
 *
 *  kiiObj_uploadBody
 *
-*  \param: bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               objectID - the input of objectID
 *               uploadID - the input of uploadID
 *               committed - 0: cancelled; 1: committed
@@ -619,7 +643,7 @@ int kiiObj_uploadBody(char *bucketName, char *objectID, char *uploadID, char *da
 *  \brief  Commits or cancels this uploading
 *
 *****************************************************************************/
-int kiiObj_uploadBodyCommit(char *bucketName, char *objectID, char *uploadID, int committed)
+int kiiObj_uploadBodyCommit(int scope, char *bucketName, char *objectID, char *uploadID, int committed)
 {
     char *buf;
 	
@@ -634,8 +658,11 @@ int kiiObj_uploadBodyCommit(char *bucketName, char *objectID, char *uploadID, in
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
-    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    if (scope == KII_THING_SCOPE)
+    {
+        strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+        strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    }
     strcpy(buf+strlen(buf), "/buckets/");
     strcpy(buf+strlen(buf), bucketName);
     strcpy(buf+strlen(buf), "/objects/");
@@ -698,7 +725,8 @@ int kiiObj_uploadBodyCommit(char *bucketName, char *objectID, char *uploadID, in
 *
 *  kiiObj_retrieve
 *
-*  \param  bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               objectID - the input of objectID
 *               jsonObject - the output of object with json format
 *               length - the buffer length of jsonObject
@@ -708,10 +736,9 @@ int kiiObj_uploadBodyCommit(char *bucketName, char *objectID, char *uploadID, in
 *  \brief  Retrieves object with objectID
 *
 *****************************************************************************/
-int kiiObj_retrieve(char *bucketName, char *objectID,  char *jsonObject, unsigned int length)
+int kiiObj_retrieve(int scope, char *bucketName, char *objectID,  char *jsonObject, unsigned int length)
 {
     char * p1;
-    char * p2;
     char *buf;
 
     buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
@@ -725,8 +752,11 @@ int kiiObj_retrieve(char *bucketName, char *objectID,  char *jsonObject, unsigne
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
-    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    if (scope == KII_THING_SCOPE)
+    {
+        strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+        strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    }
     strcpy(buf+strlen(buf), "/buckets/");
     strcpy(buf+strlen(buf),bucketName);
     strcpy(buf+strlen(buf), "/objects/");
@@ -761,16 +791,14 @@ int kiiObj_retrieve(char *bucketName, char *objectID,  char *jsonObject, unsigne
 	   return -1;
    }
 
-    if ((strstr(buf, "HTTP/1.1 200") == NULL) || (strstr(buf, "{") == NULL) || (strstr(buf, "}") == NULL) )
+    if (strstr(buf, "HTTP/1.1 200") == NULL)
     {
 	kiiHal_free(buf);
         return -1;    
     }
 
     p1 = strstr(buf, "{");
-    p2 = strstr(buf, "}");
-    p2++;
-    if ((p2-p1) > length)
+    if (strlen(p1) > length)
     {
         KII_DEBUG("kii-error: jsonObjectBuf overflow !\r\n");
 	kiiHal_free(buf);
@@ -779,17 +807,19 @@ int kiiObj_retrieve(char *bucketName, char *objectID,  char *jsonObject, unsigne
     else
     {
         memset(jsonObject, 0, length);
-        memcpy(jsonObject, p1, p2-p1);
+        strcpy(jsonObject, p1);
 	kiiHal_free(buf);
         return 0;
     }
 }
 
+
 /*****************************************************************************
 *
 *  kiiObj_downloadBodyAtOnce
 *
-*  \param  bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               objectID - the input of objectID
 *               data - raw data
 *               length - the buffer lengh for object body
@@ -799,7 +829,7 @@ int kiiObj_retrieve(char *bucketName, char *objectID,  char *jsonObject, unsigne
 *  \brief  Downloads an object body at once
 *
 *****************************************************************************/
-int kiiObj_downloadBodyAtOnce(char *bucketName, char *objectID, unsigned char *data, unsigned int length, unsigned int *actualLength)
+int kiiObj_downloadBodyAtOnce(int scope, char *bucketName, char *objectID, unsigned char *data, unsigned int length, unsigned int *actualLength)
 {
     char * p1;
     char *buf;
@@ -816,8 +846,11 @@ int kiiObj_downloadBodyAtOnce(char *bucketName, char *objectID, unsigned char *d
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
-    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    if (scope == KII_THING_SCOPE)
+    {
+        strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+        strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    }
     strcpy(buf+strlen(buf), "/buckets/");
     strcpy(buf+strlen(buf),bucketName);
     strcpy(buf+strlen(buf), "/objects/");
@@ -901,7 +934,8 @@ int kiiObj_downloadBodyAtOnce(char *bucketName, char *objectID, unsigned char *d
 *
 *  kiiObj_downloadBody
 *
-*  \param  bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               objectID - the input of objectID
 *               position - the downloading position of body
 *               length - the downloading length of body
@@ -914,7 +948,7 @@ int kiiObj_downloadBodyAtOnce(char *bucketName, char *objectID, unsigned char *d
 *  \brief  Downloads an object body in multiple pieces
 *
 *****************************************************************************/
-int kiiObj_downloadBody(char *bucketName, char *objectID,  unsigned int position,  unsigned int length, unsigned char *data, unsigned int *actualLength, unsigned int *totalLength)
+int kiiObj_downloadBody(int scope, char *bucketName, char *objectID,  unsigned int position,  unsigned int length, unsigned char *data, unsigned int *actualLength, unsigned int *totalLength)
 {
     char * p1;
     char *buf;
@@ -931,8 +965,11 @@ int kiiObj_downloadBody(char *bucketName, char *objectID,  unsigned int position
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
-    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    if (scope == KII_THING_SCOPE)
+    {
+        strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+        strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    }
     strcpy(buf+strlen(buf), "/buckets/");
     strcpy(buf+strlen(buf),bucketName);
     strcpy(buf+strlen(buf), "/objects/");

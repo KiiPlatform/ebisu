@@ -5,7 +5,7 @@
 #include "light.h"
 #include "kii_demo.h"
 
-
+#if 0
 void kiiDemo_testObject(void)
 {
     int i;
@@ -159,7 +159,7 @@ void kiiDemo_testObject(void)
  	printf("\"\r\n");
     }
 
-   printf("Testing downloading object body ...\r\n");
+    printf("Testing downloading object body ...\r\n");
     memset(objectBody, 0, sizeof(objectBody));
     bodyPosition = 0;
     bodyLength = 5;
@@ -218,7 +218,7 @@ void kiiDemo_testTopic(void)
     }
 }
 
-
+#endif
 
 int kiiDemo_test(char *buf)
 {
@@ -236,8 +236,8 @@ int kiiDemo_test(char *buf)
 	    return 0;
     }
 
-    kiiDemo_testObject();
-    kiiDemo_testTopic();
+    //kiiDemo_testObject();
+    //kiiDemo_testTopic();
 
     if (light_initPush() < 0)
     {
@@ -247,6 +247,13 @@ int kiiDemo_test(char *buf)
     else
     {
 	printf("Initialize push success\r\n");
+#if 0	
+	while(1)
+	{
+	    OSTimeDly (OS_TICKS_PER_SEC*3);
+	    light_updateStatus();
+	}
+#endif	
 	return WM_SUCCESS;
     }
 }

@@ -1,41 +1,64 @@
 #ifndef LIGHT_H
 #define LIGHT_H
 
+#include "light_if.h"
+
+#define STR_SITE "JP"
+#define STR_APPID "06e806e2"
+#define STR_APPKEY "31afdcdfd72ade025559176a40a20875"
+
+//server extension
+#define STR_SERVER_EXTENSION_ENDPOINT_NAME 	"doActionResponse"
+
+
 //Thing onboarding
 #define STR_DEVICE_TYPE "LED"
 #define STR_PASSWORD "123456"
+
+#define LIGHT_TYPE_SIZE    					16
+#define LIGHT_JSON_OBJECT_SIZE 				512
+
 
 //remote control
 #define STR_LED_BUCKET_CONTROL  "LEDControl"    //thing scope
 #define STR_LED_BUCKET_RESPONSE  "LEDControlResponse"    //thing scope
 #define STR_LED_MEDIA_TYPE "LED"
 
-//remote control
-#define STR_LED_BUCKET_FIRWAREUPGRADE "MTK_FirmwareUpgrade" //app scope
+//firmware upgrade
+#define STR_JSON_FIRMWARE_URL					"\"firmwareUrl\":"
+#define STR_JSON_VERSION_NAME				"\"versionName\":"
 
 
-#define STR_JSON_REQUESTID			"\"requestID\":"
-#define STR_JSON_STATUS				"\"status\":"
-#define STR_JSON_VALUE_TRUE		"true"
-#define STR_JSON_VALUE_FALSE		"false"
+#define STR_JSON_TYPE					"\"type\":"
 
-#define STR_JSON_LIGHT_STATE		"\"state\":"
-#define STR_JSON_LIGHT_COLOR		"\"color\":"
-#define STR_JSON_LIGHT_BRIGHTNESS	"\"brightness\":"
-#define STR_JSON_LIGHT_CT			"\"CT\":"
+#define STR_JSON_TYPE_COMMAND 		"command"
+#define STR_JSON_LIGHT_STATE			"\"state\":"
+#define STR_JSON_LIGHT_COLOR			"\"color\":"
+#define STR_JSON_LIGHT_BRIGHTNESS		"\"brightness\":"
+#define STR_JSON_LIGHT_CT				"\"CT\":"
 
-typedef struct {
-	unsigned char state; //0,1
-	unsigned char color [3]; //0..0xffffff
-	unsigned char brightness; //0..100
-	unsigned char ct; //0..100
-} light_struct;
+#define STR_JSON_TYPE_QUERYSTATUS 		"queryStatus"
+
+#define STR_JSON_TYPE_UPDATEPWD 		"updatePwd"
+#define STR_JSON_NEW_PWD 				"\"newPwd\":"
+#define STR_JSON_PASSWORD				"\"password\":"
+
+#define STR_JSON_TYPE_FACTORY_RESET	"factoryReset"
+#define STR_JSON_FACTORY_RESET	 		"\"factoryReset\":"
+
+#define STR_JSON_REQUESTID				"\"requestID\":"
+#define STR_JSON_THINGID					"\"thingID\":"
+
+#define STR_JSON_FIRMWARE_VERSION		"\"firmwareVersion\":"
+
+#define STR_JSON_IP_ADDRESS				"\"ipAddress\":"
+
+#define STR_JSON_TRUE					"true"
+#define STR_JSON_FALSE					"false"
 
 
-
-int light_initPush(void);
-int light_onBoarding(void);
-
+int light_init(void);
+int light_updateStatus(light_struct light);
 
 #endif
 

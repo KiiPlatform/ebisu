@@ -141,6 +141,27 @@ int light_buildJson(char *jsonBuf, light_struct light)
     return 0;
 }
 
+int light_updateStatus(void)
+{
+    char jsonObject[512];
+    light_struct light;
+
+    memset(jsonObject, 0, sizeof(jsonObject));
+    strcpy(jsonObject, "{");
+    light_buildJson(jsonObject+strlen(jsonObject), light);
+    strcpy(jsonObject+strlen(jsonObject), "}");
+    printf("update light status, jsonObject:\r\n%s\r\n", jsonObject);
+    if (kiiObj_createWithID(KII_THING_SCOPE, STR_LED_BUCKET_RESPONSE, jsonObject, STR_LED_MEDIA_TYPE, "led_status") < 0)
+    {
+	printf("update light status failed\r\n");
+	return -1;
+    }
+    else
+    {
+	return 0;
+    }
+}
+
 void light_callback(char* jsonBuf, int rcvdCounter)
 {
     char * p1;
@@ -194,7 +215,7 @@ void light_callback(char* jsonBuf, int rcvdCounter)
         //printf("Remote control led... \r\n");
         //retrieve object
         memset(jsonObject, 0, sizeof(jsonObject));
-        if (kiiObj_retrieve(STR_LED_BUCKET_CONTROL, objectID, jsonObject, sizeof(jsonObject)) < 0)
+        if (kiiObj_retrieve(KII_THING_SCOPE, STR_LED_BUCKET_CONTROL, objectID, jsonObject, sizeof(jsonObject)) < 0)
         {
             printf("Retrieve object failed, objectID:\"%s\"\r\n", objectID);
         }
@@ -237,7 +258,7 @@ void light_callback(char* jsonBuf, int rcvdCounter)
 	        }
 		strcpy(jsonObject+strlen(jsonObject), "}");
 		//printf("light status:\r\n%s\r\n", jsonObject);
-		if (kiiObj_create(STR_LED_BUCKET_RESPONSE, jsonObject, STR_LED_MEDIA_TYPE, objectID) < 0)
+		if (kiiObj_create(KII_THING_SCOPE, STR_LED_BUCKET_RESPONSE, jsonObject, STR_LED_MEDIA_TYPE, objectID) < 0)
 		{
 		    printf("create led response object failed\r\n");
 		}
@@ -261,12 +282,12 @@ void light_callback(char* jsonBuf, int rcvdCounter)
 
 int light_initPush(void)
 {
-    if (kiiPush_subscribeAppBucket(STR_LED_BUCKET_FIRWAREUPGRADE) < 0)
+    if (kiiPush_subscribeBucket(KII_APP_SCOPE, STR_LED_BUCKET_FIRWAREUPGRADE) < 0)
     {
 	return -1;
     }
 
-    if (kiiPush_subscribeThingBucket(STR_LED_BUCKET_CONTROL) < 0)
+    if (kiiPush_subscribeBucket(KII_THING_SCOPE, STR_LED_BUCKET_CONTROL) < 0)
     {
 	return -1;
     }

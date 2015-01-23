@@ -98,7 +98,7 @@ static int kiiPush_install(void)
 	   return -1;
    }
 
-    if ((strstr(buf, "HTTP/1.1 201") == NULL) || (strstr(buf, "{") == NULL) || (strstr(buf, "}") == NULL) )
+    if (strstr(buf, "HTTP/1.1 201") == NULL)
     {
 	kiiHal_free(buf);
         return -1;    
@@ -179,7 +179,7 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
 	   return KIIPUSH_ENDPOINT_ERROR;
    }
 
-    if ((strstr(buf, "HTTP/1.1 200") != NULL) && (strstr(buf, "{") != NULL) && (strstr(buf, "}") != NULL) )
+    if (strstr(buf, "HTTP/1.1 200") != NULL)
     {
         //get username
         p1 = strstr(buf, "\"username\"");
@@ -235,16 +235,17 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(void)
 
 /*****************************************************************************
 *
-*  kiiPush_subscribeAppBucket
+*  kiiPush_subscribeBucket
 *
-*  \param: bucketID - the bucket ID
+*  \param  scope - bucket scope
+*               bucketID - the bucket ID
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  Subscribes app scope bucket
+*  \brief  Subscribes bucket
 *
 *****************************************************************************/
-int kiiPush_subscribeAppBucket(char *bucketID)
+int kiiPush_subscribeBucket(int scope, char *bucketID)
 {
     char *buf;
 
@@ -259,6 +260,11 @@ int kiiPush_subscribeAppBucket(char *bucketID)
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
+    if (scope == KII_THING_SCOPE)
+    {
+        strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+        strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    }
     strcpy(buf+strlen(buf), "/buckets/");
     strcpy(buf+strlen(buf),bucketID);
     strcpy(buf+strlen(buf), "/filters/all/push/subscriptions/things");
@@ -292,81 +298,7 @@ int kiiPush_subscribeAppBucket(char *bucketID)
 	   return -1;
    }
 
-    if ((strstr(buf, "HTTP/1.1 204") != NULL)  || (strstr(buf, "HTTP/1.1 409") != NULL))
-    {
-	kiiHal_free(buf);
-	 return 0;
-    }
-    else
-    {
-	kiiHal_free(buf);
-	return -1;
-    }
-}
-
-
-/*****************************************************************************
-*
-*  kiiPush_subscribeThingBucket
-*
-*  \param: bucketID - the bucket ID
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Subscribes thing scope bucket
-*
-*****************************************************************************/
-int kiiPush_subscribeThingBucket(char *bucketID)
-{
-    char *buf;
-
-    buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
-    if (buf == NULL)
-    {
-        KII_DEBUG("kii-error: memory allocation failed !\r\n");
-        return -1;
-    }
-    memset(buf, 0, KII_SOCKET_BUF_SIZE);
-    strcpy(buf, STR_POST);
-    // url
-    strcpy(buf+strlen(buf), "/api/apps/");
-    strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
-    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
-    strcpy(buf+strlen(buf), "/buckets/");
-    strcpy(buf+strlen(buf),bucketID);
-    strcpy(buf+strlen(buf), "/filters/all/push/subscriptions/things");
-    strcpy(buf+strlen(buf), STR_HTTP);
-   strcpy(buf+strlen(buf), STR_CRLF);
-   //Connection
-   strcpy(buf+strlen(buf), "Connection: Keep-Alive\r\n");
-   //Host
-   strcpy(buf+strlen(buf), "Host: ");
-   strcpy(buf+strlen(buf), g_kii_data.host);
-   strcpy(buf+strlen(buf), STR_CRLF);
-    //x-kii-appid
-    strcpy(buf+strlen(buf), STR_KII_APPID);
-    strcpy(buf+strlen(buf), g_kii_data.appID); 
-   strcpy(buf+strlen(buf), STR_CRLF);
-    //x-kii-appkey 
-    strcpy(buf+strlen(buf), STR_KII_APPKEY);
-    strcpy(buf+strlen(buf), g_kii_data.appKey);
-   strcpy(buf+strlen(buf), STR_CRLF);
-   //Authorization
-    strcpy(buf+strlen(buf), STR_AUTHORIZATION);
-    strcpy(buf+strlen(buf),  " Bearer ");
-    strcpy(buf+strlen(buf), g_kii_data.accessToken); 
-   strcpy(buf+strlen(buf), STR_CRLF);
-   strcpy(buf+strlen(buf), STR_CRLF);
-   
-   if (kiiHal_transfer(buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
-   {
-	   KII_DEBUG("kii-error: transfer data error !\r\n");
-	   kiiHal_free(buf);
-	   return -1;
-   }
-
-    if ((strstr(buf, "HTTP/1.1 204") != NULL)  || (strstr(buf, "HTTP/1.1 409") != NULL))
+    if ((strstr(buf, "HTTP/1.1 204") != NULL) || (strstr(buf, "HTTP/1.1 409") != NULL))
     {
 	kiiHal_free(buf);
 	 return 0;
@@ -383,14 +315,15 @@ int kiiPush_subscribeThingBucket(char *bucketID)
 *
 *  kiiPush_subscribeTopic
 *
-*  \param: topicID - the topic ID
+*  \param: scope - topic scope
+*               topicID - the topic ID
 *
 *  \return 0:success; -1: failure
 *
 *  \brief  Subscribes thing scope topic
 *
 *****************************************************************************/
-int kiiPush_subscribeTopic(char *topicID)
+int kiiPush_subscribeTopic(int scope, char *topicID)
 {
     char *buf;
 
@@ -405,8 +338,11 @@ int kiiPush_subscribeTopic(char *topicID)
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
-    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    if (scope == KII_THING_SCOPE)
+    {
+        strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+        strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    }
     strcpy(buf+strlen(buf), "/topics/");
     strcpy(buf+strlen(buf),topicID);
     strcpy(buf+strlen(buf), "/push/subscriptions/things");
@@ -457,14 +393,15 @@ int kiiPush_subscribeTopic(char *topicID)
 *
 *  kiiPush_createTopic
 *
-*  \param: topicID - the topic ID
+*  \param: scope - topic scope
+*               topicID - the topic ID
 *
 *  \return 0:success; -1: failure
 *
 *  \brief  Creates thing scope topic
 *
 *****************************************************************************/
-int kiiPush_createTopic(char *topicID)
+int kiiPush_createTopic(int scope, char *topicID)
 {
     char *buf;
 
@@ -479,8 +416,11 @@ int kiiPush_createTopic(char *topicID)
     // url
     strcpy(buf+strlen(buf), "/api/apps/");
     strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
-    strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    if (scope == KII_THING_SCOPE)
+    {
+        strcpy(buf+strlen(buf), "/things/VENDOR_THING_ID:");
+        strcpy(buf+strlen(buf), g_kii_data.vendorDeviceID);
+    }
     strcpy(buf+strlen(buf), "/topics/");
     strcpy(buf+strlen(buf),topicID);
     strcpy(buf+strlen(buf), STR_HTTP);

@@ -1,5 +1,24 @@
 #include <string.h>
 #include <pthread.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/param.h>
+#include <sys/time.h>
+#include <sys/select.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
+
+#include <stdlib.h>
+#include <string.h>
+#include <signal.h>
+
+
 
 #include "kii.h"
 #include "kii_def.h"
@@ -21,11 +40,8 @@ extern kii_data_struct g_kii_data;
 *****************************************************************************/
 int kiiHal_dns(char *hostName, unsigned char *buf)
 {
-
     struct hostent *host;
 	
-    int portnumber,nbytes;
-
     host = gethostbyname(hostName);
     if(host != NULL)
     {

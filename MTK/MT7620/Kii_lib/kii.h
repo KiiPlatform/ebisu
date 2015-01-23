@@ -1,25 +1,6 @@
 #ifndef KII_H
 #define KII_H
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/select.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <fcntl.h>
-
-#include <stdlib.h>
-#include <string.h>
-#include <signal.h>
-
-
 #define KII_SITE_SIZE 2
 #define KII_HOST_SIZE 64
 #define KII_APPID_SIZE 8
@@ -35,9 +16,13 @@
 
 #define KII_SOCKET_BUF_SIZE 2048
 
+typedef enum
+{
+    KII_APP_SCOPE =  0,
+    KII_THING_SCOPE =  1    
+}kii_scope_e; 
 
 typedef void (* kiiPush_recvMsgCallback)(char* jsonBuf, int rcvdCounter);
-
 
 
 /*****************************************************************************
@@ -91,7 +76,8 @@ extern int kiiDev_register(char *vendorDeviceID, char *deviceType, char *passwor
 *
 *  kiiObj_create
 *
-*  \param  bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               jsonObject - the input of object with json format
 *               dataType - the input of data type, the format should be like "mydata"
 *               objectID - the output of objectID
@@ -101,14 +87,15 @@ extern int kiiDev_register(char *vendorDeviceID, char *deviceType, char *passwor
 *  \brief  Creates object
 *
 *****************************************************************************/
-extern int kiiObj_create(char *bucketName, char *jsonObject, char *dataType, char *objectID);
+extern int kiiObj_create(int scope, char *bucketName, char *jsonObject, char *dataType, char *objectID);
 
 
 /*****************************************************************************
 *
 *  kiiObj_createWithID
 *
-*  \param  bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               jsonObject - the input of object with json format
 *               dataType - the input of data type, the format should be like "mydata"
 *               objectID - the input of objectID
@@ -118,14 +105,15 @@ extern int kiiObj_create(char *bucketName, char *jsonObject, char *dataType, cha
 *  \brief  Creates a new object with an ID
 *
 *****************************************************************************/
-extern int kiiObj_createWithID(char *bucketName, char *jsonObject, char *dataType, char *objectID);
+extern int kiiObj_createWithID(int scope, char *bucketName, char *jsonObject, char *dataType, char *objectID);
 
 
 /*****************************************************************************
 *
 *  kiiObj_fullyUpdate
 *
-*  \param  bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               jsonObject - the input of object with json format
 *               dataType - the input of data type, the format should be like "mydata"
 *               objectID - the input of objectID
@@ -135,14 +123,15 @@ extern int kiiObj_createWithID(char *bucketName, char *jsonObject, char *dataTyp
 *  \brief  Fully updates an object
 *
 *****************************************************************************/
-extern int kiiObj_fullyUpdate(char *bucketName, char *jsonObject, char *dataType, char *objectID);
+extern int kiiObj_fullyUpdate(int scope, char *bucketName, char *jsonObject, char *dataType, char *objectID);
 
 
 /*****************************************************************************
 *
 *  kiiObj_partiallyUpdate
 *
-*  \param  bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               jsonObject - the input of object with json format
 *               objectID - the input of objectID
 *
@@ -151,14 +140,15 @@ extern int kiiObj_fullyUpdate(char *bucketName, char *jsonObject, char *dataType
 *  \brief  Partially updates an object
 *
 *****************************************************************************/
-extern int kiiObj_partiallyUpdate(char *bucketName, char *jsonObject, char *objectID);
+extern int kiiObj_partiallyUpdate(int scope, char *bucketName, char *jsonObject, char *objectID);
 
 
 /*****************************************************************************
 *
 *  kiiObj_uploadBodyAtOnce
 *
-*  \param: bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               objectID - the input of objectID
 *               dataType - the input of data type, the format should be like "image/jpg"
 *               data - raw data
@@ -169,14 +159,15 @@ extern int kiiObj_partiallyUpdate(char *bucketName, char *jsonObject, char *obje
 *  \brief  Uploads object body at once
 *
 *****************************************************************************/
-extern int kiiObj_uploadBodyAtOnce(char *bucketName, char *objectID,  char *dataType, unsigned char *data, unsigned int length);
+extern int kiiObj_uploadBodyAtOnce(int scope, char *bucketName, char *objectID,  char *dataType, unsigned char *data, unsigned int length);
 
 
 /*****************************************************************************
 *
 *  kiiObj_uploadBodyInit
 *
-*  \param: bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               objectID - the input of objectID
 *               uploadID - the output of uploadID
 *
@@ -185,14 +176,15 @@ extern int kiiObj_uploadBodyAtOnce(char *bucketName, char *objectID,  char *data
 *  \brief  Initializes "uploading an object body in multiple pieces"
 *
 *****************************************************************************/
-extern int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *uploadID);
+extern int kiiObj_uploadBodyInit(int scope, char *bucketName, char *objectID, char *uploadID);
 
 
 /*****************************************************************************
 *
 *  kiiObj_uploadBody
 *
-*  \param: bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               objectID - the input of objectID
 *               uploadID - the input of uploadID
 *               dataType - the input of data type, the format should be like "image/jpg"
@@ -206,14 +198,15 @@ extern int kiiObj_uploadBodyInit(char *bucketName, char *objectID, char *uploadI
 *  \brief  Uploads a piece of data
 *
 *****************************************************************************/
-extern int kiiObj_uploadBody(char *bucketName, char *objectID, char *uploadID, char *dataType, unsigned int position,  unsigned int length, unsigned int totalLength, unsigned char *data);
+extern int kiiObj_uploadBody(int scope, char *bucketName, char *objectID, char *uploadID, char *dataType, unsigned int position,  unsigned int length, unsigned int totalLength, unsigned char *data);
 
 
 /*****************************************************************************
 *
 *  kiiObj_uploadBody
 *
-*  \param: bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               objectID - the input of objectID
 *               uploadID - the input of uploadID
 *               committed - 0: cancelled; 1: committed
@@ -223,14 +216,15 @@ extern int kiiObj_uploadBody(char *bucketName, char *objectID, char *uploadID, c
 *  \brief  Commits or cancels this uploading
 *
 *****************************************************************************/
-extern int kiiObj_uploadBodyCommit(char *bucketName, char *objectID, char *uploadID, int committed);
+extern int kiiObj_uploadBodyCommit(int scope, char *bucketName, char *objectID, char *uploadID, int committed);
 
 
 /*****************************************************************************
 *
 *  kiiObj_retrieve
 *
-*  \param  bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               objectID - the input of objectID
 *               jsonObject - the output of object with json format
 *               length - the buffer length of jsonObject
@@ -240,14 +234,15 @@ extern int kiiObj_uploadBodyCommit(char *bucketName, char *objectID, char *uploa
 *  \brief  Retrieves object with objectID
 *
 *****************************************************************************/
-extern int kiiObj_retrieve(char *bucketName, char *objectID,  char *jsonObject, unsigned int length);
+extern int kiiObj_retrieve(int scope, char *bucketName, char *objectID,  char *jsonObject, unsigned int length);
 
 
 /*****************************************************************************
 *
 *  kiiObj_downloadBodyAtOnce
 *
-*  \param  bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               objectID - the input of objectID
 *               data - raw data
 *               length - the buffer lengh for object body
@@ -257,14 +252,15 @@ extern int kiiObj_retrieve(char *bucketName, char *objectID,  char *jsonObject, 
 *  \brief  Downloads an object body at once
 *
 *****************************************************************************/
-extern int kiiObj_downloadBodyAtOnce(char *bucketName, char *objectID, unsigned char *data, unsigned int length, unsigned int *actualLength);
+extern int kiiObj_downloadBodyAtOnce(int scope, char *bucketName, char *objectID, unsigned char *data, unsigned int length, unsigned int *actualLength);
 
 
 /*****************************************************************************
 *
 *  kiiObj_downloadBody
 *
-*  \param  bucketName - the input of bucket name
+*  \param  scope - bucket scope
+*               bucketName - the input of bucket name
 *               objectID - the input of objectID
 *               position - the downloading position of body
 *               length - the downloading length of body
@@ -277,65 +273,52 @@ extern int kiiObj_downloadBodyAtOnce(char *bucketName, char *objectID, unsigned 
 *  \brief  Downloads an object body in multiple pieces
 *
 *****************************************************************************/
-extern int kiiObj_downloadBody(char *bucketName, char *objectID,  unsigned int position,  unsigned int length, unsigned char *data, unsigned int *actualLength, unsigned int *totalLength);
+extern int kiiObj_downloadBody(int scope, char *bucketName, char *objectID,  unsigned int position,  unsigned int length, unsigned char *data, unsigned int *actualLength, unsigned int *totalLength);
 
 
 /*****************************************************************************
 *
-*  kiiPush_subscribeAppBucket
+*  kiiPush_subscribeBucket
 *
-*  \param: bucketID - the bucket ID
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Subscribes app scope bucket
-*
-*****************************************************************************/
-extern int kiiPush_subscribeAppBucket(char *bucketID);
-
-
-/*****************************************************************************
-*
-*  kiiPush_subscribeThingBucket
-*
-*  \param: bucketID - the bucket ID
+*  \param  scope - bucket scope
+*               bucketID - the bucket ID
 *
 *  \return 0:success; -1: failure
 *
-*  \brief  Subscribes thing scope bucket
+*  \brief  Subscribes bucket
 *
 *****************************************************************************/
-int kiiPush_subscribeThingBucket(char *bucketID);
-
+extern int kiiPush_subscribeBucket(int scope, char *bucketID);
 
 
 /*****************************************************************************
 *
 *  kiiPush_subscribeTopic
 *
-*  \param: topicID - the topic ID
+*  \param: scope - topic scope
+*               topicID - the topic ID
 *
 *  \return 0:success; -1: failure
 *
 *  \brief  Subscribes thing scope topic
 *
 *****************************************************************************/
-extern int kiiPush_subscribeTopic(char *topicID);
+extern int kiiPush_subscribeTopic(int scope, char *topicID);
 
 
 /*****************************************************************************
 *
 *  kiiPush_createTopic
 *
-*  \param: topicID - the topic ID
+*  \param: scope - topic scope
+*               topicID - the topic ID
 *
 *  \return 0:success; -1: failure
 *
 *  \brief  Creates thing scope topic
 *
 *****************************************************************************/
-int kiiPush_createTopic(char *topicID);
-
+extern int kiiPush_createTopic(int scope, char *topicID);
 
 
 /*****************************************************************************
@@ -351,7 +334,23 @@ int kiiPush_createTopic(char *topicID);
 *  \brief  Initializes push
 *
 *****************************************************************************/
-int KiiPush_init(unsigned int taskPrio, unsigned int pingReqTaskPrio, kiiPush_recvMsgCallback callback);
+extern int KiiPush_init(unsigned int taskPrio, unsigned int pingReqTaskPrio, kiiPush_recvMsgCallback callback);
+
+
+/*****************************************************************************
+*
+*  kiiExt_extension
+*
+*  \param  endpointName - the endpoint name
+*              jsonObject - the input of object with json format
+*
+*  \return 0:success; -1: failure
+*
+*  \brief  Executes the server extension code
+*
+*****************************************************************************/
+extern int kiiExt_extension(char * endpointName, char *jsonObject);
 
 #endif
+
 

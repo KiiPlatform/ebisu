@@ -89,7 +89,7 @@ int kiiDev_getToken(char *vendorDeviceID, char *password)
         return -1;
     }
 
-    if ((strstr(buf, "HTTP/1.1 200") == NULL) || (strstr(buf, "{") == NULL) || (strstr(buf, "}") == NULL) )
+    if (strstr(buf, "HTTP/1.1 200") == NULL)
     {
 	kiiHal_free(buf);
         return -1;    
@@ -194,7 +194,7 @@ int kiiDev_register(char *vendorDeviceID, char *deviceType, char *password)
         return -1;
     }
 
-    if ((strstr(buf, "HTTP/1.1 201") == NULL) || (strstr(buf, "{") == NULL) || (strstr(buf, "}") == NULL) )
+    if (strstr(buf, "HTTP/1.1 201") == NULL)
     {
         kiiHal_free(buf);
         return -1;    
