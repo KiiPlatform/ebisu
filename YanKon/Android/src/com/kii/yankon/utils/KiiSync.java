@@ -1,12 +1,5 @@
 package com.kii.yankon.utils;
 
-import android.content.ContentValues;
-import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
-import android.text.TextUtils;
-import android.util.Log;
-
 import com.kii.cloud.storage.Kii;
 import com.kii.cloud.storage.KiiBucket;
 import com.kii.cloud.storage.KiiObject;
@@ -14,6 +7,8 @@ import com.kii.cloud.storage.KiiServerCodeEntry;
 import com.kii.cloud.storage.KiiServerCodeEntryArgument;
 import com.kii.cloud.storage.KiiServerCodeExecResult;
 import com.kii.cloud.storage.KiiUser;
+import com.kii.cloud.storage.query.KiiClause;
+import com.kii.cloud.storage.query.KiiQuery;
 import com.kii.cloud.storage.query.KiiQueryResult;
 import com.kii.yankon.App;
 import com.kii.yankon.providers.YanKonProvider;
@@ -21,6 +16,13 @@ import com.kii.yankon.providers.YanKonProvider;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+import android.text.TextUtils;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -178,7 +180,8 @@ public class KiiSync {
             return result;
         }
     */
-    public static String fireLamp(JSONObject lights, boolean verify, int state, int color, int brightness, int CT) {
+    public static String fireLamp(JSONObject lights, boolean verify, int state, int color,
+            int brightness, int CT) {
         String result = null;
         if (!KiiUser.isLoggedIn()) {
             return result;
@@ -217,14 +220,16 @@ public class KiiSync {
 
     public static String getCursorString(Cursor cursor, int col) {
         String s = cursor.getString(col);
-        if (s == null)
+        if (s == null) {
             return "";
+        }
         return s;
     }
 
     public static void sync() {
-        if (isSyncing)
+        if (isSyncing) {
             return;
+        }
         isSyncing = true;
         downloadLights();
         uploadLights();
@@ -274,8 +279,9 @@ public class KiiSync {
                     repeatArr = new JSONArray(repeat);
                 } catch (Exception e) {
                     repeatArr = new JSONArray();
-                    for (int i = 0; i < 7; i++)
+                    for (int i = 0; i < 7; i++) {
                         repeatArr.put(false);
+                    }
                 }
                 colorObject.set("repeat", repeatArr);
                 colorObject.set("objectID", objectID);
@@ -415,7 +421,7 @@ public class KiiSync {
     }
 
     private static String saveRemoteObject(ContentValues values, Uri uri,
-                                           KiiObject object) {
+            KiiObject object) {
         String objectId = object.getString("objectID");
         int objVersion = object.getInt("_version");
         Cursor cursor = App.getApp().getContentResolver()
@@ -592,8 +598,10 @@ public class KiiSync {
                 lightObj = bucket.object(mac);
                 lightObj.set("name", cursor.getString(cursor.getColumnIndex("name")));
                 lightObj.set("model", getCursorString(cursor, cursor.getColumnIndex("model")));
-                lightObj.set("remote_pwd", getCursorString(cursor, cursor.getColumnIndex("remote_pwd")));
-                lightObj.set("admin_pwd", getCursorString(cursor, cursor.getColumnIndex("admin_pwd")));
+                lightObj.set("remote_pwd",
+                        getCursorString(cursor, cursor.getColumnIndex("remote_pwd")));
+                lightObj.set("admin_pwd",
+                        getCursorString(cursor, cursor.getColumnIndex("admin_pwd")));
                 lightObj.set("MAC", mac);
 //                lightObj.set("brightness", cursor.getInt(cursor.getColumnIndex("brightness")));
 //                lightObj.set("CT", cursor.getInt(cursor.getColumnIndex("CT")));
@@ -715,8 +723,10 @@ public class KiiSync {
                     values.put("color", detailObject.getInt("color"));
                     values.put("brightness", detailObject.getInt("brightness"));
                     values.put("CT", detailObject.getInt("CT"));
-                    values.put("light_id", DataHelper.getLightIdByMac(detailObject.optString("light_id", null)));
-                    values.put("group_id", DataHelper.getGroupIdByObjId(detailObject.optString("group_id", null)));
+                    values.put("light_id",
+                            DataHelper.getLightIdByMac(detailObject.optString("light_id", null)));
+                    values.put("group_id",
+                            DataHelper.getGroupIdByObjId(detailObject.optString("group_id", null)));
                     App.getApp().getContentResolver()
                             .insert(YanKonProvider.URI_SCENES_DETAIL, values);
                 } catch (JSONException e) {
@@ -747,7 +757,8 @@ public class KiiSync {
     }
 
     private static void processRel(KiiObject object, String newId) {
-        String groupId = newId == null ? String.valueOf(DataHelper.getGroupIdByObjId(object.getString("objectID"))) : newId;
+        String groupId = newId == null ? String
+                .valueOf(DataHelper.getGroupIdByObjId(object.getString("objectID"))) : newId;
 
         if (Settings.isServerWin()) {
             App.getApp().getContentResolver()
@@ -877,5 +888,50 @@ public class KiiSync {
 
     public static boolean isSyncing() {
         return isSyncing;
+    }
+
+    public void downloadLightThings() {
+        KiiBucket bucket = Kii.bucket("globeThingInfo");
+        ArrayList<String> macList = new ArrayList<>();
+        Cursor c = App.getApp().getContentResolver()
+                .query(YanKonProvider.URI_LIGHTS, new String[]{"MAC"}, null, null, null);
+        if (c != null) {
+            while (c.moveToNext()) {
+                macList.add(getCursorString(c, 0));
+            }
+            c.close();
+        }
+        if (macList.isEmpty()) {
+            return;
+        }
+        //TODO: how to convert string[] to var args??
+        String[] args = macList.toArray(new String[macList.size()]);
+        KiiQuery lightsQuery = new KiiQuery(KiiClause.inWithStringValue("thingID", args));
+        try {
+            KiiQueryResult<KiiObject> result = bucket.query(lightsQuery);
+            List<KiiObject> objList = result.getResult();
+            saveLightThing(objList);
+            while (result.hasNext()) {
+                result = result.getNextQueryResult();
+                objList = result.getResult();
+                saveLightThing(objList);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void saveLightThing(List<KiiObject> objects) {
+        for (KiiObject object : objects) {
+            ContentValues values = new ContentValues();
+            JSONObject currAction = object.getJSONObject("currAction");
+            values.put("state", currAction.optInt("state"));
+            values.put("color", currAction.optInt("color"));
+            values.put("brightness", currAction.optInt("brightness"));
+            values.put("CT", currAction.optInt("CT"));
+            String thingId = object.getString("thingID");
+            App.getApp().getContentResolver()
+                    .update(YanKonProvider.URI_LIGHTS, values, "MAC=?", new String[]{thingId});
+        }
     }
 }

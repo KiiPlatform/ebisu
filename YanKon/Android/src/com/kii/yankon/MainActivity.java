@@ -89,7 +89,7 @@ public class MainActivity extends Activity
         try {
             index = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(this)
                     .getString("default_home_page", "0"));
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         mNavigationDrawerFragment.selectItem(index);
