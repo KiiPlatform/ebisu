@@ -241,6 +241,7 @@ public class KiiSync {
         uploadColors();
         downloadSchedules();
         uploadSchedules();
+        downloadLightThings();
         isSyncing = false;
     }
 
@@ -890,7 +891,7 @@ public class KiiSync {
         return isSyncing;
     }
 
-    public void downloadLightThings() {
+    public static void downloadLightThings() {
         KiiBucket bucket = Kii.bucket("globeThingInfo");
         ArrayList<String> macList = new ArrayList<>();
         Cursor c = App.getApp().getContentResolver()
@@ -904,7 +905,6 @@ public class KiiSync {
         if (macList.isEmpty()) {
             return;
         }
-        //TODO: how to convert string[] to var args??
         String[] args = macList.toArray(new String[macList.size()]);
         KiiQuery lightsQuery = new KiiQuery(KiiClause.inWithStringValue("thingID", args));
         try {
@@ -921,7 +921,7 @@ public class KiiSync {
         }
     }
 
-    private void saveLightThing(List<KiiObject> objects) {
+    private static void saveLightThing(List<KiiObject> objects) {
         for (KiiObject object : objects) {
             ContentValues values = new ContentValues();
             JSONObject currAction = object.getJSONObject("currAction");
