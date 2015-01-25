@@ -1,5 +1,6 @@
 package com.kii.yankon.utils;
 
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.Resources;
@@ -161,12 +162,14 @@ public class Utils {
             new Thread() {
                 @Override
                 public void run() {
-                    JSONObject lights = new JSONObject();
-                    try {
-                        lights.put(light.mac, light.remotePassword);
-                    } catch (JSONException e) {
+                    if (light.remotePassword != null && light.remotePassword.length() == 4) {
+                        JSONObject lights = new JSONObject();
+                        try {
+                            lights.put(light.mac, light.remotePassword);
+                        } catch (JSONException e) {
+                        }
+                        KiiSync.fireLamp(lights, false, light.state ? 1 : 0, light.color, light.brightness, light.CT);
                     }
-                    KiiSync.fireLamp(lights, false, light.state ? 1 : 0, light.color, light.brightness, light.CT);
                 }
             }.start();
         }
@@ -212,9 +215,8 @@ public class Utils {
                     connectedLights.add(ip);
                 } else {
                     try {
-                        if (remotePwd == null)
-                            remotePwd = "";
-                        unconnectedLights.put(mac, remotePwd);
+                        if (remotePwd != null && remotePwd.length() == 4)
+                            unconnectedLights.put(mac, remotePwd);
                     } catch (JSONException e) {
                     }
                 }
@@ -251,7 +253,12 @@ public class Utils {
     public static void controlLightsById(final Context context, final String[] lights, boolean state, int color, int CT, int brightness, boolean doItNow) {
         if (lights == null || lights.length == 0)
             return;
-        String inSQL = buildNumsInSQL(lights);
+        String where;
+        if (lights.length == 1) {
+            where = "_id='" + lights[0] + "'";
+        } else {
+            where = "_id in " + buildNumsInSQL(lights);
+        }
         ContentValues values = new ContentValues();
         if (CT >= 0 && brightness >= 0) {
             values.put("CT", CT);
@@ -259,10 +266,10 @@ public class Utils {
             values.put("color", color);
         }
         values.put("state", state);
-        context.getContentResolver().update(YanKonProvider.URI_LIGHTS, values, "_id in " + inSQL, null);
+        context.getContentResolver().update(YanKonProvider.URI_LIGHTS, values, where, null);
         ArrayList<String> connectedLights = new ArrayList<>();
         final JSONObject unconnectedLights = new JSONObject();
-        Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "_id in " + inSQL, null, null);
+        Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null, where, null, null);
         if (c != null) {
             while (c.moveToNext()) {
                 boolean connected = c.getInt(c.getColumnIndex("connected")) > 0;
@@ -273,9 +280,8 @@ public class Utils {
                     connectedLights.add(ip);
                 } else {
                     try {
-                        if (remotePwd == null)
-                            remotePwd = "";
-                        unconnectedLights.put(mac, remotePwd);
+                        if (remotePwd != null && remotePwd.length() == 4)
+                            unconnectedLights.put(mac, remotePwd);
                     } catch (JSONException e) {
                     }
                 }
@@ -300,5 +306,40 @@ public class Utils {
                 }
             }.start();
         }
+    }
+
+    public static void controlScene(final Context context, final int scene_id, boolean doItNow) {
+        ContentResolver cr = context.getContentResolver();
+        Cursor cursor = cr.query(YanKonProvider.URI_SCENES_DETAIL, null, "scene_id=" + scene_id, null, null);
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                int light_id = cursor.getInt(cursor.getColumnIndex("light_id"));
+                int group_id = cursor.getInt(cursor.getColumnIndex("group_id"));
+                int brightness = cursor.getInt(cursor.getColumnIndex("brightness"));
+                int CT = cursor.getInt(cursor.getColumnIndex("CT"));
+                int color = cursor.getInt(cursor.getColumnIndex("color"));
+                boolean state = cursor.getInt(cursor.getColumnIndex("state")) != 0;
+                String[] lights = null;
+                if (light_id > -1) {
+                    lights = new String[]{String.valueOf(light_id)};
+                } else if (group_id > -1) {
+                    ArrayList<String> group_lights = new ArrayList<>();
+                    Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHT_GROUP_REL, null, "group_id=" + group_id, null, null);
+                    if (c != null) {
+                        while (c.moveToNext()) {
+                            int group_l_id = c.getInt(c.getColumnIndex("light_id"));
+                            group_lights.add(String.valueOf(group_l_id));
+                        }
+                        c.close();
+                    }
+                    lights = group_lights.toArray(new String[group_lights.size()]);
+                }
+                controlLightsById(context, lights, state, color, CT, brightness, doItNow);
+            }
+            cursor.close();
+        }
+        ContentValues values = new ContentValues();
+        values.put("last_used_time", System.currentTimeMillis());
+        cr.update(YanKonProvider.URI_SCENES, values, "_id=" + scene_id, null);
     }
 }

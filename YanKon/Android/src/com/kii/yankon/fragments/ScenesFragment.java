@@ -17,10 +17,16 @@ import android.widget.CursorAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.kii.yankon.App;
 import com.kii.yankon.R;
 import com.kii.yankon.activities.AddScenesActivity;
 import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.utils.DataHelper;
+import com.kii.yankon.utils.Utils;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created by Evan on 14/11/26.
@@ -107,8 +113,10 @@ public class ScenesFragment extends BaseListFragment {
     }
 
     class ScenesAdapter extends CursorAdapter {
+        DateFormat dateFormat;
         public ScenesAdapter(Context context) {
             super(context, null, 0);
+            dateFormat = new SimpleDateFormat("MM-dd HH:mm");
         }
 
         @Override
@@ -127,13 +135,20 @@ public class ScenesFragment extends BaseListFragment {
             if (last_used_time == 0) {
                 tv.setText(context.getString(R.string.never_used));
             } else {
-
+                Date date = new Date(last_used_time);
+                tv.setText(getString(R.string.scene_last_used, dateFormat.format(date)));
             }
 //            tv.setText(context.getString(R.string.group_num_format, num));
+            final int sid = cursor.getInt(cursor.getColumnIndex("_id"));
             View icon = view.findViewById(R.id.light_icon);
             icon.setBackgroundResource(R.drawable.scenes);
             Button applyBtn = (Button) view.findViewById(R.id.light_apply);
-
+            applyBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Utils.controlScene(App.getApp(), sid, true);
+                }
+            });
         }
     }
 }

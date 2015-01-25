@@ -96,4 +96,5 @@
     <string name="sync_configurations">Sync Configurations</string>
     <string name="default_home_page">Default Home Page</string>
     <string name="action_show_mode">Show Mode</string>
+    <string name="scene_last_used">Last used: %s</string>
 </resources>
