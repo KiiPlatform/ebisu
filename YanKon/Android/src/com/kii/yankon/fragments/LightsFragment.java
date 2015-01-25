@@ -1,11 +1,13 @@
 package com.kii.yankon.fragments;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.CursorLoader;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
@@ -45,9 +47,14 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
 
     private static final int REQUEST_EDIT_NAME = 0x2001;
 
+    private static final int SHOW_LOCAL = 0;
+    private static final int SHOW_CONTROLLABLE = 1;  //local + remote pwd
+    private static final int SHOW_ALL = 2;  // all even without pwd
+
     View headerView;
 
     boolean inMultipleMode = false;
+    int mShowMode = SHOW_LOCAL;
 
     HashSet<String> mSelectedLights = new HashSet<>();
 
@@ -75,6 +82,22 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.action_show_mode: {
+                AlertDialog.Builder ab = new AlertDialog.Builder(getActivity());
+                ab.setTitle(R.string.action_show_mode);
+                ab.setNegativeButton(android.R.string.cancel, null);
+                ab.setItems(R.array.lights_show_modes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (which != mShowMode) {
+                            mShowMode = which;
+                            getLoaderManager().restartLoader(LightsFragment.class.hashCode(), null, LightsFragment.this);
+                        }
+                    }
+                });
+                ab.show();
+            }
+            break;
             case R.id.action_multiple: {
                 inMultipleMode = !inMultipleMode;
                 switchMode();
@@ -152,7 +175,18 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         //"connected OR is_mine"
-        return new CursorLoader(getActivity(), YanKonProvider.URI_LIGHTS, null, "deleted=0", null,
+        String where = "deleted=0";
+        switch (mShowMode) {
+            case SHOW_LOCAL:
+                where = "connected AND deleted=0";
+                break;
+            case SHOW_CONTROLLABLE:
+                where = "deleted=0 AND (connected OR ifnull(length(remote_pwd), 0) = 4)";
+                break;
+            default:
+                break;
+        }
+        return new CursorLoader(getActivity(), YanKonProvider.URI_LIGHTS, null, where, null,
                 "owned_time asc");
     }
 
@@ -335,7 +369,17 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
             tv.setText(name);
             String modelName = cursor.getString(cursor.getColumnIndex("model"));
             tv = (TextView) view.findViewById(android.R.id.text2);
-            tv.setText(context.getString(R.string.light_model_format, modelName));
+//            tv.setText(context.getString(R.string.light_model_format, modelName));
+            boolean connected = cursor.getInt(cursor.getColumnIndex("connected")) > 0;
+            String remotePwd = cursor.getString(cursor.getColumnIndex("remote_pwd"));
+            String ip = cursor.getString(cursor.getColumnIndex("IP"));
+            if (connected) {
+                tv.setText(ip);
+            } else if (remotePwd != null && remotePwd.length() == 4) {
+                tv.setText("Remote");
+            } else {
+                tv.setText("No remote password");
+            }
             View icon = view.findViewById(R.id.light_icon);
             CheckBox checkBox = (CheckBox) view.findViewById(R.id.light_checkbox);
             final boolean state = cursor.getInt(cursor.getColumnIndex("state")) > 0;

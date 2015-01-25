@@ -53,4 +53,9 @@
         <item>4</item>
         <item>5</item>
     </string-array>
+    <array name="lights_show_modes">
+        <item>Local</item>
+        <item>Controllable</item>
+        <item>All</item>
+    </array>
 </resources>

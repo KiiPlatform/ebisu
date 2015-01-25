@@ -95,4 +95,5 @@
     <string name="scene_apply">Apply</string>
     <string name="sync_configurations">Sync Configurations</string>
     <string name="default_home_page">Default Home Page</string>
+    <string name="action_show_mode">Show Mode</string>
 </resources>

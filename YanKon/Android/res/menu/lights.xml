@@ -10,6 +10,12 @@
         android:showAsAction="always" />
 
     <item
+        android:id="@+id/action_show_mode"
+        android:title="@string/action_show_mode"
+        android:orderInCategory="100"
+        android:showAsAction="never" />
+
+    <item
         android:id="@+id/action_multiple"
         android:title="@string/action_multiple"
         android:orderInCategory="100"
