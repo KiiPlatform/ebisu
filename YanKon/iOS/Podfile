@@ -1,7 +1,8 @@
 # Uncomment this line to define a global platform for your project
-# platform :ios, '6.0'
+platform :ios, '7.0'
 
 target 'YanKon' do
+pod "Color-Picker-for-iOS", "~> 2.0"
 pod "AMSlideMenu", "~> 1.5.3"
 pod 'FMDB'
 pod 'KxMenu', '~> 1'

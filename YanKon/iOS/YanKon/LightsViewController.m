@@ -28,6 +28,8 @@
     [super viewDidLoad];
     [self addLeftMenuButton];
     self.lights = [[NSMutableArray alloc] init];
+    
+    self.navigationItem.backBarButtonItem=[[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStylePlain target:nil action:nil];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -80,6 +82,17 @@
     }];
     [queue close];
     [self.tableView reloadData];
+}
+
+
+-(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    
+}
+
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [self performSegueWithIdentifier:@"lightInfo" sender:nil];
 }
 
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
