@@ -221,11 +221,14 @@ public class ColorCircle extends View {
                 }
                 break;
             case MotionEvent.ACTION_UP:
+                if (mListener != null) {
+                    mListener.onColorPicked(this, mCenterPaint.getColor());
+                }
                 if (mTrackingCenter) {
                     if (inCenter) {
-                    	if (mListener != null) {
-                    		mListener.onColorPicked(this, mCenterPaint.getColor());
-                    	}
+//                    	if (mListener != null) {
+//                    		mListener.onColorPicked(this, mCenterPaint.getColor());
+//                    	}
                     }
                     mTrackingCenter = false;    // so we draw w/o halo
                     invalidate();

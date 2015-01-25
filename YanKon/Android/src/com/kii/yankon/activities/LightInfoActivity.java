@@ -203,17 +203,22 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
         } else if (view == mValue) {
             mColorCircle.setColor(newColor);
         }
+//        color = newColor;
+//        this.color_changed = true;
+//        matchColor();
+//        ContentValues values = new ContentValues();
+//        values.put("color", color);
+//        saveChange(values, false);
+    }
+
+    @Override
+    public void onColorPicked(View view, int newColor) {
         color = newColor;
         this.color_changed = true;
         matchColor();
         ContentValues values = new ContentValues();
         values.put("color", color);
         saveChange(values, false);
-    }
-
-    @Override
-    public void onColorPicked(View view, int newColor) {
-
     }
 
     @Override
