@@ -47,7 +47,7 @@ public class CommandBuilder {
             result[pos + 2] = attr.cmd;
             Utils.Int16ToByte(attr.data_len, result, pos + 3);
             for (int i = 0; i < attr.data_len; i++) {
-                result[pos + 5 + i] = attr.data[0];
+                result[pos + 5 + i] = attr.data[i];
             }
             pos += 5 + attr.data_len;
         }

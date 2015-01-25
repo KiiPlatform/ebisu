@@ -17,4 +17,13 @@
 @property (weak, nonatomic) IBOutlet UISlider *brightnessSlide;
 @property (weak, nonatomic) IBOutlet UISlider *CTSlide;
 
+@property (nonatomic) int light_id;
+@property (nonatomic) int group_id;
+@property (nonatomic, strong) NSArray *lights;
+
+@property (nonatomic) int brightness;
+@property (nonatomic) int CT;
+@property (nonatomic) BOOL state;
+@property (nonatomic) int color;
+
 @end

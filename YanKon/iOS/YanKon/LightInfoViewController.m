@@ -7,6 +7,8 @@
 //
 
 #import "LightInfoViewController.h"
+#import "Global.h"
+#import "UIColor+CreateMethods.h"
 
 @interface LightInfoViewController ()
 
@@ -16,22 +18,54 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view.
+    
+    if (self.light_id>=0 || self.group_id>=0){
+        FMDatabaseQueue *queue = [Global getFMDBQueue];
+        [queue inDatabase:^(FMDatabase *db) {
+            FMResultSet *rs;
+            if (self.light_id>=0) {
+                rs = [db executeQuery:@"select * from lights where _id=(?);",@(self.light_id)];
+            } else {
+                rs = [db executeQuery:@"select * from light_groups_view where _id=(?);",@(self.group_id)];
+            }
+            if ([rs next]) {
+                self.brightness = [rs intForColumn:@"brightness"];
+                self.color = [rs intForColumn:@"color"];
+                self.CT = [rs intForColumn:@"CT"];
+                if (self.light_id>=0) {
+                    self.state = [rs boolForColumn:@"state"];
+                } else {
+                    self.state = [rs intForColumn:@"num"] == [rs intForColumn:@"on_num"];
+                }
+            }
+            [rs close];
+        }];
+        [queue close];
+    }
+    if (self.group_id>=0) {
+        [self applyChanges:YES];
+    }
+    [self.stateSwitch setOn:self.state];
+    [self.brightnessSlide setMinimumValue:0];
+    [self.brightnessSlide setMaximumValue:100];
+    [self.brightnessSlide setValue:self.brightness];
+    [self.CTSlide setMinimumValue:0];
+    [self.CTSlide setMaximumValue:100];
+    [self.CTSlide setValue:self.CT];
+    [self.colorPickerView setColor:[UIColor colorWithRGBHex:self.color]];
+    
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+
 }
 
-/*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
+-(void)applyChanges:(BOOL)applyNow
+{
+    
 }
-*/
+
+
 
 @end

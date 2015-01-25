@@ -76,6 +76,7 @@ static CommandDaemon *instance = nil;
         ips = @[broadcastIP];
     }
     for (NSString *ip in ips) {
+        NSLog(@"Send to:%@ Data:%@",ip,[data hexadecimalString]);
         [socket sendData:data toHost:ip port:DEFAULT_PORT withTimeout:1 tag:0];
     }
 }
