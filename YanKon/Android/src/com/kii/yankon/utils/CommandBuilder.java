@@ -36,7 +36,7 @@ public class CommandBuilder {
         }
         byte[] result = new byte[6 + len];
         result[0] = 0;
-        result[1] = (byte)trans_no;
+        result[1] = (byte) trans_no;
         result[2] = 0;
         result[3] = 0;
         Utils.Int16ToByte(len, result, 4);
@@ -59,18 +59,20 @@ public class CommandBuilder {
         byte[] data = new byte[1];
         data[0] = (byte) (state ? 1 : 0);
         cb.append((byte) 10, (byte) 0, (byte) 1, data);
-        data = new byte[3];
-        data[2] = (byte) (color % 256);
-        color /= 256;
-        data[1] = (byte) (color % 256);
-        data[0] = (byte) (color / 256);
-        cb.append((byte) 10, (byte) 1, (byte) 1, data);
-        data = new byte[1];
-        data[0] = (byte) brightness;
-        cb.append((byte) 10, (byte) 2, (byte) 1, data);
-        data = new byte[1];
-        data[0] = (byte) CT;
-        cb.append((byte) 10, (byte) 3, (byte) 1, data);
+        if (CT >= 0 && brightness >= 0) {
+            data = new byte[3];
+            data[2] = (byte) (color % 256);
+            color /= 256;
+            data[1] = (byte) (color % 256);
+            data[0] = (byte) (color / 256);
+            cb.append((byte) 10, (byte) 1, (byte) 1, data);
+            data = new byte[1];
+            data[0] = (byte) brightness;
+            cb.append((byte) 10, (byte) 2, (byte) 1, data);
+            data = new byte[1];
+            data[0] = (byte) CT;
+            cb.append((byte) 10, (byte) 3, (byte) 1, data);
+        }
         return cb.build(trans_no);
     }
 }

@@ -26,6 +26,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.kii.yankon.App;
 import com.kii.yankon.R;
 import com.kii.yankon.activities.AddLights2Activity;
 import com.kii.yankon.activities.LightInfoActivity;
@@ -117,6 +118,14 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
         headerView.findViewById(R.id.light_icon).setVisibility(View.GONE);
         TextView tv = (TextView) headerView.findViewById(android.R.id.text1);
         tv.setText(R.string.header_selected_lights);
+        Switch s = (Switch) headerView.findViewById(R.id.light_switch);
+        s.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                String[] lights = mSelectedLights.toArray(new String[mSelectedLights.size()]);
+                Utils.controlLightsById(App.getApp(), lights, isChecked, -1, -1, -1, true);
+            }
+        });
         updateHeaderView();
         switchMode();
     }

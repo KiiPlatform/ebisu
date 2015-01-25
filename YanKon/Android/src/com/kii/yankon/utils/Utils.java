@@ -115,6 +115,17 @@ public class Utils {
         return new String(ch);
     }
 
+    public static String buildNumsInSQL(String[] data) {
+        StringBuilder sb = new StringBuilder();
+        for (String s : data) {
+            if (sb.length() > 0) {
+                sb.append(',');
+            }
+            sb.append(s);
+        }
+        return "(" + sb.toString() + ")";
+    }
+
     public static void controlLight(final Context context, final int light_id, boolean doItNow) {
         final Light light;
         Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "_id=" + light_id, null, null);
@@ -218,6 +229,60 @@ public class Utils {
             values.put("color", color);
             context.getContentResolver().update(YanKonProvider.URI_LIGHTS, values, "_id in (" + allIds.toString() + ")", null);
         }
+        if (connectedLights.size() > 0) {
+            byte[] cmd = CommandBuilder.buildLightInfo(1, state, color, brightness, CT);
+            String[] ips = connectedLights.toArray(new String[connectedLights.size()]);
+            NetworkSenderService.sendCmd(context, ips, cmd);
+        }
+        if (doItNow && KiiUser.isLoggedIn()) {
+            final boolean i_state = state;
+            final int i_color = color;
+            final int i_brightness = brightness;
+            final int i_CT = CT;
+            new Thread() {
+                @Override
+                public void run() {
+                    KiiSync.fireLamp(unconnectedLights, false, i_state ? 1 : 0, i_color, i_brightness, i_CT);
+                }
+            }.start();
+        }
+    }
+
+    public static void controlLightsById(final Context context, final String[] lights, boolean state, int color, int CT, int brightness, boolean doItNow) {
+        if (lights == null || lights.length == 0)
+            return;
+        String inSQL = buildNumsInSQL(lights);
+        ContentValues values = new ContentValues();
+        if (CT >= 0 && brightness >= 0) {
+            values.put("CT", CT);
+            values.put("brightness", brightness);
+            values.put("color", color);
+        }
+        values.put("state", state);
+        context.getContentResolver().update(YanKonProvider.URI_LIGHTS, values, "_id in " + inSQL, null);
+        ArrayList<String> connectedLights = new ArrayList<>();
+        final JSONObject unconnectedLights = new JSONObject();
+        Cursor c = context.getContentResolver().query(YanKonProvider.URI_LIGHTS, null, "_id in " + inSQL, null, null);
+        if (c != null) {
+            while (c.moveToNext()) {
+                boolean connected = c.getInt(c.getColumnIndex("connected")) > 0;
+                String ip = c.getString(c.getColumnIndex("IP"));
+                String mac = c.getString(c.getColumnIndex("MAC"));
+                String remotePwd = c.getString(c.getColumnIndex("remote_pwd"));
+                if (connected && !TextUtils.isEmpty(ip)) {
+                    connectedLights.add(ip);
+                } else {
+                    try {
+                        if (remotePwd == null)
+                            remotePwd = "";
+                        unconnectedLights.put(mac, remotePwd);
+                    } catch (JSONException e) {
+                    }
+                }
+            }
+            c.close();
+        }
+
         if (connectedLights.size() > 0) {
             byte[] cmd = CommandBuilder.buildLightInfo(1, state, color, brightness, CT);
             String[] ips = connectedLights.toArray(new String[connectedLights.size()]);

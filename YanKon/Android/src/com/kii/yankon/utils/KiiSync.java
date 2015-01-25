@@ -1,5 +1,12 @@
 package com.kii.yankon.utils;
 
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+import android.text.TextUtils;
+import android.util.Log;
+
 import com.kii.cloud.storage.Kii;
 import com.kii.cloud.storage.KiiBucket;
 import com.kii.cloud.storage.KiiObject;
@@ -16,13 +23,6 @@ import com.kii.yankon.providers.YanKonProvider;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import android.content.ContentValues;
-import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
-import android.text.TextUtils;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -181,7 +181,7 @@ public class KiiSync {
         }
     */
     public static String fireLamp(JSONObject lights, boolean verify, int state, int color,
-            int brightness, int CT) {
+                                  int brightness, int CT) {
         String result = null;
         if (!KiiUser.isLoggedIn()) {
             return result;
@@ -193,9 +193,11 @@ public class KiiSync {
             JSONObject action = new JSONObject();
             if (!verify) {
                 action.put("state", state);
-                action.put("color", colorL);
-                action.put("brightness", brightness);
-                action.put("CT", CT);
+                if (CT >= 0 && brightness >= 0) {
+                    action.put("color", colorL);
+                    action.put("brightness", brightness);
+                    action.put("CT", CT);
+                }
             } else {
                 rawArg.put("verify", true);
             }
@@ -422,7 +424,7 @@ public class KiiSync {
     }
 
     private static String saveRemoteObject(ContentValues values, Uri uri,
-            KiiObject object) {
+                                           KiiObject object) {
         String objectId = object.getString("objectID");
         int objVersion = object.getInt("_version");
         Cursor cursor = App.getApp().getContentResolver()

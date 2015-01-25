@@ -101,7 +101,7 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
                     state = c.getInt(c.getColumnIndex("num")) == c.getInt(c.getColumnIndex("on_num"));
                     ContentValues values = new ContentValues();
                     values.put("state", state);
-                    saveChange(values, false);
+                    saveChange(values, true);
                 }
             }
             c.close();
@@ -190,6 +190,8 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
         } else if (group_id >= 0) {
             getContentResolver().update(YanKonProvider.URI_LIGHT_GROUPS, values, "_id=" + group_id, null);
             Utils.controlGroup(this, group_id, doItNow);
+        } else if (lights != null && lights.length>0) {
+            Utils.controlLightsById(this, lights, state, color, CT, brightness, doItNow);
         }
     }
 
@@ -218,7 +220,7 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
         matchColor();
         ContentValues values = new ContentValues();
         values.put("color", color);
-        saveChange(values, false);
+        saveChange(values, true);
     }
 
     @Override
@@ -271,7 +273,7 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
                 this.color_changed = true;
                 ContentValues values = new ContentValues();
                 values.put("color", color);
-                saveChange(values, false);
+                saveChange(values, true);
             }
         }
     }
@@ -286,7 +288,7 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
         state = isChecked;
         ContentValues values = new ContentValues();
         values.put("state", state);
-        saveChange(values, false);
+        saveChange(values, true);
     }
 
     @Override
@@ -298,12 +300,12 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
             brightness = progress;
             ContentValues values = new ContentValues();
             values.put("brightness", brightness);
-            saveChange(values, false);
+            saveChange(values, true);
         } else if (seekBar == mCTSeekBar) {
             CT = progress;
             ContentValues values = new ContentValues();
             values.put("CT", CT);
-            saveChange(values, false);
+            saveChange(values, true);
         }
     }
 
