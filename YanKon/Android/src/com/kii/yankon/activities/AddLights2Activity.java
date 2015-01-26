@@ -231,7 +231,7 @@ public class AddLights2Activity extends ListActivity implements CompoundButton.O
             holder.switchButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    byte[] cmd = CommandBuilder.buildLightInfo(1, isChecked, light.color, light.brightness, light.CT);
+                    byte[] cmd = CommandBuilder.buildLightInfo(1, isChecked, -1, -1, -1);
                     NetworkSenderService.sendCmd(mContext, light.ip, cmd);
                 }
             });

@@ -22,6 +22,7 @@
 		205EA4191A6F95EB00BE6D01 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 205EA4181A6F95EB00BE6D01 /* SystemConfiguration.framework */; };
 		205EA41C1A6FA86400BE6D01 /* Global.m in Sources */ = {isa = PBXBuildFile; fileRef = 205EA41B1A6FA86400BE6D01 /* Global.m */; };
 		209429B31A752F7A00F19EF2 /* LightInfoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 209429B21A752F7A00F19EF2 /* LightInfoViewController.m */; };
+		209429B61A756F6100F19EF2 /* Commands.m in Sources */ = {isa = PBXBuildFile; fileRef = 209429B51A756F6100F19EF2 /* Commands.m */; };
 		20B0BD871A6ED702004EE954 /* AddLightsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 20B0BD861A6ED702004EE954 /* AddLightsViewController.m */; };
 		20B0BD8A1A6ED9FB004EE954 /* BasicTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 20B0BD891A6ED9FB004EE954 /* BasicTableViewCell.m */; };
 		47752FA2FE292FBA9F279FC4 /* libPods-YanKon.a in Frameworks */ = {isa = PBXBuildFile; fileRef = FAB09959CB2DCF5C1BB0AEED /* libPods-YanKon.a */; };
@@ -64,6 +65,8 @@
 		205EA41B1A6FA86400BE6D01 /* Global.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Global.m; path = ../Global.m; sourceTree = "<group>"; };
 		209429B11A752F7A00F19EF2 /* LightInfoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LightInfoViewController.h; sourceTree = "<group>"; };
 		209429B21A752F7A00F19EF2 /* LightInfoViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LightInfoViewController.m; sourceTree = "<group>"; };
+		209429B41A756F6100F19EF2 /* Commands.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Commands.h; sourceTree = "<group>"; };
+		209429B51A756F6100F19EF2 /* Commands.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Commands.m; sourceTree = "<group>"; };
 		20954D35651ABD4042B0572A /* Pods-YanKon.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YanKon.debug.xcconfig"; path = "Pods/Target Support Files/Pods-YanKon/Pods-YanKon.debug.xcconfig"; sourceTree = "<group>"; };
 		20B0BD851A6ED702004EE954 /* AddLightsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AddLightsViewController.h; sourceTree = "<group>"; };
 		20B0BD861A6ED702004EE954 /* AddLightsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AddLightsViewController.m; sourceTree = "<group>"; };
@@ -124,6 +127,8 @@
 				205EA4161A6F8A0900BE6D01 /* CommandDaemon.m */,
 				205EA41A1A6FA86400BE6D01 /* Global.h */,
 				205EA41B1A6FA86400BE6D01 /* Global.m */,
+				209429B41A756F6100F19EF2 /* Commands.h */,
+				209429B51A756F6100F19EF2 /* Commands.m */,
 			);
 			name = Global;
 			sourceTree = "<group>";
@@ -343,6 +348,7 @@
 				200C6B421A70DE6D00A6BB60 /* NSData+Conversion.m in Sources */,
 				20B0BD8A1A6ED9FB004EE954 /* BasicTableViewCell.m in Sources */,
 				205EA4171A6F8A0900BE6D01 /* CommandDaemon.m in Sources */,
+				209429B61A756F6100F19EF2 /* Commands.m in Sources */,
 				209429B31A752F7A00F19EF2 /* LightInfoViewController.m in Sources */,
 				2003026F1A6B6B88001F0667 /* MainViewController.m in Sources */,
 				202596A31A6C3571007493A3 /* LightsViewController.m in Sources */,

@@ -237,6 +237,9 @@
                                                             <include reference="NCK-Gy-RqG"/>
                                                         </mask>
                                                     </variation>
+                                                    <connections>
+                                                        <action selector="clickOnLightSwitch:" destination="Sr2-yr-ddr" eventType="valueChanged" id="gMO-6j-55L"/>
+                                                    </connections>
                                                 </switch>
                                                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="YankonLED" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="wCJ-35-7F9">
                                                     <rect key="frame" x="0.0" y="-21" width="42" height="21"/>
@@ -604,7 +607,7 @@
                                     </mask>
                                 </variation>
                             </label>
-                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Sfm-k0-YZp" customClass="HRColorPickerView">
+                            <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Sfm-k0-YZp" customClass="HRColorPickerView">
                                 <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                             </view>

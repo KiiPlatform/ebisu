@@ -10,6 +10,7 @@
 #import "BasicTableViewCell.h"
 #import "Light.h"
 #import "Global.h"
+#import "CommandDaemon.h"
 
 @interface AddLightsViewController() <UITableViewDataSource, UITableViewDelegate>
 
@@ -135,6 +136,11 @@
 }
 
 - (IBAction)clickOnLightSwitch:(id)sender {
+    UISwitch *lightSwitch = sender;
+    NSInteger pos = [lightSwitch tag];
+    Light *light = self.lights[pos];
+    NSData *cmd = [Commands buildLightInfo:1 state:lightSwitch.isOn color:-1 brightness:-1 CT:-1];
+    [[CommandDaemon getInstance] sendCMD:cmd toIPs:@[light.ip]];
 }
 
 - (IBAction)clickOnLightCheckbox:(id)sender {

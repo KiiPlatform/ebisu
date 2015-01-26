@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "Commands.h"
 
 @interface CommandDaemon : NSObject
 

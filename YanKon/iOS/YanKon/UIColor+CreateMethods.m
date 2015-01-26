@@ -14,6 +14,14 @@
     return [UIColor colorWithRed:(red/255.0) green:(green/255.0) blue:(blue/255.0) alpha:alpha];
 }
 
++ (UIColor*)colorWithRGBHex: (UInt32)hex
+{
+    int r = (hex >> 16) & 0xFF;
+    int g = (hex >> 8) & 0xFF;
+    int b = (hex >> 0) & 0xFF;
+    return [UIColor colorWithRed: r / 255.0f green: g / 255.0f blue: b / 255.0f alpha: 1.0f];
+}
+
 + (UIColor*)colorWithHex:(NSString*)hex alpha:(CGFloat)alpha {
     
     assert(7 == [hex length]);

@@ -14,6 +14,8 @@
 @property (nonatomic, strong) NSString* model;
 @property (nonatomic, strong) NSString* mac;
 @property (nonatomic, strong) NSString* ip;
+@property (nonatomic, strong) NSString* remotePassword;
+@property (nonatomic, strong) NSString* adminPassword;
 @property (nonatomic) BOOL state;
 @property (nonatomic) int color;
 @property (nonatomic) int brightness;
