@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -25,8 +27,10 @@ import com.kii.yankon.services.NetworkSenderService;
 import com.kii.yankon.utils.CommandBuilder;
 import com.kii.yankon.utils.Constants;
 import com.kii.yankon.utils.Global;
+import com.kii.yankon.utils.Network;
 import com.kii.yankon.widget.LightItemViewHolder;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +38,8 @@ public class AddLights2Activity extends ListActivity implements CompoundButton.O
 
     private List<Light> mLights = new ArrayList<Light>();
     private LightsAdapter mAdapter;
+
+    MainHandler mHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,14 +86,54 @@ public class AddLights2Activity extends ListActivity implements CompoundButton.O
 
         IntentFilter filter = new IntentFilter(Constants.ACTION_LIGHT_UPDATED);
         LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, filter);
-        NetworkSenderService.sendCmd(this, (String) null, Constants.SEARCH_LIGHTS_CMD);
+//        NetworkSenderService.sendCmd(this, (String) null, Constants.SEARCH_LIGHTS_CMD);
+        mHandler = new MainHandler(this);
+        mHandler.sendEmptyMessage(MainHandler.MSG_UPDATE_STATUS);
     }
 
+
+    static class MainHandler extends Handler {
+        public static final int MSG_UPDATE_STATUS = 0;
+        public static final int MSG_STOP = 1;
+        WeakReference<AddLights2Activity> actRef = null;
+        MainHandler(AddLights2Activity activity) {
+            super();
+            actRef = new WeakReference<>(activity);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if (actRef == null) {
+                return;
+            }
+            AddLights2Activity activity = actRef.get();
+            if (activity == null) {
+                return;
+            }
+            switch (msg.what) {
+                case MSG_STOP:
+                    removeMessages(MSG_UPDATE_STATUS);
+                    break;
+                case MSG_UPDATE_STATUS: {
+                    removeMessages(MSG_UPDATE_STATUS);
+                    Network.getLocalIP(activity);
+                    if (Global.isWifiConnected) {
+                        NetworkSenderService.sendCmd(activity, (String) null, Constants.SEARCH_LIGHTS_CMD);
+                    }
+                    sendEmptyMessageDelayed(MSG_UPDATE_STATUS, 5 * 1000);
+                }
+                break;
+            }
+        }
+    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
+        mHandler.sendEmptyMessage(MainHandler.MSG_STOP);
+        mHandler = null;
     }
 
     BroadcastReceiver mReceiver = new BroadcastReceiver() {

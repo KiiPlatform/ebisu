@@ -1,5 +1,27 @@
 package com.kii.yankon;
 
+import android.app.ActionBar;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.widget.DrawerLayout;
+import android.text.TextUtils;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.Toast;
+
 import com.kii.cloud.storage.KiiUser;
 import com.kii.cloud.storage.callback.LoginCallBack;
 import com.kii.yankon.activities.GuideActivity;
@@ -16,28 +38,11 @@ import com.kii.yankon.fragments.SettingsFragment;
 import com.kii.yankon.services.NetworkReceiverService;
 import com.kii.yankon.services.NetworkSenderService;
 import com.kii.yankon.utils.Constants;
+import com.kii.yankon.utils.Global;
 import com.kii.yankon.utils.Network;
 import com.kii.yankon.utils.Settings;
 
-import android.app.ActionBar;
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.widget.DrawerLayout;
-import android.text.TextUtils;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.Toast;
+import java.lang.ref.WeakReference;
 
 public class MainActivity extends Activity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks, LoginCallBack {
@@ -53,6 +58,8 @@ public class MainActivity extends Activity
      * {@link #restoreActionBar()}.
      */
     private CharSequence mTitle;
+
+    MainHandler mHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,10 +85,9 @@ public class MainActivity extends Activity
         filter.addAction(Constants.INTENT_LOGGED_OUT);
         LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, filter);
         startService(new Intent(this, NetworkReceiverService.class));
-        NetworkSenderService.sendCmd(this, (String) null, Constants.SEARCH_LIGHTS_CMD);
 
         loginKii();
-
+        mHandler = new MainHandler(this);
     }
 
     private void setDefaultHomePage() {
@@ -98,13 +104,21 @@ public class MainActivity extends Activity
     @Override
     protected void onResume() {
         super.onResume();
-        Network.getLocalIP(this);
+        mHandler.sendEmptyMessage(MainHandler.MSG_UPDATE_STATUS);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mHandler.sendEmptyMessage(MainHandler.MSG_STOP);
     }
 
     @Override
     protected void onDestroy() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
         stopService(new Intent(this, NetworkReceiverService.class));
+        mHandler.sendEmptyMessage(MainHandler.MSG_STOP);
+        mHandler = null;
         super.onDestroy();
     }
 
@@ -120,6 +134,42 @@ public class MainActivity extends Activity
             }
         });
         ab.show();
+    }
+
+    static class MainHandler extends Handler {
+        public static final int MSG_UPDATE_STATUS = 0;
+        public static final int MSG_STOP = 1;
+        WeakReference<MainActivity> actRef = null;
+        MainHandler(MainActivity activity) {
+            super();
+            actRef = new WeakReference<>(activity);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if (actRef == null) {
+                return;
+            }
+            MainActivity activity = actRef.get();
+            if (activity == null) {
+                return;
+            }
+            switch (msg.what) {
+                case MSG_STOP:
+                    removeMessages(MSG_UPDATE_STATUS);
+                    break;
+                case MSG_UPDATE_STATUS: {
+                    removeMessages(MSG_UPDATE_STATUS);
+                    Network.getLocalIP(activity);
+                    if (Global.isWifiConnected) {
+                        NetworkSenderService.sendCmd(activity, (String) null, Constants.SEARCH_LIGHTS_CMD);
+                    }
+                    sendEmptyMessageDelayed(MSG_UPDATE_STATUS, 20 * 1000);
+                }
+                    break;
+            }
+        }
     }
 
     @Override
