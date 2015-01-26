@@ -31,11 +31,13 @@
 }
 - (IBAction)onSync:(id)sender
 {
+}
+
+- (IBAction)onLogOut:(id)sender
+{
     UIAlertView* alert = [[UIAlertView alloc] initWithTitle:@"Log Out" message:@"Are you sure to log out?" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"OK", nil];
     [alert show];
 }
-
-- (IBAction)onLogOut:(id)sender {}
 
 - (void)
 alertView:(UIAlertView*)alertView

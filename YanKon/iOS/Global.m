@@ -193,6 +193,7 @@ static Global* instance = nil;
 {
     
     NSUserDefaults* userDefaults = [NSUserDefaults standardUserDefaults];
+    NSLog(@"isLoggedIn? token is %@", [userDefaults valueForKey:@"token"]);
     return [userDefaults valueForKey:@"token"];
 }
 @end
