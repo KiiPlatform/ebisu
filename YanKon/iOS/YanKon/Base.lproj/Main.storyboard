@@ -161,7 +161,7 @@
                                             </subviews>
                                         </tableViewCellContentView>
                                         <connections>
-                                            <segue destination="KHc-CF-cHq" kind="custom" identifier="account" customClass="AMSlideMenuContentSegue" id="hOp-qo-Veo"/>
+                                            <segue destination="1Lc-1R-lOI" kind="custom" identifier="account" customClass="AMSlideMenuContentSegue" id="YPU-bh-Loz"/>
                                         </connections>
                                     </tableViewCell>
                                     <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" textLabel="dFw-Np-bhp" style="IBUITableViewCellStyleDefault" id="x9e-8J-bkL">
@@ -444,6 +444,9 @@
                                     <color key="titleColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
+                                <connections>
+                                    <action selector="onSync:" destination="lwG-fN-sTW" eventType="touchUpInside" id="aaq-nd-UiL"/>
+                                </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="zVY-he-X7I">
                                 <rect key="frame" x="23" y="550" width="555" height="30"/>
@@ -452,11 +455,17 @@
                                     <color key="titleColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
+                                <connections>
+                                    <action selector="onLogOut:" destination="lwG-fN-sTW" eventType="touchUpInside" id="iuG-J4-VUg"/>
+                                </connections>
                             </button>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     </view>
                     <navigationItem key="navigationItem" id="IZe-1h-yQh"/>
+                    <connections>
+                        <outlet property="profileLabel" destination="E4B-SA-x0Z" id="dpJ-xv-aoL"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="nrf-bA-ODT" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
@@ -465,7 +474,7 @@
         <!--Register & Log In-->
         <scene sceneID="SdM-1w-qps">
             <objects>
-                <viewController title="Register &amp; Log In" id="PCu-ea-ZvO" customClass="RegisterLogInViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="RegisterLogInViewController" title="Register &amp; Log In" useStoryboardIdentifierAsRestorationIdentifier="YES" id="PCu-ea-ZvO" customClass="RegisterLogInViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="ZKq-Tc-PjW"/>
                         <viewControllerLayoutGuide type="bottom" id="VNd-1l-KzJ"/>

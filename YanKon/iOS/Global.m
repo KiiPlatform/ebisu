@@ -10,11 +10,11 @@
 
 @implementation Global
 
-
-static Global *instance = nil;
-+ (Global *)getInstance
+static Global* instance = nil;
++ (Global*)getInstance
 {
-    @synchronized(self) {
+    @synchronized(self)
+    {
         if (instance == nil) {
             instance = [[Global alloc] init];
         }
@@ -22,30 +22,29 @@ static Global *instance = nil;
     return instance;
 }
 
--(instancetype)init
+- (instancetype)init
 {
     self = [super init];
     if (self) {
         self.lightsIpDict = [[NSMutableDictionary alloc] init];
         self.lightsMacDict = [[NSMutableDictionary alloc] init];
         self.scanDelay = DEFAULT_SCAN_DELAY;
-        NSString *docdir = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0];
+        NSString* docdir = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0];
         self.dbPath = [docdir stringByAppendingPathComponent:@"yankon.sqlite"];
         [self createOrUpdateDB];
-        
     }
     return self;
 }
 
-
-+ (FMDatabaseQueue *)getFMDBQueue
++ (FMDatabaseQueue*)getFMDBQueue
 {
-    return [FMDatabaseQueue databaseQueueWithPath:[Global getInstance].dbPath];;
+    return [FMDatabaseQueue databaseQueueWithPath:[Global getInstance].dbPath];
+    ;
 }
 
 - (void)createOrUpdateDB
 {
-    FMDatabase *db = [FMDatabase databaseWithPath:self.dbPath];
+    FMDatabase* db = [FMDatabase databaseWithPath:self.dbPath];
     
     if (![db open]) {
         return;
@@ -87,8 +86,7 @@ static Global *instance = nil;
          "pic TEXT,"
          "des TEXT, "
          "UNIQUE(model)"
-         ");"
-         ];
+         ");"];
         [db executeStatements:@"CREATE TABLE IF NOT EXISTS colors ("
          "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
          "objectID TEXT,"
@@ -98,8 +96,7 @@ static Global *instance = nil;
          "synced BOOL,"
          "created_time INTEGER,"
          "deleted INTEGER DEFAULT 0"
-         ");"
-         ];
+         ");"];
         
         [db executeStatements:@"CREATE TABLE IF NOT EXISTS light_groups ("
          "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -113,16 +110,14 @@ static Global *instance = nil;
          "synced BOOL,"
          "created_time INTEGER,"
          "deleted INTEGER DEFAULT 0"
-         ");"
-         ];
+         ");"];
         [db executeStatements:@"CREATE TABLE IF NOT EXISTS light_group_rel ("
          "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
          "light_id INTEGER,"
          "group_id INTEGER,"
          "created_time INTEGER,"
          "UNIQUE(light_id, group_id)"
-         ");"
-         ];
+         ");"];
         
         [db executeStatements:@"CREATE VIEW IF NOT EXISTS group_light_view "
          " AS SELECT * FROM light_group_rel,lights "
@@ -144,8 +139,7 @@ static Global *instance = nil;
          "created_time INTEGER,"
          "last_used_time INTEGER,"
          "deleted INTEGER DEFAULT 0"
-         ");"
-         ];
+         ");"];
         [db executeStatements:@"CREATE TABLE IF NOT EXISTS scenes_detail ("
          "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
          "scene_id INTEGER,"
@@ -158,8 +152,7 @@ static Global *instance = nil;
          "CT INTEGER,"
          "action_id INTEGER,"
          "created_time INTEGER"
-         ");"
-         ];
+         ");"];
         [db executeStatements:@"CREATE TABLE IF NOT EXISTS schedule ("
          "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
          "enabled BOOL DEFAULT 0,"
@@ -178,8 +171,7 @@ static Global *instance = nil;
          "synced BOOL,"
          "created_time INTEGER,"
          "deleted INTEGER DEFAULT 0"
-         ");"
-         ];
+         ");"];
         [db executeStatements:@"CREATE TABLE IF NOT EXISTS actions ("
          "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
          "objectID TEXT,"
@@ -187,8 +179,7 @@ static Global *instance = nil;
          "name TEXT,"
          "content TEXT,"
          "created_time INTEGER"
-         ");"
-         ];
+         ");"];
         [db setUserVersion:DB_VERSION];
     }
 }
@@ -198,5 +189,10 @@ static Global *instance = nil;
     return (long long)([[NSDate date] timeIntervalSince1970] * 1000);
 }
 
-
++ (BOOL)isLoggedIn
+{
+    
+    NSUserDefaults* userDefaults = [NSUserDefaults standardUserDefaults];
+    return [userDefaults valueForKey:@"token"];
+}
 @end
