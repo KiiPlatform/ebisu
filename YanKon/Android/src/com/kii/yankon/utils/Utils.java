@@ -140,6 +140,7 @@ public class Utils {
                 light.mac = c.getString(c.getColumnIndex("MAC"));
                 light.state = c.getInt(c.getColumnIndex("state")) != 0;
                 light.connected = c.getInt(c.getColumnIndex("connected")) != 0;
+                light.remotePassword = c.getString(c.getColumnIndex("remote_pwd"));
             } else {
                 light = null;
             }

@@ -50,7 +50,7 @@ public class AddLights2Activity extends ListActivity implements CompoundButton.O
         getActionBar().setDisplayHomeAsUpEnabled(true);
 
         mAdapter = new LightsAdapter(this);
-
+/*
         Light l = new Light();
         l.name = "Unknown1";
         l.model = "model1";
@@ -81,7 +81,7 @@ public class AddLights2Activity extends ListActivity implements CompoundButton.O
         l.mac = "55";
         Global.gLightsMacMap.put(l.mac, l);
         addLightToList(l);
-
+*/
         setListAdapter(mAdapter);
 
         IntentFilter filter = new IntentFilter(Constants.ACTION_LIGHT_UPDATED);

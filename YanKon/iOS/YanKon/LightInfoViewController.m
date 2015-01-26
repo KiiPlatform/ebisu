@@ -53,7 +53,6 @@
     [self.CTSlide setMaximumValue:100];
     [self.CTSlide setValue:self.CT];
     [self.colorPickerView setColor:[UIColor colorWithRGBHex:self.color]];
-    
 }
 
 - (void)didReceiveMemoryWarning {
@@ -64,6 +63,17 @@
 -(void)applyChanges:(BOOL)applyNow
 {
     
+}
+
+- (IBAction)colorChanged:(id)sender {
+    UIColor *newColor = [self.colorPickerView color];
+    
+}
+- (IBAction)stateChanged:(id)sender {
+}
+- (IBAction)brightnessChanged:(id)sender {
+}
+- (IBAction)CTChanged:(id)sender {
 }
 
 

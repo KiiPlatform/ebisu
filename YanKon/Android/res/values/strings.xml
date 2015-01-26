@@ -97,4 +97,9 @@
     <string name="default_home_page">Default Home Page</string>
     <string name="action_show_mode">Show Mode</string>
     <string name="scene_last_used">Last used: %s</string>
+    <string name="set_remote_pwd">Enable remote control</string>
+    <string name="change_password">Change password</string>
+    <string name="input_remotepwd_hint">4 digits password</string>
+    <string name="input_remotepwd_title">Enable remote control</string>
+    <string name="remotepwd_prompt">The password should be 4 digits</string>
 </resources>

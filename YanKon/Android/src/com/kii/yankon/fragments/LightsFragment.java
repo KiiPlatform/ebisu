@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -46,10 +47,14 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
     private static boolean isFirstLaunch = true;
 
     private static final int REQUEST_EDIT_NAME = 0x2001;
+    private static final int REQUEST_SET_PWD = 0x2002;
 
     private static final int SHOW_LOCAL = 0;
     private static final int SHOW_CONTROLLABLE = 1;  //local + remote pwd
     private static final int SHOW_ALL = 2;  // all even without pwd
+
+    public static final int MENU_SET_REMOTE_PWD = 3;
+    public static final int MENU_CHANGE_PWD = 4;
 
     View headerView;
 
@@ -57,6 +62,7 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
     int mShowMode = SHOW_LOCAL;
 
     HashSet<String> mSelectedLights = new HashSet<>();
+    String[] currLightIds = null;
 
     public static LightsFragment newInstance(int sectionNumber) {
         LightsFragment fragment = new LightsFragment();
@@ -230,6 +236,8 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
             menu.add(0, MENU_EDIT, 0, R.string.menu_edit_name);
         }
         menu.setHeaderTitle(name);
+        menu.add(0, MENU_SET_REMOTE_PWD, 0, R.string.set_remote_pwd);
+        menu.add(0, MENU_CHANGE_PWD, 0, R.string.change_password);
         menu.add(0, MENU_DELETE, 0, R.string.menu_delete);
     }
 
@@ -246,6 +254,21 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
                 text,
                 null);
         newFragment.setTargetFragment(this, REQUEST_EDIT_NAME);
+        newFragment.show(getFragmentManager(), "dialog");
+    }
+
+    void showSetPassword() {
+        FragmentTransaction ft = getActivity().getFragmentManager().beginTransaction();
+        Fragment prev = getActivity().getFragmentManager().findFragmentByTag("dialog");
+        if (prev != null) {
+            ft.remove(prev);
+        }
+        ft.addToBackStack(null);
+        InputDialogFragment newFragment = InputDialogFragment.newInstance(
+                getString(R.string.input_remotepwd_title),
+                null,
+                getString(R.string.input_remotepwd_hint));
+        newFragment.setTargetFragment(this, REQUEST_SET_PWD);
         newFragment.show(getFragmentManager(), "dialog");
     }
 
@@ -279,6 +302,16 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
                 updateHeaderView();
             }
             break;
+            case MENU_SET_REMOTE_PWD:
+                if (info.position == 0) {
+                    currLightIds = mSelectedLights.toArray(new String[mSelectedLights.size()]);
+                } else {
+                    Cursor cursor = (Cursor) mAdapter.getItem(pos);
+                    int cid = cursor.getInt(cursor.getColumnIndex("_id"));
+                    currLightIds = new String[]{String.valueOf(cid)};
+                }
+                showSetPassword();
+                break;
         }
         return true;
     }
@@ -290,7 +323,7 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
             return;
         }
         switch (requestCode) {
-            case REQUEST_EDIT_NAME:
+            case REQUEST_EDIT_NAME: {
                 String name = data.getStringExtra(InputDialogFragment.ARG_TEXT);
                 ContentValues values = new ContentValues();
                 values.put("name", name);
@@ -300,7 +333,20 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
                             .update(YanKonProvider.URI_LIGHTS, values, "_id=" + currentEditId,
                                     null);
                 }
-                break;
+            }
+            break;
+            case REQUEST_SET_PWD: {
+                String pwd = data.getStringExtra(InputDialogFragment.ARG_TEXT);
+                if (pwd != null && pwd.length() == 4 && TextUtils.isDigitsOnly(pwd)) {
+                    ContentValues values = new ContentValues();
+                    values.put("remote_pwd", pwd);
+                    values.put("synced", false);
+                    getActivity().getContentResolver().update(YanKonProvider.URI_LIGHTS, values, "_id in " + Utils.buildNumsInSQL(currLightIds), null);
+                } else {
+                    Toast.makeText(getActivity(), R.string.remotepwd_prompt, Toast.LENGTH_SHORT).show();
+                }
+            }
+            break;
         }
     }
 
