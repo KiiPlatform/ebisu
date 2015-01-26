@@ -584,6 +584,7 @@
                             <constraint firstItem="Sh7-dV-CHA" firstAttribute="top" secondItem="cSd-ud-X3U" secondAttribute="bottom" constant="20" id="ahg-lV-iba"/>
                             <constraint firstItem="4Im-Lj-4MV" firstAttribute="top" secondItem="ZKq-Tc-PjW" secondAttribute="bottom" constant="20" id="mWf-2l-N8e"/>
                             <constraint firstAttribute="trailingMargin" secondItem="vka-HW-Wcl" secondAttribute="trailing" id="qKy-vi-SCh"/>
+                            <constraint firstItem="TEe-em-Fb9" firstAttribute="top" secondItem="UcS-Kk-2ba" secondAttribute="bottom" constant="10" id="wA7-m5-wT0"/>
                             <constraint firstItem="4Im-Lj-4MV" firstAttribute="leading" secondItem="lQm-bZ-OI1" secondAttribute="leadingMargin" constant="20" id="xDc-AN-3QT">
                                 <variation key="widthClass=compact" constant="0.0"/>
                             </constraint>
@@ -592,6 +593,7 @@
                             <mask key="constraints">
                                 <exclude reference="mWf-2l-N8e"/>
                                 <exclude reference="xDc-AN-3QT"/>
+                                <exclude reference="Hxu-dj-2uh"/>
                             </mask>
                         </variation>
                         <variation key="widthClass=compact">
