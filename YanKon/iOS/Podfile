@@ -1,3 +1,4 @@
+source 'https://github.com/CocoaPods/Specs.git'
 # Uncomment this line to define a global platform for your project
 platform :ios, '7.0'
 
@@ -9,5 +10,7 @@ pod 'KxMenu', '~> 1'
 pod 'M13Checkbox', '~> 1.1.2'
 pod 'CocoaAsyncSocket', '~> 7.4.1'
 pod 'Reachability', '~> 3.2'
+pod 'MBProgressHUD', '~> 0.8'
+pod 'iToast', '~> 0.0.1'
 end
 

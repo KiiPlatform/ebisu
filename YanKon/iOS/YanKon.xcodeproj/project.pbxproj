@@ -26,6 +26,15 @@
 		20B0BD871A6ED702004EE954 /* AddLightsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 20B0BD861A6ED702004EE954 /* AddLightsViewController.m */; };
 		20B0BD8A1A6ED9FB004EE954 /* BasicTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 20B0BD891A6ED9FB004EE954 /* BasicTableViewCell.m */; };
 		47752FA2FE292FBA9F279FC4 /* libPods-YanKon.a in Frameworks */ = {isa = PBXBuildFile; fileRef = FAB09959CB2DCF5C1BB0AEED /* libPods-YanKon.a */; };
+		941260461A7543C90042DD17 /* KiiSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 941260451A7543C90042DD17 /* KiiSDK.framework */; };
+		941260481A75443B0042DD17 /* Accounts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 941260471A75443B0042DD17 /* Accounts.framework */; };
+		9412604A1A7544440042DD17 /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 941260491A7544440042DD17 /* ImageIO.framework */; };
+		9412604C1A75444B0042DD17 /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9412604B1A75444B0042DD17 /* libsqlite3.dylib */; };
+		9412604E1A7544540042DD17 /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9412604D1A7544540042DD17 /* MobileCoreServices.framework */; };
+		941260501A75445B0042DD17 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9412604F1A75445B0042DD17 /* Security.framework */; };
+		941260521A7544610042DD17 /* Social.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 941260511A7544610042DD17 /* Social.framework */; };
+		941260551A754B370042DD17 /* ProfileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 941260541A754B370042DD17 /* ProfileViewController.m */; };
+		941260581A754B440042DD17 /* RegisterLogInViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 941260571A754B440042DD17 /* RegisterLogInViewController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -63,6 +72,17 @@
 		20B0BD861A6ED702004EE954 /* AddLightsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AddLightsViewController.m; sourceTree = "<group>"; };
 		20B0BD881A6ED9FB004EE954 /* BasicTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BasicTableViewCell.h; sourceTree = "<group>"; };
 		20B0BD891A6ED9FB004EE954 /* BasicTableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BasicTableViewCell.m; sourceTree = "<group>"; };
+		941260451A7543C90042DD17 /* KiiSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = KiiSDK.framework; sourceTree = "<group>"; };
+		941260471A75443B0042DD17 /* Accounts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accounts.framework; path = System/Library/Frameworks/Accounts.framework; sourceTree = SDKROOT; };
+		941260491A7544440042DD17 /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
+		9412604B1A75444B0042DD17 /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };
+		9412604D1A7544540042DD17 /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
+		9412604F1A75445B0042DD17 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		941260511A7544610042DD17 /* Social.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Social.framework; path = System/Library/Frameworks/Social.framework; sourceTree = SDKROOT; };
+		941260531A754B370042DD17 /* ProfileViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileViewController.h; sourceTree = "<group>"; };
+		941260541A754B370042DD17 /* ProfileViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfileViewController.m; sourceTree = "<group>"; };
+		941260561A754B440042DD17 /* RegisterLogInViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterLogInViewController.h; sourceTree = "<group>"; };
+		941260571A754B440042DD17 /* RegisterLogInViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RegisterLogInViewController.m; sourceTree = "<group>"; };
 		AA6A9478F5B9E4A3C54DF0DF /* Pods-YanKon.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YanKon.release.xcconfig"; path = "Pods/Target Support Files/Pods-YanKon/Pods-YanKon.release.xcconfig"; sourceTree = "<group>"; };
 		FAB09959CB2DCF5C1BB0AEED /* libPods-YanKon.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-YanKon.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -72,8 +92,15 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				941260521A7544610042DD17 /* Social.framework in Frameworks */,
+				941260501A75445B0042DD17 /* Security.framework in Frameworks */,
+				9412604E1A7544540042DD17 /* MobileCoreServices.framework in Frameworks */,
+				9412604C1A75444B0042DD17 /* libsqlite3.dylib in Frameworks */,
+				9412604A1A7544440042DD17 /* ImageIO.framework in Frameworks */,
+				941260481A75443B0042DD17 /* Accounts.framework in Frameworks */,
 				205EA4191A6F95EB00BE6D01 /* SystemConfiguration.framework in Frameworks */,
 				47752FA2FE292FBA9F279FC4 /* libPods-YanKon.a in Frameworks */,
+				941260461A7543C90042DD17 /* KiiSDK.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -161,6 +188,10 @@
 				20B0BD861A6ED702004EE954 /* AddLightsViewController.m */,
 				209429B11A752F7A00F19EF2 /* LightInfoViewController.h */,
 				209429B21A752F7A00F19EF2 /* LightInfoViewController.m */,
+				941260531A754B370042DD17 /* ProfileViewController.h */,
+				941260541A754B370042DD17 /* ProfileViewController.m */,
+				941260561A754B440042DD17 /* RegisterLogInViewController.h */,
+				941260571A754B440042DD17 /* RegisterLogInViewController.m */,
 			);
 			name = ViewControllers;
 			sourceTree = "<group>";
@@ -188,6 +219,13 @@
 		E6D1A1185768CC20360A2577 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				941260511A7544610042DD17 /* Social.framework */,
+				9412604F1A75445B0042DD17 /* Security.framework */,
+				9412604D1A7544540042DD17 /* MobileCoreServices.framework */,
+				9412604B1A75444B0042DD17 /* libsqlite3.dylib */,
+				941260491A7544440042DD17 /* ImageIO.framework */,
+				941260471A75443B0042DD17 /* Accounts.framework */,
+				941260451A7543C90042DD17 /* KiiSDK.framework */,
 				205EA4181A6F95EB00BE6D01 /* SystemConfiguration.framework */,
 				FAB09959CB2DCF5C1BB0AEED /* libPods-YanKon.a */,
 			);
@@ -303,7 +341,9 @@
 				20B0BD871A6ED702004EE954 /* AddLightsViewController.m in Sources */,
 				204370D11A1CE04900D96242 /* AppDelegate.m in Sources */,
 				205EA41C1A6FA86400BE6D01 /* Global.m in Sources */,
+				941260551A754B370042DD17 /* ProfileViewController.m in Sources */,
 				200302721A6B6BED001F0667 /* LeftMenu.m in Sources */,
+				941260581A754B440042DD17 /* RegisterLogInViewController.m in Sources */,
 				202596A61A6C3D91007493A3 /* UIColor+CreateMethods.m in Sources */,
 				200C6B421A70DE6D00A6BB60 /* NSData+Conversion.m in Sources */,
 				20B0BD8A1A6ED9FB004EE954 /* BasicTableViewCell.m in Sources */,
@@ -423,6 +463,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SYSTEM_APPS_DIR)/Reveal.app/Contents/SharedSupport/iOS-Libraries",
+					"$(PROJECT_DIR)",
 				);
 				INFOPLIST_FILE = YanKon/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
@@ -441,6 +482,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SYSTEM_APPS_DIR)/Reveal.app/Contents/SharedSupport/iOS-Libraries",
+					"$(PROJECT_DIR)",
 				);
 				INFOPLIST_FILE = YanKon/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;

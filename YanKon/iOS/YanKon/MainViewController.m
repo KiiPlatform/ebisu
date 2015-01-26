@@ -10,12 +10,13 @@
 
 @implementation MainViewController
 
-
--(NSString *)segueIdentifierForIndexPathInLeftMenu:(NSIndexPath *)indexPath
+- (NSString*)segueIdentifierForIndexPathInLeftMenu:(NSIndexPath*)indexPath
 {
     switch ([indexPath row]) {
         case 0:
-           return @"lights";
+            return @"lights";
+        case 6:
+            return @"account";
     }
     return @"lights";
 }
@@ -25,8 +26,7 @@
     return YES;
 }
 
-
--(void)configureLeftMenuButton:(UIButton *)button
+- (void)configureLeftMenuButton:(UIButton*)button
 {
     CGRect frame = button.frame;
     frame = CGRectMake(0, 0, 25, 25);
