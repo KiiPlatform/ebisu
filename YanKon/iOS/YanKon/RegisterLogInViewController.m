@@ -12,7 +12,6 @@
 #import <MBProgressHUD/MBProgressHUD.h>
 
 @implementation RegisterLogInViewController
-
 - (IBAction)onRegister:(id)sender
 {
     if (![self isParamValid]) {
@@ -25,12 +24,18 @@
     KiiUser* user = [KiiUser userWithEmailAddress:username andPassword:password];
     [user performRegistrationWithBlock:^(KiiUser* user, NSError* error) {
         [MBProgressHUD hideAllHUDsForView:self.view animated:YES];
+        NSLog(@"onRegister, user is %@", user);
         if (error != nil) {
             // Error handling
             [[iToast makeText:@"Register failed"] show];
-            return;
         } else {
-            
+            NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+            [defaults setValue:user.email forKey:@"email"];
+            [defaults setValue:user.userID forKey:@"user_id"];
+            [defaults setValue:user.username forKey:@"username"];
+            [defaults setValue:user.accessToken forKey:@"token"];
+            [defaults synchronize];
+            [self dismissViewControllerAnimated:YES completion:nil];
         }
     }];
     [[[MBProgressHUD alloc] init] show:YES];
@@ -46,12 +51,19 @@
     
     [KiiUser authenticate:username withPassword:password andBlock:^(KiiUser* user, NSError* error) {
         [MBProgressHUD hideAllHUDsForView:self.view animated:YES];
+        NSLog(@"onLogIn, user is %@", user);
+        
         if (error != nil) {
             // Error handling
             [[iToast makeText:@"Log in failed"] show];
-            return;
         } else {
-            
+            NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+            [defaults setValue:user.email forKey:@"email"];
+            [defaults setValue:user.userID forKey:@"user_id"];
+            [defaults setValue:user.username forKey:@"username"];
+            [defaults setValue:user.accessToken forKey:@"token"];
+            [defaults synchronize];
+            [self dismissViewControllerAnimated:YES completion:nil];
         }
     }];
     [[[MBProgressHUD alloc] init] show:YES];

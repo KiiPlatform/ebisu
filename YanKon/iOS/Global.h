@@ -16,15 +16,15 @@
 
 #define NOTIFY_ACTIVE_LIGHTS_CHANGED @"active_lights_changed"
 
-
 @interface Global : NSObject
 
-@property (nonatomic, strong) NSString *dbPath;
-@property (nonatomic, strong) NSMutableDictionary *lightsIpDict;
-@property (nonatomic, strong) NSMutableDictionary *lightsMacDict;
+@property (nonatomic, strong) NSString* dbPath;
+@property (nonatomic, strong) NSMutableDictionary* lightsIpDict;
+@property (nonatomic, strong) NSMutableDictionary* lightsMacDict;
 @property (nonatomic) int scanDelay;
 
-+ (Global *)getInstance;
-+ (FMDatabaseQueue *)getFMDBQueue;
++ (Global*)getInstance;
++ (FMDatabaseQueue*)getFMDBQueue;
 + (long long)getCurrentTime;
++ (BOOL)isLoggedIn;
 @end
