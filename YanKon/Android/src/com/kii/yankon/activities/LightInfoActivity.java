@@ -183,11 +183,11 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
     }
 
     void saveChange(ContentValues values, boolean doItNow) {
-        values.put("synced", false);
         if (light_id >= 0) {
             getContentResolver().update(YanKonProvider.URI_LIGHTS, values, "_id=" + light_id, null);
             Utils.controlLight(this, light_id, doItNow);
         } else if (group_id >= 0) {
+            values.put("synced", false);
             getContentResolver().update(YanKonProvider.URI_LIGHT_GROUPS, values, "_id=" + group_id, null);
             Utils.controlGroup(this, group_id, doItNow);
         } else if (lights != null && lights.length>0) {

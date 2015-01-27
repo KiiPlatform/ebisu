@@ -69,9 +69,11 @@
         unsigned char brData[1];
         brData[0] = (unsigned char)brightness;
         [commands append:10 attr:2 cmd:1 data:brData];
+        /*
         unsigned char CTData[1];
         CTData[0] = (unsigned char)CT;
         [commands append:10 attr:3 cmd:1 data:CTData];
+         */
     }
     return [commands build];
 }

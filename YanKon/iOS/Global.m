@@ -196,4 +196,39 @@ static Global* instance = nil;
     NSLog(@"isLoggedIn? token is %@", [userDefaults valueForKey:@"token"]);
     return [userDefaults valueForKey:@"token"];
 }
+
++(void)controlLight:(int)light_id doItNow:(BOOL)doItNow
+{
+    Light *light = [[Light alloc] init];
+    FMDatabaseQueue *queue = [Global getFMDBQueue];
+    [queue inDatabase:^(FMDatabase *db) {
+        FMResultSet *rs;
+        rs = [db executeQuery:@"select * from lights where _id=(?);",@(light_id)];
+        if ([rs next]) {
+            light.brightness = [rs intForColumn:@"brightness"];
+            light.color = [rs intForColumn:@"color"];
+            light.CT = [rs intForColumn:@"CT"];
+            light.state = [rs boolForColumn:@"state"];
+            light.ip = [rs stringForColumn:@"IP"];
+            light.mac = [rs stringForColumn:@"MAC"];
+            light.connected = [rs boolForColumn:@"connected"];
+            light.remotePassword = [rs stringForColumn:@"remote_pwd"];
+        } else {
+            
+        }
+        [rs close];
+    }];
+    [queue close];
+    if ([light.mac length] == 0) {
+        [[iToast makeText:@"Cannot get light info"] show];
+        return;
+    }
+    if (light.connected) {
+        NSData *cmd = [Commands buildLightInfo:1 state:light.state color:light.color brightness:light.brightness CT:light.CT];
+        [[CommandDaemon getInstance] sendCMD:cmd toIPs:@[light.ip]];
+    } else {
+        
+    }
+}
+
 @end

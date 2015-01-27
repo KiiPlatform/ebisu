@@ -233,7 +233,7 @@
                                                         </mask>
                                                     </variation>
                                                     <variation key="widthClass=compact" misplaced="YES">
-                                                        <rect key="frame" x="251" y="16.5" width="51" height="31"/>
+                                                        <rect key="frame" x="251" y="16" width="51" height="31"/>
                                                         <mask key="constraints">
                                                             <include reference="JPh-Y9-YHf"/>
                                                             <include reference="NCK-Gy-RqG"/>
@@ -513,9 +513,6 @@
                                 <rect key="frame" x="16" y="60" width="568" height="30"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" keyboardType="emailAddress" returnKeyType="next"/>
-                                <variation key="widthClass=compact" fixedFrame="YES">
-                                    <rect key="frame" x="16" y="68" width="392" height="30"/>
-                                </variation>
                             </textField>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Password:" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Sh7-dV-CHA">
                                 <rect key="frame" x="16" y="110" width="81" height="20.5"/>
@@ -527,18 +524,12 @@
                                 <rect key="frame" x="16" y="150" width="568" height="30"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" keyboardType="alphabet" returnKeyType="done" secureTextEntry="YES"/>
-                                <variation key="widthClass=compact" fixedFrame="YES">
-                                    <rect key="frame" x="16" y="138" width="392" height="30"/>
-                                </variation>
                             </textField>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="TEe-em-Fb9">
                                 <rect key="frame" x="16" y="240" width="57" height="30"/>
                                 <state key="normal" title="Register">
                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
-                                <variation key="widthClass=compact" fixedFrame="YES">
-                                    <rect key="frame" x="16" y="214" width="57" height="30"/>
-                                </variation>
                                 <connections>
                                     <action selector="onRegister:" destination="PCu-ea-ZvO" eventType="touchUpInside" id="2u2-D0-lXr"/>
                                 </connections>
@@ -548,18 +539,12 @@
                                 <state key="normal" title="Forget Password?">
                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
-                                <variation key="widthClass=compact" fixedFrame="YES">
-                                    <rect key="frame" x="16" y="176" width="125" height="30"/>
-                                </variation>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="0mu-XS-NJY">
                                 <rect key="frame" x="16" y="290" width="43" height="30"/>
                                 <state key="normal" title="Log In">
                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
-                                <variation key="widthClass=compact" fixedFrame="YES">
-                                    <rect key="frame" x="16" y="252" width="43" height="30"/>
-                                </variation>
                                 <connections>
                                     <action selector="onLogIn:" destination="PCu-ea-ZvO" eventType="touchUpInside" id="luD-ZO-5YK"/>
                                 </connections>
@@ -575,7 +560,6 @@
                             <constraint firstItem="UcS-Kk-2ba" firstAttribute="top" secondItem="vka-HW-Wcl" secondAttribute="bottom" constant="20" id="H0q-b0-Caz"/>
                             <constraint firstItem="TEe-em-Fb9" firstAttribute="top" secondItem="vka-HW-Wcl" secondAttribute="bottom" constant="60" id="Hxu-dj-2uh"/>
                             <constraint firstItem="vka-HW-Wcl" firstAttribute="leading" secondItem="lQm-bZ-OI1" secondAttribute="leadingMargin" id="IQ9-LK-hDa"/>
-                            <constraint firstItem="4Im-Lj-4MV" firstAttribute="top" secondItem="ZKq-Tc-PjW" secondAttribute="bottom" id="JNl-f4-ZL9"/>
                             <constraint firstItem="0mu-XS-NJY" firstAttribute="leading" secondItem="lQm-bZ-OI1" secondAttribute="leadingMargin" id="MST-2Q-NHS"/>
                             <constraint firstItem="0mu-XS-NJY" firstAttribute="top" secondItem="TEe-em-Fb9" secondAttribute="bottom" constant="20" id="Pxv-NE-ttf"/>
                             <constraint firstItem="TEe-em-Fb9" firstAttribute="leading" secondItem="lQm-bZ-OI1" secondAttribute="leadingMargin" id="QxV-c8-9GO"/>
@@ -640,6 +624,9 @@
                                         <include reference="tfI-xc-EO5"/>
                                     </mask>
                                 </variation>
+                                <connections>
+                                    <action selector="CTChanged:" destination="Sp0-ki-O0j" eventType="valueChanged" id="h88-pm-SuF"/>
+                                </connections>
                             </slider>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="CT" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Ps2-89-EiS">
                                 <rect key="frame" x="0.0" y="-21" width="42" height="21"/>
@@ -662,6 +649,9 @@
                             </label>
                             <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="Xpe-Un-KWL">
                                 <rect key="frame" x="0.0" y="-15" width="118" height="31"/>
+                                <connections>
+                                    <action selector="brightnessChanged:" destination="Sp0-ki-O0j" eventType="valueChanged" id="eUR-t9-J3v"/>
+                                </connections>
                             </slider>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Brightness" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="l5L-PR-eVm">
                                 <rect key="frame" x="0.0" y="-21" width="42" height="21"/>
@@ -690,6 +680,9 @@
                             <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Sfm-k0-YZp" customClass="HRColorPickerView">
                                 <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <connections>
+                                    <action selector="colorChanged:" destination="Sp0-ki-O0j" eventType="valueChanged" id="jd8-Md-wXS"/>
+                                </connections>
                             </view>
                             <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="DMN-js-3YQ">
                                 <rect key="frame" x="-25" y="-15" width="51" height="31"/>
@@ -713,6 +706,9 @@
                                         <include reference="eum-uP-eQs"/>
                                     </mask>
                                 </variation>
+                                <connections>
+                                    <action selector="stateChanged:" destination="Sp0-ki-O0j" eventType="valueChanged" id="efo-g2-oVE"/>
+                                </connections>
                             </switch>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -920,7 +916,7 @@
                                                         </mask>
                                                     </variation>
                                                     <variation key="widthClass=compact" misplaced="YES">
-                                                        <rect key="frame" x="251" y="16.5" width="51" height="31"/>
+                                                        <rect key="frame" x="251" y="16" width="51" height="31"/>
                                                         <mask key="constraints">
                                                             <include reference="cTO-3X-pC0"/>
                                                             <include reference="chT-qr-ZLC"/>

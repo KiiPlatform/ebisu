@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import "CommandDaemon.h"
 #import "FMDB.h"
+#import "Light.h"
+#import "iToast.h"
 
 #define DEFAULT_PORT 5015
 #define DB_VERSION 1
@@ -27,4 +29,5 @@
 + (FMDatabaseQueue*)getFMDBQueue;
 + (long long)getCurrentTime;
 + (BOOL)isLoggedIn;
++ (void)controlLight:(int)light_id doItNow:(BOOL)doItNow;
 @end

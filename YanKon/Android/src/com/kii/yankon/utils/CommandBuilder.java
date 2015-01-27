@@ -69,9 +69,9 @@ public class CommandBuilder {
             data = new byte[1];
             data[0] = (byte) brightness;
             cb.append((byte) 10, (byte) 2, (byte) 1, data);
-            data = new byte[1];
-            data[0] = (byte) CT;
-            cb.append((byte) 10, (byte) 3, (byte) 1, data);
+//            data = new byte[1];
+//            data[0] = (byte) CT;
+//            cb.append((byte) 10, (byte) 3, (byte) 1, data);
         }
         return cb.build(trans_no);
     }
