@@ -10,9 +10,13 @@ import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -32,12 +36,19 @@ import android.widget.Toast;
 import com.kii.yankon.App;
 import com.kii.yankon.R;
 import com.kii.yankon.activities.AddLights2Activity;
+import com.kii.yankon.activities.ChangePasswordActivity;
 import com.kii.yankon.activities.LightInfoActivity;
 import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.utils.DataHelper;
+import com.kii.yankon.utils.KiiSync;
 import com.kii.yankon.utils.Utils;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 
 /**
  * Created by Evan on 14/11/26.
@@ -49,9 +60,9 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
     private static final int REQUEST_EDIT_NAME = 0x2001;
     private static final int REQUEST_SET_PWD = 0x2002;
 
-    private static final int SHOW_LOCAL = 0;
-    private static final int SHOW_CONTROLLABLE = 1;  //local + remote pwd
-    private static final int SHOW_ALL = 2;  // all even without pwd
+    private static final int SHOW_LOCAL = 1;
+    private static final int SHOW_CONTROLLABLE = 2;  //local + remote pwd
+    private static final int SHOW_ALL = 0;  // all even without pwd
 
     public static final int MENU_SET_REMOTE_PWD = 3;
     public static final int MENU_CHANGE_PWD = 4;
@@ -95,8 +106,23 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
                 ab.setItems(R.array.lights_show_modes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if (which != mShowMode) {
-                            mShowMode = which;
+                        int mode = SHOW_ALL;
+                        switch (which) {
+                            case 0:
+                                mode = SHOW_LOCAL;
+                                break;
+                            case 1:
+                                mode = SHOW_CONTROLLABLE;
+                                break;
+                            case 2:
+                                mode = SHOW_ALL;
+                                break;
+                        }
+                        if (mode != mShowMode) {
+                            mShowMode = mode;
+                            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getActivity()).edit();
+                            editor.putString("default_show_mode", String.valueOf(mShowMode));
+                            editor.commit();
                             getLoaderManager().restartLoader(LightsFragment.class.hashCode(), null, LightsFragment.this);
                         }
                     }
@@ -173,6 +199,13 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
     @Override
     public void onStart() {
         super.onStart();
+        try {
+            mShowMode = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(getActivity())
+                    .getString("default_show_mode", "0"));
+        } catch (Exception e) {
+            mShowMode = 0;
+        }
+
         mAdapter = new LightsAdapter(getActivity());
         setListAdapter(mAdapter);
         getLoaderManager().initLoader(getClass().hashCode(), null, this);
@@ -312,6 +345,19 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
                 }
                 showSetPassword();
                 break;
+            case MENU_CHANGE_PWD: {
+                if (info.position == 0) {
+                    currLightIds = mSelectedLights.toArray(new String[mSelectedLights.size()]);
+                } else {
+                    Cursor cursor = (Cursor) mAdapter.getItem(pos);
+                    int cid = cursor.getInt(cursor.getColumnIndex("_id"));
+                    currLightIds = new String[]{String.valueOf(cid)};
+                }
+                Intent intent = new Intent(getActivity(), ChangePasswordActivity.class);
+                intent.putExtra(ChangePasswordActivity.EXTRA_LIGHTS, currLightIds);
+                startActivity(intent);
+            }
+            break;
         }
         return true;
     }
@@ -338,15 +384,83 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
             case REQUEST_SET_PWD: {
                 String pwd = data.getStringExtra(InputDialogFragment.ARG_TEXT);
                 if (pwd != null && pwd.length() == 4 && TextUtils.isDigitsOnly(pwd)) {
-                    ContentValues values = new ContentValues();
-                    values.put("remote_pwd", pwd);
-                    values.put("synced", false);
-                    getActivity().getContentResolver().update(YanKonProvider.URI_LIGHTS, values, "_id in " + Utils.buildNumsInSQL(currLightIds), null);
+                    new SetRemotePwdTask(pwd).execute();
                 } else {
                     Toast.makeText(getActivity(), R.string.remotepwd_prompt, Toast.LENGTH_SHORT).show();
                 }
             }
             break;
+        }
+    }
+
+    class SetRemotePwdTask extends AsyncTask<Void, Void, Void> {
+        ProgressDialogFragment dialogFragment;
+        String pwd;
+        String result;
+
+        public SetRemotePwdTask(String pwd) {
+            super();
+            this.pwd = pwd;
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            Cursor c = App.getApp().getContentResolver().query(YanKonProvider.URI_LIGHTS, new String[]{"MAC"}, "_id in " + Utils.buildNumsInSQL(currLightIds), null, null);
+            JSONObject lights = new JSONObject();
+            if (c != null) {
+                while (c.moveToNext()) {
+                    try {
+                        lights.put(c.getString(0), pwd);
+                    } catch (JSONException e) {
+                    }
+                }
+                c.close();
+            }
+            result = KiiSync.fireLamp(lights, true, 0, 0, 0, 0);
+            return null;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            dialogFragment = ProgressDialogFragment.newInstance(null, getString(R.string.set_pwd_async_msg));
+            dialogFragment.show(getFragmentManager(), "dialog");
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            dialogFragment.dismiss();
+            if (TextUtils.isEmpty(result)) {
+                Toast.makeText(getActivity(), R.string.kii_extension_return_null, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            ArrayList<String> succList = new ArrayList<>();
+            ArrayList<String> failList = new ArrayList<>();
+            try {
+                JSONObject root = new JSONObject(result);
+                JSONObject succ = root.getJSONObject("lights");
+
+                Iterator<String> it = succ.keys();
+                while (it.hasNext()) {//遍历JSONObject
+                    String mac = it.next();
+                    int res = succ.getInt(mac);
+                    if (res == 0) {
+                        succList.add(mac);
+                    } else {
+                        failList.add(mac);
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(ChangePasswordActivity.class.getSimpleName(), Log.getStackTraceString(e));
+            }
+            if (succList.size() > 0) {
+                String[] succMacs = succList.toArray(new String[succList.size()]);
+                ContentValues values = new ContentValues();
+                values.put("remote_pwd", pwd);
+                values.put("synced", false);
+                getActivity().getContentResolver().update(YanKonProvider.URI_LIGHTS, values, "MAC in " + Utils.buildStringsInSQL(succMacs), null);
+            }
         }
     }
 

@@ -19,6 +19,7 @@ import com.kii.cloud.storage.KiiUser;
 import com.kii.cloud.storage.callback.KiiUserCallBack;
 import com.kii.yankon.R;
 import com.kii.yankon.utils.Constants;
+import com.kii.yankon.utils.KiiSync;
 import com.kii.yankon.utils.Settings;
 
 import butterknife.ButterKnife;
@@ -119,6 +120,7 @@ public class LogInFragment extends BaseFragment implements View.OnClickListener 
                 Settings.saveEmail(user.getEmail());
                 LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(new Intent(
                         Constants.INTENT_LOGGED_IN));
+                KiiSync.asyncStartSync();
             } else {
                 Toast.makeText(getActivity(), exception.getLocalizedMessage(), Toast.LENGTH_SHORT)
                         .show();
@@ -137,6 +139,7 @@ public class LogInFragment extends BaseFragment implements View.OnClickListener 
                 Settings.saveExp(expires_at);
                 LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(new Intent(
                         Constants.INTENT_LOGGED_IN));
+                KiiSync.asyncStartSync();
             } else {
                 Toast.makeText(getActivity(), exception.getLocalizedMessage(), Toast.LENGTH_SHORT)
                         .show();

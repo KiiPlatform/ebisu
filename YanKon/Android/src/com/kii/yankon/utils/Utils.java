@@ -5,6 +5,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.Resources;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
@@ -72,6 +73,9 @@ public class Utils {
     }
 
     public static int getRGBColor(byte[] data) {
+        if (data == null || data.length <3 ) {
+            return Color.WHITE;
+        }
         return unsignedByteToInt(data[2]) * 256 * 256 + unsignedByteToInt(data[1]) * 256 + unsignedByteToInt(data[0]);
     }
 
@@ -123,6 +127,19 @@ public class Utils {
                 sb.append(',');
             }
             sb.append(s);
+        }
+        return "(" + sb.toString() + ")";
+    }
+
+    public static String buildStringsInSQL(String[] data) {
+        StringBuilder sb = new StringBuilder();
+        for (String s : data) {
+            if (sb.length() > 0) {
+                sb.append(',');
+            }
+            sb.append('\'');
+            sb.append(s);
+            sb.append('\'');
         }
         return "(" + sb.toString() + ")";
     }
@@ -309,7 +326,7 @@ public class Utils {
         }
     }
 
-    public static void controlScene(final Context context, final int scene_id, boolean doItNow) {
+    public static void controlScene(final Context context, final int scene_id, boolean closeAll, boolean doItNow) {
         ContentResolver cr = context.getContentResolver();
         Cursor cursor = cr.query(YanKonProvider.URI_SCENES_DETAIL, null, "scene_id=" + scene_id, null, null);
         if (cursor != null) {
@@ -335,7 +352,11 @@ public class Utils {
                     }
                     lights = group_lights.toArray(new String[group_lights.size()]);
                 }
-                controlLightsById(context, lights, state, color, CT, brightness, doItNow);
+                if (closeAll) {
+                    controlLightsById(context, lights, false, -1, -1, -1, doItNow);
+                } else {
+                    controlLightsById(context, lights, state, color, CT, brightness, doItNow);
+                }
             }
             cursor.close();
         }

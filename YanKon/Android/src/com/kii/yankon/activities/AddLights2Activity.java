@@ -269,6 +269,7 @@ public class AddLights2Activity extends ListActivity implements CompoundButton.O
             holder.textView1.setText(light.name);
             holder.textView2.setText(light.model);
             holder.switchButton.setChecked(light.state);
+            holder.switchButton.setVisibility(View.GONE);
             holder.checkBox.setChecked(light.selected || light.added);
             holder.checkBox.setEnabled(!light.added);
             holder.checkBox.setVisibility(View.VISIBLE);

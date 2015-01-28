@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.text.TextUtils;
 
 import com.kii.yankon.App;
+import com.kii.yankon.model.Light;
 import com.kii.yankon.providers.YanKonProvider;
 
 /**
@@ -107,6 +108,10 @@ public class DataHelper {
                 new String[]{Integer.toString(id)});
 
         String mac = getLightMacById(id);
+        Light light = Global.gLightsMacMap.get(mac);
+        if (light != null) {
+            light.added = false;
+        }
         if (!TextUtils.isEmpty(mac)) {
             cr.update(YanKonProvider.URI_SCHEDULE, cv, "light_id=(?)",
                     new String[]{mac});

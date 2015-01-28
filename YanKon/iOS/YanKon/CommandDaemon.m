@@ -278,6 +278,8 @@ static CommandDaemon *instance = nil;
 
 -(int)getRGBColor:(unsigned char*)bytes
 {
+    if (sizeof(bytes)<3)
+        return 0x000000;
     return bytes[2] * 256 * 256 + bytes[1] * 256 + bytes[0];
 }
 

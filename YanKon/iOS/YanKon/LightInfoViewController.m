@@ -71,8 +71,10 @@
 
 - (IBAction)colorChanged:(id)sender {
     UIColor *newColor = [self.colorPickerView color];
+
     const CGFloat *components = CGColorGetComponents(newColor.CGColor);
-    int rgb = (int)(components[0] * 255 * 256 * 256 + components[1] * 255 * 256 + components[0] * 255)+ 0xFF000000;
+    int rgb = (int)(components[0] * 255 * 256 * 256 + components[1] * 255 * 256 + components[2] * 255)+ 0xFF000000;
+    
     self.color = rgb;
     
     

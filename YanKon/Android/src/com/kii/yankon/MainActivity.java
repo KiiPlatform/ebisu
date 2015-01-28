@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -35,6 +36,7 @@ import com.kii.yankon.fragments.ProfileFragment;
 import com.kii.yankon.fragments.ScenesFragment;
 import com.kii.yankon.fragments.ScheduleFragment;
 import com.kii.yankon.fragments.SettingsFragment;
+import com.kii.yankon.providers.YanKonProvider;
 import com.kii.yankon.services.NetworkReceiverService;
 import com.kii.yankon.services.NetworkSenderService;
 import com.kii.yankon.utils.Constants;
@@ -117,8 +119,10 @@ public class MainActivity extends Activity
     protected void onDestroy() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
         stopService(new Intent(this, NetworkReceiverService.class));
-        mHandler.sendEmptyMessage(MainHandler.MSG_STOP);
-        mHandler = null;
+        if (mHandler != null) {
+            mHandler.sendEmptyMessage(MainHandler.MSG_STOP);
+            mHandler = null;
+        }
         super.onDestroy();
     }
 
@@ -140,6 +144,7 @@ public class MainActivity extends Activity
         public static final int MSG_UPDATE_STATUS = 0;
         public static final int MSG_STOP = 1;
         WeakReference<MainActivity> actRef = null;
+
         MainHandler(MainActivity activity) {
             super();
             actRef = new WeakReference<>(activity);
@@ -162,12 +167,17 @@ public class MainActivity extends Activity
                 case MSG_UPDATE_STATUS: {
                     removeMessages(MSG_UPDATE_STATUS);
                     Network.getLocalIP(activity);
+                    ContentValues values = new ContentValues();
+                    values.put("connected", false);
+                    values.put("IP", "");
+                    activity.getContentResolver().update(YanKonProvider.URI_LIGHTS, values, null, null);
+
                     if (Global.isWifiConnected) {
                         NetworkSenderService.sendCmd(activity, (String) null, Constants.SEARCH_LIGHTS_CMD);
                     }
                     sendEmptyMessageDelayed(MSG_UPDATE_STATUS, 20 * 1000);
                 }
-                    break;
+                break;
             }
         }
     }

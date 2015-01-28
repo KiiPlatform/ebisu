@@ -114,6 +114,7 @@ public class ScenesFragment extends BaseListFragment {
 
     class ScenesAdapter extends CursorAdapter {
         DateFormat dateFormat;
+
         public ScenesAdapter(Context context) {
             super(context, null, 0);
             dateFormat = new SimpleDateFormat("MM-dd HH:mm");
@@ -143,12 +144,15 @@ public class ScenesFragment extends BaseListFragment {
             View icon = view.findViewById(R.id.light_icon);
             icon.setBackgroundResource(R.drawable.scenes);
             Button applyBtn = (Button) view.findViewById(R.id.light_apply);
-            applyBtn.setOnClickListener(new View.OnClickListener() {
+            View.OnClickListener listener = new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Utils.controlScene(App.getApp(), sid, true);
+                    Utils.controlScene(App.getApp(), sid, v.getId() == R.id.light_close, true);
                 }
-            });
+            };
+            applyBtn.setOnClickListener(listener);
+            Button closeBtn = (Button) view.findViewById(R.id.light_close);
+            closeBtn.setOnClickListener(listener);
         }
     }
 }

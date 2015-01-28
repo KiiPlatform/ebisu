@@ -201,7 +201,7 @@ public class KiiSync {
             } else {
                 rawArg.put("verify", true);
             }
-            rawArg.put("thing", lights);
+            rawArg.put("lights", lights);
             rawArg.put("action", action);
             Log.e(LOG_TAG, "fireLamp:" + rawArg.toString());
             KiiServerCodeEntryArgument arg = KiiServerCodeEntryArgument
@@ -215,6 +215,43 @@ public class KiiSync {
             result = returned.getString("returnedValue");
             Log.e(LOG_TAG, "FireLamp result:" + result);
         } catch (Exception e) {
+            Log.e(LOG_TAG, Log.getStackTraceString(e));
+        }
+        return result;
+    }
+
+    public static String changePwd(String[] mac, String currPwd, String adminPwd, String remotePwd) {
+        String result = null;
+        if (!KiiUser.isLoggedIn()) {
+            return result;
+        }
+        KiiServerCodeEntry entry = Kii.serverCodeEntry("batchChangeThingPwd");
+        try {
+            JSONObject rawArg = new JSONObject();
+            JSONArray things = new JSONArray();
+            for (String s : mac) {
+                things.put(s);
+            }
+            rawArg.put("thingID", things);
+            rawArg.put("adminPwd", currPwd);
+            if (!TextUtils.isEmpty(adminPwd)) {
+                rawArg.put("newAdminPwd", adminPwd);
+            }
+            if (!TextUtils.isEmpty(remotePwd)) {
+                rawArg.put("newRemotePwd", remotePwd);
+            }
+            Log.e(LOG_TAG, "doChangeThingPwd:" + rawArg.toString());
+            KiiServerCodeEntryArgument arg = KiiServerCodeEntryArgument
+                    .newArgument(rawArg);
+
+            // Execute the Server Code
+            KiiServerCodeExecResult res = entry.execute(arg);
+
+            // Parse the result.
+            JSONObject returned = res.getReturnedValue();
+            result = returned.getString("returnedValue");
+            Log.e(LOG_TAG, "doChangeThingPwd result:" + result);
+        } catch (Exception e) {
 
         }
         return result;
@@ -226,6 +263,15 @@ public class KiiSync {
             return "";
         }
         return s;
+    }
+
+    public static void asyncStartSync() {
+        new Thread() {
+            @Override
+            public void run() {
+                KiiSync.sync();
+            }
+        }.start();
     }
 
     public static void sync() {
@@ -366,6 +412,9 @@ public class KiiSync {
                 int light_id = cursor.getInt(cursor.getColumnIndex("_id"));
                 KiiObject colorObject;
                 String objectID = cursor.getString(cursor.getColumnIndex("objectID"));
+                if (TextUtils.isEmpty(objectID)) {
+                    continue;
+                }
                 colorObject = bucket.object(objectID);
                 colorObject.set("name", cursor.getString(cursor.getColumnIndex("name")));
                 colorObject.set("value", cursor.getInt(cursor.getColumnIndex("value")));
@@ -894,7 +943,7 @@ public class KiiSync {
     }
 
     public static void downloadLightThings() {
-        KiiBucket bucket = Kii.bucket("globeThingInfo");
+        KiiBucket bucket = Kii.bucket("globalThingInfo");
         ArrayList<String> macList = new ArrayList<>();
         Cursor c = App.getApp().getContentResolver()
                 .query(YanKonProvider.URI_LIGHTS, new String[]{"MAC"}, null, null, null);
@@ -925,15 +974,19 @@ public class KiiSync {
 
     private static void saveLightThing(List<KiiObject> objects) {
         for (KiiObject object : objects) {
-            ContentValues values = new ContentValues();
-            JSONObject currAction = object.getJSONObject("currAction");
-            values.put("state", currAction.optInt("state"));
-            values.put("color", currAction.optInt("color"));
-            values.put("brightness", currAction.optInt("brightness"));
-            values.put("CT", currAction.optInt("CT"));
-            String thingId = object.getString("thingID");
-            App.getApp().getContentResolver()
-                    .update(YanKonProvider.URI_LIGHTS, values, "MAC=?", new String[]{thingId});
+            try {
+                ContentValues values = new ContentValues();
+                JSONObject currAction = object.getJSONObject("currAction");
+                values.put("state", currAction.optInt("state"));
+                values.put("color", currAction.optInt("color"));
+                values.put("brightness", currAction.optInt("brightness"));
+                values.put("CT", currAction.optInt("CT"));
+                String thingId = object.getString("thingID");
+                App.getApp().getContentResolver()
+                        .update(YanKonProvider.URI_LIGHTS, values, "MAC=?", new String[]{thingId});
+            } catch (Exception e){
+
+            }
         }
     }
 }

@@ -102,4 +102,11 @@
     <string name="input_remotepwd_hint">4 digits password</string>
     <string name="input_remotepwd_title">Enable remote control</string>
     <string name="remotepwd_prompt">The password should be 4 digits</string>
+    <string name="title_activity_change_password">Change password</string>
+    <string name="change_password_hint">Leave blank if not change</string>
+    <string name="scene_close_all">Close all</string>
+    <string name="change_pwd_async_msg">Saving...</string>
+    <string name="set_pwd_async_msg">Verifying password...</string>
+    <string name="kii_extension_return_null">Cannot get server result</string>
+
 </resources>

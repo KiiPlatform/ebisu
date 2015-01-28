@@ -23,6 +23,8 @@ import com.kii.yankon.activities.ColorPickerActivity2;
 import com.kii.yankon.R;
 import com.kii.yankon.providers.YanKonProvider;
 
+import java.util.UUID;
+
 /**
  * Created by Evan on 14/11/26.
  */
@@ -68,6 +70,7 @@ public class ColorsFragment extends BaseListFragment {
                 values.put("value", color);
                 values.put("synced", false);
                 if (id == -1) {
+                    values.put("objectID", UUID.randomUUID().toString());
                     values.put("created_time", System.currentTimeMillis());
                     getActivity().getContentResolver().insert(YanKonProvider.URI_COLORS, values);
                 } else {

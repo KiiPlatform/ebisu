@@ -61,10 +61,21 @@
     [commands append:10 attr:0 cmd:1 data:data];
     if (CT>=0 && brightness>=0) {
         unsigned char colorData[3];
-        colorData[2] = (unsigned char)(color % 256);
-        color /= 256;
-        colorData[1] = (unsigned char)(color % 256);
-        colorData[0] = (unsigned char)(color / 256);
+//        colorData[2] = (unsigned char)(color % 256);
+//        color /= 256;
+//        colorData[1] = (unsigned char)(color % 256);
+//        colorData[0] = (unsigned char)(color / 256);
+//        
+        color = color & 0x00FFFFFF;
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = (color >> 0) & 0xFF;
+        
+        colorData[0] = r;
+        colorData[1] = g;
+        colorData[2] = b;
+        
+        NSLog(@"color:%d %d %d %d",color,colorData[0],colorData[1],colorData[2]);
         [commands append:10 attr:1 cmd:1 data:colorData];
         unsigned char brData[1];
         brData[0] = (unsigned char)brightness;

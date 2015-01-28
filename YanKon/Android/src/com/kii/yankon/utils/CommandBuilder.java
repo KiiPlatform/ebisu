@@ -61,10 +61,10 @@ public class CommandBuilder {
         cb.append((byte) 10, (byte) 0, (byte) 1, data);
         if (CT >= 0 && brightness >= 0) {
             data = new byte[3];
-            data[2] = (byte) (color % 256);
+            data[0] = (byte) (color % 256);
             color /= 256;
             data[1] = (byte) (color % 256);
-            data[0] = (byte) (color / 256);
+            data[2] = (byte) (color / 256);
             cb.append((byte) 10, (byte) 1, (byte) 1, data);
             data = new byte[1];
             data[0] = (byte) brightness;

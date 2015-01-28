@@ -3,6 +3,7 @@ package com.kii.yankon.fragments;
 
 import android.app.Fragment;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -49,7 +50,7 @@ public class ProfileFragment extends BaseFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+                             Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
         ButterKnife.inject(this, view);
@@ -67,16 +68,35 @@ public class ProfileFragment extends BaseFragment {
         syncButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new Thread() {
-                    @Override
-                    public void run() {
-                        KiiSync.sync();
-                    }
-                }.start();
+                new SyncTask().execute();
             }
         });
         return view;
     }
 
+
+    class SyncTask extends AsyncTask<Void, Void, Void> {
+
+        ProgressDialogFragment dialogFragment;
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            KiiSync.sync();
+            return null;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            dialogFragment = ProgressDialogFragment.newInstance(null, "Syncing...");
+            dialogFragment.show(getFragmentManager(), "dialog");
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            dialogFragment.dismiss();
+        }
+    }
 
 }
