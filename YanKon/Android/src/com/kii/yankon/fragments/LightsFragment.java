@@ -532,9 +532,10 @@ public class LightsFragment extends BaseListFragment implements CompoundButton.O
 //            tv.setText(context.getString(R.string.light_model_format, modelName));
             boolean connected = cursor.getInt(cursor.getColumnIndex("connected")) > 0;
             String remotePwd = cursor.getString(cursor.getColumnIndex("remote_pwd"));
-            String ip = cursor.getString(cursor.getColumnIndex("IP"));
+//            String ip = cursor.getString(cursor.getColumnIndex("IP"));
+            String mac = cursor.getString(cursor.getColumnIndex("MAC"));
             if (connected) {
-                tv.setText(ip);
+                tv.setText(mac);
             } else if (remotePwd != null && remotePwd.length() == 4) {
                 tv.setText("Remote");
             } else {

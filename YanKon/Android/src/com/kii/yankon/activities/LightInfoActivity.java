@@ -296,17 +296,6 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
         if (!fromUser) {
             return;
         }
-        if (seekBar == mBrightnessSeekBar) {
-            brightness = progress;
-            ContentValues values = new ContentValues();
-            values.put("brightness", brightness);
-            saveChange(values, true);
-        } else if (seekBar == mCTSeekBar) {
-            CT = progress;
-            ContentValues values = new ContentValues();
-            values.put("CT", CT);
-            saveChange(values, true);
-        }
     }
 
     @Override
@@ -316,6 +305,16 @@ public class LightInfoActivity extends Activity implements OnColorChangedListene
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
-
+        if (seekBar == mBrightnessSeekBar) {
+            brightness = seekBar.getProgress();
+            ContentValues values = new ContentValues();
+            values.put("brightness", brightness);
+            saveChange(values, true);
+        } else if (seekBar == mCTSeekBar) {
+            CT = seekBar.getProgress();
+            ContentValues values = new ContentValues();
+            values.put("CT", CT);
+            saveChange(values, true);
+        }
     }
 }

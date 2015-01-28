@@ -203,6 +203,7 @@ public class KiiSync {
             }
             rawArg.put("lights", lights);
             rawArg.put("action", action);
+            rawArg.put("type","command");
             Log.e(LOG_TAG, "fireLamp:" + rawArg.toString());
             KiiServerCodeEntryArgument arg = KiiServerCodeEntryArgument
                     .newArgument(rawArg);

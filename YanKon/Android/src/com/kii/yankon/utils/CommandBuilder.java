@@ -60,18 +60,22 @@ public class CommandBuilder {
         data[0] = (byte) (state ? 1 : 0);
         cb.append((byte) 10, (byte) 0, (byte) 1, data);
         if (CT >= 0 && brightness >= 0) {
+            color = color & 0x00FFFFFF;
+            int r = (color >> 16) & 0xFF;
+            int g = (color >> 8) & 0xFF;
+            int b = (color >> 0) & 0xFF;
+
             data = new byte[3];
-            data[0] = (byte) (color % 256);
-            color /= 256;
-            data[1] = (byte) (color % 256);
-            data[2] = (byte) (color / 256);
+            data[2] = (byte) b;
+            data[1] = (byte) g;
+            data[0] = (byte) r;
             cb.append((byte) 10, (byte) 1, (byte) 1, data);
             data = new byte[1];
             data[0] = (byte) brightness;
             cb.append((byte) 10, (byte) 2, (byte) 1, data);
-//            data = new byte[1];
-//            data[0] = (byte) CT;
-//            cb.append((byte) 10, (byte) 3, (byte) 1, data);
+            data = new byte[1];
+            data[0] = (byte) CT;
+            cb.append((byte) 10, (byte) 3, (byte) 1, data);
         }
         return cb.build(trans_no);
     }

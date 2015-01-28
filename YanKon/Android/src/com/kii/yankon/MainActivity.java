@@ -306,4 +306,6 @@ public class MainActivity extends Activity
             Toast.makeText(this, "Kii login failed", Toast.LENGTH_SHORT).show();
         }
     }
+
+
 }
