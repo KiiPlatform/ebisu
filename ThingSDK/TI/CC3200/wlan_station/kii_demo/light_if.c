@@ -189,6 +189,6 @@ int lightIf_getIModelName(char *name)
 *****************************************************************************/
 int lightIf_getMacAddr(char *mac_addr)
 {
-    strcpy(mac_addr, "0022C0A57A82");
+    strcpy(mac_addr, "78B3B90FFEF1");
     return 0;
 }

@@ -11,10 +11,11 @@ extern kii_data_struct g_kii_data;
 kii_push_struct g_kii_push;
 
 #define    KIIPUSH_TASK_STK_SIZE      8
-#define    KIIPUSH_PINGREQ_TASK_STK_SIZE      8
-
 static unsigned int  mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];     
+#if(KII_PUSH_PING_ENABLE)
+#define    KIIPUSH_PINGREQ_TASK_STK_SIZE      8
 static unsigned int  mKiiPush_pingReqTaskStk[KIIPUSH_PINGREQ_TASK_STK_SIZE];     
+#endif
 
 
 
@@ -487,35 +488,39 @@ static void *kiiPush_recvMsgTask(void *sdata)
     int bytes;
     int rcvdCounter;
     kiiPush_recvMsgCallback callback;
+	kiiPush_endpointState_e endpointState;
 
     callback = (kiiPush_recvMsgCallback) sdata;
-
-    //KII_DEBUG("kii-info: installationID:%s\r\n", g_kii_push.installationID);
-    //KII_DEBUG("kii-info: mqttTopic:%s\r\n", g_kii_push.mqttTopic);
-    //KII_DEBUG("kii-info: host:%s\r\n", g_kii_push.host);
-    //KII_DEBUG("kii-info: username:%s\r\n", g_kii_push.username);
-    //KII_DEBUG("kii-info: password:%s\r\n", g_kii_push.password);
-
-    g_kii_push.connected = 0;
     for(;;)
     {
         if (g_kii_push.connected == 0)
         {
-            kiiHal_delayMs(1000);
-            g_kii_push.mqttSocket= kiiHal_socketCreate();
-            if (g_kii_push.mqttSocket < 0)
+	    if (kiiPush_install() != 0)
+	    {
+                kiiHal_delayMs(1000);
+                    continue;
+            }
+
+            do {
+                kiiHal_delayMs(1000);
+                endpointState = kiiPush_retrieveEndpoint() ;
+            }while((endpointState == KIIPUSH_ENDPOINT_UNAVAILABLE));
+
+            if (endpointState != KIIPUSH_ENDPOINT_READY)
             {
-                KII_DEBUG("kii-error: create socket failed !\r\n");
                 continue;
             }
+            //KII_DEBUG("kii-info: installationID:%s\r\n", g_kii_push.installationID);
+            //KII_DEBUG("kii-info: mqttTopic:%s\r\n", g_kii_push.mqttTopic);
+            //KII_DEBUG("kii-info: host:%s\r\n", g_kii_push.host);
+            //KII_DEBUG("kii-info: username:%s\r\n", g_kii_push.username);
+            //KII_DEBUG("kii-info: password:%s\r\n", g_kii_push.password);			
             if (KiiMQTT_connect(KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE) < 0)
             {
-                kiiHal_socketClose(&g_kii_push.mqttSocket);
                 continue;
             }
             else if (KiiMQTT_subscribe(QOS1) < 0)
             {
-                kiiHal_socketClose(&g_kii_push.mqttSocket);
                 continue;
             }
             else
@@ -526,7 +531,7 @@ static void *kiiPush_recvMsgTask(void *sdata)
         else
         {
             memset(g_kii_push.rcvdBuf, 0, KII_PUSH_SOCKET_BUF_SIZE);
-            rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf, 16);
+            rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf, KII_PUSH_TOPIC_HEADER_SIZE);
             if (rcvdCounter > 0)
             {
                 if ((g_kii_push.rcvdBuf[0]&0xf0) == 0x30)
@@ -573,21 +578,28 @@ static void *kiiPush_recvMsgTask(void *sdata)
                         p = p+topicLen; //skip topic
                         callback(p, remainingLen-2-topicLen);
                     }
+                    else
+                    {
+                        g_kii_push.connected = 0;
+                        KII_DEBUG("kii_error: mqtt receive data error\r\n");
+                    }
                 }
+#if(KII_PUSH_PING_ENABLE)
                 else if ((g_kii_push.rcvdBuf[0]&0xf0) == 0xd0)
                 {
                     //KII_DEBUG("ping resp\r\n");
                 }
+#endif				
             }
             else
             { 
                 g_kii_push.connected = 0;
-                kiiHal_socketClose(&g_kii_push.mqttSocket);
+                KII_DEBUG("kii-error: mqtt receive data error\r\n");
             }
         }
     }
 }
-
+#if(KII_PUSH_PING_ENABLE)
 /*****************************************************************************
 *
 *  kiiPush_pingReqTask
@@ -610,7 +622,7 @@ static void *kiiPush_pingReqTask(void *sdata)
        kiiHal_delayMs(KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE*1000);
     }
 }
-
+#endif
 
 /*****************************************************************************
 *
@@ -627,43 +639,25 @@ static void *kiiPush_pingReqTask(void *sdata)
 *****************************************************************************/
 int KiiPush_init(unsigned int recvMsgtaskPrio, unsigned int pingReqTaskPrio, kiiPush_recvMsgCallback callback)
 {
-	kiiPush_endpointState_e endpointState;
-
     memset(&g_kii_push, 0, sizeof(g_kii_push));
     g_kii_push.mqttSocket = -1;
+    g_kii_push.connected = 0;
 
-    if (kiiPush_install() != 0)
-    {
-        KII_DEBUG("kii-error: push installation failed !\r\n");
-        return -1;
-    }
-	
-    do {
-        kiiHal_delayMs(1000);
-        endpointState = kiiPush_retrieveEndpoint() ;
-    }while((endpointState == KIIPUSH_ENDPOINT_UNAVAILABLE));
-
-    if (endpointState == KIIPUSH_ENDPOINT_READY)
-    {
-        kiiHal_taskCreate(NULL,
-			                      kiiPush_recvMsgTask,
+    kiiHal_taskCreate(NULL,
+                        kiiPush_recvMsgTask,
 						(void *)callback,
 						(void *)mKiiPush_taskStk,
 						KIIPUSH_TASK_STK_SIZE * sizeof(unsigned char), 
 						recvMsgtaskPrio);
-	    
-        kiiHal_taskCreate(NULL,
-			                     kiiPush_pingReqTask,
+#if(KII_PUSH_PING_ENABLE)
+    kiiHal_taskCreate(NULL,
+	                    kiiPush_pingReqTask,
 						NULL,
 						(void *)mKiiPush_pingReqTaskStk,
 						KIIPUSH_PINGREQ_TASK_STK_SIZE * sizeof(unsigned char), 
 						pingReqTaskPrio);
-        return 0;
-    }
-    else
-    {
-        return -1;
-    }
+#endif
+    return 0;
 }
 
 

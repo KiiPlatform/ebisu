@@ -92,14 +92,25 @@ int KiiMQTT_connect(unsigned short keepAliveInterval)
 
     if (kiiHal_dns(g_kii_push.host, ipBuf) < 0)
     {
-        KII_DEBUG("kii-error: dns failed !\r\n");
+        KII_DEBUG("kii-error: mqtt dns failed !\r\n");
         return -1;
     }
     //KII_DEBUG("broker ip::%d.%d.%d.%d\r\n", ipBuf[0], ipBuf[1], ipBuf[2], ipBuf[3]);
+
+    if (g_kii_push.mqttSocket >= 0)
+    {
+        kiiHal_socketClose(&g_kii_push.mqttSocket);
+    }
+    g_kii_push.mqttSocket= kiiHal_socketCreate();
+    if (g_kii_push.mqttSocket < 0)
+    {
+        KII_DEBUG("kii-error: create mqtt socket failed !\r\n");
+        return -1;
+    }
 	
     if (kiiHal_connect(g_kii_push.mqttSocket, (char*)ipBuf, KII_MQTT_DEFAULT_PORT) < 0)
     {
-        KII_DEBUG("kii-error: connect to server failed \r\n");
+        KII_DEBUG("kii-error: connect to mqtt server failed \r\n");
         return -1;
     }
 

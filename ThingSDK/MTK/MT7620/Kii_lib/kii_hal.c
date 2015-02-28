@@ -156,7 +156,7 @@ int kiiHal_socketSend(int socketNum, char * buf, int len)
     while(bytes < len)
     {
         sent =  send(socketNum, buf+bytes, len-bytes, 0);
-        if (sent < 0)
+        if (sent <= 0)
         {
         
             return -1;
@@ -187,7 +187,7 @@ int kiiHal_socketRecv(int socketNum, char * buf, int len)
     int ret;
 
      ret = recv(socketNum, buf, len, 0);
-     if (ret < 0)
+     if (ret <= 0)
      	{
      	    ret =-1;
      	}

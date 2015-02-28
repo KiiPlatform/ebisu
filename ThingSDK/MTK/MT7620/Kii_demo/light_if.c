@@ -223,3 +223,4 @@ int lightIf_getMacAddr(char *mac_addr)
         return 0;    
     }
 }
+

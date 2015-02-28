@@ -143,7 +143,7 @@ int kiiHal_socketSend(int socketNum, char * buf, int len)
 	while (bytes < len) 
 	{
 		sent = sl_Send(socketNum, buf + bytes, len - bytes, 0);
-		if (sent < 0) 
+		if (sent <= 0) 
 		{
 
 			return -1;
