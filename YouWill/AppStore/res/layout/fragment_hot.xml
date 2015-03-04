@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:orientation="vertical"
@@ -16,7 +17,13 @@
             android:layout_marginTop="12px"
             android:id="@+id/coverflow"
             android:layout_marginRight="28px"
-            android:layout_marginLeft="28px" />
+            android:layout_marginLeft="28px"
+            app:actionDistance="32767"
+            app:unselectedAlpha="1"
+            app:unselectedSaturation="0"
+            app:unselectedScale="0.5"
+            app:maxRotation="4"
+            app:scaleDownGravity="0.2"/>
 
         <RelativeLayout
             android:layout_width="match_parent"
