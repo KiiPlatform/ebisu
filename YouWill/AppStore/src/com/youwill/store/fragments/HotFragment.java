@@ -23,6 +23,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -60,6 +61,8 @@ public class HotFragment extends Fragment
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
+    private static int mSelection = 10000;
+
     private HomeCoverFlowAdapter mCoverFlowAdapter;
 
     private DisplayImageOptions coverFlowOption;
@@ -92,12 +95,11 @@ public class HotFragment extends Fragment
         coverFlow.setSpacing(-100);
         coverFlow.setActionDistance(FancyCoverFlow.ACTION_DISTANCE_AUTO);
         coverFlow.setAdapter(mCoverFlowAdapter);
-        coverFlow.setUnselectedAlpha(1.0f);
-        coverFlow.setUnselectedSaturation(0.0f);
-        coverFlow.setUnselectedScale(0.5f);
-        coverFlow.setMaxRotation(4);
-        coverFlow.setScaleDownGravity(0.2f);
-        coverFlow.setActionDistance(FancyCoverFlow.ACTION_DISTANCE_AUTO);
+//        coverFlow.setUnselectedAlpha(1.0f);
+//        coverFlow.setUnselectedSaturation(0.0f);
+//        coverFlow.setUnselectedScale(0.5f);
+//        coverFlow.setMaxRotation(4);
+//        coverFlow.setScaleDownGravity(0.2f);
         coverFlow.setOnItemClickListener(this);
         coverFlowOption = new DisplayImageOptions.Builder()
                 .showImageOnLoading(R.drawable.cover_flow1).showImageOnFail(R.drawable.cover_flow1)
@@ -285,7 +287,8 @@ public class HotFragment extends Fragment
                     case YouWill.Application.RECOMMEND_TYPE_COVER_FLOW:
                         coverFlowItems = parseCursor(cursor);
                         coverFlow.setAdapter(mCoverFlowAdapter);
-                        coverFlow.setSelection(10000, true);
+                        coverFlow.setSelection(mSelection, true);
+                        mHandler.sendEmptyMessage(MSG_START);
                         break;
                     case YouWill.Application.RECOMMEND_TYPE_LINE1:
                         recommend1Items = parseCursor(cursor);
@@ -354,5 +357,22 @@ public class HotFragment extends Fragment
 //            ImageLoader.getInstance().loadImage(imageUri, mListener);
 //        }
 //    };
+
+    private static final int MSG_START = 0;
+
+    private Handler mHandler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what){
+                case MSG_START:
+                    sendEmptyMessageDelayed(MSG_START, 5000);
+                    mSelection++;
+                    coverFlow.setSelection(mSelection);
+                    break;
+
+            }
+        }
+    };
 
 }
