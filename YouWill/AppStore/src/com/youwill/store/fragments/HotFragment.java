@@ -249,8 +249,10 @@ public class HotFragment extends Fragment
                 imageView = new ImageView(parent.getContext());
             }
             imageView.setLayoutParams(new FancyCoverFlow.LayoutParams(512, 257));
-            imageView.setImageBitmap(coverFlowImageMap.get(item.image));
+//            imageView.setImageBitmap(coverFlowImageMap.get(item.image));
 //            imageView.setImageDrawable(getResources().getDrawable(R.drawable.cover_flow1));
+            ImageLoader.getInstance()
+                    .displayImage(coverFlowItems.get(pos).image, imageView, Utils.coverFlowDisplayOptions);
             return imageView;
         }
     }
@@ -312,9 +314,9 @@ public class HotFragment extends Fragment
             try {
                 JSONObject app = new JSONObject(item.json);
                 item.image = app.optString("recommend_image");
-                if (!TextUtils.isEmpty(item.image)) {
-                    ImageLoader.getInstance().loadImage(item.image, mListener);
-                }
+//                if (!TextUtils.isEmpty(item.image)) {
+//                    ImageLoader.getInstance().loadImage(item.image, mListener);
+//                }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -325,32 +327,32 @@ public class HotFragment extends Fragment
 
     private Map<String, Bitmap> coverFlowImageMap = new HashMap<String, Bitmap>();
 
-    private ImageLoadingListener mListener = new ImageLoadingListener() {
-        @Override
-        public void onLoadingStarted(String imageUri, View view) {
-
-        }
-
-        @Override
-        public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
-            //retry
+//    private ImageLoadingListener mListener = new ImageLoadingListener() {
+//        @Override
+//        public void onLoadingStarted(String imageUri, View view) {
+//
+//        }
+//
+//        @Override
+//        public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
+//            //retry
+////            ImageLoader.getInstance().loadImage(imageUri, mListener);
+//        }
+//
+//        @Override
+//        public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+//            coverFlowImageMap.put(imageUri, loadedImage);
+//            if (coverFlowImageMap.size() == coverFlowItems.size()) {
+//                coverFlow.setAdapter(mCoverFlowAdapter);
+//                coverFlow.setSelection(10000);
+//            }
+//        }
+//
+//        @Override
+//        public void onLoadingCancelled(String imageUri, View view) {
+//            //retry
 //            ImageLoader.getInstance().loadImage(imageUri, mListener);
-        }
-
-        @Override
-        public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
-            coverFlowImageMap.put(imageUri, loadedImage);
-            if (coverFlowImageMap.size() == coverFlowItems.size()) {
-                coverFlow.setAdapter(mCoverFlowAdapter);
-                coverFlow.setSelection(10000);
-            }
-        }
-
-        @Override
-        public void onLoadingCancelled(String imageUri, View view) {
-            //retry
-            ImageLoader.getInstance().loadImage(imageUri, mListener);
-        }
-    };
+//        }
+//    };
 
 }

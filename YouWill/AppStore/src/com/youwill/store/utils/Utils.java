@@ -42,6 +42,14 @@ public class Utils {
             .cacheOnDisk(true)
             .build();
 
+    public static final DisplayImageOptions coverFlowDisplayOptions = new DisplayImageOptions.Builder()
+            .showImageOnLoading(R.drawable.cover_flow3)
+            .showImageOnFail(R.drawable.cover_flow3)
+            .showImageForEmptyUri(R.drawable.cover_flow3)
+            .cacheInMemory(true)
+            .cacheOnDisk(true)
+            .build();
+
     public static final DisplayImageOptions detailDisplayOptions = new DisplayImageOptions.Builder()
             .showImageOnLoading(R.drawable.default_content_image)
             .showImageOnFail(R.drawable.default_content_image)
