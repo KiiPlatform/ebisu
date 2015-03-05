@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content">
+    <RelativeLayout android:layout_width="585px"
+                    android:layout_height="42px"
+                    android:background="@drawable/top_bar_bg"
+                    android:paddingTop="7px"
+                    android:paddingBottom="6px"
+                    android:paddingRight="17px"
+            >
+        <ImageView android:layout_width="29px"
+                   android:layout_height="29px"
+                   android:id="@+id/close"
+                   android:src="@drawable/close_button"
+                   android:layout_alignParentRight="true"
+                />
+    </RelativeLayout>
+    <LinearLayout android:layout_width="585px"
+                  android:layout_height="374px"
+                  android:orientation="vertical"
+                  android:layout_marginLeft="22px"
+                  android:layout_marginRight="22px"
+                  android:background="@drawable/popup_bottom_bg">
+        <RatingBar
+                android:id="@+id/rating"
+                android:layout_width="wrap_content"
+                android:layout_height="24px"
+                android:layout_marginTop="30px"
+                android:layout_marginBottom="16px"
+                android:isIndicator="false"
+                android:numStars="5"
+                android:progressDrawable="@drawable/star_rating_bar"
+                android:stepSize="1"/>
+        <EditText android:layout_width="538px"
+                  android:layout_height="194px"
+                  android:id="@+id/edit"
+                  android:gravity="top|left"
+                  android:hint="@string/input_comment"
+                  android:textSize="12px"
+                  android:textColorHint="#666666"
+                  android:background="@drawable/edit_bg"
+                  android:padding="8px"
+                />
+        <TextView android:layout_width="100px"
+                  android:layout_height="wrap_content"
+                  android:layout_gravity="center_horizontal"
+                  android:text="@string/submit_comment"
+                  android:layout_marginTop="18px"
+                  android:paddingTop="14px"
+                  android:paddingBottom="14px"
+                  android:textColor="@color/white"
+                  android:textSize="16px"
+                  android:background="@drawable/submit_comment_button_bg"
+                  android:gravity="center"
+                  android:id="@+id/submit_button"/>
+    </LinearLayout>
+</LinearLayout>

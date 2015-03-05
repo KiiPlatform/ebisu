@@ -1,0 +1,178 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@android:color/transparent"
+              android:orientation="vertical">
+
+    <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="53px"
+            android:background="@drawable/top_bar_bg">
+        <ImageView
+                android:layout_width="35px"
+                android:layout_height="35px"
+                android:src="@drawable/app_detail_close"
+                android:id="@+id/close"
+                android:layout_marginTop="9px"
+                android:layout_marginBottom="9px"
+                android:layout_marginRight="20px"
+                android:layout_alignParentRight="true"/>
+    </RelativeLayout>
+
+    <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:paddingBottom="15px">
+
+        <ImageView
+                android:id="@+id/app_detail_icon"
+                android:layout_width="150px"
+                android:layout_height="150px"
+                android:layout_marginLeft="25px"
+                android:layout_marginTop="20px"
+                android:layout_marginRight="20px"/>
+
+        <TextView
+                android:id="@+id/app_detail_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="10pt"
+                android:layout_marginTop="27px"
+                android:layout_toRightOf="@id/app_detail_icon"
+                android:textColor="#161616"/>
+
+
+        <TextView
+                android:id="@+id/app_detail_developer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="7pt"
+                android:layout_marginTop="2px"
+                android:layout_toRightOf="@id/app_detail_icon"
+                android:layout_below="@id/app_detail_name"
+                android:textColor="#999999"/>
+
+        <RatingBar
+                android:id="@+id/app_detail_rate"
+                android:layout_width="wrap_content"
+                android:layout_height="15px"
+                android:layout_marginTop="2px"
+                android:isIndicator="true"
+                android:numStars="5"
+                android:layout_toRightOf="@id/app_detail_icon"
+                android:layout_below="@id/app_detail_developer"
+                android:progressDrawable="@drawable/star_rating_bar_small"/>
+
+        <TextView
+                android:id="@+id/app_detail_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="6pt"
+                android:layout_marginTop="2px"
+                android:layout_toRightOf="@id/app_detail_icon"
+                android:layout_below="@id/app_detail_rate"
+                android:textColor="#999999"/>
+
+        <Button
+                android:id="@+id/app_detail_price"
+                android:layout_width="90px"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2px"
+                android:background="@drawable/price_frame"
+                android:layout_toRightOf="@id/app_detail_icon"
+                android:layout_below="@id/app_detail_info"
+                android:textColor="@color/price_text_color"
+                android:textSize="8pt"/>
+        <ProgressBar
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:id="@+id/app_detail_progress"
+                android:layout_width="match_parent"
+                android:layout_height="7px"
+                android:layout_marginTop="2px"
+                android:layout_marginLeft="6px"
+                android:layout_marginRight="27px"
+                android:layout_toRightOf="@id/app_detail_price"
+                android:max="100"
+                android:progressDrawable="@drawable/progress_bar_bg"
+                android:layout_alignTop="@id/app_detail_price"
+                />
+
+    </RelativeLayout>
+
+    <View
+            android:layout_width="match_parent"
+            android:layout_height="1px"
+            android:background="@color/list_divider"/>
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="29px"
+            android:background="@color/detail_section_header">
+
+    </LinearLayout>
+
+    <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bottom_bg"
+
+            >
+        <ScrollView android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+            <LinearLayout android:layout_width="match_parent"
+                          android:layout_height="wrap_content"
+                          android:orientation="vertical"
+                          android:paddingTop="10px">
+                <android.support.v7.widget.RecyclerView
+                        android:id="@+id/pic_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="281px"
+                        android:background="#ffffff"
+                        android:scrollbarStyle="insideOverlay"
+                        android:visibility="gone"
+                        />
+                <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1px"
+                        android:background="@drawable/divider_horizontal"
+                        android:layout_marginLeft="11px"
+                        android:layout_marginRight="11px"
+                        android:layout_marginTop="12px"
+                        android:layout_marginBottom="13px"/>
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="11px"
+                        android:textSize="8pt"
+                        android:textColor="#333333"
+                        android:text="@string/app_detail_desc"/>
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="11px"
+                        android:textSize="7pt"
+                        android:textColor="#767676"
+                        android:id="@+id/app_detail_desc"
+                        android:layout_marginTop="10px"
+                        android:layout_marginBottom="10px"/>
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="11px"
+                        android:textSize="8pt"
+                        android:textColor="#333333"
+                        android:text="@string/app_upgrade_comment"/>
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="11px"
+                        android:textSize="7pt"
+                        android:textColor="#767676"
+                        android:id="@+id/app_detail_upgrade"
+                        android:layout_marginTop="10px"
+                        android:layout_marginBottom="10px"/>
+            </LinearLayout>
+        </ScrollView>
+    </FrameLayout>
+</LinearLayout>

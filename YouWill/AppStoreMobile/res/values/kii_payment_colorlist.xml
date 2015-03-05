@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="kii_payment_TextColorBlack">#FF000000</color>
+    <color name="kii_payment_TextColorWhite">#FFFFFFFF</color>
+    <color name="kii_payment_TextColorGray">#FF505050</color>
+    <color name="kii_payment_ToastBgColor">#FF424242</color>
+    <color name="kii_payment_btnColor">#FFFFFF</color>
+    <color name="kii_payment_textColorforItemTitle">#FF666666</color>
+    <color name="kii_payment_secondbtntextColor">#FF496ea3</color>
+    <color name="kii_payment_textColorforCheckBox">#FF333333</color>
+    <color name="kii_payment_downLoadTextNomal">#FF3366CC</color>
+    <color name="kii_payment_downLoadTextPressed">#FFFFFFFF</color>
+    <color name="kii_payment_downLoadBackNomal">#FFFFFFFF</color>
+    <color name="kii_payment_downLoadBackFocus">#FF6698E7</color>
+    <color name="kii_payment_downLoadBackPressed">#FF3366CC</color>
+    <color name="kii_payment_dialog_tiltle_blue">#2277BB</color>
+
+</resources>
