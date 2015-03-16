@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="IAPSDK:jar">
-    <output-path>$PROJECT_DIR$/build/classes/artifacts/IAPSDK_jar</output-path>
-    <root id="archive" name="IAPSDK.jar">
-      <element id="module-output" name="IAPSDK" />
-    </root>
-  </artifact>
-</component>

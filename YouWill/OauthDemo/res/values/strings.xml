@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-
-    <string name="app_name">OauthDemo</string>
-    <string name="hello_world">Hello world!</string>
-    <string name="refresh">Refresh</string>
-    <string name="you_cancel_login">已取消登录！</string>
-
-</resources>

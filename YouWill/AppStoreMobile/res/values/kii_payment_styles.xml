@@ -1,8 +1,0 @@
-<resources>
-
-    <style name="kii_payment_alert_dialog" parent="android:Theme.Dialog">
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:windowBackground">@drawable/kii_payment_popup_bg</item>
-    </style>
-
-</resources>
