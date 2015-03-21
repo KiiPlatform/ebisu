@@ -12,4 +12,3 @@ int kiiDemo_test(void)
 	light_init();
 	return 0;
 }
-

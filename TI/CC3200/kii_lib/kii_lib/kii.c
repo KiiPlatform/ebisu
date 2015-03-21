@@ -15,24 +15,35 @@ kii_data_struct g_kii_data;
 *
 *  \return  0:success; -1: failure
 *
-*  \brief  Initializes Kii 
+*  \brief  Initializes Kii
 *
 *****************************************************************************/
-int kii_init(char *site, char *appID, char *appKey) {
+int kii_init(char* site, char* appID, char* appKey)
+{
 	memset(&g_kii_data, 0, sizeof(g_kii_data));
-	if ((strlen(site) != KII_SITE_SIZE) || (strlen(appID) != KII_APPID_SIZE)
-			|| (strlen(appKey) != KII_APPKEY_SIZE)) {
+	if((strlen(site) != KII_SITE_SIZE) || (strlen(appID) != KII_APPID_SIZE) || (strlen(appKey) != KII_APPKEY_SIZE))
+	{
 		return -1;
-	} else if (strcmp(site, "CN") == 0) {
+	}
+	else if(strcmp(site, "CN") == 0)
+	{
 		strcpy(g_kii_data.host, "api-cn2.kii.com");
-	} else if (strcmp(site, "JP") == 0) {
+	}
+	else if(strcmp(site, "JP") == 0)
+	{
 		strcpy(g_kii_data.host, "api-jp.kii.com");
-		//strcpy(g_kii_data.host, "api-development-jp.internal.kii.com");
-	} else if (strcmp(site, "US") == 0) {
+		// strcpy(g_kii_data.host, "api-development-jp.internal.kii.com");
+	}
+	else if(strcmp(site, "US") == 0)
+	{
 		strcpy(g_kii_data.host, "api.kii.com");
-	} else if (strcmp(site, "SG") == 0) {
+	}
+	else if(strcmp(site, "SG") == 0)
+	{
 		strcpy(g_kii_data.host, "api-sg.kii.com");
-	} else {
+	}
+	else
+	{
 		return -1;
 	}
 
@@ -41,4 +52,3 @@ int kii_init(char *site, char *appID, char *appKey) {
 
 	return 0;
 }
-

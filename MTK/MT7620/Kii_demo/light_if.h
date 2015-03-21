@@ -1,28 +1,26 @@
 #ifndef LIGHT_IF_H
 #define LIGHT_IF_H
 
-#define LIGHT_PASSWORD_SIZE    				32
-#define LIGHT_VERSION_NAME_SIZE 			16
-#define LIGHT_FIRMWARE_UPGRADE_URL_SIZE	256
-#define LIGHT_IP_ADDRESS_SIZE  				16  
-#define LIGHT_MODEL_NAME_SIZE  				64  
+#define LIGHT_PASSWORD_SIZE 32
+#define LIGHT_VERSION_NAME_SIZE 16
+#define LIGHT_FIRMWARE_UPGRADE_URL_SIZE 256
+#define LIGHT_IP_ADDRESS_SIZE 16
+#define LIGHT_MODEL_NAME_SIZE 64
 
+// effective fields
+#define LIGHT_EFFECTIVE_FIELD_STATE 0x01
+#define LIGHT_EFFECTIVE_FIELD_COLOR (0x01 << 1)
+#define LIGHT_EFFECTIVE_FIELD_BRIGHTESS (0x01 << 2)
+#define LIGHT_EFFECTIVE_FIELD_CT (0x01 << 3)
 
-//effective fields
-#define LIGHT_EFFECTIVE_FIELD_STATE		0x01
-#define LIGHT_EFFECTIVE_FIELD_COLOR		(0x01<<1)
-#define LIGHT_EFFECTIVE_FIELD_BRIGHTESS	(0x01<<2)
-#define LIGHT_EFFECTIVE_FIELD_CT			(0x01<<3)
-
-typedef struct {
-    unsigned char state; //0,1
-    unsigned char color [3]; //0..0xffffff
-    unsigned char brightness; //0..100
-    unsigned char ct; //0..100
-    unsigned char effectiveField;
+typedef struct
+{
+	unsigned char state;      // 0,1
+	unsigned char color[3];   // 0..0xffffff
+	unsigned char brightness; // 0..100
+	unsigned char ct;         // 0..100
+	unsigned char effectiveField;
 } light_struct;
-
-
 
 /*****************************************************************************
 *
@@ -37,7 +35,6 @@ typedef struct {
 *****************************************************************************/
 int lightIf_control(light_struct light);
 
-
 /*****************************************************************************
 *
 *  lightIf_status
@@ -49,8 +46,7 @@ int lightIf_control(light_struct light);
 *  \brief  Gets light status
 *
 *****************************************************************************/
-int lightIf_status(light_struct *light);
-
+int lightIf_status(light_struct* light);
 
 /*****************************************************************************
 *
@@ -65,7 +61,6 @@ int lightIf_status(light_struct *light);
 *****************************************************************************/
 int lightIf_updateStatus(light_struct light);
 
-
 /*****************************************************************************
 *
 *  lightIf_updatePassword
@@ -77,8 +72,7 @@ int lightIf_updateStatus(light_struct light);
 *  \brief  Updates light password
 *
 *****************************************************************************/
-int lightIf_updatePassword(char *pwd);
-
+int lightIf_updatePassword(char* pwd);
 
 /*****************************************************************************
 *
@@ -91,8 +85,7 @@ int lightIf_updatePassword(char *pwd);
 *  \brief  Gets light password
 *
 *****************************************************************************/
-int lightIf_getPassword(char *pwd);
-
+int lightIf_getPassword(char* pwd);
 
 /*****************************************************************************
 *
@@ -107,7 +100,6 @@ int lightIf_getPassword(char *pwd);
 *****************************************************************************/
 int lightIf_factoryReset(void);
 
-
 /*****************************************************************************
 *
 *  lightIf_getFirmwareVersion
@@ -119,8 +111,7 @@ int lightIf_factoryReset(void);
 *  \brief  gets the current firmware version
 *
 *****************************************************************************/
-int lightIf_getFirmwareVersion(char *version);
-
+int lightIf_getFirmwareVersion(char* version);
 
 /*****************************************************************************
 *
@@ -134,8 +125,7 @@ int lightIf_getFirmwareVersion(char *version);
 *  \brief  Upgrades firmware
 *
 *****************************************************************************/
-int lightIf_firmwareUpgrade(char *url, char *version);
-
+int lightIf_firmwareUpgrade(char* url, char* version);
 
 /*****************************************************************************
 *
@@ -148,8 +138,7 @@ int lightIf_firmwareUpgrade(char *url, char *version);
 *  \brief  Gets external IP address
 *
 *****************************************************************************/
-int lightIf_getIPAddress(char *ipAddress);
-
+int lightIf_getIPAddress(char* ipAddress);
 
 /*****************************************************************************
 *
@@ -162,8 +151,7 @@ int lightIf_getIPAddress(char *ipAddress);
 *  \brief  Gets model name
 *
 *****************************************************************************/
-int lightIf_getIModelName(char *name);
-
+int lightIf_getIModelName(char* name);
 
 /*****************************************************************************
 *
@@ -176,8 +164,6 @@ int lightIf_getIModelName(char *name);
 *  \brief  Gets mac address
 *
 *****************************************************************************/
-int lightIf_getMacAddr(char *mac_addr);
-
+int lightIf_getMacAddr(char* mac_addr);
 
 #endif
-

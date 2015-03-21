@@ -1,12 +1,10 @@
 #include <string.h>
 #include "wm_include.h"
 
-
 #include "light.h"
 #include "light_if.h"
 
 #define GPIO_LED1					13
-
 
 /*****************************************************************************
 *
@@ -21,9 +19,9 @@
 *****************************************************************************/
 int lightIf_control(light_struct light)
 {
-    tls_gpio_cfg(GPIO_LED1, TLS_GPIO_DIR_OUTPUT, TLS_GPIO_ATTR_FLOATING);
-    tls_gpio_write(GPIO_LED1, light.state);
-    return 0;
+	tls_gpio_cfg(GPIO_LED1, TLS_GPIO_DIR_OUTPUT, TLS_GPIO_ATTR_FLOATING);
+	tls_gpio_write(GPIO_LED1, light.state);
+	return 0;
 }
 
 /*****************************************************************************
@@ -37,16 +35,16 @@ int lightIf_control(light_struct light)
 *  \brief  Gets light status
 *
 *****************************************************************************/
-int lightIf_status(light_struct *light)
+int lightIf_status(light_struct* light)
 {
-    light->state = 1;
-    light->brightness = 90;
-    light->color[0] = 0xf1;
-    light->color[1] = 0x88;
-    light->color[2] = 0x77;
-    light->ct = 80;
-    light->effectiveField = LIGHT_EFFECTIVE_FIELD_STATE | LIGHT_EFFECTIVE_FIELD_COLOR | LIGHT_EFFECTIVE_FIELD_BRIGHTESS;
-    return 0;
+	light->state = 1;
+	light->brightness = 90;
+	light->color[0] = 0xf1;
+	light->color[1] = 0x88;
+	light->color[2] = 0x77;
+	light->ct = 80;
+	light->effectiveField = LIGHT_EFFECTIVE_FIELD_STATE | LIGHT_EFFECTIVE_FIELD_COLOR | LIGHT_EFFECTIVE_FIELD_BRIGHTESS;
+	return 0;
 }
 
 /*****************************************************************************
@@ -62,7 +60,7 @@ int lightIf_status(light_struct *light)
 *****************************************************************************/
 int lightIf_updateStatus(light_struct light)
 {
-    return light_updateStatus(light);
+	return light_updateStatus(light);
 }
 
 /*****************************************************************************
@@ -76,9 +74,9 @@ int lightIf_updateStatus(light_struct light)
 *  \brief  Updates light password
 *
 *****************************************************************************/
-int lightIf_updatePassword(char *pwd)
+int lightIf_updatePassword(char* pwd)
 {
-    return 0;
+	return 0;
 }
 
 /*****************************************************************************
@@ -92,10 +90,10 @@ int lightIf_updatePassword(char *pwd)
 *  \brief  Gets light password
 *
 *****************************************************************************/
-int lightIf_getPassword(char *pwd)
+int lightIf_getPassword(char* pwd)
 {
-    strcpy(pwd, "123456");
-    return 0;
+	strcpy(pwd, "123456");
+	return 0;
 }
 
 /*****************************************************************************
@@ -111,7 +109,7 @@ int lightIf_getPassword(char *pwd)
 *****************************************************************************/
 int lightIf_factoryReset(void)
 {
-    return 0;
+	return 0;
 }
 
 /*****************************************************************************
@@ -125,10 +123,10 @@ int lightIf_factoryReset(void)
 *  \brief  gets the current firmware version
 *
 *****************************************************************************/
-int lightIf_getFirmwareVersion(char *version)
+int lightIf_getFirmwareVersion(char* version)
 {
-    strcpy(version, "1.1.00");
-    return 0;
+	strcpy(version, "1.1.00");
+	return 0;
 }
 
 /*****************************************************************************
@@ -143,9 +141,10 @@ int lightIf_getFirmwareVersion(char *version)
 *  \brief  Upgrades firmware
 *
 *****************************************************************************/
-int lightIf_firmwareUpgrade(char *url, char *version)
+int lightIf_firmwareUpgrade(char* url, char* version)
 {
-    return 0;
+// check and compare version with the old one
+	return 0;
 }
 
 /*****************************************************************************
@@ -159,10 +158,10 @@ int lightIf_firmwareUpgrade(char *url, char *version)
 *  \brief  Gets external IP address
 *
 *****************************************************************************/
-int lightIf_getIPAddress(char *ipAddress)
+int lightIf_getIPAddress(char* ipAddress)
 {
-    strcpy(ipAddress, "192.168.1.98");
-    return 0;
+	strcpy(ipAddress, "192.168.1.98");
+	return 0;
 }
 
 /*****************************************************************************
@@ -176,10 +175,10 @@ int lightIf_getIPAddress(char *ipAddress)
 *  \brief  Gets model name
 *
 *****************************************************************************/
-int lightIf_getIModelName(char *name)
+int lightIf_getIModelName(char* name)
 {
-    strcpy(name, "FirmwareUpgrade_07-00-XXXX");
-    return 0;
+	strcpy(name, "07-00-XXXX");
+	return 0;
 }
 
 /*****************************************************************************
@@ -193,18 +192,21 @@ int lightIf_getIModelName(char *name)
 *  \brief  Gets mac address
 *
 *****************************************************************************/
-int lightIf_getMacAddr(char *mac_addr)
+int lightIf_getMacAddr(char* mac_addr)
 {
-    unsigned char addr[8];
-    int i;	
+#if 0
+	unsigned char addr[8];
+	int i;
 
-    memset(addr,0,sizeof(addr));
-    tls_get_mac_addr(addr);
-    for(i=0; i<6; i++)
-    {
-	sprintf(mac_addr+strlen(mac_addr), "%02X", addr[i]);
-    }
-    return 0;
-		
+	memset(addr,0,sizeof(addr));
+	tls_get_mac_addr(addr);
+	for(i=0; i<6; i++)
+	{
+		sprintf(mac_addr+strlen(mac_addr), "%02X", addr[i]);
+	}
+	return 0;
+
+#endif
+	strcpy(mac_addr, "78B3B90FFEF1");
+	return 0;
 }
-

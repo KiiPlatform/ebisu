@@ -9,7 +9,6 @@
 
 extern kii_data_struct g_kii_data;
 
-
 /*****************************************************************************
 *
 *  kiiExt_extension
@@ -22,78 +21,75 @@ extern kii_data_struct g_kii_data;
 *  \brief  Executes the server extension code
 *
 *****************************************************************************/
-int kiiExt_extension(char *endpointName, char *jsonObject)
+int kiiExt_extension(char* endpointName, char* jsonObject)
 {
-    char *buf;
+	char* buf;
 
-    buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
-    if (buf == NULL)
-    {
-        KII_DEBUG("kii-error: memory allocation failed !\r\n");
-        return -1;
-    }
-    memset(buf, 0, KII_SOCKET_BUF_SIZE);
-    strcpy(buf, STR_POST);
-    // url
-    strcpy(buf+strlen(buf), "/api/apps/");
-    strcpy(buf+strlen(buf), g_kii_data.appID);
-    strcpy(buf+strlen(buf), "/server-code/versions/current/");
-    strcpy(buf+strlen(buf), endpointName);
-    strcpy(buf+strlen(buf), STR_HTTP);
-   strcpy(buf+strlen(buf), STR_CRLF);
-   //Connection
-   strcpy(buf+strlen(buf), "Connection: Keep-Alive\r\n");
-   //Host
-   strcpy(buf+strlen(buf), "Host: ");
-   strcpy(buf+strlen(buf), g_kii_data.host);
-   strcpy(buf+strlen(buf), STR_CRLF);
-    //x-kii-appid
-    strcpy(buf+strlen(buf), STR_KII_APPID);
-    strcpy(buf+strlen(buf), g_kii_data.appID); 
-   strcpy(buf+strlen(buf), STR_CRLF);
-    //x-kii-appkey 
-    strcpy(buf+strlen(buf), STR_KII_APPKEY);
-    strcpy(buf+strlen(buf), g_kii_data.appKey);
-   strcpy(buf+strlen(buf), STR_CRLF);
-   //content-type	
-   strcpy(buf+strlen(buf), STR_CONTENT_TYPE);
-   strcpy(buf+strlen(buf), "application/json");
-   strcpy(buf+strlen(buf), STR_CRLF);
-   //Authorization
-    strcpy(buf+strlen(buf), STR_AUTHORIZATION);
-    strcpy(buf+strlen(buf),  " Bearer ");
-    strcpy(buf+strlen(buf), g_kii_data.accessToken); 
-   strcpy(buf+strlen(buf), STR_CRLF);
-    //Content-Length
-   strcpy(buf+strlen(buf), STR_CONTENT_LENGTH);
-   sprintf(buf+strlen(buf), "%d", strlen(jsonObject)+1);
-   strcpy(buf+strlen(buf), STR_CRLF);
-   strcpy(buf+strlen(buf), STR_CRLF);
-    if ((strlen(buf)+strlen(jsonObject)+1) > KII_SOCKET_BUF_SIZE)
-    {
-        KII_DEBUG("kii-error: buffer overflow !\r\n");
-	kiiHal_free(buf);
-        return -1;
-    }
-   strcpy(buf+strlen(buf), jsonObject);
-   strcpy(buf+strlen(buf), STR_LF);
-   
-    if (kiiHal_transfer(buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
-    {
-        KII_DEBUG("kii-error: transfer data error !\r\n");
-        kiiHal_free(buf);
-        return -1;
-    }
+	buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
+	if(buf == NULL)
+	{
+		KII_DEBUG("kii-error: memory allocation failed !\r\n");
+		return -1;
+	}
+	memset(buf, 0, KII_SOCKET_BUF_SIZE);
+	strcpy(buf, STR_POST);
+	// url
+	strcat(buf, "/api/apps/");
+	strcat(buf, g_kii_data.appID);
+	strcat(buf, "/server-code/versions/current/");
+	strcat(buf, endpointName);
+	strcat(buf, STR_HTTP);
+	strcat(buf, STR_CRLF);
+	// Host
+	strcat(buf, "Host: ");
+	strcat(buf, g_kii_data.host);
+	strcat(buf, STR_CRLF);
+	// x-kii-appid
+	strcat(buf, STR_KII_APPID);
+	strcat(buf, g_kii_data.appID);
+	strcat(buf, STR_CRLF);
+	// x-kii-appkey
+	strcat(buf, STR_KII_APPKEY);
+	strcat(buf, g_kii_data.appKey);
+	strcat(buf, STR_CRLF);
+	// content-type
+	strcat(buf, STR_CONTENT_TYPE);
+	strcat(buf, "application/json");
+	strcat(buf, STR_CRLF);
+	// Authorization
+	strcat(buf, STR_AUTHORIZATION);
+	strcat(buf, " Bearer ");
+	strcat(buf, g_kii_data.accessToken);
+	strcat(buf, STR_CRLF);
+	// Content-Length
+	strcat(buf, STR_CONTENT_LENGTH);
+	sprintf(buf + strlen(buf), "%d", strlen(jsonObject) + 1);
+	strcat(buf, STR_CRLF);
+	strcat(buf, STR_CRLF);
+	if((strlen(buf) + strlen(jsonObject) + 1) > KII_SOCKET_BUF_SIZE)
+	{
+		KII_DEBUG("kii-error: buffer overflow !\r\n");
+		kiiHal_free(buf);
+		return -1;
+	}
+	strcat(buf, jsonObject);
+	strcat(buf, STR_LF);
 
-    if ((strstr(buf, "HTTP/1.1 200") == NULL))
-    {
-	kiiHal_free(buf);
-        return -1;    
-    }
-    else
-    {
-        kiiHal_free(buf);
-        return 0;
-    }
+	if(kiiHal_transfer(g_kii_data.host, buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
+	{
+		KII_DEBUG("kii-error: transfer data error !\r\n");
+		kiiHal_free(buf);
+		return -1;
+	}
+
+	if((strstr(buf, "HTTP/1.1 200") == NULL))
+	{
+		kiiHal_free(buf);
+		return -1;
+	}
+	else
+	{
+		kiiHal_free(buf);
+		return 0;
+	}
 }
-
