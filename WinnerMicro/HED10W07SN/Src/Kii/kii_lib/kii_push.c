@@ -515,12 +515,22 @@ static void kiiPush_recvMsgTask(void *sdata)
 		else
 		{
 			memset(g_kii_push.rcvdBuf, 0, KII_PUSH_SOCKET_BUF_SIZE);
-			rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf, KII_PUSH_TOPIC_HEADER_SIZE);
-			if(rcvdCounter > 0)
+			rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf, 2);
+			if(rcvdCounter == 2)
 			{
 				if((g_kii_push.rcvdBuf[0] & 0xf0) == 0x30)
 				{
-					byteLen = KiiMQTT_decode(&g_kii_push.rcvdBuf[1], &remainingLen);
+					rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, g_kii_push.rcvdBuf+2, KII_PUSH_TOPIC_HEADER_SIZE);
+					if(rcvdCounter == KII_PUSH_TOPIC_HEADER_SIZE)
+					{
+					    byteLen = KiiMQTT_decode(&g_kii_push.rcvdBuf[1], &remainingLen);
+					}
+					else
+					{
+						KII_DEBUG("kii-error: mqtt decode error\r\n");
+						g_kii_push.connected = 0;
+						continue;
+					}
 					if(byteLen > 0)
 					{
 						totalLen =
@@ -529,16 +539,18 @@ static void kiiPush_recvMsgTask(void *sdata)
 					else
 					{
 						KII_DEBUG("kii-error: mqtt decode error\r\n");
+						g_kii_push.connected = 0;
 						continue;
 					}
 					if(totalLen > KII_PUSH_SOCKET_BUF_SIZE)
 					{
 						KII_DEBUG("kii-error: mqtt buffer overflow\r\n");
+						g_kii_push.connected = 0;
 						continue;
 					}
 
 					// KII_DEBUG("decode byteLen=%d, remainingLen=%d\r\n", byteLen, remainingLen);
-					bytes = rcvdCounter;
+					bytes = rcvdCounter + 2;
 					while(bytes < totalLen)
 					{
 						rcvdCounter =
@@ -562,12 +574,22 @@ static void kiiPush_recvMsgTask(void *sdata)
 						topicLen = p[0] * 256 + p[1]; // get topic length
 						p = p + 2; // skip 2 topic length bytes
 						p = p + topicLen; // skip topic
-						callback(p, remainingLen - 2 - topicLen);
+						if((remainingLen - 2 - topicLen) > 0)
+						{
+						    callback(p, remainingLen - 2 - topicLen);
+						}
+						else
+						{
+							KII_DEBUG("kii-error: mqtt topic length error\r\n");
+							g_kii_push.connected = 0;
+							continue;
+						}
 					}
 					else
 					{
-						g_kii_push.connected = 0;
 						KII_DEBUG("kii_error: mqtt receive data error\r\n");
+						g_kii_push.connected = 0;
+						continue;
 					}
 				}
 #if(KII_PUSH_PING_ENABLE)
