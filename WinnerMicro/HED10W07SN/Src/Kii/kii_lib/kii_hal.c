@@ -18,7 +18,7 @@
 *  \brief  Gets host IP address
 *
 *****************************************************************************/
-int kiiHal_dns(char *hostName, unsigned char *buf)
+int kiiHal_dns(char* hostName, unsigned char* buf)
 {
 	int ret = 0;
 	ip_addr_t addr;
@@ -71,7 +71,7 @@ int kiiHal_socketCreate(void)
 *  \brief  Closes a socket
 *
 *****************************************************************************/
-int kiiHal_socketClose(int *socketNum)
+int kiiHal_socketClose(int* socketNum)
 {
 	int ret = 0;
 
@@ -80,6 +80,7 @@ int kiiHal_socketClose(int *socketNum)
 		ret = -1;
 	}
 	*socketNum = -1;
+
 	return ret;
 }
 
@@ -96,17 +97,17 @@ int kiiHal_socketClose(int *socketNum)
 *  \brief  Connects a TCP socket
 *
 *****************************************************************************/
-int kiiHal_connect(int socketNum, char *saData, int port)
+int kiiHal_connect(int socketNum, char* saData, int port)
 {
 	int ret = 0;
 
 	struct sockaddr_in pin;
 
 	memset(&pin, 0, sizeof(struct sockaddr));
-	pin.sin_family=AF_INET; //use IPv4
-	memcpy((char *)&pin.sin_addr.s_addr, saData, 4);
-	pin.sin_port=htons(port);
-	if(connect(socketNum, (struct sockaddr *)&pin, sizeof(struct sockaddr)) != 0)
+	pin.sin_family = AF_INET; // use IPv4
+	memcpy((char*)&pin.sin_addr.s_addr, saData, 4);
+	pin.sin_port = htons(port);
+	if(connect(socketNum, (struct sockaddr*)&pin, sizeof(struct sockaddr)) != 0)
 	{
 		ret = -1;
 	}
@@ -126,7 +127,7 @@ int kiiHal_connect(int socketNum, char *saData, int port)
 *  \brief  Sends data out to the internet
 *
 *****************************************************************************/
-int kiiHal_socketSend(int socketNum, char * buf, int len)
+int kiiHal_socketSend(int socketNum, char* buf, int len)
 {
 	int bytes;
 	int sent;
@@ -134,7 +135,7 @@ int kiiHal_socketSend(int socketNum, char * buf, int len)
 	bytes = 0;
 	while(bytes < len)
 	{
-		sent =  send(socketNum, buf+bytes, len-bytes, 0);
+		sent = send(socketNum, buf + bytes, len - bytes, 0);
 		if(sent <= 0)
 		{
 
@@ -161,16 +162,15 @@ int kiiHal_socketSend(int socketNum, char * buf, int len)
 *  \brief  Receives data from the internet
 *
 *****************************************************************************/
-int kiiHal_socketRecv(int socketNum, char * buf, int len)
+int kiiHal_socketRecv(int socketNum, char* buf, int len)
 {
 	int ret;
 
 	ret = recv(socketNum, buf, len, 0);
 	if(ret <= 0)
 	{
-		ret =-1;
+		ret = -1;
 	}
-
 
 	return ret;
 }
@@ -195,15 +195,16 @@ int kiiHal_transfer(char* host, char* buf, int bufLen, int sendLen)
 	unsigned char ipBuf[4];
 	int bytes;
 	int len;
-	char * p1;
-	char * p2;
+	char* p1;
+	char* p2;
 	unsigned long contentLengh;
+	int ret = -1;
 
-	// KII_DEBUG("kii-info: host ""%s""\r\n", g_kii_data.host);
+	// KII_DEBUG("kii-info: host ""%s""\r\n", host);
 	if(kiiHal_dns(host, ipBuf) < 0)
 	{
 		KII_DEBUG("kii-error: dns failed !\r\n");
-		return -1;
+		goto exit;
 	}
 	// KII_DEBUG("Host ip:%d.%d.%d.%d\r\n", ipBuf[0], ipBuf[1], ipBuf[2], ipBuf[3]);
 
@@ -211,14 +212,13 @@ int kiiHal_transfer(char* host, char* buf, int bufLen, int sendLen)
 	if(socketNum < 0)
 	{
 		KII_DEBUG("kii-error: create socket failed !\r\n");
-		return -1;
+		goto exit;
 	}
 
 	if(kiiHal_connect(socketNum, (char*)ipBuf, KII_DEFAULT_PORT) < 0)
 	{
 		KII_DEBUG("kii-error: connect to server failed \r\n");
-		kiiHal_socketClose(&socketNum);
-		return -1;
+		goto close_socket;
 	}
 
 	len = kiiHal_socketSend(socketNum, buf, sendLen);
@@ -226,8 +226,7 @@ int kiiHal_transfer(char* host, char* buf, int bufLen, int sendLen)
 	{
 
 		KII_DEBUG("kii-error: send data fail\r\n");
-		kiiHal_socketClose(&socketNum);
-		return -1;
+		goto close_socket;
 	}
 
 	bytes = 0;
@@ -238,8 +237,7 @@ int kiiHal_transfer(char* host, char* buf, int bufLen, int sendLen)
 		if(len < 0)
 		{
 			KII_DEBUG("kii-error: recv data fail\r\n");
-			kiiHal_socketClose(&socketNum);
-			return -1;
+			goto close_socket;
 		}
 		else
 		{
@@ -257,30 +255,30 @@ int kiiHal_transfer(char* host, char* buf, int bufLen, int sendLen)
 						p1 += strlen(STR_CRLFCRLF);
 						if(bytes >= (contentLengh + (p1 - buf)))
 						{
-							kiiHal_socketClose(&socketNum);
-							return 0;
+							ret = 0;
+							goto close_socket;
 						}
 					}
 					else   // should never get here
 					{
 						KII_DEBUG("kii-error: get content lenght failed\r\n");
-						kiiHal_socketClose(&socketNum);
-						return -1;
+						goto close_socket;
 					}
 				}
 				else
 				{
-					kiiHal_socketClose(&socketNum);
-					return 0; // no content length
+					ret = 0; // no content length
+					goto close_socket;
 				}
 			}
 		}
 	}
 	KII_DEBUG("kii-error: receiving buffer overflow !\r\n");
+close_socket:
 	kiiHal_socketClose(&socketNum);
-	return -1; // buffer overflow
+exit:
+	return ret;
 }
-
 
 /*****************************************************************************
 *
@@ -339,7 +337,7 @@ int kiiHal_taskCreate(const char* name, KiiHal_taskEntry pEntry, void* param, un
 *  \brief  Allocates memory
 *
 *****************************************************************************/
-void *kiiHal_malloc(unsigned long size)
+void* kiiHal_malloc(unsigned long size)
 {
 	return malloc(size);
 }
@@ -355,7 +353,7 @@ void *kiiHal_malloc(unsigned long size)
 *  \brief  Frees memory
 *
 *****************************************************************************/
-void kiiHal_free(void *p)
+void kiiHal_free(void* p)
 {
 	free(p);
 }

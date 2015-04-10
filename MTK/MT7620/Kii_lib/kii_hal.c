@@ -36,6 +36,7 @@
 *****************************************************************************/
 int kiiHal_dns(char* hostName, unsigned char* buf)
 {
+#if 0
 	struct hostent* host;
 
 	host = gethostbyname(hostName);
@@ -48,6 +49,42 @@ int kiiHal_dns(char* hostName, unsigned char* buf)
 	{
 		return -1;
 	}
+#else
+	int ret = -1;
+	struct sockaddr_in address;
+	struct addrinfo *result = NULL;
+	struct addrinfo hints;
+
+	bzero(&hints, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+
+	if (getaddrinfo(hostName, NULL, &hints, &result) == 0)
+	{
+		struct addrinfo* res = result;
+
+		/* prefer ip4 addresses */
+		while (res)
+		{
+			if (res->ai_family == AF_INET)
+			{
+				result = res;
+				break;
+			}
+			res = res->ai_next;
+		}
+
+		if (result->ai_family == AF_INET)
+		{
+			address.sin_addr = ((struct sockaddr_in*)(result->ai_addr))->sin_addr;
+			memcpy(buf, (char*)&address.sin_addr.s_addr, 4);
+			ret = 0;
+		}
+		freeaddrinfo(result);
+	}
+
+	return ret;
+#endif	
 }
 
 /*****************************************************************************
@@ -211,12 +248,13 @@ int kiiHal_transfer(char* host, char* buf, int bufLen, int sendLen)
 	char* p1;
 	char* p2;
 	unsigned long contentLengh;
+	int ret = -1;
 
-	// KII_DEBUG("kii-info: host ""%s""\r\n", g_kii_data.host);
+	// KII_DEBUG("kii-info: host ""%s""\r\n", host);
 	if(kiiHal_dns(host, ipBuf) < 0)
 	{
 		KII_DEBUG("kii-error: dns failed !\r\n");
-		return -1;
+		goto exit;
 	}
 	// KII_DEBUG("Host ip:%d.%d.%d.%d\r\n", ipBuf[0], ipBuf[1], ipBuf[2], ipBuf[3]);
 
@@ -224,14 +262,13 @@ int kiiHal_transfer(char* host, char* buf, int bufLen, int sendLen)
 	if(socketNum < 0)
 	{
 		KII_DEBUG("kii-error: create socket failed !\r\n");
-		return -1;
+		goto exit;
 	}
 
 	if(kiiHal_connect(socketNum, (char*)ipBuf, KII_DEFAULT_PORT) < 0)
 	{
 		KII_DEBUG("kii-error: connect to server failed \r\n");
-		kiiHal_socketClose(&socketNum);
-		return -1;
+		goto close_socket;
 	}
 
 	len = kiiHal_socketSend(socketNum, buf, sendLen);
@@ -239,8 +276,7 @@ int kiiHal_transfer(char* host, char* buf, int bufLen, int sendLen)
 	{
 
 		KII_DEBUG("kii-error: send data fail\r\n");
-		kiiHal_socketClose(&socketNum);
-		return -1;
+		goto close_socket;
 	}
 
 	bytes = 0;
@@ -251,8 +287,7 @@ int kiiHal_transfer(char* host, char* buf, int bufLen, int sendLen)
 		if(len < 0)
 		{
 			KII_DEBUG("kii-error: recv data fail\r\n");
-			kiiHal_socketClose(&socketNum);
-			return -1;
+			goto close_socket;
 		}
 		else
 		{
@@ -270,28 +305,29 @@ int kiiHal_transfer(char* host, char* buf, int bufLen, int sendLen)
 						p1 += strlen(STR_CRLFCRLF);
 						if(bytes >= (contentLengh + (p1 - buf)))
 						{
-							kiiHal_socketClose(&socketNum);
-							return 0;
+							ret = 0;
+							goto close_socket;
 						}
 					}
 					else   // should never get here
 					{
 						KII_DEBUG("kii-error: get content lenght failed\r\n");
-						kiiHal_socketClose(&socketNum);
-						return -1;
+						goto close_socket;
 					}
 				}
 				else
 				{
-					kiiHal_socketClose(&socketNum);
-					return 0; // no content length
+					ret = 0; // no content length
+					goto close_socket;
 				}
 			}
 		}
 	}
 	KII_DEBUG("kii-error: receiving buffer overflow !\r\n");
+close_socket:
 	kiiHal_socketClose(&socketNum);
-	return -1; // buffer overflow
+exit:
+	return ret;
 }
 
 /*****************************************************************************
@@ -327,6 +363,48 @@ void kiiHal_delayMs(unsigned int ms)
 *  \brief  Creates task
 *
 *****************************************************************************/
+#if 0
+static pthread_t m_pthid1;
+static pthread_t m_pthid2;
+
+int kiiHal_taskCreate(const char* name,
+                      KiiHal_taskEntry pEntry,
+                      void* param,
+                      unsigned char* stk_start,
+                      unsigned int stk_size,
+                      unsigned int prio)
+{
+	int ret;
+	pthread_t *pthid;
+    static int index = 0;
+
+    if (index == 0)
+    {
+        pthid = &m_pthid1;
+        index++;
+    }
+	else if(index == 1)
+	{
+        index++;
+        pthid = &m_pthid2;
+	}
+	else
+	{
+	    return -1;
+	}
+		
+	ret = pthread_create(pthid, NULL, pEntry, param);
+
+	if(ret == 0)
+	{
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
+}
+#else
 int kiiHal_taskCreate(const char* name,
                       KiiHal_taskEntry pEntry,
                       void* param,
@@ -348,6 +426,7 @@ int kiiHal_taskCreate(const char* name,
 		return -1;
 	}
 }
+#endif
 
 /*****************************************************************************
 *

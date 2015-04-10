@@ -235,7 +235,8 @@ int lightIf_getMacAddr(char* mac_addr)
 		}
 		return 0;
 	}
-#endif
+#else
 	strcpy(mac_addr, "78B3B90FFEF1");
 	return 0;
+#endif	
 }

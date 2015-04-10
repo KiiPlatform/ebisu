@@ -32,12 +32,13 @@ int kiiObj_create(int scope, char* bucketName, char* jsonObject, char* dataType,
 	char* p1;
 	char* p2;
 	char* buf;
+	int ret = -1;
 
 	buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
 	if(buf == NULL)
 	{
 		KII_DEBUG("kii-error: memory allocation failed !\r\n");
-		return -1;
+		goto exit;
 	}
 	memset(buf, 0, KII_SOCKET_BUF_SIZE);
 	strcpy(buf, STR_POST);
@@ -87,8 +88,7 @@ int kiiObj_create(int scope, char* bucketName, char* jsonObject, char* dataType,
 	if((strlen(buf) + strlen(jsonObject) + 1) > KII_SOCKET_BUF_SIZE)
 	{
 		KII_DEBUG("kii-error: buffer overflow !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 	strcat(buf, jsonObject);
 	strcat(buf, STR_LF);
@@ -96,26 +96,43 @@ int kiiObj_create(int scope, char* bucketName, char* jsonObject, char* dataType,
 	if(kiiHal_transfer(g_kii_data.host, buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
 	{
 		KII_DEBUG("kii-error: transfer data error !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	if(strstr(buf, "HTTP/1.1 201") == NULL)
 	{
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	p1 = strstr(buf, "\"objectID\"");
+	if(p1 == NULL)
+	{
+		goto free;
+	}
 	p1 = strstr(p1, ":");
+	if(p1 == NULL)
+	{
+		goto free;
+	}
 	p1 = strstr(p1, "\"");
+	if(p1 == NULL)
+	{
+		goto free;
+	}
 	p1 += 1;
 	p2 = strstr(p1, "\"");
+	if(p2 == NULL)
+	{
+		goto free;
+	}
 	memset(objectID, 0, KII_OBJECTID_SIZE + 1);
 	memcpy(objectID, p1, p2 - p1);
 
+	ret = 0;
+free:
 	kiiHal_free(buf);
-	return 0;
+exit:
+	return ret;
 }
 
 /*****************************************************************************
@@ -197,12 +214,13 @@ static int
 kiiObj_update(int scope, char* bucketName, char* jsonObject, char* dataType, char* objectID, int updateOrCreateWithID)
 {
 	char* buf;
-
+    int ret = -1;
+	
 	buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
 	if(buf == NULL)
 	{
 		KII_DEBUG("kii-error: memory allocation failed !\r\n");
-		return -1;
+		goto exit;
 	}
 	memset(buf, 0, KII_SOCKET_BUF_SIZE);
 	if(updateOrCreateWithID != KIIOBJ_PARTIALLY_UPDATE)
@@ -276,8 +294,7 @@ kiiObj_update(int scope, char* bucketName, char* jsonObject, char* dataType, cha
 	if((strlen(buf) + strlen(jsonObject) + 1) > KII_SOCKET_BUF_SIZE)
 	{
 		KII_DEBUG("kii-error: buffer overflow!\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 	strcat(buf, jsonObject);
 	strcat(buf, STR_LF);
@@ -285,20 +302,18 @@ kiiObj_update(int scope, char* bucketName, char* jsonObject, char* dataType, cha
 	if(kiiHal_transfer(g_kii_data.host, buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
 	{
 		KII_DEBUG("kii-error: transfer data error !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	if((strstr(buf, "HTTP/1.1 200") != NULL) || (strstr(buf, "HTTP/1.1 201") != NULL))
 	{
-		kiiHal_free(buf);
-		return 0;
+        ret = 0;
 	}
-	else
-	{
-		kiiHal_free(buf);
-		return -1;
-	}
+
+free:
+	kiiHal_free(buf);
+exit:
+	return ret;
 }
 
 /*****************************************************************************
@@ -325,12 +340,13 @@ int kiiObj_uploadBodyAtOnce(int scope,
                             unsigned int length)
 {
 	char* buf;
+	int ret = -1;
 
 	buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
 	if(buf == NULL)
 	{
 		KII_DEBUG("kii-error: memory allocation failed !\r\n");
-		return -1;
+		goto exit;
 	}
 	memset(buf, 0, KII_SOCKET_BUF_SIZE);
 	strcpy(buf, STR_PUT);
@@ -378,27 +394,23 @@ int kiiObj_uploadBodyAtOnce(int scope,
 	if((strlen(buf) + length) > KII_SOCKET_BUF_SIZE)
 	{
 		KII_DEBUG("kii-error: buffer overflow !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 	memcpy(buf + strlen(buf), data, length);
-	// memcpy(buf + g_kii_data.sendDataLen -1, STR_LF, 1);
 	if(kiiHal_transfer(g_kii_data.host, buf, KII_SOCKET_BUF_SIZE, strlen(buf) + length) != 0)
 	{
 		KII_DEBUG("kii-error: transfer data error !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 	if((strstr(buf, "HTTP/1.1 200")) != NULL)
 	{
-		kiiHal_free(buf);
-		return 0;
+		ret = 0;
 	}
-	else
-	{
-		kiiHal_free(buf);
-		return -1;
-	}
+	
+free:
+	kiiHal_free(buf);
+exit:
+	return ret;
 }
 
 /*****************************************************************************
@@ -420,12 +432,13 @@ int kiiObj_uploadBodyInit(int scope, char* bucketName, char* objectID, char* upl
 	char* p1;
 	char* p2;
 	char* buf;
+	int ret = -1;
 
 	buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
 	if(buf == NULL)
 	{
 		KII_DEBUG("kii-error: memory allocation failed !\r\n");
-		return -1;
+		goto exit;
 	}
 	memset(buf, 0, KII_SOCKET_BUF_SIZE);
 	strcpy(buf, STR_POST);
@@ -480,26 +493,43 @@ int kiiObj_uploadBodyInit(int scope, char* bucketName, char* objectID, char* upl
 	if(kiiHal_transfer(g_kii_data.host, buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
 	{
 		KII_DEBUG("kii-error: transfer data error !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	if(strstr(buf, "HTTP/1.1 200") == NULL)
 	{
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	p1 = strstr(buf, "\"uploadID\"");
+	if(p1 == NULL)
+	{
+		goto free;
+	}
 	p1 = strstr(p1, ":");
+	if(p1 == NULL)
+	{
+		goto free;
+	}
 	p1 = strstr(p1, "\"");
+	if(p1 == NULL)
+	{
+		goto free;
+	}
 	p1 += 1;
 	p2 = strstr(p1, "\"");
+	if(p2 == NULL)
+	{
+		goto free;
+	}
 	memset(uploadID, 0, KII_UPLOAD_ID_SIZE + 1);
 	memcpy(uploadID, p1, p2 - p1);
-
+	ret = 0;
+	
+free:
 	kiiHal_free(buf);
-	return 0;
+exit:
+	return ret;
 }
 
 /*****************************************************************************
@@ -532,12 +562,13 @@ int kiiObj_uploadBody(int scope,
                       unsigned char* data)
 {
 	char* buf;
+	int ret = -1;
 
 	buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
 	if(buf == NULL)
 	{
 		KII_DEBUG("kii-error: memory allocation failed !\r\n");
-		return -1;
+		goto exit;
 	}
 	memset(buf, 0, KII_SOCKET_BUF_SIZE);
 	strcpy(buf, STR_PUT);
@@ -600,30 +631,24 @@ int kiiObj_uploadBody(int scope,
 	if((strlen(buf) + length) > KII_SOCKET_BUF_SIZE)
 	{
 		KII_DEBUG("kii-error: buffer overflow !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 	memcpy(buf + strlen(buf), data, length);
-	// memcpy(buf + g_kii_data.sendDataLen -1, STR_LF, 1);
-
 	if(kiiHal_transfer(g_kii_data.host, buf, KII_SOCKET_BUF_SIZE, strlen(buf) + length) != 0)
 	{
 		KII_DEBUG("kii-error: transfer data error !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	if(strstr(buf, "HTTP/1.1 204") != NULL)
 	{
-		kiiHal_free(buf);
-		return 0;
+		ret = 0;
 	}
-	else
-	{
-		KII_DEBUG("kii-error: upload body failed !\r\n");
-		kiiHal_free(buf);
-		return -1;
-	}
+	
+free:
+	kiiHal_free(buf);
+exit:
+	return ret;
 }
 
 /*****************************************************************************
@@ -644,12 +669,13 @@ int kiiObj_uploadBody(int scope,
 int kiiObj_uploadBodyCommit(int scope, char* bucketName, char* objectID, char* uploadID, int committed)
 {
 	char* buf;
+	int ret = -1;
 
 	buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
 	if(buf == NULL)
 	{
 		KII_DEBUG("kii-error: memory allocation failed !\r\n");
-		return -1;
+		goto exit;
 	}
 	memset(buf, 0, KII_SOCKET_BUF_SIZE);
 	strcpy(buf, STR_POST);
@@ -700,20 +726,18 @@ int kiiObj_uploadBodyCommit(int scope, char* bucketName, char* objectID, char* u
 	if(kiiHal_transfer(g_kii_data.host, buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
 	{
 		KII_DEBUG("kii-error: transfer data error !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	if(strstr(buf, "HTTP/1.1 204") != NULL)
 	{
-		kiiHal_free(buf);
-		return 0;
+		ret = 0;
 	}
-	else
-	{
-		kiiHal_free(buf);
-		return -1;
-	}
+
+free:
+	kiiHal_free(buf);
+exit:
+	return ret;
 }
 
 /*****************************************************************************
@@ -735,12 +759,13 @@ int kiiObj_retrieve(int scope, char* bucketName, char* objectID, char* jsonObjec
 {
 	char* p1;
 	char* buf;
+	int ret = -1;
 
 	buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
 	if(buf == NULL)
 	{
 		KII_DEBUG("kii-error: memory allocation failed !\r\n");
-		return -1;
+		goto exit;
 	}
 	memset(buf, 0, KII_SOCKET_BUF_SIZE);
 	strcpy(buf, STR_GET);
@@ -780,30 +805,35 @@ int kiiObj_retrieve(int scope, char* bucketName, char* objectID, char* jsonObjec
 	if(kiiHal_transfer(g_kii_data.host, buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
 	{
 		KII_DEBUG("kii-error: transfer data error !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	if(strstr(buf, "HTTP/1.1 200") == NULL)
 	{
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	p1 = strstr(buf, "{");
+	if(p1 == NULL)
+	{
+		goto free;
+	}
 	if(strlen(p1) > length)
 	{
 		KII_DEBUG("kii-error: jsonObjectBuf overflow !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 	else
 	{
 		memset(jsonObject, 0, length);
 		strcpy(jsonObject, p1);
-		kiiHal_free(buf);
-		return 0;
+		ret = 0;
 	}
+	
+free:
+	kiiHal_free(buf);
+exit:
+	return ret;
 }
 
 /*****************************************************************************
@@ -831,12 +861,13 @@ int kiiObj_downloadBodyAtOnce(int scope,
 	char* p1;
 	char* buf;
 	unsigned long contentLengh;
+	int ret = -1;
 
 	buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
 	if(buf == NULL)
 	{
 		KII_DEBUG("kii-error: memory allocation failed !\r\n");
-		return -1;
+		goto exit;
 	}
 	memset(buf, 0, KII_SOCKET_BUF_SIZE);
 	strcpy(buf, STR_GET);
@@ -881,21 +912,18 @@ int kiiObj_downloadBodyAtOnce(int scope,
 	if(kiiHal_transfer(g_kii_data.host, buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
 	{
 		KII_DEBUG("kii-error: transfer data error !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	if(strstr(buf, "HTTP/1.1 200") == NULL)
 	{
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	p1 = strstr(buf, STR_CONTENT_LENGTH);
 	if(p1 == NULL)
 	{
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 	p1 = p1 + strlen(STR_CONTENT_LENGTH);
 	contentLengh = atoi(p1);
@@ -903,25 +931,27 @@ int kiiObj_downloadBodyAtOnce(int scope,
 	p1 = strstr(buf, STR_CRLFCRLF);
 	if(p1 == NULL)
 	{
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 	p1 += 4;
 
 	if(contentLengh > length)
 	{
 		KII_DEBUG("kii-error: the buffer of object body is too small\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 	else
 	{
 		memset(data, 0, length);
 		memcpy(data, p1, contentLengh);
 		*actualLength = contentLengh;
-		kiiHal_free(buf);
-		return 0;
+		ret = 0;
 	}
+	
+free:
+	kiiHal_free(buf);
+exit:
+	return ret;
 }
 
 /*****************************************************************************
@@ -954,12 +984,13 @@ int kiiObj_downloadBody(int scope,
 	char* p1;
 	char* buf;
 	unsigned long contentLengh;
+	int ret = -1;
 
 	buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
 	if(buf == NULL)
 	{
 		KII_DEBUG("kii-error: memory allocation failed !\r\n");
-		return -1;
+		goto exit;
 	}
 	memset(buf, 0, KII_SOCKET_BUF_SIZE);
 	strcpy(buf, STR_GET);
@@ -1011,22 +1042,23 @@ int kiiObj_downloadBody(int scope,
 	if(kiiHal_transfer(g_kii_data.host, buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
 	{
 		KII_DEBUG("kii-error: transfer data error !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	if(strstr(buf, "HTTP/1.1 206") == NULL)
 	{
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	p1 = strstr(buf, STR_CONTENT_RANGE);
+	if(p1 == NULL)
+	{
+		goto free;
+	}
 	p1 = strstr(p1, "/");
 	if(p1 == NULL)
 	{
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 	p1++;
 	*totalLength = atoi(p1);
@@ -1034,8 +1066,7 @@ int kiiObj_downloadBody(int scope,
 	p1 = strstr(buf, STR_CONTENT_LENGTH);
 	if(p1 == NULL)
 	{
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 	p1 = p1 + strlen(STR_CONTENT_LENGTH);
 	contentLengh = atoi(p1);
@@ -1043,23 +1074,25 @@ int kiiObj_downloadBody(int scope,
 	p1 = strstr(buf, STR_CRLFCRLF);
 	if(p1 == NULL)
 	{
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 	p1 += 4;
 
 	if(contentLengh > length)
 	{
 		KII_DEBUG("kii-error: the buffer of object body is too small");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 	else
 	{
 		memset(data, 0, length);
 		memcpy(data, p1, contentLengh);
 		*actualLength = contentLengh;
-		kiiHal_free(buf);
-		return 0;
+		ret = 0;
 	}
+	
+free:
+	kiiHal_free(buf);
+exit:
+	return ret;
 }

@@ -24,12 +24,13 @@ extern kii_data_struct g_kii_data;
 int kiiExt_extension(char* endpointName, char* jsonObject)
 {
 	char* buf;
-
+	int ret = -1;
+	
 	buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
 	if(buf == NULL)
 	{
 		KII_DEBUG("kii-error: memory allocation failed !\r\n");
-		return -1;
+		goto exit;
 	}
 	memset(buf, 0, KII_SOCKET_BUF_SIZE);
 	strcpy(buf, STR_POST);
@@ -69,8 +70,7 @@ int kiiExt_extension(char* endpointName, char* jsonObject)
 	if((strlen(buf) + strlen(jsonObject) + 1) > KII_SOCKET_BUF_SIZE)
 	{
 		KII_DEBUG("kii-error: buffer overflow !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 	strcat(buf, jsonObject);
 	strcat(buf, STR_LF);
@@ -78,18 +78,16 @@ int kiiExt_extension(char* endpointName, char* jsonObject)
 	if(kiiHal_transfer(g_kii_data.host, buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
 	{
 		KII_DEBUG("kii-error: transfer data error !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
-	if((strstr(buf, "HTTP/1.1 200") == NULL))
+	if((strstr(buf, "HTTP/1.1 200") != NULL))
 	{
-		kiiHal_free(buf);
-		return -1;
+		ret = 0;
 	}
-	else
-	{
-		kiiHal_free(buf);
-		return 0;
-	}
+	
+free:
+	kiiHal_free(buf);
+exit:
+	return ret;
 }

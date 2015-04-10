@@ -26,12 +26,13 @@ int kiiDev_getToken(char* vendorDeviceID, char* password)
 	char* p2;
 	char* buf;
 	char jsonBuf[256];
+	int ret = -1;
 
 	buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
 	if(buf == NULL)
 	{
 		KII_DEBUG("kii-error: memory allocation failed !\r\n");
-		return -1;
+		goto exit;
 	}
 	memset(buf, 0, KII_SOCKET_BUF_SIZE);
 	strcpy(buf, STR_POST);
@@ -73,8 +74,7 @@ int kiiDev_getToken(char* vendorDeviceID, char* password)
 	if((strlen(buf) + strlen(jsonBuf) + 1) > KII_SOCKET_BUF_SIZE)
 	{
 		KII_DEBUG("kii-error: buffer overflow !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 	strcat(buf, jsonBuf);
 	strcat(buf, STR_LF);
@@ -82,29 +82,46 @@ int kiiDev_getToken(char* vendorDeviceID, char* password)
 	if(kiiHal_transfer(g_kii_data.host, buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
 	{
 		KII_DEBUG("kii-error: transfer data error !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	if(strstr(buf, "HTTP/1.1 200") == NULL)
 	{
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	// get access token
 	p1 = strstr(buf, "\"access_token\"");
+	if(p1 == NULL)
+	{
+		goto free;
+	}
 	p1 = strstr(p1, ":");
+	if(p1 == NULL)
+	{
+		goto free;
+	}
 	p1 = strstr(p1, "\"");
+	if(p1 == NULL)
+	{
+		goto free;
+	}
 	p1 += 1;
 	p2 = strstr(p1, "\"");
+	if(p2 == NULL)
+	{
+		goto free;
+	}
 	memset(g_kii_data.accessToken, 0, KII_ACCESS_TOKEN_SIZE + 1);
 	memcpy(g_kii_data.accessToken, p1, p2 - p1);
 
 	memset(g_kii_data.vendorDeviceID, 0, KII_DEVICE_VENDOR_ID + 1);
 	strcpy(g_kii_data.vendorDeviceID, vendorDeviceID);
+	ret = 0;
+free:
 	kiiHal_free(buf);
-	return 0;
+exit:
+	return ret;
 }
 
 /*****************************************************************************
@@ -126,12 +143,13 @@ int kiiDev_register(char* vendorDeviceID, char* deviceType, char* password)
 	char* p2;
 	char* buf;
 	char jsonBuf[256];
+	int ret = -1;
 
 	buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
 	if(buf == NULL)
 	{
 		KII_DEBUG("kii-error: memory allocation failed !\r\n");
-		return -1;
+		goto exit;
 	}
 	memset(buf, 0, KII_SOCKET_BUF_SIZE);
 	strcpy(buf, STR_POST);
@@ -175,8 +193,7 @@ int kiiDev_register(char* vendorDeviceID, char* deviceType, char* password)
 	if((strlen(buf) + strlen(jsonBuf) + 1) > KII_SOCKET_BUF_SIZE)
 	{
 		KII_DEBUG("kii-error: buffer overflow !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 	strcat(buf, jsonBuf);
 	strcat(buf, STR_LF);
@@ -184,29 +201,45 @@ int kiiDev_register(char* vendorDeviceID, char* deviceType, char* password)
 	if(kiiHal_transfer(g_kii_data.host, buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
 	{
 		KII_DEBUG("kii-error: transfer data error !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	if(strstr(buf, "HTTP/1.1 201") == NULL)
 	{
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	p1 = strstr(buf, "\"_accessToken\"");
+	if(p1 == NULL)
+	{
+		goto free;
+	}
 	p1 = strstr(p1, ":");
+	if(p1 == NULL)
+	{
+		goto free;
+	}
 	p1 = strstr(p1, "\"");
+	if(p1 == NULL)
+	{
+		goto free;
+	}
 	p1 += 1;
 	p2 = strstr(p1, "\"");
+	if(p2 == NULL)
+	{
+		goto free;
+	}
 	memset(g_kii_data.accessToken, 0, KII_ACCESS_TOKEN_SIZE + 1);
 	memcpy(g_kii_data.accessToken, p1, p2 - p1);
 
 	memset(g_kii_data.vendorDeviceID, 0, KII_DEVICE_VENDOR_ID + 1);
 	strcpy(g_kii_data.vendorDeviceID, vendorDeviceID);
-
+	ret = 0;
+free:
 	kiiHal_free(buf);
-	return 0;
+exit:
+	return ret;
 }
 
 /*****************************************************************************
@@ -225,12 +258,13 @@ int kiiDev_getIPAddress(char* ipAddress)
 	char* p1;
 	char* p2;
 	char* buf;
-
+    int ret = -1;
+	
 	buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
 	if(buf == NULL)
 	{
 		KII_DEBUG("kii-error: memory allocation failed !\r\n");
-		return -1;
+		goto exit;
 	}
 	memset(buf, 0, KII_SOCKET_BUF_SIZE);
 	strcpy(buf, STR_GET);
@@ -246,30 +280,46 @@ int kiiDev_getIPAddress(char* ipAddress)
 	if(strlen(buf) > KII_SOCKET_BUF_SIZE)
 	{
 		KII_DEBUG("kii-error: buffer overflow !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	if(kiiHal_transfer("api.ipify.org", buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
 	{
 		KII_DEBUG("kii-error: transfer data error !\r\n");
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	if(strstr(buf, "HTTP/1.1 200") == NULL)
 	{
-		kiiHal_free(buf);
-		return -1;
+		goto free;
 	}
 
 	p1 = strstr(buf, "\"ip\"");
+	if(p1 == NULL)
+	{
+		goto free;
+	}
 	p1 = strstr(p1, ":");
+	if(p1 == NULL)
+	{
+		goto free;
+	}
 	p1 = strstr(p1, "\"");
+	if(p1 == NULL)
+	{
+		goto free;
+	}
 	p1 += 1;
 	p2 = strstr(p1, "\"");
+	if(p2 == NULL)
+	{
+		goto free;
+	}
 	memcpy(ipAddress, p1, p2 - p1);
+	ret = 0;
 
+free:
 	kiiHal_free(buf);
-	return 0;
+exit:
+	return ret;
 }

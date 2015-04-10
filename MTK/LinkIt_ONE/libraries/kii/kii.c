@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdio.h>
 
 #include "kii.h"
 #include "kii_def.h"
@@ -20,6 +21,7 @@ kii_data_struct g_kii_data;
 *****************************************************************************/
 int kii_init(char* site, char* appID, char* appKey)
 {
+	KII_DEBUG("Kii lib building time:%s,%s\r\n",__TIME__,__DATE__);
 	memset(&g_kii_data, 0, sizeof(g_kii_data));
 	if((strlen(site) != KII_SITE_SIZE) || (strlen(appID) != KII_APPID_SIZE) || (strlen(appKey) != KII_APPKEY_SIZE))
 	{

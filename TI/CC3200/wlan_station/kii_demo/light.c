@@ -662,16 +662,6 @@ int light_init(void)
 		UART_PRINT("light onboarding success\r\n");
 	}
 
-	if(light_initPush() < 0)
-	{
-		UART_PRINT("Initialize push failed\r\n");
-		return -1;
-	}
-	else
-	{
-		UART_PRINT("Initialize push success\r\n");
-	}
-
 	if(light_updateBootupStatus() < 0)
 	{
 		UART_PRINT("Update bootup status failed\r\n");
@@ -680,6 +670,16 @@ int light_init(void)
 	else
 	{
 		UART_PRINT("Update bootup status success\r\n");
+	}
+
+	if(light_initPush() < 0)
+	{
+		UART_PRINT("Initialize push failed\r\n");
+		return -1;
+	}
+	else
+	{
+		UART_PRINT("Initialize push success\r\n");
 	}
 
 	return 0;

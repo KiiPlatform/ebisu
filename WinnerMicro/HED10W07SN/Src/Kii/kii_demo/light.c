@@ -450,8 +450,8 @@ void light_parseFirmwareUpgrade(char* bucketName, char* objectID)
 	}
 	// printf("firmware upgrade ...\r\n");
 	// printf("bodyUrl:%s\r\n", bodyUrl);
-	 printf("bodyUrlFinal:%s\r\n", bodyUrlFinal);
-	 printf("versionName:%s\r\n", versionName);
+	printf("bodyUrlFinal:%s\r\n", bodyUrlFinal);
+	printf("versionName:%s\r\n", versionName);
 	lightIf_firmwareUpgrade(bodyUrlFinal, versionName);
 }
 
@@ -658,16 +658,6 @@ int light_init(void)
 		printf("light onboarding success\r\n");
 	}
 
-	if(light_initPush() < 0)
-	{
-		printf("Initialize push failed\r\n");
-		return -1;
-	}
-	else
-	{
-		printf("Initialize push success\r\n");
-	}
-
 	if(light_updateBootupStatus() < 0)
 	{
 		printf("Update bootup status failed\r\n");
@@ -676,6 +666,16 @@ int light_init(void)
 	else
 	{
 		printf("Update bootup status success\r\n");
+	}
+
+	if(light_initPush() < 0)
+	{
+		printf("Initialize push failed\r\n");
+		return -1;
+	}
+	else
+	{
+		printf("Initialize push success\r\n");
 	}
 
 	return 0;

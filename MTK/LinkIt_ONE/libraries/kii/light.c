@@ -660,16 +660,6 @@ int light_init(void)
 		DEBUG("light onboarding success\r\n");
 	}
 
-	if(light_initPush() < 0)
-	{
-		DEBUG("Initialize push failed\r\n");
-		return -1;
-	}
-	else
-	{
-		DEBUG("Initialize push success\r\n");
-	}
-
 	if(light_updateBootupStatus() < 0)
 	{
 		DEBUG("Update bootup status failed\r\n");
@@ -678,6 +668,16 @@ int light_init(void)
 	else
 	{
 		DEBUG("Update bootup status success\r\n");
+	}
+
+	if(light_initPush() < 0)
+	{
+		DEBUG("Initialize push failed\r\n");
+		return -1;
+	}
+	else
+	{
+		DEBUG("Initialize push success\r\n");
 	}
 
 	return 0;

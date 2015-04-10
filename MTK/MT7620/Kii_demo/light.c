@@ -665,6 +665,16 @@ int light_init(void)
 		printf("light onboarding success\r\n");
 	}
 
+	if(light_updateBootupStatus() < 0)
+	{
+		printf("Update bootup status failed\r\n");
+		return -1;
+	}
+	else
+	{
+		printf("Update bootup status success\r\n");
+	}
+
 	if(light_initPush() < 0)
 	{
 		printf("Initialize push failed\r\n");
@@ -675,15 +685,6 @@ int light_init(void)
 		printf("Initialize push success\r\n");
 	}
 
-	if(light_updateBootupStatus() < 0)
-	{
-		printf("Update bootup status failed\r\n");
-		return -1;
-	}
-	else
-	{
-		printf("Update bootup status success\r\n");
-	}
 	fwup_upgrade(NULL);
 
 	return 0;
