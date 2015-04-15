@@ -11,12 +11,16 @@ TARGET = exampleapp
 
 all: clean $(TARGET)
 
-$(TARGET):
+copy:
+	cp ../kii-core/*.c kii-core/
+	cp ../kii-core/*.h kii-core/
+
+$(TARGET): copy
 	gcc $(CFLAGS) $(SOURCES) $(LIBS) -o $@
 
 clean:
 	touch $(TARGET)
 	rm $(TARGET)
 
-.PHONY: all clean
+.PHONY: all clean copy
 
