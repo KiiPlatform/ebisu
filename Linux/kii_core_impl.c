@@ -12,13 +12,36 @@
 
 #define BUFF_SIZE 256
 
-kii_http_client_code_t prv_ssl_connect(void* app_context, const char* host)
+typedef enum prv_ssl_state_t {
+    PRV_SSL_STATE_IDLE,
+    PRV_SSL_STATE_CONNECT,
+    PRV_SSL_STATE_SEND,
+    PRV_SSL_STATE_RECV,
+    PRV_SSL_STATE_CLOSE
+} prv_ssl_state_t;
+    
+typedef struct context_t
+{
+    SSL *ssl;
+    SSL_CTX *ssl_ctx;
+    int sock;
+    char host[256];
+    prv_ssl_state_t state;
+    int last_chunk;
+    int sent_size;
+    int received_size;
+} context_t;
+
+context_t g_ctx;
+
+kii_http_client_code_t prv_ssl_connect(kii_http_context_t* http_context,
+        const char* host)
 {
     int sock, ret;
     struct hostent *servhost;
     struct sockaddr_in server;
     struct servent *service;
-    context_t* ctx = (context_t*)app_context;
+    context_t* ctx = (context_t*)http_context->app_context;
     SSL *ssl;
     SSL_CTX *ssl_ctx;
 
@@ -86,9 +109,9 @@ kii_http_client_code_t prv_ssl_connect(void* app_context, const char* host)
     return KII_HTTPC_OK;
 }
 
-kii_http_client_code_t prv_ssl_send(void* app_context, const char* send_buff, int buff_length)
+kii_http_client_code_t prv_ssl_send(kii_http_context_t* http_context, const char* send_buff, int buff_length)
 {
-    context_t* ctx = (context_t*)app_context;
+    context_t* ctx = (context_t*)http_context->app_context;
     int ret = SSL_write(ctx->ssl, send_buff, buff_length);
     if (ret > 0) {
         return KII_HTTPC_OK;
@@ -98,9 +121,9 @@ kii_http_client_code_t prv_ssl_send(void* app_context, const char* send_buff, in
     }
 }
 
-kii_http_client_code_t prv_ssl_recv(void* app_context, char* recv_buff, int length_to_read, int* out_actual_length)
+kii_http_client_code_t prv_ssl_recv(kii_http_context_t* http_context, char* recv_buff, int length_to_read, int* out_actual_length)
 {
-    context_t* ctx = (context_t*)app_context;
+    context_t* ctx = (context_t*)http_context->app_context;
     int ret = SSL_read(ctx->ssl, recv_buff, length_to_read);
     if (ret > 0) {
         *out_actual_length = ret;
@@ -114,9 +137,9 @@ kii_http_client_code_t prv_ssl_recv(void* app_context, char* recv_buff, int leng
 }
 
 
-kii_http_client_code_t prv_ssl_close(void* app_context)
+kii_http_client_code_t prv_ssl_close(kii_http_context_t* http_context)
 {
-    context_t* ctx = (context_t*)app_context;
+    context_t* ctx = (context_t*)http_context->app_context;
     int ret = SSL_shutdown(ctx->ssl);
     if (ret != 1) {
         int sslErr = SSL_get_error(ctx->ssl, ret);
@@ -143,15 +166,17 @@ kii_http_client_code_t prv_ssl_close(void* app_context)
 /* HTTP Callback functions */
 kii_http_client_code_t
     request_line_cb(
-        void* http_context,
+        kii_http_context_t* http_context,
         const char* method,
         const char* host,
         const char* path)
 {
-    context_t* ctx = (context_t*)http_context;
-    char* reqBuff = ctx->buff;
-    strncpy(ctx->host, host, strlen(host));
-    /* TODO: prevent overflow. */
+    char* reqBuff;
+    
+    memset(&g_ctx, 0x00, sizeof(context_t));
+    http_context->app_context = &g_ctx;
+    reqBuff = http_context->buffer;
+    strncpy(g_ctx.host, host, strlen(host));
     sprintf(reqBuff, "%s https://%s/%s HTTP/1.1\r\n", method, host, path);
 
     return KII_HTTPC_OK;
@@ -159,12 +184,11 @@ kii_http_client_code_t
 
 kii_http_client_code_t
     header_cb(
-        void* http_context,
+        kii_http_context_t* http_context,
         const char* key,
         const char* value)
 {
-    /* TODO: prevent overflow. */
-    char* reqBuff = ((context_t*)http_context)->buff;
+    char* reqBuff = http_context->buffer;
     strcat(reqBuff, key);
     strcat(reqBuff, ":");
     strcat(reqBuff, value);
@@ -174,11 +198,10 @@ kii_http_client_code_t
 
 kii_http_client_code_t
     body_cb(
-        void* http_context,
+        kii_http_context_t* http_context,
         const char* body_data)
 {
-    /* TODO: prevent overflow. */
-    char* reqBuff = ((context_t*)http_context)->buff;
+    char* reqBuff = http_context->buffer;
     strcat(reqBuff, "\r\n");
     if (body_data != NULL) {
         strcat(reqBuff, body_data);
@@ -188,11 +211,14 @@ kii_http_client_code_t
 
 kii_http_client_code_t
     execute_cb(
-        void* http_context,
+        kii_http_context_t* http_context,
         int* response_code,
         char** response_body)
 {
-    context_t* ctx = (context_t*)http_context;
+    context_t* ctx;
+
+    ctx = &g_ctx;
+    
     kii_http_client_code_t res;
 
     printf("client state: %d\n", ctx->state);
@@ -204,7 +230,7 @@ kii_http_client_code_t
             ctx->state = PRV_SSL_STATE_CONNECT;
             return KII_HTTPC_AGAIN;
         case PRV_SSL_STATE_CONNECT:
-            res = prv_ssl_connect(ctx, ctx->host);
+            res = prv_ssl_connect(http_context, ctx->host);
             if (res == KII_HTTPC_OK) {
                 ctx->state = PRV_SSL_STATE_SEND;
                 return KII_HTTPC_AGAIN;
@@ -218,14 +244,14 @@ kii_http_client_code_t
         {
             char* sendBuff = NULL;
             int size = BUFF_SIZE;
-            int remain = strlen(ctx->buff) - ctx->sent_size;
+            int remain = strlen(http_context->buffer) - ctx->sent_size;
             if (remain < size) {
                 size = remain;
                 ctx->last_chunk = 1;
             }
-            sendBuff = ctx->buff + ctx->sent_size;
+            sendBuff = http_context->buffer + ctx->sent_size;
             res = prv_ssl_send(
-                    ctx,
+                    http_context,
                     sendBuff,
                     size);
             if (res == KII_HTTPC_OK) {
@@ -244,11 +270,11 @@ kii_http_client_code_t
         case PRV_SSL_STATE_RECV:
         {
             int actualLength = 0;
-            char* buffPtr = ctx->buff + ctx->received_size;
+            char* buffPtr = http_context->buffer + ctx->received_size;
             if (ctx->received_size == 0) {
-                memset(ctx->buff, 0x00, ctx->buff_size);
+                memset(http_context->buffer, 0x00, http_context->buffer_size);
             }
-            res = prv_ssl_recv(ctx, buffPtr, BUFF_SIZE, &actualLength);
+            res = prv_ssl_recv(http_context, buffPtr, BUFF_SIZE, &actualLength);
             if (res == KII_HTTPC_OK) {
                 ctx->received_size += actualLength;
                 if (actualLength < BUFF_SIZE) {
@@ -264,10 +290,10 @@ kii_http_client_code_t
         }
         case PRV_SSL_STATE_CLOSE:
         {
-            res = prv_ssl_close(ctx);
+            res = prv_ssl_close(http_context);
             if (res == KII_HTTPC_OK) {
                 /* parse status code */
-                char* statusPtr = strstr(ctx->buff, "HTTP/1.1 ");
+                char* statusPtr = strstr(http_context->buffer, "HTTP/1.1 ");
                 int numCode = 0;
                 char* bodyPtr = NULL;
                 if (statusPtr != NULL) {
@@ -279,7 +305,7 @@ kii_http_client_code_t
                     *response_code = numCode;
                 }
                 /* set body pointer */
-                bodyPtr = strstr(ctx->buff, "\r\n\r\n");
+                bodyPtr = strstr(http_context->buffer, "\r\n\r\n");
                 if (bodyPtr != NULL) {
                     bodyPtr += 4;
                 }
@@ -294,7 +320,6 @@ kii_http_client_code_t
             }
         }
     }
-
     return KII_HTTPC_OK;
 }
 

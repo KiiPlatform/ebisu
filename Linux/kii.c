@@ -7,7 +7,7 @@
 #include "kii_core_impl.h"
 
 kii_t g_kii_data;
-context_t ctx;
+kii_http_context_t g_http_context;
 
 /*****************************************************************************
 *
@@ -26,6 +26,7 @@ int kii_init(char* site, char* appID, char* appKey)
 {
     /* TODO: logging improvement */
 	memset(&g_kii_data, 0, sizeof(kii_t));
+    memset(&g_http_context, 0, sizeof(kii_http_context_t));
 	if((strlen(site) != KII_SITE_SIZE) || (strlen(appID) != KII_APPID_SIZE) || (strlen(appKey) != KII_APPKEY_SIZE))
 	{
 		return -1;
@@ -62,8 +63,7 @@ int kii_init(char* site, char* appID, char* appKey)
     g_kii_data.http_execute_cb = execute_cb;
     g_kii_data.logger_cb = logger_cb;
 
-    memset(&ctx, 0, sizeof(context_t));
-    g_kii_data.http_context = &ctx;
+    g_kii_data.http_context = &g_http_context;
 
 	return 0;
 }

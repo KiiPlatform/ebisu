@@ -32,14 +32,11 @@ int kiiDev_getToken(char* vendorDeviceID, char* password)
     kii_error_code_t core_err;
     kii_author_t author;
     kii_state_t state;
-    void* ctx;
 
     /* TODO: use wrapper. */
     buf = malloc(4096);
-    g_kii_data.buffer = buf;
-    g_kii_data.buffer_size = 4096;
-    ctx = g_kii_data.http_context;
-    ((context_t*) ctx)->buff = buf;
+    g_kii_data.http_context->buffer = buf;
+    g_kii_data.http_context->buffer_size = 4096;
 
     core_err = kii_thing_authentication(&g_kii_data, vendorDeviceID, password);
     if (core_err != KIIE_OK) {
