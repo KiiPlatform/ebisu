@@ -1,6 +1,8 @@
 #ifndef KII_H
 #define KII_H
 
+#include "kii-core/kii.h"
+
 #define KII_SITE_SIZE 2
 #define KII_HOST_SIZE 64
 #define KII_APPID_SIZE 8
@@ -27,22 +29,24 @@ typedef void (*kiiPush_recvMsgCallback)(char* jsonBuf, int rcvdCounter);
 *
 *  kii_init
 *
-*  \param  site - the input of site name, should be one of "CN", "JP", "US", "SG"
+*  \param kii - sdk instance.
+*              site - the input of site name, should be one of "CN", "JP", "US", "SG"
 *              appID - the input of Application ID
-*              objectID - the input of Application Key
+*              appKey - the input of Application Key
 *
 *  \return  0:success; -1: failure
 *
 *  \brief  Initializes Kii
 *
 *****************************************************************************/
-extern int kii_init(char* site, char* appID, char* appKey);
+extern int kii_init(kii_t* kii, char* site, char* appID, char* appKey);
 
 /*****************************************************************************
 *
 *  kiiDev_getToken
 *
-*  \param  vendorDeviceID - the input of identification of the device
+*  \param kii - sdk instance.
+*               vendorDeviceID - the input of identification of the device
 *               password - the input of password
 *
 *  \return 0:success; -1: failure
@@ -50,13 +54,14 @@ extern int kii_init(char* site, char* appID, char* appKey);
 *  \brief  Gets token
 *
 *****************************************************************************/
-extern int kiiDev_getToken(char* deviceVendorID, char* password);
+extern int kiiDev_getToken(kii_t* kii, char* deviceVendorID, char* password);
 
 /*****************************************************************************
 *
 *  kiiDev_register
 *
-*  \param  vendorDeviceID - the input of identification of the device
+*  \param kii - sdk instance.
+*               vendorDeviceID - the input of identification of the device
 *               deviceType - the input of device type
 *               password - the input of password
 *
@@ -65,7 +70,7 @@ extern int kiiDev_getToken(char* deviceVendorID, char* password);
 *  \brief  Registers device
 *
 *****************************************************************************/
-extern int kiiDev_register(char* vendorDeviceID, char* deviceType, char* password);
+extern int kiiDev_register(kii_t* kii, char* vendorDeviceID, char* deviceType, char* password);
 
 /*****************************************************************************
 *
