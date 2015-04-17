@@ -21,6 +21,24 @@
 #define DEMO_KII_PUSH_RECV_MSG_TASK_PRIO 3
 #define DEMO_KII_PUSH_PINGREQ_TASK_PRIO 4
 
+#ifdef DEBUG
+#ifndef __FILE__
+#define __FILE__ ("__FILE__ macro is not available")
+#endif
+
+#ifndef __LINE__
+#define __LINE__ (-1)
+#endif
+
+#define M_KII_LOG(x) \
+    if (kii->logger_cb != NULL) {\
+        kii->logger_cb("file:%s, line:%d ", __FILE__, __LINE__); \
+        (x); \
+    }
+#else
+#define M_KII_LOG(x)
+#endif
+
 typedef enum { KII_APP_SCOPE = 0, KII_THING_SCOPE = 1 } kii_scope_e;
 
 typedef void (*kiiPush_recvMsgCallback)(char* jsonBuf, int rcvdCounter);
