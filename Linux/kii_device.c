@@ -31,7 +31,8 @@ int kiiDev_getToken(kii_t* kii, char* vendorDeviceID, char* password)
         core_err = kii_run(kii);
         state = kii_get_state(kii);
     } while (state != KII_STATE_IDLE);
-    printf("resp: %s", kii->response_body);
+    /* TODO: improve logging abstraction.*/
+    printf("resp: %s\n", kii->response_body);
     if (core_err != KIIE_OK) {
         goto free;
     }
