@@ -1,5 +1,9 @@
-#ifndef KII_TASK_CALLBACK
-#define KII_TASK_CALLBACK
+#ifndef _KII_TASK_CALLBACK
+#define _KII_TASK_CALLBACK
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum kii_task_code_t {
     KII_TASKC_OK,
@@ -15,6 +19,10 @@ typedef kii_task_code_t
      void* param,
      unsigned char* stk_start,
      unsigned int stk_size,
-     unsigned int prio);
+     unsigned int priority);
 
+#ifdef _cplusplus
+}
 #endif
+
+#endif /* _KII_TASK_CALLBACK  */

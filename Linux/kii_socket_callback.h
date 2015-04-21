@@ -1,5 +1,9 @@
-#ifndef KII_SOCKET_CALLBACK
-#define KII_SOCKET_CALLBACK
+#ifndef _KII_SOCKET_CALLBACK
+#define _KII_SOCKET_CALLBACK
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct kii_socket_context_t {
     void* app_context;
@@ -22,4 +26,9 @@ typedef (kii_socket_code_t)
 typedef (kii_socket_code_t)
     (*KII_SOCKET_CLOSE_CB)(kii_socket_context_t* socket_context);
 
+
+#ifdef _cplusplus
+}
 #endif
+
+#endif /* _KII_SOCKET_CALBACK */
