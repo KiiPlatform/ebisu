@@ -122,4 +122,4 @@ exit:
     return ret;
 }
 
-/* vim: set tw=4 sw=4 ts=4 et fenc=utf=8: */
+/* vim: set tw=4 sw=4 ts=4 et fenc=utf-8: */
