@@ -23,7 +23,8 @@ typedef (kii_socket_code_t)
     (kii_socket_context_t* socket_context, const char* buffer, size_t length);
 typedef (kii_socket_code_t)
     (*KII_SOCKET_RECV_CB)
-    (kii_socket_context_t* socket_context, char* buffer, size_t length);
+    (kii_socket_context_t* socket_context, char* buffer, size_t length_to_read,
+     size_t* out_actual_length);
 typedef (kii_socket_code_t)
     (*KII_SOCKET_CLOSE_CB)(kii_socket_context_t* socket_context);
 

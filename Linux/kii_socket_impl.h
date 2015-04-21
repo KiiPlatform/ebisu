@@ -18,7 +18,8 @@ kii_socket_code_t
 kii_socket_code_t
     recv_cb(kii_socket_context_t* socket_context,
             char* buffer,
-            size_t length);
+            size_t length_to_read,
+            size_t* out_actual_length);
 
 kii_socket_code_t
     close_cb(kii_socket_context_t* socket_context);
