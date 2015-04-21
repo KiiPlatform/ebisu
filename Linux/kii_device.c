@@ -68,6 +68,8 @@ exit:
 int kiiDev_register(kii_t* kii, char* vendorDeviceID, char* deviceType, char* password)
 {
     char* buf;
+    char* p1;
+    char* p2;
     char thing_data[1024];
     int ret = -1;
     kii_error_code_t core_err;
@@ -77,15 +79,15 @@ int kiiDev_register(kii_t* kii, char* vendorDeviceID, char* deviceType, char* pa
     sprintf(thing_data,
             "{\"_vendorThingID\":\"%s\",\"_thingType\":\"%s\",\"_password\":\"%s\"}",
             vendorDeviceID, deviceType, password);
-    core_err = kii_thing_register(kii, thing_data);
-    if (core_err != KII_E_OK) {
+    core_err = kii_register_thing(kii, thing_data);
+    if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
         core_err = kii_run(kii); 
         state = kii_get_state(kii);
     } while (state != KII_STATE_IDLE);
-    if (core_err != KII_E_OK) {
+    if (core_err != KIIE_OK) {
         goto exit;
     }
     if(kii->response_code < 200 || 300 <= kii->response_code)
@@ -114,7 +116,7 @@ int kiiDev_register(kii_t* kii, char* vendorDeviceID, char* deviceType, char* pa
     {
         goto exit;
     }
-    strncpy(kii->author.access_token, p1, p2 - p1);
+    memcpy(kii->author.access_token, p1, p2 - p1);
     strcpy(kii->author.author_id, vendorDeviceID);
     ret = 0;
 

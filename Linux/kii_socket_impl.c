@@ -1,5 +1,11 @@
 #include "kii_socket_impl.h"
 
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/uio.h>
+#include <netdb.h>
+#include <netinet/in.h>
+
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -109,15 +115,15 @@ kii_socket_code_t
     int ret;
 
     ctx = (linux_ssl_context_t*)socket_context->app_context;
-    ret = SSL_read(ctx->ssl, recv_buff, length_to_read);
+    ret = SSL_read(ctx->ssl, buffer, length_to_read);
     if (ret > 0) {
         *out_actual_length = ret;
-        return KII_HTTPC_OK;
+        return KII_SOCKETC_OK;
     } else {
         printf("failed to receive:\n");
         /* TOOD: could be 0 on success? */
         *out_actual_length = 0;
-        return KII_HTTPC_FAIL;
+        return KII_SOCKETC_FAIL;
     }
 }
 
@@ -146,8 +152,8 @@ kii_socket_code_t
     SSL_CTX_free(ctx->ssl_ctx);
     if (ret != 1) {
         printf("failed to close:\n");
-        return KII_HTTPC_FAIL;
+        return KII_SOCKETC_FAIL;
     }
-    return KII_HTTPC_OK;
+    return KII_SOCKETC_OK;
 }
 
