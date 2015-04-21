@@ -12,8 +12,6 @@ typedef enum kii_socket_code_t {
 } kii_socket_code_t;
 
 typedef (kii_socket_code_t)
-    (*KII_SOCKET_INIT_CB)(kii_socket_context_t* socket_context);
-typedef (kii_socket_code_t)
     (*KII_SOCKET_CONNECT_CB)(kii_socket_context_t* socket_context);
 typedef (kii_socket_code_t)
     (*KII_SOCKET_SEND_CB)
