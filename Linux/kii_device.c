@@ -11,10 +11,10 @@
 
 int kiiDev_getToken(kii_t* kii, char* vendorDeviceID, char* password)
 {
-	char* p1;
-	char* p2;
-	char* buf;
-	int ret = -1;
+    char* p1;
+    char* p2;
+    char* buf;
+    int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
 
@@ -31,38 +31,38 @@ int kiiDev_getToken(kii_t* kii, char* vendorDeviceID, char* password)
     if (core_err != KIIE_OK) {
         goto exit;
     }
-	if(kii->response_code < 200 || 300 <= kii->response_code)
-	{
-		goto exit;
-	}
-	// get access token
-	p1 = strstr(buf, "\"access_token\"");
-	if(p1 == NULL)
-	{
-		goto exit;
-	}
-	p1 = strstr(p1, ":");
-	if(p1 == NULL)
-	{
-		goto exit;
-	}
-	p1 = strstr(p1, "\"");
-	if(p1 == NULL)
-	{
-		goto exit;
-	}
-	p1 += 1;
-	p2 = strstr(p1, "\"");
-	if(p2 == NULL)
-	{
-		goto exit;
-	}
+    if(kii->response_code < 200 || 300 <= kii->response_code)
+    {
+        goto exit;
+    }
+    // get access token
+    p1 = strstr(buf, "\"access_token\"");
+    if(p1 == NULL)
+    {
+        goto exit;
+    }
+    p1 = strstr(p1, ":");
+    if(p1 == NULL)
+    {
+        goto exit;
+    }
+    p1 = strstr(p1, "\"");
+    if(p1 == NULL)
+    {
+        goto exit;
+    }
+    p1 += 1;
+    p2 = strstr(p1, "\"");
+    if(p2 == NULL)
+    {
+        goto exit;
+    }
     strcpy(kii->author.author_id, vendorDeviceID);
     memcpy(kii->author.access_token, p1, p2 - p1);
-	ret = 0;
+    ret = 0;
 
 exit:
-	return ret;
+    return ret;
 }
 
 int kiiDev_register(kii_t* kii, char* vendorDeviceID, char* deviceType, char* password)
