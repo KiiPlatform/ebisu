@@ -15,6 +15,9 @@ kii_task_code_t task_create_cb
      unsigned int stk_size,
      unsigned int priority);
 
+void delay_ms_cb
+    (unsigned int msec);
+
 #ifdef __cplusplus
 }
 #endif

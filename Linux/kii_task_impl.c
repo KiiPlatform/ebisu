@@ -1,5 +1,6 @@
 #include "kii_task_impl.h"
 #include <pthread.h>
+#include <unistd.h>
 
 kii_task_code_t task_create_cb
     (const char* name,
@@ -22,4 +23,9 @@ kii_task_code_t task_create_cb
     {
         return KII_TASKC_FAIL;
     }
+}
+
+void delay_ms_cb(unsigned int msec)
+{
+    usleep(msec * 1000);
 }
