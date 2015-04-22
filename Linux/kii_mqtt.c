@@ -154,25 +154,15 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
 	}
 }
 
-#if 0
-/*****************************************************************************
-*
-*  KiiMQTT_subscribe
-*
-*  \param  qos -  QoS value, 0, 1 or 2
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Subscribes MQTT topic
-*
-*****************************************************************************/
-int KiiMQTT_subscribe(kii_t* kii, enum QoS qos)
+int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
 {
 	char buf[256];
 	int rcvdCounter;
 	int i;
 	int j;
 	int k;
+    int actual_length = 0;
+    kii_socket_code_t sock_err;
 
 	memset(buf, 0, sizeof(buf));
 	i = 8;
@@ -181,11 +171,11 @@ int KiiMQTT_subscribe(kii_t* kii, enum QoS qos)
 	buf[i++] = 0x00;
 	buf[i++] = 0x01;
 	// Payload:topic length
-	buf[i++] = (strlen(g_kii_push.mqttTopic) & 0xff00) >> 8;
-	buf[i++] = strlen(g_kii_push.mqttTopic) & 0x00ff;
+	buf[i++] = (strlen(topic) & 0xff00) >> 8;
+	buf[i++] = strlen(topic) & 0x00ff;
 	// Payload:topic
-	strcpy(&buf[i], g_kii_push.mqttTopic);
-	i += strlen(g_kii_push.mqttTopic);
+	strcpy(&buf[i], topic);
+	i += strlen(topic);
 	// Payload: qos
 	buf[i++] = qos;
 
@@ -200,79 +190,64 @@ int KiiMQTT_subscribe(kii_t* kii, enum QoS qos)
 	{
 		buf[j++] = buf[8 + k];
 	}
-	/*
-	    M_KII_LOG(kii->logger_cb("\r\n----------------MQTT subscribe send start-------------\r\n");
-	    M_KII_LOG(kii->logger_cb("\r\n");
-	    for (i=0; i<j; i++)
-	    {
-	        M_KII_LOG(kii->logger_cb("%02x", buf[i]);
-	    }
-	    M_KII_LOG(kii->logger_cb("\r\n");
+    M_KII_LOG(kii->logger_cb("\r\n----------------MQTT subscribe send start-------------\r\n"));
+    M_KII_LOG(kii->logger_cb("\r\n"));
+    for (i=0; i<j; i++)
+    {
+        M_KII_LOG(kii->logger_cb("%02x", buf[i]));
+    }
+    M_KII_LOG(kii->logger_cb("\r\n"));
 
-	    M_KII_LOG(kii->logger_cb("\r\n----------------MQTT subscribe send end-------------\r\n");
-	*/
-	if(kiiHal_socketSend(g_kii_push.mqttSocket, buf, j) < 0)
+    M_KII_LOG(kii->logger_cb("\r\n----------------MQTT subscribe send end-------------\r\n"));
+    sock_err = kii->socket_send_cb(&(kii->socket_context), buf, j);
+	if(sock_err != KII_SOCKETC_OK)
 	{
-
-		M_KII_LOG(kii->logger_cb("kii-error: send data fail\r\n");
+		M_KII_LOG(kii->logger_cb("kii-error: send data fail\r\n"));
 		return -1;
 	}
-
 	memset(buf, 0, sizeof(buf));
-	rcvdCounter = kiiHal_socketRecv(g_kii_push.mqttSocket, buf, sizeof(buf));
-	if(rcvdCounter <= 0)
+    sock_err = kii->socket_recv_cb(&(kii->socket_context), buf, sizeof(buf), &actual_length);
+	if(sock_err != KII_SOCKETC_OK)
 	{
-		M_KII_LOG(kii->logger_cb("kii-error: recv data fail\r\n");
+		M_KII_LOG(kii->logger_cb("kii-error: recv data fail\r\n"));
 		return -1;
 	}
 	else
 	{
-		/*
-		        M_KII_LOG(kii->logger_cb("\r\n----------------MQTT subscribe recv start-------------\r\n");
-		        M_KII_LOG(kii->logger_cb("\r\n");
-		        for (i=0; i<rcvdCounter; i++)
-		        {
-		            M_KII_LOG(kii->logger_cb("%02x", buf[i]);
-		        }
-		          M_KII_LOG(kii->logger_cb("\r\n");
+        M_KII_LOG(kii->logger_cb("\r\n----------------MQTT subscribe recv start-------------\r\n"));
+        M_KII_LOG(kii->logger_cb("\r\n"));
+        for (i=0; i<rcvdCounter; i++)
+        {
+            M_KII_LOG(kii->logger_cb("%02x", buf[i]));
+        }
+          M_KII_LOG(kii->logger_cb("\r\n"));
 
-		        M_KII_LOG(kii->logger_cb("\r\n----------------MQTT subscribe recv end-------------\r\n");
-		*/
-		if((rcvdCounter == 5) && ((unsigned char)buf[0] == 0x90) && (buf[1] == 0x03) && (buf[2] == 0x00) &&
+        M_KII_LOG(kii->logger_cb("\r\n----------------MQTT subscribe recv end-------------\r\n"));
+		if((actual_length == 5) && ((unsigned char)buf[0] == 0x90) && (buf[1] == 0x03) && (buf[2] == 0x00) &&
 		        (buf[3] == 0x01))
 		{
 			return 0;
 		}
 		else
 		{
-			M_KII_LOG(kii->logger_cb("kii-error: invalid data format\r\n");
+			M_KII_LOG(kii->logger_cb("kii-error: invalid data format\r\n"));
 			return -1;
 		}
 	}
 }
 
-/*****************************************************************************
-*
-*  KiiMQTT_pingReq
-*
-*  \param  None
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Sends "PINGREQ"
-*
-*****************************************************************************/
-int KiiMQTT_pingReq(kii_t* kii)
+int kiiMQTT_pingReq(kii_t* kii)
 {
 	char buf[2];
+    kii_socket_code_t sock_err;
 
 	memset(buf, 0, sizeof(buf));
 	buf[0] = 0xc0;
 	buf[1] = 0x00;
-	if(kiiHal_socketSend(g_kii_push.mqttSocket, buf, sizeof(buf)) < 0)
+    sock_err = kii->socket_send_cb(&(kii->socket_context), buf, sizeof(buf));
+	if(sock_err != KII_SOCKETC_OK)
 	{
-
-		M_KII_LOG(kii->logger_cb("kii-error: send data fail\r\n");
+		M_KII_LOG(kii->logger_cb("kii-error: send data fail\r\n"));
 		return -1;
 	}
 	else
@@ -280,4 +255,3 @@ int KiiMQTT_pingReq(kii_t* kii)
 		return 0;
 	}
 }
-#endif

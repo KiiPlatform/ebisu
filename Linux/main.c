@@ -27,4 +27,7 @@ int main() {
     endpoint.ttl = 2147483647;
 
     kiiMQTT_connect(&kii, &endpoint, 0);
+    kiiMQTT_subscribe(&kii, endpoint.topic, QOS0);
+    kiiMQTT_pingReq(&kii);
+
 }
