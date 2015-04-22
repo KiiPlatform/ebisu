@@ -1,5 +1,7 @@
 #include "kii.h"
 #include "kii-core/kii.h"
+#include "kii-core/kii_mqtt.h"
+#include "kii_mqtt.h"
 
 int main() {
     kii_t kii;
@@ -14,4 +16,15 @@ int main() {
     kiiDev_getToken(&kii, "98477", "1234");
     printf("vendor thing id: %s\n", kii.author.author_id);
     printf("thing token: %s\n", kii.author.access_token);
+
+    kii_mqtt_endpoint_t endpoint;
+    strcpy(endpoint.username, "9ab34d8b-GUYXr9ckHpNBZLLQhUMdsxN");
+    strcpy(endpoint.password, "ZsSqnnAREOpcRsqzAfTAVwKikeQFcdCmAZTlcWlISwqFUYTDINlBeLwQSYCrIIKd");
+    strcpy(endpoint.topic, "sFJGc3o0fmvSK8d3KRSMYZM");
+    strcpy(endpoint.host, "jp-mqtt-0a0bfd4468f3.kii.com");
+    endpoint.port_tcp = 1883;
+    endpoint.port_ssl = 8883;
+    endpoint.ttl = 2147483647;
+
+    kiiMQTT_connect(&kii, &endpoint, 0);
 }

@@ -5,6 +5,7 @@
 #include <sys/uio.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <string.h>
 
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
@@ -17,7 +18,8 @@ typedef struct linux_ssl_context_t {
 } linux_ssl_context_t;
 
 kii_socket_code_t
-    connect_cb(kii_socket_context_t* socket_context, const char* host)
+    connect_cb(kii_socket_context_t* socket_context, const char* host,
+            unsigned int port)
 {
     int sock, ret;
     struct hostent *servhost;
@@ -26,6 +28,8 @@ kii_socket_code_t
     SSL *ssl;
     SSL_CTX *ssl_ctx;
     linux_ssl_context_t* ctx = (linux_ssl_context_t*)socket_context->app_context;
+    ctx = malloc(sizeof(linux_ssl_context_t));
+    memset(ctx, 0x00, sizeof(linux_ssl_context_t));
 
     servhost = gethostbyname(host);
     if (servhost == NULL) {
@@ -36,13 +40,7 @@ kii_socket_code_t
     server.sin_family = AF_INET;
     memcpy(&(server.sin_addr), servhost->h_addr, servhost->h_length);
 
-    /* Get Port number */
-    service = getservbyname("https", "tcp");
-    if (service != NULL) {
-        server.sin_port = service->s_port;
-    } else {
-        server.sin_port = htons(443);
-    }
+    server.sin_port = htons(port);
 
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
@@ -154,6 +152,7 @@ kii_socket_code_t
         printf("failed to close:\n");
         return KII_SOCKETC_FAIL;
     }
+    free(ctx);
     return KII_SOCKETC_OK;
 }
 

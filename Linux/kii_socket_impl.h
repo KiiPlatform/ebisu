@@ -8,7 +8,8 @@ extern "C" {
 #endif
 
 kii_socket_code_t
-    connect_cb(kii_socket_context_t* socket_context, const char* host);
+    connect_cb(kii_socket_context_t* socket_context, const char* host,
+            unsigned int port);
 
 kii_socket_code_t
     send_cb(kii_socket_context_t* socket_context,
