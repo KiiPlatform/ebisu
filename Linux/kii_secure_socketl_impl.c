@@ -18,7 +18,7 @@ typedef struct linux_ssl_context_t {
 } linux_ssl_context_t;
 
 kii_socket_code_t
-    connect_cb(kii_socket_context_t* socket_context, const char* host,
+    s_connect_cb(kii_socket_context_t* socket_context, const char* host,
             unsigned int port)
 {
     int sock, ret;
@@ -87,7 +87,7 @@ kii_socket_code_t
 }
 
 kii_socket_code_t
-    send_cb(kii_socket_context_t* socket_context,
+    s_send_cb(kii_socket_context_t* socket_context,
             const char* buffer,
             size_t length)
 {
@@ -104,7 +104,7 @@ kii_socket_code_t
 }
 
 kii_socket_code_t
-    recv_cb(kii_socket_context_t* socket_context,
+    s_recv_cb(kii_socket_context_t* socket_context,
             char* buffer,
             size_t length_to_read,
             size_t* out_actual_length)
@@ -126,7 +126,7 @@ kii_socket_code_t
 }
 
 kii_socket_code_t
-    close_cb(kii_socket_context_t* socket_context)
+    s_close_cb(kii_socket_context_t* socket_context)
 {
     linux_ssl_context_t* ctx;
     int ret;
