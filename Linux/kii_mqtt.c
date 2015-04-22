@@ -45,7 +45,6 @@ int KiiMQTT_decode(char* buf, int* value)
 
 int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short keepAliveInterval)
 {
-	int rcvdCounter;
 	char buf[256];
 	int i;
 	int j;
@@ -141,7 +140,7 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
 	{
         M_KII_LOG(kii->logger_cb("\r\n----------------MQTT connect recv start-------------\r\n"));
         M_KII_LOG(kii->logger_cb("\r\n"));
-        for (i=0; i<rcvdCounter; i++)
+        for (i=0; i<actual_length; i++)
         {
                 M_KII_LOG(kii->logger_cb("%02x", buf[i]));
         }
@@ -163,7 +162,6 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
 int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
 {
 	char buf[256];
-	int rcvdCounter;
 	int i;
 	int j;
 	int k;
@@ -222,11 +220,11 @@ int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
 	{
         M_KII_LOG(kii->logger_cb("\r\n----------------MQTT subscribe recv start-------------\r\n"));
         M_KII_LOG(kii->logger_cb("\r\n"));
-        for (i=0; i<rcvdCounter; i++)
+        for (i=0; i<actual_length; i++)
         {
             M_KII_LOG(kii->logger_cb("%02x", buf[i]));
         }
-          M_KII_LOG(kii->logger_cb("\r\n"));
+        M_KII_LOG(kii->logger_cb("\r\n"));
 
         M_KII_LOG(kii->logger_cb("\r\n----------------MQTT subscribe recv end-------------\r\n"));
 		if((actual_length == 5) && ((unsigned char)buf[0] == 0x90) && (buf[1] == 0x03) && (buf[2] == 0x00) &&
