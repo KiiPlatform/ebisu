@@ -53,6 +53,12 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
     kii_socket_code_t sock_err;
     int actual_length;
 
+    if (kii->socket_context.socket > 0) {
+        sock_err = kii->socket_close_cb(&(kii->socket_context));
+        if (sock_err != KII_SOCKETC_OK) {
+            return -1;
+        }
+    }
     sock_err = kii->socket_connect_cb(&(kii->socket_context), endpoint->host, endpoint->port_tcp);
     if (sock_err != KII_SOCKETC_OK) {
         return -1;

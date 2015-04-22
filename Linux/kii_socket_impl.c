@@ -48,6 +48,7 @@ kii_socket_code_t
         return KII_SOCKETC_FAIL;
     }
     ctx->sock = sock;
+    socket_context->socket = sock;
     return KII_SOCKETC_OK;
 }
 
@@ -102,6 +103,7 @@ kii_socket_code_t
     ctx = (linux_socket_context_t*)socket_context->app_context;
     close(ctx->sock);
     free(ctx);
+    socket_context->socket = -1;
     return KII_SOCKETC_OK;
 }
 
