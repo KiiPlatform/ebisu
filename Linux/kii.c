@@ -5,6 +5,8 @@
 #include "kii_def.h"
 #include "kii-core/kii.h"
 #include "kii_core_impl.h"
+#include "kii_socket_impl.h"
+#include "kii_task_impl.h"
 
 int kii_init(kii_t* kii, char* site, char* appID, char* appKey)
 {
@@ -38,12 +40,23 @@ int kii_init(kii_t* kii, char* site, char* appID, char* appKey)
 	kii->app_id = appID;
 	kii->app_key = appKey;
 
-    /* setting callbacks. */
+    /* setting http callbacks. */
     kii->http_set_request_line_cb = request_line_cb;
     kii->http_set_header_cb = header_cb;
     kii->http_set_body_cb = body_cb;
     kii->http_execute_cb = execute_cb;
+
+    /* setting logger callbacks. */
     kii->logger_cb = logger_cb;
+
+    /* setting socket callbacks. */
+    kii->socket_connect_cb = connect_cb;
+    kii->socket_send_cb = send_cb;
+    kii->socket_recv_cb = recv_cb;
+    kii->socket_close_cb = close_cb;
+
+    /* setting task callbacks. */
+    kii->task_create_cb = task_create_cb;
 
 	return 0;
 }
