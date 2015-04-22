@@ -53,7 +53,7 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
     kii_socket_code_t sock_err;
     int actual_length;
 
-    sock_err = kii->socket_connect_cb(&(kii->socket_context), endpoint->host, endpoint->port_ssl);
+    sock_err = kii->socket_connect_cb(&(kii->socket_context), endpoint->host, endpoint->port_tcp);
     if (sock_err != KII_SOCKETC_OK) {
         return -1;
     }
@@ -119,13 +119,13 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
 
     M_KII_LOG(kii->logger_cb("\r\n----------------MQTT connect send end-------------\r\n"));
 
-    sock_err = kii->socket_send_cb(&kii->socket_context, buf, j);
+    sock_err = kii->socket_send_cb(&(kii->socket_context), buf, j);
     if (sock_err != KII_SOCKETC_OK) {
 		M_KII_LOG(kii->logger_cb("kii-error: send data fail\r\n"));
 		return -1;
     }
 	memset(buf, 0, sizeof(buf));
-    sock_err = kii->socket_recv_cb(&kii->socket_context, buf, sizeof(buf), &actual_length);
+    sock_err = kii->socket_recv_cb(&(kii->socket_context), buf, sizeof(buf), &actual_length);
 	if(sock_err != KII_SOCKETC_OK)
 	{
 		M_KII_LOG(kii->logger_cb("kii-error: recv data fail\r\n"));
