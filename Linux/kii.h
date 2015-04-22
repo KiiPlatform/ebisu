@@ -41,8 +41,6 @@
 
 typedef enum { KII_APP_SCOPE = 0, KII_THING_SCOPE = 1 } kii_scope_e;
 
-typedef void (*kiiPush_recvMsgCallback)(char* jsonBuf, int rcvdCounter);
-
 /*****************************************************************************
 *
 *  kii_init
@@ -376,7 +374,7 @@ extern int kiiPush_createTopic(int scope, char* topicID);
 *  \brief  Initializes push
 *
 *****************************************************************************/
-extern int KiiPush_init(unsigned int taskPrio, unsigned int pingReqTaskPrio, kiiPush_recvMsgCallback callback);
+extern int KiiPush_init(unsigned int taskPrio, unsigned int pingReqTaskPrio, KII_PUSH_RECEIVED_CB callback);
 
 /*****************************************************************************
 *

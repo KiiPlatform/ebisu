@@ -57,6 +57,7 @@ int kii_init(kii_t* kii, char* site, char* appID, char* appKey)
 
     /* setting task callbacks. */
     kii->task_create_cb = task_create_cb;
+    kii->delay_ms_cb = delay_ms_cb;
 
 	return 0;
 }
