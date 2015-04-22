@@ -7,10 +7,6 @@
 #include <netinet/in.h>
 #include <string.h>
 
-typedef struct linux_socket_context_t {
-    int sock
-} linux_socket_context_t;
-
 kii_socket_code_t
     connect_cb(kii_socket_context_t* socket_context, const char* host,
             unsigned int port)
@@ -19,13 +15,7 @@ kii_socket_code_t
     struct hostent *servhost;
     struct sockaddr_in server;
     struct servent *service;
-    linux_socket_context_t* ctx;
     
-    socket_context->app_context = malloc(sizeof(linux_socket_context_t));
-
-    ctx = (linux_socket_context_t*)socket_context->app_context;
-    memset(ctx, 0x00, sizeof(linux_socket_context_t));
-
     servhost = gethostbyname(host);
     if (servhost == NULL) {
         printf("failed to get host.\n");
@@ -47,7 +37,6 @@ kii_socket_code_t
         printf("failed to connect socket.\n");
         return KII_SOCKETC_FAIL;
     }
-    ctx->sock = sock;
     socket_context->socket = sock;
     return KII_SOCKETC_OK;
 }
@@ -57,12 +46,10 @@ kii_socket_code_t
             const char* buffer,
             size_t length)
 {
-    linux_socket_context_t* ctx;
     int ret;
     int sock;
 
-    ctx = (linux_socket_context_t*)socket_context->app_context;
-    sock = ctx->sock;
+    sock = socket_context->socket;
     ret = send(sock, buffer, length, 0);
     if (ret > 0) {
         return KII_SOCKETC_OK;
@@ -78,11 +65,9 @@ kii_socket_code_t
             size_t length_to_read,
             size_t* out_actual_length)
 {
-    linux_socket_context_t* ctx;
     int ret;
 
-    ctx = (linux_socket_context_t*)socket_context->app_context;
-    ret = recv(ctx->sock, buffer, length_to_read, 0);
+    ret = recv(socket_context->socket, buffer, length_to_read, 0);
     if (ret > 0) {
         *out_actual_length = ret;
         return KII_SOCKETC_OK;
@@ -97,12 +82,11 @@ kii_socket_code_t
 kii_socket_code_t
     close_cb(kii_socket_context_t* socket_context)
 {
-    linux_socket_context_t* ctx;
     int ret;
+    int sock;
+    sock = socket_context->socket;
 
-    ctx = (linux_socket_context_t*)socket_context->app_context;
-    close(ctx->sock);
-    free(ctx);
+    close(sock);
     socket_context->socket = -1;
     return KII_SOCKETC_OK;
 }
