@@ -15,120 +15,60 @@ static unsigned int mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];
 static unsigned int mKiiPush_pingReqTaskStk[KIIPUSH_PINGREQ_TASK_STK_SIZE];
 #endif
 
-
-#if 0
-/*****************************************************************************
-*
-*  kiiPush_install
-*
-*  \param: none
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Registers installation of a device
-*
-*****************************************************************************/
-static int kiiPush_install(void)
+static int kiiPush_install(kii_t* kii, kii_bool_t development, char* installation_id)
 {
 	char* p1;
 	char* p2;
 	char* buf;
 	char jsonBuf[256];
 	int ret = -1;
+    kii_error_code_t core_err;
+    kii_state_t state;
 
-	buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
-	if(buf == NULL)
-	{
-		KII_DEBUG("kii-error: memory allocation failed !\r\n");
+    buf = kii->http_context.buffer;
+    core_err = kii_install_thing_push(kii, development);
+    if (core_err != KIIE_OK) {
+        goto exit;
+    }
+    do {
+        core_err = kii_run(kii);
+        state = kii_get_state(kii);
+    } while (state != KII_STATE_IDLE);
+    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    if (core_err != KIIE_OK) {
+        goto exit;
+    }
+    if(kii->response_code < 200 || 300 <= kii->response_code)
+    {
 		goto exit;
-	}
-	memset(buf, 0, KII_SOCKET_BUF_SIZE);
-	strcpy(buf, STR_POST);
-	// url
-	strcat(buf, "/api/apps/");
-	strcat(buf, g_kii_data.appID);
-	strcat(buf, "/installations");
-	strcat(buf, STR_HTTP);
-	strcat(buf, STR_CRLF);
-	// Host
-	strcat(buf, "Host: ");
-	strcat(buf, g_kii_data.host);
-	strcat(buf, STR_CRLF);
-	// x-kii-appid
-	strcat(buf, STR_KII_APPID);
-	strcat(buf, g_kii_data.appID);
-	strcat(buf, STR_CRLF);
-	// x-kii-appkey
-	strcat(buf, STR_KII_APPKEY);
-	strcat(buf, g_kii_data.appKey);
-	strcat(buf, STR_CRLF);
-	// content-type
-	strcat(buf, STR_CONTENT_TYPE);
-	strcat(buf, "application/vnd.kii.InstallationCreationRequest+json");
-	strcat(buf, STR_CRLF);
-	// Authorization
-	strcat(buf, STR_AUTHORIZATION);
-	strcat(buf, " Bearer ");
-	strcat(buf, g_kii_data.accessToken);
-	strcat(buf, STR_CRLF);
-	// Json object
-	memset(jsonBuf, 0, sizeof(jsonBuf));
-	strcpy(jsonBuf, "{\"installationType\":\"MQTT\", \"development\":false}");
-
-	// Content-Length
-	strcat(buf, STR_CONTENT_LENGTH);
-	sprintf(buf + strlen(buf), "%d", strlen(jsonBuf) + 1);
-	strcat(buf, STR_CRLF);
-	strcat(buf, STR_CRLF);
-	if((strlen(buf) + strlen(jsonBuf) + 1) > KII_SOCKET_BUF_SIZE)
-	{
-		KII_DEBUG("kii-error: buffer overflow !\r\n");
-		goto free;
-	}
-	strcat(buf, jsonBuf);
-	strcat(buf, STR_LF);
-
-	if(kiiHal_transfer(g_kii_data.host, buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
-	{
-		KII_DEBUG("kii-error: transfer data error !\r\n");
-		goto free;
-	}
-
-	if(strstr(buf, "HTTP/1.1 201") == NULL)
-	{
-		goto free;
-	}
+    }
 	p1 = strstr(buf, "\"installationID\"");
 	if(p1 == NULL)
 	{
-		goto free;
+		goto exit;
 	}
 	p1 = strstr(p1, ":");
 	if(p1 == NULL)
 	{
-		goto free;
+		goto exit;
 	}
 	p1 = strstr(p1, "\"");
 	if(p1 == NULL)
 	{
-		goto free;
+		goto exit;
 	}
 	p1 += 1;
 	p2 = strstr(p1, "\"");
 	if(p2 == NULL)
 	{
-		goto free;
+		goto exit;
 	}
-	memset(g_kii_push.installationID, 0, KII_PUSH_INSTALLATIONID_SIZE + 1);
-	memcpy(g_kii_push.installationID, p1, p2 - p1);
+	memcpy(installation_id, p1, p2 - p1);
 	ret = 0;
 	
-free:
-	kiiHal_free(buf);
 exit:
 	return ret;
 }
-#endif
 
 static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* installation_id, kii_mqtt_endpoint_t* endpoint)
 {
