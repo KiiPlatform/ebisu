@@ -13,13 +13,13 @@ void received_callback(char* buffer, size_t buffer_size) {
     strncpy(copy, buffer, sizeof(copy));
     printf("recieve message\n%s", copy);
 }
+kii_t kii;
+char buffer[4096];
+char mqtt_buffer[2048];
 
 int main() {
-    kii_t kii;
     size_t buffer_size = 4096;
-    char buffer[4096];
     size_t mqtt_buffer_size = 2048;
-    char mqtt_buffer[2048];
     char installation_id[128];
     kii_topic_t topic;
     char scope_id[128];
