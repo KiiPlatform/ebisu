@@ -496,7 +496,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
 			{
 				continue;
 			}
-			else if(KiiMQTT_subscribe(kii, endpoint.topic, QOS0) < 0)
+			else if(kiiMQTT_subscribe(kii, endpoint.topic, QOS0) < 0)
 			{
 				continue;
 			}
@@ -518,7 +518,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
 					kii->socket_recv_cb(&kii->socket_context, kii->mqtt_buffer+2, KII_PUSH_TOPIC_HEADER_SIZE, &rcvdCounter);
 					if(rcvdCounter == KII_PUSH_TOPIC_HEADER_SIZE)
 					{
-					    byteLen = KiiMQTT_decode(&kii->mqtt_buffer[1], &remainingLen);
+					    byteLen = kiiMQTT_decode(&kii->mqtt_buffer[1], &remainingLen);
 					}
 					else
 					{
@@ -605,17 +605,6 @@ static void* kiiPush_recvMsgTask(void* sdata)
 }
 
 #if(KII_PUSH_PING_ENABLE)
-/*****************************************************************************
-*
-*  kiiPush_pingReqTask
-*
-*  \param: sdata - an optional data, points to callback function
-*
-*  \return none
-*
-*  \brief  "PINGREQ" task
-*
-*****************************************************************************/
 static void* kiiPush_pingReqTask(void* sdata)
 {
     kii_t* kii;
@@ -632,37 +621,22 @@ static void* kiiPush_pingReqTask(void* sdata)
 }
 #endif
 
-#if 0
-/*****************************************************************************
-*
-*  KiiPush_init
-*
-*  \param: recvMsgtaskPrio - the priority of task for receiving message
-*               pingReqTaskPrio - the priority of task for "PINGREQ" task
-*               callback - the call back function for processing the push message received
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Initializes push
-*
-*****************************************************************************/
 int KiiPush_init(kii_t* kii, unsigned int recvMsgtaskPrio, unsigned int pingReqTaskPrio, KII_PUSH_RECEIVED_CB callback)
 {
-    kii->push_received_cb = callback
-	kiiHal_taskCreate(NULL,
-	                  kiiPush_recvMsgTask,
-	                  (void*)kii,
-	                  (void*)mKiiPush_taskStk,
-	                  KIIPUSH_TASK_STK_SIZE * sizeof(unsigned char),
-	                  recvMsgtaskPrio);
+    kii->push_received_cb = callback;
+    kii->task_create_cb(NULL,
+            kiiPush_recvMsgTask,
+            (void*)kii,
+            (void*)mKiiPush_taskStk,
+            KIIPUSH_TASK_STK_SIZE * sizeof(unsigned char),
+            recvMsgtaskPrio);
 #if(KII_PUSH_PING_ENABLE)
-	kiiHal_taskCreate(NULL,
-	                  kiiPush_pingReqTask,
-	                  (void*)kii,
-	                  (void*)mKiiPush_pingReqTaskStk,
-	                  KIIPUSH_PINGREQ_TASK_STK_SIZE * sizeof(unsigned char),
-	                  pingReqTaskPrio);
+    kii->task_create_cb(NULL,
+            kiiPush_pingReqTask,
+            (void*)kii,
+            (void*)mKiiPush_pingReqTaskStk,
+            KIIPUSH_PINGREQ_TASK_STK_SIZE * sizeof(unsigned char),
+            pingReqTaskPrio);
 #endif
 	return 0;
 }
-#endif
