@@ -15,7 +15,7 @@ static unsigned int mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];
 static unsigned int mKiiPush_pingReqTaskStk[KIIPUSH_PINGREQ_TASK_STK_SIZE];
 #endif
 
-static int kiiPush_install(kii_t* kii, kii_bool_t development, char* installation_id)
+int kiiPush_install(kii_t* kii, kii_bool_t development, char* installation_id)
 {
 	char* p1;
 	char* p2;

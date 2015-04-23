@@ -7,6 +7,7 @@ int main() {
     kii_t kii;
     size_t buffer_size = 4096;
     char buffer[buffer_size];
+    char installation_id[128];
 
     memset(buffer, 0x00, buffer_size);
     kii_init(&kii, "JP", "9ab34d8b", "7a950d78956ed39f3b0815f0f001b43b");
@@ -17,6 +18,10 @@ int main() {
     printf("vendor thing id: %s\n", kii.author.author_id);
     printf("thing token: %s\n", kii.author.access_token);
 
+    memset(installation_id, 0x00, 128);
+    kiiPush_install(&kii, KII_FALSE, installation_id);
+    printf("installation_id: %s\n", installation_id);
+#if 0
     kii_mqtt_endpoint_t endpoint;
     strcpy(endpoint.username, "9ab34d8b-GUYXr9ckHpNBZLLQhUMdsxN");
     strcpy(endpoint.password, "ZsSqnnAREOpcRsqzAfTAVwKikeQFcdCmAZTlcWlISwqFUYTDINlBeLwQSYCrIIKd");
@@ -29,5 +34,6 @@ int main() {
     kiiMQTT_connect(&kii, &endpoint, 0);
     kiiMQTT_subscribe(&kii, endpoint.topic, QOS0);
     kiiMQTT_pingReq(&kii);
+#endif
 
 }

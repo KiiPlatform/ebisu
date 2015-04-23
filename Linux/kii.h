@@ -390,4 +390,7 @@ extern int KiiPush_init(unsigned int taskPrio, unsigned int pingReqTaskPrio, KII
 *****************************************************************************/
 extern int kiiExt_extension(char* endpointName, char* jsonObject);
 
+
+/* TODO: decide whether we expose it or not */
+extern kiiPush_install(kii_t* kii, kii_bool_t development, char* installation_id);
 #endif
