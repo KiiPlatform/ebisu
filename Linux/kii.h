@@ -359,7 +359,7 @@ extern int kiiPush_subscribeTopic(kii_t* kii, kii_topic_t* topic);
 *  \brief  Creates thing scope topic
 *
 *****************************************************************************/
-extern int kiiPush_createTopic(int scope, char* topicID);
+extern int kiiPush_createTopic(kii_t* kii, kii_topic_t* topic);
 
 /*****************************************************************************
 *
