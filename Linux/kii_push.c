@@ -403,6 +403,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
 					{
                         rcvdCounter = 0;
                         kii->socket_recv_cb(&kii->socket_context, kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);
+                        M_KII_LOG(kii->logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
 						if(rcvdCounter > 0)
 						{
 							bytes += rcvdCounter;
@@ -474,7 +475,7 @@ static void* kiiPush_pingReqTask(void* sdata)
 }
 #endif
 
-int KiiPush_init(kii_t* kii, unsigned int recvMsgtaskPrio, unsigned int pingReqTaskPrio, KII_PUSH_RECEIVED_CB callback)
+int kiiPush_init(kii_t* kii, unsigned int recvMsgtaskPrio, unsigned int pingReqTaskPrio, KII_PUSH_RECEIVED_CB callback)
 {
     kii->push_received_cb = callback;
     kii->task_create_cb(NULL,

@@ -374,7 +374,7 @@ extern int kiiPush_createTopic(kii_t* kii, kii_topic_t* topic);
 *  \brief  Initializes push
 *
 *****************************************************************************/
-extern int KiiPush_init(kii_t* kii, unsigned int taskPrio, unsigned int pingReqTaskPrio, KII_PUSH_RECEIVED_CB callback);
+extern int kiiPush_init(kii_t* kii, unsigned int taskPrio, unsigned int pingReqTaskPrio, KII_PUSH_RECEIVED_CB callback);
 
 /*****************************************************************************
 *
