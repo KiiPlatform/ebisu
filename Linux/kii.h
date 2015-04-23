@@ -331,7 +331,7 @@ extern int kiiObj_downloadBody(int scope,
 *  \brief  Subscribes bucket
 *
 *****************************************************************************/
-extern int kiiPush_subscribeBucket(int scope, char* bucketID);
+extern int kiiPush_subscribeBucket(kii_t* kii, kii_bucket_t* bucket);
 
 /*****************************************************************************
 *
