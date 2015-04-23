@@ -312,8 +312,6 @@ static void* kiiPush_recvMsgTask(void* sdata)
     kii_t* kii;
     kii_mqtt_endpoint_t endpoint;
     char installation_id[KII_PUSH_INSTALLATIONID_SIZE + 1];
-    char temp_buff[2048];
-    memset(temp_buff, 0x00, sizeof(temp_buff));
 
     memset(installation_id, 0x00, sizeof(installation_id));
     memset(&endpoint, 0x00, sizeof(kii_mqtt_endpoint_t));
@@ -410,7 +408,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
                         M_KII_LOG(kii->logger_cb("readPointer: %d\r\n", kii->mqtt_buffer + bytes));
                         /*kii->socket_recv_cb(&(kii->socket_context), kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);*/
                         rcvdCounter = 0;
-                        kii->socket_recv_cb(&(kii->socket_context), temp_buff, totalLen - bytes, &rcvdCounter);
+                        kii->socket_recv_cb(&(kii->socket_context), kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);
                         M_KII_LOG(kii->logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
 						if(rcvdCounter > 0)
 						{

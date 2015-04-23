@@ -11,13 +11,15 @@ void received_callback(char* buffer, size_t buffer_size) {
     char copy[1024];
     memset(copy, 0x00, sizeof(copy));
     strncpy(copy, buffer, sizeof(copy));
-    printf("recieve message\n%s", copy);
+    printf("buffer_size: %lu\n", buffer_size);
+    printf("recieve message: %s\n", copy);
 }
-kii_t kii;
-char buffer[4096];
-char mqtt_buffer[2048];
 
 int main() {
+    kii_t kii;
+    char buffer[4096];
+    char mqtt_buffer[2048];
+    
     size_t buffer_size = 4096;
     size_t mqtt_buffer_size = 2048;
     char installation_id[128];
