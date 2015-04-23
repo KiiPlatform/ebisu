@@ -53,6 +53,7 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
     int actual_length;
 
     if (kii->socket_context.socket > 0) {
+        M_KII_LOG(kii->logger_cb("closing socket as socket is already created.\r\n"));
         sock_err = kii->socket_close_cb(&(kii->socket_context));
         if (sock_err != KII_SOCKETC_OK) {
             return -1;

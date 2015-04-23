@@ -73,8 +73,6 @@ kii_socket_code_t
         return KII_SOCKETC_OK;
     } else {
         printf("failed to receive:\n");
-        /* TOOD: could be 0 on success? */
-        *out_actual_length = 0;
         return KII_SOCKETC_FAIL;
     }
 }

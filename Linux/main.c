@@ -16,13 +16,15 @@ int main() {
     size_t buffer_size = 4096;
     char buffer[buffer_size];
     size_t mqtt_buffer_size = 2048;
-    char mqtt_buffer[mqtt_buffer_size];
+    char mqtt_buffer[2048];
     char installation_id[128];
     kii_topic_t topic;
     char scope_id[128];
     int ret;
 
     memset(buffer, 0x00, buffer_size);
+    memset(mqtt_buffer, 0x00, mqtt_buffer_size);
+
     kii_init(&kii, "JP", "9ab34d8b", "7a950d78956ed39f3b0815f0f001b43b");
     kii.http_context.buffer = buffer;
     kii.http_context.buffer_size = buffer_size;

@@ -306,13 +306,15 @@ static void* kiiPush_recvMsgTask(void* sdata)
 	int topicLen;
 	int totalLen;
 	char* p;
-	int bytes;
+	int bytes = 0;
 	int rcvdCounter = 0;
 	KII_PUSH_RECEIVED_CB callback;
 	kiiPush_endpointState_e endpointState;
     kii_t* kii;
     kii_mqtt_endpoint_t endpoint;
     char installation_id[KII_PUSH_INSTALLATIONID_SIZE + 1];
+    char temp_buff[2048];
+    memset(temp_buff, 0x00, sizeof(temp_buff));
 
     memset(installation_id, 0x00, sizeof(installation_id));
     memset(&endpoint, 0x00, sizeof(kii_mqtt_endpoint_t));
@@ -361,6 +363,8 @@ static void* kiiPush_recvMsgTask(void* sdata)
 		else
 		{
 			memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
+            M_KII_LOG(kii->logger_cb("readPointer: %d\r\n", kii->mqtt_buffer + bytes));
+            
             rcvdCounter = 0;
 			kii->socket_recv_cb(&kii->socket_context, kii->mqtt_buffer, 2, &rcvdCounter);
 			if(rcvdCounter == 2)
@@ -390,7 +394,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
 						kii->_mqtt_endpoint_ready = 0;
 						continue;
 					}
-					if(totalLen > KII_PUSH_SOCKET_BUF_SIZE)
+					if(totalLen > kii->mqtt_buffer_size)
 					{
 						M_KII_LOG(kii->logger_cb("kii-error: mqtt buffer overflow\r\n"));
 						kii->_mqtt_endpoint_ready = 0;
@@ -399,18 +403,25 @@ static void* kiiPush_recvMsgTask(void* sdata)
 
 					M_KII_LOG(kii->logger_cb("decode byteLen=%d, remainingLen=%d\r\n", byteLen, remainingLen));
 					bytes = rcvdCounter + 2;
+                    M_KII_LOG(kii->logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
 					while(bytes < totalLen)
 					{
+                        M_KII_LOG(kii->logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
                         rcvdCounter = 0;
-                        kii->socket_recv_cb(&kii->socket_context, kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);
+                        M_KII_LOG(kii->logger_cb("lengthToLead: %d\r\n", totalLen - bytes));
+                        M_KII_LOG(kii->logger_cb("readPointer: %d\r\n", kii->mqtt_buffer + bytes));
+                        //kii->socket_recv_cb(&(kii->socket_context), kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);
+                        kii->socket_recv_cb(&(kii->socket_context), temp_buff, totalLen - bytes, &rcvdCounter);
                         M_KII_LOG(kii->logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
 						if(rcvdCounter > 0)
 						{
 							bytes += rcvdCounter;
+                            M_KII_LOG(kii->logger_cb("success read. totalLen: %d, bytes: %d\r\n", totalLen, bytes));
 						}
 						else
 						{
 							bytes = -1;
+                            M_KII_LOG(kii->logger_cb("failed to read. totalLen: %d, bytes: %d\r\n", totalLen, bytes));
 							break;
 						}
 					}
