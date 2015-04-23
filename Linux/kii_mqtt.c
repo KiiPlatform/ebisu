@@ -6,7 +6,7 @@
 #include "kii_mqtt.h"
 #include "kii.h"
 
-int KiiMQTT_encode(char* buf, int length)
+int kiiMQTT_encode(char* buf, int length)
 {
     int rc = 0;
     char d;
@@ -23,7 +23,7 @@ int KiiMQTT_encode(char* buf, int length)
     return rc;
 }
 
-int KiiMQTT_decode(char* buf, int* value)
+int kiiMQTT_decode(char* buf, int* value)
 {
     int i = 0;
     int multiplier = 1;
@@ -105,7 +105,7 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
     // Fixed header:byte1
     buf[j++] = 0x10;
     // Fixed header:Remaining Length
-    j += KiiMQTT_encode(&buf[j], i - 8);
+    j += kiiMQTT_encode(&buf[j], i - 8);
 
     // copy the other tytes
     for(k = 0; k < i - 8; k++)
@@ -187,7 +187,7 @@ int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
     // Fixed header: byte1
     buf[j++] = 0x82;
     // Fixed header:Remaining Length
-    j += KiiMQTT_encode(&buf[j], i - 8);
+    j += kiiMQTT_encode(&buf[j], i - 8);
 
     // copy the other tytes
     for(k = 0; k < i - 8; k++)
