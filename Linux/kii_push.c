@@ -20,7 +20,6 @@ int kiiPush_install(kii_t* kii, kii_bool_t development, char* installation_id)
 	char* p1;
 	char* p2;
 	char* buf;
-	char jsonBuf[256];
 	int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
@@ -103,7 +102,7 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
 		goto exit;
     }
 
-    // get username
+    /* get username*/
     p1 = strstr(buf, "\"username\"");
     if(p1 == NULL)
     {
@@ -131,7 +130,7 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
     }
     memcpy(endpoint->username, p1, p2 - p1);
 
-    // get password
+    /* get password*/
     p1 = strstr(buf, "\"password\"");
     if(p1 == NULL)
     {
@@ -159,7 +158,7 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
     }
     memcpy(endpoint->password, p1, p2 - p1);
 
-    // get host
+    /* get host*/
     p1 = strstr(buf, "\"host\"");
     if(p1 == NULL)
     {
@@ -187,7 +186,7 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
     }
     memcpy(endpoint->host, p1, p2 - p1);
 
-    // get mqttTopic
+    /* get mqttTopic*/
     p1 = strstr(buf, "\"mqttTopic\"");
     if(p1 == NULL)
     {
@@ -307,7 +306,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
 	int totalLen;
 	char* p;
 	int bytes = 0;
-	int rcvdCounter = 0;
+	size_t rcvdCounter = 0;
 	KII_PUSH_RECEIVED_CB callback;
 	kiiPush_endpointState_e endpointState;
     kii_t* kii;
@@ -386,7 +385,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
 					if(byteLen > 0)
 					{
 						totalLen =
-						    remainingLen + byteLen + 1; // fixed head byte1+remaining length bytes + remaining bytes
+						    remainingLen + byteLen + 1; /* fixed head byte1+remaining length bytes + remaining bytes*/
 					}
 					else
 					{
@@ -409,7 +408,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
                         M_KII_LOG(kii->logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
                         M_KII_LOG(kii->logger_cb("lengthToLead: %d\r\n", totalLen - bytes));
                         M_KII_LOG(kii->logger_cb("readPointer: %d\r\n", kii->mqtt_buffer + bytes));
-                        //kii->socket_recv_cb(&(kii->socket_context), kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);
+                        /*kii->socket_recv_cb(&(kii->socket_context), kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);*/
                         rcvdCounter = 0;
                         kii->socket_recv_cb(&(kii->socket_context), temp_buff, totalLen - bytes, &rcvdCounter);
                         M_KII_LOG(kii->logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
@@ -429,11 +428,11 @@ static void* kiiPush_recvMsgTask(void* sdata)
 					if(bytes >= totalLen)
 					{
 						p = kii->mqtt_buffer;
-						p++; // skip fixed header byte1
-						p += byteLen; // skip remaining length bytes
-						topicLen = p[0] * 256 + p[1]; // get topic length
-						p = p + 2; // skip 2 topic length bytes
-						p = p + topicLen; // skip topic
+						p++; /* skip fixed header byte1*/
+						p += byteLen; /* skip remaining length bytes*/
+						topicLen = p[0] * 256 + p[1]; /* get topic length*/
+						p = p + 2; /* skip 2 topic length bytes*/
+						p = p + topicLen; /* skip topic*/
 						if((remainingLen - 2 - topicLen) > 0)
 						{
                             M_KII_LOG(kii-logger_cb("Successfully Recieved Push %s\n", p));
@@ -467,6 +466,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
 			}
 		}
 	}
+	return NULL;
 }
 
 #if(KII_PUSH_PING_ENABLE)
@@ -483,6 +483,7 @@ static void* kiiPush_pingReqTask(void* sdata)
 		}
 		kii->delay_ms_cb(KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE * 1000);
 	}
+	return NULL;
 }
 #endif
 

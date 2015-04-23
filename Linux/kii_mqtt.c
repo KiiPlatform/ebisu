@@ -50,7 +50,7 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
     int j;
     int k;
     kii_socket_code_t sock_err;
-    int actual_length;
+    size_t actual_length;
 
     if (kii->socket_context.socket > 0) {
         M_KII_LOG(kii->logger_cb("closing socket as socket is already created.\r\n"));
@@ -65,8 +65,8 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
     }
 
     memset(buf, 0, sizeof(buf));
-    i = 8; // reserver 8 bytes for header
-    // Variable header:Protocol Name bytes
+    i = 8; /* reserver 8 bytes for header */
+    /* Variable header:Protocol Name bytes */
     buf[i++] = 0x00;
     buf[i++] = 0x06;
     buf[i++] = 'M';
@@ -75,40 +75,40 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
     buf[i++] = 's';
     buf[i++] = 'd';
     buf[i++] = 'p';
-    // Variable header:Protocol Level
+    /* Variable header:Protocol Level */
     buf[i++] = 0x03;
-    // Variable header:Connect Flags
+    /* Variable header:Connect Flags */
     /*
      * Bit   7                          6                        5                    4  3            2            1 0
      *        User Name Flag     Password Flag    Will Retain        Will QoS     Will Flag   Clean Session   Reserved
      */
-    buf[i++] = 0xc2;
-    // Variable header:Keep Alive
+    buf[i++] = (char)0xc2;
+    /* Variable header:Keep Alive */
     buf[i++] = (keepAliveInterval & 0xff00) >> 8;
     buf[i++] = keepAliveInterval & 0x00ff;
-    // Payload:Client Identifier
+    /* Payload:Client Identifier */
     buf[i++] = (strlen(endpoint->topic) & 0xff00) >> 8;
     buf[i++] = strlen(endpoint->topic) & 0x00ff;
     strcpy(&buf[i], endpoint->topic);
     i += strlen(endpoint->topic);
-    // Payload:User Name
+    /* Payload:User Name */
     buf[i++] = (strlen(endpoint->username) & 0xff00) >> 8;
     buf[i++] = strlen(endpoint->username) & 0x00ff;
     strcpy(&buf[i], endpoint->username);
     i += strlen(endpoint->username);
-    // Payload:Password
+    /* Payload:Password */
     buf[i++] = (strlen(endpoint->password) & 0xff00) >> 8;
     buf[i++] = strlen(endpoint->password) & 0x00ff;
     strcpy(&buf[i], endpoint->password);
     i += strlen(endpoint->password);
 
     j = 0;
-    // Fixed header:byte1
+    /* Fixed header:byte1 */
     buf[j++] = 0x10;
-    // Fixed header:Remaining Length
+    /*/ Fixed header:Remaining Length*/
     j += kiiMQTT_encode(&buf[j], i - 8);
 
-    // copy the other tytes
+    /* copy the other tytes */
     for(k = 0; k < i - 8; k++)
     {
         buf[j++] = buf[8 + k];
@@ -166,31 +166,31 @@ int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
     int i;
     int j;
     int k;
-    int actual_length = 0;
+    size_t actual_length = 0;
     kii_socket_code_t sock_err;
 
     memset(buf, 0, sizeof(buf));
     i = 8;
 
-    // Variable header:Packet Identifier
+    /* Variable header:Packet Identifier */
     buf[i++] = 0x00;
     buf[i++] = 0x01;
-    // Payload:topic length
+    /* Payload:topic length */
     buf[i++] = (strlen(topic) & 0xff00) >> 8;
     buf[i++] = strlen(topic) & 0x00ff;
-    // Payload:topic
+    /* Payload:topic */
     strcpy(&buf[i], topic);
     i += strlen(topic);
-    // Payload: qos
-    buf[i++] = qos;
+    /* Payload: qos*/
+    buf[i++] = (char)qos;
 
     j = 0;
-    // Fixed header: byte1
-    buf[j++] = 0x82;
-    // Fixed header:Remaining Length
+    /* Fixed header: byte1*/
+    buf[j++] = (char)0x82;
+    /* Fixed header:Remaining Length*/
     j += kiiMQTT_encode(&buf[j], i - 8);
 
-    // copy the other tytes
+    /* copy the other tytes*/
     for(k = 0; k < i - 8; k++)
     {
         buf[j++] = buf[8 + k];
@@ -247,7 +247,7 @@ int kiiMQTT_pingReq(kii_t* kii)
     kii_socket_code_t sock_err;
 
     memset(buf, 0, sizeof(buf));
-    buf[0] = 0xc0;
+    buf[0] = (char)0xc0;
     buf[1] = 0x00;
     sock_err = kii->socket_send_cb(&(kii->socket_context), buf, sizeof(buf));
     if(sock_err != KII_SOCKETC_OK)

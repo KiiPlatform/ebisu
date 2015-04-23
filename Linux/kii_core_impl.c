@@ -216,10 +216,9 @@ kii_http_client_code_t
         char** response_body)
 {
     context_t* ctx;
+    kii_http_client_code_t res;
 
     ctx = &g_ctx;
-    
-    kii_http_client_code_t res;
 
     printf("client state: %d\n", ctx->state);
     switch (ctx->state) {

@@ -9,8 +9,8 @@
 #define KII_APPKEY_SIZE 32
 
 #define KII_ACCESS_TOKEN_SIZE 44
-#define KII_DEVICE_VENDOR_ID 64 // matches [a-zA-Z0-9-_\\.]{3,64}
-#define KII_PASSWORD_SIZE 50    // Matches ^[\\u0020-\\u007E]{4,50}
+#define KII_DEVICE_VENDOR_ID 64 /* matches [a-zA-Z0-9-_\\.]{3,64} */
+#define KII_PASSWORD_SIZE 50    /* Matches ^[\\u0020-\\u007E]{4,50} */
 #define KII_OBJECTID_SIZE 36
 #define KII_DATA_TPYE_SIZE 36
 #define KII_UPLOAD_ID_SIZE 46
@@ -392,5 +392,5 @@ extern int kiiExt_extension(char* endpointName, char* jsonObject);
 
 
 /* TODO: decide whether we expose it or not */
-extern kiiPush_install(kii_t* kii, kii_bool_t development, char* installation_id);
+extern int kiiPush_install(kii_t* kii, kii_bool_t development, char* installation_id);
 #endif

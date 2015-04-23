@@ -35,7 +35,6 @@ int kiiDev_getToken(kii_t* kii, char* vendorDeviceID, char* password)
     {
         goto exit;
     }
-    // get access token
     p1 = strstr(buf, "\"access_token\"");
     if(p1 == NULL)
     {

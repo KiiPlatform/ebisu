@@ -10,11 +10,12 @@
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <unistd.h>
 
 typedef struct linux_ssl_context_t {
     SSL *ssl;
     SSL_CTX *ssl_ctx;
-    int sock
+    int sock;
 } linux_ssl_context_t;
 
 kii_socket_code_t
@@ -24,7 +25,6 @@ kii_socket_code_t
     int sock, ret;
     struct hostent *servhost;
     struct sockaddr_in server;
-    struct servent *service;
     SSL *ssl;
     SSL_CTX *ssl_ctx;
     linux_ssl_context_t* ctx = (linux_ssl_context_t*)socket_context->app_context;
