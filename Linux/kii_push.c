@@ -407,10 +407,10 @@ static void* kiiPush_recvMsgTask(void* sdata)
 					while(bytes < totalLen)
 					{
                         M_KII_LOG(kii->logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
-                        rcvdCounter = 0;
                         M_KII_LOG(kii->logger_cb("lengthToLead: %d\r\n", totalLen - bytes));
                         M_KII_LOG(kii->logger_cb("readPointer: %d\r\n", kii->mqtt_buffer + bytes));
                         //kii->socket_recv_cb(&(kii->socket_context), kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);
+                        rcvdCounter = 0;
                         kii->socket_recv_cb(&(kii->socket_context), temp_buff, totalLen - bytes, &rcvdCounter);
                         M_KII_LOG(kii->logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
 						if(rcvdCounter > 0)

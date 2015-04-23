@@ -3,6 +3,9 @@
 #include "kii-core/kii_mqtt.h"
 #include "kii_mqtt.h"
 #include <assert.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 void received_callback(char* buffer, size_t buffer_size) {
     char copy[1024];
@@ -14,7 +17,7 @@ void received_callback(char* buffer, size_t buffer_size) {
 int main() {
     kii_t kii;
     size_t buffer_size = 4096;
-    char buffer[buffer_size];
+    char buffer[4096];
     size_t mqtt_buffer_size = 2048;
     char mqtt_buffer[2048];
     char installation_id[128];

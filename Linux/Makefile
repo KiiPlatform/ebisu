@@ -1,5 +1,5 @@
-#CFLAGS = -std=gnu89 -Wall -pedantic
-CFLAGS = -std=gnu89 -w -pedantic
+CFLAGS = -std=gnu89 -Wall -pedantic
+#CFLAGS = -std=gnu89 -w -pedantic
 ifdef DEBUG
 CFLAGS += -g -DDEBUG
 endif

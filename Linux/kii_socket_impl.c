@@ -6,15 +6,16 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <stdio.h>
+#include <unistd.h>
 
 kii_socket_code_t
     connect_cb(kii_socket_context_t* socket_context, const char* host,
             unsigned int port)
 {
-    int sock, ret;
+    int sock;
     struct hostent *servhost;
     struct sockaddr_in server;
-    struct servent *service;
     
     servhost = gethostbyname(host);
     if (servhost == NULL) {
@@ -80,7 +81,6 @@ kii_socket_code_t
 kii_socket_code_t
     close_cb(kii_socket_context_t* socket_context)
 {
-    int ret;
     int sock;
     sock = socket_context->socket;
 
