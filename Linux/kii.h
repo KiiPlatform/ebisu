@@ -345,7 +345,7 @@ extern int kiiPush_subscribeBucket(int scope, char* bucketID);
 *  \brief  Subscribes thing scope topic
 *
 *****************************************************************************/
-extern int kiiPush_subscribeTopic(int scope, char* topicID);
+extern int kiiPush_subscribeTopic(kii_t* kii, kii_topic_t* topic);
 
 /*****************************************************************************
 *

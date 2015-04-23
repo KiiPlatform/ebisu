@@ -297,81 +297,36 @@ free:
 exit:
 	return ret;
 }
+#endif
 
-/*****************************************************************************
-*
-*  kiiPush_subscribeTopic
-*
-*  \param: scope - topic scope
-*               topicID - the topic ID
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Subscribes thing scope topic
-*
-*****************************************************************************/
-int kiiPush_subscribeTopic(int scope, char* topicID)
+int kiiPush_subscribeTopic(kii_t* kii, kii_topic_t* topic)
 {
 	char* buf;
 	int ret = -1;
+    kii_error_code_t core_err;
+    kii_state_t state;
 
-	buf = kiiHal_malloc(KII_SOCKET_BUF_SIZE);
-	if(buf == NULL)
-	{
-		KII_DEBUG("kii-error: memory allocation failed !\r\n");
-		goto exit;
-	}
-	memset(buf, 0, KII_SOCKET_BUF_SIZE);
-	strcpy(buf, STR_POST);
-	// url
-	strcat(buf, "/api/apps/");
-	strcat(buf, g_kii_data.appID);
-	if(scope == KII_THING_SCOPE)
-	{
-		strcat(buf, "/things/VENDOR_THING_ID:");
-		strcat(buf, g_kii_data.vendorDeviceID);
-	}
-	strcat(buf, "/topics/");
-	strcat(buf, topicID);
-	strcat(buf, "/push/subscriptions/things");
-	strcat(buf, STR_HTTP);
-	strcat(buf, STR_CRLF);
-	// Host
-	strcat(buf, "Host: ");
-	strcat(buf, g_kii_data.host);
-	strcat(buf, STR_CRLF);
-	// x-kii-appid
-	strcat(buf, STR_KII_APPID);
-	strcat(buf, g_kii_data.appID);
-	strcat(buf, STR_CRLF);
-	// x-kii-appkey
-	strcat(buf, STR_KII_APPKEY);
-	strcat(buf, g_kii_data.appKey);
-	strcat(buf, STR_CRLF);
-	// Authorization
-	strcat(buf, STR_AUTHORIZATION);
-	strcat(buf, " Bearer ");
-	strcat(buf, g_kii_data.accessToken);
-	strcat(buf, STR_CRLF);
-	strcat(buf, STR_CRLF);
-
-	if(kiiHal_transfer(g_kii_data.host, buf, KII_SOCKET_BUF_SIZE, strlen(buf)) != 0)
-	{
-		KII_DEBUG("kii-error: transfer data error !\r\n");
-		goto free;
-	}
-
-	if((strstr(buf, "HTTP/1.1 204") != NULL) || (strstr(buf, "HTTP/1.1 409") != NULL))
-	{
-		ret = 0;
-	}
-
-free:
-	kiiHal_free(buf);
+    buf = kii->http_context.buffer;
+    core_err = kii_subscribe_topic(kii, topic);
+    if (core_err != KIIE_OK) {
+        goto exit;
+    }
+    do {
+        core_err = kii_run(kii);
+        state = kii_get_state(kii);
+    } while (state != KII_STATE_IDLE);
+    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    if (core_err != KIIE_OK) {
+        goto exit;
+    }
+    if (kii->response_code == 204 || kii->response_code == 409) {
+        ret = 0;
+    }
 exit:
 	return ret;
 }
 
+#if 0
 /*****************************************************************************
 *
 *  kiiPush_createTopic
