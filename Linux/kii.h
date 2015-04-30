@@ -116,7 +116,11 @@ int kiiDev_getIPAddress(char* ipAddress);
 *  \brief  Creates object
 *
 *****************************************************************************/
-extern int kiiObj_create(int scope, char* bucketName, char* jsonObject, char* dataType, char* objectID);
+extern int kiiObj_create(	kii_t* kii,
+			const kii_bucket_t* bucket,
+			const char* object_data,
+			const char* object_content_type,
+			char* object_id);
 
 /*****************************************************************************
 *
@@ -133,7 +137,12 @@ extern int kiiObj_create(int scope, char* bucketName, char* jsonObject, char* da
 *  \brief  Creates a new object with an ID
 *
 *****************************************************************************/
-extern int kiiObj_createWithID(int scope, char* bucketName, char* jsonObject, char* dataType, char* objectID);
+extern int kiiObj_createWithID(
+		kii_t* kii,
+		const kii_bucket_t* bucket,
+		const char* object_id,
+		const char* object_data,
+		const char* object_content_type);
 
 /*****************************************************************************
 *
@@ -150,7 +159,18 @@ extern int kiiObj_createWithID(int scope, char* bucketName, char* jsonObject, ch
 *  \brief  Fully updates an object
 *
 *****************************************************************************/
-extern int kiiObj_fullyUpdate(int scope, char* bucketName, char* jsonObject, char* dataType, char* objectID);
+extern int kiiObj_patch(
+			kii_t* kii,
+			const kii_bucket_t* bucket,
+			const char* object_id,
+			const char* patch_data,
+			const char* opt_etag);
+
+extern int kiiObj_delete(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id);
+
 
 /*****************************************************************************
 *
@@ -166,7 +186,12 @@ extern int kiiObj_fullyUpdate(int scope, char* bucketName, char* jsonObject, cha
 *  \brief  Partially updates an object
 *
 *****************************************************************************/
-extern int kiiObj_partiallyUpdate(int scope, char* bucketName, char* jsonObject, char* objectID);
+extern int kiiObj_get(
+			kii_t* kii,
+			const kii_bucket_t* bucket,
+			const char* object_id,
+			char* object_data,
+			size_t size);
 
 /*****************************************************************************
 *
@@ -252,23 +277,6 @@ extern int kiiObj_uploadBody(int scope,
 *
 *****************************************************************************/
 extern int kiiObj_uploadBodyCommit(int scope, char* bucketName, char* objectID, char* uploadID, int committed);
-
-/*****************************************************************************
-*
-*  kiiObj_retrieve
-*
-*  \param  scope - bucket scope
-*               bucketName - the input of bucket name
-*               objectID - the input of objectID
-*               jsonObject - the output of object with json format
-*               length - the buffer length of jsonObject
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Retrieves object with objectID
-*
-*****************************************************************************/
-extern int kiiObj_retrieve(int scope, char* bucketName, char* objectID, char* jsonObject, unsigned int length);
 
 /*****************************************************************************
 *

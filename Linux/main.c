@@ -26,6 +26,9 @@ int main() {
     kii_topic_t topic;
     char scope_id[128];
     int ret;
+    kii_bucket_t bucket;
+	char object_data[512];
+	char object_id[KII_OBJECTID_SIZE+1];
 
     memset(buffer, 0x00, buffer_size);
     memset(mqtt_buffer, 0x00, mqtt_buffer_size);
@@ -41,6 +44,46 @@ int main() {
     printf("vendor thing id: %s\n", kii.author.author_id);
     printf("thing token: %s\n", kii.author.access_token);
 
+    /* create object */
+    memset(&bucket, 0x00, sizeof(kii_bucket_t));
+    bucket.scope = KII_SCOPE_THING;
+    memset(scope_id, 0x00, sizeof(scope_id));
+    sprintf(scope_id, "VENDOR_THING_ID:%s", kii.author.author_id);
+	bucket.scope_id = scope_id;
+    bucket.bucket_name = "my_bucket";
+	memset(object_data, 0x00, sizeof(object_data));
+	strcpy(object_data, "{""score"": 2300, ""name"": ""game1""}");
+	memset(object_id, 0x00, sizeof(object_id));
+	ret = kiiObj_create(&kii, &bucket, object_data, NULL, object_id);
+	assert(ret == 0);
+
+    /* create object with id */
+	memset(object_id, 0x00, sizeof(object_id));
+	strcpy(object_id, "my_object");
+	ret = kiiObj_createWithID(&kii, &bucket, object_id, object_data, NULL);
+	assert(ret == 0);
+
+    /* patch object */
+	memset(object_data, 0x00, sizeof(object_data));
+	strcpy(object_data, "{""score"": 5000}");
+	ret = kiiObj_patch(&kii, &bucket, object_id, object_data, NULL);
+	assert(ret == 0);
+
+    /* replace object */
+	memset(object_data, 0x00, sizeof(object_data));
+	strcpy(object_data, "{""score1"": 2000, ""name1"": ""game1""}");
+	ret = kiiObj_replace(&kii, &bucket, object_id, object_data, NULL);
+	assert(ret == 0);
+
+    /* get object */
+	memset(object_data, 0x00, sizeof(object_data));
+	ret = kiiObj_get(&kii, &bucket, object_id, object_data, sizeof(object_data));
+	assert(ret == 0);
+	printf("object_data:%s\n", object_data);
+
+	/* delete object */
+	ret = kiiObj_delete(&kii, &bucket, object_id);
+	assert(ret == 0);
 
     memset(&topic, 0x00, sizeof(kii_topic_t));
     memset(scope_id, 0x00, sizeof(scope_id));
