@@ -39,8 +39,6 @@
 #define M_KII_LOG(x)
 #endif
 
-typedef enum { KII_APP_SCOPE = 0, KII_THING_SCOPE = 1 } kii_scope_e;
-
 /** Initializes Kii SDK
  *  \param kii sdk instance.
  *  \param site the input of site name, should be one of "CN", "JP", "US", "SG"
