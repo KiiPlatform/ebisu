@@ -8,8 +8,9 @@ LIBS = -lssl -lcrypto -lpthread
 SOURCES = $(wildcard *.c)
 SOURCES += kii-core/kii.c kii-core/kii_libc_wrapper.c
 TARGET = exampleapp
+DOCTARGET = doc 
 
-all: clean $(TARGET)
+all: clean $(TARGET) $(DOCTARGET)
 
 copy:
 	cp ../kii-core/*.c kii-core/
@@ -18,9 +19,13 @@ copy:
 $(TARGET): copy
 	gcc $(CFLAGS) $(SOURCES) $(LIBS) -o $@
 
+$(DOCTARGET):
+	doxygen
+
 clean:
 	touch $(TARGET)
 	rm $(TARGET)
+	rm -rf $(DOCTARGET)
 
 .PHONY: all clean copy
 
