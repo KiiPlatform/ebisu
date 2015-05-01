@@ -19,7 +19,7 @@ copy:
 $(TARGET): copy
 	gcc $(CFLAGS) $(SOURCES) $(LIBS) -o $@
 
-$(DOCTARGET):
+$(DOCTARGET): kii.h
 	doxygen
 
 clean:

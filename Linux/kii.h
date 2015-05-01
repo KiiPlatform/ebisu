@@ -41,20 +41,13 @@
 
 typedef enum { KII_APP_SCOPE = 0, KII_THING_SCOPE = 1 } kii_scope_e;
 
-/*****************************************************************************
-*
-*  kii_init
-*
-*  \param kii - sdk instance.
-*              site - the input of site name, should be one of "CN", "JP", "US", "SG"
-*              appID - the input of Application ID
-*              appKey - the input of Application Key
-*
-*  \return  0:success; -1: failure
-*
-*  \brief  Initializes Kii
-*
-*****************************************************************************/
+/** Initializes Kii SDK
+ *  \param kii sdk instance.
+ *  \param site the input of site name, should be one of "CN", "JP", "US", "SG"
+ *  \param appID the input of Application ID
+ *  \param appKey the input of Application Key
+ *  \return  0:success; -1: failure
+ */
 extern int kii_init(kii_t* kii, char* site, char* appID, char* appKey);
 
 /*****************************************************************************
