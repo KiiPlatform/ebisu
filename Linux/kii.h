@@ -40,149 +40,140 @@
 #endif
 
 /** Initializes Kii SDK
- *  \param kii sdk instance.
- *  \param site the input of site name, should be one of "CN", "JP", "US", "SG"
- *  \param appID the input of Application ID
- *  \param appKey the input of Application Key
- *  \return  0:success; -1: failure
+ *  \param [inout] kii sdk instance.
+ *  \param [in] site the input of site name, should be one of "CN", "JP", "US", "SG"
+ *  \param [in] app_id the input of Application ID
+ *  \param [in] app_key the input of Application Key
+ *  \return  0:success, -1: failure
  */
-extern int kii_init(kii_t* kii, char* site, char* appID, char* appKey);
+int kii_init(
+        kii_t* kii,
+        const char* site,
+        const char* app_id,
+        const char* app_key);
 
-/*****************************************************************************
-*
-*  kiiDev_getToken
-*
-*  \param kii - sdk instance.
-*               vendorDeviceID - the input of identification of the device
-*               password - the input of password
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Gets token
-*
-*****************************************************************************/
-extern int kiiDev_getToken(kii_t* kii, char* deviceVendorID, char* password);
+/** Authorize thing with vendor thing id and password.
+ *  After the authentication, access token is used to call APIs access to
+ *  Kii Cloud so that the thing can access private data.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] vendor_thing_id the thing identifier given by vendor.
+ *  \param [in] password the password of the thing given by vendor.
+ *  \return 0:success, -1: failure
+ */
+int kii_thing_authenticate(
+        kii_t* kii,
+        const char* vendor_thing_id,
+        const char* password);
 
-/*****************************************************************************
-*
-*  kiiDev_register
-*
-*  \param kii - sdk instance.
-*               vendorDeviceID - the input of identification of the device
-*               deviceType - the input of device type
-*               password - the input of password
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Registers device
-*
-*****************************************************************************/
-extern int kiiDev_register(kii_t* kii, char* vendorDeviceID, char* deviceType, char* password);
+/** Register new thing
+ *  After the registtration, access token is used to call APIs access to
+ *  Kii Cloud so that the thing can access private data.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] vendor_thing_id the thing identifier given by vendor.
+ *  \param [in] thing_type the type of the thing given by vendor.
+ *  \param [in] password - the password of the thing given by vendor.
+ *  \return 0:success, -1: failure
+ */
+int kii_thing_register(
+        kii_t* kii,
+        const char* vendor_thing_id,
+        const char* thing_type,
+        const char* password);
 
-/*****************************************************************************
-*
-*  kiiDev_getIPAddress
-*
-*  \param  ipAddress - the info of IP address
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Gets external IP address
-*
-*****************************************************************************/
-int kiiDev_getIPAddress(char* ipAddress);
+/** Create new object
+ *  \param [inout] kii sdk instance.
+ *  \param [in] bucket specify the bucket of which object is stored.
+ *  \param [in] object_data key-value pair of the object in json format.
+ *  \param [in] object_content_type content-type of the object. If null,
+ *  application/json will be applied.
+ *  \param [out] object_id output of the created object ID.
+ *  Supplied when succeeded to create new object.
+ *  Must be allocated by application with the size of KII_OBJECTID_SIZE
+ *  before this api call.
+ *  \return 0:success, -1: failure
+ */
+int kii_object_create(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_data,
+        const char* object_content_type,
+        char* out_object_id);
 
-/*****************************************************************************
-*
-*  kiiObj_create
-*
-*  \param  scope - bucket scope
-*               bucketName - the input of bucket name
-*               jsonObject - the input of object with json format
-*               dataType - the input of data type, the format should be like "mydata"
-*               objectID - the output of objectID
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Creates object
-*
-*****************************************************************************/
-extern int kiiObj_create(	kii_t* kii,
-			const kii_bucket_t* bucket,
-			const char* object_data,
-			const char* object_content_type,
-			char* object_id);
+/** Create new object with the specified ID
+ *  \param [inout] kii sdk instance.
+ *  \param [in] bucket specify the bucket of which object is stored.
+ *  \param [in] object_id specify the id of the object.
+ *  \param [in] object_data key-value pair of the object in json format.
+ *  \param [in] object_content_type content-type of the object. If null,
+ *  application/json will be applied.
+ *  \return  0:success, -1: failure
+ */
+int kii_object_create_with_id(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id,
+        const char* object_data,
+        const char* object_content_type);
 
-/*****************************************************************************
-*
-*  kiiObj_createWithID
-*
-*  \param  scope - bucket scope
-*               bucketName - the input of bucket name
-*               jsonObject - the input of object with json format
-*               dataType - the input of data type, the format should be like "mydata"
-*               objectID - the input of objectID
-*
-*  \return  0:success; -1: failure
-*
-*  \brief  Creates a new object with an ID
-*
-*****************************************************************************/
-extern int kiiObj_createWithID(
-		kii_t* kii,
-		const kii_bucket_t* bucket,
-		const char* object_id,
-		const char* object_data,
-		const char* object_content_type);
+/** Partial update of the object
+ *  Only the specified key-value is updated and other key-values won't be
+ *  updated/ removed.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] bucket specify the bucket of which object is stored.
+ *  \param [in] object_id specify the id of the object.
+ *  \param [in] patch_data key-value pair of the object in json format.
+ *  \param [in] opt_etag etag of the object. if specified, update will be failed
+ *  if there is updates on cloud. if NULL, forcibly updates.
+ *  \return  0:success, -1: failure
+ */
+int kii_object_patch(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id,
+        const char* patch_data,
+        const char* opt_etag);
 
-/*****************************************************************************
-*
-*  kiiObj_fullyUpdate
-*
-*  \param  scope - bucket scope
-*               bucketName - the input of bucket name
-*               jsonObject - the input of object with json format
-*               dataType - the input of data type, the format should be like "mydata"
-*               objectID - the input of objectID
-*
-*  \return  0:success; -1: failure
-*
-*  \brief  Fully updates an object
-*
-*****************************************************************************/
-extern int kiiObj_patch(
-			kii_t* kii,
-			const kii_bucket_t* bucket,
-			const char* object_id,
-			const char* patch_data,
-			const char* opt_etag);
+/** Full update of the object
+ * Replace the object with specified key-values.
+ * Existing key-value pair which is not included in the replacement_data will be
+ * removed.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] bucket specify the bucket of which object is stored.
+ *  \param [in] object_id specify the id of the object.
+ *  \param [in] replacement_data key-value pair of the object in json format.
+ *  \param [in] opt_etag etag of the object. if specified, update will be failed
+ *  if there is updates on cloud. if NULL, forcibly updates.
+ *  \return  0:success, -1: failure
+ */
+int kii_object_replace(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id,
+        const char* replacement_data,
+        const char* opt_etag);
 
-extern int kiiObj_delete(
+/** Delete the object
+ *  \param [inout] kii sdk instance.
+ *  \param [in] bucket specify the bucket of which object is stored.
+ *  \param [in] object_id specify the id of the object.
+ *  \return  0:success, -1: failure
+ */
+int kii_object_delete(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id);
 
-
-/*****************************************************************************
-*
-*  kiiObj_partiallyUpdate
-*
-*  \param  scope - bucket scope
-*               bucketName - the input of bucket name
-*               jsonObject - the input of object with json format
-*               objectID - the input of objectID
-*
-*  \return  0:success; -1: failure
-*
-*  \brief  Partially updates an object
-*
-*****************************************************************************/
-extern int kiiObj_get(
-			kii_t* kii,
-			const kii_bucket_t* bucket,
-			const char* object_id,
-			char* object_data,
-			size_t size);
+/** Get the object
+ *  When succeeded, obtained object data is cached in kii_t#response_body.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] bucket specify the bucket of which object is stored.
+ *  \param [in] object_id specify the id of the object.
+ *  \return  0:success, -1: failure
+ */
+int kii_object_get(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id);
 
 /*****************************************************************************
 *

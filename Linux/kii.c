@@ -8,7 +8,7 @@
 #include "kii_socket_impl.h"
 #include "kii_task_impl.h"
 
-int kii_init(kii_t* kii, char* site, char* appID, char* appKey)
+int kii_init(kii_t* kii, const char* site, const char* appID, const char* appKey)
 {
 	memset(kii, 0, sizeof(kii_t));
 	if((strlen(site) != KII_SITE_SIZE) || (strlen(appID) != KII_APPID_SIZE) || (strlen(appKey) != KII_APPKEY_SIZE))
