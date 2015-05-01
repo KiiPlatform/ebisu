@@ -41,7 +41,8 @@
 
 /** Initializes Kii SDK
  *  \param [inout] kii sdk instance.
- *  \param [in] site the input of site name, should be one of "CN", "JP", "US", "SG"
+ *  \param [in] site the input of site name,
+ *  should be one of "CN", "JP", "US", "SG"
  *  \param [in] app_id the input of Application ID
  *  \param [in] app_key the input of Application Key
  *  \return  0:success, -1: failure
@@ -175,211 +176,185 @@ int kii_object_get(
         const kii_bucket_t* bucket,
         const char* object_id);
 
-/*****************************************************************************
-*
-*  kiiObj_uploadBodyAtOnce
-*
-*  \param  scope - bucket scope
-*               bucketName - the input of bucket name
-*               objectID - the input of objectID
-*               dataType - the input of data type, the format should be like "image/jpg"
-*               data - raw data
-*               length - raw data length
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Uploads object body at once
-*
-*****************************************************************************/
-extern int kiiObj_uploadBodyAtOnce(int scope,
-                                   char* bucketName,
-                                   char* objectID,
-                                   char* dataType,
-                                   unsigned char* data,
-                                   unsigned int length);
+/** Upload object body at once.
+ *  Upload object body at one time.
+ *  If the data is large,
+ *  consider use chunk upload with kii_object_upload_body().
+ *  \param [inout] kii sdk instance.
+ *  \param [in] bucket specify the bucket of which object is stored.
+ *  \param [in] object_id specify the id of the object of which body is added.
+ *  \param [in] body_content_type content-type of the body.
+ *  \param [in] data object body data.
+ *  \param [in] data_length length of the data.
+ *  \return 0:success, -1: failure
+ */
+int kii_object_upload_body_at_once(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id,
+        const char* body_content_type,
+        const char* data,
+        size_t data_length);
 
-/*****************************************************************************
-*
-*  kiiObj_uploadBodyInit
-*
-*  \param  scope - bucket scope
-*               bucketName - the input of bucket name
-*               objectID - the input of objectID
-*               uploadID - the output of uploadID
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Initializes "uploading an object body in multiple pieces"
-*
-*****************************************************************************/
-extern int kiiObj_uploadBodyInit(int scope, char* bucketName, char* objectID, char* uploadID);
+/** Initiate chunked object body upload.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] bucket specify the bucket of which object is stored.
+ *  \param [in] object_id specify the id of the object of which body is added.
+ *  \param [out] out_upload_id upload id to be used to continue chunked upload.
+ *  \return 0:success; -1: failure
+ */
+int kii_object_init_upload_body(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id,
+        char* out_upload_id);
 
-/*****************************************************************************
-*
-*  kiiObj_uploadBody
-*
-*  \param  scope - bucket scope
-*               bucketName - the input of bucket name
-*               objectID - the input of objectID
-*               uploadID - the input of uploadID
-*               dataType - the input of data type, the format should be like "image/jpg"
-*               position - data position
-*               length - this  piece of data length
-*               totalLength - the total object body length
-*               data - raw data
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Uploads a piece of data
-*
-*****************************************************************************/
-extern int kiiObj_uploadBody(int scope,
-                             char* bucketName,
-                             char* objectID,
-                             char* uploadID,
-                             char* dataType,
-                             unsigned int position,
-                             unsigned int length,
-                             unsigned int totalLength,
-                             unsigned char* data);
+/** represents chunk data */
+typedef struct kii_chunk_data_t {
+    /** content-type of the body */
+    char* body_content_type;
+    /** position of the chunk.(bytes count) */
+    unsigned int position;
+    /** length of the chunk */
+    unsigned int length;
+    /** total length of the body */
+    unsigned int total_length;
+    /** chunk data */
+    char* chunk;
+} kii_chunk_data_t;
 
-/*****************************************************************************
-*
-*  kiiObj_uploadBody
-*
-*  \param  scope - bucket scope
-*               bucketName - the input of bucket name
-*               objectID - the input of objectID
-*               uploadID - the input of uploadID
-*               committed - 0: cancelled; 1: committed
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Commits or cancels this uploading
-*
-*****************************************************************************/
-extern int kiiObj_uploadBodyCommit(int scope, char* bucketName, char* objectID, char* uploadID, int committed);
+/** Upload object body chunk by chunk.
+ *  You need to obtain upload id before execute this method by calling
+ *  kii_object_init_upload_body().
+ *  \param [inout] kii sdk instance.
+ *  \param [in] bucket specify the bucket of which object is stored.
+ *  \param [in] object_id specify the id of the object of which body is added.
+ *  \param [in] upload id obtained by kii_object_init_upload_body().
+ *  \param [in] chunk chunk of the body to upload.
+ *  \return 0:success, -1: failure
+ */
+int kii_object_upload_body(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id,
+        const char* upload_id,
+        const kii_chunk_data_t* chunk);
 
-/*****************************************************************************
-*
-*  kiiObj_downloadBodyAtOnce
-*
-*  \param  scope - bucket scope
-*               bucketName - the input of bucket name
-*               objectID - the input of objectID
-*               data - raw data
-*               length - the buffer lengh for object body
-*               actualLength - the actual length of received body
-*  \return 0:success; -1: failure
-*
-*  \brief  Downloads an object body at once
-*
-*****************************************************************************/
-extern int kiiObj_downloadBodyAtOnce(int scope,
-                                     char* bucketName,
-                                     char* objectID,
-                                     unsigned char* data,
-                                     unsigned int length,
-                                     unsigned int* actualLength);
+/** Commit and finalize upload.
+ *  After successfully upload all the chunk of the body by
+ *  kii_object_upload_body() call this api to finalize upload.
+ *  or in cancel upload can be called after the kii_object_init_upload_body()
+ *  succeeded. Basically no need to cancel upload since Kii Cloud cleanups the
+ *  impcompleted uploads periodically.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] bucket specify the bucket of which object is stored.
+ *  \param [in] object_id specify the id of the object of which body is added.
+ *  \param [in] upload id obtained by kii_object_init_upload_body().
+ *  \param ]in] commit 0: cancell upload, >0: commit upload
+ *  \return 0:success, -1: failure
+ */
+int kii_object_commit_upload(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id,
+        const char* upload_id,
+        unsigned int commit);
 
-/*****************************************************************************
-*
-*  kiiObj_downloadBody
-*
-*  \param  scope - bucket scope
-*               bucketName - the input of bucket name
-*               objectID - the input of objectID
-*               position - the downloading position of body
-*               length - the downloading length of body
-*               data - the output data of received body
-*               actualLength - the actual length of received body
-*               totalLength - the output of total body length
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Downloads an object body in multiple pieces
-*
-*****************************************************************************/
-extern int kiiObj_downloadBody(int scope,
-                               char* bucketName,
-                               char* objectID,
-                               unsigned int position,
-                               unsigned int length,
-                               unsigned char* data,
-                               unsigned int* actualLength,
-                               unsigned int* totalLength);
+/** Download object body at one time.
+ *  If the data size is large or unknown, consider use kii_object_downlad_body()
+ *  instead.
+ *  The result is cached in kii_t#response_body when succeeded.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] bucket specify the bucket of which object is stored.
+ *  \param [in] object_id specify the id of the object of which body is added.
+ *  \param [out] out_data_length length of the downloaded body. (in bytes)
+ *  \return 0:success, -1: failure
+ */
+int kii_object_download_body_at_once(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id,
+        unsigned int* out_data_length);
 
-/*****************************************************************************
-*
-*  kiiPush_subscribeBucket
-*
-*  \param  scope - bucket scope
-*               bucketID - the bucket ID
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Subscribes bucket
-*
-*****************************************************************************/
-extern int kiiPush_subscribeBucket(kii_t* kii, kii_bucket_t* bucket);
+/** Download object body chunk by chunk.
+ *  Downloaded data is cached in kii_t#response_body after the download chunk is
+ *  succeeded.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] bucket specify the bucket of which object is stored.
+ *  \param [in] object_id specify the id of the object of which body is added.
+ *  \param [in] position starting position of the download (in bytes)
+ *  \param [in] length length to download (in bytes)
+ *  \param [out] out_actual_length actual length downloaded. (in bytes)
+ *  \param [out] out_total_length total length of whole object body (in bytes)
+ *  \return 0:success, -1: failure
+ */
+int kii_object_downlad_body(
+        kii_t* kii,
+        char* object_id,
+        const kii_bucket_t* bucket,
+        unsigned int position,
+        unsigned int length,
+        unsigned int* out_actual_length,
+        unsigned int* out_total_length);
 
-/*****************************************************************************
-*
-*  kiiPush_subscribeTopic
-*
-*  \param: scope - topic scope
-*               topicID - the topic ID
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Subscribes thing scope topic
-*
-*****************************************************************************/
-extern int kiiPush_subscribeTopic(kii_t* kii, kii_topic_t* topic);
+/** Subscribe to specified bucket.
+ *  After succeeded,
+ *  Event happened on the bucket will be notified via push notification.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] bucket specify the bucket to subscribe.
+ *  \return 0:success, -1: failure
+ */
+int kii_push_subscribe_bucket(
+        kii_t* kii,
+        const kii_bucket_t* bucket);
 
-/*****************************************************************************
-*
-*  kiiPush_createTopic
-*
-*  \param: scope - topic scope
-*               topicID - the topic ID
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Creates thing scope topic
-*
-*****************************************************************************/
-extern int kiiPush_createTopic(kii_t* kii, kii_topic_t* topic);
+/** Subscribe to specified topic.
+ *  After succeeded,
+ *  Message sent to the topic will be notified via push notification.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] topic specify the topic to subscribe.
+ *  \return 0:success, -1: failure
+ */
+int kii_push_subscribe_topic(
+        kii_t* kii,
+        const kii_topic_t* topic);
 
-/*****************************************************************************
-*
-*  KiiPush_init
-*
-*  \param: recvMsgtaskPrio - the priority of task for receiving message
-*               pingReqTaskPrio - the priority of task for "PINGREQ" task
-*               callback - the call back function for processing the push message received
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Initializes push
-*
-*****************************************************************************/
-extern int kiiPush_init(kii_t* kii, unsigned int taskPrio, unsigned int pingReqTaskPrio, KII_PUSH_RECEIVED_CB callback);
+/** Create new topic.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] topic specify the topic to create.
+ *  \return 0:success, -1: failure
+ */
+int kii_push_create_topic(
+        kii_t* kii,
+        const kii_topic_t* topic);
 
-/*****************************************************************************
-*
-*  kiiExt_extension
-*
-*  \param  endpointName - the endpoint name
-*              jsonObject - the input of object with json format
-*
-*  \return 0:success; -1: failure
-*
-*  \brief  Executes the server extension code
-*
-*****************************************************************************/
-extern int kiiExt_extension(char* endpointName, char* jsonObject);
+/** Start push notification receiving routine.
+ *  After succeeded, callback is called when push message is delivered to this
+ *  thing.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] task_priority task priority of receiving push.
+ *  actual value is depends on the platform environment.
+ *  \param [in] ping_req_task_priority task priority of sending ping to cloud.
+ *  actual value is depends on the platform environment.
+ *  \param [in] callback  callback function called when push message delivered. 
+ *  \return 0:success, -1: failure
+ */
+int kii_push_start_routine(
+        kii_t* kii,
+        unsigned int task_priority,
+        unsigned int ping_req_task_priority,
+        KII_PUSH_RECEIVED_CB callback);
 
+/** Execute server code.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] endpoint_name name of the endpoint to be executed.
+ *  \param [in] params parameters given to endpoint. should be formatted in json.
+ *  \return 0:success, -1: failure
+ */
+int kii_server_code_execute(
+        kii_t* kii,
+        const char* endpoint_name,
+        const char* params);
 
 /* TODO: decide whether we expose it or not */
 extern int kiiPush_install(kii_t* kii, kii_bool_t development, char* installation_id);
