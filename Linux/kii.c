@@ -8,10 +8,14 @@
 #include "kii_socket_impl.h"
 #include "kii_task_impl.h"
 
-int kii_init(kii_t* kii, const char* site, const char* appID, const char* appKey)
+int kii_init(
+        kii_t* kii,
+        const char* site,
+        const char* app_id,
+        const char* app_key)
 {
 	memset(kii, 0, sizeof(kii_t));
-	if((strlen(site) != KII_SITE_SIZE) || (strlen(appID) != KII_APPID_SIZE) || (strlen(appKey) != KII_APPKEY_SIZE))
+	if((strlen(site) != KII_SITE_SIZE) || (strlen(app_id) != KII_APPID_SIZE) || (strlen(app_key) != KII_APPKEY_SIZE))
 	{
 		return -1;
 	}
@@ -37,8 +41,8 @@ int kii_init(kii_t* kii, const char* site, const char* appID, const char* appKey
 		kii->app_host = site;
 	}
 
-	kii->app_id = appID;
-	kii->app_key = appKey;
+	kii->app_id = app_id;
+	kii->app_key = app_key;
 
     /* setting http callbacks. */
     kii->http_set_request_line_cb = request_line_cb;

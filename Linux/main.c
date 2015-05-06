@@ -29,7 +29,13 @@ int main() {
     kii_bucket_t bucket;
 	char object_data[512];
 	char object_id[KII_OBJECTID_SIZE+1];
-
+    char upload_id[128];
+    char content_type[128];
+	kii_chunk_data_t chunk;
+	unsigned int length;
+    unsigned int actual_length;
+    unsigned int total_length;
+        
     memset(buffer, 0x00, buffer_size);
     memset(mqtt_buffer, 0x00, mqtt_buffer_size);
 
@@ -39,7 +45,7 @@ int main() {
     kii.mqtt_buffer = mqtt_buffer;
     kii.mqtt_buffer_size = mqtt_buffer_size;
 
-    ret = kiiDev_getToken(&kii, "98477", "1234");
+    ret = kii_thing_authenticate(&kii, "98477", "1234");
     assert(ret == 0);
     printf("vendor thing id: %s\n", kii.author.author_id);
     printf("thing token: %s\n", kii.author.access_token);
@@ -54,36 +60,71 @@ int main() {
 	memset(object_data, 0x00, sizeof(object_data));
 	strcpy(object_data, "{""score"": 2300, ""name"": ""game1""}");
 	memset(object_id, 0x00, sizeof(object_id));
-	ret = kiiObj_create(&kii, &bucket, object_data, NULL, object_id);
+	ret = kii_object_create(&kii, &bucket, object_data, NULL, object_id);
 	assert(ret == 0);
 
     /* create object with id */
 	memset(object_id, 0x00, sizeof(object_id));
 	strcpy(object_id, "my_object");
-	ret = kiiObj_createWithID(&kii, &bucket, object_id, object_data, NULL);
+	ret = kii_object_create_with_id(&kii, &bucket, object_id, object_data, NULL);
 	assert(ret == 0);
 
     /* patch object */
 	memset(object_data, 0x00, sizeof(object_data));
 	strcpy(object_data, "{""score"": 5000}");
-	ret = kiiObj_patch(&kii, &bucket, object_id, object_data, NULL);
+	ret = kii_object_patch(&kii, &bucket, object_id, object_data, NULL);
 	assert(ret == 0);
 
     /* replace object */
 	memset(object_data, 0x00, sizeof(object_data));
 	strcpy(object_data, "{""score1"": 2000, ""name1"": ""game1""}");
-	ret = kiiObj_replace(&kii, &bucket, object_id, object_data, NULL);
+	ret = kii_object_replace(&kii, &bucket, object_id, object_data, NULL);
 	assert(ret == 0);
 
     /* get object */
 	memset(object_data, 0x00, sizeof(object_data));
-	ret = kiiObj_get(&kii, &bucket, object_id, object_data, sizeof(object_data));
+	ret = kii_object_get(&kii, &bucket, object_id);
 	assert(ret == 0);
-	printf("object_data:%s\n", object_data);
+
+    /* upload body at once */
+	printf("upload body at once...\r\n");
+    ret = kii_object_upload_body_at_once(&kii, &bucket, object_id, "text/plain", "1234", 4);
+	assert(ret == 0);
+
+	/* upload body */
+	printf("upload body init...\r\n");
+	memset(upload_id, 0x00, sizeof(upload_id));
+    ret = kii_object_init_upload_body(&kii, &bucket, object_id, upload_id); 
+	assert(ret == 0);
+	memset(object_data, 0x00, sizeof(object_data));
+	strcpy(object_data, "hello world!");
+	chunk.chunk = object_data;
+    memset(content_type, 0x00, sizeof(content_type));
+    strcpy(content_type, "text/plain");
+	chunk.body_content_type = content_type;
+	chunk.length = strlen(object_data);
+	chunk.position = 0;
+	chunk.total_length = strlen(object_data);
+    ret = kii_object_upload_body(&kii, &bucket, object_id, upload_id, &chunk);
+	assert(ret == 0);
+    ret = kii_object_commit_upload(&kii, &bucket, object_id, upload_id, 1);
+	assert(ret == 0);
+	/* download body at once */
+	printf("download body at once...\r\n");
+    ret = kii_object_download_body_at_once(&kii, &bucket, object_id, &length);
+	printf("length=%d\r\n", length);
+	assert(ret == 0);
+	/* download body */
+	printf("download body...\r\n");
+    ret = kii_object_downlad_body(&kii, object_id, &bucket, 0, 
+		strlen(object_data), &actual_length, &total_length);
+	assert(ret == 0);
+    printf("actual_length=%d, total_length=%d\r\n", actual_length, total_length);
 
 	/* delete object */
-	ret = kiiObj_delete(&kii, &bucket, object_id);
+	ret = kii_object_delete(&kii, &bucket, object_id);
 	assert(ret == 0);
+
 
     memset(&topic, 0x00, sizeof(kii_topic_t));
     memset(scope_id, 0x00, sizeof(scope_id));

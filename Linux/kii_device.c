@@ -8,8 +8,10 @@
 
 #include "kii-core/kii.h"
 #include "kii_core_impl.h"
-
-int kiiDev_getToken(kii_t* kii, char* vendorDeviceID, char* password)
+int kii_thing_authenticate(
+        kii_t* kii,
+        const char* vendor_thing_id,
+        const char* password)
 {
     char* p1;
     char* p2;
@@ -19,7 +21,7 @@ int kiiDev_getToken(kii_t* kii, char* vendorDeviceID, char* password)
     kii_state_t state;
 
     buf = kii->http_context.buffer;
-    core_err = kii_thing_authentication(kii, vendorDeviceID, password);
+    core_err = kii_thing_authentication(kii, vendor_thing_id, password);
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -56,7 +58,7 @@ int kiiDev_getToken(kii_t* kii, char* vendorDeviceID, char* password)
     {
         goto exit;
     }
-    strcpy(kii->author.author_id, vendorDeviceID);
+    strcpy(kii->author.author_id, vendor_thing_id);
     memcpy(kii->author.access_token, p1, p2 - p1);
     ret = 0;
 
@@ -64,7 +66,11 @@ exit:
     return ret;
 }
 
-int kiiDev_register(kii_t* kii, char* vendorDeviceID, char* deviceType, char* password)
+int kii_thing_register(
+        kii_t* kii,
+        const char* vendor_thing_id,
+        const char* thing_type,
+        const char* password)
 {
     char* buf;
     char* p1;
@@ -77,7 +83,7 @@ int kiiDev_register(kii_t* kii, char* vendorDeviceID, char* deviceType, char* pa
     buf = kii->http_context.buffer;
     sprintf(thing_data,
             "{\"_vendorThingID\":\"%s\",\"_thingType\":\"%s\",\"_password\":\"%s\"}",
-            vendorDeviceID, deviceType, password);
+            vendor_thing_id, thing_type, password);
     core_err = kii_register_thing(kii, thing_data);
     if (core_err != KIIE_OK) {
         goto exit;
@@ -116,7 +122,7 @@ int kiiDev_register(kii_t* kii, char* vendorDeviceID, char* deviceType, char* pa
         goto exit;
     }
     memcpy(kii->author.access_token, p1, p2 - p1);
-    strcpy(kii->author.author_id, vendorDeviceID);
+    strcpy(kii->author.author_id, vendor_thing_id);
     ret = 0;
 
 exit:
