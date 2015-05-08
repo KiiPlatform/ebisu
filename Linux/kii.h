@@ -290,7 +290,7 @@ int kii_object_download_body_at_once(
  */
 int kii_object_downlad_body(
         kii_t* kii,
-        char* object_id,
+        const char* object_id,
         const kii_bucket_t* bucket,
         unsigned int position,
         unsigned int length,

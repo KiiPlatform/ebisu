@@ -33,29 +33,24 @@ int kii_thing_authenticate(
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if(kii->response_code < 200 || 300 <= kii->response_code)
-    {
+    if(kii->response_code < 200 || 300 <= kii->response_code) {
         goto exit;
     }
     p1 = strstr(buf, "\"access_token\"");
-    if(p1 == NULL)
-    {
+    if(p1 == NULL) {
         goto exit;
     }
     p1 = strstr(p1, ":");
-    if(p1 == NULL)
-    {
+    if(p1 == NULL) {
         goto exit;
     }
     p1 = strstr(p1, "\"");
-    if(p1 == NULL)
-    {
+    if(p1 == NULL) {
         goto exit;
     }
     p1 += 1;
     p2 = strstr(p1, "\"");
-    if(p2 == NULL)
-    {
+    if(p2 == NULL) {
         goto exit;
     }
     strcpy(kii->author.author_id, vendor_thing_id);
@@ -95,30 +90,25 @@ int kii_thing_register(
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if(kii->response_code < 200 || 300 <= kii->response_code)
-    {
+    if(kii->response_code < 200 || 300 <= kii->response_code) {
         goto exit;
     }
     /* parse response */
     p1 = strstr(buf, "\"_accessToken\"");
-    if(p1 == NULL)
-    {
+    if(p1 == NULL) {
         goto exit;
     }
     p1 = strstr(p1, ":");
-    if(p1 == NULL)
-    {
+    if(p1 == NULL) {
         goto exit;
     }
     p1 = strstr(p1, "\"");
-    if(p1 == NULL)
-    {
+    if(p1 == NULL) {
         goto exit;
     }
     p1 += 1;
     p2 = strstr(p1, "\"");
-    if(p2 == NULL)
-    {
+    if(p2 == NULL) {
         goto exit;
     }
     memcpy(kii->author.access_token, p1, p2 - p1);
