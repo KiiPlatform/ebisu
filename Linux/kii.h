@@ -356,6 +356,4 @@ int kii_server_code_execute(
         const char* endpoint_name,
         const char* params);
 
-/* TODO: decide whether we expose it or not */
-extern int kiiPush_install(kii_t* kii, kii_bool_t development, char* installation_id);
 #endif

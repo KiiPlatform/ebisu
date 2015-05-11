@@ -277,7 +277,7 @@ int main(int argc, char** argv)
             break;
         case 12:
             printf("subscribe bucket\n");
-	    ret = kiiPush_subscribeBucket(&kii, &bucket);
+	    ret = kii_push_subscribe_bucket(&kii, &bucket);
             if(ret == 0)
             {
                 printf("success!\n");
@@ -289,7 +289,7 @@ int main(int argc, char** argv)
             break;
         case 13:
             printf("create topic\n");
-    	    ret = kiiPush_createTopic(&kii, &topic);
+    	    ret = kii_push_create_topic(&kii, &topic);
             if(ret == 0)
             {
                 printf("success!\n");
@@ -301,7 +301,7 @@ int main(int argc, char** argv)
             break;
         case 14:
             printf("subscrie topic\n");
-    	    ret = kiiPush_subscribeTopic(&kii, &topic);
+    	    ret = kii_push_subscribe_topic(&kii, &topic);
             if(ret == 0)
             {
                 printf("success!\n");
@@ -313,7 +313,7 @@ int main(int argc, char** argv)
             break;
         case 15:
 	    printf("Initialize push");
-            kiiPush_init(&kii, 0, 0, received_callback);
+            kii_push_start_routine(&kii, 0, 0, received_callback);
             while(1)
             {
                 sleep(1);

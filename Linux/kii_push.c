@@ -15,7 +15,7 @@ static unsigned int mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];
 static unsigned int mKiiPush_pingReqTaskStk[KIIPUSH_PINGREQ_TASK_STK_SIZE];
 #endif
 
-int kiiPush_install(kii_t* kii, kii_bool_t development, char* installation_id)
+static int kiiPush_install(kii_t* kii, kii_bool_t development, char* installation_id)
 {
 	char* p1;
 	char* p2;
@@ -222,7 +222,7 @@ exit:
 }
 
 
-int kiiPush_subscribeBucket(kii_t* kii, kii_bucket_t* bucket)
+int kii_push_subscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
 {
 	int ret = -1;
 
@@ -248,7 +248,7 @@ exit:
 	return ret;
 }
 
-int kiiPush_subscribeTopic(kii_t* kii, kii_topic_t* topic)
+int kii_push_subscribe_topic(kii_t* kii, const kii_topic_t* topic)
 {
 	int ret = -1;
     kii_error_code_t core_err;
@@ -273,7 +273,7 @@ exit:
 	return ret;
 }
 
-int kiiPush_createTopic(kii_t* kii, kii_topic_t* topic)
+int kii_push_create_topic(kii_t* kii, const kii_topic_t* topic)
 {
 	int ret = -1;
     kii_error_code_t core_err;
@@ -485,7 +485,7 @@ static void* kiiPush_pingReqTask(void* sdata)
 }
 #endif
 
-int kiiPush_init(kii_t* kii, unsigned int recvMsgtaskPrio, unsigned int pingReqTaskPrio, KII_PUSH_RECEIVED_CB callback)
+int kii_push_start_routine(kii_t* kii, unsigned int recvMsgtaskPrio, unsigned int pingReqTaskPrio, KII_PUSH_RECEIVED_CB callback)
 {
     kii->push_received_cb = callback;
     kii->task_create_cb(NULL,
