@@ -3,10 +3,25 @@
 
 #include "kii.h"
 #include "kii_def.h"
-#include "kii_push.h"
 #include "kii_mqtt.h"
 #include "kii-core/kii.h"
 
+#define KII_PUSH_PING_ENABLE 1
+#define KII_PUSH_INSTALLATIONID_SIZE 64
+#define KII_PUSH_TOPIC_HEADER_SIZE 8
+
+#if(KII_PUSH_PING_ENABLE)
+#define KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE 30
+#else
+#define KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE 0
+#endif
+
+typedef enum
+{
+    KIIPUSH_ENDPOINT_READY = 0,
+    KIIPUSH_ENDPOINT_UNAVAILABLE = 1,
+    KIIPUSH_ENDPOINT_ERROR = 2
+} kiiPush_endpointState_e;
 
 #define KIIPUSH_TASK_STK_SIZE 8
 static unsigned int mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];
