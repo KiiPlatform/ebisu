@@ -1,20 +1,8 @@
 #include "kii.h"
-#include "kii-core/kii.h"
-#include "kii-core/kii_mqtt.h"
-#include "kii_mqtt.h"
 #include "example.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <sys/types.h>
-#include <sys/uio.h>
-#include <unistd.h>
-
-
 #include <getopt.h>
 
 void received_callback(char* buffer, size_t buffer_size) {
