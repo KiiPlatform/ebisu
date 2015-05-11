@@ -4,7 +4,6 @@
 
 #include "kii.h"
 #include "kii_def.h"
-#include "kii_device.h"
 
 #include "kii-core/kii.h"
 #include "kii_core_impl.h"
