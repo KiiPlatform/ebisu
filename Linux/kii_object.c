@@ -277,6 +277,7 @@ int kii_object_upload_body_at_once(
 			"PUT",
 			resource_path,
 			data,
+			data_length,
 			body_content_type,
 			NULL);
 	if (core_err != KIIE_OK) {
@@ -329,6 +330,7 @@ int kii_object_init_upload_body(
 			"POST",
 			resource_path,
 			"{}",
+			2,
 			"application/vnd.kii.startobjectbodyuploadrequest+json",
 			"accept:application/vnd.kii.startobjectbodyuploadresponse+json",
 			(char*)(0));
@@ -413,6 +415,7 @@ int kii_object_upload_body(
 			"PUT",
 			resource_path,
 			chunk->chunk,
+			chunk->length,
 			chunk->body_content_type,
 			"Accept: application/json, application/*+json",
 			content_range,
@@ -475,6 +478,7 @@ int kii_object_commit_upload(
 			"POST",
 			resource_path,
 			NULL,
+			0,
 			NULL,
 			NULL);
 	if (core_err != KIIE_OK) {
@@ -528,6 +532,7 @@ int kii_object_download_body_at_once(
 			"GET",
 			resource_path,
 			NULL,
+			0,
 			NULL,
 			"Accept: */*",
 			(char*)(0));
@@ -600,6 +605,7 @@ int kii_object_downlad_body(
 			"GET",
 			resource_path,
 			NULL,
+			0,
 			NULL,
 			range,
 			"Accept: */*",

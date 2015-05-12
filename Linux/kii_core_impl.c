@@ -247,7 +247,7 @@ kii_http_client_code_t
         {
             char* sendBuff = NULL;
             int size = BUFF_SIZE;
-            int remain = strlen(http_context->buffer) - ctx->sent_size;
+            int remain = http_context->total_send_size- ctx->sent_size;
             if (remain <= size) {
                 size = remain;
                 ctx->last_chunk = 1;

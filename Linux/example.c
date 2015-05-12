@@ -319,7 +319,7 @@ int main(int argc, char** argv)
                 printf("--get-object\n get object.\n");
                 printf("--upload-body-o\n upload body at once.\n"),
                 printf("--upload-body-m\n upload body in multiple pieces.\n"),
-                printf("--download-body-o\n donload body at once.\n"),
+                printf("--download-body-o\n download body at once.\n"),
                 printf("--download-body-m\n download body in multiple pieces.\n"),
                 printf("--delete-object\n delete object.\n");
                 printf("--subscribe-bucket\n subscribe bucket.\n");
