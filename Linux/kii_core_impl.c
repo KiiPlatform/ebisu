@@ -129,8 +129,12 @@ kii_http_client_code_t prv_ssl_recv(kii_http_context_t* http_context, char* recv
         *out_actual_length = ret;
         return KII_HTTPC_OK;
     } else {
+        int ssl_err;
+        ssl_err = SSL_get_error(ctx->ssl, ret);
+        if (ssl_err == SSL_ERROR_ZERO_RETURN) {
+            return KII_HTTPC_OK;
+        }
         printf("failed to receive:\n");
-        /* TOOD: could be 0 on success? */
         *out_actual_length = 0;
         return KII_HTTPC_FAIL;
     }
