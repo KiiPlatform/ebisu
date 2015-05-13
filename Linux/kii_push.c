@@ -236,7 +236,6 @@ exit:
     return ret;
 }
 
-
 int kii_push_subscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
 {
     int ret = -1;
@@ -245,6 +244,32 @@ int kii_push_subscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
     kii_state_t state;
 
     core_err = kii_subscribe_bucket(kii, bucket);
+    if (core_err != KIIE_OK) {
+        goto exit;
+    }
+    do {
+        core_err = kii_run(kii);
+        state = kii_get_state(kii);
+    } while (state != KII_STATE_IDLE);
+    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    if (core_err != KIIE_OK) {
+        goto exit;
+    }
+    if (kii->response_code == 204 || kii->response_code == 409) {
+        ret = 0;
+    }
+exit:
+    return ret;
+}
+
+int kii_push_unsubscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
+{
+    int ret = -1;
+
+    kii_error_code_t core_err;
+    kii_state_t state;
+
+    core_err = kii_unsubscribe_bucket(kii, bucket);
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -288,6 +313,31 @@ exit:
     return ret;
 }
 
+int kii_push_unsubscribe_topic(kii_t* kii, const kii_topic_t* topic)
+{
+    int ret = -1;
+    kii_error_code_t core_err;
+    kii_state_t state;
+
+    core_err = kii_unsubscribe_topic(kii, topic);
+    if (core_err != KIIE_OK) {
+        goto exit;
+    }
+    do {
+        core_err = kii_run(kii);
+        state = kii_get_state(kii);
+    } while (state != KII_STATE_IDLE);
+    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    if (core_err != KIIE_OK) {
+        goto exit;
+    }
+    if (kii->response_code == 204 || kii->response_code == 409) {
+        ret = 0;
+    }
+exit:
+    return ret;
+}
+
 int kii_push_create_topic(kii_t* kii, const kii_topic_t* topic)
 {
     int ret = -1;
@@ -295,6 +345,31 @@ int kii_push_create_topic(kii_t* kii, const kii_topic_t* topic)
     kii_state_t state;
 
     core_err = kii_create_topic(kii, topic);
+    if (core_err != KIIE_OK) {
+        goto exit;
+    }
+    do {
+        core_err = kii_run(kii);
+        state = kii_get_state(kii);
+    } while (state != KII_STATE_IDLE);
+    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    if (core_err != KIIE_OK) {
+        goto exit;
+    }
+    if (kii->response_code == 204 || kii->response_code == 409) {
+        ret = 0;
+    }
+exit:
+    return ret;
+}
+
+int kii_push_delete_topic(kii_t* kii, const kii_topic_t* topic)
+{
+    int ret = -1;
+    kii_error_code_t core_err;
+    kii_state_t state;
+
+    core_err = kii_delete_topic(kii, topic);
     if (core_err != KIIE_OK) {
         goto exit;
     }

@@ -80,10 +80,12 @@ int main(int argc, char** argv)
             {"download-body-m", no_argument, NULL, 10},
             {"delete-object", no_argument, NULL, 11},
             {"subscribe-bucket", no_argument, NULL, 12},
-            {"create-topic", no_argument, NULL, 12},
-            {"subscribe-topic", no_argument, NULL, 13},
-            {"authentication", no_argument, NULL,  14},
-            {"push", no_argument, NULL,  15},
+            {"unsubscribe-bucket", no_argument, NULL, 13},
+            {"create-topic", no_argument, NULL, 14},
+            {"delete-topic", no_argument, NULL, 15},
+            {"subscribe-topic", no_argument, NULL, 16},
+            {"unsubscribe-topic", no_argument, NULL, 17},
+            {"push", no_argument, NULL,  18},
             {"help", no_argument, NULL, 1000},
             {0, 0, 0, 0}
         };
@@ -276,6 +278,18 @@ int main(int argc, char** argv)
                 }
                 break;
             case 13:
+                printf("unsubscribe bucket\n");
+                ret = kii_push_unsubscribe_bucket(&kii, &bucket);
+                if(ret == 0)
+                {
+                    printf("success!\n");
+                }
+                else
+                {
+                    printf("failed!\n");
+                }
+                break;
+            case 14:
                 printf("create topic\n");
                 ret = kii_push_create_topic(&kii, &topic);
                 if(ret == 0)
@@ -287,7 +301,19 @@ int main(int argc, char** argv)
                     printf("failed!\n");
                 }
                 break;
-            case 14:
+            case 15:
+                printf("delete topic\n");
+                ret = kii_push_delete_topic(&kii, &topic);
+                if(ret == 0)
+                {
+                    printf("success!\n");
+                }
+                else
+                {
+                    printf("failed!\n");
+                }
+                break;
+            case 16:
                 printf("subscrie topic\n");
                 ret = kii_push_subscribe_topic(&kii, &topic);
                 if(ret == 0)
@@ -299,7 +325,19 @@ int main(int argc, char** argv)
                     printf("failed!\n");
                 }
                 break;
-            case 15:
+            case 17:
+                printf("unsubscrie topic\n");
+                ret = kii_push_unsubscribe_topic(&kii, &topic);
+                if(ret == 0)
+                {
+                    printf("success!\n");
+                }
+                else
+                {
+                    printf("failed!\n");
+                }
+                break;
+            case 18:
                 printf("Initialize push");
                 kii_push_start_routine(&kii, 0, 0, received_callback);
                 while(1)
@@ -323,8 +361,11 @@ int main(int argc, char** argv)
                 printf("--download-body-m\n download body in multiple pieces.\n"),
                 printf("--delete-object\n delete object.\n");
                 printf("--subscribe-bucket\n subscribe bucket.\n");
+                printf("--unsubscribe-bucket\n unsubscribe bucket.\n");
                 printf("--create-topic\n create topic.\n");
+                printf("--delete-topic\n delete topic.\n");
                 printf("--subscribe-topic\n subscribe to topic.\n");
+                printf("--unsubscribe-topic\n unsubscribe to topic.\n");
                 printf("--push\n initialize push.\n");
                 break;
             case '?':
