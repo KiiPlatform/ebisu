@@ -31,10 +31,10 @@
 #endif
 
 #define M_KII_LOG(x) \
-    if (kii->logger_cb != NULL) {\
-        kii->logger_cb("file:%s, line:%d ", __FILE__, __LINE__); \
-        (x); \
-    }
+	if (kii->logger_cb != NULL) {\
+		kii->logger_cb("file:%s, line:%d ", __FILE__, __LINE__); \
+		(x); \
+	}
 #else
 #define M_KII_LOG(x)
 #endif
@@ -48,10 +48,10 @@
  *  \return  0:success, -1: failure
  */
 int kii_init(
-        kii_t* kii,
-        const char* site,
-        const char* app_id,
-        const char* app_key);
+		kii_t* kii,
+		const char* site,
+		const char* app_id,
+		const char* app_key);
 
 /** Authorize thing with vendor thing id and password.
  *  After the authentication, access token is used to call APIs access to
@@ -62,9 +62,9 @@ int kii_init(
  *  \return 0:success, -1: failure
  */
 int kii_thing_authenticate(
-        kii_t* kii,
-        const char* vendor_thing_id,
-        const char* password);
+		kii_t* kii,
+		const char* vendor_thing_id,
+		const char* password);
 
 /** Register new thing
  *  After the registtration, access token is used to call APIs access to
@@ -76,10 +76,10 @@ int kii_thing_authenticate(
  *  \return 0:success, -1: failure
  */
 int kii_thing_register(
-        kii_t* kii,
-        const char* vendor_thing_id,
-        const char* thing_type,
-        const char* password);
+		kii_t* kii,
+		const char* vendor_thing_id,
+		const char* thing_type,
+		const char* password);
 
 /** Create new object
  *  \param [inout] kii sdk instance.
@@ -94,11 +94,11 @@ int kii_thing_register(
  *  \return 0:success, -1: failure
  */
 int kii_object_create(
-        kii_t* kii,
-        const kii_bucket_t* bucket,
-        const char* object_data,
-        const char* object_content_type,
-        char* out_object_id);
+		kii_t* kii,
+		const kii_bucket_t* bucket,
+		const char* object_data,
+		const char* object_content_type,
+		char* out_object_id);
 
 /** Create new object with the specified ID
  *  \param [inout] kii sdk instance.
@@ -110,11 +110,11 @@ int kii_object_create(
  *  \return  0:success, -1: failure
  */
 int kii_object_create_with_id(
-        kii_t* kii,
-        const kii_bucket_t* bucket,
-        const char* object_id,
-        const char* object_data,
-        const char* object_content_type);
+		kii_t* kii,
+		const kii_bucket_t* bucket,
+		const char* object_id,
+		const char* object_data,
+		const char* object_content_type);
 
 /** Partial update of the object
  *  Only the specified key-value is updated and other key-values won't be
@@ -128,11 +128,11 @@ int kii_object_create_with_id(
  *  \return  0:success, -1: failure
  */
 int kii_object_patch(
-        kii_t* kii,
-        const kii_bucket_t* bucket,
-        const char* object_id,
-        const char* patch_data,
-        const char* opt_etag);
+		kii_t* kii,
+		const kii_bucket_t* bucket,
+		const char* object_id,
+		const char* patch_data,
+		const char* opt_etag);
 
 /** Full update of the object
  * Replace the object with specified key-values.
@@ -147,11 +147,11 @@ int kii_object_patch(
  *  \return  0:success, -1: failure
  */
 int kii_object_replace(
-        kii_t* kii,
-        const kii_bucket_t* bucket,
-        const char* object_id,
-        const char* replacement_data,
-        const char* opt_etag);
+		kii_t* kii,
+		const kii_bucket_t* bucket,
+		const char* object_id,
+		const char* replacement_data,
+		const char* opt_etag);
 
 /** Delete the object
  *  \param [inout] kii sdk instance.
@@ -160,9 +160,9 @@ int kii_object_replace(
  *  \return  0:success, -1: failure
  */
 int kii_object_delete(
-        kii_t* kii,
-        const kii_bucket_t* bucket,
-        const char* object_id);
+		kii_t* kii,
+		const kii_bucket_t* bucket,
+		const char* object_id);
 
 /** Get the object
  *  When succeeded, obtained object data is cached in kii_t#response_body.
@@ -172,9 +172,9 @@ int kii_object_delete(
  *  \return  0:success, -1: failure
  */
 int kii_object_get(
-        kii_t* kii,
-        const kii_bucket_t* bucket,
-        const char* object_id);
+		kii_t* kii,
+		const kii_bucket_t* bucket,
+		const char* object_id);
 
 /** Upload object body at once.
  *  Upload object body at one time.
@@ -189,12 +189,12 @@ int kii_object_get(
  *  \return 0:success, -1: failure
  */
 int kii_object_upload_body_at_once(
-        kii_t* kii,
-        const kii_bucket_t* bucket,
-        const char* object_id,
-        const char* body_content_type,
-        const char* data,
-        size_t data_length);
+		kii_t* kii,
+		const kii_bucket_t* bucket,
+		const char* object_id,
+		const char* body_content_type,
+		const char* data,
+		size_t data_length);
 
 /** Initiate chunked object body upload.
  *  \param [inout] kii sdk instance.
@@ -204,23 +204,23 @@ int kii_object_upload_body_at_once(
  *  \return 0:success; -1: failure
  */
 int kii_object_init_upload_body(
-        kii_t* kii,
-        const kii_bucket_t* bucket,
-        const char* object_id,
-        char* out_upload_id);
+		kii_t* kii,
+		const kii_bucket_t* bucket,
+		const char* object_id,
+		char* out_upload_id);
 
 /** represents chunk data */
 typedef struct kii_chunk_data_t {
-    /** content-type of the body */
-    char* body_content_type;
-    /** position of the chunk.(bytes count) */
-    unsigned int position;
-    /** length of the chunk */
-    unsigned int length;
-    /** total length of the body */
-    unsigned int total_length;
-    /** chunk data */
-    char* chunk;
+	/** content-type of the body */
+	char* body_content_type;
+	/** position of the chunk.(bytes count) */
+	unsigned int position;
+	/** length of the chunk */
+	unsigned int length;
+	/** total length of the body */
+	unsigned int total_length;
+	/** chunk data */
+	char* chunk;
 } kii_chunk_data_t;
 
 /** Upload object body chunk by chunk.
@@ -234,11 +234,11 @@ typedef struct kii_chunk_data_t {
  *  \return 0:success, -1: failure
  */
 int kii_object_upload_body(
-        kii_t* kii,
-        const kii_bucket_t* bucket,
-        const char* object_id,
-        const char* upload_id,
-        const kii_chunk_data_t* chunk);
+		kii_t* kii,
+		const kii_bucket_t* bucket,
+		const char* object_id,
+		const char* upload_id,
+		const kii_chunk_data_t* chunk);
 
 /** Commit and finalize upload.
  *  After successfully upload all the chunk of the body by
@@ -254,11 +254,11 @@ int kii_object_upload_body(
  *  \return 0:success, -1: failure
  */
 int kii_object_commit_upload(
-        kii_t* kii,
-        const kii_bucket_t* bucket,
-        const char* object_id,
-        const char* upload_id,
-        unsigned int commit);
+		kii_t* kii,
+		const kii_bucket_t* bucket,
+		const char* object_id,
+		const char* upload_id,
+		unsigned int commit);
 
 /** Download object body at one time.
  *  If the data size is large or unknown, consider use kii_object_downlad_body()
@@ -271,10 +271,10 @@ int kii_object_commit_upload(
  *  \return 0:success, -1: failure
  */
 int kii_object_download_body_at_once(
-        kii_t* kii,
-        const kii_bucket_t* bucket,
-        const char* object_id,
-        unsigned int* out_data_length);
+		kii_t* kii,
+		const kii_bucket_t* bucket,
+		const char* object_id,
+		unsigned int* out_data_length);
 
 /** Download object body chunk by chunk.
  *  Downloaded data is cached in kii_t#response_body after the download chunk is
@@ -289,13 +289,13 @@ int kii_object_download_body_at_once(
  *  \return 0:success, -1: failure
  */
 int kii_object_downlad_body(
-        kii_t* kii,
-        const char* object_id,
-        const kii_bucket_t* bucket,
-        unsigned int position,
-        unsigned int length,
-        unsigned int* out_actual_length,
-        unsigned int* out_total_length);
+		kii_t* kii,
+		const char* object_id,
+		const kii_bucket_t* bucket,
+		unsigned int position,
+		unsigned int length,
+		unsigned int* out_actual_length,
+		unsigned int* out_total_length);
 
 /** Subscribe to specified bucket.
  *  After succeeded,
@@ -305,8 +305,8 @@ int kii_object_downlad_body(
  *  \return 0:success, -1: failure
  */
 int kii_push_subscribe_bucket(
-        kii_t* kii,
-        const kii_bucket_t* bucket);
+		kii_t* kii,
+		const kii_bucket_t* bucket);
 
 /** Unsubscribe specified bucket.
  *  \param [inout] kii sdk instance.
@@ -314,8 +314,8 @@ int kii_push_subscribe_bucket(
  *  \return 0:success, -1: failure
  */
 int kii_push_unsubscribe_bucket(
-        kii_t* kii,
-        const kii_bucket_t* bucket);
+		kii_t* kii,
+		const kii_bucket_t* bucket);
 
 /** Subscribe to specified topic.
  *  After succeeded,
@@ -325,8 +325,8 @@ int kii_push_unsubscribe_bucket(
  *  \return 0:success, -1: failure
  */
 int kii_push_subscribe_topic(
-        kii_t* kii,
-        const kii_topic_t* topic);
+		kii_t* kii,
+		const kii_topic_t* topic);
 
 /** Unsubscribe specified topic.
  *  \param [inout] kii sdk instance.
@@ -334,8 +334,8 @@ int kii_push_subscribe_topic(
  *  \return 0:success, -1: failure
  */
 int kii_push_unsubscribe_topic(
-        kii_t* kii,
-        const kii_topic_t* topic);
+		kii_t* kii,
+		const kii_topic_t* topic);
 
 /** Create new topic.
  *  \param [inout] kii sdk instance.
@@ -343,8 +343,8 @@ int kii_push_unsubscribe_topic(
  *  \return 0:success, -1: failure
  */
 int kii_push_create_topic(
-        kii_t* kii,
-        const kii_topic_t* topic);
+		kii_t* kii,
+		const kii_topic_t* topic);
 
 /** Delete existing topic.
  *  \param [inout] kii sdk instance.
@@ -352,8 +352,8 @@ int kii_push_create_topic(
  *  \return 0:success, -1: failure
  */
 int kii_push_delete_topic(
-        kii_t* kii,
-        const kii_topic_t* topic);
+		kii_t* kii,
+		const kii_topic_t* topic);
 
 /** Start push notification receiving routine.
  *  After succeeded, callback is called when push message is delivered to this
@@ -367,10 +367,10 @@ int kii_push_delete_topic(
  *  \return 0:success, -1: failure
  */
 int kii_push_start_routine(
-        kii_t* kii,
-        unsigned int task_priority,
-        unsigned int ping_req_task_priority,
-        KII_PUSH_RECEIVED_CB callback);
+		kii_t* kii,
+		unsigned int task_priority,
+		unsigned int ping_req_task_priority,
+		KII_PUSH_RECEIVED_CB callback);
 
 /** Execute server code.
  *  \param [inout] kii sdk instance.
@@ -379,8 +379,10 @@ int kii_push_start_routine(
  *  \return 0:success, -1: failure
  */
 int kii_server_code_execute(
-        kii_t* kii,
-        const char* endpoint_name,
-        const char* params);
+		kii_t* kii,
+		const char* endpoint_name,
+		const char* params);
 
 #endif
+/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=dos: */
+
