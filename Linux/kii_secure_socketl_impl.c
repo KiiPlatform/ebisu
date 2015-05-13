@@ -155,4 +155,4 @@ kii_socket_code_t
     free(ctx);
     return KII_SOCKETC_OK;
 }
-
+/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=dos: */
