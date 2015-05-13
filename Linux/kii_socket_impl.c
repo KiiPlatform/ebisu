@@ -88,4 +88,4 @@ kii_socket_code_t
     socket_context->socket = -1;
     return KII_SOCKETC_OK;
 }
-
+/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=dos: */
