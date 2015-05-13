@@ -14,35 +14,35 @@ int kii_init(
         const char* app_id,
         const char* app_key)
 {
-	memset(kii, 0, sizeof(kii_t));
-	if((strlen(site) != KII_SITE_SIZE) || (strlen(app_id) != KII_APPID_SIZE) || (strlen(app_key) != KII_APPKEY_SIZE))
-	{
-		return -1;
-	}
-	else if(strcmp(site, "CN") == 0)
-	{
-		kii->app_host = "api-cn2.kii.com";
-	}
-	else if(strcmp(site, "JP") == 0)
-	{
-		kii->app_host = "api-jp.kii.com";
-	}
-	else if(strcmp(site, "US") == 0)
-	{
-		kii->app_host = "api.kii.com";
-	}
-	else if(strcmp(site, "SG") == 0)
-	{
-		kii->app_host = "api-sg.kii.com";
-	}
-	else
-	{
+    memset(kii, 0, sizeof(kii_t));
+    if((strlen(site) != KII_SITE_SIZE) || (strlen(app_id) != KII_APPID_SIZE) || (strlen(app_key) != KII_APPKEY_SIZE))
+    {
+        return -1;
+    }
+    else if(strcmp(site, "CN") == 0)
+    {
+        kii->app_host = "api-cn2.kii.com";
+    }
+    else if(strcmp(site, "JP") == 0)
+    {
+        kii->app_host = "api-jp.kii.com";
+    }
+    else if(strcmp(site, "US") == 0)
+    {
+        kii->app_host = "api.kii.com";
+    }
+    else if(strcmp(site, "SG") == 0)
+    {
+        kii->app_host = "api-sg.kii.com";
+    }
+    else
+    {
         /* Let's enable to set custom host */
-		kii->app_host = site;
-	}
+        kii->app_host = site;
+    }
 
-	kii->app_id = app_id;
-	kii->app_key = app_key;
+    kii->app_id = app_id;
+    kii->app_key = app_key;
 
     /* setting http callbacks. */
     kii->http_set_request_line_cb = request_line_cb;
@@ -63,5 +63,7 @@ int kii_init(
     kii->task_create_cb = task_create_cb;
     kii->delay_ms_cb = delay_ms_cb;
 
-	return 0;
+    return 0;
 }
+/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=dos: */
+
