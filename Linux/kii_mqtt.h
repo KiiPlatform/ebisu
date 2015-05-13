@@ -13,3 +13,4 @@ int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos);
 int kiiMQTT_pingReq(kii_t* kii);
 
 #endif
+/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=dos: */
