@@ -4,7 +4,6 @@
 #ifdef __cplusplus
 extern 'C' {
 #endif
-
 const char EX_AUTH_VENDOR_ID[] = "4649";
 const char EX_AUTH_VENDOR_PASS[] = "1234";
 const char EX_AUTH_VENDOR_TYPE[] = "my_type";
@@ -29,3 +28,4 @@ const char EX_BODY_DATA[] = "Hello world !\n";
 #endif
 
 #endif
+/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=dos: */
