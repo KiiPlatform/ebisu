@@ -31,3 +31,4 @@ kii_socket_code_t
 #endif
 
 #endif /* _KII_SOCKET_IMPL */
+/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=dos: */
