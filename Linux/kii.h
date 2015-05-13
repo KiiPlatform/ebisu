@@ -308,6 +308,15 @@ int kii_push_subscribe_bucket(
         kii_t* kii,
         const kii_bucket_t* bucket);
 
+/** Unsubscribe specified bucket.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] bucket specify the bucket to subscribe.
+ *  \return 0:success, -1: failure
+ */
+int kii_push_unsubscribe_bucket(
+        kii_t* kii,
+        const kii_bucket_t* bucket);
+
 /** Subscribe to specified topic.
  *  After succeeded,
  *  Message sent to the topic will be notified via push notification.
@@ -319,12 +328,30 @@ int kii_push_subscribe_topic(
         kii_t* kii,
         const kii_topic_t* topic);
 
+/** Unsubscribe specified topic.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] topic specify the topic to subscribe.
+ *  \return 0:success, -1: failure
+ */
+int kii_push_unsubscribe_topic(
+        kii_t* kii,
+        const kii_topic_t* topic);
+
 /** Create new topic.
  *  \param [inout] kii sdk instance.
  *  \param [in] topic specify the topic to create.
  *  \return 0:success, -1: failure
  */
 int kii_push_create_topic(
+        kii_t* kii,
+        const kii_topic_t* topic);
+
+/** Delete existing topic.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] topic specify the topic to delete.
+ *  \return 0:success, -1: failure
+ */
+int kii_push_delete_topic(
         kii_t* kii,
         const kii_topic_t* topic);
 
