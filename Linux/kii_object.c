@@ -8,7 +8,7 @@
 #include "kii_core_impl.h"
 
 int kii_object_create(
-        kii_core_t* kii,
+        kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_data,
         const char* object_content_type,
@@ -22,7 +22,7 @@ int kii_object_create(
     kii_state_t state;
 
     core_err = kii_core_create_new_object(
-            kii,
+            &kii->kii_core,
             bucket,
             object_data,
             object_content_type);
@@ -30,18 +30,18 @@ int kii_object_create(
         goto exit;
     }
     do {
-        core_err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if(kii->response_code < 200 || 300 <= kii->response_code) {
+    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
         goto exit;
     }
 
-    buf = kii->http_context.buffer;
+    buf = kii->kii_core.http_context.buffer;
     p1 = strstr(buf, "\"objectID\"");
     if(p1 == NULL) {
         goto exit;
@@ -67,7 +67,7 @@ exit:
 }
 
 int kii_object_create_with_id(
-        kii_core_t* kii,
+        kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
         const char* object_data,
@@ -78,7 +78,7 @@ int kii_object_create_with_id(
     kii_state_t state;
 
     core_err = kii_core_create_new_object_with_id(
-            kii,
+            &kii->kii_core,
             bucket,
             object_id,
             object_data,
@@ -87,14 +87,14 @@ int kii_object_create_with_id(
         goto exit;
     }
     do {
-        core_err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if(kii->response_code < 200 || 300 <= kii->response_code) {
+    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
         goto exit;
     }
 
@@ -106,7 +106,7 @@ exit:
 }
 
 int kii_object_patch(
-        kii_core_t* kii,
+        kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
         const char* patch_data,
@@ -117,7 +117,7 @@ int kii_object_patch(
     kii_state_t state;
 
     core_err = kii_core_patch_object(
-            kii,
+            &kii->kii_core,
             bucket,
             object_id,
             patch_data,
@@ -126,14 +126,14 @@ int kii_object_patch(
         goto exit;
     }
     do {
-        core_err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if(kii->response_code < 200 || 300 <= kii->response_code) {
+    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
         goto exit;
     }
 
@@ -144,7 +144,7 @@ exit:
 }
 
 int kii_object_replace(
-        kii_core_t* kii,
+        kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
         const char* replacement_data,
@@ -155,7 +155,7 @@ int kii_object_replace(
     kii_state_t state;
 
     core_err = kii_core_replace_object(
-            kii,
+            &kii->kii_core,
             bucket,
             object_id,
             replacement_data,
@@ -164,14 +164,14 @@ int kii_object_replace(
         goto exit;
     }
     do {
-        core_err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if(kii->response_code < 200 || 300 <= kii->response_code) {
+    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
         goto exit;
     }
 
@@ -182,7 +182,7 @@ exit:
 }
 
 int kii_object_delete(
-        kii_core_t* kii,
+        kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id)
 {
@@ -191,21 +191,21 @@ int kii_object_delete(
     kii_state_t state;
 
     core_err = kii_core_delete_object(
-            kii,
+            &kii->kii_core,
             bucket,
             object_id);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if(kii->response_code < 200 || 300 <= kii->response_code) {
+    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
         goto exit;
     }
 
@@ -215,7 +215,7 @@ exit:
 }
 
 int kii_object_get(
-        kii_core_t* kii,
+        kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id)
 {
@@ -224,21 +224,21 @@ int kii_object_get(
     kii_state_t state;
 
     core_err = kii_core_get_object(
-            kii,
+            &kii->kii_core,
             bucket,
             object_id);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if(kii->response_code < 200 || 300 <= kii->response_code) {
+    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
         goto exit;
     }
     ret = 0;
@@ -247,7 +247,7 @@ exit:
 }
 
 int kii_object_upload_body_at_once(
-        kii_core_t* kii,
+        kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
         const char* body_content_type,
@@ -261,7 +261,7 @@ int kii_object_upload_body_at_once(
 
     memset(resource_path, 0x00, sizeof(resource_path));
     strcpy(resource_path, "api/apps/");
-    strcat(resource_path, kii->app_id);
+    strcat(resource_path, kii->kii_core.app_id);
     if(bucket->scope == KII_SCOPE_THING) {
         strcat(resource_path, "/things/");
         strcat(resource_path, bucket->scope_id);
@@ -272,7 +272,7 @@ int kii_object_upload_body_at_once(
     strcat(resource_path, object_id);
     strcat(resource_path, "/body");
     core_err = kii_core_api_call(
-            kii,
+            &kii->kii_core,
             "PUT",
             resource_path,
             data,
@@ -283,14 +283,14 @@ int kii_object_upload_body_at_once(
         goto exit;
     }
     do {
-        core_err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if(kii->response_code < 200 || 300 <= kii->response_code) {
+    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
         goto exit;
     }
     ret = 0;
@@ -299,7 +299,7 @@ exit:
 }
 
 int kii_object_init_upload_body(
-        kii_core_t* kii,
+        kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
         char* out_upload_id)
@@ -314,7 +314,7 @@ int kii_object_init_upload_body(
 
     memset(resource_path, 0x00, sizeof(resource_path));
     strcpy(resource_path, "api/apps/");
-    strcat(resource_path, kii->app_id);
+    strcat(resource_path, kii->kii_core.app_id);
     if(bucket->scope == KII_SCOPE_THING) {
         strcat(resource_path, "/things/");
         strcat(resource_path, bucket->scope_id);
@@ -325,7 +325,7 @@ int kii_object_init_upload_body(
     strcat(resource_path, object_id);
     strcat(resource_path, "/body/uploads");
     core_err = kii_core_api_call(
-            kii,
+            &kii->kii_core,
             "POST",
             resource_path,
             "{}",
@@ -337,17 +337,17 @@ int kii_object_init_upload_body(
         goto exit;
     }
     do {
-        core_err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if(kii->response_code < 200 || 300 <= kii->response_code) {
+    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
         goto exit;
     }
-    buf = kii->http_context.buffer;
+    buf = kii->kii_core.http_context.buffer;
     p1 = strstr(buf, "\"uploadID\"");
     if(p1 == NULL) {
         goto exit;
@@ -372,7 +372,7 @@ exit:
 }
 
 int kii_object_upload_body(
-        kii_core_t* kii,
+        kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
         const char* upload_id,
@@ -386,7 +386,7 @@ int kii_object_upload_body(
 
     memset(resource_path, 0x00, sizeof(resource_path));
     strcpy(resource_path, "api/apps/");
-    strcat(resource_path, kii->app_id);
+    strcat(resource_path, kii->kii_core.app_id);
     if(bucket->scope == KII_SCOPE_THING) {
         strcat(resource_path, "/things/");
         strcat(resource_path, bucket->scope_id);
@@ -410,7 +410,7 @@ int kii_object_upload_body(
     sprintf(content_range + strlen(content_range), "%d", chunk->total_length);
 
     core_err = kii_core_api_call(
-            kii,
+            &kii->kii_core,
             "PUT",
             resource_path,
             chunk->chunk,
@@ -423,14 +423,14 @@ int kii_object_upload_body(
         goto exit;
     }
     do {
-        core_err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if(kii->response_code < 200 || 300 <= kii->response_code) {
+    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
         goto exit;
     }
     ret = 0;
@@ -439,7 +439,7 @@ exit:
 }
 
 int kii_object_commit_upload(
-        kii_core_t* kii,
+        kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
         const char* upload_id,
@@ -453,7 +453,7 @@ int kii_object_commit_upload(
 
     memset(resource_path, 0x00, sizeof(resource_path));
     strcpy(resource_path, "api/apps/");
-    strcat(resource_path, kii->app_id);
+    strcat(resource_path, kii->kii_core.app_id);
     if(bucket->scope == KII_SCOPE_THING) {
         strcat(resource_path, "/things/");
         strcat(resource_path, bucket->scope_id);
@@ -473,7 +473,7 @@ int kii_object_commit_upload(
     }
 
     core_err = kii_core_api_call(
-            kii,
+            &kii->kii_core,
             "POST",
             resource_path,
             NULL,
@@ -484,14 +484,14 @@ int kii_object_commit_upload(
         goto exit;
     }
     do {
-        core_err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if(kii->response_code < 200 || 300 <= kii->response_code) {
+    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
         goto exit;
     }
     ret = 0;
@@ -500,7 +500,7 @@ exit:
 }
 
 int kii_object_download_body_at_once(
-        kii_core_t* kii,
+        kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
         unsigned int* out_data_length)
@@ -515,7 +515,7 @@ int kii_object_download_body_at_once(
 
     memset(resource_path, 0x00, sizeof(resource_path));
     strcpy(resource_path, "api/apps/");
-    strcat(resource_path, kii->app_id);
+    strcat(resource_path, kii->kii_core.app_id);
     if(bucket->scope == KII_SCOPE_THING) {
         strcat(resource_path, "/things/");
         strcat(resource_path, bucket->scope_id);
@@ -527,7 +527,7 @@ int kii_object_download_body_at_once(
     strcat(resource_path, "/body");
 
     core_err = kii_core_api_call(
-            kii,
+            &kii->kii_core,
             "GET",
             resource_path,
             NULL,
@@ -539,17 +539,17 @@ int kii_object_download_body_at_once(
         goto exit;
     }
     do {
-        core_err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if(kii->response_code < 200 || 300 <= kii->response_code) {
+    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
         goto exit;
     }
-    buf = kii->http_context.buffer;
+    buf = kii->kii_core.http_context.buffer;
     p1 = strstr(buf, "Content-Length: ");
     if(p1 == NULL)	{
         goto exit;
@@ -562,7 +562,7 @@ exit:
 }
 
 int kii_object_downlad_body(
-        kii_core_t* kii,
+        kii_t* kii,
         const char* object_id,
         const kii_bucket_t* bucket,
         unsigned int position,
@@ -580,7 +580,7 @@ int kii_object_downlad_body(
 
     memset(resource_path, 0x00, sizeof(resource_path));
     strcpy(resource_path, "api/apps/");
-    strcat(resource_path, kii->app_id);
+    strcat(resource_path, kii->kii_core.app_id);
     if(bucket->scope == KII_SCOPE_THING) {
         strcat(resource_path, "/things/");
         strcat(resource_path, bucket->scope_id);
@@ -600,7 +600,7 @@ int kii_object_downlad_body(
     sprintf(range + strlen(range), "%d", position + length - 1);
 
     core_err = kii_core_api_call(
-            kii,
+            &kii->kii_core,
             "GET",
             resource_path,
             NULL,
@@ -613,17 +613,17 @@ int kii_object_downlad_body(
         goto exit;
     }
     do {
-        core_err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if(kii->response_code < 200 || 300 <= kii->response_code) {
+    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
         goto exit;
     }
-    buf = kii->http_context.buffer;
+    buf = kii->kii_core.http_context.buffer;
     p1 = strstr(buf, "Content-Range: ");
     if(p1 == NULL)	{
         goto exit;
