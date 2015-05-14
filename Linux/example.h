@@ -22,6 +22,7 @@ const char EX_BUCKET_NAME[] = "my_bucket";
 const char EX_TOPIC_NAME[] = "my_topic";
 const char EX_OBJECT_DATA[] = "{}";
 const char EX_BODY_DATA[] = "Hello world !\n";
+const char EX_ENDPOINT_NAME[] = "test_topic";
 
 #ifdef __cplusplus
 }

@@ -86,6 +86,7 @@ int main(int argc, char** argv)
             {"subscribe-topic", no_argument, NULL, 16},
             {"unsubscribe-topic", no_argument, NULL, 17},
             {"push", no_argument, NULL,  18},
+            {"server-code-execute", no_argument, NULL,  19},
             {"help", no_argument, NULL, 1000},
             {0, 0, 0, 0}
         };
@@ -100,24 +101,18 @@ int main(int argc, char** argv)
                 printf("register thing\n");
                 ret = kii_thing_register(&kii, EX_AUTH_VENDOR_ID, 
                         EX_AUTH_VENDOR_TYPE, EX_AUTH_VENDOR_PASS);
-                if(ret == 0)
-                {
+                if(ret == 0) {
                     printf("success!\n");
-                }
-                else
-                {
+                } else {
                     printf("failed!\n");
                 }
                 break;
             case 1:
                 printf("authentication\n");
                 ret = kii_thing_authenticate(&kii, EX_AUTH_VENDOR_ID, EX_AUTH_VENDOR_PASS);
-                if(ret == 0)
-                {
+                if(ret == 0) {
                     printf("success!\n");
-                }
-                else
-                {
+                } else {
                     printf("failed!\n");
                 }
                 break;
@@ -125,72 +120,54 @@ int main(int argc, char** argv)
                 printf("create new object\n");
                 memset(object_id, 0x00, sizeof(object_id));
                 ret = kii_object_create(&kii, &bucket, EX_OBJECT_DATA, NULL, object_id);
-                if(ret == 0)
-                {
+                if(ret == 0) {
                     printf("success!\n");
-                }
-                else
-                {
+                } else {
                     printf("failed!\n");
                 }
                 break;
             case 3:
                 printf("create new object with id\n");
                 ret = kii_object_create_with_id(&kii, &bucket, EX_OBJECT_ID, EX_OBJECT_DATA, NULL);
-                if(ret == 0)
-                {
+                if(ret == 0) {
                     printf("success!\n");
-                }
-                else
-                {
+                } else {
                     printf("failed!\n");
                 }
                 break;
             case 4:
                 printf("patch object\n");
                 ret = kii_object_patch(&kii, &bucket, EX_OBJECT_ID, EX_OBJECT_DATA, NULL);
-                if(ret == 0)
-                {
+                if(ret == 0) {
                     printf("success!\n");
-                }
-                else
-                {
+                } else {
                     printf("failed!\n");
                 }
                 break;
             case 5:
                 printf("replace object\n");
                 ret = kii_object_replace(&kii, &bucket, EX_OBJECT_ID, EX_OBJECT_DATA, NULL);
-                if(ret == 0)
-                {
+                if(ret == 0) {
                     printf("success!\n");
-                }
-                else
-                {
+                } else {
                     printf("failed!\n");
                 }
                 break;
             case 6:
                 printf("get object\n");
                 ret = kii_object_get(&kii, &bucket, EX_OBJECT_ID);
-                if(ret == 0)
-                {
+                if(ret == 0) {
                     printf("success!\n");
-                }
-                else
-                {
+                } else {
                     printf("failed!\n");
                 }
                 break;
             case 7:
                 printf("upload body at once\n");
                 ret = kii_object_upload_body_at_once(&kii, &bucket, EX_OBJECT_ID, "text/plain", "1234", 4);
-                if(ret == 0)
-                {
+                if(ret == 0) {
                     printf("success!\n");
-                }
-                else
-                {
+                } else {
                     printf("failed!\n");
                 }
                 break;
@@ -198,8 +175,7 @@ int main(int argc, char** argv)
                 printf("upload body in multiple peces\n");
                 memset(upload_id, 0x00, sizeof(upload_id));
                 ret = kii_object_init_upload_body(&kii, &bucket, EX_OBJECT_ID, upload_id); 
-                if (ret != 0)
-                {
+                if (ret != 0) {
                     printf("failed!\n");
                     break;
                 }
@@ -213,30 +189,23 @@ int main(int argc, char** argv)
                 chunk.position = 0;
                 chunk.total_length = strlen(object_data);
                 ret = kii_object_upload_body(&kii, &bucket, EX_OBJECT_ID, upload_id, &chunk);
-                if (ret != 0)
-                {
+                if (ret != 0) {
                     printf("failed!\n");
                     break;
                 }
                 ret = kii_object_commit_upload(&kii, &bucket, EX_OBJECT_ID, upload_id, 1);
-                if(ret == 0)
-                {
+                if(ret == 0) {
                     printf("success!\n");
-                }
-                else
-                {
+                } else {
                     printf("failed!\n");
                 }
                 break;
             case 9:
                 printf("download body at once\n");
                 ret = kii_object_download_body_at_once(&kii, &bucket, EX_OBJECT_ID, &length);
-                if(ret == 0)
-                {
+                if(ret == 0) {
                     printf("success!\n");
-                }
-                else
-                {
+                } else {
                     printf("failed!\n");
                 }
                 break;
@@ -244,105 +213,89 @@ int main(int argc, char** argv)
                 printf("download body in multiple peces\n");
                 ret = kii_object_downlad_body(&kii, EX_OBJECT_ID, &bucket, 0, 
                         strlen(EX_BODY_DATA), &actual_length, &total_length);
-                if(ret == 0)
-                {
+                if(ret == 0) {
                     printf("success!\n");
-                }
-                else
-                {
+                } else {
                     printf("failed!\n");
                 }
                 break;
             case 11:
                 printf("delete object\n");
                 ret = kii_object_delete(&kii, &bucket, EX_OBJECT_ID);
-                if(ret == 0)
-                {
+                if(ret == 0) {
                     printf("success!\n");
-                }
-                else
-                {
+                } else {
                     printf("failed!\n");
                 }
                 break;
             case 12:
                 printf("subscribe bucket\n");
                 ret = kii_push_subscribe_bucket(&kii, &bucket);
-                if(ret == 0)
-                {
+                if(ret == 0) {
                     printf("success!\n");
-                }
-                else
-                {
+                } else {
                     printf("failed!\n");
                 }
                 break;
             case 13:
                 printf("unsubscribe bucket\n");
                 ret = kii_push_unsubscribe_bucket(&kii, &bucket);
-                if(ret == 0)
-                {
+                if(ret == 0) {
                     printf("success!\n");
-                }
-                else
-                {
+                } else {
                     printf("failed!\n");
                 }
                 break;
             case 14:
                 printf("create topic\n");
                 ret = kii_push_create_topic(&kii, &topic);
-                if(ret == 0)
-                {
+                if(ret == 0) {
                     printf("success!\n");
-                }
-                else
-                {
+                } else {
                     printf("failed!\n");
                 }
                 break;
             case 15:
                 printf("delete topic\n");
                 ret = kii_push_delete_topic(&kii, &topic);
-                if(ret == 0)
-                {
+                if(ret == 0) {
                     printf("success!\n");
-                }
-                else
-                {
+                } else {
                     printf("failed!\n");
                 }
                 break;
             case 16:
                 printf("subscrie topic\n");
                 ret = kii_push_subscribe_topic(&kii, &topic);
-                if(ret == 0)
-                {
+                if(ret == 0) {
                     printf("success!\n");
-                }
-                else
-                {
+                } else {
                     printf("failed!\n");
                 }
                 break;
             case 17:
                 printf("unsubscrie topic\n");
                 ret = kii_push_unsubscribe_topic(&kii, &topic);
-                if(ret == 0)
-                {
+                if(ret == 0) {
                     printf("success!\n");
-                }
-                else
-                {
+                } else {
                     printf("failed!\n");
                 }
                 break;
             case 18:
-                printf("Initialize push");
+                printf("Initialize push\n");
                 kii_push_start_routine(&kii, 0, 0, received_callback);
-                while(1)
-                {
+                while(1) {
                     sleep(1);
+                }
+                break;
+            case 19:
+                printf("Server code execute\n");
+                ret = kii_server_code_execute(&kii, EX_ENDPOINT_NAME, NULL);
+                if(ret == 0) {
+                    printf("success!\n");
+                } else {
+                    printf("failed!\n");
                 }
                 break;
             case 1000:
@@ -367,6 +320,7 @@ int main(int argc, char** argv)
                 printf("--subscribe-topic\n subscribe to topic.\n");
                 printf("--unsubscribe-topic\n unsubscribe to topic.\n");
                 printf("--push\n initialize push.\n");
+                printf("--server-code-execute\n server code execute.\n");
                 break;
             case '?':
                 break;
