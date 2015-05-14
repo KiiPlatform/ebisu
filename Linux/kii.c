@@ -14,11 +14,7 @@ int kii_init(
         const char* app_key)
 {
     memset(kii, 0, sizeof(kii_core_t));
-    if((strlen(site) != KII_SITE_SIZE) || (strlen(app_id) != KII_APPID_SIZE) || (strlen(app_key) != KII_APPKEY_SIZE))
-    {
-        return -1;
-    }
-    else if(strcmp(site, "CN") == 0)
+    if(strcmp(site, "CN") == 0)
     {
         kii->app_host = "api-cn2.kii.com";
     }

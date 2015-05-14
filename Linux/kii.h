@@ -3,23 +3,7 @@
 
 #include "kii-core/kii_core.h"
 
-#define KII_SITE_SIZE 2
-#define KII_HOST_SIZE 64
-#define KII_APPID_SIZE 8
-#define KII_APPKEY_SIZE 32
-
-#define KII_ACCESS_TOKEN_SIZE 44
-#define KII_DEVICE_VENDOR_ID 64 /* matches [a-zA-Z0-9-_\\.]{3,64} */
-#define KII_PASSWORD_SIZE 50    /* Matches ^[\\u0020-\\u007E]{4,50} */
 #define KII_OBJECTID_SIZE 36
-#define KII_DATA_TPYE_SIZE 36
-#define KII_UPLOAD_ID_SIZE 46
-#define KII_BUCKET_NAME_SIZE 64
-
-#define KII_SOCKET_BUF_SIZE 2048
-
-#define DEMO_KII_PUSH_RECV_MSG_TASK_PRIO 3
-#define DEMO_KII_PUSH_PINGREQ_TASK_PRIO 4
 
 #ifdef DEBUG
 #ifndef __FILE__
