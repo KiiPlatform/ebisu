@@ -1,7 +1,7 @@
 #ifndef _KII_TASK_IMPL
 #define _KII_TASK_IMPL
 
-#include "kii-core/kii_task_callback.h"
+#include "kii_task_callback.h"
 
 #ifdef __cplusplus
 extern "C" {
