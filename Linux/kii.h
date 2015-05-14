@@ -1,7 +1,7 @@
 #ifndef KII_H
 #define KII_H
 
-#include "kii-core/kii.h"
+#include "kii-core/kii_core.h"
 
 #define KII_SITE_SIZE 2
 #define KII_HOST_SIZE 64
@@ -48,7 +48,7 @@
  *  \return  0:success, -1: failure
  */
 int kii_init(
-		kii_t* kii,
+		kii_core_t* kii,
 		const char* site,
 		const char* app_id,
 		const char* app_key);
@@ -62,7 +62,7 @@ int kii_init(
  *  \return 0:success, -1: failure
  */
 int kii_thing_authenticate(
-		kii_t* kii,
+		kii_core_t* kii,
 		const char* vendor_thing_id,
 		const char* password);
 
@@ -76,7 +76,7 @@ int kii_thing_authenticate(
  *  \return 0:success, -1: failure
  */
 int kii_thing_register(
-		kii_t* kii,
+		kii_core_t* kii,
 		const char* vendor_thing_id,
 		const char* thing_type,
 		const char* password);
@@ -94,7 +94,7 @@ int kii_thing_register(
  *  \return 0:success, -1: failure
  */
 int kii_object_create(
-		kii_t* kii,
+		kii_core_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_data,
 		const char* object_content_type,
@@ -110,7 +110,7 @@ int kii_object_create(
  *  \return  0:success, -1: failure
  */
 int kii_object_create_with_id(
-		kii_t* kii,
+		kii_core_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
 		const char* object_data,
@@ -128,7 +128,7 @@ int kii_object_create_with_id(
  *  \return  0:success, -1: failure
  */
 int kii_object_patch(
-		kii_t* kii,
+		kii_core_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
 		const char* patch_data,
@@ -147,7 +147,7 @@ int kii_object_patch(
  *  \return  0:success, -1: failure
  */
 int kii_object_replace(
-		kii_t* kii,
+		kii_core_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
 		const char* replacement_data,
@@ -160,19 +160,19 @@ int kii_object_replace(
  *  \return  0:success, -1: failure
  */
 int kii_object_delete(
-		kii_t* kii,
+		kii_core_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id);
 
 /** Get the object
- *  When succeeded, obtained object data is cached in kii_t#response_body.
+ *  When succeeded, obtained object data is cached in kii_core_t#response_body.
  *  \param [inout] kii sdk instance.
  *  \param [in] bucket specify the bucket of which object is stored.
  *  \param [in] object_id specify the id of the object.
  *  \return  0:success, -1: failure
  */
 int kii_object_get(
-		kii_t* kii,
+		kii_core_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id);
 
@@ -189,7 +189,7 @@ int kii_object_get(
  *  \return 0:success, -1: failure
  */
 int kii_object_upload_body_at_once(
-		kii_t* kii,
+		kii_core_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
 		const char* body_content_type,
@@ -204,7 +204,7 @@ int kii_object_upload_body_at_once(
  *  \return 0:success; -1: failure
  */
 int kii_object_init_upload_body(
-		kii_t* kii,
+		kii_core_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
 		char* out_upload_id);
@@ -234,7 +234,7 @@ typedef struct kii_chunk_data_t {
  *  \return 0:success, -1: failure
  */
 int kii_object_upload_body(
-		kii_t* kii,
+		kii_core_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
 		const char* upload_id,
@@ -254,7 +254,7 @@ int kii_object_upload_body(
  *  \return 0:success, -1: failure
  */
 int kii_object_commit_upload(
-		kii_t* kii,
+		kii_core_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
 		const char* upload_id,
@@ -263,7 +263,7 @@ int kii_object_commit_upload(
 /** Download object body at one time.
  *  If the data size is large or unknown, consider use kii_object_downlad_body()
  *  instead.
- *  The result is cached in kii_t#response_body when succeeded.
+ *  The result is cached in kii_core_t#response_body when succeeded.
  *  \param [inout] kii sdk instance.
  *  \param [in] bucket specify the bucket of which object is stored.
  *  \param [in] object_id specify the id of the object of which body is added.
@@ -271,13 +271,13 @@ int kii_object_commit_upload(
  *  \return 0:success, -1: failure
  */
 int kii_object_download_body_at_once(
-		kii_t* kii,
+		kii_core_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
 		unsigned int* out_data_length);
 
 /** Download object body chunk by chunk.
- *  Downloaded data is cached in kii_t#response_body after the download chunk is
+ *  Downloaded data is cached in kii_core_t#response_body after the download chunk is
  *  succeeded.
  *  \param [inout] kii sdk instance.
  *  \param [in] bucket specify the bucket of which object is stored.
@@ -289,7 +289,7 @@ int kii_object_download_body_at_once(
  *  \return 0:success, -1: failure
  */
 int kii_object_downlad_body(
-		kii_t* kii,
+		kii_core_t* kii,
 		const char* object_id,
 		const kii_bucket_t* bucket,
 		unsigned int position,
@@ -305,7 +305,7 @@ int kii_object_downlad_body(
  *  \return 0:success, -1: failure
  */
 int kii_push_subscribe_bucket(
-		kii_t* kii,
+		kii_core_t* kii,
 		const kii_bucket_t* bucket);
 
 /** Unsubscribe specified bucket.
@@ -314,7 +314,7 @@ int kii_push_subscribe_bucket(
  *  \return 0:success, -1: failure
  */
 int kii_push_unsubscribe_bucket(
-		kii_t* kii,
+		kii_core_t* kii,
 		const kii_bucket_t* bucket);
 
 /** Subscribe to specified topic.
@@ -325,7 +325,7 @@ int kii_push_unsubscribe_bucket(
  *  \return 0:success, -1: failure
  */
 int kii_push_subscribe_topic(
-		kii_t* kii,
+		kii_core_t* kii,
 		const kii_topic_t* topic);
 
 /** Unsubscribe specified topic.
@@ -334,7 +334,7 @@ int kii_push_subscribe_topic(
  *  \return 0:success, -1: failure
  */
 int kii_push_unsubscribe_topic(
-		kii_t* kii,
+		kii_core_t* kii,
 		const kii_topic_t* topic);
 
 /** Create new topic.
@@ -343,7 +343,7 @@ int kii_push_unsubscribe_topic(
  *  \return 0:success, -1: failure
  */
 int kii_push_create_topic(
-		kii_t* kii,
+		kii_core_t* kii,
 		const kii_topic_t* topic);
 
 /** Delete existing topic.
@@ -352,7 +352,7 @@ int kii_push_create_topic(
  *  \return 0:success, -1: failure
  */
 int kii_push_delete_topic(
-		kii_t* kii,
+		kii_core_t* kii,
 		const kii_topic_t* topic);
 
 /** Start push notification receiving routine.
@@ -367,7 +367,7 @@ int kii_push_delete_topic(
  *  \return 0:success, -1: failure
  */
 int kii_push_start_routine(
-		kii_t* kii,
+		kii_core_t* kii,
 		unsigned int task_priority,
 		unsigned int ping_req_task_priority,
 		KII_PUSH_RECEIVED_CB callback);
@@ -379,7 +379,7 @@ int kii_push_start_routine(
  *  \return 0:success, -1: failure
  */
 int kii_server_code_execute(
-		kii_t* kii,
+		kii_core_t* kii,
 		const char* endpoint_name,
 		const char* params);
 

@@ -6,15 +6,11 @@ endif
 
 LIBS = -lssl -lcrypto -lpthread
 SOURCES = $(wildcard *.c)
-SOURCES += kii-core/kii.c kii-core/kii_libc_wrapper.c
+SOURCES += kii-core/kii_core.c kii-core/kii_libc_wrapper.c
 TARGET = exampleapp
 DOCTARGET = doc 
 
 all: clean $(TARGET) $(DOCTARGET)
-
-copy:
-	cp ../kii-core/*.c kii-core/
-	cp ../kii-core/*.h kii-core/
 
 $(TARGET): copy
 	gcc $(CFLAGS) $(SOURCES) $(LIBS) -o $@

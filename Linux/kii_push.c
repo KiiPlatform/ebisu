@@ -3,7 +3,7 @@
 
 #include "kii.h"
 #include "kii_mqtt.h"
-#include "kii-core/kii.h"
+#include "kii-core/kii_core.h"
 
 #define KII_PUSH_PING_ENABLE 1
 #define KII_PUSH_INSTALLATIONID_SIZE 64
@@ -29,7 +29,7 @@ static unsigned int mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];
 static unsigned int mKiiPush_pingReqTaskStk[KIIPUSH_PINGREQ_TASK_STK_SIZE];
 #endif
 
-static int kiiPush_install(kii_t* kii, kii_bool_t development, char* installation_id)
+static int kiiPush_install(kii_core_t* kii, kii_bool_t development, char* installation_id)
 {
     char* p1;
     char* p2;
@@ -39,13 +39,13 @@ static int kiiPush_install(kii_t* kii, kii_bool_t development, char* installatio
     kii_state_t state;
 
     buf = kii->http_context.buffer;
-    core_err = kii_install_thing_push(kii, development);
+    core_err = kii_core_install_thing_push(kii, development);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_run(kii);
-        state = kii_get_state(kii);
+        core_err = kii_core_run(kii);
+        state = kii_core_get_state(kii);
     } while (state != KII_STATE_IDLE);
     M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
     if (core_err != KIIE_OK) {
@@ -83,7 +83,7 @@ exit:
     return ret;
 }
 
-static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* installation_id, kii_mqtt_endpoint_t* endpoint)
+static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_core_t* kii, const char* installation_id, kii_mqtt_endpoint_t* endpoint)
 {
     char* p1;
     char* p2;
@@ -93,13 +93,13 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
     kii_state_t state;
 
     buf = kii->http_context.buffer;
-    core_err = kii_get_mqtt_endpoint(kii, installation_id);
+    core_err = kii_core_get_mqtt_endpoint(kii, installation_id);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_run(kii);
-        state = kii_get_state(kii);
+        core_err = kii_core_run(kii);
+        state = kii_core_get_state(kii);
     } while (state != KII_STATE_IDLE);
     M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
     if (core_err != KIIE_OK) {
@@ -235,20 +235,20 @@ exit:
     return ret;
 }
 
-int kii_push_subscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
+int kii_push_subscribe_bucket(kii_core_t* kii, const kii_bucket_t* bucket)
 {
     int ret = -1;
 
     kii_error_code_t core_err;
     kii_state_t state;
 
-    core_err = kii_subscribe_bucket(kii, bucket);
+    core_err = kii_core_subscribe_bucket(kii, bucket);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_run(kii);
-        state = kii_get_state(kii);
+        core_err = kii_core_run(kii);
+        state = kii_core_get_state(kii);
     } while (state != KII_STATE_IDLE);
     M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
     if (core_err != KIIE_OK) {
@@ -261,20 +261,20 @@ exit:
     return ret;
 }
 
-int kii_push_unsubscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
+int kii_push_unsubscribe_bucket(kii_core_t* kii, const kii_bucket_t* bucket)
 {
     int ret = -1;
 
     kii_error_code_t core_err;
     kii_state_t state;
 
-    core_err = kii_unsubscribe_bucket(kii, bucket);
+    core_err = kii_core_unsubscribe_bucket(kii, bucket);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_run(kii);
-        state = kii_get_state(kii);
+        core_err = kii_core_run(kii);
+        state = kii_core_get_state(kii);
     } while (state != KII_STATE_IDLE);
     M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
     if (core_err != KIIE_OK) {
@@ -287,19 +287,19 @@ exit:
     return ret;
 }
 
-int kii_push_subscribe_topic(kii_t* kii, const kii_topic_t* topic)
+int kii_push_subscribe_topic(kii_core_t* kii, const kii_topic_t* topic)
 {
     int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
 
-    core_err = kii_subscribe_topic(kii, topic);
+    core_err = kii_core_subscribe_topic(kii, topic);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_run(kii);
-        state = kii_get_state(kii);
+        core_err = kii_core_run(kii);
+        state = kii_core_get_state(kii);
     } while (state != KII_STATE_IDLE);
     M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
     if (core_err != KIIE_OK) {
@@ -312,19 +312,19 @@ exit:
     return ret;
 }
 
-int kii_push_unsubscribe_topic(kii_t* kii, const kii_topic_t* topic)
+int kii_push_unsubscribe_topic(kii_core_t* kii, const kii_topic_t* topic)
 {
     int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
 
-    core_err = kii_unsubscribe_topic(kii, topic);
+    core_err = kii_core_unsubscribe_topic(kii, topic);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_run(kii);
-        state = kii_get_state(kii);
+        core_err = kii_core_run(kii);
+        state = kii_core_get_state(kii);
     } while (state != KII_STATE_IDLE);
     M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
     if (core_err != KIIE_OK) {
@@ -337,19 +337,19 @@ exit:
     return ret;
 }
 
-int kii_push_create_topic(kii_t* kii, const kii_topic_t* topic)
+int kii_push_create_topic(kii_core_t* kii, const kii_topic_t* topic)
 {
     int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
 
-    core_err = kii_create_topic(kii, topic);
+    core_err = kii_core_create_topic(kii, topic);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_run(kii);
-        state = kii_get_state(kii);
+        core_err = kii_core_run(kii);
+        state = kii_core_get_state(kii);
     } while (state != KII_STATE_IDLE);
     M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
     if (core_err != KIIE_OK) {
@@ -362,19 +362,19 @@ exit:
     return ret;
 }
 
-int kii_push_delete_topic(kii_t* kii, const kii_topic_t* topic)
+int kii_push_delete_topic(kii_core_t* kii, const kii_topic_t* topic)
 {
     int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
 
-    core_err = kii_delete_topic(kii, topic);
+    core_err = kii_core_delete_topic(kii, topic);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_run(kii);
-        state = kii_get_state(kii);
+        core_err = kii_core_run(kii);
+        state = kii_core_get_state(kii);
     } while (state != KII_STATE_IDLE);
     M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
     if (core_err != KIIE_OK) {
@@ -398,14 +398,14 @@ static void* kiiPush_recvMsgTask(void* sdata)
     size_t rcvdCounter = 0;
     KII_PUSH_RECEIVED_CB callback;
     kiiPush_endpointState_e endpointState;
-    kii_t* kii;
+    kii_core_t* kii;
     kii_mqtt_endpoint_t endpoint;
     char installation_id[KII_PUSH_INSTALLATIONID_SIZE + 1];
 
     memset(installation_id, 0x00, sizeof(installation_id));
     memset(&endpoint, 0x00, sizeof(kii_mqtt_endpoint_t));
 
-    kii = (kii_t*) sdata;
+    kii = (kii_core_t*) sdata;
     callback = kii->push_received_cb;
     for(;;)
     {
@@ -559,9 +559,9 @@ static void* kiiPush_recvMsgTask(void* sdata)
 #if(KII_PUSH_PING_ENABLE)
 static void* kiiPush_pingReqTask(void* sdata)
 {
-    kii_t* kii;
+    kii_core_t* kii;
 
-    kii = (kii_t*)sdata;
+    kii = (kii_core_t*)sdata;
     for(;;)
     {
         if(kii->_mqtt_endpoint_ready == 1)
@@ -574,7 +574,7 @@ static void* kiiPush_pingReqTask(void* sdata)
 }
 #endif
 
-int kii_push_start_routine(kii_t* kii, unsigned int recvMsgtaskPrio, unsigned int pingReqTaskPrio, KII_PUSH_RECEIVED_CB callback)
+int kii_push_start_routine(kii_core_t* kii, unsigned int recvMsgtaskPrio, unsigned int pingReqTaskPrio, KII_PUSH_RECEIVED_CB callback)
 {
     kii->push_received_cb = callback;
     kii->task_create_cb(NULL,

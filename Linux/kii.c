@@ -2,18 +2,18 @@
 #include <stdio.h>
 
 #include "kii.h"
-#include "kii-core/kii.h"
+#include "kii-core/kii_core.h"
 #include "kii_core_impl.h"
 #include "kii_socket_impl.h"
 #include "kii_task_impl.h"
 
 int kii_init(
-        kii_t* kii,
+        kii_core_t* kii,
         const char* site,
         const char* app_id,
         const char* app_key)
 {
-    memset(kii, 0, sizeof(kii_t));
+    memset(kii, 0, sizeof(kii_core_t));
     if((strlen(site) != KII_SITE_SIZE) || (strlen(app_id) != KII_APPID_SIZE) || (strlen(app_key) != KII_APPKEY_SIZE))
     {
         return -1;

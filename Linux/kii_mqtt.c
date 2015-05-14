@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "kii-core/kii.h"
+#include "kii-core/kii_core.h"
 #include "kii-core/kii_mqtt.h"
 #include "kii_mqtt.h"
 #include "kii.h"
@@ -43,7 +43,7 @@ int kiiMQTT_decode(char* buf, int* value)
     return len;
 }
 
-int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short keepAliveInterval)
+int kiiMQTT_connect(kii_core_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short keepAliveInterval)
 {
     char buf[256];
     int i;
@@ -160,7 +160,7 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
     }
 }
 
-int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
+int kiiMQTT_subscribe(kii_core_t* kii, const char* topic, enum QoS qos)
 {
     char buf[256];
     int i;
@@ -241,7 +241,7 @@ int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
     }
 }
 
-int kiiMQTT_pingReq(kii_t* kii)
+int kiiMQTT_pingReq(kii_core_t* kii)
 {
     char buf[2];
     kii_socket_code_t sock_err;

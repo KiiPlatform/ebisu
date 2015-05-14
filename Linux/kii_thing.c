@@ -4,10 +4,11 @@
 
 #include "kii.h"
 
-#include "kii-core/kii.h"
+#include "kii-core/kii_core.h"
 #include "kii_core_impl.h"
+
 int kii_thing_authenticate(
-        kii_t* kii,
+        kii_core_t* kii,
         const char* vendor_thing_id,
         const char* password)
 {
@@ -19,13 +20,13 @@ int kii_thing_authenticate(
     kii_state_t state;
 
     buf = kii->http_context.buffer;
-    core_err = kii_thing_authentication(kii, vendor_thing_id, password);
+    core_err = kii_core_thing_authentication(kii, vendor_thing_id, password);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_run(kii);
-        state = kii_get_state(kii);
+        core_err = kii_core_run(kii);
+        state = kii_core_get_state(kii);
     } while (state != KII_STATE_IDLE);
     M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
     if (core_err != KIIE_OK) {
@@ -60,7 +61,7 @@ exit:
 }
 
 int kii_thing_register(
-        kii_t* kii,
+        kii_core_t* kii,
         const char* vendor_thing_id,
         const char* thing_type,
         const char* password)
@@ -77,13 +78,13 @@ int kii_thing_register(
     sprintf(thing_data,
             "{\"_vendorThingID\":\"%s\",\"_thingType\":\"%s\",\"_password\":\"%s\"}",
             vendor_thing_id, thing_type, password);
-    core_err = kii_register_thing(kii, thing_data);
+    core_err = kii_core_register_thing(kii, thing_data);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_run(kii); 
-        state = kii_get_state(kii);
+        core_err = kii_core_run(kii); 
+        state = kii_core_get_state(kii);
     } while (state != KII_STATE_IDLE);
     if (core_err != KIIE_OK) {
         goto exit;

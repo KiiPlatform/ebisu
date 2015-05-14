@@ -16,7 +16,7 @@ void received_callback(char* buffer, size_t buffer_size) {
 int main(int argc, char** argv)
 {
     int optval;
-    kii_t kii;
+    kii_core_t kii;
     kii_author_t author;
     char buffer[EX_BUFFER_SIZE];
     char mqtt_buffer[EX_MQTT_BUFFER_SIZE];

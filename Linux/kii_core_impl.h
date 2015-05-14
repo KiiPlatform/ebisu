@@ -5,7 +5,7 @@
 extern 'C' {
 #endif
 
-#include "kii-core/kii.h"
+#include "kii-core/kii_core.h"
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
