@@ -3,7 +3,6 @@
 #include <stdlib.h>
 
 #include "kii.h"
-#include "kii_def.h"
 
 #include "kii-core/kii.h"
 #include "kii_core_impl.h"
@@ -402,7 +401,7 @@ int kii_object_upload_body(
 
     /* content-range */
     memset(content_range, 0x00, sizeof(content_range));
-    strcpy(content_range, STR_CONTENT_RANGE);
+    strcpy(content_range, "Content-Range: ");
     strcat(content_range, "bytes=");
     sprintf(content_range + strlen(content_range), "%d", chunk->position);
     strcat(content_range, "-");
@@ -551,11 +550,11 @@ int kii_object_download_body_at_once(
         goto exit;
     }
     buf = kii->http_context.buffer;
-    p1 = strstr(buf, STR_CONTENT_LENGTH);
+    p1 = strstr(buf, "Content-Length: ");
     if(p1 == NULL)	{
         goto exit;
     }
-    p1 = p1 + strlen(STR_CONTENT_LENGTH);
+    p1 = p1 + strlen("Content-Length: ");
     *out_data_length = atoi(p1);
     ret = 0;
 exit:
@@ -594,7 +593,7 @@ int kii_object_downlad_body(
 
     /* Range */
     memset(range, 0x00, sizeof(range));
-    strcpy(range, STR_RANGE);
+    strcpy(range, "Range: ");
     strcat(range, "bytes=");
     sprintf(range + strlen(range), "%d", position);
     strcat(range, "-");
@@ -625,7 +624,7 @@ int kii_object_downlad_body(
         goto exit;
     }
     buf = kii->http_context.buffer;
-    p1 = strstr(buf, STR_CONTENT_RANGE);
+    p1 = strstr(buf, "Content-Range: ");
     if(p1 == NULL)	{
         goto exit;
     }
@@ -636,11 +635,11 @@ int kii_object_downlad_body(
     p1++;
     *out_total_length = atoi(p1);
 
-    p1 = strstr(buf, STR_CONTENT_LENGTH);
+    p1 = strstr(buf, "Content-Length: ");
     if(p1 == NULL) {
         goto exit;
     }
-    p1 = p1 + strlen(STR_CONTENT_LENGTH);
+    p1 = p1 + strlen("Content-Length: ");
     *out_actual_length = atoi(p1);
     ret = 0;
 exit:

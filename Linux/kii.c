@@ -2,7 +2,6 @@
 #include <stdio.h>
 
 #include "kii.h"
-#include "kii_def.h"
 #include "kii-core/kii.h"
 #include "kii_core_impl.h"
 #include "kii_socket_impl.h"

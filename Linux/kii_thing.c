@@ -3,7 +3,6 @@
 #include <stdlib.h>
 
 #include "kii.h"
-#include "kii_def.h"
 
 #include "kii-core/kii.h"
 #include "kii_core_impl.h"
