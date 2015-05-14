@@ -2,10 +2,19 @@
 #define KII_MQTT_H
 
 #include "kii-core/kii_core.h"
-#include "kii-core/kii_mqtt.h"
 #include "kii.h"
 
 enum QoS { QOS0, QOS1, QOS2 };
+
+typedef struct kii_mqtt_endpoint_t {
+    char username[64];
+    char password[128];
+    char topic[64];
+    char host[64];
+    unsigned int port_tcp;
+    unsigned int port_ssl;
+    unsigned long ttl;
+} kii_mqtt_endpoint_t;
 
 int kiiMQTT_encode(char* buf, int length);
 int kiiMQTT_decode(char* buf, int* value);

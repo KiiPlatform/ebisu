@@ -2,7 +2,6 @@
 #include <stdio.h>
 
 #include "kii-core/kii_core.h"
-#include "kii-core/kii_mqtt.h"
 #include "kii_mqtt.h"
 #include "kii.h"
 
