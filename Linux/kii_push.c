@@ -3,7 +3,7 @@
 
 #include "kii.h"
 #include "kii_mqtt.h"
-#include "kii-core/kii.h"
+#include "kii-core/kii_core.h"
 
 #define KII_PUSH_PING_ENABLE 1
 #define KII_PUSH_INSTALLATIONID_SIZE 64
@@ -38,20 +38,20 @@ static int kiiPush_install(kii_t* kii, kii_bool_t development, char* installatio
     kii_error_code_t core_err;
     kii_state_t state;
 
-    buf = kii->http_context.buffer;
-    core_err = kii_install_thing_push(kii, development);
+    buf = kii->kii_core.http_context.buffer;
+    core_err = kii_core_install_thing_push(&kii->kii_core, development);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_run(kii);
-        state = kii_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if(kii->response_code < 200 || 300 <= kii->response_code)
+    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code)
     {
         goto exit;
     }
@@ -92,25 +92,25 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
     kii_error_code_t core_err;
     kii_state_t state;
 
-    buf = kii->http_context.buffer;
-    core_err = kii_get_mqtt_endpoint(kii, installation_id);
+    buf = kii->kii_core.http_context.buffer;
+    core_err = kii_core_get_mqtt_endpoint(&kii->kii_core, installation_id);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_run(kii);
-        state = kii_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if(kii->response_code == 503)
+    if(kii->kii_core.response_code == 503)
     {
         ret = KIIPUSH_ENDPOINT_UNAVAILABLE;
         goto exit;
     }
-    if(kii->response_code < 200 || 300 <= kii->response_code)
+    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code)
     {
         ret = KIIPUSH_ENDPOINT_ERROR;
         goto exit;
@@ -242,19 +242,19 @@ int kii_push_subscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
     kii_error_code_t core_err;
     kii_state_t state;
 
-    core_err = kii_subscribe_bucket(kii, bucket);
+    core_err = kii_core_subscribe_bucket(&kii->kii_core, bucket);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_run(kii);
-        state = kii_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if (kii->response_code == 204 || kii->response_code == 409) {
+    if (kii->kii_core.response_code == 204 || kii->kii_core.response_code == 409) {
         ret = 0;
     }
 exit:
@@ -268,19 +268,19 @@ int kii_push_unsubscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
     kii_error_code_t core_err;
     kii_state_t state;
 
-    core_err = kii_unsubscribe_bucket(kii, bucket);
+    core_err = kii_core_unsubscribe_bucket(&kii->kii_core, bucket);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_run(kii);
-        state = kii_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if (kii->response_code == 204 || kii->response_code == 409) {
+    if (kii->kii_core.response_code == 204 || kii->kii_core.response_code == 409) {
         ret = 0;
     }
 exit:
@@ -293,19 +293,19 @@ int kii_push_subscribe_topic(kii_t* kii, const kii_topic_t* topic)
     kii_error_code_t core_err;
     kii_state_t state;
 
-    core_err = kii_subscribe_topic(kii, topic);
+    core_err = kii_core_subscribe_topic(&kii->kii_core, topic);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_run(kii);
-        state = kii_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if (kii->response_code == 204 || kii->response_code == 409) {
+    if (kii->kii_core.response_code == 204 || kii->kii_core.response_code == 409) {
         ret = 0;
     }
 exit:
@@ -318,19 +318,19 @@ int kii_push_unsubscribe_topic(kii_t* kii, const kii_topic_t* topic)
     kii_error_code_t core_err;
     kii_state_t state;
 
-    core_err = kii_unsubscribe_topic(kii, topic);
+    core_err = kii_core_unsubscribe_topic(&kii->kii_core, topic);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_run(kii);
-        state = kii_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if (kii->response_code == 204 || kii->response_code == 409) {
+    if (kii->kii_core.response_code == 204 || kii->kii_core.response_code == 409) {
         ret = 0;
     }
 exit:
@@ -343,19 +343,19 @@ int kii_push_create_topic(kii_t* kii, const kii_topic_t* topic)
     kii_error_code_t core_err;
     kii_state_t state;
 
-    core_err = kii_create_topic(kii, topic);
+    core_err = kii_core_create_topic(&kii->kii_core, topic);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_run(kii);
-        state = kii_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if (kii->response_code == 204 || kii->response_code == 409) {
+    if (kii->kii_core.response_code == 204 || kii->kii_core.response_code == 409) {
         ret = 0;
     }
 exit:
@@ -368,19 +368,19 @@ int kii_push_delete_topic(kii_t* kii, const kii_topic_t* topic)
     kii_error_code_t core_err;
     kii_state_t state;
 
-    core_err = kii_delete_topic(kii, topic);
+    core_err = kii_core_delete_topic(&kii->kii_core, topic);
     if (core_err != KIIE_OK) {
         goto exit;
     }
     do {
-        core_err = kii_run(kii);
-        state = kii_get_state(kii);
+        core_err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->logger_cb("resp: %s\n", kii->response_body));
+    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if (kii->response_code == 204 || kii->response_code == 409) {
+    if (kii->kii_core.response_code == 204 || kii->kii_core.response_code == 409) {
         ret = 0;
     }
 exit:
@@ -428,11 +428,11 @@ static void* kiiPush_recvMsgTask(void* sdata)
             {
                 continue;
             }
-            M_KII_LOG(kii->logger_cb("installationID:%s\r\n", installation_id));
-            M_KII_LOG(kii->logger_cb("mqttTopic:%s\r\n", endpoint.topic));
-            M_KII_LOG(kii->logger_cb("host:%s\r\n", endpoint.host));
-            M_KII_LOG(kii->logger_cb("username:%s\r\n", endpoint.username));
-            M_KII_LOG(kii->logger_cb("password:%s\r\n", endpoint.password));
+            M_KII_LOG(kii->kii_core.logger_cb("installationID:%s\r\n", installation_id));
+            M_KII_LOG(kii->kii_core.logger_cb("mqttTopic:%s\r\n", endpoint.topic));
+            M_KII_LOG(kii->kii_core.logger_cb("host:%s\r\n", endpoint.host));
+            M_KII_LOG(kii->kii_core.logger_cb("username:%s\r\n", endpoint.username));
+            M_KII_LOG(kii->kii_core.logger_cb("password:%s\r\n", endpoint.password));
             if(kiiMQTT_connect(kii, &endpoint, KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE) < 0)
             {
                 continue;
@@ -449,23 +449,23 @@ static void* kiiPush_recvMsgTask(void* sdata)
         else
         {
             memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
-            M_KII_LOG(kii->logger_cb("readPointer: %d\r\n", kii->mqtt_buffer + bytes));
+            M_KII_LOG(kii->kii_core.logger_cb("readPointer: %d\r\n", kii->mqtt_buffer + bytes));
 
             rcvdCounter = 0;
-            kii->socket_recv_cb(&kii->socket_context, kii->mqtt_buffer, 2, &rcvdCounter);
+            kii->mqtt_socket_recv_cb(&kii->mqtt_socket_context, kii->mqtt_buffer, 2, &rcvdCounter);
             if(rcvdCounter == 2)
             {
                 if((kii->mqtt_buffer[0] & 0xf0) == 0x30)
                 {
                     rcvdCounter = 0;
-                    kii->socket_recv_cb(&kii->socket_context, kii->mqtt_buffer+2, KII_PUSH_TOPIC_HEADER_SIZE, &rcvdCounter);
+                    kii->mqtt_socket_recv_cb(&kii->mqtt_socket_context, kii->mqtt_buffer+2, KII_PUSH_TOPIC_HEADER_SIZE, &rcvdCounter);
                     if(rcvdCounter == KII_PUSH_TOPIC_HEADER_SIZE)
                     {
                         byteLen = kiiMQTT_decode(&kii->mqtt_buffer[1], &remainingLen);
                     }
                     else
                     {
-                        M_KII_LOG(kii->logger_cb("kii-error: mqtt decode error\r\n"));
+                        M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt decode error\r\n"));
                         kii->_mqtt_endpoint_ready = 0;
                         continue;
                     }
@@ -476,42 +476,42 @@ static void* kiiPush_recvMsgTask(void* sdata)
                     }
                     else
                     {
-                        M_KII_LOG(kii->logger_cb("kii-error: mqtt decode error\r\n"));
+                        M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt decode error\r\n"));
                         kii->_mqtt_endpoint_ready = 0;
                         continue;
                     }
                     if(totalLen > kii->mqtt_buffer_size)
                     {
-                        M_KII_LOG(kii->logger_cb("kii-error: mqtt buffer overflow\r\n"));
+                        M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt buffer overflow\r\n"));
                         kii->_mqtt_endpoint_ready = 0;
                         continue;
                     }
 
-                    M_KII_LOG(kii->logger_cb("decode byteLen=%d, remainingLen=%d\r\n", byteLen, remainingLen));
+                    M_KII_LOG(kii->kii_core.logger_cb("decode byteLen=%d, remainingLen=%d\r\n", byteLen, remainingLen));
                     bytes = rcvdCounter + 2;
-                    M_KII_LOG(kii->logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
+                    M_KII_LOG(kii->kii_core.logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
                     while(bytes < totalLen)
                     {
-                        M_KII_LOG(kii->logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
-                        M_KII_LOG(kii->logger_cb("lengthToLead: %d\r\n", totalLen - bytes));
-                        M_KII_LOG(kii->logger_cb("readPointer: %d\r\n", kii->mqtt_buffer + bytes));
+                        M_KII_LOG(kii->kii_core.logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
+                        M_KII_LOG(kii->kii_core.logger_cb("lengthToLead: %d\r\n", totalLen - bytes));
+                        M_KII_LOG(kii->kii_core.logger_cb("readPointer: %d\r\n", kii->mqtt_buffer + bytes));
                         /*kii->socket_recv_cb(&(kii->socket_context), kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);*/
                         rcvdCounter = 0;
-                        kii->socket_recv_cb(&(kii->socket_context), kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);
-                        M_KII_LOG(kii->logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
+                        kii->mqtt_socket_recv_cb(&(kii->mqtt_socket_context), kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);
+                        M_KII_LOG(kii->kii_core.logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
                         if(rcvdCounter > 0)
                         {
                             bytes += rcvdCounter;
-                            M_KII_LOG(kii->logger_cb("success read. totalLen: %d, bytes: %d\r\n", totalLen, bytes));
+                            M_KII_LOG(kii->kii_core.logger_cb("success read. totalLen: %d, bytes: %d\r\n", totalLen, bytes));
                         }
                         else
                         {
                             bytes = -1;
-                            M_KII_LOG(kii->logger_cb("failed to read. totalLen: %d, bytes: %d\r\n", totalLen, bytes));
+                            M_KII_LOG(kii->kii_core.logger_cb("failed to read. totalLen: %d, bytes: %d\r\n", totalLen, bytes));
                             break;
                         }
                     }
-                    M_KII_LOG(kii-logger_cb("bytes:%d, totalLen:%d\r\n", bytes, totalLen));
+                    M_KII_LOG(kii->kii_core.logger_cb("bytes:%d, totalLen:%d\r\n", bytes, totalLen));
                     if(bytes >= totalLen)
                     {
                         p = kii->mqtt_buffer;
@@ -522,19 +522,19 @@ static void* kiiPush_recvMsgTask(void* sdata)
                         p = p + topicLen; /* skip topic*/
                         if((remainingLen - 2 - topicLen) > 0)
                         {
-                            M_KII_LOG(kii-logger_cb("Successfully Recieved Push %s\n", p));
+                            M_KII_LOG(kii->kii_core.logger_cb("Successfully Recieved Push %s\n", p));
                             callback(p, remainingLen - 2 - topicLen);
                         }
                         else
                         {
-                            M_KII_LOG(kii-logger_cb("kii-error: mqtt topic length error\r\n"));
+                            M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt topic length error\r\n"));
                             kii->_mqtt_endpoint_ready = 0;
                             continue;
                         }
                     }
                     else
                     {
-                        M_KII_LOG(kii->logger_cb("kii_error: mqtt receive data error\r\n"));
+                        M_KII_LOG(kii->kii_core.logger_cb("kii_error: mqtt receive data error\r\n"));
                         kii->_mqtt_endpoint_ready = 0;
                         continue;
                     }
@@ -542,13 +542,13 @@ static void* kiiPush_recvMsgTask(void* sdata)
 #if(KII_PUSH_PING_ENABLE)
                 else if((kii->mqtt_buffer[0] & 0xf0) == 0xd0)
                 {
-                    M_KII_LOG(kii->logger_cb("ping resp\r\n"));
+                    M_KII_LOG(kii->kii_core.logger_cb("ping resp\r\n"));
                 }
 #endif
             }
             else
             {
-                M_KII_LOG(kii->logger_cb("kii-error: mqtt receive data error\r\n"));
+                M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt receive data error\r\n"));
                 kii->_mqtt_endpoint_ready = 0;
             }
         }

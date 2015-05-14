@@ -1,25 +1,10 @@
 #ifndef KII_H
 #define KII_H
 
-#include "kii-core/kii.h"
+#include "kii-core/kii_core.h"
+#include "kii_task_callback.h"
 
-#define KII_SITE_SIZE 2
-#define KII_HOST_SIZE 64
-#define KII_APPID_SIZE 8
-#define KII_APPKEY_SIZE 32
-
-#define KII_ACCESS_TOKEN_SIZE 44
-#define KII_DEVICE_VENDOR_ID 64 /* matches [a-zA-Z0-9-_\\.]{3,64} */
-#define KII_PASSWORD_SIZE 50    /* Matches ^[\\u0020-\\u007E]{4,50} */
 #define KII_OBJECTID_SIZE 36
-#define KII_DATA_TPYE_SIZE 36
-#define KII_UPLOAD_ID_SIZE 46
-#define KII_BUCKET_NAME_SIZE 64
-
-#define KII_SOCKET_BUF_SIZE 2048
-
-#define DEMO_KII_PUSH_RECV_MSG_TASK_PRIO 3
-#define DEMO_KII_PUSH_PINGREQ_TASK_PRIO 4
 
 #ifdef DEBUG
 #ifndef __FILE__
@@ -31,13 +16,35 @@
 #endif
 
 #define M_KII_LOG(x) \
-	if (kii->logger_cb != NULL) {\
-		kii->logger_cb("file:%s, line:%d ", __FILE__, __LINE__); \
+	if (kii->kii_core.logger_cb != NULL) {\
+		kii->kii_core.logger_cb("file:%s, line:%d ", __FILE__, __LINE__); \
 		(x); \
 	}
 #else
 #define M_KII_LOG(x)
 #endif
+
+typedef struct kii_t {
+    kii_core_t kii_core;
+
+    kii_socket_context_t mqtt_socket_context;
+    KII_SOCKET_CONNECT_CB mqtt_socket_connect_cb;
+    KII_SOCKET_SEND_CB mqtt_socket_send_cb;
+    KII_SOCKET_RECV_CB mqtt_socket_recv_cb;
+    KII_SOCKET_CLOSE_CB mqtt_socket_close_cb;
+
+    KII_TASK_CREATE task_create_cb;
+
+    KII_DELAY_MS delay_ms_cb;
+
+    KII_PUSH_RECEIVED_CB push_received_cb;
+
+    int _mqtt_endpoint_ready;
+
+    char* mqtt_buffer;
+    size_t mqtt_buffer_size;
+
+} kii_t;
 
 /** Initializes Kii SDK
  *  \param [inout] kii sdk instance.
@@ -165,7 +172,7 @@ int kii_object_delete(
 		const char* object_id);
 
 /** Get the object
- *  When succeeded, obtained object data is cached in kii_t#response_body.
+ *  When succeeded, obtained object data is cached in kii_core_t#response_body.
  *  \param [inout] kii sdk instance.
  *  \param [in] bucket specify the bucket of which object is stored.
  *  \param [in] object_id specify the id of the object.
@@ -263,7 +270,7 @@ int kii_object_commit_upload(
 /** Download object body at one time.
  *  If the data size is large or unknown, consider use kii_object_downlad_body()
  *  instead.
- *  The result is cached in kii_t#response_body when succeeded.
+ *  The result is cached in kii_core_t#response_body when succeeded.
  *  \param [inout] kii sdk instance.
  *  \param [in] bucket specify the bucket of which object is stored.
  *  \param [in] object_id specify the id of the object of which body is added.
@@ -277,7 +284,7 @@ int kii_object_download_body_at_once(
 		unsigned int* out_data_length);
 
 /** Download object body chunk by chunk.
- *  Downloaded data is cached in kii_t#response_body after the download chunk is
+ *  Downloaded data is cached in kii_core_t#response_body after the download chunk is
  *  succeeded.
  *  \param [inout] kii sdk instance.
  *  \param [in] bucket specify the bucket of which object is stored.

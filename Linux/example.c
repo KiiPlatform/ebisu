@@ -40,14 +40,14 @@ int main(int argc, char** argv)
     memset(mqtt_buffer, 0x00, mqtt_buffer_size);
 
     kii_init(&kii, EX_APP_SITE, EX_APP_ID, EX_APP_KEY);
-    kii.http_context.buffer = buffer;
-    kii.http_context.buffer_size = buffer_size;
+    kii.kii_core.http_context.buffer = buffer;
+    kii.kii_core.http_context.buffer_size = buffer_size;
     kii.mqtt_buffer = mqtt_buffer;
     kii.mqtt_buffer_size = mqtt_buffer_size;
     memset(&author, 0x00, sizeof(kii_author_t));
     strncpy(author.author_id, (char*)EX_THING_ID, 128);
     strncpy(author.access_token, (char*)EX_ACCESS_TOKEN, 128);
-    kii.author = author; 
+    kii.kii_core.author = author;
 
     memset(&bucket, 0x00, sizeof(kii_bucket_t));
     bucket.scope = KII_SCOPE_THING;
