@@ -1,7 +1,7 @@
 #ifndef _KII_SOCKET_IMPL
 #define _KII_SOCKET_IMPL
 
-#include "kii-core/kii_socket_callback.h"
+#include "kii_socket_callback.h"
 
 #ifdef __cplusplus
 extern "C" {
