@@ -593,4 +593,4 @@ int kii_push_start_routine(kii_t* kii, unsigned int recvMsgtaskPrio, unsigned in
 #endif
     return 0;
 }
-/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=dos: */
+/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

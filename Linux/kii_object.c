@@ -645,5 +645,5 @@ int kii_object_downlad_body(
 exit:
     return ret;
 }
-/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=dos: */
+/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
 

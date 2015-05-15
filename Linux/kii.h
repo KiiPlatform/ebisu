@@ -391,5 +391,5 @@ int kii_server_code_execute(
 		const char* params);
 
 #endif
-/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=dos: */
+/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
 

@@ -29,4 +29,4 @@ void delay_ms_cb(unsigned int msec)
 {
     usleep(msec * 1000);
 }
-/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=dos: */
+/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

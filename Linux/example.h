@@ -29,4 +29,4 @@ const char EX_ENDPOINT_NAME[] = "test_topic";
 #endif
 
 #endif
-/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=dos: */
+/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

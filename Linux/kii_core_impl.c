@@ -312,4 +312,4 @@ void logger_cb(const char* format, ...)
     vprintf(format, list);
     va_end(list);
 }
-/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=dos: */
+/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
