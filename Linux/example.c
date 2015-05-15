@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include "kii_core_impl.h"
 
 void received_callback(char* buffer, size_t buffer_size) {
     char copy[1024];
@@ -35,13 +36,16 @@ int main(int argc, char** argv)
     unsigned int length;
     unsigned int actual_length;
     unsigned int total_length;
+    context_t ssl_context;
 
     memset(buffer, 0x00, buffer_size);
     memset(mqtt_buffer, 0x00, mqtt_buffer_size);
+    memset(&ssl_context, 0x00, sizeof(context_t));
 
     kii_init(&kii, EX_APP_SITE, EX_APP_ID, EX_APP_KEY);
     kii.kii_core.http_context.buffer = buffer;
     kii.kii_core.http_context.buffer_size = buffer_size;
+    kii.kii_core.http_context.app_context = &ssl_context;
     kii.mqtt_buffer = mqtt_buffer;
     kii.mqtt_buffer_size = mqtt_buffer_size;
     memset(&author, 0x00, sizeof(kii_author_t));
