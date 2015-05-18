@@ -33,11 +33,11 @@ int kii_init(
     else
     {
         /* Let's enable to set custom host */
-        kii->kii_core.app_host = site;
+        kii->kii_core.app_host = (char*)site;
     }
 
-    kii->kii_core.app_id = app_id;
-    kii->kii_core.app_key = app_key;
+    kii->kii_core.app_id = (char*)app_id;
+    kii->kii_core.app_key = (char*)app_key;
 
     /* setting http callbacks. */
     kii->kii_core.http_set_request_line_cb = request_line_cb;
