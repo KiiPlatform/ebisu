@@ -4,6 +4,11 @@ ifdef DEBUG
 CFLAGS += -g -DDEBUG
 endif
 
+KIISDKPARAM =
+ifdef DEBUG
+KIISDKPARAM += DEBUG=1
+endif
+
 LIBS = -lssl -lcrypto -lpthread -lkiisdk
 LD_FLAGS = -L../kii/
 SOURCES = $(wildcard *.c)
@@ -15,7 +20,7 @@ KIISDK = ../kii/libkiisdk.so
 all: clean $(TARGET) $(DOCTARGET)
 
 $(KIISDK):
-	$(MAKE) -C ../kii
+	$(MAKE) -C ../kii $(KIISDKPARAM)
 
 
 $(TARGET): $(KIISDK)
@@ -25,6 +30,8 @@ clean:
 	touch $(TARGET)
 	rm $(TARGET)
 	rm -rf $(DOCTARGET)
+	touch $(KIISDK)
+	rm -rf $(KIISDK)
 
 .PHONY: all clean copy
 

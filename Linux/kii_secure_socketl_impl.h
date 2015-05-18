@@ -1,5 +1,5 @@
-#ifndef _KII_SOCKET_IMPL
-#define _KII_SOCKET_IMPL
+#ifndef _KII_SECURE_SOCKET_IMPL
+#define _KII_SECURE_SOCKET_IMPL
 
 #include "kii_socket_callback.h"
 
@@ -30,5 +30,5 @@ kii_socket_code_t
 }
 #endif
 
-#endif /* _KII_SOCKET_IMPL */
+#endif /* _KII_SECURE_SOCKET_IMPL */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

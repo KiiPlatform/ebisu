@@ -27,9 +27,12 @@ kii_socket_code_t
     struct sockaddr_in server;
     SSL *ssl;
     SSL_CTX *ssl_ctx;
-    linux_ssl_context_t* ctx = (linux_ssl_context_t*)socket_context->app_context;
+    linux_ssl_context_t* ctx;
+
     ctx = malloc(sizeof(linux_ssl_context_t));
     memset(ctx, 0x00, sizeof(linux_ssl_context_t));
+    socket_context->app_context = (void*)ctx;
+
 
     servhost = gethostbyname(host);
     if (servhost == NULL) {

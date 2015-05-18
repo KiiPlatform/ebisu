@@ -12,139 +12,6 @@
 
 #define BUFF_SIZE 256
 
-kii_http_client_code_t prv_ssl_connect(kii_http_context_t* http_context,
-        const char* host)
-{
-    int sock, ret;
-    struct hostent *servhost;
-    struct sockaddr_in server;
-    struct servent *service;
-    context_t* ctx = (context_t*)http_context->app_context;
-    SSL *ssl;
-    SSL_CTX *ssl_ctx;
-
-    printf("host: %s\n", host);
-    
-    servhost = gethostbyname(host);
-    if (servhost == NULL) {
-        printf("failed to get host.\n");
-        return KII_HTTPC_FAIL;
-    }
-    memset(&server, 0x00, sizeof(server));
-    server.sin_family = AF_INET;
-    /* More secure. */
-    memcpy(&(server.sin_addr), servhost->h_addr, servhost->h_length);
-
-    /* Get Port number */
-    service = getservbyname("https", "tcp");
-    if (service != NULL) {
-        server.sin_port = service->s_port;
-    } else {
-        server.sin_port = htons(443);
-    }
-
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0) {
-        printf("failed to init socket.\n");
-        return KII_HTTPC_FAIL;
-    }
-
-    if (connect(sock, (struct sockaddr*) &server, sizeof(server)) == -1 ){
-        printf("failed to connect socket.\n");
-        return KII_HTTPC_FAIL;
-    }
-
-    SSL_library_init();
-    ssl_ctx = SSL_CTX_new(SSLv23_client_method());
-    if (ssl_ctx == NULL){
-        printf("failed to init ssl context.\n");
-        return KII_HTTPC_FAIL;
-    }
-
-    ssl = SSL_new(ssl_ctx);
-    if (ssl == NULL){
-        printf("failed to init ssl.\n");
-        return KII_HTTPC_FAIL;
-    }
-
-    ret = SSL_set_fd(ssl, sock);
-    if (ret == 0){
-        printf("failed to set fd.\n");
-        return KII_HTTPC_FAIL;
-    }
-
-    ret = SSL_connect(ssl);
-    if (ret != 1) {
-        int sslErr= SSL_get_error(ssl, ret);
-        char sslErrStr[120];
-        ERR_error_string_n(sslErr, sslErrStr, 120);
-        printf("failed to connect: %s\n", sslErrStr);
-        return KII_HTTPC_FAIL;
-    }
-    ctx->sock = sock;
-    ctx->ssl = ssl;
-    ctx->ssl_ctx = ssl_ctx;
-    return KII_HTTPC_OK;
-}
-
-kii_http_client_code_t prv_ssl_send(kii_http_context_t* http_context, const char* send_buff, int buff_length)
-{
-    context_t* ctx = (context_t*)http_context->app_context;
-    int ret = SSL_write(ctx->ssl, send_buff, buff_length);
-    if (ret > 0) {
-        return KII_HTTPC_OK;
-    } else {
-        printf("failed to send\n");
-        return KII_HTTPC_FAIL;
-    }
-}
-
-kii_http_client_code_t prv_ssl_recv(kii_http_context_t* http_context, char* recv_buff, int length_to_read, int* out_actual_length)
-{
-    context_t* ctx = (context_t*)http_context->app_context;
-    int ret = SSL_read(ctx->ssl, recv_buff, length_to_read);
-    if (ret > 0) {
-        *out_actual_length = ret;
-        return KII_HTTPC_OK;
-    } else {
-        int ssl_err;
-        ssl_err = SSL_get_error(ctx->ssl, ret);
-        if (ssl_err == SSL_ERROR_ZERO_RETURN) {
-            return KII_HTTPC_OK;
-        }
-        printf("failed to receive:\n");
-        *out_actual_length = 0;
-        return KII_HTTPC_FAIL;
-    }
-}
-
-
-kii_http_client_code_t prv_ssl_close(kii_http_context_t* http_context)
-{
-    context_t* ctx = (context_t*)http_context->app_context;
-    int ret = SSL_shutdown(ctx->ssl);
-    if (ret != 1) {
-        int sslErr = SSL_get_error(ctx->ssl, ret);
-        if (sslErr == SSL_ERROR_SYSCALL) {
-            /* This is OK.*/
-            /* See https://www.openssl.org/docs/ssl/SSL_shutdown.html */
-            ret = 1;
-        } else {
-            char sslErrStr[120];
-            ERR_error_string_n(sslErr, sslErrStr, 120);
-            printf("failed to shutdown: %s\n", sslErrStr);
-        }
-    }
-    close(ctx->sock);
-    SSL_free(ctx->ssl);
-    SSL_CTX_free(ctx->ssl_ctx);
-    if (ret != 1) {
-        printf("failed to close:\n");
-        return KII_HTTPC_FAIL;
-    }
-    return KII_HTTPC_OK;
-}
-
 /* HTTP Callback functions */
 kii_http_client_code_t
     request_line_cb(
@@ -199,7 +66,7 @@ kii_http_client_code_t
         char** response_body)
 {
     context_t* ctx;
-    kii_http_client_code_t res;
+    kii_socket_code_t sock_res;
 
     ctx = http_context->app_context;
 
@@ -212,11 +79,11 @@ kii_http_client_code_t
             ctx->state = PRV_SSL_STATE_CONNECT;
             return KII_HTTPC_AGAIN;
         case PRV_SSL_STATE_CONNECT:
-            res = prv_ssl_connect(http_context, ctx->host);
-            if (res == KII_HTTPC_OK) {
+            sock_res = http_context->connect_cb(&http_context->socket_context, ctx->host, 443);
+            if (sock_res == KII_SOCKETC_OK) {
                 ctx->state = PRV_SSL_STATE_SEND;
                 return KII_HTTPC_AGAIN;
-            } else if (res == KII_HTTPC_AGAIN) {
+            } else if (sock_res == KII_SOCKETC_AGAIN) {
                 return KII_HTTPC_AGAIN;
             } else {
                 ctx->state = PRV_SSL_STATE_IDLE;
@@ -226,23 +93,23 @@ kii_http_client_code_t
         {
             char* sendBuff = NULL;
             int size = BUFF_SIZE;
-            int remain = http_context->total_send_size- ctx->sent_size;
+            int remain = http_context->total_send_size - ctx->sent_size;
             if (remain <= size) {
                 size = remain;
                 ctx->last_chunk = 1;
             }
             sendBuff = http_context->buffer + ctx->sent_size;
-            res = prv_ssl_send(
-                    http_context,
+            sock_res = http_context->send_cb(
+                    &http_context->socket_context,
                     sendBuff,
                     size);
-            if (res == KII_HTTPC_OK) {
+            if (sock_res == KII_SOCKETC_OK) {
                 ctx->sent_size += size;
                 if (ctx->last_chunk > 0) {
                     ctx->state = PRV_SSL_STATE_RECV;
                 }
                 return KII_HTTPC_AGAIN;
-            } else if(res == KII_HTTPC_AGAIN) {
+            } else if(sock_res == KII_SOCKETC_AGAIN) {
                 return KII_HTTPC_AGAIN;
             } else {
                 ctx->state = PRV_SSL_STATE_IDLE;
@@ -251,19 +118,19 @@ kii_http_client_code_t
         }
         case PRV_SSL_STATE_RECV:
         {
-            int actualLength = 0;
+            size_t actualLength = 0;
             char* buffPtr = http_context->buffer + ctx->received_size;
             if (ctx->received_size == 0) {
                 memset(http_context->buffer, 0x00, http_context->buffer_size);
             }
-            res = prv_ssl_recv(http_context, buffPtr, BUFF_SIZE, &actualLength);
-            if (res == KII_HTTPC_OK) {
+            sock_res = http_context->recv_cb(&http_context->socket_context, buffPtr, BUFF_SIZE, &actualLength);
+            if (sock_res == KII_SOCKETC_OK) {
                 ctx->received_size += actualLength;
                 if (actualLength < BUFF_SIZE) {
                     ctx->state = PRV_SSL_STATE_CLOSE;
                 }
                 return KII_HTTPC_AGAIN;
-            } else if (res == KII_HTTPC_AGAIN) {
+            } else if (sock_res == KII_SOCKETC_AGAIN) {
                 return KII_HTTPC_AGAIN;
             } else {
                 ctx->state = PRV_SSL_STATE_IDLE;
@@ -272,8 +139,8 @@ kii_http_client_code_t
         }
         case PRV_SSL_STATE_CLOSE:
         {
-            res = prv_ssl_close(http_context);
-            if (res == KII_HTTPC_OK) {
+            sock_res = http_context->close_cb(&http_context->socket_context);
+            if (sock_res == KII_SOCKETC_OK) {
                 /* parse status code */
                 char* statusPtr = strstr(http_context->buffer, "HTTP/1.1 ");
                 int numCode = 0;
@@ -294,7 +161,7 @@ kii_http_client_code_t
                 *response_body = bodyPtr;
                 ctx->state = PRV_SSL_STATE_IDLE;
                 return KII_HTTPC_OK;
-            } else if (res == KII_HTTPC_AGAIN) {
+            } else if (sock_res == KII_SOCKETC_AGAIN) {
                 return KII_HTTPC_AGAIN;
             } else {
                 ctx->state = PRV_SSL_STATE_IDLE;

@@ -5,6 +5,7 @@
 #include "kii_core.h"
 #include "kii_core_impl.h"
 #include "kii_socket_impl.h"
+#include "kii_secure_socketl_impl.h"
 #include "kii_task_impl.h"
 
 int kii_init(
@@ -45,10 +46,16 @@ int kii_init(
     kii->kii_core.http_set_body_cb = body_cb;
     kii->kii_core.http_execute_cb = execute_cb;
 
+    /* setting http socket callbacks */
+    kii->kii_core.http_context.connect_cb = s_connect_cb;
+    kii->kii_core.http_context.send_cb = s_send_cb;
+    kii->kii_core.http_context.recv_cb = s_recv_cb;
+    kii->kii_core.http_context.close_cb = s_close_cb;
+
     /* setting logger callbacks. */
     kii->kii_core.logger_cb = logger_cb;
 
-    /* setting socket callbacks. */
+    /* setting mqtt socket callbacks. */
     kii->mqtt_socket_connect_cb = connect_cb;
     kii->mqtt_socket_send_cb = send_cb;
     kii->mqtt_socket_recv_cb = recv_cb;
