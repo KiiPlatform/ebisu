@@ -12,10 +12,13 @@ LIB_PATH = -L../lib/jsmn
 
 TARGET = libkiisdk.so
 
-all: clean $(TARGET)
+all: clean libjsmn $(TARGET)
 
 $(TARGET):
 	gcc $(CFLAGS) $(SOURCES) $(LIB_PATH) $(LIBS) $(INCLUDES) -o $@
+
+libjsmn:
+	(cd ../lib/jsmn; make)
 
 clean:
 	touch $(TARGET)
