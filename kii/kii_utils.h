@@ -9,14 +9,14 @@
 
 int prv_kii_jsmn_get_tokens(
         kii_t* kii,
-        const char* javascript,
-        size_t javascript_len,
+        const char* json_string,
+        size_t json_string_len,
         jsmntok_t* tokens,
         size_t token_num);
 
 int prv_kii_jsmn_get_value(
-        const char* javascript,
-        size_t javascript_len,
+        const char* json_string,
+        size_t json_string_len,
         const jsmntok_t* tokens,
         const char* name,
         jsmntok_t** out_token);
