@@ -49,6 +49,9 @@ int kii_thing_authenticate(
     }
     ret = prv_kii_jsmn_get_value(buf, buf_size, tokens, "access_token",
             &access_token);
+    if (ret != 0) {
+        goto exit;
+    }
     if (access_token == NULL) {
         goto exit;
     }
