@@ -1,0 +1,8 @@
+## Changing token size.
+
+Kii Thing SDK uses jsmn. The token size is fixed.  If you want to
+change token size. You should execute make commands like below.
+
+```sh
+make SIZE=-DKII_TOKEN_NUM=128
+```

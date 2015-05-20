@@ -15,7 +15,7 @@ TARGET = libkiisdk.so
 all: clean $(TARGET)
 
 $(TARGET):
-	gcc $(CFLAGS) $(SOURCES) $(LIBS) $(INCLUDES) -o $@
+	gcc $(SIZE) $(CFLAGS) $(SOURCES) $(LIBS) $(INCLUDES) -o $@
 
 clean:
 	touch $(TARGET)

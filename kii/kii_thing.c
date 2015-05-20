@@ -18,7 +18,7 @@ int kii_thing_authenticate(
     int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
-    jsmntok_t* tokens = NULL;
+    jsmntok_t tokens[KII_TOKEN_NUM];
     jsmntok_t* access_token = NULL;
     size_t buf_size = 0;
 
@@ -40,7 +40,8 @@ int kii_thing_authenticate(
         goto exit;
     }
 
-    ret = prv_kii_jsmn_get_tokens(buf, buf_size, &tokens);
+    ret = prv_kii_jsmn_get_tokens(kii, buf, buf_size, tokens,
+            sizeof(tokens) / sizeof(tokens[0]));
     if (ret != 0) {
         goto exit;
     }
@@ -62,9 +63,6 @@ int kii_thing_authenticate(
     ret = 0;
 
 exit:
-    if (tokens != NULL) {
-        free(tokens);
-    }
     return ret;
 }
 

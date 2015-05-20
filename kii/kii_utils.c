@@ -20,45 +20,43 @@ static int prv_jsmn_token_num(const char* javascript, size_t javascript_len)
 }
 
 int prv_kii_jsmn_get_tokens(
+        kii_t* kii,
         const char* javascript,
         size_t javascript_len,
-        jsmntok_t** out_tokens)
+        jsmntok_t* tokens,
+        size_t token_num)
 {
     jsmn_parser parser;
     int ret = -1;
     int parse_result = JSMN_ERROR_NOMEM;
-    jsmntok_t* tokens = NULL;
-    int len = 0;
 
     assert(javascript != NULL);
-    assert(out_tokens != NULL);
+    assert(tokens != NULL);
 
-    len = prv_jsmn_token_num(javascript, javascript_len);
-    if (len <= 0) {
-        ret = -1;
-        goto exit;
-    }
-
-    tokens = malloc(sizeof(jsmntok_t) * len);
-    if (tokens == NULL) {
-        ret = -1;
-        goto exit;
-    }
 
     jsmn_init(&parser);
-    parse_result = jsmn_parse(&parser, javascript, javascript_len, tokens, len);
-    if (parse_result <= 0) {
+    parse_result = jsmn_parse(&parser, javascript, javascript_len, tokens,
+            token_num);
+    if (parse_result >= 0) {
+        ret = 0;
+    } else if (parse_result == JSMN_ERROR_NOMEM) {
         ret = -1;
-        goto exit;
+        M_KII_LOG(kii->kii_core.logger_cb(
+            "Not enough tokens were provided\r\n"));
+    } else if (parse_result == JSMN_ERROR_INVAL) {
+        ret = -1;
+        M_KII_LOG(kii->kii_core.logger_cb(
+            "Invalid character inside JSON string\r\n"));
+    } else if (parse_result == JSMN_ERROR_PART) {
+        ret = -1;
+        M_KII_LOG(kii->kii_core.logger_cb(
+            "The string is not a full JSON packet, more bytes expected\r\n"));
+    } else {
+        ret = -1;
+        M_KII_LOG(kii->kii_core.logger_cb(
+            "Unexpected error: %d\r\n", parse_result));
     }
-    ret = 0;
 
-exit:
-    if (ret != 0) {
-        free(tokens);
-        tokens = NULL;
-    }
-    *out_tokens = tokens;
     return ret;
 }
 
