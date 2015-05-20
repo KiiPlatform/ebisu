@@ -9,6 +9,18 @@
 
 #include "kii_core.h"
 
+static int prv_jsmn_token_num(const char* javascript, size_t javascript_len)
+{
+    jsmn_parser parser;
+
+    assert(javascript != NULL);
+    assert(javascript_len >= 0);
+
+    jsmn_init(&parser);
+
+    return jsmn_parse(&parser, javascript, javascript_len, NULL, 0);
+}
+
 static int prv_jsmn_get_tokens(
         const char* javascript,
         size_t javascript_len,
@@ -23,9 +35,7 @@ static int prv_jsmn_get_tokens(
     assert(javascript != NULL);
     assert(out_tokens != NULL);
 
-    jsmn_init(&parser);
-
-    len = jsmn_parse(&parser, javascript, javascript_len, NULL, 0);
+    len = prv_jsmn_token_num(javascript, javascript_len);
     if (len <= 0) {
         ret = -1;
         goto exit;
@@ -54,34 +64,9 @@ exit:
     return ret;
 }
 
-static int prv_jsmn_get_child_size(const jsmntok_t* root)
-{
-    int i = 0;
-    int ret = 0;
-
-    assert(root != NULL);
-    assert(root->type == JSMN_OBJECT || root->type == JSMN_ARRAY);
-
-    if (root->size > 0) {
-        const jsmntok_t* children = &root[1];
-        for (i = 0; i < root->size; ++i) {
-            switch (children[i].type) {
-                case JSMN_STRING:
-                case JSMN_PRIMITIVE:
-                    ++ret;
-                    break;
-                case JSMN_OBJECT:
-                case JSMN_ARRAY:
-                    ret += (prv_jsmn_get_child_size(&children[i]) + 1);
-                    break;
-            }
-        }
-    }
-    return ret;
-}
-
 static int prv_jsmn_get_value(
         const char* javascript,
+        size_t javascript_len,
         const jsmntok_t* tokens,
         const char* name,
         jsmntok_t** out_token)
@@ -117,7 +102,16 @@ static int prv_jsmn_get_value(
                 break;
             case JSMN_OBJECT:
             case JSMN_ARRAY:
-                index += (prv_jsmn_get_child_size(value_token) + 2);
+                {
+                    int num = prv_jsmn_token_num(
+                            javascript + value_token->start,
+                            javascript_len - value_token->start);
+                    if (num < 0) {
+                        ret = -1;
+                        goto exit;
+                    }
+                    index += (num + 1);
+                }
                 break;
         }
     }
@@ -164,7 +158,8 @@ int kii_thing_authenticate(
     if (tokens[0].type != JSMN_OBJECT || tokens[0].size < 2) {
         goto exit;
     }
-    ret = prv_jsmn_get_value(buf, tokens, "access_token", &access_token);
+    ret = prv_jsmn_get_value(buf, buf_size, tokens, "access_token",
+            &access_token);
     if (access_token == NULL) {
         goto exit;
     }
