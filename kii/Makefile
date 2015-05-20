@@ -7,7 +7,7 @@ endif
 LIBS = -lssl -lcrypto -lpthread -ljsmn
 SOURCES = $(wildcard *.c)
 SOURCES += $(wildcard ../kii-core/*.c)
-INCLUDES = -I../kii-core
+INCLUDES = -I../kii-core -I../lib/jsmn
 LIB_PATH = -L../lib/jsmn
 
 TARGET = libkiisdk.so
