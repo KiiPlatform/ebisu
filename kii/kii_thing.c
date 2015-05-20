@@ -18,33 +18,34 @@ static int prv_jsmn_get_tokens(
     int ret = -1;
     int parse_result = JSMN_ERROR_NOMEM;
     jsmntok_t* tokens = NULL;
-    int len = 5;
+    int len = 0;
 
     assert(javascript != NULL);
     assert(out_tokens != NULL);
 
     jsmn_init(&parser);
-    for (len = 5; parse_result == JSMN_ERROR_NOMEM; len *= 2) {
-        jsmntok_t* tmp = realloc(tokens, sizeof(jsmntok_t) * len);
-        if (tmp == NULL) {
-            break;
-        }
-        tokens = tmp;
-        parse_result = jsmn_parse(&parser, javascript, javascript_len, tokens,
-                len);
-        switch (parse_result) {
-            case JSMN_ERROR_NOMEM:
-                break;
-            case JSMN_ERROR_INVAL:
-            case JSMN_ERROR_PART:
-                ret = -1;
-                break;
-            default:
-                ret = 0;
-                break;
-        }
+
+    len = jsmn_parse(&parser, javascript, javascript_len, NULL, 0);
+    if (len <= 0) {
+        ret = -1;
+        goto exit;
     }
 
+    tokens = malloc(sizeof(jsmntok_t) * len);
+    if (tokens == NULL) {
+        ret = -1;
+        goto exit;
+    }
+
+    jsmn_init(&parser);
+    parse_result = jsmn_parse(&parser, javascript, javascript_len, tokens, len);
+    if (parse_result <= 0) {
+        ret = -1;
+        goto exit;
+    }
+    ret = 0;
+
+exit:
     if (ret != 0) {
         free(tokens);
         tokens = NULL;
