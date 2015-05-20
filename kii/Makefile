@@ -4,21 +4,18 @@ ifdef DEBUG
 	CFLAGS += -g -DDEBUG
 endif
 
-LIBS = -lssl -lcrypto -lpthread -ljsmn
+LIBS = -lssl -lcrypto -lpthread
 SOURCES = $(wildcard *.c)
 SOURCES += $(wildcard ../kii-core/*.c)
+SOURCES += ../lib/jsmn/jsmn.c
 INCLUDES = -I../kii-core -I../lib/jsmn
-LIB_PATH = -L../lib/jsmn
 
 TARGET = libkiisdk.so
 
-all: clean libjsmn $(TARGET)
+all: clean $(TARGET)
 
 $(TARGET):
-	gcc $(CFLAGS) $(SOURCES) $(LIB_PATH) $(LIBS) $(INCLUDES) -o $@
-
-libjsmn:
-	(cd ../lib/jsmn; make)
+	gcc $(CFLAGS) $(SOURCES) $(LIBS) $(INCLUDES) -o $@
 
 clean:
 	touch $(TARGET)
