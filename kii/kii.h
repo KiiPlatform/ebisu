@@ -1,3 +1,7 @@
+/**
+ * @file kii.h
+ * @brief This is a file defining Kii Cloud APIs.
+ */
 #ifndef KII_H
 #define KII_H
 
@@ -7,6 +11,16 @@
 #define KII_OBJECTID_SIZE 36
 
 #ifndef KII_JSON_TOKEN_SIZE
+/**
+ * @def KII_JSON_TOKEN_SIZE
+ * @brief Json token size
+ *
+ * KII_JSON_TOKEN_NUM defines size of JSON can be parsed. By default
+ * it is set to 128. If you've got error on JSON parsing in SDK, You
+ * can increase the size of KII_JSON_TOKEN_NUM so that avoid error on
+ * parsing large JSON. To change the size, please specify the size of
+ * KII_JSON_TOKEN_NUM on build.
+ */
 #define KII_JSON_TOKEN_SIZE 128
 #endif
 
