@@ -19,6 +19,9 @@ $(TARGET):
 
 clean:
 	touch $(TARGET)
-	rm $(TARGET)
+	rm -rf $(TARGET) html latex
+
+doc:
+	doxygen Doxyfile
 
 .PHONY: clean
