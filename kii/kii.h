@@ -10,9 +10,9 @@
 
 #define KII_OBJECTID_SIZE 36
 
-#ifndef KII_JSON_TOKEN_SIZE
+#ifndef KII_JSON_TOKEN_NUM
 /**
- * @def KII_JSON_TOKEN_SIZE
+ * @def KII_JSON_TOKEN_NUM
  * @brief Json token size
  *
  * KII_JSON_TOKEN_NUM defines size of JSON can be parsed. By default
@@ -21,7 +21,7 @@
  * parsing large JSON. To change the size, please specify the size of
  * KII_JSON_TOKEN_NUM on build.
  */
-#define KII_JSON_TOKEN_SIZE 128
+#define KII_JSON_TOKEN_NUM 128
 #endif
 
 #ifdef DEBUG

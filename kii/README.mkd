@@ -7,5 +7,5 @@ large JSON. To change the size, please specify the size of
 KII_JSON_TOKEN_NUM on build.
 
 ```sh
-make SIZE=-DKII_JSON_TOKEN_SIZE=128
+make SIZE=-DKII_JSON_TOKEN_NUM=128
 ```
