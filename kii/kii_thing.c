@@ -2,7 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <jsmn.h>
+
 #include "kii.h"
+#include "kii_json.h"
 
 #include "kii_core.h"
 
@@ -11,14 +14,16 @@ int kii_thing_authenticate(
         const char* vendor_thing_id,
         const char* password)
 {
-    char* p1;
-    char* p2;
     char* buf;
     int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
+    jsmntok_t tokens[KII_JSON_TOKEN_NUM];
+    jsmntok_t* access_token = NULL;
+    size_t buf_size = 0;
 
     buf = kii->kii_core.http_context.buffer;
+    buf_size = kii->kii_core.http_context.buffer_size;
     core_err = kii_core_thing_authentication(&kii->kii_core, vendor_thing_id, password);
     if (core_err != KIIE_OK) {
         goto exit;
@@ -34,25 +39,27 @@ int kii_thing_authenticate(
     if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
         goto exit;
     }
-    p1 = strstr(buf, "\"access_token\"");
-    if(p1 == NULL) {
+
+    ret = prv_kii_jsmn_get_tokens(kii, buf, buf_size, tokens,
+            sizeof(tokens) / sizeof(tokens[0]));
+    if (ret != 0) {
         goto exit;
     }
-    p1 = strstr(p1, ":");
-    if(p1 == NULL) {
+    if (tokens[0].type != JSMN_OBJECT || tokens[0].size < 2) {
         goto exit;
     }
-    p1 = strstr(p1, "\"");
-    if(p1 == NULL) {
+    ret = prv_kii_jsmn_get_value(buf, buf_size, tokens, "access_token",
+            &access_token);
+    if (ret != 0) {
         goto exit;
     }
-    p1 += 1;
-    p2 = strstr(p1, "\"");
-    if(p2 == NULL) {
+    if (access_token == NULL) {
         goto exit;
     }
+
     strcpy(kii->kii_core.author.author_id, vendor_thing_id);
-    memcpy(kii->kii_core.author.access_token, p1, p2 - p1);
+    memcpy(kii->kii_core.author.access_token, buf + access_token->start,
+            access_token->end - access_token->start);
     ret = 0;
 
 exit:
