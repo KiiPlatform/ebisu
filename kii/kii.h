@@ -6,6 +6,10 @@
 
 #define KII_OBJECTID_SIZE 36
 
+#ifndef KII_JSON_TOKEN_SIZE
+#define KII_JSON_TOKEN_SIZE 128
+#endif
+
 #ifdef DEBUG
 #ifndef __FILE__
 #define __FILE__ ("__FILE__ macro is not available")

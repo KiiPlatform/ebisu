@@ -1,10 +1,6 @@
 #ifndef KII_UTILS_H
 #define KII_UTILS_H
 
-#ifndef KII_TOKEN_NUM
-#define KII_TOKEN_NUM 64
-#endif
-
 #include "kii.h"
 
 int prv_kii_jsmn_get_tokens(

@@ -18,7 +18,7 @@ int kii_thing_authenticate(
     int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
-    jsmntok_t tokens[KII_TOKEN_NUM];
+    jsmntok_t tokens[KII_JSON_TOKEN_SIZE];
     jsmntok_t* access_token = NULL;
     size_t buf_size = 0;
 

@@ -1,4 +1,4 @@
-CFLAGS = -std=gnu89 -Wall -pedantic -pthread -fPIC -shared
+override CFLAGS += -std=gnu89 -Wall -pedantic -pthread -fPIC -shared
 
 ifdef DEBUG
 	CFLAGS += -g -DDEBUG
@@ -15,7 +15,7 @@ TARGET = libkiisdk.so
 all: clean $(TARGET)
 
 $(TARGET):
-	gcc $(SIZE) $(CFLAGS) $(SOURCES) $(LIBS) $(INCLUDES) -o $@
+	gcc $(CFLAGS) $(SOURCES) $(LIBS) $(INCLUDES) -o $@
 
 clean:
 	touch $(TARGET)
