@@ -5,7 +5,7 @@
 
 #include <jsmn.h>
 
-#include "kii_utils.h"
+#include "kii_json.h"
 
 static int prv_jsmn_token_num(const char* json_string, size_t json_string_len)
 {
