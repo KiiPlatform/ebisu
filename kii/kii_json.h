@@ -24,15 +24,24 @@ typedef enum kii_json_field_type {
 
 /** json parsed field data */
 typedef struct kii_json_field {
-    /** parsing target key name */
+
+    /** parsing target key name. Input of kii_json_read_object. */
     char* name;
-    /** field parse result */
+
+    /** field parse result. Output of kii_json_read_object. */
     kii_json_field_parse_result_t result;
-    /** parsed target value type */
+
+    /** parsed target value type. Output of kii_json_read_object. */
     kii_json_field_type_t type;
-    /** start point of this field in given buffer */
+
+    /** start point of this field in given buffer.
+     * Output of kii_json_read_object
+     */
     size_t start;
-    /** end point of this field in given buffer */
+
+    /** end point of this field in given buffer.
+     *Output of kii_json_read_object
+     */
     size_t end;
 } kii_json_field_t;
 
@@ -43,11 +52,11 @@ typedef struct kii_json_field {
  *  \param [inout] field of kii json parser.
  *  \return parse json result.
  */
-kii_json_parse_result_t prv_kii_json_read_object(
+kii_json_parse_result_t kii_json_read_object(
         kii_t* kii,
         const char* json_string,
         size_t json_string_len,
-        kii_json_field_t* field);
+        kii_json_field_t* fields);
 
 // TODO: remove this after new api is implemented..
 int prv_kii_jsmn_get_tokens(
