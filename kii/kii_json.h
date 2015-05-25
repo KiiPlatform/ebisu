@@ -3,56 +3,78 @@
 
 #include "kii.h"
 
-typedef enum kii_json_result {
-    KII_JSON_SUCCESS,
-    KII_JSON_UNEXPECTED_ARRAY,
-    KII_JSON_UNEXPECTED_OBJECT,
-    KII_JSON_INVALID
-} kii_json_result_t;
+typedef enum kii_json_parse_result {
+    KII_JSON_PARSE_SUCCESS,
+    KII_JSON_PARSE_UNEXPECTED_ARRAY,
+    KII_JSON_PARSE_UNEXPECTED_OBJECT,
+    KII_JSON_PARSE_INVALID
+} kii_json_parse_result_t;
 
-typedef enum kii_json_attr_result {
-    KII_JSON_ATTR_SUCCESS,
-    KII_JSON_ATTR_UNMATCH_TYPE,
-    KII_JSON_ATTR_IS_NULL,
-    KII_JSON_ATTR_NOT_FOUND
-} kii_json_attr_result_t;
+typedef enum kii_json_field_parse_result {
+    KII_JSON_FIELD_PARSE_SUCCESS,
+    KII_JSON_FIELD_PARSE_NOT_FOUND
+} kii_json_field_parse_result_t;
 
-typedef enum kii_json_boolean {
-    KII_JSON_FALSE,
-    KII_JSON_TRUE
-} kii_json_boolean_t;
+typedef enum kii_json_field_type {
+    KII_JSON_FIELD_TYPE_PRIMITIVE,
+    KII_JSON_FIELD_TYPE_STRING,
+    KII_JSON_FIELD_TYPE_OBJECT,
+    KII_JSON_FIELD_TYPE_ARRAY
+} kii_json_field_type_t;
 
-typedef enum kii_json_attr_type {
-    KII_JSON_ATTR_TYPE_PRIMITIVE,
-    KII_JSON_ATTR_TYPE_STRING
-} kii_json_attr_type_t;
-
-/** json parsed attribute data */
-typedef struct kii_json_attr {
+/** json parsed field data */
+typedef struct kii_json_field {
     /** parsing target key name */
     char* name;
-    /** attribute parse result */
-    kii_json_attr_result_t result;
+    /** field parse result */
+    kii_json_field_parse_result_t result;
     /** parsed target value type */
-    kii_json_attr_type_t type;
-    /** start point of this attribute in given buffer */
-    int start;
-    /** end point of this attribute in given buffer */
-    int end;
-} kii_json_attr_t;
+    kii_json_field_type_t type;
+    /** start point of this field in given buffer */
+    size_t start;
+    /** end point of this field in given buffer */
+    size_t end;
+} kii_json_field_t;
 
-/** parse json string by attribute.
+/** json parsed array element data */
+typedef struct kii_json_array_element {
+    /** parsing target index */
+    int index;
+    /** element parse result */
+    kii_json_field_parse_result_t result;
+    /** parsed target value type */
+    kii_json_field_type_t type;
+    /** start point of this element in given buffer */
+    size_t start;
+    /** end point of this element in given buffer */
+    size_t end;
+} kii_json_field_t;
+
+/** parse json string as json object.
  *  \param [in] kii sdk instance.
  *  \param [in] pointer of json string.
  *  \param [in] length of json string.
- *  \param [inout] attribute of kii json parser.
+ *  \param [inout] field of kii json parser.
  *  \return parse json result.
  */
-kii_json_result_t prv_kii_json_read_object(
+kii_json_parse_result_t prv_kii_json_read_object(
         kii_t* kii,
         const char* json_string,
-        size_t string_len,
-        kii_json_attr_t* attr);
+        size_t json_string_len,
+        kii_json_field_t* field);
+
+/** parse json string as json array .
+ *  \param [in] kii sdk instance.
+ *  \param [in] pointer of json string.
+ *  \param [in] length of json string.
+ *  \param [inout] field of kii json parser.
+ *  \return parse json result.
+ */
+kii_json_parse_result_t prv_kii_json_read_array(
+        kii_t* kii,
+        const char* json_string,
+        size_t json_string_len,
+        kii_json_array_element_t* elements);
 
 // TODO: remove this after new api is implemented..
 int prv_kii_jsmn_get_tokens(
