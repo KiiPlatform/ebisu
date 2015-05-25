@@ -7,6 +7,8 @@
 
 #include "kii_json.h"
 
+#define TOKEN_NUM 64
+
 static int prv_jsmn_token_num(const char* json_string, size_t json_string_len)
 {
     jsmn_parser parser;
@@ -113,6 +115,101 @@ int prv_kii_jsmn_get_value(
     }
 
 exit:
+    return ret;
+}
+
+static kii_json_parse_result_t prv_check_object_fields(
+        const char* json_string,
+        size_t json_string_len,
+        const jsmntok_t* tokens,
+        kii_json_field_t* fields)
+{
+    int i;
+
+    switch (tokens[0].type)
+    {
+        case JSMN_ARRAY:
+            return KII_JSON_PARSE_UNEXPECTED_ARRAY;
+        case JSMN_OBJECT:
+            break;
+        default:
+            return KII_JSON_PARSE_INVALID;
+    }
+
+    for (i = 0; fields[i].name != NULL; ++i)
+    {
+        jsmntok_t* value = NULL;
+        int result = 0;
+
+        result = prv_kii_jsmn_get_value(json_string, json_string_len, tokens,
+                fields[i].name, &value);
+        if (result != 0 || value == NULL)
+        {
+            fields[i].result = KII_JSON_FIELD_PARSE_NOT_FOUND;
+            continue;
+        }
+        fields[i].result = KII_JSON_FIELD_PARSE_SUCCESS;
+        switch (value->type)
+        {
+            case JSMN_PRIMITIVE:
+                fields[i].type = KII_JSON_FIELD_TYPE_PRIMITIVE;
+                break;
+            case JSMN_OBJECT:
+                fields[i].type = KII_JSON_FIELD_TYPE_OBJECT;
+                break;
+            case JSMN_ARRAY:
+                fields[i].type = KII_JSON_FIELD_TYPE_ARRAY;
+                break;
+            case JSMN_STRING:
+                fields[i].type = KII_JSON_FIELD_TYPE_STRING;
+                break;
+            default:
+                /* programming error */
+                fields[i].result = KII_JSON_FIELD_PARSE_NOT_FOUND;
+                continue;
+        }
+        fields[i].start = value->start;
+        fields[i].end = value->end;
+    }
+
+    return KII_JSON_PARSE_SUCCESS;
+}
+
+kii_json_parse_result_t kii_json_read_object(
+        kii_t* kii,
+        const char* json_string,
+        size_t json_string_len,
+        kii_json_field_t* fields)
+{
+    jsmn_parser parser;
+    kii_json_parse_result_t ret = KII_JSON_PARSE_INVALID;
+    int parse_result = JSMN_ERROR_NOMEM;
+    jsmntok_t tokens[TOKEN_NUM];
+
+    assert(json_string != NULL);
+
+    jsmn_init(&parser);
+    parse_result = jsmn_parse(&parser, json_string, json_string_len, tokens,
+            TOKEN_NUM);
+    if (parse_result > 0) {
+        ret = prv_check_object_fields(json_string, json_string_len, tokens,
+                fields);
+    } else if (parse_result == 0) {
+        ret = KII_JSON_PARSE_SUCCESS;
+    } else if (parse_result == JSMN_ERROR_NOMEM) {
+        M_KII_LOG(kii->kii_core.logger_cb(
+            "Not enough tokens were provided\r\n"));
+    } else if (parse_result == JSMN_ERROR_INVAL) {
+        M_KII_LOG(kii->kii_core.logger_cb(
+            "Invalid character inside JSON string\r\n"));
+    } else if (parse_result == JSMN_ERROR_PART) {
+        M_KII_LOG(kii->kii_core.logger_cb(
+            "The string is not a full JSON packet, more bytes expected\r\n"));
+    } else {
+        M_KII_LOG(kii->kii_core.logger_cb(
+            "Unexpected error: %d\r\n", parse_result));
+    }
+
     return ret;
 }
 
