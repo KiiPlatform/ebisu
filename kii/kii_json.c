@@ -131,7 +131,7 @@ exit:
     return ret;
 }
 
-static kii_json_parse_result_t prv_check_object_fields(
+static kii_json_parse_result_t prv_kii_json_check_object_fields(
         const char* json_string,
         size_t json_string_len,
         const jsmntok_t* tokens,
@@ -205,8 +205,8 @@ kii_json_parse_result_t kii_json_read_object(
             tokens, sizeof(tokens) / sizeof(tokens[0]));
     if (result == 0)
     {
-        ret = prv_check_object_fields(json_string, json_string_len, tokens,
-                fields);
+        ret = prv_kii_json_check_object_fields(json_string, json_string_len,
+                tokens, fields);
     }
 
     return ret;
