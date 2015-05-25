@@ -36,20 +36,6 @@ typedef struct kii_json_field {
     size_t end;
 } kii_json_field_t;
 
-/** json parsed array element data */
-typedef struct kii_json_array_element {
-    /** parsing target index */
-    int index;
-    /** element parse result */
-    kii_json_field_parse_result_t result;
-    /** parsed target value type */
-    kii_json_field_type_t type;
-    /** start point of this element in given buffer */
-    size_t start;
-    /** end point of this element in given buffer */
-    size_t end;
-} kii_json_field_t;
-
 /** parse json string as json object.
  *  \param [in] kii sdk instance.
  *  \param [in] pointer of json string.
@@ -62,19 +48,6 @@ kii_json_parse_result_t prv_kii_json_read_object(
         const char* json_string,
         size_t json_string_len,
         kii_json_field_t* field);
-
-/** parse json string as json array .
- *  \param [in] kii sdk instance.
- *  \param [in] pointer of json string.
- *  \param [in] length of json string.
- *  \param [inout] field of kii json parser.
- *  \return parse json result.
- */
-kii_json_parse_result_t prv_kii_json_read_array(
-        kii_t* kii,
-        const char* json_string,
-        size_t json_string_len,
-        kii_json_array_element_t* elements);
 
 // TODO: remove this after new api is implemented..
 int prv_kii_jsmn_get_tokens(
