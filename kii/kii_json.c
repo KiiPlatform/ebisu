@@ -7,6 +7,21 @@
 
 #include "kii_json.h"
 
+#ifndef KII_JSON_TOKEN_NUM
+/**
+ * @def KII_JSON_TOKEN_NUM
+ * @brief Json token size
+ *
+ * KII_JSON_TOKEN_NUM defines size of JSON can be parsed. By default
+ * it is set to 128. If you've got error on JSON parsing in SDK, You
+ * can increase the size of KII_JSON_TOKEN_NUM so that avoid error on
+ * parsing large JSON. To change the size, please specify the size of
+ * KII_JSON_TOKEN_NUM on build.
+ */
+#define KII_JSON_TOKEN_NUM 128
+#endif
+
+
 static int prv_jsmn_token_num(const char* json_string, size_t json_string_len)
 {
     jsmn_parser parser;
@@ -113,6 +128,87 @@ int prv_kii_jsmn_get_value(
     }
 
 exit:
+    return ret;
+}
+
+static kii_json_parse_result_t prv_kii_json_check_object_fields(
+        const char* json_string,
+        size_t json_string_len,
+        const jsmntok_t* tokens,
+        kii_json_field_t* fields)
+{
+    int i;
+
+    switch (tokens[0].type)
+    {
+        case JSMN_ARRAY:
+            return KII_JSON_PARSE_UNEXPECTED_ARRAY;
+        case JSMN_OBJECT:
+            break;
+        default:
+            return KII_JSON_PARSE_INVALID;
+    }
+
+    for (i = 0; fields[i].name != NULL; ++i)
+    {
+        jsmntok_t* value = NULL;
+        int result = 0;
+
+        result = prv_kii_jsmn_get_value(json_string, json_string_len, tokens,
+                fields[i].name, &value);
+        if (result != 0 || value == NULL)
+        {
+            fields[i].result = KII_JSON_FIELD_PARSE_NOT_FOUND;
+            continue;
+        }
+        fields[i].result = KII_JSON_FIELD_PARSE_SUCCESS;
+        switch (value->type)
+        {
+            case JSMN_PRIMITIVE:
+                fields[i].type = KII_JSON_FIELD_TYPE_PRIMITIVE;
+                break;
+            case JSMN_OBJECT:
+                fields[i].type = KII_JSON_FIELD_TYPE_OBJECT;
+                break;
+            case JSMN_ARRAY:
+                fields[i].type = KII_JSON_FIELD_TYPE_ARRAY;
+                break;
+            case JSMN_STRING:
+                fields[i].type = KII_JSON_FIELD_TYPE_STRING;
+                break;
+            default:
+                /* programming error */
+                assert(0);
+                break;
+        }
+        fields[i].start = value->start;
+        fields[i].end = value->end;
+    }
+
+    return KII_JSON_PARSE_SUCCESS;
+}
+
+kii_json_parse_result_t kii_json_read_object(
+        kii_t* kii,
+        const char* json_string,
+        size_t json_string_len,
+        kii_json_field_t* fields)
+{
+    kii_json_parse_result_t ret = KII_JSON_PARSE_INVALID;
+    int result = -1;
+    jsmntok_t tokens[KII_JSON_TOKEN_NUM];
+
+    assert(json_string != NULL);
+    assert(json_string_len > 0);
+
+    result = prv_kii_jsmn_get_tokens(kii, json_string, json_string_len,
+            tokens, sizeof(tokens) / sizeof(tokens[0]));
+    if (result == 0)
+    {
+        ret = prv_kii_json_check_object_fields(json_string, json_string_len,
+                tokens, fields);
+    }
+
     return ret;
 }
 
