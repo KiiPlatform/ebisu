@@ -280,9 +280,10 @@ int kii_push_unsubscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if (kii->kii_core.response_code == 204 || kii->kii_core.response_code == 409) {
-        ret = 0;
+    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
+        goto exit;
     }
+	ret = 0;
 exit:
     return ret;
 }
@@ -330,9 +331,10 @@ int kii_push_unsubscribe_topic(kii_t* kii, const kii_topic_t* topic)
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if (kii->kii_core.response_code == 204 || kii->kii_core.response_code == 409) {
-        ret = 0;
+    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
+        goto exit;
     }
+	ret = 0;
 exit:
     return ret;
 }
@@ -380,9 +382,10 @@ int kii_push_delete_topic(kii_t* kii, const kii_topic_t* topic)
     if (core_err != KIIE_OK) {
         goto exit;
     }
-    if (kii->kii_core.response_code == 204 || kii->kii_core.response_code == 409) {
-        ret = 0;
+    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
+        goto exit;
     }
+    ret = 0;
 exit:
     return ret;
 }
