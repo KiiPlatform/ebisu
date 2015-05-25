@@ -4,6 +4,7 @@
 #include "kii.h"
 #include "kii_mqtt.h"
 #include "kii_core.h"
+#include "kii_json.h"
 
 #define KII_PUSH_PING_ENABLE 1
 #define KII_PUSH_INSTALLATIONID_SIZE 64
@@ -31,14 +32,16 @@ static unsigned int mKiiPush_pingReqTaskStk[KIIPUSH_PINGREQ_TASK_STK_SIZE];
 
 static int kiiPush_install(kii_t* kii, kii_bool_t development, char* installation_id)
 {
-    char* p1;
-    char* p2;
-    char* buf;
+    char* buf = NULL;
+    size_t buf_size = 0;
     int ret = -1;
+    kii_json_parse_result_t parse_result = KII_JSON_PARSE_INVALID;
     kii_error_code_t core_err;
     kii_state_t state;
+    kii_json_field_t fields[] = { {"installationID"}, { NULL } };
 
     buf = kii->kii_core.http_context.buffer;
+    buf_size = kii->kii_core.http_context.buffer_size;
     core_err = kii_core_install_thing_push(&kii->kii_core, development);
     if (core_err != KIIE_OK) {
         goto exit;
@@ -55,28 +58,24 @@ static int kiiPush_install(kii_t* kii, kii_bool_t development, char* installatio
     {
         goto exit;
     }
-    p1 = strstr(buf, "\"installationID\"");
-    if(p1 == NULL)
-    {
+
+    parse_result = kii_json_read_object(kii, buf, buf_size, fields);
+    if (parse_result == KII_JSON_PARSE_SUCCESS) {
+        kii_json_field_t *installationID = &fields[0];
+        if (installationID->type == KII_JSON_FIELD_TYPE_STRING &&
+                installationID->result == KII_JSON_PARSE_SUCCESS) {
+            memcpy(installation_id, buf + installationID->start,
+                    installationID->end - installationID->start);
+        } else {
+            M_KII_LOG(kii->kii_core.logger_cb("fail to get json value: %d %d\n",
+                            installationID->type, installationID->result));
+            goto exit;
+        }
+    } else {
+        M_KII_LOG(kii->kii_core.logger_cb("fail to get json value: %d\n",
+                        parse_result));
         goto exit;
     }
-    p1 = strstr(p1, ":");
-    if(p1 == NULL)
-    {
-        goto exit;
-    }
-    p1 = strstr(p1, "\"");
-    if(p1 == NULL)
-    {
-        goto exit;
-    }
-    p1 += 1;
-    p2 = strstr(p1, "\"");
-    if(p2 == NULL)
-    {
-        goto exit;
-    }
-    memcpy(installation_id, p1, p2 - p1);
     ret = 0;
 
 exit:

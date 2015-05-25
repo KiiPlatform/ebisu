@@ -1,6 +1,9 @@
 #ifndef KII_JSON_H
 #define KII_JSON_H
 
+// TODO: remove this after implemented new API.
+#include <jsmn.h>
+
 #include "kii.h"
 
 /** Return value of kii_json_read_object(kii_t*, const char*, size_t,
