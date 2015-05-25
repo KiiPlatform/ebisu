@@ -20,6 +20,7 @@ int kii_thing_authenticate(
     kii_state_t state;
     jsmntok_t tokens[KII_JSON_TOKEN_NUM];
     jsmntok_t* access_token = NULL;
+    jsmntok_t* id = NULL;
     size_t buf_size = 0;
 
     buf = kii->kii_core.http_context.buffer;
@@ -56,8 +57,16 @@ int kii_thing_authenticate(
     if (access_token == NULL) {
         goto exit;
     }
+    ret = prv_kii_jsmn_get_value(buf, buf_size, tokens, "id", &id);
+    if (ret != 0) {
+        goto exit;
+    }
+    if (id == NULL) {
+        goto exit;
+    }
 
-    strcpy(kii->kii_core.author.author_id, vendor_thing_id);
+    memcpy(kii->kii_core.author.author_id, buf + id->start,
+            id->end - id->start);
     memcpy(kii->kii_core.author.access_token, buf + access_token->start,
             access_token->end - access_token->start);
     ret = 0;
