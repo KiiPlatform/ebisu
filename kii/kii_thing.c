@@ -9,6 +9,9 @@
 
 #include "kii_core.h"
 
+/* This define remove after. */
+#define KII_JSON_TOKEN_NUM 128
+
 int kii_thing_authenticate(
         kii_t* kii,
         const char* vendor_thing_id,

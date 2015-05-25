@@ -7,7 +7,20 @@
 
 #include "kii_json.h"
 
-#define TOKEN_NUM 64
+#ifndef KII_JSON_TOKEN_NUM
+/**
+ * @def KII_JSON_TOKEN_NUM
+ * @brief Json token size
+ *
+ * KII_JSON_TOKEN_NUM defines size of JSON can be parsed. By default
+ * it is set to 128. If you've got error on JSON parsing in SDK, You
+ * can increase the size of KII_JSON_TOKEN_NUM so that avoid error on
+ * parsing large JSON. To change the size, please specify the size of
+ * KII_JSON_TOKEN_NUM on build.
+ */
+#define KII_JSON_TOKEN_NUM 128
+#endif
+
 
 static int prv_jsmn_token_num(const char* json_string, size_t json_string_len)
 {
@@ -165,8 +178,8 @@ static kii_json_parse_result_t prv_check_object_fields(
                 break;
             default:
                 /* programming error */
-                fields[i].result = KII_JSON_FIELD_PARSE_NOT_FOUND;
-                continue;
+                assert(0);
+                break;
         }
         fields[i].start = value->start;
         fields[i].end = value->end;
@@ -181,33 +194,19 @@ kii_json_parse_result_t kii_json_read_object(
         size_t json_string_len,
         kii_json_field_t* fields)
 {
-    jsmn_parser parser;
     kii_json_parse_result_t ret = KII_JSON_PARSE_INVALID;
-    int parse_result = JSMN_ERROR_NOMEM;
-    jsmntok_t tokens[TOKEN_NUM];
+    int result = -1;
+    jsmntok_t tokens[KII_JSON_TOKEN_NUM];
 
     assert(json_string != NULL);
+    assert(json_string_len > 0);
 
-    jsmn_init(&parser);
-    parse_result = jsmn_parse(&parser, json_string, json_string_len, tokens,
-            TOKEN_NUM);
-    if (parse_result > 0) {
+    result = prv_kii_jsmn_get_tokens(kii, json_string, json_string_len,
+            tokens, sizeof(tokens) / sizeof(tokens[0]));
+    if (result == 0)
+    {
         ret = prv_check_object_fields(json_string, json_string_len, tokens,
                 fields);
-    } else if (parse_result == 0) {
-        ret = KII_JSON_PARSE_SUCCESS;
-    } else if (parse_result == JSMN_ERROR_NOMEM) {
-        M_KII_LOG(kii->kii_core.logger_cb(
-            "Not enough tokens were provided\r\n"));
-    } else if (parse_result == JSMN_ERROR_INVAL) {
-        M_KII_LOG(kii->kii_core.logger_cb(
-            "Invalid character inside JSON string\r\n"));
-    } else if (parse_result == JSMN_ERROR_PART) {
-        M_KII_LOG(kii->kii_core.logger_cb(
-            "The string is not a full JSON packet, more bytes expected\r\n"));
-    } else {
-        M_KII_LOG(kii->kii_core.logger_cb(
-            "Unexpected error: %d\r\n", parse_result));
     }
 
     return ret;
