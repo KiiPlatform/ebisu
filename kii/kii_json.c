@@ -34,7 +34,7 @@ static int prv_jsmn_token_num(const char* json_string, size_t json_string_len)
     return jsmn_parse(&parser, json_string, json_string_len, NULL, 0);
 }
 
-int prv_kii_jsmn_get_tokens(
+static int prv_kii_jsmn_get_tokens(
         kii_t* kii,
         const char* json_string,
         size_t json_string_len,
@@ -75,7 +75,7 @@ int prv_kii_jsmn_get_tokens(
     return ret;
 }
 
-int prv_kii_jsmn_get_value(
+static int prv_kii_jsmn_get_value(
         const char* json_string,
         size_t json_string_len,
         const jsmntok_t* tokens,
