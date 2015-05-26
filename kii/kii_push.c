@@ -31,7 +31,11 @@ static unsigned int mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];
 static unsigned int mKiiPush_pingReqTaskStk[KIIPUSH_PINGREQ_TASK_STK_SIZE];
 #endif
 
-static int kiiPush_install(kii_t* kii, kii_bool_t development, char* installation_id)
+static int kiiPush_install(
+        kii_t* kii,
+        kii_bool_t development,
+        char* installation_id,
+        size_t installation_id_len)
 {
     char* buf = NULL;
     size_t buf_size = 0;
@@ -63,21 +67,13 @@ static int kiiPush_install(kii_t* kii, kii_bool_t development, char* installatio
     buf_size = kii->kii_core.http_context.buffer_size -
         (buf - kii->kii_core.http_context.buffer);
     parse_result = kii_json_read_object(kii, buf, buf_size, fields);
-    if (parse_result == KII_JSON_PARSE_SUCCESS) {
-        kii_json_field_t *installationID = &fields[0];
-        if (installationID->type == KII_JSON_FIELD_TYPE_STRING &&
-                installationID->result == KII_JSON_PARSE_SUCCESS) {
-            memcpy(installation_id, buf + installationID->start,
-                    installationID->end - installationID->start);
-            installation_id[installationID->end - installationID->start] = '\0';
-        } else {
-            M_KII_LOG(kii->kii_core.logger_cb("fail to get json value: %d %d\n",
-                            installationID->type, installationID->result));
-            goto exit;
-        }
-    } else {
+    if (parse_result != KII_JSON_PARSE_SUCCESS) {
         M_KII_LOG(kii->kii_core.logger_cb("fail to get json value: %d\n",
                         parse_result));
+        goto exit;
+    }
+    if (kii_json_copy_string_field(kii, buf, buf_size, &fields[0],
+                    installation_id, installation_id_len) != 0) {
         goto exit;
     }
     ret = 0;
@@ -352,7 +348,8 @@ static void* kiiPush_recvMsgTask(void* sdata)
     {
         if(kii->_mqtt_endpoint_ready == 0)
         {
-            if(kiiPush_install(kii, KII_FALSE, installation_id) != 0)
+            if(kiiPush_install(kii, KII_FALSE, installation_id,
+                    sizeof(installation_id) / sizeof(installation_id[0])) != 0)
             {
                 kii->delay_ms_cb(1000);
                 continue;
