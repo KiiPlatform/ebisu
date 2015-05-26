@@ -24,8 +24,8 @@ int kii_thing_authenticate(
     kii_error_code_t core_err;
     kii_state_t state;
     kii_json_field_t fields[] = {
-        { "access_token" },
         { "id" },
+        { "access_token" },
         { NULL }
     };
     kii_json_parse_result_t result;
@@ -70,13 +70,13 @@ int kii_thing_authenticate(
         goto exit;
     }
 
-    field_len = fields[1].end - fields[1].start;
-    memcpy(kii->kii_core.author.author_id, start_body + fields[1].start,
+    field_len = fields[0].end - fields[0].start;
+    memcpy(kii->kii_core.author.author_id, start_body + fields[0].start,
             field_len);
     kii->kii_core.author.author_id[field_len] = '\0';
 
-    field_len = fields[0].end - fields[0].start;
-    memcpy(kii->kii_core.author.access_token, start_body + fields[0].start,
+    field_len = fields[1].end - fields[1].start;
+    memcpy(kii->kii_core.author.access_token, start_body + fields[1].start,
             field_len);
     kii->kii_core.author.access_token[field_len] = '\0';
 
