@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <jsmn.h>
-
 #include "kii.h"
 #include "kii_json.h"
 #include "kii_util.h"
