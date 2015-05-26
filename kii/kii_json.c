@@ -98,10 +98,12 @@ int prv_kii_jsmn_get_value(
     for (i = 0; i < tokens[0].size; ++i) {
         const jsmntok_t* key_token = tokens + index;
         const jsmntok_t* value_token = tokens + index + 1;
+        int key_len = key_token->end - key_token->start;
         if (key_token->type != JSMN_STRING) {
             goto exit;
         }
-        if (strcmp(name, json_string + key_token->start) == 0) {
+        if (strlen(name) == key_len &&
+                strncmp(name, json_string + key_token->start, key_len) == 0) {
             ret = 0;
             *out_token = (jsmntok_t*)value_token;
             break;
