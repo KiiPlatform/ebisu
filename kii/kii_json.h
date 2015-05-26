@@ -58,20 +58,4 @@ kii_json_parse_result_t kii_json_read_object(
         size_t json_string_len,
         kii_json_field_t* fields);
 
-// TODO: remove this after new api is implemented..
-int prv_kii_jsmn_get_tokens(
-        kii_t* kii,
-        const char* json_string,
-        size_t json_string_len,
-        jsmntok_t* tokens,
-        size_t token_num);
-
-// TODO: remove this after new api is implemented.
-int prv_kii_jsmn_get_value(
-        const char* json_string,
-        size_t json_string_len,
-        const jsmntok_t* tokens,
-        const char* name,
-        jsmntok_t** out_token);
-
 #endif
