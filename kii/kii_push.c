@@ -360,7 +360,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
                 kii->delay_ms_cb(1000);
                 endpointState = kiiPush_retrieveEndpoint(kii, installation_id, &endpoint);
             }
-            while((endpointState == KIIPUSH_ENDPOINT_UNAVAILABLE));
+            while(endpointState == KIIPUSH_ENDPOINT_UNAVAILABLE);
 
             if(endpointState != KIIPUSH_ENDPOINT_READY)
             {
