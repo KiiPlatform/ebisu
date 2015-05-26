@@ -43,7 +43,7 @@ static int kiiPush_install(
     kii_json_parse_result_t parse_result = KII_JSON_PARSE_INVALID;
     kii_error_code_t core_err;
     kii_state_t state;
-    kii_json_field_t fields[] = { {"installationID"}, { NULL } };
+    kii_json_field_t fields[] = { { "installationID" }, { NULL } };
 
     core_err = kii_core_install_thing_push(&kii->kii_core, development);
     if (core_err != KIIE_OK) {
