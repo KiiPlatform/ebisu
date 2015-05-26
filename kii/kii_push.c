@@ -5,6 +5,7 @@
 #include "kii_mqtt.h"
 #include "kii_core.h"
 #include "kii_json.h"
+#include "kii_util.h"
 
 #define KII_PUSH_PING_ENABLE 1
 #define KII_PUSH_INSTALLATIONID_SIZE 64
@@ -40,8 +41,6 @@ static int kiiPush_install(kii_t* kii, kii_bool_t development, char* installatio
     kii_state_t state;
     kii_json_field_t fields[] = { {"installationID"}, { NULL } };
 
-    buf = kii->kii_core.http_context.buffer;
-    buf_size = kii->kii_core.http_context.buffer_size;
     core_err = kii_core_install_thing_push(&kii->kii_core, development);
     if (core_err != KIIE_OK) {
         goto exit;
@@ -59,6 +58,10 @@ static int kiiPush_install(kii_t* kii, kii_bool_t development, char* installatio
         goto exit;
     }
 
+    buf = prv_kii_util_get_http_body(kii->kii_core.http_context.buffer,
+            kii->kii_core.http_context.buffer_size);
+    buf_size = kii->kii_core.http_context.buffer_size -
+        (buf - kii->kii_core.http_context.buffer);
     parse_result = kii_json_read_object(kii, buf, buf_size, fields);
     if (parse_result == KII_JSON_PARSE_SUCCESS) {
         kii_json_field_t *installationID = &fields[0];
@@ -98,8 +101,6 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
             { NULL }
     };
 
-    buf = kii->kii_core.http_context.buffer;
-    buf_size = kii->kii_core.http_context.buffer_size;
     core_err = kii_core_get_mqtt_endpoint(&kii->kii_core, installation_id);
     if (core_err != KIIE_OK) {
         goto exit;
@@ -123,6 +124,10 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
         goto exit;
     }
 
+    buf = prv_kii_util_get_http_body(kii->kii_core.http_context.buffer,
+            kii->kii_core.http_context.buffer_size);
+    buf_size = kii->kii_core.http_context.buffer_size -
+        (buf - kii->kii_core.http_context.buffer);
     parse_result = kii_json_read_object(kii, buf, buf_size, fields);
     if (parse_result == KII_JSON_PARSE_SUCCESS) {
         ret = KIIPUSH_ENDPOINT_ERROR;
