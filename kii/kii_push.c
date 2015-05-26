@@ -69,6 +69,7 @@ static int kiiPush_install(kii_t* kii, kii_bool_t development, char* installatio
                 installationID->result == KII_JSON_PARSE_SUCCESS) {
             memcpy(installation_id, buf + installationID->start,
                     installationID->end - installationID->start);
+            installation_id[installationID->end - installationID->start] = '\0';
         } else {
             M_KII_LOG(kii->kii_core.logger_cb("fail to get json value: %d %d\n",
                             installationID->type, installationID->result));
