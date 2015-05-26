@@ -24,8 +24,8 @@ int kii_thing_authenticate(
     kii_error_code_t core_err;
     kii_state_t state;
     kii_json_field_t fields[] = {
-        { "access_token", 0, 0, 0, 0 },
-        { "id", 0, 0, 0, 0 },
+        { "access_token" },
+        { "id" },
         { NULL }
     };
     kii_json_parse_result_t result;
@@ -50,7 +50,7 @@ int kii_thing_authenticate(
         goto exit;
     }
 
-    start_body = prv_kii_util_get_http_body(buf);
+    start_body = prv_kii_util_get_http_body(buf, buf_size);
     if (start_body == NULL) {
         ret = -1;
         goto exit;

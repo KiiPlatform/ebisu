@@ -4,11 +4,11 @@
 
 #include "kii_util.h"
 
-char* prv_kii_util_get_http_body(char* str)
+char* prv_kii_util_get_http_body(char* str, size_t len)
 {
     char* ret = NULL;
 
-    ret = strstr(str, "\r\n\r\n");
+    ret = strnstr(str, "\r\n\r\n", len);
     if (ret != NULL) {
         ret += 4;
     }
