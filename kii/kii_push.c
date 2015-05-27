@@ -5,7 +5,6 @@
 #include "kii_mqtt.h"
 #include "kii_core.h"
 #include "kii_json.h"
-#include "kii_util.h"
 
 #define KII_PUSH_PING_ENABLE 1
 #define KII_PUSH_INSTALLATIONID_SIZE 64
@@ -62,10 +61,9 @@ static int kiiPush_install(
         goto exit;
     }
 
-    buf = prv_kii_util_get_http_body(kii->kii_core.http_context.buffer,
-            kii->kii_core.http_context.buffer_size);
+    buf = kii->kii_core.response_body;
     buf_size = kii->kii_core.http_context.buffer_size -
-        (buf - kii->kii_core.http_context.buffer);
+        (kii->kii_core.response_body - kii->kii_core.http_context.buffer);
     parse_result = kii_json_read_object(kii, buf, buf_size, fields);
     if (parse_result != KII_JSON_PARSE_SUCCESS) {
         M_KII_LOG(kii->kii_core.logger_cb("fail to get json value: %d\n",
@@ -121,10 +119,9 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
         goto exit;
     }
 
-    buf = prv_kii_util_get_http_body(kii->kii_core.http_context.buffer,
-            kii->kii_core.http_context.buffer_size);
+    buf = kii->kii_core.response_body;
     buf_size = kii->kii_core.http_context.buffer_size -
-        (buf - kii->kii_core.http_context.buffer);
+        (kii->kii_core.response_body - kii->kii_core.http_context.buffer);
     parse_result = kii_json_read_object(kii, buf, buf_size, fields);
     if (parse_result == KII_JSON_PARSE_SUCCESS) {
         ret = KIIPUSH_ENDPOINT_ERROR;
