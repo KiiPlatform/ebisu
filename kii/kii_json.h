@@ -13,7 +13,7 @@ typedef enum kii_json_parse_result {
 typedef enum kii_json_field_parse_result {
     KII_JSON_FIELD_PARSE_SUCCESS,
     KII_JSON_FIELD_PARSE_NOT_FOUND,
-    KII_JSON_FIELD_PARSE_SIZE_TOO_SMALL
+    KII_JSON_FIELD_PARSE_COPY_FAILED
 } kii_json_field_parse_result_t;
 
 typedef enum kii_json_field_type {
@@ -41,14 +41,14 @@ typedef struct kii_json_field {
     size_t start;
 
     /** end point of this field in given buffer.
-     *Output of kii_json_read_object
+     * Output of kii_json_read_object
      */
     size_t end;
 
-    /** buffer to copy field value. if null no copy is generated */
+    /** buffer to copy field value. if null no copy is generated. */
     char* field_copy_buff;
 
-    /** length of field_copy_buff */
+    /** length of field_copy_buff. ignored if field_copy_buff is null. */
     size_t field_copy_buff_size;
 
 } kii_json_field_t;
