@@ -15,8 +15,7 @@ int kii_object_create(
         const char* object_content_type,
         char* out_object_id)
 {
-    char* buf;
-    char* start_body;
+    char* buf = NULL;
     int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
@@ -48,15 +47,10 @@ int kii_object_create(
         goto exit;
     }
 
-    buf = kii->kii_core.http_context.buffer;
-    buf_size = kii->kii_core.http_context.buffer_size;
-    start_body = prv_kii_util_get_http_body(buf, buf_size);
-    if (start_body == NULL) {
-        ret = -1;
-        goto exit;
-    }
-    result = kii_json_read_object(kii, start_body,
-            buf_size - (start_body - buf), fields);
+    buf = kii->kii_core.response_body;
+    buf_size = kii->kii_core.http_context.buffer_size -
+        (kii->kii_core.response_body - kii->kii_core.http_context.buffer);
+    result = kii_json_read_object(kii, buf, buf_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
         ret = -1;
         goto exit;
@@ -67,7 +61,7 @@ int kii_object_create(
     }
 
     field_len = fields[0].end - fields[0].start;
-    memcpy(out_object_id, start_body + fields[0].start, field_len);
+    memcpy(out_object_id, buf + fields[0].start, field_len);
     out_object_id[field_len] = '\0';
 
     ret = 0;
@@ -314,8 +308,7 @@ int kii_object_init_upload_body(
         const char* object_id,
         char* out_upload_id)
 { 
-    char* buf;
-    char* start_body;
+    char* buf = NULL;
     int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
@@ -363,15 +356,10 @@ int kii_object_init_upload_body(
     if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
         goto exit;
     }
-    buf = kii->kii_core.http_context.buffer;
-    buf_size = kii->kii_core.http_context.buffer_size;
-    start_body = prv_kii_util_get_http_body(buf, buf_size);
-    if (start_body == NULL) {
-        ret = -1;
-        goto exit;
-    }
-    result = kii_json_read_object(kii, start_body,
-            buf_size - (start_body - buf), fields);
+    buf = kii->kii_core.response_body;
+    buf_size = kii->kii_core.http_context.buffer_size -
+        (kii->kii_core.response_body - kii->kii_core.http_context.buffer);
+    result = kii_json_read_object(kii, buf, buf_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
         ret = -1;
         goto exit;
@@ -382,7 +370,7 @@ int kii_object_init_upload_body(
     }
 
     field_len = fields[0].end - fields[0].start;
-    strncpy(out_upload_id, start_body + fields[0].start, field_len);
+    strncpy(out_upload_id, buf + fields[0].start, field_len);
     out_upload_id[field_len] = '\0';
 
     ret = 0;
