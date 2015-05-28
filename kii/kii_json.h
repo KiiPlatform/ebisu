@@ -27,7 +27,7 @@ typedef enum kii_json_field_type {
 typedef struct kii_json_field {
 
     /** parsing target key name. Input of kii_json_read_object. */
-    char* name;
+    const char* name;
 
     /** field parse result. Output of kii_json_read_object. */
     kii_json_field_parse_result_t result;
@@ -65,5 +65,24 @@ kii_json_parse_result_t kii_json_read_object(
         const char* json_string,
         size_t json_string_len,
         kii_json_field_t* fields);
+
+/** set values to kii_json_field_t.
+ *  \param [out] kii_json_field_t instance to be set values.
+ *  \param [in] value to set set to name field of kii_json_field_t.
+ *  \param [in] value to set set to field_copy_buff field of kii_json_field_t.
+ *  \param [in] value to set set to field_copy_buff_size field of kii_json_field_t.
+ */
+void kii_json_set_field(
+        kii_json_field_t* field,
+        const char* name,
+        char* copy_buff,
+        size_t copy_buff_size);
+
+/** check field is string.
+ *  \param [in] kii sdk instance.
+ *  \param [in] field to check.
+ *  \return return 0 if field is string. otherwise non 0.
+ */
+int kii_json_is_string_field(kii_t* kii, const kii_json_field_t* field);
 
 #endif

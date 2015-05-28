@@ -155,36 +155,48 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
     {
         jsmntok_t* value = NULL;
         int result = 0;
+        kii_json_field_t* field = &fields[i];
 
         result = prv_kii_jsmn_get_value(json_string, json_string_len, tokens,
-                fields[i].name, &value);
+                field->name, &value);
         if (result != 0 || value == NULL)
         {
-            fields[i].result = KII_JSON_FIELD_PARSE_NOT_FOUND;
+            field->result = KII_JSON_FIELD_PARSE_NOT_FOUND;
             continue;
         }
-        fields[i].result = KII_JSON_FIELD_PARSE_SUCCESS;
         switch (value->type)
         {
             case JSMN_PRIMITIVE:
-                fields[i].type = KII_JSON_FIELD_TYPE_PRIMITIVE;
+                field->type = KII_JSON_FIELD_TYPE_PRIMITIVE;
                 break;
             case JSMN_OBJECT:
-                fields[i].type = KII_JSON_FIELD_TYPE_OBJECT;
+                field->type = KII_JSON_FIELD_TYPE_OBJECT;
                 break;
             case JSMN_ARRAY:
-                fields[i].type = KII_JSON_FIELD_TYPE_ARRAY;
+                field->type = KII_JSON_FIELD_TYPE_ARRAY;
                 break;
             case JSMN_STRING:
-                fields[i].type = KII_JSON_FIELD_TYPE_STRING;
+                field->type = KII_JSON_FIELD_TYPE_STRING;
                 break;
             default:
                 /* programming error */
                 assert(0);
                 break;
         }
-        fields[i].start = value->start;
-        fields[i].end = value->end;
+        field->start = value->start;
+        field->end = value->end;
+        if (field->field_copy_buff == NULL) {
+            field->result = KII_JSON_FIELD_PARSE_SUCCESS;
+        } else {
+            size_t len = value->end - value->start;
+            if (field->field_copy_buff_size <= len) {
+                field->result = KII_JSON_FIELD_PARSE_COPY_FAILED;
+            } else {
+                memcpy(field->field_copy_buff, json_string + value->start, len);
+                field->field_copy_buff[len] = '\0';
+                field->result = KII_JSON_FIELD_PARSE_SUCCESS;
+            }
+        }
     }
 
     return KII_JSON_PARSE_SUCCESS;
@@ -214,3 +226,31 @@ kii_json_parse_result_t kii_json_read_object(
     return ret;
 }
 
+void kii_json_set_field(
+        kii_json_field_t* field,
+        const char* name,
+        char* copy_buff,
+        size_t copy_buff_size)
+{
+    assert(field != NULL);
+    assert(name != NULL);
+
+    field->name = name;
+    field->field_copy_buff = copy_buff;
+    field->field_copy_buff_size = copy_buff_size;
+}
+
+int kii_json_is_string_field(kii_t* kii, const kii_json_field_t* field)
+{
+    assert(kii != NULL);
+    assert(field != NULL);
+
+    if (field->type != KII_JSON_FIELD_TYPE_STRING ||
+            field->result != KII_JSON_FIELD_PARSE_SUCCESS) {
+        M_KII_LOG(kii->kii_core.logger_cb(
+            "\"%s\" field is not string: %d %d\r\n",
+                field->name, field->type, field->result));
+        return 1;
+    }
+    return 0;
+}

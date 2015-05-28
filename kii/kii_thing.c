@@ -14,21 +14,22 @@ int kii_thing_authenticate(
         const char* password)
 {
     char* buf;
-    char* start_body;
     int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
-    kii_json_field_t fields[] = {
-        { "id" },
-        { "access_token" },
-        { NULL }
-    };
+    kii_json_field_t fields[3];
     kii_json_parse_result_t result;
     size_t buf_size = 0;
-    size_t field_len = 0;
 
-    buf = kii->kii_core.http_context.buffer;
-    buf_size = kii->kii_core.http_context.buffer_size;
+    kii_json_set_field(&fields[0], "id", kii->kii_core.author.author_id,
+            sizeof(kii->kii_core.author.author_id) /
+                sizeof(kii->kii_core.author.author_id[0]));
+    kii_json_set_field(&fields[1], "access_token",
+            kii->kii_core.author.access_token,
+            sizeof(kii->kii_core.author.access_token) /
+                sizeof(kii->kii_core.author.access_token[0]));
+    fields[2].name = NULL;
+
     core_err = kii_core_thing_authentication(&kii->kii_core, vendor_thing_id, password);
     if (core_err != KIIE_OK) {
         goto exit;
@@ -45,35 +46,26 @@ int kii_thing_authenticate(
         goto exit;
     }
 
-    start_body = prv_kii_util_get_http_body(buf, buf_size);
-    if (start_body == NULL) {
+    buf = kii->kii_core.response_body;
+    buf_size = kii->kii_core.http_context.buffer_size -
+            (kii->kii_core.http_context.buffer - kii->kii_core.response_body);
+    if (buf == NULL) {
         ret = -1;
         goto exit;
     }
-    result = kii_json_read_object(kii, start_body,
-            buf_size - (start_body - buf), fields);
+    result = kii_json_read_object(kii, buf, buf_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
         ret = -1;
         goto exit;
     }
-    if (fields[0].result != KII_JSON_FIELD_PARSE_SUCCESS) {
+    if (kii_json_is_string_field(kii, &fields[0]) != 0) {
         ret = -1;
         goto exit;
     }
-    if (fields[1].result != KII_JSON_FIELD_PARSE_SUCCESS) {
+    if (kii_json_is_string_field(kii, &fields[1]) != 0) {
         ret = -1;
         goto exit;
     }
-
-    field_len = fields[0].end - fields[0].start;
-    memcpy(kii->kii_core.author.author_id, start_body + fields[0].start,
-            field_len);
-    kii->kii_core.author.author_id[field_len] = '\0';
-
-    field_len = fields[1].end - fields[1].start;
-    memcpy(kii->kii_core.author.access_token, start_body + fields[1].start,
-            field_len);
-    kii->kii_core.author.access_token[field_len] = '\0';
 
     ret = 0;
 
