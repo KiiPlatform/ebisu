@@ -226,20 +226,6 @@ kii_json_parse_result_t kii_json_read_object(
     return ret;
 }
 
-void kii_json_set_field(
-        kii_json_field_t* field,
-        const char* name,
-        char* copy_buff,
-        size_t copy_buff_size)
-{
-    assert(field != NULL);
-    assert(name != NULL);
-
-    field->name = name;
-    field->field_copy_buff = copy_buff;
-    field->field_copy_buff_size = copy_buff_size;
-}
-
 int kii_json_is_string_field(kii_t* kii, const kii_json_field_t* field)
 {
     assert(kii != NULL);

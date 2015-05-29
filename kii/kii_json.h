@@ -66,18 +66,6 @@ kii_json_parse_result_t kii_json_read_object(
         size_t json_string_len,
         kii_json_field_t* fields);
 
-/** set values to kii_json_field_t.
- *  \param [out] kii_json_field_t instance to be set values.
- *  \param [in] value to set set to name field of kii_json_field_t.
- *  \param [in] value to set set to field_copy_buff field of kii_json_field_t.
- *  \param [in] value to set set to field_copy_buff_size field of kii_json_field_t.
- */
-void kii_json_set_field(
-        kii_json_field_t* field,
-        const char* name,
-        char* copy_buff,
-        size_t copy_buff_size);
-
 /** check field is string.
  *  \param [in] kii sdk instance.
  *  \param [in] field to check.

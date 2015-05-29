@@ -21,15 +21,6 @@ int kii_thing_authenticate(
     kii_json_parse_result_t result;
     size_t buf_size = 0;
 
-    kii_json_set_field(&fields[0], "id", kii->kii_core.author.author_id,
-            sizeof(kii->kii_core.author.author_id) /
-                sizeof(kii->kii_core.author.author_id[0]));
-    kii_json_set_field(&fields[1], "access_token",
-            kii->kii_core.author.access_token,
-            sizeof(kii->kii_core.author.access_token) /
-                sizeof(kii->kii_core.author.access_token[0]));
-    fields[2].name = NULL;
-
     core_err = kii_core_thing_authentication(&kii->kii_core, vendor_thing_id, password);
     if (core_err != KIIE_OK) {
         goto exit;
@@ -53,6 +44,17 @@ int kii_thing_authenticate(
         ret = -1;
         goto exit;
     }
+
+    fields[0].name = "id";
+    fields[0].field_copy_buff = kii->kii_core.author.author_id;
+    fields[0].field_copy_buff_size = sizeof(kii->kii_core.author.author_id) /
+            sizeof(kii->kii_core.author.author_id[0]);
+    fields[1].name = "access_token";
+    fields[1].field_copy_buff = kii->kii_core.author.access_token;
+    fields[1].field_copy_buff_size = sizeof(kii->kii_core.author.access_token) /
+            sizeof(kii->kii_core.author.access_token[0]);
+    fields[2].name = NULL;
+
     result = kii_json_read_object(kii, buf, buf_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
         ret = -1;
