@@ -143,21 +143,4 @@ kii_json_parse_result_t kii_json_read_object(
         size_t json_string_len,
         kii_json_field_t* fields);
 
-/** copy string pointed by field to buf.
- *  \param [in] kii sdk instance.
- *  \param [in] pointer of json string.
- *  \param [in] length of json string.
- *  \param [in] field of target string.
- *  \param [out] buffer to be copied string.
- *  \param [in] buffer size.
- *  \return coping result. 0 is success. otherwise fails.
- */
-int kii_json_copy_string_field(
-        kii_t* kii,
-        const char* json_string,
-        size_t json_string_len,
-        const kii_json_field_t* field,
-        char* buf,
-        size_t buf_size);
-
 #endif
