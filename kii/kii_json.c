@@ -133,6 +133,26 @@ exit:
     return ret;
 }
 
+static kii_json_field_type_t prv_kii_json_to_kii_json_field_type(
+        jsmntype_t jsmn_type)
+{
+    switch (jsmn_type)
+    {
+        case JSMN_PRIMITIVE:
+            return KII_JSON_FIELD_TYPE_PRIMITIVE;
+        case JSMN_OBJECT:
+            return KII_JSON_FIELD_TYPE_OBJECT;
+        case JSMN_ARRAY:
+            return KII_JSON_FIELD_TYPE_ARRAY;
+        case JSMN_STRING:
+            return KII_JSON_FIELD_TYPE_STRING;
+        default:
+            /* programming error */
+            assert(0);
+            return KII_JSON_FIELD_TYPE_PRIMITIVE;
+    }
+}
+
 static kii_json_parse_result_t prv_kii_json_check_object_fields(
         const char* json_string,
         size_t json_string_len,
@@ -140,54 +160,61 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
         kii_json_field_t* fields)
 {
     int i;
+    kii_json_parse_result_t retval = KII_JSON_PARSE_SUCCESS;
 
     switch (tokens[0].type)
     {
         case JSMN_ARRAY:
-            return KII_JSON_PARSE_UNEXPECTED_ARRAY;
+            return KII_JSON_PARSE_ROOT_TYPE_ERROR;
         case JSMN_OBJECT:
             break;
         default:
-            return KII_JSON_PARSE_INVALID;
+            return KII_JSON_PARSE_INVALID_INPUT;
     }
 
     for (i = 0; fields[i].name != NULL; ++i)
     {
         jsmntok_t* value = NULL;
         int result = 0;
+        kii_json_field_t* field = &fields[i];
+        kii_json_field_type_t type = KII_JSON_FIELD_TYPE_PRIMITIVE;
 
         result = prv_kii_jsmn_get_value(json_string, json_string_len, tokens,
-                fields[i].name, &value);
+                field->name, &value);
         if (result != 0 || value == NULL)
         {
-            fields[i].result = KII_JSON_FIELD_PARSE_NOT_FOUND;
+            retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
+            field->result = KII_JSON_FIELD_PARSE_NOT_FOUND;
             continue;
         }
-        fields[i].result = KII_JSON_FIELD_PARSE_SUCCESS;
-        switch (value->type)
-        {
-            case JSMN_PRIMITIVE:
-                fields[i].type = KII_JSON_FIELD_TYPE_PRIMITIVE;
-                break;
-            case JSMN_OBJECT:
-                fields[i].type = KII_JSON_FIELD_TYPE_OBJECT;
-                break;
-            case JSMN_ARRAY:
-                fields[i].type = KII_JSON_FIELD_TYPE_ARRAY;
-                break;
-            case JSMN_STRING:
-                fields[i].type = KII_JSON_FIELD_TYPE_STRING;
-                break;
-            default:
-                /* programming error */
-                assert(0);
-                break;
+
+        type = prv_kii_json_to_kii_json_field_type(value->type);
+        if (field->type == KII_JSON_FIELD_TYPE_ANY) {
+            field->type = type;
         }
-        fields[i].start = value->start;
-        fields[i].end = value->end;
+
+        field->start = value->start;
+        field->end = value->end;
+        if (type != field->type) {
+            retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
+            field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
+            field->type = type;
+        } else if (field->field_copy_buff == NULL) {
+            field->result = KII_JSON_FIELD_PARSE_SUCCESS;
+        } else {
+            size_t len = value->end - value->start;
+            if (field->field_copy_buff_size <= len) {
+                retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
+                field->result = KII_JSON_FIELD_PARSE_COPY_FAILED;
+            } else {
+                memcpy(field->field_copy_buff, json_string + value->start, len);
+                field->field_copy_buff[len] = '\0';
+                field->result = KII_JSON_FIELD_PARSE_SUCCESS;
+            }
+        }
     }
 
-    return KII_JSON_PARSE_SUCCESS;
+    return retval;
 }
 
 kii_json_parse_result_t kii_json_read_object(
@@ -196,7 +223,7 @@ kii_json_parse_result_t kii_json_read_object(
         size_t json_string_len,
         kii_json_field_t* fields)
 {
-    kii_json_parse_result_t ret = KII_JSON_PARSE_INVALID;
+    kii_json_parse_result_t ret = KII_JSON_PARSE_INVALID_INPUT;
     int result = -1;
     jsmntok_t tokens[KII_JSON_TOKEN_NUM];
 
@@ -213,4 +240,3 @@ kii_json_parse_result_t kii_json_read_object(
 
     return ret;
 }
-
