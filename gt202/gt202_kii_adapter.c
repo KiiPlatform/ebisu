@@ -148,12 +148,12 @@ kii_http_client_code_t prv_close(void* app_context)
 /* HTTP Callback functions */
 kii_http_client_code_t
     request_line_cb(
-        void* http_context,
+        kii_http_context_t* http_context,
         const char* method,
         const char* host,
         const char* path)
 {
-    context_t* ctx = (context_t*)http_context;
+    context_t* ctx = (context_t*)http_context->app_context;
     char* reqBuff = ctx->buff;
     int hostLen = strlen(host);
     if (hostLen < sizeof(ctx->host)) {
@@ -171,11 +171,11 @@ kii_http_client_code_t
 
 kii_http_client_code_t
     header_cb(
-        void* http_context,
+        kii_http_context_t* http_context,
         const char* key,
         const char* value)
 {
-    context_t* ctx = (context_t*)http_context;
+    context_t* ctx = (context_t*)http_context->app_context;
     char* reqBuff = ctx->buff;
     if (ctx->buff_size < strlen(reqBuff) + 4 + strlen(key) + strlen(value)) {
         return KII_HTTPC_FAIL;
@@ -189,10 +189,10 @@ kii_http_client_code_t
 
 kii_http_client_code_t
     body_cb(
-        void* http_context,
+        kii_http_context_t* http_context,
         const char* body_data)
 {
-    context_t* ctx = (context_t*)http_context;
+    context_t* ctx = (context_t*)http_context->app_context;
     char* reqBuff = ctx->buff;
     int body_len = (body_data != NULL) ? strlen(body_data) : 0;
     if (ctx->buff_size < strlen(reqBuff) + 3 + body_len) {
@@ -207,11 +207,11 @@ kii_http_client_code_t
 
 kii_http_client_code_t
     execute_cb(
-        void* http_context,
+        kii_http_context_t* http_context,
         int* response_code,
         char** response_body)
 {
-    context_t* ctx = (context_t*)http_context;
+    context_t* ctx = (context_t*)http_context->app_context;
     kii_http_client_code_t res;
     switch (ctx->state) {
         case PRV_STATE_IDLE:

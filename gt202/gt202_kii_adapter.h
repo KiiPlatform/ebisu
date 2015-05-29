@@ -1,7 +1,7 @@
 #ifndef _gt202_kii_adapter
 #define _gt202_kii_adapter
 
-#include "kii.h"
+#include "kii_core.h"
 
 #include "main.h"
 
@@ -30,26 +30,25 @@ typedef struct context
 /* HTTP Callback functions */
 
 kii_http_client_code_t request_line_cb(
-        void* http_context,
+        kii_http_context_t* http_context,
         const char* method,
         const char* host,
         const char* path);
 
 kii_http_client_code_t header_cb(
-        void* http_context,
+        kii_http_context_t* http_context,
         const char* key,
         const char* value);
 
 kii_http_client_code_t body_cb(
-        void* http_context,
+        kii_http_context_t* http_context,
         const char* body_data);
 
 kii_http_client_code_t execute_cb(
-        void* http_context,
+        kii_http_context_t* http_context,
         int* response_code,
         char** response_body);
 
 void logger_cb(const char* format, ...);
 
 #endif
-
