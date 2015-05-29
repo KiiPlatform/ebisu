@@ -3,47 +3,104 @@
 
 #include "kii.h"
 
+/** Return value of kii_json_read_object(kii_t*, const char*, size_t,
+ * kii_json_field_t*) */
 typedef enum kii_json_parse_result {
+
+    /** JSON string is successfully parsed and all kii_json_field_t
+     * variables are successfully set. i.e., all kii_json_field_t type
+     * fields are KII_JSON_FIELD_PARSE_SUCCESS.
+     */
     KII_JSON_PARSE_SUCCESS,
+
+    /** JSON string is successfully parsed but some kii_json_field_t
+     * variables are failed. i.e., some kii_json_field_t type fields
+     * are not KII_JSON_FIELD_PARSE_SUCCESS.
+     */
     KII_JSON_PARSE_PARTIAL_SUCCESS,
+
+    /** JSON string is successfully parsed but type of root object
+     * type is unmatched to using function.
+     *
+     * kii_json_read_object(kii_t*, const char*, size_t,
+     * kii_json_field_t*) requires JSON object if JSON array is
+     * passed, then this error is returned.
+     */
     KII_JSON_PARSE_ROOT_TYPE_ERROR,
+
+    /** JSON string is failed to parse. Passed string is not JSON string. */
     KII_JSON_PARSE_INVALID_INPUT
 } kii_json_parse_result_t;
 
+/** Field parsing result. Assigned to kii_json_field_t#result. */
 typedef enum kii_json_field_parse_result {
+    /** Field parsing is success. */
     KII_JSON_FIELD_PARSE_SUCCESS,
+
+    /** Type of field specified kii_json_field_t#type is unmathced.*/
     KII_JSON_FIELD_PARSE_TYPE_UNMATCHED,
+
+    /** Field specified by kii_json_field_t#name is not found. */
     KII_JSON_FIELD_PARSE_NOT_FOUND,
+
+    /** Coping string to kii_json_field_t#field_copy_buff is failed.
+     * kii_json_field_t#field_copy_buff_size may shorter than actual
+     * length.
+     */
     KII_JSON_FIELD_PARSE_COPY_FAILED
 } kii_json_field_parse_result_t;
 
+/** Type of parsed JSON field. This value is assigned to
+ * kii_json_field_t#type. */
 typedef enum kii_json_field_type {
+
+    /** Input only value. If this value is set to
+     * kii_json_field_t#type, then kii_json_read_object(kii_t*, const
+     * char*, size_t, kii_json_field_t*) ignore type checking.
+     */
     KII_JSON_FIELD_TYPE_ANY,
+
+    /** Input and output value. This value denotes JSON primitive
+     * values such as number and null.
+     */
     KII_JSON_FIELD_TYPE_PRIMITIVE,
+
+    /** Input and output value. This value denotes JSON string. */
     KII_JSON_FIELD_TYPE_STRING,
+
+    /** Input and output value. This value denotes JSON object. */
     KII_JSON_FIELD_TYPE_OBJECT,
+
+    /** Input and output value. This value denotes JSON array. */
     KII_JSON_FIELD_TYPE_ARRAY
 } kii_json_field_type_t;
 
-/** json parsed field data */
+/** JSON parsed field data */
 typedef struct kii_json_field {
 
-    /** parsing target key name. Input of kii_json_read_object. */
+    /** parsing target key name. Input of
+     * kii_json_read_object(kii_t*, const char*, size_t,
+     * kii_json_field_t*). */
     const char* name;
 
-    /** field parse result. Output of kii_json_read_object. */
+    /** field parse result. Output of kii_json_read_object(kii_t*,
+     * const char*, size_t, kii_json_field_t*). */
     kii_json_field_parse_result_t result;
 
-    /** parsed target value type. Input and Output of kii_json_read_object. */
+    /** parsed target value type. Input and Output of
+     * kii_json_read_object(kii_t*, const char*, size_t,
+     * kii_json_field_t*). */
     kii_json_field_type_t type;
 
-    /** start point of this field in given buffer.
-     * Output of kii_json_read_object
+    /** start point of this field in given buffer. Output of
+     * kii_json_read_object(kii_t*, const char*, size_t,
+     * kii_json_field_t*).
      */
     size_t start;
 
-    /** end point of this field in given buffer.
-     * Output of kii_json_read_object
+    /** end point of this field in given buffer. Output of
+     * kii_json_read_object(kii_t*, const char*, size_t,
+     * kii_json_field_t*).
      */
     size_t end;
 
@@ -55,12 +112,12 @@ typedef struct kii_json_field {
 
 } kii_json_field_t;
 
-/** parse json string as json object.
+/** parse JSON string as JSON object.
  *  \param [in] kii sdk instance.
- *  \param [in] pointer of json string.
- *  \param [in] length of json string.
- *  \param [inout] field of kii json parser.
- *  \return parse json result.
+ *  \param [in] pointer of JSON string.
+ *  \param [in] length of JSON string.
+ *  \param [inout] field of kii JSON parser.
+ *  \return parse JSON result.
  */
 kii_json_parse_result_t kii_json_read_object(
         kii_t* kii,
