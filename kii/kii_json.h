@@ -18,6 +18,7 @@ typedef enum kii_json_field_parse_result {
 } kii_json_field_parse_result_t;
 
 typedef enum kii_json_field_type {
+    KII_JSON_FIELD_TYPE_ANY,
     KII_JSON_FIELD_TYPE_PRIMITIVE,
     KII_JSON_FIELD_TYPE_STRING,
     KII_JSON_FIELD_TYPE_OBJECT,

@@ -189,6 +189,10 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
         }
 
         type = prv_kii_json_to_kii_json_field_type(value->type);
+        if (field->type == KII_JSON_FIELD_TYPE_ANY) {
+            field->type = type;
+        }
+
         field->start = value->start;
         field->end = value->end;
         if (type != field->type) {
