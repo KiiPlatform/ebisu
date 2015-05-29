@@ -5,6 +5,7 @@
 
 typedef enum kii_json_parse_result {
     KII_JSON_PARSE_SUCCESS,
+    KII_JSON_PARSE_FIELD_UNMATCHED,
     KII_JSON_PARSE_UNEXPECTED_ARRAY,
     KII_JSON_PARSE_UNEXPECTED_OBJECT,
     KII_JSON_PARSE_INVALID
@@ -12,6 +13,7 @@ typedef enum kii_json_parse_result {
 
 typedef enum kii_json_field_parse_result {
     KII_JSON_FIELD_PARSE_SUCCESS,
+    KII_JSON_FIELD_PARSE_TYPE_UNMATCHED,
     KII_JSON_FIELD_PARSE_NOT_FOUND,
     KII_JSON_FIELD_PARSE_COPY_FAILED
 } kii_json_field_parse_result_t;
@@ -32,7 +34,7 @@ typedef struct kii_json_field {
     /** field parse result. Output of kii_json_read_object. */
     kii_json_field_parse_result_t result;
 
-    /** parsed target value type. Output of kii_json_read_object. */
+    /** parsed target value type. Input and Output of kii_json_read_object. */
     kii_json_field_type_t type;
 
     /** start point of this field in given buffer.
@@ -65,12 +67,5 @@ kii_json_parse_result_t kii_json_read_object(
         const char* json_string,
         size_t json_string_len,
         kii_json_field_t* fields);
-
-/** check field is string.
- *  \param [in] kii sdk instance.
- *  \param [in] field to check.
- *  \return return 0 if field is string. otherwise non 0.
- */
-int kii_json_is_string_field(kii_t* kii, const kii_json_field_t* field);
 
 #endif
