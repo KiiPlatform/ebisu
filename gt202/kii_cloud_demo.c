@@ -3,26 +3,28 @@
 
 #include "gt202_kii_adapter.h"
 
+static char static_ojbect_id_buf[KII_OBJECTID_SIZE + 1];
+
 void parse_response(char* resp_body)
 {
     /* TODO: implement */
 }
 
-static void init(kii_core_t* kii, context_t* ctx, char* buff, int buff_length)
+static void init(kii_t* kii, context_t* ctx, char* buff, int buff_length)
 {
-    memset(kii, 0x00, sizeof(kii_core_t));
-    kii->app_id = APP_ID;
-    kii->app_key = APP_KEY;
-    kii->app_host = APP_HOST;
-    kii->http_context.buffer = buff;
-    kii->http_context.buffer_size = buff_length;
+    memset(kii, 0x00, sizeof(kii_t));
+    kii->kii_core.app_id = APP_ID;
+    kii->kii_core.app_key = APP_KEY;
+    kii->kii_core.app_host = APP_HOST;
+    kii->kii_core.http_context.buffer = buff;
+    kii->kii_core.http_context.buffer_size = buff_length;
 
-    kii->http_context.app_context = ctx;
-    kii->http_set_request_line_cb = request_line_cb;
-    kii->http_set_header_cb = header_cb;
-    kii->http_set_body_cb = body_cb;
-    kii->http_execute_cb = execute_cb;
-    kii->logger_cb = logger_cb;
+    kii->kii_core.http_context.app_context = ctx;
+    kii->kii_core.http_set_request_line_cb = request_line_cb;
+    kii->kii_core.http_set_header_cb = header_cb;
+    kii->kii_core.http_set_body_cb = body_cb;
+    kii->kii_core.http_execute_cb = execute_cb;
+    kii->kii_core.logger_cb = logger_cb;
 
     memset(ctx, 0x00, sizeof(context_t));
     /* share the request and response buffer.*/
@@ -30,10 +32,10 @@ static void init(kii_core_t* kii, context_t* ctx, char* buff, int buff_length)
     ctx->buff_size = buff_length;
 }
 
-static void set_author(kii_core_t* kii)
+static void set_author(kii_t* kii)
 {
-    strcpy(kii->author.author_id, THING_ID);
-    strcpy(kii->author.access_token, ACCESS_TOKEN);
+    strcpy(kii->kii_core.author.author_id, THING_ID);
+    strcpy(kii->kii_core.author.access_token, ACCESS_TOKEN);
 }
 
 static void init_bucket(kii_bucket_t* bucket) {
@@ -50,449 +52,236 @@ static void init_topic(kii_topic_t* topic) {
     topic->topic_name = TOPIC_NAME;
 }
 
-static void print_response(kii_core_t* kii)
+static void print_response(kii_t* kii)
 {
     printf("========response========\n");
-    printf("%s\n", kii->http_context.buffer);
+    printf("%s\n", kii->kii_core.http_context.buffer);
     printf("========response========\n");
-    printf("response_code: %d\n", kii->response_code);
-    printf("response_body:\n%s\n", kii->response_body);
+    printf("response_code: %d\n", kii->kii_core.response_code);
+    printf("response_body:\n%s\n", kii->kii_core.response_body);
 }
 
-static int register_thing(kii_core_t* kii)
+static int register_thing(kii_t* kii)
 {
     int ret = 0;
-    kii_state_t state;
-    kii_error_code_t err;
-    char *thingData = malloc(1024);
-    
-    /* Prepare Thing Data */
-    memset(thingData, 0x00, 1024);
-    sprintf(thingData,
-            "{\"_vendorThingID\":\"%d\", \"_password\":\"1234\"}",
-            time(NULL));
-    /* Register Thing */
-    err = kii_core_register_thing(kii, thingData);
-    printf("request:\n%s\n", kii->http_context.buffer);
-    if (err != KIIE_OK) {
-        printf("execution failed\n");
-        ret = 1;
-        goto END_FUNC;
-    }
-    do {
-        err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
-    } while (state != KII_STATE_IDLE);
-    if (err != KIIE_OK) {
-        ret = 1;
-        goto END_FUNC;
-    }
-    print_response(kii);
-    parse_response(kii->response_body);
+    char venderId[22];
 
-END_FUNC:
-    free(thingData);
+    sprintf(venderId, "%d", time(NULL));
+    ret = kii_thing_register(kii, venderId, "my_type", "1234");
+
+    print_response(kii);
+    parse_response(kii->kii_core.response_body);
+
     return ret;
 }
 
-static int thing_authentication(kii_core_t* kii)
+static int thing_authentication(kii_t* kii)
 {
-    kii_state_t state;
-    kii_error_code_t err;
+    int ret = 0;
 
-    err = kii_core_thing_authentication(kii, AUTH_VENDOR_ID, AUTH_VENDOR_PASS);
-    printf("request:\n%s\n", kii->http_context.buffer);
-    if (err != KIIE_OK) {
-        printf("execution failed\n");
-        return 1;
-    }
-    do {
-        err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
-    } while (state != KII_STATE_IDLE);
-    if (err != KIIE_OK) {
-        return 1;
-    }
+    ret = kii_thing_authenticate(kii, AUTH_VENDOR_ID, AUTH_VENDOR_PASS);
+
     print_response(kii);
-    parse_response(kii->response_body);
+    parse_response(kii->kii_core.response_body);
 
-    return 0;
+    return ret;
 }
 
-static int create_new_object(kii_core_t* kii)
+static int create_new_object(kii_t* kii)
 {
-    kii_state_t state;
-    kii_error_code_t err;
+    int ret = 0;
+    char* objectId = static_ojbect_id_buf;
+
+    kii_bucket_t bucket;
+    init_bucket(&bucket);
+
+    set_author(kii);
+
+    ret = kii_object_create(kii, &bucket, "{}", NULL, objectId);
+
+    print_response(kii);
+    printf("ojbectId = %s\n", objectId);
+    parse_response(kii->kii_core.response_body);
+    return ret;
+}
+
+static int create_new_object_with_id(kii_t* kii, const char* id)
+{
+    int ret = 0;
     
     kii_bucket_t bucket;
     init_bucket(&bucket);
 
     set_author(kii);
 
-    err = kii_core_create_new_object(
-            kii,
-            &bucket,
-            "{}",
-            NULL);
-    printf("request:\n%s\n", kii->http_context.buffer);
-    if (err != KIIE_OK) {
-        printf("execution failed\n");
-        return 1;
-    }    
-    do {
-        err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
-    } while (state != KII_STATE_IDLE);
-    if (err != KIIE_OK) {
-        return 1;
-    }
+    ret = kii_object_create_with_id(kii, &bucket, id, "{}", NULL);
+
     print_response(kii);
-    parse_response(kii->response_body);
-    return 0;
+    parse_response(kii->kii_core.response_body);
+    return ret;
 }
 
-static int create_new_object_with_id(kii_core_t* kii, const char* id)
+static int patch_object(kii_t* kii, const char* id)
 {
-    kii_state_t state;
-    kii_error_code_t err;
-    
-    kii_bucket_t bucket;
-    init_bucket(&bucket);
-
-    set_author(kii);
-
-    err = kii_core_create_new_object_with_id(
-            kii,
-            &bucket,
-            id,
-            "{}",
-            NULL);
-    printf("request:\n%s\n", kii->http_context.buffer);
-    if (err != KIIE_OK) {
-        printf("execution failed\n");
-        return 1;
-    }    
-    do {
-        err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
-    } while (state != KII_STATE_IDLE);
-    if (err != KIIE_OK) {
-        return 1;
-    }
-    print_response(kii);
-    parse_response(kii->response_body);
-    return 0;
-}
-
-static int patch_object(kii_core_t* kii, const char* id)
-{
-    kii_state_t state;
-    kii_error_code_t err;
+    int ret = 0;
 
     kii_bucket_t bucket;
     init_bucket(&bucket);
 
     set_author(kii);
 
-    err = kii_core_patch_object(
-            kii,
-            &bucket,
-            id,
-            "{}",
-            NULL);
-    printf("request:\n%s\n", kii->http_context.buffer);
-    if (err != KIIE_OK) {
-        printf("execution failed\n");
-        return 1;
-    }    
-    do {
-        err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
-    } while (state != KII_STATE_IDLE);
-    if (err != KIIE_OK) {
-        return 1;
-    }
+    ret = kii_object_patch(kii, &bucket, id, "{}", NULL);
+
     print_response(kii);
-    parse_response(kii->response_body);
-    return 0;
+    parse_response(kii->kii_core.response_body);
+    return ret;
 }
 
-static int replace_object(kii_core_t* kii, const char* id)
+static int replace_object(kii_t* kii, const char* id)
 {
-    kii_state_t state;
-    kii_error_code_t err;
+    int ret = 0;
 
     kii_bucket_t bucket;
     init_bucket(&bucket);
 
     set_author(kii);
 
-    err = kii_core_replace_object(
-            kii,
-            &bucket,
-            id,
-            "{}",
-            NULL);
-    printf("request:\n%s\n", kii->http_context.buffer);
-    if (err != KIIE_OK) {
-        printf("execution failed\n");
-        return 1;
-    }    
-    do {
-        err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
-    } while (state != KII_STATE_IDLE);
-    if (err != KIIE_OK) {
-        return 1;
-    }
+    ret = kii_object_replace(kii, &bucket, id, "{}", NULL);
+
     print_response(kii);
-    parse_response(kii->response_body);
-    return 0;
+    parse_response(kii->kii_core.response_body);
+    return ret;
 }
 
-static int get_object(kii_core_t* kii, const char* id)
+static int get_object(kii_t* kii, const char* id)
 {
-    kii_state_t state;
-    kii_error_code_t err;
+    int ret = 0;
 
     kii_bucket_t bucket;
     init_bucket(&bucket);
 
     set_author(kii);
 
-    err = kii_core_get_object(
-            kii,
-            &bucket,
-            id);
-    printf("request:\n%s\n", kii->http_context.buffer);
-    if (err != KIIE_OK) {
-        printf("execution failed\n");
-        return 1;
-    }
-    do {
-        err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
-    } while (state != KII_STATE_IDLE);
-    if (err != KIIE_OK) {
-        return 1;
-    }
+    ret = kii_object_get(kii, &bucket, id);
+
     print_response(kii);
-    parse_response(kii->response_body);
-    return 0;
+    parse_response(kii->kii_core.response_body);
+    return ret;
 }
 
-static int delete_object(kii_core_t* kii, const char* id)
+static int delete_object(kii_t* kii, const char* id)
 {
-    kii_state_t state;
-    kii_error_code_t err;
+    int ret = 0;
 
     kii_bucket_t bucket;
     init_bucket(&bucket);
 
     set_author(kii);
 
-    err = kii_core_delete_object(
-            kii,
-            &bucket,
-            id);
-    printf("request:\n%s\n", kii->http_context.buffer);
-    if (err != KIIE_OK) {
-        printf("execution failed\n");
-        return 1;
-    }
-    do {
-        err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
-    } while (state != KII_STATE_IDLE);
-    if (err != KIIE_OK) {
-        return 1;
-    }
+    ret = kii_object_delete(kii, &bucket, id);
+
     print_response(kii);
-    parse_response(kii->response_body);
-    return 0;
+    parse_response(kii->kii_core.response_body);
+    return ret;
 }
 
-static int subscribe_bucket(kii_core_t* kii, const char* bucket_name)
+static int subscribe_bucket(kii_t* kii, const char* bucket_name)
 {
-    kii_state_t state;
-    kii_error_code_t err;
+    int ret = 0;
 
     kii_bucket_t bucket;
     init_bucket(&bucket);
 
     set_author(kii);
 
-    err = kii_core_subscribe_bucket(
-            kii,
-            &bucket);
-    printf("request:\n%s\n", kii->http_context.buffer);
-    if (err != KIIE_OK) {
-        printf("execution failed\n");
-        return 1;
-    }
-    do {
-        err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
-    } while (state != KII_STATE_IDLE);
-    if (err != KIIE_OK) {
-        return 1;
-    }
+    ret = kii_push_subscribe_bucket(kii, &bucket);
+
     print_response(kii);
-    parse_response(kii->response_body);
-    return 0;
+    parse_response(kii->kii_core.response_body);
+    return ret;
 }
 
-static int unsubscribe_bucket(kii_core_t* kii, const char* bucket_name)
+static int unsubscribe_bucket(kii_t* kii, const char* bucket_name)
 {
-    kii_state_t state;
-    kii_error_code_t err;
+    int ret = 0;
 
     kii_bucket_t bucket;
     init_bucket(&bucket);
 
     set_author(kii);
 
-    err = kii_core_unsubscribe_bucket(
-            kii,
-            &bucket);
-    printf("request:\n%s\n", kii->http_context.buffer);
-    if (err != KIIE_OK) {
-        printf("execution failed\n");
-        return 1;
-    }
-    do {
-        err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
-    } while (state != KII_STATE_IDLE);
-    if (err != KIIE_OK) {
-        return 1;
-    }
+    ret = kii_push_unsubscribe_bucket(kii, &bucket);
+
     print_response(kii);
-    parse_response(kii->response_body);
-    return 0;
+    parse_response(kii->kii_core.response_body);
+    return ret;
 }
 
-static int create_topic(kii_core_t* kii)
+static int create_topic(kii_t* kii)
 {
-    kii_state_t state;
-    kii_error_code_t err;
+    int ret = 0;
 
     kii_topic_t topic;
     init_topic(&topic);
 
     set_author(kii);
 
-    err = kii_core_create_topic(
-            kii,
-            &topic);
-    printf("request:\n%s\n", kii->http_context.buffer);
-    if (err != KIIE_OK) {
-        printf("execution failed\n");
-        return 1;
-    }
-    do {
-        err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
-    } while (state != KII_STATE_IDLE);
-    if (err != KIIE_OK) {
-        return 1;
-    }
+    ret = kii_push_create_topic(kii, &topic);
+
     print_response(kii);
-    parse_response(kii->response_body);
-    return 0;
+    parse_response(kii->kii_core.response_body);
+    return ret;
 }
 
-static int delete_topic(kii_core_t* kii)
+static int delete_topic(kii_t* kii)
 {
-    kii_state_t state;
-    kii_error_code_t err;
+    int ret = 0;
 
     kii_topic_t topic;
     init_topic(&topic);
 
     set_author(kii);
 
-    err = kii_core_delete_topic(
-            kii,
-            &topic);
-    printf("request:\n%s\n", kii->http_context.buffer);
-    if (err != KIIE_OK) {
-        printf("execution failed\n");
-        return 1;
-    }
-    do {
-        err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
-    } while (state != KII_STATE_IDLE);
-    if (err != KIIE_OK) {
-        return 1;
-    }
+    ret = kii_push_delete_topic(kii, &topic);
+
     print_response(kii);
-    parse_response(kii->response_body);
-    return 0;
+    parse_response(kii->kii_core.response_body);
+    return ret;
 }
 
-static int subscribe_topic(kii_core_t* kii)
+static int subscribe_topic(kii_t* kii)
 {
-    kii_state_t state;
-    kii_error_code_t err;
+    int ret = 0;
 
     kii_topic_t topic;
     init_topic(&topic);
 
     set_author(kii);
 
-    err = kii_core_subscribe_topic(
-            kii,
-            &topic);
-    printf("request:\n%s\n", kii->http_context.buffer);
-    if (err != KIIE_OK) {
-        printf("execution failed\n");
-        return 1;
-    }
-    do {
-        err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
-    } while (state != KII_STATE_IDLE);
-    if (err != KIIE_OK) {
-        return 1;
-    }
+    ret = kii_push_subscribe_topic(kii, &topic);
+
     print_response(kii);
-    parse_response(kii->response_body);
-    return 0;
+    parse_response(kii->kii_core.response_body);
+    return ret;
 }
 
-static int unsubscribe_topic(kii_core_t* kii)
+static int unsubscribe_topic(kii_t* kii)
 {
-    kii_state_t state;
-    kii_error_code_t err;
+    int ret = 0;
 
     kii_topic_t topic;
     init_topic(&topic);
 
     set_author(kii);
 
-    err = kii_core_unsubscribe_topic(
-            kii,
-            &topic);
-    printf("request:\n%s\n", kii->http_context.buffer);
-    if (err != KIIE_OK) {
-        printf("execution failed\n");
-        return 1;
-    }
-    do {
-        err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
-    } while (state != KII_STATE_IDLE);
-    if (err != KIIE_OK) {
-        return 1;
-    }
+    ret = kii_push_unsubscribe_topic(kii, &topic);
+
     print_response(kii);
-    parse_response(kii->response_body);
-    return 0;
+    parse_response(kii->kii_core.response_body);
+    return ret;
 }
 
-static int install_push(kii_core_t* kii)
+static int install_push(kii_t* kii)
 {
     kii_state_t state;
     kii_error_code_t err;
@@ -500,26 +289,26 @@ static int install_push(kii_core_t* kii)
     set_author(kii);
 
     err = kii_core_install_thing_push(
-            kii,
+            &kii->kii_core,
             KII_FALSE);
-    printf("request:\n%s\n", kii->http_context.buffer);
+    printf("request:\n%s\n", kii->kii_core.http_context.buffer);
     if (err != KIIE_OK) {
         printf("execution failed\n");
         return 1;
     }
     do {
-        err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
+        err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
     if (err != KIIE_OK) {
         return 1;
     }
     print_response(kii);
-    parse_response(kii->response_body);
+    parse_response(kii->kii_core.response_body);
     return 0;
 }
 
-static int get_endpoint(kii_core_t* kii)
+static int get_endpoint(kii_t* kii)
 {
     kii_state_t state;
     kii_error_code_t err;
@@ -527,22 +316,22 @@ static int get_endpoint(kii_core_t* kii)
     set_author(kii);
 
     err = kii_core_get_mqtt_endpoint(
-            kii,
+            &kii->kii_core,
             INSTALLATION_ID);
-    printf("request:\n%s\n", kii->http_context.buffer);
+    printf("request:\n%s\n", kii->kii_core.http_context.buffer);
     if (err != KIIE_OK) {
         printf("execution failed\n");
         return 1;
     }
     do {
-        err = kii_core_run(kii);
-        state = kii_core_get_state(kii);
+        err = kii_core_run(&kii->kii_core);
+        state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
     if (err != KIIE_OK) {
         return 1;
     }
     print_response(kii);
-    parse_response(kii->response_body);
+    parse_response(kii->kii_core.response_body);
     return 0;
 }
 
@@ -574,7 +363,7 @@ int kii_main(int argc, char *argv[])
 {
     int ret = A_ERROR;
     context_t *ctx = NULL;
-    kii_core_t *kii = NULL;
+    kii_t *kii = NULL;
     kii_state_t state;
     kii_error_code_t err;
     char *buff = NULL;
@@ -585,7 +374,7 @@ int kii_main(int argc, char *argv[])
         return A_OK;
     }
 
-    kii = malloc(sizeof(kii_core_t));
+    kii = malloc(sizeof(kii_t));
     ctx = malloc(sizeof(context_t));
     buff = malloc(4096);
 
@@ -714,4 +503,3 @@ int kii_main(int argc, char *argv[])
     free(ctx);
     return ret;
 }
-

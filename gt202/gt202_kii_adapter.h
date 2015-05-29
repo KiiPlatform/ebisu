@@ -1,7 +1,7 @@
 #ifndef _gt202_kii_adapter
 #define _gt202_kii_adapter
 
-#include "kii_core.h"
+#include "kii.h"
 
 #include "main.h"
 
