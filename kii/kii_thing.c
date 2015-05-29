@@ -82,7 +82,7 @@ int kii_thing_register(
     int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
-    kii_json_field_t fields[2];
+    kii_json_field_t fields[3];
     kii_json_parse_result_t result;
 
 
@@ -118,14 +118,18 @@ int kii_thing_register(
     fields[0].field_copy_buff = kii->kii_core.author.access_token;
     fields[0].field_copy_buff_size = sizeof(kii->kii_core.author.access_token) /
             sizeof(kii->kii_core.author.access_token[0]);
-    fields[1].name = NULL;
+    fields[1].name = "_thingID";
+    fields[1].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[1].field_copy_buff = kii->kii_core.author.author_id;
+    fields[1].field_copy_buff_size = sizeof(kii->kii_core.author.author_id) /
+            sizeof(kii->kii_core.author.author_id[0]);
+    fields[2].name = NULL;
 
     result = kii_json_read_object(kii, buf, buf_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
         ret = -1;
         goto exit;
     }
-    strcpy(kii->kii_core.author.author_id, vendor_thing_id);
     ret = 0;
 
 exit:
