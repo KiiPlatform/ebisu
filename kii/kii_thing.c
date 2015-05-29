@@ -45,7 +45,7 @@ int kii_thing_authenticate(
         goto exit;
     }
 
-    memset(fields, sizeof(fields[0]), sizeof(fields) / sizeof(fields[0]));
+    memset(fields, 0, sizeof(fields));
     fields[0].name = "id";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
     fields[0].field_copy_buff = kii->kii_core.author.author_id;
