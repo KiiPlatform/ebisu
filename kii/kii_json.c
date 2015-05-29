@@ -165,11 +165,11 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
     switch (tokens[0].type)
     {
         case JSMN_ARRAY:
-            return KII_JSON_PARSE_UNEXPECTED_ARRAY;
+            return KII_JSON_PARSE_ROOT_TYPE_ERROR;
         case JSMN_OBJECT:
             break;
         default:
-            return KII_JSON_PARSE_INVALID;
+            return KII_JSON_PARSE_INVALID_INPUT;
     }
 
     for (i = 0; fields[i].name != NULL; ++i)
@@ -183,7 +183,7 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
                 field->name, &value);
         if (result != 0 || value == NULL)
         {
-            retval = KII_JSON_PARSE_FIELD_UNMATCHED;
+            retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
             field->result = KII_JSON_FIELD_PARSE_NOT_FOUND;
             continue;
         }
@@ -192,7 +192,7 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
         field->start = value->start;
         field->end = value->end;
         if (type != field->type) {
-            retval = KII_JSON_PARSE_FIELD_UNMATCHED;
+            retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
             field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
             field->type = type;
         } else if (field->field_copy_buff == NULL) {
@@ -200,7 +200,7 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
         } else {
             size_t len = value->end - value->start;
             if (field->field_copy_buff_size <= len) {
-                retval = KII_JSON_PARSE_FIELD_UNMATCHED;
+                retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
                 field->result = KII_JSON_FIELD_PARSE_COPY_FAILED;
             } else {
                 memcpy(field->field_copy_buff, json_string + value->start, len);
@@ -219,7 +219,7 @@ kii_json_parse_result_t kii_json_read_object(
         size_t json_string_len,
         kii_json_field_t* fields)
 {
-    kii_json_parse_result_t ret = KII_JSON_PARSE_INVALID;
+    kii_json_parse_result_t ret = KII_JSON_PARSE_INVALID_INPUT;
     int result = -1;
     jsmntok_t tokens[KII_JSON_TOKEN_NUM];
 

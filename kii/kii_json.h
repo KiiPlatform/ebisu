@@ -5,10 +5,9 @@
 
 typedef enum kii_json_parse_result {
     KII_JSON_PARSE_SUCCESS,
-    KII_JSON_PARSE_FIELD_UNMATCHED,
-    KII_JSON_PARSE_UNEXPECTED_ARRAY,
-    KII_JSON_PARSE_UNEXPECTED_OBJECT,
-    KII_JSON_PARSE_INVALID
+    KII_JSON_PARSE_PARTIAL_SUCCESS,
+    KII_JSON_PARSE_ROOT_TYPE_ERROR,
+    KII_JSON_PARSE_INVALID_INPUT
 } kii_json_parse_result_t;
 
 typedef enum kii_json_field_parse_result {
