@@ -54,24 +54,22 @@ typedef enum kii_json_field_parse_result {
  * kii_json_field_t#type. */
 typedef enum kii_json_field_type {
 
-    /** Input only value. If this value is set to
+    /** This value denotes any JSON types. If this value is set to
      * kii_json_field_t#type, then kii_json_read_object(kii_t*, const
      * char*, size_t, kii_json_field_t*) ignore type checking.
      */
     KII_JSON_FIELD_TYPE_ANY,
 
-    /** Input and output value. This value denotes JSON primitive
-     * values such as number and null.
-     */
+    /** This value denotes JSON primitive values such as number and null. */
     KII_JSON_FIELD_TYPE_PRIMITIVE,
 
-    /** Input and output value. This value denotes JSON string. */
+    /** This value denotes JSON string. */
     KII_JSON_FIELD_TYPE_STRING,
 
-    /** Input and output value. This value denotes JSON object. */
+    /** This value denotes JSON object. */
     KII_JSON_FIELD_TYPE_OBJECT,
 
-    /** Input and output value. This value denotes JSON array. */
+    /** This value denotes JSON array. */
     KII_JSON_FIELD_TYPE_ARRAY
 } kii_json_field_type_t;
 
@@ -80,16 +78,36 @@ typedef struct kii_json_field {
 
     /** parsing target key name. Input of
      * kii_json_read_object(kii_t*, const char*, size_t,
-     * kii_json_field_t*). */
+     * kii_json_field_t*).
+     */
     const char* name;
 
     /** field parse result. Output of kii_json_read_object(kii_t*,
-     * const char*, size_t, kii_json_field_t*). */
+     * const char*, size_t, kii_json_field_t*).
+     */
     kii_json_field_parse_result_t result;
 
     /** parsed target value type. Input and Output of
      * kii_json_read_object(kii_t*, const char*, size_t,
-     * kii_json_field_t*). */
+     * kii_json_field_t*).
+     *
+     * If type is set except for
+     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_ANY, then
+     * kii_json_read_object(kii_t*, const char*, size_t,
+     * kii_json_field_t*) ignore type checking.
+     *
+     * If actual type is not matched expected type:
+     *   - kii_json_read_object(kii_t*, const char*, size_t,
+     *     kii_json_field_t*) set actual type.
+     *   - if expected type is not
+     *     kii_json_field_type_t#KII_JSON_FIELD_TYPE_ANY, then
+     *     kii_json_field_t#result become
+     *     kii_json_parse_result_t#KII_JSON_FIELD_PARSE_TYPE_UNMATCHED.
+     *   - if expected type is
+     *     kii_json_field_type_t#KII_JSON_FIELD_TYPE_ANY, then
+     *     kii_json_field_t#result become
+     *     kii_json_parse_result_t#KII_JSON_FIELD_PARSE_SUCCESS.
+     */
     kii_json_field_type_t type;
 
     /** start point of this field in given buffer. Output of
