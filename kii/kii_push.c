@@ -84,14 +84,22 @@ exit:
 
 static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* installation_id, kii_mqtt_endpoint_t* endpoint)
 {
-    char* p1;
-    char* p2;
-    char* buf;
-    kiiPush_endpointState_e ret;
+    char* buf = NULL;
+    size_t buf_size = 0;
+    kiiPush_endpointState_e ret = KIIPUSH_ENDPOINT_ERROR;
+    kii_json_parse_result_t parse_result = KII_JSON_PARSE_INVALID;
     kii_error_code_t core_err;
     kii_state_t state;
+    kii_json_field_t fields[] = {
+            { "username" },
+            { "password" },
+            { "host" },
+            { "mqttTopic" },
+            { NULL }
+    };
 
     buf = kii->kii_core.http_context.buffer;
+    buf_size = kii->kii_core.http_context.buffer_size;
     core_err = kii_core_get_mqtt_endpoint(&kii->kii_core, installation_id);
     if (core_err != KIIE_OK) {
         goto exit;
@@ -115,117 +123,42 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
         goto exit;
     }
 
+    parse_result = kii_json_read_object(kii, buf, buf_size, fields);
+    if (parse_result == KII_JSON_PARSE_SUCCESS) {
+        ret = KIIPUSH_ENDPOINT_ERROR;
+        goto exit;
+    }
     /* get username*/
-    p1 = strstr(buf, "\"username\"");
-    if(p1 == NULL)
-    {
+    if (kii_json_copy_string_field(kii, buf, buf_size, &fields[0],
+                    endpoint->username,
+                    sizeof(endpoint->username) / sizeof(endpoint->username[0]))
+            != 0) {
         ret = KIIPUSH_ENDPOINT_ERROR;
         goto exit;
     }
-    p1 = strstr(p1, ":");
-    if(p1 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    p1 = strstr(p1, "\"");
-    if(p1 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    p1 += 1;
-    p2 = strstr(p1, "\"");
-    if(p2 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    memcpy(endpoint->username, p1, p2 - p1);
-
     /* get password*/
-    p1 = strstr(buf, "\"password\"");
-    if(p1 == NULL)
-    {
+    if (kii_json_copy_string_field(kii, buf, buf_size, &fields[1],
+                    endpoint->password,
+                    sizeof(endpoint->password) / sizeof(endpoint->password[0]))
+            !=0) {
         ret = KIIPUSH_ENDPOINT_ERROR;
         goto exit;
     }
-    p1 = strstr(p1, ":");
-    if(p1 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    p1 = strstr(p1, "\"");
-    if(p1 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    p1 += 1;
-    p2 = strstr(p1, "\"");
-    if(p2 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    memcpy(endpoint->password, p1, p2 - p1);
-
     /* get host*/
-    p1 = strstr(buf, "\"host\"");
-    if(p1 == NULL)
-    {
+    if (kii_json_copy_string_field(kii, buf, buf_size, &fields[2],
+                    endpoint->host,
+                    sizeof(endpoint->host) / sizeof(endpoint->host[0])) != 0) {
         ret = KIIPUSH_ENDPOINT_ERROR;
         goto exit;
     }
-    p1 = strstr(p1, ":");
-    if(p1 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    p1 = strstr(p1, "\"");
-    if(p1 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    p1 += 1;
-    p2 = strstr(p1, "\"");
-    if(p2 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    memcpy(endpoint->host, p1, p2 - p1);
-
     /* get mqttTopic*/
-    p1 = strstr(buf, "\"mqttTopic\"");
-    if(p1 == NULL)
-    {
+    if (kii_json_copy_string_field(kii, buf, buf_size, &fields[2],
+                    endpoint->topic,
+                    sizeof(endpoint->topic) / sizeof(endpoint->topic[0]))
+            != 0) {
         ret = KIIPUSH_ENDPOINT_ERROR;
         goto exit;
     }
-    p1 = strstr(p1, ":");
-    if(p1 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    p1 = strstr(p1, "\"");
-    if(p1 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    p1 += 1;
-    p2 = strstr(p1, "\"");
-    if(p2 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    memcpy(endpoint->topic, p1, p2 - p1);
     /* TODO: parse from response */
     endpoint->port_tcp = 1883;
     ret = KIIPUSH_ENDPOINT_READY;
