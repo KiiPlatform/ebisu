@@ -39,10 +39,10 @@ static int kiiPush_install(
     char* buf = NULL;
     size_t buf_size = 0;
     int ret = -1;
-    kii_json_parse_result_t parse_result = KII_JSON_PARSE_INVALID;
+    kii_json_parse_result_t parse_result = KII_JSON_PARSE_INVALID_INPUT;
     kii_error_code_t core_err;
     kii_state_t state;
-    kii_json_field_t fields[] = { { "installationID" }, { NULL } };
+    kii_json_field_t fields[2];
 
     core_err = kii_core_install_thing_push(&kii->kii_core, development);
     if (core_err != KIIE_OK) {
@@ -64,16 +64,25 @@ static int kiiPush_install(
     buf = kii->kii_core.response_body;
     buf_size = kii->kii_core.http_context.buffer_size -
         (kii->kii_core.response_body - kii->kii_core.http_context.buffer);
+    if (buf == NULL) {
+        ret = -1;
+        goto exit;
+    }
+
+    memset(fields, 0, sizeof(fields));
+    fields[0].name = "installationID";
+    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].field_copy_buff = installation_id;
+    fields[0].field_copy_buff_size = installation_id_len;
+    fields[1].name = NULL;
+
     parse_result = kii_json_read_object(kii, buf, buf_size, fields);
     if (parse_result != KII_JSON_PARSE_SUCCESS) {
         M_KII_LOG(kii->kii_core.logger_cb("fail to get json value: %d\n",
                         parse_result));
         goto exit;
     }
-    if (kii_json_copy_string_field(kii, buf, buf_size, &fields[0],
-                    installation_id, installation_id_len) != 0) {
-        goto exit;
-    }
+
     ret = 0;
 
 exit:
@@ -85,16 +94,10 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
     char* buf = NULL;
     size_t buf_size = 0;
     kiiPush_endpointState_e ret = KIIPUSH_ENDPOINT_ERROR;
-    kii_json_parse_result_t parse_result = KII_JSON_PARSE_INVALID;
+    kii_json_parse_result_t parse_result = KII_JSON_PARSE_INVALID_INPUT;
     kii_error_code_t core_err;
     kii_state_t state;
-    kii_json_field_t fields[] = {
-            { "username" },
-            { "password" },
-            { "host" },
-            { "mqttTopic" },
-            { NULL }
-    };
+    kii_json_field_t fields[5];
 
     core_err = kii_core_get_mqtt_endpoint(&kii->kii_core, installation_id);
     if (core_err != KIIE_OK) {
@@ -122,42 +125,40 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
     buf = kii->kii_core.response_body;
     buf_size = kii->kii_core.http_context.buffer_size -
         (kii->kii_core.response_body - kii->kii_core.http_context.buffer);
+    if (buf == NULL) {
+        ret = KIIPUSH_ENDPOINT_ERROR;
+        goto exit;
+    }
+
+    memset(fields, 0, sizeof(fields));
+    fields[0].name = "username";
+    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].field_copy_buff = endpoint->username;
+    fields[0].field_copy_buff_size = 
+        sizeof(endpoint->username) / sizeof(endpoint->username[0]);
+    fields[1].name = "password";
+    fields[1].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[1].field_copy_buff = endpoint->password;
+    fields[1].field_copy_buff_size =
+        sizeof(endpoint->password) / sizeof(endpoint->password[0]);
+    fields[2].name = "host";
+    fields[2].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[2].field_copy_buff = endpoint->host;
+    fields[2].field_copy_buff_size =
+        sizeof(endpoint->host) / sizeof(endpoint->host[0]);
+    fields[3].name = "mqttTopic";
+    fields[3].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[3].field_copy_buff = endpoint->topic;
+    fields[3].field_copy_buff_size =
+        sizeof(endpoint->topic) / sizeof(endpoint->topic[0]);
+    fields[4].name = NULL;
+
     parse_result = kii_json_read_object(kii, buf, buf_size, fields);
     if (parse_result == KII_JSON_PARSE_SUCCESS) {
         ret = KIIPUSH_ENDPOINT_ERROR;
         goto exit;
     }
-    /* get username*/
-    if (kii_json_copy_string_field(kii, buf, buf_size, &fields[0],
-                    endpoint->username,
-                    sizeof(endpoint->username) / sizeof(endpoint->username[0]))
-            != 0) {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    /* get password*/
-    if (kii_json_copy_string_field(kii, buf, buf_size, &fields[1],
-                    endpoint->password,
-                    sizeof(endpoint->password) / sizeof(endpoint->password[0]))
-            !=0) {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    /* get host*/
-    if (kii_json_copy_string_field(kii, buf, buf_size, &fields[2],
-                    endpoint->host,
-                    sizeof(endpoint->host) / sizeof(endpoint->host[0])) != 0) {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    /* get mqttTopic*/
-    if (kii_json_copy_string_field(kii, buf, buf_size, &fields[2],
-                    endpoint->topic,
-                    sizeof(endpoint->topic) / sizeof(endpoint->topic[0]))
-            != 0) {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
+
     /* TODO: parse from response */
     endpoint->port_tcp = 1883;
     ret = KIIPUSH_ENDPOINT_READY;
