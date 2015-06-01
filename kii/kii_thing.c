@@ -76,22 +76,16 @@ int kii_thing_register(
         const char* thing_type,
         const char* password)
 {
-    char* buf;
-    char* start_body;
+    char* buf = NULL;
     char thing_data[1024];
     size_t buf_size = 0;
     int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
-    kii_json_field_t fields[] = {
-        { "access_token" },
-        { NULL }
-    };
+    kii_json_field_t fields[3];
     kii_json_parse_result_t result;
-    size_t field_len = 0;
 
-    buf = kii->kii_core.http_context.buffer;
-    buf_size = kii->kii_core.http_context.buffer_size;
+
     sprintf(thing_data,
             "{\"_vendorThingID\":\"%s\",\"_thingType\":\"%s\",\"_password\":\"%s\"}",
             vendor_thing_id, thing_type, password);
@@ -110,26 +104,32 @@ int kii_thing_register(
         goto exit;
     }
     /* parse response */
-    start_body = prv_kii_util_get_http_body(buf, buf_size);
-    if (start_body == NULL) {
+    buf = kii->kii_core.response_body;
+    buf_size = kii->kii_core.http_context.buffer_size -
+            (kii->kii_core.http_context.buffer - kii->kii_core.response_body);
+    if (buf == NULL) {
         ret = -1;
         goto exit;
     }
-    result = kii_json_read_object(kii, start_body,
-            buf_size - (start_body - buf), fields);
+
+    memset(fields, 0, sizeof(fields));
+    fields[0].name = "_accessToken";
+    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].field_copy_buff = kii->kii_core.author.access_token;
+    fields[0].field_copy_buff_size = sizeof(kii->kii_core.author.access_token) /
+            sizeof(kii->kii_core.author.access_token[0]);
+    fields[1].name = "_thingID";
+    fields[1].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[1].field_copy_buff = kii->kii_core.author.author_id;
+    fields[1].field_copy_buff_size = sizeof(kii->kii_core.author.author_id) /
+            sizeof(kii->kii_core.author.author_id[0]);
+    fields[2].name = NULL;
+
+    result = kii_json_read_object(kii, buf, buf_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
         ret = -1;
         goto exit;
     }
-    if (fields[0].result != KII_JSON_FIELD_PARSE_SUCCESS) {
-        ret = -1;
-        goto exit;
-    }
-    field_len = fields[0].end - fields[0].start;
-    memcpy(kii->kii_core.author.access_token, start_body + fields[0].start,
-            field_len);
-    kii->kii_core.author.access_token[field_len] = '\0';
-    strcpy(kii->kii_core.author.author_id, vendor_thing_id);
     ret = 0;
 
 exit:
