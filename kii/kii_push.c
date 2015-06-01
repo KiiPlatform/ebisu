@@ -4,6 +4,7 @@
 #include "kii.h"
 #include "kii_mqtt.h"
 #include "kii_core.h"
+#include "kii_json.h"
 
 #define KII_PUSH_PING_ENABLE 1
 #define KII_PUSH_INSTALLATIONID_SIZE 64
@@ -29,16 +30,20 @@ static unsigned int mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];
 static unsigned int mKiiPush_pingReqTaskStk[KIIPUSH_PINGREQ_TASK_STK_SIZE];
 #endif
 
-static int kiiPush_install(kii_t* kii, kii_bool_t development, char* installation_id)
+static int kiiPush_install(
+        kii_t* kii,
+        kii_bool_t development,
+        char* installation_id,
+        size_t installation_id_len)
 {
-    char* p1;
-    char* p2;
-    char* buf;
+    char* buf = NULL;
+    size_t buf_size = 0;
     int ret = -1;
+    kii_json_parse_result_t parse_result = KII_JSON_PARSE_INVALID_INPUT;
     kii_error_code_t core_err;
     kii_state_t state;
+    kii_json_field_t fields[2];
 
-    buf = kii->kii_core.http_context.buffer;
     core_err = kii_core_install_thing_push(&kii->kii_core, development);
     if (core_err != KIIE_OK) {
         goto exit;
@@ -55,28 +60,29 @@ static int kiiPush_install(kii_t* kii, kii_bool_t development, char* installatio
     {
         goto exit;
     }
-    p1 = strstr(buf, "\"installationID\"");
-    if(p1 == NULL)
-    {
+
+    buf = kii->kii_core.response_body;
+    buf_size = kii->kii_core.http_context.buffer_size -
+        (kii->kii_core.response_body - kii->kii_core.http_context.buffer);
+    if (buf == NULL) {
+        ret = -1;
         goto exit;
     }
-    p1 = strstr(p1, ":");
-    if(p1 == NULL)
-    {
+
+    memset(fields, 0, sizeof(fields));
+    fields[0].name = "installationID";
+    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].field_copy_buff = installation_id;
+    fields[0].field_copy_buff_size = installation_id_len;
+    fields[1].name = NULL;
+
+    parse_result = kii_json_read_object(kii, buf, buf_size, fields);
+    if (parse_result != KII_JSON_PARSE_SUCCESS) {
+        M_KII_LOG(kii->kii_core.logger_cb("fail to get json value: %d\n",
+                        parse_result));
         goto exit;
     }
-    p1 = strstr(p1, "\"");
-    if(p1 == NULL)
-    {
-        goto exit;
-    }
-    p1 += 1;
-    p2 = strstr(p1, "\"");
-    if(p2 == NULL)
-    {
-        goto exit;
-    }
-    memcpy(installation_id, p1, p2 - p1);
+
     ret = 0;
 
 exit:
@@ -85,14 +91,14 @@ exit:
 
 static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* installation_id, kii_mqtt_endpoint_t* endpoint)
 {
-    char* p1;
-    char* p2;
-    char* buf;
-    kiiPush_endpointState_e ret;
+    char* buf = NULL;
+    size_t buf_size = 0;
+    kiiPush_endpointState_e ret = KIIPUSH_ENDPOINT_ERROR;
+    kii_json_parse_result_t parse_result = KII_JSON_PARSE_INVALID_INPUT;
     kii_error_code_t core_err;
     kii_state_t state;
+    kii_json_field_t fields[5];
 
-    buf = kii->kii_core.http_context.buffer;
     core_err = kii_core_get_mqtt_endpoint(&kii->kii_core, installation_id);
     if (core_err != KIIE_OK) {
         goto exit;
@@ -116,117 +122,43 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
         goto exit;
     }
 
-    /* get username*/
-    p1 = strstr(buf, "\"username\"");
-    if(p1 == NULL)
-    {
+    buf = kii->kii_core.response_body;
+    buf_size = kii->kii_core.http_context.buffer_size -
+        (kii->kii_core.response_body - kii->kii_core.http_context.buffer);
+    if (buf == NULL) {
         ret = KIIPUSH_ENDPOINT_ERROR;
         goto exit;
     }
-    p1 = strstr(p1, ":");
-    if(p1 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    p1 = strstr(p1, "\"");
-    if(p1 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    p1 += 1;
-    p2 = strstr(p1, "\"");
-    if(p2 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    memcpy(endpoint->username, p1, p2 - p1);
 
-    /* get password*/
-    p1 = strstr(buf, "\"password\"");
-    if(p1 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    p1 = strstr(p1, ":");
-    if(p1 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    p1 = strstr(p1, "\"");
-    if(p1 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    p1 += 1;
-    p2 = strstr(p1, "\"");
-    if(p2 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    memcpy(endpoint->password, p1, p2 - p1);
+    memset(fields, 0, sizeof(fields));
+    fields[0].name = "username";
+    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].field_copy_buff = endpoint->username;
+    fields[0].field_copy_buff_size = 
+        sizeof(endpoint->username) / sizeof(endpoint->username[0]);
+    fields[1].name = "password";
+    fields[1].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[1].field_copy_buff = endpoint->password;
+    fields[1].field_copy_buff_size =
+        sizeof(endpoint->password) / sizeof(endpoint->password[0]);
+    fields[2].name = "host";
+    fields[2].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[2].field_copy_buff = endpoint->host;
+    fields[2].field_copy_buff_size =
+        sizeof(endpoint->host) / sizeof(endpoint->host[0]);
+    fields[3].name = "mqttTopic";
+    fields[3].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[3].field_copy_buff = endpoint->topic;
+    fields[3].field_copy_buff_size =
+        sizeof(endpoint->topic) / sizeof(endpoint->topic[0]);
+    fields[4].name = NULL;
 
-    /* get host*/
-    p1 = strstr(buf, "\"host\"");
-    if(p1 == NULL)
-    {
+    parse_result = kii_json_read_object(kii, buf, buf_size, fields);
+    if (parse_result == KII_JSON_PARSE_SUCCESS) {
         ret = KIIPUSH_ENDPOINT_ERROR;
         goto exit;
     }
-    p1 = strstr(p1, ":");
-    if(p1 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    p1 = strstr(p1, "\"");
-    if(p1 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    p1 += 1;
-    p2 = strstr(p1, "\"");
-    if(p2 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    memcpy(endpoint->host, p1, p2 - p1);
 
-    /* get mqttTopic*/
-    p1 = strstr(buf, "\"mqttTopic\"");
-    if(p1 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    p1 = strstr(p1, ":");
-    if(p1 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    p1 = strstr(p1, "\"");
-    if(p1 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    p1 += 1;
-    p2 = strstr(p1, "\"");
-    if(p2 == NULL)
-    {
-        ret = KIIPUSH_ENDPOINT_ERROR;
-        goto exit;
-    }
-    memcpy(endpoint->topic, p1, p2 - p1);
     /* TODO: parse from response */
     endpoint->port_tcp = 1883;
     ret = KIIPUSH_ENDPOINT_READY;
@@ -414,7 +346,8 @@ static void* kiiPush_recvMsgTask(void* sdata)
     {
         if(kii->_mqtt_endpoint_ready == 0)
         {
-            if(kiiPush_install(kii, KII_FALSE, installation_id) != 0)
+            if(kiiPush_install(kii, KII_FALSE, installation_id,
+                    sizeof(installation_id) / sizeof(installation_id[0])) != 0)
             {
                 kii->delay_ms_cb(1000);
                 continue;
@@ -425,7 +358,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
                 kii->delay_ms_cb(1000);
                 endpointState = kiiPush_retrieveEndpoint(kii, installation_id, &endpoint);
             }
-            while((endpointState == KIIPUSH_ENDPOINT_UNAVAILABLE));
+            while(endpointState == KIIPUSH_ENDPOINT_UNAVAILABLE);
 
             if(endpointState != KIIPUSH_ENDPOINT_READY)
             {
