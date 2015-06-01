@@ -311,13 +311,9 @@ int kii_object_init_upload_body(
     kii_error_code_t core_err;
     kii_state_t state;
     char resource_path[256];
-    kii_json_field_t fields[] = {
-        { "uploadID" },
-        { NULL }
-    };
+    kii_json_field_t fields[2];
     kii_json_parse_result_t result;
     size_t buf_size = 0;
-    size_t field_len = 0;
 
     memset(resource_path, 0x00, sizeof(resource_path));
     strcpy(resource_path, "api/apps/");
@@ -357,19 +353,22 @@ int kii_object_init_upload_body(
     buf = kii->kii_core.response_body;
     buf_size = kii->kii_core.http_context.buffer_size -
         (kii->kii_core.response_body - kii->kii_core.http_context.buffer);
-    result = kii_json_read_object(kii, buf, buf_size, fields);
-    if (result != KII_JSON_PARSE_SUCCESS) {
-        ret = -1;
-        goto exit;
-    }
-    if (fields[0].result != KII_JSON_FIELD_PARSE_SUCCESS) {
-        ret = -1;
+    if (buf == NULL) {
         goto exit;
     }
 
-    field_len = fields[0].end - fields[0].start;
-    strncpy(out_upload_id, buf + fields[0].start, field_len);
-    out_upload_id[field_len] = '\0';
+    memset(fields, 0x00, sizeof(fields));
+    fields[0].name = "uploadID";
+    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].field_copy_buff = out_upload_id;
+    // TODO: fix this size.
+    fields[0].field_copy_buff_size = 128;
+    fields[1].name = NULL;
+
+    result = kii_json_read_object(kii, buf, buf_size, fields);
+    if (result != KII_JSON_PARSE_SUCCESS) {
+        goto exit;
+    }
 
     ret = 0;
 exit:
