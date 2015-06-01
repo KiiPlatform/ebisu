@@ -19,13 +19,9 @@ int kii_object_create(
     int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
-    kii_json_field_t fields[] = {
-        { "objectID" },
-        { NULL }
-    };
+    kii_json_field_t fields[2];
     kii_json_parse_result_t result;
     size_t buf_size = 0;
-    size_t field_len = 0;
 
     core_err = kii_core_create_new_object(
             &kii->kii_core,
@@ -50,19 +46,21 @@ int kii_object_create(
     buf = kii->kii_core.response_body;
     buf_size = kii->kii_core.http_context.buffer_size -
         (kii->kii_core.response_body - kii->kii_core.http_context.buffer);
-    result = kii_json_read_object(kii, buf, buf_size, fields);
-    if (result != KII_JSON_PARSE_SUCCESS) {
-        ret = -1;
-        goto exit;
-    }
-    if (fields[0].result != KII_JSON_FIELD_PARSE_SUCCESS) {
-        ret = -1;
+    if (buf == NULL) {
         goto exit;
     }
 
-    field_len = fields[0].end - fields[0].start;
-    memcpy(out_object_id, buf + fields[0].start, field_len);
-    out_object_id[field_len] = '\0';
+    memset(fields, 0, sizeof(fields));
+    fields[0].name = "objectID";
+    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].field_copy_buff = out_object_id;
+    fields[0].field_copy_buff_size = KII_OBJECTID_SIZE;
+    fields[1].name = NULL;
+
+    result = kii_json_read_object(kii, buf, buf_size, fields);
+    if (result != KII_JSON_PARSE_SUCCESS) {
+        goto exit;
+    }
 
     ret = 0;
 
