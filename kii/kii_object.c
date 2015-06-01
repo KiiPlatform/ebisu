@@ -3,6 +3,8 @@
 #include <stdlib.h>
 
 #include "kii.h"
+#include "kii_json.h"
+#include "kii_util.h"
 
 #include "kii_core.h"
 
@@ -13,12 +15,13 @@ int kii_object_create(
         const char* object_content_type,
         char* out_object_id)
 {
-    char* p1;
-    char* p2;
-    char* buf;
+    char* buf = NULL;
     int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
+    kii_json_field_t fields[2];
+    kii_json_parse_result_t result;
+    size_t buf_size = 0;
 
     core_err = kii_core_create_new_object(
             &kii->kii_core,
@@ -40,25 +43,25 @@ int kii_object_create(
         goto exit;
     }
 
-    buf = kii->kii_core.http_context.buffer;
-    p1 = strstr(buf, "\"objectID\"");
-    if(p1 == NULL) {
+    buf = kii->kii_core.response_body;
+    buf_size = kii->kii_core.http_context.buffer_size -
+        (kii->kii_core.response_body - kii->kii_core.http_context.buffer);
+    if (buf == NULL) {
         goto exit;
     }
-    p1 = strstr(p1, ":");
-    if(p1 == NULL) {
+
+    memset(fields, 0, sizeof(fields));
+    fields[0].name = "objectID";
+    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].field_copy_buff = out_object_id;
+    fields[0].field_copy_buff_size = KII_OBJECTID_SIZE;
+    fields[1].name = NULL;
+
+    result = kii_json_read_object(kii, buf, buf_size, fields);
+    if (result != KII_JSON_PARSE_SUCCESS) {
         goto exit;
     }
-    p1 = strstr(p1, "\"");
-    if(p1 == NULL) {
-        goto exit;
-    }
-    p1 += 1;
-    p2 = strstr(p1, "\"");
-    if(p2 == NULL) {
-        goto exit;
-    }
-    memcpy(out_object_id, p1, p2 - p1);
+
     ret = 0;
 
 exit:
@@ -303,13 +306,14 @@ int kii_object_init_upload_body(
         const char* object_id,
         char* out_upload_id)
 { 
-    char* p1;
-    char* p2;
-    char* buf;
+    char* buf = NULL;
     int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
     char resource_path[256];
+    kii_json_field_t fields[2];
+    kii_json_parse_result_t result;
+    size_t buf_size = 0;
 
     memset(resource_path, 0x00, sizeof(resource_path));
     strcpy(resource_path, "api/apps/");
@@ -346,25 +350,26 @@ int kii_object_init_upload_body(
     if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
         goto exit;
     }
-    buf = kii->kii_core.http_context.buffer;
-    p1 = strstr(buf, "\"uploadID\"");
-    if(p1 == NULL) {
+    buf = kii->kii_core.response_body;
+    buf_size = kii->kii_core.http_context.buffer_size -
+        (kii->kii_core.response_body - kii->kii_core.http_context.buffer);
+    if (buf == NULL) {
         goto exit;
     }
-    p1 = strstr(p1, ":");
-    if(p1 == NULL) {
+
+    memset(fields, 0x00, sizeof(fields));
+    fields[0].name = "uploadID";
+    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].field_copy_buff = out_upload_id;
+    // TODO: fix this size.
+    fields[0].field_copy_buff_size = 128;
+    fields[1].name = NULL;
+
+    result = kii_json_read_object(kii, buf, buf_size, fields);
+    if (result != KII_JSON_PARSE_SUCCESS) {
         goto exit;
     }
-    p1 = strstr(p1, "\"");
-    if(p1 == NULL) {
-        goto exit;
-    }
-    p1 += 1;
-    p2 = strstr(p1, "\"");
-    if(p2 == NULL) {
-        goto exit;
-    }
-    strncpy(out_upload_id, p1, p2 - p1);
+
     ret = 0;
 exit:
     return ret;
