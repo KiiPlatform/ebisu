@@ -31,7 +31,7 @@ int main(int argc, char** argv)
     kii_bucket_t bucket;
     char object_data[512];
     char object_id[KII_OBJECTID_SIZE+1];
-    char upload_id[128];
+    char upload_id[KII_UPLOADID_SIZE];
     char content_type[128];
     kii_chunk_data_t chunk;
     unsigned int length;

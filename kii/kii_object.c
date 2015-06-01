@@ -361,8 +361,7 @@ int kii_object_init_upload_body(
     fields[0].name = "uploadID";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
     fields[0].field_copy_buff = out_upload_id;
-    // TODO: fix this size.
-    fields[0].field_copy_buff_size = 128;
+    fields[0].field_copy_buff_size = KII_UPLOADID_SIZE;
     fields[1].name = NULL;
 
     result = kii_json_read_object(kii, buf, buf_size, fields);

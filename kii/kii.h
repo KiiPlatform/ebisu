@@ -10,6 +10,8 @@
 
 #define KII_OBJECTID_SIZE 36
 
+#define KII_UPLOADID_SIZE 64
+
 #ifdef DEBUG
 #ifndef __FILE__
 #define __FILE__ ("__FILE__ macro is not available")
@@ -212,6 +214,8 @@ int kii_object_upload_body_at_once(
  *  \param [in] bucket specify the bucket of which object is stored.
  *  \param [in] object_id specify the id of the object of which body is added.
  *  \param [out] out_upload_id upload id to be used to continue chunked upload.
+ *  Must be allocated by application with the size of KII_UPLOADID_SIZE
+ *  before this api call.
  *  \return 0:success; -1: failure
  */
 int kii_object_init_upload_body(
