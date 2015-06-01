@@ -1,5 +1,7 @@
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
+#include <ctype.h>
 
 #include "kii.h"
 #include "kii_mqtt.h"
@@ -29,6 +31,66 @@ static unsigned int mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];
 #define KIIPUSH_PINGREQ_TASK_STK_SIZE 8
 static unsigned int mKiiPush_pingReqTaskStk[KIIPUSH_PINGREQ_TASK_STK_SIZE];
 #endif
+
+static int prv_kii_json_field_to_unsigned_int(
+        const char* json_string,
+        const kii_json_field_t* field,
+        unsigned int* out_value)
+{
+    const char* start = NULL;
+    const char* end = NULL;
+    unsigned int parsed_value = 0;
+
+    assert(field != NULL);
+    assert(out_value != NULL);
+
+    if (field->type != KII_JSON_FIELD_TYPE_PRIMITIVE) {
+        return -1;
+    }
+
+    start = json_string + field->start;
+    end = json_string + field->end;
+    do {
+        if (isdigit(*start) == 0) {
+            return -1;
+        }
+        parsed_value = *start - '0' + (parsed_value * 10);
+        ++start;
+    } while (start != end);
+
+    *out_value = parsed_value;
+    return 0;
+}
+
+static int prv_kii_json_field_to_unsigned_long(
+        const char* json_string,
+        const kii_json_field_t* field,
+        unsigned long* out_value)
+{
+    const char* start = NULL;
+    const char* end = NULL;
+    unsigned long parsed_value = 0;
+
+    assert(field != NULL);
+    assert(out_value != NULL);
+
+    if (field->type != KII_JSON_FIELD_TYPE_PRIMITIVE) {
+        return -1;
+    }
+
+    start = json_string + field->start;
+    end = json_string + field->end;
+    do {
+        if (isdigit(*start) == 0) {
+            return -1;
+        }
+        parsed_value = *start - '0' + (parsed_value * 10);
+        ++start;
+    } while (start != end);
+
+    *out_value = parsed_value;
+    return 0;
+}
 
 static int kiiPush_install(
         kii_t* kii,
@@ -97,7 +159,7 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
     kii_json_parse_result_t parse_result = KII_JSON_PARSE_INVALID_INPUT;
     kii_error_code_t core_err;
     kii_state_t state;
-    kii_json_field_t fields[5];
+    kii_json_field_t fields[8];
 
     core_err = kii_core_get_mqtt_endpoint(&kii->kii_core, installation_id);
     if (core_err != KIIE_OK) {
@@ -151,16 +213,35 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
     fields[3].field_copy_buff = endpoint->topic;
     fields[3].field_copy_buff_size =
         sizeof(endpoint->topic) / sizeof(endpoint->topic[0]);
-    fields[4].name = NULL;
+    fields[4].name = "portTCP";
+    fields[4].type = KII_JSON_FIELD_TYPE_PRIMITIVE;
+    fields[5].name = "portSSL";
+    fields[5].type = KII_JSON_FIELD_TYPE_PRIMITIVE;
+    fields[6].name = "X-MQTT-TTL";
+    fields[6].type = KII_JSON_FIELD_TYPE_PRIMITIVE;
+    fields[7].name = NULL;
 
     parse_result = kii_json_read_object(kii, buf, buf_size, fields);
-    if (parse_result == KII_JSON_PARSE_SUCCESS) {
+    if (parse_result != KII_JSON_PARSE_SUCCESS) {
         ret = KIIPUSH_ENDPOINT_ERROR;
         goto exit;
     }
 
-    /* TODO: parse from response */
-    endpoint->port_tcp = 1883;
+    if (prv_kii_json_field_to_unsigned_int(buf, &fields[4],
+                    &endpoint->port_tcp) != 0) {
+        ret = KIIPUSH_ENDPOINT_ERROR;
+        goto exit;
+    }
+    if (prv_kii_json_field_to_unsigned_int(buf, &fields[5],
+                    &endpoint->port_ssl) != 0) {
+        ret = KIIPUSH_ENDPOINT_ERROR;
+        goto exit;
+    }
+    if (prv_kii_json_field_to_unsigned_long(buf, &fields[5],
+                    &endpoint->ttl) != 0) {
+        ret = KIIPUSH_ENDPOINT_ERROR;
+        goto exit;
+    }
     ret = KIIPUSH_ENDPOINT_READY;
 
 exit:
