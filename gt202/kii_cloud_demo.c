@@ -169,6 +169,98 @@ static int get_object(kii_t* kii, const char* id)
     return ret;
 }
 
+static int upload_body_once(kii_t* kii, const char* id)
+{
+    int ret = 0;
+
+    kii_bucket_t bucket;
+    init_bucket(&bucket);
+
+    set_author(kii);
+
+    ret = kii_object_upload_body_at_once(kii, &bucket, id, "text/plain",
+            "1234", 4);
+
+    print_response(kii);
+    parse_response(kii->kii_core.response_body);
+    return ret;
+}
+
+static int upload_body_multi(kii_t* kii, const char* id)
+{
+    int ret = 0;
+    char uploadId[KII_UPLOADID_SIZE];
+    kii_chunk_data_t chunk;
+
+    kii_bucket_t bucket;
+    init_bucket(&bucket);
+
+    set_author(kii);
+
+    ret = kii_object_init_upload_body(kii, &bucket, id, uploadId);
+    if (ret != 0) {
+        print_response(kii);
+        parse_response(kii->kii_core.response_body);
+        return ret;
+    }
+
+    chunk.chunk = "Hello world !\n";
+    chunk.body_content_type = "text/plain";
+    chunk.position = 0;
+    chunk.length = chunk.total_length = strlen(chunk.chunk);
+
+    ret = kii_object_upload_body(kii, &bucket, id, uploadId, &chunk);
+    if (ret != 0) {
+        print_response(kii);
+        parse_response(kii->kii_core.response_body);
+        return ret;
+    }
+
+    ret = kii_object_commit_upload(kii, &bucket, id, uploadId, 1);
+
+    print_response(kii);
+    parse_response(kii->kii_core.response_body);
+    return ret;
+}
+
+static int download_body_once(kii_t* kii, const char* id)
+{
+    int ret = 0;
+    unsigned int length;
+
+    kii_bucket_t bucket;
+    init_bucket(&bucket);
+
+    set_author(kii);
+
+    ret = kii_object_download_body_at_once(kii, &bucket, id, &length);
+
+    print_response(kii);
+    printf("length: %d\n", length);
+    parse_response(kii->kii_core.response_body);
+    return ret;
+}
+
+static int download_body_multi(kii_t* kii, const char* id)
+{
+    int ret = 0;
+    unsigned int length;
+    unsigned int total;
+
+    kii_bucket_t bucket;
+    init_bucket(&bucket);
+
+    set_author(kii);
+
+    ret = kii_object_downlad_body(kii, id, &bucket, 0,
+            strlen("Hello world !\n"), &length, &total);
+
+    print_response(kii);
+    printf("length: %d total: %d\n", length, total);
+    parse_response(kii->kii_core.response_body);
+    return ret;
+}
+
 static int delete_object(kii_t* kii, const char* id)
 {
     int ret = 0;
@@ -281,55 +373,35 @@ static int unsubscribe_topic(kii_t* kii)
     return ret;
 }
 
-static int install_push(kii_t* kii)
-{
-    kii_state_t state;
-    kii_error_code_t err;
-
-    set_author(kii);
-
-    err = kii_core_install_thing_push(
-            &kii->kii_core,
-            KII_FALSE);
-    printf("request:\n%s\n", kii->kii_core.http_context.buffer);
-    if (err != KIIE_OK) {
-        printf("execution failed\n");
-        return 1;
-    }
-    do {
-        err = kii_core_run(&kii->kii_core);
-        state = kii_core_get_state(&kii->kii_core);
-    } while (state != KII_STATE_IDLE);
-    if (err != KIIE_OK) {
-        return 1;
-    }
-    print_response(kii);
-    parse_response(kii->kii_core.response_body);
-    return 0;
+void received_callback(char* buffer, size_t buffer_size) {
+    char copy[1024];
+    memset(copy, 0x00, sizeof(copy));
+    strncpy(copy, buffer, sizeof(copy));
+    printf("buffer_size: %lu\n", buffer_size);
+    printf("recieve message: %s\n", copy);
 }
 
-static int get_endpoint(kii_t* kii)
+static int push(kii_t* kii)
 {
-    kii_state_t state;
-    kii_error_code_t err;
+    int ret = 0;
 
     set_author(kii);
 
-    err = kii_core_get_mqtt_endpoint(
-            &kii->kii_core,
-            INSTALLATION_ID);
-    printf("request:\n%s\n", kii->kii_core.http_context.buffer);
-    if (err != KIIE_OK) {
-        printf("execution failed\n");
-        return 1;
-    }
-    do {
-        err = kii_core_run(&kii->kii_core);
-        state = kii_core_get_state(&kii->kii_core);
-    } while (state != KII_STATE_IDLE);
-    if (err != KIIE_OK) {
-        return 1;
-    }
+    ret = kii_push_start_routine(kii, 0, 0, received_callback);
+
+    print_response(kii);
+    parse_response(kii->kii_core.response_body);
+    return ret;
+}
+
+static int server_code_eexecute(kii_t* kii)
+{
+    int ret = 0;
+
+    set_author(kii);
+
+    ret = kii_server_code_execute(kii, "test_topic", NULL);
+
     print_response(kii);
     parse_response(kii->kii_core.response_body);
     return 0;
@@ -346,6 +418,10 @@ static void show_help()
       printf(" patch-object\n\t patch object.\n");
       printf(" replace-object\n\t replace object.\n");
       printf(" get-object\n\t get object.\n");
+      printf(" upload-body-o\n\t upload body at once.\n"),
+      printf(" upload-body-m\n\t upload body in multiple pieces.\n"),
+      printf(" download-body-o\n\t download body at once.\n"),
+      printf(" download-body-m\n\t download body in multiple pieces.\n"),
       printf(" delete-object\n\t delete object.\n");
       printf(" subscribe-bucket\n\t subscribe bucket.\n");
       printf(" unsubscribe-bucket\n\t unsubscribe bucket.\n");
@@ -353,9 +429,10 @@ static void show_help()
       printf(" delete-topic\n\t delete topic.\n");
       printf(" subscribe-topic\n\t subscribe to topic.\n");
       printf(" unsubscribe-topic\n\t unsubscribe to topic.\n");
-      printf(" install-push\n\t install push.\n");
-      printf(" get-endpoint\n\t get endpoint of MQTT.\n");
+      printf(" push\n\t initialize push.\n");
+      printf(" server-code-execute\n\t server code execute.\n");
 }
+
 
 #define CMD_INDEX 1
 
@@ -429,6 +506,34 @@ int kii_main(int argc, char *argv[])
             ret = A_OK;
         }
     }
+    else if(ATH_STRCMP(argv[CMD_INDEX], "upload-body-o") == 0)
+    {
+        if (upload_body_once(kii, OBJECT_NAME) == 0)
+        {
+            ret = A_OK;
+        }
+    }
+    else if(ATH_STRCMP(argv[CMD_INDEX], "upload-body-m") == 0)
+    {
+        if (upload_body_multi(kii, OBJECT_NAME) == 0)
+        {
+            ret = A_OK;
+        }
+    }
+    else if(ATH_STRCMP(argv[CMD_INDEX], "download-body-o") == 0)
+    {
+        if (download_body_once(kii, OBJECT_NAME) == 0)
+        {
+            ret = A_OK;
+        }
+    }
+    else if(ATH_STRCMP(argv[CMD_INDEX], "download-body-m") == 0)
+    {
+        if (download_body_multi(kii, OBJECT_NAME) == 0)
+        {
+            ret = A_OK;
+        }
+    }
     else if(ATH_STRCMP(argv[CMD_INDEX], "delete-object") == 0)
     {
         if (delete_object(kii, OBJECT_NAME) == 0)
@@ -478,16 +583,16 @@ int kii_main(int argc, char *argv[])
             ret = A_OK;
         }
     }
-    else if(ATH_STRCMP(argv[CMD_INDEX], "install-push") == 0)
+    else if(ATH_STRCMP(argv[CMD_INDEX], "push") == 0)
     {
-        if (install_push(kii) == 0)
+        if (push(kii) == 0)
         {
             ret = A_OK;
         }
     }
-    else if(ATH_STRCMP(argv[CMD_INDEX], "get-endpoint") == 0)
+    else if(ATH_STRCMP(argv[CMD_INDEX], "server-code-execute") == 0)
     {
-        if (get_endpoint(kii) == 0)
+        if (server_code_eexecute(kii) == 0)
         {
             ret = A_OK;
         }
