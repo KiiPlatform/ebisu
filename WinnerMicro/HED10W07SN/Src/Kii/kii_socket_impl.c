@@ -26,6 +26,7 @@ kii_socket_code_t
     }
 
     if (connect(sock, (struct sockaddr*) &server, sizeof(server)) == -1 ){
+	    close(sock);
         return KII_SOCKETC_FAIL;
     }
 	
