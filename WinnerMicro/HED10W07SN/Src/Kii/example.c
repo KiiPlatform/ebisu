@@ -7,11 +7,8 @@
 #include "kii_core_impl.h"
 
 void received_callback(char* buffer, size_t buffer_size) {
-    char copy[1024];
-    memset(copy, 0x00, sizeof(copy));
-    strncpy(copy, buffer, sizeof(copy));
     printf("buffer_size: %u\n", buffer_size);
-    printf("recieve message: %s\n", copy);
+    printf("recieve message: %s\n", buffer);
 }
 
 int kiiDemo_test(char *buf)
@@ -35,7 +32,13 @@ int kiiDemo_test(char *buf)
     unsigned int length;
     unsigned int actual_length;
     unsigned int total_length;
-    context_t context;
+    context_t *context;
+
+    context = malloc(sizeof(struct context_t));
+	if (context == NULL) {
+	    printf("allocate memory failed\n");
+		return -1;
+	}
 
     buffer = malloc(EX_BUFFER_SIZE);
 	if (buffer == NULL)
@@ -53,12 +56,12 @@ int kiiDemo_test(char *buf)
 	}
     memset(buffer, 0x00, buffer_size);
     memset(mqtt_buffer, 0x00, mqtt_buffer_size);
-    memset(&context, 0x00, sizeof(context_t));
+    memset(context, 0x00, sizeof(context_t));
 
     kii_init(&kii, EX_APP_SITE, EX_APP_ID, EX_APP_KEY);
     kii.kii_core.http_context.buffer = buffer;
     kii.kii_core.http_context.buffer_size = buffer_size;
-    kii.kii_core.http_context.app_context = &context;
+    kii.kii_core.http_context.app_context = context;
     kii.mqtt_buffer = mqtt_buffer;
     kii.mqtt_buffer_size = mqtt_buffer_size;
     memset(&author, 0x00, sizeof(kii_author_t));

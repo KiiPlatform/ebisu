@@ -12,8 +12,8 @@ const char EX_APP_SITE[] = "JP";
 const char EX_APP_ID[] = "9ab34d8b";
 const char EX_APP_KEY[] = "7a950d78956ed39f3b0815f0f001b43b";
 
-#define EX_BUFFER_SIZE 4096
-#define EX_MQTT_BUFFER_SIZE 2048
+#define EX_BUFFER_SIZE 2048
+#define EX_MQTT_BUFFER_SIZE 1024
 
 const char EX_THING_ID[] = "th.396587a00022-51e9-4e11-5eec-07846c59";
 const char EX_ACCESS_TOKEN[] = "PlRI8O54j74Og7OtRnYLHu-ftQYINQwgDRuyhi3rGlQ";
