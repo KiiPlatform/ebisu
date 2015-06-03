@@ -102,7 +102,7 @@ int kii_thing_register(
  *  application/json will be applied.
  *  \param [out] object_id output of the created object ID.
  *  Supplied when succeeded to create new object.
- *  Must be allocated by application with the size of KII_OBJECTID_SIZE
+ *  Must be allocated by application with the size of KII_OBJECTID_SIZE + 1
  *  before this api call.
  *  \return 0:success, -1: failure
  */
@@ -214,7 +214,7 @@ int kii_object_upload_body_at_once(
  *  \param [in] bucket specify the bucket of which object is stored.
  *  \param [in] object_id specify the id of the object of which body is added.
  *  \param [out] out_upload_id upload id to be used to continue chunked upload.
- *  Must be allocated by application with the size of KII_UPLOADID_SIZE
+ *  Must be allocated by application with the size of KII_UPLOADID_SIZE + 1
  *  before this api call.
  *  \return 0:success; -1: failure
  */

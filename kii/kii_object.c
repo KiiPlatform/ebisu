@@ -54,7 +54,7 @@ int kii_object_create(
     fields[0].name = "objectID";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
     fields[0].field_copy_buff = out_object_id;
-    fields[0].field_copy_buff_size = KII_OBJECTID_SIZE;
+    fields[0].field_copy_buff_size = KII_OBJECTID_SIZE + 1;
     fields[1].name = NULL;
 
     result = kii_json_read_object(kii, buf, buf_size, fields);
@@ -361,7 +361,7 @@ int kii_object_init_upload_body(
     fields[0].name = "uploadID";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
     fields[0].field_copy_buff = out_upload_id;
-    fields[0].field_copy_buff_size = KII_UPLOADID_SIZE;
+    fields[0].field_copy_buff_size = KII_UPLOADID_SIZE + 1;
     fields[1].name = NULL;
 
     result = kii_json_read_object(kii, buf, buf_size, fields);
