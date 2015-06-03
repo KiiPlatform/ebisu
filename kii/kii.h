@@ -8,7 +8,7 @@
 #include "kii_core.h"
 #include "kii_task_callback.h"
 
-#define KII_OBJECTID_SIZE 36
+#define KII_OBJECTID_SIZE 64
 
 #define KII_UPLOADID_SIZE 64
 
