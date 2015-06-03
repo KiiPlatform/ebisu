@@ -843,6 +843,7 @@ void WlanStationMode( void *pvParameters )
     }
 
     UART_PRINT("Connection established w/ AP and IP is aquired \n\r");
+#if 0
     UART_PRINT("Pinging...! \n\r");
 
     //
@@ -872,8 +873,8 @@ void WlanStationMode( void *pvParameters )
     GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
 
     UART_PRINT("Device pinged both the gateway and the external host \n\r");
-
     UART_PRINT("WLAN STATION example executed successfully \n\r");
+#endif
     kiiDemo_test();
 	while(1)
 	{
@@ -994,7 +995,7 @@ void main()
     //
     lRetVal = osi_TaskCreate( WlanStationMode, \
                                 (const signed char*)"Wlan Station Task", \
-                                OSI_STACK_SIZE, NULL, 1, NULL);
+                                OSI_STACK_SIZE*4, NULL, 1, NULL);
     if(lRetVal < 0)
     {
         ERR_PRINT(lRetVal);
