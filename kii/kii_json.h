@@ -1,7 +1,23 @@
 #ifndef KII_JSON_H
 #define KII_JSON_H
 
+// TODO: remove this.
 #include "kii.h"
+
+/** callback for logging. kii_json uses this function for logging. If
+ * you want to enable logging, set pointer of this function in
+ * kii_json_context_t#logger_cb. Logging is only enabled in DEBUG
+ * build.
+ */
+typedef void (*KII_JSON_LOGGER)(const char* format, ...);
+
+/** object manages context of kii json apis. */
+typedef struct kii_json_context_t {
+
+    /** logging callback function pointer */
+    KII_JSON_LOGGER logger_cb;
+
+} kii_json_context_t;
 
 /** Boolean type */
 typedef enum kii_json_boolean {
