@@ -70,13 +70,13 @@ typedef enum kii_json_field_type {
      * boolean and null. */
     KII_JSON_FIELD_TYPE_PRIMITIVE,
 
-    /** This values denotes an signed interger value. Max is INT_MAX
-     * and min is INT_MIN. */
+    /** This values denotes an signed interger value. Maximum is
+     * INT_MAX and Minimum is INT_MIN. */
     KII_JSON_FIELD_TYPE_INTEGER,
 
-    /** This values denotes an unsigned interger value. Max is
-     * UINT_MAX. */
-    KII_JSON_FIELD_TYPE_UNSIGNED_INTEGER,
+    /** This values denotes an signed interger value. Maximum is
+     * LONG_MAX and Minimum is LONG_MIN. */
+    KII_JSON_FIELD_TYPE_LONG,
 
     /** This value denotes an double value. */
     KII_JSON_FIELD_TYPE_DOUBLE,
@@ -137,7 +137,7 @@ typedef struct kii_json_field {
      * kii_json_field_type_t#KII_JSON_FIELD_TYPE_PRIMITIVE and Actual
      * type is one of
      * kii_json_field_type_t#KII_JSON_FIELD_TYPE_INTEGER,
-     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_UNSIGNED_INTEGER,
+     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_LONG,
      * kii_json_field_type_t#KII_JSON_FIELD_TYPE_BOOLEAN or
      * kii_json_field_type_t#KII_JSON_FIELD_TYPE_NULL:
      *   - kii_json_field_t#result becomes
@@ -185,9 +185,9 @@ typedef struct kii_json_field {
         int* int_value;
 
         /** This value is used if kii_json_field_t#type is
-         * kii_json_field_type_t#KII_JSON_FIELD_TYPE_UNSIGNED_INTEGER.
+         * kii_json_field_type_t#KII_JSON_FIELD_TYPE_LONG.
          */
-        unsigned int* uint_value;
+        long* long_value;
 
         /** This value is used if kii_json_field_t#type is
          * kii_json_field_type_t#KII_JSON_FIELD_TYPE_DOUBLE.
@@ -198,7 +198,7 @@ typedef struct kii_json_field {
          * kii_json_field_type_t#KII_JSON_FIELD_TYPE_BOOLEAN.
          */
         kii_json_boolean_t* boolean_value;
-    } fielc_copy;
+    } field_copy;
 
     /** Length of field_copy#string. ignored if field_copy#string is
      * null or kii_json_field_t#type is not
