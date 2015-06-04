@@ -49,11 +49,25 @@ typedef enum kii_json_field_parse_result {
     /** Field specified by kii_json_field_t#name is not found. */
     KII_JSON_FIELD_PARSE_NOT_FOUND,
 
-    /** Coping string to kii_json_field_t#field_copy_buff is failed.
+    /** Coping string to kii_json_field_t#field_copy#string is failed.
      * kii_json_field_t#field_copy_buff_size may shorter than actual
      * length.
      */
-    KII_JSON_FIELD_PARSE_COPY_FAILED
+    KII_JSON_FIELD_PARSE_COPY_FAILED,
+
+    /** Coping int or long value to
+     * kii_json_field_t#field_copy#int_value or
+     * kii_json_field_t#field_copy#long_value is failed. value is
+     * overflowed.
+     */
+    KII_JSON_FIELD_PARSE_COPY_OVERFLOW,
+
+    /** Coping int or long value to
+     * kii_json_field_t#field_copy#int_value or
+     * kii_json_field_t#field_copy#long_value is failed. value is
+     * underflowed.
+     */
+    KII_JSON_FIELD_PARSE_COPY_UNDERFLOW
 } kii_json_field_parse_result_t;
 
 /** Type of parsed JSON field. This value is assigned to
