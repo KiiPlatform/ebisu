@@ -3,6 +3,12 @@
 
 #include "kii.h"
 
+/** Boolean type */
+typedef enum kii_json_boolean {
+    KII_JSON_FALSE,
+    KII_JSON_TRUE
+} kii_json_boolean_t;
+
 /** Return value of kii_json_read_object(kii_t*, const char*, size_t,
  * kii_json_field_t*) */
 typedef enum kii_json_parse_result {
@@ -60,8 +66,26 @@ typedef enum kii_json_field_type {
      */
     KII_JSON_FIELD_TYPE_ANY,
 
-    /** This value denotes JSON primitive values such as number and null. */
+    /** This value denotes JSON primitive values such as number,
+     * boolean and null. */
     KII_JSON_FIELD_TYPE_PRIMITIVE,
+
+    /** This values denotes an signed interger value. Max is INT_MAX
+     * and min is INT_MIN. */
+    KII_JSON_FIELD_TYPE_INTEGER,
+
+    /** This values denotes an unsigned interger value. Max is
+     * UINT_MAX. */
+    KII_JSON_FIELD_TYPE_UNSIGNED_INTEGER,
+
+    /** This value denotes an double value. */
+    KII_JSON_FIELD_TYPE_DOUBLE,
+
+    /** This value denotes kii_json_boolean_t value. */
+    KII_JSON_FIELD_TYPE_BOOLEAN,
+
+    /** This value denotes denotes NULL value. */
+    KII_JSON_FIELD_TYPE_NULL,
 
     /** This value denotes JSON string. */
     KII_JSON_FIELD_TYPE_STRING,
@@ -76,22 +100,23 @@ typedef enum kii_json_field_type {
 /** JSON parsed field data */
 typedef struct kii_json_field {
 
-    /** parsing target key name. Input of
+    /** Parsing target key name. Input of
      * kii_json_read_object(kii_t*, const char*, size_t,
      * kii_json_field_t*).
      */
     const char* name;
 
-    /** field parse result. Output of kii_json_read_object(kii_t*,
+    /** Field parse result. Output of kii_json_read_object(kii_t*,
      * const char*, size_t, kii_json_field_t*).
      */
     kii_json_field_parse_result_t result;
 
-    /** parsed target value type. Input and Output of
+    /** Parsed target value type. Input and Output of
      * kii_json_read_object(kii_t*, const char*, size_t,
-     * kii_json_field_t*).
+     * kii_json_field_t*). Inputted value is expected value type and
+     * outputted value is actual value type.
      *
-     * If type is set except for
+     * If type is set as
      * kii_json_field_type_t#KII_JSON_FIELD_TYPE_ANY, then
      * kii_json_read_object(kii_t*, const char*, size_t,
      * kii_json_field_t*) ignore type checking.
@@ -101,31 +126,83 @@ typedef struct kii_json_field {
      *     kii_json_field_t*) set actual type.
      *   - if expected type is not
      *     kii_json_field_type_t#KII_JSON_FIELD_TYPE_ANY, then
-     *     kii_json_field_t#result become
+     *     kii_json_field_t#result becomes
      *     kii_json_parse_result_t#KII_JSON_FIELD_PARSE_TYPE_UNMATCHED.
      *   - if expected type is
      *     kii_json_field_type_t#KII_JSON_FIELD_TYPE_ANY, then
      *     kii_json_field_t#result become
      *     kii_json_parse_result_t#KII_JSON_FIELD_PARSE_SUCCESS.
+     *
+     * If expected type is
+     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_PRIMITIVE and Actual
+     * type is one of
+     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_INTEGER,
+     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_UNSIGNED_INTEGER,
+     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_BOOLEAN or
+     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_NULL:
+     *   - kii_json_field_t#result becomes
+     *     kii_json_parse_result_t#KII_JSON_FIELD_PARSE_SUCCESS,
+     *     otherwise,
+     *     kii_json_parse_result_t#KII_JSON_FIELD_PARSE_TYPE_UNMATCHED.
+     *   - Outputted actual type is
+     *     kii_json_field_type_t#KII_JSON_FIELD_TYPE_PRIMITIVE.
      */
     kii_json_field_type_t type;
 
-    /** start point of this field in given buffer. Output of
+    /** Start point of this field in given buffer. Output of
      * kii_json_read_object(kii_t*, const char*, size_t,
      * kii_json_field_t*).
      */
     size_t start;
 
-    /** end point of this field in given buffer. Output of
+    /** End point of this field in given buffer. Output of
      * kii_json_read_object(kii_t*, const char*, size_t,
      * kii_json_field_t*).
      */
     size_t end;
 
-    /** buffer to copy field value. if null no copy is generated. */
+    // TODO: remove this fields after field_copy field is adapted
     char* field_copy_buff;
 
-    /** length of field_copy_buff. ignored if field_copy_buff is null. */
+    /** Buffer to copy field value. if NULL, no copy is
+     * generated. Using value is determined by value of
+     * kii_json_field_t#type. If kii_json_field_t#type is
+     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_NULL, no copy is
+     * generated.
+     */
+    union {
+
+        /** This value is used if kii_json_field_t#type is
+         * kii_json_field_type_t#KII_JSON_FIELD_TYPE_STRING or
+         * kii_json_field_type_t#KII_JSON_FIELD_TYPE_PRIMITIVE.
+         */
+        char* string;
+
+        /** This value is used if kii_json_field_t#type is
+         * kii_json_field_type_t#KII_JSON_FIELD_TYPE_INTEGER.
+         */
+        int* int_value;
+
+        /** This value is used if kii_json_field_t#type is
+         * kii_json_field_type_t#KII_JSON_FIELD_TYPE_UNSIGNED_INTEGER.
+         */
+        unsigned int* uint_value;
+
+        /** This value is used if kii_json_field_t#type is
+         * kii_json_field_type_t#KII_JSON_FIELD_TYPE_DOUBLE.
+         */
+        double* double_value;
+
+        /** This value is used if kii_json_field_t#type is
+         * kii_json_field_type_t#KII_JSON_FIELD_TYPE_BOOLEAN.
+         */
+        kii_json_boolean_t* boolean_value;
+    } fielc_copy;
+
+    /** Length of field_copy#string. ignored if field_copy#string is
+     * null or kii_json_field_t#type is not
+     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_STRING and
+     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_PRIMITIVE. */
     size_t field_copy_buff_size;
 
 } kii_json_field_t;
