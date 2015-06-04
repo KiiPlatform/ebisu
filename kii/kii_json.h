@@ -173,8 +173,9 @@ typedef struct kii_json_field {
     union {
 
         /** This value is used if kii_json_field_t#type is
-         * kii_json_field_type_t#KII_JSON_FIELD_TYPE_STRING or
-         * kii_json_field_type_t#KII_JSON_FIELD_TYPE_PRIMITIVE.
+         * kii_json_field_type_t#KII_JSON_FIELD_TYPE_STRING,
+         * kii_json_field_type_t#KII_JSON_FIELD_TYPE_PRIMITIVE,
+         * KII_JSON_FIELD_TYPE_OBJECT or KII_JSON_FIELD_TYPE_ARRAY.
          */
         char* string;
 
