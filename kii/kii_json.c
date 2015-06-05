@@ -21,6 +21,14 @@
 #define KII_JSON_TOKEN_NUM 128
 #endif
 
+static void prv_kii_json_set_error_message(
+        kii_json_t* kii_json,
+        const char* message)
+{
+    strncpy(kii_json->error_string_buff, message,
+            kii_json->error_string_length);
+    kii_json->error_string_buff[kii_json->error_string_length - 1] = '\0';
+}
 
 static int prv_jsmn_token_num(const char* json_string, size_t json_string_len)
 {
@@ -35,7 +43,7 @@ static int prv_jsmn_token_num(const char* json_string, size_t json_string_len)
 }
 
 static int prv_kii_jsmn_get_tokens(
-        kii_t* kii,
+        kii_json_t* kii_json,
         const char* json_string,
         size_t json_string_len,
         jsmntok_t* tokens,
@@ -56,20 +64,23 @@ static int prv_kii_jsmn_get_tokens(
         ret = 0;
     } else if (parse_result == JSMN_ERROR_NOMEM) {
         ret = -1;
-        M_KII_LOG(kii->kii_core.logger_cb(
-            "Not enough tokens were provided\r\n"));
+        prv_kii_json_set_error_message(kii_json,
+                "Not enough tokens were provided");
     } else if (parse_result == JSMN_ERROR_INVAL) {
         ret = -1;
-        M_KII_LOG(kii->kii_core.logger_cb(
-            "Invalid character inside JSON string\r\n"));
+        prv_kii_json_set_error_message(kii_json,
+                "Invalid character inside JSON string");
     } else if (parse_result == JSMN_ERROR_PART) {
         ret = -1;
-        M_KII_LOG(kii->kii_core.logger_cb(
-            "The string is not a full JSON packet, more bytes expected\r\n"));
+        prv_kii_json_set_error_message(kii_json,
+                "The string is not a full JSON packet, more bytes expected");
     } else {
+        char buf[50];
         ret = -1;
-        M_KII_LOG(kii->kii_core.logger_cb(
-            "Unexpected error: %d\r\n", parse_result));
+        snprintf(buf, sizeof(buf) / sizeof(buf[0]),
+                "Unexpected error: %d", parse_result);
+        buf[31] = '\0';
+        prv_kii_json_set_error_message(kii_json, buf);
     }
 
     return ret;
@@ -199,7 +210,7 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
             retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
             field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
             field->type = type;
-        } else if (field->field_copy_buff == NULL) {
+        } else if (field->field_copy.string == NULL) {
             field->result = KII_JSON_FIELD_PARSE_SUCCESS;
         } else {
             size_t len = value->end - value->start;
@@ -207,8 +218,9 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
                 retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
                 field->result = KII_JSON_FIELD_PARSE_COPY_FAILED;
             } else {
-                memcpy(field->field_copy_buff, json_string + value->start, len);
-                field->field_copy_buff[len] = '\0';
+                memcpy(field->field_copy.string, json_string + value->start,
+                        len);
+                field->field_copy.string[len] = '\0';
                 field->result = KII_JSON_FIELD_PARSE_SUCCESS;
             }
         }
@@ -218,7 +230,7 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
 }
 
 kii_json_parse_result_t kii_json_read_object(
-        kii_t* kii,
+        kii_json_t* kii_json,
         const char* json_string,
         size_t json_string_len,
         kii_json_field_t* fields)
@@ -230,7 +242,7 @@ kii_json_parse_result_t kii_json_read_object(
     assert(json_string != NULL);
     assert(json_string_len > 0);
 
-    result = prv_kii_jsmn_get_tokens(kii, json_string, json_string_len,
+    result = prv_kii_jsmn_get_tokens(kii_json, json_string, json_string_len,
             tokens, sizeof(tokens) / sizeof(tokens[0]));
     if (result == 0)
     {
