@@ -25,7 +25,7 @@ typedef void
 (*KII_DELAY_MS)
     (unsigned int msec);
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 }
 #endif
 
