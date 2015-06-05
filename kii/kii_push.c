@@ -105,6 +105,7 @@ static int kiiPush_install(
     kii_error_code_t core_err;
     kii_state_t state;
     kii_json_field_t fields[2];
+    kii_json_t kii_json;
 
     core_err = kii_core_install_thing_push(&kii->kii_core, development);
     if (core_err != KIIE_OK) {
@@ -138,7 +139,9 @@ static int kiiPush_install(
     fields[0].field_copy_buff_size = installation_id_len;
     fields[1].name = NULL;
 
-    parse_result = kii_json_read_object(kii, buf, buf_size, fields);
+    memset(&kii_json, 0, sizeof(kii_json));
+
+    parse_result = kii_json_read_object(&kii_json, buf, buf_size, fields);
     if (parse_result != KII_JSON_PARSE_SUCCESS) {
         M_KII_LOG(kii->kii_core.logger_cb("fail to get json value: %d\n",
                         parse_result));
@@ -160,6 +163,7 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
     kii_error_code_t core_err;
     kii_state_t state;
     kii_json_field_t fields[8];
+    kii_json_t kii_json;
 
     core_err = kii_core_get_mqtt_endpoint(&kii->kii_core, installation_id);
     if (core_err != KIIE_OK) {
@@ -221,7 +225,9 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
     fields[6].type = KII_JSON_FIELD_TYPE_PRIMITIVE;
     fields[7].name = NULL;
 
-    parse_result = kii_json_read_object(kii, buf, buf_size, fields);
+    memset(&kii_json, 0, sizeof(kii_json));
+
+    parse_result = kii_json_read_object(&kii_json, buf, buf_size, fields);
     if (parse_result != KII_JSON_PARSE_SUCCESS) {
         ret = KIIPUSH_ENDPOINT_ERROR;
         goto exit;
