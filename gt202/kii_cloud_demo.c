@@ -203,6 +203,7 @@ static int upload_body_multi(kii_t* kii, const char* id)
         parse_response(kii->kii_core.response_body);
         return ret;
     }
+    printf("uploadId = %s\n", uploadId);
 
     chunk.chunk = "Hello world !\n";
     chunk.body_content_type = "text/plain";
@@ -608,3 +609,4 @@ int kii_main(int argc, char *argv[])
     free(ctx);
     return ret;
 }
+
