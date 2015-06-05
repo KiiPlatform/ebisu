@@ -276,7 +276,7 @@ int kii_object_commit_upload(
 		unsigned int commit);
 
 /** Download object body at one time.
- *  If the data size is large or unknown, consider use kii_object_downlad_body()
+ *  If the data size is large or unknown, consider use kii_object_download_body()
  *  instead.
  *  The result is cached in kii_core_t#response_body when succeeded.
  *  \param [inout] kii sdk instance.
@@ -303,7 +303,7 @@ int kii_object_download_body_at_once(
  *  \param [out] out_total_length total length of whole object body (in bytes)
  *  \return 0:success, -1: failure
  */
-int kii_object_downlad_body(
+int kii_object_download_body(
 		kii_t* kii,
 		const char* object_id,
 		const kii_bucket_t* bucket,

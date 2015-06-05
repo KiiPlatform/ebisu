@@ -178,7 +178,7 @@ int kiiDemo_test(void)
         UART_PRINT("failed!\r\n");
     }
     UART_PRINT("download body in multiple peces\r\n");
-    ret = kii_object_downlad_body(&kii, EX_OBJECT_ID, &bucket, 0, 
+    ret = kii_object_download_body(&kii, EX_OBJECT_ID, &bucket, 0, 
     strlen(EX_BODY_DATA), &actual_length, &total_length);
     if(ret == 0) {
         UART_PRINT("success!\r\n");
