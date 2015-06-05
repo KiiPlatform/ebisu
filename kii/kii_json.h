@@ -1,23 +1,21 @@
 #ifndef KII_JSON_H
 #define KII_JSON_H
 
-// TODO: remove this.
-#include "kii.h"
-
-/** callback for logging. kii_json uses this function for logging. If
- * you want to enable logging, set pointer of this function in
- * kii_json_context_t#logger_cb. Logging is only enabled in DEBUG
- * build.
- */
-typedef void (*KII_JSON_LOGGER)(const char* format, ...);
-
 /** object manages context of kii json apis. */
-typedef struct kii_json_context_t {
+typedef struct kii_json_t {
 
-    /** logging callback function pointer */
-    KII_JSON_LOGGER logger_cb;
+    /** Number of json tokens. */
+    int json_token_num;
 
-} kii_json_context_t;
+    /** Error string. If error occurs in kii_json library, then error
+     * message is set to this fields. If NULL, no error message is
+     * set.
+     */
+    char* error_string_buff;
+
+    /** Size of error_string_buff. */
+    size_t error_string_length;
+} kii_json_t;
 
 /** Boolean type */
 typedef enum kii_json_boolean {
@@ -239,14 +237,14 @@ typedef struct kii_json_field {
 } kii_json_field_t;
 
 /** parse JSON string as JSON object.
- *  \param [in] kii sdk instance.
+ *  \param [in] kii json instance.
  *  \param [in] pointer of JSON string.
  *  \param [in] length of JSON string.
  *  \param [inout] field of kii JSON parser.
  *  \return parse JSON result.
  */
 kii_json_parse_result_t kii_json_read_object(
-        kii_t* kii,
+        kii_json_t* kii_json,
         const char* json_string,
         size_t json_string_len,
         kii_json_field_t* fields);
