@@ -21,6 +21,7 @@ int kii_object_create(
     kii_json_field_t fields[2];
     kii_json_parse_result_t result;
     size_t buf_size = 0;
+    kii_json_t kii_json;
 
     core_err = kii_core_create_new_object(
             &kii->kii_core,
@@ -56,7 +57,9 @@ int kii_object_create(
     fields[0].field_copy_buff_size = KII_OBJECTID_SIZE + 1;
     fields[1].name = NULL;
 
-    result = kii_json_read_object(kii, buf, buf_size, fields);
+    memset(&kii_json, 0, sizeof(kii_json));
+
+    result = kii_json_read_object(&kii_json, buf, buf_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
         goto exit;
     }
@@ -313,6 +316,7 @@ int kii_object_init_upload_body(
     kii_json_field_t fields[2];
     kii_json_parse_result_t result;
     size_t buf_size = 0;
+    kii_json_t kii_json;
 
     memset(resource_path, 0x00, sizeof(resource_path));
     strcpy(resource_path, "api/apps/");
@@ -363,7 +367,9 @@ int kii_object_init_upload_body(
     fields[0].field_copy_buff_size = KII_UPLOADID_SIZE + 1;
     fields[1].name = NULL;
 
-    result = kii_json_read_object(kii, buf, buf_size, fields);
+    memset(&kii_json, 0, sizeof(kii_json));
+
+    result = kii_json_read_object(&kii_json, buf, buf_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
         goto exit;
     }

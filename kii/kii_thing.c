@@ -19,6 +19,7 @@ int kii_thing_authenticate(
     kii_json_field_t fields[3];
     kii_json_parse_result_t result;
     size_t buf_size = 0;
+    kii_json_t kii_json;
 
     core_err = kii_core_thing_authentication(&kii->kii_core, vendor_thing_id, password);
     if (core_err != KIIE_OK) {
@@ -57,7 +58,9 @@ int kii_thing_authenticate(
             sizeof(kii->kii_core.author.access_token[0]);
     fields[2].name = NULL;
 
-    result = kii_json_read_object(kii, buf, buf_size, fields);
+    memset(&kii_json, 0, sizeof(kii_json));
+
+    result = kii_json_read_object(&kii_json, buf, buf_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
         ret = -1;
         goto exit;
@@ -83,7 +86,7 @@ int kii_thing_register(
     kii_state_t state;
     kii_json_field_t fields[3];
     kii_json_parse_result_t result;
-
+    kii_json_t kii_json;
 
     sprintf(thing_data,
             "{\"_vendorThingID\":\"%s\",\"_thingType\":\"%s\",\"_password\":\"%s\"}",
@@ -124,7 +127,9 @@ int kii_thing_register(
             sizeof(kii->kii_core.author.author_id[0]);
     fields[2].name = NULL;
 
-    result = kii_json_read_object(kii, buf, buf_size, fields);
+    memset(&kii_json, 0, sizeof(kii_json));
+
+    result = kii_json_read_object(&kii_json, buf, buf_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
         ret = -1;
         goto exit;
