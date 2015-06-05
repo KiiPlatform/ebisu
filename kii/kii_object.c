@@ -53,7 +53,7 @@ int kii_object_create(
     memset(fields, 0, sizeof(fields));
     fields[0].name = "objectID";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[0].field_copy_buff = out_object_id;
+    fields[0].field_copy.string = out_object_id;
     fields[0].field_copy_buff_size = KII_OBJECTID_SIZE + 1;
     fields[1].name = NULL;
 
@@ -363,7 +363,7 @@ int kii_object_init_upload_body(
     memset(fields, 0x00, sizeof(fields));
     fields[0].name = "uploadID";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[0].field_copy_buff = out_upload_id;
+    fields[0].field_copy.string = out_upload_id;
     fields[0].field_copy_buff_size = KII_UPLOADID_SIZE + 1;
     fields[1].name = NULL;
 

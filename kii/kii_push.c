@@ -135,7 +135,7 @@ static int kiiPush_install(
     memset(fields, 0, sizeof(fields));
     fields[0].name = "installationID";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[0].field_copy_buff = installation_id;
+    fields[0].field_copy.string = installation_id;
     fields[0].field_copy_buff_size = installation_id_len;
     fields[1].name = NULL;
 
@@ -199,22 +199,22 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
     memset(fields, 0, sizeof(fields));
     fields[0].name = "username";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[0].field_copy_buff = endpoint->username;
+    fields[0].field_copy.string = endpoint->username;
     fields[0].field_copy_buff_size = 
         sizeof(endpoint->username) / sizeof(endpoint->username[0]);
     fields[1].name = "password";
     fields[1].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[1].field_copy_buff = endpoint->password;
+    fields[1].field_copy.string = endpoint->password;
     fields[1].field_copy_buff_size =
         sizeof(endpoint->password) / sizeof(endpoint->password[0]);
     fields[2].name = "host";
     fields[2].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[2].field_copy_buff = endpoint->host;
+    fields[2].field_copy.string = endpoint->host;
     fields[2].field_copy_buff_size =
         sizeof(endpoint->host) / sizeof(endpoint->host[0]);
     fields[3].name = "mqttTopic";
     fields[3].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[3].field_copy_buff = endpoint->topic;
+    fields[3].field_copy.string = endpoint->topic;
     fields[3].field_copy_buff_size =
         sizeof(endpoint->topic) / sizeof(endpoint->topic[0]);
     fields[4].name = "portTCP";

@@ -189,9 +189,6 @@ typedef struct kii_json_field {
      */
     size_t end;
 
-    // TODO: remove this fields after field_copy field is adapted
-    char* field_copy_buff;
-
     /** Buffer to copy field value. if NULL, no copy is
      * generated. Using value is determined by value of
      * kii_json_field_t#type. If kii_json_field_t#type is
