@@ -210,7 +210,7 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
             retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
             field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
             field->type = type;
-        } else if (field->field_copy_buff == NULL) {
+        } else if (field->field_copy.string == NULL) {
             field->result = KII_JSON_FIELD_PARSE_SUCCESS;
         } else {
             size_t len = value->end - value->start;
@@ -218,8 +218,9 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
                 retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
                 field->result = KII_JSON_FIELD_PARSE_COPY_FAILED;
             } else {
-                memcpy(field->field_copy_buff, json_string + value->start, len);
-                field->field_copy_buff[len] = '\0';
+                memcpy(field->field_copy.string, json_string + value->start,
+                        len);
+                field->field_copy.string[len] = '\0';
                 field->result = KII_JSON_FIELD_PARSE_SUCCESS;
             }
         }

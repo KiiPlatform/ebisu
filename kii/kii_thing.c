@@ -49,12 +49,12 @@ int kii_thing_authenticate(
     memset(fields, 0, sizeof(fields));
     fields[0].name = "id";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[0].field_copy_buff = kii->kii_core.author.author_id;
+    fields[0].field_copy.string = kii->kii_core.author.author_id;
     fields[0].field_copy_buff_size = sizeof(kii->kii_core.author.author_id) /
             sizeof(kii->kii_core.author.author_id[0]);
     fields[1].name = "access_token";
     fields[1].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[1].field_copy_buff = kii->kii_core.author.access_token;
+    fields[1].field_copy.string = kii->kii_core.author.access_token;
     fields[1].field_copy_buff_size = sizeof(kii->kii_core.author.access_token) /
             sizeof(kii->kii_core.author.access_token[0]);
     fields[2].name = NULL;
@@ -118,12 +118,12 @@ int kii_thing_register(
     memset(fields, 0, sizeof(fields));
     fields[0].name = "_accessToken";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[0].field_copy_buff = kii->kii_core.author.access_token;
+    fields[0].field_copy.string = kii->kii_core.author.access_token;
     fields[0].field_copy_buff_size = sizeof(kii->kii_core.author.access_token) /
             sizeof(kii->kii_core.author.access_token[0]);
     fields[1].name = "_thingID";
     fields[1].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[1].field_copy_buff = kii->kii_core.author.author_id;
+    fields[1].field_copy.string = kii->kii_core.author.author_id;
     fields[1].field_copy_buff_size = sizeof(kii->kii_core.author.author_id) /
             sizeof(kii->kii_core.author.author_id[0]);
     fields[2].name = NULL;
