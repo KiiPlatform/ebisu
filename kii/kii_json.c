@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <limits.h>
+#include <errno.h>
 
 #include <jsmn.h>
 
@@ -19,6 +21,15 @@
  * KII_JSON_TOKEN_NUM on build.
  */
 #define KII_JSON_TOKEN_NUM 128
+#endif
+
+ // LONG_MAX size + 2. 2 means '\0' and '-'
+#if LONG_MAX == 2147483647
+    #define NUMBUF 12
+#elif LONG_MAX == 9223372036854775807
+  #define NUMBUF 21
+#else
+  #error LONG_MAX size is not expected.
 #endif
 
 static void prv_kii_json_set_error_message(
@@ -263,12 +274,85 @@ static int prv_kii_json_jsmn_primitive_to_kii_json_primitive(
 }
 
 static int prv_kii_json_jsmn_primitive_to_kii_json_integer(
+        kii_json_t* kii_json,
         const jsmntok_t* token,
         const char* json_string,
         kii_json_field_t* field)
 {
-    // TODO: implement me.
-    return 0;
+    assert(token != NULL);
+    assert(json_string != NULL);
+    assert(field != NULL);
+    assert(field->type == KII_JSON_FIELD_TYPE_INTEGER);
+
+    field->start = token->start;
+    field->end = token->end;
+
+    if (token->type != JSMN_PRIMITIVE) {
+        field->type = prv_kii_json_to_kii_json_field_type(token->type);
+        field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
+        return 0;
+    }
+
+
+    if (field->field_copy.int_value != NULL) {
+        char buf[NUMBUF];
+        char* endptr = NULL;
+        long value = 0;
+        size_t buf_len = 0;
+        size_t actual_len = 0;
+
+        actual_len = token->end - token->start;
+        buf_len = sizeof(buf) / sizeof(buf[0]);
+        memset(buf, 0, sizeof(buf));
+
+        if (buf_len <= actual_len) {
+            // If checking more exactly, we should check contents of
+            // json_string.
+            if (*(json_string + token->start) == '-') {
+                field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
+            } else {
+                field->result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
+            }
+            return 0;
+        }
+        memcpy(buf, json_string + token->start, actual_len);
+
+        value = strtol(buf, &endptr, 0);
+        if (errno == ERANGE) {
+            if (value == LONG_MAX) {
+                field->result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
+            } else if (value == LONG_MIN) {
+                field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
+            } else {
+                prv_kii_json_set_error_message(kii_json,
+                        "strtol set ERANGE but return is unexpected.");
+                field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
+            }
+            return 0;
+        }
+
+        if (*endptr != '\0') {
+            char message[50];
+            snprintf(buf, sizeof(message) / sizeof(message[0]),
+                    "invalid long string: %s.", endptr);
+            prv_kii_json_set_error_message(kii_json, message);
+            field->result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
+            return 0;
+        }
+
+        if (value > INT_MAX) {
+            field->result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
+            return 0;
+        } else if (value < INT_MIN) {
+            field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
+            return 0;
+        }
+
+        *(field->field_copy.int_value) = (int)value;
+    }
+
+    field->result = KII_JSON_FIELD_PARSE_SUCCESS;
+    return 1;
 }
 
 static int prv_kii_json_jsmn_primitive_to_kii_json_long(
@@ -308,6 +392,7 @@ static int prv_kii_json_jsmn_primitive_to_kii_json_null(
 }
 
 static kii_json_parse_result_t prv_kii_json_check_object_fields(
+        kii_json_t* kii_json,
         const char* json_string,
         size_t json_string_len,
         const jsmntok_t* tokens,
@@ -371,8 +456,8 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
                 }
                 break;
             case KII_JSON_FIELD_TYPE_INTEGER:
-                if (prv_kii_json_jsmn_primitive_to_kii_json_integer(value,
-                                json_string, field) == 0) {
+                if (prv_kii_json_jsmn_primitive_to_kii_json_integer(kii_json,
+                                value, json_string, field) == 0) {
                     retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
                 }
                 break;
@@ -428,8 +513,8 @@ kii_json_parse_result_t kii_json_read_object(
             tokens, sizeof(tokens) / sizeof(tokens[0]));
     if (result == 0)
     {
-        ret = prv_kii_json_check_object_fields(json_string, json_string_len,
-                tokens, fields);
+        ret = prv_kii_json_check_object_fields(kii_json, json_string,
+                json_string_len, tokens, fields);
     }
 
     return ret;
