@@ -227,8 +227,10 @@ typedef struct kii_json_field {
 
     /** Length of field_copy#string. ignored if field_copy#string is
      * null or kii_json_field_t#type is not
-     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_STRING and
-     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_PRIMITIVE. */
+     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_STRING,
+     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_PRIMITIVE,
+     * KII_JSON_FIELD_TYPE_OBJECT and KII_JSON_FIELD_TYPE_ARRAY.
+     */
     size_t field_copy_buff_size;
 
 } kii_json_field_t;

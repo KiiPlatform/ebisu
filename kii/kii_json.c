@@ -164,6 +164,87 @@ static kii_json_field_type_t prv_kii_json_to_kii_json_field_type(
     }
 }
 
+static int prv_kii_json_jsmn_string_to_kii_json_string(
+        const jsmntok_t* token,
+        const char* json_string,
+        kii_json_field_t* field)
+{
+    // TODO: implement me.
+    return 0;
+}
+
+static int prv_kii_json_jsmn_object_to_kii_json_object(
+        const jsmntok_t* token,
+        const char* json_string,
+        kii_json_field_t* field)
+{
+    // TODO: implement me.
+    return 0;
+}
+
+static int prv_kii_json_jsmn_array_to_kii_json_array(
+        const jsmntok_t* token,
+        const char* json_string,
+        kii_json_field_t* field)
+{
+    // TODO: implement me.
+    return 0;
+}
+
+static int prv_kii_json_jsmn_primitive_to_kii_json_primitive(
+        const jsmntok_t* token,
+        const char* json_string,
+        kii_json_field_t* field)
+{
+    // TODO: implement me.
+    return 0;
+}
+
+static int prv_kii_json_jsmn_primitive_to_kii_json_integer(
+        const jsmntok_t* token,
+        const char* json_string,
+        kii_json_field_t* field)
+{
+    // TODO: implement me.
+    return 0;
+}
+
+static int prv_kii_json_jsmn_primitive_to_kii_json_long(
+        const jsmntok_t* token,
+        const char* json_string,
+        kii_json_field_t* field)
+{
+    // TODO: implement me.
+    return 0;
+}
+
+static int prv_kii_json_jsmn_primitive_to_kii_json_double(
+        const jsmntok_t* token,
+        const char* json_string,
+        kii_json_field_t* field)
+{
+    // TODO: implement me.
+    return 0;
+}
+
+static int prv_kii_json_jsmn_primitive_to_kii_json_boolean(
+        const jsmntok_t* token,
+        const char* json_string,
+        kii_json_field_t* field)
+{
+    // TODO: implement me.
+    return 0;
+
+}
+static int prv_kii_json_jsmn_primitive_to_kii_json_null(
+        const jsmntok_t* token,
+        const char* json_string,
+        kii_json_field_t* field)
+{
+    // TODO: implement me.
+    return 0;
+}
+
 static kii_json_parse_result_t prv_kii_json_check_object_fields(
         const char* json_string,
         size_t json_string_len,
@@ -188,7 +269,6 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
         jsmntok_t* value = NULL;
         int result = 0;
         kii_json_field_t* field = &fields[i];
-        kii_json_field_type_t type = KII_JSON_FIELD_TYPE_PRIMITIVE;
 
         result = prv_kii_jsmn_get_value(json_string, json_string_len, tokens,
                 field->name, &value);
@@ -199,30 +279,73 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
             continue;
         }
 
-        type = prv_kii_json_to_kii_json_field_type(value->type);
         if (field->type == KII_JSON_FIELD_TYPE_ANY) {
-            field->type = type;
+            field->type = prv_kii_json_to_kii_json_field_type(value->type);
         }
 
         field->start = value->start;
         field->end = value->end;
-        if (type != field->type) {
-            retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
-            field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
-            field->type = type;
-        } else if (field->field_copy.string == NULL) {
-            field->result = KII_JSON_FIELD_PARSE_SUCCESS;
-        } else {
-            size_t len = value->end - value->start;
-            if (field->field_copy_buff_size <= len) {
-                retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
-                field->result = KII_JSON_FIELD_PARSE_COPY_FAILED;
-            } else {
-                memcpy(field->field_copy.string, json_string + value->start,
-                        len);
-                field->field_copy.string[len] = '\0';
-                field->result = KII_JSON_FIELD_PARSE_SUCCESS;
-            }
+
+        switch (field->type) {
+            case KII_JSON_FIELD_TYPE_STRING:
+                if (prv_kii_json_jsmn_string_to_kii_json_string(value,
+                                json_string, field) == 0) {
+                    retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
+                }
+                break;
+            case KII_JSON_FIELD_TYPE_OBJECT:
+                if (prv_kii_json_jsmn_object_to_kii_json_object(value,
+                                json_string, field) == 0) {
+                    retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
+                }
+                break;
+            case KII_JSON_FIELD_TYPE_ARRAY:
+                if ( prv_kii_json_jsmn_array_to_kii_json_array(value,
+                                json_string, field) == 0) {
+                    retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
+                }
+                break;
+            case KII_JSON_FIELD_TYPE_PRIMITIVE:
+                if (prv_kii_json_jsmn_primitive_to_kii_json_primitive(value,
+                                json_string, field) == 0) {
+                    retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
+                }
+                break;
+            case KII_JSON_FIELD_TYPE_INTEGER:
+                if (prv_kii_json_jsmn_primitive_to_kii_json_integer(value,
+                                json_string, field) == 0) {
+                    retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
+                }
+                break;
+            case KII_JSON_FIELD_TYPE_LONG:
+                if (prv_kii_json_jsmn_primitive_to_kii_json_long(value,
+                                json_string, field) == 0) {
+                    retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
+                }
+                break;
+            case KII_JSON_FIELD_TYPE_DOUBLE:
+                if (prv_kii_json_jsmn_primitive_to_kii_json_double(value,
+                                json_string, field) == 0) {
+                    retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
+                }
+                break;
+            case KII_JSON_FIELD_TYPE_BOOLEAN:
+                if (prv_kii_json_jsmn_primitive_to_kii_json_boolean(value,
+                                json_string, field) == 0) {
+                    retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
+                }
+                break;
+            case KII_JSON_FIELD_TYPE_NULL:
+                if (prv_kii_json_jsmn_primitive_to_kii_json_null(value,
+                                json_string, field) == 0) {
+                    retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
+                }
+                break;
+            case KII_JSON_FIELD_TYPE_ANY:
+            default:
+                /* programming error */
+                assert(0);
+                return 0;
         }
     }
 
