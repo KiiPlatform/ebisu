@@ -186,20 +186,21 @@ static int prv_kii_json_copy_string(
     }
 }
 
-static int prv_kii_json_jsmn_string_to_kii_json_string(
+static int prv_kii_json_jsmn_expected_type_to_kii_json_field(
         const jsmntok_t* token,
         const char* json_string,
+        jsmntype_t expected_type,
         kii_json_field_t* field)
 {
     assert(token != NULL);
     assert(json_string != NULL);
     assert(field != NULL);
-    assert(field->type == KII_JSON_FIELD_TYPE_STRING);
 
     field->start = token->start;
     field->end = token->end;
 
-    if (token->type != JSMN_STRING) {
+    if (token->type != expected_type) {
+        field->type = prv_kii_json_to_kii_json_field_type(token->type);
         field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
         return 0;
     }
@@ -217,13 +218,26 @@ static int prv_kii_json_jsmn_string_to_kii_json_string(
     return 1;
 }
 
+static int prv_kii_json_jsmn_string_to_kii_json_string(
+        const jsmntok_t* token,
+        const char* json_string,
+        kii_json_field_t* field)
+{
+    assert(field->type == KII_JSON_FIELD_TYPE_STRING);
+
+    return prv_kii_json_jsmn_expected_type_to_kii_json_field(token, json_string,
+            JSMN_STRING, field);
+}
+
 static int prv_kii_json_jsmn_object_to_kii_json_object(
         const jsmntok_t* token,
         const char* json_string,
         kii_json_field_t* field)
 {
-    // TODO: implement me.
-    return 0;
+    assert(field->type == KII_JSON_FIELD_TYPE_OBJECT);
+
+    return prv_kii_json_jsmn_expected_type_to_kii_json_field(token, json_string,
+            JSMN_OBJECT, field);
 }
 
 static int prv_kii_json_jsmn_array_to_kii_json_array(
@@ -231,8 +245,10 @@ static int prv_kii_json_jsmn_array_to_kii_json_array(
         const char* json_string,
         kii_json_field_t* field)
 {
-    // TODO: implement me.
-    return 0;
+    assert(field->type == KII_JSON_FIELD_TYPE_ARRAY);
+
+    return prv_kii_json_jsmn_expected_type_to_kii_json_field(token, json_string,
+            JSMN_ARRAY, field);
 }
 
 static int prv_kii_json_jsmn_primitive_to_kii_json_primitive(
@@ -240,8 +256,10 @@ static int prv_kii_json_jsmn_primitive_to_kii_json_primitive(
         const char* json_string,
         kii_json_field_t* field)
 {
-    // TODO: implement me.
-    return 0;
+    assert(field->type == KII_JSON_FIELD_TYPE_PRIMITIVE);
+
+    return prv_kii_json_jsmn_expected_type_to_kii_json_field(token, json_string,
+            JSMN_PRIMITIVE, field);
 }
 
 static int prv_kii_json_jsmn_primitive_to_kii_json_integer(
