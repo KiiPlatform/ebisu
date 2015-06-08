@@ -32,6 +32,12 @@
   #error LONG_MAX size is not expected.
 #endif
 
+typedef enum prv_kii_json_convert {
+    PRV_KII_JSON_CONVERT_SUCCESS,
+    PRV_KII_JSON_CONVERT_EXPECTED_FAIL,
+    PRV_KII_JSON_CONVERT_UNEXPECTED_FAIL
+} prv_kii_json_convert_t;
+
 static void prv_kii_json_set_error_message(
         kii_json_t* kii_json,
         const char* message)
@@ -197,7 +203,7 @@ static int prv_kii_json_copy_string(
     }
 }
 
-static int prv_kii_json_jsmn_expected_type_to_kii_json_field(
+static prv_kii_json_convert_t prv_kii_json_jsmn_expected_type_to_kii_json_field(
         kii_json_t* kii_json,
         const jsmntok_t* token,
         const char* json_string,
@@ -214,7 +220,7 @@ static int prv_kii_json_jsmn_expected_type_to_kii_json_field(
     if (token->type != expected_type) {
         field->type = prv_kii_json_to_kii_json_field_type(token->type);
         field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
-        return 0;
+        return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
     }
 
     if (field->field_copy.string != NULL) {
@@ -222,15 +228,15 @@ static int prv_kii_json_jsmn_expected_type_to_kii_json_field(
                         field->field_copy.string,
                         field->field_copy_buff_size) == 0) {
             field->result = KII_JSON_FIELD_PARSE_COPY_FAILED;
-            return 0;
+            return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
         }
     }
 
     field->result = KII_JSON_FIELD_PARSE_SUCCESS;
-    return 1;
+    return PRV_KII_JSON_CONVERT_SUCCESS;
 }
 
-static int prv_kii_json_jsmn_string_to_kii_json_string(
+static prv_kii_json_convert_t prv_kii_json_jsmn_string_to_kii_json_string(
         kii_json_t* kii_json,
         const jsmntok_t* token,
         const char* json_string,
@@ -242,7 +248,7 @@ static int prv_kii_json_jsmn_string_to_kii_json_string(
             json_string, JSMN_STRING, field);
 }
 
-static int prv_kii_json_jsmn_object_to_kii_json_object(
+static prv_kii_json_convert_t prv_kii_json_jsmn_object_to_kii_json_object(
         kii_json_t* kii_json,
         const jsmntok_t* token,
         const char* json_string,
@@ -254,7 +260,7 @@ static int prv_kii_json_jsmn_object_to_kii_json_object(
             json_string, JSMN_OBJECT, field);
 }
 
-static int prv_kii_json_jsmn_array_to_kii_json_array(
+static prv_kii_json_convert_t prv_kii_json_jsmn_array_to_kii_json_array(
         kii_json_t* kii_json,
         const jsmntok_t* token,
         const char* json_string,
@@ -266,7 +272,7 @@ static int prv_kii_json_jsmn_array_to_kii_json_array(
             json_string, JSMN_ARRAY, field);
 }
 
-static int prv_kii_json_jsmn_primitive_to_kii_json_primitive(
+static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_primitive(
         kii_json_t* kii_json,
         const jsmntok_t* token,
         const char* json_string,
@@ -278,7 +284,7 @@ static int prv_kii_json_jsmn_primitive_to_kii_json_primitive(
             json_string, JSMN_PRIMITIVE, field);
 }
 
-static int prv_kii_json_jsmn_primitive_to_kii_json_integer(
+static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_integer(
         kii_json_t* kii_json,
         const jsmntok_t* token,
         const char* json_string,
@@ -318,7 +324,7 @@ static int prv_kii_json_jsmn_primitive_to_kii_json_integer(
             } else {
                 field->result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
             }
-            return 0;
+            return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
         }
         memcpy(buf, json_string + token->start, actual_len);
 
@@ -333,7 +339,7 @@ static int prv_kii_json_jsmn_primitive_to_kii_json_integer(
                         "strtol set ERANGE but return is unexpected.");
                 field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
             }
-            return 0;
+            return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
         }
 
         if (*endptr != '\0') {
@@ -342,7 +348,7 @@ static int prv_kii_json_jsmn_primitive_to_kii_json_integer(
                     "invalid long string: %s.", endptr);
             prv_kii_json_set_error_message(kii_json, message);
             field->result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
-            return 0;
+            return PRV_KII_JSON_CONVERT_UNEXPECTED_FAIL;
         }
 
         if (value > INT_MAX) {
@@ -357,10 +363,10 @@ static int prv_kii_json_jsmn_primitive_to_kii_json_integer(
     }
 
     field->result = KII_JSON_FIELD_PARSE_SUCCESS;
-    return 1;
+    return PRV_KII_JSON_CONVERT_SUCCESS;
 }
 
-static int prv_kii_json_jsmn_primitive_to_kii_json_long(
+static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_long(
         kii_json_t* kii_json,
         const jsmntok_t* token,
         const char* json_string,
@@ -370,7 +376,7 @@ static int prv_kii_json_jsmn_primitive_to_kii_json_long(
     return 0;
 }
 
-static int prv_kii_json_jsmn_primitive_to_kii_json_double(
+static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_double(
         kii_json_t* kii_json,
         const jsmntok_t* token,
         const char* json_string,
@@ -380,7 +386,7 @@ static int prv_kii_json_jsmn_primitive_to_kii_json_double(
     return 0;
 }
 
-static int prv_kii_json_jsmn_primitive_to_kii_json_boolean(
+static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_boolean(
         kii_json_t* kii_json,
         const jsmntok_t* token,
         const char* json_string,
@@ -390,7 +396,7 @@ static int prv_kii_json_jsmn_primitive_to_kii_json_boolean(
     return 0;
 
 }
-static int prv_kii_json_jsmn_primitive_to_kii_json_null(
+static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_null(
         kii_json_t* kii_json,
         const jsmntok_t* token,
         const char* json_string,
@@ -425,6 +431,7 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
         jsmntok_t* value = NULL;
         int result = 0;
         kii_json_field_t* field = &fields[i];
+        prv_kii_json_convert_t convert_result = PRV_KII_JSON_CONVERT_SUCCESS;
 
         result = prv_kii_jsmn_get_value(json_string, json_string_len, tokens,
                 field->name, &value);
@@ -441,64 +448,60 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
 
         switch (field->type) {
             case KII_JSON_FIELD_TYPE_STRING:
-                if (prv_kii_json_jsmn_string_to_kii_json_string(kii_json, value,
-                                json_string, field) == 0) {
-                    retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
-                }
+                convert_result = prv_kii_json_jsmn_string_to_kii_json_string(
+                        kii_json, value, json_string, field);
                 break;
             case KII_JSON_FIELD_TYPE_OBJECT:
-                if (prv_kii_json_jsmn_object_to_kii_json_object(kii_json, value,
-                                json_string, field) == 0) {
-                    retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
-                }
+                convert_result = prv_kii_json_jsmn_object_to_kii_json_object(
+                        kii_json, value, json_string, field);
                 break;
             case KII_JSON_FIELD_TYPE_ARRAY:
-                if ( prv_kii_json_jsmn_array_to_kii_json_array(kii_json, value,
-                                json_string, field) == 0) {
-                    retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
-                }
+                convert_result = prv_kii_json_jsmn_array_to_kii_json_array(
+                        kii_json, value, json_string, field);
                 break;
             case KII_JSON_FIELD_TYPE_PRIMITIVE:
-                if (prv_kii_json_jsmn_primitive_to_kii_json_primitive(kii_json,
-                                value, json_string, field) == 0) {
-                    retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
-                }
+                convert_result =
+                    prv_kii_json_jsmn_primitive_to_kii_json_primitive(kii_json,
+                            value, json_string, field);
                 break;
             case KII_JSON_FIELD_TYPE_INTEGER:
-                if (prv_kii_json_jsmn_primitive_to_kii_json_integer(kii_json,
-                                value, json_string, field) == 0) {
-                    retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
-                }
+                convert_result =
+                    prv_kii_json_jsmn_primitive_to_kii_json_integer(kii_json,
+                            value, json_string, field);
                 break;
             case KII_JSON_FIELD_TYPE_LONG:
-                if (prv_kii_json_jsmn_primitive_to_kii_json_long(kii_json,
-                                value, json_string, field) == 0) {
-                    retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
-                }
+                convert_result = prv_kii_json_jsmn_primitive_to_kii_json_long(
+                        kii_json, value, json_string, field);
                 break;
             case KII_JSON_FIELD_TYPE_DOUBLE:
-                if (prv_kii_json_jsmn_primitive_to_kii_json_double(kii_json,
-                                value, json_string, field) == 0) {
-                    retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
-                }
+                convert_result = prv_kii_json_jsmn_primitive_to_kii_json_double(
+                        kii_json, value, json_string, field);
                 break;
             case KII_JSON_FIELD_TYPE_BOOLEAN:
-                if (prv_kii_json_jsmn_primitive_to_kii_json_boolean(kii_json,
-                                value, json_string, field) == 0) {
-                    retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
-                }
+                convert_result =
+                    prv_kii_json_jsmn_primitive_to_kii_json_boolean(kii_json,
+                            value, json_string, field);
                 break;
             case KII_JSON_FIELD_TYPE_NULL:
-                if (prv_kii_json_jsmn_primitive_to_kii_json_null(kii_json,
-                                value, json_string, field) == 0) {
-                    retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
-                }
+                convert_result = prv_kii_json_jsmn_primitive_to_kii_json_null(
+                        kii_json, value, json_string, field);
                 break;
             case KII_JSON_FIELD_TYPE_ANY:
             default:
-                /* programming error */
-                assert(0);
-                return 0;
+                {
+                    convert_result = PRV_KII_JSON_CONVERT_UNEXPECTED_FAIL;
+                    prv_kii_json_set_error_message(kii_json,
+                            "Unexpected kii_json_field_t.");
+                }
+                break;
+        }
+
+        if (convert_result == PRV_KII_JSON_CONVERT_EXPECTED_FAIL) {
+            retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
+        } else if (convert_result == PRV_KII_JSON_CONVERT_UNEXPECTED_FAIL) {
+            // finish parsing.
+            retval = KII_JSON_PARSE_INVALID_INPUT;
+            break;
         }
     }
 
