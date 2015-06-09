@@ -396,8 +396,37 @@ static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_long(
         const char* json_string,
         kii_json_field_t* field)
 {
-    // TODO: implement me.
-    return 0;
+    assert(token != NULL);
+    assert(json_string != NULL);
+    assert(field != NULL);
+    assert(field->type == KII_JSON_FIELD_TYPE_LONG);
+
+    field->start = token->start;
+    field->end = token->end;
+
+    if (token->type != JSMN_PRIMITIVE) {
+        field->type = prv_kii_json_to_kii_json_field_type(token->type);
+        field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
+        return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
+    }
+
+
+    if (field->field_copy.long_value != NULL) {
+        long value = 0;
+        prv_kii_json_convert_t conver_result =
+            PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
+
+        conver_result = prv_kii_json_jsmn_primitive_to_long(kii_json, token,
+                json_string, &value, &field->result);
+        if (conver_result != PRV_KII_JSON_CONVERT_SUCCESS) {
+            return conver_result;
+        }
+
+        *(field->field_copy.long_value) = (int)value;
+    }
+
+    field->result = KII_JSON_FIELD_PARSE_SUCCESS;
+    return PRV_KII_JSON_CONVERT_SUCCESS;
 }
 
 static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_double(
