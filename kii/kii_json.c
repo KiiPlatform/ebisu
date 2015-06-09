@@ -284,6 +284,65 @@ static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_primitive(
             json_string, JSMN_PRIMITIVE, field);
 }
 
+static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_long(
+        kii_json_t* kii_json,
+        const jsmntok_t* token,
+        const char* json_string,
+        long* out_value,
+        kii_json_field_parse_result_t* out_parse_result)
+{
+    char buf[NUMBUF];
+    char* endptr = NULL;
+    size_t buf_len = 0;
+    size_t actual_len = 0;
+
+    assert(kii_json != NULL);
+    assert(json_string != NULL);
+    assert(out_value != NULL);
+    assert(out_parse_result != NULL);
+
+    actual_len = token->end - token->start;
+    buf_len = sizeof(buf) / sizeof(buf[0]);
+    memset(buf, 0, sizeof(buf));
+
+    if (buf_len <= actual_len) {
+        // If checking more exactly, we should check contents of
+        // json_string.
+        if (*(json_string + token->start) == '-') {
+            *out_parse_result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
+        } else {
+            *out_parse_result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
+        }
+        return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
+    }
+    memcpy(buf, json_string + token->start, actual_len);
+
+    *out_value = strtol(buf, &endptr, 0);
+    if (errno == ERANGE) {
+        if (*out_value == LONG_MAX) {
+            *out_parse_result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
+        } else if (*out_value == LONG_MIN) {
+            *out_parse_result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
+        } else {
+            prv_kii_json_set_error_message(kii_json,
+                    "strtol set ERANGE but return is unexpected.");
+            *out_parse_result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
+        }
+        return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
+    }
+
+    if (*endptr != '\0') {
+        char message[50];
+        snprintf(buf, sizeof(message) / sizeof(message[0]),
+                "invalid long string: %s.", endptr);
+        prv_kii_json_set_error_message(kii_json, message);
+        *out_parse_result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
+        return PRV_KII_JSON_CONVERT_UNEXPECTED_FAIL;
+    }
+
+    return PRV_KII_JSON_CONVERT_SUCCESS;
+}
+
 static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_integer(
         kii_json_t* kii_json,
         const jsmntok_t* token,
@@ -301,62 +360,27 @@ static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_integer(
     if (token->type != JSMN_PRIMITIVE) {
         field->type = prv_kii_json_to_kii_json_field_type(token->type);
         field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
-        return 0;
+        return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
     }
 
 
     if (field->field_copy.int_value != NULL) {
-        char buf[NUMBUF];
-        char* endptr = NULL;
         long value = 0;
-        size_t buf_len = 0;
-        size_t actual_len = 0;
+        prv_kii_json_convert_t conver_result =
+            PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
 
-        actual_len = token->end - token->start;
-        buf_len = sizeof(buf) / sizeof(buf[0]);
-        memset(buf, 0, sizeof(buf));
-
-        if (buf_len <= actual_len) {
-            // If checking more exactly, we should check contents of
-            // json_string.
-            if (*(json_string + token->start) == '-') {
-                field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
-            } else {
-                field->result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
-            }
-            return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
-        }
-        memcpy(buf, json_string + token->start, actual_len);
-
-        value = strtol(buf, &endptr, 0);
-        if (errno == ERANGE) {
-            if (value == LONG_MAX) {
-                field->result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
-            } else if (value == LONG_MIN) {
-                field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
-            } else {
-                prv_kii_json_set_error_message(kii_json,
-                        "strtol set ERANGE but return is unexpected.");
-                field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
-            }
-            return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
-        }
-
-        if (*endptr != '\0') {
-            char message[50];
-            snprintf(buf, sizeof(message) / sizeof(message[0]),
-                    "invalid long string: %s.", endptr);
-            prv_kii_json_set_error_message(kii_json, message);
-            field->result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
-            return PRV_KII_JSON_CONVERT_UNEXPECTED_FAIL;
+        conver_result = prv_kii_json_jsmn_primitive_to_long(kii_json, token,
+                json_string, &value, &field->result);
+        if (conver_result != PRV_KII_JSON_CONVERT_SUCCESS) {
+            return conver_result;
         }
 
         if (value > INT_MAX) {
             field->result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
-            return 0;
+            return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
         } else if (value < INT_MIN) {
             field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
-            return 0;
+            return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
         }
 
         *(field->field_copy.int_value) = (int)value;
