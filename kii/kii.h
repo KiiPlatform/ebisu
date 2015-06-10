@@ -30,9 +30,10 @@
 #define M_KII_LOG(x)
 #endif
 
-typedef void
-        (*KII_PUSH_RECEIVED_CB)(
-                void* app_context,
+struct kii_t;
+
+typedef void (*KII_PUSH_RECEIVED_CB)(
+                struct kii_t* kii,
                 char* message,
                 size_t message_length);
 

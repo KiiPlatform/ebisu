@@ -7,7 +7,7 @@
 #include <getopt.h>
 #include "kii_core_impl.h"
 
-void received_callback(void* app_context, char* buffer, size_t buffer_size) {
+void received_callback(kii_t* kii, char* buffer, size_t buffer_size) {
     char copy[1024];
     memset(copy, 0x00, sizeof(copy));
     strncpy(copy, buffer, sizeof(copy));
