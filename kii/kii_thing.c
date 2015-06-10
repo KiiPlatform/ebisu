@@ -4,7 +4,6 @@
 
 #include "kii.h"
 #include "kii_json.h"
-#include "kii_util.h"
 
 #include "kii_core.h"
 
