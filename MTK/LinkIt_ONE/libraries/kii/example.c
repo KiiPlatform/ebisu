@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include "kii_core_impl.h"
 
-void received_callback(char* buffer, size_t buffer_size) {
+void received_callback(void* app_context, char* buffer, size_t buffer_size) {
     logger_cb("buffer_size: %u\n", buffer_size);
     logger_cb("recieve message: %s\n", buffer);
 }

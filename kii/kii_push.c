@@ -540,7 +540,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
                         if((remainingLen - 2 - topicLen) > 0)
                         {
                             M_KII_LOG(kii->kii_core.logger_cb("Successfully Recieved Push %s\n", p));
-                            callback(p, remainingLen - 2 - topicLen);
+                            callback(kii->app_context, p, remainingLen - 2 - topicLen);
                         }
                         else
                         {
@@ -593,6 +593,7 @@ static void* kiiPush_pingReqTask(void* sdata)
 
 int kii_push_start_routine(kii_t* kii, unsigned int recvMsgtaskPrio, unsigned int pingReqTaskPrio, KII_PUSH_RECEIVED_CB callback)
 {
+    kii->app_context = NULL;
     kii->push_received_cb = callback;
     kii->task_create_cb(NULL,
             kiiPush_recvMsgTask,

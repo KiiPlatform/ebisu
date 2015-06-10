@@ -30,6 +30,12 @@
 #define M_KII_LOG(x)
 #endif
 
+typedef void
+        (*KII_PUSH_RECEIVED_CB)(
+                void* app_context,
+                char* message,
+                size_t message_length);
+
 typedef struct kii_t {
     kii_core_t kii_core;
 
@@ -49,6 +55,8 @@ typedef struct kii_t {
 
     char* mqtt_buffer;
     size_t mqtt_buffer_size;
+
+    void* app_context;
 
 } kii_t;
 
