@@ -8,7 +8,7 @@
 #include "uart_if.h"
 #include "common.h"
 
-void received_callback(char* buffer, size_t buffer_size) {
+void received_callback(kii_t* kii, char* buffer, size_t buffer_size) {
     UART_PRINT("buffer_size: %u\r\n", buffer_size);
     UART_PRINT("recieve message: %s\r\n", buffer);
 }
