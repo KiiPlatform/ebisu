@@ -276,3 +276,35 @@ TEST(kiiTest, pushTopic)
 
     ASSERT_EQ(0, ret);
 }
+
+static void initForServerCodeExecute(
+        kii_t* kii,
+        char* buffer,
+        int buffer_size,
+        context_t* context)
+{
+    kii_init(kii, "JP", "3943f650", "0675b0e0c96c33e3e8b9c282291dfe6f");
+
+    kii->kii_core.http_context.buffer = buffer;
+    kii->kii_core.http_context.buffer_size = buffer_size;
+    kii->kii_core.http_context.app_context = context;
+
+    strcpy(kii->kii_core.author.author_id, "");
+    strcpy(kii->kii_core.author.access_token, "");
+}
+
+TEST(kiiTest, serverCodeExecute)
+{
+    int ret = -1;
+    char buffer[4096];
+    kii_t kii;
+    context_t context;
+
+    initForServerCodeExecute(&kii, buffer, 4096, &context);
+
+    ret = kii_server_code_execute(&kii, "test", NULL);
+
+    ASSERT_EQ(0, ret);
+    ASSERT_STREQ("{\"returnedValue\":\"Test Version 2.\"}",
+            kii.kii_core.response_body);
+}
