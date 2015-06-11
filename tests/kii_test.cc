@@ -226,3 +226,53 @@ TEST(kiiTest, objectBodyMulti)
 
     ASSERT_EQ(0, ret);
 }
+
+TEST(kiiTest, pushBucket)
+{
+    int ret = -1;
+    char buffer[4096];
+    kii_t kii;
+    kii_bucket_t bucket;
+    context_t context;
+
+    init(&kii, buffer, 4096, &context);
+    initBucket(&bucket);
+
+    ret = kii_push_subscribe_bucket(&kii, &bucket);
+
+    ASSERT_EQ(0, ret);
+
+    ret = kii_push_unsubscribe_bucket(&kii, &bucket);
+
+    ASSERT_EQ(0, ret);
+}
+
+TEST(kiiTest, pushTopic)
+{
+    int ret = -1;
+    char buffer[4096];
+    kii_t kii;
+    kii_topic_t topic;
+    context_t context;
+
+    init(&kii, buffer, 4096, &context);
+    topic.scope = KII_SCOPE_THING;
+    topic.scope_id = THING_ID;
+    topic.topic_name = "myTopic";
+
+    ret = kii_push_create_topic(&kii, &topic);
+
+    ASSERT_EQ(0, ret);
+
+    ret = kii_push_subscribe_topic(&kii, &topic);
+
+    ASSERT_EQ(0, ret);
+
+    ret = kii_push_unsubscribe_topic(&kii, &topic);
+
+    ASSERT_EQ(0, ret);
+
+    ret = kii_push_delete_topic(&kii, &topic);
+
+    ASSERT_EQ(0, ret);
+}
