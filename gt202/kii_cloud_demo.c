@@ -253,7 +253,7 @@ static int download_body_multi(kii_t* kii, const char* id)
 
     set_author(kii);
 
-    ret = kii_object_downlad_body(kii, id, &bucket, 0,
+    ret = kii_object_download_body(kii, &bucket, id, 0,
             strlen("Hello world !\n"), &length, &total);
 
     print_response(kii);
