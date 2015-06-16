@@ -2,8 +2,10 @@
 #include "kii_cloud_demo_setting.h"
 
 #include "gt202_kii_adapter.h"
+#include "kii_task_impl.h"
 
 static char static_ojbect_id_buf[KII_OBJECTID_SIZE + 1];
+static char static_mqtt_buf[2048];
 
 void parse_response(char* resp_body)
 {
@@ -25,6 +27,13 @@ static void init(kii_t* kii, context_t* ctx, char* buff, int buff_length)
     kii->kii_core.http_set_body_cb = body_cb;
     kii->kii_core.http_execute_cb = execute_cb;
     kii->kii_core.logger_cb = logger_cb;
+
+    kii->mqtt_buffer = static_mqtt_buf;
+    kii->mqtt_buffer_size = 2048;
+    kii->app_context = ctx;
+
+    kii->task_create_cb = task_create_cb;
+    kii->delay_ms_cb = delay_ms_cb;
 
     memset(ctx, 0x00, sizeof(context_t));
     /* share the request and response buffer.*/
@@ -390,8 +399,9 @@ static int push(kii_t* kii)
 
     ret = kii_push_start_routine(kii, 0, 0, received_callback);
 
-    print_response(kii);
-    parse_response(kii->kii_core.response_body);
+    printf("start_routine: %d\n", ret);
+    //print_response(kii);
+    //parse_response(kii->kii_core.response_body);
     return ret;
 }
 
@@ -597,6 +607,10 @@ int kii_main(int argc, char *argv[])
         {
             ret = A_OK;
         }
+    }
+    else if(ATH_STRCMP(argv[CMD_INDEX], "print") == 0)
+    {
+        print_response(kii);
     }
     else if(ATH_STRCMP(argv[CMD_INDEX], "help") == 0)
     {
