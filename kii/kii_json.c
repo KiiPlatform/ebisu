@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <limits.h>
+#include <math.h>
 #include <errno.h>
 
 #include <jsmn.h>
@@ -303,7 +304,7 @@ static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_long(
 
     actual_len = token->end - token->start;
     buf_len = sizeof(buf) / sizeof(buf[0]);
-    memset(buf, 0, sizeof(buf));
+    memset(buf, 0, sizeof(buf) / sizeof(buf[0]));
 
     if (buf_len <= actual_len) {
         // If checking more exactly, we should check contents of
@@ -317,6 +318,7 @@ static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_long(
     }
     memcpy(buf, json_string + token->start, actual_len);
 
+    errno = 0;
     *out_value = strtol(buf, &endptr, 0);
     if (errno == ERANGE) {
         if (*out_value == LONG_MAX) {
@@ -429,14 +431,98 @@ static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_long(
     return PRV_KII_JSON_CONVERT_SUCCESS;
 }
 
+static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_double(
+        kii_json_t* kii_json,
+        const jsmntok_t* token,
+        const char* json_string,
+        double* out_value,
+        kii_json_field_parse_result_t* out_parse_result)
+{
+    char buf[NUMBUF];
+    char* endptr = NULL;
+    size_t buf_len = 0;
+    size_t actual_len = 0;
+    double value = 0;
+
+    assert(kii_json != NULL);
+    assert(json_string != NULL);
+    assert(out_value != NULL);
+    assert(out_parse_result != NULL);
+
+    actual_len = token->end - token->start;
+    buf_len = sizeof(buf) / sizeof(buf[0]);
+    memset(buf, 0, sizeof(buf) / sizeof(buf[0]));
+
+    if (buf_len <= actual_len) {
+        // If checking more exactly, we should check contents of
+        // json_string.
+        if (*(json_string + token->start) == '-') {
+            *out_parse_result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
+        } else {
+            *out_parse_result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
+        }
+        return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
+    }
+    memcpy(buf, json_string + token->start, actual_len);
+
+    errno = 0;
+    value = strtod(buf, &endptr);
+    if (value == 0 && *endptr != '\0') {
+        char message[50];
+        snprintf(buf, sizeof(message) / sizeof(message[0]),
+                "invalid double string: %s.", endptr);
+        prv_kii_json_set_error_message(kii_json, message);
+        *out_parse_result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
+        return PRV_KII_JSON_CONVERT_UNEXPECTED_FAIL;
+    } else if (value == 0 && errno == ERANGE) {
+        *out_parse_result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
+        return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
+    } else if (value == HUGE_VAL && errno == ERANGE) {
+        *out_parse_result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
+        return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
+    }
+
+    *out_value = value;
+    return PRV_KII_JSON_CONVERT_SUCCESS;
+}
+
 static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_double(
         kii_json_t* kii_json,
         const jsmntok_t* token,
         const char* json_string,
         kii_json_field_t* field)
 {
-    // TODO: implement me.
-    return 0;
+    assert(token != NULL);
+    assert(json_string != NULL);
+    assert(field != NULL);
+    assert(field->type == KII_JSON_FIELD_TYPE_LONG);
+
+    field->start = token->start;
+    field->end = token->end;
+
+    if (token->type != JSMN_PRIMITIVE) {
+        field->type = prv_kii_json_to_kii_json_field_type(token->type);
+        field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
+        return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
+    }
+
+
+    if (field->field_copy.double_value != NULL) {
+        double value = 0;
+        prv_kii_json_convert_t conver_result =
+            PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
+
+        conver_result = prv_kii_json_jsmn_primitive_to_double(kii_json, token,
+                json_string, &value, &field->result);
+        if (conver_result != PRV_KII_JSON_CONVERT_SUCCESS) {
+            return conver_result;
+        }
+
+        *(field->field_copy.double_value) = (int)value;
+    }
+
+    field->result = KII_JSON_FIELD_PARSE_SUCCESS;
+    return PRV_KII_JSON_CONVERT_SUCCESS;
 }
 
 static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_boolean(
