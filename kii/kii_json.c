@@ -531,18 +531,69 @@ static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_boolean(
         const char* json_string,
         kii_json_field_t* field)
 {
-    // TODO: implement me.
-    return 0;
+    assert(token != NULL);
+    assert(json_string != NULL);
+    assert(field != NULL);
+    assert(field->type == KII_JSON_FIELD_TYPE_LONG);
 
+    field->start = token->start;
+    field->end = token->end;
+
+    if (token->type != JSMN_PRIMITIVE) {
+        field->type = prv_kii_json_to_kii_json_field_type(token->type);
+        field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
+        return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
+    }
+
+
+    if (field->field_copy.boolean_value != NULL) {
+        const char* bool_str = NULL;
+        size_t bool_str_len = 0;
+        bool_str = json_string + token->start;
+        bool_str_len = token->end - token->start;
+        if (memcmp(bool_str, "true", bool_str_len) == 0) {
+            *(field->field_copy.boolean_value) = KII_JSON_TRUE;
+        } else if (memcmp(bool_str, "false", bool_str_len) == 0) {
+            *(field->field_copy.boolean_value) = KII_JSON_FALSE;
+        } else {
+            field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
+            return PRV_KII_JSON_CONVERT_UNEXPECTED_FAIL;
+        }
+    }
+
+    field->result = KII_JSON_FIELD_PARSE_SUCCESS;
+    return PRV_KII_JSON_CONVERT_SUCCESS;
 }
+
 static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_null(
         kii_json_t* kii_json,
         const jsmntok_t* token,
         const char* json_string,
         kii_json_field_t* field)
 {
-    // TODO: implement me.
-    return 0;
+    assert(token != NULL);
+    assert(json_string != NULL);
+    assert(field != NULL);
+    assert(field->type == KII_JSON_FIELD_TYPE_LONG);
+
+    field->start = token->start;
+    field->end = token->end;
+
+    if (token->type != JSMN_PRIMITIVE) {
+        field->type = prv_kii_json_to_kii_json_field_type(token->type);
+        field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
+        return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
+    }
+
+
+    if (memcmp(json_string + token->start, "null", token->end - token->start)
+            != 0) {
+        field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
+        return PRV_KII_JSON_CONVERT_UNEXPECTED_FAIL;
+    }
+
+    field->result = KII_JSON_FIELD_PARSE_SUCCESS;
+    return PRV_KII_JSON_CONVERT_SUCCESS;
 }
 
 static kii_json_parse_result_t prv_kii_json_check_object_fields(
