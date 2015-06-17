@@ -182,39 +182,27 @@ static kii_json_field_type_t prv_kii_json_to_kii_json_field_type(
     }
 }
 
-static prv_kii_json_convert_t prv_kii_json_jsmn_expected_type_to_kii_json_field(
+static int prv_kii_json_jsmn_string_copy(
         kii_json_t* kii_json,
         const jsmntok_t* token,
         const char* json_string,
-        jsmntype_t expected_type,
-        kii_json_field_t* field)
+        char* out_buf,
+        size_t out_buf_size)
 {
+    size_t len = 0;
+
     assert(token != NULL);
     assert(json_string != NULL);
-    assert(field != NULL);
+    assert(out_buf != NULL);
 
-    field->start = token->start;
-    field->end = token->end;
-
-    if (token->type != expected_type) {
-        field->type = prv_kii_json_to_kii_json_field_type(token->type);
-        field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
-        return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
+    len = token->end - token->start;
+    if (out_buf_size <= len) {
+        return 1;
     }
+    memcpy(out_buf, json_string + token->start, len);
+    out_buf[len] = '\0';
 
-    if (field->field_copy.string != NULL) {
-        size_t len = 0;
-        len = token->end - token->start;
-        if (field->field_copy_buff_size <= len) {
-            field->result = KII_JSON_FIELD_PARSE_COPY_FAILED;
-            return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
-        }
-        memcpy(field->field_copy.string, json_string + token->start, len);
-        field->field_copy.string[len] = '\0';
-    }
-
-    field->result = KII_JSON_FIELD_PARSE_SUCCESS;
-    return PRV_KII_JSON_CONVERT_SUCCESS;
+    return 0;
 }
 
 static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_long(
@@ -554,6 +542,7 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
         int result = 0;
         kii_json_field_t* field = &fields[i];
         prv_kii_json_convert_t convert_result = PRV_KII_JSON_CONVERT_SUCCESS;
+        kii_json_field_type_t converted_type;
 
         result = prv_kii_jsmn_get_value(json_string, json_string_len, tokens,
                 field->name, &value);
@@ -564,30 +553,35 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
             continue;
         }
 
+        converted_type = prv_kii_json_to_kii_json_field_type(value->type);
         if (field->type == KII_JSON_FIELD_TYPE_ANY) {
-            field->type = prv_kii_json_to_kii_json_field_type(value->type);
+            field->type = converted_type;
         }
+
+        field->start = value->start;
+        field->end = value->end;
 
         switch (field->type) {
             case KII_JSON_FIELD_TYPE_STRING:
-                convert_result =
-                    prv_kii_json_jsmn_expected_type_to_kii_json_field(kii_json,
-                            value, json_string, JSMN_STRING, field);
-                break;
             case KII_JSON_FIELD_TYPE_OBJECT:
-                convert_result =
-                    prv_kii_json_jsmn_expected_type_to_kii_json_field(kii_json,
-                            value, json_string, JSMN_OBJECT, field);
-                break;
             case KII_JSON_FIELD_TYPE_ARRAY:
-                convert_result =
-                    prv_kii_json_jsmn_expected_type_to_kii_json_field(kii_json,
-                            value, json_string, JSMN_ARRAY, field);
-                break;
             case KII_JSON_FIELD_TYPE_PRIMITIVE:
-                convert_result =
-                    prv_kii_json_jsmn_expected_type_to_kii_json_field(kii_json,
-                            value, json_string, JSMN_PRIMITIVE, field);
+                if (field->type != converted_type) {
+                    field->type = converted_type;
+                    field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
+                    convert_result = PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
+                } else if (field->field_copy.string == NULL) {
+                    field->result = KII_JSON_FIELD_PARSE_SUCCESS;
+                    convert_result = PRV_KII_JSON_CONVERT_SUCCESS;
+                } else if (prv_kii_json_jsmn_string_copy(kii_json, value,
+                                json_string, field->field_copy.string,
+                                field->field_copy_buff_size) == 0) {
+                    field->result = KII_JSON_FIELD_PARSE_SUCCESS;
+                    convert_result = PRV_KII_JSON_CONVERT_SUCCESS;
+                } else {
+                    field->result = KII_JSON_FIELD_PARSE_COPY_FAILED;
+                    convert_result = PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
+                }
                 break;
             case KII_JSON_FIELD_TYPE_INTEGER:
                 convert_result =
