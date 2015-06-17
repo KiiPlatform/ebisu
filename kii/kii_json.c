@@ -445,75 +445,22 @@ static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_double(
     return PRV_KII_JSON_CONVERT_SUCCESS;
 }
 
-static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_boolean(
-        kii_json_t* kii_json,
-        const jsmntok_t* token,
-        const char* json_string,
-        kii_json_field_t* field)
+static int prv_kii_json_to_boolean(
+        const char* buf,
+        size_t buf_size,
+        kii_json_boolean_t* out_boolean)
 {
-    assert(token != NULL);
-    assert(json_string != NULL);
-    assert(field != NULL);
-    assert(field->type == KII_JSON_FIELD_TYPE_LONG);
+    assert(buf != NULL);
+    assert(out_boolean != NULL);
 
-    field->start = token->start;
-    field->end = token->end;
-
-    if (token->type != JSMN_PRIMITIVE) {
-        field->type = prv_kii_json_to_kii_json_field_type(token->type);
-        field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
-        return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
+    if (memcmp(buf, "true", buf_size) == 0) {
+        *out_boolean = KII_JSON_TRUE;
+        return 0;
+    } else if (memcmp(buf, "false", buf_size) == 0) {
+        *out_boolean = KII_JSON_FALSE;
+        return 0;
     }
-
-
-    if (field->field_copy.boolean_value != NULL) {
-        const char* bool_str = NULL;
-        size_t bool_str_len = 0;
-        bool_str = json_string + token->start;
-        bool_str_len = token->end - token->start;
-        if (memcmp(bool_str, "true", bool_str_len) == 0) {
-            *(field->field_copy.boolean_value) = KII_JSON_TRUE;
-        } else if (memcmp(bool_str, "false", bool_str_len) == 0) {
-            *(field->field_copy.boolean_value) = KII_JSON_FALSE;
-        } else {
-            field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
-            return PRV_KII_JSON_CONVERT_UNEXPECTED_FAIL;
-        }
-    }
-
-    field->result = KII_JSON_FIELD_PARSE_SUCCESS;
-    return PRV_KII_JSON_CONVERT_SUCCESS;
-}
-
-static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_null(
-        kii_json_t* kii_json,
-        const jsmntok_t* token,
-        const char* json_string,
-        kii_json_field_t* field)
-{
-    assert(token != NULL);
-    assert(json_string != NULL);
-    assert(field != NULL);
-    assert(field->type == KII_JSON_FIELD_TYPE_LONG);
-
-    field->start = token->start;
-    field->end = token->end;
-
-    if (token->type != JSMN_PRIMITIVE) {
-        field->type = prv_kii_json_to_kii_json_field_type(token->type);
-        field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
-        return PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
-    }
-
-
-    if (memcmp(json_string + token->start, "null", token->end - token->start)
-            != 0) {
-        field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
-        return PRV_KII_JSON_CONVERT_UNEXPECTED_FAIL;
-    }
-
-    field->result = KII_JSON_FIELD_PARSE_SUCCESS;
-    return PRV_KII_JSON_CONVERT_SUCCESS;
+    return -1;
 }
 
 static kii_json_parse_result_t prv_kii_json_check_object_fields(
@@ -597,13 +544,38 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
                         kii_json, value, json_string, field);
                 break;
             case KII_JSON_FIELD_TYPE_BOOLEAN:
-                convert_result =
-                    prv_kii_json_jsmn_primitive_to_kii_json_boolean(kii_json,
-                            value, json_string, field);
+                if (converted_type != KII_JSON_FIELD_TYPE_PRIMITIVE) {
+                    field->type = converted_type;
+                    field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
+                    convert_result = PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
+                } else if (field->field_copy.boolean_value == NULL) {
+                    field->result = KII_JSON_FIELD_PARSE_SUCCESS;
+                    convert_result = PRV_KII_JSON_CONVERT_SUCCESS;
+                } else if (prv_kii_json_to_boolean(json_string + value->start,
+                                value->end - value->start,
+                                field->field_copy.boolean_value) == 0) {
+                    field->result = KII_JSON_FIELD_PARSE_SUCCESS;
+                    convert_result = PRV_KII_JSON_CONVERT_SUCCESS;
+                } else {
+                    field->type = converted_type;
+                    field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
+                    convert_result = PRV_KII_JSON_CONVERT_UNEXPECTED_FAIL;
+                }
                 break;
             case KII_JSON_FIELD_TYPE_NULL:
-                convert_result = prv_kii_json_jsmn_primitive_to_kii_json_null(
-                        kii_json, value, json_string, field);
+                if (converted_type != KII_JSON_FIELD_TYPE_PRIMITIVE) {
+                    field->type = converted_type;
+                    field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
+                    convert_result = PRV_KII_JSON_CONVERT_EXPECTED_FAIL;
+                } else if (memcmp(json_string + value->start, "null",
+                                value->end - value->start) == 0) {
+                    field->result = KII_JSON_FIELD_PARSE_SUCCESS;
+                    convert_result = PRV_KII_JSON_CONVERT_SUCCESS;
+                } else {
+                    field->type = converted_type;
+                    field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
+                    convert_result = PRV_KII_JSON_CONVERT_UNEXPECTED_FAIL;
+                }
                 break;
             case KII_JSON_FIELD_TYPE_ANY:
             default:
