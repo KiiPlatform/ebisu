@@ -237,54 +237,6 @@ static prv_kii_json_convert_t prv_kii_json_jsmn_expected_type_to_kii_json_field(
     return PRV_KII_JSON_CONVERT_SUCCESS;
 }
 
-static prv_kii_json_convert_t prv_kii_json_jsmn_string_to_kii_json_string(
-        kii_json_t* kii_json,
-        const jsmntok_t* token,
-        const char* json_string,
-        kii_json_field_t* field)
-{
-    assert(field->type == KII_JSON_FIELD_TYPE_STRING);
-
-    return prv_kii_json_jsmn_expected_type_to_kii_json_field(kii_json, token,
-            json_string, JSMN_STRING, field);
-}
-
-static prv_kii_json_convert_t prv_kii_json_jsmn_object_to_kii_json_object(
-        kii_json_t* kii_json,
-        const jsmntok_t* token,
-        const char* json_string,
-        kii_json_field_t* field)
-{
-    assert(field->type == KII_JSON_FIELD_TYPE_OBJECT);
-
-    return prv_kii_json_jsmn_expected_type_to_kii_json_field(kii_json, token,
-            json_string, JSMN_OBJECT, field);
-}
-
-static prv_kii_json_convert_t prv_kii_json_jsmn_array_to_kii_json_array(
-        kii_json_t* kii_json,
-        const jsmntok_t* token,
-        const char* json_string,
-        kii_json_field_t* field)
-{
-    assert(field->type == KII_JSON_FIELD_TYPE_ARRAY);
-
-    return prv_kii_json_jsmn_expected_type_to_kii_json_field(kii_json, token,
-            json_string, JSMN_ARRAY, field);
-}
-
-static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_kii_json_primitive(
-        kii_json_t* kii_json,
-        const jsmntok_t* token,
-        const char* json_string,
-        kii_json_field_t* field)
-{
-    assert(field->type == KII_JSON_FIELD_TYPE_PRIMITIVE);
-
-    return prv_kii_json_jsmn_expected_type_to_kii_json_field(kii_json, token,
-            json_string, JSMN_PRIMITIVE, field);
-}
-
 static prv_kii_json_convert_t prv_kii_json_jsmn_primitive_to_long(
         kii_json_t* kii_json,
         const jsmntok_t* token,
@@ -638,21 +590,24 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
 
         switch (field->type) {
             case KII_JSON_FIELD_TYPE_STRING:
-                convert_result = prv_kii_json_jsmn_string_to_kii_json_string(
-                        kii_json, value, json_string, field);
+                convert_result =
+                    prv_kii_json_jsmn_expected_type_to_kii_json_field(kii_json,
+                            value, json_string, JSMN_STRING, field);
                 break;
             case KII_JSON_FIELD_TYPE_OBJECT:
-                convert_result = prv_kii_json_jsmn_object_to_kii_json_object(
-                        kii_json, value, json_string, field);
+                convert_result =
+                    prv_kii_json_jsmn_expected_type_to_kii_json_field(kii_json,
+                            value, json_string, JSMN_OBJECT, field);
                 break;
             case KII_JSON_FIELD_TYPE_ARRAY:
-                convert_result = prv_kii_json_jsmn_array_to_kii_json_array(
-                        kii_json, value, json_string, field);
+                convert_result =
+                    prv_kii_json_jsmn_expected_type_to_kii_json_field(kii_json,
+                            value, json_string, JSMN_ARRAY, field);
                 break;
             case KII_JSON_FIELD_TYPE_PRIMITIVE:
                 convert_result =
-                    prv_kii_json_jsmn_primitive_to_kii_json_primitive(kii_json,
-                            value, json_string, field);
+                    prv_kii_json_jsmn_expected_type_to_kii_json_field(kii_json,
+                            value, json_string, JSMN_PRIMITIVE, field);
                 break;
             case KII_JSON_FIELD_TYPE_INTEGER:
                 convert_result =
