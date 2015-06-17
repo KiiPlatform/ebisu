@@ -378,7 +378,7 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
         jsmntok_t* value = NULL;
         int result = 0;
         kii_json_field_t* field = &fields[i];
-        kii_json_field_type_t type;
+        kii_json_field_type_t type = KII_JSON_FIELD_TYPE_PRIMITIVE;
 
         result = prv_kii_jsmn_get_value(json_string, json_string_len, tokens,
                 field->name, &value);
