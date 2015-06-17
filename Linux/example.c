@@ -7,7 +7,7 @@
 #include <getopt.h>
 #include "kii_core_impl.h"
 
-void received_callback(char* buffer, size_t buffer_size) {
+void received_callback(kii_t* kii, char* buffer, size_t buffer_size) {
     char copy[1024];
     memset(copy, 0x00, sizeof(copy));
     strncpy(copy, buffer, sizeof(copy));
@@ -216,7 +216,7 @@ int main(int argc, char** argv)
                 break;
             case 10:
                 printf("download body in multiple peces\n");
-                ret = kii_object_downlad_body(&kii, EX_OBJECT_ID, &bucket, 0, 
+                ret = kii_object_download_body(&kii, &bucket, EX_OBJECT_ID, 0, 
                         strlen(EX_BODY_DATA), &actual_length, &total_length);
                 if(ret == 0) {
                     printf("success!\n");

@@ -1,19 +1,13 @@
-#ifndef _KII_TASK_CALLBACK
-#define _KII_TASK_CALLBACK
+#ifndef _KII_TASK_IMPL
+#define _KII_TASK_IMPL
+
+#include "kii_task_callback.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef enum kii_task_code_t {
-    KII_TASKC_OK,
-    KII_TASKC_FAIL
-} kii_task_code_t;
-
-typedef void* (*KII_TASK_ENTRY)(void* value);
-
-typedef kii_task_code_t
-(*KII_TASK_CREATE)
+kii_task_code_t task_create_cb
     (const char* name,
      KII_TASK_ENTRY entry,
      void* param,
@@ -21,13 +15,12 @@ typedef kii_task_code_t
      unsigned int stk_size,
      unsigned int priority);
 
-typedef void
-(*KII_DELAY_MS)
+void delay_ms_cb
     (unsigned int msec);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _KII_TASK_CALLBACK  */
+#endif /* _KII_TASK_IMPL */
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

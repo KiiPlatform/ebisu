@@ -8,6 +8,10 @@
 #include "kii_core.h"
 #include "kii_task_callback.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define KII_OBJECTID_SIZE 36
 
 #define KII_UPLOADID_SIZE 64
@@ -30,6 +34,13 @@
 #define M_KII_LOG(x)
 #endif
 
+struct kii_t;
+
+typedef void (*KII_PUSH_RECEIVED_CB)(
+                struct kii_t* kii,
+                char* message,
+                size_t message_length);
+
 typedef struct kii_t {
     kii_core_t kii_core;
 
@@ -49,6 +60,8 @@ typedef struct kii_t {
 
     char* mqtt_buffer;
     size_t mqtt_buffer_size;
+
+    void* app_context;
 
 } kii_t;
 
@@ -276,7 +289,7 @@ int kii_object_commit_upload(
 		unsigned int commit);
 
 /** Download object body at one time.
- *  If the data size is large or unknown, consider use kii_object_downlad_body()
+ *  If the data size is large or unknown, consider use kii_object_download_body()
  *  instead.
  *  The result is cached in kii_core_t#response_body when succeeded.
  *  \param [inout] kii sdk instance.
@@ -303,10 +316,10 @@ int kii_object_download_body_at_once(
  *  \param [out] out_total_length total length of whole object body (in bytes)
  *  \return 0:success, -1: failure
  */
-int kii_object_downlad_body(
+int kii_object_download_body(
 		kii_t* kii,
-		const char* object_id,
 		const kii_bucket_t* bucket,
+		const char* object_id,
 		unsigned int position,
 		unsigned int length,
 		unsigned int* out_actual_length,
@@ -397,6 +410,10 @@ int kii_server_code_execute(
 		kii_t* kii,
 		const char* endpoint_name,
 		const char* params);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
