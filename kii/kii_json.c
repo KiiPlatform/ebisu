@@ -27,7 +27,10 @@
 #define EVAL(f, v) f(v)
 #define TOSTR(s) #s
 #define LONG_MIN_STR EVAL(TOSTR, LONG_MIN)
-#define NUMBUF (sizeof(LONG_MIN_STR) / sizeof(char))
+#define LONGBUFSIZE (sizeof(LONG_MIN_STR) / sizeof(char))
+
+/* "+ 3" denotes '-', '.', '\0' */
+#define DOUBLEBUFSIZE DBL_MAX_10_EXP + 3
 
 typedef enum prv_kii_json_num_parse_result_t {
     PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS,
@@ -204,7 +207,7 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_long(
         size_t target_size,
         long* out_long)
 {
-    char buf[NUMBUF];
+    char buf[LONGBUFSIZE];
     char* endptr = NULL;
     size_t buf_len = 0;
     long long_value = 0;
@@ -289,7 +292,7 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_double(
         size_t target_size,
         double* out_double)
 {
-    char buf[NUMBUF];
+    char buf[DOUBLEBUFSIZE];
     char* endptr = NULL;
     size_t buf_len = 0;
     double value = 0;
@@ -301,15 +304,30 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_double(
     buf_len = sizeof(buf) / sizeof(buf[0]);
     memset(buf, 0, sizeof(buf) / sizeof(buf[0]));
 
-    if (buf_len <= target_size) {
+    if (buf_len > target_size) {
+        memcpy(buf, target, target_size);
+    } else {
         // If checking more exactly, we should check contents of
         // target.
-        if (*target == '-') {
-            return PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
+        const char* e_point = prv_strnchr(target, 'e', target_size);
+        const char* decimal_point = prv_strnchr(target, '.', target_size);
+        if (e_point == NULL && decimal_point == NULL) {
+            // integer part is bigger than double can store.
+            *out_double = HUGE_VAL;
+            return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
+        } else if (e_point == NULL && decimal_point != NULL) {
+            if(buf <= decimal_point - target) {
+                // integer part is bigger than double can store.
+                *out_double = HUGE_VAL;
+                return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
+            } else {
+                memcpy(buf, target, buf_len - 1);
+            }
+        } else {
+            // this might be no occurred.
+            return PRV_KII_JSON_NUM_PARSE_RESULT_INVALID;
         }
-        return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
     }
-    memcpy(buf, target, target_size);
 
     errno = 0;
     value = strtod(buf, &endptr);
@@ -318,14 +336,27 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_double(
         snprintf(message, sizeof(message) / sizeof(message[0]),
                 "invalid double string: %s.", endptr);
         prv_kii_json_set_error_message(kii_json, message);
-        return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
+        return PRV_KII_JSON_NUM_PARSE_RESULT_INVALID;
     } else if (value == 0 && errno == ERANGE) {
+        *out_double = 0;
         return PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
     } else if (value == HUGE_VAL && errno == ERANGE) {
+        *out_double = HUGE_VAL;
         return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
     }
 
     *out_double = value;
+    if (strchr(buf, 'e') == NULL) {
+        if (strchr(buf, '.') != NULL) {
+            return strlen(buf) - 1 >= DBL_DIG ?
+                PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW :
+                PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS;
+        } else {
+            return strlen(buf) >= DBL_DIG ?
+                PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW :
+                PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS;
+        }
+    }
     return PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS;
 }
 

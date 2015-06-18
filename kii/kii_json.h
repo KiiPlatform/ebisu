@@ -69,16 +69,18 @@ typedef enum kii_json_field_parse_result {
      */
     KII_JSON_FIELD_PARSE_COPY_FAILED,
 
-    /** Coping int or long value to
-     * kii_json_field_t#field_copy#int_value or
-     * kii_json_field_t#field_copy#long_value is failed. value is
+    /** Coping int, long or double value to
+     * kii_json_field_t#field_copy#int_value,
+     * kii_json_field_t#field_copy#long_value or
+     * kii_json_field_t#field_copy#double_value is failed. value is
      * overflowed.
      */
     KII_JSON_FIELD_PARSE_COPY_OVERFLOW,
 
-    /** Coping int or long value to
-     * kii_json_field_t#field_copy#int_value or
-     * kii_json_field_t#field_copy#long_value is failed. value is
+    /** Coping int, long or double value to
+     * kii_json_field_t#field_copy#int_value,
+     * kii_json_field_t#field_copy#long_value or
+     * kii_json_field_t#field_copy#double_value is failed. value is
      * underflowed.
      */
     KII_JSON_FIELD_PARSE_COPY_UNDERFLOW
