@@ -237,6 +237,10 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_long(
         prv_kii_json_set_error_message(kii_json,
                 "strtol set ERANGE but return is unexpected.");
         return PRV_KII_JSON_NUM_PARSE_RESULT_INVALID;
+    } else if (errno == EINVAL) {
+        // This situation must not be occurred. This situation is
+        // occurred when third argument of strtol is invalid.
+        assert(0);
     }
 
     if (*endptr != '\0') {
