@@ -221,8 +221,10 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_long(
 
     if (buf_len <= target_size) {
         if (*target == '-') {
+            *out_long = LONG_MIN;
             return PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
         }
+        *out_long = LONG_MAX;
         return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
     }
     memcpy(buf, target, target_size);
@@ -231,13 +233,13 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_long(
     long_value = strtol(buf, &endptr, 0);
     if (errno == ERANGE) {
         if (long_value == LONG_MAX) {
+            *out_long = LONG_MAX;
             return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
         } else if (long_value == LONG_MIN) {
+            *out_long = LONG_MIN;
             return PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
         }
-        prv_kii_json_set_error_message(kii_json,
-                "strtol set ERANGE but return is unexpected.");
-        return PRV_KII_JSON_NUM_PARSE_RESULT_INVALID;
+        assert(0);
     } else if (errno == EINVAL) {
         // This situation must not be occurred. This situation is
         // occurred when third argument of strtol is invalid.
@@ -253,7 +255,6 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_long(
     }
 
     *out_long = long_value;
-
     return PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS;
 }
 
@@ -264,20 +265,20 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_int(
         int* out_int)
 {
     long long_value = 0;
-    prv_kii_json_num_parse_result_t result =
-        PRV_KII_JSON_NUM_PARSE_RESULT_INVALID;
 
     assert(kii_json != NULL);
     assert(target != NULL);
     assert(out_int != NULL);
 
-    result = prv_kii_json_to_long(kii_json, target, target_size, &long_value);
-    if (result != PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS) {
-        return result;
+    if (prv_kii_json_to_long(kii_json, target, target_size, &long_value) ==
+            PRV_KII_JSON_NUM_PARSE_RESULT_INVALID) {
+        return PRV_KII_JSON_NUM_PARSE_RESULT_INVALID;
     } else if (long_value > INT_MAX) {
+        *out_int = INT_MAX;
         return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
     } else if (long_value < INT_MIN) {
-        return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
+        *out_int = INT_MIN;
+        return PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
     }
 
     *out_int = (int)long_value;
