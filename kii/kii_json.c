@@ -24,14 +24,10 @@
 #define KII_JSON_TOKEN_NUM 128
 #endif
 
- // LONG_MAX size + 2. 2 means '\0' and '-'
-#if LONG_MAX == 2147483647
-    #define NUMBUF 12
-#elif LONG_MAX == 9223372036854775807
-  #define NUMBUF 21
-#else
-  #error LONG_MAX size is not expected.
-#endif
+#define EVAL(f, v) f(v)
+#define TOSTR(s) #s
+#define LONG_MIN_STR EVAL(TOSTR, LONG_MIN)
+#define NUMBUF (sizeof(LONG_MIN_STR) / sizeof(char))
 
 typedef enum prv_kii_json_num_parse_result_t {
     PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS,
