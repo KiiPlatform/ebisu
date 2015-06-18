@@ -220,8 +220,6 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_long(
     memset(buf, 0, sizeof(buf) / sizeof(buf[0]));
 
     if (buf_len <= target_size) {
-        // If checking more exactly, we should check contents of
-        // target.
         if (*target == '-') {
             return PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
         }
@@ -307,8 +305,6 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_double(
     if (buf_len > target_size) {
         memcpy(buf, target, target_size);
     } else {
-        // If checking more exactly, we should check contents of
-        // target.
         const char* e_point = prv_strnchr(target, 'e', target_size);
         const char* decimal_point = prv_strnchr(target, '.', target_size);
         if (e_point == NULL && decimal_point == NULL) {
