@@ -225,10 +225,8 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_long(
         // target.
         if (*target == '-') {
             return PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
-        } else {
-            return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
         }
-        return PRV_KII_JSON_NUM_PARSE_RESULT_INVALID;
+        return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
     }
     memcpy(buf, target, target_size);
 
@@ -239,11 +237,9 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_long(
             return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
         } else if (long_value == LONG_MIN) {
             return PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
-        } else {
-            prv_kii_json_set_error_message(kii_json,
-                    "strtol set ERANGE but return is unexpected.");
-            return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
         }
+        prv_kii_json_set_error_message(kii_json,
+                "strtol set ERANGE but return is unexpected.");
         return PRV_KII_JSON_NUM_PARSE_RESULT_INVALID;
     }
 
@@ -310,10 +306,8 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_double(
         // target.
         if (*target == '-') {
             return PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
-        } else {
-            return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
         }
-        return PRV_KII_JSON_NUM_PARSE_RESULT_INVALID;
+        return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
     }
     memcpy(buf, target, target_size);
 
