@@ -23,8 +23,8 @@ typedef enum kii_json_boolean {
     KII_JSON_TRUE
 } kii_json_boolean_t;
 
-/** Return value of kii_json_read_object(kii_t*, const char*, size_t,
- * kii_json_field_t*) */
+/** Return value of kii_json_read_object(kii_json_t*, const char*,
+ * size_t, kii_json_field_t*) */
 typedef enum kii_json_parse_result {
 
     /** JSON string is successfully parsed and all kii_json_field_t
@@ -42,7 +42,7 @@ typedef enum kii_json_parse_result {
     /** JSON string is successfully parsed but type of root object
      * type is unmatched to using function.
      *
-     * kii_json_read_object(kii_t*, const char*, size_t,
+     * kii_json_read_object(kii_json_t*, const char*, size_t,
      * kii_json_field_t*) requires JSON object if JSON array is
      * passed, then this error is returned.
      */
@@ -91,8 +91,8 @@ typedef enum kii_json_field_parse_result {
 typedef enum kii_json_field_type {
 
     /** This value denotes any JSON types. If this value is set to
-     * kii_json_field_t#type, then kii_json_read_object(kii_t*, const
-     * char*, size_t, kii_json_field_t*) ignore type checking.
+     * kii_json_field_t#type, then kii_json_read_object(kii_json_t*,
+     * const char*, size_t, kii_json_field_t*) ignore type checking.
      */
     KII_JSON_FIELD_TYPE_ANY,
 
@@ -131,28 +131,29 @@ typedef enum kii_json_field_type {
 typedef struct kii_json_field {
 
     /** Parsing target key name. Input of
-     * kii_json_read_object(kii_t*, const char*, size_t,
+     * kii_json_read_object(kii_json_t*, const char*, size_t,
      * kii_json_field_t*).
      */
     const char* name;
 
-    /** Field parse result. Output of kii_json_read_object(kii_t*,
-     * const char*, size_t, kii_json_field_t*).
+    /** Field parse result. Output of
+     * kii_json_read_object(kii_json_t*, const char*, size_t,
+     * kii_json_field_t*).
      */
     kii_json_field_parse_result_t result;
 
     /** Parsed target value type. Input and Output of
-     * kii_json_read_object(kii_t*, const char*, size_t,
+     * kii_json_read_object(kii_json_t*, const char*, size_t,
      * kii_json_field_t*). Inputted value is expected value type and
      * outputted value is actual value type.
      *
      * If type is set as
      * kii_json_field_type_t#KII_JSON_FIELD_TYPE_ANY, then
-     * kii_json_read_object(kii_t*, const char*, size_t,
+     * kii_json_read_object(kii_json_t*, const char*, size_t,
      * kii_json_field_t*) ignore type checking.
      *
      * If actual type is not matched expected type:
-     *   - kii_json_read_object(kii_t*, const char*, size_t,
+     *   - kii_json_read_object(kii_json_t*, const char*, size_t,
      *     kii_json_field_t*) set actual type.
      *   - if expected type is not
      *     kii_json_field_type_t#KII_JSON_FIELD_TYPE_ANY, then
@@ -180,13 +181,13 @@ typedef struct kii_json_field {
     kii_json_field_type_t type;
 
     /** Start point of this field in given buffer. Output of
-     * kii_json_read_object(kii_t*, const char*, size_t,
+     * kii_json_read_object(kii_json_t*, const char*, size_t,
      * kii_json_field_t*).
      */
     size_t start;
 
     /** End point of this field in given buffer. Output of
-     * kii_json_read_object(kii_t*, const char*, size_t,
+     * kii_json_read_object(kii_json_t*, const char*, size_t,
      * kii_json_field_t*).
      */
     size_t end;
