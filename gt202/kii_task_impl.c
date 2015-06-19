@@ -8,12 +8,21 @@ typedef struct _data {
     void* param;
 } _data_t;
 
-void kii_task(uint_32 temp)
+void kii_task1(uint_32 temp)
 {
     _data_t* data = (_data_t*)temp;
     data->entry(data->param);
     free(data);
 }
+
+void kii_task2(uint_32 temp)
+{
+    _data_t* data = (_data_t*)temp;
+    data->entry(data->param);
+    free(data);
+}
+
+static int use_task1 = 0;
 
 kii_task_code_t task_create_cb
     (const char* name,
@@ -25,13 +34,23 @@ kii_task_code_t task_create_cb
 {
     int ret = 0;
     _data_t* data = NULL;
+    uint_32 task = KII_TASK1;
 
     data = (_data_t*)malloc(sizeof(_data_t));
     data->name = name;
     data->entry = entry;
     data->param = param;
 
-    _task_create(0, KII_TASK,(uint_32) data);
+    if (use_task1 == 1)
+    {
+        task = KII_TASK2;
+    }
+    else
+    {
+        use_task1 = 1;
+    }
+
+    _task_create(0, task,(uint_32) data);
 
     if(ret == 0)
     {

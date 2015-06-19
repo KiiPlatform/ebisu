@@ -234,13 +234,14 @@ kii_http_client_code_t
             }
         case PRV_STATE_SEND:
         {
+            char* sendBuff = NULL;
             int size = BUFF_SIZE;
-            int remain = strlen(ctx->buff) - ctx->sent_size;
+            int remain = http_context->total_send_size - ctx->sent_size;
             if (remain < size) {
                 size = remain;
                 ctx->last_chunk = 1;
             }
-            char* sendBuff = ctx->buff + ctx->sent_size;
+            sendBuff = http_context->buffer + ctx->sent_size;
             res = prv_send(
                     ctx,
                     sendBuff,
@@ -262,9 +263,9 @@ kii_http_client_code_t
         case PRV_STATE_RECV:
         {
             int actualLength = 0;
-            char* buffPtr = ctx->buff + ctx->received_size;
+            char* buffPtr = http_context->buffer + ctx->received_size;
             if (ctx->received_size == 0) {
-                memset(ctx->buff, 0x00, ctx->buff_size);
+                memset(http_context->buffer, 0x00, http_context->buffer_size);
             }
             res = prv_recv(ctx, buffPtr, BUFF_SIZE, &actualLength);
             if (res == KII_HTTPC_OK) {
@@ -286,7 +287,7 @@ kii_http_client_code_t
             res = prv_close(ctx);
             if (res == KII_HTTPC_OK) {
                 /* parse status code */
-                char* statusPtr = strstr(ctx->buff, "HTTP/1.1 ");
+                char* statusPtr = strstr(http_context->buffer, "HTTP/1.1 ");
                 int numCode = 0;
                 char* bodyPtr = NULL;
                 if (statusPtr != NULL) {
@@ -298,7 +299,7 @@ kii_http_client_code_t
                     *response_code = numCode;
                 }
                 /* set body pointer */
-                bodyPtr = strstr(ctx->buff, "\r\n\r\n");
+                bodyPtr = strstr(http_context->buffer, "\r\n\r\n");
                 if (bodyPtr != NULL) {
                     bodyPtr += 4;
                 }

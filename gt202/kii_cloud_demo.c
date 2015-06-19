@@ -3,16 +3,25 @@
 
 #include "gt202_kii_adapter.h"
 #include "kii_task_impl.h"
+#include "kii_mqtt_socket.h"
 
 static char static_ojbect_id_buf[KII_OBJECTID_SIZE + 1];
-static char static_mqtt_buf[2048];
+static kii_t static_kii;
+static int static_kii_init = 0;
 
 void parse_response(char* resp_body)
 {
     /* TODO: implement */
 }
 
-static void init(kii_t* kii, context_t* ctx, char* buff, int buff_length)
+static void init(
+        kii_t* kii,
+        context_t* ctx,
+        char* buff,
+        int buff_length,
+        context_t* mqtt_ctx,
+        char* mqtt_buff,
+        int mqtt_length)
 {
     memset(kii, 0x00, sizeof(kii_t));
     kii->kii_core.app_id = APP_ID;
@@ -28,9 +37,14 @@ static void init(kii_t* kii, context_t* ctx, char* buff, int buff_length)
     kii->kii_core.http_execute_cb = execute_cb;
     kii->kii_core.logger_cb = logger_cb;
 
-    kii->mqtt_buffer = static_mqtt_buf;
-    kii->mqtt_buffer_size = 2048;
-    kii->app_context = ctx;
+    kii->mqtt_socket_connect_cb = mqtt_socket_connect;
+    kii->mqtt_socket_send_cb = mqtt_socket_send;
+    kii->mqtt_socket_recv_cb = mqtt_socket_recv;
+    kii->mqtt_socket_close_cb = mqtt_socket_close;
+
+    kii->mqtt_socket_context.app_context = mqtt_ctx;
+    kii->mqtt_buffer = mqtt_buff;
+    kii->mqtt_buffer_size = mqtt_length;
 
     kii->task_create_cb = task_create_cb;
     kii->delay_ms_cb = delay_ms_cb;
@@ -39,6 +53,8 @@ static void init(kii_t* kii, context_t* ctx, char* buff, int buff_length)
     /* share the request and response buffer.*/
     ctx->buff = buff;
     ctx->buff_size = buff_length;
+    mqtt_ctx->buff = mqtt_buff;
+    mqtt_ctx->buff_size = mqtt_length;
 }
 
 static void set_author(kii_t* kii)
@@ -383,12 +399,17 @@ static int unsubscribe_topic(kii_t* kii)
     return ret;
 }
 
-void received_callback(char* buffer, size_t buffer_size) {
+void received_callback(
+        kii_t* kii,
+        char* buffer,
+        size_t buffer_size)
+{
     char copy[1024];
     memset(copy, 0x00, sizeof(copy));
     strncpy(copy, buffer, sizeof(copy));
     printf("buffer_size: %lu\n", buffer_size);
     printf("recieve message: %s\n", copy);
+    fflush(stdout);
 }
 
 static int push(kii_t* kii)
@@ -451,10 +472,12 @@ int kii_main(int argc, char *argv[])
 {
     int ret = A_ERROR;
     context_t *ctx = NULL;
-    kii_t *kii = NULL;
+    context_t *mqtt_ctx = NULL;
+    kii_t *kii = &static_kii;
     kii_state_t state;
     kii_error_code_t err;
     char *buff = NULL;
+    char *mqtt = NULL;
 
     if (argc < CMD_INDEX + 1)
     {
@@ -462,11 +485,16 @@ int kii_main(int argc, char *argv[])
         return A_OK;
     }
 
-    kii = malloc(sizeof(kii_t));
-    ctx = malloc(sizeof(context_t));
-    buff = malloc(4096);
+    if (static_kii_init == 0)
+    {
+        ctx = malloc(sizeof(context_t));
+        mqtt_ctx = malloc(sizeof(context_t));
+        buff = malloc(4096);
+        mqtt = malloc(4096);
 
-    init(kii, ctx, buff, 4096);
+        init(kii, ctx, buff, 4096, mqtt_ctx, mqtt, 4096);
+        static_kii_init = 1;
+    }
 
     if(ATH_STRCMP(argv[CMD_INDEX], "register") == 0)
     {
@@ -618,9 +646,12 @@ int kii_main(int argc, char *argv[])
         ret = A_OK;
     }
 
+    /*
     free(kii);
     free(buff);
+    free(mqtt);
     free(ctx);
+    */
     return ret;
 }
 

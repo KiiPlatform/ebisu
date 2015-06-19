@@ -38,7 +38,7 @@ mqtt_socket_connect(
     {
         if (strlen(host) >= sizeof(dnsCfg.ahostname))
         {
-            printf("GetERROR: host name too long\n");
+            printf("GetERROR: host name too long.(%s)\n", host);
             return KII_HTTPC_FAIL;
         }
         strcpy((char*)dnsCfg.ahostname, host);
@@ -84,6 +84,7 @@ mqtt_socket_send(
     memcpy(buff, send_buff, buff_length);
     int ret = t_send(handle, ctx->sock, (uint_8 *)buff, buff_length, 0);
 
+    printf("send: %.*s\n", buff_length, buff);
     CUSTOM_FREE(buff);
 
     if (ret > 0) {
@@ -125,6 +126,7 @@ mqtt_socket_recv(
     } while (res == A_OK);
 
     if (total >  0) {
+        printf("recv: %.*s\n", total, recv_buff);
         *out_actual_length = total;
         return KII_HTTPC_OK;
     } else {
