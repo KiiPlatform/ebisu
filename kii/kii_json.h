@@ -123,43 +123,6 @@ typedef enum kii_json_field_type {
     KII_JSON_FIELD_TYPE_ARRAY
 } kii_json_field_type_t;
 
-/** Object type enclosing kii_json_target_t#target. */
-typedef enum kii_json_enclosing_type_t {
-    /** Enclosing type is json object. */
-    KII_JSON_ENCLOSING_TYPE_OBJECT,
-
-    /** Enclosing type is json array. */
-    KII_JSON_ENCLOSING_TYPE_ARRAY,
-
-    /** This is not a type. This denotes the end point of
-     * kii_json_target_t array. */
-    KII_JSON_ENCLOSING_TYPE_END
-} kii_json_enclosing_type_t;
-
-/** Information to specify parsing target. */
-typedef struct kii_json_target_t {
-    /** Object type enclosing target.
-     *
-     * If type is KII_JSON_ENCLOSING_TYPE_OBJECT,
-     * kii_json_target_t#target#name must be used. If type is
-     * KII_JSON_ENCLOSING_TYPE_ARRAY, kii_json_target_t#target#index
-     * must be used.
-     *
-     * If KII_JSON_ENCLOSING_TYPE_END is specified, then the element is
-     * the end point of kii_json_target_t array.
-     */
-    kii_json_enclosing_type_t type;
-
-    /** Target name or index. */
-    union {
-        /** Target name of json object. */
-        const char* name;
-
-        /** Target index of json array. */
-        int index;
-    } target;
-} kii_json_target_t;
-
 /** JSON parsed field data.
  *
  * Input of kii_json_read_object(kii_json_t*, const char*, size_t,
@@ -176,12 +139,35 @@ typedef struct kii_json_target_t {
  */
 typedef struct kii_json_field_t {
 
-    /** Parsing target. Input of kii_json_read_object(kii_json_t*,
-     * const char*, size_t, kii_json_field_t*).
+    /** Parsing target key name. Input of
+     * kii_json_read_object(kii_json_t*, const char*, size_t,
+     * kii_json_field_t*).
      *
-     * This is an array of kii_json_target_t. Index of this array is
-     * depth of target in json. If you want to get first element of
-     * color array in following json example:
+     * This can point an only field in root json object.
+     * \deprecated{You should use kii_json_field_t#path}
+     */
+    const char* name;
+
+    /** Parsing target path. Input of
+     * kii_json_read_object(kii_json_t*, const char*, size_t,
+     * kii_json_field_t*).
+     *
+     * This can point any field or element of array. BNF like notation
+     * of path is following:
+     *
+     * \code
+     * path ::= '/' identifier subpath
+     * subpath ::= '/' identifier subpath | ''
+     * identifier ::= field | index
+     * index ::= '[' 0 ']' | '[' [1-9][0-9]+ ']'
+     * field ::= [char | escaped]+
+     * char ::= any ascii characters expect '/', '[', ']' and '\'
+     * escaped = "\\/" | "\\[" | "\\]" | "\\"
+     * \endcode
+     *
+     * If you want to get first element of color array in following
+     * json example:
+     *
      * \code
      * {
      *     "ligtht" : {
@@ -190,24 +176,24 @@ typedef struct kii_json_field_t {
      * }
      * \endcode
      *
-     * You should specify with array of kii_json_target_t as followings:
-     *
      * \code
-     * kii_json_target_t target[4];
-     * target[0].name = "ligtht";
-     * target[0].type = KII_JSON_ENCLOSING_TYPE_OBJECT;
-     * target[1].name = "color";
-     * target[1].type = KII_JSON_ENCLOSING_TYPE_OBJECT;
-     * target[2].index = 0;
-     * target[2].type = KII_JSON_ENCLOSING_TYPE_ARRAY;
-     * target[3].type = KII_JSON_ENCLOSING_TYPE_END;
+     * path ="/ligtht/color/[0]";
      * \endcode
      *
-     * The type value of last element of array of kii_json_target_t
-     * must be KII_JSON_ENCLOSING_TYPE_END. This denotes end of this
-     * array.
+     * In rare cases, like following:
+     * \code
+     * {
+     *     "[]/\\" : "rare"
+     * }
+     * \endcode
+     *
+     * You can specify "[]/\\" as following:
+     *
+     * \code
+     * path ="/\\[\\]\\/\\";
+     * \endcode
      */
-    const kii_json_target_t* target;
+    const char* path;
 
     /** Field parse result. Output of
      * kii_json_read_object(kii_json_t*, const char*, size_t,
