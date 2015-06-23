@@ -209,14 +209,14 @@ typedef struct kii_json_field {
          * INT_MAX. If parsing is underflowed, then this value is
          * INT_MIN.
          */
-        int* int_value;
+        int int_value;
 
         /** This value is used if kii_json_field_t#type is
          * kii_json_field_type_t#KII_JSON_FIELD_TYPE_LONG. If parsing
          * target is overflowed, then this value is LONG_MAX. If parsing
          * is underflowed, then this value is LONG_MIN.
          */
-        long* long_value;
+        long long_value;
 
         /** This value is used if kii_json_field_t#type is
          * kii_json_field_type_t#KII_JSON_FIELD_TYPE_DOUBLE. If
@@ -224,12 +224,12 @@ typedef struct kii_json_field {
          * minus HUGE_VAL. If parsing is underflowed, then this value is
          * 0.
          */
-        double* double_value;
+        double double_value;
 
         /** This value is used if kii_json_field_t#type is
          * kii_json_field_type_t#KII_JSON_FIELD_TYPE_BOOLEAN.
          */
-        kii_json_boolean_t* boolean_value;
+        kii_json_boolean_t boolean_value;
     } field_copy;
 
     /** Length of field_copy#string. ignored if field_copy#string is
