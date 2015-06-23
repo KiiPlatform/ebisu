@@ -16,3 +16,22 @@
     { "?",         Shell_command_list },     
     { NULL,        NULL } 
  };
+--- Tasks.c  2015-04-01 18:48:27.821462100 +0900
++++ Tasks.c  2015-06-18 14:18:29.142265400 +0900
+@@ -18,6 +18,7 @@
+
+ #include "main.h"
+ #include "throughput.h"
++#include "kii_task_impl.h"
+
+ /*
+ ** MQX initialization information
+@@ -31,6 +32,8 @@
+ #if DEMOCFG_ENABLE_SERIAL_SHELL
+     { SHELL_TASK,   Shell_Task,        2000,   12,      "Shell",    MQX_AUTO_START_TASK,      0,      0           },
+ #endif
++   { KII_TASK1,          kii_task1,        3000,    9,      "KIITASK1",    0,  0,      0           },
++   { KII_TASK2,          kii_task2,        3000,    9,      "KIITASK2",    0,  0,      0           },
+
+     {0}
+ };
