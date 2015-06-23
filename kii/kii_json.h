@@ -96,10 +96,6 @@ typedef enum kii_json_field_type {
      */
     KII_JSON_FIELD_TYPE_ANY,
 
-    /** This value denotes JSON primitive values such as number,
-     * boolean and null. */
-    KII_JSON_FIELD_TYPE_PRIMITIVE,
-
     /** This values denotes an signed interger value. Maximum is
      * INT_MAX and Minimum is INT_MIN. */
     KII_JSON_FIELD_TYPE_INTEGER,
