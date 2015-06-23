@@ -43,6 +43,20 @@ typedef enum prv_kii_json_num_parse_result_t {
     PRV_KII_JSON_NUM_PARSE_RESULT_INVALID
 } prv_kii_json_num_parse_result_t;
 
+typedef enum prv_kii_json_enclosing_type_t {
+    PRV_KII_JSON_ENCLOSING_TYPE_OBJECT,
+    PRV_KII_JSON_ENCLOSING_TYPE_ARRAY
+} prv_kii_json_enclosing_type_t;
+
+typedef struct prv_kii_json_target_t {
+    union {
+        const char* name;
+        size_t index;
+    } field;
+    size_t len;
+    prv_kii_json_enclosing_type_t enclosing_type;
+} prv_kii_json_target_t;
+
 static void prv_kii_json_set_error_message(
         kii_json_t* kii_json,
         const char* message)
@@ -128,7 +142,7 @@ static int prv_kii_jsmn_get_value(
         goto exit;
     }
 
-    for (i = 0; i < tokens[0].size; ++i) {
+    for (i = 0; i < tokens[0].size; i += 2) {
         const jsmntok_t* key_token = tokens + index;
         const jsmntok_t* value_token = tokens + index + 1;
         int key_len = key_token->end - key_token->start;
@@ -470,6 +484,88 @@ static int prv_kii_json_to_boolean(
     return -1;
 }
 
+static const char* prv_kii_json_get_target(
+        const char* path,
+        prv_kii_json_target_t* target)
+{
+    // TODO: implement me.
+    return NULL;
+}
+
+static size_t prv_kii_json_count_contained_token(const jsmntok_t* token)
+{
+    // TODO: implement me.
+    return 0;
+}
+
+static int prv_kii_json_is_same_key(
+        prv_kii_json_target_t* target,
+        const char* key,
+        size_t key_len)
+{
+    // TODO: implement me.
+    return -1;
+}
+
+static int prv_kii_jsmn_get_value_by_path(
+        const char* json_string,
+        size_t json_string_len,
+        const jsmntok_t* tokens,
+        const char* path,
+        jsmntok_t** out_token)
+{
+    const char* next_top = path;
+    const jsmntok_t* top_token = tokens;
+
+    assert(json_string != NULL);
+    assert(tokens != NULL);
+    assert(path != NULL && strlen(path) > 0);
+    assert(out_token != NULL);
+
+    do {
+        prv_kii_json_target_t target;
+        memset(&target, 0x00, sizeof(target));
+        next_top = prv_kii_json_get_target(next_top, &target);
+        if (top_token->type == JSMN_OBJECT &&
+                target.enclosing_type == PRV_KII_JSON_ENCLOSING_TYPE_OBJECT) {
+            size_t i = 0;
+            size_t index = 1;
+            const jsmntok_t* next_token = NULL;
+            for (i = 0; i < top_token->size; i += 2) {
+                const jsmntok_t* key_token = top_token + index;
+                const jsmntok_t* value_token = top_token + index + 1;
+                assert(key_token->type == JSMN_STRING);
+                if (prv_kii_json_is_same_key(&target,
+                                json_string + key_token->start,
+                                key_token->end - key_token->start) == 0) {
+                    next_token = value_token;
+                    break;
+                }
+                index += prv_kii_json_count_contained_token(value_token) + 1;
+            }
+            if (next_token == NULL) {
+                return -1;
+            }
+            top_token = next_token;
+        } else  if (top_token->type == JSMN_ARRAY &&
+                target.enclosing_type == PRV_KII_JSON_ENCLOSING_TYPE_ARRAY) {
+            size_t i = 0;
+            if (target.field.index >= top_token->size) {
+                return -1;
+            }
+            for (i = 0; i < target.field.index - 1; ++i) {
+                top_token += prv_kii_json_count_contained_token(top_token + 1);
+            }
+            ++top_token;
+        } else {
+            return -1;
+        }
+    } while (next_top != NULL);
+
+    *out_token = (jsmntok_t*)top_token;
+    return 0;
+}
+
 static kii_json_parse_result_t prv_kii_json_check_object_fields(
         kii_json_t* kii_json,
         const char* json_string,
@@ -490,15 +586,20 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
             return KII_JSON_PARSE_INVALID_INPUT;
     }
 
-    for (i = 0; fields[i].name != NULL; ++i)
+    for (i = 0; fields[i].name != NULL || fields[i].path != NULL; ++i)
     {
         jsmntok_t* value = NULL;
         int result = 0;
         kii_json_field_t* field = &fields[i];
         kii_json_field_type_t type = KII_JSON_FIELD_TYPE_ANY;
 
-        result = prv_kii_jsmn_get_value(json_string, json_string_len, tokens,
-                field->name, &value);
+        if (field->path != NULL) {
+            result = prv_kii_jsmn_get_value_by_path(json_string,
+                    json_string_len, tokens, field->path, &value);
+        } else {
+            result = prv_kii_jsmn_get_value(json_string, json_string_len,
+                    tokens, field->name, &value);
+        }
         if (result != 0 || value == NULL)
         {
             retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
