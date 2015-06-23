@@ -6,6 +6,7 @@
 #include <math.h>
 #include <errno.h>
 #include <float.h>
+#include <ctype.h>
 
 #include <jsmn.h>
 
@@ -27,8 +28,10 @@
 
 #define EVAL(f, v) f(v)
 #define TOSTR(s) #s
-#define LONG_MIN_STR EVAL(TOSTR, LONG_MIN)
-#define LONGBUFSIZE (sizeof(LONG_MIN_STR) / sizeof(char))
+#define LONG_MAX_STR EVAL(TOSTR, LONG_MAN)
+#define LONGBUFSIZE (sizeof(LONG_MAX_STR) / sizeof(char) + 1)
+#define INT_MAX_STR EVAL(TOSTR, INT_MAN)
+#define INTBUFSIZE (sizeof(INT_MAX_STR) / sizeof(char) + 1)
 
 /* "+ 3" denotes '-', '.', '\0' */
 #define DOUBLEBUFSIZE DBL_MAX_10_EXP + 3
@@ -163,13 +166,127 @@ exit:
     return ret;
 }
 
+static const char* prv_kii_json_memchr(
+        const char* buf,
+        size_t buf_len,
+        const char c)
+{
+    int i = 0;
+    assert(buf != NULL);
+    for (i = 0; i < buf_len; ++i) {
+        if (buf[i] == c) {
+            return &buf[i];
+        }
+    }
+    return NULL;
+}
+
+static int prv_kii_json_is_all_digit(const char* buf, size_t buf_len)
+{
+    int i = 0;
+    assert(buf != NULL);
+
+    for (i = 0; i < buf_len; ++i) {
+        if (isdigit(buf[i]) == 0) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int prv_kii_json_is_int(const char* buf, size_t buf_len)
+{
+    assert(buf != NULL);
+    if (buf_len > INTBUFSIZE) {
+        return 0;
+    }
+    if (*buf == '-') {
+        ++buf;
+        --buf_len;
+    }
+    return prv_kii_json_is_all_digit(buf, buf_len);
+}
+
+static int prv_kii_json_is_long(const char* buf, size_t buf_len)
+{
+    assert(buf != NULL);
+    if (buf_len > LONGBUFSIZE) {
+        return 0;
+    }
+    if (*buf == '-') {
+        ++buf;
+        --buf_len;
+    }
+    return prv_kii_json_is_all_digit(buf, buf_len);
+}
+
+static int prv_kii_json_is_decimal_point(const char* buf, size_t buf_len)
+{
+    const char* comma_point = prv_kii_json_memchr(buf, buf_len, '.');
+
+    assert(buf != NULL);
+
+    if (*buf == '-') {
+        ++buf;
+        --buf_len;
+    }
+    if (prv_kii_json_is_all_digit(buf, comma_point - buf) == 0) {
+        return 0;
+    }
+    return prv_kii_json_is_all_digit(comma_point + 1,
+            buf + buf_len - comma_point + 1);
+}
+
+static int prv_kii_json_is_double(const char* buf, size_t buf_len)
+{
+    const char* e_point = prv_kii_json_memchr(buf, buf_len, 'e');
+    const char* comma_point = prv_kii_json_memchr(buf, buf_len, '.');
+    assert(buf != NULL);
+    if (buf_len > DOUBLEBUFSIZE) {
+        return 0;
+    }
+    if (e_point != NULL) {
+        if (prv_kii_json_is_decimal_point(buf, e_point - buf - 1) == 0) {
+            return 0;
+        } else {
+            const char* exponent = e_point + 1;
+            size_t exponent_len = buf + buf_len - exponent;
+            if (*exponent == '-') {
+                ++exponent;
+                --exponent_len;
+            }
+            return prv_kii_json_is_all_digit(exponent, exponent_len);
+        }
+    } else if (comma_point != NULL) {
+        return prv_kii_json_is_decimal_point(buf, buf_len);
+    } else {
+        return 0;
+    }
+}
+
 static kii_json_field_type_t prv_kii_json_to_kii_json_field_type(
-        jsmntype_t jsmn_type)
+        jsmntype_t jsmn_type,
+        const char* buf,
+        size_t buf_len)
 {
     switch (jsmn_type)
     {
         case JSMN_PRIMITIVE:
-            return KII_JSON_FIELD_TYPE_PRIMITIVE;
+            if (memcmp(buf, "null", buf_len) == 0) {
+                return KII_JSON_FIELD_TYPE_NULL;
+            } else if (memcmp(buf, "true", buf_len) == 0 ||
+                    memcmp(buf, "false", buf_len) == 0 ) {
+                return KII_JSON_FIELD_TYPE_BOOLEAN;
+            } else if (prv_kii_json_is_int(buf, buf_len) != 0) {
+                return KII_JSON_FIELD_TYPE_INTEGER;
+            } else if (prv_kii_json_is_long(buf, buf_len) != 0) {
+                return KII_JSON_FIELD_TYPE_LONG;
+            } else if (prv_kii_json_is_double(buf, buf_len) != 0) {
+                return KII_JSON_FIELD_TYPE_DOUBLE;
+            } else {
+                /* unexpected case. */
+                return KII_JSON_FIELD_TYPE_ANY;
+            }
         case JSMN_OBJECT:
             return KII_JSON_FIELD_TYPE_OBJECT;
         case JSMN_ARRAY:
@@ -179,7 +296,7 @@ static kii_json_field_type_t prv_kii_json_to_kii_json_field_type(
         default:
             /* programming error */
             assert(0);
-            return KII_JSON_FIELD_TYPE_PRIMITIVE;
+            return KII_JSON_FIELD_TYPE_ANY;
     }
 }
 
@@ -378,7 +495,7 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
         jsmntok_t* value = NULL;
         int result = 0;
         kii_json_field_t* field = &fields[i];
-        kii_json_field_type_t type = KII_JSON_FIELD_TYPE_PRIMITIVE;
+        kii_json_field_type_t type = KII_JSON_FIELD_TYPE_ANY;
 
         result = prv_kii_jsmn_get_value(json_string, json_string_len, tokens,
                 field->name, &value);
@@ -389,7 +506,11 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
             continue;
         }
 
-        type = prv_kii_json_to_kii_json_field_type(value->type);
+        type = prv_kii_json_to_kii_json_field_type(value->type,
+                json_string + value->start, value->end - value->start);
+        if (type == KII_JSON_FIELD_TYPE_ANY) {
+            return KII_JSON_PARSE_INVALID_INPUT;
+        }
         if (field->type == KII_JSON_FIELD_TYPE_ANY) {
             field->type = type;
         }
@@ -401,7 +522,6 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
             case KII_JSON_FIELD_TYPE_STRING:
             case KII_JSON_FIELD_TYPE_OBJECT:
             case KII_JSON_FIELD_TYPE_ARRAY:
-            case KII_JSON_FIELD_TYPE_PRIMITIVE:
                 if (field->type != type) {
                     field->type = type;
                     field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
@@ -420,18 +540,16 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
                 }
                 break;
             case KII_JSON_FIELD_TYPE_INTEGER:
-                if (type != KII_JSON_FIELD_TYPE_PRIMITIVE) {
+                if (type != KII_JSON_FIELD_TYPE_INTEGER) {
                     field->type = type;
                     field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
                     retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
-                } else if (field->field_copy.int_value == NULL) {
-                    field->result = KII_JSON_FIELD_PARSE_SUCCESS;
                 } else {
                     prv_kii_json_num_parse_result_t result =
                         prv_kii_json_to_int(kii_json,
                                 json_string + value->start,
                                 value->end - value->start,
-                                field->field_copy.int_value);
+                                &(field->field_copy.int_value));
                     switch (result) {
                         case PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS:
                             field->result = KII_JSON_FIELD_PARSE_SUCCESS;
@@ -451,18 +569,16 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
                 }
                 break;
             case KII_JSON_FIELD_TYPE_LONG:
-                if (type != KII_JSON_FIELD_TYPE_PRIMITIVE) {
+                if (type != KII_JSON_FIELD_TYPE_LONG) {
                     field->type = type;
                     field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
                     retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
-                } else if (field->field_copy.long_value == NULL) {
-                    field->result = KII_JSON_FIELD_PARSE_SUCCESS;
                 } else {
                     prv_kii_json_num_parse_result_t result =
                         prv_kii_json_to_long(kii_json,
                                 json_string + value->start,
                                 value->end - value->start,
-                                field->field_copy.long_value);
+                                &(field->field_copy.long_value));
                     switch (result) {
                         case PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS:
                             field->result = KII_JSON_FIELD_PARSE_SUCCESS;
@@ -482,18 +598,16 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
                 }
                 break;
             case KII_JSON_FIELD_TYPE_DOUBLE:
-                if (type != KII_JSON_FIELD_TYPE_PRIMITIVE) {
+                if (type != KII_JSON_FIELD_TYPE_DOUBLE) {
                     field->type = type;
                     field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
                     retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
-                } else if (field->field_copy.double_value == NULL) {
-                    field->result = KII_JSON_FIELD_PARSE_SUCCESS;
                 } else {
                     prv_kii_json_num_parse_result_t result =
                         prv_kii_json_to_double(kii_json,
                                 json_string + value->start,
                                 value->end - value->start,
-                                field->field_copy.double_value);
+                                &(field->field_copy.double_value));
                     switch (result) {
                         case PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS:
                             field->result = KII_JSON_FIELD_PARSE_SUCCESS;
@@ -513,15 +627,13 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
                 }
                 break;
             case KII_JSON_FIELD_TYPE_BOOLEAN:
-                if (type != KII_JSON_FIELD_TYPE_PRIMITIVE) {
+                if (type != KII_JSON_FIELD_TYPE_BOOLEAN) {
                     field->type = type;
                     field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
                     retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
-                } else if (field->field_copy.boolean_value == NULL) {
-                    field->result = KII_JSON_FIELD_PARSE_SUCCESS;
                 } else if (prv_kii_json_to_boolean(json_string + value->start,
                                 value->end - value->start,
-                                field->field_copy.boolean_value) == 0) {
+                                &(field->field_copy.boolean_value)) == 0) {
                     field->result = KII_JSON_FIELD_PARSE_SUCCESS;
                 } else {
                     field->type = type;
@@ -530,7 +642,7 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
                 }
                 break;
             case KII_JSON_FIELD_TYPE_NULL:
-                if (type != KII_JSON_FIELD_TYPE_PRIMITIVE) {
+                if (type != KII_JSON_FIELD_TYPE_NULL) {
                     field->type = type;
                     field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
                     retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
