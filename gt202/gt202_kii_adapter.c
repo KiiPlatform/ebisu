@@ -104,14 +104,15 @@ static kii_http_client_code_t prv_connect(void* app_context, const char* host)
 
 static kii_http_client_code_t prv_send(void* app_context, const char* send_buff, int buff_length)
 {
+    int ret;
     context_t* ctx = (context_t*)app_context;
     char* buff = CUSTOM_ALLOC(buff_length);
 
     memcpy(buff, send_buff, buff_length);
 #if CONNECT_SSL
-    int ret = SSL_write(ctx->ssl, buff, buff_length);
+    ret = SSL_write(ctx->ssl, buff, buff_length);
 #else
-    int ret = t_send(handle, ctx->sock, (uint_8 *)buff, buff_length, 0);
+    ret = t_send(handle, ctx->sock, (uint_8 *)buff, buff_length, 0);
 #endif
 
     CUSTOM_FREE(buff);

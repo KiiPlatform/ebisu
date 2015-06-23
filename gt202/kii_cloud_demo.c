@@ -53,8 +53,12 @@ static void init(
     /* share the request and response buffer.*/
     ctx->buff = buff;
     ctx->buff_size = buff_length;
-    mqtt_ctx->buff = mqtt_buff;
-    mqtt_ctx->buff_size = mqtt_length;
+    if (mqtt_ctx != NULL)
+    {
+        memset(mqtt_ctx, 0x00, sizeof(context_t));
+        mqtt_ctx->buff = mqtt_buff;
+        mqtt_ctx->buff_size = mqtt_length;
+    }
 }
 
 static void set_author(kii_t* kii)
@@ -412,17 +416,35 @@ void received_callback(
     fflush(stdout);
 }
 
-static int push(kii_t* kii)
+static int push()
 {
     int ret = 0;
+    context_t *ctx = NULL;
+    context_t *mqtt_ctx = NULL;
+    kii_t *kii = &static_kii;
+    char *buff = NULL;
+    char *mqtt_buff = NULL;
 
-    set_author(kii);
+    if (static_kii_init == 0)
+    {
+        ctx = (context_t*)malloc(sizeof(context_t));
+        mqtt_ctx = (context_t*)malloc(sizeof(context_t));
+        buff = (char*)malloc(4096);
+        mqtt_buff = (char*)malloc(4096);
 
-    ret = kii_push_start_routine(kii, 0, 0, received_callback);
+        init(kii, ctx, buff, 4096, mqtt_ctx, mqtt_buff, 4096);
+        static_kii_init = 1;
 
-    printf("start_routine: %d\n", ret);
-    //print_response(kii);
-    //parse_response(kii->kii_core.response_body);
+        set_author(kii);
+
+        ret = kii_push_start_routine(kii, 0, 0, received_callback);
+
+        printf("start_routine: %d\n", ret);
+    }
+    else
+    {
+        printf("kii_push_start_routine already started\n");
+    }
     return ret;
 }
 
@@ -472,12 +494,8 @@ int kii_main(int argc, char *argv[])
 {
     int ret = A_ERROR;
     context_t *ctx = NULL;
-    context_t *mqtt_ctx = NULL;
-    kii_t *kii = &static_kii;
-    kii_state_t state;
-    kii_error_code_t err;
+    kii_t *kii = NULL;
     char *buff = NULL;
-    char *mqtt = NULL;
 
     if (argc < CMD_INDEX + 1)
     {
@@ -485,16 +503,11 @@ int kii_main(int argc, char *argv[])
         return A_OK;
     }
 
-    if (static_kii_init == 0)
-    {
-        ctx = malloc(sizeof(context_t));
-        mqtt_ctx = malloc(sizeof(context_t));
-        buff = malloc(4096);
-        mqtt = malloc(4096);
+    kii = malloc(sizeof(kii_t));
+    ctx = malloc(sizeof(context_t));
+    buff = malloc(4096);
 
-        init(kii, ctx, buff, 4096, mqtt_ctx, mqtt, 4096);
-        static_kii_init = 1;
-    }
+    init(kii, ctx, buff, 4096, NULL, NULL, 0);
 
     if(ATH_STRCMP(argv[CMD_INDEX], "register") == 0)
     {
@@ -624,7 +637,7 @@ int kii_main(int argc, char *argv[])
     }
     else if(ATH_STRCMP(argv[CMD_INDEX], "push") == 0)
     {
-        if (push(kii) == 0)
+        if (push() == 0)
         {
             ret = A_OK;
         }
@@ -646,12 +659,9 @@ int kii_main(int argc, char *argv[])
         ret = A_OK;
     }
 
-    /*
     free(kii);
     free(buff);
-    free(mqtt);
     free(ctx);
-    */
     return ret;
 }
 
