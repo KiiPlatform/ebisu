@@ -551,8 +551,35 @@ exit:
 
 static size_t prv_kii_json_count_contained_token(const jsmntok_t* token)
 {
-    // TODO: implement me.
-    return 0;
+    size_t i = 0;
+    size_t retval = 0;
+    size_t index = 0;
+    switch (token->type) {
+        case JSMN_STRING:
+        case JSMN_PRIMITIVE:
+            retval = 1;
+            break;
+        case JSMN_OBJECT:
+            retval = 1;
+            index = 2;
+            for (i = 0; i < token->size; i += 2) {
+                size_t num = prv_kii_json_count_contained_token(&token[index]);
+                retval += (num + 1);
+                index += (num + 1);
+            }
+        case JSMN_ARRAY:
+            retval = 1;
+            index = 1;
+            for (i = 0; i < token->size; ++i) {
+                size_t num = prv_kii_json_count_contained_token(&token[index]);
+                retval += num;
+                index += num;
+            }
+        default:
+            assert(0);
+            return 0;
+    }
+    return retval;
 }
 
 static int prv_kii_json_is_same_key(
