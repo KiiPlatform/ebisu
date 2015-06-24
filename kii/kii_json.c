@@ -587,8 +587,32 @@ static int prv_kii_json_is_same_key(
         const char* key,
         size_t key_len)
 {
-    // TODO: implement me.
-    return -1;
+    int key_i = 0;
+    int target_i = 0;
+    int retval = 0;
+
+    for (key_i =0, target_i = 0;
+            key_i < key_len && target_i < target->len; ++key_i) {
+        char key_c = key[key_i];
+        char target_c1 = target->field.name[target_i];
+        char target_c2 = target->field.name[target_i + 1];
+        if (key_c == target_c1) {
+            ++target_i;
+        } else if (key_c == '/' && (target_c1 == '\\' && target_c2 == '/')) {
+            target_i += 2;
+        } else if (key_c == '\\' && (target_c1 == '\\' && target_c2 == '\\')) {
+            target_i += 2;
+        } else if (key_c == '[' && (target_c1 == '\\' && target_c2 == '[')) {
+            target_i += 2;
+        } else if (key_c == ']' && (target_c1 == '\\' && target_c2 == ']')) {
+            target_i += 2;
+        } else {
+            retval = -1;
+            break;
+        }
+    }
+
+    return retval;
 }
 
 static int prv_kii_jsmn_get_value_by_path(
