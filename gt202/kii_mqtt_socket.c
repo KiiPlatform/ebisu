@@ -111,30 +111,15 @@ mqtt_socket_recv(
         int length_to_read,
         int* out_actual_length)
 {
-    int ret = KII_HTTPC_FAIL;
-    int res;
     int received;
-    int total = 0;
     char *pBuf = NULL;
     context_t* ctx = (context_t*)socket_context->app_context;
-    do
+    received = t_recv(handle, ctx->sock, (void**)&pBuf, length_to_read, 0);
+    if(received > 0)
     {
-        res = t_select((void *)handle, ctx->sock, 0);
-        if (res == A_OK)
-        {
-            received = t_recv(handle, ctx->sock, (void**)&pBuf, length_to_read, 0);
-            if(received > 0)
-            {
-                memcpy(recv_buff, pBuf, received);
-                zero_copy_free(pBuf);
-                total = received;
-                break;
-            }
-        }
-    } while (res == A_OK);
-
-    if (total >  0) {
-        *out_actual_length = total;
+        memcpy(recv_buff, pBuf, received);
+        zero_copy_free(pBuf);
+        *out_actual_length = received;
         return KII_HTTPC_OK;
     } else {
         printf("failed to receive:\n");
