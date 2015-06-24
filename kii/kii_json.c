@@ -380,7 +380,7 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_long(
 
     if (*endptr != '\0') {
         char message[50];
-        snprintf(buf, sizeof(message) / sizeof(message[0]),
+        snprintf(message, sizeof(message) / sizeof(message[0]),
                 "invalid long string: %s.", endptr);
         prv_kii_json_set_error_message(kii_json, message);
         return PRV_KII_JSON_NUM_PARSE_RESULT_INVALID;
@@ -485,11 +485,68 @@ static int prv_kii_json_to_boolean(
 }
 
 static const char* prv_kii_json_get_target(
+        kii_json_t* kii_json,
         const char* path,
         prv_kii_json_target_t* target)
 {
-    // TODO: implement me.
-    return NULL;
+    const char* start = NULL;
+    const char* end = NULL;
+    const char* retval = NULL;
+    const char* error = NULL;
+    size_t path_len = strlen(path);
+
+    assert(path != NULL);
+    assert(target != NULL);
+
+    // determine start point and end point.
+    if (path_len <= 1 || *path != '/' || strncmp(path, "//", 2) == 0) {
+        error = path;
+        retval = NULL;
+        goto exit;
+    }
+    start = path + 1;
+    end = path + 1;
+    do {
+        end = strchr(end, '/');
+    } while (end != NULL && *(end - 1) == '\\');
+
+    if (end == NULL) {
+        end = path + path_len - 1;
+        retval = NULL;
+    } else {
+        retval = end;
+    }
+
+    // check contents.
+    if (*start == '[') {
+        long value = 0;
+        if (prv_kii_json_is_long(start, end - start) != 0) {
+            error = start;
+            retval = NULL;
+            goto exit;
+        } else if (prv_kii_json_to_long(kii_json, start, end - start, &value)
+                != PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS) {
+            error = start;
+            retval = NULL;
+            goto exit;
+        }
+        target->field.index = (size_t)value;
+        target->enclosing_type = PRV_KII_JSON_ENCLOSING_TYPE_ARRAY;
+    } else {
+        target->field.name = start;
+        target->len = end - start;
+        target->enclosing_type = PRV_KII_JSON_ENCLOSING_TYPE_OBJECT;
+    }
+
+exit:
+    if (error != NULL) {
+        char message[50];
+        snprintf(message, sizeof(message) / sizeof(message[0]),
+                "Invalid path: %s.", error);
+        message[49] = '\0';
+        prv_kii_json_set_error_message(kii_json, message);
+    }
+    return retval;
 }
 
 static size_t prv_kii_json_count_contained_token(const jsmntok_t* token)
@@ -508,6 +565,7 @@ static int prv_kii_json_is_same_key(
 }
 
 static int prv_kii_jsmn_get_value_by_path(
+        kii_json_t* kii_json,
         const char* json_string,
         size_t json_string_len,
         const jsmntok_t* tokens,
@@ -517,6 +575,7 @@ static int prv_kii_jsmn_get_value_by_path(
     const char* next_top = path;
     const jsmntok_t* top_token = tokens;
 
+    assert(kii_json != NULL);
     assert(json_string != NULL);
     assert(tokens != NULL);
     assert(path != NULL && strlen(path) > 0);
@@ -525,7 +584,7 @@ static int prv_kii_jsmn_get_value_by_path(
     do {
         prv_kii_json_target_t target;
         memset(&target, 0x00, sizeof(target));
-        next_top = prv_kii_json_get_target(next_top, &target);
+        next_top = prv_kii_json_get_target(kii_json, next_top, &target);
         if (top_token->type == JSMN_OBJECT &&
                 target.enclosing_type == PRV_KII_JSON_ENCLOSING_TYPE_OBJECT) {
             size_t i = 0;
@@ -594,7 +653,7 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
         kii_json_field_type_t type = KII_JSON_FIELD_TYPE_ANY;
 
         if (field->path != NULL) {
-            result = prv_kii_jsmn_get_value_by_path(json_string,
+            result = prv_kii_jsmn_get_value_by_path(kii_json, json_string,
                     json_string_len, tokens, field->path, &value);
         } else {
             result = prv_kii_jsmn_get_value(json_string, json_string_len,
