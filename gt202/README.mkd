@@ -32,7 +32,7 @@ The build steps are followings:
   1. In IAR workbench for ARM, select [File] -> [Open] -> [Workspace] and
   select C:\Freescale\Freescale\_MQX\_4\_1\gt202kits\_frdmk22f.eww.
   1. Select throghput_demo/Source/custom and add files copied at 1.
-  1. Apply kii_cloud_demo.patch to Command\_Lists.c.
+  1. Apply kii_cloud_demo.patch to Command\_Lists.c and Tasks.c.
 
 At 1, if you want to use non ZERO_COPY version of MQX, you should copy
 prv_kii_recv_copy.c instaed of prv_kii_recv_zero_copy.c. ZERO_COPY is
@@ -43,7 +43,7 @@ C:\Freescale\Freescale\_MQX\_4\_1\demo\throughput\_demo\custom, And
 execute following command.
 
 ```sh
-patch -p0 -u < kii_cloud_demo.patch
+patch -p0 -u --binary < kii_cloud_demo.patch
 ```
 
 After that, you can build and download demo demo application binary
