@@ -1,4 +1,7 @@
-KiiChinaTHINGSDK
+Kii Thing SDK Embedded.
 ==============
 
-This repos includes all ongoing thing SDK projects of China team
+Kii Thing SDK for limited resource environments.
+
+ - Written in pure C. (c89)
+ - No dynamic memory allocation.

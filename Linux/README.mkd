@@ -1,0 +1,12 @@
+# Desktop sample application on Linux
+
+## Set up, build & run
+```sh
+cd ../
+git submodule init
+git submodule update
+cd Linux
+make
+./exampleapp
+```
+

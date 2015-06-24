@@ -1,0 +1,11 @@
+## Change KII_JSON_TOKEN_NUM size
+
+KII_JSON_TOKEN_NUM defines size of JSON can be parsed. By default it
+is set to 128. If you've got error on JSON parsing in SDK, You can
+increase the size of KII_JSON_TOKEN_NUM so that avoid error on parsing
+large JSON. To change the size, please specify the size of
+KII_JSON_TOKEN_NUM on build.
+
+```sh
+make SIZE=-DKII_JSON_TOKEN_NUM=128
+```
