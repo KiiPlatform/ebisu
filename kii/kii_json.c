@@ -180,21 +180,6 @@ exit:
     return ret;
 }
 
-static const char* prv_kii_json_memchr(
-        const char* buf,
-        size_t buf_len,
-        const char c)
-{
-    int i = 0;
-    assert(buf != NULL);
-    for (i = 0; i < buf_len; ++i) {
-        if (buf[i] == c) {
-            return &buf[i];
-        }
-    }
-    return NULL;
-}
-
 static int prv_kii_json_is_all_digit(const char* buf, size_t buf_len)
 {
     int i = 0;
@@ -234,48 +219,78 @@ static int prv_kii_json_is_long(const char* buf, size_t buf_len)
     return prv_kii_json_is_all_digit(buf, buf_len);
 }
 
-static int prv_kii_json_is_decimal_point(const char* buf, size_t buf_len)
-{
-    const char* comma_point = prv_kii_json_memchr(buf, buf_len, '.');
-
-    assert(buf != NULL);
-
-    if (*buf == '-') {
-        ++buf;
-        --buf_len;
-    }
-    if (prv_kii_json_is_all_digit(buf, comma_point - buf) == 0) {
-        return 0;
-    }
-    return prv_kii_json_is_all_digit(comma_point + 1,
-            buf + buf_len - comma_point - 1);
-}
-
 static int prv_kii_json_is_double(const char* buf, size_t buf_len)
 {
-    const char* e_point = prv_kii_json_memchr(buf, buf_len, 'e');
-    const char* comma_point = prv_kii_json_memchr(buf, buf_len, '.');
+    int is_first = 1;
+    int after_e = 0;
+    int before_is_e = 0;
+    int after_dot = 0;
+    int before_is_dot = 0;
+    int before_is_minus = 0;
+    size_t i = 0;
+
     assert(buf != NULL);
     if (buf_len > DOUBLEBUFSIZE) {
         return 0;
     }
-    if (e_point != NULL) {
-        if (prv_kii_json_is_decimal_point(buf, e_point - buf - 1) == 0) {
-            return 0;
-        } else {
-            const char* exponent = e_point + 1;
-            size_t exponent_len = buf + buf_len - exponent;
-            if (*exponent == '-') {
-                ++exponent;
-                --exponent_len;
-            }
-            return prv_kii_json_is_all_digit(exponent, exponent_len);
+
+    for (i = 0; i < buf_len; ++i) {
+        switch(buf[i]) {
+            case 'e':
+                if (is_first != 0) {
+                    // e must not be first.
+                    return 0;
+                } else if (after_e != 0) {
+                    // e must not appear only once.
+                    return 0;
+                } else if (before_is_minus != 0) {
+                    // e must follow digit.
+                    return 0;
+                }
+                before_is_e = 1;
+                after_e = 1;
+                break;
+            case '.':
+                if (is_first != 0) {
+                    // . must not be first.
+                    return 0;
+                } else if (after_dot != 0) {
+                    // . must not appear only once.
+                    return 0;
+                } else if (after_e != 0) {
+                    // . must not appear after e.
+                    return 0;
+                }
+                before_is_dot = 1;
+                after_dot = 1;
+                break;
+            case '-':
+                if (is_first != 0) {
+                    is_first = 0;
+                    before_is_minus = 1;
+                } else if (before_is_e != 0) {
+                    before_is_minus = 1;
+                } else {
+                    return 0;
+                }
+                break;
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                is_first = 0;
+                break;
+            default:
+                return 0;
         }
-    } else if (comma_point != NULL) {
-        return prv_kii_json_is_decimal_point(buf, buf_len);
-    } else {
-        return 0;
     }
+    return 1;
 }
 
 static kii_json_field_type_t prv_kii_json_to_kii_json_field_type(
