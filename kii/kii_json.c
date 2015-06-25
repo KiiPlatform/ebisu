@@ -75,7 +75,7 @@ static size_t prv_kii_json_count_contained_token(const jsmntok_t* token)
         token_num += token->size;
         --token_num;
         ++token;
-    } while (token_num < 0);
+    } while (token_num > 0);
     return retval;
 }
 
@@ -143,7 +143,7 @@ static int prv_kii_jsmn_get_value(
         goto exit;
     }
 
-    for (i = 0; i < tokens[0].size; i += 2) {
+    for (i = 0; i < tokens[0].size; ++i) {
         const jsmntok_t* key_token = tokens + index;
         const jsmntok_t* value_token = tokens + index + 1;
         int key_len = key_token->end - key_token->start;
@@ -631,7 +631,7 @@ static int prv_kii_jsmn_get_value_by_path(
             size_t i = 0;
             size_t index = 1;
             const jsmntok_t* next_token = NULL;
-            for (i = 0; i < top_token->size; i += 2) {
+            for (i = 0; i < top_token->size; ++i) {
                 const jsmntok_t* key_token = top_token + index;
                 const jsmntok_t* value_token = top_token + index + 1;
                 assert(key_token->type == JSMN_STRING);
