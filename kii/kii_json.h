@@ -1,6 +1,10 @@
 #ifndef KII_JSON_H
 #define KII_JSON_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** object manages context of kii json apis. */
 typedef struct kii_json_t {
 
@@ -317,5 +321,9 @@ kii_json_parse_result_t kii_json_read_object(
         const char* json_string,
         size_t json_string_len,
         kii_json_field_t* fields);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
