@@ -66,16 +66,17 @@ static void prv_kii_json_set_error_message(
     kii_json->error_string_buff[kii_json->error_string_length - 1] = '\0';
 }
 
-static int prv_jsmn_token_num(const char* json_string, size_t json_string_len)
+static size_t prv_kii_json_count_contained_token(const jsmntok_t* token)
 {
-    jsmn_parser parser;
-
-    assert(json_string != NULL);
-    assert(json_string_len >= 0);
-
-    jsmn_init(&parser);
-
-    return jsmn_parse(&parser, json_string, json_string_len, NULL, 0);
+    size_t retval = 0;
+    int token_num = 1;
+    do {
+        ++retval;
+        token_num += token->size;
+        --token_num;
+        ++token;
+    } while (token_num < 0);
+    return retval;
 }
 
 static int prv_kii_jsmn_get_tokens(
@@ -162,16 +163,7 @@ static int prv_kii_jsmn_get_value(
                 break;
             case JSMN_OBJECT:
             case JSMN_ARRAY:
-                {
-                    int num = prv_jsmn_token_num(
-                            json_string + value_token->start,
-                            json_string_len - value_token->start);
-                    if (num < 0) {
-                        ret = -1;
-                        goto exit;
-                    }
-                    index += (num + 1);
-                }
+                index += prv_kii_json_count_contained_token(value_token) + 1;
                 break;
         }
     }
@@ -568,39 +560,6 @@ exit:
                 "Invalid path: %s.", error);
         message[49] = '\0';
         prv_kii_json_set_error_message(kii_json, message);
-    }
-    return retval;
-}
-
-static size_t prv_kii_json_count_contained_token(const jsmntok_t* token)
-{
-    size_t i = 0;
-    size_t retval = 0;
-    size_t index = 0;
-    switch (token->type) {
-        case JSMN_STRING:
-        case JSMN_PRIMITIVE:
-            retval = 1;
-            break;
-        case JSMN_OBJECT:
-            retval = 1;
-            index = 2;
-            for (i = 0; i < token->size; i += 2) {
-                size_t num = prv_kii_json_count_contained_token(&token[index]);
-                retval += (num + 1);
-                index += (num + 1);
-            }
-        case JSMN_ARRAY:
-            retval = 1;
-            index = 1;
-            for (i = 0; i < token->size; ++i) {
-                size_t num = prv_kii_json_count_contained_token(&token[index]);
-                retval += num;
-                index += num;
-            }
-        default:
-            assert(0);
-            return 0;
     }
     return retval;
 }
