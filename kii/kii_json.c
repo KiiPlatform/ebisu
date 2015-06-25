@@ -246,6 +246,8 @@ static int prv_kii_json_is_double(const char* buf, size_t buf_len)
                 } else if (before_is_minus != 0) {
                     // e must follow digit.
                     return 0;
+                } else if (before_is_dot != 0) {
+                    return 0;
                 }
                 before_is_e = 1;
                 after_e = 1;
@@ -259,6 +261,8 @@ static int prv_kii_json_is_double(const char* buf, size_t buf_len)
                     return 0;
                 } else if (after_e != 0) {
                     // . must not appear after e.
+                    return 0;
+                } else if (before_is_minus != 0) {
                     return 0;
                 }
                 before_is_dot = 1;
@@ -285,6 +289,9 @@ static int prv_kii_json_is_double(const char* buf, size_t buf_len)
             case '8':
             case '9':
                 is_first = 0;
+                before_is_e = 0;
+                before_is_dot = 0;
+                before_is_minus = 0;
                 break;
             default:
                 return 0;
