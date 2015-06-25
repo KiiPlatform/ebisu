@@ -505,41 +505,49 @@ static const char* prv_kii_json_get_target(
         prv_kii_json_target_t* target)
 {
     const char* start = NULL;
-    const char* end = NULL;
     const char* retval = NULL;
     const char* error = NULL;
     size_t path_len = strlen(path);
+    size_t target_len = 0;
+    int before_is_bash_slash = 0;
 
     assert(path != NULL);
     assert(target != NULL);
 
-    // determine start point and end point.
     if (path_len <= 1 || *path != '/' || strncmp(path, "//", 2) == 0) {
         error = path;
         retval = NULL;
         goto exit;
     }
-    start = path + 1;
-    end = path + 1;
-    do {
-        end = strchr(end, '/');
-    } while (end != NULL && *(end - 1) == '\\');
 
-    if (end == NULL) {
-        end = path + path_len - 1;
+    // get length of target.
+    start = path + 1;
+    for (before_is_bash_slash = 0, target_len = 0, retval = start;
+            *retval != '\0'; ++retval) {
+        if (*retval == '/' && before_is_bash_slash == 0) {
+            break;
+        } else if (*retval == '\\') {
+            before_is_bash_slash = 1;
+        } else {
+            before_is_bash_slash = 0;
+        }
+        ++target_len;
+
+    }
+    if (*retval == '\0') {
         retval = NULL;
-    } else {
-        retval = end;
     }
 
     // check contents.
     if (*start == '[') {
         long value = 0;
-        if (prv_kii_json_is_long(start, end - start) != 0) {
+        ++start;
+        target_len -= 2;
+        if (prv_kii_json_is_long(start, target_len) == 0) {
             error = start;
             retval = NULL;
             goto exit;
-        } else if (prv_kii_json_to_long(kii_json, start, end - start, &value)
+        } else if (prv_kii_json_to_long(kii_json, start, target_len, &value)
                 != PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS) {
             error = start;
             retval = NULL;
@@ -549,7 +557,7 @@ static const char* prv_kii_json_get_target(
         target->enclosing_type = PRV_KII_JSON_ENCLOSING_TYPE_ARRAY;
     } else {
         target->field.name = start;
-        target->len = end - start;
+        target->len = target_len;
         target->enclosing_type = PRV_KII_JSON_ENCLOSING_TYPE_OBJECT;
     }
 
@@ -645,7 +653,7 @@ static int prv_kii_jsmn_get_value_by_path(
             if (target.field.index >= top_token->size) {
                 return -1;
             }
-            for (i = 0; i < target.field.index - 1; ++i) {
+            for (i = 0; i < target.field.index; ++i) {
                 top_token += prv_kii_json_count_contained_token(top_token + 1);
             }
             ++top_token;
