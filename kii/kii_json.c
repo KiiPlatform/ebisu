@@ -248,7 +248,7 @@ static int prv_kii_json_is_decimal_point(const char* buf, size_t buf_len)
         return 0;
     }
     return prv_kii_json_is_all_digit(comma_point + 1,
-            buf + buf_len - comma_point + 1);
+            buf + buf_len - comma_point - 1);
 }
 
 static int prv_kii_json_is_double(const char* buf, size_t buf_len)
