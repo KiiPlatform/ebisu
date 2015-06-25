@@ -671,7 +671,6 @@ static kii_json_parse_result_t prv_kii_json_check_object_fields(
     switch (tokens[0].type)
     {
         case JSMN_ARRAY:
-            return KII_JSON_PARSE_ROOT_TYPE_ERROR;
         case JSMN_OBJECT:
             break;
         default:
