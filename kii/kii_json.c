@@ -28,9 +28,9 @@
 
 #define EVAL(f, v) f(v)
 #define TOSTR(s) #s
-#define LONG_MAX_STR EVAL(TOSTR, LONG_MAN)
+#define LONG_MAX_STR EVAL(TOSTR, LONG_MAX)
 #define LONGBUFSIZE (sizeof(LONG_MAX_STR) / sizeof(char) + 1)
-#define INT_MAX_STR EVAL(TOSTR, INT_MAN)
+#define INT_MAX_STR EVAL(TOSTR, INT_MAX)
 #define INTBUFSIZE (sizeof(INT_MAX_STR) / sizeof(char) + 1)
 
 /* "+ 3" denotes '-', '.', '\0' */
@@ -382,6 +382,7 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_long(
         char message[50];
         snprintf(message, sizeof(message) / sizeof(message[0]),
                 "invalid long string: %s.", endptr);
+        message[49] = '\0';
         prv_kii_json_set_error_message(kii_json, message);
         return PRV_KII_JSON_NUM_PARSE_RESULT_INVALID;
     }
