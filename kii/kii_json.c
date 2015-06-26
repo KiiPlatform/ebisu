@@ -1,7 +1,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 #include <limits.h>
 #include <math.h>
 #include <errno.h>
@@ -9,6 +8,14 @@
 #include <ctype.h>
 
 #include <jsmn.h>
+
+/* If your environment does not have assert, you must set NOASSERT define. */
+#ifdef NOASSERT
+  #define M_KII_JSON_ASSERT(s)
+#else
+  #include <assert.h>
+  #define M_KII_JSON_ASSERT(s) assert(s)
+#endif
 
 #include "kii_json.h"
 
@@ -90,8 +97,8 @@ static int prv_kii_jsmn_get_tokens(
     int ret = -1;
     int parse_result = JSMN_ERROR_NOMEM;
 
-    assert(json_string != NULL);
-    assert(tokens != NULL);
+    M_KII_JSON_ASSERT(json_string != NULL);
+    M_KII_JSON_ASSERT(tokens != NULL);
 
 
     jsmn_init(&parser);
@@ -134,10 +141,10 @@ static int prv_kii_jsmn_get_value(
     int index = 1;
     int ret = -1;
 
-    assert(json_string != NULL);
-    assert(tokens != NULL);
-    assert(name != NULL && strlen(name) > 0);
-    assert(out_token != NULL);
+    M_KII_JSON_ASSERT(json_string != NULL);
+    M_KII_JSON_ASSERT(tokens != NULL);
+    M_KII_JSON_ASSERT(name != NULL && strlen(name) > 0);
+    M_KII_JSON_ASSERT(out_token != NULL);
 
     if (tokens[0].type != JSMN_OBJECT && tokens[0].size < 2) {
         goto exit;
@@ -175,7 +182,7 @@ exit:
 static int prv_kii_json_is_all_digit(const char* buf, size_t buf_len)
 {
     int i = 0;
-    assert(buf != NULL);
+    M_KII_JSON_ASSERT(buf != NULL);
 
     for (i = 0; i < buf_len; ++i) {
         if (isdigit(buf[i]) == 0) {
@@ -187,7 +194,7 @@ static int prv_kii_json_is_all_digit(const char* buf, size_t buf_len)
 
 static int prv_kii_json_is_int(const char* buf, size_t buf_len)
 {
-    assert(buf != NULL);
+    M_KII_JSON_ASSERT(buf != NULL);
     if (buf_len > INTBUFSIZE) {
         return 0;
     }
@@ -200,7 +207,7 @@ static int prv_kii_json_is_int(const char* buf, size_t buf_len)
 
 static int prv_kii_json_is_long(const char* buf, size_t buf_len)
 {
-    assert(buf != NULL);
+    M_KII_JSON_ASSERT(buf != NULL);
     if (buf_len > LONGBUFSIZE) {
         return 0;
     }
@@ -221,7 +228,7 @@ static int prv_kii_json_is_double(const char* buf, size_t buf_len)
     int before_is_minus = 0;
     size_t i = 0;
 
-    assert(buf != NULL);
+    M_KII_JSON_ASSERT(buf != NULL);
     if (buf_len > DOUBLEBUFSIZE) {
         return 0;
     }
@@ -323,7 +330,7 @@ static kii_json_field_type_t prv_kii_json_to_kii_json_field_type(
             return KII_JSON_FIELD_TYPE_STRING;
         default:
             /* programming error */
-            assert(0);
+            M_KII_JSON_ASSERT(0);
             return KII_JSON_FIELD_TYPE_ANY;
     }
 }
@@ -335,8 +342,8 @@ static int prv_kii_json_string_copy(
         char* out_buf,
         size_t out_buf_size)
 {
-    assert(target != NULL);
-    assert(out_buf != NULL);
+    M_KII_JSON_ASSERT(target != NULL);
+    M_KII_JSON_ASSERT(out_buf != NULL);
 
     if (out_buf_size <= target_size) {
         return -1;
@@ -358,9 +365,9 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_long(
     size_t buf_len = 0;
     long long_value = 0;
 
-    assert(kii_json != NULL);
-    assert(target != NULL);
-    assert(out_long != NULL);
+    M_KII_JSON_ASSERT(kii_json != NULL);
+    M_KII_JSON_ASSERT(target != NULL);
+    M_KII_JSON_ASSERT(out_long != NULL);
 
     buf_len = sizeof(buf) / sizeof(buf[0]);
     memset(buf, 0, sizeof(buf) / sizeof(buf[0]));
@@ -385,11 +392,11 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_long(
             *out_long = LONG_MIN;
             return PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
         }
-        assert(0);
+        M_KII_JSON_ASSERT(0);
     } else if (errno == EINVAL) {
         // This situation must not be occurred. This situation is
         // occurred when third argument of strtol is invalid.
-        assert(0);
+        M_KII_JSON_ASSERT(0);
     }
 
     if (*endptr != '\0') {
@@ -413,9 +420,9 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_int(
 {
     long long_value = 0;
 
-    assert(kii_json != NULL);
-    assert(target != NULL);
-    assert(out_int != NULL);
+    M_KII_JSON_ASSERT(kii_json != NULL);
+    M_KII_JSON_ASSERT(target != NULL);
+    M_KII_JSON_ASSERT(out_int != NULL);
 
     if (prv_kii_json_to_long(kii_json, target, target_size, &long_value) ==
             PRV_KII_JSON_NUM_PARSE_RESULT_INVALID) {
@@ -443,9 +450,9 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_double(
     size_t buf_len = 0;
     double value = 0;
 
-    assert(kii_json != NULL);
-    assert(buf != NULL);
-    assert(out_double != NULL);
+    M_KII_JSON_ASSERT(kii_json != NULL);
+    M_KII_JSON_ASSERT(buf != NULL);
+    M_KII_JSON_ASSERT(out_double != NULL);
 
     buf_len = sizeof(buf) / sizeof(buf[0]);
     memset(buf, 0, sizeof(buf) / sizeof(buf[0]));
@@ -486,8 +493,8 @@ static int prv_kii_json_to_boolean(
         size_t buf_size,
         kii_json_boolean_t* out_boolean)
 {
-    assert(buf != NULL);
-    assert(out_boolean != NULL);
+    M_KII_JSON_ASSERT(buf != NULL);
+    M_KII_JSON_ASSERT(out_boolean != NULL);
 
     if (memcmp(buf, "true", buf_size) == 0) {
         *out_boolean = KII_JSON_TRUE;
@@ -511,8 +518,8 @@ static const char* prv_kii_json_get_target(
     size_t target_len = 0;
     int before_is_bash_slash = 0;
 
-    assert(path != NULL);
-    assert(target != NULL);
+    M_KII_JSON_ASSERT(path != NULL);
+    M_KII_JSON_ASSERT(target != NULL);
 
     if (path_len <= 1 || *path != '/' || strncmp(path, "//", 2) == 0) {
         error = path;
@@ -616,11 +623,11 @@ static int prv_kii_jsmn_get_value_by_path(
     const char* next_root = path;
     const jsmntok_t* root_token = tokens;
 
-    assert(kii_json != NULL);
-    assert(json_string != NULL);
-    assert(tokens != NULL);
-    assert(path != NULL && strlen(path) > 0);
-    assert(out_token != NULL);
+    M_KII_JSON_ASSERT(kii_json != NULL);
+    M_KII_JSON_ASSERT(json_string != NULL);
+    M_KII_JSON_ASSERT(tokens != NULL);
+    M_KII_JSON_ASSERT(path != NULL && strlen(path) > 0);
+    M_KII_JSON_ASSERT(out_token != NULL);
 
     do {
         prv_kii_json_target_t target;
@@ -634,7 +641,7 @@ static int prv_kii_jsmn_get_value_by_path(
             for (i = 0; i < root_token->size; ++i) {
                 const jsmntok_t* key_token = root_token + index;
                 const jsmntok_t* value_token = root_token + index + 1;
-                assert(key_token->type == JSMN_STRING);
+                M_KII_JSON_ASSERT(key_token->type == JSMN_STRING);
                 if (prv_kii_json_is_same_key(&target,
                                 json_string + key_token->start,
                                 key_token->end - key_token->start) == 0) {
@@ -877,8 +884,8 @@ kii_json_parse_result_t kii_json_read_object(
     int result = -1;
     jsmntok_t tokens[KII_JSON_TOKEN_NUM];
 
-    assert(json_string != NULL);
-    assert(json_string_len > 0);
+    M_KII_JSON_ASSERT(json_string != NULL);
+    M_KII_JSON_ASSERT(json_string_len > 0);
 
     result = prv_kii_jsmn_get_tokens(kii_json, json_string, json_string_len,
             tokens, sizeof(tokens) / sizeof(tokens[0]));
