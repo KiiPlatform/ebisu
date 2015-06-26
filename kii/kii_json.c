@@ -43,10 +43,10 @@ typedef enum prv_kii_json_num_parse_result_t {
     PRV_KII_JSON_NUM_PARSE_RESULT_INVALID
 } prv_kii_json_num_parse_result_t;
 
-typedef enum prv_kii_json_enclosing_type_t {
-    PRV_KII_JSON_ENCLOSING_TYPE_OBJECT,
-    PRV_KII_JSON_ENCLOSING_TYPE_ARRAY
-} prv_kii_json_enclosing_type_t;
+typedef enum prv_kii_json_parent_type_t {
+    PRV_KII_JSON_PARENT_TYPE_OBJECT,
+    PRV_KII_JSON_PARENT_TYPE_ARRAY
+} prv_kii_json_parent_type_t;
 
 typedef struct prv_kii_json_target_t {
     union {
@@ -54,7 +54,7 @@ typedef struct prv_kii_json_target_t {
         size_t index;
     } field;
     size_t len;
-    prv_kii_json_enclosing_type_t enclosing_type;
+    prv_kii_json_parent_type_t parent_type;
 } prv_kii_json_target_t;
 
 static void prv_kii_json_set_error_message(
@@ -554,11 +554,11 @@ static const char* prv_kii_json_get_target(
             goto exit;
         }
         target->field.index = (size_t)value;
-        target->enclosing_type = PRV_KII_JSON_ENCLOSING_TYPE_ARRAY;
+        target->parent_type = PRV_KII_JSON_PARENT_TYPE_ARRAY;
     } else {
         target->field.name = start;
         target->len = target_len;
-        target->enclosing_type = PRV_KII_JSON_ENCLOSING_TYPE_OBJECT;
+        target->parent_type = PRV_KII_JSON_PARENT_TYPE_OBJECT;
     }
 
 exit:
@@ -627,7 +627,7 @@ static int prv_kii_jsmn_get_value_by_path(
         memset(&target, 0x00, sizeof(target));
         next_top = prv_kii_json_get_target(kii_json, next_top, &target);
         if (top_token->type == JSMN_OBJECT &&
-                target.enclosing_type == PRV_KII_JSON_ENCLOSING_TYPE_OBJECT) {
+                target.parent_type == PRV_KII_JSON_PARENT_TYPE_OBJECT) {
             size_t i = 0;
             size_t index = 1;
             const jsmntok_t* next_token = NULL;
@@ -648,7 +648,7 @@ static int prv_kii_jsmn_get_value_by_path(
             }
             top_token = next_token;
         } else  if (top_token->type == JSMN_ARRAY &&
-                target.enclosing_type == PRV_KII_JSON_ENCLOSING_TYPE_ARRAY) {
+                target.parent_type == PRV_KII_JSON_PARENT_TYPE_ARRAY) {
             size_t i = 0;
             if (target.field.index >= top_token->size) {
                 return -1;
