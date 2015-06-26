@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <gtest/gtest.h>
 
 #include <kii.h>
