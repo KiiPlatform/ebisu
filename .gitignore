@@ -7,3 +7,6 @@ GTAGS
 *~
 html/
 latex/
+unit_test/kii_test
+libkiisdk.so
+libgtest.a
