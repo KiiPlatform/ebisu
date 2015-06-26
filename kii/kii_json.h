@@ -22,14 +22,14 @@ typedef struct kii_json_t {
 } kii_json_t;
 
 /** Boolean type */
-typedef enum kii_json_boolean {
+typedef enum kii_json_boolean_t {
     KII_JSON_FALSE,
     KII_JSON_TRUE
 } kii_json_boolean_t;
 
 /** Return value of kii_json_read_object(kii_json_t*, const char*,
  * size_t, kii_json_field_t*) */
-typedef enum kii_json_parse_result {
+typedef enum kii_json_parse_result_t {
 
     /** JSON string is successfully parsed and all kii_json_field_t
      * variables are successfully set. i.e., all kii_json_field_t type
@@ -57,7 +57,7 @@ typedef enum kii_json_parse_result {
 } kii_json_parse_result_t;
 
 /** Field parsing result. Assigned to kii_json_field_t#result. */
-typedef enum kii_json_field_parse_result {
+typedef enum kii_json_field_parse_result_t {
     /** Field parsing is success. */
     KII_JSON_FIELD_PARSE_SUCCESS,
 
@@ -92,7 +92,7 @@ typedef enum kii_json_field_parse_result {
 
 /** Type of parsed JSON field. This value is assigned to
  * kii_json_field_t#type. */
-typedef enum kii_json_field_type {
+typedef enum kii_json_field_type_t {
 
     /** This value denotes any JSON types. If this value is set to
      * kii_json_field_t#type, then kii_json_read_object(kii_json_t*,
