@@ -1203,6 +1203,21 @@ TEST(KiiJson, GetComplexObject) {
     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[11].result);
     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[12].result);
     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[13].result);
+
+    EXPECT_EQ(0, strcmp("child value", fields[0].field_copy.string));
+    EXPECT_EQ(100, fields[1].field_copy.int_value);
+    EXPECT_EQ(1099511627776, fields[2].field_copy.long_value);
+    EXPECT_GE(0.0001, fabs(fields[3].field_copy.double_value - 100.0e100));
+    EXPECT_EQ(KII_JSON_TRUE, fields[4].field_copy.boolean_value);
+    // fields[5] does not have value. it is null.
+    EXPECT_EQ(-100, fields[6].field_copy.int_value);
+    EXPECT_EQ(-1099511627776, fields[7].field_copy.long_value);
+    EXPECT_GE(0.0001, fabs(fields[8].field_copy.double_value + 100.0e-100));
+    EXPECT_EQ(KII_JSON_FALSE, fields[9].field_copy.boolean_value);
+    EXPECT_EQ(0, strcmp("child value", fields[11].field_copy.string));
+    EXPECT_EQ(KII_JSON_TRUE, fields[12].field_copy.boolean_value);
+    // fields[12] does not have value. it is null.
+    EXPECT_EQ(0, strcmp("value", fields[13].field_copy.string));
 }
 
 int main(int argc, char** argv)
