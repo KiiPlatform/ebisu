@@ -613,8 +613,8 @@ static int prv_kii_jsmn_get_value_by_path(
         const char* path,
         jsmntok_t** out_token)
 {
-    const char* next_top = path;
-    const jsmntok_t* top_token = tokens;
+    const char* next_root = path;
+    const jsmntok_t* root_token = tokens;
 
     assert(kii_json != NULL);
     assert(json_string != NULL);
@@ -625,15 +625,15 @@ static int prv_kii_jsmn_get_value_by_path(
     do {
         prv_kii_json_target_t target;
         memset(&target, 0x00, sizeof(target));
-        next_top = prv_kii_json_get_target(kii_json, next_top, &target);
-        if (top_token->type == JSMN_OBJECT &&
+        next_root = prv_kii_json_get_target(kii_json, next_root, &target);
+        if (root_token->type == JSMN_OBJECT &&
                 target.parent_type == PRV_KII_JSON_PARENT_TYPE_OBJECT) {
             size_t i = 0;
             size_t index = 1;
             const jsmntok_t* next_token = NULL;
-            for (i = 0; i < top_token->size; ++i) {
-                const jsmntok_t* key_token = top_token + index;
-                const jsmntok_t* value_token = top_token + index + 1;
+            for (i = 0; i < root_token->size; ++i) {
+                const jsmntok_t* key_token = root_token + index;
+                const jsmntok_t* value_token = root_token + index + 1;
                 assert(key_token->type == JSMN_STRING);
                 if (prv_kii_json_is_same_key(&target,
                                 json_string + key_token->start,
@@ -646,23 +646,24 @@ static int prv_kii_jsmn_get_value_by_path(
             if (next_token == NULL) {
                 return -1;
             }
-            top_token = next_token;
-        } else  if (top_token->type == JSMN_ARRAY &&
+            root_token = next_token;
+        } else  if (root_token->type == JSMN_ARRAY &&
                 target.parent_type == PRV_KII_JSON_PARENT_TYPE_ARRAY) {
             size_t i = 0;
-            if (target.field.index >= top_token->size) {
+            if (target.field.index >= root_token->size) {
                 return -1;
             }
             for (i = 0; i < target.field.index; ++i) {
-                top_token += prv_kii_json_count_contained_token(top_token + 1);
+                root_token += prv_kii_json_count_contained_token(
+                        root_token + 1);
             }
-            ++top_token;
+            ++root_token;
         } else {
             return -1;
         }
-    } while (next_top != NULL);
+    } while (next_root != NULL);
 
-    *out_token = (jsmntok_t*)top_token;
+    *out_token = (jsmntok_t*)root_token;
     return 0;
 }
 
