@@ -14,7 +14,8 @@ $(LIBKII):
 
 $(LIBGTEST):
 	g++ -isystem $(GTEST_PATH)/include -I$(GTEST_PATH) -pthread -c $(GTEST_PATH)/src/gtest-all.cc 
-	ar -rv $(LIBGTEST) gtest-all.o
+	g++ -isystem $(GTEST_PATH)/include -I$(GTEST_PATH) -pthread -c $(GTEST_PATH)/src/gtest_main.cc 
+	ar -rv $(LIBGTEST) gtest-all.o gtest_main.o
 
 $(TARGET): $(LIBGTEST) $(LIBKII)
 	g++ $(SOURCE) $(INCLUDES) $(LIBS) -o $@
