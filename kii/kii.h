@@ -8,6 +8,10 @@
 #include "kii_core.h"
 #include "kii_task_callback.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define KII_OBJECTID_SIZE 36
 
 #define KII_UPLOADID_SIZE 64
@@ -406,6 +410,10 @@ int kii_server_code_execute(
 		kii_t* kii,
 		const char* endpoint_name,
 		const char* params);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
