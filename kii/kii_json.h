@@ -1,6 +1,10 @@
 #ifndef KII_JSON_H
 #define KII_JSON_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** object manages context of kii json apis. */
 typedef struct kii_json_t {
 
@@ -18,14 +22,14 @@ typedef struct kii_json_t {
 } kii_json_t;
 
 /** Boolean type */
-typedef enum kii_json_boolean {
+typedef enum kii_json_boolean_t {
     KII_JSON_FALSE,
     KII_JSON_TRUE
 } kii_json_boolean_t;
 
 /** Return value of kii_json_read_object(kii_json_t*, const char*,
  * size_t, kii_json_field_t*) */
-typedef enum kii_json_parse_result {
+typedef enum kii_json_parse_result_t {
 
     /** JSON string is successfully parsed and all kii_json_field_t
      * variables are successfully set. i.e., all kii_json_field_t type
@@ -53,7 +57,7 @@ typedef enum kii_json_parse_result {
 } kii_json_parse_result_t;
 
 /** Field parsing result. Assigned to kii_json_field_t#result. */
-typedef enum kii_json_field_parse_result {
+typedef enum kii_json_field_parse_result_t {
     /** Field parsing is success. */
     KII_JSON_FIELD_PARSE_SUCCESS,
 
@@ -88,7 +92,7 @@ typedef enum kii_json_field_parse_result {
 
 /** Type of parsed JSON field. This value is assigned to
  * kii_json_field_t#type. */
-typedef enum kii_json_field_type {
+typedef enum kii_json_field_type_t {
 
     /** This value denotes any JSON types. If this value is set to
      * kii_json_field_t#type, then kii_json_read_object(kii_json_t*,
@@ -123,14 +127,77 @@ typedef enum kii_json_field_type {
     KII_JSON_FIELD_TYPE_ARRAY
 } kii_json_field_type_t;
 
-/** JSON parsed field data */
-typedef struct kii_json_field {
+/** JSON parsed field data.
+ *
+ * Input of kii_json_read_object(kii_json_t*, const char*, size_t,
+ * kii_json_field_t*).
+ *
+ * Array of kii_json_field_t is passed to
+ * kii_json_read_object(kii_json_t*, const char*, size_t,
+ * kii_json_field_t*).
+ *
+ * End point of the array is specified by kii_json_field_t#target.  If
+ * kii_json_field_t#target is NULL, kii_json_read_object(kii_json_t*,
+ * const char*, size_t, kii_json_field_t*) consider that it is the end
+ * point of the passed array.
+ */
+typedef struct kii_json_field_t {
 
     /** Parsing target key name. Input of
      * kii_json_read_object(kii_json_t*, const char*, size_t,
      * kii_json_field_t*).
+     *
+     * This can point an only field in root json object.
+     * \deprecated{You should use kii_json_field_t#path}
      */
     const char* name;
+
+    /** Parsing target path. Input of
+     * kii_json_read_object(kii_json_t*, const char*, size_t,
+     * kii_json_field_t*).
+     *
+     * This can point any field or element of array. BNF like notation
+     * of path is following:
+     *
+     * \code
+     * path ::= '/' identifier subpath
+     * subpath ::= '/' identifier subpath | ''
+     * identifier ::= field | index
+     * index ::= '[' 0 ']' | '[' [1-9][0-9]+ ']'
+     * field ::= [char | escaped]+
+     * char ::= any ascii characters expect '/', '[', ']' and '\'
+     * escaped = "\\/" | "\\[" | "\\]" | "\\"
+     * \endcode
+     *
+     * If you want to get first element of color array in following
+     * json example:
+     *
+     * \code
+     * {
+     *     "ligtht" : {
+     *         "color" : [ 0, 128, 255]
+     *      }
+     * }
+     * \endcode
+     *
+     * \code
+     * path ="/ligtht/color/[0]";
+     * \endcode
+     *
+     * In rare cases, like following:
+     * \code
+     * {
+     *     "[]/\\" : "rare"
+     * }
+     * \endcode
+     *
+     * You can specify "[]/\\" as following:
+     *
+     * \code
+     * path ="/\\[\\]\\/\\";
+     * \endcode
+     */
+    const char* path;
 
     /** Field parse result. Output of
      * kii_json_read_object(kii_json_t*, const char*, size_t,
@@ -254,5 +321,9 @@ kii_json_parse_result_t kii_json_read_object(
         const char* json_string,
         size_t json_string_len,
         kii_json_field_t* fields);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
