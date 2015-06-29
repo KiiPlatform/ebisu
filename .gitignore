@@ -4,3 +4,7 @@ GPATH
 GRTAGS
 GTAGS
 *~
+html/
+latex/
+target
+libkiijson.so
