@@ -609,6 +609,14 @@ static int prv_kii_json_is_same_key(
         }
     }
 
+    if (key_i < key_len) {
+        // key does not reaches at the end of string.
+        return -1;
+    } else if (target_i < target->len) {
+        // target does not reaches at the end of string.
+        return -1;
+    }
+
     return retval;
 }
 

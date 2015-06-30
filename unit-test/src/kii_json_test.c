@@ -1284,3 +1284,50 @@ TEST(KiiJson, PushRetrieveEndpoint) {
     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[6].result);
     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[7].result);
 }
+
+TEST(KiiJson, PushGetSmartTest) {
+    const char json_string[] =
+        "{"
+            "\"schema\":\"XXXXXXXXXXXXXX\","
+            "\"schemaVersion\":1,"
+            "\"commandID\":\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\","
+            "\"actions\":[{\"turnPower\":{\"power\":true}},"
+                         "{\"setBrightness\":{\"brightness\":3000}},"
+                         "{\"setColor\":{\"color\":[0,128,255]}},"
+                         "{\"setColorTemperature\":{\"colorTemperature\":-100}}"
+                         "]"
+        "}";
+    kii_json_t kii_json;
+    kii_json_field_t fields[5];
+    char schema[64];
+    char commandID[64];
+
+    memset(fields, 0x00, sizeof(fields));
+    fields[0].path = "/schema";
+    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].field_copy.string = schema;
+    fields[0].field_copy_buff_size = sizeof(schema) / sizeof(schema[0]);
+    fields[1].path = "/schemaVersion";
+    fields[1].type = KII_JSON_FIELD_TYPE_INTEGER;
+    fields[2].path = "/commandID";
+    fields[2].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[2].field_copy.string = commandID;
+    fields[2].field_copy_buff_size =
+        sizeof(commandID) / sizeof(commandID[0]);
+    fields[3].path = "/actions";
+    fields[3].type = KII_JSON_FIELD_TYPE_ARRAY;
+    fields[4].path = NULL;
+
+    memset(&kii_json, 0, sizeof(kii_json));
+    EXPECT_EQ(KII_JSON_PARSE_SUCCESS,
+            kii_json_read_object(
+                &kii_json,
+                json_string,
+                sizeof(json_string) / sizeof(json_string[0]),
+                fields));
+
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[1].result);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[2].result);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[3].result);
+}
