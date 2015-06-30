@@ -609,6 +609,14 @@ static int prv_kii_json_is_same_key(
         }
     }
 
+    if (key_i < key_len) {
+        // key does not reaches at the end of string.
+        return -1;
+    } else if (target_i < target->len) {
+        // target does not reaches at the end of string.
+        return -1;
+    }
+
     return retval;
 }
 
@@ -750,7 +758,8 @@ static kii_json_parse_result_t prv_kii_json_convert_jsmntok_to_field(
             }
             break;
         case KII_JSON_FIELD_TYPE_LONG:
-            if (type != KII_JSON_FIELD_TYPE_LONG) {
+            if (type != KII_JSON_FIELD_TYPE_LONG &&
+                    type != KII_JSON_FIELD_TYPE_INTEGER) {
                 field->type = type;
                 field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
                 retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
