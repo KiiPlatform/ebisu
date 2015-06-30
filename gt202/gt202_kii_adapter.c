@@ -191,17 +191,17 @@ kii_http_client_code_t
 kii_http_client_code_t
     body_cb(
         kii_http_context_t* http_context,
-        const char* body_data)
+        const char* body_data,
+        size_t body_size)
 {
     context_t* ctx = (context_t*)http_context->app_context;
     char* reqBuff = ctx->buff;
-    int body_len = (body_data != NULL) ? strlen(body_data) : 0;
-    if (ctx->buff_size < strlen(reqBuff) + 3 + body_len) {
+    if (ctx->buff_size < strlen(reqBuff) + 3 + body_size) {
         return KII_HTTPC_FAIL;
     }
     strcat(reqBuff, "\r\n");
     if (body_data != NULL) {
-        strcat(reqBuff, body_data);
+        strncat(reqBuff, body_data, body_size);
     }
     return KII_HTTPC_OK;
 }

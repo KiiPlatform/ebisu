@@ -42,7 +42,8 @@ kii_http_client_code_t header_cb(
 
 kii_http_client_code_t body_cb(
         kii_http_context_t* http_context,
-        const char* body_data);
+        const char* body_data,
+        size_t body_size);
 
 kii_http_client_code_t execute_cb(
         kii_http_context_t* http_context,
