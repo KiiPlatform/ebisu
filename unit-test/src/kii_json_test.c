@@ -1196,7 +1196,7 @@ TEST(KiiJson, GetComplexObject) {
     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[5].result);
     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[6].result);
     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[7].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[7].result);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[8].result);
     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[9].result);
     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[10].result);
     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[11].result);
@@ -1217,4 +1217,70 @@ TEST(KiiJson, GetComplexObject) {
     EXPECT_EQ(KII_JSON_TRUE, fields[12].field_copy.boolean_value);
     // fields[12] does not have value. it is null.
     EXPECT_EQ(0, strcmp("value", fields[13].field_copy.string));
+}
+
+TEST(KiiJson, PushRetrieveEndpoint) {
+    const char json_string[] =
+        "{"
+            "\"installationID\" : \"XXXXXXXXXXXXXXXXXXXXXXXXX\","
+            "\"username\" : \"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\","
+            "\"password\" : \"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\","
+            "\"mqttTopic\" : \"XXXXXXXXXXXXXXXXXXXXXXX\","
+            "\"host\" : \"XXXXXXXXXXXXXXXXXXXX.kii.com\","
+            "\"portTCP\" : 1883,"
+            "\"portSSL\" : 8883,"
+            "\"X-MQTT-TTL\" : 2147483647"
+        "}";
+    kii_json_t kii_json;
+    kii_json_field_t fields[8];
+    char username[64];
+    char password[128];
+    char topic[64];
+    char host[64];
+
+    memset(fields, 0, sizeof(fields));
+    memset(username, 0, sizeof(username));
+    memset(password, 0, sizeof(password));
+    memset(topic, 0, sizeof(topic));
+    memset(host, 0, sizeof(host));
+    fields[0].name = "username";
+    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].field_copy.string = username;
+    fields[0].field_copy_buff_size = sizeof(username) / sizeof(username[0]);
+    fields[1].name = "password";
+    fields[1].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[1].field_copy.string = password;
+    fields[1].field_copy_buff_size = sizeof(password) / sizeof(password[0]);
+    fields[2].name = "host";
+    fields[2].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[2].field_copy.string = host;
+    fields[2].field_copy_buff_size = sizeof(host) / sizeof(host[0]);
+    fields[3].name = "mqttTopic";
+    fields[3].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[3].field_copy.string = topic;
+    fields[3].field_copy_buff_size = sizeof(topic) / sizeof(topic[0]);
+    fields[4].name = "portTCP";
+    fields[4].type = KII_JSON_FIELD_TYPE_INTEGER;
+    fields[5].name = "portSSL";
+    fields[5].type = KII_JSON_FIELD_TYPE_INTEGER;
+    fields[6].name = "X-MQTT-TTL";
+    fields[6].type = KII_JSON_FIELD_TYPE_LONG;
+    fields[7].name = NULL;
+
+    memset(&kii_json, 0, sizeof(kii_json));
+    EXPECT_EQ(KII_JSON_PARSE_SUCCESS,
+            kii_json_read_object(
+                &kii_json,
+                json_string,
+                sizeof(json_string) / sizeof(json_string[0]),
+                fields));
+
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[1].result);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[2].result);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[3].result);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[4].result);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[5].result);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[6].result);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[7].result);
 }

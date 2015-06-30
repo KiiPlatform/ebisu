@@ -750,7 +750,8 @@ static kii_json_parse_result_t prv_kii_json_convert_jsmntok_to_field(
             }
             break;
         case KII_JSON_FIELD_TYPE_LONG:
-            if (type != KII_JSON_FIELD_TYPE_LONG) {
+            if (type != KII_JSON_FIELD_TYPE_LONG &&
+                    type != KII_JSON_FIELD_TYPE_INTEGER) {
                 field->type = type;
                 field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
                 retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
