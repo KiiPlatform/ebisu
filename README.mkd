@@ -1,13 +1,13 @@
-Kii JSON
-==============
+# Kii JSON
 
-Kii JSON extracts values from JSON string by pointing property names
-or indexes of array.
+Kii JSON is JSON parser library written in c (conforms to c99).
+It Allows to specify multiple fields by jsonpath notation to obtain its values.
+By this API, redundant fields by fields parsing code can be eliminated in your
+application.
+This design is inspired by [microjson](http://www.catb.org/esr/microjson/).
 
-Kii JSON is implemented for limited resource environments.
-
- - Written in pure C. (c89)
- - No dynamic memory allocation.
+It is desinged for resource limited devices.
+No dynamic memory allocation is used.
 
 ## Building Kii JSON
 
@@ -57,11 +57,10 @@ if (result == KII_JSON_PARSE_SUCCESS) {
 }
 ```
 
-## Library used by Kii JSON
+## Dependency.
 
-Kii JSON uses following libraries:
-
-  * [jsmn](http://zserge.com/jsmn.html)
+Kii JSON uses [jsmn](http://zserge.com/jsmn.html).
+It is statically linked by default.
 
 jsmn is published under [MIT
 License](http://opensource.org/licenses/mit-license.php).
