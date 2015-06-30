@@ -1,0 +1,66 @@
+# Kii JSON
+
+Kii JSON is JSON parser library written in c (conforms to c99).
+It Allows to specify multiple fields by jsonpath notation to obtain its values.
+By this API, redundant fields by fields parsing code can be eliminated in your
+application.
+This design is inspired by [microjson](http://www.catb.org/esr/microjson/).
+
+It is desinged for resource limited devices.
+No dynamic memory allocation is used.
+
+## Building Kii JSON
+
+Execute following command on this directory.
+
+```sh
+make
+```
+
+After that, you can find target/libkiijson.so.
+
+## Example
+
+If you want to extract "hoo" value from following JSON string:
+
+```json
+{
+    "hoo" : "bar"
+}
+```
+
+With Kii JSON, we can extract "hoo" value by followings:
+
+```c
+const char json_string[] = "{\"hoo\":\"bar\"}"; // target json string.
+
+kii_json_field_t fields[2];
+kii_json_t kii_json;
+char buf[256];
+kii_json_parse_result_t result;
+
+memset(&kii_json, 0x00, sizeof(kii_json));
+memset(fields, 0x00, sizeof(fields));
+
+fields[0].path = "/hoo";
+fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+fields[0].field_copy.string = buf;
+fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
+fields[1].path = NULL;
+
+result = kii_json_read_object(&kii_json, json_string,
+        sizeof(json_string) / sizeof(json_string[0]), fields);
+
+if (result == KII_JSON_PARSE_SUCCESS) {
+    // success to extract "hoo" value.
+    // you can find "hoo" value in buf array.
+}
+```
+
+## Dependency.
+
+Kii JSON uses [jsmn](http://zserge.com/jsmn.html).
+It is statically linked by default.
+
+jsmn is published under [MIT
+License](http://opensource.org/licenses/mit-license.php).
