@@ -5,14 +5,32 @@
 #ifndef KII_JSON_H
 #define KII_JSON_H
 
+#include <jsmn.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/** JSON token data to parse JSON string. */
+typedef jsmntok_t kii_json_token_t;
+
 /** object manages context of kii json apis. */
 typedef struct kii_json_t {
 
-    /** Number of json tokens. */
+    /** JSON token array. To parse JSON string, Enough number of JSON
+     * token is needed.
+     */
+    kii_json_token_t* tokens;
+
+    /** Number of json tokens.
+     * Input and Output of kii_json_read_object(kii_json_t*, const
+     * char*, size_t, kii_json_field_t*). Inputted value is size of
+     * kii_json_t#tokens, and outputted value is required size to
+     * parse passing JSON string. If kii_json_read_object(kii_json_t*,
+     * const char*, size_t, kii_json_field_t*) returns
+     * KII_JSON_PARSE_SHORTAGE_TOKENS, then you need to resize
+     * kii_json_t#tokens up to this value. After that, you can retry.
+     */
     int json_token_num;
 
     /** Error string. If error occurs in kii_json library, then error
@@ -55,6 +73,9 @@ typedef enum kii_json_parse_result_t {
      * passed, then this error is returned.
      */
     KII_JSON_PARSE_ROOT_TYPE_ERROR,
+
+    /** kii_json_t#tokens is not enough to parse JSON string.*/
+    KII_JSON_PARSE_SHORTAGE_TOKENS,
 
     /** JSON string is failed to parse. Passed string is not JSON string. */
     KII_JSON_PARSE_INVALID_INPUT
