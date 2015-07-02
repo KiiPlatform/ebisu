@@ -65,6 +65,11 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
     if (kii->mqtt_buffer == NULL || kii->mqtt_buffer_size == 0) {
         return -1;
     }
+    if (kii->mqtt_buffer_size < 27 + strlen(endpoint->topic) +
+            strlen(endpoint->username) + strlen(endpoint->password))
+    {
+        return -1;
+    }
     memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
     i = 8; /* reserver 8 bytes for header */
     /* Variable header:Protocol Name bytes */
@@ -178,6 +183,9 @@ int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
     if (kii->mqtt_buffer == NULL || kii->mqtt_buffer_size == 0) {
         return -1;
     }
+    if (kii->mqtt_buffer_size < 14 + strlen(topic)) {
+        return -1;
+    }
     memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
     i = 8;
 
@@ -257,16 +265,13 @@ int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
 
 int kiiMQTT_pingReq(kii_t* kii)
 {
+    char buf[2];
     kii_socket_code_t sock_err;
 
-    if (kii->mqtt_buffer == NULL || kii->mqtt_buffer_size == 0) {
-        return -1;
-    }
-    memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
-    kii->mqtt_buffer[0] = (char)0xc0;
-    kii->mqtt_buffer[1] = 0x00;
-    sock_err = kii->mqtt_socket_send_cb(&(kii->mqtt_socket_context),
-            kii->mqtt_buffer, kii->mqtt_buffer_size);
+    memset(buf, 0, sizeof(buf));
+    buf[0] = (char)0xc0;
+    buf[1] = 0x00;
+    sock_err = kii->mqtt_socket_send_cb(&(kii->mqtt_socket_context), buf, sizeof(buf));
     if(sock_err != KII_SOCKETC_OK)
     {
         M_KII_LOG(kii->kii_core.logger_cb("kii-error: send data fail\r\n"));
