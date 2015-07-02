@@ -44,7 +44,6 @@ int kiiMQTT_decode(char* buf, int* value)
 
 int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short keepAliveInterval)
 {
-    char buf[256];
     int i;
     int j;
     int k;
@@ -63,54 +62,57 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
         return -1;
     }
 
-    memset(buf, 0, sizeof(buf));
+    if (kii->mqtt_buffer == NULL || kii->mqtt_buffer_size == 0) {
+        return -1;
+    }
+    memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
     i = 8; /* reserver 8 bytes for header */
     /* Variable header:Protocol Name bytes */
-    buf[i++] = 0x00;
-    buf[i++] = 0x06;
-    buf[i++] = 'M';
-    buf[i++] = 'Q';
-    buf[i++] = 'I';
-    buf[i++] = 's';
-    buf[i++] = 'd';
-    buf[i++] = 'p';
+    kii->mqtt_buffer[i++] = 0x00;
+    kii->mqtt_buffer[i++] = 0x06;
+    kii->mqtt_buffer[i++] = 'M';
+    kii->mqtt_buffer[i++] = 'Q';
+    kii->mqtt_buffer[i++] = 'I';
+    kii->mqtt_buffer[i++] = 's';
+    kii->mqtt_buffer[i++] = 'd';
+    kii->mqtt_buffer[i++] = 'p';
     /* Variable header:Protocol Level */
-    buf[i++] = 0x03;
+    kii->mqtt_buffer[i++] = 0x03;
     /* Variable header:Connect Flags */
     /*
      * Bit   7                          6                        5                    4  3            2            1 0
      *        User Name Flag     Password Flag    Will Retain        Will QoS     Will Flag   Clean Session   Reserved
      */
-    buf[i++] = (char)0xc2;
+    kii->mqtt_buffer[i++] = (char)0xc2;
     /* Variable header:Keep Alive */
-    buf[i++] = (keepAliveInterval & 0xff00) >> 8;
-    buf[i++] = keepAliveInterval & 0x00ff;
+    kii->mqtt_buffer[i++] = (keepAliveInterval & 0xff00) >> 8;
+    kii->mqtt_buffer[i++] = keepAliveInterval & 0x00ff;
     /* Payload:Client Identifier */
-    buf[i++] = (strlen(endpoint->topic) & 0xff00) >> 8;
-    buf[i++] = strlen(endpoint->topic) & 0x00ff;
-    strcpy(&buf[i], endpoint->topic);
+    kii->mqtt_buffer[i++] = (strlen(endpoint->topic) & 0xff00) >> 8;
+    kii->mqtt_buffer[i++] = strlen(endpoint->topic) & 0x00ff;
+    strcpy(&(kii->mqtt_buffer[i]), endpoint->topic);
     i += strlen(endpoint->topic);
     /* Payload:User Name */
-    buf[i++] = (strlen(endpoint->username) & 0xff00) >> 8;
-    buf[i++] = strlen(endpoint->username) & 0x00ff;
-    strcpy(&buf[i], endpoint->username);
+    kii->mqtt_buffer[i++] = (strlen(endpoint->username) & 0xff00) >> 8;
+    kii->mqtt_buffer[i++] = strlen(endpoint->username) & 0x00ff;
+    strcpy(&(kii->mqtt_buffer[i]), endpoint->username);
     i += strlen(endpoint->username);
     /* Payload:Password */
-    buf[i++] = (strlen(endpoint->password) & 0xff00) >> 8;
-    buf[i++] = strlen(endpoint->password) & 0x00ff;
-    strcpy(&buf[i], endpoint->password);
+    kii->mqtt_buffer[i++] = (strlen(endpoint->password) & 0xff00) >> 8;
+    kii->mqtt_buffer[i++] = strlen(endpoint->password) & 0x00ff;
+    strcpy(&(kii->mqtt_buffer[i]), endpoint->password);
     i += strlen(endpoint->password);
 
     j = 0;
     /* Fixed header:byte1 */
-    buf[j++] = 0x10;
+    kii->mqtt_buffer[j++] = 0x10;
     /*/ Fixed header:Remaining Length*/
-    j += kiiMQTT_encode(&buf[j], i - 8);
+    j += kiiMQTT_encode(&(kii->mqtt_buffer[j]), i - 8);
 
     /* copy the other tytes */
     for(k = 0; k < i - 8; k++)
     {
-        buf[j++] = buf[8 + k];
+        kii->mqtt_buffer[j++] = kii->mqtt_buffer[8 + k];
     }
 
     M_KII_LOG((kii->kii_core.logger_cb("\r\n----------------MQTT connect send start-------------\r\n")));
@@ -118,19 +120,21 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
     M_KII_LOG(kii->kii_core.logger_cb("\r\n"));
     for (i=0; i<j; i++)
     {
-        M_KII_LOG(kii->kii_core.logger_cb("%02x", buf[i]));
+        M_KII_LOG(kii->kii_core.logger_cb("%02x", kii->mqtt_buffer[i]));
     }
     M_KII_LOG(kii->kii_core.logger_cb("\r\n"));
 
     M_KII_LOG(kii->kii_core.logger_cb("\r\n----------------MQTT connect send end-------------\r\n"));
 
-    sock_err = kii->mqtt_socket_send_cb(&(kii->mqtt_socket_context), buf, j);
+    sock_err = kii->mqtt_socket_send_cb(&(kii->mqtt_socket_context),
+            kii->mqtt_buffer, j);
     if (sock_err != KII_SOCKETC_OK) {
         M_KII_LOG(kii->kii_core.logger_cb("kii-error: send data fail\r\n"));
         return -1;
     }
-    memset(buf, 0, sizeof(buf));
-    sock_err = kii->mqtt_socket_recv_cb(&(kii->mqtt_socket_context), buf, sizeof(buf), &actual_length);
+    memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
+    sock_err = kii->mqtt_socket_recv_cb(&(kii->mqtt_socket_context),
+            kii->mqtt_buffer, kii->mqtt_buffer_size, &actual_length);
     if(sock_err != KII_SOCKETC_OK)
     {
         M_KII_LOG(kii->kii_core.logger_cb("kii-error: recv data fail\r\n"));
@@ -142,12 +146,16 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
         M_KII_LOG(kii->kii_core.logger_cb("\r\n"));
         for (i=0; i<actual_length; i++)
         {
-            M_KII_LOG(kii->kii_core.logger_cb("%02x", buf[i]));
+            M_KII_LOG(kii->kii_core.logger_cb("%02x", kii->mqtt_buffer[i]));
         }
         M_KII_LOG(kii->kii_core.logger_cb("\r\n"));
 
         M_KII_LOG(kii->kii_core.logger_cb("\r\n----------------MQTT_connect recv end-------------\r\n"));
-        if((actual_length == 4) && (buf[0] == 0x20) && (buf[1] == 0x02) && (buf[2] == 0x00) && (buf[3] == 0x00))
+        if((actual_length == 4) &&
+                (kii->mqtt_buffer[0] == 0x20) &&
+                (kii->mqtt_buffer[1] == 0x02) &&
+                (kii->mqtt_buffer[2] == 0x00) &&
+                (kii->mqtt_buffer[3] == 0x00))
         {
             return 0;
         }
@@ -161,56 +169,60 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
 
 int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
 {
-    char buf[256];
     int i;
     int j;
     int k;
     size_t actual_length = 0;
     kii_socket_code_t sock_err;
 
-    memset(buf, 0, sizeof(buf));
+    if (kii->mqtt_buffer == NULL || kii->mqtt_buffer_size == 0) {
+        return -1;
+    }
+    memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
     i = 8;
 
     /* Variable header:Packet Identifier */
-    buf[i++] = 0x00;
-    buf[i++] = 0x01;
+    kii->mqtt_buffer[i++] = 0x00;
+    kii->mqtt_buffer[i++] = 0x01;
     /* Payload:topic length */
-    buf[i++] = (strlen(topic) & 0xff00) >> 8;
-    buf[i++] = strlen(topic) & 0x00ff;
+    kii->mqtt_buffer[i++] = (strlen(topic) & 0xff00) >> 8;
+    kii->mqtt_buffer[i++] = strlen(topic) & 0x00ff;
     /* Payload:topic */
-    strcpy(&buf[i], topic);
+    strcpy(&kii->mqtt_buffer[i], topic);
     i += strlen(topic);
     /* Payload: qos*/
-    buf[i++] = (char)qos;
+    kii->mqtt_buffer[i++] = (char)qos;
 
     j = 0;
     /* Fixed header: byte1*/
-    buf[j++] = (char)0x82;
+    kii->mqtt_buffer[j++] = (char)0x82;
     /* Fixed header:Remaining Length*/
-    j += kiiMQTT_encode(&buf[j], i - 8);
+    j += kiiMQTT_encode(&(kii->mqtt_buffer[j]), i - 8);
 
     /* copy the other tytes*/
     for(k = 0; k < i - 8; k++)
     {
-        buf[j++] = buf[8 + k];
+        kii->mqtt_buffer[j++] = kii->mqtt_buffer[8 + k];
     }
     M_KII_LOG(kii->kii_core.logger_cb("\r\n----------------MQTT subscribe send start-------------\r\n"));
     M_KII_LOG(kii->kii_core.logger_cb("\r\n"));
     for (i=0; i<j; i++)
     {
-        M_KII_LOG(kii->kii_core.logger_cb("%02x", buf[i]));
+        M_KII_LOG(kii->kii_core.logger_cb("%02x", kii->mqtt_buffer[i]));
     }
     M_KII_LOG(kii->kii_core.logger_cb("\r\n"));
 
     M_KII_LOG(kii->kii_core.logger_cb("\r\n----------------MQTT subscribe send end-------------\r\n"));
-    sock_err = kii->mqtt_socket_send_cb(&(kii->mqtt_socket_context), buf, j);
+    sock_err = kii->mqtt_socket_send_cb(&(kii->mqtt_socket_context),
+            kii->mqtt_buffer, j);
     if(sock_err != KII_SOCKETC_OK)
     {
         M_KII_LOG(kii->kii_core.logger_cb("kii-error: send data fail\r\n"));
         return -1;
     }
-    memset(buf, 0, sizeof(buf));
-    sock_err = kii->mqtt_socket_recv_cb(&(kii->mqtt_socket_context), buf, sizeof(buf), &actual_length);
+    memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
+    sock_err = kii->mqtt_socket_recv_cb(&(kii->mqtt_socket_context),
+            kii->mqtt_buffer, kii->mqtt_buffer_size, &actual_length);
     if(sock_err != KII_SOCKETC_OK)
     {
         M_KII_LOG(kii->kii_core.logger_cb("kii-error: recv data fail\r\n"));
@@ -222,13 +234,16 @@ int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
         M_KII_LOG(kii->kii_core.logger_cb("\r\n"));
         for (i=0; i<actual_length; i++)
         {
-            M_KII_LOG(kii->kii_core.logger_cb("%02x", buf[i]));
+            M_KII_LOG(kii->kii_core.logger_cb("%02x", kii->mqtt_buffer[i]));
         }
         M_KII_LOG(kii->kii_core.logger_cb("\r\n"));
 
         M_KII_LOG(kii->kii_core.logger_cb("\r\n----------------MQTT subscribe recv end-------------\r\n"));
-        if((actual_length == 5) && ((unsigned char)buf[0] == 0x90) && (buf[1] == 0x03) && (buf[2] == 0x00) &&
-                (buf[3] == 0x01))
+        if((actual_length == 5) &&
+                ((unsigned char)kii->mqtt_buffer[0] == 0x90) &&
+                (kii->mqtt_buffer[1] == 0x03) &&
+                (kii->mqtt_buffer[2] == 0x00) &&
+                (kii->mqtt_buffer[3] == 0x01))
         {
             return 0;
         }
@@ -242,13 +257,16 @@ int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
 
 int kiiMQTT_pingReq(kii_t* kii)
 {
-    char buf[2];
     kii_socket_code_t sock_err;
 
-    memset(buf, 0, sizeof(buf));
-    buf[0] = (char)0xc0;
-    buf[1] = 0x00;
-    sock_err = kii->mqtt_socket_send_cb(&(kii->mqtt_socket_context), buf, sizeof(buf));
+    if (kii->mqtt_buffer == NULL || kii->mqtt_buffer_size == 0) {
+        return -1;
+    }
+    memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
+    kii->mqtt_buffer[0] = (char)0xc0;
+    kii->mqtt_buffer[1] = 0x00;
+    sock_err = kii->mqtt_socket_send_cb(&(kii->mqtt_socket_context),
+            kii->mqtt_buffer, kii->mqtt_buffer_size);
     if(sock_err != KII_SOCKETC_OK)
     {
         M_KII_LOG(kii->kii_core.logger_cb("kii-error: send data fail\r\n"));
