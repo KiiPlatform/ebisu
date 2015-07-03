@@ -21,6 +21,7 @@ all: clean $(TARGET) $(DOCTARGET)
 
 $(KIISDK):
 	$(MAKE) -C ../kii $(KIISDKPARAM)
+	cp $(KIISDK) ./
 
 
 $(TARGET): $(KIISDK)
