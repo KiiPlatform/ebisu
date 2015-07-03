@@ -63,11 +63,12 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
     }
 
     if (kii->mqtt_buffer == NULL || kii->mqtt_buffer_size == 0) {
+        M_KII_LOG(kii->kii_core.logger_cb("mqtt_buffer must not be NULL.\r\n"));
         return -1;
     }
     if (kii->mqtt_buffer_size < 27 + strlen(endpoint->topic) +
-            strlen(endpoint->username) + strlen(endpoint->password))
-    {
+            strlen(endpoint->username) + strlen(endpoint->password)) {
+        M_KII_LOG(kii->kii_core.logger_cb("mqtt_buffer is too short.\r\n"));
         return -1;
     }
     memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
@@ -181,9 +182,11 @@ int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
     kii_socket_code_t sock_err;
 
     if (kii->mqtt_buffer == NULL || kii->mqtt_buffer_size == 0) {
+        M_KII_LOG(kii->kii_core.logger_cb("mqtt_buffer must not be NULL.\r\n"));
         return -1;
     }
     if (kii->mqtt_buffer_size < 14 + strlen(topic)) {
+        M_KII_LOG(kii->kii_core.logger_cb("mqtt_buffer is too short.\r\n"));
         return -1;
     }
     memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
