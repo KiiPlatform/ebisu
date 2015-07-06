@@ -5,7 +5,7 @@ LIBKIIJSON=libkiijson.so
 SOURCE = $(wildcard src/*.c)
 TARGET = testapp
 LIBS= $(OUTDIR)/$(LIBGTEST) $(OUTDIR)/$(LIBKIIJSON)
-INCLUDES= -I$(GTEST_PATH)/include  -I../include
+INCLUDES= -I$(GTEST_PATH)/include  -I../include -I../libs/jsmn
 OUTDIR=target
 
 all: clean $(OUTDIR) $(TARGET)
