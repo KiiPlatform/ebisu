@@ -2,13 +2,25 @@
 #include <kii_json.h>
 #include <math.h>
 
+static void init_kii_json(
+        kii_json_t *kii_json,
+        kii_json_token_t* tokens,
+        size_t tokens_num)
+{
+    memset(kii_json, 0x00, sizeof(kii_json_t));
+    memset(tokens, 0x00, tokens_num * sizeof(kii_json_token_t));
+    kii_json->tokens = tokens;
+    kii_json->json_token_num = tokens_num;
+}
+
 TEST(KiiJson, GetObjectStringByName) {
     const char json_string[] = "{\"key1\" : \"value1\"}";
     char buf[256];
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].name = "key1";
@@ -30,9 +42,10 @@ TEST(KiiJson, GetObjectStringByName) {
 TEST(KiiJson, GetObjectPositiveIntByName) {
     const char json_string[] = "{\"key1\" : 100}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].name = "key1";
@@ -52,9 +65,10 @@ TEST(KiiJson, GetObjectPositiveIntByName) {
 TEST(KiiJson, GetObjectNegativeIntByName) {
     const char json_string[] = "{\"key1\" : -100}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].name = "key1";
@@ -74,9 +88,10 @@ TEST(KiiJson, GetObjectNegativeIntByName) {
 TEST(KiiJson, GetObjectPositiveLongByName) {
     const char json_string[] = "{\"key1\" : 1099511627776}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].name = "key1";
@@ -96,9 +111,10 @@ TEST(KiiJson, GetObjectPositiveLongByName) {
 TEST(KiiJson, GetObjectNegativeLongByName) {
     const char json_string[] = "{\"key1\" : -1099511627776}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].name = "key1";
@@ -118,9 +134,10 @@ TEST(KiiJson, GetObjectNegativeLongByName) {
 TEST(KiiJson, GetObjectPositiveDotDoubleByName) {
     const char json_string[] = "{\"key1\" : 0.1}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].name = "key1";
@@ -140,9 +157,10 @@ TEST(KiiJson, GetObjectPositiveDotDoubleByName) {
 TEST(KiiJson, GetObjectNegativeDotDoubleByName) {
     const char json_string[] = "{\"key1\" : -0.1}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].name = "key1";
@@ -162,9 +180,10 @@ TEST(KiiJson, GetObjectNegativeDotDoubleByName) {
 TEST(KiiJson, GetObjectPositiveEDoubleByName) {
     const char json_string[] = "{\"key1\" : 1e-1}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].name = "key1";
@@ -184,9 +203,10 @@ TEST(KiiJson, GetObjectPositiveEDoubleByName) {
 TEST(KiiJson, GetObjectNegativeEDoubleByName) {
     const char json_string[] = "{\"key1\" : -1e-1}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].name = "key1";
@@ -207,9 +227,10 @@ TEST(KiiJson, GetObjectTrueByName) {
     const char json_string[] = "{\"key1\" : true}";
     char buf[256];
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].name = "key1";
@@ -230,9 +251,10 @@ TEST(KiiJson, GetObjectFalseByName) {
     const char json_string[] = "{\"key1\" : false}";
     char buf[256];
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].name = "key1";
@@ -254,9 +276,10 @@ TEST(KiiJson, GetObjectStringByPath) {
     const char json_string[] = "{\"key1\" : \"value1\"}";
     char buf[256];
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1";
@@ -278,9 +301,10 @@ TEST(KiiJson, GetObjectStringByPath) {
 TEST(KiiJson, GetObjectPositiveIntByPath) {
     const char json_string[] = "{\"key1\" : 100}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1";
@@ -300,9 +324,10 @@ TEST(KiiJson, GetObjectPositiveIntByPath) {
 TEST(KiiJson, GetObjectNegativeIntByPath) {
     const char json_string[] = "{\"key1\" : -100}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1";
@@ -322,9 +347,10 @@ TEST(KiiJson, GetObjectNegativeIntByPath) {
 TEST(KiiJson, GetObjectPositiveLongByPath) {
     const char json_string[] = "{\"key1\" : 1099511627776}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1";
@@ -344,9 +370,10 @@ TEST(KiiJson, GetObjectPositiveLongByPath) {
 TEST(KiiJson, GetObjectNegativeLongByPath) {
     const char json_string[] = "{\"key1\" : -1099511627776}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1";
@@ -366,9 +393,10 @@ TEST(KiiJson, GetObjectNegativeLongByPath) {
 TEST(KiiJson, GetObjectPositiveDotDoubleByPath) {
     const char json_string[] = "{\"key1\" : 0.1}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1";
@@ -388,9 +416,10 @@ TEST(KiiJson, GetObjectPositiveDotDoubleByPath) {
 TEST(KiiJson, GetObjectNegativeDotDoubleByPath) {
     const char json_string[] = "{\"key1\" : -0.1}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1";
@@ -410,9 +439,10 @@ TEST(KiiJson, GetObjectNegativeDotDoubleByPath) {
 TEST(KiiJson, GetObjectPositiveEDoubleByPath) {
     const char json_string[] = "{\"key1\" : 1e-1}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1";
@@ -432,9 +462,10 @@ TEST(KiiJson, GetObjectPositiveEDoubleByPath) {
 TEST(KiiJson, GetObjectNegativeEDoubleByPath) {
     const char json_string[] = "{\"key1\" : -1e-1}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1";
@@ -455,9 +486,10 @@ TEST(KiiJson, GetObjectNullByPath) {
     const char json_string[] = "{\"key1\" : null}";
     char buf[256];
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1";
@@ -477,9 +509,10 @@ TEST(KiiJson, GetObjectTrueByPath) {
     const char json_string[] = "{\"key1\" : true}";
     char buf[256];
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1";
@@ -500,9 +533,10 @@ TEST(KiiJson, GetObjectFalseByPath) {
     const char json_string[] = "{\"key1\" : false}";
     char buf[256];
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1";
@@ -523,9 +557,10 @@ TEST(KiiJson, GetObjectSecondLayerStringByPath) {
     const char json_string[] = "{\"key1\" : {\"key2\" : \"value1\"}}";
     char buf[256];
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1/key2";
@@ -547,9 +582,10 @@ TEST(KiiJson, GetObjectSecondLayerStringByPath) {
 TEST(KiiJson, GetObjectSecondLayerPositiveIntByPath) {
     const char json_string[] = "{\"key1\" : {\"key2\" : 100}}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1/key2";
@@ -569,9 +605,10 @@ TEST(KiiJson, GetObjectSecondLayerPositiveIntByPath) {
 TEST(KiiJson, GetObjectSecondLayerNegativeIntByPath) {
     const char json_string[] = "{\"key1\" : {\"key2\" : -100}}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1/key2";
@@ -591,9 +628,10 @@ TEST(KiiJson, GetObjectSecondLayerNegativeIntByPath) {
 TEST(KiiJson, GetObjectSecondLayerPositiveLongByPath) {
     const char json_string[] = "{\"key1\" : {\"key2\" : 1099511627776}}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1/key2";
@@ -613,9 +651,10 @@ TEST(KiiJson, GetObjectSecondLayerPositiveLongByPath) {
 TEST(KiiJson, GetObjectSecondLayerNegativeLongByPath) {
     const char json_string[] = "{\"key1\" : {\"key2\" : -1099511627776}}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1/key2";
@@ -635,9 +674,10 @@ TEST(KiiJson, GetObjectSecondLayerNegativeLongByPath) {
 TEST(KiiJson, GetObjectSecondLayerPositiveDotDoubleByPath) {
     const char json_string[] = "{\"key1\" : {\"key2\" : 0.1}}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1/key2";
@@ -657,9 +697,10 @@ TEST(KiiJson, GetObjectSecondLayerPositiveDotDoubleByPath) {
 TEST(KiiJson, GetObjectSecondLayerNegativeDotDoubleByPath) {
     const char json_string[] = "{\"key1\" : {\"key2\" : -0.1}}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1/key2";
@@ -679,9 +720,10 @@ TEST(KiiJson, GetObjectSecondLayerNegativeDotDoubleByPath) {
 TEST(KiiJson, GetObjectSecondLayerPositiveEDoubleByPath) {
     const char json_string[] = "{\"key1\" : {\"key2\" : 1e-1}}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1/key2";
@@ -701,9 +743,10 @@ TEST(KiiJson, GetObjectSecondLayerPositiveEDoubleByPath) {
 TEST(KiiJson, GetObjectSecondLayerNegativeEDoubleByPath) {
     const char json_string[] = "{\"key1\" : {\"key2\" : -1e-1}}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1/key2";
@@ -724,9 +767,10 @@ TEST(KiiJson, GetObjectThirdLayerStringByPath) {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : \"value1\"}}}";
     char buf[256];
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1/key2/key3";
@@ -748,9 +792,10 @@ TEST(KiiJson, GetObjectThirdLayerStringByPath) {
 TEST(KiiJson, GetObjectThirdLayerPositiveIntByPath) {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : 100}}}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1/key2/key3";
@@ -770,9 +815,10 @@ TEST(KiiJson, GetObjectThirdLayerPositiveIntByPath) {
 TEST(KiiJson, GetObjectThirdLayerNegativeIntByPath) {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : -100}}}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1/key2/key3";
@@ -793,9 +839,10 @@ TEST(KiiJson, GetObjectThirdLayerPositiveLongByPath) {
     const char json_string[] =
         "{\"key1\" : {\"key2\" : {\"key3\" : 1099511627776}}}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1/key2/key3";
@@ -816,9 +863,10 @@ TEST(KiiJson, GetObjectThirdLayerNegativeLongByPath) {
     const char json_string[] =
         "{\"key1\" : {\"key2\" : {\"key3\" : -1099511627776}}}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1/key2/key3";
@@ -838,9 +886,10 @@ TEST(KiiJson, GetObjectThirdLayerNegativeLongByPath) {
 TEST(KiiJson, GetObjectThirdLayerPositiveDotDoubleByPath) {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : 0.1}}}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1/key2/key3";
@@ -860,9 +909,10 @@ TEST(KiiJson, GetObjectThirdLayerPositiveDotDoubleByPath) {
 TEST(KiiJson, GetObjectThirdLayerNegativeDotDoubleByPath) {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : -0.1}}}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1/key2/key3";
@@ -882,9 +932,10 @@ TEST(KiiJson, GetObjectThirdLayerNegativeDotDoubleByPath) {
 TEST(KiiJson, GetObjectThirdLayerPositiveEDoubleByPath) {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : 1e-1}}}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1/key2/key3";
@@ -904,9 +955,10 @@ TEST(KiiJson, GetObjectThirdLayerPositiveEDoubleByPath) {
 TEST(KiiJson, GetObjectThirdLayerNegativeEDoubleByPath) {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : -1e-1}}}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/key1/key2/key3";
@@ -927,9 +979,10 @@ TEST(KiiJson, GetArrayString) {
     const char json_string[] = "[\"value1\"]";
     char buf[256];
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/[0]";
@@ -952,9 +1005,10 @@ TEST(KiiJson, GetArrayInt) {
     const char json_string[] = "[100]";
     char buf[256];
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/[0]";
@@ -975,9 +1029,10 @@ TEST(KiiJson, GetArrayLong) {
     const char json_string[] = "[1099511627776]";
     char buf[256];
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/[0]";
@@ -998,9 +1053,10 @@ TEST(KiiJson, GetArrayDouble) {
     const char json_string[] = "[1e-1]";
     char buf[256];
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/[0]";
@@ -1021,9 +1077,10 @@ TEST(KiiJson, GetArrayIntIndex1) {
     const char json_string[] = "[0, 100]";
     char buf[256];
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/[1]";
@@ -1044,9 +1101,10 @@ TEST(KiiJson, GetArrayNull) {
     const char json_string[] = "[null]";
     char buf[256];
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/[0]";
@@ -1066,9 +1124,10 @@ TEST(KiiJson, GetArrayTrue) {
     const char json_string[] = "[true]";
     char buf[256];
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/[0]";
@@ -1089,9 +1148,10 @@ TEST(KiiJson, GetArrayFalse) {
     const char json_string[] = "[false]";
     char buf[256];
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[2];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/[0]";
@@ -1138,9 +1198,10 @@ TEST(KiiJson, GetComplexObject) {
     char child2_1buf[256];
     char value_buf[256];
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[15];
 
-    memset(&kii_json, 0x00, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     memset(fields, 0x00, sizeof(fields));
 
     fields[0].path = "/parent1/child1-1";
@@ -1232,6 +1293,7 @@ TEST(KiiJson, PushRetrieveEndpoint) {
             "\"X-MQTT-TTL\" : 2147483647"
         "}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[8];
     char username[64];
     char password[128];
@@ -1267,7 +1329,7 @@ TEST(KiiJson, PushRetrieveEndpoint) {
     fields[6].type = KII_JSON_FIELD_TYPE_LONG;
     fields[7].name = NULL;
 
-    memset(&kii_json, 0, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     EXPECT_EQ(KII_JSON_PARSE_SUCCESS,
             kii_json_read_object(
                 &kii_json,
@@ -1298,6 +1360,7 @@ TEST(KiiJson, PushGetSmartTest) {
                          "]"
         "}";
     kii_json_t kii_json;
+    kii_json_token_t tokens[256];
     kii_json_field_t fields[5];
     char schema[64];
     char commandID[64];
@@ -1318,7 +1381,7 @@ TEST(KiiJson, PushGetSmartTest) {
     fields[3].type = KII_JSON_FIELD_TYPE_ARRAY;
     fields[4].path = NULL;
 
-    memset(&kii_json, 0, sizeof(kii_json));
+    init_kii_json(&kii_json, tokens, sizeof(tokens) / sizeof(tokens[0]));
     EXPECT_EQ(KII_JSON_PARSE_SUCCESS,
             kii_json_read_object(
                 &kii_json,
