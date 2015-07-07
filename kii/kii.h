@@ -56,11 +56,11 @@ typedef struct kii_json_resource_t {
 
 } kii_json_resource_t;
 
-/** Resize contents of kii_json_resource_t.
+/** Resource allocator for kii_json_resource_t.
  *
  * If parsing JSON object requires more tokens provided by
  * kii_json_resource_t, This function is called. You need to resize
- * kii_json_resource_t#tokens and set new size to
+ * kii_json_resource_t#tokens and set required size to
  * kii_json_resource_t#tokens_num.
  *
  * If kii_json_resource_t#tokens is allocated from heap memory, you
@@ -68,13 +68,13 @@ typedef struct kii_json_resource_t {
  * memory.
  *
  * \param[inout] kii_json_resource kii json resources used by KII JSON library.
- * \param[in] new_size newly required token size.
+ * \param[in] required_size newly required token size.
  * \return KIIE_OK: success to resize, KII_OK: fail to resize.
  */
 typedef kii_bool_t
-    (*KII_JSON_RESIZE_CB)(
+    (*KII_JSON_RESOURCE_CB)(
         kii_json_resource_t* kii_json_resource,
-        size_t new_size);
+        size_t required_size);
 
 typedef struct kii_t {
     kii_core_t kii_core;
@@ -121,7 +121,7 @@ typedef struct kii_t {
      * not try to resize kii_t#kii_json_resource. As a result, Some
      * APIs may fail with JSON parsing error.
      */
-    KII_JSON_RESIZE_CB kii_json_resize_cb;
+    KII_JSON_RESOURCE_CB kii_json_resource_cb;
 
 } kii_t;
 
