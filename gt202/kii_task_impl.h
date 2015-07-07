@@ -9,10 +9,12 @@ extern "C" {
 
 enum
 {
-    KII_TASK = 1000
+    KII_TASK1 = 1001,
+    KII_TASK2 = 1002
 };
 
-void kii_task(uint_32 temp);
+void kii_task1(uint_32 temp);
+void kii_task2(uint_32 temp);
 
 kii_task_code_t task_create_cb
     (const char* name,
