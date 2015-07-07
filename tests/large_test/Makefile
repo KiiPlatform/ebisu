@@ -32,7 +32,7 @@ $(LIBGTEST):
 	ar -rv $(LIBGTEST) gtest-all.o gtest_main.o
 
 $(KIISDK):
-	$(MAKE) -C ../../kii $(KIISDKPARAM) "CFLAGS=-DKII_JSON_STACK_TOKEN_NUM=256"
+	$(MAKE) -C ../../kii $(KIISDKPARAM) "CFLAGS=-DKII_JSON_FIXED_TOKEN_NUM=256"
 	cp $(KIISDK) ./
 
 

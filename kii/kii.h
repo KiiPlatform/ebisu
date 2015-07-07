@@ -100,11 +100,11 @@ typedef struct kii_t {
 
     /** Resource used by KII JSON library.
      *
-     * This field is optional. If KII_JSON_STACK_TOKEN_NUM macro is
+     * This field is optional. If KII_JSON_FIXED_TOKEN_NUM macro is
      * defined, This SDK takes resources for KII JSON library by
-     * myself on stack memory. In KII_JSON_STACK_TOKEN_NUM case, token
+     * myself on stack memory. In KII_JSON_FIXED_TOKEN_NUM case, token
      * size of Kii JSON library is number defined by
-     * KII_JSON_STACK_TOKEN_NUM. If your environment has small stack
+     * KII_JSON_FIXED_TOKEN_NUM. If your environment has small stack
      * size, you should use this field and manage this resources by
      * yourself.
      *
