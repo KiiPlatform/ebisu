@@ -18,7 +18,7 @@ LD_FLAGS = -L../../kii
 C_OBJ = $(patsubst %.c,%.o,$(wildcard *.c))
 CC_OBJ = $(patsubst %.cc,%.o,$(wildcard *.cc))
 TARGET = testapp
-INCLUDES = -I../../kii -I../../kii-core -I$(GTEST_PATH)/include
+INCLUDES = -I../../kii -I../../kii-core -I$(GTEST_PATH)/include -I../../kii_json/include -I../../kii_json/libs/jsmn
 
 KIISDK = ../../kii/libkiisdk.so
 
@@ -32,7 +32,7 @@ $(LIBGTEST):
 	ar -rv $(LIBGTEST) gtest-all.o gtest_main.o
 
 $(KIISDK):
-	$(MAKE) -C ../../kii $(KIISDKPARAM)
+	$(MAKE) -C ../../kii $(KIISDKPARAM) "CFLAGS=-DKII_JSON_FIXED_TOKEN_NUM=256"
 	cp $(KIISDK) ./
 
 

@@ -8,6 +8,8 @@
 #include "kii_core.h"
 #include "kii_task_callback.h"
 
+#include <kii_json.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -41,6 +43,39 @@ typedef void (*KII_PUSH_RECEIVED_CB)(
                 char* message,
                 size_t message_length);
 
+/** Resource used by KII JSON library. Fields of this struct
+ * determines parseable json object size.
+ */
+typedef struct kii_json_resource_t {
+
+    /** Array to set kii_json_t#tokens. */
+    kii_json_token_t *tokens;
+
+    /** Size of kii_json_resource_t#tokens */
+    size_t tokens_num;
+
+} kii_json_resource_t;
+
+/** Resource allocator for kii_json_resource_t.
+ *
+ * If parsing JSON object requires more tokens provided by
+ * kii_json_resource_t, This function is called. You need to resize
+ * kii_json_resource_t#tokens and set required size to
+ * kii_json_resource_t#tokens_num.
+ *
+ * If kii_json_resource_t#tokens is allocated from heap memory, you
+ * need to free old kii_json_resource_t#tokens and set new allocated
+ * memory.
+ *
+ * \param[inout] kii_json_resource kii json resources used by KII JSON library.
+ * \param[in] required_size newly required token size.
+ * \return KIIE_OK: success to resize, KII_OK: fail to resize.
+ */
+typedef kii_bool_t
+    (*KII_JSON_RESOURCE_CB)(
+        kii_json_resource_t* kii_json_resource,
+        size_t required_size);
+
 typedef struct kii_t {
     kii_core_t kii_core;
 
@@ -62,6 +97,34 @@ typedef struct kii_t {
     size_t mqtt_buffer_size;
 
     void* app_context;
+
+    /** Resource used by KII JSON library.
+     *
+     * This field is optional. If KII_JSON_FIXED_TOKEN_NUM macro is
+     * defined, This SDK takes resources for KII JSON library by
+     * myself on stack memory. In KII_JSON_FIXED_TOKEN_NUM case, token
+     * size of Kii JSON library is number defined by
+     * KII_JSON_FIXED_TOKEN_NUM. If your environment has small stack
+     * size, you should use this field and manage this resources by
+     * yourself.
+     *
+     * This field is not managed by this SDK. If
+     * kii_json_resource_t#tokens is allocated from heap memory, you
+     * must free these by yourself before applications are
+     * terminated.
+     *
+     * Value of this field is not thread safe. You must not share
+     * kii_json_resource_t instance with two or more kii_t instance.
+     */
+    kii_json_resource_t kii_json_resource;
+
+    /** Callback to resize to kii_json_resource contents.
+     *
+     * This field is optional. If this field is NULL. This SDK does
+     * not try to allocate kii_t#kii_json_resource. As a result, Some
+     * APIs may fail with JSON parsing error.
+     */
+    KII_JSON_RESOURCE_CB kii_json_resource_cb;
 
 } kii_t;
 

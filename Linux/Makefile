@@ -13,14 +13,14 @@ LIBS = -lssl -lcrypto -lpthread -lkiisdk
 LD_FLAGS = -L../kii/
 SOURCES = $(wildcard *.c)
 TARGET = exampleapp
-INCLUDES = -I../kii -I../kii-core
+INCLUDES = -I../kii -I../kii-core -I../kii_json/include -I../kii_json/libs/jsmn
 
 KIISDK = ../kii/libkiisdk.so
 
 all: clean $(TARGET) $(DOCTARGET)
 
 $(KIISDK):
-	$(MAKE) -C ../kii $(KIISDKPARAM)
+	$(MAKE) -C ../kii $(KIISDKPARAM) "CFLAGS=-DKII_JSON_FIXED_TOKEN_NUM=256"
 	cp $(KIISDK) ./
 
 
