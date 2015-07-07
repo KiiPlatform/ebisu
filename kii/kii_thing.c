@@ -76,7 +76,6 @@ int kii_thing_register(
         const char* password)
 {
     char* buf = NULL;
-    char thing_data[1024];
     size_t buf_size = 0;
     int ret = -1;
     kii_error_code_t core_err;
@@ -84,10 +83,8 @@ int kii_thing_register(
     kii_json_field_t fields[3];
     kii_json_parse_result_t result;
 
-    sprintf(thing_data,
-            "{\"_vendorThingID\":\"%s\",\"_thingType\":\"%s\",\"_password\":\"%s\"}",
-            vendor_thing_id, thing_type, password);
-    core_err = kii_core_register_thing(&kii->kii_core, thing_data);
+    core_err = kii_core_register_thing_with_id(&kii->kii_core, vendor_thing_id,
+            password, thing_type);
     if (core_err != KIIE_OK) {
         goto exit;
     }
