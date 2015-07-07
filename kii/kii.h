@@ -100,15 +100,18 @@ typedef struct kii_t {
 
     /** Resource used by KII JSON library.
      *
-     * This field is optional. If this field is NULL, This SDK takes
-     * resources for KII JSON library by myself on stack memory. If
-     * your environment has small stack size, you should use this
-     * field and manage this resources by yourself.
+     * This field is optional. If KII_JSON_STACK_TOKEN_NUM macro is
+     * defined, This SDK takes resources for KII JSON library by
+     * myself on stack memory. In KII_JSON_STACK_TOKEN_NUM case, token
+     * size of Kii JSON library is number defined by
+     * KII_JSON_STACK_TOKEN_NUM. If your environment has small stack
+     * size, you should use this field and manage this resources by
+     * yourself.
      *
-     * This field is not managed by this SDK. If kii_json_resource_t
-     * instance and/or kii_json_resource_t#tokens is allocated from
-     * heap memory, you must free theses by yourself before
-     * applications are terminated.
+     * This field is not managed by this SDK. If
+     * kii_json_resource_t#tokens is allocated from heap memory, you
+     * must free these by yourself before applications are
+     * terminated.
      *
      * Value of this field is not thread safe. You must not share
      * kii_json_resource_t instance with two or more kii_t instance.
@@ -118,7 +121,7 @@ typedef struct kii_t {
     /** Callback to resize to kii_json_resource contents.
      *
      * This field is optional. If this field is NULL. This SDK does
-     * not try to resize kii_t#kii_json_resource. As a result, Some
+     * not try to allocate kii_t#kii_json_resource. As a result, Some
      * APIs may fail with JSON parsing error.
      */
     KII_JSON_RESOURCE_CB kii_json_resource_cb;
