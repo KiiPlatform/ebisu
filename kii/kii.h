@@ -113,7 +113,7 @@ typedef struct kii_t {
      * Value of this field is not thread safe. You must not share
      * kii_json_resource_t instance with two or more kii_t instance.
      */
-    kii_json_resource_t* kii_json_resource;
+    kii_json_resource_t kii_json_resource;
 
     /** Callback to resize to kii_json_resource contents.
      *
