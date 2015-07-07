@@ -30,6 +30,8 @@ kii_json_parse_result_t prv_kii_json_read_object(
                             kii_json.json_token_num) != KIIE_OK) {
                 return KII_JSON_PARSE_SHORTAGE_TOKENS;
             }
+            kii_json.tokens = kii->kii_json_resource->tokens;
+            kii_json.json_token_num = kii->kii_json_resource->tokens_num;
             retval = kii_json_read_object(&kii_json, json_string,
                     json_string_size, fields);
         }

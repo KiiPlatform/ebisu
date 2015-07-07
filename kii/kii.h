@@ -7,7 +7,8 @@
 
 #include "kii_core.h"
 #include "kii_task_callback.h"
-#include "kii_json.h"
+
+#include <kii_json.h>
 
 #ifdef __cplusplus
 extern "C" {
