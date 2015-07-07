@@ -20,7 +20,7 @@ KIISDK = ../kii/libkiisdk.so
 all: clean $(TARGET) $(DOCTARGET)
 
 $(KIISDK):
-	$(MAKE) -C ../kii $(KIISDKPARAM)
+	$(MAKE) -C ../kii $(KIISDKPARAM) "CFLAGS=-DKII_JSON_STACK_TOKEN_NUM=256"
 	cp $(KIISDK) ./
 
 
