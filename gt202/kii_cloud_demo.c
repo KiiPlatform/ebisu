@@ -8,6 +8,7 @@
 static char static_ojbect_id_buf[KII_OBJECTID_SIZE + 1];
 static kii_t static_kii;
 static int static_kii_init = 0;
+static kii_json_token_t static_tokens[32];
 
 void parse_response(char* resp_body)
 {
@@ -33,7 +34,9 @@ static void init(
     kii->kii_core.http_context.app_context = ctx;
     kii->kii_core.http_set_request_line_cb = request_line_cb;
     kii->kii_core.http_set_header_cb = header_cb;
-    kii->kii_core.http_set_body_cb = body_cb;
+    kii->kii_core.http_append_body_start_cb = append_body_start_cb;
+    kii->kii_core.http_append_body_cb = append_body_cb;
+    kii->kii_core.http_append_body_end_cb = append_body_end_cb;
     kii->kii_core.http_execute_cb = execute_cb;
     kii->kii_core.logger_cb = logger_cb;
 
@@ -48,6 +51,9 @@ static void init(
 
     kii->task_create_cb = task_create_cb;
     kii->delay_ms_cb = delay_ms_cb;
+
+    kii->kii_json_resource.tokens = static_tokens;
+    kii->kii_json_resource.tokens_num = 32;
 
     memset(ctx, 0x00, sizeof(context_t));
     /* share the request and response buffer.*/
