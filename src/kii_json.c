@@ -68,6 +68,9 @@ static void prv_kii_json_set_error_message(
         kii_json_t* kii_json,
         const char* message)
 {
+    if (kii_json->error_string_buff == NULL) {
+        return;
+    }
     strncpy(kii_json->error_string_buff, message,
             kii_json->error_string_length);
     kii_json->error_string_buff[kii_json->error_string_length - 1] = '\0';
@@ -125,7 +128,7 @@ static kii_json_parse_result_t prv_kii_jsmn_get_tokens(
 
     if (kii_json->resource.tokens == NULL && kii_json->resource_cb == NULL) {
         // This is application layer programming error.
-        return KII_JSON_PARSE_SHORTAGE_TOKENS;
+        parse_result = JSMN_ERROR_NOMEM;
     } else if (kii_json->resource.tokens != NULL &&
             kii_json->resource_cb == NULL) {
         jsmn_init(&parser);
@@ -894,7 +897,7 @@ static kii_json_parse_result_t prv_kii_json_convert_jsmntok_to_field(
     return retval;
 }
 
-kii_json_parse_result_t kii_json_read_object(
+static kii_json_parse_result_t prv_kii_json_read_object(
         kii_json_t* kii_json,
         const char* json_string,
         size_t json_string_len,
@@ -959,4 +962,36 @@ kii_json_parse_result_t kii_json_read_object(
     }
 
     return retval;
+}
+
+kii_json_parse_result_t kii_json_read_object(
+        kii_json_t* kii_json,
+        const char* json_string,
+        size_t json_string_len,
+        kii_json_field_t* fields)
+{
+#ifdef KII_JSON_FIXED_TOKEN_NUM
+    {
+        kii_json_parse_result_t retval;
+        kii_json_token_t tokens[KII_JSON_FIXED_TOKEN_NUM];
+        kii_json_token_t* original_token = kii_json->resource.tokens;
+        size_t original_size = kii_json->resource.tokens_num;
+        KII_JSON_RESOURCE_CB resource_cb = kii_json->resource_cb;
+
+        kii_json->resource.tokens = tokens;
+        kii_json->resource.tokens_num = sizeof(tokens) / sizeof(tokens[0]);
+        kii_json->resource_cb = NULL;
+
+        retval = prv_kii_json_read_object(kii_json, json_string,
+                json_string_len, fields);
+
+        kii_json->resource.tokens = original_token;
+        kii_json->resource.tokens_num = original_size;
+        kii_json->resource_cb = resource_cb;
+        return retval;
+    }
+#else
+    return prv_kii_json_read_object(kii_json, json_string, json_string_len,
+            fields);
+#endif
 }
