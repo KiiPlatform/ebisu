@@ -105,14 +105,14 @@ static int prv_kii_json_alloc_and_parse(
     if (retval < 0) {
         return retval;
     }
-    if ((*kii_json->resource_cb)(&(kii_json->resource), retval) == 0) {
+    if ((*kii_json->resource_cb)(kii_json->resource, retval) == 0) {
         return JSMN_ERROR_NOMEM;
     }
 
     jsmn_init(&parser);
     return jsmn_parse(&parser, json_string, json_string_len,
-            kii_json->resource.tokens,
-            kii_json->resource.tokens_num);
+            kii_json->resource->tokens,
+            kii_json->resource->tokens_num);
 }
 
 static kii_json_parse_result_t prv_kii_jsmn_get_tokens(
@@ -126,22 +126,26 @@ static kii_json_parse_result_t prv_kii_jsmn_get_tokens(
     M_KII_JSON_ASSERT(kii_json != NULL);
     M_KII_JSON_ASSERT(json_string != NULL);
 
-    if (kii_json->resource.tokens == NULL && kii_json->resource_cb == NULL) {
+    if (kii_json->resource == NULL) {
         // This is application layer programming error.
         parse_result = JSMN_ERROR_NOMEM;
-    } else if (kii_json->resource.tokens != NULL &&
+    } else if (kii_json->resource->tokens == NULL
+            && kii_json->resource_cb == NULL) {
+        // This is application layer programming error.
+        parse_result = JSMN_ERROR_NOMEM;
+    } else if (kii_json->resource->tokens != NULL &&
             kii_json->resource_cb == NULL) {
         jsmn_init(&parser);
         parse_result = jsmn_parse(&parser, json_string, json_string_len,
-                kii_json->resource.tokens, kii_json->resource.tokens_num);
-    } else if (kii_json->resource.tokens == NULL &&
+                kii_json->resource->tokens, kii_json->resource->tokens_num);
+    } else if (kii_json->resource->tokens == NULL &&
             kii_json->resource_cb != NULL) {
         parse_result = prv_kii_json_alloc_and_parse(kii_json, json_string,
                 json_string_len);
     } else {
         jsmn_init(&parser);
         parse_result = jsmn_parse(&parser, json_string, json_string_len,
-                kii_json->resource.tokens, kii_json->resource.tokens_num);
+                kii_json->resource->tokens, kii_json->resource->tokens_num);
         if (parse_result == JSMN_ERROR_NOMEM) {
             parse_result = prv_kii_json_alloc_and_parse(kii_json, json_string,
                     json_string_len);
@@ -914,7 +918,7 @@ static kii_json_parse_result_t prv_kii_json_read_object(
         return retval;
     }
 
-    switch (kii_json->resource.tokens[0].type) {
+    switch (kii_json->resource->tokens[0].type) {
         case JSMN_ARRAY:
         case JSMN_OBJECT:
             break;
@@ -929,11 +933,11 @@ static kii_json_parse_result_t prv_kii_json_read_object(
         // get jsmntok_t pointing target value.
         if (field->path != NULL) {
             result = prv_kii_jsmn_get_value_by_path(kii_json, json_string,
-                    json_string_len, kii_json->resource.tokens, field->path,
+                    json_string_len, kii_json->resource->tokens, field->path,
                     &value);
         } else {
             result = prv_kii_jsmn_get_value(json_string, json_string_len,
-                    kii_json->resource.tokens, field->name, &value);
+                    kii_json->resource->tokens, field->name, &value);
         }
         if (result != 0 || value == NULL)
         {
@@ -974,19 +978,19 @@ kii_json_parse_result_t kii_json_read_object(
     {
         kii_json_parse_result_t retval;
         kii_json_token_t tokens[KII_JSON_FIXED_TOKEN_NUM];
-        kii_json_token_t* original_token = kii_json->resource.tokens;
-        size_t original_size = kii_json->resource.tokens_num;
+        kii_json_resource_t* original_resource = kii_json->resource;
+        kii_json_resource_t stacked_resource;
         KII_JSON_RESOURCE_CB resource_cb = kii_json->resource_cb;
 
-        kii_json->resource.tokens = tokens;
-        kii_json->resource.tokens_num = sizeof(tokens) / sizeof(tokens[0]);
+        stacked_resource.tokens = tokens;
+        stacked_resource.tokens_num = sizeof(tokens) / sizeof(tokens[0]);
+        kii_json->resource = &stacked_resource;
         kii_json->resource_cb = NULL;
 
         retval = prv_kii_json_read_object(kii_json, json_string,
                 json_string_len, fields);
 
-        kii_json->resource.tokens = original_token;
-        kii_json->resource.tokens_num = original_size;
+        kii_json->resource = original_resource;
         kii_json->resource_cb = resource_cb;
         return retval;
     }
