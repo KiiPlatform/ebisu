@@ -9,8 +9,8 @@ static void init_kii_json(
 {
     memset(kii_json, 0x00, sizeof(kii_json_t));
     memset(tokens, 0x00, tokens_num * sizeof(kii_json_token_t));
-    kii_json->tokens = tokens;
-    kii_json->json_token_num = tokens_num;
+    kii_json->resource.tokens = tokens;
+    kii_json->resource.tokens_num = tokens_num;
 }
 
 TEST(KiiJson, GetObjectStringByName) {
