@@ -100,12 +100,12 @@ static kii_json_parse_result_t prv_kii_jsmn_get_tokens(
 
     jsmn_init(&parser);
     parse_result = jsmn_parse(&parser, json_string, json_string_len,
-            kii_json->tokens, kii_json->json_token_num);
+            kii_json->resource.tokens, kii_json->resource.tokens_num);
     if (parse_result >= 0) {
-        kii_json->json_token_num = parse_result;
+        kii_json->resource.tokens_num = parse_result;
         return KII_JSON_PARSE_SUCCESS;
     } else if (parse_result == JSMN_ERROR_NOMEM) {
-        kii_json->json_token_num = parse_result;
+        kii_json->resource.tokens_num = parse_result;
         prv_kii_json_set_error_message(kii_json,
                 "Not enough tokens were provided");
         return KII_JSON_PARSE_SHORTAGE_TOKENS;
@@ -869,7 +869,7 @@ kii_json_parse_result_t kii_json_read_object(
         return retval;
     }
 
-    switch (kii_json->tokens[0].type) {
+    switch (kii_json->resource.tokens[0].type) {
         case JSMN_ARRAY:
         case JSMN_OBJECT:
             break;
@@ -884,10 +884,11 @@ kii_json_parse_result_t kii_json_read_object(
         // get jsmntok_t pointing target value.
         if (field->path != NULL) {
             result = prv_kii_jsmn_get_value_by_path(kii_json, json_string,
-                    json_string_len, kii_json->tokens, field->path, &value);
+                    json_string_len, kii_json->resource.tokens, field->path,
+                    &value);
         } else {
             result = prv_kii_jsmn_get_value(json_string, json_string_len,
-                    kii_json->tokens, field->name, &value);
+                    kii_json->resource.tokens, field->name, &value);
         }
         if (result != 0 || value == NULL)
         {
