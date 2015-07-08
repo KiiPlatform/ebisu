@@ -128,7 +128,7 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
     M_KII_LOG(kii->kii_core.logger_cb("\r\n"));
     for (i=0; i<j; i++)
     {
-        M_KII_LOG(kii->kii_core.logger_cb("%02x", kii->mqtt_buffer[i]));
+        M_KII_LOG(kii->kii_core.logger_cb("%02x\r\n", kii->mqtt_buffer[i]));
     }
     M_KII_LOG(kii->kii_core.logger_cb("\r\n"));
 
@@ -221,7 +221,7 @@ int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
     M_KII_LOG(kii->kii_core.logger_cb("\r\n"));
     for (i=0; i<j; i++)
     {
-        M_KII_LOG(kii->kii_core.logger_cb("%02x", kii->mqtt_buffer[i]));
+        M_KII_LOG(kii->kii_core.logger_cb("%02x\r\n", kii->mqtt_buffer[i]));
     }
     M_KII_LOG(kii->kii_core.logger_cb("\r\n"));
 
@@ -247,7 +247,7 @@ int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
         M_KII_LOG(kii->kii_core.logger_cb("\r\n"));
         for (i=0; i<actual_length; i++)
         {
-            M_KII_LOG(kii->kii_core.logger_cb("%02x", kii->mqtt_buffer[i]));
+            M_KII_LOG(kii->kii_core.logger_cb("%02x\r\n", kii->mqtt_buffer[i]));
         }
         M_KII_LOG(kii->kii_core.logger_cb("\r\n"));
 
