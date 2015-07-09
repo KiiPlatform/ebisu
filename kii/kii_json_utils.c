@@ -18,35 +18,13 @@ kii_json_parse_result_t prv_kii_json_read_object(
     kii_json.error_string_length =
         sizeof(error_message) / sizeof(error_message[0]);
 
-#ifdef KII_JSON_FIXED_TOKEN_NUM
-    {
-        kii_json_token_t tokens[KII_JSON_FIXED_TOKEN_NUM];
-        kii_json.tokens = tokens;
-        kii_json.json_token_num = sizeof(tokens) / sizeof(tokens[0]);
-        retval = kii_json_read_object(&kii_json, json_string, json_string_size,
-                fields);
-    }
-#else
-    kii_json.tokens = kii->kii_json_resource.tokens;
-    kii_json.json_token_num = kii->kii_json_resource.tokens_num;
+    kii_json.resource = &(kii->kii_json_resource);
     retval = kii_json_read_object(&kii_json, json_string, json_string_size,
                 fields);
-    if (kii->kii_json_resource_cb != NULL &&
-            retval == KII_JSON_PARSE_SHORTAGE_TOKENS) {
-        if (kii->kii_json_resource_cb(&(kii->kii_json_resource),
-                        kii_json.json_token_num) != KIIE_OK) {
-            return KII_JSON_PARSE_SHORTAGE_TOKENS;
-        }
-        kii_json.tokens = kii->kii_json_resource.tokens;
-        kii_json.json_token_num = kii->kii_json_resource.tokens_num;
-        retval = kii_json_read_object(&kii_json, json_string,
-                json_string_size, fields);
-    }
-#endif
 
     if (retval != KII_JSON_PARSE_SUCCESS) {
         M_KII_LOG(kii->kii_core.logger_cb(
-                "fail to parse json: result=%d, message=%s",
+                "fail to parse json: result=%d, message=%s\n",
                 retval, kii_json.error_string_buff));
     }
     return retval;
