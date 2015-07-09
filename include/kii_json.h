@@ -14,24 +14,76 @@ extern "C" {
 /** JSON token data to parse JSON string. */
 typedef jsmntok_t kii_json_token_t;
 
-/** object manages context of kii json apis. */
+/** Resource used by KII JSON library. Fields of this struct
+ * determines max number of tokens inside json can be parsed.
+ */
+typedef struct kii_json_resource_t {
+
+    /** Array to set kii_json_t#tokens. */
+    kii_json_token_t *tokens;
+
+    /** Size of kii_json_resource_t#tokens */
+    size_t tokens_num;
+
+} kii_json_resource_t;
+
+/** Resource allocator for kii_json_resource_t.
+ *
+ * When parsing target JSON string requires more tokens provided by
+ * kii_json_resource_t, This function is called. You need to resize
+ * kii_json_resource_t#tokens and set new size to
+ * kii_json_resource_t#tokens_num which is greater than or equal to
+ * required_size.
+ *
+ * If you allocate new resource,
+ * Application may need to free old resource since the library never free the
+ * given resource.
+ *
+ * \param[inout] resource kii json resources used by KII JSON library.
+ * \param[in] required_size newly required token size.
+ * \return 1: success to allocate resource, 0: fail to allocate resourceresize.
+ */
+typedef int
+    (*KII_JSON_RESOURCE_CB)(
+        kii_json_resource_t* resource,
+        size_t required_size);
+
+/** object manages context of kii json apis.
+ * Do not share this object and fields inside this object among the
+ * thread/tasks.
+ * library won't sync the request if the multiple threads/tasks share the
+ * resource.
+ */
 typedef struct kii_json_t {
 
-    /** JSON token array. To parse JSON string, Enough number of JSON
-     * token is needed.
+    /** Resource used by KII JSON library.
+     *
+     * This field is optional. If KII_JSON_FIXED_TOKEN_NUM macro is
+     * defined, KII JSON library allocate resources in stack memory
+     * with the size specified number by the macro.
+     * In this case, re-allocation won't happens.
+     * This would be convenient if your environment has enough size of stack
+     * memory to work with the targetting JSON data structure.
+     *
+     * If KII_JSON_FIXED_TOKEN_NUM macro is not present,
+     * You can allocate resource anywhere you want to put.
+     * library never allocate/free the resource.
+     * Allocation and free must be done by application.
+     * In case of running out given resource and need more resouces to parse
+     * given JSON string,
+     * library calls resource_cb to ask application to allocate more resources.
      */
-    kii_json_token_t* tokens;
+    kii_json_resource_t* resource;
 
-    /** Number of json tokens.
-     * Input and Output of kii_json_read_object(kii_json_t*, const
-     * char*, size_t, kii_json_field_t*). Inputted value is size of
-     * kii_json_t#tokens, and outputted value is required size to
-     * parse passing JSON string. If kii_json_read_object(kii_json_t*,
-     * const char*, size_t, kii_json_field_t*) returns
-     * KII_JSON_PARSE_SHORTAGE_TOKENS, then you need to resize
-     * kii_json_t#tokens up to this value. After that, you can retry.
+    /** Callback asks for allocate more tokens to parse JSON.
+     *
+     * Called when the target JSON string can not be parsed with given resource.
+     * Library won't try to allocate resource when given resource is not enough
+     * to parse JSON string when this field is NULL.
+     *
+     * If KII_JSON_FIXED_TOKEN_NUM is defined, this callback won't be called.
      */
-    int json_token_num;
+    KII_JSON_RESOURCE_CB resource_cb;
 
     /** Error string. If error occurs in kii_json library, then error
      * message is set to this fields. If NULL, no error message is
