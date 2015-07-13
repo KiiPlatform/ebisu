@@ -104,14 +104,15 @@ static kii_http_client_code_t prv_connect(void* app_context, const char* host)
 
 static kii_http_client_code_t prv_send(void* app_context, const char* send_buff, int buff_length)
 {
+    int ret;
     context_t* ctx = (context_t*)app_context;
     char* buff = CUSTOM_ALLOC(buff_length);
 
     memcpy(buff, send_buff, buff_length);
 #if CONNECT_SSL
-    int ret = SSL_write(ctx->ssl, buff, buff_length);
+    ret = SSL_write(ctx->ssl, buff, buff_length);
 #else
-    int ret = t_send(handle, ctx->sock, (uint_8 *)buff, buff_length, 0);
+    ret = t_send(handle, ctx->sock, (uint_8 *)buff, buff_length, 0);
 #endif
 
     CUSTOM_FREE(buff);
@@ -187,21 +188,41 @@ kii_http_client_code_t
     return KII_HTTPC_OK;
 }
 
-kii_http_client_code_t
-    body_cb(
+kii_http_client_code_t append_body(
         kii_http_context_t* http_context,
-        const char* body_data)
+        const char* data,
+        size_t data_len)
 {
-    context_t* ctx = (context_t*)http_context->app_context;
-    char* reqBuff = ctx->buff;
-    int body_len = (body_data != NULL) ? strlen(body_data) : 0;
-    if (ctx->buff_size < strlen(reqBuff) + 3 + body_len) {
+    char* reqBuff = http_context->buffer;
+
+    if ((strlen(reqBuff) + data_len + 1) > http_context->buffer_size) {
         return KII_HTTPC_FAIL;
     }
-    strcat(reqBuff, "\r\n");
-    if (body_data != NULL) {
-        strcat(reqBuff, body_data);
+
+    if (data == NULL) {
+        return KII_HTTPC_FAIL;
     }
+
+    strncat(reqBuff, data, data_len);
+    return KII_HTTPC_OK;
+}
+
+kii_http_client_code_t append_body_start_cb(kii_http_context_t* http_context)
+{
+    return append_body(http_context, "\r\n", 2);
+}
+
+kii_http_client_code_t
+    append_body_cb(
+        kii_http_context_t* http_context,
+        const char* body_data,
+        size_t body_size)
+{
+    return append_body(http_context, body_data, body_size);
+}
+
+kii_http_client_code_t append_body_end_cb(kii_http_context_t* http_context)
+{
     return KII_HTTPC_OK;
 }
 
@@ -234,13 +255,14 @@ kii_http_client_code_t
             }
         case PRV_STATE_SEND:
         {
+            char* sendBuff = NULL;
             int size = BUFF_SIZE;
-            int remain = strlen(ctx->buff) - ctx->sent_size;
+            int remain = http_context->total_send_size - ctx->sent_size;
             if (remain < size) {
                 size = remain;
                 ctx->last_chunk = 1;
             }
-            char* sendBuff = ctx->buff + ctx->sent_size;
+            sendBuff = http_context->buffer + ctx->sent_size;
             res = prv_send(
                     ctx,
                     sendBuff,
@@ -262,9 +284,9 @@ kii_http_client_code_t
         case PRV_STATE_RECV:
         {
             int actualLength = 0;
-            char* buffPtr = ctx->buff + ctx->received_size;
+            char* buffPtr = http_context->buffer + ctx->received_size;
             if (ctx->received_size == 0) {
-                memset(ctx->buff, 0x00, ctx->buff_size);
+                memset(http_context->buffer, 0x00, http_context->buffer_size);
             }
             res = prv_recv(ctx, buffPtr, BUFF_SIZE, &actualLength);
             if (res == KII_HTTPC_OK) {
@@ -286,7 +308,7 @@ kii_http_client_code_t
             res = prv_close(ctx);
             if (res == KII_HTTPC_OK) {
                 /* parse status code */
-                char* statusPtr = strstr(ctx->buff, "HTTP/1.1 ");
+                char* statusPtr = strstr(http_context->buffer, "HTTP/1.1 ");
                 int numCode = 0;
                 char* bodyPtr = NULL;
                 if (statusPtr != NULL) {
@@ -298,7 +320,7 @@ kii_http_client_code_t
                     *response_code = numCode;
                 }
                 /* set body pointer */
-                bodyPtr = strstr(ctx->buff, "\r\n\r\n");
+                bodyPtr = strstr(http_context->buffer, "\r\n\r\n");
                 if (bodyPtr != NULL) {
                     bodyPtr += 4;
                 }

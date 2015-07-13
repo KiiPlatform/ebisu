@@ -1,7 +1,7 @@
 #ifndef _gt202_kii_adapter
 #define _gt202_kii_adapter
 
-#include "kii_core.h"
+#include "kii.h"
 
 #include "main.h"
 
@@ -40,9 +40,15 @@ kii_http_client_code_t header_cb(
         const char* key,
         const char* value);
 
-kii_http_client_code_t body_cb(
-        kii_http_context_t* http_context,
-        const char* body_data);
+kii_http_client_code_t append_body_start_cb(kii_http_context_t* http_context);
+
+kii_http_client_code_t append_body_cb(
+            kii_http_context_t* http_context,
+            const char* body_data,
+            size_t body_size);
+
+kii_http_client_code_t append_body_end_cb(kii_http_context_t* http_context);
+
 
 kii_http_client_code_t execute_cb(
         kii_http_context_t* http_context,
