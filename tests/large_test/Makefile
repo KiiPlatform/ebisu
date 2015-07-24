@@ -1,4 +1,4 @@
-CFLAGS = -std=gnu89 -Wall -pedantic -pthread
+override CFLAGS += -std=gnu89 -Wall -pedantic -pthread
 CXXFLAGS = -Wall -pedantic
 #CFLAGS = -std=gnu89 -w -pedantic
 ifdef DEBUG

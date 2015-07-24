@@ -23,35 +23,11 @@ typedef struct context_t
     SSL *ssl;
     SSL_CTX *ssl_ctx;
     int sock;
-    char host[256];
     prv_ssl_state_t state;
     int last_chunk;
     int sent_size;
     int received_size;
 } context_t;
-
-kii_http_client_code_t
-    request_line_cb(
-            kii_http_context_t* http_context,
-            const char* method,
-            const char* host,
-            const char* path);
-
-kii_http_client_code_t
-    header_cb(
-            kii_http_context_t* http_context,
-            const char* key,
-            const char* value);
-
-kii_http_client_code_t append_body_start_cb(kii_http_context_t* http_context);
-
-kii_http_client_code_t
-    append_body_cb(
-            kii_http_context_t* http_context,
-            const char* body_data,
-            size_t body_size);
-
-kii_http_client_code_t append_body_end_cb(kii_http_context_t* http_context);
 
 kii_http_client_code_t
     execute_cb(

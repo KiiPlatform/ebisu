@@ -14,77 +14,6 @@
 
 /* HTTP Callback functions */
 kii_http_client_code_t
-    request_line_cb(
-        kii_http_context_t* http_context,
-        const char* method,
-        const char* host,
-        const char* path)
-{
-    char* reqBuff;
-    context_t* app_context;
-    
-    app_context = (context_t*)http_context->app_context;
-    memset(app_context, 0x00, sizeof(context_t));
-    reqBuff = http_context->buffer;
-    strncpy(app_context->host, host, strlen(host));
-    sprintf(reqBuff, "%s https://%s/%s HTTP/1.1\r\n", method, host, path);
-
-    return KII_HTTPC_OK;
-}
-
-kii_http_client_code_t
-    header_cb(
-        kii_http_context_t* http_context,
-        const char* key,
-        const char* value)
-{
-    char* reqBuff = http_context->buffer;
-    strcat(reqBuff, key);
-    strcat(reqBuff, ":");
-    strcat(reqBuff, value);
-    strcat(reqBuff, "\r\n");
-    return KII_HTTPC_OK;
-}
-
-kii_http_client_code_t append_body(
-        kii_http_context_t* http_context,
-        const char* data,
-        size_t data_len)
-{
-    char* reqBuff = http_context->buffer;
-
-    if ((strlen(reqBuff) + data_len + 1) > http_context->buffer_size) {
-        return KII_HTTPC_FAIL;
-    }
-
-    if (data == NULL) {
-        return KII_HTTPC_FAIL;
-    }
-
-    strncat(reqBuff, data, data_len);
-    return KII_HTTPC_OK;
-}
-
-kii_http_client_code_t append_body_start_cb(kii_http_context_t* http_context)
-{
-    return append_body(http_context, "\r\n", 2);
-}
-
-kii_http_client_code_t
-    append_body_cb(
-        kii_http_context_t* http_context,
-        const char* body_data,
-        size_t body_size)
-{
-    return append_body(http_context, body_data, body_size);
-}
-
-kii_http_client_code_t append_body_end_cb(kii_http_context_t* http_context)
-{
-    return KII_HTTPC_OK;
-}
-
-kii_http_client_code_t
     execute_cb(
         kii_http_context_t* http_context,
         int* response_code,
@@ -104,7 +33,8 @@ kii_http_client_code_t
             ctx->state = PRV_SSL_STATE_CONNECT;
             return KII_HTTPC_AGAIN;
         case PRV_SSL_STATE_CONNECT:
-            sock_res = http_context->connect_cb(&http_context->socket_context, ctx->host, 443);
+            sock_res = http_context->connect_cb(&http_context->socket_context,
+                    http_context->host, 443);
             if (sock_res == KII_SOCKETC_OK) {
                 ctx->state = PRV_SSL_STATE_SEND;
                 return KII_HTTPC_AGAIN;
