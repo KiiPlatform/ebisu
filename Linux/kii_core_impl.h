@@ -5,14 +5,6 @@
 extern 'C' {
 #endif
 
-#include <openssl/ssl.h>
-
-typedef struct context_t
-{
-    SSL *ssl;
-    SSL_CTX *ssl_ctx;
-} context_t;
-
 void
     logger_cb(const char* format, ...);
 
