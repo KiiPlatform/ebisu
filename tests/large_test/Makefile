@@ -13,14 +13,15 @@ ifdef DEBUG
 KIISDKPARAM += DEBUG=1
 endif
 
-LIBS = -lssl -lcrypto -lpthread -lkiisdk
-LD_FLAGS = -L../../kii
-C_OBJ = $(patsubst %.c,%.o,$(wildcard *.c))
+LIBS = -lssl -lcrypto -lpthread -lkiisdk -lkiiclient
+LD_FLAGS = -L.
 CC_OBJ = $(patsubst %.cc,%.o,$(wildcard *.cc))
 TARGET = testapp
-INCLUDES = -I../../kii -I../../kii-core -I$(GTEST_PATH)/include -I../../kii_json/include -I../../kii_json/libs/jsmn
+INCLUDES = -I../../kii -I../../kii-core -I$(GTEST_PATH)/include -I../../kii_json/include -I../../kii_json/libs/jsmn -I../../Linux
 
 KIISDK = ../../kii/libkiisdk.so
+KIICLIENT = ../../Linux/libkiiclient.so
+TEST = test
 
 LIBGTEST=libgtest.a
 
@@ -31,13 +32,16 @@ $(LIBGTEST):
 	g++ -isystem $(GTEST_PATH)/include -I$(GTEST_PATH) -pthread -c $(GTEST_PATH)/src/gtest_main.cc
 	ar -rv $(LIBGTEST) gtest-all.o gtest_main.o
 
-$(KIISDK):
+client:
+	$(MAKE) -C ../../Linux lib
+	cp $(KIICLIENT) ./
+
+kiisdk:
 	$(MAKE) -C ../../kii $(KIISDKPARAM) "CFLAGS+=-DKII_JSON_FIXED_TOKEN_NUM=256"
 	cp $(KIISDK) ./
 
-
-$(TARGET): $(KIISDK) $(LIBGTEST) $(C_OBJ) $(CC_OBJ)
-	g++ -o $(TARGET) $(C_OBJ) $(CC_OBJ) $(LD_FLAGS) $(LIBS) $(LIBGTEST)
+$(TARGET): client kiisdk $(LIBGTEST) $(CC_OBJ)
+	g++ -o $(TARGET) $(CC_OBJ) $(LD_FLAGS) $(LIBS) $(LIBGTEST)
 
 .c.o:
 	gcc $(CFLAGS) $(INCLUDES) -c $<
@@ -50,10 +54,9 @@ clean:
 	rm $(TARGET)
 	rm -f *.o
 	rm -rf $(DOCTARGET)
-	touch $(KIISDK)
-	rm -rf $(KIISDK)
 	rm -f libkiisdk.so
 	rm -f $(LIBGTEST)
+	rm -f libkiiclient.so
 
 .PHONY: all clean copy
 

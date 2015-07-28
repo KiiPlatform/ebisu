@@ -10,4 +10,5 @@ latex/
 testapp
 unit_test/kii_json/kii_json_test
 libkiisdk.so
+libkiiclient.so
 libgtest.a

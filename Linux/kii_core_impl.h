@@ -2,7 +2,7 @@
 #define __kii_core_impl
 
 #ifdef __cplusplus
-extern 'C' {
+extern "C" {
 #endif
 
 void
