@@ -37,8 +37,7 @@ int kii_thing_authenticate(
     }
 
     buf = kii->kii_core.response_body;
-    buf_size = kii->kii_core.http_context.buffer_size -
-            (kii->kii_core.http_context.buffer - kii->kii_core.response_body);
+    buf_size = strlen(kii->kii_core.response_body);
     if (buf == NULL) {
         ret = -1;
         goto exit;
@@ -101,8 +100,7 @@ int kii_thing_register(
     }
     /* parse response */
     buf = kii->kii_core.response_body;
-    buf_size = kii->kii_core.http_context.buffer_size -
-            (kii->kii_core.http_context.buffer - kii->kii_core.response_body);
+    buf_size = strlen(kii->kii_core.response_body);
     if (buf == NULL) {
         ret = -1;
         goto exit;
