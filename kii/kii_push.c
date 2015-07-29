@@ -64,8 +64,7 @@ static int kiiPush_install(
     }
 
     buf = kii->kii_core.response_body;
-    buf_size = kii->kii_core.http_context.buffer_size -
-        (kii->kii_core.response_body - kii->kii_core.http_context.buffer);
+    buf_size = strlen(kii->kii_core.response_body);
     if (buf == NULL) {
         ret = -1;
         goto exit;
@@ -125,8 +124,7 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
     }
 
     buf = kii->kii_core.response_body;
-    buf_size = kii->kii_core.http_context.buffer_size -
-        (kii->kii_core.response_body - kii->kii_core.http_context.buffer);
+    buf_size = strlen(kii->kii_core.response_body);
     if (buf == NULL) {
         ret = KIIPUSH_ENDPOINT_ERROR;
         goto exit;

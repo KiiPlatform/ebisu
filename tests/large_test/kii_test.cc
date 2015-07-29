@@ -3,22 +3,21 @@
 
 #include <kii.h>
 #include "kii_core_impl.h"
+#include <kii_json.h>
 
 #define THING_ID "th.53ae324be5a0-26f8-4e11-a13c-03da6fb2"
 
 static void init(
         kii_t* kii,
         char* buffer,
-        int buffer_size,
-        context_t* context)
+        int buffer_size)
 {
     kii_init(kii, "api-development-jp.internal.kii.com",
             "84fff36e", "e45fcc2d31d6aca675af639bc5f04a26");
 
     kii->kii_core.http_context.buffer = buffer;
     kii->kii_core.http_context.buffer_size = buffer_size;
-    kii->kii_core.http_context.app_context = context;
-    kii->mqtt_socket_context.app_context = context;
+    kii->mqtt_socket_context.app_context = NULL;
 
     strcpy(kii->kii_core.author.author_id, THING_ID);
     strcpy(kii->kii_core.author.access_token,
@@ -37,9 +36,8 @@ TEST(kiiTest, authenticate)
     int ret = -1;
     char buffer[4096];
     kii_t kii;
-    context_t context;
 
-    init(&kii, buffer, 4096, &context);
+    init(&kii, buffer, 4096);
 
     ret = kii_thing_authenticate(&kii, "1426830900", "1234");
 
@@ -52,11 +50,10 @@ TEST(kiiTest, register)
     char buffer[4096];
     char vendorId[1024];
     kii_t kii;
-    context_t context;
 
     sprintf(vendorId, "%d", getpid());
 
-    init(&kii, buffer, 4096, &context);
+    init(&kii, buffer, 4096);
 
     ret = kii_thing_register(&kii, vendorId, "my_type", "1234");
 
@@ -70,9 +67,8 @@ TEST(kiiTest, object)
     char objectId[KII_OBJECTID_SIZE + 1];
     kii_t kii;
     kii_bucket_t bucket;
-    context_t context;
 
-    init(&kii, buffer, 4096, &context);
+    init(&kii, buffer, 4096);
     initBucket(&bucket);
 
     memset(objectId, 0x00, KII_OBJECTID_SIZE + 1);
@@ -106,9 +102,8 @@ TEST(kiiTest, objectWithID)
     char objectId[KII_OBJECTID_SIZE + 1];
     kii_t kii;
     kii_bucket_t bucket;
-    context_t context;
 
-    init(&kii, buffer, 4096, &context);
+    init(&kii, buffer, 4096);
     initBucket(&bucket);
     strcpy(objectId, "my_object");
 
@@ -142,13 +137,12 @@ TEST(kiiTest, objectBodyOnce)
     char objectId[KII_OBJECTID_SIZE + 1];
     kii_t kii;
     kii_bucket_t bucket;
-    context_t context;
     unsigned int body_len;
     unsigned int out_len = 0;
 
     body_len = strlen(body);
 
-    init(&kii, buffer, 4096, &context);
+    init(&kii, buffer, 4096);
     initBucket(&bucket);
     strcpy(objectId, "my_object");
 
@@ -182,14 +176,13 @@ TEST(kiiTest, objectBodyMulti)
     kii_t kii;
     kii_bucket_t bucket;
     kii_chunk_data_t chunk;
-    context_t context;
     unsigned int body_len;
     unsigned int out_len = 0;
     unsigned int out_total = 0;
 
     body_len = strlen(body);
 
-    init(&kii, buffer, 4096, &context);
+    init(&kii, buffer, 4096);
     initBucket(&bucket);
     strcpy(objectId, "my_object");
 
@@ -235,9 +228,8 @@ TEST(kiiTest, pushBucket)
     char buffer[4096];
     kii_t kii;
     kii_bucket_t bucket;
-    context_t context;
 
-    init(&kii, buffer, 4096, &context);
+    init(&kii, buffer, 4096);
     initBucket(&bucket);
 
     ret = kii_push_subscribe_bucket(&kii, &bucket);
@@ -255,9 +247,8 @@ TEST(kiiTest, pushTopic)
     char buffer[4096];
     kii_t kii;
     kii_topic_t topic;
-    context_t context;
 
-    init(&kii, buffer, 4096, &context);
+    init(&kii, buffer, 4096);
     topic.scope = KII_SCOPE_THING;
     topic.scope_id = THING_ID;
     topic.topic_name = "myTopic";
@@ -279,6 +270,59 @@ TEST(kiiTest, pushTopic)
     ASSERT_EQ(0, ret);
 }
 
+TEST(kiiTest, genericApis)
+{
+    int ret = -1;
+    char buffer[4096];
+    kii_t kii;
+    const char* EX_AUTH_VENDOR_ID = "1426830900";
+    const char* EX_AUTH_VENDOR_PASS = "1234";
+    kii_json_t kii_json;
+    kii_json_field_t fields[3];
+    char author_id[128];
+    char access_token[128];
+
+    memset(&kii_json, 0x00, sizeof(kii_json));
+    memset(fields, 0, sizeof(fields));
+    memset(author_id, 0x00, sizeof(author_id));
+    memset(access_token, 0x00, sizeof(access_token));
+
+    fields[0].name = "id";
+    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].field_copy.string = author_id;
+    fields[0].field_copy_buff_size = sizeof(author_id) / sizeof(author_id[0]);
+    fields[1].name = "access_token";
+    fields[1].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[1].field_copy.string = access_token;
+    fields[1].field_copy_buff_size = sizeof(access_token) /
+            sizeof(access_token[0]);
+    fields[2].name = NULL;
+
+    init(&kii, buffer, 4096);
+    ASSERT_EQ(0, kii_api_call_start(&kii, "POST", "api/oauth2/token",
+                    "application/json", KII_FALSE));
+    ASSERT_EQ(0, kii_api_call_append_body(&kii,
+                    "{\"username\":\"VENDOR_THING_ID:",
+                    strlen("{\"username\":\"VENDOR_THING_ID:")));
+    ASSERT_EQ(0, kii_api_call_append_body(&kii, EX_AUTH_VENDOR_ID,
+                    strlen(EX_AUTH_VENDOR_ID)));
+    ASSERT_EQ(0, kii_api_call_append_body(&kii, "\",\"password\":\"",
+                    strlen("\",\"password\":\"")));
+    ASSERT_EQ(0, kii_api_call_append_body(&kii, EX_AUTH_VENDOR_PASS,
+                    strlen(EX_AUTH_VENDOR_PASS)));
+    ASSERT_EQ(0, kii_api_call_append_body(&kii, "\"}", strlen("\"}")));
+
+    ASSERT_EQ(0, kii_api_call_run(&kii));
+
+    ASSERT_EQ(KII_JSON_PARSE_SUCCESS,
+            kii_json_read_object(&kii_json, kii.kii_core.response_body,
+                    kii.kii_core.http_context.buffer_size -
+                        (kii.kii_core.http_context.buffer -
+                                kii.kii_core.response_body), fields));
+    ASSERT_STREQ("th.53ae324be5a0-6a8a-4e11-7cec-026e0383", author_id);
+    ASSERT_STRNE("", access_token);
+}
+
 /*
 void received_callback(kii_t* kii, char* buffer, size_t buffer_size) {
     printf("%d\n%s\n", buffer_size, buffer);
@@ -298,9 +342,8 @@ TEST(kiiTest, startRoutine)
     char objectId[KII_OBJECTID_SIZE + 1];
     kii_t kii;
     kii_bucket_t bucket;
-    context_t context;
 
-    init(&kii, buffer, 4096, &context);
+    init(&kii, buffer, 4096);
     kii.mqtt_buffer = mqtt_buffer;
     kii.mqtt_buffer_size = 2048;
     initBucket(&bucket);

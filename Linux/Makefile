@@ -13,11 +13,16 @@ LIBS = -lssl -lcrypto -lpthread -lkiisdk
 LD_FLAGS = -L../kii/
 SOURCES = $(wildcard *.c)
 TARGET = exampleapp
+LIB_SOURCES = $(wildcard kii_*.c)
+LIB_TARGET = libkiisocketclient.so
 INCLUDES = -I../kii -I../kii-core -I../kii_json/include -I../kii_json/libs/jsmn
 
-KIISDK = ../kii/libkiisdk.so
+KIISDKNAME = libkiisdk.so
+KIISDK = ../kii/$(KIISDKNAME)
 
 all: clean $(TARGET) $(DOCTARGET)
+
+lib: clean $(LIB_TARGET)
 
 $(KIISDK):
 	$(MAKE) -C ../kii $(KIISDKPARAM) "CFLAGS+=-DKII_JSON_FIXED_TOKEN_NUM=256"
@@ -27,12 +32,17 @@ $(KIISDK):
 $(TARGET): $(KIISDK)
 	gcc $(CFLAGS) $(SOURCES) $(LIBS) $(LD_FLAGS) $(INCLUDES) -o $@
 
+$(LIB_TARGET): $(KIISDK)
+	gcc $(CFLAGS) -shared $(LIB_SOURCES) $(LIBS) $(LD_FLAGS) $(INCLUDES) -o $@
+
 clean:
 	touch $(TARGET)
 	rm $(TARGET)
 	rm -rf $(DOCTARGET)
 	touch $(KIISDK)
 	rm -rf $(KIISDK)
+	rm -rf $(KIISDKNAME)
+	rm -rf $(LIB_TARGET)
 
 .PHONY: all clean copy
 

@@ -441,6 +441,83 @@ int kii_server_code_execute(
 		const char* endpoint_name,
 		const char* params);
 
+/** start to create request for REST API.
+ *
+ * Between this function and kii_api_call_run(kii_t*), you can call
+ * kii_api_call_append_body(kii_t*, const char* size_t) and
+ * kii_api_call_append_header(kii_t*, const char*, const char*) any
+ * number of times.
+ *
+ * @param [in] kii SDK object.
+ * @param [in] http_method method of http request.
+ * @param [in] resource_path resource path of http request.
+ * @param [in] content_type content type of http_body.
+ * @param [in] set_authentication_header a flag to set or not
+ * authentication header.
+ * @return result of preparation. if 0, preparation is succeeded,
+ * otherwise failed
+ */
+int kii_api_call_start(
+        kii_t* kii,
+        const char* http_method,
+        const char* resource_path,
+        const char* content_type,
+        kii_bool_t set_authentication_header);
+
+/** append request body.
+ *
+ * This function must be called between kii_api_call_start(kii_t*,
+ * const char*, const char*, const char*, kii_bool_t) and
+ * kii_api_call_run(kii_t*).
+ *
+ * @param [in] kii SDK object.
+ * @param [in] body_data appended body data.
+ * @param [in] body_size appended body data size.
+ * @return result of appending. if 0 appending is succeeded, otherwise
+ * failed.
+ */
+int kii_api_call_append_body(
+        kii_t* kii,
+        const char* body_data,
+        size_t body_size);
+
+/** append request header.
+ *
+ * This function must be called between kii_api_call_start(kii_t*,
+ * const char*, const char*, const char*, kii_bool_t) and
+ * kii_api_call_run(kii_t*).
+ *
+ * @param [in] kii SDK object.
+ * @param [in] key key of http header.
+ * @param [in] value value of http header.
+ * @return result of appending. if 0 appending is succeeded, otherwise
+ * failed.
+ */
+int
+kii_api_call_append_header(
+        kii_t* kii,
+        const char* key,
+        const char* value);
+
+/** run with created request for REST API.
+ *
+ * HTTP request is created with following APIs:
+ *
+ * - kii_api_call_start(kii_t*, const char*,const char*, const char*,
+ *   kii_bool_t)
+ * - kii_api_call_append_body(kii_t*, const char*, size_t)
+ * - kii_api_call_append_header(kii_t*, const char*, const char*)
+ *
+ * After creation of HTTP request, this function calls REST API with
+ * created request. As a result, HTTP response is set to
+ * kii_t#kii_core#response_body and kii_t#kii_core#response_code.
+ *
+ * @param [in] kii SDK object.
+ * @return result of closing request creation if 0 it is succeeded,
+ * otherwise failed.
+ */
+int kii_api_call_run(kii_t* kii);
+
 #ifdef __cplusplus
 }
 #endif

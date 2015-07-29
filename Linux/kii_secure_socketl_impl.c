@@ -15,7 +15,6 @@
 typedef struct linux_ssl_context_t {
     SSL *ssl;
     SSL_CTX *ssl_ctx;
-    int sock;
 } linux_ssl_context_t;
 
 kii_socket_code_t
@@ -83,7 +82,7 @@ kii_socket_code_t
         printf("failed to connect: %s\n", sslErrStr);
         return KII_SOCKETC_FAIL;
     }
-    ctx->sock = sock;
+    socket_context->socket = sock;
     ctx->ssl = ssl;
     ctx->ssl_ctx = ssl_ctx;
     return KII_SOCKETC_OK;
@@ -148,7 +147,7 @@ kii_socket_code_t
             printf("failed to shutdown: %s\n", sslErrStr);
         }
     }
-    close(ctx->sock);
+    close(socket_context->socket);
     SSL_free(ctx->ssl);
     SSL_CTX_free(ctx->ssl_ctx);
     if (ret != 1) {

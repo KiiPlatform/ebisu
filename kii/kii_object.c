@@ -43,8 +43,7 @@ int kii_object_create(
     }
 
     buf = kii->kii_core.response_body;
-    buf_size = kii->kii_core.http_context.buffer_size -
-        (kii->kii_core.response_body - kii->kii_core.http_context.buffer);
+    buf_size = strlen(kii->kii_core.response_body);
     if (buf == NULL) {
         goto exit;
     }
@@ -350,8 +349,7 @@ int kii_object_init_upload_body(
         goto exit;
     }
     buf = kii->kii_core.response_body;
-    buf_size = kii->kii_core.http_context.buffer_size -
-        (kii->kii_core.response_body - kii->kii_core.http_context.buffer);
+    buf_size = strlen(kii->kii_core.response_body);
     if (buf == NULL) {
         goto exit;
     }
