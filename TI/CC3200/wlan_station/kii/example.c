@@ -61,7 +61,7 @@ int kiiDemo_test(void)
     kii_init(&kii, EX_APP_SITE, EX_APP_ID, EX_APP_KEY);
     kii.kii_core.http_context.buffer = buffer;
     kii.kii_core.http_context.buffer_size = buffer_size;
-    kii.kii_core.http_context.app_context = context;
+    kii.kii_core.http_context.socket_context.app_context = NULL;
     kii.mqtt_buffer = mqtt_buffer;
     kii.mqtt_buffer_size = mqtt_buffer_size;
     memset(&author, 0x00, sizeof(kii_author_t));
