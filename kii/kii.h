@@ -499,11 +499,18 @@ kii_api_call_append_header(
         const char* key,
         const char* value);
 
-/** end of creation of request for REST API.
+/** run with created request for REST API.
  *
- * If you call kii_api_call_start(kii_t*, const char*, const char*,
- * const char*, kii_bool_t), you must call this function at the end of
- * creation of request.
+ * HTTP request is created with following APIs:
+ *
+ * - kii_api_call_start(kii_t*, const char*,const char*, const char*,
+ *   kii_bool_t)
+ * - kii_api_call_append_body(kii_t*, const char*, size_t)
+ * - kii_api_call_append_header(kii_t*, const char*, const char*)
+ *
+ * After creation of HTTP request, this function calls REST API with
+ * created request. As a result, HTTP response is set to
+ * kii_t#kii_core#response_body and kii_t#kii_core#response_code.
  *
  * @param [in] kii SDK object.
  * @return result of closing request creation if 0 it is succeeded,
