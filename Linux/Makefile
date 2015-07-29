@@ -14,10 +14,11 @@ LD_FLAGS = -L../kii/
 SOURCES = $(wildcard *.c)
 TARGET = exampleapp
 LIB_SOURCES = $(wildcard kii_*.c)
-LIB_TARGET = libkiiclient.so
+LIB_TARGET = libkiisocketclient.so
 INCLUDES = -I../kii -I../kii-core -I../kii_json/include -I../kii_json/libs/jsmn
 
-KIISDK = ../kii/libkiisdk.so
+KIISDKNAME = libkiisdk.so
+KIISDK = ../kii/$(KIISDKNAME)
 
 all: clean $(TARGET) $(DOCTARGET)
 
@@ -40,6 +41,8 @@ clean:
 	rm -rf $(DOCTARGET)
 	touch $(KIISDK)
 	rm -rf $(KIISDK)
+	rm -rf $(KIISDKNAME)
+	rm -rf $(LIB_TARGET)
 
 .PHONY: all clean copy
 
