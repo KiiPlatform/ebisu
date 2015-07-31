@@ -38,7 +38,6 @@ int kii_server_code_execute(kii_t* kii, const char* endpoint_name, const char* p
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
