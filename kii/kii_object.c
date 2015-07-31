@@ -34,7 +34,6 @@ int kii_object_create(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -90,7 +89,6 @@ int kii_object_create_with_id(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -129,7 +127,6 @@ int kii_object_patch(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -167,7 +164,6 @@ int kii_object_replace(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -201,7 +197,6 @@ int kii_object_delete(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -234,7 +229,6 @@ int kii_object_get(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -286,7 +280,6 @@ int kii_object_upload_body_at_once(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -341,7 +334,6 @@ int kii_object_init_upload_body(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -426,7 +418,6 @@ int kii_object_upload_body(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -487,7 +478,6 @@ int kii_object_commit_upload(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -542,7 +532,6 @@ int kii_object_download_body_at_once(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -616,7 +605,6 @@ int kii_object_download_body(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
