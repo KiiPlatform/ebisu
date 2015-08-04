@@ -28,16 +28,15 @@ static void init(
     kii->kii_core.app_id = APP_ID;
     kii->kii_core.app_key = APP_KEY;
     kii->kii_core.app_host = APP_HOST;
+
     kii->kii_core.http_context.buffer = buff;
     kii->kii_core.http_context.buffer_size = buff_length;
+    kii->kii_core.http_context.socket_context.app_context = ctx;
+    kii->kii_core.http_context.connect_cb = socket_connect_cb;
+    kii->kii_core.http_context.send_cb = socket_send_cb;
+    kii->kii_core.http_context.recv_cb = socket_recv_cb;
+    kii->kii_core.http_context.close_cb = socket_close_cb;
 
-    kii->kii_core.http_context.app_context = ctx;
-    kii->kii_core.http_set_request_line_cb = request_line_cb;
-    kii->kii_core.http_set_header_cb = header_cb;
-    kii->kii_core.http_append_body_start_cb = append_body_start_cb;
-    kii->kii_core.http_append_body_cb = append_body_cb;
-    kii->kii_core.http_append_body_end_cb = append_body_end_cb;
-    kii->kii_core.http_execute_cb = execute_cb;
     kii->kii_core.logger_cb = logger_cb;
 
     kii->mqtt_socket_connect_cb = mqtt_socket_connect;
