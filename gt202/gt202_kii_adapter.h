@@ -28,32 +28,23 @@ typedef struct context
 } context_t;
 
 /* HTTP Callback functions */
-
-kii_http_client_code_t request_line_cb(
-        kii_http_context_t* http_context,
-        const char* method,
+kii_socket_code_t socket_connect_cb(
+        kii_socket_context_t* socket_context,
         const char* host,
-        const char* path);
+        unsigned int port);
 
-kii_http_client_code_t header_cb(
-        kii_http_context_t* http_context,
-        const char* key,
-        const char* value);
+kii_socket_code_t socket_send_cb(
+        kii_socket_context_t* socket_context,
+        const char* buffer,
+        size_t length);
 
-kii_http_client_code_t append_body_start_cb(kii_http_context_t* http_context);
+kii_socket_code_t socket_recv_cb(
+        kii_socket_context_t* socket_context,
+        char* buffer,
+        size_t length_to_read,
+        size_t* out_actual_length);
 
-kii_http_client_code_t append_body_cb(
-            kii_http_context_t* http_context,
-            const char* body_data,
-            size_t body_size);
-
-kii_http_client_code_t append_body_end_cb(kii_http_context_t* http_context);
-
-
-kii_http_client_code_t execute_cb(
-        kii_http_context_t* http_context,
-        int* response_code,
-        char** response_body);
+kii_socket_code_t socket_close_cb(kii_socket_context_t* socket_context);
 
 void logger_cb(const char* format, ...);
 

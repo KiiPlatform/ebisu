@@ -99,7 +99,7 @@ mqtt_socket_send(
         return KII_HTTPC_OK;
     } else {
         printf("failed to send\n");
-        prv_close(socket_context);
+        mqtt_socket_close(socket_context);
         return KII_HTTPC_FAIL;
     }
 }

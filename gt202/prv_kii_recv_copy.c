@@ -6,30 +6,29 @@
 #error
 #endif
 
-extern kii_http_client_code_t prv_close(void* app_context);
+extern kii_socket_code_t socket_close_cb(kii_socket_context_t* socket_context);
 
-    kii_http_client_code_t
-prv_recv(
-        void* app_context,
-        char* recv_buff,
-        int length_to_read,
-        int* out_actual_length)
+    kii_socket_code_t
+socket_recv_cb(
+        kii_socket_context_t* socket_context,
+        char* buffer,
+        size_t length_to_read,
+        size_t* out_actual_length)
 {
-    int ret = KII_HTTPC_FAIL;
     int res;
     int received;
     int total = 0;
     char *pBuf = NULL;
-    context_t* ctx = (context_t*)app_context;
+    context_t* ctx = (context_t*)socket_context->app_context;
     do
     {
         res = t_select((void *)handle, ctx->sock, 1000);
         if (res == A_OK)
         {
 #if CONNECT_SSL
-            received = SSL_read(ssl, recv_buff, length_to_read);
+            received = SSL_read(ssl, buffer, length_to_read);
 #else
-            received = t_recv(handle, ctx->sock, recv_buff, length_to_read, 0);
+            received = t_recv(handle, ctx->sock, buffer, length_to_read, 0);
 #endif
             if(received > 0)
             {
@@ -41,13 +40,13 @@ prv_recv(
 
     if (total >  0) {
         *out_actual_length = total;
-        return KII_HTTPC_OK;
+        return KII_SOCKETC_OK;
     } else {
         printf("failed to receive:\n");
         // TOOD: could be 0 on success?
         *out_actual_length = 0;
-        prv_close(app_context);
-        return KII_HTTPC_FAIL;
+        socket_close_cb(socket_context);
+        return KII_SOCKETC_FAIL;
     }
 }
 
