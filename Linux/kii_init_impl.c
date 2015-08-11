@@ -1,12 +1,21 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdarg.h>
 
-#include "kii.h"
-#include "kii_core.h"
-#include "kii_core_impl.h"
 #include "kii_socket_impl.h"
-#include "kii_core_secure_socket.h"
 #include "kii_task_impl.h"
+
+#include <kii.h>
+#include <kii_core.h>
+#include <kii_core_secure_socket.h>
+
+static void logger_cb(const char* format, ...)
+{
+    va_list list;
+    va_start(list, format);
+    vprintf(format, list);
+    va_end(list);
+}
 
 int kii_init(
         kii_t* kii,
