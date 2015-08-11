@@ -5,7 +5,7 @@
 #include "kii_core.h"
 #include "kii_core_impl.h"
 #include "kii_socket_impl.h"
-#include "kii_secure_socketl_impl.h"
+#include "kii_core_secure_socket.h"
 #include "kii_task_impl.h"
 
 int kii_init(

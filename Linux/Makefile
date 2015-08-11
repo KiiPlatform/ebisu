@@ -10,12 +10,12 @@ KIISDKPARAM += DEBUG=1
 endif
 
 LIBS = -lssl -lcrypto -lpthread -lkiisdk
-LD_FLAGS = -L../kii/
-SOURCES = $(wildcard *.c)
+LD_FLAGS = -L.
+SOURCES = $(wildcard *.c) ../kii-core/linux/kii_core_secure_socket.c
 TARGET = exampleapp
-LIB_SOURCES = $(wildcard kii_*.c)
+LIB_SOURCES = $(wildcard kii_*.c) ../kii-core/linux/kii_core_secure_socket.c
 LIB_TARGET = libkiisocketclient.so
-INCLUDES = -I../kii -I../kii-core -I../kii_json/include -I../kii_json/libs/jsmn
+INCLUDES = -I../kii -I../kii-core -I../kii_json/include -I../kii_json/libs/jsmn -I../kii-core/linux/
 
 KIISDKNAME = libkiisdk.so
 KIISDK = ../kii/$(KIISDKNAME)
