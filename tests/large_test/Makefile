@@ -6,7 +6,7 @@ CFLAGS += -g -DDEBUG
 CXXFLAGS += -g -DDEBUG
 endif
 
-GTEST_PATH=../../gtest-1.7.0
+GTEST_PATH=../../kii-core/gtest-1.7.0
 
 KIISDKPARAM =
 ifdef DEBUG
