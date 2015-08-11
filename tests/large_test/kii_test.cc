@@ -2,7 +2,6 @@
 #include <gtest/gtest.h>
 
 #include <kii.h>
-#include "kii_core_impl.h"
 #include <kii_json.h>
 
 #define THING_ID "th.53ae324be5a0-26f8-4e11-a13c-03da6fb2"
