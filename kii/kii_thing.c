@@ -7,6 +7,17 @@
 
 #include "kii_core.h"
 
+int kii_init(
+        kii_t* kii,
+        const char* site,
+        const char* app_id,
+        const char* app_key)
+{
+    memset(kii, 0x00, sizeof(kii_t));
+    return kii_core_init(&(kii->kii_core), site, app_id, app_key) ==
+            KIIE_FAIL ? -1 : 0;
+}
+
 int kii_thing_authenticate(
         kii_t* kii,
         const char* vendor_thing_id,

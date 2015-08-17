@@ -3,6 +3,7 @@
 
 #include <kii.h>
 #include <kii_json.h>
+#include <kii_init_impl.h>
 
 #define THING_ID "th.53ae324be5a0-26f8-4e11-a13c-03da6fb2"
 #define ACCESS_TOKEN "ablTGrnsE20rSRBFKPnJkWyTaeqQ50msqUizvR_61hU"
@@ -12,7 +13,7 @@ static void init(
         char* buffer,
         int buffer_size)
 {
-    kii_init(kii, "api-development-jp.internal.kii.com",
+    kii_impl_init(kii, "api-development-jp.internal.kii.com",
             "84fff36e", "e45fcc2d31d6aca675af639bc5f04a26");
 
     kii->kii_core.http_context.buffer = buffer;

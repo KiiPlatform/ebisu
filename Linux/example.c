@@ -1,4 +1,6 @@
 #include "kii.h"
+#include "kii_init_impl.h"
+
 #include "example.h"
 #include <stdio.h>
 #include <string.h>
@@ -40,7 +42,7 @@ int main(int argc, char** argv)
     memset(buffer, 0x00, buffer_size);
     memset(mqtt_buffer, 0x00, mqtt_buffer_size);
 
-    kii_init(&kii, EX_APP_SITE, EX_APP_ID, EX_APP_KEY);
+    kii_impl_init(&kii, EX_APP_SITE, EX_APP_ID, EX_APP_KEY);
     kii.kii_core.http_context.buffer = buffer;
     kii.kii_core.http_context.buffer_size = buffer_size;
     kii.kii_core.http_context.socket_context.app_context = NULL;
