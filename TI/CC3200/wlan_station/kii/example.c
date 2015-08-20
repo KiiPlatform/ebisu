@@ -34,13 +34,6 @@ int kiiDemo_test(void)
     unsigned int length;
     unsigned int actual_length;
     unsigned int total_length;
-    context_t *context;
-
-    context = malloc(sizeof(struct context_t));
-	if (context == NULL) {
-	    UART_PRINT("allocate memory failed\r\n");
-		return -1;
-	}
 
     buffer = malloc(EX_BUFFER_SIZE);
 	if (buffer == NULL) {
@@ -56,7 +49,6 @@ int kiiDemo_test(void)
 	}
     memset(buffer, 0x00, buffer_size);
     memset(mqtt_buffer, 0x00, mqtt_buffer_size);
-    memset(context, 0x00, sizeof(struct context_t));
 
     kii_init(&kii, EX_APP_SITE, EX_APP_ID, EX_APP_KEY);
     kii.kii_core.http_context.buffer = buffer;
