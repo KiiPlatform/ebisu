@@ -213,8 +213,10 @@ typedef enum kii_json_field_type_t {
  * kii_json_read_object(kii_json_t*, const char*, size_t,
  * kii_json_field_t*).
  *
- * End point of the array is specified by kii_json_field_t#target.  If
- * kii_json_field_t#target is NULL, kii_json_read_object(kii_json_t*,
+
+ * End point of the array is specified by kii_json_field_t#name and
+ * kii_json_field_t#path. If both of kii_json_field_t#name and
+ * kii_json_field_t#path are NULL, kii_json_read_object(kii_json_t*,
  * const char*, size_t, kii_json_field_t*) consider that it is the end
  * point of the passed array.
  */
