@@ -66,8 +66,8 @@ typedef struct kii_json_t {
      * memory to work with the targetting JSON data structure.
      *
      * If KII_JSON_FIXED_TOKEN_NUM macro is not present,
-     * You can allocate resource anywhere you want to put.
-     * library never allocate/free the resource.
+     * you can allocate resource anywhere you want to put.
+     * Library never allocate/free the resource.
      * Allocation and free must be done by application.
      * In case of running out given resource and need more resouces to parse
      * given JSON string,
