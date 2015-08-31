@@ -305,20 +305,6 @@ typedef struct kii_json_field_t {
      *     kii_json_field_type_t#KII_JSON_FIELD_TYPE_ANY, then
      *     kii_json_field_t#result become
      *     kii_json_parse_result_t#KII_JSON_FIELD_PARSE_SUCCESS.
-     *
-     * If expected type is
-     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_PRIMITIVE and Actual
-     * type is one of
-     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_INTEGER,
-     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_LONG,
-     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_BOOLEAN or
-     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_NULL:
-     *   - kii_json_field_t#result becomes
-     *     kii_json_parse_result_t#KII_JSON_FIELD_PARSE_SUCCESS,
-     *     otherwise,
-     *     kii_json_parse_result_t#KII_JSON_FIELD_PARSE_TYPE_UNMATCHED.
-     *   - Outputted actual type is
-     *     kii_json_field_type_t#KII_JSON_FIELD_TYPE_PRIMITIVE.
      */
     kii_json_field_type_t type;
 
@@ -344,8 +330,8 @@ typedef struct kii_json_field_t {
 
         /** This value is used if kii_json_field_t#type is
          * kii_json_field_type_t#KII_JSON_FIELD_TYPE_STRING,
-         * kii_json_field_type_t#KII_JSON_FIELD_TYPE_PRIMITIVE,
-         * KII_JSON_FIELD_TYPE_OBJECT or KII_JSON_FIELD_TYPE_ARRAY.
+         * kii_json_field_type_t#KII_JSON_FIELD_TYPE_OBJECT or
+         * kii_json_field_type_t#KII_JSON_FIELD_TYPE_ARRAY.
          */
         char* string;
 
@@ -381,8 +367,8 @@ typedef struct kii_json_field_t {
     /** Length of field_copy#string. ignored if field_copy#string is
      * null or kii_json_field_t#type is not
      * kii_json_field_type_t#KII_JSON_FIELD_TYPE_STRING,
-     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_PRIMITIVE,
-     * KII_JSON_FIELD_TYPE_OBJECT and KII_JSON_FIELD_TYPE_ARRAY.
+     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_OBJECT and
+     * kii_json_field_type_t#KII_JSON_FIELD_TYPE_ARRAY.
      */
     size_t field_copy_buff_size;
 
