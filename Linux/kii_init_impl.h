@@ -7,7 +7,7 @@ extern "C" {
 
 #include "kii.h"
 
-int kii_init(
+int kii_impl_init(
         kii_t* kii,
         const char* site,
         const char* app_id,
