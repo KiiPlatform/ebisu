@@ -1,12 +1,22 @@
 #include <stdio.h>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wvariadic-macros"
+#pragma GCC diagnostic ignored "-Wlong-long"
+#pragma GCC diagnostic ignored "-Wsign-compare"
 #include <gtest/gtest.h>
+#pragma GCC diagnostic pop
 
 #include <kii.h>
 #include <kii_json.h>
 #include <kii_init_impl.h>
 
-#define THING_ID "th.53ae324be5a0-26f8-4e11-a13c-03da6fb2"
-#define ACCESS_TOKEN "ablTGrnsE20rSRBFKPnJkWyTaeqQ50msqUizvR_61hU"
+static char THING_ID[] = "th.53ae324be5a0-26f8-4e11-a13c-03da6fb2";
+static char ACCESS_TOKEN[] = "ablTGrnsE20rSRBFKPnJkWyTaeqQ50msqUizvR_61hU";
+static char BUCKET[] = "myBucket";
+static char TOPIC[] = "myTopic";
+static char BODY[] = "Stop the world!";
+static char CONTENT_TYPE[] = "text/plain";
 
 static void init(
         kii_t* kii,
@@ -28,7 +38,7 @@ static void initBucket(kii_bucket_t* bucket)
 {
     bucket->scope = KII_SCOPE_THING;
     bucket->scope_id = THING_ID;
-    bucket->bucket_name = "myBucket";
+    bucket->bucket_name = BUCKET;
 }
 
 TEST(kiiTest, authenticate)
@@ -184,7 +194,7 @@ TEST(kiiTest, objectWithID)
 TEST(kiiTest, objectBodyOnce)
 {
     int ret = -1;
-    char* body = "Stop the world!";
+    char* body = BODY;
     char buffer[4096];
     char objectId[KII_OBJECTID_SIZE + 1];
     kii_t kii;
@@ -207,7 +217,7 @@ TEST(kiiTest, objectBodyOnce)
     ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
 
     kii.kii_core.response_code = 0;
-    ret = kii_object_upload_body_at_once(&kii, &bucket, objectId, "text/plain",
+    ret = kii_object_upload_body_at_once(&kii, &bucket, objectId, CONTENT_TYPE,
             body, body_len);
 
     ASSERT_EQ(0, ret);
@@ -237,7 +247,7 @@ TEST(kiiTest, objectBodyOnce)
 TEST(kiiTest, objectBodyMulti)
 {
     int ret = -1;
-    char* body = "Stop the world!";
+    char* body = BODY;
     char buffer[4096];
     char objectId[KII_OBJECTID_SIZE + 1];
     char uploadId[KII_UPLOADID_SIZE + 1];
@@ -273,7 +283,7 @@ TEST(kiiTest, objectBodyMulti)
     ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
 
     chunk.chunk = body;
-    chunk.body_content_type = "text/plain";
+    chunk.body_content_type = CONTENT_TYPE;
     chunk.position = 0;
     chunk.length = chunk.total_length = body_len;
 
@@ -351,7 +361,7 @@ TEST(kiiTest, pushTopic)
     init(&kii, buffer, 4096);
     topic.scope = KII_SCOPE_THING;
     topic.scope_id = THING_ID;
-    topic.topic_name = "myTopic";
+    topic.topic_name = TOPIC;
 
     kii.kii_core.response_code = 0;
     ret = kii_push_create_topic(&kii, &topic);
@@ -388,7 +398,6 @@ TEST(kiiTest, pushTopic)
 
 TEST(kiiTest, genericApis)
 {
-    int ret = -1;
     char buffer[4096];
     kii_t kii;
     const char* EX_AUTH_VENDOR_ID = "1426830900";
