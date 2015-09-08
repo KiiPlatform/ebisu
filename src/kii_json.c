@@ -9,8 +9,8 @@
 
 #include <jsmn.h>
 
-/* If your environment does not have assert, you must set NOASSERT define. */
-#ifdef NOASSERT
+/* If your environment does not have assert, you must set KII_JSON_NOASSERT define. */
+#ifdef KII_JSON_NOASSERT
   #define M_KII_JSON_ASSERT(s)
 #else
   #include <assert.h>
