@@ -98,7 +98,7 @@ typedef struct kii_t {
 /** Initializes Kii SDK
  *  \param [inout] kii sdk instance.
  *  \param [in] site the input of site name,
- *  should be one of "CN", "JP", "US", "SG"
+ *  should be one of "CN", "CN3", "JP", "US", "SG"
  *  \param [in] app_id the input of Application ID
  *  \param [in] app_key the input of Application Key
  *  \return  0:success, -1: failure
