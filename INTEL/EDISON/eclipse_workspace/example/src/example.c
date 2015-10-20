@@ -1,27 +1,3 @@
-/*
- * Author: Jessica Gomez <jessica.gomez.hernandez@intel.com>
- * Copyright (c) 2015 Intel Corporation.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
 #include "mraa.h"
 
 #include <stdio.h>
@@ -111,7 +87,7 @@ int main()
 	} else {
 		printf("failed!\n");
 	}
-	printf("create new object\n");
+	printf("create new object on initial \n");
 	memset(object_id, 0x00, sizeof(object_id));
 	ret = kii_object_create(&kii, &bucket, EX_OBJECT_DATA, NULL, object_id);
 	if(ret == 0) {
@@ -147,12 +123,21 @@ int main()
 		fprintf(stderr, "Can't set digital pin as output, exiting");
 		return MRAA_ERROR_UNSPECIFIED;
 	};
+	mraa_gpio_context gpio;
 
+	gpio = mraa_gpio_init(2);
 	// loop forever toggling the on board LED every second
 	for (;;) {
-		mraa_gpio_write(d_pin, 0);
-		sleep(1);
-		mraa_gpio_write(d_pin, 1);
+		if(mraa_gpio_read(gpio)){
+			printf("create new object on pressed\n");
+			memset(object_id, 0x00, sizeof(object_id));
+			ret = kii_object_create(&kii, &bucket, "{'event':'button pressed'}", NULL, object_id);
+			if(ret == 0) {
+				printf("success!\n");
+			} else {
+				printf("failed!\n");
+			}
+		}
 		sleep(1);
 	}
 
