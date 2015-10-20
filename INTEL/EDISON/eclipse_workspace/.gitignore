@@ -3,3 +3,5 @@ kii/*
 kii-core/*
 .metadata/*
 RemoteSystemsTempFiles/*
+kii_json/*
+Linux/*
