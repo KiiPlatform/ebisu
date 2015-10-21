@@ -7,41 +7,38 @@
 #include "kii.h"
 #include "kii_init_impl.h"
 
-void received_callback(kii_t* kii, char* buffer, size_t buffer_size) {
-	char copy[1024];
-	memset(copy, 0x00, sizeof(copy));
-	strncpy(copy, buffer, sizeof(copy));
-	printf("buffer_size: %lu\n", buffer_size);
-	printf("recieve message: %s\n", copy);
-}
-
-const char EX_AUTH_VENDOR_ID[] = "sweet_wks_2";
-const char EX_AUTH_VENDOR_PASS[] = "password";
-const char EX_AUTH_VENDOR_TYPE[] = "my_type";
-
+// Kii Apps information, please get the information on Developer Portal
 const char EX_APP_SITE[] = "JP";
 const char EX_APP_ID[] = "2fc66b6f";
 const char EX_APP_KEY[] = "c273738ade7edf22bcdc66a329481c5f";
+
+// Example's Thing informations, please register it on Developer Portal
+const char EX_AUTH_VENDOR_ID[] = "sweet_wks_2";
+const char EX_AUTH_VENDOR_PASS[] = "password";
+const char EX_AUTH_VENDOR_TYPE[] = "my_type";
 
 #define EX_BUFFER_SIZE 4096
 #define EX_MQTT_BUFFER_SIZE 2048
 
 const char EX_OBJECT_ID[] = "my_object";
 const char EX_BUCKET_NAME[] = "my_bucket";
-const char EX_TOPIC_NAME[] = "my_topic";
 const char EX_OBJECT_DATA[] = "{}";
-const char EX_BODY_DATA[] = "Hello world !\n";
-const char EX_ENDPOINT_NAME[] = "test_topic";
+
 /*
- * On board LED blink C example
+ * On board Push button Kii cloud C example
  *
- * Demonstrate how to blink the on board LED, writing a digital value to an
+ * Demonstrate how to authenticate the board as a Thing, reading a digital value to an
  * output pin using the MRAA library.
- * No external hardware is needed.
+ * Feature :
+ * - Thing authentication with pre-registered Thing vendor_id
+ * - Save an object on initial (after authentication)
+ * - Save an object on press button event
+ * Any external button can be used.
+ * This example use : Grove Button http://www.seeedstudio.com/wiki/Grove_-_Button
  *
- * - digital out: on board LED
+ * - digital input: Digital pin no 2
  *
- * Additional linker flags: none
+ *
  */
 
 int main()
@@ -52,7 +49,6 @@ int main()
 	char mqtt_buffer[EX_MQTT_BUFFER_SIZE];
 	size_t buffer_size = EX_BUFFER_SIZE;
 	size_t mqtt_buffer_size = EX_MQTT_BUFFER_SIZE;
-
 
 	char scope_id[128];
 	int ret;
@@ -87,6 +83,7 @@ int main()
 	} else {
 		printf("failed!\n");
 	}
+
 	printf("create new object on initial \n");
 	memset(object_id, 0x00, sizeof(object_id));
 	ret = kii_object_create(&kii, &bucket, EX_OBJECT_DATA, NULL, object_id);
@@ -126,18 +123,21 @@ int main()
 	mraa_gpio_context gpio;
 
 	gpio = mraa_gpio_init(2);
-	// loop forever toggling the on board LED every second
+	// loop forever checking the state of the button every second
 	for (;;) {
 		if(mraa_gpio_read(gpio)){
 			printf("create new object on pressed\n");
 			memset(object_id, 0x00, sizeof(object_id));
 			ret = kii_object_create(&kii, &bucket, "{'event':'button pressed'}", NULL, object_id);
 			if(ret == 0) {
+				mraa_gpio_write(d_pin, 1);
+				sleep(1);
 				printf("success!\n");
 			} else {
 				printf("failed!\n");
 			}
 		}
+		mraa_gpio_write(d_pin, 0);
 		sleep(1);
 	}
 
