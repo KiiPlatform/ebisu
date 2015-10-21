@@ -1,7 +1,7 @@
 #Intel Edison Example
 
 ####Prerequests :
-1. Intel Edison Board that is connected to your local network. Please refer to [getting started] (https://software.intel.com/en-us/iot/library/edison-getting-started] with eclipse as IDE.
+1. Intel Edison Board that is connected to your local network. Please refer to [Official Intel getting started tutorial] (https://software.intel.com/en-us/iot/library/edison-getting-started) with eclipse as IDE.
 2. This example optionally requires additional hardware which is a push button that is attached on the gpio. If you don't have, the sample will still run but won't have hardware triggered demonstration. 
 3. Kii Developer account and a Kii apps created. You can create a new one or just reuse your existing Kii apps.
 4. Create a Thing object on Kii developer portal, don't forget to remember the 'thing' password since we will use it on the code.
@@ -9,6 +9,7 @@
 
 ####Installation Steps.
 1. Update git sub modules and run install script
+
  ```bash
  cd ../../
  git submodule init
@@ -17,8 +18,8 @@
  sh install_dep.sh
  ```
 2. Run eclipse Intel IOT Developer Kit
-3. Switch workspace by clinking file->switch workspace->other.. and point to this repository `eclipse_workspace`
-4. Import `example` project by clicking file->import->exixsting Projects Into Workspace, brose to your current workspace and select only `example`
+3. Switch workspace by clinking `file`->`switch workspace`->`other..` and point to this repository `eclipse_workspace` folder.
+4. Import `example` project by clicking `file`->`import`->`existing Projects Into Workspace`, browse to your current workspace and select only `example`
 5. Edit `example.c` const bellow with your Kii Apps information (see above pre requests) 
 ```c
 // Kii Apps information, please get the information on Developer Portal
@@ -32,6 +33,6 @@ const char EX_AUTH_VENDOR_PASS[] = "password"; // fill with value you have creat
 const char EX_AUTH_VENDOR_TYPE[] = "my_type"; // optional, you can fill any string
 ```
 6. Build and run into your connected edison target.
-7. Confirm your successful runtime by opening Developer Portal Object console. Your data should be saved on the cloud once you ht refresh.
+7. Confirm your successful runtime by opening Developer Portal Object console. Your data should be saved on the cloud once you hit refresh.
 
 
