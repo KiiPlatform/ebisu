@@ -21,7 +21,8 @@
 3. Switch workspace by clinking `file`->`switch workspace`->`other..` and point to this repository `eclipse_workspace` folder.
 4. Import `example` project by clicking `file`->`import`->`existing Projects Into Workspace`, browse to your current workspace and select only `example`
 5. Edit `example.c` const bellow with your Kii Apps information (see above pre requests) 
-```c
+
+ ```c
 // Kii Apps information, please get the information on Developer Portal
 const char EX_APP_SITE[] = "JP";//Your app kii site (JP/US/SG/CN/CN3)
 const char EX_APP_ID[] = "your_app_id";
@@ -31,7 +32,7 @@ const char EX_APP_KEY[] = "your_app_key";
 const char EX_AUTH_VENDOR_ID[] = "sweet_wks_2"; // fill with value you have created on pre request step 4
 const char EX_AUTH_VENDOR_PASS[] = "password"; // fill with value you have created on pre request step 4
 const char EX_AUTH_VENDOR_TYPE[] = "my_type"; // optional, you can fill any string
-```
+ ```
 6. Build and run into your connected edison target.
 7. Confirm your successful runtime by opening Developer Portal Object console. Your data should be saved on the cloud once you hit refresh.
 
