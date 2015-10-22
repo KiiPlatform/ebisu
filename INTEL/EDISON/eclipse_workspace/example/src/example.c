@@ -46,9 +46,8 @@ int main()
 	kii_t kii;
 	kii_author_t author;
 	char buffer[EX_BUFFER_SIZE];
-	char mqtt_buffer[EX_MQTT_BUFFER_SIZE];
 	size_t buffer_size = EX_BUFFER_SIZE;
-	size_t mqtt_buffer_size = EX_MQTT_BUFFER_SIZE;
+
 
 	char scope_id[128];
 	int ret;
@@ -57,14 +56,12 @@ int main()
 	char object_id[KII_OBJECTID_SIZE + 1];
 
 	memset(buffer, 0x00, buffer_size);
-	memset(mqtt_buffer, 0x00, mqtt_buffer_size);
 
 	kii_impl_init(&kii, EX_APP_SITE, EX_APP_ID, EX_APP_KEY);
 	kii.kii_core.http_context.buffer = buffer;
 	kii.kii_core.http_context.buffer_size = buffer_size;
 	kii.kii_core.http_context.socket_context.app_context = NULL;
-	kii.mqtt_buffer = mqtt_buffer;
-	kii.mqtt_buffer_size = mqtt_buffer_size;
+
 	memset(&author, 0x00, sizeof(kii_author_t));
 
 	kii.kii_core.author = author;
