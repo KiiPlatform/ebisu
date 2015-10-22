@@ -18,7 +18,6 @@ const char EX_AUTH_VENDOR_PASS[] = "password";
 const char EX_AUTH_VENDOR_TYPE[] = "my_type";
 
 #define EX_BUFFER_SIZE 4096
-#define EX_MQTT_BUFFER_SIZE 2048
 
 const char EX_OBJECT_ID[] = "my_object";
 const char EX_BUCKET_NAME[] = "my_bucket";
@@ -43,10 +42,45 @@ const char EX_OBJECT_DATA[] = "{}";
 
 int main()
 {
+	//edison gpio setup
+
+	// select onboard LED pin based on the platform type
+	// create a GPIO object from MRAA using it
+	mraa_platform_t platform = mraa_get_platform_type();
+	mraa_gpio_context d_pin = NULL;
+	switch (platform) {
+	case MRAA_INTEL_GALILEO_GEN1:
+		d_pin = mraa_gpio_init_raw(3);
+		break;
+	case MRAA_INTEL_GALILEO_GEN2:
+		d_pin = mraa_gpio_init(13);
+		break ;
+	case MRAA_INTEL_EDISON_FAB_C:
+		d_pin = mraa_gpio_init(13);
+		break;
+	default:
+		fprintf(stderr, "Unsupported platform, exiting");
+		return MRAA_ERROR_INVALID_PLATFORM;
+	}
+	if (d_pin == NULL) {
+		fprintf(stderr, "MRAA couldn't initialize GPIO, exiting");
+		return MRAA_ERROR_UNSPECIFIED;
+	}
+
+	// set the pin as output
+	if (mraa_gpio_dir(d_pin, MRAA_GPIO_OUT) != MRAA_SUCCESS) {
+		fprintf(stderr, "Can't set digital pin as output, exiting");
+		return MRAA_ERROR_UNSPECIFIED;
+	};
+	mraa_gpio_context gpio;
+
+	gpio = mraa_gpio_init(2);
+
+	// Kii Cloud Setup
 	kii_t kii;
 	kii_author_t author;
 	char buffer[EX_BUFFER_SIZE];
-	size_t buffer_size = EX_BUFFER_SIZE;
+	size_t buffer_size = sizeof(buffer);
 
 
 	char scope_id[128];
@@ -89,37 +123,7 @@ int main()
 	} else {
 		printf("failed!\n");
 	}
-	// select onboard LED pin based on the platform type
-	// create a GPIO object from MRAA using it
-	mraa_platform_t platform = mraa_get_platform_type();
-	mraa_gpio_context d_pin = NULL;
-	switch (platform) {
-	case MRAA_INTEL_GALILEO_GEN1:
-		d_pin = mraa_gpio_init_raw(3);
-		break;
-	case MRAA_INTEL_GALILEO_GEN2:
-		d_pin = mraa_gpio_init(13);
-		break ;
-	case MRAA_INTEL_EDISON_FAB_C:
-		d_pin = mraa_gpio_init(13);
-		break;
-	default:
-		fprintf(stderr, "Unsupported platform, exiting");
-		return MRAA_ERROR_INVALID_PLATFORM;
-	}
-	if (d_pin == NULL) {
-		fprintf(stderr, "MRAA couldn't initialize GPIO, exiting");
-		return MRAA_ERROR_UNSPECIFIED;
-	}
 
-	// set the pin as output
-	if (mraa_gpio_dir(d_pin, MRAA_GPIO_OUT) != MRAA_SUCCESS) {
-		fprintf(stderr, "Can't set digital pin as output, exiting");
-		return MRAA_ERROR_UNSPECIFIED;
-	};
-	mraa_gpio_context gpio;
-
-	gpio = mraa_gpio_init(2);
 	// loop forever checking the state of the button every second
 	for (;;) {
 		if(mraa_gpio_read(gpio)){
