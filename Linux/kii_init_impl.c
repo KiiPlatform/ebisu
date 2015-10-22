@@ -1,50 +1,29 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdarg.h>
 
-#include "kii.h"
-#include "kii_core.h"
-#include "kii_core_impl.h"
 #include "kii_socket_impl.h"
-#include "kii_secure_socketl_impl.h"
 #include "kii_task_impl.h"
 
-int kii_init(
+#include <kii.h>
+#include <kii_core.h>
+#include <kii_core_secure_socket.h>
+
+static void logger_cb(const char* format, ...)
+{
+    va_list list;
+    va_start(list, format);
+    vprintf(format, list);
+    va_end(list);
+}
+
+int kii_impl_init(
         kii_t* kii,
         const char* site,
         const char* app_id,
         const char* app_key)
 {
-    memset(kii, 0, sizeof(kii_t));
-    if(strcmp(site, "CN") == 0)
-    {
-        kii->kii_core.app_host = "api-cn2.kii.com";
-    }
-    else if(strcmp(site, "JP") == 0)
-    {
-        kii->kii_core.app_host = "api-jp.kii.com";
-    }
-    else if(strcmp(site, "US") == 0)
-    {
-        kii->kii_core.app_host = "api.kii.com";
-    }
-    else if(strcmp(site, "SG") == 0)
-    {
-        kii->kii_core.app_host = "api-sg.kii.com";
-    }
-    else
-    {
-        /* Let's enable to set custom host */
-        kii->kii_core.app_host = (char*)site;
-    }
-
-    kii->kii_core.app_id = (char*)app_id;
-    kii->kii_core.app_key = (char*)app_key;
-
-    /* setting http callbacks. */
-    kii->kii_core.http_set_request_line_cb = request_line_cb;
-    kii->kii_core.http_set_header_cb = header_cb;
-    kii->kii_core.http_set_body_cb = body_cb;
-    kii->kii_core.http_execute_cb = execute_cb;
+    kii_init(kii, site, app_id, app_key);
 
     /* setting http socket callbacks */
     kii->kii_core.http_context.connect_cb = s_connect_cb;

@@ -8,6 +8,12 @@
 #include "kii_core.h"
 #include "kii_task_callback.h"
 
+#include <kii_json.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define KII_OBJECTID_SIZE 36
 
 #define KII_UPLOADID_SIZE 64
@@ -59,12 +65,40 @@ typedef struct kii_t {
 
     void* app_context;
 
+    /** Resource used by KII JSON library.
+     *
+     * This field is optional. If KII_JSON_FIXED_TOKEN_NUM macro is
+     * defined, KII JSON library takes resources by myself on stack
+     * memory. In KII_JSON_FIXED_TOKEN_NUM case, token size of Kii
+     * JSON library is number defined by KII_JSON_FIXED_TOKEN_NUM. If
+     * your environment has small stack size, you should use this
+     * field and manage this resources by yourself.
+     *
+     * This field is not managed by this SDK. If
+     * kii_json_resource_t#tokens is allocated from heap memory, you
+     * must free these by yourself before applications are
+     * terminated.
+     *
+     * Value of this field is not thread safe. You must not share
+     * kii_json_resource_t#tokens instance with two or more kii_t
+     * instance.
+     */
+    kii_json_resource_t kii_json_resource;
+
+    /** Callback to resize to kii_json_resource contents.
+     *
+     * This field is optional. If this field is NULL. This SDK does
+     * not try to allocate kii_t#kii_json_resource. As a result, Some
+     * APIs may fail with KII_JSON_PARSE_SHORTAGE_TOKENS.
+     */
+    KII_JSON_RESOURCE_CB kii_json_resource_cb;
+
 } kii_t;
 
 /** Initializes Kii SDK
  *  \param [inout] kii sdk instance.
  *  \param [in] site the input of site name,
- *  should be one of "CN", "JP", "US", "SG"
+ *  should be one of "CN", "CN3", "JP", "US", "SG"
  *  \param [in] app_id the input of Application ID
  *  \param [in] app_key the input of Application Key
  *  \return  0:success, -1: failure
@@ -406,6 +440,87 @@ int kii_server_code_execute(
 		kii_t* kii,
 		const char* endpoint_name,
 		const char* params);
+
+/** start to create request for REST API.
+ *
+ * Between this function and kii_api_call_run(kii_t*), you can call
+ * kii_api_call_append_body(kii_t*, const char* size_t) and
+ * kii_api_call_append_header(kii_t*, const char*, const char*) any
+ * number of times.
+ *
+ * @param [in] kii SDK object.
+ * @param [in] http_method method of http request.
+ * @param [in] resource_path resource path of http request.
+ * @param [in] content_type content type of http_body.
+ * @param [in] set_authentication_header a flag to set or not
+ * authentication header.
+ * @return result of preparation. if 0, preparation is succeeded,
+ * otherwise failed
+ */
+int kii_api_call_start(
+        kii_t* kii,
+        const char* http_method,
+        const char* resource_path,
+        const char* content_type,
+        kii_bool_t set_authentication_header);
+
+/** append request body.
+ *
+ * This function must be called between kii_api_call_start(kii_t*,
+ * const char*, const char*, const char*, kii_bool_t) and
+ * kii_api_call_run(kii_t*).
+ *
+ * @param [in] kii SDK object.
+ * @param [in] body_data appended body data.
+ * @param [in] body_size appended body data size.
+ * @return result of appending. if 0 appending is succeeded, otherwise
+ * failed.
+ */
+int kii_api_call_append_body(
+        kii_t* kii,
+        const char* body_data,
+        size_t body_size);
+
+/** append request header.
+ *
+ * This function must be called between kii_api_call_start(kii_t*,
+ * const char*, const char*, const char*, kii_bool_t) and
+ * kii_api_call_run(kii_t*).
+ *
+ * @param [in] kii SDK object.
+ * @param [in] key key of http header.
+ * @param [in] value value of http header.
+ * @return result of appending. if 0 appending is succeeded, otherwise
+ * failed.
+ */
+int
+kii_api_call_append_header(
+        kii_t* kii,
+        const char* key,
+        const char* value);
+
+/** run with created request for REST API.
+ *
+ * HTTP request is created with following APIs:
+ *
+ * - kii_api_call_start(kii_t*, const char*,const char*, const char*,
+ *   kii_bool_t)
+ * - kii_api_call_append_body(kii_t*, const char*, size_t)
+ * - kii_api_call_append_header(kii_t*, const char*, const char*)
+ *
+ * After creation of HTTP request, this function calls REST API with
+ * created request. As a result, HTTP response is set to
+ * kii_t#kii_core#response_body and kii_t#kii_core#response_code.
+ *
+ * @param [in] kii SDK object.
+ * @return result of closing request creation if 0 it is succeeded,
+ * otherwise failed.
+ */
+int kii_api_call_run(kii_t* kii);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

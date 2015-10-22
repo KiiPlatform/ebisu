@@ -31,15 +31,8 @@ int kiiDemo_test(char *buf)
     unsigned int length;
     unsigned int actual_length;
     unsigned int total_length;
-    context_t *context;
 
     logger_cb("kiiDemo_test...\n");
-
-    context = malloc(sizeof(struct context_t));
-	if (context == NULL) {
-	    logger_cb("allocate memory failed\n");
-		return -1;
-	}
 
     buffer = malloc(EX_BUFFER_SIZE);
 	if (buffer == NULL)
@@ -57,12 +50,11 @@ int kiiDemo_test(char *buf)
 	}
     memset(buffer, 0x00, buffer_size);
     memset(mqtt_buffer, 0x00, mqtt_buffer_size);
-    memset(context, 0x00, sizeof(context_t));
 
     kii_init(&kii, EX_APP_SITE, EX_APP_ID, EX_APP_KEY);
     kii.kii_core.http_context.buffer = buffer;
     kii.kii_core.http_context.buffer_size = buffer_size;
-    kii.kii_core.http_context.app_context = context;
+    kii.kii_core.http_context.socket_context.app_context = NULL;
     kii.mqtt_buffer = mqtt_buffer;
     kii.mqtt_buffer_size = mqtt_buffer_size;
     memset(&author, 0x00, sizeof(kii_author_t));
@@ -222,6 +214,7 @@ int kiiDemo_test(char *buf)
     } else {
         logger_cb("failed!\n");
     }
+#if 0	
     logger_cb("unsubscrie topic\n");
     ret = kii_push_unsubscribe_topic(&kii, &topic);
     if(ret == 0) {
@@ -236,6 +229,7 @@ int kiiDemo_test(char *buf)
     } else {
         logger_cb("failed!\n");
     }
+#endif	
     logger_cb("Server code execute\n");
     ret = kii_server_code_execute(&kii, EX_ENDPOINT_NAME, NULL);
     if(ret == 0) {

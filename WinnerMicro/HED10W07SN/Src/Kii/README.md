@@ -9,6 +9,3 @@
 ## How to test
 1. Use "t-connect("WIFIID","pwd")" to connect wifi network
 2. Use "t-kii" to run example application
-
-## Issues
-1. Need to modify api "prv_kii_util_get_http_body"

@@ -39,12 +39,6 @@ int kii_init(
     kii->kii_core.app_id = (char*)app_id;
     kii->kii_core.app_key = (char*)app_key;
 
-    /* setting http callbacks. */
-    kii->kii_core.http_set_request_line_cb = request_line_cb;
-    kii->kii_core.http_set_header_cb = header_cb;
-    kii->kii_core.http_set_body_cb = body_cb;
-    kii->kii_core.http_execute_cb = execute_cb;
-
     /* setting http socket callbacks */
     kii->kii_core.http_context.connect_cb = connect_cb;
     kii->kii_core.http_context.send_cb = send_cb;

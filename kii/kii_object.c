@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "kii.h"
-#include "kii_json.h"
+#include "kii_json_utils.h"
 
 #include "kii_core.h"
 
@@ -34,7 +34,6 @@ int kii_object_create(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -43,8 +42,7 @@ int kii_object_create(
     }
 
     buf = kii->kii_core.response_body;
-    buf_size = kii->kii_core.http_context.buffer_size -
-        (kii->kii_core.response_body - kii->kii_core.http_context.buffer);
+    buf_size = strlen(kii->kii_core.response_body);
     if (buf == NULL) {
         goto exit;
     }
@@ -52,11 +50,11 @@ int kii_object_create(
     memset(fields, 0, sizeof(fields));
     fields[0].name = "objectID";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[0].field_copy_buff = out_object_id;
+    fields[0].field_copy.string = out_object_id;
     fields[0].field_copy_buff_size = KII_OBJECTID_SIZE + 1;
     fields[1].name = NULL;
 
-    result = kii_json_read_object(kii, buf, buf_size, fields);
+    result = prv_kii_json_read_object(kii, buf, buf_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
         goto exit;
     }
@@ -91,7 +89,6 @@ int kii_object_create_with_id(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -130,7 +127,6 @@ int kii_object_patch(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -168,7 +164,6 @@ int kii_object_replace(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -202,7 +197,6 @@ int kii_object_delete(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -235,7 +229,6 @@ int kii_object_get(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -287,7 +280,6 @@ int kii_object_upload_body_at_once(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -342,7 +334,6 @@ int kii_object_init_upload_body(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -350,8 +341,7 @@ int kii_object_init_upload_body(
         goto exit;
     }
     buf = kii->kii_core.response_body;
-    buf_size = kii->kii_core.http_context.buffer_size -
-        (kii->kii_core.response_body - kii->kii_core.http_context.buffer);
+    buf_size = strlen(kii->kii_core.response_body);
     if (buf == NULL) {
         goto exit;
     }
@@ -359,11 +349,11 @@ int kii_object_init_upload_body(
     memset(fields, 0x00, sizeof(fields));
     fields[0].name = "uploadID";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[0].field_copy_buff = out_upload_id;
+    fields[0].field_copy.string = out_upload_id;
     fields[0].field_copy_buff_size = KII_UPLOADID_SIZE + 1;
     fields[1].name = NULL;
 
-    result = kii_json_read_object(kii, buf, buf_size, fields);
+    result = prv_kii_json_read_object(kii, buf, buf_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
         goto exit;
     }
@@ -428,7 +418,6 @@ int kii_object_upload_body(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -489,7 +478,6 @@ int kii_object_commit_upload(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -544,7 +532,6 @@ int kii_object_download_body_at_once(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }
@@ -618,7 +605,6 @@ int kii_object_download_body(
         core_err = kii_core_run(&kii->kii_core);
         state = kii_core_get_state(&kii->kii_core);
     } while (state != KII_STATE_IDLE);
-    M_KII_LOG(kii->kii_core.logger_cb("resp: %s\n", kii->kii_core.response_body));
     if (core_err != KIIE_OK) {
         goto exit;
     }

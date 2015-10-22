@@ -28,7 +28,7 @@ kii_socket_code_t
         sl_Close(sock);
 		return KII_SOCKETC_FAIL;
     }
-    socket_context->sock = sock;
+    socket_context->socket = sock;
     return KII_SOCKETC_OK;
 }
 
@@ -40,7 +40,7 @@ kii_socket_code_t
     int ret;
     int sock;
 
-    sock = socket_context->sock;
+    sock = socket_context->socket;
     ret = sl_Send(sock, buffer, length, 0);
     if (ret > 0) {
         return KII_SOCKETC_OK;
@@ -58,7 +58,7 @@ kii_socket_code_t
     int ret;
     int sock;
 
-    sock = socket_context->sock;
+    sock = socket_context->socket;
     ret = sl_Recv(sock, buffer, length_to_read, 0);
     if (ret > 0) {
      *out_actual_length = ret;
@@ -72,10 +72,10 @@ kii_socket_code_t
     close_cb(kii_socket_context_t* socket_context)
 {
     int sock;
-    sock = socket_context->sock;
+    sock = socket_context->socket;
 
     sl_Close(sock);
-    socket_context->sock = -1;
+    socket_context->socket = -1;
     return KII_SOCKETC_OK;
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
