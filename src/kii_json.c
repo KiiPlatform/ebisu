@@ -227,7 +227,7 @@ exit:
 
 static int prv_kii_json_is_all_digit(const char* buf, size_t buf_len)
 {
-    int i = 0;
+    size_t i = 0;
     M_KII_JSON_ASSERT(buf != NULL);
 
     for (i = 0; i < buf_len; ++i) {
@@ -630,11 +630,11 @@ static int prv_kii_json_is_same_key(
         const char* key,
         size_t key_len)
 {
-    int key_i = 0;
-    int target_i = 0;
+    size_t key_i = 0;
+    size_t target_i = 0;
     int retval = 0;
 
-    for (key_i =0, target_i = 0;
+    for (key_i = 0, target_i = 0;
             key_i < key_len && target_i < target->len; ++key_i) {
         char key_c = key[key_i];
         char target_c1 = target->field.name[target_i];
@@ -691,8 +691,9 @@ static int prv_kii_jsmn_get_value_by_path(
                 target.parent_type == PRV_KII_JSON_PARENT_TYPE_OBJECT) {
             size_t i = 0;
             size_t index = 1;
+            const size_t root_token_size = (size_t)root_token->size;
             const jsmntok_t* next_token = NULL;
-            for (i = 0; i < root_token->size; ++i) {
+            for (i = 0; i < root_token_size; ++i) {
                 const jsmntok_t* key_token = root_token + index;
                 const jsmntok_t* value_token = root_token + index + 1;
                 M_KII_JSON_ASSERT(key_token->type == JSMN_STRING);
@@ -711,7 +712,8 @@ static int prv_kii_jsmn_get_value_by_path(
         } else  if (root_token->type == JSMN_ARRAY &&
                 target.parent_type == PRV_KII_JSON_PARENT_TYPE_ARRAY) {
             size_t i = 0;
-            if (target.field.index >= root_token->size) {
+            const size_t root_token_size = (size_t)root_token->size;
+            if (target.field.index >= root_token_size) {
                 return -1;
             }
             for (i = 0; i < target.field.index; ++i) {
