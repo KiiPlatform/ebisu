@@ -325,9 +325,9 @@ static void* kiiPush_recvMsgTask(void* sdata)
     int remainingLen;
     int byteLen;
     int topicLen;
-    int totalLen;
+    size_t totalLen;
     char* p;
-    int bytes = 0;
+    size_t bytes = 0;
     size_t rcvdCounter = 0;
     KII_PUSH_RECEIVED_CB callback;
     kiiPush_endpointState_e endpointState;

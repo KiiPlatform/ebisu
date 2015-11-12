@@ -44,9 +44,9 @@ int kiiMQTT_decode(char* buf, int* value)
 
 int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short keepAliveInterval)
 {
-    int i;
-    int j;
-    int k;
+    size_t i;
+    size_t j;
+    size_t k;
     kii_socket_code_t sock_err;
     size_t actual_length;
 
@@ -177,9 +177,9 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
 
 int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
 {
-    int i;
-    int j;
-    int k;
+    size_t i;
+    size_t j;
+    size_t k;
     size_t actual_length = 0;
     kii_socket_code_t sock_err;
 
