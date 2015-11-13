@@ -22,6 +22,8 @@
 #define DEF_ACCESS_TOKEN "ablTGrnsE20rSRBFKPnJkWyTaeqQ50msqUizvR_61hU"
 #define DEF_BUCKET "myBucket"
 #define DEF_OBJECT "myObject"
+#define DEF_TOPIC "myTopic"
+#define DEF_MQTT_ENDPOINT "p6i5c3h59b193cmht5gdyzi3a"
 
 static char APP_HOST[] = DEF_APP_HOST;
 static char APP_ID[] = DEF_APP_ID;
@@ -30,7 +32,8 @@ static char THING_ID[] = DEF_THING_ID;
 static char ACCESS_TOKEN[] = DEF_ACCESS_TOKEN;
 static char BUCKET[] = DEF_BUCKET;
 static char OBJECT[] = DEF_OBJECT;
-static char TOPIC[] = "myTopic";
+static char TOPIC[] = DEF_TOPIC;
+static char MQTT_ENDPOINT[] = DEF_MQTT_ENDPOINT;
 static char DUMMY_HEADER[] = "DummyHeader:DummyValue";
 
 static int send_counter;
@@ -85,6 +88,13 @@ static void initBucket(kii_bucket_t* bucket)
     bucket->scope = KII_SCOPE_THING;
     bucket->scope_id = THING_ID;
     bucket->bucket_name = BUCKET;
+}
+
+static void initTopic(kii_topic_t* topic)
+{
+    topic->scope = KII_SCOPE_THING;
+    topic->scope_id = THING_ID;
+    topic->topic_name = TOPIC;
 }
 
 static kii_socket_code_t common_connect_cb(
@@ -870,5 +880,375 @@ TEST(kiiTest, unsubscribe_bucket)
  
     ASSERT_TRUE(kii.response_body != NULL);
     ASSERT_STREQ("", kii.response_body);
+}
+
+TEST(kiiTest, create_topic)
+{
+    kii_error_code_t core_err;
+    kii_state_t state;
+    char buffer[4096];
+    kii_core_t kii;
+    kii_topic_t topic;
+    const char* send_body =
+"PUT https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/topics/" DEF_TOPIC " HTTP/1.1\r\n"
+"host:" DEF_APP_HOST "\r\n"
+"x-kii-appid:" DEF_APP_ID "\r\n"
+"x-kii-appkey:" DEF_APP_KEY "\r\n"
+"authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
+"\r\n";
+    const char* recv_body =
+"HTTP/1.1 204 No Content\r\n"
+"Accept-Ranges: bytes\r\n"
+"Access-Control-Allow-Origin: *\r\n"
+"Access-Control-Expose-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, ETag, X-Step-Count\r\n"
+"Age: 0\r\n"
+"Cache-Control: max-age=0, no-cache, no-store\r\n"
+"Date: Fri, 13 Nov 2015 09:59:15 GMT\r\n"
+"Server: nginx/1.2.3\r\n"
+"X-HTTP-Status-Code: 204\r\n"
+"Connection: keep-alive\r\n"
+"\r\n";
+    test_context_t ctx;
+
+    ctx.send_body = send_body;
+    ctx.recv_body = recv_body;
+
+    init(&kii, buffer, 4096, &ctx, common_connect_cb, common_send_cb,
+            common_recv_cb, common_close_cb);
+
+    initTopic(&topic);
+
+    kii.response_code = 0;
+    kii.response_body = NULL;
+
+    core_err = kii_core_create_topic(&kii, &topic);
+    ASSERT_EQ(KIIE_OK, core_err);
+
+    do {
+        core_err = kii_core_run(&kii);
+        state = kii_core_get_state(&kii);
+    } while (state != KII_STATE_IDLE);
+
+    ASSERT_EQ(KIIE_OK, core_err);
+    ASSERT_EQ(204, kii.response_code);
+    ASSERT_STREQ(THING_ID, kii.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.author.access_token);
+ 
+    ASSERT_TRUE(kii.response_body != NULL);
+    ASSERT_STREQ("",
+            kii.response_body);
+}
+
+TEST(kiiTest, delete_topic)
+{
+    kii_error_code_t core_err;
+    kii_state_t state;
+    char buffer[4096];
+    kii_core_t kii;
+    kii_topic_t topic;
+    const char* send_body =
+"DELETE https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/topics/" DEF_TOPIC " HTTP/1.1\r\n"
+"host:" DEF_APP_HOST "\r\n"
+"x-kii-appid:" DEF_APP_ID "\r\n"
+"x-kii-appkey:" DEF_APP_KEY "\r\n"
+"authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
+"\r\n";
+    const char* recv_body =
+"HTTP/1.1 204 No Content\r\n"
+"Accept-Ranges: bytes\r\n"
+"Access-Control-Allow-Origin: *\r\n"
+"Access-Control-Expose-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, ETag, X-Step-Count\r\n"
+"Age: 0\r\n"
+"Cache-Control: max-age=0, no-cache, no-store\r\n"
+"Date: Fri, 13 Nov 2015 09:56:44 GMT\r\n"
+"Server: nginx/1.2.3\r\n"
+"X-HTTP-Status-Code: 204\r\n"
+"Connection: keep-alive\r\n"
+"\r\n";
+    test_context_t ctx;
+
+    ctx.send_body = send_body;
+    ctx.recv_body = recv_body;
+
+    init(&kii, buffer, 4096, &ctx, common_connect_cb, common_send_cb,
+            common_recv_cb, common_close_cb);
+
+    initTopic(&topic);
+
+    kii.response_code = 0;
+    kii.response_body = NULL;
+
+    core_err = kii_core_delete_topic(&kii, &topic);
+    ASSERT_EQ(KIIE_OK, core_err);
+
+    do {
+        core_err = kii_core_run(&kii);
+        state = kii_core_get_state(&kii);
+    } while (state != KII_STATE_IDLE);
+
+    ASSERT_EQ(KIIE_OK, core_err);
+    ASSERT_EQ(204, kii.response_code);
+    ASSERT_STREQ(THING_ID, kii.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.author.access_token);
+ 
+    ASSERT_TRUE(kii.response_body != NULL);
+    ASSERT_STREQ("", kii.response_body);
+}
+
+TEST(kiiTest, subscribe_topic)
+{
+    kii_error_code_t core_err;
+    kii_state_t state;
+    char buffer[4096];
+    kii_core_t kii;
+    kii_topic_t topic;
+    const char* send_body =
+"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/topics/" DEF_TOPIC "/push/subscriptions/things HTTP/1.1\r\n"
+"host:" DEF_APP_HOST "\r\n"
+"x-kii-appid:" DEF_APP_ID "\r\n"
+"x-kii-appkey:" DEF_APP_KEY "\r\n"
+"authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
+"\r\n";
+    const char* recv_body =
+"HTTP/1.1 204 No Content\r\n"
+"Accept-Ranges: bytes\r\n"
+"Access-Control-Allow-Origin: *\r\n"
+"Access-Control-Expose-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, ETag, X-Step-Count\r\n"
+"Age: 0\r\n"
+"Cache-Control: max-age=0, no-cache, no-store\r\n"
+"Date: Fri, 13 Nov 2015 10:59:08 GMT\r\n"
+"Server: nginx/1.2.3\r\n"
+"X-HTTP-Status-Code: 204\r\n"
+"Connection: keep-alive\r\n"
+"\r\n";
+    test_context_t ctx;
+
+    ctx.send_body = send_body;
+    ctx.recv_body = recv_body;
+
+    init(&kii, buffer, 4096, &ctx, common_connect_cb, common_send_cb,
+            common_recv_cb, common_close_cb);
+
+    initTopic(&topic);
+
+    kii.response_code = 0;
+    kii.response_body = NULL;
+
+    core_err = kii_core_subscribe_topic(&kii, &topic);
+    ASSERT_EQ(KIIE_OK, core_err);
+
+    do {
+        core_err = kii_core_run(&kii);
+        state = kii_core_get_state(&kii);
+    } while (state != KII_STATE_IDLE);
+
+    ASSERT_EQ(KIIE_OK, core_err);
+    ASSERT_EQ(204, kii.response_code);
+    ASSERT_STREQ(THING_ID, kii.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.author.access_token);
+ 
+    ASSERT_TRUE(kii.response_body != NULL);
+    ASSERT_STREQ("", kii.response_body);
+}
+
+TEST(kiiTest, unsubscribe_topic)
+{
+    kii_error_code_t core_err;
+    kii_state_t state;
+    char buffer[4096];
+    kii_core_t kii;
+    kii_topic_t topic;
+    const char* send_body =
+"DELETE https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/topics/" DEF_TOPIC "/push/subscriptions/things/" DEF_THING_ID " HTTP/1.1\r\n"
+"host:" DEF_APP_HOST "\r\n"
+"x-kii-appid:" DEF_APP_ID "\r\n"
+"x-kii-appkey:" DEF_APP_KEY "\r\n"
+"authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
+"\r\n";
+    const char* recv_body =
+"HTTP/1.1 204 No Content\r\n"
+"Accept-Ranges: bytes\r\n"
+"Access-Control-Allow-Origin: *\r\n"
+"Access-Control-Expose-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, ETag, X-Step-Count\r\n"
+"Age: 0\r\n"
+"Cache-Control: max-age=0, no-cache, no-store\r\n"
+"Content-Type: application/vnd.kii.ObjectUpdateResponse+json;charset=UTF-8\r\n"
+"Date: Fri, 13 Nov 2015 10:58:56 GMT\r\n"
+"Server: nginx/1.2.3\r\n"
+"X-HTTP-Status-Code: 204\r\n"
+"Connection: keep-alive\r\n"
+"\r\n";
+    test_context_t ctx;
+
+    ctx.send_body = send_body;
+    ctx.recv_body = recv_body;
+
+    init(&kii, buffer, 4096, &ctx, common_connect_cb, common_send_cb,
+            common_recv_cb, common_close_cb);
+
+    initTopic(&topic);
+
+    kii.response_code = 0;
+    kii.response_body = NULL;
+
+    core_err = kii_core_unsubscribe_topic(&kii, &topic);
+    ASSERT_EQ(KIIE_OK, core_err);
+
+    do {
+        core_err = kii_core_run(&kii);
+        state = kii_core_get_state(&kii);
+    } while (state != KII_STATE_IDLE);
+
+    ASSERT_EQ(KIIE_OK, core_err);
+    ASSERT_EQ(204, kii.response_code);
+    ASSERT_STREQ(THING_ID, kii.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.author.access_token);
+ 
+    ASSERT_TRUE(kii.response_body != NULL);
+    ASSERT_STREQ("", kii.response_body);
+}
+
+TEST(kiiTest, install_thing_push)
+{
+    kii_error_code_t core_err;
+    kii_state_t state;
+    char buffer[4096];
+    kii_core_t kii;
+    const char* send_body =
+"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/installations HTTP/1.1\r\n"
+"host:" DEF_APP_HOST "\r\n"
+"x-kii-appid:" DEF_APP_ID "\r\n"
+"x-kii-appkey:" DEF_APP_KEY "\r\n"
+"content-type:application/vnd.kii.InstallationCreationRequest+json\r\n"
+"authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
+"content-length:47\r\n"
+"\r\n"
+"{\"installationType\":\"MQTT\",\"development\":false}";
+    const char* recv_body =
+"HTTP/1.1 201 Created\r\n"
+"Accept-Ranges: bytes\r\n"
+"Access-Control-Allow-Origin: *\r\n"
+"Access-Control-Expose-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, ETag, X-Step-Count\r\n"
+"Age: 0\r\n"
+"Cache-Control: max-age=0, no-cache, no-store\r\n"
+"Content-Type: application/vnd.kii.InstallationCreationResponse+json;charset=UTF-8\r\n"
+"Date: Fri, 13 Nov 2015 11:20:11 GMT\r\n"
+"Server: nginx/1.2.3\r\n"
+"X-HTTP-Status-Code: 204\r\n"
+"Content-Length: 125\r\n"
+"Connection: keep-alive\r\n"
+"\r\n"
+"{\n"
+"  \"installationID\" : \"" DEF_MQTT_ENDPOINT "\",\n"
+"  \"installationRegistrationID\" : \"b1d418da-55e4-4372-8463-9f42b90f9e07\"\n"
+"}";
+    test_context_t ctx;
+
+    ctx.send_body = send_body;
+    ctx.recv_body = recv_body;
+
+    init(&kii, buffer, 4096, &ctx, common_connect_cb, common_send_cb,
+            common_recv_cb, common_close_cb);
+
+    kii.response_code = 0;
+    kii.response_body = NULL;
+
+    core_err = kii_core_install_thing_push(&kii, KII_FALSE);
+    ASSERT_EQ(KIIE_OK, core_err);
+
+    do {
+        core_err = kii_core_run(&kii);
+        state = kii_core_get_state(&kii);
+    } while (state != KII_STATE_IDLE);
+
+    ASSERT_EQ(KIIE_OK, core_err);
+    ASSERT_EQ(201, kii.response_code);
+    ASSERT_STREQ(THING_ID, kii.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.author.access_token);
+ 
+    ASSERT_TRUE(kii.response_body != NULL);
+    ASSERT_STREQ(
+            "{\n"
+            "  \"installationID\" : \"" DEF_MQTT_ENDPOINT "\",\n"
+            "  \"installationRegistrationID\" : \"b1d418da-55e4-4372-8463-9f42b90f9e07\"\n"
+            "}",
+            kii.response_body);
+}
+
+TEST(kiiTest, get_endpoint)
+{
+    kii_error_code_t core_err;
+    kii_state_t state;
+    char buffer[4096];
+    kii_core_t kii;
+    const char* send_body =
+"GET https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/installations/" DEF_MQTT_ENDPOINT "/mqtt-endpoint HTTP/1.1\r\n"
+"host:" DEF_APP_HOST "\r\n"
+"x-kii-appid:" DEF_APP_ID "\r\n"
+"x-kii-appkey:" DEF_APP_KEY "\r\n"
+"authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
+"\r\n";
+    const char* recv_body =
+"HTTP/1.1 200 OK\r\n"
+"Accept-Ranges: bytes\r\n"
+"Access-Control-Allow-Origin: *\r\n"
+"Access-Control-Expose-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, ETag, X-Step-Count\r\n"
+"Age: 0\r\n"
+"Cache-Control: max-age=0, no-cache, no-store\r\n"
+"Content-Type: application/vnd.kii.MQTTEndpointResponse+json;charset=UTF-8\r\n"
+"Date: Fri, 13 Nov 2015 11:44:01 GMT\r\n"
+"Server: nginx/1.2.3\r\n"
+"X-HTTP-Status-Code: 200\r\n"
+"X-MQTT-TTL: 2147483647\r\n"
+"Content-Length: 341\r\n"
+"Connection: keep-alive\r\n"
+"\r\n"
+"{\n"
+"  \"installationID\" : \"" DEF_MQTT_ENDPOINT "\",\n"
+"  \"username\" : \"9ab34d8b-GUYXr9ckHpNBZLLQhUMdsxN\",\n"
+"  \"password\" : \"ZsSqnnAREOpcRsqzAfTAVwKikeQFcdCmAZTlcWlISwqFUYTDINlBeLwQSYCrIIKd\",\n"
+"  \"mqttTopic\" : \"sFJGc3o0fmvSK8d3KRSMYZM\",\n"
+"  \"host\" : \"jp-mqtt-0a0bfd4468f3.kii.com\",\n"
+"  \"portTCP\" : 1883,\n"
+"  \"portSSL\" : 8883,\n"
+"  \"X-MQTT-TTL\" : 2147483647\n"
+"}";
+    test_context_t ctx;
+
+    ctx.send_body = send_body;
+    ctx.recv_body = recv_body;
+
+    init(&kii, buffer, 4096, &ctx, common_connect_cb, common_send_cb,
+            common_recv_cb, common_close_cb);
+
+    kii.response_code = 0;
+    kii.response_body = NULL;
+
+    core_err = kii_core_get_mqtt_endpoint(&kii, MQTT_ENDPOINT);
+    ASSERT_EQ(KIIE_OK, core_err);
+
+    do {
+        core_err = kii_core_run(&kii);
+        state = kii_core_get_state(&kii);
+    } while (state != KII_STATE_IDLE);
+
+    ASSERT_EQ(KIIE_OK, core_err);
+    ASSERT_EQ(200, kii.response_code);
+    ASSERT_STREQ(THING_ID, kii.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.author.access_token);
+ 
+    ASSERT_TRUE(kii.response_body != NULL);
+    ASSERT_STREQ(
+            "{\n"
+            "  \"installationID\" : \"" DEF_MQTT_ENDPOINT "\",\n"
+            "  \"username\" : \"9ab34d8b-GUYXr9ckHpNBZLLQhUMdsxN\",\n"
+            "  \"password\" : \"ZsSqnnAREOpcRsqzAfTAVwKikeQFcdCmAZTlcWlISwqFUYTDINlBeLwQSYCrIIKd\",\n"
+            "  \"mqttTopic\" : \"sFJGc3o0fmvSK8d3KRSMYZM\",\n"
+            "  \"host\" : \"jp-mqtt-0a0bfd4468f3.kii.com\",\n"
+            "  \"portTCP\" : 1883,\n"
+            "  \"portSSL\" : 8883,\n"
+            "  \"X-MQTT-TTL\" : 2147483647\n"
+            "}",
+            kii.response_body);
 }
 
