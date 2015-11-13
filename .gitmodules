@@ -1,6 +1,3 @@
-[submodule "kii-core"]
-	path = kii-core
-	url = git@github.com:KiiCorp/KiiThingSDK-Embedded-Core.git
 [submodule "kii_json"]
 	path = kii_json
 	url = git@github.com:KiiCorp/kii_json.git
