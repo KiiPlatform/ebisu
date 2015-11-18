@@ -24,6 +24,9 @@
 #define DEF_OBJECT "myObject"
 #define DEF_TOPIC "myTopic"
 #define DEF_MQTT_ENDPOINT "p6i5c3h59b193cmht5gdyzi3a"
+#define DEF_DUMMY_KEY "DummyHeader"
+#define DEF_DUMMY_VALUE "DummyValue"
+#define DEF_DUMMY_HEADER DEF_DUMMY_KEY ":" DEF_DUMMY_VALUE
 
 static char APP_HOST[] = DEF_APP_HOST;
 static char APP_ID[] = DEF_APP_ID;
@@ -34,7 +37,7 @@ static char BUCKET[] = DEF_BUCKET;
 static char OBJECT[] = DEF_OBJECT;
 static char TOPIC[] = DEF_TOPIC;
 static char MQTT_ENDPOINT[] = DEF_MQTT_ENDPOINT;
-static char DUMMY_HEADER[] = "DummyHeader:DummyValue";
+static char DUMMY_HEADER[] = DEF_DUMMY_HEADER;
 
 static int send_counter;
 static int recv_counter;
@@ -1248,6 +1251,166 @@ TEST(kiiTest, get_endpoint)
             "  \"portTCP\" : 1883,\n"
             "  \"portSSL\" : 8883,\n"
             "  \"X-MQTT-TTL\" : 2147483647\n"
+            "}",
+            kii.response_body);
+}
+
+TEST(kiiTest, api_call)
+{
+    kii_error_code_t core_err;
+    kii_state_t state;
+    char buffer[4096];
+    kii_core_t kii;
+    const char* send_body =
+"POST https://" DEF_APP_HOST "/api/oauth2/token HTTP/1.1\r\n"
+"host:" DEF_APP_HOST "\r\n"
+"x-kii-appid:" DEF_APP_ID "\r\n"
+"x-kii-appkey:" DEF_APP_KEY "\r\n"
+"content-type:application/json\r\n"
+DEF_DUMMY_HEADER "\r\n"
+"content-length:59\r\n"
+"\r\n"
+"{\"username\":\"VENDOR_THING_ID:1426830900\",\"password\":\"1234\"}";
+    const char* recv_body =
+"HTTP/1.1 200 OK\r\n"
+"Accept-Ranges: bytes\r\n"
+"Access-Control-Allow-Origin: *\r\n"
+"Access-Control-Expose-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, ETag, X-Step-Count\r\n"
+"Age: 0\r\n"
+"Cache-Control: max-age=0, no-cache, no-store\r\n"
+"Content-Type: application/json;charset=UTF-8\r\n"
+"Date: Fri, 25 Sep 2015 11:07:16 GMT\r\n"
+"Server: nginx/1.2.3\r\n"
+"Via: 1.1 varnish\r\n"
+"X-HTTP-Status-Code: 200\r\n"
+"X-Varnish: 726929556\r\n"
+"Content-Length: 176\r\n"
+"Connection: keep-alive\r\n"
+"\r\n"
+"{\n"
+"  \"id\" : \"" DEF_THING_ID "\",\n"
+"  \"access_token\" : \"" DEF_ACCESS_TOKEN "\",\n"
+"  \"expires_in\" : 2147483639,\n"
+"  \"token_type\" : \"Bearer\"\n"
+"}";
+    test_context_t ctx;
+
+    ctx.send_body = send_body;
+    ctx.recv_body = recv_body;
+
+    init(&kii, buffer, 4096, &ctx, common_connect_cb, common_send_cb,
+            common_recv_cb, common_close_cb);
+
+    strcpy(kii.author.author_id, "");
+    strcpy(kii.author.access_token, "");
+    kii.response_code = 0;
+    kii.response_body = NULL;
+
+    core_err = kii_core_api_call(&kii, "POST", "api/oauth2/token",
+            "{\"username\":\"VENDOR_THING_ID:1426830900\",\"password\":\"1234\"}",
+            59, "application/json", DUMMY_HEADER, NULL);
+    ASSERT_EQ(KIIE_OK, core_err);
+
+    do {
+        core_err = kii_core_run(&kii);
+        state = kii_core_get_state(&kii);
+    } while (state != KII_STATE_IDLE);
+
+    ASSERT_EQ(KIIE_OK, core_err);
+    ASSERT_EQ(200, kii.response_code);
+
+    ASSERT_TRUE(kii.response_body != NULL);
+    ASSERT_STREQ(
+            "{\n"
+            "  \"id\" : \"" DEF_THING_ID "\",\n"
+            "  \"access_token\" : \"" DEF_ACCESS_TOKEN "\",\n"
+            "  \"expires_in\" : 2147483639,\n"
+            "  \"token_type\" : \"Bearer\"\n"
+            "}",
+            kii.response_body);
+}
+
+TEST(kiiTest, api_call_2)
+{
+    kii_error_code_t core_err;
+    kii_state_t state;
+    char buffer[4096];
+    kii_core_t kii;
+    const char* send_body =
+"POST https://" DEF_APP_HOST "/api/oauth2/token HTTP/1.1\r\n"
+"host:" DEF_APP_HOST "\r\n"
+"x-kii-appid:" DEF_APP_ID "\r\n"
+"x-kii-appkey:" DEF_APP_KEY "\r\n"
+"content-type:application/json\r\n"
+DEF_DUMMY_HEADER "\r\n"
+"content-length:59\r\n"
+"\r\n"
+"{\"username\":\"VENDOR_THING_ID:1426830900\",\"password\":\"1234\"}";
+    const char* recv_body =
+"HTTP/1.1 200 OK\r\n"
+"Accept-Ranges: bytes\r\n"
+"Access-Control-Allow-Origin: *\r\n"
+"Access-Control-Expose-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, ETag, X-Step-Count\r\n"
+"Age: 0\r\n"
+"Cache-Control: max-age=0, no-cache, no-store\r\n"
+"Content-Type: application/json;charset=UTF-8\r\n"
+"Date: Fri, 25 Sep 2015 11:07:16 GMT\r\n"
+"Server: nginx/1.2.3\r\n"
+"Via: 1.1 varnish\r\n"
+"X-HTTP-Status-Code: 200\r\n"
+"X-Varnish: 726929556\r\n"
+"Content-Length: 176\r\n"
+"Connection: keep-alive\r\n"
+"\r\n"
+"{\n"
+"  \"id\" : \"" DEF_THING_ID "\",\n"
+"  \"access_token\" : \"" DEF_ACCESS_TOKEN "\",\n"
+"  \"expires_in\" : 2147483639,\n"
+"  \"token_type\" : \"Bearer\"\n"
+"}";
+    test_context_t ctx;
+
+    ctx.send_body = send_body;
+    ctx.recv_body = recv_body;
+
+    init(&kii, buffer, 4096, &ctx, common_connect_cb, common_send_cb,
+            common_recv_cb, common_close_cb);
+
+    strcpy(kii.author.author_id, "");
+    strcpy(kii.author.access_token, "");
+    kii.response_code = 0;
+    kii.response_body = NULL;
+
+    core_err = kii_core_api_call_start(&kii, "POST", "api/oauth2/token",
+            "application/json", KII_FALSE);
+    ASSERT_EQ(KIIE_OK, core_err);
+    core_err = kii_core_api_call_append_header(&kii, DEF_DUMMY_KEY,
+            DEF_DUMMY_VALUE);
+    ASSERT_EQ(KIIE_OK, core_err);
+    core_err = kii_core_api_call_append_body(&kii,
+            "{\"username\":\"VENDOR_THING_ID:1426830900\",", 41);
+    ASSERT_EQ(KIIE_OK, core_err);
+    core_err = kii_core_api_call_append_body(&kii,
+            "\"password\":\"1234\"}", 18);
+    ASSERT_EQ(KIIE_OK, core_err);
+    core_err = kii_core_api_call_end(&kii);
+    ASSERT_EQ(KIIE_OK, core_err);
+
+    do {
+        core_err = kii_core_run(&kii);
+        state = kii_core_get_state(&kii);
+    } while (state != KII_STATE_IDLE);
+
+    ASSERT_EQ(KIIE_OK, core_err);
+    ASSERT_EQ(200, kii.response_code);
+
+    ASSERT_TRUE(kii.response_body != NULL);
+    ASSERT_STREQ(
+            "{\n"
+            "  \"id\" : \"" DEF_THING_ID "\",\n"
+            "  \"access_token\" : \"" DEF_ACCESS_TOKEN "\",\n"
+            "  \"expires_in\" : 2147483639,\n"
+            "  \"token_type\" : \"Bearer\"\n"
             "}",
             kii.response_body);
 }
