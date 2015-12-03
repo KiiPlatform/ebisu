@@ -745,14 +745,104 @@ TEST(kiiTest, object_commit_upload)
 
 TEST(kiiTest, object_download_body_at_once)
 {
-    // TODO:
-    FAIL();
+    int err;
+    char buffer[4096];
+    kii_t kii;
+    kii_bucket_t bucket;
+    unsigned int length;
+    const char* send_body =
+"GET https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT "/body HTTP/1.1\r\n"
+"host:" DEF_APP_HOST "\r\n"
+"x-kii-appid:" DEF_APP_ID "\r\n"
+"x-kii-appkey:" DEF_APP_KEY "\r\n"
+"authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
+"Accept: */*\r\n"
+"\r\n";
+    const char* recv_body =
+"HTTP/1.1 200 OK\r\n"
+"Accept-Ranges: bytes\r\n"
+"Access-Control-Allow-Origin: *\r\n"
+"Access-Control-Expose-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, ETag, X-Step-Count\r\n"
+"Age: 0\r\n"
+"Cache-Control: max-age=0, no-cache, no-store\r\n"
+"Content-Type: application/json\r\n"
+"Date: Thu, 03 Dec 2015 09:32:05 GMT\r\n"
+"ETag: \"85f5ic2n6fdg89mrh29i0wio84\"\r\n"
+"Server: nginx/1.2.3\r\n"
+"X-HTTP-Status-Code: 200\r\n"
+"Content-Length: 2\r\n"
+"Connection: keep-alive\r\n"
+"\r\n"
+"{}";
+    test_context_t ctx;
+
+    ctx.send_body = send_body;
+    ctx.recv_body = recv_body;
+
+    init(&kii, buffer, 4096, &ctx);
+
+    initBucket(&bucket);
+
+    length = 0;
+    err = kii_object_download_body_at_once(&kii, &bucket, OBJECT, &length);
+    ASSERT_EQ(0, err);
+
+    ASSERT_EQ(2, length);
+    ASSERT_STREQ("{}", kii.kii_core.response_body);
 }
 
 TEST(kiiTest, object_download_body)
 {
-    // TODO:
-    FAIL();
+    int err;
+    char buffer[4096];
+    kii_t kii;
+    kii_bucket_t bucket;
+    unsigned int actual_length;
+    unsigned int total_length;
+    const char* send_body =
+"GET https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT "/body HTTP/1.1\r\n"
+"host:" DEF_APP_HOST "\r\n"
+"x-kii-appid:" DEF_APP_ID "\r\n"
+"x-kii-appkey:" DEF_APP_KEY "\r\n"
+"authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
+"Range: bytes=0-1\r\n"
+"Accept: */*\r\n"
+"\r\n";
+    const char* recv_body =
+"HTTP/1.1 206 Partial Content\r\n"
+"Accept-Ranges: bytes\r\n"
+"Access-Control-Allow-Origin: *\r\n"
+"Access-Control-Expose-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, ETag, X-Step-Count\r\n"
+"Age: 0\r\n"
+"Cache-Control: max-age=0, no-cache, no-store\r\n"
+"Content-Range: bytes 0-1/2\r\n"
+"Content-Type: application/json\r\n"
+"Date: Thu, 03 Dec 2015 09:54:31 GMT\r\n"
+"ETag: \"85f5ic2n6fdg89mrh29i0wio8\"\r\n"
+"Server: nginx/1.2.3\r\n"
+"X-HTTP-Status-Code: 206\r\n"
+"Content-Length: 2\r\n"
+"Connection: keep-alive\r\n"
+"\r\n"
+"{}";
+    test_context_t ctx;
+
+    ctx.send_body = send_body;
+    ctx.recv_body = recv_body;
+
+    init(&kii, buffer, 4096, &ctx);
+
+    initBucket(&bucket);
+
+    actual_length = 0;
+    total_length = 0;
+    err = kii_object_download_body(&kii, &bucket, OBJECT, 0, 2, &actual_length,
+            &total_length);
+    ASSERT_EQ(0, err);
+
+    ASSERT_EQ(2, actual_length);
+    ASSERT_EQ(2, total_length);
+    ASSERT_STREQ("{}", kii.kii_core.response_body);
 }
 
 TEST(kiiTest, push_subscribe_bucket)
