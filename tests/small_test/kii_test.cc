@@ -27,6 +27,7 @@
 #define DEF_DUMMY_KEY "DummyHeader"
 #define DEF_DUMMY_VALUE "DummyValue"
 #define DEF_DUMMY_HEADER DEF_DUMMY_KEY ":" DEF_DUMMY_VALUE
+#define DEF_UPLOAD_ID "MjAxNTEyMDMhODVmNWljMm42ZmRnODltcmgyOWkwd2lvOA"
 
 static char APP_HOST[] = DEF_APP_HOST;
 static char APP_ID[] = DEF_APP_ID;
@@ -38,6 +39,7 @@ static char OBJECT[] = DEF_OBJECT;
 static char TOPIC[] = DEF_TOPIC;
 static char MQTT_ENDPOINT[] = DEF_MQTT_ENDPOINT;
 static char DUMMY_HEADER[] = DEF_DUMMY_HEADER;
+static char UPLOAD_ID[] = DEF_UPLOAD_ID;
 
 typedef struct _test_context
 {
@@ -270,7 +272,7 @@ TEST(kiiTest, object_create)
     char buffer[4096];
     kii_t kii;
     kii_bucket_t bucket;
-    char objectId[KII_OBJECTID_SIZE + 1];
+    char object_id[KII_OBJECTID_SIZE + 1];
     const char* send_body =
 "POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects HTTP/1.1\r\n"
 "host:" DEF_APP_HOST "\r\n"
@@ -313,10 +315,10 @@ TEST(kiiTest, object_create)
 
     initBucket(&bucket);
 
-    err = kii_object_create(&kii, &bucket, "{}", "application/json", objectId);
+    err = kii_object_create(&kii, &bucket, "{}", "application/json", object_id);
     ASSERT_EQ(0, err);
 
-    ASSERT_STREQ("10e9d740-673b-11e5-ac56-123143070e33", objectId);
+    ASSERT_STREQ("10e9d740-673b-11e5-ac56-123143070e33", object_id);
 }
 
 TEST(kiiTest, object_create_with_id)
@@ -555,14 +557,190 @@ TEST(kiiTest, object_get)
 
 TEST(kiiTest, object_upload_body_at_once)
 {
-    // TODO:
-    FAIL();
+    int err;
+    char buffer[4096];
+    kii_t kii;
+    kii_bucket_t bucket;
+    const char* send_body =
+"PUT https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT "/body HTTP/1.1\r\n"
+"host:" DEF_APP_HOST "\r\n"
+"x-kii-appid:" DEF_APP_ID "\r\n"
+"x-kii-appkey:" DEF_APP_KEY "\r\n"
+"content-type:application/json\r\n"
+"authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
+"content-length:2\r\n"
+"\r\n"
+"{}";
+    const char* recv_body =
+"HTTP/1.1 200 OK\r\n"
+"Accept-Ranges: bytes\r\n"
+"Access-Control-Allow-Origin: *\r\n"
+"Access-Control-Expose-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, ETag, X-Step-Count\r\n"
+"Age: 0\r\n"
+"Cache-Control: max-age=0, no-cache, no-store\r\n"
+"Content-Type: application/vnd.kii.ObjectBodyUpdateResponse+json;charset=UTF-8\r\n"
+"Date: Thu, 03 Dec 2015 05:33:09 GMT\r\n"
+"ETag: \"awkzybqxot3i12w8m7belhj2a\"\r\n"
+"Last-Modified: Thu, 03 Dec 2015 05:31:31 GMT\r\n"
+"Server: nginx/1.2.3\r\n"
+"X-HTTP-Status-Code: 200\r\n"
+"Content-Length: 34\r\n"
+"Connection: keep-alive\r\n"
+"\r\n"
+"{\n"
+"  \"modifiedAt\" : 1449120691863\n"
+"}";
+    test_context_t ctx;
+
+    ctx.send_body = send_body;
+    ctx.recv_body = recv_body;
+
+    init(&kii, buffer, 4096, &ctx);
+
+    initBucket(&bucket);
+
+    err = kii_object_upload_body_at_once(&kii, &bucket, OBJECT,
+            "application/json", "{}", 2);
+    ASSERT_EQ(0, err);
+}
+
+TEST(kiiTest, object_init_upload_body)
+{
+    int err;
+    char buffer[4096];
+    char upload_id[KII_UPLOADID_SIZE + 1];
+    kii_t kii;
+    kii_bucket_t bucket;
+    const char* send_body =
+"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT "/body/uploads HTTP/1.1\r\n"
+"host:" DEF_APP_HOST "\r\n"
+"x-kii-appid:" DEF_APP_ID "\r\n"
+"x-kii-appkey:" DEF_APP_KEY "\r\n"
+"content-type:application/vnd.kii.startobjectbodyuploadrequest+json\r\n"
+"authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
+"accept:application/vnd.kii.startobjectbodyuploadresponse+json\r\n"
+"content-length:2\r\n"
+"\r\n"
+"{}";
+    const char* recv_body =
+"HTTP/1.1 200 OK\r\n"
+"Accept-Ranges: bytes\r\n"
+"Access-Control-Allow-Origin: *\r\n"
+"Access-Control-Expose-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, ETag, X-Step-Count\r\n"
+"Age: 0\r\n"
+"Cache-Control: max-age=0, no-cache, no-store\r\n"
+"Content-Type: application/vnd.kii.ObjectBodyUpdateResponse+json;charset=UTF-8\r\n"
+"Date: Thu, 03 Dec 2015 06:13:56 GMT\r\n"
+"Server: nginx/1.2.3\r\n"
+"X-HTTP-Status-Code: 200\r\n"
+"Content-Length: 67\r\n"
+"Connection: keep-alive\r\n"
+"\r\n"
+"{\n"
+"  \"uploadID\" : \"" DEF_UPLOAD_ID "\"\n"
+"}";
+    test_context_t ctx;
+
+    ctx.send_body = send_body;
+    ctx.recv_body = recv_body;
+
+    init(&kii, buffer, 4096, &ctx);
+
+    initBucket(&bucket);
+
+    err = kii_object_init_upload_body(&kii, &bucket, OBJECT, upload_id);
+    ASSERT_EQ(0, err);
+
+    ASSERT_STREQ(UPLOAD_ID, upload_id);
 }
 
 TEST(kiiTest, object_upload_body)
 {
-    // TODO:
-    FAIL();
+    int err;
+    char buffer[4096];
+    kii_t kii;
+    kii_bucket_t bucket;
+    kii_chunk_data_t chunk;
+    const char* send_body =
+"PUT https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT "/body/uploads/" DEF_UPLOAD_ID "/data HTTP/1.1\r\n"
+"host:" DEF_APP_HOST "\r\n"
+"x-kii-appid:" DEF_APP_ID "\r\n"
+"x-kii-appkey:" DEF_APP_KEY "\r\n"
+"content-type:application/json\r\n"
+"authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
+"Accept: application/json, application/*+json\r\n"
+"Content-Range: bytes=0-1/2\r\n"
+"content-length:2\r\n"
+"\r\n"
+"{}";
+    const char* recv_body =
+"HTTP/1.1 204 No Content\r\n"
+"Accept-Ranges: bytes\r\n"
+"Access-Control-Allow-Origin: *\r\n"
+"Access-Control-Expose-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, ETag, X-Step-Count\r\n"
+"Age: 0\r\n"
+"Cache-Control: max-age=0, no-cache, no-store\r\n"
+"ClientID: " DEF_APP_ID "\r\n"
+"Date: Thu, 03 Dec 2015 06:17:34 GMT\r\n"
+"Server: nginx/1.2.3\r\n"
+"X-HTTP-Status-Code: 204\r\n"
+"Connection: keep-alive\r\n"
+"\r\n";
+    test_context_t ctx;
+
+    ctx.send_body = send_body;
+    ctx.recv_body = recv_body;
+
+    init(&kii, buffer, 4096, &ctx);
+
+    initBucket(&bucket);
+
+    chunk.chunk = "{}";
+    chunk.body_content_type = "application/json";
+    chunk.length = 2;
+    chunk.position = 0;
+    chunk.total_length = 2;
+    err = kii_object_upload_body(&kii, &bucket, OBJECT, UPLOAD_ID, &chunk);
+    ASSERT_EQ(0, err);
+}
+
+TEST(kiiTest, object_commit_upload)
+{
+    int err;
+    char buffer[4096];
+    kii_t kii;
+    kii_bucket_t bucket;
+    const char* send_body =
+"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT "/body/uploads/" DEF_UPLOAD_ID "/status/committed HTTP/1.1\r\n"
+"host:" DEF_APP_HOST "\r\n"
+"x-kii-appid:" DEF_APP_ID "\r\n"
+"x-kii-appkey:" DEF_APP_KEY "\r\n"
+"authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
+"\r\n";
+    const char* recv_body =
+"HTTP/1.1 204 No Content\r\n"
+"Accept-Ranges: bytes\r\n"
+"Access-Control-Allow-Origin: *\r\n"
+"Access-Control-Expose-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, ETag, X-Step-Count\r\n"
+"Age: 0\r\n"
+"Cache-Control: max-age=0, no-cache, no-store\r\n"
+"ClientID: " DEF_APP_ID "\r\n"
+"Date: Thu, 03 Dec 2015 06:13:58 GMT\r\n"
+"Server: nginx/1.2.3\r\n"
+"X-HTTP-Status-Code: 204\r\n"
+"Connection: keep-alive\r\n"
+"\r\n";
+    test_context_t ctx;
+
+    ctx.send_body = send_body;
+    ctx.recv_body = recv_body;
+
+    init(&kii, buffer, 4096, &ctx);
+
+    initBucket(&bucket);
+
+    err = kii_object_commit_upload(&kii, &bucket, OBJECT, UPLOAD_ID, 1);
+    ASSERT_EQ(0, err);
 }
 
 TEST(kiiTest, object_download_body_at_once)
