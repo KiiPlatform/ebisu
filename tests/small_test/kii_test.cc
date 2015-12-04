@@ -1082,12 +1082,6 @@ TEST(kiiTest, push_delete_topic)
     ASSERT_EQ(0, err);
 }
 
-TEST(kiiTest, push_start_routine)
-{
-    // TODO:
-    FAIL();
-}
-
 TEST(kiiTest, server_code_execute)
 {
     int err;
