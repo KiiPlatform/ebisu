@@ -1090,8 +1090,44 @@ TEST(kiiTest, push_start_routine)
 
 TEST(kiiTest, server_code_execute)
 {
-    // TODO:
-    FAIL();
+    int err;
+    char buffer[4096];
+    kii_t kii;
+    const char* send_body =
+"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/server-code/versions/current/test_code HTTP/1.1\r\n"
+"host:" DEF_APP_HOST "\r\n"
+"x-kii-appid:" DEF_APP_ID "\r\n"
+"x-kii-appkey:" DEF_APP_KEY "\r\n"
+"content-type:application/json\r\n"
+"authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
+"\r\n";
+    const char* recv_body =
+"HTTP/1.1 200 OK\r\n"
+"Accept-Ranges: bytes\r\n"
+"Access-Control-Allow-Origin: *\r\n"
+"Access-Control-Expose-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, ETag, X-Step-Count\r\n"
+"Age: 0\r\n"
+"Cache-Control: max-age=0, no-cache, no-store\r\n"
+"Date: Fri, 13 Nov 2015 09:59:15 GMT\r\n"
+"Server: nginx/1.2.3\r\n"
+"X-HTTP-Status-Code: 200\r\n"
+"Content-Type: application/json;charset=UTF-8\r\n"
+"Content-Length: 29\r\n"
+"Connection: keep-alive\r\n"
+"\r\n"
+"{\"returnValue\":\"returnValue\"}";
+    test_context_t ctx;
+
+    ctx.send_body = send_body;
+    ctx.recv_body = recv_body;
+
+    init(&kii, buffer, 4096, &ctx);
+
+    err = kii_server_code_execute(&kii, "test_code", NULL);
+    ASSERT_EQ(0, err);
+
+    ASSERT_STREQ("{\"returnValue\":\"returnValue\"}",
+            kii.kii_core.response_body);
 }
 
 TEST(kiiTest, api_call)
