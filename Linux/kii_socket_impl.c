@@ -1,5 +1,7 @@
 #include "kii_socket_impl.h"
 
+#include "kii_mqtt.h"
+
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -8,6 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <errno.h>
 
 kii_socket_code_t
     mqtt_connect_cb(kii_socket_context_t* socket_context, const char* host,
@@ -33,6 +36,19 @@ kii_socket_code_t
         printf("failed to init socket.\n");
         return KII_SOCKETC_FAIL;
     }
+
+#ifdef KII_PUSH_PING_ENABLE
+    {
+        struct timeval timeout;
+        timeout.tv_sec = KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE * 2;
+        timeout.tv_usec = 0;
+        if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout,
+                        sizeof(timeout)) != 0) {
+            printf("fail to set option for socket: %d\n", errno);
+            return KII_SOCKETC_FAIL;
+        }
+    }
+#endif
 
     if (connect(sock, (struct sockaddr*) &server, sizeof(server)) == -1 ){
         printf("failed to connect socket.\n");

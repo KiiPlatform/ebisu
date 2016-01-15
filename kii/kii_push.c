@@ -8,15 +8,8 @@
 #include "kii_core.h"
 #include "kii_json_utils.h"
 
-#define KII_PUSH_PING_ENABLE 1
 #define KII_PUSH_INSTALLATIONID_SIZE 64
 #define KII_PUSH_TOPIC_HEADER_SIZE 8
-
-#if(KII_PUSH_PING_ENABLE)
-#define KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE 30
-#else
-#define KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE 0
-#endif
 
 typedef enum
 {

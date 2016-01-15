@@ -4,6 +4,14 @@
 #include "kii_core.h"
 #include "kii.h"
 
+#define KII_PUSH_PING_ENABLE 1
+
+#if(KII_PUSH_PING_ENABLE)
+#define KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE 1
+#else
+#define KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE 0
+#endif
+
 enum QoS { QOS0, QOS1, QOS2 };
 
 typedef struct kii_mqtt_endpoint_t {
