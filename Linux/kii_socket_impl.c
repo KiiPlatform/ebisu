@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 kii_socket_code_t
-    connect_cb(kii_socket_context_t* socket_context, const char* host,
+    mqtt_connect_cb(kii_socket_context_t* socket_context, const char* host,
             unsigned int port)
 {
     int sock;
@@ -43,7 +43,7 @@ kii_socket_code_t
 }
 
 kii_socket_code_t
-    send_cb(kii_socket_context_t* socket_context,
+    mqtt_send_cb(kii_socket_context_t* socket_context,
             const char* buffer,
             size_t length)
 {
@@ -61,7 +61,7 @@ kii_socket_code_t
 }
 
 kii_socket_code_t
-    recv_cb(kii_socket_context_t* socket_context,
+    mqtt_recv_cb(kii_socket_context_t* socket_context,
             char* buffer,
             size_t length_to_read,
             size_t* out_actual_length)
@@ -79,7 +79,7 @@ kii_socket_code_t
 }
 
 kii_socket_code_t
-    close_cb(kii_socket_context_t* socket_context)
+    mqtt_close_cb(kii_socket_context_t* socket_context)
 {
     int sock;
     sock = socket_context->socket;
