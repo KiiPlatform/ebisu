@@ -313,6 +313,53 @@ exit:
     return ret;
 }
 
+static int kiiPush_prepareEndpoint(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
+{
+    char installation_id[KII_PUSH_INSTALLATIONID_SIZE + 1];
+    kiiPush_endpointState_e endpointState;
+
+    if(kiiPush_install(kii, KII_FALSE, installation_id,
+            sizeof(installation_id) / sizeof(installation_id[0])) != 0)
+    {
+        return -1;
+    }
+
+    do
+    {
+        kii->delay_ms_cb(1000);
+        endpointState = kiiPush_retrieveEndpoint(kii, installation_id,
+                endpoint);
+    }
+    while(endpointState == KIIPUSH_ENDPOINT_UNAVAILABLE);
+
+    if(endpointState != KIIPUSH_ENDPOINT_READY)
+    {
+        return -1;
+    }
+    M_KII_LOG(kii->kii_core.logger_cb("installationID:%s\r\n",
+                    installation_id));
+    M_KII_LOG(kii->kii_core.logger_cb("mqttTopic:%s\r\n", endpoint->topic));
+    M_KII_LOG(kii->kii_core.logger_cb("host:%s\r\n", endpoint->host));
+    M_KII_LOG(kii->kii_core.logger_cb("username:%s\r\n", endpoint->username));
+    M_KII_LOG(kii->kii_core.logger_cb("password:%s\r\n", endpoint->password));
+
+    return 0;
+}
+
+static int kiiPush_subscribe(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
+{
+    if(kiiMQTT_connect(kii, endpoint, KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE) < 0)
+    {
+        return -1;
+    }
+    else if(kiiMQTT_subscribe(kii, endpoint->topic, QOS0) < 0)
+    {
+        return -1;
+    }
+
+    return 0;
+}
+
 static void* kiiPush_recvMsgTask(void* sdata)
 {
     int remainingLen;
@@ -323,12 +370,9 @@ static void* kiiPush_recvMsgTask(void* sdata)
     size_t bytes = 0;
     size_t rcvdCounter = 0;
     KII_PUSH_RECEIVED_CB callback;
-    kiiPush_endpointState_e endpointState;
     kii_t* kii;
     kii_mqtt_endpoint_t endpoint;
-    char installation_id[KII_PUSH_INSTALLATIONID_SIZE + 1];
 
-    memset(installation_id, 0x00, sizeof(installation_id));
     memset(&endpoint, 0x00, sizeof(kii_mqtt_endpoint_t));
 
     kii = (kii_t*) sdata;
@@ -337,34 +381,12 @@ static void* kiiPush_recvMsgTask(void* sdata)
     {
         if(kii->_mqtt_endpoint_ready == 0)
         {
-            if(kiiPush_install(kii, KII_FALSE, installation_id,
-                    sizeof(installation_id) / sizeof(installation_id[0])) != 0)
+            if (kiiPush_prepareEndpoint(kii, &endpoint) != 0)
             {
                 kii->delay_ms_cb(1000);
                 continue;
             }
-
-            do
-            {
-                kii->delay_ms_cb(1000);
-                endpointState = kiiPush_retrieveEndpoint(kii, installation_id, &endpoint);
-            }
-            while(endpointState == KIIPUSH_ENDPOINT_UNAVAILABLE);
-
-            if(endpointState != KIIPUSH_ENDPOINT_READY)
-            {
-                continue;
-            }
-            M_KII_LOG(kii->kii_core.logger_cb("installationID:%s\r\n", installation_id));
-            M_KII_LOG(kii->kii_core.logger_cb("mqttTopic:%s\r\n", endpoint.topic));
-            M_KII_LOG(kii->kii_core.logger_cb("host:%s\r\n", endpoint.host));
-            M_KII_LOG(kii->kii_core.logger_cb("username:%s\r\n", endpoint.username));
-            M_KII_LOG(kii->kii_core.logger_cb("password:%s\r\n", endpoint.password));
-            if(kiiMQTT_connect(kii, &endpoint, KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE) < 0)
-            {
-                continue;
-            }
-            else if(kiiMQTT_subscribe(kii, endpoint.topic, QOS0) < 0)
+            if (kiiPush_subscribe(kii, &endpoint) != 0)
             {
                 continue;
             }
