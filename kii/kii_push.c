@@ -328,6 +328,8 @@ static int kiiPush_prepareEndpoint(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
     if(kiiPush_install(kii, KII_FALSE, installation_id,
             sizeof(installation_id) / sizeof(installation_id[0])) != 0)
     {
+        M_KII_LOG(kii->kii_core.logger_cb(
+                "kii-error: mqtt installation error\r\n"));
         return -1;
     }
 
@@ -341,6 +343,7 @@ static int kiiPush_prepareEndpoint(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
 
     if(endpointState != KIIPUSH_ENDPOINT_READY)
     {
+        M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt retrive error\r\n"));
         return -1;
     }
     M_KII_LOG(kii->kii_core.logger_cb("installationID:%s\r\n",
@@ -357,10 +360,13 @@ static int kiiPush_subscribe(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
 {
     if(kiiMQTT_connect(kii, endpoint, KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE) < 0)
     {
+        M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt connect error\r\n"));
         return -1;
     }
     else if(kiiMQTT_subscribe(kii, endpoint->topic, QOS0) < 0)
     {
+        M_KII_LOG(kii->kii_core.logger_cb(
+                "kii-error: mqtt subscribe error\r\n"));
         return -1;
     }
 
