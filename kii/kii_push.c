@@ -392,7 +392,6 @@ static int kiiPush_receivePushNotification(
             else
             {
                 M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt decode error\r\n"));
-                kii->_mqtt_endpoint_ready = 0;
                 return -1;
             }
             if(byteLen > 0)
@@ -403,13 +402,11 @@ static int kiiPush_receivePushNotification(
             else
             {
                 M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt decode error\r\n"));
-                kii->_mqtt_endpoint_ready = 0;
                 return -1;
             }
             if(totalLen > kii->mqtt_buffer_size)
             {
                 M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt buffer overflow\r\n"));
-                kii->_mqtt_endpoint_ready = 0;
                 return -1;
             }
 
@@ -454,14 +451,12 @@ static int kiiPush_receivePushNotification(
                 else
                 {
                     M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt topic length error\r\n"));
-                    kii->_mqtt_endpoint_ready = 0;
                     return -1;
                 }
             }
             else
             {
                 M_KII_LOG(kii->kii_core.logger_cb("kii_error: mqtt receive data error\r\n"));
-                kii->_mqtt_endpoint_ready = 0;
                 return -1;
             }
         }
@@ -475,7 +470,6 @@ static int kiiPush_receivePushNotification(
     else
     {
         M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt receive data error\r\n"));
-        kii->_mqtt_endpoint_ready = 0;
         return -1;
     }
     return 0;
@@ -509,7 +503,10 @@ static void* kiiPush_recvMsgTask(void* sdata)
         }
         else
         {
-            kiiPush_receivePushNotification(kii, &endpoint);
+            if(kiiPush_receivePushNotification(kii, &endpoint) != 0)
+            {
+                kii->_mqtt_endpoint_ready = 0;
+            }
         }
     }
     return NULL;
