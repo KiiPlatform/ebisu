@@ -18,6 +18,13 @@ typedef enum
     KIIPUSH_ENDPOINT_ERROR = 2
 } kiiPush_endpointState_e;
 
+typedef enum
+{
+    KIIPUSH_PREPARE_ENDPOINT = 0,
+    KIIPUSH_SUBSCRIBE_ENDPOINT = 1,
+    KIIPUSH_RECEIVE_NOTIFICATION = 2
+} kiiPush_receivingState_e;
+
 #define KIIPUSH_TASK_STK_SIZE 8
 static unsigned int mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];
 #if(KII_PUSH_PING_ENABLE)
@@ -479,34 +486,46 @@ static void* kiiPush_recvMsgTask(void* sdata)
 {
     kii_t* kii;
     kii_mqtt_endpoint_t endpoint;
+    kiiPush_receivingState_e receivingState = KIIPUSH_PREPARE_ENDPOINT;
 
     memset(&endpoint, 0x00, sizeof(kii_mqtt_endpoint_t));
 
     kii = (kii_t*) sdata;
     for(;;)
     {
-        if(kii->_mqtt_endpoint_ready == 0)
+        switch(receivingState)
         {
-            if (kiiPush_prepareEndpoint(kii, &endpoint) != 0)
-            {
-                kii->delay_ms_cb(1000);
-                continue;
-            }
-            if (kiiPush_subscribe(kii, &endpoint) != 0)
-            {
-                continue;
-            }
-            else
-            {
-                kii->_mqtt_endpoint_ready = 1;
-            }
-        }
-        else
-        {
-            if(kiiPush_receivePushNotification(kii, &endpoint) != 0)
-            {
-                kii->_mqtt_endpoint_ready = 0;
-            }
+            case KIIPUSH_PREPARE_ENDPOINT:
+                if(kiiPush_prepareEndpoint(kii, &endpoint) == 0)
+                {
+                    receivingState = KIIPUSH_SUBSCRIBE_ENDPOINT;
+                }
+                else
+                {
+                    // If preparing endpoint is failed, retry.
+                    kii->delay_ms_cb(1000);
+                }
+                break;
+            case KIIPUSH_SUBSCRIBE_ENDPOINT:
+                if(kiiPush_subscribe(kii, &endpoint) == 0)
+                {
+                    kii->_mqtt_endpoint_ready = 1;
+                    receivingState = KIIPUSH_RECEIVE_NOTIFICATION;
+                }
+                else
+                {
+                    // If subscribing is failed, retry preparation.
+                    receivingState = KIIPUSH_PREPARE_ENDPOINT;
+                }
+                break;
+            case KIIPUSH_RECEIVE_NOTIFICATION:
+                if(kiiPush_receivePushNotification(kii, &endpoint) != 0)
+                {
+                    // If receiving notificaiton is failed, retry subscribing.
+                    kii->_mqtt_endpoint_ready = 0;
+                    receivingState = KIIPUSH_SUBSCRIBE_ENDPOINT;
+                }
+                break;
         }
     }
     return NULL;
