@@ -61,7 +61,7 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
     sock_err = kii->mqtt_socket_connect_cb(&(kii->mqtt_socket_context), endpoint->host, endpoint->port_tcp);
     if (sock_err != KII_SOCKETC_OK) {
         M_KII_LOG(kii->kii_core.logger_cb("connecting socket is failed.\r\n"));
-        return -1;
+        return -2;
     }
 
     if (kii->mqtt_buffer == NULL || kii->mqtt_buffer_size == 0) {

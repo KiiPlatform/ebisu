@@ -358,12 +358,21 @@ static int kiiPush_prepareEndpoint(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
 
 static int kiiPush_subscribe(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
 {
-    if(kiiMQTT_connect(kii, endpoint, KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE) < 0)
+    switch(kiiMQTT_connect(kii, endpoint, KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE))
     {
-        M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt connect error\r\n"));
-        return -1;
+        case 0:
+            break;
+        case -1:
+            M_KII_LOG(kii->kii_core.logger_cb(
+                    "kii-error: mqtt connect error\r\n"));
+            return -1;
+        case -2:
+            M_KII_LOG(kii->kii_core.logger_cb(
+                    "kii-error: mqtt connect network error\r\n"));
+            return -2;
     }
-    else if(kiiMQTT_subscribe(kii, endpoint->topic, QOS0) < 0)
+
+    if(kiiMQTT_subscribe(kii, endpoint->topic, QOS0) < 0)
     {
         M_KII_LOG(kii->kii_core.logger_cb(
                 "kii-error: mqtt subscribe error\r\n"));
@@ -508,26 +517,35 @@ static void* kiiPush_recvMsgTask(void* sdata)
                 }
                 else
                 {
-                    // If preparing endpoint is failed, retry.
+                    // Preparing endpoint is failed, retry later.
                     kii->delay_ms_cb(1000);
                 }
                 break;
             case KIIPUSH_SUBSCRIBE_ENDPOINT:
-                if(kiiPush_subscribe(kii, &endpoint) == 0)
                 {
-                    kii->_mqtt_endpoint_ready = 1;
-                    receivingState = KIIPUSH_RECEIVE_NOTIFICATION;
-                }
-                else
-                {
-                    // If subscribing is failed, retry preparation.
-                    receivingState = KIIPUSH_PREPARE_ENDPOINT;
+                    int state = kiiPush_subscribe(kii, &endpoint);
+                    if(state == 0)
+                    {
+                        kii->_mqtt_endpoint_ready = 1;
+                        receivingState = KIIPUSH_RECEIVE_NOTIFICATION;
+                    }
+                    else if (state == -2)
+                    {
+                        // Subscribe is fails because of network error.
+                        // retry later.
+                        kii->delay_ms_cb(1000);
+                    }
+                    else
+                    {
+                        // Subscribing is failed. Retry preparation.
+                        receivingState = KIIPUSH_PREPARE_ENDPOINT;
+                    }
                 }
                 break;
             case KIIPUSH_RECEIVE_NOTIFICATION:
                 if(kiiPush_receivePushNotification(kii, &endpoint) != 0)
                 {
-                    // If receiving notificaiton is failed, retry subscribing.
+                    // Receiving notificaiton is failed. Retry subscribing.
                     kii->_mqtt_endpoint_ready = 0;
                     receivingState = KIIPUSH_SUBSCRIBE_ENDPOINT;
                 }
