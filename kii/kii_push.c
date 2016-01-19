@@ -532,7 +532,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
                     else if (state == -2)
                     {
                         // Subscribe is fails because of network error.
-                        // retry later.
+                        // Retry later.
                         kii->delay_ms_cb(1000);
                     }
                     else
