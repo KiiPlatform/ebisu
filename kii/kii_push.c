@@ -360,7 +360,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
             M_KII_LOG(kii->kii_core.logger_cb("host:%s\r\n", endpoint.host));
             M_KII_LOG(kii->kii_core.logger_cb("username:%s\r\n", endpoint.username));
             M_KII_LOG(kii->kii_core.logger_cb("password:%s\r\n", endpoint.password));
-            if(kiiMQTT_connect(kii, &endpoint, KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE) < 0)
+            if(kiiMQTT_connect(kii, &endpoint, KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS) < 0)
             {
                 continue;
             }
@@ -495,7 +495,7 @@ static void* kiiPush_pingReqTask(void* sdata)
         {
             kiiMQTT_pingReq(kii);
         }
-        kii->delay_ms_cb(KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE * 1000);
+        kii->delay_ms_cb(KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS * 1000);
     }
     return NULL;
 }

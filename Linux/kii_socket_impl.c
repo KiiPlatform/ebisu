@@ -40,7 +40,7 @@ kii_socket_code_t
 #ifdef KII_PUSH_PING_ENABLE
     {
         struct timeval timeout;
-        timeout.tv_sec = KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE * 2;
+        timeout.tv_sec = KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS * 2;
         timeout.tv_usec = 0;
         if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout,
                         sizeof(timeout)) != 0) {
