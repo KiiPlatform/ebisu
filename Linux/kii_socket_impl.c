@@ -23,6 +23,9 @@ kii_socket_code_t
     servhost = gethostbyname(host);
     if (servhost == NULL) {
         printf("failed to get host.\n");
+        if (h_errno == HOST_NOT_FOUND || h_errno == TRY_AGAIN) {
+            return KII_SOCKETC_AGAIN;
+        }
         return KII_SOCKETC_FAIL;
     }
     memset(&server, 0x00, sizeof(server));

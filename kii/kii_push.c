@@ -18,6 +18,13 @@ typedef enum
     KIIPUSH_ENDPOINT_ERROR = 2
 } kiiPush_endpointState_e;
 
+typedef enum
+{
+    KIIPUSH_PREPARE_ENDPOINT = 0,
+    KIIPUSH_SUBSCRIBE_ENDPOINT = 1,
+    KIIPUSH_RECEIVE_NOTIFICATION = 2
+} kiiPush_receivingState_e;
+
 #define KIIPUSH_TASK_STK_SIZE 8
 static unsigned int mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];
 #ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
@@ -313,7 +320,71 @@ exit:
     return ret;
 }
 
-static void* kiiPush_recvMsgTask(void* sdata)
+static int kiiPush_prepareEndpoint(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
+{
+    char installation_id[KII_PUSH_INSTALLATIONID_SIZE + 1];
+    kiiPush_endpointState_e endpointState;
+
+    if(kiiPush_install(kii, KII_FALSE, installation_id,
+            sizeof(installation_id) / sizeof(installation_id[0])) != 0)
+    {
+        M_KII_LOG(kii->kii_core.logger_cb(
+                "kii-error: mqtt installation error\r\n"));
+        return -1;
+    }
+
+    do
+    {
+        kii->delay_ms_cb(1000);
+        endpointState = kiiPush_retrieveEndpoint(kii, installation_id,
+                endpoint);
+    }
+    while(endpointState == KIIPUSH_ENDPOINT_UNAVAILABLE);
+
+    if(endpointState != KIIPUSH_ENDPOINT_READY)
+    {
+        M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt retrive error\r\n"));
+        return -1;
+    }
+    M_KII_LOG(kii->kii_core.logger_cb("installationID:%s\r\n",
+                    installation_id));
+    M_KII_LOG(kii->kii_core.logger_cb("mqttTopic:%s\r\n", endpoint->topic));
+    M_KII_LOG(kii->kii_core.logger_cb("host:%s\r\n", endpoint->host));
+    M_KII_LOG(kii->kii_core.logger_cb("username:%s\r\n", endpoint->username));
+    M_KII_LOG(kii->kii_core.logger_cb("password:%s\r\n", endpoint->password));
+
+    return 0;
+}
+
+static int kiiPush_subscribe(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
+{
+    switch(kiiMQTT_connect(kii, endpoint, KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE))
+    {
+        case 0:
+            break;
+        case -1:
+            M_KII_LOG(kii->kii_core.logger_cb(
+                    "kii-error: mqtt connect error\r\n"));
+            return -1;
+        case -2:
+            M_KII_LOG(kii->kii_core.logger_cb(
+                    "kii-error: mqtt connect network error\r\n"));
+            return -2;
+    }
+
+    if(kiiMQTT_subscribe(kii, endpoint->topic, QOS0) < 0)
+    {
+        M_KII_LOG(kii->kii_core.logger_cb(
+                "kii-error: mqtt subscribe error\r\n"));
+        return -1;
+    }
+
+    return 0;
+}
+
+static int kiiPush_receivePushNotification(
+        kii_t* kii,
+        kii_mqtt_endpoint_t* endpoint)
 {
     int remainingLen;
     int byteLen;
@@ -323,161 +394,161 @@ static void* kiiPush_recvMsgTask(void* sdata)
     size_t bytes = 0;
     size_t rcvdCounter = 0;
     KII_PUSH_RECEIVED_CB callback;
-    kiiPush_endpointState_e endpointState;
+
+    callback = kii->push_received_cb;
+    memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
+    M_KII_LOG(kii->kii_core.logger_cb("readPointer: %d\r\n", kii->mqtt_buffer + bytes));
+
+    rcvdCounter = 0;
+    kii->mqtt_socket_recv_cb(&kii->mqtt_socket_context, kii->mqtt_buffer, 2, &rcvdCounter);
+    if(rcvdCounter == 2)
+    {
+        if((kii->mqtt_buffer[0] & 0xf0) == 0x30)
+        {
+            rcvdCounter = 0;
+            kii->mqtt_socket_recv_cb(&kii->mqtt_socket_context, kii->mqtt_buffer+2, KII_PUSH_TOPIC_HEADER_SIZE, &rcvdCounter);
+            if(rcvdCounter == KII_PUSH_TOPIC_HEADER_SIZE)
+            {
+                byteLen = kiiMQTT_decode(&kii->mqtt_buffer[1], &remainingLen);
+            }
+            else
+            {
+                M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt decode error\r\n"));
+                return -1;
+            }
+            if(byteLen > 0)
+            {
+                totalLen =
+                  remainingLen + byteLen + 1; /* fixed head byte1+remaining length bytes + remaining bytes*/
+            }
+            else
+            {
+                M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt decode error\r\n"));
+                return -1;
+            }
+            if(totalLen > kii->mqtt_buffer_size)
+            {
+                M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt buffer overflow\r\n"));
+                return -1;
+            }
+            M_KII_LOG(kii->kii_core.logger_cb("decode byteLen=%d, remainingLen=%d\r\n", byteLen, remainingLen));
+            bytes = rcvdCounter + 2;
+            M_KII_LOG(kii->kii_core.logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
+            while(bytes < totalLen)
+            {
+                M_KII_LOG(kii->kii_core.logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
+                M_KII_LOG(kii->kii_core.logger_cb("lengthToLead: %d\r\n", totalLen - bytes));
+                M_KII_LOG(kii->kii_core.logger_cb("readPointer: %d\r\n", kii->mqtt_buffer + bytes));
+                /*kii->socket_recv_cb(&(kii->socket_context), kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);*/
+                rcvdCounter = 0;
+                kii->mqtt_socket_recv_cb(&(kii->mqtt_socket_context), kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);
+                M_KII_LOG(kii->kii_core.logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
+                if(rcvdCounter > 0)
+                {
+                    bytes += rcvdCounter;
+                    M_KII_LOG(kii->kii_core.logger_cb("success read. totalLen: %d, bytes: %d\r\n", totalLen, bytes));
+                }
+                else
+                {
+                    bytes = -1;
+                    M_KII_LOG(kii->kii_core.logger_cb("failed to read. totalLen: %d, bytes: %d\r\n", totalLen, bytes));
+                    break;
+                }
+            }
+            M_KII_LOG(kii->kii_core.logger_cb("bytes:%d, totalLen:%d\r\n", bytes, totalLen));
+            if(bytes >= totalLen)
+            {
+                p = kii->mqtt_buffer;
+                p++; /* skip fixed header byte1*/
+                p += byteLen; /* skip remaining length bytes*/
+                topicLen = p[0] * 256 + p[1]; /* get topic length*/
+                p = p + 2; /* skip 2 topic length bytes*/
+                p = p + topicLen; /* skip topic*/
+                if((remainingLen - 2 - topicLen) > 0)
+                {
+                    M_KII_LOG(kii->kii_core.logger_cb("Successfully Recieved Push %s\n", p));
+                    callback(kii, p, remainingLen - 2 - topicLen);
+                }
+                else
+                {
+                    M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt topic length error\r\n"));
+                    return -1;
+                }
+            }
+            else
+            {
+                M_KII_LOG(kii->kii_core.logger_cb("kii_error: mqtt receive data error\r\n"));
+                return -1;
+            }
+        }
+#if(KII_PUSH_PING_ENABLE)
+        else if((kii->mqtt_buffer[0] & 0xf0) == 0xd0)
+        {
+            M_KII_LOG(kii->kii_core.logger_cb("ping resp\r\n"));
+        }
+#endif
+    }
+    else
+    {
+        M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt receive data error\r\n"));
+        return -1;
+    }
+    return 0;
+}
+
+static void* kiiPush_recvMsgTask(void* sdata)
+{
     kii_t* kii;
     kii_mqtt_endpoint_t endpoint;
-    char installation_id[KII_PUSH_INSTALLATIONID_SIZE + 1];
+    kiiPush_receivingState_e receivingState = KIIPUSH_PREPARE_ENDPOINT;
 
-    memset(installation_id, 0x00, sizeof(installation_id));
     memset(&endpoint, 0x00, sizeof(kii_mqtt_endpoint_t));
 
     kii = (kii_t*) sdata;
-    callback = kii->push_received_cb;
     for(;;)
     {
-        if(kii->_mqtt_endpoint_ready == 0)
+        switch(receivingState)
         {
-            if(kiiPush_install(kii, KII_FALSE, installation_id,
-                    sizeof(installation_id) / sizeof(installation_id[0])) != 0)
-            {
-                kii->delay_ms_cb(1000);
-                continue;
-            }
-
-            do
-            {
-                kii->delay_ms_cb(1000);
-                endpointState = kiiPush_retrieveEndpoint(kii, installation_id, &endpoint);
-            }
-            while(endpointState == KIIPUSH_ENDPOINT_UNAVAILABLE);
-
-            if(endpointState != KIIPUSH_ENDPOINT_READY)
-            {
-                continue;
-            }
-            M_KII_LOG(kii->kii_core.logger_cb("installationID:%s\r\n", installation_id));
-            M_KII_LOG(kii->kii_core.logger_cb("mqttTopic:%s\r\n", endpoint.topic));
-            M_KII_LOG(kii->kii_core.logger_cb("host:%s\r\n", endpoint.host));
-            M_KII_LOG(kii->kii_core.logger_cb("username:%s\r\n", endpoint.username));
-            M_KII_LOG(kii->kii_core.logger_cb("password:%s\r\n", endpoint.password));
-            if(kiiMQTT_connect(kii, &endpoint, KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS) < 0)
-            {
-                continue;
-            }
-            else if(kiiMQTT_subscribe(kii, endpoint.topic, QOS0) < 0)
-            {
-                continue;
-            }
-            else
-            {
-                kii->_mqtt_endpoint_ready = 1;
-            }
-        }
-        else
-        {
-            memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
-            M_KII_LOG(kii->kii_core.logger_cb("readPointer: %d\r\n", kii->mqtt_buffer + bytes));
-
-            rcvdCounter = 0;
-            kii->mqtt_socket_recv_cb(&kii->mqtt_socket_context, kii->mqtt_buffer, 2, &rcvdCounter);
-            if(rcvdCounter == 2)
-            {
-                if((kii->mqtt_buffer[0] & 0xf0) == 0x30)
+            case KIIPUSH_PREPARE_ENDPOINT:
+                if(kiiPush_prepareEndpoint(kii, &endpoint) == 0)
                 {
-                    rcvdCounter = 0;
-                    kii->mqtt_socket_recv_cb(&kii->mqtt_socket_context, kii->mqtt_buffer+2, KII_PUSH_TOPIC_HEADER_SIZE, &rcvdCounter);
-                    if(rcvdCounter == KII_PUSH_TOPIC_HEADER_SIZE)
+                    receivingState = KIIPUSH_SUBSCRIBE_ENDPOINT;
+                }
+                else
+                {
+                    // Preparing endpoint is failed, retry later.
+                    kii->delay_ms_cb(1000);
+                }
+                break;
+            case KIIPUSH_SUBSCRIBE_ENDPOINT:
+                {
+                    int state = kiiPush_subscribe(kii, &endpoint);
+                    if(state == 0)
                     {
-                        byteLen = kiiMQTT_decode(&kii->mqtt_buffer[1], &remainingLen);
+                        kii->_mqtt_endpoint_ready = 1;
+                        receivingState = KIIPUSH_RECEIVE_NOTIFICATION;
+                    }
+                    else if (state == -2)
+                    {
+                        // Subscribe is fails because of network error.
+                        // Retry later.
+                        kii->delay_ms_cb(1000);
                     }
                     else
                     {
-                        M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt decode error\r\n"));
-                        kii->_mqtt_endpoint_ready = 0;
-                        continue;
-                    }
-                    if(byteLen > 0)
-                    {
-                        totalLen =
-                            remainingLen + byteLen + 1; /* fixed head byte1+remaining length bytes + remaining bytes*/
-                    }
-                    else
-                    {
-                        M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt decode error\r\n"));
-                        kii->_mqtt_endpoint_ready = 0;
-                        continue;
-                    }
-                    if(totalLen > kii->mqtt_buffer_size)
-                    {
-                        M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt buffer overflow\r\n"));
-                        kii->_mqtt_endpoint_ready = 0;
-                        continue;
-                    }
-
-                    M_KII_LOG(kii->kii_core.logger_cb("decode byteLen=%d, remainingLen=%d\r\n", byteLen, remainingLen));
-                    bytes = rcvdCounter + 2;
-                    M_KII_LOG(kii->kii_core.logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
-                    while(bytes < totalLen)
-                    {
-                        M_KII_LOG(kii->kii_core.logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
-                        M_KII_LOG(kii->kii_core.logger_cb("lengthToLead: %d\r\n", totalLen - bytes));
-                        M_KII_LOG(kii->kii_core.logger_cb("readPointer: %d\r\n", kii->mqtt_buffer + bytes));
-                        /*kii->socket_recv_cb(&(kii->socket_context), kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);*/
-                        rcvdCounter = 0;
-                        kii->mqtt_socket_recv_cb(&(kii->mqtt_socket_context), kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);
-                        M_KII_LOG(kii->kii_core.logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
-                        if(rcvdCounter > 0)
-                        {
-                            bytes += rcvdCounter;
-                            M_KII_LOG(kii->kii_core.logger_cb("success read. totalLen: %d, bytes: %d\r\n", totalLen, bytes));
-                        }
-                        else
-                        {
-                            bytes = -1;
-                            M_KII_LOG(kii->kii_core.logger_cb("failed to read. totalLen: %d, bytes: %d\r\n", totalLen, bytes));
-                            break;
-                        }
-                    }
-                    M_KII_LOG(kii->kii_core.logger_cb("bytes:%d, totalLen:%d\r\n", bytes, totalLen));
-                    if(bytes >= totalLen)
-                    {
-                        p = kii->mqtt_buffer;
-                        p++; /* skip fixed header byte1*/
-                        p += byteLen; /* skip remaining length bytes*/
-                        topicLen = p[0] * 256 + p[1]; /* get topic length*/
-                        p = p + 2; /* skip 2 topic length bytes*/
-                        p = p + topicLen; /* skip topic*/
-                        if((remainingLen - 2 - topicLen) > 0)
-                        {
-                            M_KII_LOG(kii->kii_core.logger_cb("Successfully Recieved Push %s\n", p));
-                            callback(kii, p, remainingLen - 2 - topicLen);
-                        }
-                        else
-                        {
-                            M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt topic length error\r\n"));
-                            kii->_mqtt_endpoint_ready = 0;
-                            continue;
-                        }
-                    }
-                    else
-                    {
-                        M_KII_LOG(kii->kii_core.logger_cb("kii_error: mqtt receive data error\r\n"));
-                        kii->_mqtt_endpoint_ready = 0;
-                        continue;
+                        // Subscribing is failed. Retry preparation.
+                        receivingState = KIIPUSH_PREPARE_ENDPOINT;
                     }
                 }
-#ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
-                else if((kii->mqtt_buffer[0] & 0xf0) == 0xd0)
+                break;
+            case KIIPUSH_RECEIVE_NOTIFICATION:
+                if(kiiPush_receivePushNotification(kii, &endpoint) != 0)
                 {
-                    M_KII_LOG(kii->kii_core.logger_cb("ping resp\r\n"));
+                    // Receiving notificaiton is failed. Retry subscribing.
+                    kii->_mqtt_endpoint_ready = 0;
+                    receivingState = KIIPUSH_SUBSCRIBE_ENDPOINT;
                 }
-#endif
-            }
-            else
-            {
-                M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt receive data error\r\n"));
-                kii->_mqtt_endpoint_ready = 0;
-            }
+                break;
         }
     }
     return NULL;

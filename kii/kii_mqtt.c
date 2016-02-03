@@ -59,7 +59,11 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
         }
     }
     sock_err = kii->mqtt_socket_connect_cb(&(kii->mqtt_socket_context), endpoint->host, endpoint->port_tcp);
-    if (sock_err != KII_SOCKETC_OK) {
+    if (sock_err == KII_SOCKETC_AGAIN) {
+        M_KII_LOG(kii->kii_core.logger_cb(
+                "connecting socket is failed temporary.\r\n"));
+        return -2;
+    } else if (sock_err != KII_SOCKETC_OK) {
         M_KII_LOG(kii->kii_core.logger_cb("connecting socket is failed.\r\n"));
         return -1;
     }
