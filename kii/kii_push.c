@@ -13,10 +13,10 @@
 
 typedef enum
 {
-    KIIPUSH_ENDPOINT_READY = 0,
-    KIIPUSH_ENDPOINT_UNAVAILABLE = 1,
-    KIIPUSH_ENDPOINT_ERROR = 2
-} kiiPush_endpointState_e;
+    KIIPUSH_RETRIEVING_ENDPOINT_SUCCESS = 0,
+    KIIPUSH_RETRIEVING_ENDPOINT_RETRY = 1,
+    KIIPUSH_RETRIEVING_ERROR = 2
+} kiiPush_retrievingEndpointResult_e;
 
 typedef enum
 {
@@ -89,11 +89,11 @@ exit:
     return ret;
 }
 
-static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* installation_id, kii_mqtt_endpoint_t* endpoint)
+static kiiPush_retrievingEndpointResult_e kiiPush_retrieveEndpoint(kii_t* kii, const char* installation_id, kii_mqtt_endpoint_t* endpoint)
 {
     char* buf = NULL;
     size_t buf_size = 0;
-    kiiPush_endpointState_e ret = KIIPUSH_ENDPOINT_ERROR;
+    kiiPush_retrievingEndpointResult_e ret = KIIPUSH_RETRIEVING_ERROR;
     kii_json_parse_result_t parse_result = KII_JSON_PARSE_INVALID_INPUT;
     kii_error_code_t core_err;
     kii_state_t state;
@@ -112,19 +112,19 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
     }
     if(kii->kii_core.response_code == 503)
     {
-        ret = KIIPUSH_ENDPOINT_UNAVAILABLE;
+        ret = KIIPUSH_RETRIEVING_ENDPOINT_RETRY;
         goto exit;
     }
     if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code)
     {
-        ret = KIIPUSH_ENDPOINT_ERROR;
+        ret = KIIPUSH_RETRIEVING_ERROR;
         goto exit;
     }
 
     buf = kii->kii_core.response_body;
     buf_size = strlen(kii->kii_core.response_body);
     if (buf == NULL) {
-        ret = KIIPUSH_ENDPOINT_ERROR;
+        ret = KIIPUSH_RETRIEVING_ERROR;
         goto exit;
     }
 
@@ -159,13 +159,13 @@ static kiiPush_endpointState_e kiiPush_retrieveEndpoint(kii_t* kii, const char* 
 
     parse_result = prv_kii_json_read_object(kii, buf, buf_size, fields);
     if (parse_result != KII_JSON_PARSE_SUCCESS) {
-        ret = KIIPUSH_ENDPOINT_ERROR;
+        ret = KIIPUSH_RETRIEVING_ERROR;
         goto exit;
     }
     endpoint->port_tcp = fields[4].field_copy.int_value;
     endpoint->port_ssl = fields[5].field_copy.int_value;
     endpoint->ttl = fields[6].field_copy.long_value;
-    ret = KIIPUSH_ENDPOINT_READY;
+    ret = KIIPUSH_RETRIEVING_ENDPOINT_SUCCESS;
 
 exit:
     return ret;
@@ -323,7 +323,7 @@ exit:
 static int kiiPush_prepareEndpoint(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
 {
     char installation_id[KII_PUSH_INSTALLATIONID_SIZE + 1];
-    kiiPush_endpointState_e endpointState;
+    kiiPush_retrievingEndpointResult_e result;
 
     if(kiiPush_install(kii, KII_FALSE, installation_id,
             sizeof(installation_id) / sizeof(installation_id[0])) != 0)
@@ -336,12 +336,11 @@ static int kiiPush_prepareEndpoint(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
     do
     {
         kii->delay_ms_cb(1000);
-        endpointState = kiiPush_retrieveEndpoint(kii, installation_id,
-                endpoint);
+        result = kiiPush_retrieveEndpoint(kii, installation_id, endpoint);
     }
-    while(endpointState == KIIPUSH_ENDPOINT_UNAVAILABLE);
+    while(result == KIIPUSH_RETRIEVING_ENDPOINT_RETRY);
 
-    if(endpointState != KIIPUSH_ENDPOINT_READY)
+    if(result != KIIPUSH_RETRIEVING_ENDPOINT_SUCCESS)
     {
         M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt retrive error\r\n"));
         return -1;
