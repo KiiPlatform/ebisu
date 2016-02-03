@@ -4,7 +4,6 @@
 #include "kii_core.h"
 #include "kii.h"
 
-
 enum QoS { QOS0, QOS1, QOS2 };
 
 typedef struct kii_mqtt_endpoint_t {
