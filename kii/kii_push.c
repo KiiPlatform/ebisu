@@ -357,18 +357,11 @@ static int kiiPush_prepareEndpoint(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
 
 static int kiiPush_subscribe(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
 {
-    switch(kiiMQTT_connect(kii, endpoint, KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS))
+    if (kiiMQTT_connect(kii, endpoint,
+                    KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS) != 0)
     {
-        case 0:
-            break;
-        case -1:
-            M_KII_LOG(kii->kii_core.logger_cb(
-                    "kii-error: mqtt connect error\r\n"));
-            return -1;
-        case -2:
-            M_KII_LOG(kii->kii_core.logger_cb(
-                    "kii-error: mqtt connect network error\r\n"));
-            return -2;
+        M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt connect error\r\n"));
+        return -1;
     }
 
     if(kiiMQTT_subscribe(kii, endpoint->topic, QOS0) < 0)
@@ -526,12 +519,6 @@ static void* kiiPush_recvMsgTask(void* sdata)
                     {
                         kii->_mqtt_endpoint_ready = 1;
                         receivingState = KIIPUSH_READY;
-                    }
-                    else if (state == -2)
-                    {
-                        // Subscribe is fails because of network error.
-                        // Retry later.
-                        kii->delay_ms_cb(1000);
                     }
                     else
                     {
