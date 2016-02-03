@@ -37,7 +37,7 @@ kii_socket_code_t
         return KII_SOCKETC_FAIL;
     }
 
-#ifdef KII_PUSH_PING_ENABLE
+#ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
     {
         struct timeval timeout;
         timeout.tv_sec = KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS * 2;

@@ -1,4 +1,4 @@
-override CFLAGS += -std=gnu89 -Wall -pedantic -pthread
+override CFLAGS += -std=gnu89 -Wall -pedantic -pthread -DKII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS=30
 #CFLAGS = -std=gnu89 -w -pedantic
 ifdef DEBUG
 CFLAGS += -g -DDEBUG
