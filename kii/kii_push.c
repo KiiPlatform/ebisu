@@ -358,7 +358,7 @@ static int kiiPush_prepareEndpoint(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
 
 static int kiiPush_subscribe(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
 {
-    switch(kiiMQTT_connect(kii, endpoint, KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE))
+    switch(kiiMQTT_connect(kii, endpoint, KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS))
     {
         case 0:
             break;

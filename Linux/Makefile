@@ -1,4 +1,4 @@
-override CFLAGS += -std=gnu89 -Wall -pedantic -pthread -DKII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS=30
+override CFLAGS += -std=gnu89 -Wall -pedantic -pthread
 #CFLAGS = -std=gnu89 -w -pedantic
 ifdef DEBUG
 CFLAGS += -g -DDEBUG
@@ -25,7 +25,7 @@ all: clean $(TARGET) $(DOCTARGET)
 lib: clean $(LIB_TARGET)
 
 $(KIISDK):
-	$(MAKE) -C ../kii $(KIISDKPARAM) "CFLAGS+=-DKII_JSON_FIXED_TOKEN_NUM=256"
+	$(MAKE) -C ../kii $(KIISDKPARAM) "CFLAGS+=-DKII_JSON_FIXED_TOKEN_NUM=256 -DKII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS=30"
 	cp $(KIISDK) ./
 
 
