@@ -320,41 +320,6 @@ exit:
     return ret;
 }
 
-static int kiiPush_prepareEndpoint(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
-{
-    char installation_id[KII_PUSH_INSTALLATIONID_SIZE + 1];
-    kiiPush_retrieveEndpointResult result;
-
-    if(kiiPush_install(kii, KII_FALSE, installation_id,
-            sizeof(installation_id) / sizeof(installation_id[0])) != 0)
-    {
-        M_KII_LOG(kii->kii_core.logger_cb(
-                "kii-error: mqtt installation error\r\n"));
-        return -1;
-    }
-
-    do
-    {
-        kii->delay_ms_cb(1000);
-        result = kiiPush_retrieveEndpoint(kii, installation_id, endpoint);
-    }
-    while(result == KIIPUSH_RETRIEVE_ENDPOINT_RETRY);
-
-    if(result != KIIPUSH_RETRIEVE_ENDPOINT_SUCCESS)
-    {
-        M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt retrive error\r\n"));
-        return -1;
-    }
-    M_KII_LOG(kii->kii_core.logger_cb("installationID:%s\r\n",
-                    installation_id));
-    M_KII_LOG(kii->kii_core.logger_cb("mqttTopic:%s\r\n", endpoint->topic));
-    M_KII_LOG(kii->kii_core.logger_cb("host:%s\r\n", endpoint->host));
-    M_KII_LOG(kii->kii_core.logger_cb("username:%s\r\n", endpoint->username));
-    M_KII_LOG(kii->kii_core.logger_cb("password:%s\r\n", endpoint->password));
-
-    return 0;
-}
-
 static int kiiPush_receivePushNotification(
         kii_t* kii,
         kii_mqtt_endpoint_t* endpoint)
@@ -483,14 +448,48 @@ static void* kiiPush_recvMsgTask(void* sdata)
         switch(pushState)
         {
             case KIIPUSH_PREPARING_ENDPOINT:
-                if(kiiPush_prepareEndpoint(kii, &endpoint) == 0)
                 {
+                    char installation_id[KII_PUSH_INSTALLATIONID_SIZE + 1];
+                    kiiPush_retrieveEndpointResult result;
+
+                    if(kiiPush_install(kii, KII_FALSE, installation_id,
+                                    sizeof(installation_id) /
+                                        sizeof(installation_id[0])) != 0)
+                    {
+                        M_KII_LOG(kii->kii_core.logger_cb(
+                                "kii-error: mqtt installation error\r\n"));
+                        kii->delay_ms_cb(1000);
+                        continue;
+                    }
+
+                    do
+                    {
+                        kii->delay_ms_cb(1000);
+                        result = kiiPush_retrieveEndpoint(kii, installation_id,
+                                &endpoint);
+                    }
+                    while(result == KIIPUSH_RETRIEVE_ENDPOINT_RETRY);
+
+                    if(result != KIIPUSH_RETRIEVE_ENDPOINT_SUCCESS)
+                    {
+                        M_KII_LOG(kii->kii_core.logger_cb(
+                                "kii-error: mqtt retrive error\r\n"));
+                        kii->delay_ms_cb(1000);
+                        continue;
+                    }
+
                     pushState = KIIPUSH_SUBSCRIBING_TOPIC;
-                }
-                else
-                {
-                    // Preparing endpoint is failed, retry later.
-                    kii->delay_ms_cb(1000);
+
+                    M_KII_LOG(kii->kii_core.logger_cb("installationID:%s\r\n",
+                                    installation_id));
+                    M_KII_LOG(kii->kii_core.logger_cb("mqttTopic:%s\r\n",
+                                    endpoint.topic));
+                    M_KII_LOG(kii->kii_core.logger_cb("host:%s\r\n",
+                                    endpoint.host));
+                    M_KII_LOG(kii->kii_core.logger_cb("username:%s\r\n",
+                                    endpoint.username));
+                    M_KII_LOG(kii->kii_core.logger_cb("password:%s\r\n",
+                                    endpoint.password));
                 }
                 break;
             case KIIPUSH_SUBSCRIBING_TOPIC:
