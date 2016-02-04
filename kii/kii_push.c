@@ -23,7 +23,7 @@ typedef enum
     KIIPUSH_PREPARING_ENDPOINT = 0,
     KIIPUSH_SUBSCRIBING_TOPIC = 1,
     KIIPUSH_READY = 2
-} kiiPush_receivingState_e;
+} kiiPush_state;
 
 #define KIIPUSH_TASK_STK_SIZE 8
 static unsigned int mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];
@@ -492,7 +492,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
 {
     kii_t* kii;
     kii_mqtt_endpoint_t endpoint;
-    kiiPush_receivingState_e receivingState = KIIPUSH_PREPARING_ENDPOINT;
+    kiiPush_state receivingState = KIIPUSH_PREPARING_ENDPOINT;
 
     memset(&endpoint, 0x00, sizeof(kii_mqtt_endpoint_t));
 
