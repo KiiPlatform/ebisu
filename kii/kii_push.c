@@ -16,7 +16,7 @@ typedef enum
     KIIPUSH_RETRIEVING_ENDPOINT_SUCCESS = 0,
     KIIPUSH_RETRIEVING_ENDPOINT_RETRY = 1,
     KIIPUSH_RETRIEVING_ERROR = 2
-} kiiPush_retrievingEndpointResult_e;
+} kiiPush_retrieveEndpointResult;
 
 typedef enum
 {
@@ -89,11 +89,11 @@ exit:
     return ret;
 }
 
-static kiiPush_retrievingEndpointResult_e kiiPush_retrieveEndpoint(kii_t* kii, const char* installation_id, kii_mqtt_endpoint_t* endpoint)
+static kiiPush_retrieveEndpointResult kiiPush_retrieveEndpoint(kii_t* kii, const char* installation_id, kii_mqtt_endpoint_t* endpoint)
 {
     char* buf = NULL;
     size_t buf_size = 0;
-    kiiPush_retrievingEndpointResult_e ret = KIIPUSH_RETRIEVING_ERROR;
+    kiiPush_retrieveEndpointResult ret = KIIPUSH_RETRIEVING_ERROR;
     kii_json_parse_result_t parse_result = KII_JSON_PARSE_INVALID_INPUT;
     kii_error_code_t core_err;
     kii_state_t state;
@@ -323,7 +323,7 @@ exit:
 static int kiiPush_prepareEndpoint(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
 {
     char installation_id[KII_PUSH_INSTALLATIONID_SIZE + 1];
-    kiiPush_retrievingEndpointResult_e result;
+    kiiPush_retrieveEndpointResult result;
 
     if(kiiPush_install(kii, KII_FALSE, installation_id,
             sizeof(installation_id) / sizeof(installation_id[0])) != 0)
