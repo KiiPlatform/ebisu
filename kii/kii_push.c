@@ -473,19 +473,19 @@ static void* kiiPush_recvMsgTask(void* sdata)
 {
     kii_t* kii;
     kii_mqtt_endpoint_t endpoint;
-    kiiPush_state receivingState = KIIPUSH_PREPARING_ENDPOINT;
+    kiiPush_state pushState = KIIPUSH_PREPARING_ENDPOINT;
 
     memset(&endpoint, 0x00, sizeof(kii_mqtt_endpoint_t));
 
     kii = (kii_t*) sdata;
     for(;;)
     {
-        switch(receivingState)
+        switch(pushState)
         {
             case KIIPUSH_PREPARING_ENDPOINT:
                 if(kiiPush_prepareEndpoint(kii, &endpoint) == 0)
                 {
-                    receivingState = KIIPUSH_SUBSCRIBING_TOPIC;
+                    pushState = KIIPUSH_SUBSCRIBING_TOPIC;
                 }
                 else
                 {
@@ -499,7 +499,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
                 {
                     M_KII_LOG(kii->kii_core.logger_cb(
                             "kii-error: mqtt connect error\r\n"));
-                    receivingState = KIIPUSH_PREPARING_ENDPOINT;
+                    pushState = KIIPUSH_PREPARING_ENDPOINT;
                     continue;
                 }
                 kii->_mqtt_connected = 1;
@@ -509,18 +509,18 @@ static void* kiiPush_recvMsgTask(void* sdata)
                     M_KII_LOG(kii->kii_core.logger_cb(
                             "kii-error: mqtt subscribe error\r\n"));
                     kii->_mqtt_connected = 0;
-                    receivingState = KIIPUSH_PREPARING_ENDPOINT;
+                    pushState = KIIPUSH_PREPARING_ENDPOINT;
                     continue;
                 }
 
-                receivingState = KIIPUSH_READY;
+                pushState = KIIPUSH_READY;
                 break;
             case KIIPUSH_READY:
                 if(kiiPush_receivePushNotification(kii, &endpoint) != 0)
                 {
                     // Receiving notificaiton is failed. Retry subscribing.
                     kii->_mqtt_connected = 0;
-                    receivingState = KIIPUSH_SUBSCRIBING_TOPIC;
+                    pushState = KIIPUSH_SUBSCRIBING_TOPIC;
                 }
                 break;
         }
