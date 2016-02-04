@@ -1,7 +1,5 @@
 #include "kii_socket_impl.h"
 
-#include "kii_mqtt.h"
-
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/uio.h>
