@@ -46,6 +46,17 @@ typedef void (*KII_PUSH_RECEIVED_CB)(
 typedef struct kii_t {
     kii_core_t kii_core;
 
+    /** Socket context for MQTT client.
+     *
+     * If you want to use MQTT client, You must set this socket
+     * context.  If You want to use ping req, you need to define
+     * KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
+     * macro. KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS is interval of
+     * sending ping request. KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
+     * requires seconds of ping request interval. If the interval is
+     * too short, MQTT client often disconnect connection to a MQTT
+     * server. We recommend 30 seconds or upper.
+     */
     kii_socket_context_t mqtt_socket_context;
     KII_SOCKET_CONNECT_CB mqtt_socket_connect_cb;
     KII_SOCKET_SEND_CB mqtt_socket_send_cb;

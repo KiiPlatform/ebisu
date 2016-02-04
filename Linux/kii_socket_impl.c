@@ -8,9 +8,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <errno.h>
 
 kii_socket_code_t
-    connect_cb(kii_socket_context_t* socket_context, const char* host,
+    mqtt_connect_cb(kii_socket_context_t* socket_context, const char* host,
             unsigned int port)
 {
     int sock;
@@ -34,6 +35,19 @@ kii_socket_code_t
         return KII_SOCKETC_FAIL;
     }
 
+#ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
+    {
+        struct timeval timeout;
+        timeout.tv_sec = KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS * 2;
+        timeout.tv_usec = 0;
+        if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout,
+                        sizeof(timeout)) != 0) {
+            printf("fail to set option for socket: %d\n", errno);
+            return KII_SOCKETC_FAIL;
+        }
+    }
+#endif
+
     if (connect(sock, (struct sockaddr*) &server, sizeof(server)) == -1 ){
         printf("failed to connect socket.\n");
         return KII_SOCKETC_FAIL;
@@ -43,7 +57,7 @@ kii_socket_code_t
 }
 
 kii_socket_code_t
-    send_cb(kii_socket_context_t* socket_context,
+    mqtt_send_cb(kii_socket_context_t* socket_context,
             const char* buffer,
             size_t length)
 {
@@ -61,7 +75,7 @@ kii_socket_code_t
 }
 
 kii_socket_code_t
-    recv_cb(kii_socket_context_t* socket_context,
+    mqtt_recv_cb(kii_socket_context_t* socket_context,
             char* buffer,
             size_t length_to_read,
             size_t* out_actual_length)
@@ -79,7 +93,7 @@ kii_socket_code_t
 }
 
 kii_socket_code_t
-    close_cb(kii_socket_context_t* socket_context)
+    mqtt_close_cb(kii_socket_context_t* socket_context)
 {
     int sock;
     sock = socket_context->socket;

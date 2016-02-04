@@ -8,15 +8,8 @@
 #include "kii_core.h"
 #include "kii_json_utils.h"
 
-#define KII_PUSH_PING_ENABLE 1
 #define KII_PUSH_INSTALLATIONID_SIZE 64
 #define KII_PUSH_TOPIC_HEADER_SIZE 8
-
-#if(KII_PUSH_PING_ENABLE)
-#define KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE 30
-#else
-#define KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE 0
-#endif
 
 typedef enum
 {
@@ -27,7 +20,7 @@ typedef enum
 
 #define KIIPUSH_TASK_STK_SIZE 8
 static unsigned int mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];
-#if(KII_PUSH_PING_ENABLE)
+#ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
 #define KIIPUSH_PINGREQ_TASK_STK_SIZE 8
 static unsigned int mKiiPush_pingReqTaskStk[KIIPUSH_PINGREQ_TASK_STK_SIZE];
 #endif
@@ -367,7 +360,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
             M_KII_LOG(kii->kii_core.logger_cb("host:%s\r\n", endpoint.host));
             M_KII_LOG(kii->kii_core.logger_cb("username:%s\r\n", endpoint.username));
             M_KII_LOG(kii->kii_core.logger_cb("password:%s\r\n", endpoint.password));
-            if(kiiMQTT_connect(kii, &endpoint, KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE) < 0)
+            if(kiiMQTT_connect(kii, &endpoint, KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS) < 0)
             {
                 continue;
             }
@@ -473,7 +466,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
                         continue;
                     }
                 }
-#if(KII_PUSH_PING_ENABLE)
+#ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
                 else if((kii->mqtt_buffer[0] & 0xf0) == 0xd0)
                 {
                     M_KII_LOG(kii->kii_core.logger_cb("ping resp\r\n"));
@@ -490,7 +483,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
     return NULL;
 }
 
-#if(KII_PUSH_PING_ENABLE)
+#ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
 static void* kiiPush_pingReqTask(void* sdata)
 {
     kii_t* kii;
@@ -502,7 +495,7 @@ static void* kiiPush_pingReqTask(void* sdata)
         {
             kiiMQTT_pingReq(kii);
         }
-        kii->delay_ms_cb(KII_PUSH_KEEP_ALIVE_INTERVAL_VALUE * 1000);
+        kii->delay_ms_cb(KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS * 1000);
     }
     return NULL;
 }
@@ -517,7 +510,7 @@ int kii_push_start_routine(kii_t* kii, unsigned int recvMsgtaskPrio, unsigned in
             (void*)mKiiPush_taskStk,
             KIIPUSH_TASK_STK_SIZE * sizeof(unsigned char),
             recvMsgtaskPrio);
-#if(KII_PUSH_PING_ENABLE)
+#ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
     kii->task_create_cb(NULL,
             kiiPush_pingReqTask,
             (void*)kii,
