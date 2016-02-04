@@ -355,25 +355,6 @@ static int kiiPush_prepareEndpoint(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
     return 0;
 }
 
-static int kiiPush_subscribe(kii_t* kii, kii_mqtt_endpoint_t* endpoint)
-{
-    if (kiiMQTT_connect(kii, endpoint,
-                    KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS) != 0)
-    {
-        M_KII_LOG(kii->kii_core.logger_cb("kii-error: mqtt connect error\r\n"));
-        return -1;
-    }
-
-    if(kiiMQTT_subscribe(kii, endpoint->topic, QOS0) < 0)
-    {
-        M_KII_LOG(kii->kii_core.logger_cb(
-                "kii-error: mqtt subscribe error\r\n"));
-        return -1;
-    }
-
-    return 0;
-}
-
 static int kiiPush_receivePushNotification(
         kii_t* kii,
         kii_mqtt_endpoint_t* endpoint)
@@ -513,19 +494,26 @@ static void* kiiPush_recvMsgTask(void* sdata)
                 }
                 break;
             case KIIPUSH_SUBSCRIBING_TOPIC:
+                if (kiiMQTT_connect(kii, &endpoint,
+                                KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS) != 0)
                 {
-                    int state = kiiPush_subscribe(kii, &endpoint);
-                    if(state == 0)
-                    {
-                        kii->_mqtt_connected = 1;
-                        receivingState = KIIPUSH_READY;
-                    }
-                    else
-                    {
-                        // Subscribing is failed. Retry preparation.
-                        receivingState = KIIPUSH_PREPARING_ENDPOINT;
-                    }
+                    M_KII_LOG(kii->kii_core.logger_cb(
+                            "kii-error: mqtt connect error\r\n"));
+                    receivingState = KIIPUSH_PREPARING_ENDPOINT;
+                    continue;
                 }
+                kii->_mqtt_connected = 1;
+
+                if(kiiMQTT_subscribe(kii, endpoint.topic, QOS0) < 0)
+                {
+                    M_KII_LOG(kii->kii_core.logger_cb(
+                            "kii-error: mqtt subscribe error\r\n"));
+                    kii->_mqtt_connected = 0;
+                    receivingState = KIIPUSH_PREPARING_ENDPOINT;
+                    continue;
+                }
+
+                receivingState = KIIPUSH_READY;
                 break;
             case KIIPUSH_READY:
                 if(kiiPush_receivePushNotification(kii, &endpoint) != 0)
