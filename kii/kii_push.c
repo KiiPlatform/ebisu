@@ -15,7 +15,7 @@ typedef enum
 {
     KIIPUSH_RETRIEVE_ENDPOINT_SUCCESS = 0,
     KIIPUSH_RETRIEVE_ENDPOINT_RETRY = 1,
-    KIIPUSH_RETRIEVE_ERROR = 2
+    KIIPUSH_RETRIEVE_ENDPOINT_ERROR = 2
 } kiiPush_retrieveEndpointResult;
 
 typedef enum
@@ -93,7 +93,7 @@ static kiiPush_retrieveEndpointResult kiiPush_retrieveEndpoint(kii_t* kii, const
 {
     char* buf = NULL;
     size_t buf_size = 0;
-    kiiPush_retrieveEndpointResult ret = KIIPUSH_RETRIEVE_ERROR;
+    kiiPush_retrieveEndpointResult ret = KIIPUSH_RETRIEVE_ENDPOINT_ERROR;
     kii_json_parse_result_t parse_result = KII_JSON_PARSE_INVALID_INPUT;
     kii_error_code_t core_err;
     kii_state_t state;
@@ -117,14 +117,14 @@ static kiiPush_retrieveEndpointResult kiiPush_retrieveEndpoint(kii_t* kii, const
     }
     if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code)
     {
-        ret = KIIPUSH_RETRIEVE_ERROR;
+        ret = KIIPUSH_RETRIEVE_ENDPOINT_ERROR;
         goto exit;
     }
 
     buf = kii->kii_core.response_body;
     buf_size = strlen(kii->kii_core.response_body);
     if (buf == NULL) {
-        ret = KIIPUSH_RETRIEVE_ERROR;
+        ret = KIIPUSH_RETRIEVE_ENDPOINT_ERROR;
         goto exit;
     }
 
@@ -159,7 +159,7 @@ static kiiPush_retrieveEndpointResult kiiPush_retrieveEndpoint(kii_t* kii, const
 
     parse_result = prv_kii_json_read_object(kii, buf, buf_size, fields);
     if (parse_result != KII_JSON_PARSE_SUCCESS) {
-        ret = KIIPUSH_RETRIEVE_ERROR;
+        ret = KIIPUSH_RETRIEVE_ENDPOINT_ERROR;
         goto exit;
     }
     endpoint->port_tcp = fields[4].field_copy.int_value;
