@@ -69,7 +69,7 @@ typedef struct kii_t {
 
     KII_PUSH_RECEIVED_CB push_received_cb;
 
-    int _mqtt_endpoint_ready;
+    int _mqtt_connected;
 
     char* mqtt_buffer;
     size_t mqtt_buffer_size;
