@@ -35,10 +35,10 @@ int kii_impl_init(
     kii->kii_core.logger_cb = logger_cb;
 
     /* setting mqtt socket callbacks. */
-    kii->mqtt_socket_connect_cb = connect_cb;
-    kii->mqtt_socket_send_cb = send_cb;
-    kii->mqtt_socket_recv_cb = recv_cb;
-    kii->mqtt_socket_close_cb = close_cb;
+    kii->mqtt_socket_connect_cb = mqtt_connect_cb;
+    kii->mqtt_socket_send_cb = mqtt_send_cb;
+    kii->mqtt_socket_recv_cb = mqtt_recv_cb;
+    kii->mqtt_socket_close_cb = mqtt_close_cb;
 
     /* setting task callbacks. */
     kii->task_create_cb = task_create_cb;
