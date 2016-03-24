@@ -424,6 +424,13 @@ typedef struct kii_core_t
     kii_state_t _state;
 
     size_t _content_length;
+
+    /** Kii Cloud sdk info
+     *
+     * This is sdk internal use only. Application developers must not
+     * change this field.
+     */
+    const char* _sdk_info;
 } kii_core_t;
 
 
