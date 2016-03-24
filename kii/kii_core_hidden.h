@@ -1,5 +1,5 @@
-#ifndef _kii_hidden_
-#define _kii_hidden_
+#ifndef _KII_CORE_HIDDEN_
+#define _KII_CORE_HIDDEN_
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,7 +15,7 @@ extern "C" {
  *  should be one of "CN", "CN3", "JP", "US", "SG"
  *  \param [in] app_id the input of Application ID
  *  \param [in] app_key the input of Application Key
- *  \param [in] version the input of SDK version.
+ *  \param [in] info the input of SDK info.
  *  \return  KIIE_OK:success, KIIE_FAIL: failure
  */
 kii_error_code_t _kii_core_init_with_info(
