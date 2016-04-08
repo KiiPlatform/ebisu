@@ -4,8 +4,23 @@
 
 #include "kii.h"
 #include "kii_json_utils.h"
+#include "kii_core_hidden.h"
 
-#include "kii_core.h"
+#include <kii_core.h>
+
+#define KII_SDK_INFO "sn=te;sv=1.1.1"
+
+int _kii_init_with_info(
+        kii_t* kii,
+        const char* site,
+        const char* app_id,
+        const char* app_key,
+        const char* info)
+{
+    memset(kii, 0x00, sizeof(kii_t));
+    return _kii_core_init_with_info(&(kii->kii_core), site, app_id,
+            app_key, info) == KIIE_FAIL ? -1 : 0;
+}
 
 int kii_init(
         kii_t* kii,
@@ -13,9 +28,7 @@ int kii_init(
         const char* app_id,
         const char* app_key)
 {
-    memset(kii, 0x00, sizeof(kii_t));
-    return kii_core_init(&(kii->kii_core), site, app_id, app_key) ==
-            KIIE_FAIL ? -1 : 0;
+    return _kii_init_with_info(kii, site, app_id, app_key, KII_SDK_INFO);
 }
 
 int kii_thing_authenticate(
