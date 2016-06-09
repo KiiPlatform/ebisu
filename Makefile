@@ -2,7 +2,17 @@ ifdef DEBUG
 	override CFLAGS += -g -DDEBUG
 endif
 
-override CFLAGS += -std=gnu89 -Wall -pedantic -fPIC -shared
+ifndef FIXED_JSON_TOKEN_NUM
+	JSON_FLAG = -DKII_JSON_FIXED_TOKEN_NUM=128
+else
+	JSON_FLAG = -DKII_JSON_FIXED_TOKEN_NUM=$(FIXED_JSON_TOKEN_NUM)
+endif
+
+ifdef FLEXIBLE_JSON_TOKEN
+	JSON_FLAG =
+endif
+
+override CFLAGS += -std=gnu89 -Wall -pedantic -fPIC -shared $(JSON_FLAG)
 
 SOURCES = $(wildcard src/*.c)
 SOURCES += libs/jsmn/jsmn.c
