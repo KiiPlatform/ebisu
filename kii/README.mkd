@@ -53,6 +53,10 @@ To override the value, we provides `FIXED_JSON_TOKEN_NUM` variable.
 make FIXED_JSON_TOKEN_NUM=256
 ```
 
+Size of memory allocated by this can be calculated as following.
+```c
+sizeof(kii_json_token_t) * KII_JSON_FIXED_TOKEN_NUM
+```
 ## Dynamic memory allocation for JSON parsing
 If you prefer to dynamica allocation than fixed memory allocation by
 KII\_JSON\_FIXED\_TOKEN\_NUM, You will build sdk with FLEXIBLE\_JSON\_TOKEN
