@@ -14,7 +14,7 @@ $(OUTDIR):
 	mkdir -p $@
 
 $(LIBKIIJSON):
-	make -C ../
+	make FLEXIBLE_JSON_TOKEN=1 -C ../
 	cp ../$(LIBKIIJSON) $(OUTDIR)
 
 $(LIBGTEST):
