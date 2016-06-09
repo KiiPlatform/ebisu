@@ -15,7 +15,7 @@ else
 endif
 
 ifdef FLEXIBLE_JSON_TOKEN
-	JSON_FLAG =  ''
+	JSON_FLAG =
 endif
 
 override CFLAGS += -std=gnu89 -Wall -pedantic -pthread -fPIC -shared $(JSON_FLAG)
