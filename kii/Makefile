@@ -1,8 +1,14 @@
-override CFLAGS += -std=gnu89 -Wall -pedantic -pthread -fPIC -shared
-
 ifdef DEBUG
 	CFLAGS += -g -DDEBUG
 endif
+
+ifndef KEEP_ALIVE_INTERVAL
+	CFLAGS += -DKII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS=30
+else
+	CFLAGS += -DKII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS=$(KEEP_ALIVE_INTERVAL)
+endif
+
+override CFLAGS += -std=gnu89 -Wall -pedantic -pthread -fPIC -shared
 
 LIBS = -lssl -lcrypto -lpthread
 SOURCES = $(wildcard *.c)
