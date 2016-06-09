@@ -3,16 +3,22 @@ ifdef DEBUG
 endif
 
 ifndef KEEP_ALIVE_INTERVAL
-	override CFLAGS += -DKII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS=30
+	override CFLAGS += -DKII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS=300
 else
 	override CFLAGS += -DKII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS=$(KEEP_ALIVE_INTERVAL)
 endif
 
-ifdef JSON_TOKEN_NUM
-	override CFLAGS += -DKII_JSON_FIXED_TOKEN_NUM=$(JSON_TOKEN_NUM)
+ifndef FIXED_JSON_TOKEN_NUM
+	JSON_FLAG = -DKII_JSON_FIXED_TOKEN_NUM=128
+else
+	JSON_FLAG = -DKII_JSON_FIXED_TOKEN_NUM=$(FIXED_JSON_TOKEN_NUM)
 endif
 
-override CFLAGS += -std=gnu89 -Wall -pedantic -pthread -fPIC -shared
+ifdef FLEXIBLE_JSON_TOKEN
+	JSON_FLAG =  ''
+endif
+
+override CFLAGS += -std=gnu89 -Wall -pedantic -pthread -fPIC -shared $(JSON_FLAG)
 
 LIBS = -lssl -lcrypto -lpthread
 SOURCES = $(wildcard *.c)
