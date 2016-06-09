@@ -1,8 +1,8 @@
-override CFLAGS += -std=gnu89 -Wall -pedantic -fPIC -shared
-
 ifdef DEBUG
-	CFLAGS += -g -DDEBUG
+	override CFLAGS += -g -DDEBUG
 endif
+
+override CFLAGS += -std=gnu89 -Wall -pedantic -fPIC -shared
 
 SOURCES = $(wildcard src/*.c)
 SOURCES += libs/jsmn/jsmn.c
