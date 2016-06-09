@@ -62,6 +62,9 @@ variable.
 make FLEXIBLE_JSON_TOKEN=1
 ```
 
+In this case, you need to implement KII\_JSON\_RESOURCE\_CB function and set the
+pointer in kii\_t struct.
+
 If both KII\_JSON\_FIXED\_TOKEN\_NUM and FLEXIBLE\_JSON\_TOKEN are specified,
 KII\_JSON\_FIXED\_TOKEN\_NUM is ignored.
 
