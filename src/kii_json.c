@@ -19,20 +19,6 @@
 
 #include <kii_json.h>
 
-#ifndef KII_JSON_TOKEN_NUM
-/**
- * @def KII_JSON_TOKEN_NUM
- * @brief Json token size
- *
- * KII_JSON_TOKEN_NUM defines size of JSON can be parsed. By default
- * it is set to 128. If you've got error on JSON parsing in SDK, You
- * can increase the size of KII_JSON_TOKEN_NUM so that avoid error on
- * parsing large JSON. To change the size, please specify the size of
- * KII_JSON_TOKEN_NUM on build.
- */
-#define KII_JSON_TOKEN_NUM 128
-#endif
-
 #define EVAL(f, v) f(v)
 #define TOSTR(s) #s
 #define LONG_MAX_STR EVAL(TOSTR, LONG_MAX)
