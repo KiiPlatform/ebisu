@@ -23,7 +23,6 @@
 #define DEF_BUCKET "myBucket"
 #define DEF_OBJECT "myObject"
 #define DEF_TOPIC "myTopic"
-#define DEF_MQTT_ENDPOINT "p6i5c3h59b193cmht5gdyzi3a"
 #define DEF_DUMMY_KEY "DummyHeader"
 #define DEF_DUMMY_VALUE "DummyValue"
 #define DEF_DUMMY_HEADER DEF_DUMMY_KEY ":" DEF_DUMMY_VALUE
@@ -37,8 +36,6 @@ static char ACCESS_TOKEN[] = DEF_ACCESS_TOKEN;
 static char BUCKET[] = DEF_BUCKET;
 static char OBJECT[] = DEF_OBJECT;
 static char TOPIC[] = DEF_TOPIC;
-static char MQTT_ENDPOINT[] = DEF_MQTT_ENDPOINT;
-static char DUMMY_HEADER[] = DEF_DUMMY_HEADER;
 static char UPLOAD_ID[] = DEF_UPLOAD_ID;
 
 typedef struct _test_context
@@ -687,6 +684,8 @@ TEST(kiiTest, object_upload_body)
 "Connection: keep-alive\r\n"
 "\r\n";
     test_context_t ctx;
+    char chunk_body[] = "{}";
+    char body_content_type[] = "application/json";
 
     ctx.send_body = send_body;
     ctx.recv_body = recv_body;
@@ -695,8 +694,8 @@ TEST(kiiTest, object_upload_body)
 
     initBucket(&bucket);
 
-    chunk.chunk = "{}";
-    chunk.body_content_type = "application/json";
+    chunk.chunk = chunk_body;
+    chunk.body_content_type = body_content_type;
     chunk.length = 2;
     chunk.position = 0;
     chunk.total_length = 2;
