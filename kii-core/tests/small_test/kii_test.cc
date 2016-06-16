@@ -1434,3 +1434,70 @@ DEF_DUMMY_HEADER "\r\n"
             kii.response_body);
 }
 
+TEST(kiiTest, api_call_get_object)
+{
+    kii_error_code_t core_err;
+    kii_state_t state;
+    char buffer[4096];
+    kii_core_t kii;
+    const char* send_body =
+"GET https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT " HTTP/1.1\r\n"
+"host:" DEF_APP_HOST "\r\n"
+"x-kii-appid:" DEF_APP_ID "\r\n"
+"x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
+"authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
+"\r\n";
+    const char* recv_body =
+"HTTP/1.1 200 OK\r\n"
+"Accept-Ranges: bytes\r\n"
+"Access-Control-Allow-Origin: *\r\n"
+"Access-Control-Expose-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, ETag, X-Step-Count\r\n"
+"Age: 0\r\n"
+"Cache-Control: max-age=0, no-cache, no-store\r\n"
+"Content-Type: application/vnd.kii.ObjectUpdateResponse+json;charset=UTF-8\r\n"
+"Date: Tue, 13 Oct 2015 09:36:11 GMT\r\n"
+"ETag: \"4\"\r\n"
+"Last-Modified: Tue, 13 Oct 2015 09:31:15 GMT\r\n"
+"Server: nginx/1.2.3\r\n"
+"Via: 1.1 varnish\r\n"
+"X-HTTP-Status-Code: 200\r\n"
+"X-Varnish: 757607985\r\n"
+"Content-Length: 136\r\n"
+"Connection: keep-alive\r\n"
+"\r\n"
+"{\"_owner\":\"" DEF_THING_ID "\",\"_created\":1443595884290,\"_id\":\"" DEF_OBJECT "\",\"_modified\":1444728675797,\"_version\":\"4\"}";
+    test_context_t ctx;
+
+    ctx.send_body = send_body;
+    ctx.recv_body = recv_body;
+
+    init(&kii, buffer, 4096, &ctx, common_connect_cb, common_send_cb,
+            common_recv_cb, common_close_cb);
+
+    kii.response_code = 0;
+    kii.response_body = NULL;
+
+    core_err = kii_core_api_call_start(
+            &kii,
+            "GET",
+            "api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT,
+            NULL,
+            KII_TRUE);
+    ASSERT_EQ(KIIE_OK, core_err);
+    core_err = kii_core_api_call_end(&kii);
+    ASSERT_EQ(KIIE_OK, core_err);
+
+    do {
+        core_err = kii_core_run(&kii);
+        state = kii_core_get_state(&kii);
+    } while (state != KII_STATE_IDLE);
+
+    ASSERT_EQ(KIIE_OK, core_err);
+    ASSERT_EQ(200, kii.response_code);
+
+    ASSERT_TRUE(kii.response_body != NULL);
+    ASSERT_STREQ(
+            "{\"_owner\":\"" DEF_THING_ID "\",\"_created\":1443595884290,\"_id\":\"" DEF_OBJECT "\",\"_modified\":1444728675797,\"_version\":\"4\"}",
+            kii.response_body);
+}
