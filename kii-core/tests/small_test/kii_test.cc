@@ -166,6 +166,7 @@ TEST(kiiTest, authenticate)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "content-type:application/json\r\n"
 "content-length:59\r\n"
 "\r\n"
@@ -233,6 +234,7 @@ TEST(kiiTest, register)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "content-type:application/vnd.kii.ThingRegistrationAndAuthorizationRequest+json\r\n"
 "content-length:67\r\n"
 "\r\n"
@@ -302,6 +304,7 @@ TEST(kiiTest, register_with_id)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "content-type:application/vnd.kii.ThingRegistrationAndAuthorizationRequest+json\r\n"
 "content-length:67\r\n"
 "\r\n"
@@ -373,6 +376,7 @@ TEST(kiiTest, create_new_object)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "content-type:application/json\r\n"
 "authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
 "content-length:2\r\n"
@@ -445,6 +449,7 @@ TEST(kiiTest, create_new_object_with_id)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "content-type:application/json\r\n"
 "authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
 "content-length:2\r\n"
@@ -517,6 +522,7 @@ TEST(kiiTest, patch_object)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
 "content-length:2\r\n"
 "\r\n"
@@ -583,6 +589,7 @@ TEST(kiiTest, replace_object)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
 "content-length:2\r\n"
 "\r\n"
@@ -652,6 +659,7 @@ TEST(kiiTest, get_object)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
 "\r\n";
     const char* recv_body =
@@ -717,6 +725,7 @@ TEST(kiiTest, delete_object)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
 "\r\n";
     const char* recv_body =
@@ -777,6 +786,7 @@ TEST(kiiTest, subscribe_bucket)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
 "\r\n";
     const char* recv_body =
@@ -837,6 +847,7 @@ TEST(kiiTest, unsubscribe_bucket)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
 "\r\n";
     const char* recv_body =
@@ -897,6 +908,7 @@ TEST(kiiTest, create_topic)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
 "\r\n";
     const char* recv_body =
@@ -954,6 +966,7 @@ TEST(kiiTest, delete_topic)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
 "\r\n";
     const char* recv_body =
@@ -1010,6 +1023,7 @@ TEST(kiiTest, subscribe_topic)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
 "\r\n";
     const char* recv_body =
@@ -1066,6 +1080,7 @@ TEST(kiiTest, unsubscribe_topic)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
 "\r\n";
     const char* recv_body =
@@ -1122,6 +1137,7 @@ TEST(kiiTest, install_thing_push)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "content-type:application/vnd.kii.InstallationCreationRequest+json\r\n"
 "authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
 "content-length:47\r\n"
@@ -1189,6 +1205,7 @@ TEST(kiiTest, get_endpoint)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
 "\r\n";
     const char* recv_body =
@@ -1266,6 +1283,7 @@ TEST(kiiTest, api_call)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "content-type:application/json\r\n"
 DEF_DUMMY_HEADER "\r\n"
 "content-length:59\r\n"
@@ -1341,6 +1359,7 @@ TEST(kiiTest, api_call_2)
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
+"x-kii-sdk:sn=tec;sv=1.1.1\r\n"
 "content-type:application/json\r\n"
 DEF_DUMMY_HEADER "\r\n"
 "content-length:59\r\n"
