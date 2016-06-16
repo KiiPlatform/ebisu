@@ -123,7 +123,7 @@ kii_core_init(
         const char* app_id,
         const char* app_key)
 {
-    return _kii_core_init_with_info(kii, site, app_id, app_id, KII_SDK_INFO);
+    return _kii_core_init_with_info(kii, site, app_id, app_key, KII_SDK_INFO);
 }
 
     kii_state_t
