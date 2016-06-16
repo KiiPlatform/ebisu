@@ -786,7 +786,8 @@ kii_core_api_call(
  * @param [in] kii SDK object.
  * @param [in] http_method method of http request.
  * @param [in] resource_path resource path of http request.
- * @param [in] content_type content type of http_body.
+ * @param [in] content_type content type of http_body. If the request
+ * has no http body such as GET method, you can set NULL.
  * @param [in] set_authentication_header a flag to set or not
  * authentication header.
  * @return result of preparation. if KIIE_OK, preparation is
