@@ -12,7 +12,7 @@ extern "C" {
  *
  *  \param [inout] kii core sdk instance.
  *  \param [in] site the input of site name,
- *  should be one of "CN", "CN3", "JP", "US", "SG"
+ *  should be one of "CN", "CN3", "JP", "US", "SG", "EU"
  *  \param [in] app_id the input of Application ID
  *  \param [in] app_key the input of Application Key
  *  \param [in] info the input of SDK info.
