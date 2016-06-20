@@ -460,7 +460,7 @@ typedef struct kii_topic_t {
 /** Initializes Kii SDK
  *  \param [inout] kii core sdk instance.
  *  \param [in] site the input of site name,
- *  should be one of "CN", "CN3", "JP", "US", "SG", "EU"
+ *  should be one of "CN", "CN3", "JP", "US", "SG" or "EU"
  *  \param [in] app_id the input of Application ID
  *  \param [in] app_key the input of Application Key
  *  \return  KIIE_OK:success, KIIE_FAIL: failure
