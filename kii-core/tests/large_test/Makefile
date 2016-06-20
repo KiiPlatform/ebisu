@@ -13,11 +13,14 @@ ifdef DEBUG
 KIISDKPARAM += DEBUG=1
 endif
 
-LIBS = -lssl -lcrypto -lpthread -lkiie
+LIBS = -lssl -lcrypto -lpthread -lkiie -lkiijson
 LD_FLAGS = -L.
 CC_OBJ = $(patsubst %.cc,%.o,$(wildcard *.cc)) ../../linux/kii_core_secure_socket.c ../../linux/kii_core_init.c
 TARGET = testapp
-INCLUDES = -I../../ -I../../linux -I$(GTEST_PATH)/include
+INCLUDES = -I../../ -I../../linux -I$(GTEST_PATH)/include -I../../../kii_json/include -I../../../kii_json/libs/jsmn
+
+KIIJSONNAME=libkiijson.so
+KIIJSONSDK = "../../../kii_json/$(KIIJSONNAME)"
 
 KIISDKNAME = libkiie.so
 KIISDK = ../../$(KIISDKNAME)
@@ -33,11 +36,16 @@ $(LIBGTEST):
 	g++ -isystem $(GTEST_PATH)/include -I$(GTEST_PATH) -pthread -c $(GTEST_PATH)/src/gtest_main.cc
 	ar -rv $(LIBGTEST) gtest-all.o gtest_main.o
 
+$(KIIJSONSDK):
+	echo "fuga"
+	$(MAKE) -C ../../../kii_json
+	cp $(KIIJSONSDK) ./
+
 $(KIISDK):
 	$(MAKE) -C ../../ $(KIISDKPARAM) "CFLAGS+=-DKII_JSON_FIXED_TOKEN_NUM=256"
 	cp $(KIISDK) ./
 
-$(TARGET): $(KIISDK) $(LIBGTEST) $(CC_OBJ)
+$(TARGET): $(KIIJSONSDK) $(KIISDK) $(LIBGTEST) $(CC_OBJ)
 	g++ -o $(TARGET) $(CC_OBJ) $(INCLUDES) $(LD_FLAGS) $(LIBS) $(LIBGTEST)
 
 .c.o:
