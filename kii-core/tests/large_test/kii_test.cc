@@ -43,7 +43,6 @@ static void initBucket(kii_bucket_t* bucket)
     bucket->bucket_name = BUCKET;
 }
 
-/*
 TEST(kiiTest, authenticate)
 {
     kii_error_code_t core_err;
@@ -602,7 +601,6 @@ TEST(kiiTest, mqtt)
     ASSERT_TRUE(strstr(kii.response_body, "\"portSSL\"") != NULL);
     ASSERT_TRUE(strstr(kii.response_body, "\"X-MQTT-TTL\"") != NULL);
 }
-*/
 
 TEST(kiiTest, api_calls_upload_binary)
 {
@@ -610,6 +608,7 @@ TEST(kiiTest, api_calls_upload_binary)
     kii_core_t kii;
     kii_bucket_t bucket;
     char object_id[256];
+    const char upload_data[] = "\01\0\0\0\0\0\01\0";
 
     init(&kii, buffer, 4096);
     initBucket(&bucket);
@@ -721,8 +720,8 @@ TEST(kiiTest, api_calls_upload_binary)
             KIIE_OK,
             kii_core_api_call_append_body(
                 &kii,
-                "\0\0\0\0\0\0\0\0",
-                8));
+                upload_data,
+                sizeof(upload_data)));
         ASSERT_EQ(
             KIIE_OK,
             kii_core_api_call_end(&kii));
@@ -735,6 +734,47 @@ TEST(kiiTest, api_calls_upload_binary)
         ASSERT_EQ(200, kii.response_code);
     }
 
+    // get body.
+    kii.response_code = 0;
+    kii.response_body = NULL;
+
+    {
+        char path[256];
+        sprintf(
+            path,
+            "api/apps/%s/things/%s/buckets/%s/objects/%s/body",
+            APP_ID, bucket.scope_id, bucket.bucket_name, object_id);
+        ASSERT_EQ(
+            KIIE_OK,
+            kii_core_api_call_start(
+                &kii,
+                "GET",
+                path,
+                NULL,
+                KII_TRUE));
+        ASSERT_EQ(
+            KIIE_OK,
+            kii_core_api_call_append_header(
+                &kii,
+                "accept",
+                "*/*"));
+        ASSERT_EQ(
+            KIIE_OK,
+            kii_core_api_call_end(&kii));
+        do {
+            kii_error_code_t error = kii_core_run(&kii);
+            if (error == KIIE_FAIL) {
+                ASSERT_TRUE(false);
+            }
+        } while (kii_core_get_state(&kii) != KII_STATE_IDLE);
+        ASSERT_EQ(200, kii.response_code);
+        ASSERT_EQ(
+            0,
+            memcmp(
+                upload_data,
+                kii.response_body,
+                sizeof(upload_data)));
+    }
     // delete object
     kii.response_code = 0;
     kii.response_body = NULL;
