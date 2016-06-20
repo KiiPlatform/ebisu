@@ -153,7 +153,7 @@ static kii_socket_code_t test_recv_cb(
     EXPECT_NE((char*)NULL, buffer);
     EXPECT_GE(context->response.length, length_to_read);
 
-    memcpy(buffer, context->response.body + context->received_size,
+    memmove(buffer, context->response.body + context->received_size,
             real_read_len);
     *out_actual_length = real_read_len;
     context->received_size += real_read_len;

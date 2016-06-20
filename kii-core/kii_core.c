@@ -384,7 +384,7 @@ prv_kii_http_append_body(
         return KII_HTTPC_FAIL;
     }
 
-    memcpy(http_context->buffer + http_context->total_send_size,
+    memmove(http_context->buffer + http_context->total_send_size,
             body, body_len);
     http_context->total_send_size += body_len;
     return KII_HTTPC_OK;
