@@ -58,12 +58,12 @@ typedef struct mock_http_body_t {
     size_t length;
 } mock_http_bodyt_t;
 
-typedef struct test_context2_t {
+typedef struct binary_test_context_t {
     mock_http_body_t request;
     mock_http_body_t response;
     size_t sent_size;
     size_t received_size;
-} test_context2_t;
+} binary_test_context_t;
 
 static void logger_cb(const char* format, ...)
 {
@@ -103,7 +103,7 @@ static void init(
     strcpy(kii->author.access_token, ACCESS_TOKEN);
 }
 
-static kii_socket_code_t test_connect_cb(
+static kii_socket_code_t binary_connect_cb(
         kii_socket_context_t* socket_context,
         const char* host,
         unsigned int port)
@@ -118,12 +118,13 @@ static kii_socket_code_t test_connect_cb(
     return KII_SOCKETC_OK;
 }
 
-static kii_socket_code_t test_send_cb(
+static kii_socket_code_t binary_send_cb(
         kii_socket_context_t* socket_context,
         const char* buffer,
         size_t length)
 {
-    test_context2_t* context = (test_context2_t*)socket_context->app_context;
+    binary_test_context_t* context =
+        (binary_test_context_t*)socket_context->app_context;
 
     EXPECT_NE((char*)NULL, buffer);
     EXPECT_GE(context->request.length, length);
@@ -138,13 +139,14 @@ static kii_socket_code_t test_send_cb(
     return KII_SOCKETC_OK;
 }
 
-static kii_socket_code_t test_recv_cb(
+static kii_socket_code_t binary_recv_cb(
         kii_socket_context_t* socket_context,
         char* buffer,
         size_t length_to_read,
         size_t* out_actual_length)
 {
-    test_context2_t* context = (test_context2_t*)socket_context->app_context;
+    binary_test_context_t* context =
+        (binary_test_context_t*)socket_context->app_context;
     size_t real_read_len = context->response.length - context->received_size;
     if (real_read_len > length_to_read) {
         real_read_len = length_to_read;
@@ -161,17 +163,17 @@ static kii_socket_code_t test_recv_cb(
     return KII_SOCKETC_OK;
 }
 
-static kii_socket_code_t test_close_cb(kii_socket_context_t* socket_context)
+static kii_socket_code_t binary_close_cb(kii_socket_context_t* socket_context)
 {
     EXPECT_NE((kii_socket_context_t*)NULL, socket_context);
     return KII_SOCKETC_OK;
 }
 
-static void init2(
+static void init_with_binary_mock(
         kii_core_t* kii,
         char* buffer,
         int buffer_size,
-        test_context2_t* context)
+        binary_test_context_t* context)
 {
     kii_http_context_t* http_ctx;
     memset(kii, 0x00, sizeof(kii_core_t));
@@ -181,10 +183,10 @@ static void init2(
     http_ctx = &kii->http_context;
     http_ctx->buffer = buffer;
     http_ctx->buffer_size = buffer_size;
-    http_ctx->connect_cb = test_connect_cb;
-    http_ctx->send_cb = test_send_cb;
-    http_ctx->recv_cb = test_recv_cb;
-    http_ctx->close_cb = test_close_cb;
+    http_ctx->connect_cb = binary_connect_cb;
+    http_ctx->send_cb = binary_send_cb;
+    http_ctx->recv_cb = binary_recv_cb;
+    http_ctx->close_cb = binary_close_cb;
     http_ctx->socket_context.app_context = context;
 
     kii->logger_cb = logger_cb;
@@ -1615,7 +1617,7 @@ TEST(kiiTest, api_call_upload_object_body_at_once_binary)
     kii_state_t state;
     char buffer[4096];
     kii_core_t kii;
-    test_context2_t context;
+    binary_test_context_t context;
 
     memset(&context, 0, sizeof(context));
     SET_MOCK_HTTP_DATA(context.request,
@@ -1650,7 +1652,7 @@ TEST(kiiTest, api_call_upload_object_body_at_once_binary)
             "  \"modifiedAt\" : 1449120691863\n"
             "}");
 
-    init2(&kii, buffer, 4096, &context);
+    init_with_binary_mock(&kii, buffer, 4096, &context);
 
     kii.response_code = 0;
     kii.response_body = NULL;
