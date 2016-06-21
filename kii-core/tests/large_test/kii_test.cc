@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+#include <kii_json.h>
+
 // Suppress warnings in gtest.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wvariadic-macros"
@@ -598,4 +600,192 @@ TEST(kiiTest, mqtt)
     ASSERT_TRUE(strstr(kii.response_body, "\"portTCP\"") != NULL);
     ASSERT_TRUE(strstr(kii.response_body, "\"portSSL\"") != NULL);
     ASSERT_TRUE(strstr(kii.response_body, "\"X-MQTT-TTL\"") != NULL);
+}
+
+TEST(kiiTest, api_calls_upload_binary)
+{
+    char buffer[4096];
+    kii_core_t kii;
+    kii_bucket_t bucket;
+    char object_id[256];
+    const char upload_data[] = "\01\0\0\0\0\0\01\0";
+
+    init(&kii, buffer, 4096);
+    initBucket(&bucket);
+
+    // create object
+    kii.response_code = 0;
+    kii.response_body = NULL;
+
+    ASSERT_EQ(KIIE_OK,
+            kii_core_create_new_object(&kii, &bucket, "{}", NULL));
+
+    do {
+        kii_error_code_t error = kii_core_run(&kii);
+        if (error == KIIE_FAIL) {
+            ASSERT_TRUE(false);
+        }
+    } while (kii_core_get_state(&kii) != KII_STATE_IDLE);
+    ASSERT_EQ(201, kii.response_code);
+
+    {
+        kii_json_t kii_json;
+        kii_json_field_t fields[2];
+        char error_string_buff[256];
+
+        memset(&kii_json, 0, sizeof(kii_json));
+        memset(error_string_buff, 0,
+                sizeof(error_string_buff) / sizeof(error_string_buff[0]));
+
+        kii_json.error_string_buff = error_string_buff;
+        kii_json.error_string_length =
+            sizeof(error_string_buff) / sizeof(error_string_buff[0]);
+
+        memset(fields, 0, sizeof(fields));
+        fields[0].name = "objectID";
+        fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+        fields[0].field_copy.string = object_id;
+        fields[0].field_copy_buff_size =
+            sizeof(object_id) / sizeof(object_id[0]);
+        fields[1].name = NULL;
+
+        ASSERT_EQ(KII_JSON_PARSE_SUCCESS,
+                kii_json_read_object(&kii_json,
+                        kii.response_body,
+                        strlen(kii.response_body),
+                        fields));
+    }
+
+    // init upload
+    kii.response_code = 0;
+    kii.response_body = NULL;
+
+    {
+        char path[256];
+
+        memset(path, 0, sizeof(path));
+        sprintf(path,
+                "api/apps/%s/things/%s/buckets/%s/objects/%s/body/uploads",
+                APP_ID, bucket.scope_id, bucket.bucket_name, object_id);
+        ASSERT_EQ(
+            KIIE_OK,
+            kii_core_api_call_start(
+                &kii,
+                "POST",
+                path,
+                "application/vnd.kii.startobjectbodyuploadrequest+json",
+                KII_TRUE));
+        ASSERT_EQ(
+            KIIE_OK,
+            kii_core_api_call_append_header(
+                &kii,
+                "accept",
+                "application/vnd.kii.startobjectbodyuploadresponse+json"));
+        ASSERT_EQ(
+            KIIE_OK,
+            kii_core_api_call_append_body(&kii, "{}", 2));
+        ASSERT_EQ(
+            KIIE_OK,
+            kii_core_api_call_end(&kii));
+
+        do {
+            kii_error_code_t error = kii_core_run(&kii);
+            if (error == KIIE_FAIL) {
+                ASSERT_TRUE(false);
+            }
+        } while (kii_core_get_state(&kii) != KII_STATE_IDLE);
+        ASSERT_EQ(200, kii.response_code);
+    }
+
+    // upload once.
+    kii.response_code = 0;
+    kii.response_body = NULL;
+
+    {
+        char path[256];
+
+        sprintf(path,
+                "api/apps/%s/things/%s/buckets/%s/objects/%s/body",
+                APP_ID, bucket.scope_id, bucket.bucket_name, object_id);
+
+        ASSERT_EQ(
+            KIIE_OK,
+            kii_core_api_call_start(
+                &kii,
+                "PUT",
+                path,
+                "application/octet-stream",
+                KII_TRUE));
+        ASSERT_EQ(
+            KIIE_OK,
+            kii_core_api_call_append_body(
+                &kii,
+                upload_data,
+                sizeof(upload_data)));
+        ASSERT_EQ(
+            KIIE_OK,
+            kii_core_api_call_end(&kii));
+        do {
+            kii_error_code_t error = kii_core_run(&kii);
+            if (error == KIIE_FAIL) {
+                ASSERT_TRUE(false);
+            }
+        } while (kii_core_get_state(&kii) != KII_STATE_IDLE);
+        ASSERT_EQ(200, kii.response_code);
+    }
+
+    // get body.
+    kii.response_code = 0;
+    kii.response_body = NULL;
+
+    {
+        char path[256];
+        sprintf(
+            path,
+            "api/apps/%s/things/%s/buckets/%s/objects/%s/body",
+            APP_ID, bucket.scope_id, bucket.bucket_name, object_id);
+        ASSERT_EQ(
+            KIIE_OK,
+            kii_core_api_call_start(
+                &kii,
+                "GET",
+                path,
+                NULL,
+                KII_TRUE));
+        ASSERT_EQ(
+            KIIE_OK,
+            kii_core_api_call_append_header(
+                &kii,
+                "accept",
+                "*/*"));
+        ASSERT_EQ(
+            KIIE_OK,
+            kii_core_api_call_end(&kii));
+        do {
+            kii_error_code_t error = kii_core_run(&kii);
+            if (error == KIIE_FAIL) {
+                ASSERT_TRUE(false);
+            }
+        } while (kii_core_get_state(&kii) != KII_STATE_IDLE);
+        ASSERT_EQ(200, kii.response_code);
+        ASSERT_EQ(
+            0,
+            memcmp(
+                upload_data,
+                kii.response_body,
+                sizeof(upload_data)));
+    }
+    // delete object
+    kii.response_code = 0;
+    kii.response_body = NULL;
+
+    ASSERT_EQ(KIIE_OK,
+            kii_core_delete_object(&kii, &bucket, object_id));
+    do {
+        kii_error_code_t error = kii_core_run(&kii);
+        if (error == KIIE_FAIL) {
+            ASSERT_TRUE(false);
+        }
+    } while (kii_core_get_state(&kii) != KII_STATE_IDLE);
+    ASSERT_EQ(204, kii.response_code);
 }

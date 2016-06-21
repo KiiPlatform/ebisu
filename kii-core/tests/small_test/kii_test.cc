@@ -22,11 +22,16 @@
 #define DEF_ACCESS_TOKEN "ablTGrnsE20rSRBFKPnJkWyTaeqQ50msqUizvR_61hU"
 #define DEF_BUCKET "myBucket"
 #define DEF_OBJECT "myObject"
+#define DEF_OBJECT_ID "myObject"
 #define DEF_TOPIC "myTopic"
 #define DEF_MQTT_ENDPOINT "p6i5c3h59b193cmht5gdyzi3a"
 #define DEF_DUMMY_KEY "DummyHeader"
 #define DEF_DUMMY_VALUE "DummyValue"
 #define DEF_DUMMY_HEADER DEF_DUMMY_KEY ":" DEF_DUMMY_VALUE
+
+#define SET_MOCK_HTTP_DATA(mock_http_body, data) \
+  mock_http_body.body = data; \
+  mock_http_body.length = sizeof(data);
 
 static char APP_HOST[] = DEF_APP_HOST;
 static char APP_ID[] = DEF_APP_ID;
@@ -47,6 +52,18 @@ typedef struct _test_context
     const char *send_body;
     const char *recv_body;
 } test_context_t;
+
+typedef struct mock_http_body_t {
+    const char *body;
+    size_t length;
+} mock_http_bodyt_t;
+
+typedef struct binary_test_context_t {
+    mock_http_body_t request;
+    mock_http_body_t response;
+    size_t sent_size;
+    size_t received_size;
+} binary_test_context_t;
 
 static void logger_cb(const char* format, ...)
 {
@@ -79,6 +96,98 @@ static void init(
     http_ctx->recv_cb = recv_cb;
     http_ctx->close_cb = close_cb;
     http_ctx->socket_context.app_context = test_ctx;
+
+    kii->logger_cb = logger_cb;
+
+    strcpy(kii->author.author_id, THING_ID);
+    strcpy(kii->author.access_token, ACCESS_TOKEN);
+}
+
+static kii_socket_code_t binary_connect_cb(
+        kii_socket_context_t* socket_context,
+        const char* host,
+        unsigned int port)
+{
+    EXPECT_NE((kii_socket_context_t*)NULL, socket_context);
+    EXPECT_STREQ(APP_HOST, host);
+    EXPECT_EQ(443, port);
+
+    send_counter = 0;
+    recv_counter = 0;
+
+    return KII_SOCKETC_OK;
+}
+
+static kii_socket_code_t binary_send_cb(
+        kii_socket_context_t* socket_context,
+        const char* buffer,
+        size_t length)
+{
+    binary_test_context_t* context =
+        (binary_test_context_t*)socket_context->app_context;
+
+    EXPECT_NE((char*)NULL, buffer);
+    EXPECT_GE(context->request.length, length);
+
+    EXPECT_TRUE(
+        memcmp(
+            context->request.body + context->sent_size,
+            buffer,
+            length) == 0 ? true : false);
+    context->sent_size += length;
+
+    return KII_SOCKETC_OK;
+}
+
+static kii_socket_code_t binary_recv_cb(
+        kii_socket_context_t* socket_context,
+        char* buffer,
+        size_t length_to_read,
+        size_t* out_actual_length)
+{
+    binary_test_context_t* context =
+        (binary_test_context_t*)socket_context->app_context;
+    size_t real_read_len = context->response.length - context->received_size;
+    if (real_read_len > length_to_read) {
+        real_read_len = length_to_read;
+    }
+
+    EXPECT_NE((char*)NULL, buffer);
+    EXPECT_GE(context->response.length, length_to_read);
+
+    memmove(buffer, context->response.body + context->received_size,
+            real_read_len);
+    *out_actual_length = real_read_len;
+    context->received_size += real_read_len;
+
+    return KII_SOCKETC_OK;
+}
+
+static kii_socket_code_t binary_close_cb(kii_socket_context_t* socket_context)
+{
+    EXPECT_NE((kii_socket_context_t*)NULL, socket_context);
+    return KII_SOCKETC_OK;
+}
+
+static void init_with_binary_mock(
+        kii_core_t* kii,
+        char* buffer,
+        int buffer_size,
+        binary_test_context_t* context)
+{
+    kii_http_context_t* http_ctx;
+    memset(kii, 0x00, sizeof(kii_core_t));
+
+    kii_core_init(kii, APP_HOST, APP_ID, APP_KEY);
+
+    http_ctx = &kii->http_context;
+    http_ctx->buffer = buffer;
+    http_ctx->buffer_size = buffer_size;
+    http_ctx->connect_cb = binary_connect_cb;
+    http_ctx->send_cb = binary_send_cb;
+    http_ctx->recv_cb = binary_recv_cb;
+    http_ctx->close_cb = binary_close_cb;
+    http_ctx->socket_context.app_context = context;
 
     kii->logger_cb = logger_cb;
 
@@ -1499,5 +1608,82 @@ TEST(kiiTest, api_call_get_object)
     ASSERT_TRUE(kii.response_body != NULL);
     ASSERT_STREQ(
             "{\"_owner\":\"" DEF_THING_ID "\",\"_created\":1443595884290,\"_id\":\"" DEF_OBJECT "\",\"_modified\":1444728675797,\"_version\":\"4\"}",
+            kii.response_body);
+}
+
+TEST(kiiTest, api_call_upload_object_body_at_once_binary)
+{
+    kii_error_code_t core_err;
+    kii_state_t state;
+    char buffer[4096];
+    kii_core_t kii;
+    binary_test_context_t context;
+
+    memset(&context, 0, sizeof(context));
+    SET_MOCK_HTTP_DATA(context.request,
+            "PUT https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT_ID "/body HTTP/1.1\r\n"
+            "host:" DEF_APP_HOST "\r\n"
+            "x-kii-appid:" DEF_APP_ID "\r\n"
+            "x-kii-appkey:" DEF_APP_KEY "\r\n"
+            "x-kii-sdk:sn=tec;sv=1.1.1\r\n"
+            "content-type:application/octet-stream\r\n"
+            "authorization:bearer " DEF_ACCESS_TOKEN "\r\n"
+            DEF_DUMMY_HEADER "\r\n"
+            "content-length:15\r\n"
+            "\r\n"
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
+    SET_MOCK_HTTP_DATA(context.response,
+            "HTTP/1.1 200 OK\r\n"
+            "Accept-Ranges: bytes\r\n"
+            "Access-Control-Allow-Origin: *\r\n"
+            "Access-Control-Expose-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, ETag, X-Step-Count\r\n"
+            "Age: 0\r\n"
+            "Cache-Control: max-age=0, no-cache, no-store\r\n"
+            "Content-Type: application/json;charset=UTF-8\r\n"
+            "Date: Fri, 25 Sep 2015 11:07:16 GMT\r\n"
+            "Server: nginx/1.2.3\r\n"
+            "Via: 1.1 varnish\r\n"
+            "X-HTTP-Status-Code: 200\r\n"
+            "X-Varnish: 726929556\r\n"
+            "Content-Length: 34\r\n"
+            "Connection: keep-alive\r\n"
+            "\r\n"
+            "{\n"
+            "  \"modifiedAt\" : 1449120691863\n"
+            "}");
+
+    init_with_binary_mock(&kii, buffer, 4096, &context);
+
+    kii.response_code = 0;
+    kii.response_body = NULL;
+
+    core_err = kii_core_api_call_start(&kii,
+            "PUT",
+            "api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT_ID "/body",
+            "application/octet-stream",
+            KII_TRUE);
+    ASSERT_EQ(KIIE_OK, core_err);
+    core_err = kii_core_api_call_append_header(&kii, DEF_DUMMY_KEY,
+            DEF_DUMMY_VALUE);
+    ASSERT_EQ(KIIE_OK, core_err);
+    core_err = kii_core_api_call_append_body(&kii,
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 15);
+    ASSERT_EQ(KIIE_OK, core_err);
+    core_err = kii_core_api_call_end(&kii);
+    ASSERT_EQ(KIIE_OK, core_err);
+
+    do {
+        core_err = kii_core_run(&kii);
+        state = kii_core_get_state(&kii);
+    } while (state != KII_STATE_IDLE);
+
+    ASSERT_EQ(KIIE_OK, core_err);
+    ASSERT_EQ(200, kii.response_code);
+
+    ASSERT_TRUE(kii.response_body != NULL);
+    ASSERT_STREQ(
+            "{\n"
+            "  \"modifiedAt\" : 1449120691863\n"
+            "}",
             kii.response_body);
 }
