@@ -37,7 +37,6 @@ $(LIBGTEST):
 	ar -rv $(LIBGTEST) gtest-all.o gtest_main.o
 
 $(KIIJSONSDK):
-	echo "fuga"
 	$(MAKE) -C ../../../kii_json
 	cp $(KIIJSONSDK) ./
 
