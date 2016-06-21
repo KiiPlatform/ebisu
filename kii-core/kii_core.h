@@ -345,6 +345,7 @@ typedef struct kii_core_t
      *  Site CN : "api-cn2.kii.com"
      *  Site CN3: "api-cn3.kii.com"
      *  Site SG : "api-sg.kii.com"
+     *  Site EU : "api-eu.kii.com"
      */
     char* app_host;
     /** HTTP response code.
@@ -459,7 +460,7 @@ typedef struct kii_topic_t {
 /** Initializes Kii SDK
  *  \param [inout] kii core sdk instance.
  *  \param [in] site the input of site name,
- *  should be one of "CN", "CN3", "JP", "US", "SG"
+ *  should be one of "CN", "CN3", "JP", "US", "SG" or "EU"
  *  \param [in] app_id the input of Application ID
  *  \param [in] app_key the input of Application Key
  *  \return  KIIE_OK:success, KIIE_FAIL: failure

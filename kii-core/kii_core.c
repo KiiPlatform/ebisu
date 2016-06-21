@@ -104,6 +104,10 @@ _kii_core_init_with_info(
     {
         kii->app_host = "api-sg.kii.com";
     }
+    else if (strcmp(site, "EU") == 0)
+    {
+        kii->app_host = "api-eu.kii.com";
+    }
     else
     {
         /* Let's enable to set custom host */
