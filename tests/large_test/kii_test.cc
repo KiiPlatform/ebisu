@@ -452,6 +452,57 @@ TEST(kiiTest, genericApis)
     ASSERT_STRNE("", access_token);
 }
 
+TEST(kiiTest, objectBodyOnce_binary)
+{
+    int ret = -1;
+    char body[] = "\0\0\01\0\01";
+    char buffer[4096];
+    char objectId[KII_OBJECTID_SIZE + 1];
+    kii_t kii;
+    kii_bucket_t bucket;
+    unsigned int body_len = sizeof(body);
+    unsigned int out_len = 0;
+
+    init(&kii, buffer, 4096);
+    initBucket(&bucket);
+    strcpy(objectId, "my_object");
+
+    kii.kii_core.response_code = 0;
+    ret = kii_object_create_with_id(&kii, &bucket, objectId, "{}", NULL);
+
+    ASSERT_EQ(0, ret);
+    ASSERT_EQ(201, kii.kii_core.response_code);
+    ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
+
+    kii.kii_core.response_code = 0;
+    ret = kii_object_upload_body_at_once(&kii, &bucket, objectId,
+            "application/octet-stream", body, body_len);
+
+    ASSERT_EQ(0, ret);
+    ASSERT_EQ(200, kii.kii_core.response_code);
+    ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
+
+    kii.kii_core.response_code = 0;
+    ret = kii_object_download_body_at_once(&kii, &bucket, objectId, &out_len);
+
+    ASSERT_EQ(0, ret);
+    ASSERT_EQ(body_len, out_len);
+    ASSERT_EQ(0, memcmp(body, kii.kii_core.response_body, body_len));
+    ASSERT_EQ(200, kii.kii_core.response_code);
+    ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
+
+    kii.kii_core.response_code = 0;
+    ret = kii_object_delete(&kii, &bucket, objectId);
+
+    ASSERT_EQ(0, ret);
+    ASSERT_EQ(204, kii.kii_core.response_code);
+    ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
+}
+
 /*
 void received_callback(kii_t* kii, char* buffer, size_t buffer_size) {
     printf("%d\n%s\n", buffer_size, buffer);
