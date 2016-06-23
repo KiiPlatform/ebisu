@@ -452,6 +452,150 @@ TEST(kiiTest, genericApis)
     ASSERT_STRNE("", access_token);
 }
 
+TEST(kiiTest, objectBodyOnce_binary)
+{
+    int ret = -1;
+    char body[] = "\0\0\01\0\01";
+    char buffer[4096];
+    char objectId[KII_OBJECTID_SIZE + 1];
+    kii_t kii;
+    kii_bucket_t bucket;
+    unsigned int body_len = sizeof(body);
+    unsigned int out_len = 0;
+
+    init(&kii, buffer, 4096);
+    initBucket(&bucket);
+    strcpy(objectId, "my_object");
+
+    kii.kii_core.response_code = 0;
+    ret = kii_object_create_with_id(&kii, &bucket, objectId, "{}", NULL);
+
+    ASSERT_EQ(0, ret);
+    ASSERT_EQ(201, kii.kii_core.response_code);
+    ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
+
+    kii.kii_core.response_code = 0;
+    ret = kii_object_upload_body_at_once(&kii, &bucket, objectId,
+            "application/octet-stream", body, body_len);
+
+    ASSERT_EQ(0, ret);
+    ASSERT_EQ(200, kii.kii_core.response_code);
+    ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
+
+    kii.kii_core.response_code = 0;
+    ret = kii_object_download_body_at_once(&kii, &bucket, objectId, &out_len);
+
+    ASSERT_EQ(0, ret);
+    ASSERT_EQ(body_len, out_len);
+    ASSERT_EQ(0, memcmp(body, kii.kii_core.response_body, body_len));
+    ASSERT_EQ(200, kii.kii_core.response_code);
+    ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
+
+    kii.kii_core.response_code = 0;
+    ret = kii_object_delete(&kii, &bucket, objectId);
+
+    ASSERT_EQ(0, ret);
+    ASSERT_EQ(204, kii.kii_core.response_code);
+    ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
+}
+
+TEST(kiiTest, objectBodyMulti_binary)
+{
+    int ret = -1;
+    char body[] = "\0\01\0\0\0\01\0\01\0\01\0";
+    char buffer[4096];
+    char objectId[KII_OBJECTID_SIZE + 1];
+    char uploadId[KII_UPLOADID_SIZE + 1];
+    kii_t kii;
+    kii_bucket_t bucket;
+    kii_chunk_data_t chunk;
+    unsigned int body_len = 16;
+    unsigned int out_len = 0;
+    unsigned int out_total = 0;
+    char content_type[] = "application/octet-stream";
+
+    init(&kii, buffer, 4096);
+    initBucket(&bucket);
+    strcpy(objectId, "my_object");
+
+    kii_object_delete(&kii, &bucket, objectId);
+
+    kii.kii_core.response_code = 0;
+    ret = kii_object_create_with_id(&kii, &bucket, objectId, "{}", NULL);
+
+    ASSERT_EQ(0, ret);
+    ASSERT_EQ(201, kii.kii_core.response_code);
+    ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
+
+    kii.kii_core.response_code = 0;
+    memset(uploadId, 0x00, KII_UPLOADID_SIZE + 1);
+    ret = kii_object_init_upload_body(&kii, &bucket, objectId, uploadId);
+
+    ASSERT_EQ(0, ret);
+    ASSERT_NE(0, strlen(uploadId));
+    ASSERT_EQ(200, kii.kii_core.response_code);
+    ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
+
+    chunk.chunk = body;
+    chunk.body_content_type = content_type;
+    chunk.position = 0;
+    chunk.total_length = body_len;
+    chunk.length = 5;
+
+    kii.kii_core.response_code = 0;
+    ret = kii_object_upload_body(&kii, &bucket, objectId, uploadId, &chunk);
+
+    ASSERT_EQ(0, ret);
+    ASSERT_EQ(204, kii.kii_core.response_code);
+    ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
+
+    chunk.chunk = body + 5;
+    chunk.position = 5;
+    chunk.length = 11;
+    kii.kii_core.response_code = 0;
+    ret = kii_object_upload_body(&kii, &bucket, objectId, uploadId, &chunk);
+
+    ASSERT_EQ(0, ret);
+    ASSERT_EQ(204, kii.kii_core.response_code);
+    ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
+
+    kii.kii_core.response_code = 0;
+    ret = kii_object_commit_upload(&kii, &bucket, objectId, uploadId, 1);
+
+    ASSERT_EQ(0, ret);
+    ASSERT_EQ(204, kii.kii_core.response_code);
+    ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
+
+    kii.kii_core.response_code = 0;
+    ret = kii_object_download_body(&kii, &bucket, objectId, 0, body_len,
+            &out_len, &out_total);
+
+    ASSERT_EQ(0, ret);
+    ASSERT_EQ(body_len, out_len);
+    ASSERT_EQ(body_len, out_total);
+    ASSERT_EQ(0, memcmp(body, kii.kii_core.response_body, body_len));
+    ASSERT_EQ(206, kii.kii_core.response_code);
+    ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
+
+    kii.kii_core.response_code = 0;
+    ret = kii_object_delete(&kii, &bucket, objectId);
+
+    ASSERT_EQ(0, ret);
+    ASSERT_EQ(204, kii.kii_core.response_code);
+    ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);
+    ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
+}
+
 /*
 void received_callback(kii_t* kii, char* buffer, size_t buffer_size) {
     printf("%d\n%s\n", buffer_size, buffer);
