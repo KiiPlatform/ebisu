@@ -104,6 +104,10 @@ _kii_core_init_with_info(
     {
         kii->app_host = "api-sg.kii.com";
     }
+    else if (strcmp(site, "EU") == 0)
+    {
+        kii->app_host = "api-eu.kii.com";
+    }
     else
     {
         /* Let's enable to set custom host */
@@ -384,8 +388,9 @@ prv_kii_http_append_body(
         return KII_HTTPC_FAIL;
     }
 
-    strncat(http_context->buffer, body, body_len);
-    http_context->total_send_size = kii_strlen(http_context->buffer);
+    memmove(http_context->buffer + http_context->total_send_size,
+            body, body_len);
+    http_context->total_send_size += body_len;
     return KII_HTTPC_OK;
 }
 
@@ -1584,10 +1589,12 @@ kii_core_api_call_start(
         return KIIE_FAIL;
     }
 
-    if (prv_kii_http_set_header(kii, "content-type",
-                    content_type) != KII_HTTPC_OK) {
-        M_KII_LOG(M_REQUEST_HEADER_CB_FAILED);
-        return KIIE_FAIL;
+    if (content_type != NULL) {
+        if (prv_kii_http_set_header(kii, "content-type",
+                        content_type) != KII_HTTPC_OK) {
+            M_KII_LOG(M_REQUEST_HEADER_CB_FAILED);
+            return KIIE_FAIL;
+        }
     }
     if (set_authentication_header == KII_TRUE) {
         if (prv_kii_core_set_authorization_header(kii) != KII_HTTPC_OK) {
@@ -1632,10 +1639,12 @@ kii_error_code_t kii_core_api_call_end(kii_core_t* kii)
     }
 
     /* set content length. */
-    if (prv_kii_core_http_set_content_length_header(kii,
-                    kii->_content_length) != KII_HTTPC_OK) {
-        M_KII_LOG(M_REQUEST_HEADER_CB_FAILED);
-        return KIIE_FAIL;
+    if (kii->_content_length > 0) {
+        if (prv_kii_core_http_set_content_length_header(kii,
+                        kii->_content_length) != KII_HTTPC_OK) {
+            M_KII_LOG(M_REQUEST_HEADER_CB_FAILED);
+            return KIIE_FAIL;
+        }
     }
 
     /* set reday. */

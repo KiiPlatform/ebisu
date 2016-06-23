@@ -6,46 +6,39 @@ CFLAGS += -g -DDEBUG
 CXXFLAGS += -g -DDEBUG
 endif
 
-GTEST_PATH=../../gtest-1.7.0
+GTEST_PATH=../../kii-core/gtest-1.7.0
 
 KIISDKPARAM =
 ifdef DEBUG
 KIISDKPARAM += DEBUG=1
 endif
 
-LIBS = -lssl -lcrypto -lpthread -lkiie -lkiijson
+LIBS = -lssl -lcrypto -lpthread -lkiisdk
 LD_FLAGS = -L.
-CC_OBJ = $(patsubst %.cc,%.o,$(wildcard *.cc)) ../../linux/kii_core_secure_socket.c ../../linux/kii_core_init.c
+CC_OBJ = $(patsubst %.cc,%.o,$(wildcard *.cc))
 TARGET = testapp
-INCLUDES = -I../../ -I../../linux -I$(GTEST_PATH)/include -I../../../kii_json/include -I../../../kii_json/libs/jsmn
+INCLUDES = -I../../kii -I../../kii-core -I$(GTEST_PATH)/include -I../../kii_json/include -I../../kii_json/libs/jsmn -I../../Linux
 
-KIIJSONNAME=libkiijson.so
-KIIJSONSDK = "../../../kii_json/$(KIIJSONNAME)"
-
-KIISDKNAME = libkiie.so
-KIISDK = ../../$(KIISDKNAME)
+KIISDKNAME = libkiisdk.so
+KIISDK = ../../kii/$(KIISDKNAME)
 
 TEST = test
 
 LIBGTEST=libgtest.a
 
-all: clean $(TARGET)
+all: clean $(TARGET) $(DOCTARGET)
 
 $(LIBGTEST):
 	g++ -isystem $(GTEST_PATH)/include -I$(GTEST_PATH) -pthread -c $(GTEST_PATH)/src/gtest-all.cc
 	g++ -isystem $(GTEST_PATH)/include -I$(GTEST_PATH) -pthread -c $(GTEST_PATH)/src/gtest_main.cc
 	ar -rv $(LIBGTEST) gtest-all.o gtest_main.o
 
-$(KIIJSONSDK):
-	$(MAKE) -C ../../../kii_json
-	cp $(KIIJSONSDK) ./
-
 $(KIISDK):
-	$(MAKE) -C ../../ $(KIISDKPARAM) "CFLAGS+=-DKII_JSON_FIXED_TOKEN_NUM=256"
+	$(MAKE) -C ../../kii $(KIISDKPARAM) "CFLAGS+=-DKII_JSON_FIXED_TOKEN_NUM=256"
 	cp $(KIISDK) ./
 
-$(TARGET): $(KIIJSONSDK) $(KIISDK) $(LIBGTEST) $(CC_OBJ)
-	g++ -o $(TARGET) $(CC_OBJ) $(INCLUDES) $(LD_FLAGS) $(LIBS) $(LIBGTEST)
+$(TARGET): $(KIISDK) $(LIBGTEST) $(CC_OBJ)
+	g++ -o $(TARGET) $(CC_OBJ) $(LD_FLAGS) $(LIBS) $(LIBGTEST)
 
 .c.o:
 	gcc $(CFLAGS) $(INCLUDES) -c $<
@@ -57,6 +50,7 @@ clean:
 	touch $(TARGET)
 	rm $(TARGET)
 	rm -f *.o
+	rm -rf $(DOCTARGET)
 	rm -f $(KIISDK)
 	rm -f $(KIISDKNAME)
 	rm -f $(LIBGTEST)
