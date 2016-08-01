@@ -15,7 +15,7 @@ SOURCES = $(wildcard *.c) ../kii-core/linux/kii_core_secure_socket.c
 TARGET = exampleapp
 LIB_SOURCES = $(wildcard kii_*.c) ../kii-core/linux/kii_core_secure_socket.c
 LIB_TARGET = libkiisocketclient.so
-INCLUDES = -I../kii -I../kii-core -I../kii_json/include -I../kii_json/libs/jsmn -I../kii-core/linux/
+INCLUDES = -I../kii -I../kii-core -I../kii_json/include -I../kii_json/libs/jsmn -I../kii-core/linux/ -I/usr/local/opt/openssl/include/
 
 KIISDKNAME = libkiisdk.so
 KIISDK = ../kii/$(KIISDKNAME)
