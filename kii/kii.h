@@ -260,7 +260,7 @@ int kii_object_upload_body_at_once(
 		const kii_bucket_t* bucket,
 		const char* object_id,
 		const char* body_content_type,
-		const char* data,
+		const void* data,
 		size_t data_length);
 
 /** Initiate chunked object body upload.
@@ -283,13 +283,13 @@ typedef struct kii_chunk_data_t {
 	/** content-type of the body */
 	char* body_content_type;
 	/** position of the chunk.(bytes count) */
-	unsigned int position;
+	size_t position;
 	/** length of the chunk */
-	unsigned int length;
+	size_t length;
 	/** total length of the body */
-	unsigned int total_length;
+	size_t total_length;
 	/** chunk data */
-	char* chunk;
+	void* chunk;
 } kii_chunk_data_t;
 
 /** Upload object body chunk by chunk.
