@@ -489,7 +489,7 @@ int kii_api_call_start(
  */
 int kii_api_call_append_body(
         kii_t* kii,
-        const char* body_data,
+        const void* body_data,
         size_t body_size);
 
 /** append request header.
