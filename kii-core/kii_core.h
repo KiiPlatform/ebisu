@@ -771,7 +771,7 @@ kii_core_api_call(
         kii_core_t* kii,
         const char* http_method,
         const char* resource_path,
-        const char* http_body,
+        const void* http_body,
         size_t body_size,
         const char* content_type,
         char* header,
@@ -815,7 +815,7 @@ kii_error_code_t kii_core_api_call_start(
  */
 kii_error_code_t kii_core_api_call_append_body(
         kii_core_t* kii,
-        const char* body_data,
+        const void* body_data,
         size_t body_size);
 
 /** append request header.

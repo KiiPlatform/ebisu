@@ -1,4 +1,4 @@
-override CFLAGS += -std=gnu89 -Wall -pedantic -pthread
+override CFLAGS += -Wall -pedantic -pthread
 #CFLAGS = -std=gnu89 -w -pedantic
 ifdef DEBUG
 CFLAGS += -g -DDEBUG
@@ -15,7 +15,7 @@ SOURCES = $(wildcard *.c) ../kii-core/linux/kii_core_secure_socket.c
 TARGET = exampleapp
 LIB_SOURCES = $(wildcard kii_*.c) ../kii-core/linux/kii_core_secure_socket.c
 LIB_TARGET = libkiisocketclient.so
-INCLUDES = -I../kii -I../kii-core -I../kii_json/include -I../kii_json/libs/jsmn -I../kii-core/linux/
+INCLUDES = -I../kii -I../kii-core -I../kii_json/include -I../kii_json/libs/jsmn -I../kii-core/linux/ -I/usr/local/opt/openssl/include/
 
 KIISDKNAME = libkiisdk.so
 KIISDK = ../kii/$(KIISDKNAME)
@@ -25,7 +25,7 @@ all: clean $(TARGET) $(DOCTARGET)
 lib: clean $(LIB_TARGET)
 
 $(KIISDK):
-	$(MAKE) -C ../kii $(KIISDKPARAM) "CFLAGS+=-DKII_JSON_FIXED_TOKEN_NUM=256 -DKII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS=30"
+	$(MAKE) -C ../kii $(KIISDKPARAM) "CFLAGS+=-DFIXED_JSON_TOKEN_NUM=256 -DKEEP_ALIVE_INTERVAL=30"
 	cp $(KIISDK) ./
 
 
