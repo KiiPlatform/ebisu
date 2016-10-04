@@ -12,8 +12,8 @@ kii_task_code_t task_create_cb
      KII_TASK_ENTRY entry,
      void* param)
 {
-    int stk_size = 0;
-    int priority = 0;
+    unsigned int stk_size = 0;
+    unsigned int priority = 0;
 
     if (strcmp(name, KII_TASK_NAME_RECV_MSG) == 0) {
         stk_size = 2048;
