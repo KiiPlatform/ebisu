@@ -10,11 +10,21 @@
 kii_task_code_t task_create_cb
     (const char* name,
      KII_TASK_ENTRY entry,
-     void* param,
-     unsigned char* stk_start,
-     unsigned int stk_size,
-     unsigned int priority)
+     void* param)
 {
+    int stk_size = 0;
+    int priority = 0;
+
+    if (strcmp(name, KII_TASK_NAME_RECV_MSG) == 0) {
+        stk_size = 2048;
+        priority = 3;
+#ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
+    } else if (strcmp(name, KII_TASK_NAME_PING_REQ) == 0) {
+        stk_size = 1024;
+        priority = 4;
+#endif
+    }
+
 	if (osi_TaskCreate(entry, (const signed char*) name, stk_size, param, priority, NULL) < 0) {
         return KII_TASKC_FAIL;
     } else {
