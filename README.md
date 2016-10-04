@@ -18,17 +18,19 @@ Please refer to the
 
 ## Create tasks
 
-This SDK requests creating tasks by KII\_TASK\_CREATE callback.  
+This SDK requests creating two tasks by KII\_TASK\_CREATE callback.  
 
-When you need to set stack size yourself, please check task's stack size.
+List of task name symbols.
 
-### Stack size on Mac (El Caption).
+- KII\_TASK\_NAME\_RECV\_MSG
 
-This is hint.
+  The task of receiving push messages.
 
-- KII\_TASK\_NAME\_RECV\_MSG: 4184 bytes
+- KII\_TASK\_NAME\_PING\_REQ
 
-- KII\_TASK\_NAME\_PING\_REQ: 80 bytes
+  The task of sending ping request.
 
-Attention: KII\_TASK\_NAME\_PING\_REQ task is requested only when KII\_PUSH\_KEEP\_ALIVE\_INTERVAL\_SECONDS is defined.
+You'll specify stack size, depth and priority, etc depending on the environment.
+Please check samples for reference.
+For example, [Ti CC3200 kii\_task\_impl.c](./TI/CC3200/wlan\_station/kii/kii\_task\_impl.c).
 
