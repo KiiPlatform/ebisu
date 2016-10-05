@@ -15,3 +15,22 @@ Please refer to the
 - [Intel Edison] (./INTEL/EDISON)
 - [Ti CC3200] (./TI/CC3200)
 - [Linux] (./Linux)
+
+## Create tasks
+
+This SDK requests creating two tasks by KII\_TASK\_CREATE callback.  
+
+List of task name symbols.
+
+- KII\_TASK\_NAME\_RECV\_MSG
+
+  The task of receiving push messages.
+
+- KII\_TASK\_NAME\_PING\_REQ
+
+  The task of sending ping request.
+
+You'll specify stack size, depth and priority, etc depending on the environment.
+Please check samples for reference.
+For example, [Ti CC3200 kii\_task\_impl.c](./TI/CC3200/wlan\_station/kii/kii\_task\_impl.c).
+

@@ -26,11 +26,5 @@ typedef struct kii_socket_context_t {
 } kii_socket_context_t;
 
 2. In file "kii_core.h", add the line "#define KII_SERVER_PORT 80" before the line "#ifndef KII_SERVER_PORT"
-3. In file "kii_push.c", modify the follow lines:
-  #define KIIPUSH_TASK_STK_SIZE 2048
-  static unsigned int mKiiPush_taskStk[1];
-  #if(KII_PUSH_PING_ENABLE)
-  #define KIIPUSH_PINGREQ_TASK_STK_SIZE 1024
-  static unsigned int mKiiPush_pingReqTaskStk[1];
-  #endif
-4. In "kii_json.h", add definition of "#define KII_JSON_FIXED_TOKEN_NUM 20"
+3. In "kii_json.h", add definition of "#define KII_JSON_FIXED_TOKEN_NUM 20"
+

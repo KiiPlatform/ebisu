@@ -16,10 +16,7 @@ typedef kii_task_code_t
 (*KII_TASK_CREATE)
     (const char* name,
      KII_TASK_ENTRY entry,
-     void* param,
-     unsigned char* stk_start,
-     unsigned int stk_size,
-     unsigned int priority);
+     void* param);
 
 typedef void
 (*KII_DELAY_MS)
