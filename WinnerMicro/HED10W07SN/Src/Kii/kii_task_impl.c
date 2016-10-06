@@ -1,15 +1,34 @@
 #include "kii_task_impl.h"
 #include "wm_include.h"
 
+#define RECVMSG_TASK_STK_SIZE 8
+static unsigned int RecvMsgTaskStk[RECVMSG_TASK_STK_SIZE];
+#ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
+#define PINGREQ_TASK_STK_SIZE 8
+static unsigned int PingReqTaskStk[PINGREQ_TASK_STK_SIZE];
+#endif
+
 kii_task_code_t task_create_cb
     (const char* name,
      KII_TASK_ENTRY entry,
-     void* param,
-     unsigned char* stk_start,
-     unsigned int stk_size,
-     unsigned int priority)
+     void* param)
 {
     int ret;
+    unsigned char* stk_start = NULL;
+    unsigned int stk_size = 0;
+    unsigned int priority = 0;
+
+    if (strcmp(name, KII_TASK_NAME_RECV_MSG) == 0) {
+        stk_start = RecvMsgTaskStk;
+        stk_size = RECVMSG_TASK_STK_SIZE;
+        priority = DEMO_KII_PUSH_RECV_MSG_TASK_PRIO;
+#ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
+    } else if (strcmp(name, KII_TASK_NAME_PING_REQ) == 0) {
+        stk_start = PingReqTaskStk;
+        stk_size = PINGREQ_TASK_STK_SIZE;
+        priority = DEMO_KII_PUSH_PINGREQ_TASK_PRIO;
+#endif
+    }
 
 	ret = tls_os_task_create(NULL,name, entry, param, stk_start, stk_size, priority, 0);
 
