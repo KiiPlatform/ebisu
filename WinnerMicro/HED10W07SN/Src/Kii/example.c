@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "kii_core_impl.h"
+#include "kii_init_impl.h"
 
 void received_callback(kii_t* kii, char* buffer, size_t buffer_size) {
     printf("buffer_size: %u\n", buffer_size);
@@ -51,7 +52,7 @@ int kiiDemo_test(char *buf)
     memset(mqtt_buffer, 0x00, mqtt_buffer_size);
 
 
-    kii_init(&kii, EX_APP_SITE, EX_APP_ID, EX_APP_KEY);
+    kii_init_impl(&kii, EX_APP_SITE, EX_APP_ID, EX_APP_KEY);
     kii.kii_core.http_context.buffer = buffer;
     kii.kii_core.http_context.buffer_size = buffer_size;
     kii.kii_core.http_context.socket_context.app_context = NULL;
@@ -238,7 +239,7 @@ int kiiDemo_test(char *buf)
         printf("failed!\n");
     }
     printf("Initialize push\n");
-    kii_push_start_routine(&kii, received_callback);
+    kii_push_start_routine(&kii, 0, 0, received_callback);
     return 0;
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
