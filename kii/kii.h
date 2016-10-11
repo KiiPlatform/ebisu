@@ -36,6 +36,8 @@ extern "C" {
 #define M_KII_LOG(x)
 #endif
 
+#define KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS 30
+
 #define KII_TASK_NAME_RECV_MSG "kiiPush_recvMsgTask"
 #ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
 #define KII_TASK_NAME_PING_REQ "kiiPush_pingReqTask"

@@ -1,10 +1,14 @@
 #include "kii_task_impl.h"
 #include "wm_include.h"
+#include "kii.h"
 
-#define RECVMSG_TASK_STK_SIZE 8
+#define  DEMO_KII_PUSH_RECV_MSG_TASK_PRIO	42
+#define  DEMO_KII_PUSH_PINGREQ_TASK_PRIO	43
+
+#define RECVMSG_TASK_STK_SIZE 2048
 static unsigned int RecvMsgTaskStk[RECVMSG_TASK_STK_SIZE];
 #ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
-#define PINGREQ_TASK_STK_SIZE 8
+#define PINGREQ_TASK_STK_SIZE 256
 static unsigned int PingReqTaskStk[PINGREQ_TASK_STK_SIZE];
 #endif
 

@@ -21,7 +21,7 @@ int _kii_init_with_info(
     return _kii_core_init_with_info(&(kii->kii_core), site, app_id,
             app_key, info) == KIIE_FAIL ? -1 : 0;
 }
-
+/*
 int kii_init(
         kii_t* kii,
         const char* site,
@@ -30,7 +30,7 @@ int kii_init(
 {
     return _kii_init_with_info(kii, site, app_id, app_key, KII_SDK_INFO);
 }
-
+*/
 int kii_thing_authenticate(
         kii_t* kii,
         const char* vendor_thing_id,
