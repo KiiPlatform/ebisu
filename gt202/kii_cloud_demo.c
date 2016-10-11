@@ -442,7 +442,7 @@ static int push()
 
         set_author(kii);
 
-        ret = kii_push_start_routine(kii, 0, 0, received_callback);
+        ret = kii_push_start_routine(kii, received_callback);
 
         printf("start_routine: %d\n", ret);
     }
