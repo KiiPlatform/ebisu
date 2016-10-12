@@ -236,7 +236,7 @@ int kiiDemo_test(void)
         UART_PRINT("failed!\r\n");
     }
     UART_PRINT("Initialize push\r\n");
-    kii_push_start_routine(&kii, DEMO_KII_PUSH_RECV_MSG_TASK_PRIO, DEMO_KII_PUSH_PINGREQ_TASK_PRIO, received_callback);
+    kii_push_start_routine(&kii, received_callback);
     return 0;
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
