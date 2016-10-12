@@ -538,7 +538,7 @@ static void* kiiPush_pingReqTask(void* sdata)
 }
 #endif
 
-int kii_push_start_routine(kii_t* kii, unsigned int recvMsgtaskPrio, unsigned int pingReqTaskPrio, KII_PUSH_RECEIVED_CB callback)
+int kii_push_start_routine(kii_t* kii, KII_PUSH_RECEIVED_CB callback)
 {
     kii->push_received_cb = callback;
     kii->task_create_cb(KII_TASK_NAME_RECV_MSG,

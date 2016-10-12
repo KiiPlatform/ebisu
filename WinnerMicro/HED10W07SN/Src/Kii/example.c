@@ -239,7 +239,7 @@ int kiiDemo_test(char *buf)
         printf("failed!\n");
     }
     printf("Initialize push\n");
-    kii_push_start_routine(&kii, 0, 0, received_callback);
+    kii_push_start_routine(&kii, received_callback);
     return 0;
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
