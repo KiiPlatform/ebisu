@@ -36,9 +36,9 @@ extern "C" {
 #define M_KII_LOG(x)
 #endif
 
-#define KII_TASK_NAME_RECV_MSG "kiiPush_recvMsgTask"
+#define KII_TASK_NAME_RECV_MSG "recv_msg_task"
 #ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
-#define KII_TASK_NAME_PING_REQ "kiiPush_pingReqTask"
+#define KII_TASK_NAME_PING_REQ "ping_req_task"
 #endif
 
 struct kii_t;
