@@ -23,7 +23,7 @@ $(LIBGTEST):
 	ar -rv $(OUTDIR)/$(LIBGTEST) $(OUTDIR)/gtest-all.o $(OUTDIR)/gtest_main.o
 
 $(TARGET): $(LIBGTEST) $(LIBKIIJSON)
-	g++ $(CFLAGS) $(SOURCE) $(INCLUDES) $(LIBS) -o $(OUTDIR)/$@
+	g++ $(CFLAGS) $(SOURCE) $(INCLUDES) $(LIBS) -pthread -o $(OUTDIR)/$@
 
 clean:
 	rm -rf $(OUTDIR)
