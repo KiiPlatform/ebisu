@@ -26,9 +26,7 @@ $(TARGET):
 	gcc $(CFLAGS) $(SOURCES) $(INCLUDES) -o $@
 
 test:
-	make -C unit-test
-	export LD_LIBRARY_PATH=unit-test/target
-	(cd unit-test/target; ./testapp;)
+	make test -C unit-test
 
 doc:
 	doxygen Doxyfile
