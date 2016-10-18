@@ -27,7 +27,7 @@ $(TARGET):
 
 test:
 	make -C unit-test
-	(pushd unit-test/target; ./testapp; popd)
+	(cd unit-test/target; ./testapp;)
 
 doc:
 	doxygen Doxyfile
