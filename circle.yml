@@ -1,4 +1,6 @@
 dependencies:
+  pre:
+    - sudo apt-get install doxygen
   override:
     - make all
     - make doc
