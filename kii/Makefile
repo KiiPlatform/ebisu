@@ -21,6 +21,7 @@ endif
 override CFLAGS += -std=gnu89 -Wall -pedantic -pthread -fPIC -shared $(JSON_FLAG)
 
 LIBS = -lssl -lcrypto -lpthread
+LIBS_DIR = -L/usr/local/opt/openssl/lib
 SOURCES = $(wildcard *.c)
 SOURCES += $(wildcard ../kii-core/*.c)
 SOURCES += $(wildcard ../kii_json/src/*.c)
@@ -32,7 +33,7 @@ TARGET = libkiisdk.so
 all: clean $(TARGET)
 
 $(TARGET):
-	gcc $(CFLAGS) $(SOURCES) $(LIBS) $(INCLUDES) -o $@
+	gcc $(CFLAGS) $(SOURCES) $(LIBS_DIR) $(LIBS) $(INCLUDES) -o $@
 
 clean:
 	touch $(TARGET)
