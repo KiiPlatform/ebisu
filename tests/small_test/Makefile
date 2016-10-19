@@ -1,6 +1,5 @@
-override CFLAGS += -std=gnu89 -Wall -pedantic -pthread
-CXXFLAGS = -Wall -pedantic
-#CFLAGS = -std=gnu89 -w -pedantic
+override CFLAGS += -Wall -pthread
+CXXFLAGS = -Wall
 ifdef DEBUG
 CFLAGS += -g -DDEBUG
 CXXFLAGS += -g -DDEBUG
@@ -19,8 +18,7 @@ CC_OBJ = $(patsubst %.cc,%.o,$(wildcard *.cc))
 TARGET = testapp
 INCLUDES = -I../../kii -I../../kii-core -I$(GTEST_PATH)/include -I../../kii_json/include -I../../kii_json/libs/jsmn -I../../Linux
 
-KIISDKNAME = libkiisdk.so
-KIISDK = ../../kii/$(KIISDKNAME)
+KIISDK = libkiisdk.so
 
 LIBGTEST=libgtest.a
 
@@ -33,10 +31,10 @@ $(LIBGTEST):
 
 $(KIISDK):
 	$(MAKE) -C ../../kii $(KIISDKPARAM) "CFLAGS+=-DKII_JSON_FIXED_TOKEN_NUM=256"
-	cp $(KIISDK) ./
+	cp ../../kii/$(KIISDK) ./
 
 $(TARGET): $(KIISDK) $(LIBGTEST) $(CC_OBJ)
-	g++ -o $(TARGET) $(CC_OBJ) $(LD_FLAGS) $(LIBS) $(LIBGTEST)
+	g++ -pthread -o $(TARGET) $(CC_OBJ) $(LD_FLAGS) $(LIBS) $(LIBGTEST)
 
 test: $(TARGET)
 	./$(TARGET)
@@ -53,7 +51,6 @@ clean:
 	rm -f *.o
 	rm -rf $(DOCTARGET)
 	rm -f $(KIISDK)
-	rm -f $(KIISDKNAME)
 	rm -f $(LIBGTEST)
 
 .PHONY: all clean copy
