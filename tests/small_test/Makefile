@@ -37,6 +37,7 @@ $(TARGET): $(KIISDK) $(LIBGTEST) $(CC_OBJ)
 	g++ -pthread -o $(TARGET) $(CC_OBJ) $(LD_FLAGS) $(LIBS) $(LIBGTEST)
 
 test: $(TARGET)
+	export LD_LIBRARY_PATH=.
 	./$(TARGET)
 
 .c.o:
