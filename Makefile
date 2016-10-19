@@ -26,8 +26,7 @@ $(TARGET):
 	gcc $(CFLAGS) $(SOURCES) $(INCLUDES) -o $@
 
 test:
-	make -C unit-test
-	(pushd unit-test/target; ./testapp; popd)
+	make test -C unit-test
 
 doc:
 	doxygen Doxyfile

@@ -3,8 +3,9 @@ LIBGTEST=libgtest.a
 LIBKIIJSON=libkiijson.so
 
 SOURCE = $(wildcard src/*.c)
-TARGET = testapp
-LIBS= $(OUTDIR)/$(LIBGTEST) $(OUTDIR)/$(LIBKIIJSON)
+TARGET = $(OUTDIR)/testapp
+LIBSDIR = $(OUTDIR)
+LIBS= -lkiijson
 INCLUDES= -I$(GTEST_PATH)/include  -I../include -I../libs/jsmn
 OUTDIR=target
 
@@ -22,8 +23,11 @@ $(LIBGTEST):
 	g++ -isystem $(GTEST_PATH)/include -I$(GTEST_PATH) -pthread -c $(GTEST_PATH)/src/gtest_main.cc  -o $(OUTDIR)/gtest_main.o
 	ar -rv $(OUTDIR)/$(LIBGTEST) $(OUTDIR)/gtest-all.o $(OUTDIR)/gtest_main.o
 
-$(TARGET): $(LIBGTEST) $(LIBKIIJSON)
-	g++ $(CFLAGS) $(SOURCE) $(INCLUDES) $(LIBS) -o $(OUTDIR)/$@
+$(TARGET): $(OUTDIR) $(LIBGTEST) $(LIBKIIJSON)
+	g++ $(CFLAGS) $(SOURCE) $(LIBSDIR)/$(LIBGTEST) $(INCLUDES) -L $(LIBSDIR) $(LIBS) -pthread -o $@
+
+test: $(TARGET)
+	cd target && export LD_LIBRARY_PATH=. && ./testapp
 
 clean:
 	rm -rf $(OUTDIR)

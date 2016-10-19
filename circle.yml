@@ -1,0 +1,16 @@
+dependencies:
+  pre:
+    - sudo apt-get install doxygen
+  override:
+    - make all
+    - make doc
+  post:
+    - cp -r html $CIRCLE_ARTIFACTS
+    - cp libkiijson.so $CIRCLE_ARTIFACTS
+
+test:
+  override:
+    - make test
+
+# vim: set sts=2 sw=2 et:
+
