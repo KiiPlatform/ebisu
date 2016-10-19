@@ -1,6 +1,8 @@
 dependencies:
   pre:
     - sudo apt-get install doxygen
+    - sudo apt-get install libssl-dev
+    - git submodule init && git submodule update
   override:
     - make build
     - make doc
