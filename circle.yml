@@ -14,5 +14,16 @@ test:
   override:
     - make small-test
     - make large-test
+
+deployment:
+  release:
+    tag: /v[0-9](\.[0-9])*.*/
+    commands:
+      - git clone https://$GH_TOKEN_FOR_HTTPS@github.com/KiiPlatform/KiiThingSDK-Embedded.git
+      - cd KiiThingSDK-Embedded && git checkout gh-pages && git config user.email 'satoshi.kumano@kii.com' && git config user.name 'satoshi kumano'
+      - rm -rf KiiThingSDK-Embedded/api-doc && mkdir -p KiiThingSDK-Embedded/api-doc
+      - cp -r kii/html/ KiiThingSDK-Embedded/api-doc
+      - cd KiiThingSDK-Embedded && git add api-doc && git commit -m 'updated doc' && git push origin gh-pages
+
 # vim: set sts=2 sw=2 et:
 
