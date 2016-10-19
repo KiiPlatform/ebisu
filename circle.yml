@@ -25,7 +25,7 @@ deployment:
       - cd kii_json && git checkout gh-pages
       - rm -rf kii_json/api-doc && mkdir -p kii_json/api-doc
       - cp -r html/ kii_json/api-doc
-      - cd kii_json && git add api-doc && git push origin gh-pages
+      - cd kii_json && git add api-doc && git commit -m 'updated doc' && git push origin gh-pages
 
 # vim: set sts=2 sw=2 et:
 
