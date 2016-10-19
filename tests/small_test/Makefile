@@ -22,8 +22,6 @@ INCLUDES = -I../../kii -I../../kii-core -I$(GTEST_PATH)/include -I../../kii_json
 KIISDKNAME = libkiisdk.so
 KIISDK = ../../kii/$(KIISDKNAME)
 
-TEST = test
-
 LIBGTEST=libgtest.a
 
 all: clean $(TARGET) $(DOCTARGET)
@@ -39,6 +37,9 @@ $(KIISDK):
 
 $(TARGET): $(KIISDK) $(LIBGTEST) $(CC_OBJ)
 	g++ -o $(TARGET) $(CC_OBJ) $(LD_FLAGS) $(LIBS) $(LIBGTEST)
+
+test: $(TARGET)
+	./$(TARGET)
 
 .c.o:
 	gcc $(CFLAGS) $(INCLUDES) -c $<

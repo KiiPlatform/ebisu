@@ -24,8 +24,6 @@ KIISDK = ../../kii/$(KIISDKNAME)
 KIICLIENTNAME = libkiisocketclient.so
 KIICLIENT = ../../Linux/$(KIICLIENTNAME)
 
-TEST = test
-
 LIBGTEST=libgtest.a
 
 all: clean $(TARGET) $(DOCTARGET)
@@ -45,6 +43,9 @@ $(KIISDK):
 
 $(TARGET): $(KIISDK) $(KIICLIENT) $(LIBGTEST) $(CC_OBJ)
 	g++ -o $(TARGET) $(CC_OBJ) $(LD_FLAGS) $(LIBS) $(LIBGTEST)
+
+test: $(TARGET)
+	./$(TARGET)
 
 .c.o:
 	gcc $(CFLAGS) $(INCLUDES) -c $<
