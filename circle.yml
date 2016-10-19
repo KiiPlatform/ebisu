@@ -1,0 +1,8 @@
+dependencies:
+  pre:
+    - sudo apt-get install doxygen
+  override:
+    - make -C kii
+    - make doc -C kii
+# vim: set sts=2 sw=2 et:
+
