@@ -1,0 +1,18 @@
+dependencies:
+  pre:
+    - sudo apt-get install doxygen
+    - sudo apt-get install libssl-dev
+    - git submodule init && git submodule update
+  override:
+    - make build
+    - make doc
+  post:
+    - cp -r kii/html $CIRCLE_ARTIFACTS
+    - cp kii/libkiisdk.so $CIRCLE_ARTIFACTS
+
+test:
+  override:
+    - make small-test
+    - make large-test
+# vim: set sts=2 sw=2 et:
+
