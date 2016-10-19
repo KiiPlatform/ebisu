@@ -22,7 +22,7 @@ KIISDK = libkiisdk.so
 
 LIBGTEST=libgtest.a
 
-all: clean $(TARGET) $(DOCTARGET)
+all: clean $(TARGET)
 
 $(LIBGTEST):
 	g++ -isystem $(GTEST_PATH)/include -I$(GTEST_PATH) -pthread -c $(GTEST_PATH)/src/gtest-all.cc
@@ -37,6 +37,8 @@ $(TARGET): $(KIISDK) $(LIBGTEST) $(CC_OBJ)
 	g++ -pthread -o $(TARGET) $(CC_OBJ) $(LD_FLAGS) $(LIBS) $(LIBGTEST)
 
 test: $(TARGET)
+	ldd $(TARGET)
+	ls -l libkiisdk.so
 	export LD_LIBRARY_PATH=.
 	./$(TARGET)
 
@@ -50,7 +52,6 @@ clean:
 	touch $(TARGET)
 	rm $(TARGET)
 	rm -f *.o
-	rm -rf $(DOCTARGET)
 	rm -f $(KIISDK)
 	rm -f $(LIBGTEST)
 
