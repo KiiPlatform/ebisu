@@ -4,5 +4,8 @@ dependencies:
   override:
     - make -C kii
     - make doc -C kii
+  post:
+    - cp -r kii/html $CIRCLE_ARTIFACTS
+    - cp kii/libkiisdk.so $CIRCLE_ARTIFACTS
 # vim: set sts=2 sw=2 et:
 
