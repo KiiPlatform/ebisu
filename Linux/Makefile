@@ -10,7 +10,7 @@ KIISDKPARAM += DEBUG=1
 endif
 
 LIBS = -lssl -lcrypto -lpthread -lkiisdk
-LD_FLAGS = -L.
+LD_FLAGS = -L. -L/usr/local/opt/openssl/lib
 SOURCES = $(wildcard *.c) ../kii-core/linux/kii_core_secure_socket.c
 TARGET = exampleapp
 LIB_SOURCES = $(wildcard kii_*.c) ../kii-core/linux/kii_core_secure_socket.c
