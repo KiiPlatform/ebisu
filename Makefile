@@ -33,6 +33,6 @@ doc:
 
 clean:
 	touch $(TARGET)
-	rm -rf $(TARGET) html latex
+	rm -rf $(TARGET)
 
 .PHONY: clean
