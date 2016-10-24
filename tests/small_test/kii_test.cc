@@ -27,7 +27,7 @@
 #define DEF_DUMMY_VALUE "DummyValue"
 #define DEF_DUMMY_HEADER DEF_DUMMY_KEY ":" DEF_DUMMY_VALUE
 #define DEF_UPLOAD_ID "MjAxNTEyMDMhODVmNWljMm42ZmRnODltcmgyOWkwd2lvOA"
-#define DEF_SDK_VERSION "sn=tec;sv=1.1.1"
+#define DEF_SDK_VERSION "sn=te;sv=1.1.6"
 
 static char APP_HOST[] = DEF_APP_HOST;
 static char APP_ID[] = DEF_APP_ID;
@@ -125,7 +125,7 @@ static void init(
     kii_http_context_t* http_ctx;
     memset(kii, 0x00, sizeof(kii_t));
 
-    kii_core_init(&(kii->kii_core), APP_HOST, APP_ID, APP_KEY);
+    kii_init(kii, APP_HOST, APP_ID, APP_KEY);
 
     http_ctx = &(kii->kii_core.http_context);
     http_ctx->buffer = buffer;
