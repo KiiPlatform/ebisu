@@ -36,6 +36,11 @@ extern "C" {
 #define M_KII_LOG(x)
 #endif
 
+#define KII_TASK_NAME_RECV_MSG "recv_msg_task"
+#ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
+#define KII_TASK_NAME_PING_REQ "ping_req_task"
+#endif
+
 struct kii_t;
 
 typedef void (*KII_PUSH_RECEIVED_CB)(
@@ -428,17 +433,11 @@ int kii_push_delete_topic(
  *  After succeeded, callback is called when push message is delivered to this
  *  thing.
  *  \param [inout] kii sdk instance.
- *  \param [in] task_priority task priority of receiving push.
- *  actual value is depends on the platform environment.
- *  \param [in] ping_req_task_priority task priority of sending ping to cloud.
- *  actual value is depends on the platform environment.
  *  \param [in] callback  callback function called when push message delivered. 
  *  \return 0:success, -1: failure
  */
 int kii_push_start_routine(
 		kii_t* kii,
-		unsigned int task_priority,
-		unsigned int ping_req_task_priority,
 		KII_PUSH_RECEIVED_CB callback);
 
 /** Execute server code.

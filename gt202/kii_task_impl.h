@@ -19,10 +19,7 @@ void kii_task2(uint_32 temp);
 kii_task_code_t task_create_cb
     (const char* name,
      KII_TASK_ENTRY entry,
-     void* param,
-     unsigned char* stk_start,
-     unsigned int stk_size,
-     unsigned int priority);
+     void* param);
 
 void delay_ms_cb
     (unsigned int msec);

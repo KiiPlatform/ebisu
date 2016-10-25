@@ -27,10 +27,7 @@ static int use_task1 = 0;
 kii_task_code_t task_create_cb
     (const char* name,
      KII_TASK_ENTRY entry,
-     void* param,
-     unsigned char* stk_start,
-     unsigned int stk_size,
-     unsigned int priority)
+     void* param)
 {
     int ret = 0;
     _data_t* data = NULL;

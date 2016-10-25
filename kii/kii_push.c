@@ -25,13 +25,6 @@ typedef enum
     KIIPUSH_READY = 2
 } kiiPush_state;
 
-#define KIIPUSH_TASK_STK_SIZE 8
-static unsigned int mKiiPush_taskStk[KIIPUSH_TASK_STK_SIZE];
-#ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
-#define KIIPUSH_PINGREQ_TASK_STK_SIZE 8
-static unsigned int mKiiPush_pingReqTaskStk[KIIPUSH_PINGREQ_TASK_STK_SIZE];
-#endif
-
 static int kiiPush_install(
         kii_t* kii,
         kii_bool_t development,
@@ -545,22 +538,16 @@ static void* kiiPush_pingReqTask(void* sdata)
 }
 #endif
 
-int kii_push_start_routine(kii_t* kii, unsigned int recvMsgtaskPrio, unsigned int pingReqTaskPrio, KII_PUSH_RECEIVED_CB callback)
+int kii_push_start_routine(kii_t* kii, KII_PUSH_RECEIVED_CB callback)
 {
     kii->push_received_cb = callback;
-    kii->task_create_cb(NULL,
+    kii->task_create_cb(KII_TASK_NAME_RECV_MSG,
             kiiPush_recvMsgTask,
-            (void*)kii,
-            (void*)mKiiPush_taskStk,
-            KIIPUSH_TASK_STK_SIZE * sizeof(unsigned char),
-            recvMsgtaskPrio);
+            (void*)kii);
 #ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
-    kii->task_create_cb(NULL,
+    kii->task_create_cb(KII_TASK_NAME_PING_REQ,
             kiiPush_pingReqTask,
-            (void*)kii,
-            (void*)mKiiPush_pingReqTaskStk,
-            KIIPUSH_PINGREQ_TASK_STK_SIZE * sizeof(unsigned char),
-            pingReqTaskPrio);
+            (void*)kii);
 #endif
     return 0;
 }

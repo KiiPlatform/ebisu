@@ -7,7 +7,7 @@
 #include "kii_socket_impl.h"
 #include "kii_task_impl.h"
 
-int kii_init(
+int kii_init_impl(
         kii_t* kii,
         const char* site,
         const char* app_id,

@@ -288,7 +288,7 @@ int main(int argc, char** argv)
                 break;
             case 18:
                 printf("Initialize push\n");
-                kii_push_start_routine(&kii, 0, 0, received_callback);
+                kii_push_start_routine(&kii, received_callback);
                 while(1) {
                     sleep(1);
                 }
