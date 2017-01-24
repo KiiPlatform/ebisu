@@ -83,3 +83,7 @@ ex.)
 make DEBUG=1 KEEP_ALIVE_INTERVAL=3600 FLEXIBLE_JSON_TOKEN=1
 ```
 
+## Connect MQTT server using TCP port.
+This SDK is connected to a MQTT server using TLS/SSL port by default.
+If you need to use TCP port, please set KII\_MQTT\_USE\_PORT\_TCP macro in Makefile.
+

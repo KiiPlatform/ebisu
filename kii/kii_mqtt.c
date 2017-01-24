@@ -59,7 +59,7 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
             return -1;
         }
     }
-#ifdef KII_MQTT_USE_PORT_SSL
+#ifndef KII_MQTT_USE_PORT_TCP
     port = endpoint->port_ssl;
 #else
     port = endpoint->port_tcp;
