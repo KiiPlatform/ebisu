@@ -49,6 +49,7 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
     size_t k;
     kii_socket_code_t sock_err;
     size_t actual_length;
+    unsigned int port;
 
     if (kii->mqtt_socket_context.socket > 0) {
         M_KII_LOG(kii->kii_core.logger_cb("closing socket as socket is already created.\r\n"));
@@ -58,7 +59,12 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
             return -1;
         }
     }
-    sock_err = kii->mqtt_socket_connect_cb(&(kii->mqtt_socket_context), endpoint->host, endpoint->port_tcp);
+#ifndef KII_MQTT_USE_PORT_TCP
+    port = endpoint->port_ssl;
+#else
+    port = endpoint->port_tcp;
+#endif
+    sock_err = kii->mqtt_socket_connect_cb(&(kii->mqtt_socket_context), endpoint->host, port);
     if (sock_err != KII_SOCKETC_OK) {
         M_KII_LOG(kii->kii_core.logger_cb("connecting socket is failed.\r\n"));
         return -1;
