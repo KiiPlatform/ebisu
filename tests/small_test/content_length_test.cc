@@ -61,7 +61,7 @@ TEST(contentLengthParser, noBody)
 "X-HTTP-Status-Code: 200\r\n"
 "Connection: keep-alive\r\n"
 "\r\n";
-    long content_length = kii_parse_content_length((char*)response);
+    long content_length = kii_parse_content_length(response);
     ASSERT_EQ(0, content_length);
 }
 

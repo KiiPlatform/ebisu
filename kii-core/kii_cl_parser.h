@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-long kii_parse_content_length(char* buffer);
+long kii_parse_content_length(const char* buffer);
 
 #endif /* _kii_cl_parser_ */
 

@@ -4,25 +4,27 @@
 
 #include "kii_cl_parser.h"
 
+static const char* lower = "content-length";
+static const char* upper = "CONTENT-LENGTH";
+static const size_t cl_length = 14;
+
 /* Check whether the given string is content-length header.
  * @param header should point a first char of the header line.
  * @return
  * 1: given header is content-length header.
  * 0: given header is not content-length header.
  */
-static int check(char* header) {
-    const char* lower = "content-length";
-    const char* upper = "CONTENT-LENGTH";
+static int check(const char* header) {
     int ret = 0;
     int i = 0;
-    for (i = 0; i < strlen(lower); i++) {
+    for (i = 0; i < cl_length; i++) {
         if (*header == lower[i] || *header == upper[i]) {
             header++;
             continue;
         }
         break;
     }
-    if (i == strlen(lower)) {
+    if (i == cl_length) {
         ret = 1;
     }
     return ret;
@@ -32,9 +34,8 @@ static int check(char* header) {
  * @param header it should be a valid content-lenght header.
  * @return content-length value. 0 is returned when failed to parse number.
  */
-static long value(char* header) {
-    const char* lower = "content-length";
-    char* next = header + strlen(lower);
+static long value(const char* header) {
+    char* next = header + cl_length;
     int state = 0;
     int idx = 0;
     char temp[16]; 
@@ -70,7 +71,7 @@ static long value(char* header) {
  * @return next header pointer.
  * NULL if no next header exists.
  */
-static char* skip(char* header) {
+static char* skip(const char* header) {
     while (*header != '\0') {
         if (*header == '\r') {
             char* next = header + 1;
@@ -93,7 +94,7 @@ static char* skip(char* header) {
  * or null terminated.
  * @return content-length if present. Otherwise 0.
  */
-long kii_parse_content_length(char* buffer) {
+long kii_parse_content_length(const char* buffer) {
     char* next = buffer;
     int ret = 0;
     while(1) {
