@@ -99,12 +99,10 @@ long kii_parse_content_length(char* buffer) {
     while(1) {
         next = skip(next);
         if (next == NULL) {
-            printf("reached to end\n");
             break;
         }
         ret = check(next);
         if (ret == 1) {
-            printf("hdr: %s\n", next);
             return value(next);
             break;
         }
