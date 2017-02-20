@@ -4,7 +4,8 @@
 
 #include "kii_cl_parser.h"
 
-/*
+/* Check whether the given string is content-length header.
+ * @param header should point a first char of the header line.
  * @return
  * 1: given header is content-length header.
  * 0: given header is not content-length header.
@@ -27,6 +28,10 @@ static int check(char* header) {
     return ret;
 }
 
+/** Get the value of content-length
+ * @param header it should be a valid content-lenght header.
+ * @return content-length value. 0 is returned when failed to parse number.
+ */
 static long value(char* header) {
     const char* lower = "content-length";
     char* next = header + strlen(lower);
@@ -60,7 +65,8 @@ static long value(char* header) {
     return atol(temp);
 }
 
-/**
+/** Skip to next header.
+ * @param header buffer should be null terminated string.
  * @return next header pointer.
  * NULL if no next header exists.
  */
@@ -82,6 +88,11 @@ static char* skip(char* header) {
     return NULL;
 }
 
+/**
+ * @param HTTP response header part. Should be ended with \r\n\r\n
+ * or null terminated.
+ * @return content-length if present. Otherwise 0.
+ */
 long kii_parse_content_length(char* buffer) {
     char* next = buffer;
     int ret = 0;
