@@ -35,7 +35,7 @@ static int check(const char* header) {
  * @return content-length value. 0 is returned when failed to parse number.
  */
 static long value(const char* header) {
-    char* next = header + cl_length;
+    char* next = (char*)header + cl_length;
     int state = 0;
     int idx = 0;
     char temp[16]; 
@@ -74,7 +74,7 @@ static long value(const char* header) {
 static char* skip(const char* header) {
     while (*header != '\0') {
         if (*header == '\r') {
-            char* next = header + 1;
+            char* next = (char*)header + 1;
             if (*next == '\n') {
                 if (*(next+1) == '\r' && *(next+2) == '\n') {
                     // Reached to body part.
@@ -95,7 +95,7 @@ static char* skip(const char* header) {
  * @return content-length if present. Otherwise 0.
  */
 long kii_parse_content_length(const char* buffer) {
-    char* next = buffer;
+    char* next = (char*)buffer;
     int ret = 0;
     while(1) {
         next = skip(next);
