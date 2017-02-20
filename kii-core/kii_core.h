@@ -134,6 +134,22 @@ typedef struct kii_http_context_t
      * This field becomes activate, if KII_USE_CUSTOM_HTTP_CLIENT is not
      * defined.
      */
+    size_t _response_length;
+
+    /** This is a private field for this SDK.
+     * Application programmers must not use this field.
+     *
+     * This field becomes activate, if KII_USE_CUSTOM_HTTP_CLIENT is not
+     * defined.
+     */
+    int _content_length_scanned;
+
+    /** This is a private field for this SDK.
+     * Application programmers must not use this field.
+     *
+     * This field becomes activate, if KII_USE_CUSTOM_HTTP_CLIENT is not
+     * defined.
+     */
     prv_kii_socket_state_t _socket_state;
 
     /** Host name to send HTTP request. You can connect to target

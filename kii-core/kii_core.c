@@ -1,5 +1,6 @@
 #include "kii_core.h"
 #include "kii_libc_wrapper.h"
+#include "kii_cl_parser.h"
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -150,6 +151,8 @@ prv_kii_http_execute(kii_core_t* kii)
             http_context->_sent_size = 0;
             http_context->_received_size = 0;
             http_context->_socket_state = PRV_KII_SOCKET_STATE_CONNECT;
+            http_context->_response_length = 0;
+            http_context->_content_length_scanned = 0;
             return KII_HTTPC_AGAIN;
         case PRV_KII_SOCKET_STATE_CONNECT:
             switch (http_context->connect_cb(&(http_context->socket_context),
@@ -200,6 +203,9 @@ prv_kii_http_execute(kii_core_t* kii)
         }
         case PRV_KII_SOCKET_STATE_RECV:
         {
+            char* buffer = NULL;
+            char* separator = NULL;
+            long content_length = 0;
             size_t actualLength = 0;
             size_t size =
                 http_context->buffer_size - http_context->_received_size;
@@ -220,9 +226,29 @@ prv_kii_http_execute(kii_core_t* kii)
                         M_KII_LOG("buffer is smaller than receiving data.");
                         return KII_HTTPC_FAIL;
                     }
-                    /* TODO: We may check content-length and decide to
-                       finish calling recv_cb. */
-                    if (actualLength < size) {
+                    if (http_context->_content_length_scanned != 1) {
+                        buffer = http_context->buffer;
+                        separator = strstr(buffer, "\r\n\r\n");
+                        if (separator != NULL) {
+                            content_length = kii_parse_content_length(buffer);
+                            http_context->_content_length_scanned = 1;
+                        }
+                        if (content_length > 0) {
+                            http_context->_response_length =
+                                (separator - buffer) + 4 + content_length;
+                        }
+                    }
+                    if (http_context->_response_length > 0 &&
+                            http_context->_received_size >=
+                            http_context->_response_length ) {
+                        http_context->buffer[http_context->_received_size] =
+                            '\0';
+                        http_context->_socket_state =
+                            PRV_KII_SOCKET_STATE_CLOSE;
+                    } else if (actualLength < size) {
+                        /* If content-length is not present, wait for
+                         * Connnection is closed by server.
+                         */
                         http_context->buffer[http_context->_received_size] =
                             '\0';
                         http_context->_socket_state =
