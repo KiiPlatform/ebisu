@@ -205,7 +205,7 @@ prv_kii_http_execute(kii_core_t* kii)
         {
             char* buffer = NULL;
             char* separator = NULL;
-            long content_length = 0;
+            unsigned long content_length = 0;
             size_t actualLength = 0;
             size_t size =
                 http_context->buffer_size - http_context->_received_size;
