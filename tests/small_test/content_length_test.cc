@@ -80,21 +80,21 @@ TEST(contentLengthParser, max)
 "Via: 1.1 varnish\r\n"
 "X-HTTP-Status-Code: 200\r\n"
 "X-Varnish: 726929556\r\n"
-"Content-Length: 4294967296\r\n"
+"Content-Length: 4294967295\r\n"
 "Connection: keep-alive\r\n"
 "\r\nBody";
     unsigned long content_length = kii_parse_content_length((char*)response);
-    ASSERT_EQ(4294967296, content_length);
+    ASSERT_EQ(4294967295, content_length);
 }
 
 TEST(contentLengthParser, exceedMaxFigures)
 {
     const char* response =
 "HTTP/1.1 200 OK\r\n"
-"Content-Length: 42949672960\r\n"
+"Content-Length: 42949672950\r\n"
 "\r\nBody";
     unsigned long content_length = kii_parse_content_length((char*)response);
-    ASSERT_EQ(4294967296, content_length);
+    ASSERT_EQ(4294967295, content_length);
 }
 
 TEST(contentLengthParser, min)
