@@ -134,7 +134,7 @@ typedef struct kii_http_context_t
      * This field becomes activate, if KII_USE_CUSTOM_HTTP_CLIENT is not
      * defined.
      */
-    size_t _response_length;
+    unsigned long _response_length;
 
     /** This is a private field for this SDK.
      * Application programmers must not use this field.

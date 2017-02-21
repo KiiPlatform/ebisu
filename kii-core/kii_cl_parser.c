@@ -34,7 +34,7 @@ static int check(const char* header) {
  * @param header it should be a valid content-lenght header.
  * @return content-length value. 0 is returned when failed to parse number.
  */
-static long value(const char* header) {
+static unsigned long value(const char* header) {
     char* start = (char*)header + cl_length;
     char* next = start;
     const unsigned int MAX_SEARCH_NUM = 10;
@@ -90,7 +90,7 @@ static char* skip(const char* header) {
  * or null terminated.
  * @return content-length if present. Otherwise 0.
  */
-long kii_parse_content_length(const char* buffer) {
+unsigned long kii_parse_content_length(const char* buffer) {
     char* next = (char*)buffer;
     int ret = 0;
     while(1) {

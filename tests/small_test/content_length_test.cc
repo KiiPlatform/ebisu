@@ -21,7 +21,7 @@ TEST(contentLengthParser, normal)
 "Content-Length: 176\r\n"
 "Connection: keep-alive\r\n"
 "\r\nBody";
-    long content_length = kii_parse_content_length((char*)response);
+    unsigned long content_length = kii_parse_content_length((char*)response);
     ASSERT_EQ(176, content_length);
 }
 
@@ -41,7 +41,7 @@ TEST(contentLengthParser, noContentLength)
 "X-HTTP-Status-Code: 200\r\n"
 "Connection: keep-alive\r\n"
 "\r\nBody";
-    long content_length = kii_parse_content_length((char*)response);
+    unsigned long content_length = kii_parse_content_length((char*)response);
     ASSERT_EQ(0, content_length);
 }
 
@@ -61,7 +61,7 @@ TEST(contentLengthParser, noBody)
 "X-HTTP-Status-Code: 200\r\n"
 "Connection: keep-alive\r\n"
 "\r\n";
-    long content_length = kii_parse_content_length(response);
+    unsigned long content_length = kii_parse_content_length(response);
     ASSERT_EQ(0, content_length);
 }
 
@@ -80,21 +80,21 @@ TEST(contentLengthParser, max)
 "Via: 1.1 varnish\r\n"
 "X-HTTP-Status-Code: 200\r\n"
 "X-Varnish: 726929556\r\n"
-"Content-Length: 2147483647\r\n"
+"Content-Length: 4294967296\r\n"
 "Connection: keep-alive\r\n"
 "\r\nBody";
-    long content_length = kii_parse_content_length((char*)response);
-    ASSERT_EQ(2147483647, content_length);
+    unsigned long content_length = kii_parse_content_length((char*)response);
+    ASSERT_EQ(4294967296, content_length);
 }
 
-TEST(contentLengthParser, exceedMax)
+TEST(contentLengthParser, exceedMaxFigures)
 {
     const char* response =
 "HTTP/1.1 200 OK\r\n"
-"Content-Length: 21474836470\r\n"
+"Content-Length: 42949672960\r\n"
 "\r\nBody";
-    long content_length = kii_parse_content_length((char*)response);
-    ASSERT_EQ(2147483647, content_length);
+    unsigned long content_length = kii_parse_content_length((char*)response);
+    ASSERT_EQ(4294967296, content_length);
 }
 
 TEST(contentLengthParser, min)
@@ -103,7 +103,7 @@ TEST(contentLengthParser, min)
 "HTTP/1.1 200 OK\r\n"
 "Content-Length: 1\r\n"
 "\r\nBody";
-    long content_length = kii_parse_content_length((char*)response);
+    unsigned long content_length = kii_parse_content_length((char*)response);
     ASSERT_EQ(1, content_length);
 }
 
