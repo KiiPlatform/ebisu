@@ -35,35 +35,31 @@ static int check(const char* header) {
  * @return content-length value. 0 is returned when failed to parse number.
  */
 static long value(const char* header) {
-    char* next = (char*)header + cl_length;
-    int state = 0;
-    int idx = 0;
-    char temp[16]; 
-    temp[0] = '\0';
+    char* start = (char*)header + cl_length;
+    char* next = start;
+    const unsigned int MAX_SEARCH_NUM = 10;
+    const unsigned int MAX_FIGURES = 10;
+    int i = 1;
+    long ret = 0;
 
-    while(idx < sizeof(temp)-1) {
-        if (state == 0) {
-            if (*next < '1' || '9' < *next) {
-                next++;
-            } else {
-                state = 1;
-                temp[idx] = *next;
-                temp[idx+1] = '\0';
-                idx++;
-                next++;
-            }
-        } else if (state == 1) {
-            if (*next < '0' || '9' < *next) {
-                break;
-            } else {
-                temp[idx] = *next;
-                temp[idx+1] = '\0';
-                idx++;
-                next++;
-            }
+    // Search for number.
+    while (*next < '1' || '9' < *next) {
+        ++next;
+        // To avoid infinite loop if invalid header is given.
+        if (next - start > MAX_SEARCH_NUM) {
+            return 0;
         }
     }
-    return atol(temp);
+    ret = *next - '0';
+    for (i=1; i < MAX_FIGURES; ++i, ++next) {
+        char* nn = next + 1;
+        if ('0' <= *nn &&  *nn <= '9') {
+            ret = ret * 10 + (*nn - '0');
+        } else {
+            break;
+        }
+    }
+    return ret;
 }
 
 /** Skip to next header.
