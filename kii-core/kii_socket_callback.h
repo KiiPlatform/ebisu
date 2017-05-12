@@ -7,6 +7,17 @@
 extern "C" {
 #endif
 
+typedef enum kii_socket_error_t {
+    /** No error. */
+    KII_SOCKET_ERROR_NONE,
+    /** Invalid response. */
+    KII_SOCKET_ERROR_INVALID_RESPONSE,
+    /** Response buffer overflow. */
+    KII_SOCKET_ERROR_RESPONSE_BUFFER_OVERFLOW,
+    /** Socket functions returns false. */
+    KII_SOCKET_ERROR_SOCKET_FUNCTIONS
+} kii_socket_error_t;
+
 typedef struct kii_socket_context_t {
     /** Application specific context object.
      * Used by socket callback implementations.
@@ -17,6 +28,9 @@ typedef struct kii_socket_context_t {
      * Used by socket callback implementations.
      */
     int socket;
+
+    /** Socket level error. */
+    kii_socket_error_t socket_error;
 } kii_socket_context_t;
 
 typedef enum kii_socket_code_t {
