@@ -7,16 +7,16 @@
 extern "C" {
 #endif
 
-typedef enum kii_socket_error_t {
+typedef enum kii_defaut_http_client_t {
     /** No error. */
-    KII_SOCKET_ERROR_NONE,
+    KII_DEFAULT_HTTP_CLIENT_ERROR_NONE,
     /** Invalid response. */
-    KII_SOCKET_ERROR_INVALID_RESPONSE,
+    KII_DEFAULT_HTTP_CLIENT_ERROR_INVALID_RESPONSE,
     /** Response buffer overflow. */
-    KII_SOCKET_ERROR_RESPONSE_BUFFER_OVERFLOW,
+    KII_DEFAULT_HTTP_CLIENT_ERROR_RESPONSE_BUFFER_OVERFLOW,
     /** Socket functions returns false. */
-    KII_SOCKET_ERROR_SOCKET_FUNCTIONS
-} kii_socket_error_t;
+    KII_DEFAULT_HTTP_CLIENT_ERROR_SOCKET_FUNCTIONS
+} kii_defaut_http_client_t;
 
 typedef struct kii_socket_context_t {
     /** Application specific context object.
@@ -30,7 +30,7 @@ typedef struct kii_socket_context_t {
     int socket;
 
     /** Socket level error. */
-    kii_socket_error_t socket_error;
+    kii_defaut_http_client_t default_http_client_error;
 } kii_socket_context_t;
 
 typedef enum kii_socket_code_t {
