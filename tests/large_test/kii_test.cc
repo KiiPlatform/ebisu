@@ -94,8 +94,6 @@ TEST(kiiTest, object)
     init(&kii, buffer, 4096);
     initBucket(&bucket);
 
-    kii_object_delete(&kii, &bucket, objectId);
-
     kii.kii_core.response_code = 0;
     memset(objectId, 0x00, KII_OBJECTID_SIZE + 1);
     ret = kii_object_create(&kii, &bucket, "{}", NULL, objectId);
@@ -151,8 +149,6 @@ TEST(kiiTest, objectWithID)
     init(&kii, buffer, 4096);
     initBucket(&bucket);
     strcpy(objectId, "my_object");
-
-    kii_object_delete(&kii, &bucket, objectId);
 
     kii.kii_core.response_code = 0;
     ret = kii_object_create_with_id(&kii, &bucket, objectId, "{}", NULL);
@@ -213,8 +209,6 @@ TEST(kiiTest, objectBodyOnce)
     initBucket(&bucket);
     strcpy(objectId, "my_object");
 
-    kii_object_delete(&kii, &bucket, objectId);
-
     kii.kii_core.response_code = 0;
     ret = kii_object_create_with_id(&kii, &bucket, objectId, "{}", NULL);
 
@@ -270,8 +264,6 @@ TEST(kiiTest, objectBodyMulti)
     init(&kii, buffer, 4096);
     initBucket(&bucket);
     strcpy(objectId, "my_object");
-
-    kii_object_delete(&kii, &bucket, objectId);
 
     kii.kii_core.response_code = 0;
     ret = kii_object_create_with_id(&kii, &bucket, objectId, "{}", NULL);
@@ -474,8 +466,6 @@ TEST(kiiTest, objectBodyOnce_binary)
     init(&kii, buffer, 4096);
     initBucket(&bucket);
     strcpy(objectId, "my_object");
-
-    kii_object_delete(&kii, &bucket, objectId);
 
     kii.kii_core.response_code = 0;
     ret = kii_object_create_with_id(&kii, &bucket, objectId, "{}", NULL);
