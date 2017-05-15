@@ -154,7 +154,7 @@ prv_kii_http_execute(kii_core_t* kii)
             http_context->_response_length = 0;
             http_context->_content_length_scanned = 0;
             http_context->socket_context.default_http_client_error =
-                KII_DEFAULT_HTTP_CLIENT_ERROR_NONE;
+                KII_HTTP_ERROR_NONE;
             return KII_HTTPC_AGAIN;
         case PRV_KII_SOCKET_STATE_CONNECT:
             switch (http_context->connect_cb(&(http_context->socket_context),
@@ -167,7 +167,7 @@ prv_kii_http_execute(kii_core_t* kii)
                 default:
                     http_context->_socket_state = PRV_KII_SOCKET_STATE_IDLE;
                     http_context->socket_context.default_http_client_error =
-                        KII_DEFAULT_HTTP_CLIENT_ERROR_SOCKET_FUNCTIONS;
+                        KII_HTTP_ERROR_SOCKET;
                     return KII_HTTPC_FAIL;
             }
             /* This is programing error. */
@@ -200,7 +200,7 @@ prv_kii_http_execute(kii_core_t* kii)
                 default:
                     http_context->_socket_state = PRV_KII_SOCKET_STATE_IDLE;
                     http_context->socket_context.default_http_client_error =
-                        KII_DEFAULT_HTTP_CLIENT_ERROR_SOCKET_FUNCTIONS;
+                        KII_HTTP_ERROR_SOCKET;
                     return KII_HTTPC_FAIL;
             }
             /* This is programing error. */
@@ -231,7 +231,7 @@ prv_kii_http_execute(kii_core_t* kii)
                             http_context->buffer_size) {
                         M_KII_LOG("buffer is smaller than receiving data.");
                         http_context->socket_context.default_http_client_error =
-                            KII_DEFAULT_HTTP_CLIENT_ERROR_RESPONSE_BUFFER_OVERFLOW;
+                            KII_HTTP_ERROR_INSUFFICIENT_BUFFER;
                         return KII_HTTPC_FAIL;
                     }
                     if (http_context->_content_length_scanned != 1) {
@@ -271,7 +271,7 @@ prv_kii_http_execute(kii_core_t* kii)
                 default:
                     http_context->_socket_state = PRV_KII_SOCKET_STATE_IDLE;
                     http_context->socket_context.default_http_client_error =
-                        KII_DEFAULT_HTTP_CLIENT_ERROR_SOCKET_FUNCTIONS;
+                        KII_HTTP_ERROR_SOCKET;
                     return KII_HTTPC_FAIL;
             }
             /* This is programing error. */
@@ -289,7 +289,7 @@ prv_kii_http_execute(kii_core_t* kii)
                     if (pointer == NULL) {
                         M_KII_LOG("invalid response.");
                         http_context->socket_context.default_http_client_error =
-                            KII_DEFAULT_HTTP_CLIENT_ERROR_INVALID_RESPONSE;
+                            KII_HTTP_ERROR_INVALID_RESPONSE;
                         return KII_HTTPC_FAIL;
                     }
 
@@ -301,7 +301,7 @@ prv_kii_http_execute(kii_core_t* kii)
                             M_KII_LOG("invalid status code.");
                             kii->response_code = 0;
                             http_context->socket_context.default_http_client_error =
-                                KII_DEFAULT_HTTP_CLIENT_ERROR_INVALID_RESPONSE;
+                                KII_HTTP_ERROR_INVALID_RESPONSE;
                             return KII_HTTPC_FAIL;
                         }
                         kii->response_code = (kii->response_code * 10) +
@@ -322,7 +322,7 @@ prv_kii_http_execute(kii_core_t* kii)
                 default:
                     http_context->_socket_state = PRV_KII_SOCKET_STATE_IDLE;
                     http_context->socket_context.default_http_client_error =
-                        KII_DEFAULT_HTTP_CLIENT_ERROR_SOCKET_FUNCTIONS;
+                        KII_HTTP_ERROR_SOCKET;
                     return KII_HTTPC_FAIL;
             }
             /* This is programing error. */
