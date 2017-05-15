@@ -29,8 +29,8 @@ typedef struct kii_socket_context_t {
      */
     int socket;
 
-    /** Socket level error. */
-    kii_http_error_t default_http_client_error;
+    /** HTTP client error. */
+    kii_http_error_t http_error;
 } kii_socket_context_t;
 
 typedef enum kii_socket_code_t {
