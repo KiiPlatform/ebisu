@@ -67,7 +67,7 @@
 #define HTTP1_1 "HTTP/1.1 "
 #define END_OF_HEADER "\r\n\r\n"
 #define CONST_LEN(str) sizeof(str) - 1
-#define KII_SDK_INFO "sn=tec;sv=1.1.1"
+#define KII_SDK_INFO "sn=tec;sv=1.2.3"
 
 const char DEFAULT_OBJECT_CONTENT_TYPE[] = "application/json";
 
@@ -153,6 +153,8 @@ prv_kii_http_execute(kii_core_t* kii)
             http_context->_socket_state = PRV_KII_SOCKET_STATE_CONNECT;
             http_context->_response_length = 0;
             http_context->_content_length_scanned = 0;
+            http_context->socket_context.http_error =
+                KII_HTTP_ERROR_NONE;
             return KII_HTTPC_AGAIN;
         case PRV_KII_SOCKET_STATE_CONNECT:
             switch (http_context->connect_cb(&(http_context->socket_context),
@@ -164,6 +166,8 @@ prv_kii_http_execute(kii_core_t* kii)
                     return KII_HTTPC_AGAIN;
                 default:
                     http_context->_socket_state = PRV_KII_SOCKET_STATE_IDLE;
+                    http_context->socket_context.http_error =
+                        KII_HTTP_ERROR_SOCKET;
                     return KII_HTTPC_FAIL;
             }
             /* This is programing error. */
@@ -195,6 +199,8 @@ prv_kii_http_execute(kii_core_t* kii)
                     return KII_HTTPC_AGAIN;
                 default:
                     http_context->_socket_state = PRV_KII_SOCKET_STATE_IDLE;
+                    http_context->socket_context.http_error =
+                        KII_HTTP_ERROR_SOCKET;
                     return KII_HTTPC_FAIL;
             }
             /* This is programing error. */
@@ -224,6 +230,8 @@ prv_kii_http_execute(kii_core_t* kii)
                     if (http_context->_received_size >=
                             http_context->buffer_size) {
                         M_KII_LOG("buffer is smaller than receiving data.");
+                        http_context->socket_context.http_error =
+                            KII_HTTP_ERROR_INSUFFICIENT_BUFFER;
                         return KII_HTTPC_FAIL;
                     }
                     if (http_context->_content_length_scanned != 1) {
@@ -262,6 +270,8 @@ prv_kii_http_execute(kii_core_t* kii)
                     return KII_HTTPC_AGAIN;
                 default:
                     http_context->_socket_state = PRV_KII_SOCKET_STATE_IDLE;
+                    http_context->socket_context.http_error =
+                        KII_HTTP_ERROR_SOCKET;
                     return KII_HTTPC_FAIL;
             }
             /* This is programing error. */
@@ -278,6 +288,8 @@ prv_kii_http_execute(kii_core_t* kii)
                     int i = 0;
                     if (pointer == NULL) {
                         M_KII_LOG("invalid response.");
+                        http_context->socket_context.http_error =
+                            KII_HTTP_ERROR_INVALID_RESPONSE;
                         return KII_HTTPC_FAIL;
                     }
 
@@ -288,6 +300,8 @@ prv_kii_http_execute(kii_core_t* kii)
                         if (isdigit((int)pointer[i]) == 0) {
                             M_KII_LOG("invalid status code.");
                             kii->response_code = 0;
+                            http_context->socket_context.http_error =
+                                KII_HTTP_ERROR_INVALID_RESPONSE;
                             return KII_HTTPC_FAIL;
                         }
                         kii->response_code = (kii->response_code * 10) +
@@ -307,6 +321,8 @@ prv_kii_http_execute(kii_core_t* kii)
                     return KII_HTTPC_AGAIN;
                 default:
                     http_context->_socket_state = PRV_KII_SOCKET_STATE_IDLE;
+                    http_context->socket_context.http_error =
+                        KII_HTTP_ERROR_SOCKET;
                     return KII_HTTPC_FAIL;
             }
             /* This is programing error. */

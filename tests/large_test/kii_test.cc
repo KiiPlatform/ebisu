@@ -150,6 +150,8 @@ TEST(kiiTest, objectWithID)
     initBucket(&bucket);
     strcpy(objectId, "my_object");
 
+    kii_object_delete(&kii, &bucket, objectId);
+
     kii.kii_core.response_code = 0;
     ret = kii_object_create_with_id(&kii, &bucket, objectId, "{}", NULL);
 
@@ -466,6 +468,8 @@ TEST(kiiTest, objectBodyOnce_binary)
     init(&kii, buffer, 4096);
     initBucket(&bucket);
     strcpy(objectId, "my_object");
+
+    kii_object_delete(&kii, &bucket, objectId);
 
     kii.kii_core.response_code = 0;
     ret = kii_object_create_with_id(&kii, &bucket, objectId, "{}", NULL);
