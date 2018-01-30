@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 // Suppress warnings in gtest.
 #pragma GCC diagnostic push
@@ -18,13 +19,19 @@ static char BUCKET[] = "myBucket";
 static char TOPIC[] = "myTopic";
 static char BODY[] = "Stop the world!";
 static char CONTENT_TYPE[] = "text/plain";
+static char DEFAULT_SITE[] = "api-development-jp.internal.kii.com";
 
 static void init(
         kii_t* kii,
         char* buffer,
         int buffer_size)
 {
-    kii_impl_init(kii, "api-development-jp.internal.kii.com",
+    char* site = getenv("TEST_SITE");
+    if (site == NULL) {
+        site = DEFAULT_SITE;
+    }
+    printf("SITE: %s\n", site);
+    kii_impl_init(kii, site,
             "84fff36e", "e45fcc2d31d6aca675af639bc5f04a26");
 
     kii->kii_core.http_context.buffer = buffer;
