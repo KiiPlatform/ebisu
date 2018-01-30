@@ -30,7 +30,6 @@ static void init(
     if (site == NULL) {
         site = DEFAULT_SITE;
     }
-    printf("SITE: %s\n", site);
     kii_impl_init(kii, site,
             "84fff36e", "e45fcc2d31d6aca675af639bc5f04a26");
 
