@@ -496,8 +496,6 @@ int kii_object_download_body_at_once(
         unsigned int* out_data_length)
 
 {
-    char* p1;
-    char* buf;
     int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
