@@ -372,6 +372,10 @@ typedef struct kii_core_t
      * value is set by implementation of KII_HTTPCB_EXECUTE
      */
     char* response_body;
+    /** HTTP response body length
+     * value is set by implementation of KII_HTTPCB_EXECUTE
+     */
+    size_t response_body_length;
     /** author of the api.
      * set author object before execute api requires authorization.
      */

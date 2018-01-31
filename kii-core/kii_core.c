@@ -313,6 +313,7 @@ prv_kii_http_execute(kii_core_t* kii)
                         strstr(http_context->buffer, END_OF_HEADER);
                     if (kii->response_body != NULL) {
                         kii->response_body += CONST_LEN(END_OF_HEADER);
+                        kii->response_body_length = http_context->_received_size - (kii->response_body - http_context->buffer);
                     }
                     http_context->_socket_state = PRV_KII_SOCKET_STATE_IDLE;
                     return KII_HTTPC_OK;
