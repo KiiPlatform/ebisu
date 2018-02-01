@@ -353,6 +353,11 @@ int kii_object_download_body_at_once(
 /** Download object body chunk by chunk.
  *  Downloaded data is cached in kii_core_t#response_body after the download chunk is
  *  succeeded.
+ *
+ *  IMPORTANT:
+ *  This API uses Range request which is defined in HTTP 1.1.
+ *  You may need to turn on KII_USE_CUSTOM_
+HTTP_CLIENT and switch the client implementation since the reference client is HTTP 1.0.
  *  \param [inout] kii sdk instance.
  *  \param [in] bucket specify the bucket of which object is stored.
  *  \param [in] object_id specify the id of the object of which body is added.
