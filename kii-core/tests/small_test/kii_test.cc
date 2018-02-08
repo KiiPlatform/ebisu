@@ -28,7 +28,7 @@
 #define DEF_DUMMY_KEY "DummyHeader"
 #define DEF_DUMMY_VALUE "DummyValue"
 #define DEF_DUMMY_HEADER DEF_DUMMY_KEY ":" DEF_DUMMY_VALUE
-#define DEF_SDK_VERSION "sn=tec;sv=1.2.3"
+#define DEF_SDK_VERSION "sn=tec;sv=1.2.4"
 
 #define SET_MOCK_HTTP_DATA(mock_http_body, data) \
   mock_http_body.body = data; \
