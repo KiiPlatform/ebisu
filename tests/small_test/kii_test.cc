@@ -27,7 +27,7 @@
 #define DEF_DUMMY_VALUE "DummyValue"
 #define DEF_DUMMY_HEADER DEF_DUMMY_KEY ":" DEF_DUMMY_VALUE
 #define DEF_UPLOAD_ID "MjAxNTEyMDMhODVmNWljMm42ZmRnODltcmgyOWkwd2lvOA"
-#define DEF_SDK_VERSION "sn=te;sv=1.2.3"
+#define DEF_SDK_VERSION "sn=te;sv=1.2.4"
 
 static char APP_HOST[] = DEF_APP_HOST;
 static char APP_ID[] = DEF_APP_ID;
@@ -162,7 +162,7 @@ TEST(kiiTest, authenticate)
     char buffer[4096];
     kii_t kii;
     const char* send_body =
-"POST https://" DEF_APP_HOST "/api/oauth2/token HTTP/1.1\r\n"
+"POST https://" DEF_APP_HOST "/api/oauth2/token HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -216,7 +216,7 @@ TEST(kiiTest, register)
     char buffer[4096];
     kii_t kii;
     const char* send_body =
-"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things HTTP/1.1\r\n"
+"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -274,7 +274,7 @@ TEST(kiiTest, object_create)
     kii_bucket_t bucket;
     char object_id[KII_OBJECTID_SIZE + 1];
     const char* send_body =
-"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects HTTP/1.1\r\n"
+"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -329,7 +329,7 @@ TEST(kiiTest, object_create_with_id)
     kii_t kii;
     kii_bucket_t bucket;
     const char* send_body =
-"PUT https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT " HTTP/1.1\r\n"
+"PUT https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT " HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -382,7 +382,7 @@ TEST(kiiTest, object_patch)
     kii_t kii;
     kii_bucket_t bucket;
     const char* send_body =
-"PATCH https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT " HTTP/1.1\r\n"
+"PATCH https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT " HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -429,7 +429,7 @@ TEST(kiiTest, replace_object)
     kii_t kii;
     kii_bucket_t bucket;
     const char* send_body =
-"PUT https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT " HTTP/1.1\r\n"
+"PUT https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT " HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -479,7 +479,7 @@ TEST(kiiTest, object_delete)
     kii_t kii;
     kii_bucket_t bucket;
     const char* send_body =
-"DELETE https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT " HTTP/1.1\r\n"
+"DELETE https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT " HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -522,7 +522,7 @@ TEST(kiiTest, object_get)
     kii_t kii;
     kii_bucket_t bucket;
     const char* send_body =
-"GET https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT " HTTP/1.1\r\n"
+"GET https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT " HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -568,7 +568,7 @@ TEST(kiiTest, object_upload_body_at_once)
     kii_t kii;
     kii_bucket_t bucket;
     const char* send_body =
-"PUT https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT "/body HTTP/1.1\r\n"
+"PUT https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT "/body HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -619,7 +619,7 @@ TEST(kiiTest, object_init_upload_body)
     kii_t kii;
     kii_bucket_t bucket;
     const char* send_body =
-"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT "/body/uploads HTTP/1.1\r\n"
+"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT "/body/uploads HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -670,7 +670,7 @@ TEST(kiiTest, object_upload_body)
     kii_bucket_t bucket;
     kii_chunk_data_t chunk;
     const char* send_body =
-"PUT https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT "/body/uploads/" DEF_UPLOAD_ID "/data HTTP/1.1\r\n"
+"PUT https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT "/body/uploads/" DEF_UPLOAD_ID "/data HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -722,7 +722,7 @@ TEST(kiiTest, object_commit_upload)
     kii_t kii;
     kii_bucket_t bucket;
     const char* send_body =
-"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT "/body/uploads/" DEF_UPLOAD_ID "/status/committed HTTP/1.1\r\n"
+"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT "/body/uploads/" DEF_UPLOAD_ID "/status/committed HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -763,7 +763,7 @@ TEST(kiiTest, object_download_body_at_once)
     kii_bucket_t bucket;
     unsigned int length;
     const char* send_body =
-"GET https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT "/body HTTP/1.1\r\n"
+"GET https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT "/body HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -813,7 +813,7 @@ TEST(kiiTest, object_download_body)
     unsigned int actual_length;
     unsigned int total_length;
     const char* send_body =
-"GET https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT "/body HTTP/1.1\r\n"
+"GET https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/objects/" DEF_OBJECT "/body HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -866,7 +866,7 @@ TEST(kiiTest, push_subscribe_bucket)
     kii_t kii;
     kii_bucket_t bucket;
     const char* send_body =
-"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/filters/all/push/subscriptions/things HTTP/1.1\r\n"
+"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/filters/all/push/subscriptions/things HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -909,7 +909,7 @@ TEST(kiiTest, push_unsubscribe_bucket)
     kii_t kii;
     kii_bucket_t bucket;
     const char* send_body =
-"DELETE https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/filters/all/push/subscriptions/things/" DEF_THING_ID " HTTP/1.1\r\n"
+"DELETE https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/buckets/" DEF_BUCKET "/filters/all/push/subscriptions/things/" DEF_THING_ID " HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -952,7 +952,7 @@ TEST(kiiTest, push_subscribe_topic)
     kii_t kii;
     kii_topic_t topic;
     const char* send_body =
-"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/topics/" DEF_TOPIC "/push/subscriptions/things HTTP/1.1\r\n"
+"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/topics/" DEF_TOPIC "/push/subscriptions/things HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -991,7 +991,7 @@ TEST(kiiTest, push_unsubscribe_topic)
     kii_t kii;
     kii_topic_t topic;
     const char* send_body =
-"DELETE https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/topics/" DEF_TOPIC "/push/subscriptions/things/" DEF_THING_ID " HTTP/1.1\r\n"
+"DELETE https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/topics/" DEF_TOPIC "/push/subscriptions/things/" DEF_THING_ID " HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -1031,7 +1031,7 @@ TEST(kiiTest, push_create_topic)
     kii_t kii;
     kii_topic_t topic;
     const char* send_body =
-"PUT https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/topics/" DEF_TOPIC " HTTP/1.1\r\n"
+"PUT https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/topics/" DEF_TOPIC " HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -1070,7 +1070,7 @@ TEST(kiiTest, push_delete_topic)
     kii_t kii;
     kii_topic_t topic;
     const char* send_body =
-"DELETE https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/topics/" DEF_TOPIC " HTTP/1.1\r\n"
+"DELETE https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/things/" DEF_THING_ID "/topics/" DEF_TOPIC " HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -1108,7 +1108,7 @@ TEST(kiiTest, server_code_execute)
     char buffer[4096];
     kii_t kii;
     const char* send_body =
-"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/server-code/versions/current/test_code HTTP/1.1\r\n"
+"POST https://" DEF_APP_HOST "/api/apps/" DEF_APP_ID "/server-code/versions/current/test_code HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"
@@ -1151,7 +1151,7 @@ TEST(kiiTest, api_call)
     char buffer[4096];
     kii_t kii;
     const char* send_body =
-"POST https://" DEF_APP_HOST "/api/oauth2/token HTTP/1.1\r\n"
+"POST https://" DEF_APP_HOST "/api/oauth2/token HTTP/1.0\r\n"
 "host:" DEF_APP_HOST "\r\n"
 "x-kii-appid:" DEF_APP_ID "\r\n"
 "x-kii-appkey:" DEF_APP_KEY "\r\n"

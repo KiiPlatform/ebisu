@@ -372,6 +372,13 @@ typedef struct kii_core_t
      * value is set by implementation of KII_HTTPCB_EXECUTE
      */
     char* response_body;
+    /* This is a private field for this SDK.
+     * Application programmers must not use this field.
+     *
+     * HTTP response body length
+     * value is set by implementation of KII_HTTPCB_EXECUTE
+     */
+    size_t _response_body_length;
     /** author of the api.
      * set author object before execute api requires authorization.
      */

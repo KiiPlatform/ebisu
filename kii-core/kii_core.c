@@ -67,7 +67,7 @@
 #define HTTP1_1 "HTTP/1.1 "
 #define END_OF_HEADER "\r\n\r\n"
 #define CONST_LEN(str) sizeof(str) - 1
-#define KII_SDK_INFO "sn=tec;sv=1.2.3"
+#define KII_SDK_INFO "sn=tec;sv=1.2.4"
 
 const char DEFAULT_OBJECT_CONTENT_TYPE[] = "application/json";
 
@@ -313,6 +313,7 @@ prv_kii_http_execute(kii_core_t* kii)
                         strstr(http_context->buffer, END_OF_HEADER);
                     if (kii->response_body != NULL) {
                         kii->response_body += CONST_LEN(END_OF_HEADER);
+                        kii->_response_body_length = http_context->_received_size - (kii->response_body - http_context->buffer);
                     }
                     http_context->_socket_state = PRV_KII_SOCKET_STATE_IDLE;
                     return KII_HTTPC_OK;
@@ -356,7 +357,7 @@ prv_kii_http_set_request_line(
 
     http_context->total_send_size =
         sprintf(http_context->buffer,
-                "%s https://%s/%s HTTP/1.1\r\n", method, kii->app_host,
+                "%s https://%s/%s HTTP/1.0\r\n", method, kii->app_host,
                 resource_path);
 
     http_context->_body_position =

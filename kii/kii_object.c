@@ -496,8 +496,6 @@ int kii_object_download_body_at_once(
         unsigned int* out_data_length)
 
 {
-    char* p1;
-    char* buf;
     int ret = -1;
     kii_error_code_t core_err;
     kii_state_t state;
@@ -538,13 +536,7 @@ int kii_object_download_body_at_once(
     if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
         goto exit;
     }
-    buf = kii->kii_core.http_context.buffer;
-    p1 = strstr(buf, "Content-Length: ");
-    if(p1 == NULL)	{
-        goto exit;
-    }
-    p1 = p1 + strlen("Content-Length: ");
-    *out_data_length = atoi(p1);
+    *out_data_length = kii->kii_core._response_body_length;
     ret = 0;
 exit:
     return ret;
@@ -622,13 +614,7 @@ int kii_object_download_body(
     }
     p1++;
     *out_total_length = atoi(p1);
-
-    p1 = strstr(buf, "Content-Length: ");
-    if(p1 == NULL) {
-        goto exit;
-    }
-    p1 = p1 + strlen("Content-Length: ");
-    *out_actual_length = atoi(p1);
+    *out_actual_length = kii->kii_core._response_body_length;
     ret = 0;
 exit:
     return ret;
