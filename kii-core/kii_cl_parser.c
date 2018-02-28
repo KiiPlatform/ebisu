@@ -42,10 +42,10 @@ static unsigned long value(const char* header) {
     int i = 1;
     long ret = 0;
 
-    // Search for number.
+    /* Search for number. */
     while (*next < '1' || '9' < *next) {
         ++next;
-        // To avoid infinite loop if invalid header is given.
+        /* To avoid infinite loop if invalid header is given. */
         if (next - start > MAX_SEARCH_NUM) {
             return 0;
         }
@@ -73,7 +73,7 @@ static char* skip(const char* header) {
             char* next = (char*)header + 1;
             if (*next == '\n') {
                 if (*(next+1) == '\r' && *(next+2) == '\n') {
-                    // Reached to body part.
+                    /* Reached to body part. */
                     return NULL;
                 } else {
                     return next + 1;
@@ -104,7 +104,7 @@ unsigned long kii_parse_content_length(const char* buffer) {
             break;
         }
     }
-    // Content-Length header not found.
+    /* Content-Length header not found. */
     return 0;
 }
 

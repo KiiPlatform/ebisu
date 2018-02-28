@@ -510,7 +510,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
             case KIIPUSH_READY:
                 if(kiiPush_receivePushNotification(kii, &endpoint) != 0)
                 {
-                    // Receiving notificaiton is failed. Retry subscribing.
+                    /* Receiving notificaiton is failed. Retry subscribing. */
                     kii->_mqtt_connected = 0;
                     pushState = KIIPUSH_SUBSCRIBING_TOPIC;
                 }
