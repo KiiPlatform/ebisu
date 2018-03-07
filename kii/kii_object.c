@@ -395,11 +395,11 @@ int kii_object_upload_body(
     memset(content_range, 0x00, sizeof(content_range));
     strcpy(content_range, "Content-Range: ");
     strcat(content_range, "bytes=");
-    sprintf(content_range + strlen(content_range), "%lu", chunk->position);
+    sprintf(content_range + strlen(content_range), "%lu", (unsigned long)chunk->position);
     strcat(content_range, "-");
-    sprintf(content_range + strlen(content_range), "%lu", chunk->position+ chunk->length- 1);
+    sprintf(content_range + strlen(content_range), "%lu", (unsigned long)(chunk->position + chunk->length - 1));
     strcat(content_range, "/");
-    sprintf(content_range + strlen(content_range), "%lu", chunk->total_length);
+    sprintf(content_range + strlen(content_range), "%lu", (unsigned long)chunk->total_length);
 
     core_err = kii_core_api_call(
             &kii->kii_core,
