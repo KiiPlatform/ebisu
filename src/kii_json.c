@@ -492,7 +492,7 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_double(
     if (buf_len <= target_size) {
         char message[50];
         snprintf(message, sizeof(message) / sizeof(message[0]),
-                "double string too long: %lu.", target_size);
+                "double string too long: %lu.", (unsigned long)target_size);
       return PRV_KII_JSON_NUM_PARSE_RESULT_INVALID;
     }
     memcpy(buf, target, target_size);
