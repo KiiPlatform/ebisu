@@ -38,6 +38,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: make build
+          command: make build
+      - run:
           name: small test
           command: make small-test
       - run:
