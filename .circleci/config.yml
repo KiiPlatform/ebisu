@@ -38,8 +38,15 @@ jobs:
     steps:
       - checkout
       - run:
-          name: make build
-          command: make build
+          name: install packages
+          command: |
+            sudo apt-get update
+            sudo apt-get install libssl-dev
+      - run:
+          name: submodule
+          command: |
+            git submodule init
+            git submodule update
       - run:
           name: small test
           command: make small-test
