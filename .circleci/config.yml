@@ -50,14 +50,17 @@ jobs:
       - run:
           name: small test
           command: make small-test
+      - store_artifacts:
+          path: tests/small-test/test_results.xml
+          destination: small_test_results.xml
       - run:
           name: large test
           command: make large-test
+      - store_artifacts:
+          path: tests/large-test/test_results.xml
+          destination: large_test_results.xml
       - store_test_results:
           path: tests
-#      - store_artifacts:
-#          path: tests/small-test/test_results.xml
-#          destination: results/
   deployment:
     <<: *env
     steps:
