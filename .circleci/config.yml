@@ -1,0 +1,103 @@
+env: &env
+    docker:
+      - image: circleci/node:latest
+version: 2
+jobs:
+  build:
+    <<: *env
+    steps:
+      - checkout
+      - run:
+          name: install packages
+          command: |
+            sudo apt-get update
+            sudo apt-get install doxygen
+            sudo apt-get install libssl-dev
+      - run:
+          name: submodule
+          command: |
+            git submodule init
+            git submodule update
+      - run:
+          name: make build
+          command: make build
+      - store_artifacts:
+          path: kii/libkiisdk.so
+          destination: libkiisdk.so
+      - run:
+          name: make doc
+          command: make doc
+      - store_artifacts:
+          path: kii/html
+          destination: html
+      - persist_to_workspace:
+          root: .
+          paths: kii/html
+  test:
+    <<: *env
+    steps:
+      - checkout
+      - run:
+          name: install packages
+          command: |
+            sudo apt-get update
+            sudo apt-get install libssl-dev
+      - run:
+          name: submodule
+          command: |
+            git submodule init
+            git submodule update
+      - run:
+          name: small test
+          command: make small-test
+      - store_artifacts:
+          path: tests/small_test/test_results.xml
+          destination: small_test_results.xml
+      - run:
+          name: large test
+          command: make large-test
+      - store_artifacts:
+          path: tests/large_test/test_results.xml
+          destination: large_test_results.xml
+      - store_test_results:
+          path: tests
+  deployment:
+    <<: *env
+    steps:
+      - attach_workspace:
+          at: kii/html
+      - run:
+          command: |
+      - git clone https://$GH_TOKEN_FOR_HTTPS@github.com/KiiPlatform/KiiThingSDK-Embedded.git
+      - cd KiiThingSDK-Embedded && git checkout gh-pages && git config user.email 'satoshi.kumano@kii.com' && git config user.name 'satoshi kumano'
+      - rm -rf KiiThingSDK-Embedded/api-doc && mkdir -p KiiThingSDK-Embedded/api-doc
+      - cp -r kii/html/ KiiThingSDK-Embedded/api-doc
+      - cd KiiThingSDK-Embedded && git add api-doc && git commit -m 'updated doc' && git push origin gh-pages
+
+workflows:
+  version: 2
+  default:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - test:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - deployment:
+          requires:
+            - test
+          filters:
+            branches:
+              only: master
+            tags:
+              only: /v[0-9]+(\.[0-9]+){0,2}([-+].+)?/
+
+# vim: set sts=2 sw=2 et:
+
