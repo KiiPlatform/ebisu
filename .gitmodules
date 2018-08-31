@@ -2,3 +2,6 @@
 	path = kii_json
 	url = git@github.com:KiiCorp/kii_json.git
 	branch = master
+[submodule "khc"]
+	path = khc
+	url = git@github.com:KiiPlatform/khc.git
