@@ -4,8 +4,8 @@
 #include <ctype.h>
 
 #include "kii.h"
+#include "khc.h"
 #include "kii_mqtt.h"
-#include "kii_core.h"
 #include "kii_json_utils.h"
 
 #define KII_PUSH_INSTALLATIONID_SIZE 64
@@ -25,43 +25,42 @@ typedef enum
     KIIPUSH_READY = 2
 } kiiPush_state;
 
+static khc_code _install_thing_push(
+        kii_t* kii,
+        kii_bool_t development)
+{
+    // TODO: reimplement it.
+    return KHC_ERR_FAIL;
+}
+
 static int kiiPush_install(
         kii_t* kii,
         kii_bool_t development,
         char* installation_id,
         size_t installation_id_len)
 {
-    char* buf = NULL;
-    size_t buf_size = 0;
     int ret = -1;
+
+    khc_code khc_err = _install_thing_push(kii, development);
+    if (khc_err != KHC_ERR_OK) {
+        goto exit;
+    }
+
+    // TODO: get response code.
+    int resp_code;
+    if(resp_code < 200 || 300 <= resp_code) {
+        goto exit;
+    }
+
+    // TODO: get buffer and its length.
+    char* buff = NULL;
+    size_t buff_size = 0;
+    if (buff == NULL) {
+        goto exit;
+    }
+
     kii_json_parse_result_t parse_result = KII_JSON_PARSE_INVALID_INPUT;
-    kii_error_code_t core_err;
-    kii_state_t state;
     kii_json_field_t fields[2];
-
-    core_err = kii_core_install_thing_push(&kii->kii_core, development);
-    if (core_err != KIIE_OK) {
-        goto exit;
-    }
-    do {
-        core_err = kii_core_run(&kii->kii_core);
-        state = kii_core_get_state(&kii->kii_core);
-    } while (state != KII_STATE_IDLE);
-    if (core_err != KIIE_OK) {
-        goto exit;
-    }
-    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code)
-    {
-        goto exit;
-    }
-
-    buf = kii->kii_core.response_body;
-    buf_size = strlen(kii->kii_core.response_body);
-    if (buf == NULL) {
-        ret = -1;
-        goto exit;
-    }
-
     memset(fields, 0, sizeof(fields));
     fields[0].name = "installationID";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
@@ -69,7 +68,7 @@ static int kiiPush_install(
     fields[0].field_copy_buff_size = installation_id_len;
     fields[1].name = NULL;
 
-    parse_result = prv_kii_json_read_object(kii, buf, buf_size, fields);
+    parse_result = prv_kii_json_read_object(kii, buff, buff_size, fields);
     if (parse_result != KII_JSON_PARSE_SUCCESS) {
         M_KII_LOG(kii->kii_core.logger_cb("fail to get json value: %d\n",
                         parse_result));

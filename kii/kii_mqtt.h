@@ -1,7 +1,6 @@
 #ifndef KII_MQTT_H
 #define KII_MQTT_H
 
-#include "kii_core.h"
 #include "kii.h"
 
 enum QoS { QOS0, QOS1, QOS2 };
