@@ -312,32 +312,6 @@ int kii_object_download_body_at_once(
 		const char* object_id,
 		unsigned int* out_data_length);
 
-/** Download object body chunk by chunk.
- *  Downloaded data is cached in kii_core_t#response_body after the download chunk is
- *  succeeded.
- *
- *  IMPORTANT:
- *  This API uses Range request which is defined in HTTP 1.1.
- *  You may need to turn on KII_USE_CUSTOM_
-HTTP_CLIENT and switch the client implementation since the reference client is HTTP 1.0.
- *  \param [inout] kii sdk instance.
- *  \param [in] bucket specify the bucket of which object is stored.
- *  \param [in] object_id specify the id of the object of which body is added.
- *  \param [in] position starting position of the download (in bytes)
- *  \param [in] length length to download (in bytes)
- *  \param [out] out_actual_length actual length downloaded. (in bytes)
- *  \param [out] out_total_length total length of whole object body (in bytes)
- *  \return 0:success, -1: failure
- */
-int kii_object_download_body(
-		kii_t* kii,
-		const kii_bucket_t* bucket,
-		const char* object_id,
-		unsigned int position,
-		unsigned int length,
-		unsigned int* out_actual_length,
-		unsigned int* out_total_length);
-
 /** Subscribe to specified bucket.
  *  After succeeded,
  *  Event happened on the bucket will be notified via push notification.
