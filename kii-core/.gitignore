@@ -1,8 +1,0 @@
-libkiie.so
-libkiijson.so
-html
-latex
-*~
-*.o
-*.a
-testapp
