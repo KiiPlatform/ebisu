@@ -27,7 +27,7 @@ override CFLAGS += -std=c99 -Wall -pedantic -pthread -fPIC -shared $(JSON_FLAG)
 LIBS = -lssl -lcrypto -lpthread
 LIBS_DIR = -L/usr/local/opt/openssl/lib
 SOURCES = $(wildcard *.c)
-SOURCES += $(wildcard ../khc/*.c)
+SOURCES += $(wildcard ../khc/src/*.c)
 SOURCES += $(wildcard ../kii_json/src/*.c)
 SOURCES += ../lib/jsmn/jsmn.c
 INCLUDES = -I../khc/include -I../lib/jsmn -I../kii_json/include

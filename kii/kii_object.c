@@ -84,7 +84,7 @@ int kii_object_create(
         goto exit;
     }
     // TODO: get response code.
-    int resp_code = 1000;
+    int resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
@@ -135,7 +135,7 @@ int kii_object_create_with_id(
         goto exit;
     }
     // TODO: get response code.
-    int resp_code = 1000;
+    int resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
@@ -164,7 +164,7 @@ int kii_object_patch(
         goto exit;
     }
     // TODO: get response code.
-    int resp_code = 1000;
+    int resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
@@ -194,7 +194,7 @@ int kii_object_replace(
         goto exit;
     }
     // TODO: get response code.
-    int resp_code = 1000;
+    int resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
@@ -221,7 +221,7 @@ int kii_object_delete(
     }
 
     // TODO: get response code.
-    int resp_code = 1000;
+    int resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
@@ -247,7 +247,7 @@ int kii_object_get(
     }
 
     // TODO: get response code.
-    int resp_code = 1000;
+    int resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }

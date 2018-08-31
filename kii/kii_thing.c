@@ -82,7 +82,7 @@ int kii_thing_authenticate(
     }
 
     // TODO: get response code.
-    int resp_code = 1000;
+    int resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
@@ -135,7 +135,7 @@ int kii_thing_register(
     }
 
     // TODO: get response code.
-    int resp_code = 1000;
+    int resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
