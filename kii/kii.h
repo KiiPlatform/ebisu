@@ -78,7 +78,10 @@ typedef void (*KII_PUSH_RECEIVED_CB)(
 
 typedef struct kii_t {
     khc _khc;
-
+		char* _app_id;
+		char* _app_key;
+		char* _app_host;
+		char* _sdk_info;
     /** Socket context for MQTT client.
      *
      * If you want to use MQTT client, You must set this socket

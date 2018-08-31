@@ -6,21 +6,7 @@
 #include "kii_json_utils.h"
 #include "kii_core_hidden.h"
 
-#include <kii_core.h>
-
 #define KII_SDK_INFO "sn=te;sv=1.2.4"
-
-int _kii_init_with_info(
-        kii_t* kii,
-        const char* site,
-        const char* app_id,
-        const char* app_key,
-        const char* info)
-{
-    memset(kii, 0x00, sizeof(kii_t));
-    return _kii_core_init_with_info(&(kii->kii_core), site, app_id,
-            app_key, info) == KIIE_FAIL ? -1 : 0;
-}
 
 int kii_init(
         kii_t* kii,
@@ -28,7 +14,40 @@ int kii_init(
         const char* app_id,
         const char* app_key)
 {
-    return _kii_init_with_info(kii, site, app_id, app_key, KII_SDK_INFO);
+    memset(kii, 0x00, sizeof(kii_t));
+    kii->_app_id = app_id;
+    kii->_app_key = app_key;
+        if(strcmp(site, "CN") == 0)
+    {
+        kii->_app_host = "api-cn2.kii.com";
+    }
+    else if(strcmp(site, "CN3") == 0)
+    {
+        kii->_app_host = "api-cn3.kii.com";
+    }
+    else if(strcmp(site, "JP") == 0)
+    {
+        kii->_app_host = "api-jp.kii.com";
+    }
+    else if(strcmp(site, "US") == 0)
+    {
+        kii->_app_host = "api.kii.com";
+    }
+    else if(strcmp(site, "SG") == 0)
+    {
+        kii->_app_host = "api-sg.kii.com";
+    }
+    else if (strcmp(site, "EU") == 0)
+    {
+        kii->_app_host = "api-eu.kii.com";
+    }
+    else
+    {
+        /* Let's enable to set custom host */
+        kii->_app_host = (char*)site;
+    }
+    kii->_sdk_info = KII_SDK_INFO;
+    return 0;
 }
 
 int kii_thing_authenticate(
