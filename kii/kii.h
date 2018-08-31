@@ -5,7 +5,7 @@
 #ifndef KII_H
 #define KII_H
 
-#include "kii_core.h"
+#include "khc.h"
 #include "kii_task_callback.h"
 
 #include <kii_json.h>
@@ -41,6 +41,34 @@ extern "C" {
 #define KII_TASK_NAME_PING_REQ "ping_req_task"
 #endif
 
+/** bool type definition */
+typedef enum kii_bool_t {
+    KII_FALSE = 0,
+    KII_TRUE
+} kii_bool_t;
+
+/** represents scope of bucket/ topic. */
+typedef enum kii_scope_type_t {
+    KII_SCOPE_APP,
+    KII_SCOPE_USER,
+    KII_SCOPE_GROUP,
+    KII_SCOPE_THING
+} kii_scope_type_t;
+
+/** represents bucket */
+typedef struct kii_bucket_t {
+    kii_scope_type_t scope;
+    char* scope_id;
+    char* bucket_name;
+} kii_bucket_t;
+
+/** represents topic */
+typedef struct kii_topic_t {
+    kii_scope_type_t scope;
+    char* scope_id;
+    char* topic_name;
+} kii_topic_t;
+
 struct kii_t;
 
 typedef void (*KII_PUSH_RECEIVED_CB)(
@@ -49,7 +77,7 @@ typedef void (*KII_PUSH_RECEIVED_CB)(
                 size_t message_length);
 
 typedef struct kii_t {
-    kii_core_t kii_core;
+    khc _khc;
 
     /** Socket context for MQTT client.
      *
@@ -62,11 +90,11 @@ typedef struct kii_t {
      * too short, MQTT client often disconnect connection to a MQTT
      * server. We recommend 30 seconds or upper.
      */
-    kii_socket_context_t mqtt_socket_context;
-    KII_SOCKET_CONNECT_CB mqtt_socket_connect_cb;
-    KII_SOCKET_SEND_CB mqtt_socket_send_cb;
-    KII_SOCKET_RECV_CB mqtt_socket_recv_cb;
-    KII_SOCKET_CLOSE_CB mqtt_socket_close_cb;
+    void* mqtt_socket_context;
+    KHC_CB_SOCK_CONNECT mqtt_socket_connect_cb;
+    KHC_CB_SOCK_SEND mqtt_socket_send_cb;
+    KHC_CB_SOCK_RECV mqtt_socket_recv_cb;
+    KHC_CB_SOCK_CLOSE mqtt_socket_close_cb;
 
     KII_TASK_CREATE task_create_cb;
 
