@@ -69,6 +69,15 @@ typedef struct kii_topic_t {
     char* topic_name;
 } kii_topic_t;
 
+/** represents author of SDK api. */
+typedef struct kii_author_t
+{
+    /** ID of the author */
+    char author_id[128];
+    /** access token of the author */
+    char access_token[128];
+} kii_author_t;
+
 struct kii_t;
 
 typedef void (*KII_PUSH_RECEIVED_CB)(
@@ -78,6 +87,7 @@ typedef void (*KII_PUSH_RECEIVED_CB)(
 
 typedef struct kii_t {
     khc _khc;
+		kii_author_t _author;
 		char* _app_id;
 		char* _app_key;
 		char* _app_host;
