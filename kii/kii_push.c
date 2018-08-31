@@ -41,6 +41,54 @@ static khc_code _get_mqtt_endpoint(
     return KHC_ERR_FAIL;
 }
 
+static khc_code _subscribe_bucket(
+        kii_t* kii,
+        const kii_bucket_t* bucket)
+{
+    // TODO: reimplement it.
+    return KHC_ERR_FAIL;
+}
+
+static khc_code _unsubscribe_bucket(
+        kii_t* kii,
+        const kii_bucket_t* bucket)
+{
+    // TODO: reimplement it.
+    return KHC_ERR_FAIL;
+}
+
+static khc_code _subscribe_topic(
+        kii_t* kii,
+        const kii_topic_t* topic)
+{
+    // TODO: reimplement it.
+    return KHC_ERR_FAIL;
+}
+
+static khc_code _unsubscribe_topic(
+        kii_t* kii,
+        const kii_topic_t* topic)
+{
+    // TODO: reimplement it.
+    return KHC_ERR_FAIL;
+}
+
+static khc_code _create_topic(
+        kii_t* kii,
+        const kii_topic_t* topic)
+{
+    // TODO: reimplement it.
+    return KHC_ERR_FAIL;
+}
+
+static khc_code _delete_topic(
+        kii_t* kii,
+        const kii_topic_t* topic)
+{
+    // TODO: reimplement it.
+    return KHC_ERR_FAIL;
+}
+
 static int kiiPush_install(
         kii_t* kii,
         kii_bool_t development,
@@ -168,21 +216,14 @@ int kii_push_subscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
 {
     int ret = -1;
 
-    kii_error_code_t core_err;
-    kii_state_t state;
+    khc_code khc_err = _subscribe_bucket(kii, bucket);
+    if (khc_err != KHC_ERR_OK) {
+        goto exit;
+    }
 
-    core_err = kii_core_subscribe_bucket(&kii->kii_core, bucket);
-    if (core_err != KIIE_OK) {
-        goto exit;
-    }
-    do {
-        core_err = kii_core_run(&kii->kii_core);
-        state = kii_core_get_state(&kii->kii_core);
-    } while (state != KII_STATE_IDLE);
-    if (core_err != KIIE_OK) {
-        goto exit;
-    }
-    if (kii->kii_core.response_code == 204 || kii->kii_core.response_code == 409) {
+    // TODO: get response code.
+    int resp_code;
+    if (resp_code == 204 || resp_code == 409) {
         ret = 0;
     }
 exit:
@@ -193,21 +234,14 @@ int kii_push_unsubscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
 {
     int ret = -1;
 
-    kii_error_code_t core_err;
-    kii_state_t state;
+    khc_code khc_err = _unsubscribe_bucket(kii, bucket);
+    if (khc_err != KHC_ERR_OK) {
+        goto exit;
+    }
 
-    core_err = kii_core_unsubscribe_bucket(&kii->kii_core, bucket);
-    if (core_err != KIIE_OK) {
-        goto exit;
-    }
-    do {
-        core_err = kii_core_run(&kii->kii_core);
-        state = kii_core_get_state(&kii->kii_core);
-    } while (state != KII_STATE_IDLE);
-    if (core_err != KIIE_OK) {
-        goto exit;
-    }
-    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
+    // TODO: get response code.
+    int resp_code;
+    if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
 	ret = 0;
@@ -218,21 +252,14 @@ exit:
 int kii_push_subscribe_topic(kii_t* kii, const kii_topic_t* topic)
 {
     int ret = -1;
-    kii_error_code_t core_err;
-    kii_state_t state;
 
-    core_err = kii_core_subscribe_topic(&kii->kii_core, topic);
-    if (core_err != KIIE_OK) {
+    khc_code khc_err = _subscribe_topic(kii, topic);
+    if (khc_err != KHC_ERR_OK) {
         goto exit;
     }
-    do {
-        core_err = kii_core_run(&kii->kii_core);
-        state = kii_core_get_state(&kii->kii_core);
-    } while (state != KII_STATE_IDLE);
-    if (core_err != KIIE_OK) {
-        goto exit;
-    }
-    if (kii->kii_core.response_code == 204 || kii->kii_core.response_code == 409) {
+    // TODO: get response code.
+    int resp_code;
+    if (resp_code == 204 || resp_code == 409) {
         ret = 0;
     }
 exit:
@@ -242,24 +269,16 @@ exit:
 int kii_push_unsubscribe_topic(kii_t* kii, const kii_topic_t* topic)
 {
     int ret = -1;
-    kii_error_code_t core_err;
-    kii_state_t state;
 
-    core_err = kii_core_unsubscribe_topic(&kii->kii_core, topic);
-    if (core_err != KIIE_OK) {
+    khc_code khc_err = _unsubscribe_topic(kii, topic);
+    if (khc_err != KHC_ERR_OK) {
         goto exit;
     }
-    do {
-        core_err = kii_core_run(&kii->kii_core);
-        state = kii_core_get_state(&kii->kii_core);
-    } while (state != KII_STATE_IDLE);
-    if (core_err != KIIE_OK) {
-        goto exit;
+    // TODO: get response code.
+    int resp_code;
+    if (resp_code == 204 || resp_code == 409) {
+        ret = 0;
     }
-    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
-        goto exit;
-    }
-	ret = 0;
 exit:
     return ret;
 }
@@ -267,21 +286,13 @@ exit:
 int kii_push_create_topic(kii_t* kii, const kii_topic_t* topic)
 {
     int ret = -1;
-    kii_error_code_t core_err;
-    kii_state_t state;
-
-    core_err = kii_core_create_topic(&kii->kii_core, topic);
-    if (core_err != KIIE_OK) {
+    khc_code khc_err = _create_topic(kii, topic);
+    if (khc_err != KHC_ERR_OK) {
         goto exit;
     }
-    do {
-        core_err = kii_core_run(&kii->kii_core);
-        state = kii_core_get_state(&kii->kii_core);
-    } while (state != KII_STATE_IDLE);
-    if (core_err != KIIE_OK) {
-        goto exit;
-    }
-    if (kii->kii_core.response_code == 204 || kii->kii_core.response_code == 409) {
+    // TODO: get response code.
+    int resp_code;
+    if (resp_code == 204 || resp_code == 409) {
         ret = 0;
     }
 exit:
@@ -291,21 +302,14 @@ exit:
 int kii_push_delete_topic(kii_t* kii, const kii_topic_t* topic)
 {
     int ret = -1;
-    kii_error_code_t core_err;
-    kii_state_t state;
 
-    core_err = kii_core_delete_topic(&kii->kii_core, topic);
-    if (core_err != KIIE_OK) {
+    khc_code khc_err = _create_topic(kii, topic);
+    if (khc_err != KHC_ERR_OK) {
         goto exit;
     }
-    do {
-        core_err = kii_core_run(&kii->kii_core);
-        state = kii_core_get_state(&kii->kii_core);
-    } while (state != KII_STATE_IDLE);
-    if (core_err != KIIE_OK) {
-        goto exit;
-    }
-    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
+    // TODO: get response code.
+    int resp_code;
+    if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
     ret = 0;
