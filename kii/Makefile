@@ -27,10 +27,10 @@ override CFLAGS += -std=gnu89 -Wall -pedantic -pthread -fPIC -shared $(JSON_FLAG
 LIBS = -lssl -lcrypto -lpthread
 LIBS_DIR = -L/usr/local/opt/openssl/lib
 SOURCES = $(wildcard *.c)
-SOURCES += $(wildcard ../kii-core/*.c)
+SOURCES += $(wildcard ../khc/*.c)
 SOURCES += $(wildcard ../kii_json/src/*.c)
 SOURCES += ../lib/jsmn/jsmn.c
-INCLUDES = -I../kii-core -I../lib/jsmn -I../kii_json/include
+INCLUDES = -I../khc -I../lib/jsmn -I../kii_json/include
 
 TARGET = libkiisdk.so
 
