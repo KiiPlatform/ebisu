@@ -155,7 +155,7 @@ int kii_object_patch(
         const char* opt_etag)
 {
     int ret = -1;
-    khc_code khc_err = kii_core_patch_object(
+    khc_code khc_err = _patch_object(
             kii,
             bucket,
             object_id,

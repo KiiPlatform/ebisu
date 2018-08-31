@@ -30,7 +30,7 @@ SOURCES = $(wildcard *.c)
 SOURCES += $(wildcard ../khc/*.c)
 SOURCES += $(wildcard ../kii_json/src/*.c)
 SOURCES += ../lib/jsmn/jsmn.c
-INCLUDES = -I../khc -I../lib/jsmn -I../kii_json/include
+INCLUDES = -I../khc/include -I../lib/jsmn -I../kii_json/include
 
 TARGET = libkiisdk.so
 

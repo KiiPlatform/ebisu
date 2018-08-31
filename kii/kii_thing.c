@@ -4,7 +4,6 @@
 
 #include "kii.h"
 #include "kii_json_utils.h"
-#include "kii_core_hidden.h"
 
 #define KII_SDK_INFO "sn=te;sv=1.2.4"
 
@@ -77,7 +76,7 @@ int kii_thing_authenticate(
 {
     int ret = -1;
 
-    khc_code khc_err = kii_core_thing_authentication(kii, vendor_thing_id, password);
+    khc_code khc_err = _thing_authentication(kii, vendor_thing_id, password);
     if (khc_err != KHC_ERR_OK) {
         goto exit;
     }
