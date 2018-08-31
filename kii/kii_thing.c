@@ -14,8 +14,8 @@ int kii_init(
         const char* app_key)
 {
     memset(kii, 0x00, sizeof(kii_t));
-    kii->_app_id = app_id;
-    kii->_app_key = app_key;
+    kii->_app_id = (char*)app_id;
+    kii->_app_key = (char*)app_key;
         if(strcmp(site, "CN") == 0)
     {
         kii->_app_host = "api-cn2.kii.com";
@@ -82,14 +82,14 @@ int kii_thing_authenticate(
     }
 
     // TODO: get response code.
-    int respCode;
-    if(respCode < 200 || 300 <= respCode) {
+    int resp_code = 1000;
+    if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
 
     // TODO: get buffer and its length.
-    char* buff;
-    size_t buff_size;
+    char* buff = NULL;
+    size_t buff_size = 0;
     if (buff == NULL) {
         goto exit;
     }
@@ -135,15 +135,15 @@ int kii_thing_register(
     }
 
     // TODO: get response code.
-    int respCode;
-    if(respCode < 200 || 300 <= respCode) {
+    int resp_code = 1000;
+    if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
 
     /* parse response */
     // TODO: get buffer and its length.
-    char* buff;
-    size_t buff_size;
+    char* buff = NULL;
+    size_t buff_size = 0;
     if (buff == NULL) {
         goto exit;
     }

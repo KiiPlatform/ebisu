@@ -84,14 +84,14 @@ int kii_object_create(
         goto exit;
     }
     // TODO: get response code.
-    int respCode;
-    if(respCode < 200 || 300 <= respCode) {
+    int resp_code = 1000;
+    if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
 
     // TODO: get buffer and its length.
-    char* buff;
-    size_t buff_size;
+    char* buff = NULL;
+    size_t buff_size = 0;
     if (buff == NULL) {
         goto exit;
     }
@@ -135,11 +135,10 @@ int kii_object_create_with_id(
         goto exit;
     }
     // TODO: get response code.
-    int respCode;
-    if(respCode < 200 || 300 <= respCode) {
+    int resp_code = 1000;
+    if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
-
     ret = 0;
 
 exit:
@@ -165,8 +164,8 @@ int kii_object_patch(
         goto exit;
     }
     // TODO: get response code.
-    int respCode;
-    if(respCode < 200 || 300 <= respCode) {
+    int resp_code = 1000;
+    if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
 
@@ -195,8 +194,8 @@ int kii_object_replace(
         goto exit;
     }
     // TODO: get response code.
-    int respCode;
-    if(respCode < 200 || 300 <= respCode) {
+    int resp_code = 1000;
+    if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
 
@@ -222,8 +221,8 @@ int kii_object_delete(
     }
 
     // TODO: get response code.
-    int respCode;
-    if(respCode < 200 || 300 <= respCode) {
+    int resp_code = 1000;
+    if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
 
@@ -248,8 +247,8 @@ int kii_object_get(
     }
 
     // TODO: get response code.
-    int respCode;
-    if(respCode < 200 || 300 <= respCode) {
+    int resp_code = 1000;
+    if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
 

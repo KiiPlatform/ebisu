@@ -22,7 +22,7 @@ ifdef FLEXIBLE_JSON_TOKEN
 	JSON_FLAG =
 endif
 
-override CFLAGS += -std=gnu89 -Wall -pedantic -pthread -fPIC -shared $(JSON_FLAG)
+override CFLAGS += -std=c99 -Wall -pedantic -pthread -fPIC -shared $(JSON_FLAG)
 
 LIBS = -lssl -lcrypto -lpthread
 LIBS_DIR = -L/usr/local/opt/openssl/lib

@@ -103,7 +103,7 @@ static int kiiPush_install(
     }
 
     // TODO: get response code.
-    int resp_code;
+    int resp_code = 1000;
     if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
@@ -147,7 +147,7 @@ static kiiPush_retrieveEndpointResult kiiPush_retrieveEndpoint(kii_t* kii, const
     }
 
     // TODO: get response code.
-    int resp_code;
+    int resp_code = 1000;
     if(resp_code == 503)
     {
         ret = KIIPUSH_RETRIEVE_ENDPOINT_RETRY;
@@ -222,7 +222,7 @@ int kii_push_subscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
     }
 
     // TODO: get response code.
-    int resp_code;
+    int resp_code = 1000;
     if (resp_code == 204 || resp_code == 409) {
         ret = 0;
     }
@@ -240,7 +240,7 @@ int kii_push_unsubscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
     }
 
     // TODO: get response code.
-    int resp_code;
+    int resp_code = 1000;
     if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
@@ -258,7 +258,7 @@ int kii_push_subscribe_topic(kii_t* kii, const kii_topic_t* topic)
         goto exit;
     }
     // TODO: get response code.
-    int resp_code;
+    int resp_code = 1000;
     if (resp_code == 204 || resp_code == 409) {
         ret = 0;
     }
@@ -275,7 +275,7 @@ int kii_push_unsubscribe_topic(kii_t* kii, const kii_topic_t* topic)
         goto exit;
     }
     // TODO: get response code.
-    int resp_code;
+    int resp_code = 1000;
     if (resp_code == 204 || resp_code == 409) {
         ret = 0;
     }
@@ -291,7 +291,7 @@ int kii_push_create_topic(kii_t* kii, const kii_topic_t* topic)
         goto exit;
     }
     // TODO: get response code.
-    int resp_code;
+    int resp_code = 1000;
     if (resp_code == 204 || resp_code == 409) {
         ret = 0;
     }
@@ -303,12 +303,12 @@ int kii_push_delete_topic(kii_t* kii, const kii_topic_t* topic)
 {
     int ret = -1;
 
-    khc_code khc_err = _create_topic(kii, topic);
+    khc_code khc_err = _delete_topic(kii, topic);
     if (khc_err != KHC_ERR_OK) {
         goto exit;
     }
     // TODO: get response code.
-    int resp_code;
+    int resp_code = 1000;
     if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }

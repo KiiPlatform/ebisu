@@ -33,8 +33,8 @@ int kii_server_code_execute(kii_t* kii, const char* endpoint_name, const char* p
     }
 
     // TODO: get response code.
-    int respCode;
-    if(respCode < 200 || 300 <= respCode) {
+    int resp_code = 1000;
+    if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
     }
     ret = 0;
