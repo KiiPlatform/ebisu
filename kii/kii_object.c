@@ -5,7 +5,15 @@
 #include "kii.h"
 #include "kii_json_utils.h"
 
-#include "kii_core.h"
+static khc_code _create_new_object(
+            khc* _khc,
+            const kii_bucket_t* bucket,
+            const char* object_data,
+            const char* object_content_type)
+{
+    // TODO: reimplement it.
+    return KHC_ERR_FAIL;
+}
 
 int kii_object_create(
         kii_t* kii,
@@ -14,39 +22,30 @@ int kii_object_create(
         const char* object_content_type,
         char* out_object_id)
 {
-    char* buf = NULL;
     int ret = -1;
-    kii_error_code_t core_err;
-    kii_state_t state;
-    kii_json_field_t fields[2];
-    kii_json_parse_result_t result;
-    size_t buf_size = 0;
-
-    core_err = kii_core_create_new_object(
-            &kii->kii_core,
+    khc_code khc_err = _create_new_object(
+            &kii->_khc,
             bucket,
             object_data,
             object_content_type);
-    if (core_err != KIIE_OK) {
+    if (khc_err != KHC_ERR_OK) {
         goto exit;
     }
-    do {
-        core_err = kii_core_run(&kii->kii_core);
-        state = kii_core_get_state(&kii->kii_core);
-    } while (state != KII_STATE_IDLE);
-    if (core_err != KIIE_OK) {
-        goto exit;
-    }
-    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
+    // TODO: get response code.
+    int respCode;
+    if(respCode < 200 || 300 <= respCode) {
         goto exit;
     }
 
-    buf = kii->kii_core.response_body;
-    buf_size = strlen(kii->kii_core.response_body);
-    if (buf == NULL) {
+    // TODO: get buffer and its length.
+    char* buff;
+    size_t buff_size;
+    if (buff == NULL) {
         goto exit;
     }
 
+    kii_json_field_t fields[2];
+    kii_json_parse_result_t result;
     memset(fields, 0, sizeof(fields));
     fields[0].name = "objectID";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
@@ -54,7 +53,7 @@ int kii_object_create(
     fields[0].field_copy_buff_size = KII_OBJECTID_SIZE + 1;
     fields[1].name = NULL;
 
-    result = prv_kii_json_read_object(kii, buf, buf_size, fields);
+    result = prv_kii_json_read_object(kii, buff, buff_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
         goto exit;
     }
