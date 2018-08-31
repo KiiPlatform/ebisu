@@ -27,6 +27,37 @@ static khc_code _create_new_object_with_id(
     return KHC_ERR_FAIL;
 }
 
+static khc_code _patch_object(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id,
+        const char* patch_data,
+        const char* opt_etag)
+{
+    // TODO: reimplement it.
+    return KHC_ERR_FAIL;
+}
+
+static khc_code _replace_object(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id,
+        const char* replace_data,
+        const char* opt_etag)
+{
+    // TODO: reimplement it.
+    return KHC_ERR_FAIL;
+}
+
+static khc_code _delete_object(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id)
+{
+    // TODO: reimplement it.
+    return KHC_ERR_FAIL;
+}
+
 int kii_object_create(
         kii_t* kii,
         const kii_bucket_t* bucket,
@@ -115,26 +146,18 @@ int kii_object_patch(
         const char* opt_etag)
 {
     int ret = -1;
-    kii_error_code_t core_err;
-    kii_state_t state;
-
-    core_err = kii_core_patch_object(
-            &kii->kii_core,
+    khc_code khc_err = kii_core_patch_object(
+            kii,
             bucket,
             object_id,
             patch_data,
             opt_etag);
-    if (core_err != KIIE_OK) {
+    if (khc_err != KHC_ERR_OK) {
         goto exit;
     }
-    do {
-        core_err = kii_core_run(&kii->kii_core);
-        state = kii_core_get_state(&kii->kii_core);
-    } while (state != KII_STATE_IDLE);
-    if (core_err != KIIE_OK) {
-        goto exit;
-    }
-    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
+    // TODO: get response code.
+    int respCode;
+    if(respCode < 200 || 300 <= respCode) {
         goto exit;
     }
 
@@ -152,26 +175,19 @@ int kii_object_replace(
         const char* opt_etag)
 {
     int ret = -1;
-    kii_error_code_t core_err;
-    kii_state_t state;
 
-    core_err = kii_core_replace_object(
-            &kii->kii_core,
+    khc_code khc_err = _replace_object(
+            kii,
             bucket,
             object_id,
             replacement_data,
             opt_etag);
-    if (core_err != KIIE_OK) {
+    if (khc_err != KHC_ERR_OK) {
         goto exit;
     }
-    do {
-        core_err = kii_core_run(&kii->kii_core);
-        state = kii_core_get_state(&kii->kii_core);
-    } while (state != KII_STATE_IDLE);
-    if (core_err != KIIE_OK) {
-        goto exit;
-    }
-    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
+    // TODO: get response code.
+    int respCode;
+    if(respCode < 200 || 300 <= respCode) {
         goto exit;
     }
 
@@ -187,24 +203,18 @@ int kii_object_delete(
         const char* object_id)
 {
     int ret = -1;
-    kii_error_code_t core_err;
-    kii_state_t state;
 
-    core_err = kii_core_delete_object(
-            &kii->kii_core,
+    khc_code khc_err = _delete_object(
+            kii,
             bucket,
             object_id);
-    if (core_err != KIIE_OK) {
+    if (khc_err != KHC_ERR_OK) {
         goto exit;
     }
-    do {
-        core_err = kii_core_run(&kii->kii_core);
-        state = kii_core_get_state(&kii->kii_core);
-    } while (state != KII_STATE_IDLE);
-    if (core_err != KIIE_OK) {
-        goto exit;
-    }
-    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
+
+    // TODO: get response code.
+    int respCode;
+    if(respCode < 200 || 300 <= respCode) {
         goto exit;
     }
 
