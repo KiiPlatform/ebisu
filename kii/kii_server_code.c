@@ -32,7 +32,6 @@ int kii_server_code_execute(kii_t* kii, const char* endpoint_name, const char* p
         goto exit;
     }
 
-    // TODO: get response code.
     int resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         goto exit;
