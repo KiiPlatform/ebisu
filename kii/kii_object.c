@@ -6,10 +6,22 @@
 #include "kii_json_utils.h"
 
 static khc_code _create_new_object(
-            khc* _khc,
+            kii_t* kii,
             const kii_bucket_t* bucket,
             const char* object_data,
             const char* object_content_type)
+{
+    // TODO: reimplement it.
+    return KHC_ERR_FAIL;
+}
+
+static khc_code _create_new_object_with_id(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id,
+        const char* object_data,
+        const char* opt_object_content_type
+        )
 {
     // TODO: reimplement it.
     return KHC_ERR_FAIL;
@@ -24,7 +36,7 @@ int kii_object_create(
 {
     int ret = -1;
     khc_code khc_err = _create_new_object(
-            &kii->_khc,
+            kii,
             bucket,
             object_data,
             object_content_type);
@@ -72,26 +84,19 @@ int kii_object_create_with_id(
         const char* object_content_type)
 {
     int ret = -1;
-    kii_error_code_t core_err;
-    kii_state_t state;
 
-    core_err = kii_core_create_new_object_with_id(
-            &kii->kii_core,
+    khc_code khc_err = _create_new_object_with_id(
+            kii,
             bucket,
             object_id,
             object_data,
             object_content_type);
-    if (core_err != KIIE_OK) {
+    if (khc_err != KHC_ERR_OK) {
         goto exit;
     }
-    do {
-        core_err = kii_core_run(&kii->kii_core);
-        state = kii_core_get_state(&kii->kii_core);
-    } while (state != KII_STATE_IDLE);
-    if (core_err != KIIE_OK) {
-        goto exit;
-    }
-    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
+    // TODO: get response code.
+    int respCode;
+    if(respCode < 200 || 300 <= respCode) {
         goto exit;
     }
 
