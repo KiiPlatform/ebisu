@@ -1,7 +1,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "kii_core.h"
 #include "kii_mqtt.h"
 #include "kii.h"
 
@@ -47,17 +46,19 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
     size_t i;
     size_t j;
     size_t k;
-    kii_socket_code_t sock_err;
+    khc_sock_code_t sock_err;
     size_t actual_length;
     unsigned int port;
 
-    if (kii->mqtt_socket_context.socket > 0) {
+    // TODO: Review this logic. This might be used to recover from stale connection.
+    if (kii->_mqtt_connected == 1) {
         M_KII_LOG(kii->kii_core.logger_cb("closing socket as socket is already created.\r\n"));
         sock_err = kii->mqtt_socket_close_cb(&(kii->mqtt_socket_context));
-        if (sock_err != KII_SOCKETC_OK) {
+        if (sock_err != KHC_SOCK_OK) {
             M_KII_LOG(kii->kii_core.logger_cb("closing socket is failed.\r\n"));
             return -1;
         }
+        kii->_mqtt_connected = 0;
     }
 #ifndef KII_MQTT_USE_PORT_TCP
     port = endpoint->port_ssl;
@@ -65,7 +66,7 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
     port = endpoint->port_tcp;
 #endif
     sock_err = kii->mqtt_socket_connect_cb(&(kii->mqtt_socket_context), endpoint->host, port);
-    if (sock_err != KII_SOCKETC_OK) {
+    if (sock_err != KHC_SOCK_OK) {
         M_KII_LOG(kii->kii_core.logger_cb("connecting socket is failed.\r\n"));
         return -1;
     }
@@ -142,14 +143,14 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
 
     sock_err = kii->mqtt_socket_send_cb(&(kii->mqtt_socket_context),
             kii->mqtt_buffer, j);
-    if (sock_err != KII_SOCKETC_OK) {
+    if (sock_err != KHC_SOCK_OK) {
         M_KII_LOG(kii->kii_core.logger_cb("kii-error: send data fail\r\n"));
         return -1;
     }
     memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
     sock_err = kii->mqtt_socket_recv_cb(&(kii->mqtt_socket_context),
             kii->mqtt_buffer, kii->mqtt_buffer_size, &actual_length);
-    if(sock_err != KII_SOCKETC_OK)
+    if(sock_err != KHC_SOCK_OK)
     {
         M_KII_LOG(kii->kii_core.logger_cb("kii-error: recv data fail\r\n"));
         return -1;
@@ -187,7 +188,7 @@ int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
     size_t j;
     size_t k;
     size_t actual_length = 0;
-    kii_socket_code_t sock_err;
+    khc_sock_code_t sock_err;
 
     if (kii->mqtt_buffer == NULL || kii->mqtt_buffer_size == 0) {
         M_KII_LOG(kii->kii_core.logger_cb("mqtt_buffer must not be NULL.\r\n"));
@@ -234,7 +235,7 @@ int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
     M_KII_LOG(kii->kii_core.logger_cb("\r\n----------------MQTT subscribe send end-------------\r\n"));
     sock_err = kii->mqtt_socket_send_cb(&(kii->mqtt_socket_context),
             kii->mqtt_buffer, j);
-    if(sock_err != KII_SOCKETC_OK)
+    if(sock_err != KHC_SOCK_OK)
     {
         M_KII_LOG(kii->kii_core.logger_cb("kii-error: send data fail\r\n"));
         return -1;
@@ -242,7 +243,7 @@ int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
     memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
     sock_err = kii->mqtt_socket_recv_cb(&(kii->mqtt_socket_context),
             kii->mqtt_buffer, kii->mqtt_buffer_size, &actual_length);
-    if(sock_err != KII_SOCKETC_OK)
+    if(sock_err != KHC_SOCK_OK)
     {
         M_KII_LOG(kii->kii_core.logger_cb("kii-error: recv data fail\r\n"));
         return -1;
@@ -277,13 +278,13 @@ int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
 int kiiMQTT_pingReq(kii_t* kii)
 {
     char buf[2];
-    kii_socket_code_t sock_err;
+    khc_sock_code_t sock_err;
 
     memset(buf, 0, sizeof(buf));
     buf[0] = (char)0xc0;
     buf[1] = 0x00;
     sock_err = kii->mqtt_socket_send_cb(&(kii->mqtt_socket_context), buf, sizeof(buf));
-    if(sock_err != KII_SOCKETC_OK)
+    if(sock_err != KHC_SOCK_OK)
     {
         M_KII_LOG(kii->kii_core.logger_cb("kii-error: send data fail\r\n"));
         return -1;
