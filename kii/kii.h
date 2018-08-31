@@ -482,6 +482,16 @@ kii_api_call_append_header(
  */
 int kii_api_call_run(kii_t* kii);
 
+int kii_api_call(
+    kii_t *kii,
+    const char *http_method,
+    const char *resource_path,
+    const void *http_body,
+    size_t body_size,
+    const char *content_type,
+    char *header,
+    ...);
+
 #ifdef __cplusplus
 }
 #endif
