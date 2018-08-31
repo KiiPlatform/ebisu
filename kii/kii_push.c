@@ -33,6 +33,14 @@ static khc_code _install_thing_push(
     return KHC_ERR_FAIL;
 }
 
+static khc_code _get_mqtt_endpoint(
+        kii_t* kii,
+        const char* installation_id)
+{
+    // TODO: reimplement it.
+    return KHC_ERR_FAIL;
+}
+
 static int kiiPush_install(
         kii_t* kii,
         kii_bool_t development,
@@ -83,43 +91,36 @@ exit:
 
 static kiiPush_retrieveEndpointResult kiiPush_retrieveEndpoint(kii_t* kii, const char* installation_id, kii_mqtt_endpoint_t* endpoint)
 {
-    char* buf = NULL;
-    size_t buf_size = 0;
     kiiPush_retrieveEndpointResult ret = KIIPUSH_RETRIEVE_ENDPOINT_ERROR;
-    kii_json_parse_result_t parse_result = KII_JSON_PARSE_INVALID_INPUT;
-    kii_error_code_t core_err;
-    kii_state_t state;
-    kii_json_field_t fields[8];
 
-    core_err = kii_core_get_mqtt_endpoint(&kii->kii_core, installation_id);
-    if (core_err != KIIE_OK) {
+    khc_code khc_err = _get_mqtt_endpoint(kii, installation_id);
+    if (khc_err != KHC_ERR_OK) {
         goto exit;
     }
-    do {
-        core_err = kii_core_run(&kii->kii_core);
-        state = kii_core_get_state(&kii->kii_core);
-    } while (state != KII_STATE_IDLE);
-    if (core_err != KIIE_OK) {
-        goto exit;
-    }
-    if(kii->kii_core.response_code == 503)
+
+    // TODO: get response code.
+    int resp_code;
+    if(resp_code == 503)
     {
         ret = KIIPUSH_RETRIEVE_ENDPOINT_RETRY;
         goto exit;
     }
-    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code)
+    if(resp_code < 200 || 300 <= resp_code)
     {
         ret = KIIPUSH_RETRIEVE_ENDPOINT_ERROR;
         goto exit;
     }
 
-    buf = kii->kii_core.response_body;
-    buf_size = strlen(kii->kii_core.response_body);
-    if (buf == NULL) {
+    // TODO: get buffer and its length.
+    char* buff = NULL;
+    size_t buff_size = 0;
+    if (buff == NULL) {
         ret = KIIPUSH_RETRIEVE_ENDPOINT_ERROR;
         goto exit;
     }
 
+    kii_json_parse_result_t parse_result = KII_JSON_PARSE_INVALID_INPUT;
+    kii_json_field_t fields[8];
     memset(fields, 0, sizeof(fields));
     fields[0].name = "username";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
@@ -149,7 +150,7 @@ static kiiPush_retrieveEndpointResult kiiPush_retrieveEndpoint(kii_t* kii, const
     fields[6].type = KII_JSON_FIELD_TYPE_LONG;
     fields[7].name = NULL;
 
-    parse_result = prv_kii_json_read_object(kii, buf, buf_size, fields);
+    parse_result = prv_kii_json_read_object(kii, buff, buff_size, fields);
     if (parse_result != KII_JSON_PARSE_SUCCESS) {
         ret = KIIPUSH_RETRIEVE_ENDPOINT_ERROR;
         goto exit;
