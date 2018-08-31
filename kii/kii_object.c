@@ -58,6 +58,15 @@ static khc_code _delete_object(
     return KHC_ERR_FAIL;
 }
 
+static khc_code _get_object(
+        kii_t *kii,
+        const kii_bucket_t *bucket,
+        const char *object_id)
+{
+    // TODO: reimplement it.
+    return KHC_ERR_FAIL;
+}
+
 int kii_object_create(
         kii_t* kii,
         const kii_bucket_t* bucket,
@@ -229,26 +238,21 @@ int kii_object_get(
         const char* object_id)
 {
     int ret = -1;
-    kii_error_code_t core_err;
-    kii_state_t state;
 
-    core_err = kii_core_get_object(
-            &kii->kii_core,
+    khc_code khc_err = _get_object(
+            kii,
             bucket,
             object_id);
-    if (core_err != KIIE_OK) {
+    if (khc_err != KHC_ERR_OK) {
         goto exit;
     }
-    do {
-        core_err = kii_core_run(&kii->kii_core);
-        state = kii_core_get_state(&kii->kii_core);
-    } while (state != KII_STATE_IDLE);
-    if (core_err != KIIE_OK) {
+
+    // TODO: get response code.
+    int respCode;
+    if(respCode < 200 || 300 <= respCode) {
         goto exit;
     }
-    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
-        goto exit;
-    }
+
     ret = 0;
 exit:
     return ret;
@@ -262,47 +266,8 @@ int kii_object_upload_body_at_once(
         const void* data,
         size_t data_length)
 {
-    int ret = -1;
-    kii_error_code_t core_err;
-    kii_state_t state;
-    char resource_path[256];
-
-    memset(resource_path, 0x00, sizeof(resource_path));
-    strcpy(resource_path, "api/apps/");
-    strcat(resource_path, kii->kii_core.app_id);
-    if(bucket->scope == KII_SCOPE_THING) {
-        strcat(resource_path, "/things/");
-        strcat(resource_path, bucket->scope_id);
-    }
-    strcat(resource_path, "/buckets/");
-    strcat(resource_path, bucket->bucket_name);
-    strcat(resource_path, "/objects/");
-    strcat(resource_path, object_id);
-    strcat(resource_path, "/body");
-    core_err = kii_core_api_call(
-            &kii->kii_core,
-            "PUT",
-            resource_path,
-            data,
-            data_length,
-            body_content_type,
-            NULL);
-    if (core_err != KIIE_OK) {
-        goto exit;
-    }
-    do {
-        core_err = kii_core_run(&kii->kii_core);
-        state = kii_core_get_state(&kii->kii_core);
-    } while (state != KII_STATE_IDLE);
-    if (core_err != KIIE_OK) {
-        goto exit;
-    }
-    if(kii->kii_core.response_code < 200 || 300 <= kii->kii_core.response_code) {
-        goto exit;
-    }
-    ret = 0;
-exit:
-    return ret;
+    // TODO: This API should be refined.
+    return -1;
 }
 
 int kii_object_init_upload_body(
