@@ -103,11 +103,14 @@ typedef struct kii_t {
      * too short, MQTT client often disconnect connection to a MQTT
      * server. We recommend 30 seconds or upper.
      */
-    void* mqtt_socket_context;
-    KHC_CB_SOCK_CONNECT mqtt_socket_connect_cb;
-    KHC_CB_SOCK_SEND mqtt_socket_send_cb;
-    KHC_CB_SOCK_RECV mqtt_socket_recv_cb;
-    KHC_CB_SOCK_CLOSE mqtt_socket_close_cb;
+    void* mqtt_sock_connect_ctx;
+    void* mqtt_sock_send_ctx;
+    void* mqtt_sock_recv_ctx;
+    void* mqtt_sock_close_ctx;
+    KHC_CB_SOCK_CONNECT mqtt_sock_connect_cb;
+    KHC_CB_SOCK_SEND mqtt_sock_send_cb;
+    KHC_CB_SOCK_RECV mqtt_sock_recv_cb;
+    KHC_CB_SOCK_CLOSE mqtt_sock_close_cb;
 
     KII_TASK_CREATE task_create_cb;
 
@@ -119,8 +122,6 @@ typedef struct kii_t {
 
     char* mqtt_buffer;
     size_t mqtt_buffer_size;
-
-    void* app_context;
 
     char* _rw_buff;
     size_t _rw_buff_size;
@@ -498,6 +499,16 @@ int kii_api_call(
     ...);
 
 int kii_set_buff(kii_t* kii, char* buff, size_t buff_size);
+
+int kii_set_http_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
+int kii_set_http_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
+int kii_set_http_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
+int kii_set_http_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+
+int kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
+int kii_set_mqtt_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
+int kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
+int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
 
 int _kii_set_content_length(kii_t* kii, size_t content_length);
 
