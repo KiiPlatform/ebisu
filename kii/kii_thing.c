@@ -12,13 +12,13 @@ static khc_code _thing_authentication(
         )
 {
     // TODO: reimplement it.
-    khc_set_param(&kii->_khc, KHC_PARAM_HOST, kii->_app_host);
+    khc_set_host(&kii->_khc, kii->_app_host);
     // /api/apps/{appid}/oauth2/token
     char path[128];
     path[0] = '\0';
     snprintf(path, 128, "/api/apps/%s/oauth2/token", kii->_app_id);
-    khc_set_param(&kii->_khc, KHC_PARAM_PATH, path);
-    khc_set_param(&kii->_khc, KHC_PARAM_METHOD, "POST");
+    khc_set_path(&kii->_khc, path);
+    khc_set_method(&kii->_khc, "POST");
     khc_slist* headers = NULL;
     char ct[] = "Content-Type: application/vnd.kii.OauthTokenRequest+json";
     char appid[128];
@@ -45,7 +45,7 @@ static khc_code _thing_authentication(
     char cl[128];
     snprintf(cl, 128, "Content-Length: %d", content_len);
     headers =khc_slist_append(headers, cl, strlen(cl));
-    khc_set_param(&kii->_khc, KHC_PARAM_REQ_HEADERS, headers);
+    khc_set_req_headers(&kii->_khc, headers);
 
     _kii_set_content_length(kii, content_len);
 
