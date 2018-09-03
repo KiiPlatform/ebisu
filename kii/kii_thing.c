@@ -82,9 +82,8 @@ int kii_thing_authenticate(
         goto exit;
     }
 
-    // TODO: get buffer and its length.
-    char* buff = NULL;
-    size_t buff_size = 0;
+    char* buff = kii->_rw_buff;
+    size_t buff_size = kii->_rw_buff_size;
     if (buff == NULL) {
         goto exit;
     }
