@@ -155,3 +155,28 @@ int _kii_set_content_length(kii_t* kii, size_t content_length) {
     kii->_rw_buff_req_size = content_length;
     return 0;
 }
+
+kii_code_t _convert_code(khc_code khc_c) {
+    switch(khc_c) {
+        case KHC_ERR_OK:
+            return KII_ERR_OK;
+        case KHC_ERR_SOCK_CONNECT:
+            return KII_ERR_SOCK_CONNECT;
+        case KHC_ERR_SOCK_CLOSE:
+            return KII_ERR_SOCK_CONNECT;
+        case KHC_ERR_SOCK_SEND:
+            return KII_ERR_SOCK_SEND;
+        case KHC_ERR_SOCK_RECV:
+            return KII_ERR_SOCK_RECV;
+        case KHC_ERR_HEADER_CALLBACK:
+            return KII_ERR_HEADER_CALLBACK;
+        case KHC_ERR_WRITE_CALLBACK:
+            return KII_ERR_WRITE_CALLBACK;
+        case KHC_ERR_ALLOCATION:
+            return KII_ERR_ALLOCATION;
+        case KHC_ERR_TOO_LARGE_DATA:
+            return KII_ERR_TOO_LARGE_DATA;
+        case KHC_ERR_FAIL:
+            return KII_ERR_FAIL;
+    }
+}

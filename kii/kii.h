@@ -41,25 +41,44 @@ extern "C" {
 #define KII_TASK_NAME_PING_REQ "ping_req_task"
 #endif
 
-/** bool type definition */
-typedef enum kii_bool_t {
-    KII_FALSE = 0,
-    KII_TRUE
-} kii_bool_t;
+    typedef enum kii_code_t
+    {
+        KII_ERR_OK,
+        KII_ERR_SOCK_CONNECT,
+        KII_ERR_SOCK_CLOSE,
+        KII_ERR_SOCK_SEND,
+        KII_ERR_SOCK_RECV,
+        KII_ERR_HEADER_CALLBACK,
+        KII_ERR_WRITE_CALLBACK,
+        KII_ERR_ALLOCATION,
+        KII_ERR_TOO_LARGE_DATA,
+        KII_ERR_RESP_STATUS,
+        KII_ERR_PARSE_JSON,
+        KII_ERR_FAIL
+    } kii_code_t;
 
-/** represents scope of bucket/ topic. */
-typedef enum kii_scope_type_t {
-    KII_SCOPE_APP,
-    KII_SCOPE_USER,
-    KII_SCOPE_GROUP,
-    KII_SCOPE_THING
-} kii_scope_type_t;
+    /** bool type definition */
+    typedef enum kii_bool_t
+    {
+        KII_FALSE = 0,
+        KII_TRUE
+    } kii_bool_t;
 
-/** represents bucket */
-typedef struct kii_bucket_t {
-    kii_scope_type_t scope;
-    char* scope_id;
-    char* bucket_name;
+    /** represents scope of bucket/ topic. */
+    typedef enum kii_scope_type_t
+    {
+        KII_SCOPE_APP,
+        KII_SCOPE_USER,
+        KII_SCOPE_GROUP,
+        KII_SCOPE_THING
+    } kii_scope_type_t;
+
+    /** represents bucket */
+    typedef struct kii_bucket_t
+    {
+        kii_scope_type_t scope;
+        char *scope_id;
+        char *bucket_name;
 } kii_bucket_t;
 
 /** represents topic */
@@ -177,7 +196,7 @@ int kii_init(
  *  \param [in] password the password of the thing given by vendor.
  *  \return 0:success, -1: failure
  */
-int kii_thing_authenticate(
+kii_code_t kii_thing_authenticate(
 		kii_t* kii,
 		const char* vendor_thing_id,
 		const char* password);
@@ -506,8 +525,6 @@ int kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userd
 int kii_set_mqtt_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
 int kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
 int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
-
-int _kii_set_content_length(kii_t* kii, size_t content_length);
 
 #ifdef __cplusplus
 }
