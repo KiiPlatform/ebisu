@@ -12,7 +12,7 @@ static khc_code _thing_authentication(
         )
 {
     // TODO: reimplement it.
-    khc_set_param(&kii->_khc, KHC_PARAM_HOST, &kii->_app_host);
+    khc_set_param(&kii->_khc, KHC_PARAM_HOST, kii->_app_host);
     // /api/apps/{appid}/oauth2/token
     char path[128];
     path[0] = '\0';
