@@ -5,50 +5,6 @@
 #include "kii.h"
 #include "kii_json_utils.h"
 
-#define KII_SDK_INFO "sn=te;sv=1.2.4"
-
-int kii_init(
-        kii_t* kii,
-        const char* site,
-        const char* app_id,
-        const char* app_key)
-{
-    memset(kii, 0x00, sizeof(kii_t));
-    kii->_app_id = (char*)app_id;
-    kii->_app_key = (char*)app_key;
-        if(strcmp(site, "CN") == 0)
-    {
-        kii->_app_host = "api-cn2.kii.com";
-    }
-    else if(strcmp(site, "CN3") == 0)
-    {
-        kii->_app_host = "api-cn3.kii.com";
-    }
-    else if(strcmp(site, "JP") == 0)
-    {
-        kii->_app_host = "api-jp.kii.com";
-    }
-    else if(strcmp(site, "US") == 0)
-    {
-        kii->_app_host = "api.kii.com";
-    }
-    else if(strcmp(site, "SG") == 0)
-    {
-        kii->_app_host = "api-sg.kii.com";
-    }
-    else if (strcmp(site, "EU") == 0)
-    {
-        kii->_app_host = "api-eu.kii.com";
-    }
-    else
-    {
-        /* Let's enable to set custom host */
-        kii->_app_host = (char*)site;
-    }
-    kii->_sdk_info = KII_SDK_INFO;
-    return 0;
-}
-
 static khc_code _thing_authentication(
         kii_t* kii,
         const char* vendor_thing_id,
@@ -56,6 +12,7 @@ static khc_code _thing_authentication(
         )
 {
     // TODO: reimplement it.
+    
     return KHC_ERR_FAIL;
 }
 
