@@ -28,6 +28,11 @@ size_t _cb_read_buff(char *buffer, size_t size, size_t count, void *userdata) {
   return to_read;
 }
 
+size_t _cb_write_header(char *buffer, size_t size, size_t count, void *userdata) {
+    // TODO: implement it later for getting Etag, etc.
+    return size * count;
+}
+
 int kii_init(
         kii_t* kii,
         const char* site,
@@ -68,8 +73,9 @@ int kii_init(
     }
     kii->_sdk_info = KII_SDK_INFO;
     khc_set_zero(&kii->_khc);
-    khc_set_cb_read(&kii->_khc, _cb_read_buff, kii->_rw_buff);
-    khc_set_cb_write(&kii->_khc, _cb_write_buff, kii->_rw_buff);
+    khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
+    khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
+    khc_set_cb_header(&kii->_khc, _cb_write_header, kii);
     return 0;
 }
 
