@@ -1,4 +1,5 @@
 #include "kii.h"
+#include <string.h>
 
 size_t _cb_write_buff(char *buffer, size_t size, size_t count, void *userdata) {
   kii_t* kii = (kii_t*)userdata;
