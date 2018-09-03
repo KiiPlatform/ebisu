@@ -20,19 +20,7 @@ static khc_code _thing_authentication(
     khc_set_path(&kii->_khc, kii->_rw_buff);
     khc_set_method(&kii->_khc, "POST");
 
-    khc_slist* headers = NULL;
-    int x_app_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "X-Kii-Appid: %s", kii->_app_id);
-    if (x_app_len >= kii->_rw_buff_size) {
-        return KHC_ERR_TOO_LARGE_DATA;
-    }
-    headers = khc_slist_append(headers, kii->_rw_buff, x_app_len);
-
-    char ct[] = "Content-Type: application/vnd.kii.OauthTokenRequest+json";
-    headers = khc_slist_append(headers, ct, strlen(ct));
-
-    char appkey[] = "X-Kii-Appkey: k";
-    headers = khc_slist_append(headers, appkey, strlen(appkey));
-
+    // Request body.
     char esc_vid[strlen(vendor_thing_id) * 2];
     char esc_pass[strlen(password) * 2];
     kii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid) * sizeof(char));
@@ -47,12 +35,26 @@ static khc_code _thing_authentication(
         return KHC_ERR_TOO_LARGE_DATA;
     }
 
+    // Request headers.
+    khc_slist* headers = NULL;
+    int x_app_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "X-Kii-Appid: %s", kii->_app_id);
+    if (x_app_len >= kii->_rw_buff_size) {
+        return KHC_ERR_TOO_LARGE_DATA;
+    }
+    headers = khc_slist_append(headers, kii->_rw_buff, x_app_len);
+
+    char ct[] = "Content-Type: application/vnd.kii.OauthTokenRequest+json";
+    headers = khc_slist_append(headers, ct, strlen(ct));
+
+    char appkey[] = "X-Kii-Appkey: k";
+    headers = khc_slist_append(headers, appkey, strlen(appkey));
     char cl_h[128];
     int cl_h_len = snprintf(cl_h, 128, "Content-Length: %d", content_len);
     if (cl_h_len >= 128) {
+        khc_slist_free_all(headers);
         return KHC_ERR_TOO_LARGE_DATA;
     }
-    headers =khc_slist_append(headers, cl_h, cl_h_len);
+    headers = khc_slist_append(headers, cl_h, cl_h_len);
     khc_set_req_headers(&kii->_khc, headers);
 
     _kii_set_content_length(kii, content_len);
