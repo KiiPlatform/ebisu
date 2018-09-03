@@ -12,6 +12,21 @@ static khc_code _thing_authentication(
         )
 {
     // TODO: reimplement it.
+    khc_set_param(&kii->_khc, KHC_PARAM_HOST, &kii->_app_host);
+    // /api/apps/{appid}/oauth2/token
+    char path[128];
+    path[0] = '\0';
+    snprintf(path, 128, "/api/apps/%s/oauth2/token", kii->_app_id);
+    khc_set_param(&kii->_khc, KHC_PARAM_PATH, path);
+    khc_set_param(&kii->_khc, KHC_PARAM_METHOD, "POST");
+    khc_slist* headers = NULL;
+    char cl[] = "Content-Type: application/vnd.kii.OauthTokenRequest+json";
+    char appid[128];
+    snprintf(appid, 128, "X-Kii-Appid: %s", kii->_app_id);
+    char appkey[] = "X-Kii-Appkey: k";
+    headers = khc_slist_append(headers, cl, strlen(cl));
+    headers = khc_slist_append(headers, appid, strlen(appid));
+    headers = khc_slist_append(headers, appkey, strlen(appkey));
     
     return KHC_ERR_FAIL;
 }
