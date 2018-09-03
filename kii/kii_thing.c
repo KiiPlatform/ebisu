@@ -36,7 +36,7 @@ static khc_code _thing_authentication(
     int content_len = snprintf(
         body,
         256,
-        "{\"username\":\"%s\", \"password\":\"%s\", \"grant_type\":\"password\"}",
+        "{\"username\":\"VENDOR_THING_ID:%s\", \"password\":\"%s\", \"grant_type\":\"password\"}",
         esc_vid, esc_pass);
     if (content_len >= 256) {
         // TODO: No proper error code.
