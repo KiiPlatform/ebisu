@@ -45,6 +45,7 @@ static khc_code _thing_authentication(
     char cl[128];
     snprintf(cl, 128, "Content-Length: %d", content_len);
     headers =khc_slist_append(headers, cl, strlen(cl));
+    khc_set_param(&kii->_khc, KHC_PARAM_REQ_HEADERS, headers);
 
     memcpy(kii->_rw_buff, body, content_len);
     kii->_rw_buff[content_len] = '\0';
