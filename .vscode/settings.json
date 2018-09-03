@@ -11,6 +11,8 @@
     "memory": "c",
     "tuple": "c",
     "utility": "c",
-    "functional": "c"
+    "functional": "c",
+    "ios": "cpp",
+    "random": "cpp"
   }
 }

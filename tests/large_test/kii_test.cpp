@@ -62,7 +62,10 @@ TEST_CASE("Thing auth")
 
     strcpy(kii._author.author_id, "");
     strcpy(kii._author.access_token, "");
-    ret = kii_thing_authenticate(&kii, "1426830900", "1234");
+
+    const char vid[] = "test1";
+    const char password[] = "1234";
+    ret = kii_thing_authenticate(&kii, vid, password);
 
     REQUIRE( ret == 0);
     REQUIRE( khc_get_status_code(&kii._khc) == 200 );
