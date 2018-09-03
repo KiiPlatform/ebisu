@@ -53,12 +53,13 @@ static void initBucket(kii_bucket_t* bucket)
 TEST_CASE("Thing auth")
 {
     int ret = -1;
-    char buffer[4096];
+    size_t buff_size = 4096;
+    char buff[buff_size];
     kii_t kii;
     khct::ssl::SSLData http_ssl_ctx;
     khct::ssl::SSLData mqtt_ssl_ctx;
 
-    init(&kii, buffer, 4096, &http_ssl_ctx, &mqtt_ssl_ctx);
+    init(&kii, buff, buff_size, &http_ssl_ctx, &mqtt_ssl_ctx);
 
     strcpy(kii._author.author_id, "");
     strcpy(kii._author.access_token, "");
