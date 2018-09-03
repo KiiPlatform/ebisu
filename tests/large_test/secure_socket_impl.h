@@ -4,7 +4,7 @@
 #include "khc_socket_callback.h"
 #include <openssl/ssl.h>
 
-namespace khct {
+namespace kiit {
 namespace ssl {
 
 struct SSLData

@@ -28,15 +28,15 @@ static void init(
 
     kii_set_buff(kii, buffer, buffer_size);
 
-    kii_set_http_cb_sock_connect(kii, khct::ssl::cb_connect, http_ssl_ctx);
-    kii_set_http_cb_sock_send(kii, khct::ssl::cb_send, http_ssl_ctx);
-    kii_set_http_cb_sock_recv(kii, khct::ssl::cb_recv, http_ssl_ctx);
-    kii_set_http_cb_sock_close(kii, khct::ssl::cb_close, http_ssl_ctx);
+    kii_set_http_cb_sock_connect(kii, kiit::ssl::cb_connect, http_ssl_ctx);
+    kii_set_http_cb_sock_send(kii, kiit::ssl::cb_send, http_ssl_ctx);
+    kii_set_http_cb_sock_recv(kii, kiit::ssl::cb_recv, http_ssl_ctx);
+    kii_set_http_cb_sock_close(kii, kiit::ssl::cb_close, http_ssl_ctx);
 
-    kii_set_mqtt_cb_sock_connect(kii, khct::ssl::cb_connect, mqtt_ssl_ctx);
-    kii_set_mqtt_cb_sock_send(kii, khct::ssl::cb_send, mqtt_ssl_ctx);
-    kii_set_mqtt_cb_sock_recv(kii, khct::ssl::cb_recv, mqtt_ssl_ctx);
-    kii_set_mqtt_cb_sock_close(kii, khct::ssl::cb_close, mqtt_ssl_ctx);
+    kii_set_mqtt_cb_sock_connect(kii, kiit::ssl::cb_connect, mqtt_ssl_ctx);
+    kii_set_mqtt_cb_sock_send(kii, kiit::ssl::cb_send, mqtt_ssl_ctx);
+    kii_set_mqtt_cb_sock_recv(kii, kiit::ssl::cb_recv, mqtt_ssl_ctx);
+    kii_set_mqtt_cb_sock_close(kii, kiit::ssl::cb_close, mqtt_ssl_ctx);
 
     strcpy(kii->_author.author_id, THING_ID);
     strcpy(kii->_author.access_token, ACCESS_TOKEN);
@@ -55,8 +55,8 @@ TEST_CASE("Thing auth")
     size_t buff_size = 4096;
     char buff[buff_size];
     kii_t kii;
-    khct::ssl::SSLData http_ssl_ctx;
-    khct::ssl::SSLData mqtt_ssl_ctx;
+    kiit::ssl::SSLData http_ssl_ctx;
+    kiit::ssl::SSLData mqtt_ssl_ctx;
 
     init(&kii, buff, buff_size, &http_ssl_ctx, &mqtt_ssl_ctx);
 
