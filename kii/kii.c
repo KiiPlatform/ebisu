@@ -86,3 +86,13 @@ int kii_api_call(
     // TODO: reimplement it. Equivalent to kii_core_api_call().
     return -1;
 }
+
+int kii_set_buff(kii_t* kii, char* buff, size_t buff_size) {
+    kii->_rw_buff = buff;
+    kii->_rw_buff_size = buff_size;
+    // TODO: review API. It requires \0 terminated request body is already set.
+    kii->_rw_buff_req_size = strlen(buff);
+    kii->_rw_buff_read = 0;
+    kii->_rw_buff_written = 0;
+    return 0;
+}

@@ -497,6 +497,8 @@ int kii_api_call(
     char *header,
     ...);
 
+int kii_set_buff(kii_t* kii, char* buff, size_t buff_size);
+
 #ifdef __cplusplus
 }
 #endif
