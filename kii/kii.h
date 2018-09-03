@@ -122,6 +122,11 @@ typedef struct kii_t {
 
     void* app_context;
 
+    char* _rw_buff;
+    size_t _rw_buff_size;
+    size_t _rw_buff_req_size;
+    size_t _rw_buff_read;
+    size_t _rw_buff_written;
     /** Resource used by KII JSON library.
      *
      * This field is optional. If KII_JSON_FIXED_TOKEN_NUM macro is
