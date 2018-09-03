@@ -13,7 +13,10 @@ static char BUCKET[] = "myBucket";
 static char TOPIC[] = "myTopic";
 static char BODY[] = "Stop the world!";
 static char CONTENT_TYPE[] = "text/plain";
-static char DEFAULT_SITE[] = "api-development-jp.internal.kii.com";
+static const char DEFAULT_SITE[] = "api-jp.kii.com";
+// APP Owner: satoshi.kumano@kii.com
+static const char APP_ID[] = "b6t9ai81zb3s";
+static const char APP_KEY[] = "dummy";
 
 static void init(
         kii_t* kii,
@@ -22,12 +25,7 @@ static void init(
         void* http_ssl_ctx,
         void* mqtt_ssl_ctx)
 {
-    char* site = getenv("TEST_SITE");
-    if (site == NULL) {
-        site = DEFAULT_SITE;
-    }
-    kii_init(kii, site,
-            "84fff36e", "e45fcc2d31d6aca675af639bc5f04a26");
+    kii_init(kii, DEFAULT_SITE, APP_ID, APP_KEY);
 
     kii_set_buff(kii, buffer, buffer_size);
 
