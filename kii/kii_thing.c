@@ -51,6 +51,7 @@ static khc_code _thing_authentication(
     _kii_set_content_length(kii, content_len);
 
     khc_code code = khc_perform(&kii->_khc);
+    khc_slist_free_all(headers);
 
     return code;
 }
