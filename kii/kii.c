@@ -6,6 +6,9 @@
 size_t _cb_write_buff(char *buffer, size_t size, size_t count, void *userdata)
 {
     kii_t *kii = (kii_t *)userdata;
+    if (kii->_rw_buff_written == 0) {
+        memset(kii->_rw_buff, '\0', kii->_rw_buff_size);
+    }
     size_t remain = kii->_rw_buff_size - kii->_rw_buff_written;
     size_t req_size = size * count;
     if (remain < req_size)
@@ -101,11 +104,14 @@ int kii_api_call(
 int kii_set_buff(kii_t* kii, char* buff, size_t buff_size) {
     kii->_rw_buff = buff;
     kii->_rw_buff_size = buff_size;
-    // TODO: review API. It requires \0 terminated request body is already set.
-    kii->_rw_buff_req_size = strlen(buff);
     kii->_rw_buff_read = 0;
     kii->_rw_buff_written = 0;
     khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
     khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
+    return 0;
+}
+
+int _kii_set_content_length(kii_t* kii, size_t content_length) {
+    kii->_rw_buff_req_size = content_length;
     return 0;
 }

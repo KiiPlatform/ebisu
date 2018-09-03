@@ -20,15 +20,39 @@ static khc_code _thing_authentication(
     khc_set_param(&kii->_khc, KHC_PARAM_PATH, path);
     khc_set_param(&kii->_khc, KHC_PARAM_METHOD, "POST");
     khc_slist* headers = NULL;
-    char cl[] = "Content-Type: application/vnd.kii.OauthTokenRequest+json";
+    char ct[] = "Content-Type: application/vnd.kii.OauthTokenRequest+json";
     char appid[128];
     snprintf(appid, 128, "X-Kii-Appid: %s", kii->_app_id);
     char appkey[] = "X-Kii-Appkey: k";
-    headers = khc_slist_append(headers, cl, strlen(cl));
+    headers = khc_slist_append(headers, ct, strlen(ct));
     headers = khc_slist_append(headers, appid, strlen(appid));
     headers = khc_slist_append(headers, appkey, strlen(appkey));
-    
-    return KHC_ERR_FAIL;
+
+    char esc_vid[strlen(vendor_thing_id) * 2];
+    char esc_pass[strlen(password) * 2];
+    kii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid) * sizeof(char));
+    kii_escape_str(password, esc_pass, sizeof(esc_vid) * sizeof(char));
+    char body[256];
+    int content_len = snprintf(
+        body,
+        256,
+        "{\"username\":\"%s\", \"password\":\"%s\", \"grant_type\":\"password\"}",
+        esc_vid, esc_pass);
+    if (content_len >= 256) {
+        // TODO: No proper error code.
+        return KHC_ERR_FAIL;
+    }
+    char cl[128];
+    snprintf(cl, 128, "Content-Length: %d", content_len);
+    headers =khc_slist_append(headers, cl, strlen(cl));
+
+    memcpy(kii->_rw_buff, body, content_len);
+    kii->_rw_buff[content_len] = '\0';
+    _kii_set_content_length(kii, content_len);
+
+    khc_code code = khc_perform(&kii->_khc);
+
+    return code;
 }
 
 static khc_code _register_thing_with_id(

@@ -499,6 +499,8 @@ int kii_api_call(
 
 int kii_set_buff(kii_t* kii, char* buff, size_t buff_size);
 
+int _kii_set_content_length(kii_t* kii, size_t content_length);
+
 #ifdef __cplusplus
 }
 #endif
