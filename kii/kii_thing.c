@@ -11,7 +11,6 @@ static khc_code _thing_authentication(
         const char* password
         )
 {
-    // TODO: reimplement it.
     khc_set_host(&kii->_khc, kii->_app_host);
     // /api/apps/{appid}/oauth2/token
     int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/api/apps/%s/oauth2/token", kii->_app_id);
