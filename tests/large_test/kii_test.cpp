@@ -60,8 +60,8 @@ TEST_CASE("Thing auth")
 
     init(&kii, buff, buff_size, &http_ssl_ctx, &mqtt_ssl_ctx);
 
-    strcpy(kii._author.author_id, "");
-    strcpy(kii._author.access_token, "");
+    kii._author.author_id[0] = '\0';
+    kii._author.access_token[0] = '\0';
 
     const char vid[] = "test1";
     const char password[] = "1234";
@@ -69,8 +69,8 @@ TEST_CASE("Thing auth")
 
     REQUIRE( ret == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&kii._khc) == 200 );
-    REQUIRE( std::string(kii._author.author_id) != "" );
-    REQUIRE( std::string(kii._author.access_token) != "" );
+    REQUIRE( std::string(kii._author.author_id).length() > 0 );
+    REQUIRE( std::string(kii._author.access_token).length() > 0 );
 }
 
 // TEST(kiiTest, register)
