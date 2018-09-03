@@ -14,18 +14,24 @@ static khc_code _thing_authentication(
     // TODO: reimplement it.
     khc_set_host(&kii->_khc, kii->_app_host);
     // /api/apps/{appid}/oauth2/token
-    char path[128];
-    path[0] = '\0';
-    snprintf(path, 128, "/api/apps/%s/oauth2/token", kii->_app_id);
-    khc_set_path(&kii->_khc, path);
+    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/api/apps/%s/oauth2/token", kii->_app_id);
+    if (path_len >= kii->_rw_buff_size) {
+        return KHC_ERR_TOO_LARGE_DATA;
+    }
+    khc_set_path(&kii->_khc, kii->_rw_buff);
     khc_set_method(&kii->_khc, "POST");
+
     khc_slist* headers = NULL;
+    int x_app_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "X-Kii-Appid: %s", kii->_app_id);
+    if (x_app_len >= kii->_rw_buff_size) {
+        return KHC_ERR_TOO_LARGE_DATA;
+    }
+    headers = khc_slist_append(headers, kii->_rw_buff, x_app_len);
+
     char ct[] = "Content-Type: application/vnd.kii.OauthTokenRequest+json";
-    char appid[128];
-    snprintf(appid, 128, "X-Kii-Appid: %s", kii->_app_id);
-    char appkey[] = "X-Kii-Appkey: k";
     headers = khc_slist_append(headers, ct, strlen(ct));
-    headers = khc_slist_append(headers, appid, strlen(appid));
+
+    char appkey[] = "X-Kii-Appkey: k";
     headers = khc_slist_append(headers, appkey, strlen(appkey));
 
     char esc_vid[strlen(vendor_thing_id) * 2];
@@ -39,12 +45,15 @@ static khc_code _thing_authentication(
         "{\"username\":\"VENDOR_THING_ID:%s\", \"password\":\"%s\", \"grant_type\":\"password\"}",
         esc_vid, esc_pass);
     if (content_len >= 256) {
-        // TODO: No proper error code.
-        return KHC_ERR_FAIL;
+        return KHC_ERR_TOO_LARGE_DATA;
     }
-    char cl[128];
-    snprintf(cl, 128, "Content-Length: %d", content_len);
-    headers =khc_slist_append(headers, cl, strlen(cl));
+
+    char cl_h[128];
+    int cl_h_len = snprintf(cl_h, 128, "Content-Length: %d", content_len);
+    if (cl_h_len >= 128) {
+        return KHC_ERR_TOO_LARGE_DATA;
+    }
+    headers =khc_slist_append(headers, cl_h, cl_h_len);
     khc_set_req_headers(&kii->_khc, headers);
 
     _kii_set_content_length(kii, content_len);
