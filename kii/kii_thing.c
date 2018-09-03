@@ -32,10 +32,10 @@ static khc_code _thing_authentication(
     char esc_pass[strlen(password) * 2];
     kii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid) * sizeof(char));
     kii_escape_str(password, esc_pass, sizeof(esc_vid) * sizeof(char));
-    char body[256];
+
     int content_len = snprintf(
-        body,
-        256,
+        kii->_rw_buff,
+        kii->_rw_buff_size,
         "{\"username\":\"VENDOR_THING_ID:%s\", \"password\":\"%s\", \"grant_type\":\"password\"}",
         esc_vid, esc_pass);
     if (content_len >= 256) {
@@ -47,8 +47,6 @@ static khc_code _thing_authentication(
     headers =khc_slist_append(headers, cl, strlen(cl));
     khc_set_param(&kii->_khc, KHC_PARAM_REQ_HEADERS, headers);
 
-    memcpy(kii->_rw_buff, body, content_len);
-    kii->_rw_buff[content_len] = '\0';
     _kii_set_content_length(kii, content_len);
 
     khc_code code = khc_perform(&kii->_khc);
