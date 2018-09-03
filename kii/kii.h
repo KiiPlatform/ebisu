@@ -88,10 +88,9 @@ typedef void (*KII_PUSH_RECEIVED_CB)(
 typedef struct kii_t {
     khc _khc;
 	kii_author_t _author;
-	char* _app_id;
-	char* _app_key;
-	char* _app_host;
-	char* _sdk_info;
+	char _app_id[128];
+	char _app_host[128];
+    char* _sdk_info;
     /** Socket context for MQTT client.
      *
      * If you want to use MQTT client, You must set this socket
@@ -163,14 +162,12 @@ typedef struct kii_t {
  *  \param [in] site the input of site name,
  *  should be one of "CN", "CN3", "JP", "US", "SG" or "EU"
  *  \param [in] app_id the input of Application ID
- *  \param [in] app_key the input of Application Key
  *  \return  0:success, -1: failure
  */
 int kii_init(
 		kii_t* kii,
 		const char* site,
-		const char* app_id,
-		const char* app_key);
+		const char* app_id);
 
 /** Authorize thing with vendor thing id and password.
  *  After the authentication, access token is used to call APIs access to

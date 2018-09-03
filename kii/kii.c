@@ -44,41 +44,37 @@ size_t _cb_write_header(char *buffer, size_t size, size_t count, void *userdata)
 int kii_init(
         kii_t* kii,
         const char* site,
-        const char* app_id,
-        const char* app_key)
+        const char* app_id)
 {
     memset(kii, 0x00, sizeof(kii_t));
-    kii->_app_id = (char*)app_id;
-    kii->_app_key = (char*)app_key;
-        if(strcmp(site, "CN") == 0)
+    strncpy(kii->_app_id, app_id, sizeof(kii->_app_id) * sizeof(char));
+    char* host;
+    if(strcmp(site, "CN3") == 0)
     {
-        kii->_app_host = "api-cn2.kii.com";
-    }
-    else if(strcmp(site, "CN3") == 0)
-    {
-        kii->_app_host = "api-cn3.kii.com";
+        host = "api-cn3.kii.com";
     }
     else if(strcmp(site, "JP") == 0)
     {
-        kii->_app_host = "api-jp.kii.com";
+        host = "api-jp.kii.com";
     }
     else if(strcmp(site, "US") == 0)
     {
-        kii->_app_host = "api.kii.com";
+        host = "api.kii.com";
     }
     else if(strcmp(site, "SG") == 0)
     {
-        kii->_app_host = "api-sg.kii.com";
+        host = "api-sg.kii.com";
     }
     else if (strcmp(site, "EU") == 0)
     {
-        kii->_app_host = "api-eu.kii.com";
+        host = "api-eu.kii.com";
     }
     else
     {
         /* Let's enable to set custom host */
-        kii->_app_host = (char*)site;
+        host = (char*)site;
     }
+    strncpy(kii->_app_host, host, sizeof(kii->_app_host) * sizeof(char));
     kii->_sdk_info = KII_SDK_INFO;
     khc_set_zero(&kii->_khc);
     khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
