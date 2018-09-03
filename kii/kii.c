@@ -94,5 +94,7 @@ int kii_set_buff(kii_t* kii, char* buff, size_t buff_size) {
     kii->_rw_buff_req_size = strlen(buff);
     kii->_rw_buff_read = 0;
     kii->_rw_buff_written = 0;
+    khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
+    khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
     return 0;
 }
