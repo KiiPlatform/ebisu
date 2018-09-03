@@ -21,21 +21,6 @@ static kii_code_t _thing_authentication(
     khc_set_path(&kii->_khc, kii->_rw_buff);
     khc_set_method(&kii->_khc, "POST");
 
-    // Request body.
-    char esc_vid[strlen(vendor_thing_id) * 2];
-    char esc_pass[strlen(password) * 2];
-    kii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid) * sizeof(char));
-    kii_escape_str(password, esc_pass, sizeof(esc_vid) * sizeof(char));
-
-    int content_len = snprintf(
-        kii->_rw_buff,
-        kii->_rw_buff_size,
-        "{\"username\":\"VENDOR_THING_ID:%s\", \"password\":\"%s\", \"grant_type\":\"password\"}",
-        esc_vid, esc_pass);
-    if (content_len >= 256) {
-        return KII_ERR_TOO_LARGE_DATA;
-    }
-
     // Request headers.
     khc_slist* headers = NULL;
     int x_app_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "X-Kii-Appid: %s", kii->_app_id);
@@ -49,6 +34,24 @@ static kii_code_t _thing_authentication(
 
     char appkey[] = "X-Kii-Appkey: k";
     headers = khc_slist_append(headers, appkey, strlen(appkey));
+
+    // Request body.
+    char esc_vid[strlen(vendor_thing_id) * 2];
+    char esc_pass[strlen(password) * 2];
+    kii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid) * sizeof(char));
+    kii_escape_str(password, esc_pass, sizeof(esc_vid) * sizeof(char));
+
+    int content_len = snprintf(
+        kii->_rw_buff,
+        kii->_rw_buff_size,
+        "{\"username\":\"VENDOR_THING_ID:%s\", \"password\":\"%s\", \"grant_type\":\"password\"}",
+        esc_vid, esc_pass);
+    if (content_len >= 256) {
+        khc_slist_free_all(headers);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+
+    // Content-Length.
     char cl_h[128];
     int cl_h_len = snprintf(cl_h, 128, "Content-Length: %d", content_len);
     if (cl_h_len >= 128) {
