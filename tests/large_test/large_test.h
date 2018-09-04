@@ -8,7 +8,7 @@ namespace kiiltest {
 
 const char DEFAULT_SITE[] = "api-jp.kii.com";
 // APP Owner: satoshi.kumano@kii.com
-static const char APP_ID[] = "b6t9ai81zb3s";
+const char APP_ID[] = "b6t9ai81zb3s";
 
 inline void init(
         kii_t* kii,
