@@ -83,6 +83,13 @@ int kii_init(
     return 0;
 }
 
+void _kii_reset_khc(kii_t* kii) {
+    khc_set_zero(&kii->_khc);
+    khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
+    khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
+    khc_set_cb_header(&kii->_khc, _cb_write_header, kii);
+}
+
 int kii_api_call(
     kii_t *kii,
     const char *http_method,
