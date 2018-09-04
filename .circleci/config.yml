@@ -1,18 +1,12 @@
 env: &env
     docker:
-      - image: circleci/node:latest
+      - image: satoshikumano/ubuntu-18.04-cpp:0.0.1
 version: 2
 jobs:
   build:
     <<: *env
     steps:
       - checkout
-      - run:
-          name: install packages
-          command: |
-            sudo apt-get update
-            sudo apt-get install doxygen
-            sudo apt-get install libssl-dev
       - run:
           name: submodule
           command: |
@@ -37,11 +31,6 @@ jobs:
     <<: *env
     steps:
       - checkout
-      - run:
-          name: install packages
-          command: |
-            sudo apt-get update
-            sudo apt-get install libssl-dev
       - run:
           name: submodule
           command: |
