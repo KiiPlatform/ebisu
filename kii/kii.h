@@ -77,8 +77,8 @@ extern "C" {
     typedef struct kii_bucket_t
     {
         kii_scope_type_t scope;
-        char *scope_id;
-        char *bucket_name;
+        const char *scope_id;
+        const char *bucket_name;
 } kii_bucket_t;
 
 /** represents topic */
