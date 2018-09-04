@@ -10,7 +10,7 @@
 
 TEST_CASE("Thing auth")
 {
-    int ret = -1;
+    kii_code_t ret = KII_ERR_FAIL;
     size_t buff_size = 4096;
     char buff[buff_size];
     kii_t kii;
@@ -23,33 +23,35 @@ TEST_CASE("Thing auth")
     const char password[] = "1234";
     ret = kii_thing_authenticate(&kii, vid, password);
 
-    REQUIRE( ret == KHC_ERR_OK );
+    REQUIRE( ret == KII_ERR_OK );
     REQUIRE( khc_get_status_code(&kii._khc) == 200 );
     REQUIRE( std::string(kii._author.author_id).length() > 0 );
     REQUIRE( std::string(kii._author.access_token).length() > 0 );
 }
 
-// TEST(kiiTest, register)
-// {
-//     int ret = -1;
-//     char buffer[4096];
-//     char vendorId[1024];
-//     kii_t kii;
+TEST_CASE("Thing register")
+{
+    kii_code_t ret = KII_ERR_FAIL;
+    size_t buff_size = 4096;
+    char buff[buff_size];
+    kii_t kii;
+    kiiltest::ssl::SSLData http_ssl_ctx;
+    kiiltest::ssl::SSLData mqtt_ssl_ctx;
 
-//     sprintf(vendorId, "%d", getpid());
+    kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &mqtt_ssl_ctx);
 
-//     init(&kii, buffer, 4096);
+    std::string vid_base("thing2-");
+    std::string id = std::to_string(kiiltest::current_time());
+    std::string vid = vid_base + id;
+    const char thing_type[] = "ltest-thing";
+    const char password[] = "1234";
+    ret = kii_thing_register(&kii, vid.c_str(), thing_type, password);
 
-//     strcpy(kii.kii_core.author.author_id, "");
-//     strcpy(kii.kii_core.author.access_token, "");
-//     kii.kii_core.response_code = 0;
-//     ret = kii_thing_register(&kii, vendorId, "my_type", "1234");
-
-//     ASSERT_EQ(0, ret);
-//     ASSERT_EQ(201, kii.kii_core.response_code);
-//     ASSERT_STRNE("", kii.kii_core.author.author_id);
-//     ASSERT_STRNE("", kii.kii_core.author.access_token);
-// }
+    REQUIRE( ret == KII_ERR_OK );
+    REQUIRE( khc_get_status_code(&kii._khc) == 201 );
+    REQUIRE( std::string(kii._author.author_id).length() > 0 );
+    REQUIRE( std::string(kii._author.access_token).length() > 0 );
+}
 
 // TEST(kiiTest, object)
 // {
