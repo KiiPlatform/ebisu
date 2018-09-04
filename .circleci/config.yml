@@ -40,7 +40,7 @@ jobs:
           name: large test
           command: MEMCHECK=1 JUNIT=1 make large-test
       - store_test_results:
-          path: tests/large-test/test-results
+          path: tests/large_test/test-results
 
   deployment:
     <<: *env
