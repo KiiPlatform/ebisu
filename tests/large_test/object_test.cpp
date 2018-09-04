@@ -27,6 +27,7 @@ TEST_CASE("App Scope Object POST")
     REQUIRE( std::string(kii._author.author_id).length() > 0 );
     REQUIRE( std::string(kii._author.access_token).length() > 0 );
 
+    kii_set_buff(&kii, buff, buff_size);
     kii_bucket_t bucket;
     bucket.bucket_name = "my_bucket";
     bucket.scope = KII_SCOPE_APP;
