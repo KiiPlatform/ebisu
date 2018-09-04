@@ -4,15 +4,122 @@
 
 #include "kii.h"
 #include "kii_json_utils.h"
+#include "kii_impl.h"
 
-static khc_code _create_new_object(
+static kii_code_t _make_bucket_path(
+    kii_t* kii,
+    const kii_bucket_t* bucket,
+    const char* objects,
+    const char* object_id,
+    int* path_len) {
+    char *scope_strs[] = { "", "users", "groups", "things" };
+    switch(bucket->scope) {
+        case KII_SCOPE_APP:
+            *path_len = snprintf(
+                kii->_rw_buff,
+                kii->_rw_buff_size,
+                "/api/apps/%s/buckets/%s%s%s",
+                kii->_app_id,
+                bucket->bucket_name,
+                objects,
+                object_id);
+            break;
+        case KII_SCOPE_USER:
+        case KII_SCOPE_GROUP:
+        case KII_SCOPE_THING:
+            *path_len = snprintf(
+                kii->_rw_buff,
+                kii->_rw_buff_size,
+                "/api/apps/%s/%s/%s/buckets/%s%s%s",
+                kii->_app_id,
+                scope_strs[bucket->scope],
+                bucket->scope_id,
+                bucket->bucket_name,
+                objects,
+                object_id);
+            break;
+        default:
+            return KII_ERR_FAIL;
+    }
+    if (*path_len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    } else {
+        return KII_ERR_OK;
+    }
+}
+
+static kii_code_t _make_object_content_type(
+    kii_t* kii,
+    const char* object_content_type,
+    int* header_len)
+{
+    char ct_key[] = "Content-Type: ";
+    char *ct_value = "application/json";
+    if (object_content_type != NULL && strlen(object_content_type) > 0) {
+        ct_value = (char*)object_content_type;
+    }
+    *header_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "%s%s", ct_key, ct_value);
+    if (*header_len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    return KII_ERR_OK;
+}
+
+static kii_code_t _create_new_object(
             kii_t* kii,
             const kii_bucket_t* bucket,
             const char* object_data,
             const char* object_content_type)
 {
-    // TODO: reimplement it.
-    return KHC_ERR_FAIL;
+    khc_set_host(&kii->_khc, kii->_app_host);
+    int path_len = 0;
+    kii_code_t ret = _make_bucket_path(kii,bucket, "/objects", "", &path_len);
+    if (ret != KII_ERR_OK) {
+        return ret;
+    }
+    khc_set_path(&kii->_khc, kii->_rw_buff);
+    khc_set_method(&kii->_khc, "POST");
+
+    // Request headers.
+    khc_slist* headers = NULL;
+    int x_app_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "X-Kii-Appid: %s", kii->_app_id);
+    if (x_app_len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    headers = khc_slist_append(headers, kii->_rw_buff, x_app_len);
+    headers = khc_slist_append(headers, _APP_KEY_HEADER, strlen(_APP_KEY_HEADER));
+
+    int header_len = 0;
+    ret = _make_object_content_type(kii, object_content_type, &header_len);
+    if (ret != KII_ERR_OK) {
+        khc_slist_free_all(headers);
+        return ret;
+    }
+    headers = khc_slist_append(headers, kii->_rw_buff, header_len);
+
+    // Request body
+    size_t content_len = strlen(object_data);
+    if (content_len + 1 > kii->_rw_buff_size) {
+        khc_slist_free_all(headers);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    strncpy(kii->_rw_buff, object_data, kii->_rw_buff_size);
+
+    // Content-Length.
+    char cl_h[128];
+    int cl_h_len = snprintf(cl_h, 128, "Content-Length: %lld", (long long)content_len);
+    if (cl_h_len >= 128) {
+        khc_slist_free_all(headers);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    headers = khc_slist_append(headers, cl_h, cl_h_len);
+    khc_set_req_headers(&kii->_khc, headers);
+    _kii_set_content_length(kii, content_len);
+
+    khc_code code = khc_perform(&kii->_khc);
+    khc_slist_free_all(headers);
+
+    return _convert_code(code);
 }
 
 static khc_code _create_new_object_with_id(
@@ -74,25 +181,25 @@ int kii_object_create(
         const char* object_content_type,
         char* out_object_id)
 {
-    int ret = -1;
-    khc_code khc_err = _create_new_object(
+    kii_code_t ret = _create_new_object(
             kii,
             bucket,
             object_data,
             object_content_type);
-    if (khc_err != KHC_ERR_OK) {
+    if (ret != KII_ERR_OK) {
         goto exit;
     }
 
     int resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
+        ret = KII_ERR_RESP_STATUS;
         goto exit;
     }
 
-    // TODO: get buffer and its length.
-    char* buff = NULL;
-    size_t buff_size = 0;
+    char* buff = kii->_rw_buff;
+    size_t buff_size = kii->_rw_buff_size;
     if (buff == NULL) {
+        ret = KII_ERR_FAIL;
         goto exit;
     }
 
@@ -107,10 +214,11 @@ int kii_object_create(
 
     result = prv_kii_json_read_object(kii, buff, buff_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
+        ret = KII_ERR_PARSE_JSON;
         goto exit;
     }
 
-    ret = 0;
+    ret = KII_ERR_OK;
 
 exit:
     return ret;
