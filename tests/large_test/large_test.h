@@ -1,6 +1,7 @@
 #ifndef __large_test__
 #define __large_test__
 
+#include <chrono>
 #include "kii.h"
 #include "secure_socket_impl.h"
 
@@ -33,6 +34,11 @@ inline void init(
 
     kii->_author.author_id[0] = '\0';
     kii->_author.access_token[0] = '\0';
+}
+
+inline long long current_time() {
+    auto now = std::chrono::system_clock::now();
+    return now.time_since_epoch().count() / 1000;
 }
 
 } // namespace kiiltest

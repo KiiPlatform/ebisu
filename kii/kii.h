@@ -208,9 +208,9 @@ kii_code_t kii_thing_authenticate(
  *  \param [in] vendor_thing_id the thing identifier given by vendor.
  *  \param [in] thing_type the type of the thing given by vendor.
  *  \param [in] password - the password of the thing given by vendor.
- *  \return 0:success, -1: failure
+ *  \return kii_code_t.
  */
-int kii_thing_register(
+kii_code_t kii_thing_register(
 		kii_t* kii,
 		const char* vendor_thing_id,
 		const char* thing_type,

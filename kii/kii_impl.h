@@ -8,8 +8,6 @@ int _kii_set_content_length(kii_t* kii, size_t content_length);
 
 kii_code_t _convert_code(khc_code khc_c);
 
-void _kii_reset_khc(kii_t* kii);
-
 const char _APP_KEY_HEADER[] = "X-Kii-Appkey: k";
 
 #endif

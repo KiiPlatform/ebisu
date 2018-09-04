@@ -12,7 +12,6 @@ static kii_code_t _thing_authentication(
         const char* password
         )
 {
-    _kii_reset_khc(kii);
     khc_set_host(&kii->_khc, kii->_app_host);
     // /api/apps/{appid}/oauth2/token
     int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/api/apps/%s/oauth2/token", kii->_app_id);
@@ -75,7 +74,6 @@ static kii_code_t _register_thing_with_id(
         const char* password,
         const char* thing_type)
 {
-    _kii_reset_khc(kii);
     khc_set_host(&kii->_khc, kii->_app_host);
     int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/api/apps/%s/things", kii->_app_id);
     if (path_len >= kii->_rw_buff_size) {
@@ -182,7 +180,7 @@ exit:
     return ret;
 }
 
-int kii_thing_register(
+kii_code_t kii_thing_register(
         kii_t* kii,
         const char* vendor_thing_id,
         const char* thing_type,
@@ -227,10 +225,10 @@ int kii_thing_register(
 
     result = prv_kii_json_read_object(kii, buff, buff_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
-        ret = -1;
+        ret = KII_ERR_PARSE_JSON;
         goto exit;
     }
-    ret = 0;
+    ret = KII_ERR_OK;
 
 exit:
     return ret;
