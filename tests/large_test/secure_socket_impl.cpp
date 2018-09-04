@@ -19,7 +19,7 @@
 #endif
 
 khc_sock_code_t
-    kiit::ssl::cb_connect(void* sock_ctx, const char* host,
+    kiiltest::ssl::cb_connect(void* sock_ctx, const char* host,
             unsigned int port)
 {
     int sock, ret;
@@ -86,7 +86,7 @@ khc_sock_code_t
         return KHC_SOCK_FAIL;
     }
 
-    kiit::ssl::SSLData* ctx = (kiit::ssl::SSLData*)sock_ctx;
+    kiiltest::ssl::SSLData* ctx = (kiiltest::ssl::SSLData*)sock_ctx;
     ctx->socket = sock;
     ctx->ssl = ssl;
     ctx->ssl_ctx = ssl_ctx;
@@ -94,11 +94,11 @@ khc_sock_code_t
 }
 
 khc_sock_code_t
-    kiit::ssl::cb_send(void* socket_context,
+    kiiltest::ssl::cb_send(void* socket_context,
             const char* buffer,
             size_t length)
 {
-    kiit::ssl::SSLData* ctx = (kiit::ssl::SSLData*)socket_context;
+    kiiltest::ssl::SSLData* ctx = (kiiltest::ssl::SSLData*)socket_context;
     int ret = SSL_write(ctx->ssl, buffer, length);
     if (ret > 0) {
         return KHC_SOCK_OK;
@@ -109,12 +109,12 @@ khc_sock_code_t
 }
 
 khc_sock_code_t
-    kiit::ssl::cb_recv(void* socket_context,
+    kiiltest::ssl::cb_recv(void* socket_context,
             char* buffer,
             size_t length_to_read,
             size_t* out_actual_length)
 {
-    kiit::ssl::SSLData* ctx = (kiit::ssl::SSLData*)socket_context;
+    kiiltest::ssl::SSLData* ctx = (kiiltest::ssl::SSLData*)socket_context;
     int ret = SSL_read(ctx->ssl, buffer, length_to_read);
     if (ret > 0) {
         *out_actual_length = ret;
@@ -128,9 +128,9 @@ khc_sock_code_t
 }
 
 khc_sock_code_t
-    kiit::ssl::cb_close(void* socket_context)
+    kiiltest::ssl::cb_close(void* socket_context)
 {
-    kiit::ssl::SSLData* ctx = (kiit::ssl::SSLData*)socket_context;
+    kiiltest::ssl::SSLData* ctx = (kiiltest::ssl::SSLData*)socket_context;
     int ret = SSL_shutdown(ctx->ssl);
     if (ret != 1) {
         int sslErr = SSL_get_error(ctx->ssl, ret);

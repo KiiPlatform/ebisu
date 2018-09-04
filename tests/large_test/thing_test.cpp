@@ -6,48 +6,7 @@
 #include <kii_json.h>
 #include "secure_socket_impl.h"
 #include "catch.hpp"
-
-static char THING_ID[] = "th.53ae324be5a0-26f8-4e11-a13c-03da6fb2";
-static char ACCESS_TOKEN[] = "ablTGrnsE20rSRBFKPnJkWyTaeqQ50msqUizvR_61hU";
-static char BUCKET[] = "myBucket";
-static char TOPIC[] = "myTopic";
-static char BODY[] = "Stop the world!";
-static char CONTENT_TYPE[] = "text/plain";
-static const char DEFAULT_SITE[] = "api-jp.kii.com";
-// APP Owner: satoshi.kumano@kii.com
-static const char APP_ID[] = "b6t9ai81zb3s";
-
-static void init(
-        kii_t* kii,
-        char* buffer,
-        int buffer_size,
-        void* http_ssl_ctx,
-        void* mqtt_ssl_ctx)
-{
-    kii_init(kii, DEFAULT_SITE, APP_ID);
-
-    kii_set_buff(kii, buffer, buffer_size);
-
-    kii_set_http_cb_sock_connect(kii, kiit::ssl::cb_connect, http_ssl_ctx);
-    kii_set_http_cb_sock_send(kii, kiit::ssl::cb_send, http_ssl_ctx);
-    kii_set_http_cb_sock_recv(kii, kiit::ssl::cb_recv, http_ssl_ctx);
-    kii_set_http_cb_sock_close(kii, kiit::ssl::cb_close, http_ssl_ctx);
-
-    kii_set_mqtt_cb_sock_connect(kii, kiit::ssl::cb_connect, mqtt_ssl_ctx);
-    kii_set_mqtt_cb_sock_send(kii, kiit::ssl::cb_send, mqtt_ssl_ctx);
-    kii_set_mqtt_cb_sock_recv(kii, kiit::ssl::cb_recv, mqtt_ssl_ctx);
-    kii_set_mqtt_cb_sock_close(kii, kiit::ssl::cb_close, mqtt_ssl_ctx);
-
-    strcpy(kii->_author.author_id, THING_ID);
-    strcpy(kii->_author.access_token, ACCESS_TOKEN);
-}
-
-static void initBucket(kii_bucket_t* bucket)
-{
-    bucket->scope = KII_SCOPE_THING;
-    bucket->scope_id = THING_ID;
-    bucket->bucket_name = BUCKET;
-}
+#include "large_test.h"
 
 TEST_CASE("Thing auth")
 {
@@ -55,13 +14,10 @@ TEST_CASE("Thing auth")
     size_t buff_size = 4096;
     char buff[buff_size];
     kii_t kii;
-    kiit::ssl::SSLData http_ssl_ctx;
-    kiit::ssl::SSLData mqtt_ssl_ctx;
+    kiiltest::ssl::SSLData http_ssl_ctx;
+    kiiltest::ssl::SSLData mqtt_ssl_ctx;
 
-    init(&kii, buff, buff_size, &http_ssl_ctx, &mqtt_ssl_ctx);
-
-    kii._author.author_id[0] = '\0';
-    kii._author.access_token[0] = '\0';
+    kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &mqtt_ssl_ctx);
 
     const char vid[] = "test1";
     const char password[] = "1234";
