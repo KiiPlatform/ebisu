@@ -331,13 +331,13 @@ static int kiiPush_receivePushNotification(
     M_KII_LOG(kii->kii_core.logger_cb("readPointer: %d\r\n", kii->mqtt_buffer + bytes));
 
     rcvdCounter = 0;
-    kii->mqtt_socket_recv_cb(&kii->mqtt_socket_context, kii->mqtt_buffer, 2, &rcvdCounter);
+    kii->mqtt_sock_recv_cb(&kii->mqtt_sock_recv_ctx, kii->mqtt_buffer, 2, &rcvdCounter);
     if(rcvdCounter == 2)
     {
         if((kii->mqtt_buffer[0] & 0xf0) == 0x30)
         {
             rcvdCounter = 0;
-            kii->mqtt_socket_recv_cb(&kii->mqtt_socket_context, kii->mqtt_buffer+2, KII_PUSH_TOPIC_HEADER_SIZE, &rcvdCounter);
+            kii->mqtt_sock_recv_cb(&kii->mqtt_sock_recv_ctx, kii->mqtt_buffer+2, KII_PUSH_TOPIC_HEADER_SIZE, &rcvdCounter);
             if(rcvdCounter == KII_PUSH_TOPIC_HEADER_SIZE)
             {
                 byteLen = kiiMQTT_decode(&kii->mqtt_buffer[1], &remainingLen);
@@ -372,7 +372,7 @@ static int kiiPush_receivePushNotification(
                 M_KII_LOG(kii->kii_core.logger_cb("readPointer: %d\r\n", kii->mqtt_buffer + bytes));
                 /*kii->socket_recv_cb(&(kii->socket_context), kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);*/
                 rcvdCounter = 0;
-                kii->mqtt_socket_recv_cb(&(kii->mqtt_socket_context), kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);
+                kii->mqtt_sock_recv_cb(&(kii->mqtt_sock_recv_ctx), kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);
                 M_KII_LOG(kii->kii_core.logger_cb("totalLen: %d, bytes: %d\r\n", totalLen, bytes));
                 if(rcvdCounter > 0)
                 {

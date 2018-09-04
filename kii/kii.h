@@ -41,25 +41,44 @@ extern "C" {
 #define KII_TASK_NAME_PING_REQ "ping_req_task"
 #endif
 
-/** bool type definition */
-typedef enum kii_bool_t {
-    KII_FALSE = 0,
-    KII_TRUE
-} kii_bool_t;
+    typedef enum kii_code_t
+    {
+        KII_ERR_OK,
+        KII_ERR_SOCK_CONNECT,
+        KII_ERR_SOCK_CLOSE,
+        KII_ERR_SOCK_SEND,
+        KII_ERR_SOCK_RECV,
+        KII_ERR_HEADER_CALLBACK,
+        KII_ERR_WRITE_CALLBACK,
+        KII_ERR_ALLOCATION,
+        KII_ERR_TOO_LARGE_DATA,
+        KII_ERR_RESP_STATUS,
+        KII_ERR_PARSE_JSON,
+        KII_ERR_FAIL
+    } kii_code_t;
 
-/** represents scope of bucket/ topic. */
-typedef enum kii_scope_type_t {
-    KII_SCOPE_APP,
-    KII_SCOPE_USER,
-    KII_SCOPE_GROUP,
-    KII_SCOPE_THING
-} kii_scope_type_t;
+    /** bool type definition */
+    typedef enum kii_bool_t
+    {
+        KII_FALSE = 0,
+        KII_TRUE
+    } kii_bool_t;
 
-/** represents bucket */
-typedef struct kii_bucket_t {
-    kii_scope_type_t scope;
-    char* scope_id;
-    char* bucket_name;
+    /** represents scope of bucket/ topic. */
+    typedef enum kii_scope_type_t
+    {
+        KII_SCOPE_APP,
+        KII_SCOPE_USER,
+        KII_SCOPE_GROUP,
+        KII_SCOPE_THING
+    } kii_scope_type_t;
+
+    /** represents bucket */
+    typedef struct kii_bucket_t
+    {
+        kii_scope_type_t scope;
+        char *scope_id;
+        char *bucket_name;
 } kii_bucket_t;
 
 /** represents topic */
@@ -88,10 +107,9 @@ typedef void (*KII_PUSH_RECEIVED_CB)(
 typedef struct kii_t {
     khc _khc;
 	kii_author_t _author;
-	char* _app_id;
-	char* _app_key;
-	char* _app_host;
-	char* _sdk_info;
+	char _app_id[128];
+	char _app_host[128];
+    char* _sdk_info;
     /** Socket context for MQTT client.
      *
      * If you want to use MQTT client, You must set this socket
@@ -103,11 +121,14 @@ typedef struct kii_t {
      * too short, MQTT client often disconnect connection to a MQTT
      * server. We recommend 30 seconds or upper.
      */
-    void* mqtt_socket_context;
-    KHC_CB_SOCK_CONNECT mqtt_socket_connect_cb;
-    KHC_CB_SOCK_SEND mqtt_socket_send_cb;
-    KHC_CB_SOCK_RECV mqtt_socket_recv_cb;
-    KHC_CB_SOCK_CLOSE mqtt_socket_close_cb;
+    void* mqtt_sock_connect_ctx;
+    void* mqtt_sock_send_ctx;
+    void* mqtt_sock_recv_ctx;
+    void* mqtt_sock_close_ctx;
+    KHC_CB_SOCK_CONNECT mqtt_sock_connect_cb;
+    KHC_CB_SOCK_SEND mqtt_sock_send_cb;
+    KHC_CB_SOCK_RECV mqtt_sock_recv_cb;
+    KHC_CB_SOCK_CLOSE mqtt_sock_close_cb;
 
     KII_TASK_CREATE task_create_cb;
 
@@ -119,8 +140,6 @@ typedef struct kii_t {
 
     char* mqtt_buffer;
     size_t mqtt_buffer_size;
-
-    void* app_context;
 
     char* _rw_buff;
     size_t _rw_buff_size;
@@ -162,14 +181,12 @@ typedef struct kii_t {
  *  \param [in] site the input of site name,
  *  should be one of "CN", "CN3", "JP", "US", "SG" or "EU"
  *  \param [in] app_id the input of Application ID
- *  \param [in] app_key the input of Application Key
  *  \return  0:success, -1: failure
  */
 int kii_init(
 		kii_t* kii,
 		const char* site,
-		const char* app_id,
-		const char* app_key);
+		const char* app_id);
 
 /** Authorize thing with vendor thing id and password.
  *  After the authentication, access token is used to call APIs access to
@@ -179,7 +196,7 @@ int kii_init(
  *  \param [in] password the password of the thing given by vendor.
  *  \return 0:success, -1: failure
  */
-int kii_thing_authenticate(
+kii_code_t kii_thing_authenticate(
 		kii_t* kii,
 		const char* vendor_thing_id,
 		const char* password);
@@ -496,6 +513,18 @@ int kii_api_call(
     const char *content_type,
     char *header,
     ...);
+
+int kii_set_buff(kii_t* kii, char* buff, size_t buff_size);
+
+int kii_set_http_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
+int kii_set_http_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
+int kii_set_http_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
+int kii_set_http_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+
+int kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
+int kii_set_mqtt_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
+int kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
+int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
 
 #ifdef __cplusplus
 }

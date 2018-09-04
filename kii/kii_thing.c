@@ -3,60 +3,70 @@
 #include <stdlib.h>
 
 #include "kii.h"
+#include "kii_impl.h"
 #include "kii_json_utils.h"
 
-#define KII_SDK_INFO "sn=te;sv=1.2.4"
-
-int kii_init(
-        kii_t* kii,
-        const char* site,
-        const char* app_id,
-        const char* app_key)
-{
-    memset(kii, 0x00, sizeof(kii_t));
-    kii->_app_id = (char*)app_id;
-    kii->_app_key = (char*)app_key;
-        if(strcmp(site, "CN") == 0)
-    {
-        kii->_app_host = "api-cn2.kii.com";
-    }
-    else if(strcmp(site, "CN3") == 0)
-    {
-        kii->_app_host = "api-cn3.kii.com";
-    }
-    else if(strcmp(site, "JP") == 0)
-    {
-        kii->_app_host = "api-jp.kii.com";
-    }
-    else if(strcmp(site, "US") == 0)
-    {
-        kii->_app_host = "api.kii.com";
-    }
-    else if(strcmp(site, "SG") == 0)
-    {
-        kii->_app_host = "api-sg.kii.com";
-    }
-    else if (strcmp(site, "EU") == 0)
-    {
-        kii->_app_host = "api-eu.kii.com";
-    }
-    else
-    {
-        /* Let's enable to set custom host */
-        kii->_app_host = (char*)site;
-    }
-    kii->_sdk_info = KII_SDK_INFO;
-    return 0;
-}
-
-static khc_code _thing_authentication(
+static kii_code_t _thing_authentication(
         kii_t* kii,
         const char* vendor_thing_id,
         const char* password
         )
 {
-    // TODO: reimplement it.
-    return KHC_ERR_FAIL;
+    khc_set_host(&kii->_khc, kii->_app_host);
+    // /api/apps/{appid}/oauth2/token
+    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/api/apps/%s/oauth2/token", kii->_app_id);
+    if (path_len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    khc_set_path(&kii->_khc, kii->_rw_buff);
+    khc_set_method(&kii->_khc, "POST");
+
+    // Request headers.
+    khc_slist* headers = NULL;
+    int x_app_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "X-Kii-Appid: %s", kii->_app_id);
+    if (x_app_len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    headers = khc_slist_append(headers, kii->_rw_buff, x_app_len);
+
+    char ct[] = "Content-Type: application/vnd.kii.OauthTokenRequest+json";
+    headers = khc_slist_append(headers, ct, strlen(ct));
+
+    char appkey[] = "X-Kii-Appkey: k";
+    headers = khc_slist_append(headers, appkey, strlen(appkey));
+
+    // Request body.
+    char esc_vid[strlen(vendor_thing_id) * 2];
+    char esc_pass[strlen(password) * 2];
+    kii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid) * sizeof(char));
+    kii_escape_str(password, esc_pass, sizeof(esc_vid) * sizeof(char));
+
+    int content_len = snprintf(
+        kii->_rw_buff,
+        kii->_rw_buff_size,
+        "{\"username\":\"VENDOR_THING_ID:%s\", \"password\":\"%s\", \"grant_type\":\"password\"}",
+        esc_vid, esc_pass);
+    if (content_len >= 256) {
+        khc_slist_free_all(headers);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+
+    // Content-Length.
+    char cl_h[128];
+    int cl_h_len = snprintf(cl_h, 128, "Content-Length: %d", content_len);
+    if (cl_h_len >= 128) {
+        khc_slist_free_all(headers);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    headers = khc_slist_append(headers, cl_h, cl_h_len);
+    khc_set_req_headers(&kii->_khc, headers);
+
+    _kii_set_content_length(kii, content_len);
+
+    khc_code code = khc_perform(&kii->_khc);
+    khc_slist_free_all(headers);
+
+    return _convert_code(code);
 }
 
 static khc_code _register_thing_with_id(
@@ -69,27 +79,28 @@ static khc_code _register_thing_with_id(
     return KHC_ERR_FAIL;
 }
 
-int kii_thing_authenticate(
+kii_code_t kii_thing_authenticate(
         kii_t* kii,
         const char* vendor_thing_id,
         const char* password)
 {
-    int ret = -1;
+    kii_code_t ret = KII_ERR_FAIL;
 
-    khc_code khc_err = _thing_authentication(kii, vendor_thing_id, password);
-    if (khc_err != KHC_ERR_OK) {
+    ret = _thing_authentication(kii, vendor_thing_id, password);
+    if (ret != KII_ERR_OK) {
         goto exit;
     }
 
     int resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
+        ret = KII_ERR_RESP_STATUS;
         goto exit;
     }
 
-    // TODO: get buffer and its length.
-    char* buff = NULL;
-    size_t buff_size = 0;
+    char* buff = kii->_rw_buff;
+    size_t buff_size = kii->_rw_buff_size;
     if (buff == NULL) {
+        ret = KII_ERR_FAIL;
         goto exit;
     }
     kii_json_field_t fields[3];
@@ -109,11 +120,11 @@ int kii_thing_authenticate(
 
     result = prv_kii_json_read_object(kii, buff, buff_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
-        ret = -1;
+        ret = KII_ERR_PARSE_JSON;
         goto exit;
     }
 
-    ret = 0;
+    ret = KII_ERR_OK;
 
 exit:
     return ret;
