@@ -1,9 +1,5 @@
-override CFLAGS += -Wall -pthread
 CXXFLAGS = -Wall -std=c++11
-ifdef DEBUG
-CFLAGS += -g -DDEBUG
 CXXFLAGS += -g -DDEBUG
-endif
 
 LIBS = -lssl -lcrypto -lpthread -lkiisdk
 LD_FLAGS = -L. -L/usr/local/opt/openssl/lib
@@ -24,9 +20,6 @@ $(TARGET): $(KIISDK) $(OBJS)
 
 test: $(TARGET)
 	LD_LIBRARY_PATH=. ./$(TARGET)
-
-.c.o:
-	gcc $(CFLAGS) $(INCLUDES) -c $<
 
 .cpp.o:
 	g++ $(CXXFLAGS) $(INCLUDES) -c $<
