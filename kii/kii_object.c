@@ -227,6 +227,7 @@ kii_code_t kii_object_post(
     ret = KII_ERR_OK;
 
 exit:
+    _reset_rw_buff(kii);
     return ret;
 }
 

@@ -177,6 +177,7 @@ kii_code_t kii_thing_authenticate(
     ret = KII_ERR_OK;
 
 exit:
+    _reset_rw_buff(kii);
     return ret;
 }
 
@@ -231,6 +232,7 @@ kii_code_t kii_thing_register(
     ret = KII_ERR_OK;
 
 exit:
+    _reset_rw_buff(kii);
     return ret;
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
