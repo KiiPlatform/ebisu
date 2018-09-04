@@ -32,8 +32,7 @@ static kii_code_t _thing_authentication(
     char ct[] = "Content-Type: application/vnd.kii.OauthTokenRequest+json";
     headers = khc_slist_append(headers, ct, strlen(ct));
 
-    char appkey[] = "X-Kii-Appkey: k";
-    headers = khc_slist_append(headers, appkey, strlen(appkey));
+    headers = khc_slist_append(headers, _APP_KEY_HEADER, strlen(_APP_KEY_HEADER));
 
     // Request body.
     char esc_vid[strlen(vendor_thing_id) * 2];
