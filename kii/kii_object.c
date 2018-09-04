@@ -65,7 +65,7 @@ static kii_code_t _make_object_content_type(
     return KII_ERR_OK;
 }
 
-static kii_code_t _create_new_object(
+static kii_code_t _kii_object_post(
             kii_t* kii,
             const kii_bucket_t* bucket,
             const char* object_data,
@@ -174,14 +174,14 @@ static khc_code _get_object(
     return KHC_ERR_FAIL;
 }
 
-int kii_object_create(
+kii_code_t kii_object_post(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_data,
         const char* object_content_type,
         char* out_object_id)
 {
-    kii_code_t ret = _create_new_object(
+    kii_code_t ret = _kii_object_post(
             kii,
             bucket,
             object_data,
