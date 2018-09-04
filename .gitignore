@@ -12,3 +12,4 @@ unit_test/kii_json/kii_json_test
 libkiisdk.so
 libkiisocketclient.so
 libgtest.a
+*.dsym

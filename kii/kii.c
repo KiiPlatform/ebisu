@@ -179,4 +179,5 @@ kii_code_t _convert_code(khc_code khc_c) {
         case KHC_ERR_FAIL:
             return KII_ERR_FAIL;
     }
+    return KII_ERR_FAIL;
 }

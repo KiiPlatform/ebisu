@@ -1,18 +1,12 @@
 env: &env
     docker:
-      - image: circleci/node:latest
+      - image: satoshikumano/ubuntu-18.04-cpp:0.0.1
 version: 2
 jobs:
   build:
     <<: *env
     steps:
       - checkout
-      - run:
-          name: install packages
-          command: |
-            sudo apt-get update
-            sudo apt-get install doxygen
-            sudo apt-get install libssl-dev
       - run:
           name: submodule
           command: |
@@ -33,34 +27,21 @@ jobs:
       - persist_to_workspace:
           root: .
           paths: kii/html
-  test:
+  ltest:
     <<: *env
     steps:
       - checkout
-      - run:
-          name: install packages
-          command: |
-            sudo apt-get update
-            sudo apt-get install libssl-dev
       - run:
           name: submodule
           command: |
             git submodule init
             git submodule update
       - run:
-          name: small test
-          command: make small-test
-      - store_artifacts:
-          path: tests/small_test/test_results.xml
-          destination: small_test_results.xml
-      - run:
           name: large test
-          command: make large-test
-      - store_artifacts:
-          path: tests/large_test/test_results.xml
-          destination: large_test_results.xml
+          command: MEMCHECK=1 JUNIT=1 make large-test
       - store_test_results:
-          path: tests
+          path: tests/large_test/test-results
+
   deployment:
     <<: *env
     steps:
@@ -83,7 +64,7 @@ workflows:
             branches:
               ignore:
                 - gh-pages
-      - test:
+      - ltest:
           requires:
             - build
           filters:
@@ -92,7 +73,7 @@ workflows:
                 - gh-pages
       - deployment:
           requires:
-            - test
+            - ltest
           filters:
             branches:
               only: master
