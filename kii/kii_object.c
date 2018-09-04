@@ -88,6 +88,12 @@ static kii_code_t _kii_object_post(
     }
     headers = khc_slist_append(headers, kii->_rw_buff, x_app_len);
     headers = khc_slist_append(headers, _APP_KEY_HEADER, strlen(_APP_KEY_HEADER));
+    int auth_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "Authorization: Bearer %s", kii->_author.access_token);
+    if (auth_len >= kii->_rw_buff_size) {
+        khc_slist_free_all(headers);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    headers = khc_slist_append(headers, kii->_rw_buff, auth_len);
 
     int header_len = 0;
     ret = _make_object_content_type(kii, object_content_type, &header_len);
