@@ -77,8 +77,8 @@ extern "C" {
     typedef struct kii_bucket_t
     {
         kii_scope_type_t scope;
-        char *scope_id;
-        char *bucket_name;
+        const char *scope_id;
+        const char *bucket_name;
 } kii_bucket_t;
 
 /** represents topic */
@@ -216,7 +216,7 @@ kii_code_t kii_thing_register(
 		const char* thing_type,
 		const char* password);
 
-/** Create new object
+/** Post Kii object
  *  \param [inout] kii sdk instance.
  *  \param [in] bucket specify the bucket of which object is stored.
  *  \param [in] object_data key-value pair of the object in json format.
@@ -226,9 +226,9 @@ kii_code_t kii_thing_register(
  *  Supplied when succeeded to create new object.
  *  Must be allocated by application with the size of KII_OBJECTID_SIZE + 1
  *  before this api call.
- *  \return 0:success, -1: failure
+ *  \return kii_code_t
  */
-int kii_object_create(
+kii_code_t kii_object_post(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_data,
