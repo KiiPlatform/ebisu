@@ -37,9 +37,69 @@ size_t _cb_read_buff(char *buffer, size_t size, size_t count, void *userdata)
     return to_read;
 }
 
+
+int _parse_etag(kii_t* kii, char* header, size_t header_len) {
+    kii->_etag[0] = '\0';
+    const char etag_lower[] = "etag";
+    const char etag_upper[] = "ETAG";
+    size_t key_len = strlen(etag_lower);
+    int state = 0;
+    int j = 0;
+    for (int i = 0; i < header_len; ++i) {
+        char c = header[i];
+        if (state == 0) {
+            if (c == etag_lower[i] || c == etag_upper[i]) {
+                if (i == key_len - 1) {
+                    state = 1;
+                }
+                continue;
+            } else {
+                // Not Etag.
+                state = 100;
+            }
+        } else if (state == 1) { // Skip WP before :
+            if (c == ' ' || c == '\t') {
+                continue;
+            } else if ( c == ':') {
+                state = 2;
+            } else {
+                // Inalid Format.
+                state = 100;
+            }
+        } else if (state == 2) { // Skip WP after :
+            if (c == ' ' || c == '\t') {
+                continue;
+            } else {
+                state = 3;
+            }
+        } else if (state == 3) { // Extract value
+            if (c == ' ' || c == '\t' || c == '\r') {
+                state = 4;
+            } else if (j < sizeof(kii->_etag) - 1) {
+                kii->_etag[j] = c;
+                ++j;
+            } else {
+                // Etag too large.
+                state = 100;
+            }
+        } else if (state == 4) {
+            kii->_etag[j+1] = '\0';
+        } else {
+            // Parse failed.
+            break;
+        }
+    }
+    if (state == 4) {
+        return j;
+    } else {
+        return -1;
+    }
+}
+
 size_t _cb_write_header(char *buffer, size_t size, size_t count, void *userdata)
 {
     // TODO: implement it later for getting Etag, etc.
+    _parse_etag((kii_t*)userdata, buffer, size * count);
     return size * count;
 }
 
