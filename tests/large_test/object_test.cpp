@@ -46,7 +46,7 @@ TEST_CASE("Object Tests")
             REQUIRE( strlen(object_id) > 0 );
             char* etag = kii_get_etag(&kii);
             size_t etag_len = strlen(etag);
-            REQUIRE( etag_len > 0 );
+            REQUIRE( etag_len == 3 );
 
             SECTION("PUT with Etag") {
                 char etag_copy[etag_len+1];
