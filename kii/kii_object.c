@@ -281,7 +281,7 @@ kii_code_t kii_object_post(
     ret = KII_ERR_OK;
 
 exit:
-    _reset_rw_buff(kii);
+    _reset_buff(kii);
     return ret;
 }
 
@@ -310,7 +310,7 @@ kii_code_t kii_object_put(
     ret = KII_ERR_OK;
 
 exit:
-    _reset_rw_buff(kii);
+    _reset_buff(kii);
     return ret;
 
 }

@@ -188,10 +188,11 @@ kii_code_t _convert_code(khc_code khc_c) {
     return KII_ERR_FAIL;
 }
 
-void _reset_rw_buff(kii_t* kii) {
+void _reset_buff(kii_t* kii) {
     kii->_rw_buff_read = 0;
     kii->_rw_buff_written = 0;
     kii->_rw_buff_req_size = 0;
+    kii->_etag[0] = '\0';
 }
 
 int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len) {
