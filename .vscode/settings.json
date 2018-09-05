@@ -17,6 +17,7 @@
     "chrono": "cpp",
     "__hash_table": "cpp",
     "unordered_map": "cpp",
-    "hashtable": "cpp"
+    "hashtable": "cpp",
+    "algorithm": "cpp"
   }
 }
