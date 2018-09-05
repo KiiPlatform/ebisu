@@ -200,13 +200,18 @@ void _reset_buff(kii_t* kii) {
 }
 
 int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len) {
+    char header_cpy[header_len + 1];
+    memcpy(header_cpy, header, header_len);
+    header_cpy[header_len] = '\0';
+
     const char etag_lower[] = "etag";
     const char etag_upper[] = "ETAG";
     size_t key_len = strlen(etag_lower);
     int state = 0;
     int j = 0;
     for (int i = 0; i < header_len; ++i) {
-        char c = header[i];
+        char c = header_cpy[i];
+
         if (state == 0) {
             if (c == etag_lower[i] || c == etag_upper[i]) {
                 if (i == key_len - 1) {
@@ -222,6 +227,7 @@ int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len) {
                 continue;
             } else if ( c == ':') {
                 state = 2;
+                continue;
             } else {
                 // Inalid Format.
                 return -2;
@@ -233,21 +239,23 @@ int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len) {
                 state = 3;
                 buff[0] = c;
                 j++;
+                continue;
             }
         } else if (state == 3) { // Extract value
             if (c == ' ' || c == '\t' || c == '\r') {
-                state = 4;
-            } else if (j < buff_len - 1) {
-                buff[j] = c;
-                ++j;
+                break;
             } else {
-                // Etag too large.
-                return -3;
+                if (j < buff_len - 1) {
+                    buff[j] = c;
+                    ++j;
+                    continue;
+                } else {
+                    // Etag too large.
+                    return -3;
+                }
             }
-        } else if (state == 4) {
-            buff[j+1] = '\0';
-            break;
         }
     }
+    buff[j] = '\0';
     return j;
 }

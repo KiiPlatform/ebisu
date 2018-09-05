@@ -45,7 +45,21 @@ TEST_CASE("Object Tests")
             REQUIRE( khc_get_status_code(&kii._khc) == 201 );
             REQUIRE( strlen(object_id) > 0 );
             char* etag = kii_get_etag(&kii);
-            REQUIRE( strlen(etag) > 0 );
+            size_t etag_len = strlen(etag);
+            REQUIRE( etag_len > 0 );
+
+            SECTION("PUT with Etag") {
+                char etag_copy[etag_len+1];
+                memcpy(etag_copy, etag, etag_len);
+                etag_copy[etag_len] = '\0';
+                code = kii_object_put(&kii, &bucket, object_id, object, NULL, etag_copy);
+                REQUIRE( code == KII_ERR_OK );
+                REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+                // Now etag_copy should be obsoleted.
+                code = kii_object_put(&kii, &bucket, object_id, object, NULL, etag_copy);
+                REQUIRE( code == KII_ERR_RESP_STATUS );
+                REQUIRE( khc_get_status_code(&kii._khc) == 409 );
+            }
         }
 
         SECTION("PUT") {

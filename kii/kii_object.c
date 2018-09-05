@@ -169,7 +169,7 @@ static kii_code_t _kii_object_put(
     }
     headers = khc_slist_append(headers, kii->_rw_buff, header_len);
     if (opt_etag != NULL && strlen(opt_etag) > 0) {
-        int etag_h_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "Etag: %s", opt_etag);
+        int etag_h_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "If-Match: %s", opt_etag);
         if (etag_h_len >= kii->_rw_buff_size) {
             khc_slist_free_all(headers);
             return KII_ERR_TOO_LARGE_DATA;
