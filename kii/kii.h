@@ -242,9 +242,9 @@ kii_code_t kii_object_post(
  *  \param [in] object_data key-value pair of the object in json format.
  *  \param [in] object_content_type content-type of the object. If null,
  *  application/json will be applied.
- *  \return  0:success, -1: failure
+ *  \return  kii_code_t
  */
-int kii_object_create_with_id(
+kii_code_t kii_object_put(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
