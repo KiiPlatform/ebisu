@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <cstring>
 
 #include <kii.h>
 #include <kii_json.h>
@@ -34,6 +35,7 @@ TEST_CASE("App Scope Object POST")
 
     const char object[] = "{}";
     char object_id[128];
+    object_id[0] = '\0';
     ret = kii_object_post(&kii, &bucket, object, NULL, object_id);
 
     REQUIRE( ret == KII_ERR_OK );
