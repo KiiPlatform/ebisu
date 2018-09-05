@@ -53,7 +53,7 @@ TEST_CASE("Object Tests")
             std::string id = std::to_string(kiiltest::current_time());
             std::string object_id = id_base + id;
             const char object_data[] = "{}";
-            kii_code_t code = kii_object_put(&kii, &bucket, object_id.c_str(), object_data, "");
+            kii_code_t code = kii_object_put(&kii, &bucket, object_id.c_str(), object_data, "", NULL);
 
             REQUIRE( code == KII_ERR_OK );
             REQUIRE( khc_get_status_code(&kii._khc) == 201 );

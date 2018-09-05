@@ -133,7 +133,8 @@ static kii_code_t _kii_object_put(
         const kii_bucket_t* bucket,
         const char* object_id,
         const char* object_data,
-        const char* opt_object_content_type
+        const char* opt_object_content_type,
+        const char* opt_etag
         )
 {
     khc_set_host(&kii->_khc, kii->_app_host);
@@ -167,6 +168,14 @@ static kii_code_t _kii_object_put(
         return ret;
     }
     headers = khc_slist_append(headers, kii->_rw_buff, header_len);
+    if (opt_etag != NULL && strlen(opt_etag) > 0) {
+        int etag_h_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "Etag: %s", opt_etag);
+        if (etag_h_len >= kii->_rw_buff_size) {
+            khc_slist_free_all(headers);
+            return KII_ERR_TOO_LARGE_DATA;
+        }
+        headers = khc_slist_append(headers, kii->_rw_buff, etag_h_len);
+    }
 
     // Request body
     size_t content_len = strlen(object_data);
@@ -202,17 +211,6 @@ static khc_code _patch_object(
 {
     // TODO: reimplement it.
     return KHC_ERR_FAIL;
-}
-
-static kii_code_t _kii_object_put_if_match(
-        kii_t* kii,
-        const kii_bucket_t* bucket,
-        const char* object_id,
-        const char* replace_data,
-        const char* opt_etag)
-{
-    // TODO: reimplement it.
-    return KII_ERR_FAIL;
 }
 
 static khc_code _delete_object(
@@ -289,7 +287,8 @@ kii_code_t kii_object_put(
         const kii_bucket_t* bucket,
         const char* object_id,
         const char* object_data,
-        const char* object_content_type)
+        const char* object_content_type,
+        const char* opt_etag)
 {
     _reset_buff(kii);
     kii_code_t ret = _kii_object_put(
@@ -297,7 +296,8 @@ kii_code_t kii_object_put(
             bucket,
             object_id,
             object_data,
-            object_content_type);
+            object_content_type,
+            opt_etag);
     if (ret != KII_ERR_OK) {
         goto exit;
     }
@@ -329,35 +329,6 @@ int kii_object_patch(
             patch_data,
             opt_etag);
     if (khc_err != KHC_ERR_OK) {
-        goto exit;
-    }
-
-    int resp_code = khc_get_status_code(&kii->_khc);
-    if(resp_code < 200 || 300 <= resp_code) {
-        goto exit;
-    }
-
-    ret = 0;
-
-exit:
-    return ret;	
-}
-
-kii_code_t kii_object_put_if_match(
-        kii_t* kii,
-        const kii_bucket_t* bucket,
-        const char* object_id,
-        const char* object_data,
-        const char* opt_etag)
-{
-
-    kii_code_t ret = _kii_object_put_if_match(
-            kii,
-            bucket,
-            object_id,
-            object_data,
-            opt_etag);
-    if (ret != KII_ERR_OK) {
         goto exit;
     }
 

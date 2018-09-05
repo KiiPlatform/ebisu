@@ -244,6 +244,7 @@ kii_code_t kii_object_post(
  *  \param [in] object_data key-value pair of the object in json format.
  *  \param [in] object_content_type content-type of the object. If null,
  *  application/json will be applied.
+ *  \param [in] if specified, If-Match header is sent to the endpoint.
  *  \return  kii_code_t
  */
 kii_code_t kii_object_put(
@@ -251,25 +252,8 @@ kii_code_t kii_object_put(
 		const kii_bucket_t* bucket,
 		const char* object_id,
 		const char* object_data,
-		const char* object_content_type);
-
-/** Put kii object with etag.
- * Replace the object with specified key-values.
- * Existing key-value pair which is not included in the replacement_data will be
- * removed.
- *  \param [inout] kii sdk instance.
- *  \param [in] bucket specify the bucket of which object is stored.
- *  \param [in] object_id specify the id of the object.
- *  \param [in] replacement_data key-value pair of the object in json format.
- *  \param [in] opt_etag etag of the object. if specified, If-Match header is sent.
- *  \return  kii_code_t
- */
-kii_code_t kii_object_put_if_match(
-		kii_t* kii,
-		const kii_bucket_t* bucket,
-		const char* object_id,
-		const char* object_data,
-		const char* opt_etag);
+		const char* object_content_type,
+        const char* opt_etag);
 
 /** Partial update of the object
  *  Only the specified key-value is updated and other key-values won't be
