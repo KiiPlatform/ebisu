@@ -233,7 +233,8 @@ kii_code_t kii_object_post(
 		const kii_bucket_t* bucket,
 		const char* object_data,
 		const char* object_content_type,
-		char* out_object_id);
+		char* out_object_id,
+        char* out_etag);
 
 /** Create new object with the specified ID
  *  \param [inout] kii sdk instance.
@@ -251,6 +252,24 @@ kii_code_t kii_object_put(
 		const char* object_data,
 		const char* object_content_type);
 
+/** Put kii object with etag.
+ * Replace the object with specified key-values.
+ * Existing key-value pair which is not included in the replacement_data will be
+ * removed.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] bucket specify the bucket of which object is stored.
+ *  \param [in] object_id specify the id of the object.
+ *  \param [in] replacement_data key-value pair of the object in json format.
+ *  \param [in] opt_etag etag of the object. if specified, If-Match header is sent.
+ *  \return  kii_code_t
+ */
+kii_code_t kii_object_put_if_match(
+		kii_t* kii,
+		const kii_bucket_t* bucket,
+		const char* object_id,
+		const char* object_data,
+		const char* opt_etag);
+
 /** Partial update of the object
  *  Only the specified key-value is updated and other key-values won't be
  *  updated/ removed.
@@ -267,25 +286,6 @@ int kii_object_patch(
 		const kii_bucket_t* bucket,
 		const char* object_id,
 		const char* patch_data,
-		const char* opt_etag);
-
-/** Full update of the object
- * Replace the object with specified key-values.
- * Existing key-value pair which is not included in the replacement_data will be
- * removed.
- *  \param [inout] kii sdk instance.
- *  \param [in] bucket specify the bucket of which object is stored.
- *  \param [in] object_id specify the id of the object.
- *  \param [in] replacement_data key-value pair of the object in json format.
- *  \param [in] opt_etag etag of the object. if specified, update will be failed
- *  if there is updates on cloud. if NULL, forcibly updates.
- *  \return  0:success, -1: failure
- */
-int kii_object_replace(
-		kii_t* kii,
-		const kii_bucket_t* bucket,
-		const char* object_id,
-		const char* replacement_data,
 		const char* opt_etag);
 
 /** Delete the object

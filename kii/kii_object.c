@@ -204,7 +204,7 @@ static khc_code _patch_object(
     return KHC_ERR_FAIL;
 }
 
-static khc_code _replace_object(
+static kii_code_t _kii_object_put_if_match(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
@@ -212,7 +212,7 @@ static khc_code _replace_object(
         const char* opt_etag)
 {
     // TODO: reimplement it.
-    return KHC_ERR_FAIL;
+    return KII_ERR_FAIL;
 }
 
 static khc_code _delete_object(
@@ -238,7 +238,8 @@ kii_code_t kii_object_post(
         const kii_bucket_t* bucket,
         const char* object_data,
         const char* object_content_type,
-        char* out_object_id)
+        char* out_object_id,
+        char* out_etag)
 {
     kii_code_t ret = _kii_object_post(
             kii,
@@ -343,22 +344,21 @@ exit:
     return ret;	
 }
 
-int kii_object_replace(
+kii_code_t kii_object_put_if_match(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
-        const char* replacement_data,
+        const char* object_data,
         const char* opt_etag)
 {
-    int ret = -1;
 
-    khc_code khc_err = _replace_object(
+    kii_code_t ret = _kii_object_put_if_match(
             kii,
             bucket,
             object_id,
-            replacement_data,
+            object_data,
             opt_etag);
-    if (khc_err != KHC_ERR_OK) {
+    if (ret != KII_ERR_OK) {
         goto exit;
     }
 
