@@ -39,7 +39,7 @@ TEST_CASE("Object Tests")
             const char object[] = "{}";
             char object_id[128];
             object_id[0] = '\0';
-            kii_code_t code = kii_object_post(&kii, &bucket, object, NULL, object_id);
+            kii_code_t code = kii_object_post(&kii, &bucket, object, NULL, object_id, NULL);
 
             REQUIRE( code == KII_ERR_OK );
             REQUIRE( khc_get_status_code(&kii._khc) == 201 );

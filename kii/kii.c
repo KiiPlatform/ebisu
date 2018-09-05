@@ -39,7 +39,6 @@ size_t _cb_read_buff(char *buffer, size_t size, size_t count, void *userdata)
 
 
 int _parse_etag(kii_t* kii, char* header, size_t header_len) {
-    kii->_etag[0] = '\0';
     const char etag_lower[] = "etag";
     const char etag_upper[] = "ETAG";
     size_t key_len = strlen(etag_lower);
@@ -71,6 +70,8 @@ int _parse_etag(kii_t* kii, char* header, size_t header_len) {
                 continue;
             } else {
                 state = 3;
+                kii->_etag[0] = c;
+                j++;
             }
         } else if (state == 3) { // Extract value
             if (c == ' ' || c == '\t' || c == '\r') {
@@ -142,6 +143,7 @@ int kii_init(
     khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
     khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
     khc_set_cb_header(&kii->_khc, _cb_write_header, kii);
+    kii->_etag[0] = '\0';
     return 0;
 }
 

@@ -146,6 +146,8 @@ typedef struct kii_t {
     size_t _rw_buff_req_size;
     size_t _rw_buff_read;
     size_t _rw_buff_written;
+
+    char _etag[64];
     /** Resource used by KII JSON library.
      *
      * This field is optional. If KII_JSON_FIXED_TOKEN_NUM macro is
