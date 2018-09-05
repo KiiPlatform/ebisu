@@ -235,8 +235,7 @@ kii_code_t kii_object_post(
 		const kii_bucket_t* bucket,
 		const char* object_data,
 		const char* object_content_type,
-		char* out_object_id,
-        char* out_etag);
+		char* out_object_id);
 
 /** Create new object with the specified ID
  *  \param [inout] kii sdk instance.
@@ -527,6 +526,8 @@ int kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userd
 int kii_set_mqtt_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
 int kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
 int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+
+char* kii_get_etag(kii_t* kii);
 
 #ifdef __cplusplus
 }

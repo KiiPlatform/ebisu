@@ -39,11 +39,13 @@ TEST_CASE("Object Tests")
             const char object[] = "{}";
             char object_id[128];
             object_id[0] = '\0';
-            kii_code_t code = kii_object_post(&kii, &bucket, object, NULL, object_id, NULL);
+            kii_code_t code = kii_object_post(&kii, &bucket, object, NULL, object_id);
 
             REQUIRE( code == KII_ERR_OK );
             REQUIRE( khc_get_status_code(&kii._khc) == 201 );
             REQUIRE( strlen(object_id) > 0 );
+            char* etag = kii_get_etag(&kii);
+            REQUIRE( strlen(etag) > 0 );
         }
 
         SECTION("PUT") {

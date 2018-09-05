@@ -42,7 +42,7 @@ size_t _cb_write_header(char *buffer, size_t size, size_t count, void *userdata)
 {
     // TODO: implement it later for getting Etag, etc.
     char* etag_buff = ((kii_t*)userdata)->_etag;
-    _parse_etag(buffer, size * count, etag_buff, sizeof(etag_buff));
+    _parse_etag(buffer, size * count, etag_buff, 64);
     return size * count;
 }
 
@@ -155,6 +155,10 @@ int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata)
     kii->mqtt_sock_close_cb = cb;
     kii->mqtt_sock_close_ctx = userdata;
     return 0;
+}
+
+char* kii_get_etag(kii_t* kii) {
+    return kii->_etag;
 }
 
 int _kii_set_content_length(kii_t* kii, size_t content_length) {

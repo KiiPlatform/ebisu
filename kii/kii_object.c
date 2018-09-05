@@ -238,9 +238,9 @@ kii_code_t kii_object_post(
         const kii_bucket_t* bucket,
         const char* object_data,
         const char* object_content_type,
-        char* out_object_id,
-        char* out_etag)
+        char* out_object_id)
 {
+    _reset_buff(kii);
     kii_code_t ret = _kii_object_post(
             kii,
             bucket,
@@ -281,7 +281,6 @@ kii_code_t kii_object_post(
     ret = KII_ERR_OK;
 
 exit:
-    _reset_buff(kii);
     return ret;
 }
 
@@ -292,6 +291,7 @@ kii_code_t kii_object_put(
         const char* object_data,
         const char* object_content_type)
 {
+    _reset_buff(kii);
     kii_code_t ret = _kii_object_put(
             kii,
             bucket,
@@ -310,7 +310,6 @@ kii_code_t kii_object_put(
     ret = KII_ERR_OK;
 
 exit:
-    _reset_buff(kii);
     return ret;
 
 }
