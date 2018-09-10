@@ -1,4 +1,5 @@
 #include "kii.h"
+#include "kii_impl.h"
 #include <string.h>
 
 #define KII_SDK_INFO "sn=te;sv=1.2.4"
@@ -40,6 +41,8 @@ size_t _cb_read_buff(char *buffer, size_t size, size_t count, void *userdata)
 size_t _cb_write_header(char *buffer, size_t size, size_t count, void *userdata)
 {
     // TODO: implement it later for getting Etag, etc.
+    char* etag_buff = ((kii_t*)userdata)->_etag;
+    _parse_etag(buffer, size * count, etag_buff, 64);
     return size * count;
 }
 
@@ -82,6 +85,7 @@ int kii_init(
     khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
     khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
     khc_set_cb_header(&kii->_khc, _cb_write_header, kii);
+    kii->_etag[0] = '\0';
     return 0;
 }
 
@@ -153,6 +157,10 @@ int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata)
     return 0;
 }
 
+char* kii_get_etag(kii_t* kii) {
+    return kii->_etag;
+}
+
 int _kii_set_content_length(kii_t* kii, size_t content_length) {
     kii->_rw_buff_req_size = content_length;
     return 0;
@@ -184,8 +192,70 @@ kii_code_t _convert_code(khc_code khc_c) {
     return KII_ERR_FAIL;
 }
 
-void _reset_rw_buff(kii_t* kii) {
+void _reset_buff(kii_t* kii) {
     kii->_rw_buff_read = 0;
     kii->_rw_buff_written = 0;
     kii->_rw_buff_req_size = 0;
+    kii->_etag[0] = '\0';
+}
+
+int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len) {
+    char header_cpy[header_len + 1];
+    memcpy(header_cpy, header, header_len);
+    header_cpy[header_len] = '\0';
+
+    const char etag_lower[] = "etag";
+    const char etag_upper[] = "ETAG";
+    size_t key_len = strlen(etag_lower);
+    int state = 0;
+    int j = 0;
+    for (int i = 0; i < header_len; ++i) {
+        char c = header_cpy[i];
+
+        if (state == 0) {
+            if (c == etag_lower[i] || c == etag_upper[i]) {
+                if (i == key_len - 1) {
+                    state = 1;
+                }
+                continue;
+            } else {
+                // Not Etag.
+                return -1;
+            }
+        } else if (state == 1) { // Skip WP before :
+            if (c == ' ' || c == '\t') {
+                continue;
+            } else if ( c == ':') {
+                state = 2;
+                continue;
+            } else {
+                // Inalid Format.
+                return -2;
+            }
+        } else if (state == 2) { // Skip WP after :
+            if (c == ' ' || c == '\t') {
+                continue;
+            } else {
+                state = 3;
+                buff[0] = c;
+                j++;
+                continue;
+            }
+        } else if (state == 3) { // Extract value
+            if (c == ' ' || c == '\t' || c == '\r') {
+                break;
+            } else {
+                if (j < buff_len - 1) {
+                    buff[j] = c;
+                    ++j;
+                    continue;
+                } else {
+                    // Etag too large.
+                    return -3;
+                }
+            }
+        }
+    }
+    buff[j] = '\0';
+    return j;
 }

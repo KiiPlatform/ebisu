@@ -146,6 +146,8 @@ typedef struct kii_t {
     size_t _rw_buff_req_size;
     size_t _rw_buff_read;
     size_t _rw_buff_written;
+
+    char _etag[64];
     /** Resource used by KII JSON library.
      *
      * This field is optional. If KII_JSON_FIXED_TOKEN_NUM macro is
@@ -242,14 +244,16 @@ kii_code_t kii_object_post(
  *  \param [in] object_data key-value pair of the object in json format.
  *  \param [in] object_content_type content-type of the object. If null,
  *  application/json will be applied.
- *  \return  0:success, -1: failure
+ *  \param [in] if specified, If-Match header is sent to the endpoint.
+ *  \return  kii_code_t
  */
-int kii_object_create_with_id(
+kii_code_t kii_object_put(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
 		const char* object_data,
-		const char* object_content_type);
+		const char* object_content_type,
+        const char* opt_etag);
 
 /** Partial update of the object
  *  Only the specified key-value is updated and other key-values won't be
@@ -267,25 +271,6 @@ int kii_object_patch(
 		const kii_bucket_t* bucket,
 		const char* object_id,
 		const char* patch_data,
-		const char* opt_etag);
-
-/** Full update of the object
- * Replace the object with specified key-values.
- * Existing key-value pair which is not included in the replacement_data will be
- * removed.
- *  \param [inout] kii sdk instance.
- *  \param [in] bucket specify the bucket of which object is stored.
- *  \param [in] object_id specify the id of the object.
- *  \param [in] replacement_data key-value pair of the object in json format.
- *  \param [in] opt_etag etag of the object. if specified, update will be failed
- *  if there is updates on cloud. if NULL, forcibly updates.
- *  \return  0:success, -1: failure
- */
-int kii_object_replace(
-		kii_t* kii,
-		const kii_bucket_t* bucket,
-		const char* object_id,
-		const char* replacement_data,
 		const char* opt_etag);
 
 /** Delete the object
@@ -525,6 +510,8 @@ int kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userd
 int kii_set_mqtt_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
 int kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
 int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+
+char* kii_get_etag(kii_t* kii);
 
 #ifdef __cplusplus
 }

@@ -134,6 +134,7 @@ kii_code_t kii_thing_authenticate(
         const char* vendor_thing_id,
         const char* password)
 {
+    _reset_buff(kii);
     kii_code_t ret = KII_ERR_FAIL;
 
     ret = _thing_authentication(kii, vendor_thing_id, password);
@@ -177,7 +178,6 @@ kii_code_t kii_thing_authenticate(
     ret = KII_ERR_OK;
 
 exit:
-    _reset_rw_buff(kii);
     return ret;
 }
 
@@ -187,6 +187,7 @@ kii_code_t kii_thing_register(
         const char* thing_type,
         const char* password)
 {
+    _reset_buff(kii);
     kii_code_t ret = KII_ERR_FAIL;
 
     ret = _register_thing_with_id(kii, vendor_thing_id,
@@ -232,7 +233,6 @@ kii_code_t kii_thing_register(
     ret = KII_ERR_OK;
 
 exit:
-    _reset_rw_buff(kii);
     return ret;
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

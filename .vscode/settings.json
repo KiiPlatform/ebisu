@@ -13,6 +13,11 @@
     "utility": "c",
     "functional": "c",
     "ios": "cpp",
-    "random": "cpp"
+    "random": "cpp",
+    "chrono": "cpp",
+    "__hash_table": "cpp",
+    "unordered_map": "cpp",
+    "hashtable": "cpp",
+    "algorithm": "cpp"
   }
 }
