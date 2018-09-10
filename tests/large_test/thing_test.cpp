@@ -8,9 +8,9 @@
 #include "catch.hpp"
 #include "large_test.h"
 
-TEST_CASE("Thing auth")
+TEST_CASE("Thing tests")
 {
-    kii_code_t ret = KII_ERR_FAIL;
+
     size_t buff_size = 4096;
     char buff[buff_size];
     kii_t kii;
@@ -19,38 +19,31 @@ TEST_CASE("Thing auth")
 
     kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &mqtt_ssl_ctx);
 
-    const char vid[] = "test1";
-    const char password[] = "1234";
-    ret = kii_thing_authenticate(&kii, vid, password);
+    SECTION("Thing auth") {
+        kii_code_t ret = KII_ERR_FAIL;
+        const char vid[] = "test1";
+        const char password[] = "1234";
+        ret = kii_thing_authenticate(&kii, vid, password);
 
-    REQUIRE( ret == KII_ERR_OK );
-    REQUIRE( khc_get_status_code(&kii._khc) == 200 );
-    REQUIRE( std::string(kii._author.author_id).length() > 0 );
-    REQUIRE( std::string(kii._author.access_token).length() > 0 );
-}
+        REQUIRE( ret == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+        REQUIRE( std::string(kii._author.author_id).length() > 0 );
+        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+    }
+    SECTION("Thing register") {
+        kii_code_t ret = KII_ERR_FAIL;
+        std::string vid_base("thing2-");
+        std::string id = std::to_string(kiiltest::current_time());
+        std::string vid = vid_base + id;
+        const char thing_type[] = "ltest-thing";
+        const char password[] = "1234";
+        ret = kii_thing_register(&kii, vid.c_str(), thing_type, password);
 
-TEST_CASE("Thing register")
-{
-    kii_code_t ret = KII_ERR_FAIL;
-    size_t buff_size = 4096;
-    char buff[buff_size];
-    kii_t kii;
-    kiiltest::ssl::SSLData http_ssl_ctx;
-    kiiltest::ssl::SSLData mqtt_ssl_ctx;
-
-    kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &mqtt_ssl_ctx);
-
-    std::string vid_base("thing2-");
-    std::string id = std::to_string(kiiltest::current_time());
-    std::string vid = vid_base + id;
-    const char thing_type[] = "ltest-thing";
-    const char password[] = "1234";
-    ret = kii_thing_register(&kii, vid.c_str(), thing_type, password);
-
-    REQUIRE( ret == KII_ERR_OK );
-    REQUIRE( khc_get_status_code(&kii._khc) == 201 );
-    REQUIRE( std::string(kii._author.author_id).length() > 0 );
-    REQUIRE( std::string(kii._author.access_token).length() > 0 );
+        REQUIRE( ret == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 201 );
+        REQUIRE( std::string(kii._author.author_id).length() > 0 );
+        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+    }
 }
 
 // TEST(kiiTest, object)
