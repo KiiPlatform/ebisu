@@ -13,7 +13,7 @@
 TEST_CASE("Object Tests")
 {
     // To Avoid 429 Too Many Requests
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
     kii_code_t ret = KII_ERR_FAIL;
     size_t buff_size = 4096;
     char buff[buff_size];

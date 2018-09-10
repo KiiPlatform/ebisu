@@ -14,7 +14,7 @@ TEST_CASE("Thing tests")
 {
 
     // To Avoid 429 Too Many Requests
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
     size_t buff_size = 4096;
     char buff[buff_size];
     kii_t kii;
