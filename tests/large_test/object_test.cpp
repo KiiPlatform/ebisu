@@ -65,6 +65,20 @@ TEST_CASE("Object Tests")
                 kii_code_t p_code = kii_object_patch(&kii, &bucket, object_id, patch_data, NULL);
                 REQUIRE( p_code == KII_ERR_OK );
                 REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+
+                char* p_etag = kii_get_etag(&kii);
+                size_t p_etag_len = strlen(etag);
+                char p_etag_copy[p_etag_len+1];
+                memcpy(p_etag_copy, p_etag, p_etag_len);
+                p_etag_copy[p_etag_len] = '\0';
+
+                p_code = kii_object_patch(&kii, &bucket, object_id, patch_data, p_etag_copy);
+                REQUIRE( p_code == KII_ERR_OK );
+                REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+                // Now p_etag_copy is not valid.
+                p_code = kii_object_patch(&kii, &bucket, object_id, patch_data, p_etag_copy);
+                REQUIRE( p_code == KII_ERR_RESP_STATUS );
+                REQUIRE( khc_get_status_code(&kii._khc) == 409 );
             }
         }
 
