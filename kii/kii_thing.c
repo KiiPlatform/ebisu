@@ -134,7 +134,9 @@ kii_code_t kii_thing_authenticate(
         const char* vendor_thing_id,
         const char* password)
 {
+    printf("kii_thing_authenticate\n");
     _reset_buff(kii);
+    khc_set_zero_excl_cb(&kii->_khc);
     kii_code_t ret = KII_ERR_FAIL;
 
     ret = _thing_authentication(kii, vendor_thing_id, password);
@@ -150,6 +152,7 @@ kii_code_t kii_thing_authenticate(
 
     char* buff = kii->_rw_buff;
     size_t buff_size = kii->_rw_buff_written;
+    printf("kii_thing_authenticate buff_size: %d\n", buff_size);
     if (buff == NULL) {
         ret = KII_ERR_FAIL;
         goto exit;
@@ -187,7 +190,9 @@ kii_code_t kii_thing_register(
         const char* thing_type,
         const char* password)
 {
+    printf("kii_thing_register\n");
     _reset_buff(kii);
+    khc_set_zero_excl_cb(&kii->_khc);
     kii_code_t ret = KII_ERR_FAIL;
 
     ret = _register_thing_with_id(kii, vendor_thing_id,
