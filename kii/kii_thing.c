@@ -149,7 +149,7 @@ kii_code_t kii_thing_authenticate(
     }
 
     char* buff = kii->_rw_buff;
-    size_t buff_size = kii->_rw_buff_size;
+    size_t buff_size = kii->_rw_buff_written;
     if (buff == NULL) {
         ret = KII_ERR_FAIL;
         goto exit;
@@ -204,7 +204,7 @@ kii_code_t kii_thing_register(
 
     /* parse response */
     char* buff = kii->_rw_buff;
-    size_t buff_size = kii->_rw_buff_size;
+    size_t buff_size = kii->_rw_buff_written;
     if (buff == NULL) {
         ret = KII_ERR_FAIL;
         goto exit;
