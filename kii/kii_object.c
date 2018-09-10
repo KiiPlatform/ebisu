@@ -375,13 +375,14 @@ kii_code_t kii_object_patch(
         const char* patch_data,
         const char* opt_etag)
 {
+    _reset_buff(kii);
     kii_code_t code = _patch_object(
             kii,
             bucket,
             object_id,
             patch_data,
             opt_etag);
-    if (code != KHC_ERR_OK) {
+    if (code != KII_ERR_OK) {
         goto exit;
     }
 

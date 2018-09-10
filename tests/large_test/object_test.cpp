@@ -60,6 +60,12 @@ TEST_CASE("Object Tests")
                 REQUIRE( code == KII_ERR_RESP_STATUS );
                 REQUIRE( khc_get_status_code(&kii._khc) == 409 );
             }
+            SECTION("PATCH") {
+                const char patch_data[] = "{\"patch\":1}";
+                kii_code_t p_code = kii_object_patch(&kii, &bucket, object_id, patch_data, NULL);
+                REQUIRE( p_code == KII_ERR_OK );
+                REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+            }
         }
 
         SECTION("PUT") {
