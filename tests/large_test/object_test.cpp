@@ -100,6 +100,15 @@ TEST_CASE("Object Tests")
                 REQUIRE ( obj_id.is<std::string>() );
                 REQUIRE ( obj_id.get<std::string>() == std::string(object_id) );
             }
+            SECTION("DELETE") {
+                kii_code_t d_code = kii_object_delete(&kii, &bucket, object_id);
+                REQUIRE( d_code == KII_ERR_OK );
+                REQUIRE( khc_get_status_code(&kii._khc) == 204 );
+                // Now get should return 404.
+                kii_code_t g_code = kii_object_get(&kii, &bucket, object_id);
+                REQUIRE( g_code == KII_ERR_RESP_STATUS );
+                REQUIRE( khc_get_status_code(&kii._khc) == 404 );
+            }
         }
 
         SECTION("PUT") {
