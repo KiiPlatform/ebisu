@@ -18,6 +18,18 @@
     "__hash_table": "cpp",
     "unordered_map": "cpp",
     "hashtable": "cpp",
-    "algorithm": "cpp"
+    "algorithm": "cpp",
+    "__bit_reference": "cpp",
+    "bitset": "cpp",
+    "hash_map": "cpp",
+    "hash_set": "cpp",
+    "map": "cpp",
+    "set": "cpp",
+    "__split_buffer": "cpp",
+    "__tree": "cpp",
+    "deque": "cpp",
+    "initializer_list": "cpp",
+    "list": "cpp",
+    "regex": "cpp"
   }
 }
