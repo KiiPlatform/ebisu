@@ -41,44 +41,47 @@ extern "C" {
 #define KII_TASK_NAME_PING_REQ "ping_req_task"
 #endif
 
-    typedef enum kii_code_t
-    {
-        KII_ERR_OK,
-        KII_ERR_SOCK_CONNECT,
-        KII_ERR_SOCK_CLOSE,
-        KII_ERR_SOCK_SEND,
-        KII_ERR_SOCK_RECV,
-        KII_ERR_HEADER_CALLBACK,
-        KII_ERR_WRITE_CALLBACK,
-        KII_ERR_ALLOCATION,
-        KII_ERR_TOO_LARGE_DATA,
-        KII_ERR_RESP_STATUS,
-        KII_ERR_PARSE_JSON,
-        KII_ERR_FAIL
-    } kii_code_t;
+typedef size_t (*KII_CB_WRITE)(char *ptr, size_t size, size_t count, void *userdata);
+typedef size_t (*KII_CB_READ)(char *buffer, size_t size, size_t count, void *userdata);
 
-    /** bool type definition */
-    typedef enum kii_bool_t
-    {
-        KII_FALSE = 0,
-        KII_TRUE
-    } kii_bool_t;
+typedef enum kii_code_t
+{
+    KII_ERR_OK,
+    KII_ERR_SOCK_CONNECT,
+    KII_ERR_SOCK_CLOSE,
+    KII_ERR_SOCK_SEND,
+    KII_ERR_SOCK_RECV,
+    KII_ERR_HEADER_CALLBACK,
+    KII_ERR_WRITE_CALLBACK,
+    KII_ERR_ALLOCATION,
+    KII_ERR_TOO_LARGE_DATA,
+    KII_ERR_RESP_STATUS,
+    KII_ERR_PARSE_JSON,
+    KII_ERR_FAIL
+} kii_code_t;
 
-    /** represents scope of bucket/ topic. */
-    typedef enum kii_scope_type_t
-    {
-        KII_SCOPE_APP,
-        KII_SCOPE_USER,
-        KII_SCOPE_GROUP,
-        KII_SCOPE_THING
-    } kii_scope_type_t;
+/** bool type definition */
+typedef enum kii_bool_t
+{
+    KII_FALSE = 0,
+    KII_TRUE
+} kii_bool_t;
 
-    /** represents bucket */
-    typedef struct kii_bucket_t
-    {
-        kii_scope_type_t scope;
-        const char *scope_id;
-        const char *bucket_name;
+/** represents scope of bucket/ topic. */
+typedef enum kii_scope_type_t
+{
+    KII_SCOPE_APP,
+    KII_SCOPE_USER,
+    KII_SCOPE_GROUP,
+    KII_SCOPE_THING
+} kii_scope_type_t;
+
+/** represents bucket */
+typedef struct kii_bucket_t
+{
+    kii_scope_type_t scope;
+    const char *scope_id;
+    const char *bucket_name;
 } kii_bucket_t;
 
 /** represents topic */
@@ -296,41 +299,39 @@ kii_code_t kii_object_get(
 		const kii_bucket_t* bucket,
 		const char* object_id);
 
-/** Upload object body at once.
- *  Upload object body at one time.
- *  If the data is large,
- *  consider use chunk upload with kii_object_upload_body().
+/** Upload object body.
  *  \param [inout] kii sdk instance.
  *  \param [in] bucket specify the bucket of which object is stored.
  *  \param [in] object_id specify the id of the object of which body is added.
  *  \param [in] body_content_type content-type of the body.
- *  \param [in] data object body data.
- *  \param [in] data_length length of the data.
- *  \return 0:success, -1: failure
+ *  \param [in] read_cb callback function called for reading body contents.
+ *  \param [in] userdata read_cb context data.
+ *  \return kii_code_t
  */
-int kii_object_upload_body_at_once(
+kii_code_t kii_object_upload_body(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
 		const char* body_content_type,
-		const void* data,
-		size_t data_length);
+        size_t body_content_length,
+        const KII_CB_READ read_cb,
+        void* userdata
+);
 
-/** Download object body at one time.
- *  If the data size is large or unknown, consider use kii_object_download_body()
- *  instead.
- *  The result is cached in kii_core_t#response_body when succeeded.
+/** Download object body.
  *  \param [inout] kii sdk instance.
  *  \param [in] bucket specify the bucket of which object is stored.
  *  \param [in] object_id specify the id of the object of which body is added.
- *  \param [out] out_data_length length of the downloaded body. (in bytes)
- *  \return 0:success, -1: failure
+ *  \param [in] write_cb callback function writes body contents.
+ *  \param [in] userdata write_cb context data.
+ *  \return kii_code_t
  */
-int kii_object_download_body_at_once(
+kii_code_t kii_object_download_body(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
-		unsigned int* out_data_length);
+        const KII_CB_WRITE write_cb,
+        void* userdata);
 
 /** Subscribe to specified bucket.
  *  After succeeded,

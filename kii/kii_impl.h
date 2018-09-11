@@ -14,4 +14,7 @@ int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len);
 
 extern const char _APP_KEY_HEADER[];
 
+size_t _cb_read_buff(char *buffer, size_t size, size_t count, void *userdata);
+size_t _cb_write_buff(char *buffer, size_t size, size_t count, void *userdata);
+
 #endif

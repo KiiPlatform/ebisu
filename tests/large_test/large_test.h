@@ -2,6 +2,7 @@
 #define __large_test__
 
 #include <chrono>
+#include <functional>
 #include "kii.h"
 #include "secure_socket_impl.h"
 
@@ -39,6 +40,22 @@ inline void init(
 inline long long current_time() {
     auto now = std::chrono::system_clock::now();
     return now.time_since_epoch().count() / 1000;
+}
+
+class BodyFunc {
+public:
+    std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)> on_read;
+    std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)> on_write;
+};
+
+inline size_t read_cb(char *buffer, size_t size, size_t count, void *userdata) {
+    BodyFunc* ctx = (BodyFunc*)userdata;
+    return ctx->on_read(buffer, size, count, userdata);
+}
+
+inline size_t write_cb(char *buffer, size_t size, size_t count, void *userdata) {
+    BodyFunc* ctx = (BodyFunc*)userdata;
+    return ctx->on_write(buffer, size, count, userdata);
 }
 
 } // namespace kiiltest

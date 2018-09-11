@@ -11,6 +11,7 @@ static kii_code_t _make_bucket_path(
     const kii_bucket_t* bucket,
     const char* objects,
     const char* object_id,
+    const char* body,
     int* path_len) {
     char *scope_strs[] = { "", "users", "groups", "things" };
     switch(bucket->scope) {
@@ -18,11 +19,12 @@ static kii_code_t _make_bucket_path(
             *path_len = snprintf(
                 kii->_rw_buff,
                 kii->_rw_buff_size,
-                "/api/apps/%s/buckets/%s%s%s",
+                "/api/apps/%s/buckets/%s%s%s%s",
                 kii->_app_id,
                 bucket->bucket_name,
                 objects,
-                object_id);
+                object_id,
+                body);
             break;
         case KII_SCOPE_USER:
         case KII_SCOPE_GROUP:
@@ -30,13 +32,14 @@ static kii_code_t _make_bucket_path(
             *path_len = snprintf(
                 kii->_rw_buff,
                 kii->_rw_buff_size,
-                "/api/apps/%s/%s/%s/buckets/%s%s%s",
+                "/api/apps/%s/%s/%s/buckets/%s%s%s%s",
                 kii->_app_id,
                 scope_strs[bucket->scope],
                 bucket->scope_id,
                 bucket->bucket_name,
                 objects,
-                object_id);
+                object_id,
+                body);
             break;
         default:
             return KII_ERR_FAIL;
@@ -65,6 +68,23 @@ static kii_code_t _make_object_content_type(
     return KII_ERR_OK;
 }
 
+static kii_code_t _make_object_body_content_type(
+    kii_t* kii,
+    const char* object_body_content_type,
+    int* header_len)
+{
+    char ct_key[] = "Content-Type: ";
+    char *ct_value = "application/octet-stream";
+    if (object_body_content_type != NULL && strlen(object_body_content_type) > 0) {
+        ct_value = (char*)object_body_content_type;
+    }
+    *header_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "%s%s", ct_key, ct_value);
+    if (*header_len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    return KII_ERR_OK;
+}
+
 static kii_code_t _kii_object_post(
             kii_t* kii,
             const kii_bucket_t* bucket,
@@ -73,7 +93,7 @@ static kii_code_t _kii_object_post(
 {
     khc_set_host(&kii->_khc, kii->_app_host);
     int path_len = 0;
-    kii_code_t ret = _make_bucket_path(kii,bucket, "/objects", "", &path_len);
+    kii_code_t ret = _make_bucket_path(kii,bucket, "/objects", "", "", &path_len);
     if (ret != KII_ERR_OK) {
         return ret;
     }
@@ -139,7 +159,7 @@ static kii_code_t _kii_object_put(
 {
     khc_set_host(&kii->_khc, kii->_app_host);
     int path_len = 0;
-    kii_code_t ret = _make_bucket_path(kii,bucket, "/objects/", object_id, &path_len);
+    kii_code_t ret = _make_bucket_path(kii,bucket, "/objects/", object_id, "", &path_len);
     if (ret != KII_ERR_OK) {
         return ret;
     }
@@ -211,7 +231,7 @@ static kii_code_t _patch_object(
 {
     khc_set_host(&kii->_khc, kii->_app_host);
     int path_len = 0;
-    kii_code_t ret = _make_bucket_path(kii,bucket, "/objects/", object_id, &path_len);
+    kii_code_t ret = _make_bucket_path(kii,bucket, "/objects/", object_id, "", &path_len);
     if (ret != KII_ERR_OK) {
         return ret;
     }
@@ -274,7 +294,7 @@ static kii_code_t _delete_object(
 {
     khc_set_host(&kii->_khc, kii->_app_host);
     int path_len = 0;
-    kii_code_t ret = _make_bucket_path(kii,bucket, "/objects/", object_id, &path_len);
+    kii_code_t ret = _make_bucket_path(kii,bucket, "/objects/", object_id, "", &path_len);
     if (ret != KII_ERR_OK) {
         return ret;
     }
@@ -318,7 +338,7 @@ static kii_code_t _get_object(
 {
     khc_set_host(&kii->_khc, kii->_app_host);
     int path_len = 0;
-    kii_code_t ret = _make_bucket_path(kii,bucket, "/objects/", object_id, &path_len);
+    kii_code_t ret = _make_bucket_path(kii,bucket, "/objects/", object_id, "", &path_len);
     if (ret != KII_ERR_OK) {
         return ret;
     }
@@ -523,27 +543,162 @@ exit:
     return ret;
 }
 
-int kii_object_upload_body_at_once(
+kii_code_t _upload_body(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
         const char* body_content_type,
-        const void* data,
-        size_t data_length)
+        size_t body_content_length)
 {
-    // TODO: This API should be refined.
-    return -1;
+    khc_set_host(&kii->_khc, kii->_app_host);
+    int path_len = 0;
+    kii_code_t ret = _make_bucket_path(kii,bucket, "/objects/", object_id, "/body", &path_len);
+    if (ret != KII_ERR_OK) {
+        return ret;
+    }
+    khc_set_path(&kii->_khc, kii->_rw_buff);
+    khc_set_method(&kii->_khc, "PUT");
+
+    // Request headers.
+    khc_slist* headers = NULL;
+    int x_app_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "X-Kii-Appid: %s", kii->_app_id);
+    if (x_app_len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    headers = khc_slist_append(headers, kii->_rw_buff, x_app_len);
+    headers = khc_slist_append(headers, _APP_KEY_HEADER, strlen(_APP_KEY_HEADER));
+    if (strlen(kii->_author.access_token) > 0) {
+        int auth_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "Authorization: Bearer %s", kii->_author.access_token);
+        if (auth_len >= kii->_rw_buff_size) {
+            khc_slist_free_all(headers);
+            return KII_ERR_TOO_LARGE_DATA;
+        }
+        headers = khc_slist_append(headers, kii->_rw_buff, auth_len);
+    }
+
+    int header_len = 0;
+    ret = _make_object_body_content_type(kii, body_content_type, &header_len);
+    if (ret != KII_ERR_OK) {
+        khc_slist_free_all(headers);
+        return ret;
+    }
+    headers = khc_slist_append(headers, kii->_rw_buff, header_len);
+
+    // Content-Length.
+    char cl_h[128];
+    int cl_h_len = snprintf(cl_h, 128, "Content-Length: %lld", (long long)body_content_length);
+    if (cl_h_len >= 128) {
+        khc_slist_free_all(headers);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    headers = khc_slist_append(headers, cl_h, cl_h_len);
+    khc_set_req_headers(&kii->_khc, headers);
+
+    khc_code res = khc_perform(&kii->_khc);
+    khc_slist_free_all(headers);
+    return _convert_code(res);
 }
 
-int kii_object_download_body_at_once(
+kii_code_t kii_object_upload_body(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
-        unsigned int* out_data_length)
+        const char* body_content_type,
+        size_t body_content_length,
+        const KII_CB_READ read_cb,
+        void* userdata)
+{
+    khc_set_zero_excl_cb(&kii->_khc);
+    _reset_buff(kii);
+    khc_set_cb_read(&kii->_khc, read_cb, userdata);
+
+    kii_code_t ret = _upload_body(kii, bucket, object_id, body_content_type, body_content_length);
+    if (ret != KII_ERR_OK) {
+        goto exit;
+    }
+
+    int resp_code = khc_get_status_code(&kii->_khc);
+    if(resp_code < 200 || 300 <= resp_code) {
+        ret = KII_ERR_RESP_STATUS;
+        goto exit;
+    }
+
+exit:
+    // Restore default callback.
+    khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
+    return ret;
+}
+
+kii_code_t _download_body(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id)
+{
+    khc_set_host(&kii->_khc, kii->_app_host);
+    int path_len = 0;
+    kii_code_t ret = _make_bucket_path(kii,bucket, "/objects/", object_id, "/body", &path_len);
+    if (ret != KII_ERR_OK) {
+        return ret;
+    }
+    khc_set_path(&kii->_khc, kii->_rw_buff);
+    khc_set_method(&kii->_khc, "GET");
+
+    // Request headers.
+    khc_slist* headers = NULL;
+    int x_app_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "X-Kii-Appid: %s", kii->_app_id);
+    if (x_app_len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    headers = khc_slist_append(headers, kii->_rw_buff, x_app_len);
+    headers = khc_slist_append(headers, _APP_KEY_HEADER, strlen(_APP_KEY_HEADER));
+    if (strlen(kii->_author.access_token) > 0) {
+        int auth_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "Authorization: Bearer %s", kii->_author.access_token);
+        if (auth_len >= kii->_rw_buff_size) {
+            khc_slist_free_all(headers);
+            return KII_ERR_TOO_LARGE_DATA;
+        }
+        headers = khc_slist_append(headers, kii->_rw_buff, auth_len);
+    }
+
+    // Content-Length.
+    char cl0[] = "Content-Length: 0";
+    headers = khc_slist_append(headers, cl0, strlen(cl0));
+    khc_set_req_headers(&kii->_khc, headers);
+    kii->_rw_buff[0] = '\0';
+    _kii_set_content_length(kii, 0);
+
+    khc_code res = khc_perform(&kii->_khc);
+    khc_slist_free_all(headers);
+    return _convert_code(res);
+}
+
+kii_code_t kii_object_download_body(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id,
+        const KII_CB_WRITE write_cb,
+        void* userdata)
 
 {
-    // TODO: This API should be refined.
-    return -1;
+    khc_set_zero_excl_cb(&kii->_khc);
+    _reset_buff(kii);
+    khc_set_cb_write(&kii->_khc, write_cb, userdata);
+
+    kii_code_t ret = _download_body(kii, bucket, object_id);
+    if (ret != KII_ERR_OK) {
+        goto exit;
+    }
+
+    int resp_code = khc_get_status_code(&kii->_khc);
+    if(resp_code < 200 || 300 <= resp_code) {
+        ret = KII_ERR_RESP_STATUS;
+        goto exit;
+    }
+
+exit:
+    // Restore default callback.
+    khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
+    return ret;
 }
 
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
