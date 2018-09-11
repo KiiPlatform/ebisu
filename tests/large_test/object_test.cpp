@@ -111,12 +111,12 @@ TEST_CASE("Object Tests")
                 REQUIRE( get_res == KII_ERR_RESP_STATUS );
                 REQUIRE( khc_get_status_code(&kii._khc) == 404 );
             }
-            SECTION("Upload Body") {
+            SECTION("Upload Download Body") {
                 std::string body(
                     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
                 );
                 std::istringstream iss(body);
-                std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)> 
+                std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)>
                     on_read = [=, &iss](char *buffer, size_t size, size_t count, void *userdata)
                 {
                     return iss.read(buffer, size * count).gcount();
@@ -125,7 +125,21 @@ TEST_CASE("Object Tests")
                 ctx.on_read = on_read;
                 kii_code_t upload_res = kii_object_upload_body(&kii, &bucket, object_id, "text/plain", body.length(), kiiltest::read_cb, &ctx);
                 REQUIRE( khc_get_status_code(&kii._khc) == 200 );
-                REQUIRE( upload_res == KII_ERR_OK );                
+                REQUIRE( upload_res == KII_ERR_OK );
+
+                // Download uploaded body
+                std::ostringstream oss;
+                std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)>
+                    on_write = [=, &oss](char *buffer, size_t size, size_t count, void *userdata)
+                {
+                    oss.write(buffer, size * count);
+                    return size * count;
+                };
+                ctx.on_write = on_write;
+                kii_code_t download_res = kii_object_download_body(&kii, &bucket, object_id, kiiltest::write_cb, &ctx);
+                REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+                REQUIRE( download_res == KII_ERR_OK );
+                REQUIRE ( oss.str() == body );
             }
         }
 
