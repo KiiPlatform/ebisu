@@ -276,13 +276,48 @@ static khc_code _delete_object(
     return KHC_ERR_FAIL;
 }
 
-static khc_code _get_object(
+static kii_code_t _get_object(
         kii_t *kii,
         const kii_bucket_t *bucket,
         const char *object_id)
 {
-    // TODO: reimplement it.
-    return KHC_ERR_FAIL;
+    khc_set_host(&kii->_khc, kii->_app_host);
+    int path_len = 0;
+    kii_code_t ret = _make_bucket_path(kii,bucket, "/objects/", object_id, &path_len);
+    if (ret != KII_ERR_OK) {
+        return ret;
+    }
+    khc_set_path(&kii->_khc, kii->_rw_buff);
+    khc_set_method(&kii->_khc, "GET");
+
+    // Request headers.
+    khc_slist* headers = NULL;
+    int x_app_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "X-Kii-Appid: %s", kii->_app_id);
+    if (x_app_len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    headers = khc_slist_append(headers, kii->_rw_buff, x_app_len);
+    headers = khc_slist_append(headers, _APP_KEY_HEADER, strlen(_APP_KEY_HEADER));
+    if (strlen(kii->_author.access_token) > 0) {
+        int auth_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "Authorization: Bearer %s", kii->_author.access_token);
+        if (auth_len >= kii->_rw_buff_size) {
+            khc_slist_free_all(headers);
+            return KII_ERR_TOO_LARGE_DATA;
+        }
+        headers = khc_slist_append(headers, kii->_rw_buff, auth_len);
+    }
+    const char cl0[] = "Content-Length: 0";
+    headers = khc_slist_append(headers, cl0, strlen(cl0));
+
+    khc_set_req_headers(&kii->_khc, headers);
+
+    kii->_rw_buff[0] = '\0';
+    _kii_set_content_length(kii, 0);
+
+    khc_code code = khc_perform(&kii->_khc);
+    khc_slist_free_all(headers);
+
+    return _convert_code(code);
 }
 
 kii_code_t kii_object_post(
@@ -426,27 +461,28 @@ exit:
     return ret;
 }
 
-int kii_object_get(
+kii_code_t kii_object_get(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id)
 {
-    int ret = -1;
-
-    khc_code khc_err = _get_object(
+    khc_set_zero_excl_cb(&kii->_khc);
+    _reset_buff(kii);
+    kii_code_t ret = _get_object(
             kii,
             bucket,
             object_id);
-    if (khc_err != KHC_ERR_OK) {
+    if (ret != KHC_ERR_OK) {
         goto exit;
     }
 
     int resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
+        ret = KII_ERR_RESP_STATUS;
         goto exit;
     }
 
-    ret = 0;
+    ret = KII_ERR_OK;
 exit:
     return ret;
 }
