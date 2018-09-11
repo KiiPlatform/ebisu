@@ -664,6 +664,7 @@ kii_code_t _download_body(
     char cl0[] = "Content-Length: 0";
     headers = khc_slist_append(headers, cl0, strlen(cl0));
     khc_set_req_headers(&kii->_khc, headers);
+    kii->_rw_buff[0] = '\0';
     _kii_set_content_length(kii, 0);
 
     khc_code res = khc_perform(&kii->_khc);
