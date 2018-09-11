@@ -277,9 +277,9 @@ kii_code_t kii_object_patch(
  *  \param [inout] kii sdk instance.
  *  \param [in] bucket specify the bucket of which object is stored.
  *  \param [in] object_id specify the id of the object.
- *  \return  0:success, -1: failure
+ *  \return  kii_code_t
  */
-int kii_object_delete(
+kii_code_t kii_object_delete(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id);
