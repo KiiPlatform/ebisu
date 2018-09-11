@@ -3,6 +3,8 @@
 #include <cstring>
 #include <chrono>
 #include <thread>
+#include <sstream>
+#include <functional>
 
 #include <kii.h>
 #include <kii_json.h>
@@ -40,6 +42,7 @@ TEST_CASE("Object Tests")
         bucket.scope_id = NULL;
 
         SECTION("POST") {
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
             const char object[] = "{}";
             char object_id[128];
             object_id[0] = '\0';
@@ -107,6 +110,22 @@ TEST_CASE("Object Tests")
                 kii_code_t get_res = kii_object_get(&kii, &bucket, object_id);
                 REQUIRE( get_res == KII_ERR_RESP_STATUS );
                 REQUIRE( khc_get_status_code(&kii._khc) == 404 );
+            }
+            SECTION("Upload Body") {
+                std::string body(
+                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+                );
+                std::istringstream iss(body);
+                std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)> 
+                    on_read = [=, &iss](char *buffer, size_t size, size_t count, void *userdata)
+                {
+                    return iss.read(buffer, size * count).gcount();
+                };
+                kiiltest::BodyFunc ctx;
+                ctx.on_read = on_read;
+                kii_code_t upload_res = kii_object_upload_body(&kii, &bucket, object_id, "text/plain", body.length(), kiiltest::read_cb, &ctx);
+                REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+                REQUIRE( upload_res == KII_ERR_OK );                
             }
         }
 
