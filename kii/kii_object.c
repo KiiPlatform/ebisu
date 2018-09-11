@@ -317,8 +317,7 @@ static kii_code_t _delete_object(
         }
         headers = khc_slist_append(headers, kii->_rw_buff, auth_len);
     }
-    const char cl0[] = "Content-Length: 0";
-    headers = khc_slist_append(headers, cl0, strlen(cl0));
+    headers = khc_slist_append(headers, _CONTENT_LENGTH_ZERO, strlen(_CONTENT_LENGTH_ZERO));
 
     khc_set_req_headers(&kii->_khc, headers);
 
@@ -361,8 +360,7 @@ static kii_code_t _get_object(
         }
         headers = khc_slist_append(headers, kii->_rw_buff, auth_len);
     }
-    const char cl0[] = "Content-Length: 0";
-    headers = khc_slist_append(headers, cl0, strlen(cl0));
+    headers = khc_slist_append(headers, _CONTENT_LENGTH_ZERO, strlen(_CONTENT_LENGTH_ZERO));
 
     khc_set_req_headers(&kii->_khc, headers);
 
@@ -661,8 +659,7 @@ kii_code_t _download_body(
     }
 
     // Content-Length.
-    char cl0[] = "Content-Length: 0";
-    headers = khc_slist_append(headers, cl0, strlen(cl0));
+    headers = khc_slist_append(headers, _CONTENT_LENGTH_ZERO, strlen(_CONTENT_LENGTH_ZERO));
     khc_set_req_headers(&kii->_khc, headers);
     kii->_rw_buff[0] = '\0';
     _kii_set_content_length(kii, 0);
