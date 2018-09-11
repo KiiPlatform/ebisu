@@ -202,15 +202,69 @@ static kii_code_t _kii_object_put(
     return _convert_code(code);
 }
 
-static khc_code _patch_object(
+static kii_code_t _patch_object(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
         const char* patch_data,
         const char* opt_etag)
 {
-    // TODO: reimplement it.
-    return KHC_ERR_FAIL;
+    khc_set_host(&kii->_khc, kii->_app_host);
+    int path_len = 0;
+    kii_code_t ret = _make_bucket_path(kii,bucket, "/objects/", object_id, &path_len);
+    if (ret != KII_ERR_OK) {
+        return ret;
+    }
+    khc_set_path(&kii->_khc, kii->_rw_buff);
+    khc_set_method(&kii->_khc, "PATCH");
+
+    // Request headers.
+    khc_slist* headers = NULL;
+    int x_app_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "X-Kii-Appid: %s", kii->_app_id);
+    if (x_app_len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    headers = khc_slist_append(headers, kii->_rw_buff, x_app_len);
+    headers = khc_slist_append(headers, _APP_KEY_HEADER, strlen(_APP_KEY_HEADER));
+    int auth_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "Authorization: Bearer %s", kii->_author.access_token);
+    if (auth_len >= kii->_rw_buff_size) {
+        khc_slist_free_all(headers);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    headers = khc_slist_append(headers, kii->_rw_buff, auth_len);
+
+    if (opt_etag != NULL && strlen(opt_etag) > 0) {
+        int etag_h_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "If-Match: %s", opt_etag);
+        if (etag_h_len >= kii->_rw_buff_size) {
+            khc_slist_free_all(headers);
+            return KII_ERR_TOO_LARGE_DATA;
+        }
+        headers = khc_slist_append(headers, kii->_rw_buff, etag_h_len);
+    }
+
+    // Request body
+    size_t content_len = strlen(patch_data);
+    if (content_len + 1 > kii->_rw_buff_size) {
+        khc_slist_free_all(headers);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    strncpy(kii->_rw_buff, patch_data, kii->_rw_buff_size);
+
+    // Content-Length.
+    char cl_h[128];
+    int cl_h_len = snprintf(cl_h, 128, "Content-Length: %lld", (long long)content_len);
+    if (cl_h_len >= 128) {
+        khc_slist_free_all(headers);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    headers = khc_slist_append(headers, cl_h, cl_h_len);
+    khc_set_req_headers(&kii->_khc, headers);
+    _kii_set_content_length(kii, content_len);
+
+    khc_code code = khc_perform(&kii->_khc);
+    khc_slist_free_all(headers);
+
+    return _convert_code(code);
 }
 
 static khc_code _delete_object(
@@ -238,6 +292,7 @@ kii_code_t kii_object_post(
         const char* object_content_type,
         char* out_object_id)
 {
+    khc_set_zero_excl_cb(&kii->_khc);
     _reset_buff(kii);
     kii_code_t ret = _kii_object_post(
             kii,
@@ -255,7 +310,7 @@ kii_code_t kii_object_post(
     }
 
     char* buff = kii->_rw_buff;
-    size_t buff_size = kii->_rw_buff_size;
+    size_t buff_size = kii->_rw_buff_written;
     if (buff == NULL) {
         ret = KII_ERR_FAIL;
         goto exit;
@@ -291,6 +346,7 @@ kii_code_t kii_object_put(
         const char* opt_etag)
 {
     _reset_buff(kii);
+    khc_set_zero_excl_cb(&kii->_khc);
     kii_code_t ret = _kii_object_put(
             kii,
             bucket,
@@ -314,33 +370,35 @@ exit:
 
 }
 
-int kii_object_patch(
+kii_code_t kii_object_patch(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
         const char* patch_data,
         const char* opt_etag)
 {
-    int ret = -1;
-    khc_code khc_err = _patch_object(
+    _reset_buff(kii);
+    khc_set_zero_excl_cb(&kii->_khc);
+    kii_code_t code = _patch_object(
             kii,
             bucket,
             object_id,
             patch_data,
             opt_etag);
-    if (khc_err != KHC_ERR_OK) {
+    if (code != KII_ERR_OK) {
         goto exit;
     }
 
     int resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
+        code = KII_ERR_RESP_STATUS;
         goto exit;
     }
 
-    ret = 0;
+    code = KII_ERR_OK;
 
 exit:
-    return ret;	
+    return code;	
 }
 
 int kii_object_delete(

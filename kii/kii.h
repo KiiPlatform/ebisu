@@ -264,9 +264,9 @@ kii_code_t kii_object_put(
  *  \param [in] patch_data key-value pair of the object in json format.
  *  \param [in] opt_etag etag of the object. if specified, update will be failed
  *  if there is updates on cloud. if NULL, forcibly updates.
- *  \return  0:success, -1: failure
+ *  \return  kii_code_t
  */
-int kii_object_patch(
+kii_code_t kii_object_patch(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,

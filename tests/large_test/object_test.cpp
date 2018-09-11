@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <cstring>
+#include <chrono>
+#include <thread>
 
 #include <kii.h>
 #include <kii_json.h>
@@ -10,6 +12,8 @@
 
 TEST_CASE("Object Tests")
 {
+    // To Avoid 429 Too Many Requests
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
     kii_code_t ret = KII_ERR_FAIL;
     size_t buff_size = 4096;
     char buff[buff_size];
@@ -58,6 +62,26 @@ TEST_CASE("Object Tests")
                 // Now etag_copy should be obsoleted.
                 code = kii_object_put(&kii, &bucket, object_id, object, NULL, etag_copy);
                 REQUIRE( code == KII_ERR_RESP_STATUS );
+                REQUIRE( khc_get_status_code(&kii._khc) == 409 );
+            }
+            SECTION("PATCH") {
+                const char patch_data[] = "{\"patch\":1}";
+                kii_code_t p_code = kii_object_patch(&kii, &bucket, object_id, patch_data, NULL);
+                REQUIRE( p_code == KII_ERR_OK );
+                REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+
+                char* p_etag = kii_get_etag(&kii);
+                size_t p_etag_len = strlen(etag);
+                char p_etag_copy[p_etag_len+1];
+                memcpy(p_etag_copy, p_etag, p_etag_len);
+                p_etag_copy[p_etag_len] = '\0';
+
+                p_code = kii_object_patch(&kii, &bucket, object_id, patch_data, p_etag_copy);
+                REQUIRE( p_code == KII_ERR_OK );
+                REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+                // Now p_etag_copy is not valid.
+                p_code = kii_object_patch(&kii, &bucket, object_id, patch_data, p_etag_copy);
+                REQUIRE( p_code == KII_ERR_RESP_STATUS );
                 REQUIRE( khc_get_status_code(&kii._khc) == 409 );
             }
         }

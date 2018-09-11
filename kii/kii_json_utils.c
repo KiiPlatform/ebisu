@@ -17,15 +17,14 @@ kii_json_parse_result_t prv_kii_json_read_object(
     kii_json.error_string_buff = error_message;
     kii_json.error_string_length =
         sizeof(error_message) / sizeof(error_message[0]);
+    error_message[0] = '\0';
 
     kii_json.resource = &(kii->kii_json_resource);
     retval = kii_json_read_object(&kii_json, json_string, json_string_size,
                 fields);
 
     if (retval != KII_JSON_PARSE_SUCCESS) {
-        M_KII_LOG(kii->kii_core.logger_cb(
-                "fail to parse json: result=%d, message=%s\n",
-                retval, kii_json.error_string_buff));
+        printf("fail to parse json: result=%d, message=%s\n",retval, kii_json.error_string_buff);
     }
     return retval;
 }
