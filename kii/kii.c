@@ -5,6 +5,7 @@
 #define KII_SDK_INFO "sn=te;sv=1.2.4"
 
 const char _APP_KEY_HEADER[] = "X-Kii-Appkey: k";
+const char _CONTENT_LENGTH_ZERO[] = "Content-Length: 0";
 
 size_t _cb_write_buff(char *buffer, size_t size, size_t count, void *userdata)
 {
