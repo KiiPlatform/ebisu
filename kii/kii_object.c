@@ -629,15 +629,75 @@ exit:
     return ret;
 }
 
-int kii_object_download_body_at_once(
+kii_code_t _download_body(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id)
+{
+    khc_set_host(&kii->_khc, kii->_app_host);
+    int path_len = 0;
+    kii_code_t ret = _make_bucket_path(kii,bucket, "/objects/", object_id, "/body", &path_len);
+    if (ret != KII_ERR_OK) {
+        return ret;
+    }
+    khc_set_path(&kii->_khc, kii->_rw_buff);
+    khc_set_method(&kii->_khc, "GET");
+
+    // Request headers.
+    khc_slist* headers = NULL;
+    int x_app_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "X-Kii-Appid: %s", kii->_app_id);
+    if (x_app_len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    headers = khc_slist_append(headers, kii->_rw_buff, x_app_len);
+    headers = khc_slist_append(headers, _APP_KEY_HEADER, strlen(_APP_KEY_HEADER));
+    if (strlen(kii->_author.access_token) > 0) {
+        int auth_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "Authorization: Bearer %s", kii->_author.access_token);
+        if (auth_len >= kii->_rw_buff_size) {
+            khc_slist_free_all(headers);
+            return KII_ERR_TOO_LARGE_DATA;
+        }
+        headers = khc_slist_append(headers, kii->_rw_buff, auth_len);
+    }
+
+    // Content-Length.
+    char cl0[] = "Content-Length: 0";
+    headers = khc_slist_append(headers, cl0, strlen(cl0));
+    khc_set_req_headers(&kii->_khc, headers);
+    _kii_set_content_length(kii, 0);
+
+    khc_code res = khc_perform(&kii->_khc);
+    khc_slist_free_all(headers);
+    return _convert_code(res);
+}
+
+kii_code_t kii_object_download_body(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
-        unsigned int* out_data_length)
+        const KII_CB_WRITE write_cb,
+        void* userdata)
 
 {
-    // TODO: This API should be refined.
-    return -1;
+    khc_set_zero_excl_cb(&kii->_khc);
+    _reset_buff(kii);
+    khc_set_cb_write(&kii->_khc, write_cb, userdata);
+
+    kii_code_t ret = _download_body(kii, bucket, object_id);
+    if (ret != KII_ERR_OK) {
+        goto exit;
+    }
+
+    int resp_code = khc_get_status_code(&kii->_khc);
+    if(resp_code < 200 || 300 <= resp_code) {
+        ret = KII_ERR_RESP_STATUS;
+        goto exit;
+    }
+
+exit:
+    // Restore default callback.
+    khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
+    return ret;
 }
 
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

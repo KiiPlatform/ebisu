@@ -318,21 +318,20 @@ kii_code_t kii_object_upload_body(
         void* userdata
 );
 
-/** Download object body at one time.
- *  If the data size is large or unknown, consider use kii_object_download_body()
- *  instead.
- *  The result is cached in kii_core_t#response_body when succeeded.
+/** Download object body.
  *  \param [inout] kii sdk instance.
  *  \param [in] bucket specify the bucket of which object is stored.
  *  \param [in] object_id specify the id of the object of which body is added.
- *  \param [out] out_data_length length of the downloaded body. (in bytes)
- *  \return 0:success, -1: failure
+ *  \param [in] write_cb callback function writes body contents.
+ *  \param [in] userdata write_cb context data.
+ *  \return kii_code_t
  */
-int kii_object_download_body_at_once(
+kii_code_t kii_object_download_body(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
-		unsigned int* out_data_length);
+        const KII_CB_WRITE write_cb,
+        void* userdata);
 
 /** Subscribe to specified bucket.
  *  After succeeded,
