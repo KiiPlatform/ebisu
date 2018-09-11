@@ -292,7 +292,6 @@ kii_code_t kii_object_post(
         const char* object_content_type,
         char* out_object_id)
 {
-    printf("kii_object_post\n");
     khc_set_zero_excl_cb(&kii->_khc);
     _reset_buff(kii);
     kii_code_t ret = _kii_object_post(
@@ -312,7 +311,6 @@ kii_code_t kii_object_post(
 
     char* buff = kii->_rw_buff;
     size_t buff_size = kii->_rw_buff_written;
-    printf("kii_object_post buff_size: %d\n", buff_size);
     if (buff == NULL) {
         ret = KII_ERR_FAIL;
         goto exit;
@@ -347,7 +345,6 @@ kii_code_t kii_object_put(
         const char* object_content_type,
         const char* opt_etag)
 {
-    printf("kii_object_put\n");
     _reset_buff(kii);
     khc_set_zero_excl_cb(&kii->_khc);
     kii_code_t ret = _kii_object_put(
@@ -380,7 +377,6 @@ kii_code_t kii_object_patch(
         const char* patch_data,
         const char* opt_etag)
 {
-    printf("kii_object_patch\n");
     _reset_buff(kii);
     khc_set_zero_excl_cb(&kii->_khc);
     kii_code_t code = _patch_object(

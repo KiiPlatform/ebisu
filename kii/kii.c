@@ -8,7 +8,6 @@ const char _APP_KEY_HEADER[] = "X-Kii-Appkey: k";
 
 size_t _cb_write_buff(char *buffer, size_t size, size_t count, void *userdata)
 {
-    printf("_cb_write_buff size:%d count:%d\n", size, count);
     kii_t *kii = (kii_t *)userdata;
     if (kii->_rw_buff_written == 0) {
         memset(kii->_rw_buff, '\0', kii->_rw_buff_size);
