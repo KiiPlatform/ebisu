@@ -9,6 +9,7 @@
 #include "secure_socket_impl.h"
 #include "catch.hpp"
 #include "large_test.h"
+#include "picojson.h"
 
 TEST_CASE("Object Tests")
 {
@@ -83,6 +84,21 @@ TEST_CASE("Object Tests")
                 p_code = kii_object_patch(&kii, &bucket, object_id, patch_data, p_etag_copy);
                 REQUIRE( p_code == KII_ERR_RESP_STATUS );
                 REQUIRE( khc_get_status_code(&kii._khc) == 409 );
+            }
+            SECTION("GET") {
+                kii_code_t g_code = kii_object_get(&kii, &bucket, object_id);
+                REQUIRE( g_code == KII_ERR_OK );
+                REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+
+                // Parse response.
+                picojson::value v;
+                auto err_str = picojson::parse(v, buff);
+                REQUIRE ( err_str.empty() );
+                REQUIRE ( v.is<picojson::object>() );
+                picojson::object obj = v.get<picojson::object>();
+                auto obj_id = obj.at("_id");
+                REQUIRE ( obj_id.is<std::string>() );
+                REQUIRE ( obj_id.get<std::string>() == std::string(object_id) );
             }
         }
 
