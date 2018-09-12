@@ -56,6 +56,18 @@ kii_code_t _delete_object(
     const kii_bucket_t *bucket,
     const char *object_id);
 
+kii_code_t _upload_body(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id,
+        const char* body_content_type,
+        size_t body_content_length);
+
+kii_code_t _download_body(
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_id);
+
 #ifdef __cplusplus
 }
 #endif
