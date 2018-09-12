@@ -150,6 +150,8 @@ typedef struct kii_t {
     size_t _rw_buff_read;
     size_t _rw_buff_written;
 
+    khc_slist* _req_headers;
+
     char _etag[64];
     /** Resource used by KII JSON library.
      *
