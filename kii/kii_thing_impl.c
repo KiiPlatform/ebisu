@@ -4,7 +4,7 @@
 #include "kii_json_utils.h"
 #include <string.h>
 
-kii_code_t _thing_authentication(
+kii_code_t _thing_auth(
         kii_t* kii,
         const char* vendor_thing_id,
         const char* password)
@@ -62,7 +62,7 @@ kii_code_t _thing_authentication(
     return _convert_code(code);
 }
 
-kii_code_t _register_thing_with_id(
+kii_code_t _thing_register(
         kii_t* kii,
         const char* vendor_thing_id,
         const char* password,

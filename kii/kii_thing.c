@@ -16,7 +16,7 @@ kii_code_t kii_thing_auth(
     khc_set_zero_excl_cb(&kii->_khc);
     kii_code_t ret = KII_ERR_FAIL;
 
-    ret = _thing_authentication(kii, vendor_thing_id, password);
+    ret = _thing_auth(kii, vendor_thing_id, password);
     if (ret != KII_ERR_OK) {
         goto exit;
     }
@@ -70,7 +70,7 @@ kii_code_t kii_thing_register(
     khc_set_zero_excl_cb(&kii->_khc);
     kii_code_t ret = KII_ERR_FAIL;
 
-    ret = _register_thing_with_id(kii, vendor_thing_id,
+    ret = _thing_register(kii, vendor_thing_id,
             password, thing_type);
     if (ret != KII_ERR_OK) {
         goto exit;
