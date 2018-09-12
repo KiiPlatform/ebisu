@@ -52,6 +52,18 @@ kii_code_t _set_bucket_path(
     }
 }
 
+kii_code_t _set_content_type(
+    kii_t* kii,
+    const char* content_type)
+{
+    int header_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "Content-Type: %s", content_type);
+    if (header_len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    kii->_req_headers = khc_slist_append(kii->_req_headers, kii->_rw_buff, header_len);
+    return KII_ERR_OK;
+}
+
 kii_code_t _set_object_content_type(
     kii_t* kii,
     const char* object_content_type)

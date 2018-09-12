@@ -18,6 +18,10 @@ kii_code_t _set_object_body_content_type(
     kii_t* kii,
     const char* object_body_content_type);
 
+kii_code_t _set_content_type(
+    kii_t* kii,
+    const char* content_type);
+
 kii_code_t _set_content_length(
     kii_t* kii,
     size_t content_length);
