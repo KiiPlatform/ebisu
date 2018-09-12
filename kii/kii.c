@@ -162,11 +162,6 @@ char* kii_get_etag(kii_t* kii) {
     return kii->_etag;
 }
 
-int _kii_set_content_length(kii_t* kii, size_t content_length) {
-    kii->_rw_buff_req_size = content_length;
-    return 0;
-}
-
 kii_code_t _convert_code(khc_code khc_c) {
     switch(khc_c) {
         case KHC_ERR_OK:
