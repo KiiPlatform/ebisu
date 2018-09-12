@@ -200,6 +200,11 @@ void _reset_buff(kii_t* kii) {
     kii->_etag[0] = '\0';
 }
 
+void _req_headers_free_all(kii_t* kii) {
+    khc_slist_free_all(kii->_req_headers);
+    kii->_req_headers = NULL;
+}
+
 int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len) {
     char header_cpy[header_len + 1];
     memcpy(header_cpy, header, header_len);

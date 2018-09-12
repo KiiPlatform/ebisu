@@ -198,34 +198,35 @@ kii_code_t _kii_object_post(
     // Request headers.
     ret = _set_app_id_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_app_key_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_auth_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_object_content_type(kii, object_content_type);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
 
     // Request body
     ret = _set_req_body(kii, object_data);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
 
+    khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
-    khc_slist_free_all(kii->_req_headers);
+    _req_headers_free_all(kii);
     return _convert_code(code);
 }
 
@@ -249,38 +250,39 @@ kii_code_t _kii_object_put(
     // Request headers.
     ret = _set_app_id_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_app_key_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_auth_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_object_content_type(kii, opt_object_content_type);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_if_match(kii, opt_etag);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
 
     ret = _set_req_body(kii, object_data);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
 
+    khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
-    khc_slist_free_all(kii->_req_headers);
+    _req_headers_free_all(kii);
 
     return _convert_code(code);
 }
@@ -303,33 +305,34 @@ kii_code_t _patch_object(
     // Request headers.
     ret = _set_app_id_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_app_key_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_auth_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_if_match(kii, opt_etag);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
 
     ret = _set_req_body(kii, patch_data);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
 
+    khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
-    khc_slist_free_all(kii->_req_headers);
+    _req_headers_free_all(kii);
 
     return _convert_code(code);
 }
@@ -350,27 +353,28 @@ kii_code_t _delete_object(
     // Request headers.
     ret = _set_app_id_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_app_key_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_auth_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_req_body(kii, "");
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
 
+    khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
-    khc_slist_free_all(kii->_req_headers);
+    _req_headers_free_all(kii);
 
     return _convert_code(code);
 }
@@ -391,27 +395,28 @@ kii_code_t _get_object(
     // Request headers.
     ret = _set_app_id_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_app_key_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_auth_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_req_body(kii, "");
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
 
+    khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
-    khc_slist_free_all(kii->_req_headers);
+    _req_headers_free_all(kii);
 
     return _convert_code(code);
 }
@@ -434,17 +439,17 @@ kii_code_t _upload_body(
     // Request headers.
     ret = _set_app_id_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_app_key_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_auth_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_object_body_content_type(kii, body_content_type);
@@ -455,12 +460,13 @@ kii_code_t _upload_body(
 
     ret = _set_content_length(kii, body_content_length);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
 
+    khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_code res = khc_perform(&kii->_khc);
-    khc_slist_free_all(kii->_req_headers);
+    _req_headers_free_all(kii);
     return _convert_code(res);
 }
 
@@ -480,26 +486,27 @@ kii_code_t _download_body(
     // Request headers.
     ret = _set_app_id_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_app_key_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_auth_header(kii);
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
     ret = _set_req_body(kii, "");
     if (ret != KII_ERR_OK) {
-        khc_slist_free_all(kii->_req_headers);
+        _req_headers_free_all(kii);
         return ret;
     }
 
+    khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_code res = khc_perform(&kii->_khc);
-    khc_slist_free_all(kii->_req_headers);
+    _req_headers_free_all(kii);
     return _convert_code(res);
 }
