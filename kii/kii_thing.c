@@ -7,7 +7,7 @@
 #include "kii_thing_impl.h"
 #include "kii_json_utils.h"
 
-kii_code_t kii_thing_authenticate(
+kii_code_t kii_thing_auth(
         kii_t* kii,
         const char* vendor_thing_id,
         const char* password)
