@@ -134,6 +134,8 @@ kii_code_t kii_install_push(
         char* installation_id,
         size_t installation_id_len)
 {
+    khc_set_zero_excl_cb(&kii->_khc);
+    _reset_buff(kii);
 
     kii_code_t res = _install_push(kii, development);
     if (res != KII_ERR_OK) {

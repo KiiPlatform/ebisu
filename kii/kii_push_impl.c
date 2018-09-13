@@ -9,8 +9,55 @@ kii_code_t _install_push(
         kii_t* kii,
         kii_bool_t development)
 {
-    // TODO: reimplement it.
-    return KII_ERR_FAIL;
+    khc_set_host(&kii->_khc, kii->_app_host);
+    khc_set_method(&kii->_khc, "POST");
+
+    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size,
+        "/api/apps/%s/installations", kii->_app_id);
+    if (path_len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+
+    // Request Headers
+    kii_code_t res = _set_app_id_header(kii);
+    if (res != KII_ERR_OK) {
+        _req_headers_free_all(kii);
+        return res;
+    }
+    res = _set_app_key_header(kii);
+    if (res != KII_ERR_OK) {
+        _req_headers_free_all(kii);
+        return res;
+    }
+    res = _set_auth_header(kii);
+    if (res != KII_ERR_OK) {
+        _req_headers_free_all(kii);
+        return res;
+    }
+
+    // Request body
+    const char* flag = "false";
+    if (development == KII_TRUE) {
+        flag = "true";
+    }
+    int body_len = snprintf(kii->_rw_buff, kii->_rw_buff_size,
+        "{\"deviceType\":\"MQTT\", \"development\": \"%s\"}",
+        flag);
+    if (body_len >= kii->_rw_buff_size) {
+        _req_headers_free_all(kii);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    res =_set_content_length(kii, body_len);
+    if (res != KII_ERR_OK) {
+        _req_headers_free_all(kii);
+        return res;
+    }
+
+    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_code code = khc_perform(&kii->_khc);
+    _req_headers_free_all(kii);
+
+    return _convert_code(code);
 }
 
 kii_code_t _get_mqtt_endpoint(
