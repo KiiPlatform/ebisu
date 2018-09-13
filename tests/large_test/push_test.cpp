@@ -38,15 +38,23 @@ TEST_CASE("Push Tests")
         char object_id[128];
         object_id[0] = '\0';
         kii_code_t post_res = kii_object_post(&kii, &bucket, object, NULL, object_id);
-        REQUIRE(post_res == KII_ERR_OK);
+        CHECK(post_res == KII_ERR_OK);
         REQUIRE(khc_get_status_code(&kii._khc) == 201);
 
         kii_code_t sub_res = kii_subscribe_bucket(&kii, &bucket);
-        REQUIRE(sub_res == KII_ERR_OK);
+        CHECK(sub_res == KII_ERR_OK);
         REQUIRE(khc_get_status_code(&kii._khc) == 204);
 
         kii_code_t sub_res2 = kii_subscribe_bucket(&kii, &bucket);
+        CHECK(sub_res2 == KII_ERR_OK);
         REQUIRE(khc_get_status_code(&kii._khc) == 409);
-        REQUIRE(sub_res2 == KII_ERR_OK);
+
+        kii_code_t unsub_res = kii_unsubscribe_bucket(&kii, &bucket);
+        CHECK(unsub_res == KII_ERR_OK);
+        REQUIRE(khc_get_status_code(&kii._khc) == 204);
+
+        kii_code_t unsub_res2 = kii_unsubscribe_bucket(&kii, &bucket);
+        CHECK(unsub_res2 == KII_ERR_RESP_STATUS);
+        REQUIRE(khc_get_status_code(&kii._khc) == 404);
     }
 }

@@ -32,6 +32,8 @@ exit:
 
 kii_code_t kii_unsubscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
 {
+    khc_set_zero_excl_cb(&kii->_khc);
+    _reset_buff(kii);
 
     kii_code_t res = _unsubscribe_bucket(kii, bucket);
     if (res != KII_ERR_OK) {
