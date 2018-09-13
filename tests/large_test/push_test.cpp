@@ -86,8 +86,23 @@ TEST_CASE("Push Tests")
         CHECK(put_res == KII_ERR_OK);
         REQUIRE(khc_get_status_code(&kii._khc) == 204);
 
+        // Putting same topic results 409
         kii_code_t put_res2 = kii_put_topic(&kii, &topic);
         CHECK(put_res2 == KII_ERR_OK);
         REQUIRE(khc_get_status_code(&kii._khc) == 409);
+
+        SECTION("Delete thing scope topic") {
+            // To Avoid 429 Too Many Requests
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+            kii_code_t del_res = kii_delete_topic(&kii, &topic);
+            CHECK(del_res == KII_ERR_OK);
+            REQUIRE(khc_get_status_code(&kii._khc) == 204);
+
+            // Deleting same topic results 404.
+            kii_code_t del_res2 = kii_delete_topic(&kii, &topic);
+            CHECK(del_res2 == KII_ERR_RESP_STATUS);
+            REQUIRE(khc_get_status_code(&kii._khc) == 404);
+        }
     }
 }
