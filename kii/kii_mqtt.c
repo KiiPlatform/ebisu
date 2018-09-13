@@ -4,7 +4,7 @@
 #include "kii_mqtt.h"
 #include "kii.h"
 
-int kiiMQTT_encode(char* buf, int length)
+int _mqtt_encode(char* buf, int length)
 {
     int rc = 0;
     char d;
@@ -21,7 +21,7 @@ int kiiMQTT_encode(char* buf, int length)
     return rc;
 }
 
-int kiiMQTT_decode(char* buf, int* value)
+int _mqtt_decode(char* buf, int* value)
 {
     int i = 0;
     int multiplier = 1;
@@ -41,7 +41,7 @@ int kiiMQTT_decode(char* buf, int* value)
     return len;
 }
 
-int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short keepAliveInterval)
+int _mqtt_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short keepAliveInterval)
 {
     size_t i;
     size_t j;
@@ -122,7 +122,7 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
     /* Fixed header:byte1 */
     kii->mqtt_buffer[j++] = 0x10;
     /*/ Fixed header:Remaining Length*/
-    j += kiiMQTT_encode(&(kii->mqtt_buffer[j]), i - 8);
+    j += _mqtt_encode(&(kii->mqtt_buffer[j]), i - 8);
 
     /* copy the other tytes */
     for(k = 0; k < i - 8; k++)
@@ -182,7 +182,7 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
     }
 }
 
-int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
+int _mqtt_subscribe(kii_t* kii, const char* topic, enum QoS qos)
 {
     size_t i;
     size_t j;
@@ -217,7 +217,7 @@ int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
     /* Fixed header: byte1*/
     kii->mqtt_buffer[j++] = (char)0x82;
     /* Fixed header:Remaining Length*/
-    j += kiiMQTT_encode(&(kii->mqtt_buffer[j]), i - 8);
+    j += _mqtt_encode(&(kii->mqtt_buffer[j]), i - 8);
 
     /* copy the other tytes*/
     for(k = 0; k < i - 8; k++)
@@ -275,7 +275,7 @@ int kiiMQTT_subscribe(kii_t* kii, const char* topic, enum QoS qos)
     }
 }
 
-int kiiMQTT_pingReq(kii_t* kii)
+int _mqtt_pingreq(kii_t* kii)
 {
     char buf[2];
     khc_sock_code_t sock_err;

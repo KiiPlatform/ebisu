@@ -251,7 +251,7 @@ static int kiiPush_receivePushNotification(
             kii->mqtt_sock_recv_cb(&kii->mqtt_sock_recv_ctx, kii->mqtt_buffer+2, KII_PUSH_TOPIC_HEADER_SIZE, &rcvdCounter);
             if(rcvdCounter == KII_PUSH_TOPIC_HEADER_SIZE)
             {
-                byteLen = kiiMQTT_decode(&kii->mqtt_buffer[1], &remainingLen);
+                byteLen = _mqtt_decode(&kii->mqtt_buffer[1], &remainingLen);
             }
             else
             {
@@ -405,7 +405,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
                 }
                 break;
             case KII_MQTT_SUBSCRIBING_TOPIC:
-                if (kiiMQTT_connect(kii, &endpoint,
+                if (_mqtt_connect(kii, &endpoint,
                                 KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS) != 0)
                 {
                     M_KII_LOG(kii->kii_core.logger_cb(
@@ -415,7 +415,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
                 }
                 kii->_mqtt_connected = 1;
 
-                if(kiiMQTT_subscribe(kii, endpoint.topic, QOS0) < 0)
+                if(_mqtt_subscribe(kii, endpoint.topic, QOS0) < 0)
                 {
                     M_KII_LOG(kii->kii_core.logger_cb(
                             "kii-error: mqtt subscribe error\r\n"));
@@ -449,7 +449,7 @@ static void* kiiPush_pingReqTask(void* sdata)
     {
         if(kii->_mqtt_connected == 1)
         {
-            kiiMQTT_pingReq(kii);
+            _mqtt_pingreq(kii);
         }
         kii->delay_ms_cb(KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS * 1000);
     }
