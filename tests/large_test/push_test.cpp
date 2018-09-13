@@ -57,4 +57,15 @@ TEST_CASE("Push Tests")
         CHECK(unsub_res2 == KII_ERR_RESP_STATUS);
         REQUIRE(khc_get_status_code(&kii._khc) == 404);
     }
+    SECTION("Subscribe to app scope topic") {
+        kii_topic_t topic;
+        topic.scope = KII_SCOPE_APP;
+        topic.scope_id = "";
+        topic.topic_name = "test_topic";
+
+        kii_code_t sub_res = kii_subscribe_topic(&kii, &topic);
+        CHECK(sub_res == KII_ERR_OK);
+        REQUIRE(khc_get_status_code(&kii._khc) == 204);
+
+    }
 }
