@@ -87,8 +87,8 @@ typedef struct kii_bucket_t
 /** represents topic */
 typedef struct kii_topic_t {
     kii_scope_type_t scope;
-    char* scope_id;
-    char* topic_name;
+    const char* scope_id;
+    const char* topic_name;
 } kii_topic_t;
 
 /** represents author of SDK api. */
