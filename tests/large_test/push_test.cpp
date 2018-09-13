@@ -105,4 +105,12 @@ TEST_CASE("Push Tests")
             REQUIRE(khc_get_status_code(&kii._khc) == 404);
         }
     }
+    SECTION("Install push") {
+        char installation_id[64];
+        installation_id[0] = '\0';
+        kii_code_t ins_res = kii_install_push(&kii, KII_TRUE, installation_id, 64);
+        CHECK(ins_res == KII_ERR_OK);
+        REQUIRE(khc_get_status_code(&kii._khc) == 201);
+        REQUIRE(strlen(installation_id) > 0);
+    }
 }
