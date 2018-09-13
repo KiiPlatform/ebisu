@@ -56,6 +56,7 @@ kii_code_t _subscribe_bucket(
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
+    _req_headers_free_all(kii);
 
     return _convert_code(code);
 }
