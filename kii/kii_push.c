@@ -52,6 +52,8 @@ exit:
 
 kii_code_t kii_subscribe_topic(kii_t* kii, const kii_topic_t* topic)
 {
+   khc_set_zero_excl_cb(&kii->_khc);
+    _reset_buff(kii);
 
     kii_code_t res = _subscribe_topic(kii, topic);
     if (res != KII_ERR_OK) {
