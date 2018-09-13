@@ -8,10 +8,10 @@
 
 typedef enum
 {
-    KIIPUSH_PREPARING_ENDPOINT = 0,
-    KIIPUSH_SUBSCRIBING_TOPIC = 1,
-    KIIPUSH_READY = 2
-} kiiPush_state;
+    KII_MQTT_PREPARING_ENDPOINT = 0,
+    KII_MQTT_SUBSCRIBING_TOPIC = 1,
+    KII_MQTT_READY = 2
+} kii_mqtt_state;
 
 kii_code_t _install_push(
         kii_t* kii,

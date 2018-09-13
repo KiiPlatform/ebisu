@@ -342,7 +342,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
 {
     kii_t* kii;
     kii_mqtt_endpoint_t endpoint;
-    kiiPush_state pushState = KIIPUSH_PREPARING_ENDPOINT;
+    kii_mqtt_state pushState = KII_MQTT_PREPARING_ENDPOINT;
 
     memset(&endpoint, 0x00, sizeof(kii_mqtt_endpoint_t));
 
@@ -351,7 +351,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
     {
         switch(pushState)
         {
-            case KIIPUSH_PREPARING_ENDPOINT:
+            case KII_MQTT_PREPARING_ENDPOINT:
                 {
                     char installation_id[KII_PUSH_INSTALLATIONID_SIZE + 1];
 
@@ -390,7 +390,7 @@ static void* kiiPush_recvMsgTask(void* sdata)
                         continue;
                     }
 
-                    pushState = KIIPUSH_SUBSCRIBING_TOPIC;
+                    pushState = KII_MQTT_SUBSCRIBING_TOPIC;
 
                     M_KII_LOG(kii->kii_core.logger_cb("installationID:%s\r\n",
                                     installation_id));
@@ -404,13 +404,13 @@ static void* kiiPush_recvMsgTask(void* sdata)
                                     endpoint.password));
                 }
                 break;
-            case KIIPUSH_SUBSCRIBING_TOPIC:
+            case KII_MQTT_SUBSCRIBING_TOPIC:
                 if (kiiMQTT_connect(kii, &endpoint,
                                 KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS) != 0)
                 {
                     M_KII_LOG(kii->kii_core.logger_cb(
                             "kii-error: mqtt connect error\r\n"));
-                    pushState = KIIPUSH_PREPARING_ENDPOINT;
+                    pushState = KII_MQTT_PREPARING_ENDPOINT;
                     continue;
                 }
                 kii->_mqtt_connected = 1;
@@ -420,18 +420,18 @@ static void* kiiPush_recvMsgTask(void* sdata)
                     M_KII_LOG(kii->kii_core.logger_cb(
                             "kii-error: mqtt subscribe error\r\n"));
                     kii->_mqtt_connected = 0;
-                    pushState = KIIPUSH_PREPARING_ENDPOINT;
+                    pushState = KII_MQTT_PREPARING_ENDPOINT;
                     continue;
                 }
 
-                pushState = KIIPUSH_READY;
+                pushState = KII_MQTT_READY;
                 break;
-            case KIIPUSH_READY:
+            case KII_MQTT_READY:
                 if(kiiPush_receivePushNotification(kii, &endpoint) != 0)
                 {
                     /* Receiving notificaiton is failed. Retry subscribing. */
                     kii->_mqtt_connected = 0;
-                    pushState = KIIPUSH_SUBSCRIBING_TOPIC;
+                    pushState = KII_MQTT_SUBSCRIBING_TOPIC;
                 }
                 break;
         }
