@@ -340,18 +340,18 @@ kii_code_t kii_object_download_body(
  *  Event happened on the bucket will be notified via push notification.
  *  \param [inout] kii sdk instance.
  *  \param [in] bucket specify the bucket to subscribe.
- *  \return 0:success, -1: failure
+ *  \return kii_code_t
  */
-int kii_push_subscribe_bucket(
+kii_code_t kii_subscribe_bucket(
 		kii_t* kii,
 		const kii_bucket_t* bucket);
 
 /** Unsubscribe specified bucket.
  *  \param [inout] kii sdk instance.
  *  \param [in] bucket specify the bucket to subscribe.
- *  \return 0:success, -1: failure
+ *  \return kii_code_t
  */
-int kii_push_unsubscribe_bucket(
+kii_code_t kii_unsubscribe_bucket(
 		kii_t* kii,
 		const kii_bucket_t* bucket);
 
@@ -360,38 +360,44 @@ int kii_push_unsubscribe_bucket(
  *  Message sent to the topic will be notified via push notification.
  *  \param [inout] kii sdk instance.
  *  \param [in] topic specify the topic to subscribe.
- *  \return 0:success, -1: failure
+ *  \return kii_code_t
  */
-int kii_push_subscribe_topic(
+kii_code_t kii_subscribe_topic(
 		kii_t* kii,
 		const kii_topic_t* topic);
 
 /** Unsubscribe specified topic.
  *  \param [inout] kii sdk instance.
  *  \param [in] topic specify the topic to subscribe.
- *  \return 0:success, -1: failure
+ *  \return kii_code_t
  */
-int kii_push_unsubscribe_topic(
+kii_code_t kii_unsubscribe_topic(
 		kii_t* kii,
 		const kii_topic_t* topic);
 
-/** Create new topic.
+/** Put new topic.
  *  \param [inout] kii sdk instance.
  *  \param [in] topic specify the topic to create.
- *  \return 0:success, -1: failure
+ *  \return kii_code_t
  */
-int kii_push_create_topic(
+kii_code_t kii_put_topic(
 		kii_t* kii,
 		const kii_topic_t* topic);
 
-/** Delete existing topic.
+/** Delete topic.
  *  \param [inout] kii sdk instance.
  *  \param [in] topic specify the topic to delete.
- *  \return 0:success, -1: failure
+ *  \return kii_code_t
  */
-int kii_push_delete_topic(
+kii_code_t kii_delete_topic(
 		kii_t* kii,
 		const kii_topic_t* topic);
+
+kii_code_t kii_install_push(
+        kii_t* kii,
+        kii_bool_t development,
+        char* installation_id,
+        size_t installation_id_len);
 
 /** Start push notification receiving routine.
  *  After succeeded, callback is called when push message is delivered to this

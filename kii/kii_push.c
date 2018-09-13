@@ -7,110 +7,135 @@
 #include "khc.h"
 #include "kii_mqtt.h"
 #include "kii_json_utils.h"
+#include "kii_push_impl.h"
 
-#define KII_PUSH_INSTALLATIONID_SIZE 64
-#define KII_PUSH_TOPIC_HEADER_SIZE 8
-
-typedef enum
+kii_code_t kii_subscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
 {
-    KIIPUSH_RETRIEVE_ENDPOINT_SUCCESS = 0,
-    KIIPUSH_RETRIEVE_ENDPOINT_RETRY = 1,
-    KIIPUSH_RETRIEVE_ENDPOINT_ERROR = 2
-} kiiPush_retrieveEndpointResult;
+    kii_code_t res = _subscribe_bucket(kii, bucket);
+    if (res != KII_ERR_OK) {
+        goto exit;
+    }
 
-typedef enum
-{
-    KIIPUSH_PREPARING_ENDPOINT = 0,
-    KIIPUSH_SUBSCRIBING_TOPIC = 1,
-    KIIPUSH_READY = 2
-} kiiPush_state;
+    int resp_code = khc_get_status_code(&kii->_khc);
+    if (resp_code != 204 && resp_code != 409) {
+        res = KII_ERR_RESP_STATUS;
+        goto exit;
+    }
 
-static khc_code _install_thing_push(
-        kii_t* kii,
-        kii_bool_t development)
-{
-    // TODO: reimplement it.
-    return KHC_ERR_FAIL;
+exit:
+    return res;
 }
 
-static khc_code _get_mqtt_endpoint(
-        kii_t* kii,
-        const char* installation_id)
+kii_code_t kii_unsubscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
 {
-    // TODO: reimplement it.
-    return KHC_ERR_FAIL;
-}
 
-static khc_code _subscribe_bucket(
-        kii_t* kii,
-        const kii_bucket_t* bucket)
-{
-    // TODO: reimplement it.
-    return KHC_ERR_FAIL;
-}
-
-static khc_code _unsubscribe_bucket(
-        kii_t* kii,
-        const kii_bucket_t* bucket)
-{
-    // TODO: reimplement it.
-    return KHC_ERR_FAIL;
-}
-
-static khc_code _subscribe_topic(
-        kii_t* kii,
-        const kii_topic_t* topic)
-{
-    // TODO: reimplement it.
-    return KHC_ERR_FAIL;
-}
-
-static khc_code _unsubscribe_topic(
-        kii_t* kii,
-        const kii_topic_t* topic)
-{
-    // TODO: reimplement it.
-    return KHC_ERR_FAIL;
-}
-
-static khc_code _create_topic(
-        kii_t* kii,
-        const kii_topic_t* topic)
-{
-    // TODO: reimplement it.
-    return KHC_ERR_FAIL;
-}
-
-static khc_code _delete_topic(
-        kii_t* kii,
-        const kii_topic_t* topic)
-{
-    // TODO: reimplement it.
-    return KHC_ERR_FAIL;
-}
-
-static int kiiPush_install(
-        kii_t* kii,
-        kii_bool_t development,
-        char* installation_id,
-        size_t installation_id_len)
-{
-    int ret = -1;
-
-    khc_code khc_err = _install_thing_push(kii, development);
-    if (khc_err != KHC_ERR_OK) {
+    kii_code_t res = _unsubscribe_bucket(kii, bucket);
+    if (res != KII_ERR_OK) {
         goto exit;
     }
 
     int resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
+        res = KII_ERR_RESP_STATUS;
         goto exit;
     }
 
-    // TODO: get buffer and its length.
-    char* buff = NULL;
-    size_t buff_size = 0;
+exit:
+    return res;
+}
+
+kii_code_t kii_subscribe_topic(kii_t* kii, const kii_topic_t* topic)
+{
+
+    kii_code_t res = _subscribe_topic(kii, topic);
+    if (res != KII_ERR_OK) {
+        goto exit;
+    }
+
+    int resp_code = khc_get_status_code(&kii->_khc);
+    if (resp_code != 204 && resp_code != 409) {
+        res = KII_ERR_RESP_STATUS;
+        goto exit;
+    }
+
+exit:
+    return res;
+}
+
+kii_code_t kii_unsubscribe_topic(kii_t* kii, const kii_topic_t* topic)
+{
+
+    kii_code_t res = _unsubscribe_topic(kii, topic);
+    if (res != KII_ERR_OK) {
+        goto exit;
+    }
+
+    int resp_code = khc_get_status_code(&kii->_khc);
+    if (resp_code != 204 && resp_code != 409) {
+        res = KII_ERR_RESP_STATUS;
+    }
+
+exit:
+    return res;
+}
+
+kii_code_t kii_put_topic(kii_t* kii, const kii_topic_t* topic)
+{
+
+    kii_code_t res = _put_topic(kii, topic);
+    if (res != KII_ERR_OK) {
+        goto exit;
+    }
+
+    int resp_code = khc_get_status_code(&kii->_khc);
+    if (resp_code == 204 || resp_code == 409) {
+        res = KII_ERR_RESP_STATUS;
+        goto exit;
+    }
+
+exit:
+    return res;
+}
+
+kii_code_t kii_delete_topic(kii_t* kii, const kii_topic_t* topic)
+{
+
+    kii_code_t res = _delete_topic(kii, topic);
+    if (res != KII_ERR_OK) {
+        goto exit;
+    }
+
+    int resp_code = khc_get_status_code(&kii->_khc);
+    if(resp_code < 200 || 300 <= resp_code) {
+        res = KII_ERR_RESP_STATUS;
+        goto exit;
+    }
+exit:
+    return res;
+}
+
+kii_code_t kii_install_push(
+        kii_t* kii,
+        kii_bool_t development,
+        char* installation_id,
+        size_t installation_id_len)
+{
+
+    kii_code_t res = _install_push(kii, development);
+    if (res != KII_ERR_OK) {
+        goto exit;
+    }
+
+    int resp_code = khc_get_status_code(&kii->_khc);
+    if(resp_code < 200 || 300 <= resp_code) {
+        res = KII_ERR_RESP_STATUS;
+        goto exit;
+    }
+
+    char* buff = kii->_rw_buff;
+    size_t buff_size = kii->_rw_buff_written;
     if (buff == NULL) {
+        res = KII_ERR_FAIL;
         goto exit;
     }
 
@@ -125,23 +150,20 @@ static int kiiPush_install(
 
     parse_result = prv_kii_json_read_object(kii, buff, buff_size, fields);
     if (parse_result != KII_JSON_PARSE_SUCCESS) {
-        M_KII_LOG(kii->kii_core.logger_cb("fail to get json value: %d\n",
-                        parse_result));
+        res = KII_ERR_PARSE_JSON;
         goto exit;
     }
 
-    ret = 0;
-
 exit:
-    return ret;
+    return res;
 }
 
-static kiiPush_retrieveEndpointResult kiiPush_retrieveEndpoint(kii_t* kii, const char* installation_id, kii_mqtt_endpoint_t* endpoint)
+kiiPush_retrieveEndpointResult kiiPush_retrieveEndpoint(kii_t* kii, const char* installation_id, kii_mqtt_endpoint_t* endpoint)
 {
     kiiPush_retrieveEndpointResult ret = KIIPUSH_RETRIEVE_ENDPOINT_ERROR;
 
-    khc_code khc_err = _get_mqtt_endpoint(kii, installation_id);
-    if (khc_err != KHC_ERR_OK) {
+    kii_code_t res = _get_mqtt_endpoint(kii, installation_id);
+    if (res != KHC_ERR_OK) {
         goto exit;
     }
 
@@ -206,109 +228,6 @@ static kiiPush_retrieveEndpointResult kiiPush_retrieveEndpoint(kii_t* kii, const
     endpoint->ttl = fields[6].field_copy.long_value;
     ret = KIIPUSH_RETRIEVE_ENDPOINT_SUCCESS;
 
-exit:
-    return ret;
-}
-
-int kii_push_subscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
-{
-    int ret = -1;
-
-    khc_code khc_err = _subscribe_bucket(kii, bucket);
-    if (khc_err != KHC_ERR_OK) {
-        goto exit;
-    }
-
-    int resp_code = khc_get_status_code(&kii->_khc);
-    if (resp_code == 204 || resp_code == 409) {
-        ret = 0;
-    }
-exit:
-    return ret;
-}
-
-int kii_push_unsubscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
-{
-    int ret = -1;
-
-    khc_code khc_err = _unsubscribe_bucket(kii, bucket);
-    if (khc_err != KHC_ERR_OK) {
-        goto exit;
-    }
-
-    int resp_code = khc_get_status_code(&kii->_khc);
-    if(resp_code < 200 || 300 <= resp_code) {
-        goto exit;
-    }
-	ret = 0;
-exit:
-    return ret;
-}
-
-int kii_push_subscribe_topic(kii_t* kii, const kii_topic_t* topic)
-{
-    int ret = -1;
-
-    khc_code khc_err = _subscribe_topic(kii, topic);
-    if (khc_err != KHC_ERR_OK) {
-        goto exit;
-    }
-
-    int resp_code = khc_get_status_code(&kii->_khc);
-    if (resp_code == 204 || resp_code == 409) {
-        ret = 0;
-    }
-exit:
-    return ret;
-}
-
-int kii_push_unsubscribe_topic(kii_t* kii, const kii_topic_t* topic)
-{
-    int ret = -1;
-
-    khc_code khc_err = _unsubscribe_topic(kii, topic);
-    if (khc_err != KHC_ERR_OK) {
-        goto exit;
-    }
-
-    int resp_code = khc_get_status_code(&kii->_khc);
-    if (resp_code == 204 || resp_code == 409) {
-        ret = 0;
-    }
-exit:
-    return ret;
-}
-
-int kii_push_create_topic(kii_t* kii, const kii_topic_t* topic)
-{
-    int ret = -1;
-    khc_code khc_err = _create_topic(kii, topic);
-    if (khc_err != KHC_ERR_OK) {
-        goto exit;
-    }
-
-    int resp_code = khc_get_status_code(&kii->_khc);
-    if (resp_code == 204 || resp_code == 409) {
-        ret = 0;
-    }
-exit:
-    return ret;
-}
-
-int kii_push_delete_topic(kii_t* kii, const kii_topic_t* topic)
-{
-    int ret = -1;
-
-    khc_code khc_err = _delete_topic(kii, topic);
-    if (khc_err != KHC_ERR_OK) {
-        goto exit;
-    }
-
-    int resp_code = khc_get_status_code(&kii->_khc);
-    if(resp_code < 200 || 300 <= resp_code) {
-        goto exit;
-    }
-    ret = 0;
 exit:
     return ret;
 }
@@ -445,9 +364,9 @@ static void* kiiPush_recvMsgTask(void* sdata)
                     char installation_id[KII_PUSH_INSTALLATIONID_SIZE + 1];
                     kiiPush_retrieveEndpointResult result;
 
-                    if(kiiPush_install(kii, KII_FALSE, installation_id,
+                    if(kii_install_push(kii, KII_FALSE, installation_id,
                                     sizeof(installation_id) /
-                                        sizeof(installation_id[0])) != 0)
+                                        sizeof(installation_id[0])) != KII_ERR_OK)
                     {
                         M_KII_LOG(kii->kii_core.logger_cb(
                                 "kii-error: mqtt installation error\r\n"));
