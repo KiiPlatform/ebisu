@@ -68,5 +68,8 @@ TEST_CASE("Push Tests")
         // test_topic is already created and subscribed.
         REQUIRE(khc_get_status_code(&kii._khc) == 409);
 
+        kii_code_t del_res = kii_unsubscribe_topic(&kii, &topic);
+        CHECK(del_res == KII_ERR_OK);
+        REQUIRE(khc_get_status_code(&kii._khc) == 204);
     }
 }
