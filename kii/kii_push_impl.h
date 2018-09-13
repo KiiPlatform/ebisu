@@ -3,16 +3,6 @@
 
 #include "kii.h"
 
-#define KII_PUSH_INSTALLATIONID_SIZE 64
-#define KII_PUSH_TOPIC_HEADER_SIZE 8
-
-typedef enum
-{
-    KII_MQTT_PREPARING_ENDPOINT = 0,
-    KII_MQTT_SUBSCRIBING_TOPIC = 1,
-    KII_MQTT_READY = 2
-} kii_mqtt_state;
-
 kii_code_t _install_push(
         kii_t* kii,
         kii_bool_t development);
