@@ -399,6 +399,11 @@ kii_code_t kii_install_push(
         char* installation_id,
         size_t installation_id_len);
 
+kii_code_t kii_get_mqtt_endpoint(
+    kii_t* kii,
+    const char* installation_id,
+    kii_mqtt_endpoint_t* endpoint);
+
 /** Start push notification receiving routine.
  *  After succeeded, callback is called when push message is delivered to this
  *  thing.

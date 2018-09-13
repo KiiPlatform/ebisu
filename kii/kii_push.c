@@ -158,32 +158,25 @@ exit:
     return res;
 }
 
-kiiPush_retrieveEndpointResult kiiPush_retrieveEndpoint(kii_t* kii, const char* installation_id, kii_mqtt_endpoint_t* endpoint)
+kii_code_t kii_get_mqtt_endpoint(kii_t* kii, const char* installation_id, kii_mqtt_endpoint_t* endpoint)
 {
-    kiiPush_retrieveEndpointResult ret = KIIPUSH_RETRIEVE_ENDPOINT_ERROR;
-
     kii_code_t res = _get_mqtt_endpoint(kii, installation_id);
-    if (res != KHC_ERR_OK) {
+    if (res != KII_ERR_OK) {
         goto exit;
     }
 
     int resp_code = khc_get_status_code(&kii->_khc);
-    if(resp_code == 503)
-    {
-        ret = KIIPUSH_RETRIEVE_ENDPOINT_RETRY;
-        goto exit;
-    }
     if(resp_code < 200 || 300 <= resp_code)
     {
-        ret = KIIPUSH_RETRIEVE_ENDPOINT_ERROR;
+        res = KII_ERR_RESP_STATUS;
         goto exit;
     }
 
     // TODO: get buffer and its length.
-    char* buff = NULL;
-    size_t buff_size = 0;
+    char* buff = kii->_rw_buff;
+    size_t buff_size = kii->_rw_buff_written;
     if (buff == NULL) {
-        ret = KIIPUSH_RETRIEVE_ENDPOINT_ERROR;
+        res = KII_ERR_FAIL;
         goto exit;
     }
 
@@ -220,16 +213,15 @@ kiiPush_retrieveEndpointResult kiiPush_retrieveEndpoint(kii_t* kii, const char* 
 
     parse_result = prv_kii_json_read_object(kii, buff, buff_size, fields);
     if (parse_result != KII_JSON_PARSE_SUCCESS) {
-        ret = KIIPUSH_RETRIEVE_ENDPOINT_ERROR;
+        res = KII_ERR_PARSE_JSON;
         goto exit;
     }
     endpoint->port_tcp = fields[4].field_copy.int_value;
     endpoint->port_ssl = fields[5].field_copy.int_value;
     endpoint->ttl = fields[6].field_copy.long_value;
-    ret = KIIPUSH_RETRIEVE_ENDPOINT_SUCCESS;
 
 exit:
-    return ret;
+    return res;
 }
 
 static int kiiPush_receivePushNotification(
@@ -362,7 +354,6 @@ static void* kiiPush_recvMsgTask(void* sdata)
             case KIIPUSH_PREPARING_ENDPOINT:
                 {
                     char installation_id[KII_PUSH_INSTALLATIONID_SIZE + 1];
-                    kiiPush_retrieveEndpointResult result;
 
                     if(kii_install_push(kii, KII_FALSE, installation_id,
                                     sizeof(installation_id) /
@@ -374,15 +365,21 @@ static void* kiiPush_recvMsgTask(void* sdata)
                         continue;
                     }
 
+                    kii_code_t get_ep_res = KII_ERR_FAIL;
+                    int retry = 0;
                     do
                     {
                         kii->delay_ms_cb(1000);
-                        result = kiiPush_retrieveEndpoint(kii, installation_id,
+                        get_ep_res = kii_get_mqtt_endpoint(kii, installation_id,
                                 &endpoint);
+                        int status_code = khc_get_status_code(&kii->_khc);
+                        if (500 <= status_code && status_code < 600) {
+                            retry = 1;
+                        }
                     }
-                    while(result == KIIPUSH_RETRIEVE_ENDPOINT_RETRY);
+                    while(retry);
 
-                    if(result != KIIPUSH_RETRIEVE_ENDPOINT_SUCCESS)
+                    if(get_ep_res != KII_ERR_OK)
                     {
                         M_KII_LOG(kii->kii_core.logger_cb(
                                 "kii-error: mqtt retrive error\r\n"));
