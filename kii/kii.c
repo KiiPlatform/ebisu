@@ -162,11 +162,6 @@ char* kii_get_etag(kii_t* kii) {
     return kii->_etag;
 }
 
-int _kii_set_content_length(kii_t* kii, size_t content_length) {
-    kii->_rw_buff_req_size = content_length;
-    return 0;
-}
-
 kii_code_t _convert_code(khc_code khc_c) {
     switch(khc_c) {
         case KHC_ERR_OK:
@@ -198,6 +193,11 @@ void _reset_buff(kii_t* kii) {
     kii->_rw_buff_written = 0;
     kii->_rw_buff_req_size = 0;
     kii->_etag[0] = '\0';
+}
+
+void _req_headers_free_all(kii_t* kii) {
+    khc_slist_free_all(kii->_req_headers);
+    kii->_req_headers = NULL;
 }
 
 int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len) {

@@ -150,6 +150,8 @@ typedef struct kii_t {
     size_t _rw_buff_read;
     size_t _rw_buff_written;
 
+    khc_slist* _req_headers;
+
     char _etag[64];
     /** Resource used by KII JSON library.
      *
@@ -201,7 +203,7 @@ int kii_init(
  *  \param [in] password the password of the thing given by vendor.
  *  \return 0:success, -1: failure
  */
-kii_code_t kii_thing_authenticate(
+kii_code_t kii_thing_auth(
 		kii_t* kii,
 		const char* vendor_thing_id,
 		const char* password);

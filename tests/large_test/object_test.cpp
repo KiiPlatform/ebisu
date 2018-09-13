@@ -27,7 +27,7 @@ TEST_CASE("Object Tests")
 
     const char vid[] = "test1";
     const char password[] = "1234";
-    kii_code_t auth_res = kii_thing_authenticate(&kii, vid, password);
+    kii_code_t auth_res = kii_thing_auth(&kii, vid, password);
 
     REQUIRE( auth_res == KII_ERR_OK );
     REQUIRE( khc_get_status_code(&kii._khc) == 200 );
