@@ -1,5 +1,9 @@
+#include <string.h>
 #include "kii_push_impl.h"
 #include "kii_mqtt.h"
+#include "kii_impl.h"
+#include "kii_req_impl.h"
+#include "kii.h"
 
 kii_code_t _install_push(
         kii_t* kii,
@@ -21,8 +25,39 @@ kii_code_t _subscribe_bucket(
         kii_t* kii,
         const kii_bucket_t* bucket)
 {
-    // TODO: reimplement it.
-    return KII_ERR_FAIL;
+    khc_set_host(&kii->_khc, kii->_app_host);
+    khc_set_method(&kii->_khc, "PUT");
+
+    kii_code_t res = _set_bucket_subscription_path(kii, bucket);
+    if (res != KII_ERR_OK) {
+        return res;
+    }
+    // Request Headers
+    res = _set_app_id_header(kii);
+    if (res != KII_ERR_OK) {
+        _req_headers_free_all(kii);
+        return res;
+    }
+    res = _set_app_key_header(kii);
+    if (res != KII_ERR_OK) {
+        _req_headers_free_all(kii);
+        return res;
+    }
+    res = _set_auth_header(kii);
+    if (res != KII_ERR_OK) {
+        _req_headers_free_all(kii);
+        return res;
+    }
+    res = _set_req_body(kii, "");
+    if (res != KII_ERR_OK) {
+        _req_headers_free_all(kii);
+        return res;
+    }
+
+    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_code code = khc_perform(&kii->_khc);
+
+    return _convert_code(code);
 }
 
 kii_code_t _unsubscribe_bucket(

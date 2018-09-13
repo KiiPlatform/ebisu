@@ -8,9 +8,13 @@
 #include "kii_mqtt.h"
 #include "kii_json_utils.h"
 #include "kii_push_impl.h"
+#include "kii_impl.h"
 
 kii_code_t kii_subscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
 {
+    khc_set_zero_excl_cb(&kii->_khc);
+    _reset_buff(kii);
+
     kii_code_t res = _subscribe_bucket(kii, bucket);
     if (res != KII_ERR_OK) {
         goto exit;
