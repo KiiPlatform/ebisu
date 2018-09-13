@@ -404,9 +404,9 @@ kii_code_t kii_install_push(
  *  thing.
  *  \param [inout] kii sdk instance.
  *  \param [in] callback  callback function called when push message delivered. 
- *  \return 0:success, -1: failure
+ *  \return kii_code_t
  */
-int kii_push_start_routine(
+kii_code_t kii_push_start_routine(
 		kii_t* kii,
 		KII_PUSH_RECEIVED_CB callback);
 

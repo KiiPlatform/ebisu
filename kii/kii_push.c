@@ -457,7 +457,7 @@ static void* kiiPush_pingReqTask(void* sdata)
 }
 #endif
 
-int kii_push_start_routine(kii_t* kii, KII_PUSH_RECEIVED_CB callback)
+kii_code_t kii_push_start_routine(kii_t* kii, KII_PUSH_RECEIVED_CB callback)
 {
     kii->push_received_cb = callback;
     kii->task_create_cb(KII_TASK_NAME_RECV_MSG,
@@ -468,6 +468,6 @@ int kii_push_start_routine(kii_t* kii, KII_PUSH_RECEIVED_CB callback)
             kiiPush_pingReqTask,
             (void*)kii);
 #endif
-    return 0;
+    return KII_ERR_OK;
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
