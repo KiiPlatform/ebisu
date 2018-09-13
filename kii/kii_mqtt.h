@@ -5,16 +5,6 @@
 
 enum QoS { QOS0, QOS1, QOS2 };
 
-typedef struct kii_mqtt_endpoint_t {
-    char username[64];
-    char password[128];
-    char topic[64];
-    char host[64];
-    unsigned int port_tcp;
-    unsigned int port_ssl;
-    unsigned long ttl;
-} kii_mqtt_endpoint_t;
-
 int kiiMQTT_encode(char* buf, int length);
 int kiiMQTT_decode(char* buf, int* value);
 int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short keepAliveInterval);

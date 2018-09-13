@@ -372,6 +372,9 @@ static void* kiiPush_recvMsgTask(void* sdata)
                         kii->delay_ms_cb(1000);
                         get_ep_res = kii_get_mqtt_endpoint(kii, installation_id,
                                 &endpoint);
+                        if (get_ep_res == KII_ERR_OK) {
+                            retry = 0;
+                        }
                         int status_code = khc_get_status_code(&kii->_khc);
                         if (500 <= status_code && status_code < 600) {
                             retry = 1;

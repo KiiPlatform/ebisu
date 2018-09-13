@@ -100,6 +100,16 @@ typedef struct kii_author_t
     char access_token[128];
 } kii_author_t;
 
+typedef struct kii_mqtt_endpoint_t {
+    char username[64];
+    char password[128];
+    char topic[64];
+    char host[64];
+    unsigned int port_tcp;
+    unsigned int port_ssl;
+    unsigned long ttl;
+} kii_mqtt_endpoint_t;
+
 struct kii_t;
 
 typedef void (*KII_PUSH_RECEIVED_CB)(
