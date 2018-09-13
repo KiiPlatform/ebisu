@@ -72,6 +72,8 @@ exit:
 
 kii_code_t kii_unsubscribe_topic(kii_t* kii, const kii_topic_t* topic)
 {
+   khc_set_zero_excl_cb(&kii->_khc);
+    _reset_buff(kii);
 
     kii_code_t res = _unsubscribe_topic(kii, topic);
     if (res != KII_ERR_OK) {
@@ -89,6 +91,8 @@ exit:
 
 kii_code_t kii_put_topic(kii_t* kii, const kii_topic_t* topic)
 {
+    khc_set_zero_excl_cb(&kii->_khc);
+    _reset_buff(kii);
 
     kii_code_t res = _put_topic(kii, topic);
     if (res != KII_ERR_OK) {
@@ -96,7 +100,7 @@ kii_code_t kii_put_topic(kii_t* kii, const kii_topic_t* topic)
     }
 
     int resp_code = khc_get_status_code(&kii->_khc);
-    if (resp_code == 204 || resp_code == 409) {
+    if (resp_code != 204 && resp_code != 409) {
         res = KII_ERR_RESP_STATUS;
         goto exit;
     }

@@ -14,6 +14,10 @@ kii_code_t _set_bucket_subscription_path(
     kii_t* kii,
     const kii_bucket_t* bucket);
 
+kii_code_t _set_topic_path(
+    kii_t* kii,
+    const kii_topic_t* topic);
+
 kii_code_t _set_topic_subscription_path(
     kii_t* kii,
     const kii_topic_t* topic);

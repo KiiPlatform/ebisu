@@ -65,11 +65,25 @@ TEST_CASE("Push Tests")
 
         kii_code_t sub_res = kii_subscribe_topic(&kii, &topic);
         CHECK(sub_res == KII_ERR_OK);
-        // test_topic is already created and subscribed.
-        REQUIRE(khc_get_status_code(&kii._khc) == 409);
+        int status = khc_get_status_code(&kii._khc);
+        // TODO: Make admin operation tools in test and create new topic by the tool.
+        REQUIRE((status == 204 || status == 409));
 
         kii_code_t del_res = kii_unsubscribe_topic(&kii, &topic);
         CHECK(del_res == KII_ERR_OK);
+        REQUIRE(khc_get_status_code(&kii._khc) == 204);
+    }
+    SECTION("Thing scope topic") {
+        kii_topic_t topic;
+        topic.scope = KII_SCOPE_THING;
+        topic.scope_id = kii._author.author_id;
+        std::string name_base = std::string("topic-");
+        std::string id = std::to_string(kiiltest::current_time());
+        const char* topic_name = (name_base + id).c_str();
+        topic.topic_name = topic_name;
+
+        kii_code_t put_res = kii_put_topic(&kii, &topic);
+        CHECK(put_res == KII_ERR_OK);
         REQUIRE(khc_get_status_code(&kii._khc) == 204);
     }
 }
