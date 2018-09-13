@@ -85,5 +85,9 @@ TEST_CASE("Push Tests")
         kii_code_t put_res = kii_put_topic(&kii, &topic);
         CHECK(put_res == KII_ERR_OK);
         REQUIRE(khc_get_status_code(&kii._khc) == 204);
+
+        kii_code_t put_res2 = kii_put_topic(&kii, &topic);
+        CHECK(put_res2 == KII_ERR_OK);
+        REQUIRE(khc_get_status_code(&kii._khc) == 409);
     }
 }
