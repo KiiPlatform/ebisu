@@ -88,7 +88,7 @@ TEST_CASE("Object Tests")
                 REQUIRE( khc_get_status_code(&kii._khc) == 409 );
             }
             SECTION("GET") {
-                kii_code_t get_res = kii_object_get(&kii, &bucket, object_id);
+                kii_code_t get_res = kii_get_object(&kii, &bucket, object_id);
                 REQUIRE( get_res == KII_ERR_OK );
                 REQUIRE( khc_get_status_code(&kii._khc) == 200 );
 
@@ -107,7 +107,7 @@ TEST_CASE("Object Tests")
                 REQUIRE( delete_res == KII_ERR_OK );
                 REQUIRE( khc_get_status_code(&kii._khc) == 204 );
                 // Now get should return 404.
-                kii_code_t get_res = kii_object_get(&kii, &bucket, object_id);
+                kii_code_t get_res = kii_get_object(&kii, &bucket, object_id);
                 REQUIRE( get_res == KII_ERR_RESP_STATUS );
                 REQUIRE( khc_get_status_code(&kii._khc) == 404 );
             }

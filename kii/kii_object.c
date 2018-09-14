@@ -149,7 +149,7 @@ exit:
     return res;
 }
 
-kii_code_t kii_object_get(
+kii_code_t kii_get_object(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id)

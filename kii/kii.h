@@ -306,7 +306,7 @@ kii_code_t kii_delete_object(
  *  \param [in] object_id specify the id of the object.
  *  \return  kii_code_t
  */
-kii_code_t kii_object_get(
+kii_code_t kii_get_object(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id);

@@ -557,7 +557,7 @@ TEST(kiiTest, object_get)
 
     initBucket(&bucket);
 
-    err = kii_object_get(&kii, &bucket, OBJECT);
+    err = kii_get_object(&kii, &bucket, OBJECT);
     ASSERT_EQ(0, err);
 }
 
