@@ -421,7 +421,7 @@ kii_code_t kii_get_mqtt_endpoint(
  *  \param [in] callback  callback function called when push message delivered. 
  *  \return kii_code_t
  */
-kii_code_t kii_push_start_routine(
+kii_code_t kii_start_push_routine(
 		kii_t* kii,
 		KII_PUSH_RECEIVED_CB callback);
 

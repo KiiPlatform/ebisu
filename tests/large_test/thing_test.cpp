@@ -599,7 +599,7 @@ TEST(kiiTest, startRoutine)
     ASSERT_EQ(0, ret);
 
     printf("Z\n");fflush(stdout);
-    ret = kii_push_start_routine(&kii, received_callback);
+    ret = kii_start_push_routine(&kii, received_callback);
 
     ASSERT_EQ(0, ret);
 
