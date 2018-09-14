@@ -203,7 +203,7 @@ TEST(kiiTest, authenticate)
     strcpy(kii.kii_core.author.author_id, "");
     strcpy(kii.kii_core.author.access_token, "");
 
-    err = kii_thing_authenticate(&kii, "1426830900", "1234");
+    err = kii_auth_thingenticate(&kii, "1426830900", "1234");
     ASSERT_EQ(0, err);
 
     ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);
@@ -259,7 +259,7 @@ TEST(kiiTest, register)
     strcpy(kii.kii_core.author.author_id, "");
     strcpy(kii.kii_core.author.access_token, "");
 
-    err = kii_thing_register(&kii, "4792", "my_type", "1234");
+    err = kii_register_thing(&kii, "4792", "my_type", "1234");
     ASSERT_EQ(0, err);
 
     ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);
@@ -418,7 +418,7 @@ TEST(kiiTest, object_patch)
 
     initBucket(&bucket);
 
-    err = kii_object_patch(&kii, &bucket, OBJECT, "{}", NULL);
+    err = kii_patch_object(&kii, &bucket, OBJECT, "{}", NULL);
     ASSERT_EQ(0, err);
 }
 
@@ -511,7 +511,7 @@ TEST(kiiTest, object_delete)
 
     initBucket(&bucket);
 
-    err = kii_object_delete(&kii, &bucket, OBJECT);
+    err = kii_delete_object(&kii, &bucket, OBJECT);
     ASSERT_EQ(0, err);
 }
 
@@ -557,7 +557,7 @@ TEST(kiiTest, object_get)
 
     initBucket(&bucket);
 
-    err = kii_object_get(&kii, &bucket, OBJECT);
+    err = kii_get_object(&kii, &bucket, OBJECT);
     ASSERT_EQ(0, err);
 }
 
@@ -606,7 +606,7 @@ TEST(kiiTest, object_upload_body_at_once)
 
     initBucket(&bucket);
 
-    err = kii_object_upload_body_at_once(&kii, &bucket, OBJECT,
+    err = kii_upload_object_body_at_once(&kii, &bucket, OBJECT,
             "application/json", "{}", 2);
     ASSERT_EQ(0, err);
 }
@@ -711,7 +711,7 @@ TEST(kiiTest, object_upload_body)
     chunk.length = 2;
     chunk.position = 0;
     chunk.total_length = 2;
-    err = kii_object_upload_body(&kii, &bucket, OBJECT, UPLOAD_ID, &chunk);
+    err = kii_upload_object_body(&kii, &bucket, OBJECT, UPLOAD_ID, &chunk);
     ASSERT_EQ(0, err);
 }
 
@@ -797,7 +797,7 @@ TEST(kiiTest, object_download_body_at_once)
     initBucket(&bucket);
 
     length = 0;
-    err = kii_object_download_body_at_once(&kii, &bucket, OBJECT, &length);
+    err = kii_download_object_body_at_once(&kii, &bucket, OBJECT, &length);
     ASSERT_EQ(0, err);
 
     ASSERT_EQ(2, length);
@@ -850,7 +850,7 @@ TEST(kiiTest, object_download_body)
 
     actual_length = 0;
     total_length = 0;
-    err = kii_object_download_body(&kii, &bucket, OBJECT, 0, 2, &actual_length,
+    err = kii_download_object_body(&kii, &bucket, OBJECT, 0, 2, &actual_length,
             &total_length);
     ASSERT_EQ(0, err);
 

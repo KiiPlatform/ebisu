@@ -246,7 +246,7 @@ exit:
     return res;
 }
 
-kii_code_t kii_push_start_routine(kii_t* kii, KII_PUSH_RECEIVED_CB callback)
+kii_code_t kii_start_push_routine(kii_t* kii, KII_PUSH_RECEIVED_CB callback)
 {
     kii->push_received_cb = callback;
     kii->task_create_cb(KII_TASK_NAME_RECV_MSG,

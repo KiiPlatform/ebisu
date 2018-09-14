@@ -213,7 +213,7 @@ int kii_init(
  *  \param [in] password the password of the thing given by vendor.
  *  \return 0:success, -1: failure
  */
-kii_code_t kii_thing_auth(
+kii_code_t kii_auth_thing(
 		kii_t* kii,
 		const char* vendor_thing_id,
 		const char* password);
@@ -227,7 +227,7 @@ kii_code_t kii_thing_auth(
  *  \param [in] password - the password of the thing given by vendor.
  *  \return kii_code_t.
  */
-kii_code_t kii_thing_register(
+kii_code_t kii_register_thing(
 		kii_t* kii,
 		const char* vendor_thing_id,
 		const char* thing_type,
@@ -245,7 +245,7 @@ kii_code_t kii_thing_register(
  *  before this api call.
  *  \return kii_code_t
  */
-kii_code_t kii_object_post(
+kii_code_t kii_post_object(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_data,
@@ -262,7 +262,7 @@ kii_code_t kii_object_post(
  *  \param [in] if specified, If-Match header is sent to the endpoint.
  *  \return  kii_code_t
  */
-kii_code_t kii_object_put(
+kii_code_t kii_put_object(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
@@ -281,7 +281,7 @@ kii_code_t kii_object_put(
  *  if there is updates on cloud. if NULL, forcibly updates.
  *  \return  kii_code_t
  */
-kii_code_t kii_object_patch(
+kii_code_t kii_patch_object(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
@@ -294,7 +294,7 @@ kii_code_t kii_object_patch(
  *  \param [in] object_id specify the id of the object.
  *  \return  kii_code_t
  */
-kii_code_t kii_object_delete(
+kii_code_t kii_delete_object(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id);
@@ -306,7 +306,7 @@ kii_code_t kii_object_delete(
  *  \param [in] object_id specify the id of the object.
  *  \return  kii_code_t
  */
-kii_code_t kii_object_get(
+kii_code_t kii_get_object(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id);
@@ -320,7 +320,7 @@ kii_code_t kii_object_get(
  *  \param [in] userdata read_cb context data.
  *  \return kii_code_t
  */
-kii_code_t kii_object_upload_body(
+kii_code_t kii_upload_object_body(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
@@ -338,7 +338,7 @@ kii_code_t kii_object_upload_body(
  *  \param [in] userdata write_cb context data.
  *  \return kii_code_t
  */
-kii_code_t kii_object_download_body(
+kii_code_t kii_download_object_body(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
@@ -421,7 +421,7 @@ kii_code_t kii_get_mqtt_endpoint(
  *  \param [in] callback  callback function called when push message delivered. 
  *  \return kii_code_t
  */
-kii_code_t kii_push_start_routine(
+kii_code_t kii_start_push_routine(
 		kii_t* kii,
 		KII_PUSH_RECEIVED_CB callback);
 

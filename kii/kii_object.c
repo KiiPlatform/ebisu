@@ -7,7 +7,7 @@
 #include "kii_impl.h"
 #include "kii_object_impl.h"
 
-kii_code_t kii_object_post(
+kii_code_t kii_post_object(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_data,
@@ -16,7 +16,7 @@ kii_code_t kii_object_post(
 {
     khc_set_zero_excl_cb(&kii->_khc);
     _reset_buff(kii);
-    kii_code_t ret = _kii_object_post(
+    kii_code_t ret = _post_object(
             kii,
             bucket,
             object_data,
@@ -59,7 +59,7 @@ exit:
     return ret;
 }
 
-kii_code_t kii_object_put(
+kii_code_t kii_put_object(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
@@ -69,7 +69,7 @@ kii_code_t kii_object_put(
 {
     _reset_buff(kii);
     khc_set_zero_excl_cb(&kii->_khc);
-    kii_code_t ret = _kii_object_put(
+    kii_code_t ret = _put_object(
             kii,
             bucket,
             object_id,
@@ -92,7 +92,7 @@ exit:
 
 }
 
-kii_code_t kii_object_patch(
+kii_code_t kii_patch_object(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
@@ -123,7 +123,7 @@ exit:
     return code;	
 }
 
-kii_code_t kii_object_delete(
+kii_code_t kii_delete_object(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id)
@@ -149,7 +149,7 @@ exit:
     return res;
 }
 
-kii_code_t kii_object_get(
+kii_code_t kii_get_object(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id)
@@ -175,7 +175,7 @@ exit:
     return ret;
 }
 
-kii_code_t kii_object_upload_body(
+kii_code_t kii_upload_object_body(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
@@ -205,7 +205,7 @@ exit:
     return ret;
 }
 
-kii_code_t kii_object_download_body(
+kii_code_t kii_download_object_body(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,

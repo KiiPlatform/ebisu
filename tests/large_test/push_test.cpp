@@ -18,7 +18,7 @@ TEST_CASE("Push Tests")
 
     const char vid[] = "test1";
     const char password[] = "1234";
-    kii_code_t auth_res = kii_thing_auth(&kii, vid, password);
+    kii_code_t auth_res = kii_auth_thing(&kii, vid, password);
 
     REQUIRE( auth_res == KII_ERR_OK );
     REQUIRE( khc_get_status_code(&kii._khc) == 200 );
@@ -38,7 +38,7 @@ TEST_CASE("Push Tests")
         const char object[] = "{}";
         char object_id[128];
         object_id[0] = '\0';
-        kii_code_t post_res = kii_object_post(&kii, &bucket, object, NULL, object_id);
+        kii_code_t post_res = kii_post_object(&kii, &bucket, object, NULL, object_id);
         CHECK(post_res == KII_ERR_OK);
         REQUIRE(khc_get_status_code(&kii._khc) == 201);
 

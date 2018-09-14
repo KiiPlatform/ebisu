@@ -25,13 +25,13 @@ kii_code_t _make_object_body_content_type(
     const char *object_body_content_type,
     int *header_len);
 
-kii_code_t _kii_object_post(
+kii_code_t _post_object(
     kii_t *kii,
     const kii_bucket_t *bucket,
     const char *object_data,
     const char *object_content_type);
 
-kii_code_t _kii_object_put(
+kii_code_t _put_object(
     kii_t *kii,
     const kii_bucket_t *bucket,
     const char *object_id,
