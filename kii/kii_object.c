@@ -134,7 +134,7 @@ kii_code_t kii_object_delete(
             kii,
             bucket,
             object_id);
-    if (res != KHC_ERR_OK) {
+    if (res != KII_ERR_OK) {
         goto exit;
     }
 
