@@ -429,9 +429,9 @@ kii_code_t kii_push_start_routine(
  *  \param [inout] kii sdk instance.
  *  \param [in] endpoint_name name of the endpoint to be executed.
  *  \param [in] params parameters given to endpoint. should be formatted in json.
- *  \return 0:success, -1: failure
+ *  \return kii_code_t
  */
-int kii_server_code_execute(
+kii_code_t kii_execute_server_code(
 		kii_t* kii,
 		const char* endpoint_name,
 		const char* params);
