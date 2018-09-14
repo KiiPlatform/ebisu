@@ -174,8 +174,14 @@ exit:
     return res;
 }
 
-kii_code_t kii_get_mqtt_endpoint(kii_t* kii, const char* installation_id, kii_mqtt_endpoint_t* endpoint)
+kii_code_t kii_get_mqtt_endpoint(
+    kii_t* kii,
+    const char* installation_id,
+    kii_mqtt_endpoint_t* endpoint)
 {
+    khc_set_zero_excl_cb(&kii->_khc);
+    _reset_buff(kii);
+
     kii_code_t res = _get_mqtt_endpoint(kii, installation_id);
     if (res != KII_ERR_OK) {
         goto exit;
