@@ -16,7 +16,7 @@ kii_code_t kii_post_object(
 {
     khc_set_zero_excl_cb(&kii->_khc);
     _reset_buff(kii);
-    kii_code_t ret = _kii_post_object(
+    kii_code_t ret = _post_object(
             kii,
             bucket,
             object_data,
