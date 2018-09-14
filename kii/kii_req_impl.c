@@ -52,6 +52,102 @@ kii_code_t _set_bucket_path(
     }
 }
 
+kii_code_t _set_bucket_subscription_path(kii_t* kii, const kii_bucket_t* bucket) {
+    int len = 0;
+    const char* scope_strs[] = { "", "users", "groups", "things" };
+    switch (bucket->scope) {
+        case KII_SCOPE_APP: {
+            const char path[] = "/api/apps/%s/buckets/%s/filters/all/push/subscriptions/things/%s";
+            len = snprintf(kii->_rw_buff, kii->_rw_buff_size, path, kii->_app_id, bucket->bucket_name, kii->_author.author_id);
+            break;
+        }
+        case KII_SCOPE_USER:
+        case KII_SCOPE_GROUP:
+        case KII_SCOPE_THING: {
+            const char* scope = scope_strs[bucket->scope];
+            const char path[] = "/api/apps/%s/%s/%s/buckets/%s/filters/all/push/subscriptions/things/%s";
+            len = snprintf(kii->_rw_buff, kii->_rw_buff_size, path,
+                kii->_app_id, scope, bucket->scope_id, bucket->bucket_name, kii->_author.author_id);
+            break;
+        }
+        default:
+            return KII_ERR_FAIL;
+    }
+    if (len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    khc_code kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
+    if (kcode != KHC_ERR_OK) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    return KII_ERR_OK;
+}
+
+kii_code_t _set_topic_path(
+    kii_t* kii,
+    const kii_topic_t* topic)
+{
+    int len = 0;
+    const char* scope_strs[] = { "", "users", "groups", "things" };
+    switch (topic->scope) {
+        case KII_SCOPE_APP: {
+            const char path[] = "/api/apps/%s/topics/%s";
+            len = snprintf(kii->_rw_buff, kii->_rw_buff_size, path, kii->_app_id, topic->topic_name);
+            break;
+        }
+        case KII_SCOPE_USER:
+        case KII_SCOPE_GROUP:
+        case KII_SCOPE_THING: {
+            const char* scope = scope_strs[topic->scope];
+            const char path[] = "/api/apps/%s/%s/%s/topics/%s";
+            len = snprintf(kii->_rw_buff, kii->_rw_buff_size, path,
+                kii->_app_id, scope, topic->scope_id, topic->topic_name);
+            break;
+        }
+        default:
+            return KII_ERR_FAIL;
+    }
+    if (len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    khc_code kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
+    if (kcode != KHC_ERR_OK) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    return KII_ERR_OK;
+}
+
+kii_code_t _set_topic_subscription_path(kii_t* kii, const kii_topic_t* topic) {
+    int len = 0;
+    const char* scope_strs[] = { "", "users", "groups", "things" };
+    switch (topic->scope) {
+        case KII_SCOPE_APP: {
+            const char path[] = "/api/apps/%s/topics/%s/push/subscriptions/things/%s";
+            len = snprintf(kii->_rw_buff, kii->_rw_buff_size, path, kii->_app_id, topic->topic_name, kii->_author.author_id);
+            break;
+        }
+        case KII_SCOPE_USER:
+        case KII_SCOPE_GROUP:
+        case KII_SCOPE_THING: {
+            const char* scope = scope_strs[topic->scope];
+            const char path[] = "/api/apps/%s/%s/%s/topics/%s/push/subscriptions/things/%s";
+            len = snprintf(kii->_rw_buff, kii->_rw_buff_size, path,
+                kii->_app_id, scope, topic->scope_id, topic->topic_name, kii->_author.author_id);
+            break;
+        }
+        default:
+            return KII_ERR_FAIL;
+    }
+    if (len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    khc_code kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
+    if (kcode != KHC_ERR_OK) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    return KII_ERR_OK;
+}
+
 kii_code_t _set_content_type(
     kii_t* kii,
     const char* content_type)

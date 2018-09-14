@@ -87,8 +87,8 @@ typedef struct kii_bucket_t
 /** represents topic */
 typedef struct kii_topic_t {
     kii_scope_type_t scope;
-    char* scope_id;
-    char* topic_name;
+    const char* scope_id;
+    const char* topic_name;
 } kii_topic_t;
 
 /** represents author of SDK api. */
@@ -99,6 +99,16 @@ typedef struct kii_author_t
     /** access token of the author */
     char access_token[128];
 } kii_author_t;
+
+typedef struct kii_mqtt_endpoint_t {
+    char username[64];
+    char password[128];
+    char topic[64];
+    char host[64];
+    unsigned int port_tcp;
+    unsigned int port_ssl;
+    unsigned long ttl;
+} kii_mqtt_endpoint_t;
 
 struct kii_t;
 
@@ -340,18 +350,18 @@ kii_code_t kii_object_download_body(
  *  Event happened on the bucket will be notified via push notification.
  *  \param [inout] kii sdk instance.
  *  \param [in] bucket specify the bucket to subscribe.
- *  \return 0:success, -1: failure
+ *  \return kii_code_t
  */
-int kii_push_subscribe_bucket(
+kii_code_t kii_subscribe_bucket(
 		kii_t* kii,
 		const kii_bucket_t* bucket);
 
 /** Unsubscribe specified bucket.
  *  \param [inout] kii sdk instance.
  *  \param [in] bucket specify the bucket to subscribe.
- *  \return 0:success, -1: failure
+ *  \return kii_code_t
  */
-int kii_push_unsubscribe_bucket(
+kii_code_t kii_unsubscribe_bucket(
 		kii_t* kii,
 		const kii_bucket_t* bucket);
 
@@ -360,47 +370,58 @@ int kii_push_unsubscribe_bucket(
  *  Message sent to the topic will be notified via push notification.
  *  \param [inout] kii sdk instance.
  *  \param [in] topic specify the topic to subscribe.
- *  \return 0:success, -1: failure
+ *  \return kii_code_t
  */
-int kii_push_subscribe_topic(
+kii_code_t kii_subscribe_topic(
 		kii_t* kii,
 		const kii_topic_t* topic);
 
 /** Unsubscribe specified topic.
  *  \param [inout] kii sdk instance.
  *  \param [in] topic specify the topic to subscribe.
- *  \return 0:success, -1: failure
+ *  \return kii_code_t
  */
-int kii_push_unsubscribe_topic(
+kii_code_t kii_unsubscribe_topic(
 		kii_t* kii,
 		const kii_topic_t* topic);
 
-/** Create new topic.
+/** Put new topic.
  *  \param [inout] kii sdk instance.
  *  \param [in] topic specify the topic to create.
- *  \return 0:success, -1: failure
+ *  \return kii_code_t
  */
-int kii_push_create_topic(
+kii_code_t kii_put_topic(
 		kii_t* kii,
 		const kii_topic_t* topic);
 
-/** Delete existing topic.
+/** Delete topic.
  *  \param [inout] kii sdk instance.
  *  \param [in] topic specify the topic to delete.
- *  \return 0:success, -1: failure
+ *  \return kii_code_t
  */
-int kii_push_delete_topic(
+kii_code_t kii_delete_topic(
 		kii_t* kii,
 		const kii_topic_t* topic);
+
+kii_code_t kii_install_push(
+        kii_t* kii,
+        kii_bool_t development,
+        char* installation_id,
+        size_t installation_id_len);
+
+kii_code_t kii_get_mqtt_endpoint(
+    kii_t* kii,
+    const char* installation_id,
+    kii_mqtt_endpoint_t* endpoint);
 
 /** Start push notification receiving routine.
  *  After succeeded, callback is called when push message is delivered to this
  *  thing.
  *  \param [inout] kii sdk instance.
  *  \param [in] callback  callback function called when push message delivered. 
- *  \return 0:success, -1: failure
+ *  \return kii_code_t
  */
-int kii_push_start_routine(
+kii_code_t kii_push_start_routine(
 		kii_t* kii,
 		KII_PUSH_RECEIVED_CB callback);
 

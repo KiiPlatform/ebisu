@@ -10,6 +10,18 @@ kii_code_t _set_bucket_path(
     const char* object_id,
     const char* body);
 
+kii_code_t _set_bucket_subscription_path(
+    kii_t* kii,
+    const kii_bucket_t* bucket);
+
+kii_code_t _set_topic_path(
+    kii_t* kii,
+    const kii_topic_t* topic);
+
+kii_code_t _set_topic_subscription_path(
+    kii_t* kii,
+    const kii_topic_t* topic);
+
 kii_code_t _set_object_content_type(
     kii_t* kii,
     const char* object_content_type);
