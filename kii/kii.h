@@ -449,10 +449,9 @@ kii_code_t kii_execute_server_code(
  * @param [in] content_type content type of http_body.
  * @param [in] set_authentication_header a flag to set or not
  * authentication header.
- * @return result of preparation. if 0, preparation is succeeded,
- * otherwise failed
+ * @return result of preparation.
  */
-int kii_api_call_start(
+kii_code_t kii_api_call_start(
         kii_t* kii,
         const char* http_method,
         const char* resource_path,
@@ -466,15 +465,14 @@ int kii_api_call_start(
  * kii_api_call_run(kii_t*).
  *
  * @param [in] kii SDK object.
- * @param [in] body_data appended body data.
- * @param [in] body_size appended body data size.
- * @return result of appending. if 0 appending is succeeded, otherwise
- * failed.
+ * @param [in] chunk part of the body to be appended.
+ * @param [in] chunk_size size of the chunk.
+ * @return result of addition.
  */
-int kii_api_call_append_body(
+kii_code_t kii_api_call_append_body(
         kii_t* kii,
-        const void* body_data,
-        size_t body_size);
+        const char* chunk,
+        size_t chunk_size);
 
 /** append request header.
  *
@@ -485,10 +483,9 @@ int kii_api_call_append_body(
  * @param [in] kii SDK object.
  * @param [in] key key of http header.
  * @param [in] value value of http header.
- * @return result of appending. if 0 appending is succeeded, otherwise
- * failed.
+ * @return result of addition.
  */
-int
+kii_code_t
 kii_api_call_append_header(
         kii_t* kii,
         const char* key,
@@ -504,24 +501,14 @@ kii_api_call_append_header(
  * - kii_api_call_append_header(kii_t*, const char*, const char*)
  *
  * After creation of HTTP request, this function calls REST API with
- * created request. As a result, HTTP response is set to
- * kii_t#kii_core#response_body and kii_t#kii_core#response_code.
+ * created request.
+ * Response status can be obtained by kii_get_resp_status(kii_t*)
+ * Response body is written to the buffer set by kii_api_call_run(kii_t*)
  *
  * @param [in] kii SDK object.
- * @return result of closing request creation if 0 it is succeeded,
- * otherwise failed.
+ * @return result of the request creation.
  */
-int kii_api_call_run(kii_t* kii);
-
-int kii_api_call(
-    kii_t *kii,
-    const char *http_method,
-    const char *resource_path,
-    const void *http_body,
-    size_t body_size,
-    const char *content_type,
-    char *header,
-    ...);
+kii_code_t kii_api_call_run(kii_t* kii);
 
 int kii_set_buff(kii_t* kii, char* buff, size_t buff_size);
 
@@ -536,6 +523,8 @@ int kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
 int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
 
 char* kii_get_etag(kii_t* kii);
+
+int kii_get_resp_status(kii_t* kii);
 
 #ifdef __cplusplus
 }

@@ -90,20 +90,6 @@ int kii_init(
     return 0;
 }
 
-int kii_api_call(
-    kii_t *kii,
-    const char *http_method,
-    const char *resource_path,
-    const void *http_body,
-    size_t body_size,
-    const char *content_type,
-    char *header,
-    ...)
-{
-    // TODO: reimplement it. Equivalent to kii_core_api_call().
-    return -1;
-}
-
 int kii_set_buff(kii_t* kii, char* buff, size_t buff_size) {
     kii->_rw_buff = buff;
     kii->_rw_buff_size = buff_size;
@@ -160,6 +146,10 @@ int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata)
 
 char* kii_get_etag(kii_t* kii) {
     return kii->_etag;
+}
+
+int kii_get_resp_status(kii_t* kii) {
+    return khc_get_status_code(&kii->_khc);
 }
 
 kii_code_t _convert_code(khc_code khc_c) {
