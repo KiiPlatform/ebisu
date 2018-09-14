@@ -59,7 +59,7 @@ exit:
     return ret;
 }
 
-kii_code_t kii_object_put(
+kii_code_t kii_put_object(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
@@ -69,7 +69,7 @@ kii_code_t kii_object_put(
 {
     _reset_buff(kii);
     khc_set_zero_excl_cb(&kii->_khc);
-    kii_code_t ret = _kii_object_put(
+    kii_code_t ret = _kii_put_object(
             kii,
             bucket,
             object_id,

@@ -59,11 +59,11 @@ TEST_CASE("Object Tests")
                 char etag_copy[etag_len+1];
                 memcpy(etag_copy, etag, etag_len);
                 etag_copy[etag_len] = '\0';
-                kii_code_t put_res = kii_object_put(&kii, &bucket, object_id, object, NULL, etag_copy);
+                kii_code_t put_res = kii_put_object(&kii, &bucket, object_id, object, NULL, etag_copy);
                 REQUIRE( put_res == KII_ERR_OK );
                 REQUIRE( khc_get_status_code(&kii._khc) == 200 );
                 // Now etag_copy should be obsoleted.
-                put_res = kii_object_put(&kii, &bucket, object_id, object, NULL, etag_copy);
+                put_res = kii_put_object(&kii, &bucket, object_id, object, NULL, etag_copy);
                 REQUIRE( put_res == KII_ERR_RESP_STATUS );
                 REQUIRE( khc_get_status_code(&kii._khc) == 409 );
             }
@@ -148,7 +148,7 @@ TEST_CASE("Object Tests")
             std::string id = std::to_string(kiiltest::current_time());
             std::string object_id = id_base + id;
             const char object_data[] = "{}";
-            kii_code_t put_res = kii_object_put(&kii, &bucket, object_id.c_str(), object_data, "", NULL);
+            kii_code_t put_res = kii_put_object(&kii, &bucket, object_id.c_str(), object_data, "", NULL);
 
             REQUIRE( put_res == KII_ERR_OK );
             REQUIRE( khc_get_status_code(&kii._khc) == 201 );

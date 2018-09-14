@@ -262,7 +262,7 @@ kii_code_t kii_post_object(
  *  \param [in] if specified, If-Match header is sent to the endpoint.
  *  \return  kii_code_t
  */
-kii_code_t kii_object_put(
+kii_code_t kii_put_object(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
