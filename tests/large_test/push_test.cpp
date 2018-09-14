@@ -112,5 +112,27 @@ TEST_CASE("Push Tests")
         CHECK(ins_res == KII_ERR_OK);
         REQUIRE(khc_get_status_code(&kii._khc) == 201);
         REQUIRE(strlen(installation_id) > 0);
+
+        SECTION("Get MQTT endpoint") {
+            kii_mqtt_endpoint_t endpoint;
+            memset(&endpoint, '\0', sizeof(kii_mqtt_endpoint_t));
+
+            int status = 0;
+            kii_code_t get_ep_res = KII_ERR_FAIL;
+            do {
+                std::this_thread::sleep_for(std::chrono::milliseconds(200));
+                get_ep_res = kii_get_mqtt_endpoint(&kii, installation_id, &endpoint);
+                status = khc_get_status_code(&kii._khc);
+            } while (status == 503);
+
+            CHECK(get_ep_res == KII_ERR_OK);
+            REQUIRE(khc_get_status_code(&kii._khc) == 200);
+            REQUIRE(strlen(endpoint.host) > 0);
+            REQUIRE(strlen(endpoint.password) > 0);
+            REQUIRE(strlen(endpoint.topic) > 0);
+            REQUIRE(strlen(endpoint.username) > 0);
+            REQUIRE(endpoint.port_ssl == 8883);
+            REQUIRE(endpoint.port_tcp == 1883);
+        }
     }
 }
