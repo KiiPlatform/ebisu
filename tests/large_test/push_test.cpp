@@ -1,5 +1,6 @@
 #include "catch.hpp"
 #include <thread>
+#include <cstring>
 #include <kii.h>
 #include "large_test.h"
 
