@@ -60,6 +60,29 @@ TEST_CASE("API call tests")
         auto object_id = resp.at("objectID");
         REQUIRE ( object_id.is<std::string>() );
         REQUIRE ( object_id.get<std::string>().length() > 0 );
+
+        SECTION("API call without body") {
+            const char* obj_id = object_id.get<std::string>().c_str();
+            int path_len = snprintf(path, 128, "/api/apps/%s/buckets/test_bucket/objects/%s", kii._app_id, obj_id);
+            REQUIRE(path_len <= 128);
+
+            start_res = kii_api_call_start(&kii, "GET", path, NULL, KII_FALSE);
+            REQUIRE (start_res == KII_ERR_OK);
+
+            run_res = kii_api_call_run(&kii);
+            CHECK (run_res == KII_ERR_OK);
+            REQUIRE (kii_get_resp_status(&kii) == 200);
+
+            // Parse response.
+            picojson::value v;
+            auto err_str = picojson::parse(v, buff);
+            REQUIRE ( err_str.empty() );
+            REQUIRE ( v.is<picojson::object>() );
+            picojson::object resp_get = v.get<picojson::object>();
+            auto long_text = resp_get.at("long_text");
+            REQUIRE ( long_text.is<std::string>() );
+            REQUIRE ( long_text.get<std::string>() == std::string(chunk2));
+        }
     }
 
 }
