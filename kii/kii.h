@@ -227,7 +227,7 @@ kii_code_t kii_auth_thing(
  *  \param [in] password - the password of the thing given by vendor.
  *  \return kii_code_t.
  */
-kii_code_t kii_thing_register(
+kii_code_t kii_register_thing(
 		kii_t* kii,
 		const char* vendor_thing_id,
 		const char* thing_type,

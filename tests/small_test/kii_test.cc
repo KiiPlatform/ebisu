@@ -259,7 +259,7 @@ TEST(kiiTest, register)
     strcpy(kii.kii_core.author.author_id, "");
     strcpy(kii.kii_core.author.access_token, "");
 
-    err = kii_thing_register(&kii, "4792", "my_type", "1234");
+    err = kii_register_thing(&kii, "4792", "my_type", "1234");
     ASSERT_EQ(0, err);
 
     ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);

@@ -41,7 +41,7 @@ TEST_CASE("Thing tests")
         std::string vid = vid_base + id;
         const char thing_type[] = "ltest-thing";
         const char password[] = "1234";
-        ret = kii_thing_register(&kii, vid.c_str(), thing_type, password);
+        ret = kii_register_thing(&kii, vid.c_str(), thing_type, password);
 
         REQUIRE( ret == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 201 );
