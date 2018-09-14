@@ -7,7 +7,7 @@
 #include "kii_impl.h"
 #include "kii_object_impl.h"
 
-kii_code_t kii_object_post(
+kii_code_t kii_post_object(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_data,
@@ -16,7 +16,7 @@ kii_code_t kii_object_post(
 {
     khc_set_zero_excl_cb(&kii->_khc);
     _reset_buff(kii);
-    kii_code_t ret = _kii_object_post(
+    kii_code_t ret = _kii_post_object(
             kii,
             bucket,
             object_data,

@@ -245,7 +245,7 @@ kii_code_t kii_register_thing(
  *  before this api call.
  *  \return kii_code_t
  */
-kii_code_t kii_object_post(
+kii_code_t kii_post_object(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_data,

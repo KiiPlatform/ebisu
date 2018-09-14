@@ -38,7 +38,7 @@ TEST_CASE("Push Tests")
         const char object[] = "{}";
         char object_id[128];
         object_id[0] = '\0';
-        kii_code_t post_res = kii_object_post(&kii, &bucket, object, NULL, object_id);
+        kii_code_t post_res = kii_post_object(&kii, &bucket, object, NULL, object_id);
         CHECK(post_res == KII_ERR_OK);
         REQUIRE(khc_get_status_code(&kii._khc) == 201);
 
