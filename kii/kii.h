@@ -509,16 +509,6 @@ kii_api_call_append_header(
  */
 kii_code_t kii_api_call_run(kii_t* kii);
 
-kii_code_t kii_api_call(
-    kii_t *kii,
-    const char *http_method,
-    const char *resource_path,
-    const void *http_body,
-    size_t body_size,
-    const char *content_type,
-    char *header,
-    ...);
-
 int kii_set_buff(kii_t* kii, char* buff, size_t buff_size);
 
 int kii_set_http_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
