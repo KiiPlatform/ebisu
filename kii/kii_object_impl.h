@@ -31,7 +31,7 @@ kii_code_t _post_object(
     const char *object_data,
     const char *object_content_type);
 
-kii_code_t _kii_put_object(
+kii_code_t _put_object(
     kii_t *kii,
     const kii_bucket_t *bucket,
     const char *object_id,

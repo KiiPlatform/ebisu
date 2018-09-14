@@ -52,7 +52,7 @@ kii_code_t _post_object(
     return _convert_code(code);
 }
 
-kii_code_t _kii_put_object(
+kii_code_t _put_object(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,

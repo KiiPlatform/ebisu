@@ -69,7 +69,7 @@ kii_code_t kii_put_object(
 {
     _reset_buff(kii);
     khc_set_zero_excl_cb(&kii->_khc);
-    kii_code_t ret = _kii_put_object(
+    kii_code_t ret = _put_object(
             kii,
             bucket,
             object_id,
