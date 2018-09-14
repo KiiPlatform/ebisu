@@ -72,7 +72,7 @@ TEST_CASE("Thing tests")
 //     ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
 
 //     kii.kii_core.response_code = 0;
-//     ret = kii_object_patch(&kii, &bucket, objectId, "{}", NULL);
+//     ret = kii_patch_object(&kii, &bucket, objectId, "{}", NULL);
 
 //     ASSERT_EQ(0, ret);
 //     ASSERT_EQ(200, kii.kii_core.response_code);
@@ -128,7 +128,7 @@ TEST_CASE("Thing tests")
 //     ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
 
 //     kii.kii_core.response_code = 0;
-//     ret = kii_object_patch(&kii, &bucket, objectId, "{}", NULL);
+//     ret = kii_patch_object(&kii, &bucket, objectId, "{}", NULL);
 
 //     ASSERT_EQ(0, ret);
 //     ASSERT_EQ(200, kii.kii_core.response_code);

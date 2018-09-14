@@ -92,7 +92,7 @@ exit:
 
 }
 
-kii_code_t kii_object_patch(
+kii_code_t kii_patch_object(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,

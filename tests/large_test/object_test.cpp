@@ -69,7 +69,7 @@ TEST_CASE("Object Tests")
             }
             SECTION("PATCH") {
                 const char patch_data[] = "{\"patch\":1}";
-                kii_code_t patch_res = kii_object_patch(&kii, &bucket, object_id, patch_data, NULL);
+                kii_code_t patch_res = kii_patch_object(&kii, &bucket, object_id, patch_data, NULL);
                 REQUIRE( patch_res == KII_ERR_OK );
                 REQUIRE( khc_get_status_code(&kii._khc) == 200 );
 
@@ -79,11 +79,11 @@ TEST_CASE("Object Tests")
                 memcpy(p_etag_copy, p_etag, p_etag_len);
                 p_etag_copy[p_etag_len] = '\0';
 
-                patch_res = kii_object_patch(&kii, &bucket, object_id, patch_data, p_etag_copy);
+                patch_res = kii_patch_object(&kii, &bucket, object_id, patch_data, p_etag_copy);
                 REQUIRE( patch_res == KII_ERR_OK );
                 REQUIRE( khc_get_status_code(&kii._khc) == 200 );
                 // Now p_etag_copy is not valid.
-                patch_res = kii_object_patch(&kii, &bucket, object_id, patch_data, p_etag_copy);
+                patch_res = kii_patch_object(&kii, &bucket, object_id, patch_data, p_etag_copy);
                 REQUIRE( patch_res == KII_ERR_RESP_STATUS );
                 REQUIRE( khc_get_status_code(&kii._khc) == 409 );
             }

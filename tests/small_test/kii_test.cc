@@ -418,7 +418,7 @@ TEST(kiiTest, object_patch)
 
     initBucket(&bucket);
 
-    err = kii_object_patch(&kii, &bucket, OBJECT, "{}", NULL);
+    err = kii_patch_object(&kii, &bucket, OBJECT, "{}", NULL);
     ASSERT_EQ(0, err);
 }
 

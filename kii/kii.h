@@ -281,7 +281,7 @@ kii_code_t kii_put_object(
  *  if there is updates on cloud. if NULL, forcibly updates.
  *  \return  kii_code_t
  */
-kii_code_t kii_object_patch(
+kii_code_t kii_patch_object(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,
