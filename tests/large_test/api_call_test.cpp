@@ -62,6 +62,7 @@ TEST_CASE("API call tests")
         REQUIRE ( object_id.get<std::string>().length() > 0 );
 
         SECTION("API call without body") {
+            // Get object.
             const char* obj_id = object_id.get<std::string>().c_str();
             int path_len = snprintf(path, 128, "/api/apps/%s/buckets/test_bucket/objects/%s", kii._app_id, obj_id);
             REQUIRE(path_len <= 128);
@@ -82,6 +83,25 @@ TEST_CASE("API call tests")
             auto long_text = resp_get.at("long_text");
             REQUIRE ( long_text.is<std::string>() );
             REQUIRE ( long_text.get<std::string>() == std::string(chunk2));
+        }
+        SECTION("API call with header") {
+            // PUT object with If-None-Match
+            const char* obj_id = object_id.get<std::string>().c_str();
+            int path_len = snprintf(path, 128, "/api/apps/%s/buckets/test_bucket/objects/%s", kii._app_id, obj_id);
+            REQUIRE(path_len <= 128);
+            start_res = kii_api_call_start(&kii, "PUT", path, "application/json", KII_TRUE);
+            REQUIRE (start_res == KII_ERR_OK);
+
+            apend_res = kii_api_call_append_body(&kii, "{}", 2);
+            REQUIRE (apend_res == KII_ERR_OK);
+
+            kii_code_t header_append_res = kii_api_call_append_header(&kii, "If-None-Match", "*");
+            REQUIRE (header_append_res == KII_ERR_OK);
+
+            run_res = kii_api_call_run(&kii);
+            CHECK (run_res == KII_ERR_OK);
+            // If-None-Match: * will fail since there's a object created.
+            REQUIRE (kii_get_resp_status(&kii) == 409);
         }
     }
 

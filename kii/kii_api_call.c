@@ -65,7 +65,7 @@ kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* v
 {
     size_t key_len = strlen(key);
     size_t val_len = strlen(value);
-    size_t buff_size = key_len + val_len + 2;
+    size_t buff_size = key_len + val_len + 3;
     char buff[buff_size];
 
     int header_len = snprintf(buff, buff_size, "%s: %s", key, value);
