@@ -213,7 +213,7 @@ int kii_init(
  *  \param [in] password the password of the thing given by vendor.
  *  \return 0:success, -1: failure
  */
-kii_code_t kii_thing_auth(
+kii_code_t kii_auth_thing(
 		kii_t* kii,
 		const char* vendor_thing_id,
 		const char* password);

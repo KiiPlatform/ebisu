@@ -203,7 +203,7 @@ TEST(kiiTest, authenticate)
     strcpy(kii.kii_core.author.author_id, "");
     strcpy(kii.kii_core.author.access_token, "");
 
-    err = kii_thing_authenticate(&kii, "1426830900", "1234");
+    err = kii_auth_thingenticate(&kii, "1426830900", "1234");
     ASSERT_EQ(0, err);
 
     ASSERT_STREQ(THING_ID, kii.kii_core.author.author_id);
