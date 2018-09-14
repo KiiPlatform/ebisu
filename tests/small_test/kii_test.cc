@@ -797,7 +797,7 @@ TEST(kiiTest, object_download_body_at_once)
     initBucket(&bucket);
 
     length = 0;
-    err = kii_object_download_body_at_once(&kii, &bucket, OBJECT, &length);
+    err = kii_download_object_body_at_once(&kii, &bucket, OBJECT, &length);
     ASSERT_EQ(0, err);
 
     ASSERT_EQ(2, length);
@@ -850,7 +850,7 @@ TEST(kiiTest, object_download_body)
 
     actual_length = 0;
     total_length = 0;
-    err = kii_object_download_body(&kii, &bucket, OBJECT, 0, 2, &actual_length,
+    err = kii_download_object_body(&kii, &bucket, OBJECT, 0, 2, &actual_length,
             &total_length);
     ASSERT_EQ(0, err);
 

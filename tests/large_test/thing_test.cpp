@@ -196,7 +196,7 @@ TEST_CASE("Thing tests")
 //     ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
 
 //     kii.kii_core.response_code = 0;
-//     ret = kii_object_download_body_at_once(&kii, &bucket, objectId, &out_len);
+//     ret = kii_download_object_body_at_once(&kii, &bucket, objectId, &out_len);
 
 //     ASSERT_EQ(0, ret);
 //     ASSERT_EQ(body_len, out_len);
@@ -274,7 +274,7 @@ TEST_CASE("Thing tests")
 //     ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
 
 //     kii.kii_core.response_code = 0;
-//     ret = kii_object_download_body(&kii, &bucket, objectId, 0, body_len,
+//     ret = kii_download_object_body(&kii, &bucket, objectId, 0, body_len,
 //             &out_len, &out_total);
 
 //     ASSERT_EQ(0, ret);
@@ -456,7 +456,7 @@ TEST_CASE("Thing tests")
 //     ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
 
 //     kii.kii_core.response_code = 0;
-//     ret = kii_object_download_body_at_once(&kii, &bucket, objectId, &out_len);
+//     ret = kii_download_object_body_at_once(&kii, &bucket, objectId, &out_len);
 
 //     ASSERT_EQ(0, ret);
 //     ASSERT_EQ(body_len, out_len);
@@ -547,7 +547,7 @@ TEST_CASE("Thing tests")
 //     ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
 
 //     kii.kii_core.response_code = 0;
-//     ret = kii_object_download_body(&kii, &bucket, objectId, 0, body_len,
+//     ret = kii_download_object_body(&kii, &bucket, objectId, 0, body_len,
 //             &out_len, &out_total);
 
 //     ASSERT_EQ(0, ret);

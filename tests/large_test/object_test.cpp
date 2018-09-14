@@ -136,7 +136,7 @@ TEST_CASE("Object Tests")
                     return size * count;
                 };
                 ctx.on_write = on_write;
-                kii_code_t download_res = kii_object_download_body(&kii, &bucket, object_id, kiiltest::write_cb, &ctx);
+                kii_code_t download_res = kii_download_object_body(&kii, &bucket, object_id, kiiltest::write_cb, &ctx);
                 REQUIRE( khc_get_status_code(&kii._khc) == 200 );
                 REQUIRE( download_res == KII_ERR_OK );
                 REQUIRE ( oss.str() == body );
