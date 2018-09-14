@@ -57,7 +57,7 @@ TEST_CASE("API call tests")
         REQUIRE ( err_str.empty() );
         REQUIRE ( v.is<picojson::object>() );
         picojson::object resp = v.get<picojson::object>();
-        auto object_id = resp.at("_id");
+        auto object_id = resp.at("objectID");
         REQUIRE ( object_id.is<std::string>() );
         REQUIRE ( object_id.get<std::string>().length() > 0 );
     }

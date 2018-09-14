@@ -56,6 +56,7 @@ kii_code_t kii_api_call_append_body(
     }
     char* curr_pos = kii->_rw_buff + kii->_rw_buff_req_size;
     memcpy(curr_pos, chunk, chunk_size);
+    kii->_rw_buff_req_size = total;
     kii->_rw_buff[total] = '\0';
     return KII_ERR_OK;
 }
