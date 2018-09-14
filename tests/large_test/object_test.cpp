@@ -103,7 +103,7 @@ TEST_CASE("Object Tests")
                 REQUIRE ( obj_id.get<std::string>() == std::string(object_id) );
             }
             SECTION("DELETE") {
-                kii_code_t delete_res = kii_object_delete(&kii, &bucket, object_id);
+                kii_code_t delete_res = kii_delete_object(&kii, &bucket, object_id);
                 REQUIRE( delete_res == KII_ERR_OK );
                 REQUIRE( khc_get_status_code(&kii._khc) == 204 );
                 // Now get should return 404.

@@ -97,7 +97,7 @@ TEST_CASE("Thing tests")
 //     ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
 
 //     kii.kii_core.response_code = 0;
-//     ret = kii_object_delete(&kii, &bucket, objectId);
+//     ret = kii_delete_object(&kii, &bucket, objectId);
 
 //     ASSERT_EQ(0, ret);
 //     ASSERT_EQ(204, kii.kii_core.response_code);
@@ -117,7 +117,7 @@ TEST_CASE("Thing tests")
 //     initBucket(&bucket);
 //     strcpy(objectId, "my_object");
 
-//     kii_object_delete(&kii, &bucket, objectId);
+//     kii_delete_object(&kii, &bucket, objectId);
 
 //     kii.kii_core.response_code = 0;
 //     ret = kii_object_create_with_id(&kii, &bucket, objectId, "{}", NULL);
@@ -153,7 +153,7 @@ TEST_CASE("Thing tests")
 //     ASSERT_TRUE(NULL != kii.kii_core.response_body);
 
 //     kii.kii_core.response_code = 0;
-//     ret = kii_object_delete(&kii, &bucket, objectId);
+//     ret = kii_delete_object(&kii, &bucket, objectId);
 
 //     ASSERT_EQ(0, ret);
 //     ASSERT_EQ(204, kii.kii_core.response_code);
@@ -206,7 +206,7 @@ TEST_CASE("Thing tests")
 //     ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
 
 //     kii.kii_core.response_code = 0;
-//     ret = kii_object_delete(&kii, &bucket, objectId);
+//     ret = kii_delete_object(&kii, &bucket, objectId);
 
 //     ASSERT_EQ(0, ret);
 //     ASSERT_EQ(204, kii.kii_core.response_code);
@@ -286,7 +286,7 @@ TEST_CASE("Thing tests")
 //     ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
 
 //     kii.kii_core.response_code = 0;
-//     ret = kii_object_delete(&kii, &bucket, objectId);
+//     ret = kii_delete_object(&kii, &bucket, objectId);
 
 //     ASSERT_EQ(0, ret);
 //     ASSERT_EQ(204, kii.kii_core.response_code);
@@ -436,7 +436,7 @@ TEST_CASE("Thing tests")
 //     initBucket(&bucket);
 //     strcpy(objectId, "my_object");
 
-//     kii_object_delete(&kii, &bucket, objectId);
+//     kii_delete_object(&kii, &bucket, objectId);
 
 //     kii.kii_core.response_code = 0;
 //     ret = kii_object_create_with_id(&kii, &bucket, objectId, "{}", NULL);
@@ -466,7 +466,7 @@ TEST_CASE("Thing tests")
 //     ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
 
 //     kii.kii_core.response_code = 0;
-//     ret = kii_object_delete(&kii, &bucket, objectId);
+//     ret = kii_delete_object(&kii, &bucket, objectId);
 
 //     ASSERT_EQ(0, ret);
 //     ASSERT_EQ(204, kii.kii_core.response_code);
@@ -493,7 +493,7 @@ TEST_CASE("Thing tests")
 //     initBucket(&bucket);
 //     strcpy(objectId, "my_object");
 
-//     kii_object_delete(&kii, &bucket, objectId);
+//     kii_delete_object(&kii, &bucket, objectId);
 
 //     kii.kii_core.response_code = 0;
 //     ret = kii_object_create_with_id(&kii, &bucket, objectId, "{}", NULL);
@@ -559,7 +559,7 @@ TEST_CASE("Thing tests")
 //     ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
 
 //     kii.kii_core.response_code = 0;
-//     ret = kii_object_delete(&kii, &bucket, objectId);
+//     ret = kii_delete_object(&kii, &bucket, objectId);
 
 //     ASSERT_EQ(0, ret);
 //     ASSERT_EQ(204, kii.kii_core.response_code);
@@ -615,7 +615,7 @@ TEST(kiiTest, startRoutine)
     sleep(10);
 
     printf("D\n");fflush(stdout);
-    ret = kii_object_delete(&kii, &bucket, objectId);
+    ret = kii_delete_object(&kii, &bucket, objectId);
 
     ASSERT_EQ(0, ret);
 

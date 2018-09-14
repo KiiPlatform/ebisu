@@ -294,7 +294,7 @@ kii_code_t kii_patch_object(
  *  \param [in] object_id specify the id of the object.
  *  \return  kii_code_t
  */
-kii_code_t kii_object_delete(
+kii_code_t kii_delete_object(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id);

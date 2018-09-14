@@ -511,7 +511,7 @@ TEST(kiiTest, object_delete)
 
     initBucket(&bucket);
 
-    err = kii_object_delete(&kii, &bucket, OBJECT);
+    err = kii_delete_object(&kii, &bucket, OBJECT);
     ASSERT_EQ(0, err);
 }
 
