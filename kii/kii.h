@@ -465,14 +465,14 @@ kii_code_t kii_api_call_start(
  * kii_api_call_run(kii_t*).
  *
  * @param [in] kii SDK object.
- * @param [in] body_data appended body data.
- * @param [in] body_size appended body data size.
+ * @param [in] chunk part of the body to be appended.
+ * @param [in] chunk_size size of the chunk.
  * @return result of addition.
  */
 kii_code_t kii_api_call_append_body(
         kii_t* kii,
-        const void* body_data,
-        size_t body_size);
+        const char* chunk,
+        size_t chunk_size);
 
 /** append request header.
  *
@@ -501,8 +501,9 @@ kii_api_call_append_header(
  * - kii_api_call_append_header(kii_t*, const char*, const char*)
  *
  * After creation of HTTP request, this function calls REST API with
- * created request. As a result, HTTP response is set to
- * kii_t#kii_core#response_body and kii_t#kii_core#response_code.
+ * created request.
+ * Response status can be obtained by kii_get_resp_status(kii_t*)
+ * Response body is written to the buffer set by kii_api_call_run(kii_t*)
  *
  * @param [in] kii SDK object.
  * @return result of the request creation.
@@ -522,6 +523,8 @@ int kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
 int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
 
 char* kii_get_etag(kii_t* kii);
+
+int kii_get_resp_status(kii_t* kii);
 
 #ifdef __cplusplus
 }

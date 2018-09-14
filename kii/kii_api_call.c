@@ -46,21 +46,48 @@ kii_code_t kii_api_call_start(
 
 kii_code_t kii_api_call_append_body(
         kii_t* kii,
-        const void* body_data,
-        size_t body_size)
+        const char* chunk,
+        size_t chunk_size)
 {
-    // TODO: implement it.
-    return -1;
+    size_t total = kii->_rw_buff_req_size + chunk_size;
+    if (total + 1 > kii->_rw_buff_size) {
+        _req_headers_free_all(kii);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    char* curr_pos = kii->_rw_buff + kii->_rw_buff_req_size;
+    memcpy(curr_pos, chunk, chunk_size);
+    kii->_rw_buff[total] = '\0';
+    return KII_ERR_OK;
 }
 
 kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* value)
 {
-    // TODO: implement it.
-    return -1;
+    size_t key_len = strlen(key);
+    size_t val_len = strlen(value);
+    size_t buff_size = key_len + val_len + 2;
+    char buff[buff_size];
+
+    int header_len = snprintf(buff, buff_size, "%s: %s", key, value);
+    if (header_len >= buff_size) {
+        _req_headers_free_all(kii);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    kii->_req_headers = khc_slist_append(kii->_req_headers, buff, header_len);
+
+    return KII_ERR_OK;
 }
 
 kii_code_t kii_api_call_run(kii_t* kii)
 {
-    // TODO: implement it.
-    return -1;
+    kii_code_t res = _set_content_length(kii, kii->_rw_buff_req_size);
+    if (res != KII_ERR_OK) {
+        _req_headers_free_all(kii);
+        return res;
+    }
+
+    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_code code = khc_perform(&kii->_khc);
+    _req_headers_free_all(kii);
+
+    return _convert_code(code);
 }

@@ -148,6 +148,10 @@ char* kii_get_etag(kii_t* kii) {
     return kii->_etag;
 }
 
+int kii_get_resp_status(kii_t* kii) {
+    return khc_get_status_code(&kii->_khc);
+}
+
 kii_code_t _convert_code(khc_code khc_c) {
     switch(khc_c) {
         case KHC_ERR_OK:
