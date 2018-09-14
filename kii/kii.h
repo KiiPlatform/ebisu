@@ -320,7 +320,7 @@ kii_code_t kii_get_object(
  *  \param [in] userdata read_cb context data.
  *  \return kii_code_t
  */
-kii_code_t kii_object_upload_body(
+kii_code_t kii_upload_object_body(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id,

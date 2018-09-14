@@ -187,7 +187,7 @@ TEST_CASE("Thing tests")
 //     ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
 
 //     kii.kii_core.response_code = 0;
-//     ret = kii_object_upload_body_at_once(&kii, &bucket, objectId, CONTENT_TYPE,
+//     ret = kii_upload_object_body_at_once(&kii, &bucket, objectId, CONTENT_TYPE,
 //             body, body_len);
 
 //     ASSERT_EQ(0, ret);
@@ -258,7 +258,7 @@ TEST_CASE("Thing tests")
 //     chunk.length = chunk.total_length = body_len;
 
 //     kii.kii_core.response_code = 0;
-//     ret = kii_object_upload_body(&kii, &bucket, objectId, uploadId, &chunk);
+//     ret = kii_upload_object_body(&kii, &bucket, objectId, uploadId, &chunk);
 
 //     ASSERT_EQ(0, ret);
 //     ASSERT_EQ(204, kii.kii_core.response_code);
@@ -447,7 +447,7 @@ TEST_CASE("Thing tests")
 //     ASSERT_STREQ(ACCESS_TOKEN, kii.kii_core.author.access_token);
 
 //     kii.kii_core.response_code = 0;
-//     ret = kii_object_upload_body_at_once(&kii, &bucket, objectId,
+//     ret = kii_upload_object_body_at_once(&kii, &bucket, objectId,
 //             "application/octet-stream", body, body_len);
 
 //     ASSERT_EQ(0, ret);
@@ -520,7 +520,7 @@ TEST_CASE("Thing tests")
 //     chunk.length = 5;
 
 //     kii.kii_core.response_code = 0;
-//     ret = kii_object_upload_body(&kii, &bucket, objectId, uploadId, &chunk);
+//     ret = kii_upload_object_body(&kii, &bucket, objectId, uploadId, &chunk);
 
 //     ASSERT_EQ(0, ret);
 //     ASSERT_EQ(204, kii.kii_core.response_code);
@@ -531,7 +531,7 @@ TEST_CASE("Thing tests")
 //     chunk.position = 5;
 //     chunk.length = 11;
 //     kii.kii_core.response_code = 0;
-//     ret = kii_object_upload_body(&kii, &bucket, objectId, uploadId, &chunk);
+//     ret = kii_upload_object_body(&kii, &bucket, objectId, uploadId, &chunk);
 
 //     ASSERT_EQ(0, ret);
 //     ASSERT_EQ(204, kii.kii_core.response_code);

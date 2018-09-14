@@ -606,7 +606,7 @@ TEST(kiiTest, object_upload_body_at_once)
 
     initBucket(&bucket);
 
-    err = kii_object_upload_body_at_once(&kii, &bucket, OBJECT,
+    err = kii_upload_object_body_at_once(&kii, &bucket, OBJECT,
             "application/json", "{}", 2);
     ASSERT_EQ(0, err);
 }
@@ -711,7 +711,7 @@ TEST(kiiTest, object_upload_body)
     chunk.length = 2;
     chunk.position = 0;
     chunk.total_length = 2;
-    err = kii_object_upload_body(&kii, &bucket, OBJECT, UPLOAD_ID, &chunk);
+    err = kii_upload_object_body(&kii, &bucket, OBJECT, UPLOAD_ID, &chunk);
     ASSERT_EQ(0, err);
 }
 
