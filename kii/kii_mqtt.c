@@ -349,12 +349,10 @@ int _mqtt_recvmsg(
                 return -1;
             }
         }
-#if(KII_PUSH_PING_ENABLE)
         else if((kii->mqtt_buffer[0] & 0xf0) == 0xd0)
         {
             M_KII_LOG("ping resp\r\n");
         }
-#endif
     }
     else
     {
