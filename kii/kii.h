@@ -522,7 +522,7 @@ int kii_set_mqtt_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
 int kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
 int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
 
-char* kii_get_etag(kii_t* kii);
+const char* kii_get_etag(kii_t* kii);
 
 int kii_get_resp_status(kii_t* kii);
 

@@ -51,7 +51,7 @@ TEST_CASE("Object Tests")
             REQUIRE( post_res == KII_ERR_OK );
             REQUIRE( khc_get_status_code(&kii._khc) == 201 );
             REQUIRE( strlen(object_id) > 0 );
-            char* etag = kii_get_etag(&kii);
+            const char* etag = kii_get_etag(&kii);
             size_t etag_len = strlen(etag);
             REQUIRE( etag_len == 3 );
 
@@ -73,7 +73,7 @@ TEST_CASE("Object Tests")
                 REQUIRE( patch_res == KII_ERR_OK );
                 REQUIRE( khc_get_status_code(&kii._khc) == 200 );
 
-                char* p_etag = kii_get_etag(&kii);
+                const char* p_etag = kii_get_etag(&kii);
                 size_t p_etag_len = strlen(etag);
                 char p_etag_copy[p_etag_len+1];
                 memcpy(p_etag_copy, p_etag, p_etag_len);
