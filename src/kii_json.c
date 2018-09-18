@@ -957,33 +957,24 @@ static kii_json_parse_result_t prv_kii_json_read_object(
 }
 
 kii_json_parse_result_t kii_json_read_object(
-        kii_json_t* kii_json,
-        const char* json_string,
-        size_t json_string_len,
-        kii_json_field_t* fields)
+    kii_json_t* kii_json,
+    const char* json_string,
+    size_t json_string_len,
+    kii_json_field_t* fields,
+    kii_json_resource_t* resource)
 {
-#ifdef KII_JSON_FIXED_TOKEN_NUM
-    {
-        kii_json_parse_result_t retval;
-        kii_json_token_t tokens[KII_JSON_FIXED_TOKEN_NUM];
-        kii_json_resource_t* original_resource = kii_json->resource;
-        kii_json_resource_t stacked_resource;
-        KII_JSON_RESOURCE_CB resource_cb = kii_json->resource_cb;
+    // TODO: implement it.
+    return KII_JSON_PARSE_INVALID_INPUT;
+}
 
-        stacked_resource.tokens = tokens;
-        stacked_resource.tokens_num = sizeof(tokens) / sizeof(tokens[0]);
-        kii_json->resource = &stacked_resource;
-        kii_json->resource_cb = NULL;
-
-        retval = prv_kii_json_read_object(kii_json, json_string,
-                json_string_len, fields);
-
-        kii_json->resource = original_resource;
-        kii_json->resource_cb = resource_cb;
-        return retval;
-    }
-#else
-    return prv_kii_json_read_object(kii_json, json_string, json_string_len,
-            fields);
-#endif
+kii_json_parse_result_t kii_json_read_object_with_allocator(
+    kii_json_t* kii_json,
+    const char* json_string,
+    size_t json_string_len,
+    kii_json_field_t* fields,
+    KII_JSON_RESOURCE_ALLOC_CB alloc_cb,
+    KII_JSON_RESOURCE_FREE_CB free_cb)
+{
+    // TODO: implement it.
+    return KII_JSON_PARSE_INVALID_INPUT;
 }

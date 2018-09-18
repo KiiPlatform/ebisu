@@ -44,9 +44,12 @@ typedef struct kii_json_resource_t {
  * \return 1: success to allocate resource, 0: fail to allocate resourceresize.
  */
 typedef int
-    (*KII_JSON_RESOURCE_CB)(
+    (*KII_JSON_RESOURCE_ALLOC_CB)(
         kii_json_resource_t* resource,
         size_t required_size);
+
+typedef void (*KII_JSON_RESOURCE_FREE_CB)(
+    kii_json_resource_t* resource);
 
 /** object manages context of kii json apis.
  * Do not share this object and fields inside this object among the
@@ -83,7 +86,7 @@ typedef struct kii_json_t {
      *
      * If KII_JSON_FIXED_TOKEN_NUM is defined, this callback won't be called.
      */
-    KII_JSON_RESOURCE_CB resource_cb;
+    KII_JSON_RESOURCE_ALLOC_CB resource_cb;
 
     /** Error string. If error occurs in kii_json library, then error
      * message is set to this fields. If NULL, no error message is
@@ -374,18 +377,36 @@ typedef struct kii_json_field_t {
 
 } kii_json_field_t;
 
-/** parse JSON string as JSON object.
+/** Parse JSON object.
  *  \param [in] kii json instance.
  *  \param [in] pointer of JSON string.
  *  \param [in] length of JSON string.
  *  \param [inout] field of kii JSON parser.
+ *  \param [in] resource of parser.
  *  \return parse JSON result.
  */
 kii_json_parse_result_t kii_json_read_object(
         kii_json_t* kii_json,
         const char* json_string,
         size_t json_string_len,
-        kii_json_field_t* fields);
+        kii_json_field_t* fields,
+        kii_json_resource_t* resource);
+
+/** Parse JSON object.
+ *  \param [in] kii json instance.
+ *  \param [in] pointer of JSON string.
+ *  \param [in] length of JSON string.
+ *  \param [inout] field of kii JSON parser.
+ *  \param [in] resource of parser.
+ *  \return parse JSON result.
+ */
+kii_json_parse_result_t kii_json_read_object_with_allocator(
+    kii_json_t* kii_json,
+    const char* json_string,
+    size_t json_string_len,
+    kii_json_field_t* fields,
+    KII_JSON_RESOURCE_ALLOC_CB alloc_cb,
+    KII_JSON_RESOURCE_FREE_CB free_cb);
 
 #ifdef __cplusplus
 }
