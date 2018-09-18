@@ -14,10 +14,6 @@
 extern "C" {
 #endif
 
-#define KII_OBJECTID_SIZE 36
-
-#define KII_UPLOADID_SIZE 64
-
 #ifdef DEBUG
 #ifndef __FILE__
 #define __FILE__ ("__FILE__ macro is not available")
