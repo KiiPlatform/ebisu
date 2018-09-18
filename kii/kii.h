@@ -14,26 +14,10 @@
 extern "C" {
 #endif
 
-#define KII_OBJECTID_SIZE 36
-
-#define KII_UPLOADID_SIZE 64
-
 #ifdef DEBUG
-#ifndef __FILE__
-#define __FILE__ ("__FILE__ macro is not available")
-#endif
-
-#ifndef __LINE__
-#define __LINE__ (-1)
-#endif
-
-#define M_KII_LOG(x) \
-	if (kii->kii_core.logger_cb != NULL) {\
-		kii->kii_core.logger_cb("file:%s, line:%d ", __FILE__, __LINE__); \
-		(x); \
-	}
+#define M_KII_LOG(...) printf(__VA_ARGS__)
 #else
-#define M_KII_LOG(x)
+#define M_KII_LOG(...)
 #endif
 
 #define KII_TASK_NAME_RECV_MSG "recv_msg_task"
