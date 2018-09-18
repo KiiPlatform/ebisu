@@ -21,9 +21,7 @@ extern "C" {
 #endif
 
 #define KII_TASK_NAME_RECV_MSG "recv_msg_task"
-#ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
 #define KII_TASK_NAME_PING_REQ "ping_req_task"
-#endif
 
 typedef size_t (*KII_CB_WRITE)(char *ptr, size_t size, size_t count, void *userdata);
 typedef size_t (*KII_CB_READ)(char *buffer, size_t size, size_t count, void *userdata);
@@ -115,17 +113,7 @@ typedef struct kii_t {
 	char _app_id[128];
 	char _app_host[128];
     char* _sdk_info;
-    /** Socket context for MQTT client.
-     *
-     * If you want to use MQTT client, You must set this socket
-     * context.  If You want to use ping req, you need to define
-     * KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
-     * macro. KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS is interval of
-     * sending ping request. KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
-     * requires seconds of ping request interval. If the interval is
-     * too short, MQTT client often disconnect connection to a MQTT
-     * server. We recommend 30 seconds or upper.
-     */
+
     void* mqtt_sock_connect_ctx;
     void* mqtt_sock_send_ctx;
     void* mqtt_sock_recv_ctx;
@@ -145,6 +133,8 @@ typedef struct kii_t {
 
     char* mqtt_buffer;
     size_t mqtt_buffer_size;
+
+    unsigned int _keep_alive_interval;
 
     char* _rw_buff;
     size_t _rw_buff_size;
@@ -409,11 +399,15 @@ kii_code_t kii_get_mqtt_endpoint(
  *  After succeeded, callback is called when push message is delivered to this
  *  thing.
  *  \param [inout] kii sdk instance.
+ *  \param [in] MQTT keep alive interval in second. If 0, Keep Alive mechanism is disabled.
+ * Otherwise, ping req is sent to MQTT broker periodically with the specified interval.
+ * Sending too many request with short interval consumes resouces. We recommend 30 seconds or longer interval.
  *  \param [in] callback  callback function called when push message delivered. 
  *  \return kii_code_t
  */
 kii_code_t kii_start_push_routine(
 		kii_t* kii,
+        unsigned int keep_alive_interval,
 		KII_PUSH_RECEIVED_CB callback);
 
 /** Execute server code.
