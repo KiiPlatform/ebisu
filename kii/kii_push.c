@@ -131,8 +131,7 @@ exit:
 kii_code_t kii_install_push(
         kii_t* kii,
         kii_bool_t development,
-        char* installation_id,
-        size_t installation_id_len)
+        kii_installation_id_t* out_installation_id)
 {
     khc_set_zero_excl_cb(&kii->_khc);
     _reset_buff(kii);
@@ -160,8 +159,8 @@ kii_code_t kii_install_push(
     memset(fields, 0, sizeof(fields));
     fields[0].name = "installationID";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[0].field_copy.string = installation_id;
-    fields[0].field_copy_buff_size = installation_id_len;
+    fields[0].field_copy.string = out_installation_id->id;
+    fields[0].field_copy_buff_size = sizeof(out_installation_id->id);
     fields[1].name = NULL;
 
     parse_result = prv_kii_json_read_object(kii, buff, buff_size, fields);

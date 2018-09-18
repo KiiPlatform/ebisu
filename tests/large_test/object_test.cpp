@@ -44,14 +44,13 @@ TEST_CASE("Object Tests")
         SECTION("POST") {
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
             const char object[] = "{}";
-            char object_id[128];
-            object_id[0] = '\0';
-            kii_code_t post_res = kii_post_object(&kii, &bucket, object, NULL, object_id);
+            kii_object_id_t obj_id;
+            kii_code_t post_res = kii_post_object(&kii, &bucket, object, NULL, &obj_id);
 
             REQUIRE( post_res == KII_ERR_OK );
             REQUIRE( khc_get_status_code(&kii._khc) == 201 );
-            REQUIRE( strlen(object_id) > 0 );
-            char* etag = kii_get_etag(&kii);
+            REQUIRE( strlen(obj_id.id) > 0 );
+            const char* etag = kii_get_etag(&kii);
             size_t etag_len = strlen(etag);
             REQUIRE( etag_len == 3 );
 
@@ -59,36 +58,36 @@ TEST_CASE("Object Tests")
                 char etag_copy[etag_len+1];
                 memcpy(etag_copy, etag, etag_len);
                 etag_copy[etag_len] = '\0';
-                kii_code_t put_res = kii_put_object(&kii, &bucket, object_id, object, NULL, etag_copy);
+                kii_code_t put_res = kii_put_object(&kii, &bucket, obj_id.id, object, NULL, etag_copy);
                 REQUIRE( put_res == KII_ERR_OK );
                 REQUIRE( khc_get_status_code(&kii._khc) == 200 );
                 // Now etag_copy should be obsoleted.
-                put_res = kii_put_object(&kii, &bucket, object_id, object, NULL, etag_copy);
+                put_res = kii_put_object(&kii, &bucket, obj_id.id, object, NULL, etag_copy);
                 REQUIRE( put_res == KII_ERR_RESP_STATUS );
                 REQUIRE( khc_get_status_code(&kii._khc) == 409 );
             }
             SECTION("PATCH") {
                 const char patch_data[] = "{\"patch\":1}";
-                kii_code_t patch_res = kii_patch_object(&kii, &bucket, object_id, patch_data, NULL);
+                kii_code_t patch_res = kii_patch_object(&kii, &bucket, obj_id.id, patch_data, NULL);
                 REQUIRE( patch_res == KII_ERR_OK );
                 REQUIRE( khc_get_status_code(&kii._khc) == 200 );
 
-                char* p_etag = kii_get_etag(&kii);
+                const char* p_etag = kii_get_etag(&kii);
                 size_t p_etag_len = strlen(etag);
                 char p_etag_copy[p_etag_len+1];
                 memcpy(p_etag_copy, p_etag, p_etag_len);
                 p_etag_copy[p_etag_len] = '\0';
 
-                patch_res = kii_patch_object(&kii, &bucket, object_id, patch_data, p_etag_copy);
+                patch_res = kii_patch_object(&kii, &bucket, obj_id.id, patch_data, p_etag_copy);
                 REQUIRE( patch_res == KII_ERR_OK );
                 REQUIRE( khc_get_status_code(&kii._khc) == 200 );
                 // Now p_etag_copy is not valid.
-                patch_res = kii_patch_object(&kii, &bucket, object_id, patch_data, p_etag_copy);
+                patch_res = kii_patch_object(&kii, &bucket, obj_id.id, patch_data, p_etag_copy);
                 REQUIRE( patch_res == KII_ERR_RESP_STATUS );
                 REQUIRE( khc_get_status_code(&kii._khc) == 409 );
             }
             SECTION("GET") {
-                kii_code_t get_res = kii_get_object(&kii, &bucket, object_id);
+                kii_code_t get_res = kii_get_object(&kii, &bucket, obj_id.id);
                 REQUIRE( get_res == KII_ERR_OK );
                 REQUIRE( khc_get_status_code(&kii._khc) == 200 );
 
@@ -98,16 +97,16 @@ TEST_CASE("Object Tests")
                 REQUIRE ( err_str.empty() );
                 REQUIRE ( v.is<picojson::object>() );
                 picojson::object obj = v.get<picojson::object>();
-                auto obj_id = obj.at("_id");
-                REQUIRE ( obj_id.is<std::string>() );
-                REQUIRE ( obj_id.get<std::string>() == std::string(object_id) );
+                auto obj_id_ = obj.at("_id");
+                REQUIRE ( obj_id_.is<std::string>() );
+                REQUIRE ( obj_id_.get<std::string>() == std::string(obj_id.id) );
             }
             SECTION("DELETE") {
-                kii_code_t delete_res = kii_delete_object(&kii, &bucket, object_id);
+                kii_code_t delete_res = kii_delete_object(&kii, &bucket, obj_id.id);
                 REQUIRE( delete_res == KII_ERR_OK );
                 REQUIRE( khc_get_status_code(&kii._khc) == 204 );
                 // Now get should return 404.
-                kii_code_t get_res = kii_get_object(&kii, &bucket, object_id);
+                kii_code_t get_res = kii_get_object(&kii, &bucket, obj_id.id);
                 REQUIRE( get_res == KII_ERR_RESP_STATUS );
                 REQUIRE( khc_get_status_code(&kii._khc) == 404 );
             }
@@ -123,7 +122,7 @@ TEST_CASE("Object Tests")
                 };
                 kiiltest::BodyFunc ctx;
                 ctx.on_read = on_read;
-                kii_code_t upload_res = kii_upload_object_body(&kii, &bucket, object_id, "text/plain", body.length(), kiiltest::read_cb, &ctx);
+                kii_code_t upload_res = kii_upload_object_body(&kii, &bucket, obj_id.id, "text/plain", body.length(), kiiltest::read_cb, &ctx);
                 REQUIRE( khc_get_status_code(&kii._khc) == 200 );
                 REQUIRE( upload_res == KII_ERR_OK );
 
@@ -136,7 +135,7 @@ TEST_CASE("Object Tests")
                     return size * count;
                 };
                 ctx.on_write = on_write;
-                kii_code_t download_res = kii_download_object_body(&kii, &bucket, object_id, kiiltest::write_cb, &ctx);
+                kii_code_t download_res = kii_download_object_body(&kii, &bucket, obj_id.id, kiiltest::write_cb, &ctx);
                 REQUIRE( khc_get_status_code(&kii._khc) == 200 );
                 REQUIRE( download_res == KII_ERR_OK );
                 REQUIRE ( oss.str() == body );

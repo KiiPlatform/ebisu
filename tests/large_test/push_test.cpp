@@ -36,9 +36,8 @@ TEST_CASE("Push Tests")
 
         // Post object to create bucket.
         const char object[] = "{}";
-        char object_id[128];
-        object_id[0] = '\0';
-        kii_code_t post_res = kii_post_object(&kii, &bucket, object, NULL, object_id);
+        kii_object_id_t obj_id;
+        kii_code_t post_res = kii_post_object(&kii, &bucket, object, NULL, &obj_id);
         CHECK(post_res == KII_ERR_OK);
         REQUIRE(khc_get_status_code(&kii._khc) == 201);
 
@@ -107,12 +106,11 @@ TEST_CASE("Push Tests")
         }
     }
     SECTION("Install push") {
-        char installation_id[64];
-        installation_id[0] = '\0';
-        kii_code_t ins_res = kii_install_push(&kii, KII_TRUE, installation_id, 64);
+        kii_installation_id_t ins_id;
+        kii_code_t ins_res = kii_install_push(&kii, KII_TRUE, &ins_id);
         CHECK(ins_res == KII_ERR_OK);
         REQUIRE(khc_get_status_code(&kii._khc) == 201);
-        REQUIRE(strlen(installation_id) > 0);
+        REQUIRE(strlen(ins_id.id) > 0);
 
         SECTION("Get MQTT endpoint") {
             kii_mqtt_endpoint_t endpoint;
@@ -122,7 +120,7 @@ TEST_CASE("Push Tests")
             kii_code_t get_ep_res = KII_ERR_FAIL;
             do {
                 std::this_thread::sleep_for(std::chrono::milliseconds(200));
-                get_ep_res = kii_get_mqtt_endpoint(&kii, installation_id, &endpoint);
+                get_ep_res = kii_get_mqtt_endpoint(&kii, ins_id.id, &endpoint);
                 status = khc_get_status_code(&kii._khc);
             } while (status == 503);
 

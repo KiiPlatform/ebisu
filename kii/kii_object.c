@@ -12,7 +12,7 @@ kii_code_t kii_post_object(
         const kii_bucket_t* bucket,
         const char* object_data,
         const char* object_content_type,
-        char* out_object_id)
+        kii_object_id_t* out_object_id)
 {
     khc_set_zero_excl_cb(&kii->_khc);
     _reset_buff(kii);
@@ -43,8 +43,8 @@ kii_code_t kii_post_object(
     memset(fields, 0, sizeof(fields));
     fields[0].name = "objectID";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[0].field_copy.string = out_object_id;
-    fields[0].field_copy_buff_size = KII_OBJECTID_SIZE + 1;
+    fields[0].field_copy.string = out_object_id->id;
+    fields[0].field_copy_buff_size = sizeof(out_object_id->id);
     fields[1].name = NULL;
 
     result = prv_kii_json_read_object(kii, buff, buff_size, fields);

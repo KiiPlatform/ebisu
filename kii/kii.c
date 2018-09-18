@@ -144,7 +144,7 @@ int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata)
     return 0;
 }
 
-char* kii_get_etag(kii_t* kii) {
+const char* kii_get_etag(kii_t* kii) {
     return kii->_etag;
 }
 
