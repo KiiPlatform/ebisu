@@ -417,7 +417,7 @@ void* _mqtt_start_recvmsg_task(void* sdata)
                 break;
             case KII_MQTT_SUBSCRIBING_TOPIC:
                 if (_mqtt_connect(kii, &endpoint,
-                                KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS) != 0)
+                                kii->_keep_alive_interval) != 0)
                 {
                     M_KII_LOG("kii-error: mqtt connect error\r\n");
                     pushState = KII_MQTT_PREPARING_ENDPOINT;
@@ -448,7 +448,6 @@ void* _mqtt_start_recvmsg_task(void* sdata)
     return NULL;
 }
 
-#ifdef KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS
 void* _mqtt_start_pinreq_task(void* sdata)
 {
     kii_t* kii;
@@ -460,9 +459,8 @@ void* _mqtt_start_pinreq_task(void* sdata)
         {
             _mqtt_pingreq(kii);
         }
-        kii->delay_ms_cb(KII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS * 1000);
+        kii->delay_ms_cb(kii->_keep_alive_interval * 1000);
     }
     return NULL;
 }
-#endif
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
