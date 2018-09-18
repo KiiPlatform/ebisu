@@ -427,11 +427,9 @@ void* _mqtt_start_recvmsg_task(void* sdata)
         {
             case KII_MQTT_PREPARING_ENDPOINT:
                 {
-                    char installation_id[KII_PUSH_INSTALLATIONID_SIZE + 1];
+                    kii_installation_id_t ins_id;
 
-                    if(kii_install_push(kii, KII_FALSE, installation_id,
-                                    sizeof(installation_id) /
-                                        sizeof(installation_id[0])) != KII_ERR_OK)
+                    if(kii_install_push(kii, KII_FALSE, &ins_id) != KII_ERR_OK)
                     {
                         M_KII_LOG(kii->kii_core.logger_cb(
                                 "kii-error: mqtt installation error\r\n"));
@@ -444,7 +442,7 @@ void* _mqtt_start_recvmsg_task(void* sdata)
                     do
                     {
                         kii->delay_ms_cb(1000);
-                        get_ep_res = kii_get_mqtt_endpoint(kii, installation_id,
+                        get_ep_res = kii_get_mqtt_endpoint(kii, ins_id.id,
                                 &endpoint);
                         if (get_ep_res == KII_ERR_OK) {
                             retry = 0;
@@ -467,7 +465,7 @@ void* _mqtt_start_recvmsg_task(void* sdata)
                     pushState = KII_MQTT_SUBSCRIBING_TOPIC;
 
                     M_KII_LOG(kii->kii_core.logger_cb("installationID:%s\r\n",
-                                    installation_id));
+                                    ins_id.id));
                     M_KII_LOG(kii->kii_core.logger_cb("mqttTopic:%s\r\n",
                                     endpoint.topic));
                     M_KII_LOG(kii->kii_core.logger_cb("host:%s\r\n",

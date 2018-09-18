@@ -110,6 +110,14 @@ typedef struct kii_mqtt_endpoint_t {
     unsigned long ttl;
 } kii_mqtt_endpoint_t;
 
+typedef struct kii_object_id_t {
+    char id[64];
+} kii_object_id_t;
+
+typedef struct kii_installation_id_t {
+    char id[64];
+} kii_installation_id_t;
+
 struct kii_t;
 
 typedef void (*KII_PUSH_RECEIVED_CB)(
@@ -250,7 +258,7 @@ kii_code_t kii_post_object(
 		const kii_bucket_t* bucket,
 		const char* object_data,
 		const char* object_content_type,
-		char* out_object_id);
+		kii_object_id_t* out_object_id);
 
 /** Create new object with the specified ID
  *  \param [inout] kii sdk instance.
@@ -406,8 +414,7 @@ kii_code_t kii_delete_topic(
 kii_code_t kii_install_push(
         kii_t* kii,
         kii_bool_t development,
-        char* installation_id,
-        size_t installation_id_len);
+        kii_installation_id_t* out_installation_id);
 
 kii_code_t kii_get_mqtt_endpoint(
     kii_t* kii,
