@@ -156,7 +156,11 @@ kii_code_t _set_content_type(
     if (header_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    kii->_req_headers = khc_slist_append(kii->_req_headers, kii->_rw_buff, header_len);
+    khc_slist* list = khc_slist_append(kii->_req_headers, kii->_rw_buff, header_len);
+    if (list == NULL) {
+        return KII_ERR_ALLOCATION;
+    }
+    kii->_req_headers = list;
     return KII_ERR_OK;
 }
 
@@ -173,7 +177,11 @@ kii_code_t _set_object_content_type(
     if (header_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    kii->_req_headers = khc_slist_append(kii->_req_headers, kii->_rw_buff, header_len);
+    khc_slist* list = khc_slist_append(kii->_req_headers, kii->_rw_buff, header_len);
+    if (list == NULL) {
+        return KII_ERR_ALLOCATION;
+    }
+    kii->_req_headers = list;
     return KII_ERR_OK;
 }
 
@@ -190,7 +198,11 @@ kii_code_t _set_object_body_content_type(
     if (header_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    kii->_req_headers = khc_slist_append(kii->_req_headers, kii->_rw_buff, header_len);
+    khc_slist* list = khc_slist_append(kii->_req_headers, kii->_rw_buff, header_len);
+    if (list == NULL) {
+        return KII_ERR_ALLOCATION;
+    }
+    kii->_req_headers = list;
     return KII_ERR_OK;
 }
 
@@ -208,7 +220,10 @@ kii_code_t _set_content_length(
     if (header_len >= cl_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    kii->_req_headers = khc_slist_append(kii->_req_headers, cl_h, header_len);
+    khc_slist* list = khc_slist_append(kii->_req_headers, cl_h, header_len);
+    if (list == NULL) {
+        return KII_ERR_ALLOCATION;
+    }
     kii->_rw_buff_req_size = content_length;
     return KII_ERR_OK;
 }
@@ -223,7 +238,11 @@ kii_code_t _set_app_id_header(kii_t* kii)
     if (header_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    kii->_req_headers = khc_slist_append(kii->_req_headers, kii->_rw_buff, header_len);
+    khc_slist* list = khc_slist_append(kii->_req_headers, kii->_rw_buff, header_len);
+    if (list == NULL) {
+        return KII_ERR_ALLOCATION;
+    }
+    kii->_req_headers = list;
     return KII_ERR_OK;
 }
 
@@ -237,7 +256,11 @@ kii_code_t _set_app_key_header(kii_t* kii)
     if (header_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    kii->_req_headers = khc_slist_append(kii->_req_headers, kii->_rw_buff, header_len);
+    khc_slist* list = khc_slist_append(kii->_req_headers, kii->_rw_buff, header_len);
+    if (list == NULL) {
+        return KII_ERR_ALLOCATION;
+    }
+    kii->_req_headers = list;
     return KII_ERR_OK;
 }
 
@@ -252,7 +275,11 @@ kii_code_t _set_auth_header(kii_t* kii)
         if (header_len >= kii->_rw_buff_size) {
             return KII_ERR_TOO_LARGE_DATA;
         }
-        kii->_req_headers = khc_slist_append(kii->_req_headers, kii->_rw_buff, header_len);
+        khc_slist* list = khc_slist_append(kii->_req_headers, kii->_rw_buff, header_len);
+        if (list == NULL) {
+            return KII_ERR_ALLOCATION;
+        }
+        kii->_req_headers = list;
         return KII_ERR_OK;
     } else {
         // Nothing to do.
@@ -274,7 +301,11 @@ kii_code_t _set_if_match(kii_t* kii, const char* etag)
     if (header_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
-    kii->_req_headers = khc_slist_append(kii->_req_headers, kii->_rw_buff, header_len);
+    khc_slist* list = khc_slist_append(kii->_req_headers, kii->_rw_buff, header_len);
+    if (list == NULL) {
+        return KII_ERR_ALLOCATION;
+    }
+    kii->_req_headers = list;
     return KII_ERR_OK;
 }
 
