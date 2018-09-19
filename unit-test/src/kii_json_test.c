@@ -824,6 +824,7 @@ TEST(KiiJson, GetObjectThirdLayerPositiveIntByPath) {
         strlen(json_string),
         fields,
         &resource);
+    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
     EXPECT_EQ(100, fields[0].field_copy.int_value);
 }
@@ -846,162 +847,150 @@ TEST(KiiJson, GetObjectThirdLayerNegativeIntByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
+    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
     EXPECT_EQ(-100, fields[0].field_copy.int_value);
 }
 
-// TEST(KiiJson, GetObjectThirdLayerPositiveLongByPath) {
-//     const char json_string[] =
-//         "{\"key1\" : {\"key2\" : {\"key3\" : 1099511627776}}}";
-//     kii_json_t kii_json;
-//     kii_json_resource_t resource;
-//     kii_json_token_t tokens[256];
-//     kii_json_field_t fields[2];
+TEST(KiiJson, GetObjectThirdLayerPositiveLongByPath) {
+    const char json_string[] =
+        "{\"key1\" : {\"key2\" : {\"key3\" : 1099511627776}}}";
 
-//     init_kii_json(&kii_json, &resource, tokens,
-//             sizeof(tokens) / sizeof(tokens[0]));
-//     memset(fields, 0x00, sizeof(fields));
+    kii_json_token_t tokens[256];
+    kii_json_resource_t resource = { tokens, 256 };
 
-//     fields[0].path = "/key1/key2/key3";
-//     fields[0].type = KII_JSON_FIELD_TYPE_LONG;
-//     fields[1].name = NULL;
+    kii_json_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
 
-//     EXPECT_EQ(KII_JSON_PARSE_SUCCESS,
-//             kii_json_read_object(
-//                 &kii_json,
-//                 json_string,
-//                 sizeof(json_string) / sizeof(json_string[0]),
-//                 fields));
-//     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-//     EXPECT_EQ(1099511627776, fields[0].field_copy.long_value);
-// }
+    fields[0].path = "/key1/key2/key3";
+    fields[0].type = KII_JSON_FIELD_TYPE_LONG;
+    fields[1].name = NULL;
 
-// TEST(KiiJson, GetObjectThirdLayerNegativeLongByPath) {
-//     const char json_string[] =
-//         "{\"key1\" : {\"key2\" : {\"key3\" : -1099511627776}}}";
-//     kii_json_t kii_json;
-//     kii_json_resource_t resource;
-//     kii_json_token_t tokens[256];
-//     kii_json_field_t fields[2];
+    kii_json_parse_result_t res = kii_json_read_object(
+        json_string,
+        strlen(json_string),
+        fields,
+        &resource);
+    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
+    EXPECT_EQ(1099511627776, fields[0].field_copy.long_value);
+}
 
-//     init_kii_json(&kii_json, &resource, tokens,
-//             sizeof(tokens) / sizeof(tokens[0]));
-//     memset(fields, 0x00, sizeof(fields));
+TEST(KiiJson, GetObjectThirdLayerNegativeLongByPath) {
+    const char json_string[] =
+        "{\"key1\" : {\"key2\" : {\"key3\" : -1099511627776}}}";
 
-//     fields[0].path = "/key1/key2/key3";
-//     fields[0].type = KII_JSON_FIELD_TYPE_LONG;
-//     fields[1].name = NULL;
+    kii_json_token_t tokens[256];
+    kii_json_resource_t resource = { tokens, 256 };
 
-//     EXPECT_EQ(KII_JSON_PARSE_SUCCESS,
-//             kii_json_read_object(
-//                 &kii_json,
-//                 json_string,
-//                 sizeof(json_string) / sizeof(json_string[0]),
-//                 fields));
-//     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-//     EXPECT_EQ(-1099511627776, fields[0].field_copy.long_value);
-// }
+    kii_json_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
 
-// TEST(KiiJson, GetObjectThirdLayerPositiveDotDoubleByPath) {
-//     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : 0.1}}}";
-//     kii_json_t kii_json;
-//     kii_json_resource_t resource;
-//     kii_json_token_t tokens[256];
-//     kii_json_field_t fields[2];
+    fields[0].path = "/key1/key2/key3";
+    fields[0].type = KII_JSON_FIELD_TYPE_LONG;
+    fields[1].name = NULL;
 
-//     init_kii_json(&kii_json, &resource, tokens,
-//             sizeof(tokens) / sizeof(tokens[0]));
-//     memset(fields, 0x00, sizeof(fields));
+    kii_json_parse_result_t res = kii_json_read_object(
+        json_string,
+        strlen(json_string),
+        fields,
+        &resource);
+    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
+    EXPECT_EQ(-1099511627776, fields[0].field_copy.long_value);
+}
 
-//     fields[0].path = "/key1/key2/key3";
-//     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
-//     fields[1].name = NULL;
+TEST(KiiJson, GetObjectThirdLayerPositiveDotDoubleByPath) {
+    const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : 0.1}}}";
 
-//     EXPECT_EQ(KII_JSON_PARSE_SUCCESS,
-//             kii_json_read_object(
-//                 &kii_json,
-//                 json_string,
-//                 sizeof(json_string) / sizeof(json_string[0]),
-//                 fields));
-//     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-//     EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value - 0.1));
-// }
+    kii_json_token_t tokens[256];
+    kii_json_resource_t resource = { tokens, 256 };
 
-// TEST(KiiJson, GetObjectThirdLayerNegativeDotDoubleByPath) {
-//     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : -0.1}}}";
-//     kii_json_t kii_json;
-//     kii_json_resource_t resource;
-//     kii_json_token_t tokens[256];
-//     kii_json_field_t fields[2];
+    kii_json_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
 
-//     init_kii_json(&kii_json, &resource, tokens,
-//             sizeof(tokens) / sizeof(tokens[0]));
-//     memset(fields, 0x00, sizeof(fields));
+    fields[0].path = "/key1/key2/key3";
+    fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
+    fields[1].name = NULL;
 
-//     fields[0].path = "/key1/key2/key3";
-//     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
-//     fields[1].name = NULL;
+    kii_json_parse_result_t res = kii_json_read_object(
+        json_string,
+        strlen(json_string),
+        fields,
+        &resource);
+    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
+    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value - 0.1));
+}
 
-//     EXPECT_EQ(KII_JSON_PARSE_SUCCESS,
-//             kii_json_read_object(
-//                 &kii_json,
-//                 json_string,
-//                 sizeof(json_string) / sizeof(json_string[0]),
-//                 fields));
-//     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-//     EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value + 0.1));
-// }
+TEST(KiiJson, GetObjectThirdLayerNegativeDotDoubleByPath) {
+    const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : -0.1}}}";
 
-// TEST(KiiJson, GetObjectThirdLayerPositiveEDoubleByPath) {
-//     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : 1e-1}}}";
-//     kii_json_t kii_json;
-//     kii_json_resource_t resource;
-//     kii_json_token_t tokens[256];
-//     kii_json_field_t fields[2];
+    kii_json_token_t tokens[256];
+    kii_json_resource_t resource = { tokens, 256 };
 
-//     init_kii_json(&kii_json, &resource, tokens,
-//             sizeof(tokens) / sizeof(tokens[0]));
-//     memset(fields, 0x00, sizeof(fields));
+    kii_json_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
 
-//     fields[0].path = "/key1/key2/key3";
-//     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
-//     fields[1].name = NULL;
+    fields[0].path = "/key1/key2/key3";
+    fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
+    fields[1].name = NULL;
 
-//     EXPECT_EQ(KII_JSON_PARSE_SUCCESS,
-//             kii_json_read_object(
-//                 &kii_json,
-//                 json_string,
-//                 sizeof(json_string) / sizeof(json_string[0]),
-//                 fields));
-//     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-//     EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value - 0.1));
-// }
+    kii_json_parse_result_t res = kii_json_read_object(
+        json_string,
+        strlen(json_string),
+        fields,
+        &resource);
+    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
+    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value + 0.1));
+}
 
-// TEST(KiiJson, GetObjectThirdLayerNegativeEDoubleByPath) {
-//     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : -1e-1}}}";
-//     kii_json_t kii_json;
-//     kii_json_resource_t resource;
-//     kii_json_token_t tokens[256];
-//     kii_json_field_t fields[2];
+TEST(KiiJson, GetObjectThirdLayerPositiveEDoubleByPath) {
+    const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : 1e-1}}}";
 
-//     init_kii_json(&kii_json, &resource, tokens,
-//             sizeof(tokens) / sizeof(tokens[0]));
-//     memset(fields, 0x00, sizeof(fields));
+    kii_json_token_t tokens[256];
+    kii_json_resource_t resource = { tokens, 256 };
 
-//     fields[0].path = "/key1/key2/key3";
-//     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
-//     fields[1].name = NULL;
+    kii_json_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
 
-//     EXPECT_EQ(KII_JSON_PARSE_SUCCESS,
-//             kii_json_read_object(
-//                 &kii_json,
-//                 json_string,
-//                 sizeof(json_string) / sizeof(json_string[0]),
-//                 fields));
-//     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-//     EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value + 0.1));
-// }
+    fields[0].path = "/key1/key2/key3";
+    fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
+    fields[1].name = NULL;
+
+    kii_json_parse_result_t res = kii_json_read_object(
+        json_string,
+        strlen(json_string),
+        fields,
+        &resource);
+    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
+    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value - (1e-1)));
+}
+
+TEST(KiiJson, GetObjectThirdLayerNegativeEDoubleByPath) {
+    const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : -1e-1}}}";
+
+    kii_json_token_t tokens[256];
+    kii_json_resource_t resource = { tokens, 256 };
+
+    kii_json_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
+
+    fields[0].path = "/key1/key2/key3";
+    fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
+    fields[1].name = NULL;
+
+    kii_json_parse_result_t res = kii_json_read_object(
+        json_string,
+        strlen(json_string),
+        fields,
+        &resource);
+    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
+    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value - (-1e-1)));
+}
 
 // TEST(KiiJson, GetArrayString) {
 //     const char json_string[] = "[\"value1\"]";
