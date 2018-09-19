@@ -49,7 +49,7 @@ TEST(KiiJson, GetObjectStringByName) {
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(json_string, strlen(json_string), fields, &resource);
+    kii_json_parse_result_t res = kii_json_parse(json_string, strlen(json_string), fields, &resource);
     EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
     EXPECT_EQ(0, strcmp("value1", fields[0].field_copy.string));
@@ -69,7 +69,7 @@ TEST(KiiJson, GetObjectPositiveIntByName) {
     fields[0].type = KII_JSON_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -93,7 +93,7 @@ TEST(KiiJson, GetObjectNegativeIntByName) {
     fields[0].type = KII_JSON_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -115,7 +115,7 @@ TEST(KiiJson, GetObjectPositiveLongByName) {
     fields[0].type = KII_JSON_FIELD_TYPE_LONG;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -138,7 +138,7 @@ TEST(KiiJson, GetObjectNegativeLongByName) {
     fields[0].type = KII_JSON_FIELD_TYPE_LONG;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -161,7 +161,7 @@ TEST(KiiJson, GetObjectPositiveDotDoubleByName) {
     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -184,7 +184,7 @@ TEST(KiiJson, GetObjectNegativeDotDoubleByName) {
     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -207,7 +207,7 @@ TEST(KiiJson, GetObjectPositiveEDoubleByName) {
     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -230,7 +230,7 @@ TEST(KiiJson, GetObjectNegativeEDoubleByName) {
     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -254,7 +254,7 @@ TEST(KiiJson, GetObjectTrueByName) {
     fields[0].type = KII_JSON_FIELD_TYPE_BOOLEAN;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -278,7 +278,7 @@ TEST(KiiJson, GetObjectFalseByName) {
     fields[0].type = KII_JSON_FIELD_TYPE_BOOLEAN;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -305,7 +305,7 @@ TEST(KiiJson, GetObjectStringByPath) {
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -328,7 +328,7 @@ TEST(KiiJson, GetObjectPositiveIntByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -351,7 +351,7 @@ TEST(KiiJson, GetObjectNegativeIntByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -374,7 +374,7 @@ TEST(KiiJson, GetObjectPositiveLongByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_LONG;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -397,7 +397,7 @@ TEST(KiiJson, GetObjectNegativeLongByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_LONG;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -420,7 +420,7 @@ TEST(KiiJson, GetObjectPositiveDotDoubleByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -443,7 +443,7 @@ TEST(KiiJson, GetObjectNegativeDotDoubleByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -466,7 +466,7 @@ TEST(KiiJson, GetObjectPositiveEDoubleByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -489,7 +489,7 @@ TEST(KiiJson, GetObjectNegativeEDoubleByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -513,7 +513,7 @@ TEST(KiiJson, GetObjectNullByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_NULL;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -536,7 +536,7 @@ TEST(KiiJson, GetObjectTrueByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_BOOLEAN;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -560,7 +560,7 @@ TEST(KiiJson, GetObjectFalseByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_BOOLEAN;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -586,7 +586,7 @@ TEST(KiiJson, GetObjectSecondLayerStringByPath) {
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -609,7 +609,7 @@ TEST(KiiJson, GetObjectSecondLayerPositiveIntByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -632,7 +632,7 @@ TEST(KiiJson, GetObjectSecondLayerNegativeIntByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -655,7 +655,7 @@ TEST(KiiJson, GetObjectSecondLayerPositiveLongByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_LONG;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -678,7 +678,7 @@ TEST(KiiJson, GetObjectSecondLayerNegativeLongByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_LONG;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -701,7 +701,7 @@ TEST(KiiJson, GetObjectSecondLayerPositiveDotDoubleByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -724,7 +724,7 @@ TEST(KiiJson, GetObjectSecondLayerNegativeDotDoubleByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -747,7 +747,7 @@ TEST(KiiJson, GetObjectSecondLayerPositiveEDoubleByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -770,7 +770,7 @@ TEST(KiiJson, GetObjectSecondLayerNegativeEDoubleByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -796,7 +796,7 @@ TEST(KiiJson, GetObjectThirdLayerStringByPath) {
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -819,7 +819,7 @@ TEST(KiiJson, GetObjectThirdLayerPositiveIntByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -842,7 +842,7 @@ TEST(KiiJson, GetObjectThirdLayerNegativeIntByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -866,7 +866,7 @@ TEST(KiiJson, GetObjectThirdLayerPositiveLongByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_LONG;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -890,7 +890,7 @@ TEST(KiiJson, GetObjectThirdLayerNegativeLongByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_LONG;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -913,7 +913,7 @@ TEST(KiiJson, GetObjectThirdLayerPositiveDotDoubleByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -936,7 +936,7 @@ TEST(KiiJson, GetObjectThirdLayerNegativeDotDoubleByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -959,7 +959,7 @@ TEST(KiiJson, GetObjectThirdLayerPositiveEDoubleByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -982,7 +982,7 @@ TEST(KiiJson, GetObjectThirdLayerNegativeEDoubleByPath) {
     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1008,7 +1008,7 @@ TEST(KiiJson, GetArrayString) {
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1032,7 +1032,7 @@ TEST(KiiJson, GetArrayInt) {
     fields[0].type = KII_JSON_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1056,7 +1056,7 @@ TEST(KiiJson, GetArrayLong) {
     fields[0].type = KII_JSON_FIELD_TYPE_LONG;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1080,7 +1080,7 @@ TEST(KiiJson, GetArrayDouble) {
     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1104,7 +1104,7 @@ TEST(KiiJson, GetArrayIntIndex1) {
     fields[0].type = KII_JSON_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1128,7 +1128,7 @@ TEST(KiiJson, GetArrayNull) {
     fields[0].type = KII_JSON_FIELD_TYPE_NULL;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1151,7 +1151,7 @@ TEST(KiiJson, GetArrayTrue) {
     fields[0].type = KII_JSON_FIELD_TYPE_BOOLEAN;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1175,7 +1175,7 @@ TEST(KiiJson, GetArrayFalse) {
     fields[0].type = KII_JSON_FIELD_TYPE_BOOLEAN;
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1260,7 +1260,7 @@ TEST(KiiJson, GetComplexObject) {
         sizeof(value_buf) / sizeof(value_buf[0]);
     fields[14].path = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1348,7 +1348,7 @@ TEST(KiiJson, PushRetrieveEndpoint) {
     fields[6].type = KII_JSON_FIELD_TYPE_LONG;
     fields[7].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1400,7 +1400,7 @@ TEST(KiiJson, CommandParseTest) {
     fields[3].type = KII_JSON_FIELD_TYPE_ARRAY;
     fields[4].path = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1426,7 +1426,7 @@ TEST(KiiJson, NoTokensTest)
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1451,7 +1451,7 @@ TEST(KiiJson, TokensShortageTest)
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1476,7 +1476,7 @@ TEST(KiiJson, ExactTokensTest)
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object(
+    kii_json_parse_result_t res = kii_json_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1503,7 +1503,7 @@ TEST(KiiJson, AllocatorTest)
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    kii_json_parse_result_t res = kii_json_read_object_with_allocator(
+    kii_json_parse_result_t res = kii_json_parse_with_allocator(
         json_string,
         strlen(json_string),
         fields,
@@ -1530,7 +1530,7 @@ TEST(KiiJson, FailedAllocationTest)
     fields[1].name = NULL;
 
 
-    kii_json_parse_result_t res = kii_json_read_object_with_allocator(
+    kii_json_parse_result_t res = kii_json_parse_with_allocator(
         json_string,
         strlen(json_string),
         fields,

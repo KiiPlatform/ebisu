@@ -44,7 +44,7 @@ typedef enum kii_json_boolean_t {
     KII_JSON_TRUE
 } kii_json_boolean_t;
 
-/** Return value of kii_json_read_object(kii_json_t*, const char*,
+/** Return value of kii_json_parse(kii_json_t*, const char*,
  * size_t, kii_json_field_t*) */
 typedef enum kii_json_parse_result_t {
 
@@ -63,7 +63,7 @@ typedef enum kii_json_parse_result_t {
     /** JSON string is successfully parsed but type of root object
      * type is unmatched to using function.
      *
-     * kii_json_read_object(kii_json_t*, const char*, size_t,
+     * kii_json_parse(kii_json_t*, const char*, size_t,
      * kii_json_field_t*) requires JSON object if JSON array is
      * passed, then this error is returned.
      */
@@ -118,7 +118,7 @@ typedef enum kii_json_field_parse_result_t {
 typedef enum kii_json_field_type_t {
 
     /** This value denotes any JSON types. If this value is set to
-     * kii_json_field_t#type, then kii_json_read_object(kii_json_t*,
+     * kii_json_field_t#type, then kii_json_parse(kii_json_t*,
      * const char*, size_t, kii_json_field_t*) ignore type checking.
      */
     KII_JSON_FIELD_TYPE_ANY,
@@ -152,24 +152,24 @@ typedef enum kii_json_field_type_t {
 
 /** JSON parsed field data.
  *
- * Input of kii_json_read_object(kii_json_t*, const char*, size_t,
+ * Input of kii_json_parse(kii_json_t*, const char*, size_t,
  * kii_json_field_t*).
  *
  * Array of kii_json_field_t is passed to
- * kii_json_read_object(kii_json_t*, const char*, size_t,
+ * kii_json_parse(kii_json_t*, const char*, size_t,
  * kii_json_field_t*).
  *
 
  * End point of the array is specified by kii_json_field_t#name and
  * kii_json_field_t#path. If both of kii_json_field_t#name and
- * kii_json_field_t#path are NULL, kii_json_read_object(kii_json_t*,
+ * kii_json_field_t#path are NULL, kii_json_parse(kii_json_t*,
  * const char*, size_t, kii_json_field_t*) consider that it is the end
  * point of the passed array.
  */
 typedef struct kii_json_field_t {
 
     /** Parsing target key name. Input of
-     * kii_json_read_object(kii_json_t*, const char*, size_t,
+     * kii_json_parse(kii_json_t*, const char*, size_t,
      * kii_json_field_t*).
      *
      * This can point an only field in root json object.
@@ -178,7 +178,7 @@ typedef struct kii_json_field_t {
     const char* name;
 
     /** Parsing target path. Input of
-     * kii_json_read_object(kii_json_t*, const char*, size_t,
+     * kii_json_parse(kii_json_t*, const char*, size_t,
      * kii_json_field_t*).
      *
      * This can point any field or element of array. BNF like notation
@@ -225,23 +225,23 @@ typedef struct kii_json_field_t {
     const char* path;
 
     /** Field parse result. Output of
-     * kii_json_read_object(kii_json_t*, const char*, size_t,
+     * kii_json_parse(kii_json_t*, const char*, size_t,
      * kii_json_field_t*).
      */
     kii_json_field_parse_result_t result;
 
     /** Parsed target value type. Input and Output of
-     * kii_json_read_object(kii_json_t*, const char*, size_t,
+     * kii_json_parse(kii_json_t*, const char*, size_t,
      * kii_json_field_t*). Inputted value is expected value type and
      * outputted value is actual value type.
      *
      * If type is set as
      * kii_json_field_type_t#KII_JSON_FIELD_TYPE_ANY, then
-     * kii_json_read_object(kii_json_t*, const char*, size_t,
+     * kii_json_parse(kii_json_t*, const char*, size_t,
      * kii_json_field_t*) ignore type checking.
      *
      * If actual type is not matched expected type:
-     *   - kii_json_read_object(kii_json_t*, const char*, size_t,
+     *   - kii_json_parse(kii_json_t*, const char*, size_t,
      *     kii_json_field_t*) set actual type.
      *   - if expected type is not
      *     kii_json_field_type_t#KII_JSON_FIELD_TYPE_ANY, then
@@ -255,13 +255,13 @@ typedef struct kii_json_field_t {
     kii_json_field_type_t type;
 
     /** Start point of this field in given buffer. Output of
-     * kii_json_read_object(kii_json_t*, const char*, size_t,
+     * kii_json_parse(kii_json_t*, const char*, size_t,
      * kii_json_field_t*).
      */
     size_t start;
 
     /** End point of this field in given buffer. Output of
-     * kii_json_read_object(kii_json_t*, const char*, size_t,
+     * kii_json_parse(kii_json_t*, const char*, size_t,
      * kii_json_field_t*).
      */
     size_t end;
@@ -320,27 +320,27 @@ typedef struct kii_json_field_t {
 
 } kii_json_field_t;
 
-/** Parse JSON object.
+/** Parse JSON string.
  *  \param [in] pointer of JSON string.
  *  \param [in] length of JSON string.
  *  \param [inout] field of kii JSON parser.
  *  \param [in] resource of parser.
  *  \return parse JSON result.
  */
-kii_json_parse_result_t kii_json_read_object(
+kii_json_parse_result_t kii_json_parse(
         const char* json_string,
         size_t json_string_len,
         kii_json_field_t* fields,
         kii_json_resource_t* resource);
 
-/** Parse JSON object.
+/** Parse JSON string with custom memory allocator.
  *  \param [in] pointer of JSON string.
  *  \param [in] length of JSON string.
  *  \param [inout] field of kii JSON parser.
  *  \param [in] resource of parser.
  *  \return parse JSON result.
  */
-kii_json_parse_result_t kii_json_read_object_with_allocator(
+kii_json_parse_result_t kii_json_parse_with_allocator(
     const char* json_string,
     size_t json_string_len,
     kii_json_field_t* fields,

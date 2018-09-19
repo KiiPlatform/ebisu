@@ -99,7 +99,7 @@ fields[0].field_copy.string = buf;
 fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
 fields[1].path = NULL;
 
-result = kii_json_read_object(&kii_json, json_string,
+result = kii_json_parse(&kii_json, json_string,
         sizeof(json_string) / sizeof(json_string[0]), fields);
 
 if (result == KII_JSON_PARSE_SUCCESS) {

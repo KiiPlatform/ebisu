@@ -848,7 +848,7 @@ static kii_json_parse_result_t _kii_json_parse_fields(
     return ret;
 }
 
-kii_json_parse_result_t kii_json_read_object(
+kii_json_parse_result_t kii_json_parse(
     const char* json_string,
     size_t json_string_len,
     kii_json_field_t* fields,
@@ -876,7 +876,7 @@ kii_json_parse_result_t kii_json_read_object(
     return res;
 }
 
-kii_json_parse_result_t kii_json_read_object_with_allocator(
+kii_json_parse_result_t kii_json_parse_with_allocator(
     const char* json_string,
     size_t json_string_len,
     kii_json_field_t* fields,
