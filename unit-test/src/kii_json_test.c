@@ -1434,7 +1434,7 @@ TEST(KiiJson, NoTokensTest)
     EXPECT_EQ(KII_JSON_PARSE_SHORTAGE_TOKENS, res);
 }
 
-TEST(KiiJson, ShortTokensTest)
+TEST(KiiJson, TokensShortageTest)
 {
     const char json_string[] = "{\"key1\" : \"value1\"}";
     char buf[256];
@@ -1459,39 +1459,34 @@ TEST(KiiJson, ShortTokensTest)
     EXPECT_EQ(KII_JSON_PARSE_SHORTAGE_TOKENS, res);
 }
 
-// TEST(KiiJson, EnoughTokensTest)
-// {
-//     const char json_string[] = "{\"key1\" : \"value1\"}";
-//     char buf[256];
-//     kii_json_t kii_json;
-//     kii_json_resource_t resource;
-//     kii_json_token_t tokens[3];
-//     kii_json_field_t fields[2];
+TEST(KiiJson, ExactTokensTest)
+{
+    const char json_string[] = "{\"key1\" : \"value1\"}";
+    char buf[256];
 
-//     init_kii_json(&kii_json, &resource, tokens, sizeof(tokens) / sizeof(tokens[0]));
-//     memset(fields, 0x00, sizeof(fields));
+    kii_json_token_t tokens[3];
+    kii_json_resource_t resource = { tokens, 3 };
 
-//     fields[0].name = "key1";
-//     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
-//     fields[0].field_copy.string = buf;
-//     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
-//     fields[1].name = NULL;
+    kii_json_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
 
-//     EXPECT_NE((kii_json_token_t*)NULL, kii_json.resource->tokens);
-//     EXPECT_EQ(3, kii_json.resource->tokens_num);
+    fields[0].name = "key1";
+    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].field_copy.string = buf;
+    fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
+    fields[1].name = NULL;
 
-//     EXPECT_EQ(KII_JSON_PARSE_SUCCESS,
-//             kii_json_read_object(
-//                 &kii_json,
-//                 json_string,
-//                 sizeof(json_string) / sizeof(json_string[0]),
-//                 fields));
-//     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-//     EXPECT_EQ(0, strcmp("value1", fields[0].field_copy.string));
+    kii_json_parse_result_t res = kii_json_read_object(
+        json_string,
+        strlen(json_string),
+        fields,
+        &resource);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
+    EXPECT_EQ(0, strcmp("value1", fields[0].field_copy.string));
 
-//     EXPECT_NE((kii_json_token_t*)NULL, kii_json.resource->tokens);
-//     EXPECT_EQ(3, kii_json.resource->tokens_num);
-// }
+    EXPECT_NE((kii_json_token_t*)NULL, resource.tokens);
+    EXPECT_EQ(3, resource.tokens_num);
+}
 
 // TEST(KiiJson, AllocateTest)
 // {
