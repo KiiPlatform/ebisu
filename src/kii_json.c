@@ -29,28 +29,28 @@
 /* "+ 3" denotes '-', '.', '\0' */
 #define DOUBLEBUFSIZE DBL_MAX_10_EXP + 3
 
-typedef enum prv_kii_json_num_parse_result_t {
+typedef enum _kii_json_num_parse_result_t {
     PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS,
     PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW,
     PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW,
     PRV_KII_JSON_NUM_PARSE_RESULT_INVALID
-} prv_kii_json_num_parse_result_t;
+} _kii_json_num_parse_result_t;
 
-typedef enum prv_kii_json_parent_type_t {
+typedef enum _kii_json_parent_type_t {
     PRV_KII_JSON_PARENT_TYPE_OBJECT,
     PRV_KII_JSON_PARENT_TYPE_ARRAY
-} prv_kii_json_parent_type_t;
+} _kii_json_parent_type_t;
 
-typedef struct prv_kii_json_target_t {
+typedef struct _kii_json_target_t {
     union {
         const char* name;
         size_t index;
     } field;
     size_t len;
-    prv_kii_json_parent_type_t parent_type;
-} prv_kii_json_target_t;
+    _kii_json_parent_type_t parent_type;
+} _kii_json_target_t;
 
-static size_t prv_kii_json_count_contained_token(const jsmntok_t* token)
+static size_t _kii_json_count_contained_token(const jsmntok_t* token)
 {
     size_t retval = 0;
     int token_num = 1;
@@ -75,7 +75,7 @@ static int _calculate_required_token_num(
     return res;
 }
 
-static kii_json_parse_result_t prv_kii_jsmn_get_tokens(
+static kii_json_parse_result_t _kii_jsmn_get_tokens(
         const char* json_string,
         size_t json_string_len,
         kii_json_resource_t* resource)
@@ -102,7 +102,7 @@ static kii_json_parse_result_t prv_kii_jsmn_get_tokens(
     }
 }
 
-static int prv_kii_jsmn_get_value(
+static int _kii_jsmn_get_value(
         const char* json_string,
         size_t json_string_len,
         const jsmntok_t* tokens,
@@ -142,7 +142,7 @@ static int prv_kii_jsmn_get_value(
                 break;
             case JSMN_OBJECT:
             case JSMN_ARRAY:
-                index += prv_kii_json_count_contained_token(value_token) + 1;
+                index += _kii_json_count_contained_token(value_token) + 1;
                 break;
         }
     }
@@ -151,7 +151,7 @@ exit:
     return ret;
 }
 
-static int prv_kii_json_is_all_digit(const char* buf, size_t buf_len)
+static int _kii_json_is_all_digit(const char* buf, size_t buf_len)
 {
     size_t i = 0;
     M_KII_JSON_ASSERT(buf != NULL);
@@ -164,7 +164,7 @@ static int prv_kii_json_is_all_digit(const char* buf, size_t buf_len)
     return 1;
 }
 
-static int prv_kii_json_is_int(const char* buf, size_t buf_len)
+static int _kii_json_is_int(const char* buf, size_t buf_len)
 {
     M_KII_JSON_ASSERT(buf != NULL);
     if (buf_len > INTBUFSIZE) {
@@ -174,10 +174,10 @@ static int prv_kii_json_is_int(const char* buf, size_t buf_len)
         ++buf;
         --buf_len;
     }
-    return prv_kii_json_is_all_digit(buf, buf_len);
+    return _kii_json_is_all_digit(buf, buf_len);
 }
 
-static int prv_kii_json_is_long(const char* buf, size_t buf_len)
+static int _kii_json_is_long(const char* buf, size_t buf_len)
 {
     M_KII_JSON_ASSERT(buf != NULL);
     if (buf_len > LONGBUFSIZE) {
@@ -187,10 +187,10 @@ static int prv_kii_json_is_long(const char* buf, size_t buf_len)
         ++buf;
         --buf_len;
     }
-    return prv_kii_json_is_all_digit(buf, buf_len);
+    return _kii_json_is_all_digit(buf, buf_len);
 }
 
-static int prv_kii_json_is_double(const char* buf, size_t buf_len)
+static int _kii_json_is_double(const char* buf, size_t buf_len)
 {
     int is_first = 1;
     int after_e = 0;
@@ -271,7 +271,7 @@ static int prv_kii_json_is_double(const char* buf, size_t buf_len)
     return 1;
 }
 
-static kii_json_field_type_t prv_kii_json_to_kii_json_field_type(
+static kii_json_field_type_t _kii_json_to_kii_json_field_type(
         jsmntype_t jsmn_type,
         const char* buf,
         size_t buf_len)
@@ -284,11 +284,11 @@ static kii_json_field_type_t prv_kii_json_to_kii_json_field_type(
             } else if (memcmp(buf, "true", buf_len) == 0 ||
                     memcmp(buf, "false", buf_len) == 0 ) {
                 return KII_JSON_FIELD_TYPE_BOOLEAN;
-            } else if (prv_kii_json_is_int(buf, buf_len) != 0) {
+            } else if (_kii_json_is_int(buf, buf_len) != 0) {
                 return KII_JSON_FIELD_TYPE_INTEGER;
-            } else if (prv_kii_json_is_long(buf, buf_len) != 0) {
+            } else if (_kii_json_is_long(buf, buf_len) != 0) {
                 return KII_JSON_FIELD_TYPE_LONG;
-            } else if (prv_kii_json_is_double(buf, buf_len) != 0) {
+            } else if (_kii_json_is_double(buf, buf_len) != 0) {
                 return KII_JSON_FIELD_TYPE_DOUBLE;
             } else {
                 /* unexpected case. */
@@ -307,7 +307,7 @@ static kii_json_field_type_t prv_kii_json_to_kii_json_field_type(
     }
 }
 
-static int prv_kii_json_string_copy(
+static int _kii_json_string_copy(
         const char* target,
         size_t target_size,
         char* out_buf,
@@ -325,7 +325,7 @@ static int prv_kii_json_string_copy(
     return 0;
 }
 
-static prv_kii_json_num_parse_result_t prv_kii_json_to_long(
+static _kii_json_num_parse_result_t _kii_json_to_long(
         const char* target,
         size_t target_size,
         long* out_long)
@@ -376,7 +376,7 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_long(
     return PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS;
 }
 
-static prv_kii_json_num_parse_result_t prv_kii_json_to_int(
+static _kii_json_num_parse_result_t _kii_json_to_int(
         const char* target,
         size_t target_size,
         int* out_int)
@@ -386,7 +386,7 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_int(
     M_KII_JSON_ASSERT(target != NULL);
     M_KII_JSON_ASSERT(out_int != NULL);
 
-    if (prv_kii_json_to_long(target, target_size, &long_value) ==
+    if (_kii_json_to_long(target, target_size, &long_value) ==
             PRV_KII_JSON_NUM_PARSE_RESULT_INVALID) {
         return PRV_KII_JSON_NUM_PARSE_RESULT_INVALID;
     } else if (long_value > INT_MAX) {
@@ -401,7 +401,7 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_int(
     return PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS;
 }
 
-static prv_kii_json_num_parse_result_t prv_kii_json_to_double(
+static _kii_json_num_parse_result_t _kii_json_to_double(
         const char* target,
         size_t target_size,
         double* out_double)
@@ -444,7 +444,7 @@ static prv_kii_json_num_parse_result_t prv_kii_json_to_double(
     return PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS;
 }
 
-static int prv_kii_json_to_boolean(
+static int _kii_json_to_boolean(
         const char* buf,
         size_t buf_size,
         kii_json_boolean_t* out_boolean)
@@ -462,9 +462,9 @@ static int prv_kii_json_to_boolean(
     return -1;
 }
 
-static const char* prv_kii_json_get_target(
+static const char* _kii_json_get_target(
         const char* path,
-        prv_kii_json_target_t* target)
+        _kii_json_target_t* target)
 {
     const char* start = NULL;
     const char* retval = NULL;
@@ -505,11 +505,11 @@ static const char* prv_kii_json_get_target(
         long value = 0;
         ++start;
         target_len -= 2;
-        if (prv_kii_json_is_long(start, target_len) == 0) {
+        if (_kii_json_is_long(start, target_len) == 0) {
             error = start;
             retval = NULL;
             goto exit;
-        } else if (prv_kii_json_to_long(start, target_len, &value)
+        } else if (_kii_json_to_long(start, target_len, &value)
                 != PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS) {
             error = start;
             retval = NULL;
@@ -528,8 +528,8 @@ exit:
     return retval;
 }
 
-static int prv_kii_json_is_same_key(
-        prv_kii_json_target_t* target,
+static int _kii_json_is_same_key(
+        _kii_json_target_t* target,
         const char* key,
         size_t key_len)
 {
@@ -569,7 +569,7 @@ static int prv_kii_json_is_same_key(
     return retval;
 }
 
-static int prv_kii_jsmn_get_value_by_path(
+static int _kii_jsmn_get_value_by_path(
         const char* json_string,
         size_t json_string_len,
         const jsmntok_t* tokens,
@@ -585,9 +585,9 @@ static int prv_kii_jsmn_get_value_by_path(
     M_KII_JSON_ASSERT(out_token != NULL);
 
     do {
-        prv_kii_json_target_t target;
+        _kii_json_target_t target;
         memset(&target, 0x00, sizeof(target));
-        next_root = prv_kii_json_get_target( next_root, &target);
+        next_root = _kii_json_get_target( next_root, &target);
         if (root_token->type == JSMN_OBJECT &&
                 target.parent_type == PRV_KII_JSON_PARENT_TYPE_OBJECT) {
             size_t i = 0;
@@ -598,13 +598,13 @@ static int prv_kii_jsmn_get_value_by_path(
                 const jsmntok_t* key_token = root_token + index;
                 const jsmntok_t* value_token = root_token + index + 1;
                 M_KII_JSON_ASSERT(key_token->type == JSMN_STRING);
-                if (prv_kii_json_is_same_key(&target,
+                if (_kii_json_is_same_key(&target,
                                 json_string + key_token->start,
                                 key_token->end - key_token->start) == 0) {
                     next_token = value_token;
                     break;
                 }
-                index += prv_kii_json_count_contained_token(value_token) + 1;
+                index += _kii_json_count_contained_token(value_token) + 1;
             }
             if (next_token == NULL) {
                 return -1;
@@ -618,7 +618,7 @@ static int prv_kii_jsmn_get_value_by_path(
                 return -1;
             }
             for (i = 0; i < target.field.index; ++i) {
-                root_token += prv_kii_json_count_contained_token(
+                root_token += _kii_json_count_contained_token(
                         root_token + 1);
             }
             ++root_token;
@@ -631,7 +631,7 @@ static int prv_kii_jsmn_get_value_by_path(
     return 0;
 }
 
-static kii_json_parse_result_t prv_kii_json_convert_jsmntok_to_field(
+static kii_json_parse_result_t _kii_json_convert_jsmntok_to_field(
         kii_json_field_t* field,
         const jsmntok_t* value,
         const char* json_string,
@@ -641,7 +641,7 @@ static kii_json_parse_result_t prv_kii_json_convert_jsmntok_to_field(
     kii_json_field_type_t type = KII_JSON_FIELD_TYPE_ANY;
 
     /* get actual type. */
-    type = prv_kii_json_to_kii_json_field_type(value->type,
+    type = _kii_json_to_kii_json_field_type(value->type,
             json_string + value->start, value->end - value->start);
     if (type == KII_JSON_FIELD_TYPE_ANY) {
         /* fail to get actual type. */
@@ -665,7 +665,7 @@ static kii_json_parse_result_t prv_kii_json_convert_jsmntok_to_field(
                 retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
             } else if (field->field_copy.string == NULL) {
                 field->result = KII_JSON_FIELD_PARSE_SUCCESS;
-            } else if (prv_kii_json_string_copy(
+            } else if (_kii_json_string_copy(
                             json_string + value->start,
                             value->end - value->start,
                             field->field_copy.string,
@@ -682,8 +682,8 @@ static kii_json_parse_result_t prv_kii_json_convert_jsmntok_to_field(
                 field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
                 retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
             } else {
-                prv_kii_json_num_parse_result_t result =
-                    prv_kii_json_to_int(
+                _kii_json_num_parse_result_t result =
+                    _kii_json_to_int(
                             json_string + value->start,
                             value->end - value->start,
                             &(field->field_copy.int_value));
@@ -712,8 +712,8 @@ static kii_json_parse_result_t prv_kii_json_convert_jsmntok_to_field(
                 field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
                 retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
             } else {
-                prv_kii_json_num_parse_result_t result =
-                    prv_kii_json_to_long(
+                _kii_json_num_parse_result_t result =
+                    _kii_json_to_long(
                             json_string + value->start,
                             value->end - value->start,
                             &(field->field_copy.long_value));
@@ -741,8 +741,8 @@ static kii_json_parse_result_t prv_kii_json_convert_jsmntok_to_field(
                 field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
                 retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
             } else {
-                prv_kii_json_num_parse_result_t result =
-                    prv_kii_json_to_double(
+                _kii_json_num_parse_result_t result =
+                    _kii_json_to_double(
                             json_string + value->start,
                             value->end - value->start,
                             &(field->field_copy.double_value));
@@ -769,7 +769,7 @@ static kii_json_parse_result_t prv_kii_json_convert_jsmntok_to_field(
                 field->type = type;
                 field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
                 retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
-            } else if (prv_kii_json_to_boolean(json_string + value->start,
+            } else if (_kii_json_to_boolean(json_string + value->start,
                             value->end - value->start,
                             &(field->field_copy.boolean_value)) == 0) {
                 field->result = KII_JSON_FIELD_PARSE_SUCCESS;
@@ -814,11 +814,11 @@ static kii_json_parse_result_t _kii_json_parse_fields(
 
         /* get jsmntok_t pointing target value. */
         if (field->path != NULL) {
-            result = prv_kii_jsmn_get_value_by_path(json_string,
+            result = _kii_jsmn_get_value_by_path(json_string,
                     json_string_len, resource->tokens, field->path,
                     &value);
         } else {
-            result = prv_kii_jsmn_get_value(json_string, json_string_len,
+            result = _kii_jsmn_get_value(json_string, json_string_len,
                     resource->tokens, field->name, &value);
         }
         if (result != 0 || value == NULL)
@@ -829,7 +829,7 @@ static kii_json_parse_result_t _kii_json_parse_fields(
         }
 
         /* convert jsmntok_t to kii_json_field_t. */
-        switch (prv_kii_json_convert_jsmntok_to_field(field, value,
+        switch (_kii_json_convert_jsmntok_to_field(field, value,
                         json_string, json_string_len)) {
             case KII_JSON_PARSE_SUCCESS:
                 break;
@@ -858,7 +858,7 @@ kii_json_parse_result_t kii_json_read_object(
     M_KII_JSON_ASSERT(json_string_len > 0);
 
     kii_json_parse_result_t res = KII_JSON_PARSE_INVALID_INPUT;
-    res = prv_kii_jsmn_get_tokens(json_string, json_string_len, resource);
+    res = _kii_jsmn_get_tokens(json_string, json_string_len, resource);
     if (res != KII_JSON_PARSE_SUCCESS) {
         return res;
     }
@@ -896,7 +896,7 @@ kii_json_parse_result_t kii_json_read_object_with_allocator(
         return KII_JSON_PARSE_INVALID_INPUT;
     }
 
-    kii_json_parse_result_t res = prv_kii_jsmn_get_tokens(json_string, json_string_len, resource);
+    kii_json_parse_result_t res = _kii_jsmn_get_tokens(json_string, json_string_len, resource);
     if (res != KII_JSON_PARSE_SUCCESS) {
         free_cb(resource);
         return res;
