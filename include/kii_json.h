@@ -28,24 +28,11 @@ typedef struct kii_json_resource_t {
 } kii_json_resource_t;
 
 /** Resource allocator for kii_json_resource_t.
- *
- * When parsing target JSON string requires more tokens provided by
- * kii_json_resource_t, This function is called. You need to resize
- * kii_json_resource_t#tokens and set new size to
- * kii_json_resource_t#tokens_num which is greater than or equal to
- * required_size.
- *
- * If you allocate new resource,
- * Application may need to free old resource since the library never free the
- * given resource.
- *
- * \param[inout] resource kii json resources used by KII JSON library.
- * \param[in] required_size newly required token size.
- * \return 1: success to allocate resource, 0: fail to allocate resourceresize.
+ * \param[in] required_size required token size.
+ * \return kii_json_resource_t instance of NULL if failed to allocate resource.
  */
-typedef int
+typedef kii_json_resource_t*
     (*KII_JSON_RESOURCE_ALLOC_CB)(
-        kii_json_resource_t* resource,
         size_t required_size);
 
 typedef void (*KII_JSON_RESOURCE_FREE_CB)(
@@ -58,36 +45,6 @@ typedef void (*KII_JSON_RESOURCE_FREE_CB)(
  * resource.
  */
 typedef struct kii_json_t {
-
-    /** Resource used by KII JSON library.
-     *
-     * This field is optional. If KII_JSON_FIXED_TOKEN_NUM macro is
-     * defined, KII JSON library allocate resources in stack memory
-     * with the size specified number by the macro.
-     * In this case, re-allocation won't happens.
-     * This would be convenient if your environment has enough size of stack
-     * memory to work with the targetting JSON data structure.
-     *
-     * If KII_JSON_FIXED_TOKEN_NUM macro is not present,
-     * you can allocate resource anywhere you want to put.
-     * Library never allocate/free the resource.
-     * Allocation and free must be done by application.
-     * In case of running out given resource and need more resouces to parse
-     * given JSON string,
-     * library calls resource_cb to ask application to allocate more resources.
-     */
-    kii_json_resource_t* resource;
-
-    /** Callback asks for allocate more tokens to parse JSON.
-     *
-     * Called when the target JSON string can not be parsed with given resource.
-     * Library won't try to allocate resource when given resource is not enough
-     * to parse JSON string when this field is NULL.
-     *
-     * If KII_JSON_FIXED_TOKEN_NUM is defined, this callback won't be called.
-     */
-    KII_JSON_RESOURCE_ALLOC_CB resource_cb;
-
     /** Error string. If error occurs in kii_json library, then error
      * message is set to this fields. If NULL, no error message is
      * set.
@@ -133,7 +90,10 @@ typedef enum kii_json_parse_result_t {
     KII_JSON_PARSE_SHORTAGE_TOKENS,
 
     /** JSON string is failed to parse. Passed string is not JSON string. */
-    KII_JSON_PARSE_INVALID_INPUT
+    KII_JSON_PARSE_INVALID_INPUT,
+
+    /** Allocation failed. */
+    KII_JSON_PARSE_ALLOCATION_ERROR,
 } kii_json_parse_result_t;
 
 /** Field parsing result. Assigned to kii_json_field_t#result. */
