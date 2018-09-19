@@ -30,15 +30,15 @@
 #define DOUBLEBUFSIZE DBL_MAX_10_EXP + 3
 
 typedef enum _kii_json_num_parse_result_t {
-    PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS,
-    PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW,
-    PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW,
-    PRV_KII_JSON_NUM_PARSE_RESULT_INVALID
+    _KII_JSON_NUM_PARSE_RESULT_SUCCESS,
+    _KII_JSON_NUM_PARSE_RESULT_OVERFLOW,
+    _KII_JSON_NUM_PARSE_RESULT_UNDERFLOW,
+    _KII_JSON_NUM_PARSE_RESULT_INVALID
 } _kii_json_num_parse_result_t;
 
 typedef enum _kii_json_parent_type_t {
-    PRV_KII_JSON_PARENT_TYPE_OBJECT,
-    PRV_KII_JSON_PARENT_TYPE_ARRAY
+    _KII_JSON_PARENT_TYPE_OBJECT,
+    _KII_JSON_PARENT_TYPE_ARRAY
 } _kii_json_parent_type_t;
 
 typedef struct _kii_json_target_t {
@@ -344,10 +344,10 @@ static _kii_json_num_parse_result_t _kii_json_to_long(
     if (buf_len <= target_size) {
         if (*target == '-') {
             *out_long = LONG_MIN;
-            return PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
+            return _KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
         }
         *out_long = LONG_MAX;
-        return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
+        return _KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
     }
     memcpy(buf, target, target_size);
 
@@ -356,10 +356,10 @@ static _kii_json_num_parse_result_t _kii_json_to_long(
     if (errno == ERANGE) {
         if (long_value == LONG_MAX) {
             *out_long = LONG_MAX;
-            return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
+            return _KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
         } else if (long_value == LONG_MIN) {
             *out_long = LONG_MIN;
-            return PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
+            return _KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
         }
         M_KII_JSON_ASSERT(0);
     } else if (errno == EINVAL) {
@@ -369,11 +369,11 @@ static _kii_json_num_parse_result_t _kii_json_to_long(
     }
 
     if (*endptr != '\0') {
-        return PRV_KII_JSON_NUM_PARSE_RESULT_INVALID;
+        return _KII_JSON_NUM_PARSE_RESULT_INVALID;
     }
 
     *out_long = long_value;
-    return PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS;
+    return _KII_JSON_NUM_PARSE_RESULT_SUCCESS;
 }
 
 static _kii_json_num_parse_result_t _kii_json_to_int(
@@ -387,18 +387,18 @@ static _kii_json_num_parse_result_t _kii_json_to_int(
     M_KII_JSON_ASSERT(out_int != NULL);
 
     if (_kii_json_to_long(target, target_size, &long_value) ==
-            PRV_KII_JSON_NUM_PARSE_RESULT_INVALID) {
-        return PRV_KII_JSON_NUM_PARSE_RESULT_INVALID;
+            _KII_JSON_NUM_PARSE_RESULT_INVALID) {
+        return _KII_JSON_NUM_PARSE_RESULT_INVALID;
     } else if (long_value > INT_MAX) {
         *out_int = INT_MAX;
-        return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
+        return _KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
     } else if (long_value < INT_MIN) {
         *out_int = INT_MIN;
-        return PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
+        return _KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
     }
 
     *out_int = (int)long_value;
-    return PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS;
+    return _KII_JSON_NUM_PARSE_RESULT_SUCCESS;
 }
 
 static _kii_json_num_parse_result_t _kii_json_to_double(
@@ -421,27 +421,27 @@ static _kii_json_num_parse_result_t _kii_json_to_double(
         char message[50];
         snprintf(message, sizeof(message) / sizeof(message[0]),
                 "double string too long: %lu.", (unsigned long)target_size);
-      return PRV_KII_JSON_NUM_PARSE_RESULT_INVALID;
+      return _KII_JSON_NUM_PARSE_RESULT_INVALID;
     }
     memcpy(buf, target, target_size);
 
     errno = 0;
     value = strtod(buf, &endptr);
     if (value == 0 && *endptr != '\0') {
-        return PRV_KII_JSON_NUM_PARSE_RESULT_INVALID;
+        return _KII_JSON_NUM_PARSE_RESULT_INVALID;
     } else if (errno == ERANGE) {
         if (value == 0) {
             *out_double = 0;
-            return PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
+            return _KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
         } else {
             /* In this case, value is plus or minus HUGE_VAL. */
             *out_double = value;
-            return PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
+            return _KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
         }
     }
 
     *out_double = value;
-    return PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS;
+    return _KII_JSON_NUM_PARSE_RESULT_SUCCESS;
 }
 
 static int _kii_json_to_boolean(
@@ -510,17 +510,17 @@ static const char* _kii_json_get_target(
             retval = NULL;
             goto exit;
         } else if (_kii_json_to_long(start, target_len, &value)
-                != PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS) {
+                != _KII_JSON_NUM_PARSE_RESULT_SUCCESS) {
             error = start;
             retval = NULL;
             goto exit;
         }
         target->field.index = (size_t)value;
-        target->parent_type = PRV_KII_JSON_PARENT_TYPE_ARRAY;
+        target->parent_type = _KII_JSON_PARENT_TYPE_ARRAY;
     } else {
         target->field.name = start;
         target->len = target_len;
-        target->parent_type = PRV_KII_JSON_PARENT_TYPE_OBJECT;
+        target->parent_type = _KII_JSON_PARENT_TYPE_OBJECT;
     }
 
 exit:
@@ -589,7 +589,7 @@ static int _kii_jsmn_get_value_by_path(
         memset(&target, 0x00, sizeof(target));
         next_root = _kii_json_get_target( next_root, &target);
         if (root_token->type == JSMN_OBJECT &&
-                target.parent_type == PRV_KII_JSON_PARENT_TYPE_OBJECT) {
+                target.parent_type == _KII_JSON_PARENT_TYPE_OBJECT) {
             size_t i = 0;
             size_t index = 1;
             const size_t root_token_size = (size_t)root_token->size;
@@ -611,7 +611,7 @@ static int _kii_jsmn_get_value_by_path(
             }
             root_token = next_token;
         } else  if (root_token->type == JSMN_ARRAY &&
-                target.parent_type == PRV_KII_JSON_PARENT_TYPE_ARRAY) {
+                target.parent_type == _KII_JSON_PARENT_TYPE_ARRAY) {
             size_t i = 0;
             const size_t root_token_size = (size_t)root_token->size;
             if (target.field.index >= root_token_size) {
@@ -688,18 +688,18 @@ static kii_json_parse_result_t _kii_json_convert_jsmntok_to_field(
                             value->end - value->start,
                             &(field->field_copy.int_value));
                 switch (result) {
-                    case PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS:
+                    case _KII_JSON_NUM_PARSE_RESULT_SUCCESS:
                         field->result = KII_JSON_FIELD_PARSE_SUCCESS;
                         break;
-                    case PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW:
+                    case _KII_JSON_NUM_PARSE_RESULT_OVERFLOW:
                         field->result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
                         retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
                         break;
-                    case PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW:
+                    case _KII_JSON_NUM_PARSE_RESULT_UNDERFLOW:
                         field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
                         retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
                         break;
-                    case PRV_KII_JSON_NUM_PARSE_RESULT_INVALID:
+                    case _KII_JSON_NUM_PARSE_RESULT_INVALID:
                         field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
                         return KII_JSON_PARSE_INVALID_INPUT;
                 }
@@ -718,18 +718,18 @@ static kii_json_parse_result_t _kii_json_convert_jsmntok_to_field(
                             value->end - value->start,
                             &(field->field_copy.long_value));
                 switch (result) {
-                    case PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS:
+                    case _KII_JSON_NUM_PARSE_RESULT_SUCCESS:
                         field->result = KII_JSON_FIELD_PARSE_SUCCESS;
                         break;
-                    case PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW:
+                    case _KII_JSON_NUM_PARSE_RESULT_OVERFLOW:
                         field->result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
                         retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
                         break;
-                    case PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW:
+                    case _KII_JSON_NUM_PARSE_RESULT_UNDERFLOW:
                         field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
                         retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
                         break;
-                    case PRV_KII_JSON_NUM_PARSE_RESULT_INVALID:
+                    case _KII_JSON_NUM_PARSE_RESULT_INVALID:
                         field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
                         return KII_JSON_PARSE_INVALID_INPUT;
                 }
@@ -747,18 +747,18 @@ static kii_json_parse_result_t _kii_json_convert_jsmntok_to_field(
                             value->end - value->start,
                             &(field->field_copy.double_value));
                 switch (result) {
-                    case PRV_KII_JSON_NUM_PARSE_RESULT_SUCCESS:
+                    case _KII_JSON_NUM_PARSE_RESULT_SUCCESS:
                         field->result = KII_JSON_FIELD_PARSE_SUCCESS;
                         break;
-                    case PRV_KII_JSON_NUM_PARSE_RESULT_OVERFLOW:
+                    case _KII_JSON_NUM_PARSE_RESULT_OVERFLOW:
                         field->result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
                         retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
                         break;
-                    case PRV_KII_JSON_NUM_PARSE_RESULT_UNDERFLOW:
+                    case _KII_JSON_NUM_PARSE_RESULT_UNDERFLOW:
                         field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
                         retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
                         break;
-                    case PRV_KII_JSON_NUM_PARSE_RESULT_INVALID:
+                    case _KII_JSON_NUM_PARSE_RESULT_INVALID:
                         field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
                         return KII_JSON_PARSE_INVALID_INPUT;
                 }
