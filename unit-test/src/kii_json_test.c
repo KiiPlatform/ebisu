@@ -1481,6 +1481,7 @@ TEST(KiiJson, ExactTokensTest)
         strlen(json_string),
         fields,
         &resource);
+    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
     EXPECT_EQ(0, strcmp("value1", fields[0].field_copy.string));
 
@@ -1488,39 +1489,31 @@ TEST(KiiJson, ExactTokensTest)
     EXPECT_EQ(3, resource.tokens_num);
 }
 
-// TEST(KiiJson, AllocateTest)
-// {
-//     const char json_string[] = "{\"key1\" : \"value1\"}";
-//     char buf[256];
-//     kii_json_t kii_json;
-//     kii_json_resource_t resource;
-//     kii_json_field_t fields[2];
+TEST(KiiJson, AllocatorTest)
+{
+    const char json_string[] = "{\"key1\" : \"value1\"}";
+    char buf[256];
 
-//     init_kii_json_reallocatable(&kii_json, &resource, 0);
-//     memset(fields, 0x00, sizeof(fields));
+    kii_json_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
 
-//     fields[0].name = "key1";
-//     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
-//     fields[0].field_copy.string = buf;
-//     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
-//     fields[1].name = NULL;
+    fields[0].name = "key1";
+    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].field_copy.string = buf;
+    fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
+    fields[1].name = NULL;
 
-//     EXPECT_EQ((kii_json_token_t*)NULL, kii_json.resource->tokens);
-//     EXPECT_EQ(0, kii_json.resource->tokens_num);
+    kii_json_parse_result_t res = kii_json_read_object_with_allocator(
+        json_string,
+        strlen(json_string),
+        fields,
+        alloc_cb,
+        free_cb);
 
-//     EXPECT_EQ(KII_JSON_PARSE_SUCCESS,
-//             kii_json_read_object(
-//                 &kii_json,
-//                 json_string,
-//                 sizeof(json_string) / sizeof(json_string[0]),
-//                 fields));
-//     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-//     EXPECT_EQ(0, strcmp("value1", fields[0].field_copy.string));
-
-//     EXPECT_NE((kii_json_token_t*)NULL, kii_json.resource->tokens);
-//     EXPECT_EQ(3, kii_json.resource->tokens_num);
-//     free(kii_json.resource->tokens);
-// }
+    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
+    EXPECT_EQ(0, strcmp("value1", fields[0].field_copy.string));
+}
 
 // TEST(KiiJson, AllocateFailedTest)
 // {
