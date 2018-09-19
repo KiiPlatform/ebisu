@@ -145,33 +145,11 @@ typedef struct kii_t {
     khc_slist* _req_headers;
 
     char _etag[64];
-    /** Resource used by KII JSON library.
-     *
-     * This field is optional. If KII_JSON_FIXED_TOKEN_NUM macro is
-     * defined, KII JSON library takes resources by myself on stack
-     * memory. In KII_JSON_FIXED_TOKEN_NUM case, token size of Kii
-     * JSON library is number defined by KII_JSON_FIXED_TOKEN_NUM. If
-     * your environment has small stack size, you should use this
-     * field and manage this resources by yourself.
-     *
-     * This field is not managed by this SDK. If
-     * kii_json_resource_t#tokens is allocated from heap memory, you
-     * must free these by yourself before applications are
-     * terminated.
-     *
-     * Value of this field is not thread safe. You must not share
-     * kii_json_resource_t#tokens instance with two or more kii_t
-     * instance.
-     */
-    kii_json_resource_t kii_json_resource;
 
-    /** Callback to resize to kii_json_resource contents.
-     *
-     * This field is optional. If this field is NULL. This SDK does
-     * not try to allocate kii_t#kii_json_resource. As a result, Some
-     * APIs may fail with KII_JSON_PARSE_SHORTAGE_TOKENS.
-     */
-    KII_JSON_RESOURCE_CB kii_json_resource_cb;
+    kii_json_resource_t* _json_resource;
+
+    KII_JSON_RESOURCE_ALLOC_CB _json_alloc_cb;
+    KII_JSON_RESOURCE_FREE_CB _json_free_cb;
 
 } kii_t;
 
@@ -506,6 +484,22 @@ int kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userd
 int kii_set_mqtt_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
 int kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
 int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+
+/** Set JSON paraser resource
+ * @param [inout] kii SDK instance.
+ * @param [in] resource to be used parse JSON. 256 tokens_num might be enough for almost all usecases.
+ * If you need to parse large object or allocate exact size of memory used,
+ * see kii_set_json_parser_resource_cb(kii_t, KII_JSON_RESOURCE_ALLOC_CB, KII_JSON_RESOURCE_FREE_CB)
+ */
+kii_code_t kii_set_json_parser_resource(kii_t* kii, kii_json_resource_t* resource);
+
+/** Set JSON paraser resource allocators.
+ *  To use Allocator instead of fixed size memory given by kii_set_json_parser_resource(kii_t, kii_json_resource_t),
+ *  call kii_set_json_parser_resource(kii_t, kii_json_resource_t) with NULL resource argument.
+*/
+kii_code_t kii_set_json_parser_resource_cb(kii_t* kii,
+    KII_JSON_RESOURCE_ALLOC_CB alloc_cb,
+    KII_JSON_RESOURCE_FREE_CB free_cb);
 
 const char* kii_get_etag(kii_t* kii);
 
