@@ -857,6 +857,10 @@ kii_json_parse_result_t kii_json_read_object(
     M_KII_JSON_ASSERT(json_string != NULL);
     M_KII_JSON_ASSERT(json_string_len > 0);
 
+    if (resource == NULL || resource->tokens_num == 0) {
+        return KII_JSON_PARSE_SHORTAGE_TOKENS;
+    }
+
     kii_json_parse_result_t res = KII_JSON_PARSE_INVALID_INPUT;
     res = _kii_jsmn_get_tokens(json_string, json_string_len, resource);
     if (res != KII_JSON_PARSE_SUCCESS) {
