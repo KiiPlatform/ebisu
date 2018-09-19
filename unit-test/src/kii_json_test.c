@@ -1042,31 +1042,29 @@ TEST(KiiJson, GetArrayInt) {
     EXPECT_EQ(100, fields[0].field_copy.int_value);
 }
 
-// TEST(KiiJson, GetArrayLong) {
-//     const char json_string[] = "[1099511627776]";
-//     char buf[256];
-//     kii_json_t kii_json;
-//     kii_json_resource_t resource;
-//     kii_json_token_t tokens[256];
-//     kii_json_field_t fields[2];
+TEST(KiiJson, GetArrayLong) {
+    const char json_string[] = "[1099511627776]";
+    char buf[256];
 
-//     init_kii_json(&kii_json, &resource, tokens,
-//             sizeof(tokens) / sizeof(tokens[0]));
-//     memset(fields, 0x00, sizeof(fields));
+    kii_json_token_t tokens[256];
+    kii_json_resource_t resource = { tokens, 256 };
 
-//     fields[0].path = "/[0]";
-//     fields[0].type = KII_JSON_FIELD_TYPE_LONG;
-//     fields[1].name = NULL;
+    kii_json_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
 
-//     EXPECT_EQ(KII_JSON_PARSE_SUCCESS,
-//             kii_json_read_object(
-//                 &kii_json,
-//                 json_string,
-//                 sizeof(json_string) / sizeof(json_string[0]),
-//                 fields));
-//     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-//     EXPECT_EQ(1099511627776, fields[0].field_copy.long_value);
-// }
+    fields[0].path = "/[0]";
+    fields[0].type = KII_JSON_FIELD_TYPE_LONG;
+    fields[1].name = NULL;
+
+    kii_json_parse_result_t res = kii_json_read_object(
+        json_string,
+        strlen(json_string),
+        fields,
+        &resource);
+    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
+    EXPECT_EQ(1099511627776, fields[0].field_copy.long_value);
+}
 
 // TEST(KiiJson, GetArrayDouble) {
 //     const char json_string[] = "[1e-1]";
