@@ -496,7 +496,10 @@ kii_code_t kii_set_json_parser_resource(kii_t* kii, kii_json_resource_t* resourc
 /** Set JSON paraser resource allocators.
  *  To use Allocator instead of fixed size memory given by kii_set_json_parser_resource(kii_t, kii_json_resource_t),
  *  call kii_set_json_parser_resource(kii_t, kii_json_resource_t) with NULL resource argument.
-*/
+ * @param [inout] kii SDK instance.
+ * @param [in] alloc_cb allocator callback.
+ * @param [in] free_cb free callback should free memories allocated in alloc_cb.
+ */
 kii_code_t kii_set_json_parser_resource_cb(kii_t* kii,
     KII_JSON_RESOURCE_ALLOC_CB alloc_cb,
     KII_JSON_RESOURCE_FREE_CB free_cb);
