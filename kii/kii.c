@@ -146,6 +146,7 @@ int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata)
 
 kii_code_t kii_set_json_parser_resource(kii_t* kii, kii_json_resource_t* resource) {
     kii->_json_resource = resource;
+    return KII_ERR_OK;
 }
 
 kii_code_t kii_set_json_parser_resource_cb(
@@ -155,6 +156,7 @@ kii_code_t kii_set_json_parser_resource_cb(
 {
     kii->_json_alloc_cb = alloc_cb;
     kii->_json_free_cb = free_cb;
+    return KII_ERR_OK;
 }
 
 const char* kii_get_etag(kii_t* kii) {
