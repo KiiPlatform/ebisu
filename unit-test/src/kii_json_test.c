@@ -106,30 +106,29 @@ TEST(KiiJson, GetObjectNegativeIntByName) {
     EXPECT_EQ(-100, fields[0].field_copy.int_value);
 }
 
-// TEST(KiiJson, GetObjectPositiveLongByName) {
-//     const char json_string[] = "{\"key1\" : 1099511627776}";
-//     kii_json_t kii_json;
-//     kii_json_resource_t resource;
-//     kii_json_token_t tokens[256];
-//     kii_json_field_t fields[2];
+TEST(KiiJson, GetObjectPositiveLongByName) {
+    const char json_string[] = "{\"key1\" : 1099511627776}";
+    kii_json_resource_t resource;
+    kii_json_token_t tokens[256];
+    resource.tokens = tokens;
+    resource.tokens_num = 256;
 
-//     init_kii_json(&kii_json, &resource, tokens,
-//             sizeof(tokens) / sizeof(tokens[0]));
-//     memset(fields, 0x00, sizeof(fields));
+    kii_json_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
 
-//     fields[0].name = "key1";
-//     fields[0].type = KII_JSON_FIELD_TYPE_LONG;
-//     fields[1].name = NULL;
+    fields[0].name = "key1";
+    fields[0].type = KII_JSON_FIELD_TYPE_LONG;
+    fields[1].name = NULL;
 
-//     EXPECT_EQ(KII_JSON_PARSE_SUCCESS,
-//             kii_json_read_object(
-//                 &kii_json,
-//                 json_string,
-//                 sizeof(json_string) / sizeof(json_string[0]),
-//                 fields));
-//     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-//     EXPECT_EQ(1099511627776, fields[0].field_copy.long_value);
-// }
+    kii_json_parse_result_t res = kii_json_read_object(
+        json_string,
+        strlen(json_string),
+        fields,
+        &resource);
+    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
+    EXPECT_EQ(1099511627776, fields[0].field_copy.long_value);
+}
 
 // TEST(KiiJson, GetObjectNegativeLongByName) {
 //     const char json_string[] = "{\"key1\" : -1099511627776}";
