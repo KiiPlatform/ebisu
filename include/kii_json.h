@@ -38,23 +38,6 @@ typedef kii_json_resource_t*
 typedef void (*KII_JSON_RESOURCE_FREE_CB)(
     kii_json_resource_t* resource);
 
-/** object manages context of kii json apis.
- * Do not share this object and fields inside this object among the
- * thread/tasks.
- * library won't sync the request if the multiple threads/tasks share the
- * resource.
- */
-typedef struct kii_json_t {
-    /** Error string. If error occurs in kii_json library, then error
-     * message is set to this fields. If NULL, no error message is
-     * set.
-     */
-    char* error_string_buff;
-
-    /** Size of error_string_buff. */
-    size_t error_string_length;
-} kii_json_t;
-
 /** Boolean type */
 typedef enum kii_json_boolean_t {
     KII_JSON_FALSE,
@@ -338,7 +321,6 @@ typedef struct kii_json_field_t {
 } kii_json_field_t;
 
 /** Parse JSON object.
- *  \param [in] kii json instance.
  *  \param [in] pointer of JSON string.
  *  \param [in] length of JSON string.
  *  \param [inout] field of kii JSON parser.
@@ -346,14 +328,12 @@ typedef struct kii_json_field_t {
  *  \return parse JSON result.
  */
 kii_json_parse_result_t kii_json_read_object(
-        kii_json_t* kii_json,
         const char* json_string,
         size_t json_string_len,
         kii_json_field_t* fields,
         kii_json_resource_t* resource);
 
 /** Parse JSON object.
- *  \param [in] kii json instance.
  *  \param [in] pointer of JSON string.
  *  \param [in] length of JSON string.
  *  \param [inout] field of kii JSON parser.
@@ -361,7 +341,6 @@ kii_json_parse_result_t kii_json_read_object(
  *  \return parse JSON result.
  */
 kii_json_parse_result_t kii_json_read_object_with_allocator(
-    kii_json_t* kii_json,
     const char* json_string,
     size_t json_string_len,
     kii_json_field_t* fields,
