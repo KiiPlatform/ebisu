@@ -1364,55 +1364,53 @@ TEST(KiiJson, PushRetrieveEndpoint) {
     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[7].result);
 }
 
-// TEST(KiiJson, PushGetSmartTest) {
-//     const char json_string[] =
-//         "{"
-//             "\"schema\":\"XXXXXXXXXXXXXX\","
-//             "\"schemaVersion\":1,"
-//             "\"commandID\":\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\","
-//             "\"actions\":[{\"turnPower\":{\"power\":true}},"
-//                          "{\"setBrightness\":{\"brightness\":3000}},"
-//                          "{\"setColor\":{\"color\":[0,128,255]}},"
-//                          "{\"setColorTemperature\":{\"colorTemperature\":-100}}"
-//                          "]"
-//         "}";
-//     kii_json_t kii_json;
-//     kii_json_resource_t resource;
-//     kii_json_token_t tokens[256];
-//     kii_json_field_t fields[5];
-//     char schema[64];
-//     char commandID[64];
+TEST(KiiJson, CommandParseTest) {
+    const char json_string[] =
+        "{"
+            "\"schema\":\"XXXXXXXXXXXXXX\","
+            "\"schemaVersion\":1,"
+            "\"commandID\":\"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\","
+            "\"actions\":[{\"turnPower\":{\"power\":true}},"
+                         "{\"setBrightness\":{\"brightness\":3000}},"
+                         "{\"setColor\":{\"color\":[0,128,255]}},"
+                         "{\"setColorTemperature\":{\"colorTemperature\":-100}}"
+                         "]"
+        "}";
 
-//     memset(fields, 0x00, sizeof(fields));
-//     fields[0].path = "/schema";
-//     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
-//     fields[0].field_copy.string = schema;
-//     fields[0].field_copy_buff_size = sizeof(schema) / sizeof(schema[0]);
-//     fields[1].path = "/schemaVersion";
-//     fields[1].type = KII_JSON_FIELD_TYPE_INTEGER;
-//     fields[2].path = "/commandID";
-//     fields[2].type = KII_JSON_FIELD_TYPE_STRING;
-//     fields[2].field_copy.string = commandID;
-//     fields[2].field_copy_buff_size =
-//         sizeof(commandID) / sizeof(commandID[0]);
-//     fields[3].path = "/actions";
-//     fields[3].type = KII_JSON_FIELD_TYPE_ARRAY;
-//     fields[4].path = NULL;
+    kii_json_token_t tokens[256];
+    kii_json_resource_t resource = { tokens, 256 };
 
-//     init_kii_json(&kii_json, &resource, tokens,
-//  sizeof(tokens) / sizeof(tokens[0]));
-//     EXPECT_EQ(KII_JSON_PARSE_SUCCESS,
-//             kii_json_read_object(
-//                 &kii_json,
-//                 json_string,
-//                 sizeof(json_string) / sizeof(json_string[0]),
-//                 fields));
+    kii_json_field_t fields[5];
+    char schema[64];
+    char commandID[64];
 
-//     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-//     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[1].result);
-//     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[2].result);
-//     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[3].result);
-// }
+    memset(fields, 0x00, sizeof(fields));
+    fields[0].path = "/schema";
+    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].field_copy.string = schema;
+    fields[0].field_copy_buff_size = sizeof(schema) / sizeof(schema[0]);
+    fields[1].path = "/schemaVersion";
+    fields[1].type = KII_JSON_FIELD_TYPE_INTEGER;
+    fields[2].path = "/commandID";
+    fields[2].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[2].field_copy.string = commandID;
+    fields[2].field_copy_buff_size =
+        sizeof(commandID) / sizeof(commandID[0]);
+    fields[3].path = "/actions";
+    fields[3].type = KII_JSON_FIELD_TYPE_ARRAY;
+    fields[4].path = NULL;
+
+    kii_json_parse_result_t res = kii_json_read_object(
+        json_string,
+        strlen(json_string),
+        fields,
+        &resource);
+    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[1].result);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[2].result);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[3].result);
+}
 
 // #ifndef KII_JSON_FIXED_TOKEN_NUM
 
