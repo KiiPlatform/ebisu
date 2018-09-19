@@ -17,7 +17,8 @@ inline void init(
         char* buffer,
         int buffer_size,
         void* http_ssl_ctx,
-        void* mqtt_ssl_ctx)
+        void* mqtt_ssl_ctx,
+        kii_json_resource_t* resource)
 {
     kii_init(kii, DEFAULT_SITE, APP_ID);
 
@@ -32,6 +33,7 @@ inline void init(
     kii_set_mqtt_cb_sock_send(kii, ssl::cb_send, mqtt_ssl_ctx);
     kii_set_mqtt_cb_sock_recv(kii, ssl::cb_recv, mqtt_ssl_ctx);
     kii_set_mqtt_cb_sock_close(kii, ssl::cb_close, mqtt_ssl_ctx);
+    kii_set_json_parser_resource(kii, resource);
 
     kii->_author.author_id[0] = '\0';
     kii->_author.access_token[0] = '\0';
