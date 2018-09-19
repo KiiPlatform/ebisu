@@ -734,30 +734,28 @@ TEST(KiiJson, GetObjectSecondLayerNegativeDotDoubleByPath) {
     EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value + 0.1));
 }
 
-// TEST(KiiJson, GetObjectSecondLayerPositiveEDoubleByPath) {
-//     const char json_string[] = "{\"key1\" : {\"key2\" : 1e-1}}";
-//     kii_json_t kii_json;
-//     kii_json_resource_t resource;
-//     kii_json_token_t tokens[256];
-//     kii_json_field_t fields[2];
+TEST(KiiJson, GetObjectSecondLayerPositiveEDoubleByPath) {
+    const char json_string[] = "{\"key1\" : {\"key2\" : 1e-1}}";
 
-//     init_kii_json(&kii_json, &resource, tokens,
-//             sizeof(tokens) / sizeof(tokens[0]));
-//     memset(fields, 0x00, sizeof(fields));
+    kii_json_token_t tokens[256];
+    kii_json_resource_t resource = { tokens, 256 };
 
-//     fields[0].path = "/key1/key2";
-//     fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
-//     fields[1].name = NULL;
+    kii_json_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
 
-//     EXPECT_EQ(KII_JSON_PARSE_SUCCESS,
-//             kii_json_read_object(
-//                 &kii_json,
-//                 json_string,
-//                 sizeof(json_string) / sizeof(json_string[0]),
-//                 fields));
-//     EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-//     EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value - 0.1));
-// }
+    fields[0].path = "/key1/key2";
+    fields[0].type = KII_JSON_FIELD_TYPE_DOUBLE;
+    fields[1].name = NULL;
+
+    kii_json_parse_result_t res = kii_json_read_object(
+        json_string,
+        strlen(json_string),
+        fields,
+        &resource);
+    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
+    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
+    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value - 0.1));
+}
 
 // TEST(KiiJson, GetObjectSecondLayerNegativeEDoubleByPath) {
 //     const char json_string[] = "{\"key1\" : {\"key2\" : -1e-1}}";
