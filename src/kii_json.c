@@ -855,54 +855,15 @@ static kii_json_parse_result_t prv_kii_json_convert_jsmntok_to_field(
     return retval;
 }
 
-static kii_json_parse_result_t prv_kii_json_read_object(
-        kii_json_t* kii_json,
-        const char* json_string,
-        size_t json_string_len,
-        kii_json_field_t* fields,
-        kii_json_resource_t* resource,
-        KII_JSON_RESOURCE_ALLOC_CB alloc_cb,
-        KII_JSON_RESOURCE_FREE_CB free_cb)
+static kii_json_parse_result_t _kii_json_parse_fields(
+    kii_json_t* kii_json,
+    const char* json_string,
+    size_t json_string_len,
+    kii_json_field_t* fields,
+    kii_json_resource_t* resource)
 {
-    kii_json_parse_result_t retval = KII_JSON_PARSE_INVALID_INPUT;
-    kii_json_field_t* field = NULL;
-
-    M_KII_JSON_ASSERT(json_string != NULL);
-    M_KII_JSON_ASSERT(json_string_len > 0);
-
-    int allocated = 0;
-    if (resource == NULL) {
-        int required = _calculate_required_token_num(kii_json, json_string, json_string_len);
-        if (required > 0) {
-            kii_json_resource_t* temp = alloc_cb(required);
-            if (temp == NULL) {
-                return KII_JSON_PARSE_ALLOCATION_ERROR;
-            }
-            allocated = 1;
-        } else {
-            return KII_JSON_PARSE_INVALID_INPUT;
-        }
-    }
-    retval = prv_kii_jsmn_get_tokens(kii_json, json_string, json_string_len, resource);
-    if (retval != KII_JSON_PARSE_SUCCESS) {
-        if (allocated) {
-            free_cb(resource);
-        }
-        return retval;
-    }
-
-    switch (resource->tokens[0].type) {
-        case JSMN_ARRAY:
-        case JSMN_OBJECT:
-            break;
-        default:
-            if (allocated) {
-                free_cb(resource);
-            }
-            return KII_JSON_PARSE_INVALID_INPUT;
-    }
-
-    for (field = fields; field->name != NULL || field->path != NULL; ++field) {
+    kii_json_parse_result_t ret = KII_JSON_PARSE_SUCCESS;
+    for (kii_json_field_t* field = fields; field->name != NULL || field->path != NULL; ++field) {
         int result = -1;
         jsmntok_t* value = NULL;
 
@@ -917,7 +878,7 @@ static kii_json_parse_result_t prv_kii_json_read_object(
         }
         if (result != 0 || value == NULL)
         {
-            retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
+            ret = KII_JSON_PARSE_PARTIAL_SUCCESS;
             field->result = KII_JSON_FIELD_PARSE_NOT_FOUND;
             continue;
         }
@@ -928,25 +889,18 @@ static kii_json_parse_result_t prv_kii_json_read_object(
             case KII_JSON_PARSE_SUCCESS:
                 break;
             case KII_JSON_PARSE_PARTIAL_SUCCESS:
-                retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
+                ret = KII_JSON_PARSE_PARTIAL_SUCCESS;
                 break;
             case KII_JSON_PARSE_INVALID_INPUT:
-                retval = KII_JSON_PARSE_INVALID_INPUT;
-                break;
+                return KII_JSON_PARSE_INVALID_INPUT;
             case KII_JSON_PARSE_ROOT_TYPE_ERROR:
             default:
               /* unexpected error. */
               M_KII_JSON_ASSERT(0);
-              retval = KII_JSON_PARSE_INVALID_INPUT;
-              break;
+              return KII_JSON_PARSE_INVALID_INPUT;
         }
-
     }
-
-    if (allocated) {
-        free_cb(resource);
-    }
-    return retval;
+    return ret;
 }
 
 kii_json_parse_result_t kii_json_read_object(
@@ -956,8 +910,22 @@ kii_json_parse_result_t kii_json_read_object(
     kii_json_field_t* fields,
     kii_json_resource_t* resource)
 {
-    // TODO: implement it.
-    return KII_JSON_PARSE_INVALID_INPUT;
+    M_KII_JSON_ASSERT(json_string != NULL);
+    M_KII_JSON_ASSERT(json_string_len > 0);
+
+    kii_json_parse_result_t res = KII_JSON_PARSE_INVALID_INPUT;
+    res = prv_kii_jsmn_get_tokens(kii_json, json_string, json_string_len, resource);
+    if (res != KII_JSON_PARSE_SUCCESS) {
+        return res;
+    }
+
+    jsmntype_t type = resource->tokens[0].type;
+    if (type != JSMN_ARRAY && type != JSMN_OBJECT) {
+        return KII_JSON_PARSE_INVALID_INPUT;
+    }
+    res = _kii_json_parse_fields(kii_json, json_string, json_string_len, fields, resource);
+
+    return res;
 }
 
 kii_json_parse_result_t kii_json_read_object_with_allocator(
@@ -968,6 +936,36 @@ kii_json_parse_result_t kii_json_read_object_with_allocator(
     KII_JSON_RESOURCE_ALLOC_CB alloc_cb,
     KII_JSON_RESOURCE_FREE_CB free_cb)
 {
-    // TODO: implement it.
-    return KII_JSON_PARSE_INVALID_INPUT;
+    M_KII_JSON_ASSERT(json_string != NULL);
+    M_KII_JSON_ASSERT(json_string_len > 0);
+    M_KII_JSON_ASSERT(alloc_cb != NULL);
+    M_KII_JSON_ASSERT(free_cb != NULL);
+
+    kii_json_resource_t *resource;
+    int required = _calculate_required_token_num(kii_json, json_string, json_string_len);
+    if (required > 0) {
+        resource = alloc_cb(required);
+        if (resource == NULL)
+        {
+            return KII_JSON_PARSE_ALLOCATION_ERROR;
+        }
+    } else {
+        return KII_JSON_PARSE_INVALID_INPUT;
+    }
+
+    kii_json_parse_result_t res = prv_kii_jsmn_get_tokens(kii_json, json_string, json_string_len, resource);
+    if (res != KII_JSON_PARSE_SUCCESS) {
+        free_cb(resource);
+        return res;
+    }
+
+    jsmntype_t type = resource->tokens[0].type;
+    if (type != JSMN_ARRAY && type != JSMN_OBJECT) {
+        free_cb(resource);
+        return KII_JSON_PARSE_INVALID_INPUT;
+    }
+    res = _kii_json_parse_fields(kii_json, json_string, json_string_len, fields, resource);
+
+    free_cb(resource);
+    return res;
 }
