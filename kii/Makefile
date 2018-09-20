@@ -6,25 +6,15 @@ ifdef KII_MQTT_USE_PORT_TCP
 	override CFLAGS += -DKII_MQTT_USE_PORT_TCP=$(KII_MQTT_USE_PORT_TCP)
 endif
 
-ifndef FIXED_JSON_TOKEN_NUM
-	JSON_FLAG = -DKII_JSON_FIXED_TOKEN_NUM=128
-else
-	JSON_FLAG = -DKII_JSON_FIXED_TOKEN_NUM=$(FIXED_JSON_TOKEN_NUM)
-endif
-
-ifdef FLEXIBLE_JSON_TOKEN
-	JSON_FLAG =
-endif
-
-override CFLAGS += -std=c99 -Wall -pthread -fPIC -shared $(JSON_FLAG)
+override CFLAGS += -std=c99 -Wall -pthread -fPIC -shared
 
 LIBS = -lssl -lcrypto -lpthread
 LIBS_DIR = -L/usr/local/opt/openssl/lib
 SOURCES = $(wildcard *.c)
 SOURCES += $(wildcard ../khc/src/*.c)
 SOURCES += $(wildcard ../kii_json/src/*.c)
-SOURCES += ../lib/jsmn/jsmn.c
-INCLUDES = -I../khc/include -I../lib/jsmn -I../kii_json/include
+SOURCES += $(wildcard ../kii_json/libs/jsmn/*.c)
+INCLUDES = -I../khc/include -I../kii_json/include -I../kii_json/libs/jsmn
 
 TARGET = libkiisdk.so
 
