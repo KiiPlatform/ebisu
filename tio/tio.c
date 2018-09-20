@@ -47,9 +47,9 @@
 #define THING_IF_INFO "sn=tic;sv=1.0.1"
 
 typedef enum _get_key_and_value_t {
-    PRV_GET_KEY_AND_VALUE_SUCCESS,
-    PRV_GET_KEY_AND_VALUE_FAIL,
-    PRV_GET_KEY_AND_VALUE_FINISH
+    _GET_KEY_AND_VALUE_SUCCESS,
+    _GET_KEY_AND_VALUE_FAIL,
+    _GET_KEY_AND_VALUE_FINISH
 } _get_key_and_value_t;
 
 static int _kii_api_call_start(
@@ -582,17 +582,17 @@ static _get_key_and_value_t get_key_and_value_at_index(
                         key_len,
                         value_len) != 0) {
                 M_KII_LOG(kii->kii_core.logger_cb("fail to parse item."))
-                return PRV_GET_KEY_AND_VALUE_FAIL;
+                return _GET_KEY_AND_VALUE_FAIL;
             }
-            return PRV_GET_KEY_AND_VALUE_SUCCESS;
+            return _GET_KEY_AND_VALUE_SUCCESS;
         case KII_JSON_PARSE_PARTIAL_SUCCESS:
             /* This must be end of array. */
-            return PRV_GET_KEY_AND_VALUE_FINISH;
+            return _GET_KEY_AND_VALUE_FINISH;
         case KII_JSON_PARSE_ROOT_TYPE_ERROR:
         case KII_JSON_PARSE_INVALID_INPUT:
         default:
             M_KII_LOG(kii->kii_core.logger_cb("unexpected error.\n"));
-            return PRV_GET_KEY_AND_VALUE_FAIL;
+            return _GET_KEY_AND_VALUE_FAIL;
     }
 }
 
@@ -681,8 +681,8 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
     }
 
     // FIXME: Review error handling system and removed M_KII_LOG logging.
-    for (alias_index = 0, alias_result = PRV_GET_KEY_AND_VALUE_SUCCESS;
-            alias_result == PRV_GET_KEY_AND_VALUE_SUCCESS;
+    for (alias_index = 0, alias_result = _GET_KEY_AND_VALUE_SUCCESS;
+            alias_result == _GET_KEY_AND_VALUE_SUCCESS;
             ++alias_index) {
         TIO_ACTION_HANDLER handler =
             ctx->action_handler;
@@ -699,10 +699,10 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
                 &actions,
                 &actions_len);
         switch (alias_result) {
-            case PRV_GET_KEY_AND_VALUE_FAIL:
+            case _GET_KEY_AND_VALUE_FAIL:
                 M_KII_LOG(kii->kii_core.logger_cb("fail to get alias.\n"));
                 return;
-            case PRV_GET_KEY_AND_VALUE_SUCCESS:
+            case _GET_KEY_AND_VALUE_SUCCESS:
             {
                 char alias_name_swap;
                 size_t action_index;
@@ -712,8 +712,8 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
                 alias_name[alias_name_len] = '\0';
 
                 for (action_index = 0,
-                            action_result = PRV_GET_KEY_AND_VALUE_SUCCESS;
-                        action_result == PRV_GET_KEY_AND_VALUE_SUCCESS;
+                            action_result = _GET_KEY_AND_VALUE_SUCCESS;
+                        action_result == _GET_KEY_AND_VALUE_SUCCESS;
                         ++action_index) {
                     char* name;
                     char* value;
@@ -728,11 +728,11 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
                             &value,
                             &value_len);
                     switch (action_result) {
-                        case PRV_GET_KEY_AND_VALUE_FAIL:
+                        case _GET_KEY_AND_VALUE_FAIL:
                             M_KII_LOG(kii->kii_core.logger_cb(
                                     "fail to get action.\n"));
                             return;
-                        case PRV_GET_KEY_AND_VALUE_SUCCESS:
+                        case _GET_KEY_AND_VALUE_SUCCESS:
                         {
                             char name_swap, value_swap;
                             char error[EMESSAGE_SIZE + 1];
@@ -773,7 +773,7 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
                             value[value_len] = value_swap;
                             break;
                         }
-                        case PRV_GET_KEY_AND_VALUE_FINISH:
+                        case _GET_KEY_AND_VALUE_FINISH:
                             /* finished to parse aliases. */
                             break;
                         default:
@@ -786,7 +786,7 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
                 alias_name[alias_name_len] = alias_name_swap;
                 break;
             }
-            case PRV_GET_KEY_AND_VALUE_FINISH:
+            case _GET_KEY_AND_VALUE_FINISH:
                 /* finished to parse aliases. */
                 break;
             default:
