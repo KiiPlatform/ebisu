@@ -3,7 +3,7 @@
 
 #include <string.h>
 
-kii_json_parse_result_t prv_kii_json_read_object(
+kii_json_parse_result_t _kii_json_read_object(
         kii_t* kii,
         const char* json_string,
         size_t json_string_size,

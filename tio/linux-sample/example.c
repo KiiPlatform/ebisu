@@ -12,16 +12,16 @@
 #include <unistd.h>
 #include "sys_cb_impl.h"
 
-typedef struct prv_air_conditioner_t {
+typedef struct _air_conditioner_t {
     kii_bool_t power;
     int temperature;
-} prv_air_conditioner_t;
+} _air_conditioner_t;
 
-static prv_air_conditioner_t m_air_conditioner;
+static _air_conditioner_t m_air_conditioner;
 static pthread_mutex_t m_mutex;
 
-static kii_bool_t prv_get_air_conditioner_info(
-        prv_air_conditioner_t* air_conditioner)
+static kii_bool_t _get_air_conditioner_info(
+        _air_conditioner_t* air_conditioner)
 {
     if (pthread_mutex_lock(&m_mutex) != 0) {
         return KII_FALSE;
@@ -34,8 +34,8 @@ static kii_bool_t prv_get_air_conditioner_info(
     return KII_TRUE;
 }
 
-static kii_bool_t prv_set_air_conditioner_info(
-        const prv_air_conditioner_t* air_conditioner)
+static kii_bool_t _set_air_conditioner_info(
+        const _air_conditioner_t* air_conditioner)
 {
     if (pthread_mutex_lock(&m_mutex) != 0) {
         return KII_FALSE;
@@ -54,7 +54,7 @@ static kii_bool_t action_handler(
         const char* action_params,
         char error[EMESSAGE_SIZE + 1])
 {
-    prv_air_conditioner_t air_conditioner;
+    _air_conditioner_t air_conditioner;
 
     printf("alias=%s, action name=%s, action params=%s\n",
             alias, action_name, action_params);
@@ -66,7 +66,7 @@ static kii_bool_t action_handler(
     }
 
     memset(&air_conditioner, 0, sizeof(air_conditioner));
-    if (prv_get_air_conditioner_info(&air_conditioner) == KII_FALSE) {
+    if (_get_air_conditioner_info(&air_conditioner) == KII_FALSE) {
         printf("fail to lock.\n");
         strcpy(error, "fail to lock.");
         return KII_FALSE;
@@ -79,7 +79,7 @@ static kii_bool_t action_handler(
         air_conditioner.temperature = atoi(action_name);
     }
 
-    if (prv_set_air_conditioner_info(&air_conditioner) == KII_FALSE) {
+    if (_set_air_conditioner_info(&air_conditioner) == KII_FALSE) {
         printf("fail to unlock.\n");
         return KII_FALSE;
     }
@@ -104,9 +104,9 @@ static kii_bool_t state_handler(
         return retval;
     } else {
         char buf[256];
-        prv_air_conditioner_t air_conditioner;
+        _air_conditioner_t air_conditioner;
         memset(&air_conditioner, 0x00, sizeof(air_conditioner));
-        if (prv_get_air_conditioner_info(&air_conditioner) == KII_FALSE) {
+        if (_get_air_conditioner_info(&air_conditioner) == KII_FALSE) {
             printf("fail to lock.\n");
             return KII_FALSE;
         }

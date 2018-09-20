@@ -48,7 +48,7 @@ kii_code_t kii_auth_thing(
             sizeof(kii->_author.access_token[0]);
     fields[2].name = NULL;
 
-    result = prv_kii_json_read_object(kii, buff, buff_size, fields);
+    result = _kii_json_read_object(kii, buff, buff_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
         ret = KII_ERR_PARSE_JSON;
         goto exit;
@@ -105,7 +105,7 @@ kii_code_t kii_register_thing(
             sizeof(kii->_author.author_id[0]);
     fields[2].name = NULL;
 
-    result = prv_kii_json_read_object(kii, buff, buff_size, fields);
+    result = _kii_json_read_object(kii, buff, buff_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
         ret = KII_ERR_PARSE_JSON;
         goto exit;

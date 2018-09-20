@@ -163,7 +163,7 @@ kii_code_t kii_install_push(
     fields[0].field_copy_buff_size = sizeof(out_installation_id->id);
     fields[1].name = NULL;
 
-    parse_result = prv_kii_json_read_object(kii, buff, buff_size, fields);
+    parse_result = _kii_json_read_object(kii, buff, buff_size, fields);
     if (parse_result != KII_JSON_PARSE_SUCCESS) {
         res = KII_ERR_PARSE_JSON;
         goto exit;
@@ -232,7 +232,7 @@ kii_code_t kii_get_mqtt_endpoint(
     fields[6].type = KII_JSON_FIELD_TYPE_LONG;
     fields[7].name = NULL;
 
-    parse_result = prv_kii_json_read_object(kii, buff, buff_size, fields);
+    parse_result = _kii_json_read_object(kii, buff, buff_size, fields);
     if (parse_result != KII_JSON_PARSE_SUCCESS) {
         res = KII_ERR_PARSE_JSON;
         goto exit;
