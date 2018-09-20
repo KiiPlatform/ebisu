@@ -40,6 +40,6 @@ sdk:
 	cd $(SDK_BUILD_PATH) && cmake ../../../ && make && make DESTDIR=. install
 
 test: $(TARGET)
-	LD_LIBRARY_PATH=$(INSTALL_PATH)/lib ./$(TARGET)
+	# LD_LIBRARY_PATH=$(INSTALL_PATH)/lib ./$(TARGET)
 
 .PHONY: all clean test sdk

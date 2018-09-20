@@ -1,10 +1,9 @@
-doc:
-	doxygen Doxyfile
+all: stests linux-app
 
-clean:
-	rm -rf doc
+stests:
+	make -C tests/small_tests
 
-doc:
-	doxygen Doxyfile
+linux-app:
+	make -C linux-sample
 
-.PHONY: clean doc
+.PHONY: all stests linux-app
