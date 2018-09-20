@@ -1,0 +1,31 @@
+general:
+  branches:
+    ignore:
+      - gh-pages
+
+dependencies:
+  pre:
+    - sudo apt-get install doxygen
+  override:
+    - make all
+    - make doc
+  post:
+    - cp -r html $CIRCLE_ARTIFACTS
+    - cp libkiijson.so $CIRCLE_ARTIFACTS
+
+test:
+  override:
+    - make test
+
+deployment:
+  release:
+    tag: /v[0-9](\.[0-9])*.*/
+    commands:
+      - git clone https://$GH_TOKEN_FOR_HTTPS@github.com/KiiPlatform/kii_json.git
+      - cd kii_json && git checkout gh-pages && git config user.email 'satoshi.kumano@kii.com' && git config user.name 'satoshi kumano'
+      - rm -rf kii_json/api-doc && mkdir -p kii_json/api-doc
+      - cp -r html/ kii_json/api-doc
+      - cd kii_json && git add api-doc && git commit -m 'updated doc' && git push origin gh-pages
+
+# vim: set sts=2 sw=2 et:
+
