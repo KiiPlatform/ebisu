@@ -210,16 +210,16 @@ int main(int argc, char** argv)
 
     sys_cb.task_create_cb = task_create_cb_impl;
     sys_cb.delay_ms_cb = delay_ms_cb_impl;
-    sys_cb.delay_ms_cb = delay_ms_cb_impl;
-    sys_cb.log_cb = logger_cb_impl;
-    sys_cb.socket_connect_cb = socket_connect_cb_impl;
-    sys_cb.socket_send_cb = socket_send_cb_impl;
-    sys_cb.socket_recv_cb = socket_recv_cb_impl;
-    sys_cb.socket_close_cb = socket_close_cb_impl;
-    sys_cb.mqtt_socket_connect_cb = mqtt_connect_cb_impl;
-    sys_cb.mqtt_socket_send_cb = mqtt_send_cb_impl;
-    sys_cb.mqtt_socket_recv_cb = mqtt_recv_cb_impl;
-    sys_cb.mqtt_socket_close_cb = mqtt_close_cb_impl;
+
+    // FIXME: setup callbacks.
+    // sys_cb.socket_connect_cb = socket_connect_cb_impl;
+    // sys_cb.socket_send_cb = socket_send_cb_impl;
+    // sys_cb.socket_recv_cb = socket_recv_cb_impl;
+    // sys_cb.socket_close_cb = socket_close_cb_impl;
+    // sys_cb.mqtt_socket_connect_cb = mqtt_connect_cb_impl;
+    // sys_cb.mqtt_socket_send_cb = mqtt_send_cb_impl;
+    // sys_cb.mqtt_socket_recv_cb = mqtt_recv_cb_impl;
+    // sys_cb.mqtt_socket_close_cb = mqtt_close_cb_impl;
 
     if (pthread_mutex_init(&m_mutex, NULL) != 0) {
         printf("fail to get mutex.\n");
@@ -258,7 +258,7 @@ int main(int argc, char** argv)
                 /* Initialize with token. */
                 result = init_kii_thing_if_with_onboarded_thing(&kii_thing_if, EX_APP_ID,
                                 EX_APP_KEY, EX_APP_SITE, thingID, accessToken,
-                                &command_handler_resource, &state_updater_resource, &sys_cb, NULL);
+                                &command_handler_resource, &state_updater_resource, &sys_cb);
                 if (result == KII_FALSE) {
                     printf("failed to onboard with token.\n");
                     exit(1);
@@ -315,7 +315,7 @@ int main(int argc, char** argv)
                 }
                 printf("program successfully started!\n");
                 result = init_kii_thing_if(&kii_thing_if, EX_APP_ID, EX_APP_KEY, EX_APP_SITE,
-                        &command_handler_resource, &state_updater_resource, &sys_cb, NULL);
+                        &command_handler_resource, &state_updater_resource, &sys_cb);
                 if (result == KII_FALSE) {
                     printf("failed to onboard.\n");
                     exit(1);
@@ -441,8 +441,7 @@ int main(int argc, char** argv)
                 EX_APP_SITE,
                 &command_handler_resource,
                 &state_updater_resource,
-                &sys_cb,
-                NULL) == KII_FALSE) {
+                &sys_cb) == KII_FALSE) {
             printf("fail to initialize.\n");
             exit(1);
         }
@@ -581,8 +580,7 @@ int main(int argc, char** argv)
                 EX_APP_SITE,
                 &command_handler_resource,
                 &state_updater_resource,
-                &sys_cb,
-                NULL) == KII_FALSE) {
+                &sys_cb) == KII_FALSE) {
             printf("fail to initialize.\n");
             exit(1);
         }

@@ -8,7 +8,7 @@ CFLAGS += -g -DDEBUG
 CMAKE_BUILD_TYPE = DEBUG
 endif
 
-CFLAGS += -Wall -pedantic -pthread
+CFLAGS += -Wall -pthread
 
 LIBS = -lssl -lcrypto -lpthread -lkiithingifsdk
 LD_FLAGS = -L$(INSTALL_PATH)/lib
