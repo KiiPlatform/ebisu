@@ -18,7 +18,7 @@ extern "C" {
  *  \param [in] info the input of SDK info.
  *  \return  0:success, -1: failure
  */
-kii_error_code_t _kii_init_with_info(
+kii_code_t _kii_init_with_info(
         kii_t* kii,
         const char* site,
         const char* app_id,
