@@ -197,36 +197,22 @@ static kii_bool_t prv_execute_http_session(
 {
     M_KII_THING_IF_ASSERT(kii != NULL);
 
-    if (kii_api_call_run(kii) != 0) {
-        M_KII_LOG(kii->kii_core.logger_cb("fail to run api.\n"));
-        if (error != NULL) {
-            switch (kii->kii_core.http_context.
-                        socket_context.http_error) {
-                case KII_HTTP_ERROR_NONE:
-                    /* kii_api_call_run() set content length and so
-                       on. The request buffer can not accept such
-                       elements because of insufficient buffer. */
-                    error->code = KII_THING_IF_ERROR_INSUFFICIENT_BUFFER;
-                    break;
-                case KII_HTTP_ERROR_INSUFFICIENT_BUFFER:
-                    error->code = KII_THING_IF_ERROR_INSUFFICIENT_BUFFER;
-                    break;
-                case KII_HTTP_ERROR_SOCKET:
-                    error->code = KII_THING_IF_ERROR_SOCKET;
-                    break;
-                case KII_HTTP_ERROR_INVALID_RESPONSE:
-                default:
-                    /* Unexpected case. */
-                    M_KII_THING_IF_ASSERT(0);
-                    break;
-            }
-        }
-        return KII_FALSE;
+    kii_code_t res = kii_api_call_run(kii);
+    // FIXME renew thing-if error handling system.
+    switch (res) {
+        case KII_ERR_OK:
+            break;
+        case KII_ERR_TOO_LARGE_DATA:
+            error->code = KII_THING_IF_ERROR_INSUFFICIENT_BUFFER;
+            return KII_FALSE;
+        default:
+            return KII_FALSE;
     }
 
+    int resp_status = kii_get_resp_status(kii);
     /* check http status */
-    if (kii->kii_core.response_code < 200 ||
-            kii->kii_core.response_code >= 300) {
+    if (resp_status < 200 ||
+            resp_status >= 300) {
         if (error != NULL) {
             kii_json_field_t fields[2];
             memset(fields, 0x00, sizeof(fields));
@@ -236,16 +222,13 @@ static kii_bool_t prv_execute_http_session(
             fields[0].field_copy_buff_size = sizeof(error->error_code) /
                 sizeof(error->error_code[0]);
             fields[1].path = NULL;
-            if (prv_kii_thing_if_json_read_object(
+            kii_json_parse_result_t pres = prv_kii_thing_if_json_read_object(
                     kii,
-                    kii->kii_core.response_body,
-                    strlen(kii->kii_core.response_body),
-                    fields) != KII_JSON_PARSE_SUCCESS) {
-                M_KII_LOG(kii->kii_core.logger_cb(
-                    "fail to parse received message.\n"));
-            }
+                    kii->_rw_buff,
+                    kii->_rw_buff_written,
+                    fields);
             error->code = KII_THING_IF_ERROR_HTTP;
-            error->http_status_code = kii->kii_core.response_code;
+            error->http_status_code = resp_status;
         }
         return KII_FALSE;
     }
