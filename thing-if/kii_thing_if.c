@@ -346,18 +346,18 @@ static int prv_thing_if_parse_onboarding_response(
     memset(fields, 0, sizeof(fields));
     fields[0].name = "thingID";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[0].field_copy.string = kii->kii_core.author.author_id;
-    fields[0].field_copy_buff_size = sizeof(kii->kii_core.author.author_id) /
-            sizeof(kii->kii_core.author.author_id[0]);
+    fields[0].field_copy.string = kii->_author.author_id;
+    fields[0].field_copy_buff_size = sizeof(kii->_author.author_id) /
+            sizeof(kii->_author.author_id[0]);
     fields[1].name = "accessToken";
     fields[1].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[1].field_copy.string = kii->kii_core.author.access_token;
-    fields[1].field_copy_buff_size = sizeof(kii->kii_core.author.access_token) /
-            sizeof(kii->kii_core.author.access_token[0]);
+    fields[1].field_copy.string = kii->_author.access_token;
+    fields[1].field_copy_buff_size = sizeof(kii->_author.access_token) /
+            sizeof(kii->_author.access_token[0]);
     fields[2].name = NULL;
 
-    if (prv_kii_thing_if_json_read_object(kii, kii->kii_core.response_body,
-                    strlen(kii->kii_core.response_body), fields) !=
+    if (prv_kii_thing_if_json_read_object(kii, kii->_rw_buff,
+                    kii->_rw_buff_written, fields) !=
             KII_JSON_PARSE_SUCCESS) {
         if (error != NULL) {
             error->code = KII_THING_IF_ERROR_INVALID_PAYLOAD;
@@ -375,8 +375,7 @@ static kii_bool_t prv_init_kii_thing_if(
         const char* app_host,
         kii_thing_if_command_handler_resource_t* command_handler_resource,
         kii_thing_if_state_updater_resource_t* state_updater_resource,
-        kii_thing_if_system_cb_t* system_cb,
-        KII_JSON_RESOURCE_CB resource_cb
+        kii_thing_if_system_cb_t* system_cb
         )
 {
     M_KII_THING_IF_ASSERT(kii_thing_if != NULL);
@@ -399,17 +398,16 @@ static kii_bool_t prv_init_kii_thing_if(
                     app_key, THING_IF_INFO) != 0) {
         return KII_FALSE;
     }
-    kii_thing_if->command_handler.kii_core.http_context.buffer =
-        command_handler_resource->buffer;
-    kii_thing_if->command_handler.kii_core.http_context.buffer_size =
-        command_handler_resource->buffer_size;
+
+    kii_set_buff(
+        &kii_thing_if->command_handler,
+        command_handler_resource->buffer,
+        command_handler_resource->buffer_size);
 
     kii_thing_if->command_handler.mqtt_buffer =
         command_handler_resource->mqtt_buffer;
     kii_thing_if->command_handler.mqtt_buffer_size =
         command_handler_resource->mqtt_buffer_size;
-
-    kii_thing_if->command_handler.kii_json_resource_cb = resource_cb;
 
     kii_thing_if->action_handler = command_handler_resource->action_handler;
     kii_thing_if->state_handler_for_command_reaction=
@@ -417,65 +415,42 @@ static kii_bool_t prv_init_kii_thing_if(
     kii_thing_if->custom_push_handler =
         command_handler_resource->custom_push_handler;
 
-    kii_thing_if->command_handler.app_context = (void*)kii_thing_if;
-
     /* Initialize state_updater */
     if (_kii_init_with_info(&kii_thing_if->state_updater, app_host, app_id,
                     app_key, THING_IF_INFO) != 0) {
         return KII_FALSE;
     }
-    kii_thing_if->state_updater.kii_core.http_context.buffer =
-        state_updater_resource->buffer;
-    kii_thing_if->state_updater.kii_core.http_context.buffer_size =
-        state_updater_resource->buffer_size;
 
-    kii_thing_if->state_updater.kii_json_resource_cb = resource_cb;
+    kii_set_buff(
+        &kii_thing_if->state_updater,
+        state_updater_resource->buffer,
+        state_updater_resource->buffer_size);
 
-    kii_thing_if->state_handler_for_period =
-        state_updater_resource->state_handler;
+    kii_thing_if->state_handler_for_period = state_updater_resource->state_handler;
     kii_thing_if->state_update_period = state_updater_resource->period;
 
-    kii_thing_if->state_updater.app_context = (void*)kii_thing_if;
-
     /* setup command handler callbacks. */
-    kii_thing_if->command_handler.kii_core.http_context.connect_cb =
-        system_cb->socket_connect_cb;
-    kii_thing_if->command_handler.kii_core.http_context.send_cb =
-        system_cb->socket_send_cb;
-    kii_thing_if->command_handler.kii_core.http_context.recv_cb =
-        system_cb->socket_recv_cb;
-    kii_thing_if->command_handler.kii_core.http_context.close_cb =
-        system_cb->socket_close_cb;
-    kii_thing_if->command_handler.mqtt_socket_connect_cb =
-        system_cb->mqtt_socket_connect_cb;
-    kii_thing_if->command_handler.mqtt_socket_send_cb =
-        system_cb->mqtt_socket_send_cb;
-    kii_thing_if->command_handler.mqtt_socket_recv_cb =
-        system_cb->mqtt_socket_recv_cb;
-    kii_thing_if->command_handler.mqtt_socket_close_cb =
-        system_cb->mqtt_socket_close_cb;
-    kii_thing_if->command_handler.task_create_cb =
-        system_cb->task_create_cb;
-    kii_thing_if->command_handler.delay_ms_cb =
-        system_cb->delay_ms_cb;
-    kii_thing_if->command_handler.kii_core.logger_cb =
-        system_cb->log_cb;
+    // FIXEME: Pass context object.
+    kii_set_http_cb_sock_connect(&kii_thing_if->command_handler, system_cb->socket_connect_cb, NULL);
+    kii_set_http_cb_sock_send(&kii_thing_if->command_handler, system_cb->socket_send_cb, NULL);
+    kii_set_http_cb_sock_recv(&kii_thing_if->command_handler, system_cb->socket_recv_cb, NULL);
+    kii_set_http_cb_sock_close(&kii_thing_if->command_handler, system_cb->socket_close_cb, NULL);
+
+    kii_thing_if->command_handler.mqtt_sock_connect_cb = system_cb->mqtt_socket_connect_cb;
+    kii_thing_if->command_handler.mqtt_sock_send_cb = system_cb->mqtt_socket_send_cb;
+    kii_thing_if->command_handler.mqtt_sock_recv_cb = system_cb->mqtt_socket_recv_cb;
+    kii_thing_if->command_handler.mqtt_sock_close_cb = system_cb->mqtt_socket_close_cb;
+    kii_thing_if->command_handler.task_create_cb = system_cb->task_create_cb;
+    kii_thing_if->command_handler.delay_ms_cb = system_cb->delay_ms_cb;
 
     /* setup state updater callbacks. */
-    kii_thing_if->state_updater.kii_core.http_context.connect_cb =
-        system_cb->socket_connect_cb;
-    kii_thing_if->state_updater.kii_core.http_context.send_cb =
-        system_cb->socket_send_cb;
-    kii_thing_if->state_updater.kii_core.http_context.recv_cb =
-        system_cb->socket_recv_cb;
-    kii_thing_if->state_updater.kii_core.http_context.close_cb =
-        system_cb->socket_close_cb;
-    kii_thing_if->state_updater.task_create_cb =
-        system_cb->task_create_cb;
-    kii_thing_if->state_updater.delay_ms_cb =
-        system_cb->delay_ms_cb;
-    kii_thing_if->state_updater.kii_core.logger_cb =
-        system_cb->log_cb;
+    kii_set_http_cb_sock_connect(&kii_thing_if->state_updater, system_cb->socket_connect_cb, NULL);
+    kii_set_http_cb_sock_send(&kii_thing_if->state_updater, system_cb->socket_send_cb, NULL);
+    kii_set_http_cb_sock_recv(&kii_thing_if->state_updater, system_cb->socket_recv_cb, NULL);
+    kii_set_http_cb_sock_close(&kii_thing_if->state_updater, system_cb->socket_close_cb, NULL);
+
+    kii_thing_if->state_updater.task_create_cb = system_cb->task_create_cb;
+    kii_thing_if->state_updater.delay_ms_cb = system_cb->delay_ms_cb;
 
     kii_thing_if->state = KII_THING_IF_STATE_INITIALIZED;
 
