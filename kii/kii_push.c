@@ -245,7 +245,7 @@ exit:
     return res;
 }
 
-kii_code_t kii_start_push_routine(kii_t* kii, unsigned int keep_alive_interval, KII_PUSH_RECEIVED_CB callback)
+kii_code_t kii_start_push_routine(kii_t* kii, unsigned int keep_alive_interval, KII_PUSH_RECEIVED_CB callback, void* userdata)
 {
     kii->_keep_alive_interval = keep_alive_interval;
     kii->push_received_cb = callback;

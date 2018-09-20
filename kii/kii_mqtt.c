@@ -335,7 +335,7 @@ int _mqtt_recvmsg(
                 if((remainingLen - 2 - topicLen) > 0)
                 {
                     M_KII_LOG("Successfully Recieved Push %s\n", p);
-                    callback(kii, p, remainingLen - 2 - topicLen);
+                    callback(p, remainingLen - 2 - topicLen, kii->_push_data);
                 }
                 else
                 {
