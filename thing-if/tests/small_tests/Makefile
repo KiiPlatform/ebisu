@@ -12,7 +12,7 @@ INCLUDES = -I$(INSTALL_PATH)/include
 # Mac using homebrew
 INCLUDES += -I/usr/local/opt/openssl/include
 
-GTEST_PATH=../../kii/kii-core/gtest-1.7.0
+GTEST_PATH=../../../kii_json/unit-test/libs/gtest-1.7.0
 LIBGTEST=libgtest.a
 
 TEST_SOURCES = $(wildcard ./*.c)
