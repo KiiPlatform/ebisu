@@ -9,24 +9,15 @@ kii_json_parse_result_t prv_kii_json_read_object(
         size_t json_string_size,
         kii_json_field_t *fields)
 {
-    kii_json_t kii_json;
-    kii_json_parse_result_t retval;
-    char error_message[50];
-
-    memset(&kii_json, 0, sizeof(kii_json));
-    kii_json.error_string_buff = error_message;
-    kii_json.error_string_length =
-        sizeof(error_message) / sizeof(error_message[0]);
-    error_message[0] = '\0';
-
-    kii_json.resource = &(kii->kii_json_resource);
-    retval = kii_json_read_object(&kii_json, json_string, json_string_size,
-                fields);
-
-    if (retval != KII_JSON_PARSE_SUCCESS) {
-        printf("fail to parse json: result=%d, message=%s\n",retval, kii_json.error_string_buff);
+    kii_json_parse_result_t res = KII_JSON_PARSE_INVALID_INPUT;
+    kii_json_resource_t* resource = kii->_json_resource;
+    if (resource == NULL) {
+        res = kii_json_parse_with_allocator(json_string, json_string_size, fields, kii->_json_alloc_cb, kii->_json_free_cb);
+    } else {
+        res = kii_json_parse(json_string, json_string_size, fields, kii->_json_resource);
     }
-    return retval;
+
+    return res;
 }
 
 int kii_escape_str(const char* str, char* buff, size_t buff_size) {
