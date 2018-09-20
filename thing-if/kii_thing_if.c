@@ -1,5 +1,4 @@
 #include "kii_thing_if.h"
-#include "kii_hidden.h"
 
 #include <kii.h>
 #include <kii_json.h>
