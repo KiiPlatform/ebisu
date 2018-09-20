@@ -1,0 +1,14 @@
+version: 2.0
+jobs:
+  build:
+    docker:
+      - image: satoshikumano/ubuntu-18.04-cpp:0.0.1
+
+    steps:
+      - checkout
+      - run: cd tests/small-tests && MEMCHECK=1 JUNIT=1 make
+      - store_test_results:
+          path: tests/small-tests/test-results
+      - run: cd tests/large-tests && MEMCHECK=1 JUNIT=1 make
+      - store_test_results:
+          path: tests/large-tests/test-results

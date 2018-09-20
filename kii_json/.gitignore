@@ -1,0 +1,10 @@
+.DS_Store
+*.o
+GPATH
+GRTAGS
+GTAGS
+*~
+html/
+latex/
+target
+libkiijson.so
