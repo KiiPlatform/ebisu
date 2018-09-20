@@ -1,6 +1,6 @@
 #include "example.h"
 
-#include <kii_thing_if.h>
+#include <tio.h>
 #include <kii_json.h>
 
 #include <string.h>
@@ -183,13 +183,13 @@ static void print_help() {
 int main(int argc, char** argv)
 {
     char* subc = argv[1];
-    kii_thing_if_command_handler_resource_t command_handler_resource;
-    kii_thing_if_state_updater_resource_t state_updater_resource;
-    kii_thing_if_system_cb_t sys_cb;
+    tio_command_handler_resource_t command_handler_resource;
+    tio_state_updater_resource_t state_updater_resource;
+    tio_system_cb_t sys_cb;
     char command_handler_buff[EX_COMMAND_HANDLER_BUFF_SIZE];
     char state_updater_buff[EX_STATE_UPDATER_BUFF_SIZE];
     char mqtt_buff[EX_MQTT_BUFF_SIZE];
-    kii_thing_if_t kii_thing_if;
+    tio_t tio;
     kii_bool_t result;
 
     command_handler_resource.buffer = command_handler_buff;
@@ -256,7 +256,7 @@ int main(int argc, char** argv)
                     exit(1);
                 }
                 /* Initialize with token. */
-                result = init_kii_thing_if_with_onboarded_thing(&kii_thing_if, EX_APP_ID,
+                result = init_tio_with_onboarded_thing(&tio, EX_APP_ID,
                                 EX_APP_KEY, EX_APP_SITE, thingID, accessToken,
                                 &command_handler_resource, &state_updater_resource, &sys_cb);
                 if (result == KII_FALSE) {
@@ -314,7 +314,7 @@ int main(int argc, char** argv)
                     exit(1);
                 }
                 printf("program successfully started!\n");
-                result = init_kii_thing_if(&kii_thing_if, EX_APP_ID, EX_APP_KEY, EX_APP_SITE,
+                result = init_tio(&tio, EX_APP_ID, EX_APP_KEY, EX_APP_SITE,
                         &command_handler_resource, &state_updater_resource, &sys_cb);
                 if (result == KII_FALSE) {
                     printf("failed to onboard.\n");
@@ -322,7 +322,7 @@ int main(int argc, char** argv)
                 }
                 if (vendorThingID != NULL) {
                     result = onboard_with_vendor_thing_id(
-                            &kii_thing_if,
+                            &tio,
                             vendorThingID,
                             password,
                             NULL,
@@ -332,7 +332,7 @@ int main(int argc, char** argv)
                             NULL);
                 } else {
                     result = onboard_with_thing_id(
-                            &kii_thing_if,
+                            &tio,
                             thingID,
                             password,
                             NULL,
@@ -434,8 +434,8 @@ int main(int argc, char** argv)
             printf("--firmware-version or --thing-type must be specified.\n");
             exit(1);
         }
-        if (init_kii_thing_if(
-                &kii_thing_if,
+        if (init_tio(
+                &tio,
                 EX_APP_ID,
                 EX_APP_KEY,
                 EX_APP_SITE,
@@ -447,7 +447,7 @@ int main(int argc, char** argv)
         }
         if (vendorThingID != NULL) {
             if (onboard_with_vendor_thing_id(
-                    &kii_thing_if,
+                    &tio,
                     vendorThingID,
                     password,
                     NULL,
@@ -460,7 +460,7 @@ int main(int argc, char** argv)
             }
         } else {
             if (onboard_with_thing_id(
-                    &kii_thing_if,
+                    &tio,
                     thingID,
                     password,
                     NULL,
@@ -475,9 +475,9 @@ int main(int argc, char** argv)
 
         if (getFirmwareVersion != 0) {
             char firmwareVersion[64];
-            kii_thing_if_error_t error;
+            tio_error_t error;
             if (get_firmware_version(
-                    &kii_thing_if,
+                    &tio,
                     firmwareVersion,
                     sizeof(firmwareVersion) / sizeof(firmwareVersion[0]),
                     &error) == KII_FALSE) {
@@ -493,9 +493,9 @@ int main(int argc, char** argv)
         }
         if (getThingType != 0) {
             char thingType[64];
-            kii_thing_if_error_t error;
+            tio_error_t error;
             if (get_thing_type(
-                    &kii_thing_if,
+                    &tio,
                     thingType,
                     sizeof(thingType) / sizeof(thingType[0]),
                     &error) == KII_FALSE) {
@@ -573,8 +573,8 @@ int main(int argc, char** argv)
             printf("--firmware-version or --thing-type must be specified.\n");
             exit(1);
         }
-        if (init_kii_thing_if(
-                &kii_thing_if,
+        if (init_tio(
+                &tio,
                 EX_APP_ID,
                 EX_APP_KEY,
                 EX_APP_SITE,
@@ -586,7 +586,7 @@ int main(int argc, char** argv)
         }
         if (vendorThingID != NULL) {
             if (onboard_with_vendor_thing_id(
-                    &kii_thing_if,
+                    &tio,
                     vendorThingID,
                     password,
                     NULL,
@@ -599,7 +599,7 @@ int main(int argc, char** argv)
             }
         } else {
             if (onboard_with_thing_id(
-                    &kii_thing_if,
+                    &tio,
                     thingID,
                     password,
                     NULL,
@@ -613,9 +613,9 @@ int main(int argc, char** argv)
         }
 
         if (firmwareVersion != NULL) {
-            kii_thing_if_error_t error;
+            tio_error_t error;
             if (update_firmware_version(
-                    &kii_thing_if,
+                    &tio,
                     firmwareVersion,
                     &error) == KII_FALSE) {
                 printf("update_firmware_version is failed: %d\n", error.code);
@@ -629,9 +629,9 @@ int main(int argc, char** argv)
             printf("firmware version successfully updated.\n");
         }
         if (thingType != NULL) {
-            kii_thing_if_error_t error;
+            tio_error_t error;
             if (update_thing_type(
-                    &kii_thing_if,
+                    &tio,
                     thingType,
                     &error) == KII_FALSE) {
                 printf("update_thing_type is failed: %d\n", error.code);
@@ -650,7 +650,7 @@ int main(int argc, char** argv)
         exit(0);
     }
 
-    start(&kii_thing_if);
+    start(&tio);
     /* run forever. TODO: Convert to daemon. */
     while(1){ sleep(1); };
 

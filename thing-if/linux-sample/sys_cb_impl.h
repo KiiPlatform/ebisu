@@ -1,5 +1,5 @@
 /**
- * @file kii_thing_if_environment_dependent.h
+ * @file tio_environment_dependent.h
  * @brief This is a file defining environment dependent functions.
  * this SDKrequires to implement these functions in each target
  * environment.

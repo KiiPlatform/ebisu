@@ -1,4 +1,4 @@
-#include "kii_thing_if.h"
+#include "tio.h"
 
 #include <kii.h>
 #include <kii_json.h>
@@ -58,7 +58,7 @@ static int prv_kii_api_call_start(
         const char* resource_path,
         const char* content_type,
         kii_bool_t set_authentication_header,
-        kii_thing_if_error_t* error)
+        tio_error_t* error)
 {
     int retval = kii_api_call_start(
             kii,
@@ -174,7 +174,7 @@ static int prv_append_key_value_bool(
             KII_FALSE);
 }
 
-static kii_json_parse_result_t prv_kii_thing_if_json_read_object(
+static kii_json_parse_result_t prv_tio_json_read_object(
         kii_t* kii,
         const char* json_string,
         size_t json_string_size,
@@ -192,7 +192,7 @@ static kii_json_parse_result_t prv_kii_thing_if_json_read_object(
 
 static kii_bool_t prv_execute_http_session(
         kii_t* kii,
-        kii_thing_if_error_t* error)
+        tio_error_t* error)
 {
     M_KII_THING_IF_ASSERT(kii != NULL);
 
@@ -221,7 +221,7 @@ static kii_bool_t prv_execute_http_session(
             fields[0].field_copy_buff_size = sizeof(error->error_code) /
                 sizeof(error->error_code[0]);
             fields[1].path = NULL;
-            prv_kii_thing_if_json_read_object(
+            prv_tio_json_read_object(
                     kii,
                     kii->_rw_buff,
                     kii->_rw_buff_written,
@@ -336,7 +336,7 @@ static kii_bool_t prv_set_thing_type_resource_path(
 
 static int prv_thing_if_parse_onboarding_response(
         kii_t* kii,
-        kii_thing_if_error_t* error)
+        tio_error_t* error)
 {
     kii_json_field_t fields[3];
 
@@ -355,7 +355,7 @@ static int prv_thing_if_parse_onboarding_response(
             sizeof(kii->_author.access_token[0]);
     fields[2].name = NULL;
 
-    if (prv_kii_thing_if_json_read_object(kii, kii->_rw_buff,
+    if (prv_tio_json_read_object(kii, kii->_rw_buff,
                     kii->_rw_buff_written, fields) !=
             KII_JSON_PARSE_SUCCESS) {
         if (error != NULL) {
@@ -367,24 +367,24 @@ static int prv_thing_if_parse_onboarding_response(
     return 0;
 }
 
-static kii_bool_t prv_init_kii_thing_if(
-        kii_thing_if_t* kii_thing_if,
+static kii_bool_t prv_init_tio(
+        tio_t* tio,
         const char* app_id,
         const char* app_key,
         const char* app_host,
-        kii_thing_if_command_handler_resource_t* command_handler_resource,
-        kii_thing_if_state_updater_resource_t* state_updater_resource,
-        kii_thing_if_system_cb_t* system_cb
+        tio_command_handler_resource_t* command_handler_resource,
+        tio_state_updater_resource_t* state_updater_resource,
+        tio_system_cb_t* system_cb
         )
 {
-    M_KII_THING_IF_ASSERT(kii_thing_if != NULL);
+    M_KII_THING_IF_ASSERT(tio != NULL);
     M_KII_THING_IF_ASSERT(app_id != NULL);
     M_KII_THING_IF_ASSERT(app_key != NULL);
     M_KII_THING_IF_ASSERT(app_host != NULL);
     M_KII_THING_IF_ASSERT(command_handler_resource != NULL);
     M_KII_THING_IF_ASSERT(state_updater_resource != NULL);
 
-    memset(kii_thing_if, 0x00, sizeof(kii_thing_if_t));
+    memset(tio, 0x00, sizeof(tio_t));
     memset(command_handler_resource->mqtt_buffer, 0x00,
             command_handler_resource->mqtt_buffer_size);
     memset(command_handler_resource->buffer, 0x00,
@@ -393,77 +393,77 @@ static kii_bool_t prv_init_kii_thing_if(
             state_updater_resource->buffer_size);
 
     /* Initialize command_handler */
-    kii_init(&kii_thing_if->command_handler, app_host, app_id);
+    kii_init(&tio->command_handler, app_host, app_id);
 
     kii_set_buff(
-        &kii_thing_if->command_handler,
+        &tio->command_handler,
         command_handler_resource->buffer,
         command_handler_resource->buffer_size);
 
-    kii_thing_if->command_handler.mqtt_buffer =
+    tio->command_handler.mqtt_buffer =
         command_handler_resource->mqtt_buffer;
-    kii_thing_if->command_handler.mqtt_buffer_size =
+    tio->command_handler.mqtt_buffer_size =
         command_handler_resource->mqtt_buffer_size;
 
-    kii_thing_if->action_handler = command_handler_resource->action_handler;
-    kii_thing_if->state_handler_for_command_reaction=
+    tio->action_handler = command_handler_resource->action_handler;
+    tio->state_handler_for_command_reaction=
         command_handler_resource->state_handler;
-    kii_thing_if->custom_push_handler =
+    tio->custom_push_handler =
         command_handler_resource->custom_push_handler;
 
     /* Initialize state_updater */
-    kii_init(&kii_thing_if->state_updater, app_host, app_id);
+    kii_init(&tio->state_updater, app_host, app_id);
 
     kii_set_buff(
-        &kii_thing_if->state_updater,
+        &tio->state_updater,
         state_updater_resource->buffer,
         state_updater_resource->buffer_size);
 
-    kii_thing_if->state_handler_for_period = state_updater_resource->state_handler;
-    kii_thing_if->state_update_period = state_updater_resource->period;
+    tio->state_handler_for_period = state_updater_resource->state_handler;
+    tio->state_update_period = state_updater_resource->period;
 
     /* setup command handler callbacks. */
     // FIXEME: Pass context object.
-    kii_set_http_cb_sock_connect(&kii_thing_if->command_handler, system_cb->socket_connect_cb, NULL);
-    kii_set_http_cb_sock_send(&kii_thing_if->command_handler, system_cb->socket_send_cb, NULL);
-    kii_set_http_cb_sock_recv(&kii_thing_if->command_handler, system_cb->socket_recv_cb, NULL);
-    kii_set_http_cb_sock_close(&kii_thing_if->command_handler, system_cb->socket_close_cb, NULL);
+    kii_set_http_cb_sock_connect(&tio->command_handler, system_cb->socket_connect_cb, NULL);
+    kii_set_http_cb_sock_send(&tio->command_handler, system_cb->socket_send_cb, NULL);
+    kii_set_http_cb_sock_recv(&tio->command_handler, system_cb->socket_recv_cb, NULL);
+    kii_set_http_cb_sock_close(&tio->command_handler, system_cb->socket_close_cb, NULL);
 
-    kii_thing_if->command_handler.mqtt_sock_connect_cb = system_cb->mqtt_socket_connect_cb;
-    kii_thing_if->command_handler.mqtt_sock_send_cb = system_cb->mqtt_socket_send_cb;
-    kii_thing_if->command_handler.mqtt_sock_recv_cb = system_cb->mqtt_socket_recv_cb;
-    kii_thing_if->command_handler.mqtt_sock_close_cb = system_cb->mqtt_socket_close_cb;
-    kii_thing_if->command_handler.task_create_cb = system_cb->task_create_cb;
-    kii_thing_if->command_handler.delay_ms_cb = system_cb->delay_ms_cb;
+    tio->command_handler.mqtt_sock_connect_cb = system_cb->mqtt_socket_connect_cb;
+    tio->command_handler.mqtt_sock_send_cb = system_cb->mqtt_socket_send_cb;
+    tio->command_handler.mqtt_sock_recv_cb = system_cb->mqtt_socket_recv_cb;
+    tio->command_handler.mqtt_sock_close_cb = system_cb->mqtt_socket_close_cb;
+    tio->command_handler.task_create_cb = system_cb->task_create_cb;
+    tio->command_handler.delay_ms_cb = system_cb->delay_ms_cb;
 
     /* setup state updater callbacks. */
-    kii_set_http_cb_sock_connect(&kii_thing_if->state_updater, system_cb->socket_connect_cb, NULL);
-    kii_set_http_cb_sock_send(&kii_thing_if->state_updater, system_cb->socket_send_cb, NULL);
-    kii_set_http_cb_sock_recv(&kii_thing_if->state_updater, system_cb->socket_recv_cb, NULL);
-    kii_set_http_cb_sock_close(&kii_thing_if->state_updater, system_cb->socket_close_cb, NULL);
+    kii_set_http_cb_sock_connect(&tio->state_updater, system_cb->socket_connect_cb, NULL);
+    kii_set_http_cb_sock_send(&tio->state_updater, system_cb->socket_send_cb, NULL);
+    kii_set_http_cb_sock_recv(&tio->state_updater, system_cb->socket_recv_cb, NULL);
+    kii_set_http_cb_sock_close(&tio->state_updater, system_cb->socket_close_cb, NULL);
 
-    kii_thing_if->state_updater.task_create_cb = system_cb->task_create_cb;
-    kii_thing_if->state_updater.delay_ms_cb = system_cb->delay_ms_cb;
+    tio->state_updater.task_create_cb = system_cb->task_create_cb;
+    tio->state_updater.delay_ms_cb = system_cb->delay_ms_cb;
 
-    kii_thing_if->state = KII_THING_IF_STATE_INITIALIZED;
+    tio->state = KII_THING_IF_STATE_INITIALIZED;
 
     return KII_TRUE;
 }
 
-kii_bool_t init_kii_thing_if(
-        kii_thing_if_t* kii_thing_if,
+kii_bool_t init_tio(
+        tio_t* tio,
         const char* app_id,
         const char* app_key,
         const char* app_host,
-        kii_thing_if_command_handler_resource_t* command_handler_resource,
-        kii_thing_if_state_updater_resource_t* state_updater_resource,
-        kii_thing_if_system_cb_t* system_cb)
+        tio_command_handler_resource_t* command_handler_resource,
+        tio_state_updater_resource_t* state_updater_resource,
+        tio_system_cb_t* system_cb)
 {
-    return prv_init_kii_thing_if(kii_thing_if, app_id, app_key, app_host,
+    return prv_init_tio(tio, app_id, app_key, app_host,
             command_handler_resource, state_updater_resource, system_cb);
 }
 
-static int prv_kii_thing_if_get_key_and_value_from_json(
+static int prv_tio_get_key_and_value_from_json(
         kii_t* kii,
         const char* json_string,
         size_t json_string_len,
@@ -513,7 +513,7 @@ static kii_bool_t prv_writer(kii_t* kii, const char* buff)
     return KII_TRUE;
 }
 
-static kii_bool_t prv_send_state(kii_thing_if_t* ctx)
+static kii_bool_t prv_send_state(tio_t* ctx)
 {
     kii_t* kii = &ctx->state_updater;
     char resource_path[256];
@@ -567,13 +567,13 @@ static prv_get_key_and_value_t get_key_and_value_at_index(
     item[1].path = NULL;
     sprintf(index_str, "/[%lu]", (unsigned long)index);
 
-    switch (prv_kii_thing_if_json_read_object(
+    switch (prv_tio_json_read_object(
                 kii,
                 array_str,
                 array_len,
                 item)) {
         case KII_JSON_PARSE_SUCCESS:
-            if (prv_kii_thing_if_get_key_and_value_from_json(
+            if (prv_tio_get_key_and_value_from_json(
                         kii,
                         array_str + item[0].start,
                         item[0].end - item[0].start,
@@ -596,7 +596,7 @@ static prv_get_key_and_value_t get_key_and_value_at_index(
     }
 }
 
-static void handle_command(kii_thing_if_t* ctx, char* buffer, size_t buffer_size)
+static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
 {
     kii_t* kii = &ctx->command_handler;
     char* alias_actions_str = NULL;
@@ -621,7 +621,7 @@ static void handle_command(kii_thing_if_t* ctx, char* buffer, size_t buffer_size
         fields[1].field_copy.string = NULL;
         fields[2].path = NULL;
 
-        switch(prv_kii_thing_if_json_read_object(
+        switch(prv_tio_json_read_object(
                 kii, buffer, buffer_size, fields)) {
             case KII_JSON_PARSE_SUCCESS:
                 break;
@@ -816,7 +816,7 @@ static void handle_command(kii_thing_if_t* ctx, char* buffer, size_t buffer_size
 
 static void received_callback(char* buffer, size_t buffer_size, void* userdata) {
     kii_bool_t skip = KII_FALSE;
-    kii_thing_if_t* ctx = (kii_thing_if_t*)userdata;
+    tio_t* ctx = (tio_t*)userdata;
     if (ctx->custom_push_handler != NULL) {
         KII_THING_IF_CUSTOM_PUSH_HANDLER handler =
             ctx->custom_push_handler;
@@ -827,9 +827,9 @@ static void received_callback(char* buffer, size_t buffer_size, void* userdata) 
     }
 }
 
-static int prv_kii_thing_if_get_anonymous_token(
+static int prv_tio_get_anonymous_token(
         kii_t* kii,
-        kii_thing_if_error_t* error)
+        tio_error_t* error)
 {
     char resource_path[64];
     kii_json_field_t fields[2];
@@ -885,7 +885,7 @@ static int prv_kii_thing_if_get_anonymous_token(
             sizeof(kii->_author.access_token[0]);
     fields[1].path = NULL;
 
-    if (prv_kii_thing_if_json_read_object(kii, kii->_rw_buff, kii->_rw_buff_written, fields)
+    if (prv_tio_json_read_object(kii, kii->_rw_buff, kii->_rw_buff_written, fields)
             != KII_JSON_PARSE_SUCCESS) {
         if (error != NULL) {
             error->code = KII_THING_IF_ERROR_INVALID_PAYLOAD;
@@ -904,12 +904,12 @@ static kii_bool_t prv_onboard_with_vendor_thing_id(
         const char* thing_properties,
         const char* firmware_version,
         const char* layout_position,
-        kii_thing_if_error_t* error)
+        tio_error_t* error)
 {
     char resource_path[64];
     kii_bool_t succeeded;
 
-    if (prv_kii_thing_if_get_anonymous_token(kii, error) != 0) {
+    if (prv_tio_get_anonymous_token(kii, error) != 0) {
         M_KII_LOG(kii->kii_core.logger_cb("fail to get anonymous token.\n"));
         return KII_FALSE;
     }
@@ -972,7 +972,7 @@ static kii_bool_t prv_onboard_with_vendor_thing_id(
 
 static void* prv_update_status(void *sdata)
 {
-    kii_thing_if_t* ctx = (kii_thing_if_t*)sdata;
+    tio_t* ctx = (tio_t*)sdata;
     kii_t* kii = &ctx->state_updater;
     char resource_path[256];
     kii_bool_t succeeded = prv_set_state_resource_path(
@@ -1033,37 +1033,37 @@ static kii_bool_t prv_set_author(
 }
 
 kii_bool_t onboard_with_vendor_thing_id(
-        kii_thing_if_t* kii_thing_if,
+        tio_t* tio,
         const char* vendor_thing_id,
         const char* password,
         const char* thing_type,
         const char* firmware_version,
         const char* layout_position,
         const char* thing_properties,
-        kii_thing_if_error_t* error)
+        tio_error_t* error)
 {
-    if (kii_thing_if->state == KII_THING_IF_STATE_STARTED) {
+    if (tio->state == KII_THING_IF_STATE_STARTED) {
         if (error != NULL) {
             error->code = KII_THING_IF_ERROR_INVALID_STATE;
         }
         return KII_FALSE;
     }
 
-    if (prv_onboard_with_vendor_thing_id(&kii_thing_if->command_handler,
+    if (prv_onboard_with_vendor_thing_id(&tio->command_handler,
                     vendor_thing_id, password, thing_type,
                     thing_properties, firmware_version, layout_position, error)
             == KII_FALSE) {
         return KII_FALSE;
     }
 
-    if (prv_set_author(&(kii_thing_if->state_updater._author),
-                    kii_thing_if->command_handler._author.author_id,
-                    kii_thing_if->command_handler._author.access_token)
+    if (prv_set_author(&(tio->state_updater._author),
+                    tio->command_handler._author.author_id,
+                    tio->command_handler._author.access_token)
             == KII_FALSE) {
         return KII_FALSE;
     }
 
-    kii_thing_if->state = KII_THING_IF_STATE_ONBOARDED;
+    tio->state = KII_THING_IF_STATE_ONBOARDED;
 
     return KII_TRUE;
 }
@@ -1076,12 +1076,12 @@ static kii_bool_t prv_onboard_with_thing_id(
         const char* thing_properties,
         const char* firmware_version,
         const char* layout_position,
-        kii_thing_if_error_t* error)
+        tio_error_t* error)
 {
     char resource_path[64];
     kii_bool_t succeeded;
 
-    if (prv_kii_thing_if_get_anonymous_token(kii, error) != 0) {
+    if (prv_tio_get_anonymous_token(kii, error) != 0) {
         M_KII_LOG(kii->kii_core.logger_cb("fail to get anonymous token.\n"));
         return KII_FALSE;
     }
@@ -1134,98 +1134,98 @@ static kii_bool_t prv_onboard_with_thing_id(
 }
 
 kii_bool_t onboard_with_thing_id(
-        kii_thing_if_t* kii_thing_if,
+        tio_t* tio,
         const char* thing_id,
         const char* password,
         const char* thing_type,
         const char* firmware_version,
         const char* layout_position,
         const char* thing_properties,
-        kii_thing_if_error_t* error)
+        tio_error_t* error)
 {
-    if (kii_thing_if->state == KII_THING_IF_STATE_STARTED) {
+    if (tio->state == KII_THING_IF_STATE_STARTED) {
         if (error != NULL) {
             error->code = KII_THING_IF_ERROR_INVALID_STATE;
         }
         return KII_FALSE;
     }
 
-    if (prv_onboard_with_thing_id(&kii_thing_if->command_handler, thing_id,
+    if (prv_onboard_with_thing_id(&tio->command_handler, thing_id,
                     password, thing_type, thing_properties, firmware_version,
                     layout_position, error) == KII_FALSE) {
         return KII_FALSE;
     }
 
-    if (prv_set_author(&(kii_thing_if->state_updater._author),
-                    kii_thing_if->command_handler._author.author_id,
-                    kii_thing_if->command_handler._author.access_token)
+    if (prv_set_author(&(tio->state_updater._author),
+                    tio->command_handler._author.author_id,
+                    tio->command_handler._author.access_token)
             == KII_FALSE) {
         return KII_FALSE;
     }
 
-    kii_thing_if->state = KII_THING_IF_STATE_ONBOARDED;
+    tio->state = KII_THING_IF_STATE_ONBOARDED;
 
     return KII_TRUE;
 }
 
-kii_bool_t init_kii_thing_if_with_onboarded_thing(
-        kii_thing_if_t* kii_thing_if,
+kii_bool_t init_tio_with_onboarded_thing(
+        tio_t* tio,
         const char* app_id,
         const char* app_key,
         const char* app_host,
         const char* thing_id,
         const char* access_token,
-        kii_thing_if_command_handler_resource_t* command_handler_resource,
-        kii_thing_if_state_updater_resource_t* state_updater_resource,
-        kii_thing_if_system_cb_t* system_cb)
+        tio_command_handler_resource_t* command_handler_resource,
+        tio_state_updater_resource_t* state_updater_resource,
+        tio_system_cb_t* system_cb)
 {
-    if (prv_init_kii_thing_if(kii_thing_if, app_id, app_key, app_host,
+    if (prv_init_tio(tio, app_id, app_key, app_host,
                     command_handler_resource, state_updater_resource,
                     system_cb) == KII_FALSE) {
         return KII_FALSE;
     }
 
-    if (prv_set_author(&kii_thing_if->command_handler._author,
+    if (prv_set_author(&tio->command_handler._author,
                     thing_id, access_token) == KII_FALSE) {
         return KII_FALSE;
     }
 
-    if (prv_set_author(&kii_thing_if->state_updater._author,
+    if (prv_set_author(&tio->state_updater._author,
                     thing_id, access_token) == KII_FALSE) {
         return KII_FALSE;
     }
 
-    kii_thing_if->state = KII_THING_IF_STATE_ONBOARDED;
+    tio->state = KII_THING_IF_STATE_ONBOARDED;
 
     return KII_TRUE;
 }
 
-kii_bool_t start(kii_thing_if_t* kii_thing_if)
+kii_bool_t start(tio_t* tio)
 {
-    if (kii_thing_if->state != KII_THING_IF_STATE_ONBOARDED) {
+    if (tio->state != KII_THING_IF_STATE_ONBOARDED) {
         return KII_FALSE;
     }
 
     // FIXME: Set Keep Alive Interval.
     if (kii_start_push_routine(
-            &kii_thing_if->command_handler, 0, received_callback, kii_thing_if) != 0) {
+            &tio->command_handler, 0, received_callback, tio) != 0) {
         return KII_FALSE;
     }
 
-    kii_thing_if->state_updater.task_create_cb(
+    tio->state_updater.task_create_cb(
         KII_THING_IF_TASK_NAME_STATUS_UPDATE,
-        prv_update_status, (void*)kii_thing_if);
+        prv_update_status, (void*)tio);
 
     return KII_TRUE;
 }
 
 kii_bool_t get_firmware_version(
-        kii_thing_if_t* kii_thing_if,
+        tio_t* tio,
         char* firmware_version,
         size_t firmware_version_len,
-        kii_thing_if_error_t* error)
+        tio_error_t* error)
 {
-    switch (kii_thing_if->state) {
+    switch (tio->state) {
         case KII_THING_IF_STATE_INITIALIZED:
             if (error != NULL) {
                 error->code = KII_THING_IF_ERROR_INVALID_STATE;
@@ -1239,7 +1239,7 @@ kii_bool_t get_firmware_version(
         case KII_THING_IF_STATE_ONBOARDED:
         {
             char resource_path[128];
-            kii_t* kii = &(kii_thing_if->command_handler);
+            kii_t* kii = &(tio->command_handler);
             kii_bool_t succeeded = prv_set_firmware_version_resource_path(
                     kii->_app_id,
                     kii->_author.author_id,
@@ -1267,7 +1267,7 @@ kii_bool_t get_firmware_version(
                 fields[0].field_copy.string = firmware_version;
                 fields[0].field_copy_buff_size = firmware_version_len;
                 fields[1].path = NULL;
-                if (prv_kii_thing_if_json_read_object(
+                if (prv_tio_json_read_object(
                         kii,
                         kii->_rw_buff,
                         kii->_rw_buff_written,
@@ -1294,11 +1294,11 @@ kii_bool_t get_firmware_version(
 }
 
 kii_bool_t update_firmware_version(
-        kii_thing_if_t* kii_thing_if,
+        tio_t* tio,
         const char* firmware_version,
-        kii_thing_if_error_t* error)
+        tio_error_t* error)
 {
-    switch (kii_thing_if->state) {
+    switch (tio->state) {
         case KII_THING_IF_STATE_INITIALIZED:
             if (error != NULL) {
                 error->code = KII_THING_IF_ERROR_INVALID_STATE;
@@ -1312,7 +1312,7 @@ kii_bool_t update_firmware_version(
         case KII_THING_IF_STATE_ONBOARDED:
         {
             char resource_path[128];
-            kii_t* kii = &(kii_thing_if->command_handler);
+            kii_t* kii = &(tio->command_handler);
             kii_bool_t succeeded = prv_set_firmware_version_resource_path(
                     kii->_app_id,
                     kii->_author.author_id,
@@ -1355,12 +1355,12 @@ kii_bool_t update_firmware_version(
 }
 
 kii_bool_t get_thing_type(
-        kii_thing_if_t* kii_thing_if,
+        tio_t* tio,
         char* thing_type,
         size_t thing_type_len,
-        kii_thing_if_error_t* error)
+        tio_error_t* error)
 {
-    switch (kii_thing_if->state) {
+    switch (tio->state) {
         case KII_THING_IF_STATE_INITIALIZED:
             if (error != NULL) {
                 error->code = KII_THING_IF_ERROR_INVALID_STATE;
@@ -1374,7 +1374,7 @@ kii_bool_t get_thing_type(
         case KII_THING_IF_STATE_ONBOARDED:
         {
             char resource_path[128];
-            kii_t* kii = &(kii_thing_if->command_handler);
+            kii_t* kii = &(tio->command_handler);
             kii_bool_t succeeded = prv_set_thing_type_resource_path(
                     kii->_app_id,
                     kii->_author.author_id,
@@ -1401,7 +1401,7 @@ kii_bool_t get_thing_type(
                 fields[0].field_copy.string = thing_type;
                 fields[0].field_copy_buff_size = thing_type_len;
                 fields[1].path = NULL;
-                if (prv_kii_thing_if_json_read_object(
+                if (prv_tio_json_read_object(
                         kii,
                         kii->_rw_buff,
                         kii->_rw_buff_written,
@@ -1428,11 +1428,11 @@ kii_bool_t get_thing_type(
 }
 
 kii_bool_t update_thing_type(
-        kii_thing_if_t* kii_thing_if,
+        tio_t* tio,
         const char* thing_type,
-        kii_thing_if_error_t* error)
+        tio_error_t* error)
 {
-    switch (kii_thing_if->state) {
+    switch (tio->state) {
         case KII_THING_IF_STATE_INITIALIZED:
             if (error != NULL) {
                 error->code = KII_THING_IF_ERROR_INVALID_STATE;
@@ -1446,7 +1446,7 @@ kii_bool_t update_thing_type(
         case KII_THING_IF_STATE_ONBOARDED:
         {
             char resource_path[128];
-            kii_t* kii = &(kii_thing_if->command_handler);
+            kii_t* kii = &(tio->command_handler);
             kii_bool_t succeeded = prv_set_thing_type_resource_path(
                     kii->_app_id,
                     kii->_author.author_id,
@@ -1492,7 +1492,7 @@ kii_bool_t update_thing_type(
  * This function is for testing purpose.
  * Not visible from applications since the function is not declared in public headers.
  */
-void test_handle_command(kii_thing_if_t* ctx, char* buffer, size_t buffer_size)
+void test_handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
 {
     handle_command(ctx, buffer, buffer_size);
 }

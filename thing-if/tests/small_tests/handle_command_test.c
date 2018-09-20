@@ -1,4 +1,4 @@
-#include <kii_thing_if.h>
+#include <tio.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -42,9 +42,9 @@ static kii_bool_t state_handler_returning_true(
 
 TEST(kiiThingIfTest, handle_command)
 {
-    kii_thing_if_t kii_thing_if;
-    kii_thing_if_command_handler_resource_t command_handler_resource;
-    kii_thing_if_state_updater_resource_t state_updater_resource;
+    tio_t tio;
+    tio_command_handler_resource_t command_handler_resource;
+    tio_state_updater_resource_t state_updater_resource;
     char command_handler_buff[1024];
     char state_updater_buff[1024];
     char mqtt_buff[1024];
@@ -72,7 +72,7 @@ TEST(kiiThingIfTest, handle_command)
     state_updater_resource.period = 10;
     state_updater_resource.state_handler = state_handler_returning_true;
 
-    kii_thing_if_system_cb_t sys_cb;
+    tio_system_cb_t sys_cb;
 
     // FIXME: Setup callbacks
     // sys_cb.task_create_cb = task_create_cb_impl;
@@ -90,8 +90,8 @@ TEST(kiiThingIfTest, handle_command)
 
     ASSERT_EQ(
         KII_TRUE,
-        init_kii_thing_if(
-            &kii_thing_if,
+        init_tio(
+            &tio,
             "app_id",
             "app_key",
             "JP",
@@ -101,10 +101,10 @@ TEST(kiiThingIfTest, handle_command)
             )
     );
 
-    strcpy(kii_thing_if.command_handler._author.author_id, "owenr");
-    strcpy(kii_thing_if.state_updater._author.author_id, "owenr");
-    strcpy(kii_thing_if.command_handler._author.access_token, "token");
-    strcpy(kii_thing_if.state_updater._author.access_token, "token");
+    strcpy(tio.command_handler._author.author_id, "owenr");
+    strcpy(tio.state_updater._author.author_id, "owenr");
+    strcpy(tio.command_handler._author.access_token, "token");
+    strcpy(tio.state_updater._author.access_token, "token");
 
     handle_command_expected_index = 0;
     handle_command_expected[0].alias = "AirConditionerAlias";
@@ -118,7 +118,7 @@ TEST(kiiThingIfTest, handle_command)
     handle_command_expected[2].action_value = "45";
 
     // FIXME: Execute internal command handler.
-    // test_handle_command(&kii_thing_if, command_payload, strlen(command_payload));
+    // test_handle_command(&tio, command_payload, strlen(command_payload));
 
     // FIXME: Compare requests.
     char* req1;
