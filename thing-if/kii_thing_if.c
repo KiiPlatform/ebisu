@@ -464,12 +464,10 @@ kii_bool_t init_kii_thing_if(
         const char* app_host,
         kii_thing_if_command_handler_resource_t* command_handler_resource,
         kii_thing_if_state_updater_resource_t* state_updater_resource,
-        kii_thing_if_system_cb_t* system_cb,
-        KII_JSON_RESOURCE_CB resource_cb)
+        kii_thing_if_system_cb_t* system_cb)
 {
     return prv_init_kii_thing_if(kii_thing_if, app_id, app_key, app_host,
-            command_handler_resource, state_updater_resource, system_cb,
-            resource_cb);
+            command_handler_resource, state_updater_resource, system_cb);
 }
 
 static int prv_kii_thing_if_get_key_and_value_from_json(
@@ -483,13 +481,8 @@ static int prv_kii_thing_if_get_key_and_value_from_json(
 {
     jsmn_parser parser;
     int parse_result = JSMN_ERROR_NOMEM;
-#ifdef KII_JSON_FIXED_TOKEN_NUM
-    jsmntok_t tokens[KII_JSON_FIXED_TOKEN_NUM];
-    size_t tokens_num = sizeof(tokens) / sizeof(tokens[0]);
-#else
-    jsmntok_t* tokens = kii->kii_json_resource.tokens;
-    size_t tokens_num = kii->kii_json_resource.tokens_num;
-#endif
+    size_t tokens_num = 256;
+    kii_json_token_t tokens[tokens_num];
 
     jsmn_init(&parser);
 
@@ -497,11 +490,9 @@ static int prv_kii_thing_if_get_key_and_value_from_json(
             tokens_num);
     if (parse_result >= 0) {
         if (tokens[0].type != JSMN_OBJECT) {
-            M_KII_LOG(kii->kii_core.logger_cb("action must be json object.\n"));
             return -1;
         }
         if (tokens[1].type != JSMN_STRING) {
-            M_KII_LOG(kii->kii_core.logger_cb("invalid json object.\n"));
             return -1;
         }
         *out_key = (char*)(json_string + tokens[1].start);
@@ -510,19 +501,12 @@ static int prv_kii_thing_if_get_key_and_value_from_json(
         *out_value_len = tokens[2].end - tokens[2].start;
         return 0;
     } else if (parse_result == JSMN_ERROR_NOMEM) {
-        M_KII_LOG(kii->kii_core.logger_cb(
-                "Not enough tokens were provided.\n"));
         return -1;
     } else if (parse_result == JSMN_ERROR_INVAL) {
-        M_KII_LOG(kii->kii_core.logger_cb(
-                "Invalid character inside JSON string.\n"));
         return -1;
     } else if (parse_result == JSMN_ERROR_PART) {
-        M_KII_LOG(kii->kii_core.logger_cb(
-                "The string is not a full JSON packet, more bytes expected.\n"));
         return -1;
     } else {
-        M_KII_LOG(kii->kii_core.logger_cb("Unexpected error.\n"));
         return -1;
     }
 }
