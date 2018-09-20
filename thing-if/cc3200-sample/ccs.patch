@@ -1,0 +1,26 @@
+diff --git target/freertos_thingsdk_demo/kii_socket_callback.h target/freertos_thingsdk_demo/kii_socket_callback.h
+index ea576c9..27176f7 100644
+--- target/freertos_thingsdk_demo/kii_socket_callback.h
++++ target/freertos_thingsdk_demo/kii_socket_callback.h
+@@ -16,7 +16,7 @@ typedef struct kii_socket_context_t {
+     /** Application specific socket.
+      * Used by socket callback implementations.
+      */
+-    int socket;
++    int sock;
+ } kii_socket_context_t;
+ 
+ typedef enum kii_socket_code_t {
+diff --git target/freertos_thingsdk_demo/kii_mqtt.c target/freertos_thingsdk_demo/kii_mqtt.c
+index 765e26d..e319683 100644
+--- target/freertos_thingsdk_demo/kii_mqtt.c
++++ target/freertos_thingsdk_demo/kii_mqtt.c
+@@ -50,7 +50,7 @@ int kiiMQTT_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short ke
+     kii_socket_code_t sock_err;
+     size_t actual_length;
+ 
+-    if (kii->mqtt_socket_context.socket > 0) {
++    if (kii->mqtt_socket_context.sock > 0) {
+         M_KII_LOG(kii->kii_core.logger_cb("closing socket as socket is already created.\r\n"));
+         sock_err = kii->mqtt_socket_close_cb(&(kii->mqtt_socket_context));
+         if (sock_err != KII_SOCKETC_OK) {
