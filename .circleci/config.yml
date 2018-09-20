@@ -32,19 +32,6 @@ jobs:
       - store_test_results:
           path: tests/large_test/test-results
 
-  deployment:
-    <<: *env
-    steps:
-      - attach_workspace:
-          at: kii/html
-      - run:
-          command: |
-      - git clone https://$GH_TOKEN_FOR_HTTPS@github.com/KiiPlatform/KiiThingSDK-Embedded.git
-      - cd KiiThingSDK-Embedded && git checkout gh-pages && git config user.email 'satoshi.kumano@kii.com' && git config user.name 'satoshi kumano'
-      - rm -rf KiiThingSDK-Embedded/api-doc && mkdir -p KiiThingSDK-Embedded/api-doc
-      - cp -r kii/html/ KiiThingSDK-Embedded/api-doc
-      - cd KiiThingSDK-Embedded && git add api-doc && git commit -m 'updated doc' && git push origin gh-pages
-
 workflows:
   version: 2
   default:
@@ -61,14 +48,6 @@ workflows:
             branches:
               ignore:
                 - gh-pages
-      - deployment:
-          requires:
-            - ltest
-          filters:
-            branches:
-              only: master
-            tags:
-              only: /v[0-9]+(\.[0-9]+){0,2}([-+].+)?/
 
 # vim: set sts=2 sw=2 et:
 
