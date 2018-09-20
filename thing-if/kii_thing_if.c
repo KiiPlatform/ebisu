@@ -8,12 +8,12 @@
 
 
 /* If your environment does not have assert, you must set
-   KII_THING_IF_NOASSERT define. */
-#ifdef KII_THING_IF_NOASSERT
-  #define M_KII_THING_IF_ASSERT(s)
+   TIO_NOASSERT define. */
+#ifdef TIO_NOASSERT
+  #define M_TIO_ASSERT(s)
 #else
   #include <assert.h>
-  #define M_KII_THING_IF_ASSERT(s) assert(s)
+  #define M_TIO_ASSERT(s) assert(s)
 #endif
 
 #define EVAL(f, v) f(v)
@@ -69,7 +69,7 @@ static int prv_kii_api_call_start(
     if (retval != 0) {
         M_KII_LOG(kii->kii_core.logger_cb("fail to start api call"));
         if (error != NULL){
-            error->code = KII_THING_IF_ERROR_INSUFFICIENT_BUFFER;
+            error->code = TIO_ERROR_INSUFFICIENT_BUFFER;
         }
     }
     return retval;
@@ -194,7 +194,7 @@ static kii_bool_t prv_execute_http_session(
         kii_t* kii,
         tio_error_t* error)
 {
-    M_KII_THING_IF_ASSERT(kii != NULL);
+    M_TIO_ASSERT(kii != NULL);
 
     kii_code_t res = kii_api_call_run(kii);
     // FIXME renew thing-if error handling system.
@@ -202,7 +202,7 @@ static kii_bool_t prv_execute_http_session(
         case KII_ERR_OK:
             break;
         case KII_ERR_TOO_LARGE_DATA:
-            error->code = KII_THING_IF_ERROR_INSUFFICIENT_BUFFER;
+            error->code = TIO_ERROR_INSUFFICIENT_BUFFER;
             return KII_FALSE;
         default:
             return KII_FALSE;
@@ -226,7 +226,7 @@ static kii_bool_t prv_execute_http_session(
                     kii->_rw_buff,
                     kii->_rw_buff_written,
                     fields);
-            error->code = KII_THING_IF_ERROR_HTTP;
+            error->code = TIO_ERROR_HTTP;
             error->http_status_code = resp_status;
         }
         return KII_FALSE;
@@ -245,7 +245,7 @@ static kii_bool_t prv_set_onboard_resource_path(
       strlen(ONBOARDING_PATH);
 
     if (resource_path_len <= onboard_resource_path_length) {
-        M_KII_THING_IF_ASSERT(0);
+        M_TIO_ASSERT(0);
         return KII_FALSE;
     }
 
@@ -270,7 +270,7 @@ static kii_bool_t prv_set_state_resource_path(
       strlen(STATES_PART);
 
     if (resource_path_len <= state_resource_path_length) {
-        M_KII_THING_IF_ASSERT(0);
+        M_TIO_ASSERT(0);
         return KII_FALSE;
     }
 
@@ -297,7 +297,7 @@ static kii_bool_t prv_set_firmware_version_resource_path(
       strlen(FIRMWARE_VERSION_PART);
 
     if (resource_path_len <= firmware_version_resource_path_length) {
-        M_KII_THING_IF_ASSERT(0);
+        M_TIO_ASSERT(0);
         return KII_FALSE;
     }
     sprintf(resource_path, "%s%s%s%s%s",
@@ -322,7 +322,7 @@ static kii_bool_t prv_set_thing_type_resource_path(
       strlen(THING_TYPE_PART);
 
     if (resource_path_len <= thing_type_path_length) {
-        M_KII_THING_IF_ASSERT(0);
+        M_TIO_ASSERT(0);
         return KII_FALSE;
     }
     sprintf(resource_path, "%s%s%s%s%s",
@@ -340,7 +340,7 @@ static int prv_thing_if_parse_onboarding_response(
 {
     kii_json_field_t fields[3];
 
-    M_KII_THING_IF_ASSERT(kii != NULL);
+    M_TIO_ASSERT(kii != NULL);
 
     memset(fields, 0, sizeof(fields));
     fields[0].name = "thingID";
@@ -359,7 +359,7 @@ static int prv_thing_if_parse_onboarding_response(
                     kii->_rw_buff_written, fields) !=
             KII_JSON_PARSE_SUCCESS) {
         if (error != NULL) {
-            error->code = KII_THING_IF_ERROR_INVALID_PAYLOAD;
+            error->code = TIO_ERROR_INVALID_PAYLOAD;
         }
         return -1;
     }
@@ -377,12 +377,12 @@ static kii_bool_t prv_init_tio(
         tio_system_cb_t* system_cb
         )
 {
-    M_KII_THING_IF_ASSERT(tio != NULL);
-    M_KII_THING_IF_ASSERT(app_id != NULL);
-    M_KII_THING_IF_ASSERT(app_key != NULL);
-    M_KII_THING_IF_ASSERT(app_host != NULL);
-    M_KII_THING_IF_ASSERT(command_handler_resource != NULL);
-    M_KII_THING_IF_ASSERT(state_updater_resource != NULL);
+    M_TIO_ASSERT(tio != NULL);
+    M_TIO_ASSERT(app_id != NULL);
+    M_TIO_ASSERT(app_key != NULL);
+    M_TIO_ASSERT(app_host != NULL);
+    M_TIO_ASSERT(command_handler_resource != NULL);
+    M_TIO_ASSERT(state_updater_resource != NULL);
 
     memset(tio, 0x00, sizeof(tio_t));
     memset(command_handler_resource->mqtt_buffer, 0x00,
@@ -445,7 +445,7 @@ static kii_bool_t prv_init_tio(
     tio->state_updater.task_create_cb = system_cb->task_create_cb;
     tio->state_updater.delay_ms_cb = system_cb->delay_ms_cb;
 
-    tio->state = KII_THING_IF_STATE_INITIALIZED;
+    tio->state = TIO_STATE_INITIALIZED;
 
     return KII_TRUE;
 }
@@ -684,7 +684,7 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
     for (alias_index = 0, alias_result = PRV_GET_KEY_AND_VALUE_SUCCESS;
             alias_result == PRV_GET_KEY_AND_VALUE_SUCCESS;
             ++alias_index) {
-        KII_THING_IF_ACTION_HANDLER handler =
+        TIO_ACTION_HANDLER handler =
             ctx->action_handler;
         char* alias_name;
         char* actions;
@@ -779,7 +779,7 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
                         default:
                             M_KII_LOG(kii->kii_core.logger_cb(
                                     "unknown result %d.\n", action_result));
-                            M_KII_THING_IF_ASSERT(0);
+                            M_TIO_ASSERT(0);
                             return;
                     }
                 }
@@ -793,7 +793,7 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
                 M_KII_LOG(
                     kii->kii_core.logger_cb("unknown result %d.\n",
                             alias_result));
-                M_KII_THING_IF_ASSERT(0);
+                M_TIO_ASSERT(0);
                 return;
         }
     }
@@ -818,7 +818,7 @@ static void received_callback(char* buffer, size_t buffer_size, void* userdata) 
     kii_bool_t skip = KII_FALSE;
     tio_t* ctx = (tio_t*)userdata;
     if (ctx->custom_push_handler != NULL) {
-        KII_THING_IF_CUSTOM_PUSH_HANDLER handler =
+        TIO_CUSTOM_PUSH_HANDLER handler =
             ctx->custom_push_handler;
         skip = (*handler)(&ctx->command_handler, buffer, buffer_size);
     }
@@ -838,11 +838,11 @@ static int prv_tio_get_anonymous_token(
         strlen(kii->_app_id) +
         strlen(OAUTH_PATH);
 
-    M_KII_THING_IF_ASSERT(kii);
+    M_TIO_ASSERT(kii);
 
     if (sizeof(resource_path) / sizeof(resource_path[0]) <= oauth_path_length) {
         if (error != NULL) {
-            error->code = KII_THING_IF_ERROR_INSUFFICIENT_BUFFER;
+            error->code = TIO_ERROR_INSUFFICIENT_BUFFER;
         }
         return -1;
     }
@@ -853,7 +853,7 @@ static int prv_tio_get_anonymous_token(
     if (kii_api_call_start(kii, "POST", resource_path, "application/json",
                     KII_FALSE) != 0) {
         if (error != NULL) {
-            error->code = KII_THING_IF_ERROR_INSUFFICIENT_BUFFER;
+            error->code = TIO_ERROR_INSUFFICIENT_BUFFER;
         }
         return -1;
     }
@@ -867,7 +867,7 @@ static int prv_tio_get_anonymous_token(
                 kii, "client_secret", "dummy", KII_TRUE) != 0 ||
             APPEND_BODY_CONST(kii, "}") != 0) {
         if (error != NULL) {
-            error->code = KII_THING_IF_ERROR_INSUFFICIENT_BUFFER;
+            error->code = TIO_ERROR_INSUFFICIENT_BUFFER;
         }
         return -1;
     }
@@ -888,7 +888,7 @@ static int prv_tio_get_anonymous_token(
     if (prv_tio_json_read_object(kii, kii->_rw_buff, kii->_rw_buff_written, fields)
             != KII_JSON_PARSE_SUCCESS) {
         if (error != NULL) {
-            error->code = KII_THING_IF_ERROR_INVALID_PAYLOAD;
+            error->code = TIO_ERROR_INVALID_PAYLOAD;
         }
         return -1;
     }
@@ -930,7 +930,7 @@ static kii_bool_t prv_onboard_with_vendor_thing_id(
         // FIXME remove redundant logging.
         M_KII_LOG(kii->kii_core.logger_cb("fail to start api call.\n"));
         if (error != NULL) {
-            error->code = KII_THING_IF_ERROR_INSUFFICIENT_BUFFER;
+            error->code = TIO_ERROR_INSUFFICIENT_BUFFER;
         }
         return KII_FALSE;
     }
@@ -952,7 +952,7 @@ static kii_bool_t prv_onboard_with_vendor_thing_id(
             APPEND_BODY_CONST(kii, "}") != 0) {
         M_KII_LOG(kii->kii_core.logger_cb("request size overflowed.\n"));
         if (error != NULL) {
-            error->code = KII_THING_IF_ERROR_INSUFFICIENT_BUFFER;
+            error->code = TIO_ERROR_INSUFFICIENT_BUFFER;
         }
         return KII_FALSE;
     }
@@ -1042,9 +1042,9 @@ kii_bool_t onboard_with_vendor_thing_id(
         const char* thing_properties,
         tio_error_t* error)
 {
-    if (tio->state == KII_THING_IF_STATE_STARTED) {
+    if (tio->state == TIO_STATE_STARTED) {
         if (error != NULL) {
-            error->code = KII_THING_IF_ERROR_INVALID_STATE;
+            error->code = TIO_ERROR_INVALID_STATE;
         }
         return KII_FALSE;
     }
@@ -1063,7 +1063,7 @@ kii_bool_t onboard_with_vendor_thing_id(
         return KII_FALSE;
     }
 
-    tio->state = KII_THING_IF_STATE_ONBOARDED;
+    tio->state = TIO_STATE_ONBOARDED;
 
     return KII_TRUE;
 }
@@ -1143,9 +1143,9 @@ kii_bool_t onboard_with_thing_id(
         const char* thing_properties,
         tio_error_t* error)
 {
-    if (tio->state == KII_THING_IF_STATE_STARTED) {
+    if (tio->state == TIO_STATE_STARTED) {
         if (error != NULL) {
-            error->code = KII_THING_IF_ERROR_INVALID_STATE;
+            error->code = TIO_ERROR_INVALID_STATE;
         }
         return KII_FALSE;
     }
@@ -1163,7 +1163,7 @@ kii_bool_t onboard_with_thing_id(
         return KII_FALSE;
     }
 
-    tio->state = KII_THING_IF_STATE_ONBOARDED;
+    tio->state = TIO_STATE_ONBOARDED;
 
     return KII_TRUE;
 }
@@ -1195,14 +1195,14 @@ kii_bool_t init_tio_with_onboarded_thing(
         return KII_FALSE;
     }
 
-    tio->state = KII_THING_IF_STATE_ONBOARDED;
+    tio->state = TIO_STATE_ONBOARDED;
 
     return KII_TRUE;
 }
 
 kii_bool_t start(tio_t* tio)
 {
-    if (tio->state != KII_THING_IF_STATE_ONBOARDED) {
+    if (tio->state != TIO_STATE_ONBOARDED) {
         return KII_FALSE;
     }
 
@@ -1213,7 +1213,7 @@ kii_bool_t start(tio_t* tio)
     }
 
     tio->state_updater.task_create_cb(
-        KII_THING_IF_TASK_NAME_STATUS_UPDATE,
+        TIO_TASK_NAME_STATUS_UPDATE,
         prv_update_status, (void*)tio);
 
     return KII_TRUE;
@@ -1226,17 +1226,17 @@ kii_bool_t get_firmware_version(
         tio_error_t* error)
 {
     switch (tio->state) {
-        case KII_THING_IF_STATE_INITIALIZED:
+        case TIO_STATE_INITIALIZED:
             if (error != NULL) {
-                error->code = KII_THING_IF_ERROR_INVALID_STATE;
+                error->code = TIO_ERROR_INVALID_STATE;
             }
             return KII_FALSE;
-        case KII_THING_IF_STATE_STARTED:
+        case TIO_STATE_STARTED:
             if (error != NULL) {
-                error->code = KII_THING_IF_ERROR_INVALID_STATE;
+                error->code = TIO_ERROR_INVALID_STATE;
             }
             return KII_FALSE;
-        case KII_THING_IF_STATE_ONBOARDED:
+        case TIO_STATE_ONBOARDED:
         {
             char resource_path[128];
             kii_t* kii = &(tio->command_handler);
@@ -1276,9 +1276,9 @@ kii_bool_t get_firmware_version(
                         if (fields[0].result ==
                                 KII_JSON_FIELD_PARSE_COPY_FAILED) {
                             error->code =
-                                KII_THING_IF_ERROR_INSUFFICIENT_ARG_BUFFER;
+                                TIO_ERROR_INSUFFICIENT_ARG_BUFFER;
                         } else {
-                            error->code = KII_THING_IF_ERROR_INVALID_PAYLOAD;
+                            error->code = TIO_ERROR_INVALID_PAYLOAD;
                         }
                     }
                     return KII_FALSE;
@@ -1288,7 +1288,7 @@ kii_bool_t get_firmware_version(
         }
         default:
             /* Unexpected error*/
-            M_KII_THING_IF_ASSERT(0);
+            M_TIO_ASSERT(0);
             return KII_FALSE;
     }
 }
@@ -1299,17 +1299,17 @@ kii_bool_t update_firmware_version(
         tio_error_t* error)
 {
     switch (tio->state) {
-        case KII_THING_IF_STATE_INITIALIZED:
+        case TIO_STATE_INITIALIZED:
             if (error != NULL) {
-                error->code = KII_THING_IF_ERROR_INVALID_STATE;
+                error->code = TIO_ERROR_INVALID_STATE;
             }
             return KII_FALSE;
-        case KII_THING_IF_STATE_STARTED:
+        case TIO_STATE_STARTED:
             if (error != NULL) {
-                error->code = KII_THING_IF_ERROR_INVALID_STATE;
+                error->code = TIO_ERROR_INVALID_STATE;
             }
             return KII_FALSE;
-        case KII_THING_IF_STATE_ONBOARDED:
+        case TIO_STATE_ONBOARDED:
         {
             char resource_path[128];
             kii_t* kii = &(tio->command_handler);
@@ -1340,7 +1340,7 @@ kii_bool_t update_firmware_version(
                 M_KII_LOG(kii->kii_core.logger_cb(
                         "request size overflowed.\n"));
                 if (error != NULL) {
-                    error->code = KII_THING_IF_ERROR_INSUFFICIENT_BUFFER;
+                    error->code = TIO_ERROR_INSUFFICIENT_BUFFER;
                 }
                 return KII_FALSE;
             }
@@ -1349,7 +1349,7 @@ kii_bool_t update_firmware_version(
         }
         default:
             /* Unexpected error*/
-            M_KII_THING_IF_ASSERT(0);
+            M_TIO_ASSERT(0);
             return KII_FALSE;
     }
 }
@@ -1361,17 +1361,17 @@ kii_bool_t get_thing_type(
         tio_error_t* error)
 {
     switch (tio->state) {
-        case KII_THING_IF_STATE_INITIALIZED:
+        case TIO_STATE_INITIALIZED:
             if (error != NULL) {
-                error->code = KII_THING_IF_ERROR_INVALID_STATE;
+                error->code = TIO_ERROR_INVALID_STATE;
             }
             return KII_FALSE;
-        case KII_THING_IF_STATE_STARTED:
+        case TIO_STATE_STARTED:
             if (error != NULL) {
-                error->code = KII_THING_IF_ERROR_INVALID_STATE;
+                error->code = TIO_ERROR_INVALID_STATE;
             }
             return KII_FALSE;
-        case KII_THING_IF_STATE_ONBOARDED:
+        case TIO_STATE_ONBOARDED:
         {
             char resource_path[128];
             kii_t* kii = &(tio->command_handler);
@@ -1410,9 +1410,9 @@ kii_bool_t get_thing_type(
                         if (fields[0].result ==
                                 KII_JSON_FIELD_PARSE_COPY_FAILED) {
                             error->code =
-                                KII_THING_IF_ERROR_INSUFFICIENT_ARG_BUFFER;
+                                TIO_ERROR_INSUFFICIENT_ARG_BUFFER;
                         } else {
-                            error->code = KII_THING_IF_ERROR_INVALID_PAYLOAD;
+                            error->code = TIO_ERROR_INVALID_PAYLOAD;
                         }
                     }
                     return KII_FALSE;
@@ -1422,7 +1422,7 @@ kii_bool_t get_thing_type(
         }
         default:
             /* Unexpected error*/
-            M_KII_THING_IF_ASSERT(0);
+            M_TIO_ASSERT(0);
             return KII_FALSE;
     }
 }
@@ -1433,17 +1433,17 @@ kii_bool_t update_thing_type(
         tio_error_t* error)
 {
     switch (tio->state) {
-        case KII_THING_IF_STATE_INITIALIZED:
+        case TIO_STATE_INITIALIZED:
             if (error != NULL) {
-                error->code = KII_THING_IF_ERROR_INVALID_STATE;
+                error->code = TIO_ERROR_INVALID_STATE;
             }
             return KII_FALSE;
-        case KII_THING_IF_STATE_STARTED:
+        case TIO_STATE_STARTED:
             if (error != NULL) {
-                error->code = KII_THING_IF_ERROR_INVALID_STATE;
+                error->code = TIO_ERROR_INVALID_STATE;
             }
             return KII_FALSE;
-        case KII_THING_IF_STATE_ONBOARDED:
+        case TIO_STATE_ONBOARDED:
         {
             char resource_path[128];
             kii_t* kii = &(tio->command_handler);
@@ -1474,7 +1474,7 @@ kii_bool_t update_thing_type(
                 M_KII_LOG(kii->kii_core.logger_cb(
                         "request size overflowed.\n"));
                 if (error != NULL) {
-                    error->code = KII_THING_IF_ERROR_INSUFFICIENT_BUFFER;
+                    error->code = TIO_ERROR_INSUFFICIENT_BUFFER;
                 }
                 return KII_FALSE;
             }
@@ -1483,7 +1483,7 @@ kii_bool_t update_thing_type(
         }
         default:
             /* Unexpected error*/
-            M_KII_THING_IF_ASSERT(0);
+            M_TIO_ASSERT(0);
             return KII_FALSE;
     }
 }

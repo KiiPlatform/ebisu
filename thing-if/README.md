@@ -130,7 +130,7 @@ To handle tasks asynchronusly, task implementation is required.
 
 List of task name symbols.
 
-- `KII_THING_IF_TASK_NAME_UPDATE_STATUS`
+- `TIO_TASK_NAME_UPDATE_STATUS`
 
   The task of sending onboarded status.
 

@@ -88,7 +88,7 @@ static kii_bool_t action_handler(
 
 static kii_bool_t state_handler(
         kii_t* kii,
-        KII_THING_IF_WRITER writer)
+        TIO_WRITER writer)
 {
     FILE* fp = fopen("air_conditioner-state.json", "r");
     if (fp != NULL) {
@@ -482,7 +482,7 @@ int main(int argc, char** argv)
                     sizeof(firmwareVersion) / sizeof(firmwareVersion[0]),
                     &error) == KII_FALSE) {
                 printf("get_firmware_version is failed: %d\n", error.code);
-                if (error.code == KII_THING_IF_ERROR_HTTP) {
+                if (error.code == TIO_ERROR_HTTP) {
                     printf("status code=%d, error code=%s\n",
                             error.http_status_code,
                             error.error_code);
@@ -500,7 +500,7 @@ int main(int argc, char** argv)
                     sizeof(thingType) / sizeof(thingType[0]),
                     &error) == KII_FALSE) {
                 printf("get_thing_type is failed: %d\n", error.code);
-                if (error.code == KII_THING_IF_ERROR_HTTP) {
+                if (error.code == TIO_ERROR_HTTP) {
                     printf("status code=%d, error code=%s\n",
                             error.http_status_code,
                             error.error_code);
@@ -619,7 +619,7 @@ int main(int argc, char** argv)
                     firmwareVersion,
                     &error) == KII_FALSE) {
                 printf("update_firmware_version is failed: %d\n", error.code);
-                if (error.code == KII_THING_IF_ERROR_HTTP) {
+                if (error.code == TIO_ERROR_HTTP) {
                     printf("status code=%d, error code=%s\n",
                             error.http_status_code,
                             error.error_code);
@@ -635,7 +635,7 @@ int main(int argc, char** argv)
                     thingType,
                     &error) == KII_FALSE) {
                 printf("update_thing_type is failed: %d\n", error.code);
-                if (error.code == KII_THING_IF_ERROR_HTTP) {
+                if (error.code == TIO_ERROR_HTTP) {
                     printf("status code=%d, error code=%s\n",
                             error.http_status_code,
                             error.error_code);

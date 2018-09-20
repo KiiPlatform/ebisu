@@ -4,8 +4,8 @@
  * this SDKrequires to implement these functions in each target
  * environment.
  */
-#ifndef _KII_THING_IF_ENVIRONMENT_DEPENDENT_
-#define _KII_THING_IF_ENVIRONMENT_DEPENDENT_
+#ifndef _TIO_ENVIRONMENT_DEPENDENT_
+#define _TIO_ENVIRONMENT_DEPENDENT_
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,4 +50,4 @@ void delay_ms_cb_impl(unsigned int msec);
 }
 #endif
 
-#endif /* _KII_THING_IF_ENVIRONMENT_DEPENDENT_ */
+#endif /* _TIO_ENVIRONMENT_DEPENDENT_ */

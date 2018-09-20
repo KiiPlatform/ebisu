@@ -1,5 +1,5 @@
-#ifndef _KII_THING_IF_
-#define _KII_THING_IF_
+#ifndef _TIO_
+#define _TIO_
 
 #include <kii.h>
 #include <khc.h>
@@ -10,28 +10,28 @@
 extern "C" {
 #endif
 
-#define KII_THING_IF_TASK_NAME_STATUS_UPDATE "status_update_task"
+#define TIO_TASK_NAME_STATUS_UPDATE "status_update_task"
 
 /** States of tio_t instance. */
 typedef enum tio_state_t {
     /** A tio_t instance is initialized. */
-    KII_THING_IF_STATE_INITIALIZED,
+    TIO_STATE_INITIALIZED,
     /** A tio_t instance is onboarded. */
-    KII_THING_IF_STATE_ONBOARDED,
+    TIO_STATE_ONBOARDED,
     /** A tio_t instance is started. */
-    KII_THING_IF_STATE_STARTED
+    TIO_STATE_STARTED
 } tio_state_t;
 
 /** Error reasons of thing-if ThingSDK. */
 typedef enum tio_error_code_t {
     /** State of tio_t instance is invalid to use some functions. */
-    KII_THING_IF_ERROR_INVALID_STATE,
+    TIO_ERROR_INVALID_STATE,
 
     /** HTTP error. */
-    KII_THING_IF_ERROR_HTTP,
+    TIO_ERROR_HTTP,
 
     /** Socket error. */
-    KII_THING_IF_ERROR_SOCKET,
+    TIO_ERROR_SOCKET,
 
     /** HTTP request/ response buffer is insufficient.
      *
@@ -39,7 +39,7 @@ typedef enum tio_error_code_t {
      * tio_t::command_handler and/or
      * tio_t::state_updater.
      */
-    KII_THING_IF_ERROR_INSUFFICIENT_BUFFER,
+    TIO_ERROR_INSUFFICIENT_BUFFER,
 
     /** Size of argument buffer is insufficient.
      *
@@ -49,7 +49,7 @@ typedef enum tio_error_code_t {
      *
      * Application should increase the length of the array.
      **/
-    KII_THING_IF_ERROR_INSUFFICIENT_ARG_BUFFER,
+    TIO_ERROR_INSUFFICIENT_ARG_BUFFER,
 
     /** Fail to parse HTTP response.
      *
@@ -59,7 +59,7 @@ typedef enum tio_error_code_t {
      * received broken data from the undelying network.
      * If this error constantly happens you may need to ask for support.
      */
-    KII_THING_IF_ERROR_INVALID_PAYLOAD
+    TIO_ERROR_INVALID_PAYLOAD
 } tio_error_code_t;
 
 /** Error information of thing-if ThingSDK. */
@@ -70,14 +70,14 @@ typedef struct tio_error_t {
     /** HTTP status code.
      *
      * If ::tio_error_t::code is
-     * ::KII_THING_IF_ERROR_HTTP, this value is set. Otherwise 0.
+     * ::TIO_ERROR_HTTP, this value is set. Otherwise 0.
      */
     int http_status_code;
 
     /** Error code.
      *
      * If ::tio_error_t::code is
-     * ::KII_THING_IF_ERROR_HTTP, this value is set. Otherwise
+     * ::TIO_ERROR_HTTP, this value is set. Otherwise
      * functions does not change this value.
      */
     char error_code[64];
@@ -91,7 +91,7 @@ typedef struct tio_error_t {
  * @return KII_TRUE if succeeded, otherwise KII_FALSE.
  */
 typedef kii_bool_t
-    (*KII_THING_IF_ACTION_HANDLER)
+    (*TIO_ACTION_HANDLER)
         (const char* alias,
          const char* action_name,
          const char* action_params,
@@ -99,26 +99,26 @@ typedef kii_bool_t
 
 /** a function pointer to write thing state.
  *
- * This function pointer is used at KII_THING_IF_STATE_HANDLER. This
+ * This function pointer is used at TIO_STATE_HANDLER. This
  * function pointer is passed as second argument of
- * KII_THING_IF_STATE_HANDLER. Implementation of this function pointer is
+ * TIO_STATE_HANDLER. Implementation of this function pointer is
  * provided by this SDK.
  *
  * @param [in] context context of state handler.
  * @param [in] buff json string of thing state. must be null terminated.
  * @return KII_TRUE if succeeded. otherwise KII_FALSE.
  */
-typedef kii_bool_t (*KII_THING_IF_WRITER)(kii_t* kii, const char* buff);
+typedef kii_bool_t (*TIO_WRITER)(kii_t* kii, const char* buff);
 
 /** callback function for writing thing state.
  *
  * This callback function should write current thing state with
- * KII_THING_IF_WRITER. for example:
+ * TIO_WRITER. for example:
  *
  * @code
  * kii_bool_t state_handler(
  *         kii_t* kii,
- *         KII_THING_IF_WRITER writer)
+ *         TIO_WRITER writer)
  * {
  *     char buf[256];
  *
@@ -173,9 +173,9 @@ typedef kii_bool_t (*KII_THING_IF_WRITER)(kii_t* kii, const char* buff);
  * @return KII_TRUE if succeeded. otherwise KII_FALSE.
  */
 typedef kii_bool_t
-    (*KII_THING_IF_STATE_HANDLER)
+    (*TIO_STATE_HANDLER)
         (kii_t* kii,
-         KII_THING_IF_WRITER writer);
+         TIO_WRITER writer);
 
 /** callback function enables to handle all push notifications.
  *
@@ -188,7 +188,7 @@ typedef kii_bool_t
  * Normally you don't need to implement this handler.
  * Without this handler, SDK only deals with push notification includes
  * Command. In this case, SDK parses the push notification and if its a 
- * valid Command to the thing, #KII_THING_IF_ACTION_HANDLER will be called.
+ * valid Command to the thing, #TIO_ACTION_HANDLER will be called.
  *
  * This handler will be implemented and passed to #tio_t
  * in case you need to handle bucket events notification, messages arrived to
@@ -205,15 +205,15 @@ typedef kii_bool_t
  * @param [in] message_length length of message.
  * @return
  * - KII_TRUE Let SDK to skip executing default logic handles Command.
- *   In this case #KII_THING_IF_ACTION_HANDLER won't be called even if the
+ *   In this case #TIO_ACTION_HANDLER won't be called even if the
  *   push notification includes valid Command.
  * - KII_FALSE Let SDK to execute default logic handles Command. If the push
- *   notification includes valid Command, #KII_THING_IF_ACTION_HANDLER will be
+ *   notification includes valid Command, #TIO_ACTION_HANDLER will be
  *   called.
  *   (If the push notification is not Command, would be ignored safely.) 
  */
 typedef kii_bool_t
-    (*KII_THING_IF_CUSTOM_PUSH_HANDLER)
+    (*TIO_CUSTOM_PUSH_HANDLER)
         (kii_t *kii,
          const char* message,
          size_t message_length);
@@ -248,20 +248,20 @@ typedef struct tio_command_handler_resource_t {
     size_t mqtt_buffer_size;
 
     /** callback function to handle received action. */
-    KII_THING_IF_ACTION_HANDLER action_handler;
+    TIO_ACTION_HANDLER action_handler;
 
     /** callback function to write the thing state after a command is
      * processed.
      */
-    KII_THING_IF_STATE_HANDLER state_handler;
+    TIO_STATE_HANDLER state_handler;
 
     /** callback function to handle recived all push notifications.
      * Normally you can left this field as NULL.
      * Only required when you have to deal with push notification with your
      * custom logic.
-     * @see KII_THING_IF_CUSTOM_PUSH_HANDLER
+     * @see TIO_CUSTOM_PUSH_HANDLER
      */
-    KII_THING_IF_CUSTOM_PUSH_HANDLER custom_push_handler;
+    TIO_CUSTOM_PUSH_HANDLER custom_push_handler;
 
 } tio_command_handler_resource_t;
 
@@ -293,7 +293,7 @@ typedef struct tio_state_updater_resource_t {
     /** callback function to write thing state.
      * called in every #period.
      */
-    KII_THING_IF_STATE_HANDLER state_handler;
+    TIO_STATE_HANDLER state_handler;
 } tio_state_updater_resource_t;
 
 /**
@@ -315,10 +315,10 @@ typedef struct tio_system_cb_t {
 typedef struct tio_t {
     kii_t command_handler;
     kii_t state_updater;
-    KII_THING_IF_ACTION_HANDLER action_handler;
-    KII_THING_IF_STATE_HANDLER state_handler_for_period;
-    KII_THING_IF_STATE_HANDLER state_handler_for_command_reaction;
-    KII_THING_IF_CUSTOM_PUSH_HANDLER custom_push_handler;
+    TIO_ACTION_HANDLER action_handler;
+    TIO_STATE_HANDLER state_handler_for_period;
+    TIO_STATE_HANDLER state_handler_for_command_reaction;
+    TIO_CUSTOM_PUSH_HANDLER custom_push_handler;
     /** Specify the period of updating state in seconds. */
     int state_update_period;
     /**
@@ -336,7 +336,7 @@ typedef struct tio_t {
  * const char*, const char*) to onboard from thing.
  *
  * After this functions succeeded, tio_t::state becomes
- * ::KII_THING_IF_STATE_INITIALIZED.
+ * ::TIO_STATE_INITIALIZED.
  *
  * @param [in] tio tio_t object to be initialized.
  * @param [in] app_id the input of Application ID
@@ -373,7 +373,7 @@ kii_bool_t init_tio(
  * - ::init_tio_with_onboarded_thing
  *
  * After this functions succeeded, tio_t::state becomes
- * ::KII_THING_IF_STATE_STARTED.
+ * ::TIO_STATE_STARTED.
  *
  * @param [in] tio_t This SDK instance.
  * @return KII_TRUE when succeeded, KII_FALSE when failed.
@@ -385,7 +385,7 @@ kii_bool_t start(tio_t* tio);
  * used to call api.
  *
  * After this functions succeeded, tio_t::state becomes
- * ::KII_THING_IF_STATE_ONBOARDED.
+ * ::TIO_STATE_ONBOARDED.
  *
  * @param [inout] tio This SDK instance.
  * @param [in] vendor_thing_id Vendor thing id given by thing
@@ -412,7 +412,7 @@ kii_bool_t start(tio_t* tio);
  * @return KII_TRUE when succeeded, KII_FALSE when failed. If returned
  * value is KII_FALSE and error is not NULL, this SDK set error
  * information to the error. This function does not set
- * ::KII_THING_IF_ERROR_INVALID_STATE to
+ * ::TIO_ERROR_INVALID_STATE to
  * ::tio_error_t::code.
  */
 kii_bool_t onboard_with_vendor_thing_id(
@@ -430,7 +430,7 @@ kii_bool_t onboard_with_vendor_thing_id(
  * used to call api.
  *
  * After this functions succeeded, tio_t::state becomes
- * ::KII_THING_IF_STATE_ONBOARDED.
+ * ::TIO_STATE_ONBOARDED.
  *
  * @param [inout] tio This SDK instance.
  * @param [in] thing_id thing ID issued by Kii Cloud. Must not be NULL
@@ -457,7 +457,7 @@ kii_bool_t onboard_with_vendor_thing_id(
  * @return KII_TRUE when succeeded, KII_FALSE when failed. If returned
  * value is KII_FALSE and error is not NULL, this SDK set error
  * information to the error. This function does not set
- * ::KII_THING_IF_ERROR_INVALID_STATE to
+ * ::TIO_ERROR_INVALID_STATE to
  * ::tio_error_t::code.
  */
 kii_bool_t onboard_with_thing_id(
@@ -483,7 +483,7 @@ kii_bool_t onboard_with_thing_id(
  * used to call api.
  *
  * After this functions succeeded, tio_t::state becomes
- * ::KII_THING_IF_STATE_ONBOARDED.
+ * ::TIO_STATE_ONBOARDED.
  *
  * @param [in] app_id the input of Application ID
  * @param [in] app_key the input of Application Key
@@ -610,5 +610,5 @@ kii_bool_t get_thing_type(
 }
 #endif
 
-#endif /* _KII_THING_IF_ */
+#endif /* _TIO_ */
 

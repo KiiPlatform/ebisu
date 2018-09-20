@@ -35,7 +35,7 @@ static kii_bool_t action_handler_returning_true(
 
 static kii_bool_t state_handler_returning_true(
         kii_t *kii,
-        KII_THING_IF_WRITER writer)
+        TIO_WRITER writer)
 {
     return (*writer)(kii, "{\"power\":true}");
 }
