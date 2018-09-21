@@ -74,7 +74,12 @@ void tio_handler_set_keep_alive_interval(tio_handler_t* handler, size_t keep_ali
 
 void tio_handler_set_app(tio_handler_t* handler, const char* app_id, const char* host);
 
-tio_code_t tio_handler_start(tio_handler_t* handler, const tio_author_t* author, TIO_CB_ACTION cb_action, void* userdata);
+tio_code_t tio_handler_start(
+    tio_handler_t* handler,
+    const tio_author_t* author,
+    const kii_mqtt_endpoint_t* endpoint,
+    TIO_CB_ACTION cb_action,
+    void* userdata);
 
 typedef struct tio_updater_t {
     TIO_CB_READ _state_reader;
@@ -96,7 +101,6 @@ void tio_updater_set_interval(tio_updater_t* updater, size_t update_interval);
 tio_code_t tio_updater_start_with_author(
     tio_updater_t* updater,
     const tio_author_t* author,
-    const kii_mqtt_endpoint_t* endpoint,
     TIO_CB_READ state_reader,
     void* userdata);
 
