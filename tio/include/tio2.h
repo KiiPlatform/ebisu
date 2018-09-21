@@ -83,9 +83,7 @@ void tio_handler_set_keep_alive_interval(tio_handler_t* handler, size_t keep_ali
 
 void tio_handler_set_app(tio_handler_t* handler, const char* app_id, const char* host);
 
-tio_code_t tio_handler_start_with_author(tio_handler_t* handler, const tio_author_t* author, TIO_CB_ACTION cb_action);
-
-tio_code_t tio_handelr_start(tio_handler_t* handler, const tio_onboard_req_t* onboard_req, TIO_CB_ACTION cb_action, tio_author_t* out_author, void* userdata);
+tio_code_t tio_handler_start(tio_handler_t* handler, const tio_author_t* author, TIO_CB_ACTION cb_action, void* userdata);
 
 typedef struct tio_updater_t {
     TIO_CB_READ _state_reader;
@@ -93,17 +91,22 @@ typedef struct tio_updater_t {
     size_t _update_interval;
 } tio_updater_t;
 
-void tio_updater_set_cb_sock_connect_mqtt(tio_updater_t* updater, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
-void tio_updater_set_cb_sock_send_mqtt(tio_updater_t* updater, KHC_CB_SOCK_SEND cb_send, void* userdata);
-void tio_updater_set_cb_sock_recv_mqtt(tio_updater_t* updater, KHC_CB_SOCK_RECV cb_recv, void* userdata);
-void tio_updater_set_cb_sock_close_mqtt(tio_updater_t* updater, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
+void tio_updater_set_cb_sock_connect(tio_updater_t* updater, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
+void tio_updater_set_cb_sock_send(tio_updater_t* updater, KHC_CB_SOCK_SEND cb_send, void* userdata);
+void tio_updater_set_cb_sock_recv(tio_updater_t* updater, KHC_CB_SOCK_RECV cb_recv, void* userdata);
+void tio_updater_set_cb_sock_close(tio_updater_t* updater, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
 
-void tio_updater_set_mqtt_buff(tio_updater_t* updater, char* buff, size_t buff_size);
+void tio_updater_set_buff(tio_updater_t* updater, char* buff, size_t buff_size);
 
 void tio_updater_set_app(tio_updater_t* updater, const char* app_id, const char* host);
 
 void tio_updater_set_interval(tio_updater_t* updater, size_t update_interval);
 
-tio_code_t tio_updater_start_with_author(tio_updater_t* updater, const tio_author_t* author, TIO_CB_READ state_reader, void* userdata);
+tio_code_t tio_updater_start_with_author(
+    tio_updater_t* updater,
+    const tio_author_t* author,
+    const kii_mqtt_endpoint_t* endpoint,
+    TIO_CB_READ state_reader,
+    void* userdata);
 
 #endif
