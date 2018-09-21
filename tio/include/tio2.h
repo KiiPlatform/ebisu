@@ -56,15 +56,6 @@ typedef struct tio_author_t {
     char token[64];
 } tio_author_t;
 
-typedef struct tio_onboard_req_t {
-    const char* vendor_thing_id;
-    const char* password;
-    const char* thing_type;
-    const char* firmware_version;
-    const char* layout_position;
-    const char* thing_properties;
-} tio_onboard_req_t;
-
 void tio_handler_set_cb_sock_connect_http(tio_handler_t* handler, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
 void tio_handler_set_cb_sock_send_http(tio_handler_t* handler, KHC_CB_SOCK_SEND cb_send, void* userdata);
 void tio_handler_set_cb_sock_recv_http(tio_handler_t* handler, KHC_CB_SOCK_RECV cb_recv, void* userdata);
