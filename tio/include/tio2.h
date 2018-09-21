@@ -98,7 +98,7 @@ void tio_updater_set_app(tio_updater_t* updater, const char* app_id, const char*
 
 void tio_updater_set_interval(tio_updater_t* updater, size_t update_interval);
 
-tio_code_t tio_updater_start_with_author(
+tio_code_t tio_updater_start(
     tio_updater_t* updater,
     const tio_author_t* author,
     TIO_CB_READ state_reader,
