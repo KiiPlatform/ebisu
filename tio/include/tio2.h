@@ -33,8 +33,12 @@ typedef struct tio_action_t {
     tio_action_params_t action_params;
 } tio_action_t;
 
+typedef struct tio_action_error_t {
+    const char error_message[64];
+} tio_action_error_t;
+
 typedef size_t (*TIO_CB_READ)(char *buffer, size_t size, size_t count, void *userdata);
-typedef tio_bool_t (*TIO_CB_ACTION)(tio_action_t action, void* userdata);
+typedef tio_bool_t (*TIO_CB_ACTION)(tio_action_t action, tio_action_error_t* error, void* userdata);
 
 typedef enum tio_code_t {
     TIO_ERR_OK,
