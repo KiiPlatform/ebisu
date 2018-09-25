@@ -72,6 +72,9 @@ void tio_handler_set_cb_sock_send_mqtt(tio_handler_t* handler, KHC_CB_SOCK_SEND 
 void tio_handler_set_cb_sock_recv_mqtt(tio_handler_t* handler, KHC_CB_SOCK_RECV cb_recv, void* userdata);
 void tio_handler_set_cb_sock_close_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
 
+void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_TASK_CREATE cb_task_create);
+void tio_hadler_set_cb_delay_ms(tio_handler_t* handler, KII_DELAY_MS cb_delay_ms);
+
 void tio_handler_set_mqtt_buff(tio_handler_t* handler, char* buff, size_t buff_size);
 
 void tio_handler_set_keep_alive_interval(tio_handler_t* handler, size_t keep_alive_interval);
@@ -95,6 +98,9 @@ void tio_updater_set_cb_sock_connect(tio_updater_t* updater, KHC_CB_SOCK_CONNECT
 void tio_updater_set_cb_sock_send(tio_updater_t* updater, KHC_CB_SOCK_SEND cb_send, void* userdata);
 void tio_updater_set_cb_sock_recv(tio_updater_t* updater, KHC_CB_SOCK_RECV cb_recv, void* userdata);
 void tio_updater_set_cb_sock_close(tio_updater_t* updater, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
+
+void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_TASK_CREATE cb_task_create);
+void tio_updater_set_cb_delay_ms(tio_updater_t* updater, KII_DELAY_MS cb_delay_ms);
 
 void tio_updater_set_buff(tio_updater_t* updater, char* buff, size_t buff_size);
 

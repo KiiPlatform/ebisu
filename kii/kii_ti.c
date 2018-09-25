@@ -44,5 +44,4 @@ void kii_ti_set_normalizer_site(
     const char* normalizer_site)
 {
     // TODO: implement it.
-    return KII_ERR_FAIL;
 }
