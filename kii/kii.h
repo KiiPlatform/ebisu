@@ -402,6 +402,37 @@ kii_code_t kii_execute_server_code(
 		const char* endpoint_name,
 		const char* params);
 
+kii_code_t kii_ti_onboard(
+    kii_t* kii,
+    const char* vendor_thing_id,
+    const char* password,
+    const char* thing_type,
+    const char* firmware_version,
+    const char* layout_position,
+    const char* thing_properties);
+
+kii_code_t kii_ti_put_firmware_version(
+    kii_t* kii,
+    const char* firmware_version);
+
+typedef struct kii_ti_firmware_version_t {
+    char firmware_version[128];
+} kii_ti_firmware_version_t;
+
+kii_code_t kii_ti_get_firmware_version(
+    kii_t* kii,
+    kii_ti_firmware_version_t* version);
+
+kii_code_t kii_ti_put_thing_type(
+    kii_t* kii,
+    const char* thing_type);
+
+kii_code_t kii_ti_put_state(
+    kii_t* kii,
+    size_t content_length,
+    KII_CB_READ state_read_cb,
+    kii_bool_t send_to_normalizer);
+
 /** start to create request for REST API.
  *
  * Between this function and kii_api_call_run(kii_t*), you can call
@@ -510,6 +541,8 @@ kii_code_t kii_set_json_parser_resource_cb(kii_t* kii,
 const char* kii_get_etag(kii_t* kii);
 
 int kii_get_resp_status(kii_t* kii);
+
+void kii_ti_set_normalizer_site(kii_t* kii, const char* normalizer_site);
 
 #ifdef __cplusplus
 }
