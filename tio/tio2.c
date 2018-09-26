@@ -92,6 +92,15 @@ void tio_hadler_set_cb_delay_ms(
     handler->_kii.delay_ms_cb = cb_delay_ms;
 }
 
+void tio_handler_set_cb_err(
+    tio_handler_t* handler,
+    TIO_CB_ERR cb_err,
+    void* userdata)
+{
+    handler->_cb_err = cb_err;
+    handler->_cb_err_data = userdata;
+}
+
 void tio_handler_set_mqtt_buff(
     tio_handler_t* handler,
     char* buff,
@@ -211,6 +220,15 @@ void tio_updater_set_cb_delay_ms(
 {
     // FIXME: Kii should provide setter API.
     updater->_kii.delay_ms_cb = cb_delay_ms;
+}
+
+void tio_updater_set_cb_error(
+    tio_updater_t* updater,
+    TIO_CB_ERR cb_err,
+    void* userdata)
+{
+    updater->_cb_err = cb_err;
+    updater->_cb_err_data = userdata;
 }
 
 void tio_updater_set_buff(

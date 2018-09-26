@@ -8,6 +8,8 @@ extern const char TIO_TASK_NAME_UPDATE_STATE[];
 
 typedef kii_bool_t tio_bool_t;
 
+typedef kii_author_t tio_author_t;
+
 typedef enum tio_code_t {
     TIO_ERR_OK,
     TIO_ERR_CREATE_TASK,
@@ -68,7 +70,17 @@ typedef struct tio_handler_t {
     size_t _keep_alive_interval;
 } tio_handler_t;
 
-typedef kii_author_t tio_author_t;
+typedef struct tio_updater_t {
+    TIO_CB_SIZE _cb_state_size;
+    void* _cb_state_size_data;
+    TIO_CB_READ _state_reader;
+    void* _state_reader_data;
+    TIO_CB_ERR _cb_err;
+    void* _cb_err_data;
+    kii_t _kii;
+    size_t _update_interval;
+} tio_updater_t;
+
 
 void tio_handler_set_cb_sock_connect_http(tio_handler_t* handler, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
 void tio_handler_set_cb_sock_send_http(tio_handler_t* handler, KHC_CB_SOCK_SEND cb_send, void* userdata);
@@ -85,7 +97,7 @@ void tio_handler_set_cb_sock_close_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CLOS
 void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_TASK_CREATE cb_task_create);
 void tio_hadler_set_cb_delay_ms(tio_handler_t* handler, KII_DELAY_MS cb_delay_ms);
 
-void tio_handler_set_cb_err(tio_handler_t* handler, void* userdata);
+void tio_handler_set_cb_err(tio_handler_t* handler, TIO_CB_ERR cb_err, void* userdata);
 
 void tio_handler_set_mqtt_buff(tio_handler_t* handler, char* buff, size_t buff_size);
 
@@ -100,15 +112,6 @@ tio_code_t tio_handler_start(
     TIO_CB_ACTION cb_action,
     void* userdata);
 
-typedef struct tio_updater_t {
-    TIO_CB_SIZE _cb_state_size;
-    void* _cb_state_size_data;
-    TIO_CB_READ _state_reader;
-    void* _state_reader_data;
-    kii_t _kii;
-    size_t _update_interval;
-} tio_updater_t;
-
 void tio_updater_set_cb_sock_connect(tio_updater_t* updater, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
 void tio_updater_set_cb_sock_send(tio_updater_t* updater, KHC_CB_SOCK_SEND cb_send, void* userdata);
 void tio_updater_set_cb_sock_recv(tio_updater_t* updater, KHC_CB_SOCK_RECV cb_recv, void* userdata);
@@ -117,7 +120,7 @@ void tio_updater_set_cb_sock_close(tio_updater_t* updater, KHC_CB_SOCK_CLOSE cb_
 void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_TASK_CREATE cb_task_create);
 void tio_updater_set_cb_delay_ms(tio_updater_t* updater, KII_DELAY_MS cb_delay_ms);
 
-void tio_updater_set_cb_error(tio_updater_t* updater, void* userdata);
+void tio_updater_set_cb_error(tio_updater_t* updater, TIO_CB_ERR cb_err, void* userdata);
 
 void tio_updater_set_buff(tio_updater_t* updater, char* buff, size_t buff_size);
 
