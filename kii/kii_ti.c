@@ -1,4 +1,5 @@
 #include "kii.h"
+#include "kii_ti_impl.h"
 
 kii_code_t kii_ti_onboard(
     kii_t* kii,
@@ -9,8 +10,22 @@ kii_code_t kii_ti_onboard(
     const char* layout_position,
     const char* thing_properties)
 {
-    // TODO: implement it.
-    return KII_ERR_FAIL;
+    char token[128];
+    kii_code_t ret = KII_ERR_FAIL;
+
+    ret = _get_anonymous_token(kii, token, sizeof(token)/sizeof(token[0]));
+    if (ret != KII_ERR_OK) {
+        M_KII_LOG(kii->kii_core.logger_cb("fail to get anonymous token.\n"));
+        return ret;
+    }
+
+    ret = _onboard(kii, token, vendor_thing_id, password, thing_type, firmware_version, layout_position, thing_properties);
+    if (ret != KII_ERR_OK) {
+        M_KII_LOG(kii->kii_core.logger_cb("fail to onboard.\n"));
+        return ret;
+    }
+
+    return KII_ERR_OK;
 }
 
 kii_code_t kii_ti_put_firmware_version(

@@ -44,6 +44,8 @@ kii_code_t _set_app_key_header(kii_t* kii);
 
 kii_code_t _set_auth_header(kii_t* kii);
 
+kii_code_t _set_auth_bearer_token(kii_t* kii, const char* token);
+
 kii_code_t _set_if_match(kii_t* kii, const char* etag);
 
 kii_code_t _set_req_body(kii_t* kii, const char* body_contents);
