@@ -4,6 +4,8 @@
 #include "kii.h"
 #include "khc.h"
 
+extern const char TIO_TASK_NAME_UPDATE_STATE[];
+
 typedef kii_bool_t tio_bool_t;
 
 typedef enum tio_data_type_t {
@@ -37,11 +39,13 @@ typedef struct tio_action_error_t {
     const char error_message[64];
 } tio_action_error_t;
 
+typedef size_t (*TIO_CB_SIZE)();
 typedef size_t (*TIO_CB_READ)(char *buffer, size_t size, size_t count, void *userdata);
 typedef tio_bool_t (*TIO_CB_ACTION)(tio_action_t action, tio_action_error_t* error, void* userdata);
 
 typedef enum tio_code_t {
     TIO_ERR_OK,
+    TIO_ERR_CREATE_TASK,
     TIO_ERR_FAIL
 } tio_code_t;
 
@@ -55,10 +59,7 @@ typedef struct tio_handler_t {
     size_t _keep_alive_interval;
 } tio_handler_t;
 
-typedef struct tio_author_t {
-    char id[64];
-    char token[64];
-} tio_author_t;
+typedef kii_author_t tio_author_t;
 
 void tio_handler_set_cb_sock_connect_http(tio_handler_t* handler, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
 void tio_handler_set_cb_sock_send_http(tio_handler_t* handler, KHC_CB_SOCK_SEND cb_send, void* userdata);
@@ -89,7 +90,9 @@ tio_code_t tio_handler_start(
     void* userdata);
 
 typedef struct tio_updater_t {
+    TIO_CB_SIZE _cb_state_size;
     TIO_CB_READ _state_reader;
+    void* _state_reader_data;
     kii_t _kii;
     size_t _update_interval;
 } tio_updater_t;
@@ -111,6 +114,7 @@ void tio_updater_set_interval(tio_updater_t* updater, size_t update_interval);
 tio_code_t tio_updater_start(
     tio_updater_t* updater,
     const tio_author_t* author,
+    TIO_CB_SIZE cb_state_size,
     TIO_CB_READ state_reader,
     void* userdata);
 

@@ -3,6 +3,8 @@
 #include "kii.h"
 #include "khc.h"
 
+const char TIO_TASK_NAME_UPDATE_STATE[] = "task_update_state";
+
 void tio_handler_set_cb_sock_connect_http(
     tio_handler_t* handler,
     KHC_CB_SOCK_CONNECT cb_connect,
@@ -200,12 +202,41 @@ void tio_updater_set_interval(
     updater->_update_interval = update_interval;
 }
 
+static void* _update_state(void* data) {
+    tio_updater_t* updater = (tio_updater_t*)data;
+    while(1) {
+        updater->_kii.delay_ms_cb(updater->_update_interval * 1000);
+        size_t state_size = updater->_cb_state_size();
+        if (state_size > 0) {
+            kii_ti_put_state(
+                &updater->_kii,
+                state_size,
+                updater->_state_reader,
+                KII_FALSE);
+        }
+    }
+    return NULL;
+}
+
 tio_code_t tio_updater_start(
     tio_updater_t* updater,
     const tio_author_t* author,
+    TIO_CB_SIZE cb_state_size,
     TIO_CB_READ state_reader,
     void* userdata)
 {
-    //TODO: Implement it.
-    return TIO_ERR_FAIL;
+    updater->_kii._author = *author;
+    updater->_cb_state_size = cb_state_size;
+    updater->_state_reader = state_reader;
+    updater->_state_reader_data = userdata;
+
+    kii_task_code_t res = updater->_kii.task_create_cb(
+        TIO_TASK_NAME_UPDATE_STATE,
+        _update_state,
+        (void*)updater);
+
+    if (res != KII_TASKC_OK) {
+        return TIO_ERR_CREATE_TASK;
+    }
+    return TIO_ERR_OK;
 }
