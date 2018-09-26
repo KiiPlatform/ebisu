@@ -271,7 +271,7 @@ kii_code_t _set_auth_header(kii_t* kii)
 
 kii_code_t _set_auth_bearer_token(kii_t* kii, const char* token)
 {
-    if (strlen(kii->_author.access_token) > 0) {
+    if (strlen(token) > 0) {
         int header_len = snprintf(
             kii->_rw_buff,
             kii->_rw_buff_size,

@@ -6,8 +6,7 @@
 
 kii_code_t _get_anonymous_token(
         kii_t* kii,
-        char* token_buf,
-        size_t token_buf_size)
+        _kii_anonymous_token_t* out_token)
 {
     kii_code_t ret = KII_ERR_FAIL;
     _reset_buff(kii);
@@ -70,8 +69,8 @@ kii_code_t _get_anonymous_token(
     memset(fields, 0, sizeof(fields));
     fields[0].name = "access_token";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[0].field_copy.string = token_buf;
-    fields[0].field_copy_buff_size = token_buf_size;
+    fields[0].field_copy.string = out_token->buf;
+    fields[0].field_copy_buff_size = out_token->buf_size;
     fields[1].name = NULL;
 
     result = _kii_json_read_object(kii, buff, buff_size, fields);
@@ -99,32 +98,22 @@ kii_code_t _onboard(
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "POST");
 
-    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/api/apps/%s/onboardings", kii->_app_id);
+    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/thing-if/apps/%s/onboardings", kii->_app_id);
     if (path_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
     khc_set_path(&kii->_khc, kii->_rw_buff);
 
     // Request headers.
-    kii_code_t res = _set_app_id_header(kii);
-    if (res != KII_ERR_OK) {
-        _req_headers_free_all(kii);
-        return res;
-    }
-    res = _set_app_key_header(kii);
-    if (res != KII_ERR_OK) {
-        _req_headers_free_all(kii);
-        return res;
-    }
     ret = _set_auth_bearer_token(kii, token);
     if (ret != KII_ERR_OK) {
         _req_headers_free_all(kii);
         return ret;
     }
-    res = _set_content_type(kii, "application/vnd.kii.OnboardingWithVendorThingIDByThing+json");
-    if (res != KII_ERR_OK) {
+    ret = _set_content_type(kii, "application/vnd.kii.OnboardingWithVendorThingIDByThing+json");
+    if (ret != KII_ERR_OK) {
         _req_headers_free_all(kii);
-        return res;
+        return ret;
     }
 
     // Request body.
@@ -209,10 +198,10 @@ kii_code_t _onboard(
         return KII_ERR_TOO_LARGE_DATA;
     }
 
-    res = _set_content_length(kii, content_len);
-    if (res != KII_ERR_OK) {
+    ret = _set_content_length(kii, content_len);
+    if (ret != KII_ERR_OK) {
         _req_headers_free_all(kii);
-        return res;
+        return ret;
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);

@@ -11,9 +11,12 @@ kii_code_t kii_ti_onboard(
     const char* thing_properties)
 {
     char token[128];
+    _kii_anonymous_token_t out_token;
     kii_code_t ret = KII_ERR_FAIL;
 
-    ret = _get_anonymous_token(kii, token, sizeof(token)/sizeof(token[0]));
+    out_token.buf = token;
+    out_token.buf_size = sizeof(token)/sizeof(token[0]);
+    ret = _get_anonymous_token(kii, &out_token);
     if (ret != KII_ERR_OK) {
         M_KII_LOG(kii->kii_core.logger_cb("fail to get anonymous token.\n"));
         return ret;

@@ -3,10 +3,14 @@
 
 #include "kii.h"
 
+typedef struct {
+    char* buf;
+    size_t buf_size;
+} _kii_anonymous_token_t;
+
 kii_code_t _get_anonymous_token(
         kii_t* kii,
-        char* token_buf,
-        size_t token_buf_size);
+        _kii_anonymous_token_t* out_token);
 
 kii_code_t _onboard(
         kii_t* kii,
