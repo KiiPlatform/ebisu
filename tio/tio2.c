@@ -1,5 +1,6 @@
 #include <string.h>
 #include "tio2.h"
+#include "tio.h"
 #include "kii.h"
 #include "khc.h"
 
@@ -118,6 +119,37 @@ void tio_handler_set_app(
     strncpy(handler->_kii._app_host, host, sizeof(handler->_kii._app_host)-1);
 }
 
+static kii_json_parse_result_t _tio_parse_json(
+        tio_handler_t* handler,
+        const char* json_string,
+        size_t json_string_size,
+        kii_json_field_t* fields)
+{
+    kii_json_resource_t* resource = handler->_kii._json_resource;
+    kii_json_parse_result_t res = KII_JSON_PARSE_INVALID_INPUT;
+    if (resource != NULL) {
+        res = kii_json_parse(json_string, json_string_size, fields, resource);
+    } else {
+        KII_JSON_RESOURCE_ALLOC_CB alloc_cb = handler->_kii._json_alloc_cb;
+        KII_JSON_RESOURCE_FREE_CB free_cb = handler->_kii._json_free_cb;
+        res = kii_json_parse_with_allocator(json_string, json_string_size, fields, alloc_cb, free_cb);
+    }
+    return res;
+}
+
+static void _handle_command(tio_handler_t* handler, char* buffer, size_t buffer_size) {
+
+}
+
+static void _cb_receive_push(char* buffer, size_t buffer_size, void* userdata) {
+    // TODO: implement it.
+}
+
+static tio_code_t _convert_code(kii_code_t code) {
+    // TODO: Implement it.
+    return TIO_ERR_FAIL;
+}
+
 tio_code_t tio_handler_start(
     tio_handler_t* handler,
     const tio_author_t* author,
@@ -125,8 +157,12 @@ tio_code_t tio_handler_start(
     TIO_CB_ACTION cb_action,
     void* userdata)
 {
-    //TODO: Implement it.
-    return TIO_ERR_FAIL;
+    kii_code_t res = kii_start_push_routine(
+        &handler->_kii,
+        handler->_keep_alive_interval,
+        _cb_receive_push,
+        (void*)handler);
+    return _convert_code(res);
 }
 
 void tio_updater_set_cb_sock_connect(
@@ -206,7 +242,7 @@ static void* _update_state(void* data) {
     tio_updater_t* updater = (tio_updater_t*)data;
     while(1) {
         updater->_kii.delay_ms_cb(updater->_update_interval * 1000);
-        size_t state_size = updater->_cb_state_size();
+        size_t state_size = updater->_cb_state_size(updater->_cb_state_size_data);
         if (state_size > 0) {
             kii_ti_put_state(
                 &updater->_kii,
@@ -222,13 +258,17 @@ tio_code_t tio_updater_start(
     tio_updater_t* updater,
     const tio_author_t* author,
     TIO_CB_SIZE cb_state_size,
+    void* cb_state_size_data,
     TIO_CB_READ state_reader,
-    void* userdata)
+    void* state_reader_data)
 {
     updater->_kii._author = *author;
+ 
     updater->_cb_state_size = cb_state_size;
+    updater->_cb_state_size_data = cb_state_size_data;
+
     updater->_state_reader = state_reader;
-    updater->_state_reader_data = userdata;
+    updater->_state_reader_data = state_reader_data;
 
     kii_task_code_t res = updater->_kii.task_create_cb(
         TIO_TASK_NAME_UPDATE_STATE,
