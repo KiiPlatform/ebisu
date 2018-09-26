@@ -6,7 +6,7 @@
 
 kii_code_t _get_anonymous_token(
         kii_t* kii,
-        _kii_anonymous_token_t* out_token)
+        _kii_token_t* out_token)
 {
     kii_code_t ret = KII_ERR_FAIL;
     _reset_buff(kii);
@@ -69,8 +69,9 @@ kii_code_t _get_anonymous_token(
     memset(fields, 0, sizeof(fields));
     fields[0].name = "access_token";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
-    fields[0].field_copy.string = out_token->buf;
-    fields[0].field_copy_buff_size = out_token->buf_size;
+    fields[0].field_copy.string = out_token->token;
+    fields[0].field_copy_buff_size = sizeof(out_token->token) /
+        sizeof(out_token->token[0]);
     fields[1].name = NULL;
 
     result = _kii_json_read_object(kii, buff, buff_size, fields);

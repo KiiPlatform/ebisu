@@ -10,19 +10,16 @@ kii_code_t kii_ti_onboard(
     const char* layout_position,
     const char* thing_properties)
 {
-    char token[128];
-    _kii_anonymous_token_t out_token;
+    _kii_token_t out_token;
     kii_code_t ret = KII_ERR_FAIL;
 
-    out_token.buf = token;
-    out_token.buf_size = sizeof(token)/sizeof(token[0]);
     ret = _get_anonymous_token(kii, &out_token);
     if (ret != KII_ERR_OK) {
         M_KII_LOG(kii->kii_core.logger_cb("fail to get anonymous token.\n"));
         return ret;
     }
 
-    ret = _onboard(kii, token, vendor_thing_id, password, thing_type, firmware_version, layout_position, thing_properties);
+    ret = _onboard(kii, out_token.token, vendor_thing_id, password, thing_type, firmware_version, layout_position, thing_properties);
     if (ret != KII_ERR_OK) {
         M_KII_LOG(kii->kii_core.logger_cb("fail to onboard.\n"));
         return ret;
