@@ -262,11 +262,17 @@ static void* _update_state(void* data) {
         updater->_kii.delay_ms_cb(updater->_update_interval * 1000);
         size_t state_size = updater->_cb_state_size(updater->_cb_state_size_data);
         if (state_size > 0) {
-            kii_ti_put_state(
+            kii_code_t res = kii_ti_put_state(
                 &updater->_kii,
                 state_size,
                 updater->_state_reader,
                 KII_FALSE);
+            if (res != KII_ERR_OK) {
+                tio_code_t code = _convert_code(res);
+                if (updater->_cb_err != NULL) {
+                    updater->_cb_err(code, "Failed to upload state", updater->_cb_err_data);
+                }
+            }
         }
     }
     return NULL;
