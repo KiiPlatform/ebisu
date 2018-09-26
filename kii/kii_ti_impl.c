@@ -31,7 +31,7 @@ kii_code_t _get_anonymous_token(
     int content_len = snprintf(
         kii->_rw_buff,
         kii->_rw_buff_size,
-        "{\"grant_type\":\"client_credentials\",\"client_id\":\"%s\",\"client_secret\":\"dummy\",\"expiresAt\":180000}",
+        "{\"grant_type\":\"client_credentials\",\"client_id\":\"%s\",\"client_secret\":\"dummy\"}",
         kii->_app_id);
     if (content_len >= kii->_rw_buff_size) {
         _req_headers_free_all(kii);
@@ -224,7 +224,7 @@ kii_code_t _onboard(
         return KII_ERR_FAIL;
     }
 
-    kii_json_field_t fields[2];
+    kii_json_field_t fields[3];
     kii_json_parse_result_t result;
     memset(fields, 0, sizeof(fields));
     fields[0].name = "accessToken";
