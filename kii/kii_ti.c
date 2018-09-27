@@ -34,13 +34,7 @@ kii_code_t kii_ti_put_firmware_version(
 {
     kii_code_t ret = KII_ERR_FAIL;
 
-    ret = _put_firnware_version(kii, firmware_version);
-    if (ret != KII_ERR_OK) {
-        M_KII_LOG(kii->kii_core.logger_cb("fail to get firmware version.\n"));
-        return ret;
-    }
-
-    return KII_ERR_OK;
+    return _put_firmware_version(kii, firmware_version);
 }
 
 kii_code_t kii_ti_get_firmware_version(
@@ -49,13 +43,7 @@ kii_code_t kii_ti_get_firmware_version(
 {
     kii_code_t ret = KII_ERR_FAIL;
 
-    ret = _get_firnware_version(kii, version);
-    if (ret != KII_ERR_OK) {
-        M_KII_LOG(kii->kii_core.logger_cb("fail to get firmware version.\n"));
-        return ret;
-    }
-
-    return KII_ERR_OK;
+    return _get_firmware_version(kii, version);
 }
 
 kii_code_t kii_ti_put_state(

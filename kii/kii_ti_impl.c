@@ -248,7 +248,7 @@ kii_code_t _onboard(
     return KII_ERR_OK;
 }
 
-kii_code_t _put_firnware_version(
+kii_code_t _put_firmware_version(
         kii_t* kii,
         const char* firmware_version)
 {
@@ -311,7 +311,7 @@ kii_code_t _put_firnware_version(
     return KII_ERR_OK;
 }
 
-kii_code_t _get_firnware_version(
+kii_code_t _get_firmware_version(
         kii_t* kii,
         kii_ti_firmware_version_t* out_version)
 {
