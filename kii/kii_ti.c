@@ -32,8 +32,6 @@ kii_code_t kii_ti_put_firmware_version(
     kii_t* kii,
     const char* firmware_version)
 {
-    kii_code_t ret = KII_ERR_FAIL;
-
     return _put_firmware_version(kii, firmware_version);
 }
 
@@ -41,8 +39,6 @@ kii_code_t kii_ti_get_firmware_version(
     kii_t* kii,
     kii_ti_firmware_version_t* version)
 {
-    kii_code_t ret = KII_ERR_FAIL;
-
     return _get_firmware_version(kii, version);
 }
 
