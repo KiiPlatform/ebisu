@@ -21,4 +21,12 @@ kii_code_t _onboard(
         const char* layout_position,
         const char* thing_properties);
 
+kii_code_t _put_firmware_version(
+        kii_t* kii,
+        const char* firmware_version);
+
+kii_code_t _get_firmware_version(
+        kii_t* kii,
+        kii_ti_firmware_version_t* out_version);
+
 #endif
