@@ -26,18 +26,7 @@ _cmd_parser_code_t _parse_first_kv(
     return _CMD_PARSE_FAIL;
 }
 
-_cmd_parser_code_t _parse_action_object(
-    const char* alias,
-    size_t alias_length,
-    const char* action_object,
-    size_t action_object_length,
-    tio_action_t* action)
-{
-    // TODO: implement it.
-    return _CMD_PARSE_FAIL;
-}
-
-_cmd_parser_code_t _parse_actions_in_alias(
+_cmd_parser_code_t _parse_alias(
     tio_handler_t* handler,
     const char* actions_array,
     size_t actions_array_length,
@@ -57,7 +46,8 @@ _cmd_parser_code_t _parse_action(
     size_t alias_length,
     const char* actions_array_in_alias,
     size_t actions_array_in_alias_length,
-    size_t action_index)
+    size_t action_index,
+    tio_action_t* out_action)
 {
     // TODO: implement it.
     return _CMD_PARSE_FAIL;
@@ -101,7 +91,7 @@ static tio_code_t _append_action_result(
     tio_handler_t* handler,
     size_t index,
     tio_bool_t succeeded,
-    const char* action_name,
+    tio_action_t* action,
     const char* err_message,
     char* work_buff,
     size_t work_buff_size)
@@ -111,12 +101,14 @@ static tio_code_t _append_action_result(
     {
         comma = "";
     }
+    char action_name[action->action_name_length+1];
+    strncpy(action_name, action->action_name, action->action_name_length);
     if (succeeded == KII_TRUE)
     {
         int len = snprintf(
             work_buff, work_buff_size,
-            "%s{\"%s\" : { \"succeeded\" : \"%s\" }}",
-            comma, action_name, "true");
+            "%s{\"%s\" : { \"succeeded\" : true }}",
+            comma, action_name);
         if (len >= work_buff_size)
         {
             return TIO_ERR_TOO_LARGE_DATA;
@@ -145,8 +137,8 @@ static tio_code_t _append_action_result(
         }
         int len = snprintf(
             work_buff, work_buff_size,
-            "%s{\"%s\" : { \"succeeded\" : \"%s\"%s}}",
-            comma, action_name, "false", err_part);
+            "%s{\"%s\" : { \"succeeded\" : false %s}}",
+            comma, action_name, err_part);
         if (len >= work_buff_size)
         {
             return TIO_ERR_TOO_LARGE_DATA;
@@ -190,7 +182,7 @@ tio_code_t _handle_command(
         size_t actions_array_in_alias_length = 0;
         char* alias = NULL;
         size_t alias_length = 0;
-        _cmd_parser_code_t res = _parse_actions_in_alias(
+        _cmd_parser_code_t res = _parse_alias(
             handler,
             actions_array,
             actions_array_length,
@@ -208,7 +200,8 @@ tio_code_t _handle_command(
                     alias_length,
                     actions_array_in_alias,
                     actions_array_in_alias_length,
-                    action_idx);
+                    action_idx,
+                    &action);
                 if (pa_res == _CMD_PARSE_OK) {
                     tio_action_err_t action_err;
                     action_err.err_message[0] = '\0';
@@ -218,7 +211,7 @@ tio_code_t _handle_command(
                         handler,
                         action_idx,
                         succeeded,
-                        action.action_name,
+                        &action,
                         action_err.err_message,
                         work_buff,
                         sizeof(work_buff)/sizeof(work_buff[0]));
@@ -234,7 +227,7 @@ tio_code_t _handle_command(
             }
         } else if ( res == _CMD_PARSE_ARRAY_OUT_OF_INDEX) {
             // Handled all actions in command.
-            kii_code_t res = kii_api_call_append_body(&handler->_kii, "]", 1);
+            kii_code_t res = kii_api_call_append_body(&handler->_kii, "]}", 2);
             if (res != KII_ERR_OK) {
                 return _tio_convert_code(res);
             }
@@ -242,6 +235,10 @@ tio_code_t _handle_command(
         } else {
             return TIO_ERR_PARSE_JSON;
         }
+    }
+    kii_code_t run_res = kii_api_call_run(&handler->_kii);
+    if (run_res != KII_ERR_OK) {
+        return _tio_convert_code(run_res);
     }
     return TIO_ERR_OK;
 }

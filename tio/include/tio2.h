@@ -33,7 +33,7 @@ typedef enum tio_data_type_t {
     TIO_TYPE_ARRAY
 } tio_data_type_t;
 
-typedef struct tio_action_params_t {
+typedef struct tio_action_value_t {
     tio_data_type_t type;
     union {
         long long_value;
@@ -42,12 +42,14 @@ typedef struct tio_action_params_t {
         const char *opaque_value;
     } param;
     size_t opaque_value_length;
-} tio_action_params_t;
+} tio_action_value_t;
 
 typedef struct tio_action_t {
     const char* alias;
+    size_t alias_length;
     const char* action_name;
-    tio_action_params_t action_params;
+    size_t action_name_length;
+    tio_action_value_t action_value;
 } tio_action_t;
 
 typedef struct tio_action_err_t {
