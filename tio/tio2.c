@@ -3,6 +3,7 @@
 #include "tio.h"
 #include "kii.h"
 #include "khc.h"
+#include "tio_impl.h"
 
 const char TIO_TASK_NAME_UPDATE_STATE[] = "task_update_state";
 
@@ -128,35 +129,8 @@ void tio_handler_set_app(
     strncpy(handler->_kii._app_host, host, sizeof(handler->_kii._app_host)-1);
 }
 
-static kii_json_parse_result_t _tio_parse_json(
-        tio_handler_t* handler,
-        const char* json_string,
-        size_t json_string_size,
-        kii_json_field_t* fields)
-{
-    kii_json_resource_t* resource = handler->_kii._json_resource;
-    kii_json_parse_result_t res = KII_JSON_PARSE_INVALID_INPUT;
-    if (resource != NULL) {
-        res = kii_json_parse(json_string, json_string_size, fields, resource);
-    } else {
-        KII_JSON_RESOURCE_ALLOC_CB alloc_cb = handler->_kii._json_alloc_cb;
-        KII_JSON_RESOURCE_FREE_CB free_cb = handler->_kii._json_free_cb;
-        res = kii_json_parse_with_allocator(json_string, json_string_size, fields, alloc_cb, free_cb);
-    }
-    return res;
-}
-
-static void _handle_command(tio_handler_t* handler, char* buffer, size_t buffer_size) {
-
-}
-
 static void _cb_receive_push(char* buffer, size_t buffer_size, void* userdata) {
     // TODO: implement it.
-}
-
-static tio_code_t _convert_code(kii_code_t code) {
-    // TODO: Implement it.
-    return TIO_ERR_FAIL;
 }
 
 tio_code_t tio_handler_start(
@@ -171,7 +145,7 @@ tio_code_t tio_handler_start(
         handler->_keep_alive_interval,
         _cb_receive_push,
         (void*)handler);
-    return _convert_code(res);
+    return _tio_convert_code(res);
 }
 
 void tio_updater_set_cb_sock_connect(
@@ -268,7 +242,7 @@ static void* _update_state(void* data) {
                 updater->_state_reader,
                 KII_FALSE);
             if (res != KII_ERR_OK) {
-                tio_code_t code = _convert_code(res);
+                tio_code_t code = _tio_convert_code(res);
                 if (updater->_cb_err != NULL) {
                     updater->_cb_err(code, "Failed to upload state", updater->_cb_err_data);
                 }

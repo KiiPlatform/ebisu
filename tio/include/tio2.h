@@ -12,6 +12,14 @@ typedef kii_author_t tio_author_t;
 
 typedef enum tio_code_t {
     TIO_ERR_OK,
+    TIO_ERR_SOCK_CONNECT,
+    TIO_ERR_SOCK_SEND,
+    TIO_ERR_SOCK_RECV,
+    TIO_ERR_WRITE_CALLBACK,
+    TIO_ERR_ALLOCATION,
+    TIO_ERR_TOO_LARGE_DATA,
+    TIO_ERR_RESP_STATUS,
+    TIO_ERR_PARSE_JSON,
     TIO_ERR_CREATE_TASK,
     TIO_ERR_FAIL
 } tio_code_t;
@@ -31,10 +39,9 @@ typedef struct tio_action_params_t {
         long long_value;
         double double_value;
         tio_bool_t bool_value;
-        const char *string_value;
-        const char *object_value;
-        const char *array_value;
+        const char *opaque_value;
     } param;
+    size_t opaque_value_length;
 } tio_action_params_t;
 
 typedef struct tio_action_t {
@@ -44,12 +51,12 @@ typedef struct tio_action_t {
 } tio_action_t;
 
 typedef struct tio_action_err_t {
-    const char err_message[64];
+    char err_message[64];
 } tio_action_err_t;
 
 typedef size_t (*TIO_CB_SIZE)(void* userdata);
 typedef size_t (*TIO_CB_READ)(char *buffer, size_t size, size_t count, void *userdata);
-typedef tio_bool_t (*TIO_CB_ACTION)(tio_action_t action, tio_action_err_t* err, void* userdata);
+typedef tio_bool_t (*TIO_CB_ACTION)(tio_action_t* action, tio_action_err_t* err, void* userdata);
 typedef void (*TIO_CB_ERR)(tio_code_t code, const char* err_message, void* userdata);
 
 typedef struct tio_handler_t {
