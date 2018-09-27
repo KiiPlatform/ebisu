@@ -32,16 +32,30 @@ kii_code_t kii_ti_put_firmware_version(
     kii_t* kii,
     const char* firmware_version)
 {
-    // TODO: implement it.
-    return KII_ERR_FAIL;
+    kii_code_t ret = KII_ERR_FAIL;
+
+    ret = _put_firnware_version(kii, firmware_version);
+    if (ret != KII_ERR_OK) {
+        M_KII_LOG(kii->kii_core.logger_cb("fail to get firmware version.\n"));
+        return ret;
+    }
+
+    return KII_ERR_OK;
 }
 
 kii_code_t kii_ti_get_firmware_version(
     kii_t* kii,
     kii_ti_firmware_version_t* version)
 {
-    // TODO: implement it.
-    return KII_ERR_FAIL;
+    kii_code_t ret = KII_ERR_FAIL;
+
+    ret = _get_firnware_version(kii, version);
+    if (ret != KII_ERR_OK) {
+        M_KII_LOG(kii->kii_core.logger_cb("fail to get firmware version.\n"));
+        return ret;
+    }
+
+    return KII_ERR_OK;
 }
 
 kii_code_t kii_ti_put_state(

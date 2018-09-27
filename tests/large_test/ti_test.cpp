@@ -39,4 +39,61 @@ TEST_CASE("TI Tests")
         REQUIRE( std::string(kii._author.author_id).length() > 0 );
         REQUIRE( std::string(kii._author.access_token).length() > 0 );
     }
+
+    SECTION("Get firmware version")
+    {
+        std::ostringstream oss;
+        oss << "LTest-" << std::time(NULL);
+        std::string vid = oss.str();
+        const char password[] = "1234";
+        const char firmware[] = "0.0.2";
+        kii_code_t res = kii_ti_onboard(&kii, vid.c_str(), password, NULL, firmware, NULL, NULL);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+        REQUIRE( std::string(kii._author.author_id).length() > 0 );
+        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+
+        kii_ti_firmware_version_t version;
+        memset(&version, 0x00, sizeof(kii_ti_firmware_version_t));
+        res = kii_ti_get_firmware_version(&kii, &version);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+        REQUIRE( std::string(version.firmware_version) == std::string(firmware) );
+    }
+
+    SECTION("Put firmware version")
+    {
+        std::ostringstream oss;
+        oss << "LTest-" << std::time(NULL);
+        std::string vid = oss.str();
+        const char password[] = "1234";
+        kii_code_t res = kii_ti_onboard(&kii, vid.c_str(), password, NULL, NULL, NULL, NULL);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+        REQUIRE( std::string(kii._author.author_id).length() > 0 );
+        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+
+        kii_ti_firmware_version_t version;
+        memset(&version, 0x00, sizeof(kii_ti_firmware_version_t));
+        res = kii_ti_get_firmware_version(&kii, &version);
+
+        REQUIRE( res == KII_ERR_RESP_STATUS );
+        REQUIRE( khc_get_status_code(&kii._khc) == 404 );
+        REQUIRE( std::string(version.firmware_version).length() == 0 );
+
+        const char firmware[] = "0.0.3";
+        res = kii_ti_put_firmware_version(&kii, firmware);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 204 );
+
+        res = kii_ti_get_firmware_version(&kii, &version);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+        REQUIRE( std::string(version.firmware_version) == std::string(firmware) );
+    }
 }
