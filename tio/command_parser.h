@@ -7,10 +7,14 @@
 typedef enum _cmd_parser_code_t {
     _CMD_PARSE_OK,
     _CMD_PARSE_ARRAY_OUT_OF_INDEX,
+    _CMD_PARSE_ERR_DATA_TOO_LARGE,
     _CMD_PARSE_FAIL
 } _cmd_parser_code_t;
 
 _cmd_parser_code_t _get_object_in_array(
+    kii_json_resource_t* resource,
+    KII_JSON_RESOURCE_ALLOC_CB alloc_cb,
+    KII_JSON_RESOURCE_FREE_CB free_cb,
     const char* json_array,
     size_t json_array_length,
     size_t index,

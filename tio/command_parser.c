@@ -4,14 +4,44 @@
 #include "kii_json_utils.h"
 
 _cmd_parser_code_t _get_object_in_array(
+    kii_json_resource_t* resource,
+    KII_JSON_RESOURCE_ALLOC_CB alloc_cb,
+    KII_JSON_RESOURCE_FREE_CB free_cb,
     const char* json_array,
     size_t json_array_length,
     size_t index,
     char** out_object,
     size_t* out_object_length)
 {
-    // TODO: implement it.
-    return _CMD_PARSE_FAIL;
+    char idx_str[32];
+    int len = snprintf(idx_str, 32, "/[%lu]", (unsigned long)index);
+    if (len >= 32) {
+        return _CMD_PARSE_ERR_DATA_TOO_LARGE;
+    }
+    kii_json_field_t field[2];
+    memset(field, 0x00, sizeof(field));
+    field[0].path = idx_str;
+    field[0].type = KII_JSON_FIELD_TYPE_OBJECT;
+    field[0].field_copy.string = NULL;
+    field[0].result = KII_JSON_FIELD_PARSE_SUCCESS;
+    field[1].path = NULL;
+
+    kii_json_parse_result_t res = KII_JSON_PARSE_INVALID_INPUT;
+    if (resource != NULL) {
+        res = kii_json_parse(json_array, json_array_length, field, resource);
+    } else {
+        res = kii_json_parse_with_allocator(json_array, json_array_length, field, alloc_cb, free_cb);
+    }
+
+    if (res == KII_JSON_PARSE_SUCCESS) {
+        *out_object = (char*)(json_array + field[0].start);
+        *out_object_length = field[0].start - field[0].end;
+        return _CMD_PARSE_OK;
+    } else if (res == KII_JSON_PARSE_PARTIAL_SUCCESS) {
+        return _CMD_PARSE_ARRAY_OUT_OF_INDEX;
+    } else {
+        return _CMD_PARSE_FAIL;
+    }
 }
 
 _cmd_parser_code_t _parse_first_kv(
@@ -22,8 +52,26 @@ _cmd_parser_code_t _parse_first_kv(
     char** out_value,
     size_t* out_value_length)
 {
-    // TODO: implement it.
-    return _CMD_PARSE_FAIL;
+    jsmn_parser parser;
+    jsmnerr_t p_err = JSMN_ERROR_NOMEM;
+    jsmntok_t tokens[3];
+
+    p_err = jsmn_parse(&parser, object, object_length, tokens, 3);
+    if (p_err >= 0) {
+        if (tokens[0].type != JSMN_OBJECT) {
+            return _CMD_PARSE_FAIL;
+        }
+        if (tokens[1].type != JSMN_STRING) {
+            return _CMD_PARSE_FAIL;
+        }
+        *out_key = (char*)(object + tokens[1].start);
+        *out_key_length = tokens[1].end - tokens[1].start;
+        *out_value = (char*)(object + tokens[2].start);
+        *out_value_length = tokens[2].end - tokens[2].start;
+        return _CMD_PARSE_OK;
+    } else {
+        return _CMD_PARSE_FAIL;
+    }
 }
 
 _cmd_parser_code_t _parse_alias(
