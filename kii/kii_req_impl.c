@@ -266,12 +266,17 @@ kii_code_t _set_app_key_header(kii_t* kii)
 
 kii_code_t _set_auth_header(kii_t* kii)
 {
-    if (strlen(kii->_author.access_token) > 0) {
+    return _set_auth_bearer_token(kii, kii->_author.access_token);
+}
+
+kii_code_t _set_auth_bearer_token(kii_t* kii, const char* token)
+{
+    if (strlen(token) > 0) {
         int header_len = snprintf(
             kii->_rw_buff,
             kii->_rw_buff_size,
             "Authorization: Bearer %s",
-            kii->_author.access_token);
+            token);
         if (header_len >= kii->_rw_buff_size) {
             return KII_ERR_TOO_LARGE_DATA;
         }
