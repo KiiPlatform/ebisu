@@ -260,6 +260,16 @@ static tio_code_t _append_action_result(
     }
 }
 
+//
+// actions : [
+//    {alias1 : [ { setPower: true}, {setTemp : 25} ]}
+//    {alias2 : [ {...}, ... ]},...
+// ]
+// actionResults :
+//  [
+//    {setPower : {succeeded : true}},
+//    {setTemp : {succeeded : false, message : "com err"}},
+// ]
 tio_code_t _handle_command(
     tio_handler_t* handler,
     const char* command,
