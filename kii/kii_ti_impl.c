@@ -377,7 +377,7 @@ kii_code_t _put_state(
         kii_t* kii,
         size_t content_length,
         KII_CB_READ state_read_cb,
-        void* userdata,
+        void* state_read_cb_data,
         const char* opt_normalizer_host)
 {
     kii_code_t ret = KII_ERR_FAIL;
@@ -417,7 +417,7 @@ kii_code_t _put_state(
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_set_cb_read(&kii->_khc, state_read_cb, userdata);
+    khc_set_cb_read(&kii->_khc, state_read_cb, state_read_cb_data);
     khc_code code = khc_perform(&kii->_khc);
     khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
     _req_headers_free_all(kii);

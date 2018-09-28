@@ -431,7 +431,7 @@ kii_code_t kii_ti_put_state(
     kii_t* kii,
     size_t content_length,
     KII_CB_READ state_read_cb,
-    void* userdata,
+    void* state_read_cb_data,
     const char* opt_normalizer_host);
 
 /** start to create request for REST API.
