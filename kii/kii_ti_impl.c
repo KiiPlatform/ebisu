@@ -373,3 +373,65 @@ kii_code_t _get_firmware_version(
     return KII_ERR_OK;
 }
 
+kii_code_t _put_state(
+        kii_t* kii,
+        size_t content_length,
+        KII_CB_READ state_read_cb,
+        void* state_read_cb_data,
+        const char* opt_normalizer_host)
+{
+    kii_code_t ret = KII_ERR_FAIL;
+    khc_set_zero_excl_cb(&kii->_khc);
+    _reset_buff(kii);
+
+    if (opt_normalizer_host != NULL) {
+        khc_set_host(&kii->_khc, opt_normalizer_host);
+    } else {
+        khc_set_host(&kii->_khc, kii->_app_host);
+    }
+    khc_set_method(&kii->_khc, "PUT");
+
+    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/thing-if/apps/%s/targets/thing:%s/states", kii->_app_id, kii->_author.author_id);
+    if (path_len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    khc_set_path(&kii->_khc, kii->_rw_buff);
+
+    // Request headers.
+    ret = _set_auth_header(kii);
+    if (ret != KII_ERR_OK) {
+        _req_headers_free_all(kii);
+        return ret;
+    }
+
+    ret = _set_content_type(kii, "application/json");
+    if (ret != KII_ERR_OK) {
+        _req_headers_free_all(kii);
+        return ret;
+    }
+
+    ret = _set_content_length(kii, content_length);
+    if (ret != KII_ERR_OK) {
+        _req_headers_free_all(kii);
+        return ret;
+    }
+
+    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_cb_read(&kii->_khc, state_read_cb, state_read_cb_data);
+    khc_code code = khc_perform(&kii->_khc);
+    khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
+    _req_headers_free_all(kii);
+
+    ret = _convert_code(code);
+    if (ret != KII_ERR_OK) {
+        return ret;
+    }
+
+    int resp_code = khc_get_status_code(&kii->_khc);
+    if(resp_code < 200 || 300 <= resp_code) {
+        return KII_ERR_RESP_STATUS;
+    }
+
+    return KII_ERR_OK;    
+}
+

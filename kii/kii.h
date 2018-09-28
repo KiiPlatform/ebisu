@@ -431,7 +431,8 @@ kii_code_t kii_ti_put_state(
     kii_t* kii,
     size_t content_length,
     KII_CB_READ state_read_cb,
-    kii_bool_t send_to_normalizer);
+    void* state_read_cb_data,
+    const char* opt_normalizer_host);
 
 /** start to create request for REST API.
  *
@@ -541,8 +542,6 @@ kii_code_t kii_set_json_parser_resource_cb(kii_t* kii,
 const char* kii_get_etag(kii_t* kii);
 
 int kii_get_resp_status(kii_t* kii);
-
-void kii_ti_set_normalizer_site(kii_t* kii, const char* normalizer_site);
 
 #ifdef __cplusplus
 }

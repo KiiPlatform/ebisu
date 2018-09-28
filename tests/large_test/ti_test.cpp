@@ -96,4 +96,30 @@ TEST_CASE("TI Tests")
         REQUIRE( khc_get_status_code(&kii._khc) == 200 );
         REQUIRE( std::string(version.firmware_version) == std::string(firmware) );
     }
+
+    SECTION("Put state")
+    {
+        const char vid[] = "test1";
+        const char password[] = "1234";
+        kii_code_t res = kii_ti_onboard(&kii, vid, password, NULL, NULL, NULL, NULL);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+        REQUIRE( std::string(kii._author.author_id).length() > 0 );
+        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+
+        std::string body = "{\"dummyKey\":\"dummyvalue\"}";
+        std::istringstream iss(body);
+        std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)>
+            on_read = [=, &iss](char *buffer, size_t size, size_t count, void *userdata)
+            {
+                return iss.read(buffer, size * count).gcount();
+            };
+        kiiltest::RWFunc ctx;
+        ctx.on_read = on_read;
+        res = kii_ti_put_state(&kii, body.length(), kiiltest::read_cb, &ctx, NULL);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 204 );
+    }
 }
