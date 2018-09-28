@@ -4,6 +4,7 @@
 #include "kii.h"
 #include "khc.h"
 #include "tio_impl.h"
+#include "command_parser.h"
 
 const char TIO_TASK_NAME_UPDATE_STATE[] = "task_update_state";
 
@@ -129,8 +130,12 @@ void tio_handler_set_app(
     strncpy(handler->_kii._app_host, host, sizeof(handler->_kii._app_host)-1);
 }
 
-static void _cb_receive_push(char* buffer, size_t buffer_size, void* userdata) {
-    // TODO: implement it.
+static void _cb_receive_push(char* palyload, size_t payload_length, void* userdata) {
+    tio_handler_t* handler = (tio_handler_t*)userdata;
+    tio_code_t handle_res = _handle_command(handler, palyload, payload_length);
+    if (handler->_cb_err != NULL) {
+        handler->_cb_err(handle_res, "Failed to handle command", handler->_cb_err_data);
+    }
 }
 
 tio_code_t tio_handler_start(
