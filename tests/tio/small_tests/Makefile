@@ -38,4 +38,9 @@ test: $(TARGET)
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(LIB_BUILD_DIR)/lib \
 	$(TESTCMD)
 
-.PHONY: build test
+clean:
+	rm -f $(TARGET)
+	rm -rf $(TEST_RESULT_DIR)
+	rm -rf $(LIB_BUILD_DIR)
+
+.PHONY: build test clean
