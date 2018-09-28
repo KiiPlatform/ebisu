@@ -24,6 +24,8 @@ ifdef JUNIT
 TESTCMD+= -r junit -o $(TEST_RESULT)
 endif
 
+all: test
+
 $(LIB_BUILD_DIR): $(LIB_DEPS)
 	mkdir -p $(LIB_BUILD_DIR)
 	cd 	$(LIB_BUILD_DIR) && cmake -DCMAKE_INSTALL_PREFIX=. ../../../../tio && make install
