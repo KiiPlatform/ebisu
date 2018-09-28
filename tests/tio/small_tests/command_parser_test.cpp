@@ -63,5 +63,14 @@ TEST_CASE( "_get_object_in_array" ) {
             );
         REQUIRE( p_res == _CMD_PARSE_ARRAY_OUT_OF_INDEX );
     }
+}
 
+TEST_CASE( "_parse_first_kv" ) {
+    // TODO: Add tests.
+    REQUIRE( true );
+}
+
+TEST_CASE( "_parse_action_object" ) {
+    // TODO: Add tests.
+    REQUIRE( true );
 }
