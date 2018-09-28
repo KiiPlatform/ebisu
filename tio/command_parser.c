@@ -35,7 +35,7 @@ _cmd_parser_code_t _get_object_in_array(
 
     if (res == KII_JSON_PARSE_SUCCESS) {
         *out_object = (char*)(json_array + field[0].start);
-        *out_object_length = field[0].start - field[0].end;
+        *out_object_length = field[0].end - field[0].start;
         return _CMD_PARSE_OK;
     } else if (res == KII_JSON_PARSE_PARTIAL_SUCCESS) {
         return _CMD_PARSE_ARRAY_OUT_OF_INDEX;

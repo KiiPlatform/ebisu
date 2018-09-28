@@ -24,5 +24,6 @@ TEST_CASE( "_get_object_in_array" ) {
         &obj_str_len
         );
     REQUIRE( p_res == _CMD_PARSE_OK );
+    REQUIRE( obj_str_len == 7);
 
 }
