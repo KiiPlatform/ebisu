@@ -50,7 +50,8 @@ _cmd_parser_code_t _parse_first_kv(
     char** out_key,
     size_t* out_key_length,
     char** out_value,
-    size_t* out_value_length)
+    size_t* out_value_length,
+    jsmntype_t* out_value_type)
 {
     jsmn_parser parser;
     jsmnerr_t p_err = JSMN_ERROR_NOMEM;
@@ -84,8 +85,16 @@ _cmd_parser_code_t _parse_alias(
     char** out_actions_array_in_alias,
     size_t* out_actions_array_in_alias_length)
 {
-    // TODO: implement it.
-    return _CMD_PARSE_FAIL;
+    _cmd_parser_code_t res = _get_object_in_array(
+        handler->_kii._json_resource,
+        handler->_kii._json_alloc_cb,
+        handler->_kii._json_free_cb,
+        actions_array,
+        actions_array_length,
+        alias_index,
+        out_actions_array_in_alias,
+        out_actions_array_in_alias_length);
+    return res;
 }
 
 _cmd_parser_code_t _parse_action(
@@ -97,8 +106,63 @@ _cmd_parser_code_t _parse_action(
     size_t action_index,
     tio_action_t* out_action)
 {
-    // TODO: implement it.
-    return _CMD_PARSE_FAIL;
+    char* action_object = NULL;
+    size_t action_object_length = 0;
+    _cmd_parser_code_t res = _get_object_in_array(
+        handler->_kii._json_resource,
+        handler->_kii._json_alloc_cb,
+        handler->_kii._json_free_cb,
+        actions_array_in_alias,
+        actions_array_in_alias_length,
+        action_index,
+        &action_object,
+        &action_object_length);
+    if (res != _CMD_PARSE_OK) {
+        return res;
+    }
+    char* action_name = NULL;
+    size_t action_name_length = 0;
+    char* action_value = NULL;
+    size_t action_value_length = 0;
+    jsmntype_t action_type = JSMN_OBJECT;
+    res = _parse_first_kv(
+        action_object,
+        action_object_length,
+        &action_name,
+        &action_name_length,
+        &action_value,
+        &action_value_length,
+        &action_type);
+    if (res != _CMD_PARSE_OK) {
+        return res;
+    }
+    out_action->alias = alias;
+    out_action->alias_length = alias_length;
+    out_action->action_name = action_name;
+    out_action->action_name_length = action_name_length;
+    switch (action_type) {
+        case JSMN_ARRAY:
+            out_action->action_value.type = TIO_TYPE_ARRAY;
+            out_action->action_value.opaque_value_length = action_value_length;
+            out_action->action_value.param.opaque_value = action_value;
+            break;
+        case JSMN_OBJECT:
+            out_action->action_value.type = TIO_TYPE_OBJECT;
+            out_action->action_value.opaque_value_length = action_value_length;
+            out_action->action_value.param.opaque_value = action_value;
+            break;
+        case JSMN_STRING:
+            out_action->action_value.type = TIO_TYPE_STRING;
+            out_action->action_value.opaque_value_length = action_value_length;
+            out_action->action_value.param.opaque_value = action_value;
+            break;
+        case JSMN_PRIMITIVE:
+            // FIXME: parse number, boolean.
+            break;
+        default:
+            break;
+    }
+    return _CMD_PARSE_OK;
 }
 
 static tio_code_t _start_result_request(
