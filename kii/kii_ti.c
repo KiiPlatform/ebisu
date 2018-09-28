@@ -48,6 +48,5 @@ kii_code_t kii_ti_put_state(
     KII_CB_READ state_read_cb,
     const char* opt_normalizer_host)
 {
-    // TODO: implement it.
-    return KII_ERR_FAIL;
+    return _put_state(kii, content_length, state_read_cb, opt_normalizer_host);
 }

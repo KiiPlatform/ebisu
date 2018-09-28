@@ -13,6 +13,15 @@
 #include "large_test.h"
 #include "picojson.h"
 
+#define STATE_BODY "{\"dummyKey\":\"dummyvalue\"}"
+
+static size_t readCB(char* buffer, size_t size, size_t count, void *userdata)
+{
+    std::istringstream iss = std::istringstream(std::string(STATE_BODY));
+    return iss.read(buffer, size * count).gcount();
+}
+
+
 TEST_CASE("TI Tests")
 {
     // To Avoid 429 Too Many Requests
@@ -95,5 +104,23 @@ TEST_CASE("TI Tests")
         REQUIRE( res == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 200 );
         REQUIRE( std::string(version.firmware_version) == std::string(firmware) );
+    }
+
+    SECTION("Put state")
+    {
+        const char vid[] = "test1";
+        const char password[] = "1234";
+        kii_code_t res = kii_ti_onboard(&kii, vid, password, NULL, NULL, NULL, NULL);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+        REQUIRE( std::string(kii._author.author_id).length() > 0 );
+        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+
+        std::string body(STATE_BODY);
+        res = kii_ti_put_state(&kii, body.length(), readCB, NULL);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 204 );
     }
 }
