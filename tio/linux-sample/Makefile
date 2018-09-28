@@ -10,7 +10,7 @@ endif
 
 CFLAGS += -Wall -pthread
 
-LIBS = -lssl -lcrypto -lpthread -lkiithingifsdk
+LIBS = -lssl -lcrypto -lpthread -ltio
 LD_FLAGS = -L$(INSTALL_PATH)/lib
 # On Mac using homebrew.
 LD_FLAGS += -L/usr/local/opt/openssl/lib
