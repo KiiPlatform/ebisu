@@ -118,7 +118,7 @@ TEST_CASE( "_parse_action_object" ) {
         const char alias[] = "myalias";
         _cmd_parser_code_t p_res = _parse_action(
             &handler,
-            "alias",
+            alias,
             strlen(alias),
             json_str,
             strlen(json_str),
@@ -126,12 +126,29 @@ TEST_CASE( "_parse_action_object" ) {
             &action);
 
         REQUIRE( p_res == _CMD_PARSE_OK );
-        
+
+        // Check action name.
         char action_name[action.action_name_length + 1];
         strncpy(action_name, action.action_name, action.action_name_length);
         action_name[action.action_name_length] = '\0';
 
         REQUIRE ( strcmp(action_name, "setPower") == 0 );
+
+        // Check action value.
+        char action_value[action.action_value.opaque_value_length + 1];
+        strncpy(action_value, action.action_value.param.opaque_value, action.action_value.opaque_value_length);
+        action_value[action.action_value.opaque_value_length] = '\0';
+
+        REQUIRE ( strcmp(action_value, "{\"power\":true}") == 0 );
+
+        // Check action value type
+        REQUIRE ( action.action_value.type == TIO_TYPE_OBJECT );
+
+        // Check alias
+        char alias_copy[action.alias_length+1];
+        strncpy(alias_copy, action.alias, action.alias_length);
+        alias_copy[action.alias_length] = '\0';
+        REQUIRE ( strcmp(alias_copy, alias) == 0 );
     }
 
 }
