@@ -46,7 +46,8 @@ kii_code_t kii_ti_put_state(
     kii_t* kii,
     size_t content_length,
     KII_CB_READ state_read_cb,
+    void* userdata,
     const char* opt_normalizer_host)
 {
-    return _put_state(kii, content_length, state_read_cb, opt_normalizer_host);
+    return _put_state(kii, content_length, state_read_cb, userdata, opt_normalizer_host);
 }

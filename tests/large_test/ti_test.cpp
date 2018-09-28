@@ -13,15 +13,6 @@
 #include "large_test.h"
 #include "picojson.h"
 
-#define STATE_BODY "{\"dummyKey\":\"dummyvalue\"}"
-
-static size_t readCB(char* buffer, size_t size, size_t count, void *userdata)
-{
-    std::istringstream iss = std::istringstream(std::string(STATE_BODY));
-    return iss.read(buffer, size * count).gcount();
-}
-
-
 TEST_CASE("TI Tests")
 {
     // To Avoid 429 Too Many Requests
@@ -117,8 +108,16 @@ TEST_CASE("TI Tests")
         REQUIRE( std::string(kii._author.author_id).length() > 0 );
         REQUIRE( std::string(kii._author.access_token).length() > 0 );
 
-        std::string body(STATE_BODY);
-        res = kii_ti_put_state(&kii, body.length(), readCB, NULL);
+        std::string body = "{\"dummyKey\":\"dummyvalue\"}";
+        std::istringstream iss(body);
+        std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)>
+            on_read = [=, &iss](char *buffer, size_t size, size_t count, void *userdata)
+            {
+                return iss.read(buffer, size * count).gcount();
+            };
+        kiiltest::BodyFunc ctx;
+        ctx.on_read = on_read;
+        res = kii_ti_put_state(&kii, body.length(), kiiltest::read_cb, &ctx, NULL);
 
         REQUIRE( res == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 204 );

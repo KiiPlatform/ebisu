@@ -33,6 +33,7 @@ kii_code_t _put_state(
         kii_t* kii,
         size_t content_length,
         KII_CB_READ state_read_cb,
+        void* userdata,
         const char* opt_normalizer_host);
 
 #endif
