@@ -29,7 +29,8 @@ _cmd_parser_code_t _parse_first_kv(
     char** out_key,
     size_t* out_key_length,
     char** out_value,
-    size_t* out_value_length);
+    size_t* out_value_length,
+    jsmntype_t* out_value_type);
 
 _cmd_parser_code_t _parse_action_object(
     const char* alias,
