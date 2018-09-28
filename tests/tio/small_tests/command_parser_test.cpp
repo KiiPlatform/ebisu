@@ -67,7 +67,42 @@ TEST_CASE( "_get_object_in_array" ) {
 
 TEST_CASE( "_parse_first_kv" ) {
     // TODO: Add tests.
-    REQUIRE( true );
+    SECTION("Int value") {
+        const char json_obj[] = "{\"a\":1}";
+        char* out_key = NULL;
+        size_t out_key_len = 0;
+        char* out_value = NULL;
+        size_t out_value_len = 0;
+        jsmntype_t out_value_type = JSMN_OBJECT;
+        _cmd_parser_code_t p_res = _parse_first_kv(
+            json_obj,
+            strlen(json_obj),
+            &out_key,
+            &out_key_len,
+            &out_value,
+            &out_value_len,
+            &out_value_type);
+        
+        REQUIRE( p_res == _CMD_PARSE_OK );
+
+        // Check key.
+        REQUIRE( out_key_len == 1 );
+        char out_key_copy[out_key_len+1];
+        strncpy(out_key_copy, out_key, out_key_len);
+        out_key_copy[out_key_len] = '\0';
+        REQUIRE( strcmp(out_key_copy, "a") == 0 );
+
+        // Check value.
+        REQUIRE( out_value_len == 1 );
+        char out_value_copy[out_value_len+1];
+        strncpy(out_value_copy, out_value, out_value_len);
+        out_value_copy[out_value_len] = '\0';
+        REQUIRE( strcmp(out_value_copy, "1") == 0 );
+
+        // Check value type.
+        REQUIRE( out_value_type == JSMN_PRIMITIVE );
+    }
+
 }
 
 TEST_CASE( "_parse_action_object" ) {

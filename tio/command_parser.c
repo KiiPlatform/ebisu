@@ -54,6 +54,7 @@ _cmd_parser_code_t _parse_first_kv(
     jsmntype_t* out_value_type)
 {
     jsmn_parser parser;
+    jsmn_init(&parser);
     jsmnerr_t p_err = JSMN_ERROR_NOMEM;
     jsmntok_t tokens[3];
 
@@ -69,6 +70,7 @@ _cmd_parser_code_t _parse_first_kv(
         *out_key_length = tokens[1].end - tokens[1].start;
         *out_value = (char*)(object + tokens[2].start);
         *out_value_length = tokens[2].end - tokens[2].start;
+        *out_value_type = tokens[2].type;
         return _CMD_PARSE_OK;
     } else {
         return _CMD_PARSE_FAIL;
