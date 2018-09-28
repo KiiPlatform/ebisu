@@ -11,6 +11,8 @@ TEST_RESULT_DIR=test-results/junit
 TEST_RESULT=$(TEST_RESULT_DIR)/test-result.xml
 
 INCLUDES=-I. -I$(LIB_BUILD_DIR)/include
+# tio private headers.
+INCLUDES+=-I../../../tio/
 LIBS_DIR=-L$(LIB_BUILD_DIR)/lib
 LIBS=-ltio
 

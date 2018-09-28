@@ -1,6 +1,10 @@
 #ifndef __tio2__
 #define __tio2__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "kii.h"
 #include "khc.h"
 
@@ -141,5 +145,9 @@ tio_code_t tio_updater_start(
     void* cb_state_size_data,
     TIO_CB_READ state_reader,
     void* state_reader_data);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

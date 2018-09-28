@@ -1,6 +1,10 @@
 #ifndef _command_parser_
 #define _command_parser_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <string.h>
 #include "tio2.h"
 
@@ -49,5 +53,9 @@ kii_json_parse_result_t _parse_json(
     const char* json_string,
     size_t json_string_size,
     kii_json_field_t* fields);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
