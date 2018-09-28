@@ -25,5 +25,7 @@ TEST_CASE( "_get_object_in_array" ) {
         );
     REQUIRE( p_res == _CMD_PARSE_OK );
     REQUIRE( obj_str_len == 7);
-
+    char obj_str_copy[obj_str_len+1];
+    strncpy(obj_str_copy, obj_str, obj_str_len);
+    REQUIRE( strcmp(obj_str_copy, "{\"a\":1}") == 0 );
 }
