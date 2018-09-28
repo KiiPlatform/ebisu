@@ -39,11 +39,6 @@ _cmd_parser_code_t _parse_action_object(
     size_t action_object_length,
     tio_action_t* action);
 
-tio_code_t _handle_action(
-    tio_handler_t* handler,
-    const char* actions_array,
-    size_t actions_array_length);
-
 tio_code_t _handle_command(
     tio_handler_t* handler,
     const char* command,
