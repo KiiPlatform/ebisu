@@ -66,7 +66,7 @@ TEST_CASE( "_get_object_in_array" ) {
 }
 
 TEST_CASE( "_parse_first_kv" ) {
-    // TODO: Add tests.
+    // TODO: Add other types test.
     SECTION("Int value") {
         const char json_obj[] = "{\"a\":1}";
         char* out_key = NULL;
@@ -106,6 +106,32 @@ TEST_CASE( "_parse_first_kv" ) {
 }
 
 TEST_CASE( "_parse_action_object" ) {
-    // TODO: Add tests.
-    REQUIRE( true );
+    tio_action_t action;
+    tio_handler_t handler;
+    kii_json_token_t tokens[16];
+    kii_json_resource_t resource = { tokens, 16 };
+    handler._kii._json_resource = &resource;
+
+    // TODO: Add other types tests.
+    SECTION("Object action") {
+        const char json_str[] = "[{\"setPower\":{\"power\":true}}]";
+        const char alias[] = "myalias";
+        _cmd_parser_code_t p_res = _parse_action(
+            &handler,
+            "alias",
+            strlen(alias),
+            json_str,
+            strlen(json_str),
+            0,
+            &action);
+
+        REQUIRE( p_res == _CMD_PARSE_OK );
+        
+        char action_name[action.action_name_length + 1];
+        strncpy(action_name, action.action_name, action.action_name_length);
+        action_name[action.action_name_length] = '\0';
+
+        REQUIRE ( strcmp(action_name, "setPower") == 0 );
+    }
+
 }

@@ -36,12 +36,14 @@ _cmd_parser_code_t _parse_first_kv(
     size_t* out_value_length,
     jsmntype_t* out_value_type);
 
-_cmd_parser_code_t _parse_action_object(
+_cmd_parser_code_t _parse_action(
+    tio_handler_t* handler,
     const char* alias,
     size_t alias_length,
-    const char* action_object,
-    size_t action_object_length,
-    tio_action_t* action);
+    const char* actions_array_in_alias,
+    size_t actions_array_in_alias_length,
+    size_t action_index,
+    tio_action_t* out_action);
 
 tio_code_t _handle_command(
     tio_handler_t* handler,

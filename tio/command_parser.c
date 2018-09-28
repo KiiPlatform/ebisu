@@ -56,9 +56,9 @@ _cmd_parser_code_t _parse_first_kv(
     jsmn_parser parser;
     jsmn_init(&parser);
     jsmnerr_t p_err = JSMN_ERROR_NOMEM;
-    jsmntok_t tokens[3];
+    jsmntok_t tokens[64];
 
-    p_err = jsmn_parse(&parser, object, object_length, tokens, 3);
+    p_err = jsmn_parse(&parser, object, object_length, tokens, 64);
     if (p_err >= 0) {
         if (tokens[0].type != JSMN_OBJECT) {
             return _CMD_PARSE_FAIL;
@@ -72,6 +72,8 @@ _cmd_parser_code_t _parse_first_kv(
         *out_value_length = tokens[2].end - tokens[2].start;
         *out_value_type = tokens[2].type;
         return _CMD_PARSE_OK;
+    } else if (p_err == JSMN_ERROR_NOMEM) {
+        return _CMD_PARSE_ERR_DATA_TOO_LARGE;
     } else {
         return _CMD_PARSE_FAIL;
     }
