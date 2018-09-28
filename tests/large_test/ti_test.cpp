@@ -115,7 +115,7 @@ TEST_CASE("TI Tests")
             {
                 return iss.read(buffer, size * count).gcount();
             };
-        kiiltest::BodyFunc ctx;
+        kiiltest::RWFunc ctx;
         ctx.on_read = on_read;
         res = kii_ti_put_state(&kii, body.length(), kiiltest::read_cb, &ctx, NULL);
 

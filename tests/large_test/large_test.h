@@ -44,19 +44,19 @@ inline long long current_time() {
     return now.time_since_epoch().count() / 1000;
 }
 
-class BodyFunc {
+class RWFunc {
 public:
     std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)> on_read;
     std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)> on_write;
 };
 
 inline size_t read_cb(char *buffer, size_t size, size_t count, void *userdata) {
-    BodyFunc* ctx = (BodyFunc*)userdata;
+    RWFunc* ctx = (RWFunc*)userdata;
     return ctx->on_read(buffer, size, count, userdata);
 }
 
 inline size_t write_cb(char *buffer, size_t size, size_t count, void *userdata) {
-    BodyFunc* ctx = (BodyFunc*)userdata;
+    RWFunc* ctx = (RWFunc*)userdata;
     return ctx->on_write(buffer, size, count, userdata);
 }
 
