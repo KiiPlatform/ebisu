@@ -35,7 +35,7 @@ _cmd_parser_code_t _get_object_in_array(
 
     if (res == KII_JSON_PARSE_SUCCESS) {
         *out_object = (char*)(json_array + field[0].start);
-        *out_object_length = field[0].start - field[0].end;
+        *out_object_length = field[0].end - field[0].start;
         return _CMD_PARSE_OK;
     } else if (res == KII_JSON_PARSE_PARTIAL_SUCCESS) {
         return _CMD_PARSE_ARRAY_OUT_OF_INDEX;
@@ -54,10 +54,11 @@ _cmd_parser_code_t _parse_first_kv(
     jsmntype_t* out_value_type)
 {
     jsmn_parser parser;
+    jsmn_init(&parser);
     jsmnerr_t p_err = JSMN_ERROR_NOMEM;
-    jsmntok_t tokens[3];
+    jsmntok_t tokens[64];
 
-    p_err = jsmn_parse(&parser, object, object_length, tokens, 3);
+    p_err = jsmn_parse(&parser, object, object_length, tokens, 64);
     if (p_err >= 0) {
         if (tokens[0].type != JSMN_OBJECT) {
             return _CMD_PARSE_FAIL;
@@ -69,7 +70,10 @@ _cmd_parser_code_t _parse_first_kv(
         *out_key_length = tokens[1].end - tokens[1].start;
         *out_value = (char*)(object + tokens[2].start);
         *out_value_length = tokens[2].end - tokens[2].start;
+        *out_value_type = tokens[2].type;
         return _CMD_PARSE_OK;
+    } else if (p_err == JSMN_ERROR_NOMEM) {
+        return _CMD_PARSE_ERR_DATA_TOO_LARGE;
     } else {
         return _CMD_PARSE_FAIL;
     }
