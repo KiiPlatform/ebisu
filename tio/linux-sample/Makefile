@@ -20,6 +20,7 @@ TARGET = exampleapp
 INCLUDES = -I$(INSTALL_PATH)/include
 # On Mac using homebrew.
 INCLUDES += -I/usr/local/opt/openssl/include/
+RPATH = -Wl,-rpath,$(INSTALL_PATH)/lib
 
 all: clean $(TARGET)
 
@@ -30,7 +31,7 @@ sdk:
 	cd $(SDK_BUILD_PATH) && cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) ../../ && make && make DESTDIR=. install
 
 $(TARGET): sdk
-	gcc $(CFLAGS) $(SOURCES) $(LIBS) $(LD_FLAGS) $(INCLUDES) -o $@
+	gcc $(CFLAGS) $(SOURCES) $(LIBS) $(LD_FLAGS) $(INCLUDES) $(RPATH) -o $@
 
 clean:
 	touch $(TARGET)
