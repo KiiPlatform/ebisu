@@ -14,6 +14,5 @@ kii_task_code_t task_create_cb_impl(
     KII_TASK_ENTRY entry,
     void* param)
 {
-    // TODO: implement.
-    return KII_TASKC_OK;
+    return task_create_cb(name, entry, param);
 }

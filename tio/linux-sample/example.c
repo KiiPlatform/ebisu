@@ -184,25 +184,34 @@ static void print_help() {
 
 void init(
         tio_handler_t* tio,
-        char* buffer,
-        int buffer_size,
+        char* kii_buffer,
+        int kii_buffer_size,
         void* http_ssl_ctx,
+        char* mqtt_buffer,
+        int mqtt_buffer_size,
         void* mqtt_ssl_ctx,
         kii_json_resource_t* resource)
 {
     tio_handler_set_app(tio, EX_APP_ID, EX_APP_SITE);
 
-    tio_handler_set_http_buff(tio, buffer, buffer_size);
+    tio_handler_set_cb_task_create(tio, task_create_cb_impl);
+    tio_handler_set_cb_delay_ms(tio, delay_ms_cb_impl);
+
+    tio_handler_set_http_buff(tio, kii_buffer, kii_buffer_size);
 
     tio_handler_set_cb_sock_connect_http(tio, sock_cb_connect, http_ssl_ctx);
     tio_handler_set_cb_sock_send_http(tio, sock_cb_send, http_ssl_ctx);
     tio_handler_set_cb_sock_recv_http(tio, sock_cb_recv, http_ssl_ctx);
     tio_handler_set_cb_sock_close_http(tio, sock_cb_close, http_ssl_ctx);
 
+    tio_handler_set_mqtt_buff(tio, mqtt_buffer, mqtt_buffer_size);
+
     tio_handler_set_cb_sock_connect_mqtt(tio, mqtt_cb_connect, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_send_mqtt(tio, mqtt_cb_send, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_recv_mqtt(tio, mqtt_cb_recv, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_close_mqtt(tio, mqtt_cb_close, mqtt_ssl_ctx);
+
+    tio_handler_set_keep_alive_interval(tio, 0);
 
     kii_set_json_parser_resource(&tio->_kii, resource);
     tio->_kii._author.author_id[0] = '\0';
@@ -226,13 +235,23 @@ int main(int argc, char** argv)
     tio_handler_t tio;
     char kii_buff[EX_COMMAND_HANDLER_BUFF_SIZE];
     socket_context_t http_ctx;
+    char mqtt_buff[EX_MQTT_BUFF_SIZE];
     socket_context_t mqtt_ctx;
     kii_json_token_t tokens[256];
     kii_json_resource_t resource = {tokens, 256};
     kii_code_t result;
 
     memset(kii_buff, 0x00, sizeof(char) * EX_COMMAND_HANDLER_BUFF_SIZE);
-    init(&tio, kii_buff, EX_COMMAND_HANDLER_BUFF_SIZE, &http_ctx, &mqtt_ctx, &resource);
+    memset(mqtt_buff, 0x00, sizeof(char) * EX_MQTT_BUFF_SIZE);
+    init(
+            &tio,
+            kii_buff,
+            EX_COMMAND_HANDLER_BUFF_SIZE,
+            &http_ctx,
+            mqtt_buff,
+            EX_MQTT_BUFF_SIZE,
+            &mqtt_ctx,
+            &resource);
 
     if (pthread_mutex_init(&m_mutex, NULL) != 0) {
         printf("fail to get mutex.\n");
@@ -587,6 +606,7 @@ int main(int argc, char** argv)
 
     start(&tio);
     */
+    tio_handler_start(&tio, NULL, NULL, NULL, NULL);
 
     /* run forever. TODO: Convert to daemon. */
     while(1){ sleep(1); };
