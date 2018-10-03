@@ -105,7 +105,7 @@ void tio_handler_set_cb_sock_recv_mqtt(tio_handler_t* handler, KHC_CB_SOCK_RECV 
 void tio_handler_set_cb_sock_close_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
 
 void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_TASK_CREATE cb_task_create);
-void tio_hadler_set_cb_delay_ms(tio_handler_t* handler, KII_DELAY_MS cb_delay_ms);
+void tio_handler_set_cb_delay_ms(tio_handler_t* handler, KII_DELAY_MS cb_delay_ms);
 
 void tio_handler_set_cb_err(tio_handler_t* handler, TIO_CB_ERR cb_err, void* userdata);
 

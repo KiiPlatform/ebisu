@@ -87,7 +87,7 @@ void tio_handler_set_cb_task_create(
     handler->_kii.task_create_cb = cb_task_create;
 }
 
-void tio_hadler_set_cb_delay_ms(
+void tio_handler_set_cb_delay_ms(
     tio_handler_t* handler,
     KII_DELAY_MS cb_delay_ms)
 {
