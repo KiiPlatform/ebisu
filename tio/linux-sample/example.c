@@ -183,30 +183,30 @@ static void print_help() {
 }
 
 void init(
-        kii_t* kii,
+        tio_handler_t* tio,
         char* buffer,
         int buffer_size,
         void* http_ssl_ctx,
         void* mqtt_ssl_ctx,
         kii_json_resource_t* resource)
 {
-    kii_init(kii, EX_APP_SITE, EX_APP_ID);
+    tio_handler_set_app(tio, EX_APP_ID, EX_APP_SITE);
 
-    kii_set_buff(kii, buffer, buffer_size);
+    tio_handler_set_http_buff(tio, buffer, buffer_size);
 
-    kii_set_http_cb_sock_connect(kii, sock_cb_connect, http_ssl_ctx);
-    kii_set_http_cb_sock_send(kii, sock_cb_send, http_ssl_ctx);
-    kii_set_http_cb_sock_recv(kii, sock_cb_recv, http_ssl_ctx);
-    kii_set_http_cb_sock_close(kii, sock_cb_close, http_ssl_ctx);
+    tio_handler_set_cb_sock_connect_http(tio, sock_cb_connect, http_ssl_ctx);
+    tio_handler_set_cb_sock_send_http(tio, sock_cb_send, http_ssl_ctx);
+    tio_handler_set_cb_sock_recv_http(tio, sock_cb_recv, http_ssl_ctx);
+    tio_handler_set_cb_sock_close_http(tio, sock_cb_close, http_ssl_ctx);
 
-    kii_set_mqtt_cb_sock_connect(kii, mqtt_cb_connect, mqtt_ssl_ctx);
-    kii_set_mqtt_cb_sock_send(kii, mqtt_cb_send, mqtt_ssl_ctx);
-    kii_set_mqtt_cb_sock_recv(kii, mqtt_cb_recv, mqtt_ssl_ctx);
-    kii_set_mqtt_cb_sock_close(kii, mqtt_cb_close, mqtt_ssl_ctx);
-    kii_set_json_parser_resource(kii, resource);
+    tio_handler_set_cb_sock_connect_mqtt(tio, mqtt_cb_connect, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_send_mqtt(tio, mqtt_cb_send, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_recv_mqtt(tio, mqtt_cb_recv, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_close_mqtt(tio, mqtt_cb_close, mqtt_ssl_ctx);
 
-    kii->_author.author_id[0] = '\0';
-    kii->_author.access_token[0] = '\0';
+    kii_set_json_parser_resource(&tio->_kii, resource);
+    tio->_kii._author.author_id[0] = '\0';
+    tio->_kii._author.access_token[0] = '\0';
 }
 
 int main(int argc, char** argv)
@@ -223,7 +223,7 @@ int main(int argc, char** argv)
     kii_bool_t result;
     */
 
-    kii_t kii;
+    tio_handler_t tio;
     char kii_buff[EX_COMMAND_HANDLER_BUFF_SIZE];
     socket_context_t http_ctx;
     socket_context_t mqtt_ctx;
@@ -231,7 +231,8 @@ int main(int argc, char** argv)
     kii_json_resource_t resource = {tokens, 256};
     kii_code_t result;
 
-    init(&kii, kii_buff, EX_COMMAND_HANDLER_BUFF_SIZE, &http_ctx, &mqtt_ctx, &resource);
+    memset(kii_buff, 0x00, sizeof(char) * EX_COMMAND_HANDLER_BUFF_SIZE);
+    init(&tio, kii_buff, EX_COMMAND_HANDLER_BUFF_SIZE, &http_ctx, &mqtt_ctx, &resource);
 
     if (pthread_mutex_init(&m_mutex, NULL) != 0) {
         printf("fail to get mutex.\n");
@@ -269,7 +270,7 @@ int main(int argc, char** argv)
                 }
                 printf("program successfully started!\n");
                 result = kii_ti_onboard(
-                        &kii,
+                        &tio._kii,
                         vendorThingID,
                         password,
                         NULL,

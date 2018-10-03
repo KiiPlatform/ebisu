@@ -125,9 +125,7 @@ void tio_handler_set_app(
     const char* app_id,
     const char* host)
 {
-    // FIXME: Kii should provide setter API.
-    strncpy(handler->_kii._app_id, app_id, sizeof(handler->_kii._app_id)-1);
-    strncpy(handler->_kii._app_host, host, sizeof(handler->_kii._app_host)-1);
+    kii_init(&handler->_kii, host, app_id);
 }
 
 static void _cb_receive_push(char* palyload, size_t payload_length, void* userdata) {
