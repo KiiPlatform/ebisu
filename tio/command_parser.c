@@ -89,6 +89,8 @@ _cmd_parser_code_t _parse_alias(
     char** out_actions_array_in_alias,
     size_t* out_actions_array_in_alias_length)
 {
+    char* alias;
+    size_t alias_length;
     _cmd_parser_code_t res = _get_object_in_array(
         handler->_kii._json_resource,
         handler->_kii._json_alloc_cb,
@@ -96,8 +98,20 @@ _cmd_parser_code_t _parse_alias(
         actions_array,
         actions_array_length,
         alias_index,
+        &alias,
+        &alias_length);
+    if (res != _CMD_PARSE_OK) {
+        return res;
+    }
+    jsmntype_t alias_type = JSMN_OBJECT;
+    res = _parse_first_kv(
+        alias,
+        alias_length,
+        out_alias,
+        out_alias_length,
         out_actions_array_in_alias,
-        out_actions_array_in_alias_length);
+        out_actions_array_in_alias_length,
+        &alias_type);
     return res;
 }
 
@@ -174,13 +188,13 @@ static tio_code_t _start_result_request(
     const char* command_id)
 {
     // Start making command result request.
-    char command_result_path[128];
+    char command_result_path[256];
     int path_len = snprintf(
         command_result_path,
-        128,
-        "/thing-if/apps/%s/targets/thing:%s/commands/%s",
+        256,
+        "/thing-if/apps/%s/targets/thing:%s/commands/%s/action-results",
         handler->_kii._app_id, handler->_kii._author.author_id, command_id);
-    if (path_len >= 128) {
+    if (path_len >= 256) {
         return TIO_ERR_TOO_LARGE_DATA;
     }
     kii_code_t s_res = kii_api_call_start(
@@ -219,6 +233,7 @@ static tio_code_t _append_action_result(
     }
     char action_name[action->action_name_length+1];
     strncpy(action_name, action->action_name, action->action_name_length);
+    action_name[action->action_name_length] = '\0';
     if (succeeded == KII_TRUE)
     {
         int len = snprintf(
@@ -250,6 +265,7 @@ static tio_code_t _append_action_result(
             {
                 return TIO_ERR_TOO_LARGE_DATA;
             }
+            err_part = temp_err;
         }
         int len = snprintf(
             work_buff, work_buff_size,
@@ -285,9 +301,11 @@ tio_code_t _handle_command(
     fields[0].path = "/commandID";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
     fields[0].field_copy.string = command_id;
+    fields[0].field_copy_buff_size = sizeof(command_id) / sizeof(command_id[0]);
     fields[1].path = "/actions";
     fields[1].type = KII_JSON_FIELD_TYPE_ARRAY;
     fields[1].field_copy.string = NULL;
+    fields[1].result = KII_JSON_FIELD_PARSE_SUCCESS;
     fields[2].path = NULL;
 
     kii_json_parse_result_t res = _parse_json(handler, command, command_length, fields);
@@ -333,7 +351,7 @@ tio_code_t _handle_command(
                     action_err.err_message[0] = '\0';
                     tio_bool_t succeeded = handler->_cb_action(&action, &action_err, handler->_cb_action_data);
                     char work_buff[256];
-                    tio_code_t app_res =_append_action_result(
+                    tio_code_t app_res = _append_action_result(
                         handler,
                         action_idx,
                         succeeded,
