@@ -218,6 +218,13 @@ void init(
     tio->_kii._author.access_token[0] = '\0';
 }
 
+tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, void* userdata)
+{
+    printf("tio_action_handler called\n");
+    printf("%.*s: %.*s\n", action->alias_length, action->alias, action->action_name_length, action->action_name);
+    return KII_TRUE;
+}
+
 int main(int argc, char** argv)
 {
     char* subc = argv[1];
@@ -606,7 +613,7 @@ int main(int argc, char** argv)
 
     start(&tio);
     */
-    tio_handler_start(&tio, NULL, NULL, NULL, NULL);
+    tio_handler_start(&tio, NULL, NULL, tio_action_handler, NULL);
 
     /* run forever. TODO: Convert to daemon. */
     while(1){ sleep(1); };
