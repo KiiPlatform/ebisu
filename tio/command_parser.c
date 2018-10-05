@@ -3,6 +3,8 @@
 #include "tio_impl.h"
 #include "kii_json_utils.h"
 
+#include <stdlib.h>
+
 _cmd_parser_code_t _get_object_in_array(
     kii_json_resource_t* resource,
     KII_JSON_RESOURCE_ALLOC_CB alloc_cb,
@@ -115,6 +117,16 @@ _cmd_parser_code_t _parse_alias(
     return res;
 }
 
+int _check_double(const char* str, size_t len)
+{
+    for (int i = 0; i < len; ++i) {
+        if (str[i] == '.' || str[i] == 'e' || str[i] == 'E') {
+            return 0;
+        }
+    }
+    return -1;
+}
+
 _cmd_parser_code_t _parse_action(
     tio_handler_t* handler,
     const char* alias,
@@ -175,7 +187,24 @@ _cmd_parser_code_t _parse_action(
             out_action->action_value.param.opaque_value = action_value;
             break;
         case JSMN_PRIMITIVE:
-            // FIXME: parse number, boolean.
+            if (strncmp("null", action_value, (action_value_length > 4) ? action_value_length : 4) == 0) {
+                out_action->action_value.type = TIO_TYPE_NULL;
+                out_action->action_value.opaque_value_length = action_value_length;
+                out_action->action_value.param.opaque_value = action_value;
+            } else if (strncmp("true", action_value, (action_value_length > 4) ? action_value_length : 4) == 0) {
+                out_action->action_value.type = TIO_TYPE_BOOLEAN;
+                out_action->action_value.param.bool_value = KII_TRUE;
+            } else if (strncmp("false", action_value, (action_value_length > 5) ? action_value_length : 5) == 0) {
+                out_action->action_value.type = TIO_TYPE_BOOLEAN;
+                out_action->action_value.param.bool_value = KII_FALSE;
+            } else {
+                out_action->action_value.type = TIO_TYPE_NUMBER;
+                if (_check_double(action_value, action_value_length) == 0) {
+                    out_action->action_value.param.double_value = strtod(action_value, NULL);
+                } else {
+                    out_action->action_value.param.long_value = strtol(action_value, NULL, 10);
+                }
+            }
             break;
         default:
             break;
