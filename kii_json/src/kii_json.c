@@ -202,6 +202,7 @@ static int _kii_json_is_double(const char* buf, size_t buf_len)
     for (i = 0; i < buf_len; ++i) {
         switch(buf[i]) {
             case 'e':
+            case 'E':
                 if (is_first != 0) {
                     /* e must not be first. */
                     return 0;
