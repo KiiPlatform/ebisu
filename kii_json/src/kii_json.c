@@ -8,7 +8,6 @@
 #include <ctype.h>
 
 #include <jsmn.h>
-#include "../include/kii_json_utils.h"
 
 /* If your environment does not have assert, you must set KII_JSON_NOASSERT define. */
 #ifdef KII_JSON_NOASSERT
@@ -19,6 +18,7 @@
 #endif
 
 #include <kii_json.h>
+#include <kii_json_utils.h>
 
 #define EVAL(f, v) f(v)
 #define TOSTR(s) #s
