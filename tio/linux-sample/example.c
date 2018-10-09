@@ -192,6 +192,8 @@ void init(
         void* mqtt_ssl_ctx,
         kii_json_resource_t* resource)
 {
+    tio_handler_init(tio);
+
     tio_handler_set_app(tio, EX_APP_ID, EX_APP_SITE);
 
     tio_handler_set_cb_task_create(tio, task_create_cb_impl);
@@ -214,8 +216,6 @@ void init(
     tio_handler_set_keep_alive_interval(tio, 0);
 
     kii_set_json_parser_resource(&tio->_kii, resource);
-    tio->_kii._author.author_id[0] = '\0';
-    tio->_kii._author.access_token[0] = '\0';
 }
 
 tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, void* userdata)

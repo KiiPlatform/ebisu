@@ -8,6 +8,12 @@
 
 const char TIO_TASK_NAME_UPDATE_STATE[] = "task_update_state";
 
+void tio_handler_init(tio_handler_t* handler)
+{
+    handler->_kii._author.author_id[0] = '\0';
+    handler->_kii._author.access_token[0] = '\0';
+}
+
 void tio_handler_set_cb_sock_connect_http(
     tio_handler_t* handler,
     KHC_CB_SOCK_CONNECT cb_connect,
