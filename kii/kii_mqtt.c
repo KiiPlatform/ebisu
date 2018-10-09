@@ -55,7 +55,7 @@ int _mqtt_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short keep
     // TODO: Review this logic. This might be used to recover from stale connection.
     if (kii->_mqtt_connected == 1) {
         M_KII_LOG("closing socket as socket is already created.\r\n");
-        sock_err = kii->mqtt_sock_close_cb(&(kii->mqtt_sock_close_ctx));
+        sock_err = kii->mqtt_sock_close_cb(kii->mqtt_sock_close_ctx);
         if (sock_err != KHC_SOCK_OK) {
             M_KII_LOG("closing socket is failed.\r\n");
             return -1;
@@ -67,7 +67,7 @@ int _mqtt_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short keep
 #else
     port = endpoint->port_tcp;
 #endif
-    sock_err = kii->mqtt_sock_connect_cb(&(kii->mqtt_sock_connect_ctx), endpoint->host, port);
+    sock_err = kii->mqtt_sock_connect_cb(kii->mqtt_sock_connect_ctx, endpoint->host, port);
     if (sock_err != KHC_SOCK_OK) {
         M_KII_LOG("connecting socket is failed.\r\n");
         return -1;
@@ -132,14 +132,14 @@ int _mqtt_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short keep
         kii->mqtt_buffer[j++] = kii->mqtt_buffer[8 + k];
     }
 
-    sock_err = kii->mqtt_sock_send_cb(&(kii->mqtt_sock_send_ctx),
+    sock_err = kii->mqtt_sock_send_cb(kii->mqtt_sock_send_ctx,
             kii->mqtt_buffer, j);
     if (sock_err != KHC_SOCK_OK) {
         M_KII_LOG("kii-error: send data fail\r\n");
         return -1;
     }
     memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
-    sock_err = kii->mqtt_sock_recv_cb(&(kii->mqtt_sock_recv_ctx),
+    sock_err = kii->mqtt_sock_recv_cb(kii->mqtt_sock_recv_ctx,
             kii->mqtt_buffer, kii->mqtt_buffer_size, &actual_length);
     if(sock_err != KHC_SOCK_OK)
     {
@@ -206,7 +206,7 @@ int _mqtt_subscribe(kii_t* kii, const char* topic, enum QoS qos)
     {
         kii->mqtt_buffer[j++] = kii->mqtt_buffer[8 + k];
     }
-    sock_err = kii->mqtt_sock_send_cb(&(kii->mqtt_sock_send_ctx),
+    sock_err = kii->mqtt_sock_send_cb(kii->mqtt_sock_send_ctx,
             kii->mqtt_buffer, j);
     if(sock_err != KHC_SOCK_OK)
     {
@@ -214,7 +214,7 @@ int _mqtt_subscribe(kii_t* kii, const char* topic, enum QoS qos)
         return -1;
     }
     memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
-    sock_err = kii->mqtt_sock_recv_cb(&(kii->mqtt_sock_recv_ctx),
+    sock_err = kii->mqtt_sock_recv_cb(kii->mqtt_sock_recv_ctx,
             kii->mqtt_buffer, kii->mqtt_buffer_size, &actual_length);
     if(sock_err != KHC_SOCK_OK)
     {
@@ -247,7 +247,7 @@ int _mqtt_pingreq(kii_t* kii)
     memset(buf, 0, sizeof(buf));
     buf[0] = (char)0xc0;
     buf[1] = 0x00;
-    sock_err = kii->mqtt_sock_send_cb(&(kii->mqtt_sock_send_ctx), buf, sizeof(buf));
+    sock_err = kii->mqtt_sock_send_cb(kii->mqtt_sock_send_ctx, buf, sizeof(buf));
     if(sock_err != KHC_SOCK_OK)
     {
         M_KII_LOG("kii-error: send data fail\r\n");
@@ -276,13 +276,13 @@ int _mqtt_recvmsg(
     memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
 
     rcvdCounter = 0;
-    kii->mqtt_sock_recv_cb(&kii->mqtt_sock_recv_ctx, kii->mqtt_buffer, 2, &rcvdCounter);
+    kii->mqtt_sock_recv_cb(kii->mqtt_sock_recv_ctx, kii->mqtt_buffer, 2, &rcvdCounter);
     if(rcvdCounter == 2)
     {
         if((kii->mqtt_buffer[0] & 0xf0) == 0x30)
         {
             rcvdCounter = 0;
-            kii->mqtt_sock_recv_cb(&kii->mqtt_sock_recv_ctx, kii->mqtt_buffer+2, KII_PUSH_TOPIC_HEADER_SIZE, &rcvdCounter);
+            kii->mqtt_sock_recv_cb(kii->mqtt_sock_recv_ctx, kii->mqtt_buffer+2, KII_PUSH_TOPIC_HEADER_SIZE, &rcvdCounter);
             if(rcvdCounter == KII_PUSH_TOPIC_HEADER_SIZE)
             {
                 byteLen = _mqtt_decode(&kii->mqtt_buffer[1], &remainingLen);
@@ -311,7 +311,7 @@ int _mqtt_recvmsg(
             while(bytes < totalLen)
             {
                 rcvdCounter = 0;
-                kii->mqtt_sock_recv_cb(&(kii->mqtt_sock_recv_ctx), kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);
+                kii->mqtt_sock_recv_cb(kii->mqtt_sock_recv_ctx, kii->mqtt_buffer + bytes, totalLen - bytes, &rcvdCounter);
                 if(rcvdCounter > 0)
                 {
                     bytes += rcvdCounter;

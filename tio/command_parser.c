@@ -3,6 +3,8 @@
 #include "tio_impl.h"
 #include "kii_json_utils.h"
 
+#include <stdlib.h>
+
 _cmd_parser_code_t _get_object_in_array(
     kii_json_resource_t* resource,
     KII_JSON_RESOURCE_ALLOC_CB alloc_cb,
@@ -89,6 +91,8 @@ _cmd_parser_code_t _parse_alias(
     char** out_actions_array_in_alias,
     size_t* out_actions_array_in_alias_length)
 {
+    char* alias;
+    size_t alias_length;
     _cmd_parser_code_t res = _get_object_in_array(
         handler->_kii._json_resource,
         handler->_kii._json_alloc_cb,
@@ -96,9 +100,57 @@ _cmd_parser_code_t _parse_alias(
         actions_array,
         actions_array_length,
         alias_index,
+        &alias,
+        &alias_length);
+    if (res != _CMD_PARSE_OK) {
+        return res;
+    }
+    jsmntype_t alias_type = JSMN_OBJECT;
+    res = _parse_first_kv(
+        alias,
+        alias_length,
+        out_alias,
+        out_alias_length,
         out_actions_array_in_alias,
-        out_actions_array_in_alias_length);
+        out_actions_array_in_alias_length,
+        &alias_type);
     return res;
+}
+
+int _check_double(const char* str, size_t len)
+{
+    for (int i = 0; i < len; ++i) {
+        if (str[i] == '.' || str[i] == 'e' || str[i] == 'E') {
+            return 0;
+        }
+    }
+    return -1;
+}
+
+void _parse_primitive(
+    const char* action_value,
+    size_t action_value_length,
+    tio_action_t* out_action)
+{
+    if (strncmp("null", action_value, (action_value_length > 4) ? action_value_length : 4) == 0) {
+        out_action->action_value.type = TIO_TYPE_NULL;
+        out_action->action_value.opaque_value_length = action_value_length;
+        out_action->action_value.param.opaque_value = action_value;
+    } else if (strncmp("true", action_value, (action_value_length > 4) ? action_value_length : 4) == 0) {
+        out_action->action_value.type = TIO_TYPE_BOOLEAN;
+        out_action->action_value.param.bool_value = KII_TRUE;
+    } else if (strncmp("false", action_value, (action_value_length > 5) ? action_value_length : 5) == 0) {
+        out_action->action_value.type = TIO_TYPE_BOOLEAN;
+        out_action->action_value.param.bool_value = KII_FALSE;
+    } else {
+        if (_check_double(action_value, action_value_length) == 0) {
+            out_action->action_value.type = TIO_TYPE_DOUBLE;
+            out_action->action_value.param.double_value = strtod(action_value, NULL);
+        } else {
+            out_action->action_value.type = TIO_TYPE_INTEGER;
+            out_action->action_value.param.long_value = strtol(action_value, NULL, 10);
+        }
+    }
 }
 
 _cmd_parser_code_t _parse_action(
@@ -161,7 +213,7 @@ _cmd_parser_code_t _parse_action(
             out_action->action_value.param.opaque_value = action_value;
             break;
         case JSMN_PRIMITIVE:
-            // FIXME: parse number, boolean.
+            _parse_primitive(action_value, action_value_length, out_action);
             break;
         default:
             break;
@@ -174,13 +226,13 @@ static tio_code_t _start_result_request(
     const char* command_id)
 {
     // Start making command result request.
-    char command_result_path[128];
+    char command_result_path[256];
     int path_len = snprintf(
         command_result_path,
-        128,
-        "/thing-if/apps/%s/targets/thing:%s/commands/%s",
+        256,
+        "/thing-if/apps/%s/targets/thing:%s/commands/%s/action-results",
         handler->_kii._app_id, handler->_kii._author.author_id, command_id);
-    if (path_len >= 128) {
+    if (path_len >= 256) {
         return TIO_ERR_TOO_LARGE_DATA;
     }
     kii_code_t s_res = kii_api_call_start(
@@ -219,6 +271,7 @@ static tio_code_t _append_action_result(
     }
     char action_name[action->action_name_length+1];
     strncpy(action_name, action->action_name, action->action_name_length);
+    action_name[action->action_name_length] = '\0';
     if (succeeded == KII_TRUE)
     {
         int len = snprintf(
@@ -245,11 +298,12 @@ static tio_code_t _append_action_result(
             if (esc_len < 0) {
                 return TIO_ERR_TOO_LARGE_DATA;
             }
-            int len = snprintf(temp_err, 128, ",\"errorMessagea\":\"%s\"", esc_msg);
+            int len = snprintf(temp_err, 128, ",\"errorMessage\":\"%s\"", esc_msg);
             if (len >= 128)
             {
                 return TIO_ERR_TOO_LARGE_DATA;
             }
+            err_part = temp_err;
         }
         int len = snprintf(
             work_buff, work_buff_size,
@@ -285,9 +339,11 @@ tio_code_t _handle_command(
     fields[0].path = "/commandID";
     fields[0].type = KII_JSON_FIELD_TYPE_STRING;
     fields[0].field_copy.string = command_id;
+    fields[0].field_copy_buff_size = sizeof(command_id) / sizeof(command_id[0]);
     fields[1].path = "/actions";
     fields[1].type = KII_JSON_FIELD_TYPE_ARRAY;
     fields[1].field_copy.string = NULL;
+    fields[1].result = KII_JSON_FIELD_PARSE_SUCCESS;
     fields[2].path = NULL;
 
     kii_json_parse_result_t res = _parse_json(handler, command, command_length, fields);
@@ -303,6 +359,7 @@ tio_code_t _handle_command(
     const char* actions_array = command + fields[1].start;
     size_t actions_array_length = fields[1].end - fields[1].start;
     tio_action_t action;
+    size_t result_counts = 0;
     for (size_t alias_idx = 0; ; ++alias_idx) {
         char* actions_array_in_alias = NULL;
         size_t actions_array_in_alias_length = 0;
@@ -333,9 +390,9 @@ tio_code_t _handle_command(
                     action_err.err_message[0] = '\0';
                     tio_bool_t succeeded = handler->_cb_action(&action, &action_err, handler->_cb_action_data);
                     char work_buff[256];
-                    tio_code_t app_res =_append_action_result(
+                    tio_code_t app_res = _append_action_result(
                         handler,
-                        action_idx,
+                        result_counts,
                         succeeded,
                         &action,
                         action_err.err_message,
@@ -344,6 +401,7 @@ tio_code_t _handle_command(
                     if (app_res != TIO_ERR_OK) {
                         return app_res;
                     }
+                    ++result_counts;
                 } else if (pa_res == _CMD_PARSE_ARRAY_OUT_OF_INDEX) {
                     // Handled all actions in alias.
                     break;

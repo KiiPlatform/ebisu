@@ -1,6 +1,7 @@
 #include "example.h"
 
 #include <tio.h>
+#include <tio2.h>
 #include <kii_json.h>
 
 #include <string.h>
@@ -11,6 +12,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include "sys_cb_impl.h"
+#include "sock_cb_linux.h"
 
 typedef struct _air_conditioner_t {
     kii_bool_t power;
@@ -180,9 +182,53 @@ static void print_help() {
 
 }
 
+void init(
+        tio_handler_t* tio,
+        char* kii_buffer,
+        int kii_buffer_size,
+        void* http_ssl_ctx,
+        char* mqtt_buffer,
+        int mqtt_buffer_size,
+        void* mqtt_ssl_ctx,
+        kii_json_resource_t* resource)
+{
+    tio_handler_init(tio);
+
+    tio_handler_set_app(tio, EX_APP_ID, EX_APP_SITE);
+
+    tio_handler_set_cb_task_create(tio, task_create_cb_impl);
+    tio_handler_set_cb_delay_ms(tio, delay_ms_cb_impl);
+
+    tio_handler_set_http_buff(tio, kii_buffer, kii_buffer_size);
+
+    tio_handler_set_cb_sock_connect_http(tio, sock_cb_connect, http_ssl_ctx);
+    tio_handler_set_cb_sock_send_http(tio, sock_cb_send, http_ssl_ctx);
+    tio_handler_set_cb_sock_recv_http(tio, sock_cb_recv, http_ssl_ctx);
+    tio_handler_set_cb_sock_close_http(tio, sock_cb_close, http_ssl_ctx);
+
+    tio_handler_set_mqtt_buff(tio, mqtt_buffer, mqtt_buffer_size);
+
+    tio_handler_set_cb_sock_connect_mqtt(tio, mqtt_cb_connect, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_send_mqtt(tio, mqtt_cb_send, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_recv_mqtt(tio, mqtt_cb_recv, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_close_mqtt(tio, mqtt_cb_close, mqtt_ssl_ctx);
+
+    tio_handler_set_keep_alive_interval(tio, 0);
+
+    kii_set_json_parser_resource(&tio->_kii, resource);
+}
+
+tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, void* userdata)
+{
+    printf("tio_action_handler called\n");
+    printf("%.*s: %.*s\n", action->alias_length, action->alias, action->action_name_length, action->action_name);
+    return KII_TRUE;
+}
+
 int main(int argc, char** argv)
 {
     char* subc = argv[1];
+    /*
     tio_command_handler_resource_t command_handler_resource;
     tio_state_updater_resource_t state_updater_resource;
     tio_system_cb_t sys_cb;
@@ -191,35 +237,28 @@ int main(int argc, char** argv)
     char mqtt_buff[EX_MQTT_BUFF_SIZE];
     tio_t tio;
     kii_bool_t result;
+    */
 
-    command_handler_resource.buffer = command_handler_buff;
-    command_handler_resource.buffer_size =
-        sizeof(command_handler_buff) / sizeof(command_handler_buff[0]);
-    command_handler_resource.mqtt_buffer = mqtt_buff;
-    command_handler_resource.mqtt_buffer_size =
-        sizeof(mqtt_buff) / sizeof(mqtt_buff[0]);
-    command_handler_resource.action_handler = action_handler;
-    command_handler_resource.state_handler = state_handler;
-    command_handler_resource.custom_push_handler = custom_push_handler;
+    tio_handler_t tio;
+    char kii_buff[EX_COMMAND_HANDLER_BUFF_SIZE];
+    socket_context_t http_ctx;
+    char mqtt_buff[EX_MQTT_BUFF_SIZE];
+    socket_context_t mqtt_ctx;
+    kii_json_token_t tokens[256];
+    kii_json_resource_t resource = {tokens, 256};
+    kii_code_t result;
 
-    state_updater_resource.buffer = state_updater_buff;
-    state_updater_resource.buffer_size =
-        sizeof(state_updater_buff) / sizeof(state_updater_buff[0]);
-    state_updater_resource.period = EX_STATE_UPDATE_PERIOD;
-    state_updater_resource.state_handler = state_handler;
-
-    sys_cb.task_create_cb = task_create_cb_impl;
-    sys_cb.delay_ms_cb = delay_ms_cb_impl;
-
-    // FIXME: setup callbacks.
-    // sys_cb.socket_connect_cb = socket_connect_cb_impl;
-    // sys_cb.socket_send_cb = socket_send_cb_impl;
-    // sys_cb.socket_recv_cb = socket_recv_cb_impl;
-    // sys_cb.socket_close_cb = socket_close_cb_impl;
-    // sys_cb.mqtt_socket_connect_cb = mqtt_connect_cb_impl;
-    // sys_cb.mqtt_socket_send_cb = mqtt_send_cb_impl;
-    // sys_cb.mqtt_socket_recv_cb = mqtt_recv_cb_impl;
-    // sys_cb.mqtt_socket_close_cb = mqtt_close_cb_impl;
+    memset(kii_buff, 0x00, sizeof(char) * EX_COMMAND_HANDLER_BUFF_SIZE);
+    memset(mqtt_buff, 0x00, sizeof(char) * EX_MQTT_BUFF_SIZE);
+    init(
+            &tio,
+            kii_buff,
+            EX_COMMAND_HANDLER_BUFF_SIZE,
+            &http_ctx,
+            mqtt_buff,
+            EX_MQTT_BUFF_SIZE,
+            &mqtt_ctx,
+            &resource);
 
     if (pthread_mutex_init(&m_mutex, NULL) != 0) {
         printf("fail to get mutex.\n");
@@ -233,13 +272,13 @@ int main(int argc, char** argv)
     }
 
     /* Parse command. */
-    if (strcmp(subc, "onboard-with-token") == 0) {
-        char* thingID = NULL;
-        char* accessToken = NULL;
+    if (strcmp(subc, "onboard") == 0) {
+        char* vendorThingID = NULL;
+        char* password = NULL;
         while(1) {
             struct option longOptions[] = {
-                {"thing-id", required_argument, 0, 0},
-                {"access-token", required_argument, 0, 1},
+                {"vendor-thing-id", required_argument, 0, 0},
+                {"password", required_argument, 0, 1},
                 {"help", no_argument, 0, 2},
                 {0, 0, 0, 0}
             };
@@ -247,101 +286,24 @@ int main(int argc, char** argv)
             int c = getopt_long(argc, argv, "", longOptions, &optIndex);
             const char* optName = longOptions[optIndex].name;
             if (c == -1) {
-                if (thingID == NULL) {
-                    printf("thing-id is not specified.\n");
-                    exit(1);
-                }
-                if (accessToken == NULL) {
-                    printf("access-token is not specifeid.\n");
-                    exit(1);
-                }
-                /* Initialize with token. */
-                result = init_tio_with_onboarded_thing(&tio, EX_APP_ID,
-                                EX_APP_KEY, EX_APP_SITE, thingID, accessToken,
-                                &command_handler_resource, &state_updater_resource, &sys_cb);
-                if (result == KII_FALSE) {
-                    printf("failed to onboard with token.\n");
-                    exit(1);
-                }
-                printf("program successfully started!\n");
-                break;
-            }
-            printf("option %s : %s\n", optName, optarg);
-            switch(c) {
-                case 0:
-                    thingID = optarg;
-                    break;
-                case 1:
-                    accessToken = optarg;
-                    break;
-                case 3:
-                    printf("usage: \n");
-                    printf("onboard-with-token --thing-id={ID of the thing} --access-token={access token of the thing} or\n");
-                    break;
-                default:
-                    printf("unexpected usage.\n");
-            }
-            if (strcmp(optName, "help") == 0) {
-                break;
-            }
-        }
-    } else if (strcmp(subc, "onboard") == 0) {
-        char* vendorThingID = NULL;
-        char* thingID = NULL;
-        char* password = NULL;
-        while(1) {
-            struct option longOptions[] = {
-                {"vendor-thing-id", required_argument, 0, 0},
-                {"thing-id", required_argument, 0, 1},
-                {"password", required_argument, 0, 2},
-                {"help", no_argument, 0, 3},
-                {0, 0, 0, 0}
-            };
-            int optIndex = 0;
-            int c = getopt_long(argc, argv, "", longOptions, &optIndex);
-            const char* optName = longOptions[optIndex].name;
-            if (c == -1) {
-                if (vendorThingID == NULL && thingID == NULL) {
-                    printf("neither vendor-thing-id and thing-id are specified.\n");
+                if (vendorThingID == NULL) {
+                    printf("neither vendor-thing-id is specified.\n");
                     exit(1);
                 }
                 if (password == NULL) {
                     printf("password is not specifeid.\n");
                     exit(1);
                 }
-                if (vendorThingID != NULL && thingID != NULL) {
-                    printf("both vendor-thing-id and thing-id is specified.  either of one should be specified.\n");
-                    exit(1);
-                }
                 printf("program successfully started!\n");
-                result = init_tio(&tio, EX_APP_ID, EX_APP_KEY, EX_APP_SITE,
-                        &command_handler_resource, &state_updater_resource, &sys_cb);
-                if (result == KII_FALSE) {
-                    printf("failed to onboard.\n");
-                    exit(1);
-                }
-                if (vendorThingID != NULL) {
-                    result = onboard_with_vendor_thing_id(
-                            &tio,
-                            vendorThingID,
-                            password,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL);
-                } else {
-                    result = onboard_with_thing_id(
-                            &tio,
-                            thingID,
-                            password,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL);
-                }
-                if (result == KII_FALSE) {
+                result = kii_ti_onboard(
+                        &tio._kii,
+                        vendorThingID,
+                        password,
+                        NULL,
+                        NULL,
+                        NULL,
+                        NULL);
+                if (result != KII_ERR_OK) {
                     printf("failed to onboard.\n");
                     exit(1);
                 }
@@ -353,14 +315,10 @@ int main(int argc, char** argv)
                     vendorThingID = optarg;
                     break;
                 case 1:
-                    thingID = optarg;
-                    break;
-                case 2:
                     password = optarg;
                     break;
-                case 3:
+                case 2:
                     printf("usage: \n");
-                    printf("onboard --thing-id={ID of the thing} --password={password of the thing} or\n");
                     printf("onboard --vendor-thing-id={ID of the thing} --password={password of the thing}\n");
                     break;
                 default:
@@ -370,7 +328,11 @@ int main(int argc, char** argv)
                 break;
             }
         }
-
+    } else {
+        print_help();
+        exit(0);
+    }
+/*
     } else if (strcmp(subc, "get") == 0) {
         char* vendorThingID = NULL;
         char* thingID = NULL;
@@ -446,15 +408,14 @@ int main(int argc, char** argv)
             exit(1);
         }
         if (vendorThingID != NULL) {
-            if (onboard_with_vendor_thing_id(
-                    &tio,
+            if (kii_ti_onboard(
+                    &kii,
                     vendorThingID,
                     password,
                     NULL,
                     NULL,
                     NULL,
-                    NULL,
-                    NULL) == KII_FALSE) {
+                    NULL) != KII_ERR_OK) {
                 printf("fail to onboard.\n");
                 exit(1);
             }
@@ -651,6 +612,9 @@ int main(int argc, char** argv)
     }
 
     start(&tio);
+    */
+    tio_handler_start(&tio, NULL, tio_action_handler, NULL);
+
     /* run forever. TODO: Convert to daemon. */
     while(1){ sleep(1); };
 

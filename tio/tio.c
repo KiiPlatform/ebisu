@@ -67,7 +67,7 @@ static int _kii_api_call_start(
             content_type,
             set_authentication_header);
     if (retval != 0) {
-        M_KII_LOG(kii->kii_core.logger_cb("fail to start api call"));
+        M_KII_LOG("fail to start api call");
         if (error != NULL){
             error->code = TIO_ERROR_INSUFFICIENT_BUFFER;
         }
@@ -83,19 +83,19 @@ static int _append_key_value(
         kii_bool_t is_string)
 {
     if (key == NULL) {
-        M_KII_LOG(kii->kii_core.logger_cb("key not specified.\n"));
+        M_KII_LOG("key not specified.\n");
         return -1;
     }
     if (value == NULL) {
         M_KII_LOG(
-            kii->kii_core.logger_cb("value not specified for key: %s.\n", key));
+            "value not specified for key: %s.\n", key);
         return -1;
     }
 
     if (is_successor == KII_TRUE) {
         if (kii_api_call_append_body(kii, ",", CONST_STRLEN(",")) != 0) {
-            M_KII_LOG(kii->kii_core.logger_cb(
-                "request size overflowed: (%s, %s).\n", key, value));
+            M_KII_LOG(
+                "request size overflowed: (%s, %s).\n", key, value);
             return -1;
         }
     }
@@ -103,8 +103,8 @@ static int _append_key_value(
     if (kii_api_call_append_body(kii, "\"", CONST_STRLEN("\"")) != 0 ||
             kii_api_call_append_body(kii, key, strlen(key)) != 0 ||
             kii_api_call_append_body(kii, "\":", CONST_STRLEN("\":")) != 0) {
-        M_KII_LOG(kii->kii_core.logger_cb(
-            "request size overflowed: (%s, %s).\n", key, value));
+        M_KII_LOG(
+            "request size overflowed: (%s, %s).\n", key, value);
         return -1;
     }
 
@@ -113,14 +113,14 @@ static int _append_key_value(
         if (kii_api_call_append_body(kii, "\"", CONST_STRLEN("\"")) != 0 ||
                 kii_api_call_append_body(kii, value, strlen(value)) != 0 ||
                 kii_api_call_append_body(kii, "\"", CONST_STRLEN("\"")) != 0) {
-            M_KII_LOG(kii->kii_core.logger_cb(
-                    "request size overflowed: (%s, %s).\n", key, value));
+            M_KII_LOG(
+                    "request size overflowed: (%s, %s).\n", key, value);
             return -1;
         }
     } else {
         if (kii_api_call_append_body(kii, value, strlen(value)) != 0) {
-            M_KII_LOG(kii->kii_core.logger_cb(
-                    "request size overflowed: (%s, %s).\n", key, value));
+            M_KII_LOG(
+                    "request size overflowed: (%s, %s).\n", key, value);
             return -1;
         }
     }
@@ -507,7 +507,7 @@ static int _tio_get_key_and_value_from_json(
 static kii_bool_t _writer(kii_t* kii, const char* buff)
 {
     if (kii_api_call_append_body(kii, buff, strlen(buff)) != 0) {
-        M_KII_LOG(kii->kii_core.logger_cb("request size overflowed.\n"));
+        M_KII_LOG("request size overflowed.\n");
         return KII_FALSE;
     }
     return KII_TRUE;
@@ -524,23 +524,23 @@ static kii_bool_t _send_state(tio_t* ctx)
             sizeof(resource_path) / sizeof(resource_path[0]));
 
     if (succeeded == KII_FALSE) {
-        M_KII_LOG(kii->kii_core.logger_cb(
-                "resource path is longer than expected.\n"));
+        M_KII_LOG(
+                "resource path is longer than expected.\n");
         return KII_FALSE;
     }
 
     if (kii_api_call_start(kii, "PUT", resource_path, CONTENT_UPDATE_STATE,
                     KII_TRUE) != 0) {
-        M_KII_LOG(kii->kii_core.logger_cb("fail to start api call.\n"));
+        M_KII_LOG("fail to start api call.\n");
         return KII_FALSE;
     }
     if (ctx->state_handler_for_command_reaction(kii,
                     _writer) == KII_FALSE) {
-        M_KII_LOG(kii->kii_core.logger_cb("fail to start api call.\n"));
+        M_KII_LOG("fail to start api call.\n");
         return KII_FALSE;
     }
     if (kii_api_call_run(kii) != 0) {
-        M_KII_LOG(kii->kii_core.logger_cb("fail to run api.\n"));
+        M_KII_LOG("fail to run api.\n");
         return KII_FALSE;
     }
 
@@ -581,7 +581,7 @@ static _get_key_and_value_t get_key_and_value_at_index(
                         value,
                         key_len,
                         value_len) != 0) {
-                M_KII_LOG(kii->kii_core.logger_cb("fail to parse item."))
+                M_KII_LOG("fail to parse item.");
                 return _GET_KEY_AND_VALUE_FAIL;
             }
             return _GET_KEY_AND_VALUE_SUCCESS;
@@ -591,7 +591,7 @@ static _get_key_and_value_t get_key_and_value_at_index(
         case KII_JSON_PARSE_ROOT_TYPE_ERROR:
         case KII_JSON_PARSE_INVALID_INPUT:
         default:
-            M_KII_LOG(kii->kii_core.logger_cb("unexpected error.\n"));
+            M_KII_LOG("unexpected error.\n");
             return _GET_KEY_AND_VALUE_FAIL;
     }
 }
@@ -632,8 +632,8 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
                 }
                 break;
             default:
-                M_KII_LOG(kii->kii_core.logger_cb(
-                        "fail to parse received message.\n"));
+                M_KII_LOG(
+                        "fail to parse received message.\n");
                 return;
         }
 
@@ -648,8 +648,8 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
 
         if (sizeof(resource_path) / sizeof(resource_path[0]) <=
                 results_path_length) {
-            M_KII_LOG(kii->kii_core.logger_cb(
-                    "resource path is longer than expected.\n"));
+            M_KII_LOG(
+                    "resource path is longer than expected.\n");
             return;
         }
 
@@ -666,7 +666,7 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
 
         if (kii_api_call_start(kii, "PUT", resource_path, "application/json",
                         KII_TRUE) != 0) {
-            M_KII_LOG(kii->kii_core.logger_cb("fail to start api call.\n"));
+            M_KII_LOG("fail to start api call.\n");
             return;
         }
 
@@ -676,7 +676,7 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
 
     if (kii_api_call_append_body(kii, "{\"actionResults\":[",
                     CONST_STRLEN("{\"actionResults\":[")) != 0) {
-        M_KII_LOG(kii->kii_core.logger_cb("request size overflowed.\n"));
+        M_KII_LOG("request size overflowed.\n");
         return;
     }
 
@@ -700,7 +700,7 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
                 &actions_len);
         switch (alias_result) {
             case _GET_KEY_AND_VALUE_FAIL:
-                M_KII_LOG(kii->kii_core.logger_cb("fail to get alias.\n"));
+                M_KII_LOG("fail to get alias.\n");
                 return;
             case _GET_KEY_AND_VALUE_SUCCESS:
             {
@@ -729,8 +729,8 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
                             &value_len);
                     switch (action_result) {
                         case _GET_KEY_AND_VALUE_FAIL:
-                            M_KII_LOG(kii->kii_core.logger_cb(
-                                    "fail to get action.\n"));
+                            M_KII_LOG(
+                                    "fail to get action.\n");
                             return;
                         case _GET_KEY_AND_VALUE_SUCCESS:
                         {
@@ -747,8 +747,8 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
 
                             if (alias_index > 0 || action_index > 0) {
                                 if (APPEND_BODY_CONST(kii, ",") != 0) {
-                                    M_KII_LOG(kii->kii_core.logger_cb(
-                                            "request size overflowed.\n"));
+                                    M_KII_LOG(
+                                            "request size overflowed.\n");
                                 }
                             }
                             if (APPEND_BODY_CONST(kii, "{\"") != 0 ||
@@ -765,8 +765,8 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
                                         succeeded == KII_FALSE ? error : NULL,
                                         KII_TRUE) != 0 ||
                                     APPEND_BODY_CONST(kii, "}}") != 0) {
-                                M_KII_LOG(kii->kii_core.logger_cb(
-                                        "request size overflowed.\n"));
+                                M_KII_LOG(
+                                        "request size overflowed.\n");
                                 return;
                             }
                             name[name_len] = name_swap;
@@ -777,8 +777,8 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
                             /* finished to parse aliases. */
                             break;
                         default:
-                            M_KII_LOG(kii->kii_core.logger_cb(
-                                    "unknown result %d.\n", action_result));
+                            M_KII_LOG(
+                                    "unknown result %d.\n", action_result);
                             M_TIO_ASSERT(0);
                             return;
                     }
@@ -791,24 +791,24 @@ static void handle_command(tio_t* ctx, char* buffer, size_t buffer_size)
                 break;
             default:
                 M_KII_LOG(
-                    kii->kii_core.logger_cb("unknown result %d.\n",
-                            alias_result));
+                    "unknown result %d.\n",
+                            alias_result);
                 M_TIO_ASSERT(0);
                 return;
         }
     }
 
     if (kii_api_call_append_body(kii, "]}", sizeof("]}") - 1) != 0) {
-        M_KII_LOG(kii->kii_core.logger_cb("request size overflowed.\n"));
+        M_KII_LOG("request size overflowed.\n");
         return;
     }
     if (kii_api_call_run(kii) != 0) {
-        M_KII_LOG(kii->kii_core.logger_cb("fail to run api.\n"));
+        M_KII_LOG("fail to run api.\n");
         return;
     }
 
     if (_send_state(ctx) != KII_TRUE) {
-        M_KII_LOG(kii->kii_core.logger_cb("fail to send state.\n"));
+        M_KII_LOG("fail to send state.\n");
     }
 
     return;
@@ -873,7 +873,7 @@ static int _tio_get_anonymous_token(
     }
 
     if (_execute_http_session(kii, error) != KII_TRUE) {
-        M_KII_LOG(kii->kii_core.logger_cb("fail to run api.\n"));
+        M_KII_LOG("fail to run api.\n");
         return -1;
     }
 
@@ -910,7 +910,7 @@ static kii_bool_t _onboard_with_vendor_thing_id(
     kii_bool_t succeeded;
 
     if (_tio_get_anonymous_token(kii, error) != 0) {
-        M_KII_LOG(kii->kii_core.logger_cb("fail to get anonymous token.\n"));
+        M_KII_LOG("fail to get anonymous token.\n");
         return KII_FALSE;
     }
 
@@ -920,15 +920,15 @@ static kii_bool_t _onboard_with_vendor_thing_id(
             sizeof(resource_path) / sizeof(resource_path[0]));
     if (succeeded == KII_FALSE) {
         // FIXME remove redundant logging.
-        M_KII_LOG(kii->kii_core.logger_cb(
-                "resource path is longer than expected.\n"));
+        M_KII_LOG(
+                "resource path is longer than expected.\n");
         return KII_FALSE;
     }
 
     if (kii_api_call_start(kii, "POST", resource_path,
                     CONTENT_TYPE_VENDOR_THING_ID, KII_TRUE) != 0) {
         // FIXME remove redundant logging.
-        M_KII_LOG(kii->kii_core.logger_cb("fail to start api call.\n"));
+        M_KII_LOG("fail to start api call.\n");
         if (error != NULL) {
             error->code = TIO_ERROR_INSUFFICIENT_BUFFER;
         }
@@ -950,7 +950,7 @@ static kii_bool_t _onboard_with_vendor_thing_id(
             _append_key_value_string_optional(
                 kii, "layoutPosition", layout_position, KII_TRUE) != 0 ||
             APPEND_BODY_CONST(kii, "}") != 0) {
-        M_KII_LOG(kii->kii_core.logger_cb("request size overflowed.\n"));
+        M_KII_LOG("request size overflowed.\n");
         if (error != NULL) {
             error->code = TIO_ERROR_INSUFFICIENT_BUFFER;
         }
@@ -958,12 +958,12 @@ static kii_bool_t _onboard_with_vendor_thing_id(
     }
 
     if (_execute_http_session(kii, error) != KII_TRUE) {
-        M_KII_LOG(kii->kii_core.logger_cb("fail to run api.\n"));
+        M_KII_LOG("fail to run api.\n");
         return KII_FALSE;
     }
 
     if (_thing_if_parse_onboarding_response(kii, error) != 0) {
-        M_KII_LOG(kii->kii_core.logger_cb("fail to parse resonse.\n"));
+        M_KII_LOG("fail to parse resonse.\n");
         return KII_FALSE;
     }
 
@@ -982,8 +982,8 @@ static void* _update_status(void *sdata)
             sizeof(resource_path) / sizeof(resource_path[0]));
 
     if (succeeded == KII_FALSE) {
-        M_KII_LOG(kii->kii_core.logger_cb(
-                "resource path is longer than expected.\n"));
+        M_KII_LOG(
+                "resource path is longer than expected.\n");
         return NULL;
     }
 
@@ -993,18 +993,18 @@ static void* _update_status(void *sdata)
 
         if (kii_api_call_start(kii, "PUT", resource_path, CONTENT_UPDATE_STATE,
                         KII_TRUE) != 0) {
-            M_KII_LOG(kii->kii_core.logger_cb(
-                    "fail to start api call.\n"));
+            M_KII_LOG(
+                    "fail to start api call.\n");
             continue;
         }
         if (ctx->state_handler_for_period(kii,
                         _writer) == KII_FALSE) {
-            M_KII_LOG(kii->kii_core.logger_cb(
-                    "fail to start api call.\n"));
+            M_KII_LOG(
+                    "fail to start api call.\n");
             continue;
         }
         if (kii_api_call_run(kii) != 0) {
-            M_KII_LOG(kii->kii_core.logger_cb("fail to run api.\n"));
+            M_KII_LOG("fail to run api.\n");
             continue;
         }
     }
@@ -1082,7 +1082,7 @@ static kii_bool_t _onboard_with_thing_id(
     kii_bool_t succeeded;
 
     if (_tio_get_anonymous_token(kii, error) != 0) {
-        M_KII_LOG(kii->kii_core.logger_cb("fail to get anonymous token.\n"));
+        M_KII_LOG("fail to get anonymous token.\n");
         return KII_FALSE;
     }
 
@@ -1091,15 +1091,15 @@ static kii_bool_t _onboard_with_thing_id(
             resource_path,
             sizeof(resource_path) / sizeof(resource_path[0]));
     if (succeeded == KII_FALSE) {
-        M_KII_LOG(kii->kii_core.logger_cb(
-                "resource path is longer than expected.\n"));
+        M_KII_LOG(
+                "resource path is longer than expected.\n");
         return KII_FALSE;
     }
 
     if (kii_api_call_start(kii, "POST", resource_path, CONTENT_TYPE_THING_ID,
                     KII_TRUE) != 0) {
-        M_KII_LOG(kii->kii_core.logger_cb(
-            "fail to start api call.\n"));
+        M_KII_LOG(
+            "fail to start api call.\n");
     }
 
     /* Append key value pairs. */
@@ -1116,17 +1116,17 @@ static kii_bool_t _onboard_with_thing_id(
             _append_key_value_string_optional(
                 kii, "layoutPosition", layout_position, KII_TRUE) != 0 ||
             APPEND_BODY_CONST(kii, "}") != 0) {
-        M_KII_LOG(kii->kii_core.logger_cb("request size overflowed.\n"));
+        M_KII_LOG("request size overflowed.\n");
         return KII_FALSE;
     }
 
     if (_execute_http_session(kii, error) != KII_TRUE) {
-        M_KII_LOG(kii->kii_core.logger_cb("fail to run api.\n"));
+        M_KII_LOG("fail to run api.\n");
         return KII_FALSE;
     }
 
     if (_thing_if_parse_onboarding_response(kii, error) != 0) {
-        M_KII_LOG(kii->kii_core.logger_cb("fail to parse resonse.\n"));
+        M_KII_LOG("fail to parse resonse.\n");
         return KII_FALSE;
     }
 
@@ -1247,8 +1247,8 @@ kii_bool_t get_firmware_version(
                     sizeof(resource_path) / sizeof(resource_path[0]));
 
             if (succeeded != KII_TRUE) {
-                M_KII_LOG(kii->kii_core.logger_cb(
-                        "resource path is longer than expected.\n"));
+                M_KII_LOG(
+                        "resource path is longer than expected.\n");
                 return KII_FALSE;
             }
             if (_kii_api_call_start(
@@ -1320,8 +1320,8 @@ kii_bool_t update_firmware_version(
                     sizeof(resource_path) / sizeof(resource_path[0]));
 
             if (succeeded != KII_TRUE) {
-                M_KII_LOG(kii->kii_core.logger_cb(
-                        "resource path is longer than expected.\n"));
+                M_KII_LOG(
+                        "resource path is longer than expected.\n");
                 return KII_FALSE;
             }
             if (_kii_api_call_start(
@@ -1337,8 +1337,8 @@ kii_bool_t update_firmware_version(
                     _append_key_value_string(
                         kii, "firmwareVersion", firmware_version, KII_FALSE) != 0 ||
                     APPEND_BODY_CONST(kii, "}") != 0) {
-                M_KII_LOG(kii->kii_core.logger_cb(
-                        "request size overflowed.\n"));
+                M_KII_LOG(
+                        "request size overflowed.\n");
                 if (error != NULL) {
                     error->code = TIO_ERROR_INSUFFICIENT_BUFFER;
                 }
@@ -1382,8 +1382,8 @@ kii_bool_t get_thing_type(
                     sizeof(resource_path) / sizeof(resource_path[0]));
 
             if (succeeded != KII_TRUE) {
-                M_KII_LOG(kii->kii_core.logger_cb(
-                        "resource path is longer than expected.\n"));
+                M_KII_LOG(
+                        "resource path is longer than expected.\n");
                 return KII_FALSE;
             }
             if (_kii_api_call_start(
@@ -1454,8 +1454,8 @@ kii_bool_t update_thing_type(
                     sizeof(resource_path) / sizeof(resource_path[0]));
 
             if (succeeded != KII_TRUE) {
-                M_KII_LOG(kii->kii_core.logger_cb(
-                        "resource path is longer than expected.\n"));
+                M_KII_LOG(
+                        "resource path is longer than expected.\n");
                 return KII_FALSE;
             }
             if (_kii_api_call_start(
@@ -1471,8 +1471,8 @@ kii_bool_t update_thing_type(
                     _append_key_value_string(
                         kii, "thingType", thing_type, KII_FALSE) != 0 ||
                     APPEND_BODY_CONST(kii, "}") != 0) {
-                M_KII_LOG(kii->kii_core.logger_cb(
-                        "request size overflowed.\n"));
+                M_KII_LOG(
+                        "request size overflowed.\n");
                 if (error != NULL) {
                     error->code = TIO_ERROR_INSUFFICIENT_BUFFER;
                 }

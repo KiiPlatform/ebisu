@@ -8,6 +8,12 @@
 
 const char TIO_TASK_NAME_UPDATE_STATE[] = "task_update_state";
 
+void tio_handler_init(tio_handler_t* handler)
+{
+    handler->_kii._author.author_id[0] = '\0';
+    handler->_kii._author.access_token[0] = '\0';
+}
+
 void tio_handler_set_cb_sock_connect_http(
     tio_handler_t* handler,
     KHC_CB_SOCK_CONNECT cb_connect,
@@ -87,7 +93,7 @@ void tio_handler_set_cb_task_create(
     handler->_kii.task_create_cb = cb_task_create;
 }
 
-void tio_hadler_set_cb_delay_ms(
+void tio_handler_set_cb_delay_ms(
     tio_handler_t* handler,
     KII_DELAY_MS cb_delay_ms)
 {
@@ -125,9 +131,7 @@ void tio_handler_set_app(
     const char* app_id,
     const char* host)
 {
-    // FIXME: Kii should provide setter API.
-    strncpy(handler->_kii._app_id, app_id, sizeof(handler->_kii._app_id)-1);
-    strncpy(handler->_kii._app_host, host, sizeof(handler->_kii._app_host)-1);
+    kii_init(&handler->_kii, host, app_id);
 }
 
 static void _cb_receive_push(char* palyload, size_t payload_length, void* userdata) {
@@ -141,10 +145,14 @@ static void _cb_receive_push(char* palyload, size_t payload_length, void* userda
 tio_code_t tio_handler_start(
     tio_handler_t* handler,
     const tio_author_t* author,
-    const kii_mqtt_endpoint_t* endpoint,
     TIO_CB_ACTION cb_action,
     void* userdata)
 {
+    if (author != NULL) {
+        handler->_kii._author = *author;
+    }
+    handler->_cb_action = cb_action;
+    handler->_cb_action_data = userdata;
     kii_code_t res = kii_start_push_routine(
         &handler->_kii,
         handler->_keep_alive_interval,
