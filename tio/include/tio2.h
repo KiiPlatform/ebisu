@@ -33,7 +33,8 @@ typedef enum tio_code_t {
 typedef enum tio_data_type_t {
     TIO_TYPE_NULL,
     TIO_TYPE_BOOLEAN,
-    TIO_TYPE_NUMBER,
+    TIO_TYPE_INTEGER,
+    TIO_TYPE_DOUBLE,
     TIO_TYPE_STRING,
     TIO_TYPE_OBJECT,
     TIO_TYPE_ARRAY

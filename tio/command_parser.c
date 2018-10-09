@@ -127,6 +127,32 @@ int _check_double(const char* str, size_t len)
     return -1;
 }
 
+void _parse_primitive(
+    const char* action_value,
+    size_t action_value_length,
+    tio_action_t* out_action)
+{
+    if (strncmp("null", action_value, (action_value_length > 4) ? action_value_length : 4) == 0) {
+        out_action->action_value.type = TIO_TYPE_NULL;
+        out_action->action_value.opaque_value_length = action_value_length;
+        out_action->action_value.param.opaque_value = action_value;
+    } else if (strncmp("true", action_value, (action_value_length > 4) ? action_value_length : 4) == 0) {
+        out_action->action_value.type = TIO_TYPE_BOOLEAN;
+        out_action->action_value.param.bool_value = KII_TRUE;
+    } else if (strncmp("false", action_value, (action_value_length > 5) ? action_value_length : 5) == 0) {
+        out_action->action_value.type = TIO_TYPE_BOOLEAN;
+        out_action->action_value.param.bool_value = KII_FALSE;
+    } else {
+        if (_check_double(action_value, action_value_length) == 0) {
+            out_action->action_value.type = TIO_TYPE_DOUBLE;
+            out_action->action_value.param.double_value = strtod(action_value, NULL);
+        } else {
+            out_action->action_value.type = TIO_TYPE_INTEGER;
+            out_action->action_value.param.long_value = strtol(action_value, NULL, 10);
+        }
+    }
+}
+
 _cmd_parser_code_t _parse_action(
     tio_handler_t* handler,
     const char* alias,
@@ -187,24 +213,7 @@ _cmd_parser_code_t _parse_action(
             out_action->action_value.param.opaque_value = action_value;
             break;
         case JSMN_PRIMITIVE:
-            if (strncmp("null", action_value, (action_value_length > 4) ? action_value_length : 4) == 0) {
-                out_action->action_value.type = TIO_TYPE_NULL;
-                out_action->action_value.opaque_value_length = action_value_length;
-                out_action->action_value.param.opaque_value = action_value;
-            } else if (strncmp("true", action_value, (action_value_length > 4) ? action_value_length : 4) == 0) {
-                out_action->action_value.type = TIO_TYPE_BOOLEAN;
-                out_action->action_value.param.bool_value = KII_TRUE;
-            } else if (strncmp("false", action_value, (action_value_length > 5) ? action_value_length : 5) == 0) {
-                out_action->action_value.type = TIO_TYPE_BOOLEAN;
-                out_action->action_value.param.bool_value = KII_FALSE;
-            } else {
-                out_action->action_value.type = TIO_TYPE_NUMBER;
-                if (_check_double(action_value, action_value_length) == 0) {
-                    out_action->action_value.param.double_value = strtod(action_value, NULL);
-                } else {
-                    out_action->action_value.param.long_value = strtol(action_value, NULL, 10);
-                }
-            }
+            _parse_primitive(action_value, action_value_length, out_action);
             break;
         default:
             break;
