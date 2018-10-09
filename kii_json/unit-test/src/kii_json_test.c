@@ -2,6 +2,7 @@
 #include <kii_json.h>
 #include <kii_json_utils.h>
 #include <math.h>
+#include <limits.h>
 
 static kii_json_resource_t* alloc_cb(size_t required_size)
 {
@@ -1549,4 +1550,63 @@ TEST(KiiJson, PrimitiveInt)
 
     EXPECT_EQ(KII_JSON_FIELD_TYPE_INTEGER, res.type);
     EXPECT_EQ(1, res.value.int_value);
+}
+
+TEST(KiiJson, PrimitiveIntMax)
+{
+    const char int_str[] = "2147483647";
+    kii_json_primitive_t res;
+    kii_json_parse_primitive(int_str, strlen(int_str), &res);
+
+    EXPECT_EQ(KII_JSON_FIELD_TYPE_INTEGER, res.type);
+    EXPECT_EQ(2147483647, res.value.int_value);
+}
+
+TEST(KiiJson, PrimitiveIntMin)
+{
+    const char int_str[] = "-2147483648";
+    kii_json_primitive_t res;
+    kii_json_parse_primitive(int_str, strlen(int_str), &res);
+
+    EXPECT_EQ(KII_JSON_FIELD_TYPE_INTEGER, res.type);
+    EXPECT_EQ(-2147483648, res.value.int_value);
+}
+
+TEST(KiiJson, PrimitiveDouble)
+{
+    const char double_str[] = "0.1";
+    kii_json_primitive_t res;
+    kii_json_parse_primitive(double_str, strlen(double_str), &res);
+
+    EXPECT_EQ(KII_JSON_FIELD_TYPE_DOUBLE, res.type);
+    EXPECT_EQ(0.1, res.value.double_value);
+}
+
+TEST(KiiJson, PrimitiveNull)
+{
+    const char null_str[] = "null";
+    kii_json_primitive_t res;
+    kii_json_parse_primitive(null_str, strlen(null_str), &res);
+
+    EXPECT_EQ(KII_JSON_FIELD_TYPE_NULL, res.type);
+}
+
+TEST(KiiJson, PrimitiveTrue)
+{
+    const char bool_str[] = "true";
+    kii_json_primitive_t res;
+    kii_json_parse_primitive(bool_str, strlen(bool_str), &res);
+
+    EXPECT_EQ(KII_JSON_FIELD_TYPE_BOOLEAN, res.type);
+    EXPECT_EQ(KII_JSON_TRUE, res.value.boolean_value);
+}
+
+TEST(KiiJson, PrimitiveFalse)
+{
+    const char bool_str[] = "false";
+    kii_json_primitive_t res;
+    kii_json_parse_primitive(bool_str, strlen(bool_str), &res);
+
+    EXPECT_EQ(KII_JSON_FIELD_TYPE_BOOLEAN, res.type);
+    EXPECT_EQ(KII_JSON_FALSE, res.value.boolean_value);
 }
