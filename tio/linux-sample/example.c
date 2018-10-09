@@ -182,8 +182,8 @@ static void print_help() {
 
 }
 
-void init(
-        tio_handler_t* tio,
+void handler_init(
+        tio_handler_t* handler,
         char* kii_buffer,
         int kii_buffer_size,
         void* http_ssl_ctx,
@@ -192,30 +192,30 @@ void init(
         void* mqtt_ssl_ctx,
         kii_json_resource_t* resource)
 {
-    tio_handler_init(tio);
+    tio_handler_init(handler);
 
-    tio_handler_set_app(tio, EX_APP_ID, EX_APP_SITE);
+    tio_handler_set_app(handler, EX_APP_ID, EX_APP_SITE);
 
-    tio_handler_set_cb_task_create(tio, task_create_cb_impl);
-    tio_handler_set_cb_delay_ms(tio, delay_ms_cb_impl);
+    tio_handler_set_cb_task_create(handler, task_create_cb_impl);
+    tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl);
 
-    tio_handler_set_http_buff(tio, kii_buffer, kii_buffer_size);
+    tio_handler_set_http_buff(handler, kii_buffer, kii_buffer_size);
 
-    tio_handler_set_cb_sock_connect_http(tio, sock_cb_connect, http_ssl_ctx);
-    tio_handler_set_cb_sock_send_http(tio, sock_cb_send, http_ssl_ctx);
-    tio_handler_set_cb_sock_recv_http(tio, sock_cb_recv, http_ssl_ctx);
-    tio_handler_set_cb_sock_close_http(tio, sock_cb_close, http_ssl_ctx);
+    tio_handler_set_cb_sock_connect_http(handler, sock_cb_connect, http_ssl_ctx);
+    tio_handler_set_cb_sock_send_http(handler, sock_cb_send, http_ssl_ctx);
+    tio_handler_set_cb_sock_recv_http(handler, sock_cb_recv, http_ssl_ctx);
+    tio_handler_set_cb_sock_close_http(handler, sock_cb_close, http_ssl_ctx);
 
-    tio_handler_set_mqtt_buff(tio, mqtt_buffer, mqtt_buffer_size);
+    tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
 
-    tio_handler_set_cb_sock_connect_mqtt(tio, mqtt_cb_connect, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_send_mqtt(tio, mqtt_cb_send, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_recv_mqtt(tio, mqtt_cb_recv, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_close_mqtt(tio, mqtt_cb_close, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_connect_mqtt(handler, mqtt_cb_connect, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_send_mqtt(handler, mqtt_cb_send, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_recv_mqtt(handler, mqtt_cb_recv, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_close_mqtt(handler, mqtt_cb_close, mqtt_ssl_ctx);
 
-    tio_handler_set_keep_alive_interval(tio, 0);
+    tio_handler_set_keep_alive_interval(handler, 0);
 
-    kii_set_json_parser_resource(&tio->_kii, resource);
+    kii_set_json_parser_resource(&handler->_kii, resource);
 }
 
 tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, void* userdata)
@@ -239,7 +239,7 @@ int main(int argc, char** argv)
     kii_bool_t result;
     */
 
-    tio_handler_t tio;
+    tio_handler_t handler;
     char kii_buff[EX_COMMAND_HANDLER_BUFF_SIZE];
     socket_context_t http_ctx;
     char mqtt_buff[EX_MQTT_BUFF_SIZE];
@@ -250,8 +250,8 @@ int main(int argc, char** argv)
 
     memset(kii_buff, 0x00, sizeof(char) * EX_COMMAND_HANDLER_BUFF_SIZE);
     memset(mqtt_buff, 0x00, sizeof(char) * EX_MQTT_BUFF_SIZE);
-    init(
-            &tio,
+    handler_init(
+            &handler,
             kii_buff,
             EX_COMMAND_HANDLER_BUFF_SIZE,
             &http_ctx,
@@ -296,7 +296,7 @@ int main(int argc, char** argv)
                 }
                 printf("program successfully started!\n");
                 result = kii_ti_onboard(
-                        &tio._kii,
+                        &handler._kii,
                         vendorThingID,
                         password,
                         NULL,
@@ -325,13 +325,10 @@ int main(int argc, char** argv)
                     printf("unexpected usage.\n");
             }
             if (strcmp(optName, "help") == 0) {
-                break;
+                exit(0);
             }
         }
-    } else {
-        print_help();
-        exit(0);
-    }
+        tio_handler_start(&handler, NULL, tio_action_handler, NULL);
 /*
     } else if (strcmp(subc, "get") == 0) {
         char* vendorThingID = NULL;
@@ -606,14 +603,11 @@ int main(int argc, char** argv)
             printf("thing type successfully updated.\n");
         }
         exit(0);
+*/
     } else {
         print_help();
         exit(0);
     }
-
-    start(&tio);
-    */
-    tio_handler_start(&tio, NULL, tio_action_handler, NULL);
 
     /* run forever. TODO: Convert to daemon. */
     while(1){ sleep(1); };
