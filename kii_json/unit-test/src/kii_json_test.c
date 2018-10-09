@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <kii_json.h>
+#include <kii_json_utils.h>
 #include <math.h>
 
 static kii_json_resource_t* alloc_cb(size_t required_size)
@@ -1538,4 +1539,14 @@ TEST(KiiJson, FailedAllocationTest)
         free_cb);
 
     EXPECT_EQ(KII_JSON_PARSE_ALLOCATION_ERROR, res);
+}
+
+TEST(KiiJson, PrimitiveInt)
+{
+    const char int_str[] = "1";
+    kii_json_primitive_t res;
+    kii_json_parse_primitive(int_str, 1, &res);
+
+    EXPECT_EQ(KII_JSON_FIELD_TYPE_INTEGER, res.type);
+    EXPECT_EQ(1, res.value.int_value);
 }

@@ -17,7 +17,8 @@ typedef enum kii_json_parse_primitive_result_t
 
 typedef struct kii_json_primitive_t {
     union {
-        long integer_value;
+        int int_value;
+        long long_value;
         double double_value;
         kii_json_boolean_t boolean_value;
     } value;

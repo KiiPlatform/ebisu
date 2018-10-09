@@ -942,7 +942,7 @@ kii_json_parse_primitive_result_t kii_json_parse_primitive(
             return res;
         }
         result->type = KII_JSON_FIELD_TYPE_INTEGER;
-        result->value.integer_value = int_value;
+        result->value.int_value = int_value;
         return KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS;
     }
     int is_long = _kii_json_is_long(primitive, primitive_length);
@@ -954,7 +954,7 @@ kii_json_parse_primitive_result_t kii_json_parse_primitive(
             return res;
         }
         result->type = KII_JSON_FIELD_TYPE_LONG;
-        result->value.integer_value = long_value;
+        result->value.long_value = long_value;
         return KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS;
     }
     int is_double = _kii_json_is_double(primitive, primitive_length);
