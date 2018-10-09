@@ -1554,27 +1554,71 @@ TEST(KiiJson, PrimitiveInt)
 
 TEST(KiiJson, PrimitiveIntMax)
 {
-    const char int_str[] = "2147483647";
+    char str_buff[64];
+    snprintf(str_buff, 64, "%d", INT_MAX);
     kii_json_primitive_t res;
-    kii_json_parse_primitive(int_str, strlen(int_str), &res);
+    kii_json_parse_primitive(str_buff, strlen(str_buff), &res);
 
     EXPECT_EQ(KII_JSON_FIELD_TYPE_INTEGER, res.type);
-    EXPECT_EQ(2147483647, res.value.int_value);
+    EXPECT_EQ(INT_MAX, res.value.int_value);
 }
 
 TEST(KiiJson, PrimitiveIntMin)
 {
-    const char int_str[] = "-2147483648";
+    char str_buff[64];
+    snprintf(str_buff, 64, "%d", INT_MIN);
     kii_json_primitive_t res;
-    kii_json_parse_primitive(int_str, strlen(int_str), &res);
+    kii_json_parse_primitive(str_buff, strlen(str_buff), &res);
 
     EXPECT_EQ(KII_JSON_FIELD_TYPE_INTEGER, res.type);
-    EXPECT_EQ(-2147483648, res.value.int_value);
+    EXPECT_EQ(INT_MIN, res.value.int_value);
+}
+
+TEST(KiiJson, PrimitiveLongMin)
+{
+    char str_buff[64];
+    snprintf(str_buff, 64, "%ld", LONG_MIN);
+    kii_json_primitive_t res;
+    kii_json_parse_primitive(str_buff, strlen(str_buff), &res);
+
+    EXPECT_EQ(KII_JSON_FIELD_TYPE_LONG, res.type);
+    EXPECT_EQ(LONG_MIN, res.value.long_value);
+}
+
+TEST(KiiJson, PrimitiveLongMax)
+{
+    char str_buff[64];
+    snprintf(str_buff, 64, "%ld", LONG_MAX);
+    kii_json_primitive_t res;
+    kii_json_parse_primitive(str_buff, strlen(str_buff), &res);
+
+    EXPECT_EQ(KII_JSON_FIELD_TYPE_LONG, res.type);
+    EXPECT_EQ(LONG_MAX, res.value.long_value);
 }
 
 TEST(KiiJson, PrimitiveDouble)
 {
     const char double_str[] = "0.1";
+    kii_json_primitive_t res;
+    kii_json_parse_primitive(double_str, strlen(double_str), &res);
+
+    EXPECT_EQ(KII_JSON_FIELD_TYPE_DOUBLE, res.type);
+    EXPECT_EQ(0.1, res.value.double_value);
+}
+
+TEST(KiiJson, PrimitiveDoubleScientific)
+{
+    const char double_str[] = "1e-1";
+    kii_json_primitive_t res;
+    kii_json_parse_primitive(double_str, strlen(double_str), &res);
+
+    EXPECT_EQ(KII_JSON_FIELD_TYPE_DOUBLE, res.type);
+    EXPECT_EQ(0.1, res.value.double_value);
+}
+
+TEST(KiiJson, PrimitiveDoubleScientificCap)
+{
+    const char double_str[] = "1E-1";
     kii_json_primitive_t res;
     kii_json_parse_primitive(double_str, strlen(double_str), &res);
 
