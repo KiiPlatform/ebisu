@@ -119,7 +119,6 @@ void tio_handler_set_app(tio_handler_t* handler, const char* app_id, const char*
 tio_code_t tio_handler_start(
     tio_handler_t* handler,
     const tio_author_t* author,
-    const kii_mqtt_endpoint_t* endpoint,
     TIO_CB_ACTION cb_action,
     void* userdata);
 

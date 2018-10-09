@@ -613,7 +613,7 @@ int main(int argc, char** argv)
 
     start(&tio);
     */
-    tio_handler_start(&tio, NULL, NULL, tio_action_handler, NULL);
+    tio_handler_start(&tio, NULL, tio_action_handler, NULL);
 
     /* run forever. TODO: Convert to daemon. */
     while(1){ sleep(1); };

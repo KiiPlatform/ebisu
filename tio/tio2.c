@@ -139,11 +139,14 @@ static void _cb_receive_push(char* palyload, size_t payload_length, void* userda
 tio_code_t tio_handler_start(
     tio_handler_t* handler,
     const tio_author_t* author,
-    const kii_mqtt_endpoint_t* endpoint,
     TIO_CB_ACTION cb_action,
     void* userdata)
 {
+    if (author != NULL) {
+        handler->_kii._author = *author;
+    }
     handler->_cb_action = cb_action;
+    handler->_cb_action_data = userdata;
     kii_code_t res = kii_start_push_routine(
         &handler->_kii,
         handler->_keep_alive_interval,
