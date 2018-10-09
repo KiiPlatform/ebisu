@@ -182,6 +182,42 @@ static void print_help() {
 
 }
 
+void updater_init(
+        tio_updater_t* updater,
+        char* buffer,
+        int buffer_size,
+        void* sock_ssl_ctx,
+        kii_json_resource_t* resource)
+{
+    tio_updater_set_app(updater, EX_APP_ID, EX_APP_SITE);
+
+    tio_updater_set_cb_task_create(updater, task_create_cb_impl);
+    tio_updater_set_cb_delay_ms(updater, delay_ms_cb_impl);
+
+    tio_updater_set_buff(updater, buffer, buffer_size);
+
+    tio_updater_set_cb_sock_connect(updater, updater_cb_connect, sock_ssl_ctx);
+    tio_updater_set_cb_sock_send(updater, updater_cb_send, sock_ssl_ctx);
+    tio_updater_set_cb_sock_recv(updater, updater_cb_recv, sock_ssl_ctx);
+    tio_updater_set_cb_sock_close(updater, updater_cb_close, sock_ssl_ctx);
+
+    tio_updater_set_interval(updater, 0);
+
+    kii_set_json_parser_resource(&updater->_kii, resource);
+}
+
+size_t updater_cb_state_size(void* userdata)
+{
+    // TODO:
+    return 0;
+}
+
+size_t updater_cb_read(char *buffer, size_t size, size_t count, void *userdata)
+{
+    // TODO:
+    return 0;
+}
+
 void handler_init(
         tio_handler_t* handler,
         char* kii_buffer,
@@ -239,15 +275,27 @@ int main(int argc, char** argv)
     kii_bool_t result;
     */
 
+    tio_updater_t updater;
     tio_handler_t handler;
+    char updater_buff[EX_STATE_UPDATER_BUFF_SIZE];
+    socket_context_t updater_ctx;
     char kii_buff[EX_COMMAND_HANDLER_BUFF_SIZE];
     socket_context_t http_ctx;
     char mqtt_buff[EX_MQTT_BUFF_SIZE];
     socket_context_t mqtt_ctx;
+    kii_json_token_t updater_tokens[256];
+    kii_json_resource_t updater_resource = {updater_tokens, 256};
     kii_json_token_t tokens[256];
     kii_json_resource_t resource = {tokens, 256};
     kii_code_t result;
 
+    memset(updater_buff, 0x00, sizeof(char) * EX_STATE_UPDATER_BUFF_SIZE);
+    updater_init(
+            &updater,
+            updater_buff,
+            EX_STATE_UPDATER_BUFF_SIZE,
+            &updater_ctx,
+            &updater_resource);
     memset(kii_buff, 0x00, sizeof(char) * EX_COMMAND_HANDLER_BUFF_SIZE);
     memset(mqtt_buff, 0x00, sizeof(char) * EX_MQTT_BUFF_SIZE);
     handler_init(
@@ -468,16 +516,15 @@ int main(int argc, char** argv)
             printf("thing type=%s\n", thingType);
         }
         exit(0);
+*/
     } else if (strcmp(subc, "update") == 0) {
         char* vendorThingID = NULL;
-        char* thingID = NULL;
         char* password = NULL;
         char* firmwareVersion = NULL;
         char* thingType = NULL;
         while (1) {
             struct option longOptions[] = {
                 {"vendor-thing-id", required_argument, 0, 0},
-                {"thing-id", required_argument, 0, 1},
                 {"password", required_argument, 0, 2},
                 {"firmware-version", required_argument, 0, 3},
                 {"thing-type", required_argument, 0, 4},
@@ -494,18 +541,15 @@ int main(int argc, char** argv)
                     vendorThingID = optarg;
                     break;
                 case 1:
-                    thingID = optarg;
-                    break;
-                case 2:
                     password = optarg;
                     break;
-                case 3:
+                case 2:
                     firmwareVersion = optarg;
                     break;
-                case 4:
+                case 3:
                     thingType = optarg;
                     break;
-                case 5:
+                case 4:
                     printf("usage: \n"
                             "update --vendor-thing-id={ID of the thing} "
                             "--password={password of the thing} "
@@ -515,95 +559,34 @@ int main(int argc, char** argv)
                     break;
             }
         }
-        if (vendorThingID == NULL && thingID == NULL) {
-            printf("neither vendor-thing-id and thing-id are specified.\n");
+        if (vendorThingID == NULL) {
+            printf("neither vendor-thing-id is specified.\n");
             exit(1);
         }
         if (password == NULL) {
             printf("password is not specifeid.\n");
             exit(1);
         }
-        if (vendorThingID != NULL && thingID != NULL) {
-            printf("both vendor-thing-id and thing-id is specified.  either of one should be specified.\n");
+        result = kii_ti_onboard(
+                &updater._kii,
+                vendorThingID,
+                password,
+                thingType,
+                firmwareVersion,
+                NULL,
+                NULL);
+        if (result != KII_ERR_OK) {
+            printf("failed to onboard.\n");
             exit(1);
-        }
-        if (firmwareVersion == NULL && thingType == NULL) {
-            printf("--firmware-version or --thing-type must be specified.\n");
-            exit(1);
-        }
-        if (init_tio(
-                &tio,
-                EX_APP_ID,
-                EX_APP_KEY,
-                EX_APP_SITE,
-                &command_handler_resource,
-                &state_updater_resource,
-                &sys_cb) == KII_FALSE) {
-            printf("fail to initialize.\n");
-            exit(1);
-        }
-        if (vendorThingID != NULL) {
-            if (onboard_with_vendor_thing_id(
-                    &tio,
-                    vendorThingID,
-                    password,
-                    NULL,
-                    NULL,
-                    NULL,
-                    NULL,
-                    NULL) == KII_FALSE) {
-                printf("fail to onboard.\n");
-                exit(1);
-            }
-        } else {
-            if (onboard_with_thing_id(
-                    &tio,
-                    thingID,
-                    password,
-                    NULL,
-                    NULL,
-                    NULL,
-                    NULL,
-                    NULL) == KII_FALSE) {
-                printf("fail to onboard.\n");
-                exit(1);
-            }
         }
 
-        if (firmwareVersion != NULL) {
-            tio_error_t error;
-            if (update_firmware_version(
-                    &tio,
-                    firmwareVersion,
-                    &error) == KII_FALSE) {
-                printf("update_firmware_version is failed: %d\n", error.code);
-                if (error.code == TIO_ERROR_HTTP) {
-                    printf("status code=%d, error code=%s\n",
-                            error.http_status_code,
-                            error.error_code);
-                }
-                exit(1);
-            }
-            printf("firmware version successfully updated.\n");
-        }
-        if (thingType != NULL) {
-            tio_error_t error;
-            if (update_thing_type(
-                    &tio,
-                    thingType,
-                    &error) == KII_FALSE) {
-                printf("update_thing_type is failed: %d\n", error.code);
-                if (error.code == TIO_ERROR_HTTP) {
-                    printf("status code=%d, error code=%s\n",
-                            error.http_status_code,
-                            error.error_code);
-                }
-                exit(1);
-            }
-            printf("thing type successfully updated.\n");
-        }
-        exit(0);
-*/
+        tio_updater_start(
+                &updater,
+                NULL,
+                updater_cb_state_size,
+                NULL,
+                updater_cb_read,
+                NULL);
     } else {
         print_help();
         exit(0);

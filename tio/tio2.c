@@ -274,7 +274,9 @@ tio_code_t tio_updater_start(
     TIO_CB_READ state_reader,
     void* state_reader_data)
 {
-    updater->_kii._author = *author;
+    if (author != NULL) {
+        updater->_kii._author = *author;
+    }
  
     updater->_cb_state_size = cb_state_size;
     updater->_cb_state_size_data = cb_state_size_data;
