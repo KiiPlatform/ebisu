@@ -1,6 +1,10 @@
 #ifndef _kii_json_utils_
 #define _kii_json_utils_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "kii_json.h"
 
 typedef enum kii_json_util_parse_result_t
@@ -25,4 +29,7 @@ kii_json_util_parse_result_t kii_json_parse_primitive(
     size_t primitive_length,
     kii_json_primitive* result);
 
+#ifdef __cplusplus
+}
+#endif
 #endif
