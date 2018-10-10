@@ -1626,6 +1626,36 @@ TEST(KiiJson, PrimitiveDoubleScientificCap)
     EXPECT_EQ(0.1, res.value.double_value);
 }
 
+TEST(KiiJson, PrimitiveDoubleMin)
+{
+    char str_buff[64];
+    int written = snprintf(str_buff, 64, "%le", -DBL_MAX);
+    EXPECT_LT(written, 64);
+    kii_json_primitive_t res;
+    kii_json_parse_primitive_result_t pres =
+        kii_json_parse_primitive(str_buff, strlen(str_buff), &res);
+    EXPECT_EQ(KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS, pres);
+    EXPECT_EQ(KII_JSON_FIELD_TYPE_DOUBLE, res.type);
+
+    double expect = strtod(str_buff, NULL);
+    EXPECT_DOUBLE_EQ(expect, res.value.double_value);
+}
+
+TEST(KiiJson, PrimitiveDoubleMax)
+{
+    char str_buff[64];
+    int written = snprintf(str_buff, 64, "%le", DBL_MAX);
+    EXPECT_LT(written, 64);
+    kii_json_primitive_t res;
+    kii_json_parse_primitive_result_t pres =
+        kii_json_parse_primitive(str_buff, strlen(str_buff), &res);
+    EXPECT_EQ(KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS, pres);
+    EXPECT_EQ(KII_JSON_FIELD_TYPE_DOUBLE, res.type);
+
+    double expect = strtod(str_buff, NULL);
+    EXPECT_DOUBLE_EQ(expect, res.value.double_value);
+}
+
 TEST(KiiJson, PrimitiveNull)
 {
     const char null_str[] = "null";
