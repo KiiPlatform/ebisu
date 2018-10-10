@@ -30,6 +30,10 @@
     "deque": "cpp",
     "initializer_list": "cpp",
     "list": "cpp",
-    "regex": "cpp"
+    "regex": "cpp",
+    "atomic": "c",
+    "limits": "c",
+    "ratio": "c",
+    "type_traits": "c"
   }
 }
