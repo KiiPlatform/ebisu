@@ -276,6 +276,8 @@ static int _kii_json_is_double(const char* buf, size_t buf_len)
                     continue;
                 }
                 return 0;
+            default:
+                return 0;
         }
     }
     return 1;
