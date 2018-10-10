@@ -184,82 +184,97 @@ static int _kii_json_is_long(const char* buf, size_t buf_len)
     return _kii_json_is_all_digit(buf, buf_len);
 }
 
+typedef enum  {
+    parser_sts_sign,
+    parser_sts_integer_start,
+    parser_sts_integer0,
+    parser_sts_integer,
+    parser_sts_decimal,
+    parser_sts_exp_start,
+    parser_sts_exp
+} num_parser_sts;
+
 static int _kii_json_is_double(const char* buf, size_t buf_len)
 {
-    int is_first = 1;
-    int after_e = 0;
-    int before_is_e = 0;
-    int after_dot = 0;
-    int before_is_dot = 0;
-    int before_is_minus = 0;
-    size_t i = 0;
-
     M_KII_JSON_ASSERT(buf != NULL);
     if (buf_len > DOUBLEBUFSIZE) {
         return 0;
     }
 
-    for (i = 0; i < buf_len; ++i) {
-        switch(buf[i]) {
-            case 'e':
-            case 'E':
-                if (is_first != 0) {
-                    /* e must not be first. */
-                    return 0;
-                } else if (after_e != 0) {
-                    /* e must not appear only once. */
-                    return 0;
-                } else if (before_is_minus != 0) {
-                    /* e must follow digit. */
-                    return 0;
-                } else if (before_is_dot != 0) {
-                    return 0;
+    num_parser_sts sts = parser_sts_sign;
+    for (int i = 0; i < buf_len; ++i) {
+        char c = buf[i];
+        switch(sts) {
+            case parser_sts_sign:
+                if (c == '-') {
+                    sts = parser_sts_integer_start;
+                    continue;
                 }
-                before_is_e = 1;
-                after_e = 1;
-                break;
-            case '.':
-                if (is_first != 0) {
-                    /* . must not be first. */
-                    return 0;
-                } else if (after_dot != 0) {
-                    /* . must not appear only once. */
-                    return 0;
-                } else if (after_e != 0) {
-                    /* . must not appear after e. */
-                    return 0;
-                } else if (before_is_minus != 0) {
-                    return 0;
+                if (c == '0') {
+                    sts = parser_sts_integer0;
+                    continue;
                 }
-                before_is_dot = 1;
-                after_dot = 1;
-                break;
-            case '-':
-                if (is_first != 0) {
-                    is_first = 0;
-                    before_is_minus = 1;
-                } else if (before_is_e != 0) {
-                    before_is_minus = 1;
-                } else {
-                    return 0;
+                if ('1' <= c && c <= '9') {
+                    sts = parser_sts_integer;
+                    continue;
                 }
-                break;
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-                is_first = 0;
-                before_is_e = 0;
-                before_is_dot = 0;
-                before_is_minus = 0;
-                break;
-            default:
+                return 0;
+            case parser_sts_integer_start:
+                if (c == '0') {
+                    sts = parser_sts_integer0;
+                    continue;
+                }
+                if ('1' <= c && c <= '9') {
+                    sts = parser_sts_integer;
+                    continue;
+                }
+                return 0;
+            case parser_sts_integer0:
+                if (c == '.') {
+                    sts = parser_sts_decimal;
+                    continue;
+                }
+                if (c == 'e' || c == 'E') {
+                    sts = parser_sts_exp_start;
+                    continue;
+                }
+                return 0;
+            case parser_sts_integer:
+                if ('0' <= c && c <= '9') {
+                    continue;
+                }
+                if (c == '.') {
+                    sts = parser_sts_decimal;
+                    continue;
+                }
+                if (c == 'e' || c == 'E') {
+                    sts = parser_sts_exp_start;
+                    continue;
+                }
+                return 0;
+            case parser_sts_decimal:
+                if ('0' <= c && c <= '9') {
+                    continue;
+                }
+                if (c == 'e' || c == 'E') {
+                    sts = parser_sts_exp_start;
+                    continue;
+                }
+                return 0;
+            case parser_sts_exp_start:
+                if (c == '-' || c == '+') {
+                    sts =parser_sts_exp;
+                    continue;
+                }
+                if ('0' <= c && c <= '9') {
+                    sts = parser_sts_exp;
+                    continue;
+                }
+                return 0;
+            case parser_sts_exp:
+                if ('0' <= c && c <= '9') {
+                    continue;
+                }
                 return 0;
         }
     }
