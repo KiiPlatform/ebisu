@@ -1,4 +1,4 @@
-#include <gtest/gtest.h>
+#include <catch.hpp>
 #include <kii_json.h>
 #include <kii_json_utils.h>
 #include <math.h>
@@ -34,7 +34,7 @@ static kii_json_resource_t* allocate_cb_fail(
     return NULL;
 }
 
-TEST(KiiJson, GetObjectStringByName) {
+TEST_CASE("KiiJson, GetObjectStringByName") {
     const char json_string[] = "{\"key1\" : \"value1\"}";
     char buf[256];
 
@@ -52,12 +52,12 @@ TEST(KiiJson, GetObjectStringByName) {
     fields[1].name = NULL;
 
     kii_json_parse_result_t res = kii_json_parse(json_string, strlen(json_string), fields, &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(0, strcmp("value1", fields[0].field_copy.string));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
 }
 
-TEST(KiiJson, GetObjectPositiveIntByName) {
+TEST_CASE("KiiJson, GetObjectPositiveIntByName") {
     const char json_string[] = "{\"key1\" : 100}";
 
     kii_json_token_t tokens[256];
@@ -76,12 +76,12 @@ TEST(KiiJson, GetObjectPositiveIntByName) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(100, fields[0].field_copy.int_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(100 == fields[0].field_copy.int_value);
 }
 
-TEST(KiiJson, GetObjectNegativeIntByName) {
+TEST_CASE("KiiJson, GetObjectNegativeIntByName") {
     const char json_string[] = "{\"key1\" : -100}";
 
     kii_json_token_t tokens[256];
@@ -100,12 +100,12 @@ TEST(KiiJson, GetObjectNegativeIntByName) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(-100, fields[0].field_copy.int_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(-100 == fields[0].field_copy.int_value);
 }
 
-TEST(KiiJson, GetObjectPositiveLongByName) {
+TEST_CASE("KiiJson, GetObjectPositiveLongByName") {
     const char json_string[] = "{\"key1\" : 1099511627776}";
     kii_json_token_t tokens[256];
     kii_json_resource_t resource = { tokens, 256 };
@@ -122,12 +122,12 @@ TEST(KiiJson, GetObjectPositiveLongByName) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(1099511627776, fields[0].field_copy.long_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(1099511627776 == fields[0].field_copy.long_value);
 }
 
-TEST(KiiJson, GetObjectNegativeLongByName) {
+TEST_CASE("KiiJson, GetObjectNegativeLongByName") {
     const char json_string[] = "{\"key1\" : -1099511627776}";
 
     kii_json_token_t tokens[256];
@@ -145,12 +145,12 @@ TEST(KiiJson, GetObjectNegativeLongByName) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(-1099511627776, fields[0].field_copy.long_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(-1099511627776 == fields[0].field_copy.long_value);
 }
 
-TEST(KiiJson, GetObjectPositiveDotDoubleByName) {
+TEST_CASE("KiiJson, GetObjectPositiveDotDoubleByName") {
     const char json_string[] = "{\"key1\" : 0.1}";
 
     kii_json_token_t tokens[256];
@@ -168,12 +168,12 @@ TEST(KiiJson, GetObjectPositiveDotDoubleByName) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value - 0.1));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0.0001 == fabs(fields[0].field_copy.double_value - 0.1));
 }
 
-TEST(KiiJson, GetObjectNegativeDotDoubleByName) {
+TEST_CASE("KiiJson, GetObjectNegativeDotDoubleByName") {
     const char json_string[] = "{\"key1\" : -0.1}";
 
     kii_json_token_t tokens[256];
@@ -191,12 +191,12 @@ TEST(KiiJson, GetObjectNegativeDotDoubleByName) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value + 0.1));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0.0001 == fabs(fields[0].field_copy.double_value + 0.1));
 }
 
-TEST(KiiJson, GetObjectPositiveEDoubleByName) {
+TEST_CASE("KiiJson, GetObjectPositiveEDoubleByName") {
     const char json_string[] = "{\"key1\" : 1e-1}";
 
     kii_json_token_t tokens[256];
@@ -214,12 +214,12 @@ TEST(KiiJson, GetObjectPositiveEDoubleByName) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value - 0.1));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
 }
 
-TEST(KiiJson, GetObjectNegativeEDoubleByName) {
+TEST_CASE("KiiJson, GetObjectNegativeEDoubleByName") {
     const char json_string[] = "{\"key1\" : -1e-1}";
 
     kii_json_token_t tokens[256];
@@ -237,12 +237,12 @@ TEST(KiiJson, GetObjectNegativeEDoubleByName) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value + 0.1));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
 }
 
-TEST(KiiJson, GetObjectTrueByName) {
+TEST_CASE("KiiJson, GetObjectTrueByName") {
     const char json_string[] = "{\"key1\" : true}";
     char buf[256];
 
@@ -261,12 +261,12 @@ TEST(KiiJson, GetObjectTrueByName) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(KII_JSON_TRUE, fields[0].field_copy.boolean_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(KII_JSON_TRUE == fields[0].field_copy.boolean_value);
 }
 
-TEST(KiiJson, GetObjectFalseByName) {
+TEST_CASE("KiiJson, GetObjectFalseByName") {
     const char json_string[] = "{\"key1\" : false}";
     char buf[256];
 
@@ -285,13 +285,13 @@ TEST(KiiJson, GetObjectFalseByName) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(KII_JSON_FALSE, fields[0].field_copy.boolean_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(KII_JSON_FALSE == fields[0].field_copy.boolean_value);
 }
 
 
-TEST(KiiJson, GetObjectStringByPath) {
+TEST_CASE("KiiJson, GetObjectStringByPath") {
     const char json_string[] = "{\"key1\" : \"value1\"}";
     char buf[256];
 
@@ -312,12 +312,12 @@ TEST(KiiJson, GetObjectStringByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(0, strcmp("value1", fields[0].field_copy.string));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
 }
 
-TEST(KiiJson, GetObjectPositiveIntByPath) {
+TEST_CASE("KiiJson, GetObjectPositiveIntByPath") {
     const char json_string[] = "{\"key1\" : 100}";
 
     kii_json_token_t tokens[256];
@@ -335,12 +335,12 @@ TEST(KiiJson, GetObjectPositiveIntByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(100, fields[0].field_copy.int_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(100 == fields[0].field_copy.int_value);
 }
 
-TEST(KiiJson, GetObjectNegativeIntByPath) {
+TEST_CASE("KiiJson, GetObjectNegativeIntByPath") {
     const char json_string[] = "{\"key1\" : -100}";
 
     kii_json_token_t tokens[256];
@@ -358,12 +358,12 @@ TEST(KiiJson, GetObjectNegativeIntByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(-100, fields[0].field_copy.int_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(-100 == fields[0].field_copy.int_value);
 }
 
-TEST(KiiJson, GetObjectPositiveLongByPath) {
+TEST_CASE("KiiJson, GetObjectPositiveLongByPath") {
     const char json_string[] = "{\"key1\" : 1099511627776}";
 
     kii_json_token_t tokens[256];
@@ -381,12 +381,12 @@ TEST(KiiJson, GetObjectPositiveLongByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(1099511627776, fields[0].field_copy.long_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(1099511627776 == fields[0].field_copy.long_value);
 }
 
-TEST(KiiJson, GetObjectNegativeLongByPath) {
+TEST_CASE("KiiJson, GetObjectNegativeLongByPath") {
     const char json_string[] = "{\"key1\" : -1099511627776}";
 
     kii_json_token_t tokens[256];
@@ -404,12 +404,12 @@ TEST(KiiJson, GetObjectNegativeLongByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(-1099511627776, fields[0].field_copy.long_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(-1099511627776 == fields[0].field_copy.long_value);
 }
 
-TEST(KiiJson, GetObjectPositiveDotDoubleByPath) {
+TEST_CASE("KiiJson, GetObjectPositiveDotDoubleByPath") {
     const char json_string[] = "{\"key1\" : 0.1}";
 
     kii_json_token_t tokens[256];
@@ -427,12 +427,12 @@ TEST(KiiJson, GetObjectPositiveDotDoubleByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value - 0.1));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
 }
 
-TEST(KiiJson, GetObjectNegativeDotDoubleByPath) {
+TEST_CASE("KiiJson, GetObjectNegativeDotDoubleByPath") {
     const char json_string[] = "{\"key1\" : -0.1}";
 
     kii_json_token_t tokens[256];
@@ -450,12 +450,12 @@ TEST(KiiJson, GetObjectNegativeDotDoubleByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value + 0.1));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
 }
 
-TEST(KiiJson, GetObjectPositiveEDoubleByPath) {
+TEST_CASE("KiiJson, GetObjectPositiveEDoubleByPath") {
     const char json_string[] = "{\"key1\" : 1e-1}";
 
     kii_json_token_t tokens[256];
@@ -473,12 +473,12 @@ TEST(KiiJson, GetObjectPositiveEDoubleByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value - 0.1));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
 }
 
-TEST(KiiJson, GetObjectNegativeEDoubleByPath) {
+TEST_CASE("KiiJson, GetObjectNegativeEDoubleByPath") {
     const char json_string[] = "{\"key1\" : -1e-1}";
 
     kii_json_token_t tokens[256];
@@ -496,12 +496,12 @@ TEST(KiiJson, GetObjectNegativeEDoubleByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value + 0.1));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
 }
 
-TEST(KiiJson, GetObjectNullByPath) {
+TEST_CASE("KiiJson, GetObjectNullByPath") {
     const char json_string[] = "{\"key1\" : null}";
     char buf[256];
 
@@ -520,11 +520,11 @@ TEST(KiiJson, GetObjectNullByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
 }
 
-TEST(KiiJson, GetObjectTrueByPath) {
+TEST_CASE("KiiJson, GetObjectTrueByPath") {
     const char json_string[] = "{\"key1\" : true}";
     char buf[256];
 
@@ -543,12 +543,12 @@ TEST(KiiJson, GetObjectTrueByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(KII_JSON_TRUE, fields[0].field_copy.boolean_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(KII_JSON_TRUE == fields[0].field_copy.boolean_value);
 }
 
-TEST(KiiJson, GetObjectFalseByPath) {
+TEST_CASE("KiiJson, GetObjectFalseByPath") {
     const char json_string[] = "{\"key1\" : false}";
     char buf[256];
 
@@ -567,12 +567,12 @@ TEST(KiiJson, GetObjectFalseByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(KII_JSON_FALSE, fields[0].field_copy.boolean_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(KII_JSON_FALSE == fields[0].field_copy.boolean_value);
 }
 
-TEST(KiiJson, GetObjectSecondLayerStringByPath) {
+TEST_CASE("KiiJson, GetObjectSecondLayerStringByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : \"value1\"}}";
     char buf[256];
 
@@ -593,12 +593,12 @@ TEST(KiiJson, GetObjectSecondLayerStringByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(0, strcmp("value1", fields[0].field_copy.string));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
 }
 
-TEST(KiiJson, GetObjectSecondLayerPositiveIntByPath) {
+TEST_CASE("KiiJson, GetObjectSecondLayerPositiveIntByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : 100}}";
 
     kii_json_token_t tokens[256];
@@ -616,12 +616,12 @@ TEST(KiiJson, GetObjectSecondLayerPositiveIntByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(100, fields[0].field_copy.int_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(100 == fields[0].field_copy.int_value);
 }
 
-TEST(KiiJson, GetObjectSecondLayerNegativeIntByPath) {
+TEST_CASE("KiiJson, GetObjectSecondLayerNegativeIntByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : -100}}";
 
     kii_json_token_t tokens[256];
@@ -639,12 +639,12 @@ TEST(KiiJson, GetObjectSecondLayerNegativeIntByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(-100, fields[0].field_copy.int_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(-100 == fields[0].field_copy.int_value);
 }
 
-TEST(KiiJson, GetObjectSecondLayerPositiveLongByPath) {
+TEST_CASE("KiiJson, GetObjectSecondLayerPositiveLongByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : 1099511627776}}";
 
     kii_json_token_t tokens[256];
@@ -662,12 +662,12 @@ TEST(KiiJson, GetObjectSecondLayerPositiveLongByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(1099511627776, fields[0].field_copy.long_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(1099511627776 == fields[0].field_copy.long_value);
 }
 
-TEST(KiiJson, GetObjectSecondLayerNegativeLongByPath) {
+TEST_CASE("KiiJson, GetObjectSecondLayerNegativeLongByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : -1099511627776}}";
 
     kii_json_token_t tokens[256];
@@ -685,12 +685,12 @@ TEST(KiiJson, GetObjectSecondLayerNegativeLongByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(-1099511627776, fields[0].field_copy.long_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(-1099511627776 == fields[0].field_copy.long_value);
 }
 
-TEST(KiiJson, GetObjectSecondLayerPositiveDotDoubleByPath) {
+TEST_CASE("KiiJson, GetObjectSecondLayerPositiveDotDoubleByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : 0.1}}";
 
     kii_json_token_t tokens[256];
@@ -708,12 +708,12 @@ TEST(KiiJson, GetObjectSecondLayerPositiveDotDoubleByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value - 0.1));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
 }
 
-TEST(KiiJson, GetObjectSecondLayerNegativeDotDoubleByPath) {
+TEST_CASE("KiiJson, GetObjectSecondLayerNegativeDotDoubleByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : -0.1}}";
 
     kii_json_token_t tokens[256];
@@ -731,12 +731,12 @@ TEST(KiiJson, GetObjectSecondLayerNegativeDotDoubleByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value + 0.1));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
 }
 
-TEST(KiiJson, GetObjectSecondLayerPositiveEDoubleByPath) {
+TEST_CASE("KiiJson, GetObjectSecondLayerPositiveEDoubleByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : 1e-1}}";
 
     kii_json_token_t tokens[256];
@@ -754,12 +754,12 @@ TEST(KiiJson, GetObjectSecondLayerPositiveEDoubleByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value - 0.1));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
 }
 
-TEST(KiiJson, GetObjectSecondLayerNegativeEDoubleByPath) {
+TEST_CASE("KiiJson, GetObjectSecondLayerNegativeEDoubleByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : -1e-1}}";
 
     kii_json_token_t tokens[256];
@@ -777,12 +777,12 @@ TEST(KiiJson, GetObjectSecondLayerNegativeEDoubleByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value + 0.1));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
 }
 
-TEST(KiiJson, GetObjectThirdLayerStringByPath) {
+TEST_CASE("KiiJson, GetObjectThirdLayerStringByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : \"value1\"}}}";
     char buf[256];
 
@@ -803,12 +803,12 @@ TEST(KiiJson, GetObjectThirdLayerStringByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(0, strcmp("value1", fields[0].field_copy.string));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
 }
 
-TEST(KiiJson, GetObjectThirdLayerPositiveIntByPath) {
+TEST_CASE("KiiJson, GetObjectThirdLayerPositiveIntByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : 100}}}";
 
     kii_json_token_t tokens[256];
@@ -826,12 +826,12 @@ TEST(KiiJson, GetObjectThirdLayerPositiveIntByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(100, fields[0].field_copy.int_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(100 == fields[0].field_copy.int_value);
 }
 
-TEST(KiiJson, GetObjectThirdLayerNegativeIntByPath) {
+TEST_CASE("KiiJson, GetObjectThirdLayerNegativeIntByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : -100}}}";
 
     kii_json_token_t tokens[256];
@@ -849,12 +849,12 @@ TEST(KiiJson, GetObjectThirdLayerNegativeIntByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(-100, fields[0].field_copy.int_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(-100 == fields[0].field_copy.int_value);
 }
 
-TEST(KiiJson, GetObjectThirdLayerPositiveLongByPath) {
+TEST_CASE("KiiJson, GetObjectThirdLayerPositiveLongByPath") {
     const char json_string[] =
         "{\"key1\" : {\"key2\" : {\"key3\" : 1099511627776}}}";
 
@@ -873,12 +873,12 @@ TEST(KiiJson, GetObjectThirdLayerPositiveLongByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(1099511627776, fields[0].field_copy.long_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(1099511627776 == fields[0].field_copy.long_value);
 }
 
-TEST(KiiJson, GetObjectThirdLayerNegativeLongByPath) {
+TEST_CASE("KiiJson, GetObjectThirdLayerNegativeLongByPath") {
     const char json_string[] =
         "{\"key1\" : {\"key2\" : {\"key3\" : -1099511627776}}}";
 
@@ -897,12 +897,12 @@ TEST(KiiJson, GetObjectThirdLayerNegativeLongByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(-1099511627776, fields[0].field_copy.long_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(-1099511627776 == fields[0].field_copy.long_value);
 }
 
-TEST(KiiJson, GetObjectThirdLayerPositiveDotDoubleByPath) {
+TEST_CASE("KiiJson, GetObjectThirdLayerPositiveDotDoubleByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : 0.1}}}";
 
     kii_json_token_t tokens[256];
@@ -920,12 +920,12 @@ TEST(KiiJson, GetObjectThirdLayerPositiveDotDoubleByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value - 0.1));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
 }
 
-TEST(KiiJson, GetObjectThirdLayerNegativeDotDoubleByPath) {
+TEST_CASE("KiiJson, GetObjectThirdLayerNegativeDotDoubleByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : -0.1}}}";
 
     kii_json_token_t tokens[256];
@@ -943,12 +943,12 @@ TEST(KiiJson, GetObjectThirdLayerNegativeDotDoubleByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value + 0.1));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
 }
 
-TEST(KiiJson, GetObjectThirdLayerPositiveEDoubleByPath) {
+TEST_CASE("KiiJson, GetObjectThirdLayerPositiveEDoubleByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : 1e-1}}}";
 
     kii_json_token_t tokens[256];
@@ -966,12 +966,12 @@ TEST(KiiJson, GetObjectThirdLayerPositiveEDoubleByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value - (1e-1)));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - (1e-1)));
 }
 
-TEST(KiiJson, GetObjectThirdLayerNegativeEDoubleByPath) {
+TEST_CASE("KiiJson, GetObjectThirdLayerNegativeEDoubleByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : -1e-1}}}";
 
     kii_json_token_t tokens[256];
@@ -989,12 +989,12 @@ TEST(KiiJson, GetObjectThirdLayerNegativeEDoubleByPath) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value - (-1e-1)));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - (-1e-1)));
 }
 
-TEST(KiiJson, GetArrayString) {
+TEST_CASE("KiiJson, GetArrayString") {
     const char json_string[] = "[\"value1\"]";
     char buf[256];
 
@@ -1015,12 +1015,12 @@ TEST(KiiJson, GetArrayString) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(0, strcmp("value1", fields[0].field_copy.string));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
 }
 
-TEST(KiiJson, GetArrayInt) {
+TEST_CASE("KiiJson, GetArrayInt") {
     const char json_string[] = "[100]";
     char buf[256];
 
@@ -1039,12 +1039,12 @@ TEST(KiiJson, GetArrayInt) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(100, fields[0].field_copy.int_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(100 == fields[0].field_copy.int_value);
 }
 
-TEST(KiiJson, GetArrayLong) {
+TEST_CASE("KiiJson, GetArrayLong") {
     const char json_string[] = "[1099511627776]";
     char buf[256];
 
@@ -1063,12 +1063,12 @@ TEST(KiiJson, GetArrayLong) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(1099511627776, fields[0].field_copy.long_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(1099511627776 == fields[0].field_copy.long_value);
 }
 
-TEST(KiiJson, GetArrayDouble) {
+TEST_CASE("KiiJson, GetArrayDouble") {
     const char json_string[] = "[1e-1]";
     char buf[256];
 
@@ -1087,12 +1087,12 @@ TEST(KiiJson, GetArrayDouble) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_GE(0.0001, fabs(fields[0].field_copy.double_value - 0.1));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
 }
 
-TEST(KiiJson, GetArrayIntIndex1) {
+TEST_CASE("KiiJson, GetArrayIntIndex1") {
     const char json_string[] = "[0, 100]";
     char buf[256];
 
@@ -1111,12 +1111,12 @@ TEST(KiiJson, GetArrayIntIndex1) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(100, fields[0].field_copy.int_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(100 == fields[0].field_copy.int_value);
 }
 
-TEST(KiiJson, GetArrayNull) {
+TEST_CASE("KiiJson, GetArrayNull") {
     const char json_string[] = "[null]";
     char buf[256];
 
@@ -1135,11 +1135,11 @@ TEST(KiiJson, GetArrayNull) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
 }
 
-TEST(KiiJson, GetArrayTrue) {
+TEST_CASE("KiiJson, GetArrayTrue") {
     const char json_string[] = "[true]";
     char buf[256];
 
@@ -1158,12 +1158,12 @@ TEST(KiiJson, GetArrayTrue) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(KII_JSON_TRUE, fields[0].field_copy.boolean_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(KII_JSON_TRUE == fields[0].field_copy.boolean_value);
 }
 
-TEST(KiiJson, GetArrayFalse) {
+TEST_CASE("KiiJson, GetArrayFalse") {
     const char json_string[] = "[false]";
     char buf[256];
 
@@ -1182,12 +1182,12 @@ TEST(KiiJson, GetArrayFalse) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(KII_JSON_FALSE, fields[0].field_copy.boolean_value);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(KII_JSON_FALSE == fields[0].field_copy.boolean_value);
 }
 
-TEST(KiiJson, GetComplexObject) {
+TEST_CASE("KiiJson, GetComplexObject") {
     const char json_string[] =
         "{"
             "\"parent1\" : {"
@@ -1267,39 +1267,39 @@ TEST(KiiJson, GetComplexObject) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[1].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[2].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[3].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[4].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[5].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[6].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[7].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[8].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[9].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[10].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[11].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[12].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[13].result);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[1].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[2].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[3].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[4].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[5].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[6].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[7].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[8].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[9].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[10].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[11].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[12].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[13].result);
 
-    EXPECT_EQ(0, strcmp("child value", fields[0].field_copy.string));
-    EXPECT_EQ(100, fields[1].field_copy.int_value);
-    EXPECT_EQ(1099511627776, fields[2].field_copy.long_value);
-    EXPECT_GE(0.0001, fabs(fields[3].field_copy.double_value - 100.0e100));
-    EXPECT_EQ(KII_JSON_TRUE, fields[4].field_copy.boolean_value);
+    REQUIRE(0 == strcmp("child value", fields[0].field_copy.string));
+    REQUIRE(100 == fields[1].field_copy.int_value);
+    REQUIRE(1099511627776 == fields[2].field_copy.long_value);
+    REQUIRE(0.0001 >= fabs(fields[3].field_copy.double_value - 100.0e100));
+    REQUIRE(KII_JSON_TRUE == fields[4].field_copy.boolean_value);
     // fields[5] does not have value. it is null.
-    EXPECT_EQ(-100, fields[6].field_copy.int_value);
-    EXPECT_EQ(-1099511627776, fields[7].field_copy.long_value);
-    EXPECT_GE(0.0001, fabs(fields[8].field_copy.double_value + 100.0e-100));
-    EXPECT_EQ(KII_JSON_FALSE, fields[9].field_copy.boolean_value);
-    EXPECT_EQ(0, strcmp("child value", fields[11].field_copy.string));
-    EXPECT_EQ(KII_JSON_TRUE, fields[12].field_copy.boolean_value);
+    REQUIRE(-100 == fields[6].field_copy.int_value);
+    REQUIRE(-1099511627776 == fields[7].field_copy.long_value);
+    REQUIRE(0.0001 >= fabs(fields[8].field_copy.double_value + 100.0e-100));
+    REQUIRE(KII_JSON_FALSE == fields[9].field_copy.boolean_value);
+    REQUIRE(0 == strcmp("child value", fields[11].field_copy.string));
+    REQUIRE(KII_JSON_TRUE == fields[12].field_copy.boolean_value);
     // fields[12] does not have value. it is null.
-    EXPECT_EQ(0, strcmp("value", fields[13].field_copy.string));
+    REQUIRE(0 == strcmp("value", fields[13].field_copy.string));
 }
 
-TEST(KiiJson, PushRetrieveEndpoint) {
+TEST_CASE("KiiJson, PushRetrieveEndpoint") {
     const char json_string[] =
         "{"
             "\"installationID\" : \"XXXXXXXXXXXXXXXXXXXXXXXXX\","
@@ -1355,18 +1355,18 @@ TEST(KiiJson, PushRetrieveEndpoint) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[1].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[2].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[3].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[4].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[5].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[6].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[7].result);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[1].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[2].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[3].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[4].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[5].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[6].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[7].result);
 }
 
-TEST(KiiJson, CommandParseTest) {
+TEST_CASE("KiiJson, CommandParseTest") {
     const char json_string[] =
         "{"
             "\"schema\":\"XXXXXXXXXXXXXX\","
@@ -1407,14 +1407,14 @@ TEST(KiiJson, CommandParseTest) {
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[1].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[2].result);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[3].result);
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[1].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[2].result);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[3].result);
 }
 
-TEST(KiiJson, NoTokensTest)
+TEST_CASE("KiiJson, NoTokensTest")
 {
     const char json_string[] = "{\"key1\" : \"value1\"}";
     char buf[256];
@@ -1433,10 +1433,10 @@ TEST(KiiJson, NoTokensTest)
         strlen(json_string),
         fields,
         NULL);
-    EXPECT_EQ(KII_JSON_PARSE_SHORTAGE_TOKENS, res);
+    REQUIRE(KII_JSON_PARSE_SHORTAGE_TOKENS == res);
 }
 
-TEST(KiiJson, TokensShortageTest)
+TEST_CASE("KiiJson, TokensShortageTest")
 {
     const char json_string[] = "{\"key1\" : \"value1\"}";
     char buf[256];
@@ -1458,10 +1458,10 @@ TEST(KiiJson, TokensShortageTest)
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SHORTAGE_TOKENS, res);
+    REQUIRE(KII_JSON_PARSE_SHORTAGE_TOKENS == res);
 }
 
-TEST(KiiJson, ExactTokensTest)
+TEST_CASE("KiiJson, ExactTokensTest")
 {
     const char json_string[] = "{\"key1\" : \"value1\"}";
     char buf[256];
@@ -1483,15 +1483,15 @@ TEST(KiiJson, ExactTokensTest)
         strlen(json_string),
         fields,
         &resource);
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(0, strcmp("value1", fields[0].field_copy.string));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
 
-    EXPECT_NE((kii_json_token_t*)NULL, resource.tokens);
-    EXPECT_EQ(3, resource.tokens_num);
+    REQUIRE((kii_json_token_t*)NULL != resource.tokens);
+    REQUIRE(3 == resource.tokens_num);
 }
 
-TEST(KiiJson, AllocatorTest)
+TEST_CASE("KiiJson, AllocatorTest")
 {
     const char json_string[] = "{\"key1\" : \"value1\"}";
     char buf[256];
@@ -1512,12 +1512,12 @@ TEST(KiiJson, AllocatorTest)
         alloc_cb,
         free_cb);
 
-    EXPECT_EQ(KII_JSON_PARSE_SUCCESS, res);
-    EXPECT_EQ(KII_JSON_FIELD_PARSE_SUCCESS, fields[0].result);
-    EXPECT_EQ(0, strcmp("value1", fields[0].field_copy.string));
+    REQUIRE(KII_JSON_PARSE_SUCCESS == res);
+    REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
 }
 
-TEST(KiiJson, FailedAllocationTest)
+TEST_CASE("KiiJson, FailedAllocationTest")
 {
     const char json_string[] = "{\"key1\" : \"value1\"}";
     char buf[256];
@@ -1539,5 +1539,5 @@ TEST(KiiJson, FailedAllocationTest)
         allocate_cb_fail,
         free_cb);
 
-    EXPECT_EQ(KII_JSON_PARSE_ALLOCATION_ERROR, res);
+    REQUIRE(KII_JSON_PARSE_ALLOCATION_ERROR == res);
 }
