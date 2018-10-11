@@ -240,7 +240,7 @@ static int _kii_json_is_double(const char* buf, size_t buf_len)
                 }
                 return 0;
             case parser_sts_integer:
-                if ('0' <= c && c <= '9') {
+                if (isdigit(c)) {
                     continue;
                 }
                 if (c == '.') {
@@ -253,7 +253,7 @@ static int _kii_json_is_double(const char* buf, size_t buf_len)
                 }
                 return 0;
             case parser_sts_decimal:
-                if ('0' <= c && c <= '9') {
+                if (isdigit(c)) {
                     continue;
                 }
                 if (c == 'e' || c == 'E') {
@@ -262,17 +262,13 @@ static int _kii_json_is_double(const char* buf, size_t buf_len)
                 }
                 return 0;
             case parser_sts_exp_start:
-                if (c == '-' || c == '+') {
-                    sts =parser_sts_exp;
-                    continue;
-                }
-                if ('0' <= c && c <= '9') {
+                if (c == '-' || c == '+' || isdigit(c)) {
                     sts = parser_sts_exp;
                     continue;
                 }
                 return 0;
             case parser_sts_exp:
-                if ('0' <= c && c <= '9') {
+                if (isdigit(c)) {
                     continue;
                 }
                 return 0;
