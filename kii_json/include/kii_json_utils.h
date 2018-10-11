@@ -30,6 +30,8 @@ kii_json_parse_primitive_result_t kii_json_parse_primitive(
     size_t primitive_length,
     kii_json_primitive_t* result);
 
+int kii_json_escape_str(const char* str, char* buff, size_t buff_size);
+
 #ifdef __cplusplus
 }
 #endif

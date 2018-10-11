@@ -985,3 +985,35 @@ kii_json_parse_primitive_result_t kii_json_parse_primitive(
     }
     return KII_JSON_PARSE_PRIMITIVE_RESULT_INVALID;
 }
+
+int kii_json_escape_str(const char* str, char* buff, size_t buff_size) {
+    size_t str_len = strlen(str);
+    if (buff_size < str_len + 1) {
+        return -1;
+    }
+    size_t escaped_len = str_len;
+    for (int i = 0, pos = 0; i < str_len; ++i, ++pos) {
+        char c = str[i];
+        // FIXME: Ignoriging \u{4 hex}
+        if (c == '"' ||
+            c == '/' ||
+            c == '\\' ||
+            c == '\b' ||
+            c == '\f' ||
+            c == '\n' ||
+            c == '\r' ||
+            c == '\t')
+        {
+            ++escaped_len;
+            if (buff_size < escaped_len + 1) {
+                return - 1;
+            }
+            buff[pos] = '\\';
+            buff[++pos] = c;
+        } else {
+            buff[pos] = c;
+        }
+    }
+    buff[escaped_len] = '\0';
+    return escaped_len;
+}

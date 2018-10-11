@@ -2,6 +2,7 @@
 #include "kii_impl.h"
 #include "kii_req_impl.h"
 #include "kii_json_wrapper.h"
+#include "kii_json_utils.h"
 #include <string.h>
 
 kii_code_t _thing_auth(
@@ -36,8 +37,8 @@ kii_code_t _thing_auth(
     // Request body.
     char esc_vid[strlen(vendor_thing_id) * 2 + 1];
     char esc_pass[strlen(password) * 2 + 1];
-    kii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid));
-    kii_escape_str(password, esc_pass, sizeof(esc_vid));
+    kii_json_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid));
+    kii_json_escape_str(password, esc_pass, sizeof(esc_vid));
 
     int content_len = snprintf(
         kii->_rw_buff,
@@ -98,9 +99,9 @@ kii_code_t _thing_register(
     char esc_vid[strlen(vendor_thing_id) * 2 + 1];
     char esc_pass[strlen(password) * 2 + 1];
     char esc_type[strlen(thing_type) * 2 + 1];
-    kii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid));
-    kii_escape_str(password, esc_pass, sizeof(esc_vid));
-    kii_escape_str(thing_type, esc_type, sizeof(esc_type));
+    kii_json_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid));
+    kii_json_escape_str(password, esc_pass, sizeof(esc_vid));
+    kii_json_escape_str(thing_type, esc_type, sizeof(esc_type));
 
     int content_len = snprintf(
         kii->_rw_buff,

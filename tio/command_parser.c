@@ -294,7 +294,7 @@ static tio_code_t _append_action_result(
         {
             size_t temp_buff_size = msg_len * 2 + 1;
             char esc_msg[temp_buff_size];
-            int esc_len = kii_escape_str(err_message, esc_msg, sizeof(esc_msg)/sizeof(esc_msg[0]));
+            int esc_len = kii_json_escape_str(err_message, esc_msg, sizeof(esc_msg)/sizeof(esc_msg[0]));
             if (esc_len < 0) {
                 return TIO_ERR_TOO_LARGE_DATA;
             }

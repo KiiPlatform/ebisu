@@ -543,8 +543,6 @@ const char* kii_get_etag(kii_t* kii);
 
 int kii_get_resp_status(kii_t* kii);
 
-int kii_escape_str(const char* str, char* buff, size_t buff_size);
-
 #ifdef __cplusplus
 }
 #endif
