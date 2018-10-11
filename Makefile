@@ -6,6 +6,7 @@ doc:
 
 small-test:
 	make test -C tests/small_test/khc
+	make test -C tests/small_test/tio
 
 large-test:
 	make test -C tests/large_test/kii
