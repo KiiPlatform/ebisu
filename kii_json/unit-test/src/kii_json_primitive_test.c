@@ -3,6 +3,7 @@
 #include <kii_json_utils.h>
 #include <math.h>
 #include <limits.h>
+#include <string.h>
 
 TEST(KiiJson, PrimitiveInt)
 {
@@ -77,6 +78,19 @@ TEST(KiiJson, PrimitiveDoubleScientific)
     EXPECT_EQ(KII_JSON_FIELD_TYPE_DOUBLE, res.type);
     EXPECT_EQ(0.1, res.value.double_value);
 
+    memset(&res, 0, sizeof(kii_json_primitive_t));
+    const char double_str2[] = "1e+1";
+    kii_json_parse_primitive(double_str2, strlen(double_str2), &res);
+
+    EXPECT_EQ(KII_JSON_FIELD_TYPE_DOUBLE, res.type);
+    EXPECT_EQ(10.0, res.value.double_value);
+
+    memset(&res, 0, sizeof(kii_json_primitive_t));
+    const char double_str3[] = "1e2";
+    kii_json_parse_primitive(double_str3, strlen(double_str3), &res);
+
+    EXPECT_EQ(KII_JSON_FIELD_TYPE_DOUBLE, res.type);
+    EXPECT_EQ(100.0, res.value.double_value);
 }
 
 TEST(KiiJson, PrimitiveDoubleScientificCap)
@@ -87,6 +101,20 @@ TEST(KiiJson, PrimitiveDoubleScientificCap)
 
     EXPECT_EQ(KII_JSON_FIELD_TYPE_DOUBLE, res.type);
     EXPECT_EQ(0.1, res.value.double_value);
+
+    memset(&res, 0, sizeof(kii_json_primitive_t));
+    const char double_str2[] = "1E+1";
+    kii_json_parse_primitive(double_str2, strlen(double_str2), &res);
+
+    EXPECT_EQ(KII_JSON_FIELD_TYPE_DOUBLE, res.type);
+    EXPECT_EQ(10.0, res.value.double_value);
+
+    memset(&res, 0, sizeof(kii_json_primitive_t));
+    const char double_str3[] = "1E2";
+    kii_json_parse_primitive(double_str3, strlen(double_str3), &res);
+
+    EXPECT_EQ(KII_JSON_FIELD_TYPE_DOUBLE, res.type);
+    EXPECT_EQ(100.0, res.value.double_value);
 }
 
 TEST(KiiJson, PrimitiveDoubleMin)
