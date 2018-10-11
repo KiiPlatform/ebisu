@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <getopt.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 #include <pthread.h>
 #include <unistd.h>
@@ -189,6 +190,8 @@ void updater_init(
         void* sock_ssl_ctx,
         kii_json_resource_t* resource)
 {
+    tio_updater_init(updater);
+
     tio_updater_set_app(updater, EX_APP_ID, EX_APP_SITE);
 
     tio_updater_set_cb_task_create(updater, task_create_cb_impl);
@@ -201,21 +204,60 @@ void updater_init(
     tio_updater_set_cb_sock_recv(updater, updater_cb_recv, sock_ssl_ctx);
     tio_updater_set_cb_sock_close(updater, updater_cb_close, sock_ssl_ctx);
 
-    tio_updater_set_interval(updater, 0);
+    tio_updater_set_interval(updater, 30);
 
     kii_set_json_parser_resource(&updater->_kii, resource);
 }
 
+const char send_file[] = "send.txt";
+
+typedef struct {
+    size_t file_size;
+    size_t file_read;
+} updater_file_context_t;
+
 size_t updater_cb_state_size(void* userdata)
 {
-    // TODO:
+    updater_file_context_t* ctx = (updater_file_context_t*)userdata;
+
+    printf("\nSend file?[y/n]: ");
+    if (getchar() == 'y') {
+        struct stat st;
+        if (stat(send_file, &st) == 0) {
+            ctx->file_size = st.st_size;
+            ctx->file_read = 0;
+            return st.st_size;
+        } else {
+            printf("failed to get stat\n");
+        }
+    }
     return 0;
 }
 
 size_t updater_cb_read(char *buffer, size_t size, size_t count, void *userdata)
 {
-    // TODO:
-    return 0;
+    updater_file_context_t* ctx = (updater_file_context_t*)userdata;
+    FILE* fp;
+
+    fp = fopen(send_file, "rb");
+    if (fp == NULL) {
+        printf("fopen error.\n");
+        return 0;
+    }
+
+    if (fseek(fp, ctx->file_read, SEEK_SET) != 0) {
+        printf("fseek error.\n");
+        fclose(fp);
+        return 0;
+    }
+
+    size_t read_size = fread(buffer, 1, size * count, fp);
+    if (read_size > 0) {
+        ctx->file_read += read_size;
+    }
+
+    fclose(fp);
+    return read_size;
 }
 
 void handler_init(
@@ -287,6 +329,7 @@ int main(int argc, char** argv)
     kii_json_resource_t updater_resource = {updater_tokens, 256};
     kii_json_token_t tokens[256];
     kii_json_resource_t resource = {tokens, 256};
+    updater_file_context_t updater_file_ctx;
     kii_code_t result;
 
     memset(updater_buff, 0x00, sizeof(char) * EX_STATE_UPDATER_BUFF_SIZE);
@@ -525,11 +568,11 @@ int main(int argc, char** argv)
         while (1) {
             struct option longOptions[] = {
                 {"vendor-thing-id", required_argument, 0, 0},
-                {"password", required_argument, 0, 2},
-                {"firmware-version", required_argument, 0, 3},
-                {"thing-type", required_argument, 0, 4},
-                {"help", no_argument, 0, 5},
-                {0, 0, 0, 0}
+                {"password", required_argument, 0, 1},
+                {"firmware-version", required_argument, 0, 2},
+                {"thing-type", required_argument, 0, 3},
+                {"help", no_argument, 0, 4},
+                {0, 0, 0, 5}
             };
             int optIndex = 0;
             int c = getopt_long(argc, argv, "", longOptions, &optIndex);
@@ -584,9 +627,9 @@ int main(int argc, char** argv)
                 &updater,
                 NULL,
                 updater_cb_state_size,
-                NULL,
+                &updater_file_ctx,
                 updater_cb_read,
-                NULL);
+                &updater_file_ctx);
     } else {
         print_help();
         exit(0);
