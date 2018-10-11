@@ -124,6 +124,8 @@ tio_code_t tio_handler_start(
     TIO_CB_ACTION cb_action,
     void* userdata);
 
+void tio_updater_init(tio_updater_t* updater);
+
 void tio_updater_set_cb_sock_connect(tio_updater_t* updater, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
 void tio_updater_set_cb_sock_send(tio_updater_t* updater, KHC_CB_SOCK_SEND cb_send, void* userdata);
 void tio_updater_set_cb_sock_recv(tio_updater_t* updater, KHC_CB_SOCK_RECV cb_recv, void* userdata);

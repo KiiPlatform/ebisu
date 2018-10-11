@@ -161,6 +161,12 @@ tio_code_t tio_handler_start(
     return _tio_convert_code(res);
 }
 
+void tio_updater_init(tio_updater_t* updater)
+{
+    updater->_kii._author.author_id[0] = '\0';
+    updater->_kii._author.access_token[0] = '\0';
+}
+
 void tio_updater_set_cb_sock_connect(
     tio_updater_t* updater,
     KHC_CB_SOCK_CONNECT cb_connect,
@@ -231,9 +237,7 @@ void tio_updater_set_app(
     const char* app_id,
     const char* host)
 {
-    // FIXME: Kii should provide setter API.
-    strncpy(updater->_kii._app_id, app_id, sizeof(updater->_kii._app_id)-1);
-    strncpy(updater->_kii._app_host, host, sizeof(updater->_kii._app_host)-1);
+    kii_init(&updater->_kii, host, app_id);
 }
 
 void tio_updater_set_interval(
