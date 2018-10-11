@@ -8,6 +8,6 @@ small-test:
 	make test -C tests/small_test
 
 large-test:
-	make test -C tests/large_test
+	make test -C tests/large_test/kii
 
 .PHONY: build doc small-test large-test
