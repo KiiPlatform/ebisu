@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "kii.h"
-#include "kii_json_utils.h"
+#include "kii_json_wrapper.h"
 #include "kii_impl.h"
 #include "kii_object_impl.h"
 
