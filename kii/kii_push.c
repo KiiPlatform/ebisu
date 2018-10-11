@@ -6,7 +6,7 @@
 #include "kii.h"
 #include "khc.h"
 #include "kii_mqtt.h"
-#include "kii_json_utils.h"
+#include "kii_json_wrapper.h"
 #include "kii_push_impl.h"
 #include "kii_impl.h"
 

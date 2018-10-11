@@ -16,7 +16,7 @@ LIBS = -lssl -lcrypto -lpthread -lkiisdk
 LD_FLAGS = -L. -L/usr/local/opt/openssl/lib
 CC_OBJ = $(patsubst %.cc,%.o,$(wildcard *.cc))
 TARGET = testapp
-INCLUDES = -I../../kii -I../../kii-core -I$(GTEST_PATH)/include -I../../kii_json/include -I../../kii_json/libs/jsmn -I../../Linux
+INCLUDES = -I../../kii -I../../kii_json/include -I../../kii_json/libs/jsmn -I../../Linux
 
 KIISDK = libkiisdk.so
 

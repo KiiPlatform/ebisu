@@ -13,8 +13,6 @@ kii_json_parse_result_t _kii_json_read_object(
         size_t json_string_size,
         kii_json_field_t *fields);
 
-int kii_escape_str(const char* str, char* buff, size_t buff_size);
-
 #ifdef __cplusplus
 }
 #endif
