@@ -1,7 +1,7 @@
 #include "kii_ti_impl.h"
 #include "kii_impl.h"
 #include "kii_req_impl.h"
-#include "kii_json_utils.h"
+#include "kii_json_wrapper.h"
 #include <string.h>
 
 kii_code_t _get_anonymous_token(

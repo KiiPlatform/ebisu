@@ -1,7 +1,7 @@
 #include "kii_thing_impl.h"
 #include "kii_impl.h"
 #include "kii_req_impl.h"
-#include "kii_json_utils.h"
+#include "kii_json_wrapper.h"
 #include <string.h>
 
 kii_code_t _thing_auth(
