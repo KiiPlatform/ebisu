@@ -7,6 +7,7 @@ doc:
 small-test:
 	make test -C tests/small_test/khc
 	make test -C tests/small_test/tio
+	make test -C tests/small_test/kii_json
 
 large-test:
 	make test -C tests/large_test/kii
