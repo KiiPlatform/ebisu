@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <kii_json.h>
+#include <kii_json_utils.h>
 #include <math.h>
+#include <limits.h>
 
 static kii_json_resource_t* alloc_cb(size_t required_size)
 {
