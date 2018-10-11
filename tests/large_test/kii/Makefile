@@ -1,7 +1,7 @@
 CXXFLAGS = -Wall -std=c++11
 CXXFLAGS += -g -DDEBUG
 
-ROOT_DIR=../../
+ROOT_DIR=../../../
 
 LIBS = -lssl -lcrypto -lpthread -lkiisdk
 LD_FLAGS = -L. -L/usr/local/opt/openssl/lib
