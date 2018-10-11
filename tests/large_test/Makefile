@@ -1,11 +1,13 @@
 CXXFLAGS = -Wall -std=c++11
 CXXFLAGS += -g -DDEBUG
 
+ROOT_DIR=../../
+
 LIBS = -lssl -lcrypto -lpthread -lkiisdk
 LD_FLAGS = -L. -L/usr/local/opt/openssl/lib
 OBJS = $(patsubst %.cpp,%.o,$(wildcard *.cpp))
 TARGET = ./testapp
-INCLUDES = -I../../kii -I../../khc/include -I../../kii_json/include -I../../kii_json/libs/jsmn
+INCLUDES = -I$(ROOT_DIR)kii -I$(ROOT_DIR)khc/include -I$(ROOT_DIR)kii_json/include -I$(ROOT_DIR)kii_json/libs/jsmn
 
 KIISDK = libkiisdk.so
 
@@ -26,8 +28,8 @@ endif
 all: clean $(TARGET)
 
 $(KIISDK):
-	FIXED_JSON_TOKEN_NUM=256 $(MAKE) -C ../../kii
-	cp ../../kii/$(KIISDK) ./
+	FIXED_JSON_TOKEN_NUM=256 $(MAKE) -C $(ROOT_DIR)kii
+	cp $(ROOT_DIR)kii/$(KIISDK) ./
 
 $(TARGET): $(KIISDK) $(OBJS)
 	g++ -pthread -o $(TARGET) $(OBJS) $(LD_FLAGS) $(LIBS) $(LIBGTEST)
