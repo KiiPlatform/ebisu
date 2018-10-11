@@ -1,10 +1,14 @@
-LIB_SRCS=$(wildcard ../../src/*.c)
-LIB_SRCS+=$(wildcard ../../src/*.h)
-LIB_SRCS+=$(wildcard ../../include/*.h)
-LIB_BUILD_DIR=build-http
+ROOT_DIR=../../..
+TEST_ROOT_DIR=../..
+KHC_ROOT_DIR=$(ROOT_DIR)/khc
+
+LIB_SRCS=$(wildcard $(KHC_ROOT_DIR)/src/*.c)
+LIB_SRCS+=$(wildcard $(KHC_ROOT_DIR)/src/*.h)
+LIB_SRCS+=$(wildcard $(KHC_ROOT_DIR)/include/*.h)
+LIB_BUILD_DIR=build-khc
 
 TARGET=./testapp
-INCLUDES=-I. -I.. -I../../src -I$(LIB_BUILD_DIR)/include
+INCLUDES=-I. -I$(TEST_ROOT_DIR) -I$(KHC_ROOT_DIR)/src -I$(LIB_BUILD_DIR)/include
 LIBS_DIR=-L$(LIB_BUILD_DIR)/lib
 
 LIBS=-lkhc
@@ -27,7 +31,7 @@ all: clean test
 
 $(LIB_BUILD_DIR): $(LIB_SRCS)
 	mkdir -p $(LIB_BUILD_DIR)
-	cd $(LIB_BUILD_DIR) && cmake -DCMAKE_INSTALL_PREFIX=. ../../.. && make install
+	cd $(LIB_BUILD_DIR) && cmake -DCMAKE_INSTALL_PREFIX=. ../$(KHC_ROOT_DIR) && make install
 
 $(TARGET): $(SRCS) $(LIB_BUILD_DIR)
 	g++ -g $(SRCS) $(LIBS_DIR) $(LIBS) $(INCLUDES) -o $(TARGET) -std=c++11
