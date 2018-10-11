@@ -1,3 +1,4 @@
+#define CATCH_CONFIG_MAIN
 #include <catch.hpp>
 #include <kii_json.h>
 #include <kii_json_utils.h>
@@ -170,7 +171,7 @@ TEST_CASE("KiiJson, GetObjectPositiveDotDoubleByName") {
         &resource);
     REQUIRE(KII_JSON_PARSE_SUCCESS == res);
     REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
-    REQUIRE(0.0001 == fabs(fields[0].field_copy.double_value - 0.1));
+    REQUIRE(fields[0].field_copy.double_value == 0.1);
 }
 
 TEST_CASE("KiiJson, GetObjectNegativeDotDoubleByName") {
@@ -193,7 +194,7 @@ TEST_CASE("KiiJson, GetObjectNegativeDotDoubleByName") {
         &resource);
     REQUIRE(KII_JSON_PARSE_SUCCESS == res);
     REQUIRE(KII_JSON_FIELD_PARSE_SUCCESS == fields[0].result);
-    REQUIRE(0.0001 == fabs(fields[0].field_copy.double_value + 0.1));
+    REQUIRE(fields[0].field_copy.double_value == -0.1);
 }
 
 TEST_CASE("KiiJson, GetObjectPositiveEDoubleByName") {

@@ -4,7 +4,7 @@ KII_JSON_DIR=$(ROOT_DIR)/kii_json
 
 LIBKIIJSON=libkiijson.so
 
-SOURCE = $(wildcard src/*.c)
+SOURCE = $(wildcard src/*.cpp)
 TARGET = $(OUTDIR)/testapp
 LIBSDIR = $(OUTDIR)
 LIBS= -lkiijson
