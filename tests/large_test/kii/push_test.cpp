@@ -30,9 +30,10 @@ TEST_CASE("Push Tests")
 
     SECTION("Subscribe to app scope bucket") {
         kii_bucket_t bucket;
-        std::string bucket_name_base = std::string("bucket-");
+        std::string bucket_name_base("bucket-");
         std::string id = std::to_string(kiiltest::current_time());
-        const char* bucket_name = (bucket_name_base + id).c_str();
+        std::string name = bucket_name_base + id;
+        const char* bucket_name = name.c_str();
         bucket.bucket_name = bucket_name;
         bucket.scope = KII_SCOPE_APP;
         bucket.scope_id = NULL;
@@ -80,9 +81,10 @@ TEST_CASE("Push Tests")
         kii_topic_t topic;
         topic.scope = KII_SCOPE_THING;
         topic.scope_id = kii._author.author_id;
-        std::string name_base = std::string("topic-");
+        std::string name_base("topic-");
         std::string id = std::to_string(kiiltest::current_time());
-        const char* topic_name = (name_base + id).c_str();
+        std::string name = name_base + id;
+        const char* topic_name = name.c_str();
         topic.topic_name = topic_name;
 
         kii_code_t put_res = kii_put_topic(&kii, &topic);
