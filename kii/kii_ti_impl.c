@@ -405,7 +405,7 @@ kii_code_t _put_state(
         return ret;
     }
 
-    ret = _set_content_type(kii, "application/json");
+    ret = _set_content_type(kii, "application/vnd.kii.MultipleTraitState+json");
     if (ret != KII_ERR_OK) {
         _req_headers_free_all(kii);
         return ret;
