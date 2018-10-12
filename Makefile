@@ -4,15 +4,25 @@ build:
 doc:
 	make doc -C kii
 
-small-test:
+stest-khc:
 	make test -C tests/small_test/khc
+
+stest-tio:
 	make test -C tests/small_test/tio
+
+stest-kii_json:
 	make test -C tests/small_test/kii_json
 
-large-test:
-	make test -C tests/large_test/kii
+stest: stest-khc stest-tio stest-kii_json
+
+ltest-khc:
 	make test -C tests/large_test/khc
 
-test: small-test large-test
+ltest-kii:
+	make test -C tests/large_test/kii
 
-.PHONY: build doc small-test large-test
+ltest: ltest-khc ltest-kii
+
+test: stest ltest
+
+.PHONY: build doc stest-khc stest-tio stest-kii_json stest ltest-khc ltest-kii ltest
