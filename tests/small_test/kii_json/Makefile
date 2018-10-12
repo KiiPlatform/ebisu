@@ -23,7 +23,7 @@ TESTCMD=./$(TARGET)
 endif
 
 ifdef JUNIT
-TESTCMD+= -r junit -o $(TEST_RESULT)
+TESTCMD+= -r junit -o ../$(TEST_RESULT)
 endif
 
 all: clean $(TARGET_PATH)
