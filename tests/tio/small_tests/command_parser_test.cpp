@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
 
 #include "catch.hpp"
-#include "tio2.h"
+#include "tio.h"
 #include "command_parser.h"
 #include "kii_json.h"
 
