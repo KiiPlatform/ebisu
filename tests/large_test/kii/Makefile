@@ -6,11 +6,11 @@ KII_DIR=$(ROOT_DIR)/kii
 TEST_ROOT_DIR=../..
 LTEST_ROOT_DIR=$(TEST_ROOT_DIR)/large_test
 
-
 LIBS = -lssl -lcrypto -lpthread -lkiisdk
 LD_FLAGS = -L. -L/usr/local/opt/openssl/lib
-OBJS = $(patsubst %.cpp,%.o,$(wildcard *.cpp))
-OBJS += secure_socket_impl.o
+
+SRCS = $(wildcard *.cpp)
+SRCS += $(wildcard $(LTEST_ROOT_DIR)/*.cpp)
 
 TARGET = ./testapp
 INCLUDES = -I$(LTEST_ROOT_DIR) -I$(TEST_ROOT_DIR) -I$(KII_DIR) -I$(ROOT_DIR)/khc/include -I$(ROOT_DIR)/kii_json/include -I$(ROOT_DIR)/kii_json/libs/jsmn
@@ -37,19 +37,13 @@ $(KIISDK):
 	$(MAKE) -C $(KII_DIR)
 	cp $(KII_DIR)/$(KIISDK) ./
 
-$(TARGET): $(KIISDK) $(OBJS)
-	g++ -pthread -o $(TARGET) $(OBJS) $(LD_FLAGS) $(LIBS) $(LIBGTEST)
+$(TARGET): $(KIISDK) $(SRCS)
+	g++ $(CXXFLAGS) $(SRCS) $(LD_FLAGS) $(INCLUDES) $(LIBS) -o $(TARGET)
 
 test: $(TARGET)
 	mkdir -p $(TEST_RESULT_DIR)
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):. \
 	$(TESTCMD)
-
-.cpp.o:
-	g++ $(CXXFLAGS) $(INCLUDES) -c $<
-
-$(LTEST_ROOT_DIR)/.cpp.o:
-	g++ $(CXXFLAGS) $(INCLUDES) -c $<
 
 clean:
 	touch $(TARGET)
