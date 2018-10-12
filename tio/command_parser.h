@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 #include <string.h>
-#include "tio2.h"
+#include "tio.h"
 
 typedef enum _cmd_parser_code_t {
     _CMD_PARSE_OK,

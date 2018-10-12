@@ -1,5 +1,5 @@
-#ifndef __tio2__
-#define __tio2__
+#ifndef __tio__
+#define __tio__
 
 #ifdef __cplusplus
 extern "C" {
