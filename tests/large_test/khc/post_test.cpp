@@ -42,11 +42,11 @@ TEST_CASE( "HTTP Post" ) {
 
   khc_set_req_headers(&http, headers);
 
-  khct::ssl::SSLData s_ctx;
-  khc_set_cb_sock_connect(&http, khct::ssl::cb_connect, &s_ctx);
-  khc_set_cb_sock_send(&http, khct::ssl::cb_send, &s_ctx);
-  khc_set_cb_sock_recv(&http, khct::ssl::cb_recv, &s_ctx);
-  khc_set_cb_sock_close(&http, khct::ssl::cb_close, &s_ctx);
+  ebisu::ltest::ssl::SSLData s_ctx;
+  khc_set_cb_sock_connect(&http, ebisu::ltest::ssl::cb_connect, &s_ctx);
+  khc_set_cb_sock_send(&http, ebisu::ltest::ssl::cb_send, &s_ctx);
+  khc_set_cb_sock_recv(&http, ebisu::ltest::ssl::cb_recv, &s_ctx);
+  khc_set_cb_sock_close(&http, ebisu::ltest::ssl::cb_close, &s_ctx);
 
   khct::cb::IOCtx io_ctx;
   khc_set_cb_read(&http, khct::cb::cb_read, &io_ctx);

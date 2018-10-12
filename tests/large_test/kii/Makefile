@@ -3,14 +3,17 @@ CXXFLAGS += -g -DDEBUG
 
 ROOT_DIR=../../..
 KII_DIR=$(ROOT_DIR)/kii
-TEST_DIR=../..
+TEST_ROOT_DIR=../..
+LTEST_ROOT_DIR=$(TEST_ROOT_DIR)/large_test
 
 
 LIBS = -lssl -lcrypto -lpthread -lkiisdk
 LD_FLAGS = -L. -L/usr/local/opt/openssl/lib
 OBJS = $(patsubst %.cpp,%.o,$(wildcard *.cpp))
+OBJS += secure_socket_impl.o
+
 TARGET = ./testapp
-INCLUDES = -I$(TEST_DIR) -I$(KII_DIR) -I$(ROOT_DIR)/khc/include -I$(ROOT_DIR)/kii_json/include -I$(ROOT_DIR)/kii_json/libs/jsmn
+INCLUDES = -I$(LTEST_ROOT_DIR) -I$(TEST_ROOT_DIR) -I$(KII_DIR) -I$(ROOT_DIR)/khc/include -I$(ROOT_DIR)/kii_json/include -I$(ROOT_DIR)/kii_json/libs/jsmn
 
 KIISDK = libkiisdk.so
 
@@ -43,6 +46,9 @@ test: $(TARGET)
 	$(TESTCMD)
 
 .cpp.o:
+	g++ $(CXXFLAGS) $(INCLUDES) -c $<
+
+$(LTEST_ROOT_DIR)/.cpp.o:
 	g++ $(CXXFLAGS) $(INCLUDES) -c $<
 
 clean:

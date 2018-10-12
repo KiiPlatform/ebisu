@@ -18,8 +18,8 @@ TEST_CASE("Thing tests")
     size_t buff_size = 4096;
     char buff[buff_size];
     kii_t kii;
-    kiiltest::ssl::SSLData http_ssl_ctx;
-    kiiltest::ssl::SSLData mqtt_ssl_ctx;
+    ebisu::ltest::ssl::SSLData http_ssl_ctx;
+    ebisu::ltest::ssl::SSLData mqtt_ssl_ctx;
     kii_json_token_t tokens[256];
     kii_json_resource_t resource = {tokens, 256};
 

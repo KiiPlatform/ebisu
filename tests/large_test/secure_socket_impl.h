@@ -4,7 +4,8 @@
 #include "khc_socket_callback.h"
 #include <openssl/ssl.h>
 
-namespace khct {
+namespace ebisu {
+namespace ltest {
 namespace ssl {
 
 struct SSLData
@@ -32,6 +33,7 @@ khc_sock_code_t
 khc_sock_code_t
     cb_close(void* socket_context);
 
+}
 }
 }
 

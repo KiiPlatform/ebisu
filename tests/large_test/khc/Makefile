@@ -1,5 +1,6 @@
 ROOT_DIR=../../..
 TEST_ROOT_DIR=../..
+LTEST_ROOT_DIR=$(TEST_ROOT_DIR)/large_test
 
 LIB_SRCS=$(wildcard $(ROOT_DIR)/khc/src/*.c)
 LIB_SRCS+=$(wildcard $(ROOT_DIR)/khc/src/*.h)
@@ -7,12 +8,13 @@ LIB_SRCS+=$(wildcard $(ROOT_DIR)/khc/include/*.h)
 LIB_BUILD_DIR=build-khc
 
 TARGET=./large-test
-INCLUDES=-I. -I$(TEST_ROOT_DIR) -I$(ROOT_DIR)/khc/src -I$(LIB_BUILD_DIR)/include
+INCLUDES=-I. -I$(LTEST_ROOT_DIR) -I$(TEST_ROOT_DIR) -I$(ROOT_DIR)/khc/src -I$(LIB_BUILD_DIR)/include
 LIBS_DIR=-L$(LIB_BUILD_DIR)/lib
 
 LIBS=-lkhc -lssl -lcrypto
 SRCS=$(wildcard *.cpp)
 SRCS+=$(wildcard *.c)
+SRCS+=$(wildcard $(LTEST_ROOT_DIR)/*.cpp)
 TEST_RESULT_DIR=test-results/junit
 TEST_RESULT=$(TEST_RESULT_DIR)/test-result.xml
 
