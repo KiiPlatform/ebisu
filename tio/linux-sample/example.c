@@ -199,10 +199,10 @@ void updater_init(
 
     tio_updater_set_buff(updater, buffer, buffer_size);
 
-    tio_updater_set_cb_sock_connect(updater, updater_cb_connect, sock_ssl_ctx);
-    tio_updater_set_cb_sock_send(updater, updater_cb_send, sock_ssl_ctx);
-    tio_updater_set_cb_sock_recv(updater, updater_cb_recv, sock_ssl_ctx);
-    tio_updater_set_cb_sock_close(updater, updater_cb_close, sock_ssl_ctx);
+    tio_updater_set_cb_sock_connect(updater, sock_cb_connect, sock_ssl_ctx);
+    tio_updater_set_cb_sock_send(updater, sock_cb_send, sock_ssl_ctx);
+    tio_updater_set_cb_sock_recv(updater, sock_cb_recv, sock_ssl_ctx);
+    tio_updater_set_cb_sock_close(updater, sock_cb_close, sock_ssl_ctx);
 
     tio_updater_set_interval(updater, 30);
 
@@ -286,10 +286,10 @@ void handler_init(
 
     tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
 
-    tio_handler_set_cb_sock_connect_mqtt(handler, mqtt_cb_connect, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_send_mqtt(handler, mqtt_cb_send, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_recv_mqtt(handler, mqtt_cb_recv, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_close_mqtt(handler, mqtt_cb_close, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_connect_mqtt(handler, sock_cb_connect, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_send_mqtt(handler, sock_cb_send, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
 
     tio_handler_set_keep_alive_interval(handler, 0);
 
