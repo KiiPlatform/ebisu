@@ -209,7 +209,7 @@ void updater_init(
     kii_set_json_parser_resource(&updater->_kii, resource);
 }
 
-const char send_file[] = "send.txt";
+const char send_file[] = "state.json";
 
 typedef struct {
     size_t file_size;
@@ -218,10 +218,11 @@ typedef struct {
 
 size_t updater_cb_state_size(void* userdata)
 {
+    char c;
     updater_file_context_t* ctx = (updater_file_context_t*)userdata;
 
-    printf("\nSend file?[y/n]: ");
-    if (getchar() == 'y') {
+    printf("Send file?[y/n]: ");
+    if ((c = getchar()) == 'y') {
         struct stat st;
         if (stat(send_file, &st) == 0) {
             ctx->file_size = st.st_size;
@@ -230,6 +231,9 @@ size_t updater_cb_state_size(void* userdata)
         } else {
             printf("failed to get stat\n");
         }
+    }
+    if (c != '\n') {
+        while(getchar() != '\n');
     }
     return 0;
 }
@@ -257,6 +261,8 @@ size_t updater_cb_read(char *buffer, size_t size, size_t count, void *userdata)
     }
 
     fclose(fp);
+
+    printf("updater_cb_read: %ld / %ld\n", ctx->file_read, ctx->file_size);
     return read_size;
 }
 
