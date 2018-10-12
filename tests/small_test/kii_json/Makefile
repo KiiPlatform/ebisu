@@ -17,9 +17,9 @@ TEST_RESULT_DIR=$(OUTDIR)/test-results/junit
 TEST_RESULT=$(TEST_RESULT_DIR)/test-result.xml
 
 ifdef MEMCHECK
-TESTCMD=valgrind --leak-check=yes $(TARGET)
+TESTCMD=valgrind --leak-check=yes ./$(TARGET)
 else
-TESTCMD=$(TARGET)
+TESTCMD=./$(TARGET)
 endif
 
 ifdef JUNIT
@@ -40,7 +40,7 @@ $(TARGET_PATH): $(LIBKIIJSON)
 
 test: $(TARGET_PATH)
 	mkdir -p $(TEST_RESULT_DIR)
-	cd $(OUTDIR) && LD_LIBRARY_PATH=. ./$(TESTCMD)
+	cd $(OUTDIR) && LD_LIBRARY_PATH=. $(TESTCMD)
 
 clean:
 	rm -rf $(OUTDIR)
