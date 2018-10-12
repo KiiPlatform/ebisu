@@ -1,7 +1,6 @@
 #include "example.h"
 
 #include <tio.h>
-#include <tio2.h>
 #include <kii_json.h>
 
 #include <string.h>
@@ -15,172 +14,17 @@
 #include "sys_cb_impl.h"
 #include "sock_cb_linux.h"
 
-typedef struct _air_conditioner_t {
-    kii_bool_t power;
-    int temperature;
-} _air_conditioner_t;
-
-static _air_conditioner_t m_air_conditioner;
 static pthread_mutex_t m_mutex;
 
-static kii_bool_t _get_air_conditioner_info(
-        _air_conditioner_t* air_conditioner)
-{
-    if (pthread_mutex_lock(&m_mutex) != 0) {
-        return KII_FALSE;
-    }
-    air_conditioner->power = m_air_conditioner.power;
-    air_conditioner->temperature = m_air_conditioner.temperature;
-    if (pthread_mutex_unlock(&m_mutex) != 0) {
-        return KII_FALSE;
-    }
-    return KII_TRUE;
-}
-
-static kii_bool_t _set_air_conditioner_info(
-        const _air_conditioner_t* air_conditioner)
-{
-    if (pthread_mutex_lock(&m_mutex) != 0) {
-        return KII_FALSE;
-    }
-    m_air_conditioner.power = air_conditioner->power;
-    m_air_conditioner.temperature = air_conditioner->temperature;
-    if (pthread_mutex_unlock(&m_mutex) != 0) {
-        return KII_FALSE;
-    }
-    return KII_TRUE;
-}
-
-static kii_bool_t action_handler(
-        const char* alias,
-        const char* action_name,
-        const char* action_params,
-        char error[EMESSAGE_SIZE + 1])
-{
-    _air_conditioner_t air_conditioner;
-
-    printf("alias=%s, action name=%s, action params=%s\n",
-            alias, action_name, action_params);
-
-    if (strcmp(alias, "AirConditionerAlias") != 0 &&
-            strcmp(alias, "HumidityAlias") != 0) {
-        snprintf(error, EMESSAGE_SIZE + 1, "invalid alias: %s", alias);
-        return KII_FALSE;
-    }
-
-    memset(&air_conditioner, 0, sizeof(air_conditioner));
-    if (_get_air_conditioner_info(&air_conditioner) == KII_FALSE) {
-        printf("fail to lock.\n");
-        strcpy(error, "fail to lock.");
-        return KII_FALSE;
-    }
-    if (strcmp(action_name, "turnPower") == 0) {
-        air_conditioner.power =
-            strcmp(action_params, "true") == 0 ? KII_TRUE : KII_FALSE;
-    }
-    if (strcmp(action_name, "setPresetTemperature") == 0) {
-        air_conditioner.temperature = atoi(action_name);
-    }
-
-    if (_set_air_conditioner_info(&air_conditioner) == KII_FALSE) {
-        printf("fail to unlock.\n");
-        return KII_FALSE;
-    }
-    return KII_TRUE;
-}
-
-static kii_bool_t state_handler(
-        kii_t* kii,
-        TIO_WRITER writer)
-{
-    FILE* fp = fopen("air_conditioner-state.json", "r");
-    if (fp != NULL) {
-        char buf[256];
-        kii_bool_t retval = KII_TRUE;
-        while (fgets(buf, sizeof(buf) / sizeof(buf[0]), fp) != NULL) {
-            if ((*writer)(kii, buf) == KII_FALSE) {
-                retval = KII_FALSE;
-                break;
-            }
-        }
-        fclose(fp);
-        return retval;
-    } else {
-        char buf[256];
-        _air_conditioner_t air_conditioner;
-        memset(&air_conditioner, 0x00, sizeof(air_conditioner));
-        if (_get_air_conditioner_info(&air_conditioner) == KII_FALSE) {
-            printf("fail to lock.\n");
-            return KII_FALSE;
-        }
-        if ((*writer)(kii, "{\"AirConditionerAlias\":") == KII_FALSE) {
-            return KII_FALSE;
-        }
-        if ((*writer)(kii, "{\"power\":") == KII_FALSE) {
-            return KII_FALSE;
-        }
-        if ((*writer)(kii, (int)air_conditioner.power == (int)KII_JSON_TRUE
-                        ? "true," : "false,") == KII_FALSE) {
-            return KII_FALSE;
-        }
-        if ((*writer)(kii, "\"currentTemperature\":") == KII_FALSE) {
-            return KII_FALSE;
-        }
-        snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%d}",
-                air_conditioner.temperature);
-        if ((*writer)(kii, buf) == KII_FALSE) {
-            return KII_FALSE;
-        }
-        if ((*writer)(kii, "}") == KII_FALSE) {
-            return KII_FALSE;
-        }
-        return KII_TRUE;
-    }
-}
-
-static kii_bool_t custom_push_handler(
-        kii_t *kii,
-        const char* message,
-        size_t message_length)
-{
-    kii_bool_t ret = KII_TRUE;
-    printf("custom_push_handler:\n%s\n", message);
-    if (strncmp(message, "{\"commandID\"", 12) == 0) {
-        ret = KII_FALSE;
-    }
-    // check no error in parsing topic.
-    if (strncmp(message, "{\"Item\":\"CheckNoError\"", 22) == 0) {
-        ret = KII_FALSE;
-    }
-    return ret;
-}
-
 static void print_help() {
-    printf("sub commands: [onboard|onboard-with-token|get|update]\n\n");
+    printf("sub commands: [onboard|update]\n\n");
     printf("to see detail usage of sub command, execute ./exampleapp {subcommand} --help\n\n");
 
     printf("onboard with vendor-thing-id\n");
     printf("./exampleapp onboard --vendor-thing-id={vendor thing id} --password={password}\n\n");
 
-    printf("onboard with thing-id\n");
-    printf("./exampleapp onboard --thing-id={thing id} --password={password}\n\n");
-
-    printf("onboard-with-token.\n");
-    printf("./exampleapp onboard-with-token --thing-id={thing id} --access-token={access token}\n\n");
-    printf("to configure app to use, edit example.h\n\n");
-
-    printf("get.\n"
-            "./exampleapp get --firmware-version --thing-type --vendor-thing-id={vendor thing id} --password={password} \n\n");
-
-    printf("get.\n"
-            "./exampleapp get --firmware-version --thing-type --thing-id={thing id} --password={password} \n\n");
-
     printf("update.\n"
             "./exampleapp update --firmware-version --thing-type --vendor-thing-id={vendor thing id} --password={password} \n\n");
-
-    printf("update.\n"
-            "./exampleapp update --firmware-version --thing-type --thing-id={thing id} --password={password} \n\n");
-
 }
 
 void updater_init(

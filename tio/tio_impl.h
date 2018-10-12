@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include "tio2.h"
+#include "tio.h"
 #include "kii.h"
 
 tio_code_t _tio_convert_code(kii_code_t code);
