@@ -1,6 +1,7 @@
 #include "kii_ti_impl.h"
 #include "kii_impl.h"
 #include "kii_req_impl.h"
+#include "kii_json_wrapper.h"
 #include "kii_json_utils.h"
 #include <string.h>
 
@@ -121,8 +122,8 @@ kii_code_t _onboard(
     int content_len = 0;
     char esc_vid[strlen(vendor_thing_id) * 2 + 1];
     char esc_pass[strlen(password) * 2 + 1];
-    kii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid));
-    kii_escape_str(password, esc_pass, sizeof(esc_vid));
+    kii_json_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid));
+    kii_json_escape_str(password, esc_pass, sizeof(esc_vid));
 
     content_len += snprintf(
         kii->_rw_buff,
@@ -136,7 +137,7 @@ kii_code_t _onboard(
 
     if (thing_type != NULL) {
         char esc[strlen(thing_type) * 2 + 1];
-        kii_escape_str(thing_type, esc, sizeof(esc));
+        kii_json_escape_str(thing_type, esc, sizeof(esc));
         content_len += snprintf(
                 &kii->_rw_buff[content_len],
                 kii->_rw_buff_size - content_len,
@@ -150,7 +151,7 @@ kii_code_t _onboard(
 
     if (firmware_version != NULL) {
         char esc[strlen(firmware_version) * 2 + 1];
-        kii_escape_str(firmware_version, esc, sizeof(esc));
+        kii_json_escape_str(firmware_version, esc, sizeof(esc));
         content_len += snprintf(
                 &kii->_rw_buff[content_len],
                 kii->_rw_buff_size - content_len,
@@ -164,7 +165,7 @@ kii_code_t _onboard(
 
     if (layout_position != NULL) {
         char esc[strlen(layout_position) * 2 + 1];
-        kii_escape_str(layout_position, esc, sizeof(esc));
+        kii_json_escape_str(layout_position, esc, sizeof(esc));
         content_len += snprintf(
                 &kii->_rw_buff[content_len],
                 kii->_rw_buff_size - content_len,
@@ -178,7 +179,7 @@ kii_code_t _onboard(
 
     if (thing_properties != NULL) {
         char esc[strlen(thing_properties) * 2 + 1];
-        kii_escape_str(thing_properties, esc, sizeof(esc));
+        kii_json_escape_str(thing_properties, esc, sizeof(esc));
         content_len += snprintf(
                 &kii->_rw_buff[content_len],
                 kii->_rw_buff_size - content_len,

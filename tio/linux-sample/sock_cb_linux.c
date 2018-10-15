@@ -1,4 +1,4 @@
-#include "secure_socket_impl.h"
+#include "sock_cb_linux.h"
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -19,7 +19,7 @@
 #endif
 
 khc_sock_code_t
-    ebisu::ltest::ssl::cb_connect(void* sock_ctx, const char* host,
+    sock_cb_connect(void* sock_ctx, const char* host,
             unsigned int port)
 {
     int sock, ret;
@@ -86,7 +86,7 @@ khc_sock_code_t
         return KHC_SOCK_FAIL;
     }
 
-    ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)sock_ctx;
+    socket_context_t* ctx = (socket_context_t*)sock_ctx;
     ctx->socket = sock;
     ctx->ssl = ssl;
     ctx->ssl_ctx = ssl_ctx;
@@ -94,11 +94,11 @@ khc_sock_code_t
 }
 
 khc_sock_code_t
-    ebisu::ltest::ssl::cb_send(void* socket_context,
+    sock_cb_send(void* socket_context,
             const char* buffer,
             size_t length)
 {
-    ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
+    socket_context_t* ctx = (socket_context_t*)socket_context;
     int ret = SSL_write(ctx->ssl, buffer, length);
     if (ret > 0) {
         return KHC_SOCK_OK;
@@ -109,12 +109,12 @@ khc_sock_code_t
 }
 
 khc_sock_code_t
-    ebisu::ltest::ssl::cb_recv(void* socket_context,
+    sock_cb_recv(void* socket_context,
             char* buffer,
             size_t length_to_read,
             size_t* out_actual_length)
 {
-    ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
+    socket_context_t* ctx = (socket_context_t*)socket_context;
     *out_actual_length = 0;
     int ret = SSL_read(ctx->ssl, buffer, length_to_read);
     if (ret > 0) {
@@ -136,9 +136,9 @@ khc_sock_code_t
 }
 
 khc_sock_code_t
-    ebisu::ltest::ssl::cb_close(void* socket_context)
+    sock_cb_close(void* socket_context)
 {
-    ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
+    socket_context_t* ctx = (socket_context_t*)socket_context;
     int ret = SSL_shutdown(ctx->ssl);
     if (ret != 1) {
         int sslErr = SSL_get_error(ctx->ssl, ret);
@@ -165,3 +165,4 @@ khc_sock_code_t
 #ifdef __APPLE__
 #pragma GCC diagnostic pop
 #endif
+

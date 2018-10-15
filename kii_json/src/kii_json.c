@@ -18,6 +18,7 @@
 #endif
 
 #include <kii_json.h>
+#include <kii_json_utils.h>
 
 #define EVAL(f, v) f(v)
 #define TOSTR(s) #s
@@ -28,13 +29,6 @@
 
 /* "+ 3" denotes '-', '.', '\0' */
 #define DOUBLEBUFSIZE DBL_MAX_10_EXP + 3
-
-typedef enum _kii_json_num_parse_result_t {
-    _KII_JSON_NUM_PARSE_RESULT_SUCCESS,
-    _KII_JSON_NUM_PARSE_RESULT_OVERFLOW,
-    _KII_JSON_NUM_PARSE_RESULT_UNDERFLOW,
-    _KII_JSON_NUM_PARSE_RESULT_INVALID
-} _kii_json_num_parse_result_t;
 
 typedef enum _kii_json_parent_type_t {
     _KII_JSON_PARENT_TYPE_OBJECT,
@@ -190,80 +184,94 @@ static int _kii_json_is_long(const char* buf, size_t buf_len)
     return _kii_json_is_all_digit(buf, buf_len);
 }
 
+typedef enum  {
+    parser_sts_sign,
+    parser_sts_integer_start,
+    parser_sts_integer0,
+    parser_sts_integer,
+    parser_sts_decimal,
+    parser_sts_exp_start,
+    parser_sts_exp
+} num_parser_sts;
+
 static int _kii_json_is_double(const char* buf, size_t buf_len)
 {
-    int is_first = 1;
-    int after_e = 0;
-    int before_is_e = 0;
-    int after_dot = 0;
-    int before_is_dot = 0;
-    int before_is_minus = 0;
-    size_t i = 0;
-
     M_KII_JSON_ASSERT(buf != NULL);
     if (buf_len > DOUBLEBUFSIZE) {
         return 0;
     }
 
-    for (i = 0; i < buf_len; ++i) {
-        switch(buf[i]) {
-            case 'e':
-                if (is_first != 0) {
-                    /* e must not be first. */
-                    return 0;
-                } else if (after_e != 0) {
-                    /* e must not appear only once. */
-                    return 0;
-                } else if (before_is_minus != 0) {
-                    /* e must follow digit. */
-                    return 0;
-                } else if (before_is_dot != 0) {
-                    return 0;
+    num_parser_sts sts = parser_sts_sign;
+    for (int i = 0; i < buf_len; ++i) {
+        char c = buf[i];
+        switch(sts) {
+            case parser_sts_sign:
+                if (c == '-') {
+                    sts = parser_sts_integer_start;
+                    continue;
                 }
-                before_is_e = 1;
-                after_e = 1;
-                break;
-            case '.':
-                if (is_first != 0) {
-                    /* . must not be first. */
-                    return 0;
-                } else if (after_dot != 0) {
-                    /* . must not appear only once. */
-                    return 0;
-                } else if (after_e != 0) {
-                    /* . must not appear after e. */
-                    return 0;
-                } else if (before_is_minus != 0) {
-                    return 0;
+                if (c == '0') {
+                    sts = parser_sts_integer0;
+                    continue;
                 }
-                before_is_dot = 1;
-                after_dot = 1;
-                break;
-            case '-':
-                if (is_first != 0) {
-                    is_first = 0;
-                    before_is_minus = 1;
-                } else if (before_is_e != 0) {
-                    before_is_minus = 1;
-                } else {
-                    return 0;
+                if ('1' <= c && c <= '9') {
+                    sts = parser_sts_integer;
+                    continue;
                 }
-                break;
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-                is_first = 0;
-                before_is_e = 0;
-                before_is_dot = 0;
-                before_is_minus = 0;
-                break;
+                return 0;
+            case parser_sts_integer_start:
+                if (c == '0') {
+                    sts = parser_sts_integer0;
+                    continue;
+                }
+                if ('1' <= c && c <= '9') {
+                    sts = parser_sts_integer;
+                    continue;
+                }
+                return 0;
+            case parser_sts_integer0:
+                if (c == '.') {
+                    sts = parser_sts_decimal;
+                    continue;
+                }
+                if (c == 'e' || c == 'E') {
+                    sts = parser_sts_exp_start;
+                    continue;
+                }
+                return 0;
+            case parser_sts_integer:
+                if (isdigit(c)) {
+                    continue;
+                }
+                if (c == '.') {
+                    sts = parser_sts_decimal;
+                    continue;
+                }
+                if (c == 'e' || c == 'E') {
+                    sts = parser_sts_exp_start;
+                    continue;
+                }
+                return 0;
+            case parser_sts_decimal:
+                if (isdigit(c)) {
+                    continue;
+                }
+                if (c == 'e' || c == 'E') {
+                    sts = parser_sts_exp_start;
+                    continue;
+                }
+                return 0;
+            case parser_sts_exp_start:
+                if (c == '-' || c == '+' || isdigit(c)) {
+                    sts = parser_sts_exp;
+                    continue;
+                }
+                return 0;
+            case parser_sts_exp:
+                if (isdigit(c)) {
+                    continue;
+                }
+                return 0;
             default:
                 return 0;
         }
@@ -325,7 +333,7 @@ static int _kii_json_string_copy(
     return 0;
 }
 
-static _kii_json_num_parse_result_t _kii_json_to_long(
+static kii_json_parse_primitive_result_t _kii_json_to_long(
         const char* target,
         size_t target_size,
         long* out_long)
@@ -344,10 +352,10 @@ static _kii_json_num_parse_result_t _kii_json_to_long(
     if (buf_len <= target_size) {
         if (*target == '-') {
             *out_long = LONG_MIN;
-            return _KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
+            return KII_JSON_PARSE_PRIMITIVE_RESULT_UNDERFLOW;
         }
         *out_long = LONG_MAX;
-        return _KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
+        return KII_JSON_PARSE_PRIMITIVE_RESULT_OVERFLOW;
     }
     memcpy(buf, target, target_size);
 
@@ -356,10 +364,10 @@ static _kii_json_num_parse_result_t _kii_json_to_long(
     if (errno == ERANGE) {
         if (long_value == LONG_MAX) {
             *out_long = LONG_MAX;
-            return _KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
+            return KII_JSON_PARSE_PRIMITIVE_RESULT_OVERFLOW;
         } else if (long_value == LONG_MIN) {
             *out_long = LONG_MIN;
-            return _KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
+            return KII_JSON_PARSE_PRIMITIVE_RESULT_UNDERFLOW;
         }
         M_KII_JSON_ASSERT(0);
     } else if (errno == EINVAL) {
@@ -369,14 +377,14 @@ static _kii_json_num_parse_result_t _kii_json_to_long(
     }
 
     if (*endptr != '\0') {
-        return _KII_JSON_NUM_PARSE_RESULT_INVALID;
+        return KII_JSON_PARSE_PRIMITIVE_RESULT_INVALID;
     }
 
     *out_long = long_value;
-    return _KII_JSON_NUM_PARSE_RESULT_SUCCESS;
+    return KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS;
 }
 
-static _kii_json_num_parse_result_t _kii_json_to_int(
+static kii_json_parse_primitive_result_t _kii_json_to_int(
         const char* target,
         size_t target_size,
         int* out_int)
@@ -387,21 +395,21 @@ static _kii_json_num_parse_result_t _kii_json_to_int(
     M_KII_JSON_ASSERT(out_int != NULL);
 
     if (_kii_json_to_long(target, target_size, &long_value) ==
-            _KII_JSON_NUM_PARSE_RESULT_INVALID) {
-        return _KII_JSON_NUM_PARSE_RESULT_INVALID;
+            KII_JSON_PARSE_PRIMITIVE_RESULT_INVALID) {
+        return KII_JSON_PARSE_PRIMITIVE_RESULT_INVALID;
     } else if (long_value > INT_MAX) {
         *out_int = INT_MAX;
-        return _KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
+        return KII_JSON_PARSE_PRIMITIVE_RESULT_OVERFLOW;
     } else if (long_value < INT_MIN) {
         *out_int = INT_MIN;
-        return _KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
+        return KII_JSON_PARSE_PRIMITIVE_RESULT_UNDERFLOW;
     }
 
     *out_int = (int)long_value;
-    return _KII_JSON_NUM_PARSE_RESULT_SUCCESS;
+    return KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS;
 }
 
-static _kii_json_num_parse_result_t _kii_json_to_double(
+static kii_json_parse_primitive_result_t _kii_json_to_double(
         const char* target,
         size_t target_size,
         double* out_double)
@@ -421,27 +429,27 @@ static _kii_json_num_parse_result_t _kii_json_to_double(
         char message[50];
         snprintf(message, sizeof(message) / sizeof(message[0]),
                 "double string too long: %lu.", (unsigned long)target_size);
-      return _KII_JSON_NUM_PARSE_RESULT_INVALID;
+      return KII_JSON_PARSE_PRIMITIVE_RESULT_INVALID;
     }
     memcpy(buf, target, target_size);
 
     errno = 0;
     value = strtod(buf, &endptr);
     if (value == 0 && *endptr != '\0') {
-        return _KII_JSON_NUM_PARSE_RESULT_INVALID;
+        return KII_JSON_PARSE_PRIMITIVE_RESULT_INVALID;
     } else if (errno == ERANGE) {
         if (value == 0) {
             *out_double = 0;
-            return _KII_JSON_NUM_PARSE_RESULT_UNDERFLOW;
+            return KII_JSON_PARSE_PRIMITIVE_RESULT_UNDERFLOW;
         } else {
             /* In this case, value is plus or minus HUGE_VAL. */
             *out_double = value;
-            return _KII_JSON_NUM_PARSE_RESULT_OVERFLOW;
+            return KII_JSON_PARSE_PRIMITIVE_RESULT_OVERFLOW;
         }
     }
 
     *out_double = value;
-    return _KII_JSON_NUM_PARSE_RESULT_SUCCESS;
+    return KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS;
 }
 
 static int _kii_json_to_boolean(
@@ -510,7 +518,7 @@ static const char* _kii_json_get_target(
             retval = NULL;
             goto exit;
         } else if (_kii_json_to_long(start, target_len, &value)
-                != _KII_JSON_NUM_PARSE_RESULT_SUCCESS) {
+                != KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS) {
             error = start;
             retval = NULL;
             goto exit;
@@ -682,24 +690,24 @@ static kii_json_parse_result_t _kii_json_convert_jsmntok_to_field(
                 field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
                 retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
             } else {
-                _kii_json_num_parse_result_t result =
+                kii_json_parse_primitive_result_t result =
                     _kii_json_to_int(
                             json_string + value->start,
                             value->end - value->start,
                             &(field->field_copy.int_value));
                 switch (result) {
-                    case _KII_JSON_NUM_PARSE_RESULT_SUCCESS:
+                    case KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS:
                         field->result = KII_JSON_FIELD_PARSE_SUCCESS;
                         break;
-                    case _KII_JSON_NUM_PARSE_RESULT_OVERFLOW:
+                    case KII_JSON_PARSE_PRIMITIVE_RESULT_OVERFLOW:
                         field->result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
                         retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
                         break;
-                    case _KII_JSON_NUM_PARSE_RESULT_UNDERFLOW:
+                    case KII_JSON_PARSE_PRIMITIVE_RESULT_UNDERFLOW:
                         field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
                         retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
                         break;
-                    case _KII_JSON_NUM_PARSE_RESULT_INVALID:
+                    case KII_JSON_PARSE_PRIMITIVE_RESULT_INVALID:
                         field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
                         return KII_JSON_PARSE_INVALID_INPUT;
                 }
@@ -712,24 +720,24 @@ static kii_json_parse_result_t _kii_json_convert_jsmntok_to_field(
                 field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
                 retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
             } else {
-                _kii_json_num_parse_result_t result =
+                kii_json_parse_primitive_result_t result =
                     _kii_json_to_long(
                             json_string + value->start,
                             value->end - value->start,
                             &(field->field_copy.long_value));
                 switch (result) {
-                    case _KII_JSON_NUM_PARSE_RESULT_SUCCESS:
+                    case KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS:
                         field->result = KII_JSON_FIELD_PARSE_SUCCESS;
                         break;
-                    case _KII_JSON_NUM_PARSE_RESULT_OVERFLOW:
+                    case KII_JSON_PARSE_PRIMITIVE_RESULT_OVERFLOW:
                         field->result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
                         retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
                         break;
-                    case _KII_JSON_NUM_PARSE_RESULT_UNDERFLOW:
+                    case KII_JSON_PARSE_PRIMITIVE_RESULT_UNDERFLOW:
                         field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
                         retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
                         break;
-                    case _KII_JSON_NUM_PARSE_RESULT_INVALID:
+                    case KII_JSON_PARSE_PRIMITIVE_RESULT_INVALID:
                         field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
                         return KII_JSON_PARSE_INVALID_INPUT;
                 }
@@ -741,24 +749,24 @@ static kii_json_parse_result_t _kii_json_convert_jsmntok_to_field(
                 field->result = KII_JSON_FIELD_PARSE_TYPE_UNMATCHED;
                 retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
             } else {
-                _kii_json_num_parse_result_t result =
+                kii_json_parse_primitive_result_t result =
                     _kii_json_to_double(
                             json_string + value->start,
                             value->end - value->start,
                             &(field->field_copy.double_value));
                 switch (result) {
-                    case _KII_JSON_NUM_PARSE_RESULT_SUCCESS:
+                    case KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS:
                         field->result = KII_JSON_FIELD_PARSE_SUCCESS;
                         break;
-                    case _KII_JSON_NUM_PARSE_RESULT_OVERFLOW:
+                    case KII_JSON_PARSE_PRIMITIVE_RESULT_OVERFLOW:
                         field->result = KII_JSON_FIELD_PARSE_COPY_OVERFLOW;
                         retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
                         break;
-                    case _KII_JSON_NUM_PARSE_RESULT_UNDERFLOW:
+                    case KII_JSON_PARSE_PRIMITIVE_RESULT_UNDERFLOW:
                         field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
                         retval = KII_JSON_PARSE_PARTIAL_SUCCESS;
                         break;
-                    case _KII_JSON_NUM_PARSE_RESULT_INVALID:
+                    case KII_JSON_PARSE_PRIMITIVE_RESULT_INVALID:
                         field->result = KII_JSON_FIELD_PARSE_COPY_UNDERFLOW;
                         return KII_JSON_PARSE_INVALID_INPUT;
                 }
@@ -915,4 +923,97 @@ kii_json_parse_result_t kii_json_parse_with_allocator(
 
     free_cb(resource);
     return res;
+}
+
+kii_json_parse_primitive_result_t kii_json_parse_primitive(
+    const char* primitive,
+    size_t primitive_length,
+    kii_json_primitive_t* result)
+{
+    if (memcmp(primitive, "null", primitive_length) == 0)
+    {
+        result->type = KII_JSON_FIELD_TYPE_NULL;
+        return KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS;
+    }
+    if (memcmp(primitive, "true", primitive_length) == 0)
+    {
+        result->type = KII_JSON_FIELD_TYPE_BOOLEAN;
+        result->value.boolean_value = KII_JSON_TRUE;
+        return KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS;
+    }
+    if (memcmp(primitive, "false", primitive_length) == 0)
+    {
+        result->type = KII_JSON_FIELD_TYPE_BOOLEAN;
+        result->value.boolean_value = KII_JSON_FALSE;
+        return KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS;
+    }
+    int is_int = _kii_json_is_int(primitive, primitive_length);
+    if (is_int != 0) {
+        int int_value = 0;
+        kii_json_parse_primitive_result_t res = 
+            _kii_json_to_int(primitive, primitive_length, &int_value);
+        if (res != KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS) {
+            return res;
+        }
+        result->type = KII_JSON_FIELD_TYPE_INTEGER;
+        result->value.int_value = int_value;
+        return KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS;
+    }
+    int is_long = _kii_json_is_long(primitive, primitive_length);
+    if (is_long != 0) {
+        long long_value = 0;
+        kii_json_parse_primitive_result_t res = 
+            _kii_json_to_long(primitive, primitive_length, &long_value);
+        if (res != KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS) {
+            return res;
+        }
+        result->type = KII_JSON_FIELD_TYPE_LONG;
+        result->value.long_value = long_value;
+        return KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS;
+    }
+    int is_double = _kii_json_is_double(primitive, primitive_length);
+    if (is_double != 0) {
+        double double_value = 0;
+                kii_json_parse_primitive_result_t res = 
+            _kii_json_to_double(primitive, primitive_length, &double_value);
+        if (res != KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS) {
+            return res;
+        }
+        result->type = KII_JSON_FIELD_TYPE_DOUBLE;
+        result->value.double_value = double_value;
+        return KII_JSON_PARSE_PRIMITIVE_RESULT_SUCCESS;
+    }
+    return KII_JSON_PARSE_PRIMITIVE_RESULT_INVALID;
+}
+
+int kii_json_escape_str(const char* str, char* buff, size_t buff_size) {
+    size_t str_len = strlen(str);
+    if (buff_size < str_len + 1) {
+        return -1;
+    }
+    size_t escaped_len = str_len;
+    for (int i = 0, pos = 0; i < str_len; ++i, ++pos) {
+        char c = str[i];
+        // FIXME: Ignoriging \u{4 hex}
+        if (c == '"' ||
+            c == '/' ||
+            c == '\\' ||
+            c == '\b' ||
+            c == '\f' ||
+            c == '\n' ||
+            c == '\r' ||
+            c == '\t')
+        {
+            ++escaped_len;
+            if (buff_size < escaped_len + 1) {
+                return - 1;
+            }
+            buff[pos] = '\\';
+            buff[++pos] = c;
+        } else {
+            buff[pos] = c;
+        }
+    }
+    buff[escaped_len] = '\0';
+    return escaped_len;
 }

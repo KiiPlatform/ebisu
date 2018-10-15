@@ -5,7 +5,7 @@
 #include "kii.h"
 #include "kii_impl.h"
 #include "kii_thing_impl.h"
-#include "kii_json_utils.h"
+#include "kii_json_wrapper.h"
 
 kii_code_t kii_auth_thing(
         kii_t* kii,
