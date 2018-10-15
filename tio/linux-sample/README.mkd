@@ -45,7 +45,11 @@ Execute folloging command on a terminal.
 # ./exampleapp onboard --vendor-thing-id={vendor-thing-id} --password={password}
 ```
 
-After succeeded, go to https://developer.kii.com and check Thing Console.
+After succeeded, go to https://developer.kii.com and send command.
+
+![ScreenShot - 4](./images/select_thing.png)
+![ScreenShot - 5](./images/create_command_1.png)
+![ScreenShot - 6](./images/create_command_2.png)
 
 TODO: Devpoの操作方法とSSを追加する。
 
@@ -61,6 +65,6 @@ edit `EX_STATE_UPDATE_PERIOD` in `example.h`.
 
 If you want to check sending results, go to https://developer.kii.com and check Thing Console.
 
-![ScreenShot - 5](./images/select_thing.png)
+![ScreenShot - 7](./images/select_thing.png)
 
-![ScreenShot - 6](./images/check_state.png)
+![ScreenShot - 8](./images/check_state.png)
