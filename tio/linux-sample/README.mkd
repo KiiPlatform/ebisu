@@ -29,18 +29,23 @@ command:
 ## How to use
 Go to https://developer.kii.com and create app for you.
 replace `EX_APP_ID`, `EX_APP_KEY` and `EX_APP_SITE` with yours.
+If you want to test receiving command, please create thing with owner.
 
+1. Create thing owner.
+![ScreenShot - 1](./images/create_user.png)
 
-Execute folloging command on a terminal. Hereafter This terminal
-called termianl A.
+2. Create thing with owner.
+![ScreenShot - 2](./images/create_thing_1.png)
+![ScreenShot - 3](./images/create_thing_2.png)
+Step 4, setting owner of created user. Step 6, setting vendor thing ID and password.
+
+Execute folloging command on a terminal.
 
 ```sh
 # ./exampleapp onboard --vendor-thing-id={vendor-thing-id} --password={password}
 ```
 
 After succeeded, go to https://developer.kii.com and check Thing Console.
-There should be a thing created with specified vendor thing ID in the command above.
-Please note thing id displayed here.
 
 TODO: Devpoの操作方法とSSを追加する。
 
@@ -56,6 +61,6 @@ edit `EX_STATE_UPDATE_PERIOD` in `example.h`.
 
 If you want to check sending results, go to https://developer.kii.com and check Thing Console.
 
-![ScreenShot - 1](./images/select_thing.png)
+![ScreenShot - 5](./images/select_thing.png)
 
-![ScreenShot - 2](./images/check_state.png)
+![ScreenShot - 6](./images/check_state.png)
