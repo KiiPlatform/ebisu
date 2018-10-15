@@ -6,7 +6,7 @@
 #include "kii.h"
 #include "khc.h"
 #include "kii_mqtt.h"
-#include "kii_json_utils.h"
+#include "kii_json_wrapper.h"
 #include "kii_push_impl.h"
 #include "kii_impl.h"
 
@@ -163,7 +163,7 @@ kii_code_t kii_install_push(
     fields[0].field_copy_buff_size = sizeof(out_installation_id->id);
     fields[1].name = NULL;
 
-    parse_result = prv_kii_json_read_object(kii, buff, buff_size, fields);
+    parse_result = _kii_json_read_object(kii, buff, buff_size, fields);
     if (parse_result != KII_JSON_PARSE_SUCCESS) {
         res = KII_ERR_PARSE_JSON;
         goto exit;
@@ -232,7 +232,7 @@ kii_code_t kii_get_mqtt_endpoint(
     fields[6].type = KII_JSON_FIELD_TYPE_LONG;
     fields[7].name = NULL;
 
-    parse_result = prv_kii_json_read_object(kii, buff, buff_size, fields);
+    parse_result = _kii_json_read_object(kii, buff, buff_size, fields);
     if (parse_result != KII_JSON_PARSE_SUCCESS) {
         res = KII_ERR_PARSE_JSON;
         goto exit;
@@ -245,10 +245,11 @@ exit:
     return res;
 }
 
-kii_code_t kii_start_push_routine(kii_t* kii, unsigned int keep_alive_interval, KII_PUSH_RECEIVED_CB callback)
+kii_code_t kii_start_push_routine(kii_t* kii, unsigned int keep_alive_interval, KII_PUSH_RECEIVED_CB callback, void* userdata)
 {
     kii->_keep_alive_interval = keep_alive_interval;
     kii->push_received_cb = callback;
+    kii->_push_data = userdata;
     kii->task_create_cb(KII_TASK_NAME_RECV_MSG,
         _mqtt_start_recvmsg_task,
         (void*)kii);

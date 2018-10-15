@@ -1,0 +1,6 @@
+/build-khc
+/*.so
+/*.dSYM
+/*.o
+/large-test
+/test-results

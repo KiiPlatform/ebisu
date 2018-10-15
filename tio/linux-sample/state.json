@@ -1,0 +1,7 @@
+{
+  "Key1" : "Value1",
+  "Key2" : {
+    "SubKey":"SubValue"
+  },
+  "Key3" : true
+}

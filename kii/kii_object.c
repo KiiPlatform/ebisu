@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "kii.h"
-#include "kii_json_utils.h"
+#include "kii_json_wrapper.h"
 #include "kii_impl.h"
 #include "kii_object_impl.h"
 
@@ -47,7 +47,7 @@ kii_code_t kii_post_object(
     fields[0].field_copy_buff_size = sizeof(out_object_id->id);
     fields[1].name = NULL;
 
-    result = prv_kii_json_read_object(kii, buff, buff_size, fields);
+    result = _kii_json_read_object(kii, buff, buff_size, fields);
     if (result != KII_JSON_PARSE_SUCCESS) {
         ret = KII_ERR_PARSE_JSON;
         goto exit;

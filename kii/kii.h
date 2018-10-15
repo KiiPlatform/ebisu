@@ -103,9 +103,9 @@ typedef struct kii_installation_id_t {
 struct kii_t;
 
 typedef void (*KII_PUSH_RECEIVED_CB)(
-                struct kii_t* kii,
                 char* message,
-                size_t message_length);
+                size_t message_length,
+                void* userdata);
 
 typedef struct kii_t {
     khc _khc;
@@ -128,6 +128,7 @@ typedef struct kii_t {
     KII_DELAY_MS delay_ms_cb;
 
     KII_PUSH_RECEIVED_CB push_received_cb;
+    void* _push_data;
 
     int _mqtt_connected;
 
@@ -381,12 +382,14 @@ kii_code_t kii_get_mqtt_endpoint(
  * Otherwise, ping req is sent to MQTT broker periodically with the specified interval.
  * Sending too many request with short interval consumes resouces. We recommend 30 seconds or longer interval.
  *  \param [in] callback  callback function called when push message delivered. 
+ *  \param [in] userdata context object passed to callback.
  *  \return kii_code_t
  */
 kii_code_t kii_start_push_routine(
 		kii_t* kii,
         unsigned int keep_alive_interval,
-		KII_PUSH_RECEIVED_CB callback);
+		KII_PUSH_RECEIVED_CB callback,
+        void* userdata);
 
 /** Execute server code.
  *  \param [inout] kii sdk instance.
@@ -398,6 +401,38 @@ kii_code_t kii_execute_server_code(
 		kii_t* kii,
 		const char* endpoint_name,
 		const char* params);
+
+kii_code_t kii_ti_onboard(
+    kii_t* kii,
+    const char* vendor_thing_id,
+    const char* password,
+    const char* thing_type,
+    const char* firmware_version,
+    const char* layout_position,
+    const char* thing_properties);
+
+kii_code_t kii_ti_put_firmware_version(
+    kii_t* kii,
+    const char* firmware_version);
+
+typedef struct kii_ti_firmware_version_t {
+    char firmware_version[128];
+} kii_ti_firmware_version_t;
+
+kii_code_t kii_ti_get_firmware_version(
+    kii_t* kii,
+    kii_ti_firmware_version_t* version);
+
+kii_code_t kii_ti_put_thing_type(
+    kii_t* kii,
+    const char* thing_type);
+
+kii_code_t kii_ti_put_state(
+    kii_t* kii,
+    size_t content_length,
+    KII_CB_READ state_read_cb,
+    void* state_read_cb_data,
+    const char* opt_normalizer_host);
 
 /** start to create request for REST API.
  *
