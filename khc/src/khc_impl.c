@@ -269,14 +269,11 @@ void khc_state_req_header_end(khc* khc) {
 
 void khc_state_req_body_read(khc* khc) {
   khc->_read_size = khc->_cb_read(khc->_stream_buff, 1, khc->_stream_buff_size, khc->_read_data);
-  // TODO: handle read failure. let return signed value?
-  if (khc->_read_size > 0) {
-    khc->_state = KHC_STATE_REQ_BODY_SEND;
-  } else {
-    khc->_state = KHC_STATE_RESP_HEADERS_ALLOC;
-  }
-  if (khc->_read_size < khc->_stream_buff_size) {
+  if (khc->_read_size == 0) {
     khc->_read_req_end = 1;
+    khc->_state = KHC_STATE_RESP_HEADERS_ALLOC;
+  } else if (khc->_read_size > 0) {
+    khc->_state = KHC_STATE_REQ_BODY_SEND;
   }
   return;
 }
