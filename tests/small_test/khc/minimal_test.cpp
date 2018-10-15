@@ -94,7 +94,7 @@ TEST_CASE( "HTTP minimal" ) {
   khc_state_req_body_read(&http);
   REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND );
   REQUIRE( http._result == KHC_ERR_OK );
-  REQUIRE( http._read_req_end == 1 );
+  REQUIRE( http._read_req_end == 0 );
   REQUIRE( called );
 
   called = false;
@@ -106,8 +106,21 @@ TEST_CASE( "HTTP minimal" ) {
     return KHC_SOCK_OK;
   };
   khc_state_req_body_send(&http);
+  REQUIRE( http._state == KHC_STATE_REQ_BODY_READ );
+  REQUIRE( http._result == KHC_ERR_OK );
+  REQUIRE( called );
+
+  called = false;
+  io_ctx.on_read = [=, &called](char *buffer, size_t size, size_t count, void *userdata) {
+    called = true;
+    REQUIRE( size == 1);
+    REQUIRE( count == buff_size);
+    return 0;
+  };
+  khc_state_req_body_read(&http);
   REQUIRE( http._state == KHC_STATE_RESP_HEADERS_ALLOC );
   REQUIRE( http._result == KHC_ERR_OK );
+  REQUIRE( http._read_req_end == 1 );
   REQUIRE( called );
 
   khc_state_resp_headers_alloc(&http);

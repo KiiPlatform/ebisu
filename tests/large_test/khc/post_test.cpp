@@ -54,10 +54,10 @@ TEST_CASE( "HTTP Post" ) {
   khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
   int on_read_called = 0;
-  io_ctx.on_read = [=, &on_read_called, &req_body](char *buffer, size_t size, size_t count, void *userdata) {
+  std::istringstream iss(req_body);
+  io_ctx.on_read = [=, &on_read_called, &iss](char *buffer, size_t size, size_t count, void *userdata) {
     ++on_read_called;
-    memcpy(buffer, req_body.c_str(), body_len);
-    return body_len;
+    return iss.read(buffer, size*count).gcount();
   };
 
   int on_header_called = 0;
@@ -94,7 +94,7 @@ TEST_CASE( "HTTP Post" ) {
   REQUIRE ( !access_token.get<std::string>().empty() );
   
   REQUIRE( res == KHC_ERR_OK );
-  REQUIRE( on_read_called == 1 );
+  REQUIRE( on_read_called == 2 );
   REQUIRE( on_header_called > 1 );
   REQUIRE( on_write_called == 1 );
 }
