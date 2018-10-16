@@ -1,14 +1,14 @@
 #include "command_parser.h"
 #include "kii.h"
 #include "tio_impl.h"
-#include "kii_json_utils.h"
+#include "jkii_utils.h"
 
 #include <stdlib.h>
 
 _cmd_parser_code_t _get_object_in_array(
-    kii_json_resource_t* resource,
-    KII_JSON_RESOURCE_ALLOC_CB alloc_cb,
-    KII_JSON_RESOURCE_FREE_CB free_cb,
+    jkii_resource_t* resource,
+    JKII_RESOURCE_ALLOC_CB alloc_cb,
+    JKII_RESOURCE_FREE_CB free_cb,
     const char* json_array,
     size_t json_array_length,
     size_t index,
@@ -20,26 +20,26 @@ _cmd_parser_code_t _get_object_in_array(
     if (len >= 32) {
         return _CMD_PARSE_ERR_DATA_TOO_LARGE;
     }
-    kii_json_field_t field[2];
+    jkii_field_t field[2];
     memset(field, 0x00, sizeof(field));
     field[0].path = idx_str;
-    field[0].type = KII_JSON_FIELD_TYPE_OBJECT;
+    field[0].type = JKII_FIELD_TYPE_OBJECT;
     field[0].field_copy.string = NULL;
-    field[0].result = KII_JSON_FIELD_PARSE_SUCCESS;
+    field[0].result = JKII_FIELD_PARSE_SUCCESS;
     field[1].path = NULL;
 
-    kii_json_parse_result_t res = KII_JSON_PARSE_INVALID_INPUT;
+    jkii_parse_result_t res = JKII_PARSE_INVALID_INPUT;
     if (resource != NULL) {
-        res = kii_json_parse(json_array, json_array_length, field, resource);
+        res = jkii_parse(json_array, json_array_length, field, resource);
     } else {
-        res = kii_json_parse_with_allocator(json_array, json_array_length, field, alloc_cb, free_cb);
+        res = jkii_parse_with_allocator(json_array, json_array_length, field, alloc_cb, free_cb);
     }
 
-    if (res == KII_JSON_PARSE_SUCCESS) {
+    if (res == JKII_PARSE_SUCCESS) {
         *out_object = (char*)(json_array + field[0].start);
         *out_object_length = field[0].end - field[0].start;
         return _CMD_PARSE_OK;
-    } else if (res == KII_JSON_PARSE_PARTIAL_SUCCESS) {
+    } else if (res == JKII_PARSE_PARTIAL_SUCCESS) {
         return _CMD_PARSE_ARRAY_OUT_OF_INDEX;
     } else {
         return _CMD_PARSE_FAIL;
@@ -294,7 +294,7 @@ static tio_code_t _append_action_result(
         {
             size_t temp_buff_size = msg_len * 2 + 1;
             char esc_msg[temp_buff_size];
-            int esc_len = kii_json_escape_str(err_message, esc_msg, sizeof(esc_msg)/sizeof(esc_msg[0]));
+            int esc_len = jkii_escape_str(err_message, esc_msg, sizeof(esc_msg)/sizeof(esc_msg[0]));
             if (esc_len < 0) {
                 return TIO_ERR_TOO_LARGE_DATA;
             }
@@ -333,21 +333,21 @@ tio_code_t _handle_command(
     const char* command,
     size_t command_length)
 {
-    kii_json_field_t fields[3];
+    jkii_field_t fields[3];
     char command_id[64];
     memset(fields, 0x00, sizeof(fields));
     fields[0].path = "/commandID";
-    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].type = JKII_FIELD_TYPE_STRING;
     fields[0].field_copy.string = command_id;
     fields[0].field_copy_buff_size = sizeof(command_id) / sizeof(command_id[0]);
     fields[1].path = "/actions";
-    fields[1].type = KII_JSON_FIELD_TYPE_ARRAY;
+    fields[1].type = JKII_FIELD_TYPE_ARRAY;
     fields[1].field_copy.string = NULL;
-    fields[1].result = KII_JSON_FIELD_PARSE_SUCCESS;
+    fields[1].result = JKII_FIELD_PARSE_SUCCESS;
     fields[2].path = NULL;
 
-    kii_json_parse_result_t res = _parse_json(handler, command, command_length, fields);
-    if (res != KII_JSON_PARSE_SUCCESS) {
+    jkii_parse_result_t res = _parse_json(handler, command, command_length, fields);
+    if (res != JKII_PARSE_SUCCESS) {
         return TIO_ERR_PARSE_JSON;
     }
 
@@ -427,20 +427,20 @@ tio_code_t _handle_command(
     return TIO_ERR_OK;
 }
 
-kii_json_parse_result_t _parse_json(
+jkii_parse_result_t _parse_json(
     tio_handler_t* handler,
     const char* json_string,
     size_t json_string_size,
-    kii_json_field_t* fields)
+    jkii_field_t* fields)
 {
-    kii_json_resource_t* resource = handler->_kii._json_resource;
-    kii_json_parse_result_t res = KII_JSON_PARSE_INVALID_INPUT;
+    jkii_resource_t* resource = handler->_kii._json_resource;
+    jkii_parse_result_t res = JKII_PARSE_INVALID_INPUT;
     if (resource != NULL) {
-        res = kii_json_parse(json_string, json_string_size, fields, resource);
+        res = jkii_parse(json_string, json_string_size, fields, resource);
     } else {
-        KII_JSON_RESOURCE_ALLOC_CB alloc_cb = handler->_kii._json_alloc_cb;
-        KII_JSON_RESOURCE_FREE_CB free_cb = handler->_kii._json_free_cb;
-        res = kii_json_parse_with_allocator(json_string, json_string_size, fields, alloc_cb, free_cb);
+        JKII_RESOURCE_ALLOC_CB alloc_cb = handler->_kii._json_alloc_cb;
+        JKII_RESOURCE_FREE_CB free_cb = handler->_kii._json_free_cb;
+        res = jkii_parse_with_allocator(json_string, json_string_size, fields, alloc_cb, free_cb);
     }
     return res;
 }

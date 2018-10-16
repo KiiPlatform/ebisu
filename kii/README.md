@@ -55,7 +55,7 @@ make FIXED_JSON_TOKEN_NUM=256
 
 Size of memory allocated by this can be calculated as following.
 ```c
-sizeof(kii_json_token_t) * KII_JSON_FIXED_TOKEN_NUM
+sizeof(jkii_token_t) * JKII_FIXED_TOKEN_NUM
 ```
 ## Dynamic memory allocation for JSON parsing
 If you prefer to dynamica allocation than fixed memory allocation by

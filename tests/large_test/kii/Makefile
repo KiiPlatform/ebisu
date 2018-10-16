@@ -13,7 +13,7 @@ SRCS = $(wildcard *.cpp)
 SRCS += $(wildcard $(LTEST_ROOT_DIR)/*.cpp)
 
 TARGET = ./testapp
-INCLUDES = -I$(LTEST_ROOT_DIR) -I$(TEST_ROOT_DIR) -I$(KII_DIR) -I$(ROOT_DIR)/khc/include -I$(ROOT_DIR)/kii_json/include -I$(ROOT_DIR)/kii_json/libs/jsmn
+INCLUDES = -I$(LTEST_ROOT_DIR) -I$(TEST_ROOT_DIR) -I$(KII_DIR) -I$(ROOT_DIR)/khc/include -I$(ROOT_DIR)/jkii/include -I$(ROOT_DIR)/jkii/libs/jsmn
 
 KIISDK = libkiisdk.so
 

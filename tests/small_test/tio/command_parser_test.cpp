@@ -3,13 +3,13 @@
 #include "catch.hpp"
 #include "tio.h"
 #include "command_parser.h"
-#include "kii_json.h"
+#include "jkii.h"
 
 TEST_CASE( "_get_object_in_array" ) {
     const char json_arr[] = "[{\"a\":1},{\"b\":2}]";
 
-    kii_json_token_t tokens[16];
-    kii_json_resource_t resource = {tokens, 16};
+    jkii_token_t tokens[16];
+    jkii_resource_t resource = {tokens, 16};
 
     char* obj_str = NULL;
     size_t obj_str_len = 0;
@@ -108,8 +108,8 @@ TEST_CASE( "_parse_first_kv" ) {
 TEST_CASE( "_parse_action_object" ) {
     tio_action_t action;
     tio_handler_t handler;
-    kii_json_token_t tokens[16];
-    kii_json_resource_t resource = { tokens, 16 };
+    jkii_token_t tokens[16];
+    jkii_resource_t resource = { tokens, 16 };
     handler._kii._json_resource = &resource;
 
     // TODO: Add other types tests.

@@ -75,7 +75,7 @@ For details, please refer to the [MQTT spec](http://docs.oasis-open.org/mqtt/mqt
 Edit CMakeLists.txt and change following line.
 
 ```
-SET(CMAKE_C_FLAGS "-DKII_JSON_FIXED_TOKEN_NUM=128")
+SET(CMAKE_C_FLAGS "-DJKII_FIXED_TOKEN_NUM=128")
 ```
 
 The number indicates amounts of memory used to
@@ -85,14 +85,14 @@ By default it is set to 128.
 Size of memory allocated by this can be calculated as following.
 
 ```c
-sizeof(kii_json_token_t) * KII_JSON_FIXED_TOKEN_NUM
+sizeof(jkii_token_t) * JKII_FIXED_TOKEN_NUM
 ```
 
 #### Dynamic memory allocation for JSON parsing
 If you prefer to dynamic allocation than fixed memory allocation,
-Edit CMakeLists.txt and remove the line specifies `KII_JSON_FIXED_TOKEN_NUM`.
+Edit CMakeLists.txt and remove the line specifies `JKII_FIXED_TOKEN_NUM`.
 
-In this case, you need to implement `KII_JSON_RESOURCE_CB` function and set the
+In this case, you need to implement `JKII_RESOURCE_CB` function and set the
 pointer in `kii_t` struct.
 
 #### Connect MQTT server using non-secure connection.

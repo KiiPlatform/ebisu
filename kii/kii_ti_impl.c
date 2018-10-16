@@ -1,8 +1,8 @@
 #include "kii_ti_impl.h"
 #include "kii_impl.h"
 #include "kii_req_impl.h"
-#include "kii_json_wrapper.h"
-#include "kii_json_utils.h"
+#include "jkii_wrapper.h"
+#include "jkii_utils.h"
 #include <string.h>
 
 kii_code_t _get_anonymous_token(
@@ -65,18 +65,18 @@ kii_code_t _get_anonymous_token(
         return KII_ERR_FAIL;
     }
 
-    kii_json_field_t fields[2];
-    kii_json_parse_result_t result;
+    jkii_field_t fields[2];
+    jkii_parse_result_t result;
     memset(fields, 0, sizeof(fields));
     fields[0].name = "access_token";
-    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].type = JKII_FIELD_TYPE_STRING;
     fields[0].field_copy.string = out_token->token;
     fields[0].field_copy_buff_size = sizeof(out_token->token) /
         sizeof(out_token->token[0]);
     fields[1].name = NULL;
 
-    result = _kii_json_read_object(kii, buff, buff_size, fields);
-    if (result != KII_JSON_PARSE_SUCCESS) {
+    result = _jkii_read_object(kii, buff, buff_size, fields);
+    if (result != JKII_PARSE_SUCCESS) {
         return KII_ERR_PARSE_JSON;
     }
 
@@ -122,8 +122,8 @@ kii_code_t _onboard(
     int content_len = 0;
     char esc_vid[strlen(vendor_thing_id) * 2 + 1];
     char esc_pass[strlen(password) * 2 + 1];
-    kii_json_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid));
-    kii_json_escape_str(password, esc_pass, sizeof(esc_vid));
+    jkii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid));
+    jkii_escape_str(password, esc_pass, sizeof(esc_vid));
 
     content_len += snprintf(
         kii->_rw_buff,
@@ -137,7 +137,7 @@ kii_code_t _onboard(
 
     if (thing_type != NULL) {
         char esc[strlen(thing_type) * 2 + 1];
-        kii_json_escape_str(thing_type, esc, sizeof(esc));
+        jkii_escape_str(thing_type, esc, sizeof(esc));
         content_len += snprintf(
                 &kii->_rw_buff[content_len],
                 kii->_rw_buff_size - content_len,
@@ -151,7 +151,7 @@ kii_code_t _onboard(
 
     if (firmware_version != NULL) {
         char esc[strlen(firmware_version) * 2 + 1];
-        kii_json_escape_str(firmware_version, esc, sizeof(esc));
+        jkii_escape_str(firmware_version, esc, sizeof(esc));
         content_len += snprintf(
                 &kii->_rw_buff[content_len],
                 kii->_rw_buff_size - content_len,
@@ -165,7 +165,7 @@ kii_code_t _onboard(
 
     if (layout_position != NULL) {
         char esc[strlen(layout_position) * 2 + 1];
-        kii_json_escape_str(layout_position, esc, sizeof(esc));
+        jkii_escape_str(layout_position, esc, sizeof(esc));
         content_len += snprintf(
                 &kii->_rw_buff[content_len],
                 kii->_rw_buff_size - content_len,
@@ -179,7 +179,7 @@ kii_code_t _onboard(
 
     if (thing_properties != NULL) {
         char esc[strlen(thing_properties) * 2 + 1];
-        kii_json_escape_str(thing_properties, esc, sizeof(esc));
+        jkii_escape_str(thing_properties, esc, sizeof(esc));
         content_len += snprintf(
                 &kii->_rw_buff[content_len],
                 kii->_rw_buff_size - content_len,
@@ -226,23 +226,23 @@ kii_code_t _onboard(
         return KII_ERR_FAIL;
     }
 
-    kii_json_field_t fields[3];
-    kii_json_parse_result_t result;
+    jkii_field_t fields[3];
+    jkii_parse_result_t result;
     memset(fields, 0, sizeof(fields));
     fields[0].name = "accessToken";
-    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].type = JKII_FIELD_TYPE_STRING;
     fields[0].field_copy.string = kii->_author.access_token;
     fields[0].field_copy_buff_size = sizeof(kii->_author.access_token) /
             sizeof(kii->_author.access_token[0]);
     fields[1].name = "thingID";
-    fields[1].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[1].type = JKII_FIELD_TYPE_STRING;
     fields[1].field_copy.string = kii->_author.author_id;
     fields[1].field_copy_buff_size = sizeof(kii->_author.author_id) /
             sizeof(kii->_author.author_id[0]);
     fields[2].name = NULL;
 
-    result = _kii_json_read_object(kii, buff, buff_size, fields);
-    if (result != KII_JSON_PARSE_SUCCESS) {
+    result = _jkii_read_object(kii, buff, buff_size, fields);
+    if (result != JKII_PARSE_SUCCESS) {
         return KII_ERR_PARSE_JSON;
     }
 
@@ -356,18 +356,18 @@ kii_code_t _get_firmware_version(
         return KII_ERR_FAIL;
     }
 
-    kii_json_field_t fields[2];
-    kii_json_parse_result_t result;
+    jkii_field_t fields[2];
+    jkii_parse_result_t result;
     memset(fields, 0, sizeof(fields));
     fields[0].name = "firmwareVersion";
-    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].type = JKII_FIELD_TYPE_STRING;
     fields[0].field_copy.string = out_version->firmware_version;
     fields[0].field_copy_buff_size = sizeof(out_version->firmware_version) /
         sizeof(out_version->firmware_version[0]);
     fields[1].name = NULL;
 
-    result = _kii_json_read_object(kii, buff, buff_size, fields);
-    if (result != KII_JSON_PARSE_SUCCESS) {
+    result = _jkii_read_object(kii, buff, buff_size, fields);
+    if (result != JKII_PARSE_SUCCESS) {
         return KII_ERR_PARSE_JSON;
     }
 

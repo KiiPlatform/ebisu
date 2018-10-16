@@ -33,15 +33,15 @@ jobs:
       - store_test_results:
           path: tests/small_test/khc/test-results
 
-  stest-kii_json:
+  stest-jkii:
     <<: *env
     steps:
       - checkout
       - run:
-          name: kii_json small test
-          command: MEMCHECK=1 JUNIT=1 make stest-kii_json
+          name: jkii small test
+          command: MEMCHECK=1 JUNIT=1 make stest-jkii
       - store_test_results:
-          path: tests/small_test/kii_json/build/test-results
+          path: tests/small_test/jkii/build/test-results
 
   stest-tio:
     <<: *env
@@ -87,7 +87,7 @@ workflows:
             branches:
               ignore:
                 - gh-pages
-      - stest-kii_json:
+      - stest-jkii:
           filters:
             branches:
               ignore:

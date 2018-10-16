@@ -12,9 +12,9 @@ LIBS = -lssl -lcrypto -lpthread
 LIBS_DIR = -L/usr/local/opt/openssl/lib
 SOURCES = $(wildcard *.c)
 SOURCES += $(wildcard ../khc/src/*.c)
-SOURCES += $(wildcard ../kii_json/src/*.c)
-SOURCES += $(wildcard ../kii_json/libs/jsmn/*.c)
-INCLUDES = -I../khc/include -I../kii_json/include -I../kii_json/libs/jsmn
+SOURCES += $(wildcard ../jkii/src/*.c)
+SOURCES += $(wildcard ../jkii/libs/jsmn/*.c)
+INCLUDES = -I../khc/include -I../jkii/include -I../jkii/libs/jsmn
 
 TARGET = libkiisdk.so
 
