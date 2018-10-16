@@ -54,7 +54,7 @@ TEST_CASE("KiiJson, GetObjectStringByName") {
 
     jkii_parse_result_t res = jkii_parse(json_string, strlen(json_string), fields, &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
 }
 
@@ -78,7 +78,7 @@ TEST_CASE("KiiJson, GetObjectPositiveIntByName") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(100 == fields[0].field_copy.int_value);
 }
 
@@ -102,7 +102,7 @@ TEST_CASE("KiiJson, GetObjectNegativeIntByName") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(-100 == fields[0].field_copy.int_value);
 }
 
@@ -124,7 +124,7 @@ TEST_CASE("KiiJson, GetObjectPositiveLongByName") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(1099511627776 == fields[0].field_copy.long_value);
 }
 
@@ -147,7 +147,7 @@ TEST_CASE("KiiJson, GetObjectNegativeLongByName") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(-1099511627776 == fields[0].field_copy.long_value);
 }
 
@@ -170,7 +170,7 @@ TEST_CASE("KiiJson, GetObjectPositiveDotDoubleByName") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(fields[0].field_copy.double_value == 0.1);
 }
 
@@ -193,7 +193,7 @@ TEST_CASE("KiiJson, GetObjectNegativeDotDoubleByName") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(fields[0].field_copy.double_value == -0.1);
 }
 
@@ -216,7 +216,7 @@ TEST_CASE("KiiJson, GetObjectPositiveEDoubleByName") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
 }
 
@@ -239,7 +239,7 @@ TEST_CASE("KiiJson, GetObjectNegativeEDoubleByName") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
 }
 
@@ -263,7 +263,7 @@ TEST_CASE("KiiJson, GetObjectTrueByName") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(JKII_TRUE == fields[0].field_copy.boolean_value);
 }
 
@@ -287,7 +287,7 @@ TEST_CASE("KiiJson, GetObjectFalseByName") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(JKII_FALSE == fields[0].field_copy.boolean_value);
 }
 
@@ -314,7 +314,7 @@ TEST_CASE("KiiJson, GetObjectStringByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
 }
 
@@ -337,7 +337,7 @@ TEST_CASE("KiiJson, GetObjectPositiveIntByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(100 == fields[0].field_copy.int_value);
 }
 
@@ -360,7 +360,7 @@ TEST_CASE("KiiJson, GetObjectNegativeIntByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(-100 == fields[0].field_copy.int_value);
 }
 
@@ -383,7 +383,7 @@ TEST_CASE("KiiJson, GetObjectPositiveLongByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(1099511627776 == fields[0].field_copy.long_value);
 }
 
@@ -406,7 +406,7 @@ TEST_CASE("KiiJson, GetObjectNegativeLongByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(-1099511627776 == fields[0].field_copy.long_value);
 }
 
@@ -429,7 +429,7 @@ TEST_CASE("KiiJson, GetObjectPositiveDotDoubleByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
 }
 
@@ -452,7 +452,7 @@ TEST_CASE("KiiJson, GetObjectNegativeDotDoubleByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
 }
 
@@ -475,7 +475,7 @@ TEST_CASE("KiiJson, GetObjectPositiveEDoubleByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
 }
 
@@ -498,7 +498,7 @@ TEST_CASE("KiiJson, GetObjectNegativeEDoubleByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
 }
 
@@ -522,7 +522,7 @@ TEST_CASE("KiiJson, GetObjectNullByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
 }
 
 TEST_CASE("KiiJson, GetObjectTrueByPath") {
@@ -545,7 +545,7 @@ TEST_CASE("KiiJson, GetObjectTrueByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(JKII_TRUE == fields[0].field_copy.boolean_value);
 }
 
@@ -569,7 +569,7 @@ TEST_CASE("KiiJson, GetObjectFalseByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(JKII_FALSE == fields[0].field_copy.boolean_value);
 }
 
@@ -595,7 +595,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerStringByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
 }
 
@@ -618,7 +618,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerPositiveIntByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(100 == fields[0].field_copy.int_value);
 }
 
@@ -641,7 +641,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerNegativeIntByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(-100 == fields[0].field_copy.int_value);
 }
 
@@ -664,7 +664,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerPositiveLongByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(1099511627776 == fields[0].field_copy.long_value);
 }
 
@@ -687,7 +687,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerNegativeLongByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(-1099511627776 == fields[0].field_copy.long_value);
 }
 
@@ -710,7 +710,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerPositiveDotDoubleByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
 }
 
@@ -733,7 +733,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerNegativeDotDoubleByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
 }
 
@@ -756,7 +756,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerPositiveEDoubleByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
 }
 
@@ -779,7 +779,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerNegativeEDoubleByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
 }
 
@@ -805,7 +805,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerStringByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
 }
 
@@ -828,7 +828,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerPositiveIntByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(100 == fields[0].field_copy.int_value);
 }
 
@@ -851,7 +851,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerNegativeIntByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(-100 == fields[0].field_copy.int_value);
 }
 
@@ -875,7 +875,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerPositiveLongByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(1099511627776 == fields[0].field_copy.long_value);
 }
 
@@ -899,7 +899,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerNegativeLongByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(-1099511627776 == fields[0].field_copy.long_value);
 }
 
@@ -922,7 +922,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerPositiveDotDoubleByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
 }
 
@@ -945,7 +945,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerNegativeDotDoubleByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
 }
 
@@ -968,7 +968,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerPositiveEDoubleByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - (1e-1)));
 }
 
@@ -991,7 +991,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerNegativeEDoubleByPath") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - (-1e-1)));
 }
 
@@ -1017,7 +1017,7 @@ TEST_CASE("KiiJson, GetArrayString") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
 }
 
@@ -1041,7 +1041,7 @@ TEST_CASE("KiiJson, GetArrayInt") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(100 == fields[0].field_copy.int_value);
 }
 
@@ -1065,7 +1065,7 @@ TEST_CASE("KiiJson, GetArrayLong") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(1099511627776 == fields[0].field_copy.long_value);
 }
 
@@ -1089,7 +1089,7 @@ TEST_CASE("KiiJson, GetArrayDouble") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
 }
 
@@ -1113,7 +1113,7 @@ TEST_CASE("KiiJson, GetArrayIntIndex1") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(100 == fields[0].field_copy.int_value);
 }
 
@@ -1137,7 +1137,7 @@ TEST_CASE("KiiJson, GetArrayNull") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
 }
 
 TEST_CASE("KiiJson, GetArrayTrue") {
@@ -1160,7 +1160,7 @@ TEST_CASE("KiiJson, GetArrayTrue") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(JKII_TRUE == fields[0].field_copy.boolean_value);
 }
 
@@ -1184,7 +1184,7 @@ TEST_CASE("KiiJson, GetArrayFalse") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(JKII_FALSE == fields[0].field_copy.boolean_value);
 }
 
@@ -1269,20 +1269,20 @@ TEST_CASE("KiiJson, GetComplexObject") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[1].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[2].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[3].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[4].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[5].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[6].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[7].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[8].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[9].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[10].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[11].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[12].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[13].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[1].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[2].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[3].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[4].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[5].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[6].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[7].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[8].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[9].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[10].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[11].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[12].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[13].result);
 
     REQUIRE(0 == strcmp("child value", fields[0].field_copy.string));
     REQUIRE(100 == fields[1].field_copy.int_value);
@@ -1357,14 +1357,14 @@ TEST_CASE("KiiJson, PushRetrieveEndpoint") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[1].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[2].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[3].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[4].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[5].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[6].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[7].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[1].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[2].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[3].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[4].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[5].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[6].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[7].result);
 }
 
 TEST_CASE("KiiJson, CommandParseTest") {
@@ -1409,10 +1409,10 @@ TEST_CASE("KiiJson, CommandParseTest") {
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[1].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[2].result);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[3].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[1].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[2].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[3].result);
 }
 
 TEST_CASE("KiiJson, NoTokensTest")
@@ -1485,7 +1485,7 @@ TEST_CASE("KiiJson, ExactTokensTest")
         fields,
         &resource);
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
 
     REQUIRE((jkii_token_t*)NULL != resource.tokens);
@@ -1514,7 +1514,7 @@ TEST_CASE("KiiJson, AllocatorTest")
         free_cb);
 
     REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_PARSE_SUCCESS == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
 }
 

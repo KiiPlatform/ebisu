@@ -50,13 +50,13 @@ typedef enum jkii_parse_result_t {
 
     /** JSON string is successfully parsed and all jkii_field_t
      * variables are successfully set. i.e., all jkii_field_t type
-     * fields are JKII_FIELD_PARSE_SUCCESS.
+     * fields are JKII_FIELD_ERR_OK.
      */
     JKII_ERR_OK,
 
     /** JSON string is successfully parsed but some jkii_field_t
      * variables are failed. i.e., some jkii_field_t type fields
-     * are not JKII_FIELD_PARSE_SUCCESS.
+     * are not JKII_FIELD_ERR_OK.
      */
     JKII_ERR_PARTIAL,
 
@@ -82,19 +82,19 @@ typedef enum jkii_parse_result_t {
 /** Field parsing result. Assigned to jkii_field_t#result. */
 typedef enum jkii_field_parse_result_t {
     /** Field parsing is success. */
-    JKII_FIELD_PARSE_SUCCESS,
+    JKII_FIELD_ERR_OK,
 
     /** Type of field specified jkii_field_t#type is unmathced.*/
-    JKII_FIELD_PARSE_TYPE_UNMATCHED,
+    JKII_FIELD_ERR_TYPE_UNMATCH,
 
     /** Field specified by jkii_field_t#name is not found. */
-    JKII_FIELD_PARSE_NOT_FOUND,
+    JKII_FIELD_ERR_NOT_FOUND,
 
     /** Coping string to jkii_field_t#field_copy#string is failed.
      * jkii_field_t#field_copy_buff_size may shorter than actual
      * length.
      */
-    JKII_FIELD_PARSE_COPY_FAILED,
+    JKII_FIELD_ERR_COPY,
 
     /** Coping int, long or double value to
      * jkii_field_t#field_copy#int_value,
@@ -102,7 +102,7 @@ typedef enum jkii_field_parse_result_t {
      * jkii_field_t#field_copy#double_value is failed. value is
      * overflowed.
      */
-    JKII_FIELD_PARSE_NUM_OVERFLOW,
+    JKII_FIELD_ERR_NUM_OVERFLOW,
 
     /** Coping int, long or double value to
      * jkii_field_t#field_copy#int_value,
@@ -110,7 +110,7 @@ typedef enum jkii_field_parse_result_t {
      * jkii_field_t#field_copy#double_value is failed. value is
      * underflowed.
      */
-    JKII_FIELD_PARSE_NUM_UNDERFLOW
+    JKII_FIELD_ERR_NUM_UNDERFLOW
 } jkii_field_parse_result_t;
 
 /** Type of parsed JSON field. This value is assigned to
@@ -245,11 +245,11 @@ typedef struct jkii_field_t {
      *   - if expected type is not
      *     jkii_field_type_t#JKII_FIELD_TYPE_ANY, then
      *     jkii_field_t#result becomes
-     *     jkii_parse_result_t#JKII_FIELD_PARSE_TYPE_UNMATCHED.
+     *     jkii_parse_result_t#JKII_FIELD_ERR_TYPE_UNMATCH.
      *   - if expected type is
      *     jkii_field_type_t#JKII_FIELD_TYPE_ANY, then
      *     jkii_field_t#result become
-     *     jkii_parse_result_t#JKII_FIELD_PARSE_SUCCESS.
+     *     jkii_parse_result_t#JKII_FIELD_ERR_OK.
      */
     jkii_field_type_t type;
 

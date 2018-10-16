@@ -25,7 +25,7 @@ _cmd_parser_code_t _get_object_in_array(
     field[0].path = idx_str;
     field[0].type = JKII_FIELD_TYPE_OBJECT;
     field[0].field_copy.string = NULL;
-    field[0].result = JKII_FIELD_PARSE_SUCCESS;
+    field[0].result = JKII_FIELD_ERR_OK;
     field[1].path = NULL;
 
     jkii_parse_result_t res = JKII_ERR_INVALID_INPUT;
@@ -343,7 +343,7 @@ tio_code_t _handle_command(
     fields[1].path = "/actions";
     fields[1].type = JKII_FIELD_TYPE_ARRAY;
     fields[1].field_copy.string = NULL;
-    fields[1].result = JKII_FIELD_PARSE_SUCCESS;
+    fields[1].result = JKII_FIELD_ERR_OK;
     fields[2].path = NULL;
 
     jkii_parse_result_t res = _parse_json(handler, command, command_length, fields);
