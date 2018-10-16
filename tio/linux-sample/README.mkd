@@ -55,6 +55,7 @@ Step 4, setting owner of created user. Step 6, setting vendor thing ID and passw
 ```
 
 2. After succeeded, go to https://developer.kii.com and send command.
+
 ![ScreenShot - 4](./images/select_thing.png)
 Step 3, please select thing with your vendorThingID.
 
