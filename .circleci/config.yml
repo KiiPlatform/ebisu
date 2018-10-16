@@ -22,15 +22,56 @@ jobs:
       - persist_to_workspace:
           root: .
           paths: kii/html
-  ltest:
+
+  stest-khc:
     <<: *env
     steps:
       - checkout
       - run:
-          name: large test
-          command: MEMCHECK=1 JUNIT=1 make large-test
+          name: khc small test
+          command: MEMCHECK=1 JUNIT=1 make stest-khc
       - store_test_results:
-          path: tests/large_test/test-results
+          path: tests/small_test/khc/test-results
+
+  stest-kii_json:
+    <<: *env
+    steps:
+      - checkout
+      - run:
+          name: kii_json small test
+          command: MEMCHECK=1 JUNIT=1 make stest-kii_json
+      - store_test_results:
+          path: tests/small_test/kii_json/build/test-results
+
+  stest-tio:
+    <<: *env
+    steps:
+      - checkout
+      - run:
+          name: tio small test
+          command: MEMCHECK=1 JUNIT=1 make stest-tio
+      - store_test_results:
+          path: tests/small_test/tio/test-results
+
+  ltest-khc:
+    <<: *env
+    steps:
+      - checkout
+      - run:
+          name: khc large test
+          command: MEMCHECK=1 JUNIT=1 make ltest-khc
+      - store_test_results:
+          path: tests/large_test/khc/test-results
+
+  ltest-kii:
+    <<: *env
+    steps:
+      - checkout
+      - run:
+          name: kii large test
+          command: make ltest-kii
+      - store_test_results:
+          path: tests/large_test/kii/test-results
 
 workflows:
   version: 2
@@ -41,13 +82,30 @@ workflows:
             branches:
               ignore:
                 - gh-pages
-      - ltest:
-          requires:
-            - build
+      - stest-khc:
           filters:
             branches:
               ignore:
                 - gh-pages
-
+      - stest-kii_json:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - stest-tio:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - ltest-khc:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - ltest-kii:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
 # vim: set sts=2 sw=2 et:
 

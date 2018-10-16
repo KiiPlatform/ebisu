@@ -172,8 +172,7 @@ typedef struct kii_json_field_t {
      * kii_json_parse(kii_json_t*, const char*, size_t,
      * kii_json_field_t*).
      *
-     * This can point an only field in root json object.
-     * \deprecated{You should use kii_json_field_t#path}
+     * Addressing a top-level field in a json object.
      */
     const char* name;
 
