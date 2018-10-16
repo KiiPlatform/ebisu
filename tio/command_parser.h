@@ -16,9 +16,9 @@ typedef enum _cmd_parser_code_t {
 } _cmd_parser_code_t;
 
 _cmd_parser_code_t _get_object_in_array(
-    kii_json_resource_t* resource,
-    KII_JSON_RESOURCE_ALLOC_CB alloc_cb,
-    KII_JSON_RESOURCE_FREE_CB free_cb,
+    jkii_resource_t* resource,
+    JKII_RESOURCE_ALLOC_CB alloc_cb,
+    JKII_RESOURCE_FREE_CB free_cb,
     const char* json_array,
     size_t json_array_length,
     size_t index,
@@ -50,11 +50,11 @@ tio_code_t _handle_command(
     const char* command,
     size_t command_length);
 
-kii_json_parse_result_t _parse_json(
+jkii_parse_err_t _parse_json(
     tio_handler_t* handler,
     const char* json_string,
     size_t json_string_size,
-    kii_json_field_t* fields);
+    jkii_field_t* fields);
 
 #ifdef __cplusplus
 }

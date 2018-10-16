@@ -14,8 +14,8 @@ TEST_CASE("Server code tests")
     ebisu::ltest::ssl::SSLData http_ssl_ctx;
     ebisu::ltest::ssl::SSLData mqtt_ssl_ctx;
 
-    kii_json_token_t tokens[256];
-    kii_json_resource_t resource = {tokens, 256};
+    jkii_token_t tokens[256];
+    jkii_resource_t resource = {tokens, 256};
 
     kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &mqtt_ssl_ctx, &resource);
 

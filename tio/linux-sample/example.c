@@ -1,7 +1,7 @@
 #include "example.h"
 
 #include <tio.h>
-#include <kii_json.h>
+#include <jkii.h>
 
 #include <string.h>
 #include <stdio.h>
@@ -32,7 +32,7 @@ void updater_init(
         char* buffer,
         int buffer_size,
         void* sock_ssl_ctx,
-        kii_json_resource_t* resource)
+        jkii_resource_t* resource)
 {
     tio_updater_init(updater);
 
@@ -118,7 +118,7 @@ void handler_init(
         char* mqtt_buffer,
         int mqtt_buffer_size,
         void* mqtt_ssl_ctx,
-        kii_json_resource_t* resource)
+        jkii_resource_t* resource)
 {
     tio_handler_init(handler);
 
@@ -175,10 +175,10 @@ int main(int argc, char** argv)
     socket_context_t http_ctx;
     char mqtt_buff[EX_MQTT_BUFF_SIZE];
     socket_context_t mqtt_ctx;
-    kii_json_token_t updater_tokens[256];
-    kii_json_resource_t updater_resource = {updater_tokens, 256};
-    kii_json_token_t tokens[256];
-    kii_json_resource_t resource = {tokens, 256};
+    jkii_token_t updater_tokens[256];
+    jkii_resource_t updater_resource = {updater_tokens, 256};
+    jkii_token_t tokens[256];
+    jkii_resource_t resource = {tokens, 256};
     updater_file_context_t updater_file_ctx;
     kii_code_t result;
 

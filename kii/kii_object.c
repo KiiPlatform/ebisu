@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "kii.h"
-#include "kii_json_wrapper.h"
+#include "jkii_wrapper.h"
 #include "kii_impl.h"
 #include "kii_object_impl.h"
 
@@ -38,17 +38,17 @@ kii_code_t kii_post_object(
         goto exit;
     }
 
-    kii_json_field_t fields[2];
-    kii_json_parse_result_t result;
+    jkii_field_t fields[2];
+    jkii_parse_err_t result;
     memset(fields, 0, sizeof(fields));
     fields[0].name = "objectID";
-    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].type = JKII_FIELD_TYPE_STRING;
     fields[0].field_copy.string = out_object_id->id;
     fields[0].field_copy_buff_size = sizeof(out_object_id->id);
     fields[1].name = NULL;
 
-    result = _kii_json_read_object(kii, buff, buff_size, fields);
-    if (result != KII_JSON_PARSE_SUCCESS) {
+    result = _jkii_read_object(kii, buff, buff_size, fields);
+    if (result != JKII_ERR_OK) {
         ret = KII_ERR_PARSE_JSON;
         goto exit;
     }

@@ -8,7 +8,7 @@ GTAGS
 html/
 latex/
 testapp
-unit_test/kii_json/kii_json_test
+unit_test/jkii/jkii_test
 libkiisdk.so
 libkiisocketclient.so
 libgtest.a

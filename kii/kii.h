@@ -8,7 +8,7 @@
 #include "khc.h"
 #include "kii_task_callback.h"
 
-#include <kii_json.h>
+#include <jkii.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -147,10 +147,10 @@ typedef struct kii_t {
 
     char _etag[64];
 
-    kii_json_resource_t* _json_resource;
+    jkii_resource_t* _json_resource;
 
-    KII_JSON_RESOURCE_ALLOC_CB _json_alloc_cb;
-    KII_JSON_RESOURCE_FREE_CB _json_free_cb;
+    JKII_RESOURCE_ALLOC_CB _json_alloc_cb;
+    JKII_RESOURCE_FREE_CB _json_free_cb;
 
 } kii_t;
 
@@ -524,20 +524,20 @@ int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata)
  * @param [inout] kii SDK instance.
  * @param [in] resource to be used parse JSON. 256 tokens_num might be enough for almost all usecases.
  * If you need to parse large object or allocate exact size of memory used,
- * see kii_set_json_parser_resource_cb(kii_t, KII_JSON_RESOURCE_ALLOC_CB, KII_JSON_RESOURCE_FREE_CB)
+ * see kii_set_json_parser_resource_cb(kii_t, JKII_RESOURCE_ALLOC_CB, JKII_RESOURCE_FREE_CB)
  */
-kii_code_t kii_set_json_parser_resource(kii_t* kii, kii_json_resource_t* resource);
+kii_code_t kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource);
 
 /** Set JSON paraser resource allocators.
- *  To use Allocator instead of fixed size memory given by kii_set_json_parser_resource(kii_t, kii_json_resource_t),
- *  call kii_set_json_parser_resource(kii_t, kii_json_resource_t) with NULL resource argument.
+ *  To use Allocator instead of fixed size memory given by kii_set_json_parser_resource(kii_t, jkii_resource_t),
+ *  call kii_set_json_parser_resource(kii_t, jkii_resource_t) with NULL resource argument.
  * @param [inout] kii SDK instance.
  * @param [in] alloc_cb allocator callback.
  * @param [in] free_cb free callback should free memories allocated in alloc_cb.
  */
 kii_code_t kii_set_json_parser_resource_cb(kii_t* kii,
-    KII_JSON_RESOURCE_ALLOC_CB alloc_cb,
-    KII_JSON_RESOURCE_FREE_CB free_cb);
+    JKII_RESOURCE_ALLOC_CB alloc_cb,
+    JKII_RESOURCE_FREE_CB free_cb);
 
 const char* kii_get_etag(kii_t* kii);
 

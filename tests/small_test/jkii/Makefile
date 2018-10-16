@@ -1,17 +1,17 @@
 ROOT_DIR=../../..
 TEST_ROOT_DIR=../..
-KII_JSON_DIR=$(ROOT_DIR)/kii_json
+JKII_DIR=$(ROOT_DIR)/jkii
 
 SOURCE = $(wildcard src/*.cpp)
 
 LIBDIRS = -L$(OUTDIR)
-LIBS= -lkiijson
-INCLUDES=-I$(TEST_ROOT_DIR) -I$(KII_JSON_DIR)/include -I$(KII_JSON_DIR)/libs/jsmn
+LIBS= -ljkii
+INCLUDES=-I$(TEST_ROOT_DIR) -I$(JKII_DIR)/include -I$(JKII_DIR)/libs/jsmn
 
 OUTDIR = ./build
 TARGET=testapp
 TARGET_PATH = $(OUTDIR)/$(TARGET)
-LIBKIIJSON=$(OUTDIR)/libkiijson.so
+LIBKIIJSON=$(OUTDIR)/libjkii.so
 
 TEST_RESULT_DIR=$(OUTDIR)/test-results/junit
 TEST_RESULT=$(TEST_RESULT_DIR)/test-result.xml
@@ -32,8 +32,8 @@ $(OUTDIR):
 	mkdir -p build
 
 $(LIBKIIJSON): $(OUTDIR)
-	make -C $(KII_JSON_DIR)
-	cp $(KII_JSON_DIR)/libkiijson.so $(OUTDIR)
+	make -C $(JKII_DIR)
+	cp $(JKII_DIR)/libjkii.so $(OUTDIR)
 
 $(TARGET_PATH): $(LIBKIIJSON)
 	g++ $(CFLAGS) $(SOURCE) $(INCLUDES) $(LIBDIRS) $(LIBS) -std=c++11 -o $@

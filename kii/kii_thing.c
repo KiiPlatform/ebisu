@@ -5,7 +5,7 @@
 #include "kii.h"
 #include "kii_impl.h"
 #include "kii_thing_impl.h"
-#include "kii_json_wrapper.h"
+#include "jkii_wrapper.h"
 
 kii_code_t kii_auth_thing(
         kii_t* kii,
@@ -33,23 +33,23 @@ kii_code_t kii_auth_thing(
         ret = KII_ERR_FAIL;
         goto exit;
     }
-    kii_json_field_t fields[3];
-    kii_json_parse_result_t result;
+    jkii_field_t fields[3];
+    jkii_parse_err_t result;
     memset(fields, 0, sizeof(fields));
     fields[0].name = "id";
-    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].type = JKII_FIELD_TYPE_STRING;
     fields[0].field_copy.string = kii->_author.author_id;
     fields[0].field_copy_buff_size = sizeof(kii->_author.author_id) /
             sizeof(kii->_author.author_id[0]);
     fields[1].name = "access_token";
-    fields[1].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[1].type = JKII_FIELD_TYPE_STRING;
     fields[1].field_copy.string = kii->_author.access_token;
     fields[1].field_copy_buff_size = sizeof(kii->_author.access_token) /
             sizeof(kii->_author.access_token[0]);
     fields[2].name = NULL;
 
-    result = _kii_json_read_object(kii, buff, buff_size, fields);
-    if (result != KII_JSON_PARSE_SUCCESS) {
+    result = _jkii_read_object(kii, buff, buff_size, fields);
+    if (result != JKII_ERR_OK) {
         ret = KII_ERR_PARSE_JSON;
         goto exit;
     }
@@ -90,23 +90,23 @@ kii_code_t kii_register_thing(
         goto exit;
     }
 
-    kii_json_field_t fields[3];
-    kii_json_parse_result_t result;
+    jkii_field_t fields[3];
+    jkii_parse_err_t result;
     memset(fields, 0, sizeof(fields));
     fields[0].name = "_accessToken";
-    fields[0].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[0].type = JKII_FIELD_TYPE_STRING;
     fields[0].field_copy.string = kii->_author.access_token;
     fields[0].field_copy_buff_size = sizeof(kii->_author.access_token) /
             sizeof(kii->_author.access_token[0]);
     fields[1].name = "_thingID";
-    fields[1].type = KII_JSON_FIELD_TYPE_STRING;
+    fields[1].type = JKII_FIELD_TYPE_STRING;
     fields[1].field_copy.string = kii->_author.author_id;
     fields[1].field_copy_buff_size = sizeof(kii->_author.author_id) /
             sizeof(kii->_author.author_id[0]);
     fields[2].name = NULL;
 
-    result = _kii_json_read_object(kii, buff, buff_size, fields);
-    if (result != KII_JSON_PARSE_SUCCESS) {
+    result = _jkii_read_object(kii, buff, buff_size, fields);
+    if (result != JKII_ERR_OK) {
         ret = KII_ERR_PARSE_JSON;
         goto exit;
     }

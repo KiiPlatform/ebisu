@@ -18,7 +18,7 @@ inline void init(
         int buffer_size,
         void* http_ssl_ctx,
         void* mqtt_ssl_ctx,
-        kii_json_resource_t* resource)
+        jkii_resource_t* resource)
 {
     kii_init(kii, DEFAULT_SITE, APP_ID);
 
