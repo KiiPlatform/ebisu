@@ -52,13 +52,13 @@ typedef enum jkii_parse_result_t {
      * variables are successfully set. i.e., all jkii_field_t type
      * fields are JKII_FIELD_PARSE_SUCCESS.
      */
-    JKII_PARSE_SUCCESS,
+    JKII_SUCCESS,
 
     /** JSON string is successfully parsed but some jkii_field_t
      * variables are failed. i.e., some jkii_field_t type fields
      * are not JKII_FIELD_PARSE_SUCCESS.
      */
-    JKII_PARSE_PARTIAL_SUCCESS,
+    JKII_PARTIAL_SUCCESS,
 
     /** JSON string is successfully parsed but type of root object
      * type is unmatched to using function.
@@ -67,16 +67,16 @@ typedef enum jkii_parse_result_t {
      * jkii_field_t*) requires JSON object if JSON array is
      * passed, then this error is returned.
      */
-    JKII_PARSE_ROOT_TYPE_ERROR,
+    JKII_ROOT_TYPE_ERROR,
 
     /** jkii_t#tokens is not enough to parse JSON string.*/
-    JKII_PARSE_SHORTAGE_TOKENS,
+    JKII_SHORTAGE_TOKENS,
 
     /** JSON string is failed to parse. Passed string is not JSON string. */
-    JKII_PARSE_INVALID_INPUT,
+    JKII_INVALID_INPUT,
 
     /** Allocation failed. */
-    JKII_PARSE_ALLOCATION_ERROR,
+    JKII_ALLOCATION_ERROR,
 } jkii_parse_result_t;
 
 /** Field parsing result. Assigned to jkii_field_t#result. */

@@ -154,7 +154,7 @@ kii_code_t kii_install_push(
         goto exit;
     }
 
-    jkii_parse_result_t parse_result = JKII_PARSE_INVALID_INPUT;
+    jkii_parse_result_t parse_result = JKII_INVALID_INPUT;
     jkii_field_t fields[2];
     memset(fields, 0, sizeof(fields));
     fields[0].name = "installationID";
@@ -164,7 +164,7 @@ kii_code_t kii_install_push(
     fields[1].name = NULL;
 
     parse_result = _jkii_read_object(kii, buff, buff_size, fields);
-    if (parse_result != JKII_PARSE_SUCCESS) {
+    if (parse_result != JKII_SUCCESS) {
         res = KII_ERR_PARSE_JSON;
         goto exit;
     }
@@ -201,7 +201,7 @@ kii_code_t kii_get_mqtt_endpoint(
         goto exit;
     }
 
-    jkii_parse_result_t parse_result = JKII_PARSE_INVALID_INPUT;
+    jkii_parse_result_t parse_result = JKII_INVALID_INPUT;
     jkii_field_t fields[8];
     memset(fields, 0, sizeof(fields));
     fields[0].name = "username";
@@ -233,7 +233,7 @@ kii_code_t kii_get_mqtt_endpoint(
     fields[7].name = NULL;
 
     parse_result = _jkii_read_object(kii, buff, buff_size, fields);
-    if (parse_result != JKII_PARSE_SUCCESS) {
+    if (parse_result != JKII_SUCCESS) {
         res = KII_ERR_PARSE_JSON;
         goto exit;
     }

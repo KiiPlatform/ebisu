@@ -76,7 +76,7 @@ kii_code_t _get_anonymous_token(
     fields[1].name = NULL;
 
     result = _jkii_read_object(kii, buff, buff_size, fields);
-    if (result != JKII_PARSE_SUCCESS) {
+    if (result != JKII_SUCCESS) {
         return KII_ERR_PARSE_JSON;
     }
 
@@ -242,7 +242,7 @@ kii_code_t _onboard(
     fields[2].name = NULL;
 
     result = _jkii_read_object(kii, buff, buff_size, fields);
-    if (result != JKII_PARSE_SUCCESS) {
+    if (result != JKII_SUCCESS) {
         return KII_ERR_PARSE_JSON;
     }
 
@@ -367,7 +367,7 @@ kii_code_t _get_firmware_version(
     fields[1].name = NULL;
 
     result = _jkii_read_object(kii, buff, buff_size, fields);
-    if (result != JKII_PARSE_SUCCESS) {
+    if (result != JKII_SUCCESS) {
         return KII_ERR_PARSE_JSON;
     }
 

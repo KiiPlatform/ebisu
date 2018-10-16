@@ -102,7 +102,7 @@ fields[1].path = NULL;
 result = jkii_parse(&jkii, json_string,
         sizeof(json_string) / sizeof(json_string[0]), fields);
 
-if (result == JKII_PARSE_SUCCESS) {
+if (result == JKII_SUCCESS) {
     // success to extract "hoo" value.
     // you can find "hoo" value in buf array.
 }

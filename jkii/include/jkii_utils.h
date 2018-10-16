@@ -9,10 +9,10 @@ extern "C" {
 
 typedef enum jkii_parse_primitive_result_t
 {
-    JKII_PARSE_PRIMITIVE_ERR_SUCCESS,
-    JKII_PARSE_PRIMITIVE_ERR_OVERFLOW,
-    JKII_PARSE_PRIMITIVE_ERR_UNDERFLOW,
-    JKII_PARSE_PRIMITIVE_ERR_INVALID
+    JKII_PRIMITIVE_ERR_SUCCESS,
+    JKII_PRIMITIVE_ERR_OVERFLOW,
+    JKII_PRIMITIVE_ERR_UNDERFLOW,
+    JKII_PRIMITIVE_ERR_INVALID
 } jkii_parse_primitive_result_t;
 
 typedef struct jkii_primitive_t {
