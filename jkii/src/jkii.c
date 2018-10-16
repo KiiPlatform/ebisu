@@ -700,15 +700,15 @@ static jkii_parse_result_t _jkii_convert_jsmntok_to_field(
                         field->result = JKII_FIELD_PARSE_SUCCESS;
                         break;
                     case JKII_PARSE_PRIMITIVE_RESULT_OVERFLOW:
-                        field->result = JKII_FIELD_PARSE_COPY_OVERFLOW;
+                        field->result = JKII_FIELD_PARSE_NUM_OVERFLOW;
                         retval = JKII_PARSE_PARTIAL_SUCCESS;
                         break;
                     case JKII_PARSE_PRIMITIVE_RESULT_UNDERFLOW:
-                        field->result = JKII_FIELD_PARSE_COPY_UNDERFLOW;
+                        field->result = JKII_FIELD_PARSE_NUM_UNDERFLOW;
                         retval = JKII_PARSE_PARTIAL_SUCCESS;
                         break;
                     case JKII_PARSE_PRIMITIVE_RESULT_INVALID:
-                        field->result = JKII_FIELD_PARSE_COPY_UNDERFLOW;
+                        field->result = JKII_FIELD_PARSE_NUM_UNDERFLOW;
                         return JKII_PARSE_INVALID_INPUT;
                 }
             }
@@ -730,15 +730,15 @@ static jkii_parse_result_t _jkii_convert_jsmntok_to_field(
                         field->result = JKII_FIELD_PARSE_SUCCESS;
                         break;
                     case JKII_PARSE_PRIMITIVE_RESULT_OVERFLOW:
-                        field->result = JKII_FIELD_PARSE_COPY_OVERFLOW;
+                        field->result = JKII_FIELD_PARSE_NUM_OVERFLOW;
                         retval = JKII_PARSE_PARTIAL_SUCCESS;
                         break;
                     case JKII_PARSE_PRIMITIVE_RESULT_UNDERFLOW:
-                        field->result = JKII_FIELD_PARSE_COPY_UNDERFLOW;
+                        field->result = JKII_FIELD_PARSE_NUM_UNDERFLOW;
                         retval = JKII_PARSE_PARTIAL_SUCCESS;
                         break;
                     case JKII_PARSE_PRIMITIVE_RESULT_INVALID:
-                        field->result = JKII_FIELD_PARSE_COPY_UNDERFLOW;
+                        field->result = JKII_FIELD_PARSE_NUM_UNDERFLOW;
                         return JKII_PARSE_INVALID_INPUT;
                 }
             }
@@ -759,15 +759,15 @@ static jkii_parse_result_t _jkii_convert_jsmntok_to_field(
                         field->result = JKII_FIELD_PARSE_SUCCESS;
                         break;
                     case JKII_PARSE_PRIMITIVE_RESULT_OVERFLOW:
-                        field->result = JKII_FIELD_PARSE_COPY_OVERFLOW;
+                        field->result = JKII_FIELD_PARSE_NUM_OVERFLOW;
                         retval = JKII_PARSE_PARTIAL_SUCCESS;
                         break;
                     case JKII_PARSE_PRIMITIVE_RESULT_UNDERFLOW:
-                        field->result = JKII_FIELD_PARSE_COPY_UNDERFLOW;
+                        field->result = JKII_FIELD_PARSE_NUM_UNDERFLOW;
                         retval = JKII_PARSE_PARTIAL_SUCCESS;
                         break;
                     case JKII_PARSE_PRIMITIVE_RESULT_INVALID:
-                        field->result = JKII_FIELD_PARSE_COPY_UNDERFLOW;
+                        field->result = JKII_FIELD_PARSE_NUM_UNDERFLOW;
                         return JKII_PARSE_INVALID_INPUT;
                 }
             }

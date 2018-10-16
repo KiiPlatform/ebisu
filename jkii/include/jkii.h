@@ -102,7 +102,7 @@ typedef enum jkii_field_parse_result_t {
      * jkii_field_t#field_copy#double_value is failed. value is
      * overflowed.
      */
-    JKII_FIELD_PARSE_COPY_OVERFLOW,
+    JKII_FIELD_PARSE_NUM_OVERFLOW,
 
     /** Coping int, long or double value to
      * jkii_field_t#field_copy#int_value,
@@ -110,7 +110,7 @@ typedef enum jkii_field_parse_result_t {
      * jkii_field_t#field_copy#double_value is failed. value is
      * underflowed.
      */
-    JKII_FIELD_PARSE_COPY_UNDERFLOW
+    JKII_FIELD_PARSE_NUM_UNDERFLOW
 } jkii_field_parse_result_t;
 
 /** Type of parsed JSON field. This value is assigned to
