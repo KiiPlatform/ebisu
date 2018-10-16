@@ -17,7 +17,7 @@ Execute following command on this directory.
 make
 ```
 
-After that, you can find target/libkiijson.so.
+After that, you can find target/libjkii.so.
 
 ## Building Kii JSON with variables
 

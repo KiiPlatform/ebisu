@@ -11,7 +11,7 @@ INCLUDES=-I$(TEST_ROOT_DIR) -I$(JKII_DIR)/include -I$(JKII_DIR)/libs/jsmn
 OUTDIR = ./build
 TARGET=testapp
 TARGET_PATH = $(OUTDIR)/$(TARGET)
-LIBKIIJSON=$(OUTDIR)/libkiijson.so
+LIBKIIJSON=$(OUTDIR)/libjkii.so
 
 TEST_RESULT_DIR=$(OUTDIR)/test-results/junit
 TEST_RESULT=$(TEST_RESULT_DIR)/test-result.xml
@@ -33,7 +33,7 @@ $(OUTDIR):
 
 $(LIBKIIJSON): $(OUTDIR)
 	make -C $(JKII_DIR)
-	cp $(JKII_DIR)/libkiijson.so $(OUTDIR)
+	cp $(JKII_DIR)/libjkii.so $(OUTDIR)
 
 $(TARGET_PATH): $(LIBKIIJSON)
 	g++ $(CFLAGS) $(SOURCE) $(INCLUDES) $(LIBDIRS) $(LIBS) -std=c++11 -o $@

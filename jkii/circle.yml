@@ -11,7 +11,7 @@ dependencies:
     - make doc
   post:
     - cp -r html $CIRCLE_ARTIFACTS
-    - cp libkiijson.so $CIRCLE_ARTIFACTS
+    - cp libjkii.so $CIRCLE_ARTIFACTS
 
 test:
   override:
