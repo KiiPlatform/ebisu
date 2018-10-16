@@ -381,7 +381,7 @@ static jkii_primitive_err_t _jkii_to_long(
     }
 
     *out_long = long_value;
-    return JKII_PRIMITIVE_ERR_SUCCESS;
+    return JKII_PRIMITIVE_ERR_OK;
 }
 
 static jkii_primitive_err_t _jkii_to_int(
@@ -406,7 +406,7 @@ static jkii_primitive_err_t _jkii_to_int(
     }
 
     *out_int = (int)long_value;
-    return JKII_PRIMITIVE_ERR_SUCCESS;
+    return JKII_PRIMITIVE_ERR_OK;
 }
 
 static jkii_primitive_err_t _jkii_to_double(
@@ -449,7 +449,7 @@ static jkii_primitive_err_t _jkii_to_double(
     }
 
     *out_double = value;
-    return JKII_PRIMITIVE_ERR_SUCCESS;
+    return JKII_PRIMITIVE_ERR_OK;
 }
 
 static int _jkii_to_boolean(
@@ -518,7 +518,7 @@ static const char* _jkii_get_target(
             retval = NULL;
             goto exit;
         } else if (_jkii_to_long(start, target_len, &value)
-                != JKII_PRIMITIVE_ERR_SUCCESS) {
+                != JKII_PRIMITIVE_ERR_OK) {
             error = start;
             retval = NULL;
             goto exit;
@@ -696,7 +696,7 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
                             value->end - value->start,
                             &(field->field_copy.int_value));
                 switch (result) {
-                    case JKII_PRIMITIVE_ERR_SUCCESS:
+                    case JKII_PRIMITIVE_ERR_OK:
                         field->result = JKII_FIELD_ERR_OK;
                         break;
                     case JKII_PRIMITIVE_ERR_OVERFLOW:
@@ -726,7 +726,7 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
                             value->end - value->start,
                             &(field->field_copy.long_value));
                 switch (result) {
-                    case JKII_PRIMITIVE_ERR_SUCCESS:
+                    case JKII_PRIMITIVE_ERR_OK:
                         field->result = JKII_FIELD_ERR_OK;
                         break;
                     case JKII_PRIMITIVE_ERR_OVERFLOW:
@@ -755,7 +755,7 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
                             value->end - value->start,
                             &(field->field_copy.double_value));
                 switch (result) {
-                    case JKII_PRIMITIVE_ERR_SUCCESS:
+                    case JKII_PRIMITIVE_ERR_OK:
                         field->result = JKII_FIELD_ERR_OK;
                         break;
                     case JKII_PRIMITIVE_ERR_OVERFLOW:
@@ -933,55 +933,55 @@ jkii_primitive_err_t jkii_parse_primitive(
     if (memcmp(primitive, "null", primitive_length) == 0)
     {
         result->type = JKII_FIELD_TYPE_NULL;
-        return JKII_PRIMITIVE_ERR_SUCCESS;
+        return JKII_PRIMITIVE_ERR_OK;
     }
     if (memcmp(primitive, "true", primitive_length) == 0)
     {
         result->type = JKII_FIELD_TYPE_BOOLEAN;
         result->value.boolean_value = JKII_TRUE;
-        return JKII_PRIMITIVE_ERR_SUCCESS;
+        return JKII_PRIMITIVE_ERR_OK;
     }
     if (memcmp(primitive, "false", primitive_length) == 0)
     {
         result->type = JKII_FIELD_TYPE_BOOLEAN;
         result->value.boolean_value = JKII_FALSE;
-        return JKII_PRIMITIVE_ERR_SUCCESS;
+        return JKII_PRIMITIVE_ERR_OK;
     }
     int is_int = _jkii_is_int(primitive, primitive_length);
     if (is_int != 0) {
         int int_value = 0;
         jkii_primitive_err_t res = 
             _jkii_to_int(primitive, primitive_length, &int_value);
-        if (res != JKII_PRIMITIVE_ERR_SUCCESS) {
+        if (res != JKII_PRIMITIVE_ERR_OK) {
             return res;
         }
         result->type = JKII_FIELD_TYPE_INTEGER;
         result->value.int_value = int_value;
-        return JKII_PRIMITIVE_ERR_SUCCESS;
+        return JKII_PRIMITIVE_ERR_OK;
     }
     int is_long = _jkii_is_long(primitive, primitive_length);
     if (is_long != 0) {
         long long_value = 0;
         jkii_primitive_err_t res = 
             _jkii_to_long(primitive, primitive_length, &long_value);
-        if (res != JKII_PRIMITIVE_ERR_SUCCESS) {
+        if (res != JKII_PRIMITIVE_ERR_OK) {
             return res;
         }
         result->type = JKII_FIELD_TYPE_LONG;
         result->value.long_value = long_value;
-        return JKII_PRIMITIVE_ERR_SUCCESS;
+        return JKII_PRIMITIVE_ERR_OK;
     }
     int is_double = _jkii_is_double(primitive, primitive_length);
     if (is_double != 0) {
         double double_value = 0;
                 jkii_primitive_err_t res = 
             _jkii_to_double(primitive, primitive_length, &double_value);
-        if (res != JKII_PRIMITIVE_ERR_SUCCESS) {
+        if (res != JKII_PRIMITIVE_ERR_OK) {
             return res;
         }
         result->type = JKII_FIELD_TYPE_DOUBLE;
         result->value.double_value = double_value;
-        return JKII_PRIMITIVE_ERR_SUCCESS;
+        return JKII_PRIMITIVE_ERR_OK;
     }
     return JKII_PRIMITIVE_ERR_INVALID;
 }
