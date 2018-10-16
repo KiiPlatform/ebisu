@@ -49,7 +49,7 @@ kii_code_t kii_auth_thing(
     fields[2].name = NULL;
 
     result = _jkii_read_object(kii, buff, buff_size, fields);
-    if (result != JKII_SUCCESS) {
+    if (result != JKII_ERR_OK) {
         ret = KII_ERR_PARSE_JSON;
         goto exit;
     }
@@ -106,7 +106,7 @@ kii_code_t kii_register_thing(
     fields[2].name = NULL;
 
     result = _jkii_read_object(kii, buff, buff_size, fields);
-    if (result != JKII_SUCCESS) {
+    if (result != JKII_ERR_OK) {
         ret = KII_ERR_PARSE_JSON;
         goto exit;
     }
