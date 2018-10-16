@@ -5,7 +5,7 @@ JKII_DIR=$(ROOT_DIR)/jkii
 SOURCE = $(wildcard src/*.cpp)
 
 LIBDIRS = -L$(OUTDIR)
-LIBS= -lkiijson
+LIBS= -ljkii
 INCLUDES=-I$(TEST_ROOT_DIR) -I$(JKII_DIR)/include -I$(JKII_DIR)/libs/jsmn
 
 OUTDIR = ./build
