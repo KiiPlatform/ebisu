@@ -8,7 +8,7 @@ SOURCES = $(wildcard src/*.c)
 SOURCES += libs/jsmn/jsmn.c
 INCLUDES = -Ilibs/jsmn -Iinclude
 
-TARGET = libkiijson.so
+TARGET = libjkii.so
 
 all: clean $(TARGET)
 
