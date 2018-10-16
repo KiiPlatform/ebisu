@@ -1,4 +1,4 @@
-This is a sample application for thing-if SDK.
+This is a sample application for TIO.
 
 ## Requirement
 
@@ -54,6 +54,7 @@ Step 4, setting owner of created user. Step 6, setting vendor thing ID and passw
 
 2. After succeeded, go to https://developer.kii.com and send command.
 ![ScreenShot - 4](./images/select_thing.png)
+Step 3, please select thing with your vendorThingID.
 ![ScreenShot - 5](./images/create_command_1.png)
 ![ScreenShot - 6](./images/create_command_2.png)
 Step 6, you need to select alias and issuer. Step 7, input actions.
