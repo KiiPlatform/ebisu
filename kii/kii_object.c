@@ -39,7 +39,7 @@ kii_code_t kii_post_object(
     }
 
     jkii_field_t fields[2];
-    jkii_parse_result_t result;
+    jkii_parse_err_t result;
     memset(fields, 0, sizeof(fields));
     fields[0].name = "objectID";
     fields[0].type = JKII_FIELD_TYPE_STRING;

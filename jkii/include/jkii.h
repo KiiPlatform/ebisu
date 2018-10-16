@@ -46,7 +46,7 @@ typedef enum jkii_boolean_t {
 
 /** Return value of jkii_parse(jkii_t*, const char*,
  * size_t, jkii_field_t*) */
-typedef enum jkii_parse_result_t {
+typedef enum jkii_parse_err_t {
 
     /** JSON string is successfully parsed and all jkii_field_t
      * variables are successfully set. i.e., all jkii_field_t type
@@ -77,10 +77,10 @@ typedef enum jkii_parse_result_t {
 
     /** Allocation failed. */
     JKII_ERR_ALLOCATION,
-} jkii_parse_result_t;
+} jkii_parse_err_t;
 
 /** Field parsing result. Assigned to jkii_field_t#result. */
-typedef enum jkii_field_parse_result_t {
+typedef enum jkii_field_err_t {
     /** Field parsing is success. */
     JKII_FIELD_ERR_OK,
 
@@ -111,7 +111,7 @@ typedef enum jkii_field_parse_result_t {
      * underflowed.
      */
     JKII_FIELD_ERR_NUM_UNDERFLOW
-} jkii_field_parse_result_t;
+} jkii_field_err_t;
 
 /** Type of parsed JSON field. This value is assigned to
  * jkii_field_t#type. */
@@ -227,7 +227,7 @@ typedef struct jkii_field_t {
      * jkii_parse(jkii_t*, const char*, size_t,
      * jkii_field_t*).
      */
-    jkii_field_parse_result_t result;
+    jkii_field_err_t result;
 
     /** Parsed target value type. Input and Output of
      * jkii_parse(jkii_t*, const char*, size_t,
@@ -245,11 +245,11 @@ typedef struct jkii_field_t {
      *   - if expected type is not
      *     jkii_field_type_t#JKII_FIELD_TYPE_ANY, then
      *     jkii_field_t#result becomes
-     *     jkii_parse_result_t#JKII_FIELD_ERR_TYPE_UNMATCH.
+     *     jkii_parse_err_t#JKII_FIELD_ERR_TYPE_UNMATCH.
      *   - if expected type is
      *     jkii_field_type_t#JKII_FIELD_TYPE_ANY, then
      *     jkii_field_t#result become
-     *     jkii_parse_result_t#JKII_FIELD_ERR_OK.
+     *     jkii_parse_err_t#JKII_FIELD_ERR_OK.
      */
     jkii_field_type_t type;
 
@@ -326,7 +326,7 @@ typedef struct jkii_field_t {
  *  \param [in] resource of parser.
  *  \return parse JSON result.
  */
-jkii_parse_result_t jkii_parse(
+jkii_parse_err_t jkii_parse(
         const char* json_string,
         size_t json_string_len,
         jkii_field_t* fields,
@@ -339,7 +339,7 @@ jkii_parse_result_t jkii_parse(
  *  \param [in] resource of parser.
  *  \return parse JSON result.
  */
-jkii_parse_result_t jkii_parse_with_allocator(
+jkii_parse_err_t jkii_parse_with_allocator(
     const char* json_string,
     size_t json_string_len,
     jkii_field_t* fields,

@@ -154,7 +154,7 @@ kii_code_t kii_install_push(
         goto exit;
     }
 
-    jkii_parse_result_t parse_result = JKII_ERR_INVALID_INPUT;
+    jkii_parse_err_t parse_result = JKII_ERR_INVALID_INPUT;
     jkii_field_t fields[2];
     memset(fields, 0, sizeof(fields));
     fields[0].name = "installationID";
@@ -201,7 +201,7 @@ kii_code_t kii_get_mqtt_endpoint(
         goto exit;
     }
 
-    jkii_parse_result_t parse_result = JKII_ERR_INVALID_INPUT;
+    jkii_parse_err_t parse_result = JKII_ERR_INVALID_INPUT;
     jkii_field_t fields[8];
     memset(fields, 0, sizeof(fields));
     fields[0].name = "username";

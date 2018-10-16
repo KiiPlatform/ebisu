@@ -28,7 +28,7 @@ _cmd_parser_code_t _get_object_in_array(
     field[0].result = JKII_FIELD_ERR_OK;
     field[1].path = NULL;
 
-    jkii_parse_result_t res = JKII_ERR_INVALID_INPUT;
+    jkii_parse_err_t res = JKII_ERR_INVALID_INPUT;
     if (resource != NULL) {
         res = jkii_parse(json_array, json_array_length, field, resource);
     } else {
@@ -346,7 +346,7 @@ tio_code_t _handle_command(
     fields[1].result = JKII_FIELD_ERR_OK;
     fields[2].path = NULL;
 
-    jkii_parse_result_t res = _parse_json(handler, command, command_length, fields);
+    jkii_parse_err_t res = _parse_json(handler, command, command_length, fields);
     if (res != JKII_ERR_OK) {
         return TIO_ERR_PARSE_JSON;
     }
@@ -427,14 +427,14 @@ tio_code_t _handle_command(
     return TIO_ERR_OK;
 }
 
-jkii_parse_result_t _parse_json(
+jkii_parse_err_t _parse_json(
     tio_handler_t* handler,
     const char* json_string,
     size_t json_string_size,
     jkii_field_t* fields)
 {
     jkii_resource_t* resource = handler->_kii._json_resource;
-    jkii_parse_result_t res = JKII_ERR_INVALID_INPUT;
+    jkii_parse_err_t res = JKII_ERR_INVALID_INPUT;
     if (resource != NULL) {
         res = jkii_parse(json_string, json_string_size, fields, resource);
     } else {

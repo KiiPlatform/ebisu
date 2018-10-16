@@ -52,7 +52,7 @@ TEST_CASE("KiiJson, GetObjectStringByName") {
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(json_string, strlen(json_string), fields, &resource);
+    jkii_parse_err_t res = jkii_parse(json_string, strlen(json_string), fields, &resource);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
@@ -72,7 +72,7 @@ TEST_CASE("KiiJson, GetObjectPositiveIntByName") {
     fields[0].type = JKII_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -96,7 +96,7 @@ TEST_CASE("KiiJson, GetObjectNegativeIntByName") {
     fields[0].type = JKII_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -118,7 +118,7 @@ TEST_CASE("KiiJson, GetObjectPositiveLongByName") {
     fields[0].type = JKII_FIELD_TYPE_LONG;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -141,7 +141,7 @@ TEST_CASE("KiiJson, GetObjectNegativeLongByName") {
     fields[0].type = JKII_FIELD_TYPE_LONG;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -164,7 +164,7 @@ TEST_CASE("KiiJson, GetObjectPositiveDotDoubleByName") {
     fields[0].type = JKII_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -187,7 +187,7 @@ TEST_CASE("KiiJson, GetObjectNegativeDotDoubleByName") {
     fields[0].type = JKII_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -210,7 +210,7 @@ TEST_CASE("KiiJson, GetObjectPositiveEDoubleByName") {
     fields[0].type = JKII_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -233,7 +233,7 @@ TEST_CASE("KiiJson, GetObjectNegativeEDoubleByName") {
     fields[0].type = JKII_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -257,7 +257,7 @@ TEST_CASE("KiiJson, GetObjectTrueByName") {
     fields[0].type = JKII_FIELD_TYPE_BOOLEAN;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -281,7 +281,7 @@ TEST_CASE("KiiJson, GetObjectFalseByName") {
     fields[0].type = JKII_FIELD_TYPE_BOOLEAN;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -308,7 +308,7 @@ TEST_CASE("KiiJson, GetObjectStringByPath") {
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -331,7 +331,7 @@ TEST_CASE("KiiJson, GetObjectPositiveIntByPath") {
     fields[0].type = JKII_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -354,7 +354,7 @@ TEST_CASE("KiiJson, GetObjectNegativeIntByPath") {
     fields[0].type = JKII_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -377,7 +377,7 @@ TEST_CASE("KiiJson, GetObjectPositiveLongByPath") {
     fields[0].type = JKII_FIELD_TYPE_LONG;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -400,7 +400,7 @@ TEST_CASE("KiiJson, GetObjectNegativeLongByPath") {
     fields[0].type = JKII_FIELD_TYPE_LONG;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -423,7 +423,7 @@ TEST_CASE("KiiJson, GetObjectPositiveDotDoubleByPath") {
     fields[0].type = JKII_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -446,7 +446,7 @@ TEST_CASE("KiiJson, GetObjectNegativeDotDoubleByPath") {
     fields[0].type = JKII_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -469,7 +469,7 @@ TEST_CASE("KiiJson, GetObjectPositiveEDoubleByPath") {
     fields[0].type = JKII_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -492,7 +492,7 @@ TEST_CASE("KiiJson, GetObjectNegativeEDoubleByPath") {
     fields[0].type = JKII_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -516,7 +516,7 @@ TEST_CASE("KiiJson, GetObjectNullByPath") {
     fields[0].type = JKII_FIELD_TYPE_NULL;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -539,7 +539,7 @@ TEST_CASE("KiiJson, GetObjectTrueByPath") {
     fields[0].type = JKII_FIELD_TYPE_BOOLEAN;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -563,7 +563,7 @@ TEST_CASE("KiiJson, GetObjectFalseByPath") {
     fields[0].type = JKII_FIELD_TYPE_BOOLEAN;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -589,7 +589,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerStringByPath") {
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -612,7 +612,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerPositiveIntByPath") {
     fields[0].type = JKII_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -635,7 +635,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerNegativeIntByPath") {
     fields[0].type = JKII_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -658,7 +658,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerPositiveLongByPath") {
     fields[0].type = JKII_FIELD_TYPE_LONG;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -681,7 +681,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerNegativeLongByPath") {
     fields[0].type = JKII_FIELD_TYPE_LONG;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -704,7 +704,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerPositiveDotDoubleByPath") {
     fields[0].type = JKII_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -727,7 +727,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerNegativeDotDoubleByPath") {
     fields[0].type = JKII_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -750,7 +750,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerPositiveEDoubleByPath") {
     fields[0].type = JKII_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -773,7 +773,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerNegativeEDoubleByPath") {
     fields[0].type = JKII_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -799,7 +799,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerStringByPath") {
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -822,7 +822,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerPositiveIntByPath") {
     fields[0].type = JKII_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -845,7 +845,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerNegativeIntByPath") {
     fields[0].type = JKII_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -869,7 +869,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerPositiveLongByPath") {
     fields[0].type = JKII_FIELD_TYPE_LONG;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -893,7 +893,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerNegativeLongByPath") {
     fields[0].type = JKII_FIELD_TYPE_LONG;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -916,7 +916,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerPositiveDotDoubleByPath") {
     fields[0].type = JKII_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -939,7 +939,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerNegativeDotDoubleByPath") {
     fields[0].type = JKII_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -962,7 +962,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerPositiveEDoubleByPath") {
     fields[0].type = JKII_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -985,7 +985,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerNegativeEDoubleByPath") {
     fields[0].type = JKII_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1011,7 +1011,7 @@ TEST_CASE("KiiJson, GetArrayString") {
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1035,7 +1035,7 @@ TEST_CASE("KiiJson, GetArrayInt") {
     fields[0].type = JKII_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1059,7 +1059,7 @@ TEST_CASE("KiiJson, GetArrayLong") {
     fields[0].type = JKII_FIELD_TYPE_LONG;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1083,7 +1083,7 @@ TEST_CASE("KiiJson, GetArrayDouble") {
     fields[0].type = JKII_FIELD_TYPE_DOUBLE;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1107,7 +1107,7 @@ TEST_CASE("KiiJson, GetArrayIntIndex1") {
     fields[0].type = JKII_FIELD_TYPE_INTEGER;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1131,7 +1131,7 @@ TEST_CASE("KiiJson, GetArrayNull") {
     fields[0].type = JKII_FIELD_TYPE_NULL;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1154,7 +1154,7 @@ TEST_CASE("KiiJson, GetArrayTrue") {
     fields[0].type = JKII_FIELD_TYPE_BOOLEAN;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1178,7 +1178,7 @@ TEST_CASE("KiiJson, GetArrayFalse") {
     fields[0].type = JKII_FIELD_TYPE_BOOLEAN;
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1263,7 +1263,7 @@ TEST_CASE("KiiJson, GetComplexObject") {
         sizeof(value_buf) / sizeof(value_buf[0]);
     fields[14].path = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1351,7 +1351,7 @@ TEST_CASE("KiiJson, PushRetrieveEndpoint") {
     fields[6].type = JKII_FIELD_TYPE_LONG;
     fields[7].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1403,7 +1403,7 @@ TEST_CASE("KiiJson, CommandParseTest") {
     fields[3].type = JKII_FIELD_TYPE_ARRAY;
     fields[4].path = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1429,7 +1429,7 @@ TEST_CASE("KiiJson, NoTokensTest")
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1454,7 +1454,7 @@ TEST_CASE("KiiJson, TokensShortageTest")
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1479,7 +1479,7 @@ TEST_CASE("KiiJson, ExactTokensTest")
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse(
+    jkii_parse_err_t res = jkii_parse(
         json_string,
         strlen(json_string),
         fields,
@@ -1506,7 +1506,7 @@ TEST_CASE("KiiJson, AllocatorTest")
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    jkii_parse_result_t res = jkii_parse_with_allocator(
+    jkii_parse_err_t res = jkii_parse_with_allocator(
         json_string,
         strlen(json_string),
         fields,
@@ -1533,7 +1533,7 @@ TEST_CASE("KiiJson, FailedAllocationTest")
     fields[1].name = NULL;
 
 
-    jkii_parse_result_t res = jkii_parse_with_allocator(
+    jkii_parse_err_t res = jkii_parse_with_allocator(
         json_string,
         strlen(json_string),
         fields,

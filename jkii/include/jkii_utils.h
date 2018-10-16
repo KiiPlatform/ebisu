@@ -7,13 +7,13 @@ extern "C" {
 
 #include "jkii.h"
 
-typedef enum jkii_parse_primitive_result_t
+typedef enum jkii_primitive_err_t
 {
     JKII_PRIMITIVE_ERR_SUCCESS,
     JKII_PRIMITIVE_ERR_OVERFLOW,
     JKII_PRIMITIVE_ERR_UNDERFLOW,
     JKII_PRIMITIVE_ERR_INVALID
-} jkii_parse_primitive_result_t;
+} jkii_primitive_err_t;
 
 typedef struct jkii_primitive_t {
     union {
@@ -25,7 +25,7 @@ typedef struct jkii_primitive_t {
     jkii_field_type_t type;
 } jkii_primitive_t;
 
-jkii_parse_primitive_result_t jkii_parse_primitive(
+jkii_primitive_err_t jkii_parse_primitive(
     const char* primitive,
     size_t primitive_length,
     jkii_primitive_t* result);

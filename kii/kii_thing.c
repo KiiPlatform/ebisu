@@ -34,7 +34,7 @@ kii_code_t kii_auth_thing(
         goto exit;
     }
     jkii_field_t fields[3];
-    jkii_parse_result_t result;
+    jkii_parse_err_t result;
     memset(fields, 0, sizeof(fields));
     fields[0].name = "id";
     fields[0].type = JKII_FIELD_TYPE_STRING;
@@ -91,7 +91,7 @@ kii_code_t kii_register_thing(
     }
 
     jkii_field_t fields[3];
-    jkii_parse_result_t result;
+    jkii_parse_err_t result;
     memset(fields, 0, sizeof(fields));
     fields[0].name = "_accessToken";
     fields[0].type = JKII_FIELD_TYPE_STRING;

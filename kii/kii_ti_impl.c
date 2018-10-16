@@ -66,7 +66,7 @@ kii_code_t _get_anonymous_token(
     }
 
     jkii_field_t fields[2];
-    jkii_parse_result_t result;
+    jkii_parse_err_t result;
     memset(fields, 0, sizeof(fields));
     fields[0].name = "access_token";
     fields[0].type = JKII_FIELD_TYPE_STRING;
@@ -227,7 +227,7 @@ kii_code_t _onboard(
     }
 
     jkii_field_t fields[3];
-    jkii_parse_result_t result;
+    jkii_parse_err_t result;
     memset(fields, 0, sizeof(fields));
     fields[0].name = "accessToken";
     fields[0].type = JKII_FIELD_TYPE_STRING;
@@ -357,7 +357,7 @@ kii_code_t _get_firmware_version(
     }
 
     jkii_field_t fields[2];
-    jkii_parse_result_t result;
+    jkii_parse_err_t result;
     memset(fields, 0, sizeof(fields));
     fields[0].name = "firmwareVersion";
     fields[0].type = JKII_FIELD_TYPE_STRING;

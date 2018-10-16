@@ -124,7 +124,7 @@ TEST_CASE("KiiJson, PrimitiveDoubleMin")
     int written = snprintf(str_buff, 64, "%le", -DBL_MAX);
     REQUIRE(written < 64);
     jkii_primitive_t res;
-    jkii_parse_primitive_result_t pres =
+    jkii_primitive_err_t pres =
         jkii_parse_primitive(str_buff, strlen(str_buff), &res);
     REQUIRE(JKII_PRIMITIVE_ERR_SUCCESS == pres);
     REQUIRE(JKII_FIELD_TYPE_DOUBLE == res.type);
@@ -139,7 +139,7 @@ TEST_CASE("KiiJson, PrimitiveDoubleMax")
     int written = snprintf(str_buff, 64, "%le", DBL_MAX);
     REQUIRE(written < 64);
     jkii_primitive_t res;
-    jkii_parse_primitive_result_t pres =
+    jkii_primitive_err_t pres =
         jkii_parse_primitive(str_buff, strlen(str_buff), &res);
     REQUIRE(JKII_PRIMITIVE_ERR_SUCCESS == pres);
     REQUIRE(JKII_FIELD_TYPE_DOUBLE == res.type);

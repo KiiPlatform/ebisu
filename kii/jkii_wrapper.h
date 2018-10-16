@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-jkii_parse_result_t _jkii_read_object(
+jkii_parse_err_t _jkii_read_object(
         kii_t* kii,
         const char* json_string,
         size_t json_string_size,

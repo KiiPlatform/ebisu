@@ -69,7 +69,7 @@ static int _calculate_required_token_num(
     return res;
 }
 
-static jkii_parse_result_t _kii_jsmn_get_tokens(
+static jkii_parse_err_t _kii_jsmn_get_tokens(
         const char* json_string,
         size_t json_string_len,
         jkii_resource_t* resource)
@@ -333,7 +333,7 @@ static int _jkii_string_copy(
     return 0;
 }
 
-static jkii_parse_primitive_result_t _jkii_to_long(
+static jkii_primitive_err_t _jkii_to_long(
         const char* target,
         size_t target_size,
         long* out_long)
@@ -384,7 +384,7 @@ static jkii_parse_primitive_result_t _jkii_to_long(
     return JKII_PRIMITIVE_ERR_SUCCESS;
 }
 
-static jkii_parse_primitive_result_t _jkii_to_int(
+static jkii_primitive_err_t _jkii_to_int(
         const char* target,
         size_t target_size,
         int* out_int)
@@ -409,7 +409,7 @@ static jkii_parse_primitive_result_t _jkii_to_int(
     return JKII_PRIMITIVE_ERR_SUCCESS;
 }
 
-static jkii_parse_primitive_result_t _jkii_to_double(
+static jkii_primitive_err_t _jkii_to_double(
         const char* target,
         size_t target_size,
         double* out_double)
@@ -639,13 +639,13 @@ static int _kii_jsmn_get_value_by_path(
     return 0;
 }
 
-static jkii_parse_result_t _jkii_convert_jsmntok_to_field(
+static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
         jkii_field_t* field,
         const jsmntok_t* value,
         const char* json_string,
         size_t json_string_len)
 {
-    jkii_parse_result_t retval = JKII_ERR_OK;
+    jkii_parse_err_t retval = JKII_ERR_OK;
     jkii_field_type_t type = JKII_FIELD_TYPE_ANY;
 
     /* get actual type. */
@@ -690,7 +690,7 @@ static jkii_parse_result_t _jkii_convert_jsmntok_to_field(
                 field->result = JKII_FIELD_ERR_TYPE_UNMATCH;
                 retval = JKII_ERR_PARTIAL;
             } else {
-                jkii_parse_primitive_result_t result =
+                jkii_primitive_err_t result =
                     _jkii_to_int(
                             json_string + value->start,
                             value->end - value->start,
@@ -720,7 +720,7 @@ static jkii_parse_result_t _jkii_convert_jsmntok_to_field(
                 field->result = JKII_FIELD_ERR_TYPE_UNMATCH;
                 retval = JKII_ERR_PARTIAL;
             } else {
-                jkii_parse_primitive_result_t result =
+                jkii_primitive_err_t result =
                     _jkii_to_long(
                             json_string + value->start,
                             value->end - value->start,
@@ -749,7 +749,7 @@ static jkii_parse_result_t _jkii_convert_jsmntok_to_field(
                 field->result = JKII_FIELD_ERR_TYPE_UNMATCH;
                 retval = JKII_ERR_PARTIAL;
             } else {
-                jkii_parse_primitive_result_t result =
+                jkii_primitive_err_t result =
                     _jkii_to_double(
                             json_string + value->start,
                             value->end - value->start,
@@ -809,13 +809,13 @@ static jkii_parse_result_t _jkii_convert_jsmntok_to_field(
     return retval;
 }
 
-static jkii_parse_result_t _jkii_parse_fields(
+static jkii_parse_err_t _jkii_parse_fields(
     const char* json_string,
     size_t json_string_len,
     jkii_field_t* fields,
     jkii_resource_t* resource)
 {
-    jkii_parse_result_t ret = JKII_ERR_OK;
+    jkii_parse_err_t ret = JKII_ERR_OK;
     for (jkii_field_t* field = fields; field->name != NULL || field->path != NULL; ++field) {
         int result = -1;
         jsmntok_t* value = NULL;
@@ -856,7 +856,7 @@ static jkii_parse_result_t _jkii_parse_fields(
     return ret;
 }
 
-jkii_parse_result_t jkii_parse(
+jkii_parse_err_t jkii_parse(
     const char* json_string,
     size_t json_string_len,
     jkii_field_t* fields,
@@ -869,7 +869,7 @@ jkii_parse_result_t jkii_parse(
         return JKII_ERR_TOKENS_SHORTAGE;
     }
 
-    jkii_parse_result_t res = JKII_ERR_INVALID_INPUT;
+    jkii_parse_err_t res = JKII_ERR_INVALID_INPUT;
     res = _kii_jsmn_get_tokens(json_string, json_string_len, resource);
     if (res != JKII_ERR_OK) {
         return res;
@@ -884,7 +884,7 @@ jkii_parse_result_t jkii_parse(
     return res;
 }
 
-jkii_parse_result_t jkii_parse_with_allocator(
+jkii_parse_err_t jkii_parse_with_allocator(
     const char* json_string,
     size_t json_string_len,
     jkii_field_t* fields,
@@ -908,7 +908,7 @@ jkii_parse_result_t jkii_parse_with_allocator(
         return JKII_ERR_INVALID_INPUT;
     }
 
-    jkii_parse_result_t res = _kii_jsmn_get_tokens(json_string, json_string_len, resource);
+    jkii_parse_err_t res = _kii_jsmn_get_tokens(json_string, json_string_len, resource);
     if (res != JKII_ERR_OK) {
         free_cb(resource);
         return res;
@@ -925,7 +925,7 @@ jkii_parse_result_t jkii_parse_with_allocator(
     return res;
 }
 
-jkii_parse_primitive_result_t jkii_parse_primitive(
+jkii_primitive_err_t jkii_parse_primitive(
     const char* primitive,
     size_t primitive_length,
     jkii_primitive_t* result)
@@ -950,7 +950,7 @@ jkii_parse_primitive_result_t jkii_parse_primitive(
     int is_int = _jkii_is_int(primitive, primitive_length);
     if (is_int != 0) {
         int int_value = 0;
-        jkii_parse_primitive_result_t res = 
+        jkii_primitive_err_t res = 
             _jkii_to_int(primitive, primitive_length, &int_value);
         if (res != JKII_PRIMITIVE_ERR_SUCCESS) {
             return res;
@@ -962,7 +962,7 @@ jkii_parse_primitive_result_t jkii_parse_primitive(
     int is_long = _jkii_is_long(primitive, primitive_length);
     if (is_long != 0) {
         long long_value = 0;
-        jkii_parse_primitive_result_t res = 
+        jkii_primitive_err_t res = 
             _jkii_to_long(primitive, primitive_length, &long_value);
         if (res != JKII_PRIMITIVE_ERR_SUCCESS) {
             return res;
@@ -974,7 +974,7 @@ jkii_parse_primitive_result_t jkii_parse_primitive(
     int is_double = _jkii_is_double(primitive, primitive_length);
     if (is_double != 0) {
         double double_value = 0;
-                jkii_parse_primitive_result_t res = 
+                jkii_primitive_err_t res = 
             _jkii_to_double(primitive, primitive_length, &double_value);
         if (res != JKII_PRIMITIVE_ERR_SUCCESS) {
             return res;

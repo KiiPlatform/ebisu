@@ -50,7 +50,7 @@ tio_code_t _handle_command(
     const char* command,
     size_t command_length);
 
-jkii_parse_result_t _parse_json(
+jkii_parse_err_t _parse_json(
     tio_handler_t* handler,
     const char* json_string,
     size_t json_string_size,

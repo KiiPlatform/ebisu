@@ -88,7 +88,7 @@ const char json_string[] = "{\"hoo\":\"bar\"}"; // target json string.
 jkii_field_t fields[2];
 jkii_t jkii;
 char buf[256];
-jkii_parse_result_t result;
+jkii_parse_err_t result;
 
 memset(&jkii, 0x00, sizeof(jkii));
 memset(fields, 0x00, sizeof(fields));
