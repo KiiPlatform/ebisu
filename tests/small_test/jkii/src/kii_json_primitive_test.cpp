@@ -126,7 +126,7 @@ TEST_CASE("KiiJson, PrimitiveDoubleMin")
     jkii_primitive_t res;
     jkii_parse_primitive_result_t pres =
         jkii_parse_primitive(str_buff, strlen(str_buff), &res);
-    REQUIRE(JKII_PARSE_PRIMITIVE_RESULT_SUCCESS == pres);
+    REQUIRE(JKII_PARSE_PRIMITIVE_ERR_SUCCESS == pres);
     REQUIRE(JKII_FIELD_TYPE_DOUBLE == res.type);
 
     double expect = strtod(str_buff, NULL);
@@ -141,7 +141,7 @@ TEST_CASE("KiiJson, PrimitiveDoubleMax")
     jkii_primitive_t res;
     jkii_parse_primitive_result_t pres =
         jkii_parse_primitive(str_buff, strlen(str_buff), &res);
-    REQUIRE(JKII_PARSE_PRIMITIVE_RESULT_SUCCESS == pres);
+    REQUIRE(JKII_PARSE_PRIMITIVE_ERR_SUCCESS == pres);
     REQUIRE(JKII_FIELD_TYPE_DOUBLE == res.type);
 
     double expect = strtod(str_buff, NULL);
