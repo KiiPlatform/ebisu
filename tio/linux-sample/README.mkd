@@ -47,7 +47,6 @@ Step 4, setting owner of created user. Step 6, setting vendor thing ID and passw
 ### Thing command receiving
 
 1. Execute folloging command on a terminal.
-
 ```sh
 # ./exampleapp onboard --vendor-thing-id={vendor-thing-id} --password={password}
 ```
@@ -61,7 +60,6 @@ Step 6, you need to select alias and issuer. Step 7, input actions.
 
 3. After send command, please check a terminal.
 Actions in command are shown on terminal like this.
-
 ```sh
 # ./exampleapp onboard --vendor-thing-id={VID} --password={pass}
 option vendor-thing-id : {VID}
