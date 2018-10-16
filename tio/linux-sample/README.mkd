@@ -1,17 +1,20 @@
 This is a sample application for thing-if SDK.
 
-## Prerequisite
+## Requirement
 
-Build and install thing-if SDK.
+ * cmake: version 3.5 or higher.
+```sh
+# sudo apt-get install cmake3
+```
 
-Please refer to [README](../README.mkd) for build and installation.
+ * libssl-dev:
+```sh
+# sudo apt-get install libssl-dev
+```
 
 ## Build
 
-If you installed thing-if SDK in custom directory,
-Plese edit the Makefile and adjust `INCLUDES` and `LD_FLAGS` variable
-to include the custom directory path.
-After that, execute following command:
+Execute following command:
 
 ```sh
 # make
@@ -27,6 +30,8 @@ command:
 ```
 
 ## How to use
+
+### Preparation
 Go to https://developer.kii.com and create app for you.
 replace `EX_APP_ID`, `EX_APP_KEY` and `EX_APP_SITE` with yours.
 If you want to test receiving command, please create thing with owner.
@@ -39,20 +44,21 @@ If you want to test receiving command, please create thing with owner.
 ![ScreenShot - 3](./images/create_thing_2.png)
 Step 4, setting owner of created user. Step 6, setting vendor thing ID and password.
 
-Execute folloging command on a terminal.
+### Thing command receiving
+
+1. Execute folloging command on a terminal.
 
 ```sh
 # ./exampleapp onboard --vendor-thing-id={vendor-thing-id} --password={password}
 ```
 
-After succeeded, go to https://developer.kii.com and send command.
-
+2. After succeeded, go to https://developer.kii.com and send command.
 ![ScreenShot - 4](./images/select_thing.png)
 ![ScreenShot - 5](./images/create_command_1.png)
 ![ScreenShot - 6](./images/create_command_2.png)
 Step 6, you need to select alias and issuer. Step 7, input actions.
 
-After send command, please check a terminal.
+3. After send command, please check a terminal.
 Actions in command are shown on terminal like this.
 
 ```sh
@@ -66,7 +72,7 @@ tio_action_handler called
 AirconAlias: setPresetTemperature
 ```
 
-## Thing state file.
+### Thing state update.
 
 This sample application sends thing state every 60 seconds. The
 sending thing state is described in `state.json`. Content
