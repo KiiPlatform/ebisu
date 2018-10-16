@@ -37,10 +37,13 @@ replace `EX_APP_ID`, `EX_APP_KEY` and `EX_APP_SITE` with yours.
 If you want to test receiving command, please create thing with owner.
 
 1. Create thing owner.
+
 ![ScreenShot - 1](./images/create_user.png)
 
 2. Create thing with owner.
+
 ![ScreenShot - 2](./images/create_thing_1.png)
+
 ![ScreenShot - 3](./images/create_thing_2.png)
 Step 4, setting owner of created user. Step 6, setting vendor thing ID and password.
 
@@ -54,12 +57,15 @@ Step 4, setting owner of created user. Step 6, setting vendor thing ID and passw
 2. After succeeded, go to https://developer.kii.com and send command.
 ![ScreenShot - 4](./images/select_thing.png)
 Step 3, please select thing with your vendorThingID.
+
 ![ScreenShot - 5](./images/create_command_1.png)
+
 ![ScreenShot - 6](./images/create_command_2.png)
 Step 6, you need to select alias and issuer. Step 7, input actions.
 
 3. After send command, please check a terminal.
 Actions in command are shown on terminal like this.
+
 ```sh
 # ./exampleapp onboard --vendor-thing-id={VID} --password={pass}
 option vendor-thing-id : {VID}
