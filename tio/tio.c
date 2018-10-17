@@ -257,6 +257,7 @@ static void* _update_state(void* data) {
                 state_size,
                 updater->_state_reader,
                 updater->_state_reader_data,
+                NULL,
                 NULL);
             if (res != KII_ERR_OK) {
                 tio_code_t code = _tio_convert_code(res);

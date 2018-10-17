@@ -34,6 +34,7 @@ kii_code_t _put_state(
         size_t content_length,
         KII_CB_READ state_read_cb,
         void* state_read_cb_data,
+        const char* opt_content_type,
         const char* opt_normalizer_host);
 
 #endif
