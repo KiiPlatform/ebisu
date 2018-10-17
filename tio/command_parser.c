@@ -132,24 +132,33 @@ void _parse_primitive(
     size_t action_value_length,
     tio_action_t* out_action)
 {
-    if (strncmp("null", action_value, (action_value_length > 4) ? action_value_length : 4) == 0) {
-        out_action->action_value.type = TIO_TYPE_NULL;
-        out_action->action_value.opaque_value_length = action_value_length;
-        out_action->action_value.param.opaque_value = action_value;
-    } else if (strncmp("true", action_value, (action_value_length > 4) ? action_value_length : 4) == 0) {
-        out_action->action_value.type = TIO_TYPE_BOOLEAN;
-        out_action->action_value.param.bool_value = KII_TRUE;
-    } else if (strncmp("false", action_value, (action_value_length > 5) ? action_value_length : 5) == 0) {
-        out_action->action_value.type = TIO_TYPE_BOOLEAN;
-        out_action->action_value.param.bool_value = KII_FALSE;
-    } else {
-        if (_check_double(action_value, action_value_length) == 0) {
-            out_action->action_value.type = TIO_TYPE_DOUBLE;
-            out_action->action_value.param.double_value = strtod(action_value, NULL);
-        } else {
+    jkii_primitive_t jprim;
+    jkii_parse_primitive(action_value, action_value_length, &jprim);
+    switch (jprim.type) {
+        case JKII_FIELD_TYPE_NULL:
+            out_action->action_value.type = TIO_TYPE_NULL;
+            out_action->action_value.opaque_value_length = action_value_length;
+            out_action->action_value.param.opaque_value = action_value;
+            break;
+        case JKII_FIELD_TYPE_BOOLEAN:
+            out_action->action_value.type = TIO_TYPE_BOOLEAN;
+            out_action->action_value.param.bool_value = jprim.value.boolean_value == JKII_TRUE ? KII_TRUE : KII_FALSE;
+            break;
+        case JKII_FIELD_TYPE_INTEGER:
             out_action->action_value.type = TIO_TYPE_INTEGER;
-            out_action->action_value.param.long_value = strtol(action_value, NULL, 10);
-        }
+            out_action->action_value.param.long_value = jprim.value.int_value;
+            break;
+        case JKII_FIELD_TYPE_LONG:
+            out_action->action_value.type = TIO_TYPE_INTEGER;
+            out_action->action_value.param.long_value = jprim.value.long_value;
+            break;
+        case JKII_FIELD_TYPE_DOUBLE:
+            out_action->action_value.type = TIO_TYPE_DOUBLE;
+            out_action->action_value.param.double_value = jprim.value.double_value;
+            break;
+        default:
+            // Programing error.
+            break;
     }
 }
 
