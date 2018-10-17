@@ -139,7 +139,7 @@ khc_code khc_set_zero(khc* khc);
 /**
  * \brief Set members of khc 0/NULL.
  * 
- * However callbacks/ userdata set by 
+ * However, callbacks/ userdata set by 
  * khc_set_cb_sock_connect(khc*, KHC_CB_SOCK_CONNECT, void*),
  * khc_set_cb_sock_send(khc*, KHC_CB_SOCK_SEND, void*),
  * khc_set_cb_sock_recv(khc*, KHC_CB_SOCK_RECV, void*),
@@ -154,37 +154,118 @@ khc_code khc_set_zero(khc* khc);
  */
 khc_code khc_set_zero_excl_cb(khc* khc);
 
+/**
+ * \brief Perform the HTTP session
+ *
+ * During the session, callback functions set by
+ * khc_set_cb_sock_connect(khc*, KHC_CB_SOCK_CONNECT, void*),
+ * khc_set_cb_sock_send(khc*, KHC_CB_SOCK_SEND, void*),
+ * khc_set_cb_sock_recv(khc*, KHC_CB_SOCK_RECV, void*),
+ * khc_set_cb_sock_close(khc*, KHC_CB_SOCK_CLOSE, void*),
+ * khc_set_cb_read(khc*, KHC_CB_READ, void*),
+ * khc_set_cb_write(khc*, KHC_CB_WRITE, void*) and
+ * khc_set_cb_header(khc*, KHC_CB_HEADER, void*)
+ * called.
+ * This method blocks untill the HTTP session ends.
+ * \param [in, out] khc instance.
+ */
 khc_code khc_perform(khc* khc);
 
+/**
+ * \brief Set host.
+ *
+ * Host consists of URL in request line.
+ * \param [out] khc instance.
+ * \param [in] host must be null terminated.
+ */
 khc_code khc_set_host(khc* khc, const char* host);
 
+/**
+ * \brief Set path.
+ *
+ * Path consists of URL in request line.
+ * \param [out] khc instance.
+ * \param [in] host must be null terminated.
+ */
 khc_code khc_set_path(khc* khc, const char* path);
 
+/**
+ * \brief Set HTTP method.
+ *
+ * \param [out] khc instance.
+ * \param [in] method must be null terminated.
+ */
 khc_code khc_set_method(khc* khc, const char* method);
 
+/**
+ * \brief Set request headers.
+ *
+ * \param [out] khc instance.
+ * \param [in] headers list of request headers.
+ */
 khc_code khc_set_req_headers(khc* khc, khc_slist* headers);
 
+/**
+ * \breif Set stream buffer.
+ *
+ * Set stream buffer pointer used by KHC_CB_READ, KHC_CB_WRITE.
+ * If this method is not called or set NULL to the buffer,
+ * khc allocates memory of stream buffer when the HTTP session started
+ * and free when the HTTP session ends.
+ *
+ * \param [out] khc instance.
+ * \param [in] buffer pointer to the buffer.
+ * \param [in] buff_size size of the buffer.
+ */
 khc_code khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size);
 
-/** TODO: write doc */
+/**
+ * \brief Set socket connect callback.
+ *
+ * \param [out] khc instance.
+ * \param [in] cb called when socket connection to the server is required.
+ * \param [in] userdata context data of the callback.
+ */
 khc_code khc_set_cb_sock_connect(
   khc* khc,
   KHC_CB_SOCK_CONNECT cb,
   void* userdata);
 
-/** TODO: write doc */
+/**
+ * \brief Set socket send callback.
+ *
+ * Callback would be called several times during the HTTP session depending on the size of the request.
+ * \param [out] khc instance.
+ * \param [in] cb called when send data to the connected server is required.
+ * \param [in] userdata context data of the callback.
+ */
 khc_code khc_set_cb_sock_send(
   khc* khc,
   KHC_CB_SOCK_SEND cb,
   void* userdata);
 
-/** TODO: write doc */
+/**
+ * \brief Set socket recv callback.
+ *
+ * Callback would be called several times until
+ * the lenght of data read by the callback is 0.
+ * \param [out] khc instance.
+ * \param [in] cb called when receive data from the connected server is required.
+ * \param [in] userdata context data of the callback.
+ */
 khc_code khc_set_cb_sock_recv(
   khc* khc,
   KHC_CB_SOCK_RECV cb,
   void* userdata);
 
-/** TODO: write doc */
+/**
+ * \brief Set socket close callback.
+ *
+ * NOTE: Currently khc uses HTTP 1.0 and close callback is called each HTTP session.
+ * \param [out] khc instance.
+ * \param [in] cb called when HTTP session ends.
+ * \param [in] userdata context data of the callback.
+ */
 khc_code khc_set_cb_sock_close(
   khc* khc,
   KHC_CB_SOCK_CLOSE cb,
