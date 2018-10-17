@@ -30,31 +30,64 @@ command:
 ```
 
 ## How to use
-
-### Preparation
 Go to https://developer.kii.com and create app for you.
 replace `EX_APP_ID`, `EX_APP_KEY` and `EX_APP_SITE` with yours.
 If you want to test receiving command, please create thing with owner.
 
-1. Create thing owner.
+### Prepare Thing type, Trait, Alias
+
+#### Show Trait Menu
+
+![ScreenShot](./images/select_trait_menu.png)
+
+#### Create Thing type
+
+![ScreenShot](./images/create_thing_type_1.png)
+Step 2, please input your thing type name.
+After step 3, confirmation dialog is shown, please select OK.
+
+![ScreenShot](./images/create_thing_type_2.png)
+Step 5, please input firmware version.
+After step 6, confirmation dialog is shown, please select OK.
+
+#### Create Trait
+
+![ScreenShot](./images/create_trait_1.png)
+
+![ScreenShot](./images/create_trait_2.png)
+Step 2, please input trait name and select data grouping interval.
+Step 3, please customize actions, states and properties.
+After step 4, confirmation dialog is shown, please select OK.
+
+#### Create Alias
+
+![ScreenShot](./images/create_alias_1.png)
+
+![ScreenShot](./images/create_alias_2.png)
+Step 3, please input alias name.
+Step 4, please select thing type and firmware version you created.
+Step 5, please select trait and input trait version.
+After step 6, confirmation dialog is shown, please select OK.
+
+### Owner registration
 
 ![ScreenShot - 1](./images/create_user.png)
 
-2. Create thing with owner.
+### Thing owner registration (Onboard).
 
 ![ScreenShot - 2](./images/create_thing_1.png)
 
 ![ScreenShot - 3](./images/create_thing_2.png)
 Step 4, setting owner of created user. Step 6, setting vendor thing ID and password.
 
-### Thing command receiving
+### Startup sample application and connect to cloud
 
-1. Execute folloging command on a terminal.
+Execute folloging command on a terminal.
 ```sh
 # ./exampleapp onboard --vendor-thing-id={vendor-thing-id} --password={password}
 ```
 
-2. After succeeded, go to https://developer.kii.com and send command.
+### Remote control by Command.
 
 ![ScreenShot - 4](./images/select_thing.png)
 Step 3, please select thing with your vendorThingID.
@@ -64,7 +97,7 @@ Step 3, please select thing with your vendorThingID.
 ![ScreenShot - 6](./images/create_command_2.png)
 Step 6, you need to select alias and issuer. Step 7, input actions.
 
-3. After send command, please check a terminal.
+After send command, please check a terminal.
 Actions in command are shown on terminal like this.
 
 ```sh
@@ -78,7 +111,7 @@ tio_action_handler called
 AirconAlias: setPresetTemperature
 ```
 
-### Thing state update.
+### State update.
 
 This sample application sends thing state every 60 seconds. The
 sending thing state is described in `state.json`. Content
