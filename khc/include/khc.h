@@ -1,3 +1,7 @@
+/**
+ * \file khc.h
+ * Kii HTTP clinet public API definitions.
+ */
 #ifndef __khc
 #define __khc
 
@@ -123,8 +127,31 @@ typedef struct khc {
   khc_code _result;
 } khc;
 
+/**
+ * \brief Set members of khc 0/NULL.
+ * 
+ * You may use this method when you start new session.
+ * \param [out] khc instance.
+ * \see khc_set_zero_excl_cb(khc*)
+ */
 khc_code khc_set_zero(khc* khc);
 
+/**
+ * \brief Set members of khc 0/NULL.
+ * 
+ * However callbacks/ userdata set by 
+ * khc_set_cb_sock_connect(khc*, KHC_CB_SOCK_CONNECT, void*),
+ * khc_set_cb_sock_send(khc*, KHC_CB_SOCK_SEND, void*),
+ * khc_set_cb_sock_recv(khc*, KHC_CB_SOCK_RECV, void*),
+ * khc_set_cb_sock_close(khc*, KHC_CB_SOCK_CLOSE, void*),
+ * khc_set_cb_read(khc*, KHC_CB_READ, void*),
+ * khc_set_cb_write(khc*, KHC_CB_WRITE, void*) and
+ * khc_set_cb_header(khc*, KHC_CB_HEADER, void*)
+ * remain untouched.
+ * You may use this method when you start new session and reuse same callback and userdata pointer.
+ * \param [out] khc instance.
+ * \see khc_set_zero(khc*)
+ */
 khc_code khc_set_zero_excl_cb(khc* khc);
 
 khc_code khc_perform(khc* khc);
@@ -139,36 +166,43 @@ khc_code khc_set_req_headers(khc* khc, khc_slist* headers);
 
 khc_code khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size);
 
+/** TODO: write doc */
 khc_code khc_set_cb_sock_connect(
   khc* khc,
   KHC_CB_SOCK_CONNECT cb,
   void* userdata);
 
+/** TODO: write doc */
 khc_code khc_set_cb_sock_send(
   khc* khc,
   KHC_CB_SOCK_SEND cb,
   void* userdata);
 
+/** TODO: write doc */
 khc_code khc_set_cb_sock_recv(
   khc* khc,
   KHC_CB_SOCK_RECV cb,
   void* userdata);
 
+/** TODO: write doc */
 khc_code khc_set_cb_sock_close(
   khc* khc,
   KHC_CB_SOCK_CLOSE cb,
   void* userdata);
 
+/** TODO: write doc */
 khc_code khc_set_cb_read(
   khc* khc,
   KHC_CB_READ cb,
   void* userdata);
 
+/** TODO: write doc */
 khc_code khc_set_cb_write(
   khc* khc,
   KHC_CB_WRITE cb,
   void* userdata);
 
+/** TODO: write doc */
 khc_code khc_set_cb_header(
   khc* khc,
   KHC_CB_HEADER cb,
