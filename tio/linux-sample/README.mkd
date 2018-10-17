@@ -42,11 +42,11 @@ If you want to test receiving command, please create thing with owner.
 
 #### Create Thing type
 
-![ScreenShot](./images/create_thing_type_1.png)
+![ScreenShot](./images/create_thingtype_1.png)
 Step 2, please input your thing type name.
 After step 3, confirmation dialog is shown, please select OK.
 
-![ScreenShot](./images/create_thing_type_2.png)
+![ScreenShot](./images/create_thingtype_2.png)
 Step 5, please input firmware version.
 After step 6, confirmation dialog is shown, please select OK.
 
@@ -71,13 +71,13 @@ After step 6, confirmation dialog is shown, please select OK.
 
 ### Owner registration
 
-![ScreenShot - 1](./images/create_user.png)
+![ScreenShot](./images/create_user.png)
 
 ### Thing owner registration (Onboard).
 
-![ScreenShot - 2](./images/create_thing_1.png)
+![ScreenShot](./images/create_thing_1.png)
 
-![ScreenShot - 3](./images/create_thing_2.png)
+![ScreenShot](./images/create_thing_2.png)
 Step 4, setting owner of created user. Step 6, setting vendor thing ID and password.
 
 ### Startup sample application and connect to cloud
@@ -89,12 +89,12 @@ Execute folloging command on a terminal.
 
 ### Remote control by Command.
 
-![ScreenShot - 4](./images/select_thing.png)
+![ScreenShot](./images/select_thing.png)
 Step 3, please select thing with your vendorThingID.
 
-![ScreenShot - 5](./images/create_command_1.png)
+![ScreenShot](./images/create_command_1.png)
 
-![ScreenShot - 6](./images/create_command_2.png)
+![ScreenShot](./images/create_command_2.png)
 Step 6, you need to select alias and issuer. Step 7, input actions.
 
 After send command, please check a terminal.
@@ -123,6 +123,6 @@ edit `EX_STATE_UPDATE_PERIOD` in `example.h`.
 
 If you want to check sending results, go to https://developer.kii.com and check Thing Console.
 
-![ScreenShot - 7](./images/select_thing.png)
+![ScreenShot](./images/select_thing.png)
 
-![ScreenShot - 8](./images/check_state.png)
+![ScreenShot](./images/check_state.png)
