@@ -1,6 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
 PROJECT(tio C)
-SET(CMAKE_C_FLAGS "-Wall")
+SET(CMAKE_C_FLAGS "-Wall -std=c99")
 # Uncomment it if you need to use unsecure connection.
 #SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DKII_MQTT_USE_PORT_TCP=1")
 SET(CMAKE_C_FLAGS_RELEASE "-O2")
