@@ -137,66 +137,73 @@ typedef enum khc_code {
   KHC_ERR_FAIL,
 } khc_code;
 
+/**
+ * \brief khc object.
+ *
+ * Reference/ change members of khc instance must be done by APIs takes
+ * pointer of the khc object instance.
+ * Do not reference/ change members directly.
+ */
 typedef struct khc {
-  KHC_CB_WRITE _cb_write;
-  void* _write_data;
-  KHC_CB_READ _cb_read;
-  void* _read_data;
-  KHC_CB_HEADER _cb_header;
-  void* _header_data;
+  KHC_CB_WRITE _cb_write; /**< \private **/
+  void* _write_data; /**< \private **/
+  KHC_CB_READ _cb_read; /**< \private **/
+  void* _read_data; /**< \private **/
+  KHC_CB_HEADER _cb_header; /**< \private **/
+  void* _header_data; /**< \private **/
 
-  /** Request header list */
+  /** \private Request header list */
   khc_slist* _req_headers;
 
-  char _host[128];
-  char _path[256];
-  char _method[16];
+  char _host[128]; /**< \private **/
+  char _path[256]; /**< \private **/
+  char _method[16]; /**< \private **/
 
-  /** State machine */
-  khc_state _state;
+  /* State machine */
+  khc_state _state; /**< \private **/
 
-  /** Socket functions. */
-  KHC_CB_SOCK_CONNECT _cb_sock_connect;
-  KHC_CB_SOCK_SEND _cb_sock_send;
-  KHC_CB_SOCK_RECV _cb_sock_recv;
-  KHC_CB_SOCK_CLOSE _cb_sock_close;
-  /**   Socket context. */
-  void* _sock_ctx_connect;
-  void* _sock_ctx_send;
-  void* _sock_ctx_recv;
-  void* _sock_ctx_close;
+  /* Socket functions. */
+  KHC_CB_SOCK_CONNECT _cb_sock_connect; /**< \private **/
+  KHC_CB_SOCK_SEND _cb_sock_send; /**< \private **/
+  KHC_CB_SOCK_RECV _cb_sock_recv; /**< \private **/
+  KHC_CB_SOCK_CLOSE _cb_sock_close; /**< \private **/
+  /* Socket context. */
+  void* _sock_ctx_connect; /**< \private **/
+  void* _sock_ctx_send; /**< \private **/
+  void* _sock_ctx_recv; /**< \private **/
+  void* _sock_ctx_close; /**< \private **/
 
-  khc_slist* _current_req_header;
+  khc_slist* _current_req_header; /**< \private **/
 
-  char* _stream_buff;
-  size_t _stream_buff_size;
-  int _stream_buff_allocated;
+  char* _stream_buff; /**< \private **/
+  size_t _stream_buff_size; /**< \private **/
+  int _stream_buff_allocated; /**< \private **/
 
-  size_t _read_size;
-  int _read_req_end;
+  size_t _read_size; /**< \private **/
+  int _read_req_end; /**< \private **/
 
-  /** Response header buffer (Dynamic allocation) */
-  char* _resp_header_buffer;
-  char* _resp_header_buffer_current_pos;
-  size_t _resp_header_buffer_size;
-  size_t _resp_header_read_size;
+  /* Response header buffer (Dynamic allocation) */
+  char* _resp_header_buffer; /**< \private **/
+  char* _resp_header_buffer_current_pos; /**< \private **/
+  size_t _resp_header_buffer_size; /**< \private **/
+  size_t _resp_header_read_size; /**< \private **/
 
-  int _status_code;
-  /** Pointer to the double CRLF boundary in the resp_header_buffer */
-  char* _body_boundary;
+  int _status_code; /**< \private **/
+  /* Pointer to the double CRLF boundary in the resp_header_buffer */
+  char* _body_boundary; /**< \private **/
 
-  /** Header callback */
-  char* _cb_header_pos;
-  /** Used to seek for CRFL effectively. */
-  size_t _cb_header_remaining_size;
+  /* Header callback */
+  char* _cb_header_pos; /**< \private **/
+  /* Used to seek for CRFL effectively. */
+  size_t _cb_header_remaining_size; /**< \private **/
 
-  char* _body_flagment;
-  size_t _body_flagment_size;
-  int _read_end;
+  char* _body_flagment; /**< \private **/
+  size_t _body_flagment_size; /**< \private **/
+  int _read_end; /**< \private **/
 
-  size_t _body_read_size;
+  size_t _body_read_size; /**< \private **/
 
-  khc_code _result;
+  khc_code _result; /**< \private **/
 } khc;
 
 /**
