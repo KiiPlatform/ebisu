@@ -8,6 +8,9 @@ extern "C"
 
 #include "khc.h"
 
+#define DEFAULT_STREAM_BUFF_SIZE 1024
+#define RESP_HEADER_BUFF_SIZE 1024
+
 void khc_state_idle(khc* khc);
 void khc_state_connect(khc* khc);
 void khc_state_req_line(khc* khc);

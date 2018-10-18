@@ -80,9 +80,6 @@ khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length)
  */
 void khc_slist_free_all(khc_slist* slist);
 
-#define DEFAULT_STREAM_BUFF_SIZE 1024
-#define RESP_HEADER_BUFF_SIZE 1024
-
 /**
  * \brief Indicate state of khc.
  *
