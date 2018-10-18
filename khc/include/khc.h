@@ -38,6 +38,19 @@ typedef size_t (*KHC_CB_WRITE)(char *buffer, size_t size, size_t count, void *us
  * khc repeatedly call this callback untill it returns 0.
  */
 typedef size_t (*KHC_CB_READ)(char *buffer, size_t size, size_t count, void *userdata);
+/**
+ * \brief Callback used to propagate response headers.
+ *
+ * \param [in] buffer response header data.
+ * Note that the buffer is not null terminted and size must be determined by the product of size and count.
+ * The buffer does not contains CRLF.
+ * \param [in] size block size.
+ * \param [in] count number of blocks. Header size is determined by size * count.
+ * \param [in, out] userdata context data passed to khc_set_cb_header(khc*, KHC_CB_HEADER, void*)
+ * \returns Size of the bytes handled.
+ * If it is not equal to Header size determined by size * count,
+ * khc aborts HTTP session and khc_perform(khc*) returns KHC_ERR_HEADER_CALLBACK.
+ */
 typedef size_t (*KHC_CB_HEADER)(char *buffer, size_t size, size_t count, void *userdata);
 
 typedef struct khc_slist {
