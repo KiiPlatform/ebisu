@@ -264,7 +264,7 @@ khc_code khc_set_host(khc* khc, const char* host);
  *
  * Path consists of URL in request line.
  * \param [out] khc instance.
- * \param [in] host must be null terminated.
+ * \param [in] path must be null terminated.
  */
 khc_code khc_set_path(khc* khc, const char* path);
 
