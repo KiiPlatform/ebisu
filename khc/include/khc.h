@@ -83,6 +83,11 @@ void khc_slist_free_all(khc_slist* slist);
 #define DEFAULT_STREAM_BUFF_SIZE 1024
 #define RESP_HEADER_BUFF_SIZE 1024
 
+/**
+ * \brief Indicate state of khc.
+ *
+ * No need to reference state of khc to run HTTP session.
+ */
 typedef enum khc_state {
   KHC_STATE_IDLE,
   KHC_STATE_CONNECT,
@@ -98,7 +103,7 @@ typedef enum khc_state {
   KHC_STATE_RESP_HEADERS_READ,
   KHC_STATE_RESP_STATUS_PARSE,
   KHC_STATE_RESP_HEADERS_CALLBACK,
-  /** Process flagment of body obtaind when trying to find body boundary. */
+  /* Process flagment of body obtaind when trying to find body boundary. */
   KHC_STATE_RESP_BODY_FLAGMENT,
   KHC_STATE_RESP_BODY_READ,
   KHC_STATE_RESP_BODY_CALLBACK,
@@ -106,16 +111,29 @@ typedef enum khc_state {
   KHC_STATE_FINISHED,
 } khc_state;
 
+/**
+ * \brief Error codes.
+ */
 typedef enum khc_code {
+  /**< \brief Operation succeeded. */
   KHC_ERR_OK,
+  /**< \brief Failure in connecting to server. */
   KHC_ERR_SOCK_CONNECT,
+  /**< \brief Failure in closing connection. */
   KHC_ERR_SOCK_CLOSE,
+  /**< \brief Failure in sending data. */
   KHC_ERR_SOCK_SEND,
+  /**< \brief Failure in receiving data. */
   KHC_ERR_SOCK_RECV,
+  /**< \brief Failure in handling response headers. */
   KHC_ERR_HEADER_CALLBACK,
+  /**< \brief Failure in handling response body. */
   KHC_ERR_WRITE_CALLBACK,
+  /**< \brief Memory allocation error. */
   KHC_ERR_ALLOCATION,
+  /**< \brief Data is too large and doesn't fit to buffers staticaly sized. */
   KHC_ERR_TOO_LARGE_DATA,
+  /**< \brief Uncategorized error. */
   KHC_ERR_FAIL,
 } khc_code;
 
