@@ -271,24 +271,55 @@ khc_code khc_set_cb_sock_close(
   KHC_CB_SOCK_CLOSE cb,
   void* userdata);
 
-/** TODO: write doc */
+/**
+ * \brief Set read callback.
+ *
+ * The callback is called to read request body data.
+ * Callback would be called several times until
+ * the lenght of data read by the callback is 0.
+ * \param [out] khc instance.
+ * \param [in] cb reads request body.
+ * \param [in] userdata context data of the callback.
+ */
 khc_code khc_set_cb_read(
   khc* khc,
   KHC_CB_READ cb,
   void* userdata);
 
-/** TODO: write doc */
+/**
+ * \brief Set write callback.
+ *
+ * The callback is called while reading response body.
+ * Callback would be called several times untill the whole response body is written.
+ * \param [out] khc instance.
+ * \param [in] cb writes response body.
+ * \param [in] userdata context data of the callback.
+ */
 khc_code khc_set_cb_write(
   khc* khc,
   KHC_CB_WRITE cb,
   void* userdata);
 
-/** TODO: write doc */
+/**
+ * \brief Set header callback.
+ *
+ * The callback is called while reading response headers.
+ * Callback would be called several times untill all response headers are processed.
+ * \param [out] khc instance.
+ * \param [in] cb response header callback.
+ * \param [in] userdata context data of the callback.
+ */
 khc_code khc_set_cb_header(
   khc* khc,
   KHC_CB_HEADER cb,
   void* userdata);
 
+/**
+ * \brief Get HTTP status code.
+ *
+ * \param [in] khc instance.
+ * \returns HTTP status code.
+ */
 int khc_get_status_code(
   khc* khc
 );
