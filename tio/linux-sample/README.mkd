@@ -177,9 +177,9 @@ After send command, please check a terminal.
 Actions in command are shown on terminal like this.
 
 ```sh
-# ./exampleapp onboard --vendor-thing-id={VID} --password={pass}
-option vendor-thing-id : {VID}
-option password : {pass}
+# ./exampleapp onboard --vendor-thing-id=test1 --password=1234
+option vendor-thing-id : test1
+option password : 1234
 program successfully started!
 tio_action_handler called
 AirconAlias: power
