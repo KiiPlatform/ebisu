@@ -63,8 +63,21 @@ typedef struct khc_slist {
   struct khc_slist* next; /**< \brief Pointer to the next item. */
 } khc_slist;
 
+/**
+ * \brief Add item to the linked list.
+ *
+ * \param [in, out] slist pointer to the linked list or NULL to create new linked list.
+ * \param [in] string data to be appended.
+ * \param [in] length of the string.
+ * \returns pointer to the linked list (first item).
+ */
 khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length);
 
+/**
+ * \brief Free memory used for the entire linked list.
+ *
+ * \param [in, out] slist pointer to the linked list (first item).
+ */
 void khc_slist_free_all(khc_slist* slist);
 
 #define DEFAULT_STREAM_BUFF_SIZE 1024
