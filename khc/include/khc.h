@@ -285,7 +285,7 @@ khc_code khc_set_method(khc* khc, const char* method);
 khc_code khc_set_req_headers(khc* khc, khc_slist* headers);
 
 /**
- * \breif Set stream buffer.
+ * \brief Set stream buffer.
  *
  * Set stream buffer pointer used by KHC_CB_READ, KHC_CB_WRITE.
  * If this method is not called or set NULL to the buffer,
