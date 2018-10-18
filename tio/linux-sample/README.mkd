@@ -47,8 +47,11 @@ Step 2, please input your thing type name.
 After step 3, confirmation dialog is shown, please select OK.
 
 ![ScreenShot](./images/create_thingtype_2.png)
-Step 5, please input firmware version.
-After step 6, confirmation dialog is shown, please select OK.
+
+![ScreenShot](./images/create_thingtype_3.png)
+Step 6, please input firmware version.
+
+![ScreenShot](./images/create_thingtype_4.png)
 
 #### Create Trait
 
@@ -56,8 +59,54 @@ After step 6, confirmation dialog is shown, please select OK.
 
 ![ScreenShot](./images/create_trait_2.png)
 Step 2, please input trait name and select data grouping interval.
-Step 3, please customize actions, states and properties.
-After step 4, confirmation dialog is shown, please select OK.
+Step 3, please customize actions, states and properties like this.
+```json
+{
+  "actions": [
+    {
+      "power": {
+        "description": "Turn on/off airconditioner",
+        "payloadSchema": {
+          "type": "boolean"
+        }
+      }
+    },
+    {
+      "setPresetTemperature": {
+        "description": "Set preset temperature",
+        "payloadSchema": {
+          "maximum": 28,
+          "type": "integer",
+          "minimum": 16
+        }
+      }
+    }
+  ],
+  "states": [
+    {
+      "PresetTemperature": {
+        "description": "Preset temperature",
+        "payloadSchema": {
+          "maximum": 28,
+          "type": "integer",
+          "minimum": 16
+        }
+      }
+    },
+    {
+      "RoomTemperature": {
+        "description": "Room temperature",
+        "payloadSchema": {
+          "maximum": 40,
+          "type": "integer",
+          "minimum": -20
+        }
+      }
+    }
+  ],
+  "dataGroupingInterval": "1_MINUTE"
+}
+```
 
 #### Create Alias
 
@@ -67,7 +116,8 @@ After step 4, confirmation dialog is shown, please select OK.
 Step 3, please input alias name.
 Step 4, please select thing type and firmware version you created.
 Step 5, please select trait and input trait version.
-After step 6, confirmation dialog is shown, please select OK.
+
+![ScreenShot](./images/create_alias_3.png)
 
 ### Owner registration
 
@@ -78,7 +128,15 @@ After step 6, confirmation dialog is shown, please select OK.
 ![ScreenShot](./images/create_thing_1.png)
 
 ![ScreenShot](./images/create_thing_2.png)
-Step 4, setting owner of created user. Step 6, setting vendor thing ID and password.
+Step 4, setting owner of created user.
+Step 6, setting vendor thing ID and password like this.
+```json
+{
+  "vendorThingID": "test1",
+  "thingPassword": "1234",
+  ...
+}
+```
 
 ### Startup sample application and connect to cloud
 
@@ -95,7 +153,25 @@ Step 3, please select thing with your vendorThingID.
 ![ScreenShot](./images/create_command_1.png)
 
 ![ScreenShot](./images/create_command_2.png)
-Step 6, you need to select alias and issuer. Step 7, input actions.
+Step 6, you need to select alias and issuer.
+Step 7, input actions like this.
+```json
+{
+  "actions": [
+    {
+      "AirconAlias": [
+        {
+          "power": true
+        },
+        {
+          "setPresetTemperature": 20
+        }
+      ]
+    }
+  ],
+  ...
+}
+```
 
 After send command, please check a terminal.
 Actions in command are shown on terminal like this.
