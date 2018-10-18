@@ -31,8 +31,8 @@ command:
 
 ## How to use
 Go to https://developer.kii.com and create app for you.
-replace `EX_APP_ID`, `EX_APP_KEY` and `EX_APP_SITE` with yours.
-If you want to test receiving command, please create thing with owner.
+Replace `EX_APP_ID`, `EX_APP_KEY` and `EX_APP_SITE` in example.h with yours.
+If you want to test receiving commands, please create thing with owner.
 
 ### Prepare Thing type, Trait, Alias
 
@@ -129,7 +129,7 @@ Step 5, please select trait and input trait version.
 
 ![ScreenShot](./images/create_thing_2.png)
 Step 4, setting owner of created user.
-Step 6, setting vendor thing ID and password like this.
+Step 6, setting vendorThingID and thingPassword like this.
 ```json
 {
   "vendorThingID": "test1",
