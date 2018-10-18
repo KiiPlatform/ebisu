@@ -53,9 +53,14 @@ typedef size_t (*KHC_CB_READ)(char *buffer, size_t size, size_t count, void *use
  */
 typedef size_t (*KHC_CB_HEADER)(char *buffer, size_t size, size_t count, void *userdata);
 
+/**
+ * \brief Linked list.
+ *
+ * Linked list manages c string data.
+ */
 typedef struct khc_slist {
-  char* data;
-  struct khc_slist* next;
+  char* data; /**< \brief Null terminated string */
+  struct khc_slist* next; /**< \brief Pointer to the next item. */
 } khc_slist;
 
 khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length);
