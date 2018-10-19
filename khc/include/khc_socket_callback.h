@@ -43,6 +43,8 @@ typedef khc_sock_code_t
 /** \brief Callback function sends data to server.
  *
  * Applications must implement this callback in the target enviroment.
+ * This callback is called repeatedly in the HTTP session
+ * untill the whole request is sent.
  *
  * @param [in] sock_ctx context object.
  * @param [in] buffer data to send server.
@@ -56,12 +58,13 @@ typedef khc_sock_code_t
 /** \brief Callback function receives data from server.
  *
  * Applications must implement this callback in the target enviroment.
- * This callback is called repeatedly untill out_actual_length value is set to 0.
-
+ * This callback is called repeatedly in the HTTP session
+ * untill out_actual_length value is set to 0.
+ *
  * @param [in] socket_context context object.
- * @param [out] buffer buffer to set receiving data.
- * @param [in] length_to_read buffer size.
- * @param [out] out_actual_length actual set data size.
+ * @param [out] buffer data read from the socket must be written here.
+ * @param [in] length_to_read Maximum size requested to read.
+ * @param [out] out_actual_length actual data size read from the socket.
  * @returns khc_sock_code_t
  */
 typedef khc_sock_code_t
@@ -73,7 +76,7 @@ typedef khc_sock_code_t
  *
  * Applications must implement this callback in the target enviroment.
  *
- * @param [in] socket_context context object.
+ * @param [in] sock_context context object.
  * @returns khc_sock_code_t
  */
 typedef khc_sock_code_t
