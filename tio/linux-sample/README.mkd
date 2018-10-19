@@ -1,17 +1,20 @@
-This is a sample application for thing-if SDK.
+This is a sample application for TIO.
 
-## Prerequisite
+## Requirement
 
-Build and install thing-if SDK.
+ * cmake: version 3.5 or higher.
+```sh
+# sudo apt-get install cmake3
+```
 
-Please refer to [README](../README.mkd) for build and installation.
+ * libssl-dev:
+```sh
+# sudo apt-get install libssl-dev
+```
 
 ## Build
 
-If you installed thing-if SDK in custom directory,
-Plese edit the Makefile and adjust `INCLUDES` and `LD_FLAGS` variable
-to include the custom directory path.
-After that, execute following command:
+Execute following command:
 
 ```sh
 # make
@@ -28,57 +31,174 @@ command:
 
 ## How to use
 Go to https://developer.kii.com and create app for you.
-replace `EX_APP_ID`, `EX_APP_KEY` and `EX_APP_SITE` with yours.
+Replace `EX_APP_ID`, `EX_APP_KEY` and `EX_APP_SITE` in example.h with yours.
+If you want to test receiving commands, please create thing with owner.
 
-Execute folloging command on a terminal. Hereafter This terminal
-called termianl A.
+### Prepare Thing type, Trait, Alias
 
+#### Show Trait Menu
+
+![ScreenShot](./images/select_trait_menu.png)
+
+#### Create Thing type
+
+![ScreenShot](./images/create_thingtype_1.png)
+Step 2, please input your thing type name.
+After step 3, confirmation dialog is shown, please select OK.
+
+![ScreenShot](./images/create_thingtype_2.png)
+
+![ScreenShot](./images/create_thingtype_3.png)
+Step 6, please input firmware version.
+
+![ScreenShot](./images/create_thingtype_4.png)
+
+#### Create Trait
+
+![ScreenShot](./images/create_trait_1.png)
+
+![ScreenShot](./images/create_trait_2.png)
+Step 2, please input trait name and select data grouping interval.
+Step 3, please customize actions, states and properties like this.
+```json
+{
+  "actions": [
+    {
+      "power": {
+        "description": "Turn on/off airconditioner",
+        "payloadSchema": {
+          "type": "boolean"
+        }
+      }
+    },
+    {
+      "setPresetTemperature": {
+        "description": "Set preset temperature",
+        "payloadSchema": {
+          "maximum": 28,
+          "type": "integer",
+          "minimum": 16
+        }
+      }
+    }
+  ],
+  "states": [
+    {
+      "PresetTemperature": {
+        "description": "Preset temperature",
+        "payloadSchema": {
+          "maximum": 28,
+          "type": "integer",
+          "minimum": 16
+        }
+      }
+    },
+    {
+      "RoomTemperature": {
+        "description": "Room temperature",
+        "payloadSchema": {
+          "maximum": 40,
+          "type": "integer",
+          "minimum": -20
+        }
+      }
+    }
+  ],
+  "dataGroupingInterval": "1_MINUTE"
+}
+```
+
+#### Create Alias
+
+![ScreenShot](./images/create_alias_1.png)
+
+![ScreenShot](./images/create_alias_2.png)
+Step 3, please input alias name.
+Step 4, please select thing type and firmware version you created.
+Step 5, please select trait and input trait version.
+
+![ScreenShot](./images/create_alias_3.png)
+
+### Owner registration
+
+![ScreenShot](./images/create_user.png)
+
+### Thing owner registration (Onboard).
+
+![ScreenShot](./images/create_thing_1.png)
+
+![ScreenShot](./images/create_thing_2.png)
+Step 4, setting owner of created user.
+Step 6, setting vendorThingID and thingPassword like this.
+```json
+{
+  "vendorThingID": "test1",
+  "thingPassword": "1234",
+  ...
+}
+```
+
+### Startup sample application and connect to cloud
+
+Execute folloging command on a terminal.
 ```sh
 # ./exampleapp onboard --vendor-thing-id={vendor-thing-id} --password={password}
 ```
 
-After succeeded, go to https://developer.kii.com and check Thing Console.
-There should be a thing created with specified vendor thing ID in the command above.
-Please note thing id displayed here.
+### Remote control by Command.
 
-After that, open another terminal, and execute following command in
-the another terminal. Hereafter This terminal called termianl B.
-```sh
-cd script
-```
-Please open README.mkd and follow the instruciton of Setup section.
-After the setup, execute
-```sh
-sh script/air-conditioner-command-post.sh
-```
+![ScreenShot](./images/select_thing.png)
+Step 3, please select thing with your vendorThingID.
 
-This script posts new command entry to server. exampleapp receives the
-command entry and show followings on the terminal A.
+![ScreenShot](./images/create_command_1.png)
 
-```sh
-schema=SmartLightDemo, schema_version=1, action name=turnPower, action params={"power":true}
-schema=SmartLightDemo, schema_version=1, action name=setBrightness, action params={"brightness":3000}
-schema=SmartLightDemo, schema_version=1, action name=setColor, action params={"color":[0,128,255]}
-schema=SmartLightDemo, schema_version=1, action name=setColorTemperature, action params={"colorTemperature":-100}
-```
-
-If you want to check command state, you can use `script/air-conditioner-command-get.sh`.
-
-```sh
-sh script/air-conditioner-get.sh {COMMAND_ID}
+![ScreenShot](./images/create_command_2.png)
+Step 6, you need to select alias and issuer.
+Step 7, input actions like this.
+```json
+{
+  "actions": [
+    {
+      "AirconAlias": [
+        {
+          "power": true
+        },
+        {
+          "setPresetTemperature": 20
+        }
+      ]
+    }
+  ],
+  ...
+}
 ```
 
-{COMMAND_ID} can be found response of `script/air-conditioner-post.sh`.
+After send command, please check a terminal.
+Actions in command are shown on terminal like this.
 
-## Thing state file.
+```sh
+# ./exampleapp onboard --vendor-thing-id=test1 --password=1234
+option vendor-thing-id : test1
+option password : 1234
+program successfully started!
+tio_action_handler called
+AirconAlias: power
+tio_action_handler called
+AirconAlias: setPresetTemperature
+```
+
+### State update.
 
 This sample application sends thing state every 60 seconds. The
-sending thing state is described in `smartlight-state.json`. Content
+sending thing state is described in `state.json`. Content
 of this file is send to server. If you want to change thing state to
 server, You can edit this file.
 
-If `smartlight-state.json` does not exist, exampleapp sends last
-received command contents as thing state.
-
 If you want to change period of sending thing state to server, you can
 edit `EX_STATE_UPDATE_PERIOD` in `example.h`.
+
+If you want to check sending results, go to https://developer.kii.com and check Thing Console.
+
+![ScreenShot](./images/select_thing.png)
+
+![ScreenShot](./images/check_state.png)

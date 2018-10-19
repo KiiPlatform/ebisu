@@ -48,7 +48,7 @@ void updater_init(
     tio_updater_set_cb_sock_recv(updater, sock_cb_recv, sock_ssl_ctx);
     tio_updater_set_cb_sock_close(updater, sock_cb_close, sock_ssl_ctx);
 
-    tio_updater_set_interval(updater, 30);
+    tio_updater_set_interval(updater, EX_STATE_UPDATE_PERIOD);
 
     kii_set_json_parser_resource(&updater->_kii, resource);
 }
@@ -62,22 +62,16 @@ typedef struct {
 
 size_t updater_cb_state_size(void* userdata)
 {
-    char c;
+    struct stat st;
     updater_file_context_t* ctx = (updater_file_context_t*)userdata;
 
-    printf("Send file?[y/n]: ");
-    if ((c = getchar()) == 'y') {
-        struct stat st;
-        if (stat(send_file, &st) == 0) {
-            ctx->file_size = st.st_size;
-            ctx->file_read = 0;
-            return st.st_size;
-        } else {
-            printf("failed to get stat\n");
-        }
-    }
-    if (c != '\n') {
-        while(getchar() != '\n');
+    printf("Send state\n");
+    if (stat(send_file, &st) == 0) {
+        ctx->file_size = st.st_size;
+        ctx->file_read = 0;
+        return st.st_size;
+    } else {
+        printf("failed to get stat\n");
     }
     return 0;
 }
@@ -156,16 +150,6 @@ tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, void*
 int main(int argc, char** argv)
 {
     char* subc = argv[1];
-    /*
-    tio_command_handler_resource_t command_handler_resource;
-    tio_state_updater_resource_t state_updater_resource;
-    tio_system_cb_t sys_cb;
-    char command_handler_buff[EX_COMMAND_HANDLER_BUFF_SIZE];
-    char state_updater_buff[EX_STATE_UPDATER_BUFF_SIZE];
-    char mqtt_buff[EX_MQTT_BUFF_SIZE];
-    tio_t tio;
-    kii_bool_t result;
-    */
 
     tio_updater_t updater;
     tio_handler_t handler;
@@ -269,7 +253,6 @@ int main(int argc, char** argv)
                 exit(0);
             }
         }
-        tio_handler_start(&handler, NULL, tio_action_handler, NULL);
 /*
     } else if (strcmp(subc, "get") == 0) {
         char* vendorThingID = NULL;
@@ -409,7 +392,6 @@ int main(int argc, char** argv)
             printf("thing type=%s\n", thingType);
         }
         exit(0);
-*/
     } else if (strcmp(subc, "update") == 0) {
         char* vendorThingID = NULL;
         char* password = NULL;
@@ -472,18 +454,20 @@ int main(int argc, char** argv)
             printf("failed to onboard.\n");
             exit(1);
         }
-
-        tio_updater_start(
-                &updater,
-                NULL,
-                updater_cb_state_size,
-                &updater_file_ctx,
-                updater_cb_read,
-                &updater_file_ctx);
+*/
     } else {
         print_help();
         exit(0);
     }
+
+    tio_handler_start(&handler, NULL, tio_action_handler, NULL);
+    tio_updater_start(
+            &updater,
+            &handler._kii._author,
+            updater_cb_state_size,
+            &updater_file_ctx,
+            updater_cb_read,
+            &updater_file_ctx);
 
     /* run forever. TODO: Convert to daemon. */
     while(1){ sleep(1); };

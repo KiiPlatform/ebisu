@@ -379,6 +379,7 @@ kii_code_t _put_state(
         size_t content_length,
         KII_CB_READ state_read_cb,
         void* state_read_cb_data,
+        const char* opt_content_type,
         const char* opt_normalizer_host)
 {
     kii_code_t ret = KII_ERR_FAIL;
@@ -405,7 +406,12 @@ kii_code_t _put_state(
         return ret;
     }
 
-    ret = _set_content_type(kii, "application/json");
+    if (opt_content_type != NULL) {
+        ret = _set_content_type(kii, opt_content_type);
+    } else {
+        ret = _set_content_type(kii, "application/vnd.kii.MultipleTraitState+json");
+    }
+
     if (ret != KII_ERR_OK) {
         _req_headers_free_all(kii);
         return ret;
