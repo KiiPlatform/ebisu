@@ -61,7 +61,7 @@ typedef khc_sock_code_t
  * This callback is called repeatedly in the HTTP session
  * untill out_actual_length value is set to 0.
  *
- * @param [in] socket_context context object.
+ * @param [in] sock_ctx context object.
  * @param [out] buffer data read from the socket must be written here.
  * @param [in] length_to_read Maximum size requested to read.
  * @param [out] out_actual_length actual data size read from the socket.
@@ -76,11 +76,11 @@ typedef khc_sock_code_t
  *
  * Applications must implement this callback in the target enviroment.
  *
- * @param [in] sock_context context object.
+ * @param [in] sock_ctx context object.
  * @returns khc_sock_code_t
  */
 typedef khc_sock_code_t
-    (*KHC_CB_SOCK_CLOSE)(void* sock_context);
+    (*KHC_CB_SOCK_CLOSE)(void* sock_ctx);
 
 
 #ifdef __cplusplus
