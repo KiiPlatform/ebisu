@@ -1,3 +1,6 @@
+/** \file khc_socket_callback.h
+ * Provides socket abstraction.
+ */
 #ifndef _KHC_SOCKET_CALLBACK
 #define _KHC_SOCKET_CALLBACK
 
@@ -7,86 +10,77 @@
 extern "C" {
 #endif
 
+/** \brief Indicates socket callback result */
 typedef enum khc_sock_code_t {
-    /** Retrun this code when operation succeed. */
+    /** \brief Retrun this code when operation succeed. */
     KHC_SOCK_OK,
 
-    /** Return this code when operation failed. */
+    /** \brief Return this code when operation failed. */
     KHC_SOCK_FAIL,
 
-    /** Return this code when operation is in progress.
+    /** \brief Return this code when operation is in progress.
      *
-     *  SDK calls the callback again until the callbacks returns
-     *  KHC_SOCK_OK or KHC_SOCK_FAIL.
+     * This code is used when the underlying socket is non-bloking mode.
+     * khc calls the callback again with the same argument 
+     * until the callbacks returns KHC_SOCK_OK or KHC_SOCK_FAIL.
      */
     KHC_SOCK_AGAIN
 } khc_sock_code_t;
 
-/** Callback for connecting socket to server.
+/** \brief Callback function connects socket to server.
+ *
  * Applications must implement this callback in the target enviroment.
  *
- * @param [in] socket_context context object.
+ * @param [in] sock_ctx context object.
  * @param [in] host host name.
  * @param [in] port port number.
- * @return If connection is succeeded, applications need to return
- * KHC_SOCK_OK. If connection is failed, applications need to
- * return KHC_SOCK_FAIL. If applications want to pend returning
- * success or fail, applications need to return KHC_SOCKETC_AGAIN.
+ * @returns khc_sock_code_t
  */
 typedef khc_sock_code_t
     (*KHC_CB_SOCK_CONNECT)
     (void* sock_ctx, const char* host, unsigned int port);
 
-/** Callback for sending data to server.
- * Applications must implement this callback in the target enviroment.
+/** \brief Callback function sends data to server.
  *
- * @param [in] socket_context context object.
+ * Applications must implement this callback in the target enviroment.
+ * This callback is called repeatedly in the HTTP session
+ * untill the whole request is sent.
+ *
+ * @param [in] sock_ctx context object.
  * @param [in] buffer data to send server.
  * @param [in] length length of buffer.
-
- * @return If applications succeed to send data, applications need to
- * return KHC_SOCK_OK. If connection is failed. applications need
- * to return KHC_SOCKETC__FAIL. If applications don't want to send
- * data, applications need to return KHC_SOCKETC_AGAIN. In this case,
- * KiiThingSDK Embedded Core pass same data to this callback again.
+ * @returns khc_sock_code_t
  */
 typedef khc_sock_code_t
     (*KHC_CB_SOCK_SEND)
     (void* sock_ctx, const char* buffer, size_t length);
 
-/** Callback for receiving data from server.
- * Applications must implement this callback in the target enviroment.
+/** \brief Callback function receives data from server.
  *
- * @param [in] socket_context context object.
- * @param [out] buffer buffer to set receiving data.
- * @param [in] length_to_read buffer size.
- * @param [out] out_actual_length actual set data size.
- * @return If applications succeed to receive data and set the data to
- * buffer, applications need to return KHC_SOCK_OK. Applications
- * also set data size to out_actual_length. If applications fail,
- * applications need to return KHC_HTTPC_FAIL. If applications want to
- * wait to receive data, applications need to return
- * KHC_HTTPC_AGAIN. In this case, applications must not set receving
- * data to buffer if some data is received.
+ * Applications must implement this callback in the target enviroment.
+ * This callback is called repeatedly in the HTTP session
+ * untill out_actual_length value is set to 0.
+ *
+ * @param [in] sock_ctx context object.
+ * @param [out] buffer data read from the socket must be written here.
+ * @param [in] length_to_read Maximum size requested to read.
+ * @param [out] out_actual_length actual data size read from the socket.
+ * @returns khc_sock_code_t
  */
 typedef khc_sock_code_t
     (*KHC_CB_SOCK_RECV)
     (void* sock_ctx, char* buffer, size_t length_to_read,
      size_t* out_actual_length);
 
-/** Callback for closing socket.
+/** \brief Callback closes socket.
+ *
  * Applications must implement this callback in the target enviroment.
  *
- * @param [in] socket_context context object.
- *
- * @return If applications succeed to close socket, applications need
- * to return KHC_SOCK_OK. If applications fail to close socket,
- * applications need to return KHC_SOCK_FAIL. If applications want
- * to pend returning success or fail, applications need to return
- * KHC_SOCKETC_AGAIN.
+ * @param [in] sock_ctx context object.
+ * @returns khc_sock_code_t
  */
 typedef khc_sock_code_t
-    (*KHC_CB_SOCK_CLOSE)(void* sock_context);
+    (*KHC_CB_SOCK_CLOSE)(void* sock_ctx);
 
 
 #ifdef __cplusplus
