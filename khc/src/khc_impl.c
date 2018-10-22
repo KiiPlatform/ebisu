@@ -182,6 +182,26 @@ void khc_state_req_line(khc* khc) {
   strcat(request_line, http_version);
   khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, request_line, strlen(request_line));
   if (send_res == KHC_SOCK_OK) {
+    khc->_state = KHC_STATE_REQ_HOST_HEADER;
+    return;
+  }
+  if (send_res == KHC_SOCK_AGAIN) {
+    return;
+  }
+  if (send_res == KHC_SOCK_FAIL) {
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = KHC_ERR_SOCK_SEND;
+    return;
+  }
+}
+
+void khc_state_req_host_header(khc* khc) {
+  const char hdr_key[] = "HOST: ";
+  size_t hdr_len = strlen(hdr_key) + strlen(khc->_host);
+  char buff[hdr_len + 3];
+  snprintf(buff, hdr_len, "%s%s\r\n", hdr_key, khc->_host);
+  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, buff, strlen(buff));
+  if (send_res == KHC_SOCK_OK) {
     khc->_state = KHC_STATE_REQ_HEADER;
     khc->_current_req_header = khc->_req_headers;
     return;
@@ -193,7 +213,7 @@ void khc_state_req_line(khc* khc) {
     khc->_state = KHC_STATE_CLOSE;
     khc->_result = KHC_ERR_SOCK_SEND;
     return;
-  } 
+  }
 }
 
 void khc_state_req_header(khc* khc) {
@@ -516,6 +536,7 @@ const KHC_STATE_HANDLER state_handlers[] = {
   khc_state_connect,
   khc_state_req_line,
   khc_state_req_header,
+  khc_state_req_host_header,
   khc_state_req_header_send,
   khc_state_req_header_send_crlf,
   khc_state_req_header_end,
