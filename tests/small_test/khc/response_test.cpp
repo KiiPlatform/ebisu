@@ -1,5 +1,6 @@
 #include "catch.hpp"
 #include <khc.h>
+#include "khc_impl.h"
 #include "http_test.h"
 #include "test_callbacks.h"
 #include <fstream>
