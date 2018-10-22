@@ -271,7 +271,7 @@ void khc_state_req_header_send_crlf(khc* khc) {
 }
 
 void khc_state_req_header_end(khc* khc) {
-  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, "\r\n", 2);
+  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, "Transfer-Encoding: chunked\r\n\r\n", 30);
   if (send_res == KHC_SOCK_OK) {
     khc->_state = KHC_STATE_REQ_BODY_READ;
     khc->_read_req_end = 0;
@@ -291,15 +291,23 @@ void khc_state_req_body_read(khc* khc) {
   khc->_read_size = khc->_cb_read(khc->_stream_buff, 1, khc->_stream_buff_size, khc->_read_data);
   if (khc->_read_size == 0) {
     khc->_read_req_end = 1;
-    khc->_state = KHC_STATE_RESP_HEADERS_ALLOC;
-  } else if (khc->_read_size > 0) {
-    khc->_state = KHC_STATE_REQ_BODY_SEND;
   }
+  khc->_state = KHC_STATE_REQ_BODY_SEND;
   return;
 }
 
 void khc_state_req_body_send(khc* khc) {
-  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, khc->_stream_buff, khc->_read_size);
+  char size_buff[30];
+  snprintf(size_buff, 29, "%ld\r\n", khc->_read_size);
+  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, size_buff, strlen(size_buff));
+  if (khc->_read_req_end != 1) {
+    if (send_res == KHC_SOCK_OK) {
+      send_res = khc->_cb_sock_send(khc->_sock_ctx_send, khc->_stream_buff, khc->_read_size);
+    }
+    if (send_res == KHC_SOCK_OK) {
+      send_res = khc->_cb_sock_send(khc->_sock_ctx_send, "\r\n", 2);
+    }
+  }
   if (send_res == KHC_SOCK_OK) {
     if (khc->_read_req_end == 1) {
       khc->_state = KHC_STATE_RESP_HEADERS_ALLOC;

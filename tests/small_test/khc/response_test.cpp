@@ -101,7 +101,7 @@ TEST_CASE( "HTTP response test" ) {
   REQUIRE( res == KHC_ERR_OK );
   REQUIRE( khc_get_status_code(&http) == 200 );
   REQUIRE( on_connect_called == 1 );
-  REQUIRE( on_send_called == 2 );
+  REQUIRE( on_send_called == 3 );
   REQUIRE( on_read_called == 1 );
   REQUIRE( on_recv_called == 2 );
   REQUIRE( on_header_called == 12 );

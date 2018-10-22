@@ -85,8 +85,8 @@ TEST_CASE( "HTTP minimal" ) {
   called = false;
   s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
     called = true;
-    REQUIRE( length == 2 );
-    REQUIRE( strncmp(buffer, "\r\n", 2) == 0 );
+    REQUIRE( length == 30 );
+    REQUIRE( strncmp(buffer, "Transfer-Encoding: chunked\r\n\r\n", 30) == 0 );
     return KHC_SOCK_OK;
   };
 
@@ -110,18 +110,18 @@ TEST_CASE( "HTTP minimal" ) {
   REQUIRE( http._read_req_end == 0 );
   REQUIRE( called );
 
-  called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
-    called = true;
-    const char body[] = "http body";
-    REQUIRE( length == strlen(body) );
-    REQUIRE( strncmp(buffer, body, length) == 0 );
+  int index = 0;
+  s_ctx.on_send = [=, &index](void* socket_context, const char* buffer, size_t length) {
+    const char* bodies[] = { "9\r\n", "http body", "\r\n" };
+    REQUIRE( length == strlen(bodies[index]) );
+    REQUIRE( strncmp(buffer, bodies[index], length) == 0 );
+    ++index;
     return KHC_SOCK_OK;
   };
   khc_state_req_body_send(&http);
   REQUIRE( http._state == KHC_STATE_REQ_BODY_READ );
   REQUIRE( http._result == KHC_ERR_OK );
-  REQUIRE( called );
+  REQUIRE( index == 3 );
 
   called = false;
   io_ctx.on_read = [=, &called](char *buffer, size_t size, size_t count, void *userdata) {
@@ -131,10 +131,23 @@ TEST_CASE( "HTTP minimal" ) {
     return 0;
   };
   khc_state_req_body_read(&http);
-  REQUIRE( http._state == KHC_STATE_RESP_HEADERS_ALLOC );
+  REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND );
   REQUIRE( http._result == KHC_ERR_OK );
   REQUIRE( http._read_req_end == 1 );
   REQUIRE( called );
+
+  index = 0;
+  s_ctx.on_send = [=, &index](void* socket_context, const char* buffer, size_t length) {
+    const char* bodies[] = { "0\r\n" };
+    REQUIRE( length == strlen(bodies[index]) );
+    REQUIRE( strncmp(buffer, bodies[index], length) == 0 );
+    ++index;
+    return KHC_SOCK_OK;
+  };
+  khc_state_req_body_send(&http);
+  REQUIRE( http._state == KHC_STATE_RESP_HEADERS_ALLOC );
+  REQUIRE( http._result == KHC_ERR_OK );
+  REQUIRE( index == 1 );
 
   khc_state_resp_headers_alloc(&http);
   REQUIRE( http._state == KHC_STATE_RESP_HEADERS_READ );
