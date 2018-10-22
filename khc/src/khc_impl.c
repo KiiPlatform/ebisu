@@ -197,10 +197,10 @@ void khc_state_req_line(khc* khc) {
 
 void khc_state_req_host_header(khc* khc) {
   const char hdr_key[] = "HOST: ";
-  size_t hdr_len = strlen(hdr_key) + strlen(khc->_host);
-  char buff[hdr_len + 3];
-  snprintf(buff, hdr_len, "%s%s\r\n", hdr_key, khc->_host);
-  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, buff, strlen(buff));
+  size_t hdr_len = strlen(hdr_key) + strlen(khc->_host) + 2;
+  char buff[hdr_len + 1];
+  snprintf(buff, hdr_len + 1, "%s%s\r\n", hdr_key, khc->_host);
+  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, buff, hdr_len);
   if (send_res == KHC_SOCK_OK) {
     khc->_state = KHC_STATE_REQ_HEADER;
     khc->_current_req_header = khc->_req_headers;

@@ -11,6 +11,7 @@ extern "C"
 void khc_state_idle(khc* khc);
 void khc_state_connect(khc* khc);
 void khc_state_req_line(khc* khc);
+void khc_state_req_host_header(khc* khc);
 void khc_state_req_header(khc* khc);
 void khc_state_req_header_send(khc* khc);
 void khc_state_req_header_send_crlf(khc* khc);

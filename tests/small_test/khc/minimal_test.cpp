@@ -61,6 +61,19 @@ TEST_CASE( "HTTP minimal" ) {
   };
 
   khc_state_req_line(&http);
+  REQUIRE( http._state == KHC_STATE_REQ_HOST_HEADER );
+  REQUIRE( http._result == KHC_ERR_OK );
+  REQUIRE( called );
+
+  called = false;
+  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
+    called = true;
+    const char host_hdr[] = "HOST: api.kii.com\r\n";
+    REQUIRE( length == strlen(host_hdr) );
+    REQUIRE( strncmp(buffer, host_hdr, length) == 0 );
+    return KHC_SOCK_OK;
+  };
+  khc_state_req_host_header(&http);
   REQUIRE( http._state == KHC_STATE_REQ_HEADER );
   REQUIRE( http._result == KHC_ERR_OK );
   REQUIRE( called );
