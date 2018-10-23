@@ -35,8 +35,6 @@ TEST_CASE( "HTTP Post" ) {
   // Prepare Req Headers.
   khc_slist* headers = NULL;
   headers = khc_slist_append(headers, x_kii_appid.c_str(), x_kii_appid.length());
-  std::string content_length = "Content-Length: " + std::to_string(body_len);
-  headers = khc_slist_append(headers, content_length.c_str(), content_length.length());
   headers = khc_slist_append(headers, content_type.c_str(), content_type.length());
   headers = khc_slist_append(headers, x_kii_appkey.c_str(), x_kii_appkey.length());
 
