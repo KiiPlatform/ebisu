@@ -85,8 +85,8 @@ TEST_CASE( "HTTP minimal" ) {
   called = false;
   s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
     called = true;
-    REQUIRE( length == 30 );
-    REQUIRE( strncmp(buffer, "Transfer-Encoding: chunked\r\n\r\n", 30) == 0 );
+    REQUIRE( length == 49 );
+    REQUIRE( strncmp(buffer, "Transfer-Encoding: chunked\r\nConnection: Close\r\n\r\n", 49) == 0 );
     return KHC_SOCK_OK;
   };
 
