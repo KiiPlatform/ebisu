@@ -151,7 +151,7 @@ void khc_state_connect(khc* khc) {
 }
 
 static const char schema[] = "https://";
-static const char http_version[] = "HTTP/1.0\r\n";
+static const char http_version[] = "HTTP/1.1\r\n";
 
 static size_t request_line_len(khc* khc) {
   char* method = khc->_method;
@@ -159,7 +159,7 @@ static size_t request_line_len(khc* khc) {
   // Path must be started with '/'
   char* path = khc->_path;
 
-  return ( // example)GET https://api.khc.com/v1/users HTTP1.0\r\n
+  return ( // example)GET https://api.khc.com/v1/users HTTP1.1\r\n
     strlen(method) + 1
     + strlen(schema) + strlen(host) + strlen(path) + 1
     + strlen(http_version)
@@ -292,28 +292,57 @@ void khc_state_req_body_read(khc* khc) {
   if (khc->_read_size == 0) {
     khc->_read_req_end = 1;
   }
-  khc->_state = KHC_STATE_REQ_BODY_SEND;
+  khc->_state = KHC_STATE_REQ_BODY_SEND_SIZE;
   return;
 }
 
-void khc_state_req_body_send(khc* khc) {
+void khc_state_req_body_send_size(khc* khc) {
   char size_buff[30];
-  snprintf(size_buff, 29, "%ld\r\n", khc->_read_size);
-  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, size_buff, strlen(size_buff));
-  if (khc->_read_req_end != 1) {
-    if (send_res == KHC_SOCK_OK) {
-      send_res = khc->_cb_sock_send(khc->_sock_ctx_send, khc->_stream_buff, khc->_read_size);
-    }
-    if (send_res == KHC_SOCK_OK) {
-      send_res = khc->_cb_sock_send(khc->_sock_ctx_send, "\r\n", 2);
-    }
+  int size_len = snprintf(size_buff, 29, "%ld\r\n", khc->_read_size);
+  if (size_len < 3) {
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = KHC_ERR_SOCK_SEND;
+    return;
   }
+  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, size_buff, size_len);
   if (send_res == KHC_SOCK_OK) {
     if (khc->_read_req_end == 1) {
       khc->_state = KHC_STATE_RESP_HEADERS_ALLOC;
     } else {
-      khc->_state = KHC_STATE_REQ_BODY_READ;
+      khc->_state = KHC_STATE_REQ_BODY_SEND;
     }
+    return;
+  }
+  if (send_res == KHC_SOCK_AGAIN) {
+    return;
+  }
+  if (send_res == KHC_SOCK_FAIL) {
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = KHC_ERR_SOCK_SEND;
+    return;
+  }
+}
+
+void khc_state_req_body_send(khc* khc) {
+  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, khc->_stream_buff, khc->_read_size);
+  if (send_res == KHC_SOCK_OK) {
+    khc->_state = KHC_STATE_REQ_BODY_SEND_CRLF;
+    return;
+  }
+  if (send_res == KHC_SOCK_AGAIN) {
+    return;
+  }
+  if (send_res == KHC_SOCK_FAIL) {
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = KHC_ERR_SOCK_SEND;
+    return;
+  }
+}
+
+void khc_state_req_body_send_crlf(khc* khc) {
+  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, "\r\n", 2);
+  if (send_res == KHC_SOCK_OK) {
+    khc->_state = KHC_STATE_REQ_BODY_READ;
     return;
   }
   if (send_res == KHC_SOCK_AGAIN) {
@@ -549,7 +578,9 @@ const KHC_STATE_HANDLER state_handlers[] = {
   khc_state_req_header_send_crlf,
   khc_state_req_header_end,
   khc_state_req_body_read,
+  khc_state_req_body_send_size,
   khc_state_req_body_send,
+  khc_state_req_body_send_crlf,
   khc_state_resp_headers_alloc,
   khc_state_resp_headers_realloc,
   khc_state_resp_headers_read,
