@@ -299,7 +299,7 @@ void khc_state_req_body_read(khc* khc) {
 void khc_state_req_body_send_size(khc* khc) {
   char size_buff[16];
   int size_len = snprintf(size_buff, 15, "%lx\r\n", khc->_read_size);
-  if (size_len < 0) {
+  if (size_len > 15) {
     khc->_state = KHC_STATE_CLOSE;
     khc->_result = KHC_ERR_TOO_LARGE_DATA;
     return;
