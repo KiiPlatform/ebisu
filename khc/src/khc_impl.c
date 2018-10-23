@@ -307,7 +307,7 @@ void khc_state_req_body_send_size(khc* khc) {
   khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, size_buff, size_len);
   if (send_res == KHC_SOCK_OK) {
     if (khc->_read_req_end == 1) {
-      khc->_state = KHC_STATE_RESP_HEADERS_ALLOC;
+      khc->_state = KHC_STATE_REQ_BODY_SEND_CRLF;
     } else {
       khc->_state = KHC_STATE_REQ_BODY_SEND;
     }
@@ -342,7 +342,11 @@ void khc_state_req_body_send(khc* khc) {
 void khc_state_req_body_send_crlf(khc* khc) {
   khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, "\r\n", 2);
   if (send_res == KHC_SOCK_OK) {
-    khc->_state = KHC_STATE_REQ_BODY_READ;
+    if (khc->_read_req_end == 1) {
+      khc->_state = KHC_STATE_RESP_HEADERS_ALLOC;
+    } else {
+      khc->_state = KHC_STATE_REQ_BODY_READ;
+    }
     return;
   }
   if (send_res == KHC_SOCK_AGAIN) {
@@ -572,8 +576,8 @@ const KHC_STATE_HANDLER state_handlers[] = {
   khc_state_idle,
   khc_state_connect,
   khc_state_req_line,
-  khc_state_req_header,
   khc_state_req_host_header,
+  khc_state_req_header,
   khc_state_req_header_send,
   khc_state_req_header_send_crlf,
   khc_state_req_header_end,

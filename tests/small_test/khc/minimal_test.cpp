@@ -171,6 +171,19 @@ TEST_CASE( "HTTP minimal" ) {
     return KHC_SOCK_OK;
   };
   khc_state_req_body_send_size(&http);
+  REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_CRLF );
+  REQUIRE( http._result == KHC_ERR_OK );
+  REQUIRE( called );
+
+  called = false;
+  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
+    called = true;
+    const char body[] = "\r\n";
+    REQUIRE( length == strlen(body) );
+    REQUIRE( strncmp(buffer, body, length) == 0 );
+    return KHC_SOCK_OK;
+  };
+  khc_state_req_body_send_crlf(&http);
   REQUIRE( http._state == KHC_STATE_RESP_HEADERS_ALLOC );
   REQUIRE( http._result == KHC_ERR_OK );
   REQUIRE( called );
