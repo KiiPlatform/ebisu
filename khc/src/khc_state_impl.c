@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include "khc.h"
+#include "khc_impl.h"
 #include "khc_state_impl.h"
 
 khc_code khc_set_cb_sock_connect(
@@ -450,6 +451,7 @@ void khc_state_resp_status_parse(khc* khc) {
 }
 
 void khc_state_resp_headers_callback(khc* khc) {
+  size_t content_length = 0;
   char* header_boundary = strstr(khc->_cb_header_pos, "\r\n");
   size_t header_size = header_boundary - khc->_cb_header_pos;
   size_t header_written = 
@@ -462,11 +464,13 @@ void khc_state_resp_headers_callback(khc* khc) {
     khc->_resp_header_buffer_size = 0;
     return;
   }
-  // check 'Transfer-Encoding: chunked'.
-  // FIXME: check ignore case and [no] spaces after ':'.
-  if (strncmp("Transfer-Encoding: chunked", khc->_cb_header_pos, header_size) == 0) {
+
+  if (_is_chunked_encoding(khc->_cb_header_pos, header_size) == 1) {
     khc->_chunked_resp = 1;
+  } else if (_extract_content_length(khc->_cb_header_pos, header_size, &content_length) == 1) {
+    khc->_resp_content_length = content_length;
   }
+
   if (header_boundary < khc->_body_boundary) {
     khc->_cb_header_pos = header_boundary + 2; // +2 : Skip CRLF
     khc->_cb_header_remaining_size = khc->_cb_header_remaining_size - header_size - 2;

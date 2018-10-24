@@ -110,6 +110,8 @@ khc_code khc_set_zero_excl_cb(khc* khc) {
   khc->_cb_header_remaining_size = 0;
   khc->_body_flagment = NULL;
   khc->_body_flagment_size = 0;
+  khc->_chunked_resp = 0;
+  khc->_resp_content_length = 0;
   khc->_read_end = 0;
   khc->_body_read_size = 0;
   khc->_result = KHC_ERR_OK;
