@@ -199,6 +199,7 @@ typedef struct khc {
 
   char* _body_flagment; /**< \private **/
   size_t _body_flagment_size; /**< \private **/
+  int _body_is_chunked; /**< \private **/
   int _read_end; /**< \private **/
 
   size_t _body_read_size; /**< \private **/

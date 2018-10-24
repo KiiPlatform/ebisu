@@ -462,6 +462,11 @@ void khc_state_resp_headers_callback(khc* khc) {
     khc->_resp_header_buffer_size = 0;
     return;
   }
+  // check 'Transfer-Encoding: chunked'.
+  // FIXME: check ignore case and [no] spaces after ':'.
+  if (strncmp("Transfer-Encoding: chunked", khc->_cb_header_pos, header_size) == 0) {
+    khc->_body_is_chunked = 1;
+  }
   if (header_boundary < khc->_body_boundary) {
     khc->_cb_header_pos = header_boundary + 2; // +2 : Skip CRLF
     khc->_cb_header_remaining_size = khc->_cb_header_remaining_size - header_size - 2;
