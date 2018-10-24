@@ -85,7 +85,6 @@ int _extract_content_length(const char* header, size_t header_length, size_t* ou
                 }
                 break;
             case extract_value:
-                endptr = (char*)&header[i-1];
                 *out_content_length = strtol(&header[i-1], &endptr, 10);
                 return 1;
             default:
