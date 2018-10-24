@@ -1,3 +1,4 @@
+#include <string.h>
 #include "catch.hpp"
 #include <khc.h>
 #include "khc_impl.h"
