@@ -63,6 +63,7 @@ int _is_chunked_encoding(const char* header, size_t header_length) {
 int _extract_content_length(const char* header, size_t header_length, size_t* out_content_length) {
     const char upper_key[] = "CONTENT-LENGTH";
     const char lower_key[] = "content-length";
+    char* endptr = NULL;
 
     header_parser_sts sts = parse_key;
     for (int i=0; i<header_length; ++i) {
@@ -84,7 +85,8 @@ int _extract_content_length(const char* header, size_t header_length, size_t* ou
                 }
                 break;
             case extract_value:
-                *out_content_length = strtol(&header[i-1], NULL, 10);
+                endptr = (char*)&header[i-1];
+                *out_content_length = strtol(&header[i-1], &endptr, 10);
                 return 1;
             default:
                 return 0;
