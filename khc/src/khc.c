@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "khc.h"
-#include "khc_impl.h"
+#include "khc_state_impl.h"
 #include "khc_socket_callback.h"
 
 khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length) {

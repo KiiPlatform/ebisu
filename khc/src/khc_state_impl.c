@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include "khc.h"
-#include "khc_impl.h"
+#include "khc_state_impl.h"
 
 khc_code khc_set_cb_sock_connect(
   khc* khc,
@@ -465,7 +465,7 @@ void khc_state_resp_headers_callback(khc* khc) {
   // check 'Transfer-Encoding: chunked'.
   // FIXME: check ignore case and [no] spaces after ':'.
   if (strncmp("Transfer-Encoding: chunked", khc->_cb_header_pos, header_size) == 0) {
-    khc->_body_is_chunked = 1;
+    khc->_chunked_resp = 1;
   }
   if (header_boundary < khc->_body_boundary) {
     khc->_cb_header_pos = header_boundary + 2; // +2 : Skip CRLF
