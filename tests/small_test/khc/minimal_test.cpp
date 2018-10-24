@@ -334,12 +334,26 @@ TEST_CASE( "_extract_content_length tests" ) {
     REQUIRE( res == 1);
     REQUIRE( len == 123);
   }
-  SECTION( "optional white spaces exist" ) {
+  SECTION( "optional white spaces exist ahead" ) {
     size_t len = 0;
     const char str[] = "content-length:\t \t 45678\r\n";
     int res = _extract_content_length(str, strlen(str) - 2, &len);
     REQUIRE( res == 1);
     REQUIRE( len == 45678);
+  }
+  SECTION( "optional white spaces exist behind" ) {
+    size_t len = 0;
+    const char str[] = "content-length:1122 \t \r\n";
+    int res = _extract_content_length(str, strlen(str) - 2, &len);
+    REQUIRE( res == 1);
+    REQUIRE( len == 1122);
+  }
+  SECTION( "optional white spaces exist both" ) {
+    size_t len = 0;
+    const char str[] = "content-length:  \t5656\t  \r\n";
+    int res = _extract_content_length(str, strlen(str) - 2, &len);
+    REQUIRE( res == 1);
+    REQUIRE( len == 5656);
   }
   SECTION( "ignore case" ) {
     size_t len = 0;
