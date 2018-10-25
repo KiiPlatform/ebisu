@@ -31,6 +31,12 @@ void khc_state_resp_headers_callback(khc* khc);
 void khc_state_resp_body_flagment(khc* khc);
 void khc_state_resp_body_read(khc* khc);
 void khc_state_resp_body_callback(khc* khc);
+
+void khc_state_resp_body_flagment_chunked(khc* khc);
+void khc_state_resp_body_read_size(khc* khc);
+void khc_state_resp_body_read_chunk(khc* khc);
+void khc_state_resp_body_callback_chunked(khc* khc);
+
 void khc_state_close(khc* khc);
 
 typedef void (*KHC_STATE_HANDLER)(khc* khc);

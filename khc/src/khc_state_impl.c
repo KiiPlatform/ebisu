@@ -602,5 +602,11 @@ const KHC_STATE_HANDLER state_handlers[] = {
   khc_state_resp_body_flagment,
   khc_state_resp_body_read,
   khc_state_resp_body_callback,
+
+  khc_state_resp_body_flagment_chunked,
+  khc_state_resp_body_read_size,
+  khc_state_resp_body_read_chunk,
+  khc_state_resp_body_callback_chunked,
+
   khc_state_close
 };
