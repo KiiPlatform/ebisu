@@ -482,7 +482,11 @@ void khc_state_resp_headers_callback(khc* khc) {
     if (body_size > 0) {
       khc->_body_flagment = khc->_body_boundary + 4;
       khc->_body_flagment_size = body_size;
-      khc->_state = KHC_STATE_RESP_BODY_FLAGMENT;
+      if (khc->_chunked_resp) {
+        khc->_state = KHC_STATE_RESP_BODY_FLAGMENT_CHUNKED;
+      } else {
+        khc->_state = KHC_STATE_RESP_BODY_FLAGMENT;
+      }
       return;
     } else {
       free(khc->_resp_header_buffer);
@@ -492,7 +496,11 @@ void khc_state_resp_headers_callback(khc* khc) {
         khc->_state = KHC_STATE_CLOSE;
         return;
       } else {
-        khc->_state = KHC_STATE_RESP_BODY_READ;
+        if (khc->_chunked_resp) {
+          khc->_state = KHC_STATE_RESP_BODY_READ_CHUNK_SIZE;
+        } else {
+          khc->_state = KHC_STATE_RESP_BODY_READ;
+        }
         return;
       }
     }
@@ -558,6 +566,50 @@ void khc_state_resp_body_callback(khc* khc) {
   return;
 }
 
+void khc_state_resp_body_flagment_chunked(khc* khc) {
+  char* start = khc->_body_flagment;
+  int state = 0;
+  long chunk_size = -1;
+  char* chunk_start = NULL;
+  for (int i=0; i<khc->_body_flagment_size; ++i) {
+    if (state == 2) {
+      chunk_start = start + i;
+      break;
+    }
+    switch(state) {
+      case 0:
+        if (start + i == '\r') {
+          state = 1;
+        }
+        continue;
+      case 1:
+        if (start + i == '\n') {
+          chunk_size = strtol(khc->_body_flagment, NULL, 16);
+          state = 2;
+        } else {
+          // Invalid response.
+          khc->_state = KHC_STATE_CLOSE;
+          khc->_result = KHC_ERR_FAIL;
+          return;
+        }
+    }
+  }
+  if (chunk_size >= 0) {
+    khc->_chunk_size = chunk_size;
+    if (chunk_start == NULL) {
+      khc->_state = KHC_STATE_RESP_BODY_READ_CHUNK;
+      return;
+    } else {
+      khc->_chunk_flagment_size = start + khc->_body_flagment_size - chunk_start;
+      khc->_state = KHC_STATE_RESP_BODY_FLAGMENT_BODY;
+    }
+  }
+}
+
+void khc_state_resp_body_read_chunk_size(khc* khc) {}
+void khc_state_resp_body_read_chunk(khc* khc) {}
+void khc_state_resp_body_callback_chunked(khc* khc) {}
+
 void khc_state_close(khc* khc) {
   if (khc->_stream_buff_allocated == 1) {
     free(khc->_stream_buff);
@@ -604,7 +656,7 @@ const KHC_STATE_HANDLER state_handlers[] = {
   khc_state_resp_body_callback,
 
   khc_state_resp_body_flagment_chunked,
-  khc_state_resp_body_read_size,
+  khc_state_resp_body_read_chunk_size,
   khc_state_resp_body_read_chunk,
   khc_state_resp_body_callback_chunked,
 

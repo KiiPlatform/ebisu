@@ -109,7 +109,8 @@ typedef enum khc_state {
   KHC_STATE_RESP_BODY_CALLBACK,
 
   KHC_STATE_RESP_BODY_FLAGMENT_CHUNKED,
-  KHC_STATE_RESP_BODY_READ_SIZE,
+  KHC_STATE_RESP_BODY_FLAGMENT_BODY,
+  KHC_STATE_RESP_BODY_READ_CHUNK_SIZE,
   KHC_STATE_RESP_BODY_READ_CHUNK,
   KHC_STATE_RESP_BODY_CALLBACK_CHUNKED,
   KHC_STATE_CLOSE,
@@ -205,6 +206,9 @@ typedef struct khc {
   char* _body_flagment; /**< \private **/
   size_t _body_flagment_size; /**< \private **/
   int _chunked_resp; /**< \private **/
+  long _chunk_size; /**< \private **/
+  long _chunk_flagment_size; /**< \private **/
+  char* _chunk_start; /**< \private **/
   size_t _resp_content_length; /**< \private **/
   int _read_end; /**< \private **/
 
