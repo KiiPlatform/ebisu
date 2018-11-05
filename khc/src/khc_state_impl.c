@@ -652,8 +652,12 @@ void khc_state_resp_body_read_chunk_body(khc* khc) {
   // TODO: implement me.
 }
 
+/*
 void parse_chunk_body() {
-    if (_stream_data_length >= khc->_chunk_size + 2) {
+    if (khc->_chunk_size == 0) {
+        // read CRLF.
+        state = CLOSE;
+    } else if (_stream_data_length >= khc->_chunk_size + 2) {
         cb_write(_stream_buf, khc->_chunk_size);
         memmove();
         _stream_data_length -= khc->chunk_size;
@@ -673,11 +677,7 @@ void read_chunk_body() {
     cb_write(buf);
     state = PARSE_CHUNK_BODY;
 }
-
-
-void khc_state_resp_body_read_chunk_size(khc* khc) {}
-void khc_state_resp_body_read_chunk(khc* khc) {}
-void khc_state_resp_body_callback_chunked(khc* khc) {}
+*/
 
 void khc_state_close(khc* khc) {
   if (khc->_stream_buff_allocated == 1) {
