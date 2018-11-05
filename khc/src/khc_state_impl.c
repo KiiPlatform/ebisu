@@ -567,6 +567,92 @@ void khc_state_resp_body_callback(khc* khc) {
 }
 
 void khc_state_resp_body_flagment_chunked(khc* khc) {
+  memmove(khc->_stream_buff, khc->_body_flagment, khc->_body_flagment_size);
+  khc->_stream_buff_used_size = khc->_body_flagment_size;
+
+  free(khc->_resp_header_buffer);
+  khc->_resp_header_buffer = NULL;
+  khc->_resp_header_buffer_size = 0;
+
+  khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
+  return;
+}
+
+int _read_chunk_size(const char* buff, size_t buff_size, size_t* out_chunk_size) {
+  int crlf = 0;
+  for(int i = 0; i < buff_size; ++i) {
+    if (buff[i] == '\r') {
+      crlf = 1;
+      continue;
+    } else if (buff[i] == '\n' && crlf == 1) {
+      crlf = 2;
+      break;
+    }
+    crlf = 0;
+  }
+  if (crlf == 2) {
+    *out_size = strtol(buff, NULL, 16);
+  }
+  return (crlf == 2) ? 1 : 0;
+}
+
+void khc_state_resp_body_parse_chunk_size(khc* khc) {
+  size_t chunk_size = 0;
+  int has_chunk_size = _read_chunk_size(khc->_stream_buff, khc->_stream_buff_used_size, &chunk_size);
+  if (has_chunk_size == 1) {
+    khc->_chunk_size = chunk_size;
+    const char* chunk_end = strstr(khc->_stream_buff, "\r\n");
+    size_t remain = khc->_stream_buff_used_size - (chunk_end + 2 - khc->_stream_buff);
+    memmove(khc->_stream_buff, chunk_end + 2, remain);
+    khc->_stream_buff_used_size = remain;
+    khc->state = KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY;
+  } else {
+    khc->state = KHC_STATE_RESP_BODY_READ_CHUNK_SIZE;
+  }
+}
+
+void khc_state_resp_body_read_chunk_size(khc* khc) {
+  size_t read_size = 0;
+  size_t remain = khc->_stream_buff_size - khc->_stream_buff_used_size;
+  if (remain <= 0) {
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = KHC_ERR_TOO_LARGE_DATA;
+    return;
+  }
+  khc_sock_code_t read_res = khc->_cb_sock_recv(
+      khc->_sock_ctx_recv,
+      &khc->_stream_buff[khc->_stream_buff_used_size],
+      remain,
+      &read_size);
+  if (read_res == KHC_SOCK_OK) {
+    khc->_stream_buff_used_size += read_size;
+    if (read_size == 0) {
+      khc->_state = KHC_STATE_CLOSE;
+      khc->_result = KHC_ERR_FAIL;
+      return;
+    }
+    khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
+    return;
+  }
+  if (read_res == KHC_SOCK_AGAIN) {
+    return;
+  }
+  if (read_res == KHC_SOCK_FAIL) {
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = KHC_ERR_SOCK_RECV;
+    return;
+  }
+}
+
+void khc_state_resp_body_parse_chunk_body(khc* khc) {
+  // TODO: implement me.
+}
+
+void khc_state_resp_body_read_chunk_body(khc* khc) {
+  // TODO: implement me.
+}
+
+void khc_state_resp_body_flagment_chunked(khc* khc) {
   char* start = khc->_body_flagment;
   int state = 0;
   long chunk_size = -1;
