@@ -590,6 +590,10 @@ void khc_state_resp_body_flagment_chunked(khc* khc) {
           // Invalid response.
           khc->_state = KHC_STATE_CLOSE;
           khc->_result = KHC_ERR_FAIL;
+
+          free(khc->_resp_header_buffer);
+          khc->_resp_header_buffer = NULL;
+          khc->_resp_header_buffer_size = 0;
           return;
         }
     }
@@ -598,6 +602,10 @@ void khc_state_resp_body_flagment_chunked(khc* khc) {
     khc->_chunk_size = chunk_size;
     if (chunk_start == NULL) {
       khc->_state = KHC_STATE_RESP_BODY_READ_CHUNK;
+
+      free(khc->_resp_header_buffer);
+      khc->_resp_header_buffer = NULL;
+      khc->_resp_header_buffer_size = 0;
       return;
     } else {
       khc->_chunk_flagment_size = start + khc->_body_flagment_size - chunk_start;
@@ -605,6 +613,60 @@ void khc_state_resp_body_flagment_chunked(khc* khc) {
     }
   }
 }
+
+void body_flagment_chunked() {
+    memmove(_stream_buf, &header[chunk_start], **);
+
+    state = PARSE_CHUNK_SIZE;
+}
+
+void parse_chunk_size() {
+    if (_read_size_line(_stream_buf, _stream_data_length, &khc->_chunk_size)) {
+        p = strstr(_stream_buf, CRLF);
+        khc->_chunk_size = ();
+        if (_chunk_size == 0) {
+            // finish.
+            // 0CRFL + CRLF
+            state = KHC_STATE_CLOSE;
+        }
+        if (p + 2 - _stream_buf < _stream_data_length) {
+            memmove(&_stream_buf[0], &_stream_buf[p + 2], **);
+            _stream_data_length = _stream_data_length - (p + 2 - _stream_buf);
+        }
+        state = PARSE_CHUNK_BODY;
+    } else {
+        state = PARSE_CHUNK_BODY;
+    }
+}
+
+void read_chunk_size() {
+        sock_recv(&_stream_buf[_stream_data_length], _stream_buf_max - _stream_data_length, &read_size);
+        _stream_data_length += read_size;
+    }
+}
+
+void parse_chunk_body() {
+    if (_stream_data_length >= khc->_chunk_size + 2) {
+        cb_write(_stream_buf, khc->_chunk_size);
+        memmove();
+        _stream_data_length -= khc->chunk_size;
+        state = CHUNK_SIZE;
+    } else if (_stream_data_length > 0) {
+        cb_write(_steam_buf);
+        _write_length = _stream_data_length;
+        _stream_data_length = 0;
+        state = READ_CHUNK_BODY
+    } else {
+        state = READ_CHUNK_BODY
+    }
+}
+
+void read_chunk_body() {
+    sock_recv(buf, (chunk_size - write_lenght or _stream_buf_max), out_read);
+    cb_write(buf);
+    state = PARSE_CHUNK_BODY;
+}
+
 
 void khc_state_resp_body_read_chunk_size(khc* khc) {}
 void khc_state_resp_body_read_chunk(khc* khc) {}
