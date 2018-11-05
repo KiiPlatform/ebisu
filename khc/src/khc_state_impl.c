@@ -591,7 +591,7 @@ int _read_chunk_size(const char* buff, size_t buff_size, size_t* out_chunk_size)
     crlf = 0;
   }
   if (crlf == 2) {
-    *out_size = strtol(buff, NULL, 16);
+    *out_chunk_size = strtol(buff, NULL, 16);
   }
   return (crlf == 2) ? 1 : 0;
 }
@@ -605,9 +605,9 @@ void khc_state_resp_body_parse_chunk_size(khc* khc) {
     size_t remain = khc->_stream_buff_used_size - (chunk_end + 2 - khc->_stream_buff);
     memmove(khc->_stream_buff, chunk_end + 2, remain);
     khc->_stream_buff_used_size = remain;
-    khc->state = KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY;
+    khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY;
   } else {
-    khc->state = KHC_STATE_RESP_BODY_READ_CHUNK_SIZE;
+    khc->_state = KHC_STATE_RESP_BODY_READ_CHUNK_SIZE;
   }
 }
 
@@ -725,9 +725,10 @@ const KHC_STATE_HANDLER state_handlers[] = {
   khc_state_resp_body_callback,
 
   khc_state_resp_body_flagment_chunked,
+  khc_state_resp_body_parse_chunk_size,
   khc_state_resp_body_read_chunk_size,
-  khc_state_resp_body_read_chunk,
-  khc_state_resp_body_callback_chunked,
+  khc_state_resp_body_parse_chunk_body,
+  khc_state_resp_body_read_chunk_body,
 
   khc_state_close
 };
