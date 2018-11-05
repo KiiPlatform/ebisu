@@ -184,6 +184,7 @@ typedef struct khc {
 
   char* _stream_buff; /**< \private **/
   size_t _stream_buff_size; /**< \private **/
+  size_t _stream_buff_used_size; /**< \private **/
   int _stream_buff_allocated; /**< \private **/
 
   size_t _read_size; /**< \private **/

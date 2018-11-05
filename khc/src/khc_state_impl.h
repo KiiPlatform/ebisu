@@ -33,9 +33,10 @@ void khc_state_resp_body_read(khc* khc);
 void khc_state_resp_body_callback(khc* khc);
 
 void khc_state_resp_body_flagment_chunked(khc* khc);
+void khc_state_resp_body_parse_chunk_size(khc* khc);
 void khc_state_resp_body_read_chunk_size(khc* khc);
-void khc_state_resp_body_read_chunk(khc* khc);
-void khc_state_resp_body_callback_chunked(khc* khc);
+void khc_state_resp_body_parse_chunk_body(khc* khc);
+void khc_state_resp_body_read_chunk_body(khc* khc);
 
 void khc_state_close(khc* khc);
 
