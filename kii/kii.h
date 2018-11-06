@@ -286,7 +286,6 @@ kii_code_t kii_upload_object_body(
 		const kii_bucket_t* bucket,
 		const char* object_id,
 		const char* body_content_type,
-        size_t body_content_length,
         const KII_CB_READ read_cb,
         void* userdata
 );
@@ -429,7 +428,6 @@ kii_code_t kii_ti_put_thing_type(
 
 kii_code_t kii_ti_put_state(
     kii_t* kii,
-    size_t content_length,
     KII_CB_READ state_read_cb,
     void* state_read_cb_data,
     const char* opt_content_type,

@@ -117,7 +117,7 @@ TEST_CASE("TI Tests")
             };
         kiiltest::RWFunc ctx;
         ctx.on_read = on_read;
-        res = kii_ti_put_state(&kii, body.length(), kiiltest::read_cb, &ctx, "application/json", NULL);
+        res = kii_ti_put_state(&kii, kiiltest::read_cb, &ctx, "application/json", NULL);
 
         REQUIRE( res == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 204 );

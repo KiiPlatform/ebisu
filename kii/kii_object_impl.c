@@ -247,8 +247,7 @@ kii_code_t _upload_body(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
-        const char* body_content_type,
-        size_t body_content_length)
+        const char* body_content_type)
 {
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "PUT");
@@ -278,12 +277,6 @@ kii_code_t _upload_body(
     if (ret != KII_ERR_OK) {
         
         return ret;
-    }
-
-    ret = _set_content_length(kii, body_content_length);
-    if (ret != KII_ERR_OK) {
-        _req_headers_free_all(kii);
-        return KII_ERR_TOO_LARGE_DATA;
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
