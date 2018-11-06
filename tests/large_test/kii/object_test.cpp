@@ -125,7 +125,7 @@ TEST_CASE("Object Tests")
                 };
                 kiiltest::RWFunc ctx;
                 ctx.on_read = on_read;
-                kii_code_t upload_res = kii_upload_object_body(&kii, &bucket, obj_id.id, "text/plain", body.length(), kiiltest::read_cb, &ctx);
+                kii_code_t upload_res = kii_upload_object_body(&kii, &bucket, obj_id.id, "text/plain", kiiltest::read_cb, &ctx);
                 REQUIRE( khc_get_status_code(&kii._khc) == 200 );
                 REQUIRE( upload_res == KII_ERR_OK );
 
