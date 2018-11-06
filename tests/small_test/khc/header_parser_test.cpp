@@ -126,3 +126,41 @@ TEST_CASE( "_extract_content_length tests" ) {
     REQUIRE( len == 0);
   }
 }
+
+TEST_CASE( "_read_chunk_size test" ) {
+  SECTION( "chunk size line exists" ) {
+    const char* buff = "123\r\n";
+    size_t out_size = 0;
+    int res = _read_chunk_size(buff, strlen(buff), &out_size);
+    REQUIRE( res == 1);
+    REQUIRE( out_size == 0x123 );
+  }
+  SECTION( "no hex" ) {
+    const char* buff = "1z3\r\n";
+    size_t out_size = 0;
+    int res = _read_chunk_size(buff, strlen(buff), &out_size);
+    REQUIRE( res == 1);
+    REQUIRE( out_size == 0x1 );
+  }
+  SECTION( "LF no exists" ) {
+    const char* buff = "123\r";
+    size_t out_size = 0;
+    int res = _read_chunk_size(buff, strlen(buff), &out_size);
+    REQUIRE( res == 0);
+    REQUIRE( out_size == 0 );
+  }
+  SECTION( "CRLF no exists" ) {
+    const char* buff = "123";
+    size_t out_size = 0;
+    int res = _read_chunk_size(buff, strlen(buff), &out_size);
+    REQUIRE( res == 0);
+    REQUIRE( out_size == 0 );
+  }
+  SECTION( "empty string" ) {
+    const char* buff = "";
+    size_t out_size = 0;
+    int res = _read_chunk_size(buff, strlen(buff), &out_size);
+    REQUIRE( res == 0);
+    REQUIRE( out_size == 0 );
+  }
+}

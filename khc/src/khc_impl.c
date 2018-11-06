@@ -92,3 +92,21 @@ int _extract_content_length(const char* header, size_t header_length, size_t* ou
     }
     return 0;
 }
+
+int _read_chunk_size(const char* buff, size_t buff_size, size_t* out_chunk_size) {
+    int crlf = 0;
+    for(int i = 0; i < buff_size; ++i) {
+        if (buff[i] == '\r') {
+            crlf = 1;
+            continue;
+        } else if (buff[i] == '\n' && crlf == 1) {
+            crlf = 2;
+            break;
+        }
+        crlf = 0;
+    }
+    if (crlf == 2) {
+        *out_chunk_size = strtol(buff, NULL, 16);
+    }
+    return (crlf == 2) ? 1 : 0;
+}

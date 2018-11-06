@@ -13,6 +13,7 @@ int _is_chunked_encoding(const char* header, size_t header_length);
 
 int _extract_content_length(const char* header, size_t header_length, size_t* out_content_length);
 
+int _read_chunk_size(const char* buff, size_t buff_size, size_t* out_chunk_size);
 
 #ifdef __cplusplus
 }
