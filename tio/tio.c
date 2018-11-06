@@ -254,7 +254,6 @@ static void* _update_state(void* data) {
         if (state_size > 0) {
             kii_code_t res = kii_ti_put_state(
                 &updater->_kii,
-                state_size,
                 updater->_state_reader,
                 updater->_state_reader_data,
                 NULL,
