@@ -568,7 +568,7 @@ void khc_state_resp_body_callback(khc* khc) {
 
 void khc_state_resp_body_flagment_chunked(khc* khc) {
   memmove(khc->_stream_buff, khc->_body_flagment, khc->_body_flagment_size);
-  khc->_stream_buff_used_size = khc->_body_flagment_size;
+  khc->_body_read_size = khc->_body_flagment_size;
 
   free(khc->_resp_header_buffer);
   khc->_resp_header_buffer = NULL;
@@ -598,14 +598,19 @@ int _read_chunk_size(const char* buff, size_t buff_size, size_t* out_chunk_size)
 
 void khc_state_resp_body_parse_chunk_size(khc* khc) {
   size_t chunk_size = 0;
-  int has_chunk_size = _read_chunk_size(khc->_stream_buff, khc->_stream_buff_used_size, &chunk_size);
+  int has_chunk_size = _read_chunk_size(khc->_stream_buff, khc->_body_read_size, &chunk_size);
   if (has_chunk_size == 1) {
     khc->_chunk_size = chunk_size;
+    khc->_chunk_size_written = 0;
     const char* chunk_end = strstr(khc->_stream_buff, "\r\n");
-    size_t remain = khc->_stream_buff_used_size - (chunk_end + 2 - khc->_stream_buff);
+    size_t remain = khc->_body_read_size - (chunk_end + 2 - khc->_stream_buff);
     memmove(khc->_stream_buff, chunk_end + 2, remain);
-    khc->_stream_buff_used_size = remain;
-    khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY;
+    khc->_body_read_size = remain;
+    if (chunk_size > 0) {
+      khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY;
+    } else {
+      khc->_state = KHC_STATE_RESP_BODY_SKIP_TRAILERS;
+    }
   } else {
     khc->_state = KHC_STATE_RESP_BODY_READ_CHUNK_SIZE;
   }
@@ -613,7 +618,7 @@ void khc_state_resp_body_parse_chunk_size(khc* khc) {
 
 void khc_state_resp_body_read_chunk_size(khc* khc) {
   size_t read_size = 0;
-  size_t remain = khc->_stream_buff_size - khc->_stream_buff_used_size;
+  size_t remain = khc->_stream_buff_size - khc->_body_read_size;
   if (remain <= 0) {
     khc->_state = KHC_STATE_CLOSE;
     khc->_result = KHC_ERR_TOO_LARGE_DATA;
@@ -621,11 +626,11 @@ void khc_state_resp_body_read_chunk_size(khc* khc) {
   }
   khc_sock_code_t read_res = khc->_cb_sock_recv(
       khc->_sock_ctx_recv,
-      &khc->_stream_buff[khc->_stream_buff_used_size],
+      &khc->_stream_buff[khc->_body_read_size],
       remain,
       &read_size);
   if (read_res == KHC_SOCK_OK) {
-    khc->_stream_buff_used_size += read_size;
+    khc->_body_read_size += read_size;
     if (read_size == 0) {
       khc->_state = KHC_STATE_CLOSE;
       khc->_result = KHC_ERR_FAIL;
@@ -645,39 +650,115 @@ void khc_state_resp_body_read_chunk_size(khc* khc) {
 }
 
 void khc_state_resp_body_parse_chunk_body(khc* khc) {
-  // TODO: implement me.
+  size_t target_size =
+      khc->_chunk_size > khc->_body_read_size + khc->_chunk_size_written ?
+      khc->_body_read_size :
+      khc->_chunk_size - khc->_chunk_size_written;
+  size_t written = khc->_cb_write(khc->_stream_buff, 1, target_size, khc->_write_data);
+  if (written < target_size) { // Error in write callback.
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = KHC_ERR_WRITE_CALLBACK;
+    return;
+  }
+  khc->_chunk_size_written += target_size;
+  if (khc->_chunk_size > khc->_chunk_size_written) {
+    khc->_state = KHC_STATE_RESP_BODY_READ_CHUNK_BODY;
+  } else {
+    size_t remain = khc->_body_read_size - target_size;
+    memmove(khc->_stream_buff, &khc->_stream_buff[target_size], remain);
+    khc->_body_read_size = remain;
+    khc->_state = KHC_STATE_RESP_BODY_SKIP_CHUNK_BODY_CRLF;
+    return;
+  }
+  return;
 }
 
 void khc_state_resp_body_read_chunk_body(khc* khc) {
-  // TODO: implement me.
-}
-
-/*
-void parse_chunk_body() {
-    if (khc->_chunk_size == 0) {
-        // read CRLF.
-        state = CLOSE;
-    } else if (_stream_data_length >= khc->_chunk_size + 2) {
-        cb_write(_stream_buf, khc->_chunk_size);
-        memmove();
-        _stream_data_length -= khc->chunk_size;
-        state = CHUNK_SIZE;
-    } else if (_stream_data_length > 0) {
-        cb_write(_steam_buf);
-        _write_length = _stream_data_length;
-        _stream_data_length = 0;
-        state = READ_CHUNK_BODY
-    } else {
-        state = READ_CHUNK_BODY
+  size_t read_size = 0;
+  khc_sock_code_t read_res = khc->_cb_sock_recv(
+      khc->_sock_ctx_recv,
+      khc->_stream_buff,
+      khc->_stream_buff_size,
+      &read_size);
+  if (read_res == KHC_SOCK_OK) {
+    if (read_size == 0) {
+      khc->_state = KHC_STATE_CLOSE;
+      khc->_result = KHC_ERR_FAIL;
+      return;
     }
+    khc->_body_read_size = read_size;
+    khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY;
+    return;
+  }
+  if (read_res == KHC_SOCK_AGAIN) {
+    return;
+  }
+  if (read_res == KHC_SOCK_FAIL) {
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = KHC_ERR_SOCK_RECV;
+    return;
+  }
 }
 
-void read_chunk_body() {
-    sock_recv(buf, (chunk_size - write_lenght or _stream_buf_max), out_read);
-    cb_write(buf);
-    state = PARSE_CHUNK_BODY;
+void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
+  if (khc->_body_read_size < 2) {
+    size_t tmp_size = 2 - khc->_body_read_size;
+    char tmp[tmp_size];
+    size_t read_size = 0;
+    khc_sock_code_t read_res = khc->_cb_sock_recv(
+        khc->_sock_ctx_recv,
+        tmp,
+        tmp_size,
+        &read_size);
+    if (read_res == KHC_SOCK_OK) {
+      if (read_size == 0) {
+        khc->_state = KHC_STATE_CLOSE;
+        khc->_result = KHC_ERR_FAIL;
+        return;
+      }
+      khc->_body_read_size = 0;
+      khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
+      return;
+    }
+    if (read_res == KHC_SOCK_AGAIN) {
+      return;
+    }
+    if (read_res == KHC_SOCK_FAIL) {
+      khc->_state = KHC_STATE_CLOSE;
+      khc->_result = KHC_ERR_SOCK_RECV;
+      return;
+    }
+  } else {
+    size_t remain = khc->_body_read_size - 2;
+    memmove(khc->_stream_buff, &khc->_stream_buff[2], remain);
+    khc->_body_read_size = remain;
+    khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
+  }
 }
-*/
+
+void khc_state_resp_body_skip_trailers(khc* khc) {
+  size_t read_size = 0;
+  khc_sock_code_t read_res = khc->_cb_sock_recv(
+      khc->_sock_ctx_recv,
+      khc->_stream_buff,
+      khc->_stream_buff_size,
+      &read_size);
+  if (read_res == KHC_SOCK_OK) {
+    if (read_size == 0) {
+      khc->_state = KHC_STATE_CLOSE;
+      return;
+    }
+    return;
+  }
+  if (read_res == KHC_SOCK_AGAIN) {
+    return;
+  }
+  if (read_res == KHC_SOCK_FAIL) {
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = KHC_ERR_SOCK_RECV;
+    return;
+  }
+}
 
 void khc_state_close(khc* khc) {
   if (khc->_stream_buff_allocated == 1) {
@@ -729,6 +810,8 @@ const KHC_STATE_HANDLER state_handlers[] = {
   khc_state_resp_body_read_chunk_size,
   khc_state_resp_body_parse_chunk_body,
   khc_state_resp_body_read_chunk_body,
+  khc_state_resp_body_skip_chunk_body_crlf,
+  khc_state_resp_body_skip_trailers,
 
   khc_state_close
 };

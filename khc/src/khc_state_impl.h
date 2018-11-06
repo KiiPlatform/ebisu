@@ -37,6 +37,8 @@ void khc_state_resp_body_parse_chunk_size(khc* khc);
 void khc_state_resp_body_read_chunk_size(khc* khc);
 void khc_state_resp_body_parse_chunk_body(khc* khc);
 void khc_state_resp_body_read_chunk_body(khc* khc);
+void khc_state_resp_body_skip_chunk_body_crlf(khc* khc);
+void khc_state_resp_body_skip_trailers(khc* khc);
 
 void khc_state_close(khc* khc);
 
