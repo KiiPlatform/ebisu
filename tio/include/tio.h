@@ -153,7 +153,7 @@ void tio_updater_set_interval(tio_updater_t* updater, size_t update_interval);
 void tio_updater_set_json_parser_resource(tio_updater_t* updater, jkii_resource_t* resource);
 
 void tio_updater_set_json_parser_resource_cb(
-    tio_handler_t* updater,
+    tio_updater_t* updater,
     JKII_RESOURCE_ALLOC_CB alloc_cb,
     JKII_RESOURCE_FREE_CB free_cb);
 

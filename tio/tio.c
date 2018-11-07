@@ -141,6 +141,21 @@ static void _cb_receive_push(char* palyload, size_t payload_length, void* userda
     }
 }
 
+void tio_handler_set_json_parser_resource(
+    tio_handler_t* handler,
+    jkii_resource_t* resource)
+{
+    kii_set_json_parser_resource(&handler->_kii, resource);
+}
+
+void tio_handler_set_json_parser_resource_cb(
+    tio_handler_t* handler,
+    JKII_RESOURCE_ALLOC_CB alloc_cb,
+    JKII_RESOURCE_FREE_CB free_cb)
+{
+    kii_set_json_parser_resource_cb(&handler->_kii, alloc_cb, free_cb);
+}
+
 tio_code_t tio_handler_start(
     tio_handler_t* handler,
     const tio_author_t* author,
@@ -267,6 +282,21 @@ static void* _update_state(void* data) {
         }
     }
     return NULL;
+}
+
+void tio_updater_set_json_parser_resource(
+    tio_updater_t* updater,
+    jkii_resource_t* resource)
+{
+    kii_set_json_parser_resource(&updater->_kii, resource);
+}
+
+void tio_updater_set_json_parser_resource_cb(
+    tio_updater_t* updater,
+    JKII_RESOURCE_ALLOC_CB alloc_cb,
+    JKII_RESOURCE_FREE_CB free_cb)
+{
+    kii_set_json_parser_resource_cb(&updater->_kii, alloc_cb, free_cb);
 }
 
 tio_code_t tio_updater_start(
