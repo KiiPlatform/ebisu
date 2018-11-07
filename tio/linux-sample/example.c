@@ -50,7 +50,7 @@ void updater_init(
 
     tio_updater_set_interval(updater, EX_STATE_UPDATE_PERIOD);
 
-    kii_set_json_parser_resource(&updater->_kii, resource);
+    tio_updater_set_json_parser_resource(updater, resource);
 }
 
 const char send_file[] = "state.json";
@@ -137,7 +137,7 @@ void handler_init(
 
     tio_handler_set_keep_alive_interval(handler, 0);
 
-    kii_set_json_parser_resource(&handler->_kii, resource);
+    tio_handler_set_json_parser_resource(handler, resource);
 }
 
 tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, void* userdata)
