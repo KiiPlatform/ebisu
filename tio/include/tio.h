@@ -7,6 +7,7 @@ extern "C" {
 
 #include "kii.h"
 #include "khc.h"
+#include "jkii.h"
 
 extern const char TIO_TASK_NAME_UPDATE_STATE[];
 
@@ -118,6 +119,13 @@ void tio_handler_set_keep_alive_interval(tio_handler_t* handler, size_t keep_ali
 
 void tio_handler_set_app(tio_handler_t* handler, const char* app_id, const char* host);
 
+void tio_handler_set_json_parser_resource(tio_handler_t* handler, jkii_resource_t* resource);
+
+void tio_handler_set_json_parser_resource_cb(
+    tio_handler_t* handler,
+    JKII_RESOURCE_ALLOC_CB alloc_cb,
+    JKII_RESOURCE_FREE_CB free_cb);
+
 tio_code_t tio_handler_start(
     tio_handler_t* handler,
     const tio_author_t* author,
@@ -141,6 +149,13 @@ void tio_updater_set_buff(tio_updater_t* updater, char* buff, size_t buff_size);
 void tio_updater_set_app(tio_updater_t* updater, const char* app_id, const char* host);
 
 void tio_updater_set_interval(tio_updater_t* updater, size_t update_interval);
+
+void tio_updater_set_json_parser_resource(tio_updater_t* updater, jkii_resource_t* resource);
+
+void tio_updater_set_json_parser_resource_cb(
+    tio_handler_t* updater,
+    JKII_RESOURCE_ALLOC_CB alloc_cb,
+    JKII_RESOURCE_FREE_CB free_cb);
 
 tio_code_t tio_updater_start(
     tio_updater_t* updater,
