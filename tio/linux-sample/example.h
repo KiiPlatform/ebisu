@@ -7,7 +7,6 @@ extern 'C' {
 
 /* Go to https:/developer.kii.com and create app for you! */
 const char EX_APP_ID[] = "fj9xy2fsp0ld";
-const char EX_APP_KEY[] = "";
 /* JP: "api-jp.kii.com" */
 /* US: "api.kii.com" */
 /* SG: "api-sg.kii.com" */
