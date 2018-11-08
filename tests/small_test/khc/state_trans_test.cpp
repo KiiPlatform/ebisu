@@ -12,7 +12,7 @@ TEST_CASE( "HTTP minimal" ) {
   khc http;
   khc_set_zero(&http);
   const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
-  const size_t resp_header_buff_size = RESP_HEADER_BUFF_SIZE;
+  const size_t resp_header_buff_size = buff_size;
 
   khct::http::Resp resp;
   resp.headers = { "HTTP/1.0 200 OK" };
@@ -262,7 +262,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   khc http;
   khc_set_zero(&http);
   const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
-  const size_t resp_header_buff_size = RESP_HEADER_BUFF_SIZE;
+  const size_t resp_header_buff_size = buff_size;
 
   khct::http::Resp resp;
   resp.headers = {
