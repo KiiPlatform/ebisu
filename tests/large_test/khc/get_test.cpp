@@ -3,7 +3,7 @@
 #include "catch.hpp"
 #include <khc.h>
 #include "secure_socket_impl.h"
-#include "khc_impl.h"
+#include "khc_state_impl.h"
 #include "test_callbacks.h"
 
 TEST_CASE( "HTTP Get" ) {

@@ -376,7 +376,6 @@ kii_code_t _get_firmware_version(
 
 kii_code_t _put_state(
         kii_t* kii,
-        size_t content_length,
         KII_CB_READ state_read_cb,
         void* state_read_cb_data,
         const char* opt_content_type,
@@ -417,12 +416,6 @@ kii_code_t _put_state(
         return ret;
     }
 
-    ret = _set_content_length(kii, content_length);
-    if (ret != KII_ERR_OK) {
-        _req_headers_free_all(kii);
-        return ret;
-    }
-
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_set_cb_read(&kii->_khc, state_read_cb, state_read_cb_data);
     khc_code code = khc_perform(&kii->_khc);
@@ -439,6 +432,6 @@ kii_code_t _put_state(
         return KII_ERR_RESP_STATUS;
     }
 
-    return KII_ERR_OK;    
+    return KII_ERR_OK;
 }
 

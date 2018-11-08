@@ -107,6 +107,15 @@ typedef enum khc_state {
   KHC_STATE_RESP_BODY_FLAGMENT,
   KHC_STATE_RESP_BODY_READ,
   KHC_STATE_RESP_BODY_CALLBACK,
+
+  KHC_STATE_RESP_BODY_FLAGMENT_CHUNKED,
+  KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE,
+  KHC_STATE_RESP_BODY_READ_CHUNK_SIZE,
+  KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY,
+  KHC_STATE_RESP_BODY_READ_CHUNK_BODY,
+  KHC_STATE_RESP_BODY_SKIP_CHUNK_BODY_CRLF,
+  KHC_STATE_RESP_BODY_SKIP_TRAILERS,
+
   KHC_STATE_CLOSE,
   KHC_STATE_FINISHED,
 } khc_state;
@@ -199,6 +208,10 @@ typedef struct khc {
 
   char* _body_flagment; /**< \private **/
   size_t _body_flagment_size; /**< \private **/
+  int _chunked_resp; /**< \private **/
+  long _chunk_size; /**< \private **/
+  long _chunk_size_written; /**< \private **/
+  size_t _resp_content_length; /**< \private **/
   int _read_end; /**< \private **/
 
   size_t _body_read_size; /**< \private **/

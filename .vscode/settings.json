@@ -34,6 +34,7 @@
     "atomic": "c",
     "limits": "c",
     "ratio": "c",
-    "type_traits": "c"
+    "type_traits": "c",
+    "stdlib.h": "c"
   }
 }
