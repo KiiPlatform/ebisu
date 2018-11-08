@@ -153,7 +153,7 @@ int main(int argc, char** argv)
 
     tio_updater_t updater;
     tio_handler_t handler;
-    char updater_buff[EX_STATE_UPDATER_BUFF_SIZE];
+    char updater_buff[STATE_UPDATER_BUFF_SIZE];
     socket_context_t updater_ctx;
     char kii_buff[EX_COMMAND_HANDLER_BUFF_SIZE];
     socket_context_t http_ctx;
@@ -166,11 +166,11 @@ int main(int argc, char** argv)
     updater_file_context_t updater_file_ctx;
     kii_code_t result;
 
-    memset(updater_buff, 0x00, sizeof(char) * EX_STATE_UPDATER_BUFF_SIZE);
+    memset(updater_buff, 0x00, sizeof(char) * STATE_UPDATER_BUFF_SIZE);
     updater_init(
             &updater,
             updater_buff,
-            EX_STATE_UPDATER_BUFF_SIZE,
+            STATE_UPDATER_BUFF_SIZE,
             &updater_ctx,
             &updater_resource);
     memset(kii_buff, 0x00, sizeof(char) * EX_COMMAND_HANDLER_BUFF_SIZE);
