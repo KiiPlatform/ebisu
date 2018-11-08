@@ -155,7 +155,7 @@ int main(int argc, char** argv)
     tio_handler_t handler;
     char updater_buff[STATE_UPDATER_BUFF_SIZE];
     socket_context_t updater_ctx;
-    char kii_buff[EX_COMMAND_HANDLER_BUFF_SIZE];
+    char kii_buff[COMMAND_HANDLER_HTTP_BUFF_SIZE];
     socket_context_t http_ctx;
     char mqtt_buff[EX_MQTT_BUFF_SIZE];
     socket_context_t mqtt_ctx;
@@ -173,12 +173,12 @@ int main(int argc, char** argv)
             STATE_UPDATER_BUFF_SIZE,
             &updater_ctx,
             &updater_resource);
-    memset(kii_buff, 0x00, sizeof(char) * EX_COMMAND_HANDLER_BUFF_SIZE);
+    memset(kii_buff, 0x00, sizeof(char) * COMMAND_HANDLER_HTTP_BUFF_SIZE);
     memset(mqtt_buff, 0x00, sizeof(char) * EX_MQTT_BUFF_SIZE);
     handler_init(
             &handler,
             kii_buff,
-            EX_COMMAND_HANDLER_BUFF_SIZE,
+            COMMAND_HANDLER_HTTP_BUFF_SIZE,
             &http_ctx,
             mqtt_buff,
             EX_MQTT_BUFF_SIZE,
