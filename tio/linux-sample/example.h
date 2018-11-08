@@ -14,8 +14,8 @@ const char KII_APP_ID[] = "fj9xy2fsp0ld";
 const char KII_APP_HOST[] = "api-jp.kii.com";
 
 #define COMMAND_HANDLER_HTTP_BUFF_SIZE 4096
+#define COMMAND_HANDLER_MQTT_BUFF_SIZE 2048
 #define STATE_UPDATER_BUFF_SIZE 4096
-#define EX_MQTT_BUFF_SIZE 2048
 #define EX_STATE_UPDATE_PERIOD 60
 
 #ifdef __cplusplus
