@@ -106,8 +106,8 @@ size_t updater_cb_read(char *buffer, size_t size, size_t count, void *userdata)
 
 void handler_init(
         tio_handler_t* handler,
-        char* kii_buffer,
-        int kii_buffer_size,
+        char* http_buffer,
+        int http_buffer_size,
         void* http_ssl_ctx,
         char* mqtt_buffer,
         int mqtt_buffer_size,
@@ -121,19 +121,18 @@ void handler_init(
     tio_handler_set_cb_task_create(handler, task_create_cb_impl);
     tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl);
 
-    tio_handler_set_http_buff(handler, kii_buffer, kii_buffer_size);
-
     tio_handler_set_cb_sock_connect_http(handler, sock_cb_connect, http_ssl_ctx);
     tio_handler_set_cb_sock_send_http(handler, sock_cb_send, http_ssl_ctx);
     tio_handler_set_cb_sock_recv_http(handler, sock_cb_recv, http_ssl_ctx);
     tio_handler_set_cb_sock_close_http(handler, sock_cb_close, http_ssl_ctx);
 
-    tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
-
     tio_handler_set_cb_sock_connect_mqtt(handler, sock_cb_connect, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_send_mqtt(handler, sock_cb_send, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
+
+    tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);
+    tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
 
     tio_handler_set_keep_alive_interval(handler, COMMAND_HANDLER_MQTT_KEEP_ALIVE_INTERVAL);
 
