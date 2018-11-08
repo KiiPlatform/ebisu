@@ -139,9 +139,147 @@ If you choose to pass same pointer of the function, Please also check [Thread sa
 For both MQTT and HTTP, using them over secure connection is highly recommended.
 Our cloud supports non-secure connection for now. However, we may terminate supports of unsecure connections in the future. 
 
-## Set-up
+## Set-up `tio_handler_t` instance
+
+Here's the extracte set-up code from example app. 
+The full code can be checked [handler_init() in example.c](linux-sample/example.c)
+
+```c
+    tio_handler_init(handler);
+
+    tio_handler_set_app(handler, KII_APP_ID, KII_APP_HOST);
+
+    tio_handler_set_cb_task_create(handler, task_create_cb_impl);
+    tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl);
+
+    tio_handler_set_cb_sock_connect_http(handler, sock_cb_connect, http_ssl_ctx);
+    tio_handler_set_cb_sock_send_http(handler, sock_cb_send, http_ssl_ctx);
+    tio_handler_set_cb_sock_recv_http(handler, sock_cb_recv, http_ssl_ctx);
+    tio_handler_set_cb_sock_close_http(handler, sock_cb_close, http_ssl_ctx);
+
+    tio_handler_set_cb_sock_connect_mqtt(handler, sock_cb_connect, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_send_mqtt(handler, sock_cb_send, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
+
+    tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);
+    tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
+
+    tio_handler_set_keep_alive_interval(handler, COMMAND_HANDLER_MQTT_KEEP_ALIVE_INTERVAL);
+
+    tio_handler_set_json_parser_resource(handler, resource);
+```
+
+Here's anatomy of set-up calls.
+
+### `tio_handler_init` call
+
+This function must be called prior to any other functions of `tio_handler_t`.
+
+### `tio_handler_set_app` call
+
+Set the Kii application information.
+
+In the example, `KII_APP_ID` and `KII_APP_HOST` is defined as Macro.
+Those are used to identify work space in the cloud and the value is determined when you Kii Cloud App has been created.
+To create your Kii Cloud App, Sign-up to [Developer console](https://developer.kii.com).
+
+### Set-up callbacks
+
+#### Task callbacks.
+
+Set callback function pointers.
+
+```c
+    tio_handler_set_cb_task_create(handler, task_create_cb_impl);
+    tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl);
+```
+
+### Socket callbacks.
+
+Set callback function pointers and context data pointers.
+If you application allocates memory/ resources for context data, application is responsible to free those memory/ resources.
+
+Different context objects named `http_ssl_ctx` and `mqtt_ssl_ctx` is used since the connection and it's life-cycle is different between them.
+
+```c
+    tio_handler_set_cb_sock_connect_http(handler, sock_cb_connect, http_ssl_ctx);
+    tio_handler_set_cb_sock_send_http(handler, sock_cb_send, http_ssl_ctx);
+    tio_handler_set_cb_sock_recv_http(handler, sock_cb_recv, http_ssl_ctx);
+    tio_handler_set_cb_sock_close_http(handler, sock_cb_close, http_ssl_ctx);
+```
+
+```c
+    tio_handler_set_cb_sock_connect_mqtt(handler, sock_cb_connect, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_send_mqtt(handler, sock_cb_send, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
+```
+
+### Set-up buffers
+
+`tio_handler` needs memory buffer to store HTTP/ MQTT payloads.
+
+In this example, assigned 4Kb for HTTP payloads and 2Kb for MQTT payloads.
+This size may covers most use-cases.
+However, If you're remote command definition is more and larger, you may need to allocate larger size.
+
+Note that buffer for HTTP and MQTT must be isolated. Passing overlapping memory causes undefined behavior.
+
+```c
+    tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);
+    tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
+```
+
+### Set-up MQTT Keep Alive interval.
+
+In the example, `COMMAND_HANDLER_MQTT_KEEP_ALIVE_INTERVAL` is defined as Macro and value is 300 (in seconds).
+
+MQTT have mechanism called `Keep Alive` detecting stale connection between the MQTT broker.
+
+`tio_handler_t` acts as MQTT clients and send `PingReq` to MQTT broaker periodically with the specified interval. 
+If `PingResp` from MQTT broaker is not present, `tio_handler_t` would close the current connection and make fresh connection again.
+
+If interval is set to 0, `Keep Alive` is turned off and no `PingReq` message is send to MQTT broaker.
+
+We highly recommend setting Keep Alive interval greater than 0 to detect disconnection.
+Recommended interval is few minutes since too small interval may cause network congestion and increases cloud cost.
+
+```c
+    tio_handler_set_keep_alive_interval(handler, COMMAND_HANDLER_MQTT_KEEP_ALIVE_INTERVAL);
+```
+
+### Set-up json parser resource
+
+`tio_handler_t` uses `jkii` json parser library.
+`jkii` uses array of tokens to parse json string.
+
+In this example, allocates 256 tokens statically.
+
+```c
+    tio_handler_set_json_parser_resource(handler, resource);
+```
+
+Number of tokens to be used to parse json varies depending on how complex the target json string is.
+If you defined complex(i.e, lot of fields or long arrays in the commands) controll command, you would need to give larger number.
+Alternatively, you can use dynamic allocation for tokens by using followig API:
+
+```c
+void tio_handler_set_json_parser_resource_cb(
+    tio_handler_t* handler,
+    JKII_RESOURCE_ALLOC_CB alloc_cb,
+    JKII_RESOURCE_FREE_CB free_cb);
+```
+
+`alloc_cb` is called when the token is required and it's number is exactly same as numbers need to parse json string.
+
+`free_cb` is called when the parse has been done.
 
 ## Start module
+
+Now, it's ready to start `tio_handler_t` module.
+
+
 
 # Use `tio_updater_t`
 
