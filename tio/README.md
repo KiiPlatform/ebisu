@@ -134,7 +134,7 @@ Application should pass the pointer of the data when calling
 Note that, `tio_handler` uses MQTT(s) to receive remote controll commands and uses HTTP(s) to send the result of command execution.
 
 Application can choose to pass different implementations of socket functions or same one.
-If you choose to pass same pointer of the function, Please see the also check [Thread safety](#thread-safety) section as well.
+If you choose to pass same pointer of the function, Please also check [Thread safety](#thread-safety) section as well.
 
 For both MQTT and HTTP, using them over secure connection is highly recommended.
 Our cloud supports non-secure connection for now. However, we may terminate supports of unsecure connections in the future. 
