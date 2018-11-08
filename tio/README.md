@@ -49,7 +49,7 @@ typedef kii_task_code_t
      void* param);
 ```
 
-Bellow is typical implemetation with `pthread`.
+Typical implemetation with `pthread`:
 
 ```c
 kii_task_code_t task_create_cb
@@ -84,7 +84,7 @@ typedef void
     (unsigned int msec);
 ```
 
-Bellow is typical implemetation with `usleep` provided by libc.
+Typical implemetation with `usleep` provided by libc:
 
 ```c
 void delay_ms_cb(unsigned int msec)
