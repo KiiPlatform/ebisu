@@ -84,7 +84,7 @@ typedef void
     (unsigned int msec);
 ```
 
-Bellow is typical implemetation in Linux environment.
+Bellow is typical implemetation with `usleep` provided by libc.
 
 ```c
 void delay_ms_cb(unsigned int msec)
