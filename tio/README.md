@@ -93,6 +93,52 @@ void delay_ms_cb(unsigned int msec)
 }
 ```
 
+### Socket callbacks.
+
+`tio` provides abstraction of socket related functions.
+
+Socket callback functions signature:
+
+```c
+typedef khc_sock_code_t
+    (*KHC_CB_SOCK_CONNECT)
+    (void* sock_ctx, const char* host, unsigned int port);
+
+typedef khc_sock_code_t
+    (*KHC_CB_SOCK_SEND)
+    (void* sock_ctx, const char* buffer, size_t length);
+
+typedef khc_sock_code_t
+    (*KHC_CB_SOCK_RECV)
+    (void* sock_ctx, char* buffer, size_t length_to_read,
+     size_t* out_actual_length);
+
+typedef khc_sock_code_t
+    (*KHC_CB_SOCK_CLOSE)(void* sock_ctx);
+```
+
+You can see implementation witn OpenSSL at [linux-sample](linux-sample/sock_cb_linux.c)
+
+`sock_ctx` argument is arbitrary data context which application can use.
+Application should pass the pointer of the data when calling
+`tio_handler_set_cb_sock_connect_http()`,
+`tio_handler_set_cb_sock_send_http()`,
+`tio_handler_set_cb_sock_recv_http()`,
+`tio_handler_set_cb_sock_close_http()`,
+`tio_handler_set_cb_sock_connect_mqtt()`,
+`tio_handler_set_cb_sock_send_mqtt()`,
+`tio_handler_set_cb_sock_recv_mqtt()`,
+`tio_handler_set_cb_sock_close_mqtt()`
+ methods.
+
+Note that, `tio_handler` uses MQTT(s) to receive remote controll commands and uses HTTP(s) to send the result of command execution.
+
+Application can choose to pass different implementations of socket functions or same one.
+If you choose to pass same pointer of the function, Please see the also check [Thread safety](#thread-safety) section as well.
+
+For both MQTT and HTTP, using them over secure connection is highly recommended.
+Our cloud supports non-secure connection for now. However, we may terminate supports of unsecure connections in the future. 
+
 ## Set-up
 
 ## Start module
@@ -106,4 +152,6 @@ TODO: write
 ## Set-up
 
 ## Start module
+
+# Thread safety
 
