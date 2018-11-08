@@ -36,7 +36,7 @@ void updater_init(
 {
     tio_updater_init(updater);
 
-    tio_updater_set_app(updater, EX_APP_ID, EX_APP_SITE);
+    tio_updater_set_app(updater, KII_APP_ID, KII_APP_HOST);
 
     tio_updater_set_cb_task_create(updater, task_create_cb_impl);
     tio_updater_set_cb_delay_ms(updater, delay_ms_cb_impl);
@@ -116,7 +116,7 @@ void handler_init(
 {
     tio_handler_init(handler);
 
-    tio_handler_set_app(handler, EX_APP_ID, EX_APP_SITE);
+    tio_handler_set_app(handler, KII_APP_ID, KII_APP_HOST);
 
     tio_handler_set_cb_task_create(handler, task_create_cb_impl);
     tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl);
