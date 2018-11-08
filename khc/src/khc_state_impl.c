@@ -752,7 +752,6 @@ void khc_state_close(khc* khc) {
   khc_sock_code_t close_res = khc->_cb_sock_close(khc->_sock_ctx_close);
   if (close_res == KHC_SOCK_OK) {
     khc->_state = KHC_STATE_FINISHED;
-    khc->_result = KHC_ERR_OK;
     return;
   }
   if (close_res == KHC_SOCK_AGAIN) {
