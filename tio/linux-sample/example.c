@@ -48,7 +48,7 @@ void updater_init(
     tio_updater_set_cb_sock_recv(updater, sock_cb_recv, sock_ssl_ctx);
     tio_updater_set_cb_sock_close(updater, sock_cb_close, sock_ssl_ctx);
 
-    tio_updater_set_interval(updater, EX_STATE_UPDATE_PERIOD);
+    tio_updater_set_interval(updater, STATE_UPDATE_PERIOD);
 
     tio_updater_set_json_parser_resource(updater, resource);
 }
