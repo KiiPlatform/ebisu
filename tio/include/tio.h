@@ -126,6 +126,20 @@ void tio_handler_set_json_parser_resource_cb(
     JKII_RESOURCE_ALLOC_CB alloc_cb,
     JKII_RESOURCE_FREE_CB free_cb);
 
+tio_code_t tio_handler_onboard(
+    tio_handler_t* handler,
+    const char* vendor_thing_id,
+    const char* password,
+    const char* thing_type,
+    const char* firmware_version,
+    const char* layout_position,
+    const char* thing_properties
+);
+
+const tio_author_t* tio_handler_get_author(
+    tio_handler_t* handler
+);
+
 tio_code_t tio_handler_start(
     tio_handler_t* handler,
     const tio_author_t* author,
@@ -156,6 +170,20 @@ void tio_updater_set_json_parser_resource_cb(
     tio_updater_t* updater,
     JKII_RESOURCE_ALLOC_CB alloc_cb,
     JKII_RESOURCE_FREE_CB free_cb);
+
+tio_code_t tio_updater_onboard(
+    tio_updater_t* updater,
+    const char* vendor_thing_id,
+    const char* password,
+    const char* thing_type,
+    const char* firmware_version,
+    const char* layout_position,
+    const char* thing_properties
+);
+
+const tio_author_t* tio_updater_get_author(
+    tio_updater_t* updater
+);
 
 tio_code_t tio_updater_start(
     tio_updater_t* updater,

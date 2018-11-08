@@ -156,6 +156,32 @@ void tio_handler_set_json_parser_resource_cb(
     kii_set_json_parser_resource_cb(&handler->_kii, alloc_cb, free_cb);
 }
 
+tio_code_t tio_handler_onboard(
+    tio_handler_t* handler,
+    const char* vendor_thing_id,
+    const char* password,
+    const char* thing_type,
+    const char* firmware_version,
+    const char* layout_position,
+    const char* thing_properties)
+{
+    kii_code_t ret =kii_ti_onboard(
+        &handler->_kii,
+        vendor_thing_id,
+        password,
+        thing_type,
+        firmware_version,
+        layout_position,
+        thing_properties
+    );
+    return _tio_convert_code(ret);
+}
+
+const tio_author_t* tio_handler_get_author(tio_handler_t* handler)
+{
+    return &handler->_kii._author;
+}
+
 tio_code_t tio_handler_start(
     tio_handler_t* handler,
     const tio_author_t* author,
@@ -297,6 +323,33 @@ void tio_updater_set_json_parser_resource_cb(
     JKII_RESOURCE_FREE_CB free_cb)
 {
     kii_set_json_parser_resource_cb(&updater->_kii, alloc_cb, free_cb);
+}
+
+tio_code_t tio_updater_onboard(
+    tio_updater_t* updater,
+    const char* vendor_thing_id,
+    const char* password,
+    const char* thing_type,
+    const char* firmware_version,
+    const char* layout_position,
+    const char* thing_properties)
+{
+    kii_code_t ret =kii_ti_onboard(
+        &updater->_kii,
+        vendor_thing_id,
+        password,
+        thing_type,
+        firmware_version,
+        layout_position,
+        thing_properties
+    );
+    return _tio_convert_code(ret);
+}
+
+const tio_author_t* tio_updater_get_author(
+    tio_updater_t* updater)
+{
+    return &updater->_kii._author;
 }
 
 tio_code_t tio_updater_start(
