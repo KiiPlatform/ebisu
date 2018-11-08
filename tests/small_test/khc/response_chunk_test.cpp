@@ -334,3 +334,126 @@ TEST_CASE( "random buffer size test" ) {
     "}";
   REQUIRE( chunkedBody == oss.str() );
 }
+
+TEST_CASE( "random chunk body test" ) {
+  khc http;
+  khc_set_zero(&http);
+
+  ifstream ifs;
+  ifs.open("./data/resp-login-chunked-headers.txt");
+
+  khct::http::Resp resp(ifs);
+
+  ifs.close();
+
+  string baseC =
+    "0123456789"
+    " \t\r\n"
+    "abcdefghijklmnopqrstuvwxyz"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  random_device rd;
+  mt19937 mt(rd());
+  uniform_int_distribution<> randNum(10, 50);
+  uniform_int_distribution<> randSize(10, 200);
+  uniform_int_distribution<> randBody(0, baseC.size() - 1);
+  ostringstream responseBody;
+  ostringstream expectBody;
+  const char* CRLF = "\r\n";
+  for (int chunkNum = 0; chunkNum < randNum(mt); ++chunkNum) {
+    size_t chunkSize = randSize(mt);
+    responseBody << hex << chunkSize << CRLF;
+    for (int i = 0; i < chunkSize; ++i) {
+      const char c = baseC[randBody(mt)];
+      responseBody << c;
+      expectBody << c;
+    }
+    responseBody << CRLF;
+  }
+  responseBody << "0" << CRLF << CRLF;
+  resp.body = responseBody.str();
+
+  khc_set_host(&http, "api.kii.com");
+  khc_set_method(&http, "GET");
+  khc_set_path(&http, "/api/apps");
+  khc_set_req_headers(&http, NULL);
+
+  khct::cb::SockCtx s_ctx;
+  khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
+  khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
+  khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
+  khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+
+  khct::cb::IOCtx io_ctx;
+  khc_set_cb_read(&http, khct::cb::cb_read, &io_ctx);
+  khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
+  khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
+
+  int on_connect_called = 0;
+  s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port) {
+    ++on_connect_called;
+    REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
+    REQUIRE( strlen(host) == strlen("api.kii.com") );
+    REQUIRE( port == 443 );
+    return KHC_SOCK_OK;
+  };
+
+  int on_send_called = 0;
+  s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length) {
+    ++on_send_called;
+    return KHC_SOCK_OK;
+  };
+
+  int on_read_called = 0;
+  io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, size_t count, void *userdata) {
+    ++on_read_called;
+    REQUIRE( size == 1);
+    REQUIRE( count == DEFAULT_STREAM_BUFF_SIZE);
+    return 0;
+  };
+
+  int on_recv_called = 0;
+  auto is = resp.to_istringstream();
+  s_ctx.on_recv = [=, &on_recv_called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    ++on_recv_called;
+    *out_actual_length = is.read(buffer, length_to_read).gcount();
+    return KHC_SOCK_OK;
+  };
+
+  int on_header_called = 0;
+  io_ctx.on_header = [=, &on_header_called, &resp](char *buffer, size_t size, size_t count, void *userdata) {
+    const char* header = resp.headers[on_header_called].c_str();
+    size_t len = strlen(header);
+    REQUIRE( size == 1);
+    REQUIRE( count == len );
+    REQUIRE( strncmp(buffer, header, len) == 0 );
+    ++on_header_called;
+    return size * count;
+  };
+
+  ostringstream oss;
+  int on_write_called = 0;
+  io_ctx.on_write = [=, &oss, &on_write_called](char *buffer, size_t size, size_t count, void *userdata) {
+    ++on_write_called;
+    oss.write(buffer, size * count);
+    return size * count;
+  };
+
+  int on_close_called = 0;
+  s_ctx.on_close = [=, &on_close_called](void* socket_ctx) {
+    ++on_close_called;
+    return KHC_SOCK_OK;
+  };
+
+  khc_code res = khc_perform(&http);
+  REQUIRE( res == KHC_ERR_OK );
+  REQUIRE( khc_get_status_code(&http) == 200 );
+  REQUIRE( on_connect_called == 1 );
+  REQUIRE( on_send_called > 0 );
+  REQUIRE( on_read_called > 0 );
+  REQUIRE( on_recv_called > 0 );
+  REQUIRE( on_header_called == 12 );
+  REQUIRE( on_write_called > 0 );
+  REQUIRE( on_close_called == 1 );
+
+  REQUIRE( expectBody.str() == oss.str() );
+}
