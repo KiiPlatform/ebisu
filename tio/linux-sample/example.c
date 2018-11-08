@@ -135,7 +135,7 @@ void handler_init(
     tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
 
-    tio_handler_set_keep_alive_interval(handler, 0);
+    tio_handler_set_keep_alive_interval(handler, COMMAND_HANDLER_MQTT_KEEP_ALIVE_INTERVAL);
 
     tio_handler_set_json_parser_resource(handler, resource);
 }
