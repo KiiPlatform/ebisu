@@ -163,7 +163,6 @@ int main(int argc, char** argv)
     jkii_token_t tokens[256];
     jkii_resource_t resource = {tokens, 256};
     updater_file_context_t updater_file_ctx;
-    kii_code_t result;
 
     memset(updater_buff, 0x00, sizeof(char) * STATE_UPDATER_BUFF_SIZE);
     updater_init(
@@ -219,15 +218,15 @@ int main(int argc, char** argv)
                     exit(1);
                 }
                 printf("program successfully started!\n");
-                result = kii_ti_onboard(
-                        &handler._kii,
+                tio_code_t result = tio_handler_onboard(
+                        &handler,
                         vendorThingID,
                         password,
                         NULL,
                         NULL,
                         NULL,
                         NULL);
-                if (result != KII_ERR_OK) {
+                if (result != TIO_ERR_OK) {
                     printf("failed to onboard.\n");
                     exit(1);
                 }
@@ -257,10 +256,11 @@ int main(int argc, char** argv)
         exit(0);
     }
 
-    tio_handler_start(&handler, NULL, tio_action_handler, NULL);
+    const kii_author_t* author = tio_handler_get_author(&handler);
+    tio_handler_start(&handler, author, tio_action_handler, NULL);
     tio_updater_start(
             &updater,
-            &handler._kii._author,
+            author,
             updater_cb_state_size,
             &updater_file_ctx,
             updater_cb_read,
