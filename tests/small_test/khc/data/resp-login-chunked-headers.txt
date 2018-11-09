@@ -1,0 +1,13 @@
+HTTP/1.1 200 OK
+Accept-Ranges: bytes
+Access-Control-Allow-Origin: *
+Access-Control-Expose-Headers: Content-Type, Authorization, Content-Length, X-Requested-With, ETag, X-Step-Count, X-Environment-version, X-HTTP-Status-Code
+Age: 0
+Cache-Control: max-age=0, no-cache, no-store, no-cache, no-store
+Content-Type: application/json;charset=UTF-8
+Date: Tue, 28 Aug 2018 05:56:19 GMT
+Server: openresty
+X-HTTP-Status-Code: 200
+Transfer-Encoding: chunked,
+Connection: close
+
