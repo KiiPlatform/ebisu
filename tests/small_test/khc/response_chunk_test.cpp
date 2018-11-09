@@ -372,6 +372,10 @@ TEST_CASE( "random chunk body test" ) {
   responseBody << "0" << CRLF << CRLF;
   resp.body = responseBody.str();
 
+  ofstream ofs("tmp_random_chunk_response.txt");
+  ofs << resp.to_string();
+  ofs.close();
+
   khc_set_host(&http, "api.kii.com");
   khc_set_method(&http, "GET");
   khc_set_path(&http, "/api/apps");
