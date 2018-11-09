@@ -357,9 +357,76 @@ The name of tasks initiated by this call is exporte as macro `KII_TASK_NAME_RECV
 
 # Use `tio_updater_t`
 
-TODO: write
-
 ## Callback functions
+
+### Task callbacks, socket callbacks
+
+Similar to `tio_handler_t`.
+
+`tio_updater_t` only uses HTTP(s) and does not use MQTT(s).
+
+### State read callbacks
+
+`tio_updater_t` uploads the IoT device state such as sensor readings periodically with the specified interval.
+
+When the specified interval elapsed, `tio_updater_t` execute callback function to read the latest state of the IoT device.
+
+Application can implement the process reading values from sensors, etc.
+
+#### Size callback.
+
+Size callback is called to ask the size of new IoT device state.
+This callback is called before the read callback.
+If the returned size is 0, `tio_updater_t` skips updating device state.
+
+Signature of size callback:
+
+```c
+typedef size_t (*TIO_CB_SIZE)(void* userdata);
+```
+
+`userdata` is context object pointer given to `tio_updater_start()` argument.
+
+#### Read callback
+
+Read callback is used to read actual IoT device state.
+Callback is repeatedly called untill it returns 0.
+
+```c
+typedef size_t (*TIO_CB_READ)(
+    char *buffer,
+    size_t size,
+    size_t count,
+    void *userdata);
+```
+
+- `buffer` : Callback implementation writes the state data to this buffer.
+
+- `size`/ `count` : Requested size (size * count) to be written to the buffer. If the retuned value does not muches the requested size, `tio_updater` aborts the update process this time but the loop continues to run.
+
+- `userdata` : Context object pointer passed to `tio_updater_start()` function.
+
+Expected format of the IoT device state is defined by `Trait`.
+
+eg.)
+
+```json
+{
+    "AirConditionerAlias" : {
+        "temperature" : 29,
+        "presetTemperature" : 20
+    }
+}
+```
+
+- `AirConditionerAlias` is the name of the `Alias`.
+
+- `temperature` is number type property defined in the `Trait`.
+
+- `presetTemperature` is number type property defined in the `Trait`.
+
+For more details about formt of the IoT device state and `Trait`,
+Please refer to (http://docs.kii.com/en/guides/thingifsdk/).
 
 ## Set-up
 
