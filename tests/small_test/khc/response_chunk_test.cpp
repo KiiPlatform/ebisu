@@ -346,30 +346,9 @@ TEST_CASE( "random chunk body test" ) {
 
   ifs.close();
 
-  string baseC =
-    "0123456789"
-    " \t\r\n"
-    "abcdefghijklmnopqrstuvwxyz"
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  random_device rd;
-  mt19937 mt(rd());
-  uniform_int_distribution<> randNum(10, 50);
-  uniform_int_distribution<> randSize(10, 200);
-  uniform_int_distribution<> randBody(0, baseC.size() - 1);
   ostringstream responseBody;
   ostringstream expectBody;
-  const char* CRLF = "\r\n";
-  for (int chunkNum = 0; chunkNum < randNum(mt); ++chunkNum) {
-    size_t chunkSize = randSize(mt);
-    responseBody << hex << chunkSize << CRLF;
-    for (int i = 0; i < chunkSize; ++i) {
-      const char c = baseC[randBody(mt)];
-      responseBody << c;
-      expectBody << c;
-    }
-    responseBody << CRLF;
-  }
-  responseBody << "0" << CRLF << CRLF;
+  khct::http::create_random_chunked_body(responseBody, expectBody);
   resp.body = responseBody.str();
 
   ofstream ofs("tmp_random_chunk_response.txt");
