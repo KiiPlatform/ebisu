@@ -7,6 +7,7 @@ using namespace std;
 #include <string>
 #include <istream>
 #include <sstream>
+#include <ostream>
 
 namespace khct {
 namespace http {
@@ -14,6 +15,7 @@ namespace http {
 std::istream &read_header(std::istream &in, std::string &out);
 class Resp;
 
+void create_random_chunked_body(std::ostream &chunkedBody, std::ostream &expectBody);
 }
 
 struct khct::http::Resp {
