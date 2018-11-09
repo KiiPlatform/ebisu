@@ -481,7 +481,7 @@ Here's code extracted from [example app](linux-sample/example.c)).
         &updater_file_ctx);
 ```
 
-- `author` : Pointer to tio_author_t instance obtained from onboarded `tio_handler_t`.
+- `author` : Pointer to `tio_author_t` instance obtained from onboarded `tio_handler_t`.
 
 - `updater_cb_state_size` : [Size callback](#size_callback) function pointer.
 
@@ -489,5 +489,8 @@ Here's code extracted from [example app](linux-sample/example.c)).
 
 - `updater_file_ctx` : Context object pointer referenced from both size callback/ read callback.
 
-# Thread safety
+
+# Concurrent access to data/ hardware.
+
+TODO: write how to design trustworthy application runs multple threads/ tasks.
 
