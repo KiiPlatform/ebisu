@@ -139,6 +139,40 @@ If you choose to pass same pointer of the function, Please also check [Thread sa
 For both MQTT and HTTP, using them over secure connection is highly recommended.
 Our cloud supports non-secure connection for now. However, we may terminate supports of unsecure connections in the future. 
 
+### Action callback
+
+Action callback is called when the IoT device recevies remote controll command.
+You can implement IoT device specific controll in thie callback such as turn on /off devices or changes level of actuators, etc.
+
+Action callback signature:
+
+```c
+typedef tio_bool_t (*TIO_CB_ACTION)(
+    tio_action_t* action,
+    tio_action_err_t* err,
+    void* userdata);
+```
+
+- `tio_action_t.alias` is a string represents the alias of the trait which represents set of capabilities equipped.
+
+eg.) "AirConditioner", "LevelMonitor", etc.
+
+- `tio_action_t.action_name` is a string represents the name of action.
+
+eg.) "setPresetTemperature", "executeMonitering", etc.
+
+- `tio_action_t.action_value` is a subject of the action.
+
+eg.) If the `action_name` is "setPresetTemperature", `action_value.type` might be a `long_value` and it's value is 26, 18, etc.
+
+When the execution is failed, you can set the message in `err` argument and returns false. The result of execution and error message is stored in the cloud.
+
+`user_data` argument is a context object pointer given to `tio_handler_start()` method.
+
+Alias, action name, action value and its type is defined by the feature called `Trait`.
+
+For more details about Trait, please refer to the [document](http://docs.kii.com/en/guides/thingifsdk/).
+
 ## Set-up `tio_handler_t` instance
 
 Here's the extracte set-up code from example app. 
@@ -275,10 +309,41 @@ void tio_handler_set_json_parser_resource_cb(
 
 `free_cb` is called when the parse has been done.
 
+## Execute onboarding
+
+For the first time, Step called `onboarding` is required.
+In this step, Identifier of IoT device (thing ID) is generated and stored in cloud.
+
+After the step, thing ID and access token is returned to IoT device.
+By using thing ID and access token, cloud can identify the device when the remote command is sent to the device with the thing ID or sensor data sent from the device with the token.
+
+This step can be skipped once thing ID and access token is stored by the IoT devices.
+
+Alternatively, you can execute this step outside of the IoT Device and pass thing ID and access token to IoT devices. Typicall example is using Mobile apps to execute the onboarding step and passing thing ID and access token to the devices via BLE, etc.
+
+```c
+    tio_code_t result = tio_handler_onboard(
+            &handler,
+            vendorThingID,
+            password,
+            thingType,
+            firmWareVersion,
+            layoutPosion,
+            properties);
+    tio_author_t* author = tio_handler_get_author(&handler);
+    /* thing ID and access token is stored in tio_author_t.
+    printf("thing ID: %s, access token %s\n", author->author_id, author->access_token);
+    */
+```
+
 ## Start module
 
 Now, it's ready to start `tio_handler_t` module.
 
+```c
+
+
+```
 
 
 # Use `tio_updater_t`
