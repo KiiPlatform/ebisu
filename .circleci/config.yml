@@ -34,7 +34,6 @@ jobs:
           path: tests/small_test/khc/test-results
       - store_artifacts:
           path: tests/small_test/khc/tmp_random_chunk_response.txt
-          destination: khc
 
   stest-jkii:
     <<: *env
