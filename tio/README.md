@@ -428,9 +428,66 @@ eg.)
 For more details about formt of the IoT device state and `Trait`,
 Please refer to (http://docs.kii.com/en/guides/thingifsdk/).
 
-## Set-up
+## Set-up `tio_updater_t` instance
+
+Here's the extracte set-up code from example app.
+The full code can be checked [updater_init() in example.c](linux-sample/example.c)
+
+```
+    tio_updater_init(updater);
+
+    tio_updater_set_app(updater, KII_APP_ID, KII_APP_HOST);
+
+    tio_updater_set_cb_task_create(updater, task_create_cb_impl);
+    tio_updater_set_cb_delay_ms(updater, delay_ms_cb_impl);
+
+    tio_updater_set_buff(updater, buffer, buffer_size);
+
+    tio_updater_set_cb_sock_connect(updater, sock_cb_connect, sock_ssl_ctx);
+    tio_updater_set_cb_sock_send(updater, sock_cb_send, sock_ssl_ctx);
+    tio_updater_set_cb_sock_recv(updater, sock_cb_recv, sock_ssl_ctx);
+    tio_updater_set_cb_sock_close(updater, sock_cb_close, sock_ssl_ctx);
+
+    tio_updater_set_interval(updater, STATE_UPDATE_PERIOD);
+
+    tio_updater_set_json_parser_resource(updater, resource);
+```
+
+- `tio_updater_set_interval()` specifies interval of uploading state in seconds.
+
+Other set-up process is similar to `tio_handler_t`.
+
+## Execute onboarding
+
+`tio_updater_onboard()` method is similar to `tio_handler_onboard()`.
+
+If you use both `tio_handler_t` and `tio_updater_t` for an IoT device, you just need to execute onboarding process from either one. No need to execute onboarding for both method since the thing ID bonding process just need to be executed once.
+
+After the onboarding has been done, you can get `tio_author_t` instance from either `tio_handler_t` or `tio_updater_t` and pass it to `tio_handler_start()` or `tio_updater_start()` method.
 
 ## Start module
+
+Now, it's ready to start the updater module.
+
+Here's code extracted from [example app](linux-sample/example.c)).
+
+```c
+    tio_updater_start(
+        &updater,
+        author,
+        updater_cb_state_size,
+        &updater_file_ctx,
+        updater_cb_read,
+        &updater_file_ctx);
+```
+
+- `author` : Pointer to tio_author_t instance obtained from onboarded `tio_handler_t`.
+
+- `updater_cb_state_size` : [Size callback](#size_callback) function pointer.
+
+- `updater_cb_read` : [Read callback](#read_callback) function pointer.
+
+- `updater_file_ctx` : Context object pointer referenced from both size callback/ read callback.
 
 # Thread safety
 
