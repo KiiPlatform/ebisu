@@ -341,10 +341,19 @@ Alternatively, you can execute this step outside of the IoT Device and pass thin
 Now, it's ready to start `tio_handler_t` module.
 
 ```c
-
-
+    const kii_author_t* author = tio_handler_get_author(&handler);
+    tio_handler_start(&handler, author, tio_action_handler, NULL);
 ```
 
+- `author` consits of thing ID and access token obtained in the step of [Onboarding](#execute-onboarding).
+
+- `tio_action_handler` is the callback function pointer explained in [Action callback](#action-callback)
+
+- last argument is context object pointer can be referenced in action callback.
+  Passing NULL since we don't use context object in this example.
+
+This call results to execute asynchronous tasks created by [Task callbacks](#task-callbacks).
+The name of tasks initiated by this call is exporte as macro `KII_TASK_NAME_RECV_MSG` and `KII_TASK_NAME_PING_REQ` defined in `kii.h`.
 
 # Use `tio_updater_t`
 
