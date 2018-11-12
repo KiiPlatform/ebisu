@@ -251,7 +251,7 @@ kii_code_t kii_start_push_routine(kii_t* kii, unsigned int keep_alive_interval, 
     kii->push_received_cb = callback;
     kii->_push_data = userdata;
     kii->task_create_cb(KII_TASK_NAME_RECV_MSG,
-        _mqtt_start_recvmsg_task,
+        _mqtt_start_task,
         (void*)kii);
     return KII_ERR_OK;
 }

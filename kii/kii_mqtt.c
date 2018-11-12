@@ -362,7 +362,7 @@ int _mqtt_recvmsg(
     return 0;
 }
 
-void* _mqtt_start_recvmsg_task(void* sdata)
+void* _mqtt_start_task(void* sdata)
 {
     kii_t* kii;
     kii_mqtt_endpoint_t endpoint;
