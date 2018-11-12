@@ -489,8 +489,85 @@ Here's code extracted from [example app](linux-sample/example.c)).
 
 - `updater_file_ctx` : Context object pointer referenced from both size callback/ read callback.
 
-
 # Concurrent access to data/ hardware.
 
-TODO: write how to design trustworthy application runs multple threads/ tasks.
+`tio` execute multiple asynchronous tasks.
 
+The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
+
+## Tasks executed by `tio_handler_t`.
+
+- `KII_TASK_NAME_RECV_MSG` is a name of the task defined at `kii.h` and passed as argument when `tio_handler_set_cb_task_create()` is called to create task/ thread.
+
+    The task creation is requested once when the `tio_handler_start()` method is invoked.
+
+    This task is responsible for getting MQTT endpoint information thru REST API and connect, receive message from MQTT and propagate message to app by the `TIO_CB_ACTION` callback.
+
+    This task executes callbacks set by following APIs.
+
+    - `tio_handler_set_cb_sock_connect_http()`
+    - `tio_handler_set_cb_sock_send_http()`
+    - `tio_handler_set_cb_sock_recv_http()`
+    - `tio_handler_set_cb_sock_close_http()`
+    - `tio_handler_set_cb_sock_connect_mqtt()`
+    - `tio_handler_set_cb_sock_send_mqtt()`
+    - `tio_handler_set_cb_sock_recv_mqtt()`
+    - `tio_handler_set_cb_sock_close_mqtt()`
+    - `tio_handler_set_cb_delay_ms()`
+    - `tio_handler_start()` (`TIO_CB_ACTION` callback)
+    - `tio_handler_set_cb_err()`
+        (Optinal. In case set the error handler for debugging, etc.)
+    - `tio_handler_set_json_parser_resource_cb()`
+        (Optional. In case dynamic memory allocation is chosen for parsing JSON.)
+
+    This task uses buffers set by following APIs.
+
+    - `tio_handler_set_http_buff()`
+    - `tio_handler_set_mqtt_buff()`
+
+    Those two buffers must be separated and have no overlaps.
+
+- `KII_TASK_NAME_PING_REQ` is a name of the task defined at `kii.h` and passed as argument when `tio_handler_set_cb_task_create()` is called to create task/ thread.
+
+    The task creation is requested once when the `tio_handler_start()` method is invoked.
+
+    This task is responsible for sending MQTT `PingReq` message periodically in specified Keep Alive interval.
+
+    This task executes callbacks set by following APIs.
+
+    - `tio_handler_set_cb_sock_send_mqtt()`
+    - `tio_handler_set_cb_delay_ms()`
+
+    This task doesn't use buffers given by APIs.
+    (MQTT PingResp is handled in `KII_TASK_NAME_RECV_MSG` task.)
+
+## Tasks executed by `tio_updater_t`.
+
+- `TIO_TASK_NAME_UPDATE_STATE` is a name of the task defined at `kii.h` and passed as argument when `tio_handler_set_cb_task_create()` is called to create task/ thread.
+
+    The task creation is requested once when the `tio_updater_start()` method is invoked.
+
+    This task is responsible for periodicaly updates the IoT device state with the specified interval.
+
+    This task executes callbacks set by following APIs.
+
+    - `tio_updater_set_cb_sock_connect()`
+    - `tio_updater_set_cb_sock_send()`
+    - `tio_updater_set_cb_sock_recv()`
+    - `tio_updater_set_cb_sock_close()`
+    - `tio_updater_set_cb_delay_ms()`
+    - `tio_updater_start()` (`TIO_CB_SIZE`, `TIO_CB_READ` callbacks.)
+    - `tio_updater_set_cb_err()`
+        (Optinal. In case set the error handler for debugging, etc.)
+    - `tio_updater_set_json_parser_resource_cb()`
+        (Optional. In case dynamic memory allocation is chosen for parsing JSON.)
+
+    This task uses buffers set by following APIs.
+
+    - `tio_updater_set_buff()`
+
+## Avoiding race condtion
+
+- Above 3 tasks `KII_TASK_NAME_RECV_MSG`, `KII_TASK_NAME_PING_REQ`, `TIO_TASK_NAME_UPDATE_STATE` would be executed in parallel. Therefore, if the callback implementation shares the resource that need exclusive access, you need to implement access controll mechanism.
+
+- You must prepare independent buffers which does not have overlaps.
