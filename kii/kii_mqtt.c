@@ -371,8 +371,9 @@ void* _mqtt_start_recvmsg_task(void* sdata)
     memset(&endpoint, 0x00, sizeof(kii_mqtt_endpoint_t));
 
     kii = (kii_t*) sdata;
-    long total_waiting_time = 0;
+    long time_elapsed = 0;
     const int wait_time = 1000;
+    const int estimated_recv_time = 1000;
     const long keep_alive_interval = kii->_keep_alive_interval;
     for(;;)
     {
@@ -446,9 +447,9 @@ void* _mqtt_start_recvmsg_task(void* sdata)
                 kii->delay_ms_cb(wait_time);
                 // Assume that _mqtt_recvmsg takes less than 1 seconds
                 // Sending PingReq eariler than keep_alive_interval is OK.
-                total_waiting_time += wait_time * 2;
-                if (keep_alive_interval> 0 && total_waiting_time > keep_alive_interval) {
-                    total_waiting_time = 0;
+                time_elapsed += wait_time + estimated_recv_time;
+                if (keep_alive_interval > 0 && time_elapsed > keep_alive_interval * 1000) {
+                    time_elapsed = 0;
                     int ret = _mqtt_pingreq(kii);
                     if (ret != 0) {
                         kii->_mqtt_connected = 0;
