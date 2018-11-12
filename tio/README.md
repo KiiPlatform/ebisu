@@ -501,7 +501,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
     The task creation is requested once when the `tio_handler_start()` method is invoked.
 
-    This task is responsible for getting MQTT endpoint information thru REST API and connect, receive message from MQTT and propagate message to app by the `TIO_CB_ACTION` callback.
+    This task is responsible for getting MQTT endpoint information thru REST API and connect, receive message from MQTT and propagate message to app by the `TIO_CB_ACTION` callback. This task also sends PingReq message to server if the Keep Alive interval is set to larger than 0.
 
     This task executes callbacks set by following APIs.
 
@@ -525,21 +525,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
     - `tio_handler_set_http_buff()`
     - `tio_handler_set_mqtt_buff()`
 
-    Those two buffers must be separated and have no overlaps.
-
-- `KII_TASK_NAME_PING_REQ` is a name of the task defined at `kii.h` and passed as argument when `tio_handler_set_cb_task_create()` is called to create task/ thread.
-
-    The task creation is requested once when the `tio_handler_start()` method is invoked.
-
-    This task is responsible for sending MQTT `PingReq` message periodically in specified Keep Alive interval.
-
-    This task executes callbacks set by following APIs.
-
-    - `tio_handler_set_cb_sock_send_mqtt()`
-    - `tio_handler_set_cb_delay_ms()`
-
-    This task doesn't use buffers given by APIs.
-    (MQTT PingResp is handled in `KII_TASK_NAME_MQTT` task.)
+    Those buffers must be separated and have no overlaps.
 
 ## Tasks executed by `tio_updater_t`.
 
@@ -566,8 +552,12 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
     - `tio_updater_set_buff()`
 
+    Those buffers must be separated and have no overlaps with buffers used by `tio_handler_t`.
+
 ## Avoiding race condtion
 
-- Above 3 tasks `KII_TASK_NAME_MQTT`, `KII_TASK_NAME_PING_REQ`, `TIO_TASK_NAME_UPDATE_STATE` would be executed in parallel. Therefore, if the callback implementation shares the resource that need exclusive access, you need to implement access controll mechanism.
+- Above 2 tasks `KII_TASK_NAME_MQTT` and `TIO_TASK_NAME_UPDATE_STATE` would be executed in parallel. Therefore, if the callback implementation shares the resource that need exclusive access, you need to implement access controll mechanism.
 
 - You must prepare independent buffers which does not have overlaps.
+
+- `tio_handler_t` and `tio_updater_t` instance is referenced/ changed by the task. Application must not reference to or change those instance after the `tio_handler_start()` / `tio_updater_start()` method is invoked.
