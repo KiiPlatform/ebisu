@@ -353,7 +353,7 @@ Now, it's ready to start `tio_handler_t` module.
   Passing NULL since we don't use context object in this example.
 
 This call results to execute asynchronous tasks created by [Task callbacks](#task-callbacks).
-The name of tasks initiated by this call is exporte as macro `KII_TASK_NAME_RECV_MSG` and `KII_TASK_NAME_PING_REQ` defined in `kii.h`.
+The name of tasks initiated by this call is exporte as macro `KII_TASK_NAME_MQTT` and `KII_TASK_NAME_PING_REQ` defined in `kii.h`.
 
 # Use `tio_updater_t`
 
@@ -497,7 +497,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
 ## Tasks executed by `tio_handler_t`.
 
-- `KII_TASK_NAME_RECV_MSG` is a name of the task defined at `kii.h` and passed as argument when `tio_handler_set_cb_task_create()` is called to create task/ thread.
+- `KII_TASK_NAME_MQTT` is a name of the task defined at `kii.h` and passed as argument when `tio_handler_set_cb_task_create()` is called to create task/ thread.
 
     The task creation is requested once when the `tio_handler_start()` method is invoked.
 
@@ -539,7 +539,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
     - `tio_handler_set_cb_delay_ms()`
 
     This task doesn't use buffers given by APIs.
-    (MQTT PingResp is handled in `KII_TASK_NAME_RECV_MSG` task.)
+    (MQTT PingResp is handled in `KII_TASK_NAME_MQTT` task.)
 
 ## Tasks executed by `tio_updater_t`.
 
@@ -568,6 +568,6 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
 ## Avoiding race condtion
 
-- Above 3 tasks `KII_TASK_NAME_RECV_MSG`, `KII_TASK_NAME_PING_REQ`, `TIO_TASK_NAME_UPDATE_STATE` would be executed in parallel. Therefore, if the callback implementation shares the resource that need exclusive access, you need to implement access controll mechanism.
+- Above 3 tasks `KII_TASK_NAME_MQTT`, `KII_TASK_NAME_PING_REQ`, `TIO_TASK_NAME_UPDATE_STATE` would be executed in parallel. Therefore, if the callback implementation shares the resource that need exclusive access, you need to implement access controll mechanism.
 
 - You must prepare independent buffers which does not have overlaps.
