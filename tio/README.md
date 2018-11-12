@@ -497,7 +497,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
 ## Tasks executed by `tio_handler_t`.
 
-- `KII_TASK_NAME_MQTT` is a name of the task defined at `kii.h` and passed as argument when `tio_handler_set_cb_task_create()` is called to create task/ thread.
+- `KII_TASK_NAME_MQTT` is a name of the task defined at `kii.h` and passed as argument when `cb_task_create` callback function pointer (passed to `tio_handler_set_cb_task_create()`) is called to create task/ thread.
 
     The task creation is requested once when the `tio_handler_start()` method is invoked.
 
@@ -529,7 +529,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
 ## Tasks executed by `tio_updater_t`.
 
-- `TIO_TASK_NAME_UPDATE_STATE` is a name of the task defined at `kii.h` and passed as argument when `tio_handler_set_cb_task_create()` is called to create task/ thread.
+- `TIO_TASK_NAME_UPDATE_STATE` is a name of the task defined at `kii.h` and passed as argument when `cb_task_create` callback function pointer (passed to `tio_updater_set_cb_task_create()`) is called to create task/ thread.
 
     The task creation is requested once when the `tio_updater_start()` method is invoked.
 
