@@ -361,21 +361,21 @@ void khc_state_req_body_send_crlf(khc* khc) {
 }
 
 void khc_state_resp_headers_alloc(khc* khc) {
-  khc->_resp_header_buffer = malloc(RESP_HEADER_BUFF_SIZE);
+  khc->_resp_header_buffer = malloc(khc->_stream_buff_size);
   if (khc->_resp_header_buffer == NULL) {
     khc->_state = KHC_STATE_CLOSE;
     khc->_result = KHC_ERR_ALLOCATION;
     return;
   }
-  memset(khc->_resp_header_buffer, '\0', RESP_HEADER_BUFF_SIZE);
-  khc->_resp_header_buffer_size = RESP_HEADER_BUFF_SIZE;
+  khc->_resp_header_buffer_size = khc->_stream_buff_size;
   khc->_resp_header_buffer_current_pos = khc->_resp_header_buffer;
+  memset(khc->_resp_header_buffer, '\0', khc->_resp_header_buffer_size);
   khc->_state = KHC_STATE_RESP_HEADERS_READ;
   return;
 }
 
 void khc_state_resp_headers_realloc(khc* khc) {
-  void* newBuff = realloc(khc->_resp_header_buffer, khc->_resp_header_buffer_size + RESP_HEADER_BUFF_SIZE);
+  void* newBuff = realloc(khc->_resp_header_buffer, khc->_resp_header_buffer_size + khc->_stream_buff_size);
   if (newBuff == NULL) {
     free(khc->_resp_header_buffer);
     khc->_resp_header_buffer = NULL;
@@ -387,7 +387,7 @@ void khc_state_resp_headers_realloc(khc* khc) {
   // Pointer: last part newly allocated.
   khc->_resp_header_buffer = newBuff;
   khc->_resp_header_buffer_current_pos = newBuff + khc->_resp_header_read_size;
-  khc->_resp_header_buffer_size += RESP_HEADER_BUFF_SIZE;
+  khc->_resp_header_buffer_size += khc->_stream_buff_size;
   size_t remain = khc->_resp_header_buffer_size - khc->_resp_header_read_size;
   memset(khc->_resp_header_buffer_current_pos, '\0', remain);
   khc->_state = KHC_STATE_RESP_HEADERS_READ;
@@ -396,7 +396,7 @@ void khc_state_resp_headers_realloc(khc* khc) {
 
 void khc_state_resp_headers_read(khc* khc) {
   size_t read_size = 0;
-  size_t read_req_size = RESP_HEADER_BUFF_SIZE - 1;
+  size_t read_req_size = khc->_stream_buff_size - 1;
   khc_sock_code_t read_res = 
     khc->_cb_sock_recv(khc->_sock_ctx_recv, khc->_resp_header_buffer_current_pos, read_req_size, &read_size);
   if (read_res == KHC_SOCK_OK) {
@@ -752,7 +752,6 @@ void khc_state_close(khc* khc) {
   khc_sock_code_t close_res = khc->_cb_sock_close(khc->_sock_ctx_close);
   if (close_res == KHC_SOCK_OK) {
     khc->_state = KHC_STATE_FINISHED;
-    khc->_result = KHC_ERR_OK;
     return;
   }
   if (close_res == KHC_SOCK_AGAIN) {
