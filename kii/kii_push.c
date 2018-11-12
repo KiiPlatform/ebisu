@@ -253,11 +253,6 @@ kii_code_t kii_start_push_routine(kii_t* kii, unsigned int keep_alive_interval, 
     kii->task_create_cb(KII_TASK_NAME_RECV_MSG,
         _mqtt_start_recvmsg_task,
         (void*)kii);
-    if (keep_alive_interval > 0) {
-        kii->task_create_cb(KII_TASK_NAME_PING_REQ,
-            _mqtt_start_pinreq_task,
-            (void*)kii);
-    }
     return KII_ERR_OK;
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

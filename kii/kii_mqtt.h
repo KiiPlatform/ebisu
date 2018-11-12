@@ -22,7 +22,6 @@ int _mqtt_recvmsg(
     kii_t* kii,
     kii_mqtt_endpoint_t* endpoint);
 void* _mqtt_start_recvmsg_task(void* sdata);
-void* _mqtt_start_pinreq_task(void* sdata);
 
 #endif
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

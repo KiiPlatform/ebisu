@@ -371,6 +371,9 @@ void* _mqtt_start_recvmsg_task(void* sdata)
     memset(&endpoint, 0x00, sizeof(kii_mqtt_endpoint_t));
 
     kii = (kii_t*) sdata;
+    long total_waiting_time = 0;
+    const int wait_time = 1000;
+    const long keep_alive_interval = kii->_keep_alive_interval;
     for(;;)
     {
         switch(pushState)
@@ -382,7 +385,7 @@ void* _mqtt_start_recvmsg_task(void* sdata)
                     if(kii_install_push(kii, KII_FALSE, &ins_id) != KII_ERR_OK)
                     {
                         M_KII_LOG("kii-error: mqtt installation error\r\n");
-                        kii->delay_ms_cb(1000);
+                        kii->delay_ms_cb(wait_time);
                         continue;
                     }
 
@@ -390,7 +393,7 @@ void* _mqtt_start_recvmsg_task(void* sdata)
                     int retry = 0;
                     do
                     {
-                        kii->delay_ms_cb(1000);
+                        kii->delay_ms_cb(wait_time);
                         get_ep_res = kii_get_mqtt_endpoint(kii, ins_id.id,
                                 &endpoint);
                         if (get_ep_res == KII_ERR_OK) {
@@ -440,25 +443,22 @@ void* _mqtt_start_recvmsg_task(void* sdata)
                     kii->_mqtt_connected = 0;
                     pushState = KII_MQTT_SUBSCRIBING_TOPIC;
                 }
+                kii->delay_ms_cb(wait_time);
+                // Assume that _mqtt_recvmsg takes less than 1 seconds
+                // Sending PingReq eariler than keep_alive_interval is OK.
+                total_waiting_time += wait_time * 2;
+                if (keep_alive_interval> 0 && total_waiting_time > keep_alive_interval) {
+                    total_waiting_time = 0;
+                    int ret = _mqtt_pingreq(kii);
+                    if (ret != 0) {
+                        kii->_mqtt_connected = 0;
+                        pushState = KII_MQTT_SUBSCRIBING_TOPIC;
+                    }
+                }
                 break;
         }
     }
     return NULL;
 }
 
-void* _mqtt_start_pinreq_task(void* sdata)
-{
-    kii_t* kii;
-
-    kii = (kii_t*)sdata;
-    for(;;)
-    {
-        if(kii->_mqtt_connected == 1)
-        {
-            _mqtt_pingreq(kii);
-        }
-        kii->delay_ms_cb(kii->_keep_alive_interval * 1000);
-    }
-    return NULL;
-}
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
