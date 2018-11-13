@@ -49,7 +49,7 @@ typedef kii_task_code_t
      void* param);
 ```
 
-Typical implemetation with `pthread`:
+Typical implementation with `pthread`:
 
 ```c
 kii_task_code_t task_create_cb
@@ -72,7 +72,7 @@ kii_task_code_t task_create_cb
 
 #### Delay callback
 
-In some situation program needs to wait for speicified period of time to avoid the loop runs too fast or making too many requests to servers, etc.
+In some situation program needs to wait for specified period of time to avoid the loop runs too fast or making too many requests to servers, etc.
 
 `tio` needs abstraction with callbacks since the way varies in different environments.
 
@@ -84,7 +84,7 @@ typedef void
     (unsigned int msec);
 ```
 
-Typical implemetation with `usleep` provided by libc:
+Typical implementation with `usleep` provided by `libc`:
 
 ```c
 void delay_ms_cb(unsigned int msec)
@@ -137,12 +137,12 @@ Application can choose to pass different implementations of socket functions or 
 If you choose to pass same pointer of the function, Please also check [Asynchronous task management](#asynchronous_task_management) section as well.
 
 For both MQTT and HTTP, using them over secure connection is highly recommended.
-Our cloud supports non-secure connection for now. However, we may terminate supports of unsecure connections in the future. 
+Our cloud supports non-secure connection for now. However, we may terminate supports of insecure connections in the future. 
 
 ### Action callback
 
-Action callback is called when the IoT device receives remote controll command.
-You can implement IoT device specific controll in thie callback such as turn on/ off devices or changes level of actuators, etc.
+Action callback is called when the IoT device receives remote control command.
+You can implement IoT device specific control in the callback such as turn on/ off devices or changes level of actuators, etc.
 
 Action callback signature:
 
@@ -295,8 +295,8 @@ In this example, allocates 256 tokens statically.
 ```
 
 Number of tokens to be used to parse json varies depending on how complex the target json string is.
-If you defined complex(i.e, a lot of fields or long arrays in the commands) controll command, you would need to give larger number.
-Alternatively, you can use dynamic allocation for tokens by using followig API:
+If you defined complex(i.e, a lot of fields or long arrays in the commands) control command, you would need to give larger number.
+Alternatively, you can use dynamic allocation for tokens by using following API:
 
 ```c
 void tio_handler_set_json_parser_resource_cb(
@@ -319,7 +319,7 @@ By using thing ID and access token, cloud can identify the device when the remot
 
 This step can be skipped once thing ID and access token is stored by the IoT devices.
 
-Alternatively, you can execute this step outside of the IoT Device and pass thing ID and access token to IoT devices. Typicall example is using Mobile apps to execute the onboarding step and passing thing ID and access token to the devices via BLE, etc.
+Alternatively, you can execute this step outside of the IoT Device and pass thing ID and access token to IoT devices. Typical example is using Mobile apps to execute the onboarding step and passing thing ID and access token to the devices via BLE, etc.
 
 ```c
     tio_code_t result = tio_handler_onboard(
@@ -353,7 +353,7 @@ Now, it's ready to start `tio_handler_t` module.
   Passing NULL since we don't use context object in this example.
 
 This call results to execute asynchronous tasks created by [Task callbacks](#task-callbacks).
-The name of tasks initiated by this call is exporte as macro `KII_TASK_NAME_RECV_MSG` and `KII_TASK_NAME_PING_REQ` defined in `kii.h`.
+The name of tasks initiated by this call is exported as macro `KII_TASK_NAME_RECV_MSG` and `KII_TASK_NAME_PING_REQ` defined in `kii.h`.
 
 # Use `tio_updater_t`
 
@@ -390,7 +390,7 @@ typedef size_t (*TIO_CB_SIZE)(void* userdata);
 #### Read callback
 
 Read callback is used to read actual IoT device state.
-Callback is repeatedly called untill it returns 0.
+Callback is repeatedly called until it returns 0.
 
 ```c
 typedef size_t (*TIO_CB_READ)(
@@ -402,7 +402,7 @@ typedef size_t (*TIO_CB_READ)(
 
 - `buffer` : Callback implementation writes the state data to this buffer.
 
-- `size`/ `count` : Requested size (size * count) to be written to the buffer. If the retuned value does not muches the requested size, `tio_updater` aborts the update process this time but the loop continues to run.
+- `size`/ `count` : Requested size (size * count) to be written to the buffer. If the returned value does not muches the requested size, `tio_updater` aborts the update process this time but the loop continues to run.
 
 - `userdata` : Context object pointer passed to `tio_updater_start()` function.
 
@@ -425,12 +425,12 @@ eg.)
 
 - `presetTemperature` is number type property defined in the `Trait`.
 
-For more details about formt of the IoT device state and `Trait`,
+For more details about format of the IoT device state and `Trait`,
 Please refer to (http://docs.kii.com/en/guides/thingifsdk/).
 
 ## Set-up `tio_updater_t` instance
 
-Here's the extracte set-up code from example app.
+Here's the set-up code extracted from example app.
 The full code can be checked [updater_init() in example.c](linux-sample/example.c)
 
 ```
@@ -516,7 +516,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
     - `tio_handler_set_cb_delay_ms()`
     - `tio_handler_start()` (`TIO_CB_ACTION` callback)
     - `tio_handler_set_cb_err()`
-        (Optinal. In case set the error handler for debugging, etc.)
+        (Optional. In case set the error handler for debugging, etc.)
     - `tio_handler_set_json_parser_resource_cb()`
         (Optional. In case dynamic memory allocation is chosen for parsing JSON.)
 
@@ -547,7 +547,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
     The task creation is requested once when the `tio_updater_start()` method is invoked.
 
-    This task is responsible for periodicaly updates the IoT device state with the specified interval.
+    This task is responsible for periodically updates the IoT device state with the specified interval.
 
     This task executes callbacks set by following APIs.
 
@@ -558,7 +558,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
     - `tio_updater_set_cb_delay_ms()`
     - `tio_updater_start()` (`TIO_CB_SIZE`, `TIO_CB_READ` callbacks.)
     - `tio_updater_set_cb_err()`
-        (Optinal. In case set the error handler for debugging, etc.)
+        (Optional. In case set the error handler for debugging, etc.)
     - `tio_updater_set_json_parser_resource_cb()`
         (Optional. In case dynamic memory allocation is chosen for parsing JSON.)
 
@@ -566,8 +566,8 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
     - `tio_updater_set_buff()`
 
-## Avoiding race condtion
+## Avoiding race condition
 
-- Above 3 tasks `KII_TASK_NAME_RECV_MSG`, `KII_TASK_NAME_PING_REQ`, `TIO_TASK_NAME_UPDATE_STATE` would be executed in parallel. Therefore, if the callback implementation shares the resource that need exclusive access, you need to implement access controll mechanism.
+- Above 3 tasks `KII_TASK_NAME_RECV_MSG`, `KII_TASK_NAME_PING_REQ`, `TIO_TASK_NAME_UPDATE_STATE` would be executed in parallel. Therefore, if the callback implementation shares the resource that need exclusive access, you need to implement access control mechanism.
 
 - You must prepare independent buffers which does not have overlaps.
