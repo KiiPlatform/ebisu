@@ -175,7 +175,7 @@ For more details about Trait, please refer to the [document](http://docs.kii.com
 
 ## Set-up `tio_handler_t` instance
 
-Here's the extracte set-up code from example app. 
+Here's the set-up code extracted from example app.
 The full code can be checked [handler_init() in example.c](linux-sample/example.c)
 
 ```c
