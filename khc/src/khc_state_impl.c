@@ -404,8 +404,15 @@ void khc_state_resp_headers_read(khc* khc) {
     if (read_size == 0) {
       khc->_read_end = 1;
     }
+    size_t cb_header_remaining_size = khc->_resp_header_buffer_size;
+    char* cb_header_pos = khc->_resp_header_buffer;
     // Search boundary for whole buffer.
     char* boundary = strstr(khc->_resp_header_buffer, "\r\n\r\n");
+    if (100 <= khc->_status_code && khc->_status_code < 200) {
+        cb_header_pos = boundary + 4;
+        cb_header_remaining_size -= cb_header_pos - khc->_resp_header_buffer;
+        boundary = strstr(cb_header_pos, "\r\n\r\n");
+    }
     if (boundary == NULL) {
       // Not reached to end of headers.
       khc->_state = KHC_STATE_RESP_HEADERS_REALLOC;
@@ -413,8 +420,8 @@ void khc_state_resp_headers_read(khc* khc) {
     } else {
       khc->_body_boundary = boundary;
       khc->_state = KHC_STATE_RESP_STATUS_PARSE;
-      khc->_cb_header_remaining_size = khc->_resp_header_buffer_size;
-      khc->_cb_header_pos = khc->_resp_header_buffer;
+      khc->_cb_header_remaining_size = cb_header_remaining_size;
+      khc->_cb_header_pos = cb_header_pos;
       return;
     }
   }
@@ -433,7 +440,7 @@ void khc_state_resp_headers_read(khc* khc) {
 
 void khc_state_resp_status_parse(khc* khc) {
   const char http_version[] = "HTTP/d.d ";
-  char* ptr = khc->_resp_header_buffer + strlen(http_version);
+  char* ptr = khc->_cb_header_pos + strlen(http_version);
 
   int status_code = 0;
   for (int i = 0; i < 3; ++i) {
@@ -446,7 +453,11 @@ void khc_state_resp_status_parse(khc* khc) {
     status_code = status_code * 10 + (d - '0');
   }
   khc->_status_code = status_code;
-  khc->_state = KHC_STATE_RESP_HEADERS_CALLBACK;
+  if (100 <= status_code && status_code < 200) {
+    khc->_state = KHC_STATE_RESP_HEADERS_REALLOC;
+  } else {
+    khc->_state = KHC_STATE_RESP_HEADERS_CALLBACK;
+  }
   return;
 }
 
