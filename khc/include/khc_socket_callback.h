@@ -34,11 +34,15 @@ typedef enum khc_sock_code_t {
  * @param [in] sock_ctx context object.
  * @param [in] host host name.
  * @param [in] port port number.
+ * @param [in] to_recv_in_seconds read timeout in seconds.
+ * @param [in] to_send_in_seconds read timeout in seconds.
  * @returns khc_sock_code_t
  */
 typedef khc_sock_code_t
     (*KHC_CB_SOCK_CONNECT)
-    (void* sock_ctx, const char* host, unsigned int port);
+    (void* sock_ctx, const char* host, unsigned int port,
+    unsigned int to_recv_in_seconds,
+    unsigned int to_send_in_seconds);
 
 /** \brief Callback function sends data to server.
  *

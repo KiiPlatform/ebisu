@@ -181,6 +181,8 @@ typedef struct khc {
   void* _sock_ctx_send; /**< \private **/
   void* _sock_ctx_recv; /**< \private **/
   void* _sock_ctx_close; /**< \private **/
+  unsigned int _to_recv_in_seconds;  /**< \private **/
+  unsigned int _to_send_in_seconds;  /**< \private **/
 
   khc_slist* _current_req_header; /**< \private **/
 
@@ -316,11 +318,15 @@ khc_code khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size);
  *
  * \param [out] khc instance.
  * \param [in] cb called when socket connection to the server is required.
+ * \param [in] to_recv_in_seconds timeout applied when receiving data from socket.
+ * \param [in] to_send_in_seconds timeout applied when sending data from socket.
  * \param [in] userdata context data of the callback.
  */
 khc_code khc_set_cb_sock_connect(
   khc* khc,
   KHC_CB_SOCK_CONNECT cb,
+  unsigned int to_recv_in_seconds,
+  unsigned int to_send_in_seconds,
   void* userdata);
 
 /**

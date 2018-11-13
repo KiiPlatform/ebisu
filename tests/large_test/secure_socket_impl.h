@@ -17,7 +17,7 @@ struct SSLData
 
 khc_sock_code_t
     cb_connect(void* socket_context, const char* host,
-            unsigned int port);
+            unsigned int port, unsigned int to_recv_in_secounds, unsigned int to_send_in_seconds);
 
 khc_sock_code_t
     cb_send(void* socket_context,

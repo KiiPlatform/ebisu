@@ -121,12 +121,12 @@ void handler_init(
     tio_handler_set_cb_task_create(handler, task_create_cb_impl);
     tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl);
 
-    tio_handler_set_cb_sock_connect_http(handler, sock_cb_connect, http_ssl_ctx);
+    tio_handler_set_cb_sock_connect_http(handler, sock_cb_connect, 15, 15, http_ssl_ctx);
     tio_handler_set_cb_sock_send_http(handler, sock_cb_send, http_ssl_ctx);
     tio_handler_set_cb_sock_recv_http(handler, sock_cb_recv, http_ssl_ctx);
     tio_handler_set_cb_sock_close_http(handler, sock_cb_close, http_ssl_ctx);
 
-    tio_handler_set_cb_sock_connect_mqtt(handler, sock_cb_connect, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_connect_mqtt(handler, sock_cb_connect, 15, 15, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_send_mqtt(handler, sock_cb_send, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);

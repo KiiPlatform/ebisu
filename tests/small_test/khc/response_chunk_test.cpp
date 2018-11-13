@@ -26,7 +26,7 @@ TEST_CASE( "HTTP chunked response test" ) {
   khc_set_req_headers(&http, NULL);
 
   khct::cb::SockCtx s_ctx;
-  khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
+  khc_set_cb_sock_connect(&http, khct::cb::mock_connect, 15, 15, &s_ctx);
   khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
   khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
   khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
@@ -37,11 +37,13 @@ TEST_CASE( "HTTP chunked response test" ) {
   khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
   int on_connect_called = 0;
-  s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port) {
+  s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port, unsigned int to_recv_in_seconds, unsigned int to_send_in_seconds) {
     ++on_connect_called;
     REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
     REQUIRE( strlen(host) == strlen("api.kii.com") );
     REQUIRE( port == 443 );
+    REQUIRE( to_recv_in_seconds == 15 );
+    REQUIRE( to_send_in_seconds == 15 );
     return KHC_SOCK_OK;
   };
 
@@ -137,7 +139,7 @@ TEST_CASE( "small buffer size test" ) {
   khc_set_stream_buff(&http, buff, buff_size);
 
   khct::cb::SockCtx s_ctx;
-  khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
+  khc_set_cb_sock_connect(&http, khct::cb::mock_connect, 15, 15, &s_ctx);
   khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
   khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
   khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
@@ -148,11 +150,13 @@ TEST_CASE( "small buffer size test" ) {
   khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
   int on_connect_called = 0;
-  s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port) {
+  s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port, unsigned int to_recv_in_seconds, unsigned int to_send_in_seconds) {
     ++on_connect_called;
     REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
     REQUIRE( strlen(host) == strlen("api.kii.com") );
     REQUIRE( port == 443 );
+    REQUIRE( to_recv_in_seconds == 15 );
+    REQUIRE( to_send_in_seconds == 15 );
     return KHC_SOCK_OK;
   };
 
@@ -248,7 +252,7 @@ TEST_CASE( "random buffer size test" ) {
   khc_set_stream_buff(&http, buff, buff_size);
 
   khct::cb::SockCtx s_ctx;
-  khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
+  khc_set_cb_sock_connect(&http, khct::cb::mock_connect, 15, 15, &s_ctx);
   khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
   khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
   khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
@@ -259,11 +263,13 @@ TEST_CASE( "random buffer size test" ) {
   khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
   int on_connect_called = 0;
-  s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port) {
+  s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port, unsigned int to_recv_in_seconds, unsigned int to_send_in_seconds) {
     ++on_connect_called;
     REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
     REQUIRE( strlen(host) == strlen("api.kii.com") );
     REQUIRE( port == 443 );
+    REQUIRE( to_recv_in_seconds == 15 );
+    REQUIRE( to_send_in_seconds == 15 );
     return KHC_SOCK_OK;
   };
 
@@ -361,7 +367,7 @@ TEST_CASE( "random chunk body test" ) {
   khc_set_req_headers(&http, NULL);
 
   khct::cb::SockCtx s_ctx;
-  khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
+  khc_set_cb_sock_connect(&http, khct::cb::mock_connect, 15, 15, &s_ctx);
   khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
   khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
   khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
@@ -372,11 +378,13 @@ TEST_CASE( "random chunk body test" ) {
   khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
   int on_connect_called = 0;
-  s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port) {
+  s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port, unsigned int to_recv_in_seconds, unsigned int to_send_in_seconds) {
     ++on_connect_called;
     REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
     REQUIRE( strlen(host) == strlen("api.kii.com") );
     REQUIRE( port == 443 );
+    REQUIRE( to_recv_in_seconds == 15 );
+    REQUIRE( to_send_in_seconds == 15 );
     return KHC_SOCK_OK;
   };
 

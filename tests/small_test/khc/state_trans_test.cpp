@@ -23,7 +23,7 @@ TEST_CASE( "HTTP minimal" ) {
   khc_set_req_headers(&http, NULL);
 
   khct::cb::SockCtx s_ctx;
-  khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
+  khc_set_cb_sock_connect(&http, khct::cb::mock_connect, 15, 15, &s_ctx);
   khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
   khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
   khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
@@ -38,11 +38,13 @@ TEST_CASE( "HTTP minimal" ) {
   REQUIRE( http._result == KHC_ERR_OK );
 
   bool called = false;
-  s_ctx.on_connect = [=, &called](void* socket_context, const char* host, unsigned int port) {
+  s_ctx.on_connect = [=, &called](void* socket_context, const char* host, unsigned int port, unsigned int to_recv_in_seconds, unsigned int to_send_in_seconds) {
     called = true;
     REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
     REQUIRE( strlen(host) == strlen("api.kii.com") );
     REQUIRE( port == 443 );
+    REQUIRE( to_recv_in_seconds == 15 );
+    REQUIRE( to_send_in_seconds == 15 );
     return KHC_SOCK_OK;
   };
 
@@ -278,7 +280,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   khc_set_req_headers(&http, NULL);
 
   khct::cb::SockCtx s_ctx;
-  khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
+  khc_set_cb_sock_connect(&http, khct::cb::mock_connect, 15, 15, &s_ctx);
   khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
   khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
   khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
@@ -293,11 +295,13 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   REQUIRE( http._result == KHC_ERR_OK );
 
   bool called = false;
-  s_ctx.on_connect = [=, &called](void* socket_context, const char* host, unsigned int port) {
+  s_ctx.on_connect = [=, &called](void* socket_context, const char* host, unsigned int port, unsigned int to_recv_in_seconds, unsigned int to_send_in_seconds) {
     called = true;
     REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
     REQUIRE( strlen(host) == strlen("api.kii.com") );
     REQUIRE( port == 443 );
+    REQUIRE( to_recv_in_seconds == 15 );
+    REQUIRE( to_send_in_seconds == 15 );
     return KHC_SOCK_OK;
   };
 

@@ -123,6 +123,9 @@ typedef struct kii_t {
     KHC_CB_SOCK_RECV mqtt_sock_recv_cb;
     KHC_CB_SOCK_CLOSE mqtt_sock_close_cb;
 
+    unsigned int _mqtt_to_recv_in_seconds;
+    unsigned int _mqtt_to_send_in_seconds;
+
     KII_TASK_CREATE task_create_cb;
 
     KII_DELAY_MS delay_ms_cb;
@@ -509,12 +512,12 @@ kii_code_t kii_api_call_run(kii_t* kii);
 
 int kii_set_buff(kii_t* kii, char* buff, size_t buff_size);
 
-int kii_set_http_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
+int kii_set_http_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, unsigned int to_recv_in_seconds, unsigned int to_send_in_seconds, void* userdata);
 int kii_set_http_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
 int kii_set_http_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
 int kii_set_http_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
 
-int kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
+int kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, unsigned int to_recv_in_seconds, unsigned int to_send_in_seconds, void* userdata);
 int kii_set_mqtt_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
 int kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
 int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);

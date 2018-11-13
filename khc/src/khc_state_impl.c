@@ -9,10 +9,14 @@
 khc_code khc_set_cb_sock_connect(
   khc* khc,
   KHC_CB_SOCK_CONNECT cb,
+  unsigned int to_recv_in_seconds,
+  unsigned int to_send_in_seconds,
   void* userdata)
 {
   khc->_cb_sock_connect = cb;
   khc->_sock_ctx_connect = userdata;
+  khc->_to_recv_in_seconds = to_recv_in_seconds;
+  khc->_to_send_in_seconds = to_send_in_seconds;
   return KHC_ERR_OK;
 }
 
@@ -136,7 +140,7 @@ void khc_state_idle(khc* khc) {
 }
 
 void khc_state_connect(khc* khc) {
-  khc_sock_code_t con_res = khc->_cb_sock_connect(khc->_sock_ctx_connect, khc->_host, 443);
+  khc_sock_code_t con_res = khc->_cb_sock_connect(khc->_sock_ctx_connect, khc->_host, 443, khc->_to_recv_in_seconds, khc->_to_send_in_seconds);
   if (con_res == KHC_SOCK_OK) {
     khc->_state = KHC_STATE_REQ_LINE;
     return;

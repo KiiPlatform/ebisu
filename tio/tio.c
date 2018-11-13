@@ -16,9 +16,11 @@ void tio_handler_init(tio_handler_t* handler)
 void tio_handler_set_cb_sock_connect_http(
     tio_handler_t* handler,
     KHC_CB_SOCK_CONNECT cb_connect,
+    unsigned int to_recv_in_seconds,
+    unsigned int to_send_in_seconds,
     void* userdata)
 {
-    kii_set_http_cb_sock_connect(&handler->_kii, cb_connect, userdata);
+    kii_set_http_cb_sock_connect(&handler->_kii, cb_connect, to_recv_in_seconds, to_send_in_seconds, userdata);
 }
 
 void tio_handler_set_cb_sock_send_http(
@@ -56,9 +58,11 @@ void tio_handler_set_http_buff(
 void tio_handler_set_cb_sock_connect_mqtt(
     tio_handler_t* handler,
     KHC_CB_SOCK_CONNECT cb_connect,
+    unsigned int to_recv_in_seconds,
+    unsigned int to_send_in_seconds, 
     void* userdata)
 {
-    kii_set_mqtt_cb_sock_connect(&handler->_kii, cb_connect, userdata);
+    kii_set_mqtt_cb_sock_connect(&handler->_kii, cb_connect, to_recv_in_seconds, to_send_in_seconds, userdata);
 }
 
 void tio_handler_set_cb_sock_send_mqtt(

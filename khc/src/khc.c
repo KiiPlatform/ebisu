@@ -84,6 +84,9 @@ khc_code khc_set_zero(khc* khc) {
   khc->_cb_sock_close = NULL;
   khc->_sock_ctx_close = NULL;
 
+  khc->_to_recv_in_seconds = 0;
+  khc->_to_send_in_seconds = 0;
+
   khc_set_zero_excl_cb(khc);
 
   return KHC_ERR_OK;
