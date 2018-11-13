@@ -20,7 +20,7 @@
 
 khc_sock_code_t
     sock_cb_connect(void* sock_ctx, const char* host,
-            unsigned int port)
+            unsigned int port, unsigned int to_recv_in_seconds, unsigned int to_send_in_seconds)
 {
     int sock, ret;
     struct hostent *servhost;
@@ -46,6 +46,16 @@ khc_sock_code_t
         printf("failed to init socket.\n");
         return KHC_SOCK_FAIL;
     }
+
+    struct timeval recv_tv;
+    recv_tv.tv_sec = to_recv_in_seconds;
+    recv_tv.tv_usec = 0;
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&recv_tv, sizeof recv_tv);
+
+    struct timeval send_tv;
+    send_tv.tv_sec = to_send_in_seconds;
+    send_tv.tv_usec = 0;
+    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (const char*)&send_tv, sizeof send_tv);
 
     if (connect(sock, (struct sockaddr*) &server, sizeof(server)) == -1 ){
         printf("failed to connect socket.\n");

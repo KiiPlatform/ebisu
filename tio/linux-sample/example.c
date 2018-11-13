@@ -43,7 +43,7 @@ void updater_init(
 
     tio_updater_set_buff(updater, buffer, buffer_size);
 
-    tio_updater_set_cb_sock_connect(updater, sock_cb_connect, sock_ssl_ctx);
+    tio_updater_set_cb_sock_connect(updater, sock_cb_connect, 15, 15, sock_ssl_ctx);
     tio_updater_set_cb_sock_send(updater, sock_cb_send, sock_ssl_ctx);
     tio_updater_set_cb_sock_recv(updater, sock_cb_recv, sock_ssl_ctx);
     tio_updater_set_cb_sock_close(updater, sock_cb_close, sock_ssl_ctx);
