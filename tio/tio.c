@@ -213,9 +213,11 @@ void tio_updater_init(tio_updater_t* updater)
 void tio_updater_set_cb_sock_connect(
     tio_updater_t* updater,
     KHC_CB_SOCK_CONNECT cb_connect,
+    unsigned int to_recv_in_seconds,
+    unsigned int to_send_in_seconds,
     void* userdata)
 {
-    kii_set_http_cb_sock_connect(&updater->_kii, cb_connect, userdata);
+    kii_set_http_cb_sock_connect(&updater->_kii, cb_connect, to_recv_in_seconds, to_send_in_seconds, userdata);
 }
 
 void tio_updater_set_cb_sock_send(
