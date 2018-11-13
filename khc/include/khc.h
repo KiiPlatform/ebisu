@@ -234,7 +234,7 @@ khc_code khc_set_zero(khc* khc);
  * \brief Set members of khc 0/NULL.
  * 
  * However, callbacks/ userdata set by 
- * khc_set_cb_sock_connect(khc*, KHC_CB_SOCK_CONNECT, void*),
+ * khc_set_cb_sock_connect(khc*, KHC_CB_SOCK_CONNECT, unsigned int, unsigned int, void*),
  * khc_set_cb_sock_send(khc*, KHC_CB_SOCK_SEND, void*),
  * khc_set_cb_sock_recv(khc*, KHC_CB_SOCK_RECV, void*),
  * khc_set_cb_sock_close(khc*, KHC_CB_SOCK_CLOSE, void*),
