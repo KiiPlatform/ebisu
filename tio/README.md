@@ -142,7 +142,7 @@ Our cloud supports non-secure connection for now. However, we may terminate supp
 ### Action callback
 
 Action callback is called when the IoT device receives remote controll command.
-You can implement IoT device specific controll in thie callback such as turn on /off devices or changes level of actuators, etc.
+You can implement IoT device specific controll in thie callback such as turn on/ off devices or changes level of actuators, etc.
 
 Action callback signature:
 
