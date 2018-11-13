@@ -469,7 +469,7 @@ After the onboarding has been done, you can get `tio_author_t` instance from eit
 
 Now, it's ready to start the updater module.
 
-Here's code extracted from [example app](linux-sample/example.c)).
+Here's code extracted from [example app](linux-sample/example.c).
 
 ```c
     tio_updater_start(
