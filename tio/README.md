@@ -72,7 +72,7 @@ kii_task_code_t task_create_cb
 
 #### Delay callback
 
-In some situation progam needs to wait for speicified period of time to avoid the loop runs too fast or making too many requests to servers, etc.
+In some situation program needs to wait for speicified period of time to avoid the loop runs too fast or making too many requests to servers, etc.
 
 `tio` needs abstraction with callbacks since the way varies in different environments.
 
