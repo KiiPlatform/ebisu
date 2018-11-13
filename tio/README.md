@@ -328,7 +328,7 @@ Alternatively, you can execute this step outside of the IoT Device and pass thin
             password,
             thingType,
             firmWareVersion,
-            layoutPosion,
+            layoutPosition,
             properties);
     tio_author_t* author = tio_handler_get_author(&handler);
     /* thing ID and access token is stored in tio_author_t.
