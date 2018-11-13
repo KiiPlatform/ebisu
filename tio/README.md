@@ -271,10 +271,10 @@ In the example, `COMMAND_HANDLER_MQTT_KEEP_ALIVE_INTERVAL` is defined as Macro a
 
 MQTT have mechanism called `Keep Alive` detecting stale connection between the MQTT broker.
 
-`tio_handler_t` acts as MQTT clients and send `PingReq` to MQTT broaker periodically with the specified interval. 
-If `PingResp` from MQTT broaker is not present, `tio_handler_t` would close the current connection and make fresh connection again.
+`tio_handler_t` acts as MQTT clients and send `PingReq` to MQTT broker periodically with the specified interval.
+If `PingResp` from MQTT broker is not present, `tio_handler_t` would close the current connection and make fresh connection again.
 
-If interval is set to 0, `Keep Alive` is turned off and no `PingReq` message is send to MQTT broaker.
+If interval is set to 0, `Keep Alive` is turned off and no `PingReq` message is send to MQTT broker.
 
 We highly recommend setting Keep Alive interval greater than 0 to detect disconnection.
 Recommended interval is few minutes since too small interval may cause network congestion and increases cloud cost.
