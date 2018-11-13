@@ -434,6 +434,7 @@ void* _mqtt_start_recvmsg_task(void* sdata)
                 pushState = KII_MQTT_READY;
                 break;
             case KII_MQTT_READY:
+                // TODO: Fix the logic. Recv timeout is introduced.
                 if(_mqtt_recvmsg(kii, &endpoint) != 0)
                 {
                     /* Receiving notificaiton is failed. Retry subscribing. */
