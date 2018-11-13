@@ -254,7 +254,7 @@ Different context objects named `http_ssl_ctx` and `mqtt_ssl_ctx` is used since 
 
 `tio_handler` needs memory buffer to store HTTP/ MQTT payloads.
 
-In this example, assigned 4Kb for HTTP payloads and 2Kb for MQTT payloads.
+In this example, assigned 4KB for HTTP payloads and 2KB for MQTT payloads.
 This size may covers most use-cases.
 However, If you're remote command definition is more and larger, you may need to allocate larger size.
 
