@@ -117,7 +117,7 @@ typedef khc_sock_code_t
     (*KHC_CB_SOCK_CLOSE)(void* sock_ctx);
 ```
 
-You can see implementation witn OpenSSL at [linux-sample](linux-sample/sock_cb_linux.c)
+You can see implementation with OpenSSL at [linux-sample](linux-sample/sock_cb_linux.c)
 
 `sock_ctx` argument is arbitrary data context which application can use.
 Application should pass the pointer of the data when calling
