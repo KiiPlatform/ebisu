@@ -131,7 +131,7 @@ Application should pass the pointer of the data when calling
 `tio_handler_set_cb_sock_close_mqtt()`
  methods.
 
-Note that, `tio_handler` uses MQTT(s) to receive remote controll commands and uses HTTP(s) to send the result of command execution.
+Note that, `tio_handler` uses MQTT(s) to receive remote control commands and uses HTTP(s) to send the result of command execution.
 
 Application can choose to pass different implementations of socket functions or same one.
 If you choose to pass same pointer of the function, Please also check [Asynchronous task management](#asynchronous_task_management) section as well.
@@ -345,7 +345,7 @@ Now, it's ready to start `tio_handler_t` module.
     tio_handler_start(&handler, author, tio_action_handler, NULL);
 ```
 
-- `author` consits of thing ID and access token obtained in the step of [Onboarding](#execute-onboarding).
+- `author` consists of thing ID and access token obtained in the step of [Onboarding](#execute-onboarding).
 
 - `tio_action_handler` is the callback function pointer explained in [Action callback](#action-callback)
 
