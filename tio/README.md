@@ -134,7 +134,7 @@ Application should pass the pointer of the data when calling
 Note that, `tio_handler` uses MQTT(s) to receive remote control commands and uses HTTP(s) to send the result of command execution.
 
 Application can choose to pass different implementations of socket functions or same one.
-If you choose to pass same pointer of the function, Please also check [Asynchronous task management](#asynchronous_task_management) section as well.
+If you choose to pass same pointer of the function, Please also check [Asynchronous task management](#asynchronous-task-management) section as well.
 
 For both MQTT and HTTP, using them over secure connection is highly recommended.
 Our cloud supports non-secure connection for now. However, we may terminate supports of insecure connections in the future. 
@@ -483,9 +483,9 @@ Here's code extracted from [example app](linux-sample/example.c).
 
 - `author` : Pointer to `tio_author_t` instance obtained from onboarded `tio_handler_t`.
 
-- `updater_cb_state_size` : [Size callback](#size_callback) function pointer.
+- `updater_cb_state_size` : [Size callback](#size-callback) function pointer.
 
-- `updater_cb_read` : [Read callback](#read_callback) function pointer.
+- `updater_cb_read` : [Read callback](#read-callback) function pointer.
 
 - `updater_file_ctx` : Context object pointer referenced from both size callback/ read callback.
 
