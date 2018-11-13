@@ -31,7 +31,7 @@ command:
 
 ## How to use
 Go to https://developer.kii.com and create app for you.
-Replace `EX_APP_ID`, `EX_APP_KEY` and `EX_APP_SITE` in example.h with yours.
+Replace `KII_APP_ID`, `EX_APP_KEY` and `KII_APP_HOST` in example.h with yours.
 If you want to test receiving commands, please create thing with owner.
 
 ### Prepare Thing type, Trait, Alias
@@ -195,7 +195,7 @@ of this file is send to server. If you want to change thing state to
 server, You can edit this file.
 
 If you want to change period of sending thing state to server, you can
-edit `EX_STATE_UPDATE_PERIOD` in `example.h`.
+edit `STATE_UPDATE_PERIOD` in `example.h`.
 
 If you want to check sending results, go to https://developer.kii.com and check Thing Console.
 

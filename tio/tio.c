@@ -141,15 +141,55 @@ static void _cb_receive_push(char* palyload, size_t payload_length, void* userda
     }
 }
 
+void tio_handler_set_json_parser_resource(
+    tio_handler_t* handler,
+    jkii_resource_t* resource)
+{
+    kii_set_json_parser_resource(&handler->_kii, resource);
+}
+
+void tio_handler_set_json_parser_resource_cb(
+    tio_handler_t* handler,
+    JKII_RESOURCE_ALLOC_CB alloc_cb,
+    JKII_RESOURCE_FREE_CB free_cb)
+{
+    kii_set_json_parser_resource_cb(&handler->_kii, alloc_cb, free_cb);
+}
+
+tio_code_t tio_handler_onboard(
+    tio_handler_t* handler,
+    const char* vendor_thing_id,
+    const char* password,
+    const char* thing_type,
+    const char* firmware_version,
+    const char* layout_position,
+    const char* thing_properties)
+{
+    kii_code_t ret =kii_ti_onboard(
+        &handler->_kii,
+        vendor_thing_id,
+        password,
+        thing_type,
+        firmware_version,
+        layout_position,
+        thing_properties
+    );
+    return _tio_convert_code(ret);
+}
+
+const tio_author_t* tio_handler_get_author(tio_handler_t* handler)
+{
+    return &handler->_kii._author;
+}
+
 tio_code_t tio_handler_start(
     tio_handler_t* handler,
     const tio_author_t* author,
     TIO_CB_ACTION cb_action,
     void* userdata)
 {
-    if (author != NULL) {
-        handler->_kii._author = *author;
-    }
+    handler->_kii._author = *author;
+
     handler->_cb_action = cb_action;
     handler->_cb_action_data = userdata;
     kii_code_t res = kii_start_push_routine(
@@ -269,6 +309,48 @@ static void* _update_state(void* data) {
     return NULL;
 }
 
+void tio_updater_set_json_parser_resource(
+    tio_updater_t* updater,
+    jkii_resource_t* resource)
+{
+    kii_set_json_parser_resource(&updater->_kii, resource);
+}
+
+void tio_updater_set_json_parser_resource_cb(
+    tio_updater_t* updater,
+    JKII_RESOURCE_ALLOC_CB alloc_cb,
+    JKII_RESOURCE_FREE_CB free_cb)
+{
+    kii_set_json_parser_resource_cb(&updater->_kii, alloc_cb, free_cb);
+}
+
+tio_code_t tio_updater_onboard(
+    tio_updater_t* updater,
+    const char* vendor_thing_id,
+    const char* password,
+    const char* thing_type,
+    const char* firmware_version,
+    const char* layout_position,
+    const char* thing_properties)
+{
+    kii_code_t ret =kii_ti_onboard(
+        &updater->_kii,
+        vendor_thing_id,
+        password,
+        thing_type,
+        firmware_version,
+        layout_position,
+        thing_properties
+    );
+    return _tio_convert_code(ret);
+}
+
+const tio_author_t* tio_updater_get_author(
+    tio_updater_t* updater)
+{
+    return &updater->_kii._author;
+}
+
 tio_code_t tio_updater_start(
     tio_updater_t* updater,
     const tio_author_t* author,
@@ -277,10 +359,8 @@ tio_code_t tio_updater_start(
     TIO_CB_READ state_reader,
     void* state_reader_data)
 {
-    if (author != NULL) {
-        updater->_kii._author = *author;
-    }
- 
+    updater->_kii._author = *author;
+
     updater->_cb_state_size = cb_state_size;
     updater->_cb_state_size_data = cb_state_size_data;
 

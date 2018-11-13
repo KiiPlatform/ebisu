@@ -35,6 +35,7 @@
     "limits": "c",
     "ratio": "c",
     "type_traits": "c",
-    "stdlib.h": "c"
+    "stdlib.h": "c",
+    "khc_socket_callback.h": "c"
   }
 }
