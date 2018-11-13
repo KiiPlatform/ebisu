@@ -19,12 +19,14 @@ void create_random_chunked_body(std::ostream &chunkedBody, std::ostream &expectB
 }
 
 struct khct::http::Resp {
+  bool _add_status_100 = false;
+
   std::vector<std::string> headers;
   std::string body;
   std::string to_string();
   std::istringstream to_istringstream();
   Resp();
-  Resp(std::istream& is);
+  Resp(std::istream& is, bool add_status_100 = false);
 };
 }
 

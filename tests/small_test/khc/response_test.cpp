@@ -117,16 +117,9 @@ TEST_CASE( "Ignore HTTP status 100" ) {
   ifstream ifs;
   ifs.open("./data/resp-login.txt");
 
-  khct::http::Resp resp(ifs);
+  khct::http::Resp resp(ifs, true);
 
   ifs.close();
-
-  const char* CRLF = "\r\n";
-  stringstream is;
-  is << "HTTP/1.1 100 Continue" << CRLF;
-  is << "Host: api.kii.com" << CRLF;
-  is << CRLF;
-  is << resp.to_string();
 
   khc_set_host(&http, "api.kii.com");
   khc_set_method(&http, "GET");
@@ -168,6 +161,7 @@ TEST_CASE( "Ignore HTTP status 100" ) {
   };
 
   int on_recv_called = 0;
+  auto is = resp.to_istringstream();
   s_ctx.on_recv = [=, &on_recv_called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
     ++on_recv_called;
     if (on_recv_called == 1)
