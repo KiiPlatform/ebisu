@@ -295,7 +295,7 @@ In this example, allocates 256 tokens statically.
 ```
 
 Number of tokens to be used to parse json varies depending on how complex the target json string is.
-If you defined complex(i.e, lot of fields or long arrays in the commands) controll command, you would need to give larger number.
+If you defined complex(i.e, a lot of fields or long arrays in the commands) controll command, you would need to give larger number.
 Alternatively, you can use dynamic allocation for tokens by using followig API:
 
 ```c
