@@ -31,6 +31,12 @@ khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length)
   return slist;
 }
 
+khc_code khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size) {
+  khc->_resp_header_buff = buffer;
+  khc->_resp_header_buff_size = buff_size;
+  return KHC_ERR_OK;
+}
+
 khc_code khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size) {
   khc->_stream_buff = buffer;
   khc->_stream_buff_size = buff_size;
@@ -118,6 +124,10 @@ khc_code khc_set_zero_excl_cb(khc* khc) {
   khc->_body_read_size = 0;
   khc->_result = KHC_ERR_OK;
 
+  // Response header Buffer
+  khc->_resp_header_buff = NULL;
+  khc->_resp_header_buff_size = 0;
+  khc->_resp_header_buff_allocated = 0;
   // Stream Buffer
   khc->_stream_buff = NULL;
   khc->_stream_buff_size = 0;

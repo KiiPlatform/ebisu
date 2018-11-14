@@ -8,6 +8,7 @@ extern "C"
 
 #include "khc.h"
 
+#define DEFAULT_RESP_HEADER_BUFF_SIZE 256
 #define DEFAULT_STREAM_BUFF_SIZE 1024
 
 void khc_state_idle(khc* khc);
@@ -27,6 +28,15 @@ void khc_state_resp_headers_realloc(khc* khc);
 void khc_state_resp_headers_read(khc* khc);
 void khc_state_resp_status_parse(khc* khc);
 void khc_state_resp_headers_callback(khc* khc);
+
+void khc_state_resp_status_read(khc* khc);
+void khc_state_resp_status_parse_2(khc* khc);
+void khc_state_resp_header_callback(khc* khc);
+void khc_state_resp_header_read(khc* khc);
+void khc_state_resp_body_flagment_2(khc* khc);
+void khc_state_resp_body_read_chunk_size_from_header_buff(khc* khc);
+void khc_state_resp_body_read_chunk_body_from_header_buff(khc* khc);
+
 void khc_state_resp_body_flagment(khc* khc);
 void khc_state_resp_body_read(khc* khc);
 void khc_state_resp_body_callback(khc* khc);

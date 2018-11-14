@@ -103,6 +103,15 @@ typedef enum khc_state {
   KHC_STATE_RESP_HEADERS_READ,
   KHC_STATE_RESP_STATUS_PARSE,
   KHC_STATE_RESP_HEADERS_CALLBACK,
+
+  KHC_STATE_RESP_STATUS_READ,
+  KHC_STATE_RESP_STATUS_PARSE_2,
+  KHC_STATE_RESP_HEADER_CALLBACK,
+  KHC_STATE_RESP_HEADER_READ,
+  KHC_STATE_RESP_BODY_FLAGMENT_2,
+  KHC_STATE_RESP_BODY_READ_CHUNK_SIZE_FROM_HEADER_BUFF,
+  KHC_STATE_RESP_BODY_READ_CHUNK_BODY_FROM_HEADER_BUFF,
+
   /* Process flagment of body obtaind when trying to find body boundary. */
   KHC_STATE_RESP_BODY_FLAGMENT,
   KHC_STATE_RESP_BODY_READ,
@@ -190,6 +199,11 @@ typedef struct khc {
 
   size_t _read_size; /**< \private **/
   int _read_req_end; /**< \private **/
+
+  /* Response header buffer */
+  char* _resp_header_buff; /**< \private **/
+  size_t _resp_header_buff_size; /**< \private **/
+  int _resp_header_buff_allocated; /**< \private **/
 
   /* Response header buffer (Dynamic allocation) */
   char* _resp_header_buffer; /**< \private **/
@@ -296,6 +310,20 @@ khc_code khc_set_method(khc* khc, const char* method);
  * \param [in] headers list of request headers.
  */
 khc_code khc_set_req_headers(khc* khc, khc_slist* headers);
+
+/**
+ * \brief Set response header buffer.
+ *
+ * Set response header buffer pointer used by KHC_CB_HEADER.
+ * If this method is not called or set NULL to the buffer,
+ * khc allocates memory of response header buffer when the HTTP session started
+ * and free when the HTTP session ends.
+ *
+ * \param [out] khc instance.
+ * \param [in] buffer pointer to the buffer.
+ * \param [in] buff_size size of the buffer.
+ */
+khc_code khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size);
 
 /**
  * \brief Set stream buffer.

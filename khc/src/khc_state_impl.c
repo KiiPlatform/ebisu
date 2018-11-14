@@ -120,6 +120,17 @@ void khc_state_idle(khc* khc) {
     // Fallback to GET.
     strncpy(khc->_method, "GET", sizeof(khc->_method));
   }
+  if (khc->_resp_header_buff == NULL) {
+    char* buff = malloc(DEFAULT_RESP_HEADER_BUFF_SIZE);
+    if (buff == NULL) {
+      khc->_state = KHC_STATE_FINISHED;
+      khc->_result = KHC_ERR_ALLOCATION;
+      return;
+    }
+    khc->_resp_header_buff = buff;
+    khc->_resp_header_buff_allocated = 1;
+    khc->_resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
+  }
   if (khc->_stream_buff == NULL) {
     char* buff = malloc(DEFAULT_STREAM_BUFF_SIZE);
     if (buff == NULL) {
@@ -344,7 +355,8 @@ void khc_state_req_body_send_crlf(khc* khc) {
   khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, "\r\n", 2);
   if (send_res == KHC_SOCK_OK) {
     if (khc->_read_req_end == 1) {
-      khc->_state = KHC_STATE_RESP_HEADERS_ALLOC;
+      khc->_resp_header_read_size = 0;
+      khc->_state = KHC_STATE_RESP_STATUS_READ;
     } else {
       khc->_state = KHC_STATE_REQ_BODY_READ;
     }
@@ -518,6 +530,182 @@ void khc_state_resp_headers_callback(khc* khc) {
   }
 }
 
+void khc_state_resp_status_read(khc* khc) {
+  size_t read_size = 0;
+  size_t read_req_size = khc->_resp_header_buff_size - khc->_resp_header_read_size - 1;
+  khc_sock_code_t read_res = 
+    khc->_cb_sock_recv(khc->_sock_ctx_recv, &khc->_resp_header_buff[khc->_resp_header_read_size], read_req_size, &read_size);
+  if (read_res == KHC_SOCK_OK) {
+    khc->_resp_header_read_size += read_size;
+    khc->_resp_header_buff[khc->_resp_header_read_size] = '\0';
+    if (read_size == 0) {
+      khc->_read_end = 1;
+    }
+    // check CRLF. no exist -> ERROR.
+    if (strstr(khc->_resp_header_buff, "\r\n") == NULL) {
+      khc->_state = KHC_STATE_CLOSE;
+      khc->_result = KHC_ERR_TOO_LARGE_DATA;
+      return;
+    }
+    khc->_state = KHC_STATE_RESP_STATUS_PARSE_2;
+    return;
+  }
+  if (read_res == KHC_SOCK_AGAIN) {
+    return;
+  }
+  if (read_res == KHC_SOCK_FAIL) {
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = KHC_ERR_SOCK_RECV;
+    return;
+  }
+}
+
+void khc_state_resp_status_parse_2(khc* khc) {
+  const char http_version[] = "HTTP/d.d ";
+  char* ptr = khc->_resp_header_buff + strlen(http_version);
+
+  int status_code = 0;
+  for (int i = 0; i < 3; ++i) {
+    char d = ptr[i];
+    if (isdigit((int)d) == 0){
+      khc->_state = KHC_STATE_CLOSE;
+      khc->_result = KHC_ERR_FAIL;  
+      return;
+    }
+    status_code = status_code * 10 + (d - '0');
+  }
+  khc->_status_code = status_code;
+  khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
+  return;
+}
+
+void khc_state_resp_header_callback(khc* khc) {
+  char* header_boundary = strstr(khc->_resp_header_buff, "\r\n");
+  if (header_boundary == NULL) {
+    if (khc->_resp_header_buff_size == khc->_resp_header_read_size + 1) {
+      // no space in _resp_header_buff.
+      khc->_state = KHC_STATE_CLOSE;
+      khc->_result = KHC_ERR_TOO_LARGE_DATA;
+      return;
+    }
+    khc->_state = KHC_STATE_RESP_HEADER_READ;
+    return;
+  }
+  size_t header_size = header_boundary - khc->_resp_header_buff;
+  if (header_size > 0) {
+    size_t content_length = 0;
+    size_t header_written = khc->_cb_header(khc->_resp_header_buff, 1,
+        header_size, khc->_header_data);
+    if (header_written != header_size) { // Error in callback function.
+      khc->_state = KHC_STATE_CLOSE;
+      khc->_result = KHC_ERR_HEADER_CALLBACK;
+      return;
+    }
+
+    if (_is_chunked_encoding(khc->_resp_header_buff, header_size) == 1) {
+      khc->_chunked_resp = 1;
+    } else if (_extract_content_length(khc->_resp_header_buff, header_size, &content_length) == 1) {
+      khc->_resp_content_length = content_length;
+    }
+  }
+
+  memmove(khc->_resp_header_buff, header_boundary + 2,
+      khc->_resp_header_read_size - (header_size + 2) + 1); // +1 is '\0' include.
+  khc->_resp_header_read_size -= (header_size + 2);
+
+  if (header_size == 0) {
+    if (100 <= khc->_status_code && khc->_status_code < 200) {
+      khc->_state = KHC_STATE_RESP_STATUS_READ;
+    } else {
+      if (khc->_chunked_resp) {
+        khc->_body_read_size = 0;
+        khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
+      } else {
+        khc->_state = KHC_STATE_RESP_BODY_FLAGMENT_2;
+      }
+      return;
+    }
+  }
+}
+
+void khc_state_resp_header_read(khc* khc) {
+  size_t read_size = 0;
+  size_t read_req_size = khc->_resp_header_buff_size - khc->_resp_header_read_size - 1;
+  khc_sock_code_t read_res = 
+    khc->_cb_sock_recv(khc->_sock_ctx_recv, &khc->_resp_header_buff[khc->_resp_header_read_size], read_req_size, &read_size);
+  if (read_res == KHC_SOCK_OK) {
+    khc->_resp_header_read_size += read_size;
+    khc->_resp_header_buff[khc->_resp_header_read_size] = '\0';
+    if (read_size == 0) {
+      khc->_read_end = 1;
+    }
+    khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
+    return;
+  }
+  if (read_res == KHC_SOCK_AGAIN) {
+    return;
+  }
+  if (read_res == KHC_SOCK_FAIL) {
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = KHC_ERR_SOCK_RECV;
+    return;
+  }
+}
+
+void khc_state_resp_body_flagment_2(khc* khc) {
+  size_t written = 
+    khc->_cb_write(khc->_resp_header_buff, 1, khc->_resp_header_read_size, khc->_write_data);
+  if (written != khc->_resp_header_read_size) { // Error in write callback.
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = KHC_ERR_WRITE_CALLBACK;
+    return;
+  }
+  if (khc->_read_end == 1) {
+    khc->_state = KHC_STATE_CLOSE;
+    return;
+  } else {
+    khc->_state = KHC_STATE_RESP_BODY_READ;
+    return;
+  }
+}
+
+int _move_resp_header_to_stream(khc* khc) {
+  size_t remain = khc->_stream_buff_size - khc->_body_read_size;
+  if (remain <= 0) {
+    return 1;
+  }
+  size_t move_size = remain > khc->_resp_header_read_size ? khc->_resp_header_read_size : remain;
+  memmove(
+      &khc->_stream_buff[khc->_body_read_size],
+      khc->_resp_header_buff,
+      move_size);
+  khc->_body_read_size += move_size;
+  khc->_resp_header_read_size -= move_size;
+  memmove(
+      khc->_resp_header_buff,
+      &khc->_resp_header_buff[move_size],
+      khc->_resp_header_read_size + 1);// move with '\0'
+  return 0;
+}
+
+void khc_state_resp_body_read_chunk_size_from_header_buff(khc* khc) {
+  if (_move_resp_header_to_stream(khc) == 0) {
+    khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
+  } else {
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = KHC_ERR_TOO_LARGE_DATA;
+  }
+}
+
+void khc_state_resp_body_read_chunk_body_from_header_buff(khc* khc) {
+  if (_move_resp_header_to_stream(khc) == 0) {
+    khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY;
+  } else {
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = KHC_ERR_TOO_LARGE_DATA;
+  }
+}
+
 void khc_state_resp_body_flagment(khc* khc) {
   size_t written = 
     khc->_cb_write(khc->_body_flagment, 1, khc->_body_flagment_size, khc->_write_data);
@@ -605,7 +793,11 @@ void khc_state_resp_body_parse_chunk_size(khc* khc) {
       khc->_state = KHC_STATE_RESP_BODY_SKIP_TRAILERS;
     }
   } else {
-    khc->_state = KHC_STATE_RESP_BODY_READ_CHUNK_SIZE;
+    if (khc->_resp_header_read_size > 0) {
+      khc->_state = KHC_STATE_RESP_BODY_READ_CHUNK_SIZE_FROM_HEADER_BUFF;
+    } else {
+      khc->_state = KHC_STATE_RESP_BODY_READ_CHUNK_SIZE;
+    }
   }
 }
 
@@ -655,7 +847,12 @@ void khc_state_resp_body_parse_chunk_body(khc* khc) {
   }
   khc->_chunk_size_written += target_size;
   if (khc->_chunk_size > khc->_chunk_size_written) {
-    khc->_state = KHC_STATE_RESP_BODY_READ_CHUNK_BODY;
+    if (khc->_resp_header_read_size > 0) {
+      khc->_body_read_size = 0;
+      khc->_state = KHC_STATE_RESP_BODY_READ_CHUNK_BODY_FROM_HEADER_BUFF;
+    } else {
+      khc->_state = KHC_STATE_RESP_BODY_READ_CHUNK_BODY;
+    }
   } else {
     size_t remain = khc->_body_read_size - target_size;
     memmove(khc->_stream_buff, &khc->_stream_buff[target_size], remain);
@@ -760,6 +957,12 @@ void khc_state_close(khc* khc) {
     khc->_stream_buff_size = 0;
     khc->_stream_buff_allocated = 0;
   }
+  if (khc->_resp_header_buff_allocated == 1) {
+    free(khc->_resp_header_buff);
+    khc->_resp_header_buff = NULL;
+    khc->_resp_header_buff_size = 0;
+    khc->_resp_header_buff_allocated = 0;
+  }
   khc_sock_code_t close_res = khc->_cb_sock_close(khc->_sock_ctx_close);
   if (close_res == KHC_SOCK_OK) {
     khc->_state = KHC_STATE_FINISHED;
@@ -793,6 +996,15 @@ const KHC_STATE_HANDLER state_handlers[] = {
   khc_state_resp_headers_read,
   khc_state_resp_status_parse,
   khc_state_resp_headers_callback,
+
+  khc_state_resp_status_read,
+  khc_state_resp_status_parse_2,
+  khc_state_resp_header_callback,
+  khc_state_resp_header_read,
+  khc_state_resp_body_flagment_2,
+  khc_state_resp_body_read_chunk_size_from_header_buff,
+  khc_state_resp_body_read_chunk_body_from_header_buff,
+
   khc_state_resp_body_flagment,
   khc_state_resp_body_read,
   khc_state_resp_body_callback,
