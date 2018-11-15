@@ -122,6 +122,8 @@ typedef struct kii_t {
     KHC_CB_SOCK_SEND mqtt_sock_send_cb;
     KHC_CB_SOCK_RECV mqtt_sock_recv_cb;
     KHC_CB_SOCK_CLOSE mqtt_sock_close_cb;
+    unsigned int _mqtt_to_recv_sec;
+    unsigned int _mqtt_to_send_sec;
 
     KII_TASK_CREATE task_create_cb;
 
