@@ -12,7 +12,7 @@ TEST_CASE( "HTTP minimal" ) {
   khc http;
   khc_set_zero(&http);
   const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
-  const size_t resp_header_buff_size = buff_size;
+  const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
 
   khct::http::Resp resp;
   resp.headers = { "HTTP/1.0 200 OK" };
@@ -184,16 +184,9 @@ TEST_CASE( "HTTP minimal" ) {
     return KHC_SOCK_OK;
   };
   khc_state_req_body_send_crlf(&http);
-  REQUIRE( http._state == KHC_STATE_RESP_HEADERS_ALLOC );
+  REQUIRE( http._state == KHC_STATE_RESP_STATUS_READ );
   REQUIRE( http._result == KHC_ERR_OK );
   REQUIRE( called );
-
-  khc_state_resp_headers_alloc(&http);
-  REQUIRE( http._state == KHC_STATE_RESP_HEADERS_READ );
-  REQUIRE( http._result == KHC_ERR_OK );
-  REQUIRE( *http._resp_header_buffer == '\0' );
-  REQUIRE( http._resp_header_buffer == http._resp_header_buffer_current_pos );
-  REQUIRE (http._resp_header_buffer_size == resp_header_buff_size );
 
   called = false;
   auto is = resp.to_istringstream();
@@ -204,7 +197,7 @@ TEST_CASE( "HTTP minimal" ) {
     return KHC_SOCK_OK;
   };
 
-  khc_state_resp_headers_read(&http);
+  khc_state_resp_status_read(&http);
   REQUIRE( http._state == KHC_STATE_RESP_STATUS_PARSE );
   REQUIRE( http._read_end == 0 );
   REQUIRE( http._result == KHC_ERR_OK );
@@ -215,7 +208,7 @@ TEST_CASE( "HTTP minimal" ) {
 
   khc_state_resp_status_parse(&http);
   REQUIRE( khc_get_status_code(&http) == 200 );
-  REQUIRE( http._state == KHC_STATE_RESP_HEADERS_CALLBACK );
+  REQUIRE( http._state == KHC_STATE_RESP_HEADER_CALLBACK );
 
   called = false;
   io_ctx.on_header = [=, &called, &resp](char *buffer, size_t size, size_t count, void *userdata) {
@@ -228,11 +221,21 @@ TEST_CASE( "HTTP minimal" ) {
     return size * count;
   };
 
-  khc_state_resp_headers_callback(&http);
-  REQUIRE( http._state == KHC_STATE_RESP_BODY_READ );
+  khc_state_resp_header_callback(&http);
+  REQUIRE( http._state == KHC_STATE_RESP_HEADER_CALLBACK );
   REQUIRE( http._read_end == 0 );
   REQUIRE( http._result == KHC_ERR_OK );
   REQUIRE( called );
+
+  khc_state_resp_header_callback(&http);
+  REQUIRE( http._state == KHC_STATE_RESP_BODY_FLAGMENT );
+  REQUIRE( http._read_end == 0 );
+  REQUIRE( http._result == KHC_ERR_OK );
+
+  khc_state_resp_body_flagment(&http);
+  REQUIRE( http._state == KHC_STATE_RESP_BODY_READ );
+  REQUIRE( http._read_end == 0 );
+  REQUIRE( http._result == KHC_ERR_OK );
 
   called = false;
   s_ctx.on_recv = [=, &called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
@@ -262,7 +265,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   khc http;
   khc_set_zero(&http);
   const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
-  const size_t resp_header_buff_size = buff_size;
+  const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
 
   khct::http::Resp resp;
   resp.headers = {
@@ -439,16 +442,9 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     return KHC_SOCK_OK;
   };
   khc_state_req_body_send_crlf(&http);
-  REQUIRE( http._state == KHC_STATE_RESP_HEADERS_ALLOC );
+  REQUIRE( http._state == KHC_STATE_RESP_STATUS_READ );
   REQUIRE( http._result == KHC_ERR_OK );
   REQUIRE( called );
-
-  khc_state_resp_headers_alloc(&http);
-  REQUIRE( http._state == KHC_STATE_RESP_HEADERS_READ );
-  REQUIRE( http._result == KHC_ERR_OK );
-  REQUIRE( *http._resp_header_buffer == '\0' );
-  REQUIRE( http._resp_header_buffer == http._resp_header_buffer_current_pos );
-  REQUIRE (http._resp_header_buffer_size == resp_header_buff_size );
 
   called = false;
   auto is = resp.to_istringstream();
@@ -459,7 +455,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     return KHC_SOCK_OK;
   };
 
-  khc_state_resp_headers_read(&http);
+  khc_state_resp_status_read(&http);
   REQUIRE( http._state == KHC_STATE_RESP_STATUS_PARSE );
   REQUIRE( http._read_end == 0 );
   REQUIRE( http._result == KHC_ERR_OK );
@@ -470,7 +466,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
 
   khc_state_resp_status_parse(&http);
   REQUIRE( khc_get_status_code(&http) == 200 );
-  REQUIRE( http._state == KHC_STATE_RESP_HEADERS_CALLBACK );
+  REQUIRE( http._state == KHC_STATE_RESP_HEADER_CALLBACK );
 
   called = false;
   io_ctx.on_header = [=, &called, &resp](char *buffer, size_t size, size_t count, void *userdata) {
@@ -483,8 +479,8 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     return size * count;
   };
 
-  khc_state_resp_headers_callback(&http);
-  REQUIRE( http._state == KHC_STATE_RESP_HEADERS_CALLBACK );
+  khc_state_resp_header_callback(&http);
+  REQUIRE( http._state == KHC_STATE_RESP_HEADER_CALLBACK );
   REQUIRE( http._chunked_resp == 0 );
   REQUIRE( http._read_end == 0 );
   REQUIRE( http._result == KHC_ERR_OK );
@@ -501,8 +497,8 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     return size * count;
   };
 
-  khc_state_resp_headers_callback(&http);
-  REQUIRE( http._state == KHC_STATE_RESP_HEADERS_CALLBACK );
+  khc_state_resp_header_callback(&http);
+  REQUIRE( http._state == KHC_STATE_RESP_HEADER_CALLBACK );
   REQUIRE( http._chunked_resp == 0 );
   REQUIRE( http._read_end == 0 );
   REQUIRE( http._result == KHC_ERR_OK );
@@ -519,15 +515,27 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     return size * count;
   };
 
-  khc_state_resp_headers_callback(&http);
-  REQUIRE( http._state == KHC_STATE_RESP_BODY_FLAGMENT_CHUNKED );
-  REQUIRE( http._chunked_resp == 1 );
+  khc_state_resp_header_callback(&http);
+  REQUIRE( http._state == KHC_STATE_RESP_HEADER_CALLBACK );
+  REQUIRE( http._chunk_size == 0 );
+  REQUIRE( http._read_end == 0 );
+  REQUIRE( http._result == KHC_ERR_OK );
+
+  khc_state_resp_header_callback(&http);
+  REQUIRE( http._state == KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE );
+  REQUIRE( http._chunk_size == 0 );
   REQUIRE( http._body_read_size == 0 );
   REQUIRE( http._read_end == 0 );
   REQUIRE( http._result == KHC_ERR_OK );
-  REQUIRE( called );
 
-  khc_state_resp_body_flagment_chunked(&http);
+  khc_state_resp_body_parse_chunk_size(&http);
+  REQUIRE( http._state == KHC_STATE_RESP_BODY_READ_CHUNK_SIZE_FROM_HEADER_BUFF );
+  REQUIRE( http._chunk_size == 0 );
+  REQUIRE( http._body_read_size == 0 );
+  REQUIRE( http._read_end == 0 );
+  REQUIRE( http._result == KHC_ERR_OK );
+
+  khc_state_resp_body_read_chunk_size_from_header_buff(&http);
   REQUIRE( http._state == KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE );
   REQUIRE( http._chunk_size == 0 );
   REQUIRE( http._body_read_size == 5 );
