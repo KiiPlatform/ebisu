@@ -441,10 +441,10 @@ void* _mqtt_start_task(void* sdata)
                         st = KII_MQTT_ST_RECONNECT;
                     } else {
                         elapsed_time_ms += kii->_mqtt_to_recv_sec * 1000 + wait_ms;
-                        unsigned int topic_size = (unsigned char)kii->mqtt_buffer[0] * 255 + (unsigned char)kii->mqtt_buffer[1];
-                        char* body_ptr = kii->mqtt_buffer + topic_size + 2;
-                        size_t length = remaining_message_size - topic_size - 2;
-                        kii->push_received_cb(body_ptr, length, kii->_push_data);
+                        unsigned int topic_size = (unsigned int)kii->mqtt_buffer[0] * 256 + (unsigned int)kii->mqtt_buffer[1];
+                        char* body_ptr = kii->mqtt_buffer + topic_size + 2; // 2bytes: Packet Identifier
+                        size_t body_length = remaining_message_size - topic_size - 2;
+                        kii->push_received_cb(body_ptr, body_length, kii->_push_data);
                         st = KII_MQTT_ST_RECV_READY;
                     }
                     break;
