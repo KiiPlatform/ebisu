@@ -106,9 +106,6 @@ khc_code khc_set_zero_excl_cb(khc* khc) {
   khc->_current_req_header = NULL;
   khc->_read_size = 0;
   khc->_read_req_end = 0;
-  khc->_resp_header_buffer = NULL;
-  khc->_resp_header_buffer_current_pos = NULL;
-  khc->_resp_header_buffer_size = 0;
   khc->_resp_header_read_size = 0;
   khc->_status_code =0;
   khc->_body_boundary = NULL;

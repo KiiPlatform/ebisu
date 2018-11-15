@@ -98,26 +98,19 @@ typedef enum khc_state {
   KHC_STATE_REQ_BODY_SEND_SIZE,
   KHC_STATE_REQ_BODY_SEND,
   KHC_STATE_REQ_BODY_SEND_CRLF,
-  KHC_STATE_RESP_HEADERS_ALLOC,
-  KHC_STATE_RESP_HEADERS_REALLOC,
-  KHC_STATE_RESP_HEADERS_READ,
-  KHC_STATE_RESP_STATUS_PARSE,
-  KHC_STATE_RESP_HEADERS_CALLBACK,
 
   KHC_STATE_RESP_STATUS_READ,
-  KHC_STATE_RESP_STATUS_PARSE_2,
+  KHC_STATE_RESP_STATUS_PARSE,
   KHC_STATE_RESP_HEADER_CALLBACK,
   KHC_STATE_RESP_HEADER_READ,
-  KHC_STATE_RESP_BODY_FLAGMENT_2,
+  KHC_STATE_RESP_BODY_FLAGMENT,
   KHC_STATE_RESP_BODY_READ_CHUNK_SIZE_FROM_HEADER_BUFF,
   KHC_STATE_RESP_BODY_READ_CHUNK_BODY_FROM_HEADER_BUFF,
 
   /* Process flagment of body obtaind when trying to find body boundary. */
-  KHC_STATE_RESP_BODY_FLAGMENT,
   KHC_STATE_RESP_BODY_READ,
   KHC_STATE_RESP_BODY_CALLBACK,
 
-  KHC_STATE_RESP_BODY_FLAGMENT_CHUNKED,
   KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE,
   KHC_STATE_RESP_BODY_READ_CHUNK_SIZE,
   KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY,
@@ -205,10 +198,6 @@ typedef struct khc {
   size_t _resp_header_buff_size; /**< \private **/
   int _resp_header_buff_allocated; /**< \private **/
 
-  /* Response header buffer (Dynamic allocation) */
-  char* _resp_header_buffer; /**< \private **/
-  char* _resp_header_buffer_current_pos; /**< \private **/
-  size_t _resp_header_buffer_size; /**< \private **/
   size_t _resp_header_read_size; /**< \private **/
 
   int _status_code; /**< \private **/
