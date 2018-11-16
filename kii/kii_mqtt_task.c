@@ -99,6 +99,19 @@ khc_sock_code_t _mqtt_send_subscribe(kii_t* kii, const char* topic, enum QoS qos
     return send_err;
 }
 
+khc_sock_code_t _mqtt_send_pingreq(kii_t* kii)
+{
+    char buff[2];
+    buff[0] = (char)0xc0;
+    buff[1] = 0x00;
+    khc_sock_code_t sock_err = kii->mqtt_sock_send_cb(kii->mqtt_sock_send_ctx, buff, sizeof(buff));
+    if(sock_err != KHC_SOCK_OK)
+    {
+        return KHC_SOCK_FAIL;
+    }
+    return sock_err;
+}
+
 khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed_header)
 {
     char c;
@@ -415,8 +428,11 @@ void* _mqtt_start_task(void* sdata)
                         }
                         break;
                     }
+                } else {
+                    // Just repeat same state after the wait.
+                    elapsed_time_ms += kii->_mqtt_to_recv_sec * 1000 + wait_ms;
+                    kii->delay_ms_cb(wait_ms);
                 }
-                // Nothing to do. Repeat the same state.
             }
             case KII_MQTT_ST_RECV_MSG: {
                 if (remaining_message_size > kii->mqtt_buffer_size) {
@@ -440,7 +456,7 @@ void* _mqtt_start_task(void* sdata)
                         kii->delay_ms_cb(wait_ms);
                         st = KII_MQTT_ST_RECONNECT;
                     } else {
-                        elapsed_time_ms += kii->_mqtt_to_recv_sec * 1000 + wait_ms;
+                        elapsed_time_ms += 1000;
                         unsigned int topic_size = (unsigned int)kii->mqtt_buffer[0] * 256 + (unsigned int)kii->mqtt_buffer[1];
                         char* body_ptr = kii->mqtt_buffer + topic_size + 2; // 2bytes: Packet Identifier
                         size_t body_length = remaining_message_size - topic_size - 2;
@@ -449,6 +465,17 @@ void* _mqtt_start_task(void* sdata)
                     }
                     break;
                 }
+            }
+            case KII_MQTT_ST_SEND_PINGREQ: {
+                khc_sock_code_t res = _mqtt_send_pingreq(kii);
+                if (res != KHC_SOCK_OK) {
+                    elapsed_time_ms = 0;
+                    kii->delay_ms_cb(wait_ms);
+                    st = KII_MQTT_ST_RECONNECT;
+                    break;
+                }
+                elapsed_time_ms += 500;
+                st = KII_MQTT_ST_RECV_READY;
             }
         }
     }
