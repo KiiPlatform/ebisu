@@ -521,6 +521,9 @@ int kii_set_mqtt_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
 int kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
 int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
 
+int kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec);
+int kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec);
+
 /** Set JSON paraser resource
  * @param [inout] kii SDK instance.
  * @param [in] resource to be used parse JSON. 256 tokens_num might be enough for almost all usecases.

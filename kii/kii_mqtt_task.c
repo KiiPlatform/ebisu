@@ -228,6 +228,8 @@ void* _mqtt_start_task(void* sdata)
     const char* err_msg = NULL;
     unsigned int keep_alive_interval = kii->_keep_alive_interval;
     unsigned int elapsed_time_ms = 0;
+    const unsigned int arrived_msg_read_time = 500;
+    const unsigned int msg_send_time = 500;
     unsigned long remaining_message_size = 0;
     while (st != KII_MQTT_ST_ERR_EXIT) {
         switch(st) {
@@ -412,11 +414,6 @@ void* _mqtt_start_task(void* sdata)
                         break;
                     } else { // Ignore other messages.
                         unsigned long size = fh.remaining_length;
-                        if (size > kii->mqtt_buffer_size) {
-                            // TODO: Dont' exit loop. Read and trash.
-                            st = KII_MQTT_ST_ERR_EXIT;
-                            err_msg = "Insufficient MQTT buffer size.";
-                        }
                         // Read and ignore.
                         res = _mqtt_recv_remaining_trash(kii, size);
                         if (res != KHC_SOCK_OK) {
@@ -424,6 +421,7 @@ void* _mqtt_start_task(void* sdata)
                             kii->delay_ms_cb(wait_ms);
                             st = KII_MQTT_ST_RECONNECT;
                         }
+                        elapsed_time_ms += arrived_msg_read_time;
                         break;
                     }
                 } else {
@@ -441,7 +439,7 @@ void* _mqtt_start_task(void* sdata)
                         kii->delay_ms_cb(wait_ms);
                         st = KII_MQTT_ST_RECONNECT;
                     } else {
-                        elapsed_time_ms += kii->_mqtt_to_recv_sec * 1000 + wait_ms;
+                        elapsed_time_ms += arrived_msg_read_time + wait_ms;
                         kii->delay_ms_cb(wait_ms);
                         st = KII_MQTT_ST_RECV_READY;
                     }
@@ -454,10 +452,10 @@ void* _mqtt_start_task(void* sdata)
                         kii->delay_ms_cb(wait_ms);
                         st = KII_MQTT_ST_RECONNECT;
                     } else {
-                        elapsed_time_ms += 1000;
+                        elapsed_time_ms += arrived_msg_read_time;
                         unsigned int topic_size = (unsigned int)kii->mqtt_buffer[0] * 256 + (unsigned int)kii->mqtt_buffer[1];
-                        char* body_ptr = kii->mqtt_buffer + topic_size + 2; // 2bytes: Packet Identifier
-                        size_t body_length = remaining_message_size - topic_size - 2;
+                        char* body_ptr = kii->mqtt_buffer + topic_size + 4; // 4bytes: topic size + Packet Identifier
+                        size_t body_length = remaining_message_size - topic_size - 4;
                         kii->push_received_cb(body_ptr, body_length, kii->_push_data);
                         st = KII_MQTT_ST_RECV_READY;
                     }
@@ -472,8 +470,14 @@ void* _mqtt_start_task(void* sdata)
                     st = KII_MQTT_ST_RECONNECT;
                     break;
                 }
-                elapsed_time_ms += 500;
+                elapsed_time_ms += msg_send_time;
                 st = KII_MQTT_ST_RECV_READY;
+                break;
+            }
+            case KII_MQTT_ST_RECONNECT: {
+                kii->mqtt_sock_close_cb(kii->mqtt_sock_close_ctx);
+                st = KII_MQTT_ST_SOCK_CONNECT;
+                break;
             }
         }
     }
