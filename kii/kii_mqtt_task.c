@@ -6,8 +6,6 @@
 #include "kii_mqtt_task.h"
 #include "kii.h"
 
-#define KII_PUSH_TOPIC_HEADER_SIZE 8
-
 khc_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) {
     unsigned int keep_alive_interval = kii->_keep_alive_interval;
     memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
@@ -61,7 +59,10 @@ khc_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) {
     }
     khc_sock_code_t send_err = kii->mqtt_sock_send_cb(kii->mqtt_sock_send_ctx,
             kii->mqtt_buffer, j);
-    memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
+    if (send_err == KHC_SOCK_AGAIN) {
+        // Don't accept non-blocking socket.
+        return KHC_SOCK_FAIL;
+    }
     return send_err;
 }
 
@@ -96,6 +97,10 @@ khc_sock_code_t _mqtt_send_subscribe(kii_t* kii, const char* topic, enum QoS qos
 
     khc_sock_code_t send_err = kii->mqtt_sock_send_cb(kii->mqtt_sock_send_ctx,
             kii->mqtt_buffer, j);
+    if (send_err == KHC_SOCK_AGAIN) {
+        // Don't accept non-blocking socket.
+        return KHC_SOCK_FAIL;
+    }
     return send_err;
 }
 
@@ -105,8 +110,9 @@ khc_sock_code_t _mqtt_send_pingreq(kii_t* kii)
     buff[0] = (char)0xc0;
     buff[1] = 0x00;
     khc_sock_code_t sock_err = kii->mqtt_sock_send_cb(kii->mqtt_sock_send_ctx, buff, sizeof(buff));
-    if(sock_err != KHC_SOCK_OK)
+    if(sock_err == KHC_SOCK_AGAIN)
     {
+        // Don't accept non-blocking socket.
         return KHC_SOCK_FAIL;
     }
     return sock_err;
@@ -301,10 +307,6 @@ void* _mqtt_start_task(void* sdata)
                     kii->delay_ms_cb(wait_ms);
                     st = KII_MQTT_ST_RECONNECT;
                     break;
-                } else if (send_err = KHC_SOCK_AGAIN) {
-                    // Retry.
-                    kii->delay_ms_cb(wait_ms);
-                    break;
                 }
                 st = KII_MQTT_ST_RECV_CONNACK;
                 break;
@@ -347,11 +349,7 @@ void* _mqtt_start_task(void* sdata)
             case KII_MQTT_ST_SEND_SUBSCRIBE: {
                 // TODO: enable to configure QoS.
                 khc_sock_code_t res = _mqtt_send_subscribe(kii, endpoint.topic, 0);
-                if (res == KHC_SOCK_AGAIN) {
-                    // Try again.
-                    kii->delay_ms_cb(wait_ms);
-                    break;
-                } else if (res == KHC_SOCK_FAIL) {
+                if (res == KHC_SOCK_FAIL) {
                     kii->delay_ms_cb(wait_ms);
                     st = KII_MQTT_ST_RECONNECT;
                     break;
