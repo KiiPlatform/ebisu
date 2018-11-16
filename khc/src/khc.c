@@ -5,30 +5,48 @@
 #include "khc_state_impl.h"
 #include "khc_socket_callback.h"
 
-khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length) {
-  khc_slist* next;
-  next = (khc_slist*)malloc(sizeof(khc_slist));
+void khc_slist_init(
+    khc_slist* slist,
+    KHC_CB_MEM_ALLOC cb_alloc,
+    void* cb_alloc_data,
+    KHC_CB_MEM_FREE cb_free,
+    void* cb_free_data)
+{
+  slist->cb_alloc = cb_alloc;
+  slist->cb_alloc_data = cb_alloc_data;
+  slist->cb_free = cb_free;
+  slist->cb_free_data = cb_free_data;
+  slist->top = NULL;
+}
+
+int khc_slist_append(khc_slist* slist, const char* string, size_t length) {
+  if (slist == NULL || slist->cb_alloc == NULL || slist->cb_free == NULL) {
+    return 1;
+  }
+  _khc_slist_node* next;
+  next = (_khc_slist_node*)slist->cb_alloc(sizeof(_khc_slist_node), slist->cb_alloc_data);
   if (next == NULL) {
-    return NULL;
+    return 1;
   }
   next->next = NULL;
-  void* temp = malloc(length+1);
+  void* temp = slist->cb_alloc(length+1, slist->cb_alloc_data);
   if (temp == NULL) {
-    free(next);
-    return NULL;
+    slist->cb_free(next, slist->cb_free_data);
+    return 1;
   }
   next->data = (char*)temp;
   strncpy(next->data, string, length);
   next->data[length] = '\0';
-  if (slist == NULL) {
-    return next;
+  if (slist->top == NULL) {
+    slist->top = next;
+    return 0;
   }
-  khc_slist* end = slist;
+  _khc_slist_node* end = slist->top;
   while (end->next != NULL) {
     end = end->next;
   }
   end->next = next;
-  return slist;
+  return 0;
 }
 
 khc_code khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size) {
@@ -44,13 +62,17 @@ khc_code khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size) {
 }
 
 void khc_slist_free_all(khc_slist* slist) {
-  khc_slist *curr;
-  curr = slist;
+  if (slist == NULL || slist->cb_free == NULL) {
+    return;
+  }
+  _khc_slist_node *curr;
+  curr = slist->top;
+  slist->top = NULL;
   while (curr != NULL) {
-    khc_slist *next = curr->next;
-    free(curr->data);
+    _khc_slist_node *next = curr->next;
+    slist->cb_free(curr->data, slist->cb_free_data);
     curr->data = NULL;
-    free(curr);
+    slist->cb_free(curr, slist->cb_free_data);
     curr = next;
   }
 }
@@ -69,6 +91,12 @@ khc_code khc_perform(khc* khc) {
 
 khc_code khc_set_zero(khc* khc) {
   // Callbacks.
+  khc->_cb_mem_alloc = NULL;
+  khc->_mem_alloc_data = NULL;
+
+  khc->_cb_mem_free = NULL;
+  khc->_mem_free_data = NULL;
+
   khc->_cb_write = NULL;
   khc->_write_data = NULL;
 

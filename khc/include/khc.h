@@ -12,6 +12,7 @@ extern "C"
 
 #include <stdio.h>
 #include "khc_socket_callback.h"
+#include "khc_memory_callback.h"
 
 /**
  * \brief Callback writes data.
@@ -53,25 +54,51 @@ typedef size_t (*KHC_CB_READ)(char *buffer, size_t size, size_t count, void *use
  */
 typedef size_t (*KHC_CB_HEADER)(char *buffer, size_t size, size_t count, void *userdata);
 
+/** \private **/
+typedef struct _khc_slist_node {
+  char* data; /**< \brief Null terminated string */
+  struct _khc_slist_node* next; /**< \brief Pointer to the next item. */
+} _khc_slist_node;
+
 /**
  * \brief Linked list.
  *
  * Linked list manages c string data.
  */
 typedef struct khc_slist {
-  char* data; /**< \brief Null terminated string */
-  struct khc_slist* next; /**< \brief Pointer to the next item. */
+  KHC_CB_MEM_ALLOC cb_alloc; /**< \brief Callback of memory allocator. */
+  void* cb_alloc_data; /**< \brief User data of memory allocator callback. */
+  KHC_CB_MEM_FREE cb_free; /**< \brief Callback of memory deallocator. */
+  void* cb_free_data; /**< \brief User data of memory deallocator callback. */
+  _khc_slist_node* top; /**< \brief Pointer to top of items. */
 } khc_slist;
+
+/**
+ * \brief Initialize linked list.
+ *
+ * \param [in, out] slist pointer to the linked list.
+ * \param [in] cb_alloc Callback of memory allocator.
+ * \param [in] cb_alloc_data User data of memory allocator.
+ * \param [in] cb_free Callback of memory deallocator.
+ * \param [in] cb_free_data User data of memory deallocator.
+ * \returns pointer to the linked list (first item).
+ */
+void khc_slist_init(
+    khc_slist* slist,
+    KHC_CB_MEM_ALLOC cb_alloc,
+    void* cb_alloc_data,
+    KHC_CB_MEM_FREE cb_free,
+    void* cb_free_data);
 
 /**
  * \brief Add item to the linked list.
  *
- * \param [in, out] slist pointer to the linked list or NULL to create new linked list.
+ * \param [in, out] slist pointer to the linked list.
  * \param [in] string data to be appended.
  * \param [in] length of the string.
- * \returns pointer to the linked list (first item).
+ * \returns boolean value(0: success, other: error).
  */
-khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length);
+int khc_slist_append(khc_slist* slist, const char* string, size_t length);
 
 /**
  * \brief Free memory used for the entire linked list.
@@ -156,6 +183,11 @@ typedef enum khc_code {
  * Do not reference/ change members directly.
  */
 typedef struct khc {
+  KHC_CB_MEM_ALLOC _cb_mem_alloc; /**< \private **/
+  void* _mem_alloc_data; /**< \private **/
+  KHC_CB_MEM_FREE _cb_mem_free; /**< \private **/
+  void* _mem_free_data; /**< \private **/
+
   KHC_CB_WRITE _cb_write; /**< \private **/
   void* _write_data; /**< \private **/
   KHC_CB_READ _cb_read; /**< \private **/
@@ -184,7 +216,7 @@ typedef struct khc {
   void* _sock_ctx_recv; /**< \private **/
   void* _sock_ctx_close; /**< \private **/
 
-  khc_slist* _current_req_header; /**< \private **/
+  _khc_slist_node* _current_req_header; /**< \private **/
 
   char* _stream_buff; /**< \private **/
   size_t _stream_buff_size; /**< \private **/
@@ -421,6 +453,30 @@ khc_code khc_set_cb_write(
 khc_code khc_set_cb_header(
   khc* khc,
   KHC_CB_HEADER cb,
+  void* userdata);
+
+/**
+ * \brief Set memory allocator callback.
+ *
+ * \param [out] khc instance.
+ * \param [in] cb called when memory allocation is required.
+ * \param [in] userdata context data of the callback.
+ */
+khc_code khc_set_cb_mem_alloc(
+  khc* khc,
+  KHC_CB_MEM_ALLOC cb,
+  void* userdata);
+
+/**
+ * \brief Set memory deallocator callback.
+ *
+ * \param [out] khc instance.
+ * \param [in] cb called when memory deallocation is required.
+ * \param [in] userdata context data of the callback.
+ */
+khc_code khc_set_cb_mem_free(
+  khc* khc,
+  KHC_CB_MEM_FREE cb,
   void* userdata);
 
 /**

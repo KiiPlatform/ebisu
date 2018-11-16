@@ -76,6 +76,26 @@ khc_code khc_set_cb_header(
   return KHC_ERR_OK;
 }
 
+khc_code khc_set_cb_mem_alloc(
+  khc* khc,
+  KHC_CB_MEM_ALLOC cb,
+  void* userdata)
+{
+  khc->_cb_mem_alloc = cb;
+  khc->_mem_alloc_data = userdata;
+  return KHC_ERR_OK;
+}
+
+khc_code khc_set_cb_mem_free(
+  khc* khc,
+  KHC_CB_MEM_FREE cb,
+  void* userdata)
+{
+  khc->_cb_mem_free = cb;
+  khc->_mem_free_data = userdata;
+  return KHC_ERR_OK;
+}
+
 khc_code khc_set_host(khc* khc, const char* host) {
   size_t len = strlen(host);
   size_t buff_len = sizeof(khc->_host);
@@ -121,7 +141,7 @@ void khc_state_idle(khc* khc) {
     strncpy(khc->_method, "GET", sizeof(khc->_method));
   }
   if (khc->_resp_header_buff == NULL) {
-    char* buff = malloc(DEFAULT_RESP_HEADER_BUFF_SIZE);
+    char* buff = khc->_cb_mem_alloc(DEFAULT_RESP_HEADER_BUFF_SIZE, khc->_mem_alloc_data);
     if (buff == NULL) {
       khc->_state = KHC_STATE_FINISHED;
       khc->_result = KHC_ERR_ALLOCATION;
@@ -132,7 +152,7 @@ void khc_state_idle(khc* khc) {
     khc->_resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
   }
   if (khc->_stream_buff == NULL) {
-    char* buff = malloc(DEFAULT_STREAM_BUFF_SIZE);
+    char* buff = khc->_cb_mem_alloc(DEFAULT_STREAM_BUFF_SIZE, khc->_mem_alloc_data);
     if (buff == NULL) {
       khc->_state = KHC_STATE_FINISHED;
       khc->_result = KHC_ERR_ALLOCATION;
@@ -215,7 +235,7 @@ void khc_state_req_host_header(khc* khc) {
   khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, buff, hdr_len);
   if (send_res == KHC_SOCK_OK) {
     khc->_state = KHC_STATE_REQ_HEADER;
-    khc->_current_req_header = khc->_req_headers;
+    khc->_current_req_header = (khc->_req_headers != NULL) ? khc->_req_headers->top : NULL;
     return;
   }
   if (send_res == KHC_SOCK_AGAIN) {
@@ -765,13 +785,13 @@ void khc_state_resp_body_skip_trailers(khc* khc) {
 
 void khc_state_close(khc* khc) {
   if (khc->_stream_buff_allocated == 1) {
-    free(khc->_stream_buff);
+    khc->_cb_mem_free(khc->_stream_buff, khc->_mem_free_data);
     khc->_stream_buff = NULL;
     khc->_stream_buff_size = 0;
     khc->_stream_buff_allocated = 0;
   }
   if (khc->_resp_header_buff_allocated == 1) {
-    free(khc->_resp_header_buff);
+    khc->_cb_mem_free(khc->_resp_header_buff, khc->_mem_free_data);
     khc->_resp_header_buff = NULL;
     khc->_resp_header_buff_size = 0;
     khc->_resp_header_buff_allocated = 0;
