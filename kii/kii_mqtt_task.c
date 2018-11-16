@@ -120,7 +120,7 @@ khc_sock_code_t _mqtt_send_pingreq(kii_t* kii)
 
 khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed_header)
 {
-    char c;
+    char c = '\0';
     size_t received = 0;
     // Read First byte.
     khc_sock_code_t res = kii->mqtt_sock_recv_cb(kii->mqtt_sock_recv_ctx, &c, 1, &received);
@@ -131,11 +131,11 @@ khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed
         // Don't accept non-blocking mode.
         return KHC_SOCK_FAIL;
     }
+    fixed_header->byte1 = c;
     
     char buff[4];
-    int remianing_size_length = 0;
     for (int i = 0; i < 4; ++i) {
-        char c2;
+        char c2 = '\0';
         khc_sock_code_t res = kii->mqtt_sock_recv_cb(kii->mqtt_sock_recv_ctx, &c2, 1, &received);
         if (res == KHC_SOCK_FAIL) {
             return KHC_SOCK_FAIL;
@@ -145,7 +145,6 @@ khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed
             return KHC_SOCK_FAIL;
         }
         buff[i] = c2;
-        ++remianing_size_length;
         if ((c2 & 128) == 0) { // Check continue bit.
             break;
         }
@@ -157,7 +156,8 @@ khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed
     do {
         value += (buff[i] & 127) * multiplier;
         multiplier *= 128;
-    } while ((buff[i] & 128) == 0);
+        ++i;
+    } while ((buff[i] & 128) != 0);
     fixed_header->remaining_length = value;
     return KHC_SOCK_OK;
 }
@@ -196,7 +196,7 @@ khc_sock_code_t _mqtt_recv_remaining(kii_t* kii, unsigned long remaining_length,
     size_t total_received = 0;
     khc_sock_code_t res = KHC_SOCK_FAIL;
     while (total_received < remaining_length) {
-        khc_sock_code_t res = kii->mqtt_sock_recv_cb(
+        res = kii->mqtt_sock_recv_cb(
             kii->mqtt_sock_recv_ctx,
             buff + received,
             remaining_length - received,
@@ -452,8 +452,9 @@ void* mqtt_start_task(void* sdata)
                     } else {
                         elapsed_time_ms += arrived_msg_read_time;
                         unsigned int topic_size = (unsigned int)kii->mqtt_buffer[0] * 256 + (unsigned int)kii->mqtt_buffer[1];
-                        char* body_ptr = kii->mqtt_buffer + topic_size + 4; // 4bytes: topic size + Packet Identifier
-                        size_t body_length = remaining_message_size - topic_size - 4;
+                        // 2 bytes: topic size. packet identifier is not present since QoS0
+                        char* body_ptr = kii->mqtt_buffer + topic_size + 2;
+                        size_t body_length = remaining_message_size - topic_size - 2;
                         kii->push_received_cb(body_ptr, body_length, kii->_push_data);
                         st = KII_MQTT_ST_RECV_READY;
                     }
