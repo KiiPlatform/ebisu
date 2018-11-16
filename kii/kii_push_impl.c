@@ -59,7 +59,7 @@ kii_code_t _install_push(
         return res;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, &kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
 
@@ -104,7 +104,7 @@ kii_code_t _get_mqtt_endpoint(
         return res;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, &kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
 
@@ -144,7 +144,7 @@ kii_code_t _subscribe_bucket(
         return res;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, &kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
 
@@ -184,7 +184,7 @@ kii_code_t _unsubscribe_bucket(
         return res;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, &kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
 
@@ -225,7 +225,7 @@ kii_code_t _subscribe_topic(
         _req_headers_free_all(kii);
         return res;
     }
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, &kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
     return _convert_code(code);
@@ -265,7 +265,7 @@ kii_code_t _unsubscribe_topic(
         _req_headers_free_all(kii);
         return res;
     }
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, &kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
     return _convert_code(code);
@@ -306,7 +306,7 @@ kii_code_t _put_topic(
         _req_headers_free_all(kii);
         return res;
     }
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, &kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
     return _convert_code(code);
@@ -347,7 +347,7 @@ kii_code_t _delete_topic(
         _req_headers_free_all(kii);
         return res;
     }
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, &kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
     return _convert_code(code);

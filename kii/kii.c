@@ -1,6 +1,7 @@
 #include "kii.h"
 #include "kii_impl.h"
 #include <string.h>
+#include <stdlib.h>
 
 #define KII_SDK_INFO "sn=te;sv=1.2.4"
 
@@ -47,6 +48,16 @@ size_t _cb_write_header(char *buffer, size_t size, size_t count, void *userdata)
     return size * count;
 }
 
+void* _cb_mem_alloc(size_t size, void* userdata)
+{
+    return malloc(size);
+}
+
+void _cb_mem_free(void* ptr, void* userdata)
+{
+    free(ptr);
+}
+
 int kii_init(
         kii_t* kii,
         const char* site,
@@ -87,6 +98,7 @@ int kii_init(
     khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
     khc_set_cb_header(&kii->_khc, _cb_write_header, kii);
     kii->_etag[0] = '\0';
+    khc_slist_init(&kii->_req_headers, _cb_mem_alloc, NULL, _cb_mem_free, NULL);
     return 0;
 }
 
@@ -201,8 +213,7 @@ void _reset_buff(kii_t* kii) {
 }
 
 void _req_headers_free_all(kii_t* kii) {
-    khc_slist_free_all(kii->_req_headers);
-    kii->_req_headers = NULL;
+    khc_slist_free_all(&kii->_req_headers);
 }
 
 int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len) {

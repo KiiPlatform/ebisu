@@ -56,7 +56,7 @@ kii_code_t _thing_auth(
         return res;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, &kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
 
@@ -119,7 +119,7 @@ kii_code_t _thing_register(
         return res;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, &kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
 

@@ -51,7 +51,7 @@ static kii_code_t _execute_server_code(
         return res;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, &kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
 

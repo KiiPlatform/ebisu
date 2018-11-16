@@ -73,11 +73,10 @@ kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* v
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_slist* list = khc_slist_append(kii->_req_headers, buff, header_len);
-    if (list == NULL) {
+    int res = khc_slist_append(&kii->_req_headers, buff, header_len);
+    if (res != 0) {
         return KII_ERR_ALLOCATION;
     }
-    kii->_req_headers = list;
 
     return KII_ERR_OK;
 }
@@ -90,7 +89,7 @@ kii_code_t kii_api_call_run(kii_t* kii)
         return res;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, &kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
 

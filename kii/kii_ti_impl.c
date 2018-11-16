@@ -45,7 +45,7 @@ kii_code_t _get_anonymous_token(
         return ret;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, &kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
 
@@ -206,7 +206,7 @@ kii_code_t _onboard(
         return ret;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, &kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
 
@@ -295,7 +295,7 @@ kii_code_t _put_firmware_version(
         return ret;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, &kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
 
@@ -336,7 +336,7 @@ kii_code_t _get_firmware_version(
         return ret;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, &kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
 
@@ -416,7 +416,7 @@ kii_code_t _put_state(
         return ret;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_set_req_headers(&kii->_khc, &kii->_req_headers);
     khc_set_cb_read(&kii->_khc, state_read_cb, state_read_cb_data);
     khc_code code = khc_perform(&kii->_khc);
     khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
