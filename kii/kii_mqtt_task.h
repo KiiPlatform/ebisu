@@ -24,5 +24,7 @@ typedef struct {
     unsigned long remaining_length;
 } kii_mqtt_fixed_header;
 
+void* mqtt_start_task(void* sdata);
+
 #endif
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

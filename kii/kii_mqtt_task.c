@@ -217,7 +217,7 @@ khc_sock_code_t _mqtt_recv_remaining(kii_t* kii, unsigned long remaining_length,
     return res;
 }
 
-void* _mqtt_start_task(void* sdata)
+void* mqtt_start_task(void* sdata)
 {
     kii_t* kii = (kii_t*)sdata;
     kii_mqtt_task_state st = KII_MQTT_ST_INSTALL_PUSH;
