@@ -533,7 +533,7 @@ int _move_resp_header_to_stream(khc* khc) {
   return 0;
 }
 
-void khc_state_resp_body_read_chunk_size_from_header_buff(khc* khc) {
+void khc_state_read_chunk_size_from_header_buff(khc* khc) {
   if (_move_resp_header_to_stream(khc) == 0) {
     khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
   } else {
@@ -542,7 +542,7 @@ void khc_state_resp_body_read_chunk_size_from_header_buff(khc* khc) {
   }
 }
 
-void khc_state_resp_body_read_chunk_body_from_header_buff(khc* khc) {
+void khc_state_read_chunk_body_from_header_buff(khc* khc) {
   if (_move_resp_header_to_stream(khc) == 0) {
     khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY;
   } else {
@@ -607,7 +607,7 @@ void khc_state_resp_body_parse_chunk_size(khc* khc) {
     }
   } else {
     if (khc->_resp_header_read_size > 0) {
-      khc->_state = KHC_STATE_RESP_BODY_READ_CHUNK_SIZE_FROM_HEADER_BUFF;
+      khc->_state = KHC_STATE_READ_CHUNK_SIZE_FROM_HEADER_BUFF;
     } else {
       khc->_state = KHC_STATE_RESP_BODY_READ_CHUNK_SIZE;
     }
@@ -662,7 +662,7 @@ void khc_state_resp_body_parse_chunk_body(khc* khc) {
   if (khc->_chunk_size > khc->_chunk_size_written) {
     if (khc->_resp_header_read_size > 0) {
       khc->_body_read_size = 0;
-      khc->_state = KHC_STATE_RESP_BODY_READ_CHUNK_BODY_FROM_HEADER_BUFF;
+      khc->_state = KHC_STATE_READ_CHUNK_BODY_FROM_HEADER_BUFF;
     } else {
       khc->_state = KHC_STATE_RESP_BODY_READ_CHUNK_BODY;
     }
@@ -810,8 +810,8 @@ const KHC_STATE_HANDLER state_handlers[] = {
   khc_state_resp_header_callback,
   khc_state_resp_header_read,
   khc_state_resp_body_flagment,
-  khc_state_resp_body_read_chunk_size_from_header_buff,
-  khc_state_resp_body_read_chunk_body_from_header_buff,
+  khc_state_read_chunk_size_from_header_buff,
+  khc_state_read_chunk_body_from_header_buff,
 
   khc_state_resp_body_read,
   khc_state_resp_body_callback,

@@ -529,13 +529,13 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   REQUIRE( http._result == KHC_ERR_OK );
 
   khc_state_resp_body_parse_chunk_size(&http);
-  REQUIRE( http._state == KHC_STATE_RESP_BODY_READ_CHUNK_SIZE_FROM_HEADER_BUFF );
+  REQUIRE( http._state == KHC_STATE_READ_CHUNK_SIZE_FROM_HEADER_BUFF );
   REQUIRE( http._chunk_size == 0 );
   REQUIRE( http._body_read_size == 0 );
   REQUIRE( http._read_end == 0 );
   REQUIRE( http._result == KHC_ERR_OK );
 
-  khc_state_resp_body_read_chunk_size_from_header_buff(&http);
+  khc_state_read_chunk_size_from_header_buff(&http);
   REQUIRE( http._state == KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE );
   REQUIRE( http._chunk_size == 0 );
   REQUIRE( http._body_read_size == 5 );
