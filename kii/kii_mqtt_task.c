@@ -122,9 +122,6 @@ khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed
 {
     char c;
     size_t received = 0;
-    size_t total_received = 0;
-    const unsigned int wait_ms = 10;
-    int count = 0;
     // Read First byte.
     khc_sock_code_t res = kii->mqtt_sock_recv_cb(kii->mqtt_sock_recv_ctx, &c, 1, &received);
     if (res == KHC_SOCK_FAIL) {
@@ -149,7 +146,7 @@ khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed
         }
         buff[i] = c2;
         ++remianing_size_length;
-        if (c2 & 128 == 0) { // Check continue bit.
+        if ((c2 & 128) == 0) { // Check continue bit.
             break;
         }
     }
@@ -160,8 +157,9 @@ khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed
     do {
         value += (buff[i] & 127) * multiplier;
         multiplier *= 128;
-    } while (buff[i] & 128 == 0);
+    } while ((buff[i] & 128) == 0);
     fixed_header->remaining_length = value;
+    return KHC_SOCK_OK;
 }
 
 // If the MQTT buffer size is insufficient,
@@ -237,7 +235,7 @@ void* mqtt_start_task(void* sdata)
                 kii_code_t res = kii_install_push(kii, KII_FALSE, &ins_id);
                 if (res != KII_ERR_OK) {
                     int status_code = khc_get_status_code(&kii->_khc);
-                    if (500 <= status_code && status_code < 600 || status_code == 429) {
+                    if ((500 <= status_code && status_code < 600) || status_code == 429) {
                         // Temporal error. Try again.
                         kii->delay_ms_cb(wait_ms);
                         break;
@@ -256,7 +254,7 @@ void* mqtt_start_task(void* sdata)
                 kii_code_t  res = kii_get_mqtt_endpoint(kii, ins_id.id, &endpoint);
                 if (res != KII_ERR_OK) {
                     int status_code = khc_get_status_code(&kii->_khc);
-                    if (500 <= status_code && status_code < 600 || status_code == 429) {
+                    if ((500 <= status_code && status_code < 600) || status_code == 429) {
                         // Temporal error. Try again.
                         break;
                     } else {
@@ -321,8 +319,8 @@ void* mqtt_start_task(void* sdata)
                     st = KII_MQTT_ST_RECONNECT;
                     break;
                 }
-                char ptype = fixed_header.byte1 << 0xf0;
-                if (ptype != 0x02) {
+                char ptype = fixed_header.byte1 & 0xf0;
+                if (ptype != 0x20) {
                     // Must not happens. CONNACK must be the first response.
                     kii->delay_ms_cb(wait_ms);
                     st = KII_MQTT_ST_RECONNECT;
@@ -333,7 +331,7 @@ void* mqtt_start_task(void* sdata)
                 char buff[length];
                 memset(buff, '\0', length);
                 khc_sock_code_t res2 = _mqtt_recv_remaining(kii, length, buff);
-                if (res != KII_ERR_OK) {
+                if (res2 != KII_ERR_OK) {
                     kii->delay_ms_cb(wait_ms);
                     st = KII_MQTT_ST_RECONNECT;
                     break;
@@ -368,15 +366,15 @@ void* mqtt_start_task(void* sdata)
                     st = KII_MQTT_ST_RECONNECT;
                     break;
                 }
-                char ptype = fixed_header.byte1 << 0xf0;
-                if (ptype != 0x9) {
+                unsigned char ptype = fixed_header.byte1 & 0xf0;
+                if (ptype != 0x90) {
                     kii->delay_ms_cb(wait_ms);
                     st = KII_MQTT_ST_RECONNECT;
                     break;
                 }
                 const char len = 3;
                 char buff[len];
-                memest(buff, '\0', len);
+                memset(buff, '\0', len);
                 khc_sock_code_t res2 = _mqtt_recv_remaining(kii, len, buff);
                 if (res2 != KII_ERR_OK) {
                     kii->delay_ms_cb(wait_ms);
@@ -385,7 +383,7 @@ void* mqtt_start_task(void* sdata)
                 }
                 if (buff[0] == 0x00 && // Identifier MSB
                     buff[1] == 0x01 && // Identifier LSB
-                    buff[2] != 0x80) // Return Code
+                    (unsigned char)buff[2] != 0x80) // Return Code
                 {
                     st = KII_MQTT_ST_RECV_READY;
                     break;
@@ -404,12 +402,12 @@ void* mqtt_start_task(void* sdata)
                 kii_mqtt_fixed_header fh;
                 khc_sock_code_t res = _mqtt_recv_fixed_header(kii, &fh);
                 if (res == KHC_SOCK_OK) {
-                    char mtype = fh.byte1 << 0xf0;
-                    if (mtype == 0x03) { // PUBLISH
+                    unsigned char mtype = fh.byte1 & 0xf0;
+                    if (mtype == 0x30) { // PUBLISH
                         remaining_message_size = fh.remaining_length;
                         st = KII_MQTT_ST_RECV_MSG;
                         break;
-                    } else if (mtype == 0x0D) { // PINGRESP
+                    } else if (mtype == 0xD0) { // PINGRESP
                         elapsed_time_ms = 0;
                         break;
                     } else { // Ignore other messages.
@@ -479,8 +477,12 @@ void* mqtt_start_task(void* sdata)
                 st = KII_MQTT_ST_SOCK_CONNECT;
                 break;
             }
+            default:
+                st = KII_MQTT_ST_ERR_EXIT;
+                break;
         }
     }
+    return NULL;
 }
 
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
