@@ -54,14 +54,20 @@ void khct::http::create_random_chunked_body(std::ostream &chunkedBody, std::ostr
 
 std::string khct::http::Resp::to_string() {
   ostringstream o;
+  vector<string> sub = headers;
 
   if (_add_status_100) {
     const char* CRLF = "\r\n";
-    o << "HTTP/1.1 100 Continue\r\n";
-    o << "Host: api.kii.com\r\n\r\n";
+    o << sub[0];
+    o << CRLF;
+    o << sub[1];
+    o << CRLF;
+    o << CRLF;
+    sub.erase(sub.begin());
+    sub.erase(sub.begin());
   }
 
-  for (string h : headers) {
+  for (string h : sub) {
     o << h;
     o << "\r\n";
   }
@@ -81,6 +87,10 @@ khct::http::Resp::Resp(std::istream& is, bool add_status_100) : _add_status_100(
   std::streampos length = is.tellg();
   is.seekg(0, std::ios::beg);
 
+  if (add_status_100) {
+    this->headers.push_back("HTTP/1.1 100 Continue");
+    this->headers.push_back("Host: api.kii.com");
+  }
   while(is.tellg() < length && is.good()) {
     std::string header = "";
     read_header(is, header);

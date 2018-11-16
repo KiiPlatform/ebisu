@@ -94,5 +94,5 @@ TEST_CASE( "HTTP Post" ) {
   REQUIRE( res == KHC_ERR_OK );
   REQUIRE( on_read_called == 2 );
   REQUIRE( on_header_called > 1 );
-  REQUIRE( on_write_called == 1 );
+  REQUIRE( on_write_called == 2 );
 }

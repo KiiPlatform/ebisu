@@ -64,9 +64,9 @@ TEST_CASE( "HTTP chunked response test" ) {
   s_ctx.on_recv = [=, &on_recv_called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
     ++on_recv_called;
     if (on_recv_called == 1)
-      REQUIRE( length_to_read == 1023 );
+      REQUIRE( length_to_read == 255 );
     if (on_recv_called == 2)
-      REQUIRE( length_to_read == 1024 );
+      REQUIRE( length_to_read == 236 );
     *out_actual_length = is.read(buffer, length_to_read).gcount();
     return KHC_SOCK_OK;
   };
@@ -82,20 +82,11 @@ TEST_CASE( "HTTP chunked response test" ) {
     return size * count;
   };
 
-  const char* chunkedBody[] = {
-    "{",
-    "  \"id\" : \"b56270b00022-171b-7e11-b35e-0911a10d\",",
-    "  \"access_token\" : \"cHltZmFtc3cxMnJn._I4i4fNNTjRfWia9juCpRgipPUNWD1-6bobnfJvQPms\",",
-    "  \"expires_in\" : 2147483646,",
-    "  \"token_type\" : \"Bearer\"",
-    "}"
-  };
+  ostringstream oss;
   int on_write_called = 0;
-  io_ctx.on_write = [=, &chunkedBody, &on_write_called](char *buffer, size_t size, size_t count, void *userdata) {
-    REQUIRE ( on_write_called < 6 );
-    REQUIRE ( strlen(chunkedBody[on_write_called]) == size * count );
-    REQUIRE ( strncmp(buffer, chunkedBody[on_write_called], size * count) == 0 );
+  io_ctx.on_write = [=, &oss, &on_write_called](char *buffer, size_t size, size_t count, void *userdata) {
     ++on_write_called;
+    oss.write(buffer, size * count);
     return size * count;
   };
 
@@ -111,10 +102,19 @@ TEST_CASE( "HTTP chunked response test" ) {
   REQUIRE( on_connect_called == 1 );
   REQUIRE( on_send_called == 5 );
   REQUIRE( on_read_called == 1 );
-  REQUIRE( on_recv_called == 2 );
+  REQUIRE( on_recv_called == 4 );
   REQUIRE( on_header_called == 12 );
-  REQUIRE( on_write_called == 6 );
+  REQUIRE( on_write_called >= 6 );
   REQUIRE( on_close_called == 1 );
+
+  string chunkedBody =
+    "{"
+    "  \"id\" : \"b56270b00022-171b-7e11-b35e-0911a10d\","
+    "  \"access_token\" : \"cHltZmFtc3cxMnJn._I4i4fNNTjRfWia9juCpRgipPUNWD1-6bobnfJvQPms\","
+    "  \"expires_in\" : 2147483646,"
+    "  \"token_type\" : \"Bearer\""
+    "}";
+  REQUIRE( chunkedBody == oss.str() );
 }
 
 TEST_CASE( "small buffer size test" ) {
