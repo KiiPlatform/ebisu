@@ -33,6 +33,9 @@ TEST_CASE( "HTTP minimal" ) {
   khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
   khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
+  khc_set_cb_mem_alloc(&http, khct::cb::cb_alloc, NULL);
+  khc_set_cb_mem_free(&http, khct::cb::cb_free, NULL);
+
   khc_state_idle(&http);
   REQUIRE( http._state == KHC_STATE_CONNECT );
   REQUIRE( http._result == KHC_ERR_OK );
@@ -290,6 +293,9 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   khc_set_cb_read(&http, khct::cb::cb_read, &io_ctx);
   khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
   khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
+
+  khc_set_cb_mem_alloc(&http, khct::cb::cb_alloc, NULL);
+  khc_set_cb_mem_free(&http, khct::cb::cb_free, NULL);
 
   khc_state_idle(&http);
   REQUIRE( http._state == KHC_STATE_CONNECT );

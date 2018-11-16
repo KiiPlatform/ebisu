@@ -36,6 +36,9 @@ TEST_CASE( "HTTP chunked response test" ) {
   khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
   khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
+  khc_set_cb_mem_alloc(&http, khct::cb::cb_alloc, NULL);
+  khc_set_cb_mem_free(&http, khct::cb::cb_free, NULL);
+
   int on_connect_called = 0;
   s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port) {
     ++on_connect_called;
@@ -147,6 +150,9 @@ TEST_CASE( "small buffer size test" ) {
   khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
   khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
+  khc_set_cb_mem_alloc(&http, khct::cb::cb_alloc, NULL);
+  khc_set_cb_mem_free(&http, khct::cb::cb_free, NULL);
+
   int on_connect_called = 0;
   s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port) {
     ++on_connect_called;
@@ -257,6 +263,9 @@ TEST_CASE( "random buffer size test" ) {
   khc_set_cb_read(&http, khct::cb::cb_read, &io_ctx);
   khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
   khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
+
+  khc_set_cb_mem_alloc(&http, khct::cb::cb_alloc, NULL);
+  khc_set_cb_mem_free(&http, khct::cb::cb_free, NULL);
 
   int on_connect_called = 0;
   s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port) {
@@ -370,6 +379,9 @@ TEST_CASE( "random chunk body test" ) {
   khc_set_cb_read(&http, khct::cb::cb_read, &io_ctx);
   khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
   khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
+
+  khc_set_cb_mem_alloc(&http, khct::cb::cb_alloc, NULL);
+  khc_set_cb_mem_free(&http, khct::cb::cb_free, NULL);
 
   int on_connect_called = 0;
   s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port) {

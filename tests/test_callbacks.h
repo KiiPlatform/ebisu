@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <khc_socket_callback.h>
 #include <functional>
 
@@ -50,6 +51,14 @@ inline size_t cb_read(char *buffer, size_t size, size_t count, void *userdata) {
 inline size_t cb_header(char *buffer, size_t size, size_t count, void *userdata) {
   IOCtx* ctx = (IOCtx*)(userdata);
   return ctx->on_header(buffer, size, count, userdata);
+}
+
+inline void* cb_alloc(size_t size, void* userdata) {
+  return malloc(size);
+}
+
+inline void cb_free(void* ptr, void* userdata) {
+  free(ptr);
 }
 }
 }
