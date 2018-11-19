@@ -227,9 +227,11 @@ void* mqtt_start_task(void* sdata)
     unsigned int keep_alive_interval = kii->_keep_alive_interval;
     unsigned int elapsed_time_ms = 0;
     const unsigned int arrived_msg_read_time = 500;
-    const unsigned int msg_send_time = 500;
     unsigned long remaining_message_size = 0;
+    time_t started;
+    time(&started);
     while (st != KII_MQTT_ST_ERR_EXIT) {
+        printf("Loop state: %d\n", st);
         switch(st) {
             case KII_MQTT_ST_INSTALL_PUSH: {
                 kii_code_t res = kii_install_push(kii, KII_FALSE, &ins_id);
@@ -426,6 +428,7 @@ void* mqtt_start_task(void* sdata)
                     // Just repeat same state after the wait.
                     elapsed_time_ms += kii->_mqtt_to_recv_sec * 1000 + wait_ms;
                     kii->delay_ms_cb(wait_ms);
+                    break;
                 }
             }
             case KII_MQTT_ST_RECV_MSG: {
@@ -462,6 +465,11 @@ void* mqtt_start_task(void* sdata)
                 }
             }
             case KII_MQTT_ST_SEND_PINGREQ: {
+                time_t ping_requested;
+                time(&ping_requested);
+                time_t diff = ping_requested - started;
+                printf("Send Pingreq after %ld sec.\n", (long)diff);
+                time(&started);
                 khc_sock_code_t res = _mqtt_send_pingreq(kii);
                 if (res != KHC_SOCK_OK) {
                     elapsed_time_ms = 0;
@@ -469,7 +477,7 @@ void* mqtt_start_task(void* sdata)
                     st = KII_MQTT_ST_RECONNECT;
                     break;
                 }
-                elapsed_time_ms += msg_send_time;
+                elapsed_time_ms = 0;
                 st = KII_MQTT_ST_RECV_READY;
                 break;
             }
