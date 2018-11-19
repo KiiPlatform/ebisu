@@ -131,8 +131,8 @@ void handler_init(
     tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
 
-    tio_handler_set_mqtt_to_sock_recv(handler, 15);
-    tio_handler_set_mqtt_to_sock_send(handler, 15);
+    tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);
+    tio_handler_set_mqtt_to_sock_send(handler, TO_SEND_SEC);
 
     tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);
     tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
@@ -154,37 +154,53 @@ int main(int argc, char** argv)
     char* subc = argv[1];
 
     tio_updater_t updater;
-    tio_handler_t handler;
-    char updater_buff[UPDATER_HTTP_BUFF_SIZE];
-    socket_context_t updater_ctx;
-    char kii_buff[HANDLER_HTTP_BUFF_SIZE];
-    socket_context_t http_ctx;
-    char mqtt_buff[HANDLER_MQTT_BUFF_SIZE];
-    socket_context_t mqtt_ctx;
+
+    socket_context_t updater_http_ctx;
+    updater_http_ctx.to_recv = TO_RECV_SEC;
+    updater_http_ctx.to_send = TO_SEND_SEC;
+
     jkii_token_t updater_tokens[256];
     jkii_resource_t updater_resource = {updater_tokens, 256};
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = {tokens, 256};
+
     updater_file_context_t updater_file_ctx;
 
+    char updater_buff[UPDATER_HTTP_BUFF_SIZE];
     memset(updater_buff, 0x00, sizeof(char) * UPDATER_HTTP_BUFF_SIZE);
     updater_init(
             &updater,
             updater_buff,
             UPDATER_HTTP_BUFF_SIZE,
-            &updater_ctx,
+            &updater_http_ctx,
             &updater_resource);
+
+    tio_handler_t handler;
+
+    socket_context_t handler_http_ctx;
+    handler_http_ctx.to_recv = TO_RECV_SEC;
+    handler_http_ctx.to_send = TO_RECV_SEC;
+
+    socket_context_t handler_mqtt_ctx;
+    handler_mqtt_ctx.to_recv = TO_RECV_SEC;
+    handler_mqtt_ctx.to_send = TO_RECV_SEC;
+
+    char kii_buff[HANDLER_HTTP_BUFF_SIZE];
     memset(kii_buff, 0x00, sizeof(char) * HANDLER_HTTP_BUFF_SIZE);
+
+    char mqtt_buff[HANDLER_MQTT_BUFF_SIZE];
     memset(mqtt_buff, 0x00, sizeof(char) * HANDLER_MQTT_BUFF_SIZE);
+
+    jkii_token_t handler_tokens[256];
+    jkii_resource_t handler_resource = {handler_tokens, 256};
+
     handler_init(
             &handler,
             kii_buff,
             HANDLER_HTTP_BUFF_SIZE,
-            &http_ctx,
+            &handler_http_ctx,
             mqtt_buff,
             HANDLER_MQTT_BUFF_SIZE,
-            &mqtt_ctx,
-            &resource);
+            &handler_mqtt_ctx,
+            &handler_resource);
 
     if (pthread_mutex_init(&m_mutex, NULL) != 0) {
         printf("fail to get mutex.\n");
