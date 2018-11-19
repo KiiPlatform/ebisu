@@ -5,16 +5,44 @@
 #include "khc_state_impl.h"
 #include "khc_socket_callback.h"
 
-khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length) {
+void khc_slist_memory_callbacks_init(
+    khc_slist_memory_callbacks* mc,
+    KHC_SLIST_CB_ALLOC cb_alloc,
+    void* alloc_data,
+    KHC_SLIST_CB_FREE cb_free,
+    void* free_data)
+{
+  if (mc != NULL) {
+    mc->cb_alloc = cb_alloc;
+    mc->alloc_data = alloc_data;
+    mc->cb_free = cb_free;
+    mc->free_data = free_data;
+  }
+}
+
+void* _slist_default_alloc(size_t size, void* userdata) {
+  return malloc(size);
+}
+
+void _slist_default_free(void* ptr, void* userdata) {
+  free(ptr);
+}
+
+khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length, khc_slist_memory_callbacks* mc) {
+  KHC_SLIST_CB_ALLOC cb_alloc = (mc != NULL && mc->cb_alloc != NULL) ? mc->cb_alloc : _slist_default_alloc;
+  void* cb_alloc_data = mc != NULL ? mc->alloc_data : NULL;
+  KHC_SLIST_CB_FREE cb_free = (mc != NULL && mc->cb_free != NULL) ? mc->cb_free : _slist_default_free;
+  void* cb_free_data = mc != NULL ? mc->free_data : NULL;
+
   khc_slist* next;
-  next = (khc_slist*)malloc(sizeof(khc_slist));
+  next = (khc_slist*)cb_alloc(sizeof(khc_slist), cb_alloc_data);
   if (next == NULL) {
     return NULL;
   }
   next->next = NULL;
-  void* temp = malloc(length+1);
+  void* temp = cb_alloc(length+1, cb_alloc_data);
   if (temp == NULL) {
-    free(next);
+    cb_free(next, cb_free_data);
     return NULL;
   }
   next->data = (char*)temp;
@@ -43,14 +71,17 @@ khc_code khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size) {
   return KHC_ERR_OK;
 }
 
-void khc_slist_free_all(khc_slist* slist) {
+void khc_slist_free_all(khc_slist* slist, khc_slist_memory_callbacks* mc) {
+  KHC_SLIST_CB_FREE cb_free = (mc != NULL && mc->cb_free != NULL) ? mc->cb_free : _slist_default_free;
+  void* cb_free_data = mc != NULL ? mc->free_data : NULL;
+
   khc_slist *curr;
   curr = slist;
   while (curr != NULL) {
     khc_slist *next = curr->next;
-    free(curr->data);
+    cb_free(curr->data, cb_free_data);
     curr->data = NULL;
-    free(curr);
+    cb_free(curr, cb_free_data);
     curr = next;
   }
 }

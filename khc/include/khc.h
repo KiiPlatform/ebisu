@@ -12,6 +12,7 @@ extern "C"
 
 #include <stdio.h>
 #include "khc_socket_callback.h"
+#include "khc_slist_memory_callback.h"
 
 /**
  * \brief Callback writes data.
@@ -54,6 +55,32 @@ typedef size_t (*KHC_CB_READ)(char *buffer, size_t size, size_t count, void *use
 typedef size_t (*KHC_CB_HEADER)(char *buffer, size_t size, size_t count, void *userdata);
 
 /**
+ * \brief Memory allocate/ free callbacks for linked list.
+ */
+typedef struct khc_slist_memory_callbacks {
+  KHC_SLIST_CB_ALLOC cb_alloc; /**< \brief Callback of memory allocate. */
+  void* alloc_data; /**< \brief User data of memory allocate callback. */
+  KHC_SLIST_CB_FREE cb_free; /**< \brief Callback of memory free. */
+  void* free_data; /**< \brief User data of memory free callback. */
+} khc_slist_memory_callbacks;
+
+/**
+ * \brief Initialize memory callbacks.
+ *
+ * \param [out] mc target pointer of the memory callbacks.
+ * \param [in] cb_alloc memory allocate callback.
+ * \param [in] alloc_data context data of memory allocate callback.
+ * \param [in] cb_free memory free callback.
+ * \param [in] free_data context data of memory free callback.
+ */
+void khc_slist_memory_callbacks_init(
+    khc_slist_memory_callbacks* mc,
+    KHC_SLIST_CB_ALLOC cb_alloc,
+    void* alloc_data,
+    KHC_SLIST_CB_FREE cb_free,
+    void* free_data);
+
+/**
  * \brief Linked list.
  *
  * Linked list manages c string data.
@@ -69,16 +96,18 @@ typedef struct khc_slist {
  * \param [in, out] slist pointer to the linked list or NULL to create new linked list.
  * \param [in] string data to be appended.
  * \param [in] length of the string.
+ * \param [in] mc memory callbacks. If NULL, use malloc/ free in stdlib.
  * \returns pointer to the linked list (first item).
  */
-khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length);
+khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length, khc_slist_memory_callbacks* mc);
 
 /**
  * \brief Free memory used for the entire linked list.
  *
  * \param [in, out] slist pointer to the linked list (first item).
+ * \param [in] mc memory callbacks. If NULL, use free in stdlib.
  */
-void khc_slist_free_all(khc_slist* slist);
+void khc_slist_free_all(khc_slist* slist, khc_slist_memory_callbacks* mc);
 
 /**
  * \brief Indicate state of khc.
