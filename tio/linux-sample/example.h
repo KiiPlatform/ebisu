@@ -13,7 +13,7 @@ const char KII_APP_ID[] = "fj9xy2fsp0ld";
 /* CN: "api-cn3.kii.com" */
 const char KII_APP_HOST[] = "api-jp.kii.com";
 
-#define COMMAND_HANDLER_HTTP_BUFF_SIZE 4096
+#define HANDLER_HTTP_BUFF_SIZE 4096
 #define COMMAND_HANDLER_MQTT_BUFF_SIZE 2048
 #define COMMAND_HANDLER_MQTT_KEEP_ALIVE_INTERVAL 300
 #define STATE_UPDATER_BUFF_SIZE 4096
