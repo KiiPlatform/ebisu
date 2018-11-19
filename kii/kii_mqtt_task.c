@@ -153,11 +153,13 @@ khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed
     int multiplier = 1;
     unsigned long value = 0;
     int i = 0;
+    char current = buff[i];
     do {
-        value += (buff[i] & 127) * multiplier;
+        current = buff[i];
+        value += (current & 127) * multiplier;
         multiplier *= 128;
         ++i;
-    } while ((buff[i] & 128) != 0);
+    } while ((current & 128) != 0);
     fixed_header->remaining_length = value;
     return KHC_SOCK_OK;
 }
@@ -227,6 +229,7 @@ void* mqtt_start_task(void* sdata)
     unsigned int keep_alive_interval = kii->_keep_alive_interval;
     unsigned int elapsed_time_ms = 0;
     const unsigned int arrived_msg_read_time = 500;
+    const unsigned int msg_send_time = 500;
     unsigned long remaining_message_size = 0;
     time_t started;
     time(&started);
@@ -408,9 +411,11 @@ void* mqtt_start_task(void* sdata)
                     if (mtype == 0x30) { // PUBLISH
                         remaining_message_size = fh.remaining_length;
                         st = KII_MQTT_ST_RECV_MSG;
+                        // Estimate worst case.
+                        elapsed_time_ms += kii->_mqtt_to_recv_sec * 1000;
                         break;
                     } else if (mtype == 0xD0) { // PINGRESP
-                        elapsed_time_ms = 0;
+                        elapsed_time_ms += arrived_msg_read_time;
                         break;
                     } else { // Ignore other messages.
                         unsigned long size = fh.remaining_length;
@@ -421,7 +426,6 @@ void* mqtt_start_task(void* sdata)
                             kii->delay_ms_cb(wait_ms);
                             st = KII_MQTT_ST_RECONNECT;
                         }
-                        elapsed_time_ms += arrived_msg_read_time;
                         break;
                     }
                 } else {
@@ -477,7 +481,7 @@ void* mqtt_start_task(void* sdata)
                     st = KII_MQTT_ST_RECONNECT;
                     break;
                 }
-                elapsed_time_ms = 0;
+                elapsed_time_ms = msg_send_time;
                 st = KII_MQTT_ST_RECV_READY;
                 break;
             }
