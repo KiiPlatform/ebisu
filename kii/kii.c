@@ -201,7 +201,7 @@ void _reset_buff(kii_t* kii) {
 }
 
 void _req_headers_free_all(kii_t* kii) {
-    khc_slist_free_all(kii->_req_headers);
+    khc_slist_free_all(kii->_req_headers, &kii->_req_headers_mc);
     kii->_req_headers = NULL;
 }
 
