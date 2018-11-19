@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "kii_mqtt.h"
 #include "kii_mqtt_task.h"
 #include "kii.h"
 
@@ -103,7 +102,7 @@ khc_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) {
     return send_err;
 }
 
-khc_sock_code_t _mqtt_send_subscribe(kii_t* kii, const char* topic, enum QoS qos)
+khc_sock_code_t _mqtt_send_subscribe(kii_t* kii, const char* topic, kii_mqtt_qos qos)
 {
     memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
     int i = 8;
@@ -383,7 +382,7 @@ void* mqtt_start_task(void* sdata)
             }
             case KII_MQTT_ST_SEND_SUBSCRIBE: {
                 // TODO: enable to configure QoS.
-                khc_sock_code_t res = _mqtt_send_subscribe(kii, endpoint.topic, 0);
+                khc_sock_code_t res = _mqtt_send_subscribe(kii, endpoint.topic, QOS0);
                 if (res == KHC_SOCK_FAIL) {
                     kii->delay_ms_cb(wait_ms);
                     st = KII_MQTT_ST_RECONNECT;

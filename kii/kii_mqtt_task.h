@@ -3,6 +3,8 @@
 
 #include "kii.h"
 
+typedef enum { QOS0, QOS1, QOS2 } kii_mqtt_qos;
+
 typedef enum
 {
     KII_MQTT_ST_INSTALL_PUSH,
