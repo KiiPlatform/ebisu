@@ -22,24 +22,23 @@ int _mqtt_encode(char* buf, unsigned long remaining_length)
     return rc;
 }
 
-int _mqtt_decode(char* buf, unsigned long* value)
+int _mqtt_decode(char* buf, unsigned long* remaining_length)
 {
     int i = 0;
     int multiplier = 1;
-    int len = 0;
-    *value = 0;
+    *remaining_length = 0;
     do
     {
-        if(++len > 4)
+        if(i > 3)
         {
             return -1;
         }
-        *value += (buf[i] & 127) * multiplier;
+        *remaining_length += (buf[i] & 127) * multiplier;
         multiplier *= 128;
     }
     while((buf[i++] & 128) != 0);
 
-    return len;
+    return i;
 }
 
 khc_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) {
@@ -186,10 +185,10 @@ khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed
         }
     }
 
-    unsigned long value = 0;
-    _mqtt_decode(buff, &value);
+    unsigned long remaining_length = 0;
+    _mqtt_decode(buff, &remaining_length);
 
-    fixed_header->remaining_length = value;
+    fixed_header->remaining_length = remaining_length;
     return KHC_SOCK_OK;
 }
 
