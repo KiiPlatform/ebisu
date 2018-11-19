@@ -6,6 +6,43 @@
 #include "kii_mqtt_task.h"
 #include "kii.h"
 
+int _mqtt_encode(char* buf, unsigned long remaining_length)
+{
+    int rc = 0;
+    char d;
+
+    do
+    {
+        d = remaining_length % 128;
+        remaining_length /= 128;
+        if(remaining_length > 0)
+            d |= 0x80;
+        buf[rc++] = d;
+    }
+    while(remaining_length > 0 && rc < 5);
+    return rc;
+}
+
+int _mqtt_decode(char* buf, unsigned long* value)
+{
+    int i = 0;
+    int multiplier = 1;
+    int len = 0;
+    *value = 0;
+    do
+    {
+        if(++len > 4)
+        {
+            return -1;
+        }
+        *value += (buf[i] & 127) * multiplier;
+        multiplier *= 128;
+    }
+    while((buf[i++] & 128) != 0);
+
+    return len;
+}
+
 khc_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) {
     unsigned int keep_alive_interval = kii->_keep_alive_interval;
     memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
@@ -150,16 +187,9 @@ khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed
         }
     }
 
-    int multiplier = 1;
     unsigned long value = 0;
-    int i = 0;
-    char current = buff[i];
-    do {
-        current = buff[i];
-        value += (current & 127) * multiplier;
-        multiplier *= 128;
-        ++i;
-    } while ((current & 128) != 0);
+    _mqtt_decode(buff, &value);
+
     fixed_header->remaining_length = value;
     return KHC_SOCK_OK;
 }

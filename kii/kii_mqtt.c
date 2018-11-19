@@ -6,43 +6,6 @@
 
 #define KII_PUSH_TOPIC_HEADER_SIZE 8
 
-int _mqtt_encode(char* buf, int length)
-{
-    int rc = 0;
-    char d;
-
-    do
-    {
-        d = length % 128;
-        length /= 128;
-        if(length > 0)
-            d |= 0x80;
-        buf[rc++] = d;
-    }
-    while(length > 0);
-    return rc;
-}
-
-int _mqtt_decode(char* buf, int* value)
-{
-    int i = 0;
-    int multiplier = 1;
-    int len = 0;
-    *value = 0;
-    do
-    {
-        if(++len > 4)
-        {
-            return -1;
-        }
-        *value += (buf[i] & 127) * multiplier;
-        multiplier *= 128;
-    }
-    while((buf[i++] & 128) != 0);
-
-    return len;
-}
-
 int _mqtt_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint, unsigned short keepAliveInterval)
 {
     size_t i;
