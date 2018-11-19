@@ -17,6 +17,11 @@ struct IOCtx {
   std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)> on_write;
 };
 
+struct MemCtx {
+  std::function<void*(size_t size, void *userdata)> on_alloc;
+  std::function<void(void *ptr, void *userdata)> on_free;
+};
+
 inline khc_sock_code_t mock_connect(void* socket_context, const char* host, unsigned int port) {
   SockCtx* ctx = (SockCtx*)socket_context;
   return ctx->on_connect(socket_context, host, port);
@@ -51,5 +56,16 @@ inline size_t cb_header(char *buffer, size_t size, size_t count, void *userdata)
   IOCtx* ctx = (IOCtx*)(userdata);
   return ctx->on_header(buffer, size, count, userdata);
 }
+
+inline void* cb_alloc(size_t size, void *userdata) {
+  MemCtx* ctx = (MemCtx*)(userdata);
+  return ctx->on_alloc(size, userdata);
+}
+
+inline void cb_free(void* ptr, void *userdata) {
+  MemCtx* ctx = (MemCtx*)(userdata);
+  ctx->on_free(ptr, userdata);
+}
+
 }
 }
