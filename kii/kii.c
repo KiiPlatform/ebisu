@@ -265,3 +265,17 @@ int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len) {
     buff[j] = '\0';
     return j;
 }
+
+void kii_set_khc_slist_resource_cb(
+    kii_t* kii,
+    KHC_SLIST_CB_ALLOC alloc_cb,
+    void* alloc_data,
+    KHC_SLIST_CB_FREE free_cb,
+    void* free_data)
+{
+    kii->_req_headers_mc.cb_alloc = alloc_cb;
+    kii->_req_headers_mc.alloc_data = alloc_data;
+    kii->_req_headers_mc.cb_free = free_cb;
+    kii->_req_headers_mc.free_data = free_data;
+}
+

@@ -543,6 +543,21 @@ const char* kii_get_etag(kii_t* kii);
 
 int kii_get_resp_status(kii_t* kii);
 
+/** Set khc_slist resource allocators.
+ *
+ * @param [inout] kii SDK instance.
+ * @param [in] alloc_cb allocator callback.
+ * @param [in] alloc_data user data for alloc_cb.
+ * @param [in] free_cb free callback should free memories allocated in alloc_cb.
+ * @param [in] free_data user data for free_cb.
+ */
+void kii_set_khc_slist_resource_cb(
+    kii_t* kii,
+    KHC_SLIST_CB_ALLOC alloc_cb,
+    void* alloc_data,
+    KHC_SLIST_CB_FREE free_cb,
+    void* free_data);
+
 #ifdef __cplusplus
 }
 #endif
