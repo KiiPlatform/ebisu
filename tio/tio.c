@@ -85,6 +85,16 @@ void tio_handler_set_cb_sock_close_mqtt(
     kii_set_mqtt_cb_sock_close(&handler->_kii, cb_close, userdata);
 }
 
+void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_sock_recv_sec)
+{
+    kii_set_mqtt_to_sock_recv(&handler->_kii, to_sock_recv_sec);
+}
+
+void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, unsigned int to_sock_send_sec)
+{
+    kii_set_mqtt_to_sock_send(&handler->_kii, to_sock_send_sec);
+}
+
 void tio_handler_set_cb_task_create(
     tio_handler_t* handler,
     KII_TASK_CREATE cb_task_create)
