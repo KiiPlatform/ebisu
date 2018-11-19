@@ -159,7 +159,7 @@ int main(int argc, char** argv)
     socket_context_t updater_ctx;
     char kii_buff[HANDLER_HTTP_BUFF_SIZE];
     socket_context_t http_ctx;
-    char mqtt_buff[COMMAND_HANDLER_MQTT_BUFF_SIZE];
+    char mqtt_buff[HANDLER_MQTT_BUFF_SIZE];
     socket_context_t mqtt_ctx;
     jkii_token_t updater_tokens[256];
     jkii_resource_t updater_resource = {updater_tokens, 256};
@@ -175,14 +175,14 @@ int main(int argc, char** argv)
             &updater_ctx,
             &updater_resource);
     memset(kii_buff, 0x00, sizeof(char) * HANDLER_HTTP_BUFF_SIZE);
-    memset(mqtt_buff, 0x00, sizeof(char) * COMMAND_HANDLER_MQTT_BUFF_SIZE);
+    memset(mqtt_buff, 0x00, sizeof(char) * HANDLER_MQTT_BUFF_SIZE);
     handler_init(
             &handler,
             kii_buff,
             HANDLER_HTTP_BUFF_SIZE,
             &http_ctx,
             mqtt_buff,
-            COMMAND_HANDLER_MQTT_BUFF_SIZE,
+            HANDLER_MQTT_BUFF_SIZE,
             &mqtt_ctx,
             &resource);
 
