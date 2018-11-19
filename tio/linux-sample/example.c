@@ -48,7 +48,7 @@ void updater_init(
     tio_updater_set_cb_sock_recv(updater, sock_cb_recv, sock_ssl_ctx);
     tio_updater_set_cb_sock_close(updater, sock_cb_close, sock_ssl_ctx);
 
-    tio_updater_set_interval(updater, STATE_UPDATE_PERIOD);
+    tio_updater_set_interval(updater, UPDATE_PERIOD_SEC);
 
     tio_updater_set_json_parser_resource(updater, resource);
 }
@@ -137,7 +137,7 @@ void handler_init(
     tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);
     tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
 
-    tio_handler_set_keep_alive_interval(handler, COMMAND_HANDLER_MQTT_KEEP_ALIVE_INTERVAL);
+    tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
 
     tio_handler_set_json_parser_resource(handler, resource);
 }
@@ -155,7 +155,7 @@ int main(int argc, char** argv)
 
     tio_updater_t updater;
     tio_handler_t handler;
-    char updater_buff[STATE_UPDATER_BUFF_SIZE];
+    char updater_buff[UPDATER_HTTP_BUFF_SIZE];
     socket_context_t updater_ctx;
     char kii_buff[HANDLER_HTTP_BUFF_SIZE];
     socket_context_t http_ctx;
@@ -167,11 +167,11 @@ int main(int argc, char** argv)
     jkii_resource_t resource = {tokens, 256};
     updater_file_context_t updater_file_ctx;
 
-    memset(updater_buff, 0x00, sizeof(char) * STATE_UPDATER_BUFF_SIZE);
+    memset(updater_buff, 0x00, sizeof(char) * UPDATER_HTTP_BUFF_SIZE);
     updater_init(
             &updater,
             updater_buff,
-            STATE_UPDATER_BUFF_SIZE,
+            UPDATER_HTTP_BUFF_SIZE,
             &updater_ctx,
             &updater_resource);
     memset(kii_buff, 0x00, sizeof(char) * HANDLER_HTTP_BUFF_SIZE);

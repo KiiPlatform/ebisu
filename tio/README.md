@@ -199,7 +199,7 @@ The full code can be checked [handler_init() in example.c](linux-sample/example.
     tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);
     tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
 
-    tio_handler_set_keep_alive_interval(handler, COMMAND_HANDLER_MQTT_KEEP_ALIVE_INTERVAL);
+    tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
 
     tio_handler_set_json_parser_resource(handler, resource);
 ```
@@ -267,7 +267,7 @@ Note that buffer for HTTP and MQTT must be isolated. Passing overlapping memory 
 
 ### Set-up MQTT Keep Alive interval.
 
-In the example, `COMMAND_HANDLER_MQTT_KEEP_ALIVE_INTERVAL` is defined as Macro and value is 300 (in seconds).
+In the example, `HANDLER_KEEP_ALIVE_SEC` is defined as Macro and value is 300 (in seconds).
 
 MQTT have mechanism called `Keep Alive` detecting stale connection between the MQTT broker.
 
@@ -280,7 +280,7 @@ We highly recommend setting Keep Alive interval greater than 0 to detect disconn
 Recommended interval is few minutes since too small interval may cause network congestion and increases cloud cost.
 
 ```c
-    tio_handler_set_keep_alive_interval(handler, COMMAND_HANDLER_MQTT_KEEP_ALIVE_INTERVAL);
+    tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
 ```
 
 ### Set-up json parser resource
@@ -448,7 +448,7 @@ The full code can be checked [updater_init() in example.c](linux-sample/example.
     tio_updater_set_cb_sock_recv(updater, sock_cb_recv, sock_ssl_ctx);
     tio_updater_set_cb_sock_close(updater, sock_cb_close, sock_ssl_ctx);
 
-    tio_updater_set_interval(updater, STATE_UPDATE_PERIOD);
+    tio_updater_set_interval(updater, UPDATE_PERIOD_SEC);
 
     tio_updater_set_json_parser_resource(updater, resource);
 ```

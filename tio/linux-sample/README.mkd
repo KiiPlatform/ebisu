@@ -195,7 +195,7 @@ of this file is send to server. If you want to change thing state to
 server, You can edit this file.
 
 If you want to change period of sending thing state to server, you can
-edit `STATE_UPDATE_PERIOD` in `example.h`.
+edit `UPDATE_PERIOD_SEC` in `example.h`.
 
 If you want to check sending results, go to https://developer.kii.com and check Thing Console.
 
