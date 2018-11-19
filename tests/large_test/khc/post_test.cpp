@@ -33,12 +33,13 @@ TEST_CASE( "HTTP Post" ) {
   size_t body_len = req_body.length();
 
   // Prepare Req Headers.
-  khc_slist* headers = NULL;
-  headers = khc_slist_append(headers, x_kii_appid.c_str(), x_kii_appid.length());
-  headers = khc_slist_append(headers, content_type.c_str(), content_type.length());
-  headers = khc_slist_append(headers, x_kii_appkey.c_str(), x_kii_appkey.length());
+  khc_slist headers;
+  khc_slist_init(&headers, khct::cb::cb_alloc, NULL, khct::cb::cb_free, NULL);
+  khc_slist_append(&headers, x_kii_appid.c_str(), x_kii_appid.length());
+  khc_slist_append(&headers, content_type.c_str(), content_type.length());
+  khc_slist_append(&headers, x_kii_appkey.c_str(), x_kii_appkey.length());
 
-  khc_set_req_headers(&http, headers);
+  khc_set_req_headers(&http, &headers);
 
   ebisu::ltest::ssl::SSLData s_ctx;
   khc_set_cb_sock_connect(&http, ebisu::ltest::ssl::cb_connect, &s_ctx);
@@ -50,6 +51,9 @@ TEST_CASE( "HTTP Post" ) {
   khc_set_cb_read(&http, khct::cb::cb_read, &io_ctx);
   khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
   khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
+
+  khc_set_cb_mem_alloc(&http, khct::cb::cb_alloc, NULL);
+  khc_set_cb_mem_free(&http, khct::cb::cb_free, NULL);
 
   int on_read_called = 0;
   std::istringstream iss(req_body);
@@ -78,7 +82,7 @@ TEST_CASE( "HTTP Post" ) {
   };
 
   khc_code res = khc_perform(&http);
-  khc_slist_free_all(headers);
+  khc_slist_free_all(&headers);
   REQUIRE( khc_get_status_code(&http) == 200 );
 
   // Parse response body.

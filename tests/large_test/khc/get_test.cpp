@@ -25,6 +25,9 @@ TEST_CASE( "HTTP Get" ) {
   khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
   khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
+  khc_set_cb_mem_alloc(&http, khct::cb::cb_alloc, NULL);
+  khc_set_cb_mem_free(&http, khct::cb::cb_free, NULL);
+
   int on_read_called = 0;
   io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, size_t count, void *userdata) {
     ++on_read_called;
