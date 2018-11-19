@@ -98,6 +98,8 @@ int kii_init(
     khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
     khc_set_cb_header(&kii->_khc, _cb_write_header, kii);
     kii->_etag[0] = '\0';
+    khc_set_cb_mem_alloc(&kii->_khc, _cb_mem_alloc, NULL);
+    khc_set_cb_mem_free(&kii->_khc, _cb_mem_free, NULL);
     khc_slist_init(&kii->_req_headers, _cb_mem_alloc, NULL, _cb_mem_free, NULL);
     return 0;
 }
