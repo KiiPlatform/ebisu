@@ -34,9 +34,9 @@ TEST_CASE( "HTTP Post" ) {
 
   // Prepare Req Headers.
   khc_slist* headers = NULL;
-  headers = khc_slist_append(headers, x_kii_appid.c_str(), x_kii_appid.length());
-  headers = khc_slist_append(headers, content_type.c_str(), content_type.length());
-  headers = khc_slist_append(headers, x_kii_appkey.c_str(), x_kii_appkey.length());
+  headers = khc_slist_append(headers, x_kii_appid.c_str(), x_kii_appid.length(), NULL);
+  headers = khc_slist_append(headers, content_type.c_str(), content_type.length(), NULL);
+  headers = khc_slist_append(headers, x_kii_appkey.c_str(), x_kii_appkey.length(), NULL);
 
   khc_set_req_headers(&http, headers);
 
@@ -78,7 +78,7 @@ TEST_CASE( "HTTP Post" ) {
   };
 
   khc_code res = khc_perform(&http);
-  khc_slist_free_all(headers);
+  khc_slist_free_all(headers, NULL);
   REQUIRE( khc_get_status_code(&http) == 200 );
 
   // Parse response body.
