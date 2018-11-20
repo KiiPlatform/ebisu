@@ -11,6 +11,7 @@ void tio_handler_init(tio_handler_t* handler)
 {
     handler->_kii._author.author_id[0] = '\0';
     handler->_kii._author.access_token[0] = '\0';
+    handler->_cb_err = NULL;
 }
 
 void tio_handler_set_cb_sock_connect_http(
@@ -146,7 +147,7 @@ void tio_handler_set_app(
 static void _cb_receive_push(char* palyload, size_t payload_length, void* userdata) {
     tio_handler_t* handler = (tio_handler_t*)userdata;
     tio_code_t handle_res = _handle_command(handler, palyload, payload_length);
-    if (handler->_cb_err != NULL) {
+    if (handle_res != TIO_ERR_OK && handler->_cb_err != NULL) {
         handler->_cb_err(handle_res, "Failed to handle command", handler->_cb_err_data);
     }
 }
