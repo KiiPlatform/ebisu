@@ -20,8 +20,7 @@ extern "C" {
 #define M_KII_LOG(...)
 #endif
 
-#define KII_TASK_NAME_RECV_MSG "recv_msg_task"
-#define KII_TASK_NAME_PING_REQ "ping_req_task"
+#define KII_TASK_NAME_MQTT "kii_mqtt_task"
 
 typedef size_t (*KII_CB_WRITE)(char *ptr, size_t size, size_t count, void *userdata);
 typedef size_t (*KII_CB_READ)(char *buffer, size_t size, size_t count, void *userdata);
