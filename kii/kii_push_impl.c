@@ -1,6 +1,5 @@
 #include <string.h>
 #include "kii_push_impl.h"
-#include "kii_mqtt.h"
 #include "kii_impl.h"
 #include "kii_req_impl.h"
 #include "kii.h"

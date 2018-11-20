@@ -13,11 +13,15 @@ const char KII_APP_ID[] = "fj9xy2fsp0ld";
 /* CN: "api-cn3.kii.com" */
 const char KII_APP_HOST[] = "api-jp.kii.com";
 
-#define COMMAND_HANDLER_HTTP_BUFF_SIZE 4096
-#define COMMAND_HANDLER_MQTT_BUFF_SIZE 2048
-#define COMMAND_HANDLER_MQTT_KEEP_ALIVE_INTERVAL 300
-#define STATE_UPDATER_BUFF_SIZE 4096
-#define STATE_UPDATE_PERIOD 60
+#define HANDLER_HTTP_BUFF_SIZE 4096
+#define HANDLER_MQTT_BUFF_SIZE 2048
+#define HANDLER_KEEP_ALIVE_SEC 300
+
+#define UPDATER_HTTP_BUFF_SIZE 4096
+#define UPDATE_PERIOD_SEC 60
+
+#define TO_RECV_SEC 15
+#define TO_SEND_SEC 15
 
 #ifdef __cplusplus
 }

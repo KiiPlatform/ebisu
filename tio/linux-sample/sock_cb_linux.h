@@ -12,6 +12,8 @@ typedef struct {
     SSL *ssl;
     SSL_CTX *ssl_ctx;
     int socket;
+    unsigned int to_recv;
+    unsigned int to_send;
 } socket_context_t;
 
 khc_sock_code_t

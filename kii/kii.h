@@ -20,8 +20,7 @@ extern "C" {
 #define M_KII_LOG(...)
 #endif
 
-#define KII_TASK_NAME_RECV_MSG "recv_msg_task"
-#define KII_TASK_NAME_PING_REQ "ping_req_task"
+#define KII_TASK_NAME_MQTT "kii_mqtt_task"
 
 typedef size_t (*KII_CB_WRITE)(char *ptr, size_t size, size_t count, void *userdata);
 typedef size_t (*KII_CB_READ)(char *buffer, size_t size, size_t count, void *userdata);
@@ -122,6 +121,8 @@ typedef struct kii_t {
     KHC_CB_SOCK_SEND mqtt_sock_send_cb;
     KHC_CB_SOCK_RECV mqtt_sock_recv_cb;
     KHC_CB_SOCK_CLOSE mqtt_sock_close_cb;
+    unsigned int _mqtt_to_recv_sec;
+    unsigned int _mqtt_to_send_sec;
 
     KII_TASK_CREATE task_create_cb;
 
@@ -518,6 +519,9 @@ int kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userd
 int kii_set_mqtt_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
 int kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
 int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+
+int kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec);
+int kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec);
 
 /** Set JSON paraser resource
  * @param [inout] kii SDK instance.

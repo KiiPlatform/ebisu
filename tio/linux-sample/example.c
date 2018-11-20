@@ -14,17 +14,12 @@
 #include "sys_cb_impl.h"
 #include "sock_cb_linux.h"
 
-static pthread_mutex_t m_mutex;
-
 static void print_help() {
     printf("sub commands: [onboard|update]\n\n");
     printf("to see detail usage of sub command, execute ./exampleapp {subcommand} --help\n\n");
 
     printf("onboard with vendor-thing-id\n");
     printf("./exampleapp onboard --vendor-thing-id={vendor thing id} --password={password}\n\n");
-
-    printf("update.\n"
-            "./exampleapp update --firmware-version --thing-type --vendor-thing-id={vendor thing id} --password={password} \n\n");
 }
 
 void updater_init(
@@ -48,7 +43,7 @@ void updater_init(
     tio_updater_set_cb_sock_recv(updater, sock_cb_recv, sock_ssl_ctx);
     tio_updater_set_cb_sock_close(updater, sock_cb_close, sock_ssl_ctx);
 
-    tio_updater_set_interval(updater, STATE_UPDATE_PERIOD);
+    tio_updater_set_interval(updater, UPDATE_PERIOD_SEC);
 
     tio_updater_set_json_parser_resource(updater, resource);
 }
@@ -131,10 +126,13 @@ void handler_init(
     tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
 
+    tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);
+    tio_handler_set_mqtt_to_sock_send(handler, TO_SEND_SEC);
+
     tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);
     tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
 
-    tio_handler_set_keep_alive_interval(handler, COMMAND_HANDLER_MQTT_KEEP_ALIVE_INTERVAL);
+    tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
 
     tio_handler_set_json_parser_resource(handler, resource);
 }
@@ -151,42 +149,53 @@ int main(int argc, char** argv)
     char* subc = argv[1];
 
     tio_updater_t updater;
-    tio_handler_t handler;
-    char updater_buff[STATE_UPDATER_BUFF_SIZE];
-    socket_context_t updater_ctx;
-    char kii_buff[COMMAND_HANDLER_HTTP_BUFF_SIZE];
-    socket_context_t http_ctx;
-    char mqtt_buff[COMMAND_HANDLER_MQTT_BUFF_SIZE];
-    socket_context_t mqtt_ctx;
+
+    socket_context_t updater_http_ctx;
+    updater_http_ctx.to_recv = TO_RECV_SEC;
+    updater_http_ctx.to_send = TO_SEND_SEC;
+
     jkii_token_t updater_tokens[256];
     jkii_resource_t updater_resource = {updater_tokens, 256};
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = {tokens, 256};
+
     updater_file_context_t updater_file_ctx;
 
-    memset(updater_buff, 0x00, sizeof(char) * STATE_UPDATER_BUFF_SIZE);
+    char updater_buff[UPDATER_HTTP_BUFF_SIZE];
+    memset(updater_buff, 0x00, sizeof(char) * UPDATER_HTTP_BUFF_SIZE);
     updater_init(
             &updater,
             updater_buff,
-            STATE_UPDATER_BUFF_SIZE,
-            &updater_ctx,
+            UPDATER_HTTP_BUFF_SIZE,
+            &updater_http_ctx,
             &updater_resource);
-    memset(kii_buff, 0x00, sizeof(char) * COMMAND_HANDLER_HTTP_BUFF_SIZE);
-    memset(mqtt_buff, 0x00, sizeof(char) * COMMAND_HANDLER_MQTT_BUFF_SIZE);
+
+    tio_handler_t handler;
+
+    socket_context_t handler_http_ctx;
+    handler_http_ctx.to_recv = TO_RECV_SEC;
+    handler_http_ctx.to_send = TO_SEND_SEC;
+
+    socket_context_t handler_mqtt_ctx;
+    handler_mqtt_ctx.to_recv = TO_RECV_SEC;
+    handler_mqtt_ctx.to_send = TO_SEND_SEC;
+
+    char handler_http_buff[HANDLER_HTTP_BUFF_SIZE];
+    memset(handler_http_buff, 0x00, sizeof(char) * HANDLER_HTTP_BUFF_SIZE);
+
+    char handler_mqtt_buff[HANDLER_MQTT_BUFF_SIZE];
+    memset(handler_mqtt_buff, 0x00, sizeof(char) * HANDLER_MQTT_BUFF_SIZE);
+
+    jkii_token_t handler_tokens[256];
+    jkii_resource_t handler_resource = {handler_tokens, 256};
+
     handler_init(
             &handler,
-            kii_buff,
-            COMMAND_HANDLER_HTTP_BUFF_SIZE,
-            &http_ctx,
-            mqtt_buff,
-            COMMAND_HANDLER_MQTT_BUFF_SIZE,
-            &mqtt_ctx,
-            &resource);
-
-    if (pthread_mutex_init(&m_mutex, NULL) != 0) {
-        printf("fail to get mutex.\n");
-        exit(1);
-    }
+            handler_http_buff,
+            HANDLER_HTTP_BUFF_SIZE,
+            &handler_http_ctx,
+            handler_mqtt_buff,
+            HANDLER_MQTT_BUFF_SIZE,
+            &handler_mqtt_ctx,
+            &handler_resource);
 
     if (argc < 2) {
         printf("too few arguments.\n");
@@ -217,7 +226,6 @@ int main(int argc, char** argv)
                     printf("password is not specifeid.\n");
                     exit(1);
                 }
-                printf("program successfully started!\n");
                 tio_code_t result = tio_handler_onboard(
                         &handler,
                         vendorThingID,
@@ -230,6 +238,7 @@ int main(int argc, char** argv)
                     printf("failed to onboard.\n");
                     exit(1);
                 }
+                printf("Onboarding succeeded!\n");
                 break;
             }
             printf("option %s : %s\n", optName, optarg);
@@ -269,11 +278,6 @@ int main(int argc, char** argv)
     /* run forever. TODO: Convert to daemon. */
     while(1){ sleep(1); };
 
-    /*
-     * This sample application keeps mutex from the start to end
-     * of the applicatoin process. So we don't implement destry.
-     * pthread_mutex_destroy(&m_mutex);
-    */
 }
 
 /* vim: set ts=4 sts=4 sw=4 et fenc=utf-8 ff=unix: */

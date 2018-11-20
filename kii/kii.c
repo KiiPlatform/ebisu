@@ -144,6 +144,16 @@ int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata)
     return 0;
 }
 
+int kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec) {
+    kii->_mqtt_to_recv_sec = to_sock_recv_sec;
+    return 0;
+}
+
+int kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec) {
+    kii->_mqtt_to_send_sec = to_sock_send_sec;
+    return 0;
+}
+
 kii_code_t kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource) {
     kii->_json_resource = resource;
     return KII_ERR_OK;
