@@ -183,21 +183,21 @@ int main(int argc, char** argv)
     handler_mqtt_ctx.to_recv = TO_RECV_SEC;
     handler_mqtt_ctx.to_send = TO_SEND_SEC;
 
-    char kii_buff[HANDLER_HTTP_BUFF_SIZE];
-    memset(kii_buff, 0x00, sizeof(char) * HANDLER_HTTP_BUFF_SIZE);
+    char handler_http_buff[HANDLER_HTTP_BUFF_SIZE];
+    memset(handler_http_buff, 0x00, sizeof(char) * HANDLER_HTTP_BUFF_SIZE);
 
-    char mqtt_buff[HANDLER_MQTT_BUFF_SIZE];
-    memset(mqtt_buff, 0x00, sizeof(char) * HANDLER_MQTT_BUFF_SIZE);
+    char handler_mqtt_buff[HANDLER_MQTT_BUFF_SIZE];
+    memset(handler_mqtt_buff, 0x00, sizeof(char) * HANDLER_MQTT_BUFF_SIZE);
 
     jkii_token_t handler_tokens[256];
     jkii_resource_t handler_resource = {handler_tokens, 256};
 
     handler_init(
             &handler,
-            kii_buff,
+            handler_http_buff,
             HANDLER_HTTP_BUFF_SIZE,
             &handler_http_ctx,
-            mqtt_buff,
+            handler_mqtt_buff,
             HANDLER_MQTT_BUFF_SIZE,
             &handler_mqtt_ctx,
             &handler_resource);
