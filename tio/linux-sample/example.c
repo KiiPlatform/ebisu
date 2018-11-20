@@ -14,17 +14,12 @@
 #include "sys_cb_impl.h"
 #include "sock_cb_linux.h"
 
-static pthread_mutex_t m_mutex;
-
 static void print_help() {
     printf("sub commands: [onboard|update]\n\n");
     printf("to see detail usage of sub command, execute ./exampleapp {subcommand} --help\n\n");
 
     printf("onboard with vendor-thing-id\n");
     printf("./exampleapp onboard --vendor-thing-id={vendor thing id} --password={password}\n\n");
-
-    printf("update.\n"
-            "./exampleapp update --firmware-version --thing-type --vendor-thing-id={vendor thing id} --password={password} \n\n");
 }
 
 void updater_init(
@@ -202,11 +197,6 @@ int main(int argc, char** argv)
             &handler_mqtt_ctx,
             &handler_resource);
 
-    if (pthread_mutex_init(&m_mutex, NULL) != 0) {
-        printf("fail to get mutex.\n");
-        exit(1);
-    }
-
     if (argc < 2) {
         printf("too few arguments.\n");
         print_help();
@@ -288,11 +278,6 @@ int main(int argc, char** argv)
     /* run forever. TODO: Convert to daemon. */
     while(1){ sleep(1); };
 
-    /*
-     * This sample application keeps mutex from the start to end
-     * of the applicatoin process. So we don't implement destry.
-     * pthread_mutex_destroy(&m_mutex);
-    */
 }
 
 /* vim: set ts=4 sts=4 sw=4 et fenc=utf-8 ff=unix: */
