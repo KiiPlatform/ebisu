@@ -1,4 +1,8 @@
-This is a sample application for TIO.
+TIO Sample application on Linux.
+
+Following instruction assumes environment is `ubuntu`.
+Instruction varies depending on your environment.
+We assumes readers already have knowledge about Linux operations.
 
 ## Requirement
 
