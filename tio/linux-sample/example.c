@@ -226,7 +226,6 @@ int main(int argc, char** argv)
                     printf("password is not specifeid.\n");
                     exit(1);
                 }
-                printf("program successfully started!\n");
                 tio_code_t result = tio_handler_onboard(
                         &handler,
                         vendorThingID,
@@ -239,6 +238,7 @@ int main(int argc, char** argv)
                     printf("failed to onboard.\n");
                     exit(1);
                 }
+                printf("Onboarding succeeded!\n");
                 break;
             }
             printf("option %s : %s\n", optName, optarg);
