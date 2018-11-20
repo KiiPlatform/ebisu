@@ -177,11 +177,11 @@ int main(int argc, char** argv)
 
     socket_context_t handler_http_ctx;
     handler_http_ctx.to_recv = TO_RECV_SEC;
-    handler_http_ctx.to_send = TO_RECV_SEC;
+    handler_http_ctx.to_send = TO_SEND_SEC;
 
     socket_context_t handler_mqtt_ctx;
     handler_mqtt_ctx.to_recv = TO_RECV_SEC;
-    handler_mqtt_ctx.to_send = TO_RECV_SEC;
+    handler_mqtt_ctx.to_send = TO_SEND_SEC;
 
     char kii_buff[HANDLER_HTTP_BUFF_SIZE];
     memset(kii_buff, 0x00, sizeof(char) * HANDLER_HTTP_BUFF_SIZE);
