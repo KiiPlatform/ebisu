@@ -137,7 +137,22 @@ Application can choose to pass different implementations of socket functions or 
 If you choose to pass same pointer of the function, Please also check [Asynchronous task management](#asynchronous-task-management) section as well.
 
 For both MQTT and HTTP, using them over secure connection is highly recommended.
-Our cloud supports non-secure connection for now. However, we may terminate supports of insecure connections in the future. 
+Our cloud supports non-secure connection for now. However, we may terminate supports of insecure connections in the future.
+
+#### Notes about socket implementation used for MQTT.
+
+Underlying socket implementation used for MQTT must be blocking mode and its recv/ send timeout must be shared with `tio_handler_t`.
+
+We use socket timeout to estimate elapsed time since we sent last MQTT messages to send MQTT `PINGREQ` message periodically.
+
+MQTT keep alive interval must be larger than recv/ send timeout.
+Twice as large as recv/ send timeout works fine but recommend few minutes to avoid congestion.
+
+```c
+    tio_handler_set_mqtt_to_sock_recv(handler, 15);
+    tio_handler_set_mqtt_to_sock_send(handler, 15);
+    tio_handler_set_keep_alive_interval(handler, 300);
+```
 
 ### Action callback
 
@@ -195,6 +210,9 @@ The full code can be checked [handler_init() in example.c](linux-sample/example.
     tio_handler_set_cb_sock_send_mqtt(handler, sock_cb_send, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
+
+    tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);
+    tio_handler_set_mqtt_to_sock_send(handler, TO_SEND_SEC);
 
     tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);
     tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
@@ -265,19 +283,33 @@ Note that buffer for HTTP and MQTT must be isolated. Passing overlapping memory 
     tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
 ```
 
+### Set-up MQTT socket timeout.
+
+`tio_handler_t` needs socket timeout in seconds to send MQTT `PINGREQ` periodically.
+
+Note that application must implement socket timeout in the socket callback implementation.
+You can see example [here](./linux-sample/sys_cb_linux.c)
+
+```c
+    tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);
+    tio_handler_set_mqtt_to_sock_send(handler, TO_SEND_SEC);
+```
+
 ### Set-up MQTT Keep Alive interval.
 
 In the example, `HANDLER_KEEP_ALIVE_SEC` is defined as Macro and value is 300 (in seconds).
 
 MQTT have mechanism called `Keep Alive` detecting stale connection between the MQTT broker.
 
-`tio_handler_t` acts as MQTT clients and send `PingReq` to MQTT broker periodically with the specified interval.
-If `PingResp` from MQTT broker is not present, `tio_handler_t` would close the current connection and make fresh connection again.
+`tio_handler_t` acts as MQTT clients and send `PINGREQ` to MQTT broker periodically with the specified interval.
+If `PINGRESP` from MQTT broker is not present, `tio_handler_t` would close the current connection and make fresh connection again.
 
-If interval is set to 0, `Keep Alive` is turned off and no `PingReq` message is send to MQTT broker.
+If interval is set to 0, `Keep Alive` is turned off and no `PINGREQ` message is send to MQTT broker.
 
 We highly recommend setting Keep Alive interval greater than 0 to detect disconnection.
 Recommended interval is few minutes since too small interval may cause network congestion and increases cloud cost.
+
+MQTT keep alive interval must be larger than recv/ send timeout.
 
 ```c
     tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
@@ -353,7 +385,7 @@ Now, it's ready to start `tio_handler_t` module.
   Passing NULL since we don't use context object in this example.
 
 This call results to execute asynchronous tasks created by [Task callbacks](#task-callbacks).
-The name of tasks initiated by this call is exported as macro `KII_TASK_NAME_RECV_MSG` and `KII_TASK_NAME_PING_REQ` defined in `kii.h`.
+The name of tasks initiated by this call is exported as macro `KII_TASK_NAME_MQTT` and `KII_TASK_NAME_PING_REQ` defined in `kii.h`.
 
 # Use `tio_updater_t`
 
@@ -497,11 +529,11 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
 ## Tasks executed by `tio_handler_t`.
 
-- `KII_TASK_NAME_RECV_MSG` is a name of the task defined at `kii.h` and passed as argument when `tio_handler_set_cb_task_create()` is called to create task/ thread.
+- `KII_TASK_NAME_MQTT` is a name of the task defined at `kii.h` and passed as argument when `tio_handler_set_cb_task_create()` is called to create task/ thread.
 
     The task creation is requested once when the `tio_handler_start()` method is invoked.
 
-    This task is responsible for getting MQTT endpoint information thru REST API and connect, receive message from MQTT and propagate message to app by the `TIO_CB_ACTION` callback.
+    This task is responsible for getting MQTT endpoint information thru REST API and connect, receive message from MQTT and propagate message to app by the `TIO_CB_ACTION` callback, and send MQTT `PINGREQ` periodically.
 
     This task executes callbacks set by following APIs.
 
@@ -526,20 +558,6 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
     - `tio_handler_set_mqtt_buff()`
 
     Those two buffers must be separated and have no overlaps.
-
-- `KII_TASK_NAME_PING_REQ` is a name of the task defined at `kii.h` and passed as argument when `tio_handler_set_cb_task_create()` is called to create task/ thread.
-
-    The task creation is requested once when the `tio_handler_start()` method is invoked.
-
-    This task is responsible for sending MQTT `PingReq` message periodically in specified Keep Alive interval.
-
-    This task executes callbacks set by following APIs.
-
-    - `tio_handler_set_cb_sock_send_mqtt()`
-    - `tio_handler_set_cb_delay_ms()`
-
-    This task doesn't use buffers given by APIs.
-    (MQTT PingResp is handled in `KII_TASK_NAME_RECV_MSG` task.)
 
 ## Tasks executed by `tio_updater_t`.
 
@@ -568,6 +586,6 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
 ## Avoiding race condition
 
-- Above 3 tasks `KII_TASK_NAME_RECV_MSG`, `KII_TASK_NAME_PING_REQ`, `TIO_TASK_NAME_UPDATE_STATE` would be executed in parallel. Therefore, if the callback implementation shares the resource that need exclusive access, you need to implement access control mechanism.
+- Above 2 tasks `KII_TASK_NAME_MQTT` and `TIO_TASK_NAME_UPDATE_STATE` would be executed in parallel. Therefore, if the callback implementation shares the resource that need exclusive access, you need to implement access control mechanism.
 
 - You must prepare independent buffers which does not have overlaps.
