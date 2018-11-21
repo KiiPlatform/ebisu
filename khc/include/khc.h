@@ -220,6 +220,8 @@ typedef struct khc {
 
   size_t _body_read_size; /**< \private **/
 
+  size_t _sent_length; /**< \private **/
+
   khc_code _result; /**< \private **/
 } khc;
 

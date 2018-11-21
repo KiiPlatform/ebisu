@@ -49,11 +49,12 @@ typedef khc_sock_code_t
  * @param [in] sock_ctx context object.
  * @param [in] buffer data to send server.
  * @param [in] length length of buffer.
+ * @param [out] out_sent_length data size sent to server.
  * @returns khc_sock_code_t
  */
 typedef khc_sock_code_t
     (*KHC_CB_SOCK_SEND)
-    (void* sock_ctx, const char* buffer, size_t length);
+    (void* sock_ctx, const char* buffer, size_t length, size_t* out_sent_length);
 
 /** \brief Callback function receives data from server.
  *

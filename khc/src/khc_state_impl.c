@@ -192,8 +192,16 @@ void khc_state_req_line(khc* khc) {
   strcat(request_line, path);
   strcat(request_line, " ");
   strcat(request_line, http_version);
-  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, request_line, strlen(request_line));
+  char* send_pos = &request_line[khc->_sent_length];
+  size_t send_len = strlen(send_pos);
+  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &khc->_sent_length);
   if (send_res == KHC_SOCK_OK) {
+    if (khc->_sent_length < send_len) {
+      // retry.
+      return;
+    } else {
+      khc->_sent_length = 0;
+    }
     khc->_state = KHC_STATE_REQ_HOST_HEADER;
     return;
   }
@@ -212,8 +220,16 @@ void khc_state_req_host_header(khc* khc) {
   size_t hdr_len = strlen(hdr_key) + strlen(khc->_host) + 2;
   char buff[hdr_len + 1];
   snprintf(buff, hdr_len + 1, "%s%s\r\n", hdr_key, khc->_host);
-  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, buff, hdr_len);
+  char* send_pos = &buff[khc->_sent_length];
+  size_t send_len = strlen(send_pos);
+  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &khc->_sent_length);
   if (send_res == KHC_SOCK_OK) {
+    if (khc->_sent_length < send_len) {
+      // retry.
+      return;
+    } else {
+      khc->_sent_length = 0;
+    }
     khc->_state = KHC_STATE_REQ_HEADER;
     khc->_current_req_header = khc->_req_headers;
     return;
@@ -250,8 +266,16 @@ void khc_state_req_header(khc* khc) {
 
 void khc_state_req_header_send(khc* khc) {
   char* line = khc->_current_req_header->data;
-  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, line, strlen(line));
+  char* send_pos = &line[khc->_sent_length];
+  size_t send_len = strlen(send_pos);
+  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &khc->_sent_length);
   if (send_res == KHC_SOCK_OK) {
+    if (khc->_sent_length < send_len) {
+      // retry.
+      return;
+    } else {
+      khc->_sent_length = 0;
+    }
     khc->_state = KHC_STATE_REQ_HEADER_SEND_CRLF;
     return;
   }
@@ -266,8 +290,17 @@ void khc_state_req_header_send(khc* khc) {
 }
 
 void khc_state_req_header_send_crlf(khc* khc) {
-  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, "\r\n", 2);
+  char crlf[] = "\r\n";
+  char* send_pos = &crlf[khc->_sent_length];
+  size_t send_len = strlen(send_pos);
+  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &khc->_sent_length);
   if (send_res == KHC_SOCK_OK) {
+    if (khc->_sent_length < send_len) {
+      // retry.
+      return;
+    } else {
+      khc->_sent_length = 0;
+    }
     khc->_current_req_header = khc->_current_req_header->next;
     khc->_state = KHC_STATE_REQ_HEADER;
     return;
@@ -283,8 +316,17 @@ void khc_state_req_header_send_crlf(khc* khc) {
 }
 
 void khc_state_req_header_end(khc* khc) {
-  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, "Transfer-Encoding: chunked\r\nConnection: Close\r\n\r\n", 49);
+  char text[] = "Transfer-Encoding: chunked\r\nConnection: Close\r\n\r\n";
+  char* send_pos = &text[khc->_sent_length];
+  size_t send_len = strlen(send_pos);
+  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &khc->_sent_length);
   if (send_res == KHC_SOCK_OK) {
+    if (khc->_sent_length < send_len) {
+      // retry.
+      return;
+    } else {
+      khc->_sent_length = 0;
+    }
     khc->_state = KHC_STATE_REQ_BODY_READ;
     khc->_read_req_end = 0;
     return;
@@ -316,8 +358,16 @@ void khc_state_req_body_send_size(khc* khc) {
     khc->_result = KHC_ERR_TOO_LARGE_DATA;
     return;
   }
-  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, size_buff, size_len);
+  char* send_pos = &size_buff[khc->_sent_length];
+  size_t send_len = strlen(send_pos);
+  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &khc->_sent_length);
   if (send_res == KHC_SOCK_OK) {
+    if (khc->_sent_length < send_len) {
+      // retry.
+      return;
+    } else {
+      khc->_sent_length = 0;
+    }
     if (khc->_read_req_end == 1) {
       khc->_state = KHC_STATE_REQ_BODY_SEND_CRLF;
     } else {
@@ -336,8 +386,16 @@ void khc_state_req_body_send_size(khc* khc) {
 }
 
 void khc_state_req_body_send(khc* khc) {
-  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, khc->_stream_buff, khc->_read_size);
+  char* send_pos = &khc->_stream_buff[khc->_sent_length];
+  size_t send_len = khc->_read_size - khc->_sent_length;
+  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &khc->_sent_length);
   if (send_res == KHC_SOCK_OK) {
+    if (khc->_sent_length < send_len) {
+      // retry.
+      return;
+    } else {
+      khc->_sent_length = 0;
+    }
     khc->_state = KHC_STATE_REQ_BODY_SEND_CRLF;
     return;
   }
@@ -352,8 +410,17 @@ void khc_state_req_body_send(khc* khc) {
 }
 
 void khc_state_req_body_send_crlf(khc* khc) {
-  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, "\r\n", 2);
+  char crlf[] = "\r\n";
+  char* send_pos = &crlf[khc->_sent_length];
+  size_t send_len = strlen(send_pos);
+  khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &khc->_sent_length);
   if (send_res == KHC_SOCK_OK) {
+    if (khc->_sent_length < send_len) {
+      // retry.
+      return;
+    } else {
+      khc->_sent_length = 0;
+    }
     if (khc->_read_req_end == 1) {
       khc->_resp_header_read_size = 0;
       khc->_state = KHC_STATE_RESP_STATUS_READ;

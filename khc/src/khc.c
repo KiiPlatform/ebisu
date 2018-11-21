@@ -120,6 +120,7 @@ khc_code khc_set_zero_excl_cb(khc* khc) {
   khc->_read_end = 0;
   khc->_body_read_size = 0;
   khc->_result = KHC_ERR_OK;
+  khc->_sent_length = 0;
 
   // Response header Buffer
   khc->_resp_header_buff = NULL;
