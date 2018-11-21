@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 #include "khc.h"
 
 khc_slist* khc_slist_alloc_cb(const char* str, size_t str_len, void* data) {
