@@ -426,8 +426,7 @@ void khc_state_resp_header_callback(khc* khc) {
   if (header_boundary == NULL) {
     if (khc->_resp_header_buff_size == khc->_resp_header_read_size + 1) {
       // no space in _resp_header_buff.
-      khc->_state = KHC_STATE_CLOSE;
-      khc->_result = KHC_ERR_TOO_LARGE_DATA;
+      khc->_state = KHC_STATE_RESP_HEADER_SKIP;
       return;
     }
     khc->_state = KHC_STATE_RESP_HEADER_READ;
@@ -481,6 +480,61 @@ void khc_state_resp_header_read(khc* khc) {
     if (read_size == 0) {
       khc->_read_end = 1;
     }
+    khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
+    return;
+  }
+  if (read_res == KHC_SOCK_AGAIN) {
+    return;
+  }
+  if (read_res == KHC_SOCK_FAIL) {
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = KHC_ERR_SOCK_RECV;
+    return;
+  }
+}
+
+void khc_state_resp_header_skip(khc* khc) {
+  // check required http headers.
+  if (_is_header_present("Content-Length", khc->_resp_header_buff, khc->_resp_header_read_size) == 1 ||
+      _is_header_present("Transfer-Encoding", khc->_resp_header_buff, khc->_resp_header_read_size) == 1) {
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = KHC_ERR_HEADER_CALLBACK;
+    return;
+  }
+
+  // check and leave CR at last.
+  if (khc->_resp_header_buff[khc->_resp_header_read_size - 1] == '\r') {
+    khc->_resp_header_buff[0] = '\r';
+    khc->_resp_header_read_size = 1;
+  } else {
+    khc->_resp_header_read_size = 0;
+  }
+
+  size_t read_size = 0;
+  size_t read_req_size = khc->_resp_header_buff_size - khc->_resp_header_read_size - 1;
+  khc_sock_code_t read_res = khc->_cb_sock_recv(
+      khc->_sock_ctx_recv,
+      &khc->_resp_header_buff[khc->_resp_header_read_size],
+      read_req_size,
+      &read_size);
+  if (read_res == KHC_SOCK_OK) {
+    khc->_resp_header_read_size += read_size;
+    khc->_resp_header_buff[khc->_resp_header_read_size] = '\0';
+    if (read_size == 0) {
+      khc->_read_end = 1;
+    }
+    // check header boundary.
+    char* header_boundary = strstr(khc->_resp_header_buff, "\r\n");
+    if (header_boundary == NULL) {
+      // re-skip.
+      return;
+    }
+    // discard skip target.
+    size_t header_size = header_boundary - khc->_resp_header_buff;
+    memmove(khc->_resp_header_buff, header_boundary + 2,
+        khc->_resp_header_read_size - (header_size + 2) + 1); // +1 is '\0' include.
+    khc->_resp_header_read_size -= (header_size + 2);
+
     khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
     return;
   }
@@ -809,6 +863,7 @@ const KHC_STATE_HANDLER state_handlers[] = {
   khc_state_resp_status_parse,
   khc_state_resp_header_callback,
   khc_state_resp_header_read,
+  khc_state_resp_header_skip,
   khc_state_resp_body_flagment,
   khc_state_read_chunk_size_from_header_buff,
   khc_state_read_chunk_body_from_header_buff,

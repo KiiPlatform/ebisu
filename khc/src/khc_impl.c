@@ -2,6 +2,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 typedef enum header_parser_sts {
     parse_key,
@@ -109,4 +110,22 @@ int _read_chunk_size(const char* buff, size_t buff_size, size_t* out_chunk_size)
         *out_chunk_size = strtol(buff, NULL, 16);
     }
     return (crlf == 2) ? 1 : 0;
+}
+
+int _is_header_present(const char* header, const char* buff, size_t buff_size) {
+    int header_length = strlen(header);
+    for (int i = 0; i < buff_size; ++i) {
+        if (buff[i] == ':') {
+            return i == header_length;
+        }
+        if (i < header_length) {
+            char c = header[i];
+            if (buff[i] != tolower(c) && buff[i] != toupper(c)) {
+                break;
+            }
+        } else {
+            break;
+        }
+    }
+    return 0;
 }
