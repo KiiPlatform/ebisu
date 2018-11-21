@@ -149,6 +149,7 @@ void khc_state_idle(khc* khc) {
 void khc_state_connect(khc* khc) {
   khc_sock_code_t con_res = khc->_cb_sock_connect(khc->_sock_ctx_connect, khc->_host, 443);
   if (con_res == KHC_SOCK_OK) {
+    khc->_sent_length = 0;
     khc->_state = KHC_STATE_REQ_LINE;
     return;
   }
