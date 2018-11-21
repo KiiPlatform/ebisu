@@ -52,11 +52,12 @@ TEST_CASE( "HTTP minimal" ) {
   REQUIRE( called );
 
   called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     called = true;
     const char req_line[] = "GET https://api.kii.com/api/apps HTTP/1.1\r\n";
     REQUIRE( length == strlen(req_line) );
     REQUIRE( strncmp(buffer, req_line, length) == 0 );
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
 
@@ -66,11 +67,12 @@ TEST_CASE( "HTTP minimal" ) {
   REQUIRE( called );
 
   called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     called = true;
     const char host_hdr[] = "HOST: api.kii.com\r\n";
     REQUIRE( length == strlen(host_hdr) );
     REQUIRE( strncmp(buffer, host_hdr, length) == 0 );
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
   khc_state_req_host_header(&http);
@@ -83,10 +85,11 @@ TEST_CASE( "HTTP minimal" ) {
   REQUIRE( http._result == KHC_ERR_OK );
 
   called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     called = true;
     REQUIRE( length == 49 );
     REQUIRE( strncmp(buffer, "Transfer-Encoding: chunked\r\nConnection: Close\r\n\r\n", 49) == 0 );
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
 
@@ -111,11 +114,12 @@ TEST_CASE( "HTTP minimal" ) {
   REQUIRE( called );
 
   called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     called = true;
     const char body[] = "9\r\n";
     REQUIRE( length == strlen(body) );
     REQUIRE( strncmp(buffer, body, length) == 0 );
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
   khc_state_req_body_send_size(&http);
@@ -124,11 +128,12 @@ TEST_CASE( "HTTP minimal" ) {
   REQUIRE( called );
 
   called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     called = true;
     const char body[] = "http body";
     REQUIRE( length == strlen(body) );
     REQUIRE( strncmp(buffer, body, length) == 0 );
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
   khc_state_req_body_send(&http);
@@ -137,11 +142,12 @@ TEST_CASE( "HTTP minimal" ) {
   REQUIRE( called );
 
   called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     called = true;
     const char body[] = "\r\n";
     REQUIRE( length == strlen(body) );
     REQUIRE( strncmp(buffer, body, length) == 0 );
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
   khc_state_req_body_send_crlf(&http);
@@ -163,11 +169,12 @@ TEST_CASE( "HTTP minimal" ) {
   REQUIRE( called );
 
   called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     called = true;
     const char body[] = "0\r\n";
     REQUIRE( length == strlen(body) );
     REQUIRE( strncmp(buffer, body, length) == 0 );
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
   khc_state_req_body_send_size(&http);
@@ -176,11 +183,12 @@ TEST_CASE( "HTTP minimal" ) {
   REQUIRE( called );
 
   called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     called = true;
     const char body[] = "\r\n";
     REQUIRE( length == strlen(body) );
     REQUIRE( strncmp(buffer, body, length) == 0 );
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
   khc_state_req_body_send_crlf(&http);
@@ -310,11 +318,12 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   REQUIRE( called );
 
   called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     called = true;
     const char req_line[] = "GET https://api.kii.com/api/apps HTTP/1.1\r\n";
     REQUIRE( length == strlen(req_line) );
     REQUIRE( strncmp(buffer, req_line, length) == 0 );
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
 
@@ -324,11 +333,12 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   REQUIRE( called );
 
   called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     called = true;
     const char host_hdr[] = "HOST: api.kii.com\r\n";
     REQUIRE( length == strlen(host_hdr) );
     REQUIRE( strncmp(buffer, host_hdr, length) == 0 );
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
   khc_state_req_host_header(&http);
@@ -341,10 +351,11 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   REQUIRE( http._result == KHC_ERR_OK );
 
   called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     called = true;
     REQUIRE( length == 49 );
     REQUIRE( strncmp(buffer, "Transfer-Encoding: chunked\r\nConnection: Close\r\n\r\n", 49) == 0 );
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
 
@@ -369,11 +380,12 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   REQUIRE( called );
 
   called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     called = true;
     const char body[] = "9\r\n";
     REQUIRE( length == strlen(body) );
     REQUIRE( strncmp(buffer, body, length) == 0 );
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
   khc_state_req_body_send_size(&http);
@@ -382,11 +394,12 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   REQUIRE( called );
 
   called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     called = true;
     const char body[] = "http body";
     REQUIRE( length == strlen(body) );
     REQUIRE( strncmp(buffer, body, length) == 0 );
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
   khc_state_req_body_send(&http);
@@ -395,11 +408,12 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   REQUIRE( called );
 
   called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     called = true;
     const char body[] = "\r\n";
     REQUIRE( length == strlen(body) );
     REQUIRE( strncmp(buffer, body, length) == 0 );
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
   khc_state_req_body_send_crlf(&http);
@@ -421,11 +435,12 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   REQUIRE( called );
 
   called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     called = true;
     const char body[] = "0\r\n";
     REQUIRE( length == strlen(body) );
     REQUIRE( strncmp(buffer, body, length) == 0 );
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
   khc_state_req_body_send_size(&http);
@@ -434,11 +449,12 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   REQUIRE( called );
 
   called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     called = true;
     const char body[] = "\r\n";
     REQUIRE( length == strlen(body) );
     REQUIRE( strncmp(buffer, body, length) == 0 );
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
   khc_state_req_body_send_crlf(&http);

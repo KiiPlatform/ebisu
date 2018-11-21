@@ -6,7 +6,7 @@ namespace cb {
 
 struct SockCtx {
   std::function<khc_sock_code_t(void* socket_context, const char* host, unsigned int port)> on_connect;
-  std::function<khc_sock_code_t(void* socket_context, const char* buffer, size_t length)> on_send;
+  std::function<khc_sock_code_t(void* socket_context, const char* buffer, size_t length, size_t* out_sent_length)> on_send;
   std::function<khc_sock_code_t(void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length)> on_recv;
   std::function<khc_sock_code_t(void* socket_context)> on_close;
 };
@@ -22,9 +22,9 @@ inline khc_sock_code_t mock_connect(void* socket_context, const char* host, unsi
   return ctx->on_connect(socket_context, host, port);
 }
 
-inline khc_sock_code_t mock_send (void* socket_context, const char* buffer, size_t length) {
+inline khc_sock_code_t mock_send (void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
   SockCtx* ctx = (SockCtx*)socket_context;
-  return ctx->on_send(socket_context, buffer, length);
+  return ctx->on_send(socket_context, buffer, length, out_sent_length);
 }
 
 inline khc_sock_code_t mock_recv(void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
