@@ -494,6 +494,14 @@ void khc_state_resp_header_read(khc* khc) {
 }
 
 void khc_state_resp_header_skip(khc* khc) {
+  // check required http headers.
+  if (_is_http_header_include("Content-Length", khc->_resp_header_buff, khc->_resp_header_read_size) == 1 ||
+      _is_http_header_include("Transfer-Encoding", khc->_resp_header_buff, khc->_resp_header_read_size) == 1) {
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = KHC_ERR_HEADER_CALLBACK;
+    return;
+  }
+
   // check and leave CR at last.
   if (khc->_resp_header_buff[khc->_resp_header_read_size - 1] == '\r') {
     khc->_resp_header_buff[0] = '\r';
