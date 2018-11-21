@@ -153,6 +153,10 @@ typedef struct kii_t {
     JKII_RESOURCE_ALLOC_CB _json_alloc_cb;
     JKII_RESOURCE_FREE_CB _json_free_cb;
 
+    KHC_SLIST_ALLOC_CB _slist_alloc_cb;
+    KHC_SLIST_FREE_CB _slist_free_cb;
+    void* _slist_alloc_cb_data;
+    void* _slist_free_cb_data;
 } kii_t;
 
 /** Initializes Kii SDK
@@ -541,6 +545,19 @@ kii_code_t kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource);
 kii_code_t kii_set_json_parser_resource_cb(kii_t* kii,
     JKII_RESOURCE_ALLOC_CB alloc_cb,
     JKII_RESOURCE_FREE_CB free_cb);
+
+/**
+ * \brief Set khc_slist (linked list) resource allocators.
+
+ * If this method is not called, default allocators implemented with malloc/free is used to
+ * allocate linked list used to construct HTTP request headers.
+ */
+kii_code_t kii_set_slist_resource_cb(
+    kii_t* kii,
+    KHC_SLIST_ALLOC_CB alloc_cb,
+    KHC_SLIST_FREE_CB free_cb,
+    void* alloc_cb_data,
+    void* free_cb_data);
 
 const char* kii_get_etag(kii_t* kii);
 

@@ -87,6 +87,10 @@ int kii_init(
     khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
     khc_set_cb_header(&kii->_khc, _cb_write_header, kii);
     kii->_etag[0] = '\0';
+    kii->_slist_alloc_cb = khc_slist_alloc_cb;
+    kii->_slist_free_cb = khc_slist_free_cb;
+    kii->_slist_alloc_cb_data = NULL;
+    kii->_slist_free_cb_data = NULL;
     return 0;
 }
 
@@ -169,6 +173,19 @@ kii_code_t kii_set_json_parser_resource_cb(
     return KII_ERR_OK;
 }
 
+kii_code_t kii_set_slist_resource_cb(
+    kii_t* kii,
+    KHC_SLIST_ALLOC_CB alloc_cb,
+    KHC_SLIST_FREE_CB free_cb,
+    void* alloc_cb_data,
+    void* free_cb_data) {
+    kii->_slist_alloc_cb = alloc_cb;
+    kii->_slist_free_cb = free_cb;
+    kii->_slist_alloc_cb_data = alloc_cb_data;
+    kii->_slist_free_cb_data = free_cb_data;
+    return KII_ERR_OK;
+}
+
 const char* kii_get_etag(kii_t* kii) {
     return kii->_etag;
 }
@@ -211,7 +228,7 @@ void _reset_buff(kii_t* kii) {
 }
 
 void _req_headers_free_all(kii_t* kii) {
-    khc_slist_free_all(kii->_req_headers);
+    khc_slist_free_all_using_free_cb(kii->_req_headers, kii->_slist_free_cb, kii->_slist_free_cb_data);
     kii->_req_headers = NULL;
 }
 
