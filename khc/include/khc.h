@@ -88,6 +88,16 @@ typedef khc_slist*(*KHC_SLIST_ALLOC_CB)(const char* str, size_t str_length, void
 typedef void(*KHC_SLIST_FREE_CB)(khc_slist* node, void* data);
 
 /**
+ * \brief Default implementation of KHC_SLIST_ALLOC_CB.
+ */
+khc_slist* khc_slist_alloc_cb(const char* str, size_t str_len, void* data);
+
+/**
+ * \brief Default implementation of KHC_SLIST_FREE_CB.
+ */
+void khc_slist_free_cb(khc_slist* slist, void* data);
+
+/**
  * \brief Add node to the linked list.
 
  * This method uses default memory allocator uses malloc() for constructing string copy and khc_slist.
