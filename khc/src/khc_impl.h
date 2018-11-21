@@ -15,7 +15,7 @@ int _extract_content_length(const char* header, size_t header_length, size_t* ou
 
 int _read_chunk_size(const char* buff, size_t buff_size, size_t* out_chunk_size);
 
-int _is_http_header_include(const char* header, const char* buff, size_t buff_size);
+int _is_header_present(const char* header, const char* buff, size_t buff_size);
 
 #ifdef __cplusplus
 }

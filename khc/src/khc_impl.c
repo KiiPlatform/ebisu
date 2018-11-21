@@ -112,7 +112,7 @@ int _read_chunk_size(const char* buff, size_t buff_size, size_t* out_chunk_size)
     return (crlf == 2) ? 1 : 0;
 }
 
-int _is_http_header_include(const char* header, const char* buff, size_t buff_size) {
+int _is_header_present(const char* header, const char* buff, size_t buff_size) {
     int header_length = strlen(header);
     for (int i = 0; i < buff_size; ++i) {
         if (buff[i] == ':') {
