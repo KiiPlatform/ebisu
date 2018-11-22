@@ -69,7 +69,7 @@ typedef struct khc_slist {
  * In this allocator, you need to allocate memory of khc_slist struct and it's data char array.
  * data char array must be NULL terminated so it requires str_length + 1 as length.
 
- * \param [in] str khs_slist content. String must be copied to khc_slist.data.
+ * \param [in] str khc_slist content. String must be copied to khc_slist.data.
  * \param [in] str_length length of the string (exclude NULL termination).
  * \param [inout] data optional context data pointer. The pointer is given by
  * khc_slist_append_using_alloc_cb(khc_slist*, const char*, size_t, void*) method and could be NULL.
