@@ -129,6 +129,22 @@ void tio_handler_set_json_parser_resource_cb(
     JKII_RESOURCE_ALLOC_CB alloc_cb,
     JKII_RESOURCE_FREE_CB free_cb);
 
+/**
+ * \brief Set custom memory allocator for the linked list used to constuct request headers of HTTP.
+
+ * If this method is not called, default memory allocator using malloc/ free is used.
+ * Notice: You need to call this method after
+ * tio_handler_set_app(tio_handler_t*, const char*, const char*) since the
+ * tio_handler_set_app() method has side effect resetting to default memory allocator.
+ */
+void tio_handler_set_slist_resource_cb(
+    tio_handler_t* handler,
+    KHC_SLIST_ALLOC_CB alloc_cb,
+    KHC_SLIST_FREE_CB free_cb,
+    void* alloc_cb_data,
+    void* free_cb_data
+);
+
 tio_code_t tio_handler_onboard(
     tio_handler_t* handler,
     const char* vendor_thing_id,
@@ -173,6 +189,22 @@ void tio_updater_set_json_parser_resource_cb(
     tio_updater_t* updater,
     JKII_RESOURCE_ALLOC_CB alloc_cb,
     JKII_RESOURCE_FREE_CB free_cb);
+
+/**
+ * \brief Set custom memory allocator for the linked list used to constuct request headers of HTTP.
+
+ * If this method is not called, default memory allocator using malloc/ free is used.
+ * Notice: You need to call this method after
+ * tio_updater_set_app(tio_updater_t*, const char*, const char*) since the
+ * tio_updater_set_app() method has side effect resetting to default memory allocator.
+ */
+void tio_updater_set_slist_resource_cb(
+    tio_updater_t* updater,
+    KHC_SLIST_ALLOC_CB alloc_cb,
+    KHC_SLIST_FREE_CB free_cb,
+    void* alloc_cb_data,
+    void* free_cb_data
+);
 
 tio_code_t tio_updater_onboard(
     tio_updater_t* updater,

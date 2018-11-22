@@ -5,32 +5,6 @@
 #include "khc_state_impl.h"
 #include "khc_socket_callback.h"
 
-khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length) {
-  khc_slist* next;
-  next = (khc_slist*)malloc(sizeof(khc_slist));
-  if (next == NULL) {
-    return NULL;
-  }
-  next->next = NULL;
-  void* temp = malloc(length+1);
-  if (temp == NULL) {
-    free(next);
-    return NULL;
-  }
-  next->data = (char*)temp;
-  strncpy(next->data, string, length);
-  next->data[length] = '\0';
-  if (slist == NULL) {
-    return next;
-  }
-  khc_slist* end = slist;
-  while (end->next != NULL) {
-    end = end->next;
-  }
-  end->next = next;
-  return slist;
-}
-
 khc_code khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size) {
   khc->_resp_header_buff = buffer;
   khc->_resp_header_buff_size = buff_size;
@@ -41,18 +15,6 @@ khc_code khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size) {
   khc->_stream_buff = buffer;
   khc->_stream_buff_size = buff_size;
   return KHC_ERR_OK;
-}
-
-void khc_slist_free_all(khc_slist* slist) {
-  khc_slist *curr;
-  curr = slist;
-  while (curr != NULL) {
-    khc_slist *next = curr->next;
-    free(curr->data);
-    curr->data = NULL;
-    free(curr);
-    curr = next;
-  }
 }
 
 khc_code khc_perform(khc* khc) {

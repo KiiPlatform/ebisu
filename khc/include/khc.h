@@ -60,25 +60,105 @@ typedef size_t (*KHC_CB_HEADER)(char *buffer, size_t size, size_t count, void *u
  */
 typedef struct khc_slist {
   char* data; /**< \brief Null terminated string */
-  struct khc_slist* next; /**< \brief Pointer to the next item. */
+  struct khc_slist* next; /**< \brief Pointer to the next node. */
 } khc_slist;
 
 /**
- * \brief Add item to the linked list.
- *
+ * \brief Custom khc_slist node allocator.
+
+ * In this allocator, you need to allocate memory of khc_slist struct and it's data char array.
+ * data char array must be NULL terminated so it requires str_length + 1 as length.
+
+ * \param [in] str khc_slist content. String must be copied to khc_slist.data.
+ * \param [in] str_length length of the string (exclude NULL termination).
+ * \param [inout] data optional context data pointer. The pointer is given by
+ * khc_slist_append_using_alloc_cb(khc_slist*, const char*, size_t, KHC_SLIST_ALLOC_CB, void*) method and could be NULL.
+ */
+typedef khc_slist*(*KHC_SLIST_ALLOC_CB)(const char* str, size_t str_length, void* data);
+
+/**
+ * \ brief free memory allocated by custom khc_slist node allocator.
+
+ * In this callback, implementation must free memory allocated by single khc_slist node.
+ * Method must be corresponding to alloc method implemented in KHC_SLIST_ALLOC_CB.
+
+ * \param [in] node of the slist.
+ * \param [in] data Context data pointer.
+ */
+typedef void(*KHC_SLIST_FREE_CB)(khc_slist* node, void* data);
+
+/**
+ * \brief Default implementation of KHC_SLIST_ALLOC_CB.
+ */
+khc_slist* khc_slist_alloc_cb(const char* str, size_t str_len, void* data);
+
+/**
+ * \brief Default implementation of KHC_SLIST_FREE_CB.
+ */
+void khc_slist_free_cb(khc_slist* slist, void* data);
+
+/**
+ * \brief Add node to the linked list.
+
+ * This method uses default memory allocator uses malloc() for constructing string copy and khc_slist.
+ * khc_slist must be appended by this method if the previous node is appended by this method.
+ * khc_slist_free_all(khc_slist*) must be called to free all memories used by the list.
+ * You can't use different allocate/ free method specified by
+ * khc_slist_append_using_alloc_cb(khc_slist*, const char*, size_t length, KHC_SLIST_ALLOC_CB, void*)
+ * in a single list.
  * \param [in, out] slist pointer to the linked list or NULL to create new linked list.
- * \param [in] string data to be appended.
+ * \param [in] string data to be appended. String is copied to new char array in slist.
  * \param [in] length of the string.
- * \returns pointer to the linked list (first item).
+ * \returns pointer to the linked list (first node).
  */
 khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length);
 
 /**
+ * \brief Add node to the linked list. Node is allocated by specified allocator.
+
+ * This method uses custom memory allocator for constructing string copy and khc_slist.
+ * khc_slist must be appended by this method and same allocator if the previous node is appended by this method.
+ * khc_slist_free_all_using_free_cb(khc_slist*, KHC_SLIST_FREE_CB, void*) and matching free callback
+ * must be used to free all memories used by the list.
+ * You can't use different allocate/ free method specified by
+ * khc_slist_append_using_alloc_cb(khc_slist*, const char*, size_t length, KHC_SLIST_ALLOC_CB, void*)
+ * in a single list.
+ * \param [in, out] slist pointer to the linked list or NULL to create new linked list.
+ * \param [in] string data to be appended. String is copied to new char array in slist.
+ * \param [in] length of the string.
+ * \param [in] alloc_cb allocator callback function.
+ * \param [in] alloc_cb_data context data pointer passed to alloc_cb.
+ * \returns pointer to the linked list (first node).
+ */
+khc_slist* khc_slist_append_using_alloc_cb(
+  khc_slist* slist,
+  const char* string,
+  size_t length,
+  KHC_SLIST_ALLOC_CB alloc_cb,
+  void* alloc_cb_data);
+
+/**
  * \brief Free memory used for the entire linked list.
- *
- * \param [in, out] slist pointer to the linked list (first item).
+
+ * Linked list constructed by khc_slist_append(khc_slist*, const char*, size_t) must be freed by this method.
+ * \param [in, out] slist pointer to the linked list (first node).
  */
 void khc_slist_free_all(khc_slist* slist);
+
+/**
+ * \brief Free memory used for the entire linked list constructed by custom allocator.
+ *
+ * Linked list constructed by khc_slist_append_using_alloc_cb(khc_slist*, const char*, size_t length, KHC_SLIST_ALLOC_CB, void*)
+ * must be freed by this method and matching free callback.
+
+ * \param [in, out] slist pointer to the linked list (first node).
+ * \param [in] free_cb free callback.
+ * \param [in] free_cb_data context object pointer passed to free_cb.
+ */
+void khc_slist_free_all_using_free_cb(
+  khc_slist* slist,
+  KHC_SLIST_FREE_CB free_cb,
+  void* free_cb_data);
 
 /**
  * \brief Indicate state of khc.
