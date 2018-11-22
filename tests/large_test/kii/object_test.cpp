@@ -118,10 +118,10 @@ TEST_CASE("Object Tests")
                     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
                 );
                 std::istringstream iss(body);
-                std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)>
-                    on_read = [=, &iss](char *buffer, size_t size, size_t count, void *userdata)
+                std::function<size_t(char *buffer, size_t size, void *userdata)>
+                    on_read = [=, &iss](char *buffer, size_t size, void *userdata)
                 {
-                    return iss.read(buffer, size * count).gcount();
+                    return iss.read(buffer, size).gcount();
                 };
                 kiiltest::RWFunc ctx;
                 ctx.on_read = on_read;
@@ -131,11 +131,11 @@ TEST_CASE("Object Tests")
 
                 // Download uploaded body
                 std::ostringstream oss;
-                std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)>
-                    on_write = [=, &oss](char *buffer, size_t size, size_t count, void *userdata)
+                std::function<size_t(char *buffer, size_t size, void *userdata)>
+                    on_write = [=, &oss](char *buffer, size_t size, void *userdata)
                 {
-                    oss.write(buffer, size * count);
-                    return size * count;
+                    oss.write(buffer, size);
+                    return size;
                 };
                 ctx.on_write = on_write;
                 kii_code_t download_res = kii_download_object_body(&kii, &bucket, obj_id.id, kiiltest::write_cb, &ctx);

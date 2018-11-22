@@ -53,28 +53,28 @@ TEST_CASE( "HTTP Post" ) {
 
   int on_read_called = 0;
   std::istringstream iss(req_body);
-  io_ctx.on_read = [=, &on_read_called, &iss](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_read = [=, &on_read_called, &iss](char *buffer, size_t size, void *userdata) {
     ++on_read_called;
-    return iss.read(buffer, size*count).gcount();
+    return iss.read(buffer, size).gcount();
   };
 
   int on_header_called = 0;
-  io_ctx.on_header = [=, &on_header_called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_header = [=, &on_header_called](char *buffer, size_t size, void *userdata) {
     ++on_header_called;
     // Ignore resp headers.
-    char str[size*count + 1];
-    strncpy(str, buffer, size*count);
-    str[size*count] = '\0';
+    char str[size + 1];
+    strncpy(str, buffer, size);
+    str[size] = '\0';
     printf("%s\n", str);
-    return size * count;
+    return size;
   };
 
   int on_write_called = 0;
   std::ostringstream oss;
-  io_ctx.on_write = [=, &on_write_called, &oss](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_write = [=, &on_write_called, &oss](char *buffer, size_t size, void *userdata) {
     ++on_write_called;
-    oss.write(buffer, size * count);
-    return size * count;
+    oss.write(buffer, size);
+    return size;
   };
 
   khc_code res = khc_perform(&http);

@@ -46,18 +46,18 @@ inline long long current_time() {
 
 class RWFunc {
 public:
-    std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)> on_read;
-    std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)> on_write;
+    std::function<size_t(char *buffer, size_t size, void *userdata)> on_read;
+    std::function<size_t(char *buffer, size_t size, void *userdata)> on_write;
 };
 
-inline size_t read_cb(char *buffer, size_t size, size_t count, void *userdata) {
+inline size_t read_cb(char *buffer, size_t size, void *userdata) {
     RWFunc* ctx = (RWFunc*)userdata;
-    return ctx->on_read(buffer, size, count, userdata);
+    return ctx->on_read(buffer, size, userdata);
 }
 
-inline size_t write_cb(char *buffer, size_t size, size_t count, void *userdata) {
+inline size_t write_cb(char *buffer, size_t size, void *userdata) {
     RWFunc* ctx = (RWFunc*)userdata;
-    return ctx->on_write(buffer, size, count, userdata);
+    return ctx->on_write(buffer, size, userdata);
 }
 
 } // namespace kiiltest
