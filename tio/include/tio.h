@@ -65,7 +65,7 @@ typedef struct tio_action_err_t {
 } tio_action_err_t;
 
 typedef size_t (*TIO_CB_SIZE)(void* userdata);
-typedef size_t (*TIO_CB_READ)(char *buffer, size_t size, size_t count, void *userdata);
+typedef size_t (*TIO_CB_READ)(char *buffer, size_t size, void *userdata);
 typedef tio_bool_t (*TIO_CB_ACTION)(tio_action_t* action, tio_action_err_t* err, void* userdata);
 typedef void (*TIO_CB_ERR)(tio_code_t code, const char* err_message, void* userdata);
 
