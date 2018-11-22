@@ -72,7 +72,7 @@ typedef struct khc_slist {
  * \param [in] str khc_slist content. String must be copied to khc_slist.data.
  * \param [in] str_length length of the string (exclude NULL termination).
  * \param [inout] data optional context data pointer. The pointer is given by
- * khc_slist_append_using_alloc_cb(khc_slist*, const char*, size_t, void*) method and could be NULL.
+ * khc_slist_append_using_alloc_cb(khc_slist*, const char*, size_t, KHC_SLIST_ALLOC_CB, void*) method and could be NULL.
  */
 typedef khc_slist*(*KHC_SLIST_ALLOC_CB)(const char* str, size_t str_length, void* data);
 
