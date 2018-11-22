@@ -17,7 +17,7 @@ extern "C"
  * \brief Callback writes data.
  *
  * \param [in] buffer data to be written.
- * Note that it is not null terminated string. Size must be determined by the product of size and count.
+ * Note that it is not null terminated string.
  * \param [in] size data size to be written.
  * \param [in, out] userdata context data passed to khc_set_cb_write(khc*, KHC_CB_WRITE, void*)
  * \returns Size of the bytes written.
@@ -40,12 +40,12 @@ typedef size_t (*KHC_CB_READ)(char *buffer, size_t size, void *userdata);
  * \brief Callback used to propagate response headers.
  *
  * \param [in] buffer response header data.
- * Note that the buffer is not null terminted and size must be determined by the product of size and count.
+ * Note that the buffer is not null terminted.
  * The buffer does not contains CRLF.
  * \param [in] size header data size.
  * \param [in, out] userdata context data passed to khc_set_cb_header(khc*, KHC_CB_HEADER, void*)
  * \returns Size of the bytes handled.
- * If it is not equal to Header size determined by size * count,
+ * If it is not equal to Header size determined by size,
  * khc aborts HTTP session and khc_perform(khc*) returns KHC_ERR_HEADER_CALLBACK.
  */
 typedef size_t (*KHC_CB_HEADER)(char *buffer, size_t size, void *userdata);
