@@ -12,9 +12,9 @@ struct SockCtx {
 };
 
 struct IOCtx {
-  std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)> on_read;
-  std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)> on_header;
-  std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)> on_write;
+  std::function<size_t(char *buffer, size_t size, void *userdata)> on_read;
+  std::function<size_t(char *buffer, size_t size, void *userdata)> on_header;
+  std::function<size_t(char *buffer, size_t size, void *userdata)> on_write;
 };
 
 inline khc_sock_code_t mock_connect(void* socket_context, const char* host, unsigned int port) {
@@ -37,19 +37,19 @@ inline khc_sock_code_t mock_close(void* socket_context) {
   return ctx->on_close(socket_context);
 }
 
-inline size_t cb_write(char *buffer, size_t size, size_t count, void *userdata) {
+inline size_t cb_write(char *buffer, size_t size, void *userdata) {
   IOCtx* ctx = (IOCtx*)(userdata);
-  return ctx->on_write(buffer, size, count, userdata);
+  return ctx->on_write(buffer, size, userdata);
 }
 
-inline size_t cb_read(char *buffer, size_t size, size_t count, void *userdata) {
+inline size_t cb_read(char *buffer, size_t size, void *userdata) {
   IOCtx* ctx = (IOCtx*)(userdata);
-  return ctx->on_read(buffer, size, count, userdata);
+  return ctx->on_read(buffer, size, userdata);
 }
 
-inline size_t cb_header(char *buffer, size_t size, size_t count, void *userdata) {
+inline size_t cb_header(char *buffer, size_t size, void *userdata) {
   IOCtx* ctx = (IOCtx*)(userdata);
-  return ctx->on_header(buffer, size, count, userdata);
+  return ctx->on_header(buffer, size, userdata);
 }
 }
 }

@@ -51,10 +51,9 @@ TEST_CASE( "HTTP response test" ) {
   };
 
   int on_read_called = 0;
-  io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, void *userdata) {
     ++on_read_called;
-    REQUIRE( size == 1);
-    REQUIRE( count == buff_size);
+    REQUIRE( size == buff_size );
     return 0;
   };
 
@@ -73,25 +72,24 @@ TEST_CASE( "HTTP response test" ) {
   };
 
   int on_header_called = 0;
-  io_ctx.on_header = [=, &on_header_called, &resp](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_header = [=, &on_header_called, &resp](char *buffer, size_t size, void *userdata) {
     const char* header = resp.headers[on_header_called].c_str();
     size_t len = strlen(header);
-    REQUIRE( size == 1);
-    REQUIRE( count == len );
+    REQUIRE( size == len );
     REQUIRE( strncmp(buffer, header, len) == 0 );
     ++on_header_called;
-    return size * count;
+    return size;
   };
 
   istringstream iss = istringstream(resp.body);
   int on_write_called = 0;
-  io_ctx.on_write = [=, &iss, &on_write_called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_write = [=, &iss, &on_write_called](char *buffer, size_t size, void *userdata) {
     ++on_write_called;
-    char body_buffer[size * count];
-    memset(body_buffer, '\0', size * count);
-    iss.read((char*)body_buffer, size * count);
-    REQUIRE ( strncmp(buffer, body_buffer, size * count) == 0 );
-    return size * count;
+    char body_buffer[size];
+    memset(body_buffer, '\0', size);
+    iss.read((char*)body_buffer, size);
+    REQUIRE ( strncmp(buffer, body_buffer, size) == 0 );
+    return size;
   };
 
   int on_close_called = 0;
@@ -157,10 +155,9 @@ TEST_CASE( "Ignore HTTP status 100" ) {
   };
 
   int on_read_called = 0;
-  io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, void *userdata) {
     ++on_read_called;
-    REQUIRE( size == 1);
-    REQUIRE( count == buff_size);
+    REQUIRE( size == buff_size );
     return 0;
   };
 
@@ -174,25 +171,24 @@ TEST_CASE( "Ignore HTTP status 100" ) {
   };
 
   int on_header_called = 0;
-  io_ctx.on_header = [=, &on_header_called, &resp](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_header = [=, &on_header_called, &resp](char *buffer, size_t size, void *userdata) {
     const char* header = resp.headers[on_header_called].c_str();
     size_t len = strlen(header);
-    REQUIRE( size == 1);
-    REQUIRE( count == len );
+    REQUIRE( size == len );
     REQUIRE( strncmp(buffer, header, len) == 0 );
     ++on_header_called;
-    return size * count;
+    return size;
   };
 
   istringstream iss = istringstream(resp.body);
   int on_write_called = 0;
-  io_ctx.on_write = [=, &iss, &on_write_called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_write = [=, &iss, &on_write_called](char *buffer, size_t size, void *userdata) {
     ++on_write_called;
-    char body_buffer[size * count];
-    memset(body_buffer, '\0', size * count);
-    iss.read((char*)body_buffer, size * count);
-    REQUIRE ( strncmp(buffer, body_buffer, size * count) == 0 );
-    return size * count;
+    char body_buffer[size];
+    memset(body_buffer, '\0', size);
+    iss.read((char*)body_buffer, size);
+    REQUIRE ( strncmp(buffer, body_buffer, size) == 0 );
+    return size;
   };
 
   int on_close_called = 0;
@@ -261,10 +257,9 @@ TEST_CASE( "Small resp header skip test" ) {
   };
 
   int on_read_called = 0;
-  io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, void *userdata) {
     ++on_read_called;
-    REQUIRE( size == 1);
-    REQUIRE( count == buff_size);
+    REQUIRE( size == buff_size );
     return 0;
   };
 
@@ -279,29 +274,28 @@ TEST_CASE( "Small resp header skip test" ) {
   };
 
   int on_header_called = 0;
-  io_ctx.on_header = [=, &on_header_called, &resp](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_header = [=, &on_header_called, &resp](char *buffer, size_t size, void *userdata) {
     int skip = 0;
     if (on_header_called > 2) {
       skip = 1;
     }
     const char* header = resp.headers[on_header_called + skip].c_str();
     size_t len = strlen(header);
-    REQUIRE( size == 1);
-    REQUIRE( count == len );
+    REQUIRE( size == len );
     REQUIRE( strncmp(buffer, header, len) == 0 );
     ++on_header_called;
-    return size * count;
+    return size;
   };
 
   istringstream iss = istringstream(resp.body);
   int on_write_called = 0;
-  io_ctx.on_write = [=, &iss, &on_write_called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_write = [=, &iss, &on_write_called](char *buffer, size_t size, void *userdata) {
     ++on_write_called;
-    char body_buffer[size * count];
-    memset(body_buffer, '\0', size * count);
-    iss.read((char*)body_buffer, size * count);
-    REQUIRE ( strncmp(buffer, body_buffer, size * count) == 0 );
-    return size * count;
+    char body_buffer[size];
+    memset(body_buffer, '\0', size);
+    iss.read((char*)body_buffer, size);
+    REQUIRE ( strncmp(buffer, body_buffer, size) == 0 );
+    return size;
   };
 
   int on_close_called = 0;
