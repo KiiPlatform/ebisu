@@ -7,14 +7,14 @@
 const char _APP_KEY_HEADER[] = "X-Kii-Appkey: k";
 const char _CONTENT_LENGTH_ZERO[] = "Content-Length: 0";
 
-size_t _cb_write_buff(char *buffer, size_t size, size_t count, void *userdata)
+size_t _cb_write_buff(char *buffer, size_t size, void *userdata)
 {
     kii_t *kii = (kii_t *)userdata;
     if (kii->_rw_buff_written == 0) {
         memset(kii->_rw_buff, '\0', kii->_rw_buff_size);
     }
     size_t remain = kii->_rw_buff_size - kii->_rw_buff_written;
-    size_t req_size = size * count;
+    size_t req_size = size;
     if (remain < req_size)
     {
         // Insufficient buffer size.
@@ -25,7 +25,7 @@ size_t _cb_write_buff(char *buffer, size_t size, size_t count, void *userdata)
     return req_size;
 }
 
-size_t _cb_read_buff(char *buffer, size_t size, size_t count, void *userdata)
+size_t _cb_read_buff(char *buffer, size_t size, void *userdata)
 {
     kii_t *kii = (kii_t *)userdata;
     size_t remain = kii->_rw_buff_req_size - kii->_rw_buff_read;
@@ -33,18 +33,18 @@ size_t _cb_read_buff(char *buffer, size_t size, size_t count, void *userdata)
     {
         return 0;
     }
-    size_t to_read = (size * count > remain) ? (remain) : (size * count);
+    size_t to_read = (size > remain) ? (remain) : (size);
     memcpy(buffer, kii->_rw_buff + kii->_rw_buff_read, to_read);
     kii->_rw_buff_read += to_read;
     return to_read;
 }
 
-size_t _cb_write_header(char *buffer, size_t size, size_t count, void *userdata)
+size_t _cb_write_header(char *buffer, size_t size, void *userdata)
 {
     // TODO: implement it later for getting Etag, etc.
     char* etag_buff = ((kii_t*)userdata)->_etag;
-    _parse_etag(buffer, size * count, etag_buff, 64);
-    return size * count;
+    _parse_etag(buffer, size, etag_buff, 64);
+    return size;
 }
 
 int kii_init(

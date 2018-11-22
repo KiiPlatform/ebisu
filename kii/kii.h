@@ -22,8 +22,8 @@ extern "C" {
 
 #define KII_TASK_NAME_MQTT "kii_mqtt_task"
 
-typedef size_t (*KII_CB_WRITE)(char *ptr, size_t size, size_t count, void *userdata);
-typedef size_t (*KII_CB_READ)(char *buffer, size_t size, size_t count, void *userdata);
+typedef size_t (*KII_CB_WRITE)(char *ptr, size_t size, void *userdata);
+typedef size_t (*KII_CB_READ)(char *buffer, size_t size, void *userdata);
 
 typedef enum kii_code_t
 {
