@@ -82,7 +82,7 @@ typedef khc_slist*(*KHC_SLIST_ALLOC_CB)(const char* str, size_t str_length, void
  * In this callback, implementation must free memory allocated by single khc_slist node.
  * Method must be corresponding to alloc method implemented in KHC_SLIST_ALLOC_CB.
 
- * \param [inout] node first node of the slist.
+ * \param [in] node of the slist.
  * \param [in] data Context data pointer.
  */
 typedef void(*KHC_SLIST_FREE_CB)(khc_slist* node, void* data);
@@ -118,7 +118,7 @@ khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length)
 
  * This method uses custom memory allocator for constructing string copy and khc_slist.
  * khc_slist must be appended by this method and same allocator if the previous node is appended by this method.
- * khc_slist_free_all_using_free_cb(khc_slist*, KHC_SLIST_FREE_CB, void*) and maching free callback 
+ * khc_slist_free_all_using_free_cb(khc_slist*, KHC_SLIST_FREE_CB, void*) and matching free callback
  * must be used to free all memories used by the list.
  * You can't use different allocate/ free method specified by
  * khc_slist_append_using_alloc_cb(khc_slist*, const char*, size_t length, KHC_SLIST_ALLOC_CB, void*)
