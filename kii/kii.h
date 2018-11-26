@@ -532,7 +532,7 @@ kii_code_t kii_api_call_run(kii_t* kii);
 
  * You can change the size of buffer depending on the request/ response size.
  * It must be enough large to store whole request/ response except for method listed above.
- * Typically, 4K is enough. However it varies depending on your data schema used to define
+ * Typically, 4096 bytes is enough. However it varies depending on your data schema used to define
  * object or thing. If object becomes large, consider putting them in object body.
 
  * \param [out] kii instance.
@@ -596,6 +596,24 @@ int kii_set_http_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
 int kii_set_http_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
 int kii_set_http_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
 
+/**
+ * \brief Set buffer used to parse MQTT message.
+
+ * This method must be called and set valid buffer before calling method
+ * kii_start_push_routine()
+ * The buffer is used to parse MQTT message.
+
+ * You can change the size of buffer depending on the request/ response size.
+ * It must be enough large to store whole message send by MQTT.
+ * Typically, 1024 bytes is enough.
+ * However it varies depending on your data schema used to define Commands.
+ * Avoid defining large Commands.
+
+ * \param [out] kii instance.
+ * \param [in] buffer pointer to the buffer.
+ * \param [in] buff_size size of the buffer.
+ * \return 0 OK. (FIXME: change to void return.)
+ */
 int kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size);
 
 int kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
