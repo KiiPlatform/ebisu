@@ -512,9 +512,83 @@ kii_api_call_append_header(
  */
 kii_code_t kii_api_call_run(kii_t* kii);
 
+/**
+ * \brief Set buffer used to construct/ parse HTTP request/ response.
+
+ * This method must be called and set valid buffer before calling method initiate HTTP session
+ * such as kii_auth_thing(), kii_post_object(), etc.
+ * The buffer is used to serialize/ deserialize JSON.
+
+ * When handling request body which could be large in following APIs,
+ * - kii_upload_object_body(),
+ * - kii_ti_put_state()
+ * The buffer is not used. Stream based KII_CB_READ is used instead.
+ * You don't have to take account the buffer size used by those request.
+
+ * Similary when handling response body which could be large in following APIs,
+ * kii_download_object_body()
+ * The buffer is not used. Stream based KII_CB_WRITE is used instead.
+ * You don't have to take account the buffer size used by those response.
+
+ * You can change the size of buffer depending on the request/ response size.
+ * It must be enough large to store whole request/ response except for method listed above.
+ * Typically, 4K is enough. However it varies depending on your data schema used to define
+ * object or thing. If object becomes large, consider putting them in object body.
+
+ * \param [out] kii instance.
+ * \param [in] buffer pointer to the buffer.
+ * \param [in] buff_size size of the buffer.
+ * \return 0 OK. (FIXME: change to void return.)
+ */
 int kii_set_buff(kii_t* kii, char* buff, size_t buff_size);
 
+/**
+ * \brief Set stream buffer.
+ * Stream buffer is used store part of HTTP body when
+ * reading/ writing it from the network.
+
+ * If this method is not called or set NULL to the buffer,
+ * kii allocates memory of stream buffer when the HTTP session started
+ * and free when the HTTP session ends.
+ * The buffer allocated by kii is 1024 bytes.
+
+ * You can change the size of buffer depending on your request/ response size.
+ * It must be enough large to store size line in chunked encoded message.
+ * However, you may use much larger buffer since size line might require very small buffer
+ * as it consists of HEX size and CRLF for the better performance.
+
+ * If you set the buffer by the method, the method must be called before calling method initiate HTTP session
+ * such as kii_auth_thing(), kii_post_object(), etc.
+ * and memory used by the buffer can be safely freed after the method returned.
+
+ * \param [out] kii instance.
+ * \param [in] buffer pointer to the buffer.
+ * \param [in] buff_size size of the buffer.
+ * \return 0 OK. (FIXME: change to void return.)
+ */
 int kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size);
+
+/**
+ * \brief Set response header buffer.
+
+ * The buffer is used to store single HTTP response header.
+ * If this method is not called or set NULL to the buffer,
+ * khc allocates memory of response header buffer when the HTTP session started
+ * and free when the HTTP session ends.
+ * The buffer allocated by kii is 256 bytes.
+
+ * If header is larger than the buffer, the header is skipped and not parsed.
+ * kii needs to parse Status Line, Content-Length, Transfer-Encoding and ETag header.
+ * The buffer must have enough size to store those headers. 256 bytes would be enough.
+ * If you set the buffer by the method, the method must be called before calling method initiate HTTP session
+ * such as kii_auth_thing(), kii_post_object(), etc.
+ * and memory used by the buffer can be safely freed after the method returned.
+
+ * \param [out] kii instance.
+ * \param [in] buffer pointer to the buffer.
+ * \param [in] buff_size size of the buffer.
+ * \return 0 OK. (FIXME: change to void return.)
+ */
 int kii_set_resp_header_buff(kii_t* kii, char* buff, size_t buff_size);
 
 int kii_set_http_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
