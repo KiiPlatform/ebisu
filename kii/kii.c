@@ -137,6 +137,7 @@ int kii_set_http_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata)
 int kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size) {
     kii->mqtt_buffer = buff;
     kii->mqtt_buffer_size = buff_size;
+    return 0;
 }
 
 int kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata) {
