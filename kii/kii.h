@@ -514,10 +514,15 @@ kii_code_t kii_api_call_run(kii_t* kii);
 
 int kii_set_buff(kii_t* kii, char* buff, size_t buff_size);
 
+int kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size);
+int kii_set_resp_header_buff(kii_t* kii, char* buff, size_t buff_size);
+
 int kii_set_http_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
 int kii_set_http_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
 int kii_set_http_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
 int kii_set_http_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+
+int kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size);
 
 int kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
 int kii_set_mqtt_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);

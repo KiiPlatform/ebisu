@@ -104,6 +104,16 @@ int kii_set_buff(kii_t* kii, char* buff, size_t buff_size) {
     return 0;
 }
 
+int kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size) {
+    khc_set_stream_buff(&kii->_khc, buff, buff_size);
+    return 0;
+}
+
+int kii_set_resp_header_buff(kii_t* kii, char* buff, size_t buff_size) {
+    khc_set_resp_header_buff(&kii->_khc, buff, buff_size);
+    return 0;
+}
+
 int kii_set_http_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata) {
     khc_set_cb_sock_connect(&kii->_khc, cb, userdata);
     return 0;
@@ -122,6 +132,11 @@ int kii_set_http_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata) {
 int kii_set_http_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata) {
     khc_set_cb_sock_close(&kii->_khc, cb, userdata);
     return 0;
+}
+
+int kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size) {
+    kii->mqtt_buffer = buff;
+    kii->mqtt_buffer_size = buff_size;
 }
 
 int kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata) {
