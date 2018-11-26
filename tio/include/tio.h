@@ -101,9 +101,68 @@ void tio_handler_set_cb_sock_send_http(tio_handler_t* handler, KHC_CB_SOCK_SEND 
 void tio_handler_set_cb_sock_recv_http(tio_handler_t* handler, KHC_CB_SOCK_RECV cb_recv, void* userdata);
 void tio_handler_set_cb_sock_close_http(tio_handler_t* handler, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
 
+/**
+ * \brief Set buffer used to construct/ parse HTTP request/ response.
+
+ * This method must be called and set valid buffer before calling method before calling 
+ * tio_handler_start().
+ * The buffer is used to serialize/ deserialize JSON.
+
+ * You can change the size of buffer depending on the request/ response size.
+ * Typically, 1024 bytes is enough. However it varies depending on your data schema used to define
+ * thing properties/ command. Avoid defining large thing properties/ command if you need to reduce memory usage.
+
+ * Memory used by the buffer can be safely freed after you've terminated tio_handler task.
+
+ * \param [out] handler instance.
+ * \param [in] buffer pointer to the buffer.
+ * \param [in] buff_size size of the buffer.
+ */
 void tio_handler_set_http_buff(tio_handler_t* handler, char* buff, size_t buff_size);
 
+/**
+ * \brief Set stream buffer.
+ * Stream buffer is used store part of HTTP body when
+ * reading/ writing it from the network.
+
+ * If this method is not called or set NULL to the buffer,
+ * tio_handler allocates memory of stream buffer when the HTTP session started
+ * and free when the HTTP session ends.
+ * The buffer allocated by tio_handler is 1024 bytes.
+
+ * You can change the size of buffer depending on your request/ response size.
+ * It must be enough large to store size line in chunked encoded message.
+ * However, you may use much larger buffer since size line might require very small buffer
+ * as it consists of HEX size and CRLF for the better performance.
+
+ * If you set the buffer by the method, the method must be called before tio_handler_start().
+ * and memory used by the buffer can be safely freed after you've terminated tio_handler task.
+
+ * \param [out] handler instance.
+ * \param [in] buffer pointer to the buffer.
+ * \param [in] buff_size size of the buffer.
+ */
 void tio_handler_set_stream_buff(tio_handler_t* handler, char* buff, size_t buff_size);
+
+/**
+ * \brief Set response header buffer.
+
+ * The buffer is used to store single HTTP response header.
+ * If this method is not called or set NULL to the buffer,
+ * tio_handler allocates memory of response header buffer when the HTTP session started
+ * and free when the HTTP session ends.
+ * The buffer allocated by tio_handler is 256 bytes.
+
+ * If header is larger than the buffer, the header is skipped and not parsed.
+ * tio_handler needs to parse Status Line, Content-Length, Transfer-Encoding and ETag header.
+ * The buffer must have enough size to store those headers. 256 bytes would be enough.
+ * If you set the buffer by the method, the method must be called before calling tio_handler_start()
+ * and memory used by the buffer can be safely freed after you've terminated tio_handler task.
+
+ * \param [out] handler instance.
+ * \param [in] buffer pointer to the buffer.
+ * \param [in] buff_size size of the buffer.
+ */
 void tio_handler_set_resp_header_buff(tio_handler_t* handler, char* buff, size_t buff_size);
 
 void tio_handler_set_cb_sock_connect_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
@@ -119,6 +178,25 @@ void tio_handler_set_cb_delay_ms(tio_handler_t* handler, KII_DELAY_MS cb_delay_m
 
 void tio_handler_set_cb_err(tio_handler_t* handler, TIO_CB_ERR cb_err, void* userdata);
 
+/**
+ * \brief Set buffer used to parse MQTT message.
+
+ * This method must be called and set valid buffer before calling method
+ * tio_handler_start()
+ * The buffer is used to parse MQTT message.
+
+ * You can change the size of buffer depending on the request/ response size.
+ * It must be enough large to store whole message send by MQTT.
+ * Typically, 1024 bytes is enough.
+ * However it varies depending on your data schema used to define Commands.
+ * Avoid defining large Commands.
+
+ * Memory used by the buffer can be safely freed after you've terminated tio_handler task.
+
+ * \param [out] handler instance.
+ * \param [in] buffer pointer to the buffer.
+ * \param [in] buff_size size of the buffer.
+ */
 void tio_handler_set_mqtt_buff(tio_handler_t* handler, char* buff, size_t buff_size);
 
 void tio_handler_set_keep_alive_interval(tio_handler_t* handler, size_t keep_alive_interval);
