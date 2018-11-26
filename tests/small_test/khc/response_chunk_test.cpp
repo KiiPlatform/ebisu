@@ -53,10 +53,9 @@ TEST_CASE( "HTTP chunked response test" ) {
   };
 
   int on_read_called = 0;
-  io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, void *userdata) {
     ++on_read_called;
-    REQUIRE( size == 1);
-    REQUIRE( count == buff_size);
+    REQUIRE( size == buff_size );
     return 0;
   };
 
@@ -73,22 +72,21 @@ TEST_CASE( "HTTP chunked response test" ) {
   };
 
   int on_header_called = 0;
-  io_ctx.on_header = [=, &on_header_called, &resp](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_header = [=, &on_header_called, &resp](char *buffer, size_t size, void *userdata) {
     const char* header = resp.headers[on_header_called].c_str();
     size_t len = strlen(header);
-    REQUIRE( size == 1);
-    REQUIRE( count == len );
+    REQUIRE( size == len );
     REQUIRE( strncmp(buffer, header, len) == 0 );
     ++on_header_called;
-    return size * count;
+    return size;
   };
 
   ostringstream oss;
   int on_write_called = 0;
-  io_ctx.on_write = [=, &oss, &on_write_called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_write = [=, &oss, &on_write_called](char *buffer, size_t size, void *userdata) {
     ++on_write_called;
-    oss.write(buffer, size * count);
-    return size * count;
+    oss.write(buffer, size);
+    return size;
   };
 
   int on_close_called = 0;
@@ -165,10 +163,9 @@ TEST_CASE( "small buffer size test" ) {
   };
 
   int on_read_called = 0;
-  io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, void *userdata) {
     ++on_read_called;
-    REQUIRE( size == 1);
-    REQUIRE( count == buff_size);
+    REQUIRE( size == buff_size );
     return 0;
   };
 
@@ -181,22 +178,21 @@ TEST_CASE( "small buffer size test" ) {
   };
 
   int on_header_called = 0;
-  io_ctx.on_header = [=, &on_header_called, &resp](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_header = [=, &on_header_called, &resp](char *buffer, size_t size, void *userdata) {
     const char* header = resp.headers[on_header_called].c_str();
     size_t len = strlen(header);
-    REQUIRE( size == 1);
-    REQUIRE( count == len );
+    REQUIRE( size == len );
     REQUIRE( strncmp(buffer, header, len) == 0 );
     ++on_header_called;
-    return size * count;
+    return size;
   };
 
   ostringstream oss;
   int on_write_called = 0;
-  io_ctx.on_write = [=, &oss, &on_write_called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_write = [=, &oss, &on_write_called](char *buffer, size_t size, void *userdata) {
     ++on_write_called;
-    oss.write(buffer, size * count);
-    return size * count;
+    oss.write(buffer, size);
+    return size;
   };
 
   int on_close_called = 0;
@@ -277,10 +273,9 @@ TEST_CASE( "random buffer size test" ) {
   };
 
   int on_read_called = 0;
-  io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, void *userdata) {
     ++on_read_called;
-    REQUIRE( size == 1);
-    REQUIRE( count == buff_size);
+    REQUIRE( size == buff_size );
     return 0;
   };
 
@@ -293,22 +288,21 @@ TEST_CASE( "random buffer size test" ) {
   };
 
   int on_header_called = 0;
-  io_ctx.on_header = [=, &on_header_called, &resp](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_header = [=, &on_header_called, &resp](char *buffer, size_t size, void *userdata) {
     const char* header = resp.headers[on_header_called].c_str();
     size_t len = strlen(header);
-    REQUIRE( size == 1);
-    REQUIRE( count == len );
+    REQUIRE( size == len );
     REQUIRE( strncmp(buffer, header, len) == 0 );
     ++on_header_called;
-    return size * count;
+    return size;
   };
 
   ostringstream oss;
   int on_write_called = 0;
-  io_ctx.on_write = [=, &oss, &on_write_called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_write = [=, &oss, &on_write_called](char *buffer, size_t size, void *userdata) {
     ++on_write_called;
-    oss.write(buffer, size * count);
-    return size * count;
+    oss.write(buffer, size);
+    return size;
   };
 
   int on_close_called = 0;
@@ -391,10 +385,9 @@ TEST_CASE( "random chunk body test" ) {
   };
 
   int on_read_called = 0;
-  io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, void *userdata) {
     ++on_read_called;
-    REQUIRE( size == 1);
-    REQUIRE( count == DEFAULT_STREAM_BUFF_SIZE);
+    REQUIRE( size == DEFAULT_STREAM_BUFF_SIZE);
     return 0;
   };
 
@@ -407,22 +400,21 @@ TEST_CASE( "random chunk body test" ) {
   };
 
   int on_header_called = 0;
-  io_ctx.on_header = [=, &on_header_called, &resp](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_header = [=, &on_header_called, &resp](char *buffer, size_t size, void *userdata) {
     const char* header = resp.headers[on_header_called].c_str();
     size_t len = strlen(header);
-    REQUIRE( size == 1);
-    REQUIRE( count == len );
+    REQUIRE( size == len );
     REQUIRE( strncmp(buffer, header, len) == 0 );
     ++on_header_called;
-    return size * count;
+    return size;
   };
 
   ostringstream oss;
   int on_write_called = 0;
-  io_ctx.on_write = [=, &oss, &on_write_called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_write = [=, &oss, &on_write_called](char *buffer, size_t size, void *userdata) {
     ++on_write_called;
-    oss.write(buffer, size * count);
-    return size * count;
+    oss.write(buffer, size);
+    return size;
   };
 
   int on_close_called = 0;

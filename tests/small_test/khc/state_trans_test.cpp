@@ -99,10 +99,9 @@ TEST_CASE( "HTTP minimal" ) {
   REQUIRE( called );
 
   called = false;
-  io_ctx.on_read = [=, &called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_read = [=, &called](char *buffer, size_t size, void *userdata) {
     called = true;
-    REQUIRE( size == 1);
-    REQUIRE( count == buff_size);
+    REQUIRE( size == buff_size );
     const char body[] = "http body";
     strncpy(buffer, body, strlen(body));
     return strlen(body);
@@ -156,10 +155,9 @@ TEST_CASE( "HTTP minimal" ) {
   REQUIRE( called );
 
   called = false;
-  io_ctx.on_read = [=, &called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_read = [=, &called](char *buffer, size_t size, void *userdata) {
     called = true;
-    REQUIRE( size == 1);
-    REQUIRE( count == buff_size);
+    REQUIRE( size == buff_size );
     return 0;
   };
   khc_state_req_body_read(&http);
@@ -219,14 +217,13 @@ TEST_CASE( "HTTP minimal" ) {
   REQUIRE( http._state == KHC_STATE_RESP_HEADER_CALLBACK );
 
   called = false;
-  io_ctx.on_header = [=, &called, &resp](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_header = [=, &called, &resp](char *buffer, size_t size, void *userdata) {
     called = true;
     const char* status_line = resp.headers[0].c_str();
     size_t len = strlen(status_line);
-    REQUIRE( size == 1);
-    REQUIRE( count == len );
+    REQUIRE( size == len );
     REQUIRE( strncmp(buffer, status_line, len) == 0 );
-    return size * count;
+    return size;
   };
 
   khc_state_resp_header_callback(&http);
@@ -365,10 +362,9 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   REQUIRE( called );
 
   called = false;
-  io_ctx.on_read = [=, &called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_read = [=, &called](char *buffer, size_t size, void *userdata) {
     called = true;
-    REQUIRE( size == 1);
-    REQUIRE( count == buff_size);
+    REQUIRE( size == buff_size );
     const char body[] = "http body";
     strncpy(buffer, body, strlen(body));
     return strlen(body);
@@ -422,10 +418,9 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   REQUIRE( called );
 
   called = false;
-  io_ctx.on_read = [=, &called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_read = [=, &called](char *buffer, size_t size, void *userdata) {
     called = true;
-    REQUIRE( size == 1);
-    REQUIRE( count == buff_size);
+    REQUIRE( size == buff_size );
     return 0;
   };
   khc_state_req_body_read(&http);
@@ -485,14 +480,13 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   REQUIRE( http._state == KHC_STATE_RESP_HEADER_CALLBACK );
 
   called = false;
-  io_ctx.on_header = [=, &called, &resp](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_header = [=, &called, &resp](char *buffer, size_t size, void *userdata) {
     called = true;
     const char* status_line = resp.headers[0].c_str();
     size_t len = strlen(status_line);
-    REQUIRE( size == 1);
-    REQUIRE( count == len );
+    REQUIRE( size == len );
     REQUIRE( strncmp(buffer, status_line, len) == 0 );
-    return size * count;
+    return size;
   };
 
   khc_state_resp_header_callback(&http);
@@ -503,14 +497,13 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   REQUIRE( called );
 
   called = false;
-  io_ctx.on_header = [=, &called, &resp](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_header = [=, &called, &resp](char *buffer, size_t size, void *userdata) {
     called = true;
     const char* host_line = resp.headers[1].c_str();
     size_t len = strlen(host_line);
-    REQUIRE( size == 1);
-    REQUIRE( count == len );
+    REQUIRE( size == len );
     REQUIRE( strncmp(buffer, host_line, len) == 0 );
-    return size * count;
+    return size;
   };
 
   khc_state_resp_header_callback(&http);
@@ -521,14 +514,13 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   REQUIRE( called );
 
   called = false;
-  io_ctx.on_header = [=, &called, &resp](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_header = [=, &called, &resp](char *buffer, size_t size, void *userdata) {
     called = true;
     const char* chunked_line = resp.headers[2].c_str();
     size_t len = strlen(chunked_line);
-    REQUIRE( size == 1);
-    REQUIRE( count == len );
+    REQUIRE( size == len );
     REQUIRE( strncmp(buffer, chunked_line, len) == 0 );
-    return size * count;
+    return size;
   };
 
   khc_state_resp_header_callback(&http);
@@ -814,10 +806,9 @@ TEST_CASE( "Socket send partial" ) {
   REQUIRE( called );
 
   called = false;
-  io_ctx.on_read = [=, &called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_read = [=, &called](char *buffer, size_t size, void *userdata) {
     called = true;
-    REQUIRE( size == 1);
-    REQUIRE( count == buff_size);
+    REQUIRE( size == buff_size );
     const char body[] = "http body";
     strncpy(buffer, body, strlen(body));
     return strlen(body);
@@ -871,10 +862,9 @@ TEST_CASE( "Socket send partial" ) {
   REQUIRE( called );
 
   called = false;
-  io_ctx.on_read = [=, &called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_read = [=, &called](char *buffer, size_t size, void *userdata) {
     called = true;
-    REQUIRE( size == 1);
-    REQUIRE( count == buff_size);
+    REQUIRE( size == buff_size );
     return 0;
   };
   khc_state_req_body_read(&http);
@@ -934,14 +924,13 @@ TEST_CASE( "Socket send partial" ) {
   REQUIRE( http._state == KHC_STATE_RESP_HEADER_CALLBACK );
 
   called = false;
-  io_ctx.on_header = [=, &called, &resp](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_header = [=, &called, &resp](char *buffer, size_t size, void *userdata) {
     called = true;
     const char* status_line = resp.headers[0].c_str();
     size_t len = strlen(status_line);
-    REQUIRE( size == 1);
-    REQUIRE( count == len );
+    REQUIRE( size == len );
     REQUIRE( strncmp(buffer, status_line, len) == 0 );
-    return size * count;
+    return size;
   };
 
   khc_state_resp_header_callback(&http);

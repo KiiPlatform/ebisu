@@ -428,13 +428,12 @@ Callback is repeatedly called until it returns 0.
 typedef size_t (*TIO_CB_READ)(
     char *buffer,
     size_t size,
-    size_t count,
     void *userdata);
 ```
 
 - `buffer` : Callback implementation writes the state data to this buffer.
 
-- `size`/ `count` : Requested size (size * count) to be written to the buffer. If the returned value does not muches the requested size, `tio_updater` aborts the update process this time but the loop continues to run.
+- `size` : Requested size to be written to the buffer. If the returned value does not muches the requested size, `tio_updater` aborts the update process this time but the loop continues to run.
 
 - `userdata` : Context object pointer passed to `tio_updater_start()` function.
 

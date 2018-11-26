@@ -71,7 +71,7 @@ size_t updater_cb_state_size(void* userdata)
     return 0;
 }
 
-size_t updater_cb_read(char *buffer, size_t size, size_t count, void *userdata)
+size_t updater_cb_read(char *buffer, size_t size, void *userdata)
 {
     updater_file_context_t* ctx = (updater_file_context_t*)userdata;
     FILE* fp;
@@ -88,7 +88,7 @@ size_t updater_cb_read(char *buffer, size_t size, size_t count, void *userdata)
         return 0;
     }
 
-    size_t read_size = fread(buffer, 1, size * count, fp);
+    size_t read_size = fread(buffer, 1, size, fp);
     if (read_size > 0) {
         ctx->file_read += read_size;
     }

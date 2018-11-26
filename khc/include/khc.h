@@ -17,41 +17,38 @@ extern "C"
  * \brief Callback writes data.
  *
  * \param [in] buffer data to be written.
- * Note that it is not null terminated string. Size must be determined by the product of size and count.
- * \param [in] size block size.
- * \param [in] count number of blocks. buffer size is determined by size * count.
+ * Note that it is not null terminated string.
+ * \param [in] size data size to be written.
  * \param [in, out] userdata context data passed to khc_set_cb_write(khc*, KHC_CB_WRITE, void*)
  * \returns Size of the bytes written.
  * If the returned value is not equal to requested size,
  * khc aborts HTTP session and khc_perform(khc*) returns KHC_ERR_WRITE_CALLBACK.
  */
-typedef size_t (*KHC_CB_WRITE)(char *buffer, size_t size, size_t count, void *userdata);
+typedef size_t (*KHC_CB_WRITE)(char *buffer, size_t size, void *userdata);
 /**
  * \brief Callback reads data.
  *
  * \param [out] buffer callback must writes data to this buffer.
- * \param [in] size block size.
- * \param [in] count number of blocks. Requested read size is determined by size * count.
+ * \param [in] size requested read size.
  * \param [in, out] userdata context data passed to khc_set_cb_read(khc*, KHC_CB_READ, void*)
  * \returns Size of the bytes read.
  * Returning 0 indicates that the whole data is read.
  * khc repeatedly call this callback untill it returns 0.
  */
-typedef size_t (*KHC_CB_READ)(char *buffer, size_t size, size_t count, void *userdata);
+typedef size_t (*KHC_CB_READ)(char *buffer, size_t size, void *userdata);
 /**
  * \brief Callback used to propagate response headers.
  *
  * \param [in] buffer response header data.
- * Note that the buffer is not null terminted and size must be determined by the product of size and count.
+ * Note that the buffer is not null terminted.
  * The buffer does not contains CRLF.
- * \param [in] size block size.
- * \param [in] count number of blocks. Header size is determined by size * count.
+ * \param [in] size header data size.
  * \param [in, out] userdata context data passed to khc_set_cb_header(khc*, KHC_CB_HEADER, void*)
  * \returns Size of the bytes handled.
- * If it is not equal to Header size determined by size * count,
+ * If it is not equal to Header size determined by size,
  * khc aborts HTTP session and khc_perform(khc*) returns KHC_ERR_HEADER_CALLBACK.
  */
-typedef size_t (*KHC_CB_HEADER)(char *buffer, size_t size, size_t count, void *userdata);
+typedef size_t (*KHC_CB_HEADER)(char *buffer, size_t size, void *userdata);
 
 /**
  * \brief Linked list.

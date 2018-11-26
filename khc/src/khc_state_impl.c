@@ -353,7 +353,7 @@ void khc_state_req_header_end(khc* khc) {
 }
 
 void khc_state_req_body_read(khc* khc) {
-  khc->_read_size = khc->_cb_read(khc->_stream_buff, 1, khc->_stream_buff_size, khc->_read_data);
+  khc->_read_size = khc->_cb_read(khc->_stream_buff, khc->_stream_buff_size, khc->_read_data);
   if (khc->_read_size == 0) {
     khc->_read_req_end = 1;
   }
@@ -519,7 +519,7 @@ void khc_state_resp_header_callback(khc* khc) {
   size_t header_size = header_boundary - khc->_resp_header_buff;
   if (header_size > 0) {
     size_t content_length = 0;
-    size_t header_written = khc->_cb_header(khc->_resp_header_buff, 1,
+    size_t header_written = khc->_cb_header(khc->_resp_header_buff,
         header_size, khc->_header_data);
     if (header_written != header_size) { // Error in callback function.
       khc->_state = KHC_STATE_CLOSE;
@@ -635,7 +635,7 @@ void khc_state_resp_header_skip(khc* khc) {
 void khc_state_resp_body_flagment(khc* khc) {
   if (khc->_resp_header_read_size > 0) {
     size_t written =
-      khc->_cb_write(khc->_resp_header_buff, 1, khc->_resp_header_read_size, khc->_write_data);
+      khc->_cb_write(khc->_resp_header_buff, khc->_resp_header_read_size, khc->_write_data);
     if (written != khc->_resp_header_read_size) { // Error in write callback.
       khc->_state = KHC_STATE_CLOSE;
       khc->_result = KHC_ERR_WRITE_CALLBACK;
@@ -714,7 +714,7 @@ void khc_state_resp_body_read(khc* khc) {
 }
 
 void khc_state_resp_body_callback(khc* khc) {
-  size_t written = khc->_cb_write(khc->_stream_buff, 1, khc->_body_read_size, khc->_write_data);
+  size_t written = khc->_cb_write(khc->_stream_buff, khc->_body_read_size, khc->_write_data);
   if (written < khc->_body_read_size) { // Error in write callback.
     khc->_state = KHC_STATE_CLOSE;
     khc->_result = KHC_ERR_WRITE_CALLBACK;
@@ -790,7 +790,7 @@ void khc_state_resp_body_parse_chunk_body(khc* khc) {
       khc->_chunk_size > khc->_body_read_size + khc->_chunk_size_written ?
       khc->_body_read_size :
       khc->_chunk_size - khc->_chunk_size_written;
-  size_t written = khc->_cb_write(khc->_stream_buff, 1, target_size, khc->_write_data);
+  size_t written = khc->_cb_write(khc->_stream_buff, target_size, khc->_write_data);
   if (written < target_size) { // Error in write callback.
     khc->_state = KHC_STATE_CLOSE;
     khc->_result = KHC_ERR_WRITE_CALLBACK;

@@ -110,10 +110,10 @@ TEST_CASE("TI Tests")
 
         std::string body = "{\"dummyKey\":\"dummyvalue\"}";
         std::istringstream iss(body);
-        std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)>
-            on_read = [=, &iss](char *buffer, size_t size, size_t count, void *userdata)
+        std::function<size_t(char *buffer, size_t size, void *userdata)>
+            on_read = [=, &iss](char *buffer, size_t size, void *userdata)
             {
-                return iss.read(buffer, size * count).gcount();
+                return iss.read(buffer, size).gcount();
             };
         kiiltest::RWFunc ctx;
         ctx.on_read = on_read;
