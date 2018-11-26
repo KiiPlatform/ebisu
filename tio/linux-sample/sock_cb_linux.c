@@ -110,11 +110,13 @@ khc_sock_code_t
 khc_sock_code_t
     sock_cb_send(void* socket_context,
             const char* buffer,
-            size_t length)
+            size_t length,
+            size_t* out_sent_length)
 {
     socket_context_t* ctx = (socket_context_t*)socket_context;
     int ret = SSL_write(ctx->ssl, buffer, length);
     if (ret > 0) {
+        *out_sent_length = ret;
         return KHC_SOCK_OK;
     } else {
         printf("failed to send\n");

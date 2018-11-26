@@ -23,7 +23,8 @@ khc_sock_code_t
 khc_sock_code_t
     sock_cb_send(void* sock_ctx,
             const char* buffer,
-            size_t length);
+            size_t length,
+            size_t* out_sent_length);
 
 khc_sock_code_t
     sock_cb_recv(void* sock_ctx, char* buffer, size_t length_to_read,
