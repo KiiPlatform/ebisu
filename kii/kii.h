@@ -573,7 +573,7 @@ int kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size);
 
  * The buffer is used to store single HTTP response header.
  * If this method is not called or set NULL to the buffer,
- * khc allocates memory of response header buffer when the HTTP session started
+ * kii allocates memory of response header buffer when the HTTP session started
  * and free when the HTTP session ends.
  * The buffer allocated by kii is 256 bytes.
 
