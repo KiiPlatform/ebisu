@@ -44,8 +44,9 @@ TEST_CASE( "HTTP response test" ) {
   };
 
   int on_send_called = 0;
-  s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     ++on_send_called;
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
 
@@ -149,8 +150,9 @@ TEST_CASE( "Ignore HTTP status 100" ) {
   };
 
   int on_send_called = 0;
-  s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     ++on_send_called;
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
 
@@ -252,8 +254,9 @@ TEST_CASE( "Small resp header skip test" ) {
   };
 
   int on_send_called = 0;
-  s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     ++on_send_called;
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
 

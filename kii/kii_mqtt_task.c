@@ -92,11 +92,18 @@ khc_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) {
     {
         kii->mqtt_buffer[j++] = kii->mqtt_buffer[8 + k];
     }
-    khc_sock_code_t send_err = kii->mqtt_sock_send_cb(kii->mqtt_sock_send_ctx,
-            kii->mqtt_buffer, j);
-    if (send_err == KHC_SOCK_AGAIN) {
-        // Don't accept non-blocking socket.
-        return KHC_SOCK_FAIL;
+
+    khc_sock_code_t send_err = KHC_SOCK_FAIL;
+    size_t total_sent = 0;
+    while (total_sent < j) {
+        size_t sent_len = 0;
+        send_err = kii->mqtt_sock_send_cb(kii->mqtt_sock_send_ctx,
+                &kii->mqtt_buffer[total_sent], j - total_sent, &sent_len);
+        if (send_err == KHC_SOCK_AGAIN || send_err == KHC_SOCK_FAIL) {
+            // Don't accept non-blocking socket when send_err is KHC_SOCK_AGAIN.
+            return KHC_SOCK_FAIL;
+        }
+        total_sent += sent_len;
     }
     return send_err;
 }
@@ -130,11 +137,17 @@ khc_sock_code_t _mqtt_send_subscribe(kii_t* kii, const char* topic, kii_mqtt_qos
         kii->mqtt_buffer[j++] = kii->mqtt_buffer[8 + k];
     }
 
-    khc_sock_code_t send_err = kii->mqtt_sock_send_cb(kii->mqtt_sock_send_ctx,
-            kii->mqtt_buffer, j);
-    if (send_err == KHC_SOCK_AGAIN) {
-        // Don't accept non-blocking socket.
-        return KHC_SOCK_FAIL;
+    khc_sock_code_t send_err = KHC_SOCK_FAIL;
+    size_t total_sent = 0;
+    while (total_sent < j) {
+        size_t sent_len = 0;
+        send_err = kii->mqtt_sock_send_cb(kii->mqtt_sock_send_ctx,
+                &kii->mqtt_buffer[total_sent], j - total_sent, &sent_len);
+        if (send_err == KHC_SOCK_AGAIN || send_err == KHC_SOCK_FAIL) {
+            // Don't accept non-blocking socket when send_err is KHC_SOCK_AGAIN.
+            return KHC_SOCK_FAIL;
+        }
+        total_sent += sent_len;
     }
     return send_err;
 }
@@ -144,11 +157,16 @@ khc_sock_code_t _mqtt_send_pingreq(kii_t* kii)
     char buff[2];
     buff[0] = (char)0xc0;
     buff[1] = 0x00;
-    khc_sock_code_t sock_err = kii->mqtt_sock_send_cb(kii->mqtt_sock_send_ctx, buff, sizeof(buff));
-    if(sock_err == KHC_SOCK_AGAIN)
-    {
-        // Don't accept non-blocking socket.
-        return KHC_SOCK_FAIL;
+    khc_sock_code_t sock_err = KHC_SOCK_FAIL;
+    size_t total_sent = 0;
+    while (total_sent < sizeof(buff)) {
+        size_t sent_len = 0;
+        sock_err = kii->mqtt_sock_send_cb(kii->mqtt_sock_send_ctx, &buff[total_sent], sizeof(buff) - total_sent, &sent_len);
+        if (sock_err == KHC_SOCK_AGAIN || sock_err == KHC_SOCK_FAIL) {
+            // Don't accept non-blocking socket when send_err is KHC_SOCK_AGAIN.
+            return KHC_SOCK_FAIL;
+        }
+        total_sent += sent_len;
     }
     return sock_err;
 }

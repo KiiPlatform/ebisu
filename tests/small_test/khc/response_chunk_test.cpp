@@ -46,8 +46,9 @@ TEST_CASE( "HTTP chunked response test" ) {
   };
 
   int on_send_called = 0;
-  s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     ++on_send_called;
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
 
@@ -157,8 +158,9 @@ TEST_CASE( "small buffer size test" ) {
   };
 
   int on_send_called = 0;
-  s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     ++on_send_called;
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
 
@@ -268,8 +270,9 @@ TEST_CASE( "random buffer size test" ) {
   };
 
   int on_send_called = 0;
-  s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     ++on_send_called;
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
 
@@ -381,8 +384,9 @@ TEST_CASE( "random chunk body test" ) {
   };
 
   int on_send_called = 0;
-  s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length) {
+  s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     ++on_send_called;
+    *out_sent_length = length;
     return KHC_SOCK_OK;
   };
 
