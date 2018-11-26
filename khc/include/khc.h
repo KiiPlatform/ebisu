@@ -387,7 +387,15 @@ khc_code khc_set_req_headers(khc* khc, khc_slist* headers);
  * If this method is not called or set NULL to the buffer,
  * khc allocates memory of response header buffer when the HTTP session started
  * and free when the HTTP session ends.
- *
+ * The buffer allocated by the khc is 256 bytes.
+
+ * The buffer is used to store single HTTP response header.
+ * If header is larger than the buffer, the header is skipped and KHC_CB_HEADER is not called.
+ * khc needs to parse Status Line, Content-Length, Transfer-Encoding header to process HTTP message.
+ * The buffer must have enough size to store those headers. 256 bytes would be enough.
+ * If you set the buffer by the method, the method must be called befor khc_perform(khc*)
+ * and memory used by the buffer can be safely freed after khc_perform(khc*) returned.
+
  * \param [out] khc instance.
  * \param [in] buffer pointer to the buffer.
  * \param [in] buff_size size of the buffer.
@@ -401,6 +409,14 @@ khc_code khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size);
  * If this method is not called or set NULL to the buffer,
  * khc allocates memory of stream buffer when the HTTP session started
  * and free when the HTTP session ends.
+ * The buffer allocated by khc is 1024 bytes.
+
+ * You can change the size of buffer depending on your request/ response size.
+ * It must be enough large to store size line in chunked encoded message.
+ * However, you may use much larger buffer since size line might require very small buffer
+ * as it consists of HEX size and CRLF for the better performance.
+ * If you set the buffer by the method, the method must be called befor khc_perform(khc*)
+ * and memory used by the buffer can be safely freed after khc_perform(khc*) returned.
  *
  * \param [out] khc instance.
  * \param [in] buffer pointer to the buffer.
