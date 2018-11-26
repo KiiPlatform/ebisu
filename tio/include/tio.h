@@ -154,7 +154,7 @@ void tio_handler_set_stream_buff(tio_handler_t* handler, char* buff, size_t buff
  * The buffer allocated by tio_handler is 256 bytes.
 
  * If header is larger than the buffer, the header is skipped and not parsed.
- * tio_handler needs to parse Status Line, Content-Length, Transfer-Encoding and ETag header.
+ * tio_handler needs to parse Status Line, Content-Length and Transfer-Encoding header.
  * The buffer must have enough size to store those headers. 256 bytes would be enough.
  * If you set the buffer by the method, the method must be called before calling tio_handler_start()
  * and memory used by the buffer can be safely freed after you've terminated tio_handler task.
@@ -258,9 +258,69 @@ void tio_updater_set_cb_delay_ms(tio_updater_t* updater, KII_DELAY_MS cb_delay_m
 
 void tio_updater_set_cb_error(tio_updater_t* updater, TIO_CB_ERR cb_err, void* userdata);
 
+/**
+ * \brief Set buffer used to construct/ parse HTTP request/ response.
+
+ * This method must be called and set valid buffer before calling method before calling 
+ * tio_updater_start().
+ * The buffer is used to serialize/ deserialize JSON.
+
+ * You can change the size of buffer depending on the request/ response size.
+ * Typically, 1024 bytes is enough.
+ * Not that for uploading state, the buffer is not used and stream based TIO_CB_READ callback is used.
+ * You don't have to take account into the size of the state.
+
+ * Memory used by the buffer can be safely freed after you've terminated tio_updater task.
+
+ * \param [out] updater instance.
+ * \param [in] buffer pointer to the buffer.
+ * \param [in] buff_size size of the buffer.
+ */
 void tio_updater_set_buff(tio_updater_t* updater, char* buff, size_t buff_size);
 
+/**
+ * \brief Set stream buffer.
+ * Stream buffer is used store part of HTTP body when
+ * reading/ writing it from the network.
+
+ * If this method is not called or set NULL to the buffer,
+ * tio_updater allocates memory of stream buffer when the HTTP session started
+ * and free when the HTTP session ends.
+ * The buffer allocated by tio_updater is 1024 bytes.
+
+ * You can change the size of buffer depending on your request/ response size.
+ * It must be enough large to store size line in chunked encoded message.
+ * However, you may use much larger buffer since size line might require very small buffer
+ * as it consists of HEX size and CRLF for the better performance.
+
+ * If you set the buffer by the method, the method must be called before tio_updater_start().
+ * and memory used by the buffer can be safely freed after you've terminated tio_updater task.
+
+ * \param [out] updater instance.
+ * \param [in] buffer pointer to the buffer.
+ * \param [in] buff_size size of the buffer.
+ */
 void tio_updater_set_stream_buff(tio_updater_t* updater, char* buff, size_t buff_size);
+
+/**
+ * \brief Set response header buffer.
+
+ * The buffer is used to store single HTTP response header.
+ * If this method is not called or set NULL to the buffer,
+ * tio_updater allocates memory of response header buffer when the HTTP session started
+ * and free when the HTTP session ends.
+ * The buffer allocated by tio_updater is 256 bytes.
+
+ * If header is larger than the buffer, the header is skipped and not parsed.
+ * tio_handler needs to parse Status Line, Content-Length and Transfer-Encoding header.
+ * The buffer must have enough size to store those headers. 256 bytes would be enough.
+ * If you set the buffer by the method, the method must be called before calling tio_updater_start()
+ * and memory used by the buffer can be safely freed after you've terminated tio_updater task.
+
+ * \param [out] updater instance.
+ * \param [in] buffer pointer to the buffer.
+ * \param [in] buff_size size of the buffer.
+ */
 void tio_updater_set_resp_header_buff(tio_updater_t* updater, char* buff, size_t buff_size);
 
 void tio_updater_set_app(tio_updater_t* updater, const char* app_id, const char* host);
