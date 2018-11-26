@@ -103,6 +103,9 @@ void tio_handler_set_cb_sock_close_http(tio_handler_t* handler, KHC_CB_SOCK_CLOS
 
 void tio_handler_set_http_buff(tio_handler_t* handler, char* buff, size_t buff_size);
 
+void tio_handler_set_stream_buff(tio_handler_t* handler, char* buff, size_t buff_size);
+void tio_handler_set_resp_header_buff(tio_handler_t* handler, char* buff, size_t buff_size);
+
 void tio_handler_set_cb_sock_connect_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
 void tio_handler_set_cb_sock_send_mqtt(tio_handler_t* handler, KHC_CB_SOCK_SEND cb_send, void* userdata);
 void tio_handler_set_cb_sock_recv_mqtt(tio_handler_t* handler, KHC_CB_SOCK_RECV cb_recv, void* userdata);
@@ -178,6 +181,9 @@ void tio_updater_set_cb_delay_ms(tio_updater_t* updater, KII_DELAY_MS cb_delay_m
 void tio_updater_set_cb_error(tio_updater_t* updater, TIO_CB_ERR cb_err, void* userdata);
 
 void tio_updater_set_buff(tio_updater_t* updater, char* buff, size_t buff_size);
+
+void tio_updater_set_stream_buff(tio_updater_t* updater, char* buff, size_t buff_size);
+void tio_updater_set_resp_header_buff(tio_updater_t* updater, char* buff, size_t buff_size);
 
 void tio_updater_set_app(tio_updater_t* updater, const char* app_id, const char* host);
 
