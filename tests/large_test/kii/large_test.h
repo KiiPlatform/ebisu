@@ -20,7 +20,9 @@ inline void init(
         void* mqtt_ssl_ctx,
         jkii_resource_t* resource)
 {
-    kii_init(kii, DEFAULT_SITE, APP_ID);
+    kii_init(kii);
+    kii_set_site(kii, DEFAULT_SITE);
+    kii_set_app_id(kii, APP_ID);
 
     kii_set_buff(kii, buffer, buffer_size);
 

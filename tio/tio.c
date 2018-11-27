@@ -31,11 +31,11 @@ tio_bool_t _task_continue(void* task_info, void* userdata) {
 
 void tio_handler_init(tio_handler_t* handler)
 {
-    handler->_kii._author.author_id[0] = '\0';
-    handler->_kii._author.access_token[0] = '\0';
+    kii_init(&handler->_kii);
     handler->_cb_err = NULL;
     kii_set_task_continue_cb(&handler->_kii, _task_continue, handler);
     kii_set_task_exit_cb(&handler->_kii, _task_exit, handler);
+    handler->_cb_push = NULL;
 }
 
 void tio_handler_set_cb_sock_connect_http(
@@ -163,6 +163,15 @@ void tio_handler_set_cb_err(
     handler->_cb_err_data = userdata;
 }
 
+void tio_handler_set_cb_push(
+    tio_handler_t* handler,
+    TIO_CB_PUSH cb_push,
+    void* userdata)
+{
+    handler->_cb_push = cb_push;
+    handler->_cb_push_data = userdata;
+}
+
 void tio_handler_set_mqtt_buff(
     tio_handler_t* handler,
     char* buff,
@@ -183,14 +192,21 @@ void tio_handler_set_app(
     const char* app_id,
     const char* host)
 {
-    kii_init(&handler->_kii, host, app_id);
+    kii_set_site(&handler->_kii, host);
+    kii_set_app_id(&handler->_kii, app_id);
 }
 
-static void _cb_receive_push(char* palyload, size_t payload_length, void* userdata) {
+static void _cb_receive_push(char* payload, size_t payload_length, void* userdata) {
     tio_handler_t* handler = (tio_handler_t*)userdata;
-    tio_code_t handle_res = _handle_command(handler, palyload, payload_length);
-    if (handle_res != TIO_ERR_OK && handler->_cb_err != NULL) {
-        handler->_cb_err(handle_res, "Failed to handle command", handler->_cb_err_data);
+    tio_bool_t skip = KII_FALSE;
+    if (handler->_cb_push != NULL) {
+        skip = handler->_cb_push(payload, payload_length, handler->_cb_push_data);
+    }
+    if (skip == KII_FALSE) {
+        tio_code_t handle_res = _handle_command(handler, payload, payload_length);
+        if (handle_res != TIO_ERR_OK && handler->_cb_err != NULL) {
+            handler->_cb_err(handle_res, "Failed to handle command", handler->_cb_err_data);
+        }
     }
 }
 
@@ -265,8 +281,7 @@ tio_code_t tio_handler_start(
 
 void tio_updater_init(tio_updater_t* updater)
 {
-    updater->_kii._author.author_id[0] = '\0';
-    updater->_kii._author.access_token[0] = '\0';
+    kii_init(&updater->_kii);
 }
 
 void tio_updater_set_cb_sock_connect(
@@ -359,7 +374,8 @@ void tio_updater_set_app(
     const char* app_id,
     const char* host)
 {
-    kii_init(&updater->_kii, host, app_id);
+    kii_set_site(&updater->_kii, host);
+    kii_set_app_id(&updater->_kii, app_id);
 }
 
 void tio_updater_set_interval(
