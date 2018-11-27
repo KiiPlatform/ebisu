@@ -99,6 +99,13 @@ size_t updater_cb_read(char *buffer, size_t size, void *userdata)
     return read_size;
 }
 
+tio_bool_t pushed_message_callback(const char* message, size_t message_length, void* userdata)
+{
+    printf("pushed_message_callback called,\n");
+    printf("%.*s\n", (int)message_length, message);
+    return KII_FALSE;
+}
+
 void handler_init(
         tio_handler_t* handler,
         char* http_buffer,
@@ -112,6 +119,8 @@ void handler_init(
     tio_handler_init(handler);
 
     tio_handler_set_app(handler, KII_APP_ID, KII_APP_HOST);
+
+    tio_handler_set_cb_push(handler, pushed_message_callback, NULL);
 
     tio_handler_set_cb_task_create(handler, task_create_cb_impl);
     tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl);
