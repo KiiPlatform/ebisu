@@ -309,6 +309,18 @@ void tio_updater_set_cb_task_create(
     updater->_kii.task_create_cb = cb_task_create;
 }
 
+void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_TASK_CONTINUE cb_continue, void* userdata)
+{
+    updater->_cb_task_continue = cb_continue;
+    updater->_task_continue_data = userdata;
+}
+
+void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_TASK_EXIT cb_exit, void* userdata)
+{
+    updater->_cb_task_exit = cb_exit;
+    updater->_task_exit_data = userdata;
+}
+
 void tio_updater_set_cb_delay_ms(
     tio_updater_t* updater,
     KII_DELAY_MS cb_delay_ms)
@@ -360,6 +372,12 @@ void tio_updater_set_interval(
 static void* _update_state(void* data) {
     tio_updater_t* updater = (tio_updater_t*)data;
     while(1) {
+        if (updater->_cb_task_continue != NULL) {
+            tio_bool_t cont = updater->_cb_task_continue(NULL, updater->_task_continue_data);
+            if (cont != KII_TRUE) {
+                break;
+            }
+        }
         updater->_kii.delay_ms_cb(updater->_update_interval * 1000);
         size_t state_size = updater->_cb_state_size(updater->_cb_state_size_data);
         if (state_size > 0) {
@@ -376,6 +394,9 @@ static void* _update_state(void* data) {
                 }
             }
         }
+    }
+    if (updater->_cb_task_exit != NULL) {
+        updater->_cb_task_exit(NULL, updater->_task_exit_data);
     }
     return NULL;
 }

@@ -100,6 +100,10 @@ typedef struct tio_updater_t {
     void* _cb_err_data;
     kii_t _kii;
     size_t _update_interval;
+    KII_TASK_CONTINUE _cb_task_continue;
+    void* _task_continue_data;
+    KII_TASK_EXIT _cb_task_exit;
+    void* _task_exit_data;
 } tio_updater_t;
 
 
@@ -287,8 +291,8 @@ void tio_updater_set_cb_sock_recv(tio_updater_t* updater, KHC_CB_SOCK_RECV cb_re
 void tio_updater_set_cb_sock_close(tio_updater_t* updater, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
 
 void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_TASK_CREATE cb_task_create);
-void tio_updater_set_cb_task_continue(tio_handler_t* handler, KII_TASK_CONTINUE cb_continue, void* userdata);
-void tio_updater_set_cb_task_exit(tio_handler_t* handler, KII_TASK_CONTINUE cb_continue, void* userdata);
+void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_TASK_CONTINUE cb_continue, void* userdata);
+void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_TASK_EXIT cb_exit, void* userdata);
 void tio_updater_set_cb_delay_ms(tio_updater_t* updater, KII_DELAY_MS cb_delay_ms);
 
 void tio_updater_set_cb_error(tio_updater_t* updater, TIO_CB_ERR cb_err, void* userdata);
