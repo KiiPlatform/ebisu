@@ -242,6 +242,10 @@ void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_TASK_CONTINUE 
 
  * If this API is not called or set NULL,
  * task function immediately returns when task is discontinued or un-recoverble error occurs.
+
+ * \param handler [out] tio_handler_t instance.
+ * \param cb_exit [in] Called right before the exit. task_info argument type is tio_handler_task_info*
+ * \param userdata [in] Context data pointer passed as second argument when cb_exit is called.
  */
 void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_TASK_EXIT cb_exit, void* userdata);
 void tio_handler_set_cb_delay_ms(tio_handler_t* handler, KII_DELAY_MS cb_delay_ms);
