@@ -9,8 +9,7 @@ const char TIO_TASK_NAME_UPDATE_STATE[] = "task_update_state";
 
 void tio_handler_init(tio_handler_t* handler)
 {
-    handler->_kii._author.author_id[0] = '\0';
-    handler->_kii._author.access_token[0] = '\0';
+    kii_init(&handler->_kii);
     handler->_cb_err = NULL;
     handler->_cb_push = NULL;
 }
@@ -157,7 +156,8 @@ void tio_handler_set_app(
     const char* app_id,
     const char* host)
 {
-    kii_init(&handler->_kii, host, app_id);
+    kii_set_site(&handler->_kii, host);
+    kii_set_app_id(&handler->_kii, app_id);
 }
 
 static void _cb_receive_push(char* payload, size_t payload_length, void* userdata) {
@@ -245,8 +245,7 @@ tio_code_t tio_handler_start(
 
 void tio_updater_init(tio_updater_t* updater)
 {
-    updater->_kii._author.author_id[0] = '\0';
-    updater->_kii._author.access_token[0] = '\0';
+    kii_init(&updater->_kii);
 }
 
 void tio_updater_set_cb_sock_connect(
@@ -327,7 +326,8 @@ void tio_updater_set_app(
     const char* app_id,
     const char* host)
 {
-    kii_init(&updater->_kii, host, app_id);
+    kii_set_site(&updater->_kii, host);
+    kii_set_app_id(&updater->_kii, app_id);
 }
 
 void tio_updater_set_interval(

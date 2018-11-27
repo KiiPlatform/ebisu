@@ -161,14 +161,28 @@ typedef struct kii_t {
 
 /** Initializes Kii SDK
  *  \param [inout] kii sdk instance.
- *  \param [in] site the input of site name,
- *  should be one of "CN", "CN3", "JP", "US", "SG" or "EU"
- *  \param [in] app_id the input of Application ID
- *  \return  0:success, -1: failure
+ *  \return 0 OK. (FIXME: change to void return.)
  */
 int kii_init(
+		kii_t* kii);
+
+/** \brief Set site name.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] site the input of site name,
+ *  should be one of "CN", "CN3", "JP", "US", "SG" or "EU"
+ *  \return 0 OK. (FIXME: change to void return.)
+ */
+int kii_set_site(
 		kii_t* kii,
-		const char* site,
+		const char* site);
+
+/** \brief Set Application ID.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] app_id the input of Application ID
+ *  \return 0 OK. (FIXME: change to void return.)
+ */
+int kii_set_app_id(
+		kii_t* kii,
 		const char* app_id);
 
 /** Authorize thing with vendor thing id and password.
