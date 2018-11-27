@@ -1,6 +1,7 @@
 #include <string.h>
 #include "tio.h"
 #include "kii.h"
+#include "kii_task_callback.h"
 #include "khc.h"
 #include "tio_impl.h"
 #include "command_parser.h"
@@ -109,6 +110,16 @@ void tio_handler_set_cb_task_create(
     KII_TASK_CREATE cb_task_create)
 {
     handler->_kii.task_create_cb = cb_task_create;
+}
+
+void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_TASK_CONTINUE cb_continue, void* userdata)
+{
+    kii_set_task_continue_cb(&handler->_kii, cb_continue, userdata);
+}
+
+void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_TASK_CONTINUE cb_exit, void* userdata)
+{
+    kii_set_task_exit_cb(&handler->_kii, cb_exit, userdata);
 }
 
 void tio_handler_set_cb_delay_ms(

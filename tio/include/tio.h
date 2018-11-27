@@ -174,6 +174,30 @@ void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_s
 void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, unsigned int to_sock_send_sec);
 
 void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_TASK_CREATE cb_task_create);
+
+/**
+ * \brief set callback determines whether to continue or discontinue task.
+
+ * If this method is not called or NULL is set, task exits only when un-recoverble error occurs.
+ * If you need cancellation mechanism, you need to set this callback.
+ * Terminate task without using this callback may cause memory leak.
+ * This method must be called before calling tio_handler_start().
+
+ * In case checking cancellation flag in continue_cb, the flag might be set by other task/ thread.
+ * Implementation must ensure consistency of the flag by using Mutex, etc.
+
+ * If un-recoverble error occurs, task exits the infinite loop and immediately calls KII_TASK_EXIT callback if set.
+ * In this case KII_TASK_CONTINUE callback is not called.
+
+ * \param tio_handler_t [out] tio_handler_t instance
+ * \param continue_cb [in] Callback determines whether to continue or discontinue task.
+ * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
+ * and calls KII_TASK_EXIT callback if set.
+ * task_info argument type of the KII_TASK_CONTINUE function is kii_mqtt_task_info.
+ * \param userdata [in] Context data pointer passed as second argument when KII_TASK_CONTINUE callback is called.
+ */
+void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_TASK_CONTINUE cb_continue, void* userdata);
+void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_TASK_CONTINUE cb_continue, void* userdata);
 void tio_handler_set_cb_delay_ms(tio_handler_t* handler, KII_DELAY_MS cb_delay_ms);
 
 void tio_handler_set_cb_err(tio_handler_t* handler, TIO_CB_ERR cb_err, void* userdata);
@@ -254,6 +278,8 @@ void tio_updater_set_cb_sock_recv(tio_updater_t* updater, KHC_CB_SOCK_RECV cb_re
 void tio_updater_set_cb_sock_close(tio_updater_t* updater, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
 
 void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_TASK_CREATE cb_task_create);
+void tio_updater_set_cb_task_continue(tio_handler_t* handler, KII_TASK_CONTINUE cb_continue, void* userdata);
+void tio_updater_set_cb_task_exit(tio_handler_t* handler, KII_TASK_CONTINUE cb_continue, void* userdata);
 void tio_updater_set_cb_delay_ms(tio_updater_t* updater, KII_DELAY_MS cb_delay_ms);
 
 void tio_updater_set_cb_error(tio_updater_t* updater, TIO_CB_ERR cb_err, void* userdata);
