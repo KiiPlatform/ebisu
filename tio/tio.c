@@ -55,6 +55,14 @@ void tio_handler_set_http_buff(
     kii_set_buff(&handler->_kii, buff, buff_size);
 }
 
+void tio_handler_set_stream_buff(tio_handler_t* handler, char* buff, size_t buff_size) {
+    kii_set_stream_buff(&handler->_kii, buff, buff_size);
+}
+
+void tio_handler_set_resp_header_buff(tio_handler_t* handler, char* buff, size_t buff_size) {
+    kii_set_resp_header_buff(&handler->_kii, buff, buff_size);
+}
+
 void tio_handler_set_cb_sock_connect_mqtt(
     tio_handler_t* handler,
     KHC_CB_SOCK_CONNECT cb_connect,
@@ -134,9 +142,7 @@ void tio_handler_set_mqtt_buff(
     char* buff,
     size_t buff_size)
 {
-    //FIXME: Kii should provide setter API.
-    handler->_kii.mqtt_buffer = buff;
-    handler->_kii.mqtt_buffer_size =buff_size;
+    kii_set_mqtt_buff(&handler->_kii, buff, buff_size);
 }
 
 void tio_handler_set_keep_alive_interval(
@@ -306,6 +312,14 @@ void tio_updater_set_buff(
     size_t buff_size)
 {
     kii_set_buff(&updater->_kii, buff, buff_size);
+}
+
+void tio_updater_set_stream_buff(tio_updater_t* updater, char* buff, size_t buff_size) {
+    kii_set_stream_buff(&updater->_kii, buff, buff_size);
+}
+
+void tio_updater_set_resp_header_buff(tio_updater_t* updater, char* buff, size_t buff_size) {
+    kii_set_resp_header_buff(&updater->_kii, buff, buff_size);
 }
 
 void tio_updater_set_app(
