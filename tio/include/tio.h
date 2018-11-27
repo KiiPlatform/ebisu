@@ -326,7 +326,55 @@ void tio_updater_set_cb_sock_recv(tio_updater_t* updater, KHC_CB_SOCK_RECV cb_re
 void tio_updater_set_cb_sock_close(tio_updater_t* updater, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
 
 void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_TASK_CREATE cb_task_create);
+
+/**
+ * \brief set callback determines whether to continue or discontinue task.
+
+ * If this method is not called or NULL is set, task won't exit.
+ * If you need cancellation mechanism, you need to set this callback.
+ * Terminate task without using this callback may cause memory leak.
+ * This method must be called before calling tio_updater_start().
+
+ * In case checking cancellation flag in continue_cb, the flag might be set by other task/ thread.
+ * Implementation must ensure consistency of the flag by using Mutex, etc.
+
+ * \param updater [out] tio_updater_t instances
+ * \param continue_cb [in] Callback determines whether to continue or discontinue task.
+ * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
+ * and calls KII_TASK_EXIT callback if set.
+ * task_info argument of the KII_TASK_CONTINUE function is always NULL.
+ * \param userdata [in] Context data pointer passed as second argument when KII_TASK_CONTINUE callback is called.
+ */
 void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_TASK_CONTINUE cb_continue, void* userdata);
+
+/**
+ * \brief Callback called right before exit of tio_updater task.
+
+ * Task exits when the task is discontinued by KII_TASK_CONTINUE callback.
+ * In exit_cb, you'll need to free memory used for buffers set by following APIs
+ * - tio_updater_set_buff(),
+ * - tio_updater_set_stream_buff(),
+ * - tio_updater_set_resp_header_buff()
+ * and memory used for the userdata passed to following callbacks in case not yet freed.
+ * - tio_updater_set_cb_sock_connect()
+ * - tio_updater_set_cb_sock_send()
+ * - tio_updater_set_cb_sock_recv()
+ * - tio_updater_set_cb_sock_close()
+ * - tio_updater_set_cb_task_continue()
+ * - tio_updater_set_cb_task_exit()
+
+ * In addition, you may need to call task/ thread termination API.
+ * It depends on the task/ threading framework you used to create task/ thread.
+ * After the exit_cb returned, task function immediately returns.
+
+ * If this API is not called or set NULL,
+ * task function immediately returns when task is discontinued or un-recoverble error occurs.
+
+ * \param updater [out] tio_updater_t instance
+ * \param exit_cb [in] Callback called right befor exit.
+ * task_info argument of the cb_exit function is always NULL.
+ * \param userdata [in] Context data pointer passed as second argument when KII_TASK_EXIT callback is called.
+ */
 void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_TASK_EXIT cb_exit, void* userdata);
 void tio_updater_set_cb_delay_ms(tio_updater_t* updater, KII_DELAY_MS cb_delay_ms);
 
