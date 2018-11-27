@@ -161,9 +161,6 @@ typedef struct kii_t {
 
 /** Initializes Kii SDK
  *  \param [inout] kii sdk instance.
- *  \param [in] site the input of site name,
- *  should be one of "CN", "CN3", "JP", "US", "SG" or "EU"
- *  \param [in] app_id the input of Application ID
  *  \return 0 OK. (FIXME: change to void return.)
  */
 int kii_init(
