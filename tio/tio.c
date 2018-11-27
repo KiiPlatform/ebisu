@@ -157,7 +157,9 @@ void tio_handler_set_app(
     const char* app_id,
     const char* host)
 {
-    kii_init(&handler->_kii, host, app_id);
+    kii_init(&handler->_kii);
+    kii_set_site(&handler->_kii, host);
+    kii_set_app_id(&handler->_kii, app_id);
 }
 
 static void _cb_receive_push(char* payload, size_t payload_length, void* userdata) {
@@ -327,7 +329,9 @@ void tio_updater_set_app(
     const char* app_id,
     const char* host)
 {
-    kii_init(&updater->_kii, host, app_id);
+    kii_init(&updater->_kii);
+    kii_set_site(&updater->_kii, host);
+    kii_set_app_id(&updater->_kii, app_id);
 }
 
 void tio_updater_set_interval(

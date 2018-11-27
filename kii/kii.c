@@ -47,13 +47,26 @@ size_t _cb_write_header(char *buffer, size_t size, void *userdata)
     return size;
 }
 
-int kii_init(
-        kii_t* kii,
-        const char* site,
-        const char* app_id)
+int kii_init(kii_t* kii)
 {
     memset(kii, 0x00, sizeof(kii_t));
-    strncpy(kii->_app_id, app_id, sizeof(kii->_app_id) * sizeof(char));
+    kii->_sdk_info = KII_SDK_INFO;
+    khc_set_zero(&kii->_khc);
+    khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
+    khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
+    khc_set_cb_header(&kii->_khc, _cb_write_header, kii);
+    kii->_etag[0] = '\0';
+    kii->_slist_alloc_cb = khc_slist_alloc_cb;
+    kii->_slist_free_cb = khc_slist_free_cb;
+    kii->_slist_alloc_cb_data = NULL;
+    kii->_slist_free_cb_data = NULL;
+    return 0;
+}
+
+int kii_set_site(
+        kii_t* kii,
+        const char* site)
+{
     char* host;
     if(strcmp(site, "CN3") == 0)
     {
@@ -81,16 +94,14 @@ int kii_init(
         host = (char*)site;
     }
     strncpy(kii->_app_host, host, sizeof(kii->_app_host) * sizeof(char));
-    kii->_sdk_info = KII_SDK_INFO;
-    khc_set_zero(&kii->_khc);
-    khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
-    khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
-    khc_set_cb_header(&kii->_khc, _cb_write_header, kii);
-    kii->_etag[0] = '\0';
-    kii->_slist_alloc_cb = khc_slist_alloc_cb;
-    kii->_slist_free_cb = khc_slist_free_cb;
-    kii->_slist_alloc_cb_data = NULL;
-    kii->_slist_free_cb_data = NULL;
+    return 0;
+}
+
+int kii_set_app_id(
+        kii_t* kii,
+        const char* app_id)
+{
+    strncpy(kii->_app_id, app_id, sizeof(kii->_app_id) * sizeof(char));
     return 0;
 }
 
