@@ -12,7 +12,7 @@ void tio_handler_init(tio_handler_t* handler)
     handler->_kii._author.author_id[0] = '\0';
     handler->_kii._author.access_token[0] = '\0';
     handler->_cb_err = NULL;
-    handler->_cb_pushed_message = NULL;
+    handler->_cb_push = NULL;
 }
 
 void tio_handler_set_cb_sock_connect_http(
@@ -120,13 +120,13 @@ void tio_handler_set_cb_err(
     handler->_cb_err_data = userdata;
 }
 
-void tio_handler_set_cb_pushed_message(
+void tio_handler_set_cb_push(
     tio_handler_t* handler,
-    TIO_CB_PUSHED_MESSAGE cb_pushed_message,
+    TIO_CB_PUSH cb_push,
     void* userdata)
 {
-    handler->_cb_pushed_message = cb_pushed_message;
-    handler->_cb_pushed_message_data = userdata;
+    handler->_cb_push = cb_push;
+    handler->_cb_push_data = userdata;
 }
 
 void tio_handler_set_mqtt_buff(
@@ -157,8 +157,8 @@ void tio_handler_set_app(
 static void _cb_receive_push(char* payload, size_t payload_length, void* userdata) {
     tio_handler_t* handler = (tio_handler_t*)userdata;
     tio_bool_t skip = KII_FALSE;
-    if (handler->_cb_pushed_message != NULL) {
-        skip = handler->_cb_pushed_message(payload, payload_length, handler->_cb_pushed_message_data);
+    if (handler->_cb_push != NULL) {
+        skip = handler->_cb_push(payload, payload_length, handler->_cb_push_data);
     }
     if (skip == KII_FALSE) {
         tio_code_t handle_res = _handle_command(handler, payload, payload_length);

@@ -68,15 +68,15 @@ typedef size_t (*TIO_CB_SIZE)(void* userdata);
 typedef size_t (*TIO_CB_READ)(char *buffer, size_t size, void *userdata);
 typedef tio_bool_t (*TIO_CB_ACTION)(tio_action_t* action, tio_action_err_t* err, void* userdata);
 typedef void (*TIO_CB_ERR)(tio_code_t code, const char* err_message, void* userdata);
-typedef tio_bool_t (*TIO_CB_PUSHED_MESSAGE)(const char* message, size_t message_length, void* userdata);
+typedef tio_bool_t (*TIO_CB_PUSH)(const char* message, size_t message_length, void* userdata);
 
 typedef struct tio_handler_t {
     TIO_CB_ACTION _cb_action;
     void* _cb_action_data;
     TIO_CB_ERR _cb_err;
     void* _cb_err_data;
-    TIO_CB_PUSHED_MESSAGE _cb_pushed_message;
-    void* _cb_pushed_message_data;
+    TIO_CB_PUSH _cb_push;
+    void* _cb_push_data;
     kii_t _kii;
     char* _http_buff;
     size_t _http_buff_size;
@@ -119,7 +119,7 @@ void tio_handler_set_cb_delay_ms(tio_handler_t* handler, KII_DELAY_MS cb_delay_m
 
 void tio_handler_set_cb_err(tio_handler_t* handler, TIO_CB_ERR cb_err, void* userdata);
 
-void tio_handler_set_cb_pushed_message(tio_handler_t* handler, TIO_CB_PUSHED_MESSAGE cb_pushed_message, void* userdata);
+void tio_handler_set_cb_push(tio_handler_t* handler, TIO_CB_PUSH cb_push, void* userdata);
 
 void tio_handler_set_mqtt_buff(tio_handler_t* handler, char* buff, size_t buff_size);
 

@@ -120,7 +120,7 @@ void handler_init(
 
     tio_handler_set_app(handler, KII_APP_ID, KII_APP_HOST);
 
-    tio_handler_set_cb_pushed_message(handler, pushed_message_callback, NULL);
+    tio_handler_set_cb_push(handler, pushed_message_callback, NULL);
 
     tio_handler_set_cb_task_create(handler, task_create_cb_impl);
     tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl);
