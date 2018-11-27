@@ -283,10 +283,12 @@ void* mqtt_start_task(void* sdata)
     time_t started;
     time(&started);
     while (task_info.task_state != KII_MQTT_ST_ERR_EXIT) {
-        kii_bool_t cont = kii->_task_continue_cb(&task_info, kii->_task_continue_data);
-        if (cont != KII_TRUE) {
-            task_info.task_state = KII_MQTT_ST_DISCONTINUED;
-            break;
+        if (kii->_task_continue_cb != NULL) {
+            kii_bool_t cont = kii->_task_continue_cb(&task_info, kii->_task_continue_data);
+            if (cont != KII_TRUE) {
+                task_info.task_state = KII_MQTT_ST_DISCONTINUED;
+                break;
+            }
         }
         switch(task_info.task_state) {
             case KII_MQTT_ST_INSTALL_PUSH: {
@@ -546,7 +548,9 @@ void* mqtt_start_task(void* sdata)
                 break;
         }
     }
-    kii->_task_exit_cb(&task_info, kii->_task_exit_data);
+    if (kii->_task_exit_cb != NULL) {
+        kii->_task_exit_cb(&task_info, kii->_task_exit_data);
+    }
     return NULL;
 }
 
