@@ -206,10 +206,40 @@ void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_TASK_CREATE cb_t
  * \param continue_cb [in] Callback determines whether to continue or discontinue task.
  * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
  * and calls KII_TASK_EXIT callback if set.
- * task_info argument type of the KII_TASK_CONTINUE function is kii_mqtt_task_info.
+ * task_info argument type of the KII_TASK_CONTINUE function is tio_handler_task_info*.
  * \param userdata [in] Context data pointer passed as second argument when KII_TASK_CONTINUE callback is called.
  */
 void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_TASK_CONTINUE cb_continue, void* userdata);
+
+/**
+ * \brief Callback called right before exit of tio_handler task.
+
+ * Task exits when the task is discontinued by KII_TASK_CONTINUE callback or
+ * un-recoverble error occurs.
+ * In exit_cb, you'll need to free memory used for buffers set by following APIs
+ * - tio_handler_set_http_buff(),
+ * - tio_handler_set_stream_buff(),
+ * - tio_handler_set_resp_header_buff()
+ * - tio_handler_set_mqtt_buff(),
+ * and memory used for the userdata passed to following callbacks in case not yet freed.
+ * - tio_handler_set_cb_sock_connect_http()
+ * - tio_handler_set_cb_sock_send_http()
+ * - tio_handler_set_cb_sock_recv_http()
+ * - tio_handler_set_cb_sock_close_http()
+ * - tio_handler_set_cb_sock_connect_mqtt()
+ * - tio_handler_set_cb_sock_send_mqtt()
+ * - tio_handler_set_cb_sock_recv_mqtt()
+ * - tio_handler_set_cb_sock_close_mqtt()
+ * - tio_handler_set_cb_task_continue()
+ * - tio_handler_set_cb_task_exit()
+
+ * In addition, you may need to call task/ thread termination API.
+ * It depends on the task/ threading framework you used to create task/ thread.
+ * After the exit_cb returned, task function immediately returns.
+
+ * If this API is not called or set NULL,
+ * task function immediately returns when task is discontinued or un-recoverble error occurs.
+ */
 void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_TASK_EXIT cb_exit, void* userdata);
 void tio_handler_set_cb_delay_ms(tio_handler_t* handler, KII_DELAY_MS cb_delay_ms);
 
