@@ -91,6 +91,11 @@ int kii_init(
     kii->_slist_free_cb = khc_slist_free_cb;
     kii->_slist_alloc_cb_data = NULL;
     kii->_slist_free_cb_data = NULL;
+    kii->task_create_cb = NULL;
+    kii->_task_continue_cb = NULL;
+    kii->_task_continue_data = NULL;
+    kii->_task_exit_cb = NULL;
+    kii->_task_exit_data = NULL;
     return 0;
 }
 
