@@ -630,7 +630,7 @@ void kii_set_task_create_cb(kii_t* kii, KII_TASK_CREATE create_cb);
 
  * If this method is not called or NULL is set, task exits only when un-recoverble error occurs.
  * If you need cancellation mechanism, you need to set this callback.
- * Terminate/ Cancel task without using this callback may cause memory leak.
+ * Terminate task without using this callback may cause memory leak.
  * This method must be called before calling kii_start_push_routine().
 
  * In case checking cancellation flag in continue_cb, the flag might be set by other task/ thread.
