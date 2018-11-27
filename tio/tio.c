@@ -8,11 +8,34 @@
 
 const char TIO_TASK_NAME_UPDATE_STATE[] = "task_update_state";
 
+void _convert_task_info(kii_mqtt_task_info* mqtt_info, tio_handler_task_info_t* task_info) {
+    task_info->error = mqtt_info->error;
+    task_info->task_state = mqtt_info->task_state;
+}
+
+void _task_exit(void* task_info, void* userdata) {
+    kii_mqtt_task_info* mqtt_info = (kii_mqtt_task_info*) task_info;
+    tio_handler_task_info_t tio_task_info;
+    _convert_task_info(mqtt_info, &tio_task_info);
+    tio_handler_t* handler = (tio_handler_t*)userdata;
+    handler->_cb_task_exit(&tio_task_info, handler->_task_exit_data);
+}
+
+tio_bool_t _task_continue(void* task_info, void* userdata) {
+    kii_mqtt_task_info* mqtt_info = (kii_mqtt_task_info*) task_info;
+    tio_handler_task_info_t tio_task_info;
+    _convert_task_info(mqtt_info, &tio_task_info);
+    tio_handler_t* handler = (tio_handler_t*)userdata;
+    return handler->_cb_task_continue(&tio_task_info, handler->_task_continue_data);
+}
+
 void tio_handler_init(tio_handler_t* handler)
 {
     handler->_kii._author.author_id[0] = '\0';
     handler->_kii._author.access_token[0] = '\0';
     handler->_cb_err = NULL;
+    kii_set_task_continue_cb(&handler->_kii, _task_continue, handler);
+    kii_set_task_exit_cb(&handler->_kii, _task_exit, handler);
 }
 
 void tio_handler_set_cb_sock_connect_http(
@@ -114,12 +137,14 @@ void tio_handler_set_cb_task_create(
 
 void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_TASK_CONTINUE cb_continue, void* userdata)
 {
-    kii_set_task_continue_cb(&handler->_kii, cb_continue, userdata);
+    handler->_cb_task_continue = cb_continue;
+    handler->_task_continue_data = userdata;
 }
 
-void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_TASK_CONTINUE cb_exit, void* userdata)
+void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_TASK_EXIT cb_exit, void* userdata)
 {
-    kii_set_task_exit_cb(&handler->_kii, cb_exit, userdata);
+    handler->_cb_task_exit = cb_exit;
+    handler->_task_exit_data = userdata;
 }
 
 void tio_handler_set_cb_delay_ms(

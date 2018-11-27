@@ -80,7 +80,16 @@ typedef struct tio_handler_t {
     char* _mqtt_buff;
     size_t _mqtt_buff_size;
     size_t _keep_alive_interval;
+    KII_TASK_CONTINUE _cb_task_continue;
+    void* _task_continue_data;
+    KII_TASK_EXIT _cb_task_exit;
+    void* _task_exit_data;
 } tio_handler_t;
+
+typedef struct {
+    kii_mqtt_error error;
+    kii_mqtt_task_state task_state;
+} tio_handler_task_info_t;
 
 typedef struct tio_updater_t {
     TIO_CB_SIZE _cb_state_size;
@@ -197,7 +206,7 @@ void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_TASK_CREATE cb_t
  * \param userdata [in] Context data pointer passed as second argument when KII_TASK_CONTINUE callback is called.
  */
 void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_TASK_CONTINUE cb_continue, void* userdata);
-void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_TASK_CONTINUE cb_continue, void* userdata);
+void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_TASK_EXIT cb_exit, void* userdata);
 void tio_handler_set_cb_delay_ms(tio_handler_t* handler, KII_DELAY_MS cb_delay_ms);
 
 void tio_handler_set_cb_err(tio_handler_t* handler, TIO_CB_ERR cb_err, void* userdata);
