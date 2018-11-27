@@ -325,7 +325,12 @@ void khc_state_req_header_send_crlf(khc* khc) {
 }
 
 void khc_state_req_header_end(khc* khc) {
-  char text[] = "Transfer-Encoding: chunked\r\nConnection: Close\r\n\r\n";
+  char* text = NULL;
+  if (khc->_cb_read == NULL) {
+    text = "Content-Length: 0\r\nConnection: Close\r\n\r\n";
+  } else {
+    text = "Transfer-Encoding: chunked\r\nConnection: Close\r\n\r\n";
+  }
   char* send_pos = &text[khc->_sent_length];
   size_t send_len = strlen(send_pos);
   size_t sent_len = 0;
@@ -338,7 +343,12 @@ void khc_state_req_header_end(khc* khc) {
     } else {
       khc->_sent_length = 0;
     }
-    khc->_state = KHC_STATE_REQ_BODY_READ;
+    if (khc->_cb_read != NULL) {
+      khc->_state = KHC_STATE_REQ_BODY_READ;
+    } else {
+      khc->_resp_header_read_size = 0;
+      khc->_state = KHC_STATE_RESP_STATUS_READ;
+    }
     khc->_read_req_end = 0;
     return;
   }
