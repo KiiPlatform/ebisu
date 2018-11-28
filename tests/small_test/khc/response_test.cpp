@@ -30,7 +30,7 @@ TEST_CASE( "HTTP response test" ) {
   khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
 
   khct::cb::IOCtx io_ctx;
-  khc_set_cb_read(&http, khct::cb::cb_read, &io_ctx);
+  // no set cb_read.
   khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
   khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
@@ -53,7 +53,7 @@ TEST_CASE( "HTTP response test" ) {
   int on_read_called = 0;
   io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, void *userdata) {
     ++on_read_called;
-    REQUIRE( size == buff_size );
+    FAIL();
     return 0;
   };
 
@@ -102,8 +102,8 @@ TEST_CASE( "HTTP response test" ) {
   REQUIRE( res == KHC_ERR_OK );
   REQUIRE( khc_get_status_code(&http) == 200 );
   REQUIRE( on_connect_called == 1 );
-  REQUIRE( on_send_called == 5 );
-  REQUIRE( on_read_called == 1 );
+  REQUIRE( on_send_called == 3 );
+  REQUIRE( on_read_called == 0 );
   REQUIRE( on_recv_called == 4 );
   REQUIRE( on_header_called == 12 );
   REQUIRE( on_write_called > 0 );
@@ -134,7 +134,7 @@ TEST_CASE( "Ignore HTTP status 100" ) {
   khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
 
   khct::cb::IOCtx io_ctx;
-  khc_set_cb_read(&http, khct::cb::cb_read, &io_ctx);
+  // no set cb_read.
   khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
   khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
@@ -157,7 +157,7 @@ TEST_CASE( "Ignore HTTP status 100" ) {
   int on_read_called = 0;
   io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, void *userdata) {
     ++on_read_called;
-    REQUIRE( size == buff_size );
+    FAIL();
     return 0;
   };
 
@@ -201,8 +201,8 @@ TEST_CASE( "Ignore HTTP status 100" ) {
   REQUIRE( res == KHC_ERR_OK );
   REQUIRE( khc_get_status_code(&http) == 200 );
   REQUIRE( on_connect_called == 1 );
-  REQUIRE( on_send_called == 5 );
-  REQUIRE( on_read_called == 1 );
+  REQUIRE( on_send_called == 3 );
+  REQUIRE( on_read_called == 0 );
   REQUIRE( on_recv_called == 5 );
   REQUIRE( on_header_called == 14 );
   REQUIRE( on_write_called == 2 );
@@ -236,7 +236,7 @@ TEST_CASE( "Small resp header skip test" ) {
   khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
 
   khct::cb::IOCtx io_ctx;
-  khc_set_cb_read(&http, khct::cb::cb_read, &io_ctx);
+  // no set cb_read.
   khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
   khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
@@ -259,7 +259,7 @@ TEST_CASE( "Small resp header skip test" ) {
   int on_read_called = 0;
   io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, void *userdata) {
     ++on_read_called;
-    REQUIRE( size == buff_size );
+    FAIL();
     return 0;
   };
 
@@ -308,8 +308,8 @@ TEST_CASE( "Small resp header skip test" ) {
   REQUIRE( res == KHC_ERR_OK );
   REQUIRE( khc_get_status_code(&http) == 200 );
   REQUIRE( on_connect_called == 1 );
-  REQUIRE( on_send_called == 5 );
-  REQUIRE( on_read_called == 1 );
+  REQUIRE( on_send_called == 3 );
+  REQUIRE( on_read_called == 0 );
   REQUIRE( on_recv_called == 7 );
   REQUIRE( on_header_called == 11 );
   REQUIRE( on_write_called > 0 );

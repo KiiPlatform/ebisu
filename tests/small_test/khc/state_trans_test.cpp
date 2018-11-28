@@ -29,7 +29,7 @@ TEST_CASE( "HTTP minimal" ) {
   khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
 
   khct::cb::IOCtx io_ctx;
-  khc_set_cb_read(&http, khct::cb::cb_read, &io_ctx);
+  // no set cb_read.
   khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
   khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
@@ -87,109 +87,13 @@ TEST_CASE( "HTTP minimal" ) {
   called = false;
   s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     called = true;
-    REQUIRE( length == 49 );
-    REQUIRE( strncmp(buffer, "Transfer-Encoding: chunked\r\nConnection: Close\r\n\r\n", 49) == 0 );
+    REQUIRE( length == 40 );
+    REQUIRE( strncmp(buffer, "Content-Length: 0\r\nConnection: Close\r\n\r\n", 40) == 0 );
     *out_sent_length = length;
     return KHC_SOCK_OK;
   };
 
   khc_state_req_header_end(&http);
-  REQUIRE( http._state == KHC_STATE_REQ_BODY_READ );
-  REQUIRE( http._result == KHC_ERR_OK );
-  REQUIRE( called );
-
-  called = false;
-  io_ctx.on_read = [=, &called](char *buffer, size_t size, void *userdata) {
-    called = true;
-    REQUIRE( size == buff_size );
-    const char body[] = "http body";
-    strncpy(buffer, body, strlen(body));
-    return strlen(body);
-  };
-  khc_state_req_body_read(&http);
-  REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_SIZE );
-  REQUIRE( http._result == KHC_ERR_OK );
-  REQUIRE( http._read_req_end == 0 );
-  REQUIRE( called );
-
-  called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-    called = true;
-    const char body[] = "9\r\n";
-    REQUIRE( length == strlen(body) );
-    REQUIRE( strncmp(buffer, body, length) == 0 );
-    *out_sent_length = length;
-    return KHC_SOCK_OK;
-  };
-  khc_state_req_body_send_size(&http);
-  REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND );
-  REQUIRE( http._result == KHC_ERR_OK );
-  REQUIRE( called );
-
-  called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-    called = true;
-    const char body[] = "http body";
-    REQUIRE( length == strlen(body) );
-    REQUIRE( strncmp(buffer, body, length) == 0 );
-    *out_sent_length = length;
-    return KHC_SOCK_OK;
-  };
-  khc_state_req_body_send(&http);
-  REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_CRLF );
-  REQUIRE( http._result == KHC_ERR_OK );
-  REQUIRE( called );
-
-  called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-    called = true;
-    const char body[] = "\r\n";
-    REQUIRE( length == strlen(body) );
-    REQUIRE( strncmp(buffer, body, length) == 0 );
-    *out_sent_length = length;
-    return KHC_SOCK_OK;
-  };
-  khc_state_req_body_send_crlf(&http);
-  REQUIRE( http._state == KHC_STATE_REQ_BODY_READ );
-  REQUIRE( http._result == KHC_ERR_OK );
-  REQUIRE( called );
-
-  called = false;
-  io_ctx.on_read = [=, &called](char *buffer, size_t size, void *userdata) {
-    called = true;
-    REQUIRE( size == buff_size );
-    return 0;
-  };
-  khc_state_req_body_read(&http);
-  REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_SIZE );
-  REQUIRE( http._result == KHC_ERR_OK );
-  REQUIRE( http._read_req_end == 1 );
-  REQUIRE( called );
-
-  called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-    called = true;
-    const char body[] = "0\r\n";
-    REQUIRE( length == strlen(body) );
-    REQUIRE( strncmp(buffer, body, length) == 0 );
-    *out_sent_length = length;
-    return KHC_SOCK_OK;
-  };
-  khc_state_req_body_send_size(&http);
-  REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_CRLF );
-  REQUIRE( http._result == KHC_ERR_OK );
-  REQUIRE( called );
-
-  called = false;
-  s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-    called = true;
-    const char body[] = "\r\n";
-    REQUIRE( length == strlen(body) );
-    REQUIRE( strncmp(buffer, body, length) == 0 );
-    *out_sent_length = length;
-    return KHC_SOCK_OK;
-  };
-  khc_state_req_body_send_crlf(&http);
   REQUIRE( http._state == KHC_STATE_RESP_STATUS_READ );
   REQUIRE( http._result == KHC_ERR_OK );
   REQUIRE( called );
