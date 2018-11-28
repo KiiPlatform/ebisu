@@ -387,29 +387,40 @@ void tio_updater_set_interval(
 
 static void* _update_state(void* data) {
     tio_updater_t* updater = (tio_updater_t*)data;
+    size_t interval_remain_sec = updater->_update_interval;
     while(1) {
-        if (updater->_cb_task_continue != NULL) {
-            tio_bool_t cont = updater->_cb_task_continue(NULL, updater->_task_continue_data);
-            if (cont != KII_TRUE) {
-                break;
+        // Ask to continue every 1 second.
+        const size_t interval_chk_cnt_sec = 1;
+        if (interval_remain_sec > interval_chk_cnt_sec) {
+            if (updater->_cb_task_continue != NULL) {
+                tio_bool_t cont = updater->_cb_task_continue(NULL, updater->_task_continue_data);
+                if (cont != KII_TRUE) {
+                    break;
+                }
             }
-        }
-        updater->_kii.delay_ms_cb(updater->_update_interval * 1000);
-        size_t state_size = updater->_cb_state_size(updater->_cb_state_size_data);
-        if (state_size > 0) {
-            kii_code_t res = kii_ti_put_state(
-                &updater->_kii,
-                updater->_state_reader,
-                updater->_state_reader_data,
-                NULL,
-                NULL);
-            if (res != KII_ERR_OK) {
-                tio_code_t code = _tio_convert_code(res);
-                if (updater->_cb_err != NULL) {
-                    updater->_cb_err(code, "Failed to upload state", updater->_cb_err_data);
+            updater->_kii.delay_ms_cb(interval_chk_cnt_sec * 1000);
+            interval_remain_sec -= interval_chk_cnt_sec;
+        } else {
+            updater->_kii.delay_ms_cb(interval_remain_sec * 1000);
+            interval_remain_sec = updater->_update_interval;
+            size_t state_size = updater->_cb_state_size(updater->_cb_state_size_data);
+            if (state_size > 0) {
+                kii_code_t res = kii_ti_put_state(
+                    &updater->_kii,
+                    updater->_state_reader,
+                    updater->_state_reader_data,
+                    NULL,
+                    NULL);
+                if (res != KII_ERR_OK) {
+                    tio_code_t code = _tio_convert_code(res);
+                    if (updater->_cb_err != NULL) {
+                        updater->_cb_err(code, "Failed to upload state", updater->_cb_err_data);
+                    }
                 }
             }
         }
+
+
     }
     if (updater->_cb_task_exit != NULL) {
         updater->_cb_task_exit(NULL, updater->_task_exit_data);
