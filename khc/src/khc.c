@@ -5,16 +5,14 @@
 #include "khc_state_impl.h"
 #include "khc_socket_callback.h"
 
-khc_code khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size) {
+void khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size) {
   khc->_resp_header_buff = buffer;
   khc->_resp_header_buff_size = buff_size;
-  return KHC_ERR_OK;
 }
 
-khc_code khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size) {
+void khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size) {
   khc->_stream_buff = buffer;
   khc->_stream_buff_size = buff_size;
-  return KHC_ERR_OK;
 }
 
 khc_code khc_perform(khc* khc) {
@@ -29,7 +27,7 @@ khc_code khc_perform(khc* khc) {
   return res;
 }
 
-khc_code khc_set_zero(khc* khc) {
+void khc_set_zero(khc* khc) {
   // Callbacks.
   khc->_cb_write = NULL;
   khc->_write_data = NULL;
@@ -53,11 +51,9 @@ khc_code khc_set_zero(khc* khc) {
   khc->_sock_ctx_close = NULL;
 
   khc_set_zero_excl_cb(khc);
-
-  return KHC_ERR_OK;
 }
 
-khc_code khc_set_zero_excl_cb(khc* khc) {
+void khc_set_zero_excl_cb(khc* khc) {
   khc->_req_headers = NULL;
   khc->_host[0] = '\0';
   khc->_path[0] = '\0';
@@ -92,7 +88,6 @@ khc_code khc_set_zero_excl_cb(khc* khc) {
   khc->_stream_buff = NULL;
   khc->_stream_buff_size = 0;
   khc->_stream_buff_allocated = 0;
-  return KHC_ERR_OK;
 }
 
 int khc_get_status_code(
