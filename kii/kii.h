@@ -657,9 +657,8 @@ void kii_set_task_create_cb(kii_t* kii, KII_TASK_CREATE create_cb);
  * \param continue_cb [in] Callback determines whether to continue or discontinue task.
  * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
  * and calls KII_TASK_EXIT callback if set.
- * task_info argument type of the KII_TASK_CONTINUE function is kii_mqtt_task_info
- * so that you can check MQTT task state.
- * \param userdata [in] Context data pointer passed as second argument when KII_TASK_CONTINUE callback is called.
+ * task_info argument type of the continue_cb function (defined as void* in KII_TASK_EXIT) is kii_mqtt_task_info*.
+ * \param userdata [in] Context data pointer passed as second argument when continue_cb is called.
  */
 void kii_set_task_continue_cb(kii_t* kii, KII_TASK_CONTINUE continue_cb, void* userdata);
 
@@ -684,6 +683,11 @@ void kii_set_task_continue_cb(kii_t* kii, KII_TASK_CONTINUE continue_cb, void* u
 
  * If this API is not called or set NULL,
  * task function immediately returns when task is discontinued or un-recoverble error occurs.
+
+ * \param kii instance
+ * \param exit_cb Called right before the exit.
+ * task_info argument type of exit_cb (defined as void* in KII_TASK_EXIT) is kii_mqtt_task_info*.
+ * \param userdata [in] Context data pointer passed as second argument when exit_cb is called.
  */
 void kii_set_task_exit_cb(kii_t* kii, KII_TASK_EXIT exit_cb, void* userdata);
 void kii_set_delay_ms_cb(kii_t* kii, KII_DELAY_MS delay_cb);
