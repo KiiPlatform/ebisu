@@ -41,13 +41,6 @@ typedef enum kii_code_t
     KII_ERR_FAIL
 } kii_code_t;
 
-/** bool type definition */
-typedef enum kii_bool_t
-{
-    KII_FALSE = 0,
-    KII_TRUE
-} kii_bool_t;
-
 /** represents scope of bucket/ topic. */
 typedef enum kii_scope_type_t
 {
@@ -125,6 +118,12 @@ typedef struct kii_t {
     unsigned int _mqtt_to_send_sec;
 
     KII_TASK_CREATE task_create_cb;
+
+    KII_TASK_CONTINUE _task_continue_cb;
+    void* _task_continue_data;
+
+    KII_TASK_EXIT _task_exit_cb;
+    void* _task_exit_data;
 
     KII_DELAY_MS delay_ms_cb;
 
@@ -659,6 +658,61 @@ int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata)
 int kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec);
 int kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec);
 
+void kii_set_task_create_cb(kii_t* kii, KII_TASK_CREATE create_cb);
+
+/**
+ * \brief set callback determines whether to continue or discontinue task.
+
+ * If this method is not called or NULL is set, task exits only when un-recoverble error occurs.
+ * If you need cancellation mechanism, you need to set this callback.
+ * Terminate task without using this callback may cause memory leak.
+ * This method must be called before calling kii_start_push_routine().
+
+ * In case checking cancellation flag in continue_cb, the flag might be set by other task/ thread.
+ * Implementation must ensure consistency of the flag by using Mutex, etc.
+
+ * If un-recoverble error occurs, task exits the infinite loop and immediately calls KII_TASK_EXIT callback if set.
+ * In this case KII_TASK_CONTINUE callback is not called.
+
+ * \param kii [out] kii instance
+ * \param continue_cb [in] Callback determines whether to continue or discontinue task.
+ * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
+ * and calls KII_TASK_EXIT callback if set.
+ * task_info argument type of the continue_cb function (defined as void* in KII_TASK_EXIT) is kii_mqtt_task_info*.
+ * \param userdata [in] Context data pointer passed as second argument when continue_cb is called.
+ */
+void kii_set_task_continue_cb(kii_t* kii, KII_TASK_CONTINUE continue_cb, void* userdata);
+
+/**
+ * \brief Callback called right before exit of MQTT task.
+
+ * Task exits when the task is discontinued by KII_TASK_CONTINUE callback or
+ * un-recoverble error occurs.
+ * In exit_cb, you'll need to free memory used for MQTT buffer set by kii_set_mqtt_buff(),
+ * Memory used for the userdata passed to following callbacks in case not yet freed.
+
+ * - kii_set_mqtt_cb_sock_send()
+ * - kii_set_mqtt_cb_sock_connect()
+ * - kii_set_mqtt_cb_sock_recv()
+ * - kii_set_mqtt_cb_sock_close()
+ * - kii_set_task_continue_cb()
+ * - kii_set_task_exit_cb()
+
+ * In addition, you may need to call task/ thread termination API.
+ * It depends on the task/ threading framework you used to create task/ thread.
+ * After the exit_cb returned, task function immediately returns.
+
+ * If this API is not called or set NULL,
+ * task function immediately returns when task is discontinued or un-recoverble error occurs.
+
+ * \param kii instance
+ * \param exit_cb Called right before the exit.
+ * task_info argument type of exit_cb (defined as void* in KII_TASK_EXIT) is kii_mqtt_task_info*.
+ * \param userdata [in] Context data pointer passed as second argument when exit_cb is called.
+ */
+void kii_set_task_exit_cb(kii_t* kii, KII_TASK_EXIT exit_cb, void* userdata);
+void kii_set_delay_ms_cb(kii_t* kii, KII_DELAY_MS delay_cb);
+
 /** Set JSON paraser resource
  * @param [inout] kii SDK instance.
  * @param [in] resource to be used parse JSON. 256 tokens_num might be enough for almost all usecases.
@@ -694,6 +748,37 @@ kii_code_t kii_set_slist_resource_cb(
 const char* kii_get_etag(kii_t* kii);
 
 int kii_get_resp_status(kii_t* kii);
+
+
+typedef enum
+{
+    KII_MQTT_ST_INSTALL_PUSH,
+    KII_MQTT_ST_GET_ENDPOINT,
+    KII_MQTT_ST_SOCK_CONNECT,
+    KII_MQTT_ST_SEND_CONNECT,
+    KII_MQTT_ST_RECV_CONNACK,
+    KII_MQTT_ST_SEND_SUBSCRIBE,
+    KII_MQTT_ST_RECV_SUBACK,
+    KII_MQTT_ST_RECV_READY,
+    KII_MQTT_ST_RECV_MSG,
+    KII_MQTT_ST_SEND_PINGREQ,
+    KII_MQTT_ST_RECONNECT,
+    KII_MQTT_ST_ERR_EXIT,
+    KII_MQTT_ST_DISCONTINUED,
+} kii_mqtt_task_state;
+
+typedef enum
+{
+    KII_MQTT_ERR_OK,
+    KII_MQTT_ERR_INSTALLATION,
+    KII_MQTT_ERR_GET_ENDPOINT,
+    KII_MQTT_ERR_INSUFFICIENT_BUFF
+} kii_mqtt_error;
+
+typedef struct {
+    kii_mqtt_error error;
+    kii_mqtt_task_state task_state;
+} kii_mqtt_task_info;
 
 #ifdef __cplusplus
 }

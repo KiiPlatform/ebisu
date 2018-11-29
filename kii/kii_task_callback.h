@@ -10,6 +10,13 @@ typedef enum kii_task_code_t {
     KII_TASKC_FAIL
 } kii_task_code_t;
 
+/** bool type definition */
+typedef enum kii_bool_t
+{
+    KII_FALSE = 0,
+    KII_TRUE
+} kii_bool_t;
+
 typedef void* (*KII_TASK_ENTRY)(void* value);
 
 typedef kii_task_code_t
@@ -21,6 +28,16 @@ typedef kii_task_code_t
 typedef void
 (*KII_DELAY_MS)
     (unsigned int msec);
+
+typedef void
+(*KII_TASK_EXIT)
+    (void* task_info,
+    void* userdata);
+
+typedef kii_bool_t
+(*KII_TASK_CONTINUE)
+    (void* task_info,
+    void* userdata);
 
 #ifdef __cplusplus
 }

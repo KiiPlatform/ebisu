@@ -1,16 +1,40 @@
 #include <string.h>
 #include "tio.h"
 #include "kii.h"
+#include "kii_task_callback.h"
 #include "khc.h"
 #include "tio_impl.h"
 #include "command_parser.h"
 
 const char TIO_TASK_NAME_UPDATE_STATE[] = "task_update_state";
 
+void _convert_task_info(kii_mqtt_task_info* mqtt_info, tio_handler_task_info_t* task_info) {
+    task_info->error = mqtt_info->error;
+    task_info->task_state = mqtt_info->task_state;
+}
+
+void _task_exit(void* task_info, void* userdata) {
+    kii_mqtt_task_info* mqtt_info = (kii_mqtt_task_info*) task_info;
+    tio_handler_task_info_t tio_task_info;
+    _convert_task_info(mqtt_info, &tio_task_info);
+    tio_handler_t* handler = (tio_handler_t*)userdata;
+    handler->_cb_task_exit(&tio_task_info, handler->_task_exit_data);
+}
+
+tio_bool_t _task_continue(void* task_info, void* userdata) {
+    kii_mqtt_task_info* mqtt_info = (kii_mqtt_task_info*) task_info;
+    tio_handler_task_info_t tio_task_info;
+    _convert_task_info(mqtt_info, &tio_task_info);
+    tio_handler_t* handler = (tio_handler_t*)userdata;
+    return handler->_cb_task_continue(&tio_task_info, handler->_task_continue_data);
+}
+
 void tio_handler_init(tio_handler_t* handler)
 {
     kii_init(&handler->_kii);
     handler->_cb_err = NULL;
+    kii_set_task_continue_cb(&handler->_kii, _task_continue, handler);
+    kii_set_task_exit_cb(&handler->_kii, _task_exit, handler);
     handler->_cb_push = NULL;
 }
 
@@ -109,6 +133,18 @@ void tio_handler_set_cb_task_create(
     KII_TASK_CREATE cb_task_create)
 {
     handler->_kii.task_create_cb = cb_task_create;
+}
+
+void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_TASK_CONTINUE cb_continue, void* userdata)
+{
+    handler->_cb_task_continue = cb_continue;
+    handler->_task_continue_data = userdata;
+}
+
+void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_TASK_EXIT cb_exit, void* userdata)
+{
+    handler->_cb_task_exit = cb_exit;
+    handler->_task_exit_data = userdata;
 }
 
 void tio_handler_set_cb_delay_ms(
@@ -288,6 +324,18 @@ void tio_updater_set_cb_task_create(
     updater->_kii.task_create_cb = cb_task_create;
 }
 
+void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_TASK_CONTINUE cb_continue, void* userdata)
+{
+    updater->_cb_task_continue = cb_continue;
+    updater->_task_continue_data = userdata;
+}
+
+void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_TASK_EXIT cb_exit, void* userdata)
+{
+    updater->_cb_task_exit = cb_exit;
+    updater->_task_exit_data = userdata;
+}
+
 void tio_updater_set_cb_delay_ms(
     tio_updater_t* updater,
     KII_DELAY_MS cb_delay_ms)
@@ -339,23 +387,43 @@ void tio_updater_set_interval(
 
 static void* _update_state(void* data) {
     tio_updater_t* updater = (tio_updater_t*)data;
+    size_t interval_remain_sec = updater->_update_interval;
     while(1) {
-        updater->_kii.delay_ms_cb(updater->_update_interval * 1000);
-        size_t state_size = updater->_cb_state_size(updater->_cb_state_size_data);
-        if (state_size > 0) {
-            kii_code_t res = kii_ti_put_state(
-                &updater->_kii,
-                updater->_state_reader,
-                updater->_state_reader_data,
-                NULL,
-                NULL);
-            if (res != KII_ERR_OK) {
-                tio_code_t code = _tio_convert_code(res);
-                if (updater->_cb_err != NULL) {
-                    updater->_cb_err(code, "Failed to upload state", updater->_cb_err_data);
+        // Ask to continue every 1 second.
+        const size_t interval_chk_cnt_sec = 1;
+        if (interval_remain_sec > interval_chk_cnt_sec) {
+            if (updater->_cb_task_continue != NULL) {
+                tio_bool_t cont = updater->_cb_task_continue(NULL, updater->_task_continue_data);
+                if (cont != KII_TRUE) {
+                    break;
+                }
+            }
+            updater->_kii.delay_ms_cb(interval_chk_cnt_sec * 1000);
+            interval_remain_sec -= interval_chk_cnt_sec;
+        } else {
+            updater->_kii.delay_ms_cb(interval_remain_sec * 1000);
+            interval_remain_sec = updater->_update_interval;
+            size_t state_size = updater->_cb_state_size(updater->_cb_state_size_data);
+            if (state_size > 0) {
+                kii_code_t res = kii_ti_put_state(
+                    &updater->_kii,
+                    updater->_state_reader,
+                    updater->_state_reader_data,
+                    NULL,
+                    NULL);
+                if (res != KII_ERR_OK) {
+                    tio_code_t code = _tio_convert_code(res);
+                    if (updater->_cb_err != NULL) {
+                        updater->_cb_err(code, "Failed to upload state", updater->_cb_err_data);
+                    }
                 }
             }
         }
+
+
+    }
+    if (updater->_cb_task_exit != NULL) {
+        updater->_cb_task_exit(NULL, updater->_task_exit_data);
     }
     return NULL;
 }

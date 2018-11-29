@@ -5,22 +5,6 @@
 
 typedef enum { QOS0, QOS1, QOS2 } kii_mqtt_qos;
 
-typedef enum
-{
-    KII_MQTT_ST_INSTALL_PUSH,
-    KII_MQTT_ST_GET_ENDPOINT,
-    KII_MQTT_ST_SOCK_CONNECT,
-    KII_MQTT_ST_SEND_CONNECT,
-    KII_MQTT_ST_RECV_CONNACK,
-    KII_MQTT_ST_SEND_SUBSCRIBE,
-    KII_MQTT_ST_RECV_SUBACK,
-    KII_MQTT_ST_RECV_READY,
-    KII_MQTT_ST_RECV_MSG,
-    KII_MQTT_ST_SEND_PINGREQ,
-    KII_MQTT_ST_RECONNECT,
-    KII_MQTT_ST_ERR_EXIT
-} kii_mqtt_task_state;
-
 typedef struct {
     char byte1;
     unsigned long remaining_length;

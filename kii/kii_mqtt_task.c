@@ -266,12 +266,15 @@ khc_sock_code_t _mqtt_recv_remaining(kii_t* kii, unsigned long remaining_length,
 void* mqtt_start_task(void* sdata)
 {
     kii_t* kii = (kii_t*)sdata;
-    kii_mqtt_task_state st = KII_MQTT_ST_INSTALL_PUSH;
     const unsigned int wait_ms = 1000;
     kii_installation_id_t ins_id;
     kii_mqtt_endpoint_t endpoint;
     memset(&endpoint, 0x00, sizeof(kii_mqtt_endpoint_t));
-    const char* err_msg = NULL;
+
+    kii_mqtt_task_info task_info;
+    task_info.error = KII_MQTT_ERR_OK;
+    task_info.task_state = KII_MQTT_ST_INSTALL_PUSH;
+
     unsigned int keep_alive_interval = kii->_keep_alive_interval;
     unsigned int elapsed_time_ms = 0;
     const unsigned int arrived_msg_read_time = 500;
@@ -279,9 +282,15 @@ void* mqtt_start_task(void* sdata)
     unsigned long remaining_message_size = 0;
     time_t started;
     time(&started);
-    while (st != KII_MQTT_ST_ERR_EXIT) {
-        printf("Loop state: %d\n", st);
-        switch(st) {
+    while (task_info.task_state != KII_MQTT_ST_ERR_EXIT) {
+        if (kii->_task_continue_cb != NULL) {
+            kii_bool_t cont = kii->_task_continue_cb(&task_info, kii->_task_continue_data);
+            if (cont != KII_TRUE) {
+                task_info.task_state = KII_MQTT_ST_DISCONTINUED;
+                break;
+            }
+        }
+        switch(task_info.task_state) {
             case KII_MQTT_ST_INSTALL_PUSH: {
                 kii_code_t res = kii_install_push(kii, KII_FALSE, &ins_id);
                 if (res != KII_ERR_OK) {
@@ -292,12 +301,12 @@ void* mqtt_start_task(void* sdata)
                         break;
                     } else {
                         // Permanent error. Exit loop.
-                        err_msg = "Failed to install push";
-                        st = KII_MQTT_ST_ERR_EXIT;
+                        task_info.error= KII_MQTT_ERR_INSTALLATION;
+                        task_info.task_state = KII_MQTT_ST_ERR_EXIT;
                         break;
                     }
                 }
-                st = KII_MQTT_ST_GET_ENDPOINT;
+                task_info.task_state = KII_MQTT_ST_GET_ENDPOINT;
                 break;
             }
             case KII_MQTT_ST_GET_ENDPOINT: {
@@ -309,12 +318,12 @@ void* mqtt_start_task(void* sdata)
                         // Temporal error. Try again.
                         break;
                     } else {
-                        err_msg = "Failed to get Endpoint";
-                        st = KII_MQTT_ST_ERR_EXIT;
+                        task_info.error = KII_MQTT_ERR_GET_ENDPOINT;
+                        task_info.task_state = KII_MQTT_ST_ERR_EXIT;
                         break;
                     }
                 } else {
-                    st = KII_MQTT_ST_SOCK_CONNECT;
+                    task_info.task_state = KII_MQTT_ST_SOCK_CONNECT;
                     break;
                 }
             }
@@ -335,31 +344,29 @@ void* mqtt_start_task(void* sdata)
                     kii->delay_ms_cb(wait_ms);
                     break;
                 } else {
-                    st = KII_MQTT_ST_SEND_CONNECT;
+                    task_info.task_state = KII_MQTT_ST_SEND_CONNECT;
                     break;
                 }
             }
             case KII_MQTT_ST_SEND_CONNECT: {
                 if (kii->mqtt_buffer == NULL || kii->mqtt_buffer_size == 0) {
-                    // TODO: check before staring routine.
-                    err_msg = "MQTT buffer is not set";
-                    st = KII_MQTT_ST_ERR_EXIT;
+                    task_info.error = KII_MQTT_ERR_INSUFFICIENT_BUFF;
+                    task_info.task_state = KII_MQTT_ST_ERR_EXIT;
                     break;
                 }
                 if (kii->mqtt_buffer_size < 27 + strlen(endpoint.topic) +
                         strlen(endpoint.username) + strlen(endpoint.password)) {
-                    // TODO: check before staring routine.
-                    err_msg = "Too small MQTT buffer size";
-                    st = KII_MQTT_ST_ERR_EXIT;
+                    task_info.error = KII_MQTT_ERR_INSUFFICIENT_BUFF;
+                    task_info.task_state = KII_MQTT_ST_ERR_EXIT;
                     break;
                 }
                 khc_sock_code_t send_err = _mqtt_send_connect(kii, &endpoint);
                 if (send_err == KHC_SOCK_FAIL) {
                     kii->delay_ms_cb(wait_ms);
-                    st = KII_MQTT_ST_RECONNECT;
+                    task_info.task_state = KII_MQTT_ST_RECONNECT;
                     break;
                 }
-                st = KII_MQTT_ST_RECV_CONNACK;
+                task_info.task_state = KII_MQTT_ST_RECV_CONNACK;
                 break;
             }
             case KII_MQTT_ST_RECV_CONNACK: {
@@ -367,14 +374,14 @@ void* mqtt_start_task(void* sdata)
                 khc_sock_code_t res = _mqtt_recv_fixed_header(kii, &fixed_header);
                 if (res != KII_ERR_OK) {
                     kii->delay_ms_cb(wait_ms);
-                    st = KII_MQTT_ST_RECONNECT;
+                    task_info.task_state = KII_MQTT_ST_RECONNECT;
                     break;
                 }
                 char ptype = fixed_header.byte1 & 0xf0;
                 if (ptype != 0x20) {
                     // Must not happens. CONNACK must be the first response.
                     kii->delay_ms_cb(wait_ms);
-                    st = KII_MQTT_ST_RECONNECT;
+                    task_info.task_state = KII_MQTT_ST_RECONNECT;
                     break;
                 }
                 // CONNACK variable header LENGTH is always 2.
@@ -384,17 +391,17 @@ void* mqtt_start_task(void* sdata)
                 khc_sock_code_t res2 = _mqtt_recv_remaining(kii, length, buff);
                 if (res2 != KII_ERR_OK) {
                     kii->delay_ms_cb(wait_ms);
-                    st = KII_MQTT_ST_RECONNECT;
+                    task_info.task_state = KII_MQTT_ST_RECONNECT;
                     break;
                 }
                 char return_code = buff[1];
                 if (return_code != 0) {
                     // CONNACK indicates failure.
                     kii->delay_ms_cb(wait_ms);
-                    st = KII_MQTT_ST_RECONNECT;
+                    task_info.task_state = KII_MQTT_ST_RECONNECT;
                     break;
                 }
-                st = KII_MQTT_ST_SEND_SUBSCRIBE;
+                task_info.task_state = KII_MQTT_ST_SEND_SUBSCRIBE;
                 break;
             }
             case KII_MQTT_ST_SEND_SUBSCRIBE: {
@@ -402,10 +409,10 @@ void* mqtt_start_task(void* sdata)
                 khc_sock_code_t res = _mqtt_send_subscribe(kii, endpoint.topic, QOS0);
                 if (res == KHC_SOCK_FAIL) {
                     kii->delay_ms_cb(wait_ms);
-                    st = KII_MQTT_ST_RECONNECT;
+                    task_info.task_state = KII_MQTT_ST_RECONNECT;
                     break;
                 } else { // KHC_ERR_OK.
-                    st = KII_MQTT_ST_RECV_SUBACK;
+                    task_info.task_state = KII_MQTT_ST_RECV_SUBACK;
                     break;
                 }
             }
@@ -414,13 +421,13 @@ void* mqtt_start_task(void* sdata)
                 khc_sock_code_t res = _mqtt_recv_fixed_header(kii, &fixed_header);
                 if (res != KII_ERR_OK) {
                     kii->delay_ms_cb(wait_ms);
-                    st = KII_MQTT_ST_RECONNECT;
+                    task_info.task_state = KII_MQTT_ST_RECONNECT;
                     break;
                 }
                 unsigned char ptype = fixed_header.byte1 & 0xf0;
                 if (ptype != 0x90) {
                     kii->delay_ms_cb(wait_ms);
-                    st = KII_MQTT_ST_RECONNECT;
+                    task_info.task_state = KII_MQTT_ST_RECONNECT;
                     break;
                 }
                 const char len = 3;
@@ -429,25 +436,25 @@ void* mqtt_start_task(void* sdata)
                 khc_sock_code_t res2 = _mqtt_recv_remaining(kii, len, buff);
                 if (res2 != KII_ERR_OK) {
                     kii->delay_ms_cb(wait_ms);
-                    st = KII_MQTT_ST_RECONNECT;
+                    task_info.task_state = KII_MQTT_ST_RECONNECT;
                     break;
                 }
                 if (buff[0] == 0x00 && // Identifier MSB
                     buff[1] == 0x01 && // Identifier LSB
                     (unsigned char)buff[2] != 0x80) // Return Code
                 {
-                    st = KII_MQTT_ST_RECV_READY;
+                    task_info.task_state = KII_MQTT_ST_RECV_READY;
                     break;
                 } else {
                     kii->delay_ms_cb(wait_ms);
-                    st = KII_MQTT_ST_RECONNECT;
+                    task_info.task_state = KII_MQTT_ST_RECONNECT;
                     break;
                 }
             }
             case KII_MQTT_ST_RECV_READY: {
                 const int thresh_ms = (keep_alive_interval - kii->_mqtt_to_recv_sec) * 1000;
                 if (elapsed_time_ms > thresh_ms) {
-                    st = KII_MQTT_ST_SEND_PINGREQ;
+                    task_info.task_state = KII_MQTT_ST_SEND_PINGREQ;
                     break;
                 }
                 kii_mqtt_fixed_header fh;
@@ -456,7 +463,7 @@ void* mqtt_start_task(void* sdata)
                     unsigned char mtype = fh.byte1 & 0xf0;
                     if (mtype == 0x30) { // PUBLISH
                         remaining_message_size = fh.remaining_length;
-                        st = KII_MQTT_ST_RECV_MSG;
+                        task_info.task_state = KII_MQTT_ST_RECV_MSG;
                         // Estimate worst case.
                         elapsed_time_ms += kii->_mqtt_to_recv_sec * 1000;
                         break;
@@ -470,7 +477,7 @@ void* mqtt_start_task(void* sdata)
                         if (res != KHC_SOCK_OK) {
                             elapsed_time_ms = 0;
                             kii->delay_ms_cb(wait_ms);
-                            st = KII_MQTT_ST_RECONNECT;
+                            task_info.task_state = KII_MQTT_ST_RECONNECT;
                         }
                         break;
                     }
@@ -488,11 +495,11 @@ void* mqtt_start_task(void* sdata)
                     if (res != KHC_SOCK_OK) {
                         elapsed_time_ms = 0;
                         kii->delay_ms_cb(wait_ms);
-                        st = KII_MQTT_ST_RECONNECT;
+                        task_info.task_state = KII_MQTT_ST_RECONNECT;
                     } else {
                         elapsed_time_ms += arrived_msg_read_time + wait_ms;
                         kii->delay_ms_cb(wait_ms);
-                        st = KII_MQTT_ST_RECV_READY;
+                        task_info.task_state = KII_MQTT_ST_RECV_READY;
                     }
                     break;
                 } else {
@@ -501,7 +508,7 @@ void* mqtt_start_task(void* sdata)
                     if (res != KHC_SOCK_OK) {
                         elapsed_time_ms = 0;
                         kii->delay_ms_cb(wait_ms);
-                        st = KII_MQTT_ST_RECONNECT;
+                        task_info.task_state = KII_MQTT_ST_RECONNECT;
                     } else {
                         elapsed_time_ms += arrived_msg_read_time;
                         unsigned int topic_size = (unsigned int)kii->mqtt_buffer[0] * 256 + (unsigned int)kii->mqtt_buffer[1];
@@ -509,7 +516,7 @@ void* mqtt_start_task(void* sdata)
                         char* body_ptr = kii->mqtt_buffer + topic_size + 2;
                         size_t body_length = remaining_message_size - topic_size - 2;
                         kii->push_received_cb(body_ptr, body_length, kii->_push_data);
-                        st = KII_MQTT_ST_RECV_READY;
+                        task_info.task_state = KII_MQTT_ST_RECV_READY;
                     }
                     break;
                 }
@@ -524,22 +531,25 @@ void* mqtt_start_task(void* sdata)
                 if (res != KHC_SOCK_OK) {
                     elapsed_time_ms = 0;
                     kii->delay_ms_cb(wait_ms);
-                    st = KII_MQTT_ST_RECONNECT;
+                    task_info.task_state = KII_MQTT_ST_RECONNECT;
                     break;
                 }
                 elapsed_time_ms = msg_send_time;
-                st = KII_MQTT_ST_RECV_READY;
+                task_info.task_state = KII_MQTT_ST_RECV_READY;
                 break;
             }
             case KII_MQTT_ST_RECONNECT: {
                 kii->mqtt_sock_close_cb(kii->mqtt_sock_close_ctx);
-                st = KII_MQTT_ST_SOCK_CONNECT;
+                task_info.task_state = KII_MQTT_ST_SOCK_CONNECT;
                 break;
             }
             default:
-                st = KII_MQTT_ST_ERR_EXIT;
+                task_info.task_state = KII_MQTT_ST_ERR_EXIT;
                 break;
         }
+    }
+    if (kii->_task_exit_cb != NULL) {
+        kii->_task_exit_cb(&task_info, kii->_task_exit_data);
     }
     return NULL;
 }

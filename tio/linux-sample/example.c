@@ -8,9 +8,12 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <stdatomic.h>
+#include <stdbool.h>
 
 #include <pthread.h>
 #include <unistd.h>
+#include <signal.h>
 #include "sys_cb_impl.h"
 #include "sock_cb_linux.h"
 
@@ -20,6 +23,41 @@ static void print_help() {
 
     printf("onboard with vendor-thing-id\n");
     printf("./exampleapp onboard --vendor-thing-id={vendor thing id} --password={password}\n\n");
+}
+
+// Using C11 atomic types.
+atomic_bool term_flag = false;
+atomic_bool handler_terminated = false;
+atomic_bool updater_terminated = false;
+
+tio_bool_t _handler_continue(void* task_info, void* userdata) {
+    if (term_flag == true) {
+        return KII_FALSE;
+    } else {
+        return KII_TRUE;
+    }
+}
+
+tio_bool_t _updater_continue(void* task_info, void* userdata) {
+    if (term_flag == true) {
+        return KII_FALSE;
+    } else {
+        return KII_TRUE;
+    }
+}
+
+void _handler_exit(void* task_info, void* userdata) {
+    printf("_handler_exit called\n");
+    handler_terminated = true;
+}
+
+void _updater_exit(void* task_info, void* userdata) {
+    printf("_updater_exit called\n");
+    updater_terminated = true;
+}
+
+void sig_handler(int sig, siginfo_t *info, void *ctx) {
+    term_flag = 1;
 }
 
 void updater_init(
@@ -46,6 +84,9 @@ void updater_init(
     tio_updater_set_interval(updater, UPDATE_PERIOD_SEC);
 
     tio_updater_set_json_parser_resource(updater, resource);
+
+    tio_updater_set_cb_task_continue(updater, _updater_continue, NULL);
+    tio_updater_set_cb_task_exit(updater, _updater_exit, NULL);
 }
 
 const char send_file[] = "state.json";
@@ -144,6 +185,9 @@ void handler_init(
     tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
 
     tio_handler_set_json_parser_resource(handler, resource);
+
+    tio_handler_set_cb_task_continue(handler, _handler_continue, NULL);
+    tio_handler_set_cb_task_exit(handler, _handler_exit, NULL);
 }
 
 tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, void* userdata)
@@ -156,6 +200,17 @@ tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, void*
 int main(int argc, char** argv)
 {
     char* subc = argv[1];
+
+    // Setup Signal handler. (Ctrl-C)
+    struct sigaction sa_sigint;
+    memset(&sa_sigint, 0, sizeof(sa_sigint));
+    sa_sigint.sa_sigaction = sig_handler;
+    sa_sigint.sa_flags = SA_SIGINFO;
+
+    if (sigaction(SIGINT, &sa_sigint, NULL) < 0) {
+        printf("failed to register sigaction\n");
+        exit(1);
+    }
 
     tio_updater_t updater;
 
@@ -284,9 +339,18 @@ int main(int argc, char** argv)
             updater_cb_read,
             &updater_file_ctx);
 
-    /* run forever. TODO: Convert to daemon. */
-    while(1){ sleep(1); };
-
+    bool end = false;
+    bool disp_msg = false;
+    while(!end){
+        sleep(1);
+        if (term_flag && !disp_msg) {
+            printf("Waiting for exiting tasks...\n");
+            disp_msg = true;
+        }
+        if (handler_terminated && updater_terminated) {
+            end = true;
+        }
+    };
 }
 
 /* vim: set ts=4 sts=4 sw=4 et fenc=utf-8 ff=unix: */
