@@ -399,7 +399,7 @@ kii_code_t kii_get_mqtt_endpoint(
  *  \param [in] MQTT keep alive interval in second. If 0, Keep Alive mechanism is disabled.
  * Otherwise, ping req is sent to MQTT broker periodically with the specified interval.
  * Sending too many request with short interval consumes resouces. We recommend 30 seconds or longer interval.
- *  \param [in] callback  callback function called when push message delivered. 
+ *  \param [in] callback  callback function called when push message delivered.
  *  \param [in] userdata context object passed to callback.
  *  \return kii_code_t
  */
@@ -446,6 +446,27 @@ kii_code_t kii_ti_put_thing_type(
     const char* thing_type);
 
 kii_code_t kii_ti_put_state(
+    kii_t* kii,
+    KII_CB_READ state_read_cb,
+    void* state_read_cb_data,
+    const char* opt_content_type,
+    const char* opt_normalizer_host);
+
+kii_code_t kii_ti_put_bulk_states(
+    kii_t* kii,
+    KII_CB_READ state_read_cb,
+    void* state_read_cb_data,
+    const char* opt_content_type,
+    const char* opt_normalizer_host);
+
+kii_code_t kii_ti_patch_state(
+    kii_t* kii,
+    KII_CB_READ state_read_cb,
+    void* state_read_cb_data,
+    const char* opt_content_type,
+    const char* opt_normalizer_host);
+
+kii_code_t kii_ti_patch_bulk_states(
     kii_t* kii,
     KII_CB_READ state_read_cb,
     void* state_read_cb_data,
