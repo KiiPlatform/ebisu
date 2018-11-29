@@ -78,10 +78,6 @@ typedef struct tio_handler_t {
     TIO_CB_PUSH _cb_push;
     void* _cb_push_data;
     kii_t _kii;
-    char* _http_buff;
-    size_t _http_buff_size;
-    char* _mqtt_buff;
-    size_t _mqtt_buff_size;
     size_t _keep_alive_interval;
     KII_TASK_CONTINUE _cb_task_continue;
     void* _task_continue_data;
