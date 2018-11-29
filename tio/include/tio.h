@@ -189,7 +189,7 @@ void tio_handler_set_cb_sock_close_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CLOS
 void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_sock_recv_sec);
 void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, unsigned int to_sock_send_sec);
 
-void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_TASK_CREATE cb_task_create);
+void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_TASK_CREATE cb_task_create, void* userdata);
 
 /**
  * \brief set callback determines whether to continue or discontinue task.
@@ -249,7 +249,7 @@ void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_TASK_CONTINUE 
  * \param userdata [in] Context data pointer passed as second argument when cb_exit is called.
  */
 void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_TASK_EXIT cb_exit, void* userdata);
-void tio_handler_set_cb_delay_ms(tio_handler_t* handler, KII_DELAY_MS cb_delay_ms);
+void tio_handler_set_cb_delay_ms(tio_handler_t* handler, KII_DELAY_MS cb_delay_ms, void* userdata);
 
 void tio_handler_set_cb_err(tio_handler_t* handler, TIO_CB_ERR cb_err, void* userdata);
 
@@ -330,7 +330,7 @@ void tio_updater_set_cb_sock_send(tio_updater_t* updater, KHC_CB_SOCK_SEND cb_se
 void tio_updater_set_cb_sock_recv(tio_updater_t* updater, KHC_CB_SOCK_RECV cb_recv, void* userdata);
 void tio_updater_set_cb_sock_close(tio_updater_t* updater, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
 
-void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_TASK_CREATE cb_task_create);
+void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_TASK_CREATE cb_task_create, void* userdata);
 
 /**
  * \brief set callback determines whether to continue or discontinue task.
@@ -381,7 +381,7 @@ void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_TASK_CONTINUE 
  * \param userdata [in] Context data pointer passed as second argument when cb_exit is called.
  */
 void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_TASK_EXIT cb_exit, void* userdata);
-void tio_updater_set_cb_delay_ms(tio_updater_t* updater, KII_DELAY_MS cb_delay_ms);
+void tio_updater_set_cb_delay_ms(tio_updater_t* updater, KII_DELAY_MS cb_delay_ms, void* userdata);
 
 void tio_updater_set_cb_error(tio_updater_t* updater, TIO_CB_ERR cb_err, void* userdata);
 
