@@ -18,7 +18,9 @@ void _task_exit(void* task_info, void* userdata) {
     tio_handler_task_info_t tio_task_info;
     _convert_task_info(mqtt_info, &tio_task_info);
     tio_handler_t* handler = (tio_handler_t*)userdata;
-    handler->_cb_task_exit(&tio_task_info, handler->_task_exit_data);
+    if (handler->_cb_task_exit != NULL) {
+        handler->_cb_task_exit(&tio_task_info, handler->_task_exit_data);
+    }
 }
 
 tio_bool_t _task_continue(void* task_info, void* userdata) {
@@ -26,7 +28,11 @@ tio_bool_t _task_continue(void* task_info, void* userdata) {
     tio_handler_task_info_t tio_task_info;
     _convert_task_info(mqtt_info, &tio_task_info);
     tio_handler_t* handler = (tio_handler_t*)userdata;
-    return handler->_cb_task_continue(&tio_task_info, handler->_task_continue_data);
+    if (handler->_cb_task_continue != NULL) {
+        return handler->_cb_task_continue(&tio_task_info, handler->_task_continue_data);
+    } else {
+        return KII_FALSE;
+    }
 }
 
 void tio_handler_init(tio_handler_t* handler)
@@ -39,6 +45,10 @@ void tio_handler_init(tio_handler_t* handler)
     handler->_cb_push = NULL;
     handler->_cb_push_data = NULL;
     handler->_keep_alive_interval = 300;
+    handler->_cb_task_continue = NULL;
+    handler->_task_continue_data = NULL;
+    handler->_cb_task_exit = NULL;
+    handler->_task_exit_data = NULL;
     kii_set_task_continue_cb(&handler->_kii, _task_continue, handler);
     kii_set_task_exit_cb(&handler->_kii, _task_exit, handler);
 }
