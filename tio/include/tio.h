@@ -291,7 +291,7 @@ void tio_handler_set_cb_json_parser_resource(
  * tio_handler_set_app(tio_handler_t*, const char*, const char*) since the
  * tio_handler_set_app() method has side effect resetting to default memory allocator.
  */
-void tio_handler_set_slist_resource_cb(
+void tio_handler_set_cb_slist_resource(
     tio_handler_t* handler,
     KHC_CB_SLIST_ALLOC cb_alloc,
     KHC_CB_SLIST_FREE cb_free,
@@ -465,7 +465,7 @@ void tio_updater_set_cb_json_parser_resource(
  * tio_updater_set_app(tio_updater_t*, const char*, const char*) since the
  * tio_updater_set_app() method has side effect resetting to default memory allocator.
  */
-void tio_updater_set_slist_resource_cb(
+void tio_updater_set_cb_slist_resource(
     tio_updater_t* updater,
     KHC_CB_SLIST_ALLOC cb_alloc,
     KHC_CB_SLIST_FREE cb_free,

@@ -242,7 +242,7 @@ void tio_handler_set_cb_json_parser_resource(
     kii_set_cb_json_parser_resource(&handler->_kii, cb_alloc, cb_free);
 }
 
-void tio_handler_set_slist_resource_cb(
+void tio_handler_set_cb_slist_resource(
     tio_handler_t* handler,
     KHC_CB_SLIST_ALLOC cb_alloc,
     KHC_CB_SLIST_FREE cb_free,
@@ -471,7 +471,7 @@ void tio_updater_set_cb_json_parser_resource(
     kii_set_cb_json_parser_resource(&updater->_kii, cb_alloc, cb_free);
 }
 
-void tio_updater_set_slist_resource_cb(
+void tio_updater_set_cb_slist_resource(
     tio_updater_t* updater,
     KHC_CB_SLIST_ALLOC cb_alloc,
     KHC_CB_SLIST_FREE cb_free,
