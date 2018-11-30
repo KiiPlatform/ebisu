@@ -676,7 +676,7 @@ void kii_set_cb_task_create(kii_t* kii, KII_CB_TASK_CREATE create_cb, void* user
  * task_info argument type of the continue_cb function (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info*.
  * \param userdata [in] Context data pointer passed as second argument when continue_cb is called.
  */
-void kii_set_task_continue_cb(kii_t* kii, KII_CB_TASK_CONTINUE continue_cb, void* userdata);
+void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE continue_cb, void* userdata);
 
 /**
  * \brief Callback called right before exit of MQTT task.
@@ -690,7 +690,7 @@ void kii_set_task_continue_cb(kii_t* kii, KII_CB_TASK_CONTINUE continue_cb, void
  * - kii_set_cb_mqtt_sock_connect()
  * - kii_set_cb_mqtt_sock_recv()
  * - kii_set_cb_mqtt_sock_close()
- * - kii_set_task_continue_cb()
+ * - kii_set_cb_task_continue()
  * - kii_set_task_exit_cb()
 
  * In addition, you may need to call task/ thread termination API.

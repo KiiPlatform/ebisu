@@ -49,7 +49,7 @@ void tio_handler_init(tio_handler_t* handler)
     handler->_task_continue_data = NULL;
     handler->_cb_task_exit = NULL;
     handler->_task_exit_data = NULL;
-    kii_set_task_continue_cb(&handler->_kii, _task_continue, handler);
+    kii_set_cb_task_continue(&handler->_kii, _task_continue, handler);
     kii_set_task_exit_cb(&handler->_kii, _task_exit, handler);
 }
 
