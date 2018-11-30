@@ -20,7 +20,7 @@ typedef enum kii_bool_t
 typedef void* (*KII_TASK_ENTRY)(void* value);
 
 typedef kii_task_code_t
-(*KII_TASK_CREATE)
+(*KII_CB_TASK_CREATE)
     (const char* name,
      KII_TASK_ENTRY entry,
      void* entry_param,

@@ -117,7 +117,7 @@ typedef struct kii_t {
     unsigned int _mqtt_to_recv_sec;
     unsigned int _mqtt_to_send_sec;
 
-    KII_TASK_CREATE task_create_cb;
+    KII_CB_TASK_CREATE task_create_cb;
     void* _task_create_data;
 
     KII_TASK_CONTINUE _task_continue_cb;
@@ -653,7 +653,7 @@ void kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata
 void kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec);
 void kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec);
 
-void kii_set_task_create_cb(kii_t* kii, KII_TASK_CREATE create_cb, void* userdata);
+void kii_set_task_create_cb(kii_t* kii, KII_CB_TASK_CREATE create_cb, void* userdata);
 
 /**
  * \brief set callback determines whether to continue or discontinue task.

@@ -43,7 +43,7 @@ Task create callback function signature is following.
 
 ```c
 typedef kii_task_code_t
-(*KII_TASK_CREATE)
+(*KII_CB_TASK_CREATE)
     (const char* name,
      KII_TASK_ENTRY entry,
      void* param);

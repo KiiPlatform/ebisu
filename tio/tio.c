@@ -145,7 +145,7 @@ void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, unsigned int to_s
 
 void tio_handler_set_cb_task_create(
     tio_handler_t* handler,
-    KII_TASK_CREATE cb_task_create,
+    KII_CB_TASK_CREATE cb_task_create,
     void* userdata)
 {
     kii_set_task_create_cb(&handler->_kii, cb_task_create, userdata);
@@ -346,7 +346,7 @@ void tio_updater_set_cb_sock_close(
 
 void tio_updater_set_cb_task_create(
     tio_updater_t* updater,
-    KII_TASK_CREATE cb_task_create,
+    KII_CB_TASK_CREATE cb_task_create,
     void* userdata)
 {
     kii_set_task_create_cb(&updater->_kii, cb_task_create, userdata);

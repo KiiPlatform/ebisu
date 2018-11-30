@@ -185,7 +185,7 @@ void tio_handler_set_cb_sock_close_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CLOS
 void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_sock_recv_sec);
 void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, unsigned int to_sock_send_sec);
 
-void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_TASK_CREATE cb_task_create, void* userdata);
+void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_CB_TASK_CREATE cb_task_create, void* userdata);
 
 /**
  * \brief set callback determines whether to continue or discontinue task.
@@ -326,7 +326,7 @@ void tio_updater_set_cb_sock_send(tio_updater_t* updater, KHC_CB_SOCK_SEND cb_se
 void tio_updater_set_cb_sock_recv(tio_updater_t* updater, KHC_CB_SOCK_RECV cb_recv, void* userdata);
 void tio_updater_set_cb_sock_close(tio_updater_t* updater, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
 
-void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_TASK_CREATE cb_task_create, void* userdata);
+void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_CB_TASK_CREATE cb_task_create, void* userdata);
 
 /**
  * \brief set callback determines whether to continue or discontinue task.
