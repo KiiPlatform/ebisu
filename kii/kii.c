@@ -67,7 +67,7 @@ void kii_init(kii_t* kii)
     kii->_task_continue_data = NULL;
     kii->_cb_task_exit = NULL;
     kii->_task_exit_data = NULL;
-    kii->cb_delay_ms = NULL;
+    kii->_cb_delay_ms = NULL;
     kii->_delay_ms_data = NULL;
 }
 
@@ -193,7 +193,7 @@ void kii_set_cb_task_exit(kii_t* kii, KII_CB_TASK_EXIT cb, void* userdata) {
 }
 
 void kii_set_cb_delay_ms(kii_t* kii, KII_CB_DELAY_MS cb, void* userdata) {
-    kii->cb_delay_ms = cb;
+    kii->_cb_delay_ms = cb;
     kii->_delay_ms_data = userdata;
 }
 

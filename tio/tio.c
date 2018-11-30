@@ -426,10 +426,10 @@ static void* _update_state(void* data) {
                     break;
                 }
             }
-            updater->_kii.cb_delay_ms(interval_chk_cnt_sec * 1000, updater->_kii._delay_ms_data);
+            updater->_kii._cb_delay_ms(interval_chk_cnt_sec * 1000, updater->_kii._delay_ms_data);
             interval_remain_sec -= interval_chk_cnt_sec;
         } else {
-            updater->_kii.cb_delay_ms(interval_remain_sec * 1000, updater->_kii._delay_ms_data);
+            updater->_kii._cb_delay_ms(interval_remain_sec * 1000, updater->_kii._delay_ms_data);
             interval_remain_sec = updater->_update_interval;
             size_t state_size = updater->_cb_state_size(updater->_cb_state_size_data);
             if (state_size > 0) {
