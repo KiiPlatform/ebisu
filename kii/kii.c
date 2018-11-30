@@ -128,19 +128,19 @@ void kii_set_resp_header_buff(kii_t* kii, char* buff, size_t buff_size) {
     khc_set_resp_header_buff(&kii->_khc, buff, buff_size);
 }
 
-void kii_set_http_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata) {
+void kii_set_cb_http_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata) {
     khc_set_cb_sock_connect(&kii->_khc, cb, userdata);
 }
 
-void kii_set_http_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata) {
+void kii_set_cb_http_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata) {
     khc_set_cb_sock_send(&kii->_khc, cb, userdata);
 }
 
-void kii_set_http_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata) {
+void kii_set_cb_http_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata) {
     khc_set_cb_sock_recv(&kii->_khc, cb, userdata);
 }
 
-void kii_set_http_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata) {
+void kii_set_cb_http_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata) {
     khc_set_cb_sock_close(&kii->_khc, cb, userdata);
 }
 
@@ -149,22 +149,22 @@ void kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size) {
     kii->mqtt_buffer_size = buff_size;
 }
 
-void kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata) {
+void kii_set_cb_mqtt_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata) {
     kii->mqtt_sock_connect_cb = cb;
     kii->mqtt_sock_connect_ctx = userdata;
 }
 
-void kii_set_mqtt_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata) {
+void kii_set_cb_mqtt_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata) {
     kii->mqtt_sock_send_cb = cb;
     kii->mqtt_sock_send_ctx = userdata;
 }
 
-void kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata) {
+void kii_set_cb_mqtt_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata) {
     kii->mqtt_sock_recv_cb = cb;
     kii->mqtt_sock_recv_ctx = userdata;
 }
 
-void kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata) {
+void kii_set_cb_mqtt_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata) {
     kii->mqtt_sock_close_cb = cb;
     kii->mqtt_sock_close_ctx = userdata;
 }

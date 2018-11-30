@@ -621,10 +621,10 @@ void kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size);
  */
 void kii_set_resp_header_buff(kii_t* kii, char* buff, size_t buff_size);
 
-void kii_set_http_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
-void kii_set_http_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
-void kii_set_http_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
-void kii_set_http_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+void kii_set_cb_http_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
+void kii_set_cb_http_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
+void kii_set_cb_http_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
+void kii_set_cb_http_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
 
 /**
  * \brief Set buffer used to parse MQTT message.
@@ -645,10 +645,10 @@ void kii_set_http_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata
  */
 void kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size);
 
-void kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
-void kii_set_mqtt_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
-void kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
-void kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+void kii_set_cb_mqtt_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
+void kii_set_cb_mqtt_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
+void kii_set_cb_mqtt_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
+void kii_set_cb_mqtt_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
 
 void kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec);
 void kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec);
@@ -686,10 +686,10 @@ void kii_set_task_continue_cb(kii_t* kii, KII_CB_TASK_CONTINUE continue_cb, void
  * In exit_cb, you'll need to free memory used for MQTT buffer set by kii_set_mqtt_buff(),
  * Memory used for the userdata passed to following callbacks in case not yet freed.
 
- * - kii_set_mqtt_cb_sock_send()
- * - kii_set_mqtt_cb_sock_connect()
- * - kii_set_mqtt_cb_sock_recv()
- * - kii_set_mqtt_cb_sock_close()
+ * - kii_set_cb_mqtt_sock_send()
+ * - kii_set_cb_mqtt_sock_connect()
+ * - kii_set_cb_mqtt_sock_recv()
+ * - kii_set_cb_mqtt_sock_close()
  * - kii_set_task_continue_cb()
  * - kii_set_task_exit_cb()
 

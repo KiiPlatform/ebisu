@@ -58,7 +58,7 @@ void tio_handler_set_cb_sock_connect_http(
     KHC_CB_SOCK_CONNECT cb_connect,
     void* userdata)
 {
-    kii_set_http_cb_sock_connect(&handler->_kii, cb_connect, userdata);
+    kii_set_cb_http_sock_connect(&handler->_kii, cb_connect, userdata);
 }
 
 void tio_handler_set_cb_sock_send_http(
@@ -66,7 +66,7 @@ void tio_handler_set_cb_sock_send_http(
     KHC_CB_SOCK_SEND cb_send,
     void* userdata)
 {
-    kii_set_http_cb_sock_send(&handler->_kii, cb_send, userdata);
+    kii_set_cb_http_sock_send(&handler->_kii, cb_send, userdata);
 }
 
 void tio_handler_set_cb_sock_recv_http(
@@ -74,7 +74,7 @@ void tio_handler_set_cb_sock_recv_http(
     KHC_CB_SOCK_RECV cb_recv,
     void* userdata)
 {
-    kii_set_http_cb_sock_recv(&handler->_kii, cb_recv, userdata);
+    kii_set_cb_http_sock_recv(&handler->_kii, cb_recv, userdata);
 }
 
 void tio_handler_set_cb_sock_close_http(
@@ -82,7 +82,7 @@ void tio_handler_set_cb_sock_close_http(
     KHC_CB_SOCK_CLOSE cb_close,
     void* userdata)
 {
-    kii_set_http_cb_sock_close(&handler->_kii, cb_close, userdata);
+    kii_set_cb_http_sock_close(&handler->_kii, cb_close, userdata);
 }
 
 void tio_handler_set_http_buff(
@@ -106,7 +106,7 @@ void tio_handler_set_cb_sock_connect_mqtt(
     KHC_CB_SOCK_CONNECT cb_connect,
     void* userdata)
 {
-    kii_set_mqtt_cb_sock_connect(&handler->_kii, cb_connect, userdata);
+    kii_set_cb_mqtt_sock_connect(&handler->_kii, cb_connect, userdata);
 }
 
 void tio_handler_set_cb_sock_send_mqtt(
@@ -114,7 +114,7 @@ void tio_handler_set_cb_sock_send_mqtt(
     KHC_CB_SOCK_SEND cb_send,
     void* userdata)
 {
-    kii_set_mqtt_cb_sock_send(&handler->_kii, cb_send, userdata);
+    kii_set_cb_mqtt_sock_send(&handler->_kii, cb_send, userdata);
 }
 
 void tio_handler_set_cb_sock_recv_mqtt(
@@ -122,7 +122,7 @@ void tio_handler_set_cb_sock_recv_mqtt(
     KHC_CB_SOCK_RECV cb_recv,
     void* userdata)
 {
-    kii_set_mqtt_cb_sock_recv(&handler->_kii, cb_recv, userdata);
+    kii_set_cb_mqtt_sock_recv(&handler->_kii, cb_recv, userdata);
 }
 
 void tio_handler_set_cb_sock_close_mqtt(
@@ -130,7 +130,7 @@ void tio_handler_set_cb_sock_close_mqtt(
     KHC_CB_SOCK_CLOSE cb_close,
     void* userdata)
 {
-    kii_set_mqtt_cb_sock_close(&handler->_kii, cb_close, userdata);
+    kii_set_cb_mqtt_sock_close(&handler->_kii, cb_close, userdata);
 }
 
 void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_sock_recv_sec)
@@ -317,7 +317,7 @@ void tio_updater_set_cb_sock_connect(
     KHC_CB_SOCK_CONNECT cb_connect,
     void* userdata)
 {
-    kii_set_http_cb_sock_connect(&updater->_kii, cb_connect, userdata);
+    kii_set_cb_http_sock_connect(&updater->_kii, cb_connect, userdata);
 }
 
 void tio_updater_set_cb_sock_send(
@@ -325,7 +325,7 @@ void tio_updater_set_cb_sock_send(
     KHC_CB_SOCK_SEND cb_send,
     void* userdata)
 {
-    kii_set_http_cb_sock_send(&updater->_kii, cb_send, userdata);
+    kii_set_cb_http_sock_send(&updater->_kii, cb_send, userdata);
 }
 
 void tio_updater_set_cb_sock_recv(
@@ -333,7 +333,7 @@ void tio_updater_set_cb_sock_recv(
     KHC_CB_SOCK_RECV cb_recv,
     void* userdata)
 {
-    kii_set_http_cb_sock_recv(&updater->_kii, cb_recv, userdata);
+    kii_set_cb_http_sock_recv(&updater->_kii, cb_recv, userdata);
 }
 
 void tio_updater_set_cb_sock_close(
@@ -341,7 +341,7 @@ void tio_updater_set_cb_sock_close(
     KHC_CB_SOCK_CLOSE cb_close,
     void* userdata)
 {
-    kii_set_http_cb_sock_close(&updater->_kii, cb_close, userdata);
+    kii_set_cb_http_sock_close(&updater->_kii, cb_close, userdata);
 }
 
 void tio_updater_set_cb_task_create(
