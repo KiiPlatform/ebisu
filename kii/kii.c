@@ -65,7 +65,7 @@ void kii_init(kii_t* kii)
     kii->_task_create_data = NULL;
     kii->_cb_task_continue = NULL;
     kii->_task_continue_data = NULL;
-    kii->_task_exit_cb = NULL;
+    kii->_cb_task_exit = NULL;
     kii->_task_exit_data = NULL;
     kii->delay_ms_cb = NULL;
     kii->_delay_ms_data = NULL;
@@ -188,7 +188,7 @@ void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE cb, void* userdat
 }
 
 void kii_set_cb_task_exit(kii_t* kii, KII_CB_TASK_EXIT cb, void* userdata) {
-    kii->_task_exit_cb = cb;
+    kii->_cb_task_exit = cb;
     kii->_task_exit_data = userdata;
 }
 

@@ -123,7 +123,7 @@ typedef struct kii_t {
     KII_CB_TASK_CONTINUE _cb_task_continue;
     void* _task_continue_data;
 
-    KII_CB_TASK_EXIT _task_exit_cb;
+    KII_CB_TASK_EXIT _cb_task_exit;
     void* _task_exit_data;
 
     KII_CB_DELAY_MS delay_ms_cb;
