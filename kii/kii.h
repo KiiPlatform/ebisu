@@ -151,13 +151,13 @@ typedef struct kii_t {
 
     jkii_resource_t* _json_resource;
 
-    JKII_CB_RESOURCE_ALLOC _json_cb_alloc;
-    JKII_CB_RESOURCE_FREE _json_cb_free;
+    JKII_CB_RESOURCE_ALLOC _cb_json_alloc;
+    JKII_CB_RESOURCE_FREE _cb_json_free;
 
-    KHC_CB_SLIST_ALLOC _slist_cb_alloc;
-    KHC_CB_SLIST_FREE _slist_cb_free;
-    void* _slist_cb_alloc_data;
-    void* _slist_cb_free_data;
+    KHC_CB_SLIST_ALLOC _cb_slist_alloc;
+    KHC_CB_SLIST_FREE _cb_slist_free;
+    void* _cb_slist_alloc_data;
+    void* _cb_slist_free_data;
 } kii_t;
 
 /** Initializes Kii SDK
