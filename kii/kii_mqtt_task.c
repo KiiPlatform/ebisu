@@ -43,54 +43,54 @@ int _mqtt_decode(char* buf, unsigned long* remaining_length)
 
 khc_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) {
     unsigned int keep_alive_interval = kii->_keep_alive_interval;
-    memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
+    memset(kii->_mqtt_buffer, 0, kii->_mqtt_buffer_size);
     int i = 8; /* reserver 8 bytes for header */
     /* Variable header:Protocol Name bytes */
-    kii->mqtt_buffer[i++] = 0x00;
-    kii->mqtt_buffer[i++] = 0x06;
-    kii->mqtt_buffer[i++] = 'M';
-    kii->mqtt_buffer[i++] = 'Q';
-    kii->mqtt_buffer[i++] = 'I';
-    kii->mqtt_buffer[i++] = 's';
-    kii->mqtt_buffer[i++] = 'd';
-    kii->mqtt_buffer[i++] = 'p';
+    kii->_mqtt_buffer[i++] = 0x00;
+    kii->_mqtt_buffer[i++] = 0x06;
+    kii->_mqtt_buffer[i++] = 'M';
+    kii->_mqtt_buffer[i++] = 'Q';
+    kii->_mqtt_buffer[i++] = 'I';
+    kii->_mqtt_buffer[i++] = 's';
+    kii->_mqtt_buffer[i++] = 'd';
+    kii->_mqtt_buffer[i++] = 'p';
     /* Variable header:Protocol Level */
-    kii->mqtt_buffer[i++] = 0x03;
+    kii->_mqtt_buffer[i++] = 0x03;
     /* Variable header:Connect Flags */
     /*
     * Bit   7                          6                        5                    4  3            2            1 0
     *        User Name Flag     Password Flag    Will Retain        Will QoS     Will Flag   Clean Session   Reserved
     */
-    kii->mqtt_buffer[i++] = (char)0xc2;
+    kii->_mqtt_buffer[i++] = (char)0xc2;
     /* Variable header:Keep Alive */
-    kii->mqtt_buffer[i++] = (keep_alive_interval & 0xff00) >> 8;
-    kii->mqtt_buffer[i++] = keep_alive_interval & 0x00ff;
+    kii->_mqtt_buffer[i++] = (keep_alive_interval & 0xff00) >> 8;
+    kii->_mqtt_buffer[i++] = keep_alive_interval & 0x00ff;
     /* Payload:Client Identifier */
-    kii->mqtt_buffer[i++] = (strlen(endpoint->topic) & 0xff00) >> 8;
-    kii->mqtt_buffer[i++] = strlen(endpoint->topic) & 0x00ff;
-    strcpy(&(kii->mqtt_buffer[i]), endpoint->topic);
+    kii->_mqtt_buffer[i++] = (strlen(endpoint->topic) & 0xff00) >> 8;
+    kii->_mqtt_buffer[i++] = strlen(endpoint->topic) & 0x00ff;
+    strcpy(&(kii->_mqtt_buffer[i]), endpoint->topic);
     i += strlen(endpoint->topic);
     /* Payload:User Name */
-    kii->mqtt_buffer[i++] = (strlen(endpoint->username) & 0xff00) >> 8;
-    kii->mqtt_buffer[i++] = strlen(endpoint->username) & 0x00ff;
-    strcpy(&(kii->mqtt_buffer[i]), endpoint->username);
+    kii->_mqtt_buffer[i++] = (strlen(endpoint->username) & 0xff00) >> 8;
+    kii->_mqtt_buffer[i++] = strlen(endpoint->username) & 0x00ff;
+    strcpy(&(kii->_mqtt_buffer[i]), endpoint->username);
     i += strlen(endpoint->username);
     /* Payload:Password */
-    kii->mqtt_buffer[i++] = (strlen(endpoint->password) & 0xff00) >> 8;
-    kii->mqtt_buffer[i++] = strlen(endpoint->password) & 0x00ff;
-    strcpy(&(kii->mqtt_buffer[i]), endpoint->password);
+    kii->_mqtt_buffer[i++] = (strlen(endpoint->password) & 0xff00) >> 8;
+    kii->_mqtt_buffer[i++] = strlen(endpoint->password) & 0x00ff;
+    strcpy(&(kii->_mqtt_buffer[i]), endpoint->password);
     i += strlen(endpoint->password);
 
     int j = 0;
     /* Fixed header:byte1 */
-    kii->mqtt_buffer[j++] = 0x10;
+    kii->_mqtt_buffer[j++] = 0x10;
     /*/ Fixed header:Remaining Length*/
-    j += _mqtt_encode(&(kii->mqtt_buffer[j]), i - 8);
+    j += _mqtt_encode(&(kii->_mqtt_buffer[j]), i - 8);
 
     /* copy the other types */
     for(int k = 0; k < i - 8; k++)
     {
-        kii->mqtt_buffer[j++] = kii->mqtt_buffer[8 + k];
+        kii->_mqtt_buffer[j++] = kii->_mqtt_buffer[8 + k];
     }
 
     khc_sock_code_t send_err = KHC_SOCK_FAIL;
@@ -98,7 +98,7 @@ khc_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) {
     while (total_sent < j) {
         size_t sent_len = 0;
         send_err = kii->_cb_mqtt_sock_send(kii->_mqtt_sock_send_ctx,
-                &kii->mqtt_buffer[total_sent], j - total_sent, &sent_len);
+                &kii->_mqtt_buffer[total_sent], j - total_sent, &sent_len);
         if (send_err == KHC_SOCK_AGAIN || send_err == KHC_SOCK_FAIL) {
             // Don't accept non-blocking socket when send_err is KHC_SOCK_AGAIN.
             return KHC_SOCK_FAIL;
@@ -110,31 +110,31 @@ khc_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) {
 
 khc_sock_code_t _mqtt_send_subscribe(kii_t* kii, const char* topic, kii_mqtt_qos qos)
 {
-    memset(kii->mqtt_buffer, 0, kii->mqtt_buffer_size);
+    memset(kii->_mqtt_buffer, 0, kii->_mqtt_buffer_size);
     int i = 8;
 
     /* Variable header:Packet Identifier */
-    kii->mqtt_buffer[i++] = 0x00;
-    kii->mqtt_buffer[i++] = 0x01;
+    kii->_mqtt_buffer[i++] = 0x00;
+    kii->_mqtt_buffer[i++] = 0x01;
     /* Payload:topic length */
-    kii->mqtt_buffer[i++] = (strlen(topic) & 0xff00) >> 8;
-    kii->mqtt_buffer[i++] = strlen(topic) & 0x00ff;
+    kii->_mqtt_buffer[i++] = (strlen(topic) & 0xff00) >> 8;
+    kii->_mqtt_buffer[i++] = strlen(topic) & 0x00ff;
     /* Payload:topic */
-    strcpy(&kii->mqtt_buffer[i], topic);
+    strcpy(&kii->_mqtt_buffer[i], topic);
     i += strlen(topic);
     /* Payload: qos*/
-    kii->mqtt_buffer[i++] = (char)qos;
+    kii->_mqtt_buffer[i++] = (char)qos;
 
     int j = 0;
     /* Fixed header: byte1*/
-    kii->mqtt_buffer[j++] = (char)0x82;
+    kii->_mqtt_buffer[j++] = (char)0x82;
     /* Fixed header:Remaining Length*/
-    j += _mqtt_encode(&(kii->mqtt_buffer[j]), i - 8);
+    j += _mqtt_encode(&(kii->_mqtt_buffer[j]), i - 8);
 
     /* copy the other types*/
     for(int k = 0; k < i - 8; k++)
     {
-        kii->mqtt_buffer[j++] = kii->mqtt_buffer[8 + k];
+        kii->_mqtt_buffer[j++] = kii->_mqtt_buffer[8 + k];
     }
 
     khc_sock_code_t send_err = KHC_SOCK_FAIL;
@@ -142,7 +142,7 @@ khc_sock_code_t _mqtt_send_subscribe(kii_t* kii, const char* topic, kii_mqtt_qos
     while (total_sent < j) {
         size_t sent_len = 0;
         send_err = kii->_cb_mqtt_sock_send(kii->_mqtt_sock_send_ctx,
-                &kii->mqtt_buffer[total_sent], j - total_sent, &sent_len);
+                &kii->_mqtt_buffer[total_sent], j - total_sent, &sent_len);
         if (send_err == KHC_SOCK_AGAIN || send_err == KHC_SOCK_FAIL) {
             // Don't accept non-blocking socket when send_err is KHC_SOCK_AGAIN.
             return KHC_SOCK_FAIL;
@@ -349,12 +349,12 @@ void* mqtt_start_task(void* sdata)
                 }
             }
             case KII_MQTT_ST_SEND_CONNECT: {
-                if (kii->mqtt_buffer == NULL || kii->mqtt_buffer_size == 0) {
+                if (kii->_mqtt_buffer == NULL || kii->_mqtt_buffer_size == 0) {
                     task_info.error = KII_MQTT_ERR_INSUFFICIENT_BUFF;
                     task_info.task_state = KII_MQTT_ST_ERR_EXIT;
                     break;
                 }
-                if (kii->mqtt_buffer_size < 27 + strlen(endpoint.topic) +
+                if (kii->_mqtt_buffer_size < 27 + strlen(endpoint.topic) +
                         strlen(endpoint.username) + strlen(endpoint.password)) {
                     task_info.error = KII_MQTT_ERR_INSUFFICIENT_BUFF;
                     task_info.task_state = KII_MQTT_ST_ERR_EXIT;
@@ -489,7 +489,7 @@ void* mqtt_start_task(void* sdata)
                 }
             }
             case KII_MQTT_ST_RECV_MSG: {
-                if (remaining_message_size > kii->mqtt_buffer_size) {
+                if (remaining_message_size > kii->_mqtt_buffer_size) {
                     // Ignore message.
                     khc_sock_code_t res = _mqtt_recv_remaining_trash(kii, remaining_message_size);
                     if (res != KHC_SOCK_OK) {
@@ -503,17 +503,17 @@ void* mqtt_start_task(void* sdata)
                     }
                     break;
                 } else {
-                    memset(kii->mqtt_buffer, '\0', kii->mqtt_buffer_size);
-                    khc_sock_code_t res = _mqtt_recv_remaining(kii, remaining_message_size, kii->mqtt_buffer);
+                    memset(kii->_mqtt_buffer, '\0', kii->_mqtt_buffer_size);
+                    khc_sock_code_t res = _mqtt_recv_remaining(kii, remaining_message_size, kii->_mqtt_buffer);
                     if (res != KHC_SOCK_OK) {
                         elapsed_time_ms = 0;
                         kii->_cb_delay_ms(wait_ms, kii->_delay_ms_data);
                         task_info.task_state = KII_MQTT_ST_RECONNECT;
                     } else {
                         elapsed_time_ms += arrived_msg_read_time;
-                        unsigned int topic_size = (unsigned int)kii->mqtt_buffer[0] * 256 + (unsigned int)kii->mqtt_buffer[1];
+                        unsigned int topic_size = (unsigned int)kii->_mqtt_buffer[0] * 256 + (unsigned int)kii->_mqtt_buffer[1];
                         // 2 bytes: topic size. packet identifier is not present since QoS0
-                        char* body_ptr = kii->mqtt_buffer + topic_size + 2;
+                        char* body_ptr = kii->_mqtt_buffer + topic_size + 2;
                         size_t body_length = remaining_message_size - topic_size - 2;
                         kii->_cb_push_received(body_ptr, body_length, kii->_push_data);
                         task_info.task_state = KII_MQTT_ST_RECV_READY;

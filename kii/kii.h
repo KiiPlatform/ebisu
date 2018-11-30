@@ -134,8 +134,8 @@ typedef struct kii_t {
 
     int _mqtt_connected;
 
-    char* mqtt_buffer;
-    size_t mqtt_buffer_size;
+    char* _mqtt_buffer;
+    size_t _mqtt_buffer_size;
 
     unsigned int _keep_alive_interval;
 
