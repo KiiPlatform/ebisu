@@ -50,7 +50,7 @@ void tio_handler_init(tio_handler_t* handler)
     handler->_cb_task_exit = NULL;
     handler->_task_exit_data = NULL;
     kii_set_cb_task_continue(&handler->_kii, _task_continue, handler);
-    kii_set_task_exit_cb(&handler->_kii, _task_exit, handler);
+    kii_set_cb_task_exit(&handler->_kii, _task_exit, handler);
 }
 
 void tio_handler_set_cb_sock_connect_http(
@@ -168,7 +168,7 @@ void tio_handler_set_cb_delay_ms(
     KII_CB_DELAY_MS cb_delay_ms,
     void* userdata)
 {
-    kii_set_delay_ms_cb(&handler->_kii, cb_delay_ms, userdata);
+    kii_set_cb_delay_ms(&handler->_kii, cb_delay_ms, userdata);
 }
 
 void tio_handler_set_cb_err(
@@ -369,7 +369,7 @@ void tio_updater_set_cb_delay_ms(
     KII_CB_DELAY_MS cb_delay_ms,
     void* userdata)
 {
-    kii_set_delay_ms_cb(&updater->_kii, cb_delay_ms, userdata);
+    kii_set_cb_delay_ms(&updater->_kii, cb_delay_ms, userdata);
 }
 
 void tio_updater_set_cb_error(

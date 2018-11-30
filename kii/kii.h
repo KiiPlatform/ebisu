@@ -691,7 +691,7 @@ void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE continue_cb, void
  * - kii_set_cb_mqtt_sock_recv()
  * - kii_set_cb_mqtt_sock_close()
  * - kii_set_cb_task_continue()
- * - kii_set_task_exit_cb()
+ * - kii_set_cb_task_exit()
 
  * In addition, you may need to call task/ thread termination API.
  * It depends on the task/ threading framework you used to create task/ thread.
@@ -705,8 +705,8 @@ void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE continue_cb, void
  * task_info argument type of exit_cb (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info*.
  * \param userdata [in] Context data pointer passed as second argument when exit_cb is called.
  */
-void kii_set_task_exit_cb(kii_t* kii, KII_CB_TASK_EXIT exit_cb, void* userdata);
-void kii_set_delay_ms_cb(kii_t* kii, KII_CB_DELAY_MS delay_cb, void* userdata);
+void kii_set_cb_task_exit(kii_t* kii, KII_CB_TASK_EXIT exit_cb, void* userdata);
+void kii_set_cb_delay_ms(kii_t* kii, KII_CB_DELAY_MS delay_cb, void* userdata);
 
 /** Set JSON paraser resource
  * @param [inout] kii SDK instance.
