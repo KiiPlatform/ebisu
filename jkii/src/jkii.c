@@ -888,18 +888,18 @@ jkii_parse_err_t jkii_parse_with_allocator(
     const char* json_string,
     size_t json_string_len,
     jkii_field_t* fields,
-    JKII_CB_RESOURCE_ALLOC alloc_cb,
+    JKII_CB_RESOURCE_ALLOC cb_alloc,
     JKII_CB_RESOURCE_FREE free_cb)
 {
     M_JKII_ASSERT(json_string != NULL);
     M_JKII_ASSERT(json_string_len > 0);
-    M_JKII_ASSERT(alloc_cb != NULL);
+    M_JKII_ASSERT(cb_alloc != NULL);
     M_JKII_ASSERT(free_cb != NULL);
 
     jkii_resource_t *resource;
     int required = _calculate_required_token_num(json_string, json_string_len);
     if (required > 0) {
-        resource = alloc_cb(required);
+        resource = cb_alloc(required);
         if (resource == NULL)
         {
             return JKII_ERR_ALLOCATION;

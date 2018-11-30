@@ -33,7 +33,7 @@ typedef struct {
   khc_slist* free_requested_node;
 } slist_alloc_ctx;
 
-khc_slist* alloc_cb(const char* str, size_t len, void* data) {
+khc_slist* cb_alloc(const char* str, size_t len, void* data) {
   slist_alloc_ctx* ctx = (slist_alloc_ctx*)data;
   ctx->alloc_requested_str = str;
   ctx->alloc_requested_str_len = len;
@@ -66,7 +66,7 @@ TEST_CASE( "slist append (3)" ) {
   slist_alloc_ctx ctx;
   memset(&ctx, 0, sizeof(slist_alloc_ctx));
   const char str[] = "aaaaa";
-  khc_slist* appended = khc_slist_append_using_alloc_cb(list, str, 5, alloc_cb, &ctx);
+  khc_slist* appended = khc_slist_append_using_cb_alloc(list, str, 5, cb_alloc, &ctx);
   REQUIRE( appended != NULL );
   REQUIRE( strlen(appended->data) == 5 );
   REQUIRE( strncmp(appended->data, str, 5) == 0 );

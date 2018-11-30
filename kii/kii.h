@@ -151,12 +151,12 @@ typedef struct kii_t {
 
     jkii_resource_t* _json_resource;
 
-    JKII_CB_RESOURCE_ALLOC _json_alloc_cb;
+    JKII_CB_RESOURCE_ALLOC _json_cb_alloc;
     JKII_CB_RESOURCE_FREE _json_free_cb;
 
-    KHC_SLIST_ALLOC_CB _slist_alloc_cb;
+    KHC_SLIST_ALLOC_CB _slist_cb_alloc;
     KHC_SLIST_FREE_CB _slist_free_cb;
-    void* _slist_alloc_cb_data;
+    void* _slist_cb_alloc_data;
     void* _slist_free_cb_data;
 } kii_t;
 
@@ -720,11 +720,11 @@ void kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource);
  *  To use Allocator instead of fixed size memory given by kii_set_json_parser_resource(kii_t, jkii_resource_t),
  *  call kii_set_json_parser_resource(kii_t, jkii_resource_t) with NULL resource argument.
  * @param [inout] kii SDK instance.
- * @param [in] alloc_cb allocator callback.
- * @param [in] free_cb free callback should free memories allocated in alloc_cb.
+ * @param [in] cb_alloc allocator callback.
+ * @param [in] free_cb free callback should free memories allocated in cb_alloc.
  */
 void kii_set_cb_json_parser_resource(kii_t* kii,
-    JKII_CB_RESOURCE_ALLOC alloc_cb,
+    JKII_CB_RESOURCE_ALLOC cb_alloc,
     JKII_CB_RESOURCE_FREE free_cb);
 
 /**
@@ -735,9 +735,9 @@ void kii_set_cb_json_parser_resource(kii_t* kii,
  */
 void kii_set_slist_resource_cb(
     kii_t* kii,
-    KHC_SLIST_ALLOC_CB alloc_cb,
+    KHC_SLIST_ALLOC_CB cb_alloc,
     KHC_SLIST_FREE_CB free_cb,
-    void* alloc_cb_data,
+    void* cb_alloc_data,
     void* free_cb_data);
 
 const char* kii_get_etag(kii_t* kii);

@@ -73,7 +73,7 @@ kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* v
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_slist* list = khc_slist_append_using_alloc_cb(kii->_req_headers, buff, header_len, kii->_slist_alloc_cb, kii->_slist_alloc_cb_data);
+    khc_slist* list = khc_slist_append_using_cb_alloc(kii->_req_headers, buff, header_len, kii->_slist_cb_alloc, kii->_slist_cb_alloc_data);
     if (list == NULL) {
         return KII_ERR_ALLOCATION;
     }

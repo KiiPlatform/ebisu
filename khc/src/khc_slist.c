@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "khc.h"
 
-khc_slist* khc_slist_alloc_cb(const char* str, size_t str_len, void* data) {
+khc_slist* khc_slist_cb_alloc(const char* str, size_t str_len, void* data) {
   char* copy = malloc(str_len+1);
   if (copy == NULL) {
     return NULL;
@@ -25,17 +25,17 @@ void khc_slist_free_cb(khc_slist* slist, void* data) {
 }
 
 khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length) {
-  return khc_slist_append_using_alloc_cb(slist, string, length, khc_slist_alloc_cb, NULL);
+  return khc_slist_append_using_cb_alloc(slist, string, length, khc_slist_cb_alloc, NULL);
 }
 
-khc_slist* khc_slist_append_using_alloc_cb(
+khc_slist* khc_slist_append_using_cb_alloc(
   khc_slist* slist,
   const char* string,
   size_t length,
-  KHC_SLIST_ALLOC_CB alloc_cb,
-  void* alloc_cb_data) {
+  KHC_SLIST_ALLOC_CB cb_alloc,
+  void* cb_alloc_data) {
   khc_slist* next;
-  next = alloc_cb(string, length, alloc_cb_data);
+  next = cb_alloc(string, length, cb_alloc_data);
   if (next == NULL) {
     return NULL;
   }

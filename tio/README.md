@@ -389,11 +389,11 @@ Alternatively, you can use dynamic allocation for tokens by using following API:
 ```c
 void tio_handler_set_cb_json_parser_resource(
     tio_handler_t* handler,
-    JKII_CB_RESOURCE_ALLOC alloc_cb,
+    JKII_CB_RESOURCE_ALLOC cb_alloc,
     JKII_CB_RESOURCE_FREE free_cb);
 ```
 
-`alloc_cb` is called when the token is required and it's number is exactly same as numbers need to parse json string.
+`cb_alloc` is called when the token is required and it's number is exactly same as numbers need to parse json string.
 
 `free_cb` is called when the parse has been done.
 
