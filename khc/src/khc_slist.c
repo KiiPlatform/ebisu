@@ -32,7 +32,7 @@ khc_slist* khc_slist_append_using_cb_alloc(
   khc_slist* slist,
   const char* string,
   size_t length,
-  KHC_SLIST_ALLOC_CB cb_alloc,
+  CB_KHC_SLIST_ALLOC cb_alloc,
   void* cb_alloc_data) {
   khc_slist* next;
   next = cb_alloc(string, length, cb_alloc_data);

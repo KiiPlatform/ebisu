@@ -293,7 +293,7 @@ void tio_handler_set_cb_json_parser_resource(
  */
 void tio_handler_set_slist_resource_cb(
     tio_handler_t* handler,
-    KHC_SLIST_ALLOC_CB cb_alloc,
+    CB_KHC_SLIST_ALLOC cb_alloc,
     KHC_SLIST_FREE_CB cb_free,
     void* cb_alloc_data,
     void* cb_free_data
@@ -467,7 +467,7 @@ void tio_updater_set_cb_json_parser_resource(
  */
 void tio_updater_set_slist_resource_cb(
     tio_updater_t* updater,
-    KHC_SLIST_ALLOC_CB cb_alloc,
+    CB_KHC_SLIST_ALLOC cb_alloc,
     KHC_SLIST_FREE_CB cb_free,
     void* cb_alloc_data,
     void* cb_free_data
