@@ -387,7 +387,7 @@ If you defined complex(i.e, a lot of fields or long arrays in the commands) cont
 Alternatively, you can use dynamic allocation for tokens by using following API:
 
 ```c
-void tio_handler_set_json_parser_resource_cb(
+void tio_handler_set_cb_json_parser_resource(
     tio_handler_t* handler,
     JKII_CB_RESOURCE_ALLOC alloc_cb,
     JKII_CB_RESOURCE_FREE free_cb);
@@ -607,7 +607,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
     - `tio_handler_start()` (`TIO_CB_ACTION` callback)
     - `tio_handler_set_cb_err()`
         (Optional. In case set the error handler for debugging, etc.)
-    - `tio_handler_set_json_parser_resource_cb()`
+    - `tio_handler_set_cb_json_parser_resource()`
         (Optional. In case dynamic memory allocation is chosen for parsing JSON.)
 
     This task uses buffers set by following APIs.
@@ -635,7 +635,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
     - `tio_updater_start()` (`TIO_CB_SIZE`, `TIO_CB_READ` callbacks.)
     - `tio_updater_set_cb_err()`
         (Optional. In case set the error handler for debugging, etc.)
-    - `tio_updater_set_json_parser_resource_cb()`
+    - `tio_updater_set_cb_json_parser_resource()`
         (Optional. In case dynamic memory allocation is chosen for parsing JSON.)
 
     This task uses buffers set by following APIs.

@@ -278,7 +278,7 @@ void tio_handler_set_app(tio_handler_t* handler, const char* app_id, const char*
 
 void tio_handler_set_json_parser_resource(tio_handler_t* handler, jkii_resource_t* resource);
 
-void tio_handler_set_json_parser_resource_cb(
+void tio_handler_set_cb_json_parser_resource(
     tio_handler_t* handler,
     JKII_CB_RESOURCE_ALLOC alloc_cb,
     JKII_CB_RESOURCE_FREE free_cb);
@@ -452,7 +452,7 @@ void tio_updater_set_interval(tio_updater_t* updater, size_t update_interval);
 
 void tio_updater_set_json_parser_resource(tio_updater_t* updater, jkii_resource_t* resource);
 
-void tio_updater_set_json_parser_resource_cb(
+void tio_updater_set_cb_json_parser_resource(
     tio_updater_t* updater,
     JKII_CB_RESOURCE_ALLOC alloc_cb,
     JKII_CB_RESOURCE_FREE free_cb);
