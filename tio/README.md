@@ -133,7 +133,7 @@ Delay callback function signature is following.
 
 ```
 typedef void
-(*KII_DELAY_MS)
+(*KII_CB_DELAY_MS)
     (unsigned int msec);
 ```
 

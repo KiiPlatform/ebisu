@@ -245,7 +245,7 @@ void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_TASK_CONTINUE 
  * \param userdata [in] Context data pointer passed as second argument when cb_exit is called.
  */
 void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_TASK_EXIT cb_exit, void* userdata);
-void tio_handler_set_cb_delay_ms(tio_handler_t* handler, KII_DELAY_MS cb_delay_ms, void* userdata);
+void tio_handler_set_cb_delay_ms(tio_handler_t* handler, KII_CB_DELAY_MS cb_delay_ms, void* userdata);
 
 void tio_handler_set_cb_err(tio_handler_t* handler, TIO_CB_ERR cb_err, void* userdata);
 
@@ -377,7 +377,7 @@ void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_TASK_CONTINUE 
  * \param userdata [in] Context data pointer passed as second argument when cb_exit is called.
  */
 void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_TASK_EXIT cb_exit, void* userdata);
-void tio_updater_set_cb_delay_ms(tio_updater_t* updater, KII_DELAY_MS cb_delay_ms, void* userdata);
+void tio_updater_set_cb_delay_ms(tio_updater_t* updater, KII_CB_DELAY_MS cb_delay_ms, void* userdata);
 
 void tio_updater_set_cb_error(tio_updater_t* updater, TIO_CB_ERR cb_err, void* userdata);
 

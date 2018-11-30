@@ -27,7 +27,7 @@ typedef kii_task_code_t
      void* userdata);
 
 typedef void
-(*KII_DELAY_MS)
+(*KII_CB_DELAY_MS)
     (unsigned int msec,
      void* userdata);
 

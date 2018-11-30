@@ -165,7 +165,7 @@ void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_TASK_EXIT cb_exit,
 
 void tio_handler_set_cb_delay_ms(
     tio_handler_t* handler,
-    KII_DELAY_MS cb_delay_ms,
+    KII_CB_DELAY_MS cb_delay_ms,
     void* userdata)
 {
     kii_set_delay_ms_cb(&handler->_kii, cb_delay_ms, userdata);
@@ -366,7 +366,7 @@ void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_TASK_EXIT cb_exit,
 
 void tio_updater_set_cb_delay_ms(
     tio_updater_t* updater,
-    KII_DELAY_MS cb_delay_ms,
+    KII_CB_DELAY_MS cb_delay_ms,
     void* userdata)
 {
     kii_set_delay_ms_cb(&updater->_kii, cb_delay_ms, userdata);

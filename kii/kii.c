@@ -192,7 +192,7 @@ void kii_set_task_exit_cb(kii_t* kii, KII_TASK_EXIT cb, void* userdata) {
     kii->_task_exit_data = userdata;
 }
 
-void kii_set_delay_ms_cb(kii_t* kii, KII_DELAY_MS cb, void* userdata) {
+void kii_set_delay_ms_cb(kii_t* kii, KII_CB_DELAY_MS cb, void* userdata) {
     kii->delay_ms_cb = cb;
     kii->_delay_ms_data = userdata;
 }

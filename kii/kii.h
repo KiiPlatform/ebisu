@@ -126,7 +126,7 @@ typedef struct kii_t {
     KII_TASK_EXIT _task_exit_cb;
     void* _task_exit_data;
 
-    KII_DELAY_MS delay_ms_cb;
+    KII_CB_DELAY_MS delay_ms_cb;
     void* _delay_ms_data;
 
     KII_PUSH_RECEIVED_CB push_received_cb;
@@ -706,7 +706,7 @@ void kii_set_task_continue_cb(kii_t* kii, KII_TASK_CONTINUE continue_cb, void* u
  * \param userdata [in] Context data pointer passed as second argument when exit_cb is called.
  */
 void kii_set_task_exit_cb(kii_t* kii, KII_TASK_EXIT exit_cb, void* userdata);
-void kii_set_delay_ms_cb(kii_t* kii, KII_DELAY_MS delay_cb, void* userdata);
+void kii_set_delay_ms_cb(kii_t* kii, KII_CB_DELAY_MS delay_cb, void* userdata);
 
 /** Set JSON paraser resource
  * @param [inout] kii SDK instance.
