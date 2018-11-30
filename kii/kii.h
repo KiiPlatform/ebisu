@@ -117,7 +117,7 @@ typedef struct kii_t {
     unsigned int _mqtt_to_recv_sec;
     unsigned int _mqtt_to_send_sec;
 
-    KII_CB_TASK_CREATE task_create_cb;
+    KII_CB_TASK_CREATE _cb_task_create;
     void* _task_create_data;
 
     KII_CB_TASK_CONTINUE _task_continue_cb;

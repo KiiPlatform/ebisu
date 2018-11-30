@@ -61,7 +61,7 @@ void kii_init(kii_t* kii)
     kii->_slist_cb_alloc_data = NULL;
     kii->_slist_cb_free_data = NULL;
     kii->_sdk_info = KII_SDK_INFO;
-    kii->task_create_cb = NULL;
+    kii->_cb_task_create = NULL;
     kii->_task_create_data = NULL;
     kii->_task_continue_cb = NULL;
     kii->_task_continue_data = NULL;
@@ -178,7 +178,7 @@ void kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec) {
 }
 
 void kii_set_cb_task_create(kii_t* kii, KII_CB_TASK_CREATE cb, void* userdata) {
-    kii->task_create_cb = cb;
+    kii->_cb_task_create = cb;
     kii->_task_create_data = userdata;
 }
 
