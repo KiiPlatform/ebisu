@@ -18,7 +18,7 @@ typedef enum _cmd_parser_code_t {
 _cmd_parser_code_t _get_object_in_array(
     jkii_resource_t* resource,
     JKII_CB_RESOURCE_ALLOC cb_alloc,
-    JKII_CB_RESOURCE_FREE free_cb,
+    JKII_CB_RESOURCE_FREE cb_free,
     const char* json_array,
     size_t json_array_length,
     size_t index,

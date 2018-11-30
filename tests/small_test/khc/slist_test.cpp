@@ -54,7 +54,7 @@ khc_slist* cb_alloc(const char* str, size_t len, void* data) {
   return node;
 }
 
-void free_cb(khc_slist* node, void* data) {
+void cb_free(khc_slist* node, void* data) {
   slist_alloc_ctx* ctx = (slist_alloc_ctx*)data;
   ctx->free_requested_node = node;
   free(node->data);
@@ -75,6 +75,6 @@ TEST_CASE( "slist append (3)" ) {
   REQUIRE( ctx.alloc_requested_str == str );
   REQUIRE( ctx.alloc_requested_str_len == 5 );
 
-  khc_slist_free_all_using_free_cb(appended, free_cb, &ctx);
+  khc_slist_free_all_using_cb_free(appended, cb_free, &ctx);
   REQUIRE( ctx.free_requested_node == appended );
 }

@@ -57,9 +57,9 @@ void kii_init(kii_t* kii)
     khc_set_cb_header(&kii->_khc, _cb_write_header, kii);
     kii->_etag[0] = '\0';
     kii->_slist_cb_alloc = khc_slist_cb_alloc;
-    kii->_slist_free_cb = khc_slist_free_cb;
+    kii->_slist_cb_free = khc_slist_cb_free;
     kii->_slist_cb_alloc_data = NULL;
-    kii->_slist_free_cb_data = NULL;
+    kii->_slist_cb_free_data = NULL;
     kii->_sdk_info = KII_SDK_INFO;
     kii->task_create_cb = NULL;
     kii->_task_create_data = NULL;
@@ -204,22 +204,22 @@ void kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource) {
 void kii_set_cb_json_parser_resource(
     kii_t* kii,
     JKII_CB_RESOURCE_ALLOC cb_alloc,
-    JKII_CB_RESOURCE_FREE free_cb)
+    JKII_CB_RESOURCE_FREE cb_free)
 {
     kii->_json_cb_alloc = cb_alloc;
-    kii->_json_free_cb = free_cb;
+    kii->_json_cb_free = cb_free;
 }
 
 void kii_set_slist_resource_cb(
     kii_t* kii,
     KHC_SLIST_ALLOC_CB cb_alloc,
-    KHC_SLIST_FREE_CB free_cb,
+    KHC_SLIST_FREE_CB cb_free,
     void* cb_alloc_data,
-    void* free_cb_data) {
+    void* cb_free_data) {
     kii->_slist_cb_alloc = cb_alloc;
-    kii->_slist_free_cb = free_cb;
+    kii->_slist_cb_free = cb_free;
     kii->_slist_cb_alloc_data = cb_alloc_data;
-    kii->_slist_free_cb_data = free_cb_data;
+    kii->_slist_cb_free_data = cb_free_data;
 }
 
 const char* kii_get_etag(kii_t* kii) {
@@ -264,7 +264,7 @@ void _reset_buff(kii_t* kii) {
 }
 
 void _req_headers_free_all(kii_t* kii) {
-    khc_slist_free_all_using_free_cb(kii->_req_headers, kii->_slist_free_cb, kii->_slist_free_cb_data);
+    khc_slist_free_all_using_cb_free(kii->_req_headers, kii->_slist_cb_free, kii->_slist_cb_free_data);
     kii->_req_headers = NULL;
 }
 

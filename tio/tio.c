@@ -237,19 +237,19 @@ void tio_handler_set_json_parser_resource(
 void tio_handler_set_cb_json_parser_resource(
     tio_handler_t* handler,
     JKII_CB_RESOURCE_ALLOC cb_alloc,
-    JKII_CB_RESOURCE_FREE free_cb)
+    JKII_CB_RESOURCE_FREE cb_free)
 {
-    kii_set_cb_json_parser_resource(&handler->_kii, cb_alloc, free_cb);
+    kii_set_cb_json_parser_resource(&handler->_kii, cb_alloc, cb_free);
 }
 
 void tio_handler_set_slist_resource_cb(
     tio_handler_t* handler,
     KHC_SLIST_ALLOC_CB cb_alloc,
-    KHC_SLIST_FREE_CB free_cb,
+    KHC_SLIST_FREE_CB cb_free,
     void* cb_alloc_data,
-    void* free_cb_data)
+    void* cb_free_data)
 {
-    kii_set_slist_resource_cb(&handler->_kii, cb_alloc, free_cb, cb_alloc_data, free_cb_data);
+    kii_set_slist_resource_cb(&handler->_kii, cb_alloc, cb_free, cb_alloc_data, cb_free_data);
 }
 
 tio_code_t tio_handler_onboard(
@@ -466,19 +466,19 @@ void tio_updater_set_json_parser_resource(
 void tio_updater_set_cb_json_parser_resource(
     tio_updater_t* updater,
     JKII_CB_RESOURCE_ALLOC cb_alloc,
-    JKII_CB_RESOURCE_FREE free_cb)
+    JKII_CB_RESOURCE_FREE cb_free)
 {
-    kii_set_cb_json_parser_resource(&updater->_kii, cb_alloc, free_cb);
+    kii_set_cb_json_parser_resource(&updater->_kii, cb_alloc, cb_free);
 }
 
 void tio_updater_set_slist_resource_cb(
     tio_updater_t* updater,
     KHC_SLIST_ALLOC_CB cb_alloc,
-    KHC_SLIST_FREE_CB free_cb,
+    KHC_SLIST_FREE_CB cb_free,
     void* cb_alloc_data,
-    void* free_cb_data)
+    void* cb_free_data)
 {
-    kii_set_slist_resource_cb(&updater->_kii, cb_alloc, free_cb, cb_alloc_data, free_cb_data);
+    kii_set_slist_resource_cb(&updater->_kii, cb_alloc, cb_free, cb_alloc_data, cb_free_data);
 }
 
 tio_code_t tio_updater_onboard(

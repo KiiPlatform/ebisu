@@ -12,7 +12,7 @@ jkii_parse_err_t _jkii_read_object(
     jkii_parse_err_t res = JKII_ERR_INVALID_INPUT;
     jkii_resource_t* resource = kii->_json_resource;
     if (resource == NULL) {
-        res = jkii_parse_with_allocator(json_string, json_string_size, fields, kii->_json_cb_alloc, kii->_json_free_cb);
+        res = jkii_parse_with_allocator(json_string, json_string_size, fields, kii->_json_cb_alloc, kii->_json_cb_free);
     } else {
         res = jkii_parse(json_string, json_string_size, fields, kii->_json_resource);
     }

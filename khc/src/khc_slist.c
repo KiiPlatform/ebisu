@@ -19,7 +19,7 @@ khc_slist* khc_slist_cb_alloc(const char* str, size_t str_len, void* data) {
   return node;
 }
 
-void khc_slist_free_cb(khc_slist* slist, void* data) {
+void khc_slist_cb_free(khc_slist* slist, void* data) {
   free(slist->data);
   free(slist);
 }
@@ -53,18 +53,18 @@ khc_slist* khc_slist_append_using_cb_alloc(
 }
 
 void khc_slist_free_all(khc_slist* slist) {
-  khc_slist_free_all_using_free_cb(slist, khc_slist_free_cb, NULL);
+  khc_slist_free_all_using_cb_free(slist, khc_slist_cb_free, NULL);
 }
 
-void khc_slist_free_all_using_free_cb(
+void khc_slist_free_all_using_cb_free(
   khc_slist* slist,
-  KHC_SLIST_FREE_CB free_cb,
-  void* free_cb_data) {
+  KHC_SLIST_FREE_CB cb_free,
+  void* cb_free_data) {
   khc_slist *curr;
   curr = slist;
   while (curr != NULL) {
     khc_slist *next = curr->next;
-    free_cb(curr, free_cb_data);
+    cb_free(curr, cb_free_data);
     curr = next;
   }
 }
