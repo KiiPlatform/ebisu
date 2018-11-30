@@ -62,10 +62,13 @@ int kii_init(kii_t* kii)
     kii->_slist_free_cb_data = NULL;
     kii->_sdk_info = KII_SDK_INFO;
     kii->task_create_cb = NULL;
+    kii->_task_create_data = NULL;
     kii->_task_continue_cb = NULL;
     kii->_task_continue_data = NULL;
     kii->_task_exit_cb = NULL;
     kii->_task_exit_data = NULL;
+    kii->delay_ms_cb = NULL;
+    kii->_delay_ms_data = NULL;
     return 0;
 }
 
@@ -191,8 +194,9 @@ int kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec) {
     return 0;
 }
 
-void kii_set_task_create_cb(kii_t* kii, KII_TASK_CREATE cb) {
+void kii_set_task_create_cb(kii_t* kii, KII_TASK_CREATE cb, void* userdata) {
     kii->task_create_cb = cb;
+    kii->_task_create_data = userdata;
 }
 
 void kii_set_task_continue_cb(kii_t* kii, KII_TASK_CONTINUE cb, void* userdata) {
@@ -205,8 +209,9 @@ void kii_set_task_exit_cb(kii_t* kii, KII_TASK_EXIT cb, void* userdata) {
     kii->_task_exit_data = userdata;
 }
 
-void kii_set_delay_ms_cb(kii_t* kii, KII_DELAY_MS cb) {
+void kii_set_delay_ms_cb(kii_t* kii, KII_DELAY_MS cb, void* userdata) {
     kii->delay_ms_cb = cb;
+    kii->_delay_ms_data = userdata;
 }
 
 kii_code_t kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource) {

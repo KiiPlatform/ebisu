@@ -130,9 +130,10 @@ void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, unsigned int to_s
 
 void tio_handler_set_cb_task_create(
     tio_handler_t* handler,
-    KII_TASK_CREATE cb_task_create)
+    KII_TASK_CREATE cb_task_create,
+    void* userdata)
 {
-    handler->_kii.task_create_cb = cb_task_create;
+    kii_set_task_create_cb(&handler->_kii, cb_task_create, userdata);
 }
 
 void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_TASK_CONTINUE cb_continue, void* userdata)
@@ -149,9 +150,10 @@ void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_TASK_EXIT cb_exit,
 
 void tio_handler_set_cb_delay_ms(
     tio_handler_t* handler,
-    KII_DELAY_MS cb_delay_ms)
+    KII_DELAY_MS cb_delay_ms,
+    void* userdata)
 {
-    handler->_kii.delay_ms_cb = cb_delay_ms;
+    kii_set_delay_ms_cb(&handler->_kii, cb_delay_ms, userdata);
 }
 
 void tio_handler_set_cb_err(
@@ -318,10 +320,10 @@ void tio_updater_set_cb_sock_close(
 
 void tio_updater_set_cb_task_create(
     tio_updater_t* updater,
-    KII_TASK_CREATE cb_task_create)
+    KII_TASK_CREATE cb_task_create,
+    void* userdata)
 {
-    // FIXME: Kii should provide setter API.
-    updater->_kii.task_create_cb = cb_task_create;
+    kii_set_task_create_cb(&updater->_kii, cb_task_create, userdata);
 }
 
 void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_TASK_CONTINUE cb_continue, void* userdata)
@@ -338,10 +340,10 @@ void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_TASK_EXIT cb_exit,
 
 void tio_updater_set_cb_delay_ms(
     tio_updater_t* updater,
-    KII_DELAY_MS cb_delay_ms)
+    KII_DELAY_MS cb_delay_ms,
+    void* userdata)
 {
-    // FIXME: Kii should provide setter API.
-    updater->_kii.delay_ms_cb = cb_delay_ms;
+    kii_set_delay_ms_cb(&updater->_kii, cb_delay_ms, userdata);
 }
 
 void tio_updater_set_cb_error(
@@ -398,10 +400,10 @@ static void* _update_state(void* data) {
                     break;
                 }
             }
-            updater->_kii.delay_ms_cb(interval_chk_cnt_sec * 1000);
+            updater->_kii.delay_ms_cb(interval_chk_cnt_sec * 1000, updater->_kii._delay_ms_data);
             interval_remain_sec -= interval_chk_cnt_sec;
         } else {
-            updater->_kii.delay_ms_cb(interval_remain_sec * 1000);
+            updater->_kii.delay_ms_cb(interval_remain_sec * 1000, updater->_kii._delay_ms_data);
             interval_remain_sec = updater->_update_interval;
             size_t state_size = updater->_cb_state_size(updater->_cb_state_size_data);
             if (state_size > 0) {
@@ -499,7 +501,8 @@ tio_code_t tio_updater_start(
     kii_task_code_t res = updater->_kii.task_create_cb(
         TIO_TASK_NAME_UPDATE_STATE,
         _update_state,
-        (void*)updater);
+        (void*)updater,
+        updater->_kii._task_create_data);
 
     if (res != KII_TASKC_OK) {
         return TIO_ERR_CREATE_TASK;

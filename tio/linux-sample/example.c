@@ -71,8 +71,8 @@ void updater_init(
 
     tio_updater_set_app(updater, KII_APP_ID, KII_APP_HOST);
 
-    tio_updater_set_cb_task_create(updater, task_create_cb_impl);
-    tio_updater_set_cb_delay_ms(updater, delay_ms_cb_impl);
+    tio_updater_set_cb_task_create(updater, task_create_cb_impl, NULL);
+    tio_updater_set_cb_delay_ms(updater, delay_ms_cb_impl, NULL);
 
     tio_updater_set_buff(updater, buffer, buffer_size);
 
@@ -163,8 +163,8 @@ void handler_init(
 
     tio_handler_set_cb_push(handler, pushed_message_callback, NULL);
 
-    tio_handler_set_cb_task_create(handler, task_create_cb_impl);
-    tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl);
+    tio_handler_set_cb_task_create(handler, task_create_cb_impl, NULL);
+    tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl, NULL);
 
     tio_handler_set_cb_sock_connect_http(handler, sock_cb_connect, http_ssl_ctx);
     tio_handler_set_cb_sock_send_http(handler, sock_cb_send, http_ssl_ctx);

@@ -118,6 +118,7 @@ typedef struct kii_t {
     unsigned int _mqtt_to_send_sec;
 
     KII_TASK_CREATE task_create_cb;
+    void* _task_create_data;
 
     KII_TASK_CONTINUE _task_continue_cb;
     void* _task_continue_data;
@@ -126,6 +127,7 @@ typedef struct kii_t {
     void* _task_exit_data;
 
     KII_DELAY_MS delay_ms_cb;
+    void* _delay_ms_data;
 
     KII_PUSH_RECEIVED_CB push_received_cb;
     void* _push_data;
@@ -658,7 +660,7 @@ int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata)
 int kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec);
 int kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec);
 
-void kii_set_task_create_cb(kii_t* kii, KII_TASK_CREATE create_cb);
+void kii_set_task_create_cb(kii_t* kii, KII_TASK_CREATE create_cb, void* userdata);
 
 /**
  * \brief set callback determines whether to continue or discontinue task.
@@ -711,7 +713,7 @@ void kii_set_task_continue_cb(kii_t* kii, KII_TASK_CONTINUE continue_cb, void* u
  * \param userdata [in] Context data pointer passed as second argument when exit_cb is called.
  */
 void kii_set_task_exit_cb(kii_t* kii, KII_TASK_EXIT exit_cb, void* userdata);
-void kii_set_delay_ms_cb(kii_t* kii, KII_DELAY_MS delay_cb);
+void kii_set_delay_ms_cb(kii_t* kii, KII_DELAY_MS delay_cb, void* userdata);
 
 /** Set JSON paraser resource
  * @param [inout] kii SDK instance.

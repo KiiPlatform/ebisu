@@ -32,7 +32,8 @@ extern "C" {
 kii_task_code_t task_create_cb_impl(
         const char* name,
         KII_TASK_ENTRY entry,
-        void* param);
+        void* param,
+        void* userdata);
 
 /** Implementation of callback to delay task.
  * this SDK requirest to implement this function in each
@@ -44,7 +45,7 @@ kii_task_code_t task_create_cb_impl(
  *
  * @param[in] msec millisecond to delay.
  */
-void delay_ms_cb_impl(unsigned int msec);
+void delay_ms_cb_impl(unsigned int msec, void* userdata);
 
 #ifdef __cplusplus
 }

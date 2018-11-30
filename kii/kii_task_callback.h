@@ -23,11 +23,13 @@ typedef kii_task_code_t
 (*KII_TASK_CREATE)
     (const char* name,
      KII_TASK_ENTRY entry,
-     void* param);
+     void* entry_param,
+     void* userdata);
 
 typedef void
 (*KII_DELAY_MS)
-    (unsigned int msec);
+    (unsigned int msec,
+     void* userdata);
 
 typedef void
 (*KII_TASK_EXIT)
