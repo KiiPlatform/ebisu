@@ -148,7 +148,7 @@ void tio_handler_set_cb_task_create(
     KII_CB_TASK_CREATE cb_task_create,
     void* userdata)
 {
-    kii_set_task_create_cb(&handler->_kii, cb_task_create, userdata);
+    kii_set_cb_task_create(&handler->_kii, cb_task_create, userdata);
 }
 
 void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_CB_TASK_CONTINUE cb_continue, void* userdata)
@@ -349,7 +349,7 @@ void tio_updater_set_cb_task_create(
     KII_CB_TASK_CREATE cb_task_create,
     void* userdata)
 {
-    kii_set_task_create_cb(&updater->_kii, cb_task_create, userdata);
+    kii_set_cb_task_create(&updater->_kii, cb_task_create, userdata);
 }
 
 void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_CB_TASK_CONTINUE cb_continue, void* userdata)

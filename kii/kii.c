@@ -177,7 +177,7 @@ void kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec) {
     kii->_mqtt_to_send_sec = to_sock_send_sec;
 }
 
-void kii_set_task_create_cb(kii_t* kii, KII_CB_TASK_CREATE cb, void* userdata) {
+void kii_set_cb_task_create(kii_t* kii, KII_CB_TASK_CREATE cb, void* userdata) {
     kii->task_create_cb = cb;
     kii->_task_create_data = userdata;
 }

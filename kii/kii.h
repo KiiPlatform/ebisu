@@ -653,7 +653,7 @@ void kii_set_cb_mqtt_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata
 void kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec);
 void kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec);
 
-void kii_set_task_create_cb(kii_t* kii, KII_CB_TASK_CREATE create_cb, void* userdata);
+void kii_set_cb_task_create(kii_t* kii, KII_CB_TASK_CREATE create_cb, void* userdata);
 
 /**
  * \brief set callback determines whether to continue or discontinue task.
