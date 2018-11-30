@@ -201,7 +201,7 @@ void kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource) {
     kii->_json_resource = resource;
 }
 
-void kii_set_json_parser_resource_cb(
+void kii_set_cb_json_parser_resource(
     kii_t* kii,
     JKII_CB_RESOURCE_ALLOC alloc_cb,
     JKII_CB_RESOURCE_FREE free_cb)
