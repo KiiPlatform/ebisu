@@ -129,7 +129,7 @@ typedef struct kii_t {
     KII_CB_DELAY_MS _cb_delay_ms;
     void* _delay_ms_data;
 
-    KII_PUSH_RECEIVED_CB push_received_cb;
+    KII_PUSH_RECEIVED_CB _cb_push_received;
     void* _push_data;
 
     int _mqtt_connected;

@@ -515,7 +515,7 @@ void* mqtt_start_task(void* sdata)
                         // 2 bytes: topic size. packet identifier is not present since QoS0
                         char* body_ptr = kii->mqtt_buffer + topic_size + 2;
                         size_t body_length = remaining_message_size - topic_size - 2;
-                        kii->push_received_cb(body_ptr, body_length, kii->_push_data);
+                        kii->_cb_push_received(body_ptr, body_length, kii->_push_data);
                         task_info.task_state = KII_MQTT_ST_RECV_READY;
                     }
                     break;

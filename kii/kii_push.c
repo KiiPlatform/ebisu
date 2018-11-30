@@ -249,7 +249,7 @@ exit:
 kii_code_t kii_start_push_routine(kii_t* kii, unsigned int keep_alive_interval, KII_PUSH_RECEIVED_CB callback, void* userdata)
 {
     kii->_keep_alive_interval = keep_alive_interval;
-    kii->push_received_cb = callback;
+    kii->_cb_push_received = callback;
     kii->_push_data = userdata;
     kii->_cb_task_create(KII_TASK_NAME_MQTT,
         mqtt_start_task,
