@@ -210,7 +210,7 @@ void kii_set_cb_json_parser_resource(
     kii->_json_cb_free = cb_free;
 }
 
-void kii_set_slist_resource_cb(
+void kii_set_cb_slist_resource(
     kii_t* kii,
     KHC_CB_SLIST_ALLOC cb_alloc,
     KHC_CB_SLIST_FREE cb_free,

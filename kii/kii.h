@@ -733,7 +733,7 @@ void kii_set_cb_json_parser_resource(kii_t* kii,
  * If this method is not called, default allocators implemented with malloc/free is used to
  * allocate linked list used to construct HTTP request headers.
  */
-void kii_set_slist_resource_cb(
+void kii_set_cb_slist_resource(
     kii_t* kii,
     KHC_CB_SLIST_ALLOC cb_alloc,
     KHC_CB_SLIST_FREE cb_free,

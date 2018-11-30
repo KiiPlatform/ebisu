@@ -249,7 +249,7 @@ void tio_handler_set_slist_resource_cb(
     void* cb_alloc_data,
     void* cb_free_data)
 {
-    kii_set_slist_resource_cb(&handler->_kii, cb_alloc, cb_free, cb_alloc_data, cb_free_data);
+    kii_set_cb_slist_resource(&handler->_kii, cb_alloc, cb_free, cb_alloc_data, cb_free_data);
 }
 
 tio_code_t tio_handler_onboard(
@@ -478,7 +478,7 @@ void tio_updater_set_slist_resource_cb(
     void* cb_alloc_data,
     void* cb_free_data)
 {
-    kii_set_slist_resource_cb(&updater->_kii, cb_alloc, cb_free, cb_alloc_data, cb_free_data);
+    kii_set_cb_slist_resource(&updater->_kii, cb_alloc, cb_free, cb_alloc_data, cb_free_data);
 }
 
 tio_code_t tio_updater_onboard(
