@@ -426,10 +426,10 @@ static void* _update_state(void* data) {
                     break;
                 }
             }
-            updater->_kii.delay_ms_cb(interval_chk_cnt_sec * 1000, updater->_kii._delay_ms_data);
+            updater->_kii.cb_delay_ms(interval_chk_cnt_sec * 1000, updater->_kii._delay_ms_data);
             interval_remain_sec -= interval_chk_cnt_sec;
         } else {
-            updater->_kii.delay_ms_cb(interval_remain_sec * 1000, updater->_kii._delay_ms_data);
+            updater->_kii.cb_delay_ms(interval_remain_sec * 1000, updater->_kii._delay_ms_data);
             interval_remain_sec = updater->_update_interval;
             size_t state_size = updater->_cb_state_size(updater->_cb_state_size_data);
             if (state_size > 0) {
@@ -524,7 +524,7 @@ tio_code_t tio_updater_start(
     updater->_state_reader = state_reader;
     updater->_state_reader_data = state_reader_data;
 
-    kii_task_code_t res = updater->_kii.task_create_cb(
+    kii_task_code_t res = updater->_kii._cb_task_create(
         TIO_TASK_NAME_UPDATE_STATE,
         _update_state,
         (void*)updater,
