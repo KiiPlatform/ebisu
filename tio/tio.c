@@ -31,7 +31,7 @@ tio_bool_t _task_continue(void* task_info, void* userdata) {
     if (handler->_cb_task_continue != NULL) {
         return handler->_cb_task_continue(&tio_task_info, handler->_task_continue_data);
     } else {
-        return KII_FALSE;
+        return KII_TRUE;
     }
 }
 
