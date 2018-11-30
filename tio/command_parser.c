@@ -7,7 +7,7 @@
 
 _cmd_parser_code_t _get_object_in_array(
     jkii_resource_t* resource,
-    JKII_RESOURCE_ALLOC_CB alloc_cb,
+    JKII_CB_RESOURCE_ALLOC alloc_cb,
     JKII_RESOURCE_FREE_CB free_cb,
     const char* json_array,
     size_t json_array_length,
@@ -447,7 +447,7 @@ jkii_parse_err_t _parse_json(
     if (resource != NULL) {
         res = jkii_parse(json_string, json_string_size, fields, resource);
     } else {
-        JKII_RESOURCE_ALLOC_CB alloc_cb = handler->_kii._json_alloc_cb;
+        JKII_CB_RESOURCE_ALLOC alloc_cb = handler->_kii._json_alloc_cb;
         JKII_RESOURCE_FREE_CB free_cb = handler->_kii._json_free_cb;
         res = jkii_parse_with_allocator(json_string, json_string_size, fields, alloc_cb, free_cb);
     }

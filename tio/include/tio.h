@@ -280,7 +280,7 @@ void tio_handler_set_json_parser_resource(tio_handler_t* handler, jkii_resource_
 
 void tio_handler_set_json_parser_resource_cb(
     tio_handler_t* handler,
-    JKII_RESOURCE_ALLOC_CB alloc_cb,
+    JKII_CB_RESOURCE_ALLOC alloc_cb,
     JKII_RESOURCE_FREE_CB free_cb);
 
 /**
@@ -454,7 +454,7 @@ void tio_updater_set_json_parser_resource(tio_updater_t* updater, jkii_resource_
 
 void tio_updater_set_json_parser_resource_cb(
     tio_updater_t* updater,
-    JKII_RESOURCE_ALLOC_CB alloc_cb,
+    JKII_CB_RESOURCE_ALLOC alloc_cb,
     JKII_RESOURCE_FREE_CB free_cb);
 
 /**
