@@ -309,7 +309,7 @@ typedef struct khc {
  * \param [out] khc instance.
  * \see khc_set_zero_excl_cb(khc*)
  */
-khc_code khc_set_zero(khc* khc);
+void khc_set_zero(khc* khc);
 
 /**
  * \brief Set members of khc 0/NULL.
@@ -327,7 +327,7 @@ khc_code khc_set_zero(khc* khc);
  * \param [out] khc instance.
  * \see khc_set_zero(khc*)
  */
-khc_code khc_set_zero_excl_cb(khc* khc);
+void khc_set_zero_excl_cb(khc* khc);
 
 /**
  * \brief Perform the HTTP session
@@ -400,7 +400,7 @@ khc_code khc_set_req_headers(khc* khc, khc_slist* headers);
  * \param [in] buffer pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
-khc_code khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size);
+void khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size);
 
 /**
  * \brief Set stream buffer.
@@ -422,7 +422,7 @@ khc_code khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size);
  * \param [in] buffer pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
-khc_code khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size);
+void khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size);
 
 /**
  * \brief Set socket connect callback.

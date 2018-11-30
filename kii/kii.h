@@ -162,27 +162,24 @@ typedef struct kii_t {
 
 /** Initializes Kii SDK
  *  \param [inout] kii sdk instance.
- *  \return 0 OK. (FIXME: change to void return.)
  */
-int kii_init(
+void kii_init(
 		kii_t* kii);
 
 /** \brief Set site name.
  *  \param [inout] kii sdk instance.
  *  \param [in] site the input of site name,
  *  should be one of "CN", "CN3", "JP", "US", "SG" or "EU"
- *  \return 0 OK. (FIXME: change to void return.)
  */
-int kii_set_site(
+void kii_set_site(
 		kii_t* kii,
 		const char* site);
 
 /** \brief Set Application ID.
  *  \param [inout] kii sdk instance.
  *  \param [in] app_id the input of Application ID
- *  \return 0 OK. (FIXME: change to void return.)
  */
-int kii_set_app_id(
+void kii_set_app_id(
 		kii_t* kii,
 		const char* app_id);
 
@@ -192,7 +189,7 @@ int kii_set_app_id(
  *  \param [inout] kii sdk instance.
  *  \param [in] vendor_thing_id the thing identifier given by vendor.
  *  \param [in] password the password of the thing given by vendor.
- *  \return 0:success, -1: failure
+ *  \return kii_code_t.
  */
 kii_code_t kii_auth_thing(
 		kii_t* kii,
@@ -574,9 +571,8 @@ kii_code_t kii_api_call_run(kii_t* kii);
  * \param [out] kii instance.
  * \param [in] buffer pointer to the buffer.
  * \param [in] buff_size size of the buffer.
- * \return 0 OK. (FIXME: change to void return.)
  */
-int kii_set_buff(kii_t* kii, char* buff, size_t buff_size);
+void kii_set_buff(kii_t* kii, char* buff, size_t buff_size);
 
 /**
  * \brief Set stream buffer.
@@ -600,9 +596,8 @@ int kii_set_buff(kii_t* kii, char* buff, size_t buff_size);
  * \param [out] kii instance.
  * \param [in] buffer pointer to the buffer.
  * \param [in] buff_size size of the buffer.
- * \return 0 OK. (FIXME: change to void return.)
  */
-int kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size);
+void kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size);
 
 /**
  * \brief Set response header buffer.
@@ -623,14 +618,13 @@ int kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size);
  * \param [out] kii instance.
  * \param [in] buffer pointer to the buffer.
  * \param [in] buff_size size of the buffer.
- * \return 0 OK. (FIXME: change to void return.)
  */
-int kii_set_resp_header_buff(kii_t* kii, char* buff, size_t buff_size);
+void kii_set_resp_header_buff(kii_t* kii, char* buff, size_t buff_size);
 
-int kii_set_http_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
-int kii_set_http_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
-int kii_set_http_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
-int kii_set_http_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+void kii_set_http_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
+void kii_set_http_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
+void kii_set_http_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
+void kii_set_http_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
 
 /**
  * \brief Set buffer used to parse MQTT message.
@@ -648,17 +642,16 @@ int kii_set_http_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata)
  * \param [out] kii instance.
  * \param [in] buffer pointer to the buffer.
  * \param [in] buff_size size of the buffer.
- * \return 0 OK. (FIXME: change to void return.)
  */
-int kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size);
+void kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size);
 
-int kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
-int kii_set_mqtt_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
-int kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
-int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+void kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
+void kii_set_mqtt_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
+void kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
+void kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
 
-int kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec);
-int kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec);
+void kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec);
+void kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec);
 
 void kii_set_task_create_cb(kii_t* kii, KII_TASK_CREATE create_cb, void* userdata);
 
@@ -721,7 +714,7 @@ void kii_set_delay_ms_cb(kii_t* kii, KII_DELAY_MS delay_cb, void* userdata);
  * If you need to parse large object or allocate exact size of memory used,
  * see kii_set_json_parser_resource_cb(kii_t, JKII_RESOURCE_ALLOC_CB, JKII_RESOURCE_FREE_CB)
  */
-kii_code_t kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource);
+void kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource);
 
 /** Set JSON paraser resource allocators.
  *  To use Allocator instead of fixed size memory given by kii_set_json_parser_resource(kii_t, jkii_resource_t),
@@ -730,7 +723,7 @@ kii_code_t kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource);
  * @param [in] alloc_cb allocator callback.
  * @param [in] free_cb free callback should free memories allocated in alloc_cb.
  */
-kii_code_t kii_set_json_parser_resource_cb(kii_t* kii,
+void kii_set_json_parser_resource_cb(kii_t* kii,
     JKII_RESOURCE_ALLOC_CB alloc_cb,
     JKII_RESOURCE_FREE_CB free_cb);
 
@@ -740,7 +733,7 @@ kii_code_t kii_set_json_parser_resource_cb(kii_t* kii,
  * If this method is not called, default allocators implemented with malloc/free is used to
  * allocate linked list used to construct HTTP request headers.
  */
-kii_code_t kii_set_slist_resource_cb(
+void kii_set_slist_resource_cb(
     kii_t* kii,
     KHC_SLIST_ALLOC_CB alloc_cb,
     KHC_SLIST_FREE_CB free_cb,
