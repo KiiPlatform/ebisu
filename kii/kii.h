@@ -120,7 +120,7 @@ typedef struct kii_t {
     KII_CB_TASK_CREATE task_create_cb;
     void* _task_create_data;
 
-    KII_TASK_CONTINUE _task_continue_cb;
+    KII_CB_TASK_CONTINUE _task_continue_cb;
     void* _task_continue_data;
 
     KII_CB_TASK_EXIT _task_exit_cb;
@@ -667,7 +667,7 @@ void kii_set_task_create_cb(kii_t* kii, KII_CB_TASK_CREATE create_cb, void* user
  * Implementation must ensure consistency of the flag by using Mutex, etc.
 
  * If un-recoverble error occurs, task exits the infinite loop and immediately calls KII_CB_TASK_EXIT callback if set.
- * In this case KII_TASK_CONTINUE callback is not called.
+ * In this case KII_CB_TASK_CONTINUE callback is not called.
 
  * \param kii [out] kii instance
  * \param continue_cb [in] Callback determines whether to continue or discontinue task.
@@ -676,12 +676,12 @@ void kii_set_task_create_cb(kii_t* kii, KII_CB_TASK_CREATE create_cb, void* user
  * task_info argument type of the continue_cb function (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info*.
  * \param userdata [in] Context data pointer passed as second argument when continue_cb is called.
  */
-void kii_set_task_continue_cb(kii_t* kii, KII_TASK_CONTINUE continue_cb, void* userdata);
+void kii_set_task_continue_cb(kii_t* kii, KII_CB_TASK_CONTINUE continue_cb, void* userdata);
 
 /**
  * \brief Callback called right before exit of MQTT task.
 
- * Task exits when the task is discontinued by KII_TASK_CONTINUE callback or
+ * Task exits when the task is discontinued by KII_CB_TASK_CONTINUE callback or
  * un-recoverble error occurs.
  * In exit_cb, you'll need to free memory used for MQTT buffer set by kii_set_mqtt_buff(),
  * Memory used for the userdata passed to following callbacks in case not yet freed.

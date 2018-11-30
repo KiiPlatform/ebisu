@@ -37,7 +37,7 @@ typedef void
     void* userdata);
 
 typedef kii_bool_t
-(*KII_TASK_CONTINUE)
+(*KII_CB_TASK_CONTINUE)
     (void* task_info,
     void* userdata);
 

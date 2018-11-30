@@ -79,7 +79,7 @@ typedef struct tio_handler_t {
     void* _cb_push_data;
     kii_t _kii;
     size_t _keep_alive_interval;
-    KII_TASK_CONTINUE _cb_task_continue;
+    KII_CB_TASK_CONTINUE _cb_task_continue;
     void* _task_continue_data;
     KII_CB_TASK_EXIT _cb_task_exit;
     void* _task_exit_data;
@@ -99,7 +99,7 @@ typedef struct tio_updater_t {
     void* _cb_err_data;
     kii_t _kii;
     size_t _update_interval;
-    KII_TASK_CONTINUE _cb_task_continue;
+    KII_CB_TASK_CONTINUE _cb_task_continue;
     void* _task_continue_data;
     KII_CB_TASK_EXIT _cb_task_exit;
     void* _task_exit_data;
@@ -199,21 +199,21 @@ void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_CB_TASK_CREATE c
  * Implementation must ensure consistency of the flag by using Mutex, etc.
 
  * If un-recoverble error occurs, task exits the infinite loop and immediately calls KII_CB_TASK_EXIT callback if set.
- * In this case KII_TASK_CONTINUE callback is not called.
+ * In this case KII_CB_TASK_CONTINUE callback is not called.
 
  * \param tio_handler_t [out] tio_handler_t instance
  * \param continue_cb [in] Callback determines whether to continue or discontinue task.
  * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
  * and calls KII_CB_TASK_EXIT callback if set.
- * task_info argument type of the cb_continue (defined as void* in KII_TASK_CONTINUE) is tio_handler_task_info*.
+ * task_info argument type of the cb_continue (defined as void* in KII_CB_TASK_CONTINUE) is tio_handler_task_info*.
  * \param userdata [in] Context data pointer passed as second argument when cb_continue is called.
  */
-void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_TASK_CONTINUE cb_continue, void* userdata);
+void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_CB_TASK_CONTINUE cb_continue, void* userdata);
 
 /**
  * \brief Callback called right before exit of tio_handler task.
 
- * Task exits when the task is discontinued by KII_TASK_CONTINUE callback or
+ * Task exits when the task is discontinued by KII_CB_TASK_CONTINUE callback or
  * un-recoverble error occurs.
  * In exit_cb, you'll need to free memory used for buffers set by following APIs
  * - tio_handler_set_http_buff(),
@@ -343,15 +343,15 @@ void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_CB_TASK_CREATE c
  * \param continue_cb [in] Callback determines whether to continue or discontinue task.
  * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
  * and calls KII_CB_TASK_EXIT callback if set.
- * task_info argument of the cb_continue (defined as void* in KII_TASK_CONTINUE) is always NULL.
+ * task_info argument of the cb_continue (defined as void* in KII_CB_TASK_CONTINUE) is always NULL.
  * \param userdata [in] Context data pointer passed as second argument when cb_continue is called.
  */
-void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_TASK_CONTINUE cb_continue, void* userdata);
+void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_CB_TASK_CONTINUE cb_continue, void* userdata);
 
 /**
  * \brief Callback called right before exit of tio_updater task.
 
- * Task exits when the task is discontinued by KII_TASK_CONTINUE callback.
+ * Task exits when the task is discontinued by KII_CB_TASK_CONTINUE callback.
  * In exit_cb, you'll need to free memory used for buffers set by following APIs
  * - tio_updater_set_buff(),
  * - tio_updater_set_stream_buff(),

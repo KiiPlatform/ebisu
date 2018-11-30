@@ -182,7 +182,7 @@ void kii_set_task_create_cb(kii_t* kii, KII_CB_TASK_CREATE cb, void* userdata) {
     kii->_task_create_data = userdata;
 }
 
-void kii_set_task_continue_cb(kii_t* kii, KII_TASK_CONTINUE cb, void* userdata) {
+void kii_set_task_continue_cb(kii_t* kii, KII_CB_TASK_CONTINUE cb, void* userdata) {
     kii->_task_continue_cb = cb;
     kii->_task_continue_data = userdata;
 }
