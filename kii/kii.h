@@ -123,7 +123,7 @@ typedef struct kii_t {
     KII_TASK_CONTINUE _task_continue_cb;
     void* _task_continue_data;
 
-    KII_TASK_EXIT _task_exit_cb;
+    KII_CB_TASK_EXIT _task_exit_cb;
     void* _task_exit_data;
 
     KII_CB_DELAY_MS delay_ms_cb;
@@ -666,14 +666,14 @@ void kii_set_task_create_cb(kii_t* kii, KII_CB_TASK_CREATE create_cb, void* user
  * In case checking cancellation flag in continue_cb, the flag might be set by other task/ thread.
  * Implementation must ensure consistency of the flag by using Mutex, etc.
 
- * If un-recoverble error occurs, task exits the infinite loop and immediately calls KII_TASK_EXIT callback if set.
+ * If un-recoverble error occurs, task exits the infinite loop and immediately calls KII_CB_TASK_EXIT callback if set.
  * In this case KII_TASK_CONTINUE callback is not called.
 
  * \param kii [out] kii instance
  * \param continue_cb [in] Callback determines whether to continue or discontinue task.
  * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
- * and calls KII_TASK_EXIT callback if set.
- * task_info argument type of the continue_cb function (defined as void* in KII_TASK_EXIT) is kii_mqtt_task_info*.
+ * and calls KII_CB_TASK_EXIT callback if set.
+ * task_info argument type of the continue_cb function (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info*.
  * \param userdata [in] Context data pointer passed as second argument when continue_cb is called.
  */
 void kii_set_task_continue_cb(kii_t* kii, KII_TASK_CONTINUE continue_cb, void* userdata);
@@ -702,10 +702,10 @@ void kii_set_task_continue_cb(kii_t* kii, KII_TASK_CONTINUE continue_cb, void* u
 
  * \param kii instance
  * \param exit_cb Called right before the exit.
- * task_info argument type of exit_cb (defined as void* in KII_TASK_EXIT) is kii_mqtt_task_info*.
+ * task_info argument type of exit_cb (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info*.
  * \param userdata [in] Context data pointer passed as second argument when exit_cb is called.
  */
-void kii_set_task_exit_cb(kii_t* kii, KII_TASK_EXIT exit_cb, void* userdata);
+void kii_set_task_exit_cb(kii_t* kii, KII_CB_TASK_EXIT exit_cb, void* userdata);
 void kii_set_delay_ms_cb(kii_t* kii, KII_CB_DELAY_MS delay_cb, void* userdata);
 
 /** Set JSON paraser resource

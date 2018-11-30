@@ -157,7 +157,7 @@ void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_TASK_CONTINUE 
     handler->_task_continue_data = userdata;
 }
 
-void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_TASK_EXIT cb_exit, void* userdata)
+void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_CB_TASK_EXIT cb_exit, void* userdata)
 {
     handler->_cb_task_exit = cb_exit;
     handler->_task_exit_data = userdata;
@@ -358,7 +358,7 @@ void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_TASK_CONTINUE 
     updater->_task_continue_data = userdata;
 }
 
-void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_TASK_EXIT cb_exit, void* userdata)
+void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_CB_TASK_EXIT cb_exit, void* userdata)
 {
     updater->_cb_task_exit = cb_exit;
     updater->_task_exit_data = userdata;

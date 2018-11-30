@@ -187,7 +187,7 @@ void kii_set_task_continue_cb(kii_t* kii, KII_TASK_CONTINUE cb, void* userdata) 
     kii->_task_continue_data = userdata;
 }
 
-void kii_set_task_exit_cb(kii_t* kii, KII_TASK_EXIT cb, void* userdata) {
+void kii_set_task_exit_cb(kii_t* kii, KII_CB_TASK_EXIT cb, void* userdata) {
     kii->_task_exit_cb = cb;
     kii->_task_exit_data = userdata;
 }

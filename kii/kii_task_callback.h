@@ -32,7 +32,7 @@ typedef void
      void* userdata);
 
 typedef void
-(*KII_TASK_EXIT)
+(*KII_CB_TASK_EXIT)
     (void* task_info,
     void* userdata);
 

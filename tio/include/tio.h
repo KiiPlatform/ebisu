@@ -81,7 +81,7 @@ typedef struct tio_handler_t {
     size_t _keep_alive_interval;
     KII_TASK_CONTINUE _cb_task_continue;
     void* _task_continue_data;
-    KII_TASK_EXIT _cb_task_exit;
+    KII_CB_TASK_EXIT _cb_task_exit;
     void* _task_exit_data;
 } tio_handler_t;
 
@@ -101,7 +101,7 @@ typedef struct tio_updater_t {
     size_t _update_interval;
     KII_TASK_CONTINUE _cb_task_continue;
     void* _task_continue_data;
-    KII_TASK_EXIT _cb_task_exit;
+    KII_CB_TASK_EXIT _cb_task_exit;
     void* _task_exit_data;
 } tio_updater_t;
 
@@ -198,13 +198,13 @@ void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_CB_TASK_CREATE c
  * In case checking cancellation flag in continue_cb, the flag might be set by other task/ thread.
  * Implementation must ensure consistency of the flag by using Mutex, etc.
 
- * If un-recoverble error occurs, task exits the infinite loop and immediately calls KII_TASK_EXIT callback if set.
+ * If un-recoverble error occurs, task exits the infinite loop and immediately calls KII_CB_TASK_EXIT callback if set.
  * In this case KII_TASK_CONTINUE callback is not called.
 
  * \param tio_handler_t [out] tio_handler_t instance
  * \param continue_cb [in] Callback determines whether to continue or discontinue task.
  * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
- * and calls KII_TASK_EXIT callback if set.
+ * and calls KII_CB_TASK_EXIT callback if set.
  * task_info argument type of the cb_continue (defined as void* in KII_TASK_CONTINUE) is tio_handler_task_info*.
  * \param userdata [in] Context data pointer passed as second argument when cb_continue is called.
  */
@@ -241,10 +241,10 @@ void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_TASK_CONTINUE 
 
  * \param handler [out] tio_handler_t instance.
  * \param cb_exit [in] Called right before the exit.
- * task_info argument type of cb_exit (defined as void* in KII_TASK_EXIT) is tio_handler_task_info*
+ * task_info argument type of cb_exit (defined as void* in KII_CB_TASK_EXIT) is tio_handler_task_info*
  * \param userdata [in] Context data pointer passed as second argument when cb_exit is called.
  */
-void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_TASK_EXIT cb_exit, void* userdata);
+void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_CB_TASK_EXIT cb_exit, void* userdata);
 void tio_handler_set_cb_delay_ms(tio_handler_t* handler, KII_CB_DELAY_MS cb_delay_ms, void* userdata);
 
 void tio_handler_set_cb_err(tio_handler_t* handler, TIO_CB_ERR cb_err, void* userdata);
@@ -342,7 +342,7 @@ void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_CB_TASK_CREATE c
  * \param updater [out] tio_updater_t instances
  * \param continue_cb [in] Callback determines whether to continue or discontinue task.
  * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
- * and calls KII_TASK_EXIT callback if set.
+ * and calls KII_CB_TASK_EXIT callback if set.
  * task_info argument of the cb_continue (defined as void* in KII_TASK_CONTINUE) is always NULL.
  * \param userdata [in] Context data pointer passed as second argument when cb_continue is called.
  */
@@ -373,10 +373,10 @@ void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_TASK_CONTINUE 
 
  * \param updater [out] tio_updater_t instance
  * \param exit_cb [in] Callback called right befor exit.
- * task_info argument of the cb_exit (defind as void* in KII_TASK_EXIT) function is always NULL.
+ * task_info argument of the cb_exit (defind as void* in KII_CB_TASK_EXIT) function is always NULL.
  * \param userdata [in] Context data pointer passed as second argument when cb_exit is called.
  */
-void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_TASK_EXIT cb_exit, void* userdata);
+void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_CB_TASK_EXIT cb_exit, void* userdata);
 void tio_updater_set_cb_delay_ms(tio_updater_t* updater, KII_CB_DELAY_MS cb_delay_ms, void* userdata);
 
 void tio_updater_set_cb_error(tio_updater_t* updater, TIO_CB_ERR cb_err, void* userdata);
