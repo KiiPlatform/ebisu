@@ -79,9 +79,9 @@ typedef struct tio_handler_t {
     void* _cb_push_data;
     kii_t _kii;
     size_t _keep_alive_interval;
-    KII_TASK_CONTINUE _cb_task_continue;
+    KII_CB_TASK_CONTINUE _cb_task_continue;
     void* _task_continue_data;
-    KII_TASK_EXIT _cb_task_exit;
+    KII_CB_TASK_EXIT _cb_task_exit;
     void* _task_exit_data;
 } tio_handler_t;
 
@@ -99,9 +99,9 @@ typedef struct tio_updater_t {
     void* _cb_err_data;
     kii_t _kii;
     size_t _update_interval;
-    KII_TASK_CONTINUE _cb_task_continue;
+    KII_CB_TASK_CONTINUE _cb_task_continue;
     void* _task_continue_data;
-    KII_TASK_EXIT _cb_task_exit;
+    KII_CB_TASK_EXIT _cb_task_exit;
     void* _task_exit_data;
 } tio_updater_t;
 
@@ -185,7 +185,7 @@ void tio_handler_set_cb_sock_close_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CLOS
 void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_sock_recv_sec);
 void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, unsigned int to_sock_send_sec);
 
-void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_TASK_CREATE cb_task_create, void* userdata);
+void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_CB_TASK_CREATE cb_task_create, void* userdata);
 
 /**
  * \brief set callback determines whether to continue or discontinue task.
@@ -198,22 +198,22 @@ void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_TASK_CREATE cb_t
  * In case checking cancellation flag in continue_cb, the flag might be set by other task/ thread.
  * Implementation must ensure consistency of the flag by using Mutex, etc.
 
- * If un-recoverble error occurs, task exits the infinite loop and immediately calls KII_TASK_EXIT callback if set.
- * In this case KII_TASK_CONTINUE callback is not called.
+ * If un-recoverble error occurs, task exits the infinite loop and immediately calls KII_CB_TASK_EXIT callback if set.
+ * In this case KII_CB_TASK_CONTINUE callback is not called.
 
  * \param tio_handler_t [out] tio_handler_t instance
  * \param continue_cb [in] Callback determines whether to continue or discontinue task.
  * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
- * and calls KII_TASK_EXIT callback if set.
- * task_info argument type of the cb_continue (defined as void* in KII_TASK_CONTINUE) is tio_handler_task_info*.
+ * and calls KII_CB_TASK_EXIT callback if set.
+ * task_info argument type of the cb_continue (defined as void* in KII_CB_TASK_CONTINUE) is tio_handler_task_info*.
  * \param userdata [in] Context data pointer passed as second argument when cb_continue is called.
  */
-void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_TASK_CONTINUE cb_continue, void* userdata);
+void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_CB_TASK_CONTINUE cb_continue, void* userdata);
 
 /**
  * \brief Callback called right before exit of tio_handler task.
 
- * Task exits when the task is discontinued by KII_TASK_CONTINUE callback or
+ * Task exits when the task is discontinued by KII_CB_TASK_CONTINUE callback or
  * un-recoverble error occurs.
  * In exit_cb, you'll need to free memory used for buffers set by following APIs
  * - tio_handler_set_http_buff(),
@@ -241,11 +241,11 @@ void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_TASK_CONTINUE 
 
  * \param handler [out] tio_handler_t instance.
  * \param cb_exit [in] Called right before the exit.
- * task_info argument type of cb_exit (defined as void* in KII_TASK_EXIT) is tio_handler_task_info*
+ * task_info argument type of cb_exit (defined as void* in KII_CB_TASK_EXIT) is tio_handler_task_info*
  * \param userdata [in] Context data pointer passed as second argument when cb_exit is called.
  */
-void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_TASK_EXIT cb_exit, void* userdata);
-void tio_handler_set_cb_delay_ms(tio_handler_t* handler, KII_DELAY_MS cb_delay_ms, void* userdata);
+void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_CB_TASK_EXIT cb_exit, void* userdata);
+void tio_handler_set_cb_delay_ms(tio_handler_t* handler, KII_CB_DELAY_MS cb_delay_ms, void* userdata);
 
 void tio_handler_set_cb_err(tio_handler_t* handler, TIO_CB_ERR cb_err, void* userdata);
 
@@ -278,10 +278,10 @@ void tio_handler_set_app(tio_handler_t* handler, const char* app_id, const char*
 
 void tio_handler_set_json_parser_resource(tio_handler_t* handler, jkii_resource_t* resource);
 
-void tio_handler_set_json_parser_resource_cb(
+void tio_handler_set_cb_json_parser_resource(
     tio_handler_t* handler,
-    JKII_RESOURCE_ALLOC_CB alloc_cb,
-    JKII_RESOURCE_FREE_CB free_cb);
+    JKII_CB_RESOURCE_ALLOC cb_alloc,
+    JKII_CB_RESOURCE_FREE cb_free);
 
 /**
  * \brief Set custom memory allocator for the linked list used to constuct request headers of HTTP.
@@ -291,12 +291,12 @@ void tio_handler_set_json_parser_resource_cb(
  * tio_handler_set_app(tio_handler_t*, const char*, const char*) since the
  * tio_handler_set_app() method has side effect resetting to default memory allocator.
  */
-void tio_handler_set_slist_resource_cb(
+void tio_handler_set_cb_slist_resource(
     tio_handler_t* handler,
-    KHC_SLIST_ALLOC_CB alloc_cb,
-    KHC_SLIST_FREE_CB free_cb,
-    void* alloc_cb_data,
-    void* free_cb_data
+    KHC_CB_SLIST_ALLOC cb_alloc,
+    KHC_CB_SLIST_FREE cb_free,
+    void* cb_alloc_data,
+    void* cb_free_data
 );
 
 tio_code_t tio_handler_onboard(
@@ -326,7 +326,7 @@ void tio_updater_set_cb_sock_send(tio_updater_t* updater, KHC_CB_SOCK_SEND cb_se
 void tio_updater_set_cb_sock_recv(tio_updater_t* updater, KHC_CB_SOCK_RECV cb_recv, void* userdata);
 void tio_updater_set_cb_sock_close(tio_updater_t* updater, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
 
-void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_TASK_CREATE cb_task_create, void* userdata);
+void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_CB_TASK_CREATE cb_task_create, void* userdata);
 
 /**
  * \brief set callback determines whether to continue or discontinue task.
@@ -342,16 +342,16 @@ void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_TASK_CREATE cb_t
  * \param updater [out] tio_updater_t instances
  * \param continue_cb [in] Callback determines whether to continue or discontinue task.
  * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
- * and calls KII_TASK_EXIT callback if set.
- * task_info argument of the cb_continue (defined as void* in KII_TASK_CONTINUE) is always NULL.
+ * and calls KII_CB_TASK_EXIT callback if set.
+ * task_info argument of the cb_continue (defined as void* in KII_CB_TASK_CONTINUE) is always NULL.
  * \param userdata [in] Context data pointer passed as second argument when cb_continue is called.
  */
-void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_TASK_CONTINUE cb_continue, void* userdata);
+void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_CB_TASK_CONTINUE cb_continue, void* userdata);
 
 /**
  * \brief Callback called right before exit of tio_updater task.
 
- * Task exits when the task is discontinued by KII_TASK_CONTINUE callback.
+ * Task exits when the task is discontinued by KII_CB_TASK_CONTINUE callback.
  * In exit_cb, you'll need to free memory used for buffers set by following APIs
  * - tio_updater_set_buff(),
  * - tio_updater_set_stream_buff(),
@@ -373,11 +373,11 @@ void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_TASK_CONTINUE 
 
  * \param updater [out] tio_updater_t instance
  * \param exit_cb [in] Callback called right befor exit.
- * task_info argument of the cb_exit (defind as void* in KII_TASK_EXIT) function is always NULL.
+ * task_info argument of the cb_exit (defind as void* in KII_CB_TASK_EXIT) function is always NULL.
  * \param userdata [in] Context data pointer passed as second argument when cb_exit is called.
  */
-void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_TASK_EXIT cb_exit, void* userdata);
-void tio_updater_set_cb_delay_ms(tio_updater_t* updater, KII_DELAY_MS cb_delay_ms, void* userdata);
+void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_CB_TASK_EXIT cb_exit, void* userdata);
+void tio_updater_set_cb_delay_ms(tio_updater_t* updater, KII_CB_DELAY_MS cb_delay_ms, void* userdata);
 
 void tio_updater_set_cb_error(tio_updater_t* updater, TIO_CB_ERR cb_err, void* userdata);
 
@@ -452,10 +452,10 @@ void tio_updater_set_interval(tio_updater_t* updater, size_t update_interval);
 
 void tio_updater_set_json_parser_resource(tio_updater_t* updater, jkii_resource_t* resource);
 
-void tio_updater_set_json_parser_resource_cb(
+void tio_updater_set_cb_json_parser_resource(
     tio_updater_t* updater,
-    JKII_RESOURCE_ALLOC_CB alloc_cb,
-    JKII_RESOURCE_FREE_CB free_cb);
+    JKII_CB_RESOURCE_ALLOC cb_alloc,
+    JKII_CB_RESOURCE_FREE cb_free);
 
 /**
  * \brief Set custom memory allocator for the linked list used to constuct request headers of HTTP.
@@ -465,12 +465,12 @@ void tio_updater_set_json_parser_resource_cb(
  * tio_updater_set_app(tio_updater_t*, const char*, const char*) since the
  * tio_updater_set_app() method has side effect resetting to default memory allocator.
  */
-void tio_updater_set_slist_resource_cb(
+void tio_updater_set_cb_slist_resource(
     tio_updater_t* updater,
-    KHC_SLIST_ALLOC_CB alloc_cb,
-    KHC_SLIST_FREE_CB free_cb,
-    void* alloc_cb_data,
-    void* free_cb_data
+    KHC_CB_SLIST_ALLOC cb_alloc,
+    KHC_CB_SLIST_FREE cb_free,
+    void* cb_alloc_data,
+    void* cb_free_data
 );
 
 tio_code_t tio_updater_onboard(

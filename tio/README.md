@@ -43,7 +43,7 @@ Task create callback function signature is following.
 
 ```c
 typedef kii_task_code_t
-(*KII_TASK_CREATE)
+(*KII_CB_TASK_CREATE)
     (const char* name,
      KII_TASK_ENTRY entry,
      void* param);
@@ -78,7 +78,7 @@ Task continue callback signature:
 
 ```c
 typedef kii_bool_t
-(*KII_TASK_CONTINUE)
+(*KII_CB_TASK_CONTINUE)
     (void* task_info,
     void* userdata);
 ```
@@ -133,7 +133,7 @@ Delay callback function signature is following.
 
 ```
 typedef void
-(*KII_DELAY_MS)
+(*KII_CB_DELAY_MS)
     (unsigned int msec);
 ```
 
@@ -387,15 +387,15 @@ If you defined complex(i.e, a lot of fields or long arrays in the commands) cont
 Alternatively, you can use dynamic allocation for tokens by using following API:
 
 ```c
-void tio_handler_set_json_parser_resource_cb(
+void tio_handler_set_cb_json_parser_resource(
     tio_handler_t* handler,
-    JKII_RESOURCE_ALLOC_CB alloc_cb,
-    JKII_RESOURCE_FREE_CB free_cb);
+    JKII_CB_RESOURCE_ALLOC cb_alloc,
+    JKII_CB_RESOURCE_FREE cb_free);
 ```
 
-`alloc_cb` is called when the token is required and it's number is exactly same as numbers need to parse json string.
+`cb_alloc` is called when the token is required and it's number is exactly same as numbers need to parse json string.
 
-`free_cb` is called when the parse has been done.
+`cb_free` is called when the parse has been done.
 
 ## Execute onboarding
 
@@ -607,7 +607,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
     - `tio_handler_start()` (`TIO_CB_ACTION` callback)
     - `tio_handler_set_cb_err()`
         (Optional. In case set the error handler for debugging, etc.)
-    - `tio_handler_set_json_parser_resource_cb()`
+    - `tio_handler_set_cb_json_parser_resource()`
         (Optional. In case dynamic memory allocation is chosen for parsing JSON.)
 
     This task uses buffers set by following APIs.
@@ -635,7 +635,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
     - `tio_updater_start()` (`TIO_CB_SIZE`, `TIO_CB_READ` callbacks.)
     - `tio_updater_set_cb_err()`
         (Optional. In case set the error handler for debugging, etc.)
-    - `tio_updater_set_json_parser_resource_cb()`
+    - `tio_updater_set_cb_json_parser_resource()`
         (Optional. In case dynamic memory allocation is chosen for parsing JSON.)
 
     This task uses buffers set by following APIs.

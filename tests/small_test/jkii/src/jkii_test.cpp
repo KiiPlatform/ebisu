@@ -5,7 +5,7 @@
 #include <math.h>
 #include <limits.h>
 
-static jkii_resource_t* alloc_cb(size_t required_size)
+static jkii_resource_t* cb_alloc(size_t required_size)
 {
     jkii_resource_t* res =
         (jkii_resource_t*)malloc(sizeof(jkii_resource_t));
@@ -23,7 +23,7 @@ static jkii_resource_t* alloc_cb(size_t required_size)
     return res;
 }
 
-static void free_cb(jkii_resource_t* resource) {
+static void cb_free(jkii_resource_t* resource) {
     free(resource->tokens);
     free(resource);
 }
@@ -1510,8 +1510,8 @@ TEST_CASE("KiiJson, AllocatorTest")
         json_string,
         strlen(json_string),
         fields,
-        alloc_cb,
-        free_cb);
+        cb_alloc,
+        cb_free);
 
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
@@ -1538,7 +1538,7 @@ TEST_CASE("KiiJson, FailedAllocationTest")
         strlen(json_string),
         fields,
         allocate_cb_fail,
-        free_cb);
+        cb_free);
 
     REQUIRE(JKII_ERR_ALLOCATION == res);
 }

@@ -20,24 +20,24 @@ typedef enum kii_bool_t
 typedef void* (*KII_TASK_ENTRY)(void* value);
 
 typedef kii_task_code_t
-(*KII_TASK_CREATE)
+(*KII_CB_TASK_CREATE)
     (const char* name,
      KII_TASK_ENTRY entry,
      void* entry_param,
      void* userdata);
 
 typedef void
-(*KII_DELAY_MS)
+(*KII_CB_DELAY_MS)
     (unsigned int msec,
      void* userdata);
 
 typedef void
-(*KII_TASK_EXIT)
+(*KII_CB_TASK_EXIT)
     (void* task_info,
     void* userdata);
 
 typedef kii_bool_t
-(*KII_TASK_CONTINUE)
+(*KII_CB_TASK_CONTINUE)
     (void* task_info,
     void* userdata);
 

@@ -117,16 +117,16 @@ typedef struct kii_t {
     unsigned int _mqtt_to_recv_sec;
     unsigned int _mqtt_to_send_sec;
 
-    KII_TASK_CREATE task_create_cb;
+    KII_CB_TASK_CREATE task_create_cb;
     void* _task_create_data;
 
-    KII_TASK_CONTINUE _task_continue_cb;
+    KII_CB_TASK_CONTINUE _task_continue_cb;
     void* _task_continue_data;
 
-    KII_TASK_EXIT _task_exit_cb;
+    KII_CB_TASK_EXIT _task_exit_cb;
     void* _task_exit_data;
 
-    KII_DELAY_MS delay_ms_cb;
+    KII_CB_DELAY_MS delay_ms_cb;
     void* _delay_ms_data;
 
     KII_PUSH_RECEIVED_CB push_received_cb;
@@ -151,13 +151,13 @@ typedef struct kii_t {
 
     jkii_resource_t* _json_resource;
 
-    JKII_RESOURCE_ALLOC_CB _json_alloc_cb;
-    JKII_RESOURCE_FREE_CB _json_free_cb;
+    JKII_CB_RESOURCE_ALLOC _json_cb_alloc;
+    JKII_CB_RESOURCE_FREE _json_cb_free;
 
-    KHC_SLIST_ALLOC_CB _slist_alloc_cb;
-    KHC_SLIST_FREE_CB _slist_free_cb;
-    void* _slist_alloc_cb_data;
-    void* _slist_free_cb_data;
+    KHC_CB_SLIST_ALLOC _slist_cb_alloc;
+    KHC_CB_SLIST_FREE _slist_cb_free;
+    void* _slist_cb_alloc_data;
+    void* _slist_cb_free_data;
 } kii_t;
 
 /** Initializes Kii SDK
@@ -621,10 +621,10 @@ void kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size);
  */
 void kii_set_resp_header_buff(kii_t* kii, char* buff, size_t buff_size);
 
-void kii_set_http_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
-void kii_set_http_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
-void kii_set_http_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
-void kii_set_http_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+void kii_set_cb_http_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
+void kii_set_cb_http_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
+void kii_set_cb_http_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
+void kii_set_cb_http_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
 
 /**
  * \brief Set buffer used to parse MQTT message.
@@ -645,15 +645,15 @@ void kii_set_http_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata
  */
 void kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size);
 
-void kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
-void kii_set_mqtt_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
-void kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
-void kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+void kii_set_cb_mqtt_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
+void kii_set_cb_mqtt_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
+void kii_set_cb_mqtt_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
+void kii_set_cb_mqtt_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
 
 void kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec);
 void kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec);
 
-void kii_set_task_create_cb(kii_t* kii, KII_TASK_CREATE create_cb, void* userdata);
+void kii_set_cb_task_create(kii_t* kii, KII_CB_TASK_CREATE create_cb, void* userdata);
 
 /**
  * \brief set callback determines whether to continue or discontinue task.
@@ -666,32 +666,32 @@ void kii_set_task_create_cb(kii_t* kii, KII_TASK_CREATE create_cb, void* userdat
  * In case checking cancellation flag in continue_cb, the flag might be set by other task/ thread.
  * Implementation must ensure consistency of the flag by using Mutex, etc.
 
- * If un-recoverble error occurs, task exits the infinite loop and immediately calls KII_TASK_EXIT callback if set.
- * In this case KII_TASK_CONTINUE callback is not called.
+ * If un-recoverble error occurs, task exits the infinite loop and immediately calls KII_CB_TASK_EXIT callback if set.
+ * In this case KII_CB_TASK_CONTINUE callback is not called.
 
  * \param kii [out] kii instance
  * \param continue_cb [in] Callback determines whether to continue or discontinue task.
  * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
- * and calls KII_TASK_EXIT callback if set.
- * task_info argument type of the continue_cb function (defined as void* in KII_TASK_EXIT) is kii_mqtt_task_info*.
+ * and calls KII_CB_TASK_EXIT callback if set.
+ * task_info argument type of the continue_cb function (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info*.
  * \param userdata [in] Context data pointer passed as second argument when continue_cb is called.
  */
-void kii_set_task_continue_cb(kii_t* kii, KII_TASK_CONTINUE continue_cb, void* userdata);
+void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE continue_cb, void* userdata);
 
 /**
  * \brief Callback called right before exit of MQTT task.
 
- * Task exits when the task is discontinued by KII_TASK_CONTINUE callback or
+ * Task exits when the task is discontinued by KII_CB_TASK_CONTINUE callback or
  * un-recoverble error occurs.
  * In exit_cb, you'll need to free memory used for MQTT buffer set by kii_set_mqtt_buff(),
  * Memory used for the userdata passed to following callbacks in case not yet freed.
 
- * - kii_set_mqtt_cb_sock_send()
- * - kii_set_mqtt_cb_sock_connect()
- * - kii_set_mqtt_cb_sock_recv()
- * - kii_set_mqtt_cb_sock_close()
- * - kii_set_task_continue_cb()
- * - kii_set_task_exit_cb()
+ * - kii_set_cb_mqtt_sock_send()
+ * - kii_set_cb_mqtt_sock_connect()
+ * - kii_set_cb_mqtt_sock_recv()
+ * - kii_set_cb_mqtt_sock_close()
+ * - kii_set_cb_task_continue()
+ * - kii_set_cb_task_exit()
 
  * In addition, you may need to call task/ thread termination API.
  * It depends on the task/ threading framework you used to create task/ thread.
@@ -702,17 +702,17 @@ void kii_set_task_continue_cb(kii_t* kii, KII_TASK_CONTINUE continue_cb, void* u
 
  * \param kii instance
  * \param exit_cb Called right before the exit.
- * task_info argument type of exit_cb (defined as void* in KII_TASK_EXIT) is kii_mqtt_task_info*.
+ * task_info argument type of exit_cb (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info*.
  * \param userdata [in] Context data pointer passed as second argument when exit_cb is called.
  */
-void kii_set_task_exit_cb(kii_t* kii, KII_TASK_EXIT exit_cb, void* userdata);
-void kii_set_delay_ms_cb(kii_t* kii, KII_DELAY_MS delay_cb, void* userdata);
+void kii_set_cb_task_exit(kii_t* kii, KII_CB_TASK_EXIT exit_cb, void* userdata);
+void kii_set_cb_delay_ms(kii_t* kii, KII_CB_DELAY_MS delay_cb, void* userdata);
 
 /** Set JSON paraser resource
  * @param [inout] kii SDK instance.
  * @param [in] resource to be used parse JSON. 256 tokens_num might be enough for almost all usecases.
  * If you need to parse large object or allocate exact size of memory used,
- * see kii_set_json_parser_resource_cb(kii_t, JKII_RESOURCE_ALLOC_CB, JKII_RESOURCE_FREE_CB)
+ * see kii_set_cb_json_parser_resource(kii_t, JKII_CB_RESOURCE_ALLOC, JKII_CB_RESOURCE_FREE)
  */
 void kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource);
 
@@ -720,12 +720,12 @@ void kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource);
  *  To use Allocator instead of fixed size memory given by kii_set_json_parser_resource(kii_t, jkii_resource_t),
  *  call kii_set_json_parser_resource(kii_t, jkii_resource_t) with NULL resource argument.
  * @param [inout] kii SDK instance.
- * @param [in] alloc_cb allocator callback.
- * @param [in] free_cb free callback should free memories allocated in alloc_cb.
+ * @param [in] cb_alloc allocator callback.
+ * @param [in] cb_free free callback should free memories allocated in cb_alloc.
  */
-void kii_set_json_parser_resource_cb(kii_t* kii,
-    JKII_RESOURCE_ALLOC_CB alloc_cb,
-    JKII_RESOURCE_FREE_CB free_cb);
+void kii_set_cb_json_parser_resource(kii_t* kii,
+    JKII_CB_RESOURCE_ALLOC cb_alloc,
+    JKII_CB_RESOURCE_FREE cb_free);
 
 /**
  * \brief Set khc_slist (linked list) resource allocators.
@@ -733,12 +733,12 @@ void kii_set_json_parser_resource_cb(kii_t* kii,
  * If this method is not called, default allocators implemented with malloc/free is used to
  * allocate linked list used to construct HTTP request headers.
  */
-void kii_set_slist_resource_cb(
+void kii_set_cb_slist_resource(
     kii_t* kii,
-    KHC_SLIST_ALLOC_CB alloc_cb,
-    KHC_SLIST_FREE_CB free_cb,
-    void* alloc_cb_data,
-    void* free_cb_data);
+    KHC_CB_SLIST_ALLOC cb_alloc,
+    KHC_CB_SLIST_FREE cb_free,
+    void* cb_alloc_data,
+    void* cb_free_data);
 
 const char* kii_get_etag(kii_t* kii);
 

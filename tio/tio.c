@@ -49,8 +49,8 @@ void tio_handler_init(tio_handler_t* handler)
     handler->_task_continue_data = NULL;
     handler->_cb_task_exit = NULL;
     handler->_task_exit_data = NULL;
-    kii_set_task_continue_cb(&handler->_kii, _task_continue, handler);
-    kii_set_task_exit_cb(&handler->_kii, _task_exit, handler);
+    kii_set_cb_task_continue(&handler->_kii, _task_continue, handler);
+    kii_set_cb_task_exit(&handler->_kii, _task_exit, handler);
 }
 
 void tio_handler_set_cb_sock_connect_http(
@@ -58,7 +58,7 @@ void tio_handler_set_cb_sock_connect_http(
     KHC_CB_SOCK_CONNECT cb_connect,
     void* userdata)
 {
-    kii_set_http_cb_sock_connect(&handler->_kii, cb_connect, userdata);
+    kii_set_cb_http_sock_connect(&handler->_kii, cb_connect, userdata);
 }
 
 void tio_handler_set_cb_sock_send_http(
@@ -66,7 +66,7 @@ void tio_handler_set_cb_sock_send_http(
     KHC_CB_SOCK_SEND cb_send,
     void* userdata)
 {
-    kii_set_http_cb_sock_send(&handler->_kii, cb_send, userdata);
+    kii_set_cb_http_sock_send(&handler->_kii, cb_send, userdata);
 }
 
 void tio_handler_set_cb_sock_recv_http(
@@ -74,7 +74,7 @@ void tio_handler_set_cb_sock_recv_http(
     KHC_CB_SOCK_RECV cb_recv,
     void* userdata)
 {
-    kii_set_http_cb_sock_recv(&handler->_kii, cb_recv, userdata);
+    kii_set_cb_http_sock_recv(&handler->_kii, cb_recv, userdata);
 }
 
 void tio_handler_set_cb_sock_close_http(
@@ -82,7 +82,7 @@ void tio_handler_set_cb_sock_close_http(
     KHC_CB_SOCK_CLOSE cb_close,
     void* userdata)
 {
-    kii_set_http_cb_sock_close(&handler->_kii, cb_close, userdata);
+    kii_set_cb_http_sock_close(&handler->_kii, cb_close, userdata);
 }
 
 void tio_handler_set_http_buff(
@@ -106,7 +106,7 @@ void tio_handler_set_cb_sock_connect_mqtt(
     KHC_CB_SOCK_CONNECT cb_connect,
     void* userdata)
 {
-    kii_set_mqtt_cb_sock_connect(&handler->_kii, cb_connect, userdata);
+    kii_set_cb_mqtt_sock_connect(&handler->_kii, cb_connect, userdata);
 }
 
 void tio_handler_set_cb_sock_send_mqtt(
@@ -114,7 +114,7 @@ void tio_handler_set_cb_sock_send_mqtt(
     KHC_CB_SOCK_SEND cb_send,
     void* userdata)
 {
-    kii_set_mqtt_cb_sock_send(&handler->_kii, cb_send, userdata);
+    kii_set_cb_mqtt_sock_send(&handler->_kii, cb_send, userdata);
 }
 
 void tio_handler_set_cb_sock_recv_mqtt(
@@ -122,7 +122,7 @@ void tio_handler_set_cb_sock_recv_mqtt(
     KHC_CB_SOCK_RECV cb_recv,
     void* userdata)
 {
-    kii_set_mqtt_cb_sock_recv(&handler->_kii, cb_recv, userdata);
+    kii_set_cb_mqtt_sock_recv(&handler->_kii, cb_recv, userdata);
 }
 
 void tio_handler_set_cb_sock_close_mqtt(
@@ -130,7 +130,7 @@ void tio_handler_set_cb_sock_close_mqtt(
     KHC_CB_SOCK_CLOSE cb_close,
     void* userdata)
 {
-    kii_set_mqtt_cb_sock_close(&handler->_kii, cb_close, userdata);
+    kii_set_cb_mqtt_sock_close(&handler->_kii, cb_close, userdata);
 }
 
 void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_sock_recv_sec)
@@ -145,19 +145,19 @@ void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, unsigned int to_s
 
 void tio_handler_set_cb_task_create(
     tio_handler_t* handler,
-    KII_TASK_CREATE cb_task_create,
+    KII_CB_TASK_CREATE cb_task_create,
     void* userdata)
 {
-    kii_set_task_create_cb(&handler->_kii, cb_task_create, userdata);
+    kii_set_cb_task_create(&handler->_kii, cb_task_create, userdata);
 }
 
-void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_TASK_CONTINUE cb_continue, void* userdata)
+void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_CB_TASK_CONTINUE cb_continue, void* userdata)
 {
     handler->_cb_task_continue = cb_continue;
     handler->_task_continue_data = userdata;
 }
 
-void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_TASK_EXIT cb_exit, void* userdata)
+void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_CB_TASK_EXIT cb_exit, void* userdata)
 {
     handler->_cb_task_exit = cb_exit;
     handler->_task_exit_data = userdata;
@@ -165,10 +165,10 @@ void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_TASK_EXIT cb_exit,
 
 void tio_handler_set_cb_delay_ms(
     tio_handler_t* handler,
-    KII_DELAY_MS cb_delay_ms,
+    KII_CB_DELAY_MS cb_delay_ms,
     void* userdata)
 {
-    kii_set_delay_ms_cb(&handler->_kii, cb_delay_ms, userdata);
+    kii_set_cb_delay_ms(&handler->_kii, cb_delay_ms, userdata);
 }
 
 void tio_handler_set_cb_err(
@@ -234,22 +234,22 @@ void tio_handler_set_json_parser_resource(
     kii_set_json_parser_resource(&handler->_kii, resource);
 }
 
-void tio_handler_set_json_parser_resource_cb(
+void tio_handler_set_cb_json_parser_resource(
     tio_handler_t* handler,
-    JKII_RESOURCE_ALLOC_CB alloc_cb,
-    JKII_RESOURCE_FREE_CB free_cb)
+    JKII_CB_RESOURCE_ALLOC cb_alloc,
+    JKII_CB_RESOURCE_FREE cb_free)
 {
-    kii_set_json_parser_resource_cb(&handler->_kii, alloc_cb, free_cb);
+    kii_set_cb_json_parser_resource(&handler->_kii, cb_alloc, cb_free);
 }
 
-void tio_handler_set_slist_resource_cb(
+void tio_handler_set_cb_slist_resource(
     tio_handler_t* handler,
-    KHC_SLIST_ALLOC_CB alloc_cb,
-    KHC_SLIST_FREE_CB free_cb,
-    void* alloc_cb_data,
-    void* free_cb_data)
+    KHC_CB_SLIST_ALLOC cb_alloc,
+    KHC_CB_SLIST_FREE cb_free,
+    void* cb_alloc_data,
+    void* cb_free_data)
 {
-    kii_set_slist_resource_cb(&handler->_kii, alloc_cb, free_cb, alloc_cb_data, free_cb_data);
+    kii_set_cb_slist_resource(&handler->_kii, cb_alloc, cb_free, cb_alloc_data, cb_free_data);
 }
 
 tio_code_t tio_handler_onboard(
@@ -317,7 +317,7 @@ void tio_updater_set_cb_sock_connect(
     KHC_CB_SOCK_CONNECT cb_connect,
     void* userdata)
 {
-    kii_set_http_cb_sock_connect(&updater->_kii, cb_connect, userdata);
+    kii_set_cb_http_sock_connect(&updater->_kii, cb_connect, userdata);
 }
 
 void tio_updater_set_cb_sock_send(
@@ -325,7 +325,7 @@ void tio_updater_set_cb_sock_send(
     KHC_CB_SOCK_SEND cb_send,
     void* userdata)
 {
-    kii_set_http_cb_sock_send(&updater->_kii, cb_send, userdata);
+    kii_set_cb_http_sock_send(&updater->_kii, cb_send, userdata);
 }
 
 void tio_updater_set_cb_sock_recv(
@@ -333,7 +333,7 @@ void tio_updater_set_cb_sock_recv(
     KHC_CB_SOCK_RECV cb_recv,
     void* userdata)
 {
-    kii_set_http_cb_sock_recv(&updater->_kii, cb_recv, userdata);
+    kii_set_cb_http_sock_recv(&updater->_kii, cb_recv, userdata);
 }
 
 void tio_updater_set_cb_sock_close(
@@ -341,24 +341,24 @@ void tio_updater_set_cb_sock_close(
     KHC_CB_SOCK_CLOSE cb_close,
     void* userdata)
 {
-    kii_set_http_cb_sock_close(&updater->_kii, cb_close, userdata);
+    kii_set_cb_http_sock_close(&updater->_kii, cb_close, userdata);
 }
 
 void tio_updater_set_cb_task_create(
     tio_updater_t* updater,
-    KII_TASK_CREATE cb_task_create,
+    KII_CB_TASK_CREATE cb_task_create,
     void* userdata)
 {
-    kii_set_task_create_cb(&updater->_kii, cb_task_create, userdata);
+    kii_set_cb_task_create(&updater->_kii, cb_task_create, userdata);
 }
 
-void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_TASK_CONTINUE cb_continue, void* userdata)
+void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_CB_TASK_CONTINUE cb_continue, void* userdata)
 {
     updater->_cb_task_continue = cb_continue;
     updater->_task_continue_data = userdata;
 }
 
-void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_TASK_EXIT cb_exit, void* userdata)
+void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_CB_TASK_EXIT cb_exit, void* userdata)
 {
     updater->_cb_task_exit = cb_exit;
     updater->_task_exit_data = userdata;
@@ -366,10 +366,10 @@ void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_TASK_EXIT cb_exit,
 
 void tio_updater_set_cb_delay_ms(
     tio_updater_t* updater,
-    KII_DELAY_MS cb_delay_ms,
+    KII_CB_DELAY_MS cb_delay_ms,
     void* userdata)
 {
-    kii_set_delay_ms_cb(&updater->_kii, cb_delay_ms, userdata);
+    kii_set_cb_delay_ms(&updater->_kii, cb_delay_ms, userdata);
 }
 
 void tio_updater_set_cb_error(
@@ -463,22 +463,22 @@ void tio_updater_set_json_parser_resource(
     kii_set_json_parser_resource(&updater->_kii, resource);
 }
 
-void tio_updater_set_json_parser_resource_cb(
+void tio_updater_set_cb_json_parser_resource(
     tio_updater_t* updater,
-    JKII_RESOURCE_ALLOC_CB alloc_cb,
-    JKII_RESOURCE_FREE_CB free_cb)
+    JKII_CB_RESOURCE_ALLOC cb_alloc,
+    JKII_CB_RESOURCE_FREE cb_free)
 {
-    kii_set_json_parser_resource_cb(&updater->_kii, alloc_cb, free_cb);
+    kii_set_cb_json_parser_resource(&updater->_kii, cb_alloc, cb_free);
 }
 
-void tio_updater_set_slist_resource_cb(
+void tio_updater_set_cb_slist_resource(
     tio_updater_t* updater,
-    KHC_SLIST_ALLOC_CB alloc_cb,
-    KHC_SLIST_FREE_CB free_cb,
-    void* alloc_cb_data,
-    void* free_cb_data)
+    KHC_CB_SLIST_ALLOC cb_alloc,
+    KHC_CB_SLIST_FREE cb_free,
+    void* cb_alloc_data,
+    void* cb_free_data)
 {
-    kii_set_slist_resource_cb(&updater->_kii, alloc_cb, free_cb, alloc_cb_data, free_cb_data);
+    kii_set_cb_slist_resource(&updater->_kii, cb_alloc, cb_free, cb_alloc_data, cb_free_data);
 }
 
 tio_code_t tio_updater_onboard(
