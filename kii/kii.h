@@ -154,8 +154,8 @@ typedef struct kii_t {
     JKII_CB_RESOURCE_ALLOC _json_cb_alloc;
     JKII_CB_RESOURCE_FREE _json_cb_free;
 
-    CB_KHC_SLIST_ALLOC _slist_cb_alloc;
-    KHC_SLIST_FREE_CB _slist_cb_free;
+    KHC_CB_SLIST_ALLOC _slist_cb_alloc;
+    KHC_CB_SLIST_FREE _slist_cb_free;
     void* _slist_cb_alloc_data;
     void* _slist_cb_free_data;
 } kii_t;
@@ -735,8 +735,8 @@ void kii_set_cb_json_parser_resource(kii_t* kii,
  */
 void kii_set_slist_resource_cb(
     kii_t* kii,
-    CB_KHC_SLIST_ALLOC cb_alloc,
-    KHC_SLIST_FREE_CB cb_free,
+    KHC_CB_SLIST_ALLOC cb_alloc,
+    KHC_CB_SLIST_FREE cb_free,
     void* cb_alloc_data,
     void* cb_free_data);
 
