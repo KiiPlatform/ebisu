@@ -120,7 +120,7 @@ typedef struct kii_t {
     KII_CB_TASK_CREATE _cb_task_create;
     void* _task_create_data;
 
-    KII_CB_TASK_CONTINUE _task_continue_cb;
+    KII_CB_TASK_CONTINUE _cb_task_continue;
     void* _task_continue_data;
 
     KII_CB_TASK_EXIT _task_exit_cb;

@@ -63,7 +63,7 @@ void kii_init(kii_t* kii)
     kii->_sdk_info = KII_SDK_INFO;
     kii->_cb_task_create = NULL;
     kii->_task_create_data = NULL;
-    kii->_task_continue_cb = NULL;
+    kii->_cb_task_continue = NULL;
     kii->_task_continue_data = NULL;
     kii->_task_exit_cb = NULL;
     kii->_task_exit_data = NULL;
@@ -183,7 +183,7 @@ void kii_set_cb_task_create(kii_t* kii, KII_CB_TASK_CREATE cb, void* userdata) {
 }
 
 void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE cb, void* userdata) {
-    kii->_task_continue_cb = cb;
+    kii->_cb_task_continue = cb;
     kii->_task_continue_data = userdata;
 }
 
