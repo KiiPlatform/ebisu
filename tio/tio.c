@@ -18,7 +18,9 @@ void _task_exit(void* task_info, void* userdata) {
     tio_handler_task_info_t tio_task_info;
     _convert_task_info(mqtt_info, &tio_task_info);
     tio_handler_t* handler = (tio_handler_t*)userdata;
-    handler->_cb_task_exit(&tio_task_info, handler->_task_exit_data);
+    if (handler->_cb_task_exit != NULL) {
+        handler->_cb_task_exit(&tio_task_info, handler->_task_exit_data);
+    }
 }
 
 tio_bool_t _task_continue(void* task_info, void* userdata) {
@@ -26,16 +28,29 @@ tio_bool_t _task_continue(void* task_info, void* userdata) {
     tio_handler_task_info_t tio_task_info;
     _convert_task_info(mqtt_info, &tio_task_info);
     tio_handler_t* handler = (tio_handler_t*)userdata;
-    return handler->_cb_task_continue(&tio_task_info, handler->_task_continue_data);
+    if (handler->_cb_task_continue != NULL) {
+        return handler->_cb_task_continue(&tio_task_info, handler->_task_continue_data);
+    } else {
+        return KII_TRUE;
+    }
 }
 
 void tio_handler_init(tio_handler_t* handler)
 {
     kii_init(&handler->_kii);
+    handler->_cb_action = NULL;
+    handler->_cb_action_data = NULL;
     handler->_cb_err = NULL;
+    handler->_cb_err_data = NULL;
+    handler->_cb_push = NULL;
+    handler->_cb_push_data = NULL;
+    handler->_keep_alive_interval = 300;
+    handler->_cb_task_continue = NULL;
+    handler->_task_continue_data = NULL;
+    handler->_cb_task_exit = NULL;
+    handler->_task_exit_data = NULL;
     kii_set_task_continue_cb(&handler->_kii, _task_continue, handler);
     kii_set_task_exit_cb(&handler->_kii, _task_exit, handler);
-    handler->_cb_push = NULL;
 }
 
 void tio_handler_set_cb_sock_connect_http(
@@ -284,6 +299,17 @@ tio_code_t tio_handler_start(
 void tio_updater_init(tio_updater_t* updater)
 {
     kii_init(&updater->_kii);
+    updater->_cb_state_size = NULL;
+    updater->_cb_state_size_data = NULL;
+    updater->_state_reader = NULL;
+    updater->_state_reader_data = NULL;
+    updater->_cb_err = NULL;
+    updater->_cb_err_data = NULL;
+    updater->_update_interval = 0;
+    updater->_cb_task_continue = NULL;
+    updater->_task_continue_data = NULL;
+    updater->_cb_task_exit = NULL;
+    updater->_task_exit_data = NULL;
 }
 
 void tio_updater_set_cb_sock_connect(
