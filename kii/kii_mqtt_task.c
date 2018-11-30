@@ -97,7 +97,7 @@ khc_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) {
     size_t total_sent = 0;
     while (total_sent < j) {
         size_t sent_len = 0;
-        send_err = kii->mqtt_sock_send_cb(kii->mqtt_sock_send_ctx,
+        send_err = kii->_cb_mqtt_sock_send(kii->_mqtt_sock_send_ctx,
                 &kii->mqtt_buffer[total_sent], j - total_sent, &sent_len);
         if (send_err == KHC_SOCK_AGAIN || send_err == KHC_SOCK_FAIL) {
             // Don't accept non-blocking socket when send_err is KHC_SOCK_AGAIN.
@@ -141,7 +141,7 @@ khc_sock_code_t _mqtt_send_subscribe(kii_t* kii, const char* topic, kii_mqtt_qos
     size_t total_sent = 0;
     while (total_sent < j) {
         size_t sent_len = 0;
-        send_err = kii->mqtt_sock_send_cb(kii->mqtt_sock_send_ctx,
+        send_err = kii->_cb_mqtt_sock_send(kii->_mqtt_sock_send_ctx,
                 &kii->mqtt_buffer[total_sent], j - total_sent, &sent_len);
         if (send_err == KHC_SOCK_AGAIN || send_err == KHC_SOCK_FAIL) {
             // Don't accept non-blocking socket when send_err is KHC_SOCK_AGAIN.
@@ -161,7 +161,7 @@ khc_sock_code_t _mqtt_send_pingreq(kii_t* kii)
     size_t total_sent = 0;
     while (total_sent < sizeof(buff)) {
         size_t sent_len = 0;
-        sock_err = kii->mqtt_sock_send_cb(kii->mqtt_sock_send_ctx, &buff[total_sent], sizeof(buff) - total_sent, &sent_len);
+        sock_err = kii->_cb_mqtt_sock_send(kii->_mqtt_sock_send_ctx, &buff[total_sent], sizeof(buff) - total_sent, &sent_len);
         if (sock_err == KHC_SOCK_AGAIN || sock_err == KHC_SOCK_FAIL) {
             // Don't accept non-blocking socket when send_err is KHC_SOCK_AGAIN.
             return KHC_SOCK_FAIL;
@@ -176,7 +176,7 @@ khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed
     char c = '\0';
     size_t received = 0;
     // Read First byte.
-    khc_sock_code_t res = kii->mqtt_sock_recv_cb(kii->mqtt_sock_recv_ctx, &c, 1, &received);
+    khc_sock_code_t res = kii->_cb_mqtt_sock_recv(kii->_mqtt_sock_recv_ctx, &c, 1, &received);
     if (res == KHC_SOCK_FAIL) {
         return KHC_SOCK_FAIL;
     }
@@ -189,7 +189,7 @@ khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed
     char buff[4];
     for (int i = 0; i < 4; ++i) {
         char c2 = '\0';
-        khc_sock_code_t res = kii->mqtt_sock_recv_cb(kii->mqtt_sock_recv_ctx, &c2, 1, &received);
+        khc_sock_code_t res = kii->_cb_mqtt_sock_recv(kii->_mqtt_sock_recv_ctx, &c2, 1, &received);
         if (res == KHC_SOCK_FAIL) {
             return KHC_SOCK_FAIL;
         }
@@ -219,8 +219,8 @@ khc_sock_code_t _mqtt_recv_remaining_trash(kii_t* kii, unsigned long remaining_l
     size_t total_received = 0;
     khc_sock_code_t res = KHC_SOCK_FAIL;
     while (total_received < remaining_length) {
-        khc_sock_code_t res = kii->mqtt_sock_recv_cb(
-            kii->mqtt_sock_recv_ctx,
+        khc_sock_code_t res = kii->_cb_mqtt_sock_recv(
+            kii->_mqtt_sock_recv_ctx,
             buff,
             buff_size,
             &received);
@@ -244,8 +244,8 @@ khc_sock_code_t _mqtt_recv_remaining(kii_t* kii, unsigned long remaining_length,
     size_t total_received = 0;
     khc_sock_code_t res = KHC_SOCK_FAIL;
     while (total_received < remaining_length) {
-        res = kii->mqtt_sock_recv_cb(
-            kii->mqtt_sock_recv_ctx,
+        res = kii->_cb_mqtt_sock_recv(
+            kii->_mqtt_sock_recv_ctx,
             buff + received,
             remaining_length - received,
             &received);
@@ -335,8 +335,8 @@ void* mqtt_start_task(void* sdata)
                 port = endpoint.port_tcp;
 #endif
                 khc_sock_code_t con_res = 
-                    kii->mqtt_sock_connect_cb(
-                        kii->mqtt_sock_connect_ctx,
+                    kii->_cb_mqtt_sock_connect(
+                        kii->_mqtt_sock_connect_ctx,
                         endpoint.host, port);
                 if (con_res != KHC_SOCK_OK) {
                     // TODO: Introduce retry count.
@@ -539,7 +539,7 @@ void* mqtt_start_task(void* sdata)
                 break;
             }
             case KII_MQTT_ST_RECONNECT: {
-                kii->mqtt_sock_close_cb(kii->mqtt_sock_close_ctx);
+                kii->_cb_mqtt_sock_close_cb(kii->_mqtt_sock_close_ctx);
                 task_info.task_state = KII_MQTT_ST_SOCK_CONNECT;
                 break;
             }

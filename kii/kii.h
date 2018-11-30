@@ -106,14 +106,14 @@ typedef struct kii_t {
 	char _app_host[128];
     char* _sdk_info;
 
-    void* mqtt_sock_connect_ctx;
-    void* mqtt_sock_send_ctx;
-    void* mqtt_sock_recv_ctx;
-    void* mqtt_sock_close_ctx;
-    KHC_CB_SOCK_CONNECT mqtt_sock_connect_cb;
-    KHC_CB_SOCK_SEND mqtt_sock_send_cb;
-    KHC_CB_SOCK_RECV mqtt_sock_recv_cb;
-    KHC_CB_SOCK_CLOSE mqtt_sock_close_cb;
+    void* _mqtt_sock_connect_ctx;
+    void* _mqtt_sock_send_ctx;
+    void* _mqtt_sock_recv_ctx;
+    void* _mqtt_sock_close_ctx;
+    KHC_CB_SOCK_CONNECT _cb_mqtt_sock_connect;
+    KHC_CB_SOCK_SEND _cb_mqtt_sock_send;
+    KHC_CB_SOCK_RECV _cb_mqtt_sock_recv;
+    KHC_CB_SOCK_CLOSE _cb_mqtt_sock_close_cb;
     unsigned int _mqtt_to_recv_sec;
     unsigned int _mqtt_to_send_sec;
 
