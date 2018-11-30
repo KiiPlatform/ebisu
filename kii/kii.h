@@ -152,7 +152,7 @@ typedef struct kii_t {
     jkii_resource_t* _json_resource;
 
     JKII_CB_RESOURCE_ALLOC _json_alloc_cb;
-    JKII_RESOURCE_FREE_CB _json_free_cb;
+    JKII_CB_RESOURCE_FREE _json_free_cb;
 
     KHC_SLIST_ALLOC_CB _slist_alloc_cb;
     KHC_SLIST_FREE_CB _slist_free_cb;
@@ -712,7 +712,7 @@ void kii_set_cb_delay_ms(kii_t* kii, KII_CB_DELAY_MS delay_cb, void* userdata);
  * @param [inout] kii SDK instance.
  * @param [in] resource to be used parse JSON. 256 tokens_num might be enough for almost all usecases.
  * If you need to parse large object or allocate exact size of memory used,
- * see kii_set_json_parser_resource_cb(kii_t, JKII_CB_RESOURCE_ALLOC, JKII_RESOURCE_FREE_CB)
+ * see kii_set_json_parser_resource_cb(kii_t, JKII_CB_RESOURCE_ALLOC, JKII_CB_RESOURCE_FREE)
  */
 void kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource);
 
@@ -725,7 +725,7 @@ void kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource);
  */
 void kii_set_json_parser_resource_cb(kii_t* kii,
     JKII_CB_RESOURCE_ALLOC alloc_cb,
-    JKII_RESOURCE_FREE_CB free_cb);
+    JKII_CB_RESOURCE_FREE free_cb);
 
 /**
  * \brief Set khc_slist (linked list) resource allocators.

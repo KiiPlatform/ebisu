@@ -35,7 +35,7 @@ typedef jkii_resource_t*
     (*JKII_CB_RESOURCE_ALLOC)(
         size_t required_size);
 
-typedef void (*JKII_RESOURCE_FREE_CB)(
+typedef void (*JKII_CB_RESOURCE_FREE)(
     jkii_resource_t* resource);
 
 /** Boolean type */
@@ -344,7 +344,7 @@ jkii_parse_err_t jkii_parse_with_allocator(
     size_t json_string_len,
     jkii_field_t* fields,
     JKII_CB_RESOURCE_ALLOC alloc_cb,
-    JKII_RESOURCE_FREE_CB free_cb);
+    JKII_CB_RESOURCE_FREE free_cb);
 
 #ifdef __cplusplus
 }

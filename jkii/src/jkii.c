@@ -889,7 +889,7 @@ jkii_parse_err_t jkii_parse_with_allocator(
     size_t json_string_len,
     jkii_field_t* fields,
     JKII_CB_RESOURCE_ALLOC alloc_cb,
-    JKII_RESOURCE_FREE_CB free_cb)
+    JKII_CB_RESOURCE_FREE free_cb)
 {
     M_JKII_ASSERT(json_string != NULL);
     M_JKII_ASSERT(json_string_len > 0);
