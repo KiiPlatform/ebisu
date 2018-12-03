@@ -156,8 +156,8 @@ typedef struct kii_t {
 
     KHC_CB_SLIST_ALLOC _cb_slist_alloc;
     KHC_CB_SLIST_FREE _cb_slist_free;
-    void* _cb_slist_alloc_data;
-    void* _cb_slist_free_data;
+    void* _slist_alloc_data;
+    void* _slist_free_data;
 } kii_t;
 
 /** Initializes Kii SDK

@@ -58,8 +58,8 @@ void kii_init(kii_t* kii)
     kii->_etag[0] = '\0';
     kii->_cb_slist_alloc = khc_cb_slist_alloc;
     kii->_cb_slist_free = khc_cb_slist_free;
-    kii->_cb_slist_alloc_data = NULL;
-    kii->_cb_slist_free_data = NULL;
+    kii->_slist_alloc_data = NULL;
+    kii->_slist_free_data = NULL;
     kii->_sdk_info = KII_SDK_INFO;
     kii->_cb_task_create = NULL;
     kii->_task_create_data = NULL;
@@ -218,8 +218,8 @@ void kii_set_cb_slist_resource(
     void* cb_free_data) {
     kii->_cb_slist_alloc = cb_alloc;
     kii->_cb_slist_free = cb_free;
-    kii->_cb_slist_alloc_data = cb_alloc_data;
-    kii->_cb_slist_free_data = cb_free_data;
+    kii->_slist_alloc_data = cb_alloc_data;
+    kii->_slist_free_data = cb_free_data;
 }
 
 const char* kii_get_etag(kii_t* kii) {
@@ -264,7 +264,7 @@ void _reset_buff(kii_t* kii) {
 }
 
 void _req_headers_free_all(kii_t* kii) {
-    khc_slist_free_all_using_cb_free(kii->_req_headers, kii->_cb_slist_free, kii->_cb_slist_free_data);
+    khc_slist_free_all_using_cb_free(kii->_req_headers, kii->_cb_slist_free, kii->_slist_free_data);
     kii->_req_headers = NULL;
 }
 
