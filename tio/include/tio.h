@@ -11,57 +11,109 @@ extern "C" {
 
 extern const char TIO_TASK_NAME_UPDATE_STATE[];
 
+/**
+ * \brief Boolean type.
+ */
 typedef kii_bool_t tio_bool_t;
 
+/**
+ * \brief Author of API.
+ */
 typedef kii_author_t tio_author_t;
 
+/**
+ * \brief Error Codes used in tio.
+ */
 typedef enum tio_code_t {
-    TIO_ERR_OK,
-    TIO_ERR_SOCK_CONNECT,
-    TIO_ERR_SOCK_SEND,
-    TIO_ERR_SOCK_RECV,
-    TIO_ERR_SOCK_CLOSE,
-    TIO_ERR_WRITE_CALLBACK,
-    TIO_ERR_HEADER_CALLBACK,
-    TIO_ERR_ALLOCATION,
-    TIO_ERR_TOO_LARGE_DATA,
-    TIO_ERR_RESP_STATUS,
-    TIO_ERR_PARSE_JSON,
-    TIO_ERR_CREATE_TASK,
-    TIO_ERR_FAIL
+    TIO_ERR_OK, /**< \brief Succeeded */
+    TIO_ERR_SOCK_CONNECT, /**< \brief Socket error in connection. */
+    TIO_ERR_SOCK_SEND, /**< \brief Socket error in sending data. */
+    TIO_ERR_SOCK_RECV, /**< \brief Socket error in receiving data. */
+    TIO_ERR_SOCK_CLOSE, /**< \brief Socket error in closing. */
+    TIO_ERR_WRITE_CALLBACK, /**< \brief Error in write callback. */
+    TIO_ERR_HEADER_CALLBACK, /**< \brief Error in header callback. */
+    TIO_ERR_ALLOCATION, /**< \brief Error in memory allocation. */
+    TIO_ERR_TOO_LARGE_DATA, /**< \brief Data is larger than expected. */
+    TIO_ERR_RESP_STATUS, /**< \brief REST API returns error status code. */
+    TIO_ERR_PARSE_JSON, /**< \brief Error in parsing JSON. */
+    TIO_ERR_CREATE_TASK, /**< \brief Error in creating task. */
+    TIO_ERR_FAIL  /**< \brief Other errors. */
 } tio_code_t;
 
+/**
+ * \brief Data types.
+
+ * Same as JSON data types except for having Integer and Double instead of Number.
+ */
 typedef enum tio_data_type_t {
-    TIO_TYPE_NULL,
-    TIO_TYPE_BOOLEAN,
-    TIO_TYPE_INTEGER,
-    TIO_TYPE_DOUBLE,
-    TIO_TYPE_STRING,
-    TIO_TYPE_OBJECT,
-    TIO_TYPE_ARRAY
+    TIO_TYPE_NULL, /**< \brief NULL type. */
+    TIO_TYPE_BOOLEAN, /**< \brief Boolean type. */
+    TIO_TYPE_INTEGER, /**< \brief Integer type. */
+    TIO_TYPE_DOUBLE, /**< \brief Double type. */
+    TIO_TYPE_STRING, /**< \brief String type. */
+    TIO_TYPE_OBJECT, /**< \brief Object type. */
+    TIO_TYPE_ARRAY /**< \brief Array type. */
 } tio_data_type_t;
 
+/**
+ * \brief Represents value of the action.
+ */
 typedef struct tio_action_value_t {
-    tio_data_type_t type;
+    tio_data_type_t type; /**< \brief Data type of the value. */
+    /**
+     *  \brief union stores value.
+     *
+     * if type is TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY,
+     * opaque_value is the pointer to it's JSON string representation.
+     * You need to use opaque_value_length to determine the length of the value
+     * since it might not be null terminated.
+     */
     union {
         long long_value;
         double double_value;
         tio_bool_t bool_value;
         const char *opaque_value;
     } param;
+    /**
+     * \brief indicate length of opaque_value in case type is
+     * TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY.
+     */
     size_t opaque_value_length;
 } tio_action_value_t;
 
+/**
+ * \brief Represents action.
+ */
 typedef struct tio_action_t {
+    /**
+     * \brief Name of the alias.
+     * You need to use alias_length field to determine the length. It might not be null terminated.
+     */
     const char* alias;
+    /**
+     * \brief Length of the alias name.
+     */
     size_t alias_length;
+    /**
+     * \brief Name of the action.
+     * You need to use action_name_length field to determine the length. It might not be null terminated.
+     */
     const char* action_name;
+    /**
+     * \brief Length of the action name.
+     */
     size_t action_name_length;
+    /**
+     * \brief Value of the action.
+     */
     tio_action_value_t action_value;
 } tio_action_t;
 
+/**
+ * \brief Represents error.
+ */
 typedef struct tio_action_err_t {
-    char err_message[64];
+    char err_message[64]; /**< \brief Error message (null terminated). */
 } tio_action_err_t;
 
 typedef size_t (*TIO_CB_SIZE)(void* userdata);
