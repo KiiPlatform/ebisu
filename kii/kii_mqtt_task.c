@@ -275,13 +275,11 @@ void* mqtt_start_task(void* sdata)
     task_info.error = KII_MQTT_ERR_OK;
     task_info.task_state = KII_MQTT_ST_INSTALL_PUSH;
 
-    unsigned int keep_alive_interval = kii->_keep_alive_interval;
+    const unsigned int keep_alive_interval = kii->_keep_alive_interval;
     unsigned int elapsed_time_ms = 0;
     const unsigned int arrived_msg_read_time = 500;
     const unsigned int msg_send_time = 500;
     unsigned long remaining_message_size = 0;
-    time_t started;
-    time(&started);
     while (task_info.task_state != KII_MQTT_ST_ERR_EXIT) {
         if (kii->_cb_task_continue != NULL) {
             kii_bool_t cont = kii->_cb_task_continue(&task_info, kii->_task_continue_data);
@@ -522,11 +520,6 @@ void* mqtt_start_task(void* sdata)
                 }
             }
             case KII_MQTT_ST_SEND_PINGREQ: {
-                time_t ping_requested;
-                time(&ping_requested);
-                time_t diff = ping_requested - started;
-                printf("Send Pingreq after %ld sec.\n", (long)diff);
-                time(&started);
                 khc_sock_code_t res = _mqtt_send_pingreq(kii);
                 if (res != KHC_SOCK_OK) {
                     elapsed_time_ms = 0;
