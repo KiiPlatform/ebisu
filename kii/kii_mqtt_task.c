@@ -5,6 +5,10 @@
 #include "kii_mqtt_task.h"
 #include "kii.h"
 
+#define WAIT_MS 1000
+#define ARRIVED_MSG_READ_TIME 500
+#define MSG_SEND_TIME 500
+
 int _mqtt_encode(char* buf, unsigned long remaining_length)
 {
     int rc = 0;
@@ -263,15 +267,6 @@ khc_sock_code_t _mqtt_recv_remaining(kii_t* kii, unsigned long remaining_length,
     return res;
 }
 
-typedef struct {
-    kii_t* kii;
-    kii_installation_id_t ins_id;
-    kii_mqtt_endpoint_t endpoint;
-    kii_mqtt_task_info info;
-    unsigned int elapsed_time_ms;
-    unsigned long remaining_message_size;
-} mqtt_state_t;
-
 void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
 {
     state->kii = kii;
@@ -281,10 +276,6 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
     state->elapsed_time_ms = 0;
     state->remaining_message_size = 0;
 }
-
-#define WAIT_MS 1000
-#define ARRIVED_MSG_READ_TIME 500
-#define MSG_SEND_TIME 500
 
 void _mqtt_state_install_push(mqtt_state_t* state)
 {
@@ -557,8 +548,6 @@ void _mqtt_state_reconnect(mqtt_state_t* state)
     kii->_cb_mqtt_sock_close_cb(kii->_mqtt_sock_close_ctx);
     state->info.task_state = KII_MQTT_ST_SOCK_CONNECT;
 }
-
-typedef void (*MQTT_STATE_HANDLER)(mqtt_state_t* state);
 
 const MQTT_STATE_HANDLER mqtt_state_handlers[] = {
     _mqtt_state_install_push,
