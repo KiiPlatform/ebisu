@@ -597,7 +597,7 @@ void* mqtt_start_task(void* sdata)
     task_info.error = KII_MQTT_ERR_OK;
     task_info.task_state = KII_MQTT_ST_INSTALL_PUSH;
 
-    const unsigned int keep_alive_interval = kii->_keep_alive_interval;
+    unsigned int keep_alive_interval = kii->_keep_alive_interval;
     unsigned int elapsed_time_ms = 0;
     const unsigned int arrived_msg_read_time = 500;
     const unsigned int msg_send_time = 500;
