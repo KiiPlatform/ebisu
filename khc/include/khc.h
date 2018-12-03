@@ -87,12 +87,12 @@ typedef void(*KHC_CB_SLIST_FREE)(khc_slist* node, void* data);
 /**
  * \brief Default implementation of KHC_CB_SLIST_ALLOC.
  */
-khc_slist* khc_slist_cb_alloc(const char* str, size_t str_len, void* data);
+khc_slist* khc_cb_slist_alloc(const char* str, size_t str_len, void* data);
 
 /**
  * \brief Default implementation of KHC_CB_SLIST_FREE.
  */
-void khc_slist_cb_free(khc_slist* slist, void* data);
+void khc_cb_slist_free(khc_slist* slist, void* data);
 
 /**
  * \brief Add node to the linked list.

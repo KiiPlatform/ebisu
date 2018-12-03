@@ -106,36 +106,36 @@ typedef struct kii_t {
 	char _app_host[128];
     char* _sdk_info;
 
-    void* mqtt_sock_connect_ctx;
-    void* mqtt_sock_send_ctx;
-    void* mqtt_sock_recv_ctx;
-    void* mqtt_sock_close_ctx;
-    KHC_CB_SOCK_CONNECT mqtt_sock_connect_cb;
-    KHC_CB_SOCK_SEND mqtt_sock_send_cb;
-    KHC_CB_SOCK_RECV mqtt_sock_recv_cb;
-    KHC_CB_SOCK_CLOSE mqtt_sock_close_cb;
+    void* _mqtt_sock_connect_ctx;
+    void* _mqtt_sock_send_ctx;
+    void* _mqtt_sock_recv_ctx;
+    void* _mqtt_sock_close_ctx;
+    KHC_CB_SOCK_CONNECT _cb_mqtt_sock_connect;
+    KHC_CB_SOCK_SEND _cb_mqtt_sock_send;
+    KHC_CB_SOCK_RECV _cb_mqtt_sock_recv;
+    KHC_CB_SOCK_CLOSE _cb_mqtt_sock_close_cb;
     unsigned int _mqtt_to_recv_sec;
     unsigned int _mqtt_to_send_sec;
 
-    KII_CB_TASK_CREATE task_create_cb;
+    KII_CB_TASK_CREATE _cb_task_create;
     void* _task_create_data;
 
-    KII_CB_TASK_CONTINUE _task_continue_cb;
+    KII_CB_TASK_CONTINUE _cb_task_continue;
     void* _task_continue_data;
 
-    KII_CB_TASK_EXIT _task_exit_cb;
+    KII_CB_TASK_EXIT _cb_task_exit;
     void* _task_exit_data;
 
-    KII_CB_DELAY_MS delay_ms_cb;
+    KII_CB_DELAY_MS _cb_delay_ms;
     void* _delay_ms_data;
 
-    KII_PUSH_RECEIVED_CB push_received_cb;
+    KII_PUSH_RECEIVED_CB _cb_push_received;
     void* _push_data;
 
     int _mqtt_connected;
 
-    char* mqtt_buffer;
-    size_t mqtt_buffer_size;
+    char* _mqtt_buffer;
+    size_t _mqtt_buffer_size;
 
     unsigned int _keep_alive_interval;
 
@@ -151,13 +151,13 @@ typedef struct kii_t {
 
     jkii_resource_t* _json_resource;
 
-    JKII_CB_RESOURCE_ALLOC _json_cb_alloc;
-    JKII_CB_RESOURCE_FREE _json_cb_free;
+    JKII_CB_RESOURCE_ALLOC _cb_json_alloc;
+    JKII_CB_RESOURCE_FREE _cb_json_free;
 
-    KHC_CB_SLIST_ALLOC _slist_cb_alloc;
-    KHC_CB_SLIST_FREE _slist_cb_free;
-    void* _slist_cb_alloc_data;
-    void* _slist_cb_free_data;
+    KHC_CB_SLIST_ALLOC _cb_slist_alloc;
+    KHC_CB_SLIST_FREE _cb_slist_free;
+    void* _slist_alloc_data;
+    void* _slist_free_data;
 } kii_t;
 
 /** Initializes Kii SDK

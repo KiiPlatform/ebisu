@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "khc.h"
 
-khc_slist* khc_slist_cb_alloc(const char* str, size_t str_len, void* data) {
+khc_slist* khc_cb_slist_alloc(const char* str, size_t str_len, void* data) {
   char* copy = malloc(str_len+1);
   if (copy == NULL) {
     return NULL;
@@ -19,13 +19,13 @@ khc_slist* khc_slist_cb_alloc(const char* str, size_t str_len, void* data) {
   return node;
 }
 
-void khc_slist_cb_free(khc_slist* slist, void* data) {
+void khc_cb_slist_free(khc_slist* slist, void* data) {
   free(slist->data);
   free(slist);
 }
 
 khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length) {
-  return khc_slist_append_using_cb_alloc(slist, string, length, khc_slist_cb_alloc, NULL);
+  return khc_slist_append_using_cb_alloc(slist, string, length, khc_cb_slist_alloc, NULL);
 }
 
 khc_slist* khc_slist_append_using_cb_alloc(
@@ -53,7 +53,7 @@ khc_slist* khc_slist_append_using_cb_alloc(
 }
 
 void khc_slist_free_all(khc_slist* slist) {
-  khc_slist_free_all_using_cb_free(slist, khc_slist_cb_free, NULL);
+  khc_slist_free_all_using_cb_free(slist, khc_cb_slist_free, NULL);
 }
 
 void khc_slist_free_all_using_cb_free(

@@ -95,8 +95,8 @@ _cmd_parser_code_t _parse_alias(
     size_t alias_length;
     _cmd_parser_code_t res = _get_object_in_array(
         handler->_kii._json_resource,
-        handler->_kii._json_cb_alloc,
-        handler->_kii._json_cb_free,
+        handler->_kii._cb_json_alloc,
+        handler->_kii._cb_json_free,
         actions_array,
         actions_array_length,
         alias_index,
@@ -175,8 +175,8 @@ _cmd_parser_code_t _parse_action(
     size_t action_object_length = 0;
     _cmd_parser_code_t res = _get_object_in_array(
         handler->_kii._json_resource,
-        handler->_kii._json_cb_alloc,
-        handler->_kii._json_cb_free,
+        handler->_kii._cb_json_alloc,
+        handler->_kii._cb_json_free,
         actions_array_in_alias,
         actions_array_in_alias_length,
         action_index,
@@ -447,8 +447,8 @@ jkii_parse_err_t _parse_json(
     if (resource != NULL) {
         res = jkii_parse(json_string, json_string_size, fields, resource);
     } else {
-        JKII_CB_RESOURCE_ALLOC cb_alloc = handler->_kii._json_cb_alloc;
-        JKII_CB_RESOURCE_FREE cb_free = handler->_kii._json_cb_free;
+        JKII_CB_RESOURCE_ALLOC cb_alloc = handler->_kii._cb_json_alloc;
+        JKII_CB_RESOURCE_FREE cb_free = handler->_kii._cb_json_free;
         res = jkii_parse_with_allocator(json_string, json_string_size, fields, cb_alloc, cb_free);
     }
     return res;

@@ -56,18 +56,18 @@ void kii_init(kii_t* kii)
     khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
     khc_set_cb_header(&kii->_khc, _cb_write_header, kii);
     kii->_etag[0] = '\0';
-    kii->_slist_cb_alloc = khc_slist_cb_alloc;
-    kii->_slist_cb_free = khc_slist_cb_free;
-    kii->_slist_cb_alloc_data = NULL;
-    kii->_slist_cb_free_data = NULL;
+    kii->_cb_slist_alloc = khc_cb_slist_alloc;
+    kii->_cb_slist_free = khc_cb_slist_free;
+    kii->_slist_alloc_data = NULL;
+    kii->_slist_free_data = NULL;
     kii->_sdk_info = KII_SDK_INFO;
-    kii->task_create_cb = NULL;
+    kii->_cb_task_create = NULL;
     kii->_task_create_data = NULL;
-    kii->_task_continue_cb = NULL;
+    kii->_cb_task_continue = NULL;
     kii->_task_continue_data = NULL;
-    kii->_task_exit_cb = NULL;
+    kii->_cb_task_exit = NULL;
     kii->_task_exit_data = NULL;
-    kii->delay_ms_cb = NULL;
+    kii->_cb_delay_ms = NULL;
     kii->_delay_ms_data = NULL;
 }
 
@@ -145,28 +145,28 @@ void kii_set_cb_http_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata
 }
 
 void kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size) {
-    kii->mqtt_buffer = buff;
-    kii->mqtt_buffer_size = buff_size;
+    kii->_mqtt_buffer = buff;
+    kii->_mqtt_buffer_size = buff_size;
 }
 
 void kii_set_cb_mqtt_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata) {
-    kii->mqtt_sock_connect_cb = cb;
-    kii->mqtt_sock_connect_ctx = userdata;
+    kii->_cb_mqtt_sock_connect = cb;
+    kii->_mqtt_sock_connect_ctx = userdata;
 }
 
 void kii_set_cb_mqtt_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata) {
-    kii->mqtt_sock_send_cb = cb;
-    kii->mqtt_sock_send_ctx = userdata;
+    kii->_cb_mqtt_sock_send = cb;
+    kii->_mqtt_sock_send_ctx = userdata;
 }
 
 void kii_set_cb_mqtt_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata) {
-    kii->mqtt_sock_recv_cb = cb;
-    kii->mqtt_sock_recv_ctx = userdata;
+    kii->_cb_mqtt_sock_recv = cb;
+    kii->_mqtt_sock_recv_ctx = userdata;
 }
 
 void kii_set_cb_mqtt_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata) {
-    kii->mqtt_sock_close_cb = cb;
-    kii->mqtt_sock_close_ctx = userdata;
+    kii->_cb_mqtt_sock_close_cb = cb;
+    kii->_mqtt_sock_close_ctx = userdata;
 }
 
 void kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec) {
@@ -178,22 +178,22 @@ void kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec) {
 }
 
 void kii_set_cb_task_create(kii_t* kii, KII_CB_TASK_CREATE cb, void* userdata) {
-    kii->task_create_cb = cb;
+    kii->_cb_task_create = cb;
     kii->_task_create_data = userdata;
 }
 
 void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE cb, void* userdata) {
-    kii->_task_continue_cb = cb;
+    kii->_cb_task_continue = cb;
     kii->_task_continue_data = userdata;
 }
 
 void kii_set_cb_task_exit(kii_t* kii, KII_CB_TASK_EXIT cb, void* userdata) {
-    kii->_task_exit_cb = cb;
+    kii->_cb_task_exit = cb;
     kii->_task_exit_data = userdata;
 }
 
 void kii_set_cb_delay_ms(kii_t* kii, KII_CB_DELAY_MS cb, void* userdata) {
-    kii->delay_ms_cb = cb;
+    kii->_cb_delay_ms = cb;
     kii->_delay_ms_data = userdata;
 }
 
@@ -206,8 +206,8 @@ void kii_set_cb_json_parser_resource(
     JKII_CB_RESOURCE_ALLOC cb_alloc,
     JKII_CB_RESOURCE_FREE cb_free)
 {
-    kii->_json_cb_alloc = cb_alloc;
-    kii->_json_cb_free = cb_free;
+    kii->_cb_json_alloc = cb_alloc;
+    kii->_cb_json_free = cb_free;
 }
 
 void kii_set_cb_slist_resource(
@@ -216,10 +216,10 @@ void kii_set_cb_slist_resource(
     KHC_CB_SLIST_FREE cb_free,
     void* cb_alloc_data,
     void* cb_free_data) {
-    kii->_slist_cb_alloc = cb_alloc;
-    kii->_slist_cb_free = cb_free;
-    kii->_slist_cb_alloc_data = cb_alloc_data;
-    kii->_slist_cb_free_data = cb_free_data;
+    kii->_cb_slist_alloc = cb_alloc;
+    kii->_cb_slist_free = cb_free;
+    kii->_slist_alloc_data = cb_alloc_data;
+    kii->_slist_free_data = cb_free_data;
 }
 
 const char* kii_get_etag(kii_t* kii) {
@@ -264,7 +264,7 @@ void _reset_buff(kii_t* kii) {
 }
 
 void _req_headers_free_all(kii_t* kii) {
-    khc_slist_free_all_using_cb_free(kii->_req_headers, kii->_slist_cb_free, kii->_slist_cb_free_data);
+    khc_slist_free_all_using_cb_free(kii->_req_headers, kii->_cb_slist_free, kii->_slist_free_data);
     kii->_req_headers = NULL;
 }
 
