@@ -1,6 +1,11 @@
 #ifndef __KII_MQTT_TASK_H__
 #define __KII_MQTT_TASK_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "kii.h"
 
 typedef enum { QOS0, QOS1, QOS2 } kii_mqtt_qos;
@@ -36,6 +41,10 @@ void _mqtt_state_send_pingreq(mqtt_state_t* state);
 void _mqtt_state_reconnect(mqtt_state_t* state);
 
 void* mqtt_start_task(void* sdata);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
