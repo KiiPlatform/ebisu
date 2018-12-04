@@ -601,10 +601,32 @@ tio_code_t tio_handler_onboard(
     const char* thing_properties
 );
 
+/**
+ * \brief Get author.
+ *
+ * Author is used to authorize API call and consists of device ID and access token.
+ * This API must be called after the successful execution of tio_handler_onboard().
+ *
+ * \param [in] handler instance.
+ * \return tio_author_t pointer.
+ * You may need to copy the value of device ID and access token and store them.
+ */
 const tio_author_t* tio_handler_get_author(
     tio_handler_t* handler
 );
 
+/**
+ * \brief Start tio_handler task.
+ *
+ * You can start tio_handler task by this method.
+ * If the API returns TIO_ERR_OK, asynchronous task is started successfully and
+ * callbacks set by tio_handler setter methods and this method is called when corresponding event occurs.
+ *
+ * \param [in] handler instance.
+ * \param [in] author API author.
+ * \param [in] cb_action Action callback called when received remote controll command.
+ * \param [in] userdata Context object pointer passed to cb_action.
+ */
 tio_code_t tio_handler_start(
     tio_handler_t* handler,
     const tio_author_t* author,
