@@ -147,7 +147,7 @@ khc_sock_code_t
             if (errno == 0){
                 return KHC_SOCK_OK;
             } else {
-                printf("errno=%d: %s\n", errno, strerror(errno));
+                printf("SSL_ERROR_SYSCALL: errno=%d: %s\n", errno, strerror(errno));
                 return KHC_SOCK_FAIL;
             }
         } else {
