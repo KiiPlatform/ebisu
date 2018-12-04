@@ -458,10 +458,34 @@ void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_CB_TASK_CONTIN
  * \param userdata [in] Context data pointer passed as second argument when cb_exit is called.
  */
 void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_CB_TASK_EXIT cb_exit, void* userdata);
+/**
+ * \brief Callback asks to delay/ sleep task execution.
+ *
+ * Called when the task needs to delay/ sleep.
+ *
+ * \param handler [out] tio_handler_t instance.
+ * \param cb_delay_ms [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_delay_ms.
+ */
 void tio_handler_set_cb_delay_ms(tio_handler_t* handler, KII_CB_DELAY_MS cb_delay_ms, void* userdata);
-
+/**
+ * \brief Set callback propagates error.
+ * You can use it for debugging, etc or you can skip calling this API.
+ *
+ * \param handler [out] tio_handler_t instance.
+ * \param cb_err [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_err.
+ */
 void tio_handler_set_cb_err(tio_handler_t* handler, TIO_CB_ERR cb_err, void* userdata);
-
+/**
+ * \brief Set callback handles custom push message.
+ *
+ * In case you don't use costom push message, you can skip calling this API.
+ *
+ * \param handler [out] tio_handler_t instance.
+ * \param cb_push [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_cb_push.
+ */
 void tio_handler_set_cb_push(tio_handler_t* handler, TIO_CB_PUSH cb_push, void* userdata);
 
 /**
@@ -485,12 +509,48 @@ void tio_handler_set_cb_push(tio_handler_t* handler, TIO_CB_PUSH cb_push, void* 
  */
 void tio_handler_set_mqtt_buff(tio_handler_t* handler, char* buff, size_t buff_size);
 
-void tio_handler_set_keep_alive_interval(tio_handler_t* handler, size_t keep_alive_interval);
+/**
+ * \brief Set MQTT Keep-Alive interval.
+ *
+ * Limitation: keep_alive_interval must be larger than socket recv/ send timeout set by
+ * tio_handler_set_mqtt_to_sock_recv() / tio_handler_set_mqtt_to_sock_send().
+ * Twice as large as recv/ send timeout works fine but recommend few minutes to avoid congestion.
+ *
+ * \param [out] handler instance.
+ * \param [in] keep_alive_interval_sec Keep-Alive interval in seconds.
+ */
+void tio_handler_set_keep_alive_interval(tio_handler_t* handler, size_t keep_alive_interval_sec);
 
+/**
+ * \brief Set app identifier and host.
+ *
+ * \param [out] handler instance.
+ * \param [in] app_id Application ID published by Cloud.
+ * \param [in] host Host tied to the application.
+ */
 void tio_handler_set_app(tio_handler_t* handler, const char* app_id, const char* host);
 
+/**
+ * \brief Set JSON parser resource.
+ *
+ * Set JSON parser resource. Required number of token depending on the remote controll command definition.
+ * If you choose to allocate memory dynamically, you can call tio_handler_set_cb_json_parser_resource() instead.
+ *
+ * \param [out] handler instance.
+ * \param [in] resource used to parse JSON.
+ */
 void tio_handler_set_json_parser_resource(tio_handler_t* handler, jkii_resource_t* resource);
 
+/**
+ * \brief JSON parser resource callbacks.
+ *
+ * Set JSON parser resource callback.
+ * If you choose to allocate memory statically, you can call tio_handler_set_json_parser_resource() instead.
+ *
+ * \param [out] handler instance.
+ * \param [in] cb_alloc allocation callback.
+ * \param [in] cb_free free callback.
+ */
 void tio_handler_set_cb_json_parser_resource(
     tio_handler_t* handler,
     JKII_CB_RESOURCE_ALLOC cb_alloc,
@@ -512,6 +572,25 @@ void tio_handler_set_cb_slist_resource(
     void* cb_free_data
 );
 
+/**
+ * \brief Execute onboarding
+ *
+ * Onboarding step is required to register device to IoT cloud and obtain access token.
+ * Once the device is registered and IoT cloud publishes device ID and access token,
+ * You can skip this process and call tio_handler_start()/ tio_updater_start().
+ * After the successfull execution, you can obtain device ID and access token via
+ * tio_handler_get_author() API.
+ *
+ * Note: input params other than vendor_thing_id and password are ignored after the first registration.
+ * \param [out] handler instance.
+ * \param [in] vendor_thing_id Unique ID determined by device vendor.
+ * \param [in] password Password of the device.
+ * \param [in] thing_type Type of the device.
+ * \param [in] firmware_version Firmware version of the device.
+ * \param [in] layout_position You'll set NULL and STAND_ALONE is chosen. Other position won't be used.
+ * \param [in] thing_properties Properties of thing. Expect JSON object include custom properties defined by Vendor.
+ * Can be NULL if you don't need them.
+ */
 tio_code_t tio_handler_onboard(
     tio_handler_t* handler,
     const char* vendor_thing_id,
