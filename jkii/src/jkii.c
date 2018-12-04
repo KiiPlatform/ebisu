@@ -888,18 +888,18 @@ jkii_parse_err_t jkii_parse_with_allocator(
     const char* json_string,
     size_t json_string_len,
     jkii_field_t* fields,
-    JKII_RESOURCE_ALLOC_CB alloc_cb,
-    JKII_RESOURCE_FREE_CB free_cb)
+    JKII_CB_RESOURCE_ALLOC cb_alloc,
+    JKII_CB_RESOURCE_FREE cb_free)
 {
     M_JKII_ASSERT(json_string != NULL);
     M_JKII_ASSERT(json_string_len > 0);
-    M_JKII_ASSERT(alloc_cb != NULL);
-    M_JKII_ASSERT(free_cb != NULL);
+    M_JKII_ASSERT(cb_alloc != NULL);
+    M_JKII_ASSERT(cb_free != NULL);
 
     jkii_resource_t *resource;
     int required = _calculate_required_token_num(json_string, json_string_len);
     if (required > 0) {
-        resource = alloc_cb(required);
+        resource = cb_alloc(required);
         if (resource == NULL)
         {
             return JKII_ERR_ALLOCATION;
@@ -910,18 +910,18 @@ jkii_parse_err_t jkii_parse_with_allocator(
 
     jkii_parse_err_t res = _kii_jsmn_get_tokens(json_string, json_string_len, resource);
     if (res != JKII_ERR_OK) {
-        free_cb(resource);
+        cb_free(resource);
         return res;
     }
 
     jsmntype_t type = resource->tokens[0].type;
     if (type != JSMN_ARRAY && type != JSMN_OBJECT) {
-        free_cb(resource);
+        cb_free(resource);
         return JKII_ERR_INVALID_INPUT;
     }
     res = _jkii_parse_fields(json_string, json_string_len, fields, resource);
 
-    free_cb(resource);
+    cb_free(resource);
     return res;
 }
 

@@ -374,12 +374,13 @@ kii_code_t _get_firmware_version(
     return KII_ERR_OK;
 }
 
-kii_code_t _put_state(
+kii_code_t _upload_state(
         kii_t* kii,
-        size_t content_length,
         KII_CB_READ state_read_cb,
         void* state_read_cb_data,
-        const char* opt_content_type,
+        const char* last_path_segment,
+        const char* method,
+        const char* content_type,
         const char* opt_normalizer_host)
 {
     kii_code_t ret = KII_ERR_FAIL;
@@ -391,9 +392,9 @@ kii_code_t _put_state(
     } else {
         khc_set_host(&kii->_khc, kii->_app_host);
     }
-    khc_set_method(&kii->_khc, "PUT");
+    khc_set_method(&kii->_khc, method);
 
-    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/thing-if/apps/%s/targets/thing:%s/states", kii->_app_id, kii->_author.author_id);
+    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/thing-if/apps/%s/targets/thing:%s/%s", kii->_app_id, kii->_author.author_id, last_path_segment);
     if (path_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
@@ -405,19 +406,7 @@ kii_code_t _put_state(
         _req_headers_free_all(kii);
         return ret;
     }
-
-    if (opt_content_type != NULL) {
-        ret = _set_content_type(kii, opt_content_type);
-    } else {
-        ret = _set_content_type(kii, "application/vnd.kii.MultipleTraitState+json");
-    }
-
-    if (ret != KII_ERR_OK) {
-        _req_headers_free_all(kii);
-        return ret;
-    }
-
-    ret = _set_content_length(kii, content_length);
+    ret = _set_content_type(kii, content_type);
     if (ret != KII_ERR_OK) {
         _req_headers_free_all(kii);
         return ret;
@@ -439,6 +428,6 @@ kii_code_t _put_state(
         return KII_ERR_RESP_STATUS;
     }
 
-    return KII_ERR_OK;    
+    return KII_ERR_OK;
 }
 

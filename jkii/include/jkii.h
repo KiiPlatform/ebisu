@@ -32,10 +32,10 @@ typedef struct jkii_resource_t {
  * \return jkii_resource_t instance of NULL if failed to allocate resource.
  */
 typedef jkii_resource_t*
-    (*JKII_RESOURCE_ALLOC_CB)(
+    (*JKII_CB_RESOURCE_ALLOC)(
         size_t required_size);
 
-typedef void (*JKII_RESOURCE_FREE_CB)(
+typedef void (*JKII_CB_RESOURCE_FREE)(
     jkii_resource_t* resource);
 
 /** Boolean type */
@@ -336,15 +336,16 @@ jkii_parse_err_t jkii_parse(
  *  \param [in] pointer of JSON string.
  *  \param [in] length of JSON string.
  *  \param [inout] field of kii JSON parser.
- *  \param [in] resource of parser.
+ *  \param [in] cb_alloc allocate resource
+ *  \param [in] cb_free free resource
  *  \return parse JSON result.
  */
 jkii_parse_err_t jkii_parse_with_allocator(
     const char* json_string,
     size_t json_string_len,
     jkii_field_t* fields,
-    JKII_RESOURCE_ALLOC_CB alloc_cb,
-    JKII_RESOURCE_FREE_CB free_cb);
+    JKII_CB_RESOURCE_ALLOC cb_alloc,
+    JKII_CB_RESOURCE_FREE cb_free);
 
 #ifdef __cplusplus
 }

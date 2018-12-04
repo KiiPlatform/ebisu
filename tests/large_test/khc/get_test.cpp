@@ -3,7 +3,7 @@
 #include "catch.hpp"
 #include <khc.h>
 #include "secure_socket_impl.h"
-#include "khc_impl.h"
+#include "khc_state_impl.h"
 #include "test_callbacks.h"
 
 TEST_CASE( "HTTP Get" ) {
@@ -26,30 +26,29 @@ TEST_CASE( "HTTP Get" ) {
   khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
   int on_read_called = 0;
-  io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_read = [=, &on_read_called](char *buffer, size_t size, void *userdata) {
     ++on_read_called;
     // No req body.
     return 0;
   };
 
   int on_header_called = 0;
-  io_ctx.on_header = [=, &on_header_called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_header = [=, &on_header_called](char *buffer, size_t size, void *userdata) {
     ++on_header_called;
     // Ignore resp headers.
-    char str[size*count + 1];
-    strncpy(str, buffer, size*count);
-    str[size*count] = '\0';
+    char str[size + 1];
+    strncpy(str, buffer, size);
+    str[size] = '\0';
     printf("%s\n", str);
-    return size * count;
+    return size;
   };
 
   int on_write_called = 0;
-  io_ctx.on_write = [=, &on_write_called](char *buffer, size_t size, size_t count, void *userdata) {
+  io_ctx.on_write = [=, &on_write_called](char *buffer, size_t size, void *userdata) {
     ++on_write_called;
-    REQUIRE ( size == 1);
-    REQUIRE ( count == 2 );
+    REQUIRE ( size == 2 );
     REQUIRE ( strncmp(buffer, "{}", 2) == 0 );
-    return size * count;
+    return size;
   };
 
   khc_code res = khc_perform(&http);

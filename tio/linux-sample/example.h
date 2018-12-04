@@ -6,18 +6,22 @@ extern 'C' {
 #endif
 
 /* Go to https:/developer.kii.com and create app for you! */
-const char EX_APP_ID[] = "fj9xy2fsp0ld";
-const char EX_APP_KEY[] = "";
+const char KII_APP_ID[] = "fj9xy2fsp0ld";
 /* JP: "api-jp.kii.com" */
 /* US: "api.kii.com" */
 /* SG: "api-sg.kii.com" */
 /* CN: "api-cn3.kii.com" */
-const char EX_APP_SITE[] = "api-jp.kii.com";
+const char KII_APP_HOST[] = "api-jp.kii.com";
 
-#define EX_COMMAND_HANDLER_BUFF_SIZE 4096
-#define EX_STATE_UPDATER_BUFF_SIZE 4096
-#define EX_MQTT_BUFF_SIZE 2048
-#define EX_STATE_UPDATE_PERIOD 60
+#define HANDLER_HTTP_BUFF_SIZE 4096
+#define HANDLER_MQTT_BUFF_SIZE 2048
+#define HANDLER_KEEP_ALIVE_SEC 300
+
+#define UPDATER_HTTP_BUFF_SIZE 4096
+#define UPDATE_PERIOD_SEC 60
+
+#define TO_RECV_SEC 15
+#define TO_SEND_SEC 15
 
 #ifdef __cplusplus
 }

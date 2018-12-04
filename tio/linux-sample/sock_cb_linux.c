@@ -47,6 +47,21 @@ khc_sock_code_t
         return KHC_SOCK_FAIL;
     }
 
+    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    if (ctx->to_recv > 0) {
+        struct timeval tv;
+        tv.tv_sec = ctx->to_recv;
+        tv.tv_usec = 0;
+        setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+    }
+
+    if (ctx->to_send > 0) {
+        struct timeval tv;
+        tv.tv_sec = ctx->to_send;
+        tv.tv_usec = 0;
+        setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof tv);
+    }
+
     if (connect(sock, (struct sockaddr*) &server, sizeof(server)) == -1 ){
         printf("failed to connect socket.\n");
         return KHC_SOCK_FAIL;
@@ -86,7 +101,6 @@ khc_sock_code_t
         return KHC_SOCK_FAIL;
     }
 
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
     ctx->socket = sock;
     ctx->ssl = ssl;
     ctx->ssl_ctx = ssl_ctx;
@@ -96,11 +110,13 @@ khc_sock_code_t
 khc_sock_code_t
     sock_cb_send(void* socket_context,
             const char* buffer,
-            size_t length)
+            size_t length,
+            size_t* out_sent_length)
 {
     socket_context_t* ctx = (socket_context_t*)socket_context;
     int ret = SSL_write(ctx->ssl, buffer, length);
     if (ret > 0) {
+        *out_sent_length = ret;
         return KHC_SOCK_OK;
     } else {
         printf("failed to send\n");

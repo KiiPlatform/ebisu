@@ -1,152 +1,649 @@
-# Kii thing-if SDK for Thing
-Thing SDK for Kii Thing Interaction Framework (kii thing-if) .<br>
+# tio
 
-## Retrieve submodules.
+With `tio` and Kii Interaction Framework, you can quickly implement IoT devices
+which supports following functionalities.
 
-When you build this SDK for the first time, you need to
-execute following commands:
+- Read data from sensors and upload data to cloud periodically.
+- Receive remote control command from cloud and process it in your IoT device application.
 
-```sh
-# git submodule init
-# git submodule update
-# cd kii
-# git submodule init
-# git submodule update
-# cd ../
-```
+`tio` consists of following modules.
 
-These commands retrieve required modules for this SDK.
+- `tio_handler_t`
 
-## Build
+Responsible for watching remote control command and propagate the command to
+IoT device application.
 
-```sh
-$ mkdir build
-$ cd build
-$ cmake ../
-$ make
-```
+Once the module has been started,
+The loop inside the module keeps watching command arrival from the cloud.
 
-### Install
+- `tio_updater_t`
 
-After the build, you can install SDK libraries by following commands.
-(Assume current directory is build you've created on build.)
+Responsible for upload data read from sensors equipped to IoT devices.
 
-```sh
-$ make install
-```
+Once the module has been started,
+The loop inside the module keeps asking for update by sensors periodically with the specified interval.
 
-Or if you want to change install location:
+You can choose to run both `tio_handler_t` and `tio_updater_t` or either one.
 
-```sh
-$ make DESTDIR={path to install} install
-```
+# Use `tio_handler_t`
 
-By specifying `DESTDIR`, libraries and headers are installed in {path to install}/usr/local/lib and {path to install}/usr/local/include respectively.
+## Callback functions
 
+Application developer needs to prepare following callback functions.
 
-### Build Configuration
+### Task callbacks
 
-#### Debug Build
-If you need to enable -g option and debug log output, following command will generate the debug build.
+`tio_handler_t` needs executing task asynchronously since it keeps waiting for commands sent to MQTT topic.
 
-```sh
-$ mkdir build
-$ cd build
-$ cmake -DCMAKE_BUILD_TYPE=DEBUG ../
-$ make
-```
+`tio` needs abstraction with callbacks since the way of dispatch async tasks varies in different environments.
 
-#### Configure MQTT keep-alive interval
+#### Task creation
 
-Edit CMakeLists.txt and change following line.
-
-```
-SET(CMAKE_C_FLAGS "-DKII_PUSH_KEEP_ALIVE_INTERVAL_SECONDS=300")
-```
-
-Unit is seconds and by default it is set to 300 seconds.
-If 0 is specified, turn off the keep alive mechanism defined in MQTT.
-Setting short period will increase the load of MQTT broker when there is a lot
-of connected devices.
-For details, please refer to the [MQTT spec](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc385349238).
-
-#### Configure memory used by JSON parser.
-
-Edit CMakeLists.txt and change following line.
-
-```
-SET(CMAKE_C_FLAGS "-DJKII_FIXED_TOKEN_NUM=128")
-```
-
-The number indicates amounts of memory used to
-parse JSON when received it from server.
-Memory is allocated on stack.
-By default it is set to 128.
-Size of memory allocated by this can be calculated as following.
+Task create callback function signature is following.
 
 ```c
-sizeof(jkii_token_t) * JKII_FIXED_TOKEN_NUM
+typedef kii_task_code_t
+(*KII_CB_TASK_CREATE)
+    (const char* name,
+     KII_TASK_ENTRY entry,
+     void* param);
 ```
 
-#### Dynamic memory allocation for JSON parsing
-If you prefer to dynamic allocation than fixed memory allocation,
-Edit CMakeLists.txt and remove the line specifies `JKII_FIXED_TOKEN_NUM`.
+Typical implementation with `pthread`:
 
-In this case, you need to implement `JKII_RESOURCE_CB` function and set the
-pointer in `kii_t` struct.
+```c
+kii_task_code_t task_create_cb
+    (const char* name,
+     KII_TASK_ENTRY entry,
+     void* param)
+{
+    pthread_t pthid;
+    int ret = pthread_create(&pthid, NULL, entry, param);
+    if(ret == 0)
+    {
+        return KII_TASKC_OK;
+    }
+    else
+    {
+        return KII_TASKC_FAIL;
+    }
+}
+```
 
-#### Connect MQTT server using non-secure connection.
-By default SDK connect to a MQTT broker using secure connection(tls).
-If you need to use non-secure connection(tcp),
-Edit CMakeLists.txt and enable following line.
-(By removing # in the head.)
+#### Task continue callback
+
+Task continue callback is used to determine whether to continue or exit task from the loop.
+
+Task continue callback signature:
+
+```c
+typedef kii_bool_t
+(*KII_CB_TASK_CONTINUE)
+    (void* task_info,
+    void* userdata);
+```
+
+Implementation in example app:
+
+```c
+tio_bool_t _handler_continue(void* task_info, void* userdata) {
+    if (term_flag == true) {
+        return KII_FALSE;
+    } else {
+        return KII_TRUE;
+    }
+}
+```
+
+`term_flag` is a variable determines whether to continue.
+Example app set it true when received `SIGINT` generated by Ctrl-C.
+
+Note that we use `atomic_bool` type introduced in C11 since `term_flag` is referenced from signal handler, main thread and handler task thread (`_handler_continue()` is executed in handler task thread.)
+
+### Task exit callback
+
+Task exit callback is called when task continue callback returns `KII_FALSE`
+or unrecoverable error occurs.
+
+In this callback, you may need to free memories used for the handler task and other necessary steps when exiting task.
+
+In the example app, we don't give allocated memory to `tio_handler` and `pthread` doesn't requires special treatment when exit loop, just set flag that indicate
+task has been exited safely.
+
+```c
+void _handler_exit(void* task_info, void* userdata) {
+    printf("_handler_exit called\n");
+    handler_terminated = true;
+}
+```
+
+`handler_terminated` is a variable indicates that resources allocated by handler is now all freed.
+
+Details of memory management when exiting handler task, please refer to API reference of `tio_handler_set_cb_task_exit()`.
+
+We use `atomic_bool` here since the flag is referenced in main thread as well before exiting the process. (`_handler_exit()` is executed in handler task thread.)
+
+#### Delay callback
+
+In some situation program needs to wait for specified period of time to avoid the loop runs too fast or making too many requests to servers, etc.
+
+`tio` needs abstraction with callbacks since the way varies in different environments.
+
+Delay callback function signature is following.
 
 ```
-SET(CMAKE_C_FLAGS "-DKII_MQTT_USE_PORT_TCP=1")
+typedef void
+(*KII_CB_DELAY_MS)
+    (unsigned int msec);
 ```
 
-## How to use
+Typical implementation with `usleep` provided by `libc`:
 
-### Sample
-[linux-sample](./linux-sample) shows how to implement the client application works in the Thing.
-
-### Environment implementations
-
-SDK requires application to implement callback functions.
-
-#### Socket callback functions:
-
-To communucate with server, socket API implmementation is required.
-Please refer to [linux-sample/sys\_cb\_impl.h](./linux-sample/sys_cb_impl.h)
-and [linux-sample/sys\_cb\_linux.c](./linux-sample/sys_cb_linux.c)
-
-Actual implementations are in [linux-env](./linux-sample/linux-env)
-directory.
-
-#### Task callback functions:
-
-To handle tasks asynchronusly, task implementation is required.
-`pthread` live up to expectation in linux environment and `task` does in RTOS environments.
-
-List of task name symbols.
-
-- `TIO_TASK_NAME_UPDATE_STATUS`
-
-  The task of sending onboarded status.
-
-- `KII_TASK_NAME_RECV_MSG`
-
-  The task of receiving push messages.
-
-- `KII_TASK_NAME_PING_REQ`
-
-  The task of sending ping request.
-
-In RTOS, You'll specify stack size, depth and priority, etc depending on the environment.
-
-## Execute tests
-
-```sh
-# cd tests/small_tests
-# make test
+```c
+void delay_ms_cb(unsigned int msec)
+{
+    usleep(msec * 1000);
+}
 ```
+
+### Socket callbacks.
+
+`tio` provides abstraction of socket related functions.
+
+Socket callback functions signature:
+
+```c
+typedef khc_sock_code_t
+    (*KHC_CB_SOCK_CONNECT)
+    (void* sock_ctx, const char* host, unsigned int port);
+
+typedef khc_sock_code_t
+    (*KHC_CB_SOCK_SEND)
+    (void* sock_ctx, const char* buffer, size_t length);
+
+typedef khc_sock_code_t
+    (*KHC_CB_SOCK_RECV)
+    (void* sock_ctx, char* buffer, size_t length_to_read,
+     size_t* out_actual_length);
+
+typedef khc_sock_code_t
+    (*KHC_CB_SOCK_CLOSE)(void* sock_ctx);
+```
+
+You can see implementation with OpenSSL at [linux-sample](linux-sample/sock_cb_linux.c)
+
+`sock_ctx` argument is arbitrary data context which application can use.
+Application should pass the pointer of the data when calling
+`tio_handler_set_cb_sock_connect_http()`,
+`tio_handler_set_cb_sock_send_http()`,
+`tio_handler_set_cb_sock_recv_http()`,
+`tio_handler_set_cb_sock_close_http()`,
+`tio_handler_set_cb_sock_connect_mqtt()`,
+`tio_handler_set_cb_sock_send_mqtt()`,
+`tio_handler_set_cb_sock_recv_mqtt()`,
+`tio_handler_set_cb_sock_close_mqtt()`
+ methods.
+
+Note that, `tio_handler` uses MQTT(s) to receive remote control commands and uses HTTP(s) to send the result of command execution.
+
+Application can choose to pass different implementations of socket functions or same one.
+If you choose to pass same pointer of the function, Please also check [Asynchronous task management](#asynchronous-task-management) section as well.
+
+For both MQTT and HTTP, using them over secure connection is highly recommended.
+Our cloud supports non-secure connection for now. However, we may terminate supports of insecure connections in the future.
+
+#### Notes about socket implementation used for MQTT.
+
+Underlying socket implementation used for MQTT must be blocking mode and its recv/ send timeout must be shared with `tio_handler_t`.
+
+We use socket timeout to estimate elapsed time since we sent last MQTT messages to send MQTT `PINGREQ` message periodically.
+
+MQTT keep alive interval must be larger than recv/ send timeout.
+Twice as large as recv/ send timeout works fine but recommend few minutes to avoid congestion.
+
+```c
+    tio_handler_set_mqtt_to_sock_recv(handler, 15);
+    tio_handler_set_mqtt_to_sock_send(handler, 15);
+    tio_handler_set_keep_alive_interval(handler, 300);
+```
+
+### Action callback
+
+Action callback is called when the IoT device receives remote control command.
+You can implement IoT device specific control in the callback such as turn on/ off devices or changes level of actuators, etc.
+
+Action callback signature:
+
+```c
+typedef tio_bool_t (*TIO_CB_ACTION)(
+    tio_action_t* action,
+    tio_action_err_t* err,
+    void* userdata);
+```
+
+- `tio_action_t.alias` is a string represents the alias of the trait which represents set of capabilities equipped.
+
+eg.) "AirConditioner", "LevelMonitor", etc.
+
+- `tio_action_t.action_name` is a string represents the name of action.
+
+eg.) "setPresetTemperature", "executeMonitering", etc.
+
+- `tio_action_t.action_value` is a subject of the action.
+
+eg.) If the `action_name` is "setPresetTemperature", `action_value.type` might be a `long_value` and it's value is 26, 18, etc.
+
+When the execution is failed, you can set the message in `err` argument and returns false. The result of execution and error message is stored in the cloud.
+
+`user_data` argument is a context object pointer given to `tio_handler_start()` method.
+
+Alias, action name, action value and its type is defined by the feature called `Trait`.
+
+For more details about Trait, please refer to the [document](http://docs.kii.com/en/guides/thingifsdk/).
+
+## Set-up `tio_handler_t` instance
+
+Here's the set-up code extracted from example app.
+The full code can be checked [handler_init() in example.c](linux-sample/example.c)
+
+```c
+    tio_handler_init(handler);
+
+    tio_handler_set_app(handler, KII_APP_ID, KII_APP_HOST);
+
+    tio_handler_set_cb_task_create(handler, task_create_cb_impl);
+    tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl);
+
+    tio_handler_set_cb_sock_connect_http(handler, sock_cb_connect, http_ssl_ctx);
+    tio_handler_set_cb_sock_send_http(handler, sock_cb_send, http_ssl_ctx);
+    tio_handler_set_cb_sock_recv_http(handler, sock_cb_recv, http_ssl_ctx);
+    tio_handler_set_cb_sock_close_http(handler, sock_cb_close, http_ssl_ctx);
+
+    tio_handler_set_cb_sock_connect_mqtt(handler, sock_cb_connect, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_send_mqtt(handler, sock_cb_send, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
+
+    tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);
+    tio_handler_set_mqtt_to_sock_send(handler, TO_SEND_SEC);
+
+    tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);
+    tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
+
+    tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
+
+    tio_handler_set_json_parser_resource(handler, resource);
+
+    tio_handler_set_cb_task_continue(handler, _handler_continue, NULL);
+    tio_handler_set_cb_task_exit(handler, _handler_exit, NULL);
+```
+
+Here's anatomy of set-up calls.
+
+### `tio_handler_init` call
+
+This function must be called prior to any other functions of `tio_handler_t`.
+
+### `tio_handler_set_app` call
+
+Set the Kii application information.
+
+In the example, `KII_APP_ID` and `KII_APP_HOST` is defined as Macro.
+Those are used to identify work space in the cloud and the value is determined when you Kii Cloud App has been created.
+To create your Kii Cloud App, Sign-up to [Developer console](https://developer.kii.com).
+
+### Set-up callbacks
+
+#### Task callbacks.
+
+Set callback function pointers.
+
+```c
+    tio_handler_set_cb_task_create(handler, task_create_cb_impl);
+    tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl);
+```
+
+### Socket callbacks.
+
+Set callback function pointers and context data pointers.
+If you application allocates memory/ resources for context data, application is responsible to free those memory/ resources.
+
+Different context objects named `http_ssl_ctx` and `mqtt_ssl_ctx` is used since the connection and it's life-cycle is different between them.
+
+```c
+    tio_handler_set_cb_sock_connect_http(handler, sock_cb_connect, http_ssl_ctx);
+    tio_handler_set_cb_sock_send_http(handler, sock_cb_send, http_ssl_ctx);
+    tio_handler_set_cb_sock_recv_http(handler, sock_cb_recv, http_ssl_ctx);
+    tio_handler_set_cb_sock_close_http(handler, sock_cb_close, http_ssl_ctx);
+```
+
+```c
+    tio_handler_set_cb_sock_connect_mqtt(handler, sock_cb_connect, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_send_mqtt(handler, sock_cb_send, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
+```
+
+### Set-up buffers
+
+`tio_handler` needs memory buffer to store HTTP/ MQTT payloads.
+
+In this example, assigned 4KB for HTTP payloads and 2KB for MQTT payloads.
+This size may covers most use-cases.
+However, If you're remote command definition is more and larger, you may need to allocate larger size.
+
+Note that buffer for HTTP and MQTT must be isolated. Passing overlapping memory causes undefined behavior.
+
+```c
+    tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);
+    tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
+```
+
+### Set-up MQTT socket timeout.
+
+`tio_handler_t` needs socket timeout in seconds to send MQTT `PINGREQ` periodically.
+
+Note that application must implement socket timeout in the socket callback implementation.
+You can see example [here](./linux-sample/sys_cb_linux.c)
+
+```c
+    tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);
+    tio_handler_set_mqtt_to_sock_send(handler, TO_SEND_SEC);
+```
+
+### Set-up MQTT Keep Alive interval.
+
+In the example, `HANDLER_KEEP_ALIVE_SEC` is defined as Macro and value is 300 (in seconds).
+
+MQTT have mechanism called `Keep Alive` detecting stale connection between the MQTT broker.
+
+`tio_handler_t` acts as MQTT clients and send `PINGREQ` to MQTT broker periodically with the specified interval.
+If `PINGRESP` from MQTT broker is not present, `tio_handler_t` would close the current connection and make fresh connection again.
+
+If interval is set to 0, `Keep Alive` is turned off and no `PINGREQ` message is send to MQTT broker.
+
+We highly recommend setting Keep Alive interval greater than 0 to detect disconnection.
+Recommended interval is few minutes since too small interval may cause network congestion and increases cloud cost.
+
+MQTT keep alive interval must be larger than recv/ send timeout.
+
+```c
+    tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
+```
+
+### Set-up json parser resource
+
+`tio_handler_t` uses `jkii` json parser library.
+`jkii` uses array of tokens to parse json string.
+
+In this example, allocates 256 tokens statically.
+
+```c
+    tio_handler_set_json_parser_resource(handler, resource);
+```
+
+Number of tokens to be used to parse json varies depending on how complex the target json string is.
+If you defined complex(i.e, a lot of fields or long arrays in the commands) control command, you would need to give larger number.
+Alternatively, you can use dynamic allocation for tokens by using following API:
+
+```c
+void tio_handler_set_cb_json_parser_resource(
+    tio_handler_t* handler,
+    JKII_CB_RESOURCE_ALLOC cb_alloc,
+    JKII_CB_RESOURCE_FREE cb_free);
+```
+
+`cb_alloc` is called when the token is required and it's number is exactly same as numbers need to parse json string.
+
+`cb_free` is called when the parse has been done.
+
+## Execute onboarding
+
+For the first time, Step called `onboarding` is required.
+In this step, Identifier of IoT device (thing ID) is generated and stored in cloud.
+
+After the step, thing ID and access token is returned to IoT device.
+By using thing ID and access token, cloud can identify the device when the remote command is sent to the device with the thing ID or sensor data sent from the device with the token.
+
+This step can be skipped once thing ID and access token is stored by the IoT devices.
+
+Alternatively, you can execute this step outside of the IoT Device and pass thing ID and access token to IoT devices. Typical example is using Mobile apps to execute the onboarding step and passing thing ID and access token to the devices via BLE, etc.
+
+```c
+    tio_code_t result = tio_handler_onboard(
+            &handler,
+            vendorThingID,
+            password,
+            thingType,
+            firmWareVersion,
+            layoutPosition,
+            properties);
+    tio_author_t* author = tio_handler_get_author(&handler);
+    /* thing ID and access token is stored in tio_author_t.
+    printf("thing ID: %s, access token %s\n", author->author_id, author->access_token);
+    */
+```
+
+## Start module
+
+Now, it's ready to start `tio_handler_t` module.
+
+```c
+    const kii_author_t* author = tio_handler_get_author(&handler);
+    tio_handler_start(&handler, author, tio_action_handler, NULL);
+```
+
+- `author` consists of thing ID and access token obtained in the step of [Onboarding](#execute-onboarding).
+
+- `tio_action_handler` is the callback function pointer explained in [Action callback](#action-callback)
+
+- last argument is context object pointer can be referenced in action callback.
+  Passing NULL since we don't use context object in this example.
+
+This call results to execute asynchronous tasks created by [Task callbacks](#task-callbacks).
+The name of tasks initiated by this call is exported as macro `KII_TASK_NAME_MQTT` and `KII_TASK_NAME_PING_REQ` defined in `kii.h`.
+
+# Use `tio_updater_t`
+
+## Callback functions
+
+### Task callbacks, socket callbacks
+
+Similar to `tio_handler_t`.
+
+`tio_updater_t` only uses HTTP(s) and does not use MQTT(s).
+
+### State read callbacks
+
+`tio_updater_t` uploads the IoT device state such as sensor readings periodically with the specified interval.
+
+When the specified interval elapsed, `tio_updater_t` execute callback function to read the latest state of the IoT device.
+
+Application can implement the process reading values from sensors, etc.
+
+#### Size callback.
+
+Size callback is called to ask the size of new IoT device state.
+This callback is called before the read callback.
+If the returned size is 0, `tio_updater_t` skips updating device state.
+
+Signature of size callback:
+
+```c
+typedef size_t (*TIO_CB_SIZE)(void* userdata);
+```
+
+`userdata` is context object pointer given to `tio_updater_start()` argument.
+
+#### Read callback
+
+Read callback is used to read actual IoT device state.
+Callback is repeatedly called until it returns 0.
+
+```c
+typedef size_t (*TIO_CB_READ)(
+    char *buffer,
+    size_t size,
+    void *userdata);
+```
+
+- `buffer` : Callback implementation writes the state data to this buffer.
+
+- `size` : Requested size to be written to the buffer. If the returned value does not muches the requested size, `tio_updater` aborts the update process this time but the loop continues to run.
+
+- `userdata` : Context object pointer passed to `tio_updater_start()` function.
+
+Expected format of the IoT device state is defined by `Trait`.
+
+eg.)
+
+```json
+{
+    "AirConditionerAlias" : {
+        "temperature" : 29,
+        "presetTemperature" : 20
+    }
+}
+```
+
+- `AirConditionerAlias` is the name of the `Alias`.
+
+- `temperature` is number type property defined in the `Trait`.
+
+- `presetTemperature` is number type property defined in the `Trait`.
+
+For more details about format of the IoT device state and `Trait`,
+Please refer to (http://docs.kii.com/en/guides/thingifsdk/).
+
+## Set-up `tio_updater_t` instance
+
+Here's the set-up code extracted from example app.
+The full code can be checked [updater_init() in example.c](linux-sample/example.c)
+
+```
+    tio_updater_init(updater);
+
+    tio_updater_set_app(updater, KII_APP_ID, KII_APP_HOST);
+
+    tio_updater_set_cb_task_create(updater, task_create_cb_impl);
+    tio_updater_set_cb_delay_ms(updater, delay_ms_cb_impl);
+
+    tio_updater_set_buff(updater, buffer, buffer_size);
+
+    tio_updater_set_cb_sock_connect(updater, sock_cb_connect, sock_ssl_ctx);
+    tio_updater_set_cb_sock_send(updater, sock_cb_send, sock_ssl_ctx);
+    tio_updater_set_cb_sock_recv(updater, sock_cb_recv, sock_ssl_ctx);
+    tio_updater_set_cb_sock_close(updater, sock_cb_close, sock_ssl_ctx);
+
+    tio_updater_set_interval(updater, UPDATE_PERIOD_SEC);
+
+    tio_updater_set_json_parser_resource(updater, resource);
+
+    tio_updater_set_cb_task_continue(updater, _updater_continue, NULL);
+    tio_updater_set_cb_task_exit(updater, _updater_exit, NULL);
+```
+
+- `tio_updater_set_interval()` specifies interval of uploading state in seconds.
+
+Other set-up process is similar to `tio_handler_t`.
+
+## Execute onboarding
+
+`tio_updater_onboard()` method is similar to `tio_handler_onboard()`.
+
+If you use both `tio_handler_t` and `tio_updater_t` for an IoT device, you just need to execute onboarding process from either one. No need to execute onboarding for both method since the thing ID bonding process just need to be executed once.
+
+After the onboarding has been done, you can get `tio_author_t` instance from either `tio_handler_t` or `tio_updater_t` and pass it to `tio_handler_start()` or `tio_updater_start()` method.
+
+## Start module
+
+Now, it's ready to start the updater module.
+
+Here's code extracted from [example app](linux-sample/example.c).
+
+```c
+    tio_updater_start(
+        &updater,
+        author,
+        updater_cb_state_size,
+        &updater_file_ctx,
+        updater_cb_read,
+        &updater_file_ctx);
+```
+
+- `author` : Pointer to `tio_author_t` instance obtained from onboarded `tio_handler_t`.
+
+- `updater_cb_state_size` : [Size callback](#size-callback) function pointer.
+
+- `updater_cb_read` : [Read callback](#read-callback) function pointer.
+
+- `updater_file_ctx` : Context object pointer referenced from both size callback/ read callback.
+
+# Asynchronous task management
+
+`tio` execute multiple asynchronous tasks.
+
+The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
+
+## Tasks executed by `tio_handler_t`.
+
+- `KII_TASK_NAME_MQTT` is a name of the task defined at `kii.h` and passed as argument when `tio_handler_set_cb_task_create()` is called to create task/ thread.
+
+    The task creation is requested once when the `tio_handler_start()` method is invoked.
+
+    This task is responsible for getting MQTT endpoint information thru REST API and connect, receive message from MQTT and propagate message to app by the `TIO_CB_ACTION` callback, and send MQTT `PINGREQ` periodically.
+
+    This task executes callbacks set by following APIs.
+
+    - `tio_handler_set_cb_sock_connect_http()`
+    - `tio_handler_set_cb_sock_send_http()`
+    - `tio_handler_set_cb_sock_recv_http()`
+    - `tio_handler_set_cb_sock_close_http()`
+    - `tio_handler_set_cb_sock_connect_mqtt()`
+    - `tio_handler_set_cb_sock_send_mqtt()`
+    - `tio_handler_set_cb_sock_recv_mqtt()`
+    - `tio_handler_set_cb_sock_close_mqtt()`
+    - `tio_handler_set_cb_delay_ms()`
+    - `tio_handler_start()` (`TIO_CB_ACTION` callback)
+    - `tio_handler_set_cb_err()`
+        (Optional. In case set the error handler for debugging, etc.)
+    - `tio_handler_set_cb_json_parser_resource()`
+        (Optional. In case dynamic memory allocation is chosen for parsing JSON.)
+
+    This task uses buffers set by following APIs.
+
+    - `tio_handler_set_http_buff()`
+    - `tio_handler_set_mqtt_buff()`
+
+    Those two buffers must be separated and have no overlaps.
+
+## Tasks executed by `tio_updater_t`.
+
+- `TIO_TASK_NAME_UPDATE_STATE` is a name of the task defined at `kii.h` and passed as argument when `tio_handler_set_cb_task_create()` is called to create task/ thread.
+
+    The task creation is requested once when the `tio_updater_start()` method is invoked.
+
+    This task is responsible for periodically updates the IoT device state with the specified interval.
+
+    This task executes callbacks set by following APIs.
+
+    - `tio_updater_set_cb_sock_connect()`
+    - `tio_updater_set_cb_sock_send()`
+    - `tio_updater_set_cb_sock_recv()`
+    - `tio_updater_set_cb_sock_close()`
+    - `tio_updater_set_cb_delay_ms()`
+    - `tio_updater_start()` (`TIO_CB_SIZE`, `TIO_CB_READ` callbacks.)
+    - `tio_updater_set_cb_err()`
+        (Optional. In case set the error handler for debugging, etc.)
+    - `tio_updater_set_cb_json_parser_resource()`
+        (Optional. In case dynamic memory allocation is chosen for parsing JSON.)
+
+    This task uses buffers set by following APIs.
+
+    - `tio_updater_set_buff()`
+
+## Avoiding race condition
+
+- Above 2 tasks `KII_TASK_NAME_MQTT` and `TIO_TASK_NAME_UPDATE_STATE` would be executed in parallel. Therefore, if the callback implementation shares the resource that need exclusive access, you need to implement access control mechanism.
+
+- You must prepare independent buffers which does not have overlaps.

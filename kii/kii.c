@@ -7,14 +7,14 @@
 const char _APP_KEY_HEADER[] = "X-Kii-Appkey: k";
 const char _CONTENT_LENGTH_ZERO[] = "Content-Length: 0";
 
-size_t _cb_write_buff(char *buffer, size_t size, size_t count, void *userdata)
+size_t _cb_write_buff(char *buffer, size_t size, void *userdata)
 {
     kii_t *kii = (kii_t *)userdata;
     if (kii->_rw_buff_written == 0) {
         memset(kii->_rw_buff, '\0', kii->_rw_buff_size);
     }
     size_t remain = kii->_rw_buff_size - kii->_rw_buff_written;
-    size_t req_size = size * count;
+    size_t req_size = size;
     if (remain < req_size)
     {
         // Insufficient buffer size.
@@ -25,7 +25,7 @@ size_t _cb_write_buff(char *buffer, size_t size, size_t count, void *userdata)
     return req_size;
 }
 
-size_t _cb_read_buff(char *buffer, size_t size, size_t count, void *userdata)
+size_t _cb_read_buff(char *buffer, size_t size, void *userdata)
 {
     kii_t *kii = (kii_t *)userdata;
     size_t remain = kii->_rw_buff_req_size - kii->_rw_buff_read;
@@ -33,27 +33,48 @@ size_t _cb_read_buff(char *buffer, size_t size, size_t count, void *userdata)
     {
         return 0;
     }
-    size_t to_read = (size * count > remain) ? (remain) : (size * count);
+    size_t to_read = (size > remain) ? (remain) : (size);
     memcpy(buffer, kii->_rw_buff + kii->_rw_buff_read, to_read);
     kii->_rw_buff_read += to_read;
     return to_read;
 }
 
-size_t _cb_write_header(char *buffer, size_t size, size_t count, void *userdata)
+size_t _cb_write_header(char *buffer, size_t size, void *userdata)
 {
     // TODO: implement it later for getting Etag, etc.
     char* etag_buff = ((kii_t*)userdata)->_etag;
-    _parse_etag(buffer, size * count, etag_buff, 64);
-    return size * count;
+    _parse_etag(buffer, size, etag_buff, 64);
+    return size;
 }
 
-int kii_init(
-        kii_t* kii,
-        const char* site,
-        const char* app_id)
+void kii_init(kii_t* kii)
 {
     memset(kii, 0x00, sizeof(kii_t));
-    strncpy(kii->_app_id, app_id, sizeof(kii->_app_id) * sizeof(char));
+    kii->_sdk_info = KII_SDK_INFO;
+    khc_set_zero(&kii->_khc);
+    khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
+    khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
+    khc_set_cb_header(&kii->_khc, _cb_write_header, kii);
+    kii->_etag[0] = '\0';
+    kii->_cb_slist_alloc = khc_cb_slist_alloc;
+    kii->_cb_slist_free = khc_cb_slist_free;
+    kii->_slist_alloc_data = NULL;
+    kii->_slist_free_data = NULL;
+    kii->_sdk_info = KII_SDK_INFO;
+    kii->_cb_task_create = NULL;
+    kii->_task_create_data = NULL;
+    kii->_cb_task_continue = NULL;
+    kii->_task_continue_data = NULL;
+    kii->_cb_task_exit = NULL;
+    kii->_task_exit_data = NULL;
+    kii->_cb_delay_ms = NULL;
+    kii->_delay_ms_data = NULL;
+}
+
+void kii_set_site(
+        kii_t* kii,
+        const char* site)
+{
     char* host;
     if(strcmp(site, "CN3") == 0)
     {
@@ -81,82 +102,124 @@ int kii_init(
         host = (char*)site;
     }
     strncpy(kii->_app_host, host, sizeof(kii->_app_host) * sizeof(char));
-    kii->_sdk_info = KII_SDK_INFO;
-    khc_set_zero(&kii->_khc);
-    khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
-    khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
-    khc_set_cb_header(&kii->_khc, _cb_write_header, kii);
-    kii->_etag[0] = '\0';
-    return 0;
 }
 
-int kii_set_buff(kii_t* kii, char* buff, size_t buff_size) {
+void kii_set_app_id(
+        kii_t* kii,
+        const char* app_id)
+{
+    strncpy(kii->_app_id, app_id, sizeof(kii->_app_id) * sizeof(char));
+}
+
+void kii_set_buff(kii_t* kii, char* buff, size_t buff_size) {
     kii->_rw_buff = buff;
     kii->_rw_buff_size = buff_size;
     kii->_rw_buff_read = 0;
     kii->_rw_buff_written = 0;
     khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
     khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
-    return 0;
 }
 
-int kii_set_http_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata) {
+void kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size) {
+    khc_set_stream_buff(&kii->_khc, buff, buff_size);
+}
+
+void kii_set_resp_header_buff(kii_t* kii, char* buff, size_t buff_size) {
+    khc_set_resp_header_buff(&kii->_khc, buff, buff_size);
+}
+
+void kii_set_cb_http_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata) {
     khc_set_cb_sock_connect(&kii->_khc, cb, userdata);
-    return 0;
 }
 
-int kii_set_http_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata) {
+void kii_set_cb_http_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata) {
     khc_set_cb_sock_send(&kii->_khc, cb, userdata);
-    return 0;
 }
 
-int kii_set_http_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata) {
+void kii_set_cb_http_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata) {
     khc_set_cb_sock_recv(&kii->_khc, cb, userdata);
-    return 0;
 }
 
-int kii_set_http_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata) {
+void kii_set_cb_http_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata) {
     khc_set_cb_sock_close(&kii->_khc, cb, userdata);
-    return 0;
 }
 
-int kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata) {
-    kii->mqtt_sock_connect_cb = cb;
-    kii->mqtt_sock_connect_ctx = userdata;
-    return 0;
+void kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size) {
+    kii->_mqtt_buffer = buff;
+    kii->_mqtt_buffer_size = buff_size;
 }
 
-int kii_set_mqtt_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata) {
-    kii->mqtt_sock_send_cb = cb;
-    kii->mqtt_sock_send_ctx = userdata;
-    return 0;
+void kii_set_cb_mqtt_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata) {
+    kii->_cb_mqtt_sock_connect = cb;
+    kii->_mqtt_sock_connect_ctx = userdata;
 }
 
-int kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata) {
-    kii->mqtt_sock_recv_cb = cb;
-    kii->mqtt_sock_recv_ctx = userdata;
-    return 0;
+void kii_set_cb_mqtt_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata) {
+    kii->_cb_mqtt_sock_send = cb;
+    kii->_mqtt_sock_send_ctx = userdata;
 }
 
-int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata) {
-    kii->mqtt_sock_close_cb = cb;
-    kii->mqtt_sock_close_ctx = userdata;
-    return 0;
+void kii_set_cb_mqtt_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata) {
+    kii->_cb_mqtt_sock_recv = cb;
+    kii->_mqtt_sock_recv_ctx = userdata;
 }
 
-kii_code_t kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource) {
+void kii_set_cb_mqtt_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata) {
+    kii->_cb_mqtt_sock_close_cb = cb;
+    kii->_mqtt_sock_close_ctx = userdata;
+}
+
+void kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec) {
+    kii->_mqtt_to_recv_sec = to_sock_recv_sec;
+}
+
+void kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec) {
+    kii->_mqtt_to_send_sec = to_sock_send_sec;
+}
+
+void kii_set_cb_task_create(kii_t* kii, KII_CB_TASK_CREATE cb, void* userdata) {
+    kii->_cb_task_create = cb;
+    kii->_task_create_data = userdata;
+}
+
+void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE cb, void* userdata) {
+    kii->_cb_task_continue = cb;
+    kii->_task_continue_data = userdata;
+}
+
+void kii_set_cb_task_exit(kii_t* kii, KII_CB_TASK_EXIT cb, void* userdata) {
+    kii->_cb_task_exit = cb;
+    kii->_task_exit_data = userdata;
+}
+
+void kii_set_cb_delay_ms(kii_t* kii, KII_CB_DELAY_MS cb, void* userdata) {
+    kii->_cb_delay_ms = cb;
+    kii->_delay_ms_data = userdata;
+}
+
+void kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource) {
     kii->_json_resource = resource;
-    return KII_ERR_OK;
 }
 
-kii_code_t kii_set_json_parser_resource_cb(
+void kii_set_cb_json_parser_resource(
     kii_t* kii,
-    JKII_RESOURCE_ALLOC_CB alloc_cb,
-    JKII_RESOURCE_FREE_CB free_cb)
+    JKII_CB_RESOURCE_ALLOC cb_alloc,
+    JKII_CB_RESOURCE_FREE cb_free)
 {
-    kii->_json_alloc_cb = alloc_cb;
-    kii->_json_free_cb = free_cb;
-    return KII_ERR_OK;
+    kii->_cb_json_alloc = cb_alloc;
+    kii->_cb_json_free = cb_free;
+}
+
+void kii_set_cb_slist_resource(
+    kii_t* kii,
+    KHC_CB_SLIST_ALLOC cb_alloc,
+    KHC_CB_SLIST_FREE cb_free,
+    void* cb_alloc_data,
+    void* cb_free_data) {
+    kii->_cb_slist_alloc = cb_alloc;
+    kii->_cb_slist_free = cb_free;
+    kii->_slist_alloc_data = cb_alloc_data;
+    kii->_slist_free_data = cb_free_data;
 }
 
 const char* kii_get_etag(kii_t* kii) {
@@ -201,7 +264,7 @@ void _reset_buff(kii_t* kii) {
 }
 
 void _req_headers_free_all(kii_t* kii) {
-    khc_slist_free_all(kii->_req_headers);
+    khc_slist_free_all_using_cb_free(kii->_req_headers, kii->_cb_slist_free, kii->_slist_free_data);
     kii->_req_headers = NULL;
 }
 

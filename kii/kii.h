@@ -20,11 +20,10 @@ extern "C" {
 #define M_KII_LOG(...)
 #endif
 
-#define KII_TASK_NAME_RECV_MSG "recv_msg_task"
-#define KII_TASK_NAME_PING_REQ "ping_req_task"
+#define KII_TASK_NAME_MQTT "kii_mqtt_task"
 
-typedef size_t (*KII_CB_WRITE)(char *ptr, size_t size, size_t count, void *userdata);
-typedef size_t (*KII_CB_READ)(char *buffer, size_t size, size_t count, void *userdata);
+typedef size_t (*KII_CB_WRITE)(char *ptr, size_t size, void *userdata);
+typedef size_t (*KII_CB_READ)(char *buffer, size_t size, void *userdata);
 
 typedef enum kii_code_t
 {
@@ -41,13 +40,6 @@ typedef enum kii_code_t
     KII_ERR_PARSE_JSON,
     KII_ERR_FAIL
 } kii_code_t;
-
-/** bool type definition */
-typedef enum kii_bool_t
-{
-    KII_FALSE = 0,
-    KII_TRUE
-} kii_bool_t;
 
 /** represents scope of bucket/ topic. */
 typedef enum kii_scope_type_t
@@ -114,26 +106,36 @@ typedef struct kii_t {
 	char _app_host[128];
     char* _sdk_info;
 
-    void* mqtt_sock_connect_ctx;
-    void* mqtt_sock_send_ctx;
-    void* mqtt_sock_recv_ctx;
-    void* mqtt_sock_close_ctx;
-    KHC_CB_SOCK_CONNECT mqtt_sock_connect_cb;
-    KHC_CB_SOCK_SEND mqtt_sock_send_cb;
-    KHC_CB_SOCK_RECV mqtt_sock_recv_cb;
-    KHC_CB_SOCK_CLOSE mqtt_sock_close_cb;
+    void* _mqtt_sock_connect_ctx;
+    void* _mqtt_sock_send_ctx;
+    void* _mqtt_sock_recv_ctx;
+    void* _mqtt_sock_close_ctx;
+    KHC_CB_SOCK_CONNECT _cb_mqtt_sock_connect;
+    KHC_CB_SOCK_SEND _cb_mqtt_sock_send;
+    KHC_CB_SOCK_RECV _cb_mqtt_sock_recv;
+    KHC_CB_SOCK_CLOSE _cb_mqtt_sock_close_cb;
+    unsigned int _mqtt_to_recv_sec;
+    unsigned int _mqtt_to_send_sec;
 
-    KII_TASK_CREATE task_create_cb;
+    KII_CB_TASK_CREATE _cb_task_create;
+    void* _task_create_data;
 
-    KII_DELAY_MS delay_ms_cb;
+    KII_CB_TASK_CONTINUE _cb_task_continue;
+    void* _task_continue_data;
 
-    KII_PUSH_RECEIVED_CB push_received_cb;
+    KII_CB_TASK_EXIT _cb_task_exit;
+    void* _task_exit_data;
+
+    KII_CB_DELAY_MS _cb_delay_ms;
+    void* _delay_ms_data;
+
+    KII_PUSH_RECEIVED_CB _cb_push_received;
     void* _push_data;
 
     int _mqtt_connected;
 
-    char* mqtt_buffer;
-    size_t mqtt_buffer_size;
+    char* _mqtt_buffer;
+    size_t _mqtt_buffer_size;
 
     unsigned int _keep_alive_interval;
 
@@ -149,21 +151,36 @@ typedef struct kii_t {
 
     jkii_resource_t* _json_resource;
 
-    JKII_RESOURCE_ALLOC_CB _json_alloc_cb;
-    JKII_RESOURCE_FREE_CB _json_free_cb;
+    JKII_CB_RESOURCE_ALLOC _cb_json_alloc;
+    JKII_CB_RESOURCE_FREE _cb_json_free;
 
+    KHC_CB_SLIST_ALLOC _cb_slist_alloc;
+    KHC_CB_SLIST_FREE _cb_slist_free;
+    void* _slist_alloc_data;
+    void* _slist_free_data;
 } kii_t;
 
 /** Initializes Kii SDK
  *  \param [inout] kii sdk instance.
+ */
+void kii_init(
+		kii_t* kii);
+
+/** \brief Set site name.
+ *  \param [inout] kii sdk instance.
  *  \param [in] site the input of site name,
  *  should be one of "CN", "CN3", "JP", "US", "SG" or "EU"
- *  \param [in] app_id the input of Application ID
- *  \return  0:success, -1: failure
  */
-int kii_init(
+void kii_set_site(
 		kii_t* kii,
-		const char* site,
+		const char* site);
+
+/** \brief Set Application ID.
+ *  \param [inout] kii sdk instance.
+ *  \param [in] app_id the input of Application ID
+ */
+void kii_set_app_id(
+		kii_t* kii,
 		const char* app_id);
 
 /** Authorize thing with vendor thing id and password.
@@ -172,7 +189,7 @@ int kii_init(
  *  \param [inout] kii sdk instance.
  *  \param [in] vendor_thing_id the thing identifier given by vendor.
  *  \param [in] password the password of the thing given by vendor.
- *  \return 0:success, -1: failure
+ *  \return kii_code_t.
  */
 kii_code_t kii_auth_thing(
 		kii_t* kii,
@@ -286,7 +303,6 @@ kii_code_t kii_upload_object_body(
 		const kii_bucket_t* bucket,
 		const char* object_id,
 		const char* body_content_type,
-        size_t body_content_length,
         const KII_CB_READ read_cb,
         void* userdata
 );
@@ -381,7 +397,7 @@ kii_code_t kii_get_mqtt_endpoint(
  *  \param [in] MQTT keep alive interval in second. If 0, Keep Alive mechanism is disabled.
  * Otherwise, ping req is sent to MQTT broker periodically with the specified interval.
  * Sending too many request with short interval consumes resouces. We recommend 30 seconds or longer interval.
- *  \param [in] callback  callback function called when push message delivered. 
+ *  \param [in] callback  callback function called when push message delivered.
  *  \param [in] userdata context object passed to callback.
  *  \return kii_code_t
  */
@@ -429,7 +445,27 @@ kii_code_t kii_ti_put_thing_type(
 
 kii_code_t kii_ti_put_state(
     kii_t* kii,
-    size_t content_length,
+    KII_CB_READ state_read_cb,
+    void* state_read_cb_data,
+    const char* opt_content_type,
+    const char* opt_normalizer_host);
+
+kii_code_t kii_ti_put_bulk_states(
+    kii_t* kii,
+    KII_CB_READ state_read_cb,
+    void* state_read_cb_data,
+    const char* opt_content_type,
+    const char* opt_normalizer_host);
+
+kii_code_t kii_ti_patch_state(
+    kii_t* kii,
+    KII_CB_READ state_read_cb,
+    void* state_read_cb_data,
+    const char* opt_content_type,
+    const char* opt_normalizer_host);
+
+kii_code_t kii_ti_patch_bulk_states(
+    kii_t* kii,
     KII_CB_READ state_read_cb,
     void* state_read_cb_data,
     const char* opt_content_type,
@@ -509,40 +545,235 @@ kii_api_call_append_header(
  */
 kii_code_t kii_api_call_run(kii_t* kii);
 
-int kii_set_buff(kii_t* kii, char* buff, size_t buff_size);
+/**
+ * \brief Set buffer used to construct/ parse HTTP request/ response.
 
-int kii_set_http_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
-int kii_set_http_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
-int kii_set_http_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
-int kii_set_http_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+ * This method must be called and set valid buffer before calling method initiate HTTP session
+ * such as kii_auth_thing(), kii_post_object(), etc.
+ * The buffer is used to serialize/ deserialize JSON.
 
-int kii_set_mqtt_cb_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
-int kii_set_mqtt_cb_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
-int kii_set_mqtt_cb_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
-int kii_set_mqtt_cb_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+ * When handling request body which could be large in following APIs,
+ * - kii_upload_object_body(),
+ * - kii_ti_put_state()
+ * The buffer is not used. Stream based KII_CB_READ is used instead.
+ * You don't have to take account the buffer size used by those request.
+
+ * Similary when handling response body which could be large in following APIs,
+ * kii_download_object_body()
+ * The buffer is not used. Stream based KII_CB_WRITE is used instead.
+ * You don't have to take account the buffer size used by those response.
+
+ * You can change the size of buffer depending on the request/ response size.
+ * It must be enough large to store whole request/ response except for method listed above.
+ * Typically, 4096 bytes is enough. However it varies depending on your data schema used to define
+ * object or thing. If object becomes large, consider putting them in object body.
+
+ * \param [out] kii instance.
+ * \param [in] buffer pointer to the buffer.
+ * \param [in] buff_size size of the buffer.
+ */
+void kii_set_buff(kii_t* kii, char* buff, size_t buff_size);
+
+/**
+ * \brief Set stream buffer.
+ * Stream buffer is used store part of HTTP body when
+ * reading/ writing it from the network.
+
+ * If this method is not called or set NULL to the buffer,
+ * kii allocates memory of stream buffer when the HTTP session started
+ * and free when the HTTP session ends.
+ * The buffer allocated by kii is 1024 bytes.
+
+ * You can change the size of buffer depending on your request/ response size.
+ * It must be enough large to store size line in chunked encoded message.
+ * However, you may use much larger buffer since size line might require very small buffer
+ * as it consists of HEX size and CRLF for the better performance.
+
+ * If you set the buffer by the method, the method must be called before calling method initiate HTTP session
+ * such as kii_auth_thing(), kii_post_object(), etc.
+ * and memory used by the buffer can be safely freed after the method returned.
+
+ * \param [out] kii instance.
+ * \param [in] buffer pointer to the buffer.
+ * \param [in] buff_size size of the buffer.
+ */
+void kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size);
+
+/**
+ * \brief Set response header buffer.
+
+ * The buffer is used to store single HTTP response header.
+ * If this method is not called or set NULL to the buffer,
+ * kii allocates memory of response header buffer when the HTTP session started
+ * and free when the HTTP session ends.
+ * The buffer allocated by kii is 256 bytes.
+
+ * If header is larger than the buffer, the header is skipped and not parsed.
+ * kii needs to parse Status Line, Content-Length, Transfer-Encoding and ETag header.
+ * The buffer must have enough size to store those headers. 256 bytes would be enough.
+ * If you set the buffer by the method, the method must be called before calling method initiate HTTP session
+ * such as kii_auth_thing(), kii_post_object(), etc.
+ * and memory used by the buffer can be safely freed after the method returned.
+
+ * \param [out] kii instance.
+ * \param [in] buffer pointer to the buffer.
+ * \param [in] buff_size size of the buffer.
+ */
+void kii_set_resp_header_buff(kii_t* kii, char* buff, size_t buff_size);
+
+void kii_set_cb_http_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
+void kii_set_cb_http_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
+void kii_set_cb_http_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
+void kii_set_cb_http_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+
+/**
+ * \brief Set buffer used to parse MQTT message.
+
+ * This method must be called and set valid buffer before calling method
+ * kii_start_push_routine()
+ * The buffer is used to parse MQTT message.
+
+ * You can change the size of buffer depending on the request/ response size.
+ * It must be enough large to store whole message send by MQTT.
+ * Typically, 1024 bytes is enough.
+ * However it varies depending on your data schema used to define Commands.
+ * Avoid defining large Commands.
+
+ * \param [out] kii instance.
+ * \param [in] buffer pointer to the buffer.
+ * \param [in] buff_size size of the buffer.
+ */
+void kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size);
+
+void kii_set_cb_mqtt_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
+void kii_set_cb_mqtt_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
+void kii_set_cb_mqtt_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
+void kii_set_cb_mqtt_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+
+void kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec);
+void kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec);
+
+void kii_set_cb_task_create(kii_t* kii, KII_CB_TASK_CREATE create_cb, void* userdata);
+
+/**
+ * \brief set callback determines whether to continue or discontinue task.
+
+ * If this method is not called or NULL is set, task exits only when un-recoverble error occurs.
+ * If you need cancellation mechanism, you need to set this callback.
+ * Terminate task without using this callback may cause memory leak.
+ * This method must be called before calling kii_start_push_routine().
+
+ * In case checking cancellation flag in continue_cb, the flag might be set by other task/ thread.
+ * Implementation must ensure consistency of the flag by using Mutex, etc.
+
+ * If un-recoverble error occurs, task exits the infinite loop and immediately calls KII_CB_TASK_EXIT callback if set.
+ * In this case KII_CB_TASK_CONTINUE callback is not called.
+
+ * \param kii [out] kii instance
+ * \param continue_cb [in] Callback determines whether to continue or discontinue task.
+ * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
+ * and calls KII_CB_TASK_EXIT callback if set.
+ * task_info argument type of the continue_cb function (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info*.
+ * \param userdata [in] Context data pointer passed as second argument when continue_cb is called.
+ */
+void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE continue_cb, void* userdata);
+
+/**
+ * \brief Callback called right before exit of MQTT task.
+
+ * Task exits when the task is discontinued by KII_CB_TASK_CONTINUE callback or
+ * un-recoverble error occurs.
+ * In exit_cb, you'll need to free memory used for MQTT buffer set by kii_set_mqtt_buff(),
+ * Memory used for the userdata passed to following callbacks in case not yet freed.
+
+ * - kii_set_cb_mqtt_sock_send()
+ * - kii_set_cb_mqtt_sock_connect()
+ * - kii_set_cb_mqtt_sock_recv()
+ * - kii_set_cb_mqtt_sock_close()
+ * - kii_set_cb_task_continue()
+ * - kii_set_cb_task_exit()
+
+ * In addition, you may need to call task/ thread termination API.
+ * It depends on the task/ threading framework you used to create task/ thread.
+ * After the exit_cb returned, task function immediately returns.
+
+ * If this API is not called or set NULL,
+ * task function immediately returns when task is discontinued or un-recoverble error occurs.
+
+ * \param kii instance
+ * \param exit_cb Called right before the exit.
+ * task_info argument type of exit_cb (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info*.
+ * \param userdata [in] Context data pointer passed as second argument when exit_cb is called.
+ */
+void kii_set_cb_task_exit(kii_t* kii, KII_CB_TASK_EXIT exit_cb, void* userdata);
+void kii_set_cb_delay_ms(kii_t* kii, KII_CB_DELAY_MS delay_cb, void* userdata);
 
 /** Set JSON paraser resource
  * @param [inout] kii SDK instance.
  * @param [in] resource to be used parse JSON. 256 tokens_num might be enough for almost all usecases.
  * If you need to parse large object or allocate exact size of memory used,
- * see kii_set_json_parser_resource_cb(kii_t, JKII_RESOURCE_ALLOC_CB, JKII_RESOURCE_FREE_CB)
+ * see kii_set_cb_json_parser_resource(kii_t, JKII_CB_RESOURCE_ALLOC, JKII_CB_RESOURCE_FREE)
  */
-kii_code_t kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource);
+void kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource);
 
 /** Set JSON paraser resource allocators.
  *  To use Allocator instead of fixed size memory given by kii_set_json_parser_resource(kii_t, jkii_resource_t),
  *  call kii_set_json_parser_resource(kii_t, jkii_resource_t) with NULL resource argument.
  * @param [inout] kii SDK instance.
- * @param [in] alloc_cb allocator callback.
- * @param [in] free_cb free callback should free memories allocated in alloc_cb.
+ * @param [in] cb_alloc allocator callback.
+ * @param [in] cb_free free callback should free memories allocated in cb_alloc.
  */
-kii_code_t kii_set_json_parser_resource_cb(kii_t* kii,
-    JKII_RESOURCE_ALLOC_CB alloc_cb,
-    JKII_RESOURCE_FREE_CB free_cb);
+void kii_set_cb_json_parser_resource(kii_t* kii,
+    JKII_CB_RESOURCE_ALLOC cb_alloc,
+    JKII_CB_RESOURCE_FREE cb_free);
+
+/**
+ * \brief Set khc_slist (linked list) resource allocators.
+
+ * If this method is not called, default allocators implemented with malloc/free is used to
+ * allocate linked list used to construct HTTP request headers.
+ */
+void kii_set_cb_slist_resource(
+    kii_t* kii,
+    KHC_CB_SLIST_ALLOC cb_alloc,
+    KHC_CB_SLIST_FREE cb_free,
+    void* cb_alloc_data,
+    void* cb_free_data);
 
 const char* kii_get_etag(kii_t* kii);
 
 int kii_get_resp_status(kii_t* kii);
+
+
+typedef enum
+{
+    KII_MQTT_ST_INSTALL_PUSH,
+    KII_MQTT_ST_GET_ENDPOINT,
+    KII_MQTT_ST_SOCK_CONNECT,
+    KII_MQTT_ST_SEND_CONNECT,
+    KII_MQTT_ST_RECV_CONNACK,
+    KII_MQTT_ST_SEND_SUBSCRIBE,
+    KII_MQTT_ST_RECV_SUBACK,
+    KII_MQTT_ST_RECV_READY,
+    KII_MQTT_ST_RECV_MSG,
+    KII_MQTT_ST_SEND_PINGREQ,
+    KII_MQTT_ST_RECONNECT,
+    KII_MQTT_ST_ERR_EXIT,
+    KII_MQTT_ST_DISCONTINUED,
+} kii_mqtt_task_state;
+
+typedef enum
+{
+    KII_MQTT_ERR_OK,
+    KII_MQTT_ERR_INSTALLATION,
+    KII_MQTT_ERR_GET_ENDPOINT,
+    KII_MQTT_ERR_INSUFFICIENT_BUFF
+} kii_mqtt_error;
+
+typedef struct {
+    kii_mqtt_error error;
+    kii_mqtt_task_state task_state;
+} kii_mqtt_task_info;
 
 #ifdef __cplusplus
 }

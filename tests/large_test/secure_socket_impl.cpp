@@ -96,11 +96,13 @@ khc_sock_code_t
 khc_sock_code_t
     ebisu::ltest::ssl::cb_send(void* socket_context,
             const char* buffer,
-            size_t length)
+            size_t length,
+            size_t* out_sent_length)
 {
     ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
     int ret = SSL_write(ctx->ssl, buffer, length);
     if (ret > 0) {
+        *out_sent_length = ret;
         return KHC_SOCK_OK;
     } else {
         printf("failed to send\n");

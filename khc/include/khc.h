@@ -17,41 +17,38 @@ extern "C"
  * \brief Callback writes data.
  *
  * \param [in] buffer data to be written.
- * Note that it is not null terminated string. Size must be determined by the product of size and count.
- * \param [in] size block size.
- * \param [in] count number of blocks. buffer size is determined by size * count.
+ * Note that it is not null terminated string.
+ * \param [in] size data size to be written.
  * \param [in, out] userdata context data passed to khc_set_cb_write(khc*, KHC_CB_WRITE, void*)
  * \returns Size of the bytes written.
  * If the returned value is not equal to requested size,
  * khc aborts HTTP session and khc_perform(khc*) returns KHC_ERR_WRITE_CALLBACK.
  */
-typedef size_t (*KHC_CB_WRITE)(char *buffer, size_t size, size_t count, void *userdata);
+typedef size_t (*KHC_CB_WRITE)(char *buffer, size_t size, void *userdata);
 /**
  * \brief Callback reads data.
  *
  * \param [out] buffer callback must writes data to this buffer.
- * \param [in] size block size.
- * \param [in] count number of blocks. Requested read size is determined by size * count.
+ * \param [in] size requested read size.
  * \param [in, out] userdata context data passed to khc_set_cb_read(khc*, KHC_CB_READ, void*)
  * \returns Size of the bytes read.
  * Returning 0 indicates that the whole data is read.
  * khc repeatedly call this callback untill it returns 0.
  */
-typedef size_t (*KHC_CB_READ)(char *buffer, size_t size, size_t count, void *userdata);
+typedef size_t (*KHC_CB_READ)(char *buffer, size_t size, void *userdata);
 /**
  * \brief Callback used to propagate response headers.
  *
  * \param [in] buffer response header data.
- * Note that the buffer is not null terminted and size must be determined by the product of size and count.
+ * Note that the buffer is not null terminted.
  * The buffer does not contains CRLF.
- * \param [in] size block size.
- * \param [in] count number of blocks. Header size is determined by size * count.
+ * \param [in] size header data size.
  * \param [in, out] userdata context data passed to khc_set_cb_header(khc*, KHC_CB_HEADER, void*)
  * \returns Size of the bytes handled.
- * If it is not equal to Header size determined by size * count,
+ * If it is not equal to Header size determined by size,
  * khc aborts HTTP session and khc_perform(khc*) returns KHC_ERR_HEADER_CALLBACK.
  */
-typedef size_t (*KHC_CB_HEADER)(char *buffer, size_t size, size_t count, void *userdata);
+typedef size_t (*KHC_CB_HEADER)(char *buffer, size_t size, void *userdata);
 
 /**
  * \brief Linked list.
@@ -60,25 +57,105 @@ typedef size_t (*KHC_CB_HEADER)(char *buffer, size_t size, size_t count, void *u
  */
 typedef struct khc_slist {
   char* data; /**< \brief Null terminated string */
-  struct khc_slist* next; /**< \brief Pointer to the next item. */
+  struct khc_slist* next; /**< \brief Pointer to the next node. */
 } khc_slist;
 
 /**
- * \brief Add item to the linked list.
- *
+ * \brief Custom khc_slist node allocator.
+
+ * In this allocator, you need to allocate memory of khc_slist struct and it's data char array.
+ * data char array must be NULL terminated so it requires str_length + 1 as length.
+
+ * \param [in] str khc_slist content. String must be copied to khc_slist.data.
+ * \param [in] str_length length of the string (exclude NULL termination).
+ * \param [inout] data optional context data pointer. The pointer is given by
+ * khc_slist_append_using_cb_alloc(khc_slist*, const char*, size_t, KHC_CB_SLIST_ALLOC, void*) method and could be NULL.
+ */
+typedef khc_slist*(*KHC_CB_SLIST_ALLOC)(const char* str, size_t str_length, void* data);
+
+/**
+ * \ brief free memory allocated by custom khc_slist node allocator.
+
+ * In this callback, implementation must free memory allocated by single khc_slist node.
+ * Method must be corresponding to alloc method implemented in KHC_CB_SLIST_ALLOC.
+
+ * \param [in] node of the slist.
+ * \param [in] data Context data pointer.
+ */
+typedef void(*KHC_CB_SLIST_FREE)(khc_slist* node, void* data);
+
+/**
+ * \brief Default implementation of KHC_CB_SLIST_ALLOC.
+ */
+khc_slist* khc_cb_slist_alloc(const char* str, size_t str_len, void* data);
+
+/**
+ * \brief Default implementation of KHC_CB_SLIST_FREE.
+ */
+void khc_cb_slist_free(khc_slist* slist, void* data);
+
+/**
+ * \brief Add node to the linked list.
+
+ * This method uses default memory allocator uses malloc() for constructing string copy and khc_slist.
+ * khc_slist must be appended by this method if the previous node is appended by this method.
+ * khc_slist_free_all(khc_slist*) must be called to free all memories used by the list.
+ * You can't use different allocate/ free method specified by
+ * khc_slist_append_using_cb_alloc(khc_slist*, const char*, size_t length, KHC_CB_SLIST_ALLOC, void*)
+ * in a single list.
  * \param [in, out] slist pointer to the linked list or NULL to create new linked list.
- * \param [in] string data to be appended.
+ * \param [in] string data to be appended. String is copied to new char array in slist.
  * \param [in] length of the string.
- * \returns pointer to the linked list (first item).
+ * \returns pointer to the linked list (first node).
  */
 khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length);
 
 /**
+ * \brief Add node to the linked list. Node is allocated by specified allocator.
+
+ * This method uses custom memory allocator for constructing string copy and khc_slist.
+ * khc_slist must be appended by this method and same allocator if the previous node is appended by this method.
+ * khc_slist_free_all_using_cb_free(khc_slist*, KHC_CB_SLIST_FREE, void*) and matching free callback
+ * must be used to free all memories used by the list.
+ * You can't use different allocate/ free method specified by
+ * khc_slist_append_using_cb_alloc(khc_slist*, const char*, size_t length, KHC_CB_SLIST_ALLOC, void*)
+ * in a single list.
+ * \param [in, out] slist pointer to the linked list or NULL to create new linked list.
+ * \param [in] string data to be appended. String is copied to new char array in slist.
+ * \param [in] length of the string.
+ * \param [in] cb_alloc allocator callback function.
+ * \param [in] cb_alloc_data context data pointer passed to cb_alloc.
+ * \returns pointer to the linked list (first node).
+ */
+khc_slist* khc_slist_append_using_cb_alloc(
+  khc_slist* slist,
+  const char* string,
+  size_t length,
+  KHC_CB_SLIST_ALLOC cb_alloc,
+  void* cb_alloc_data);
+
+/**
  * \brief Free memory used for the entire linked list.
- *
- * \param [in, out] slist pointer to the linked list (first item).
+
+ * Linked list constructed by khc_slist_append(khc_slist*, const char*, size_t) must be freed by this method.
+ * \param [in, out] slist pointer to the linked list (first node).
  */
 void khc_slist_free_all(khc_slist* slist);
+
+/**
+ * \brief Free memory used for the entire linked list constructed by custom allocator.
+ *
+ * Linked list constructed by khc_slist_append_using_cb_alloc(khc_slist*, const char*, size_t length, KHC_CB_SLIST_ALLOC, void*)
+ * must be freed by this method and matching free callback.
+
+ * \param [in, out] slist pointer to the linked list (first node).
+ * \param [in] cb_free free callback.
+ * \param [in] cb_free_data context object pointer passed to cb_free.
+ */
+void khc_slist_free_all_using_cb_free(
+  khc_slist* slist,
+  KHC_CB_SLIST_FREE cb_free,
+  void* cb_free_data);
 
 /**
  * \brief Indicate state of khc.
@@ -89,21 +166,36 @@ typedef enum khc_state {
   KHC_STATE_IDLE,
   KHC_STATE_CONNECT,
   KHC_STATE_REQ_LINE,
+  KHC_STATE_REQ_HOST_HEADER,
   KHC_STATE_REQ_HEADER,
   KHC_STATE_REQ_HEADER_SEND,
   KHC_STATE_REQ_HEADER_SEND_CRLF,
   KHC_STATE_REQ_HEADER_END,
   KHC_STATE_REQ_BODY_READ,
+  KHC_STATE_REQ_BODY_SEND_SIZE,
   KHC_STATE_REQ_BODY_SEND,
-  KHC_STATE_RESP_HEADERS_ALLOC,
-  KHC_STATE_RESP_HEADERS_REALLOC,
-  KHC_STATE_RESP_HEADERS_READ,
+  KHC_STATE_REQ_BODY_SEND_CRLF,
+
+  KHC_STATE_RESP_STATUS_READ,
   KHC_STATE_RESP_STATUS_PARSE,
-  KHC_STATE_RESP_HEADERS_CALLBACK,
-  /* Process flagment of body obtaind when trying to find body boundary. */
+  KHC_STATE_RESP_HEADER_CALLBACK,
+  KHC_STATE_RESP_HEADER_READ,
+  KHC_STATE_RESP_HEADER_SKIP,
   KHC_STATE_RESP_BODY_FLAGMENT,
+  KHC_STATE_READ_CHUNK_SIZE_FROM_HEADER_BUFF,
+  KHC_STATE_READ_CHUNK_BODY_FROM_HEADER_BUFF,
+
+  /* Process flagment of body obtaind when trying to find body boundary. */
   KHC_STATE_RESP_BODY_READ,
   KHC_STATE_RESP_BODY_CALLBACK,
+
+  KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE,
+  KHC_STATE_RESP_BODY_READ_CHUNK_SIZE,
+  KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY,
+  KHC_STATE_RESP_BODY_READ_CHUNK_BODY,
+  KHC_STATE_RESP_BODY_SKIP_CHUNK_BODY_CRLF,
+  KHC_STATE_RESP_BODY_SKIP_TRAILERS,
+
   KHC_STATE_CLOSE,
   KHC_STATE_FINISHED,
 } khc_state;
@@ -179,10 +271,11 @@ typedef struct khc {
   size_t _read_size; /**< \private **/
   int _read_req_end; /**< \private **/
 
-  /* Response header buffer (Dynamic allocation) */
-  char* _resp_header_buffer; /**< \private **/
-  char* _resp_header_buffer_current_pos; /**< \private **/
-  size_t _resp_header_buffer_size; /**< \private **/
+  /* Response header buffer */
+  char* _resp_header_buff; /**< \private **/
+  size_t _resp_header_buff_size; /**< \private **/
+  int _resp_header_buff_allocated; /**< \private **/
+
   size_t _resp_header_read_size; /**< \private **/
 
   int _status_code; /**< \private **/
@@ -196,9 +289,15 @@ typedef struct khc {
 
   char* _body_flagment; /**< \private **/
   size_t _body_flagment_size; /**< \private **/
+  int _chunked_resp; /**< \private **/
+  long _chunk_size; /**< \private **/
+  long _chunk_size_written; /**< \private **/
+  size_t _resp_content_length; /**< \private **/
   int _read_end; /**< \private **/
 
   size_t _body_read_size; /**< \private **/
+
+  size_t _sent_length; /**< \private **/
 
   khc_code _result; /**< \private **/
 } khc;
@@ -210,7 +309,7 @@ typedef struct khc {
  * \param [out] khc instance.
  * \see khc_set_zero_excl_cb(khc*)
  */
-khc_code khc_set_zero(khc* khc);
+void khc_set_zero(khc* khc);
 
 /**
  * \brief Set members of khc 0/NULL.
@@ -228,7 +327,7 @@ khc_code khc_set_zero(khc* khc);
  * \param [out] khc instance.
  * \see khc_set_zero(khc*)
  */
-khc_code khc_set_zero_excl_cb(khc* khc);
+void khc_set_zero_excl_cb(khc* khc);
 
 /**
  * \brief Perform the HTTP session
@@ -282,18 +381,48 @@ khc_code khc_set_method(khc* khc, const char* method);
 khc_code khc_set_req_headers(khc* khc, khc_slist* headers);
 
 /**
+ * \brief Set response header buffer.
+ *
+ * Set response header buffer pointer used by KHC_CB_HEADER.
+ * If this method is not called or set NULL to the buffer,
+ * khc allocates memory of response header buffer when the HTTP session started
+ * and free when the HTTP session ends.
+ * The buffer allocated by the khc is 256 bytes.
+
+ * The buffer is used to store single HTTP response header.
+ * If header is larger than the buffer, the header is skipped and KHC_CB_HEADER is not called.
+ * khc needs to parse Status Line, Content-Length, Transfer-Encoding header to process HTTP message.
+ * The buffer must have enough size to store those headers. 256 bytes would be enough.
+ * If you set the buffer by the method, the method must be called befor khc_perform(khc*)
+ * and memory used by the buffer can be safely freed after khc_perform(khc*) returned.
+
+ * \param [out] khc instance.
+ * \param [in] buffer pointer to the buffer.
+ * \param [in] buff_size size of the buffer.
+ */
+void khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size);
+
+/**
  * \brief Set stream buffer.
  *
  * Set stream buffer pointer used by KHC_CB_READ, KHC_CB_WRITE.
  * If this method is not called or set NULL to the buffer,
  * khc allocates memory of stream buffer when the HTTP session started
  * and free when the HTTP session ends.
+ * The buffer allocated by khc is 1024 bytes.
+
+ * You can change the size of buffer depending on your request/ response size.
+ * It must be enough large to store size line in chunked encoded message.
+ * However, you may use much larger buffer since size line might require very small buffer
+ * as it consists of HEX size and CRLF for the better performance.
+ * If you set the buffer by the method, the method must be called befor khc_perform(khc*)
+ * and memory used by the buffer can be safely freed after khc_perform(khc*) returned.
  *
  * \param [out] khc instance.
  * \param [in] buffer pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
-khc_code khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size);
+void khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size);
 
 /**
  * \brief Set socket connect callback.

@@ -32,6 +32,8 @@ jobs:
           command: MEMCHECK=1 JUNIT=1 make stest-khc
       - store_test_results:
           path: tests/small_test/khc/test-results
+      - store_artifacts:
+          path: tests/small_test/khc/tmp_random_chunk_response.txt
 
   stest-jkii:
     <<: *env

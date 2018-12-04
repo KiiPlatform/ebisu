@@ -5,10 +5,11 @@
 
 #include "kii.h"
 #include "khc.h"
-#include "kii_mqtt.h"
+#include "kii_mqtt_task.h"
 #include "jkii_wrapper.h"
 #include "kii_push_impl.h"
 #include "kii_impl.h"
+
 
 kii_code_t kii_subscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
 {
@@ -248,16 +249,12 @@ exit:
 kii_code_t kii_start_push_routine(kii_t* kii, unsigned int keep_alive_interval, KII_PUSH_RECEIVED_CB callback, void* userdata)
 {
     kii->_keep_alive_interval = keep_alive_interval;
-    kii->push_received_cb = callback;
+    kii->_cb_push_received = callback;
     kii->_push_data = userdata;
-    kii->task_create_cb(KII_TASK_NAME_RECV_MSG,
-        _mqtt_start_recvmsg_task,
-        (void*)kii);
-    if (keep_alive_interval > 0) {
-        kii->task_create_cb(KII_TASK_NAME_PING_REQ,
-            _mqtt_start_pinreq_task,
-            (void*)kii);
-    }
+    kii->_cb_task_create(KII_TASK_NAME_MQTT,
+        mqtt_start_task,
+        (void*)kii,
+        kii->_task_create_data);
     return KII_ERR_OK;
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

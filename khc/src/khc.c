@@ -2,51 +2,17 @@
 #include <string.h>
 #include <stdlib.h>
 #include "khc.h"
-#include "khc_impl.h"
+#include "khc_state_impl.h"
 #include "khc_socket_callback.h"
 
-khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length) {
-  khc_slist* next;
-  next = (khc_slist*)malloc(sizeof(khc_slist));
-  if (next == NULL) {
-    return NULL;
-  }
-  next->next = NULL;
-  void* temp = malloc(length+1);
-  if (temp == NULL) {
-    free(next);
-    return NULL;
-  }
-  next->data = (char*)temp;
-  strncpy(next->data, string, length);
-  next->data[length] = '\0';
-  if (slist == NULL) {
-    return next;
-  }
-  khc_slist* end = slist;
-  while (end->next != NULL) {
-    end = end->next;
-  }
-  end->next = next;
-  return slist;
+void khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size) {
+  khc->_resp_header_buff = buffer;
+  khc->_resp_header_buff_size = buff_size;
 }
 
-khc_code khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size) {
+void khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size) {
   khc->_stream_buff = buffer;
   khc->_stream_buff_size = buff_size;
-  return KHC_ERR_OK;
-}
-
-void khc_slist_free_all(khc_slist* slist) {
-  khc_slist *curr;
-  curr = slist;
-  while (curr != NULL) {
-    khc_slist *next = curr->next;
-    free(curr->data);
-    curr->data = NULL;
-    free(curr);
-    curr = next;
-  }
 }
 
 khc_code khc_perform(khc* khc) {
@@ -61,7 +27,7 @@ khc_code khc_perform(khc* khc) {
   return res;
 }
 
-khc_code khc_set_zero(khc* khc) {
+void khc_set_zero(khc* khc) {
   // Callbacks.
   khc->_cb_write = NULL;
   khc->_write_data = NULL;
@@ -85,11 +51,9 @@ khc_code khc_set_zero(khc* khc) {
   khc->_sock_ctx_close = NULL;
 
   khc_set_zero_excl_cb(khc);
-
-  return KHC_ERR_OK;
 }
 
-khc_code khc_set_zero_excl_cb(khc* khc) {
+void khc_set_zero_excl_cb(khc* khc) {
   khc->_req_headers = NULL;
   khc->_host[0] = '\0';
   khc->_path[0] = '\0';
@@ -100,9 +64,6 @@ khc_code khc_set_zero_excl_cb(khc* khc) {
   khc->_current_req_header = NULL;
   khc->_read_size = 0;
   khc->_read_req_end = 0;
-  khc->_resp_header_buffer = NULL;
-  khc->_resp_header_buffer_current_pos = NULL;
-  khc->_resp_header_buffer_size = 0;
   khc->_resp_header_read_size = 0;
   khc->_status_code =0;
   khc->_body_boundary = NULL;
@@ -110,15 +71,23 @@ khc_code khc_set_zero_excl_cb(khc* khc) {
   khc->_cb_header_remaining_size = 0;
   khc->_body_flagment = NULL;
   khc->_body_flagment_size = 0;
+  khc->_chunked_resp = 0;
+  khc->_chunk_size = 0;
+  khc->_chunk_size_written = 0;
+  khc->_resp_content_length = 0;
   khc->_read_end = 0;
   khc->_body_read_size = 0;
   khc->_result = KHC_ERR_OK;
+  khc->_sent_length = 0;
 
+  // Response header Buffer
+  khc->_resp_header_buff = NULL;
+  khc->_resp_header_buff_size = 0;
+  khc->_resp_header_buff_allocated = 0;
   // Stream Buffer
   khc->_stream_buff = NULL;
   khc->_stream_buff_size = 0;
   khc->_stream_buff_allocated = 0;
-  return KHC_ERR_OK;
 }
 
 int khc_get_status_code(

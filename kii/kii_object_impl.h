@@ -60,8 +60,7 @@ kii_code_t _upload_body(
         kii_t* kii,
         const kii_bucket_t* bucket,
         const char* object_id,
-        const char* body_content_type,
-        size_t body_content_length);
+        const char* body_content_type);
 
 kii_code_t _download_body(
         kii_t* kii,

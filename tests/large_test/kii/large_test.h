@@ -20,19 +20,21 @@ inline void init(
         void* mqtt_ssl_ctx,
         jkii_resource_t* resource)
 {
-    kii_init(kii, DEFAULT_SITE, APP_ID);
+    kii_init(kii);
+    kii_set_site(kii, DEFAULT_SITE);
+    kii_set_app_id(kii, APP_ID);
 
     kii_set_buff(kii, buffer, buffer_size);
 
-    kii_set_http_cb_sock_connect(kii, ebisu::ltest::ssl::cb_connect, http_ssl_ctx);
-    kii_set_http_cb_sock_send(kii, ebisu::ltest::ssl::cb_send, http_ssl_ctx);
-    kii_set_http_cb_sock_recv(kii, ebisu::ltest::ssl::cb_recv, http_ssl_ctx);
-    kii_set_http_cb_sock_close(kii, ebisu::ltest::ssl::cb_close, http_ssl_ctx);
+    kii_set_cb_http_sock_connect(kii, ebisu::ltest::ssl::cb_connect, http_ssl_ctx);
+    kii_set_cb_http_sock_send(kii, ebisu::ltest::ssl::cb_send, http_ssl_ctx);
+    kii_set_cb_http_sock_recv(kii, ebisu::ltest::ssl::cb_recv, http_ssl_ctx);
+    kii_set_cb_http_sock_close(kii, ebisu::ltest::ssl::cb_close, http_ssl_ctx);
 
-    kii_set_mqtt_cb_sock_connect(kii, ebisu::ltest::ssl::cb_connect, mqtt_ssl_ctx);
-    kii_set_mqtt_cb_sock_send(kii, ebisu::ltest::ssl::cb_send, mqtt_ssl_ctx);
-    kii_set_mqtt_cb_sock_recv(kii, ebisu::ltest::ssl::cb_recv, mqtt_ssl_ctx);
-    kii_set_mqtt_cb_sock_close(kii, ebisu::ltest::ssl::cb_close, mqtt_ssl_ctx);
+    kii_set_cb_mqtt_sock_connect(kii, ebisu::ltest::ssl::cb_connect, mqtt_ssl_ctx);
+    kii_set_cb_mqtt_sock_send(kii, ebisu::ltest::ssl::cb_send, mqtt_ssl_ctx);
+    kii_set_cb_mqtt_sock_recv(kii, ebisu::ltest::ssl::cb_recv, mqtt_ssl_ctx);
+    kii_set_cb_mqtt_sock_close(kii, ebisu::ltest::ssl::cb_close, mqtt_ssl_ctx);
     kii_set_json_parser_resource(kii, resource);
 
     kii->_author.author_id[0] = '\0';
@@ -46,18 +48,18 @@ inline long long current_time() {
 
 class RWFunc {
 public:
-    std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)> on_read;
-    std::function<size_t(char *buffer, size_t size, size_t count, void *userdata)> on_write;
+    std::function<size_t(char *buffer, size_t size, void *userdata)> on_read;
+    std::function<size_t(char *buffer, size_t size, void *userdata)> on_write;
 };
 
-inline size_t read_cb(char *buffer, size_t size, size_t count, void *userdata) {
+inline size_t read_cb(char *buffer, size_t size, void *userdata) {
     RWFunc* ctx = (RWFunc*)userdata;
-    return ctx->on_read(buffer, size, count, userdata);
+    return ctx->on_read(buffer, size, userdata);
 }
 
-inline size_t write_cb(char *buffer, size_t size, size_t count, void *userdata) {
+inline size_t write_cb(char *buffer, size_t size, void *userdata) {
     RWFunc* ctx = (RWFunc*)userdata;
-    return ctx->on_write(buffer, size, count, userdata);
+    return ctx->on_write(buffer, size, userdata);
 }
 
 } // namespace kiiltest

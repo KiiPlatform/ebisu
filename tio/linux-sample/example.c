@@ -8,13 +8,14 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <stdatomic.h>
+#include <stdbool.h>
 
 #include <pthread.h>
 #include <unistd.h>
+#include <signal.h>
 #include "sys_cb_impl.h"
 #include "sock_cb_linux.h"
-
-static pthread_mutex_t m_mutex;
 
 static void print_help() {
     printf("sub commands: [onboard|update]\n\n");
@@ -22,9 +23,41 @@ static void print_help() {
 
     printf("onboard with vendor-thing-id\n");
     printf("./exampleapp onboard --vendor-thing-id={vendor thing id} --password={password}\n\n");
+}
 
-    printf("update.\n"
-            "./exampleapp update --firmware-version --thing-type --vendor-thing-id={vendor thing id} --password={password} \n\n");
+// Using C11 atomic types.
+atomic_bool term_flag = false;
+atomic_bool handler_terminated = false;
+atomic_bool updater_terminated = false;
+
+tio_bool_t _handler_continue(void* task_info, void* userdata) {
+    if (term_flag == true) {
+        return KII_FALSE;
+    } else {
+        return KII_TRUE;
+    }
+}
+
+tio_bool_t _updater_continue(void* task_info, void* userdata) {
+    if (term_flag == true) {
+        return KII_FALSE;
+    } else {
+        return KII_TRUE;
+    }
+}
+
+void _handler_exit(void* task_info, void* userdata) {
+    printf("_handler_exit called\n");
+    handler_terminated = true;
+}
+
+void _updater_exit(void* task_info, void* userdata) {
+    printf("_updater_exit called\n");
+    updater_terminated = true;
+}
+
+void sig_handler(int sig, siginfo_t *info, void *ctx) {
+    term_flag = 1;
 }
 
 void updater_init(
@@ -36,10 +69,10 @@ void updater_init(
 {
     tio_updater_init(updater);
 
-    tio_updater_set_app(updater, EX_APP_ID, EX_APP_SITE);
+    tio_updater_set_app(updater, KII_APP_ID, KII_APP_HOST);
 
-    tio_updater_set_cb_task_create(updater, task_create_cb_impl);
-    tio_updater_set_cb_delay_ms(updater, delay_ms_cb_impl);
+    tio_updater_set_cb_task_create(updater, task_create_cb_impl, NULL);
+    tio_updater_set_cb_delay_ms(updater, delay_ms_cb_impl, NULL);
 
     tio_updater_set_buff(updater, buffer, buffer_size);
 
@@ -48,9 +81,12 @@ void updater_init(
     tio_updater_set_cb_sock_recv(updater, sock_cb_recv, sock_ssl_ctx);
     tio_updater_set_cb_sock_close(updater, sock_cb_close, sock_ssl_ctx);
 
-    tio_updater_set_interval(updater, EX_STATE_UPDATE_PERIOD);
+    tio_updater_set_interval(updater, UPDATE_PERIOD_SEC);
 
-    kii_set_json_parser_resource(&updater->_kii, resource);
+    tio_updater_set_json_parser_resource(updater, resource);
+
+    tio_updater_set_cb_task_continue(updater, _updater_continue, NULL);
+    tio_updater_set_cb_task_exit(updater, _updater_exit, NULL);
 }
 
 const char send_file[] = "state.json";
@@ -76,7 +112,7 @@ size_t updater_cb_state_size(void* userdata)
     return 0;
 }
 
-size_t updater_cb_read(char *buffer, size_t size, size_t count, void *userdata)
+size_t updater_cb_read(char *buffer, size_t size, void *userdata)
 {
     updater_file_context_t* ctx = (updater_file_context_t*)userdata;
     FILE* fp;
@@ -93,7 +129,7 @@ size_t updater_cb_read(char *buffer, size_t size, size_t count, void *userdata)
         return 0;
     }
 
-    size_t read_size = fread(buffer, 1, size * count, fp);
+    size_t read_size = fread(buffer, 1, size, fp);
     if (read_size > 0) {
         ctx->file_read += read_size;
     }
@@ -104,10 +140,17 @@ size_t updater_cb_read(char *buffer, size_t size, size_t count, void *userdata)
     return read_size;
 }
 
+tio_bool_t pushed_message_callback(const char* message, size_t message_length, void* userdata)
+{
+    printf("pushed_message_callback called,\n");
+    printf("%.*s\n", (int)message_length, message);
+    return KII_FALSE;
+}
+
 void handler_init(
         tio_handler_t* handler,
-        char* kii_buffer,
-        int kii_buffer_size,
+        char* http_buffer,
+        int http_buffer_size,
         void* http_ssl_ctx,
         char* mqtt_buffer,
         int mqtt_buffer_size,
@@ -116,34 +159,41 @@ void handler_init(
 {
     tio_handler_init(handler);
 
-    tio_handler_set_app(handler, EX_APP_ID, EX_APP_SITE);
+    tio_handler_set_app(handler, KII_APP_ID, KII_APP_HOST);
 
-    tio_handler_set_cb_task_create(handler, task_create_cb_impl);
-    tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl);
+    tio_handler_set_cb_push(handler, pushed_message_callback, NULL);
 
-    tio_handler_set_http_buff(handler, kii_buffer, kii_buffer_size);
+    tio_handler_set_cb_task_create(handler, task_create_cb_impl, NULL);
+    tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl, NULL);
 
     tio_handler_set_cb_sock_connect_http(handler, sock_cb_connect, http_ssl_ctx);
     tio_handler_set_cb_sock_send_http(handler, sock_cb_send, http_ssl_ctx);
     tio_handler_set_cb_sock_recv_http(handler, sock_cb_recv, http_ssl_ctx);
     tio_handler_set_cb_sock_close_http(handler, sock_cb_close, http_ssl_ctx);
 
-    tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
-
     tio_handler_set_cb_sock_connect_mqtt(handler, sock_cb_connect, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_send_mqtt(handler, sock_cb_send, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
 
-    tio_handler_set_keep_alive_interval(handler, 0);
+    tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);
+    tio_handler_set_mqtt_to_sock_send(handler, TO_SEND_SEC);
 
-    kii_set_json_parser_resource(&handler->_kii, resource);
+    tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);
+    tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
+
+    tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
+
+    tio_handler_set_json_parser_resource(handler, resource);
+
+    tio_handler_set_cb_task_continue(handler, _handler_continue, NULL);
+    tio_handler_set_cb_task_exit(handler, _handler_exit, NULL);
 }
 
 tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, void* userdata)
 {
     printf("tio_action_handler called\n");
-    printf("%.*s: %.*s\n", action->alias_length, action->alias, action->action_name_length, action->action_name);
+    printf("%.*s: %.*s\n", (int)action->alias_length, action->alias,(int)action->action_name_length, action->action_name);
     return KII_TRUE;
 }
 
@@ -151,44 +201,65 @@ int main(int argc, char** argv)
 {
     char* subc = argv[1];
 
+    // Setup Signal handler. (Ctrl-C)
+    struct sigaction sa_sigint;
+    memset(&sa_sigint, 0, sizeof(sa_sigint));
+    sa_sigint.sa_sigaction = sig_handler;
+    sa_sigint.sa_flags = SA_SIGINFO;
+
+    if (sigaction(SIGINT, &sa_sigint, NULL) < 0) {
+        printf("failed to register sigaction\n");
+        exit(1);
+    }
+
     tio_updater_t updater;
-    tio_handler_t handler;
-    char updater_buff[EX_STATE_UPDATER_BUFF_SIZE];
-    socket_context_t updater_ctx;
-    char kii_buff[EX_COMMAND_HANDLER_BUFF_SIZE];
-    socket_context_t http_ctx;
-    char mqtt_buff[EX_MQTT_BUFF_SIZE];
-    socket_context_t mqtt_ctx;
+
+    socket_context_t updater_http_ctx;
+    updater_http_ctx.to_recv = TO_RECV_SEC;
+    updater_http_ctx.to_send = TO_SEND_SEC;
+
     jkii_token_t updater_tokens[256];
     jkii_resource_t updater_resource = {updater_tokens, 256};
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = {tokens, 256};
-    updater_file_context_t updater_file_ctx;
-    kii_code_t result;
 
-    memset(updater_buff, 0x00, sizeof(char) * EX_STATE_UPDATER_BUFF_SIZE);
+    updater_file_context_t updater_file_ctx;
+
+    char updater_buff[UPDATER_HTTP_BUFF_SIZE];
+    memset(updater_buff, 0x00, sizeof(char) * UPDATER_HTTP_BUFF_SIZE);
     updater_init(
             &updater,
             updater_buff,
-            EX_STATE_UPDATER_BUFF_SIZE,
-            &updater_ctx,
+            UPDATER_HTTP_BUFF_SIZE,
+            &updater_http_ctx,
             &updater_resource);
-    memset(kii_buff, 0x00, sizeof(char) * EX_COMMAND_HANDLER_BUFF_SIZE);
-    memset(mqtt_buff, 0x00, sizeof(char) * EX_MQTT_BUFF_SIZE);
+
+    tio_handler_t handler;
+
+    socket_context_t handler_http_ctx;
+    handler_http_ctx.to_recv = TO_RECV_SEC;
+    handler_http_ctx.to_send = TO_SEND_SEC;
+
+    socket_context_t handler_mqtt_ctx;
+    handler_mqtt_ctx.to_recv = TO_RECV_SEC;
+    handler_mqtt_ctx.to_send = TO_SEND_SEC;
+
+    char handler_http_buff[HANDLER_HTTP_BUFF_SIZE];
+    memset(handler_http_buff, 0x00, sizeof(char) * HANDLER_HTTP_BUFF_SIZE);
+
+    char handler_mqtt_buff[HANDLER_MQTT_BUFF_SIZE];
+    memset(handler_mqtt_buff, 0x00, sizeof(char) * HANDLER_MQTT_BUFF_SIZE);
+
+    jkii_token_t handler_tokens[256];
+    jkii_resource_t handler_resource = {handler_tokens, 256};
+
     handler_init(
             &handler,
-            kii_buff,
-            EX_COMMAND_HANDLER_BUFF_SIZE,
-            &http_ctx,
-            mqtt_buff,
-            EX_MQTT_BUFF_SIZE,
-            &mqtt_ctx,
-            &resource);
-
-    if (pthread_mutex_init(&m_mutex, NULL) != 0) {
-        printf("fail to get mutex.\n");
-        exit(1);
-    }
+            handler_http_buff,
+            HANDLER_HTTP_BUFF_SIZE,
+            &handler_http_ctx,
+            handler_mqtt_buff,
+            HANDLER_MQTT_BUFF_SIZE,
+            &handler_mqtt_ctx,
+            &handler_resource);
 
     if (argc < 2) {
         printf("too few arguments.\n");
@@ -219,19 +290,19 @@ int main(int argc, char** argv)
                     printf("password is not specifeid.\n");
                     exit(1);
                 }
-                printf("program successfully started!\n");
-                result = kii_ti_onboard(
-                        &handler._kii,
+                tio_code_t result = tio_handler_onboard(
+                        &handler,
                         vendorThingID,
                         password,
                         NULL,
                         NULL,
                         NULL,
                         NULL);
-                if (result != KII_ERR_OK) {
+                if (result != TIO_ERR_OK) {
                     printf("failed to onboard.\n");
                     exit(1);
                 }
+                printf("Onboarding succeeded!\n");
                 break;
             }
             printf("option %s : %s\n", optName, optarg);
@@ -253,230 +324,33 @@ int main(int argc, char** argv)
                 exit(0);
             }
         }
-/*
-    } else if (strcmp(subc, "get") == 0) {
-        char* vendorThingID = NULL;
-        char* thingID = NULL;
-        char* password = NULL;
-        int getFirmwareVersion = 0;
-        int getThingType = 0;
-        while (1) {
-            struct option longOptions[] = {
-                {"vendor-thing-id", required_argument, 0, 0},
-                {"thing-id", required_argument, 0, 1},
-                {"password", required_argument, 0, 2},
-                {"firmware-version", no_argument, 0, 3},
-                {"thing-type", no_argument, 0, 4},
-                {"help", no_argument, 0, 5},
-                {0, 0, 0, 0}
-            };
-            int optIndex = 0;
-            int c = getopt_long(argc, argv, "", longOptions, &optIndex);
-            if (c == -1) {
-                break;
-            }
-            switch (c) {
-                case 0:
-                    vendorThingID = optarg;
-                    break;
-                case 1:
-                    thingID = optarg;
-                    break;
-                case 2:
-                    password = optarg;
-                    break;
-                case 3:
-                    getFirmwareVersion = 1;
-                    break;
-                case 4:
-                    getThingType = 1;
-                    break;
-                case 5:
-                    printf("usage: \n"
-                            "get --vendor-thing-id={ID of the thing} "
-                            "--password={password of the thing} "
-                            "--thing-type "
-                            "--firmware-version\n");
-                    exit(0);
-                    break;
-            }
-        }
-        if (vendorThingID == NULL && thingID == NULL) {
-            printf("neither vendor-thing-id and thing-id are specified.\n");
-            exit(1);
-        }
-        if (password == NULL) {
-            printf("password is not specifeid.\n");
-            exit(1);
-        }
-        if (vendorThingID != NULL && thingID != NULL) {
-            printf("both vendor-thing-id and thing-id is specified.  either of one should be specified.\n");
-            exit(1);
-        }
-        if (getFirmwareVersion == 0 && getThingType == 0) {
-            printf("--firmware-version or --thing-type must be specified.\n");
-            exit(1);
-        }
-        if (init_tio(
-                &tio,
-                EX_APP_ID,
-                EX_APP_KEY,
-                EX_APP_SITE,
-                &command_handler_resource,
-                &state_updater_resource,
-                &sys_cb) == KII_FALSE) {
-            printf("fail to initialize.\n");
-            exit(1);
-        }
-        if (vendorThingID != NULL) {
-            if (kii_ti_onboard(
-                    &kii,
-                    vendorThingID,
-                    password,
-                    NULL,
-                    NULL,
-                    NULL,
-                    NULL) != KII_ERR_OK) {
-                printf("fail to onboard.\n");
-                exit(1);
-            }
-        } else {
-            if (onboard_with_thing_id(
-                    &tio,
-                    thingID,
-                    password,
-                    NULL,
-                    NULL,
-                    NULL,
-                    NULL,
-                    NULL) == KII_FALSE) {
-                printf("fail to onboard.\n");
-                exit(1);
-            }
-        }
-
-        if (getFirmwareVersion != 0) {
-            char firmwareVersion[64];
-            tio_error_t error;
-            if (get_firmware_version(
-                    &tio,
-                    firmwareVersion,
-                    sizeof(firmwareVersion) / sizeof(firmwareVersion[0]),
-                    &error) == KII_FALSE) {
-                printf("get_firmware_version is failed: %d\n", error.code);
-                if (error.code == TIO_ERROR_HTTP) {
-                    printf("status code=%d, error code=%s\n",
-                            error.http_status_code,
-                            error.error_code);
-                }
-                exit(0);
-            }
-            printf("firmware version=%s\n", firmwareVersion);
-        }
-        if (getThingType != 0) {
-            char thingType[64];
-            tio_error_t error;
-            if (get_thing_type(
-                    &tio,
-                    thingType,
-                    sizeof(thingType) / sizeof(thingType[0]),
-                    &error) == KII_FALSE) {
-                printf("get_thing_type is failed: %d\n", error.code);
-                if (error.code == TIO_ERROR_HTTP) {
-                    printf("status code=%d, error code=%s\n",
-                            error.http_status_code,
-                            error.error_code);
-                }
-                exit(0);
-            }
-            printf("thing type=%s\n", thingType);
-        }
-        exit(0);
-    } else if (strcmp(subc, "update") == 0) {
-        char* vendorThingID = NULL;
-        char* password = NULL;
-        char* firmwareVersion = NULL;
-        char* thingType = NULL;
-        while (1) {
-            struct option longOptions[] = {
-                {"vendor-thing-id", required_argument, 0, 0},
-                {"password", required_argument, 0, 1},
-                {"firmware-version", required_argument, 0, 2},
-                {"thing-type", required_argument, 0, 3},
-                {"help", no_argument, 0, 4},
-                {0, 0, 0, 5}
-            };
-            int optIndex = 0;
-            int c = getopt_long(argc, argv, "", longOptions, &optIndex);
-            if (c == -1) {
-                break;
-            }
-            switch (c) {
-                case 0:
-                    vendorThingID = optarg;
-                    break;
-                case 1:
-                    password = optarg;
-                    break;
-                case 2:
-                    firmwareVersion = optarg;
-                    break;
-                case 3:
-                    thingType = optarg;
-                    break;
-                case 4:
-                    printf("usage: \n"
-                            "update --vendor-thing-id={ID of the thing} "
-                            "--password={password of the thing} "
-                            "--thing-type={thing type "
-                            "--firmware-version={firmware version}\n");
-                    exit(0);
-                    break;
-            }
-        }
-        if (vendorThingID == NULL) {
-            printf("neither vendor-thing-id is specified.\n");
-            exit(1);
-        }
-        if (password == NULL) {
-            printf("password is not specifeid.\n");
-            exit(1);
-        }
-        result = kii_ti_onboard(
-                &updater._kii,
-                vendorThingID,
-                password,
-                thingType,
-                firmwareVersion,
-                NULL,
-                NULL);
-        if (result != KII_ERR_OK) {
-            printf("failed to onboard.\n");
-            exit(1);
-        }
-*/
     } else {
         print_help();
         exit(0);
     }
 
-    tio_handler_start(&handler, NULL, tio_action_handler, NULL);
+    const kii_author_t* author = tio_handler_get_author(&handler);
+    tio_handler_start(&handler, author, tio_action_handler, NULL);
     tio_updater_start(
             &updater,
-            &handler._kii._author,
+            author,
             updater_cb_state_size,
             &updater_file_ctx,
             updater_cb_read,
             &updater_file_ctx);
 
-    /* run forever. TODO: Convert to daemon. */
-    while(1){ sleep(1); };
-
-    /*
-     * This sample application keeps mutex from the start to end
-     * of the applicatoin process. So we don't implement destry.
-     * pthread_mutex_destroy(&m_mutex);
-    */
+    bool end = false;
+    bool disp_msg = false;
+    while(!end){
+        sleep(1);
+        if (term_flag && !disp_msg) {
+            printf("Waiting for exiting tasks...\n");
+            disp_msg = true;
+        }
+        if (handler_terminated && updater_terminated) {
+            end = true;
+        }
+    };
 }
 
 /* vim: set ts=4 sts=4 sw=4 et fenc=utf-8 ff=unix: */
