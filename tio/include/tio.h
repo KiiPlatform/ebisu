@@ -738,8 +738,24 @@ void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_CB_TASK_CONTIN
  * \param userdata [in] Context data pointer passed as second argument when cb_exit is called.
  */
 void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_CB_TASK_EXIT cb_exit, void* userdata);
+/**
+ * \brief Callback asks to delay/ sleep task execution.
+ *
+ * Called when the task needs to delay/ sleep.
+ *
+ * \param updater [out] tio_updater_t instance.
+ * \param cb_delay_ms [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_delay_ms.
+ */
 void tio_updater_set_cb_delay_ms(tio_updater_t* updater, KII_CB_DELAY_MS cb_delay_ms, void* userdata);
-
+/**
+ * \brief Set callback propagates error.
+ * You can use it for debugging, etc or you can skip calling this API.
+ *
+ * \param updater [out] tio_updater_t instance.
+ * \param cb_err [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_err.
+ */
 void tio_updater_set_cb_error(tio_updater_t* updater, TIO_CB_ERR cb_err, void* userdata);
 
 /**
@@ -806,10 +822,21 @@ void tio_updater_set_stream_buff(tio_updater_t* updater, char* buff, size_t buff
  * \param [in] buff_size size of the buffer.
  */
 void tio_updater_set_resp_header_buff(tio_updater_t* updater, char* buff, size_t buff_size);
-
+/**
+ * \brief Set app identifier and host.
+ *
+ * \param [out] updater instance.
+ * \param [in] app_id Application ID published by Cloud.
+ * \param [in] host Host tied to the application.
+ */
 void tio_updater_set_app(tio_updater_t* updater, const char* app_id, const char* host);
-
-void tio_updater_set_interval(tio_updater_t* updater, size_t update_interval);
+/**
+ * \brief Set interval of updating state.
+ *
+ * \param [out] updater tio_updater_t instance.
+ * \param [in] update_interval_sec Interval in seconds.
+ */
+void tio_updater_set_interval(tio_updater_t* updater, size_t update_interval_sec);
 
 void tio_updater_set_json_parser_resource(tio_updater_t* updater, jkii_resource_t* resource);
 
