@@ -51,5 +51,8 @@ inline size_t cb_header(char *buffer, size_t size, void *userdata) {
   IOCtx* ctx = (IOCtx*)(userdata);
   return ctx->on_header(buffer, size, userdata);
 }
+
+inline void cb_delay_ms(unsigned int msec, void *userdata) {
+}
 }
 }
