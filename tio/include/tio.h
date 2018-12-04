@@ -280,7 +280,7 @@ void tio_handler_set_cb_sock_close_http(tio_handler_t* handler, KHC_CB_SOCK_CLOS
 
  * Memory used by the buffer can be safely freed after you've terminated tio_handler task.
 
- * \param [out] handler instance.
+ * \param [out] handler tio_handler_t instance.
  * \param [in] buff pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
@@ -304,7 +304,7 @@ void tio_handler_set_http_buff(tio_handler_t* handler, char* buff, size_t buff_s
  * If you set the buffer by the method, the method must be called before tio_handler_start().
  * and memory used by the buffer can be safely freed after you've terminated tio_handler task.
 
- * \param [out] handler instance.
+ * \param [out] handler tio_handler_t instance.
  * \param [in] buff pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
@@ -325,7 +325,7 @@ void tio_handler_set_stream_buff(tio_handler_t* handler, char* buff, size_t buff
  * If you set the buffer by the method, the method must be called before calling tio_handler_start()
  * and memory used by the buffer can be safely freed after you've terminated tio_handler task.
 
- * \param [out] handler instance.
+ * \param [out] handler tio_handler_t instance.
  * \param [in] buff pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
@@ -399,7 +399,7 @@ void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_s
  * Socket send implementation given to tio_handler_set_cb_sock_send_mqtt()
  * must have same timeout specified by to_sock_send_sec.
  *
- * \param [out] handler instance.
+ * \param [out] handler tio_handler_t instance.
  * \param [in] to_sock_send_sec Socket recv timeout in seconds.
  */
 void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, unsigned int to_sock_send_sec);
@@ -515,7 +515,7 @@ void tio_handler_set_cb_push(tio_handler_t* handler, TIO_CB_PUSH cb_push, void* 
 
  * Memory used by the buffer can be safely freed after you've terminated tio_handler task.
 
- * \param [out] handler instance.
+ * \param [out] handler tio_handler_t instance.
  * \param [in] buff pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
@@ -528,7 +528,7 @@ void tio_handler_set_mqtt_buff(tio_handler_t* handler, char* buff, size_t buff_s
  * tio_handler_set_mqtt_to_sock_recv() / tio_handler_set_mqtt_to_sock_send().
  * Twice as large as recv/ send timeout works fine but recommend few minutes to avoid congestion.
  *
- * \param [out] handler instance.
+ * \param [out] handler tio_handler_t instance.
  * \param [in] keep_alive_interval_sec Keep-Alive interval in seconds.
  */
 void tio_handler_set_keep_alive_interval(tio_handler_t* handler, size_t keep_alive_interval_sec);
@@ -536,7 +536,7 @@ void tio_handler_set_keep_alive_interval(tio_handler_t* handler, size_t keep_ali
 /**
  * \brief Set app identifier and host.
  *
- * \param [out] handler instance.
+ * \param [out] handler tio_handler_t instance.
  * \param [in] app_id Application ID published by Cloud.
  * \param [in] host Host tied to the application.
  */
@@ -548,7 +548,7 @@ void tio_handler_set_app(tio_handler_t* handler, const char* app_id, const char*
  * Set JSON parser resource. Required number of token depending on the remote controll command definition.
  * If you choose to allocate memory dynamically, you can call tio_handler_set_cb_json_parser_resource() instead.
  *
- * \param [out] handler instance.
+ * \param [out] handler tio_handler_t instance.
  * \param [in] resource used to parse JSON.
  */
 void tio_handler_set_json_parser_resource(tio_handler_t* handler, jkii_resource_t* resource);
@@ -559,7 +559,7 @@ void tio_handler_set_json_parser_resource(tio_handler_t* handler, jkii_resource_
  * Set JSON parser resource callback.
  * If you choose to allocate memory statically, you can call tio_handler_set_json_parser_resource() instead.
  *
- * \param [out] handler instance.
+ * \param [out] handler tio_handler_t instance.
  * \param [in] cb_alloc allocation callback.
  * \param [in] cb_free free callback.
  */
@@ -597,7 +597,7 @@ void tio_handler_set_cb_slist_resource(
  * tio_handler_get_author() API.
  *
  * Note: input params other than vendor_thing_id and password are ignored after the first registration.
- * \param [out] handler instance.
+ * \param [out] handler tio_handler_t instance.
  * \param [in] vendor_thing_id Unique ID determined by device vendor.
  * \param [in] password Password of the device.
  * \param [in] thing_type Type of the device.
@@ -622,7 +622,7 @@ tio_code_t tio_handler_onboard(
  * Author is used to authorize API call and consists of device ID and access token.
  * This API must be called after the successful execution of tio_handler_onboard().
  *
- * \param [in] handler instance.
+ * \param [in] handler tio_handler_t instance.
  * \return tio_author_t pointer.
  * You may need to copy the value of device ID and access token and store them.
  */
@@ -637,7 +637,7 @@ const tio_author_t* tio_handler_get_author(
  * If the API returns TIO_ERR_OK, asynchronous task is started successfully and
  * callbacks set by tio_handler setter methods and this method is called when corresponding event occurs.
  *
- * \param [in] handler instance.
+ * \param [in] handler tio_handler_t instance.
  * \param [in] author API author.
  * \param [in] cb_action Action callback called when received remote controll command.
  * \param [in] userdata Context object pointer passed to cb_action.
@@ -660,7 +660,7 @@ void tio_updater_init(tio_updater_t* updater);
 /**
  * \brief set socket connect callback used for HTTP(S)
  *
- * \param [out] updater instance.
+ * \param [out] updater tio_updater_t instance.
  * \param [in] cb_connect Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_connect.
  */
@@ -668,7 +668,7 @@ void tio_updater_set_cb_sock_connect(tio_updater_t* updater, KHC_CB_SOCK_CONNECT
 /**
  * \brief set socket send callback used for HTTP(S)
  *
- * \param [out] updater instance.
+ * \param [out] updater tio_updater_t instance.
  * \param [in] cb_send Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_send.
  */
@@ -676,7 +676,7 @@ void tio_updater_set_cb_sock_send(tio_updater_t* updater, KHC_CB_SOCK_SEND cb_se
 /**
  * \brief set socket recv callback used for HTTP(S)
  *
- * \param [out] updater instance.
+ * \param [out] updater tio_updater_t instance.
  * \param [in] cb_recv Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_recv.
  */
@@ -684,7 +684,7 @@ void tio_updater_set_cb_sock_recv(tio_updater_t* updater, KHC_CB_SOCK_RECV cb_re
 /**
  * \brief set socket close callback used for HTTP(S)
  *
- * \param [out] updater instance.
+ * \param [out] updater tio_updater_t instance.
  * \param [in] cb_close Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_close.
  */
@@ -692,7 +692,7 @@ void tio_updater_set_cb_sock_close(tio_updater_t* updater, KHC_CB_SOCK_CLOSE cb_
 /**
  * \brief Set callback creates task.
  *
- * \param [out] updater instance.
+ * \param [out] updater tio_updater_t instance.
  * \param [in] cb_task_create Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_task_create.
  */
@@ -781,7 +781,7 @@ void tio_updater_set_cb_error(tio_updater_t* updater, TIO_CB_ERR cb_err, void* u
 
  * Memory used by the buffer can be safely freed after you've terminated tio_updater task.
 
- * \param [out] updater instance.
+ * \param [out] updater tio_updater_t instance.
  * \param [in] buff pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
@@ -805,7 +805,7 @@ void tio_updater_set_buff(tio_updater_t* updater, char* buff, size_t buff_size);
  * If you set the buffer by the method, the method must be called before tio_updater_start().
  * and memory used by the buffer can be safely freed after you've terminated tio_updater task.
 
- * \param [out] updater instance.
+ * \param [out] updater tio_updater_t instance.
  * \param [in] buff pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
@@ -826,7 +826,7 @@ void tio_updater_set_stream_buff(tio_updater_t* updater, char* buff, size_t buff
  * If you set the buffer by the method, the method must be called before calling tio_updater_start()
  * and memory used by the buffer can be safely freed after you've terminated tio_updater task.
 
- * \param [out] updater instance.
+ * \param [out] updater tio_updater_t instance.
  * \param [in] buff pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
@@ -834,7 +834,7 @@ void tio_updater_set_resp_header_buff(tio_updater_t* updater, char* buff, size_t
 /**
  * \brief Set app identifier and host.
  *
- * \param [out] updater instance.
+ * \param [out] updater tio_updater_t instance.
  * \param [in] app_id Application ID published by Cloud.
  * \param [in] host Host tied to the application.
  */
