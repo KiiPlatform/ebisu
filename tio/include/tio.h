@@ -275,7 +275,7 @@ void tio_handler_set_cb_sock_close_http(tio_handler_t* handler, KHC_CB_SOCK_CLOS
  * Memory used by the buffer can be safely freed after you've terminated tio_handler task.
 
  * \param [out] handler instance.
- * \param [in] buffer pointer to the buffer.
+ * \param [in] buff pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
 void tio_handler_set_http_buff(tio_handler_t* handler, char* buff, size_t buff_size);
@@ -299,7 +299,7 @@ void tio_handler_set_http_buff(tio_handler_t* handler, char* buff, size_t buff_s
  * and memory used by the buffer can be safely freed after you've terminated tio_handler task.
 
  * \param [out] handler instance.
- * \param [in] buffer pointer to the buffer.
+ * \param [in] buff pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
 void tio_handler_set_stream_buff(tio_handler_t* handler, char* buff, size_t buff_size);
@@ -320,7 +320,7 @@ void tio_handler_set_stream_buff(tio_handler_t* handler, char* buff, size_t buff
  * and memory used by the buffer can be safely freed after you've terminated tio_handler task.
 
  * \param [out] handler instance.
- * \param [in] buffer pointer to the buffer.
+ * \param [in] buff pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
 void tio_handler_set_resp_header_buff(tio_handler_t* handler, char* buff, size_t buff_size);
@@ -393,8 +393,8 @@ void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_s
  * Socket send implementation given to tio_handler_set_cb_sock_send_mqtt()
  * must have same timeout specified by to_sock_send_sec.
  *
- * \param handler [out] instance.
- * \param to_sock_recv_sec [in] Socket recv timeout in seconds.
+ * \param [out] handler instance.
+ * \param [in] to_sock_send_sec Socket recv timeout in seconds.
  */
 void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, unsigned int to_sock_send_sec);
 /**
@@ -420,12 +420,12 @@ void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_CB_TASK_CREATE c
  * If un-recoverble error occurs, task exits the infinite loop and immediately calls KII_CB_TASK_EXIT callback if set.
  * In this case KII_CB_TASK_CONTINUE callback is not called.
 
- * \param tio_handler_t [out] tio_handler_t instance
- * \param continue_cb [in] Callback determines whether to continue or discontinue task.
+ * \param [out] handler tio_handler_t instance
+ * \param [in] cb_continue Callback determines whether to continue or discontinue task.
  * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
  * and calls KII_CB_TASK_EXIT callback if set.
  * task_info argument type of the cb_continue (defined as void* in KII_CB_TASK_CONTINUE) is tio_handler_task_info*.
- * \param userdata [in] Context data pointer passed as second argument when cb_continue is called.
+ * \param [in] userdata Context data pointer passed as second argument when cb_continue is called.
  */
 void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_CB_TASK_CONTINUE cb_continue, void* userdata);
 
@@ -510,7 +510,7 @@ void tio_handler_set_cb_push(tio_handler_t* handler, TIO_CB_PUSH cb_push, void* 
  * Memory used by the buffer can be safely freed after you've terminated tio_handler task.
 
  * \param [out] handler instance.
- * \param [in] buffer pointer to the buffer.
+ * \param [in] buff pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
 void tio_handler_set_mqtt_buff(tio_handler_t* handler, char* buff, size_t buff_size);
@@ -644,7 +644,7 @@ tio_code_t tio_handler_start(
  *
  * Must be called when start using tio_updater_t instance.
  *
- * \param handler [out] instance.
+ * \param [out] updater tio_updater_t instance.
  */
 void tio_updater_init(tio_updater_t* updater);
 
@@ -700,12 +700,12 @@ void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_CB_TASK_CREATE c
  * In case checking cancellation flag in continue_cb, the flag might be set by other task/ thread.
  * Implementation must ensure consistency of the flag by using Mutex, etc.
 
- * \param updater [out] tio_updater_t instances
- * \param continue_cb [in] Callback determines whether to continue or discontinue task.
- * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
+ * \param [out] updater tio_updater_t instances
+ * \param [in] cb_continue Callback determines whether to continue or discontinue task.
+ * If cb_continue returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
  * and calls KII_CB_TASK_EXIT callback if set.
  * task_info argument of the cb_continue (defined as void* in KII_CB_TASK_CONTINUE) is always NULL.
- * \param userdata [in] Context data pointer passed as second argument when cb_continue is called.
+ * \param [in] userdata Context data pointer passed as second argument when cb_continue is called.
  */
 void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_CB_TASK_CONTINUE cb_continue, void* userdata);
 
@@ -732,10 +732,10 @@ void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_CB_TASK_CONTIN
  * If this API is not called or set NULL,
  * task function immediately returns when task is discontinued or un-recoverble error occurs.
 
- * \param updater [out] tio_updater_t instance
- * \param exit_cb [in] Callback called right befor exit.
+ * \param [out] updater tio_updater_t instance
+ * \param [in] cb_exit Callback called right befor exit.
  * task_info argument of the cb_exit (defind as void* in KII_CB_TASK_EXIT) function is always NULL.
- * \param userdata [in] Context data pointer passed as second argument when cb_exit is called.
+ * \param [in] userdata Context data pointer passed as second argument when cb_exit is called.
  */
 void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_CB_TASK_EXIT cb_exit, void* userdata);
 /**
@@ -773,7 +773,7 @@ void tio_updater_set_cb_error(tio_updater_t* updater, TIO_CB_ERR cb_err, void* u
  * Memory used by the buffer can be safely freed after you've terminated tio_updater task.
 
  * \param [out] updater instance.
- * \param [in] buffer pointer to the buffer.
+ * \param [in] buff pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
 void tio_updater_set_buff(tio_updater_t* updater, char* buff, size_t buff_size);
@@ -797,7 +797,7 @@ void tio_updater_set_buff(tio_updater_t* updater, char* buff, size_t buff_size);
  * and memory used by the buffer can be safely freed after you've terminated tio_updater task.
 
  * \param [out] updater instance.
- * \param [in] buffer pointer to the buffer.
+ * \param [in] buff pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
 void tio_updater_set_stream_buff(tio_updater_t* updater, char* buff, size_t buff_size);
@@ -818,7 +818,7 @@ void tio_updater_set_stream_buff(tio_updater_t* updater, char* buff, size_t buff
  * and memory used by the buffer can be safely freed after you've terminated tio_updater task.
 
  * \param [out] updater instance.
- * \param [in] buffer pointer to the buffer.
+ * \param [in] buff pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
 void tio_updater_set_resp_header_buff(tio_updater_t* updater, char* buff, size_t buff_size);
