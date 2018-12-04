@@ -69,10 +69,10 @@ typedef struct tio_action_value_t {
      * since it might not be null terminated.
      */
     union {
-        long long_value;
-        double double_value;
-        tio_bool_t bool_value;
-        const char *opaque_value;
+        long long_value; /**< Value stored when type is TIO_TYPE_INTEGER */
+        double double_value; /**< Value stored when type is TIO_TYPE_DOUBLE */
+        tio_bool_t bool_value; /**< Value stored when type is TIO_TYPE_BOOLEAN */
+        const char *opaque_value; /**< Value stored when type is TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY */
     } param;
     /**
      * \brief indicate length of opaque_value in case type is
@@ -116,10 +116,63 @@ typedef struct tio_action_err_t {
     char err_message[64]; /**< \brief Error message (null terminated). */
 } tio_action_err_t;
 
+/**
+ * \brief Callback asks for size of the state to be uploaded.
+ *
+ * \param userdata [inout] Context object pointer passed to tio_updater_start().
+ * \return size of the state to be uploaded. if 0, TIO_CB_READ callback passed to tio_updater_start() is not called.
+ */
 typedef size_t (*TIO_CB_SIZE)(void* userdata);
+
+/**
+ * \brief Callback reads state.
+ *
+ * This callback would be called mutiple times until it returns 0.
+ * Implementation should keep track of the total size already read and write rest data to the buffer.
+ * \param buffer [out] Implementation must write the part of the state sequentially.
+ * \param size [in] Size of the buffer.
+ * \param userdata [inout] Context object pointer passed to tio_updater_start().
+ * \return size of the state read. Returning 0 is required when all state has been read.
+ */
 typedef size_t (*TIO_CB_READ)(char *buffer, size_t size, void *userdata);
+
+/**
+ * \brief Callback handles action.
+ *
+ * Called when received remote control command from cloud.
+ * Command may includes multiple actions. The callback is called per action.
+ *
+ * \param action [in] includes alias_name, action_name and action 
+ */
 typedef tio_bool_t (*TIO_CB_ACTION)(tio_action_t* action, tio_action_err_t* err, void* userdata);
+/**
+ * \brief Callback propagates error information.
+ *
+ * Called when error occurred.
+ * Can be used for debugging and implementation is optional.
+ *
+ * \param [in] code Error code.
+ * \param [in] err_message Error message.
+ * \param [inout] userdata Context object pointer passed to tio_handler_set_cb_err()/ tio_updater_set_cb_err().
+ */
 typedef void (*TIO_CB_ERR)(tio_code_t code, const char* err_message, void* userdata);
+/**
+ * \brief Callback handles custom push notification.
+ *
+ * By default tio_handler handles remote controll command and ignores other kind of messages.
+ * If you send message to the devices other than remote controll command, you can use this callback to handle them.
+ * This callback is called before TIO_CB_ACTION callback, and if it returns KII_TRUE, tio_handler skips parsing message as remote controll command
+ * and TIO_CB_ACTION callback won't be called.
+ * if it returns KII_FALSE, tio_handler try to parse message as remote controll command and call TIO_CB_ACTION callback as well
+ * if the message is remote controll command.
+ * If you only needs to handle remote contoll command, you don't have to implement this callback and call tio_handler_set_cb_push().
+ *
+ * \param message Push message received from cloud.
+ * Could be remote controll command or other message sent by Kii Topic/ Kii Bucket subscription.
+ * \param message_length Length of the message.
+ * \param userdata Context object pointer passed to tio_handler_set_cb_push().
+ * \return KII_TRUE results skip handling message as remote controll command, KII_FALSE results try to handle message as remote controll command.
+ */
 typedef tio_bool_t (*TIO_CB_PUSH)(const char* message, size_t message_length, void* userdata);
 
 typedef struct tio_handler_t {
