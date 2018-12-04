@@ -9,6 +9,12 @@ extern "C" {
 #include "khc.h"
 #include "jkii.h"
 
+/**
+ * \brief tio_updater Task name.
+ *
+ * Name can be referenced from task create callback set by
+ * tio_updater_set_cb_task_create().
+ */
 extern const char TIO_TASK_NAME_UPDATE_STATE[];
 
 /**
