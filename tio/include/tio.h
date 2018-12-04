@@ -397,7 +397,13 @@ void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_s
  * \param to_sock_recv_sec [in] Socket recv timeout in seconds.
  */
 void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, unsigned int to_sock_send_sec);
-
+/**
+ * \brief Set callback creates task.
+ *
+ * \param handler [out] instance.
+ * \param cb_task_create [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_task_create.
+ */
 void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_CB_TASK_CREATE cb_task_create, void* userdata);
 
 /**
@@ -674,7 +680,13 @@ void tio_updater_set_cb_sock_recv(tio_updater_t* updater, KHC_CB_SOCK_RECV cb_re
  * \param userdata [in] Context object pointer passed to cb_close.
  */
 void tio_updater_set_cb_sock_close(tio_updater_t* updater, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
-
+/**
+ * \brief Set callback creates task.
+ *
+ * \param updater [out] instance.
+ * \param cb_task_create [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_task_create.
+ */
 void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_CB_TASK_CREATE cb_task_create, void* userdata);
 
 /**
