@@ -119,7 +119,7 @@ typedef struct tio_action_err_t {
 /**
  * \brief Callback asks for size of the state to be uploaded.
  *
- * \param userdata [inout] Context object pointer passed to tio_updater_start().
+ * \param userdata [in,out] Context object pointer passed to tio_updater_start().
  * \return size of the state to be uploaded. if 0, TIO_CB_READ callback passed to tio_updater_start() is not called.
  */
 typedef size_t (*TIO_CB_SIZE)(void* userdata);
@@ -131,7 +131,7 @@ typedef size_t (*TIO_CB_SIZE)(void* userdata);
  * Implementation should keep track of the total size already read and write rest data to the buffer.
  * \param buffer [out] Implementation must write the part of the state sequentially.
  * \param size [in] Size of the buffer.
- * \param userdata [inout] Context object pointer passed to tio_updater_start().
+ * \param userdata [in,out] Context object pointer passed to tio_updater_start().
  * \return size of the state read. Returning 0 is required when all state has been read.
  */
 typedef size_t (*TIO_CB_READ)(char *buffer, size_t size, void *userdata);
@@ -153,7 +153,7 @@ typedef tio_bool_t (*TIO_CB_ACTION)(tio_action_t* action, tio_action_err_t* err,
  *
  * \param [in] code Error code.
  * \param [in] err_message Error message.
- * \param [inout] userdata Context object pointer passed to tio_handler_set_cb_err()/ tio_updater_set_cb_err().
+ * \param [in,out] userdata Context object pointer passed to tio_handler_set_cb_err()/ tio_updater_set_cb_err().
  */
 typedef void (*TIO_CB_ERR)(tio_code_t code, const char* err_message, void* userdata);
 /**
@@ -224,14 +224,14 @@ typedef struct tio_updater_t {
  *
  * Must be called when start using tio_handler_t instance.
  *
- * \param handler [inout] instance.
+ * \param handler [out] instance.
  */
 void tio_handler_init(tio_handler_t* handler);
 
 /**
  * \brief set socket connect callback used for HTTP(S)
  *
- * \param handler [inout] instance.
+ * \param handler [out] instance.
  * \param cb_connect [in] Callback function pointer.
  * \param userdata [in] Context object pointer passed to cb_connect.
  */
@@ -239,7 +239,7 @@ void tio_handler_set_cb_sock_connect_http(tio_handler_t* handler, KHC_CB_SOCK_CO
 /**
  * \brief set socket send callback used for HTTP(S)
  *
- * \param handler [inout] instance.
+ * \param handler [out] instance.
  * \param cb_send [in] Callback function pointer.
  * \param userdata [in] Context object pointer passed to cb_send.
  */
@@ -247,7 +247,7 @@ void tio_handler_set_cb_sock_send_http(tio_handler_t* handler, KHC_CB_SOCK_SEND 
 /**
  * \brief set socket recv callback used for HTTP(S)
  *
- * \param handler [inout] instance.
+ * \param handler [out] instance.
  * \param cb_recv [in] Callback function pointer.
  * \param userdata [in] Context object pointer passed to cb_recv.
  */
@@ -255,7 +255,7 @@ void tio_handler_set_cb_sock_recv_http(tio_handler_t* handler, KHC_CB_SOCK_RECV 
 /**
  * \brief set socket close callback used for HTTP(S)
  *
- * \param handler [inout] instance.
+ * \param handler [out] instance.
  * \param cb_close [in] Callback function pointer.
  * \param userdata [in] Context object pointer passed to cb_close.
  */
@@ -332,7 +332,7 @@ void tio_handler_set_resp_header_buff(tio_handler_t* handler, char* buff, size_t
  * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
- * \param handler [inout] instance.
+ * \param handler [out] instance.
  * \param cb_connect [in] Callback function pointer.
  * \param userdata [in] Context object pointer passed to cb_connect.
  */
@@ -344,7 +344,7 @@ void tio_handler_set_cb_sock_connect_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CO
  * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
- * \param handler [inout] instance.
+ * \param handler [out] instance.
  * \param cb_send [in] Callback function pointer.
  * \param userdata [in] Context object pointer passed to cb_send.
  */
@@ -356,7 +356,7 @@ void tio_handler_set_cb_sock_send_mqtt(tio_handler_t* handler, KHC_CB_SOCK_SEND 
  * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
- * \param handler [inout] instance.
+ * \param handler [out] instance.
  * \param cb_recv [in] Callback function pointer.
  * \param userdata [in] Context object pointer passed to cb_recv.
  */
@@ -368,7 +368,7 @@ void tio_handler_set_cb_sock_recv_mqtt(tio_handler_t* handler, KHC_CB_SOCK_RECV 
  * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
- * \param handler [inout] instance.
+ * \param handler [out] instance.
  * \param cb_close [in] Callback function pointer.
  * \param userdata [in] Context object pointer passed to cb_close.
  */
@@ -381,7 +381,7 @@ void tio_handler_set_cb_sock_close_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CLOS
  * Socket recv implementation given to tio_handler_set_cb_sock_recv_mqtt()
  * must have same timeout specified by to_sock_recv_sec.
  *
- * \param handler [inout] instance.
+ * \param handler [out] instance.
  * \param to_sock_recv_sec [in] Socket recv timeout in seconds.
  */
 void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_sock_recv_sec);
@@ -393,7 +393,7 @@ void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_s
  * Socket send implementation given to tio_handler_set_cb_sock_send_mqtt()
  * must have same timeout specified by to_sock_send_sec.
  *
- * \param handler [inout] instance.
+ * \param handler [out] instance.
  * \param to_sock_recv_sec [in] Socket recv timeout in seconds.
  */
 void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, unsigned int to_sock_send_sec);
