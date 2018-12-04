@@ -119,7 +119,7 @@ typedef struct tio_action_err_t {
 /**
  * \brief Callback asks for size of the state to be uploaded.
  *
- * \param userdata [in,out] Context object pointer passed to tio_updater_start().
+ * \param [in,out] userdata Context object pointer passed to tio_updater_start().
  * \return size of the state to be uploaded. if 0, TIO_CB_READ callback passed to tio_updater_start() is not called.
  */
 typedef size_t (*TIO_CB_SIZE)(void* userdata);
@@ -129,9 +129,9 @@ typedef size_t (*TIO_CB_SIZE)(void* userdata);
  *
  * This callback would be called mutiple times until it returns 0.
  * Implementation should keep track of the total size already read and write rest data to the buffer.
- * \param buffer [out] Implementation must write the part of the state sequentially.
- * \param size [in] Size of the buffer.
- * \param userdata [in,out] Context object pointer passed to tio_updater_start().
+ * \param [out] buffer Implementation must write the part of the state sequentially.
+ * \param [in] size Size of the buffer.
+ * \param [in,out] userdata Context object pointer passed to tio_updater_start().
  * \return size of the state read. Returning 0 is required when all state has been read.
  */
 typedef size_t (*TIO_CB_READ)(char *buffer, size_t size, void *userdata);
@@ -142,7 +142,7 @@ typedef size_t (*TIO_CB_READ)(char *buffer, size_t size, void *userdata);
  * Called when received remote control command from cloud.
  * Command may includes multiple actions. The callback is called per action.
  *
- * \param action [in] includes alias_name, action_name and action 
+ * \param [in] action includes alias_name, action_name and action 
  */
 typedef tio_bool_t (*TIO_CB_ACTION)(tio_action_t* action, tio_action_err_t* err, void* userdata);
 /**
@@ -224,40 +224,40 @@ typedef struct tio_updater_t {
  *
  * Must be called when start using tio_handler_t instance.
  *
- * \param handler [out] instance.
+ * \param [out] handler tio_handler_t instance.
  */
 void tio_handler_init(tio_handler_t* handler);
 
 /**
  * \brief set socket connect callback used for HTTP(S)
  *
- * \param handler [out] instance.
- * \param cb_connect [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_connect.
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] cb_connect Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_connect.
  */
 void tio_handler_set_cb_sock_connect_http(tio_handler_t* handler, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
 /**
  * \brief set socket send callback used for HTTP(S)
  *
- * \param handler [out] instance.
- * \param cb_send [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_send.
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] cb_send Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_send.
  */
 void tio_handler_set_cb_sock_send_http(tio_handler_t* handler, KHC_CB_SOCK_SEND cb_send, void* userdata);
 /**
  * \brief set socket recv callback used for HTTP(S)
  *
- * \param handler [out] instance.
- * \param cb_recv [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_recv.
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] cb_recv Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_recv.
  */
 void tio_handler_set_cb_sock_recv_http(tio_handler_t* handler, KHC_CB_SOCK_RECV cb_recv, void* userdata);
 /**
  * \brief set socket close callback used for HTTP(S)
  *
- * \param handler [out] instance.
- * \param cb_close [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_close.
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] cb_close Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_close.
  */
 void tio_handler_set_cb_sock_close_http(tio_handler_t* handler, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
 
@@ -332,9 +332,9 @@ void tio_handler_set_resp_header_buff(tio_handler_t* handler, char* buff, size_t
  * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
- * \param handler [out] instance.
- * \param cb_connect [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_connect.
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] cb_connect Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_connect.
  */
 void tio_handler_set_cb_sock_connect_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
 /**
@@ -344,9 +344,9 @@ void tio_handler_set_cb_sock_connect_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CO
  * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
- * \param handler [out] instance.
- * \param cb_send [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_send.
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] cb_send Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_send.
  */
 void tio_handler_set_cb_sock_send_mqtt(tio_handler_t* handler, KHC_CB_SOCK_SEND cb_send, void* userdata);
 /**
@@ -356,9 +356,9 @@ void tio_handler_set_cb_sock_send_mqtt(tio_handler_t* handler, KHC_CB_SOCK_SEND 
  * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
- * \param handler [out] instance.
- * \param cb_recv [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_recv.
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] cb_recv Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_recv.
  */
 void tio_handler_set_cb_sock_recv_mqtt(tio_handler_t* handler, KHC_CB_SOCK_RECV cb_recv, void* userdata);
 /**
@@ -368,9 +368,9 @@ void tio_handler_set_cb_sock_recv_mqtt(tio_handler_t* handler, KHC_CB_SOCK_RECV 
  * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
- * \param handler [out] instance.
- * \param cb_close [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_close.
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] cb_close Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_close.
  */
 void tio_handler_set_cb_sock_close_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
 /**
@@ -381,8 +381,8 @@ void tio_handler_set_cb_sock_close_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CLOS
  * Socket recv implementation given to tio_handler_set_cb_sock_recv_mqtt()
  * must have same timeout specified by to_sock_recv_sec.
  *
- * \param handler [out] instance.
- * \param to_sock_recv_sec [in] Socket recv timeout in seconds.
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] to_sock_recv_sec Socket recv timeout in seconds.
  */
 void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_sock_recv_sec);
 /**
@@ -400,9 +400,9 @@ void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, unsigned int to_s
 /**
  * \brief Set callback creates task.
  *
- * \param handler [out] instance.
- * \param cb_task_create [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_task_create.
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] cb_task_create Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_task_create.
  */
 void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_CB_TASK_CREATE cb_task_create, void* userdata);
 
@@ -458,10 +458,10 @@ void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_CB_TASK_CONTIN
  * If this API is not called or set NULL,
  * task function immediately returns when task is discontinued or un-recoverble error occurs.
 
- * \param handler [out] tio_handler_t instance.
- * \param cb_exit [in] Called right before the exit.
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] cb_exit Called right before the exit.
  * task_info argument type of cb_exit (defined as void* in KII_CB_TASK_EXIT) is tio_handler_task_info*
- * \param userdata [in] Context data pointer passed as second argument when cb_exit is called.
+ * \param [in] userdata Context data pointer passed as second argument when cb_exit is called.
  */
 void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_CB_TASK_EXIT cb_exit, void* userdata);
 /**
@@ -469,18 +469,18 @@ void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_CB_TASK_EXIT cb_ex
  *
  * Called when the task needs to delay/ sleep.
  *
- * \param handler [out] tio_handler_t instance.
- * \param cb_delay_ms [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_delay_ms.
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] cb_delay_ms Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_delay_ms.
  */
 void tio_handler_set_cb_delay_ms(tio_handler_t* handler, KII_CB_DELAY_MS cb_delay_ms, void* userdata);
 /**
  * \brief Set callback propagates error.
  * You can use it for debugging, etc or you can skip calling this API.
  *
- * \param handler [out] tio_handler_t instance.
- * \param cb_err [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_err.
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] cb_err Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_err.
  */
 void tio_handler_set_cb_err(tio_handler_t* handler, TIO_CB_ERR cb_err, void* userdata);
 /**
@@ -488,9 +488,9 @@ void tio_handler_set_cb_err(tio_handler_t* handler, TIO_CB_ERR cb_err, void* use
  *
  * In case you don't use costom push message, you can skip calling this API.
  *
- * \param handler [out] tio_handler_t instance.
- * \param cb_push [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_cb_push.
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] cb_push Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_cb_push.
  */
 void tio_handler_set_cb_push(tio_handler_t* handler, TIO_CB_PUSH cb_push, void* userdata);
 
@@ -654,41 +654,41 @@ void tio_updater_init(tio_updater_t* updater);
 /**
  * \brief set socket connect callback used for HTTP(S)
  *
- * \param updater [out] instance.
- * \param cb_connect [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_connect.
+ * \param [out] updater instance.
+ * \param [in] cb_connect Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_connect.
  */
 void tio_updater_set_cb_sock_connect(tio_updater_t* updater, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
 /**
  * \brief set socket send callback used for HTTP(S)
  *
- * \param updater [out] instance.
- * \param cb_send [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_send.
+ * \param [out] updater instance.
+ * \param [in] cb_send Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_send.
  */
 void tio_updater_set_cb_sock_send(tio_updater_t* updater, KHC_CB_SOCK_SEND cb_send, void* userdata);
 /**
  * \brief set socket recv callback used for HTTP(S)
  *
- * \param updater [out] instance.
- * \param cb_recv [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_recv.
+ * \param [out] updater instance.
+ * \param [in] cb_recv Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_recv.
  */
 void tio_updater_set_cb_sock_recv(tio_updater_t* updater, KHC_CB_SOCK_RECV cb_recv, void* userdata);
 /**
  * \brief set socket close callback used for HTTP(S)
  *
- * \param updater [out] instance.
- * \param cb_close [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_close.
+ * \param [out] updater instance.
+ * \param [in] cb_close Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_close.
  */
 void tio_updater_set_cb_sock_close(tio_updater_t* updater, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
 /**
  * \brief Set callback creates task.
  *
- * \param updater [out] instance.
- * \param cb_task_create [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_task_create.
+ * \param [out] updater instance.
+ * \param [in] cb_task_create Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_task_create.
  */
 void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_CB_TASK_CREATE cb_task_create, void* userdata);
 
@@ -746,18 +746,18 @@ void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_CB_TASK_EXIT cb_ex
  *
  * Called when the task needs to delay/ sleep.
  *
- * \param updater [out] tio_updater_t instance.
- * \param cb_delay_ms [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_delay_ms.
+ * \param [out] updater tio_updater_t instance.
+ * \param [in] cb_delay_ms Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_delay_ms.
  */
 void tio_updater_set_cb_delay_ms(tio_updater_t* updater, KII_CB_DELAY_MS cb_delay_ms, void* userdata);
 /**
  * \brief Set callback propagates error.
  * You can use it for debugging, etc or you can skip calling this API.
  *
- * \param updater [out] tio_updater_t instance.
- * \param cb_err [in] Callback function pointer.
- * \param userdata [in] Context object pointer passed to cb_err.
+ * \param [out] updater tio_updater_t instance.
+ * \param [in] cb_err Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_err.
  */
 void tio_updater_set_cb_error(tio_updater_t* updater, TIO_CB_ERR cb_err, void* userdata);
 
