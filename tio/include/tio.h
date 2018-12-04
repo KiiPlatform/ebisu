@@ -175,24 +175,30 @@ typedef void (*TIO_CB_ERR)(tio_code_t code, const char* err_message, void* userd
  */
 typedef tio_bool_t (*TIO_CB_PUSH)(const char* message, size_t message_length, void* userdata);
 
+/**
+ * \brief Stores data/ callbacks used by tio_handler.
+ */
 typedef struct tio_handler_t {
-    TIO_CB_ACTION _cb_action;
-    void* _cb_action_data;
-    TIO_CB_ERR _cb_err;
-    void* _cb_err_data;
-    TIO_CB_PUSH _cb_push;
-    void* _cb_push_data;
-    kii_t _kii;
-    size_t _keep_alive_interval;
-    KII_CB_TASK_CONTINUE _cb_task_continue;
-    void* _task_continue_data;
-    KII_CB_TASK_EXIT _cb_task_exit;
-    void* _task_exit_data;
+    TIO_CB_ACTION _cb_action; /**< \private **/
+    void* _cb_action_data; /**< \private **/
+    TIO_CB_ERR _cb_err; /**< \private **/
+    void* _cb_err_data; /**< \private **/
+    TIO_CB_PUSH _cb_push; /**< \private **/
+    void* _cb_push_data; /**< \private **/
+    kii_t _kii; /**< \private **/
+    size_t _keep_alive_interval; /**< \private **/
+    KII_CB_TASK_CONTINUE _cb_task_continue; /**< \private **/
+    void* _task_continue_data; /**< \private **/
+    KII_CB_TASK_EXIT _cb_task_exit; /**< \private **/
+    void* _task_exit_data; /**< \private **/
 } tio_handler_t;
 
+/**
+ * \brief Indicates handler state.
+ */
 typedef struct {
-    kii_mqtt_error error;
-    kii_mqtt_task_state task_state;
+    kii_mqtt_error error; /**< MQTT error code */
+    kii_mqtt_task_state task_state; /**< Indicates processing phase of MQTT */
 } tio_handler_task_info_t;
 
 typedef struct tio_updater_t {
