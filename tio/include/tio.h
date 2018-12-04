@@ -633,11 +633,46 @@ tio_code_t tio_handler_start(
     TIO_CB_ACTION cb_action,
     void* userdata);
 
+/**
+ * \brief tio_updater_t initializer.
+ *
+ * Must be called when start using tio_updater_t instance.
+ *
+ * \param handler [out] instance.
+ */
 void tio_updater_init(tio_updater_t* updater);
 
+/**
+ * \brief set socket connect callback used for HTTP(S)
+ *
+ * \param updater [out] instance.
+ * \param cb_connect [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_connect.
+ */
 void tio_updater_set_cb_sock_connect(tio_updater_t* updater, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
+/**
+ * \brief set socket send callback used for HTTP(S)
+ *
+ * \param updater [out] instance.
+ * \param cb_send [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_send.
+ */
 void tio_updater_set_cb_sock_send(tio_updater_t* updater, KHC_CB_SOCK_SEND cb_send, void* userdata);
+/**
+ * \brief set socket recv callback used for HTTP(S)
+ *
+ * \param updater [out] instance.
+ * \param cb_recv [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_recv.
+ */
 void tio_updater_set_cb_sock_recv(tio_updater_t* updater, KHC_CB_SOCK_RECV cb_recv, void* userdata);
+/**
+ * \brief set socket close callback used for HTTP(S)
+ *
+ * \param updater [out] instance.
+ * \param cb_close [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_close.
+ */
 void tio_updater_set_cb_sock_close(tio_updater_t* updater, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
 
 void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_CB_TASK_CREATE cb_task_create, void* userdata);
