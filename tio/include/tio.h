@@ -167,10 +167,10 @@ typedef void (*TIO_CB_ERR)(tio_code_t code, const char* err_message, void* userd
  * if the message is remote controll command.
  * If you only needs to handle remote contoll command, you don't have to implement this callback and call tio_handler_set_cb_push().
  *
- * \param message Push message received from cloud.
+ * \param [in] message Push message received from cloud.
  * Could be remote controll command or other message sent by Kii Topic/ Kii Bucket subscription.
- * \param message_length Length of the message.
- * \param userdata Context object pointer passed to tio_handler_set_cb_push().
+ * \param [in] message_length Length of the message.
+ * \param [in,out] userdata Context object pointer passed to tio_handler_set_cb_push().
  * \return KII_TRUE results skip handling message as remote controll command, KII_FALSE results try to handle message as remote controll command.
  */
 typedef tio_bool_t (*TIO_CB_PUSH)(const char* message, size_t message_length, void* userdata);
