@@ -201,27 +201,64 @@ typedef struct {
     kii_mqtt_task_state task_state; /**< Indicates processing phase of MQTT */
 } tio_handler_task_info_t;
 
+/**
+ * \brief Stores data/ callbacks used by tio_updater.
+ */
 typedef struct tio_updater_t {
-    TIO_CB_SIZE _cb_state_size;
-    void* _cb_state_size_data;
-    TIO_CB_READ _state_reader;
-    void* _state_reader_data;
-    TIO_CB_ERR _cb_err;
-    void* _cb_err_data;
-    kii_t _kii;
-    size_t _update_interval;
-    KII_CB_TASK_CONTINUE _cb_task_continue;
-    void* _task_continue_data;
-    KII_CB_TASK_EXIT _cb_task_exit;
-    void* _task_exit_data;
+    TIO_CB_SIZE _cb_state_size; /**< \private **/
+    void* _cb_state_size_data; /**< \private **/
+    TIO_CB_READ _state_reader; /**< \private **/
+    void* _state_reader_data; /**< \private **/
+    TIO_CB_ERR _cb_err; /**< \private **/
+    void* _cb_err_data; /**< \private **/
+    kii_t _kii; /**< \private **/
+    size_t _update_interval; /**< \private **/
+    KII_CB_TASK_CONTINUE _cb_task_continue; /**< \private **/
+    void* _task_continue_data; /**< \private **/
+    KII_CB_TASK_EXIT _cb_task_exit; /**< \private **/
+    void* _task_exit_data; /**< \private **/
 } tio_updater_t;
 
-
+/**
+ * \brief tio_handler_t initializer.
+ *
+ * Must be called when start using tio_handler_t instance.
+ *
+ * \param handler [inout] instance.
+ */
 void tio_handler_init(tio_handler_t* handler);
 
+/**
+ * \brief set socket connect callback used for HTTP(S)
+ *
+ * \param handler [inout] instance.
+ * \param cb_connect [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_connect.
+ */
 void tio_handler_set_cb_sock_connect_http(tio_handler_t* handler, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
+/**
+ * \brief set socket send callback used for HTTP(S)
+ *
+ * \param handler [inout] instance.
+ * \param cb_send [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_send.
+ */
 void tio_handler_set_cb_sock_send_http(tio_handler_t* handler, KHC_CB_SOCK_SEND cb_send, void* userdata);
+/**
+ * \brief set socket recv callback used for HTTP(S)
+ *
+ * \param handler [inout] instance.
+ * \param cb_recv [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_recv.
+ */
 void tio_handler_set_cb_sock_recv_http(tio_handler_t* handler, KHC_CB_SOCK_RECV cb_recv, void* userdata);
+/**
+ * \brief set socket close callback used for HTTP(S)
+ *
+ * \param handler [inout] instance.
+ * \param cb_close [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_close.
+ */
 void tio_handler_set_cb_sock_close_http(tio_handler_t* handler, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
 
 /**
@@ -288,12 +325,77 @@ void tio_handler_set_stream_buff(tio_handler_t* handler, char* buff, size_t buff
  */
 void tio_handler_set_resp_header_buff(tio_handler_t* handler, char* buff, size_t buff_size);
 
+/**
+ * \brief set socket connect callback used for MQTT(S)
+ *
+ * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
+ * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
+ * It is necessary for sending pingReq message periodically to achieve Keep-Alive
+ * since we don't require system clock APIs abstraction.
+ * \param handler [inout] instance.
+ * \param cb_connect [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_connect.
+ */
 void tio_handler_set_cb_sock_connect_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
+/**
+ * \brief set socket send callback used for MQTT(S)
+ *
+ * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
+ * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
+ * It is necessary for sending pingReq message periodically to achieve Keep-Alive
+ * since we don't require system clock APIs abstraction.
+ * \param handler [inout] instance.
+ * \param cb_send [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_send.
+ */
 void tio_handler_set_cb_sock_send_mqtt(tio_handler_t* handler, KHC_CB_SOCK_SEND cb_send, void* userdata);
+/**
+ * \brief set socket recv callback used for MQTT(S)
+ *
+ * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
+ * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
+ * It is necessary for sending pingReq message periodically to achieve Keep-Alive
+ * since we don't require system clock APIs abstraction.
+ * \param handler [inout] instance.
+ * \param cb_recv [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_recv.
+ */
 void tio_handler_set_cb_sock_recv_mqtt(tio_handler_t* handler, KHC_CB_SOCK_RECV cb_recv, void* userdata);
+/**
+ * \brief set socket recv callback used for MQTT(S)
+ *
+ * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
+ * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
+ * It is necessary for sending pingReq message periodically to achieve Keep-Alive
+ * since we don't require system clock APIs abstraction.
+ * \param handler [inout] instance.
+ * \param cb_close [in] Callback function pointer.
+ * \param userdata [in] Context object pointer passed to cb_close.
+ */
 void tio_handler_set_cb_sock_close_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
-
+/**
+ * \brief Set timeout of receiving data from socket user for MQTT(S)
+ *
+ * This setting is mandatory to achieve MQTT keep-alive mechanism.
+ * We use timeout instead of requirering system clock access to periodically send pingReq.
+ * Socket recv implementation given to tio_handler_set_cb_sock_recv_mqtt()
+ * must have same timeout specified by to_sock_recv_sec.
+ *
+ * \param handler [inout] instance.
+ * \param to_sock_recv_sec [in] Socket recv timeout in seconds.
+ */
 void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_sock_recv_sec);
+/**
+ * \brief Set timeout of receiving data from socket user for MQTT(S)
+ *
+ * This setting is mandatory to achieve MQTT keep-alive mechanism.
+ * We use timeout instead of requirering system clock access to periodically send pingReq.
+ * Socket send implementation given to tio_handler_set_cb_sock_send_mqtt()
+ * must have same timeout specified by to_sock_send_sec.
+ *
+ * \param handler [inout] instance.
+ * \param to_sock_recv_sec [in] Socket recv timeout in seconds.
+ */
 void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, unsigned int to_sock_send_sec);
 
 void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_CB_TASK_CREATE cb_task_create, void* userdata);
