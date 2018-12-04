@@ -67,7 +67,7 @@ typedef enum tio_data_type_t {
 typedef struct tio_action_value_t {
     tio_data_type_t type; /**< \brief Data type of the value. */
     /**
-     *  \brief union stores value.
+     *  \brief Union stores value.
      *
      * if type is TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY,
      * opaque_value is the pointer to it's JSON string representation.
@@ -81,7 +81,7 @@ typedef struct tio_action_value_t {
         const char *opaque_value; /**< Value stored when type is TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY */
     } param;
     /**
-     * \brief indicate length of opaque_value in case type is
+     * \brief Indicate length of opaque_value in case type is
      * TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY.
      */
     size_t opaque_value_length;
@@ -235,7 +235,7 @@ typedef struct tio_updater_t {
 void tio_handler_init(tio_handler_t* handler);
 
 /**
- * \brief set socket connect callback used for HTTP(S)
+ * \brief Set socket connect callback used for HTTP(S)
  *
  * \param [out] handler tio_handler_t instance.
  * \param [in] cb_connect Callback function pointer.
@@ -243,7 +243,7 @@ void tio_handler_init(tio_handler_t* handler);
  */
 void tio_handler_set_cb_sock_connect_http(tio_handler_t* handler, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
 /**
- * \brief set socket send callback used for HTTP(S)
+ * \brief Set socket send callback used for HTTP(S)
  *
  * \param [out] handler tio_handler_t instance.
  * \param [in] cb_send Callback function pointer.
@@ -251,7 +251,7 @@ void tio_handler_set_cb_sock_connect_http(tio_handler_t* handler, KHC_CB_SOCK_CO
  */
 void tio_handler_set_cb_sock_send_http(tio_handler_t* handler, KHC_CB_SOCK_SEND cb_send, void* userdata);
 /**
- * \brief set socket recv callback used for HTTP(S)
+ * \brief Set socket recv callback used for HTTP(S)
  *
  * \param [out] handler tio_handler_t instance.
  * \param [in] cb_recv Callback function pointer.
@@ -259,7 +259,7 @@ void tio_handler_set_cb_sock_send_http(tio_handler_t* handler, KHC_CB_SOCK_SEND 
  */
 void tio_handler_set_cb_sock_recv_http(tio_handler_t* handler, KHC_CB_SOCK_RECV cb_recv, void* userdata);
 /**
- * \brief set socket close callback used for HTTP(S)
+ * \brief Set socket close callback used for HTTP(S)
  *
  * \param [out] handler tio_handler_t instance.
  * \param [in] cb_close Callback function pointer.
@@ -332,7 +332,7 @@ void tio_handler_set_stream_buff(tio_handler_t* handler, char* buff, size_t buff
 void tio_handler_set_resp_header_buff(tio_handler_t* handler, char* buff, size_t buff_size);
 
 /**
- * \brief set socket connect callback used for MQTT(S)
+ * \brief Set socket connect callback used for MQTT(S)
  *
  * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
  * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
@@ -344,7 +344,7 @@ void tio_handler_set_resp_header_buff(tio_handler_t* handler, char* buff, size_t
  */
 void tio_handler_set_cb_sock_connect_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
 /**
- * \brief set socket send callback used for MQTT(S)
+ * \brief Set socket send callback used for MQTT(S)
  *
  * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
  * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
@@ -356,7 +356,7 @@ void tio_handler_set_cb_sock_connect_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CO
  */
 void tio_handler_set_cb_sock_send_mqtt(tio_handler_t* handler, KHC_CB_SOCK_SEND cb_send, void* userdata);
 /**
- * \brief set socket recv callback used for MQTT(S)
+ * \brief Set socket recv callback used for MQTT(S)
  *
  * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
  * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
@@ -368,7 +368,7 @@ void tio_handler_set_cb_sock_send_mqtt(tio_handler_t* handler, KHC_CB_SOCK_SEND 
  */
 void tio_handler_set_cb_sock_recv_mqtt(tio_handler_t* handler, KHC_CB_SOCK_RECV cb_recv, void* userdata);
 /**
- * \brief set socket recv callback used for MQTT(S)
+ * \brief Set socket recv callback used for MQTT(S)
  *
  * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
  * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
@@ -413,7 +413,7 @@ void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, unsigned int to_s
 void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_CB_TASK_CREATE cb_task_create, void* userdata);
 
 /**
- * \brief set callback determines whether to continue or discontinue task.
+ * \brief Set callback determines whether to continue or discontinue task.
 
  * If this method is not called or NULL is set, task exits only when un-recoverble error occurs.
  * If you need cancellation mechanism, you need to set this callback.
@@ -658,7 +658,7 @@ tio_code_t tio_handler_start(
 void tio_updater_init(tio_updater_t* updater);
 
 /**
- * \brief set socket connect callback used for HTTP(S)
+ * \brief Set socket connect callback used for HTTP(S)
  *
  * \param [out] updater tio_updater_t instance.
  * \param [in] cb_connect Callback function pointer.
@@ -666,7 +666,7 @@ void tio_updater_init(tio_updater_t* updater);
  */
 void tio_updater_set_cb_sock_connect(tio_updater_t* updater, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
 /**
- * \brief set socket send callback used for HTTP(S)
+ * \brief Set socket send callback used for HTTP(S)
  *
  * \param [out] updater tio_updater_t instance.
  * \param [in] cb_send Callback function pointer.
@@ -674,7 +674,7 @@ void tio_updater_set_cb_sock_connect(tio_updater_t* updater, KHC_CB_SOCK_CONNECT
  */
 void tio_updater_set_cb_sock_send(tio_updater_t* updater, KHC_CB_SOCK_SEND cb_send, void* userdata);
 /**
- * \brief set socket recv callback used for HTTP(S)
+ * \brief Set socket recv callback used for HTTP(S)
  *
  * \param [out] updater tio_updater_t instance.
  * \param [in] cb_recv Callback function pointer.
@@ -682,7 +682,7 @@ void tio_updater_set_cb_sock_send(tio_updater_t* updater, KHC_CB_SOCK_SEND cb_se
  */
 void tio_updater_set_cb_sock_recv(tio_updater_t* updater, KHC_CB_SOCK_RECV cb_recv, void* userdata);
 /**
- * \brief set socket close callback used for HTTP(S)
+ * \brief Set socket close callback used for HTTP(S)
  *
  * \param [out] updater tio_updater_t instance.
  * \param [in] cb_close Callback function pointer.
@@ -699,7 +699,7 @@ void tio_updater_set_cb_sock_close(tio_updater_t* updater, KHC_CB_SOCK_CLOSE cb_
 void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_CB_TASK_CREATE cb_task_create, void* userdata);
 
 /**
- * \brief set callback determines whether to continue or discontinue task.
+ * \brief Set callback determines whether to continue or discontinue task.
 
  * If this method is not called or NULL is set, task won't exit.
  * If you need cancellation mechanism, you need to set this callback.
