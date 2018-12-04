@@ -566,9 +566,12 @@ void tio_handler_set_cb_json_parser_resource(
  * \brief Set custom memory allocator for the linked list used to constuct request headers of HTTP.
 
  * If this method is not called, default memory allocator using malloc/ free is used.
- * Notice: You need to call this method after
- * tio_handler_set_app(tio_handler_t*, const char*, const char*) since the
- * tio_handler_set_app() method has side effect resetting to default memory allocator.
+
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] cb_alloc Allocation callback function pointer.
+ * \param [in] cb_free Free callback function pointer.
+ * \param [in] cb_alloc_data Context object pointer passed to cb_alloc.
+ * \param [in] cb_free_data Context object pointer passed to cb_free.
  */
 void tio_handler_set_cb_slist_resource(
     tio_handler_t* handler,
@@ -849,9 +852,12 @@ void tio_updater_set_cb_json_parser_resource(
  * \brief Set custom memory allocator for the linked list used to constuct request headers of HTTP.
 
  * If this method is not called, default memory allocator using malloc/ free is used.
- * Notice: You need to call this method after
- * tio_updater_set_app(tio_updater_t*, const char*, const char*) since the
- * tio_updater_set_app() method has side effect resetting to default memory allocator.
+
+ * \param [out] updater tio_updater_t instance.
+ * \param [in] cb_alloc Allocation callback function pointer.
+ * \param [in] cb_free Free callback function pointer.
+ * \param [in] cb_alloc_data Context object pointer passed to cb_alloc.
+ * \param [in] cb_free_data Context object pointer passed to cb_free.
  */
 void tio_updater_set_cb_slist_resource(
     tio_updater_t* updater,
@@ -861,6 +867,25 @@ void tio_updater_set_cb_slist_resource(
     void* cb_free_data
 );
 
+/**
+ * \brief Execute onboarding
+ *
+ * Onboarding step is required to register device to IoT cloud and obtain access token.
+ * Once the device is registered and IoT cloud publishes device ID and access token,
+ * You can skip this process and call tio_handler_start()/ tio_updater_start().
+ * After the successfull execution, you can obtain device ID and access token via
+ * tio_updater_get_author() API.
+ *
+ * Note: input params other than vendor_thing_id and password are ignored after the first registration.
+ * \param [out] updater tio_updater_t instance.
+ * \param [in] vendor_thing_id Unique ID determined by device vendor.
+ * \param [in] password Password of the device.
+ * \param [in] thing_type Type of the device.
+ * \param [in] firmware_version Firmware version of the device.
+ * \param [in] layout_position You'll set NULL and STAND_ALONE is chosen. Other position won't be used.
+ * \param [in] thing_properties Properties of thing. Expect JSON object include custom properties defined by Vendor.
+ * Can be NULL if you don't need them.
+ */
 tio_code_t tio_updater_onboard(
     tio_updater_t* updater,
     const char* vendor_thing_id,
@@ -871,17 +896,42 @@ tio_code_t tio_updater_onboard(
     const char* thing_properties
 );
 
+/**
+ * \brief Get author.
+ *
+ * Author is used to authorize API call and consists of device ID and access token.
+ * This API must be called after the successful execution of tio_updater_onboard().
+ *
+ * \param [in] updater tio_updater_t instance.
+ * \return tio_author_t pointer.
+ * You may need to copy the value of device ID and access token and store them.
+ */
 const tio_author_t* tio_updater_get_author(
     tio_updater_t* updater
 );
 
+/**
+ * \brief Start tio_updater task.
+ *
+ * You can start tio_updater task by this method.
+ * If the API returns TIO_ERR_OK, asynchronous task is started successfully and
+ * callbacks set by tio_updater setter methods and this method is called when corresponding event occurs.
+ *
+ * \param [in] updater tio_updater_t instance.
+ * \param [in] author API author.
+ * \param [in] cb_state_size Callback asking for size of the state to be uploaded.
+ * \param [in] state_size_data Context object pointer passed to cb_state_size.
+ * \param [in] cb_read_state Callback read state of the device.
+ * \param [in] read_state_data Context object pointer passed to cb_read_state.
+ * \return TIO_ERR_OK when succeeded to start task.
+ */
 tio_code_t tio_updater_start(
     tio_updater_t* updater,
     const tio_author_t* author,
     TIO_CB_SIZE cb_state_size,
-    void* cb_state_size_data,
-    TIO_CB_READ state_reader,
-    void* state_reader_data);
+    void* state_size_data,
+    TIO_CB_READ cb_read_state,
+    void* read_state_data);
 
 #ifdef __cplusplus
 }
