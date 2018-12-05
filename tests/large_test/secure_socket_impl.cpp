@@ -11,6 +11,7 @@
 
 #include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <errno.h>
 
 /* Suppress warnings, because OpenSSL was deprecated in Mac. */
 #ifdef __APPLE__
@@ -128,6 +129,13 @@ khc_sock_code_t
             return KHC_SOCK_OK;
         } else if (ssl_error == SSL_ERROR_WANT_READ || ssl_error == SSL_ERROR_WANT_WRITE) {
             return KHC_SOCK_AGAIN;
+        } else if (ssl_error == SSL_ERROR_SYSCALL){
+            if (errno == 0){
+                return KHC_SOCK_OK;
+            } else {
+                printf("SSL_ERROR_SYSCALL: errno=%d: %s\n", errno, strerror(errno));
+                return KHC_SOCK_FAIL;
+            }
         } else {
             return KHC_SOCK_FAIL;
         }
