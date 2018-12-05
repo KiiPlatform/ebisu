@@ -12,6 +12,8 @@ using namespace std;
 TEST_CASE( "MQTT state test" ) {
     size_t kii_buff_size = 1024;
     char kii_buff[kii_buff_size];
+    size_t mqtt_buff_size = 1024;
+    char mqtt_buff[kii_buff_size];
     jkii_token_t jkii_tokens[256];
     jkii_resource_t jkii_resource = {jkii_tokens, 256};
 
@@ -20,7 +22,9 @@ TEST_CASE( "MQTT state test" ) {
     kii_set_site(&kii, "api.kii.com");
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, kii_buff_size);
+    kii_set_mqtt_buff(&kii, mqtt_buff, mqtt_buff_size);
     kii_set_json_parser_resource(&kii, &jkii_resource);
+    kii._keep_alive_interval = 300;
 
     khct::cb::SockCtx http_ctx;
     kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
@@ -180,4 +184,75 @@ TEST_CASE( "MQTT state test" ) {
     REQUIRE( call_send > 1 );
     REQUIRE( call_recv >= 1 );
     REQUIRE( call_close == 1 );
+
+    call_connect = 0;
+    mqtt_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, unsigned int port) {
+        const char* exp_host = "jp-mqtt-dummy.kii.com";
+        ++call_connect;
+        REQUIRE( strlen(host) == strlen(exp_host) );
+        REQUIRE( strncmp(host, exp_host, strlen(exp_host)) == 0 );
+        REQUIRE( port == 8883 );
+        return KHC_SOCK_OK;
+    };
+
+    _mqtt_state_sock_connect(&state);
+    REQUIRE( state.info.task_state == KII_MQTT_ST_SEND_CONNECT );
+    REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+    REQUIRE( call_connect == 1 );
+
+    call_send = 0;
+    mqtt_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+        if (call_send == 0) {
+            const char expect[] = {
+                0x10, 0x32, // remaining_size = 50
+                0x00, 0x06, 'M', 'Q', 'I', 's', 'd', 'p', 0x03, (char)0xc2,
+                0x01, 0x2c, // _keep_alive_interval = 300
+                0x00, 0x0a, 'd', 'u', 'm', 'm', 'y', 'T', 'o', 'p', 'i', 'c',
+                0x00, 0x09, 'd', 'u', 'm', 'm', 'y', 'U', 's', 'e', 'r',
+                0x00, 0x0d, 'd', 'u', 'm', 'm', 'y', 'P', 'a', 's', 's', 'w', 'o', 'r', 'd'
+            };
+            REQUIRE( length == sizeof(expect) );
+            REQUIRE( memcmp(buffer, expect, length) == 0 );
+        }
+        ++call_send;
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+
+    _mqtt_state_send_connect(&state);
+    REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_CONNACK );
+    REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+    REQUIRE( call_send == 1 );
+
+    call_recv = 0;
+    mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        switch (call_recv) {
+            case 0: // fixed header - control packet type
+                REQUIRE( length_to_read == 1);
+                buffer[0] = 0x20;
+                *out_actual_length = 1;
+                break;
+            case 1: // fixed header - remaining length (=2)
+                REQUIRE( length_to_read == 1);
+                buffer[0] = 0x02;
+                *out_actual_length = 1;
+                break;
+            case 2: // variable header (2 bytes)
+                REQUIRE( length_to_read == 2);
+                buffer[0] = 0x00;
+                buffer[1] = 0x00;
+                *out_actual_length = 2;
+                break;
+            default:
+                FAIL();
+                break;
+        }
+        ++call_recv;
+        return KHC_SOCK_OK;
+    };
+
+    _mqtt_state_recv_connack(&state);
+    REQUIRE( state.info.task_state == KII_MQTT_ST_SEND_SUBSCRIBE );
+    REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+    REQUIRE( call_recv == 3 );
 }
