@@ -14,12 +14,6 @@
 extern "C" {
 #endif
 
-#ifdef DEBUG
-#define M_KII_LOG(...) printf(__VA_ARGS__)
-#else
-#define M_KII_LOG(...)
-#endif
-
 /**
  * \brief MQTT task name.
  * Name can be referenced inside task create callback set by
