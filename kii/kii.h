@@ -115,19 +115,30 @@ typedef struct kii_topic_t {
 /** \brief Represents author of API. */
 typedef struct kii_author_t
 {
-    /** \brief ID of the author */
+    /** \brief ID of the author. */
     char author_id[128];
-    /** \brief access token of the author */
+    /** \brief Access token of the author. */
     char access_token[128];
 } kii_author_t;
 
+/** \brief Represents MQTT endpoint. */
 typedef struct kii_mqtt_endpoint_t {
-    char username[64];
-    char password[128];
-    char topic[64];
-    char host[64];
+    char username[64]; /** \brief Username used to connect. */
+    char password[128]; /** \brief Password used to connect. */
+    char topic[64]; /** \brief Topic ID to be subscribed. */
+    char host[64]; /** \brief Host address */
+    /**
+     * \brief Port number used for non-secure connection.
+     * Highly recommend use port_ssl.
+     */
     unsigned int port_tcp;
+    /**
+     * \brief Port number used for secure connection.
+     */
     unsigned int port_ssl;
+    /**
+     * \brief Obsoleted parameter. Ignore it.
+     */
     unsigned long ttl;
 } kii_mqtt_endpoint_t;
 
