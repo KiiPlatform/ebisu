@@ -894,10 +894,54 @@ void kii_set_cb_http_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb_close, void* us
  */
 void kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size);
 
-void kii_set_cb_mqtt_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
-void kii_set_cb_mqtt_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
-void kii_set_cb_mqtt_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
-void kii_set_cb_mqtt_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+/**
+ * \brief Set socket connect callback used for MQTT(S)
+ *
+ * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
+ * kii_set_mqtt_to_sock_recv()/ kii_set_mqtt_to_sock_send() APIs.
+ * It is necessary for sending pingReq message periodically to achieve Keep-Alive
+ * since we don't require system clock APIs abstraction.
+ * \param [out] kii kii_t instance.
+ * \param [in] cb_connect Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_connect.
+ */
+void kii_set_cb_mqtt_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
+/**
+ * \brief Set socket send callback used for MQTT(S)
+ *
+ * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
+ * kii_set_mqtt_to_sock_recv()/ kii_set_mqtt_to_sock_send() APIs.
+ * It is necessary for sending pingReq message periodically to achieve Keep-Alive
+ * since we don't require system clock APIs abstraction.
+ * \param [out] kii kii_t instance.
+ * \param [in] cb_send Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_send.
+ */
+void kii_set_cb_mqtt_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb_send, void* userdata);
+/**
+ * \brief Set socket recv callback used for MQTT(S)
+ *
+ * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
+ * kii_set_mqtt_to_sock_recv()/ kii_set_mqtt_to_sock_send() APIs.
+ * It is necessary for sending pingReq message periodically to achieve Keep-Alive
+ * since we don't require system clock APIs abstraction.
+ * \param [out] kii kii_t instance.
+ * \param [in] cb_recv Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_recv.
+ */
+void kii_set_cb_mqtt_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb_recv, void* userdata);
+/**
+ * \brief Set socket close callback used for MQTT(S)
+ *
+ * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
+ * kii_set_mqtt_to_sock_recv()/ kii_set_mqtt_to_sock_send() APIs.
+ * It is necessary for sending pingReq message periodically to achieve Keep-Alive
+ * since we don't require system clock APIs abstraction.
+ * \param [out] kii kii_t instance.
+ * \param [in] cb_close Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_close.
+ */
+void kii_set_cb_mqtt_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
 
 void kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec);
 void kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec);
