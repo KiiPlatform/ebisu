@@ -860,7 +860,7 @@ void kii_set_cb_http_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata
  * However it varies depending on your data schema used to define Commands.
  * Avoid defining large Commands.
 
- * \param [out] kii instance.
+ * \param [out] kii kii_t instance.
  * \param [in] buffer pointer to the buffer.
  * \param [in] buff_size size of the buffer.
  */
@@ -890,7 +890,7 @@ void kii_set_cb_task_create(kii_t* kii, KII_CB_TASK_CREATE create_cb, void* user
  * If un-recoverble error occurs, task exits the infinite loop and immediately calls KII_CB_TASK_EXIT callback if set.
  * In this case KII_CB_TASK_CONTINUE callback is not called.
 
- * \param kii [out] kii instance
+ * \param kii [out] kii kii_t instance
  * \param continue_cb [in] Callback determines whether to continue or discontinue task.
  * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
  * and calls KII_CB_TASK_EXIT callback if set.
@@ -921,7 +921,7 @@ void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE continue_cb, void
  * If this API is not called or set NULL,
  * task function immediately returns when task is discontinued or un-recoverble error occurs.
 
- * \param kii instance
+ * \param kii kii_t instance
  * \param exit_cb Called right before the exit.
  * task_info argument type of exit_cb (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info*.
  * \param userdata [in] Context data pointer passed as second argument when exit_cb is called.
