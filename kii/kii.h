@@ -371,25 +371,29 @@ kii_code_t kii_delete_object(
 
 /**
  * \brief Get Kii object.
- *  When succeeded, obtained object data is cached in kii_core_t#response_body.
- *  \param [inout] kii sdk instance.
- *  \param [in] bucket specify the bucket of which object is stored.
- *  \param [in] object_id specify the id of the object.
- *  \return  kii_code_t
+ * When succeeded, object data is stored in the buffer given by kii_set_buff()
+ * and its length can be determined by kii_get_resp_body_length().
+
+ * \param [in,out] kii kii_t instance.
+ * \param [in] Specify the bucket to which the object is stored.
+ * \param [in] object_id Specify the id of the object.
+ * \return  kii_code_t
  */
 kii_code_t kii_get_object(
 		kii_t* kii,
 		const kii_bucket_t* bucket,
 		const char* object_id);
 
-/** Upload object body.
- *  \param [inout] kii sdk instance.
- *  \param [in] bucket specify the bucket of which object is stored.
- *  \param [in] object_id specify the id of the object of which body is added.
- *  \param [in] body_content_type content-type of the body.
- *  \param [in] read_cb callback function called for reading body contents.
- *  \param [in] userdata read_cb context data.
- *  \return kii_code_t
+/**
+ * \brief Upload object body.
+
+ * \param [in,out] kii kii_t instance.
+ * \param [in] bucket Specify the bucket to which the object is stored.
+ * \param [in] object_id Specify the id of the object to which body is added.
+ * \param [in] body_content_type Content-Type of the body.
+ * \param [in] read_cb Callback reads body contents.
+ * \param [in] userdata Context object pointer passed to read_cb.
+ * \return kii_code_t
  */
 kii_code_t kii_upload_object_body(
 		kii_t* kii,
@@ -400,13 +404,15 @@ kii_code_t kii_upload_object_body(
         void* userdata
 );
 
-/** Download object body.
- *  \param [inout] kii sdk instance.
- *  \param [in] bucket specify the bucket of which object is stored.
- *  \param [in] object_id specify the id of the object of which body is added.
- *  \param [in] write_cb callback function writes body contents.
- *  \param [in] userdata write_cb context data.
- *  \return kii_code_t
+/**
+ * \brief Download object body.
+
+ * \param [in,out] kii_t instance.
+ * \param [in] bucket Specify the bucket to which the object is stored.
+ * \param [in] object_id Specify the id of the object to which the body is stored.
+ * \param [in] write_cb Callback writes body data.
+ * \param [in] userdata write_cb Context object passed to write_cb.
+ * \return kii_code_t
  */
 kii_code_t kii_download_object_body(
 		kii_t* kii,
@@ -415,41 +421,49 @@ kii_code_t kii_download_object_body(
         const KII_CB_WRITE write_cb,
         void* userdata);
 
-/** Subscribe to specified bucket.
- *  After succeeded,
- *  Event happened on the bucket will be notified via push notification.
- *  \param [inout] kii sdk instance.
- *  \param [in] bucket specify the bucket to subscribe.
- *  \return kii_code_t
+/**
+ * \brief Subscribe to the specified bucket.
+ * After succeeded,
+ * Events happened on the bucket will be notified by MQTT messages.
+
+ * \param [in,out] kii kii_t instance.
+ * \param [in] bucket Specify the bucket to subscribe.
+ * \return kii_code_t
  */
 kii_code_t kii_subscribe_bucket(
 		kii_t* kii,
 		const kii_bucket_t* bucket);
 
-/** Unsubscribe specified bucket.
- *  \param [inout] kii sdk instance.
- *  \param [in] bucket specify the bucket to subscribe.
- *  \return kii_code_t
+/**
+ * \brief Unsubscribe from the specified bucket.
+
+ * \param [in,out] kii kii_t instance.
+ * \param [in] bucket Specify the bucket to subscribe.
+ * \return kii_code_t
  */
 kii_code_t kii_unsubscribe_bucket(
 		kii_t* kii,
 		const kii_bucket_t* bucket);
 
-/** Subscribe to specified topic.
- *  After succeeded,
- *  Message sent to the topic will be notified via push notification.
- *  \param [inout] kii sdk instance.
- *  \param [in] topic specify the topic to subscribe.
- *  \return kii_code_t
+/**
+ * \brief Subscribe to the specified topic.
+ * After succeeded,
+ * Messages sent to the topic will be notified by MQTT messages.
+
+ * \param [in,out] kii kii_t instance.
+ * \param [in] topic Specify the topic to subscribe.
+ * \return kii_code_t
  */
 kii_code_t kii_subscribe_topic(
 		kii_t* kii,
 		const kii_topic_t* topic);
 
-/** Unsubscribe specified topic.
- *  \param [inout] kii sdk instance.
- *  \param [in] topic specify the topic to subscribe.
- *  \return kii_code_t
+/**
+ * \brief Unsubscribe from the specified topic.
+
+ * \param [in,out] kii kii_t instance.
+ * \param [in] topic Specify the topic to unsubscribe.
+ * \return kii_code_t
  */
 kii_code_t kii_unsubscribe_topic(
 		kii_t* kii,
