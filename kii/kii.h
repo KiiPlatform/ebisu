@@ -968,7 +968,14 @@ void kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec);
  */
 void kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec);
 
-void kii_set_cb_task_create(kii_t* kii, KII_CB_TASK_CREATE create_cb, void* userdata);
+/**
+ * \brief Set callback creates task.
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] cb_task_create Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_task_create.
+ */
+void kii_set_cb_task_create(kii_t* kii, KII_CB_TASK_CREATE cb_task_create, void* userdata);
 
 /**
  * \brief set callback determines whether to continue or discontinue task.
@@ -984,14 +991,14 @@ void kii_set_cb_task_create(kii_t* kii, KII_CB_TASK_CREATE create_cb, void* user
  * If un-recoverble error occurs, task exits the infinite loop and immediately calls KII_CB_TASK_EXIT callback if set.
  * In this case KII_CB_TASK_CONTINUE callback is not called.
 
- * \param kii [out] kii kii_t instance
- * \param continue_cb [in] Callback determines whether to continue or discontinue task.
- * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
+ * \param [out] kii kii_t instance
+ * \param [in] cb_continue Callback determines whether to continue or discontinue task.
+ * If cb_continue returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
  * and calls KII_CB_TASK_EXIT callback if set.
  * task_info argument type of the continue_cb function (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info*.
- * \param userdata [in] Context data pointer passed as second argument when continue_cb is called.
+ * \param [in] userdata Context data pointer passed as second argument when cb_continue is called.
  */
-void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE continue_cb, void* userdata);
+void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE cb_continue, void* userdata);
 
 /**
  * \brief Callback called right before exit of MQTT task.
@@ -1015,13 +1022,22 @@ void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE continue_cb, void
  * If this API is not called or set NULL,
  * task function immediately returns when task is discontinued or un-recoverble error occurs.
 
- * \param kii kii_t instance
- * \param exit_cb Called right before the exit.
- * task_info argument type of exit_cb (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info*.
- * \param userdata [in] Context data pointer passed as second argument when exit_cb is called.
+ * \param [out] kii kii_t instance
+ * \param [in] cb_exit Called right before the exit.
+ * task_info argument type of cb_exit (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info*.
+ * \param [in] userdata Context data pointer passed as second argument when cb_exit is called.
  */
-void kii_set_cb_task_exit(kii_t* kii, KII_CB_TASK_EXIT exit_cb, void* userdata);
-void kii_set_cb_delay_ms(kii_t* kii, KII_CB_DELAY_MS delay_cb, void* userdata);
+void kii_set_cb_task_exit(kii_t* kii, KII_CB_TASK_EXIT cb_exit, void* userdata);
+/**
+ * \brief Callback asks to delay/ sleep task execution.
+ *
+ * Called when the task needs to delay/ sleep.
+ *
+ * \param [out] kii kii_t instance
+ * \param [in] cb_delay_ms Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_delay_ms.
+ */
+void kii_set_cb_delay_ms(kii_t* kii, KII_CB_DELAY_MS cb_delay_ms, void* userdata);
 
 /** Set JSON paraser resource
  * @param [inout] kii SDK instance.
