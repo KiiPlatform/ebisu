@@ -142,126 +142,151 @@ typedef struct kii_mqtt_endpoint_t {
     unsigned long ttl;
 } kii_mqtt_endpoint_t;
 
+/**
+ * \brief Represents object ID.
+ */
 typedef struct kii_object_id_t {
-    char id[64];
+    char id[64]; /**< \brief Object ID */
 } kii_object_id_t;
 
+/**
+ * \brief Represents installation ID.
+ */
 typedef struct kii_installation_id_t {
-    char id[64];
+    char id[64]; /**< \brief Installation ID */
 } kii_installation_id_t;
 
 struct kii_t;
 
+/**
+ * \brief Called when received push message via MQTT.
+ *
+ * \param [in] message Received message.
+ * You need to determine size of the message by message_length
+ * argument since it may not be null terminated.
+ * \param [in] message_length Length of the message.
+ * \param [in] userdata Context object pointer given to kii_start_push_routine().
+ */
 typedef void (*KII_PUSH_RECEIVED_CB)(
-                char* message,
+                const char* message,
                 size_t message_length,
                 void* userdata);
 
+/**
+ * \brief Stores data/ callbacks used by kii module.
+ */
 typedef struct kii_t {
-    khc _khc;
-	kii_author_t _author;
-	char _app_id[128];
-	char _app_host[128];
-    char* _sdk_info;
+    khc _khc; /**< \private */
+	kii_author_t _author; /**< \private */
+	char _app_id[128]; /**< \private */
+	char _app_host[128]; /**< \private */
+    char* _sdk_info; /**< \private */
 
-    void* _mqtt_sock_connect_ctx;
-    void* _mqtt_sock_send_ctx;
-    void* _mqtt_sock_recv_ctx;
-    void* _mqtt_sock_close_ctx;
-    KHC_CB_SOCK_CONNECT _cb_mqtt_sock_connect;
-    KHC_CB_SOCK_SEND _cb_mqtt_sock_send;
-    KHC_CB_SOCK_RECV _cb_mqtt_sock_recv;
-    KHC_CB_SOCK_CLOSE _cb_mqtt_sock_close_cb;
-    unsigned int _mqtt_to_recv_sec;
-    unsigned int _mqtt_to_send_sec;
+    void* _mqtt_sock_connect_ctx; /**< \private */
+    void* _mqtt_sock_send_ctx; /**< \private */
+    void* _mqtt_sock_recv_ctx; /**< \private */
+    void* _mqtt_sock_close_ctx; /**< \private */
+    KHC_CB_SOCK_CONNECT _cb_mqtt_sock_connect; /**< \private */
+    KHC_CB_SOCK_SEND _cb_mqtt_sock_send; /**< \private */
+    KHC_CB_SOCK_RECV _cb_mqtt_sock_recv; /**< \private */
+    KHC_CB_SOCK_CLOSE _cb_mqtt_sock_close_cb; /**< \private */
+    unsigned int _mqtt_to_recv_sec; /**< \private */
+    unsigned int _mqtt_to_send_sec; /**< \private */
 
-    KII_CB_TASK_CREATE _cb_task_create;
-    void* _task_create_data;
+    KII_CB_TASK_CREATE _cb_task_create; /**< \private */
+    void* _task_create_data; /**< \private */
 
-    KII_CB_TASK_CONTINUE _cb_task_continue;
-    void* _task_continue_data;
+    KII_CB_TASK_CONTINUE _cb_task_continue; /**< \private */
+    void* _task_continue_data; /**< \private */
 
-    KII_CB_TASK_EXIT _cb_task_exit;
-    void* _task_exit_data;
+    KII_CB_TASK_EXIT _cb_task_exit; /**< \private */
+    void* _task_exit_data; /**< \private */
 
-    KII_CB_DELAY_MS _cb_delay_ms;
-    void* _delay_ms_data;
+    KII_CB_DELAY_MS _cb_delay_ms; /**< \private */
+    void* _delay_ms_data; /**< \private */
 
-    KII_PUSH_RECEIVED_CB _cb_push_received;
-    void* _push_data;
+    KII_PUSH_RECEIVED_CB _cb_push_received; /**< \private */
+    void* _push_data; /**< \private */
 
-    int _mqtt_connected;
+    int _mqtt_connected; /**< \private */
 
-    char* _mqtt_buffer;
-    size_t _mqtt_buffer_size;
+    char* _mqtt_buffer; /**< \private */
+    size_t _mqtt_buffer_size; /**< \private */
 
-    unsigned int _keep_alive_interval;
+    unsigned int _keep_alive_interval; /**< \private */
 
-    char* _rw_buff;
-    size_t _rw_buff_size;
-    size_t _rw_buff_req_size;
-    size_t _rw_buff_read;
-    size_t _rw_buff_written;
+    char* _rw_buff; /**< \private */
+    size_t _rw_buff_size; /**< \private */
+    size_t _rw_buff_req_size; /**< \private */
+    size_t _rw_buff_read; /**< \private */
+    size_t _rw_buff_written; /**< \private */
 
-    khc_slist* _req_headers;
+    khc_slist* _req_headers; /**< \private */
 
-    char _etag[64];
+    char _etag[64]; /**< \private */
 
-    jkii_resource_t* _json_resource;
+    jkii_resource_t* _json_resource; /**< \private */
 
-    JKII_CB_RESOURCE_ALLOC _cb_json_alloc;
-    JKII_CB_RESOURCE_FREE _cb_json_free;
+    JKII_CB_RESOURCE_ALLOC _cb_json_alloc; /**< \private */
+    JKII_CB_RESOURCE_FREE _cb_json_free; /**< \private */
 
-    KHC_CB_SLIST_ALLOC _cb_slist_alloc;
-    KHC_CB_SLIST_FREE _cb_slist_free;
-    void* _slist_alloc_data;
-    void* _slist_free_data;
+    KHC_CB_SLIST_ALLOC _cb_slist_alloc; /**< \private */
+    KHC_CB_SLIST_FREE _cb_slist_free; /**< \private */
+    void* _slist_alloc_data; /**< \private */
+    void* _slist_free_data; /**< \private */
 } kii_t;
 
-/** Initializes Kii SDK
- *  \param [inout] kii sdk instance.
+/**
+ * \brief Initializes kii_t instance.
+ * \param [out] kii kii_t instance.
  */
 void kii_init(
 		kii_t* kii);
 
-/** \brief Set site name.
- *  \param [inout] kii sdk instance.
- *  \param [in] site the input of site name,
- *  should be one of "CN", "CN3", "JP", "US", "SG" or "EU"
+/**
+ * \brief Set site.
+ * \param [out] kii kii_t instance.
+ * \param [in] site should be a hostname or alias one of
+ * "CN", "CN3", "JP", "US", "SG" or "EU".
  */
 void kii_set_site(
 		kii_t* kii,
 		const char* site);
 
-/** \brief Set Application ID.
- *  \param [inout] kii sdk instance.
- *  \param [in] app_id the input of Application ID
+/**
+ * \brief Set Application ID.
+ * \param [out] kii kii_t instance.
+ * \param [in] app_id Application ID published by Kii.
  */
 void kii_set_app_id(
 		kii_t* kii,
 		const char* app_id);
 
-/** Authorize thing with vendor thing id and password.
- *  After the authentication, access token is used to call APIs access to
- *  Kii Cloud so that the thing can access private data.
- *  \param [inout] kii sdk instance.
- *  \param [in] vendor_thing_id the thing identifier given by vendor.
- *  \param [in] password the password of the thing given by vendor.
- *  \return kii_code_t.
+/**
+ * \brief Authorize thing with vendor thing id and password.
+ * After the authentication, access token is stored in
+ * kii instance and used to authorize other API calls.
+
+ * \param [inout] kii kii_t instance.
+ * \param [in] vendor_thing_id Thing identifier given by the vendor.
+ * \param [in] password Password of the thing given by the vendor.
+ * \return kii_code_t.
  */
 kii_code_t kii_auth_thing(
 		kii_t* kii,
 		const char* vendor_thing_id,
 		const char* password);
 
-/** Register new thing
- *  After the registtration, access token is used to call APIs access to
- *  Kii Cloud so that the thing can access private data.
- *  \param [inout] kii sdk instance.
- *  \param [in] vendor_thing_id the thing identifier given by vendor.
- *  \param [in] thing_type the type of the thing given by vendor.
- *  \param [in] password - the password of the thing given by vendor.
- *  \return kii_code_t.
+/**
+ * \brief Register a new thing.
+ * After the registration, access token is stored in
+ * kii instance and used to authorize other API calls.
+
+ * \param [in,out] kii kii_t instance.
+ * \param [in] vendor_thing_id Thing identifier given by the vendor.
+ * \param [in] thing_type Type of the thing given by the vendor.
+ * \param [in] password Password of the thing given by the vendor.
+ * \return kii_code_t.
  */
 kii_code_t kii_register_thing(
 		kii_t* kii,
@@ -269,17 +294,19 @@ kii_code_t kii_register_thing(
 		const char* thing_type,
 		const char* password);
 
-/** Post Kii object
- *  \param [inout] kii sdk instance.
- *  \param [in] bucket specify the bucket of which object is stored.
- *  \param [in] object_data key-value pair of the object in json format.
- *  \param [in] object_content_type content-type of the object. If null,
- *  application/json will be applied.
- *  \param [out] object_id output of the created object ID.
- *  Supplied when succeeded to create new object.
- *  Must be allocated by application with the size of KII_OBJECTID_SIZE + 1
- *  before this api call.
- *  \return kii_code_t
+/**
+ * \brief Post Kii object.
+
+ * \param [in,out] kii kii_t instance.
+ * \param [in] bucket Specify the bucket to which the object is stored.
+ * \param [in] object_data Key-Value pair of the object in json format.
+ * \param [in] object_content_type Content-Type of the object. If null,
+ * application/json will be applied.
+ * \param [out] object_id Created object ID is written to the buffer
+ * when succeeded to create new object.
+ * Memory used for the struct and char array insidde
+ * must be allocated/ free by the application.
+ * \return kii_code_t
  */
 kii_code_t kii_post_object(
 		kii_t* kii,
@@ -288,15 +315,18 @@ kii_code_t kii_post_object(
 		const char* object_content_type,
 		kii_object_id_t* out_object_id);
 
-/** Create new object with the specified ID
- *  \param [inout] kii sdk instance.
- *  \param [in] bucket specify the bucket of which object is stored.
- *  \param [in] object_id specify the id of the object.
- *  \param [in] object_data key-value pair of the object in json format.
- *  \param [in] object_content_type content-type of the object. If null,
- *  application/json will be applied.
- *  \param [in] if specified, If-Match header is sent to the endpoint.
- *  \return  kii_code_t
+/**
+ * \brief Put Kii object.
+
+ * \param [in,out] kii kii_t instance.
+ * \param [in] bucket Specify the bucket to which the object is stored.
+ * \param [in] object_id Specify the id of the object.
+ * \param [in] object_data Key-Value pair of the object in JSON format.
+ * \param [in] object_content_type Content-Type of the object. If null,
+ * application/json will be applied.
+ * \param [in] opt_etag If specified, If-Match header is sent to the endpoint.
+ * If NULL, If-Match header is not sent.
+ * \return  kii_code_t
  */
 kii_code_t kii_put_object(
 		kii_t* kii,
@@ -306,16 +336,18 @@ kii_code_t kii_put_object(
 		const char* object_content_type,
         const char* opt_etag);
 
-/** Partial update of the object
- *  Only the specified key-value is updated and other key-values won't be
- *  updated/ removed.
- *  \param [inout] kii sdk instance.
- *  \param [in] bucket specify the bucket of which object is stored.
- *  \param [in] object_id specify the id of the object.
- *  \param [in] patch_data key-value pair of the object in json format.
- *  \param [in] opt_etag etag of the object. if specified, update will be failed
- *  if there is updates on cloud. if NULL, forcibly updates.
- *  \return  kii_code_t
+/**
+ * \brief Patch Kii object.
+ * Key-Value pair included in patch_data is updated/ added.
+ * Other existing Key-Value pair stored in the object are remain untouched.
+
+ * \param [in,out] kii kii_t instance.
+ * \param [in] bucket Specify the bucket to which the object is stored.
+ * \param [in] object_id Specify the id of the object.
+ * \param [in] patch_data Key-Value pairs of the object in JSON format.
+ * \param [in] opt_etag If specified, If-Match header is sent to the endpoint.
+ * If NULL, If-Match header is not sent.
+ * \return  kii_code_t
  */
 kii_code_t kii_patch_object(
 		kii_t* kii,
@@ -324,11 +356,13 @@ kii_code_t kii_patch_object(
 		const char* patch_data,
 		const char* opt_etag);
 
-/** Delete the object
- *  \param [inout] kii sdk instance.
- *  \param [in] bucket specify the bucket of which object is stored.
- *  \param [in] object_id specify the id of the object.
- *  \return  kii_code_t
+/**
+ * \brief Delete Kii object.
+
+ * \param [in,out] kii kii_t instance.
+ * \param [in] Specify the bucket to which the object is stored.
+ * \param [in] object_id Specify the id of the object.
+ * \return  kii_code_t
  */
 kii_code_t kii_delete_object(
 		kii_t* kii,
