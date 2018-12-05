@@ -1104,34 +1104,43 @@ int kii_get_resp_status(kii_t* kii);
  */
 size_t kii_get_resp_body_length(kii_t* kii);
 
+/**
+ * \brief Represents MQTT task state
+ */
 typedef enum
 {
-    KII_MQTT_ST_INSTALL_PUSH,
-    KII_MQTT_ST_GET_ENDPOINT,
-    KII_MQTT_ST_SOCK_CONNECT,
-    KII_MQTT_ST_SEND_CONNECT,
-    KII_MQTT_ST_RECV_CONNACK,
-    KII_MQTT_ST_SEND_SUBSCRIBE,
-    KII_MQTT_ST_RECV_SUBACK,
-    KII_MQTT_ST_RECV_READY,
-    KII_MQTT_ST_RECV_MSG,
-    KII_MQTT_ST_SEND_PINGREQ,
-    KII_MQTT_ST_RECONNECT,
-    KII_MQTT_ST_ERR_EXIT,
-    KII_MQTT_ST_DISCONTINUED,
+    KII_MQTT_ST_INSTALL_PUSH, /**< \brief Installing push. */
+    KII_MQTT_ST_GET_ENDPOINT, /**< \brief Getting MQTT endpoint. */
+    KII_MQTT_ST_SOCK_CONNECT, /**< \brief Establishing connection. */
+    KII_MQTT_ST_SEND_CONNECT, /**< \brief Sending CONNECT message. */
+    KII_MQTT_ST_RECV_CONNACK, /**< \brief Receiving CONNACK message. */
+    KII_MQTT_ST_SEND_SUBSCRIBE, /**< \brief Sending SUBSCRIBE message. */
+    KII_MQTT_ST_RECV_SUBACK, /**< \brief Receiving SUBACK message. */
+    KII_MQTT_ST_RECV_READY, /**< \brief Ready to recieve message published by Cloud. */
+    KII_MQTT_ST_RECV_MSG, /**< \brief Receiving message published by Cloud. */
+    KII_MQTT_ST_SEND_PINGREQ, /**< \brief Sending PINGREQ message. */
+    KII_MQTT_ST_RECONNECT, /**< \brief Re-establishing connection. */
+    KII_MQTT_ST_ERR_EXIT, /**< \brief Exiting due to un-recoverble error. */
+    KII_MQTT_ST_DISCONTINUED, /**< \brief Task discontinued by the application . */
 } kii_mqtt_task_state;
 
+/**
+ * \brief MQTT error codes.
+ */
 typedef enum
 {
-    KII_MQTT_ERR_OK,
-    KII_MQTT_ERR_INSTALLATION,
-    KII_MQTT_ERR_GET_ENDPOINT,
-    KII_MQTT_ERR_INSUFFICIENT_BUFF
+    KII_MQTT_ERR_OK, /**< \brief No errors so far. */
+    KII_MQTT_ERR_INSTALLATION, /**< \brief Un-recoverble error in push installation. */
+    KII_MQTT_ERR_GET_ENDPOINT, /**< \brief Un-recoverble error in getting MQTT endpoint. */
+    KII_MQTT_ERR_INSUFFICIENT_BUFF /**< \brief Buffer set by kii_set_mqtt_buff() is too small. */
 } kii_mqtt_error;
 
+/**
+ * \brief Stores MQTT task information.
+ */
 typedef struct {
-    kii_mqtt_error error;
-    kii_mqtt_task_state task_state;
+    kii_mqtt_error error; /**< Last reported error. */
+    kii_mqtt_task_state task_state; /**< Current task state. */
 } kii_mqtt_task_info;
 
 #ifdef __cplusplus
