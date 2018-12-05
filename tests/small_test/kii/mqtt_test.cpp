@@ -227,12 +227,12 @@ TEST_CASE( "MQTT state test" ) {
     call_recv = 0;
     mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         switch (call_recv) {
-            case 0: // fixed header - control packet type
+            case 0: // fixed header - control packet type(2)
                 REQUIRE( length_to_read == 1);
                 buffer[0] = 0x20;
                 *out_actual_length = 1;
                 break;
-            case 1: // fixed header - remaining length (=2)
+            case 1: // fixed header - remaining length (= 2)
                 REQUIRE( length_to_read == 1);
                 buffer[0] = 0x02;
                 *out_actual_length = 1;
@@ -253,6 +253,61 @@ TEST_CASE( "MQTT state test" ) {
 
     _mqtt_state_recv_connack(&state);
     REQUIRE( state.info.task_state == KII_MQTT_ST_SEND_SUBSCRIBE );
+    REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+    REQUIRE( call_recv == 3 );
+
+    call_send = 0;
+    mqtt_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+        if (call_send == 0) {
+            const char expect[] = {
+                (char)0x82, 0x0f, // remaining_size = 15
+                0x00, 0x01, // packet identifier
+                0x00, 0x0a, 'd', 'u', 'm', 'm', 'y', 'T', 'o', 'p', 'i', 'c',
+                0x00 // QOS0
+            };
+            REQUIRE( length == sizeof(expect) );
+            REQUIRE( memcmp(buffer, expect, length) == 0 );
+        }
+        ++call_send;
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+
+    _mqtt_state_send_subscribe(&state);
+    REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_SUBACK );
+    REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+    REQUIRE( call_send == 1 );
+
+    call_recv = 0;
+    mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        switch (call_recv) {
+            case 0: // fixed header - control packet type(9)
+                REQUIRE( length_to_read == 1);
+                buffer[0] = (char)0x90;
+                *out_actual_length = 1;
+                break;
+            case 1: // fixed header - remaining length (= 3)
+                REQUIRE( length_to_read == 1);
+                buffer[0] = 0x03;
+                *out_actual_length = 1;
+                break;
+            case 2: // variable header (3 bytes)
+                REQUIRE( length_to_read == 3);
+                buffer[0] = 0x00; // identifier MSB.
+                buffer[1] = 0x01; // identifier LSB.
+                buffer[2] = 0x00; // payload(return code: Success - Maximum QOS 0)
+                *out_actual_length = 3;
+                break;
+            default:
+                FAIL();
+                break;
+        }
+        ++call_recv;
+        return KHC_SOCK_OK;
+    };
+
+    _mqtt_state_recv_suback(&state);
+    REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
     REQUIRE( state.info.error == KII_MQTT_ERR_OK );
     REQUIRE( call_recv == 3 );
 }
