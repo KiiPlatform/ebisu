@@ -469,62 +469,104 @@ kii_code_t kii_unsubscribe_topic(
 		kii_t* kii,
 		const kii_topic_t* topic);
 
-/** Put new topic.
- *  \param [inout] kii sdk instance.
- *  \param [in] topic specify the topic to create.
- *  \return kii_code_t
+/**
+ * \brief Put topic.
+ * \param [in,out] kii kii_t instance.
+ * \param [in] topic Specify the topic to put.
+ * \return kii_code_t
  */
 kii_code_t kii_put_topic(
 		kii_t* kii,
 		const kii_topic_t* topic);
 
-/** Delete topic.
- *  \param [inout] kii sdk instance.
- *  \param [in] topic specify the topic to delete.
- *  \return kii_code_t
+/**
+ * \brief Delete topic.
+ * \param [in,out] kii kii_t instance.
+ * \param [in] topic Specify the topic to delete.
+ * \return kii_code_t
  */
 kii_code_t kii_delete_topic(
 		kii_t* kii,
 		const kii_topic_t* topic);
 
+/**
+ * \brief Install push notification.
+ *
+ * The step is required to get the endpoint of MQTT before connecting to it.
+ *
+ * \param [in,out] kii kii_t instance.
+ * \param [in] development Determines whether to use development or production environment.
+ * \param [out] out_installation_id Installation ID is written to this argument.
+ * Memory allocated for the struct and string buffer inside must be allocated/ freed by the application.
+ * \return kii_code_t
+ */
 kii_code_t kii_install_push(
         kii_t* kii,
         kii_bool_t development,
         kii_installation_id_t* out_installation_id);
 
+/**
+ * \brief Get MQTT endpoint.
+ *
+ * \param [in, out] kii kii_t instance.
+ * \param [in] installation_id Installation ID obtained by kii_install_push().
+ * \param [out] endpoint Endpoint information is written to the struct.
+ * Memory allocated for the struct and string buffer inside must be allocated/ freed by the application.
+ * \return kii_code_t
+ */
 kii_code_t kii_get_mqtt_endpoint(
     kii_t* kii,
     const char* installation_id,
     kii_mqtt_endpoint_t* endpoint);
 
-/** Start push notification receiving routine.
- *  After succeeded, callback is called when push message is delivered to this
- *  thing.
- *  \param [inout] kii sdk instance.
- *  \param [in] MQTT keep alive interval in second. If 0, Keep Alive mechanism is disabled.
- * Otherwise, ping req is sent to MQTT broker periodically with the specified interval.
- * Sending too many request with short interval consumes resouces. We recommend 30 seconds or longer interval.
- *  \param [in] callback  callback function called when push message delivered.
- *  \param [in] userdata context object passed to callback.
- *  \return kii_code_t
+/**
+ * \brief Start MQTT task and watch message arrival.
+ *  After succeeded, asynchronous task is started and
+ * cb_push is called when message is delivered to the
+ * thing.
+
+ * \param [in,out] kii kii_t instance.
+ * \param [in] keep_alive_interval_sec MQTT Keep-Alive interval in seconds.
+ * MQTT keep alive interval in seconds. If 0, Keep Alive mechanism is disabled.
+ * Otherwise, pingReq is sent to MQTT broker periodically with the specified interval.
+ * Too short interval causes network congestion. We recommend to set this to few minutes.
+ * \param [in] cb_push  Callback called when push message delivered.
+ * \param [in] userdata Context object passed to cb_push.
+ * \return kii_code_t
  */
 kii_code_t kii_start_push_routine(
 		kii_t* kii,
-        unsigned int keep_alive_interval,
-		KII_PUSH_RECEIVED_CB callback,
+        unsigned int keep_alive_interval_sec,
+		KII_PUSH_RECEIVED_CB cb_push,
         void* userdata);
 
-/** Execute server code.
- *  \param [inout] kii sdk instance.
- *  \param [in] endpoint_name name of the endpoint to be executed.
- *  \param [in] params parameters given to endpoint. should be formatted in json.
- *  \return kii_code_t
+/**
+ * \brief Execute server code.
+ *
+ * \param [in,out] kii kii_t instance.
+ * \param [in] endpoint_name Name of the endpoint to be executed.
+ * \param [in] params Parameters given to endpoint. Expect JSON object.
+ * \return kii_code_t
  */
 kii_code_t kii_execute_server_code(
 		kii_t* kii,
 		const char* endpoint_name,
 		const char* params);
 
+/**
+ * \brief Execute onboarding.
+
+ * Note: input params other than vendor_thing_id and password are ignored after the first registration.
+ * \param [in, out] kii kii_t instance.
+ * \param [in] vendor_thing_id Unique ID determined by device vendor.
+ * \param [in] password Password of the device.
+ * \param [in] thing_type Type of the device.
+ * \param [in] firmware_version Firmware version of the device.
+ * \param [in] layout_position You'll set NULL and STAND_ALONE is chosen. Other position won't be used.
+ * \param [in] thing_properties Properties of thing. Expect JSON object include custom properties defined by Vendor.
+ * Can be NULL if you don't need them.
+ * \return kii_code_t
+ */
 kii_code_t kii_ti_onboard(
     kii_t* kii,
     const char* vendor_thing_id,
@@ -534,22 +576,58 @@ kii_code_t kii_ti_onboard(
     const char* layout_position,
     const char* thing_properties);
 
+/**
+ * \brief Put firmware version.
+ *
+ * \param [in, out] kii kii_t instance.
+ * \param [in] firmware_version Firmware version string.
+ * \return kii_code_t
+ */
 kii_code_t kii_ti_put_firmware_version(
     kii_t* kii,
     const char* firmware_version);
 
+/**
+ * \brief Stores firmware version.
+ */
 typedef struct kii_ti_firmware_version_t {
-    char firmware_version[128];
+    char firmware_version[128]; /**< \brief Firmware version string. */
 } kii_ti_firmware_version_t;
 
+/**
+ * \brief Get current firmware version from the cloud.
+ *
+ * \param [in, out] kii kii_t instance.
+ * \param [out] version Firmware version is written to the struct.
+ * \return kii_code_t
+ */
 kii_code_t kii_ti_get_firmware_version(
     kii_t* kii,
     kii_ti_firmware_version_t* version);
 
+/**
+ * \brief Put thing type.
+ *
+ * \param [in, out] kii kii_t instance.
+ * \param [in] thing_type String represents thing type.
+ * \return kii_code_t
+ */
 kii_code_t kii_ti_put_thing_type(
     kii_t* kii,
     const char* thing_type);
 
+/**
+ * \brief Put thing state.
+ *
+ * \param [in, out] kii kii_t instance.
+ * \param [in] state_read_cb Callback reads state.
+ * \param [in] state_read_cb_data Context object passed to state_read_cb.
+ * \param [in] opt_content_type Content-Type can be specified when you use data normalizer.
+ * If you don't use data normalizer, set NULL.
+ * \param [in] opt_normalizer_host Specify data normalizer host.
+ * If you don't use data normalizer, set NULL.
+ * \return kii_code_t
+ */
 kii_code_t kii_ti_put_state(
     kii_t* kii,
     KII_CB_READ state_read_cb,
@@ -557,6 +635,18 @@ kii_code_t kii_ti_put_state(
     const char* opt_content_type,
     const char* opt_normalizer_host);
 
+/**
+ * \brief Put thing state in bulk.
+ *
+ * \param [in, out] kii kii_t instance.
+ * \param [in] state_read_cb Callback reads state.
+ * \param [in] state_read_cb_data Context object passed to state_read_cb.
+ * \param [in] opt_content_type Content-Type can be specified when you use data normalizer.
+ * If you don't use data normalizer, set NULL.
+ * \param [in] opt_normalizer_host Specify data normalizer host.
+ * If you don't use data normalizer, set NULL.
+ * \return kii_code_t
+ */
 kii_code_t kii_ti_put_bulk_states(
     kii_t* kii,
     KII_CB_READ state_read_cb,
@@ -564,6 +654,18 @@ kii_code_t kii_ti_put_bulk_states(
     const char* opt_content_type,
     const char* opt_normalizer_host);
 
+/**
+ * \brief Patch thing state.
+ *
+ * \param [in, out] kii kii_t instance.
+ * \param [in] state_read_cb Callback reads state.
+ * \param [in] state_read_cb_data Context object passed to state_read_cb.
+ * \param [in] opt_content_type Content-Type can be specified when you use data normalizer.
+ * If you don't use data normalizer, set NULL.
+ * \param [in] opt_normalizer_host Specify data normalizer host.
+ * If you don't use data normalizer, set NULL.
+ * \return kii_code_t
+ */
 kii_code_t kii_ti_patch_state(
     kii_t* kii,
     KII_CB_READ state_read_cb,
@@ -571,6 +673,18 @@ kii_code_t kii_ti_patch_state(
     const char* opt_content_type,
     const char* opt_normalizer_host);
 
+/**
+ * \brief Patch thing state in bulk.
+ *
+ * \param [in, out] kii kii_t instance.
+ * \param [in] state_read_cb Callback reads state.
+ * \param [in] state_read_cb_data Context object passed to state_read_cb.
+ * \param [in] opt_content_type Content-Type can be specified when you use data normalizer.
+ * If you don't use data normalizer, set NULL.
+ * \param [in] opt_normalizer_host Specify data normalizer host.
+ * If you don't use data normalizer, set NULL.
+ * \return kii_code_t
+ */
 kii_code_t kii_ti_patch_bulk_states(
     kii_t* kii,
     KII_CB_READ state_read_cb,
@@ -578,20 +692,20 @@ kii_code_t kii_ti_patch_bulk_states(
     const char* opt_content_type,
     const char* opt_normalizer_host);
 
-/** start to create request for REST API.
+/** 
+ * \brief Start making REST API call.
  *
  * Between this function and kii_api_call_run(kii_t*), you can call
  * kii_api_call_append_body(kii_t*, const char* size_t) and
  * kii_api_call_append_header(kii_t*, const char*, const char*) any
  * number of times.
  *
- * @param [in] kii SDK object.
- * @param [in] http_method method of http request.
- * @param [in] resource_path resource path of http request.
- * @param [in] content_type content type of http_body.
- * @param [in] set_authentication_header a flag to set or not
- * authentication header.
- * @return result of preparation.
+ * \param [in, out] kii kii_t instance.
+ * \param [in] http_method Method of the http request.
+ * \param [in] resource_path Resource path of http request.
+ * \param [in] content_type Content-Type of request body.
+ * \param [in] set_authentication_header A flag determines whether to send authentication header.
+ * \return kii_code_t.
  */
 kii_code_t kii_api_call_start(
         kii_t* kii,
@@ -600,32 +714,34 @@ kii_code_t kii_api_call_start(
         const char* content_type,
         kii_bool_t set_authentication_header);
 
-/** append request body.
+/**
+ * \brief Append request body.
  *
  * This function must be called between kii_api_call_start(kii_t*,
  * const char*, const char*, const char*, kii_bool_t) and
  * kii_api_call_run(kii_t*).
  *
- * @param [in] kii SDK object.
- * @param [in] chunk part of the body to be appended.
- * @param [in] chunk_size size of the chunk.
- * @return result of addition.
+ * \param [in] kii kii_t instance.
+ * \param [in] chunk Part of the body to be appended.
+ * \param [in] chunk_size Size of the chunk.
+ * \return kii_code_t.
  */
 kii_code_t kii_api_call_append_body(
         kii_t* kii,
         const char* chunk,
         size_t chunk_size);
 
-/** append request header.
+/**
+ * \brief Append request header.
  *
  * This function must be called between kii_api_call_start(kii_t*,
  * const char*, const char*, const char*, kii_bool_t) and
  * kii_api_call_run(kii_t*).
  *
- * @param [in] kii SDK object.
- * @param [in] key key of http header.
- * @param [in] value value of http header.
- * @return result of addition.
+ * \param [in] kii kii_t instance.
+ * \param [in] key Key of http header.
+ * \param [in] value Value of http header.
+ * \return kii_code_t.
  */
 kii_code_t
 kii_api_call_append_header(
@@ -633,22 +749,20 @@ kii_api_call_append_header(
         const char* key,
         const char* value);
 
-/** run with created request for REST API.
+/**
+ * \brief Send request and retrieve response.
+ * Assume HTTP request is built by following APIs:
  *
- * HTTP request is created with following APIs:
- *
- * - kii_api_call_start(kii_t*, const char*,const char*, const char*,
- *   kii_bool_t)
+ * - kii_api_call_start(kii_t*, const char*,const char*, const char*, kii_bool_t)
  * - kii_api_call_append_body(kii_t*, const char*, size_t)
  * - kii_api_call_append_header(kii_t*, const char*, const char*)
  *
- * After creation of HTTP request, this function calls REST API with
- * created request.
  * Response status can be obtained by kii_get_resp_status(kii_t*)
- * Response body is written to the buffer set by kii_api_call_run(kii_t*)
+ * Response body is written to the buffer set by kii_set_buff() and
+ * its size can be determined by kii_get_resp_body_length()
  *
- * @param [in] kii SDK object.
- * @return result of the request creation.
+ * \param [in] kii SDK object.
+ * \return kii_code_t.
  */
 kii_code_t kii_api_call_run(kii_t* kii);
 
@@ -675,9 +789,9 @@ kii_code_t kii_api_call_run(kii_t* kii);
  * Typically, 4096 bytes is enough. However it varies depending on your data schema used to define
  * object or thing. If object becomes large, consider putting them in object body.
 
- * \param [out] kii instance.
- * \param [in] buffer pointer to the buffer.
- * \param [in] buff_size size of the buffer.
+ * \param [out] kii kii_t instance.
+ * \param [in] buff Pointer to the buffer.
+ * \param [in] buff_size Size of the buffer.
  */
 void kii_set_buff(kii_t* kii, char* buff, size_t buff_size);
 
@@ -700,9 +814,9 @@ void kii_set_buff(kii_t* kii, char* buff, size_t buff_size);
  * such as kii_auth_thing(), kii_post_object(), etc.
  * and memory used by the buffer can be safely freed after the method returned.
 
- * \param [out] kii instance.
- * \param [in] buffer pointer to the buffer.
- * \param [in] buff_size size of the buffer.
+ * \param [out] kii kii_t instance.
+ * \param [in] buff Pointer to the buffer.
+ * \param [in] buff_size Size of the buffer.
  */
 void kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size);
 
@@ -722,9 +836,9 @@ void kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size);
  * such as kii_auth_thing(), kii_post_object(), etc.
  * and memory used by the buffer can be safely freed after the method returned.
 
- * \param [out] kii instance.
- * \param [in] buffer pointer to the buffer.
- * \param [in] buff_size size of the buffer.
+ * \param [out] kii kii_t instance.
+ * \param [in] buff Pointer to the buffer.
+ * \param [in] buff_size Size of the buffer.
  */
 void kii_set_resp_header_buff(kii_t* kii, char* buff, size_t buff_size);
 
