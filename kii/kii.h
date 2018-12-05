@@ -20,25 +20,72 @@ extern "C" {
 #define M_KII_LOG(...)
 #endif
 
+/**
+ * \brief MQTT task name.
+ * Name can be referenced inside task create callback set by
+ * kii_set_cb_task_create().
+ */
 #define KII_TASK_NAME_MQTT "kii_mqtt_task"
 
-typedef size_t (*KII_CB_WRITE)(char *ptr, size_t size, void *userdata);
+/**
+ * \brief Callback writes data.
+ *
+ * Used to propagate response body.
+ * The callback is called multiple times until the whole response body is propagated.
+ *
+ * Following APIs require this callback implementation since the response body could be large.
+ * - kii_download_object_body()
+ *
+ * If you dealing with file, You may open the file before the API call and
+ * close after returned.
+ *
+ * \param [in] buff Buffer stores data to be written.
+ * You need to determine its size by size argument since null termination is not ensured.
+ * \param [in] size Size of the data chunk requested to write.
+ * \param [in] userdata Context object pointer set by APIs requires this callback.
+ * \return Size actually written. If the returned value and size argument value is different,
+ * API execution is aborted and API returns KII_ERR_WRITE_CALLBACK.
+ */
+typedef size_t (*KII_CB_WRITE)(char *buff, size_t size, void *userdata);
+/**
+ * \brief Callback read data.
+ *
+ * Used to propagate request body.
+ * The callback is called multiple times until the implementation returns 0.
+ *
+ * Following APIs require this callback implementation since the request body could be large.
+ * - kii_upload_object_body()
+ * - kii_ti_put_state()
+ * - kii_ti_put_bulk_states()
+ * - kii_ti_patch_state()
+ * - kii_ti_patch_bulk_states()
+ *
+ * If you dealing with file, You may open the file before the API call and
+ * close after returned.
+ *
+ * \param [out] buff Buffer stores data read.
+ * \param [in] size Requested size to read.
+ * \param [in] userdata Context object pointer set by APIs requires this callback.
+ * \return Size actually read. Returning 0 indicates that whole data is read.
+ */
 typedef size_t (*KII_CB_READ)(char *buffer, size_t size, void *userdata);
-
+/**
+ * \brief Error codes definition.
+ */
 typedef enum kii_code_t
 {
-    KII_ERR_OK,
-    KII_ERR_SOCK_CONNECT,
-    KII_ERR_SOCK_CLOSE,
-    KII_ERR_SOCK_SEND,
-    KII_ERR_SOCK_RECV,
-    KII_ERR_HEADER_CALLBACK,
-    KII_ERR_WRITE_CALLBACK,
-    KII_ERR_ALLOCATION,
-    KII_ERR_TOO_LARGE_DATA,
-    KII_ERR_RESP_STATUS,
-    KII_ERR_PARSE_JSON,
-    KII_ERR_FAIL
+    KII_ERR_OK, /**< \brief Succeeded */
+    KII_ERR_SOCK_CONNECT, /**< \brief Socket error in connection. */
+    KII_ERR_SOCK_CLOSE, /**< \brief Socket error in closing. */
+    KII_ERR_SOCK_SEND, /**< \brief Socket error in sending data. */
+    KII_ERR_SOCK_RECV, /**< \brief Socket error in receiving data. */
+    KII_ERR_HEADER_CALLBACK, /**< \brief Error in header callback. */
+    KII_ERR_WRITE_CALLBACK, /**< \brief Error in write callback. */
+    KII_ERR_ALLOCATION, /**< \brief Error in memory allocation. */
+    KII_ERR_TOO_LARGE_DATA, /**< \brief Data is larger than expected. */
+    KII_ERR_RESP_STATUS, /**< \brief REST API returns error status code. */
+    KII_ERR_PARSE_JSON, /**< \brief REST API returns error status code. */
+    KII_ERR_FAIL /**< \brief Other errors. */
 } kii_code_t;
 
 /** represents scope of bucket/ topic. */
