@@ -43,7 +43,7 @@ typedef enum tio_code_t {
     TIO_ERR_RESP_STATUS, /**< \brief REST API returns error status code. */
     TIO_ERR_PARSE_JSON, /**< \brief Error in parsing JSON. */
     TIO_ERR_CREATE_TASK, /**< \brief Error in creating task. */
-    TIO_ERR_FAIL  /**< \brief Other errors. */
+    TIO_ERR_FAIL /**< \brief Other errors. */
 } tio_code_t;
 
 /**
@@ -148,7 +148,10 @@ typedef size_t (*TIO_CB_READ)(char *buffer, size_t size, void *userdata);
  * Called when received remote control command from cloud.
  * Command may includes multiple actions. The callback is called per action.
  *
- * \param [in] action includes alias_name, action_name and action 
+ * \param [in] action Includes alias_name, action_name and action value.
+ * \param [out] err Implementation can set error when the given action is failed to execute.
+ * Reported error is recoreded in cloud. When succeeded, the argument can be ignored.
+ * \param [in,out] userdata Context object pointer given to tio_handler_start().
  */
 typedef tio_bool_t (*TIO_CB_ACTION)(tio_action_t* action, tio_action_err_t* err, void* userdata);
 /**
