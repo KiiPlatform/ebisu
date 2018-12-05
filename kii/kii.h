@@ -842,10 +842,38 @@ void kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size);
  */
 void kii_set_resp_header_buff(kii_t* kii, char* buff, size_t buff_size);
 
-void kii_set_cb_http_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata);
-void kii_set_cb_http_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata);
-void kii_set_cb_http_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata);
-void kii_set_cb_http_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata);
+/**
+ * \brief Set socket connect callback used for HTTP(S)
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] cb_connect Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_connect.
+ */
+void kii_set_cb_http_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
+/**
+ * \brief Set socket send callback used for HTTP(S)
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] cb_send Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_send.
+ */
+void kii_set_cb_http_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb_send, void* userdata);
+/**
+ * \brief Set socket recv callback used for HTTP(S)
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] cb_recv Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_recv.
+ */
+void kii_set_cb_http_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb_recv, void* userdata);
+/**
+ * \brief Set socket close callback used for HTTP(S)
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] cb_close Callback function pointer.
+ * \param [in] userdata Context object pointer passed to cb_close.
+ */
+void kii_set_cb_http_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
 
 /**
  * \brief Set buffer used to parse MQTT message.
@@ -861,8 +889,8 @@ void kii_set_cb_http_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata
  * Avoid defining large Commands.
 
  * \param [out] kii kii_t instance.
- * \param [in] buffer pointer to the buffer.
- * \param [in] buff_size size of the buffer.
+ * \param [in] buffer Pointer to the buffer.
+ * \param [in] buff_size Size of the buffer.
  */
 void kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size);
 
