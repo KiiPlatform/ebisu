@@ -88,36 +88,36 @@ typedef enum kii_code_t
     KII_ERR_FAIL /**< \brief Other errors. */
 } kii_code_t;
 
-/** represents scope of bucket/ topic. */
+/** \brief Represents scope of bucket/ topic. */
 typedef enum kii_scope_type_t
 {
-    KII_SCOPE_APP,
-    KII_SCOPE_USER,
-    KII_SCOPE_GROUP,
-    KII_SCOPE_THING
+    KII_SCOPE_APP, /**< \brief App scope */
+    KII_SCOPE_USER, /**< \brief User scope */
+    KII_SCOPE_GROUP, /**< \brief Group scope */
+    KII_SCOPE_THING /**< \brief Thing scope */
 } kii_scope_type_t;
 
-/** represents bucket */
+/** \brief Represents bucket */
 typedef struct kii_bucket_t
 {
-    kii_scope_type_t scope;
-    const char *scope_id;
-    const char *bucket_name;
+    kii_scope_type_t scope; /**< \brief Scope of the bucket. */
+    const char *scope_id; /**< \brief ID of the scope. (eg. User ID, Thing ID, etc.) */
+    const char *bucket_name; /**< \brief Name of the bucket. */
 } kii_bucket_t;
 
-/** represents topic */
+/** \brief Represents topic */
 typedef struct kii_topic_t {
-    kii_scope_type_t scope;
-    const char* scope_id;
-    const char* topic_name;
+    kii_scope_type_t scope; /**< \brief Scope of the topic. */
+    const char* scope_id; /**< \brief ID of the scope. (App/ User/ Group/ Thing ID) */
+    const char* topic_name; /**< \brief Name of the topic. */
 } kii_topic_t;
 
-/** represents author of SDK api. */
+/** \brief Represents author of API. */
 typedef struct kii_author_t
 {
-    /** ID of the author */
+    /** \brief ID of the author */
     char author_id[128];
-    /** access token of the author */
+    /** \brief access token of the author */
     char access_token[128];
 } kii_author_t;
 
