@@ -369,7 +369,8 @@ kii_code_t kii_delete_object(
 		const kii_bucket_t* bucket,
 		const char* object_id);
 
-/** Get the object
+/**
+ * \brief Get Kii object.
  *  When succeeded, obtained object data is cached in kii_core_t#response_body.
  *  \param [inout] kii sdk instance.
  *  \param [in] bucket specify the bucket of which object is stored.
@@ -836,6 +837,14 @@ const char* kii_get_etag(kii_t* kii);
 
 int kii_get_resp_status(kii_t* kii);
 
+/**
+ * \brief Get response body length.
+ * If the response is chunked, decoded response body length is returned.
+ *
+ * \param [in] kii kii_t instance.
+ * \return Length of response body.
+ */
+size_t kii_get_resp_body_length(kii_t* kii);
 
 typedef enum
 {
