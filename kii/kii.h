@@ -1039,20 +1039,22 @@ void kii_set_cb_task_exit(kii_t* kii, KII_CB_TASK_EXIT cb_exit, void* userdata);
  */
 void kii_set_cb_delay_ms(kii_t* kii, KII_CB_DELAY_MS cb_delay_ms, void* userdata);
 
-/** Set JSON paraser resource
- * @param [inout] kii SDK instance.
- * @param [in] resource to be used parse JSON. 256 tokens_num might be enough for almost all usecases.
+/**
+ * \brief Set JSON parser resource
+ * \param [out] kii kii_t instance.
+ * \param [in] resource to be used parse JSON. 256 tokens_num might be enough for almost all usecases.
  * If you need to parse large object or allocate exact size of memory used,
  * see kii_set_cb_json_parser_resource(kii_t, JKII_CB_RESOURCE_ALLOC, JKII_CB_RESOURCE_FREE)
  */
 void kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource);
 
-/** Set JSON paraser resource allocators.
- *  To use Allocator instead of fixed size memory given by kii_set_json_parser_resource(kii_t, jkii_resource_t),
- *  call kii_set_json_parser_resource(kii_t, jkii_resource_t) with NULL resource argument.
- * @param [inout] kii SDK instance.
- * @param [in] cb_alloc allocator callback.
- * @param [in] cb_free free callback should free memories allocated in cb_alloc.
+/** 
+ * \brief Set JSON parser resource allocators.
+ * To use Allocator instead of fixed size memory given by kii_set_json_parser_resource(kii_t, jkii_resource_t),
+ * call kii_set_json_parser_resource(kii_t, jkii_resource_t) with NULL resource argument.
+ * \param [out] kii kii_t instance.
+ * \param [in] cb_alloc allocator callback.
+ * \param [in] cb_free free callback should free memories allocated in cb_alloc.
  */
 void kii_set_cb_json_parser_resource(kii_t* kii,
     JKII_CB_RESOURCE_ALLOC cb_alloc,
@@ -1063,6 +1065,12 @@ void kii_set_cb_json_parser_resource(kii_t* kii,
 
  * If this method is not called, default allocators implemented with malloc/free is used to
  * allocate linked list used to construct HTTP request headers.
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] cb_alloc Callback allocates memory.
+ * \param [in] cb_free Callback free memory.
+ * \param [in] cb_alloc_data Context object pointer passed to cb_alloc.
+ * \param [in] cb_free_data Context object pointer passed to cb_free.
  */
 void kii_set_cb_slist_resource(
     kii_t* kii,
@@ -1071,8 +1079,20 @@ void kii_set_cb_slist_resource(
     void* cb_alloc_data,
     void* cb_free_data);
 
+/**
+ * \brief Get Etag value.
+ *
+ * \param [in] kii kii_t instance.
+ * \return Etag value in Etag response header.
+ */
 const char* kii_get_etag(kii_t* kii);
 
+/**
+ * \brief Get HTTP status code.
+ *
+ * \param [in] kii kii_t instance.
+ * \return HTTP status code.
+ */
 int kii_get_resp_status(kii_t* kii);
 
 /**
