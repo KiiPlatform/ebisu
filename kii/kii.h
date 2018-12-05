@@ -296,7 +296,7 @@ kii_code_t kii_register_thing(
  * \param [in] object_data Key-Value pair of the object in json format.
  * \param [in] object_content_type Content-Type of the object. If null,
  * application/json will be applied.
- * \param [out] object_id Created object ID is written to the buffer
+ * \param [out] out_object_id Created object ID is written to the buffer
  * when succeeded to create new object.
  * Memory used for the struct and char array insidde
  * must be allocated/ free by the application.
@@ -354,7 +354,7 @@ kii_code_t kii_patch_object(
  * \brief Delete Kii object.
 
  * \param [in,out] kii kii_t instance.
- * \param [in] Specify the bucket to which the object is stored.
+ * \param [in] bucket Specify the bucket to which the object is stored.
  * \param [in] object_id Specify the id of the object.
  * \return  kii_code_t
  */
@@ -369,7 +369,7 @@ kii_code_t kii_delete_object(
  * and its length can be determined by kii_get_resp_body_length().
 
  * \param [in,out] kii kii_t instance.
- * \param [in] Specify the bucket to which the object is stored.
+ * \param [in] bucket Specify the bucket to which the object is stored.
  * \param [in] object_id Specify the id of the object.
  * \return  kii_code_t
  */
@@ -401,7 +401,7 @@ kii_code_t kii_upload_object_body(
 /**
  * \brief Download object body.
 
- * \param [in,out] kii_t instance.
+ * \param [in,out] kii kii_t instance.
  * \param [in] bucket Specify the bucket to which the object is stored.
  * \param [in] object_id Specify the id of the object to which the body is stored.
  * \param [in] write_cb Callback writes body data.
@@ -883,7 +883,7 @@ void kii_set_cb_http_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb_close, void* us
  * Avoid defining large Commands.
 
  * \param [out] kii kii_t instance.
- * \param [in] buffer Pointer to the buffer.
+ * \param [in] buff Pointer to the buffer.
  * \param [in] buff_size Size of the buffer.
  */
 void kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size);
