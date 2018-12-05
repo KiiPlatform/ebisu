@@ -371,7 +371,7 @@ void tio_handler_set_cb_sock_send_mqtt(tio_handler_t* handler, KHC_CB_SOCK_SEND 
  */
 void tio_handler_set_cb_sock_recv_mqtt(tio_handler_t* handler, KHC_CB_SOCK_RECV cb_recv, void* userdata);
 /**
- * \brief Set socket recv callback used for MQTT(S)
+ * \brief Set socket close callback used for MQTT(S)
  *
  * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
  * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
@@ -395,7 +395,7 @@ void tio_handler_set_cb_sock_close_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CLOS
  */
 void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_sock_recv_sec);
 /**
- * \brief Set timeout of receiving data from socket user for MQTT(S)
+ * \brief Set timeout of sending data from socket user for MQTT(S)
  *
  * This setting is mandatory to achieve MQTT keep-alive mechanism.
  * We use timeout instead of requirering system clock access to periodically send pingReq.
@@ -403,7 +403,7 @@ void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_s
  * must have same timeout specified by to_sock_send_sec.
  *
  * \param [out] handler tio_handler_t instance.
- * \param [in] to_sock_send_sec Socket recv timeout in seconds.
+ * \param [in] to_sock_send_sec Socket send timeout in seconds.
  */
 void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, unsigned int to_sock_send_sec);
 /**
