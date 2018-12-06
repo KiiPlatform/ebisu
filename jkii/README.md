@@ -1,7 +1,7 @@
 # jkii
 
 jkii is JSON parser library written in c (conforms to c99).
-It Allows to specify multiple fields by jsonpath notation to obtain its values.
+It allows to specify multiple fields by jsonpath notation to obtain its values.
 This design is inspired by [microjson](http://www.catb.org/esr/microjson/).
 
 jkii is designed to fit resource limited environment.
