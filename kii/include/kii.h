@@ -261,7 +261,7 @@ void kii_set_app_id(
  * After the authentication, access token is stored in
  * kii instance and used to authorize other API calls.
 
- * \param [inout] kii kii_t instance.
+ * \param [in,out] kii kii_t instance.
  * \param [in] vendor_thing_id Thing identifier given by the vendor.
  * \param [in] password Password of the thing given by the vendor.
  * \return kii_code_t.
