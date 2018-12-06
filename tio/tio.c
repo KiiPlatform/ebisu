@@ -213,7 +213,7 @@ void tio_handler_set_app(
     kii_set_app_id(&handler->_kii, app_id);
 }
 
-static void _cb_receive_push(char* payload, size_t payload_length, void* userdata) {
+static void _cb_receive_push(const char* payload, size_t payload_length, void* userdata) {
     tio_handler_t* handler = (tio_handler_t*)userdata;
     tio_bool_t skip = KII_FALSE;
     if (handler->_cb_push != NULL) {
