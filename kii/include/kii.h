@@ -117,10 +117,10 @@ typedef struct kii_author_t
 
 /** \brief Represents MQTT endpoint. */
 typedef struct kii_mqtt_endpoint_t {
-    char username[64]; /** \brief Username used to connect. */
-    char password[128]; /** \brief Password used to connect. */
-    char topic[64]; /** \brief Topic ID to be subscribed. */
-    char host[64]; /** \brief Host address */
+    char username[64]; /**< \brief Username used to connect. */
+    char password[128]; /**< \brief Password used to connect. */
+    char topic[64]; /**< \brief Topic ID to be subscribed. */
+    char host[64]; /**< \brief Host address */
     /**
      * \brief Port number used for non-secure connection.
      * Highly recommend use port_ssl.
