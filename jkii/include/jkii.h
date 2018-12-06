@@ -85,7 +85,7 @@ typedef enum jkii_field_err_t {
     JKII_FIELD_ERR_OK,
 
     /** Type of field specified jkii_field_t#type is unmathced.*/
-    JKII_FIELD_ERR_TYPE_UNMATCH,
+    JKII_FIELD_ERR_TYPE_MISMATCH,
 
     /** Field specified by jkii_field_t#name is not found. */
     JKII_FIELD_ERR_NOT_FOUND,
@@ -245,7 +245,7 @@ typedef struct jkii_field_t {
      *   - if expected type is not
      *     jkii_field_type_t#JKII_FIELD_TYPE_ANY, then
      *     jkii_field_t#result becomes
-     *     jkii_parse_err_t#JKII_FIELD_ERR_TYPE_UNMATCH.
+     *     jkii_parse_err_t#JKII_FIELD_ERR_TYPE_MISMATCH.
      *   - if expected type is
      *     jkii_field_type_t#JKII_FIELD_TYPE_ANY, then
      *     jkii_field_t#result become
