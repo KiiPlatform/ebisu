@@ -1,28 +1,11 @@
-ifdef DEBUG
-	override CFLAGS += -g -DDEBUG
-endif
+DOCDIR=html
 
-override CFLAGS += -std=c99 -Wall -fPIC -shared
-
-SOURCES = $(wildcard src/*.c)
-SOURCES += libs/jsmn/jsmn.c
-INCLUDES = -Ilibs/jsmn -Iinclude
-
-TARGET = libjkii.so
-
-all: clean $(TARGET)
-
-$(TARGET):
-	gcc $(CFLAGS) $(SOURCES) $(INCLUDES) -o $@
-
-test:
-	make test -C unit-test
+all: clean doc
 
 doc:
 	doxygen Doxyfile
 
 clean:
-	touch $(TARGET)
-	rm -rf $(TARGET)
+	rm -rf $(DOCDIR)
 
-.PHONY: clean
+.PHONY: clean doc
