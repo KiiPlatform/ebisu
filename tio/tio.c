@@ -288,7 +288,7 @@ tio_code_t tio_handler_start(
 
     handler->_cb_action = cb_action;
     handler->_cb_action_data = userdata;
-    kii_code_t res = kii_start_push_routine(
+    kii_code_t res = kii_start_push_task(
         &handler->_kii,
         handler->_keep_alive_interval,
         _cb_receive_push,

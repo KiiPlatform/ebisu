@@ -159,7 +159,7 @@ struct kii_t;
  * You need to determine size of the message by message_length
  * argument since it may not be null terminated.
  * \param [in] message_length Length of the message.
- * \param [in] userdata Context object pointer given to kii_start_push_routine().
+ * \param [in] userdata Context object pointer given to kii_start_push_task().
  */
 typedef void (*KII_PUSH_RECEIVED_CB)(
                 const char* message,
@@ -528,7 +528,7 @@ kii_code_t kii_get_mqtt_endpoint(
  * \param [in] userdata Context object passed to cb_push.
  * \return kii_code_t
  */
-kii_code_t kii_start_push_routine(
+kii_code_t kii_start_push_task(
 		kii_t* kii,
         unsigned int keep_alive_interval_sec,
 		KII_PUSH_RECEIVED_CB cb_push,
@@ -873,7 +873,7 @@ void kii_set_cb_http_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb_close, void* us
  * \brief Set buffer used to parse MQTT message.
 
  * This method must be called and set valid buffer before calling method
- * kii_start_push_routine()
+ * kii_start_push_task()
  * The buffer is used to parse MQTT message.
 
  * You can change the size of buffer depending on the request/ response size.
@@ -977,7 +977,7 @@ void kii_set_cb_task_create(kii_t* kii, KII_CB_TASK_CREATE cb_task_create, void*
  * If this method is not called or NULL is set, task exits only when un-recoverble error occurs.
  * If you need cancellation mechanism, you need to set this callback.
  * Terminate task without using this callback may cause memory leak.
- * This method must be called before calling kii_start_push_routine().
+ * This method must be called before calling kii_start_push_task().
 
  * In case checking cancellation flag in continue_cb, the flag might be set by other task/ thread.
  * Implementation must ensure consistency of the flag by using Mutex, etc.
