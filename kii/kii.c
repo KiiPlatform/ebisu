@@ -230,6 +230,10 @@ int kii_get_resp_status(kii_t* kii) {
     return khc_get_status_code(&kii->_khc);
 }
 
+size_t kii_get_resp_body_length(kii_t* kii) {
+    return kii->_rw_buff_written;
+}
+
 kii_code_t _convert_code(khc_code khc_c) {
     switch(khc_c) {
         case KHC_ERR_OK:

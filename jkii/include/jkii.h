@@ -322,7 +322,7 @@ typedef struct jkii_field_t {
 /** Parse JSON string.
  *  \param [in] pointer of JSON string.
  *  \param [in] length of JSON string.
- *  \param [inout] field of kii JSON parser.
+ *  \param [in,out] field of kii JSON parser.
  *  \param [in] resource of parser.
  *  \return parse JSON result.
  */
@@ -335,7 +335,7 @@ jkii_parse_err_t jkii_parse(
 /** Parse JSON string with custom memory allocator.
  *  \param [in] pointer of JSON string.
  *  \param [in] length of JSON string.
- *  \param [inout] field of kii JSON parser.
+ *  \param [in,out] field of kii JSON parser.
  *  \param [in] cb_alloc allocate resource
  *  \param [in] cb_free free resource
  *  \return parse JSON result.
