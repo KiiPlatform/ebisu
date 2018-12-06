@@ -39,6 +39,10 @@ TEST_CASE( "MQTT state test" ) {
 
     kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
 
+    khct::cb::PushCtx push_ctx;
+    kii._cb_push_received = khct::cb::cb_push;
+    kii._push_data = &push_ctx;
+
     mqtt_state_t state;
 
     _init_mqtt_state(&kii, &state);
@@ -310,4 +314,79 @@ TEST_CASE( "MQTT state test" ) {
     REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
     REQUIRE( state.info.error == KII_MQTT_ERR_OK );
     REQUIRE( call_recv == 3 );
+
+    call_recv = 0;
+    mqtt_ctx.on_recv = [=, &call_recv, &ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        switch (call_recv) {
+            case 0: // fixed header - Publish
+                REQUIRE( length_to_read == 1);
+                buffer[0] = 0x30;
+                *out_actual_length = 1;
+                break;
+            case 1: // fixed header - remaining length[0] (= 306)
+                REQUIRE( length_to_read == 1);
+                buffer[0] = (char)0xb2;
+                *out_actual_length = 1;
+                break;
+            case 2: // fixed header - remaining length[1] (= 306)
+                REQUIRE( length_to_read == 1);
+                buffer[0] = 0x02;
+                *out_actual_length = 1;
+                break;
+            default:
+                FAIL();
+                break;
+        }
+        ++call_recv;
+        return KHC_SOCK_OK;
+    };
+
+    _mqtt_state_recv_ready(&state);
+    REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+    REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+    REQUIRE( call_recv == 3 );
+
+    call_recv = 0;
+    ss.clear();
+    ss << (char)0x00 << (char)0x0a << "dummyTopic";
+    string push_message =
+        "{"
+        "  \"schema\" : \"\","
+        "  \"schemaVersion\" : 0,"
+        "  \"target\" : \"dummyTarget\","
+        "  \"issuer\" : \"dummyUser\","
+        "  \"actions\" : ["
+        "    {"
+        "      \"AirconAlias\" : ["
+        "        {"
+        "          \"power\" : true"
+        "        },"
+        "        {"
+        "          \"setPresetTemperature\" : 20"
+        "        }"
+        "      ]"
+        "    }"
+        "  ],"
+        "  \"title\" : \"dummyTitle\","
+        "  \"description\" : \"\""
+        "}";
+    ss << push_message;
+    mqtt_ctx.on_recv = [=, &call_recv, &ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        ++call_recv;
+        *out_actual_length = ss.read(buffer, length_to_read).gcount();
+        return KHC_SOCK_OK;
+    };
+
+    bool call_push = false;
+    push_ctx.on_push = [=, &call_push](char* message, size_t message_length) {
+        call_push = true;
+        REQUIRE( message_length == push_message.length() );
+        REQUIRE( strncmp(message, push_message.c_str(), message_length) == 0 );
+    };
+
+    _mqtt_state_recv_msg(&state);
+    REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+    REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+    REQUIRE( call_recv == 1 );
+    REQUIRE( call_push );
 }

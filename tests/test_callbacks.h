@@ -54,5 +54,14 @@ inline size_t cb_header(char *buffer, size_t size, void *userdata) {
 
 inline void cb_delay_ms(unsigned int msec, void *userdata) {
 }
+
+struct PushCtx {
+  std::function<void(char *message, size_t message_length)> on_push;
+};
+
+inline void cb_push(char* message, size_t message_length, void *userdata) {
+    PushCtx* ctx = (PushCtx*)(userdata);
+    ctx->on_push(message, message_length);
+}
 }
 }
