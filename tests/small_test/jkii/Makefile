@@ -11,7 +11,7 @@ INCLUDES=-I$(TEST_ROOT_DIR) -I$(JKII_BUILD_DIR)/usr/local/include
 
 TARGET=testapp
 
-TEST_RESULT_DIR=./test-results/junit
+TEST_RESULT_DIR=test-results/junit
 TEST_RESULT=$(TEST_RESULT_DIR)/test-result.xml
 
 ifdef MEMCHECK
@@ -21,7 +21,7 @@ TESTCMD=./$(TARGET)
 endif
 
 ifdef JUNIT
-TESTCMD+= -r junit -o ../$(TEST_RESULT)
+TESTCMD+= -r junit -o $(TEST_RESULT)
 endif
 
 all: clean $(TARGET)
