@@ -198,14 +198,14 @@ typedef struct jkii_field_t {
      *
      * \code
      * {
-     *     "ligtht" : {
+     *     "light" : {
      *         "color" : [ 0, 128, 255]
      *      }
      * }
      * \endcode
      *
      * \code
-     * path ="/ligtht/color/[0]";
+     * path ="/light/color/[0]";
      * \endcode
      *
      * In rare cases, like following:
