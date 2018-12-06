@@ -389,4 +389,63 @@ TEST_CASE( "MQTT state test" ) {
     REQUIRE( state.info.error == KII_MQTT_ERR_OK );
     REQUIRE( call_recv == 1 );
     REQUIRE( call_push );
+
+    call_recv = 0;
+    mqtt_ctx.on_recv = [=, &call_recv, &ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        switch (call_recv) {
+            case 0: // fixed header - PingResp
+                REQUIRE( length_to_read == 1);
+                buffer[0] = 0xD0;
+                *out_actual_length = 1;
+                break;
+            case 1: // fixed header - remaining length (= 0)
+                REQUIRE( length_to_read == 1);
+                buffer[0] = (char)0x00;
+                *out_actual_length = 1;
+                break;
+            default:
+                FAIL();
+                break;
+        }
+        ++call_recv;
+        return KHC_SOCK_OK;
+    };
+
+    _mqtt_state_recv_ready(&state);
+    REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+    REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+    REQUIRE( call_recv == 2 );
+    call_recv = 0;
+    mqtt_ctx.on_recv = [=, &call_recv, &ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        switch (call_recv) {
+            case 0: // fixed header - Other unknown
+                REQUIRE( length_to_read == 1);
+                buffer[0] = 0xF0;
+                *out_actual_length = 1;
+                break;
+            case 1: // fixed header - remaining length (= 4)
+                REQUIRE( length_to_read == 1);
+                buffer[0] = (char)0x04;
+                *out_actual_length = 1;
+                break;
+            case 2: // remaining.
+                REQUIRE( length_to_read == 256);
+                buffer[0] = 'T';
+                buffer[1] = 'E';
+                buffer[2] = 'S';
+                buffer[4] = 'T';
+                *out_actual_length = 4;
+                break;
+            default:
+                FAIL();
+                break;
+        }
+        ++call_recv;
+        return KHC_SOCK_OK;
+    };
+
+    _mqtt_state_recv_ready(&state);
+    REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+    REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+    REQUIRE( call_recv == 3 );
 }
