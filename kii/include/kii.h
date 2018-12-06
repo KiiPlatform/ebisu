@@ -1,6 +1,6 @@
 /**
  * @file kii.h
- * @brief This is a file defining Kii Cloud APIs.
+ * @brief Provides REST API access.
  */
 #ifndef KII_H
 #define KII_H
