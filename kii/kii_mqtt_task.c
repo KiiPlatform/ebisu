@@ -223,7 +223,7 @@ khc_sock_code_t _mqtt_recv_remaining_trash(kii_t* kii, unsigned long remaining_l
     size_t total_received = 0;
     khc_sock_code_t res = KHC_SOCK_FAIL;
     while (total_received < remaining_length) {
-        khc_sock_code_t res = kii->_cb_mqtt_sock_recv(
+        res = kii->_cb_mqtt_sock_recv(
             kii->_mqtt_sock_recv_ctx,
             buff,
             buff_size,
