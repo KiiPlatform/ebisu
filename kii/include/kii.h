@@ -619,7 +619,8 @@ kii_code_t kii_ti_put_thing_type(
  * \param [in] opt_content_type Content-Type can be specified when you use data normalizer.
  * If you don't use data normalizer, set NULL.
  * \param [in] opt_content_encoding Content-Encoding can be specified when you use data normalizer.
- * If you don't use data normalizer, set NULL.
+ * If you don't use data normalizer, set NULL. Please note that sdk doesn't encode the state.
+ * We expect app encodes state beforehand and encoded state is read from KII_CB_READ callback.
  * \param [in] opt_normalizer_host Specify data normalizer host.
  * If you don't use data normalizer, set NULL.
  * \return kii_code_t
@@ -641,7 +642,8 @@ kii_code_t kii_ti_put_state(
  * \param [in] opt_content_type Content-Type can be specified when you use data normalizer.
  * If you don't use data normalizer, set NULL.
  * \param [in] opt_content_encoding Content-Encoding can be specified when you use data normalizer.
- * If you don't use data normalizer, set NULL.
+ * If you don't use data normalizer, set NULL. Please note that sdk doesn't encode the state.
+ * We expect app encodes state beforehand and encoded state is read from KII_CB_READ callback.
  * \param [in] opt_normalizer_host Specify data normalizer host.
  * If you don't use data normalizer, set NULL.
  * \return kii_code_t
@@ -663,7 +665,8 @@ kii_code_t kii_ti_put_bulk_states(
  * \param [in] opt_content_type Content-Type can be specified when you use data normalizer.
  * If you don't use data normalizer, set NULL.
  * \param [in] opt_content_encoding Content-Encoding can be specified when you use data normalizer.
- * If you don't use data normalizer, set NULL.
+ * If you don't use data normalizer, set NULL. Please note that sdk doesn't encode the state.
+ * We expect app encodes state beforehand and encoded state is read from KII_CB_READ callback.
  * \param [in] opt_normalizer_host Specify data normalizer host.
  * If you don't use data normalizer, set NULL.
  * \return kii_code_t
@@ -685,7 +688,8 @@ kii_code_t kii_ti_patch_state(
  * \param [in] opt_content_type Content-Type can be specified when you use data normalizer.
  * If you don't use data normalizer, set NULL.
  * \param [in] opt_content_encoding Content-Encoding can be specified when you use data normalizer.
- * If you don't use data normalizer, set NULL.
+ * If you don't use data normalizer, set NULL. Please note that sdk doesn't encode the state.
+ * We expect app encodes state beforehand and encoded state is read from KII_CB_READ callback.
  * \param [in] opt_normalizer_host Specify data normalizer host.
  * If you don't use data normalizer, set NULL.
  * \return kii_code_t
