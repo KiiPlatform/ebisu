@@ -307,9 +307,9 @@ typedef struct khc {
  * 
  * You may use this method when you start new session.
  * \param [out] khc instance.
- * \see khc_set_zero_excl_cb(khc*)
+ * \see khc_init_excl_cb(khc*)
  */
-void khc_set_zero(khc* khc);
+void khc_init(khc* khc);
 
 /**
  * \brief Set members of khc 0/NULL.
@@ -325,9 +325,9 @@ void khc_set_zero(khc* khc);
  * remain untouched.
  * You may use this method when you start new session and reuse same callback and userdata pointer.
  * \param [out] khc instance.
- * \see khc_set_zero(khc*)
+ * \see khc_init(khc*)
  */
-void khc_set_zero_excl_cb(khc* khc);
+void khc_init_excl_cb(khc* khc);
 
 /**
  * \brief Perform the HTTP session

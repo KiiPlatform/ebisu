@@ -10,7 +10,7 @@
 
 TEST_CASE( "HTTP minimal" ) {
   khc http;
-  khc_set_zero(&http);
+  khc_init(&http);
   const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
   const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
 
@@ -172,7 +172,7 @@ TEST_CASE( "HTTP minimal" ) {
 
 TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   khc http;
-  khc_set_zero(&http);
+  khc_init(&http);
   const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
   const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
 
@@ -486,7 +486,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
 
 TEST_CASE( "Socket send partial" ) {
   khc http;
-  khc_set_zero(&http);
+  khc_init(&http);
   const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
   const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
 

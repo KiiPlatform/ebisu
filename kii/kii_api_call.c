@@ -10,7 +10,7 @@ kii_code_t kii_api_call_start(
         const char* content_type,
         kii_bool_t set_authentication_header)
 {
-    khc_set_zero_excl_cb(&kii->_khc);
+    khc_init_excl_cb(&kii->_khc);
     _reset_buff(kii);
 
     khc_set_host(&kii->_khc, kii->_app_host);

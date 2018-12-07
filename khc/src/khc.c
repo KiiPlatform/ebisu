@@ -27,7 +27,7 @@ khc_code khc_perform(khc* khc) {
   return res;
 }
 
-void khc_set_zero(khc* khc) {
+void khc_init(khc* khc) {
   // Callbacks.
   khc->_cb_write = NULL;
   khc->_write_data = NULL;
@@ -50,10 +50,10 @@ void khc_set_zero(khc* khc) {
   khc->_cb_sock_close = NULL;
   khc->_sock_ctx_close = NULL;
 
-  khc_set_zero_excl_cb(khc);
+  khc_init_excl_cb(khc);
 }
 
-void khc_set_zero_excl_cb(khc* khc) {
+void khc_init_excl_cb(khc* khc) {
   khc->_req_headers = NULL;
   khc->_host[0] = '\0';
   khc->_path[0] = '\0';

@@ -10,7 +10,7 @@
 
 TEST_CASE( "HTTP chunked response test" ) {
   khc http;
-  khc_set_zero(&http);
+  khc_init(&http);
   const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
 
   ifstream ifs;
@@ -118,7 +118,7 @@ TEST_CASE( "HTTP chunked response test" ) {
 
 TEST_CASE( "small buffer size test" ) {
   khc http;
-  khc_set_zero(&http);
+  khc_init(&http);
   const size_t buff_size = 10;
   char buff[buff_size];
 
@@ -224,7 +224,7 @@ TEST_CASE( "small buffer size test" ) {
 
 TEST_CASE( "random buffer size test" ) {
   khc http;
-  khc_set_zero(&http);
+  khc_init(&http);
   random_device rd;
   mt19937 mt(rd());
   uniform_int_distribution<> randSize(10, 100);
@@ -334,7 +334,7 @@ TEST_CASE( "random buffer size test" ) {
 
 TEST_CASE( "random chunk body test" ) {
   khc http;
-  khc_set_zero(&http);
+  khc_init(&http);
 
   ifstream ifs;
   ifs.open("./data/resp-login-chunked-headers.txt");

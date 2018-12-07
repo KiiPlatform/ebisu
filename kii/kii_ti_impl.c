@@ -11,7 +11,7 @@ kii_code_t _get_anonymous_token(
 {
     kii_code_t ret = KII_ERR_FAIL;
     _reset_buff(kii);
-    khc_set_zero_excl_cb(&kii->_khc);
+    khc_init_excl_cb(&kii->_khc);
 
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "POST");
@@ -95,7 +95,7 @@ kii_code_t _onboard(
 {
     kii_code_t ret = KII_ERR_FAIL;
     _reset_buff(kii);
-    khc_set_zero_excl_cb(&kii->_khc);
+    khc_init_excl_cb(&kii->_khc);
 
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "POST");
@@ -255,7 +255,7 @@ kii_code_t _put_firmware_version(
 {
     kii_code_t ret = KII_ERR_FAIL;
     _reset_buff(kii);
-    khc_set_zero_excl_cb(&kii->_khc);
+    khc_init_excl_cb(&kii->_khc);
 
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "PUT");
@@ -318,7 +318,7 @@ kii_code_t _get_firmware_version(
 {
     kii_code_t ret = KII_ERR_FAIL;
     _reset_buff(kii);
-    khc_set_zero_excl_cb(&kii->_khc);
+    khc_init_excl_cb(&kii->_khc);
 
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "GET");
@@ -384,7 +384,7 @@ kii_code_t _upload_state(
         const char* opt_normalizer_host)
 {
     kii_code_t ret = KII_ERR_FAIL;
-    khc_set_zero_excl_cb(&kii->_khc);
+    khc_init_excl_cb(&kii->_khc);
     _reset_buff(kii);
 
     if (opt_normalizer_host != NULL) {
