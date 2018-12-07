@@ -13,7 +13,7 @@ kii_code_t kii_auth_thing(
         const char* password)
 {
     _reset_buff(kii);
-    khc_init_excl_cb(&kii->_khc);
+    khc_reset_except_cb(&kii->_khc);
     kii_code_t ret = KII_ERR_FAIL;
 
     ret = _thing_auth(kii, vendor_thing_id, password);
@@ -67,7 +67,7 @@ kii_code_t kii_register_thing(
         const char* password)
 {
     _reset_buff(kii);
-    khc_init_excl_cb(&kii->_khc);
+    khc_reset_except_cb(&kii->_khc);
     kii_code_t ret = KII_ERR_FAIL;
 
     ret = _thing_register(kii, vendor_thing_id,

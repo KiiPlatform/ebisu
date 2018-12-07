@@ -303,18 +303,18 @@ typedef struct khc {
 } khc;
 
 /**
- * \brief Set members of khc 0/NULL.
- * 
- * You may use this method when you start new session.
+ * \brief Set initial value to members of khc.
+ *
+ * You need to call this method when start using khc instance.
  * \param [out] khc instance.
- * \see khc_init_excl_cb(khc*)
+ * \see khc_reset_except_cb(khc*)
  */
 void khc_init(khc* khc);
 
 /**
- * \brief Set members of khc 0/NULL.
+ * \brief  Set initial value to members of khc other than callbacks.
  * 
- * However, callbacks/ userdata set by 
+ * Callbacks/ userdata set by following methods remain untouched.
  * khc_set_cb_sock_connect(khc*, KHC_CB_SOCK_CONNECT, void*),
  * khc_set_cb_sock_send(khc*, KHC_CB_SOCK_SEND, void*),
  * khc_set_cb_sock_recv(khc*, KHC_CB_SOCK_RECV, void*),
@@ -322,12 +322,12 @@ void khc_init(khc* khc);
  * khc_set_cb_read(khc*, KHC_CB_READ, void*),
  * khc_set_cb_write(khc*, KHC_CB_WRITE, void*) and
  * khc_set_cb_header(khc*, KHC_CB_HEADER, void*)
- * remain untouched.
- * You may use this method when you start new session and reuse same callback and userdata pointer.
+ 
+ * You may use this method when you start new session and reuse same callbacks and userdata pointers.
  * \param [out] khc instance.
  * \see khc_init(khc*)
  */
-void khc_init_excl_cb(khc* khc);
+void khc_reset_except_cb(khc* khc);
 
 /**
  * \brief Perform the HTTP session

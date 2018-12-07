@@ -63,7 +63,7 @@ kii_code_t kii_execute_server_code(
     const char* endpoint_name,
     const char* params)
 {
-    khc_init_excl_cb(&kii->_khc);
+    khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);
 
 

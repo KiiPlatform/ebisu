@@ -14,7 +14,7 @@ kii_code_t kii_post_object(
         const char* object_content_type,
         kii_object_id_t* out_object_id)
 {
-    khc_init_excl_cb(&kii->_khc);
+    khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);
     kii_code_t ret = _post_object(
             kii,
@@ -68,7 +68,7 @@ kii_code_t kii_put_object(
         const char* opt_etag)
 {
     _reset_buff(kii);
-    khc_init_excl_cb(&kii->_khc);
+    khc_reset_except_cb(&kii->_khc);
     kii_code_t ret = _put_object(
             kii,
             bucket,
@@ -100,7 +100,7 @@ kii_code_t kii_patch_object(
         const char* opt_etag)
 {
     _reset_buff(kii);
-    khc_init_excl_cb(&kii->_khc);
+    khc_reset_except_cb(&kii->_khc);
     kii_code_t code = _patch_object(
             kii,
             bucket,
@@ -129,7 +129,7 @@ kii_code_t kii_delete_object(
         const char* object_id)
 {
     _reset_buff(kii);
-    khc_init_excl_cb(&kii->_khc);
+    khc_reset_except_cb(&kii->_khc);
     kii_code_t res = _delete_object(
             kii,
             bucket,
@@ -154,7 +154,7 @@ kii_code_t kii_get_object(
         const kii_bucket_t* bucket,
         const char* object_id)
 {
-    khc_init_excl_cb(&kii->_khc);
+    khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);
     kii_code_t ret = _get_object(
             kii,
@@ -183,7 +183,7 @@ kii_code_t kii_upload_object_body(
         const KII_CB_READ read_cb,
         void* userdata)
 {
-    khc_init_excl_cb(&kii->_khc);
+    khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);
     khc_set_cb_read(&kii->_khc, read_cb, userdata);
 
@@ -212,7 +212,7 @@ kii_code_t kii_download_object_body(
         void* userdata)
 
 {
-    khc_init_excl_cb(&kii->_khc);
+    khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);
     khc_set_cb_write(&kii->_khc, write_cb, userdata);
 
