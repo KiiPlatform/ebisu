@@ -33,14 +33,14 @@ typedef size_t (*KHC_CB_WRITE)(char *buffer, size_t size, void *userdata);
  * \param [in, out] userdata context data passed to khc_set_cb_read(khc*, KHC_CB_READ, void*)
  * \returns Size of the bytes read.
  * Returning 0 indicates that the whole data is read.
- * khc repeatedly call this callback untill it returns 0.
+ * khc repeatedly call this callback until it returns 0.
  */
 typedef size_t (*KHC_CB_READ)(char *buffer, size_t size, void *userdata);
 /**
  * \brief Callback used to propagate response headers.
  *
  * \param [in] buffer response header data.
- * Note that the buffer is not null terminted.
+ * Note that the buffer is not null terminated.
  * The buffer does not contains CRLF.
  * \param [in] size header data size.
  * \param [in, out] userdata context data passed to khc_set_cb_header(khc*, KHC_CB_HEADER, void*)
@@ -185,7 +185,7 @@ typedef enum khc_state {
   KHC_STATE_READ_CHUNK_SIZE_FROM_HEADER_BUFF,
   KHC_STATE_READ_CHUNK_BODY_FROM_HEADER_BUFF,
 
-  /* Process fragment of body obtaind when trying to find body boundary. */
+  /* Process fragment of body obtained when trying to find body boundary. */
   KHC_STATE_RESP_BODY_READ,
   KHC_STATE_RESP_BODY_CALLBACK,
 
@@ -220,9 +220,9 @@ typedef enum khc_code {
   KHC_ERR_WRITE_CALLBACK,
   /**< \brief Memory allocation error. */
   KHC_ERR_ALLOCATION,
-  /**< \brief Data is too large and doesn't fit to buffers staticaly sized. */
+  /**< \brief Data is too large and doesn't fit to buffers statically allocated. */
   KHC_ERR_TOO_LARGE_DATA,
-  /**< \brief Uncategorized error. */
+  /**< \brief Other errors. */
   KHC_ERR_FAIL,
 } khc_code;
 
@@ -341,7 +341,7 @@ void khc_set_zero_excl_cb(khc* khc);
  * khc_set_cb_write(khc*, KHC_CB_WRITE, void*) and
  * khc_set_cb_header(khc*, KHC_CB_HEADER, void*)
  * called.
- * This method blocks untill the HTTP session ends.
+ * This method blocks until the HTTP session ends.
  * \param [in, out] khc instance.
  */
 khc_code khc_perform(khc* khc);
@@ -453,7 +453,7 @@ khc_code khc_set_cb_sock_send(
  * \brief Set socket recv callback.
  *
  * Callback would be called several times until
- * the lenght of data read by the callback is 0.
+ * the length of data read by the callback is 0.
  * \param [out] khc instance.
  * \param [in] cb called when receive data from the connected server is required.
  * \param [in] userdata context data of the callback.
@@ -481,7 +481,7 @@ khc_code khc_set_cb_sock_close(
  *
  * The callback is called to read request body data.
  * Callback would be called several times until
- * the lenght of data read by the callback is 0.
+ * the length of data read by the callback is 0.
  * \param [out] khc instance.
  * \param [in] cb reads request body.
  * \param [in] userdata context data of the callback.
@@ -495,7 +495,7 @@ khc_code khc_set_cb_read(
  * \brief Set write callback.
  *
  * The callback is called while reading response body.
- * Callback would be called several times untill the whole response body is written.
+ * Callback would be called several times until the whole response body is written.
  * \param [out] khc instance.
  * \param [in] cb writes response body.
  * \param [in] userdata context data of the callback.
@@ -509,7 +509,7 @@ khc_code khc_set_cb_write(
  * \brief Set header callback.
  *
  * The callback is called while reading response headers.
- * Callback would be called several times untill all response headers are processed.
+ * Callback would be called several times until all response headers are processed.
  * \param [out] khc instance.
  * \param [in] cb response header callback.
  * \param [in] userdata context data of the callback.
