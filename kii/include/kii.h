@@ -640,6 +640,8 @@ kii_code_t kii_ti_put_state(
  * \param [in] state_read_cb_data Context object passed to state_read_cb.
  * \param [in] opt_content_type Content-Type can be specified when you use data normalizer.
  * If you don't use data normalizer, set NULL.
+ * \param [in] opt_content_encoding Content-Encoding can be specified when you use data normalizer.
+ * If you don't use data normalizer, set NULL.
  * \param [in] opt_normalizer_host Specify data normalizer host.
  * If you don't use data normalizer, set NULL.
  * \return kii_code_t
@@ -649,6 +651,7 @@ kii_code_t kii_ti_put_bulk_states(
     KII_CB_READ state_read_cb,
     void* state_read_cb_data,
     const char* opt_content_type,
+    const char* opt_content_encoding,
     const char* opt_normalizer_host);
 
 /**
@@ -659,6 +662,8 @@ kii_code_t kii_ti_put_bulk_states(
  * \param [in] state_read_cb_data Context object passed to state_read_cb.
  * \param [in] opt_content_type Content-Type can be specified when you use data normalizer.
  * If you don't use data normalizer, set NULL.
+ * \param [in] opt_content_encoding Content-Encoding can be specified when you use data normalizer.
+ * If you don't use data normalizer, set NULL.
  * \param [in] opt_normalizer_host Specify data normalizer host.
  * If you don't use data normalizer, set NULL.
  * \return kii_code_t
@@ -668,6 +673,7 @@ kii_code_t kii_ti_patch_state(
     KII_CB_READ state_read_cb,
     void* state_read_cb_data,
     const char* opt_content_type,
+    const char* opt_content_encoding,
     const char* opt_normalizer_host);
 
 /**
@@ -678,6 +684,8 @@ kii_code_t kii_ti_patch_state(
  * \param [in] state_read_cb_data Context object passed to state_read_cb.
  * \param [in] opt_content_type Content-Type can be specified when you use data normalizer.
  * If you don't use data normalizer, set NULL.
+ * \param [in] opt_content_encoding Content-Encoding can be specified when you use data normalizer.
+ * If you don't use data normalizer, set NULL.
  * \param [in] opt_normalizer_host Specify data normalizer host.
  * If you don't use data normalizer, set NULL.
  * \return kii_code_t
@@ -687,6 +695,7 @@ kii_code_t kii_ti_patch_bulk_states(
     KII_CB_READ state_read_cb,
     void* state_read_cb_data,
     const char* opt_content_type,
+    const char* opt_content_encoding,
     const char* opt_normalizer_host);
 
 /**
