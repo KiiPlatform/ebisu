@@ -556,7 +556,7 @@ void khc_state_resp_header_callback(khc* khc) {
         khc->_body_read_size = 0;
         khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
       } else {
-        khc->_state = KHC_STATE_RESP_BODY_FLAGMENT;
+        khc->_state = KHC_STATE_RESP_BODY_FRAGMENT;
       }
       return;
     }
