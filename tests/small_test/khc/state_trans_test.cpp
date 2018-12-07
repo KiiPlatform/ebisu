@@ -141,7 +141,7 @@ TEST_CASE( "HTTP minimal" ) {
   REQUIRE( http._read_end == 0 );
   REQUIRE( http._result == KHC_ERR_OK );
 
-  khc_state_resp_body_flagment(&http);
+  khc_state_resp_body_fragment(&http);
   REQUIRE( http._state == KHC_STATE_RESP_BODY_READ );
   REQUIRE( http._read_end == 0 );
   REQUIRE( http._result == KHC_ERR_OK );
@@ -848,7 +848,7 @@ TEST_CASE( "Socket send partial" ) {
   REQUIRE( http._read_end == 0 );
   REQUIRE( http._result == KHC_ERR_OK );
 
-  khc_state_resp_body_flagment(&http);
+  khc_state_resp_body_fragment(&http);
   REQUIRE( http._state == KHC_STATE_RESP_BODY_READ );
   REQUIRE( http._read_end == 0 );
   REQUIRE( http._result == KHC_ERR_OK );

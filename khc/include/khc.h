@@ -185,7 +185,7 @@ typedef enum khc_state {
   KHC_STATE_READ_CHUNK_SIZE_FROM_HEADER_BUFF,
   KHC_STATE_READ_CHUNK_BODY_FROM_HEADER_BUFF,
 
-  /* Process flagment of body obtaind when trying to find body boundary. */
+  /* Process fragment of body obtaind when trying to find body boundary. */
   KHC_STATE_RESP_BODY_READ,
   KHC_STATE_RESP_BODY_CALLBACK,
 
@@ -287,8 +287,8 @@ typedef struct khc {
   /* Used to seek for CRFL effectively. */
   size_t _cb_header_remaining_size; /**< \private **/
 
-  char* _body_flagment; /**< \private **/
-  size_t _body_flagment_size; /**< \private **/
+  char* _body_fragment; /**< \private **/
+  size_t _body_fragment_size; /**< \private **/
   int _chunked_resp; /**< \private **/
   long _chunk_size; /**< \private **/
   long _chunk_size_written; /**< \private **/

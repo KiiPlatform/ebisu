@@ -642,7 +642,7 @@ void khc_state_resp_header_skip(khc* khc) {
   }
 }
 
-void khc_state_resp_body_flagment(khc* khc) {
+void khc_state_resp_body_fragment(khc* khc) {
   if (khc->_resp_header_read_size > 0) {
     size_t written =
       khc->_cb_write(khc->_resp_header_buff, khc->_resp_header_read_size, khc->_write_data);
@@ -958,7 +958,7 @@ const KHC_STATE_HANDLER state_handlers[] = {
   khc_state_resp_header_callback,
   khc_state_resp_header_read,
   khc_state_resp_header_skip,
-  khc_state_resp_body_flagment,
+  khc_state_resp_body_fragment,
   khc_state_read_chunk_size_from_header_buff,
   khc_state_read_chunk_body_from_header_buff,
 

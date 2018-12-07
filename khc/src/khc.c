@@ -69,8 +69,8 @@ void khc_set_zero_excl_cb(khc* khc) {
   khc->_body_boundary = NULL;
   khc->_cb_header_pos = NULL;
   khc->_cb_header_remaining_size = 0;
-  khc->_body_flagment = NULL;
-  khc->_body_flagment_size = 0;
+  khc->_body_fragment = NULL;
+  khc->_body_fragment_size = 0;
   khc->_chunked_resp = 0;
   khc->_chunk_size = 0;
   khc->_chunk_size_written = 0;
