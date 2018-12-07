@@ -43,7 +43,7 @@ jobs:
           name: jkii small test
           command: MEMCHECK=1 JUNIT=1 make stest-jkii
       - store_test_results:
-          path: tests/small_test/jkii/build/test-results
+          path: tests/small_test/jkii/test-results
 
   stest-tio:
     <<: *env

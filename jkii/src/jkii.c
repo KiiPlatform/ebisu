@@ -669,7 +669,7 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
         case JKII_FIELD_TYPE_ARRAY:
             if (field->type != type) {
                 field->type = type;
-                field->result = JKII_FIELD_ERR_TYPE_UNMATCH;
+                field->result = JKII_FIELD_ERR_TYPE_MISMATCH;
                 retval = JKII_ERR_PARTIAL;
             } else if (field->field_copy.string == NULL) {
                 field->result = JKII_FIELD_ERR_OK;
@@ -687,7 +687,7 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
         case JKII_FIELD_TYPE_INTEGER:
             if (type != JKII_FIELD_TYPE_INTEGER) {
                 field->type = type;
-                field->result = JKII_FIELD_ERR_TYPE_UNMATCH;
+                field->result = JKII_FIELD_ERR_TYPE_MISMATCH;
                 retval = JKII_ERR_PARTIAL;
             } else {
                 jkii_primitive_err_t result =
@@ -717,7 +717,7 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
             if (type != JKII_FIELD_TYPE_LONG &&
                     type != JKII_FIELD_TYPE_INTEGER) {
                 field->type = type;
-                field->result = JKII_FIELD_ERR_TYPE_UNMATCH;
+                field->result = JKII_FIELD_ERR_TYPE_MISMATCH;
                 retval = JKII_ERR_PARTIAL;
             } else {
                 jkii_primitive_err_t result =
@@ -746,7 +746,7 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
         case JKII_FIELD_TYPE_DOUBLE:
             if (type != JKII_FIELD_TYPE_DOUBLE) {
                 field->type = type;
-                field->result = JKII_FIELD_ERR_TYPE_UNMATCH;
+                field->result = JKII_FIELD_ERR_TYPE_MISMATCH;
                 retval = JKII_ERR_PARTIAL;
             } else {
                 jkii_primitive_err_t result =
@@ -775,7 +775,7 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
         case JKII_FIELD_TYPE_BOOLEAN:
             if (type != JKII_FIELD_TYPE_BOOLEAN) {
                 field->type = type;
-                field->result = JKII_FIELD_ERR_TYPE_UNMATCH;
+                field->result = JKII_FIELD_ERR_TYPE_MISMATCH;
                 retval = JKII_ERR_PARTIAL;
             } else if (_jkii_to_boolean(json_string + value->start,
                             value->end - value->start,
@@ -783,21 +783,21 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
                 field->result = JKII_FIELD_ERR_OK;
             } else {
                 field->type = type;
-                field->result = JKII_FIELD_ERR_TYPE_UNMATCH;
+                field->result = JKII_FIELD_ERR_TYPE_MISMATCH;
                 return JKII_ERR_INVALID_INPUT;
             }
             break;
         case JKII_FIELD_TYPE_NULL:
             if (type != JKII_FIELD_TYPE_NULL) {
                 field->type = type;
-                field->result = JKII_FIELD_ERR_TYPE_UNMATCH;
+                field->result = JKII_FIELD_ERR_TYPE_MISMATCH;
                 retval = JKII_ERR_PARTIAL;
             } else if (memcmp(json_string + value->start, "null",
                             value->end - value->start) == 0) {
                 field->result = JKII_FIELD_ERR_OK;
             } else {
                 field->type = type;
-                field->result = JKII_FIELD_ERR_TYPE_UNMATCH;
+                field->result = JKII_FIELD_ERR_TYPE_MISMATCH;
                 return JKII_ERR_INVALID_INPUT;
             }
             break;

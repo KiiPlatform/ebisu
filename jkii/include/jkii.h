@@ -84,8 +84,8 @@ typedef enum jkii_field_err_t {
     /** Field parsing is success. */
     JKII_FIELD_ERR_OK,
 
-    /** Type of field specified jkii_field_t#type is unmathced.*/
-    JKII_FIELD_ERR_TYPE_UNMATCH,
+    /** Type of field specified jkii_field_t#type is mismatch.*/
+    JKII_FIELD_ERR_TYPE_MISMATCH,
 
     /** Field specified by jkii_field_t#name is not found. */
     JKII_FIELD_ERR_NOT_FOUND,
@@ -198,14 +198,14 @@ typedef struct jkii_field_t {
      *
      * \code
      * {
-     *     "ligtht" : {
+     *     "light" : {
      *         "color" : [ 0, 128, 255]
      *      }
      * }
      * \endcode
      *
      * \code
-     * path ="/ligtht/color/[0]";
+     * path ="/light/color/[0]";
      * \endcode
      *
      * In rare cases, like following:
@@ -245,7 +245,7 @@ typedef struct jkii_field_t {
      *   - if expected type is not
      *     jkii_field_type_t#JKII_FIELD_TYPE_ANY, then
      *     jkii_field_t#result becomes
-     *     jkii_parse_err_t#JKII_FIELD_ERR_TYPE_UNMATCH.
+     *     jkii_parse_err_t#JKII_FIELD_ERR_TYPE_MISMATCH.
      *   - if expected type is
      *     jkii_field_type_t#JKII_FIELD_TYPE_ANY, then
      *     jkii_field_t#result become
@@ -320,11 +320,11 @@ typedef struct jkii_field_t {
 } jkii_field_t;
 
 /** Parse JSON string.
- *  \param [in] pointer of JSON string.
- *  \param [in] length of JSON string.
- *  \param [in,out] field of kii JSON parser.
+ *  \param [in] json_string of JSON string.
+ *  \param [in] json_string_len of JSON string.
+ *  \param [in,out] fields of kii JSON parser.
  *  \param [in] resource of parser.
- *  \return parse JSON result.
+ *  \return parse result.
  */
 jkii_parse_err_t jkii_parse(
         const char* json_string,
@@ -333,12 +333,12 @@ jkii_parse_err_t jkii_parse(
         jkii_resource_t* resource);
 
 /** Parse JSON string with custom memory allocator.
- *  \param [in] pointer of JSON string.
- *  \param [in] length of JSON string.
- *  \param [in,out] field of kii JSON parser.
+ *  \param [in] json_string of JSON string.
+ *  \param [in] json_string_len of JSON string.
+ *  \param [in,out] fields of kii JSON parser.
  *  \param [in] cb_alloc allocate resource
  *  \param [in] cb_free free resource
- *  \return parse JSON result.
+ *  \return parse result.
  */
 jkii_parse_err_t jkii_parse_with_allocator(
     const char* json_string,
