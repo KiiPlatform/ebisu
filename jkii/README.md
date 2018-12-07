@@ -43,12 +43,8 @@ We can extract "hoo" value by following code:
 const char json_string[] = "{\"hoo\":\"bar\"}"; // target json string.
 
 jkii_field_t fields[2];
-jkii_t jkii;
-char buf[256];
-jkii_parse_err_t result;
-
-memset(&jkii, 0x00, sizeof(jkii));
 memset(fields, 0x00, sizeof(fields));
+char buf[16];
 
 fields[0].path = "/hoo";
 fields[0].type = JKII_FIELD_TYPE_STRING;
@@ -56,8 +52,14 @@ fields[0].field_copy.string = buf;
 fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
 fields[1].path = NULL;
 
-result = jkii_parse(&jkii, json_string,
-        sizeof(json_string) / sizeof(json_string[0]), fields);
+jkii_token_t tokens[8];
+jkii_resource_t resource = {tokens, 8};
+
+jkii_parse_err_t result = jkii_parse(
+        json_string,
+        sizeof(json_string) / sizeof(json_string[0]),
+        &fields,
+        &resource);
 
 if (result == JKII_ERR_OK) {
     // success to extract "hoo" value.
