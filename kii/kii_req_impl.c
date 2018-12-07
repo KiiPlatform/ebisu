@@ -164,6 +164,22 @@ kii_code_t _set_content_type(
     return KII_ERR_OK;
 }
 
+kii_code_t _set_content_encoding(
+    kii_t* kii,
+    const char* content_encoding)
+{
+    int header_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "Content-Encoding: %s", content_encoding);
+    if (header_len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    khc_slist* list = khc_slist_append_using_cb_alloc(kii->_req_headers, kii->_rw_buff, header_len, kii->_cb_slist_alloc, kii->_slist_alloc_data);
+    if (list == NULL) {
+        return KII_ERR_ALLOCATION;
+    }
+    kii->_req_headers = list;
+    return KII_ERR_OK;
+}
+
 kii_code_t _set_object_content_type(
     kii_t* kii,
     const char* object_content_type)
@@ -321,6 +337,6 @@ kii_code_t _set_req_body(kii_t* kii, const char* body_contents)
         return KII_ERR_TOO_LARGE_DATA;
     }
     strncpy(kii->_rw_buff, body_contents, kii->_rw_buff_size);
-    
+
     return _set_content_length(kii, content_len);
 }

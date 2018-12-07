@@ -381,6 +381,7 @@ kii_code_t _upload_state(
         const char* last_path_segment,
         const char* method,
         const char* content_type,
+        const char* opt_content_encoding,
         const char* opt_normalizer_host)
 {
     kii_code_t ret = KII_ERR_FAIL;
@@ -410,6 +411,9 @@ kii_code_t _upload_state(
     if (ret != KII_ERR_OK) {
         _req_headers_free_all(kii);
         return ret;
+    }
+    if (opt_content_encoding != NULL) {
+        _set_content_encoding(kii, opt_content_encoding);
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);

@@ -45,11 +45,57 @@ kii_code_t kii_ti_put_state(
     KII_CB_READ state_read_cb,
     void* state_read_cb_data,
     const char* opt_content_type,
+    const char* opt_content_encoding,
     const char* opt_normalizer_host)
 {
     const char* content_type = opt_content_type;
     if (opt_content_type == NULL) {
         content_type = "application/vnd.kii.MultipleTraitState+json";
     }
-    return _upload_state(kii, state_read_cb, state_read_cb_data, "states", "PUT", content_type, opt_normalizer_host);
+    return _upload_state(kii, state_read_cb, state_read_cb_data, "states", "PUT", content_type, opt_content_encoding, opt_normalizer_host);
+}
+
+kii_code_t kii_ti_put_bulk_states(
+    kii_t* kii,
+    KII_CB_READ state_read_cb,
+    void* state_read_cb_data,
+    const char* opt_content_type,
+    const char* opt_content_encoding,
+    const char* opt_normalizer_host)
+{
+    const char* content_type = opt_content_type;
+    if (opt_content_type == NULL) {
+        content_type = "application/vnd.kii.StateBulkUploadRequest+json";
+    }
+    return _upload_state(kii, state_read_cb, state_read_cb_data, "states-bulk", "POST", content_type, opt_content_encoding, opt_normalizer_host);
+}
+
+kii_code_t kii_ti_patch_state(
+    kii_t* kii,
+    KII_CB_READ state_read_cb,
+    void* state_read_cb_data,
+    const char* opt_content_type,
+    const char* opt_content_encoding,
+    const char* opt_normalizer_host)
+{
+    const char* content_type = opt_content_type;
+    if (opt_content_type == NULL) {
+        content_type = "application/vnd.kii.MultipleTraitStatePatch+json";
+    }
+    return _upload_state(kii, state_read_cb, state_read_cb_data, "states", "PATCH", content_type, opt_content_encoding, opt_normalizer_host);
+}
+
+kii_code_t kii_ti_patch_bulk_states(
+    kii_t* kii,
+    KII_CB_READ state_read_cb,
+    void* state_read_cb_data,
+    const char* opt_content_type,
+    const char* opt_content_encoding,
+    const char* opt_normalizer_host)
+{
+    const char* content_type = opt_content_type;
+    if (opt_content_type == NULL) {
+        content_type = "application/vnd.kii.StatePatchBulkUploadRequest+json";
+    }
+    return _upload_state(kii, state_read_cb, state_read_cb_data, "states-bulk", "POST", content_type, opt_content_encoding, opt_normalizer_host);
 }
