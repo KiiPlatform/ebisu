@@ -33,14 +33,14 @@ typedef size_t (*KHC_CB_WRITE)(char *buffer, size_t size, void *userdata);
  * \param [in, out] userdata context data passed to khc_set_cb_read(khc*, KHC_CB_READ, void*)
  * \returns Size of the bytes read.
  * Returning 0 indicates that the whole data is read.
- * khc repeatedly call this callback untill it returns 0.
+ * khc repeatedly call this callback until it returns 0.
  */
 typedef size_t (*KHC_CB_READ)(char *buffer, size_t size, void *userdata);
 /**
  * \brief Callback used to propagate response headers.
  *
  * \param [in] buffer response header data.
- * Note that the buffer is not null terminted.
+ * Note that the buffer is not null terminated.
  * The buffer does not contains CRLF.
  * \param [in] size header data size.
  * \param [in, out] userdata context data passed to khc_set_cb_header(khc*, KHC_CB_HEADER, void*)
@@ -181,11 +181,11 @@ typedef enum khc_state {
   KHC_STATE_RESP_HEADER_CALLBACK,
   KHC_STATE_RESP_HEADER_READ,
   KHC_STATE_RESP_HEADER_SKIP,
-  KHC_STATE_RESP_BODY_FLAGMENT,
+  KHC_STATE_RESP_BODY_FRAGMENT,
   KHC_STATE_READ_CHUNK_SIZE_FROM_HEADER_BUFF,
   KHC_STATE_READ_CHUNK_BODY_FROM_HEADER_BUFF,
 
-  /* Process flagment of body obtaind when trying to find body boundary. */
+  /* Process fragment of body obtained when trying to find body boundary. */
   KHC_STATE_RESP_BODY_READ,
   KHC_STATE_RESP_BODY_CALLBACK,
 
@@ -220,9 +220,9 @@ typedef enum khc_code {
   KHC_ERR_WRITE_CALLBACK,
   /**< \brief Memory allocation error. */
   KHC_ERR_ALLOCATION,
-  /**< \brief Data is too large and doesn't fit to buffers staticaly sized. */
+  /**< \brief Data is too large and doesn't fit to buffers statically allocated. */
   KHC_ERR_TOO_LARGE_DATA,
-  /**< \brief Uncategorized error. */
+  /**< \brief Other errors. */
   KHC_ERR_FAIL,
 } khc_code;
 
@@ -287,8 +287,8 @@ typedef struct khc {
   /* Used to seek for CRFL effectively. */
   size_t _cb_header_remaining_size; /**< \private **/
 
-  char* _body_flagment; /**< \private **/
-  size_t _body_flagment_size; /**< \private **/
+  char* _body_fragment; /**< \private **/
+  size_t _body_fragment_size; /**< \private **/
   int _chunked_resp; /**< \private **/
   long _chunk_size; /**< \private **/
   long _chunk_size_written; /**< \private **/
@@ -303,18 +303,18 @@ typedef struct khc {
 } khc;
 
 /**
- * \brief Set members of khc 0/NULL.
- * 
- * You may use this method when you start new session.
+ * \brief Set initial value to members of khc.
+ *
+ * You need to call this method when start using khc instance.
  * \param [out] khc instance.
- * \see khc_set_zero_excl_cb(khc*)
+ * \see khc_reset_except_cb(khc*)
  */
-void khc_set_zero(khc* khc);
+void khc_init(khc* khc);
 
 /**
- * \brief Set members of khc 0/NULL.
+ * \brief  Set initial value to members of khc other than callbacks.
  * 
- * However, callbacks/ userdata set by 
+ * Callbacks/ userdata set by following methods remain untouched.
  * khc_set_cb_sock_connect(khc*, KHC_CB_SOCK_CONNECT, void*),
  * khc_set_cb_sock_send(khc*, KHC_CB_SOCK_SEND, void*),
  * khc_set_cb_sock_recv(khc*, KHC_CB_SOCK_RECV, void*),
@@ -322,12 +322,12 @@ void khc_set_zero(khc* khc);
  * khc_set_cb_read(khc*, KHC_CB_READ, void*),
  * khc_set_cb_write(khc*, KHC_CB_WRITE, void*) and
  * khc_set_cb_header(khc*, KHC_CB_HEADER, void*)
- * remain untouched.
- * You may use this method when you start new session and reuse same callback and userdata pointer.
+ 
+ * You may use this method when you start new session and reuse same callbacks and userdata pointers.
  * \param [out] khc instance.
- * \see khc_set_zero(khc*)
+ * \see khc_init(khc*)
  */
-void khc_set_zero_excl_cb(khc* khc);
+void khc_reset_except_cb(khc* khc);
 
 /**
  * \brief Perform the HTTP session
@@ -341,7 +341,7 @@ void khc_set_zero_excl_cb(khc* khc);
  * khc_set_cb_write(khc*, KHC_CB_WRITE, void*) and
  * khc_set_cb_header(khc*, KHC_CB_HEADER, void*)
  * called.
- * This method blocks untill the HTTP session ends.
+ * This method blocks until the HTTP session ends.
  * \param [in, out] khc instance.
  */
 khc_code khc_perform(khc* khc);
@@ -453,7 +453,7 @@ khc_code khc_set_cb_sock_send(
  * \brief Set socket recv callback.
  *
  * Callback would be called several times until
- * the lenght of data read by the callback is 0.
+ * the length of data read by the callback is 0.
  * \param [out] khc instance.
  * \param [in] cb called when receive data from the connected server is required.
  * \param [in] userdata context data of the callback.
@@ -481,7 +481,7 @@ khc_code khc_set_cb_sock_close(
  *
  * The callback is called to read request body data.
  * Callback would be called several times until
- * the lenght of data read by the callback is 0.
+ * the length of data read by the callback is 0.
  * \param [out] khc instance.
  * \param [in] cb reads request body.
  * \param [in] userdata context data of the callback.
@@ -495,7 +495,7 @@ khc_code khc_set_cb_read(
  * \brief Set write callback.
  *
  * The callback is called while reading response body.
- * Callback would be called several times untill the whole response body is written.
+ * Callback would be called several times until the whole response body is written.
  * \param [out] khc instance.
  * \param [in] cb writes response body.
  * \param [in] userdata context data of the callback.
@@ -509,7 +509,7 @@ khc_code khc_set_cb_write(
  * \brief Set header callback.
  *
  * The callback is called while reading response headers.
- * Callback would be called several times untill all response headers are processed.
+ * Callback would be called several times until all response headers are processed.
  * \param [out] khc instance.
  * \param [in] cb response header callback.
  * \param [in] userdata context data of the callback.

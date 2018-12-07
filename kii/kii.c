@@ -51,7 +51,7 @@ void kii_init(kii_t* kii)
 {
     memset(kii, 0x00, sizeof(kii_t));
     kii->_sdk_info = KII_SDK_INFO;
-    khc_set_zero(&kii->_khc);
+    khc_init(&kii->_khc);
     khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
     khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
     khc_set_cb_header(&kii->_khc, _cb_write_header, kii);

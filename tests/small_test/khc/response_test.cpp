@@ -8,7 +8,7 @@
 
 TEST_CASE( "HTTP response test" ) {
   khc http;
-  khc_set_zero(&http);
+  khc_init(&http);
   const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
 
   ifstream ifs;
@@ -112,7 +112,7 @@ TEST_CASE( "HTTP response test" ) {
 
 TEST_CASE( "Ignore HTTP status 100" ) {
   khc http;
-  khc_set_zero(&http);
+  khc_init(&http);
   const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
 
   ifstream ifs;
@@ -211,7 +211,7 @@ TEST_CASE( "Ignore HTTP status 100" ) {
 
 TEST_CASE( "Small resp header skip test" ) {
   khc http;
-  khc_set_zero(&http);
+  khc_init(&http);
   const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
   const size_t resp_header_buff_size = 120;
   char resp_header_buff[resp_header_buff_size];
