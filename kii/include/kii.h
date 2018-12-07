@@ -618,6 +618,8 @@ kii_code_t kii_ti_put_thing_type(
  * \param [in] state_read_cb_data Context object passed to state_read_cb.
  * \param [in] opt_content_type Content-Type can be specified when you use data normalizer.
  * If you don't use data normalizer, set NULL.
+ * \param [in] opt_content_encoding Content-Encoding can be specified when you use data normalizer.
+ * If you don't use data normalizer, set NULL.
  * \param [in] opt_normalizer_host Specify data normalizer host.
  * If you don't use data normalizer, set NULL.
  * \return kii_code_t
@@ -627,6 +629,7 @@ kii_code_t kii_ti_put_state(
     KII_CB_READ state_read_cb,
     void* state_read_cb_data,
     const char* opt_content_type,
+    const char* opt_content_encoding,
     const char* opt_normalizer_host);
 
 /**
@@ -686,7 +689,7 @@ kii_code_t kii_ti_patch_bulk_states(
     const char* opt_content_type,
     const char* opt_normalizer_host);
 
-/** 
+/**
  * \brief Start making REST API call.
  *
  * Between this function and kii_api_call_run(kii_t*), you can call
@@ -1042,7 +1045,7 @@ void kii_set_cb_delay_ms(kii_t* kii, KII_CB_DELAY_MS cb_delay_ms, void* userdata
  */
 void kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource);
 
-/** 
+/**
  * \brief Set JSON parser resource allocators.
  * To use Allocator instead of fixed size memory given by kii_set_json_parser_resource(kii_t, jkii_resource_t),
  * call kii_set_json_parser_resource(kii_t, jkii_resource_t) with NULL resource argument.

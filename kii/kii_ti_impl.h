@@ -36,6 +36,7 @@ kii_code_t _upload_state(
         const char* last_path_segment,
         const char* method,
         const char* content_type,
+        const char* opt_content_encoding,
         const char* opt_normalizer_host);
 
 #endif

@@ -38,6 +38,10 @@ kii_code_t _set_content_length(
     kii_t* kii,
     size_t content_length);
 
+kii_code_t _set_content_encoding(
+    kii_t* kii,
+    const char* content_encoding);
+
 kii_code_t _set_app_id_header(kii_t* kii);
 
 kii_code_t _set_app_key_header(kii_t* kii);
