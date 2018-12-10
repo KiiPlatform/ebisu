@@ -32,7 +32,7 @@ jobs:
           command: make -C ${CIRCLE_WORKING_DIRECTORY}/khc clean doc
       - run:
           name: Copy khc doc
-          command: rsync -rR --delete khc/html/ project/docs/khc/html/
+          command: rsync -rR --delete khc/html/ docs/khc/html/
       - run:
           name: Commit changes
           command: |
@@ -168,31 +168,31 @@ workflows:
             branches:
               ignore:
                 - gh-pages
-      - stest-khc:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
-      - stest-jkii:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
-      - stest-tio:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
-      - ltest-khc:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
-      - ltest-kii:
-          filters:
-            branches:
-              ignore:
-                - gh-pages
+    #   - stest-khc:
+    #       filters:
+    #         branches:
+    #           ignore:
+    #             - gh-pages
+    #   - stest-jkii:
+    #       filters:
+    #         branches:
+    #           ignore:
+    #             - gh-pages
+    #   - stest-tio:
+    #       filters:
+    #         branches:
+    #           ignore:
+    #             - gh-pages
+    #   - ltest-khc:
+    #       filters:
+    #         branches:
+    #           ignore:
+    #             - gh-pages
+    #   - ltest-kii:
+    #       filters:
+    #         branches:
+    #           ignore:
+    #             - gh-pages
       - doc-khc:
           filters:
             branches:
