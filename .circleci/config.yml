@@ -40,10 +40,10 @@ jobs:
       - run:
           name: Copy docs
           command: |
-            rsync -rR --delete khc/html/ ebisu-doc/khc/html/
-            rsync -rR --delete kii/html/ ebisu-doc/kii/html/
-            rsync -rR --delete jkii/html/ ebisu-doc/jkii/html/
-            rsync -rR --delete tio/html/ ebisu-doc/tio/html/
+            rsync -rR --delete khc/html ebisu-doc
+            rsync -rR --delete kii/html ebisu-doc
+            rsync -rR --delete jkii/html ebisu-doc
+            rsync -rR --delete tio/html ebisu-doc
       - run:
           name: Commit changes
           command: |
