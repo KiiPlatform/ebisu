@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['khc_5fcode',['khc_code',['../khc_8h.html#a90be23875108e9a39942c3af90a6d789',1,'khc.h']]],
-  ['khc_5fsock_5fcode_5ft',['khc_sock_code_t',['../khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2',1,'khc_socket_callback.h']]],
-  ['khc_5fstate',['khc_state',['../khc_8h.html#a857caeeab83df303d0fe3a7d97601d0f',1,'khc.h']]]
+  ['jkii_5fboolean_5ft',['jkii_boolean_t',['../jkii_8h.html#ad4bbea9cae26b6694b8c43e8d764ab29',1,'jkii.h']]],
+  ['jkii_5ffield_5ferr_5ft',['jkii_field_err_t',['../jkii_8h.html#a226dc87d1ccd30b36a59a096b4df3a6b',1,'jkii.h']]],
+  ['jkii_5ffield_5ftype_5ft',['jkii_field_type_t',['../jkii_8h.html#a5fe8d88e1452ceb3d2c07f69440c82b5',1,'jkii.h']]],
+  ['jkii_5fparse_5ferr_5ft',['jkii_parse_err_t',['../jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792',1,'jkii.h']]]
 ];

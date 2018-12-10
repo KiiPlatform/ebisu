@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['next',['next',['../structkhc__slist.html#ad2427c9cd37a7ef8cc829d8cc652a1fd',1,'khc_slist']]]
+  ['double_5fvalue',['double_value',['../structjkii__field__t.html#a4473c495ef26173515f141c4ea4eca51',1,'jkii_field_t']]]
 ];

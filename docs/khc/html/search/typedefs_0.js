@@ -1,17 +1,12 @@
 var searchData=
 [
-  ['khc',['khc',['../khc_8h.html#a962c972213b49a6581a83f890fe22a0b',1,'khc.h']]],
-  ['khc_5fcb_5fheader',['KHC_CB_HEADER',['../khc_8h.html#a28da65fe4a96bed6b6ac8150b9481a20',1,'khc.h']]],
-  ['khc_5fcb_5fread',['KHC_CB_READ',['../khc_8h.html#a3b82452e6a8981c670e9eef8450a7ce4',1,'khc.h']]],
-  ['khc_5fcb_5fslist_5falloc',['KHC_CB_SLIST_ALLOC',['../khc_8h.html#ab4d588005d08dee796a1c9c830dc4590',1,'khc.h']]],
-  ['khc_5fcb_5fslist_5ffree',['KHC_CB_SLIST_FREE',['../khc_8h.html#a32bafb6cf1da963a57d8a167efe9f833',1,'khc.h']]],
-  ['khc_5fcb_5fsock_5fclose',['KHC_CB_SOCK_CLOSE',['../khc__socket__callback_8h.html#af54fb240d589fb1044188bd4a81ab78d',1,'khc_socket_callback.h']]],
-  ['khc_5fcb_5fsock_5fconnect',['KHC_CB_SOCK_CONNECT',['../khc__socket__callback_8h.html#ae9552240ec64ad637e77cd63c3b65c65',1,'khc_socket_callback.h']]],
-  ['khc_5fcb_5fsock_5frecv',['KHC_CB_SOCK_RECV',['../khc__socket__callback_8h.html#a148cf4bd26b43909c9eab71f37b4cda6',1,'khc_socket_callback.h']]],
-  ['khc_5fcb_5fsock_5fsend',['KHC_CB_SOCK_SEND',['../khc__socket__callback_8h.html#a96345c64c6bcec1711d2ddaac43224c2',1,'khc_socket_callback.h']]],
-  ['khc_5fcb_5fwrite',['KHC_CB_WRITE',['../khc_8h.html#a57e8d1b5da9a4222190c74f8fb87a304',1,'khc.h']]],
-  ['khc_5fcode',['khc_code',['../khc_8h.html#a65d0cf229865208373ee2c8d2c24cbcc',1,'khc.h']]],
-  ['khc_5fslist',['khc_slist',['../khc_8h.html#a405624d71b2722c439683872c851fc8b',1,'khc.h']]],
-  ['khc_5fsock_5fcode_5ft',['khc_sock_code_t',['../khc__socket__callback_8h.html#acc707aebd5abcf59b91bcd13ec47b03a',1,'khc_socket_callback.h']]],
-  ['khc_5fstate',['khc_state',['../khc_8h.html#ae53a38ebe7cf84dfb5f5892785c74b8f',1,'khc.h']]]
+  ['jkii_5fboolean_5ft',['jkii_boolean_t',['../jkii_8h.html#ad089e08402e3d9016cfc98501513b081',1,'jkii.h']]],
+  ['jkii_5fcb_5fresource_5falloc',['JKII_CB_RESOURCE_ALLOC',['../jkii_8h.html#aedee2c9cc9049c175134deb9c637fecb',1,'jkii.h']]],
+  ['jkii_5fcb_5fresource_5ffree',['JKII_CB_RESOURCE_FREE',['../jkii_8h.html#a6419ee6ba358566315b0f98c2c1cbd51',1,'jkii.h']]],
+  ['jkii_5ffield_5ferr_5ft',['jkii_field_err_t',['../jkii_8h.html#a849095ab7b0ad16e3c2be83e301714fa',1,'jkii.h']]],
+  ['jkii_5ffield_5ft',['jkii_field_t',['../jkii_8h.html#a223482837a049315a7369b0d9a136973',1,'jkii.h']]],
+  ['jkii_5ffield_5ftype_5ft',['jkii_field_type_t',['../jkii_8h.html#aead387f1d33d34eba1ed53e3fbd6ee1e',1,'jkii.h']]],
+  ['jkii_5fparse_5ferr_5ft',['jkii_parse_err_t',['../jkii_8h.html#a51691dee450f6f8b7f7b41cad8e170a8',1,'jkii.h']]],
+  ['jkii_5fresource_5ft',['jkii_resource_t',['../jkii_8h.html#a70caa5a37ecdb571cd1097369f931a7d',1,'jkii.h']]],
+  ['jkii_5ftoken_5ft',['jkii_token_t',['../jkii_8h.html#ab9a2c8ed41a6b2a14102de46cfd8bcce',1,'jkii.h']]]
 ];
