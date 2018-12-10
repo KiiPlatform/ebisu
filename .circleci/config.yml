@@ -39,9 +39,9 @@ jobs:
       - run:
           name: Commit changes
           command: |
+            cd ebisu-doc
             git config user.email "satoshi.kumano@kii.com"
             git config user.name "Satoshi Kumano"
-            cd ebisu-doc
             git add .
             git commit -m 'Updated khc doc.'
             git push origin master
