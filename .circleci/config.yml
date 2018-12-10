@@ -29,16 +29,16 @@ jobs:
       - checkout
       - run:
           name: Build khc doc
-          command: make -C khc clean doc
+          command: make -C ${CIRCLE_WORKING_DIRECTORY}/khc clean doc
       - run:
           name: Copy khc doc
-          command: rsync -r --delete jkii/html/ docs/khc/html/
+          command: rsync -r --delete ${CIRCLE_WORKING_DIRECTORY}/khc/html/ ${CIRCLE_WORKING_DIRECTORY}/docs/khc/html/
       - run:
           name: Commit changes
           command: |
             git config user.email "satoshi.kumano@kii.com"
             git config user.name "Satoshi Kumano"
-            git add docs/khc
+            git add ${CIRCLE_WORKING_DIRECTORY}/docs/khc
             git commit -m 'Updated khc doc. [ci skip]'
             git fetch origin
             git pull origin master --commit --no-edit
