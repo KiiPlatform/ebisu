@@ -32,7 +32,7 @@ jobs:
           command: make -C khc clean doc
       - run:
           name: Copy khc doc
-          command: git rm -r docs/khc/html && cp khc/html docs/khc
+          command: git rm -r docs/khc/html && cp -r khc/html docs/khc
       - run:
           name: Commit changes
           command: |
@@ -51,7 +51,7 @@ jobs:
           command: make -C kii clean doc
       - run:
           name: Copy kii doc
-          command: git rm -r docs/kii/html && cp kii/html docs/kii
+          command: git rm -r docs/kii/html && cp -r kii/html docs/kii
       - run:
           name: Commit changes
           command: |
@@ -70,7 +70,7 @@ jobs:
           command: make -C jkii clean doc
       - run:
           name: Copy jkii doc
-          command: git rm -r docs/jkii/html && cp jkii/html docs/jkii
+          command: git rm -r docs/jkii/html && cp -r jkii/html docs/jkii
       - run:
           name: Commit changes
           command: |
@@ -89,7 +89,7 @@ jobs:
           command: make -C tio clean doc
       - run:
           name: Copy tio doc
-          command: git rm -r docs/tio/html && cp tio/html docs/tio
+          command: git rm -r docs/tio/html && cp -r tio/html docs/tio
       - run:
           name: Commit changes
           command: |
