@@ -28,76 +28,76 @@ jobs:
     steps:
       - checkout
       - run:
-        name: Build khc doc
-        command: make -C khc clean doc
+          name: Build khc doc
+          command: make -C khc clean doc
       - run:
-        name: Copy khc doc
-        commaned: git rm -r docs/khc/html && cp khc/html docs/khc
+          name: Copy khc doc
+          commaned: git rm -r docs/khc/html && cp khc/html docs/khc
       - run:
-        name: Commit changes
-        command: |
-          git config user.email "satoshi.kumano@kii.com"
-          git config user.name "Satoshi Kumano"
-          git add docs/khc
-          git commit -m 'Updated khc doc. [ci skip]'
-          git push origin master
+          name: Commit changes
+          command: |
+            git config user.email "satoshi.kumano@kii.com"
+            git config user.name "Satoshi Kumano"
+            git add docs/khc
+            git commit -m 'Updated khc doc. [ci skip]'
+            git push origin master
 
   doc-kii:
     <<: *env
     steps:
       - checkout
       - run:
-        name: Build kii doc
-        command: make -C kii clean doc
+          name: Build kii doc
+          command: make -C kii clean doc
       - run:
-        name: Copy kii doc
-        commaned: git rm -r docs/kii/html && cp kii/html docs/kii
+          name: Copy kii doc
+          commaned: git rm -r docs/kii/html && cp kii/html docs/kii
       - run:
-        name: Commit changes
-        command: |
-          git config user.email "satoshi.kumano@kii.com"
-          git config user.name "Satoshi Kumano"
-          git add docs/kii
-          git commit -m 'Updated kii doc. [ci skip]'
-          git push origin master
+          name: Commit changes
+          command: |
+            git config user.email "satoshi.kumano@kii.com"
+            git config user.name "Satoshi Kumano"
+            git add docs/kii
+            git commit -m 'Updated kii doc. [ci skip]'
+            git push origin master
 
   doc-jkii:
     <<: *env
     steps:
       - checkout
       - run:
-        name: Build jkii doc
-        command: make -C jkii clean doc
+          name: Build jkii doc
+          command: make -C jkii clean doc
       - run:
-        name: Copy jkii doc
-        commaned: git rm -r docs/jkii/html && cp jkii/html docs/jkii
+          name: Copy jkii doc
+          commaned: git rm -r docs/jkii/html && cp jkii/html docs/jkii
       - run:
-        name: Commit changes
-        command: |
-          git config user.email "satoshi.kumano@kii.com"
-          git config user.name "Satoshi Kumano"
-          git add docs/jkii
-          git commit -m 'Updated jkii doc. [ci skip]'
-          git push origin master
+          name: Commit changes
+          command: |
+            git config user.email "satoshi.kumano@kii.com"
+            git config user.name "Satoshi Kumano"
+            git add docs/jkii
+            git commit -m 'Updated jkii doc. [ci skip]'
+            git push origin master
 
   doc-tio:
     <<: *env
     steps:
       - checkout
       - run:
-        name: Build tio doc
-        command: make -C tio clean doc
+          name: Build tio doc
+          command: make -C tio clean doc
       - run:
-        name: Copy tio doc
-        commaned: git rm -r docs/tio/html && cp tio/html docs/tio
+          name: Copy tio doc
+          commaned: git rm -r docs/tio/html && cp tio/html docs/tio
       - run:
-        name: Commit changes
-        command: |
-          git config user.email "satoshi.kumano@kii.com"
-          git config user.name "Satoshi Kumano"
-          git add docs/tio
-          git commit -m 'Updated tio doc. [ci skip]'
-          git push origin master
+          name: Commit changes
+          command: |
+            git config user.email "satoshi.kumano@kii.com"
+            git config user.name "Satoshi Kumano"
+            git add docs/tio
+            git commit -m 'Updated tio doc. [ci skip]'
+            git push origin master
 
   stest-khc:
     <<: *env
