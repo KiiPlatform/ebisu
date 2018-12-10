@@ -115,31 +115,31 @@ workflows:
             branches:
               ignore:
                 - gh-pages
-    #   - stest-khc:
-    #       filters:
-    #         branches:
-    #           ignore:
-    #             - gh-pages
-    #   - stest-jkii:
-    #       filters:
-    #         branches:
-    #           ignore:
-    #             - gh-pages
-    #   - stest-tio:
-    #       filters:
-    #         branches:
-    #           ignore:
-    #             - gh-pages
-    #   - ltest-khc:
-    #       filters:
-    #         branches:
-    #           ignore:
-    #             - gh-pages
-    #   - ltest-kii:
-    #       filters:
-    #         branches:
-    #           ignore:
-    #             - gh-pages
+      - stest-khc:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - stest-jkii:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - stest-tio:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - ltest-khc:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - ltest-kii:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
       - doc-all:
           filters:
             branches:
