@@ -143,7 +143,7 @@ workflows:
       - doc-all:
           filters:
             branches:
-              only: doc
+              only: master
 
 # vim: set sts=2 sw=2 et:
 
