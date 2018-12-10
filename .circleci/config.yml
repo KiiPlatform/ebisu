@@ -40,6 +40,8 @@ jobs:
             git config user.name "Satoshi Kumano"
             git add docs/khc
             git commit -m 'Updated khc doc. [ci skip]'
+            git fetch origin
+            git pull origin master
             git push origin master
 
   doc-kii:
@@ -59,6 +61,8 @@ jobs:
             git config user.name "Satoshi Kumano"
             git add docs/kii
             git commit -m 'Updated kii doc. [ci skip]'
+            git fetch origin
+            git pull origin master
             git push origin master
 
   doc-jkii:
@@ -78,6 +82,8 @@ jobs:
             git config user.name "Satoshi Kumano"
             git add docs/jkii
             git commit -m 'Updated jkii doc. [ci skip]'
+            git fetch origin
+            git pull origin master
             git push origin master
 
   doc-tio:
@@ -97,6 +103,8 @@ jobs:
             git config user.name "Satoshi Kumano"
             git add docs/tio
             git commit -m 'Updated tio doc. [ci skip]'
+            git fetch origin
+            git pull origin master
             git push origin master
 
   stest-khc:
