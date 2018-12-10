@@ -390,6 +390,28 @@ TEST_CASE( "MQTT state test" ) {
     REQUIRE( call_recv == 1 );
     REQUIRE( call_push );
 
+    state.elapsed_time_ms = (kii._keep_alive_interval + 1) * 1000;
+    _mqtt_state_recv_ready(&state);
+    REQUIRE( state.info.task_state == KII_MQTT_ST_SEND_PINGREQ );
+    REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+
+    call_send = 0;
+    mqtt_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+        if (call_send == 0) {
+            REQUIRE( length == 2 );
+            REQUIRE( buffer[0] == (char)0xC0 );
+            REQUIRE( buffer[1] == 0x00 );
+        }
+        ++call_send;
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    _mqtt_state_send_pingreq(&state);
+    REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+    REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+    REQUIRE( call_send == 1 );
+    REQUIRE( state.elapsed_time_ms < kii._keep_alive_interval * 1000 );
+
     call_recv = 0;
     mqtt_ctx.on_recv = [=, &call_recv, &ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         switch (call_recv) {
@@ -415,6 +437,7 @@ TEST_CASE( "MQTT state test" ) {
     REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
     REQUIRE( state.info.error == KII_MQTT_ERR_OK );
     REQUIRE( call_recv == 2 );
+
     call_recv = 0;
     mqtt_ctx.on_recv = [=, &call_recv, &ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         switch (call_recv) {
