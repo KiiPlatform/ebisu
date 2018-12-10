@@ -52,3 +52,7 @@ The module is developed to implement `tio` and `kii`.
 You can use this module to parse json encoded string or you can choose other 3rd party libraries.
 
 For more details, please refer to [./jkii/README.md](./jkii/README.md)
+
+## API references
+
+Details of API are available in [API references](https://kiiplatform.github.io/ebisu/).
