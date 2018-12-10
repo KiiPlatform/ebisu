@@ -3,6 +3,7 @@ SDK_DEPS+=$(wildcard include/*.h)
 SDK_DEPS+=CMakeLists.txt
 
 CMAKE_BUILD_DIR=build
+DOC_OUTPUT_DIR=html
 
 all: build-sdk doc
 
@@ -22,6 +23,6 @@ doc:
 
 clean:
 	rm -rf $(CMAKE_BUILD_DIR)
-	rm -rf docs
+	rm -rf $(DOC_OUTPUT_DIR)
 
-.PHONY: build-sdk doc
+.PHONY: build-sdk doc all

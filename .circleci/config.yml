@@ -23,6 +23,82 @@ jobs:
           root: .
           paths: kii/html
 
+  doc-khc:
+    <<: *env
+    steps:
+      - checkout
+      - run:
+        name: Build khc doc
+        command: make -C khc clean doc
+      - run:
+        name: Copy khc doc
+        commaned: git rm -r docs/khc/html && cp khc/html docs/khc
+      - run:
+        name: Commit changes
+        command: |
+          git config user.email "satoshi.kumano@kii.com"
+          git config user.name "Satoshi Kumano"
+          git add docs/khc
+          git commit -m 'Updated khc doc. [ci skip]'
+          git push origin master
+
+  doc-kii:
+    <<: *env
+    steps:
+      - checkout
+      - run:
+        name: Build kii doc
+        command: make -C kii clean doc
+      - run:
+        name: Copy kii doc
+        commaned: git rm -r docs/kii/html && cp kii/html docs/kii
+      - run:
+        name: Commit changes
+        command: |
+          git config user.email "satoshi.kumano@kii.com"
+          git config user.name "Satoshi Kumano"
+          git add docs/kii
+          git commit -m 'Updated kii doc. [ci skip]'
+          git push origin master
+
+  doc-jkii:
+    <<: *env
+    steps:
+      - checkout
+      - run:
+        name: Build jkii doc
+        command: make -C jkii clean doc
+      - run:
+        name: Copy jkii doc
+        commaned: git rm -r docs/jkii/html && cp jkii/html docs/jkii
+      - run:
+        name: Commit changes
+        command: |
+          git config user.email "satoshi.kumano@kii.com"
+          git config user.name "Satoshi Kumano"
+          git add docs/jkii
+          git commit -m 'Updated jkii doc. [ci skip]'
+          git push origin master
+
+  doc-tio:
+    <<: *env
+    steps:
+      - checkout
+      - run:
+        name: Build tio doc
+        command: make -C tio clean doc
+      - run:
+        name: Copy tio doc
+        commaned: git rm -r docs/tio/html && cp tio/html docs/tio
+      - run:
+        name: Commit changes
+        command: |
+          git config user.email "satoshi.kumano@kii.com"
+          git config user.name "Satoshi Kumano"
+          git add docs/tio
+          git commit -m 'Updated tio doc. [ci skip]'
+          git push origin master
+
   stest-khc:
     <<: *env
     steps:
@@ -109,5 +185,21 @@ workflows:
             branches:
               ignore:
                 - gh-pages
+      - doc-khc:
+          filters:
+            branches:
+              only: master
+      - doc-kii:
+          filters:
+            branches:
+              only: master
+      - doc-jkii:
+          filters:
+            branches:
+              only: master
+      - doc-tio:
+          filters:
+            branches:
+              only: master
 # vim: set sts=2 sw=2 et:
 
