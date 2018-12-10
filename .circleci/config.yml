@@ -168,18 +168,18 @@ workflows:
       - doc-khc:
           filters:
             branches:
-              - master
+              only: master
       - doc-kii:
           filters:
             branches:
-              - master
+              only: master
       - doc-jkii:
           filters:
             branches:
-              - master
+              only: master
       - doc-tio:
           filters:
             branches:
-              - master
+              only: master
 # vim: set sts=2 sw=2 et:
 
