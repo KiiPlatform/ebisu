@@ -378,7 +378,7 @@ TEST_CASE( "MQTT state test" ) {
     };
 
     bool call_push = false;
-    push_ctx.on_push = [=, &call_push](char* message, size_t message_length) {
+    push_ctx.on_push = [=, &call_push](const char* message, size_t message_length) {
         call_push = true;
         REQUIRE( message_length == push_message.length() );
         REQUIRE( strncmp(message, push_message.c_str(), message_length) == 0 );
