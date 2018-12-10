@@ -878,3 +878,318 @@ TEST_CASE( "Socket send partial" ) {
 
   khc_slist_free_all(req_headers);
 }
+
+TEST_CASE( "state abnormal tests." ) {
+  khc http;
+  khc_init(&http);
+  const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
+  const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
+
+  khct::http::Resp resp;
+  resp.headers = { "HTTP/1.0 200 OK" };
+
+  khc_set_host(&http, "api.kii.com");
+  khc_set_method(&http, "GET");
+  khc_set_path(&http, "/api/apps");
+  khc_set_req_headers(&http, NULL);
+
+  khct::cb::SockCtx s_ctx;
+  khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
+  khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
+  khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
+  khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+
+  khct::cb::IOCtx io_ctx;
+  // no set cb_read.
+  khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
+  khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
+
+  khc_state_idle(&http);
+  REQUIRE( http._state == KHC_STATE_CONNECT );
+  REQUIRE( http._result == KHC_ERR_OK );
+
+  bool called;
+  SECTION("state connect retry.") {
+    called = false;
+    s_ctx.on_connect = [=, &called](void* socket_context, const char* host, unsigned int port) {
+      called = true;
+      return KHC_SOCK_AGAIN;
+    };
+
+    khc_state_connect(&http);
+    REQUIRE( http._state == KHC_STATE_CONNECT );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+  }
+
+  SECTION("state connect failed.") {
+    called = false;
+    s_ctx.on_connect = [=, &called](void* socket_context, const char* host, unsigned int port) {
+      called = true;
+      return KHC_SOCK_FAIL;
+    };
+
+    khc_state_connect(&http);
+    REQUIRE( http._state == KHC_STATE_FINISHED );
+    REQUIRE( http._result == KHC_ERR_SOCK_CONNECT );
+    REQUIRE( called );
+  }
+
+  SECTION("state req line retry.") {
+    http._state = KHC_STATE_REQ_LINE;
+
+    called = false;
+    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+      called = true;
+      return KHC_SOCK_AGAIN;
+    };
+
+    khc_state_req_line(&http);
+    REQUIRE( http._state == KHC_STATE_REQ_LINE );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+  }
+
+  SECTION("state req line failed.") {
+    http._state = KHC_STATE_REQ_LINE;
+
+    called = false;
+    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+      called = true;
+      return KHC_SOCK_FAIL;
+    };
+
+    khc_state_req_line(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_SOCK_SEND );
+    REQUIRE( called );
+  }
+
+  SECTION("state req host header retry.") {
+    http._state = KHC_STATE_REQ_HOST_HEADER;
+
+    called = false;
+    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+      called = true;
+      return KHC_SOCK_AGAIN;
+    };
+
+    khc_state_req_host_header(&http);
+    REQUIRE( http._state == KHC_STATE_REQ_HOST_HEADER );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+  }
+
+  SECTION("state req host header failed.") {
+    http._state = KHC_STATE_REQ_HOST_HEADER;
+
+    called = false;
+    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+      called = true;
+      return KHC_SOCK_FAIL;
+    };
+
+    khc_state_req_host_header(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_SOCK_SEND );
+    REQUIRE( called );
+  }
+
+  SECTION("state req header send retry.") {
+    http._state = KHC_STATE_REQ_HEADER_SEND;
+    http._sent_length = 0;
+    khc_slist header;
+    header.data = (char*)"dummy";
+    header.next = NULL;
+    http._current_req_header = &header;
+
+    called = false;
+    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+      called = true;
+      return KHC_SOCK_AGAIN;
+    };
+
+    khc_state_req_header_send(&http);
+    REQUIRE( http._state == KHC_STATE_REQ_HEADER_SEND );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+  }
+
+  SECTION("state req header send failed.") {
+    http._state = KHC_STATE_REQ_HEADER_SEND;
+    http._sent_length = 0;
+    khc_slist header;
+    header.data = (char*)"dummy";
+    header.next = NULL;
+    http._current_req_header = &header;
+
+    called = false;
+    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+      called = true;
+      return KHC_SOCK_FAIL;
+    };
+
+    khc_state_req_header_send(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_SOCK_SEND );
+    REQUIRE( called );
+  }
+
+  SECTION("state req header send crlf retry.") {
+    http._state = KHC_STATE_REQ_HEADER_SEND_CRLF;
+
+    called = false;
+    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+      called = true;
+      return KHC_SOCK_AGAIN;
+    };
+
+    khc_state_req_header_send_crlf(&http);
+    REQUIRE( http._state == KHC_STATE_REQ_HEADER_SEND_CRLF );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+  }
+
+  SECTION("state req header send crlf failed.") {
+    http._state = KHC_STATE_REQ_HEADER_SEND_CRLF;
+
+    called = false;
+    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+      called = true;
+      return KHC_SOCK_FAIL;
+    };
+
+    khc_state_req_header_send_crlf(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_SOCK_SEND );
+    REQUIRE( called );
+  }
+
+  SECTION("state req header end retry.") {
+    http._state = KHC_STATE_REQ_HEADER_END;
+
+    called = false;
+    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+      called = true;
+      return KHC_SOCK_AGAIN;
+    };
+
+    khc_state_req_header_end(&http);
+    REQUIRE( http._state == KHC_STATE_REQ_HEADER_END );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+  }
+
+  SECTION("state req header end failed.") {
+    http._state = KHC_STATE_REQ_HEADER_END;
+
+    called = false;
+    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+      called = true;
+      return KHC_SOCK_FAIL;
+    };
+
+    khc_state_req_header_end(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_SOCK_SEND );
+    REQUIRE( called );
+  }
+
+  SECTION("state req body send size retry.") {
+    http._state = KHC_STATE_REQ_BODY_SEND_SIZE;
+    http._read_size = 1234;
+
+    called = false;
+    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+      called = true;
+      return KHC_SOCK_AGAIN;
+    };
+
+    khc_state_req_body_send_size(&http);
+    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_SIZE );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+  }
+
+  SECTION("state req body send size failed.") {
+    http._state = KHC_STATE_REQ_BODY_SEND_SIZE;
+    http._read_size = 1234;
+
+    called = false;
+    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+      called = true;
+      return KHC_SOCK_FAIL;
+    };
+
+    khc_state_req_body_send_size(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_SOCK_SEND );
+    REQUIRE( called );
+  }
+
+  SECTION("state req body send retry.") {
+    http._state = KHC_STATE_REQ_BODY_SEND;
+    http._read_size = 1234;
+    http._sent_length = 0;
+
+    called = false;
+    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+      called = true;
+      return KHC_SOCK_AGAIN;
+    };
+
+    khc_state_req_body_send(&http);
+    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+  }
+
+  SECTION("state req body send failed.") {
+    http._state = KHC_STATE_REQ_BODY_SEND;
+    http._read_size = 1234;
+    http._sent_length = 0;
+
+    called = false;
+    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+      called = true;
+      return KHC_SOCK_FAIL;
+    };
+
+    khc_state_req_body_send(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_SOCK_SEND );
+    REQUIRE( called );
+  }
+
+  SECTION("state req body send crlf retry.") {
+    http._state = KHC_STATE_REQ_BODY_SEND_CRLF;
+    http._sent_length = 0;
+
+    called = false;
+    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+      called = true;
+      return KHC_SOCK_AGAIN;
+    };
+
+    khc_state_req_body_send_crlf(&http);
+    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_CRLF );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+  }
+
+  SECTION("state req body send crlf failed.") {
+    http._state = KHC_STATE_REQ_BODY_SEND_CRLF;
+    http._sent_length = 0;
+
+    called = false;
+    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+      called = true;
+      return KHC_SOCK_FAIL;
+    };
+
+    khc_state_req_body_send_crlf(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_SOCK_SEND );
+    REQUIRE( called );
+  }
+}
