@@ -11,3 +11,5 @@ testapp
 tmp
 /build
 /build-arm
+/html
+/latex
