@@ -28,20 +28,22 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Checkout doc repo.
+          command: git clone git@github.com:KiiPlatform/ebisu-doc.git
+      - run:
           name: Build khc doc
           command: make -C khc clean doc
       - run:
           name: Copy khc doc
-          command: rsync -rR --delete khc/html/ docs/khc/html/
+          command: rsync -rR --delete khc/html/ ebisu-doc/khc/html/
       - run:
           name: Commit changes
           command: |
             git config user.email "satoshi.kumano@kii.com"
             git config user.name "Satoshi Kumano"
-            git add docs/khc
-            git commit -m 'Updated khc doc. [ci skip]'
-            git fetch origin
-            git pull origin master --commit --no-edit
+            cd ebisu-doc
+            git add .
+            git commit -m 'Updated khc doc.'
             git push origin master
 
   doc-kii:
