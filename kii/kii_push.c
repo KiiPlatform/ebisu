@@ -13,7 +13,7 @@
 
 kii_code_t kii_subscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
 {
-    khc_set_zero_excl_cb(&kii->_khc);
+    khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);
 
     kii_code_t res = _subscribe_bucket(kii, bucket);
@@ -33,7 +33,7 @@ exit:
 
 kii_code_t kii_unsubscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
 {
-    khc_set_zero_excl_cb(&kii->_khc);
+    khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);
 
     kii_code_t res = _unsubscribe_bucket(kii, bucket);
@@ -53,7 +53,7 @@ exit:
 
 kii_code_t kii_subscribe_topic(kii_t* kii, const kii_topic_t* topic)
 {
-   khc_set_zero_excl_cb(&kii->_khc);
+   khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);
 
     kii_code_t res = _subscribe_topic(kii, topic);
@@ -73,7 +73,7 @@ exit:
 
 kii_code_t kii_unsubscribe_topic(kii_t* kii, const kii_topic_t* topic)
 {
-   khc_set_zero_excl_cb(&kii->_khc);
+   khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);
 
     kii_code_t res = _unsubscribe_topic(kii, topic);
@@ -92,7 +92,7 @@ exit:
 
 kii_code_t kii_put_topic(kii_t* kii, const kii_topic_t* topic)
 {
-    khc_set_zero_excl_cb(&kii->_khc);
+    khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);
 
     kii_code_t res = _put_topic(kii, topic);
@@ -112,7 +112,7 @@ exit:
 
 kii_code_t kii_delete_topic(kii_t* kii, const kii_topic_t* topic)
 {
-    khc_set_zero_excl_cb(&kii->_khc);
+    khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);
 
     kii_code_t res = _delete_topic(kii, topic);
@@ -134,7 +134,7 @@ kii_code_t kii_install_push(
         kii_bool_t development,
         kii_installation_id_t* out_installation_id)
 {
-    khc_set_zero_excl_cb(&kii->_khc);
+    khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);
 
     kii_code_t res = _install_push(kii, development);
@@ -179,7 +179,7 @@ kii_code_t kii_get_mqtt_endpoint(
     const char* installation_id,
     kii_mqtt_endpoint_t* endpoint)
 {
-    khc_set_zero_excl_cb(&kii->_khc);
+    khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);
 
     kii_code_t res = _get_mqtt_endpoint(kii, installation_id);
@@ -246,7 +246,7 @@ exit:
     return res;
 }
 
-kii_code_t kii_start_push_routine(kii_t* kii, unsigned int keep_alive_interval, KII_PUSH_RECEIVED_CB callback, void* userdata)
+kii_code_t kii_start_push_task(kii_t* kii, unsigned int keep_alive_interval, KII_PUSH_RECEIVED_CB callback, void* userdata)
 {
     kii->_keep_alive_interval = keep_alive_interval;
     kii->_cb_push_received = callback;

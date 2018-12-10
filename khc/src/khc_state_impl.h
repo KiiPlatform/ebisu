@@ -29,7 +29,7 @@ void khc_state_resp_status_parse(khc* khc);
 void khc_state_resp_header_callback(khc* khc);
 void khc_state_resp_header_read(khc* khc);
 void khc_state_resp_header_skip(khc* khc);
-void khc_state_resp_body_flagment(khc* khc);
+void khc_state_resp_body_fragment(khc* khc);
 void khc_state_read_chunk_size_from_header_buff(khc* khc);
 void khc_state_read_chunk_body_from_header_buff(khc* khc);
 

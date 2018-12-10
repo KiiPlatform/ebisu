@@ -10,7 +10,7 @@
 
 TEST_CASE( "HTTP minimal" ) {
   khc http;
-  khc_set_zero(&http);
+  khc_init(&http);
   const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
   const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
 
@@ -137,11 +137,11 @@ TEST_CASE( "HTTP minimal" ) {
   REQUIRE( called );
 
   khc_state_resp_header_callback(&http);
-  REQUIRE( http._state == KHC_STATE_RESP_BODY_FLAGMENT );
+  REQUIRE( http._state == KHC_STATE_RESP_BODY_FRAGMENT );
   REQUIRE( http._read_end == 0 );
   REQUIRE( http._result == KHC_ERR_OK );
 
-  khc_state_resp_body_flagment(&http);
+  khc_state_resp_body_fragment(&http);
   REQUIRE( http._state == KHC_STATE_RESP_BODY_READ );
   REQUIRE( http._read_end == 0 );
   REQUIRE( http._result == KHC_ERR_OK );
@@ -172,7 +172,7 @@ TEST_CASE( "HTTP minimal" ) {
 
 TEST_CASE( "HTTP 1.1 chunked minimal" ) {
   khc http;
-  khc_set_zero(&http);
+  khc_init(&http);
   const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
   const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
 
@@ -486,7 +486,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
 
 TEST_CASE( "Socket send partial" ) {
   khc http;
-  khc_set_zero(&http);
+  khc_init(&http);
   const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
   const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
 
@@ -844,11 +844,11 @@ TEST_CASE( "Socket send partial" ) {
   REQUIRE( called );
 
   khc_state_resp_header_callback(&http);
-  REQUIRE( http._state == KHC_STATE_RESP_BODY_FLAGMENT );
+  REQUIRE( http._state == KHC_STATE_RESP_BODY_FRAGMENT );
   REQUIRE( http._read_end == 0 );
   REQUIRE( http._result == KHC_ERR_OK );
 
-  khc_state_resp_body_flagment(&http);
+  khc_state_resp_body_fragment(&http);
   REQUIRE( http._state == KHC_STATE_RESP_BODY_READ );
   REQUIRE( http._read_end == 0 );
   REQUIRE( http._result == KHC_ERR_OK );

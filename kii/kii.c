@@ -51,7 +51,7 @@ void kii_init(kii_t* kii)
 {
     memset(kii, 0x00, sizeof(kii_t));
     kii->_sdk_info = KII_SDK_INFO;
-    khc_set_zero(&kii->_khc);
+    khc_init(&kii->_khc);
     khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
     khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
     khc_set_cb_header(&kii->_khc, _cb_write_header, kii);
@@ -228,6 +228,10 @@ const char* kii_get_etag(kii_t* kii) {
 
 int kii_get_resp_status(kii_t* kii) {
     return khc_get_status_code(&kii->_khc);
+}
+
+size_t kii_get_resp_body_length(kii_t* kii) {
+    return kii->_rw_buff_written;
 }
 
 kii_code_t _convert_code(khc_code khc_c) {
