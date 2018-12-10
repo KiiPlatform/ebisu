@@ -1,14 +1,14 @@
 var indexSectionsWithContent =
 {
-  0: "dkn",
-  1: "k",
-  2: "k",
-  3: "k",
-  4: "dn",
-  5: "k",
-  6: "k",
-  7: "k",
-  8: "k"
+  0: "bdefijlnprst",
+  1: "j",
+  2: "jr",
+  3: "j",
+  4: "bdefilnprst",
+  5: "j",
+  6: "j",
+  7: "j",
+  8: "j"
 };
 
 var indexSectionNames =

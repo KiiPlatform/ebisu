@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['data',['data',['../structkhc__slist.html#afdc9bd8e86890913ee8949a9275bf0b6',1,'khc_slist']]]
+  ['boolean_5fvalue',['boolean_value',['../structjkii__field__t.html#af204e584160c0451d1272ba2ef9cbd20',1,'jkii_field_t']]]
 ];
