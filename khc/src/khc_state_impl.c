@@ -663,7 +663,7 @@ void khc_state_resp_body_fragment(khc* khc) {
 }
 
 int _move_resp_header_to_stream(khc* khc) {
-  size_t remain = khc->_stream_buff_size - khc->_body_read_size;
+  long remain = khc->_stream_buff_size - khc->_body_read_size;
   if (remain <= 0) {
     return 1;
   }
