@@ -23,88 +23,35 @@ jobs:
           root: .
           paths: kii/html
 
-  doc-khc:
+  doc-all:
     <<: *env
     steps:
       - checkout
       - run:
-          name: Build khc doc
-          command: make -C khc clean doc
+          name: Checkout doc repo.
+          command: git clone git@github.com:KiiPlatform/ebisu-doc.git
       - run:
-          name: Copy khc doc
-          command: rsync -rR --delete khc/html/ docs/khc/html/
+          name: Build docs
+          command: |
+            make -C khc clean doc
+            make -C kii clean doc
+            make -C jkii clean doc
+            make -C tio clean doc
+      - run:
+          name: Copy docs
+          command: |
+            rsync -rR --delete khc/html ebisu-doc
+            rsync -rR --delete kii/html ebisu-doc
+            rsync -rR --delete jkii/html ebisu-doc
+            rsync -rR --delete tio/html ebisu-doc
       - run:
           name: Commit changes
           command: |
+            cd ebisu-doc
             git config user.email "satoshi.kumano@kii.com"
             git config user.name "Satoshi Kumano"
-            git add docs/khc
-            git commit -m 'Updated khc doc. [ci skip]'
-            git fetch origin
-            git pull origin master --commit --no-edit
-            git push origin master
-
-  doc-kii:
-    <<: *env
-    steps:
-      - checkout
-      - run:
-          name: Build kii doc
-          command: make -C kii clean doc
-      - run:
-          name: Copy kii doc
-          command: rm -rf docs/kii/html && cp -r kii/html docs/kii
-      - run:
-          name: Commit changes
-          command: |
-            git config user.email "satoshi.kumano@kii.com"
-            git config user.name "Satoshi Kumano"
-            git add docs/kii
-            git commit -m 'Updated kii doc. [ci skip]'
-            git fetch origin
-            git pull origin master --commit --no-edit
-            git push origin master
-
-  doc-jkii:
-    <<: *env
-    steps:
-      - checkout
-      - run:
-          name: Build jkii doc
-          command: make -C jkii clean doc
-      - run:
-          name: Copy jkii doc
-          command: rm -rf docs/jkii/html && cp -r jkii/html docs/jkii
-      - run:
-          name: Commit changes
-          command: |
-            git config user.email "satoshi.kumano@kii.com"
-            git config user.name "Satoshi Kumano"
-            git add docs/jkii
-            git commit -m 'Updated jkii doc. [ci skip]'
-            git fetch origin
-            git pull origin master --commit --no-edit
-            git push origin master
-
-  doc-tio:
-    <<: *env
-    steps:
-      - checkout
-      - run:
-          name: Build tio doc
-          command: make -C tio clean doc
-      - run:
-          name: Copy tio doc
-          command: rm -rf docs/tio/html && cp -r tio/html docs/tio
-      - run:
-          name: Commit changes
-          command: |
-            git config user.email "satoshi.kumano@kii.com"
-            git config user.name "Satoshi Kumano"
-            git add docs/tio
-            git commit -m 'Updated tio doc. [ci skip]'
-            git fetch origin
-            git pull origin master --commit --no-edit
+            git add .
+            git commit -m 'Updated ebisu docs.'
             git push origin master
 
   stest-khc:
@@ -168,46 +115,35 @@ workflows:
             branches:
               ignore:
                 - gh-pages
-    #   - stest-khc:
-    #       filters:
-    #         branches:
-    #           ignore:
-    #             - gh-pages
-    #   - stest-jkii:
-    #       filters:
-    #         branches:
-    #           ignore:
-    #             - gh-pages
-    #   - stest-tio:
-    #       filters:
-    #         branches:
-    #           ignore:
-    #             - gh-pages
-    #   - ltest-khc:
-    #       filters:
-    #         branches:
-    #           ignore:
-    #             - gh-pages
-    #   - ltest-kii:
-    #       filters:
-    #         branches:
-    #           ignore:
-    #             - gh-pages
-      - doc-khc:
+      - stest-khc:
           filters:
             branches:
-              only: doc
-      # - doc-kii:
-      #     filters:
-      #       branches:
-      #         only: master
-      # - doc-jkii:
-      #     filters:
-      #       branches:
-      #         only: master
-      # - doc-tio:
-      #     filters:
-      #       branches:
-      #         only: master
+              ignore:
+                - gh-pages
+      - stest-jkii:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - stest-tio:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - ltest-khc:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - ltest-kii:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - doc-all:
+          filters:
+            branches:
+              only: master
+
 # vim: set sts=2 sw=2 et:
 
