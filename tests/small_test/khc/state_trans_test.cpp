@@ -884,6 +884,7 @@ TEST_CASE( "state abnormal tests." ) {
   khc_init(&http);
   const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
   const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
+  char resp_header_buff[resp_header_buff_size];
 
   khct::http::Resp resp;
   resp.headers = { "HTTP/1.0 200 OK" };
@@ -892,6 +893,7 @@ TEST_CASE( "state abnormal tests." ) {
   khc_set_method(&http, "GET");
   khc_set_path(&http, "/api/apps");
   khc_set_req_headers(&http, NULL);
+  khc_set_resp_header_buff(&http, resp_header_buff, resp_header_buff_size);
 
   khct::cb::SockCtx s_ctx;
   khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
@@ -1191,5 +1193,77 @@ TEST_CASE( "state abnormal tests." ) {
     REQUIRE( http._state == KHC_STATE_CLOSE );
     REQUIRE( http._result == KHC_ERR_SOCK_SEND );
     REQUIRE( called );
+  }
+
+  SECTION("resp status read no crlf.") {
+    http._state = KHC_STATE_RESP_STATUS_READ;
+    http._resp_header_read_size = 0;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      strcpy(buffer, "no crlf");
+      *out_actual_length = strlen(buffer);
+      return KHC_SOCK_OK;
+    };
+
+    khc_state_resp_status_read(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_TOO_LARGE_DATA );
+    REQUIRE( called );
+  }
+
+  SECTION("resp status read retry.") {
+    http._state = KHC_STATE_RESP_STATUS_READ;
+    http._resp_header_read_size = 0;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      return KHC_SOCK_AGAIN;
+    };
+
+    khc_state_resp_status_read(&http);
+    REQUIRE( http._state == KHC_STATE_RESP_STATUS_READ );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+  }
+
+  SECTION("resp status read failed.") {
+    http._state = KHC_STATE_RESP_STATUS_READ;
+    http._resp_header_read_size = 0;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      return KHC_SOCK_FAIL;
+    };
+
+    khc_state_resp_status_read(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_SOCK_RECV );
+    REQUIRE( called );
+  }
+
+  SECTION("resp status parse no number.") {
+    http._state = KHC_STATE_RESP_STATUS_READ;
+    http._resp_header_read_size = 0;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      strcpy(buffer, "HTTP/1.1 abc no number status\r\n");
+      *out_actual_length = strlen(buffer);
+      return KHC_SOCK_OK;
+    };
+
+    khc_state_resp_status_read(&http);
+    REQUIRE( http._state == KHC_STATE_RESP_STATUS_PARSE );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+
+    khc_state_resp_status_parse(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_FAIL );
   }
 }
