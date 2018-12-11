@@ -7,8 +7,6 @@
 
 #include <sstream>
 
-using namespace std;
-
 TEST_CASE( "MQTT state test" ) {
     size_t kii_buff_size = 1024;
     char kii_buff[kii_buff_size];
@@ -71,7 +69,7 @@ TEST_CASE( "MQTT state test" ) {
     };
 
     int call_recv = 0;
-    stringstream ss;
+    std::stringstream ss;
     ss <<
         "HTTP/1.1 201 Created\r\n"
         "Accept-Ranges: bytes\r\n"
@@ -349,7 +347,7 @@ TEST_CASE( "MQTT state test" ) {
     call_recv = 0;
     ss.clear();
     ss << (char)0x00 << (char)0x0a << "dummyTopic";
-    string push_message =
+    std::string push_message =
         "{"
         "  \"schema\" : \"\","
         "  \"schemaVersion\" : 0,"
