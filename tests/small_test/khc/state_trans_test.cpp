@@ -1266,4 +1266,156 @@ TEST_CASE( "state abnormal tests." ) {
     REQUIRE( http._state == KHC_STATE_CLOSE );
     REQUIRE( http._result == KHC_ERR_FAIL );
   }
+
+  SECTION("resp header read retry.") {
+    http._state = KHC_STATE_RESP_HEADER_READ;
+    http._resp_header_read_size = 0;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      return KHC_SOCK_AGAIN;
+    };
+
+    khc_state_resp_header_read(&http);
+    REQUIRE( http._state == KHC_STATE_RESP_HEADER_READ );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+  }
+
+  SECTION("resp header read failed.") {
+    http._state = KHC_STATE_RESP_HEADER_READ;
+    http._resp_header_read_size = 0;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      return KHC_SOCK_FAIL;
+    };
+
+    khc_state_resp_header_read(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_SOCK_RECV );
+    REQUIRE( called );
+  }
+
+  SECTION("resp header callback failed.") {
+    http._state = KHC_STATE_RESP_HEADER_READ;
+    http._resp_header_read_size = 0;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      strcpy(buffer, "X-HEADER: dummy value\r\n");
+      *out_actual_length = strlen(buffer);
+      return KHC_SOCK_OK;
+    };
+
+    khc_state_resp_header_read(&http);
+    REQUIRE( http._state == KHC_STATE_RESP_HEADER_CALLBACK );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+
+    called = false;
+    io_ctx.on_header = [=, &called](char *buffer, size_t size, void *userdata) {
+      called = true;
+      REQUIRE( size > 0 );
+      return 0;
+    };
+
+    khc_state_resp_header_callback(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_HEADER_CALLBACK );
+    REQUIRE( called );
+  }
+
+  SECTION("resp header skip retry.") {
+    http._state = KHC_STATE_RESP_HEADER_SKIP;
+    char sbuff[15];
+    strcpy(sbuff, "X-Dummy: dummy");
+    khc_set_resp_header_buff(&http, sbuff, 14);
+    http._resp_header_read_size = 14;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      return KHC_SOCK_AGAIN;
+    };
+
+    khc_state_resp_header_skip(&http);
+    REQUIRE( http._state == KHC_STATE_RESP_HEADER_SKIP );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+  }
+
+  SECTION("resp header skip failed.") {
+    http._state = KHC_STATE_RESP_HEADER_SKIP;
+    char sbuff[15];
+    strcpy(sbuff, "X-Dummy: dummy");
+    khc_set_resp_header_buff(&http, sbuff, 14);
+    http._resp_header_read_size = 14;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      return KHC_SOCK_FAIL;
+    };
+
+    khc_state_resp_header_skip(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_SOCK_RECV );
+    REQUIRE( called );
+  }
+
+  SECTION("resp header skip failed by Content-Length.") {
+    http._state = KHC_STATE_RESP_HEADER_SKIP;
+    char sbuff[20];
+    strcpy(sbuff, "Content-Length: 200");
+    khc_set_resp_header_buff(&http, sbuff, 19);
+    http._resp_header_read_size = 19;
+
+    khc_state_resp_header_skip(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_HEADER_CALLBACK );
+  }
+
+  SECTION("resp header skip failed by Transfer-Encoding.") {
+    http._state = KHC_STATE_RESP_HEADER_SKIP;
+    char sbuff[27];
+    strcpy(sbuff, "Transfer-Encoding: chunked");
+    khc_set_resp_header_buff(&http, sbuff, 26);
+    http._resp_header_read_size = 26;
+
+    khc_state_resp_header_skip(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_HEADER_CALLBACK );
+  }
+
+  SECTION("resp body fragment failed.") {
+    http._state = KHC_STATE_RESP_BODY_FRAGMENT;
+    http._resp_header_read_size = 10;
+
+    called = false;
+    io_ctx.on_write = [=, &called](char *buffer, size_t size, void *userdata) {
+      called = true;
+      REQUIRE( size > 0 );
+      return 0;
+    };
+
+    khc_state_resp_body_fragment(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_WRITE_CALLBACK );
+    REQUIRE( called );
+  }
+
+  SECTION("read chunk size from header buff failed.") {
+    http._state = KHC_STATE_READ_CHUNK_SIZE_FROM_HEADER_BUFF;
+    char sbuff[10];
+    khc_set_stream_buff(&http, sbuff, 10);
+    http._body_read_size = 256;
+
+    khc_state_read_chunk_size_from_header_buff(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_TOO_LARGE_DATA );
+  }
 }
