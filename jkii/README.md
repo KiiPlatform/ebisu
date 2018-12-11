@@ -75,6 +75,3 @@ It is statically linked by default.
 jsmn is published under [MIT
 License](http://opensource.org/licenses/mit-license.php).
 
-## License
-This software is distributed under [MIT License](http://opensource.org/licenses/mit-license.php).
-Feel free to integrate it in your commercial product.
