@@ -884,15 +884,14 @@ TEST_CASE( "state abnormal tests." ) {
   khc_init(&http);
   const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
   const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
+  char stream_buff[buff_size];
   char resp_header_buff[resp_header_buff_size];
-
-  khct::http::Resp resp;
-  resp.headers = { "HTTP/1.0 200 OK" };
 
   khc_set_host(&http, "api.kii.com");
   khc_set_method(&http, "GET");
   khc_set_path(&http, "/api/apps");
   khc_set_req_headers(&http, NULL);
+  khc_set_stream_buff(&http, stream_buff, buff_size);
   khc_set_resp_header_buff(&http, resp_header_buff, resp_header_buff_size);
 
   khct::cb::SockCtx s_ctx;
@@ -1417,5 +1416,286 @@ TEST_CASE( "state abnormal tests." ) {
     khc_state_read_chunk_size_from_header_buff(&http);
     REQUIRE( http._state == KHC_STATE_CLOSE );
     REQUIRE( http._result == KHC_ERR_TOO_LARGE_DATA );
+  }
+
+  SECTION("read chunk body from header buff failed.") {
+    http._state = KHC_STATE_READ_CHUNK_BODY_FROM_HEADER_BUFF;
+    char sbuff[10];
+    khc_set_stream_buff(&http, sbuff, 10);
+    http._body_read_size = 256;
+
+    khc_state_read_chunk_body_from_header_buff(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_TOO_LARGE_DATA );
+  }
+
+  SECTION("resp body read retry.") {
+    http._state = KHC_STATE_RESP_BODY_READ;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      return KHC_SOCK_AGAIN;
+    };
+
+    khc_state_resp_body_read(&http);
+    REQUIRE( http._state == KHC_STATE_RESP_BODY_READ );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+  }
+
+  SECTION("resp body read failed.") {
+    http._state = KHC_STATE_RESP_BODY_READ;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      return KHC_SOCK_FAIL;
+    };
+
+    khc_state_resp_body_read(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_SOCK_RECV );
+    REQUIRE( called );
+  }
+
+  SECTION("resp body callback failed.") {
+    http._state = KHC_STATE_RESP_BODY_CALLBACK;
+    http._body_read_size = 10;
+
+    called = false;
+    io_ctx.on_write = [=, &called](char *buffer, size_t size, void *userdata) {
+      called = true;
+      REQUIRE( size > 0 );
+      return 0;
+    };
+
+    khc_state_resp_body_callback(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_WRITE_CALLBACK );
+    REQUIRE( called );
+  }
+
+  SECTION("resp body read chunk size retry.") {
+    http._state = KHC_STATE_RESP_BODY_READ_CHUNK_SIZE;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      return KHC_SOCK_AGAIN;
+    };
+
+    khc_state_resp_body_read_chunk_size(&http);
+    REQUIRE( http._state == KHC_STATE_RESP_BODY_READ_CHUNK_SIZE );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+  }
+
+  SECTION("resp body read chunk size failed.") {
+    http._state = KHC_STATE_RESP_BODY_READ_CHUNK_SIZE;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      return KHC_SOCK_FAIL;
+    };
+
+    khc_state_resp_body_read_chunk_size(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_SOCK_RECV );
+    REQUIRE( called );
+  }
+
+  SECTION("resp body read chunk size no buffer space.") {
+    http._state = KHC_STATE_RESP_BODY_READ_CHUNK_SIZE;
+    char sbuff[10];
+    khc_set_stream_buff(&http, sbuff, 10);
+    http._body_read_size = 256;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      *out_actual_length = length_to_read;
+      return KHC_SOCK_OK;
+    };
+
+    khc_state_resp_body_read_chunk_size(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_TOO_LARGE_DATA );
+    REQUIRE( called == false );
+  }
+
+  SECTION("resp body parse chunk body failed.") {
+    http._state = KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY;
+    http._chunk_size = 10;
+    http._body_read_size = 10;
+    http._chunk_size_written = 0;
+
+    called = false;
+    io_ctx.on_write = [=, &called](char *buffer, size_t size, void *userdata) {
+      called = true;
+      REQUIRE( size > 0 );
+      return 0;
+    };
+
+    khc_state_resp_body_parse_chunk_body(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_WRITE_CALLBACK );
+    REQUIRE( called );
+  }
+
+  SECTION("resp body read chunk body retry.") {
+    http._state = KHC_STATE_RESP_BODY_READ_CHUNK_BODY;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      return KHC_SOCK_AGAIN;
+    };
+
+    khc_state_resp_body_read_chunk_body(&http);
+    REQUIRE( http._state == KHC_STATE_RESP_BODY_READ_CHUNK_BODY );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+  }
+
+  SECTION("resp body read chunk body failed.") {
+    http._state = KHC_STATE_RESP_BODY_READ_CHUNK_BODY;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      return KHC_SOCK_FAIL;
+    };
+
+    khc_state_resp_body_read_chunk_body(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_SOCK_RECV );
+    REQUIRE( called );
+  }
+
+  SECTION("resp body read chunk body failed by recv 0.") {
+    http._state = KHC_STATE_RESP_BODY_READ_CHUNK_BODY;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      *out_actual_length = 0;
+      return KHC_SOCK_OK;
+    };
+
+    khc_state_resp_body_read_chunk_body(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_FAIL );
+    REQUIRE( called );
+  }
+
+  SECTION("resp body skip chunk body crlf retry.") {
+    http._state = KHC_STATE_RESP_BODY_SKIP_CHUNK_BODY_CRLF;
+    http._body_read_size = 0;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      return KHC_SOCK_AGAIN;
+    };
+
+    khc_state_resp_body_skip_chunk_body_crlf(&http);
+    REQUIRE( http._state == KHC_STATE_RESP_BODY_SKIP_CHUNK_BODY_CRLF );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+  }
+
+  SECTION("resp body skip chunk body crlf failed.") {
+    http._state = KHC_STATE_RESP_BODY_SKIP_CHUNK_BODY_CRLF;
+    http._body_read_size = 0;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      return KHC_SOCK_FAIL;
+    };
+
+    khc_state_resp_body_skip_chunk_body_crlf(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_SOCK_RECV );
+    REQUIRE( called );
+  }
+
+  SECTION("resp body skip chunk body crlf failed by recv 0.") {
+    http._state = KHC_STATE_RESP_BODY_SKIP_CHUNK_BODY_CRLF;
+    http._body_read_size = 0;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      *out_actual_length = 0;
+      return KHC_SOCK_OK;
+    };
+
+    khc_state_resp_body_skip_chunk_body_crlf(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_FAIL );
+    REQUIRE( called );
+  }
+
+  SECTION("resp body skip trailers retry.") {
+    http._state = KHC_STATE_RESP_BODY_SKIP_TRAILERS;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      return KHC_SOCK_AGAIN;
+    };
+
+    khc_state_resp_body_skip_trailers(&http);
+    REQUIRE( http._state == KHC_STATE_RESP_BODY_SKIP_TRAILERS );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+  }
+
+  SECTION("resp body skip trailers failed.") {
+    http._state = KHC_STATE_RESP_BODY_SKIP_TRAILERS;
+
+    called = false;
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+      called = true;
+      return KHC_SOCK_FAIL;
+    };
+
+    khc_state_resp_body_skip_trailers(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_SOCK_RECV );
+    REQUIRE( called );
+  }
+
+  SECTION("close retry.") {
+    http._state = KHC_STATE_CLOSE;
+
+    called = false;
+    s_ctx.on_close = [=, &called](void* socket_context) {
+      called = true;
+      return KHC_SOCK_AGAIN;
+    };
+
+    khc_state_close(&http);
+    REQUIRE( http._state == KHC_STATE_CLOSE );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+  }
+
+  SECTION("close failed.") {
+    http._state = KHC_STATE_CLOSE;
+
+    called = false;
+    s_ctx.on_close = [=, &called](void* socket_context) {
+      called = true;
+      return KHC_SOCK_FAIL;
+    };
+
+    khc_state_close(&http);
+    REQUIRE( http._state == KHC_STATE_FINISHED );
+    REQUIRE( http._result == KHC_ERR_SOCK_CLOSE );
+    REQUIRE( called );
   }
 }
