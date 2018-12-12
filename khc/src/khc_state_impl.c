@@ -663,7 +663,7 @@ void khc_state_resp_body_fragment(khc* khc) {
 }
 
 int _move_resp_header_to_stream(khc* khc) {
-  size_t remain = khc->_stream_buff_size - khc->_body_read_size;
+  long remain = khc->_stream_buff_size - khc->_body_read_size;
   if (remain <= 0) {
     return 1;
   }
@@ -764,7 +764,7 @@ void khc_state_resp_body_parse_chunk_size(khc* khc) {
 
 void khc_state_resp_body_read_chunk_size(khc* khc) {
   size_t read_size = 0;
-  size_t remain = khc->_stream_buff_size - khc->_body_read_size;
+  long remain = khc->_stream_buff_size - khc->_body_read_size;
   if (remain <= 0) {
     khc->_state = KHC_STATE_CLOSE;
     khc->_result = KHC_ERR_TOO_LARGE_DATA;
