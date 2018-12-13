@@ -53,7 +53,7 @@ exit:
 
 kii_code_t kii_subscribe_topic(kii_t* kii, const kii_topic_t* topic)
 {
-   khc_reset_except_cb(&kii->_khc);
+    khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);
 
     kii_code_t res = _subscribe_topic(kii, topic);
@@ -73,7 +73,7 @@ exit:
 
 kii_code_t kii_unsubscribe_topic(kii_t* kii, const kii_topic_t* topic)
 {
-   khc_reset_except_cb(&kii->_khc);
+    khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);
 
     kii_code_t res = _unsubscribe_topic(kii, topic);
@@ -175,9 +175,9 @@ exit:
 }
 
 kii_code_t kii_get_mqtt_endpoint(
-    kii_t* kii,
-    const char* installation_id,
-    kii_mqtt_endpoint_t* endpoint)
+        kii_t* kii,
+        const char* installation_id,
+        kii_mqtt_endpoint_t* endpoint)
 {
     khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);
@@ -252,9 +252,9 @@ kii_code_t kii_start_push_task(kii_t* kii, unsigned int keep_alive_interval, KII
     kii->_cb_push_received = callback;
     kii->_push_data = userdata;
     kii->_cb_task_create(KII_TASK_NAME_MQTT,
-        mqtt_start_task,
-        (void*)kii,
-        kii->_task_create_data);
+            mqtt_start_task,
+            (void*)kii,
+            kii->_task_create_data);
     return KII_ERR_OK;
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

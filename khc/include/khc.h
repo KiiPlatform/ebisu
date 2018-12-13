@@ -56,8 +56,8 @@ typedef size_t (*KHC_CB_HEADER)(char *buffer, size_t size, void *userdata);
  * Linked list manages c string data.
  */
 typedef struct khc_slist {
-  char* data; /**< \brief Null terminated string */
-  struct khc_slist* next; /**< \brief Pointer to the next node. */
+    char* data; /**< \brief Null terminated string */
+    struct khc_slist* next; /**< \brief Pointer to the next node. */
 } khc_slist;
 
 /**
@@ -128,11 +128,11 @@ khc_slist* khc_slist_append(khc_slist* slist, const char* string, size_t length)
  * \returns pointer to the linked list (first node).
  */
 khc_slist* khc_slist_append_using_cb_alloc(
-  khc_slist* slist,
-  const char* string,
-  size_t length,
-  KHC_CB_SLIST_ALLOC cb_alloc,
-  void* cb_alloc_data);
+        khc_slist* slist,
+        const char* string,
+        size_t length,
+        KHC_CB_SLIST_ALLOC cb_alloc,
+        void* cb_alloc_data);
 
 /**
  * \brief Free memory used for the entire linked list.
@@ -153,9 +153,9 @@ void khc_slist_free_all(khc_slist* slist);
  * \param [in] cb_free_data context object pointer passed to cb_free.
  */
 void khc_slist_free_all_using_cb_free(
-  khc_slist* slist,
-  KHC_CB_SLIST_FREE cb_free,
-  void* cb_free_data);
+        khc_slist* slist,
+        KHC_CB_SLIST_FREE cb_free,
+        void* cb_free_data);
 
 /**
  * \brief Indicate state of khc.
@@ -163,67 +163,67 @@ void khc_slist_free_all_using_cb_free(
  * No need to reference state of khc to run HTTP session.
  */
 typedef enum khc_state {
-  KHC_STATE_IDLE,
-  KHC_STATE_CONNECT,
-  KHC_STATE_REQ_LINE,
-  KHC_STATE_REQ_HOST_HEADER,
-  KHC_STATE_REQ_HEADER,
-  KHC_STATE_REQ_HEADER_SEND,
-  KHC_STATE_REQ_HEADER_SEND_CRLF,
-  KHC_STATE_REQ_HEADER_END,
-  KHC_STATE_REQ_BODY_READ,
-  KHC_STATE_REQ_BODY_SEND_SIZE,
-  KHC_STATE_REQ_BODY_SEND,
-  KHC_STATE_REQ_BODY_SEND_CRLF,
+    KHC_STATE_IDLE,
+    KHC_STATE_CONNECT,
+    KHC_STATE_REQ_LINE,
+    KHC_STATE_REQ_HOST_HEADER,
+    KHC_STATE_REQ_HEADER,
+    KHC_STATE_REQ_HEADER_SEND,
+    KHC_STATE_REQ_HEADER_SEND_CRLF,
+    KHC_STATE_REQ_HEADER_END,
+    KHC_STATE_REQ_BODY_READ,
+    KHC_STATE_REQ_BODY_SEND_SIZE,
+    KHC_STATE_REQ_BODY_SEND,
+    KHC_STATE_REQ_BODY_SEND_CRLF,
 
-  KHC_STATE_RESP_STATUS_READ,
-  KHC_STATE_RESP_STATUS_PARSE,
-  KHC_STATE_RESP_HEADER_CALLBACK,
-  KHC_STATE_RESP_HEADER_READ,
-  KHC_STATE_RESP_HEADER_SKIP,
-  KHC_STATE_RESP_BODY_FRAGMENT,
-  KHC_STATE_READ_CHUNK_SIZE_FROM_HEADER_BUFF,
-  KHC_STATE_READ_CHUNK_BODY_FROM_HEADER_BUFF,
+    KHC_STATE_RESP_STATUS_READ,
+    KHC_STATE_RESP_STATUS_PARSE,
+    KHC_STATE_RESP_HEADER_CALLBACK,
+    KHC_STATE_RESP_HEADER_READ,
+    KHC_STATE_RESP_HEADER_SKIP,
+    KHC_STATE_RESP_BODY_FRAGMENT,
+    KHC_STATE_READ_CHUNK_SIZE_FROM_HEADER_BUFF,
+    KHC_STATE_READ_CHUNK_BODY_FROM_HEADER_BUFF,
 
-  /* Process fragment of body obtained when trying to find body boundary. */
-  KHC_STATE_RESP_BODY_READ,
-  KHC_STATE_RESP_BODY_CALLBACK,
+    /* Process fragment of body obtained when trying to find body boundary. */
+    KHC_STATE_RESP_BODY_READ,
+    KHC_STATE_RESP_BODY_CALLBACK,
 
-  KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE,
-  KHC_STATE_RESP_BODY_READ_CHUNK_SIZE,
-  KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY,
-  KHC_STATE_RESP_BODY_READ_CHUNK_BODY,
-  KHC_STATE_RESP_BODY_SKIP_CHUNK_BODY_CRLF,
-  KHC_STATE_RESP_BODY_SKIP_TRAILERS,
+    KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE,
+    KHC_STATE_RESP_BODY_READ_CHUNK_SIZE,
+    KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY,
+    KHC_STATE_RESP_BODY_READ_CHUNK_BODY,
+    KHC_STATE_RESP_BODY_SKIP_CHUNK_BODY_CRLF,
+    KHC_STATE_RESP_BODY_SKIP_TRAILERS,
 
-  KHC_STATE_CLOSE,
-  KHC_STATE_FINISHED,
+    KHC_STATE_CLOSE,
+    KHC_STATE_FINISHED,
 } khc_state;
 
 /**
  * \brief Error codes.
  */
 typedef enum khc_code {
-  /**< \brief Operation succeeded. */
-  KHC_ERR_OK,
-  /**< \brief Failure in connecting to server. */
-  KHC_ERR_SOCK_CONNECT,
-  /**< \brief Failure in closing connection. */
-  KHC_ERR_SOCK_CLOSE,
-  /**< \brief Failure in sending data. */
-  KHC_ERR_SOCK_SEND,
-  /**< \brief Failure in receiving data. */
-  KHC_ERR_SOCK_RECV,
-  /**< \brief Failure in handling response headers. */
-  KHC_ERR_HEADER_CALLBACK,
-  /**< \brief Failure in handling response body. */
-  KHC_ERR_WRITE_CALLBACK,
-  /**< \brief Memory allocation error. */
-  KHC_ERR_ALLOCATION,
-  /**< \brief Data is too large and doesn't fit to buffers statically allocated. */
-  KHC_ERR_TOO_LARGE_DATA,
-  /**< \brief Other errors. */
-  KHC_ERR_FAIL,
+    /**< \brief Operation succeeded. */
+    KHC_ERR_OK,
+    /**< \brief Failure in connecting to server. */
+    KHC_ERR_SOCK_CONNECT,
+    /**< \brief Failure in closing connection. */
+    KHC_ERR_SOCK_CLOSE,
+    /**< \brief Failure in sending data. */
+    KHC_ERR_SOCK_SEND,
+    /**< \brief Failure in receiving data. */
+    KHC_ERR_SOCK_RECV,
+    /**< \brief Failure in handling response headers. */
+    KHC_ERR_HEADER_CALLBACK,
+    /**< \brief Failure in handling response body. */
+    KHC_ERR_WRITE_CALLBACK,
+    /**< \brief Memory allocation error. */
+    KHC_ERR_ALLOCATION,
+    /**< \brief Data is too large and doesn't fit to buffers statically allocated. */
+    KHC_ERR_TOO_LARGE_DATA,
+    /**< \brief Other errors. */
+    KHC_ERR_FAIL,
 } khc_code;
 
 /**
@@ -234,72 +234,72 @@ typedef enum khc_code {
  * Do not reference/ change members directly.
  */
 typedef struct khc {
-  KHC_CB_WRITE _cb_write; /**< \private **/
-  void* _write_data; /**< \private **/
-  KHC_CB_READ _cb_read; /**< \private **/
-  void* _read_data; /**< \private **/
-  KHC_CB_HEADER _cb_header; /**< \private **/
-  void* _header_data; /**< \private **/
+    KHC_CB_WRITE _cb_write; /**< \private **/
+    void* _write_data; /**< \private **/
+    KHC_CB_READ _cb_read; /**< \private **/
+    void* _read_data; /**< \private **/
+    KHC_CB_HEADER _cb_header; /**< \private **/
+    void* _header_data; /**< \private **/
 
-  /** \private Request header list */
-  khc_slist* _req_headers;
+    /** \private Request header list */
+    khc_slist* _req_headers;
 
-  char _host[128]; /**< \private **/
-  char _path[256]; /**< \private **/
-  char _method[16]; /**< \private **/
+    char _host[128]; /**< \private **/
+    char _path[256]; /**< \private **/
+    char _method[16]; /**< \private **/
 
-  /* State machine */
-  khc_state _state; /**< \private **/
+    /* State machine */
+    khc_state _state; /**< \private **/
 
-  /* Socket functions. */
-  KHC_CB_SOCK_CONNECT _cb_sock_connect; /**< \private **/
-  KHC_CB_SOCK_SEND _cb_sock_send; /**< \private **/
-  KHC_CB_SOCK_RECV _cb_sock_recv; /**< \private **/
-  KHC_CB_SOCK_CLOSE _cb_sock_close; /**< \private **/
-  /* Socket context. */
-  void* _sock_ctx_connect; /**< \private **/
-  void* _sock_ctx_send; /**< \private **/
-  void* _sock_ctx_recv; /**< \private **/
-  void* _sock_ctx_close; /**< \private **/
+    /* Socket functions. */
+    KHC_CB_SOCK_CONNECT _cb_sock_connect; /**< \private **/
+    KHC_CB_SOCK_SEND _cb_sock_send; /**< \private **/
+    KHC_CB_SOCK_RECV _cb_sock_recv; /**< \private **/
+    KHC_CB_SOCK_CLOSE _cb_sock_close; /**< \private **/
+    /* Socket context. */
+    void* _sock_ctx_connect; /**< \private **/
+    void* _sock_ctx_send; /**< \private **/
+    void* _sock_ctx_recv; /**< \private **/
+    void* _sock_ctx_close; /**< \private **/
 
-  khc_slist* _current_req_header; /**< \private **/
+    khc_slist* _current_req_header; /**< \private **/
 
-  char* _stream_buff; /**< \private **/
-  size_t _stream_buff_size; /**< \private **/
-  int _stream_buff_allocated; /**< \private **/
+    char* _stream_buff; /**< \private **/
+    size_t _stream_buff_size; /**< \private **/
+    int _stream_buff_allocated; /**< \private **/
 
-  size_t _read_size; /**< \private **/
-  int _read_req_end; /**< \private **/
+    size_t _read_size; /**< \private **/
+    int _read_req_end; /**< \private **/
 
-  /* Response header buffer */
-  char* _resp_header_buff; /**< \private **/
-  size_t _resp_header_buff_size; /**< \private **/
-  int _resp_header_buff_allocated; /**< \private **/
+    /* Response header buffer */
+    char* _resp_header_buff; /**< \private **/
+    size_t _resp_header_buff_size; /**< \private **/
+    int _resp_header_buff_allocated; /**< \private **/
 
-  size_t _resp_header_read_size; /**< \private **/
+    size_t _resp_header_read_size; /**< \private **/
 
-  int _status_code; /**< \private **/
-  /* Pointer to the double CRLF boundary in the resp_header_buffer */
-  char* _body_boundary; /**< \private **/
+    int _status_code; /**< \private **/
+    /* Pointer to the double CRLF boundary in the resp_header_buffer */
+    char* _body_boundary; /**< \private **/
 
-  /* Header callback */
-  char* _cb_header_pos; /**< \private **/
-  /* Used to seek for CRFL effectively. */
-  size_t _cb_header_remaining_size; /**< \private **/
+    /* Header callback */
+    char* _cb_header_pos; /**< \private **/
+    /* Used to seek for CRFL effectively. */
+    size_t _cb_header_remaining_size; /**< \private **/
 
-  char* _body_fragment; /**< \private **/
-  size_t _body_fragment_size; /**< \private **/
-  int _chunked_resp; /**< \private **/
-  long _chunk_size; /**< \private **/
-  long _chunk_size_written; /**< \private **/
-  size_t _resp_content_length; /**< \private **/
-  int _read_end; /**< \private **/
+    char* _body_fragment; /**< \private **/
+    size_t _body_fragment_size; /**< \private **/
+    int _chunked_resp; /**< \private **/
+    long _chunk_size; /**< \private **/
+    long _chunk_size_written; /**< \private **/
+    size_t _resp_content_length; /**< \private **/
+    int _read_end; /**< \private **/
 
-  size_t _body_read_size; /**< \private **/
+    size_t _body_read_size; /**< \private **/
 
-  size_t _sent_length; /**< \private **/
+    size_t _sent_length; /**< \private **/
 
-  khc_code _result; /**< \private **/
+    khc_code _result; /**< \private **/
 } khc;
 
 /**
@@ -432,9 +432,9 @@ void khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size);
  * \param [in] userdata context data of the callback.
  */
 khc_code khc_set_cb_sock_connect(
-  khc* khc,
-  KHC_CB_SOCK_CONNECT cb,
-  void* userdata);
+        khc* khc,
+        KHC_CB_SOCK_CONNECT cb,
+        void* userdata);
 
 /**
  * \brief Set socket send callback.
@@ -445,9 +445,9 @@ khc_code khc_set_cb_sock_connect(
  * \param [in] userdata context data of the callback.
  */
 khc_code khc_set_cb_sock_send(
-  khc* khc,
-  KHC_CB_SOCK_SEND cb,
-  void* userdata);
+        khc* khc,
+        KHC_CB_SOCK_SEND cb,
+        void* userdata);
 
 /**
  * \brief Set socket recv callback.
@@ -459,9 +459,9 @@ khc_code khc_set_cb_sock_send(
  * \param [in] userdata context data of the callback.
  */
 khc_code khc_set_cb_sock_recv(
-  khc* khc,
-  KHC_CB_SOCK_RECV cb,
-  void* userdata);
+        khc* khc,
+        KHC_CB_SOCK_RECV cb,
+        void* userdata);
 
 /**
  * \brief Set socket close callback.
@@ -472,9 +472,9 @@ khc_code khc_set_cb_sock_recv(
  * \param [in] userdata context data of the callback.
  */
 khc_code khc_set_cb_sock_close(
-  khc* khc,
-  KHC_CB_SOCK_CLOSE cb,
-  void* userdata);
+        khc* khc,
+        KHC_CB_SOCK_CLOSE cb,
+        void* userdata);
 
 /**
  * \brief Set read callback.
@@ -487,9 +487,9 @@ khc_code khc_set_cb_sock_close(
  * \param [in] userdata context data of the callback.
  */
 khc_code khc_set_cb_read(
-  khc* khc,
-  KHC_CB_READ cb,
-  void* userdata);
+        khc* khc,
+        KHC_CB_READ cb,
+        void* userdata);
 
 /**
  * \brief Set write callback.
@@ -501,9 +501,9 @@ khc_code khc_set_cb_read(
  * \param [in] userdata context data of the callback.
  */
 khc_code khc_set_cb_write(
-  khc* khc,
-  KHC_CB_WRITE cb,
-  void* userdata);
+        khc* khc,
+        KHC_CB_WRITE cb,
+        void* userdata);
 
 /**
  * \brief Set header callback.
@@ -515,9 +515,9 @@ khc_code khc_set_cb_write(
  * \param [in] userdata context data of the callback.
  */
 khc_code khc_set_cb_header(
-  khc* khc,
-  KHC_CB_HEADER cb,
-  void* userdata);
+        khc* khc,
+        KHC_CB_HEADER cb,
+        void* userdata);
 
 /**
  * \brief Get HTTP status code.
@@ -526,7 +526,7 @@ khc_code khc_set_cb_header(
  * \returns HTTP status code.
  */
 int khc_get_status_code(
-  khc* khc
+        khc* khc
 );
 
 #ifdef __cplusplus

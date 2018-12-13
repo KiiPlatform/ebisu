@@ -40,12 +40,12 @@ kii_code_t kii_auth_thing(
     fields[0].type = JKII_FIELD_TYPE_STRING;
     fields[0].field_copy.string = kii->_author.author_id;
     fields[0].field_copy_buff_size = sizeof(kii->_author.author_id) /
-            sizeof(kii->_author.author_id[0]);
+        sizeof(kii->_author.author_id[0]);
     fields[1].name = "access_token";
     fields[1].type = JKII_FIELD_TYPE_STRING;
     fields[1].field_copy.string = kii->_author.access_token;
     fields[1].field_copy_buff_size = sizeof(kii->_author.access_token) /
-            sizeof(kii->_author.access_token[0]);
+        sizeof(kii->_author.access_token[0]);
     fields[2].name = NULL;
 
     result = _jkii_read_object(kii, buff, buff_size, fields);
@@ -97,12 +97,12 @@ kii_code_t kii_register_thing(
     fields[0].type = JKII_FIELD_TYPE_STRING;
     fields[0].field_copy.string = kii->_author.access_token;
     fields[0].field_copy_buff_size = sizeof(kii->_author.access_token) /
-            sizeof(kii->_author.access_token[0]);
+        sizeof(kii->_author.access_token[0]);
     fields[1].name = "_thingID";
     fields[1].type = JKII_FIELD_TYPE_STRING;
     fields[1].field_copy.string = kii->_author.author_id;
     fields[1].field_copy_buff_size = sizeof(kii->_author.author_id) /
-            sizeof(kii->_author.author_id[0]);
+        sizeof(kii->_author.author_id[0]);
     fields[2].name = NULL;
 
     result = _jkii_read_object(kii, buff, buff_size, fields);

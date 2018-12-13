@@ -2,40 +2,40 @@
 #include <string.h>
 
 kii_code_t _set_bucket_path(
-    kii_t* kii,
-    const kii_bucket_t* bucket,
-    const char* objects,
-    const char* object_id,
-    const char* body)
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* objects,
+        const char* object_id,
+        const char* body)
 {
     char *scope_strs[] = { "", "users", "groups", "things" };
     int path_len = 0;
     switch(bucket->scope) {
         case KII_SCOPE_APP:
             path_len = snprintf(
-                kii->_rw_buff,
-                kii->_rw_buff_size,
-                "/api/apps/%s/buckets/%s%s%s%s",
-                kii->_app_id,
-                bucket->bucket_name,
-                objects,
-                object_id,
-                body);
+                    kii->_rw_buff,
+                    kii->_rw_buff_size,
+                    "/api/apps/%s/buckets/%s%s%s%s",
+                    kii->_app_id,
+                    bucket->bucket_name,
+                    objects,
+                    object_id,
+                    body);
             break;
         case KII_SCOPE_USER:
         case KII_SCOPE_GROUP:
         case KII_SCOPE_THING:
             path_len = snprintf(
-                kii->_rw_buff,
-                kii->_rw_buff_size,
-                "/api/apps/%s/%s/%s/buckets/%s%s%s%s",
-                kii->_app_id,
-                scope_strs[bucket->scope],
-                bucket->scope_id,
-                bucket->bucket_name,
-                objects,
-                object_id,
-                body);
+                    kii->_rw_buff,
+                    kii->_rw_buff_size,
+                    "/api/apps/%s/%s/%s/buckets/%s%s%s%s",
+                    kii->_app_id,
+                    scope_strs[bucket->scope],
+                    bucket->scope_id,
+                    bucket->bucket_name,
+                    objects,
+                    object_id,
+                    body);
             break;
         default:
             return KII_ERR_FAIL;
@@ -84,8 +84,8 @@ kii_code_t _set_bucket_subscription_path(kii_t* kii, const kii_bucket_t* bucket)
 }
 
 kii_code_t _set_topic_path(
-    kii_t* kii,
-    const kii_topic_t* topic)
+        kii_t* kii,
+        const kii_topic_t* topic)
 {
     int len = 0;
     const char* scope_strs[] = { "", "users", "groups", "things" };
@@ -149,8 +149,8 @@ kii_code_t _set_topic_subscription_path(kii_t* kii, const kii_topic_t* topic) {
 }
 
 kii_code_t _set_content_type(
-    kii_t* kii,
-    const char* content_type)
+        kii_t* kii,
+        const char* content_type)
 {
     int header_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "Content-Type: %s", content_type);
     if (header_len >= kii->_rw_buff_size) {
@@ -165,8 +165,8 @@ kii_code_t _set_content_type(
 }
 
 kii_code_t _set_content_encoding(
-    kii_t* kii,
-    const char* content_encoding)
+        kii_t* kii,
+        const char* content_encoding)
 {
     int header_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "Content-Encoding: %s", content_encoding);
     if (header_len >= kii->_rw_buff_size) {
@@ -181,8 +181,8 @@ kii_code_t _set_content_encoding(
 }
 
 kii_code_t _set_object_content_type(
-    kii_t* kii,
-    const char* object_content_type)
+        kii_t* kii,
+        const char* object_content_type)
 {
     char ct_key[] = "Content-Type: ";
     char *ct_value = "application/json";
@@ -202,8 +202,8 @@ kii_code_t _set_object_content_type(
 }
 
 kii_code_t _set_object_body_content_type(
-    kii_t* kii,
-    const char* object_body_content_type)
+        kii_t* kii,
+        const char* object_body_content_type)
 {
     char ct_key[] = "Content-Type: ";
     char *ct_value = "application/octet-stream";
@@ -223,16 +223,16 @@ kii_code_t _set_object_body_content_type(
 }
 
 kii_code_t _set_content_length(
-    kii_t* kii,
-    size_t content_length)
+        kii_t* kii,
+        size_t content_length)
 {
     size_t cl_size = 128;
     char cl_h[cl_size];
     int header_len = snprintf(
-        cl_h,
-        cl_size,
-        "Content-Length: %lld",
-        (long long)content_length);
+            cl_h,
+            cl_size,
+            "Content-Length: %lld",
+            (long long)content_length);
     if (header_len >= cl_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
@@ -247,10 +247,10 @@ kii_code_t _set_content_length(
 kii_code_t _set_app_id_header(kii_t* kii)
 {
     int header_len = snprintf(
-        kii->_rw_buff,
-        kii->_rw_buff_size,
-        "X-Kii-Appid: %s",
-        kii->_app_id);
+            kii->_rw_buff,
+            kii->_rw_buff_size,
+            "X-Kii-Appid: %s",
+            kii->_app_id);
     if (header_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
@@ -265,10 +265,10 @@ kii_code_t _set_app_id_header(kii_t* kii)
 kii_code_t _set_app_key_header(kii_t* kii)
 {
     int header_len = snprintf(
-        kii->_rw_buff,
-        kii->_rw_buff_size,
-        "X-Kii-Appkey: %s",
-        "k");
+            kii->_rw_buff,
+            kii->_rw_buff_size,
+            "X-Kii-Appkey: %s",
+            "k");
     if (header_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }
@@ -289,10 +289,10 @@ kii_code_t _set_auth_bearer_token(kii_t* kii, const char* token)
 {
     if (strlen(token) > 0) {
         int header_len = snprintf(
-            kii->_rw_buff,
-            kii->_rw_buff_size,
-            "Authorization: Bearer %s",
-            token);
+                kii->_rw_buff,
+                kii->_rw_buff_size,
+                "Authorization: Bearer %s",
+                token);
         if (header_len >= kii->_rw_buff_size) {
             return KII_ERR_TOO_LARGE_DATA;
         }
@@ -315,10 +315,10 @@ kii_code_t _set_if_match(kii_t* kii, const char* etag)
         return KII_ERR_OK;
     }
     int header_len = snprintf(
-        kii->_rw_buff,
-        kii->_rw_buff_size,
-        "If-Match: %s",
-        etag);
+            kii->_rw_buff,
+            kii->_rw_buff_size,
+            "If-Match: %s",
+            etag);
     if (header_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
     }

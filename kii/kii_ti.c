@@ -2,13 +2,13 @@
 #include "kii_ti_impl.h"
 
 kii_code_t kii_ti_onboard(
-    kii_t* kii,
-    const char* vendor_thing_id,
-    const char* password,
-    const char* thing_type,
-    const char* firmware_version,
-    const char* layout_position,
-    const char* thing_properties)
+        kii_t* kii,
+        const char* vendor_thing_id,
+        const char* password,
+        const char* thing_type,
+        const char* firmware_version,
+        const char* layout_position,
+        const char* thing_properties)
 {
     _kii_token_t out_token;
     kii_code_t ret = KII_ERR_FAIL;
@@ -27,26 +27,26 @@ kii_code_t kii_ti_onboard(
 }
 
 kii_code_t kii_ti_put_firmware_version(
-    kii_t* kii,
-    const char* firmware_version)
+        kii_t* kii,
+        const char* firmware_version)
 {
     return _put_firmware_version(kii, firmware_version);
 }
 
 kii_code_t kii_ti_get_firmware_version(
-    kii_t* kii,
-    kii_ti_firmware_version_t* version)
+        kii_t* kii,
+        kii_ti_firmware_version_t* version)
 {
     return _get_firmware_version(kii, version);
 }
 
 kii_code_t kii_ti_put_state(
-    kii_t* kii,
-    KII_CB_READ state_read_cb,
-    void* state_read_cb_data,
-    const char* opt_content_type,
-    const char* opt_content_encoding,
-    const char* opt_normalizer_host)
+        kii_t* kii,
+        KII_CB_READ state_read_cb,
+        void* state_read_cb_data,
+        const char* opt_content_type,
+        const char* opt_content_encoding,
+        const char* opt_normalizer_host)
 {
     const char* content_type = opt_content_type;
     if (opt_content_type == NULL) {
@@ -56,12 +56,12 @@ kii_code_t kii_ti_put_state(
 }
 
 kii_code_t kii_ti_put_bulk_states(
-    kii_t* kii,
-    KII_CB_READ state_read_cb,
-    void* state_read_cb_data,
-    const char* opt_content_type,
-    const char* opt_content_encoding,
-    const char* opt_normalizer_host)
+        kii_t* kii,
+        KII_CB_READ state_read_cb,
+        void* state_read_cb_data,
+        const char* opt_content_type,
+        const char* opt_content_encoding,
+        const char* opt_normalizer_host)
 {
     const char* content_type = opt_content_type;
     if (opt_content_type == NULL) {
@@ -71,12 +71,12 @@ kii_code_t kii_ti_put_bulk_states(
 }
 
 kii_code_t kii_ti_patch_state(
-    kii_t* kii,
-    KII_CB_READ state_read_cb,
-    void* state_read_cb_data,
-    const char* opt_content_type,
-    const char* opt_content_encoding,
-    const char* opt_normalizer_host)
+        kii_t* kii,
+        KII_CB_READ state_read_cb,
+        void* state_read_cb_data,
+        const char* opt_content_type,
+        const char* opt_content_encoding,
+        const char* opt_normalizer_host)
 {
     const char* content_type = opt_content_type;
     if (opt_content_type == NULL) {
@@ -86,12 +86,12 @@ kii_code_t kii_ti_patch_state(
 }
 
 kii_code_t kii_ti_patch_bulk_states(
-    kii_t* kii,
-    KII_CB_READ state_read_cb,
-    void* state_read_cb_data,
-    const char* opt_content_type,
-    const char* opt_content_encoding,
-    const char* opt_normalizer_host)
+        kii_t* kii,
+        KII_CB_READ state_read_cb,
+        void* state_read_cb_data,
+        const char* opt_content_type,
+        const char* opt_content_encoding,
+        const char* opt_normalizer_host)
 {
     const char* content_type = opt_content_type;
     if (opt_content_type == NULL) {

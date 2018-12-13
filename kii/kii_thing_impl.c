@@ -41,10 +41,10 @@ kii_code_t _thing_auth(
     jkii_escape_str(password, esc_pass, sizeof(esc_vid));
 
     int content_len = snprintf(
-        kii->_rw_buff,
-        kii->_rw_buff_size,
-        "{\"username\":\"VENDOR_THING_ID:%s\", \"password\":\"%s\", \"grant_type\":\"password\"}",
-        esc_vid, esc_pass);
+            kii->_rw_buff,
+            kii->_rw_buff_size,
+            "{\"username\":\"VENDOR_THING_ID:%s\", \"password\":\"%s\", \"grant_type\":\"password\"}",
+            esc_vid, esc_pass);
     if (content_len >= kii->_rw_buff_size) {
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
@@ -104,10 +104,10 @@ kii_code_t _thing_register(
     jkii_escape_str(thing_type, esc_type, sizeof(esc_type));
 
     int content_len = snprintf(
-        kii->_rw_buff,
-        kii->_rw_buff_size,
-        "{\"_vendorThingID\":\"%s\", \"_thingType\":\"%s\", \"_password\":\"%s\"}",
-        esc_vid, esc_type, esc_pass);
+            kii->_rw_buff,
+            kii->_rw_buff_size,
+            "{\"_vendorThingID\":\"%s\", \"_thingType\":\"%s\", \"_password\":\"%s\"}",
+            esc_vid, esc_type, esc_pass);
     if (content_len >= kii->_rw_buff_size) {
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;

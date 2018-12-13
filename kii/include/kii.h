@@ -162,9 +162,9 @@ struct kii_t;
  * \param [in] userdata Context object pointer given to kii_start_push_task().
  */
 typedef void (*KII_PUSH_RECEIVED_CB)(
-                const char* message,
-                size_t message_length,
-                void* userdata);
+        const char* message,
+        size_t message_length,
+        void* userdata);
 
 /**
  * \brief Stores data/ callbacks used by kii module.
@@ -235,7 +235,7 @@ typedef struct kii_t {
  * \param [out] kii kii_t instance.
  */
 void kii_init(
-		kii_t* kii);
+        kii_t* kii);
 
 /**
  * \brief Set site.
@@ -244,8 +244,8 @@ void kii_init(
  * "CN", "CN3", "JP", "US", "SG" or "EU".
  */
 void kii_set_site(
-		kii_t* kii,
-		const char* site);
+        kii_t* kii,
+        const char* site);
 
 /**
  * \brief Set Application ID.
@@ -509,9 +509,9 @@ kii_code_t kii_install_push(
  * \return kii_code_t
  */
 kii_code_t kii_get_mqtt_endpoint(
-    kii_t* kii,
-    const char* installation_id,
-    kii_mqtt_endpoint_t* endpoint);
+        kii_t* kii,
+        const char* installation_id,
+        kii_mqtt_endpoint_t* endpoint);
 
 /**
  * \brief Start MQTT task and watch message arrival.
@@ -562,13 +562,13 @@ kii_code_t kii_execute_server_code(
  * \return kii_code_t
  */
 kii_code_t kii_ti_onboard(
-    kii_t* kii,
-    const char* vendor_thing_id,
-    const char* password,
-    const char* thing_type,
-    const char* firmware_version,
-    const char* layout_position,
-    const char* thing_properties);
+        kii_t* kii,
+        const char* vendor_thing_id,
+        const char* password,
+        const char* thing_type,
+        const char* firmware_version,
+        const char* layout_position,
+        const char* thing_properties);
 
 /**
  * \brief Put firmware version.
@@ -578,8 +578,8 @@ kii_code_t kii_ti_onboard(
  * \return kii_code_t
  */
 kii_code_t kii_ti_put_firmware_version(
-    kii_t* kii,
-    const char* firmware_version);
+        kii_t* kii,
+        const char* firmware_version);
 
 /**
  * \brief Stores firmware version.
@@ -596,8 +596,8 @@ typedef struct kii_ti_firmware_version_t {
  * \return kii_code_t
  */
 kii_code_t kii_ti_get_firmware_version(
-    kii_t* kii,
-    kii_ti_firmware_version_t* version);
+        kii_t* kii,
+        kii_ti_firmware_version_t* version);
 
 /**
  * \brief Put thing type.
@@ -607,8 +607,8 @@ kii_code_t kii_ti_get_firmware_version(
  * \return kii_code_t
  */
 kii_code_t kii_ti_put_thing_type(
-    kii_t* kii,
-    const char* thing_type);
+        kii_t* kii,
+        const char* thing_type);
 
 /**
  * \brief Put thing state.
@@ -626,12 +626,12 @@ kii_code_t kii_ti_put_thing_type(
  * \return kii_code_t
  */
 kii_code_t kii_ti_put_state(
-    kii_t* kii,
-    KII_CB_READ state_read_cb,
-    void* state_read_cb_data,
-    const char* opt_content_type,
-    const char* opt_content_encoding,
-    const char* opt_normalizer_host);
+        kii_t* kii,
+        KII_CB_READ state_read_cb,
+        void* state_read_cb_data,
+        const char* opt_content_type,
+        const char* opt_content_encoding,
+        const char* opt_normalizer_host);
 
 /**
  * \brief Put thing state in bulk.
@@ -649,12 +649,12 @@ kii_code_t kii_ti_put_state(
  * \return kii_code_t
  */
 kii_code_t kii_ti_put_bulk_states(
-    kii_t* kii,
-    KII_CB_READ state_read_cb,
-    void* state_read_cb_data,
-    const char* opt_content_type,
-    const char* opt_content_encoding,
-    const char* opt_normalizer_host);
+        kii_t* kii,
+        KII_CB_READ state_read_cb,
+        void* state_read_cb_data,
+        const char* opt_content_type,
+        const char* opt_content_encoding,
+        const char* opt_normalizer_host);
 
 /**
  * \brief Patch thing state.
@@ -672,12 +672,12 @@ kii_code_t kii_ti_put_bulk_states(
  * \return kii_code_t
  */
 kii_code_t kii_ti_patch_state(
-    kii_t* kii,
-    KII_CB_READ state_read_cb,
-    void* state_read_cb_data,
-    const char* opt_content_type,
-    const char* opt_content_encoding,
-    const char* opt_normalizer_host);
+        kii_t* kii,
+        KII_CB_READ state_read_cb,
+        void* state_read_cb_data,
+        const char* opt_content_type,
+        const char* opt_content_encoding,
+        const char* opt_normalizer_host);
 
 /**
  * \brief Patch thing state in bulk.
@@ -695,12 +695,12 @@ kii_code_t kii_ti_patch_state(
  * \return kii_code_t
  */
 kii_code_t kii_ti_patch_bulk_states(
-    kii_t* kii,
-    KII_CB_READ state_read_cb,
-    void* state_read_cb_data,
-    const char* opt_content_type,
-    const char* opt_content_encoding,
-    const char* opt_normalizer_host);
+        kii_t* kii,
+        KII_CB_READ state_read_cb,
+        void* state_read_cb_data,
+        const char* opt_content_type,
+        const char* opt_content_encoding,
+        const char* opt_normalizer_host);
 
 /**
  * \brief Start making REST API call.
@@ -1067,8 +1067,8 @@ void kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource);
  * \param [in] cb_free free callback should free memories allocated in cb_alloc.
  */
 void kii_set_cb_json_parser_resource(kii_t* kii,
-    JKII_CB_RESOURCE_ALLOC cb_alloc,
-    JKII_CB_RESOURCE_FREE cb_free);
+        JKII_CB_RESOURCE_ALLOC cb_alloc,
+        JKII_CB_RESOURCE_FREE cb_free);
 
 /**
  * \brief Set khc_slist (linked list) resource allocators.
@@ -1083,11 +1083,11 @@ void kii_set_cb_json_parser_resource(kii_t* kii,
  * \param [in] cb_free_data Context object pointer passed to cb_free.
  */
 void kii_set_cb_slist_resource(
-    kii_t* kii,
-    KHC_CB_SLIST_ALLOC cb_alloc,
-    KHC_CB_SLIST_FREE cb_free,
-    void* cb_alloc_data,
-    void* cb_free_data);
+        kii_t* kii,
+        KHC_CB_SLIST_ALLOC cb_alloc,
+        KHC_CB_SLIST_FREE cb_free,
+        void* cb_alloc_data,
+        void* cb_free_data);
 
 /**
  * \brief Get Etag value.
