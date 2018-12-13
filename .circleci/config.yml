@@ -76,6 +76,16 @@ jobs:
       - store_test_results:
           path: tests/small_test/jkii/test-results
 
+  stest-kii:
+    <<: *env
+    steps:
+      - checkout
+      - run:
+          name: kii small test
+          command: MEMCHECK=1 JUNIT=1 make stest-kii
+      - store_test_results:
+          path: tests/small_test/kii/test-results
+
   stest-tio:
     <<: *env
     steps:
@@ -121,6 +131,11 @@ workflows:
               ignore:
                 - gh-pages
       - stest-jkii:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+      - stest-kii:
           filters:
             branches:
               ignore:
