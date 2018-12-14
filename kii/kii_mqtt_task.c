@@ -224,10 +224,10 @@ khc_sock_code_t _mqtt_recv_remaining_trash(kii_t* kii, unsigned long remaining_l
     khc_sock_code_t res = KHC_SOCK_FAIL;
     while (total_received < remaining_length) {
         res = kii->_cb_mqtt_sock_recv(
-            kii->_mqtt_sock_recv_ctx,
-            buff,
-            buff_size,
-            &received);
+                kii->_mqtt_sock_recv_ctx,
+                buff,
+                buff_size,
+                &received);
         if (res == KHC_SOCK_FAIL) {
             return KHC_SOCK_FAIL;
         }
@@ -249,10 +249,10 @@ khc_sock_code_t _mqtt_recv_remaining(kii_t* kii, unsigned long remaining_length,
     khc_sock_code_t res = KHC_SOCK_FAIL;
     while (total_received < remaining_length) {
         res = kii->_cb_mqtt_sock_recv(
-            kii->_mqtt_sock_recv_ctx,
-            buff + received,
-            remaining_length - received,
-            &received);
+                kii->_mqtt_sock_recv_ctx,
+                buff + received,
+                remaining_length - received,
+                &received);
         if (res == KHC_SOCK_FAIL) {
             return KHC_SOCK_FAIL;
         }

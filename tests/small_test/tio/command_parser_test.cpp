@@ -16,15 +16,15 @@ TEST_CASE( "_get_object_in_array" ) {
 
     SECTION("Get object at index 0") {
         _cmd_parser_code_t p_res = _get_object_in_array(
-            &resource,
-            NULL,
-            NULL,
-            json_arr,
-            strlen(json_arr),
-            0,
-            &obj_str,
-            &obj_str_len
-            );
+                &resource,
+                NULL,
+                NULL,
+                json_arr,
+                strlen(json_arr),
+                0,
+                &obj_str,
+                &obj_str_len
+                );
         REQUIRE( p_res == _CMD_PARSE_OK );
         REQUIRE( obj_str_len == 7);
         char obj_str_copy[obj_str_len+1];
@@ -34,15 +34,15 @@ TEST_CASE( "_get_object_in_array" ) {
 
     SECTION("Get object at index 1") {
         _cmd_parser_code_t p_res = _get_object_in_array(
-            &resource,
-            NULL,
-            NULL,
-            json_arr,
-            strlen(json_arr),
-            1,
-            &obj_str,
-            &obj_str_len
-            );
+                &resource,
+                NULL,
+                NULL,
+                json_arr,
+                strlen(json_arr),
+                1,
+                &obj_str,
+                &obj_str_len
+                );
         REQUIRE( p_res == _CMD_PARSE_OK );
         REQUIRE( obj_str_len == 7);
         char obj_str_copy[obj_str_len+1];
@@ -52,15 +52,15 @@ TEST_CASE( "_get_object_in_array" ) {
 
     SECTION("Get object at index 2") {
         _cmd_parser_code_t p_res = _get_object_in_array(
-            &resource,
-            NULL,
-            NULL,
-            json_arr,
-            strlen(json_arr),
-            2,
-            &obj_str,
-            &obj_str_len
-            );
+                &resource,
+                NULL,
+                NULL,
+                json_arr,
+                strlen(json_arr),
+                2,
+                &obj_str,
+                &obj_str_len
+                );
         REQUIRE( p_res == _CMD_PARSE_ARRAY_OUT_OF_INDEX );
     }
 }
@@ -75,14 +75,14 @@ TEST_CASE( "_parse_first_kv" ) {
         size_t out_value_len = 0;
         jsmntype_t out_value_type = JSMN_OBJECT;
         _cmd_parser_code_t p_res = _parse_first_kv(
-            json_obj,
-            strlen(json_obj),
-            &out_key,
-            &out_key_len,
-            &out_value,
-            &out_value_len,
-            &out_value_type);
-        
+                json_obj,
+                strlen(json_obj),
+                &out_key,
+                &out_key_len,
+                &out_value,
+                &out_value_len,
+                &out_value_type);
+
         REQUIRE( p_res == _CMD_PARSE_OK );
 
         // Check key.
@@ -117,13 +117,13 @@ TEST_CASE( "_parse_action_object" ) {
         const char json_str[] = "[{\"setPower\":{\"power\":true}}]";
         const char alias[] = "myalias";
         _cmd_parser_code_t p_res = _parse_action(
-            &handler,
-            alias,
-            strlen(alias),
-            json_str,
-            strlen(json_str),
-            0,
-            &action);
+                &handler,
+                alias,
+                strlen(alias),
+                json_str,
+                strlen(json_str),
+                0,
+                &action);
 
         REQUIRE( p_res == _CMD_PARSE_OK );
 

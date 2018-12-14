@@ -4,43 +4,43 @@
 #include "kii.h"
 
 kii_code_t _set_bucket_path(
-    kii_t* kii,
-    const kii_bucket_t* bucket,
-    const char* objects,
-    const char* object_id,
-    const char* body);
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* objects,
+        const char* object_id,
+        const char* body);
 
 kii_code_t _set_bucket_subscription_path(
-    kii_t* kii,
-    const kii_bucket_t* bucket);
+        kii_t* kii,
+        const kii_bucket_t* bucket);
 
 kii_code_t _set_topic_path(
-    kii_t* kii,
-    const kii_topic_t* topic);
+        kii_t* kii,
+        const kii_topic_t* topic);
 
 kii_code_t _set_topic_subscription_path(
-    kii_t* kii,
-    const kii_topic_t* topic);
+        kii_t* kii,
+        const kii_topic_t* topic);
 
 kii_code_t _set_object_content_type(
-    kii_t* kii,
-    const char* object_content_type);
+        kii_t* kii,
+        const char* object_content_type);
 
 kii_code_t _set_object_body_content_type(
-    kii_t* kii,
-    const char* object_body_content_type);
+        kii_t* kii,
+        const char* object_body_content_type);
 
 kii_code_t _set_content_type(
-    kii_t* kii,
-    const char* content_type);
+        kii_t* kii,
+        const char* content_type);
 
 kii_code_t _set_content_length(
-    kii_t* kii,
-    size_t content_length);
+        kii_t* kii,
+        size_t content_length);
 
 kii_code_t _set_content_encoding(
-    kii_t* kii,
-    const char* content_encoding);
+        kii_t* kii,
+        const char* content_encoding);
 
 kii_code_t _set_app_id_header(kii_t* kii);
 

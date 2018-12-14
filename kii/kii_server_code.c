@@ -7,16 +7,16 @@
 #include "kii_req_impl.h"
 
 static kii_code_t _execute_server_code(
-    kii_t* kii,
-    const char* endpoint_name,
-    const char* params)
+        kii_t* kii,
+        const char* endpoint_name,
+        const char* params)
 {
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "POST");
 
     int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size,
-        "/api/apps/%s/server-code/versions/current/%s",
-        kii->_app_id, endpoint_name);
+            "/api/apps/%s/server-code/versions/current/%s",
+            kii->_app_id, endpoint_name);
 
     if (path_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
@@ -59,9 +59,9 @@ static kii_code_t _execute_server_code(
 }
 
 kii_code_t kii_execute_server_code(
-    kii_t* kii,
-    const char* endpoint_name,
-    const char* params)
+        kii_t* kii,
+        const char* endpoint_name,
+        const char* params)
 {
     khc_reset_except_cb(&kii->_khc);
     _reset_buff(kii);

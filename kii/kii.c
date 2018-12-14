@@ -211,11 +211,11 @@ void kii_set_cb_json_parser_resource(
 }
 
 void kii_set_cb_slist_resource(
-    kii_t* kii,
-    KHC_CB_SLIST_ALLOC cb_alloc,
-    KHC_CB_SLIST_FREE cb_free,
-    void* cb_alloc_data,
-    void* cb_free_data) {
+        kii_t* kii,
+        KHC_CB_SLIST_ALLOC cb_alloc,
+        KHC_CB_SLIST_FREE cb_free,
+        void* cb_alloc_data,
+        void* cb_free_data) {
     kii->_cb_slist_alloc = cb_alloc;
     kii->_cb_slist_free = cb_free;
     kii->_slist_alloc_data = cb_alloc_data;

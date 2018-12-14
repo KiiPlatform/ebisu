@@ -567,9 +567,9 @@ void tio_handler_set_json_parser_resource(tio_handler_t* handler, jkii_resource_
  * \param [in] cb_free free callback.
  */
 void tio_handler_set_cb_json_parser_resource(
-    tio_handler_t* handler,
-    JKII_CB_RESOURCE_ALLOC cb_alloc,
-    JKII_CB_RESOURCE_FREE cb_free);
+        tio_handler_t* handler,
+        JKII_CB_RESOURCE_ALLOC cb_alloc,
+        JKII_CB_RESOURCE_FREE cb_free);
 
 /**
  * \brief Set custom memory allocator for the linked list used to constuct request headers of HTTP.
@@ -583,11 +583,11 @@ void tio_handler_set_cb_json_parser_resource(
  * \param [in] cb_free_data Context object pointer passed to cb_free.
  */
 void tio_handler_set_cb_slist_resource(
-    tio_handler_t* handler,
-    KHC_CB_SLIST_ALLOC cb_alloc,
-    KHC_CB_SLIST_FREE cb_free,
-    void* cb_alloc_data,
-    void* cb_free_data
+        tio_handler_t* handler,
+        KHC_CB_SLIST_ALLOC cb_alloc,
+        KHC_CB_SLIST_FREE cb_free,
+        void* cb_alloc_data,
+        void* cb_free_data
 );
 
 /**
@@ -610,13 +610,13 @@ void tio_handler_set_cb_slist_resource(
  * Can be NULL if you don't need them.
  */
 tio_code_t tio_handler_onboard(
-    tio_handler_t* handler,
-    const char* vendor_thing_id,
-    const char* password,
-    const char* thing_type,
-    const char* firmware_version,
-    const char* layout_position,
-    const char* thing_properties
+        tio_handler_t* handler,
+        const char* vendor_thing_id,
+        const char* password,
+        const char* thing_type,
+        const char* firmware_version,
+        const char* layout_position,
+        const char* thing_properties
 );
 
 /**
@@ -630,7 +630,7 @@ tio_code_t tio_handler_onboard(
  * You may need to copy the value of device ID and access token and store them.
  */
 const tio_author_t* tio_handler_get_author(
-    tio_handler_t* handler
+        tio_handler_t* handler
 );
 
 /**
@@ -646,10 +646,10 @@ const tio_author_t* tio_handler_get_author(
  * \param [in] userdata Context object pointer passed to cb_action.
  */
 tio_code_t tio_handler_start(
-    tio_handler_t* handler,
-    const tio_author_t* author,
-    TIO_CB_ACTION cb_action,
-    void* userdata);
+        tio_handler_t* handler,
+        const tio_author_t* author,
+        TIO_CB_ACTION cb_action,
+        void* userdata);
 
 /**
  * \brief tio_updater_t initializer.
@@ -853,9 +853,9 @@ void tio_updater_set_interval(tio_updater_t* updater, size_t update_interval_sec
 void tio_updater_set_json_parser_resource(tio_updater_t* updater, jkii_resource_t* resource);
 
 void tio_updater_set_cb_json_parser_resource(
-    tio_updater_t* updater,
-    JKII_CB_RESOURCE_ALLOC cb_alloc,
-    JKII_CB_RESOURCE_FREE cb_free);
+        tio_updater_t* updater,
+        JKII_CB_RESOURCE_ALLOC cb_alloc,
+        JKII_CB_RESOURCE_FREE cb_free);
 
 /**
  * \brief Set custom memory allocator for the linked list used to constuct request headers of HTTP.
@@ -869,11 +869,11 @@ void tio_updater_set_cb_json_parser_resource(
  * \param [in] cb_free_data Context object pointer passed to cb_free.
  */
 void tio_updater_set_cb_slist_resource(
-    tio_updater_t* updater,
-    KHC_CB_SLIST_ALLOC cb_alloc,
-    KHC_CB_SLIST_FREE cb_free,
-    void* cb_alloc_data,
-    void* cb_free_data
+        tio_updater_t* updater,
+        KHC_CB_SLIST_ALLOC cb_alloc,
+        KHC_CB_SLIST_FREE cb_free,
+        void* cb_alloc_data,
+        void* cb_free_data
 );
 
 /**
@@ -896,13 +896,13 @@ void tio_updater_set_cb_slist_resource(
  * Can be NULL if you don't need them.
  */
 tio_code_t tio_updater_onboard(
-    tio_updater_t* updater,
-    const char* vendor_thing_id,
-    const char* password,
-    const char* thing_type,
-    const char* firmware_version,
-    const char* layout_position,
-    const char* thing_properties
+        tio_updater_t* updater,
+        const char* vendor_thing_id,
+        const char* password,
+        const char* thing_type,
+        const char* firmware_version,
+        const char* layout_position,
+        const char* thing_properties
 );
 
 /**
@@ -916,7 +916,7 @@ tio_code_t tio_updater_onboard(
  * You may need to copy the value of device ID and access token and store them.
  */
 const tio_author_t* tio_updater_get_author(
-    tio_updater_t* updater
+        tio_updater_t* updater
 );
 
 /**
@@ -935,12 +935,12 @@ const tio_author_t* tio_updater_get_author(
  * \return TIO_ERR_OK when succeeded to start task.
  */
 tio_code_t tio_updater_start(
-    tio_updater_t* updater,
-    const tio_author_t* author,
-    TIO_CB_SIZE cb_state_size,
-    void* state_size_data,
-    TIO_CB_READ cb_read_state,
-    void* read_state_data);
+        tio_updater_t* updater,
+        const tio_author_t* author,
+        TIO_CB_SIZE cb_state_size,
+        void* state_size_data,
+        TIO_CB_READ cb_read_state,
+        void* read_state_data);
 
 #ifdef __cplusplus
 }

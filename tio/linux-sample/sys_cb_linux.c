@@ -10,10 +10,10 @@ void delay_ms_cb_impl(unsigned int msec, void* userdata)
 }
 
 kii_task_code_t task_create_cb_impl(
-    const char* name,
-    KII_TASK_ENTRY entry,
-    void* param,
-    void* userdata)
+        const char* name,
+        KII_TASK_ENTRY entry,
+        void* param,
+        void* userdata)
 {
     return task_create_cb(name, entry, param, userdata);
 }

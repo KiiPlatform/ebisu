@@ -2,11 +2,11 @@
 #include <pthread.h>
 #include <unistd.h>
 
-kii_task_code_t task_create_cb
-    (const char* name,
-     KII_TASK_ENTRY entry,
-     void* param,
-     void* userdata)
+kii_task_code_t task_create_cb(
+        const char* name,
+        KII_TASK_ENTRY entry,
+        void* param,
+        void* userdata)
 {
     int ret;
     pthread_t pthid;

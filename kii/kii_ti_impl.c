@@ -30,10 +30,10 @@ kii_code_t _get_anonymous_token(
     }
     // Request body.
     int content_len = snprintf(
-        kii->_rw_buff,
-        kii->_rw_buff_size,
-        "{\"grant_type\":\"client_credentials\",\"client_id\":\"%s\",\"client_secret\":\"dummy\"}",
-        kii->_app_id);
+            kii->_rw_buff,
+            kii->_rw_buff_size,
+            "{\"grant_type\":\"client_credentials\",\"client_id\":\"%s\",\"client_secret\":\"dummy\"}",
+            kii->_app_id);
     if (content_len >= kii->_rw_buff_size) {
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
@@ -126,10 +126,10 @@ kii_code_t _onboard(
     jkii_escape_str(password, esc_pass, sizeof(esc_vid));
 
     content_len += snprintf(
-        kii->_rw_buff,
-        kii->_rw_buff_size,
-        "{\"vendorThingID\":\"%s\",\"thingPassword\":\"%s\"",
-        esc_vid, esc_pass);
+            kii->_rw_buff,
+            kii->_rw_buff_size,
+            "{\"vendorThingID\":\"%s\",\"thingPassword\":\"%s\"",
+            esc_vid, esc_pass);
     if (content_len >= kii->_rw_buff_size) {
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
@@ -233,12 +233,12 @@ kii_code_t _onboard(
     fields[0].type = JKII_FIELD_TYPE_STRING;
     fields[0].field_copy.string = kii->_author.access_token;
     fields[0].field_copy_buff_size = sizeof(kii->_author.access_token) /
-            sizeof(kii->_author.access_token[0]);
+        sizeof(kii->_author.access_token[0]);
     fields[1].name = "thingID";
     fields[1].type = JKII_FIELD_TYPE_STRING;
     fields[1].field_copy.string = kii->_author.author_id;
     fields[1].field_copy_buff_size = sizeof(kii->_author.author_id) /
-            sizeof(kii->_author.author_id[0]);
+        sizeof(kii->_author.author_id[0]);
     fields[2].name = NULL;
 
     result = _jkii_read_object(kii, buff, buff_size, fields);
@@ -280,10 +280,10 @@ kii_code_t _put_firmware_version(
 
     // Request body.
     int content_len = snprintf(
-        kii->_rw_buff,
-        kii->_rw_buff_size,
-        "{\"firmwareVersion\":\"%s\"}",
-        firmware_version);
+            kii->_rw_buff,
+            kii->_rw_buff_size,
+            "{\"firmwareVersion\":\"%s\"}",
+            firmware_version);
     if (content_len >= kii->_rw_buff_size) {
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;

@@ -4,10 +4,10 @@
 #include "kii_req_impl.h"
 
 kii_code_t _post_object(
-            kii_t* kii,
-            const kii_bucket_t* bucket,
-            const char* object_data,
-            const char* object_content_type)
+        kii_t* kii,
+        const kii_bucket_t* bucket,
+        const char* object_data,
+        const char* object_content_type)
 {
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "POST");
@@ -275,7 +275,7 @@ kii_code_t _upload_body(
     }
     ret = _set_object_body_content_type(kii, body_content_type);
     if (ret != KII_ERR_OK) {
-        
+
         return ret;
     }
 
