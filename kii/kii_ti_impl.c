@@ -39,12 +39,6 @@ kii_code_t _get_anonymous_token(
         return KII_ERR_TOO_LARGE_DATA;
     }
 
-    ret = _set_content_length(kii, content_len);
-    if (ret != KII_ERR_OK) {
-        _req_headers_free_all(kii);
-        return ret;
-    }
-
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
@@ -200,12 +194,6 @@ kii_code_t _onboard(
         return KII_ERR_TOO_LARGE_DATA;
     }
 
-    ret = _set_content_length(kii, content_len);
-    if (ret != KII_ERR_OK) {
-        _req_headers_free_all(kii);
-        return ret;
-    }
-
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
@@ -287,12 +275,6 @@ kii_code_t _put_firmware_version(
     if (content_len >= kii->_rw_buff_size) {
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
-    }
-
-    ret = _set_content_length(kii, content_len);
-    if (ret != KII_ERR_OK) {
-        _req_headers_free_all(kii);
-        return ret;
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
