@@ -52,6 +52,7 @@ kii_code_t _install_push(
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
+    kii->_rw_buff_req_size = body_len;
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
