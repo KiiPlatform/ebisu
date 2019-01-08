@@ -338,5 +338,6 @@ kii_code_t _set_req_body(kii_t* kii, const char* body_contents)
     }
     strncpy(kii->_rw_buff, body_contents, kii->_rw_buff_size);
 
-    return _set_content_length(kii, content_len);
+    kii->_rw_buff_req_size = content_len;
+    return KII_ERR_OK;
 }
