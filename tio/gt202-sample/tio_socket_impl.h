@@ -8,11 +8,14 @@
 typedef struct
 {
     SSL *ssl;
-    SSL_CTX *ssl_ctx;
     int sock;
     unsigned int to_recv;
     unsigned int to_send;
 } socket_context_t;
+
+void ssl_ctx_init();
+
+void ssl_ctx_close();
 
 /* HTTP Callback functions */
 khc_sock_code_t sock_cb_connect(

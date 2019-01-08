@@ -1,5 +1,25 @@
 #include "tio_socket_impl.h"
 
+static SSL_CTX *_ssl_ctx = NULL;
+
+void ssl_ctx_init() {
+#if CONNECT_SSL
+    if (_ssl_ctx == NULL) {
+        _ssl_ctx = SSL_ctx_new(SSL_CLIENT, 4500, 2000, 0);
+    }
+#endif
+}
+
+void ssl_ctx_close() {
+#if CONNECT_SSL
+    if (_ssl_ctx != NULL)
+    {
+        SSL_ctx_free(_ssl_ctx);
+        _ssl_ctx = NULL;
+    }
+#endif
+}
+
     khc_sock_code_t
 sock_cb_connect(
         void* sock_ctx,
@@ -12,7 +32,6 @@ sock_cb_connect(
     SOCKADDR_T hostAddr;
     A_UINT32 sock;
     SSL *ssl = NULL;
-    SSL_CTX *ssl_ctx = NULL;
     socket_context_t *ctx = (socket_context_t*)sock_ctx;
 
     memset(&dnsRespInfo, 0, sizeof(dnsRespInfo));
@@ -41,8 +60,7 @@ sock_cb_connect(
     }
 
 #if CONNECT_SSL
-    ssl_ctx = SSL_ctx_new(SSL_CLIENT, 4500, 2000, 0);
-    if (ssl_ctx == NULL){
+    if (_ssl_ctx == NULL){
         printf("failed to init ssl context.\n");
         return KHC_SOCK_FAIL;
     }
@@ -69,7 +87,7 @@ sock_cb_connect(
     }
 
 #if CONNECT_SSL
-    ssl = SSL_new(ssl_ctx);
+    ssl = SSL_new(_ssl_ctx);
     if (ssl == NULL){
         printf("failed to init ssl.\n");
         return KHC_SOCK_FAIL;
@@ -91,7 +109,6 @@ sock_cb_connect(
     printf("Connect socket: %d\n", sock);
     ctx->sock = sock;
     ctx->ssl = ssl;
-    ctx->ssl_ctx = ssl_ctx;
     return KHC_SOCK_OK;
 }
 
@@ -249,10 +266,6 @@ khc_sock_code_t sock_cb_close(void* sock_ctx)
     if (ctx->ssl != NULL)
     {
         SSL_shutdown(ctx->ssl);
-    }
-    if (ctx->ssl_ctx != NULL)
-    {
-        SSL_ctx_free(ctx->ssl_ctx);
     }
 #endif
     if (ctx->sock > 0)

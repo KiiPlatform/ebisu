@@ -236,6 +236,8 @@ int tio_main(int argc, char *argv[])
 
     if(ATH_STRCMP(argv[CMD_INDEX], "onboard") == 0)
     {
+        ssl_ctx_init();
+
         tio_updater_t* updater = malloc(sizeof(tio_updater_t));
 
         socket_context_t updater_http_ctx;
@@ -322,6 +324,8 @@ int tio_main(int argc, char *argv[])
         free(handler_http_buff);
         free(handler_mqtt_buff);
         free(handler_tokens);
+
+        ssl_ctx_close();
     }
 
     return A_OK;
