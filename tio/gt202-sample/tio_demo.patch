@@ -38,3 +38,14 @@
  
      {0}
  };
+--- throughput.h	2015-04-01 18:48:27.830462600 +0900
++++ throughput.h	2019-01-08 16:37:01.645176000 +0900
+@@ -32,11 +32,11 @@
+ #define MAX_END_MARK_RETRY                50   // Max number of End Mark retries in UDP Tx test
+ #define MSEC_HEARTBEAT 			  10000
+ #define MAX_TASKS_ALLOWED 		  2	 // For now, we allow ony 2 tasks
+-#define MAX_STREAMS_ALLOWED 		  2	 // Max number of allowed TCP/UDP streams- limited by memory
++#define MAX_STREAMS_ALLOWED 		  3	 // Max number of allowed TCP/UDP streams- limited by memory
+ #define TCP_CONNECTION_WAIT_TIME          50 
+ #define UDP_CONNECTION_WAIT_TIME          500
+ #define UDP_CONNECTION_WAIT_TIME_MULTI_SOCK 50
