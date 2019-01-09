@@ -106,7 +106,9 @@ sock_cb_connect(
     }
 #endif
 
-    printf("Connect socket: %d\n", sock);
+    if (ctx->show_debug != 0) {
+        printf("Connect socket: %d\n", sock);
+    }
     ctx->sock = sock;
     ctx->ssl = ssl;
     return KHC_SOCK_OK;
@@ -130,6 +132,9 @@ sock_cb_connect(
 #endif
     CUSTOM_FREE(custom);
     if (ret > 0) {
+        if (ctx->show_debug != 0) {
+            printf("%.*s", ret, buffer);
+        }
         *out_sent_length = ret;
         return KHC_SOCK_OK;
     } else {
@@ -174,6 +179,9 @@ khc_sock_code_t sock_cb_recv(
     } while (res == A_OK);
 
     if (received > 0) {
+        if (ctx->show_debug != 0) {
+            printf("%.*s", received, buffer);
+        }
         *out_actual_length = received;
         return KHC_SOCK_OK;
     } else if (received == 0) {
@@ -270,7 +278,9 @@ khc_sock_code_t sock_cb_close(void* sock_ctx)
 #endif
     if (ctx->sock > 0)
     {
-        printf("Close socket: %d\n", ctx->sock);
+        if (ctx->show_debug != 0) {
+            printf("Close socket: %d\n", ctx->sock);
+        }
         t_shutdown(handle, ctx->sock);
     }
     return KHC_SOCK_OK;

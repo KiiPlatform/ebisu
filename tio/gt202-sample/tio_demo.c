@@ -92,60 +92,29 @@ void updater_init(
     tio_updater_set_cb_task_exit(updater, _updater_exit, NULL);
 }
 
-const char send_file[] = "state.json";
+const char send_state[] = "{\"AirconAlias\":{\"RoomTemperature\":17,\"PresetTemperature\":17}}";
 
 typedef struct {
-    size_t file_size;
-    size_t file_read;
-} updater_file_context_t;
+    size_t max_size;
+    size_t read_size;
+} updater_context_t;
 
 size_t updater_cb_state_size(void* userdata)
 {
-    /* TODO:
-    struct stat st;
-    updater_file_context_t* ctx = (updater_file_context_t*)userdata;
-
-    printf("Send state\n");
-    if (stat(send_file, &st) == 0) {
-        ctx->file_size = st.st_size;
-        ctx->file_read = 0;
-        return st.st_size;
-    } else {
-        printf("failed to get stat\n");
-    }
-    */
-    return 0;
+    updater_context_t* ctx = (updater_context_t*)userdata;
+    ctx->max_size = strlen(send_state);
+    ctx->read_size = 0;
+    printf("state_size: %d\n", ctx->max_size);
+    return ctx->max_size;
 }
 
 size_t updater_cb_read(char *buffer, size_t size, void *userdata)
 {
-    /* TODO:
-    updater_file_context_t* ctx = (updater_file_context_t*)userdata;
-    FILE* fp;
-
-    fp = fopen(send_file, "rb");
-    if (fp == NULL) {
-        printf("fopen error.\n");
-        return 0;
-    }
-
-    if (fseek(fp, ctx->file_read, SEEK_SET) != 0) {
-        printf("fseek error.\n");
-        fclose(fp);
-        return 0;
-    }
-
-    size_t read_size = fread(buffer, 1, size, fp);
-    if (read_size > 0) {
-        ctx->file_read += read_size;
-    }
-
-    fclose(fp);
-
-    printf("updater_cb_read: %ld / %ld\n", ctx->file_read, ctx->file_size);
+    updater_context_t* ctx = (updater_context_t*)userdata;
+    size_t read_size = sprintf(buffer, "%.*s", size, &send_state[ctx->read_size]);
+    ctx->read_size += read_size;
+    printf("state_read: %d\n", read_size);
     return read_size;
-    */
-    return 0;
 }
 
 tio_bool_t pushed_message_callback(const char* message, size_t message_length, void* userdata)
@@ -243,11 +212,12 @@ int tio_main(int argc, char *argv[])
         socket_context_t updater_http_ctx;
         updater_http_ctx.to_recv = TO_RECV_SEC;
         updater_http_ctx.to_send = TO_SEND_SEC;
+        updater_http_ctx.show_debug = 0;
 
         jkii_token_t* updater_tokens = malloc(sizeof(jkii_token_t) * 256);
         jkii_resource_t updater_resource = { updater_tokens, 256};
 
-        updater_file_context_t updater_file_ctx;
+        updater_context_t updater_ctx;
 
         char* updater_buff = malloc(UPDATER_HTTP_BUFF_SIZE);
         memset(updater_buff, 0x00, sizeof(char) * UPDATER_HTTP_BUFF_SIZE);
@@ -263,10 +233,12 @@ int tio_main(int argc, char *argv[])
         socket_context_t handler_http_ctx;
         handler_http_ctx.to_recv = TO_RECV_SEC;
         handler_http_ctx.to_send = TO_SEND_SEC;
+        handler_http_ctx.show_debug = 0;
 
         socket_context_t handler_mqtt_ctx;
         handler_mqtt_ctx.to_recv = TO_RECV_SEC;
         handler_mqtt_ctx.to_send = TO_SEND_SEC;
+        handler_mqtt_ctx.show_debug = 0;
 
         char* handler_http_buff = malloc(HANDLER_HTTP_BUFF_SIZE);
         memset(handler_http_buff, 0x00, sizeof(char) * HANDLER_HTTP_BUFF_SIZE);
@@ -304,15 +276,13 @@ int tio_main(int argc, char *argv[])
 
         const kii_author_t* author = tio_handler_get_author(handler);
         tio_handler_start(handler, author, tio_action_handler, NULL);
-        /*
         tio_updater_start(
                 updater,
                 author,
                 updater_cb_state_size,
-                &updater_file_ctx,
+                &updater_ctx,
                 updater_cb_read,
-                &updater_file_ctx);
-        */
+                &updater_ctx);
         while(1) {
             _time_delay(1000);
         }

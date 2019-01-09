@@ -11,6 +11,7 @@ typedef struct
     int sock;
     unsigned int to_recv;
     unsigned int to_send;
+    int show_debug;
 } socket_context_t;
 
 void ssl_ctx_init();
