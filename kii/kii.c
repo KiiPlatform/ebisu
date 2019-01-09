@@ -227,9 +227,9 @@ void kii_enable_insecure_http(
     kii_t* kii,
     kii_bool_t enable_insecure_http) {
     if (enable_insecure_http == KII_TRUE) {
-        khc_enable_insecure(&kii->_app_host, 1);
+        khc_enable_insecure(&kii->_khc, 1);
     } else {
-        khc_enable_insecure(&kii->_app_host, 0);
+        khc_enable_insecure(&kii->_khc, 0);
     }
 }
 
