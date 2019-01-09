@@ -69,6 +69,7 @@ void kii_init(kii_t* kii)
     kii->_task_exit_data = NULL;
     kii->_cb_delay_ms = NULL;
     kii->_delay_ms_data = NULL;
+    kii->_insecure_mqtt = KII_FALSE;
 }
 
 void kii_set_site(
@@ -220,6 +221,22 @@ void kii_set_cb_slist_resource(
     kii->_cb_slist_free = cb_free;
     kii->_slist_alloc_data = cb_alloc_data;
     kii->_slist_free_data = cb_free_data;
+}
+
+void kii_enable_insecure_http(
+    kii_t* kii,
+    kii_bool_t enable_insecure_http) {
+    if (enable_insecure_http == KII_TRUE) {
+        khc_enable_insecure(&kii->_app_host, 1);
+    } else {
+        khc_enable_insecure(&kii->_app_host, 0);
+    }
+}
+
+void kii_enable_insecure_mqtt(
+    kii_t* kii,
+    kii_bool_t enable_insecure_mqtt) {
+    kii->_insecure_mqtt = enable_insecure_mqtt;
 }
 
 const char* kii_get_etag(kii_t* kii) {

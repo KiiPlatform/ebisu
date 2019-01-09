@@ -229,7 +229,6 @@ typedef struct kii_t {
     void* _slist_alloc_data; /**< \private */
     void* _slist_free_data; /**< \private */
 
-    kii_bool_t _insecure_http; /**< \private */
     kii_bool_t _insecure_mqtt; /**< \private */
 } kii_t;
 
