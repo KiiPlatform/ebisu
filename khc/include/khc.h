@@ -529,7 +529,7 @@ khc_code khc_set_cb_header(
  * \param [out] khc instance.
  * \param [in] enable_insecure non-zero indicates enabling insecure connection.
  */
-void khc_set_enable_insecure(
+void khc_enable_insecure(
         khc* khc,
         int enable_insecure);
 
