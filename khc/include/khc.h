@@ -525,7 +525,7 @@ khc_code khc_set_cb_header(
  * \brief Enable insecure connection.
  *
  * By default, khc uses secure connection.
- * If you need to use tcp instead of tls, you need to call this method.
+ * If you need to use tcp instead of ssl/tls, you need to call this method.
  * \param [out] khc instance.
  * \param [in] enable_insecure non-zero indicates enabling insecure connection.
  */
