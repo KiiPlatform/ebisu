@@ -300,6 +300,8 @@ typedef struct khc {
     size_t _sent_length; /**< \private **/
 
     khc_code _result; /**< \private **/
+
+    int _enable_insecure; /**< \private **/
 } khc;
 
 /**
@@ -518,6 +520,18 @@ khc_code khc_set_cb_header(
         khc* khc,
         KHC_CB_HEADER cb,
         void* userdata);
+
+/**
+ * \brief Enable insecure connection.
+ *
+ * By default, khc uses secure connection.
+ * If you need to use tcp instead of tls, you need to call this method.
+ * \param [out] khc instance.
+ * \param [in] enable_insecure non-zero indicates enabling insecure connection.
+ */
+void khc_set_enable_insecure(
+        khc* khc,
+        int enable_insecure);
 
 /**
  * \brief Get HTTP status code.
