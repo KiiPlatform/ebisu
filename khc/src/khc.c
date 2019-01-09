@@ -91,6 +91,12 @@ void khc_reset_except_cb(khc* khc) {
     khc->_stream_buff_allocated = 0;
 }
 
+void khc_enable_insecure(
+        khc* khc,
+        int enable_insecure) {
+    khc->_enable_insecure = enable_insecure;
+}
+
 int khc_get_status_code(
         khc* khc
 ) {
