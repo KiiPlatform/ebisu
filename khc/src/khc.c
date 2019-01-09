@@ -79,6 +79,7 @@ void khc_reset_except_cb(khc* khc) {
     khc->_body_read_size = 0;
     khc->_result = KHC_ERR_OK;
     khc->_sent_length = 0;
+    khc->_enable_insecure = 0;
 
     // Response header Buffer
     khc->_resp_header_buff = NULL;
