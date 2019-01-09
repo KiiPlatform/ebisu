@@ -1699,3 +1699,56 @@ TEST_CASE( "state abnormal tests." ) {
         REQUIRE( called );
     }
 }
+
+TEST_CASE( "Enable insecure" ) {
+    khc http;
+    khc_init(&http);
+
+    khc_set_host(&http, "api.kii.com");
+    khc_set_method(&http, "GET");
+    khc_set_path(&http, "/api/apps");
+    khc_set_req_headers(&http, NULL);
+
+    REQUIRE( http._enable_insecure == 0);
+    khc_enable_insecure(&http, 1);
+    REQUIRE( http._enable_insecure == 1);
+
+    khct::cb::SockCtx s_ctx;
+    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
+    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
+    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
+    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+
+    khc_state_idle(&http);
+    REQUIRE( http._state == KHC_STATE_CONNECT );
+    REQUIRE( http._result == KHC_ERR_OK );
+
+    bool called = false;
+    s_ctx.on_connect = [=, &called](void* socket_context, const char* host, unsigned int port) {
+        called = true;
+        REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
+        REQUIRE( strlen(host) == strlen("api.kii.com") );
+        REQUIRE( port == 80 );
+        return KHC_SOCK_OK;
+    };
+
+    khc_state_connect(&http);
+    REQUIRE( http._state == KHC_STATE_REQ_LINE );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+
+    called = false;
+    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+        called = true;
+        const char req_line[] = "GET http://api.kii.com/api/apps HTTP/1.1\r\n";
+        REQUIRE( length == strlen(req_line) );
+        REQUIRE( strncmp(buffer, req_line, length) == 0 );
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+
+    khc_state_req_line(&http);
+    REQUIRE( http._state == KHC_STATE_REQ_HOST_HEADER );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+}
