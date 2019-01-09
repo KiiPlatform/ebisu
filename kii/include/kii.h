@@ -281,9 +281,9 @@ void kii_enable_insecure_http(
  * \param [out] kii kii_t instance.
  * \param [in] enable_insecure_http KII_TRUE indicates using insecure connection.
  */
-void kii_enable_insecure_http(
+void kii_enable_insecure_mqtt(
         kii_t* kii,
-        kii_bool_t enable_insecure_http);
+        kii_bool_t enable_insecure_mqtt);
 
 /**
  * \brief Authorize thing with vendor thing id and password.
