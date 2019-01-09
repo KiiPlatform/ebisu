@@ -213,6 +213,20 @@ void tio_handler_set_app(
     kii_set_app_id(&handler->_kii, app_id);
 }
 
+void tio_handler_enable_insecure_http(
+        tio_handler_t* handler,
+        tio_bool_t enable_insecure_http)
+{
+    kii_enable_insecure_http(&handler->_kii, enable_insecure_http);
+}
+
+void tio_handler_enable_insecure_mqtt(
+        tio_handler_t* handler,
+        tio_bool_t enable_insecure_mqtt)
+{
+    kii_enable_insecure_mqtt(&handler->_kii, enable_insecure_mqtt);
+}
+
 static void _cb_receive_push(const char* payload, size_t payload_length, void* userdata) {
     tio_handler_t* handler = (tio_handler_t*)userdata;
     tio_bool_t skip = KII_FALSE;
@@ -411,6 +425,13 @@ void tio_updater_set_interval(
         size_t update_interval)
 {
     updater->_update_interval = update_interval;
+}
+
+void tio_updater_enable_insecure_http(
+        tio_updater_t* updater,
+        tio_bool_t enable_insecure_http)
+{
+    kii_enable_insecure_http(&updater->_kii, enable_insecure_http);
 }
 
 static void* _update_state(void* data) {
