@@ -75,11 +75,7 @@ sock_cb_connect(
     memset(&hostAddr, 0x00, sizeof(hostAddr));
     hostAddr.sin_family = ATH_AF_INET;
     hostAddr.sin_addr = dnsRespInfo.ipaddrs_list[0];
-#if CONNECT_SSL
     hostAddr.sin_port = port;
-#else
-    hostAddr.sin_port = (port == 443 ? 80 : port);
-#endif
 
     if (t_connect((void *)handle, sock, &hostAddr, sizeof(hostAddr)) == A_ERROR){
         printf("failed to connect socket.\n");
