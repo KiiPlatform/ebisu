@@ -50,6 +50,9 @@ void khc_init(khc* khc) {
     khc->_cb_sock_close = NULL;
     khc->_sock_ctx_close = NULL;
 
+    // User settings.
+    khc->_enable_insecure = 0;
+
     khc_reset_except_cb(khc);
 }
 
@@ -79,7 +82,6 @@ void khc_reset_except_cb(khc* khc) {
     khc->_body_read_size = 0;
     khc->_result = KHC_ERR_OK;
     khc->_sent_length = 0;
-    khc->_enable_insecure = 0;
 
     // Response header Buffer
     khc->_resp_header_buff = NULL;
