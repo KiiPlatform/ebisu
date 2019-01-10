@@ -591,6 +591,34 @@ void tio_handler_set_cb_slist_resource(
 );
 
 /**
+ * \brief Enable insecure HTTP connection.
+ *
+ * HTTP over ssl/tls is used by default.
+ * If you need to use HTTP over plain tcp,
+ * you need to call this method.
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] enable_insecure_http KII_TRUE indicates using insecure connection.
+ */
+void tio_handler_enable_insecure_http(
+        tio_handler_t* handler,
+        tio_bool_t enable_insecure_http
+);
+
+/**
+ * \brief Enable insecure MQTT connection.
+ *
+ * MQTT over ssl/tls is used by default.
+ * If you need to use MQTT over plain tcp,
+ * you need to call this method.
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] enable_insecure_mqtt KII_TRUE indicates using insecure connection.
+ */
+void tio_handler_enable_insecure_mqtt(
+        tio_handler_t* handler,
+        tio_bool_t enable_insecure_mqtt
+);
+
+/**
  * \brief Execute onboarding
  *
  * Onboarding step is required to register device to IoT cloud and obtain access token.
@@ -874,6 +902,20 @@ void tio_updater_set_cb_slist_resource(
         KHC_CB_SLIST_FREE cb_free,
         void* cb_alloc_data,
         void* cb_free_data
+);
+
+/**
+ * \brief Enable insecure HTTP connection.
+ *
+ * HTTP over ssl/tls is used by default.
+ * If you need to use HTTP over plain tcp,
+ * you need to call this method.
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] enable_insecure_http KII_TRUE indicates using insecure connection.
+ */
+void tio_updater_enable_insecure_http(
+        tio_updater_t* updater,
+        tio_bool_t enable_insecure_http
 );
 
 /**

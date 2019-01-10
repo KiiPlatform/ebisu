@@ -321,12 +321,11 @@ void _mqtt_state_sock_connect(mqtt_state_t* state)
     kii_t* kii = state->kii;
     kii_mqtt_task_info* task_info = &state->info;
     kii_mqtt_endpoint_t* endpoint = &state->endpoint;
-    unsigned int port;
-#ifndef KII_MQTT_USE_PORT_TCP
-    port = endpoint->port_ssl;
-#else
-    port = endpoint->port_tcp;
-#endif
+    unsigned int port = endpoint->port_ssl;
+    if (kii->_insecure_mqtt == KII_TRUE) {
+        port = endpoint->port_tcp;
+    }
+
     khc_sock_code_t con_res =
         kii->_cb_mqtt_sock_connect(
                 kii->_mqtt_sock_connect_ctx,
