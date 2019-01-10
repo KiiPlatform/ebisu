@@ -84,12 +84,6 @@ kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* v
 
 kii_code_t kii_api_call_run(kii_t* kii)
 {
-    kii_code_t res = _set_content_length(kii, kii->_rw_buff_req_size);
-    if (res != KII_ERR_OK) {
-        _req_headers_free_all(kii);
-        return res;
-    }
-
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
