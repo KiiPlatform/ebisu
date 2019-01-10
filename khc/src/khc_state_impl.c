@@ -147,7 +147,8 @@ void khc_state_idle(khc* khc) {
 }
 
 void khc_state_connect(khc* khc) {
-    khc_sock_code_t con_res = khc->_cb_sock_connect(khc->_sock_ctx_connect, khc->_host, 443);
+    const unsigned int port = khc->_enable_insecure ? 80:443;
+    khc_sock_code_t con_res = khc->_cb_sock_connect(khc->_sock_ctx_connect, khc->_host, port);
     if (con_res == KHC_SOCK_OK) {
         khc->_sent_length = 0;
         khc->_state = KHC_STATE_REQ_LINE;
@@ -163,7 +164,8 @@ void khc_state_connect(khc* khc) {
     }
 }
 
-static const char schema[] = "https://";
+static const char schema_https[] = "https://";
+static const char schema_http[] = "http://";
 static const char http_version[] = "HTTP/1.1\r\n";
 
 static size_t request_line_len(khc* khc) {
@@ -172,6 +174,7 @@ static size_t request_line_len(khc* khc) {
     // Path must be started with '/'
     char* path = khc->_path;
 
+    const char* schema = khc->_enable_insecure ? schema_http : schema_https;
     return ( // example)GET https://api.khc.com/v1/users HTTP1.1\r\n
         strlen(method) + 1
         + strlen(schema) + strlen(host) + strlen(path) + 1
@@ -188,6 +191,7 @@ void khc_state_req_line(khc* khc) {
     request_line[0] = '\0';
     strcat(request_line, khc->_method);
     strcat(request_line, " ");
+    const char* schema = khc->_enable_insecure ? schema_http : schema_https;
     strcat(request_line, schema);
     strcat(request_line, host);
     strcat(request_line, path);

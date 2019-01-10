@@ -228,6 +228,8 @@ typedef struct kii_t {
     KHC_CB_SLIST_FREE _cb_slist_free; /**< \private */
     void* _slist_alloc_data; /**< \private */
     void* _slist_free_data; /**< \private */
+
+    kii_bool_t _insecure_mqtt; /**< \private */
 } kii_t;
 
 /**
@@ -255,6 +257,32 @@ void kii_set_site(
 void kii_set_app_id(
 		kii_t* kii,
 		const char* app_id);
+
+/**
+ * \brief Enable insecure HTTP connection.
+ *
+ * HTTP over ssl/tls is used by default.
+ * If you need to use HTTP over plain tcp,
+ * you need to call this method.
+ * \param [out] kii kii_t instance.
+ * \param [in] enable_insecure_http KII_TRUE indicates using insecure connection.
+ */
+void kii_enable_insecure_http(
+        kii_t* kii,
+        kii_bool_t enable_insecure_http);
+
+/**
+ * \brief Enable insecure MQTT connection.
+ *
+ * MQTT over ssl/tls is used by default.
+ * If you need to use MQTT over plain tcp,
+ * you need to call this method.
+ * \param [out] kii kii_t instance.
+ * \param [in] enable_insecure_http KII_TRUE indicates using insecure connection.
+ */
+void kii_enable_insecure_mqtt(
+        kii_t* kii,
+        kii_bool_t enable_insecure_mqtt);
 
 /**
  * \brief Authorize thing with vendor thing id and password.

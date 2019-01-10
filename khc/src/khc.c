@@ -79,6 +79,7 @@ void khc_reset_except_cb(khc* khc) {
     khc->_body_read_size = 0;
     khc->_result = KHC_ERR_OK;
     khc->_sent_length = 0;
+    khc->_enable_insecure = 0;
 
     // Response header Buffer
     khc->_resp_header_buff = NULL;
@@ -88,6 +89,12 @@ void khc_reset_except_cb(khc* khc) {
     khc->_stream_buff = NULL;
     khc->_stream_buff_size = 0;
     khc->_stream_buff_allocated = 0;
+}
+
+void khc_enable_insecure(
+        khc* khc,
+        int enable_insecure) {
+    khc->_enable_insecure = enable_insecure;
 }
 
 int khc_get_status_code(
