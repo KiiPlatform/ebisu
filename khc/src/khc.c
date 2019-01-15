@@ -50,6 +50,9 @@ void khc_init(khc* khc) {
     khc->_cb_sock_close = NULL;
     khc->_sock_ctx_close = NULL;
 
+    // User settings.
+    khc->_enable_insecure = 0;
+
     khc_reset_except_cb(khc);
 }
 
@@ -88,6 +91,12 @@ void khc_reset_except_cb(khc* khc) {
     khc->_stream_buff = NULL;
     khc->_stream_buff_size = 0;
     khc->_stream_buff_allocated = 0;
+}
+
+void khc_enable_insecure(
+        khc* khc,
+        int enable_insecure) {
+    khc->_enable_insecure = enable_insecure;
 }
 
 int khc_get_status_code(

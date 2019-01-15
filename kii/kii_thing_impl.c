@@ -49,12 +49,7 @@ kii_code_t _thing_auth(
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
-
-    res = _set_content_length(kii, content_len);
-    if (res != KII_ERR_OK) {
-        _req_headers_free_all(kii);
-        return res;
-    }
+    kii->_rw_buff_req_size = content_len;
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
@@ -112,12 +107,7 @@ kii_code_t _thing_register(
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
-
-    res = _set_content_length(kii, content_len);
-    if (res != KII_ERR_OK) {
-        _req_headers_free_all(kii);
-        return res;
-    }
+    kii->_rw_buff_req_size = content_len;
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_code code = khc_perform(&kii->_khc);
