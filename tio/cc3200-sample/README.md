@@ -1,3 +1,8 @@
+# Sample application on CC3200
+
+## Required tools
+
+We built and tested this sample appliation on Windows 10.
 Requilred tools are followings:
 
   * CC3200 SDK(1.3 or more)
@@ -8,12 +13,14 @@ How to install these two tools are described in the document.
 
 ## Build sample application
 
-```sh
-make
-```
+The build steps are followings:
 
-After make, freertos_ebisu_demo folder is created.
-Please import freertos_ebisu_demo folder as CCS Project from CCS.
-Please replace KII_APP_ID, KII_APP_HOST, VENDOR_THING_ID and THING_PASSWORD in main.c to yours.
-After these steps, you can build sample application on CCS.
+  1. Run make command on this folder. freertos\_ebisu\_demo folder is created.
+  1. Import freertos\_ebisu\_demo folder as CCS Project from CCS.
+  1. Replace KII\_APP\_ID, KII\_APP\_HOST, VENDOR\_THING\_ID and THING\_PASSWORD in main.c to yours.
+  1. Build sample application on CCS.
+
+### SSL Connection
+
+* This demo application use HTTP by default. If you want to use HTTPS, you need to set CONNECT\_SSL to 1 in ebisu\_cc3200.h and re-build.
 
