@@ -11,6 +11,8 @@
 #include "khc_socket_callback.h"
 #include "kii_task_callback.h"
 
+#define CONNECT_SSL 0
+
 typedef struct socket_context_t {
     int sock;
     unsigned int to_recv;

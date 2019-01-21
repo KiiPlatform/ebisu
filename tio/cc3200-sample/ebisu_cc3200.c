@@ -16,6 +16,7 @@ khc_sock_code_t sock_cb_connect(
     unsigned long destinationIP;
     SlSockAddrIn_t  addr;
     int sock;
+    int opt = 0;
 
     if(sl_NetAppDnsGetHostByName((signed char*)host, strlen(host),
                 &destinationIP, SL_AF_INET) < 0){
@@ -23,13 +24,12 @@ khc_sock_code_t sock_cb_connect(
     }
     memset(&addr, 0x00, sizeof(struct SlSockAddrIn_t));
     addr.sin_family = SL_AF_INET;
-    unsigned int port_ = port;
-    if (port == 443) {
-        port_ = 80;
-    }
-    addr.sin_port = sl_Htons(port_);
+    addr.sin_port = sl_Htons(port);
     addr.sin_addr.s_addr = sl_Htonl(destinationIP);
-    sock = sl_Socket(SL_AF_INET,SL_SOCK_STREAM, 0);
+#if CONNECT_SSL
+    opt = SL_SEC_SOCKET;
+#endif
+    sock = sl_Socket(SL_AF_INET,SL_SOCK_STREAM, opt);
     if (sock < 0) {
         return KHC_SOCK_FAIL;
     }
@@ -41,8 +41,12 @@ khc_sock_code_t sock_cb_connect(
                     sizeof(torecv)) != 0) {
         return KHC_SOCK_FAIL;
     }
-
-    if (sl_Connect(sock, ( SlSockAddr_t *)&addr, sizeof(struct SlSockAddrIn_t)) < 0) {
+    int r = sl_Connect(sock, ( SlSockAddr_t *)&addr, sizeof(struct SlSockAddrIn_t));
+    if (r < 0
+#if CONNECT_SSL
+    		&& r != SL_ESECSNOVERIFY
+#endif
+		) {
         sl_Close(sock);
         return KHC_SOCK_FAIL;
     }

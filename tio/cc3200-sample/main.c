@@ -683,10 +683,13 @@ void handler_init(
 
     tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);
     tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
-
+#if CONNECT_SSL
+    tio_handler_enable_insecure_http(handler, KII_FALSE);
+    tio_handler_enable_insecure_mqtt(handler, KII_FALSE);
+#else
     tio_handler_enable_insecure_http(handler, KII_TRUE);
     tio_handler_enable_insecure_mqtt(handler, KII_TRUE);
-
+#endif
     tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
 
     tio_handler_set_json_parser_resource(handler, resource);
