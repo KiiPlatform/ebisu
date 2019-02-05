@@ -22,5 +22,5 @@ The build steps are followings:
 
 ### SSL Connection
 
-* This demo application use HTTP by default. If you want to use HTTPS, you need to set CONNECT\_SSL to 1 in ebisu\_cc3200.h and re-build.
+* This demo application use HTTP. Current CC3200 can not use HTTPS for Kii Cloud server, because supported cipher is old.
 
