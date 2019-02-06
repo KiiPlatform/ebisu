@@ -4,9 +4,12 @@
 #include <stdarg.h>
 
 #include "simplelink.h"
+#include "common.h"
 #ifndef NOTERM
 #include "uart_if.h"
 #endif
+
+#define SL_SSL_CA_CERT_FILE_NAME "/cert/rootca.der"
 
 khc_sock_code_t sock_cb_connect(
         void* socket_context,
@@ -15,7 +18,7 @@ khc_sock_code_t sock_cb_connect(
 {
     unsigned long destinationIP;
     SlSockAddrIn_t  addr;
-    int sock;
+    int sock = 0;
     int opt = 0;
 
     if(sl_NetAppDnsGetHostByName((signed char*)host, strlen(host),
@@ -41,12 +44,53 @@ khc_sock_code_t sock_cb_connect(
                     sizeof(torecv)) != 0) {
         return KHC_SOCK_FAIL;
     }
-    int r = sl_Connect(sock, ( SlSockAddr_t *)&addr, sizeof(struct SlSockAddrIn_t));
-    if (r < 0
 #if CONNECT_SSL
-    		&& r != SL_ESECSNOVERIFY
+#if 1
+    char method = SL_SO_SEC_METHOD_TLSV1_2;
+    if (sl_SetSockOpt(sock, SL_SOL_SOCKET, SL_SO_SECMETHOD, &method, sizeof(method)) < 0) {
+    	return KHC_SOCK_FAIL;
+    }
+
+    long cipher = SL_SEC_MASK_SECURE_DEFAULT;
+    if (sl_SetSockOpt(sock, SL_SOL_SOCKET, SL_SO_SECURE_MASK, &cipher,  sizeof(cipher)) < 0) {
+    	return KHC_SOCK_FAIL;
+    }
 #endif
-		) {
+#if 1
+    if (sl_SetSockOpt(sock, SL_SOL_SOCKET,
+    		SL_SO_SECURE_FILES_CA_FILE_NAME,
+			SL_SSL_CA_CERT_FILE_NAME,
+			strlen(SL_SSL_CA_CERT_FILE_NAME)) < 0) {
+        return KHC_SOCK_FAIL;
+    }
+#else
+    SlSockSecureFiles_t files;
+    files.secureFiles[0] = 0;
+    files.secureFiles[1] = 0;
+    files.secureFiles[2] = 129;
+    files.secureFiles[3] = 0;
+    if (sl_SetSockOpt(sock, SL_SOL_SOCKET,
+    		SL_SO_SECURE_FILES,
+			&files,
+			sizeof(SlSockSecureFiles_t)) < 0) {
+        return KHC_SOCK_FAIL;
+    }
+#endif
+#if 0
+    if (sl_SetSockOpt(sock, SL_SOL_SOCKET,
+    		SO_SECURE_DOMAIN_NAME_VERIFICATION,
+			host,
+			strlen(host)) < 0) {
+        return KHC_SOCK_FAIL;
+    }
+#endif
+#endif
+    int r = sl_Connect(sock, ( SlSockAddr_t *)&addr, sizeof(struct SlSockAddrIn_t));
+    ASSERT_ON_ERROR(r);
+    if (r == SL_ESECSNOVERIFY) {
+        return KHC_SOCK_OK;
+    }
+    if (r < 0) {
         sl_Close(sock);
         return KHC_SOCK_FAIL;
     }

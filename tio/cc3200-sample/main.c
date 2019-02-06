@@ -37,6 +37,13 @@
 #define BUF_SIZE            1400
 #define TCP_PACKET_COUNT    1
 
+#define DATE                6    /* Current Date */
+#define MONTH               2     /* Month 1-12 */
+#define YEAR                2019  /* Current year */
+#define HOUR                14    /* Time - hours */
+#define MINUTE              10    /* Time - minutes */
+#define SECOND              0     /* Time - seconds */
+
 // Application specific status/error codes
 typedef enum{
     // Choosing -0x7D0 to avoid overlap w/ host-driver's error codes
@@ -91,6 +98,8 @@ unsigned char  g_ucConnectionStatus = 0;
 unsigned char  g_ucSimplelinkstarted = 0;
 unsigned long  g_ulIpAddr = 0;
 char g_cBsdBuf[BUF_SIZE];
+SlDateTime_t g_time;
+signed char *g_Host = KII_APP_HOST;
 
 #ifndef USE_TIRTOS
 /* in case of TI-RTOS don't include startup_*.c in app project */
@@ -643,6 +652,36 @@ static long WlanConnect()
 
 }
 
+//*****************************************************************************
+//
+//! This function updates the date and time of CC3200.
+//!
+//! \param None
+//!
+//! \return
+//!     0 for success, negative otherwise
+//!
+//*****************************************************************************
+
+static int set_time()
+{
+    long retVal;
+
+    g_time.sl_tm_day = DATE;
+    g_time.sl_tm_mon = MONTH;
+    g_time.sl_tm_year = YEAR;
+    g_time.sl_tm_hour = HOUR;
+    g_time.sl_tm_min = MINUTE;
+    g_time.sl_tm_sec = SECOND;
+
+    retVal = sl_DevSet(SL_DEVICE_GENERAL_CONFIGURATION,
+                          SL_DEVICE_GENERAL_CONFIGURATION_DATE_TIME,
+                          sizeof(SlDateTime_t),(unsigned char *)(&g_time));
+
+    ASSERT_ON_ERROR(retVal);
+    return SUCCESS;
+}
+
 tio_bool_t pushed_message_callback(const char* message, size_t message_length, void* userdata)
 {
     // TODO: Implement.
@@ -887,6 +926,8 @@ int main( void )
 
     UART_PRINT("Device is configured in default state \n\r");
 
+    CLR_STATUS_BIT_ALL(g_ulStatus);
+
     //
     // Asumption is that the device is configured in station mode already
     // and it is in its default state
@@ -918,6 +959,13 @@ int main( void )
                       SL_IPV4_BYTE(g_ulIpAddr,2),
                       SL_IPV4_BYTE(g_ulIpAddr,1),
                       SL_IPV4_BYTE(g_ulIpAddr,0));
+
+    lRetVal = set_time();
+    if(lRetVal < 0)
+    {
+        UART_PRINT("Set current time failed \n\r");
+        LOOP_FOREVER();
+    }
 
     //
     // Creating a queue for 10 elements.
