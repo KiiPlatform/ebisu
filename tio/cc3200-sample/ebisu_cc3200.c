@@ -45,45 +45,28 @@ khc_sock_code_t sock_cb_connect(
         return KHC_SOCK_FAIL;
     }
 #if CONNECT_SSL
-#if 1
     char method = SL_SO_SEC_METHOD_TLSV1_2;
     if (sl_SetSockOpt(sock, SL_SOL_SOCKET, SL_SO_SECMETHOD, &method, sizeof(method)) < 0) {
     	return KHC_SOCK_FAIL;
     }
 
-    long cipher = SL_SEC_MASK_SECURE_DEFAULT;
+    long cipher = SL_SEC_MASK_TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256;
     if (sl_SetSockOpt(sock, SL_SOL_SOCKET, SL_SO_SECURE_MASK, &cipher,  sizeof(cipher)) < 0) {
     	return KHC_SOCK_FAIL;
     }
-#endif
-#if 1
     if (sl_SetSockOpt(sock, SL_SOL_SOCKET,
     		SL_SO_SECURE_FILES_CA_FILE_NAME,
 			SL_SSL_CA_CERT_FILE_NAME,
 			strlen(SL_SSL_CA_CERT_FILE_NAME)) < 0) {
         return KHC_SOCK_FAIL;
     }
-#else
-    SlSockSecureFiles_t files;
-    files.secureFiles[0] = 0;
-    files.secureFiles[1] = 0;
-    files.secureFiles[2] = 129;
-    files.secureFiles[3] = 0;
-    if (sl_SetSockOpt(sock, SL_SOL_SOCKET,
-    		SL_SO_SECURE_FILES,
-			&files,
-			sizeof(SlSockSecureFiles_t)) < 0) {
-        return KHC_SOCK_FAIL;
-    }
-#endif
-#if 0
+
     if (sl_SetSockOpt(sock, SL_SOL_SOCKET,
     		SO_SECURE_DOMAIN_NAME_VERIFICATION,
 			host,
 			strlen(host)) < 0) {
         return KHC_SOCK_FAIL;
     }
-#endif
 #endif
     int r = sl_Connect(sock, ( SlSockAddr_t *)&addr, sizeof(struct SlSockAddrIn_t));
     ASSERT_ON_ERROR(r);
