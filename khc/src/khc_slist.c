@@ -8,6 +8,9 @@ khc_slist* khc_slist_append_using_cb_alloc(
         size_t length,
         KHC_CB_SLIST_ALLOC cb_alloc,
         void* cb_alloc_data) {
+    if (cb_alloc == NULL) {
+        return NULL;
+    }
     khc_slist* next;
     next = cb_alloc(string, length, cb_alloc_data);
     if (next == NULL) {
@@ -30,6 +33,9 @@ void khc_slist_free_all_using_cb_free(
         khc_slist* slist,
         KHC_CB_SLIST_FREE cb_free,
         void* cb_free_data) {
+    if (cb_free == NULL) {
+        return;
+    }
     khc_slist *curr;
     curr = slist;
     while (curr != NULL) {

@@ -1,5 +1,6 @@
 #include <khc_socket_callback.h>
 #include <functional>
+#include <stdlib.h>
 
 namespace khct {
 namespace cb {
@@ -62,6 +63,28 @@ struct PushCtx {
 inline void cb_push(const char* message, size_t message_length, void *userdata) {
     PushCtx* ctx = (PushCtx*)(userdata);
     ctx->on_push(message, message_length);
+}
+
+inline khc_slist* cb_khc_slist_alloc(const char* str, size_t str_len, void* data) {
+    char* copy = (char*)malloc(str_len + 1);
+    if (copy == NULL) {
+        return NULL;
+    }
+    khc_slist* node = (khc_slist*)malloc(sizeof(khc_slist));
+    if (node == NULL) {
+        free(copy);
+        return NULL;
+    }
+    strncpy(copy, str, str_len);
+    copy[str_len] = '\0';
+    node->data = copy;
+    node->next = NULL;
+    return node;
+}
+
+inline void cb_khc_slist_free(khc_slist* slist, void* data) {
+    free(slist->data);
+    free(slist);
 }
 }
 }

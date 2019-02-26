@@ -56,8 +56,8 @@ void kii_init(kii_t* kii)
     khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
     khc_set_cb_header(&kii->_khc, _cb_write_header, kii);
     kii->_etag[0] = '\0';
-    kii->_cb_slist_alloc = khc_cb_slist_alloc;
-    kii->_cb_slist_free = khc_cb_slist_free;
+    kii->_cb_slist_alloc = NULL;
+    kii->_cb_slist_free = NULL;
     kii->_slist_alloc_data = NULL;
     kii->_slist_free_data = NULL;
     kii->_sdk_info = KII_SDK_INFO;
