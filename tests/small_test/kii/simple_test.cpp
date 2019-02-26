@@ -20,6 +20,11 @@ TEST_CASE( "Simple test" ) {
     kii_set_buff(&kii, kii_buff, kii_buff_size);
     kii_set_mqtt_buff(&kii, mqtt_buff, mqtt_buff_size);
     kii_set_json_parser_resource(&kii, &jkii_resource);
+    kii_set_cb_slist_resource(&kii,
+            khct::cb::cb_khc_slist_alloc,
+            khct::cb::cb_khc_slist_free,
+            NULL,
+            NULL);
     kii._keep_alive_interval = 300;
 
     khct::cb::SockCtx http_ctx;
