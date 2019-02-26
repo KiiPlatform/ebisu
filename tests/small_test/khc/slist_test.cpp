@@ -2,31 +2,6 @@
 #include "catch.hpp"
 #include "khc.h"
 
-TEST_CASE( "slist append (1)" ) {
-    khc_slist* list = NULL;
-    khc_slist* appended = khc_slist_append(list, "aaaaa", 5);
-    REQUIRE( appended != NULL );
-    REQUIRE( strlen(appended->data) == 5 );
-    REQUIRE( strncmp(appended->data, "aaaaa", 5) == 0 );
-    REQUIRE ( appended->next == NULL );
-    khc_slist_free_all(appended);
-}
-
-TEST_CASE( "slist append (2)" ) {
-    khc_slist* list = NULL;
-    khc_slist* appended = khc_slist_append(list, "aaaaa", 5);
-    REQUIRE( appended != NULL );
-    REQUIRE( strlen(appended->data) == 5 );
-    REQUIRE( strncmp(appended->data, "aaaaa", 5) == 0 );
-    appended = khc_slist_append(appended, "bbbb", 4);
-    khc_slist* next = appended->next;
-    REQUIRE ( next != NULL );
-    REQUIRE( strlen(next->data) == 4 );
-    REQUIRE( strncmp(next->data, "bbbb", 4) == 0 );
-    REQUIRE( next->next == NULL );
-    khc_slist_free_all(appended);
-}
-
 typedef struct {
     const char* alloc_requested_str;
     size_t alloc_requested_str_len;
@@ -59,6 +34,33 @@ void cb_free(khc_slist* node, void* data) {
     ctx->free_requested_node = node;
     free(node->data);
     free(node);
+}
+
+TEST_CASE( "slist append (1)" ) {
+    khc_slist* list = NULL;
+    slist_alloc_ctx ctx;
+    khc_slist* appended = khc_slist_append_using_cb_alloc(list, "aaaaa", 5, cb_alloc, &ctx);
+    REQUIRE( appended != NULL );
+    REQUIRE( strlen(appended->data) == 5 );
+    REQUIRE( strncmp(appended->data, "aaaaa", 5) == 0 );
+    REQUIRE ( appended->next == NULL );
+    khc_slist_free_all_using_cb_free(appended, cb_free, &ctx);
+}
+
+TEST_CASE( "slist append (2)" ) {
+    khc_slist* list = NULL;
+    slist_alloc_ctx ctx;
+    khc_slist* appended = khc_slist_append_using_cb_alloc(list, "aaaaa", 5, cb_alloc, &ctx);
+    REQUIRE( appended != NULL );
+    REQUIRE( strlen(appended->data) == 5 );
+    REQUIRE( strncmp(appended->data, "aaaaa", 5) == 0 );
+    appended = khc_slist_append_using_cb_alloc(appended, "bbbb", 4, cb_alloc, &ctx);
+    khc_slist* next = appended->next;
+    REQUIRE ( next != NULL );
+    REQUIRE( strlen(next->data) == 4 );
+    REQUIRE( strncmp(next->data, "bbbb", 4) == 0 );
+    REQUIRE( next->next == NULL );
+    khc_slist_free_all_using_cb_free(appended, cb_free, &ctx);
 }
 
 TEST_CASE( "slist append (3)" ) {

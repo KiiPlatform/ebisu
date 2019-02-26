@@ -495,7 +495,7 @@ TEST_CASE( "Socket send partial" ) {
 
     char req_header[] = "X-KII-dummy-Header: test partial.";
     khc_slist* req_headers = NULL;
-    req_headers = khc_slist_append(req_headers, req_header, strlen(req_header));
+    req_headers = khc_slist_append_using_cb_alloc(req_headers, req_header, strlen(req_header), khct::cb::cb_khc_slist_alloc, NULL);
 
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
@@ -876,7 +876,7 @@ TEST_CASE( "Socket send partial" ) {
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
 
-    khc_slist_free_all(req_headers);
+    khc_slist_free_all_using_cb_free(req_headers, khct::cb::cb_khc_slist_free, NULL);
 }
 
 TEST_CASE( "state abnormal tests." ) {
