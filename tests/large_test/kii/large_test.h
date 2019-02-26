@@ -5,6 +5,7 @@
 #include <functional>
 #include "kii.h"
 #include "secure_socket_impl.h"
+#include "test_callbacks.h"
 
 namespace kiiltest {
 
@@ -36,6 +37,11 @@ inline void init(
     kii_set_cb_mqtt_sock_recv(kii, ebisu::ltest::ssl::cb_recv, mqtt_ssl_ctx);
     kii_set_cb_mqtt_sock_close(kii, ebisu::ltest::ssl::cb_close, mqtt_ssl_ctx);
     kii_set_json_parser_resource(kii, resource);
+    kii_set_cb_slist_resource(kii,
+            khct::cb::cb_khc_slist_alloc,
+            khct::cb::cb_khc_slist_free,
+            NULL,
+            NULL);
 
     kii->_author.author_id[0] = '\0';
     kii->_author.access_token[0] = '\0';
