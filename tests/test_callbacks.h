@@ -1,5 +1,6 @@
 #include <khc_socket_callback.h>
 #include <functional>
+#include <string.h>
 #include <stdlib.h>
 
 namespace khct {
