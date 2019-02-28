@@ -53,6 +53,13 @@ void khc_init(khc* khc) {
     // User settings.
     khc->_enable_insecure = 0;
 
+    // Response header Buffer
+    khc->_resp_header_buff = NULL;
+    khc->_resp_header_buff_size = 0;
+    // Stream Buffer
+    khc->_stream_buff = NULL;
+    khc->_stream_buff_size = 0;
+
     khc_reset_except_cb(khc);
 }
 
@@ -82,15 +89,6 @@ void khc_reset_except_cb(khc* khc) {
     khc->_body_read_size = 0;
     khc->_result = KHC_ERR_OK;
     khc->_sent_length = 0;
-
-    // Response header Buffer
-    khc->_resp_header_buff = NULL;
-    khc->_resp_header_buff_size = 0;
-    khc->_resp_header_buff_allocated = 0;
-    // Stream Buffer
-    khc->_stream_buff = NULL;
-    khc->_stream_buff_size = 0;
-    khc->_stream_buff_allocated = 0;
 }
 
 void khc_enable_insecure(
