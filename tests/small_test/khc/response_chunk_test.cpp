@@ -12,6 +12,8 @@ TEST_CASE( "HTTP chunked response test" ) {
     khc http;
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
+    char buff[buff_size];
+    char resp_header_buff[DEFAULT_RESP_HEADER_BUFF_SIZE];
 
     ifstream ifs;
     ifs.open("./data/resp-login-chunked.txt");
@@ -24,6 +26,8 @@ TEST_CASE( "HTTP chunked response test" ) {
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
     khc_set_req_headers(&http, NULL);
+    khc_set_stream_buff(&http, buff, buff_size);
+    khc_set_resp_header_buff(&http, resp_header_buff, DEFAULT_RESP_HEADER_BUFF_SIZE);
 
     khct::cb::SockCtx s_ctx;
     khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
@@ -121,6 +125,7 @@ TEST_CASE( "small buffer size test" ) {
     khc_init(&http);
     const size_t buff_size = 10;
     char buff[buff_size];
+    char resp_header_buff[DEFAULT_RESP_HEADER_BUFF_SIZE];
 
     ifstream ifs;
     ifs.open("./data/resp-login-chunked.txt");
@@ -134,6 +139,7 @@ TEST_CASE( "small buffer size test" ) {
     khc_set_path(&http, "/api/apps");
     khc_set_req_headers(&http, NULL);
     khc_set_stream_buff(&http, buff, buff_size);
+    khc_set_resp_header_buff(&http, resp_header_buff, DEFAULT_RESP_HEADER_BUFF_SIZE);
 
     khct::cb::SockCtx s_ctx;
     khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
@@ -231,6 +237,7 @@ TEST_CASE( "random buffer size test" ) {
     const size_t buff_size = randSize(mt);
     char buff[buff_size];
     cout << "Random Buffer Size: " << buff_size << endl;
+    char resp_header_buff[DEFAULT_RESP_HEADER_BUFF_SIZE];
 
     ifstream ifs;
     ifs.open("./data/resp-login-chunked.txt");
@@ -244,6 +251,7 @@ TEST_CASE( "random buffer size test" ) {
     khc_set_path(&http, "/api/apps");
     khc_set_req_headers(&http, NULL);
     khc_set_stream_buff(&http, buff, buff_size);
+    khc_set_resp_header_buff(&http, resp_header_buff, DEFAULT_RESP_HEADER_BUFF_SIZE);
 
     khct::cb::SockCtx s_ctx;
     khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
@@ -335,6 +343,8 @@ TEST_CASE( "random buffer size test" ) {
 TEST_CASE( "random chunk body test" ) {
     khc http;
     khc_init(&http);
+    char buff[DEFAULT_STREAM_BUFF_SIZE];
+    char resp_header_buff[DEFAULT_RESP_HEADER_BUFF_SIZE];
 
     ifstream ifs;
     ifs.open("./data/resp-login-chunked-headers.txt");
@@ -356,6 +366,8 @@ TEST_CASE( "random chunk body test" ) {
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
     khc_set_req_headers(&http, NULL);
+    khc_set_stream_buff(&http, buff, DEFAULT_STREAM_BUFF_SIZE);
+    khc_set_resp_header_buff(&http, resp_header_buff, DEFAULT_RESP_HEADER_BUFF_SIZE);
 
     khct::cb::SockCtx s_ctx;
     khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
@@ -441,6 +453,8 @@ TEST_CASE( "HTTP response 400 test(chunked)" ) {
     khc http;
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
+    char buff[buff_size];
+    char resp_header_buff[DEFAULT_RESP_HEADER_BUFF_SIZE];
 
     string expectBody = "dummy body.";
     stringstream ss;
@@ -453,6 +467,8 @@ TEST_CASE( "HTTP response 400 test(chunked)" ) {
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
     khc_set_req_headers(&http, NULL);
+    khc_set_stream_buff(&http, buff, DEFAULT_STREAM_BUFF_SIZE);
+    khc_set_resp_header_buff(&http, resp_header_buff, DEFAULT_RESP_HEADER_BUFF_SIZE);
 
     khct::cb::SockCtx s_ctx;
     khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);

@@ -12,7 +12,9 @@ TEST_CASE( "HTTP minimal" ) {
     khc http;
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
+    char buff[buff_size];
     const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
+    char resp_header_buff[resp_header_buff_size];
 
     khct::http::Resp resp;
     resp.headers = { "HTTP/1.0 200 OK" };
@@ -21,6 +23,8 @@ TEST_CASE( "HTTP minimal" ) {
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
     khc_set_req_headers(&http, NULL);
+    khc_set_stream_buff(&http, buff, buff_size);
+    khc_set_resp_header_buff(&http, resp_header_buff, resp_header_buff_size);
 
     khct::cb::SockCtx s_ctx;
     khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
@@ -174,7 +178,9 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     khc http;
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
+    char buff[buff_size];
     const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
+    char resp_header_buff[resp_header_buff_size];
 
     khct::http::Resp resp;
     resp.headers = {
@@ -188,6 +194,8 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
     khc_set_req_headers(&http, NULL);
+    khc_set_stream_buff(&http, buff, buff_size);
+    khc_set_resp_header_buff(&http, resp_header_buff, resp_header_buff_size);
 
     khct::cb::SockCtx s_ctx;
     khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
@@ -488,7 +496,9 @@ TEST_CASE( "Socket send partial" ) {
     khc http;
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
+    char buff[buff_size];
     const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
+    char resp_header_buff[resp_header_buff_size];
 
     khct::http::Resp resp;
     resp.headers = { "HTTP/1.0 200 OK" };
@@ -501,6 +511,8 @@ TEST_CASE( "Socket send partial" ) {
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
     khc_set_req_headers(&http, req_headers);
+    khc_set_stream_buff(&http, buff, buff_size);
+    khc_set_resp_header_buff(&http, resp_header_buff, resp_header_buff_size);
 
     khct::cb::SockCtx s_ctx;
     khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
@@ -1703,11 +1715,15 @@ TEST_CASE( "state abnormal tests." ) {
 TEST_CASE( "Enable insecure" ) {
     khc http;
     khc_init(&http);
+    char buff[DEFAULT_RESP_HEADER_BUFF_SIZE];
+    char resp_header_buff[DEFAULT_RESP_HEADER_BUFF_SIZE];
 
     khc_set_host(&http, "api.kii.com");
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
     khc_set_req_headers(&http, NULL);
+    khc_set_stream_buff(&http, buff, DEFAULT_STREAM_BUFF_SIZE);
+    khc_set_resp_header_buff(&http, resp_header_buff, DEFAULT_RESP_HEADER_BUFF_SIZE);
 
     REQUIRE( http._enable_insecure == 0);
     khc_enable_insecure(&http, 1);

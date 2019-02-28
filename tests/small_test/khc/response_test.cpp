@@ -10,6 +10,8 @@ TEST_CASE( "HTTP response test" ) {
     khc http;
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
+    char buff[buff_size];
+    char resp_header_buff[DEFAULT_RESP_HEADER_BUFF_SIZE];
 
     ifstream ifs;
     ifs.open("./data/resp-login.txt");
@@ -22,6 +24,8 @@ TEST_CASE( "HTTP response test" ) {
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
     khc_set_req_headers(&http, NULL);
+    khc_set_stream_buff(&http, buff, buff_size);
+    khc_set_resp_header_buff(&http, resp_header_buff, DEFAULT_RESP_HEADER_BUFF_SIZE);
 
     khct::cb::SockCtx s_ctx;
     khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
@@ -114,6 +118,8 @@ TEST_CASE( "Ignore HTTP status 100" ) {
     khc http;
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
+    char buff[buff_size];
+    char resp_header_buff[DEFAULT_RESP_HEADER_BUFF_SIZE];
 
     ifstream ifs;
     ifs.open("./data/resp-login.txt");
@@ -126,6 +132,8 @@ TEST_CASE( "Ignore HTTP status 100" ) {
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
     khc_set_req_headers(&http, NULL);
+    khc_set_stream_buff(&http, buff, buff_size);
+    khc_set_resp_header_buff(&http, resp_header_buff, DEFAULT_RESP_HEADER_BUFF_SIZE);
 
     khct::cb::SockCtx s_ctx;
     khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
@@ -213,6 +221,7 @@ TEST_CASE( "Small resp header skip test" ) {
     khc http;
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
+    char buff[buff_size];
     const size_t resp_header_buff_size = 120;
     char resp_header_buff[resp_header_buff_size];
 
@@ -227,6 +236,7 @@ TEST_CASE( "Small resp header skip test" ) {
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
     khc_set_req_headers(&http, NULL);
+    khc_set_stream_buff(&http, buff, buff_size);
     khc_set_resp_header_buff(&http, resp_header_buff, resp_header_buff_size);
 
     khct::cb::SockCtx s_ctx;
@@ -320,6 +330,8 @@ TEST_CASE( "HTTP response 400 test" ) {
     khc http;
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
+    char buff[buff_size];
+    char resp_header_buff[DEFAULT_RESP_HEADER_BUFF_SIZE];
 
     stringstream ss;
     ss << "HTTP/1.1 400 Bad Request\r\nContent-Length: 11\r\n\r\ndummy body.";
@@ -330,6 +342,8 @@ TEST_CASE( "HTTP response 400 test" ) {
     khc_set_method(&http, "GET");
     khc_set_path(&http, "/api/apps");
     khc_set_req_headers(&http, NULL);
+    khc_set_stream_buff(&http, buff, buff_size);
+    khc_set_resp_header_buff(&http, resp_header_buff, DEFAULT_RESP_HEADER_BUFF_SIZE);
 
     khct::cb::SockCtx s_ctx;
     khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
