@@ -8,6 +8,9 @@
 
 TEST_CASE( "HTTP Post" ) {
     khc http;
+    char stream_buff[DEFAULT_STREAM_BUFF_SIZE];
+    char resp_header_buff[DEFAULT_RESP_HEADER_BUFF_SIZE];
+
     khc_init(&http);
 
     std::string app_id = "1ud4iv020xa8";
@@ -39,6 +42,8 @@ TEST_CASE( "HTTP Post" ) {
     headers = khc_slist_append_using_cb_alloc(headers, x_kii_appkey.c_str(), x_kii_appkey.length(), khct::cb::cb_khc_slist_alloc, NULL);
 
     khc_set_req_headers(&http, headers);
+    khc_set_stream_buff(&http, stream_buff, DEFAULT_STREAM_BUFF_SIZE);
+    khc_set_resp_header_buff(&http, resp_header_buff, DEFAULT_RESP_HEADER_BUFF_SIZE);
 
     ebisu::ltest::ssl::SSLData s_ctx;
     khc_set_cb_sock_connect(&http, ebisu::ltest::ssl::cb_connect, &s_ctx);

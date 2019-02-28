@@ -8,11 +8,16 @@
 
 TEST_CASE( "HTTP Get" ) {
     khc http;
+    char stream_buff[DEFAULT_STREAM_BUFF_SIZE];
+    char resp_header_buff[DEFAULT_RESP_HEADER_BUFF_SIZE];
+
     khc_init(&http);
     khc_set_host(&http, "api-jp.kii.com");
     khc_set_method(&http, "GET");
     khc_set_method(&http, "");
     khc_set_req_headers(&http, NULL);
+    khc_set_stream_buff(&http, stream_buff, DEFAULT_STREAM_BUFF_SIZE);
+    khc_set_resp_header_buff(&http, resp_header_buff, DEFAULT_RESP_HEADER_BUFF_SIZE);
 
     ebisu::ltest::ssl::SSLData s_ctx;
     khc_set_cb_sock_connect(&http, ebisu::ltest::ssl::cb_connect, &s_ctx);
