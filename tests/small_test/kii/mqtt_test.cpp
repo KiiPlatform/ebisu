@@ -12,6 +12,8 @@ TEST_CASE( "MQTT state test" ) {
     char kii_buff[kii_buff_size];
     size_t mqtt_buff_size = 1024;
     char mqtt_buff[kii_buff_size];
+    char stream_buff[1024];
+    char resp_header_buff[256];
     jkii_token_t jkii_tokens[256];
     jkii_resource_t jkii_resource = {jkii_tokens, 256};
 
@@ -21,6 +23,8 @@ TEST_CASE( "MQTT state test" ) {
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, kii_buff_size);
     kii_set_mqtt_buff(&kii, mqtt_buff, mqtt_buff_size);
+    kii_set_stream_buff(&kii, stream_buff, 1024);
+    kii_set_resp_header_buff(&kii, resp_header_buff, 256);
     kii_set_json_parser_resource(&kii, &jkii_resource);
     kii_set_cb_slist_resource(&kii,
             khct::cb::cb_khc_slist_alloc,
@@ -481,6 +485,8 @@ TEST_CASE( "MQTT state abnormal tests" ) {
     char kii_buff[kii_buff_size];
     size_t mqtt_buff_size = 1024;
     char mqtt_buff[kii_buff_size];
+    char stream_buff[1024];
+    char resp_header_buff[256];
     jkii_token_t jkii_tokens[256];
     jkii_resource_t jkii_resource = {jkii_tokens, 256};
 
@@ -490,6 +496,8 @@ TEST_CASE( "MQTT state abnormal tests" ) {
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, kii_buff_size);
     kii_set_mqtt_buff(&kii, mqtt_buff, mqtt_buff_size);
+    kii_set_stream_buff(&kii, stream_buff, 1024);
+    kii_set_resp_header_buff(&kii, resp_header_buff, 256);
     kii_set_json_parser_resource(&kii, &jkii_resource);
     kii_set_cb_slist_resource(&kii,
             khct::cb::cb_khc_slist_alloc,
@@ -1482,6 +1490,8 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     char kii_buff[kii_buff_size];
     size_t mqtt_buff_size = 1024;
     char mqtt_buff[kii_buff_size];
+    char stream_buff[1024];
+    char resp_header_buff[256];
     jkii_token_t jkii_tokens[256];
     jkii_resource_t jkii_resource = {jkii_tokens, 256};
 
@@ -1491,6 +1501,8 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, kii_buff_size);
     kii_set_mqtt_buff(&kii, mqtt_buff, mqtt_buff_size);
+    kii_set_stream_buff(&kii, stream_buff, 1024);
+    kii_set_resp_header_buff(&kii, resp_header_buff, 256);
     kii_set_json_parser_resource(&kii, &jkii_resource);
     kii_set_cb_slist_resource(&kii,
             khct::cb::cb_khc_slist_alloc,
