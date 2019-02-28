@@ -19,6 +19,8 @@ TEST_CASE("Object Tests")
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
     size_t buff_size = 4096;
     char buff[buff_size];
+    char stream_buff[1024];
+    char resp_header_buff[256];
     kii_t kii;
     ebisu::ltest::ssl::SSLData http_ssl_ctx;
     ebisu::ltest::ssl::SSLData mqtt_ssl_ctx;
@@ -26,7 +28,7 @@ TEST_CASE("Object Tests")
     jkii_token_t tokens[256];
     jkii_resource_t resource = {tokens, 256};
 
-    kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &mqtt_ssl_ctx, &resource);
+    kiiltest::init(&kii, buff, buff_size, stream_buff, 1024, resp_header_buff, 256, &http_ssl_ctx, &mqtt_ssl_ctx, &resource);
 
     const char vid[] = "test1";
     const char password[] = "1234";

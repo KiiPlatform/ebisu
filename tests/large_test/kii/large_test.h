@@ -17,6 +17,10 @@ inline void init(
         kii_t* kii,
         char* buffer,
         int buffer_size,
+        char* stream_buff,
+        int stream_buff_size,
+        char* resp_header_buff,
+        int resp_header_buff_size,
         void* http_ssl_ctx,
         void* mqtt_ssl_ctx,
         jkii_resource_t* resource)
@@ -26,6 +30,8 @@ inline void init(
     kii_set_app_id(kii, APP_ID);
 
     kii_set_buff(kii, buffer, buffer_size);
+    kii_set_stream_buff(kii, stream_buff, stream_buff_size);
+    kii_set_resp_header_buff(kii, resp_header_buff, resp_header_buff_size);
 
     kii_set_cb_http_sock_connect(kii, ebisu::ltest::ssl::cb_connect, http_ssl_ctx);
     kii_set_cb_http_sock_send(kii, ebisu::ltest::ssl::cb_send, http_ssl_ctx);
