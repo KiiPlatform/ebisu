@@ -73,6 +73,8 @@ typedef enum{
 #define HANDLER_KEEP_ALIVE_SEC  300
 #define HANDLER_HTTP_BUFF_SIZE  1024
 #define HANDLER_MQTT_BUFF_SIZE  1024
+#define HANDLER_STREAM_BUFF_SIZE 1024
+#define HANDLER_RESP_HEADER_BUFF_SIZE 256
 
 //*****************************************************************************
 //                 GLOBAL VARIABLES -- Start
@@ -649,6 +651,28 @@ tio_bool_t pushed_message_callback(const char* message, size_t message_length, v
     return KII_FALSE;
 }
 
+khc_slist* khc_cb_slist_alloc(const char* str, size_t str_length, void* data) {
+    char* copy = (char*)malloc(str_length + 1);
+    if (copy == NULL) {
+        return NULL;
+    }
+    khc_slist* node = (khc_slist*)malloc(sizeof(khc_slist));
+    if (node == NULL) {
+        free(copy);
+        return NULL;
+    }
+    strncpy(copy, str, str_length);
+    copy[str_length] = '\0';
+    node->data = copy;
+    node->next = NULL;
+    return node;
+}
+
+void khc_cb_slist_free(khc_slist* node, void* data) {
+    free(node->data);
+    free(node);
+}
+
 void handler_init(
         tio_handler_t* handler,
         char* http_buffer,
@@ -657,6 +681,10 @@ void handler_init(
         char* mqtt_buffer,
         int mqtt_buffer_size,
         void* mqtt_sock_ctx,
+		char* stream_buff,
+		int stream_buff_size,
+		char* resp_header_buff,
+		int resp_header_buff_size,
         jkii_resource_t* resource)
 {
     tio_handler_init(handler);
@@ -683,6 +711,8 @@ void handler_init(
 
     tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);
     tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
+    tio_handler_set_stream_buff(handler, stream_buff, stream_buff_size);
+    tio_handler_set_resp_header_buff(handler, resp_header_buff, resp_header_buff_size);
 
     tio_handler_enable_insecure_http(handler, KII_TRUE);
     tio_handler_enable_insecure_mqtt(handler, KII_TRUE);
@@ -690,6 +720,7 @@ void handler_init(
     tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
 
     tio_handler_set_json_parser_resource(handler, resource);
+    tio_handler_set_cb_slist_resource(handler, khc_cb_slist_alloc, khc_cb_slist_free, NULL, NULL);
 }
 
 tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, void* userdata)
@@ -729,6 +760,12 @@ void vCmdTask( void *pvParameters )
     char handler_mqtt_buff[HANDLER_MQTT_BUFF_SIZE];
     memset(handler_mqtt_buff, 0x00, sizeof(char) * HANDLER_MQTT_BUFF_SIZE);
 
+    char handler_stream_buff[HANDLER_STREAM_BUFF_SIZE];
+    memset(handler_stream_buff, 0x00, sizeof(char) * HANDLER_STREAM_BUFF_SIZE);
+
+    char handler_resp_header_buff[HANDLER_RESP_HEADER_BUFF_SIZE];
+    memset(handler_resp_header_buff, 0x00, sizeof(char) * HANDLER_RESP_HEADER_BUFF_SIZE);
+
     jkii_token_t handler_tokens[256];
     jkii_resource_t handler_resource = {handler_tokens, 256};
 
@@ -740,6 +777,10 @@ void vCmdTask( void *pvParameters )
             handler_mqtt_buff,
             HANDLER_MQTT_BUFF_SIZE,
             &handler_mqtt_ctx,
+			handler_stream_buff,
+			HANDLER_STREAM_BUFF_SIZE,
+			handler_resp_header_buff,
+			HANDLER_RESP_HEADER_BUFF_SIZE,
             &handler_resource);
 
     UART_PRINT("handler init succeed.\n");
