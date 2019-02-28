@@ -65,6 +65,10 @@ void updater_init(
         char* buffer,
         int buffer_size,
         void* sock_ssl_ctx,
+        char* stream_buffer,
+        int stream_buffer_size,
+        char* resp_header_buffer,
+        int resp_header_buffer_size,
         jkii_resource_t* resource)
 {
     tio_updater_init(updater);
@@ -75,6 +79,8 @@ void updater_init(
     tio_updater_set_cb_delay_ms(updater, delay_ms_cb_impl, NULL);
 
     tio_updater_set_buff(updater, buffer, buffer_size);
+    tio_updater_set_stream_buff(updater, stream_buffer, stream_buffer_size);
+    tio_updater_set_resp_header_buff(updater, resp_header_buffer, resp_header_buffer_size);
 
     tio_updater_set_cb_sock_connect(updater, sock_cb_connect, sock_ssl_ctx);
     tio_updater_set_cb_sock_send(updater, sock_cb_send, sock_ssl_ctx);
@@ -156,6 +162,10 @@ void handler_init(
         char* mqtt_buffer,
         int mqtt_buffer_size,
         void* mqtt_ssl_ctx,
+        char* stream_buffer,
+        int stream_buffer_size,
+        char* resp_header_buffer,
+        int resp_header_buffer_size,
         jkii_resource_t* resource)
 {
     tio_handler_init(handler);
@@ -182,6 +192,8 @@ void handler_init(
 
     tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);
     tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
+    tio_handler_set_stream_buff(handler, stream_buffer, stream_buffer_size);
+    tio_handler_set_resp_header_buff(handler, resp_header_buffer, resp_header_buffer_size);
 
     tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
 
@@ -227,11 +239,22 @@ int main(int argc, char** argv)
 
     char updater_buff[UPDATER_HTTP_BUFF_SIZE];
     memset(updater_buff, 0x00, sizeof(char) * UPDATER_HTTP_BUFF_SIZE);
+
+    char updater_stream_buff[UPDATER_STREAM_BUFF_SIZE];
+    memset(updater_stream_buff, 0x00, sizeof(char) * UPDATER_STREAM_BUFF_SIZE);
+
+    char updater_resp_header_buff[UPDATER_RESP_HEADER_BUFF_SIZE];
+    memset(updater_stream_buff, 0x00, sizeof(char) * UPDATER_RESP_HEADER_BUFF_SIZE);
+
     updater_init(
             &updater,
             updater_buff,
             UPDATER_HTTP_BUFF_SIZE,
             &updater_http_ctx,
+            updater_stream_buff,
+            UPDATER_STREAM_BUFF_SIZE,
+            updater_resp_header_buff,
+            UPDATER_RESP_HEADER_BUFF_SIZE,
             &updater_resource);
 
     tio_handler_t handler;
@@ -250,6 +273,12 @@ int main(int argc, char** argv)
     char handler_mqtt_buff[HANDLER_MQTT_BUFF_SIZE];
     memset(handler_mqtt_buff, 0x00, sizeof(char) * HANDLER_MQTT_BUFF_SIZE);
 
+    char handler_stream_buff[HANDLER_STREAM_BUFF_SIZE];
+    memset(handler_stream_buff, 0x00, sizeof(char) * HANDLER_STREAM_BUFF_SIZE);
+
+    char handler_resp_header_buff[HANDLER_RESP_HEADER_BUFF_SIZE];
+    memset(handler_resp_header_buff, 0x00, sizeof(char) * HANDLER_RESP_HEADER_BUFF_SIZE);
+
     jkii_token_t handler_tokens[256];
     jkii_resource_t handler_resource = {handler_tokens, 256};
 
@@ -261,6 +290,10 @@ int main(int argc, char** argv)
             handler_mqtt_buff,
             HANDLER_MQTT_BUFF_SIZE,
             &handler_mqtt_ctx,
+            handler_stream_buff,
+            HANDLER_STREAM_BUFF_SIZE,
+            handler_resp_header_buff,
+            HANDLER_RESP_HEADER_BUFF_SIZE,
             &handler_resource);
 
     if (argc < 2) {
