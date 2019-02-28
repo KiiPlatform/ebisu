@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 #include <kii_task_callback.h>
+#include <khc.h>
 
 /** Implementation of callback to create task.
  * this SDK requirest to implement this function in each
@@ -46,6 +47,9 @@ kii_task_code_t task_create_cb_impl(
  * @param[in] msec millisecond to delay.
  */
 void delay_ms_cb_impl(unsigned int msec, void* userdata);
+
+khc_slist* khc_cb_slist_alloc(const char* str, size_t str_length, void* data);
+void khc_cb_slist_free(khc_slist* node, void* data);
 
 #ifdef __cplusplus
 }

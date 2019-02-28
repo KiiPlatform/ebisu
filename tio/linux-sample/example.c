@@ -84,6 +84,7 @@ void updater_init(
     tio_updater_set_interval(updater, UPDATE_PERIOD_SEC);
 
     tio_updater_set_json_parser_resource(updater, resource);
+    tio_updater_set_cb_slist_resource(updater, khc_cb_slist_alloc, khc_cb_slist_free, NULL, NULL);
 
     tio_updater_set_cb_task_continue(updater, _updater_continue, NULL);
     tio_updater_set_cb_task_exit(updater, _updater_exit, NULL);
@@ -185,6 +186,7 @@ void handler_init(
     tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
 
     tio_handler_set_json_parser_resource(handler, resource);
+    tio_handler_set_cb_slist_resource(handler, khc_cb_slist_alloc, khc_cb_slist_free, NULL, NULL);
 
     tio_handler_set_cb_task_continue(handler, _handler_continue, NULL);
     tio_handler_set_cb_task_exit(handler, _handler_exit, NULL);
