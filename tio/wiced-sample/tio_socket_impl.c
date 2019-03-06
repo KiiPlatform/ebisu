@@ -8,7 +8,6 @@ sock_cb_connect(
         unsigned int port)
 {
     wiced_ip_address_t addr;
-    wiced_tls_identity_t* identity = NULL;
     wiced_result_t rc;
     socket_context_t *ctx = (socket_context_t*)sock_ctx;
 
@@ -21,12 +20,18 @@ sock_cb_connect(
     if (rc != WICED_SUCCESS) {
         return KHC_SOCK_FAIL;
     }
-    wiced_tls_init_context(&(ctx->tls_context), identity, NULL);
-    wiced_tcp_enable_tls(&(ctx->socket), &(ctx->tls_context));
-    ctx->packet = NULL;
-    ctx->packet_offset = 0;
 
     rc = wiced_tcp_connect(&(ctx->socket), &addr, port, 10000);
+    if (rc != WICED_SUCCESS) {
+        wiced_tcp_disconnect(&(ctx->socket));
+        wiced_tcp_delete_socket(&(ctx->socket));
+        return KHC_SOCK_FAIL;
+    }
+
+    wiced_tls_init_context(&(ctx->tls_context), NULL, NULL);
+    wiced_tcp_enable_tls(&(ctx->socket), &(ctx->tls_context));
+
+    rc = wiced_tcp_start_tls(&(ctx->socket), WICED_TLS_AS_CLIENT, TLS_NO_VERIFICATION);
     if (rc != WICED_SUCCESS) {
         wiced_tcp_disconnect(&(ctx->socket));
         wiced_tcp_delete_socket(&(ctx->socket));
@@ -86,25 +91,24 @@ khc_sock_code_t sock_cb_recv(
 
         wiced_packet_get_data(packet, offset, &data, &length, &total);
         if (total == 2 && length == 2 && data[0] == 0x1 && data[1] == 0x0) {
-        	// Maybe, control packet?
-        	*out_actual_length = 0;
-			wiced_packet_delete(packet);
-			ctx->packet = NULL;
-			ctx->packet_offset = 0;
-	        return KHC_SOCK_OK;
+            // Maybe, control(FIN?) packet?
+            *out_actual_length = 0;
+            wiced_packet_delete(packet);
+            ctx->packet = NULL;
+            ctx->packet_offset = 0;
+            return KHC_SOCK_OK;
         }
-		*out_actual_length = MIN(length, length_to_read);
-		memcpy(buffer, data, *out_actual_length);
-		buffer[*out_actual_length] = 0;
-		offset += *out_actual_length;
-		if (*out_actual_length < total) {
-			ctx->packet = packet;
-			ctx->packet_offset = offset;
-		} else {
-			wiced_packet_delete(packet);
-			ctx->packet = NULL;
-			ctx->packet_offset = 0;
-		}
+        *out_actual_length = MIN(length, length_to_read);
+        memcpy(buffer, data, *out_actual_length);
+        offset += *out_actual_length;
+        if (*out_actual_length < total) {
+            ctx->packet = packet;
+            ctx->packet_offset = offset;
+        } else {
+            wiced_packet_delete(packet);
+            ctx->packet = NULL;
+            ctx->packet_offset = 0;
+        }
         if (ctx->show_debug != 0) {
             wiced_log_printf("%.*s", *out_actual_length, buffer);
         }
@@ -123,7 +127,7 @@ khc_sock_code_t sock_cb_recv(
         return KHC_SOCK_OK;
     } else {
         if (ctx->show_debug != 0) {
-            wiced_log_printf("recv fail. [%d]\n", ret);
+            wiced_log_printf("sock_cb_recv fail. [%d]\n", ret);
         }
         return KHC_SOCK_FAIL;
     }
@@ -154,7 +158,6 @@ khc_sock_code_t mqtt_cb_recv(
         wiced_packet_get_data(packet, offset, &data, &length, &total);
         *out_actual_length = MIN(length, length_to_read);
         memcpy(buffer, data, *out_actual_length);
-        buffer[*out_actual_length] = 0;
         offset += *out_actual_length;
         if (*out_actual_length < total) {
             ctx->packet = packet;
@@ -164,8 +167,18 @@ khc_sock_code_t mqtt_cb_recv(
             ctx->packet = NULL;
             ctx->packet_offset = 0;
         }
+        if (ctx->show_debug != 0) {
+            wiced_log_printf("Length: %d\n", *out_actual_length);
+            for (int i = 0; i < *out_actual_length; ++i) {
+                wiced_log_printf("0x%x,", buffer[i]);
+            }
+            wiced_log_printf("\n");
+        }
         return KHC_SOCK_OK;
     } else {
+        if (ctx->show_debug != 0) {
+            wiced_log_printf("mqtt_cb_recv fail. [%d]\n", ret);
+        }
         return KHC_SOCK_FAIL;
     }
 }
@@ -181,7 +194,7 @@ khc_sock_code_t sock_cb_close(void* sock_ctx)
         wiced_log_printf("Close socket\n");
     }
     wiced_tcp_disconnect(&(ctx->socket));
-    wiced_tls_deinit_context(&(ctx->tls_context));
     wiced_tcp_delete_socket(&(ctx->socket));
+    wiced_tls_deinit_context(&(ctx->tls_context));
     return KHC_SOCK_OK;
 }

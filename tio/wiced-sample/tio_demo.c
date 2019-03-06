@@ -46,12 +46,12 @@ tio_bool_t _updater_continue(void* task_info, void* userdata) {
 }
 
 void _handler_exit(void* task_info, void* userdata) {
-    printf("_handler_exit called\n");
+    wiced_log_printf("_handler_exit called\n");
     handler_terminated = true;
 }
 
 void _updater_exit(void* task_info, void* userdata) {
-    printf("_updater_exit called\n");
+    wiced_log_printf("_updater_exit called\n");
     updater_terminated = true;
 }
 
@@ -99,7 +99,7 @@ size_t updater_cb_state_size(void* userdata)
     updater_context_t* ctx = (updater_context_t*)userdata;
     ctx->max_size = strlen(send_state);
     ctx->read_size = 0;
-    printf("state_size: %d\n", ctx->max_size);
+    wiced_log_printf("state_size: %d\n", ctx->max_size);
     return ctx->max_size;
 }
 
@@ -108,14 +108,14 @@ size_t updater_cb_read(char *buffer, size_t size, void *userdata)
     updater_context_t* ctx = (updater_context_t*)userdata;
     size_t read_size = sprintf(buffer, "%.*s", size, &send_state[ctx->read_size]);
     ctx->read_size += read_size;
-    printf("state_read: %d\n", read_size);
+    wiced_log_printf("state_read: %d\n", read_size);
     return read_size;
 }
 
 tio_bool_t pushed_message_callback(const char* message, size_t message_length, void* userdata)
 {
-    printf("pushed_message_callback called,\n");
-    printf("%.*s\n", (int)message_length, message);
+    wiced_log_printf("pushed_message_callback called,\n");
+    wiced_log_printf("%.*s\n", (int)message_length, message);
     return KII_FALSE;
 }
 
@@ -168,8 +168,8 @@ void handler_init(
 
 tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, void* userdata)
 {
-    printf("tio_action_handler called\n");
-    printf("%.*s: %.*s\n", (int)action->alias_length, action->alias,(int)action->action_name_length, action->action_name);
+    wiced_log_printf("tio_action_handler called\n");
+    wiced_log_printf("%.*s: %.*s\n", (int)action->alias_length, action->alias,(int)action->action_name_length, action->action_name);
     return KII_TRUE;
 }
 
@@ -228,7 +228,7 @@ static int tio_main(int argc, char *argv[])
             NULL);
     if (result != TIO_ERR_OK) {
         wiced_log_printf("[%d] failed to onboard.\n", result);
-        return WICED_SUCCESS;
+        return ERR_CMD_OK;
     } else {
         wiced_log_printf("succeed to onboard.\n");
     }
@@ -243,7 +243,7 @@ static int tio_main(int argc, char *argv[])
             updater_cb_read,
             &updater_ctx);
 
-    return WICED_SUCCESS;
+    return ERR_CMD_OK;
 }
 
 static int wiced_log_output_handler(WICED_LOG_LEVEL_T level, char *logmsg)
@@ -273,7 +273,7 @@ void application_start( void )
     ret = wiced_init();
     if ( ret != WICED_SUCCESS )
     {
-        printf("wiced_init failed.\n\n");
+        wiced_log_printf("wiced_init failed.\n\n");
         return;
     }
 
