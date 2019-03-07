@@ -5,6 +5,13 @@
 #include "command_parser.h"
 #include "jkii.h"
 
+typedef struct expected_parsed_actions {
+    char* command_id;
+    tio_action_t *expected_actions;
+    int expected_actions_length;
+    int matched_count;
+} expected_parsed_actions;
+
 TEST_CASE( "_get_object_in_array" ) {
     const char json_arr[] = "[{\"a\":1},{\"b\":2}]";
 
@@ -151,4 +158,38 @@ TEST_CASE( "_parse_action_object" ) {
         REQUIRE ( strcmp(alias_copy, alias) == 0 );
     }
 
+}
+
+void cb_parsed_action(char* command_id, tio_action_t* action, tio_action_err_t* err, void* expected_actions) {
+    expected_parsed_actions* expected = (expected_parsed_actions *) expected_actions;
+    printf("ok here: %s\n", expected->command_id);
+    REQUIRE( strcmp(command_id, expected->command_id) == 0 );
+    int i = 0;
+    for(int i=0; i < expected -> expected_actions_length; i++) {
+        tio_action_t expected_action = expected->expected_actions[i];
+        if (strcmp(action->alias, expected_action.alias) == 0 &&
+            strcmp(action->action_name, expected_action.action_name) == 0) {
+                (expected->matched_count)++;
+            }
+    }
+}
+
+TEST_CASE( "_parse_command" ) {
+    tio_action_t action;
+    tio_handler_t handler;
+    jkii_token_t tokens[16];
+    jkii_resource_t resource = { tokens, 16 };
+    handler._kii._json_resource = &resource;
+
+    SECTION("success") {
+        const char command[] = "{\"commandID\":\"eed568b4-409c-11e9-b3ec-22000aad0899\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
+        expected_parsed_actions expected;
+        tio_action_t action1 = {"alias", 5, "turnPower", 9, {TIO_TYPE_BOOLEAN, 1}};
+        expected.command_id = "eed568b4-409c-11e9-b3ec-22000aad0899";
+        tio_action_t expected_actions[1] = {action1};
+        expected.expected_actions = expected_actions;
+        expected.expected_actions_length = 1;
+        expected.matched_count = 1;
+        _parse_command(&handler, command, strlen(command), cb_parsed_action, (void *)&expected);
+    }
 }
