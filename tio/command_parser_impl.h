@@ -51,6 +51,19 @@ jkii_parse_err_t _parse_json(
         size_t json_string_size,
         jkii_field_t* fields);
 
+tio_code_t _start_result_request(
+        tio_handler_t* handler,
+        const char* command_id);
+
+tio_code_t _append_action_result(
+        tio_handler_t* handler,
+        size_t index,
+        tio_bool_t succeeded,
+        tio_action_t* action,
+        const char* err_message,
+        char* work_buff,
+        size_t work_buff_size);
+
 #ifdef __cplusplus
 }
 #endif

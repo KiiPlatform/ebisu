@@ -230,7 +230,7 @@ _cmd_parser_code_t _parse_action(
     return _CMD_PARSE_OK;
 }
 
-static tio_code_t _start_result_request(
+tio_code_t _start_result_request(
         tio_handler_t* handler,
         const char* command_id)
 {
@@ -264,7 +264,7 @@ static tio_code_t _start_result_request(
     return TIO_ERR_OK;
 }
 
-static tio_code_t _append_action_result(
+tio_code_t _append_action_result(
         tio_handler_t* handler,
         size_t index,
         tio_bool_t succeeded,

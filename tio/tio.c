@@ -4,7 +4,6 @@
 #include "kii_task_callback.h"
 #include "khc.h"
 #include "tio_impl.h"
-#include "command_parser.h"
 
 const char TIO_TASK_NAME_UPDATE_STATE[] = "task_update_state";
 
