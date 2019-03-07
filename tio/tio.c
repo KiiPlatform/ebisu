@@ -310,6 +310,13 @@ tio_code_t tio_handler_start(
     return _tio_convert_code(res);
 }
 
+tio_code_t tio_handler_handle_command(
+        tio_handler_t* handler,
+        const char* command,
+        size_t command_length) {
+    return _handle_command(handler, command, command_length);
+}
+
 void tio_updater_init(tio_updater_t* updater)
 {
     kii_init(&updater->_kii);
