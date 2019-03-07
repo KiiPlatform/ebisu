@@ -453,3 +453,80 @@ jkii_parse_err_t _parse_json(
     }
     return res;
 }
+
+
+tio_code_t _parse_command(
+        tio_handler_t* handler,
+        const char* command,
+        size_t command_length,
+        const TIO_CB_PARSED_ACTION cb_parsed_action,
+        void* userdata)
+{
+    jkii_field_t fields[3];
+    char command_id[64];
+    memset(fields, 0x00, sizeof(fields));
+    fields[0].path = "/commandID";
+    fields[0].type = JKII_FIELD_TYPE_STRING;
+    fields[0].field_copy.string = command_id;
+    fields[0].field_copy_buff_size = sizeof(command_id) / sizeof(command_id[0]);
+    fields[1].path = "/actions";
+    fields[1].type = JKII_FIELD_TYPE_ARRAY;
+    fields[1].field_copy.string = NULL;
+    fields[1].result = JKII_FIELD_ERR_OK;
+    fields[2].path = NULL;
+
+    jkii_parse_err_t res = _parse_json(handler, command, command_length, fields);
+    if (res != JKII_ERR_OK) {
+        return TIO_ERR_PARSE_JSON;
+    }
+
+    const char* actions_array = command + fields[1].start;
+    size_t actions_array_length = fields[1].end - fields[1].start;
+    tio_action_t action;
+    size_t result_counts = 0;
+    for (size_t alias_idx = 0; ; ++alias_idx) {
+        char* actions_array_in_alias = NULL;
+        size_t actions_array_in_alias_length = 0;
+        char* alias = NULL;
+        size_t alias_length = 0;
+        _cmd_parser_code_t res = _parse_alias(
+                handler,
+                actions_array,
+                actions_array_length,
+                alias_idx,
+                &alias,
+                &alias_length,
+                &actions_array_in_alias,
+                &actions_array_in_alias_length
+                );
+        if (res == _CMD_PARSE_OK) {
+            for (size_t action_idx = 0; ; ++action_idx) {
+                _cmd_parser_code_t pa_res = _parse_action(
+                        handler,
+                        alias,
+                        alias_length,
+                        actions_array_in_alias,
+                        actions_array_in_alias_length,
+                        action_idx,
+                        &action);
+                if (pa_res == _CMD_PARSE_OK) {
+                    tio_action_err_t action_err;
+                    action_err.err_message[0] = '\0';
+                    cb_parsed_action(command_id, &action, &action_err, handler->_cb_action_data);
+                    ++result_counts;
+                } else if (pa_res == _CMD_PARSE_ARRAY_OUT_OF_INDEX) {
+                    // Handled all actions in alias.
+                    break;
+                } else {
+                    return TIO_ERR_PARSE_JSON;
+                }
+            }
+        } else if ( res == _CMD_PARSE_ARRAY_OUT_OF_INDEX) {
+            // Handled all actions in command.
+            break;
+        } else {
+            return TIO_ERR_PARSE_JSON;
+        }
+    }
+
+}

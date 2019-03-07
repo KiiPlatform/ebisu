@@ -705,6 +705,16 @@ tio_code_t tio_handler_handle_command(
         const char* command,
         size_t command_length);
 
+typedef void (*TIO_CB_PARSED_ACTION)(char* command_id, tio_action_t* action, tio_action_err_t* err, void* userdata);
+
+tio_code_t tio_handler_parse_command(
+        tio_handler_t* handler,
+        const char* command,
+        TIO_CB_PARSED_ACTION cb_parsed_action,
+        size_t command_length,
+        void* userdata);
+
+#ifdef __cplusplus
 /**
  * \brief tio_updater_t initializer.
  *
@@ -1010,7 +1020,6 @@ tio_code_t tio_updater_start(
         TIO_CB_READ cb_read_state,
         void* read_state_data);
 
-#ifdef __cplusplus
 }
 #endif
 
