@@ -145,7 +145,7 @@ typedef size_t (*TIO_CB_READ)(char *buffer, size_t size, void *userdata);
 /**
  * \brief Callback handles action.
  *
- * Called when received remote control command from cloud.
+ * Called when received remote control command from cloud or tio_handler_handle_command is invoked.
  * Command may includes multiple actions. The callback is called per action.
  *
  * \param [in] action Includes alias_name, action_name and action value.
@@ -273,7 +273,7 @@ void tio_handler_set_cb_sock_close_http(tio_handler_t* handler, KHC_CB_SOCK_CLOS
 /**
  * \brief Set buffer used to construct/ parse HTTP request/ response.
 
- * This method must be called and set valid buffer before calling method before calling 
+ * This method must be called and set valid buffer before calling method before calling
  * tio_handler_start().
  * The buffer is used to serialize/ deserialize JSON.
 
@@ -680,6 +680,32 @@ tio_code_t tio_handler_start(
         void* userdata);
 
 /**
+ * \brief Handle the command.
+ *
+ * Basically, your app doesn't need to use this method. Since tio_handler
+ * automatically invokes this method when it received a command then after all
+ * the TIO_CB_ACTION callbacks invoked, its respond to the command synchronously.
+ *
+ * In the case, your app needs to handle command asynchronously. Your app can
+ * receive this kind of command in the TIO_CB_PUSH callback, and then start
+ * to handle the command asynchronously. Your app should return KII_TRUE to the
+ * TIO_CB_PUSH callback to skip automatically command handling logic. When your
+ * app is ready to respond to the command, then invoke this method.
+ *
+ * When app invokes the method, TIO_CB_ACTION callback of tio_handler is invoked.
+ * Command may includes multiple actions. The callback TIO_CB_ACTION is invoked
+ * per action.
+ *
+ * \param [in] handler tio_handler_t instance.
+ * \param [in] command received command.
+ * \param [in] command_length Size of command.
+ */
+tio_code_t tio_handler_handle_command(
+        tio_handler_t* handler,
+        const char* command,
+        size_t command_length);
+
+/**
  * \brief tio_updater_t initializer.
  *
  * Must be called when start using tio_updater_t instance.
@@ -801,7 +827,7 @@ void tio_updater_set_cb_error(tio_updater_t* updater, TIO_CB_ERR cb_err, void* u
 /**
  * \brief Set buffer used to construct/ parse HTTP request/ response.
 
- * This method must be called and set valid buffer before calling method before calling 
+ * This method must be called and set valid buffer before calling method before calling
  * tio_updater_start().
  * The buffer is used to serialize/ deserialize JSON.
 
