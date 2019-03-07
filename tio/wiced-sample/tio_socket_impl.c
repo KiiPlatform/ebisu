@@ -1,6 +1,10 @@
 #include "tio_socket_impl.h"
 #include <string.h>
 
+#if !CONNECT_INSECURE
+#include <mbedtls/ssl.h>
+#endif
+
     khc_sock_code_t
 sock_cb_connect(
         void* sock_ctx,
@@ -36,15 +40,6 @@ sock_cb_connect(
         return KHC_SOCK_FAIL;
     }
 
-#if !CONNECT_INSECURE
-    rc = wiced_tcp_start_tls(&(ctx->socket), WICED_TLS_AS_CLIENT, TLS_NO_VERIFICATION);
-    if (rc != WICED_SUCCESS) {
-        wiced_log_printf("wiced_tcp_start_tls failed.[%d]\n", rc);
-        wiced_tcp_disconnect(&(ctx->socket));
-        wiced_tcp_delete_socket(&(ctx->socket));
-        return KHC_SOCK_FAIL;
-    }
-#endif
     if (ctx->show_debug != 0) {
         wiced_log_printf("Connect socket: [%s]:[%d]\n", host, port);
     }
@@ -97,14 +92,20 @@ khc_sock_code_t sock_cb_recv(
         uint8_t*        data;
 
         wiced_packet_get_data(packet, offset, &data, &length, &total);
+#if !CONNECT_INSECURE
         if (total == 2 && length == 2 && data[0] == 0x1 && data[1] == 0x0) {
-            // Maybe, control(FIN?) packet?
+            // for WICED SDK v4.
+            // Got MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY result on WICED SDK v6.
+            // data[0] == MBEDTLS_SSL_ALERT_LEVEL_WARNING
+            // data[1] == MBEDTLS_SSL_ALERT_MSG_CLOSE_NOTIFY
+            wiced_log_printf("Got tls alert packet!\n");
             *out_actual_length = 0;
             wiced_packet_delete(packet);
             ctx->packet = NULL;
             ctx->packet_offset = 0;
             return KHC_SOCK_OK;
         }
+#endif
         *out_actual_length = MIN(length, length_to_read);
         memcpy(buffer, data, *out_actual_length);
         offset += *out_actual_length;
@@ -126,6 +127,14 @@ khc_sock_code_t sock_cb_recv(
         }
         *out_actual_length = 0;
         return KHC_SOCK_OK;
+#if !CONNECT_INSECURE
+    } else if (ret == (uint16_t)MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
+        if (ctx->show_debug != 0) {
+            wiced_log_printf("Socket closed by tls alert.\n");
+        }
+        *out_actual_length = 0;
+        return KHC_SOCK_OK;
+#endif
     } else if (ret == WICED_TIMEOUT) {
         if (ctx->show_debug != 0) {
             wiced_log_printf("Timeout\n");
@@ -134,7 +143,7 @@ khc_sock_code_t sock_cb_recv(
         return KHC_SOCK_OK;
     } else {
         if (ctx->show_debug != 0) {
-            wiced_log_printf("sock_cb_recv fail. [%d]\n", ret);
+            wiced_log_printf("sock_cb_recv fail. [%x]\n", ret);
         }
         return KHC_SOCK_FAIL;
     }
