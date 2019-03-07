@@ -8,7 +8,7 @@ extern "C" {
 #include "kii.h"
 #include "khc.h"
 #include "jkii.h"
-
+#include "command_parser.c"
 /**
  * \brief tio_updater Task name.
  *
@@ -273,7 +273,7 @@ void tio_handler_set_cb_sock_close_http(tio_handler_t* handler, KHC_CB_SOCK_CLOS
 /**
  * \brief Set buffer used to construct/ parse HTTP request/ response.
 
- * This method must be called and set valid buffer before calling method before calling 
+ * This method must be called and set valid buffer before calling method before calling
  * tio_handler_start().
  * The buffer is used to serialize/ deserialize JSON.
 
@@ -679,6 +679,11 @@ tio_code_t tio_handler_start(
         TIO_CB_ACTION cb_action,
         void* userdata);
 
+
+tio_code_t tio_handler_handle_command(
+        tio_handler_t* handler,
+        const char* command,
+        size_t command_length);
 /**
  * \brief tio_updater_t initializer.
  *
@@ -801,7 +806,7 @@ void tio_updater_set_cb_error(tio_updater_t* updater, TIO_CB_ERR cb_err, void* u
 /**
  * \brief Set buffer used to construct/ parse HTTP request/ response.
 
- * This method must be called and set valid buffer before calling method before calling 
+ * This method must be called and set valid buffer before calling method before calling
  * tio_updater_start().
  * The buffer is used to serialize/ deserialize JSON.
 

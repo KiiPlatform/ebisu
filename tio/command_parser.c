@@ -337,7 +337,7 @@ static tio_code_t _append_action_result(
 //    {setPower : {succeeded : true}},
 //    {setTemp : {succeeded : false, message : "com err"}},
 // ]
-tio_code_t _handle_command(
+tio_code_t tio_handler_handle_command(
         tio_handler_t* handler,
         const char* command,
         size_t command_length)
