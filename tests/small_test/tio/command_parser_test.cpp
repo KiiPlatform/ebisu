@@ -2,7 +2,7 @@
 
 #include "catch.hpp"
 #include "tio.h"
-#include "command_parser.h"
+#include "command_parser_impl.h"
 #include "jkii.h"
 
 TEST_CASE( "_get_object_in_array" ) {
