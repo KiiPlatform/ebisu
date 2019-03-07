@@ -8,7 +8,6 @@ extern "C" {
 #include "kii.h"
 #include "khc.h"
 #include "jkii.h"
-#include "command_parser.c"
 /**
  * \brief tio_updater Task name.
  *
