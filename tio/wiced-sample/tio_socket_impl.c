@@ -11,35 +11,42 @@ sock_cb_connect(
     wiced_result_t rc;
     socket_context_t *ctx = (socket_context_t*)sock_ctx;
 
-    rc = wiced_hostname_lookup(host, &addr, 10000);
+    rc = wiced_hostname_lookup(host, &addr, 10000, WICED_STA_INTERFACE );
     if(rc != WICED_SUCCESS) {
+        wiced_log_printf("wiced_hostname_lookup failed.[%d]\n", rc);
         return KHC_SOCK_FAIL;
     }
 
     rc = wiced_tcp_create_socket(&(ctx->socket), WICED_STA_INTERFACE);
     if (rc != WICED_SUCCESS) {
+        wiced_log_printf("wiced_tcp_create_socket failed.[%d]\n", rc);
         return KHC_SOCK_FAIL;
     }
+
+#if !CONNECT_INSECURE
+    wiced_tls_init_context(&(ctx->tls_context), NULL, NULL);
+    wiced_tcp_enable_tls(&(ctx->socket), &(ctx->tls_context));
+#endif
 
     rc = wiced_tcp_connect(&(ctx->socket), &addr, port, 10000);
     if (rc != WICED_SUCCESS) {
+        wiced_log_printf("wiced_tcp_connect([%s],[%d]) failed.[%d]\n", host, port, rc);
         wiced_tcp_disconnect(&(ctx->socket));
         wiced_tcp_delete_socket(&(ctx->socket));
         return KHC_SOCK_FAIL;
     }
 
-    wiced_tls_init_context(&(ctx->tls_context), NULL, NULL);
-    wiced_tcp_enable_tls(&(ctx->socket), &(ctx->tls_context));
-
+#if !CONNECT_INSECURE
     rc = wiced_tcp_start_tls(&(ctx->socket), WICED_TLS_AS_CLIENT, TLS_NO_VERIFICATION);
     if (rc != WICED_SUCCESS) {
+        wiced_log_printf("wiced_tcp_start_tls failed.[%d]\n", rc);
         wiced_tcp_disconnect(&(ctx->socket));
         wiced_tcp_delete_socket(&(ctx->socket));
         return KHC_SOCK_FAIL;
     }
-
+#endif
     if (ctx->show_debug != 0) {
-        wiced_log_printf("Connect socket: \n");
+        wiced_log_printf("Connect socket: [%s]:[%d]\n", host, port);
     }
     return KHC_SOCK_OK;
 }
@@ -195,6 +202,8 @@ khc_sock_code_t sock_cb_close(void* sock_ctx)
     }
     wiced_tcp_disconnect(&(ctx->socket));
     wiced_tcp_delete_socket(&(ctx->socket));
+#if !CONNECT_INSECURE
     wiced_tls_deinit_context(&(ctx->tls_context));
+#endif
     return KHC_SOCK_OK;
 }

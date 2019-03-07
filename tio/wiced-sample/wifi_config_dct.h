@@ -65,6 +65,10 @@ extern "C"
 #define CLIENT_AP_CHANNEL    1
 #define CLIENT_AP_BAND       WICED_802_11_BAND_2_4GHZ
 
+/* Override default country code */
+#define WICED_COUNTRY_CODE    WICED_COUNTRY_JAPAN
+#define WICED_COUNTRY_AGGREGATE_CODE    WICED_COUNTRY_AGGREGATE_XV_0
+
 /* This is the network interface the device will work with */
 #define WICED_NETWORK_INTERFACE   WICED_STA_INTERFACE
 

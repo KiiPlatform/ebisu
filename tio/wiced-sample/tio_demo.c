@@ -83,8 +83,9 @@ void updater_init(
     tio_updater_set_cb_task_continue(updater, _updater_continue, NULL);
     tio_updater_set_cb_task_exit(updater, _updater_exit, NULL);
 
-    // no need to set value, this is default.
-    //tio_updater_enable_insecure_http(updater, KII_FALSE);
+#if CONNECT_INSECURE
+    tio_updater_enable_insecure_http(updater, KII_TRUE);
+#endif
 }
 
 const char send_state[] = "{\"AirconAlias\":{\"RoomTemperature\":17,\"PresetTemperature\":17}}";
@@ -161,9 +162,10 @@ void handler_init(
     tio_handler_set_cb_task_continue(handler, _handler_continue, NULL);
     tio_handler_set_cb_task_exit(handler, _handler_exit, NULL);
 
-    // no need to set value, this is default.
-    //tio_handler_enable_insecure_http(handler, KII_FALSE);
-    //tio_handler_enable_insecure_mqtt(handler, KII_FALSE);
+#if CONNECT_INSECURE
+    tio_handler_enable_insecure_http(handler, KII_TRUE);
+    tio_handler_enable_insecure_mqtt(handler, KII_TRUE);
+#endif
 }
 
 tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, void* userdata)
