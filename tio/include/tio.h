@@ -740,7 +740,6 @@ tio_code_t tio_handler_parse_command(
         TIO_CB_PARSED_ACTION cb_parsed_action,
         void* userdata);
 
-#ifdef __cplusplus
 /**
  * \brief tio_updater_t initializer.
  *
@@ -1046,6 +1045,7 @@ tio_code_t tio_updater_start(
         TIO_CB_READ cb_read_state,
         void* read_state_data);
 
+#ifdef __cplusplus
 }
 #endif
 
