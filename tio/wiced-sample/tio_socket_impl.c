@@ -40,12 +40,17 @@ sock_cb_connect(
         return KHC_SOCK_FAIL;
     }
 
+#if USE_STREAM
+    rc = wiced_tcp_stream_init(&ctx->stream, &ctx->socket);
+#endif
+
     if (ctx->show_debug != 0) {
         wiced_log_printf("Connect socket: [%s]:[%d]\n", host, port);
     }
     return KHC_SOCK_OK;
 }
 
+#if !USE_STREAM
     khc_sock_code_t
  sock_cb_send(
         void* sock_ctx,
@@ -198,14 +203,111 @@ khc_sock_code_t mqtt_cb_recv(
         return KHC_SOCK_FAIL;
     }
 }
+#else
+    khc_sock_code_t
+sock_cb_send(
+    void* sock_ctx,
+    const char* buffer,
+    size_t length,
+    size_t* out_sent_length)
+{
+    wiced_result_t ret;
+    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+
+    ret = wiced_tcp_stream_write(&ctx->stream, buffer, length);
+    if (ret == WICED_SUCCESS) {
+        wiced_tcp_stream_flush(&ctx->stream);
+        if (ctx->show_debug != 0) {
+            wiced_log_printf("%.*s", length, buffer);
+        }
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    } else {
+        wiced_log_printf("failed to send. [%d]\n", ret);
+        return KHC_SOCK_FAIL;
+    }
+}
+
+    khc_sock_code_t
+sock_cb_recv(
+    void* sock_ctx,
+    char* buffer,
+    size_t length_to_read,
+    size_t* out_actual_length)
+{
+    wiced_result_t ret = WICED_SUCCESS;
+    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+
+    uint32_t read_count = 0;
+    ret = wiced_tcp_stream_read_with_count(&ctx->stream, buffer, length_to_read, 10000, &read_count);
+    if (ret == WICED_SUCCESS) {
+        *out_actual_length = read_count;
+        if (ctx->show_debug != 0) {
+            wiced_log_printf("%.*s", *out_actual_length, buffer);
+        }
+        return KHC_SOCK_OK;
+    } else if (ret == WICED_TCPIP_SOCKET_CLOSED) {
+        if (ctx->show_debug != 0) {
+            wiced_log_printf("Socket closed by server. This is 'Connection: Close' reaction.\n");
+        }
+        *out_actual_length = 0;
+        return KHC_SOCK_OK;
+    } else if (ret == WICED_TIMEOUT) {
+        if (ctx->show_debug != 0) {
+            wiced_log_printf("Timeout\n");
+        }
+        *out_actual_length = 0;
+        return KHC_SOCK_OK;
+    } else {
+        if (ctx->show_debug != 0) {
+            wiced_log_printf("sock_cb_recv fail. [%d, 0x%x]\n", ret, ret);
+        }
+        return KHC_SOCK_FAIL;
+    }
+}
+
+    khc_sock_code_t
+mqtt_cb_recv(
+    void* sock_ctx,
+    char* buffer,
+    size_t length_to_read,
+    size_t* out_actual_length)
+{
+    wiced_result_t ret = WICED_SUCCESS;
+    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+
+    uint32_t read_count = 0;
+    ret = wiced_tcp_stream_read_with_count(&ctx->stream, buffer, length_to_read, WICED_NEVER_TIMEOUT, &read_count);
+    if (ret == WICED_SUCCESS) {
+        *out_actual_length = read_count;
+        if (ctx->show_debug != 0) {
+            wiced_log_printf("Length: %d\n", *out_actual_length);
+            for (int i = 0; i < *out_actual_length; ++i) {
+                wiced_log_printf("0x%x,", buffer[i]);
+            }
+            wiced_log_printf("\n");
+        }
+        return KHC_SOCK_OK;
+    } else {
+        if (ctx->show_debug != 0) {
+            wiced_log_printf("mqtt_cb_recv fail. [%d]\n", ret);
+        }
+        return KHC_SOCK_FAIL;
+    }
+}
+#endif
 
 khc_sock_code_t sock_cb_close(void* sock_ctx)
 {
     socket_context_t* ctx = (socket_context_t*)sock_ctx;
 
+#if USE_STREAM
+    wiced_tcp_stream_deinit(&ctx->stream);
+#else
     if (ctx->packet != NULL) {
         wiced_packet_delete(ctx->packet);
     }
+#endif
     if (ctx->show_debug != 0) {
         wiced_log_printf("Close socket\n");
     }

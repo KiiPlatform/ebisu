@@ -4,7 +4,8 @@
 # Global defines
 #==============================================================================
 GLOBAL_DEFINES += STDIO_BUFFER_SIZE=256
-GLOBAL_DEFINES += CONNECT_INSECURE=1
+GLOBAL_DEFINES += CONNECT_INSECURE=0
+GLOBAL_DEFINES += USE_STREAM=1
 
 NAME := App_tio_iot_demo
 
