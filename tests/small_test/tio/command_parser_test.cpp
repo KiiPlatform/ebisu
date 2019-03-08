@@ -159,7 +159,7 @@ TEST_CASE( "_parse_action_object" ) {
 
 }
 
-void cb_parsed_action(char* command_id, tio_action_t* action, tio_action_err_t* err, void* expected_actions) {
+void cb_parsed_action(char* command_id, tio_action_t* action, void* expected_actions) {
     expected_parsed_actions* expected = (expected_parsed_actions *) expected_actions;
     REQUIRE( strcmp(command_id, expected->command_id) == 0 );
     int i = 0;

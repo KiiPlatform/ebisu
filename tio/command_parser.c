@@ -510,9 +510,7 @@ tio_code_t _parse_command(
                         action_idx,
                         &action);
                 if (pa_res == _CMD_PARSE_OK) {
-                    tio_action_err_t action_err;
-                    action_err.err_message[0] = '\0';
-                    cb_parsed_action(command_id, &action, &action_err, userdata);
+                    cb_parsed_action(command_id, &action, userdata);
                     ++result_counts;
                 } else if (pa_res == _CMD_PARSE_ARRAY_OUT_OF_INDEX) {
                     // Handled all actions in alias.

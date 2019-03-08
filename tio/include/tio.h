@@ -705,13 +705,39 @@ tio_code_t tio_handler_handle_command(
         const char* command,
         size_t command_length);
 
-typedef void (*TIO_CB_PARSED_ACTION)(char* command_id, tio_action_t* action, tio_action_err_t* err, void* userdata);
+/**
+ * \brief Callback handles parsed action.
+ *
+ * Called when tio_handler_parse_command is called.
+ * Command may includes multiple actions. The callback is called per action.
+ *
+ * \param [in] command_id Command ID of parsed command, your app can use it to update action result.
+ * \param [in] action Includes alias_name, action_name and action value.
+ * \param [in,out] userdata Context object pointer given to tio_handler_parse_command.
+ */
+typedef void (*TIO_CB_PARSED_ACTION)(char* command_id, tio_action_t* action, void* userdata);
 
+/**
+ * \brief Parse the received command.
+ *
+ * If the received command needs to be handled asynchronously, and your app doesn't
+ * respond the command immediately. You can this method to only parse the command, then
+ * handle each action separately in TIO_CB_PARSED_ACTION callback. After all the actions
+ * are handled, and it is ready to respond the command, your app can call tio_handler_handle_command
+ * to respond command to server.
+ *
+ * \param [in] handler tio_handler_t instance.
+ * \param [in] command Received command.
+ * \param [in] command_length Length of received command.
+ * \param [in] cb_parsed_action TIO_CB_PARSED_ACTION callback called when parsed a action.
+ * \param [in] userdata Context object pointer passed to cb_parsed_action.
+ * \return TIO_ERR_OK when succeeded to parse the command.
+ */
 tio_code_t tio_handler_parse_command(
         tio_handler_t* handler,
         const char* command,
-        TIO_CB_PARSED_ACTION cb_parsed_action,
         size_t command_length,
+        TIO_CB_PARSED_ACTION cb_parsed_action,
         void* userdata);
 
 #ifdef __cplusplus

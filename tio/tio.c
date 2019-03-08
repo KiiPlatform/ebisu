@@ -568,8 +568,8 @@ tio_code_t tio_updater_start(
 tio_code_t tio_handler_parse_command(
         tio_handler_t* handler,
         const char* command,
-        TIO_CB_PARSED_ACTION cb_parsed_action,
         size_t command_length,
+        TIO_CB_PARSED_ACTION cb_parsed_action,
         void* userdata)
 {
     _parse_command(handler, command, command_length, cb_parsed_action, userdata);
