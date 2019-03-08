@@ -192,8 +192,8 @@ void cb_parsed_action(char* command_id, tio_action_t* action, tio_action_err_t* 
 TEST_CASE( "_parse_command" ) {
     tio_action_t action;
     tio_handler_t handler;
-    jkii_token_t tokens[16];
-    jkii_resource_t resource = { tokens, 16 };
+    jkii_token_t tokens[25];
+    jkii_resource_t resource = { tokens, 25 };
     handler._kii._json_resource = &resource;
 
     SECTION("has 1 alias, 1 action") {
@@ -206,7 +206,8 @@ TEST_CASE( "_parse_command" ) {
         expected.expected_actions = expected_actions;
         expected.expected_actions_length = 1;
         expected.matched_count = 0;
-        _parse_command(&handler, command, strlen(command), cb_parsed_action, (void *)&expected);
+        tio_code_t res = _parse_command(&handler, command, strlen(command), cb_parsed_action, (void *)&expected);
+        REQUIRE( TIO_ERR_OK == res);
         REQUIRE( 1 == expected.matched_count);
     }
 
@@ -222,7 +223,8 @@ TEST_CASE( "_parse_command" ) {
         expected.expected_actions = expected_actions;
         expected.expected_actions_length = 2;
         expected.matched_count = 0;
-        _parse_command(&handler, command, strlen(command), cb_parsed_action, (void *)&expected);
+        tio_code_t res = _parse_command(&handler, command, strlen(command), cb_parsed_action, (void *)&expected);
+        REQUIRE( TIO_ERR_OK == res);
         REQUIRE( 2 == expected.matched_count);
     }
 
@@ -238,7 +240,8 @@ TEST_CASE( "_parse_command" ) {
         expected.expected_actions = expected_actions;
         expected.expected_actions_length = 2;
         expected.matched_count = 0;
-        _parse_command(&handler, command, strlen(command), cb_parsed_action, (void *)&expected);
+        tio_code_t res = _parse_command(&handler, command, strlen(command), cb_parsed_action, (void *)&expected);
+        REQUIRE( TIO_ERR_OK == res);
         REQUIRE( 2 == expected.matched_count);
     }
 }

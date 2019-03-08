@@ -525,8 +525,9 @@ tio_code_t _parse_command(
             // Handled all actions in command.
             break;
         } else {
+            printf("err while parse alias\n");
             return TIO_ERR_PARSE_JSON;
         }
     }
-
+    return TIO_ERR_OK;
 }
