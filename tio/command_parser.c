@@ -285,7 +285,7 @@ static tio_code_t _append_action_result(
     {
         int len = snprintf(
                 work_buff, work_buff_size,
-                "%s{\"%s\":{\"succeeded\":true,\"errorMessage\":\"\",\"data\":{}}}",
+                "%s{\"%s\" : { \"succeeded\" : true }}",
                 comma, action_name);
         if (len >= work_buff_size)
         {
@@ -316,7 +316,7 @@ static tio_code_t _append_action_result(
         }
         int len = snprintf(
                 work_buff, work_buff_size,
-                "%s{\"%s\":{\"succeeded\":false%s,\"data\":{}}}",
+                "%s{\"%s\" : { \"succeeded\" : false %s}}",
                 comma, action_name, err_part);
         if (len >= work_buff_size)
         {
