@@ -10,8 +10,12 @@
 typedef struct _socket_context {
     wiced_tcp_socket_t socket;
     wiced_tls_context_t tls_context;
+#if USE_STREAM
+    wiced_tcp_stream_t stream;
+#else
     wiced_packet_t *packet;
     int packet_offset;
+#endif
     int show_debug;
 } socket_context_t;
 
