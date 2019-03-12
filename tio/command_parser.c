@@ -248,7 +248,7 @@ static tio_code_t _start_result_request(
             &handler->_kii,
             "PUT",
             command_result_path,
-            "application/json",
+            "application/vnd.kii.CommandResultsUpdateRequest+json",
             KII_TRUE);
     if (s_res != KII_ERR_OK) {
         return _tio_convert_code(s_res);
@@ -285,7 +285,7 @@ static tio_code_t _append_action_result(
     {
         int len = snprintf(
                 work_buff, work_buff_size,
-                "%s{\"%s\" : { \"succeeded\" : true }}",
+                "%s{\"%s\":{\"succeeded\":true,\"errorMessage\":\"\",\"data\":{}}}",
                 comma, action_name);
         if (len >= work_buff_size)
         {
@@ -316,7 +316,7 @@ static tio_code_t _append_action_result(
         }
         int len = snprintf(
                 work_buff, work_buff_size,
-                "%s{\"%s\" : { \"succeeded\" : false %s}}",
+                "%s{\"%s\":{\"succeeded\":false%s,\"data\":{}}}",
                 comma, action_name, err_part);
         if (len >= work_buff_size)
         {
