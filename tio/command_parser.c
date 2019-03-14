@@ -270,6 +270,7 @@ static tio_code_t _append_action_result(
         tio_bool_t succeeded,
         tio_action_t* action,
         const char* err_message,
+        const char* json_data,
         char* work_buff,
         size_t work_buff_size)
 {
@@ -285,12 +286,23 @@ static tio_code_t _append_action_result(
     {
         int len = snprintf(
                 work_buff, work_buff_size,
-                "%s{\"%s\" : { \"succeeded\" : true }}",
+                "%s{\"%s\":{\"succeeded\":true",
                 comma, action_name);
+        len += 2; // length of "}}".
         if (len >= work_buff_size)
         {
             return TIO_ERR_TOO_LARGE_DATA;
         }
+        if (json_data != NULL) {
+            len += strlen(json_data) + 8;
+            if (len >= work_buff_size)
+            {
+                return TIO_ERR_TOO_LARGE_DATA;
+            }
+            strcat(work_buff, ",\"data\":");
+            strcat(work_buff, json_data);
+        }
+        strcat(work_buff, "}}");
         kii_code_t res =  kii_api_call_append_body(&handler->_kii, work_buff, len);
         return _tio_convert_code(res);
     }
@@ -316,12 +328,23 @@ static tio_code_t _append_action_result(
         }
         int len = snprintf(
                 work_buff, work_buff_size,
-                "%s{\"%s\" : { \"succeeded\" : false %s}}",
+                "%s{\"%s\":{\"succeeded\":false%s",
                 comma, action_name, err_part);
+        len += 2; // length of "}}".
         if (len >= work_buff_size)
         {
             return TIO_ERR_TOO_LARGE_DATA;
         }
+        if (json_data != NULL) {
+            len += strlen(json_data) + 8;
+            if (len >= work_buff_size)
+            {
+                return TIO_ERR_TOO_LARGE_DATA;
+            }
+            strcat(work_buff, ",\"data\":");
+            strcat(work_buff, json_data);
+        }
+        strcat(work_buff, "}}");
         kii_code_t res = kii_api_call_append_body(&handler->_kii, work_buff, len);
         return _tio_convert_code(res);
     }
@@ -414,7 +437,9 @@ tio_code_t _handle_command(
                 if (pa_res == _CMD_PARSE_OK) {
                     tio_action_err_t action_err;
                     action_err.err_message[0] = '\0';
-                    tio_bool_t succeeded = handler->_cb_action(&action, &action_err, handler->_cb_action_data);
+                    tio_action_result_data_t action_result_data;
+                    action_result_data.json[0] = '\0';
+                    tio_bool_t succeeded = handler->_cb_action(&action, &action_err, &action_result_data, handler->_cb_action_data);
                     char work_buff[256];
                     tio_code_t app_res = _append_action_result(
                             handler,
@@ -422,6 +447,7 @@ tio_code_t _handle_command(
                             succeeded,
                             &action,
                             action_err.err_message,
+                            action_result_data.json,
                             work_buff,
                             sizeof(work_buff)/sizeof(work_buff[0]));
                     if (app_res != TIO_ERR_OK) {

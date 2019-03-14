@@ -123,6 +123,13 @@ typedef struct tio_action_err_t {
 } tio_action_err_t;
 
 /**
+ * \brief Represents action result data.
+ */
+typedef struct tio_action_result_data_t {
+    char json[128]; /**< \brief json string (null terminated). */
+} tio_action_err_t;
+
+/**
  * \brief Callback asks for size of the state to be uploaded.
  *
  * \param [in,out] userdata Context object pointer passed to tio_updater_start().
@@ -150,10 +157,11 @@ typedef size_t (*TIO_CB_READ)(char *buffer, size_t size, void *userdata);
  *
  * \param [in] action Includes alias_name, action_name and action value.
  * \param [out] err Implementation can set error when the given action is failed to execute.
+ * \param [out] data Implementation can set data as json string.
  * Reported error is recoreded in cloud. When succeeded, the argument can be ignored.
  * \param [in,out] userdata Context object pointer given to tio_handler_start().
  */
-typedef tio_bool_t (*TIO_CB_ACTION)(tio_action_t* action, tio_action_err_t* err, void* userdata);
+typedef tio_bool_t (*TIO_CB_ACTION)(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata);
 /**
  * \brief Callback propagates error information.
  *
