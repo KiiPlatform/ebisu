@@ -274,6 +274,14 @@ static tio_code_t _append_action_result(
         char* work_buff,
         size_t work_buff_size)
 {
+    int json_len = strlen(json_data);
+    if (json_len > 0) {
+        // Validate json_data.
+        jkii_parse_err_t json_res = _parse_json(handler, json_data, json_len, NULL);
+        if (json_res != JKII_ERR_OK) {
+            return TIO_ERR_PARSE_JSON;
+        }
+    }
     char *comma = ",";
     if (index == 0)
     {
@@ -293,8 +301,8 @@ static tio_code_t _append_action_result(
         {
             return TIO_ERR_TOO_LARGE_DATA;
         }
-        if (json_data != NULL) {
-            len += strlen(json_data) + 8;
+        if (json_len > 0) {
+            len += json_len + 8;
             if (len >= work_buff_size)
             {
                 return TIO_ERR_TOO_LARGE_DATA;
@@ -335,8 +343,8 @@ static tio_code_t _append_action_result(
         {
             return TIO_ERR_TOO_LARGE_DATA;
         }
-        if (json_data != NULL) {
-            len += strlen(json_data) + 8;
+        if (json_len > 0) {
+            len += json_len + 8;
             if (len >= work_buff_size)
             {
                 return TIO_ERR_TOO_LARGE_DATA;

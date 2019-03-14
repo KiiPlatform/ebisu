@@ -879,7 +879,9 @@ jkii_parse_err_t jkii_parse(
     if (type != JSMN_ARRAY && type != JSMN_OBJECT) {
         return JKII_ERR_INVALID_INPUT;
     }
-    res = _jkii_parse_fields(json_string, json_string_len, fields, resource);
+    if (fields != NULL) {
+        res = _jkii_parse_fields(json_string, json_string_len, fields, resource);
+    }
 
     return res;
 }
@@ -919,7 +921,9 @@ jkii_parse_err_t jkii_parse_with_allocator(
         cb_free(resource);
         return JKII_ERR_INVALID_INPUT;
     }
-    res = _jkii_parse_fields(json_string, json_string_len, fields, resource);
+    if (fields != NULL) {
+        res = _jkii_parse_fields(json_string, json_string_len, fields, resource);
+    }
 
     cb_free(resource);
     return res;
