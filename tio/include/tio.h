@@ -127,7 +127,7 @@ typedef struct tio_action_err_t {
  */
 typedef struct tio_action_result_data_t {
     char json[128]; /**< \brief json string (null terminated). */
-} tio_action_err_t;
+} tio_action_result_data_t;
 
 /**
  * \brief Callback asks for size of the state to be uploaded.
