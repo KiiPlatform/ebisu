@@ -234,7 +234,7 @@ static void _cb_receive_push(const char* payload, size_t payload_length, void* u
         skip = handler->_cb_push(payload, payload_length, handler->_cb_push_data);
     }
     if (skip == KII_FALSE) {
-        tio_code_t handle_res = _handle_command(handler, payload, payload_length);
+        tio_code_t handle_res = _handle_command(handler, payload, payload_length, handler->_cb_action, handler->_cb_action_data);
         if (handle_res != TIO_ERR_OK && handler->_cb_err != NULL) {
             handler->_cb_err(handle_res, "Failed to handle command", handler->_cb_err_data);
         }
@@ -313,8 +313,10 @@ tio_code_t tio_handler_start(
 tio_code_t tio_handler_handle_command(
         tio_handler_t* handler,
         const char* command,
-        size_t command_length) {
-    return _handle_command(handler, command, command_length);
+        size_t command_length,
+        TIO_CB_ACTION cb_action,
+        void* userdata) {
+    return _handle_command(handler, command, command_length, cb_action, userdata);
 }
 
 void tio_updater_init(tio_updater_t* updater)

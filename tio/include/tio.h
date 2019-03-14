@@ -700,18 +700,22 @@ tio_code_t tio_handler_start(
  * TIO_CB_PUSH callback to skip automatically command handling logic. When your
  * app is ready to respond to the command, then invoke this method.
  *
- * When app invokes the method, TIO_CB_ACTION callback of tio_handler is invoked.
+ * When app invokes the method, TIO_CB_ACTION callback is invoked.
  * Command may includes multiple actions. The callback TIO_CB_ACTION is invoked
  * per action.
  *
  * \param [in] handler tio_handler_t instance.
  * \param [in] command received command.
  * \param [in] command_length Size of command.
+ * \param [in] cb_action Action callback.
+ * \param [in] userdata Context object pointer passed to cb_action.
  */
 tio_code_t tio_handler_handle_command(
         tio_handler_t* handler,
         const char* command,
-        size_t command_length);
+        size_t command_length,
+        TIO_CB_ACTION cb_action,
+        void* userdata);
 
 /**
  * \brief Callback handles parsed action.

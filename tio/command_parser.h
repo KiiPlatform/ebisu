@@ -48,7 +48,9 @@ _cmd_parser_code_t _parse_action(
 tio_code_t _handle_command(
         tio_handler_t* handler,
         const char* command,
-        size_t command_length);
+        size_t command_length,
+        TIO_CB_ACTION cb_action,
+        void* cb_action_data);
 
 jkii_parse_err_t _parse_json(
         tio_handler_t* handler,
