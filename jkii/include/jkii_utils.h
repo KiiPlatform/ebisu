@@ -32,6 +32,17 @@ jkii_primitive_err_t jkii_parse_primitive(
 
 int jkii_escape_str(const char* str, char* buff, size_t buff_size);
 
+jkii_parse_err_t jkii_validate_root_object(
+        const char* json_string,
+        size_t json_string_len,
+        jkii_resource_t* resource);
+
+jkii_parse_err_t jkii_validate_root_object_with_allocator(
+        const char* json_string,
+        size_t json_string_len,
+        JKII_CB_RESOURCE_ALLOC cb_alloc,
+        JKII_CB_RESOURCE_FREE cb_free);
+
 #ifdef __cplusplus
 }
 #endif

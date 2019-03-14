@@ -264,6 +264,23 @@ static tio_code_t _start_result_request(
     return TIO_ERR_OK;
 }
 
+jkii_parse_err_t _validate_json(
+        tio_handler_t* handler,
+        const char* json_string,
+        size_t json_string_size)
+{
+    jkii_resource_t* resource = handler->_kii._json_resource;
+    jkii_parse_err_t res = JKII_ERR_INVALID_INPUT;
+    if (resource != NULL) {
+        res = jkii_validate_root_object(json_string, json_string_size, resource);
+    } else {
+        JKII_CB_RESOURCE_ALLOC cb_alloc = handler->_kii._cb_json_alloc;
+        JKII_CB_RESOURCE_FREE cb_free = handler->_kii._cb_json_free;
+        res = jkii_validate_root_object_with_allocator(json_string, json_string_size, cb_alloc, cb_free);
+    }
+    return res;
+}
+
 static tio_code_t _append_action_result(
         tio_handler_t* handler,
         size_t index,
@@ -277,7 +294,7 @@ static tio_code_t _append_action_result(
     int json_len = strlen(json_data);
     if (json_len > 0) {
         // Validate json_data.
-        jkii_parse_err_t json_res = _parse_json(handler, json_data, json_len, NULL);
+        jkii_parse_err_t json_res = _validate_json(handler, json_data, json_len);
         if (json_res != JKII_ERR_OK) {
             return TIO_ERR_PARSE_JSON;
         }
