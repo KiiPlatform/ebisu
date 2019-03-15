@@ -20,6 +20,10 @@ khc_code khc_perform(khc* khc) {
     while(khc->_state != KHC_STATE_FINISHED) {
         state_handlers[khc->_state](khc);
     }
+
+    // handle KHC_STATE_FINISHED to free resource allocated in KHC_STATE_IDLE
+    state_handlers[khc->_state](khc);
+
     khc_code res = khc->_result;
     khc->_state = KHC_STATE_IDLE;
     khc->_result = KHC_ERR_OK;
