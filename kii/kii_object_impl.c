@@ -275,7 +275,7 @@ kii_code_t _upload_body(
     }
     ret = _set_object_body_content_type(kii, body_content_type);
     if (ret != KII_ERR_OK) {
-
+        _req_headers_free_all(kii);
         return ret;
     }
 
