@@ -8,11 +8,42 @@
 #include "test_callbacks.h"
 #include <sstream>
 
+void initialAllocation(khc *http) {
+    char* buff = (char *)malloc(DEFAULT_RESP_HEADER_BUFF_SIZE);
+    REQUIRE(buff != NULL);
+    http->_resp_header_buff = buff;
+    http->_resp_header_buff_allocated = 1;
+    http->_resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
+
+    char* stream_buff = (char *)malloc(DEFAULT_STREAM_BUFF_SIZE);
+    REQUIRE(stream_buff != NULL);
+    http->_stream_buff = stream_buff;
+    http->_stream_buff_allocated = 1;
+    http->_stream_buff_size = DEFAULT_STREAM_BUFF_SIZE;
+}
+
+void freeMemory(khc *http) {
+    // free the allocated resource
+    if (http->_stream_buff_allocated == 1) {
+        free(http->_stream_buff);
+        http->_stream_buff = NULL;
+        http->_stream_buff_size = 0;
+        http->_stream_buff_allocated = 0;
+    }
+    if (http->_resp_header_buff_allocated == 1) {
+        free(http->_resp_header_buff);
+        http->_resp_header_buff = NULL;
+        http->_resp_header_buff_size = 0;
+        http->_resp_header_buff_allocated = 0;
+    }
+}
 TEST_CASE( "HTTP minimal" ) {
     khc http;
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
     const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
+
+    initialAllocation(&http);
 
     khct::http::Resp resp;
     resp.headers = { "HTTP/1.0 200 OK" };
@@ -168,6 +199,7 @@ TEST_CASE( "HTTP minimal" ) {
     REQUIRE( http._state == KHC_STATE_FINISHED );
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
+    freeMemory(&http);
 }
 
 TEST_CASE( "HTTP 1.1 chunked minimal" ) {
@@ -175,6 +207,8 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
     const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
+
+    initialAllocation(&http);
 
     khct::http::Resp resp;
     resp.headers = {
@@ -482,6 +516,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     REQUIRE( http._state == KHC_STATE_FINISHED );
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
+    freeMemory(&http);
 }
 
 TEST_CASE( "Socket send partial" ) {
@@ -489,6 +524,8 @@ TEST_CASE( "Socket send partial" ) {
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
     const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
+
+    initialAllocation(&http);
 
     khct::http::Resp resp;
     resp.headers = { "HTTP/1.0 200 OK" };
@@ -877,6 +914,7 @@ TEST_CASE( "Socket send partial" ) {
     REQUIRE( called );
 
     khc_slist_free_all(req_headers);
+    freeMemory(&http);
 }
 
 TEST_CASE( "state abnormal tests." ) {
