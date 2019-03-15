@@ -388,7 +388,9 @@ static tio_code_t _append_action_result(
 tio_code_t _handle_command(
         tio_handler_t* handler,
         const char* command,
-        size_t command_length)
+        size_t command_length,
+        TIO_CB_ACTION cb_action,
+        void* cb_action_data)
 {
     jkii_field_t fields[3];
     char command_id[64];
@@ -464,7 +466,7 @@ tio_code_t _handle_command(
                     action_err.err_message[0] = '\0';
                     tio_action_result_data_t action_result_data;
                     action_result_data.json[0] = '\0';
-                    tio_bool_t succeeded = handler->_cb_action(&action, &action_err, &action_result_data, handler->_cb_action_data);
+                    tio_bool_t succeeded = cb_action(&action, &action_err, &action_result_data, cb_action_data);
                     char work_buff[256];
                     tio_code_t app_res = _append_action_result(
                             handler,
