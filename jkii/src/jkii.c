@@ -1017,3 +1017,68 @@ int jkii_escape_str(const char* str, char* buff, size_t buff_size) {
     buff[escaped_len] = '\0';
     return escaped_len;
 }
+
+jkii_parse_err_t jkii_validate_root_object(
+        const char* json_string,
+        size_t json_string_len,
+        jkii_resource_t* resource)
+{
+    M_JKII_ASSERT(json_string != NULL);
+    M_JKII_ASSERT(json_string_len > 0);
+
+    if (resource == NULL || resource->tokens_num == 0) {
+        return JKII_ERR_TOKENS_SHORTAGE;
+    }
+
+    jkii_parse_err_t res = JKII_ERR_INVALID_INPUT;
+    res = _kii_jsmn_get_tokens(json_string, json_string_len, resource);
+    if (res != JKII_ERR_OK) {
+        return res;
+    }
+
+    jsmntype_t type = resource->tokens[0].type;
+    if (type != JSMN_OBJECT) {
+        return JKII_ERR_ROOT_TYPE;
+    }
+
+    return JKII_ERR_OK;
+}
+
+jkii_parse_err_t jkii_validate_root_object_with_allocator(
+        const char* json_string,
+        size_t json_string_len,
+        JKII_CB_RESOURCE_ALLOC cb_alloc,
+        JKII_CB_RESOURCE_FREE cb_free)
+{
+    M_JKII_ASSERT(json_string != NULL);
+    M_JKII_ASSERT(json_string_len > 0);
+    M_JKII_ASSERT(cb_alloc != NULL);
+    M_JKII_ASSERT(cb_free != NULL);
+
+    jkii_resource_t *resource;
+    int required = _calculate_required_token_num(json_string, json_string_len);
+    if (required > 0) {
+        resource = cb_alloc(required);
+        if (resource == NULL)
+        {
+            return JKII_ERR_ALLOCATION;
+        }
+    } else {
+        return JKII_ERR_INVALID_INPUT;
+    }
+
+    jkii_parse_err_t res = _kii_jsmn_get_tokens(json_string, json_string_len, resource);
+    if (res != JKII_ERR_OK) {
+        cb_free(resource);
+        return res;
+    }
+
+    jsmntype_t type = resource->tokens[0].type;
+    if (type != JSMN_OBJECT) {
+        cb_free(resource);
+        return JKII_ERR_ROOT_TYPE;
+    }
+
+    cb_free(resource);
+    return JKII_ERR_OK;
+}

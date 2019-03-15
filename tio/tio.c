@@ -572,5 +572,5 @@ tio_code_t tio_handler_parse_command(
         TIO_CB_PARSED_ACTION cb_parsed_action,
         void* userdata)
 {
-    _parse_command(handler, command, command_length, cb_parsed_action, userdata);
+    return _parse_command(handler, command, command_length, cb_parsed_action, userdata);
 }

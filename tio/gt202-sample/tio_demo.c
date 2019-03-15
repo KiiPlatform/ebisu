@@ -183,7 +183,7 @@ void handler_init(
 #endif
 }
 
-tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, void* userdata)
+tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata)
 {
     printf("tio_action_handler called\n");
     printf("%.*s: %.*s\n", (int)action->alias_length, action->alias,(int)action->action_name_length, action->action_name);
