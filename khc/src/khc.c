@@ -32,6 +32,12 @@ khc_code khc_perform(khc* khc) {
     if (khc->_stream_buff == NULL) {
         char* buff = malloc(DEFAULT_STREAM_BUFF_SIZE);
         if (buff == NULL) {
+            if (khc->_resp_header_buff_allocated == 1) {
+                free(khc->_resp_header_buff);
+                khc->_resp_header_buff = NULL;
+                khc->_resp_header_buff_size = 0;
+                khc->_resp_header_buff_allocated = 0;
+            }
             return KHC_ERR_ALLOCATION;
         }
         khc->_stream_buff = buff;
