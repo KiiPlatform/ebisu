@@ -692,7 +692,7 @@ void handler_init(
     tio_handler_set_json_parser_resource(handler, resource);
 }
 
-tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, void* userdata)
+tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata)
 {
     UART_PRINT("tio_action_handler called\n");
     UART_PRINT("%.*s: %.*s\n", (int)action->alias_length, action->alias,(int)action->action_name_length, action->action_name);
