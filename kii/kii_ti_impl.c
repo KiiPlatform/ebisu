@@ -398,7 +398,11 @@ kii_code_t _upload_state(
         return ret;
     }
     if (opt_content_encoding != NULL) {
-        _set_content_encoding(kii, opt_content_encoding);
+        ret = _set_content_encoding(kii, opt_content_encoding);
+        if (ret != KII_ERR_OK) {
+            _req_headers_free_all(kii);
+            return ret;
+        }
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);

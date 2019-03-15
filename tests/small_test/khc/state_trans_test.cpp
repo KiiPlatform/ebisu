@@ -14,6 +14,11 @@ TEST_CASE( "HTTP minimal" ) {
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
     const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
 
+    char stream_buff[buff_size];
+    char resp_header_buff[resp_header_buff_size];
+    khc_set_stream_buff(&http, stream_buff, buff_size);
+    khc_set_resp_header_buff(&http, resp_header_buff, resp_header_buff_size);
+
     khct::http::Resp resp;
     resp.headers = { "HTTP/1.0 200 OK" };
 
@@ -175,6 +180,11 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
     const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
+
+    char stream_buff[buff_size];
+    char resp_header_buff[resp_header_buff_size];
+    khc_set_stream_buff(&http, stream_buff, buff_size);
+    khc_set_resp_header_buff(&http, resp_header_buff, resp_header_buff_size);
 
     khct::http::Resp resp;
     resp.headers = {
@@ -489,6 +499,11 @@ TEST_CASE( "Socket send partial" ) {
     khc_init(&http);
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
     const size_t resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
+
+    char stream_buff[buff_size];
+    char resp_header_buff[resp_header_buff_size];
+    khc_set_stream_buff(&http, stream_buff, buff_size);
+    khc_set_resp_header_buff(&http, resp_header_buff, resp_header_buff_size);
 
     khct::http::Resp resp;
     resp.headers = { "HTTP/1.0 200 OK" };

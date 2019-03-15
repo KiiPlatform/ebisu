@@ -17,9 +17,52 @@ void khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size) {
 
 khc_code khc_perform(khc* khc) {
     khc->_state = KHC_STATE_IDLE;
+    khc->_result = KHC_ERR_OK;
+
+    // malloc the necessary resources
+    if (khc->_resp_header_buff == NULL) {
+        char* buff = malloc(DEFAULT_RESP_HEADER_BUFF_SIZE);
+        if (buff == NULL) {
+            return  KHC_ERR_ALLOCATION;
+        }
+        khc->_resp_header_buff = buff;
+        khc->_resp_header_buff_allocated = 1;
+        khc->_resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
+    }
+    if (khc->_stream_buff == NULL) {
+        char* buff = malloc(DEFAULT_STREAM_BUFF_SIZE);
+        if (buff == NULL) {
+            if (khc->_resp_header_buff_allocated == 1) {
+                free(khc->_resp_header_buff);
+                khc->_resp_header_buff = NULL;
+                khc->_resp_header_buff_size = 0;
+                khc->_resp_header_buff_allocated = 0;
+            }
+            return KHC_ERR_ALLOCATION;
+        }
+        khc->_stream_buff = buff;
+        khc->_stream_buff_allocated = 1;
+        khc->_stream_buff_size = DEFAULT_STREAM_BUFF_SIZE;
+    }
+
     while(khc->_state != KHC_STATE_FINISHED) {
         state_handlers[khc->_state](khc);
     }
+
+    // free the allocated resource
+    if (khc->_stream_buff_allocated == 1) {
+        free(khc->_stream_buff);
+        khc->_stream_buff = NULL;
+        khc->_stream_buff_size = 0;
+        khc->_stream_buff_allocated = 0;
+    }
+    if (khc->_resp_header_buff_allocated == 1) {
+        free(khc->_resp_header_buff);
+        khc->_resp_header_buff = NULL;
+        khc->_resp_header_buff_size = 0;
+        khc->_resp_header_buff_allocated = 0;
+    }
+
     khc_code res = khc->_result;
     khc->_state = KHC_STATE_IDLE;
     khc->_result = KHC_ERR_OK;
