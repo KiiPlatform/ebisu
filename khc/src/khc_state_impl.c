@@ -916,6 +916,18 @@ void khc_state_resp_body_skip_trailers(khc* khc) {
 }
 
 void khc_state_close(khc* khc) {
+    if (khc->_stream_buff_allocated == 1) {
+        free(khc->_stream_buff);
+        khc->_stream_buff = NULL;
+        khc->_stream_buff_size = 0;
+        khc->_stream_buff_allocated = 0;
+    }
+    if (khc->_resp_header_buff_allocated == 1) {
+        free(khc->_resp_header_buff);
+        khc->_resp_header_buff = NULL;
+        khc->_resp_header_buff_size = 0;
+        khc->_resp_header_buff_allocated = 0;
+    }
     khc_sock_code_t close_res = khc->_cb_sock_close(khc->_sock_ctx_close);
     if (close_res == KHC_SOCK_OK) {
         khc->_state = KHC_STATE_FINISHED;
@@ -928,21 +940,6 @@ void khc_state_close(khc* khc) {
         khc->_state = KHC_STATE_FINISHED;
         khc->_result = KHC_ERR_SOCK_CLOSE;
         return;
-    }
-}
-
-void khc_state_finished(khc* khc) {
-    if (khc->_stream_buff_allocated == 1) {
-        free(khc->_stream_buff);
-        khc->_stream_buff = NULL;
-        khc->_stream_buff_size = 0;
-        khc->_stream_buff_allocated = 0;
-    }
-    if (khc->_resp_header_buff_allocated == 1) {
-        free(khc->_resp_header_buff);
-        khc->_resp_header_buff = NULL;
-        khc->_resp_header_buff_size = 0;
-        khc->_resp_header_buff_allocated = 0;
     }
 }
 

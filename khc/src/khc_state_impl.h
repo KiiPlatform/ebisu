@@ -44,7 +44,6 @@ void khc_state_resp_body_skip_chunk_body_crlf(khc* khc);
 void khc_state_resp_body_skip_trailers(khc* khc);
 
 void khc_state_close(khc* khc);
-void khc_state_finished(khc* khc);
 
 typedef void (*KHC_STATE_HANDLER)(khc* khc);
 
