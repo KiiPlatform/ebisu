@@ -692,11 +692,11 @@ tio_code_t tio_handler_start(
  *
  * Basically, your app doesn't need to use this method. Since tio_handler
  * automatically invokes this method when it received a command then after all
- * the TIO_CB_ACTION callbacks invoked, its respond to the command synchronously.
+ * the TIO_CB_ACTION callbacks invoked, it responds to the command synchronously.
  *
  * In the case, your app needs to handle command asynchronously. Your app can
- * receive this kind of command in the TIO_CB_PUSH callback, and then start
- * to handle the command asynchronously. Your app should return KII_TRUE to the
+ * receive the command in the TIO_CB_PUSH callback, and then use tio_handler_parse_command
+ * to handle each action asynchronously. Your app should return KII_TRUE to the
  * TIO_CB_PUSH callback to skip automatically command handling logic. When your
  * app is ready to respond to the command, then invoke this method.
  *
