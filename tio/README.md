@@ -466,6 +466,8 @@ example code:
 //   ],
 // if the actions or aliases are more than one, your application need to check whether
 // all actions completely handled before call tio_handler_handle_command
+
+// implementation of TIO_CB_ACTION
 tio_bool_t manually_handle_action_callback(
     tio_action_t *action,
     tio_action_err_t *err,
@@ -482,6 +484,7 @@ typedef struct {
     int command_length;
 } command_handler_t;
 
+// implementation of TIO_CB_PARSED_ACTION
 void parsed_action_callback(
     char* command_id,
     tio_action_t *action,
@@ -512,6 +515,7 @@ void parsed_action_callback(
 
 }
 
+// implementation of TIO_CB_PUSH
 tio_bool_t pushed_message_callback(const char* message, size_t message_length, void* userdata)
 {
     printf("pushed_message_callback called,\n");
