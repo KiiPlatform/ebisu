@@ -443,6 +443,106 @@ Now, it's ready to start `tio_handler_t` module.
 This call results to execute asynchronous tasks created by [Task callbacks](#task-callbacks).
 The name of tasks initiated by this call is exported as macro `KII_TASK_NAME_MQTT` and `KII_TASK_NAME_PING_REQ` defined in `kii.h`.
 
+## Manually handle command
+
+Since when tio_handler received a command, it can automatically invoke TIO_CB_ACTION callbacks to handle each action, then it responds to the command synchronously. Usually you don't need to manually handle command in your application.
+
+In the case, your application needs to handle command asynchronously. Your application should receive the command in the TIO_CB_PUSH callback, and then use tio_handler_parse_command to handle each action asynchronously. Please note that your app must return KII_TRUE to the TIO_CB_PUSH callback to skip automatically command handling logic. Finally when your app is ready to respond to the command, invoke tio_handler_handle_command.
+
+example code:
+
+```c
+// In the example, we assume only one alias and one action in command, for instance
+//   "actions": [
+//     {
+//       "CMD": [
+//         {
+//           "CMD_GW": {
+//             "DSTF": 23
+//           }
+//         }
+//       ]
+//     }
+//   ],
+// if the actions or aliases are more than one, your application need to check whether
+// all actions completely handled before call tio_handler_handle_command
+tio_bool_t manually_handle_action_callback(
+    tio_action_t *action,
+    tio_action_err_t *err,
+    tio_action_result_data_t *data,
+    void* userdata
+) {
+    // this is the most simple response. You may need to specified data.
+    return KII_TRUE;
+}
+
+typedef struct {
+    tio_handler_t *handler;
+    char *command;
+    int command_length;
+} command_handler_t;
+
+void parsed_action_callback(
+    char* command_id,
+    tio_action_t *action,
+    void* userdata) {
+    command_handler_t *handler = (command_handler_t *) userdata;
+    char action_name[action->action_name_length+1];
+    char alias[action->alias_length];
+    memset(alias, 0, sizeof(alias));
+    memset(action_name, 0, sizeof(action_name));
+    strncpy(alias, action->alias, action->alias_length);
+    strncpy(action_name, action->action_name, action->action_name_length);
+
+    // to handle interesting action
+    if(strcmp(alias, "CMD") == 0 && strcmp(action_name, "CMD_GW") == 0) {
+        // handle the command, your application may separately the handle
+        // logic in other thread
+        printf("handle gateway command \n");
+        // after action handled succeeded, call tio_handler_handle_command to
+        // update command to cloud
+        int ret = tio_handler_handle_command(
+            handler->handler,
+            handler->command,
+            handler->command_length,
+            manually_handle_action_callback,
+            NULL
+        );
+    }
+
+}
+
+tio_bool_t pushed_message_callback(const char* message, size_t message_length, void* userdata)
+{
+    printf("pushed_message_callback called,\n");
+    printf("%.*s\n", (int)message_length, message);
+
+    // pick up message which contains keyword commandID or others which may be
+    // the command for your application to handle manually.
+    if (strstr(message, "commandID") != NULL && strstr(message, "CMD") ) {
+        tio_handler_t *handler = (tio_handler_t *)userdata;
+        // this struct used to passed to parsed_action_callback to respond command
+        command_handler_t handler_t = {
+            handler,
+            message,
+            message_length
+        };
+        // call tio_handler_parse_command to parse the actions
+        int ret = tio_handler_parse_command(
+            handler,
+            message,
+            message_length,
+            parsed_action_callback,
+            &handler_t);
+        if (ret == KII_ERR_OK){
+            return KII_TRUE;
+        }
+    }
+    return KII_FALSE;
+}
+
+```
+
 # Use `tio_updater_t`
 
 ## Callback functions
