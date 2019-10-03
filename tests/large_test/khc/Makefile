@@ -18,6 +18,10 @@ SRCS+=$(wildcard $(LTEST_ROOT_DIR)/*.cpp)
 TEST_RESULT_DIR=test-results/junit
 TEST_RESULT=$(TEST_RESULT_DIR)/test-result.xml
 
+ifdef PLAIN_HTTP
+	CPPFLAGS += -DPLAIN_HTTP
+endif
+
 ifdef MEMCHECK
 TESTCMD=valgrind --leak-check=yes $(TARGET)
 else
@@ -35,7 +39,7 @@ $(LIB_BUILD_DIR): $(LIB_SRCS)
 	cd $(LIB_BUILD_DIR) && cmake -DCMAKE_INSTALL_PREFIX=. ../$(ROOT_DIR)/khc && make install
 
 $(TARGET): $(SRCS) $(LIB_BUILD_DIR)
-	g++ -g $(SRCS) $(LIBS_DIR) $(LIBS) $(INCLUDES) -o $(TARGET) -std=c++11
+	g++ -g $(SRCS) $(LIBS_DIR) $(LIBS) $(INCLUDES) $(CPPFLAGS) -o $(TARGET) -std=c++11
 
 build: $(TARGET)
 

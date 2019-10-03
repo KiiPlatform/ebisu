@@ -26,10 +26,18 @@ inline void init(
 
     kii_set_buff(kii, buffer, buffer_size);
 
+#ifdef PLAIN_HTTP
+    kii_enable_insecure_http(kii, KII_TRUE);
+    kii_set_cb_http_sock_connect(kii, ebisu::ltest::tcp::cb_connect, http_ssl_ctx);
+    kii_set_cb_http_sock_send(kii, ebisu::ltest::tcp::cb_send, http_ssl_ctx);
+    kii_set_cb_http_sock_recv(kii, ebisu::ltest::tcp::cb_recv, http_ssl_ctx);
+    kii_set_cb_http_sock_close(kii, ebisu::ltest::tcp::cb_close, http_ssl_ctx);
+#else
     kii_set_cb_http_sock_connect(kii, ebisu::ltest::ssl::cb_connect, http_ssl_ctx);
     kii_set_cb_http_sock_send(kii, ebisu::ltest::ssl::cb_send, http_ssl_ctx);
     kii_set_cb_http_sock_recv(kii, ebisu::ltest::ssl::cb_recv, http_ssl_ctx);
     kii_set_cb_http_sock_close(kii, ebisu::ltest::ssl::cb_close, http_ssl_ctx);
+#endif
 
     kii_set_cb_mqtt_sock_connect(kii, ebisu::ltest::ssl::cb_connect, mqtt_ssl_ctx);
     kii_set_cb_mqtt_sock_send(kii, ebisu::ltest::ssl::cb_send, mqtt_ssl_ctx);

@@ -172,6 +172,89 @@ khc_sock_code_t
     return KHC_SOCK_OK;
 }
 
+/// raw
+khc_sock_code_t
+    ebisu::ltest::tcp::cb_connect(void* socket_context, const char* host,
+            unsigned int port)
+{
+    int sock;
+    struct hostent *servhost;
+    struct sockaddr_in server;
+
+    servhost = gethostbyname(host);
+    if (servhost == NULL) {
+        printf("failed to get host.\n");
+        return KHC_SOCK_FAIL;
+    }
+    memset(&server, 0x00, sizeof(server));
+    server.sin_family = AF_INET;
+    /* More secure. */
+    memcpy(&(server.sin_addr), servhost->h_addr, servhost->h_length);
+
+    /* Get Port number */
+    server.sin_port = htons(port);
+
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        printf("failed to init socket.\n");
+        return KHC_SOCK_FAIL;
+    }
+
+    if (connect(sock, (struct sockaddr*) &server, sizeof(server)) == -1 ){
+        printf("failed to connect socket.\n");
+        return KHC_SOCK_FAIL;
+    }
+    ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
+    ctx->socket = sock;
+    return KHC_SOCK_OK;
+}
+
+khc_sock_code_t
+    ebisu::ltest::tcp::cb_send(void* socket_context,
+            const char* buffer,
+            size_t length,
+            size_t* out_sent_length)
+{
+    ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
+    int ret = send(ctx->socket, buffer, length, 0);
+    if (ret > 0) {
+        *out_sent_length = ret;
+        return KHC_SOCK_OK;
+    } else {
+        printf("failed to send\n");
+        return KHC_SOCK_FAIL;
+    }
+}
+
+khc_sock_code_t
+    ebisu::ltest::tcp::cb_recv(void* socket_context,
+            char* buffer,
+            size_t length_to_read,
+            size_t* out_actual_length)
+{
+    *out_actual_length = 0;
+    ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
+    int ret = recv(ctx->socket, buffer, length_to_read, 0);
+    if (ret > 0) {
+        *out_actual_length = ret;
+        return KHC_SOCK_OK;
+    } else if (ret == 0) {
+      return KHC_SOCK_OK;
+    } else {
+        return KHC_SOCK_FAIL;
+    }
+}
+
+khc_sock_code_t
+    ebisu::ltest::tcp::cb_close(void* socket_context)
+{
+    ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
+    shutdown(ctx->socket, SHUT_RDWR);
+    // ignore close errors
+    close(ctx->socket);
+    return KHC_SOCK_OK;
+}
+
 #ifdef __APPLE__
 #pragma GCC diagnostic pop
 #endif
