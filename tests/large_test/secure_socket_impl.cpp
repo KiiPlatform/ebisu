@@ -177,7 +177,7 @@ khc_sock_code_t
     ebisu::ltest::tcp::cb_connect(void* socket_context, const char* host,
             unsigned int port)
 {
-    int sock, ret;
+    int sock;
     struct hostent *servhost;
     struct sockaddr_in server;
 
@@ -249,7 +249,7 @@ khc_sock_code_t
     ebisu::ltest::tcp::cb_close(void* socket_context)
 {
     ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
-    int ret = shutdown(ctx->socket, SHUT_RDWR);
+    shutdown(ctx->socket, SHUT_RDWR);
     // ignore close errors
     close(ctx->socket);
     return KHC_SOCK_OK;
