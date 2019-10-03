@@ -49,7 +49,6 @@ TEST_CASE( "HTTP Post" ) {
     khc_set_cb_sock_close(&http, ebisu::ltest::tcp::cb_close, &s_ctx);
 #else
     khc_set_cb_sock_connect(&http, ebisu::ltest::ssl::cb_connect, &s_ctx);
-    khc_set_cb_sock_connect(&http, ebisu::ltest::ssl::cb_connect, &s_ctx);
     khc_set_cb_sock_send(&http, ebisu::ltest::ssl::cb_send, &s_ctx);
     khc_set_cb_sock_recv(&http, ebisu::ltest::ssl::cb_recv, &s_ctx);
     khc_set_cb_sock_close(&http, ebisu::ltest::ssl::cb_close, &s_ctx);
