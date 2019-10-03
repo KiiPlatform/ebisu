@@ -15,10 +15,18 @@ TEST_CASE( "HTTP Get" ) {
     khc_set_req_headers(&http, NULL);
 
     ebisu::ltest::ssl::SSLData s_ctx;
+#ifdef PLAIN_HTTP
+    khc_enable_insecure(&http, 1);
+    khc_set_cb_sock_connect(&http, ebisu::ltest::tcp::cb_connect, &s_ctx);
+    khc_set_cb_sock_send(&http, ebisu::ltest::tcp::cb_send, &s_ctx);
+    khc_set_cb_sock_recv(&http, ebisu::ltest::tcp::cb_recv, &s_ctx);
+    khc_set_cb_sock_close(&http, ebisu::ltest::tcp::cb_close, &s_ctx);
+#else
     khc_set_cb_sock_connect(&http, ebisu::ltest::ssl::cb_connect, &s_ctx);
     khc_set_cb_sock_send(&http, ebisu::ltest::ssl::cb_send, &s_ctx);
     khc_set_cb_sock_recv(&http, ebisu::ltest::ssl::cb_recv, &s_ctx);
     khc_set_cb_sock_close(&http, ebisu::ltest::ssl::cb_close, &s_ctx);
+#endif
 
     khct::cb::IOCtx io_ctx;
     khc_set_cb_read(&http, khct::cb::cb_read, &io_ctx);
