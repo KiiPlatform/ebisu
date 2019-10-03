@@ -23,6 +23,9 @@ INCLUDES = -I$(LTEST_ROOT_DIR) -I$(TEST_ROOT_DIR) -I$(KII_BUILD_DIR)/usr/local/i
 TEST_RESULT_DIR=test-results/junit
 TEST_RESULT=$(TEST_RESULT_DIR)/test-result.xml
 
+ifdef PLAIN_HTTP
+	CPPFLAGS += -DPLAIN_HTTP
+endif
 ifdef MEMCHECK
 TESTCMD=valgrind --leak-check=yes $(TARGET)
 else
@@ -40,7 +43,7 @@ kii:
 	cd build-kii && cmake ../../../../kii && make && make DESTDIR=. install
 
 $(TARGET): kii $(SRCS)
-	g++ $(CXXFLAGS) $(SRCS) $(LD_FLAGS) $(INCLUDES) $(LIBS) -o $(TARGET)
+	g++ $(CXXFLAGS) $(SRCS) $(LD_FLAGS) $(INCLUDES) $(LIBS) $(CPPFLAGS) -o $(TARGET)
 
 test: $(TARGET)
 	mkdir -p $(TEST_RESULT_DIR)
