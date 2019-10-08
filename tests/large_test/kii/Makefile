@@ -26,6 +26,12 @@ TEST_RESULT=$(TEST_RESULT_DIR)/test-result.xml
 ifdef PLAIN_HTTP
 	CPPFLAGS += -DPLAIN_HTTP
 endif
+ifdef DEFAULT_SITE
+	CPPFLAGS += -D_DEFAULT_SITE=$(DEFAULT_SITE)
+endif
+ifdef APP_ID
+	CPPFLAGS += -D_APP_ID=$(APP_ID)
+endif
 ifdef MEMCHECK
 TESTCMD=valgrind --leak-check=yes $(TARGET)
 else

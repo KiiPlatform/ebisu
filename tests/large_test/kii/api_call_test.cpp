@@ -30,9 +30,9 @@ TEST_CASE("API call tests")
 
     SECTION("API call") {
         // POST object
-        char path[128];
-        int path_len = snprintf(path, 128, "/api/apps/%s/buckets/test_bucket/objects", kii._app_id);
-        REQUIRE(path_len <= 128);
+        char path[256];
+        int path_len = snprintf(path, 256, "/api/apps/%s/buckets/test_bucket/objects", kii._app_id);
+        REQUIRE(path_len <= 256);
         const char content_type[] = "application/json";
 
         kii_code_t start_res = kii_api_call_start(&kii, "POST", path, content_type, KII_TRUE);
