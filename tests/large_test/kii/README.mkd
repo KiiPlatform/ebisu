@@ -12,3 +12,35 @@ following command.
 ```
 ./testapp
 ```
+
+You can do them once by
+```
+make test
+```
+
+You can tweak the `make test` behavior by environemnt vars:
+
+- JUNIT : if defined, it will generate junit-sylte test report under `test-result` directory.
+
+- MEMCHECK : if defined, run test under valgrind
+
+- PLAIN_HTTP : if defined, use raw HTTP instead of HTTPS, useful for packet capturing.
+
+- APP_ID : specify the app-id used for the test.
+
+- DEFAULT_HOST : specify the API hostname used for the test.
+
+## using non-defualt app
+To run this test against the different app-id, you should preapare the followings,
+
+- create a user with login name `test1` and password `1234`.
+
+- create a app scope topic `test-topic`.
+
+- upload and enable the following server code.
+
+```
+function echo(params, context) {
+  return params.message;
+}
+```
