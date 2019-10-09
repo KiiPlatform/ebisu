@@ -23,24 +23,13 @@ INCLUDES = -I$(LTEST_ROOT_DIR) -I$(TEST_ROOT_DIR) -I$(KII_BUILD_DIR)/usr/local/i
 TEST_RESULT_DIR=test-results/junit
 TEST_RESULT=$(TEST_RESULT_DIR)/test-result.xml
 
-ifdef PLAIN_HTTP
-	CPPFLAGS += -DPLAIN_HTTP
-endif
-ifdef DEFAULT_SITE
-	CPPFLAGS += -D_DEFAULT_SITE=$(DEFAULT_SITE)
-endif
-ifdef APP_ID
-	CPPFLAGS += -D_APP_ID=$(APP_ID)
-endif
-ifdef MEMCHECK
-TESTCMD=valgrind --leak-check=yes $(TARGET)
-else
-TESTCMD=$(TARGET)
-endif
+# only work with GNU make
+CPPFLAGS += $(if $(value PLAIN_HTTP), -DPLAIN_HTTP, )
+CPPFLAGS += $(if $(value DEFAULT_SITE), -D_DEFAULT_SITE=$(DEFAULT_SITE), )
+CPPFLAGS += $(if $(value APP_ID), -D_APP_ID=$(APP_ID), )
 
-ifdef JUNIT
-TESTCMD+= -r junit -o $(TEST_RESULT)
-endif
+TESTCMD = $(if $(value MEMCHECK), valgrind --leak-check=yes $(TARGET), $(TARGET))
+TESTCMD += $(if $(value JUNIT), -r junit -o $(TEST_RESULT), )
 
 all: clean $(TARGET)
 
