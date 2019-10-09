@@ -28,15 +28,13 @@ You can tweak the `make test` behavior by environemnt vars:
 
 - APP_ID : specify the app-id used for the test.
 
-- DEFAULT_HOST : specify the API hostname used for the test.
+- DEFAULT_SITE : specify the API hostname used for the test.
 
 ## using non-defualt app
 
 To run this test against the different app-id, you should preapare the followings,
 
-- create a user with login name `test1` and password `1234`.
-
-- create a app scope topic `test-topic`.
+- create a app scope topic `test_topic`.
 
 - upload and enable the following server code.
 
