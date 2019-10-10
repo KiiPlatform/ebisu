@@ -71,5 +71,5 @@ clean:
 	rm -f *.o
 	rm -rf $(KII_BUILD_DIR)
 
-.PHONY: all clean copy kii
+.PHONY: all clean copy kii initapp
 
