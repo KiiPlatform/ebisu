@@ -45,11 +45,20 @@ test: $(TARGET)
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(KII_BUILD_DIR)/usr/local/lib \
 	$(TESTCMD)
 
+initapp:
+	# get app admin token
+	$(eval ADMIN_TOKEN := $(shell curl -v -X POST -H 'X-Kii-AppID: $(APP_ID)' -H 'X-Kii-AppKey: dummy' -H 'Content-Type: application/json' https://$(DEFAULT_SITE)/api/oauth2/token -d '{"client_id":"$(CLIENT_ID)","client_secret":"$(CLIENT_SECRET)"}' | jq -r .access_token))
+	# create app scope topic
+	curl -v -X PUT -H 'X-Kii-AppID: $(APP_ID)' -H 'X-Kii-AppKey: dummy' -H 'Authorization: Bearer $(ADMIN_TOKEN)' https://$(DEFAULT_SITE)/api/apps/$(APP_ID)/topics/test_topic
+	# deploy server code
+	$(eval CODE_VERSION := $(shell curl -v -X POST -H 'X-Kii-AppID: $(APP_ID)' -H 'X-Kii-AppKey: dummy' -H 'Authorization: Bearer $(ADMIN_TOKEN)' -H 'Content-Type: application/javascript' https://$(DEFAULT_SITE)/api/apps/$(APP_ID)/server-code -d 'function echo(params, context) { return params.message; }' | jq -r .versionID))
+	curl -v -X PUT -H 'X-Kii-AppID: $(APP_ID)' -H 'X-Kii-AppKey: dummy' -H 'Authorization: Bearer $(ADMIN_TOKEN)' -H 'Content-Type: text/plain' https://$(DEFAULT_SITE)/api/apps/$(APP_ID)/server-code/versions/current -d '$(CODE_VERSION)'
+
 clean:
 	touch $(TARGET)
 	rm $(TARGET)
 	rm -f *.o
 	rm -rf $(KII_BUILD_DIR)
 
-.PHONY: all clean copy kii
+.PHONY: all clean copy kii initapp
 
