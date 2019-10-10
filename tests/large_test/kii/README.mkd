@@ -30,6 +30,8 @@ You can tweak the `make test` behavior by environemnt vars:
 
 - DEFAULT_SITE : specify the API hostname used for the test.
 
+- SOCKET_LOG : if defined, output send/recv buffer to stdout. (this will break your console when send/recv binary data.)
+
 ## using non-defualt app
 
 To run this test against the different app-id, you should preapare the followings,

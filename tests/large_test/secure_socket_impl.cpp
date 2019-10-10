@@ -104,6 +104,14 @@ khc_sock_code_t
     int ret = SSL_write(ctx->ssl, buffer, length);
     if (ret > 0) {
         *out_sent_length = ret;
+
+#ifdef SOCKET_LOG
+        char b[ret + 1];
+        memcpy(b, buffer, ret);
+        b[ret] = '\0';
+        printf("%s", b);
+#endif
+
         return KHC_SOCK_OK;
     } else {
         printf("failed to send\n");
@@ -122,6 +130,14 @@ khc_sock_code_t
     int ret = SSL_read(ctx->ssl, buffer, length_to_read);
     if (ret > 0) {
         *out_actual_length = ret;
+
+#ifdef SOCKET_LOG
+        char b[ret + 1];
+        memcpy(b, buffer, ret);
+        b[ret] = '\0';
+        printf("%s", b);
+#endif
+
         return KHC_SOCK_OK;
     } else if (ret == 0) {
         int ssl_error = SSL_get_error(ctx->ssl, ret);
@@ -165,6 +181,11 @@ khc_sock_code_t
     close(ctx->socket);
     SSL_free(ctx->ssl);
     SSL_CTX_free(ctx->ssl_ctx);
+
+#ifdef SOCKET_LOG
+    printf("\n----------------------------------------------------------------------------------------------------\n\n\n");
+#endif
+
     if (ret != 1) {
         printf("failed to close:\n");
         return KHC_SOCK_FAIL;
@@ -219,6 +240,14 @@ khc_sock_code_t
     int ret = send(ctx->socket, buffer, length, 0);
     if (ret > 0) {
         *out_sent_length = ret;
+
+#ifdef SOCKET_LOG
+        char b[ret + 1];
+        memcpy(b, buffer, ret);
+        b[ret] = '\0';
+        printf("%s", b);
+#endif
+
         return KHC_SOCK_OK;
     } else {
         printf("failed to send\n");
@@ -237,6 +266,14 @@ khc_sock_code_t
     int ret = recv(ctx->socket, buffer, length_to_read, 0);
     if (ret > 0) {
         *out_actual_length = ret;
+
+#ifdef SOCKET_LOG
+        char b[ret + 1];
+        memcpy(b, buffer, ret);
+        b[ret] = '\0';
+        printf("%s", b);
+#endif
+
         return KHC_SOCK_OK;
     } else if (ret == 0) {
       return KHC_SOCK_OK;
@@ -252,6 +289,11 @@ khc_sock_code_t
     shutdown(ctx->socket, SHUT_RDWR);
     // ignore close errors
     close(ctx->socket);
+
+#ifdef SOCKET_LOG
+    printf("\n----------------------------------------------------------------------------------------------------\n\n\n");
+#endif
+
     return KHC_SOCK_OK;
 }
 
