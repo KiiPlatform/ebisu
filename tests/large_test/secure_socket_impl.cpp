@@ -106,10 +106,7 @@ khc_sock_code_t
         *out_sent_length = ret;
 
 #ifdef SOCKET_LOG
-        char b[ret + 1];
-        memcpy(b, buffer, ret);
-        b[ret] = '\0';
-        printf("%s", b);
+        printf("%.*s", ret, buffer);
 #endif
 
         return KHC_SOCK_OK;
@@ -132,10 +129,7 @@ khc_sock_code_t
         *out_actual_length = ret;
 
 #ifdef SOCKET_LOG
-        char b[ret + 1];
-        memcpy(b, buffer, ret);
-        b[ret] = '\0';
-        printf("%s", b);
+        printf("%.*s", ret, buffer);
 #endif
 
         return KHC_SOCK_OK;
@@ -242,10 +236,7 @@ khc_sock_code_t
         *out_sent_length = ret;
 
 #ifdef SOCKET_LOG
-        char b[ret + 1];
-        memcpy(b, buffer, ret);
-        b[ret] = '\0';
-        printf("%s", b);
+        printf("%.*s", ret, buffer);
 #endif
 
         return KHC_SOCK_OK;
@@ -268,10 +259,7 @@ khc_sock_code_t
         *out_actual_length = ret;
 
 #ifdef SOCKET_LOG
-        char b[ret + 1];
-        memcpy(b, buffer, ret);
-        b[ret] = '\0';
-        printf("%s", b);
+        printf("%.*s", ret, buffer);
 #endif
 
         return KHC_SOCK_OK;
