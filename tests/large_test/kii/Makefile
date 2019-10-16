@@ -27,6 +27,7 @@ TEST_RESULT=$(TEST_RESULT_DIR)/test-result.xml
 CPPFLAGS += $(if $(value PLAIN_HTTP), -DPLAIN_HTTP, )
 CPPFLAGS += $(if $(value DEFAULT_SITE), -D_DEFAULT_SITE=$(DEFAULT_SITE), )
 CPPFLAGS += $(if $(value APP_ID), -D_APP_ID=$(APP_ID), )
+CPPFLAGS += $(if $(value SOCKET_LOG), -DSOCKET_LOG, )
 
 TESTCMD = $(if $(value MEMCHECK), valgrind --leak-check=yes $(TARGET), $(TARGET))
 TESTCMD += $(if $(value JUNIT), -r junit -o $(TEST_RESULT), )
