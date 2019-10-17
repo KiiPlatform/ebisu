@@ -122,4 +122,94 @@ TEST_CASE("TI Tests")
         REQUIRE( res == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 204 );
     }
+
+    SECTION("Put bulk states")
+    {
+        std::ostringstream oss;
+        oss << "ltest_vid_" << std::time(NULL);
+        std::string vid = oss.str();
+        const char password[] = "1234";
+        const char thing_type[] = "ltest_thing_type";
+        const char firmware_version[] = "ltest_firmware_version";
+        kii_code_t res = kii_ti_onboard(&kii, vid.c_str(), password, thing_type, firmware_version, NULL, NULL);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+        REQUIRE( std::string(kii._author.author_id).length() > 0 );
+        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+
+        std::string body = "{\"states\":[{\"generatedAt\":1571210643993,\"payload\":{\"ltest_trait_alias\":{\"string_field\":\"value\"}}}]}";
+        std::istringstream iss(body);
+        std::function<size_t(char *buffer, size_t size, void *userdata)>
+            on_read = [=, &iss](char *buffer, size_t size, void *userdata)
+            {
+                return iss.read(buffer, size).gcount();
+            };
+        kiiltest::RWFunc ctx;
+        ctx.on_read = on_read;
+        res = kii_ti_put_bulk_states(&kii, kiiltest::read_cb, &ctx, NULL, NULL, NULL);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 204 );
+    }
+
+    SECTION("Patch state")
+    {
+        std::ostringstream oss;
+        oss << "ltest_vid_" << std::time(NULL);
+        std::string vid = oss.str();
+        const char password[] = "1234";
+        const char thing_type[] = "ltest_thing_type";
+        const char firmware_version[] = "ltest_firmware_version";
+        kii_code_t res = kii_ti_onboard(&kii, vid.c_str(), password, thing_type, firmware_version, NULL, NULL);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+        REQUIRE( std::string(kii._author.author_id).length() > 0 );
+        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+
+        std::string body = "{\"ltest_trait_alias\":{\"string_field\":\"value\"}}";
+        std::istringstream iss(body);
+        std::function<size_t(char *buffer, size_t size, void *userdata)>
+            on_read = [=, &iss](char *buffer, size_t size, void *userdata)
+            {
+                return iss.read(buffer, size).gcount();
+            };
+        kiiltest::RWFunc ctx;
+        ctx.on_read = on_read;
+        res = kii_ti_patch_state(&kii, kiiltest::read_cb, &ctx, NULL, NULL, NULL);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 204 );
+    }
+
+    SECTION("Patch bulk states")
+    {
+        std::ostringstream oss;
+        oss << "ltest_vid_" << std::time(NULL);
+        std::string vid = oss.str();
+        const char password[] = "1234";
+        const char thing_type[] = "ltest_thing_type";
+        const char firmware_version[] = "ltest_firmware_version";
+        kii_code_t res = kii_ti_onboard(&kii, vid.c_str(), password, thing_type, firmware_version, NULL, NULL);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+        REQUIRE( std::string(kii._author.author_id).length() > 0 );
+        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+
+        std::string body = "{\"states\":[{\"generatedAt\":1571210643993,\"payload\":{\"ltest_trait_alias\":{\"string_field\":\"value\"}}}]}";
+        std::istringstream iss(body);
+        std::function<size_t(char *buffer, size_t size, void *userdata)>
+            on_read = [=, &iss](char *buffer, size_t size, void *userdata)
+            {
+                return iss.read(buffer, size).gcount();
+            };
+        kiiltest::RWFunc ctx;
+        ctx.on_read = on_read;
+        res = kii_ti_patch_bulk_states(&kii, kiiltest::read_cb, &ctx, NULL, NULL, NULL);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 204 );
+    }
 }

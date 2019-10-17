@@ -54,6 +54,12 @@ initapp:
 	# deploy server code
 	$(eval CODE_VERSION := $(shell curl -v -X POST -H 'X-Kii-AppID: $(APP_ID)' -H 'X-Kii-AppKey: dummy' -H 'Authorization: Bearer $(ADMIN_TOKEN)' -H 'Content-Type: application/javascript' https://$(DEFAULT_SITE)/api/apps/$(APP_ID)/server-code -d 'function echo(params, context) { return params.message; }' | jq -r .versionID))
 	curl -v -X PUT -H 'X-Kii-AppID: $(APP_ID)' -H 'X-Kii-AppKey: dummy' -H 'Authorization: Bearer $(ADMIN_TOKEN)' -H 'Content-Type: text/plain' https://$(DEFAULT_SITE)/api/apps/$(APP_ID)/server-code/versions/current -d '$(CODE_VERSION)'
+	# create thing type and firmware version
+	curl -v -X PUT -H 'X-Kii-AppID: $(APP_ID)' -H 'X-Kii-AppKey: dummy' -H 'Authorization: Bearer $(ADMIN_TOKEN)' -H 'Content-Type: application/vnd.kii.ThingTypeConfigurationRequest+json' https://$(DEFAULT_SITE)/api/apps/$(APP_ID)/configuration/thing-types/ltest_thing_type -d '{"verificationCodeFlowStartedByUser":true,"simpleFlow":true,"verificationCodeFlowStartedByThing":true,"verificationCodeTimeout":172800,"verificationCodeLength":9}'
+	curl -v -X PUT -H 'X-Kii-AppID: $(APP_ID)' -H 'X-Kii-AppKey: dummy' -H 'Authorization: Bearer $(ADMIN_TOKEN)' -H 'Content-Type: text/plain' https://$(DEFAULT_SITE)/api/apps/$(APP_ID)/configuration/thing-types/ltest_thing_type/firmware-versions/ltest_firmware_version
+	# create trait and trait alias
+	curl -v -X POST -H 'X-Kii-AppID: $(APP_ID)' -H 'X-Kii-AppKey: dummy' -H 'Authorization: Bearer $(ADMIN_TOKEN)' -H 'Content-Type: application/vnd.kii.TraitCreationRequest+json' https://$(DEFAULT_SITE)/thing-if/apps/$(APP_ID)/traits/ltest_trait/versions -d '{"dataGroupingInterval":"15_MINUTES","actions":[],"states":[{"string_field":{"description":"","payloadSchema":{"type":"string"}}}]}'
+	curl -v -X PUT -H 'X-Kii-AppID: $(APP_ID)' -H 'X-Kii-AppKey: dummy' -H 'Authorization: Bearer $(ADMIN_TOKEN)' -H 'Content-Type: application/vnd.kii.TraitAliasCreationRequest+json' https://$(DEFAULT_SITE)/thing-if/apps/$(APP_ID)/configuration/thing-types/ltest_thing_type/firmware-versions/ltest_firmware_version/aliases/ltest_trait_alias -d '{"traitVersion":"1","trait":"ltest_trait"}'
 
 clean:
 	touch $(TARGET)
@@ -62,4 +68,3 @@ clean:
 	rm -rf $(KII_BUILD_DIR)
 
 .PHONY: all clean copy kii initapp
-
