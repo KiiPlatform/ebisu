@@ -178,7 +178,7 @@ kii_code_t _onboard(
         content_len += snprintf(
                 &kii->_rw_buff[content_len],
                 kii->_rw_buff_size - content_len,
-                ",\"thingProperties\":\"%s\"",
+                ",\"thingProperties\":%s",
                 esc);
         if (content_len >= kii->_rw_buff_size) {
             _req_headers_free_all(kii);
