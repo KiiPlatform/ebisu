@@ -628,17 +628,6 @@ kii_code_t kii_ti_get_firmware_version(
         kii_ti_firmware_version_t* version);
 
 /**
- * \brief Put thing type.
- *
- * \param [in, out] kii kii_t instance.
- * \param [in] thing_type String represents thing type.
- * \return kii_code_t
- */
-kii_code_t kii_ti_put_thing_type(
-        kii_t* kii,
-        const char* thing_type);
-
-/**
  * \brief Put thing state.
  *
  * \param [in, out] kii kii_t instance.
