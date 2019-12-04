@@ -41,6 +41,13 @@ kii_code_t kii_api_call_start(
             return res;
         }
     }
+    if (kii->_use_m_0_header == KII_TRUE) {
+        res = _set_m_0_header(kii);
+        if (res != KII_ERR_OK) {
+            _req_headers_free_all(kii);
+            return res;
+        }
+    }
     return res;
 }
 

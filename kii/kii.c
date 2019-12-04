@@ -70,6 +70,7 @@ void kii_init(kii_t* kii)
     kii->_cb_delay_ms = NULL;
     kii->_delay_ms_data = NULL;
     kii->_insecure_mqtt = KII_FALSE;
+    kii->_use_m_0_header = KII_FALSE;
 }
 
 void kii_set_site(
@@ -249,6 +250,10 @@ int kii_get_resp_status(kii_t* kii) {
 
 size_t kii_get_resp_body_length(kii_t* kii) {
     return kii->_rw_buff_written;
+}
+
+void kii_set_use_m_0_header_flag(kii_t* kii, kii_bool_t flag) {
+    kii->_use_m_0_header = flag;
 }
 
 kii_code_t _convert_code(khc_code khc_c) {

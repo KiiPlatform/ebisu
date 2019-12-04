@@ -44,6 +44,13 @@ static kii_code_t _execute_server_code(
         _req_headers_free_all(kii);
         return res;
     }
+    if (kii->_use_m_0_header == KII_TRUE) {
+        res = _set_m_0_header(kii);
+        if (res != KII_ERR_OK) {
+            _req_headers_free_all(kii);
+            return res;
+        }
+    }
     // Request body
     res = _set_req_body(kii, params);
     if (res != KII_ERR_OK) {

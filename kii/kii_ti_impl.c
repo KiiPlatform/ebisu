@@ -28,6 +28,13 @@ kii_code_t _get_anonymous_token(
         _req_headers_free_all(kii);
         return ret;
     }
+    if (kii->_use_m_0_header == KII_TRUE) {
+        ret = _set_m_0_header(kii);
+        if (ret != KII_ERR_OK) {
+            _req_headers_free_all(kii);
+            return ret;
+        }
+    }
     // Request body.
     int content_len = snprintf(
             kii->_rw_buff,
@@ -111,6 +118,13 @@ kii_code_t _onboard(
     if (ret != KII_ERR_OK) {
         _req_headers_free_all(kii);
         return ret;
+    }
+    if (kii->_use_m_0_header == KII_TRUE) {
+        ret = _set_m_0_header(kii);
+        if (ret != KII_ERR_OK) {
+            _req_headers_free_all(kii);
+            return ret;
+        }
     }
 
     // Request body.
@@ -267,6 +281,13 @@ kii_code_t _put_firmware_version(
         _req_headers_free_all(kii);
         return ret;
     }
+    if (kii->_use_m_0_header == KII_TRUE) {
+        ret = _set_m_0_header(kii);
+        if (ret != KII_ERR_OK) {
+            _req_headers_free_all(kii);
+            return ret;
+        }
+    }
 
     // Request body.
     int content_len = snprintf(
@@ -319,6 +340,13 @@ kii_code_t _get_firmware_version(
     if (ret != KII_ERR_OK) {
         _req_headers_free_all(kii);
         return ret;
+    }
+    if (kii->_use_m_0_header == KII_TRUE) {
+        ret = _set_m_0_header(kii);
+        if (ret != KII_ERR_OK) {
+            _req_headers_free_all(kii);
+            return ret;
+        }
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
@@ -399,6 +427,13 @@ kii_code_t _upload_state(
     }
     if (opt_content_encoding != NULL) {
         ret = _set_content_encoding(kii, opt_content_encoding);
+        if (ret != KII_ERR_OK) {
+            _req_headers_free_all(kii);
+            return ret;
+        }
+    }
+    if (kii->_use_m_0_header == KII_TRUE) {
+        ret = _set_m_0_header(kii);
         if (ret != KII_ERR_OK) {
             _req_headers_free_all(kii);
             return ret;

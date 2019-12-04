@@ -341,3 +341,21 @@ kii_code_t _set_req_body(kii_t* kii, const char* body_contents)
     kii->_rw_buff_req_size = content_len;
     return KII_ERR_OK;
 }
+
+kii_code_t _set_m_0_header(kii_t* kii)
+{
+    int header_len = snprintf(
+            kii->_rw_buff,
+            kii->_rw_buff_size,
+            "kii-m: 0");
+    if (header_len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    khc_slist* list = khc_slist_append_using_cb_alloc(kii->_req_headers, kii->_rw_buff, header_len, kii->_cb_slist_alloc, kii->_slist_alloc_data);;
+    if (list == NULL) {
+        return KII_ERR_ALLOCATION;
+    }
+    kii->_req_headers = list;
+    return KII_ERR_OK;
+}
+
