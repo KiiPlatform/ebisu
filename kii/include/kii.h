@@ -230,6 +230,7 @@ typedef struct kii_t {
     void* _slist_free_data; /**< \private */
 
     kii_bool_t _insecure_mqtt; /**< \private */
+    kii_bool_t _use_m_0_header; /**< \private */
 } kii_t;
 
 /**
@@ -1130,6 +1131,8 @@ int kii_get_resp_status(kii_t* kii);
  * \return Length of response body.
  */
 size_t kii_get_resp_body_length(kii_t* kii);
+
+void kii_set_use_m_0_header_flag(kii_t* kii, kii_bool_t flag);
 
 /**
  * \brief Represents MQTT task state

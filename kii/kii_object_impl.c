@@ -38,6 +38,13 @@ kii_code_t _post_object(
         _req_headers_free_all(kii);
         return ret;
     }
+    if (kii->_use_m_0_header == KII_TRUE) {
+        ret = _set_m_0_header(kii);
+        if (ret != KII_ERR_OK) {
+            _req_headers_free_all(kii);
+            return ret;
+        }
+    }
 
     // Request body
     ret = _set_req_body(kii, object_data);
@@ -95,6 +102,13 @@ kii_code_t _put_object(
         _req_headers_free_all(kii);
         return ret;
     }
+    if (kii->_use_m_0_header == KII_TRUE) {
+        ret = _set_m_0_header(kii);
+        if (ret != KII_ERR_OK) {
+            _req_headers_free_all(kii);
+            return ret;
+        }
+    }
 
     ret = _set_req_body(kii, object_data);
     if (ret != KII_ERR_OK) {
@@ -145,6 +159,13 @@ kii_code_t _patch_object(
         _req_headers_free_all(kii);
         return ret;
     }
+    if (kii->_use_m_0_header == KII_TRUE) {
+        ret = _set_m_0_header(kii);
+        if (ret != KII_ERR_OK) {
+            _req_headers_free_all(kii);
+            return ret;
+        }
+    }
 
     ret = _set_req_body(kii, patch_data);
     if (ret != KII_ERR_OK) {
@@ -188,6 +209,13 @@ kii_code_t _delete_object(
         _req_headers_free_all(kii);
         return ret;
     }
+    if (kii->_use_m_0_header == KII_TRUE) {
+        ret = _set_m_0_header(kii);
+        if (ret != KII_ERR_OK) {
+            _req_headers_free_all(kii);
+            return ret;
+        }
+    }
     ret = _set_req_body(kii, "");
     if (ret != KII_ERR_OK) {
         _req_headers_free_all(kii);
@@ -229,6 +257,13 @@ kii_code_t _get_object(
     if (ret != KII_ERR_OK) {
         _req_headers_free_all(kii);
         return ret;
+    }
+    if (kii->_use_m_0_header == KII_TRUE) {
+        ret = _set_m_0_header(kii);
+        if (ret != KII_ERR_OK) {
+            _req_headers_free_all(kii);
+            return ret;
+        }
     }
     ret = _set_req_body(kii, "");
     if (ret != KII_ERR_OK) {
@@ -278,6 +313,13 @@ kii_code_t _upload_body(
         _req_headers_free_all(kii);
         return ret;
     }
+    if (kii->_use_m_0_header == KII_TRUE) {
+        ret = _set_m_0_header(kii);
+        if (ret != KII_ERR_OK) {
+            _req_headers_free_all(kii);
+            return ret;
+        }
+    }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_code res = khc_perform(&kii->_khc);
@@ -313,6 +355,13 @@ kii_code_t _download_body(
     if (ret != KII_ERR_OK) {
         _req_headers_free_all(kii);
         return ret;
+    }
+    if (kii->_use_m_0_header == KII_TRUE) {
+        ret = _set_m_0_header(kii);
+        if (ret != KII_ERR_OK) {
+            _req_headers_free_all(kii);
+            return ret;
+        }
     }
     ret = _set_req_body(kii, "");
     if (ret != KII_ERR_OK) {

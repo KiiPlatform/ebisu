@@ -34,6 +34,13 @@ kii_code_t _thing_auth(
         _req_headers_free_all(kii);
         return res;
     }
+    if (kii->_use_m_0_header == KII_TRUE) {
+        res = _set_m_0_header(kii);
+        if (res != KII_ERR_OK) {
+            _req_headers_free_all(kii);
+            return res;
+        }
+    }
     // Request body.
     char esc_vid[strlen(vendor_thing_id) * 2 + 1];
     char esc_pass[strlen(password) * 2 + 1];
@@ -88,6 +95,13 @@ kii_code_t _thing_register(
     if (res != KII_ERR_OK) {
         _req_headers_free_all(kii);
         return res;
+    }
+    if (kii->_use_m_0_header == KII_TRUE) {
+        res = _set_m_0_header(kii);
+        if (res != KII_ERR_OK) {
+            _req_headers_free_all(kii);
+            return res;
+        }
     }
 
     // Request body.

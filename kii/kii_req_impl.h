@@ -54,4 +54,6 @@ kii_code_t _set_if_match(kii_t* kii, const char* etag);
 
 kii_code_t _set_req_body(kii_t* kii, const char* body_contents);
 
+kii_code_t _set_m_0_header(kii_t* kii);
+
 #endif
