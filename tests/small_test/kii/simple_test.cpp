@@ -49,9 +49,9 @@ TEST_CASE( "Simple test" ) {
 
     SECTION("kii_set_use_m_0 test") {
         REQUIRE(kii._use_m_0_header == KII_FALSE);
-        kii_set_use_m0_header_flag(&kii, KII_TRUE);
+        kii_set_use_m_0_header_flag(&kii, KII_TRUE);
         REQUIRE(kii._use_m_0_header == KII_TRUE);
-        kii_set_use_m0_header_flag(&kii, KII_FALSE);
+        kii_set_use_m_0_header_flag(&kii, KII_FALSE);
         REQUIRE(kii._use_m_0_header == KII_FALSE);
     }
 }
