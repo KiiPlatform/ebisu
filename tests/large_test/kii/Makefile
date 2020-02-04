@@ -60,6 +60,8 @@ initapp:
 	# create trait and trait alias
 	curl -v -X POST -H 'X-Kii-AppID: $(APP_ID)' -H 'X-Kii-AppKey: dummy' -H 'Authorization: Bearer $(ADMIN_TOKEN)' -H 'Content-Type: application/vnd.kii.TraitCreationRequest+json' https://$(DEFAULT_SITE)/thing-if/apps/$(APP_ID)/traits/ltest_trait/versions -d '{"dataGroupingInterval":"15_MINUTES","actions":[],"states":[{"string_field":{"description":"","payloadSchema":{"type":"string"}}}]}'
 	curl -v -X PUT -H 'X-Kii-AppID: $(APP_ID)' -H 'X-Kii-AppKey: dummy' -H 'Authorization: Bearer $(ADMIN_TOKEN)' -H 'Content-Type: application/vnd.kii.TraitAliasCreationRequest+json' https://$(DEFAULT_SITE)/thing-if/apps/$(APP_ID)/configuration/thing-types/ltest_thing_type/firmware-versions/ltest_firmware_version/aliases/ltest_trait_alias -d '{"traitVersion":"1","trait":"ltest_trait"}'
+	# modify app settings '{"maxLoginAttempts":2,"loginLockPeriodSeconds":3}'
+	curl -v -X PATCH -H 'X-Kii-AppID: $(APP_ID)' -H 'X-Kii-AppKey: dummy' -H 'Authorization: Bearer $(ADMIN_TOKEN)' -H 'Content-Type: application/vnd.kii.AppConfigParamsModificationRequest+json' https://$(DEFAULT_SITE)/api/apps/$(APP_ID)/configuration/parameters -d '{"maxLoginAttempts":2,"loginLockPeriodSeconds":3}'
 
 clean:
 	touch $(TARGET)
