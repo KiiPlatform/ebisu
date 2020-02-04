@@ -3,12 +3,14 @@
 #include <stdlib.h>
 #include <chrono>
 #include <thread>
+#include <unistd.h>
 
 #include <kii.h>
 #include <jkii.h>
 #include "secure_socket_impl.h"
 #include "catch.hpp"
 #include "large_test.h"
+#include "picojson.h"
 
 TEST_CASE("Thing tests")
 {
@@ -36,6 +38,7 @@ TEST_CASE("Thing tests")
         REQUIRE( std::string(kii._author.author_id).length() > 0 );
         REQUIRE( std::string(kii._author.access_token).length() > 0 );
     }
+
     SECTION("Thing register") {
         kii_code_t ret = KII_ERR_FAIL;
         std::string vid_base("thing2-");
@@ -47,6 +50,61 @@ TEST_CASE("Thing tests")
 
         REQUIRE( ret == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 201 );
+        REQUIRE( std::string(kii._author.author_id).length() > 0 );
+        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+    }
+
+    SECTION("Thing auth with lock/unlock") {
+        // see Makefile '{"maxLoginAttempts":2,"loginLockPeriodSeconds":3}'
+
+        kii_code_t ret = KII_ERR_FAIL;
+        std::string vid_base("thing3-");
+        std::string id = std::to_string(kiiltest::current_time());
+        std::string vid = vid_base + id;
+        const char thing_type[] = "ltest-thing";
+        const char password[] = "1234";
+        const char wrong_password[] = "5678";
+
+        // register new thing
+        ret = kii_register_thing(&kii, vid.c_str(), thing_type, password);
+
+        REQUIRE( ret == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 201 );
+        REQUIRE( std::string(kii._author.author_id).length() > 0 );
+        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+
+        // try to auth with wrong password
+        for (int i = 0; i < 2; i++) {
+            ret = kii_auth_thing(&kii, vid.c_str(), wrong_password);
+
+            REQUIRE( ret == KII_ERR_RESP_STATUS );
+            REQUIRE( khc_get_status_code(&kii._khc) == 400 );
+        }
+
+        // try to auth with valid password (but failed)
+        ret = kii_auth_thing(&kii, vid.c_str(), password);
+
+        REQUIRE( ret == KII_ERR_RESP_STATUS );
+        REQUIRE( khc_get_status_code(&kii._khc) == 400 );
+
+        // check error description
+        picojson::value v;
+        auto err_str = picojson::parse(v, buff);
+        REQUIRE ( err_str.empty() );
+        REQUIRE ( v.is<picojson::object>() );
+        picojson::object obj = v.get<picojson::object>();
+        auto desc = obj.at("error_description");
+        REQUIRE ( desc.is<std::string>() );
+        REQUIRE ( desc.get<std::string>() == std::string("The login name is locked") );
+
+        // wait for unlock
+        sleep(3 + 1);
+
+        // check unlocked
+        ret = kii_auth_thing(&kii, vid.c_str(), password);
+
+        REQUIRE( ret == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 200 );
         REQUIRE( std::string(kii._author.author_id).length() > 0 );
         REQUIRE( std::string(kii._author.access_token).length() > 0 );
     }
