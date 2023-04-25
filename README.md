@@ -56,3 +56,18 @@ For more details, please refer to [./jkii/README.md](./jkii/README.md)
 ## API references
 
 Details of API are available in [API references](https://kiiplatform.github.io/ebisu-doc).
+
+## Build notes
+
+### macOS
+Under macOS ventura, this project can be built by:
+ - Installing OpenSSL
+```
+$ brew install openssl@1.1
+```
+ - Allowing the compiler and linker to find OpenSSL
+```
+export LDFLAGS="-L/opt/homebrew/opt/openssl@1.1/lib"
+export CPPFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
+export LIBRARY_PATH="$LIBRARY_PATH:/opt/homebrew/opt/openssl@1.1/lib"
+```
