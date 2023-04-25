@@ -35,6 +35,7 @@ $(TARGET): jkii
 
 test: $(TARGET)
 	mkdir -p $(TEST_RESULT_DIR)
+	DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(JKII_BUILD_DIR)/usr/local/lib \
 	LD_LIBRARY_PATH=$(JKII_BUILD_DIR)/usr/local/lib $(TESTCMD)
 
 clean:
