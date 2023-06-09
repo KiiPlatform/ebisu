@@ -83,6 +83,7 @@ TEST_CASE( "HTTP Post" ) {
     io_ctx.on_write = [=, &on_write_called, &oss](char *buffer, size_t size, void *userdata) {
         ++on_write_called;
         oss.write(buffer, size);
+        // printf("ON_WRITE %s", buffer);
         return size;
     };
 
