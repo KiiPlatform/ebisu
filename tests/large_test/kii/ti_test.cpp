@@ -3,6 +3,7 @@
 #include <cstring>
 #include <chrono>
 #include <thread>
+#include <ctime>
 #include <sstream>
 #include <functional>
 
@@ -128,6 +129,7 @@ TEST_CASE("TI Tests")
         std::ostringstream oss;
         oss << "ltest_vid_" << std::time(NULL);
         std::string vid = oss.str();
+        std::time_t t = std::time(NULL);
         const char password[] = "1234";
         const char thing_type[] = "ltest_thing_type";
         const char firmware_version[] = "ltest_firmware_version";
@@ -138,7 +140,7 @@ TEST_CASE("TI Tests")
         REQUIRE( std::string(kii._author.author_id).length() > 0 );
         REQUIRE( std::string(kii._author.access_token).length() > 0 );
 
-        std::string body = "{\"states\":[{\"generatedAt\":1571210643993,\"payload\":{\"ltest_trait_alias\":{\"string_field\":\"value\"}}}]}";
+        std::string body = "{\"states\":[{\"generatedAt\":" + std::to_string(t) + "000,\"payload\":{\"ltest_trait_alias\":{\"string_field\":\"value\"}}}]}";
         std::istringstream iss(body);
         std::function<size_t(char *buffer, size_t size, void *userdata)>
             on_read = [=, &iss](char *buffer, size_t size, void *userdata)
@@ -188,6 +190,8 @@ TEST_CASE("TI Tests")
         std::ostringstream oss;
         oss << "ltest_vid_" << std::time(NULL);
         std::string vid = oss.str();
+        std::time_t t = std::time(NULL);
+
         const char password[] = "1234";
         const char thing_type[] = "ltest_thing_type";
         const char firmware_version[] = "ltest_firmware_version";
@@ -198,7 +202,7 @@ TEST_CASE("TI Tests")
         REQUIRE( std::string(kii._author.author_id).length() > 0 );
         REQUIRE( std::string(kii._author.access_token).length() > 0 );
 
-        std::string body = "{\"states\":[{\"generatedAt\":1571210643993,\"payload\":{\"ltest_trait_alias\":{\"string_field\":\"value\"}}}]}";
+        std::string body = "{\"states\":[{\"generatedAt\":" + std::to_string(t) + "000,\"payload\":{\"ltest_trait_alias\":{\"string_field\":\"value\"}}}]}";
         std::istringstream iss(body);
         std::function<size_t(char *buffer, size_t size, void *userdata)>
             on_read = [=, &iss](char *buffer, size_t size, void *userdata)
