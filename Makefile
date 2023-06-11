@@ -40,6 +40,6 @@ clean:
 	rm -rf ./tests/large_test/khc/build-khc
 	rm -f ./tests/large_test/khc/large-test
 	rm -rf ./tests/large_test/kii/build-kii
-	rm -f tests/large_test/kii/testapp
+	rm -f ./tests/large_test/kii/testapp
 
 .PHONY: build doc stest-khc stest-kii stest-tio stest-jkii stest ltest-khc ltest-kii ltest clean
