@@ -12,8 +12,8 @@ const char DEFAULT_SITE[] = "api-jp.kii.com";
 const char DEFAULT_SITE[] = XSTR(_DEFAULT_SITE);
 #endif
 #ifndef _APP_ID
-// APP Owner: satoshi.kumano@kii.com
-const char APP_ID[] = "b6t9ai81zb3s";
+#error APP_ID needs to be defined
+const char APP_ID[] = "UNDEFINED";
 #else
 const char APP_ID[] = XSTR(_APP_ID);
 #endif
