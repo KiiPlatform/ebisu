@@ -28,4 +28,18 @@ ltest: ltest-khc ltest-kii
 
 test: stest ltest
 
-.PHONY: build doc stest-khc stest-kii stest-tio stest-jkii stest ltest-khc ltest-kii ltest
+clean:
+	rm -rf ./tests/small_test/khc/build-khc
+	rm -f ./tests/small_test/khc/testapp
+	rm -rf ./tests/small_test/kii/build-kii
+	rm -f ./tests/small_test/kii/small-test
+	rm -rf ./tests/small_test/tio/build-tio
+	rm -f ./tests/small_test/tio/small-test
+	rm -rf ./tests/small_test/jkii/build-jkii
+	rm -f ./tests/small_test/jkii/testapp
+	rm -rf ./tests/large_test/khc/build-khc
+	rm -f ./tests/large_test/khc/large-test
+	rm -rf ./tests/large_test/kii/build-kii
+	rm -f tests/large_test/kii/testapp
+
+.PHONY: build doc stest-khc stest-kii stest-tio stest-jkii stest ltest-khc ltest-kii ltest clean
