@@ -3,6 +3,13 @@ on:
   workflow_dispatch:
   push:
 
+env:
+  APP_ID: ${{ secrets.APP_ID }}
+  APP_KEY: ${{ secrets.APP_KEY }}
+  CLIENT_ID: ${{ secrets.CLIENT_ID }}
+  CLIENT_SECRET: ${{ secrets.SECRET }}
+  DEFAULT_SITE: ${{ secrets.DEFAULT_SITE }}
+
 jobs:
   build:
     permissions:
@@ -11,6 +18,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
