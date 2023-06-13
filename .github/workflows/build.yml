@@ -16,7 +16,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup build env
-        run: apt-get -yq install g++ doxygen cmake libssl-dev git valgrind rsync
+        run: sudo apt-get -yq install g++ doxygen cmake libssl-dev git valgrind rsync
       - name: build
         run: make build
       - name: test
