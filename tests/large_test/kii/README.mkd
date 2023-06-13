@@ -6,7 +6,7 @@ Test application can be built by following command:
 make
 ```
 
-After aht, you can get `testapp`. You can execute this `testapp` by
+After that, you can get `testapp`. You can execute this `testapp` by
 following command.
 
 ```
@@ -32,7 +32,7 @@ You can tweak the `make test` behavior by environemnt vars:
 
 - SOCKET_LOG : if defined, output send/recv buffer to stdout. (this will break your console when send/recv binary data.)
 
-## using non-defualt app
+## using non-default app
 
 To run this test against the different app-id, you should preapare the followings,
 
@@ -54,3 +54,5 @@ CLIENT_ID="${CLIENT_ID}" \
 CLIENT_SECRET="${CLIENT_SECRET}" \
 make initapp
 ```
+
+Also you need to ensure that app has server-code enabled.
