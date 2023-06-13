@@ -13,7 +13,7 @@ env:
 jobs:
   build:
     permissions:
-      contents: read
+      contents: write
       pages: write
       id-token: write
       checks: write
@@ -54,8 +54,6 @@ jobs:
           rsync -rR --delete tio/html ebisu-doc
       - name: Deploy docs to GitHub pages
         uses: peaceiris/actions-gh-pages@v3
-        permissions:
-          contents: write
         with:
           publish_dir: ebisu-doc
           publish_branch: gh-pages
