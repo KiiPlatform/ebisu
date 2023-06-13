@@ -29,7 +29,7 @@ jobs:
       - name: test
         run: |
           MEMCHECK=1 JUNIT=1 make stest-khc
-          MEMCHECK=1 JUNIT=1 make stest-kii  
+          MEMCHECK=1 JUNIT=1 make stest-kii
           MEMCHECK=1 JUNIT=1 make stest-jkii
           MEMCHECK=1 JUNIT=1 make stest-tio
           MEMCHECK=1 JUNIT=1 make ltest-kii
@@ -54,6 +54,8 @@ jobs:
           rsync -rR --delete tio/html ebisu-doc
       - name: Deploy docs to GitHub pages
         uses: peaceiris/actions-gh-pages@v3
+        permissions:
+          contents: write
         with:
           publish_dir: ebisu-doc
           publish_branch: gh-pages
