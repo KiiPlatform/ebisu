@@ -54,7 +54,11 @@ jobs:
           rsync -rR --delete kii/html ebisu-doc
           rsync -rR --delete jkii/html ebisu-doc
           rsync -rR --delete tio/html ebisu-doc
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v2
+      - name: Deploy docs to GitHub pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          publish_dir: ebisu-doc
+          publish_branch: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
 
