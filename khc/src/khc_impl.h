@@ -17,6 +17,10 @@ int _read_chunk_size(const char* buff, size_t buff_size, size_t* out_chunk_size)
 
 int _is_header_present(const char* header, const char* buff, size_t buff_size);
 
+void _trace_dump(char prefix, char* buf, size_t len);
+
+void _trace_op(char* op, int res);
+
 #ifdef __cplusplus
 }
 #endif

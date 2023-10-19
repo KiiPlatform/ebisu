@@ -543,6 +543,41 @@ int khc_get_status_code(
         khc* khc
 );
 
+/**
+ * \brief Perform send over the socket
+ * \param [in] khc instance.
+ * \param [in] send_pos pointer to the data to be sent.
+ * \param [in] send_len length of the data to be sent.
+ * \param [out] sent_len length of the data actually sent.
+ * \returns KHC_ERR_OK if success, otherwise error code.
+ */
+khc_sock_code_t _khc_sock_send(khc* khc,  char* send_pos, size_t send_len, size_t *sent_len);
+
+/**
+ * \brief Perform recv over the socket
+ * \param [in] khc instance.
+ * \param [out] buf pointer to the buffer to store received data.
+ * \param [in] len length of the buffer.
+ * \param [out] read_len length of the data actually read.
+ * \returns KHC_ERR_OK if success, otherwise error code.
+ */
+khc_sock_code_t _khc_sock_recv(khc* khc, char* buf, size_t len, size_t* read_len);
+
+/**
+ * \brief Perform connect over the socket
+ * \param [in] khc instance.
+ * \param [in] port port number to connect.
+ * \returns KHC_ERR_OK if success, otherwise error code.
+ */
+khc_sock_code_t _khc_sock_connect(khc* khc, unsigned int port);
+
+/**
+ * \brief Perform close over the socket
+ * \param [in] khc instance.
+ * \returns KHC_ERR_OK if success, otherwise error code.
+ */
+khc_sock_code_t _khc_sock_close(khc* khc);
+
 #ifdef __cplusplus
 }
 #endif

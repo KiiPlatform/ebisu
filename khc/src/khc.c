@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "khc.h"
+#include "khc_impl.h"
 #include "khc_state_impl.h"
 #include "khc_socket_callback.h"
 
@@ -146,4 +147,39 @@ int khc_get_status_code(
         khc* khc
 ) {
     return khc->_status_code;
+}
+
+khc_sock_code_t _khc_sock_send(khc* khc,  char* send_pos, size_t send_len, size_t* sent_len) {
+    khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, sent_len);
+    #ifdef KHC_TRACE
+    if(send_res==KHC_SOCK_OK) {
+        _trace_dump('>', send_pos, *sent_len);
+    }
+    #endif
+    return send_res;
+}
+
+khc_sock_code_t _khc_sock_recv(khc* khc, char* recv_pos, size_t recv_len, size_t* read_len) {
+    khc_sock_code_t recv_res = khc->_cb_sock_recv(khc->_sock_ctx_recv, recv_pos, recv_len, read_len);
+    #ifdef KHC_TRACE
+    if(recv_res==KHC_SOCK_OK) {
+        _trace_dump('<', recv_pos, *read_len);
+    }
+    else {
+
+    }
+    #endif
+    return recv_res;
+}
+
+khc_sock_code_t _khc_sock_connect(khc* khc, unsigned int port) {
+    khc_sock_code_t res = khc->_cb_sock_connect(khc->_sock_ctx_connect, khc->_host, port);
+    _trace_op("connect", res);
+    return res;
+}
+
+khc_sock_code_t _khc_sock_close(khc* khc) {
+    khc_sock_code_t res = khc->_cb_sock_close(khc->_sock_ctx_close);
+    _trace_op("close", res);
+    return res;
 }
