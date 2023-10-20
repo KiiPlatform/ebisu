@@ -129,22 +129,3 @@ int _is_header_present(const char* header, const char* buff, size_t buff_size) {
     }
     return 0;
 }
-
-
-void _trace_dump(char prefix, char* buf, size_t len) {
-    for(int i=0;i<len;i++) {
-        if (buf[i] == '\r') {
-            printf("\n%c", prefix);
-        }
-        else if (buf[i]=='\n'){
-        }
-        else {
-            printf("%c", buf[i]);
-        }
-
-    }
-}
-
-void _trace_op(char* op, int res) {
-    printf("\n* %s = %d\n", op, res);
-}
