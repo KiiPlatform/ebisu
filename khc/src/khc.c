@@ -165,21 +165,22 @@ khc_sock_code_t _khc_sock_recv(khc* khc, char* recv_pos, size_t recv_len, size_t
     if(recv_res==KHC_SOCK_OK) {
         _trace_dump('<', recv_pos, *read_len);
     }
-    else {
-
-    }
     #endif
     return recv_res;
 }
 
 khc_sock_code_t _khc_sock_connect(khc* khc, unsigned int port) {
     khc_sock_code_t res = khc->_cb_sock_connect(khc->_sock_ctx_connect, khc->_host, port);
+    #ifdef KHC_TRACE
     _trace_op("connect", res);
+    #endif
     return res;
 }
 
 khc_sock_code_t _khc_sock_close(khc* khc) {
     khc_sock_code_t res = khc->_cb_sock_close(khc->_sock_ctx_close);
+    #ifdef KHC_TRACE
     _trace_op("close", res);
+    #endif
     return res;
 }
