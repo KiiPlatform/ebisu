@@ -154,6 +154,8 @@ khc_sock_code_t _khc_sock_send(khc* khc,  char* send_pos, size_t send_len, size_
     #ifdef KHC_TRACE
     if(send_res==KHC_SOCK_OK) {
         _trace_dump('>', send_pos, *sent_len);
+    } else {
+        _trace_op("send", send_res);
     }
     #endif
     return send_res;
@@ -164,6 +166,8 @@ khc_sock_code_t _khc_sock_recv(khc* khc, char* recv_pos, size_t recv_len, size_t
     #ifdef KHC_TRACE
     if(recv_res==KHC_SOCK_OK) {
         _trace_dump('<', recv_pos, *read_len);
+    } else {
+         _trace_op("recv", recv_res);
     }
     #endif
     return recv_res;
