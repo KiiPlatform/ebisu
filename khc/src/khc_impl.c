@@ -146,5 +146,5 @@ void _trace_dump(char prefix, char* buf, size_t len) {
 }
 
 void _trace_op(char* op, int res) {
-    printf("* %s = %d\n", op, res);
+    printf("\n* %s = %d\n", op, res);
 }
