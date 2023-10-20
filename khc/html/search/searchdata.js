@@ -1,9 +1,9 @@
 var indexSectionsWithContent =
 {
-  0: "dkn",
+  0: "_dkn",
   1: "k",
   2: "k",
-  3: "k",
+  3: "_k",
   4: "dn",
   5: "k",
   6: "k",
