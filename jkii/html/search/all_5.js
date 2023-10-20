@@ -19,7 +19,7 @@ var searchData=
   ['jkii_5ffield_5ferr_5fok_22',['JKII_FIELD_ERR_OK',['../jkii_8h.html#a226dc87d1ccd30b36a59a096b4df3a6ba975d81eb93f19408c0986a98ae65bfed',1,'jkii.h']]],
   ['jkii_5ffield_5ferr_5ft_23',['jkii_field_err_t',['../jkii_8h.html#a226dc87d1ccd30b36a59a096b4df3a6b',1,'jkii_field_err_t():&#160;jkii.h'],['../jkii_8h.html#abc81150c301b49154f90f82aa6f8d01b',1,'jkii_field_err_t():&#160;jkii.h']]],
   ['jkii_5ffield_5ferr_5ftype_5fmismatch_24',['JKII_FIELD_ERR_TYPE_MISMATCH',['../jkii_8h.html#a226dc87d1ccd30b36a59a096b4df3a6bac8e5cfb9d0b3ea59242ea631c2836205',1,'jkii.h']]],
-  ['jkii_5ffield_5ft_25',['jkii_field_t',['../jkii_8h.html#abfe54c75e23435c665b7f2dcc78e7b99',1,'jkii_field_t():&#160;jkii.h'],['../structjkii__field__t.html',1,'jkii_field_t']]],
+  ['jkii_5ffield_5ft_25',['jkii_field_t',['../structjkii__field__t.html',1,'jkii_field_t'],['../jkii_8h.html#abfe54c75e23435c665b7f2dcc78e7b99',1,'jkii_field_t():&#160;jkii.h']]],
   ['jkii_5ffield_5ftype_5fany_26',['JKII_FIELD_TYPE_ANY',['../jkii_8h.html#a5fe8d88e1452ceb3d2c07f69440c82b5a273c020553c1ee8b03caa0693e781fde',1,'jkii.h']]],
   ['jkii_5ffield_5ftype_5farray_27',['JKII_FIELD_TYPE_ARRAY',['../jkii_8h.html#a5fe8d88e1452ceb3d2c07f69440c82b5a4db6cb07c35a2800e0ea2476cb792f02',1,'jkii.h']]],
   ['jkii_5ffield_5ftype_5fboolean_28',['JKII_FIELD_TYPE_BOOLEAN',['../jkii_8h.html#a5fe8d88e1452ceb3d2c07f69440c82b5abe85380649fee3c383a7124b51acc607',1,'jkii.h']]],
@@ -33,7 +33,7 @@ var searchData=
   ['jkii_5fparse_36',['jkii_parse',['../jkii_8h.html#a4793a01413e64a45474d0e23894da2da',1,'jkii.h']]],
   ['jkii_5fparse_5ferr_5ft_37',['jkii_parse_err_t',['../jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792',1,'jkii_parse_err_t():&#160;jkii.h'],['../jkii_8h.html#a308377fd5d9eb3c6fc9af26e51cb1070',1,'jkii_parse_err_t():&#160;jkii.h']]],
   ['jkii_5fparse_5fwith_5fallocator_38',['jkii_parse_with_allocator',['../jkii_8h.html#a4b9010bf54967baa34c7608a27e99d23',1,'jkii.h']]],
-  ['jkii_5fresource_5ft_39',['jkii_resource_t',['../jkii_8h.html#a452dced9e5f98b308c923ac8df9ea158',1,'jkii_resource_t():&#160;jkii.h'],['../structjkii__resource__t.html',1,'jkii_resource_t']]],
+  ['jkii_5fresource_5ft_39',['jkii_resource_t',['../structjkii__resource__t.html',1,'jkii_resource_t'],['../jkii_8h.html#a452dced9e5f98b308c923ac8df9ea158',1,'jkii_resource_t():&#160;jkii.h']]],
   ['jkii_5ftoken_5ft_40',['jkii_token_t',['../jkii_8h.html#ab9a2c8ed41a6b2a14102de46cfd8bcce',1,'jkii.h']]],
   ['jkii_5ftrue_41',['JKII_TRUE',['../jkii_8h.html#ad4bbea9cae26b6694b8c43e8d764ab29a4cc51bcda68ed5a0dd3d122365576f2b',1,'jkii.h']]]
 ];
