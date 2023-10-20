@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "khc.h"
+#include "khc_impl.h"
 #include "khc_state_impl.h"
 #include "khc_socket_callback.h"
 
