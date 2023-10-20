@@ -1,6 +1,6 @@
 env: &env
     docker:
-      - image: satoshikumano/ubuntu-18.04-cpp:0.0.1
+      - image: flozano/ubuntu-cpp:latest
 version: 2
 jobs:
   build:

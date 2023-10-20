@@ -32,6 +32,10 @@ ifdef JUNIT
 TESTCMD+= -r junit -o $(TEST_RESULT)
 endif
 
+CPPFLAGS += $(if $(value DEFAULT_SITE), -D_DEFAULT_SITE=$(DEFAULT_SITE), )
+CPPFLAGS += $(if $(value APP_ID), -D_APP_ID=$(APP_ID), )
+CPPFLAGS += $(if $(value SOCKET_LOG), -DSOCKET_LOG, )
+
 all: clean test
 
 $(LIB_BUILD_DIR): $(LIB_SRCS)
@@ -45,6 +49,7 @@ build: $(TARGET)
 
 test: $(TARGET)
 	mkdir -p $(TEST_RESULT_DIR)
+	DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(LIB_BUILD_DIR)/lib \
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(LIB_BUILD_DIR)/lib \
 	$(TESTCMD)
 

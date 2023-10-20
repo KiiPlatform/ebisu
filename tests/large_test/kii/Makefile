@@ -43,6 +43,7 @@ $(TARGET): kii $(SRCS)
 
 test: $(TARGET)
 	mkdir -p $(TEST_RESULT_DIR)
+	DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(KII_BUILD_DIR)/usr/local/lib \
 	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(KII_BUILD_DIR)/usr/local/lib \
 	$(TESTCMD)
 
@@ -62,6 +63,8 @@ initapp:
 	curl -v -X PUT -H 'X-Kii-AppID: $(APP_ID)' -H 'X-Kii-AppKey: dummy' -H 'Authorization: Bearer $(ADMIN_TOKEN)' -H 'Content-Type: application/vnd.kii.TraitAliasCreationRequest+json' https://$(DEFAULT_SITE)/thing-if/apps/$(APP_ID)/configuration/thing-types/ltest_thing_type/firmware-versions/ltest_firmware_version/aliases/ltest_trait_alias -d '{"traitVersion":"1","trait":"ltest_trait"}'
 	# modify app settings '{"maxLoginAttempts":2,"loginLockPeriodSeconds":3}'
 	curl -v -X PATCH -H 'X-Kii-AppID: $(APP_ID)' -H 'X-Kii-AppKey: dummy' -H 'Authorization: Bearer $(ADMIN_TOKEN)' -H 'Content-Type: application/vnd.kii.AppConfigParamsModificationRequest+json' https://$(DEFAULT_SITE)/api/apps/$(APP_ID)/configuration/parameters -d '{"maxLoginAttempts":2,"loginLockPeriodSeconds":3}'
+	# create test user for KHC post test
+	curl -v -X POST -H 'X-Kii-AppID: $(APP_ID)' -H 'X-Kii-AppKey: dummy' -H 'Authorization: Bearer $(ADMIN_TOKEN)' -H 'Content-Type: application/vnd.kii.RegistrationRequest+json' https://$(DEFAULT_SITE)/api/apps/$(APP_ID)/users -d '{"loginName":"pass-1234","password":"1234","displayName":"test-user"}'
 
 clean:
 	touch $(TARGET)
