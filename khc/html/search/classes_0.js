@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['khc_57',['khc',['../structkhc.html',1,'']]],
-  ['khc_5fslist_58',['khc_slist',['../structkhc__slist.html',1,'']]]
+  ['khc_53',['khc',['../structkhc.html',1,'']]],
+  ['khc_5fslist_54',['khc_slist',['../structkhc__slist.html',1,'']]]
 ];
