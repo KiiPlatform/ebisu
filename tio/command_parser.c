@@ -251,6 +251,7 @@ static tio_code_t _start_result_request(
             "application/vnd.kii.CommandResultsUpdateRequest+json",
             KII_TRUE);
     if (s_res != KII_ERR_OK) {
+        _req_headers_free_all(&handler->_kii);
         return _tio_convert_code(s_res);
     }
     const char result_start[] = "{\"actionResults\":[";
@@ -259,6 +260,7 @@ static tio_code_t _start_result_request(
             result_start,
             strlen(result_start));
     if (a_res != KII_ERR_OK) {
+        _req_headers_free_all(&handler->_kii);
         return _tio_convert_code(s_res);
     }
     return TIO_ERR_OK;
@@ -442,14 +444,17 @@ tio_code_t _handle_command(
                 kii_res = kii_api_call_append_body(&handler->_kii, "{\"", 2);
             }
             if (kii_res != KII_ERR_OK) {
+                _req_headers_free_all(&handler->_kii);
                 return _tio_convert_code(kii_res);
             }
             kii_res = kii_api_call_append_body(&handler->_kii, alias, alias_length);
             if (kii_res != KII_ERR_OK) {
+                _req_headers_free_all(&handler->_kii);
                 return _tio_convert_code(kii_res);
             }
             kii_res = kii_api_call_append_body(&handler->_kii, "\":[", 3);
             if (kii_res != KII_ERR_OK) {
+                _req_headers_free_all(&handler->_kii);
                 return _tio_convert_code(kii_res);
             }
             for (size_t action_idx = 0; ; ++action_idx) {
@@ -490,12 +495,14 @@ tio_code_t _handle_command(
             }
             kii_res = kii_api_call_append_body(&handler->_kii, "]}", 2);
             if (kii_res != KII_ERR_OK) {
+                _req_headers_free_all(&handler->_kii);
                 return _tio_convert_code(kii_res);
             }
         } else if ( res == _CMD_PARSE_ARRAY_OUT_OF_INDEX) {
             // Handled all actions in command.
             kii_code_t res = kii_api_call_append_body(&handler->_kii, "]}", 2);
             if (res != KII_ERR_OK) {
+                _req_headers_free_all(&handler->_kii);
                 return _tio_convert_code(res);
             }
             break;
@@ -505,6 +512,7 @@ tio_code_t _handle_command(
     }
     kii_code_t run_res = kii_api_call_run(&handler->_kii);
     if (run_res != KII_ERR_OK) {
+        _req_headers_free_all(&handler->_kii);
         return _tio_convert_code(run_res);
     }
     return TIO_ERR_OK;
