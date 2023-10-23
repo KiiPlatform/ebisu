@@ -5,6 +5,10 @@
 
 #include <stdlib.h>
 
+static void _trace_op(char* op, int res) {
+    printf("* %s = %d\n", op, res);
+}
+
 _cmd_parser_code_t _get_object_in_array(
         jkii_resource_t* resource,
         JKII_CB_RESOURCE_ALLOC cb_alloc,
@@ -251,6 +255,9 @@ static tio_code_t _start_result_request(
             "application/vnd.kii.CommandResultsUpdateRequest+json",
             KII_TRUE);
     if (s_res != KII_ERR_OK) {
+        #ifdef TIO_TRACE
+        _trace_op("kii_api_call_start", s_res);
+        #endif
         return _tio_convert_code(s_res);
     }
     const char result_start[] = "{\"actionResults\":[";
@@ -259,6 +266,9 @@ static tio_code_t _start_result_request(
             result_start,
             strlen(result_start));
     if (a_res != KII_ERR_OK) {
+        #ifdef TIO_TRACE
+        _trace_op("kii_api_call_append_body", a_res);
+        #endif
         return _tio_convert_code(s_res);
     }
     return TIO_ERR_OK;
@@ -296,6 +306,10 @@ static tio_code_t _append_action_result(
         // Validate json_data.
         jkii_parse_err_t json_res = _validate_json(handler, json_data, json_data_len);
         if (json_res != JKII_ERR_OK) {
+            #ifdef TIO_TRACE
+            _trace_op("_validate_json", json_res);
+            #endif
+            kii_cancel_request_being_prepared(&handler->_kii);
             return TIO_ERR_PARSE_JSON;
         }
     }
@@ -442,14 +456,23 @@ tio_code_t _handle_command(
                 kii_res = kii_api_call_append_body(&handler->_kii, "{\"", 2);
             }
             if (kii_res != KII_ERR_OK) {
+                #ifdef TIO_TRACE
+                _trace_op("kii_api_call_append_body (CMD_PARSE_OK, 1)", kii_res);
+                #endif
                 return _tio_convert_code(kii_res);
             }
             kii_res = kii_api_call_append_body(&handler->_kii, alias, alias_length);
             if (kii_res != KII_ERR_OK) {
+                #ifdef TIO_TRACE
+                _trace_op("kii_api_call_append_body (CMD_PARSE_OK, 2)", kii_res);
+                #endif
                 return _tio_convert_code(kii_res);
             }
             kii_res = kii_api_call_append_body(&handler->_kii, "\":[", 3);
             if (kii_res != KII_ERR_OK) {
+                #ifdef TIO_TRACE
+                _trace_op("kii_api_call_append_body (CMD_PARSE_OK, 3)", kii_res);
+                #endif
                 return _tio_convert_code(kii_res);
             }
             for (size_t action_idx = 0; ; ++action_idx) {
@@ -478,6 +501,10 @@ tio_code_t _handle_command(
                             work_buff,
                             sizeof(work_buff)/sizeof(work_buff[0]));
                     if (app_res != TIO_ERR_OK) {
+                        #ifdef TIO_TRACE
+                        _trace_op("_append_action_result", app_res);
+                        #endif
+                        kii_cancel_request_being_prepared(&handler->_kii);
                         return app_res;
                     }
                     ++result_counts;
@@ -485,26 +512,43 @@ tio_code_t _handle_command(
                     // Handled all actions in alias.
                     break;
                 } else {
+                    #ifdef TIO_TRACE
+                    _trace_op("_parse_action", pa_res);
+                    #endif
+                    kii_cancel_request_being_prepared(&handler->_kii);
                     return TIO_ERR_PARSE_JSON;
                 }
             }
             kii_res = kii_api_call_append_body(&handler->_kii, "]}", 2);
             if (kii_res != KII_ERR_OK) {
+                #ifdef TIO_TRACE
+                _trace_op("kii_api_call_append_body (_CMD_PARSE_OK)", kii_res);
+                #endif
                 return _tio_convert_code(kii_res);
             }
         } else if ( res == _CMD_PARSE_ARRAY_OUT_OF_INDEX) {
             // Handled all actions in command.
             kii_code_t res = kii_api_call_append_body(&handler->_kii, "]}", 2);
             if (res != KII_ERR_OK) {
+                #ifdef TIO_TRACE
+                _trace_op("kii_api_call_append_body (Handled all actions in command)", kii_res);
+                #endif
                 return _tio_convert_code(res);
             }
             break;
         } else {
+            #ifdef TIO_TRACE
+            _trace_op("_parse_alias", res);
+            #endif
+            kii_cancel_request_being_prepared(&handler->_kii);
             return TIO_ERR_PARSE_JSON;
         }
     }
     kii_code_t run_res = kii_api_call_run(&handler->_kii);
     if (run_res != KII_ERR_OK) {
+        #ifdef TIO_TRACE
+        _trace_op("kii_api_call_run", run_res);
+        #endif
         return _tio_convert_code(run_res);
     }
     return TIO_ERR_OK;
@@ -551,6 +595,9 @@ tio_code_t _parse_command(
 
     jkii_parse_err_t res = _parse_json(handler, command, command_length, fields);
     if (res != JKII_ERR_OK) {
+        #ifdef TIO_TRACE
+        _trace_op("_parse_json", res);
+        #endif
         return TIO_ERR_PARSE_JSON;
     }
 
@@ -590,6 +637,9 @@ tio_code_t _parse_command(
                     // Handled all actions in alias.
                     break;
                 } else {
+                    #ifdef TIO_TRACE
+                    _trace_op("_parse_action", pa_res);
+                    #endif
                     return TIO_ERR_PARSE_JSON;
                 }
             }
@@ -597,6 +647,9 @@ tio_code_t _parse_command(
             // Handled all actions in command.
             break;
         } else {
+            #ifdef TIO_TRACE
+            _trace_op("_parse_alias", pa_res);
+            #endif
             return TIO_ERR_PARSE_JSON;
         }
     }

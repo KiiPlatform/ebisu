@@ -1135,6 +1135,12 @@ size_t kii_get_resp_body_length(kii_t* kii);
 void kii_set_use_m_0_header_flag(kii_t* kii, kii_bool_t flag);
 
 /**
+ * \brief reset state of request currently under preparation.
+ * \param [in] kii kii_t instance.
+*/
+void kii_cancel_request_being_prepared(kii_t* kii);
+
+/**
  * \brief Represents MQTT task state
  */
 typedef enum

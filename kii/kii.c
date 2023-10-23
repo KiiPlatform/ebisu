@@ -256,6 +256,11 @@ void kii_set_use_m_0_header_flag(kii_t* kii, kii_bool_t flag) {
     kii->_use_m_0_header = flag;
 }
 
+void kii_cancel_request_being_prepared(kii_t* kii) {
+    _req_headers_free_all(kii);
+}
+
+
 kii_code_t _convert_code(khc_code khc_c) {
     switch(khc_c) {
         case KHC_ERR_OK:
