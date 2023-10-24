@@ -3,6 +3,14 @@
 #include "kii_req_impl.h"
 #include <string.h>
 
+static void _resource_cleanup(kii_t* kii)
+{
+    _reset_buff(kii);
+    _req_headers_free_all(kii);
+
+    khc_reset_except_cb(&kii->_khc);
+}
+
 kii_code_t kii_api_call_start(
         kii_t* kii,
         const char* http_method,
@@ -10,10 +18,8 @@ kii_code_t kii_api_call_start(
         const char* content_type,
         kii_bool_t set_authentication_header)
 {
-    khc_reset_except_cb(&kii->_khc);
-    _reset_buff(kii);
-    _req_headers_free_all(kii);
-
+    _resource_cleanup(kii);
+    
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, http_method);
     khc_set_path(&kii->_khc, resource_path);

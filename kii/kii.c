@@ -291,6 +291,7 @@ void _reset_buff(kii_t* kii) {
     kii->_rw_buff_read = 0;
     kii->_rw_buff_written = 0;
     kii->_rw_buff_req_size = 0;
+    kii->_rw_buff[0] = '\0';
     kii->_etag[0] = '\0';
 }
 
