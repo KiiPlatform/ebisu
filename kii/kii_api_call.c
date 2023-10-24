@@ -75,9 +75,9 @@ kii_code_t kii_api_call_append_header_or_default(
         const char* value,
         const char* default_value)
 {
-    char *def = "application/json";
-    if (default_value != NULL && strlen(default_value) > 0) {
-        def = (char*)default_value;
+    char *def = default_value;
+    if (value != NULL && strlen(value) > 0) {
+        def = (char*)value;
     }
     return kii_api_call_append_header(kii, key, def);
 }
