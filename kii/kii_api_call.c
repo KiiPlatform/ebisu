@@ -3,6 +3,14 @@
 #include "kii_req_impl.h"
 #include <string.h>
 
+static void _resource_cleanup(kii_t* kii)
+{
+    _reset_buff(kii);
+    _req_headers_free_all(kii);
+
+    khc_reset_except_cb(&kii->_khc);
+}
+
 kii_code_t kii_api_call_start(
         kii_t* kii,
         const char* http_method,
@@ -10,9 +18,8 @@ kii_code_t kii_api_call_start(
         const char* content_type,
         kii_bool_t set_authentication_header)
 {
-    khc_reset_except_cb(&kii->_khc);
-    _reset_buff(kii);
-
+    _resource_cleanup(kii);
+    
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, http_method);
     khc_set_path(&kii->_khc, resource_path);
@@ -68,6 +75,19 @@ kii_code_t kii_api_call_append_body(
     return KII_ERR_OK;
 }
 
+kii_code_t kii_api_call_append_header_or_default(
+        kii_t* kii,
+        const char* key,
+        const char* value,
+        const char* default_value)
+{
+    char *def = default_value;
+    if (value != NULL && strlen(value) > 0) {
+        def = (char*)value;
+    }
+    return kii_api_call_append_header(kii, key, def);
+}
+
 kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* value)
 {
     size_t key_len = strlen(key);
@@ -82,6 +102,7 @@ kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* v
     }
     khc_slist* list = khc_slist_append_using_cb_alloc(kii->_req_headers, buff, header_len, kii->_cb_slist_alloc, kii->_slist_alloc_data);
     if (list == NULL) {
+        _req_headers_free_all(kii);
         return KII_ERR_ALLOCATION;
     }
     kii->_req_headers = list;

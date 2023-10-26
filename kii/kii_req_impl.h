@@ -2,6 +2,7 @@
 #define __kii_req_impl__
 
 #include "kii.h"
+#include "kii_api_call.h"
 
 kii_code_t _set_bucket_path(
         kii_t* kii,
