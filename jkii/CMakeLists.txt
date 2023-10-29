@@ -1,5 +1,8 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
+cmake_minimum_required(VERSION 3.12)
 PROJECT(jkii C)
+INCLUDE(${CMAKE_SOURCE_DIR}/../version/EbisuVersion.cmake)
+set_git_version_and_generate_header()
+
 SET(CMAKE_C_FLAGS "-Wall")
 
 SET(CMAKE_C_FLAGS_RELEASE "-O2")

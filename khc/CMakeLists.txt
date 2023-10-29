@@ -1,5 +1,8 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
+cmake_minimum_required(VERSION 3.12)
 PROJECT(khc C)
+INCLUDE(${CMAKE_SOURCE_DIR}/../version/EbisuVersion.cmake)
+set_git_version_and_generate_header()
+
 SET(CMAKE_C_FLAGS "-Wall")
 
 OPTION(KHC_TRACE "Trace KHC activity to stdout" ON)
