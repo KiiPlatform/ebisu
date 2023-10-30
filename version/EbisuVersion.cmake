@@ -5,11 +5,12 @@ function(set_git_version_and_generate_header)
         COMMAND git describe --tags
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         OUTPUT_VARIABLE GIT_DESCRIBE
+        ERROR_VARIABLE GIT_DESCRIBE_ERROR
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
     if(NOT GIT_DESCRIBE)
-        message(FATAL_ERROR "Failed to retrieve Git tag.")
+        message(FATAL_ERROR "Failed to retrieve Git tag: ${GIT_DESCRIBE_ERROR}")
     endif()
 
     string(REGEX MATCH "v[0-9]+\\.[0-9]+\\.[0-9]+" VERSION_STRING ${GIT_DESCRIBE})
