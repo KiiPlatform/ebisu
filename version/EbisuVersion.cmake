@@ -9,18 +9,22 @@ function(set_git_version_and_generate_header)
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
-    if(NOT GIT_DESCRIBE)
-        message(FATAL_ERROR "Failed to retrieve Git tag: ${GIT_DESCRIBE_ERROR}")
+    if(GIT_DESCRIBE)
+        string(REGEX MATCH "v[0-9]+\\.[0-9]+\\.[0-9]+" VERSION_STRING ${GIT_DESCRIBE})
+        if(VERSION_STRING)
+            string(REGEX REPLACE "^v" "" VERSION_STRING ${VERSION_STRING})
+            message("Git: ${GIT_DESCRIBE}, Version: ${VERSION_STRING}")
+        else()
+            message(WARNING "Invalid Git tag format: ${GIT_DESCRIBE}")
+            set(VERSION_STRING, "0.0.0-unknown")
+        endif()
+    else()
+        message(WARNING "Failed to retrieve Git tag: ${GIT_DESCRIBE_ERROR}")
+        set(VERSION_STRING, "0.0.0-unknown")
     endif()
 
-    string(REGEX MATCH "v[0-9]+\\.[0-9]+\\.[0-9]+" VERSION_STRING ${GIT_DESCRIBE})
 
-    if(NOT VERSION_STRING)
-        message(FATAL_ERROR "Invalid Git tag format: ${GIT_DESCRIBE}")
-    endif()
-    string(REGEX REPLACE "^v" "" VERSION_STRING ${VERSION_STRING})
-
-    message("Git: ${GIT_DESCRIBE}, Version: ${VERSION_STRING}")
+   
 
     set(version "${VERSION_STRING}" PARENT_SCOPE)
     set(soversion "${VERSION_STRING}" PARENT_SCOPE)
