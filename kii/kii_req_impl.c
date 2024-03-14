@@ -231,8 +231,17 @@ kii_code_t _set_if_match(kii_t* kii, const char* etag)
 
 kii_code_t _set_req_body(kii_t* kii, const char* body_contents)
 {
+    if(body_contents == NULL) {
+        return kii_api_call_set_no_body(kii);
+    }
+
     size_t content_len = strlen(body_contents);
-    return kii_api_call_append_body(kii, body_contents, content_len);
+    if(content_len == 0) {
+        return kii_api_call_set_no_body(kii);
+    }
+    else {
+        return kii_api_call_append_body(kii, body_contents, content_len);
+    }
 }
 
 kii_code_t _set_m_0_header(kii_t* kii)

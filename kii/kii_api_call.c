@@ -58,6 +58,11 @@ kii_code_t kii_api_call_start(
     return res;
 }
 
+kii_code_t kii_api_call_set_no_body(kii_t* kii)
+{
+    _reset_buff(kii);
+}
+
 kii_code_t kii_api_call_append_body(
         kii_t* kii,
         const char* chunk,

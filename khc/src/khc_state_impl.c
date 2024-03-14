@@ -124,6 +124,22 @@ khc_code khc_set_method(khc* khc, const char* method) {
     return KHC_ERR_OK;
 }
 
+int khc_method_can_have_body(khc* khc) {
+    if(khc->_method[0]==0) {
+        return 1; // undefined method.
+    }
+    if(strcmp(khc->_method, "GET") == 0) {
+        return 0;
+    }
+    if(strcmp(khc->_method, "HEAD") == 0) {
+        return 0;
+    }
+    if(strcmp(khc->_method, "DELETE") == 0) {
+        return 0;
+    }
+    return 1;
+}
+
 khc_code khc_set_req_headers(khc* khc, khc_slist* headers) {
     khc->_req_headers = headers;
     return KHC_ERR_OK;
@@ -361,7 +377,9 @@ void khc_state_req_header_send_crlf(khc* khc) {
 
 void khc_state_req_header_end(khc* khc) {
     char* text = NULL;
-    if (khc->_cb_read == NULL) {
+    if(khc_method_can_have_body(khc) == 0) {
+        text = "Connection: Close\r\n\r\n";
+    } else if(khc->_cb_read == NULL) {
         text = "Content-Length: 0\r\nConnection: Close\r\n\r\n";
     } else {
         text = "Transfer-Encoding: chunked\r\nConnection: Close\r\n\r\n";
