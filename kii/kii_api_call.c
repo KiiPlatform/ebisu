@@ -61,6 +61,7 @@ kii_code_t kii_api_call_start(
 kii_code_t kii_api_call_set_no_body(kii_t* kii)
 {
     _reset_buff(kii);
+    return KII_ERR_OK;
 }
 
 kii_code_t kii_api_call_append_body(

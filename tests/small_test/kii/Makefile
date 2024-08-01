@@ -34,10 +34,10 @@ all: test
 
 $(LIB_BUILD_DIR): $(LIB_DEPS)
 	mkdir -p $(LIB_BUILD_DIR)
-	cd $(LIB_BUILD_DIR) && cmake -DCMAKE_INSTALL_PREFIX=. ../$(KII_DIR) && make install
+	cd $(LIB_BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=. ../$(KII_DIR) && make install
 
 $(TARGET): $(TARGET_SRCS) $(LIB_BUILD_DIR)
-	g++ -g $(TARGET_SRCS) $(LIBS_DIR) $(LIBS) $(INCLUDES) -o $(TARGET) -std=c++11
+	g++ -g -O0 -ggdb $(TARGET_SRCS) $(LIBS_DIR) $(LIBS) $(INCLUDES) -o $(TARGET) -std=c++11
 
 build: $(TARGET)
 
