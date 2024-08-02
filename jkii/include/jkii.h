@@ -5,6 +5,7 @@
 #ifndef JKII_H
 #define JKII_H
 
+#define JSMN_HEADER
 #include <jsmn.h>
 
 #ifdef __cplusplus

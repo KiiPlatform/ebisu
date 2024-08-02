@@ -63,7 +63,7 @@ _cmd_parser_code_t _parse_first_kv(
 {
     jsmn_parser parser;
     jsmn_init(&parser);
-    jsmnerr_t p_err = JSMN_ERROR_NOMEM;
+    int p_err = JSMN_ERROR_NOMEM;
     jsmntok_t tokens[64];
 
     p_err = jsmn_parse(&parser, object, object_length, tokens, 64);
