@@ -564,7 +564,22 @@ kii_code_t kii_start_push_task(
         void* userdata);
 
 /**
- * \brief Execute server code.
+ * \brief Execute a specific version of server code.
+ *
+ * \param [in,out] kii kii_t instance.
+ * \param [in] version Version identifier to be used during execution.
+ * \param [in] endpoint_name Name of the endpoint to be executed.
+ * \param [in] params Parameters given to endpoint. Expect JSON object.
+ * \return kii_code_t
+ */
+kii_code_t kii_execute_server_code_version(
+        kii_t* kii,
+        const char* version,
+        const char* endpoint_name,
+        const char* params);
+
+/**
+ * \brief Execute current version of server code.
  *
  * \param [in,out] kii kii_t instance.
  * \param [in] endpoint_name Name of the endpoint to be executed.
