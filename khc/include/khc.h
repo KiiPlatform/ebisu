@@ -13,6 +13,10 @@ extern "C"
 #include <stdio.h>
 #include "khc_socket_callback.h"
 
+#define KHC_HOST_MAX_SIZE 128
+#define KHC_PATH_MAX_SIZE 256
+#define KHC_METHOD_MAX_SIZE 16
+
 /**
  * \brief Callback writes data.
  *
@@ -244,9 +248,9 @@ typedef struct khc {
     /** \private Request header list */
     khc_slist* _req_headers;
 
-    char _host[128]; /**< \private **/
-    char _path[256]; /**< \private **/
-    char _method[16]; /**< \private **/
+    char _host[KHC_HOST_MAX_SIZE]; /**< \private **/
+    char _path[KHC_PATH_MAX_SIZE]; /**< \private **/
+    char _method[KHC_METHOD_MAX_SIZE]; /**< \private **/
 
     /* State machine */
     khc_state _state; /**< \private **/
