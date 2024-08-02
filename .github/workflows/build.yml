@@ -21,7 +21,9 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-tags: true
       - name: Setup build env
         run: sudo apt-get -yq install g++ doxygen cmake libssl-dev git valgrind rsync
       - name: build

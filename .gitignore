@@ -4,3 +4,4 @@
 .envrc
 .envrc.*
 /.vscode/
+**/ebisu_version.h

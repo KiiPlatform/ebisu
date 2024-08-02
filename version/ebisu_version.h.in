@@ -1,0 +1,7 @@
+#ifndef EBISU_VERSION_H
+#define EBISU_VERSION_H
+
+#define EBISU_VERSION "@version@"
+#define EBISU_SOVERSION "@soversion@"
+
+#endif
