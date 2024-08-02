@@ -5,7 +5,7 @@ SET(CMAKE_C_FLAGS "-Wall")
 SET(CMAKE_C_FLAGS_RELEASE "-O2")
 SET(CMAKE_C_FLAGS_DEBUG "-g")
 
-FILE(GLOB srcs src/*.c)
+FILE(GLOB srcs src/*.c libs/jsmn/*.c)
 FILE(GLOB hdrs include/*.h libs/jsmn/jsmn.h)
 ADD_LIBRARY(jkii SHARED ${srcs})
 TARGET_INCLUDE_DIRECTORIES(jkii PUBLIC ./include)

@@ -7,8 +7,6 @@
 #include <float.h>
 #include <ctype.h>
 
-#include <jsmn.h>
-
 /* If your environment does not have assert, you must set JKII_NOASSERT define. */
 #ifdef JKII_NOASSERT
   #define M_JKII_ASSERT(s)
@@ -138,6 +136,8 @@ static int _kii_jsmn_get_value(
             case JSMN_ARRAY:
                 index += _jkii_count_contained_token(value_token) + 1;
                 break;
+            case JSMN_UNDEFINED:
+                goto exit;
         }
     }
 
