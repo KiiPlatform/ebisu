@@ -180,9 +180,8 @@ kii_code_t _set_content_length(
         kii_t* kii,
         size_t content_length)
 {
-    size_t length_size = 128;
-    char length_value[length_size];
-    snprintf(length_value, length_size, "%lld", (long long)content_length);
+    char length_value[KII_REQ_CONTENT_LENGTH_MAX_SIZE];
+    snprintf(length_value, KII_REQ_CONTENT_LENGTH_MAX_SIZE, "%lld", (long long)content_length);
     return kii_api_call_append_header(kii, "Content-Length", length_value);
 }
 

@@ -21,6 +21,19 @@ extern "C" {
  */
 #define KII_TASK_NAME_MQTT "kii_mqtt_task"
 
+#define KII_AUTHOR_ID_MAX_SIZE 128
+#define KII_TOKEN_MAX_SIZE 128
+#define KII_USERNAME_MAX_SIZE 64
+#define KII_PASSWORD_MAX_SIZE 128
+#define KII_TOPIC_MAX_SIZE 64
+#define KII_HOST_MAX_SIZE 64
+#define KII_OBJECT_ID_MAX_SIZE 64
+#define KII_INSTALLATION_ID_MAX_SIZE 64
+#define KII_APP_ID_MAX_SIZE 128
+#define KII_APP_HOST_MAX_SIZE 128
+#define KII_ETAG_MAX_SIZE 64
+#define KII_FIRMWARE_VERSION_MAX_SIZE 128
+
 /**
  * \brief Callback writes data.
  *
@@ -110,17 +123,17 @@ typedef struct kii_topic_t {
 typedef struct kii_author_t
 {
     /** \brief ID of the author. */
-    char author_id[128];
+    char author_id[KII_AUTHOR_ID_MAX_SIZE];
     /** \brief Access token of the author. */
-    char access_token[128];
+    char access_token[KII_TOKEN_MAX_SIZE];
 } kii_author_t;
 
 /** \brief Represents MQTT endpoint. */
 typedef struct kii_mqtt_endpoint_t {
-    char username[64]; /**< \brief Username used to connect. */
-    char password[128]; /**< \brief Password used to connect. */
-    char topic[64]; /**< \brief Topic ID to be subscribed. */
-    char host[64]; /**< \brief Host address */
+    char username[KII_USERNAME_MAX_SIZE]; /**< \brief Username used to connect. */
+    char password[KII_PASSWORD_MAX_SIZE]; /**< \brief Password used to connect. */
+    char topic[KII_TOPIC_MAX_SIZE]; /**< \brief Topic ID to be subscribed. */
+    char host[KII_HOST_MAX_SIZE]; /**< \brief Host address */
     /**
      * \brief Port number used for non-secure connection.
      * Highly recommend use port_ssl.
@@ -140,14 +153,14 @@ typedef struct kii_mqtt_endpoint_t {
  * \brief Represents object ID.
  */
 typedef struct kii_object_id_t {
-    char id[64]; /**< \brief Object ID */
+    char id[KII_OBJECT_ID_MAX_SIZE]; /**< \brief Object ID */
 } kii_object_id_t;
 
 /**
  * \brief Represents installation ID.
  */
 typedef struct kii_installation_id_t {
-    char id[64]; /**< \brief Installation ID */
+    char id[KII_INSTALLATION_ID_MAX_SIZE]; /**< \brief Installation ID */
 } kii_installation_id_t;
 
 struct kii_t;
@@ -172,8 +185,8 @@ typedef void (*KII_PUSH_RECEIVED_CB)(
 typedef struct kii_t {
     khc _khc; /**< \private */
 	kii_author_t _author; /**< \private */
-	char _app_id[128]; /**< \private */
-	char _app_host[128]; /**< \private */
+	char _app_id[KII_APP_ID_MAX_SIZE]; /**< \private */
+	char _app_host[KII_APP_HOST_MAX_SIZE]; /**< \private */
     char* _sdk_info; /**< \private */
 
     void* _mqtt_sock_connect_ctx; /**< \private */
@@ -217,7 +230,7 @@ typedef struct kii_t {
 
     khc_slist* _req_headers; /**< \private */
 
-    char _etag[64]; /**< \private */
+    char _etag[KII_ETAG_MAX_SIZE]; /**< \private */
 
     jkii_resource_t* _json_resource; /**< \private */
 
@@ -614,7 +627,7 @@ kii_code_t kii_ti_put_firmware_version(
  * \brief Stores firmware version.
  */
 typedef struct kii_ti_firmware_version_t {
-    char firmware_version[128]; /**< \brief Firmware version string. */
+    char firmware_version[KII_FIRMWARE_VERSION_MAX_SIZE]; /**< \brief Firmware version string. */
 } kii_ti_firmware_version_t;
 
 /**
