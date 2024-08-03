@@ -4,6 +4,8 @@
 #include "kii.h"
 #include "kii_api_call.h"
 
+#define KII_REQ_CONTENT_LENGTH_MAX_SIZE 128
+
 kii_code_t _set_bucket_path(
         kii_t* kii,
         const kii_bucket_t* bucket,
