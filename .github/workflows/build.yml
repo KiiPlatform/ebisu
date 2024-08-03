@@ -22,8 +22,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-tags: true
+      - name: Fetch tags
+        run: git fetch --unshallow --tags --force
       - name: Setup build env
         run: sudo apt-get -yq install g++ doxygen cmake libssl-dev git valgrind rsync
       - name: build
@@ -40,7 +40,7 @@ jobs:
         uses: mikepenz/action-junit-report@v3
         if: success() || failure() # always run even if the previous step fails
         with:
-          report_paths: '**/test-results/junit/test-result.xml'
+          report_paths: "**/test-results/junit/test-result.xml"
       - name: build docs
         run: |
           make -C khc clean doc
@@ -60,5 +60,3 @@ jobs:
           publish_dir: ebisu-doc
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
-
-
