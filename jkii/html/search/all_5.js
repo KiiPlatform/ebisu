@@ -35,6 +35,5 @@ var searchData=
   ['jkii_5fparse_5fwith_5fallocator_38',['jkii_parse_with_allocator',['../jkii_8h.html#a4b9010bf54967baa34c7608a27e99d23',1,'jkii.h']]],
   ['jkii_5fresource_5ft_39',['jkii_resource_t',['../structjkii__resource__t.html',1,'jkii_resource_t'],['../jkii_8h.html#a452dced9e5f98b308c923ac8df9ea158',1,'jkii_resource_t():&#160;jkii.h']]],
   ['jkii_5ftoken_5ft_40',['jkii_token_t',['../jkii_8h.html#ab9a2c8ed41a6b2a14102de46cfd8bcce',1,'jkii.h']]],
-  ['jkii_5ftrue_41',['JKII_TRUE',['../jkii_8h.html#ad4bbea9cae26b6694b8c43e8d764ab29a4cc51bcda68ed5a0dd3d122365576f2b',1,'jkii.h']]],
-  ['jsmn_5fheader_42',['JSMN_HEADER',['../jkii_8h.html#aeef9c3539ffb9ed912a2976b67b43d68',1,'jkii.h']]]
+  ['jkii_5ftrue_41',['JKII_TRUE',['../jkii_8h.html#ad4bbea9cae26b6694b8c43e8d764ab29a4cc51bcda68ed5a0dd3d122365576f2b',1,'jkii.h']]]
 ];
