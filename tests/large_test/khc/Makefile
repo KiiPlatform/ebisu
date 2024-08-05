@@ -45,7 +45,7 @@ $(LIB_BUILD_DIR): $(LIB_SRCS)
 	cd $(LIB_BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=. ../$(ROOT_DIR)/khc && make install
 
 $(TARGET): $(SRCS) $(LIB_BUILD_DIR)
-	g++ -g $(SRCS) $(LIBS_DIR) $(LIBS) $(INCLUDES) $(CPPFLAGS) -o $(TARGET) -std=c++11
+	g++ $(SRCS) $(LIBS_DIR) $(LIBS) $(INCLUDES) $(CPPFLAGS) -o $(TARGET) -std=c++11
 
 build: $(TARGET)
 
