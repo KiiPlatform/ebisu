@@ -4,7 +4,7 @@ TEST_ROOT_DIR=../..
 JKII_BUILD_DIR=build-jkii
 
 SOURCE = $(wildcard src/*.cpp)
-
+CFLAGS=-g -O0 -ggdb
 LIBDIRS = -L$(JKII_BUILD_DIR)/usr/local/lib
 LIBS= -ljkii
 INCLUDES=-I$(TEST_ROOT_DIR) -I$(JKII_BUILD_DIR)/usr/local/include
@@ -28,7 +28,7 @@ all: clean $(TARGET)
 
 jkii:
 	mkdir -p $(JKII_BUILD_DIR)
-	cd $(JKII_BUILD_DIR) && cmake $(ROOT_DIR)/../jkii && make &&  make DESTDIR=. install
+	cd $(JKII_BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=Debug $(ROOT_DIR)/../jkii && make &&  make DESTDIR=. install
 
 $(TARGET): jkii
 	g++ $(CFLAGS) $(SOURCE) $(INCLUDES) $(LIBDIRS) $(LIBS) -std=c++11 -o $@

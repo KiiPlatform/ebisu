@@ -1589,8 +1589,8 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     http_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         if (call_send == 0) {
             const char req_line[] = "GET https://api.kii.com/api/apps/dummyAppID/installations/dummyInstallationID/mqtt-endpoint HTTP/1.1\r\n";
-            REQUIRE( length == strlen(req_line) );
-            REQUIRE( strncmp(buffer, req_line, length) == 0 );
+            CHECK( length == strlen(req_line) );
+            CHECK( strncmp(buffer, req_line, length) == 0 );
         }
         ++call_send;
         *out_sent_length = length;
@@ -1639,19 +1639,19 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     };
 
     _mqtt_state_get_endpoint(&state);
-    REQUIRE( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
-    REQUIRE( state.info.error == KII_MQTT_ERR_OK );
-    REQUIRE( strcmp(state.endpoint.username, "dummyUser") == 0 );
-    REQUIRE( strcmp(state.endpoint.password, "dummyPassword") == 0 );
-    REQUIRE( strcmp(state.endpoint.topic, "dummyTopic") == 0 );
-    REQUIRE( strcmp(state.endpoint.host, "jp-mqtt-dummy.kii.com") == 0 );
-    REQUIRE( state.endpoint.port_tcp == 1883 );
-    REQUIRE( state.endpoint.port_ssl == 8883 );
-    REQUIRE( state.endpoint.ttl == 2147483647 );
-    REQUIRE( call_connect == 1 );
-    REQUIRE( call_send > 1 );
-    REQUIRE( call_recv >= 1 );
-    REQUIRE( call_close == 1 );
+    CHECK( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+    CHECK( state.info.error == KII_MQTT_ERR_OK );
+    CHECK( strcmp(state.endpoint.username, "dummyUser") == 0 );
+    CHECK( strcmp(state.endpoint.password, "dummyPassword") == 0 );
+    CHECK( strcmp(state.endpoint.topic, "dummyTopic") == 0 );
+    CHECK( strcmp(state.endpoint.host, "jp-mqtt-dummy.kii.com") == 0 );
+    CHECK( state.endpoint.port_tcp == 1883 );
+    CHECK( state.endpoint.port_ssl == 8883 );
+    CHECK( state.endpoint.ttl == 2147483647 );
+    CHECK( call_connect == 1 );
+    CHECK( call_send > 1 );
+    CHECK( call_recv >= 1 );
+    CHECK( call_close == 1 );
 
     call_connect = 0;
     mqtt_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, unsigned int port) {

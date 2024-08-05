@@ -92,8 +92,10 @@ TEST_CASE( "HTTP minimal" ) {
     called = false;
     s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         called = true;
-        REQUIRE( length == 40 );
-        REQUIRE( strncmp(buffer, "Content-Length: 0\r\nConnection: Close\r\n\r\n", 40) == 0 );
+        char h[] = "Connection: Close\r\n\r\n";
+        int len = strlen(h);
+        REQUIRE( length == len );
+        REQUIRE( strncmp(buffer, h, len) == 0 );
         *out_sent_length = length;
         return KHC_SOCK_OK;
     };
@@ -264,8 +266,10 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     called = false;
     s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         called = true;
-        REQUIRE( length == 49 );
-        REQUIRE( strncmp(buffer, "Transfer-Encoding: chunked\r\nConnection: Close\r\n\r\n", 49) == 0 );
+        char h[] = "Connection: Close\r\n\r\n";
+        int len = strlen(h);
+        REQUIRE( length == strlen(h) );
+        REQUIRE( strncmp(buffer, h, len) == 0 );
         *out_sent_length = length;
         return KHC_SOCK_OK;
     };
@@ -513,7 +517,7 @@ TEST_CASE( "Socket send partial" ) {
     req_headers = khc_slist_append(req_headers, req_header, strlen(req_header));
 
     khc_set_host(&http, "api.kii.com");
-    khc_set_method(&http, "GET");
+    khc_set_method(&http, "POST");
     khc_set_path(&http, "/api/apps");
     khc_set_req_headers(&http, req_headers);
 
@@ -549,7 +553,7 @@ TEST_CASE( "Socket send partial" ) {
     called = false;
     s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         called = true;
-        const char req_line[] = "GET https://api.kii.";
+        const char req_line[] = "POST https://api.kii";
         size_t req_len = strlen(req_line);
         REQUIRE( length > req_len );
         REQUIRE( strncmp(buffer, req_line, req_len) == 0 );
@@ -565,7 +569,7 @@ TEST_CASE( "Socket send partial" ) {
     called = false;
     s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         called = true;
-        const char req_line[] = "com/api/apps HT";
+        const char req_line[] = ".com/api/apps H";
         size_t req_len = strlen(req_line);
         REQUIRE( length > req_len );
         REQUIRE( strncmp(buffer, req_line, req_len) == 0 );
@@ -581,7 +585,7 @@ TEST_CASE( "Socket send partial" ) {
     called = false;
     s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         called = true;
-        const char req_line[] = "TP/1.1\r\n";
+        const char req_line[] = "TTP/1.1\r\n";
         size_t req_len = strlen(req_line);
         REQUIRE( length == req_len );
         REQUIRE( strncmp(buffer, req_line, req_len) == 0 );

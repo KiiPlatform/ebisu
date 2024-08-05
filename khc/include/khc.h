@@ -543,6 +543,14 @@ int khc_get_status_code(
         khc* khc
 );
 
+/**
+ * \brief Check if the configured request method can have a request body.
+ *
+ * \param [in] khc instance.
+ * \returns 0 if it cannot, 1 if it can.
+ */
+int khc_method_can_have_body(khc* khc);
+
 #ifdef __cplusplus
 }
 #endif

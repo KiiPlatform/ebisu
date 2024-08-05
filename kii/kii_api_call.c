@@ -58,6 +58,12 @@ kii_code_t kii_api_call_start(
     return res;
 }
 
+kii_code_t kii_api_call_set_no_body(kii_t* kii)
+{
+    _reset_buff(kii);
+    return KII_ERR_OK;
+}
+
 kii_code_t kii_api_call_append_body(
         kii_t* kii,
         const char* chunk,
@@ -81,11 +87,7 @@ kii_code_t kii_api_call_append_header_or_default(
         const char* value,
         const char* default_value)
 {
-    char *def = default_value;
-    if (value != NULL && strlen(value) > 0) {
-        def = (char*)value;
-    }
-    return kii_api_call_append_header(kii, key, def);
+    return kii_api_call_append_header(kii, key, (value != NULL && strlen(value) > 0) ? value : default_value);
 }
 
 kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* value)
