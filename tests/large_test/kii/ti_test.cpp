@@ -268,4 +268,60 @@ TEST_CASE("TI Tests")
         REQUIRE( res == KII_ERR_RESP_STATUS );
         REQUIRE((status_code == 400 || status_code == 422));
     }
+
+    SECTION("Patch bulk states with empty callback")
+    {
+        std::ostringstream oss;
+        oss << "ltest_vid_" << std::time(NULL);
+        std::string vid = oss.str();
+        std::time_t t = std::time(NULL);
+
+        const char password[] = "1234";
+        const char thing_type[] = "ltest_thing_type";
+        const char firmware_version[] = "ltest_firmware_version";
+        kii_code_t res = kii_ti_onboard(&kii, vid.c_str(), password, thing_type, firmware_version, NULL, NULL);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+        REQUIRE( std::string(kii._author.author_id).length() > 0 );
+        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+
+        std::function<size_t(char *buffer, size_t size, void *userdata)>
+            on_read = [](char *buffer, size_t size, void *userdata)
+            {
+                return 0;
+            };
+        kiiltest::RWFunc ctx;
+        ctx.on_read = on_read;
+        res = kii_ti_patch_bulk_states(&kii, kiiltest::read_cb, &ctx, NULL, NULL, NULL);
+        int status_code =  khc_get_status_code(&kii._khc);
+        INFO("Status code is: " << status_code);
+        REQUIRE( res == KII_ERR_RESP_STATUS );
+        REQUIRE((status_code == 400 || status_code == 422));
+    }
+
+    SECTION("Patch bulk states with null callback")
+    {
+        std::ostringstream oss;
+        oss << "ltest_vid_" << std::time(NULL);
+        std::string vid = oss.str();
+        std::time_t t = std::time(NULL);
+
+        const char password[] = "1234";
+        const char thing_type[] = "ltest_thing_type";
+        const char firmware_version[] = "ltest_firmware_version";
+        kii_code_t res = kii_ti_onboard(&kii, vid.c_str(), password, thing_type, firmware_version, NULL, NULL);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+        REQUIRE( std::string(kii._author.author_id).length() > 0 );
+        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+
+
+        res = kii_ti_patch_bulk_states(&kii, NULL, NULL, NULL, NULL, NULL);
+        int status_code =  khc_get_status_code(&kii._khc);
+        INFO("Status code is: " << status_code);
+        REQUIRE( res == KII_ERR_RESP_STATUS );
+        REQUIRE((status_code == 400 || status_code == 422));
+    }
 }
