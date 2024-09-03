@@ -255,36 +255,13 @@ TEST_CASE("Empty request payloads") {
         kiiltest::RWFunc ctx;
         ctx.on_read = on_read;
         res = kii_ti_put_bulk_states(&kii, kiiltest::read_cb, &ctx, NULL, NULL, NULL);
-        int status_code =  khc_get_status_code(&kii._khc);
-        INFO("Status code is: " << status_code);
-        REQUIRE( res == KII_ERR_RESP_STATUS );
-        REQUIRE(status_code == 400);
-        picojson::value v;
-        auto err_str = picojson::parse(v, buff);
-        REQUIRE ( err_str.empty() );
-        REQUIRE ( v.is<picojson::object>() );
-        picojson::object obj = v.get<picojson::object>();
-        auto errorCode = obj.at("errorCode");
-        REQUIRE ( errorCode.is<std::string>() );
-        REQUIRE ( errorCode.get<std::string>() == std::string("BAD_REQUEST") );
+        kiiltest::check_error_response(kii, buff, res, 400, "BAD_REQUEST");
     }
 
     SECTION("Put bulk states with no callback")
     {
-
         res = kii_ti_put_bulk_states(&kii, NULL, NULL, NULL, NULL, NULL);
-        int status_code =  khc_get_status_code(&kii._khc);
-        INFO("Status code is: " << status_code);
-        REQUIRE( res == KII_ERR_RESP_STATUS );
-        REQUIRE(status_code == 400);
-        picojson::value v;
-        auto err_str = picojson::parse(v, buff);
-        REQUIRE ( err_str.empty() );
-        REQUIRE ( v.is<picojson::object>() );
-        picojson::object obj = v.get<picojson::object>();
-        auto errorCode = obj.at("errorCode");
-        REQUIRE ( errorCode.is<std::string>() );
-        REQUIRE ( errorCode.get<std::string>() == std::string("EMPTY_BODY") );
+        kiiltest::check_error_response(kii, buff, res, 400, "EMPTY_BODY");
     }
 
     SECTION("Patch bulk states with empty callback")
@@ -298,35 +275,13 @@ TEST_CASE("Empty request payloads") {
         kiiltest::RWFunc ctx;
         ctx.on_read = on_read;
         res = kii_ti_patch_bulk_states(&kii, kiiltest::read_cb, &ctx, NULL, NULL, NULL);
-        int status_code =  khc_get_status_code(&kii._khc);
-        INFO("Status code is: " << status_code);
-        REQUIRE( res == KII_ERR_RESP_STATUS );
-        REQUIRE(status_code == 400);
-        picojson::value v;
-        auto err_str = picojson::parse(v, buff);
-        REQUIRE ( err_str.empty() );
-        REQUIRE ( v.is<picojson::object>() );
-        picojson::object obj = v.get<picojson::object>();
-        auto errorCode = obj.at("errorCode");
-        REQUIRE ( errorCode.is<std::string>() );
-        REQUIRE ( errorCode.get<std::string>() == std::string("BAD_REQUEST") );
+        kiiltest::check_error_response(kii, buff, res, 400, "BAD_REQUEST");
     }
 
     SECTION("Patch bulk states with null callback")
     {
         res = kii_ti_patch_bulk_states(&kii, NULL, NULL, NULL, NULL, NULL);
-        int status_code =  khc_get_status_code(&kii._khc);
-        INFO("Status code is: " << status_code);
-        REQUIRE( res == KII_ERR_RESP_STATUS );
-        REQUIRE((status_code == 400));
-        picojson::value v;
-        auto err_str = picojson::parse(v, buff);
-        REQUIRE ( err_str.empty() );
-        REQUIRE ( v.is<picojson::object>() );
-        picojson::object obj = v.get<picojson::object>();
-        auto errorCode = obj.at("errorCode");
-        REQUIRE ( errorCode.is<std::string>() );
-        REQUIRE ( errorCode.get<std::string>() == std::string("EMPTY_BODY") );
+        kiiltest::check_error_response(kii, buff, res, 400, "EMPTY_BODY");
     }
 
     SECTION("Patch state with empty callback")
@@ -339,35 +294,12 @@ TEST_CASE("Empty request payloads") {
         kiiltest::RWFunc ctx;
         ctx.on_read = on_read;
         res = kii_ti_patch_state(&kii, kiiltest::read_cb, &ctx, NULL, NULL, NULL);
-        int status_code =  khc_get_status_code(&kii._khc);
-        INFO("Status code is: " << status_code);
-        REQUIRE( res == KII_ERR_RESP_STATUS );
-        REQUIRE((status_code == 400));
-        picojson::value v;
-        auto err_str = picojson::parse(v, buff);
-        REQUIRE ( err_str.empty() );
-        REQUIRE ( v.is<picojson::object>() );
-        picojson::object obj = v.get<picojson::object>();
-        auto errorCode = obj.at("errorCode");
-        REQUIRE ( errorCode.is<std::string>() );
-        REQUIRE ( errorCode.get<std::string>() == std::string("BAD_REQUEST") );
+        kiiltest::check_error_response(kii, buff, res, 400, "BAD_REQUEST");
     }
 
    SECTION("Patch state with null callback")
     {
         res = kii_ti_patch_state(&kii, NULL, NULL, NULL, NULL, NULL);
-        int status_code =  khc_get_status_code(&kii._khc);
-        INFO("Status code is: " << status_code);
-        REQUIRE( res == KII_ERR_RESP_STATUS );
-        REQUIRE((status_code == 400));
-
-        picojson::value v;
-        auto err_str = picojson::parse(v, buff);
-        REQUIRE ( err_str.empty() );
-        REQUIRE ( v.is<picojson::object>() );
-        picojson::object obj = v.get<picojson::object>();
-        auto errorCode = obj.at("errorCode");
-        REQUIRE ( errorCode.is<std::string>() );
-        REQUIRE ( errorCode.get<std::string>() == std::string("EMPTY_BODY") );
+        kiiltest::check_error_response(kii, buff, res, 400, "EMPTY_BODY");
     }
 }
