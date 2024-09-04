@@ -297,9 +297,28 @@ TEST_CASE("Empty request payloads") {
         kiiltest::check_error_response(kii, buff, res, 400, "BAD_REQUEST");
     }
 
-   SECTION("Patch state with null callback")
+    SECTION("Patch state with null callback")
     {
         res = kii_ti_patch_state(&kii, NULL, NULL, NULL, NULL, NULL);
+        kiiltest::check_error_response(kii, buff, res, 400, "EMPTY_BODY");
+    }
+
+    SECTION("Put state with empty callback")
+    {
+        std::function<size_t(char *buffer, size_t size, void *userdata)>
+            on_read = [](char *buffer, size_t size, void *userdata)
+            {
+                return 0;
+            };
+        kiiltest::RWFunc ctx;
+        ctx.on_read = on_read;
+        res = kii_ti_put_state(&kii, kiiltest::read_cb, &ctx, NULL, NULL, NULL);
+        kiiltest::check_error_response(kii, buff, res, 400, "BAD_REQUEST");
+    }
+
+    SECTION("Put state with null callback")
+    {
+        res = kii_ti_put_state(&kii, NULL, NULL, NULL, NULL, NULL);
         kiiltest::check_error_response(kii, buff, res, 400, "EMPTY_BODY");
     }
 }
