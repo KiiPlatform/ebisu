@@ -5,7 +5,7 @@
 #include <chrono>
 #include <functional>
 #include <picojson.h>
-#include <catch.hpp>  // Assuming you're using Catch2 for the REQUIRE macros
+#include <catch.hpp>
 #include "kii.h"
 #include "khc.h"
 #include "secure_socket_impl.h"
