@@ -514,7 +514,7 @@ tio_code_t _handle_command(
             // Handled all actions in command.
             kii_code_t res = kii_api_call_append_body(&handler->_kii, "]}", 2);
             if (res != KII_ERR_OK) {
-                _trace_op("kii_api_call_append_body (Handled all actions in command)", kii_res);
+                _trace_op("kii_api_call_append_body (Handled all actions in command)", res);
                 return _tio_convert_code(res);
             }
             break;
@@ -621,7 +621,7 @@ tio_code_t _parse_command(
             // Handled all actions in command.
             break;
         } else {
-            _trace_op("_parse_alias", pa_res);
+            _trace_op("_parse_alias", res);
             return TIO_ERR_PARSE_JSON;
         }
     }
