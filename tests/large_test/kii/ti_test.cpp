@@ -218,7 +218,7 @@ TEST_CASE("TI Tests")
     }
 }
 
-TEST_CASE("Empty request payloads") {
+TEST_CASE("Empty request payloads", "[empty-request]") {
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
     size_t buff_size = 4096;
     char buff[buff_size];
@@ -255,7 +255,7 @@ TEST_CASE("Empty request payloads") {
         kiiltest::RWFunc ctx;
         ctx.on_read = on_read;
         res = kii_ti_put_bulk_states(&kii, kiiltest::read_cb, &ctx, NULL, NULL, NULL);
-        kiiltest::check_error_response(kii, buff, res, 400, "BAD_REQUEST");
+        kiiltest::check_error_response(kii, buff, res, 400, "EMPTY_BODY");
     }
 
     SECTION("Put bulk states with no callback")
@@ -275,7 +275,7 @@ TEST_CASE("Empty request payloads") {
         kiiltest::RWFunc ctx;
         ctx.on_read = on_read;
         res = kii_ti_patch_bulk_states(&kii, kiiltest::read_cb, &ctx, NULL, NULL, NULL);
-        kiiltest::check_error_response(kii, buff, res, 400, "BAD_REQUEST");
+        kiiltest::check_error_response(kii, buff, res, 400, "EMPTY_BODY");
     }
 
     SECTION("Patch bulk states with null callback")
@@ -294,7 +294,7 @@ TEST_CASE("Empty request payloads") {
         kiiltest::RWFunc ctx;
         ctx.on_read = on_read;
         res = kii_ti_patch_state(&kii, kiiltest::read_cb, &ctx, NULL, NULL, NULL);
-        kiiltest::check_error_response(kii, buff, res, 400, "BAD_REQUEST");
+        kiiltest::check_error_response(kii, buff, res, 400, "EMPTY_BODY");
     }
 
     SECTION("Patch state with null callback")
@@ -313,7 +313,7 @@ TEST_CASE("Empty request payloads") {
         kiiltest::RWFunc ctx;
         ctx.on_read = on_read;
         res = kii_ti_put_state(&kii, kiiltest::read_cb, &ctx, NULL, NULL, NULL);
-        kiiltest::check_error_response(kii, buff, res, 400, "BAD_REQUEST");
+        kiiltest::check_error_response(kii, buff, res, 400, "EMPTY_BODY");
     }
 
     SECTION("Put state with null callback")
