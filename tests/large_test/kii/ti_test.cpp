@@ -217,3 +217,108 @@ TEST_CASE("TI Tests")
         REQUIRE( khc_get_status_code(&kii._khc) == 204 );
     }
 }
+
+TEST_CASE("Empty request payloads", "[empty-request]") {
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    size_t buff_size = 4096;
+    char buff[buff_size];
+    kii_t kii;
+    ebisu::ltest::ssl::SSLData http_ssl_ctx;
+    ebisu::ltest::ssl::SSLData mqtt_ssl_ctx;
+
+    jkii_token_t tokens[256];
+    jkii_resource_t resource = {tokens, 256};
+
+    kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &mqtt_ssl_ctx, &resource);
+
+    std::ostringstream oss;
+    oss << "ltest_vid_" << std::time(NULL);
+    std::string vid = oss.str();
+    const char password[] = "1234";
+    const char thing_type[] = "ltest_thing_type";
+    const char firmware_version[] = "ltest_firmware_version";
+    kii_code_t res = kii_ti_onboard(&kii, vid.c_str(), password, thing_type, firmware_version, NULL, NULL);
+
+    REQUIRE( res == KII_ERR_OK );
+    REQUIRE( khc_get_status_code(&kii._khc) == 200 );
+    REQUIRE( std::string(kii._author.author_id).length() > 0 );
+    REQUIRE( std::string(kii._author.access_token).length() > 0 );
+
+    SECTION("Put bulk states with empty callback")
+    {
+
+        std::function<size_t(char *buffer, size_t size, void *userdata)>
+            on_read = [] (char *buffer, size_t size, void *userdata)
+            {
+                return 0;
+            };
+        kiiltest::RWFunc ctx;
+        ctx.on_read = on_read;
+        res = kii_ti_put_bulk_states(&kii, kiiltest::read_cb, &ctx, NULL, NULL, NULL);
+        kiiltest::check_error_response(kii, buff, res, 400, "EMPTY_BODY");
+    }
+
+    SECTION("Put bulk states with no callback")
+    {
+        res = kii_ti_put_bulk_states(&kii, NULL, NULL, NULL, NULL, NULL);
+        kiiltest::check_error_response(kii, buff, res, 400, "EMPTY_BODY");
+    }
+
+    SECTION("Patch bulk states with empty callback")
+    {
+
+        std::function<size_t(char *buffer, size_t size, void *userdata)>
+            on_read = [](char *buffer, size_t size, void *userdata)
+            {
+                return 0;
+            };
+        kiiltest::RWFunc ctx;
+        ctx.on_read = on_read;
+        res = kii_ti_patch_bulk_states(&kii, kiiltest::read_cb, &ctx, NULL, NULL, NULL);
+        kiiltest::check_error_response(kii, buff, res, 400, "EMPTY_BODY");
+    }
+
+    SECTION("Patch bulk states with null callback")
+    {
+        res = kii_ti_patch_bulk_states(&kii, NULL, NULL, NULL, NULL, NULL);
+        kiiltest::check_error_response(kii, buff, res, 400, "EMPTY_BODY");
+    }
+
+    SECTION("Patch state with empty callback")
+    {
+        std::function<size_t(char *buffer, size_t size, void *userdata)>
+            on_read = [](char *buffer, size_t size, void *userdata)
+            {
+                return 0;
+            };
+        kiiltest::RWFunc ctx;
+        ctx.on_read = on_read;
+        res = kii_ti_patch_state(&kii, kiiltest::read_cb, &ctx, NULL, NULL, NULL);
+        kiiltest::check_error_response(kii, buff, res, 400, "EMPTY_BODY");
+    }
+
+    SECTION("Patch state with null callback")
+    {
+        res = kii_ti_patch_state(&kii, NULL, NULL, NULL, NULL, NULL);
+        kiiltest::check_error_response(kii, buff, res, 400, "EMPTY_BODY");
+    }
+
+    SECTION("Put state with empty callback")
+    {
+        std::function<size_t(char *buffer, size_t size, void *userdata)>
+            on_read = [](char *buffer, size_t size, void *userdata)
+            {
+                return 0;
+            };
+        kiiltest::RWFunc ctx;
+        ctx.on_read = on_read;
+        res = kii_ti_put_state(&kii, kiiltest::read_cb, &ctx, NULL, NULL, NULL);
+        kiiltest::check_error_response(kii, buff, res, 400, "EMPTY_BODY");
+    }
+
+    SECTION("Put state with null callback")
+    {
+        res = kii_ti_put_state(&kii, NULL, NULL, NULL, NULL, NULL);
+        kiiltest::check_error_response(kii, buff, res, 400, "EMPTY_BODY");
+    }
+}
