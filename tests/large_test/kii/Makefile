@@ -29,8 +29,9 @@ CPPFLAGS += $(if $(value DEFAULT_SITE), -D_DEFAULT_SITE=$(DEFAULT_SITE), )
 CPPFLAGS += $(if $(value APP_ID), -D_APP_ID=$(APP_ID), )
 CPPFLAGS += $(if $(value SOCKET_LOG), -DSOCKET_LOG, )
 
-TESTCMD = $(if $(value MEMCHECK), valgrind --leak-check=yes $(TARGET), $(TARGET))
+TESTCMD = $(if $(value MEMCHECK), valgrind --leak-check=yes $(TARGET) -s, $(TARGET) -s)
 TESTCMD += $(if $(value JUNIT), -r junit -o $(TEST_RESULT), )
+TESTCMD += $(if $(value TEST_CASE), -c "$(TEST_CASE)", )
 
 all: clean $(TARGET)
 

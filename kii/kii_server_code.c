@@ -8,6 +8,7 @@
 
 static kii_code_t _execute_server_code(
         kii_t* kii,
+        const char* version,
         const char* endpoint_name,
         const char* params)
 {
@@ -15,8 +16,8 @@ static kii_code_t _execute_server_code(
     khc_set_method(&kii->_khc, "POST");
 
     int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size,
-            "/api/apps/%s/server-code/versions/current/%s",
-            kii->_app_id, endpoint_name);
+            "/api/apps/%s/server-code/versions/%s/%s",
+            kii->_app_id, version, endpoint_name);
 
     if (path_len >= kii->_rw_buff_size) {
         return KII_ERR_TOO_LARGE_DATA;
@@ -65,8 +66,9 @@ static kii_code_t _execute_server_code(
     return _convert_code(code);
 }
 
-kii_code_t kii_execute_server_code(
+kii_code_t kii_execute_server_code_version(
         kii_t* kii,
+        const char* version,
         const char* endpoint_name,
         const char* params)
 {
@@ -74,7 +76,7 @@ kii_code_t kii_execute_server_code(
     _reset_buff(kii);
 
 
-    kii_code_t res = _execute_server_code(kii, endpoint_name, params);
+    kii_code_t res = _execute_server_code(kii, version, endpoint_name, params);
     if (res != KII_ERR_OK) {
         goto exit;
     }
@@ -87,6 +89,15 @@ kii_code_t kii_execute_server_code(
 
 exit:
     return res;
+}
+
+
+kii_code_t kii_execute_server_code(
+        kii_t* kii,
+        const char* endpoint_name,
+        const char* params)
+{
+    return kii_execute_server_code_version(kii, "current", endpoint_name, params);
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
 

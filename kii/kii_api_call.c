@@ -87,7 +87,11 @@ kii_code_t kii_api_call_append_header_or_default(
         const char* value,
         const char* default_value)
 {
-    return kii_api_call_append_header(kii, key, (value != NULL && strlen(value) > 0) ? value : default_value);
+    if (value != NULL && strlen(value) > 0) {
+        return kii_api_call_append_header(kii, key, value);
+    } else {
+        return kii_api_call_append_header(kii, key, default_value);
+    }
 }
 
 kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* value)

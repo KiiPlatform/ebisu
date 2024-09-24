@@ -1,5 +1,8 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
+cmake_minimum_required(VERSION 3.12)
 PROJECT(kii C)
+INCLUDE(${CMAKE_SOURCE_DIR}/../version/EbisuVersion.cmake)
+set_git_version_and_generate_header()
+
 SET(CMAKE_C_FLAGS "-Wall -std=c99")
 # Uncomment it if you need to use unsecure connection.
 #SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DKII_MQTT_USE_PORT_TCP=1")
@@ -13,8 +16,6 @@ FILE(GLOB srcs ./*.c ../khc/src/*.c ../jkii/src/*.c ../jkii/libs/jsmn/*.c)
 ADD_LIBRARY(kii SHARED ${srcs})
 TARGET_INCLUDE_DIRECTORIES(kii PRIVATE ${PROJECT_SOURCE_DIR} ./include ../khc/include ../kii ../jkii/include ../jkii/libs/jsmn)
 TARGET_INCLUDE_DIRECTORIES(kii PUBLIC ${PROJECT_SOURCE_DIR}/include)
-SET(version "1.0.0")
-SET(soversion "1.0.0")
 SET_TARGET_PROPERTIES(kii PROPERTIES VERSION ${version} SOVERSION ${soversion})
 INSTALL(FILES ./include/kii.h ./include/kii_task_callback.h ../khc/include/khc.h ../khc/include/khc_socket_callback.h ../jkii/include/jkii.h ../jkii/include/jkii_utils.h ../jkii/libs/jsmn/jsmn.h DESTINATION include)
 INSTALL(TARGETS kii LIBRARY DESTINATION lib)

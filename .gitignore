@@ -1,6 +1,9 @@
 .DS_Store
 *.o
 *.dsym
-.envrc
-.envrc.*
+/.envrc
+/.env
+/.env.prod
+/.env.test
 /.vscode/
+**/ebisu_version.h

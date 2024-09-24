@@ -1,9 +1,13 @@
 #ifndef __large_test__
 #define __large_test__
 
+#include <string>
 #include <chrono>
 #include <functional>
+#include <picojson.h>
+#include <catch.hpp>
 #include "kii.h"
+#include "khc.h"
 #include "secure_socket_impl.h"
 #include "../test_env.h"
 
@@ -49,6 +53,29 @@ inline void init(
 inline long long current_time() {
     auto now = std::chrono::system_clock::now();
     return now.time_since_epoch().count() / 1000;
+}
+
+inline void check_error_response(
+    kii_t& kii,
+    char* buff,
+    const int res, 
+    const int expected_status_code, 
+    const std::string& expected_error_code
+    ) {
+    REQUIRE(res == KII_ERR_RESP_STATUS);
+    
+    int actual_status_code = khc_get_status_code(&kii._khc);
+    REQUIRE(actual_status_code == expected_status_code);
+    
+    picojson::value v;
+    auto err_str = picojson::parse(v, buff);
+    REQUIRE(err_str.empty());
+    REQUIRE(v.is<picojson::object>());
+    
+    picojson::object obj = v.get<picojson::object>();
+    auto errorCode = obj.at("errorCode");
+    REQUIRE(errorCode.is<std::string>());
+    REQUIRE(errorCode.get<std::string>() == expected_error_code);
 }
 
 class RWFunc {
