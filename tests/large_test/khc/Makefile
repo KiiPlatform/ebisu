@@ -18,10 +18,10 @@ SRCS+=$(wildcard $(LTEST_ROOT_DIR)/*.cpp)
 TEST_RESULT_DIR=test-results/junit
 TEST_RESULT=$(TEST_RESULT_DIR)/test-result.xml
 
-CPPFLAGS=-g -O0 -ggdb
+CPPFLAGS+=-g -O0 -ggdb
 
 ifdef PLAIN_HTTP
-	CPPFLAGS += -DPLAIN_HTTP
+CPPFLAGS += -DPLAIN_HTTP
 endif
 
 ifdef MEMCHECK
