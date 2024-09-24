@@ -1,5 +1,5 @@
 CXXFLAGS = -Wall -std=c++11
-CXXFLAGS += -g -DDEBUG
+CXXFLAGS += -g -DDEBUG -O0 -ggdb
 CMAKE_BUILD_TYPE = DEBUG
 
 ROOT_DIR=../../..
@@ -37,7 +37,7 @@ all: clean $(TARGET)
 
 kii:
 	mkdir -p $(KII_BUILD_DIR)
-	cd build-kii && cmake ../../../../kii && make && make DESTDIR=. install
+	cd $(KII_BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=Debug ../../../../kii && make && make DESTDIR=. install
 
 $(TARGET): kii $(SRCS)
 	g++ $(CXXFLAGS) $(SRCS) $(LD_FLAGS) $(INCLUDES) $(LIBS) $(CPPFLAGS) -o $(TARGET)

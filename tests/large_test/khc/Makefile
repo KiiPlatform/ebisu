@@ -18,8 +18,10 @@ SRCS+=$(wildcard $(LTEST_ROOT_DIR)/*.cpp)
 TEST_RESULT_DIR=test-results/junit
 TEST_RESULT=$(TEST_RESULT_DIR)/test-result.xml
 
+CPPFLAGS+=-g -O0 -ggdb
+
 ifdef PLAIN_HTTP
-	CPPFLAGS += -DPLAIN_HTTP
+CPPFLAGS += -DPLAIN_HTTP
 endif
 
 ifdef MEMCHECK
@@ -40,10 +42,10 @@ all: clean test
 
 $(LIB_BUILD_DIR): $(LIB_SRCS)
 	mkdir -p $(LIB_BUILD_DIR)
-	cd $(LIB_BUILD_DIR) && cmake -DCMAKE_INSTALL_PREFIX=. ../$(ROOT_DIR)/khc && make install
+	cd $(LIB_BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=. ../$(ROOT_DIR)/khc && make install
 
 $(TARGET): $(SRCS) $(LIB_BUILD_DIR)
-	g++ -g $(SRCS) $(LIBS_DIR) $(LIBS) $(INCLUDES) $(CPPFLAGS) -o $(TARGET) -std=c++11
+	g++ $(SRCS) $(LIBS_DIR) $(LIBS) $(INCLUDES) $(CPPFLAGS) -o $(TARGET) -std=c++11
 
 build: $(TARGET)
 

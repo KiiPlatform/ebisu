@@ -7,7 +7,7 @@ LIBS_DIR=-L$(LIB_BUILD_DIR)/lib
 LIB_DEPS=$(wildcard $(TIO_DIR)/*.c)
 LIB_DEPS+=$(wildcard $(TIO_DIR)/*.h)
 LIB_DEPS+=$(wildcard $(TIO_DIR)/include*.h)
-
+CFLAGS=-g -O0 -ggdb
 TARGET=./small-test
 TARGET_SRCS=$(wildcard *.cpp)
 
@@ -34,10 +34,10 @@ all: test
 
 $(LIB_BUILD_DIR): $(LIB_DEPS)
 	mkdir -p $(LIB_BUILD_DIR)
-	cd 	$(LIB_BUILD_DIR) && cmake -DCMAKE_INSTALL_PREFIX=. ../$(TIO_DIR) && make install
+	cd 	$(LIB_BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=. ../$(TIO_DIR) && make install
 
 $(TARGET): $(TARGET_SRCS) $(LIB_BUILD_DIR)
-	g++ -g $(TARGET_SRCS) $(LIBS_DIR) $(LIBS) $(INCLUDES) -o $(TARGET) -std=c++11
+	g++ $(CFLAGS) $(TARGET_SRCS) $(LIBS_DIR) $(LIBS) $(INCLUDES) -o $(TARGET) -std=c++11
 
 build: $(TARGET)
 
