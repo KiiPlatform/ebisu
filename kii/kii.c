@@ -43,7 +43,7 @@ size_t _cb_write_header(char *buffer, size_t size, void *userdata)
 {
     // TODO: implement it later for getting Etag, etc.
     char* etag_buff = ((kii_t*)userdata)->_etag;
-    _parse_etag(buffer, size, etag_buff, 64);
+    _parse_etag(buffer, size, etag_buff, KII_ETAG_MAX_SIZE);
     return size;
 }
 
