@@ -25,7 +25,9 @@ jobs:
       - name: Fetch tags
         run: git fetch --unshallow --tags --force
       - name: Setup build env
-        run: sudo apt-get -yq install g++ doxygen cmake libssl-dev git valgrind rsync
+        run: |
+          sudo apt-get -yq update
+          sudo apt-get -yq install g++ doxygen cmake libssl-dev git valgrind rsync
       - name: build
         run: make build
       - name: test
