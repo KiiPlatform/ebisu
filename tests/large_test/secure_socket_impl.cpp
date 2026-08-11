@@ -89,9 +89,8 @@ khc_sock_code_t
 
     ret = SSL_connect(ssl);
     if (ret != 1) {
-        int sslErr= SSL_get_error(ssl, ret);
         char sslErrStr[120];
-        ERR_error_string_n(sslErr, sslErrStr, 120);
+        ERR_error_string_n(ERR_get_error(), sslErrStr, 120);
         printf("failed to connect: %s\n", sslErrStr);
         return KHC_SOCK_FAIL;
     }
