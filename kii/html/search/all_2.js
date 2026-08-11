@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['error_4',['error',['../structkii__mqtt__task__info.html#a92ee0b673e721c1deb760bb6853ec42e',1,'kii_mqtt_task_info']]]
+  ['debug_20build_0',['Debug Build',['../index.html#autotoc_md1',1,'']]]
 ];

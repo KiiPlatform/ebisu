@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['long_5fvalue_10',['long_value',['../structtio__action__value__t.html#a6d17c1b2e1ad14fc98dcdf6d715b8538',1,'tio_action_value_t']]]
+  ['for_20mqtt_0',['Notes about socket implementation used for MQTT.',['../index.html#autotoc_md9',1,'']]],
+  ['functions_1',['functions',['../index.html#autotoc_md2',1,'Callback functions'],['../index.html#autotoc_md24',1,'Callback functions']]]
 ];

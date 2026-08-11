@@ -1,7 +1,6 @@
 var searchData=
 [
-  ['task_5fstate_133',['task_state',['../structkii__mqtt__task__info.html#a10dd846ce66170de1a124dc32cdc46b8',1,'kii_mqtt_task_info']]],
-  ['topic_134',['topic',['../structkii__mqtt__endpoint__t.html#a8aba990f498bfaa23e4d8df2b2d9e0c4',1,'kii_mqtt_endpoint_t']]],
-  ['topic_5fname_135',['topic_name',['../structkii__topic__t.html#a2ea6785013916b715b151da705a5d54a',1,'kii_topic_t']]],
-  ['ttl_136',['ttl',['../structkii__mqtt__endpoint__t.html#ad07b60aae4d353b09eac993a725f353e',1,'kii_mqtt_endpoint_t']]]
+  ['scope_0',['scope',['../structkii__bucket__t.html#aba6f08f67d2f5b57aaedceb75dfc0528',1,'kii_bucket_t::scope'],['../structkii__topic__t.html#a2967810519663f7e6de38f71098d9709',1,'kii_topic_t::scope']]],
+  ['scope_5fid_1',['scope_id',['../structkii__bucket__t.html#af5cdb5e5d4558d80a4196d7c91bc81be',1,'kii_bucket_t::scope_id'],['../structkii__topic__t.html#a194b3a3e1aefe07ba9662da0b4667c07',1,'kii_topic_t::scope_id']]],
+  ['sdk_2',['Build SDK',['../index.html',1,'']]]
 ];

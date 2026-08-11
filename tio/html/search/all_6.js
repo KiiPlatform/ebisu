@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['opaque_5fvalue_11',['opaque_value',['../structtio__action__value__t.html#aa924dbe5c05e0df213710f356206dc4e',1,'tio_action_value_t']]],
-  ['opaque_5fvalue_5flength_12',['opaque_value_length',['../structtio__action__value__t.html#a2a32c6a02eff627a7892a17c5b1678bf',1,'tio_action_value_t']]]
+  ['implementation_20used_20for_20mqtt_0',['Notes about socket implementation used for MQTT.',['../index.html#autotoc_md9',1,'']]],
+  ['instance_1',['instance',['../index.html#autotoc_md11',1,'Set-up &lt;tt&gt;tio_handler_t&lt;/tt&gt; instance'],['../index.html#autotoc_md29',1,'Set-up &lt;tt&gt;tio_updater_t&lt;/tt&gt; instance']]],
+  ['interval_2',['Set-up MQTT Keep Alive interval.',['../index.html#autotoc_md19',1,'']]]
 ];

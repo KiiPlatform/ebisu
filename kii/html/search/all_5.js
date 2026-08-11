@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['id_7',['id',['../structkii__object__id__t.html#ad34800652856a52ea13e123ac84aa215',1,'kii_object_id_t::id()'],['../structkii__installation__id__t.html#ae4371a255cf810194f60cd6fa1394461',1,'kii_installation_id_t::id()']]]
+  ['host_0',['host',['../structkii__mqtt__endpoint__t.html#a5a8ec72431a1703f5e800772729313ad',1,'kii_mqtt_endpoint_t']]]
 ];

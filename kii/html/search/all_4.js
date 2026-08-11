@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['host_6',['host',['../structkii__mqtt__endpoint__t.html#a5a8ec72431a1703f5e800772729313ad',1,'kii_mqtt_endpoint_t']]]
+  ['firmware_5fversion_0',['firmware_version',['../structkii__ti__firmware__version__t.html#a1f54ce129cd5d882ef81b025dff04b63',1,'kii_ti_firmware_version_t']]]
 ];
