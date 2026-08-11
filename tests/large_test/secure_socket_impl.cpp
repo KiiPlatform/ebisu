@@ -66,6 +66,15 @@ khc_sock_code_t
         return KHC_SOCK_FAIL;
     }
 
+#ifdef SSL_OP_IGNORE_UNEXPECTED_EOF
+    /* The server answers "Connection: close" and drops the transport without
+       sending a TLS close_notify. OpenSSL 1.1.1 surfaced that as
+       SSL_ERROR_SYSCALL with errno 0, i.e. an ordinary EOF; 3.0 turned it into
+       a hard "unexpected eof while reading" error instead. This option asks
+       for the old, lenient behaviour. */
+    SSL_CTX_set_options(ssl_ctx, SSL_OP_IGNORE_UNEXPECTED_EOF);
+#endif
+
     ssl = SSL_new(ssl_ctx);
     if (ssl == NULL){
         printf("failed to init ssl.\n");
