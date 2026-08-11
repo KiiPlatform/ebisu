@@ -18,14 +18,16 @@ jobs:
       id-token: write
       checks: write
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Fetch tags
         run: git fetch --unshallow --tags --force
       - name: Setup build env
-        run: sudo apt-get -yq install g++ doxygen cmake libssl-dev git valgrind rsync
+        run: |
+          sudo apt-get -yq update
+          sudo apt-get -yq install g++ doxygen cmake libssl-dev git valgrind rsync
       - name: build
         run: make build
       - name: test
@@ -37,7 +39,7 @@ jobs:
           MEMCHECK=1 JUNIT=1 make ltest-kii
           MEMCHECK=1 JUNIT=1 make ltest-khc
       - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v3
+        uses: mikepenz/action-junit-report@v6
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "**/test-results/junit/test-result.xml"
@@ -55,7 +57,10 @@ jobs:
           rsync -rR --delete jkii/html ebisu-doc
           rsync -rR --delete tio/html ebisu-doc
       - name: Deploy docs to GitHub pages
-        uses: peaceiris/actions-gh-pages@v3
+        # Only master's docs belong on gh-pages; without this any branch push
+        # republishes the site.
+        if: github.ref == 'refs/heads/master'
+        uses: peaceiris/actions-gh-pages@v4
         with:
           publish_dir: ebisu-doc
           publish_branch: gh-pages

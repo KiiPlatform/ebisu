@@ -66,6 +66,15 @@ khc_sock_code_t
         return KHC_SOCK_FAIL;
     }
 
+#ifdef SSL_OP_IGNORE_UNEXPECTED_EOF
+    /* The server answers "Connection: close" and drops the transport without
+       sending a TLS close_notify. OpenSSL 1.1.1 surfaced that as
+       SSL_ERROR_SYSCALL with errno 0, i.e. an ordinary EOF; 3.0 turned it into
+       a hard "unexpected eof while reading" error instead. This option asks
+       for the old, lenient behaviour. */
+    SSL_CTX_set_options(ssl_ctx, SSL_OP_IGNORE_UNEXPECTED_EOF);
+#endif
+
     ssl = SSL_new(ssl_ctx);
     if (ssl == NULL){
         printf("failed to init ssl.\n");
@@ -80,9 +89,8 @@ khc_sock_code_t
 
     ret = SSL_connect(ssl);
     if (ret != 1) {
-        int sslErr= SSL_get_error(ssl, ret);
         char sslErrStr[120];
-        ERR_error_string_n(sslErr, sslErrStr, 120);
+        ERR_error_string_n(ERR_get_error(), sslErrStr, 120);
         printf("failed to connect: %s\n", sslErrStr);
         return KHC_SOCK_FAIL;
     }
@@ -159,18 +167,25 @@ khc_sock_code_t
     ebisu::ltest::ssl::cb_close(void* socket_context)
 {
     ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
+    /* 1 means the bidirectional shutdown completed. 0 means our close_notify
+       went out but the peer's has not arrived yet, which is not an error -- the
+       server answers with "Connection: close" and drops the connection, so the
+       second half rarely arrives. Everything below is torn down regardless, so
+       a unidirectional shutdown is all we need.
+       SSL_get_error() is only meaningful for a negative return.
+       See https://www.openssl.org/docs/man3.0/man3/SSL_shutdown.html */
+    bool shutdown_ok = true;
     int ret = SSL_shutdown(ctx->ssl);
-    if (ret != 1) {
+    if (ret < 0) {
         int sslErr = SSL_get_error(ctx->ssl, ret);
-        if (sslErr == SSL_ERROR_SYSCALL) {
-            /* This is OK.*/
-            /* See https://www.openssl.org/docs/ssl/SSL_shutdown.html */
-            ret = 1;
-        } else {
+        if (sslErr != SSL_ERROR_SYSCALL && sslErr != SSL_ERROR_ZERO_RETURN) {
             char sslErrStr[120];
-            ERR_error_string_n(sslErr, sslErrStr, 120);
+            ERR_error_string_n(ERR_get_error(), sslErrStr, 120);
             printf("failed to shutdown: %s\n", sslErrStr);
+            shutdown_ok = false;
         }
+        /* Otherwise the peer closed the transport without a close_notify,
+           which is harmless while we are tearing the connection down. */
     }
     close(ctx->socket);
     SSL_free(ctx->ssl);
@@ -180,7 +195,7 @@ khc_sock_code_t
     printf("\n----------------------------------------------------------------------------------------------------\n\n\n");
 #endif
 
-    if (ret != 1) {
+    if (!shutdown_ok) {
         printf("failed to close:\n");
         return KHC_SOCK_FAIL;
     }
