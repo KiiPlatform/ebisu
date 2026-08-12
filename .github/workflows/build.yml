@@ -36,14 +36,18 @@ jobs:
         run: cmake --preset debug -DEBISU_TEST_JUNIT=ON
       - name: build
         run: cmake --build --preset debug
+      # --test-dir is redundant with --preset for a plain run, but -T memcheck
+      # resolves DartConfiguration.tcl relative to the current directory rather
+      # than the preset's binaryDir. Without it ctest reads no configuration,
+      # reports "Memory checker (MemoryCheckCommand) not set", and exits 16.
       - name: test (small)
         # -T memcheck is the CTest equivalent of the old MEMCHECK=1 valgrind wrapping.
-        run: ctest --preset small -T memcheck
+        run: ctest --preset small --test-dir build/debug -T memcheck
       - name: test (large)
         # The large preset retries once: these talk to a live backend and are not
         # deterministic, and without a retry a transient error lands on master as
         # a red build.
-        run: ctest --preset large -T memcheck
+        run: ctest --preset large --test-dir build/debug -T memcheck
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v6
         if: success() || failure() # always run even if the previous step fails
