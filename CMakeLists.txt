@@ -33,3 +33,16 @@ add_subdirectory(jkii)
 add_subdirectory(khc)
 add_subdirectory(kii)
 add_subdirectory(tio)
+
+# Tests are for developing ebisu itself. Skipped when ebisu is embedded in
+# another project, which is how the vendor SDK builds consume it.
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    # Matches what the per-directory Makefiles passed for MEMCHECK=1. Set before
+    # include(CTest), which is what reads it.
+    set(MEMORYCHECK_COMMAND_OPTIONS "--leak-check=yes" CACHE STRING
+        "Options passed to valgrind by `ctest -T memcheck`")
+    include(CTest)
+    if(BUILD_TESTING)
+        add_subdirectory(tests)
+    endif()
+endif()
