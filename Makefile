@@ -1,5 +1,15 @@
-build:
-	make -C kii
+LIBS=khc jkii kii tio
+BUILD_DIR?=build
+BUILD_TYPE?=Debug
+
+# Compiles every library. This used to run `make -C kii`, whose default target
+# is `all: clean doc` -- so it built doxygen output and not one line of C, and
+# a compile break could only ever be caught by the test targets.
+build: $(addprefix build-,$(LIBS))
+
+build-%:
+	cmake -S $* -B $(BUILD_DIR)/$* -DCMAKE_BUILD_TYPE=$(BUILD_TYPE)
+	cmake --build $(BUILD_DIR)/$*
 
 doc:
 	make doc -C kii
@@ -29,6 +39,7 @@ ltest: ltest-khc ltest-kii
 test: stest ltest
 
 clean:
+	rm -rf $(BUILD_DIR)
 	# jkii - small test
 	rm -rf ./tests/small_test/jkii/build-jkii
 	rm -f ./tests/small_test/jkii/testapp
@@ -54,4 +65,4 @@ clean:
 	rm -rf ./tests/large_test/kii/testapp.dSYM
 
 
-.PHONY: build doc stest-khc stest-kii stest-tio stest-jkii stest ltest-khc ltest-kii ltest clean
+.PHONY: build build-% doc stest-khc stest-kii stest-tio stest-jkii stest ltest-khc ltest-kii ltest clean
