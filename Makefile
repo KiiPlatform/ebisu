@@ -52,31 +52,11 @@ ltest-kii: build
 test: build
 	ctest --test-dir $(BUILD_DIR) $(CTEST_FLAGS)
 
+# Everything is built out of tree now, so there is one directory to remove
+# instead of a per-test-directory list of build trees, binaries and .dSYM
+# bundles that had to be kept in step by hand.
 clean:
 	rm -rf $(BUILD_DIR)
-	# jkii - small test
-	rm -rf ./tests/small_test/jkii/build-jkii
-	rm -f ./tests/small_test/jkii/testapp
-	# khc - small test
-	rm -rf ./tests/small_test/khc/build-khc
-	rm -f ./tests/small_test/khc/testapp
-	rm -rf ./tests/small_test/khc/testapp.dSYM
-	# kii - small test
-	rm -rf ./tests/small_test/kii/build-kii
-	rm -f ./tests/small_test/kii/small-test
-	rm -rf ./tests/small_test/kii/small-test.dSYM
-	# tio - small test
-	rm -rf ./tests/small_test/tio/build-tio
-	rm -f ./tests/small_test/tio/small-test
-	rm -rf ./tests/small_test/tio/small-test.dSYM
-	# khc - large test
-	rm -rf ./tests/large_test/khc/build-khc
-	rm -f ./tests/large_test/khc/large-test
-	rm -rf ./tests/large_test/khc/large-test.dSYM
-	# kii - large test
-	rm -rf ./tests/large_test/kii/build-kii
-	rm -f ./tests/large_test/kii/testapp
-	rm -rf ./tests/large_test/kii/testapp.dSYM
 
 
 .PHONY: configure build doc test stest-khc stest-kii stest-tio stest-jkii stest ltest-khc ltest-kii ltest clean
