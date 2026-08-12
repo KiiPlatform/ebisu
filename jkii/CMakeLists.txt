@@ -22,6 +22,9 @@ target_include_directories(jkii
 ebisu_configure_target(jkii)
 
 file(GLOB jkii_hdrs CONFIGURE_DEPENDS include/*.h libs/jsmn/jsmn.h)
+# See the note in khc/CMakeLists.txt: a stale in-source ebisu_version.h from a
+# pre-move checkout must not be installed over the generated one.
+list(REMOVE_ITEM jkii_hdrs ${CMAKE_CURRENT_SOURCE_DIR}/include/ebisu_version.h)
 install(FILES ${jkii_hdrs} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(TARGETS jkii
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

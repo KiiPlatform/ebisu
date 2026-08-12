@@ -17,6 +17,10 @@ target_include_directories(khc
 ebisu_configure_target(khc)
 
 file(GLOB khc_hdrs CONFIGURE_DEPENDS include/*.h)
+# Older builds generated ebisu_version.h into the source tree. It is gitignored,
+# so a checkout that predates the move still has one lying here, and installing
+# it would shadow the freshly generated header with a stale version string.
+list(REMOVE_ITEM khc_hdrs ${CMAKE_CURRENT_SOURCE_DIR}/include/ebisu_version.h)
 install(FILES ${khc_hdrs} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(TARGETS khc
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
