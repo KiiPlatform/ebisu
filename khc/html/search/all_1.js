@@ -5,7 +5,7 @@ var searchData=
   ['khc_5fcb_5fheader_2',['KHC_CB_HEADER',['../khc_8h.html#a28da65fe4a96bed6b6ac8150b9481a20',1,'khc.h']]],
   ['khc_5fcb_5fread_3',['KHC_CB_READ',['../khc_8h.html#a3b82452e6a8981c670e9eef8450a7ce4',1,'khc.h']]],
   ['khc_5fcb_5fslist_5falloc_4',['khc_cb_slist_alloc',['../khc_8h.html#a1cf6aced91a66a1e204724907a433975',1,'khc_cb_slist_alloc(const char *str, size_t str_len, void *data):&#160;khc.h'],['../khc_8h.html#a14e10ebf817cb0b1dc8dca9ce3794b9c',1,'KHC_CB_SLIST_ALLOC:&#160;khc.h']]],
-  ['khc_5fcb_5fslist_5ffree_5',['khc_cb_slist_free',['../khc_8h.html#a32bafb6cf1da963a57d8a167efe9f833',1,'KHC_CB_SLIST_FREE:&#160;khc.h'],['../khc_8h.html#af8ee1aa7bad924b214164a031a63bcf8',1,'khc_cb_slist_free(khc_slist *slist, void *data):&#160;khc.h']]],
+  ['khc_5fcb_5fslist_5ffree_5',['khc_cb_slist_free',['../khc_8h.html#af8ee1aa7bad924b214164a031a63bcf8',1,'khc_cb_slist_free(khc_slist *slist, void *data):&#160;khc.h'],['../khc_8h.html#a32bafb6cf1da963a57d8a167efe9f833',1,'KHC_CB_SLIST_FREE:&#160;khc.h']]],
   ['khc_5fcb_5fsock_5fclose_6',['KHC_CB_SOCK_CLOSE',['../khc__socket__callback_8h.html#af54fb240d589fb1044188bd4a81ab78d',1,'khc_socket_callback.h']]],
   ['khc_5fcb_5fsock_5fconnect_7',['KHC_CB_SOCK_CONNECT',['../khc__socket__callback_8h.html#ae9552240ec64ad637e77cd63c3b65c65',1,'khc_socket_callback.h']]],
   ['khc_5fcb_5fsock_5frecv_8',['KHC_CB_SOCK_RECV',['../khc__socket__callback_8h.html#a148cf4bd26b43909c9eab71f37b4cda6',1,'khc_socket_callback.h']]],
