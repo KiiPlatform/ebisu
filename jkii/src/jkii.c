@@ -20,6 +20,19 @@
 
 #define EVAL(f, v) f(v)
 #define TOSTR(s) #s
+
+/* Compares a counted, non-terminated buffer against a string literal.
+ *
+ * The obvious memcmp(buf, "null", buf_len) is wrong in both directions. When
+ * buf_len is longer than the literal it reads off the end of the literal --
+ * parsing the primitive 2147483647 reads ten bytes out of five. When buf_len is
+ * shorter it compares only a prefix, so a one-character primitive "n" matches
+ * "null" and is misclassified. Length has to be part of the comparison.
+ *
+ * literal must be a string literal, so that sizeof gives its length. */
+#define M_JKII_EQ_LITERAL(buf, buf_len, literal) \
+    ((buf_len) == sizeof(literal) - 1 && \
+     memcmp((buf), (literal), sizeof(literal) - 1) == 0)
 #define LONG_MAX_STR EVAL(TOSTR, LONG_MAX)
 #define LONGBUFSIZE (sizeof(LONG_MAX_STR) / sizeof(char) + 1)
 #define INT_MAX_STR EVAL(TOSTR, INT_MAX)
@@ -287,10 +300,10 @@ static jkii_field_type_t _jkii_to_jkii_field_type(
     switch (jsmn_type)
     {
         case JSMN_PRIMITIVE:
-            if (memcmp(buf, "null", buf_len) == 0) {
+            if (M_JKII_EQ_LITERAL(buf, buf_len, "null")) {
                 return JKII_FIELD_TYPE_NULL;
-            } else if (memcmp(buf, "true", buf_len) == 0 ||
-                    memcmp(buf, "false", buf_len) == 0 ) {
+            } else if (M_JKII_EQ_LITERAL(buf, buf_len, "true") ||
+                    M_JKII_EQ_LITERAL(buf, buf_len, "false")) {
                 return JKII_FIELD_TYPE_BOOLEAN;
             } else if (_jkii_is_int(buf, buf_len) != 0) {
                 return JKII_FIELD_TYPE_INTEGER;
@@ -460,10 +473,10 @@ static int _jkii_to_boolean(
     M_JKII_ASSERT(buf != NULL);
     M_JKII_ASSERT(out_boolean != NULL);
 
-    if (memcmp(buf, "true", buf_size) == 0) {
+    if (M_JKII_EQ_LITERAL(buf, buf_size, "true")) {
         *out_boolean = JKII_TRUE;
         return 0;
-    } else if (memcmp(buf, "false", buf_size) == 0) {
+    } else if (M_JKII_EQ_LITERAL(buf, buf_size, "false")) {
         *out_boolean = JKII_FALSE;
         return 0;
     }
@@ -930,18 +943,18 @@ jkii_primitive_err_t jkii_parse_primitive(
     size_t primitive_length,
     jkii_primitive_t* result)
 {
-    if (memcmp(primitive, "null", primitive_length) == 0)
+    if (M_JKII_EQ_LITERAL(primitive, primitive_length, "null"))
     {
         result->type = JKII_FIELD_TYPE_NULL;
         return JKII_PRIMITIVE_ERR_OK;
     }
-    if (memcmp(primitive, "true", primitive_length) == 0)
+    if (M_JKII_EQ_LITERAL(primitive, primitive_length, "true"))
     {
         result->type = JKII_FIELD_TYPE_BOOLEAN;
         result->value.boolean_value = JKII_TRUE;
         return JKII_PRIMITIVE_ERR_OK;
     }
-    if (memcmp(primitive, "false", primitive_length) == 0)
+    if (M_JKII_EQ_LITERAL(primitive, primitive_length, "false"))
     {
         result->type = JKII_FIELD_TYPE_BOOLEAN;
         result->value.boolean_value = JKII_FALSE;
