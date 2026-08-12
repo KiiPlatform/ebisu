@@ -1,17 +1,32 @@
-cmake_minimum_required(VERSION 3.12)
-PROJECT(jkii C)
-INCLUDE(${CMAKE_SOURCE_DIR}/../version/EbisuVersion.cmake)
-set_git_version_and_generate_header()
+# jsmn is vendored, and kii/tio embed it directly, so it gets its own object
+# library rather than being globbed in wherever it is needed.
+file(GLOB jsmn_srcs CONFIGURE_DEPENDS libs/jsmn/*.c)
+add_library(ebisu_jsmn_objs OBJECT ${jsmn_srcs})
+target_include_directories(ebisu_jsmn_objs
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/jsmn>)
+ebisu_configure_target(ebisu_jsmn_objs)
 
-SET(CMAKE_C_FLAGS "-Wall")
+file(GLOB jkii_srcs CONFIGURE_DEPENDS src/*.c)
+add_library(ebisu_jkii_objs OBJECT ${jkii_srcs})
+target_include_directories(ebisu_jkii_objs
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/jsmn>)
+ebisu_configure_target(ebisu_jkii_objs)
 
-SET(CMAKE_C_FLAGS_RELEASE "-O2")
-SET(CMAKE_C_FLAGS_DEBUG "-g")
+# Same content as before: jkii + jsmn.
+add_library(jkii
+    $<TARGET_OBJECTS:ebisu_jkii_objs>
+    $<TARGET_OBJECTS:ebisu_jsmn_objs>)
+target_include_directories(jkii
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+ebisu_configure_target(jkii)
 
-FILE(GLOB srcs src/*.c libs/jsmn/*.c)
-FILE(GLOB hdrs include/*.h libs/jsmn/jsmn.h)
-ADD_LIBRARY(jkii SHARED ${srcs})
-TARGET_INCLUDE_DIRECTORIES(jkii PUBLIC ./include)
-TARGET_INCLUDE_DIRECTORIES(jkii PRIVATE ./libs/jsmn)
-INSTALL(FILES ${hdrs} DESTINATION include)
-INSTALL(TARGETS jkii DESTINATION lib)
+file(GLOB jkii_hdrs CONFIGURE_DEPENDS include/*.h libs/jsmn/jsmn.h)
+# See the note in khc/CMakeLists.txt: a stale in-source ebisu_version.h from a
+# pre-move checkout must not be installed over the generated one.
+list(REMOVE_ITEM jkii_hdrs ${CMAKE_CURRENT_SOURCE_DIR}/include/ebisu_version.h)
+install(FILES ${jkii_hdrs} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(TARGETS jkii
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
