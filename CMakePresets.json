@@ -1,0 +1,75 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}"
+    },
+    {
+      "name": "debug",
+      "inherits": "base",
+      "displayName": "Debug",
+      "description": "Unoptimised build with assertions, the default for development",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+    },
+    {
+      "name": "release",
+      "inherits": "base",
+      "displayName": "Release",
+      "description": "Optimised build",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "asan",
+      "inherits": "base",
+      "displayName": "AddressSanitizer + UBSan",
+      "description": "Catches memory and undefined-behaviour bugs valgrind is slower at, or misses",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer",
+        "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address,undefined",
+        "CMAKE_SHARED_LINKER_FLAGS": "-fsanitize=address,undefined"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "debug", "configurePreset": "debug", "jobs": 0 },
+    { "name": "release", "configurePreset": "release", "jobs": 0 },
+    { "name": "asan", "configurePreset": "asan", "jobs": 0 }
+  ],
+  "testPresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "output": { "outputOnFailure": true },
+      "execution": { "noTestsAction": "error" }
+    },
+    {
+      "name": "small",
+      "inherits": "base",
+      "configurePreset": "debug",
+      "displayName": "Small tests",
+      "description": "Self-contained suites, run in parallel",
+      "filter": { "include": { "label": "small" } },
+      "execution": { "jobs": 0 }
+    },
+    {
+      "name": "large",
+      "inherits": "base",
+      "configurePreset": "debug",
+      "displayName": "Large tests",
+      "description": "Against a live Kii application; one retry, since they are not deterministic",
+      "filter": { "include": { "label": "large" } },
+      "execution": { "repeat": { "mode": "until-pass", "count": 2 } }
+    },
+    {
+      "name": "all",
+      "inherits": "base",
+      "configurePreset": "debug",
+      "displayName": "All tests"
+    }
+  ]
+}

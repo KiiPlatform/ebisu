@@ -1,53 +1,15 @@
-CXXFLAGS = -Wall -std=c++11
-CXXFLAGS += -g -DDEBUG -O0 -ggdb
-CMAKE_BUILD_TYPE = DEBUG
-
-ROOT_DIR=../../..
-
-KII_BUILD_DIR=build-kii
-KII_SDK=$(KII_BUILD_DIR)/libs/libkii.so
-
-TEST_ROOT_DIR=../..
-LTEST_ROOT_DIR=$(TEST_ROOT_DIR)/large_test
-
-LIBS = -lssl -lcrypto -lpthread -lkii
-LD_FLAGS = -L. -L/usr/local/opt/openssl/lib -L$(KII_BUILD_DIR)/lib
-
-SRCS = $(wildcard *.cpp)
-SRCS += $(wildcard $(LTEST_ROOT_DIR)/*.cpp)
-
-TARGET = ./testapp
-INCLUDES = -I$(LTEST_ROOT_DIR) -I$(TEST_ROOT_DIR) -I$(KII_BUILD_DIR)/include -I$(ROOT_DIR)/khc/include -I$(ROOT_DIR)/jkii/include -I$(ROOT_DIR)/jkii/libs/jsmn
-
-
-TEST_RESULT_DIR=test-results/junit
-TEST_RESULT=$(TEST_RESULT_DIR)/test-result.xml
-
-# only work with GNU make
-CPPFLAGS += $(if $(value PLAIN_HTTP), -DPLAIN_HTTP, )
-CPPFLAGS += $(if $(value DEFAULT_SITE), -D_DEFAULT_SITE=$(DEFAULT_SITE), )
-CPPFLAGS += $(if $(value APP_ID), -D_APP_ID=$(APP_ID), )
-CPPFLAGS += $(if $(value SOCKET_LOG), -DSOCKET_LOG, )
-
-TESTCMD = $(if $(value MEMCHECK), valgrind --leak-check=yes $(TARGET) -s, $(TARGET) -s)
-TESTCMD += $(if $(value JUNIT), -r junit -o $(TEST_RESULT), )
-TESTCMD += $(if $(value TEST_CASE), -c "$(TEST_CASE)", )
-
-all: clean $(TARGET)
-
-kii:
-	cmake -S $(ROOT_DIR) -B $(KII_BUILD_DIR) -DCMAKE_BUILD_TYPE=Debug \
-		-DCMAKE_INSTALL_PREFIX=$(CURDIR)/$(KII_BUILD_DIR) -DCMAKE_INSTALL_LIBDIR=lib
-	cmake --build $(KII_BUILD_DIR) --target install
-
-$(TARGET): kii $(SRCS)
-	g++ $(CXXFLAGS) $(SRCS) $(LD_FLAGS) $(INCLUDES) $(LIBS) $(CPPFLAGS) -o $(TARGET)
-
-test: $(TARGET)
-	mkdir -p $(TEST_RESULT_DIR)
-	DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(KII_BUILD_DIR)/lib \
-	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(KII_BUILD_DIR)/lib \
-	$(TESTCMD)
+# Building and running the large tests now lives in CMake/CTest:
+#
+#   cmake --preset debug && cmake --build --preset debug
+#   ctest --preset large
+#
+# What remains here is the one-off bootstrap of the Kii application the large
+# tests run against. It is an administrative operation against a live app, not
+# part of any build, and it is expected to be run by hand:
+#
+#   APP_ID=... DEFAULT_SITE=... CLIENT_ID=... CLIENT_SECRET=... make initapp
+#
+# Needs curl and jq.
 
 initapp:
 	# get app admin token
@@ -66,10 +28,4 @@ initapp:
 	# create test user for KHC post test
 	curl -v -X POST -H 'X-Kii-AppID: $(APP_ID)' -H 'X-Kii-AppKey: dummy' -H 'Authorization: Bearer $(ADMIN_TOKEN)' -H 'Content-Type: application/vnd.kii.RegistrationRequest+json' https://$(DEFAULT_SITE)/api/apps/$(APP_ID)/users -d '{"loginName":"pass-1234","password":"1234","displayName":"test-user"}'
 
-clean:
-	touch $(TARGET)
-	rm $(TARGET)
-	rm -f *.o
-	rm -rf $(KII_BUILD_DIR)
-
-.PHONY: all clean copy kii initapp
+.PHONY: initapp
