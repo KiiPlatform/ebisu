@@ -7,16 +7,11 @@ DOC_OUTPUT_DIR=html
 
 all: build-sdk doc
 
-$(CMAKE_BUILD_DIR):
-	mkdir -p build
-
-CMAKE_MAKEFILE=build/Makefile
-
-$(CMAKE_MAKEFILE): $(CMAKE_BUILD_DIR)
-	cd build && cmake ..
-
-build-sdk: $(CMAKE_MAKEFILE) $(SDK_DEPS)
-	make -C $(CMAKE_BUILD_DIR)
+# khc is a component of the top-level project, so this configures the root and
+# builds just the khc target out of it.
+build-sdk: $(SDK_DEPS)
+	cmake -S .. -B $(CMAKE_BUILD_DIR)
+	cmake --build $(CMAKE_BUILD_DIR) --target khc
 
 doc:
 	doxygen

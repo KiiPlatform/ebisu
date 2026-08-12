@@ -11,13 +11,13 @@ TEST_ROOT_DIR=../..
 LTEST_ROOT_DIR=$(TEST_ROOT_DIR)/large_test
 
 LIBS = -lssl -lcrypto -lpthread -lkii
-LD_FLAGS = -L. -L/usr/local/opt/openssl/lib -L$(KII_BUILD_DIR)/usr/local/lib
+LD_FLAGS = -L. -L/usr/local/opt/openssl/lib -L$(KII_BUILD_DIR)/lib
 
 SRCS = $(wildcard *.cpp)
 SRCS += $(wildcard $(LTEST_ROOT_DIR)/*.cpp)
 
 TARGET = ./testapp
-INCLUDES = -I$(LTEST_ROOT_DIR) -I$(TEST_ROOT_DIR) -I$(KII_BUILD_DIR)/usr/local/include -I$(ROOT_DIR)/khc/include -I$(ROOT_DIR)/jkii/include -I$(ROOT_DIR)/jkii/libs/jsmn
+INCLUDES = -I$(LTEST_ROOT_DIR) -I$(TEST_ROOT_DIR) -I$(KII_BUILD_DIR)/include -I$(ROOT_DIR)/khc/include -I$(ROOT_DIR)/jkii/include -I$(ROOT_DIR)/jkii/libs/jsmn
 
 
 TEST_RESULT_DIR=test-results/junit
@@ -36,16 +36,17 @@ TESTCMD += $(if $(value TEST_CASE), -c "$(TEST_CASE)", )
 all: clean $(TARGET)
 
 kii:
-	mkdir -p $(KII_BUILD_DIR)
-	cd $(KII_BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=Debug ../../../../kii && make && make DESTDIR=. install
+	cmake -S $(ROOT_DIR) -B $(KII_BUILD_DIR) -DCMAKE_BUILD_TYPE=Debug \
+		-DCMAKE_INSTALL_PREFIX=$(CURDIR)/$(KII_BUILD_DIR) -DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build $(KII_BUILD_DIR) --target install
 
 $(TARGET): kii $(SRCS)
 	g++ $(CXXFLAGS) $(SRCS) $(LD_FLAGS) $(INCLUDES) $(LIBS) $(CPPFLAGS) -o $(TARGET)
 
 test: $(TARGET)
 	mkdir -p $(TEST_RESULT_DIR)
-	DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(KII_BUILD_DIR)/usr/local/lib \
-	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(KII_BUILD_DIR)/usr/local/lib \
+	DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(KII_BUILD_DIR)/lib \
+	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(KII_BUILD_DIR)/lib \
 	$(TESTCMD)
 
 initapp:

@@ -41,8 +41,9 @@ CPPFLAGS += $(if $(value SOCKET_LOG), -DSOCKET_LOG, )
 all: clean test
 
 $(LIB_BUILD_DIR): $(LIB_SRCS)
-	mkdir -p $(LIB_BUILD_DIR)
-	cd $(LIB_BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=. ../$(ROOT_DIR)/khc && make install
+	cmake -S $(ROOT_DIR) -B $(LIB_BUILD_DIR) -DCMAKE_BUILD_TYPE=Debug \
+		-DCMAKE_INSTALL_PREFIX=$(CURDIR)/$(LIB_BUILD_DIR) -DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build $(LIB_BUILD_DIR) --target install
 
 $(TARGET): $(SRCS) $(LIB_BUILD_DIR)
 	g++ $(SRCS) $(LIBS_DIR) $(LIBS) $(INCLUDES) $(CPPFLAGS) -o $(TARGET) -std=c++11

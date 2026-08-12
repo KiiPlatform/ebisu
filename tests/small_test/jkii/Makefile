@@ -5,9 +5,9 @@ JKII_BUILD_DIR=build-jkii
 
 SOURCE = $(wildcard src/*.cpp)
 CFLAGS=-g -O0 -ggdb
-LIBDIRS = -L$(JKII_BUILD_DIR)/usr/local/lib
+LIBDIRS = -L$(JKII_BUILD_DIR)/lib
 LIBS= -ljkii
-INCLUDES=-I$(TEST_ROOT_DIR) -I$(JKII_BUILD_DIR)/usr/local/include
+INCLUDES=-I$(TEST_ROOT_DIR) -I$(JKII_BUILD_DIR)/include
 
 TARGET=testapp
 
@@ -27,16 +27,17 @@ endif
 all: clean $(TARGET)
 
 jkii:
-	mkdir -p $(JKII_BUILD_DIR)
-	cd $(JKII_BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=Debug $(ROOT_DIR)/../jkii && make &&  make DESTDIR=. install
+	cmake -S $(ROOT_DIR) -B $(JKII_BUILD_DIR) -DCMAKE_BUILD_TYPE=Debug \
+		-DCMAKE_INSTALL_PREFIX=$(CURDIR)/$(JKII_BUILD_DIR) -DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build $(JKII_BUILD_DIR) --target install
 
 $(TARGET): jkii
 	g++ $(CFLAGS) $(SOURCE) $(INCLUDES) $(LIBDIRS) $(LIBS) -std=c++11 -o $@
 
 test: $(TARGET)
 	mkdir -p $(TEST_RESULT_DIR)
-	DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(JKII_BUILD_DIR)/usr/local/lib \
-	LD_LIBRARY_PATH=$(JKII_BUILD_DIR)/usr/local/lib $(TESTCMD)
+	DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(JKII_BUILD_DIR)/lib \
+	LD_LIBRARY_PATH=$(JKII_BUILD_DIR)/lib $(TESTCMD)
 
 clean:
 	rm -f $(TARGET)

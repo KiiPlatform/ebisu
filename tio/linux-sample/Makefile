@@ -1,6 +1,5 @@
 SDK_BUILD_PATH=./build
-SDK_PREFIX=usr/local
-INSTALL_PATH=$(SDK_BUILD_PATH)/$(SDK_PREFIX)
+INSTALL_PATH=$(SDK_BUILD_PATH)
 
 CMAKE_BUILD_TYPE = RELEASE
 ifdef DEBUG
@@ -25,10 +24,10 @@ RPATH = -Wl,-rpath,$(INSTALL_PATH)/lib
 all: clean $(TARGET)
 
 sdk:
-	touch $(SDK_BUILD_PATH)
 	rm -rf $(SDK_BUILD_PATH)
-	mkdir $(SDK_BUILD_PATH)
-	cd $(SDK_BUILD_PATH) && cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) ../../ && make && make DESTDIR=. install
+	cmake -S ../.. -B $(SDK_BUILD_PATH) -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+		-DCMAKE_INSTALL_PREFIX=$(CURDIR)/$(SDK_BUILD_PATH) -DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build $(SDK_BUILD_PATH) --target install
 
 $(TARGET): sdk
 	gcc $(CFLAGS) $(SOURCES) $(LIBS) $(LD_FLAGS) $(INCLUDES) $(RPATH) -o $@
