@@ -75,3 +75,30 @@ jobs:
           publish_dir: ebisu-doc
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  # ASan and UBSan catch a class of bug valgrind structurally cannot: overruns
+  # of globals and string literals live in .rodata, not on the heap or stack.
+  # That is how a memcmp reading past a string literal in the JSON parser
+  # survived years of green MEMCHECK=1 builds.
+  #
+  # Small tests only: they are deterministic and need no credentials, so this
+  # job stays fast and never touches the live backend.
+  sanitizers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Fetch tags
+        run: git fetch --unshallow --tags --force
+      - name: Setup build env
+        run: |
+          sudo apt-get -yq update
+          sudo apt-get -yq install g++ cmake libssl-dev git
+      - name: configure
+        run: cmake --preset asan
+      - name: build
+        run: cmake --build --preset asan
+      - name: test (small, ASan + UBSan)
+        # The preset compiles with -fno-sanitize-recover=all, so a UBSan finding
+        # aborts instead of printing a "runtime error" line and passing.
+        run: ctest --preset asan-small
