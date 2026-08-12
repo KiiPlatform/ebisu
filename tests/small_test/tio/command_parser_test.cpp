@@ -35,6 +35,10 @@ TEST_CASE( "_get_object_in_array" ) {
         REQUIRE( obj_str_len == 7);
         char obj_str_copy[obj_str_len+1];
         strncpy(obj_str_copy, obj_str, obj_str_len);
+        // strncpy writes no terminator when the source is at least as long as
+        // the count, and obj_str is not terminated at obj_str_len, so strcmp
+        // below read the uninitialised last byte of this array.
+        obj_str_copy[obj_str_len] = '\0';
         REQUIRE( strcmp(obj_str_copy, "{\"a\":1}") == 0 );
     }
 
@@ -53,6 +57,7 @@ TEST_CASE( "_get_object_in_array" ) {
         REQUIRE( obj_str_len == 7);
         char obj_str_copy[obj_str_len+1];
         strncpy(obj_str_copy, obj_str, obj_str_len);
+        obj_str_copy[obj_str_len] = '\0';
         REQUIRE( strcmp(obj_str_copy, "{\"b\":2}") == 0 );
     }
 

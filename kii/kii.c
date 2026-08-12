@@ -73,6 +73,27 @@ void kii_init(kii_t* kii)
     kii->_use_m_0_header = KII_FALSE;
 }
 
+/* Copies src into a fixed-size field, truncating rather than overflowing, and
+ * always terminating.
+ *
+ * These fields used to be filled with
+ * strncpy(kii->_app_id, app_id, sizeof(kii->_app_id)). strncpy writes no
+ * terminator when the source is at least as long as the count, so an app id or
+ * host of 128 characters or more left the field unterminated, and every later
+ * strlen or strcat over it ran off the end of the struct field.
+ *
+ * khc_set_host() rejects over-long input with KHC_ERR_TOO_LARGE_DATA instead,
+ * which is the better contract, but these two are void and part of the public
+ * API. */
+static void _kii_copy_bounded(char* dest, size_t dest_size, const char* src)
+{
+    /* Reads at most dest_size - 1 bytes of src, since strncpy stops at the
+     * source's terminator. Measuring src with strlen first would instead scan
+     * all of it, however long it is, to copy at most this many bytes. */
+    strncpy(dest, src, dest_size - 1);
+    dest[dest_size - 1] = '\0';
+}
+
 void kii_set_site(
         kii_t* kii,
         const char* site)
@@ -103,14 +124,14 @@ void kii_set_site(
         /* Let's enable to set custom host */
         host = (char*)site;
     }
-    strncpy(kii->_app_host, host, sizeof(kii->_app_host) * sizeof(char));
+    _kii_copy_bounded(kii->_app_host, sizeof(kii->_app_host), host);
 }
 
 void kii_set_app_id(
         kii_t* kii,
         const char* app_id)
 {
-    strncpy(kii->_app_id, app_id, sizeof(kii->_app_id) * sizeof(char));
+    _kii_copy_bounded(kii->_app_id, sizeof(kii->_app_id), app_id);
 }
 
 void kii_set_buff(kii_t* kii, char* buff, size_t buff_size) {

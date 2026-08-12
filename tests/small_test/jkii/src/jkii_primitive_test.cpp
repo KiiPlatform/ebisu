@@ -176,3 +176,36 @@ TEST_CASE("KiiJson, PrimitiveFalse")
     REQUIRE(JKII_FIELD_TYPE_BOOLEAN == res.type);
     REQUIRE(JKII_FALSE == res.value.boolean_value);
 }
+
+// A prefix of a literal must not be accepted as that literal. These used to
+// pass, because the comparison was memcmp(buf, "null", buf_len): with buf_len
+// shorter than the literal it only ever compared a prefix.
+TEST_CASE("KiiJson, PrimitivePrefixOfLiteralIsNotThatLiteral")
+{
+    jkii_primitive_t res;
+
+    REQUIRE(JKII_PRIMITIVE_ERR_INVALID == jkii_parse_primitive("n", 1, &res));
+    REQUIRE(JKII_PRIMITIVE_ERR_INVALID == jkii_parse_primitive("nul", 3, &res));
+    REQUIRE(JKII_PRIMITIVE_ERR_INVALID == jkii_parse_primitive("t", 1, &res));
+    REQUIRE(JKII_PRIMITIVE_ERR_INVALID == jkii_parse_primitive("tru", 3, &res));
+    REQUIRE(JKII_PRIMITIVE_ERR_INVALID == jkii_parse_primitive("f", 1, &res));
+    REQUIRE(JKII_PRIMITIVE_ERR_INVALID == jkii_parse_primitive("fals", 4, &res));
+}
+
+// The mirror image: a buffer longer than the literal must not be compared
+// against bytes past the end of the literal. Reading ten bytes out of a
+// five-byte "false" is what AddressSanitizer reports as a global-buffer-overflow;
+// valgrind cannot see it, since the overrun is in .rodata.
+TEST_CASE("KiiJson, PrimitiveLongerThanLiteralDoesNotOverread")
+{
+    jkii_primitive_t res;
+
+    const char long_digits[] = "2147483647";
+    REQUIRE(JKII_PRIMITIVE_ERR_OK ==
+            jkii_parse_primitive(long_digits, strlen(long_digits), &res));
+    REQUIRE(JKII_FIELD_TYPE_INTEGER == res.type);
+
+    const char truthy[] = "truelike";
+    REQUIRE(JKII_PRIMITIVE_ERR_INVALID ==
+            jkii_parse_primitive(truthy, strlen(truthy), &res));
+}

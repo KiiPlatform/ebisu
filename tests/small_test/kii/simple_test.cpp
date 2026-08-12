@@ -4,6 +4,8 @@
 #include "test_callbacks.h"
 
 #include <sstream>
+#include <string>
+#include <string.h>
 
 TEST_CASE( "Simple test" ) {
     size_t kii_buff_size = 1024;
@@ -54,4 +56,30 @@ TEST_CASE( "Simple test" ) {
         kii_set_use_m_0_header_flag(&kii, KII_FALSE);
         REQUIRE(kii._use_m_0_header == KII_FALSE);
     }
+}
+
+// kii_set_app_id and kii_set_site used to fill their fixed-size fields with
+// strncpy(dest, src, sizeof(dest)). strncpy writes no terminator when the
+// source is at least as long as the count, so input at or over the field size
+// left the field unterminated and every later strlen over it ran off the end.
+TEST_CASE( "Over-long app id and site are truncated and stay terminated" ) {
+    kii_t kii;
+    kii_init(&kii);
+
+    const std::string long_app_id(KII_APP_ID_MAX_SIZE + 64, 'a');
+    kii_set_app_id(&kii, long_app_id.c_str());
+    REQUIRE( strlen(kii._app_id) == KII_APP_ID_MAX_SIZE - 1 );
+
+    const std::string long_site(KII_APP_HOST_MAX_SIZE + 64, 'h');
+    kii_set_site(&kii, long_site.c_str());
+    REQUIRE( strlen(kii._app_host) == KII_APP_HOST_MAX_SIZE - 1 );
+
+    // Exactly one byte too long: the boundary the old code got wrong.
+    const std::string exact(KII_APP_ID_MAX_SIZE, 'b');
+    kii_set_app_id(&kii, exact.c_str());
+    REQUIRE( strlen(kii._app_id) == KII_APP_ID_MAX_SIZE - 1 );
+
+    // Something that fits is copied whole.
+    kii_set_app_id(&kii, "dummyAppID");
+    REQUIRE( std::string(kii._app_id) == "dummyAppID" );
 }
