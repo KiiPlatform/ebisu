@@ -1,21 +1,37 @@
-cmake_minimum_required(VERSION 3.12)
-PROJECT(kii C)
-INCLUDE(${CMAKE_SOURCE_DIR}/../version/EbisuVersion.cmake)
-set_git_version_and_generate_header()
+file(GLOB kii_srcs CONFIGURE_DEPENDS ./*.c)
+add_library(ebisu_kii_objs OBJECT ${kii_srcs})
+target_include_directories(ebisu_kii_objs
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    # kii's own sources include its private headers by bare name.
+    PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+target_link_libraries(ebisu_kii_objs PRIVATE ebisu_khc_objs ebisu_jkii_objs ebisu_jsmn_objs)
+ebisu_configure_target(ebisu_kii_objs)
 
-SET(CMAKE_C_FLAGS "-Wall -std=c99")
-# Uncomment it if you need to use unsecure connection.
-#SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DKII_MQTT_USE_PORT_TCP=1")
-SET(CMAKE_C_FLAGS_RELEASE "-O2")
-SET(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG")
-OPTION(KHC_TRACE "Trace KHC activity to stdout" ON)
-IF(KHC_TRACE)
-  ADD_DEFINITIONS(-DKHC_TRACE)
-ENDIF()
-FILE(GLOB srcs ./*.c ../khc/src/*.c ../jkii/src/*.c ../jkii/libs/jsmn/*.c)
-ADD_LIBRARY(kii SHARED ${srcs})
-TARGET_INCLUDE_DIRECTORIES(kii PRIVATE ${PROJECT_SOURCE_DIR} ./include ../khc/include ../kii ../jkii/include ../jkii/libs/jsmn)
-TARGET_INCLUDE_DIRECTORIES(kii PUBLIC ${PROJECT_SOURCE_DIR}/include)
-SET_TARGET_PROPERTIES(kii PROPERTIES VERSION ${version} SOVERSION ${soversion})
-INSTALL(FILES ./include/kii.h ./include/kii_task_callback.h ../khc/include/khc.h ../khc/include/khc_socket_callback.h ../jkii/include/jkii.h ../jkii/include/jkii_utils.h ../jkii/libs/jsmn/jsmn.h DESTINATION include)
-INSTALL(TARGETS kii LIBRARY DESTINATION lib)
+# libkii keeps the same contents it has always had -- kii plus khc, jkii and
+# jsmn -- so anything linking -lkii alone still resolves. The difference is that
+# those sources are now compiled once for the whole project instead of once per
+# component, and under one set of flags rather than "-Wall" here and
+# "-Wall -std=c99" there.
+add_library(kii
+    $<TARGET_OBJECTS:ebisu_kii_objs>
+    $<TARGET_OBJECTS:ebisu_khc_objs>
+    $<TARGET_OBJECTS:ebisu_jkii_objs>
+    $<TARGET_OBJECTS:ebisu_jsmn_objs>)
+target_include_directories(kii
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+set_target_properties(kii PROPERTIES VERSION ${version} SOVERSION ${soversion})
+ebisu_configure_target(kii)
+
+install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/kii.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/kii_task_callback.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../khc/include/khc.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../khc/include/khc_socket_callback.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../jkii/include/jkii.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../jkii/include/jkii_utils.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../jkii/libs/jsmn/jsmn.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(TARGETS kii
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

@@ -33,8 +33,9 @@ endif
 all: test
 
 $(LIB_BUILD_DIR): $(LIB_DEPS)
-	mkdir -p $(LIB_BUILD_DIR)
-	cd 	$(LIB_BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=. ../$(TIO_DIR) && make install
+	cmake -S $(ROOT_DIR) -B $(LIB_BUILD_DIR) -DCMAKE_BUILD_TYPE=Debug \
+		-DCMAKE_INSTALL_PREFIX=$(CURDIR)/$(LIB_BUILD_DIR) -DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build $(LIB_BUILD_DIR) --target install
 
 $(TARGET): $(TARGET_SRCS) $(LIB_BUILD_DIR)
 	g++ $(CFLAGS) $(TARGET_SRCS) $(LIBS_DIR) $(LIBS) $(INCLUDES) -o $(TARGET) -std=c++11
