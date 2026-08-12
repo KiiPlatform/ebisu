@@ -17,8 +17,13 @@ ebisu_configure_target(ebisu_jkii_objs)
 add_library(jkii
     $<TARGET_OBJECTS:ebisu_jkii_objs>
     $<TARGET_OBJECTS:ebisu_jsmn_objs>)
+# jkii.h includes <jsmn.h>, so jsmn's directory is part of the public interface.
+# Installing flattens these into one include dir, which is why the split never
+# showed up before targets were linked directly.
 target_include_directories(jkii
-    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/jsmn>)
 ebisu_configure_target(jkii)
 
 file(GLOB jkii_hdrs CONFIGURE_DEPENDS include/*.h libs/jsmn/jsmn.h)

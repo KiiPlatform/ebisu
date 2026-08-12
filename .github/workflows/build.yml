@@ -28,21 +28,25 @@ jobs:
         run: |
           sudo apt-get -yq update
           sudo apt-get -yq install g++ doxygen cmake libssl-dev git valgrind rsync
+      - name: configure
+        # APP_ID and DEFAULT_SITE come from the job environment; without them the
+        # large tests are not configured at all.
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DEBISU_TEST_JUNIT=ON
       - name: build
-        run: make build
-      - name: test
-        run: |
-          MEMCHECK=1 JUNIT=1 make stest-khc
-          MEMCHECK=1 JUNIT=1 make stest-kii
-          MEMCHECK=1 JUNIT=1 make stest-jkii
-          MEMCHECK=1 JUNIT=1 make stest-tio
-          MEMCHECK=1 JUNIT=1 make ltest-kii
-          MEMCHECK=1 JUNIT=1 make ltest-khc
+        run: cmake --build build --parallel
+      - name: test (small)
+        # -T memcheck is the CTest equivalent of the old MEMCHECK=1 valgrind wrapping.
+        run: ctest --test-dir build -L small --output-on-failure -j"$(nproc)" -T memcheck
+      - name: test (large)
+        # These talk to a live backend and are not fully deterministic, so a
+        # suite gets one retry before it is called a failure. Without this a
+        # transient backend error lands on master as a red build.
+        run: ctest --test-dir build -L large --output-on-failure -T memcheck --repeat until-pass:2
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v6
         if: success() || failure() # always run even if the previous step fails
         with:
-          report_paths: "**/test-results/junit/test-result.xml"
+          report_paths: "**/test-results/junit/*.xml"
       - name: build docs
         run: |
           make -C khc clean doc

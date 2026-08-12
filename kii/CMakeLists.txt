@@ -17,8 +17,13 @@ add_library(kii
     $<TARGET_OBJECTS:ebisu_khc_objs>
     $<TARGET_OBJECTS:ebisu_jkii_objs>
     $<TARGET_OBJECTS:ebisu_jsmn_objs>)
+# kii.h includes "khc.h" and <jkii.h>, which in turn pulls <jsmn.h>.
 target_include_directories(kii
-    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../khc/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../jkii/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../jkii/libs/jsmn>)
 set_target_properties(kii PROPERTIES VERSION ${version} SOVERSION ${soversion})
 ebisu_configure_target(kii)
 
