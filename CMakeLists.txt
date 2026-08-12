@@ -43,9 +43,12 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     # program's own status, so `ctest -T memcheck` counted defects, printed them
     # and passed anyway: small_test_tio reported ten for a long time without
     # ever failing a build. Add --track-origins=yes when diagnosing one.
+    # Deliberately not a cache entry: set(... CACHE) leaves an existing entry
+    # alone, so changing these would silently have no effect on any build
+    # directory configured before the change -- the failure mode being that
+    # valgrind quietly keeps running with the old options.
     set(MEMORYCHECK_COMMAND_OPTIONS
-        "--leak-check=full --errors-for-leak-kinds=definite --error-exitcode=1"
-        CACHE STRING "Options passed to valgrind by `ctest -T memcheck`")
+        "--leak-check=full --errors-for-leak-kinds=definite --error-exitcode=1")
     include(CTest)
     if(BUILD_TESTING)
         add_subdirectory(tests)
