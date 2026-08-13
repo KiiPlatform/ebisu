@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['bool_5fvalue_0',['bool_value',['../structtio__action__value__t.html#ac75507595c7f721705c920fb3dc6c437',1,'tio_action_value_t']]]
+  ['bool_5fvalue_0',['bool_value',['../structtio__action__value__t.html#ac75507595c7f721705c920fb3dc6c437',1,'tio_action_value_t']]],
+  ['boolean_5fvalue_1',['boolean_value',['../../../jkii/html/structjkii__field__t.html#af204e584160c0451d1272ba2ef9cbd20',1,'jkii_field_t']]],
+  ['bucket_5fname_2',['bucket_name',['../../../kii/html/structkii__bucket__t.html#a017e05bd9ec6a26eeb4b9099da60f858',1,'kii_bucket_t']]]
 ];

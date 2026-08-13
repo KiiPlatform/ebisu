@@ -1,8 +1,4 @@
 var searchData=
 [
-  ['management_0',['Asynchronous task management',['../index.html#autotoc_md32',1,'']]],
-  ['module_1',['module',['../index.html#autotoc_md22',1,'Start module'],['../index.html#autotoc_md31',1,'Start module']]],
-  ['mqtt_2',['Notes about socket implementation used for MQTT.',['../index.html#autotoc_md9',1,'']]],
-  ['mqtt_20keep_20alive_20interval_3',['Set-up MQTT Keep Alive interval.',['../index.html#autotoc_md19',1,'']]],
-  ['mqtt_20socket_20timeout_4',['Set-up MQTT socket timeout.',['../index.html#autotoc_md18',1,'']]]
+  ['long_5fvalue_0',['long_value',['../../../jkii/html/structjkii__field__t.html#adbe399051b2cf89ee6fb357078b25c9c',1,'jkii_field_t::long_value'],['../structtio__action__value__t.html#a6d17c1b2e1ad14fc98dcdf6d715b8538',1,'tio_action_value_t::long_value']]]
 ];

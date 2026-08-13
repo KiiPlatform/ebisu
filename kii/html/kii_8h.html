@@ -21,7 +21,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">kii
+   <div id="projectname">kii<span id="projectnumber">&#160;1.3.2</span>
    </div>
   </td>
  </tr>
@@ -85,9 +85,9 @@ $(function() {
 
 <p>Provides REST API access.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &quot;khc.h&quot;</code><br />
+<div class="textblock"><code>#include &quot;<a class="elRef" href="../../khc/html/khc_8h.html">khc.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="kii__task__callback_8h_source.html">kii_task_callback.h</a>&quot;</code><br />
-<code>#include &lt;jkii.h&gt;</code><br />
+<code>#include &lt;<a class="elRef" href="../../jkii/html/jkii_8h.html">jkii.h</a>&gt;</code><br />
 </div>
 <p><a href="kii_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -392,31 +392,31 @@ Functions</h2></td></tr>
 <tr class="memitem:afeac6cc4848254cf840956e5cee04bcd" id="r_afeac6cc4848254cf840956e5cee04bcd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#afeac6cc4848254cf840956e5cee04bcd">kii_set_resp_header_buff</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, char *buff, size_t buff_size)</td></tr>
 <tr class="memdesc:afeac6cc4848254cf840956e5cee04bcd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set response header buffer.  <br /></td></tr>
 <tr class="separator:afeac6cc4848254cf840956e5cee04bcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2da9f4270de88d128d37e6ebde08540b" id="r_a2da9f4270de88d128d37e6ebde08540b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a2da9f4270de88d128d37e6ebde08540b">kii_set_cb_http_sock_connect</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, KHC_CB_SOCK_CONNECT cb_connect, void *userdata)</td></tr>
+<tr class="memitem:a2da9f4270de88d128d37e6ebde08540b" id="r_a2da9f4270de88d128d37e6ebde08540b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a2da9f4270de88d128d37e6ebde08540b">kii_set_cb_http_sock_connect</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#ae9552240ec64ad637e77cd63c3b65c65">KHC_CB_SOCK_CONNECT</a> cb_connect, void *userdata)</td></tr>
 <tr class="memdesc:a2da9f4270de88d128d37e6ebde08540b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket connect callback used for HTTP(S)  <br /></td></tr>
 <tr class="separator:a2da9f4270de88d128d37e6ebde08540b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae2b2ac2283f285b5f2771731a80ecdfb" id="r_ae2b2ac2283f285b5f2771731a80ecdfb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ae2b2ac2283f285b5f2771731a80ecdfb">kii_set_cb_http_sock_send</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, KHC_CB_SOCK_SEND cb_send, void *userdata)</td></tr>
+<tr class="memitem:ae2b2ac2283f285b5f2771731a80ecdfb" id="r_ae2b2ac2283f285b5f2771731a80ecdfb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ae2b2ac2283f285b5f2771731a80ecdfb">kii_set_cb_http_sock_send</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#a96345c64c6bcec1711d2ddaac43224c2">KHC_CB_SOCK_SEND</a> cb_send, void *userdata)</td></tr>
 <tr class="memdesc:ae2b2ac2283f285b5f2771731a80ecdfb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket send callback used for HTTP(S)  <br /></td></tr>
 <tr class="separator:ae2b2ac2283f285b5f2771731a80ecdfb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9e3e9ce59e18d212b5a961ca8650c2ad" id="r_a9e3e9ce59e18d212b5a961ca8650c2ad"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a9e3e9ce59e18d212b5a961ca8650c2ad">kii_set_cb_http_sock_recv</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, KHC_CB_SOCK_RECV cb_recv, void *userdata)</td></tr>
+<tr class="memitem:a9e3e9ce59e18d212b5a961ca8650c2ad" id="r_a9e3e9ce59e18d212b5a961ca8650c2ad"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a9e3e9ce59e18d212b5a961ca8650c2ad">kii_set_cb_http_sock_recv</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#a148cf4bd26b43909c9eab71f37b4cda6">KHC_CB_SOCK_RECV</a> cb_recv, void *userdata)</td></tr>
 <tr class="memdesc:a9e3e9ce59e18d212b5a961ca8650c2ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket recv callback used for HTTP(S)  <br /></td></tr>
 <tr class="separator:a9e3e9ce59e18d212b5a961ca8650c2ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a491beb9abda4a3e26dbffb6f10b37f4d" id="r_a491beb9abda4a3e26dbffb6f10b37f4d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a491beb9abda4a3e26dbffb6f10b37f4d">kii_set_cb_http_sock_close</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, KHC_CB_SOCK_CLOSE cb_close, void *userdata)</td></tr>
+<tr class="memitem:a491beb9abda4a3e26dbffb6f10b37f4d" id="r_a491beb9abda4a3e26dbffb6f10b37f4d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a491beb9abda4a3e26dbffb6f10b37f4d">kii_set_cb_http_sock_close</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#af54fb240d589fb1044188bd4a81ab78d">KHC_CB_SOCK_CLOSE</a> cb_close, void *userdata)</td></tr>
 <tr class="memdesc:a491beb9abda4a3e26dbffb6f10b37f4d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket close callback used for HTTP(S)  <br /></td></tr>
 <tr class="separator:a491beb9abda4a3e26dbffb6f10b37f4d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adb5bef6d077b15fca3195ef7d39681cd" id="r_adb5bef6d077b15fca3195ef7d39681cd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#adb5bef6d077b15fca3195ef7d39681cd">kii_set_mqtt_buff</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, char *buff, size_t buff_size)</td></tr>
 <tr class="memdesc:adb5bef6d077b15fca3195ef7d39681cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set buffer used to parse MQTT message.  <br /></td></tr>
 <tr class="separator:adb5bef6d077b15fca3195ef7d39681cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6125a1326008370393f502e23cc43781" id="r_a6125a1326008370393f502e23cc43781"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a6125a1326008370393f502e23cc43781">kii_set_cb_mqtt_sock_connect</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, KHC_CB_SOCK_CONNECT cb_connect, void *userdata)</td></tr>
+<tr class="memitem:a6125a1326008370393f502e23cc43781" id="r_a6125a1326008370393f502e23cc43781"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a6125a1326008370393f502e23cc43781">kii_set_cb_mqtt_sock_connect</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#ae9552240ec64ad637e77cd63c3b65c65">KHC_CB_SOCK_CONNECT</a> cb_connect, void *userdata)</td></tr>
 <tr class="memdesc:a6125a1326008370393f502e23cc43781"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket connect callback used for MQTT(S)  <br /></td></tr>
 <tr class="separator:a6125a1326008370393f502e23cc43781"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a92d3014f87739a42c28b592c3e9d323e" id="r_a92d3014f87739a42c28b592c3e9d323e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a92d3014f87739a42c28b592c3e9d323e">kii_set_cb_mqtt_sock_send</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, KHC_CB_SOCK_SEND cb_send, void *userdata)</td></tr>
+<tr class="memitem:a92d3014f87739a42c28b592c3e9d323e" id="r_a92d3014f87739a42c28b592c3e9d323e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a92d3014f87739a42c28b592c3e9d323e">kii_set_cb_mqtt_sock_send</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#a96345c64c6bcec1711d2ddaac43224c2">KHC_CB_SOCK_SEND</a> cb_send, void *userdata)</td></tr>
 <tr class="memdesc:a92d3014f87739a42c28b592c3e9d323e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket send callback used for MQTT(S)  <br /></td></tr>
 <tr class="separator:a92d3014f87739a42c28b592c3e9d323e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a53f75c9d2fab7fc43c5e0478864727e9" id="r_a53f75c9d2fab7fc43c5e0478864727e9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a53f75c9d2fab7fc43c5e0478864727e9">kii_set_cb_mqtt_sock_recv</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, KHC_CB_SOCK_RECV cb_recv, void *userdata)</td></tr>
+<tr class="memitem:a53f75c9d2fab7fc43c5e0478864727e9" id="r_a53f75c9d2fab7fc43c5e0478864727e9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a53f75c9d2fab7fc43c5e0478864727e9">kii_set_cb_mqtt_sock_recv</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#a148cf4bd26b43909c9eab71f37b4cda6">KHC_CB_SOCK_RECV</a> cb_recv, void *userdata)</td></tr>
 <tr class="memdesc:a53f75c9d2fab7fc43c5e0478864727e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket recv callback used for MQTT(S)  <br /></td></tr>
 <tr class="separator:a53f75c9d2fab7fc43c5e0478864727e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4c1ba2c47261d6c1709298d435a8e77f" id="r_a4c1ba2c47261d6c1709298d435a8e77f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a4c1ba2c47261d6c1709298d435a8e77f">kii_set_cb_mqtt_sock_close</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, KHC_CB_SOCK_CLOSE cb_close, void *userdata)</td></tr>
+<tr class="memitem:a4c1ba2c47261d6c1709298d435a8e77f" id="r_a4c1ba2c47261d6c1709298d435a8e77f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a4c1ba2c47261d6c1709298d435a8e77f">kii_set_cb_mqtt_sock_close</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#af54fb240d589fb1044188bd4a81ab78d">KHC_CB_SOCK_CLOSE</a> cb_close, void *userdata)</td></tr>
 <tr class="memdesc:a4c1ba2c47261d6c1709298d435a8e77f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket close callback used for MQTT(S)  <br /></td></tr>
 <tr class="separator:a4c1ba2c47261d6c1709298d435a8e77f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaf9cdb339d7b2f4a598ef2373b4ac438" id="r_aaf9cdb339d7b2f4a598ef2373b4ac438"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#aaf9cdb339d7b2f4a598ef2373b4ac438">kii_set_mqtt_to_sock_recv</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, unsigned int to_sock_recv_sec)</td></tr>
@@ -437,14 +437,14 @@ Functions</h2></td></tr>
 <tr class="memitem:a279015373defa4b13d772568a2be6fea" id="r_a279015373defa4b13d772568a2be6fea"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a279015373defa4b13d772568a2be6fea">kii_set_cb_delay_ms</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii__task__callback_8h.html#aa8b275089808a99cff89acb673320273">KII_CB_DELAY_MS</a> cb_delay_ms, void *userdata)</td></tr>
 <tr class="memdesc:a279015373defa4b13d772568a2be6fea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback asks to delay/ sleep task execution.  <br /></td></tr>
 <tr class="separator:a279015373defa4b13d772568a2be6fea"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ace208de016c2792d00a43374638bb34c" id="r_ace208de016c2792d00a43374638bb34c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ace208de016c2792d00a43374638bb34c">kii_set_json_parser_resource</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, jkii_resource_t *resource)</td></tr>
+<tr class="memitem:ace208de016c2792d00a43374638bb34c" id="r_ace208de016c2792d00a43374638bb34c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ace208de016c2792d00a43374638bb34c">kii_set_json_parser_resource</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../jkii/html/structjkii__resource__t.html">jkii_resource_t</a> *resource)</td></tr>
 <tr class="memdesc:ace208de016c2792d00a43374638bb34c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set JSON parser resource.  <br /></td></tr>
 <tr class="separator:ace208de016c2792d00a43374638bb34c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a644e3299e543b6dc1d32f8fd84cc6437" id="r_a644e3299e543b6dc1d32f8fd84cc6437"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a644e3299e543b6dc1d32f8fd84cc6437">kii_set_cb_json_parser_resource</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, JKII_CB_RESOURCE_ALLOC cb_alloc, JKII_CB_RESOURCE_FREE cb_free)</td></tr>
+<tr class="memitem:a644e3299e543b6dc1d32f8fd84cc6437" id="r_a644e3299e543b6dc1d32f8fd84cc6437"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a644e3299e543b6dc1d32f8fd84cc6437">kii_set_cb_json_parser_resource</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../jkii/html/jkii_8h.html#afcce849926c48d98835a7c07e2ba0fd1">JKII_CB_RESOURCE_ALLOC</a> cb_alloc, JKII_CB_RESOURCE_FREE cb_free)</td></tr>
 <tr class="memdesc:a644e3299e543b6dc1d32f8fd84cc6437"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set JSON parser resource allocators. To use Allocator instead of fixed size memory given by kii_set_json_parser_resource(kii_t, jkii_resource_t), call kii_set_json_parser_resource(kii_t, jkii_resource_t) with NULL resource argument.  <br /></td></tr>
 <tr class="separator:a644e3299e543b6dc1d32f8fd84cc6437"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af8d81eaeba5dfa0aceff7347e8f7419a" id="r_af8d81eaeba5dfa0aceff7347e8f7419a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#af8d81eaeba5dfa0aceff7347e8f7419a">kii_set_cb_slist_resource</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, KHC_CB_SLIST_ALLOC cb_alloc, KHC_CB_SLIST_FREE cb_free, void *cb_alloc_data, void *cb_free_data)</td></tr>
-<tr class="memdesc:af8d81eaeba5dfa0aceff7347e8f7419a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set khc_slist (linked list) resource allocators.  <br /></td></tr>
+<tr class="memitem:af8d81eaeba5dfa0aceff7347e8f7419a" id="r_af8d81eaeba5dfa0aceff7347e8f7419a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#af8d81eaeba5dfa0aceff7347e8f7419a">kii_set_cb_slist_resource</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../khc/html/khc_8h.html#a14e10ebf817cb0b1dc8dca9ce3794b9c">KHC_CB_SLIST_ALLOC</a> cb_alloc, <a class="elRef" href="../../khc/html/khc_8h.html#a32bafb6cf1da963a57d8a167efe9f833">KHC_CB_SLIST_FREE</a> cb_free, void *cb_alloc_data, void *cb_free_data)</td></tr>
+<tr class="memdesc:af8d81eaeba5dfa0aceff7347e8f7419a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set <a class="elRef" href="../../khc/html/structkhc__slist.html">khc_slist</a> (linked list) resource allocators.  <br /></td></tr>
 <tr class="separator:af8d81eaeba5dfa0aceff7347e8f7419a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a51c376c5e496e52aec2375a3ff70a885" id="r_a51c376c5e496e52aec2375a3ff70a885"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a51c376c5e496e52aec2375a3ff70a885">kii_get_etag</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii)</td></tr>
 <tr class="memdesc:a51c376c5e496e52aec2375a3ff70a885"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get Etag value.  <br /></td></tr>
@@ -1929,7 +1929,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">KHC_CB_SOCK_CLOSE&#160;</td>
+          <td class="paramtype"><a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#af54fb240d589fb1044188bd4a81ab78d">KHC_CB_SOCK_CLOSE</a>&#160;</td>
           <td class="paramname"><em>cb_close</em>, </td>
         </tr>
         <tr>
@@ -1973,7 +1973,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">KHC_CB_SOCK_CONNECT&#160;</td>
+          <td class="paramtype"><a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#ae9552240ec64ad637e77cd63c3b65c65">KHC_CB_SOCK_CONNECT</a>&#160;</td>
           <td class="paramname"><em>cb_connect</em>, </td>
         </tr>
         <tr>
@@ -2017,7 +2017,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">KHC_CB_SOCK_RECV&#160;</td>
+          <td class="paramtype"><a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#a148cf4bd26b43909c9eab71f37b4cda6">KHC_CB_SOCK_RECV</a>&#160;</td>
           <td class="paramname"><em>cb_recv</em>, </td>
         </tr>
         <tr>
@@ -2061,7 +2061,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">KHC_CB_SOCK_SEND&#160;</td>
+          <td class="paramtype"><a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#a96345c64c6bcec1711d2ddaac43224c2">KHC_CB_SOCK_SEND</a>&#160;</td>
           <td class="paramname"><em>cb_send</em>, </td>
         </tr>
         <tr>
@@ -2105,7 +2105,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">JKII_CB_RESOURCE_ALLOC&#160;</td>
+          <td class="paramtype"><a class="elRef" href="../../jkii/html/jkii_8h.html#afcce849926c48d98835a7c07e2ba0fd1">JKII_CB_RESOURCE_ALLOC</a>&#160;</td>
           <td class="paramname"><em>cb_alloc</em>, </td>
         </tr>
         <tr>
@@ -2149,7 +2149,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">KHC_CB_SOCK_CLOSE&#160;</td>
+          <td class="paramtype"><a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#af54fb240d589fb1044188bd4a81ab78d">KHC_CB_SOCK_CLOSE</a>&#160;</td>
           <td class="paramname"><em>cb_close</em>, </td>
         </tr>
         <tr>
@@ -2193,7 +2193,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">KHC_CB_SOCK_CONNECT&#160;</td>
+          <td class="paramtype"><a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#ae9552240ec64ad637e77cd63c3b65c65">KHC_CB_SOCK_CONNECT</a>&#160;</td>
           <td class="paramname"><em>cb_connect</em>, </td>
         </tr>
         <tr>
@@ -2237,7 +2237,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">KHC_CB_SOCK_RECV&#160;</td>
+          <td class="paramtype"><a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#a148cf4bd26b43909c9eab71f37b4cda6">KHC_CB_SOCK_RECV</a>&#160;</td>
           <td class="paramname"><em>cb_recv</em>, </td>
         </tr>
         <tr>
@@ -2281,7 +2281,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">KHC_CB_SOCK_SEND&#160;</td>
+          <td class="paramtype"><a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#a96345c64c6bcec1711d2ddaac43224c2">KHC_CB_SOCK_SEND</a>&#160;</td>
           <td class="paramname"><em>cb_send</em>, </td>
         </tr>
         <tr>
@@ -2325,13 +2325,13 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">KHC_CB_SLIST_ALLOC&#160;</td>
+          <td class="paramtype"><a class="elRef" href="../../khc/html/khc_8h.html#a14e10ebf817cb0b1dc8dca9ce3794b9c">KHC_CB_SLIST_ALLOC</a>&#160;</td>
           <td class="paramname"><em>cb_alloc</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">KHC_CB_SLIST_FREE&#160;</td>
+          <td class="paramtype"><a class="elRef" href="../../khc/html/khc_8h.html#a32bafb6cf1da963a57d8a167efe9f833">KHC_CB_SLIST_FREE</a>&#160;</td>
           <td class="paramname"><em>cb_free</em>, </td>
         </tr>
         <tr>
@@ -2354,7 +2354,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
       </table>
 </div><div class="memdoc">
 
-<p>Set khc_slist (linked list) resource allocators. </p>
+<p>Set <a class="elRef" href="../../khc/html/structkhc__slist.html">khc_slist</a> (linked list) resource allocators. </p>
 <p>If this method is not called, default allocators implemented with malloc/free is used to allocate linked list used to construct HTTP request headers.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -2530,7 +2530,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">jkii_resource_t *&#160;</td>
+          <td class="paramtype"><a class="elRef" href="../../jkii/html/structjkii__resource__t.html">jkii_resource_t</a> *&#160;</td>
           <td class="paramname"><em>resource</em>&#160;</td>
         </tr>
         <tr>
@@ -3490,7 +3490,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Aug 13 2026 16:13:56 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Thu Aug 13 2026 16:50:08 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

@@ -2,14 +2,13 @@ var indexSectionsWithContent =
 {
   0: "bdefijlnprst",
   1: "j",
-  2: "jr",
+  2: "j",
   3: "j",
   4: "bdefilnprst",
   5: "j",
   6: "j",
   7: "j",
-  8: "j",
-  9: "j"
+  8: "j"
 };
 
 var indexSectionNames =
@@ -22,8 +21,7 @@ var indexSectionNames =
   5: "typedefs",
   6: "enums",
   7: "enumvalues",
-  8: "defines",
-  9: "pages"
+  8: "pages"
 };
 
 var indexSectionLabels =
@@ -36,7 +34,6 @@ var indexSectionLabels =
   5: "Typedefs",
   6: "Enumerations",
   7: "Enumerator",
-  8: "Macros",
-  9: "Pages"
+  8: "Pages"
 };
 

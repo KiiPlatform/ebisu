@@ -21,7 +21,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">kii
+   <div id="projectname">kii<span id="projectnumber">&#160;1.3.2</span>
    </div>
   </td>
  </tr>
@@ -85,10 +85,10 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#ifndef KII_H</span></div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#define KII_H</span></div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &quot;khc.h&quot;</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &quot;<a class="codeRef" href="../../khc/html/khc_8h.html">khc.h</a>&quot;</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &quot;<a class="code" href="kii__task__callback_8h.html">kii_task_callback.h</a>&quot;</span></div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;jkii.h&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;<a class="codeRef" href="../../jkii/html/jkii_8h.html">jkii.h</a>&gt;</span></div>
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#ifdef __cplusplus</span></div>
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="keyword">extern</span> <span class="stringliteral">&quot;C&quot;</span> {</div>
@@ -197,7 +197,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span> </div>
 <div class="foldopen" id="foldopen00185" data-start="{" data-end="};">
 <div class="line"><a id="l00185" name="l00185"></a><span class="lineno"><a class="line" href="structkii__t.html">  185</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structkii__t.html">kii_t</a> {</div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    khc _khc; </div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    <a class="code hl_structRef" href="../../khc/html/structkhc.html">khc</a> _khc; </div>
 <div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    <a class="code hl_struct" href="structkii__author__t.html">kii_author_t</a> _author; </div>
 <div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    <span class="keywordtype">char</span> _app_id[KII_APP_ID_MAX_SIZE]; </div>
 <div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>    <span class="keywordtype">char</span> _app_host[KII_APP_HOST_MAX_SIZE]; </div>
@@ -206,10 +206,10 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>    <span class="keywordtype">void</span>* _mqtt_sock_send_ctx; </div>
 <div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>    <span class="keywordtype">void</span>* _mqtt_sock_recv_ctx; </div>
 <div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>    <span class="keywordtype">void</span>* _mqtt_sock_close_ctx; </div>
-<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>    KHC_CB_SOCK_CONNECT _cb_mqtt_sock_connect; </div>
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>    KHC_CB_SOCK_SEND _cb_mqtt_sock_send; </div>
-<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>    KHC_CB_SOCK_RECV _cb_mqtt_sock_recv; </div>
-<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>    KHC_CB_SOCK_CLOSE _cb_mqtt_sock_close_cb; </div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>    <a class="code hl_typedefRef" href="../../khc/html/khc__socket__callback_8h.html#ae9552240ec64ad637e77cd63c3b65c65">KHC_CB_SOCK_CONNECT</a> _cb_mqtt_sock_connect; </div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>    <a class="code hl_typedefRef" href="../../khc/html/khc__socket__callback_8h.html#a96345c64c6bcec1711d2ddaac43224c2">KHC_CB_SOCK_SEND</a> _cb_mqtt_sock_send; </div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>    <a class="code hl_typedefRef" href="../../khc/html/khc__socket__callback_8h.html#a148cf4bd26b43909c9eab71f37b4cda6">KHC_CB_SOCK_RECV</a> _cb_mqtt_sock_recv; </div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>    <a class="code hl_typedefRef" href="../../khc/html/khc__socket__callback_8h.html#af54fb240d589fb1044188bd4a81ab78d">KHC_CB_SOCK_CLOSE</a> _cb_mqtt_sock_close_cb; </div>
 <div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> _mqtt_to_recv_sec; </div>
 <div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>    <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> _mqtt_to_send_sec; </div>
 <div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    <a class="code hl_typedef" href="kii__task__callback_8h.html#a0395b3c3b153a4ae039f9cbfb171c778">KII_CB_TASK_CREATE</a> _cb_task_create; </div>
@@ -231,13 +231,13 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>    <span class="keywordtype">size_t</span> _rw_buff_req_size; </div>
 <div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>    <span class="keywordtype">size_t</span> _rw_buff_read; </div>
 <div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>    <span class="keywordtype">size_t</span> _rw_buff_written; </div>
-<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>    khc_slist* _req_headers; </div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>    <a class="code hl_structRef" href="../../khc/html/structkhc__slist.html">khc_slist</a>* _req_headers; </div>
 <div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>    <span class="keywordtype">char</span> _etag[KII_ETAG_MAX_SIZE]; </div>
-<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>    jkii_resource_t* _json_resource; </div>
-<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>    JKII_CB_RESOURCE_ALLOC _cb_json_alloc; </div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>    <a class="code hl_structRef" href="../../jkii/html/structjkii__resource__t.html">jkii_resource_t</a>* _json_resource; </div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>    <a class="code hl_typedefRef" href="../../jkii/html/jkii_8h.html#afcce849926c48d98835a7c07e2ba0fd1">JKII_CB_RESOURCE_ALLOC</a> _cb_json_alloc; </div>
 <div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>    JKII_CB_RESOURCE_FREE _cb_json_free; </div>
-<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>    KHC_CB_SLIST_ALLOC _cb_slist_alloc; </div>
-<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>    KHC_CB_SLIST_FREE _cb_slist_free; </div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>    <a class="code hl_typedefRef" href="../../khc/html/khc_8h.html#a14e10ebf817cb0b1dc8dca9ce3794b9c">KHC_CB_SLIST_ALLOC</a> _cb_slist_alloc; </div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>    <a class="code hl_typedefRef" href="../../khc/html/khc_8h.html#a32bafb6cf1da963a57d8a167efe9f833">KHC_CB_SLIST_FREE</a> _cb_slist_free; </div>
 <div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>    <span class="keywordtype">void</span>* _slist_alloc_data; </div>
 <div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>    <span class="keywordtype">void</span>* _slist_free_data; </div>
 <div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>    <a class="code hl_enumeration" href="kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">kii_bool_t</a> _insecure_mqtt; </div>
@@ -477,7 +477,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l01086" name="l01086"></a><span class="lineno"><a class="line" href="kii_8h.html#a5d4c80bb655870e967d5a90500bcda08"> 1086</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="kii_8h.html#a5d4c80bb655870e967d5a90500bcda08">kii_set_cb_task_exit</a>(<a class="code hl_struct" href="structkii__t.html">kii_t</a>* kii, <a class="code hl_typedef" href="kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5">KII_CB_TASK_EXIT</a> cb_exit, <span class="keywordtype">void</span>* userdata);</div>
 <div class="line"><a id="l01096" name="l01096"></a><span class="lineno"><a class="line" href="kii_8h.html#a279015373defa4b13d772568a2be6fea"> 1096</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="kii_8h.html#a279015373defa4b13d772568a2be6fea">kii_set_cb_delay_ms</a>(<a class="code hl_struct" href="structkii__t.html">kii_t</a>* kii, <a class="code hl_typedef" href="kii__task__callback_8h.html#aa8b275089808a99cff89acb673320273">KII_CB_DELAY_MS</a> cb_delay_ms, <span class="keywordtype">void</span>* userdata);</div>
 <div class="line"><a id="l01097" name="l01097"></a><span class="lineno"> 1097</span> </div>
-<div class="line"><a id="l01105" name="l01105"></a><span class="lineno"><a class="line" href="kii_8h.html#ace208de016c2792d00a43374638bb34c"> 1105</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="kii_8h.html#ace208de016c2792d00a43374638bb34c">kii_set_json_parser_resource</a>(<a class="code hl_struct" href="structkii__t.html">kii_t</a>* kii, jkii_resource_t* resource);</div>
+<div class="line"><a id="l01105" name="l01105"></a><span class="lineno"><a class="line" href="kii_8h.html#ace208de016c2792d00a43374638bb34c"> 1105</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="kii_8h.html#ace208de016c2792d00a43374638bb34c">kii_set_json_parser_resource</a>(<a class="code hl_struct" href="structkii__t.html">kii_t</a>* kii, <a class="code hl_structRef" href="../../jkii/html/structjkii__resource__t.html">jkii_resource_t</a>* resource);</div>
 <div class="line"><a id="l01106" name="l01106"></a><span class="lineno"> 1106</span> </div>
 <div class="line"><a id="l01115" name="l01115"></a><span class="lineno"><a class="line" href="kii_8h.html#a644e3299e543b6dc1d32f8fd84cc6437"> 1115</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="kii_8h.html#a644e3299e543b6dc1d32f8fd84cc6437">kii_set_cb_json_parser_resource</a>(<a class="code hl_struct" href="structkii__t.html">kii_t</a>* kii,</div>
 <div class="line"><a id="l01116" name="l01116"></a><span class="lineno"> 1116</span>        JKII_CB_RESOURCE_ALLOC cb_alloc,</div>
@@ -543,6 +543,15 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l01214" name="l01214"></a><span class="lineno"> 1214</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l01215" name="l01215"></a><span class="lineno"> 1215</span><span class="comment">/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */</span></div>
 <div class="line"><a id="l01216" name="l01216"></a><span class="lineno"> 1216</span> </div>
+<div class="ttc" id="ajkii_8h_html"><div class="ttname"><a href="../../jkii/html/jkii_8h.html">jkii.h</a></div></div>
+<div class="ttc" id="ajkii_8h_html_afcce849926c48d98835a7c07e2ba0fd1"><div class="ttname"><a href="../../jkii/html/jkii_8h.html#afcce849926c48d98835a7c07e2ba0fd1">JKII_CB_RESOURCE_ALLOC</a></div><div class="ttdeci">jkii_resource_t *(* JKII_CB_RESOURCE_ALLOC)(size_t required_size)</div></div>
+<div class="ttc" id="akhc_8h_html"><div class="ttname"><a href="../../khc/html/khc_8h.html">khc.h</a></div></div>
+<div class="ttc" id="akhc_8h_html_a14e10ebf817cb0b1dc8dca9ce3794b9c"><div class="ttname"><a href="../../khc/html/khc_8h.html#a14e10ebf817cb0b1dc8dca9ce3794b9c">KHC_CB_SLIST_ALLOC</a></div><div class="ttdeci">khc_slist *(* KHC_CB_SLIST_ALLOC)(const char *str, size_t str_length, void *data)</div></div>
+<div class="ttc" id="akhc_8h_html_a32bafb6cf1da963a57d8a167efe9f833"><div class="ttname"><a href="../../khc/html/khc_8h.html#a32bafb6cf1da963a57d8a167efe9f833">KHC_CB_SLIST_FREE</a></div><div class="ttdeci">void(* KHC_CB_SLIST_FREE)(khc_slist *node, void *data)</div></div>
+<div class="ttc" id="akhc__socket__callback_8h_html_a148cf4bd26b43909c9eab71f37b4cda6"><div class="ttname"><a href="../../khc/html/khc__socket__callback_8h.html#a148cf4bd26b43909c9eab71f37b4cda6">KHC_CB_SOCK_RECV</a></div><div class="ttdeci">khc_sock_code_t(* KHC_CB_SOCK_RECV)(void *sock_ctx, char *buffer, size_t length_to_read, size_t *out_actual_length)</div></div>
+<div class="ttc" id="akhc__socket__callback_8h_html_a96345c64c6bcec1711d2ddaac43224c2"><div class="ttname"><a href="../../khc/html/khc__socket__callback_8h.html#a96345c64c6bcec1711d2ddaac43224c2">KHC_CB_SOCK_SEND</a></div><div class="ttdeci">khc_sock_code_t(* KHC_CB_SOCK_SEND)(void *sock_ctx, const char *buffer, size_t length, size_t *out_sent_length)</div></div>
+<div class="ttc" id="akhc__socket__callback_8h_html_ae9552240ec64ad637e77cd63c3b65c65"><div class="ttname"><a href="../../khc/html/khc__socket__callback_8h.html#ae9552240ec64ad637e77cd63c3b65c65">KHC_CB_SOCK_CONNECT</a></div><div class="ttdeci">khc_sock_code_t(* KHC_CB_SOCK_CONNECT)(void *sock_ctx, const char *host, unsigned int port)</div></div>
+<div class="ttc" id="akhc__socket__callback_8h_html_af54fb240d589fb1044188bd4a81ab78d"><div class="ttname"><a href="../../khc/html/khc__socket__callback_8h.html#af54fb240d589fb1044188bd4a81ab78d">KHC_CB_SOCK_CLOSE</a></div><div class="ttdeci">khc_sock_code_t(* KHC_CB_SOCK_CLOSE)(void *sock_ctx)</div></div>
 <div class="ttc" id="akii_8h_html_a01bef79a9e335923fc3817c1b60f1580"><div class="ttname"><a href="kii_8h.html#a01bef79a9e335923fc3817c1b60f1580">kii_subscribe_topic</a></div><div class="ttdeci">kii_code_t kii_subscribe_topic(kii_t *kii, const kii_topic_t *topic)</div><div class="ttdoc">Subscribe to the specified topic. After succeeded, Messages sent to the topic will be notified by MQT...</div></div>
 <div class="ttc" id="akii_8h_html_a0243b3014379f29668584d078c7a7eb2"><div class="ttname"><a href="kii_8h.html#a0243b3014379f29668584d078c7a7eb2">kii_delete_object</a></div><div class="ttdeci">kii_code_t kii_delete_object(kii_t *kii, const kii_bucket_t *bucket, const char *object_id)</div><div class="ttdoc">Delete Kii object.</div></div>
 <div class="ttc" id="akii_8h_html_a0544a628a2fbc798e4d2fa67e142c491"><div class="ttname"><a href="kii_8h.html#a0544a628a2fbc798e4d2fa67e142c491">kii_set_cb_task_create</a></div><div class="ttdeci">void kii_set_cb_task_create(kii_t *kii, KII_CB_TASK_CREATE cb_task_create, void *userdata)</div><div class="ttdoc">Set callback creates task.</div></div>
@@ -650,6 +659,9 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="akii__task__callback_8h_html_aa498370678fa8bb2e7aef2d18bc315b5"><div class="ttname"><a href="kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5">KII_CB_TASK_EXIT</a></div><div class="ttdeci">void(* KII_CB_TASK_EXIT)(void *task_info, void *userdata)</div><div class="ttdoc">Callback called right before exit of the task.</div><div class="ttdef"><b>Definition</b> kii_task_callback.h:68</div></div>
 <div class="ttc" id="akii__task__callback_8h_html_aa8b275089808a99cff89acb673320273"><div class="ttname"><a href="kii__task__callback_8h.html#aa8b275089808a99cff89acb673320273">KII_CB_DELAY_MS</a></div><div class="ttdeci">void(* KII_CB_DELAY_MS)(unsigned int msec, void *userdata)</div><div class="ttdoc">Callback asks to delay/ sleep task.</div><div class="ttdef"><b>Definition</b> kii_task_callback.h:55</div></div>
 <div class="ttc" id="akii__task__callback_8h_html_ae275605d20f9b00b1ead9cbc8e3b3283"><div class="ttname"><a href="kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">kii_bool_t</a></div><div class="ttdeci">kii_bool_t</div><div class="ttdoc">Bool type definition.</div><div class="ttdef"><b>Definition</b> kii_task_callback.h:24</div></div>
+<div class="ttc" id="astructjkii__resource__t_html"><div class="ttname"><a href="../../jkii/html/structjkii__resource__t.html">jkii_resource_t</a></div></div>
+<div class="ttc" id="astructkhc__slist_html"><div class="ttname"><a href="../../khc/html/structkhc__slist.html">khc_slist</a></div></div>
+<div class="ttc" id="astructkhc_html"><div class="ttname"><a href="../../khc/html/structkhc.html">khc</a></div></div>
 <div class="ttc" id="astructkii__author__t_html"><div class="ttname"><a href="structkii__author__t.html">kii_author_t</a></div><div class="ttdoc">Represents author of API.</div><div class="ttdef"><b>Definition</b> kii.h:124</div></div>
 <div class="ttc" id="astructkii__author__t_html_a7ef55277d3fc92e56bf79e3f1838891e"><div class="ttname"><a href="structkii__author__t.html#a7ef55277d3fc92e56bf79e3f1838891e">kii_author_t::author_id</a></div><div class="ttdeci">char author_id[KII_AUTHOR_ID_MAX_SIZE]</div><div class="ttdoc">ID of the author.</div><div class="ttdef"><b>Definition</b> kii.h:126</div></div>
 <div class="ttc" id="astructkii__author__t_html_aecbad5bf0ac42fe9c08a079ae4df2279"><div class="ttname"><a href="structkii__author__t.html#aecbad5bf0ac42fe9c08a079ae4df2279">kii_author_t::access_token</a></div><div class="ttdeci">char access_token[KII_TOKEN_MAX_SIZE]</div><div class="ttdoc">Access token of the author.</div><div class="ttdef"><b>Definition</b> kii.h:128</div></div>
@@ -680,7 +692,7 @@ $(document).ready(function() { init_codefold(0); });
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Aug 13 2026 16:13:56 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Thu Aug 13 2026 16:50:08 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

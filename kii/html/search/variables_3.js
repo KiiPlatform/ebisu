@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['firmware_5fversion_0',['firmware_version',['../structkii__ti__firmware__version__t.html#a12e3389e2ec3c812ebd79e37e222bad4',1,'kii_ti_firmware_version_t']]]
+  ['end_0',['end',['../../../jkii/html/structjkii__field__t.html#a552fea2d1651b8e200ea82008493c7b3',1,'jkii_field_t']]],
+  ['error_1',['error',['../structkii__mqtt__task__info.html#a92ee0b673e721c1deb760bb6853ec42e',1,'kii_mqtt_task_info']]]
 ];

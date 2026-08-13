@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['task_5fstate_0',['task_state',['../structkii__mqtt__task__info.html#a10dd846ce66170de1a124dc32cdc46b8',1,'kii_mqtt_task_info']]],
-  ['topic_1',['topic',['../structkii__mqtt__endpoint__t.html#a541920b531df8bb20f58e1dd7c0a3c81',1,'kii_mqtt_endpoint_t']]],
-  ['topic_5fname_2',['topic_name',['../structkii__topic__t.html#a2ea6785013916b715b151da705a5d54a',1,'kii_topic_t']]],
-  ['ttl_3',['ttl',['../structkii__mqtt__endpoint__t.html#ad07b60aae4d353b09eac993a725f353e',1,'kii_mqtt_endpoint_t']]]
+  ['name_0',['name',['../../../jkii/html/structjkii__field__t.html#ad240e9f8d4144e2f73b023095a27b0f0',1,'jkii_field_t']]],
+  ['next_1',['next',['../../../khc/html/structkhc__slist.html#ad2427c9cd37a7ef8cc829d8cc652a1fd',1,'khc_slist']]]
 ];
