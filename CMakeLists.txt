@@ -4,7 +4,7 @@ project(ebisu C)
 
 include(GNUInstallDirs)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/version)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/version ${CMAKE_CURRENT_LIST_DIR}/cmake)
 include(EbisuVersion)
 set_git_version_and_generate_header()
 
@@ -34,9 +34,16 @@ add_subdirectory(khc)
 add_subdirectory(kii)
 add_subdirectory(tio)
 
-# Tests are for developing ebisu itself. Skipped when ebisu is embedded in
-# another project, which is how the vendor SDK builds consume it.
+option(EBISU_BUILD_SAMPLES "Build the linux sample application" OFF)
+if(EBISU_BUILD_SAMPLES)
+    add_subdirectory(tio/linux-sample)
+endif()
+
+# Tests and docs are for developing ebisu itself. Skipped when ebisu is embedded
+# in another project, which is how the vendor SDK builds consume it.
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    include(EbisuDocs)
+
     # Matches what the per-directory Makefiles passed for MEMCHECK=1. Set before
     # include(CTest), which is what reads it.
     # --error-exitcode is the important part. Without it valgrind exits with the
