@@ -57,17 +57,46 @@ For more details, please refer to [./jkii/README.md](./jkii/README.md)
 
 Details of API are available in [API references](https://kiiplatform.github.io/ebisu-doc).
 
-## Build notes
+## Building
+
+The project is a single CMake project. Configure and build presets cover the
+usual variants:
+
+```
+cmake --preset debug          # or release, or asan
+cmake --build --preset debug
+```
+
+Tests run through CTest, labelled by cost:
+
+```
+ctest --preset small          # self-contained, parallel, no credentials
+ctest --preset large          # against a live Kii application
+ctest --preset all
+```
+
+The large tests need `APP_ID` and `DEFAULT_SITE` in the environment; without
+them they are not configured at all and `ctest --preset small` still works. A
+new test application is bootstrapped with `tests/large_test/initapp.sh`.
+
+Other useful targets and options:
+
+```
+cmake --build --preset debug --target docs        # doxygen, into build/<preset>/ebisu-doc
+ctest --preset small -T memcheck                  # under valgrind
+ctest --preset asan-small                         # under ASan and UBSan
+cmake --preset debug -DEBISU_BUILD_SAMPLES=ON     # also build tio/linux-sample
+```
 
 ### macOS
-Under macOS ventura, this project can be built by:
- - Installing OpenSSL
+
+Install OpenSSL:
+
 ```
-$ brew install openssl@1.1
+$ brew install openssl
 ```
- - Allowing the compiler and linker to find OpenSSL
-```
-export LDFLAGS="-L/opt/homebrew/opt/openssl@1.1/lib"
-export CPPFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
-export LIBRARY_PATH="$LIBRARY_PATH:/opt/homebrew/opt/openssl@1.1/lib"
-```
+
+Setting `LDFLAGS`/`CPPFLAGS` by hand is no longer necessary: the build locates
+OpenSSL with `find_package`, which works on both Apple Silicon and Intel
+prefixes. If you have it somewhere unusual, point CMake at it with
+`-DOPENSSL_ROOT_DIR=...`.

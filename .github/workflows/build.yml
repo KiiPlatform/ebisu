@@ -54,25 +54,17 @@ jobs:
         with:
           report_paths: "**/test-results/junit/*.xml"
       - name: build docs
-        run: |
-          make -C khc clean doc
-          make -C kii clean doc
-          make -C jkii clean doc
-          make -C tio clean doc
-      - name: copy docs
-        run: |
-          mkdir -p ebisu-doc
-          rsync -rR --delete khc/html ebisu-doc
-          rsync -rR --delete kii/html ebisu-doc
-          rsync -rR --delete jkii/html ebisu-doc
-          rsync -rR --delete tio/html ebisu-doc
+        # The Doxyfiles write straight into the publish layout, so there is no
+        # longer a copy step reassembling it from per-component html/ output in
+        # the source tree.
+        run: cmake --build --preset debug --target docs
       - name: Deploy docs to GitHub pages
         # Only master's docs belong on gh-pages; without this any branch push
         # republishes the site.
         if: github.ref == 'refs/heads/master'
         uses: peaceiris/actions-gh-pages@v4
         with:
-          publish_dir: ebisu-doc
+          publish_dir: build/debug/ebisu-doc
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
