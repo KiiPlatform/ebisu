@@ -261,7 +261,7 @@ jkii_field_t*).</p>
 <div class="line">field ::= [<span class="keywordtype">char</span> | escaped]+</div>
 <div class="line">char ::= any ascii characters expect <span class="charliteral">&#39;/&#39;</span>, <span class="charliteral">&#39;[&#39;</span>, <span class="charliteral">&#39;]&#39;</span> and <span class="charliteral">&#39;\&#39;</span></div>
 <div class="line">escaped = <span class="stringliteral">&quot;\\/&quot;</span> | <span class="stringliteral">&quot;\\[&quot;</span> | <span class="stringliteral">&quot;\\]&quot;</span> | <span class="stringliteral">&quot;\\&quot;</span></div>
-<div class="ttc" id="astructjkii__field__t_html_ade8bf5f5ddad91aedd67bb0a0ae40533"><div class="ttname"><a href="structjkii__field__t.html#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a></div><div class="ttdeci">const char * path</div><div class="ttdef"><b>Definition</b> jkii.h:225</div></div>
+<div class="ttc" id="astructjkii__field__t_html_ade8bf5f5ddad91aedd67bb0a0ae40533"><div class="ttname"><a href="structjkii__field__t.html#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a></div><div class="ttdeci">const char * path</div><div class="ttdef"><b>Definition</b> jkii.h:232</div></div>
 </div><!-- fragment --><p>If you want to get first element of color array in following json example:</p>
 <div class="fragment"><div class="line">{</div>
 <div class="line">    <span class="stringliteral">&quot;light&quot;</span> : {</div>
@@ -272,11 +272,9 @@ jkii_field_t*).</p>
 </div><!-- fragment --><p>In rare cases, like following: </p><div class="fragment"><div class="line">{</div>
 <div class="line">    <span class="stringliteral">&quot;[]/\\&quot;</span> : <span class="stringliteral">&quot;rare&quot;</span></div>
 <div class="line">}</div>
-</div><!-- fragment --><p>You can specify "[]/\\" as following:
-
-@code 
-path ="/\[\]\/\";  </p>
-
+</div><!-- fragment --><p>You can specify that key as following:</p>
+<div class="fragment"><div class="line"><a class="code hl_variable" href="structjkii__field__t.html#ade8bf5f5ddad91aedd67bb0a0ae40533">path</a> =<span class="stringliteral">&quot;/\\[\\]\\/\\&quot;</span>;</div>
+</div><!-- fragment --> 
 </div>
 </div>
 <a id="a490735c809794c5f8c4c07c423b9b7e6" name="a490735c809794c5f8c4c07c423b9b7e6"></a>
@@ -356,7 +354,7 @@ jkii_field_t*) ignore type checking.</p>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Aug 13 2026 16:50:08 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Fri Aug 14 2026 11:52:28 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

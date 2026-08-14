@@ -21,6 +21,90 @@
       <anchor>a48f058506a462a68bdf8fbd4c661accf</anchor>
       <arglist></arglist>
     </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>KII_AUTHOR_ID_MAX_SIZE</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a954de624a9c08e935ab8ded034ee0b95</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>KII_TOKEN_MAX_SIZE</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a430b4f23746528cf8103295f17ca33d6</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>KII_USERNAME_MAX_SIZE</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>aeb98949f480088c69d54de582576d7d6</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>KII_PASSWORD_MAX_SIZE</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>ad3f4dc3391175bb19d8a21309932701b</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>KII_TOPIC_MAX_SIZE</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>af24947bd7dc3c4d02fa145b3bd251718</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>KII_HOST_MAX_SIZE</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>ab298051f7ad14c1004b7ab4ca39887b5</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>KII_OBJECT_ID_MAX_SIZE</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a24f504a307f34b409bf85bb7bdc44433</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>KII_INSTALLATION_ID_MAX_SIZE</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a12590c5a89c0cd57281327c7ac92c38f</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>KII_APP_ID_MAX_SIZE</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a6c2c6a9018f3aa5b444861d557a7fefa</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>KII_APP_HOST_MAX_SIZE</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a45cdafdd717a2ecece4db96cbc04207d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>KII_ETAG_MAX_SIZE</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a30bea1e5165e136c0dabfe2d6c37e9a6</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>KII_FIRMWARE_VERSION_MAX_SIZE</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a6be477b443a31b4ddc07540b762bbda3</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="typedef">
       <type>size_t(*</type>
       <name>KII_CB_WRITE</name>
@@ -760,6 +844,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>kii_set_use_m_0_header_flag</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a9f566e30857449a1899d80c91bfcdd6b</anchor>
+      <arglist>(kii_t *kii, kii_bool_t flag)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>kii_cancel_request_being_prepared</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a0709f4778e23ff51645274ec79fa7efa</anchor>
@@ -1014,6 +1105,6 @@
     <name>index</name>
     <title>Build SDK</title>
     <filename>index.html</filename>
-    <docanchor file="index.html">md__r_e_a_d_m_e</docanchor>
+    <docanchor file="index.html" title="Build SDK">kii_readme</docanchor>
   </compound>
 </tagfile>

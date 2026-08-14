@@ -28,6 +28,13 @@
       <arglist>)(size_t required_size)</arglist>
     </member>
     <member kind="typedef">
+      <type>void(*</type>
+      <name>JKII_CB_RESOURCE_FREE</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>a6419ee6ba358566315b0f98c2c1cbd51</anchor>
+      <arglist>)(jkii_resource_t *resource)</arglist>
+    </member>
+    <member kind="typedef">
       <type>enum jkii_boolean_t</type>
       <name>jkii_boolean_t</name>
       <anchorfile>jkii_8h.html</anchorfile>
@@ -329,6 +336,48 @@
   <compound kind="struct">
     <name>jkii_primitive_t</name>
     <filename>structjkii__primitive__t.html</filename>
+    <member kind="variable">
+      <type>int</type>
+      <name>int_value</name>
+      <anchorfile>structjkii__primitive__t.html</anchorfile>
+      <anchor>a77e6095c778248b158704429e0feb3f6</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>long</type>
+      <name>long_value</name>
+      <anchorfile>structjkii__primitive__t.html</anchorfile>
+      <anchor>a203e7d443f2d4f409908c50a5e4af4f2</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>double</type>
+      <name>double_value</name>
+      <anchorfile>structjkii__primitive__t.html</anchorfile>
+      <anchor>acc9cb79f8ba2bd2a361273c9bf3bccb2</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>jkii_boolean_t</type>
+      <name>boolean_value</name>
+      <anchorfile>structjkii__primitive__t.html</anchorfile>
+      <anchor>a89d1332df075a373e0eabc71c5d77189</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>union jkii_primitive_t::@1</type>
+      <name>value</name>
+      <anchorfile>structjkii__primitive__t.html</anchorfile>
+      <anchor>a863c6fd9740d55c99d09e760179dd0d9</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>jkii_field_type_t</type>
+      <name>type</name>
+      <anchorfile>structjkii__primitive__t.html</anchorfile>
+      <anchor>a6638f757159547c319de5aedb377cc2d</anchor>
+      <arglist></arglist>
+    </member>
   </compound>
   <compound kind="struct">
     <name>jkii_resource_t</name>
@@ -352,6 +401,6 @@
     <name>index</name>
     <title>jkii</title>
     <filename>index.html</filename>
-    <docanchor file="index.html" title="jkii">md__r_e_a_d_m_e</docanchor>
+    <docanchor file="index.html" title="jkii">jkii_readme</docanchor>
   </compound>
 </tagfile>

@@ -6,5 +6,5 @@ var searchData=
   ['topic_3',['topic',['../../../kii/html/structkii__mqtt__endpoint__t.html#a541920b531df8bb20f58e1dd7c0a3c81',1,'kii_mqtt_endpoint_t']]],
   ['topic_5fname_4',['topic_name',['../../../kii/html/structkii__topic__t.html#a2ea6785013916b715b151da705a5d54a',1,'kii_topic_t']]],
   ['ttl_5',['ttl',['../../../kii/html/structkii__mqtt__endpoint__t.html#ad07b60aae4d353b09eac993a725f353e',1,'kii_mqtt_endpoint_t']]],
-  ['type_6',['type',['../../../jkii/html/structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841',1,'jkii_field_t::type'],['../structtio__action__value__t.html#ae37aa5cf6246ce83845320168a92e832',1,'tio_action_value_t::type']]]
+  ['type_6',['type',['../../../jkii/html/structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841',1,'jkii_field_t::type'],['../../../jkii/html/structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d',1,'jkii_primitive_t::type'],['../structtio__action__value__t.html#ae37aa5cf6246ce83845320168a92e832',1,'tio_action_value_t::type']]]
 ];

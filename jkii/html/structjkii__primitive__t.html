@@ -74,6 +74,11 @@ $(function() {
   <div class="headertitle"><div class="title">jkii_primitive_t Struct Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>A parsed JSON primitive: its value together with the type read.  
+ <a href="structjkii__primitive__t.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="jkii__utils_8h_source.html">jkii_utils.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Data Fields</h2></td></tr>
@@ -82,29 +87,55 @@ union {&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab57c5d58aea9cfa5840c1a75d6936ace" id="r_ab57c5d58aea9cfa5840c1a75d6936ace"><td class="memItemLeft" >
 &#160;&#160;&#160;int&#160;&#160;&#160;<b>int_value</b>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
+<tr class="memdesc:ab57c5d58aea9cfa5840c1a75d6936ace"><td class="mdescLeft">&#160;</td><td class="mdescRight">Valid when <a class="el" href="structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d" title="Type of the primitive that was parsed, selecting a member of value.">type</a> is JKII_FIELD_TYPE_INTEGER. <br /></td></tr>
 <tr class="separator:ab57c5d58aea9cfa5840c1a75d6936ace"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0e28566e8e79e430a2a31e31e74e6c31" id="r_a0e28566e8e79e430a2a31e31e74e6c31"><td class="memItemLeft" >
 &#160;&#160;&#160;long&#160;&#160;&#160;<b>long_value</b>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
+<tr class="memdesc:a0e28566e8e79e430a2a31e31e74e6c31"><td class="mdescLeft">&#160;</td><td class="mdescRight">Valid when <a class="el" href="structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d" title="Type of the primitive that was parsed, selecting a member of value.">type</a> is JKII_FIELD_TYPE_LONG. <br /></td></tr>
 <tr class="separator:a0e28566e8e79e430a2a31e31e74e6c31"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af2288cb42a03e455f89399662203373f" id="r_af2288cb42a03e455f89399662203373f"><td class="memItemLeft" >
 &#160;&#160;&#160;double&#160;&#160;&#160;<b>double_value</b>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
+<tr class="memdesc:af2288cb42a03e455f89399662203373f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Valid when <a class="el" href="structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d" title="Type of the primitive that was parsed, selecting a member of value.">type</a> is JKII_FIELD_TYPE_DOUBLE. <br /></td></tr>
 <tr class="separator:af2288cb42a03e455f89399662203373f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8dbbd8ca9ade18d780b1b4862f2c7cc3" id="r_a8dbbd8ca9ade18d780b1b4862f2c7cc3"><td class="memItemLeft" >
 &#160;&#160;&#160;<a class="el" href="jkii_8h.html#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a>&#160;&#160;&#160;<b>boolean_value</b>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
+<tr class="memdesc:a8dbbd8ca9ade18d780b1b4862f2c7cc3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Valid when <a class="el" href="structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d" title="Type of the primitive that was parsed, selecting a member of value.">type</a> is JKII_FIELD_TYPE_BOOLEAN. <br /></td></tr>
 <tr class="separator:a8dbbd8ca9ade18d780b1b4862f2c7cc3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a863c6fd9740d55c99d09e760179dd0d9" id="r_a863c6fd9740d55c99d09e760179dd0d9"><td class="memItemLeft" valign="top">}&#160;</td><td class="memItemRight" valign="bottom"><b>value</b>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
+<tr class="memdesc:a863c6fd9740d55c99d09e760179dd0d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">The value. Which member is valid is given by <a class="el" href="structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d" title="Type of the primitive that was parsed, selecting a member of value.">type</a>. <br /></td></tr>
 <tr class="separator:a863c6fd9740d55c99d09e760179dd0d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6638f757159547c319de5aedb377cc2d" id="r_a6638f757159547c319de5aedb377cc2d"><td class="memItemLeft" align="right" valign="top"><a id="a6638f757159547c319de5aedb377cc2d" name="a6638f757159547c319de5aedb377cc2d"></a>
-<a class="el" href="jkii_8h.html#a5fe8d88e1452ceb3d2c07f69440c82b5">jkii_field_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>type</b></td></tr>
+<tr class="memitem:a6638f757159547c319de5aedb377cc2d" id="r_a6638f757159547c319de5aedb377cc2d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="jkii_8h.html#a5fe8d88e1452ceb3d2c07f69440c82b5">jkii_field_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d">type</a></td></tr>
+<tr class="memdesc:a6638f757159547c319de5aedb377cc2d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type of the primitive that was parsed, selecting a member of <a class="el" href="structjkii__primitive__t.html#a863c6fd9740d55c99d09e760179dd0d9" title="The value. Which member is valid is given by type.">value</a>.  <br /></td></tr>
 <tr class="separator:a6638f757159547c319de5aedb377cc2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>A parsed JSON primitive: its value together with the type read. </p>
+<p>Filled in by jkii_parse_primitive(). Read the member of <a class="el" href="structjkii__primitive__t.html#a863c6fd9740d55c99d09e760179dd0d9" title="The value. Which member is valid is given by type.">value</a> that <a class="el" href="structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d" title="Type of the primitive that was parsed, selecting a member of value.">type</a> selects; the others are not meaningful. </p>
+</div><h2 class="groupheader">Field Documentation</h2>
+<a id="a6638f757159547c319de5aedb377cc2d" name="a6638f757159547c319de5aedb377cc2d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6638f757159547c319de5aedb377cc2d">&#9670;&#160;</a></span>type</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="jkii_8h.html#a5fe8d88e1452ceb3d2c07f69440c82b5">jkii_field_type_t</a> jkii_primitive_t::type</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Type of the primitive that was parsed, selecting a member of <a class="el" href="structjkii__primitive__t.html#a863c6fd9740d55c99d09e760179dd0d9" title="The value. Which member is valid is given by type.">value</a>. </p>
+<p>JKII_FIELD_TYPE_NULL indicates the JSON literal null, in which case no member of <a class="el" href="structjkii__primitive__t.html#a863c6fd9740d55c99d09e760179dd0d9" title="The value. Which member is valid is given by type.">value</a> is set. </p>
+
+</div>
+</div>
 <hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/<a class="el" href="jkii__utils_8h_source.html">jkii_utils.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Aug 13 2026 16:50:08 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Fri Aug 14 2026 11:52:28 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

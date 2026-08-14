@@ -7,6 +7,27 @@
     <includes id="khc__socket__callback_8h" name="khc_socket_callback.h" local="yes" import="no" module="no" objc="no">khc_socket_callback.h</includes>
     <class kind="struct">khc_slist</class>
     <class kind="struct">khc</class>
+    <member kind="define">
+      <type>#define</type>
+      <name>KHC_HOST_MAX_SIZE</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>a45dcbc2b1d425f1eaf7e3b5f9c1a84c9</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>KHC_PATH_MAX_SIZE</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>a2c6c003904f5a7a3d4ecca7eaa0093e4</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>KHC_METHOD_MAX_SIZE</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>ae34f7ab4d0288491b284718bb5973415</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="typedef">
       <type>size_t(*</type>
       <name>KHC_CB_WRITE</name>
@@ -405,6 +426,6 @@
     <name>index</name>
     <title>khc</title>
     <filename>index.html</filename>
-    <docanchor file="index.html" title="khc">md__r_e_a_d_m_e</docanchor>
+    <docanchor file="index.html" title="khc">khc_readme</docanchor>
   </compound>
 </tagfile>

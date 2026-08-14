@@ -277,6 +277,12 @@
     <name>index</name>
     <title>tio</title>
     <filename>index.html</filename>
-    <docanchor file="index.html" title="tio">md_README</docanchor>
+    <docanchor file="index.html" title="tio">tio_readme</docanchor>
+    <docanchor file="index.html">task-callbacks</docanchor>
+    <docanchor file="index.html">action-callback</docanchor>
+    <docanchor file="index.html">execute-onboarding</docanchor>
+    <docanchor file="index.html">size-callback</docanchor>
+    <docanchor file="index.html">read-callback</docanchor>
+    <docanchor file="index.html">asynchronous-task-management</docanchor>
   </compound>
 </tagfile>
