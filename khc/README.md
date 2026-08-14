@@ -1,4 +1,4 @@
-# khc
+# khc {#khc_readme}
 
 `khc` is comact HTTP client designed to work in resource limited environment.
 

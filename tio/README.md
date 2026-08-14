@@ -1,4 +1,4 @@
-# tio
+# tio {#tio_readme}
 
 With `tio` and Kii Interaction Framework, you can quickly implement IoT devices
 which supports following functionalities.
