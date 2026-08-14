@@ -36,6 +36,13 @@ typedef jkii_resource_t*
     (*JKII_CB_RESOURCE_ALLOC)(
         size_t required_size);
 
+/** Resource deallocator for jkii_resource_t.
+ *
+ * Called with a resource obtained from the matching
+ * ::JKII_CB_RESOURCE_ALLOC callback.
+ *
+ * \param[in] resource resource to free.
+ */
 typedef void (*JKII_CB_RESOURCE_FREE)(
     jkii_resource_t* resource);
 
@@ -216,7 +223,7 @@ typedef struct jkii_field_t {
      * }
      * \endcode
      *
-     * You can specify "[]/\\" as following:
+     * You can specify that key as following:
      *
      * \code
      * path ="/\\[\\]\\/\\";

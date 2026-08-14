@@ -21,17 +21,41 @@ extern "C" {
  */
 #define KII_TASK_NAME_MQTT "kii_mqtt_task"
 
+/* Sizes of the fixed buffers embedded in the types below. Each includes the
+ * terminating null, so the longest value a field can hold is one less. */
+
+/** \brief Size of kii_author_t::author_id. */
 #define KII_AUTHOR_ID_MAX_SIZE 128
+/** \brief Size of kii_author_t::access_token. */
 #define KII_TOKEN_MAX_SIZE 128
+/** \brief Size of kii_mqtt_endpoint_t::username. */
 #define KII_USERNAME_MAX_SIZE 64
+/** \brief Size of kii_mqtt_endpoint_t::password. */
 #define KII_PASSWORD_MAX_SIZE 128
+/** \brief Size of kii_mqtt_endpoint_t::topic. */
 #define KII_TOPIC_MAX_SIZE 64
+/** \brief Size of kii_mqtt_endpoint_t::host. */
 #define KII_HOST_MAX_SIZE 64
+/** \brief Size of kii_object_id_t::id. */
 #define KII_OBJECT_ID_MAX_SIZE 64
+/** \brief Size of kii_installation_id_t::id. */
 #define KII_INSTALLATION_ID_MAX_SIZE 64
+/**
+ * \brief Size of the application ID field written by kii_set_app_id().
+ *
+ * A longer application ID is truncated to fit.
+ */
 #define KII_APP_ID_MAX_SIZE 128
+/**
+ * \brief Size of the application host field written by kii_set_site().
+ *
+ * A longer host, including a custom one passed to kii_set_site(), is truncated
+ * to fit.
+ */
 #define KII_APP_HOST_MAX_SIZE 128
+/** \brief Size of the buffer holding the ETag of the last response. */
 #define KII_ETAG_MAX_SIZE 64
+/** \brief Size of kii_ti_firmware_version_t::firmware_version. */
 #define KII_FIRMWARE_VERSION_MAX_SIZE 128
 
 /**
@@ -70,7 +94,7 @@ typedef size_t (*KII_CB_WRITE)(char *buff, size_t size, void *userdata);
  * If you dealing with file, You may open the file before the API call and
  * close after returned.
  *
- * \param [out] buff Buffer stores data read.
+ * \param [out] buffer Buffer stores data read.
  * \param [in] size Requested size to read.
  * \param [in] userdata Context object pointer set by APIs requires this callback.
  * \return Size actually read. Returning 0 indicates that whole data is read.
@@ -292,7 +316,7 @@ void kii_enable_insecure_http(
  * If you need to use MQTT over plain tcp,
  * you need to call this method.
  * \param [out] kii kii_t instance.
- * \param [in] enable_insecure_http KII_TRUE indicates using insecure connection.
+ * \param [in] enable_insecure_mqtt KII_TRUE indicates using insecure connection.
  */
 void kii_enable_insecure_mqtt(
         kii_t* kii,
@@ -1160,6 +1184,15 @@ int kii_get_resp_status(kii_t* kii);
  */
 size_t kii_get_resp_body_length(kii_t* kii);
 
+/**
+ * \brief Send the "kii-m: 0" header with subsequent requests.
+ *
+ * Off by default. When enabled, the header is appended to the API calls that
+ * build their own request headers, alongside the authorization header.
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] flag KII_TRUE to send the header, KII_FALSE to stop sending it.
+ */
 void kii_set_use_m_0_header_flag(kii_t* kii, kii_bool_t flag);
 
 /**

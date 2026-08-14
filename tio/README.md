@@ -31,6 +31,7 @@ You can choose to run both `tio_handler_t` and `tio_updater_t` or either one.
 
 Application developer needs to prepare following callback functions.
 
+<a name="task-callbacks"></a>
 ### Task callbacks
 
 `tio_handler_t` needs executing task asynchronously since it keeps waiting for commands sent to MQTT topic.
@@ -207,6 +208,7 @@ Twice as large as recv/ send timeout works fine but recommend few minutes to avo
     tio_handler_set_keep_alive_interval(handler, 300);
 ```
 
+<a name="action-callback"></a>
 ### Action callback
 
 Action callback is called when the IoT device receives remote control command.
@@ -397,6 +399,7 @@ void tio_handler_set_cb_json_parser_resource(
 
 `cb_free` is called when the parse has been done.
 
+<a name="execute-onboarding"></a>
 ## Execute onboarding
 
 For the first time, Step called `onboarding` is required.
@@ -461,6 +464,7 @@ When the specified interval elapsed, `tio_updater_t` execute callback function t
 
 Application can implement the process reading values from sensors, etc.
 
+<a name="size-callback"></a>
 #### Size callback.
 
 Size callback is called to ask the size of new IoT device state.
@@ -475,6 +479,7 @@ typedef size_t (*TIO_CB_SIZE)(void* userdata);
 
 `userdata` is context object pointer given to `tio_updater_start()` argument.
 
+<a name="read-callback"></a>
 #### Read callback
 
 Read callback is used to read actual IoT device state.
@@ -579,6 +584,7 @@ Here's code extracted from [example app](linux-sample/example.c).
 
 - `updater_file_ctx` : Context object pointer referenced from both size callback/ read callback.
 
+<a name="asynchronous-task-management"></a>
 # Asynchronous task management
 
 `tio` execute multiple asynchronous tasks.
