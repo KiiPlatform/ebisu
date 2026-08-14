@@ -13,8 +13,15 @@ extern "C"
 #include <stdio.h>
 #include "khc_socket_callback.h"
 
+/* Sizes of the fixed request buffers. Each includes the terminating null, so
+ * the longest value accepted is one less; the corresponding setter rejects
+ * anything longer with KHC_ERR_TOO_LARGE_DATA rather than truncating. */
+
+/** \brief Size of the host buffer written by khc_set_host(). */
 #define KHC_HOST_MAX_SIZE 128
+/** \brief Size of the path buffer written by khc_set_path(). */
 #define KHC_PATH_MAX_SIZE 256
+/** \brief Size of the method buffer written by khc_set_method(). */
 #define KHC_METHOD_MAX_SIZE 16
 
 /**

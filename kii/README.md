@@ -1,4 +1,4 @@
-# Build SDK
+# Build SDK {#kii_readme}
 
 ```sh
 mkdir -p build

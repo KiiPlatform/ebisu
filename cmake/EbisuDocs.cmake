@@ -17,15 +17,11 @@ endif()
 set(EBISU_DOCS_ROOT ${CMAKE_BINARY_DIR}/ebisu-doc
     CACHE PATH "Where the generated documentation is written")
 
-# Off by default. It sounds like the right guard, but doxygen counts
-# "X is not documented" as a warning, and the public headers have many such
-# gaps, so turning it on fails the build for reasons unrelated to correctness.
-# Warning sets also differ between doxygen releases -- CI runs 1.9.8, a
-# developer machine may run 1.17 -- which would make the docs build depend on
-# the version installed. The specific defect worth catching, an INPUT path that
-# does not exist, is checked directly below instead.
+# On now that the public headers document what they export. Obsolete-tag
+# warnings, which differ between doxygen releases, do not fail the build --
+# only warnings about the documentation itself do.
 option(EBISU_DOCS_WARN_AS_ERROR
-    "Treat doxygen warnings, including undocumented members, as errors" OFF)
+    "Treat doxygen warnings, including undocumented members, as errors" ON)
 
 # tio's Doxyfile listed kii/kii-core/kii_socket_callback.h and
 # kii/kii/kii_task_callback.h, paths from a layout that has not existed for
