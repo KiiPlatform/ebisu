@@ -22,6 +22,14 @@ typedef struct {
     kii_mqtt_task_info info;
     unsigned int elapsed_time_ms;
     unsigned long remaining_message_size;
+    /** \private
+     * Whether the PINGRESP for the last PINGREQ has arrived.
+     *
+     * A broken connection used to be noticed only when sending failed, which on
+     * a half-open TCP connection can take many retransmission timeouts. Missing
+     * PINGRESP detects it within one keep-alive interval instead.
+     */
+    kii_bool_t pingresp_received;
 } mqtt_state_t;
 
 void _init_mqtt_state(kii_t* kii, mqtt_state_t* state);
