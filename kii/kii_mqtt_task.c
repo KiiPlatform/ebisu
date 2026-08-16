@@ -275,6 +275,7 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
     state->info.task_state = KII_MQTT_ST_INSTALL_PUSH;
     state->elapsed_time_ms = 0;
     state->remaining_message_size = 0;
+    state->pingresp_received = KII_TRUE;
 }
 
 void _mqtt_state_install_push(mqtt_state_t* state)
@@ -398,6 +399,12 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
         kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
     } else {
+        // The connection is usable again, so the previous one's outstanding
+        // PINGREQ no longer counts. Without this the first PINGREQ after any
+        // reconnect would see the stale KII_FALSE and reconnect again, forever.
+        // _init_mqtt_state() runs once, before the state loop, so it cannot do
+        // this: RECONNECT goes to SOCK_CONNECT inside the loop.
+        state->pingresp_received = KII_TRUE;
         task_info->task_state = KII_MQTT_ST_SEND_SUBSCRIBE;
     }
 }
@@ -472,6 +479,7 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
             // Estimate worst case.
             state->elapsed_time_ms += kii->_mqtt_to_recv_sec * 1000;
         } else if (mtype == 0xD0) { // PINGRESP
+            state->pingresp_received = KII_TRUE;
             state->elapsed_time_ms += ARRIVED_MSG_READ_TIME;
         } else { // Ignore other messages.
             unsigned long size = fh.remaining_length;
@@ -530,12 +538,24 @@ void _mqtt_state_send_pingreq(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
     kii_mqtt_task_info* task_info = &state->info;
+
+    // The previous PINGREQ was never answered, so the connection is gone even
+    // though sending may still appear to succeed. Reconnect rather than send
+    // another and wait another keep-alive interval to find out.
+    if (state->pingresp_received != KII_TRUE) {
+        state->elapsed_time_ms = 0;
+        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        task_info->task_state = KII_MQTT_ST_RECONNECT;
+        return;
+    }
+
     khc_sock_code_t res = _mqtt_send_pingreq(kii);
     if (res != KHC_SOCK_OK) {
         state->elapsed_time_ms = 0;
         kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
     } else {
+        state->pingresp_received = KII_FALSE;
         state->elapsed_time_ms = MSG_SEND_TIME;
         task_info->task_state = KII_MQTT_ST_RECV_READY;
     }

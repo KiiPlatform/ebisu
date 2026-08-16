@@ -1465,6 +1465,108 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_send == 1 );
         REQUIRE( state.elapsed_time_ms == 0 );
     }
+
+    SECTION("sending pingreq marks the pingresp outstanding") {
+        mqtt_ctx.on_send = [=](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+            *out_sent_length = length;
+            return KHC_SOCK_OK;
+        };
+
+        REQUIRE( state.pingresp_received == KII_TRUE );
+        state.info.task_state = KII_MQTT_ST_SEND_PINGREQ;
+        _mqtt_state_send_pingreq(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        REQUIRE( state.pingresp_received == KII_FALSE );
+    }
+
+    SECTION("receiving pingresp clears the outstanding pingresp") {
+        int call_recv = 0;
+        mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            switch (call_recv) {
+                case 0: // fixed header - PINGRESP
+                    buffer[0] = (char)0xD0;
+                    *out_actual_length = 1;
+                    break;
+                default: // remaining length (= 0)
+                    buffer[0] = 0x00;
+                    *out_actual_length = 1;
+                    break;
+            }
+            ++call_recv;
+            return KHC_SOCK_OK;
+        };
+
+        state.pingresp_received = KII_FALSE;
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        REQUIRE( state.pingresp_received == KII_TRUE );
+    }
+
+    // The point of the flag: a half-open connection can keep accepting sends
+    // for many retransmission timeouts, so waiting for a send error to fail is
+    // slow. An unanswered PINGREQ reconnects within one keep-alive interval.
+    SECTION("an unanswered pingreq reconnects without sending another") {
+        int call_send = 0;
+        mqtt_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+            ++call_send;
+            *out_sent_length = length;
+            return KHC_SOCK_OK; // the socket still looks healthy
+        };
+
+        state.pingresp_received = KII_FALSE;
+        state.info.task_state = KII_MQTT_ST_SEND_PINGREQ;
+        _mqtt_state_send_pingreq(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+        REQUIRE( call_send == 0 );
+        REQUIRE( state.elapsed_time_ms == 0 );
+    }
+
+    // _init_mqtt_state() runs once, before the state loop, and RECONNECT goes
+    // to SOCK_CONNECT inside it. If the flag were not cleared when the new
+    // connection is established, the first PINGREQ after any reconnect would
+    // see the previous connection's KII_FALSE and reconnect again, forever.
+    SECTION("a reconnect does not leave the flag set for the new connection") {
+        int call_recv = 0;
+        mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            switch (call_recv) {
+                case 0: // fixed header - CONNACK
+                    buffer[0] = (char)0x20;
+                    *out_actual_length = 1;
+                    break;
+                case 1: // remaining length (= 2)
+                    buffer[0] = 0x02;
+                    *out_actual_length = 1;
+                    break;
+                default: // variable header: session present + return code 0
+                    buffer[0] = 0x00;
+                    buffer[1] = 0x00;
+                    *out_actual_length = 2;
+                    break;
+            }
+            ++call_recv;
+            return KHC_SOCK_OK;
+        };
+
+        // As left behind by the connection that died with a PINGREQ in flight.
+        state.pingresp_received = KII_FALSE;
+        state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
+        _mqtt_state_recv_connack(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_SEND_SUBSCRIBE );
+        REQUIRE( state.pingresp_received == KII_TRUE );
+
+        int call_send = 0;
+        mqtt_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+            ++call_send;
+            *out_sent_length = length;
+            return KHC_SOCK_OK;
+        };
+        state.info.task_state = KII_MQTT_ST_SEND_PINGREQ;
+        _mqtt_state_send_pingreq(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        REQUIRE( call_send == 1 );
+    }
 }
 
 TEST_CASE( "kii_enable_insecure_mqtt test" ) {
