@@ -315,7 +315,8 @@ typedef struct jkii_field_t {
          * jkii_field_type_t#JKII_FIELD_TYPE_BOOLEAN.
          */
         jkii_boolean_t boolean_value;
-    } field_copy;
+    } field_copy; /**< \brief Copy of the parsed field value. Which member is
+                       valid is given by jkii_field_t#type. */
 
     /** Length of field_copy#string. ignored if field_copy#string is
      * null or jkii_field_t#type is not
