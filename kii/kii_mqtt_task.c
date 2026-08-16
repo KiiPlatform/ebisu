@@ -217,7 +217,7 @@ khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed
 // If the MQTT buffer size is insufficient,
 // read and trash the message so that the loop can wait for next message.
 khc_sock_code_t _mqtt_recv_remaining_trash(kii_t* kii, unsigned long remaining_length) {
-    const size_t buff_size = 256;
+    enum { buff_size = 256 };
     char buff[buff_size];
     size_t received = 0;
     size_t total_received = 0;
@@ -371,7 +371,7 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
     kii_mqtt_task_info* task_info = &state->info;
     kii_mqtt_fixed_header fixed_header;
     khc_sock_code_t res = _mqtt_recv_fixed_header(kii, &fixed_header);
-    if (res != KII_ERR_OK) {
+    if (res != KHC_SOCK_OK) {
         kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
@@ -384,11 +384,11 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
         return;
     }
     // CONNACK variable header LENGTH is always 2.
-    const char length = 2;
+    enum { length = 2 };
     char buff[length];
     memset(buff, '\0', length);
     khc_sock_code_t res2 = _mqtt_recv_remaining(kii, length, buff);
-    if (res2 != KII_ERR_OK) {
+    if (res2 != KHC_SOCK_OK) {
         kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
@@ -429,7 +429,7 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
     kii_mqtt_task_info* task_info = &state->info;
     kii_mqtt_fixed_header fixed_header;
     khc_sock_code_t res = _mqtt_recv_fixed_header(kii, &fixed_header);
-    if (res != KII_ERR_OK) {
+    if (res != KHC_SOCK_OK) {
         kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
@@ -440,11 +440,11 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
     }
-    const char len = 3;
+    enum { len = 3 };
     char buff[len];
     memset(buff, '\0', len);
     khc_sock_code_t res2 = _mqtt_recv_remaining(kii, len, buff);
-    if (res2 != KII_ERR_OK) {
+    if (res2 != KHC_SOCK_OK) {
         kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;

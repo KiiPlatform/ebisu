@@ -489,7 +489,6 @@ static const char* _jkii_get_target(
 {
     const char* start = NULL;
     const char* retval = NULL;
-    const char* error = NULL;
     size_t path_len = strlen(path);
     size_t target_len = 0;
     int before_is_bash_slash = 0;
@@ -498,7 +497,6 @@ static const char* _jkii_get_target(
     M_JKII_ASSERT(target != NULL);
 
     if (path_len <= 1 || *path != '/' || strncmp(path, "//", 2) == 0) {
-        error = path;
         retval = NULL;
         goto exit;
     }
@@ -527,12 +525,10 @@ static const char* _jkii_get_target(
         ++start;
         target_len -= 2;
         if (_jkii_is_long(start, target_len) == 0) {
-            error = start;
             retval = NULL;
             goto exit;
         } else if (_jkii_to_long(start, target_len, &value)
                 != JKII_PRIMITIVE_ERR_OK) {
-            error = start;
             retval = NULL;
             goto exit;
         }

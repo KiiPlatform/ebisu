@@ -580,7 +580,6 @@ tio_code_t _parse_command(
     const char* actions_array = command + fields[1].start;
     size_t actions_array_length = fields[1].end - fields[1].start;
     tio_action_t action;
-    size_t result_counts = 0;
     for (size_t alias_idx = 0; ; ++alias_idx) {
         char* actions_array_in_alias = NULL;
         size_t actions_array_in_alias_length = 0;
@@ -608,7 +607,6 @@ tio_code_t _parse_command(
                         &action);
                 if (pa_res == _CMD_PARSE_OK) {
                     cb_parsed_action(command_id, &action, userdata);
-                    ++result_counts;
                 } else if (pa_res == _CMD_PARSE_ARRAY_OUT_OF_INDEX) {
                     // Handled all actions in alias.
                     break;
