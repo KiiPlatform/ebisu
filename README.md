@@ -88,6 +88,17 @@ ctest --preset asan-small                         # under ASan and UBSan
 cmake --preset debug -DEBISU_BUILD_SAMPLES=ON     # also build tio/linux-sample
 ```
 
+### Packaging
+
+Warnings are errors by default, so a warning cannot quietly reappear. A compiler
+newer than the one this was last checked against may report something we have
+never seen and stop your build. Turn the option off rather than patching the
+source:
+
+```
+cmake -S . -B build -DEBISU_WERROR=OFF
+```
+
 ### macOS
 
 Install OpenSSL:
