@@ -66,20 +66,17 @@ typedef enum tio_data_type_t {
  */
 typedef struct tio_action_value_t {
     tio_data_type_t type; /**< \brief Data type of the value. */
-    /**
-     *  \brief Union stores value.
-     *
-     * if type is TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY,
-     * opaque_value is the pointer to it's JSON string representation.
-     * You need to use opaque_value_length to determine the length of the value
-     * since it might not be null terminated.
-     */
     union {
         long long_value; /**< Value stored when type is TIO_TYPE_INTEGER */
         double double_value; /**< Value stored when type is TIO_TYPE_DOUBLE */
         tio_bool_t bool_value; /**< Value stored when type is TIO_TYPE_BOOLEAN */
         const char *opaque_value; /**< Value stored when type is TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY */
-    } param;
+    } param; /**< \brief Union stores value.
+              *
+              * if type is TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY,
+              * opaque_value is the pointer to it's JSON string representation.
+              * You need to use opaque_value_length to determine the length of
+              * the value since it might not be null terminated. */
     /**
      * \brief Indicate length of opaque_value in case type is
      * TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY.
@@ -115,11 +112,15 @@ typedef struct tio_action_t {
     tio_action_value_t action_value;
 } tio_action_t;
 
+/** \brief Size of tio_action_err_t::err_message, including the terminating
+ * null. */
+#define TIO_ACTION_ERR_MESSAGE_MAX_SIZE 64
+
 /**
  * \brief Represents error.
  */
 typedef struct tio_action_err_t {
-    char err_message[64]; /**< \brief Error message (null terminated). */
+    char err_message[TIO_ACTION_ERR_MESSAGE_MAX_SIZE]; /**< \brief Error message (null terminated). */
 } tio_action_err_t;
 
 /**
