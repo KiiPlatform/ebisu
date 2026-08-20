@@ -140,8 +140,8 @@
       <type>char</type>
       <name>err_message</name>
       <anchorfile>structtio__action__err__t.html</anchorfile>
-      <anchor>a142acfa38694eb93dcc87b79891c0954</anchor>
-      <arglist>[64]</arglist>
+      <anchor>aece44befd7f0b26314a54894a2fefff3</anchor>
+      <arglist>[TIO_ACTION_ERR_MESSAGE_MAX_SIZE]</arglist>
     </member>
   </compound>
   <compound kind="struct">
