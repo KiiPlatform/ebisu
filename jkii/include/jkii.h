@@ -7,6 +7,12 @@
 
 #define JSMN_HEADER
 #include <jsmn.h>
+/* The library is compiled with hidden visibility, so what this header declares
+   is exactly what the shared object exports. */
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC visibility push(default)
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -355,6 +361,10 @@ jkii_parse_err_t jkii_parse_with_allocator(
     jkii_field_t* fields,
     JKII_CB_RESOURCE_ALLOC cb_alloc,
     JKII_CB_RESOURCE_FREE cb_free);
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC visibility pop
+#endif
 
 #ifdef __cplusplus
 }

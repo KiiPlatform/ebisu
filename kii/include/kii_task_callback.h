@@ -4,6 +4,12 @@
  */
 #ifndef _KII_TASK_CALLBACK
 #define _KII_TASK_CALLBACK
+/* The library is compiled with hidden visibility, so what this header declares
+   is exactly what the shared object exports. */
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC visibility push(default)
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -81,6 +87,10 @@ typedef kii_bool_t
 (*KII_CB_TASK_CONTINUE)
     (void* task_info,
     void* userdata);
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC visibility pop
+#endif
 
 #ifdef __cplusplus
 }

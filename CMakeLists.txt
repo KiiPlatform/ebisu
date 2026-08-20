@@ -35,7 +35,17 @@ function(ebisu_configure_target tgt)
     $<$<AND:$<BOOL:${EBISU_WERROR}>,$<C_COMPILER_ID:GNU,Clang,AppleClang>>:-Werror>)
   # Every object may end up inside a shared library, including the ones that
   # reach it indirectly through $<TARGET_OBJECTS:...>.
-  set_target_properties(${tgt} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+  #
+  # Hidden by default, so the shared objects export what the public headers
+  # declare and nothing else. Being non-static because a helper is called from
+  # another translation unit is not the same as being part of the ABI, and
+  # without this the two were indistinguishable: libkii exported 203 symbols of
+  # which 108 appeared in no installed header. The public headers each push
+  # default visibility around their declarations.
+  set_target_properties(${tgt} PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    C_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON)
   target_link_libraries(${tgt} PUBLIC ebisu_version)
 endfunction()
 

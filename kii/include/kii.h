@@ -9,6 +9,12 @@
 #include "kii_task_callback.h"
 
 #include <jkii.h>
+/* The library is compiled with hidden visibility, so what this header declares
+   is exactly what the shared object exports. */
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC visibility push(default)
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -1239,6 +1245,10 @@ typedef struct {
     kii_mqtt_error error; /**< Last reported error. */
     kii_mqtt_task_state task_state; /**< Current task state. */
 } kii_mqtt_task_info;
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC visibility pop
+#endif
 
 #ifdef __cplusplus
 }

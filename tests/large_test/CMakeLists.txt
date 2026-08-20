@@ -35,7 +35,7 @@ ebisu_add_test_suite(large_test_khc
         khc/post_error_test.cpp
         khc/post_test.cpp
         ${large_test_common}
-    LINK khc OpenSSL::SSL OpenSSL::Crypto Threads::Threads
+    LINK ${EBISU_KHC_OBJS} OpenSSL::SSL OpenSSL::Crypto Threads::Threads
     INCLUDES
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/khc
@@ -53,7 +53,7 @@ ebisu_add_test_suite(large_test_kii
         kii/thing_test.cpp
         kii/ti_test.cpp
         ${large_test_common}
-    LINK kii OpenSSL::SSL OpenSSL::Crypto Threads::Threads
+    LINK ${EBISU_KII_OBJS} OpenSSL::SSL OpenSSL::Crypto Threads::Threads
     INCLUDES
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/kii
