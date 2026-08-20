@@ -200,31 +200,30 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00312" name="l00312"></a><span class="lineno"><a class="line" href="structjkii__field__t.html#a4473c495ef26173515f141c4ea4eca51">  312</a></span>        <span class="keywordtype">double</span> <a class="code hl_variable" href="structjkii__field__t.html#a4473c495ef26173515f141c4ea4eca51">double_value</a>;</div>
 <div class="line"><a id="l00313" name="l00313"></a><span class="lineno">  313</span> </div>
 <div class="line"><a id="l00317" name="l00317"></a><span class="lineno"><a class="line" href="structjkii__field__t.html#af204e584160c0451d1272ba2ef9cbd20">  317</a></span>        <a class="code hl_enumeration" href="jkii_8h.html#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a> <a class="code hl_variable" href="structjkii__field__t.html#af204e584160c0451d1272ba2ef9cbd20">boolean_value</a>;</div>
-<div class="line"><a id="l00318" name="l00318"></a><span class="lineno"><a class="line" href="structjkii__field__t.html#a55106b066dcc6932972f6c88d95fc677">  318</a></span>    } <a class="code hl_variable" href="structjkii__field__t.html#a55106b066dcc6932972f6c88d95fc677">field_copy</a>;</div>
-<div class="line"><a id="l00319" name="l00319"></a><span class="lineno">  319</span> </div>
-<div class="line"><a id="l00326" name="l00326"></a><span class="lineno"><a class="line" href="structjkii__field__t.html#a92339c0771f78c56cf96edfa806ae59b">  326</a></span>    <span class="keywordtype">size_t</span> <a class="code hl_variable" href="structjkii__field__t.html#a92339c0771f78c56cf96edfa806ae59b">field_copy_buff_size</a>;</div>
-<div class="line"><a id="l00327" name="l00327"></a><span class="lineno">  327</span> </div>
-<div class="line"><a id="l00328" name="l00328"></a><span class="lineno"><a class="line" href="jkii_8h.html#abfe54c75e23435c665b7f2dcc78e7b99">  328</a></span>} <a class="code hl_struct" href="structjkii__field__t.html">jkii_field_t</a>;</div>
+<div class="line"><a id="l00318" name="l00318"></a><span class="lineno">  318</span>    } <a class="code hl_variable" href="structjkii__field__t.html#a55106b066dcc6932972f6c88d95fc677">field_copy</a>; </div>
+<div class="line"><a id="l00327" name="l00327"></a><span class="lineno"><a class="line" href="structjkii__field__t.html#a92339c0771f78c56cf96edfa806ae59b">  327</a></span>    <span class="keywordtype">size_t</span> <a class="code hl_variable" href="structjkii__field__t.html#a92339c0771f78c56cf96edfa806ae59b">field_copy_buff_size</a>;</div>
+<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span> </div>
+<div class="line"><a id="l00329" name="l00329"></a><span class="lineno"><a class="line" href="jkii_8h.html#abfe54c75e23435c665b7f2dcc78e7b99">  329</a></span>} <a class="code hl_struct" href="structjkii__field__t.html">jkii_field_t</a>;</div>
 </div>
-<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span> </div>
-<div class="line"><a id="l00337" name="l00337"></a><span class="lineno"><a class="line" href="jkii_8h.html#a4793a01413e64a45474d0e23894da2da">  337</a></span><a class="code hl_enumeration" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a> <a class="code hl_function" href="jkii_8h.html#a4793a01413e64a45474d0e23894da2da">jkii_parse</a>(</div>
-<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* json_string,</div>
-<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span>        <span class="keywordtype">size_t</span> json_string_len,</div>
-<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span>        <a class="code hl_struct" href="structjkii__field__t.html">jkii_field_t</a>* fields,</div>
-<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span>        <a class="code hl_struct" href="structjkii__resource__t.html">jkii_resource_t</a>* resource);</div>
-<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span> </div>
-<div class="line"><a id="l00351" name="l00351"></a><span class="lineno"><a class="line" href="jkii_8h.html#a4b9010bf54967baa34c7608a27e99d23">  351</a></span><a class="code hl_enumeration" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a> <a class="code hl_function" href="jkii_8h.html#a4b9010bf54967baa34c7608a27e99d23">jkii_parse_with_allocator</a>(</div>
-<div class="line"><a id="l00352" name="l00352"></a><span class="lineno">  352</span>    <span class="keyword">const</span> <span class="keywordtype">char</span>* json_string,</div>
-<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span>    <span class="keywordtype">size_t</span> json_string_len,</div>
-<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span>    <a class="code hl_struct" href="structjkii__field__t.html">jkii_field_t</a>* fields,</div>
-<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>    <a class="code hl_typedef" href="jkii_8h.html#afcce849926c48d98835a7c07e2ba0fd1">JKII_CB_RESOURCE_ALLOC</a> cb_alloc,</div>
-<div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>    <a class="code hl_typedef" href="jkii_8h.html#a6419ee6ba358566315b0f98c2c1cbd51">JKII_CB_RESOURCE_FREE</a> cb_free);</div>
-<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span> </div>
-<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span><span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>}</div>
-<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span> </div>
-<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span> </div>
+<div class="line"><a id="l00338" name="l00338"></a><span class="lineno"><a class="line" href="jkii_8h.html#a4793a01413e64a45474d0e23894da2da">  338</a></span><a class="code hl_enumeration" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a> <a class="code hl_function" href="jkii_8h.html#a4793a01413e64a45474d0e23894da2da">jkii_parse</a>(</div>
+<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* json_string,</div>
+<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span>        <span class="keywordtype">size_t</span> json_string_len,</div>
+<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span>        <a class="code hl_struct" href="structjkii__field__t.html">jkii_field_t</a>* fields,</div>
+<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span>        <a class="code hl_struct" href="structjkii__resource__t.html">jkii_resource_t</a>* resource);</div>
+<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span> </div>
+<div class="line"><a id="l00352" name="l00352"></a><span class="lineno"><a class="line" href="jkii_8h.html#a4b9010bf54967baa34c7608a27e99d23">  352</a></span><a class="code hl_enumeration" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a> <a class="code hl_function" href="jkii_8h.html#a4b9010bf54967baa34c7608a27e99d23">jkii_parse_with_allocator</a>(</div>
+<div class="line"><a id="l00353" name="l00353"></a><span class="lineno">  353</span>    <span class="keyword">const</span> <span class="keywordtype">char</span>* json_string,</div>
+<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span>    <span class="keywordtype">size_t</span> json_string_len,</div>
+<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span>    <a class="code hl_struct" href="structjkii__field__t.html">jkii_field_t</a>* fields,</div>
+<div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span>    <a class="code hl_typedef" href="jkii_8h.html#afcce849926c48d98835a7c07e2ba0fd1">JKII_CB_RESOURCE_ALLOC</a> cb_alloc,</div>
+<div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span>    <a class="code hl_typedef" href="jkii_8h.html#a6419ee6ba358566315b0f98c2c1cbd51">JKII_CB_RESOURCE_FREE</a> cb_free);</div>
+<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span> </div>
+<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span><span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span>}</div>
+<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span> </div>
+<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="ajkii_8h_html_a226dc87d1ccd30b36a59a096b4df3a6b"><div class="ttname"><a href="jkii_8h.html#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a></div><div class="ttdeci">jkii_field_err_t</div><div class="ttdef"><b>Definition</b> jkii.h:91</div></div>
 <div class="ttc" id="ajkii_8h_html_a226dc87d1ccd30b36a59a096b4df3a6ba0ca27ded3400c5279308f056c8e5eb14"><div class="ttname"><a href="jkii_8h.html#a226dc87d1ccd30b36a59a096b4df3a6ba0ca27ded3400c5279308f056c8e5eb14">JKII_FIELD_ERR_COPY</a></div><div class="ttdeci">@ JKII_FIELD_ERR_COPY</div><div class="ttdef"><b>Definition</b> jkii.h:105</div></div>
 <div class="ttc" id="ajkii_8h_html_a226dc87d1ccd30b36a59a096b4df3a6ba14a08f2f8dcd6861859dd4f24692e089"><div class="ttname"><a href="jkii_8h.html#a226dc87d1ccd30b36a59a096b4df3a6ba14a08f2f8dcd6861859dd4f24692e089">JKII_FIELD_ERR_NUM_OVERFLOW</a></div><div class="ttdeci">@ JKII_FIELD_ERR_NUM_OVERFLOW</div><div class="ttdef"><b>Definition</b> jkii.h:113</div></div>
@@ -260,10 +259,10 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="astructjkii__field__t_html_a2a4a7e6a815d3951add43545a845bf19"><div class="ttname"><a href="structjkii__field__t.html#a2a4a7e6a815d3951add43545a845bf19">jkii_field_t::int_value</a></div><div class="ttdeci">int int_value</div><div class="ttdef"><b>Definition</b> jkii.h:297</div></div>
 <div class="ttc" id="astructjkii__field__t_html_a4473c495ef26173515f141c4ea4eca51"><div class="ttname"><a href="structjkii__field__t.html#a4473c495ef26173515f141c4ea4eca51">jkii_field_t::double_value</a></div><div class="ttdeci">double double_value</div><div class="ttdef"><b>Definition</b> jkii.h:312</div></div>
 <div class="ttc" id="astructjkii__field__t_html_a490735c809794c5f8c4c07c423b9b7e6"><div class="ttname"><a href="structjkii__field__t.html#a490735c809794c5f8c4c07c423b9b7e6">jkii_field_t::result</a></div><div class="ttdeci">jkii_field_err_t result</div><div class="ttdef"><b>Definition</b> jkii.h:238</div></div>
-<div class="ttc" id="astructjkii__field__t_html_a55106b066dcc6932972f6c88d95fc677"><div class="ttname"><a href="structjkii__field__t.html#a55106b066dcc6932972f6c88d95fc677">jkii_field_t::field_copy</a></div><div class="ttdeci">union jkii_field_t::@0 field_copy</div></div>
+<div class="ttc" id="astructjkii__field__t_html_a55106b066dcc6932972f6c88d95fc677"><div class="ttname"><a href="structjkii__field__t.html#a55106b066dcc6932972f6c88d95fc677">jkii_field_t::field_copy</a></div><div class="ttdeci">union jkii_field_t::@0 field_copy</div><div class="ttdoc">Copy of the parsed field value. Which member is valid is given by jkii_field_t::type.</div></div>
 <div class="ttc" id="astructjkii__field__t_html_a552fea2d1651b8e200ea82008493c7b3"><div class="ttname"><a href="structjkii__field__t.html#a552fea2d1651b8e200ea82008493c7b3">jkii_field_t::end</a></div><div class="ttdeci">size_t end</div><div class="ttdef"><b>Definition</b> jkii.h:274</div></div>
 <div class="ttc" id="astructjkii__field__t_html_a819930194ef418853ab716ad36cc01e6"><div class="ttname"><a href="structjkii__field__t.html#a819930194ef418853ab716ad36cc01e6">jkii_field_t::string</a></div><div class="ttdeci">char * string</div><div class="ttdef"><b>Definition</b> jkii.h:289</div></div>
-<div class="ttc" id="astructjkii__field__t_html_a92339c0771f78c56cf96edfa806ae59b"><div class="ttname"><a href="structjkii__field__t.html#a92339c0771f78c56cf96edfa806ae59b">jkii_field_t::field_copy_buff_size</a></div><div class="ttdeci">size_t field_copy_buff_size</div><div class="ttdef"><b>Definition</b> jkii.h:326</div></div>
+<div class="ttc" id="astructjkii__field__t_html_a92339c0771f78c56cf96edfa806ae59b"><div class="ttname"><a href="structjkii__field__t.html#a92339c0771f78c56cf96edfa806ae59b">jkii_field_t::field_copy_buff_size</a></div><div class="ttdeci">size_t field_copy_buff_size</div><div class="ttdef"><b>Definition</b> jkii.h:327</div></div>
 <div class="ttc" id="astructjkii__field__t_html_ab2b34feaeed6c4fc6364e3195cf1f841"><div class="ttname"><a href="structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841">jkii_field_t::type</a></div><div class="ttdeci">jkii_field_type_t type</div><div class="ttdef"><b>Definition</b> jkii.h:262</div></div>
 <div class="ttc" id="astructjkii__field__t_html_ad240e9f8d4144e2f73b023095a27b0f0"><div class="ttname"><a href="structjkii__field__t.html#ad240e9f8d4144e2f73b023095a27b0f0">jkii_field_t::name</a></div><div class="ttdeci">const char * name</div><div class="ttdef"><b>Definition</b> jkii.h:185</div></div>
 <div class="ttc" id="astructjkii__field__t_html_adbe399051b2cf89ee6fb357078b25c9c"><div class="ttname"><a href="structjkii__field__t.html#adbe399051b2cf89ee6fb357078b25c9c">jkii_field_t::long_value</a></div><div class="ttdeci">long long_value</div><div class="ttdef"><b>Definition</b> jkii.h:304</div></div>
@@ -275,7 +274,7 @@ $(document).ready(function() { init_codefold(0); });
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Aug 16 2026 13:22:10 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Thu Aug 20 2026 21:02:23 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
