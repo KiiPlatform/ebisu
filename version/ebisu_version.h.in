@@ -1,7 +1,17 @@
 #ifndef EBISU_VERSION_H
 #define EBISU_VERSION_H
 
+/** \brief Release version, as major.minor.patch. */
 #define EBISU_VERSION "@version@"
+/** \brief Major version, matching the soname of the shared libraries. */
 #define EBISU_SOVERSION "@soversion@"
+/**
+ * \brief `git describe` output for the tree this was built from.
+ *
+ * Carries the distance from the last tag, so a development build is
+ * distinguishable from the release it follows. EBISU_VERSION cannot: it has to
+ * stay numeric for the VERSION and SOVERSION target properties.
+ */
+#define EBISU_VERSION_FULL "@version_full@"
 
 #endif

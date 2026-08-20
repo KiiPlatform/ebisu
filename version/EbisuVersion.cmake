@@ -31,10 +31,27 @@ function(set_git_version_and_generate_header)
         set(VERSION_STRING "${FALLBACK_VERSION}")
     endif()
 
+    # The soname carries the major only. It used to be the whole
+    # major.minor.patch, which says that every patch release breaks the ABI:
+    # consumers had to relink for 1.3.1 -> 1.3.2 even though nothing about the
+    # interface had changed, and conversely there was no way to signal that it
+    # actually had.
+    string(REGEX MATCH "^[0-9]+" SOVERSION_STRING ${VERSION_STRING})
+
+    # `git describe` output as-is, so a build 19 commits past v1.3.2 is
+    # distinguishable from the release itself. The numeric version cannot carry
+    # that: it feeds VERSION and SOVERSION, which CMake requires to be numeric.
+    if(GIT_DESCRIBE)
+        set(VERSION_FULL_STRING "${GIT_DESCRIBE}")
+    else()
+        set(VERSION_FULL_STRING "${VERSION_STRING}")
+    endif()
+
     set(version "${VERSION_STRING}" PARENT_SCOPE)
-    set(soversion "${VERSION_STRING}" PARENT_SCOPE)
+    set(soversion "${SOVERSION_STRING}" PARENT_SCOPE)
     set(version "${VERSION_STRING}")
-    set(soversion "${VERSION_STRING}")
+    set(soversion "${SOVERSION_STRING}")
+    set(version_full "${VERSION_FULL_STRING}")
 
     # Into the build tree, not the source tree. This used to be written to
     # ${PROJECT_SOURCE_DIR}/include/ebisu_version.h -- once per component, so
