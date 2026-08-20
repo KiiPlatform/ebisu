@@ -12,7 +12,7 @@ ebisu_add_test_suite(small_test_khc
         khc/slist_test.cpp
         khc/state_trans_test.cpp
         khc/testtest.cpp
-    LINK khc
+    LINK ${EBISU_KHC_OBJS}
     # khc's tests reach into its private headers.
     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/khc ${PROJECT_SOURCE_DIR}/khc/src)
 
@@ -22,7 +22,7 @@ ebisu_add_test_suite(small_test_kii
     SOURCES
         kii/mqtt_test.cpp
         kii/simple_test.cpp
-    LINK kii
+    LINK ${EBISU_KII_OBJS}
     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/kii ${PROJECT_SOURCE_DIR}/kii)
 
 ebisu_add_test_suite(small_test_jkii
@@ -31,7 +31,7 @@ ebisu_add_test_suite(small_test_jkii
     SOURCES
         jkii/src/jkii_primitive_test.cpp
         jkii/src/jkii_test.cpp
-    LINK jkii)
+    LINK ${EBISU_JKII_OBJS})
 
 ebisu_add_test_suite(small_test_tio
     LABEL small
@@ -39,5 +39,5 @@ ebisu_add_test_suite(small_test_tio
     SOURCES
         tio/command_parser_test.cpp
         tio/simple_test.cpp
-    LINK tio
+    LINK ${EBISU_TIO_OBJS}
     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/tio ${PROJECT_SOURCE_DIR}/tio)

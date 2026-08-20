@@ -6,6 +6,12 @@ extern "C" {
 #endif
 
 #include "jkii.h"
+/* The library is compiled with hidden visibility, so what this header declares
+   is exactly what the shared object exports. */
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC visibility push(default)
+#endif
+
 
 #ifdef ERRNO_HACK_NEEDED
 int errno;
@@ -58,6 +64,10 @@ jkii_parse_err_t jkii_validate_root_object_with_allocator(
         size_t json_string_len,
         JKII_CB_RESOURCE_ALLOC cb_alloc,
         JKII_CB_RESOURCE_FREE cb_free);
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC visibility pop
+#endif
 
 #ifdef __cplusplus
 }

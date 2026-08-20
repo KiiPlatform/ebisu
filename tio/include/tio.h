@@ -8,6 +8,12 @@ extern "C" {
 #include "kii.h"
 #include "khc.h"
 #include "jkii.h"
+/* The library is compiled with hidden visibility, so what this header declares
+   is exactly what the shared object exports. */
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC visibility push(default)
+#endif
+
 
 /**
  * \brief tio_updater Task name.
@@ -1057,6 +1063,10 @@ tio_code_t tio_updater_start(
         void* state_size_data,
         TIO_CB_READ cb_read_state,
         void* read_state_data);
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC visibility pop
+#endif
 
 #ifdef __cplusplus
 }

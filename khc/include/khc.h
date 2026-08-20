@@ -12,6 +12,12 @@ extern "C"
 
 #include <stdio.h>
 #include "khc_socket_callback.h"
+/* The library is compiled with hidden visibility, so what this header declares
+   is exactly what the shared object exports. */
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC visibility push(default)
+#endif
+
 
 /* Sizes of the fixed request buffers. Each includes the terminating null, so
  * the longest value accepted is one less; the corresponding setter rejects
@@ -561,6 +567,10 @@ int khc_get_status_code(
  * \returns 0 if it cannot, 1 if it can.
  */
 int khc_method_can_have_body(khc* khc);
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC visibility pop
+#endif
 
 #ifdef __cplusplus
 }

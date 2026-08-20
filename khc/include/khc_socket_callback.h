@@ -5,6 +5,12 @@
 #define _KHC_SOCKET_CALLBACK
 
 #include <stddef.h>
+/* The library is compiled with hidden visibility, so what this header declares
+   is exactly what the shared object exports. */
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC visibility push(default)
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -83,6 +89,10 @@ typedef khc_sock_code_t
 typedef khc_sock_code_t
     (*KHC_CB_SOCK_CLOSE)(void* sock_ctx);
 
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC visibility pop
+#endif
 
 #ifdef __cplusplus
 }
