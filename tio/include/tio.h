@@ -66,20 +66,17 @@ typedef enum tio_data_type_t {
  */
 typedef struct tio_action_value_t {
     tio_data_type_t type; /**< \brief Data type of the value. */
-    /**
-     *  \brief Union stores value.
-     *
-     * if type is TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY,
-     * opaque_value is the pointer to it's JSON string representation.
-     * You need to use opaque_value_length to determine the length of the value
-     * since it might not be null terminated.
-     */
     union {
         long long_value; /**< Value stored when type is TIO_TYPE_INTEGER */
         double double_value; /**< Value stored when type is TIO_TYPE_DOUBLE */
         tio_bool_t bool_value; /**< Value stored when type is TIO_TYPE_BOOLEAN */
         const char *opaque_value; /**< Value stored when type is TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY */
-    } param;
+    } param; /**< \brief Union stores value.
+              *
+              * if type is TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY,
+              * opaque_value is the pointer to it's JSON string representation.
+              * You need to use opaque_value_length to determine the length of
+              * the value since it might not be null terminated. */
     /**
      * \brief Indicate length of opaque_value in case type is
      * TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY.
