@@ -12,6 +12,15 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(KHC_TRACE "Trace KHC activity to stdout" ON)
 option(TIO_TRACE "Trace TIO activity to stdout" ON)
 
+# On by default so a warning cannot quietly return: the four fixed in #192 sat
+# unnoticed for years because the build target only ran doxygen and compiled
+# nothing.
+#
+# If you are packaging ebisu, or building it with a compiler newer than the one
+# it was last checked against, a warning we have never seen can stop your build.
+# Turn this off rather than patching the source: -DEBISU_WERROR=OFF.
+option(EBISU_WERROR "Treat compiler warnings as errors" ON)
+
 # Applies the settings every Ebisu target shares.
 #
 # Deliberately per-target rather than assigning CMAKE_C_FLAGS: that variable
@@ -22,7 +31,8 @@ option(TIO_TRACE "Trace TIO activity to stdout" ON)
 function(ebisu_configure_target tgt)
   target_compile_features(${tgt} PRIVATE c_std_99)
   target_compile_options(${tgt} PRIVATE
-    $<$<C_COMPILER_ID:GNU,Clang,AppleClang>:-Wall>)
+    $<$<C_COMPILER_ID:GNU,Clang,AppleClang>:-Wall>
+    $<$<AND:$<BOOL:${EBISU_WERROR}>,$<C_COMPILER_ID:GNU,Clang,AppleClang>>:-Werror>)
   # Every object may end up inside a shared library, including the ones that
   # reach it indirectly through $<TARGET_OBJECTS:...>.
   set_target_properties(${tgt} PROPERTIES POSITION_INDEPENDENT_CODE ON)
