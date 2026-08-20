@@ -314,15 +314,22 @@ static tio_code_t _append_action_result(
     {
         comma = "";
     }
-    char action_name[action->action_name_length+1];
-    strncpy(action_name, action->action_name, action->action_name_length);
-    action_name[action->action_name_length] = '\0';
+    // The action name is a slice of the parsed command, so its length comes
+    // from the network. Copying it to the stack first sized the array by that
+    // length, letting whoever publishes a command choose how much stack to
+    // consume -- bounded only by the buffer passed to kii_set_mqtt_buff(), on
+    // targets whose whole stack may be smaller than that. It is printed with a
+    // precision instead, which needs no copy and no allocation.
+    if (action->action_name_length >= work_buff_size) {
+        return TIO_ERR_TOO_LARGE_DATA;
+    }
+    const int action_name_length = (int)action->action_name_length;
     if (succeeded == KII_TRUE)
     {
         int len = snprintf(
                 work_buff, work_buff_size,
-                "%s{\"%s\":{\"succeeded\":true",
-                comma, action_name);
+                "%s{\"%.*s\":{\"succeeded\":true",
+                comma, action_name_length, action->action_name);
         len += 2; // length of "}}".
         if (len >= work_buff_size)
         {
@@ -348,8 +355,14 @@ static tio_code_t _append_action_result(
         size_t msg_len = strlen(err_message);
         if (msg_len > 0)
         {
-            size_t temp_buff_size = msg_len * 2 + 1;
-            char esc_msg[temp_buff_size];
+            // Escaping can double the message, so this holds the longest
+            // tio_action_err_t::err_message can be. Sizing it from msg_len made
+            // it a variable length array whose bound depended on a caller the
+            // parameter type does not constrain.
+            char esc_msg[TIO_ACTION_ERR_MESSAGE_MAX_SIZE * 2 - 1];
+            if (msg_len * 2 + 1 > sizeof(esc_msg)) {
+                return TIO_ERR_TOO_LARGE_DATA;
+            }
             int esc_len = jkii_escape_str(err_message, esc_msg, sizeof(esc_msg)/sizeof(esc_msg[0]));
             if (esc_len < 0) {
                 return TIO_ERR_TOO_LARGE_DATA;
@@ -363,8 +376,8 @@ static tio_code_t _append_action_result(
         }
         int len = snprintf(
                 work_buff, work_buff_size,
-                "%s{\"%s\":{\"succeeded\":false%s",
-                comma, action_name, err_part);
+                "%s{\"%.*s\":{\"succeeded\":false%s",
+                comma, action_name_length, action->action_name, err_part);
         len += 2; // length of "}}".
         if (len >= work_buff_size)
         {

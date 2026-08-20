@@ -115,11 +115,15 @@ typedef struct tio_action_t {
     tio_action_value_t action_value;
 } tio_action_t;
 
+/** \brief Size of tio_action_err_t::err_message, including the terminating
+ * null. */
+#define TIO_ACTION_ERR_MESSAGE_MAX_SIZE 64
+
 /**
  * \brief Represents error.
  */
 typedef struct tio_action_err_t {
-    char err_message[64]; /**< \brief Error message (null terminated). */
+    char err_message[TIO_ACTION_ERR_MESSAGE_MAX_SIZE]; /**< \brief Error message (null terminated). */
 } tio_action_err_t;
 
 /**

@@ -4,6 +4,9 @@
 #include "tio.h"
 #include "command_parser.h"
 #include "jkii.h"
+#include "test_callbacks.h"
+#include <string>
+#include <string.h>
 typedef struct expected_parsed_actions {
     const char* command_id;
     tio_action_t *expected_actions;
@@ -248,5 +251,91 @@ TEST_CASE( "_parse_command" ) {
         tio_code_t res = _parse_command(&handler, command, strlen(command), cb_parsed_action, (void *)&expected);
         REQUIRE( TIO_ERR_OK == res);
         REQUIRE( 2 == expected.matched_count);
+    }
+}
+
+// _handle_command builds the action-result request body. The action name in it
+// is a slice of the parsed command, so its length comes from the network; it
+// used to be copied onto the stack into an array sized by that length, letting
+// whoever publishes a command choose how much stack to consume.
+static tio_bool_t cb_action_ok(
+        tio_action_t* action,
+        tio_action_err_t* err,
+        tio_action_result_data_t* data,
+        void* userdata) {
+    err->err_message[0] = '\0';
+    data->json[0] = '\0';
+    ++(*(int*)userdata);
+    return KII_TRUE;
+}
+
+TEST_CASE( "_handle_command action name length" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+
+    char kii_buff[2048];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
+    kii_set_json_parser_resource(&handler._kii, &resource);
+    kii_set_app_id(&handler._kii, "appid");
+    kii_set_site(&handler._kii, "api.kii.com");
+    strcpy(handler._kii._author.author_id, "thingid");
+
+    // The request is actually performed at the end of _handle_command, so the
+    // socket has to answer. Everything sent is captured, which is how the body
+    // the action name is written into gets inspected.
+    std::string sent;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [](void*, const char*, unsigned int) { return KHC_SOCK_OK; };
+    http_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
+        sent.append(buffer, length);
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    size_t resp_pos = 0;
+    const std::string resp = "HTTP/1.1 204 No Content\r\nContent-Length: 0\r\n\r\n";
+    http_ctx.on_recv = [&resp_pos, &resp](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        size_t n = resp.size() - resp_pos;
+        if (n > length_to_read) { n = length_to_read; }
+        memcpy(buffer, resp.data() + resp_pos, n);
+        resp_pos += n;
+        *out_actual_length = n;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_cb_http_sock_send(&handler._kii, khct::cb::mock_send, &http_ctx);
+    kii_set_cb_http_sock_recv(&handler._kii, khct::cb::mock_recv, &http_ctx);
+    kii_set_cb_http_sock_close(&handler._kii, khct::cb::mock_close, &http_ctx);
+    char resp_hdr_buff[512];
+    khc_set_resp_header_buff(&handler._kii._khc, resp_hdr_buff, sizeof(resp_hdr_buff));
+
+    SECTION("an ordinary action name is written to the result body") {
+        int called = 0;
+        std::string command =
+            "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_OK );
+        REQUIRE( called == 1 );
+        // Written with a precision rather than copied via the stack; the body
+        // must be unchanged by that.
+        REQUIRE( sent.find("{\"turnPower\":{\"succeeded\":true}}") != std::string::npos );
+    }
+
+    // The result body is built in a 256 byte work buffer, so a name at least
+    // that long is rejected rather than sized onto the stack.
+    SECTION("an action name longer than the work buffer is rejected") {
+        int called = 0;
+        std::string long_name(300, 'a');
+        std::string command =
+            "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"" +
+            long_name + "\":true}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_TOO_LARGE_DATA );
     }
 }
