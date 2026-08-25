@@ -31,6 +31,22 @@ function(ebisu_add_test_suite name)
 
     add_executable(${name} ${T_SOURCES})
     target_compile_features(${name} PRIVATE cxx_std_11)
+    # The suites were compiling with no warnings enabled at all, while the
+    # libraries they exercise are built -Wall -Werror.
+    #
+    # Deliberately without -Werror, unlike the libraries: these translation
+    # units are mostly the vendored catch.hpp, and failing the build on a
+    # warning from a third-party header nobody here is going to fix would only
+    # teach people to turn the whole thing off.
+    target_compile_options(${name} PRIVATE
+        $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall>
+        # The suites size buffers from test data throughout, which C++ has no
+        # standard form of. Only clang reports it, so leaving it on would mean
+        # the same tree is quiet on CI and noisy on a developer's machine, and
+        # thirty-four warnings nobody intends to act on would bury the ones that
+        # matter. Variable length arrays in the libraries, where the length can
+        # come from elsewhere, are a separate question tracked by -Wvla there.
+        $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-vla-cxx-extension>)
     target_link_libraries(${name} PRIVATE ebisu_catch ${T_LINK})
     if(T_INCLUDES)
         target_include_directories(${name} PRIVATE ${T_INCLUDES})

@@ -107,7 +107,7 @@ TEST_CASE( "HTTP minimal" ) {
 
     called = false;
     auto is = resp.to_istringstream();
-    s_ctx.on_recv = [=, &called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    s_ctx.on_recv = [=, &called, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         called = true;
         REQUIRE( length_to_read == resp_header_buff_size - 1 );
         *out_actual_length = is.read(buffer, length_to_read).gcount();
@@ -154,7 +154,7 @@ TEST_CASE( "HTTP minimal" ) {
     REQUIRE( http._result == KHC_ERR_OK );
 
     called = false;
-    s_ctx.on_recv = [=, &called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    s_ctx.on_recv = [=, &called, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         called = true;
         REQUIRE( length_to_read == buff_size);
         *out_actual_length = is.read(buffer, length_to_read).gcount();
@@ -377,7 +377,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
 
     called = false;
     auto is = resp.to_istringstream();
-    s_ctx.on_recv = [=, &called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    s_ctx.on_recv = [=, &called, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         called = true;
         REQUIRE( length_to_read == resp_header_buff_size - 1 );
         *out_actual_length = is.read(buffer, length_to_read).gcount();
@@ -476,7 +476,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     REQUIRE( http._result == KHC_ERR_OK );
 
     called = false;
-    s_ctx.on_recv = [=, &called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         called = true;
         *out_actual_length = 0;
         return KHC_SOCK_OK;
@@ -826,7 +826,7 @@ TEST_CASE( "Socket send partial" ) {
 
     called = false;
     auto is = resp.to_istringstream();
-    s_ctx.on_recv = [=, &called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    s_ctx.on_recv = [=, &called, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         called = true;
         REQUIRE( length_to_read == resp_header_buff_size - 1 );
         *out_actual_length = is.read(buffer, length_to_read).gcount();
@@ -873,7 +873,7 @@ TEST_CASE( "Socket send partial" ) {
     REQUIRE( http._result == KHC_ERR_OK );
 
     called = false;
-    s_ctx.on_recv = [=, &called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    s_ctx.on_recv = [=, &called, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         called = true;
         REQUIRE( length_to_read == buff_size);
         *out_actual_length = is.read(buffer, length_to_read).gcount();

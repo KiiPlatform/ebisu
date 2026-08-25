@@ -61,7 +61,7 @@ TEST_CASE( "HTTP chunked response test" ) {
 
     int on_recv_called = 0;
     auto is = resp.to_istringstream();
-    s_ctx.on_recv = [=, &on_recv_called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    s_ctx.on_recv = [=, &on_recv_called, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         ++on_recv_called;
         if (on_recv_called == 1)
             REQUIRE( length_to_read == 255 );
@@ -171,7 +171,7 @@ TEST_CASE( "small buffer size test" ) {
 
     int on_recv_called = 0;
     auto is = resp.to_istringstream();
-    s_ctx.on_recv = [=, &on_recv_called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    s_ctx.on_recv = [=, &on_recv_called, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         ++on_recv_called;
         *out_actual_length = is.read(buffer, length_to_read).gcount();
         return KHC_SOCK_OK;
@@ -281,7 +281,7 @@ TEST_CASE( "random buffer size test" ) {
 
     int on_recv_called = 0;
     auto is = resp.to_istringstream();
-    s_ctx.on_recv = [=, &on_recv_called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    s_ctx.on_recv = [=, &on_recv_called, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         ++on_recv_called;
         *out_actual_length = is.read(buffer, length_to_read).gcount();
         return KHC_SOCK_OK;
@@ -393,7 +393,7 @@ TEST_CASE( "random chunk body test" ) {
 
     int on_recv_called = 0;
     auto is = resp.to_istringstream();
-    s_ctx.on_recv = [=, &on_recv_called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    s_ctx.on_recv = [=, &on_recv_called, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         ++on_recv_called;
         *out_actual_length = is.read(buffer, length_to_read).gcount();
         return KHC_SOCK_OK;
@@ -440,7 +440,6 @@ TEST_CASE( "random chunk body test" ) {
 TEST_CASE( "HTTP response 400 test(chunked)" ) {
     khc http;
     khc_init(&http);
-    const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
 
     string expectBody = "dummy body.";
     stringstream ss;
@@ -490,7 +489,7 @@ TEST_CASE( "HTTP response 400 test(chunked)" ) {
 
     int on_recv_called = 0;
     auto is = resp.to_istringstream();
-    s_ctx.on_recv = [=, &on_recv_called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    s_ctx.on_recv = [=, &on_recv_called, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         ++on_recv_called;
         if (on_recv_called == 1) {
             // recv header.

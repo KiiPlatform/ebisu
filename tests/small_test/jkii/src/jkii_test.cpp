@@ -245,7 +245,6 @@ TEST_CASE("KiiJson, GetObjectNegativeEDoubleByName") {
 
 TEST_CASE("KiiJson, GetObjectTrueByName") {
     const char json_string[] = "{\"key1\" : true}";
-    char buf[256];
 
     jkii_token_t tokens[256];
     jkii_resource_t resource = { tokens, 256 };
@@ -269,7 +268,6 @@ TEST_CASE("KiiJson, GetObjectTrueByName") {
 
 TEST_CASE("KiiJson, GetObjectFalseByName") {
     const char json_string[] = "{\"key1\" : false}";
-    char buf[256];
 
     jkii_token_t tokens[256];
     jkii_resource_t resource = { tokens, 256 };
@@ -504,7 +502,6 @@ TEST_CASE("KiiJson, GetObjectNegativeEDoubleByPath") {
 
 TEST_CASE("KiiJson, GetObjectNullByPath") {
     const char json_string[] = "{\"key1\" : null}";
-    char buf[256];
 
     jkii_token_t tokens[256];
     jkii_resource_t resource = { tokens, 256 };
@@ -527,7 +524,6 @@ TEST_CASE("KiiJson, GetObjectNullByPath") {
 
 TEST_CASE("KiiJson, GetObjectTrueByPath") {
     const char json_string[] = "{\"key1\" : true}";
-    char buf[256];
 
     jkii_token_t tokens[256];
     jkii_resource_t resource = { tokens, 256 };
@@ -551,7 +547,6 @@ TEST_CASE("KiiJson, GetObjectTrueByPath") {
 
 TEST_CASE("KiiJson, GetObjectFalseByPath") {
     const char json_string[] = "{\"key1\" : false}";
-    char buf[256];
 
     jkii_token_t tokens[256];
     jkii_resource_t resource = { tokens, 256 };
@@ -1023,7 +1018,6 @@ TEST_CASE("KiiJson, GetArrayString") {
 
 TEST_CASE("KiiJson, GetArrayInt") {
     const char json_string[] = "[100]";
-    char buf[256];
 
     jkii_token_t tokens[256];
     jkii_resource_t resource = { tokens, 256 };
@@ -1047,7 +1041,6 @@ TEST_CASE("KiiJson, GetArrayInt") {
 
 TEST_CASE("KiiJson, GetArrayLong") {
     const char json_string[] = "[1099511627776]";
-    char buf[256];
 
     jkii_token_t tokens[256];
     jkii_resource_t resource = { tokens, 256 };
@@ -1071,7 +1064,6 @@ TEST_CASE("KiiJson, GetArrayLong") {
 
 TEST_CASE("KiiJson, GetArrayDouble") {
     const char json_string[] = "[1e-1]";
-    char buf[256];
 
     jkii_token_t tokens[256];
     jkii_resource_t resource = { tokens, 256 };
@@ -1095,7 +1087,6 @@ TEST_CASE("KiiJson, GetArrayDouble") {
 
 TEST_CASE("KiiJson, GetArrayIntIndex1") {
     const char json_string[] = "[0, 100]";
-    char buf[256];
 
     jkii_token_t tokens[256];
     jkii_resource_t resource = { tokens, 256 };
@@ -1119,7 +1110,6 @@ TEST_CASE("KiiJson, GetArrayIntIndex1") {
 
 TEST_CASE("KiiJson, GetArrayNull") {
     const char json_string[] = "[null]";
-    char buf[256];
 
     jkii_token_t tokens[256];
     jkii_resource_t resource = { tokens, 256 };
@@ -1142,7 +1132,6 @@ TEST_CASE("KiiJson, GetArrayNull") {
 
 TEST_CASE("KiiJson, GetArrayTrue") {
     const char json_string[] = "[true]";
-    char buf[256];
 
     jkii_token_t tokens[256];
     jkii_resource_t resource = { tokens, 256 };
@@ -1166,7 +1155,6 @@ TEST_CASE("KiiJson, GetArrayTrue") {
 
 TEST_CASE("KiiJson, GetArrayFalse") {
     const char json_string[] = "[false]";
-    char buf[256];
 
     jkii_token_t tokens[256];
     jkii_resource_t resource = { tokens, 256 };

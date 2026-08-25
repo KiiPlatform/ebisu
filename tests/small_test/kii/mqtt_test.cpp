@@ -314,7 +314,7 @@ TEST_CASE( "MQTT state test" ) {
     REQUIRE( call_recv == 3 );
 
     call_recv = 0;
-    mqtt_ctx.on_recv = [=, &call_recv, &ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         switch (call_recv) {
             case 0: // fixed header - Publish
                 REQUIRE( length_to_read == 1);
@@ -411,7 +411,7 @@ TEST_CASE( "MQTT state test" ) {
     REQUIRE( state.elapsed_time_ms < kii._keep_alive_interval * 1000 );
 
     call_recv = 0;
-    mqtt_ctx.on_recv = [=, &call_recv, &ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         switch (call_recv) {
             case 0: // fixed header - PingResp
                 REQUIRE( length_to_read == 1);
@@ -437,7 +437,7 @@ TEST_CASE( "MQTT state test" ) {
     REQUIRE( call_recv == 2 );
 
     call_recv = 0;
-    mqtt_ctx.on_recv = [=, &call_recv, &ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         switch (call_recv) {
             case 0: // fixed header - Other unknown
                 REQUIRE( length_to_read == 1);
