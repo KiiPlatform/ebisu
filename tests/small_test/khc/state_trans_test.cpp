@@ -93,7 +93,7 @@ TEST_CASE( "HTTP minimal" ) {
     s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         called = true;
         char h[] = "Connection: Close\r\n\r\n";
-        int len = strlen(h);
+        size_t len = strlen(h);
         REQUIRE( length == len );
         REQUIRE( strncmp(buffer, h, len) == 0 );
         *out_sent_length = length;

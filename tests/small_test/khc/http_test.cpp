@@ -42,7 +42,7 @@ void khct::http::create_random_chunked_body(std::ostream &chunkedBody, std::ostr
     for (int chunkNum = 0; chunkNum < randNum(mt); ++chunkNum) {
         size_t chunkSize = randSize(mt);
         chunkedBody << hex << chunkSize << CRLF;
-        for (int i = 0; i < chunkSize; ++i) {
+        for (size_t i = 0; i < chunkSize; ++i) {
             const char c = baseC[randBody(mt)];
             chunkedBody << c;
             expectBody << c;
