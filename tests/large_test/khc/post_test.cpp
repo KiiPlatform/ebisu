@@ -31,7 +31,6 @@ TEST_CASE( "HTTP Post" ) {
     o.insert(std::make_pair("grant_type", "password"));
     picojson::value v(o);
     std::string req_body = v.serialize();
-    size_t body_len = req_body.length();
 
     // Prepare Req Headers.
     khc_slist* headers = NULL;

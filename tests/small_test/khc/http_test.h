@@ -13,7 +13,7 @@ namespace khct {
 namespace http {
 
 std::istream &read_header(std::istream &in, std::string &out);
-class Resp;
+struct Resp;
 
 void create_random_chunked_body(std::ostream &chunkedBody, std::ostream &expectBody);
 }

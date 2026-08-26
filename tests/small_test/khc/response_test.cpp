@@ -9,7 +9,6 @@
 TEST_CASE( "HTTP response test" ) {
     khc http;
     khc_init(&http);
-    const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
 
     ifstream ifs;
     ifs.open("./data/resp-login.txt");
@@ -59,7 +58,7 @@ TEST_CASE( "HTTP response test" ) {
 
     int on_recv_called = 0;
     auto is = resp.to_istringstream();
-    s_ctx.on_recv = [=, &on_recv_called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    s_ctx.on_recv = [=, &on_recv_called, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         ++on_recv_called;
         if (on_recv_called == 1)
             REQUIRE( length_to_read == 255 );
@@ -113,7 +112,6 @@ TEST_CASE( "HTTP response test" ) {
 TEST_CASE( "Ignore HTTP status 100" ) {
     khc http;
     khc_init(&http);
-    const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
 
     ifstream ifs;
     ifs.open("./data/resp-login.txt");
@@ -163,7 +161,7 @@ TEST_CASE( "Ignore HTTP status 100" ) {
 
     int on_recv_called = 0;
     auto is = resp.to_istringstream();
-    s_ctx.on_recv = [=, &on_recv_called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    s_ctx.on_recv = [=, &on_recv_called, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         ++on_recv_called;
         REQUIRE( length_to_read > 0 );
         *out_actual_length = is.read(buffer, length_to_read).gcount();
@@ -212,7 +210,6 @@ TEST_CASE( "Ignore HTTP status 100" ) {
 TEST_CASE( "Small resp header skip test" ) {
     khc http;
     khc_init(&http);
-    const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
     const size_t resp_header_buff_size = 120;
     char resp_header_buff[resp_header_buff_size];
 
@@ -265,7 +262,7 @@ TEST_CASE( "Small resp header skip test" ) {
 
     int on_recv_called = 0;
     auto is = resp.to_istringstream();
-    s_ctx.on_recv = [=, &on_recv_called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    s_ctx.on_recv = [=, &on_recv_called, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         ++on_recv_called;
         if (on_recv_called == 1)
             REQUIRE( length_to_read == resp_header_buff_size - 1 );
@@ -319,7 +316,6 @@ TEST_CASE( "Small resp header skip test" ) {
 TEST_CASE( "HTTP response 400 test" ) {
     khc http;
     khc_init(&http);
-    const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
 
     stringstream ss;
     ss << "HTTP/1.1 400 Bad Request\r\nContent-Length: 11\r\n\r\ndummy body.";
@@ -367,7 +363,7 @@ TEST_CASE( "HTTP response 400 test" ) {
 
     int on_recv_called = 0;
     auto is = resp.to_istringstream();
-    s_ctx.on_recv = [=, &on_recv_called, &resp, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+    s_ctx.on_recv = [=, &on_recv_called, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         ++on_recv_called;
         if (on_recv_called == 1) {
             // recv header.

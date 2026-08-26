@@ -170,7 +170,6 @@ TEST_CASE( "_parse_action_object" ) {
 void cb_parsed_action(char* command_id, tio_action_t* action, void* expected_actions) {
     expected_parsed_actions* expected = (expected_parsed_actions *) expected_actions;
     REQUIRE( strcmp(command_id, expected->command_id) == 0 );
-    int i = 0;
 
     char alias_cp[action->alias_length + 1];
     char action_name_cp[action->action_name_length + 1];
@@ -198,7 +197,6 @@ void cb_parsed_action(char* command_id, tio_action_t* action, void* expected_act
 }
 
 TEST_CASE( "_parse_command" ) {
-    tio_action_t action;
     tio_handler_t handler;
     jkii_token_t tokens[25];
     jkii_resource_t resource = { tokens, 25 };
@@ -207,7 +205,7 @@ TEST_CASE( "_parse_command" ) {
     SECTION("has 1 alias, 1 action") {
         const char command[] = "{\"commandID\":\"eed568b4-409c-11e9-b3ec-22000aad0899\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
         expected_parsed_actions expected;
-        tio_action_t action1 = {"alias1", 6, "turnPower", 9, {TIO_TYPE_BOOLEAN, 1}};
+        tio_action_t action1 = {"alias1", 6, "turnPower", 9, {TIO_TYPE_BOOLEAN, {1}}};
         const char command_id[] = "eed568b4-409c-11e9-b3ec-22000aad0899";
         expected.command_id = command_id;
         tio_action_t expected_actions[1] = {action1};
@@ -222,8 +220,8 @@ TEST_CASE( "_parse_command" ) {
     SECTION("has 1 alias, 2 actions") {
         const char command[] = "{\"commandID\":\"eed568b4-409c-11e9-b3ec-22000aad0899\",\"actions\":[{\"alias1\":[{\"turnPower\":true},{\"setTemp\":23}]}]}";
         expected_parsed_actions expected;
-        tio_action_t action1 = {"alias1", 6, "turnPower", 9, {TIO_TYPE_BOOLEAN, 1}};
-        tio_action_t action2 = {"alias1", 6, "setTemp", 7, {TIO_TYPE_INTEGER, 23}};
+        tio_action_t action1 = {"alias1", 6, "turnPower", 9, {TIO_TYPE_BOOLEAN, {1}}};
+        tio_action_t action2 = {"alias1", 6, "setTemp", 7, {TIO_TYPE_INTEGER, {23}}};
 
         const char command_id[] = "eed568b4-409c-11e9-b3ec-22000aad0899";
         expected.command_id = command_id;
@@ -239,8 +237,8 @@ TEST_CASE( "_parse_command" ) {
     SECTION("has 2 alias, 2 actions") {
         const char command[] = "{\"commandID\":\"eed568b4-409c-11e9-b3ec-22000aad0899\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]},{\"alias2\":[{\"setTemp\":23}]}]}";
         expected_parsed_actions expected;
-        tio_action_t action1 = {"alias1", 6, "turnPower", 9, {TIO_TYPE_BOOLEAN, 1}};
-        tio_action_t action2 = {"alias2", 6, "setTemp", 7, {TIO_TYPE_INTEGER, 23}};
+        tio_action_t action1 = {"alias1", 6, "turnPower", 9, {TIO_TYPE_BOOLEAN, {1}}};
+        tio_action_t action2 = {"alias2", 6, "setTemp", 7, {TIO_TYPE_INTEGER, {23}}};
 
         const char command_id[] = "eed568b4-409c-11e9-b3ec-22000aad0899";
         expected.command_id = command_id;
