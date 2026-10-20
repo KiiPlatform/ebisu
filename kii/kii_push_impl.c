@@ -404,21 +404,13 @@ kii_code_t _delete_topic(
     return _convert_code(code);
 }
 
-kii_code_t _send_push_message(
+// Posts the message to the path already set.
+static kii_code_t _post_push_message(
         kii_t* kii,
-        const kii_topic_t* topic,
         const char* message)
 {
-    khc_set_host(&kii->_khc, kii->_app_host);
-    khc_set_method(&kii->_khc, "POST");
-
-    kii_code_t res = _set_topic_push_message_path(kii, topic);
-    if (res != KII_ERR_OK) {
-        return res;
-    }
-
     // Request headers
-    res = _set_app_id_header(kii);
+    kii_code_t res = _set_app_id_header(kii);
     if (res != KII_ERR_OK) {
         _req_headers_free_all(kii);
         return res;
@@ -455,4 +447,34 @@ kii_code_t _send_push_message(
     khc_code code = khc_perform(&kii->_khc);
     _req_headers_free_all(kii);
     return _convert_code(code);
+}
+
+kii_code_t _send_push_message(
+        kii_t* kii,
+        const kii_topic_t* topic,
+        const char* message)
+{
+    khc_set_host(&kii->_khc, kii->_app_host);
+    khc_set_method(&kii->_khc, "POST");
+
+    kii_code_t res = _set_topic_push_message_path(kii, topic);
+    if (res != KII_ERR_OK) {
+        return res;
+    }
+    return _post_push_message(kii, message);
+}
+
+kii_code_t _send_push_message_to_thing(
+        kii_t* kii,
+        const char* thing_id,
+        const char* message)
+{
+    khc_set_host(&kii->_khc, kii->_app_host);
+    khc_set_method(&kii->_khc, "POST");
+
+    kii_code_t res = _set_thing_push_message_path(kii, thing_id);
+    if (res != KII_ERR_OK) {
+        return res;
+    }
+    return _post_push_message(kii, message);
 }

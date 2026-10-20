@@ -614,6 +614,31 @@ kii_code_t kii_send_push_message(
         const char* message);
 
 /**
+ * \brief Send a push message to a thing.
+ *
+ * Kii Cloud sends the message straight to the thing's MQTT installations,
+ * without a topic; they receive it through the callback given to
+ * kii_start_push_task(). Only MQTT delivers it. The message is sent
+ * asynchronously: success means Kii Cloud accepted it, not that it has been
+ * delivered.
+ *
+ * Kii Cloud accepts it from the thing itself, its owners and the app admin:
+ * with a thing's own token, only that thing can be sent to.
+ *
+ * \param [in,out] kii kii_t instance.
+ * \param [in] thing_id ID of the thing to send the message to.
+ * \param [in] message The request body, as for kii_send_push_message(). "mqtt"
+ * can be left out; disabling it is refused.
+ * \return kii_code_t. KII_ERR_TOO_LARGE_DATA if the message does not fit in
+ * the buffer set by kii_set_buff(), and KII_ERR_RESP_STATUS if Kii Cloud
+ * refuses it; khc_get_status_code() gives the status.
+ */
+kii_code_t kii_send_push_message_to_thing(
+        kii_t* kii,
+        const char* thing_id,
+        const char* message);
+
+/**
  * \brief Install push notification.
  *
  * The step is required to get the endpoint of MQTT before connecting to it.

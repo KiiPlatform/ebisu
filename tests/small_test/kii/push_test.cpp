@@ -128,4 +128,39 @@ TEST_CASE( "kii_send_push_message posts the message to the topic" ) {
         REQUIRE( connected == 0 );
         REQUIRE( sent.empty() );
     }
+
+    SECTION("straight to a thing") {
+        resp = response("201 Created", "{\"pushMessageID\":\"pm.1\"}");
+
+        REQUIRE( kii_send_push_message_to_thing(&kii, "th.2", message.c_str()) == KII_ERR_OK );
+        REQUIRE( khc_get_status_code(&kii._khc) == 201 );
+
+        const std::string request_line = "POST https://api.kii.com"
+            "/api/apps/dummyAppID/things/th.2/push/messages HTTP/1.1\r\n";
+        REQUIRE( sent.compare(0, request_line.size(), request_line) == 0 );
+        CHECK( sent.find("\r\nContent-Type: application/vnd.kii.SendPushMessageRequest+json\r\n") != std::string::npos );
+        CHECK( sent.find("\r\nAuthorization: Bearer tok\r\n") != std::string::npos );
+        CHECK( sent.find("\r\nX-Kii-Appid: dummyAppID\r\n") != std::string::npos );
+        size_t headers_end = sent.find("\r\n\r\n");
+        REQUIRE( headers_end != std::string::npos );
+        char chunk_size[16];
+        snprintf(chunk_size, sizeof(chunk_size), "%x", (unsigned int)message.size());
+        REQUIRE( sent.substr(headers_end + 4) ==
+                std::string(chunk_size) + "\r\n" + message + "\r\n0\r\n\r\n" );
+    }
+
+    SECTION("straight to a thing, refused") {
+        resp = response("401 Unauthorized", "{\"errorCode\":\"UNAUTHORIZED\"}");
+
+        REQUIRE( kii_send_push_message_to_thing(&kii, "th.2", message.c_str()) == KII_ERR_RESP_STATUS );
+        REQUIRE( khc_get_status_code(&kii._khc) == 401 );
+    }
+
+    SECTION("straight to a thing, a message larger than the buffer is not sent") {
+        const std::string large = "{\"data\":{\"key\":\"" + std::string(sizeof(kii_buff), 'v') + "\"}}";
+
+        REQUIRE( kii_send_push_message_to_thing(&kii, "th.2", large.c_str()) == KII_ERR_TOO_LARGE_DATA );
+        REQUIRE( connected == 0 );
+        REQUIRE( sent.empty() );
+    }
 }

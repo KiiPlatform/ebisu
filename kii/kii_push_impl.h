@@ -39,4 +39,9 @@ kii_code_t _send_push_message(
         kii_t* kii,
         const kii_topic_t* topic,
         const char* message);
+
+kii_code_t _send_push_message_to_thing(
+        kii_t* kii,
+        const char* thing_id,
+        const char* message);
 #endif

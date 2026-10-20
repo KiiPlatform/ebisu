@@ -130,6 +130,20 @@ exit:
     return res;
 }
 
+// The outcome of a push message request sent with result res.
+static kii_code_t _push_message_result(kii_t* kii, kii_code_t res)
+{
+    if (res != KII_ERR_OK) {
+        return res;
+    }
+    // Kii's guide documents 201, its API reference 200.
+    int resp_code = khc_get_status_code(&kii->_khc);
+    if(resp_code < 200 || 300 <= resp_code) {
+        return KII_ERR_RESP_STATUS;
+    }
+    return KII_ERR_OK;
+}
+
 kii_code_t kii_send_push_message(
         kii_t* kii,
         const kii_topic_t* topic,
@@ -138,19 +152,18 @@ kii_code_t kii_send_push_message(
     _reset_khc(kii);
     _reset_buff(kii);
 
-    kii_code_t res = _send_push_message(kii, topic, message);
-    if (res != KII_ERR_OK) {
-        goto exit;
-    }
+    return _push_message_result(kii, _send_push_message(kii, topic, message));
+}
 
-    // Kii's guide documents 201, its API reference 200.
-    int resp_code = khc_get_status_code(&kii->_khc);
-    if(resp_code < 200 || 300 <= resp_code) {
-        res = KII_ERR_RESP_STATUS;
-        goto exit;
-    }
-exit:
-    return res;
+kii_code_t kii_send_push_message_to_thing(
+        kii_t* kii,
+        const char* thing_id,
+        const char* message)
+{
+    _reset_khc(kii);
+    _reset_buff(kii);
+
+    return _push_message_result(kii, _send_push_message_to_thing(kii, thing_id, message));
 }
 
 kii_code_t kii_install_push(

@@ -179,6 +179,19 @@ kii_code_t _set_topic_push_message_path(kii_t* kii, const kii_topic_t* topic) {
     return KII_ERR_OK;
 }
 
+kii_code_t _set_thing_push_message_path(kii_t* kii, const char* thing_id) {
+    const char path[] = "/api/apps/%s/things/%s/push/messages";
+    int len = snprintf(kii->_rw_buff, kii->_rw_buff_size, path, kii->_app_id, thing_id);
+    if (len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    khc_code kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
+    if (kcode != KHC_ERR_OK) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    return KII_ERR_OK;
+}
+
 kii_code_t _set_content_type(
         kii_t* kii,
         const char* content_type)

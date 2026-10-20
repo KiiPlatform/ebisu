@@ -27,6 +27,10 @@ kii_code_t _set_topic_push_message_path(
         kii_t* kii,
         const kii_topic_t* topic);
 
+kii_code_t _set_thing_push_message_path(
+        kii_t* kii,
+        const char* thing_id);
+
 kii_code_t _set_object_content_type(
         kii_t* kii,
         const char* object_content_type);
