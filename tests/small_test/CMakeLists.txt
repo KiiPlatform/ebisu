@@ -22,6 +22,7 @@ ebisu_add_test_suite(small_test_kii
     SOURCES
         kii/mqtt_test.cpp
         kii/simple_test.cpp
+        kii/thing_test.cpp
     LINK ${EBISU_KII_OBJS}
     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/kii ${PROJECT_SOURCE_DIR}/kii)
 
