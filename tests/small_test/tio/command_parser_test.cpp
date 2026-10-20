@@ -444,6 +444,29 @@ TEST_CASE( "_handle_command action name length" ) {
         REQUIRE( sent.find("{\"turnPower\":{\"succeeded\":true}}") != std::string::npos );
     }
 
+    // Each alias's results are an array of their own, separated by commas
+    // within it only: the first result of every alias after the first used
+    // to start with one, which made the body invalid JSON.
+    SECTION("the results of several aliases form valid JSON") {
+        int called = 0;
+        std::string command =
+            "{\"commandID\":\"cmd1\",\"actions\":["
+            "{\"alias1\":[{\"turnPower\":true},{\"setTemp\":23}]},"
+            "{\"alias2\":[{\"setMode\":\"eco\"}]},"
+            "{\"alias3\":[{\"setSpeed\":2},{\"setSwing\":false}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_OK );
+        REQUIRE( called == 5 );
+        REQUIRE( sent.find(
+                "{\"actionResults\":["
+                "{\"alias1\":[{\"turnPower\":{\"succeeded\":true}},{\"setTemp\":{\"succeeded\":true}}]},"
+                "{\"alias2\":[{\"setMode\":{\"succeeded\":true}}]},"
+                "{\"alias3\":[{\"setSpeed\":{\"succeeded\":true}},{\"setSwing\":{\"succeeded\":true}}]}]}")
+                != std::string::npos );
+    }
+
     // The result body is built in a 256 byte work buffer, so a name at least
     // that long is rejected rather than sized onto the stack.
     SECTION("an action name longer than the work buffer is rejected") {
