@@ -7,6 +7,7 @@
 #include "test_callbacks.h"
 #include <memory>
 #include <string>
+#include <vector>
 #include <string.h>
 typedef struct expected_parsed_actions {
     const char* command_id;
@@ -663,4 +664,106 @@ TEST_CASE( "_handle_command nothing to parse" ) {
     REQUIRE( connects == 0 );
     // Released, as on the other paths that abandon the request.
     REQUIRE( handler._kii._req_headers == NULL );
+}
+
+// jsmn is built non-strict, so a primitive action value such as abc or - is
+// tokenized even though it is not JSON. jkii cannot read it, nor a number out
+// of range such as 1e999, and the action used to reach the callback with its
+// value type and value never set.
+static void cb_parsed_action_copy(char* command_id, tio_action_t* action, void* userdata) {
+    std::vector<tio_action_t>* actions = (std::vector<tio_action_t>*)userdata;
+    actions->push_back(*action);
+}
+
+TEST_CASE( "_parse_command primitive values" ) {
+    tio_handler_t handler;
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    handler._kii._json_resource = &resource;
+
+    std::vector<tio_action_t> actions;
+
+    SECTION("JSON primitives are read with their type") {
+        const char command[] =
+            "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":["
+            "{\"a\":true},{\"b\":false},{\"c\":null},"
+            "{\"d\":23},{\"e\":-5},{\"f\":1.5},{\"g\":-2e3}]}]}";
+        tio_code_t res = _parse_command(
+                &handler, command, strlen(command), cb_parsed_action_copy, &actions);
+
+        REQUIRE( res == TIO_ERR_OK );
+        REQUIRE( actions.size() == 7 );
+        REQUIRE( actions[0].action_value.type == TIO_TYPE_BOOLEAN );
+        REQUIRE( actions[0].action_value.param.bool_value == KII_TRUE );
+        REQUIRE( actions[1].action_value.type == TIO_TYPE_BOOLEAN );
+        REQUIRE( actions[1].action_value.param.bool_value == KII_FALSE );
+        REQUIRE( actions[2].action_value.type == TIO_TYPE_NULL );
+        REQUIRE( actions[3].action_value.type == TIO_TYPE_INTEGER );
+        REQUIRE( actions[3].action_value.param.long_value == 23 );
+        REQUIRE( actions[4].action_value.type == TIO_TYPE_INTEGER );
+        REQUIRE( actions[4].action_value.param.long_value == -5 );
+        REQUIRE( actions[5].action_value.type == TIO_TYPE_DOUBLE );
+        REQUIRE( actions[5].action_value.param.double_value == 1.5 );
+        REQUIRE( actions[6].action_value.type == TIO_TYPE_DOUBLE );
+        REQUIRE( actions[6].action_value.param.double_value == -2000.0 );
+    }
+
+    SECTION("primitives jkii cannot read are rejected") {
+        const char* values[] = { "abc", "-", "tru", "0e", "1e999" };
+        for (const char* value : values) {
+            CAPTURE( value );
+            actions.clear();
+            std::string command =
+                "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"setX\":" +
+                std::string(value) + "}]}]}";
+            tio_code_t res = _parse_command(
+                    &handler, command.c_str(), command.length(),
+                    cb_parsed_action_copy, &actions);
+
+            REQUIRE( res == TIO_ERR_PARSE_JSON );
+            REQUIRE( actions.empty() );
+        }
+    }
+}
+
+// The same through _handle_command, which has started the result request by
+// the time it reads an action: no action called, nothing sent, and the
+// request released.
+TEST_CASE( "_handle_command invalid primitive values" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+
+    char kii_buff[2048];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
+    kii_set_json_parser_resource(&handler._kii, &resource);
+    kii_set_app_id(&handler._kii, "appid");
+    kii_set_site(&handler._kii, "api.kii.com");
+    strcpy(handler._kii._author.author_id, "thingid");
+
+    // No request may be performed, so connecting is recorded and fails.
+    bool connected = false;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&connected](void*, const char*, unsigned int) {
+        connected = true;
+        return KHC_SOCK_FAIL;
+    };
+    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+
+    const char* values[] = { "abc", "-", "tru", "0e", "1e999" };
+    for (const char* value : values) {
+        CAPTURE( value );
+        int called = 0;
+        std::string command =
+            "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"setX\":" +
+            std::string(value) + "}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_PARSE_JSON );
+        REQUIRE( called == 0 );
+        REQUIRE( !connected );
+        REQUIRE( handler._kii._req_headers == NULL );
+    }
 }
