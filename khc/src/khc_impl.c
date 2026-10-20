@@ -7,38 +7,55 @@
 
 typedef enum header_parser_sts {
     parse_key,
-    skip_separator,
-    extract_value
+    skip_separator
 } header_parser_sts;
 
-int _contains_chunked(const char* str, size_t str_length) {
+// Transfer-Encoding is a list of transfer codings, and the body is chunked when
+// chunked is the last of them (RFC 9112, section 6.3). Empty list elements and
+// whitespace around a coding do not count. khc cannot remove any other coding.
+static int _read_transfer_encoding_value(const char* value, size_t value_length) {
     const char upper_chunked[] = "CHUNKED";
     const char lower_chunked[] = "chunked";
-    for (int i=0; i<str_length; ++i) {
-        const char* start = str + i;
-        for (int j=0; j<strlen(upper_chunked); ++j) {
-            if (start[j] == upper_chunked[j] || start[j] == lower_chunked[j]) {
-                if (j == strlen(upper_chunked)-1) {
-                    return 1;
-                }
-                continue;
-            } else {
-                break;
-            }
+    const size_t chunked_length = sizeof(upper_chunked) - 1;
+
+    size_t end = value_length;
+    while (end > 0 && (value[end-1] == ' ' || value[end-1] == '\t' || value[end-1] == ',')) {
+        --end;
+    }
+    size_t start = end;
+    while (start > 0 && value[start-1] != ',') {
+        --start;
+    }
+    while (start < end && (value[start] == ' ' || value[start] == '\t')) {
+        ++start;
+    }
+    if (end - start != chunked_length) {
+        return -1;
+    }
+    for (size_t i = 0; i < chunked_length; ++i) {
+        if (value[start+i] != upper_chunked[i] && value[start+i] != lower_chunked[i]) {
+            return -1;
         }
     }
-    return 0;
+    return 1;
 }
 
+// Returns 1 for a Transfer-Encoding header whose final coding is chunked, 0 for
+// any other header and -1 for a Transfer-Encoding header whose final coding is
+// not chunked, which leaves the body in a coding khc cannot remove.
 int _is_chunked_encoding(const char* header, size_t header_length) {
     const char upper_key[] = "TRANSFER-ENCODING";
     const char lower_key[] = "transfer-encoding";
+    const size_t key_length = sizeof(upper_key) - 1;
 
     header_parser_sts sts = parse_key;
     for (int i=0; i<header_length; ++i) {
         switch(sts) {
             case parse_key:
-                if (header[i] == ':') {
+                if (i == key_length) {
+                    if (header[i] != ':') {
+                        return 0;
+                    }
                     sts = skip_separator;
                     continue;
                 }
@@ -49,17 +66,14 @@ int _is_chunked_encoding(const char* header, size_t header_length) {
             case skip_separator:
                 if (header[i] == ' ' || header[i] == '\t') {
                     continue;
-                } else {
-                    sts = extract_value;
                 }
-                break;
-            case extract_value:
-                return _contains_chunked(&header[i-1], header_length - i + 1);
+                return _read_transfer_encoding_value(&header[i], header_length - i);
             default:
                 return 0;
         }
     }
-    return 0;
+    // Transfer-Encoding with an empty value.
+    return (sts == skip_separator) ? -1 : 0;
 }
 
 // Content-Length is 1*DIGIT followed by optional whitespace. Read as a size_t

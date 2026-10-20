@@ -6,37 +6,6 @@
 #include <khc.h>
 #include "khc_impl.h"
 
-TEST_CASE( "_contains_chunked tests" ) {
-    SECTION( "chunked exists" ) {
-        const char str[] = "chunked\r\n";
-        int res = _contains_chunked(str, strlen(str) - 2);
-        REQUIRE( res == 1);
-    }
-    SECTION( "ignore case" ) {
-        const char str[] = "ChUnkEd\r\n";
-        int res = _contains_chunked(str, strlen(str) - 2);
-        REQUIRE( res == 1);
-    }
-    SECTION( "chunked and others exist" ) {
-        const char str[] = "gzip, compress, chunked, deflate\r\n";
-        int res = _contains_chunked(str, strlen(str) - 2);
-        REQUIRE( res == 1);
-    }
-    SECTION( "chunked no exist" ) {
-        const char str[] = "gzip, compress, deflate\r\n";
-        int res = _contains_chunked(str, strlen(str) - 2);
-        REQUIRE( res == 0);
-    }
-    SECTION( "empty string" ) {
-        int res = _contains_chunked("", 0);
-        REQUIRE( res == 0);
-    }
-    SECTION( "NULL" ) {
-        int res = _contains_chunked(NULL, 0);
-        REQUIRE( res == 0);
-    }
-}
-
 TEST_CASE( "_is_chunked_encoding tests" ) {
     SECTION( "default pattern header" ) {
         const char str[] = "transfer-encoding:chunked\r\n";
@@ -53,8 +22,8 @@ TEST_CASE( "_is_chunked_encoding tests" ) {
         int res = _is_chunked_encoding(str, strlen(str) - 2);
         REQUIRE( res == 1);
     }
-    SECTION( "chunked and others exist" ) {
-        const char str[] = "Transfer-Encoding: gzip, chunked, compress\r\n";
+    SECTION( "chunked after other codings" ) {
+        const char str[] = "Transfer-Encoding: gzip, compress, chunked\r\n";
         int res = _is_chunked_encoding(str, strlen(str) - 2);
         REQUIRE( res == 1);
     }
@@ -71,6 +40,73 @@ TEST_CASE( "_is_chunked_encoding tests" ) {
         int res = _is_chunked_encoding(NULL, 0);
         REQUIRE( res == 0);
     }
+}
+
+TEST_CASE( "_is_chunked_encoding matches Transfer-Encoding in any case" ) {
+    const std::string names[] = {
+        "Transfer-Encoding", "transfer-encoding", "TRANSFER-ENCODING",
+        "tRaNsFeR-eNcOdInG"
+    };
+    for (const auto& name : names) {
+        INFO("name [" << name << "]");
+        const std::string str = name + ": chunked\r\n";
+        CHECK( _is_chunked_encoding(str.data(), str.size() - 2) == 1 );
+    }
+}
+
+// Only a header named Transfer-Encoding is one. The name was compared up to the
+// colon, so any prefix of it, even an empty one, matched and turned on chunked
+// decoding, and a NUL in the name matched the terminator of the key and went on
+// comparing past its end.
+TEST_CASE( "_is_chunked_encoding matches the whole header name" ) {
+    const std::string names[] = {
+        "", "T", "Transfer", "Transfer-", "Transfer-Encodin",
+        "Transfer-Encodings", "Transfer-Encoding ", " Transfer-Encoding",
+        "Content-Encoding", std::string("Transfer-Encoding\0", 18),
+        std::string("Transfer-Encoding\0\0", 19)
+    };
+    for (const auto& name : names) {
+        INFO("name [" << name << "] of " << name.size());
+        const std::string str = name + ": chunked\r\n";
+        CHECK( _is_chunked_encoding(str.data(), str.size() - 2) == 0 );
+    }
+}
+
+// Transfer-Encoding is a list of transfer codings, and the body is chunked when
+// chunked is the last of them (RFC 9112, section 6.3). The name of a coding is
+// case-insensitive, whitespace may surround it and empty list elements do not
+// count (RFC 9110, section 5.6.1).
+TEST_CASE( "_is_chunked_encoding finds chunked as the final coding" ) {
+    const std::string values[] = {
+        "chunked", "Chunked", "CHUNKED", "cHuNkEd", "\t chunked", "chunked \t",
+        "gzip, chunked", "gzip,chunked", "gzip \t,\t chunked",
+        "gzip, deflate, chunked", "chunked,", "chunked , ", ", chunked",
+        "gzip,, chunked"
+    };
+    for (const auto& value : values) {
+        INFO("value [" << value << "]");
+        const std::string str = "Transfer-Encoding: " + value + "\r\n";
+        CHECK( _is_chunked_encoding(str.data(), str.size() - 2) == 1 );
+    }
+}
+
+// Any other Transfer-Encoding, an empty one included, is -1, as khc cannot
+// remove the coding the body is in. Any value containing the word chunked used
+// to be taken for it, chunkedX and chunked, gzip among them.
+TEST_CASE( "_is_chunked_encoding rejects a final coding other than chunked" ) {
+    const std::string values[] = {
+        "", " \t ", ",", " , ", "gzip", "identity", "chunke", "chunkedX",
+        "Xchunked", "chunked-gzip", "chunked gzip", "chunked, gzip",
+        "gzip, chunked, compress", "chunked,, gzip",
+        std::string("chunked\0", 8)
+    };
+    for (const auto& value : values) {
+        INFO("value [" << value << "] of " << value.size());
+        const std::string str = "Transfer-Encoding: " + value + "\r\n";
+        CHECK( _is_chunked_encoding(str.data(), str.size() - 2) == -1 );
+    }
+    const char no_value[] = "Transfer-Encoding:";
+    CHECK( _is_chunked_encoding(no_value, strlen(no_value)) == -1 );
 }
 
 TEST_CASE( "_extract_content_length tests" ) {

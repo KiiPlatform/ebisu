@@ -7,8 +7,6 @@ extern "C"
 
 #include <stdio.h>
 
-int _contains_chunked(const char* str, size_t str_length);
-
 int _is_chunked_encoding(const char* header, size_t header_length);
 
 int _extract_content_length(const char* header, size_t header_length, size_t* out_content_length);
