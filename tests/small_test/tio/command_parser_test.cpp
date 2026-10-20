@@ -519,3 +519,73 @@ TEST_CASE( "_handle_command empty objects" ) {
         REQUIRE( handler._kii._req_headers == NULL );
     }
 }
+
+// The result body opens with {"actionResults":[ before any action runs. When
+// that did not fit the HTTP buffer the error was dropped, so _handle_command
+// carried on with the request headers already freed: it ran the actions, and
+// sent a body missing its opening if the rest happened to fit.
+TEST_CASE( "_handle_command result body opening does not fit" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+
+    // Too short for {"actionResults":[ and its terminator, long enough for
+    // {"alias1":[ -- so the appends that follow do not catch it either.
+    char kii_buff[16];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
+    kii_set_json_parser_resource(&handler._kii, &resource);
+    kii_set_app_id(&handler._kii, "appid");
+    kii_set_site(&handler._kii, "api.kii.com");
+    strcpy(handler._kii._author.author_id, "thingid");
+
+    // Nothing should reach the socket; it answers anyway, so that sending is
+    // seen as such rather than as a connection error.
+    std::string sent;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [](void*, const char*, unsigned int) { return KHC_SOCK_OK; };
+    http_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
+        sent.append(buffer, length);
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    size_t resp_pos = 0;
+    const std::string resp = "HTTP/1.1 204 No Content\r\nContent-Length: 0\r\n\r\n";
+    http_ctx.on_recv = [&resp_pos, &resp](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        size_t n = resp.size() - resp_pos;
+        if (n > length_to_read) { n = length_to_read; }
+        memcpy(buffer, resp.data() + resp_pos, n);
+        resp_pos += n;
+        *out_actual_length = n;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_cb_http_sock_send(&handler._kii, khct::cb::mock_send, &http_ctx);
+    kii_set_cb_http_sock_recv(&handler._kii, khct::cb::mock_recv, &http_ctx);
+    kii_set_cb_http_sock_close(&handler._kii, khct::cb::mock_close, &http_ctx);
+    char resp_hdr_buff[512];
+    khc_set_resp_header_buff(&handler._kii._khc, resp_hdr_buff, sizeof(resp_hdr_buff));
+
+    SECTION("the action is not run") {
+        int called = 0;
+        std::string command =
+            "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_TOO_LARGE_DATA );
+        REQUIRE( called == 0 );
+        REQUIRE( sent.empty() );
+    }
+
+    SECTION("a command without actions is not sent") {
+        int called = 0;
+        std::string command = "{\"commandID\":\"cmd1\",\"actions\":[]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_TOO_LARGE_DATA );
+        REQUIRE( sent.empty() );
+    }
+}

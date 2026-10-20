@@ -272,7 +272,7 @@ static tio_code_t _start_result_request(
             strlen(result_start));
     if (a_res != KII_ERR_OK) {
         _trace_op("kii_api_call_append_body", a_res);
-        return _tio_convert_code(s_res);
+        return _tio_convert_code(a_res);
     }
     return TIO_ERR_OK;
 }
