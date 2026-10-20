@@ -995,36 +995,75 @@ jkii_primitive_err_t jkii_parse_primitive(
     return JKII_PRIMITIVE_ERR_INVALID;
 }
 
+static int _jkii_escape_fail(char* buff, size_t buff_size) {
+    // Callers that ignore the result still print buff, so leave it a string.
+    if (buff_size > 0) {
+        buff[0] = '\0';
+    }
+    return -1;
+}
+
 int jkii_escape_str(const char* str, char* buff, size_t buff_size) {
+    static const char hex_digits[] = "0123456789abcdef";
     size_t str_len = strlen(str);
     if (buff_size < str_len + 1) {
-        return -1;
+        return _jkii_escape_fail(buff, buff_size);
     }
-    size_t escaped_len = str_len;
-    for (int i = 0, pos = 0; i < str_len; ++i, ++pos) {
-        char c = str[i];
-        // FIXME: Ignoriging \u{4 hex}
-        if (c == '"' ||
-            c == '/' ||
-            c == '\\' ||
-            c == '\b' ||
-            c == '\f' ||
-            c == '\n' ||
-            c == '\r' ||
-            c == '\t')
-        {
-            ++escaped_len;
-            if (buff_size < escaped_len + 1) {
-                return - 1;
-            }
-            buff[pos] = '\\';
-            buff[++pos] = c;
+    size_t pos = 0;
+    for (size_t i = 0; i < str_len; ++i) {
+        // Unsigned, so that UTF-8 bytes do not compare below 0x20.
+        unsigned char c = (unsigned char)str[i];
+        char short_esc = '\0';
+        switch (c) {
+            case '"':
+            case '/':
+            case '\\':
+                short_esc = (char)c;
+                break;
+            case '\b':
+                short_esc = 'b';
+                break;
+            case '\f':
+                short_esc = 'f';
+                break;
+            case '\n':
+                short_esc = 'n';
+                break;
+            case '\r':
+                short_esc = 'r';
+                break;
+            case '\t':
+                short_esc = 't';
+                break;
+        }
+        // Other control characters have no short form and take \u00XX.
+        size_t esc_len = 1;
+        if (short_esc != '\0') {
+            esc_len = 2;
+        } else if (c < 0x20) {
+            esc_len = 6;
+        }
+        // pos < buff_size throughout, so this cannot wrap. The + 1 keeps
+        // room for the terminator.
+        if (buff_size - pos < esc_len + 1) {
+            return _jkii_escape_fail(buff, buff_size);
+        }
+        if (short_esc != '\0') {
+            buff[pos++] = '\\';
+            buff[pos++] = short_esc;
+        } else if (c < 0x20) {
+            buff[pos++] = '\\';
+            buff[pos++] = 'u';
+            buff[pos++] = '0';
+            buff[pos++] = '0';
+            buff[pos++] = hex_digits[c >> 4];
+            buff[pos++] = hex_digits[c & 0x0f];
         } else {
-            buff[pos] = c;
+            buff[pos++] = (char)c;
         }
     }
-    buff[escaped_len] = '\0';
-    return escaped_len;
+    buff[pos] = '\0';
+    return (int)pos;
 }
 
 jkii_parse_err_t jkii_validate_root_object(

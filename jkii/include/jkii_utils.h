@@ -52,6 +52,24 @@ jkii_primitive_err_t jkii_parse_primitive(
     size_t primitive_length,
     jkii_primitive_t* result);
 
+/** Escape a string for use inside a JSON string literal.
+ *
+ * '"', '\\' and '/' are escaped with a backslash, \\b \\f \\n \\r \\t as
+ * those two-character escapes, and any other byte below 0x20 as \\u00XX.
+ * Other bytes, including UTF-8 sequences, are copied unchanged.
+ *
+ * Escaping can make a byte up to six times longer, so a buffer of
+ * strlen(str) * 6 + 1 always suffices. One of strlen(str) * 2 + 1 suffices
+ * only if str contains no control characters other than \\b \\f \\n \\r \\t.
+ *
+ * \param [in] str null-terminated string to escape.
+ * \param [out] buff receives the escaped, null-terminated string. Nothing
+ * is written at or past buff_size. On failure it holds an empty string,
+ * provided buff_size is not 0.
+ * \param [in] buff_size size of buff, including the terminator.
+ * \return length of the escaped string, excluding the terminator, or -1 if
+ * buff is too small.
+ */
 int jkii_escape_str(const char* str, char* buff, size_t buff_size);
 
 jkii_parse_err_t jkii_validate_root_object(
