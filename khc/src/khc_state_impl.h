@@ -11,6 +11,14 @@ extern "C"
 #define DEFAULT_RESP_HEADER_BUFF_SIZE 256
 #define DEFAULT_STREAM_BUFF_SIZE 1024
 
+/* Room for the line that opens a chunk: every hex digit of a size_t, CRLF and
+ * the terminator. */
+#define KHC_CHUNK_SIZE_LINE_SIZE (sizeof(size_t) * 2 + 3)
+
+/* Writes size in lowercase hex followed by CRLF, terminated, and returns its
+ * length without the terminator. */
+size_t _khc_chunk_size_line(size_t size, char out[KHC_CHUNK_SIZE_LINE_SIZE]);
+
 void khc_state_idle(khc* khc);
 void khc_state_connect(khc* khc);
 void khc_state_req_line(khc* khc);

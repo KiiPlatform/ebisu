@@ -432,14 +432,31 @@ void khc_state_req_body_read(khc* khc) {
     return;
 }
 
-void khc_state_req_body_send_size(khc* khc) {
-    char size_buff[16];
-    int size_len = snprintf(size_buff, 15, "%lx\r\n", khc->_read_size);
-    if (size_len > 15) {
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_TOO_LARGE_DATA;
-        return;
+// Written by hand rather than with snprintf: no printf length modifier matches
+// size_t on every target and libc, and the buffer fits any size_t, so the line
+// is never cut short.
+size_t _khc_chunk_size_line(size_t size, char out[KHC_CHUNK_SIZE_LINE_SIZE]) {
+    static const char hex_digits[] = "0123456789abcdef";
+    char digits[sizeof(size_t) * 2];
+    size_t digits_len = 0;
+    do {
+        digits[digits_len++] = hex_digits[size & 0xf];
+        size >>= 4;
+    } while (size != 0);
+
+    size_t len = 0;
+    while (digits_len > 0) {
+        out[len++] = digits[--digits_len];
     }
+    out[len++] = '\r';
+    out[len++] = '\n';
+    out[len] = '\0';
+    return len;
+}
+
+void khc_state_req_body_send_size(khc* khc) {
+    char size_buff[KHC_CHUNK_SIZE_LINE_SIZE];
+    _khc_chunk_size_line(khc->_read_size, size_buff);
     char* send_pos = &size_buff[khc->_sent_length];
     size_t send_len = strlen(send_pos);
     size_t sent_len = 0;
