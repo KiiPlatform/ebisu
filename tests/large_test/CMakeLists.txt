@@ -26,6 +26,10 @@ endif()
 # EBISU_PLAIN_HTTP, without. OpenSSL over BSD sockets, except on Windows, where
 # they are the win32 sample's, over Winsock and Schannel, so that the sample's
 # TLS runs against the live server too.
+#
+# kii/mqtt_test.cpp connects to the MQTT broker through the platform's sample
+# callbacks, which time out their receives as the push task needs: the win32
+# sample's, or the Linux sample's, sock_cb_linux.c.
 if(WIN32)
     set(large_test_common
         ${CMAKE_CURRENT_SOURCE_DIR}/secure_socket_win32.cpp
@@ -38,9 +42,13 @@ if(WIN32)
     list(APPEND large_test_defines WIN32_LEAN_AND_MEAN)
 else()
     find_package(OpenSSL REQUIRED)
-    set(large_test_common ${CMAKE_CURRENT_SOURCE_DIR}/secure_socket_impl.cpp)
+    set(large_test_common
+        ${CMAKE_CURRENT_SOURCE_DIR}/secure_socket_impl.cpp
+        ${PROJECT_SOURCE_DIR}/tio/linux-sample/sock_cb_linux.c)
     set(large_test_socket_libs OpenSSL::SSL OpenSSL::Crypto)
-    set(large_test_socket_includes)
+    set(large_test_socket_includes
+        ${PROJECT_SOURCE_DIR}/tio/linux-sample
+        ${PROJECT_SOURCE_DIR}/kii/include)
 endif()
 
 ebisu_add_test_suite(large_test_khc
@@ -64,6 +72,7 @@ ebisu_add_test_suite(large_test_kii
     WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/kii
     SOURCES
         kii/api_call_test.cpp
+        kii/mqtt_test.cpp
         kii/object_test.cpp
         kii/push_test.cpp
         kii/server_code_test.cpp
