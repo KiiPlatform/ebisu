@@ -39,7 +39,7 @@ TEST_CASE( "HTTP response test" ) {
     khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
     int on_connect_called = 0;
-    s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port) {
+    s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, uint16_t port) {
         ++on_connect_called;
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -142,7 +142,7 @@ TEST_CASE( "Ignore HTTP status 100" ) {
     khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
     int on_connect_called = 0;
-    s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port) {
+    s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, uint16_t port) {
         ++on_connect_called;
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -243,7 +243,7 @@ TEST_CASE( "Small resp header skip test" ) {
     khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
     int on_connect_called = 0;
-    s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port) {
+    s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, uint16_t port) {
         ++on_connect_called;
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -344,7 +344,7 @@ TEST_CASE( "HTTP response 400 test" ) {
     khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
     int on_connect_called = 0;
-    s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port) {
+    s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, uint16_t port) {
         ++on_connect_called;
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -452,7 +452,7 @@ ContentLengthResult perform_with_header(const std::string& header) {
 
     ContentLengthResult r = {};
 
-    s_ctx.on_connect = [](void* socket_context, const char* host, unsigned int port) {
+    s_ctx.on_connect = [](void* socket_context, const char* host, uint16_t port) {
         return KHC_SOCK_OK;
     };
     s_ctx.on_send = [](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {

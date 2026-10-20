@@ -156,7 +156,7 @@ Socket callback functions signature:
 ```c
 typedef khc_sock_code_t
     (*KHC_CB_SOCK_CONNECT)
-    (void* sock_ctx, const char* host, unsigned int port);
+    (void* sock_ctx, const char* host, uint16_t port);
 
 typedef khc_sock_code_t
     (*KHC_CB_SOCK_SEND)

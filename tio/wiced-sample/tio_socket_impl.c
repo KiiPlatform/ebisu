@@ -9,7 +9,7 @@
 sock_cb_connect(
         void* sock_ctx,
         const char* host,
-        unsigned int port)
+        uint16_t port)
 {
     wiced_ip_address_t addr;
     wiced_result_t rc;

@@ -43,7 +43,7 @@ TEST_CASE( "HTTP minimal" ) {
     REQUIRE( http._result == KHC_ERR_OK );
 
     bool called = false;
-    s_ctx.on_connect = [=, &called](void* socket_context, const char* host, unsigned int port) {
+    s_ctx.on_connect = [=, &called](void* socket_context, const char* host, uint16_t port) {
         called = true;
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -116,7 +116,7 @@ TEST_CASE( "HTTP minimal" ) {
 
     khc_state_resp_status_read(&http);
     REQUIRE( http._state == KHC_STATE_RESP_STATUS_PARSE );
-    REQUIRE( http._read_end == 0 );
+    REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
     char buffer[resp_header_buff_size];
     size_t len = resp.to_istringstream().read((char*)&buffer, resp_header_buff_size - 1).gcount();
@@ -139,18 +139,18 @@ TEST_CASE( "HTTP minimal" ) {
 
     khc_state_resp_header_callback(&http);
     REQUIRE( http._state == KHC_STATE_RESP_HEADER_CALLBACK );
-    REQUIRE( http._read_end == 0 );
+    REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
 
     khc_state_resp_header_callback(&http);
     REQUIRE( http._state == KHC_STATE_RESP_BODY_FRAGMENT );
-    REQUIRE( http._read_end == 0 );
+    REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
 
     khc_state_resp_body_fragment(&http);
     REQUIRE( http._state == KHC_STATE_RESP_BODY_READ );
-    REQUIRE( http._read_end == 0 );
+    REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
 
     called = false;
@@ -162,7 +162,7 @@ TEST_CASE( "HTTP minimal" ) {
     };
     khc_state_resp_body_read(&http);
     REQUIRE( http._state == KHC_STATE_CLOSE );
-    REQUIRE( http._read_end == 1 );
+    REQUIRE( http._read_end == true );
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
 
@@ -217,7 +217,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     REQUIRE( http._result == KHC_ERR_OK );
 
     bool called = false;
-    s_ctx.on_connect = [=, &called](void* socket_context, const char* host, unsigned int port) {
+    s_ctx.on_connect = [=, &called](void* socket_context, const char* host, uint16_t port) {
         called = true;
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -290,7 +290,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     khc_state_req_body_read(&http);
     REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_SIZE );
     REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( http._read_req_end == 0 );
+    REQUIRE( http._read_req_end == false );
     REQUIRE( called );
 
     called = false;
@@ -344,7 +344,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     khc_state_req_body_read(&http);
     REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_SIZE );
     REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( http._read_req_end == 1 );
+    REQUIRE( http._read_req_end == true );
     REQUIRE( called );
 
     called = false;
@@ -386,7 +386,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
 
     khc_state_resp_status_read(&http);
     REQUIRE( http._state == KHC_STATE_RESP_STATUS_PARSE );
-    REQUIRE( http._read_end == 0 );
+    REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
     char buffer[resp_header_buff_size];
     size_t len = resp.to_istringstream().read((char*)&buffer, resp_header_buff_size - 1).gcount();
@@ -409,8 +409,8 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
 
     khc_state_resp_header_callback(&http);
     REQUIRE( http._state == KHC_STATE_RESP_HEADER_CALLBACK );
-    REQUIRE( http._chunked_resp == 0 );
-    REQUIRE( http._read_end == 0 );
+    REQUIRE( http._chunked_resp == false );
+    REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
 
@@ -426,8 +426,8 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
 
     khc_state_resp_header_callback(&http);
     REQUIRE( http._state == KHC_STATE_RESP_HEADER_CALLBACK );
-    REQUIRE( http._chunked_resp == 0 );
-    REQUIRE( http._read_end == 0 );
+    REQUIRE( http._chunked_resp == false );
+    REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
 
@@ -444,35 +444,35 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     khc_state_resp_header_callback(&http);
     REQUIRE( http._state == KHC_STATE_RESP_HEADER_CALLBACK );
     REQUIRE( http._chunk_size == 0 );
-    REQUIRE( http._read_end == 0 );
+    REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
 
     khc_state_resp_header_callback(&http);
     REQUIRE( http._state == KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE );
     REQUIRE( http._chunk_size == 0 );
     REQUIRE( http._body_read_size == 0 );
-    REQUIRE( http._read_end == 0 );
+    REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
 
     khc_state_resp_body_parse_chunk_size(&http);
     REQUIRE( http._state == KHC_STATE_READ_CHUNK_SIZE_FROM_HEADER_BUFF );
     REQUIRE( http._chunk_size == 0 );
     REQUIRE( http._body_read_size == 0 );
-    REQUIRE( http._read_end == 0 );
+    REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
 
     khc_state_read_chunk_size_from_header_buff(&http);
     REQUIRE( http._state == KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE );
     REQUIRE( http._chunk_size == 0 );
     REQUIRE( http._body_read_size == 5 );
-    REQUIRE( http._read_end == 0 );
+    REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
 
     khc_state_resp_body_parse_chunk_size(&http);
     REQUIRE( http._state == KHC_STATE_RESP_BODY_SKIP_TRAILERS );
     REQUIRE( http._chunk_size == 0 );
     REQUIRE( http._body_read_size == 2 );
-    REQUIRE( http._read_end == 0 );
+    REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
 
     called = false;
@@ -483,7 +483,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     };
     khc_state_resp_body_skip_trailers(&http);
     REQUIRE( http._state == KHC_STATE_CLOSE );
-    REQUIRE( http._read_end == 0 );
+    REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
 
@@ -537,7 +537,7 @@ TEST_CASE( "Socket send partial" ) {
     REQUIRE( http._result == KHC_ERR_OK );
 
     bool called = false;
-    s_ctx.on_connect = [=, &called](void* socket_context, const char* host, unsigned int port) {
+    s_ctx.on_connect = [=, &called](void* socket_context, const char* host, uint16_t port) {
         called = true;
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -739,7 +739,7 @@ TEST_CASE( "Socket send partial" ) {
     khc_state_req_body_read(&http);
     REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_SIZE );
     REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( http._read_req_end == 0 );
+    REQUIRE( http._read_req_end == false );
     REQUIRE( called );
 
     called = false;
@@ -793,7 +793,7 @@ TEST_CASE( "Socket send partial" ) {
     khc_state_req_body_read(&http);
     REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_SIZE );
     REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( http._read_req_end == 1 );
+    REQUIRE( http._read_req_end == true );
     REQUIRE( called );
 
     called = false;
@@ -835,7 +835,7 @@ TEST_CASE( "Socket send partial" ) {
 
     khc_state_resp_status_read(&http);
     REQUIRE( http._state == KHC_STATE_RESP_STATUS_PARSE );
-    REQUIRE( http._read_end == 0 );
+    REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
     char buffer[resp_header_buff_size];
     size_t len = resp.to_istringstream().read((char*)&buffer, resp_header_buff_size - 1).gcount();
@@ -858,18 +858,18 @@ TEST_CASE( "Socket send partial" ) {
 
     khc_state_resp_header_callback(&http);
     REQUIRE( http._state == KHC_STATE_RESP_HEADER_CALLBACK );
-    REQUIRE( http._read_end == 0 );
+    REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
 
     khc_state_resp_header_callback(&http);
     REQUIRE( http._state == KHC_STATE_RESP_BODY_FRAGMENT );
-    REQUIRE( http._read_end == 0 );
+    REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
 
     khc_state_resp_body_fragment(&http);
     REQUIRE( http._state == KHC_STATE_RESP_BODY_READ );
-    REQUIRE( http._read_end == 0 );
+    REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
 
     called = false;
@@ -881,7 +881,7 @@ TEST_CASE( "Socket send partial" ) {
     };
     khc_state_resp_body_read(&http);
     REQUIRE( http._state == KHC_STATE_CLOSE );
-    REQUIRE( http._read_end == 1 );
+    REQUIRE( http._read_end == true );
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
 
@@ -931,7 +931,7 @@ TEST_CASE( "state abnormal tests." ) {
     bool called;
     SECTION("state connect retry.") {
         called = false;
-        s_ctx.on_connect = [=, &called](void* socket_context, const char* host, unsigned int port) {
+        s_ctx.on_connect = [=, &called](void* socket_context, const char* host, uint16_t port) {
             called = true;
             return KHC_SOCK_AGAIN;
         };
@@ -944,7 +944,7 @@ TEST_CASE( "state abnormal tests." ) {
 
     SECTION("state connect failed.") {
         called = false;
-        s_ctx.on_connect = [=, &called](void* socket_context, const char* host, unsigned int port) {
+        s_ctx.on_connect = [=, &called](void* socket_context, const char* host, uint16_t port) {
             called = true;
             return KHC_SOCK_FAIL;
         };
@@ -1728,9 +1728,9 @@ TEST_CASE( "Enable insecure" ) {
     khc_set_path(&http, "/api/apps");
     khc_set_req_headers(&http, NULL);
 
-    REQUIRE( http._enable_insecure == 0);
-    khc_enable_insecure(&http, 1);
-    REQUIRE( http._enable_insecure == 1);
+    REQUIRE( http._enable_insecure == false );
+    khc_enable_insecure(&http, true);
+    REQUIRE( http._enable_insecure == true );
 
     khct::cb::SockCtx s_ctx;
     khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
@@ -1743,7 +1743,7 @@ TEST_CASE( "Enable insecure" ) {
     REQUIRE( http._result == KHC_ERR_OK );
 
     bool called = false;
-    s_ctx.on_connect = [=, &called](void* socket_context, const char* host, unsigned int port) {
+    s_ctx.on_connect = [=, &called](void* socket_context, const char* host, uint16_t port) {
         called = true;
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
