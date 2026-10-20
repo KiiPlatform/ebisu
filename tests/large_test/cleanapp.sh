@@ -135,21 +135,42 @@ query() {
     done
 }
 
-# delete_each PATH-PREFIX LIST: deletes every ID in the first column.
+# delete_each PATH-PREFIX LIST: deletes every ID in the first column. One at a
+# time, a few thousand took over an hour: they go eight at a time, in batches
+# that each finish well within one admin token. Sixteen at a time got about
+# half of them refused with 429. What isn't deleted (a 429, a lost
+# connection) is tried again, fewer at a time.
 delete_each() {
-    local n=0 failed=0 id
-    while IFS=$'\t' read -r id _; do
-        call DELETE "$1/${id}"
-        if [ "${status}" = 204 ] || [ "${status}" = 404 ]; then
-            n=$((n + 1))
-        else
-            failed=$((failed + 1))
+    local pending="${work}/pending" statuses="${work}/statuses"
+    local total deleted=0 round parallel batch
+    total=$(wc -l < "$2")
+    cut -f1 "$2" > "${pending}"
+    for round in 1 2 3; do
+        parallel=$(( 8 / round ))
+        : > "${statuses}"
+        rm -f "${work}"/batch.*
+        split -l 400 "${pending}" "${work}/batch."
+        for batch in "${work}"/batch.*; do
+            [ -s "${batch}" ] || continue
+            admin_token
+            xargs -P "${parallel}" -I{} curl -sS -o /dev/null -w '%{http_code} {}\n' \
+                -X DELETE "${app_hdr[@]}" -H "Authorization: Bearer ${token}" \
+                "${app}$1/{}" < "${batch}" >> "${statuses}" 2>/dev/null || true
+            deleted=$(awk '$1 == 204 || $1 == 404' "${statuses}" | wc -l)
+            echo "  round ${round}: $((deleted)) of $(wc -l < "${pending}") deleted"
+        done
+        awk '$1 != 204 && $1 != 404 { print $2 }' "${statuses}" > "${pending}.next"
+        # An ID curl never reported on was not tried.
+        sort "${pending}" > "${pending}.all"
+        awk '{ print $2 }' "${statuses}" | sort > "${pending}.tried"
+        comm -23 "${pending}.all" "${pending}.tried" >> "${pending}.next"
+        mv "${pending}.next" "${pending}"
+        if [ ! -s "${pending}" ]; then
+            break
         fi
-        if [ $(( (n + failed) % 200 )) = 0 ]; then
-            echo "  ${n} deleted, ${failed} failed"
-        fi
-    done < "$2"
-    echo "  ${n} deleted, ${failed} failed"
+        sleep 5
+    done
+    echo "  $((total - $(wc -l < "${pending}"))) of ${total} deleted, $(wc -l < "${pending}") failed"
 }
 
 # logout_all PATH: revokes every token of the principal.
