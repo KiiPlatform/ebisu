@@ -189,7 +189,7 @@ static int _jkii_is_all_digit(const char* buf, size_t buf_len)
     M_JKII_ASSERT(buf != NULL);
 
     for (i = 0; i < buf_len; ++i) {
-        if (isdigit(buf[i]) == 0) {
+        if (isdigit((unsigned char)buf[i]) == 0) {
             return 0;
         }
     }
@@ -265,7 +265,7 @@ static int _jkii_is_double(const char* buf, size_t buf_len)
                 }
                 return 0;
             case parser_sts_integer:
-                if (isdigit(c)) {
+                if (isdigit((unsigned char)c)) {
                     continue;
                 }
                 if (c == '.') {
@@ -278,7 +278,7 @@ static int _jkii_is_double(const char* buf, size_t buf_len)
                 }
                 return 0;
             case parser_sts_decimal:
-                if (isdigit(c)) {
+                if (isdigit((unsigned char)c)) {
                     continue;
                 }
                 if (c == 'e' || c == 'E') {
@@ -287,13 +287,13 @@ static int _jkii_is_double(const char* buf, size_t buf_len)
                 }
                 return 0;
             case parser_sts_exp_start:
-                if (c == '-' || c == '+' || isdigit(c)) {
+                if (c == '-' || c == '+' || isdigit((unsigned char)c)) {
                     sts = parser_sts_exp;
                     continue;
                 }
                 return 0;
             case parser_sts_exp:
-                if (isdigit(c)) {
+                if (isdigit((unsigned char)c)) {
                     continue;
                 }
                 return 0;

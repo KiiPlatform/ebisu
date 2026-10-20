@@ -614,7 +614,7 @@ void khc_state_resp_status_parse(khc* khc) {
     uint16_t status_code = 0;
     for (int i = 0; i < 3; ++i) {
         char d = ptr[i];
-        if (isdigit((int)d) == 0){
+        if (isdigit((unsigned char)d) == 0){
             khc->_state = KHC_STATE_CLOSE;
             khc->_result = KHC_ERR_FAIL;
             return;
