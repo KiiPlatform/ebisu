@@ -554,7 +554,7 @@ tio_code_t _handle_command(
         return _tio_convert_code(run_res);
     }
     // kii_api_call_run only reports transport errors.
-    int resp_code = kii_get_resp_status(&handler->_kii);
+    uint16_t resp_code = kii_get_resp_status(&handler->_kii);
     if (resp_code < 200 || 300 <= resp_code) {
         _trace_op("kii_get_resp_status", resp_code);
         return TIO_ERR_RESP_STATUS;

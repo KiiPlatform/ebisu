@@ -45,6 +45,6 @@ kii_task_code_t task_create_cb_impl(
         void* param,
         void* userdata);
 
-void delay_ms_cb_impl(unsigned int msec, void* userdata);
+void delay_ms_cb_impl(uint32_t msec, void* userdata);
 
 #endif /* EBISU_CC3200_H_ */

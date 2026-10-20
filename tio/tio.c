@@ -133,12 +133,12 @@ void tio_handler_set_cb_sock_close_mqtt(
     kii_set_cb_mqtt_sock_close(&handler->_kii, cb_close, userdata);
 }
 
-void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_sock_recv_sec)
+void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, uint32_t to_sock_recv_sec)
 {
     kii_set_mqtt_to_sock_recv(&handler->_kii, to_sock_recv_sec);
 }
 
-void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, unsigned int to_sock_send_sec)
+void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, uint32_t to_sock_send_sec)
 {
     kii_set_mqtt_to_sock_send(&handler->_kii, to_sock_send_sec);
 }
@@ -199,7 +199,7 @@ void tio_handler_set_mqtt_buff(
 
 void tio_handler_set_keep_alive_interval(
         tio_handler_t* handler,
-        size_t keep_alive_interval)
+        uint32_t keep_alive_interval)
 {
     handler->_keep_alive_interval = keep_alive_interval;
 }
@@ -298,8 +298,8 @@ tio_code_t tio_handler_start(
         TIO_CB_ACTION cb_action,
         void* userdata)
 {
-    // kii_start_push_task() turns away more than 65535 too, but takes an
-    // unsigned int, to which a larger size_t would be cut down first.
+    // kii_start_push_task() turns away more than 65535 too. Checking first
+    // leaves the handler as it was when it does.
     if (handler->_keep_alive_interval > 65535) {
         return TIO_ERR_FAIL;
     }
@@ -436,7 +436,7 @@ void tio_updater_set_app(
 
 void tio_updater_set_interval(
         tio_updater_t* updater,
-        size_t update_interval)
+        uint32_t update_interval)
 {
     updater->_update_interval = update_interval;
 }
@@ -450,10 +450,10 @@ void tio_updater_enable_insecure_http(
 
 static void* _update_state(void* data) {
     tio_updater_t* updater = (tio_updater_t*)data;
-    size_t interval_remain_sec = updater->_update_interval;
+    uint32_t interval_remain_sec = updater->_update_interval;
     while(1) {
         // Ask to continue every 1 second.
-        const size_t interval_chk_cnt_sec = 1;
+        const uint32_t interval_chk_cnt_sec = 1;
         if (interval_remain_sec > interval_chk_cnt_sec) {
             if (updater->_cb_task_continue != NULL) {
                 tio_bool_t cont = updater->_cb_task_continue(NULL, updater->_task_continue_data);

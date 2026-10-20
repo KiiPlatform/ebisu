@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-void delay_ms_cb_impl(unsigned int msec, void* userdata)
+void delay_ms_cb_impl(uint32_t msec, void* userdata)
 {
     delay_ms_cb(msec, userdata);
 }

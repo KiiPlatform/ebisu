@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <assert.h>
 #include <ctype.h>
-#include <limits.h>
 #include <stdint.h>
 
 #include "kii.h"
@@ -176,26 +175,18 @@ exit:
     return res;
 }
 
-/* jkii reads JSON integers as int32_t and int64_t, whatever the widths of int
- * and long, so these check that a value fits where kii_mqtt_endpoint_t keeps
- * it: a port in 16 bits, the TTL in an unsigned long, which may have 32. */
+/* jkii reads JSON integers as int32_t and int64_t, so these check that a
+ * value fits where kii_mqtt_endpoint_t keeps it: a port in a uint16_t, the TTL
+ * in a uint32_t. */
 
 static int _is_port(int32_t value)
 {
     return 0 <= value && value <= 65535;
 }
 
-static int _fits_unsigned_long(int64_t value)
+static int _fits_uint32(int64_t value)
 {
-    if (value < 0) {
-        return 0;
-    }
-#if INT64_MAX > ULONG_MAX
-    if (value > (int64_t)ULONG_MAX) {
-        return 0;
-    }
-#endif
-    return 1;
+    return 0 <= value && value <= (int64_t)UINT32_MAX;
 }
 
 kii_code_t kii_get_mqtt_endpoint(
@@ -264,26 +255,27 @@ kii_code_t kii_get_mqtt_endpoint(
     }
     if (_is_port(fields[4].field_copy.int_value) == 0 ||
             _is_port(fields[5].field_copy.int_value) == 0 ||
-            _fits_unsigned_long(fields[6].field_copy.long_value) == 0) {
+            _fits_uint32(fields[6].field_copy.long_value) == 0) {
         res = KII_ERR_PARSE_JSON;
         goto exit;
     }
-    endpoint->port_tcp = (unsigned int)fields[4].field_copy.int_value;
-    endpoint->port_ssl = (unsigned int)fields[5].field_copy.int_value;
-    endpoint->ttl = (unsigned long)fields[6].field_copy.long_value;
+    endpoint->port_tcp = (uint16_t)fields[4].field_copy.int_value;
+    endpoint->port_ssl = (uint16_t)fields[5].field_copy.int_value;
+    endpoint->ttl = (uint32_t)fields[6].field_copy.long_value;
 
 exit:
     return res;
 }
 
-kii_code_t kii_start_push_task(kii_t* kii, unsigned int keep_alive_interval, KII_PUSH_RECEIVED_CB callback, void* userdata)
+kii_code_t kii_start_push_task(kii_t* kii, uint32_t keep_alive_interval, KII_PUSH_RECEIVED_CB callback, void* userdata)
 {
     // CONNECT carries the keep-alive in 16 bits. A longer one would reach the
     // broker cut down to its low 16 bits while the task pinged on the whole.
+    // The parameter is wider than that so that such a value gets here whole.
     if (keep_alive_interval > 65535) {
         return KII_ERR_FAIL;
     }
-    kii->_keep_alive_interval = keep_alive_interval;
+    kii->_keep_alive_interval = (uint16_t)keep_alive_interval;
     kii->_cb_push_received = callback;
     kii->_push_data = userdata;
     if (kii->_cb_task_create == NULL) {

@@ -5,7 +5,7 @@
 #include "kii_mqtt_task.h"
 #include "test_callbacks.h"
 
-#include <limits.h>
+#include <stdint.h>
 #include <sstream>
 #include <string>
 
@@ -2305,10 +2305,10 @@ static std::string mqtt_endpoint_response(
         "\r\n" + body;
 }
 
-// jkii reads the ports as int32_t and the TTL as int64_t, whatever the widths
-// of int and long, and kii keeps them as unsigned int and unsigned long. A
-// value that does not fit is a response kii cannot use, as one jkii cannot read
-// already was, rather than one to wrap around: a port of -1 became 4294967295.
+// jkii reads the ports as int32_t and the TTL as int64_t, and kii keeps them as
+// uint16_t and uint32_t. A value that does not fit is a response kii cannot
+// use, as one jkii cannot read already was, rather than one to wrap around: a
+// port of -1 became 4294967295.
 TEST_CASE( "MQTT endpoint values out of range" ) {
     size_t kii_buff_size = 1024;
     char kii_buff[kii_buff_size];
@@ -2343,9 +2343,6 @@ TEST_CASE( "MQTT endpoint values out of range" ) {
         return KHC_SOCK_OK;
     };
 
-    // Whether an unsigned long holds 4294967296.
-    const bool ulong_over_32_bits = ULONG_MAX > 4294967295UL;
-
     const struct {
         const char* port_tcp;
         const char* port_ssl;
@@ -2360,7 +2357,8 @@ TEST_CASE( "MQTT endpoint values out of range" ) {
         { "1883", "65536", "2147483647", false },
         { "1883", "4294967297", "2147483647", false },
         { "1883", "8883", "-1", false },
-        { "1883", "8883", "4294967296", ulong_over_32_bits },
+        { "1883", "8883", "4294967295", true },
+        { "1883", "8883", "4294967296", false },
         { "1883", "8883", "9223372036854775808", false },
     };
 
@@ -2422,7 +2420,7 @@ TEST_CASE( "MQTT keep-alive interval range" ) {
 
     SECTION("an interval MQTT can carry is sent as given") {
         const struct {
-            unsigned int interval;
+            uint32_t interval;
             std::string bytes;
         } cases[] = {
             { 0, std::string("\x00\x00", 2) },
@@ -2452,9 +2450,11 @@ TEST_CASE( "MQTT keep-alive interval range" ) {
     }
 
     SECTION("an interval MQTT cannot carry does not start the task") {
-        const unsigned int intervals[] = { 65536, 70000, UINT_MAX };
+        // kii_start_push_task() takes a uint32_t rather than a uint16_t for
+        // this: the caller's value arrives whole, to be turned away.
+        const uint32_t intervals[] = { 65536, 70000, UINT32_MAX };
 
-        for (unsigned int interval : intervals) {
+        for (uint32_t interval : intervals) {
             INFO("keep-alive " << interval);
             kii._keep_alive_interval = 300;
             call_task_create = 0;
@@ -2496,9 +2496,9 @@ TEST_CASE( "MQTT PINGREQ timing" ) {
         };
 
         const struct {
-            unsigned int keep_alive;
-            unsigned int to_recv;
-            unsigned int elapsed_ms;
+            uint16_t keep_alive;
+            uint32_t to_recv;
+            uint32_t elapsed_ms;
             bool pingreq;
         } cases[] = {
             // Early enough that a receive timing out ends within the keep-alive.
@@ -2518,11 +2518,11 @@ TEST_CASE( "MQTT PINGREQ timing" ) {
             { 10, 30, 10001, true },
             { 1, 5, 1000, false },
             { 1, 5, 1001, true },
-            { 65535, UINT_MAX, 65535000, false },
-            { 65535, UINT_MAX, 65535001, true },
+            { 65535, UINT32_MAX, 65535000, false },
+            { 65535, UINT32_MAX, 65535001, true },
             // Never, as keep-alive is disabled.
-            { 0, 0, UINT_MAX, false },
-            { 0, 5, UINT_MAX, false },
+            { 0, 0, UINT32_MAX, false },
+            { 0, 5, UINT32_MAX, false },
         };
 
         for (const auto& c : cases) {

@@ -1,5 +1,6 @@
 #include <khc_socket_callback.h>
 #include <functional>
+#include <stdint.h>
 
 namespace khct {
 namespace cb {
@@ -52,7 +53,7 @@ inline size_t cb_header(char *buffer, size_t size, void *userdata) {
     return ctx->on_header(buffer, size, userdata);
 }
 
-inline void cb_delay_ms(unsigned int msec, void *userdata) {
+inline void cb_delay_ms(uint32_t msec, void *userdata) {
 }
 
 struct PushCtx {

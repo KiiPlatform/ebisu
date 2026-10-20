@@ -40,7 +40,7 @@ kii_task_code_t cb_task_create
     return KII_TASKC_OK;
 }
 
-void cb_delay_ms(unsigned int msec, void* userdata)
+void cb_delay_ms(uint32_t msec, void* userdata)
 {
     _time_delay(msec);
 }

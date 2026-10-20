@@ -45,7 +45,7 @@ kii_task_code_t task_create_cb_impl(
  *
  * @param[in] msec millisecond to delay.
  */
-void delay_ms_cb_impl(unsigned int msec, void* userdata);
+void delay_ms_cb_impl(uint32_t msec, void* userdata);
 
 #ifdef __cplusplus
 }

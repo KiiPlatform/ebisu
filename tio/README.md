@@ -135,13 +135,14 @@ Delay callback function signature is following.
 ```
 typedef void
 (*KII_CB_DELAY_MS)
-    (unsigned int msec);
+    (uint32_t msec,
+     void* userdata);
 ```
 
 Typical implementation with `usleep` provided by `libc`:
 
 ```c
-void delay_ms_cb(unsigned int msec)
+void delay_ms_cb(uint32_t msec, void* userdata)
 {
     usleep(msec * 1000);
 }

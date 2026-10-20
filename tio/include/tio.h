@@ -214,7 +214,7 @@ typedef struct tio_handler_t {
     TIO_CB_PUSH _cb_push; /**< \private **/
     void* _cb_push_data; /**< \private **/
     kii_t _kii; /**< \private **/
-    size_t _keep_alive_interval; /**< \private **/
+    uint32_t _keep_alive_interval; /**< \private **/
     KII_CB_TASK_CONTINUE _cb_task_continue; /**< \private **/
     void* _task_continue_data; /**< \private **/
     KII_CB_TASK_EXIT _cb_task_exit; /**< \private **/
@@ -240,7 +240,7 @@ typedef struct tio_updater_t {
     TIO_CB_ERR _cb_err; /**< \private **/
     void* _cb_err_data; /**< \private **/
     kii_t _kii; /**< \private **/
-    size_t _update_interval; /**< \private **/
+    uint32_t _update_interval; /**< \private **/
     KII_CB_TASK_CONTINUE _cb_task_continue; /**< \private **/
     void* _task_continue_data; /**< \private **/
     KII_CB_TASK_EXIT _cb_task_exit; /**< \private **/
@@ -416,7 +416,7 @@ void tio_handler_set_cb_sock_close_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CLOS
  * \param [out] handler tio_handler_t instance.
  * \param [in] to_sock_recv_sec Socket recv timeout in seconds.
  */
-void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_sock_recv_sec);
+void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, uint32_t to_sock_recv_sec);
 /**
  * \brief Set timeout of sending data from socket user for MQTT(S)
  *
@@ -428,7 +428,7 @@ void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, unsigned int to_s
  * \param [out] handler tio_handler_t instance.
  * \param [in] to_sock_send_sec Socket send timeout in seconds.
  */
-void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, unsigned int to_sock_send_sec);
+void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, uint32_t to_sock_send_sec);
 /**
  * \brief Set callback creates task.
  *
@@ -554,12 +554,14 @@ void tio_handler_set_mqtt_buff(tio_handler_t* handler, char* buff, size_t buff_s
  * tio_handler_set_mqtt_to_sock_recv() / tio_handler_set_mqtt_to_sock_send().
  * Twice as large as recv/ send timeout works fine but recommend few minutes to avoid congestion.
  * If 0, Keep-Alive is disabled. At most 65535, the largest MQTT can carry:
- * tio_handler_start() fails with TIO_ERR_FAIL for a larger value.
+ * tio_handler_start() fails with TIO_ERR_FAIL for a larger value. It is taken
+ * as a uint32_t rather than a uint16_t so that a larger value is turned away
+ * there rather than cut down to its low 16 bits where this is called.
  *
  * \param [out] handler tio_handler_t instance.
  * \param [in] keep_alive_interval_sec Keep-Alive interval in seconds.
  */
-void tio_handler_set_keep_alive_interval(tio_handler_t* handler, size_t keep_alive_interval_sec);
+void tio_handler_set_keep_alive_interval(tio_handler_t* handler, uint32_t keep_alive_interval_sec);
 
 /**
  * \brief Set app identifier and host.
@@ -974,7 +976,7 @@ void tio_updater_set_app(tio_updater_t* updater, const char* app_id, const char*
  * \param [out] updater tio_updater_t instance.
  * \param [in] update_interval_sec Interval in seconds.
  */
-void tio_updater_set_interval(tio_updater_t* updater, size_t update_interval_sec);
+void tio_updater_set_interval(tio_updater_t* updater, uint32_t update_interval_sec);
 
 void tio_updater_set_json_parser_resource(tio_updater_t* updater, jkii_resource_t* resource);
 

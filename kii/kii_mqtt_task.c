@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <time.h>
 
 #include "kii_mqtt_task.h"
@@ -46,7 +47,7 @@ int _mqtt_decode(char* buf, unsigned long* remaining_length)
 }
 
 khc_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) {
-    unsigned int keep_alive_interval = kii->_keep_alive_interval;
+    uint16_t keep_alive_interval = kii->_keep_alive_interval;
     memset(kii->_mqtt_buffer, 0, kii->_mqtt_buffer_size);
     int i = 8; /* reserver 8 bytes for header */
     /* Variable header:Protocol Name bytes */
@@ -337,7 +338,7 @@ void _mqtt_state_sock_connect(mqtt_state_t* state)
     kii_t* kii = state->kii;
     kii_mqtt_task_info* task_info = &state->info;
     kii_mqtt_endpoint_t* endpoint = &state->endpoint;
-    unsigned int port = endpoint->port_ssl;
+    uint16_t port = endpoint->port_ssl;
     if (kii->_insecure_mqtt == KII_TRUE) {
         port = endpoint->port_tcp;
     }
@@ -495,10 +496,10 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
     // once the keep-alive is over, which is after any receive that times out,
     // rather than at once: that would come back here straight after sending
     // it, before its PINGRESP could be read, and reconnect for want of it.
-    const unsigned int keep_alive = kii->_keep_alive_interval;
-    const unsigned int to_recv = kii->_mqtt_to_recv_sec;
-    // kii_start_push_task() keeps the keep-alive to 65535, so this fits.
-    const unsigned int thresh_ms =
+    const uint32_t keep_alive = kii->_keep_alive_interval;
+    const uint32_t to_recv = kii->_mqtt_to_recv_sec;
+    // The keep-alive is a uint16_t, so this is at most 65535000 and fits.
+    const uint32_t thresh_ms =
         (to_recv < keep_alive ? keep_alive - to_recv : keep_alive) * 1000;
     if (keep_alive > 0 && state->elapsed_time_ms > thresh_ms) {
         task_info->task_state = KII_MQTT_ST_SEND_PINGREQ;

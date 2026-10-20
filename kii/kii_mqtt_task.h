@@ -20,7 +20,7 @@ typedef struct {
     kii_installation_id_t ins_id;
     kii_mqtt_endpoint_t endpoint;
     kii_mqtt_task_info info;
-    unsigned int elapsed_time_ms;
+    uint32_t elapsed_time_ms;
     unsigned long remaining_message_size;
     /** \private
      * Whether the PINGRESP for the last PINGREQ has arrived.

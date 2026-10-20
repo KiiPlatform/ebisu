@@ -14,7 +14,7 @@ kii_task_code_t cb_task_create(
     void* userdata);
 
 void cb_delay_ms(
-    unsigned int msec,
+    uint32_t msec,
     void* userdata);
 
 #ifdef __cplusplus
