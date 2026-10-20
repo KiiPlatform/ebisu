@@ -1,0 +1,32 @@
+name: Clean up the test application
+# Deletes the things and users the large tests leave in the Kii application
+# they run against, and revokes the tokens of the ones they share. Run by hand:
+# without "delete" it only reports what it would do. See
+# tests/large_test/cleanapp.sh.
+on:
+  workflow_dispatch:
+    inputs:
+      delete:
+        description: Delete and revoke, rather than only report
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  cleanapp:
+    runs-on: ubuntu-latest
+    # One at a time. Run it while no Build is running: it would delete the
+    # things the large tests are using.
+    concurrency: cleanapp
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: clean up
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          DEFAULT_SITE: ${{ secrets.DEFAULT_SITE }}
+        run: tests/large_test/cleanapp.sh ${{ inputs.delete && '--delete' || '' }}
