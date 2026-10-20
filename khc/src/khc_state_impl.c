@@ -124,20 +124,20 @@ khc_code khc_set_method(khc* khc, const char* method) {
     return KHC_ERR_OK;
 }
 
-int khc_method_can_have_body(khc* khc) {
+bool khc_method_can_have_body(khc* khc) {
     if(khc->_method[0]==0) {
-        return 1; // undefined method.
+        return true; // undefined method.
     }
     if(strcmp(khc->_method, "GET") == 0) {
-        return 0;
+        return false;
     }
     if(strcmp(khc->_method, "HEAD") == 0) {
-        return 0;
+        return false;
     }
     if(strcmp(khc->_method, "DELETE") == 0) {
-        return 0;
+        return false;
     }
-    return 1;
+    return true;
 }
 
 khc_code khc_set_req_headers(khc* khc, khc_slist* headers) {
@@ -159,7 +159,7 @@ void khc_state_idle(khc* khc) {
 }
 
 void khc_state_connect(khc* khc) {
-    const unsigned int port = khc->_enable_insecure ? 80:443;
+    const uint16_t port = khc->_enable_insecure ? 80:443;
     khc_sock_code_t con_res = khc->_cb_sock_connect(khc->_sock_ctx_connect, khc->_host, port);
     #ifdef KHC_TRACE
     _trace_op("connect", con_res);
@@ -377,7 +377,7 @@ void khc_state_req_header_send_crlf(khc* khc) {
 
 void khc_state_req_header_end(khc* khc) {
     char* text = NULL;
-    if(khc_method_can_have_body(khc) == 0) {
+    if(!khc_method_can_have_body(khc)) {
         text = "Connection: Close\r\n\r\n";
     } else if(khc->_cb_read == NULL) {
         text = "Content-Length: 0\r\nConnection: Close\r\n\r\n";
@@ -405,7 +405,7 @@ void khc_state_req_header_end(khc* khc) {
             khc->_resp_header_read_size = 0;
             khc->_state = KHC_STATE_RESP_STATUS_READ;
         }
-        khc->_read_req_end = 0;
+        khc->_read_req_end = false;
         return;
     }
     #ifdef KHC_TRACE
@@ -426,7 +426,7 @@ void khc_state_req_header_end(khc* khc) {
 void khc_state_req_body_read(khc* khc) {
     khc->_read_size = khc->_cb_read(khc->_stream_buff, khc->_stream_buff_size, khc->_read_data);
     if (khc->_read_size == 0) {
-        khc->_read_req_end = 1;
+        khc->_read_req_end = true;
     }
     khc->_state = KHC_STATE_REQ_BODY_SEND_SIZE;
     return;
@@ -472,7 +472,7 @@ void khc_state_req_body_send_size(khc* khc) {
         } else {
             khc->_sent_length = 0;
         }
-        if (khc->_read_req_end == 1) {
+        if (khc->_read_req_end) {
             khc->_state = KHC_STATE_REQ_BODY_SEND_CRLF;
         } else {
             khc->_state = KHC_STATE_REQ_BODY_SEND;
@@ -545,7 +545,7 @@ void khc_state_req_body_send_crlf(khc* khc) {
         } else {
             khc->_sent_length = 0;
         }
-        if (khc->_read_req_end == 1) {
+        if (khc->_read_req_end) {
             khc->_resp_header_read_size = 0;
             khc->_state = KHC_STATE_RESP_STATUS_READ;
         } else {
@@ -580,7 +580,7 @@ void khc_state_resp_status_read(khc* khc) {
         khc->_resp_header_read_size += read_size;
         khc->_resp_header_buff[khc->_resp_header_read_size] = '\0';
         if (read_size == 0) {
-            khc->_read_end = 1;
+            khc->_read_end = true;
         }
         // check CRLF. no exist -> ERROR.
         if (strstr(khc->_resp_header_buff, "\r\n") == NULL) {
@@ -610,7 +610,8 @@ void khc_state_resp_status_parse(khc* khc) {
     const char http_version[] = "HTTP/d.d ";
     char* ptr = khc->_resp_header_buff + strlen(http_version);
 
-    int status_code = 0;
+    // Three digits, so at most 999.
+    uint16_t status_code = 0;
     for (int i = 0; i < 3; ++i) {
         char d = ptr[i];
         if (isdigit((int)d) == 0){
@@ -649,7 +650,7 @@ void khc_state_resp_header_callback(khc* khc) {
 
         int chunked = _is_chunked_encoding(khc->_resp_header_buff, header_size);
         if (chunked == 1) {
-            khc->_chunked_resp = 1;
+            khc->_chunked_resp = true;
         } else if (chunked == -1) { // Transfer coding khc cannot remove.
             khc->_state = KHC_STATE_CLOSE;
             khc->_result = KHC_ERR_HEADER_CALLBACK;
@@ -697,7 +698,7 @@ void khc_state_resp_header_read(khc* khc) {
         khc->_resp_header_read_size += read_size;
         khc->_resp_header_buff[khc->_resp_header_read_size] = '\0';
         if (read_size == 0) {
-            khc->_read_end = 1;
+            khc->_read_end = true;
         }
         khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
         return;
@@ -748,7 +749,7 @@ void khc_state_resp_header_skip(khc* khc) {
         khc->_resp_header_read_size += read_size;
         khc->_resp_header_buff[khc->_resp_header_read_size] = '\0';
         if (read_size == 0) {
-            khc->_read_end = 1;
+            khc->_read_end = true;
         }
         // check header boundary.
         char* header_boundary = strstr(khc->_resp_header_buff, "\r\n");
@@ -791,7 +792,7 @@ void khc_state_resp_body_fragment(khc* khc) {
         }
     }
 
-    if (khc->_read_end == 1) {
+    if (khc->_read_end) {
         khc->_state = KHC_STATE_CLOSE;
         return;
     } else {
@@ -847,7 +848,7 @@ void khc_state_resp_body_read(khc* khc) {
         #endif
         khc->_body_read_size = read_size;
         if (read_size == 0) {
-            khc->_read_end = 1;
+            khc->_read_end = true;
             khc->_state = KHC_STATE_CLOSE;
             return;
         }
@@ -876,7 +877,7 @@ void khc_state_resp_body_callback(khc* khc) {
         khc->_result = KHC_ERR_WRITE_CALLBACK;
         return;
     }
-    if (khc->_read_end == 1) {
+    if (khc->_read_end) {
         khc->_state = KHC_STATE_CLOSE;
     } else {
         khc->_state = KHC_STATE_RESP_BODY_READ;

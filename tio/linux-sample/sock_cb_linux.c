@@ -21,7 +21,7 @@
 
 khc_sock_code_t
     sock_cb_connect(void* sock_ctx, const char* host,
-            unsigned int port)
+            uint16_t port)
 {
     int sock, ret;
     struct hostent *servhost;

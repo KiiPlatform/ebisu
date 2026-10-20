@@ -21,7 +21,7 @@
 
 khc_sock_code_t
     ebisu::ltest::ssl::cb_connect(void* sock_ctx, const char* host,
-            unsigned int port)
+            uint16_t port)
 {
     int sock, ret;
     struct hostent *servhost;
@@ -205,7 +205,7 @@ khc_sock_code_t
 /// raw
 khc_sock_code_t
     ebisu::ltest::tcp::cb_connect(void* socket_context, const char* host,
-            unsigned int port)
+            uint16_t port)
 {
     int sock;
     struct hostent *servhost;

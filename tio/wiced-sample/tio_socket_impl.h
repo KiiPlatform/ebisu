@@ -23,7 +23,7 @@ typedef struct _socket_context {
 khc_sock_code_t sock_cb_connect(
         void* sock_ctx,
         const char* host,
-        unsigned int port);
+        uint16_t port);
 
 khc_sock_code_t sock_cb_send(
         void* sock_ctx,

@@ -5,6 +5,7 @@
 #define _KHC_SOCKET_CALLBACK
 
 #include <stddef.h>
+#include <stdint.h>
 /* The library is compiled with hidden visibility, so what this header declares
    is exactly what the shared object exports. */
 #if defined(__GNUC__) || defined(__clang__)
@@ -39,12 +40,12 @@ typedef enum khc_sock_code_t {
  *
  * @param [in] sock_ctx context object.
  * @param [in] host host name.
- * @param [in] port port number.
+ * @param [in] port TCP port number.
  * @returns khc_sock_code_t
  */
 typedef khc_sock_code_t
     (*KHC_CB_SOCK_CONNECT)
-    (void* sock_ctx, const char* host, unsigned int port);
+    (void* sock_ctx, const char* host, uint16_t port);
 
 /** \brief Callback function sends data to server.
  *

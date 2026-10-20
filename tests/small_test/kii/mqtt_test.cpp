@@ -84,7 +84,7 @@ TEST_CASE( "MQTT state test" ) {
     REQUIRE( state.info.error == KII_MQTT_ERR_OK );
 
     int call_connect = 0;
-    http_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, unsigned int port) {
+    http_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, uint16_t port) {
         ++call_connect;
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -147,7 +147,7 @@ TEST_CASE( "MQTT state test" ) {
     REQUIRE( call_close == 1 );
 
     call_connect = 0;
-    http_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, unsigned int port) {
+    http_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, uint16_t port) {
         ++call_connect;
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -224,7 +224,7 @@ TEST_CASE( "MQTT state test" ) {
     REQUIRE( call_close == 1 );
 
     call_connect = 0;
-    mqtt_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, unsigned int port) {
+    mqtt_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, uint16_t port) {
         const char* exp_host = "jp-mqtt-dummy.kii.com";
         ++call_connect;
         REQUIRE( strlen(host) == strlen(exp_host) );
@@ -568,7 +568,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
 
     SECTION("install push try again") {
         int call_connect = 0;
-        http_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, unsigned int port) {
+        http_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, uint16_t port) {
             ++call_connect;
             REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
             REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -616,7 +616,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
 
     SECTION("install push error exit") {
         int call_connect = 0;
-        http_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, unsigned int port) {
+        http_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, uint16_t port) {
             ++call_connect;
             REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
             REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -664,7 +664,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
 
     SECTION("get endpoint try again") {
         int call_connect = 0;
-        http_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, unsigned int port) {
+        http_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, uint16_t port) {
             ++call_connect;
             REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
             REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -714,7 +714,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
 
     SECTION("get endpoint error exit") {
         int call_connect = 0;
-        http_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, unsigned int port) {
+        http_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, uint16_t port) {
             ++call_connect;
             REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
             REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -764,7 +764,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
 
     SECTION("sock connect got KHC_SOCK_AGAIN") {
         int call_connect = 0;
-        mqtt_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, unsigned int port) {
+        mqtt_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, uint16_t port) {
             const char* exp_host = "jp-mqtt-dummy.kii.com";
             ++call_connect;
             REQUIRE( strlen(host) == strlen(exp_host) );
@@ -785,7 +785,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
 
     SECTION("sock connect got KHC_SOCK_FAIL") {
         int call_connect = 0;
-        mqtt_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, unsigned int port) {
+        mqtt_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, uint16_t port) {
             const char* exp_host = "jp-mqtt-dummy.kii.com";
             ++call_connect;
             REQUIRE( strlen(host) == strlen(exp_host) );
@@ -2078,7 +2078,7 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     REQUIRE( state.info.error == KII_MQTT_ERR_OK );
 
     int call_connect = 0;
-    http_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, unsigned int port) {
+    http_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, uint16_t port) {
         ++call_connect;
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -2141,7 +2141,7 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     REQUIRE( call_close == 1 );
 
     call_connect = 0;
-    http_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, unsigned int port) {
+    http_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, uint16_t port) {
         ++call_connect;
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -2218,7 +2218,7 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     CHECK( call_close == 1 );
 
     call_connect = 0;
-    mqtt_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, unsigned int port) {
+    mqtt_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, uint16_t port) {
         const char* exp_host = "jp-mqtt-dummy.kii.com";
         ++call_connect;
         REQUIRE( strlen(host) == strlen(exp_host) );
@@ -2332,7 +2332,7 @@ TEST_CASE( "MQTT endpoint values out of range" ) {
     kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
     kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
 
-    http_ctx.on_connect = [](void* socket_context, const char* host, unsigned int port) {
+    http_ctx.on_connect = [](void* socket_context, const char* host, uint16_t port) {
         return KHC_SOCK_OK;
     };
     http_ctx.on_send = [](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {

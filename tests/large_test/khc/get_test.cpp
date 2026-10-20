@@ -16,7 +16,7 @@ TEST_CASE( "HTTP Get" ) {
 
     ebisu::ltest::ssl::SSLData s_ctx;
 #ifdef PLAIN_HTTP
-    khc_enable_insecure(&http, 1);
+    khc_enable_insecure(&http, true);
     khc_set_cb_sock_connect(&http, ebisu::ltest::tcp::cb_connect, &s_ctx);
     khc_set_cb_sock_send(&http, ebisu::ltest::tcp::cb_send, &s_ctx);
     khc_set_cb_sock_recv(&http, ebisu::ltest::tcp::cb_recv, &s_ctx);

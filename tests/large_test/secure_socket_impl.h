@@ -17,7 +17,7 @@ struct SSLData
 
 khc_sock_code_t
     cb_connect(void* socket_context, const char* host,
-            unsigned int port);
+            uint16_t port);
 
 khc_sock_code_t
     cb_send(void* socket_context,
@@ -39,7 +39,7 @@ khc_sock_code_t
 namespace tcp {
 khc_sock_code_t
     cb_connect(void* socket_context, const char* host,
-            unsigned int port);
+            uint16_t port);
 
 khc_sock_code_t
     cb_send(void* socket_context,

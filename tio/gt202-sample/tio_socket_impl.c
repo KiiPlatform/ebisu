@@ -24,7 +24,7 @@ void ssl_ctx_close() {
 sock_cb_connect(
         void* sock_ctx,
         const char* host,
-        unsigned int port)
+        uint16_t port)
 {
     int ret;
     DNC_CFG_CMD dnsCfg;

@@ -40,7 +40,7 @@ TEST_CASE( "HTTP chunked response test" ) {
     khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
     int on_connect_called = 0;
-    s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port) {
+    s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, uint16_t port) {
         ++on_connect_called;
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -150,7 +150,7 @@ TEST_CASE( "small buffer size test" ) {
     khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
     int on_connect_called = 0;
-    s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port) {
+    s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, uint16_t port) {
         ++on_connect_called;
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -260,7 +260,7 @@ TEST_CASE( "random buffer size test" ) {
     khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
     int on_connect_called = 0;
-    s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port) {
+    s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, uint16_t port) {
         ++on_connect_called;
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -373,7 +373,7 @@ TEST_CASE( "random chunk body test" ) {
     khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
     int on_connect_called = 0;
-    s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port) {
+    s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, uint16_t port) {
         ++on_connect_called;
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -469,7 +469,7 @@ TEST_CASE( "HTTP response 400 test(chunked)" ) {
     khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
     int on_connect_called = 0;
-    s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, unsigned int port) {
+    s_ctx.on_connect = [=, &on_connect_called](void* socket_context, const char* host, uint16_t port) {
         ++on_connect_called;
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
@@ -579,7 +579,7 @@ ChunkedResult perform_chunked(const string& chunked_body, size_t max_recv) {
     khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
     khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
-    s_ctx.on_connect = [](void* socket_context, const char* host, unsigned int port) {
+    s_ctx.on_connect = [](void* socket_context, const char* host, uint16_t port) {
         return KHC_SOCK_OK;
     };
     s_ctx.on_send = [](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {

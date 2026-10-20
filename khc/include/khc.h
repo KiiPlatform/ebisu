@@ -10,6 +10,8 @@ extern "C"
 {
 #endif
 
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include "khc_socket_callback.h"
 /* The library is compiled with hidden visibility, so what this header declares
@@ -283,19 +285,19 @@ typedef struct khc {
 
     char* _stream_buff; /**< \private **/
     size_t _stream_buff_size; /**< \private **/
-    int _stream_buff_allocated; /**< \private **/
+    bool _stream_buff_allocated; /**< \private **/
 
     size_t _read_size; /**< \private **/
-    int _read_req_end; /**< \private **/
+    bool _read_req_end; /**< \private **/
 
     /* Response header buffer */
     char* _resp_header_buff; /**< \private **/
     size_t _resp_header_buff_size; /**< \private **/
-    int _resp_header_buff_allocated; /**< \private **/
+    bool _resp_header_buff_allocated; /**< \private **/
 
     size_t _resp_header_read_size; /**< \private **/
 
-    int _status_code; /**< \private **/
+    uint16_t _status_code; /**< \private **/
     /* Pointer to the double CRLF boundary in the resp_header_buffer */
     char* _body_boundary; /**< \private **/
 
@@ -306,11 +308,11 @@ typedef struct khc {
 
     char* _body_fragment; /**< \private **/
     size_t _body_fragment_size; /**< \private **/
-    int _chunked_resp; /**< \private **/
+    bool _chunked_resp; /**< \private **/
     size_t _chunk_size; /**< \private **/
     size_t _chunk_size_written; /**< \private **/
     size_t _resp_content_length; /**< \private **/
-    int _read_end; /**< \private **/
+    bool _read_end; /**< \private **/
 
     size_t _body_read_size; /**< \private **/
 
@@ -318,7 +320,7 @@ typedef struct khc {
 
     khc_code _result; /**< \private **/
 
-    int _enable_insecure; /**< \private **/
+    bool _enable_insecure; /**< \private **/
 } khc;
 
 /**
@@ -544,19 +546,20 @@ khc_code khc_set_cb_header(
  * By default, khc uses secure connection.
  * If you need to use tcp instead of ssl/tls, you need to call this method.
  * \param [out] khc instance.
- * \param [in] enable_insecure non-zero indicates enabling insecure connection.
+ * \param [in] enable_insecure true for an insecure connection, false (the default) for a secure one.
  */
 void khc_enable_insecure(
         khc* khc,
-        int enable_insecure);
+        bool enable_insecure);
 
 /**
  * \brief Get HTTP status code.
  *
  * \param [in] khc instance.
- * \returns HTTP status code.
+ * \returns the three-digit HTTP status code of the response, or 0 if none
+ * has been parsed since khc_init(khc*) or khc_reset_except_cb(khc*).
  */
-int khc_get_status_code(
+uint16_t khc_get_status_code(
         khc* khc
 );
 
@@ -564,9 +567,9 @@ int khc_get_status_code(
  * \brief Check if the configured request method can have a request body.
  *
  * \param [in] khc instance.
- * \returns 0 if it cannot, 1 if it can.
+ * \returns true if it can, false if it cannot.
  */
-int khc_method_can_have_body(khc* khc);
+bool khc_method_can_have_body(khc* khc);
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC visibility pop

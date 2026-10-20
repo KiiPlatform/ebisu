@@ -11,7 +11,7 @@
 khc_sock_code_t sock_cb_connect(
         void* socket_context,
         const char* host,
-        unsigned int port)
+        uint16_t port)
 {
     unsigned long destinationIP;
     SlSockAddrIn_t  addr;
@@ -23,7 +23,7 @@ khc_sock_code_t sock_cb_connect(
     }
     memset(&addr, 0x00, sizeof(struct SlSockAddrIn_t));
     addr.sin_family = SL_AF_INET;
-    unsigned int port_ = port;
+    uint16_t port_ = port;
     if (port == 443) {
         port_ = 80;
     }

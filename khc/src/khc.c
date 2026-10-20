@@ -27,22 +27,22 @@ khc_code khc_perform(khc* khc) {
             return  KHC_ERR_ALLOCATION;
         }
         khc->_resp_header_buff = buff;
-        khc->_resp_header_buff_allocated = 1;
+        khc->_resp_header_buff_allocated = true;
         khc->_resp_header_buff_size = DEFAULT_RESP_HEADER_BUFF_SIZE;
     }
     if (khc->_stream_buff == NULL) {
         char* buff = malloc(DEFAULT_STREAM_BUFF_SIZE);
         if (buff == NULL) {
-            if (khc->_resp_header_buff_allocated == 1) {
+            if (khc->_resp_header_buff_allocated) {
                 free(khc->_resp_header_buff);
                 khc->_resp_header_buff = NULL;
                 khc->_resp_header_buff_size = 0;
-                khc->_resp_header_buff_allocated = 0;
+                khc->_resp_header_buff_allocated = false;
             }
             return KHC_ERR_ALLOCATION;
         }
         khc->_stream_buff = buff;
-        khc->_stream_buff_allocated = 1;
+        khc->_stream_buff_allocated = true;
         khc->_stream_buff_size = DEFAULT_STREAM_BUFF_SIZE;
     }
 
@@ -51,17 +51,17 @@ khc_code khc_perform(khc* khc) {
     }
 
     // free the allocated resource
-    if (khc->_stream_buff_allocated == 1) {
+    if (khc->_stream_buff_allocated) {
         free(khc->_stream_buff);
         khc->_stream_buff = NULL;
         khc->_stream_buff_size = 0;
-        khc->_stream_buff_allocated = 0;
+        khc->_stream_buff_allocated = false;
     }
-    if (khc->_resp_header_buff_allocated == 1) {
+    if (khc->_resp_header_buff_allocated) {
         free(khc->_resp_header_buff);
         khc->_resp_header_buff = NULL;
         khc->_resp_header_buff_size = 0;
-        khc->_resp_header_buff_allocated = 0;
+        khc->_resp_header_buff_allocated = false;
     }
 
     khc_code res = khc->_result;
@@ -95,7 +95,7 @@ void khc_init(khc* khc) {
     khc->_sock_ctx_close = NULL;
 
     // User settings.
-    khc->_enable_insecure = 0;
+    khc->_enable_insecure = false;
 
     khc_reset_except_cb(khc);
 }
@@ -110,7 +110,7 @@ void khc_reset_except_cb(khc* khc) {
     khc->_state = KHC_STATE_IDLE;
     khc->_current_req_header = NULL;
     khc->_read_size = 0;
-    khc->_read_req_end = 0;
+    khc->_read_req_end = false;
     khc->_resp_header_read_size = 0;
     khc->_status_code =0;
     khc->_body_boundary = NULL;
@@ -118,11 +118,11 @@ void khc_reset_except_cb(khc* khc) {
     khc->_cb_header_remaining_size = 0;
     khc->_body_fragment = NULL;
     khc->_body_fragment_size = 0;
-    khc->_chunked_resp = 0;
+    khc->_chunked_resp = false;
     khc->_chunk_size = 0;
     khc->_chunk_size_written = 0;
     khc->_resp_content_length = 0;
-    khc->_read_end = 0;
+    khc->_read_end = false;
     khc->_body_read_size = 0;
     khc->_result = KHC_ERR_OK;
     khc->_sent_length = 0;
@@ -130,20 +130,20 @@ void khc_reset_except_cb(khc* khc) {
     // Response header Buffer
     khc->_resp_header_buff = NULL;
     khc->_resp_header_buff_size = 0;
-    khc->_resp_header_buff_allocated = 0;
+    khc->_resp_header_buff_allocated = false;
     // Stream Buffer
     khc->_stream_buff = NULL;
     khc->_stream_buff_size = 0;
-    khc->_stream_buff_allocated = 0;
+    khc->_stream_buff_allocated = false;
 }
 
 void khc_enable_insecure(
         khc* khc,
-        int enable_insecure) {
+        bool enable_insecure) {
     khc->_enable_insecure = enable_insecure;
 }
 
-int khc_get_status_code(
+uint16_t khc_get_status_code(
         khc* khc
 ) {
     return khc->_status_code;

@@ -5,7 +5,7 @@ namespace khct {
 namespace cb {
 
 struct SockCtx {
-    std::function<khc_sock_code_t(void* socket_context, const char* host, unsigned int port)> on_connect;
+    std::function<khc_sock_code_t(void* socket_context, const char* host, uint16_t port)> on_connect;
     std::function<khc_sock_code_t(void* socket_context, const char* buffer, size_t length, size_t* out_sent_length)> on_send;
     std::function<khc_sock_code_t(void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length)> on_recv;
     std::function<khc_sock_code_t(void* socket_context)> on_close;
@@ -17,7 +17,7 @@ struct IOCtx {
     std::function<size_t(char *buffer, size_t size, void *userdata)> on_write;
 };
 
-inline khc_sock_code_t mock_connect(void* socket_context, const char* host, unsigned int port) {
+inline khc_sock_code_t mock_connect(void* socket_context, const char* host, uint16_t port) {
     SockCtx* ctx = (SockCtx*)socket_context;
     return ctx->on_connect(socket_context, host, port);
 }
