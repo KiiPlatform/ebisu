@@ -5,6 +5,7 @@
 
 #include <sstream>
 #include <string>
+#include <stdint.h>
 #include <string.h>
 
 TEST_CASE( "Simple test" ) {
@@ -82,4 +83,95 @@ TEST_CASE( "Over-long app id and site are truncated and stay terminated" ) {
     // Something that fits is copied whole.
     kii_set_app_id(&kii, "dummyAppID");
     REQUIRE( std::string(kii._app_id) == "dummyAppID" );
+}
+
+static bool points_into(const char* p, const char* buff, size_t buff_size) {
+    uintptr_t addr = (uintptr_t)p;
+    uintptr_t begin = (uintptr_t)buff;
+    return begin <= addr && addr < begin + buff_size;
+}
+
+// kii_set_stream_buff and kii_set_resp_header_buff used to hand the buffers
+// straight to khc, but every kii API begins by resetting khc, which clears
+// them. No request ever used them: khc allocated its defaults every time.
+TEST_CASE( "Stream and response header buffers are used by every request" ) {
+    kii_t kii;
+    kii_init(&kii);
+    char kii_buff[1024];
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_site(&kii, "api.kii.com");
+    strcpy(kii._author.author_id, "thingID");
+    strcpy(kii._author.access_token, "token");
+
+    char stream_buff[512];
+    char resp_header_buff[256];
+    kii_set_stream_buff(&kii, stream_buff, sizeof(stream_buff));
+    kii_set_resp_header_buff(&kii, resp_header_buff, sizeof(resp_header_buff));
+
+    // Where khc asks the socket to read into: the response header buffer for
+    // the status line and headers, the stream buffer for the body. Anywhere
+    // else can only be a default khc allocated itself.
+    int recv_into_header = 0;
+    int recv_into_stream = 0;
+    int recv_elsewhere = 0;
+    size_t resp_pos = 0;
+    const std::string resp = "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n{}";
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&resp_pos](void*, const char*, unsigned int) {
+        resp_pos = 0;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_recv = [&](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        if (points_into(buffer, resp_header_buff, sizeof(resp_header_buff))) {
+            ++recv_into_header;
+        } else if (points_into(buffer, stream_buff, sizeof(stream_buff))) {
+            ++recv_into_stream;
+        } else {
+            ++recv_elsewhere;
+        }
+        size_t n = resp.size() - resp_pos;
+        if (n > length_to_read) { n = length_to_read; }
+        memcpy(buffer, resp.data() + resp_pos, n);
+        resp_pos += n;
+        *out_actual_length = n;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
+    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
+    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+
+    // Two different APIs, each of which resets khc before its request.
+    REQUIRE( kii_api_call_start(&kii, "POST", "/api/apps/dummyAppID/echo",
+                "application/json", KII_TRUE) == KII_ERR_OK );
+    const char body[] = "{\"key\":\"value\"}";
+    REQUIRE( kii_api_call_append_body(&kii, body, strlen(body)) == KII_ERR_OK );
+    REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
+    REQUIRE( kii_get_resp_status(&kii) == 200 );
+    REQUIRE( recv_into_header > 0 );
+    REQUIRE( recv_into_stream > 0 );
+    REQUIRE( recv_elsewhere == 0 );
+
+    recv_into_header = 0;
+    recv_into_stream = 0;
+    kii_bucket_t bucket = { KII_SCOPE_THING, "thingID", "bucket" };
+    REQUIRE( kii_get_object(&kii, &bucket, "objectID") == KII_ERR_OK );
+    REQUIRE( recv_into_header > 0 );
+    REQUIRE( recv_into_stream > 0 );
+    REQUIRE( recv_elsewhere == 0 );
+
+    // NULL hands the stream buffer back to khc's allocated default.
+    kii_set_stream_buff(&kii, NULL, 0);
+    recv_into_header = 0;
+    recv_into_stream = 0;
+    REQUIRE( kii_get_object(&kii, &bucket, "objectID") == KII_ERR_OK );
+    REQUIRE( recv_into_header > 0 );
+    REQUIRE( recv_into_stream == 0 );
+    REQUIRE( recv_elsewhere > 0 );
 }

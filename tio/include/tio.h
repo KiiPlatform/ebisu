@@ -320,7 +320,9 @@ void tio_handler_set_http_buff(tio_handler_t* handler, char* buff, size_t buff_s
  * as it consists of HEX size and CRLF for the better performance.
 
  * If you set the buffer by the method, the method must be called before tio_handler_start().
- * and memory used by the buffer can be safely freed after you've terminated tio_handler task.
+ * The buffer is used by every HTTP session tio_handler initiates, so memory used by the buffer
+ * must stay valid, and must not be used for anything else (such as a tio_updater_t),
+ * until you've terminated tio_handler task.
 
  * \param [out] handler tio_handler_t instance.
  * \param [in] buff pointer to the buffer.
@@ -340,8 +342,10 @@ void tio_handler_set_stream_buff(tio_handler_t* handler, char* buff, size_t buff
  * If header is larger than the buffer, the header is skipped and not parsed.
  * tio_handler needs to parse Status Line, Content-Length and Transfer-Encoding header.
  * The buffer must have enough size to store those headers. 256 bytes would be enough.
- * If you set the buffer by the method, the method must be called before calling tio_handler_start()
- * and memory used by the buffer can be safely freed after you've terminated tio_handler task.
+ * If you set the buffer by the method, the method must be called before calling tio_handler_start().
+ * The buffer is used by every HTTP session tio_handler initiates, so memory used by the buffer
+ * must stay valid, and must not be used for anything else (such as a tio_updater_t),
+ * until you've terminated tio_handler task.
 
  * \param [out] handler tio_handler_t instance.
  * \param [in] buff pointer to the buffer.
@@ -914,7 +918,9 @@ void tio_updater_set_buff(tio_updater_t* updater, char* buff, size_t buff_size);
  * as it consists of HEX size and CRLF for the better performance.
 
  * If you set the buffer by the method, the method must be called before tio_updater_start().
- * and memory used by the buffer can be safely freed after you've terminated tio_updater task.
+ * The buffer is used by every HTTP session tio_updater initiates, so memory used by the buffer
+ * must stay valid, and must not be used for anything else (such as a tio_handler_t),
+ * until you've terminated tio_updater task.
 
  * \param [out] updater tio_updater_t instance.
  * \param [in] buff pointer to the buffer.
@@ -934,8 +940,10 @@ void tio_updater_set_stream_buff(tio_updater_t* updater, char* buff, size_t buff
  * If header is larger than the buffer, the header is skipped and not parsed.
  * tio_handler needs to parse Status Line, Content-Length and Transfer-Encoding header.
  * The buffer must have enough size to store those headers. 256 bytes would be enough.
- * If you set the buffer by the method, the method must be called before calling tio_updater_start()
- * and memory used by the buffer can be safely freed after you've terminated tio_updater task.
+ * If you set the buffer by the method, the method must be called before calling tio_updater_start().
+ * The buffer is used by every HTTP session tio_updater initiates, so memory used by the buffer
+ * must stay valid, and must not be used for anything else (such as a tio_handler_t),
+ * until you've terminated tio_updater task.
 
  * \param [out] updater tio_updater_t instance.
  * \param [in] buff pointer to the buffer.

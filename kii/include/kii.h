@@ -258,6 +258,11 @@ typedef struct kii_t {
     size_t _rw_buff_read; /**< \private */
     size_t _rw_buff_written; /**< \private */
 
+    char* _stream_buff; /**< \private */
+    size_t _stream_buff_size; /**< \private */
+    char* _resp_header_buff; /**< \private */
+    size_t _resp_header_buff_size; /**< \private */
+
     khc_slist* _req_headers; /**< \private */
 
     char _etag[KII_ETAG_MAX_SIZE]; /**< \private */
@@ -896,9 +901,11 @@ void kii_set_buff(kii_t* kii, char* buff, size_t buff_size);
  * However, you may use much larger buffer since size line might require very small buffer
  * as it consists of HEX size and CRLF for the better performance.
 
- * If you set the buffer by the method, the method must be called before calling method initiate HTTP session
- * such as kii_auth_thing(), kii_post_object(), etc.
- * and memory used by the buffer can be safely freed after the method returned.
+ * If you set the buffer by the method, it is used by every HTTP session initiated afterwards
+ * by methods such as kii_auth_thing(), kii_post_object(), etc., until the method is called again.
+ * Memory used by the buffer must therefore stay valid, and must not be used for anything else,
+ * as long as the kii_t instance is in use.
+ * To release it earlier, call the method with NULL first.
 
  * \param [out] kii kii_t instance.
  * \param [in] buff Pointer to the buffer.
@@ -918,9 +925,11 @@ void kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size);
  * If header is larger than the buffer, the header is skipped and not parsed.
  * kii needs to parse Status Line, Content-Length, Transfer-Encoding and ETag header.
  * The buffer must have enough size to store those headers. 256 bytes would be enough.
- * If you set the buffer by the method, the method must be called before calling method initiate HTTP session
- * such as kii_auth_thing(), kii_post_object(), etc.
- * and memory used by the buffer can be safely freed after the method returned.
+ * If you set the buffer by the method, it is used by every HTTP session initiated afterwards
+ * by methods such as kii_auth_thing(), kii_post_object(), etc., until the method is called again.
+ * Memory used by the buffer must therefore stay valid, and must not be used for anything else,
+ * as long as the kii_t instance is in use.
+ * To release it earlier, call the method with NULL first.
 
  * \param [out] kii kii_t instance.
  * \param [in] buff Pointer to the buffer.
