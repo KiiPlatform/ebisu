@@ -15,4 +15,8 @@ add_executable(exampleapp
 target_include_directories(exampleapp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(exampleapp
     PRIVATE tio OpenSSL::SSL OpenSSL::Crypto Threads::Threads)
-ebisu_configure_target(exampleapp)
+# gnu11 rather than the libraries' strict C99: the sample is an application
+# and not part of them. It uses <stdatomic.h>, which is C11, and POSIX --
+# sigaction, usleep, hostent's h_addr -- which glibc declares only with GNU
+# extensions on.
+ebisu_configure_target(exampleapp C_STANDARD 11)

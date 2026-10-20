@@ -21,6 +21,8 @@ option(TIO_TRACE "Trace TIO activity to stdout" ON)
 # Turn this off rather than patching the source: -DEBISU_WERROR=OFF.
 option(EBISU_WERROR "Treat compiler warnings as errors" ON)
 
+# ebisu_configure_target(<target> [C_STANDARD <version>])
+#
 # Applies the settings every Ebisu target shares.
 #
 # Deliberately per-target rather than assigning CMAKE_C_FLAGS: that variable
@@ -28,8 +30,44 @@ option(EBISU_WERROR "Treat compiler warnings as errors" ON)
 # toolchain file, the packager, or the developer had put there, and its
 # _RELEASE form replaced CMake's "-O3 -DNDEBUG" with a bare "-O2", so NDEBUG
 # was never defined in a release build.
+#
+# The libraries are ISO C99 and nothing else: -std=c99, not gnu99, and
+# -pedantic-errors. They are built by vendor SDKs for embedded toolchains, some
+# of them old, so a C11 feature, a GNU extension or a POSIX function that slips
+# in here breaks somebody else's build rather than ours. This used to be
+# target_compile_features(c_std_99), which is only a minimum: CMake adds no flag
+# at all when the compiler's default already satisfies it, so the libraries
+# were compiled as gnu17 by GCC 13 and as gnu23 by GCC 15, which accept all
+# three without a word. Without extensions glibc and newlib also stop declaring
+# what ISO C does not have, such as strdup or strncasecmp, so a POSIX dependency
+# fails the build too.
+#
+# C_STANDARD is for the linux sample, which is an application and not part of
+# the libraries: it gets the standard it names, with GNU extensions, and
+# without -pedantic.
 function(ebisu_configure_target tgt)
-  target_compile_features(${tgt} PRIVATE c_std_99)
+  cmake_parse_arguments(PARSE_ARGV 1 arg "" "C_STANDARD" "")
+  if(arg_C_STANDARD)
+    set_target_properties(${tgt} PROPERTIES
+      C_STANDARD ${arg_C_STANDARD}
+      C_STANDARD_REQUIRED ON
+      C_EXTENSIONS ON)
+  else()
+    set_target_properties(${tgt} PROPERTIES
+      C_STANDARD 99
+      C_STANDARD_REQUIRED ON
+      C_EXTENSIONS OFF)
+    # Under EBISU_WERROR like any other warning, so that turning it off is
+    # still enough to get past a diagnostic a newer compiler has added.
+    if(EBISU_WERROR)
+      set(pedantic -pedantic-errors)
+    else()
+      set(pedantic -pedantic)
+    endif()
+    # C only, should a C++ source ever be built under these settings.
+    target_compile_options(${tgt} PRIVATE
+      $<$<AND:$<COMPILE_LANGUAGE:C>,$<C_COMPILER_ID:GNU,Clang,AppleClang>>:${pedantic}>)
+  endif()
   target_compile_options(${tgt} PRIVATE
     $<$<C_COMPILER_ID:GNU,Clang,AppleClang>:-Wall>
     $<$<AND:$<BOOL:${EBISU_WERROR}>,$<C_COMPILER_ID:GNU,Clang,AppleClang>>:-Werror>)
