@@ -351,6 +351,9 @@ Functions</h2></td></tr>
 <tr class="memitem:adb8c2b15d4e488d36eabaa91cba61b6f" id="r_adb8c2b15d4e488d36eabaa91cba61b6f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#adb8c2b15d4e488d36eabaa91cba61b6f">kii_delete_topic</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const <a class="el" href="structkii__topic__t.html">kii_topic_t</a> *topic)</td></tr>
 <tr class="memdesc:adb8c2b15d4e488d36eabaa91cba61b6f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Delete topic.  <br /></td></tr>
 <tr class="separator:adb8c2b15d4e488d36eabaa91cba61b6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa2fe483ab00cc33999be60b8edfbc1a6" id="r_aa2fe483ab00cc33999be60b8edfbc1a6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#aa2fe483ab00cc33999be60b8edfbc1a6">kii_send_push_message</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const <a class="el" href="structkii__topic__t.html">kii_topic_t</a> *topic, const char *message)</td></tr>
+<tr class="memdesc:aa2fe483ab00cc33999be60b8edfbc1a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Send a push message to a topic.  <br /></td></tr>
+<tr class="separator:aa2fe483ab00cc33999be60b8edfbc1a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a53495a9269f8822e7f6e519ebb40d2f3" id="r_a53495a9269f8822e7f6e519ebb40d2f3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a53495a9269f8822e7f6e519ebb40d2f3">kii_install_push</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">kii_bool_t</a> development, <a class="el" href="structkii__installation__id__t.html">kii_installation_id_t</a> *out_installation_id)</td></tr>
 <tr class="memdesc:a53495a9269f8822e7f6e519ebb40d2f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Install push notification.  <br /></td></tr>
 <tr class="separator:a53495a9269f8822e7f6e519ebb40d2f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1858,6 +1861,53 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>kii_code_t. </dd></dl>
+
+</div>
+</div>
+<a id="aa2fe483ab00cc33999be60b8edfbc1a6" name="aa2fe483ab00cc33999be60b8edfbc1a6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa2fe483ab00cc33999be60b8edfbc1a6">&#9670;&#160;</a></span>kii_send_push_message()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a> kii_send_push_message </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
+          <td class="paramname"><em>kii</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structkii__topic__t.html">kii_topic_t</a> *&#160;</td>
+          <td class="paramname"><em>topic</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>message</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Send a push message to a topic. </p>
+<p>Kii Cloud sends the message to the installations of every thing and user subscribed to the topic, the sender included. A thing's MQTT installation receives it through the callback given to <a class="el" href="kii_8h.html#ad3242ecc51a7aa640eb1ca7786a4a149" title="Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push ...">kii_start_push_task()</a>. The message is sent asynchronously: success means Kii Cloud accepted it, not that it has been delivered.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">topic</td><td>Specify the topic to send the message to. The author needs permission to send messages to it. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">message</td><td>The request body, a JSON object of type application/vnd.kii.SendPushMessageRequest+json, sent as it is. "data" is the message itself, a JSON object without nested objects or arrays, and at least one push network has to be enabled. An MQTT installation receives a message such as: <div class="fragment"><div class="line">{<span class="stringliteral">&quot;data&quot;</span>:{<span class="stringliteral">&quot;key&quot;</span>:<span class="stringliteral">&quot;value&quot;</span>},<span class="stringliteral">&quot;mqtt&quot;</span>:{<span class="stringliteral">&quot;enabled&quot;</span>:<span class="keyword">true</span>}}</div>
+</div><!-- fragment --> Kii Cloud's REST API reference describes the other fields. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>kii_code_t. KII_ERR_TOO_LARGE_DATA if the message does not fit in the buffer set by <a class="el" href="kii_8h.html#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a>, and KII_ERR_RESP_STATUS if Kii Cloud refuses it, as with 400 for a message it takes as invalid or 404 for a topic that does not exist; <a class="elRef" href="../../khc/html/khc_8h.html#a566621dab015c69cb57dd1de88241c2a">khc_get_status_code()</a> gives the status. </dd></dl>
 
 </div>
 </div>
@@ -3657,7 +3707,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 13:51:00 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 20 2026 14:54:04 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
