@@ -209,3 +209,19 @@ TEST_CASE("KiiJson, PrimitiveLongerThanLiteralDoesNotOverread")
     REQUIRE(JKII_PRIMITIVE_ERR_INVALID ==
             jkii_parse_primitive(truthy, strlen(truthy), &res));
 }
+
+// tio parses the values of command actions with this. A number needs digits.
+// "-" and "" asserted on BSD and macOS, where strtol sets EINVAL when it
+// converts nothing, and elsewhere "" came back as the integer 0. "1e" came
+// back as the double 1 everywhere.
+TEST_CASE("KiiJson, PrimitiveNumberWithoutDigitsIsInvalid")
+{
+    const char* const values[] = { "", "-", "+", ".", "-.", "1e", "1e+", "-1E-" };
+
+    for (const char* value : values) {
+        INFO("value \"" << value << "\"");
+        jkii_primitive_t res;
+        CHECK(JKII_PRIMITIVE_ERR_INVALID ==
+                jkii_parse_primitive(value, strlen(value), &res));
+    }
+}

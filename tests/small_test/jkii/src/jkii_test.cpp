@@ -243,6 +243,92 @@ TEST_CASE("KiiJson, GetObjectNegativeEDoubleByName") {
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
 }
 
+// Parses {"key1" : value}, asking for key1 as the given type.
+static jkii_parse_err_t parse_number_by_name(
+        const char* value,
+        jkii_field_type_t type,
+        jkii_field_t* out_field)
+{
+    char json_string[64];
+    snprintf(json_string, sizeof(json_string), "{\"key1\" : %s}", value);
+
+    jkii_token_t tokens[8];
+    jkii_resource_t resource = { tokens, 8 };
+
+    jkii_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
+
+    fields[0].name = "key1";
+    fields[0].type = type;
+    fields[1].name = NULL;
+
+    jkii_parse_err_t res = jkii_parse(
+            json_string,
+            strlen(json_string),
+            fields,
+            &resource);
+    *out_field = fields[0];
+    return res;
+}
+
+// A sign, a point or an exponent marker without the digits that go with it is
+// not a number, but jsmn passes any primitive through, so one can arrive in a
+// command or a response. "-" passes jkii's type check as an integer and "1e"
+// as a double, so they reach strtol and strtod, which convert nothing of "-"
+// and only the "1" of "1e". Whether strtol reports that in errno is left to
+// the libc: glibc does not, BSD and macOS set EINVAL, which jkii asserted
+// against. "1e" was read as 1 and reported as parsed, on every libc.
+TEST_CASE("KiiJson, GetObjectNumberWithoutDigitsByName") {
+    const char* const values[] = { "-", "+", ".", "-.", "1e", "1e+", "-1E-" };
+    const jkii_field_type_t types[] = {
+        JKII_FIELD_TYPE_INTEGER,
+        JKII_FIELD_TYPE_LONG,
+        JKII_FIELD_TYPE_DOUBLE
+    };
+
+    for (const char* value : values) {
+        for (jkii_field_type_t type : types) {
+            INFO("value " << value << ", type " << type);
+            jkii_field_t field;
+            jkii_parse_err_t res = parse_number_by_name(value, type, &field);
+            // Either the input is refused, or this field is reported failed.
+            if (res != JKII_ERR_INVALID_INPUT) {
+                CHECK(JKII_ERR_PARTIAL == res);
+                CHECK(JKII_FIELD_ERR_OK != field.result);
+            }
+        }
+    }
+}
+
+// Their neighbours that do have digits still parse.
+TEST_CASE("KiiJson, GetObjectNumberWithDigitsByName") {
+    jkii_field_t field;
+
+    REQUIRE(JKII_ERR_OK ==
+            parse_number_by_name("-1", JKII_FIELD_TYPE_INTEGER, &field));
+    REQUIRE(-1 == field.field_copy.int_value);
+
+    REQUIRE(JKII_ERR_OK ==
+            parse_number_by_name("-0", JKII_FIELD_TYPE_LONG, &field));
+    REQUIRE(0 == field.field_copy.long_value);
+
+    REQUIRE(JKII_ERR_OK ==
+            parse_number_by_name("1e1", JKII_FIELD_TYPE_DOUBLE, &field));
+    REQUIRE(10.0 == field.field_copy.double_value);
+
+    REQUIRE(JKII_ERR_OK ==
+            parse_number_by_name("1e+1", JKII_FIELD_TYPE_DOUBLE, &field));
+    REQUIRE(10.0 == field.field_copy.double_value);
+
+    REQUIRE(JKII_ERR_OK ==
+            parse_number_by_name("-1E-1", JKII_FIELD_TYPE_DOUBLE, &field));
+    REQUIRE(0.0001 >= fabs(field.field_copy.double_value + 0.1));
+
+    REQUIRE(JKII_ERR_OK ==
+            parse_number_by_name("-0.5", JKII_FIELD_TYPE_DOUBLE, &field));
+    REQUIRE(-0.5 == field.field_copy.double_value);
+}
+
 TEST_CASE("KiiJson, GetObjectTrueByName") {
     const char json_string[] = "{\"key1\" : true}";
 
@@ -1174,6 +1260,36 @@ TEST_CASE("KiiJson, GetArrayFalse") {
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(JKII_FALSE == fields[0].field_copy.boolean_value);
+}
+
+// An index in a path goes through strtol as well. Without digits it converts
+// nothing, which asserted on BSD and macOS. Elsewhere "/[]", which hands
+// strtol an empty string and so leaves nothing over, found element 0.
+TEST_CASE("KiiJson, GetArrayIndexWithoutDigits") {
+    const char json_string[] = "[10]";
+    const char* const paths[] = { "/[]", "/[-]" };
+
+    for (const char* path : paths) {
+        INFO("path " << path);
+
+        jkii_token_t tokens[8];
+        jkii_resource_t resource = { tokens, 8 };
+
+        jkii_field_t fields[2];
+        memset(fields, 0x00, sizeof(fields));
+
+        fields[0].path = path;
+        fields[0].type = JKII_FIELD_TYPE_INTEGER;
+        fields[1].name = NULL;
+
+        jkii_parse_err_t res = jkii_parse(
+                json_string,
+                strlen(json_string),
+                fields,
+                &resource);
+        CHECK(JKII_ERR_PARTIAL == res);
+        CHECK(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
+    }
 }
 
 TEST_CASE("KiiJson, GetComplexObject") {
