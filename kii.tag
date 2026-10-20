@@ -584,6 +584,13 @@
     </member>
     <member kind="function">
       <type>kii_code_t</type>
+      <name>kii_send_push_message_to_thing</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a4182c91dc4803a44e54b3fe7aa9dc880</anchor>
+      <arglist>(kii_t *kii, const char *thing_id, const char *message)</arglist>
+    </member>
+    <member kind="function">
+      <type>kii_code_t</type>
       <name>kii_install_push</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a53495a9269f8822e7f6e519ebb40d2f3</anchor>
