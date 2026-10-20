@@ -539,3 +539,33 @@ TEST_CASE( "Header named like a prefix of Content-Length is not one" ) {
         CHECK( r.on_close_called == 1 );
     }
 }
+
+// A Transfer-Encoding whose final coding is not chunked leaves the body in a
+// coding khc cannot remove. The response fails as a header khc cannot handle,
+// once the header callback has seen the header and before any of the body is
+// written. A value with chunked anywhere in it used to turn on chunked decoding.
+TEST_CASE( "Transfer-Encoding not ending in chunked fails the response" ) {
+    const std::string values[] = { "gzip", "chunked, gzip", "chunkedX" };
+    for (const auto& value : values) {
+        INFO("value [" << value << "]");
+        ContentLengthResult r = perform_with_header("Transfer-Encoding: " + value);
+        CHECK( r.res == KHC_ERR_HEADER_CALLBACK );
+        CHECK( r.on_header_called == 2 );
+        CHECK( r.on_write_called == 0 );
+        CHECK( r.on_close_called == 1 );
+    }
+}
+
+// Only a header named Transfer-Encoding is one: a prefix of the name followed
+// by a colon used to turn on chunked decoding of a body that is not chunked.
+TEST_CASE( "Header named like a prefix of Transfer-Encoding is not one" ) {
+    const std::string headers[] = { "T: chunked", "Transfer: chunked", ": chunked" };
+    for (const auto& header : headers) {
+        INFO("header [" << header << "]");
+        ContentLengthResult r = perform_with_header(header);
+        CHECK( r.res == KHC_ERR_OK );
+        CHECK( r.on_header_called == 2 );
+        CHECK( r.on_write_called == 1 );
+        CHECK( r.on_close_called == 1 );
+    }
+}

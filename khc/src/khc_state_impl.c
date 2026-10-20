@@ -647,8 +647,13 @@ void khc_state_resp_header_callback(khc* khc) {
             return;
         }
 
-        if (_is_chunked_encoding(khc->_resp_header_buff, header_size) == 1) {
+        int chunked = _is_chunked_encoding(khc->_resp_header_buff, header_size);
+        if (chunked == 1) {
             khc->_chunked_resp = 1;
+        } else if (chunked == -1) { // Transfer coding khc cannot remove.
+            khc->_state = KHC_STATE_CLOSE;
+            khc->_result = KHC_ERR_HEADER_CALLBACK;
+            return;
         } else {
             int extracted = _extract_content_length(khc->_resp_header_buff, header_size, &content_length);
             if (extracted == 1) {
