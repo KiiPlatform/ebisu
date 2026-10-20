@@ -486,6 +486,26 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
     }
 }
 
+// Adds to the time elapsed since the last PINGREQ, stopping at UINT32_MAX
+// rather than wrapping round to a time at which no PINGREQ is due.
+static void _add_elapsed_ms(mqtt_state_t* state, uint32_t ms)
+{
+    if (ms > UINT32_MAX - state->elapsed_time_ms) {
+        state->elapsed_time_ms = UINT32_MAX;
+    } else {
+        state->elapsed_time_ms += ms;
+    }
+}
+
+// The receive timeout in milliseconds, or UINT32_MAX if it is longer than that.
+static uint32_t _to_recv_ms(const kii_t* kii)
+{
+    if (kii->_mqtt_to_recv_sec > UINT32_MAX / 1000) {
+        return UINT32_MAX;
+    }
+    return kii->_mqtt_to_recv_sec * 1000;
+}
+
 void _mqtt_state_recv_ready(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
@@ -513,10 +533,10 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
             state->remaining_message_size = fh.remaining_length;
             task_info->task_state = KII_MQTT_ST_RECV_MSG;
             // Estimate worst case.
-            state->elapsed_time_ms += kii->_mqtt_to_recv_sec * 1000;
+            _add_elapsed_ms(state, _to_recv_ms(kii));
         } else if (mtype == 0xD0) { // PINGRESP
             state->pingresp_received = KII_TRUE;
-            state->elapsed_time_ms += ARRIVED_MSG_READ_TIME;
+            _add_elapsed_ms(state, ARRIVED_MSG_READ_TIME);
         } else { // Ignore other messages.
             unsigned long size = fh.remaining_length;
             // Read and ignore.
@@ -529,7 +549,8 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
         }
     } else {
         // Just repeat same state after the wait.
-        state->elapsed_time_ms += kii->_mqtt_to_recv_sec * 1000 + WAIT_MS;
+        _add_elapsed_ms(state, _to_recv_ms(kii));
+        _add_elapsed_ms(state, WAIT_MS);
         kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
     }
 }
@@ -547,7 +568,7 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
             kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
             task_info->task_state = KII_MQTT_ST_RECONNECT;
         } else {
-            state->elapsed_time_ms += ARRIVED_MSG_READ_TIME + WAIT_MS;
+            _add_elapsed_ms(state, ARRIVED_MSG_READ_TIME + WAIT_MS);
             kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
             task_info->task_state = KII_MQTT_ST_RECV_READY;
         }
@@ -559,7 +580,7 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
             kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
             task_info->task_state = KII_MQTT_ST_RECONNECT;
         } else {
-            state->elapsed_time_ms += ARRIVED_MSG_READ_TIME;
+            _add_elapsed_ms(state, ARRIVED_MSG_READ_TIME);
             // 2 bytes: topic size. packet identifier is not present since QoS0
             // The topic size comes from the message: read its bytes unsigned,
             // as char may be signed, and check the topic fits before taking the
