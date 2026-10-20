@@ -34,8 +34,8 @@ typedef enum jkii_primitive_err_t
  */
 typedef struct jkii_primitive_t {
     union {
-        int int_value; /**< \brief Valid when #type is JKII_FIELD_TYPE_INTEGER. */
-        long long_value; /**< \brief Valid when #type is JKII_FIELD_TYPE_LONG. */
+        int32_t int_value; /**< \brief Valid when #type is JKII_FIELD_TYPE_INTEGER. */
+        int64_t long_value; /**< \brief Valid when #type is JKII_FIELD_TYPE_LONG. */
         double double_value; /**< \brief Valid when #type is JKII_FIELD_TYPE_DOUBLE. */
         jkii_boolean_t boolean_value; /**< \brief Valid when #type is JKII_FIELD_TYPE_BOOLEAN. */
     } value; /**< \brief The value. Which member is valid is given by #type. */
@@ -43,6 +43,11 @@ typedef struct jkii_primitive_t {
      *
      * JKII_FIELD_TYPE_NULL indicates the JSON literal null, in which case no
      * member of #value is set.
+     *
+     * An integer is JKII_FIELD_TYPE_INTEGER if it fits in an int32_t and
+     * JKII_FIELD_TYPE_LONG if it fits only in an int64_t, whatever the
+     * widths of int and long. One that fits in neither is reported as
+     * JKII_PRIMITIVE_ERR_OVERFLOW or JKII_PRIMITIVE_ERR_UNDERFLOW.
      */
     jkii_field_type_t type;
 } jkii_primitive_t;

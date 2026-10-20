@@ -1,6 +1,8 @@
 #ifndef __tio__
 #define __tio__
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -60,7 +62,7 @@ typedef enum tio_code_t {
 typedef enum tio_data_type_t {
     TIO_TYPE_NULL, /**< \brief NULL type. */
     TIO_TYPE_BOOLEAN, /**< \brief Boolean type. */
-    TIO_TYPE_INTEGER, /**< \brief Integer type. */
+    TIO_TYPE_INTEGER, /**< \brief Integer type, held as an int64_t. */
     TIO_TYPE_DOUBLE, /**< \brief Double type. */
     TIO_TYPE_STRING, /**< \brief String type. */
     TIO_TYPE_OBJECT, /**< \brief Object type. */
@@ -73,7 +75,9 @@ typedef enum tio_data_type_t {
 typedef struct tio_action_value_t {
     tio_data_type_t type; /**< \brief Data type of the value. */
     union {
-        long long_value; /**< Value stored when type is TIO_TYPE_INTEGER */
+        int64_t long_value; /**< Value stored when type is TIO_TYPE_INTEGER:
+                              * any JSON integer from INT64_MIN to INT64_MAX,
+                              * whatever the width of long. */
         double double_value; /**< Value stored when type is TIO_TYPE_DOUBLE */
         tio_bool_t bool_value; /**< Value stored when type is TIO_TYPE_BOOLEAN */
         const char *opaque_value; /**< Value stored when type is TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY */

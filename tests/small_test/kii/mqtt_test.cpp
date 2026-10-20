@@ -5,7 +5,9 @@
 #include "kii_mqtt_task.h"
 #include "test_callbacks.h"
 
+#include <limits.h>
 #include <sstream>
+#include <string>
 
 // A QoS 0 PUBLISH as the broker sends it: the fixed header, then the topic
 // length, the topic and the payload, with no packet identifier.
@@ -2229,4 +2231,116 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     REQUIRE( state.info.task_state == KII_MQTT_ST_SEND_CONNECT );
     REQUIRE( state.info.error == KII_MQTT_ERR_OK );
     REQUIRE( call_connect == 1 );
+}
+
+// A 200 response to the MQTT endpoint request with the given ports and TTL.
+static std::string mqtt_endpoint_response(
+        const std::string& port_tcp,
+        const std::string& port_ssl,
+        const std::string& ttl)
+{
+    const std::string body =
+        "{"
+        "\"installationID\" : \"dummyInstallationID\","
+        "\"username\" : \"dummyUser\","
+        "\"password\" : \"dummyPassword\","
+        "\"mqttTopic\" : \"dummyTopic\","
+        "\"host\" : \"jp-mqtt-dummy.kii.com\","
+        "\"portTCP\" : " + port_tcp + ","
+        "\"portSSL\" : " + port_ssl + ","
+        "\"X-MQTT-TTL\" : " + ttl +
+        "}";
+    return
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: application/vnd.kii.MQTTEndpointResponse+json;charset=UTF-8\r\n"
+        "Content-Length: " + std::to_string(body.length()) + "\r\n"
+        "Connection: Close\r\n"
+        "\r\n" + body;
+}
+
+// jkii reads the ports as int32_t and the TTL as int64_t, whatever the widths
+// of int and long, and kii keeps them as unsigned int and unsigned long. A
+// value that does not fit is a response kii cannot use, as one jkii cannot read
+// already was, rather than one to wrap around: a port of -1 became 4294967295.
+TEST_CASE( "MQTT endpoint values out of range" ) {
+    size_t kii_buff_size = 1024;
+    char kii_buff[kii_buff_size];
+    size_t mqtt_buff_size = 1024;
+    char mqtt_buff[kii_buff_size];
+    jkii_token_t jkii_tokens[256];
+    jkii_resource_t jkii_resource = {jkii_tokens, 256};
+
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, kii_buff_size);
+    kii_set_mqtt_buff(&kii, mqtt_buff, mqtt_buff_size);
+    kii_set_json_parser_resource(&kii, &jkii_resource);
+
+    khct::cb::SockCtx http_ctx;
+    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
+    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
+    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+    kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
+
+    http_ctx.on_connect = [](void* socket_context, const char* host, unsigned int port) {
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_send = [](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_close = [](void* socket_ctx) {
+        return KHC_SOCK_OK;
+    };
+
+    // Whether an unsigned long holds 4294967296.
+    const bool ulong_over_32_bits = ULONG_MAX > 4294967295UL;
+
+    const struct {
+        const char* port_tcp;
+        const char* port_ssl;
+        const char* ttl;
+        bool ok;
+    } cases[] = {
+        { "1883", "8883", "2147483647", true },
+        { "0", "65535", "0", true },
+        { "-1", "8883", "2147483647", false },
+        { "1883", "-1", "2147483647", false },
+        { "65536", "8883", "2147483647", false },
+        { "1883", "65536", "2147483647", false },
+        { "1883", "4294967297", "2147483647", false },
+        { "1883", "8883", "-1", false },
+        { "1883", "8883", "4294967296", ulong_over_32_bits },
+        { "1883", "8883", "9223372036854775808", false },
+    };
+
+    for (const auto& c : cases) {
+        INFO("portTCP " << c.port_tcp << ", portSSL " << c.port_ssl
+                << ", X-MQTT-TTL " << c.ttl);
+        std::stringstream ss;
+        ss << mqtt_endpoint_response(c.port_tcp, c.port_ssl, c.ttl);
+        http_ctx.on_recv = [&ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            *out_actual_length = ss.read(buffer, length_to_read).gcount();
+            return KHC_SOCK_OK;
+        };
+
+        mqtt_state_t state;
+        _init_mqtt_state(&kii, &state);
+        state.info.task_state = KII_MQTT_ST_GET_ENDPOINT;
+        strcpy(state.ins_id.id, "dummyInstallationID");
+        _mqtt_state_get_endpoint(&state);
+        if (c.ok) {
+            CHECK( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+            CHECK( state.info.error == KII_MQTT_ERR_OK );
+            CHECK( std::to_string(state.endpoint.port_tcp) == c.port_tcp );
+            CHECK( std::to_string(state.endpoint.port_ssl) == c.port_ssl );
+            CHECK( std::to_string(state.endpoint.ttl) == c.ttl );
+        } else {
+            CHECK( state.info.task_state == KII_MQTT_ST_ERR_EXIT );
+            CHECK( state.info.error == KII_MQTT_ERR_GET_ENDPOINT );
+        }
+    }
 }

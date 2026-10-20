@@ -5,6 +5,8 @@
 #ifndef JKII_H
 #define JKII_H
 
+#include <stdint.h>
+
 #define JSMN_HEADER
 #include <jsmn.h>
 /* The library is compiled with hidden visibility, so what this header declares
@@ -137,12 +139,12 @@ typedef enum jkii_field_type_t {
      */
     JKII_FIELD_TYPE_ANY,
 
-    /** This values denotes an signed interger value. Maximum is
-     * INT_MAX and Minimum is INT_MIN. */
+    /** This value denotes a signed integer held as an int32_t: from
+     * INT32_MIN to INT32_MAX, whatever the width of int. */
     JKII_FIELD_TYPE_INTEGER,
 
-    /** This values denotes an signed interger value. Maximum is
-     * LONG_MAX and Minimum is LONG_MIN. */
+    /** This value denotes a signed integer held as an int64_t: from
+     * INT64_MIN to INT64_MAX, whatever the width of long. */
     JKII_FIELD_TYPE_LONG,
 
     /** This value denotes an double value. */
@@ -264,6 +266,18 @@ typedef struct jkii_field_t {
      *     jkii_field_type_t#JKII_FIELD_TYPE_ANY, then
      *     jkii_field_t#result become
      *     jkii_parse_err_t#JKII_FIELD_ERR_OK.
+     *
+     * The actual type of an integer follows its value:
+     * jkii_field_type_t#JKII_FIELD_TYPE_INTEGER if it fits in an int32_t,
+     * jkii_field_type_t#JKII_FIELD_TYPE_LONG if it fits only in an int64_t.
+     * One that fits in neither is
+     * jkii_field_type_t#JKII_FIELD_TYPE_LONG with jkii_field_t#result
+     * jkii_field_err_t#JKII_FIELD_ERR_NUM_OVERFLOW or
+     * jkii_field_err_t#JKII_FIELD_ERR_NUM_UNDERFLOW. Expected as
+     * jkii_field_type_t#JKII_FIELD_TYPE_INTEGER or
+     * jkii_field_type_t#JKII_FIELD_TYPE_LONG, any integer matches, and one
+     * past the range of the expected type is reported as overflow or
+     * underflow.
      */
     jkii_field_type_t type;
 
@@ -297,17 +311,17 @@ typedef struct jkii_field_t {
         /** This value is used if jkii_field_t#type is
          * jkii_field_type_t#JKII_FIELD_TYPE_INTEGER. If
          * parsing target is overflowed, then this value is
-         * INT_MAX. If parsing is underflowed, then this value is
-         * INT_MIN.
+         * INT32_MAX. If parsing is underflowed, then this value is
+         * INT32_MIN.
          */
-        int int_value;
+        int32_t int_value;
 
         /** This value is used if jkii_field_t#type is
          * jkii_field_type_t#JKII_FIELD_TYPE_LONG. If parsing
-         * target is overflowed, then this value is LONG_MAX. If parsing
-         * is underflowed, then this value is LONG_MIN.
+         * target is overflowed, then this value is INT64_MAX. If parsing
+         * is underflowed, then this value is INT64_MIN.
          */
-        long long_value;
+        int64_t long_value;
 
         /** This value is used if jkii_field_t#type is
          * jkii_field_type_t#JKII_FIELD_TYPE_DOUBLE. If
