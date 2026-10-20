@@ -121,3 +121,13 @@ TEST_CASE( "tio_handler_start reports a task it could not create" ) {
         CHECK( tio_handler_start(&handler, &author, NULL, NULL) == TIO_ERR_CREATE_TASK );
     }
 }
+
+// tio_updater_init() leaves the task-create callback unset, and starting the
+// updater without one used to call through the null pointer.
+TEST_CASE( "tio_updater_start without a task-create callback" ) {
+    tio_updater_t updater;
+    tio_updater_init(&updater);
+    tio_author_t author = {};
+
+    REQUIRE( tio_updater_start(&updater, &author, NULL, NULL, NULL, NULL) == TIO_ERR_CREATE_TASK );
+}
