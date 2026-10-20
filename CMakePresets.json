@@ -33,12 +33,40 @@
         "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address,undefined",
         "CMAKE_SHARED_LINKER_FLAGS": "-fsanitize=address,undefined"
       }
+    },
+    {
+      "name": "debug-m32",
+      "inherits": "base",
+      "displayName": "Debug, 32-bit",
+      "description": "32-bit x86, where int and long are both 32 bits as on the ARM Cortex-M targets. Needs gcc-multilib and g++-multilib",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_FLAGS": "-m32",
+        "CMAKE_CXX_FLAGS": "-m32",
+        "CMAKE_EXE_LINKER_FLAGS": "-m32",
+        "CMAKE_SHARED_LINKER_FLAGS": "-m32"
+      }
+    },
+    {
+      "name": "asan-m32",
+      "inherits": "base",
+      "displayName": "AddressSanitizer + UBSan, 32-bit",
+      "description": "asan on 32-bit x86. Needs gcc-multilib and g++-multilib",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_FLAGS": "-m32 -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer",
+        "CMAKE_CXX_FLAGS": "-m32 -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer",
+        "CMAKE_EXE_LINKER_FLAGS": "-m32 -fsanitize=address,undefined",
+        "CMAKE_SHARED_LINKER_FLAGS": "-m32 -fsanitize=address,undefined"
+      }
     }
   ],
   "buildPresets": [
     { "name": "debug", "configurePreset": "debug", "jobs": 0 },
     { "name": "release", "configurePreset": "release", "jobs": 0 },
-    { "name": "asan", "configurePreset": "asan", "jobs": 0 }
+    { "name": "asan", "configurePreset": "asan", "jobs": 0 },
+    { "name": "debug-m32", "configurePreset": "debug-m32", "jobs": 0 },
+    { "name": "asan-m32", "configurePreset": "asan-m32", "jobs": 0 }
   ],
   "testPresets": [
     {
@@ -77,6 +105,22 @@
       "configurePreset": "asan",
       "displayName": "Small tests under ASan/UBSan",
       "description": "Catches what valgrind cannot, such as overruns of .rodata",
+      "filter": { "include": { "label": "small" } },
+      "execution": { "jobs": 0 }
+    },
+    {
+      "name": "small-m32",
+      "inherits": "base",
+      "configurePreset": "debug-m32",
+      "displayName": "Small tests, 32-bit",
+      "filter": { "include": { "label": "small" } },
+      "execution": { "jobs": 0 }
+    },
+    {
+      "name": "asan-small-m32",
+      "inherits": "base",
+      "configurePreset": "asan-m32",
+      "displayName": "Small tests under ASan/UBSan, 32-bit",
       "filter": { "include": { "label": "small" } },
       "execution": { "jobs": 0 }
     }

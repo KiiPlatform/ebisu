@@ -68,15 +68,52 @@ jobs:
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+  # The small tests on 64-bit, and on 32-bit x86, where int and long are both
+  # 32 bits as on the ARM Cortex-M targets the samples are for; code that
+  # assumes a 64-bit long, or prints a size_t as one, only shows up there.
+  # Each in a plain debug build and under ASan + UBSan.
+  #
   # ASan and UBSan catch a class of bug valgrind structurally cannot: overruns
   # of globals and string literals live in .rodata, not on the heap or stack.
   # That is how a memcmp reading past a string literal in the JSON parser
   # survived years of green MEMCHECK=1 builds.
   #
-  # Small tests only: they are deterministic and need no credentials, so this
-  # job stays fast and never touches the live backend.
-  sanitizers:
+  # Small tests only: they are deterministic and need no credentials, so these
+  # jobs stay fast and never touch the live backend. The build job above runs
+  # them under valgrind as well, on 64-bit.
+  small:
+    name: small (${{ matrix.bits }}-bit, ${{ matrix.variant }})
     runs-on: ubuntu-latest
+    # The large tests are configured whenever these are set, and the workflow
+    # sets them for every job. This one runs only the small tests, so it leaves
+    # the large ones out of the build: they need the secrets, and link OpenSSL,
+    # whose 64-bit headers a -m32 build cannot use.
+    env:
+      APP_ID: ""
+      DEFAULT_SITE: ""
+    strategy:
+      # One width failing says nothing about the other.
+      fail-fast: false
+      matrix:
+        bits: [64, 32]
+        variant: [debug, asan]
+        include:
+          - bits: 64
+            variant: debug
+            preset: debug
+            test-preset: small
+          - bits: 64
+            variant: asan
+            preset: asan
+            test-preset: asan-small
+          - bits: 32
+            variant: debug
+            preset: debug-m32
+            test-preset: small-m32
+          - bits: 32
+            variant: asan
+            preset: asan-m32
+            test-preset: asan-small-m32
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -85,12 +122,13 @@ jobs:
       - name: Setup build env
         run: |
           sudo apt-get -yq update
-          sudo apt-get -yq install g++ cmake libssl-dev git
+          sudo apt-get -yq install g++ cmake libssl-dev git ${{ matrix.bits == 32 && 'gcc-multilib g++-multilib' || '' }}
       - name: configure
-        run: cmake --preset asan
+        run: cmake --preset ${{ matrix.preset }}
       - name: build
-        run: cmake --build --preset asan
-      - name: test (small, ASan + UBSan)
-        # The preset compiles with -fno-sanitize-recover=all, so a UBSan finding
-        # aborts instead of printing a "runtime error" line and passing.
-        run: ctest --preset asan-small
+        run: cmake --build --preset ${{ matrix.preset }}
+      - name: test (small)
+        # The sanitizer presets compile with -fno-sanitize-recover=all, so a
+        # UBSan finding aborts instead of printing a "runtime error" line and
+        # passing.
+        run: ctest --preset ${{ matrix.test-preset }}
