@@ -560,6 +560,10 @@ tio_code_t tio_updater_start(
     updater->_state_reader = state_reader;
     updater->_state_reader_data = state_reader_data;
 
+    // No callback to create the task with is a task that cannot be created.
+    if (updater->_kii._cb_task_create == NULL) {
+        return TIO_ERR_CREATE_TASK;
+    }
     kii_task_code_t res = updater->_kii._cb_task_create(
             TIO_TASK_NAME_UPDATE_STATE,
             _update_state,
