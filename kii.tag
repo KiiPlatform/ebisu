@@ -586,8 +586,8 @@
       <type>kii_code_t</type>
       <name>kii_start_push_task</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a2106af24a260dc351b0c17e388a4bd71</anchor>
-      <arglist>(kii_t *kii, unsigned int keep_alive_interval_sec, KII_PUSH_RECEIVED_CB cb_push, void *userdata)</arglist>
+      <anchor>ad3242ecc51a7aa640eb1ca7786a4a149</anchor>
+      <arglist>(kii_t *kii, uint32_t keep_alive_interval_sec, KII_PUSH_RECEIVED_CB cb_push, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>kii_code_t</type>
@@ -768,15 +768,15 @@
       <type>void</type>
       <name>kii_set_mqtt_to_sock_recv</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>aaf9cdb339d7b2f4a598ef2373b4ac438</anchor>
-      <arglist>(kii_t *kii, unsigned int to_sock_recv_sec)</arglist>
+      <anchor>a812b57be04fe37fc4a7ec66679f88db4</anchor>
+      <arglist>(kii_t *kii, uint32_t to_sock_recv_sec)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>kii_set_mqtt_to_sock_send</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>aeec93d3842f8340dc157260ae3637f21</anchor>
-      <arglist>(kii_t *kii, unsigned int to_sock_send_sec)</arglist>
+      <anchor>a822f223537c5c8851a79eb73e06d001b</anchor>
+      <arglist>(kii_t *kii, uint32_t to_sock_send_sec)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -835,10 +835,10 @@
       <arglist>(kii_t *kii)</arglist>
     </member>
     <member kind="function">
-      <type>int</type>
+      <type>uint16_t</type>
       <name>kii_get_resp_status</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a5cfa2d3b02d827372f3f199715687b96</anchor>
+      <anchor>ae61dfefd97935dd1d068dd640ec30af1</anchor>
       <arglist>(kii_t *kii)</arglist>
     </member>
     <member kind="function">
@@ -899,8 +899,8 @@
       <type>void(*</type>
       <name>KII_CB_DELAY_MS</name>
       <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>aa8b275089808a99cff89acb673320273</anchor>
-      <arglist>)(unsigned int msec, void *userdata)</arglist>
+      <anchor>acb31aab23022a785b6e80b3aa148b185</anchor>
+      <arglist>)(uint32_t msec, void *userdata)</arglist>
     </member>
     <member kind="typedef">
       <type>void(*</type>
@@ -1017,24 +1017,24 @@
       <arglist>[KII_HOST_MAX_SIZE]</arglist>
     </member>
     <member kind="variable">
-      <type>unsigned int</type>
+      <type>uint16_t</type>
       <name>port_tcp</name>
       <anchorfile>structkii__mqtt__endpoint__t.html</anchorfile>
-      <anchor>a9906ff89550cb9dad3e5a05eb1829b88</anchor>
+      <anchor>a38eb17e4f01a30aaf90c02f0a9651d56</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>unsigned int</type>
+      <type>uint16_t</type>
       <name>port_ssl</name>
       <anchorfile>structkii__mqtt__endpoint__t.html</anchorfile>
-      <anchor>a26db4f119fc76373a41e1137d63f629b</anchor>
+      <anchor>a6014189c0f3ba23551adffa445ef367f</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>unsigned long</type>
+      <type>uint32_t</type>
       <name>ttl</name>
       <anchorfile>structkii__mqtt__endpoint__t.html</anchorfile>
-      <anchor>ad07b60aae4d353b09eac993a725f353e</anchor>
+      <anchor>a5fb0661ad3c79d4fae5c061052a59f1b</anchor>
       <arglist></arglist>
     </member>
   </compound>

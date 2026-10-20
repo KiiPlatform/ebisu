@@ -82,7 +82,8 @@ $(function() {
 
 <p>Task/ Thread abstraction.  
 <a href="#details">More...</a></p>
-
+<div class="textblock"><code>#include &lt;stdint.h&gt;</code><br />
+</div>
 <p><a href="kii__task__callback_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
@@ -102,9 +103,9 @@ typedef void *(*&#160;</td><td class="memItemRight" valign="bottom"><b>KII_TASK_
 <tr class="memitem:a0395b3c3b153a4ae039f9cbfb171c778" id="r_a0395b3c3b153a4ae039f9cbfb171c778"><td class="memItemLeft" align="right" valign="top">typedef <a class="elRef" href="../../kii/html/kii__task__callback_8h.html#a8cb8ae6e0e48ea307aa8481d5e85feb0">kii_task_code_t</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii__task__callback_8h.html#a0395b3c3b153a4ae039f9cbfb171c778">KII_CB_TASK_CREATE</a>) (const char *name, <a class="elRef" href="../../kii/html/kii__task__callback_8h.html#a803edec5a77dda169a7487f28eb7cf9a">KII_TASK_ENTRY</a> entry, void *entry_param, void *userdata)</td></tr>
 <tr class="memdesc:a0395b3c3b153a4ae039f9cbfb171c778"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback asks to create task.  <br /></td></tr>
 <tr class="separator:a0395b3c3b153a4ae039f9cbfb171c778"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa8b275089808a99cff89acb673320273" id="r_aa8b275089808a99cff89acb673320273"><td class="memItemLeft" align="right" valign="top">typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii__task__callback_8h.html#aa8b275089808a99cff89acb673320273">KII_CB_DELAY_MS</a>) (unsigned int msec, void *userdata)</td></tr>
-<tr class="memdesc:aa8b275089808a99cff89acb673320273"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback asks to delay/ sleep task.  <br /></td></tr>
-<tr class="separator:aa8b275089808a99cff89acb673320273"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb31aab23022a785b6e80b3aa148b185" id="r_acb31aab23022a785b6e80b3aa148b185"><td class="memItemLeft" align="right" valign="top">typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii__task__callback_8h.html#acb31aab23022a785b6e80b3aa148b185">KII_CB_DELAY_MS</a>) (uint32_t msec, void *userdata)</td></tr>
+<tr class="memdesc:acb31aab23022a785b6e80b3aa148b185"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback asks to delay/ sleep task.  <br /></td></tr>
+<tr class="separator:acb31aab23022a785b6e80b3aa148b185"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa498370678fa8bb2e7aef2d18bc315b5" id="r_aa498370678fa8bb2e7aef2d18bc315b5"><td class="memItemLeft" align="right" valign="top">typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5">KII_CB_TASK_EXIT</a>) (void *task_info, void *userdata)</td></tr>
 <tr class="memdesc:aa498370678fa8bb2e7aef2d18bc315b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback called right before exit of the task.  <br /></td></tr>
 <tr class="separator:aa498370678fa8bb2e7aef2d18bc315b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -128,14 +129,14 @@ Enumerations</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Task/ Thread abstraction. </p>
 </div><h2 class="groupheader">Typedef Documentation</h2>
-<a id="aa8b275089808a99cff89acb673320273" name="aa8b275089808a99cff89acb673320273"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa8b275089808a99cff89acb673320273">&#9670;&#160;</a></span>KII_CB_DELAY_MS</h2>
+<a id="acb31aab23022a785b6e80b3aa148b185" name="acb31aab23022a785b6e80b3aa148b185"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acb31aab23022a785b6e80b3aa148b185">&#9670;&#160;</a></span>KII_CB_DELAY_MS</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">typedef void(* KII_CB_DELAY_MS) (unsigned int msec, void *userdata)</td>
+          <td class="memname">typedef void(* KII_CB_DELAY_MS) (uint32_t msec, void *userdata)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -226,7 +227,7 @@ Enumerations</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 10:36:39 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 20 2026 10:40:44 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

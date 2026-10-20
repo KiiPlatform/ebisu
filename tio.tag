@@ -101,8 +101,8 @@
       <type>void(*</type>
       <name>KII_CB_DELAY_MS</name>
       <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>aa8b275089808a99cff89acb673320273</anchor>
-      <arglist>)(unsigned int msec, void *userdata)</arglist>
+      <anchor>acb31aab23022a785b6e80b3aa148b185</anchor>
+      <arglist>)(uint32_t msec, void *userdata)</arglist>
     </member>
     <member kind="typedef">
       <type>void(*</type>

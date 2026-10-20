@@ -3,7 +3,7 @@ var searchData=
   ['kii_5fauthor_5ft_0',['kii_author_t',['../kii_8h.html#a1dec66c56a70b2a128ea8d80a409478b',1,'kii.h']]],
   ['kii_5fbool_5ft_1',['kii_bool_t',['../kii__task__callback_8h.html#a945d43709851462a1803721525df2b89',1,'kii_task_callback.h']]],
   ['kii_5fbucket_5ft_2',['kii_bucket_t',['../kii_8h.html#a6474402e02d6e65091a4c1ff788d5b7a',1,'kii.h']]],
-  ['kii_5fcb_5fdelay_5fms_3',['KII_CB_DELAY_MS',['../kii__task__callback_8h.html#aa8b275089808a99cff89acb673320273',1,'kii_task_callback.h']]],
+  ['kii_5fcb_5fdelay_5fms_3',['KII_CB_DELAY_MS',['../kii__task__callback_8h.html#acb31aab23022a785b6e80b3aa148b185',1,'kii_task_callback.h']]],
   ['kii_5fcb_5fread_4',['KII_CB_READ',['../kii_8h.html#a8aff70d991d649449726c7967ade0f8d',1,'kii.h']]],
   ['kii_5fcb_5ftask_5fcontinue_5',['KII_CB_TASK_CONTINUE',['../kii__task__callback_8h.html#a66833479636e54ec6559fcb91c37263d',1,'kii_task_callback.h']]],
   ['kii_5fcb_5ftask_5fcreate_6',['KII_CB_TASK_CREATE',['../kii__task__callback_8h.html#a0395b3c3b153a4ae039f9cbfb171c778',1,'kii_task_callback.h']]],

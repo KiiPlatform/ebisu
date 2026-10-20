@@ -17,7 +17,7 @@ var searchData=
   ['kii_5fauthor_5ft_14',['kii_author_t',['../../../kii/html/structkii__author__t.html',1,'']]],
   ['kii_5fbool_5ft_15',['kii_bool_t',['../kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283',1,'kii_bool_t:&#160;kii_task_callback.h'],['../kii__task__callback_8h.html#a945d43709851462a1803721525df2b89',1,'kii_bool_t:&#160;kii_task_callback.h']]],
   ['kii_5fbucket_5ft_16',['kii_bucket_t',['../../../kii/html/structkii__bucket__t.html',1,'']]],
-  ['kii_5fcb_5fdelay_5fms_17',['KII_CB_DELAY_MS',['../kii__task__callback_8h.html#aa8b275089808a99cff89acb673320273',1,'kii_task_callback.h']]],
+  ['kii_5fcb_5fdelay_5fms_17',['KII_CB_DELAY_MS',['../kii__task__callback_8h.html#acb31aab23022a785b6e80b3aa148b185',1,'kii_task_callback.h']]],
   ['kii_5fcb_5ftask_5fcontinue_18',['KII_CB_TASK_CONTINUE',['../kii__task__callback_8h.html#a66833479636e54ec6559fcb91c37263d',1,'kii_task_callback.h']]],
   ['kii_5fcb_5ftask_5fcreate_19',['KII_CB_TASK_CREATE',['../kii__task__callback_8h.html#a0395b3c3b153a4ae039f9cbfb171c778',1,'kii_task_callback.h']]],
   ['kii_5fcb_5ftask_5fexit_20',['KII_CB_TASK_EXIT',['../kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5',1,'kii_task_callback.h']]],

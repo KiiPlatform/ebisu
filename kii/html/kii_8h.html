@@ -88,6 +88,7 @@ $(function() {
 <div class="textblock"><code>#include &quot;<a class="elRef" href="../../khc/html/khc_8h.html">khc.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="kii__task__callback_8h_source.html">kii_task_callback.h</a>&quot;</code><br />
 <code>#include &lt;<a class="elRef" href="../../jkii/html/jkii_8h.html">jkii.h</a>&gt;</code><br />
+<code>#include &lt;stdint.h&gt;</code><br />
 </div>
 <p><a href="kii_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -353,9 +354,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a9cde2654b8a652bb01bb5952faf0e538" id="r_a9cde2654b8a652bb01bb5952faf0e538"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a9cde2654b8a652bb01bb5952faf0e538">kii_get_mqtt_endpoint</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const char *installation_id, <a class="el" href="structkii__mqtt__endpoint__t.html">kii_mqtt_endpoint_t</a> *endpoint)</td></tr>
 <tr class="memdesc:a9cde2654b8a652bb01bb5952faf0e538"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get MQTT endpoint.  <br /></td></tr>
 <tr class="separator:a9cde2654b8a652bb01bb5952faf0e538"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2106af24a260dc351b0c17e388a4bd71" id="r_a2106af24a260dc351b0c17e388a4bd71"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a2106af24a260dc351b0c17e388a4bd71">kii_start_push_task</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, unsigned int keep_alive_interval_sec, <a class="el" href="kii_8h.html#afeba27d97c92ad7a3a03374248eaeb14">KII_PUSH_RECEIVED_CB</a> cb_push, void *userdata)</td></tr>
-<tr class="memdesc:a2106af24a260dc351b0c17e388a4bd71"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push is called when message is delivered to the thing. The task is created by the callback set by <a class="el" href="kii_8h.html#a0544a628a2fbc798e4d2fa67e142c491" title="Set callback creates task.">kii_set_cb_task_create()</a>. If that callback is not set, or fails to create the task, no task is started and KII_ERR_CREATE_TASK is returned.  <br /></td></tr>
-<tr class="separator:a2106af24a260dc351b0c17e388a4bd71"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad3242ecc51a7aa640eb1ca7786a4a149" id="r_ad3242ecc51a7aa640eb1ca7786a4a149"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ad3242ecc51a7aa640eb1ca7786a4a149">kii_start_push_task</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, uint32_t keep_alive_interval_sec, <a class="el" href="kii_8h.html#afeba27d97c92ad7a3a03374248eaeb14">KII_PUSH_RECEIVED_CB</a> cb_push, void *userdata)</td></tr>
+<tr class="memdesc:ad3242ecc51a7aa640eb1ca7786a4a149"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push is called when message is delivered to the thing. The task is created by the callback set by <a class="el" href="kii_8h.html#a0544a628a2fbc798e4d2fa67e142c491" title="Set callback creates task.">kii_set_cb_task_create()</a>. If that callback is not set, or fails to create the task, no task is started and KII_ERR_CREATE_TASK is returned.  <br /></td></tr>
+<tr class="separator:ad3242ecc51a7aa640eb1ca7786a4a149"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a88de31a3b85076df9a58727d2ab63d7f" id="r_a88de31a3b85076df9a58727d2ab63d7f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a88de31a3b85076df9a58727d2ab63d7f">kii_execute_server_code_version</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const char *version, const char *endpoint_name, const char *params)</td></tr>
 <tr class="memdesc:a88de31a3b85076df9a58727d2ab63d7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute a specific version of server code.  <br /></td></tr>
 <tr class="separator:a88de31a3b85076df9a58727d2ab63d7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -431,12 +432,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a4c1ba2c47261d6c1709298d435a8e77f" id="r_a4c1ba2c47261d6c1709298d435a8e77f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a4c1ba2c47261d6c1709298d435a8e77f">kii_set_cb_mqtt_sock_close</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#af54fb240d589fb1044188bd4a81ab78d">KHC_CB_SOCK_CLOSE</a> cb_close, void *userdata)</td></tr>
 <tr class="memdesc:a4c1ba2c47261d6c1709298d435a8e77f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket close callback used for MQTT(S)  <br /></td></tr>
 <tr class="separator:a4c1ba2c47261d6c1709298d435a8e77f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaf9cdb339d7b2f4a598ef2373b4ac438" id="r_aaf9cdb339d7b2f4a598ef2373b4ac438"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#aaf9cdb339d7b2f4a598ef2373b4ac438">kii_set_mqtt_to_sock_recv</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, unsigned int to_sock_recv_sec)</td></tr>
-<tr class="memdesc:aaf9cdb339d7b2f4a598ef2373b4ac438"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set timeout of receiving data from socket user for MQTT(S)  <br /></td></tr>
-<tr class="separator:aaf9cdb339d7b2f4a598ef2373b4ac438"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeec93d3842f8340dc157260ae3637f21" id="r_aeec93d3842f8340dc157260ae3637f21"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#aeec93d3842f8340dc157260ae3637f21">kii_set_mqtt_to_sock_send</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, unsigned int to_sock_send_sec)</td></tr>
-<tr class="memdesc:aeec93d3842f8340dc157260ae3637f21"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set timeout of sending data from socket user for MQTT(S)  <br /></td></tr>
-<tr class="separator:aeec93d3842f8340dc157260ae3637f21"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a812b57be04fe37fc4a7ec66679f88db4" id="r_a812b57be04fe37fc4a7ec66679f88db4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a812b57be04fe37fc4a7ec66679f88db4">kii_set_mqtt_to_sock_recv</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, uint32_t to_sock_recv_sec)</td></tr>
+<tr class="memdesc:a812b57be04fe37fc4a7ec66679f88db4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set timeout of receiving data from socket user for MQTT(S)  <br /></td></tr>
+<tr class="separator:a812b57be04fe37fc4a7ec66679f88db4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a822f223537c5c8851a79eb73e06d001b" id="r_a822f223537c5c8851a79eb73e06d001b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a822f223537c5c8851a79eb73e06d001b">kii_set_mqtt_to_sock_send</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, uint32_t to_sock_send_sec)</td></tr>
+<tr class="memdesc:a822f223537c5c8851a79eb73e06d001b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set timeout of sending data from socket user for MQTT(S)  <br /></td></tr>
+<tr class="separator:a822f223537c5c8851a79eb73e06d001b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0544a628a2fbc798e4d2fa67e142c491" id="r_a0544a628a2fbc798e4d2fa67e142c491"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a0544a628a2fbc798e4d2fa67e142c491">kii_set_cb_task_create</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii__task__callback_8h.html#a0395b3c3b153a4ae039f9cbfb171c778">KII_CB_TASK_CREATE</a> cb_task_create, void *userdata)</td></tr>
 <tr class="memdesc:a0544a628a2fbc798e4d2fa67e142c491"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set callback creates task.  <br /></td></tr>
 <tr class="separator:a0544a628a2fbc798e4d2fa67e142c491"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -446,7 +447,7 @@ Functions</h2></td></tr>
 <tr class="memitem:a5d4c80bb655870e967d5a90500bcda08" id="r_a5d4c80bb655870e967d5a90500bcda08"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a5d4c80bb655870e967d5a90500bcda08">kii_set_cb_task_exit</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5">KII_CB_TASK_EXIT</a> cb_exit, void *userdata)</td></tr>
 <tr class="memdesc:a5d4c80bb655870e967d5a90500bcda08"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback called right before exit of MQTT task.  <br /></td></tr>
 <tr class="separator:a5d4c80bb655870e967d5a90500bcda08"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a279015373defa4b13d772568a2be6fea" id="r_a279015373defa4b13d772568a2be6fea"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a279015373defa4b13d772568a2be6fea">kii_set_cb_delay_ms</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii__task__callback_8h.html#aa8b275089808a99cff89acb673320273">KII_CB_DELAY_MS</a> cb_delay_ms, void *userdata)</td></tr>
+<tr class="memitem:a279015373defa4b13d772568a2be6fea" id="r_a279015373defa4b13d772568a2be6fea"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a279015373defa4b13d772568a2be6fea">kii_set_cb_delay_ms</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii__task__callback_8h.html#acb31aab23022a785b6e80b3aa148b185">KII_CB_DELAY_MS</a> cb_delay_ms, void *userdata)</td></tr>
 <tr class="memdesc:a279015373defa4b13d772568a2be6fea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback asks to delay/ sleep task execution.  <br /></td></tr>
 <tr class="separator:a279015373defa4b13d772568a2be6fea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace208de016c2792d00a43374638bb34c" id="r_ace208de016c2792d00a43374638bb34c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ace208de016c2792d00a43374638bb34c">kii_set_json_parser_resource</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../jkii/html/structjkii__resource__t.html">jkii_resource_t</a> *resource)</td></tr>
@@ -461,9 +462,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a51c376c5e496e52aec2375a3ff70a885" id="r_a51c376c5e496e52aec2375a3ff70a885"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a51c376c5e496e52aec2375a3ff70a885">kii_get_etag</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii)</td></tr>
 <tr class="memdesc:a51c376c5e496e52aec2375a3ff70a885"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get Etag value.  <br /></td></tr>
 <tr class="separator:a51c376c5e496e52aec2375a3ff70a885"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5cfa2d3b02d827372f3f199715687b96" id="r_a5cfa2d3b02d827372f3f199715687b96"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a5cfa2d3b02d827372f3f199715687b96">kii_get_resp_status</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii)</td></tr>
-<tr class="memdesc:a5cfa2d3b02d827372f3f199715687b96"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get HTTP status code.  <br /></td></tr>
-<tr class="separator:a5cfa2d3b02d827372f3f199715687b96"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae61dfefd97935dd1d068dd640ec30af1" id="r_ae61dfefd97935dd1d068dd640ec30af1"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ae61dfefd97935dd1d068dd640ec30af1">kii_get_resp_status</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii)</td></tr>
+<tr class="memdesc:ae61dfefd97935dd1d068dd640ec30af1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get HTTP status code.  <br /></td></tr>
+<tr class="separator:ae61dfefd97935dd1d068dd640ec30af1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acc772d67b6d4f9cf53e0c5ea864ceb5d" id="r_acc772d67b6d4f9cf53e0c5ea864ceb5d"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#acc772d67b6d4f9cf53e0c5ea864ceb5d">kii_get_resp_body_length</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii)</td></tr>
 <tr class="memdesc:acc772d67b6d4f9cf53e0c5ea864ceb5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get response body length. If the response is chunked, decoded response body length is returned.  <br /></td></tr>
 <tr class="separator:acc772d67b6d4f9cf53e0c5ea864ceb5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -593,7 +594,7 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">message</td><td>Received message. You need to determine size of the message by message_length argument since it may not be null terminated. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">message_length</td><td>Length of the message. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer given to <a class="el" href="kii_8h.html#a2106af24a260dc351b0c17e388a4bd71" title="Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push ...">kii_start_push_task()</a>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer given to <a class="el" href="kii_8h.html#ad3242ecc51a7aa640eb1ca7786a4a149" title="Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push ...">kii_start_push_task()</a>. </td></tr>
   </table>
   </dd>
 </dl>
@@ -858,7 +859,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 <li><a class="el" href="kii_8h.html#a630b808717fedeb41a643b692617bc39" title="Append request body.">kii_api_call_append_body(kii_t*, const char*, size_t)</a></li>
 <li><a class="el" href="kii_8h.html#aa9a202d325f0d5021d4d47ee6e78125c" title="Append request header.">kii_api_call_append_header(kii_t*, const char*, const char*)</a></li>
 </ul>
-<p>Response status can be obtained by <a class="el" href="kii_8h.html#a5cfa2d3b02d827372f3f199715687b96" title="Get HTTP status code.">kii_get_resp_status(kii_t*)</a> Response body is written to the buffer set by <a class="el" href="kii_8h.html#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a> and its size can be determined by <a class="el" href="kii_8h.html#acc772d67b6d4f9cf53e0c5ea864ceb5d" title="Get response body length. If the response is chunked, decoded response body length is returned.">kii_get_resp_body_length()</a></p>
+<p>Response status can be obtained by <a class="el" href="kii_8h.html#ae61dfefd97935dd1d068dd640ec30af1" title="Get HTTP status code.">kii_get_resp_status(kii_t*)</a> Response body is written to the buffer set by <a class="el" href="kii_8h.html#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a> and its size can be determined by <a class="el" href="kii_8h.html#acc772d67b6d4f9cf53e0c5ea864ceb5d" title="Get response body length. If the response is chunked, decoded response body length is returned.">kii_get_resp_body_length()</a></p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">kii</td><td>SDK object. </td></tr>
@@ -1457,14 +1458,14 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 
 </div>
 </div>
-<a id="a5cfa2d3b02d827372f3f199715687b96" name="a5cfa2d3b02d827372f3f199715687b96"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5cfa2d3b02d827372f3f199715687b96">&#9670;&#160;</a></span>kii_get_resp_status()</h2>
+<a id="ae61dfefd97935dd1d068dd640ec30af1" name="ae61dfefd97935dd1d068dd640ec30af1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae61dfefd97935dd1d068dd640ec30af1">&#9670;&#160;</a></span>kii_get_resp_status()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int kii_get_resp_status </td>
+          <td class="memname">uint16_t kii_get_resp_status </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
           <td class="paramname"><em>kii</em></td><td>)</td>
@@ -1933,7 +1934,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="kii__task__callback_8h.html#aa8b275089808a99cff89acb673320273">KII_CB_DELAY_MS</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="kii__task__callback_8h.html#acb31aab23022a785b6e80b3aa148b185">KII_CB_DELAY_MS</a>&#160;</td>
           <td class="paramname"><em>cb_delay_ms</em>, </td>
         </tr>
         <tr>
@@ -2216,7 +2217,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><div class="memdoc">
 
 <p>Set socket close callback used for MQTT(S) </p>
-<p>Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by <a class="el" href="kii_8h.html#aaf9cdb339d7b2f4a598ef2373b4ac438" title="Set timeout of receiving data from socket user for MQTT(S)">kii_set_mqtt_to_sock_recv()</a>/ <a class="el" href="kii_8h.html#aeec93d3842f8340dc157260ae3637f21" title="Set timeout of sending data from socket user for MQTT(S)">kii_set_mqtt_to_sock_send()</a> APIs. It is necessary for sending pingReq message periodically to achieve Keep-Alive since we don't require system clock APIs abstraction. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by <a class="el" href="kii_8h.html#a812b57be04fe37fc4a7ec66679f88db4" title="Set timeout of receiving data from socket user for MQTT(S)">kii_set_mqtt_to_sock_recv()</a>/ <a class="el" href="kii_8h.html#a822f223537c5c8851a79eb73e06d001b" title="Set timeout of sending data from socket user for MQTT(S)">kii_set_mqtt_to_sock_send()</a> APIs. It is necessary for sending pingReq message periodically to achieve Keep-Alive since we don't require system clock APIs abstraction. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">cb_close</td><td>Callback function pointer. </td></tr>
@@ -2260,7 +2261,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><div class="memdoc">
 
 <p>Set socket connect callback used for MQTT(S) </p>
-<p>Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by <a class="el" href="kii_8h.html#aaf9cdb339d7b2f4a598ef2373b4ac438" title="Set timeout of receiving data from socket user for MQTT(S)">kii_set_mqtt_to_sock_recv()</a>/ <a class="el" href="kii_8h.html#aeec93d3842f8340dc157260ae3637f21" title="Set timeout of sending data from socket user for MQTT(S)">kii_set_mqtt_to_sock_send()</a> APIs. It is necessary for sending pingReq message periodically to achieve Keep-Alive since we don't require system clock APIs abstraction. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by <a class="el" href="kii_8h.html#a812b57be04fe37fc4a7ec66679f88db4" title="Set timeout of receiving data from socket user for MQTT(S)">kii_set_mqtt_to_sock_recv()</a>/ <a class="el" href="kii_8h.html#a822f223537c5c8851a79eb73e06d001b" title="Set timeout of sending data from socket user for MQTT(S)">kii_set_mqtt_to_sock_send()</a> APIs. It is necessary for sending pingReq message periodically to achieve Keep-Alive since we don't require system clock APIs abstraction. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">cb_connect</td><td>Callback function pointer. </td></tr>
@@ -2304,7 +2305,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><div class="memdoc">
 
 <p>Set socket recv callback used for MQTT(S) </p>
-<p>Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by <a class="el" href="kii_8h.html#aaf9cdb339d7b2f4a598ef2373b4ac438" title="Set timeout of receiving data from socket user for MQTT(S)">kii_set_mqtt_to_sock_recv()</a>/ <a class="el" href="kii_8h.html#aeec93d3842f8340dc157260ae3637f21" title="Set timeout of sending data from socket user for MQTT(S)">kii_set_mqtt_to_sock_send()</a> APIs. It is necessary for sending pingReq message periodically to achieve Keep-Alive since we don't require system clock APIs abstraction. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by <a class="el" href="kii_8h.html#a812b57be04fe37fc4a7ec66679f88db4" title="Set timeout of receiving data from socket user for MQTT(S)">kii_set_mqtt_to_sock_recv()</a>/ <a class="el" href="kii_8h.html#a822f223537c5c8851a79eb73e06d001b" title="Set timeout of sending data from socket user for MQTT(S)">kii_set_mqtt_to_sock_send()</a> APIs. It is necessary for sending pingReq message periodically to achieve Keep-Alive since we don't require system clock APIs abstraction. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">cb_recv</td><td>Callback function pointer. </td></tr>
@@ -2348,7 +2349,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><div class="memdoc">
 
 <p>Set socket send callback used for MQTT(S) </p>
-<p>Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by <a class="el" href="kii_8h.html#aaf9cdb339d7b2f4a598ef2373b4ac438" title="Set timeout of receiving data from socket user for MQTT(S)">kii_set_mqtt_to_sock_recv()</a>/ <a class="el" href="kii_8h.html#aeec93d3842f8340dc157260ae3637f21" title="Set timeout of sending data from socket user for MQTT(S)">kii_set_mqtt_to_sock_send()</a> APIs. It is necessary for sending pingReq message periodically to achieve Keep-Alive since we don't require system clock APIs abstraction. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by <a class="el" href="kii_8h.html#a812b57be04fe37fc4a7ec66679f88db4" title="Set timeout of receiving data from socket user for MQTT(S)">kii_set_mqtt_to_sock_recv()</a>/ <a class="el" href="kii_8h.html#a822f223537c5c8851a79eb73e06d001b" title="Set timeout of sending data from socket user for MQTT(S)">kii_set_mqtt_to_sock_send()</a> APIs. It is necessary for sending pingReq message periodically to achieve Keep-Alive since we don't require system clock APIs abstraction. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">cb_send</td><td>Callback function pointer. </td></tr>
@@ -2451,7 +2452,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><div class="memdoc">
 
 <p>set callback determines whether to continue or discontinue task. </p>
-<p>If this method is not called or NULL is set, task exits only when un-recoverble error occurs. If you need cancellation mechanism, you need to set this callback. Terminate task without using this callback may cause memory leak. This method must be called before calling <a class="el" href="kii_8h.html#a2106af24a260dc351b0c17e388a4bd71" title="Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push ...">kii_start_push_task()</a>.</p>
+<p>If this method is not called or NULL is set, task exits only when un-recoverble error occurs. If you need cancellation mechanism, you need to set this callback. Terminate task without using this callback may cause memory leak. This method must be called before calling <a class="el" href="kii_8h.html#ad3242ecc51a7aa640eb1ca7786a4a149" title="Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push ...">kii_start_push_task()</a>.</p>
 <p>In case checking cancellation flag in continue_cb, the flag might be set by other task/ thread. Implementation must ensure consistency of the flag by using Mutex, etc.</p>
 <p>If un-recoverble error occurs, task exits the infinite loop and immediately calls KII_CB_TASK_EXIT callback if set. In this case KII_CB_TASK_CONTINUE callback is not called.</p>
 <dl class="params"><dt>Parameters</dt><dd>
@@ -2634,7 +2635,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><div class="memdoc">
 
 <p>Set buffer used to parse MQTT message. </p>
-<p>This method must be called and set valid buffer before calling method <a class="el" href="kii_8h.html#a2106af24a260dc351b0c17e388a4bd71" title="Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push ...">kii_start_push_task()</a> The buffer is used to parse MQTT message.</p>
+<p>This method must be called and set valid buffer before calling method <a class="el" href="kii_8h.html#ad3242ecc51a7aa640eb1ca7786a4a149" title="Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push ...">kii_start_push_task()</a> The buffer is used to parse MQTT message.</p>
 <p>You can change the size of buffer depending on the request/ response size. It must be enough large to store whole message send by MQTT. Typically, 1024 bytes is enough. However it varies depending on your data schema used to define Commands. Avoid defining large Commands.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -2647,8 +2648,8 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 
 </div>
 </div>
-<a id="aaf9cdb339d7b2f4a598ef2373b4ac438" name="aaf9cdb339d7b2f4a598ef2373b4ac438"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaf9cdb339d7b2f4a598ef2373b4ac438">&#9670;&#160;</a></span>kii_set_mqtt_to_sock_recv()</h2>
+<a id="a812b57be04fe37fc4a7ec66679f88db4" name="a812b57be04fe37fc4a7ec66679f88db4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a812b57be04fe37fc4a7ec66679f88db4">&#9670;&#160;</a></span>kii_set_mqtt_to_sock_recv()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -2662,7 +2663,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramtype">uint32_t&#160;</td>
           <td class="paramname"><em>to_sock_recv_sec</em>&#160;</td>
         </tr>
         <tr>
@@ -2685,8 +2686,8 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 
 </div>
 </div>
-<a id="aeec93d3842f8340dc157260ae3637f21" name="aeec93d3842f8340dc157260ae3637f21"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aeec93d3842f8340dc157260ae3637f21">&#9670;&#160;</a></span>kii_set_mqtt_to_sock_send()</h2>
+<a id="a822f223537c5c8851a79eb73e06d001b" name="a822f223537c5c8851a79eb73e06d001b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a822f223537c5c8851a79eb73e06d001b">&#9670;&#160;</a></span>kii_set_mqtt_to_sock_send()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -2700,7 +2701,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramtype">uint32_t&#160;</td>
           <td class="paramname"><em>to_sock_send_sec</em>&#160;</td>
         </tr>
         <tr>
@@ -2891,8 +2892,8 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 
 </div>
 </div>
-<a id="a2106af24a260dc351b0c17e388a4bd71" name="a2106af24a260dc351b0c17e388a4bd71"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2106af24a260dc351b0c17e388a4bd71">&#9670;&#160;</a></span>kii_start_push_task()</h2>
+<a id="ad3242ecc51a7aa640eb1ca7786a4a149" name="ad3242ecc51a7aa640eb1ca7786a4a149"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad3242ecc51a7aa640eb1ca7786a4a149">&#9670;&#160;</a></span>kii_start_push_task()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -2906,7 +2907,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramtype">uint32_t&#160;</td>
           <td class="paramname"><em>keep_alive_interval_sec</em>, </td>
         </tr>
         <tr>
@@ -2933,7 +2934,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">keep_alive_interval_sec</td><td>MQTT Keep-Alive interval in seconds. MQTT keep alive interval in seconds. If 0, Keep Alive mechanism is disabled. Otherwise, pingReq is sent to MQTT broker periodically with the specified interval. Too short interval causes network congestion. We recommend to set this to few minutes. At most 65535, the largest MQTT can carry. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">keep_alive_interval_sec</td><td>MQTT Keep-Alive interval in seconds. MQTT keep alive interval in seconds. If 0, Keep Alive mechanism is disabled. Otherwise, pingReq is sent to MQTT broker periodically with the specified interval. Too short interval causes network congestion. We recommend to set this to few minutes. At most 65535, the largest MQTT can carry. It is taken as a uint32_t rather than a uint16_t so that a larger value is turned away here rather than cut down to its low 16 bits where the function is called. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">cb_push</td><td>Callback called when push message delivered. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object passed to cb_push. </td></tr>
   </table>
@@ -3577,7 +3578,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 10:36:39 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 20 2026 10:40:44 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

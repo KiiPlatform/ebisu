@@ -34,6 +34,6 @@ var searchData=
   ['tt_20tio_5fhandler_5ft_20tt_20instance_31',['Set-up &lt;tt&gt;tio_handler_t&lt;/tt&gt; instance',['../index.html#autotoc_md10',1,'']]],
   ['tt_20tio_5fupdater_5ft_20tt_32',['tt tio_updater_t tt',['../index.html#autotoc_md33',1,'Tasks executed by &lt;tt&gt;tio_updater_t&lt;/tt&gt;.'],['../index.html#autotoc_md22',1,'Use &lt;tt&gt;tio_updater_t&lt;/tt&gt;']]],
   ['tt_20tio_5fupdater_5ft_20tt_20instance_33',['Set-up &lt;tt&gt;tio_updater_t&lt;/tt&gt; instance',['../index.html#autotoc_md28',1,'']]],
-  ['ttl_34',['ttl',['../../../kii/html/structkii__mqtt__endpoint__t.html#ad07b60aae4d353b09eac993a725f353e',1,'kii_mqtt_endpoint_t']]],
+  ['ttl_34',['ttl',['../../../kii/html/structkii__mqtt__endpoint__t.html#a5fb0661ad3c79d4fae5c061052a59f1b',1,'kii_mqtt_endpoint_t']]],
   ['type_35',['type',['../../../jkii/html/structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841',1,'jkii_field_t::type'],['../structtio__action__value__t.html#ae37aa5cf6246ce83845320168a92e832',1,'tio_action_value_t::type'],['../../../jkii/html/structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d',1,'jkii_primitive_t::type']]]
 ];

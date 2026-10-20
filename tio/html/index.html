@@ -164,9 +164,10 @@ Delay callback</h4>
 <p>Delay callback function signature is following.</p>
 <div class="fragment"><div class="line">typedef void</div>
 <div class="line">(*KII_CB_DELAY_MS)</div>
-<div class="line">    (unsigned int msec);</div>
+<div class="line">    (uint32_t msec,</div>
+<div class="line">     void* userdata);</div>
 </div><!-- fragment --><p>Typical implementation with <code>usleep</code> provided by <code>libc</code>:</p>
-<div class="fragment"><div class="line"><span class="keywordtype">void</span> delay_ms_cb(<span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> msec)</div>
+<div class="fragment"><div class="line"><span class="keywordtype">void</span> delay_ms_cb(uint32_t msec, <span class="keywordtype">void</span>* userdata)</div>
 <div class="line">{</div>
 <div class="line">    usleep(msec * 1000);</div>
 <div class="line">}</div>
@@ -514,7 +515,7 @@ Avoiding race condition</h2>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 10:36:39 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 20 2026 10:40:44 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
