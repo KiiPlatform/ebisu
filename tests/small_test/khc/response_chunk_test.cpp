@@ -539,3 +539,134 @@ TEST_CASE( "HTTP response 400 test(chunked)" ) {
 
     REQUIRE( expectBody == oss.str() );
 }
+
+namespace {
+
+struct ChunkedResult {
+    khc_code res;
+    string body;
+    int on_close_called;
+};
+
+// Performs a GET answered with the given chunked body. The socket hands over
+// the headers in one read, as khc needs the status line in one, and the body
+// at most max_recv bytes at a time, or as much as is asked for if 0.
+ChunkedResult perform_chunked(const string& chunked_body, size_t max_recv) {
+    khc http;
+    khc_init(&http);
+
+    // Stale bytes in the stream buffer are hex digits, so that a size read
+    // past what was received shows.
+    vector<char> stream_buff(DEFAULT_STREAM_BUFF_SIZE, 'f');
+    khc_set_stream_buff(&http, stream_buff.data(), stream_buff.size());
+
+    khc_set_host(&http, "api.kii.com");
+    khc_set_method(&http, "GET");
+    khc_set_path(&http, "/api/apps");
+    khc_set_req_headers(&http, NULL);
+
+    khct::cb::SockCtx s_ctx;
+    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
+    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
+    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
+    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+
+    khct::cb::IOCtx io_ctx;
+    khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
+    khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
+
+    s_ctx.on_connect = [](void* socket_context, const char* host, unsigned int port) {
+        return KHC_SOCK_OK;
+    };
+    s_ctx.on_send = [](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+
+    const string headers = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n";
+    istringstream is(headers + chunked_body);
+    int on_recv_called = 0;
+    s_ctx.on_recv = [&is, &on_recv_called, &headers, max_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        // Far more reads than these responses need: khc is not making progress.
+        if (++on_recv_called > 1000) {
+            return KHC_SOCK_FAIL;
+        }
+        if (max_recv > 0) {
+            size_t limit = on_recv_called == 1 ? headers.size() : max_recv;
+            if (length_to_read > limit) {
+                length_to_read = limit;
+            }
+        }
+        *out_actual_length = is.read(buffer, length_to_read).gcount();
+        return KHC_SOCK_OK;
+    };
+    io_ctx.on_header = [](char *buffer, size_t size, void *userdata) {
+        return size;
+    };
+
+    ChunkedResult result = { KHC_ERR_OK, "", 0 };
+    io_ctx.on_write = [&result](char *buffer, size_t size, void *userdata) {
+        result.body.append(buffer, size);
+        return size;
+    };
+    s_ctx.on_close = [&result](void* socket_ctx) {
+        ++result.on_close_called;
+        return KHC_SOCK_OK;
+    };
+
+    result.res = khc_perform(&http);
+    return result;
+}
+
+}
+
+TEST_CASE( "chunk size lines in uppercase or with extensions" ) {
+    // A byte at a time also splits the CRLF after each chunk's data.
+    for (size_t max_recv : { 0, 1 }) {
+        INFO("max_recv " << max_recv);
+        ChunkedResult r = perform_chunked(
+                "A;name=value\r\n0123456789\r\n"
+                "0003 ;name=\"quoted value\"\r\nabc\r\n"
+                "0;last\r\n\r\n",
+                max_recv);
+        REQUIRE( r.res == KHC_ERR_OK );
+        REQUIRE( r.body == "0123456789abc" );
+        REQUIRE( r.on_close_called == 1 );
+    }
+}
+
+TEST_CASE( "an invalid chunk size line fails the response" ) {
+    const string lines[] = {
+        "-1",
+        "+a",
+        "xyz",
+        "",
+        "0x5",
+        // One past SIZE_MAX, and 20 hex digits, too many for 64 bits.
+        "1" + string(sizeof(size_t) * 2, '0'),
+        "123456789abcdef01234",
+        string("5\0", 2),
+        string("5;\0", 3),
+    };
+    // The invalid size first, and after a chunk that is passed on.
+    const struct {
+        string chunks;
+        string body;
+    } befores[] = {
+        { "", "" },
+        { "3\r\nabc\r\n", "abc" },
+    };
+    for (const auto& line : lines) {
+        for (const auto& before : befores) {
+            for (size_t max_recv : { 0, 1 }) {
+                INFO("line \"" << line << "\" after \"" << before.chunks << "\", max_recv " << max_recv);
+                ChunkedResult r = perform_chunked(
+                        before.chunks + line + "\r\nhello\r\n0\r\n\r\n",
+                        max_recv);
+                REQUIRE( r.res == KHC_ERR_FAIL );
+                REQUIRE( r.body == before.body );
+                REQUIRE( r.on_close_called == 1 );
+            }
+        }
+    }
+}

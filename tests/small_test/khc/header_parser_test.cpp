@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <string>
+#include <vector>
 #include "catch.hpp"
 #include <khc.h>
 #include "khc_impl.h"
@@ -211,8 +212,8 @@ TEST_CASE( "_read_chunk_size test" ) {
         const char* buff = "1z3\r\n";
         size_t out_size = 0;
         int res = _read_chunk_size(buff, strlen(buff), &out_size);
-        REQUIRE( res == 1);
-        REQUIRE( out_size == 0x1 );
+        REQUIRE( res == -1);
+        REQUIRE( out_size == 0 );
     }
     SECTION( "LF no exists" ) {
         const char* buff = "123\r";
@@ -234,5 +235,68 @@ TEST_CASE( "_read_chunk_size test" ) {
         int res = _read_chunk_size(buff, strlen(buff), &out_size);
         REQUIRE( res == 0);
         REQUIRE( out_size == 0 );
+    }
+}
+
+TEST_CASE( "_read_chunk_size reads sizes up to SIZE_MAX" ) {
+    const struct {
+        std::string line;
+        size_t expected;
+    } cases[] = {
+        { "0\r\n", 0 },
+        { "a\r\n", 0xa },
+        { "3ff\r\n", 0x3ff },
+        { "3FF\r\n", 0x3ff },
+        { "aBcD\r\n", 0xabcd },
+        { "7fffffff\r\n", 0x7fffffff },
+        { "80000000\r\n", 0x80000000 },
+        { "ffffffff\r\n", 0xffffffff },
+        { std::string(sizeof(size_t) * 2, 'f') + "\r\n", SIZE_MAX },
+        // Leading zeros don't make a size too large.
+        { std::string(sizeof(size_t) * 4, '0') + "a\r\n", 0xa },
+        // Whitespace and chunk extensions are ignored.
+        { "5 \r\n", 5 },
+        { "5;name\r\n", 5 },
+        { "5;name=value\r\n", 5 },
+        { "5 \t;name=\"quoted value\" ; other\r\n", 5 },
+        { "5\r\nhello\r\n", 5 },
+    };
+    for (const auto& c : cases) {
+        INFO("line " << c.line);
+        // Exactly as large as the line, with nothing after it.
+        std::vector<char> buff(c.line.begin(), c.line.end());
+        size_t out_size = 12345;
+        int res = _read_chunk_size(buff.data(), buff.size(), &out_size);
+        REQUIRE( res == 1 );
+        REQUIRE( out_size == c.expected );
+    }
+}
+
+TEST_CASE( "_read_chunk_size rejects invalid sizes" ) {
+    const std::string cases[] = {
+        "-1\r\n",
+        "+a\r\n",
+        "xyz\r\n",
+        "\r\n",
+        "\r\n5\r\n",
+        " 5\r\n",
+        "0x5\r\n",
+        "5 6\r\n",
+        ";name\r\n",
+        // One past SIZE_MAX, and 20 hex digits, too many for 64 bits.
+        "1" + std::string(sizeof(size_t) * 2, '0') + "\r\n",
+        "123456789abcdef01234\r\n",
+        // Control characters, in the size or in an extension.
+        std::string("5\0\r\n", 4),
+        std::string("5;\0\r\n", 5),
+        "5;a\rb\r\n",
+    };
+    for (const auto& line : cases) {
+        INFO("line " << line);
+        std::vector<char> buff(line.begin(), line.end());
+        size_t out_size = 12345;
+        int res = _read_chunk_size(buff.data(), buff.size(), &out_size);
+        REQUIRE( res == -1 );
+        REQUIRE( out_size == 12345 );
     }
 }
