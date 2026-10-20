@@ -261,6 +261,22 @@ TEST_CASE("KiiJson, PrimitiveIntegerWithLeadingZeroIsInvalid")
     }
 }
 
+// A byte above 0x7f is not a digit, wherever it is in a number. Where char
+// is signed it is negative, which isdigit is not given.
+TEST_CASE("KiiJson, PrimitiveNumberWithNonAsciiByteIsInvalid")
+{
+    const char* const values[] = {
+        "\xb9", "1\xb9", "-\xb9", "1.\xb9", "1.5\xb9", "1e\xb9", "1e5\xb9",
+        "\xff", "1\xff", "1.\xff", "1e\xff"
+    };
+    for (const char* value : values) {
+        INFO("value " << value);
+        jkii_primitive_t res;
+        CHECK(JKII_PRIMITIVE_ERR_INVALID ==
+                jkii_parse_primitive(value, strlen(value), &res));
+    }
+}
+
 // Nor hexadecimal. These never reached strtol, whose base 0 would have read
 // them, because the type check refuses the x; now strtol would not either.
 TEST_CASE("KiiJson, PrimitiveHexadecimalIsInvalid")

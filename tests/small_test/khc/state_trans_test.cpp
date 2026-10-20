@@ -1285,6 +1285,28 @@ TEST_CASE( "state abnormal tests." ) {
         REQUIRE( http._result == KHC_ERR_FAIL );
     }
 
+    SECTION("resp status parse non-ASCII byte.") {
+        http._state = KHC_STATE_RESP_STATUS_READ;
+        http._resp_header_read_size = 0;
+
+        called = false;
+        s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            called = true;
+            strcpy(buffer, "HTTP/1.1 2\xb9" "0 OK\r\n");
+            *out_actual_length = strlen(buffer);
+            return KHC_SOCK_OK;
+        };
+
+        khc_state_resp_status_read(&http);
+        REQUIRE( http._state == KHC_STATE_RESP_STATUS_PARSE );
+        REQUIRE( http._result == KHC_ERR_OK );
+        REQUIRE( called );
+
+        khc_state_resp_status_parse(&http);
+        REQUIRE( http._state == KHC_STATE_CLOSE );
+        REQUIRE( http._result == KHC_ERR_FAIL );
+    }
+
     SECTION("resp header read retry.") {
         http._state = KHC_STATE_RESP_HEADER_READ;
         http._resp_header_read_size = 0;
