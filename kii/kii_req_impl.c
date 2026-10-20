@@ -176,15 +176,6 @@ kii_code_t _set_object_body_content_type(
     return kii_api_call_append_header_or_default(kii, "Content-Type", object_body_content_type, "application/octet-stream");
 }
 
-kii_code_t _set_content_length(
-        kii_t* kii,
-        size_t content_length)
-{
-    char length_value[KII_REQ_CONTENT_LENGTH_MAX_SIZE];
-    snprintf(length_value, KII_REQ_CONTENT_LENGTH_MAX_SIZE, "%lld", (long long)content_length);
-    return kii_api_call_append_header(kii, "Content-Length", length_value);
-}
-
 kii_code_t _set_app_id_header(kii_t* kii)
 {
     return kii_api_call_append_header(kii, "X-Kii-Appid", kii->_app_id);
