@@ -78,6 +78,9 @@ ctest --preset all
 The large tests need `APP_ID` and `DEFAULT_SITE` in the environment; without
 them they are not configured at all and `ctest --preset small` still works. A
 new test application is bootstrapped with `tests/large_test/initapp.sh`.
+Cross-compiled for 64-bit Windows with `cmake --preset mingw`, they run under
+wine with `ctest --preset large-mingw`, over the win32 sample's Winsock and
+Schannel callbacks in place of OpenSSL.
 
 Other useful targets and options:
 

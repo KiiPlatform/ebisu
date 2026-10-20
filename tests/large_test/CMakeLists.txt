@@ -2,8 +2,6 @@
 # and they are not fully deterministic -- hence the separate `large` label, so
 # `ctest -L small` stays clean and quick.
 
-find_package(OpenSSL REQUIRED)
-
 # APP_ID and DEFAULT_SITE are stringified by tests/large_test/test_env.h.
 #
 # Passing credentials as -D bakes them into the binary and puts them on the
@@ -24,8 +22,26 @@ if(EBISU_SOCKET_LOG)
     list(APPEND large_test_defines SOCKET_LOG)
 endif()
 
-# Shared by both large suites: the OpenSSL-backed socket callbacks.
-set(large_test_common ${CMAKE_CURRENT_SOURCE_DIR}/secure_socket_impl.cpp)
+# Shared by both large suites: the socket callbacks, with TLS and, for
+# EBISU_PLAIN_HTTP, without. OpenSSL over BSD sockets, except on Windows, where
+# they are the win32 sample's, over Winsock and Schannel, so that the sample's
+# TLS runs against the live server too.
+if(WIN32)
+    set(large_test_common
+        ${CMAKE_CURRENT_SOURCE_DIR}/secure_socket_win32.cpp
+        ${PROJECT_SOURCE_DIR}/tio/win32-sample/sock_cb_win32.c)
+    set(large_test_socket_libs ws2_32 secur32 crypt32)
+    set(large_test_socket_includes
+        ${PROJECT_SOURCE_DIR}/tio/win32-sample
+        ${PROJECT_SOURCE_DIR}/kii/include)
+    # Without it, windows.h pulls in winsock.h, which clashes with winsock2.h.
+    list(APPEND large_test_defines WIN32_LEAN_AND_MEAN)
+else()
+    find_package(OpenSSL REQUIRED)
+    set(large_test_common ${CMAKE_CURRENT_SOURCE_DIR}/secure_socket_impl.cpp)
+    set(large_test_socket_libs OpenSSL::SSL OpenSSL::Crypto)
+    set(large_test_socket_includes)
+endif()
 
 ebisu_add_test_suite(large_test_khc
     LABEL large
@@ -35,11 +51,12 @@ ebisu_add_test_suite(large_test_khc
         khc/post_error_test.cpp
         khc/post_test.cpp
         ${large_test_common}
-    LINK ${EBISU_KHC_OBJS} OpenSSL::SSL OpenSSL::Crypto Threads::Threads
+    LINK ${EBISU_KHC_OBJS} ${large_test_socket_libs} Threads::Threads
     INCLUDES
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/khc
         ${PROJECT_SOURCE_DIR}/khc/src
+        ${large_test_socket_includes}
     DEFINES ${large_test_defines})
 
 ebisu_add_test_suite(large_test_kii
@@ -53,11 +70,12 @@ ebisu_add_test_suite(large_test_kii
         kii/thing_test.cpp
         kii/ti_test.cpp
         ${large_test_common}
-    LINK ${EBISU_KII_OBJS} OpenSSL::SSL OpenSSL::Crypto Threads::Threads
+    LINK ${EBISU_KII_OBJS} ${large_test_socket_libs} Threads::Threads
     INCLUDES
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/kii
         ${PROJECT_SOURCE_DIR}/khc/include
         ${PROJECT_SOURCE_DIR}/jkii/include
         ${PROJECT_SOURCE_DIR}/jkii/libs/jsmn
+        ${large_test_socket_includes}
     DEFINES ${large_test_defines})

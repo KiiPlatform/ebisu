@@ -64,11 +64,10 @@
       "name": "mingw",
       "inherits": "base",
       "displayName": "Debug, 64-bit Windows",
-      "description": "Cross-compiled with mingw-w64 for 64-bit Windows, where long is 32 bits but pointers and size_t are 64; the tests run under wine. Leaves out the large tests, whose sockets are POSIX, and builds the win32 sample. Needs mingw-w64 and wine",
+      "description": "Cross-compiled with mingw-w64 for 64-bit Windows, where long is 32 bits but pointers and size_t are 64; the tests run under wine. Builds the win32 sample, whose Winsock and Schannel callbacks the large tests use. Needs mingw-w64 and wine",
       "toolchainFile": "${sourceDir}/cmake/mingw-w64-x86_64.cmake",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "EBISU_APP_ID": "",
         "EBISU_BUILD_SAMPLES": "ON"
       }
     }
@@ -145,6 +144,16 @@
       "filter": { "include": { "label": "small" } },
       "environment": { "WINEDEBUG": "-all" },
       "execution": { "jobs": 0 }
+    },
+    {
+      "name": "large-mingw",
+      "inherits": "base",
+      "configurePreset": "mingw",
+      "displayName": "Large tests, 64-bit Windows under wine",
+      "description": "Against a live Kii application; one retry, since they are not deterministic",
+      "filter": { "include": { "label": "large" } },
+      "environment": { "WINEDEBUG": "-all" },
+      "execution": { "repeat": { "mode": "until-pass", "count": 2 } }
     }
   ]
 }

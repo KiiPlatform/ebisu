@@ -44,7 +44,7 @@ TEST_CASE("TI Tests")
     SECTION("Get firmware version")
     {
         std::ostringstream oss;
-        oss << "LTest-" << std::time(NULL);
+        oss << "LTest-" << kiiltest::current_time();
         std::string vid = oss.str();
         const char password[] = "1234";
         const char firmware[] = "0.0.2";
@@ -67,7 +67,7 @@ TEST_CASE("TI Tests")
     SECTION("Put firmware version")
     {
         std::ostringstream oss;
-        oss << "LTest-" << std::time(NULL);
+        oss << "LTest-" << kiiltest::current_time();
         std::string vid = oss.str();
         const char password[] = "1234";
         kii_code_t res = kii_ti_onboard(&kii, vid.c_str(), password, NULL, NULL, NULL, NULL);
@@ -127,7 +127,7 @@ TEST_CASE("TI Tests")
     SECTION("Put bulk states")
     {
         std::ostringstream oss;
-        oss << "ltest_vid_" << std::time(NULL);
+        oss << "ltest_vid_" << kiiltest::current_time();
         std::string vid = oss.str();
         std::time_t t = std::time(NULL);
         const char password[] = "1234";
@@ -158,7 +158,7 @@ TEST_CASE("TI Tests")
     SECTION("Patch state")
     {
         std::ostringstream oss;
-        oss << "ltest_vid_" << std::time(NULL);
+        oss << "ltest_vid_" << kiiltest::current_time();
         std::string vid = oss.str();
         const char password[] = "1234";
         const char thing_type[] = "ltest_thing_type";
@@ -188,7 +188,7 @@ TEST_CASE("TI Tests")
     SECTION("Patch bulk states")
     {
         std::ostringstream oss;
-        oss << "ltest_vid_" << std::time(NULL);
+        oss << "ltest_vid_" << kiiltest::current_time();
         std::string vid = oss.str();
         std::time_t t = std::time(NULL);
 
@@ -232,7 +232,7 @@ TEST_CASE("Empty request payloads", "[empty-request]") {
     kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &mqtt_ssl_ctx, &resource);
 
     std::ostringstream oss;
-    oss << "ltest_vid_" << std::time(NULL);
+    oss << "ltest_vid_" << kiiltest::current_time();
     std::string vid = oss.str();
     const char password[] = "1234";
     const char thing_type[] = "ltest_thing_type";
