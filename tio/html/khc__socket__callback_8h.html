@@ -80,6 +80,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><code>#include &lt;stddef.h&gt;</code><br />
+<code>#include &lt;stdint.h&gt;</code><br />
 </div>
 <p><a href="khc__socket__callback_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -89,9 +90,9 @@ Typedefs</h2></td></tr>
 typedef enum <a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2">khc_sock_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>khc_sock_code_t</b></td></tr>
 <tr class="memdesc:af497c50fbe34dcc5990d93c1e0c61909"><td class="mdescLeft">&#160;</td><td class="mdescRight">Indicates socket callback result. <br /></td></tr>
 <tr class="separator:af497c50fbe34dcc5990d93c1e0c61909"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae9552240ec64ad637e77cd63c3b65c65" id="r_ae9552240ec64ad637e77cd63c3b65c65"><td class="memItemLeft" align="right" valign="top">typedef <a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2">khc_sock_code_t</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc__socket__callback_8h.html#ae9552240ec64ad637e77cd63c3b65c65">KHC_CB_SOCK_CONNECT</a>) (void *sock_ctx, const char *host, unsigned int port)</td></tr>
-<tr class="memdesc:ae9552240ec64ad637e77cd63c3b65c65"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback function connects socket to server.  <br /></td></tr>
-<tr class="separator:ae9552240ec64ad637e77cd63c3b65c65"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acdd52bbdab0132000516103e5474b72f" id="r_acdd52bbdab0132000516103e5474b72f"><td class="memItemLeft" align="right" valign="top">typedef <a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2">khc_sock_code_t</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc__socket__callback_8h.html#acdd52bbdab0132000516103e5474b72f">KHC_CB_SOCK_CONNECT</a>) (void *sock_ctx, const char *host, uint16_t port)</td></tr>
+<tr class="memdesc:acdd52bbdab0132000516103e5474b72f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback function connects socket to server.  <br /></td></tr>
+<tr class="separator:acdd52bbdab0132000516103e5474b72f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a96345c64c6bcec1711d2ddaac43224c2" id="r_a96345c64c6bcec1711d2ddaac43224c2"><td class="memItemLeft" align="right" valign="top">typedef <a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2">khc_sock_code_t</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc__socket__callback_8h.html#a96345c64c6bcec1711d2ddaac43224c2">KHC_CB_SOCK_SEND</a>) (void *sock_ctx, const char *buffer, size_t length, size_t *out_sent_length)</td></tr>
 <tr class="memdesc:a96345c64c6bcec1711d2ddaac43224c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback function sends data to server.  <br /></td></tr>
 <tr class="separator:a96345c64c6bcec1711d2ddaac43224c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -138,14 +139,14 @@ Enumerations</h2></td></tr>
 
 </div>
 </div>
-<a id="ae9552240ec64ad637e77cd63c3b65c65" name="ae9552240ec64ad637e77cd63c3b65c65"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae9552240ec64ad637e77cd63c3b65c65">&#9670;&#160;</a></span>KHC_CB_SOCK_CONNECT</h2>
+<a id="acdd52bbdab0132000516103e5474b72f" name="acdd52bbdab0132000516103e5474b72f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acdd52bbdab0132000516103e5474b72f">&#9670;&#160;</a></span>KHC_CB_SOCK_CONNECT</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">typedef <a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2">khc_sock_code_t</a>(* KHC_CB_SOCK_CONNECT) (void *sock_ctx, const char *host, unsigned int port)</td>
+          <td class="memname">typedef <a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2">khc_sock_code_t</a>(* KHC_CB_SOCK_CONNECT) (void *sock_ctx, const char *host, uint16_t port)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -156,7 +157,7 @@ Enumerations</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">sock_ctx</td><td>context object. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">host</td><td>host name. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">port</td><td>port number. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">port</td><td>TCP port number. </td></tr>
   </table>
   </dd>
 </dl>
@@ -247,7 +248,7 @@ Enumerations</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 10:32:56 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 20 2026 10:36:39 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

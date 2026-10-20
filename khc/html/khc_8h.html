@@ -83,7 +83,9 @@ $(function() {
   <div class="headertitle"><div class="title">khc.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;stdio.h&gt;</code><br />
+<div class="textblock"><code>#include &lt;stdbool.h&gt;</code><br />
+<code>#include &lt;stdint.h&gt;</code><br />
+<code>#include &lt;stdio.h&gt;</code><br />
 <code>#include &quot;<a class="el" href="khc__socket__callback_8h_source.html">khc_socket_callback.h</a>&quot;</code><br />
 </div>
 <p><a href="khc_8h_source.html">Go to the source code of this file.</a></p>
@@ -253,7 +255,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 <tr class="memitem:a59a8813c4c65fb2097b3461e5303d4fa" id="r_a59a8813c4c65fb2097b3461e5303d4fa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a59a8813c4c65fb2097b3461e5303d4fa">khc_set_stream_buff</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>, char *buffer, size_t buff_size)</td></tr>
 <tr class="memdesc:a59a8813c4c65fb2097b3461e5303d4fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set stream buffer.  <br /></td></tr>
 <tr class="separator:a59a8813c4c65fb2097b3461e5303d4fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a54f8f9bdcb11eead39b1665d705c5465" id="r_a54f8f9bdcb11eead39b1665d705c5465"><td class="memItemLeft" align="right" valign="top"><a class="el" href="khc_8h.html#a90be23875108e9a39942c3af90a6d789">khc_code</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a54f8f9bdcb11eead39b1665d705c5465">khc_set_cb_sock_connect</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>, <a class="el" href="khc__socket__callback_8h.html#ae9552240ec64ad637e77cd63c3b65c65">KHC_CB_SOCK_CONNECT</a> cb, void *userdata)</td></tr>
+<tr class="memitem:a54f8f9bdcb11eead39b1665d705c5465" id="r_a54f8f9bdcb11eead39b1665d705c5465"><td class="memItemLeft" align="right" valign="top"><a class="el" href="khc_8h.html#a90be23875108e9a39942c3af90a6d789">khc_code</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a54f8f9bdcb11eead39b1665d705c5465">khc_set_cb_sock_connect</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>, <a class="el" href="khc__socket__callback_8h.html#acdd52bbdab0132000516103e5474b72f">KHC_CB_SOCK_CONNECT</a> cb, void *userdata)</td></tr>
 <tr class="memdesc:a54f8f9bdcb11eead39b1665d705c5465"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket connect callback.  <br /></td></tr>
 <tr class="separator:a54f8f9bdcb11eead39b1665d705c5465"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a02713f2a404eb6f1487ecef3ce5fe2d9" id="r_a02713f2a404eb6f1487ecef3ce5fe2d9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="khc_8h.html#a90be23875108e9a39942c3af90a6d789">khc_code</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a02713f2a404eb6f1487ecef3ce5fe2d9">khc_set_cb_sock_send</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>, <a class="el" href="khc__socket__callback_8h.html#a96345c64c6bcec1711d2ddaac43224c2">KHC_CB_SOCK_SEND</a> cb, void *userdata)</td></tr>
@@ -274,15 +276,15 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 <tr class="memitem:afe54c0defe07585305e7a5c52a772b7f" id="r_afe54c0defe07585305e7a5c52a772b7f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="khc_8h.html#a90be23875108e9a39942c3af90a6d789">khc_code</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#afe54c0defe07585305e7a5c52a772b7f">khc_set_cb_header</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>, <a class="el" href="khc_8h.html#a28da65fe4a96bed6b6ac8150b9481a20">KHC_CB_HEADER</a> cb, void *userdata)</td></tr>
 <tr class="memdesc:afe54c0defe07585305e7a5c52a772b7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set header callback.  <br /></td></tr>
 <tr class="separator:afe54c0defe07585305e7a5c52a772b7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9bdd7cfba271620aa0bcaadae490936b" id="r_a9bdd7cfba271620aa0bcaadae490936b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a9bdd7cfba271620aa0bcaadae490936b">khc_enable_insecure</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>, int enable_insecure)</td></tr>
-<tr class="memdesc:a9bdd7cfba271620aa0bcaadae490936b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable insecure connection.  <br /></td></tr>
-<tr class="separator:a9bdd7cfba271620aa0bcaadae490936b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afa3313d6c8555ee7aedb75870992c449" id="r_afa3313d6c8555ee7aedb75870992c449"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#afa3313d6c8555ee7aedb75870992c449">khc_get_status_code</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
-<tr class="memdesc:afa3313d6c8555ee7aedb75870992c449"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get HTTP status code.  <br /></td></tr>
-<tr class="separator:afa3313d6c8555ee7aedb75870992c449"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abb9d159ba3fb35e950c0eaf48ad746d1" id="r_abb9d159ba3fb35e950c0eaf48ad746d1"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#abb9d159ba3fb35e950c0eaf48ad746d1">khc_method_can_have_body</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
-<tr class="memdesc:abb9d159ba3fb35e950c0eaf48ad746d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the configured request method can have a request body.  <br /></td></tr>
-<tr class="separator:abb9d159ba3fb35e950c0eaf48ad746d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab05e9076eb8e0e894603885d446499d9" id="r_ab05e9076eb8e0e894603885d446499d9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#ab05e9076eb8e0e894603885d446499d9">khc_enable_insecure</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>, bool enable_insecure)</td></tr>
+<tr class="memdesc:ab05e9076eb8e0e894603885d446499d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable insecure connection.  <br /></td></tr>
+<tr class="separator:ab05e9076eb8e0e894603885d446499d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a566621dab015c69cb57dd1de88241c2a" id="r_a566621dab015c69cb57dd1de88241c2a"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a566621dab015c69cb57dd1de88241c2a">khc_get_status_code</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
+<tr class="memdesc:a566621dab015c69cb57dd1de88241c2a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get HTTP status code.  <br /></td></tr>
+<tr class="separator:a566621dab015c69cb57dd1de88241c2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1303a5750c70d26aa745b8b5a20b6635" id="r_a1303a5750c70d26aa745b8b5a20b6635"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a1303a5750c70d26aa745b8b5a20b6635">khc_method_can_have_body</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
+<tr class="memdesc:a1303a5750c70d26aa745b8b5a20b6635"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the configured request method can have a request body.  <br /></td></tr>
+<tr class="separator:a1303a5750c70d26aa745b8b5a20b6635"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Kii HTTP clinet public API definitions. </p>
@@ -517,8 +519,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="a9bdd7cfba271620aa0bcaadae490936b" name="a9bdd7cfba271620aa0bcaadae490936b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9bdd7cfba271620aa0bcaadae490936b">&#9670;&#160;</a></span>khc_enable_insecure()</h2>
+<a id="ab05e9076eb8e0e894603885d446499d9" name="ab05e9076eb8e0e894603885d446499d9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab05e9076eb8e0e894603885d446499d9">&#9670;&#160;</a></span>khc_enable_insecure()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -532,7 +534,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int&#160;</td>
+          <td class="paramtype">bool&#160;</td>
           <td class="paramname"><em>enable_insecure</em>&#160;</td>
         </tr>
         <tr>
@@ -547,21 +549,21 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 <p>By default, khc uses secure connection. If you need to use tcp instead of ssl/tls, you need to call this method. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">khc</td><td>instance. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">enable_insecure</td><td>non-zero indicates enabling insecure connection. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">enable_insecure</td><td>true for an insecure connection, false (the default) for a secure one. </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a id="afa3313d6c8555ee7aedb75870992c449" name="afa3313d6c8555ee7aedb75870992c449"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afa3313d6c8555ee7aedb75870992c449">&#9670;&#160;</a></span>khc_get_status_code()</h2>
+<a id="a566621dab015c69cb57dd1de88241c2a" name="a566621dab015c69cb57dd1de88241c2a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a566621dab015c69cb57dd1de88241c2a">&#9670;&#160;</a></span>khc_get_status_code()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int khc_get_status_code </td>
+          <td class="memname">uint16_t khc_get_status_code </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structkhc.html">khc</a> *&#160;</td>
           <td class="paramname"><em>khc</em></td><td>)</td>
@@ -577,7 +579,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>HTTP status code. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the three-digit HTTP status code of the response, or 0 if none has been parsed since <a class="el" href="khc_8h.html#a5cb75ed1f039e02286cacb8d097f233e" title="Set initial value to members of khc.">khc_init(khc*)</a> or <a class="el" href="khc_8h.html#aea7b6dde93cd97fc303a90c1414dba21" title="Set initial value to members of khc other than callbacks.">khc_reset_except_cb(khc*)</a>. </dd></dl>
 
 </div>
 </div>
@@ -608,14 +610,14 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 
 </div>
 </div>
-<a id="abb9d159ba3fb35e950c0eaf48ad746d1" name="abb9d159ba3fb35e950c0eaf48ad746d1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abb9d159ba3fb35e950c0eaf48ad746d1">&#9670;&#160;</a></span>khc_method_can_have_body()</h2>
+<a id="a1303a5750c70d26aa745b8b5a20b6635" name="a1303a5750c70d26aa745b8b5a20b6635"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1303a5750c70d26aa745b8b5a20b6635">&#9670;&#160;</a></span>khc_method_can_have_body()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int khc_method_can_have_body </td>
+          <td class="memname">bool khc_method_can_have_body </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structkhc.html">khc</a> *&#160;</td>
           <td class="paramname"><em>khc</em></td><td>)</td>
@@ -631,7 +633,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>0 if it cannot, 1 if it can. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>true if it can, false if it cannot. </dd></dl>
 
 </div>
 </div>
@@ -836,7 +838,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="khc__socket__callback_8h.html#ae9552240ec64ad637e77cd63c3b65c65">KHC_CB_SOCK_CONNECT</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="khc__socket__callback_8h.html#acdd52bbdab0132000516103e5474b72f">KHC_CB_SOCK_CONNECT</a>&#160;</td>
           <td class="paramname"><em>cb</em>, </td>
         </tr>
         <tr>
@@ -1415,7 +1417,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 10:32:55 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 20 2026 10:36:39 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

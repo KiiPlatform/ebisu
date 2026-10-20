@@ -317,21 +317,21 @@
       <type>void</type>
       <name>khc_enable_insecure</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a9bdd7cfba271620aa0bcaadae490936b</anchor>
-      <arglist>(khc *khc, int enable_insecure)</arglist>
+      <anchor>ab05e9076eb8e0e894603885d446499d9</anchor>
+      <arglist>(khc *khc, bool enable_insecure)</arglist>
     </member>
     <member kind="function">
-      <type>int</type>
+      <type>uint16_t</type>
       <name>khc_get_status_code</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>afa3313d6c8555ee7aedb75870992c449</anchor>
+      <anchor>a566621dab015c69cb57dd1de88241c2a</anchor>
       <arglist>(khc *khc)</arglist>
     </member>
     <member kind="function">
-      <type>int</type>
+      <type>bool</type>
       <name>khc_method_can_have_body</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>abb9d159ba3fb35e950c0eaf48ad746d1</anchor>
+      <anchor>a1303a5750c70d26aa745b8b5a20b6635</anchor>
       <arglist>(khc *khc)</arglist>
     </member>
   </compound>
@@ -350,8 +350,8 @@
       <type>khc_sock_code_t(*</type>
       <name>KHC_CB_SOCK_CONNECT</name>
       <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>ae9552240ec64ad637e77cd63c3b65c65</anchor>
-      <arglist>)(void *sock_ctx, const char *host, unsigned int port)</arglist>
+      <anchor>acdd52bbdab0132000516103e5474b72f</anchor>
+      <arglist>)(void *sock_ctx, const char *host, uint16_t port)</arglist>
     </member>
     <member kind="typedef">
       <type>khc_sock_code_t(*</type>

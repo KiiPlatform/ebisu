@@ -217,7 +217,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>    <span class="keywordtype">void</span>* _mqtt_sock_send_ctx; </div>
 <div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>    <span class="keywordtype">void</span>* _mqtt_sock_recv_ctx; </div>
 <div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>    <span class="keywordtype">void</span>* _mqtt_sock_close_ctx; </div>
-<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>    <a class="code hl_typedefRef" href="../../khc/html/khc__socket__callback_8h.html#ae9552240ec64ad637e77cd63c3b65c65">KHC_CB_SOCK_CONNECT</a> _cb_mqtt_sock_connect; </div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>    <a class="code hl_typedefRef" href="../../khc/html/khc__socket__callback_8h.html#acdd52bbdab0132000516103e5474b72f">KHC_CB_SOCK_CONNECT</a> _cb_mqtt_sock_connect; </div>
 <div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>    <a class="code hl_typedefRef" href="../../khc/html/khc__socket__callback_8h.html#a96345c64c6bcec1711d2ddaac43224c2">KHC_CB_SOCK_SEND</a> _cb_mqtt_sock_send; </div>
 <div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>    <a class="code hl_typedefRef" href="../../khc/html/khc__socket__callback_8h.html#a148cf4bd26b43909c9eab71f37b4cda6">KHC_CB_SOCK_RECV</a> _cb_mqtt_sock_recv; </div>
 <div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>    <a class="code hl_typedefRef" href="../../khc/html/khc__socket__callback_8h.html#af54fb240d589fb1044188bd4a81ab78d">KHC_CB_SOCK_CLOSE</a> _cb_mqtt_sock_close_cb; </div>
@@ -570,7 +570,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="akhc_8h_html_a32bafb6cf1da963a57d8a167efe9f833"><div class="ttname"><a href="../../khc/html/khc_8h.html#a32bafb6cf1da963a57d8a167efe9f833">KHC_CB_SLIST_FREE</a></div><div class="ttdeci">void(* KHC_CB_SLIST_FREE)(khc_slist *node, void *data)</div></div>
 <div class="ttc" id="akhc__socket__callback_8h_html_a148cf4bd26b43909c9eab71f37b4cda6"><div class="ttname"><a href="../../khc/html/khc__socket__callback_8h.html#a148cf4bd26b43909c9eab71f37b4cda6">KHC_CB_SOCK_RECV</a></div><div class="ttdeci">khc_sock_code_t(* KHC_CB_SOCK_RECV)(void *sock_ctx, char *buffer, size_t length_to_read, size_t *out_actual_length)</div></div>
 <div class="ttc" id="akhc__socket__callback_8h_html_a96345c64c6bcec1711d2ddaac43224c2"><div class="ttname"><a href="../../khc/html/khc__socket__callback_8h.html#a96345c64c6bcec1711d2ddaac43224c2">KHC_CB_SOCK_SEND</a></div><div class="ttdeci">khc_sock_code_t(* KHC_CB_SOCK_SEND)(void *sock_ctx, const char *buffer, size_t length, size_t *out_sent_length)</div></div>
-<div class="ttc" id="akhc__socket__callback_8h_html_ae9552240ec64ad637e77cd63c3b65c65"><div class="ttname"><a href="../../khc/html/khc__socket__callback_8h.html#ae9552240ec64ad637e77cd63c3b65c65">KHC_CB_SOCK_CONNECT</a></div><div class="ttdeci">khc_sock_code_t(* KHC_CB_SOCK_CONNECT)(void *sock_ctx, const char *host, unsigned int port)</div></div>
+<div class="ttc" id="akhc__socket__callback_8h_html_acdd52bbdab0132000516103e5474b72f"><div class="ttname"><a href="../../khc/html/khc__socket__callback_8h.html#acdd52bbdab0132000516103e5474b72f">KHC_CB_SOCK_CONNECT</a></div><div class="ttdeci">khc_sock_code_t(* KHC_CB_SOCK_CONNECT)(void *sock_ctx, const char *host, uint16_t port)</div></div>
 <div class="ttc" id="akhc__socket__callback_8h_html_af54fb240d589fb1044188bd4a81ab78d"><div class="ttname"><a href="../../khc/html/khc__socket__callback_8h.html#af54fb240d589fb1044188bd4a81ab78d">KHC_CB_SOCK_CLOSE</a></div><div class="ttdeci">khc_sock_code_t(* KHC_CB_SOCK_CLOSE)(void *sock_ctx)</div></div>
 <div class="ttc" id="akii_8h_html_a01bef79a9e335923fc3817c1b60f1580"><div class="ttname"><a href="kii_8h.html#a01bef79a9e335923fc3817c1b60f1580">kii_subscribe_topic</a></div><div class="ttdeci">kii_code_t kii_subscribe_topic(kii_t *kii, const kii_topic_t *topic)</div><div class="ttdoc">Subscribe to the specified topic. After succeeded, Messages sent to the topic will be notified by MQT...</div></div>
 <div class="ttc" id="akii_8h_html_a0243b3014379f29668584d078c7a7eb2"><div class="ttname"><a href="kii_8h.html#a0243b3014379f29668584d078c7a7eb2">kii_delete_object</a></div><div class="ttdeci">kii_code_t kii_delete_object(kii_t *kii, const kii_bucket_t *bucket, const char *object_id)</div><div class="ttdoc">Delete Kii object.</div></div>
@@ -726,7 +726,7 @@ $(document).ready(function() { init_codefold(0); });
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 10:32:56 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 20 2026 10:36:39 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

@@ -15,8 +15,8 @@
       <type>khc_sock_code_t(*</type>
       <name>KHC_CB_SOCK_CONNECT</name>
       <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>ae9552240ec64ad637e77cd63c3b65c65</anchor>
-      <arglist>)(void *sock_ctx, const char *host, unsigned int port)</arglist>
+      <anchor>acdd52bbdab0132000516103e5474b72f</anchor>
+      <arglist>)(void *sock_ctx, const char *host, uint16_t port)</arglist>
     </member>
     <member kind="typedef">
       <type>khc_sock_code_t(*</type>
