@@ -274,103 +274,9 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
         return KHC_SOCK_OK;
     };
 
+    // A GET has no body, so none follows the headers, not even the chunk
+    // that would end an empty one, though a read callback is set.
     khc_state_req_header_end(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_BODY_READ );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    io_ctx.on_read = [=, &called](char *buffer, size_t size, void *userdata) {
-        called = true;
-        REQUIRE( size == buff_size );
-        const char body[] = "http body";
-        strncpy(buffer, body, strlen(body));
-        return strlen(body);
-    };
-    khc_state_req_body_read(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_SIZE );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( http._read_req_end == false );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char body[] = "9\r\n";
-        REQUIRE( length == strlen(body) );
-        REQUIRE( strncmp(buffer, body, length) == 0 );
-        *out_sent_length = length;
-        return KHC_SOCK_OK;
-    };
-    khc_state_req_body_send_size(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char body[] = "http body";
-        REQUIRE( length == strlen(body) );
-        REQUIRE( strncmp(buffer, body, length) == 0 );
-        *out_sent_length = length;
-        return KHC_SOCK_OK;
-    };
-    khc_state_req_body_send(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_CRLF );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char body[] = "\r\n";
-        REQUIRE( length == strlen(body) );
-        REQUIRE( strncmp(buffer, body, length) == 0 );
-        *out_sent_length = length;
-        return KHC_SOCK_OK;
-    };
-    khc_state_req_body_send_crlf(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_BODY_READ );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    io_ctx.on_read = [=, &called](char *buffer, size_t size, void *userdata) {
-        called = true;
-        REQUIRE( size == buff_size );
-        return 0;
-    };
-    khc_state_req_body_read(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_SIZE );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( http._read_req_end == true );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char body[] = "0\r\n";
-        REQUIRE( length == strlen(body) );
-        REQUIRE( strncmp(buffer, body, length) == 0 );
-        *out_sent_length = length;
-        return KHC_SOCK_OK;
-    };
-    khc_state_req_body_send_size(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_CRLF );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char body[] = "\r\n";
-        REQUIRE( length == strlen(body) );
-        REQUIRE( strncmp(buffer, body, length) == 0 );
-        *out_sent_length = length;
-        return KHC_SOCK_OK;
-    };
-    khc_state_req_body_send_crlf(&http);
     REQUIRE( http._state == KHC_STATE_RESP_STATUS_READ );
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
@@ -1792,4 +1698,76 @@ TEST_CASE( "Enable insecure" ) {
     REQUIRE( http._state == KHC_STATE_REQ_HOST_HEADER );
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
+}
+
+// What khc_perform() sends for a request with the method given and a read
+// callback giving body.
+static std::string sent_request(const char* method, const char* body) {
+    khc http;
+    khc_init(&http);
+    char stream_buff[DEFAULT_STREAM_BUFF_SIZE];
+    char resp_header_buff[DEFAULT_RESP_HEADER_BUFF_SIZE];
+    khc_set_stream_buff(&http, stream_buff, sizeof(stream_buff));
+    khc_set_resp_header_buff(&http, resp_header_buff, sizeof(resp_header_buff));
+    khc_set_host(&http, "api.kii.com");
+    khc_set_method(&http, method);
+    khc_set_path(&http, "/api/apps");
+    khc_set_req_headers(&http, NULL);
+
+    std::string sent;
+    std::istringstream resp("HTTP/1.1 204 No Content\r\n\r\n");
+    khct::cb::SockCtx s_ctx;
+    s_ctx.on_connect = [](void* socket_context, const char* host, uint16_t port) {
+        return KHC_SOCK_OK;
+    };
+    s_ctx.on_send = [&sent](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+        sent.append(buffer, length);
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    s_ctx.on_recv = [&resp](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        *out_actual_length = resp.read(buffer, length_to_read).gcount();
+        return KHC_SOCK_OK;
+    };
+    s_ctx.on_close = [](void* socket_context) {
+        return KHC_SOCK_OK;
+    };
+    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
+    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
+    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
+    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+
+    bool body_read = false;
+    khct::cb::IOCtx io_ctx;
+    io_ctx.on_read = [&body_read, body](char *buffer, size_t size, void *userdata) {
+        size_t len = body_read ? 0 : strlen(body);
+        memcpy(buffer, body, len);
+        body_read = true;
+        return len;
+    };
+    io_ctx.on_header = [](char *buffer, size_t size, void *userdata) {
+        return size;
+    };
+    io_ctx.on_write = [](char *buffer, size_t size, void *userdata) {
+        return size;
+    };
+    khc_set_cb_read(&http, khct::cb::cb_read, &io_ctx);
+    khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
+    khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
+
+    REQUIRE( khc_perform(&http) == KHC_ERR_OK );
+    REQUIRE( khc_get_status_code(&http) == 204 );
+    return sent;
+}
+
+TEST_CASE( "Only a method that can have a body sends one" ) {
+    const std::string target = " https://api.kii.com/api/apps HTTP/1.1\r\nHOST: api.kii.com\r\n";
+    // Nothing after the headers, which announce no body: not even the chunk
+    // that would end an empty one.
+    for (const char* method : {"GET", "HEAD", "DELETE"}) {
+        INFO( method );
+        REQUIRE( sent_request(method, "body") == method + target + "Connection: Close\r\n\r\n" );
+    }
+    REQUIRE( sent_request("POST", "body") == "POST" + target +
+            "Transfer-Encoding: chunked\r\nConnection: Close\r\n\r\n4\r\nbody\r\n0\r\n\r\n" );
 }
