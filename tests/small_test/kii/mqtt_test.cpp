@@ -1563,6 +1563,135 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 1 );
     }
 
+    // The topic length is the first two bytes of the message, so it can claim
+    // more than the message holds. Subtracting it from the message size then
+    // wrapped around and the callback was handed a length near SIZE_MAX.
+    SECTION("recv msg drops a message whose topic is longer than the message") {
+        const std::string packet("\x00\x10" "abc", 5); // topic length 16
+        size_t served = 0;
+        mqtt_ctx.on_recv = [=, &served](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            *out_actual_length = packet.copy(buffer, length_to_read, served);
+            served += *out_actual_length;
+            return KHC_SOCK_OK;
+        };
+        bool call_push = false;
+        size_t push_length = 0;
+        push_ctx.on_push = [&call_push, &push_length](const char* message, size_t message_length) {
+            call_push = true;
+            push_length = message_length;
+        };
+
+        state.info.task_state = KII_MQTT_ST_RECV_MSG;
+        state.remaining_message_size = packet.length();
+        _mqtt_state_recv_msg(&state);
+        CAPTURE( push_length );
+        REQUIRE( call_push == false );
+        // Read whole, so the next message starts where it should.
+        REQUIRE( served == packet.length() );
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+    }
+
+    SECTION("recv msg drops a one-byte message, too short for a topic length") {
+        const std::string packet("\x00", 1);
+        size_t served = 0;
+        mqtt_ctx.on_recv = [=, &served](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            *out_actual_length = packet.copy(buffer, length_to_read, served);
+            served += *out_actual_length;
+            return KHC_SOCK_OK;
+        };
+        bool call_push = false;
+        size_t push_length = 0;
+        push_ctx.on_push = [&call_push, &push_length](const char* message, size_t message_length) {
+            call_push = true;
+            push_length = message_length;
+        };
+
+        state.info.task_state = KII_MQTT_ST_RECV_MSG;
+        state.remaining_message_size = packet.length();
+        _mqtt_state_recv_msg(&state);
+        CAPTURE( push_length );
+        REQUIRE( call_push == false );
+        REQUIRE( served == packet.length() );
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+    }
+
+    // Nothing to read, which _mqtt_recv_remaining() reports as a failure.
+    SECTION("recv msg reconnects on an empty message") {
+        int call_recv = 0;
+        mqtt_ctx.on_recv = [&call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            ++call_recv;
+            return KHC_SOCK_FAIL;
+        };
+        bool call_push = false;
+        push_ctx.on_push = [&call_push](const char* message, size_t message_length) {
+            call_push = true;
+        };
+
+        state.info.task_state = KII_MQTT_ST_RECV_MSG;
+        state.remaining_message_size = 0;
+        _mqtt_state_recv_msg(&state);
+        REQUIRE( call_push == false );
+        REQUIRE( call_recv == 0 );
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+    }
+
+    // The boundary: a topic that exactly fills the message is valid.
+    SECTION("recv msg passes an empty payload when the topic fills the message") {
+        const std::string packet("\x00\x03" "abc", 5);
+        size_t served = 0;
+        mqtt_ctx.on_recv = [=, &served](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            *out_actual_length = packet.copy(buffer, length_to_read, served);
+            served += *out_actual_length;
+            return KHC_SOCK_OK;
+        };
+        bool call_push = false;
+        const char* mqtt_buffer = state.kii->_mqtt_buffer;
+        push_ctx.on_push = [=, &call_push](const char* message, size_t message_length) {
+            call_push = true;
+            REQUIRE( message - mqtt_buffer == 5 );
+            REQUIRE( message_length == 0 );
+        };
+
+        state.info.task_state = KII_MQTT_ST_RECV_MSG;
+        state.remaining_message_size = packet.length();
+        _mqtt_state_recv_msg(&state);
+        REQUIRE( call_push );
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+    }
+
+    // char is signed on x86, among others: reading the length bytes as char
+    // turned 0xC8 into 0xFFFFFFC8, so a topic of 128 bytes or more got the
+    // wrong length.
+    SECTION("recv msg reads a topic length byte of 0x80 or more as unsigned") {
+        std::string packet("\x00\xC8", 2); // topic length 200
+        packet.append(200, 't');
+        packet.append("{}");
+        size_t served = 0;
+        mqtt_ctx.on_recv = [=, &served](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            *out_actual_length = packet.copy(buffer, length_to_read, served);
+            served += *out_actual_length;
+            return KHC_SOCK_OK;
+        };
+        bool call_push = false;
+        const char* mqtt_buffer = state.kii->_mqtt_buffer;
+        push_ctx.on_push = [=, &call_push](const char* message, size_t message_length) {
+            call_push = true;
+            // As an offset: Catch would print a char* by reading through it.
+            REQUIRE( message - mqtt_buffer == 2 + 200 );
+            REQUIRE( message_length == 2 );
+            REQUIRE( strncmp(message, "{}", 2) == 0 );
+        };
+
+        state.info.task_state = KII_MQTT_ST_RECV_MSG;
+        state.remaining_message_size = packet.length();
+        _mqtt_state_recv_msg(&state);
+        REQUIRE( call_push );
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+    }
+
     SECTION("send pingreq got KHC_SOCK_AGAIN") {
         int call_send = 0;
         mqtt_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {

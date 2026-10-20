@@ -534,11 +534,19 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
             task_info->task_state = KII_MQTT_ST_RECONNECT;
         } else {
             state->elapsed_time_ms += ARRIVED_MSG_READ_TIME;
-            unsigned int topic_size = (unsigned int)kii->_mqtt_buffer[0] * 256 + (unsigned int)kii->_mqtt_buffer[1];
             // 2 bytes: topic size. packet identifier is not present since QoS0
-            char* body_ptr = kii->_mqtt_buffer + topic_size + 2;
-            size_t body_length = remaining_message_size - topic_size - 2;
-            kii->_cb_push_received(body_ptr, body_length, kii->_push_data);
+            // The topic size comes from the message: read its bytes unsigned,
+            // as char may be signed, and check the topic fits before taking the
+            // rest as the body. A message where it does not has been read whole
+            // all the same, so drop it, as one larger than the buffer is.
+            if (remaining_message_size >= 2) {
+                unsigned int topic_size = (unsigned char)kii->_mqtt_buffer[0] * 256 + (unsigned char)kii->_mqtt_buffer[1];
+                if (topic_size <= remaining_message_size - 2) {
+                    char* body_ptr = kii->_mqtt_buffer + topic_size + 2;
+                    size_t body_length = remaining_message_size - topic_size - 2;
+                    kii->_cb_push_received(body_ptr, body_length, kii->_push_data);
+                }
+            }
             task_info->task_state = KII_MQTT_ST_RECV_READY;
         }
     }
