@@ -1,5 +1,6 @@
 // The MQTT push task against Kii Cloud's broker: it connects, subscribes,
-// receives what the thing sends to its own topic, stays connected while idle
+// receives what the thing sends to its own topic and straight to itself, stays
+// connected while idle
 // across receive timeouts and keep-alive pings, and reconnects after losing
 // the connection.
 //
@@ -286,11 +287,15 @@ TEST_CASE("MQTT push from the broker")
     REQUIRE( kii_subscribe_topic(&kii, &topic) == KII_ERR_OK );
     REQUIRE( khc_get_status_code(&kii._khc) == 204 );
 
-    // Sends a message carrying nonce to the topic, on the task's thread.
-    auto send = [&kii, &topic, &t](const std::string& nonce) {
+    // Sends a message carrying nonce on the task's thread: to the topic, or,
+    // with to_thing, straight to the thing, the only one its own token may
+    // send to.
+    auto send = [&kii, &topic, &t](const std::string& nonce, bool to_thing) {
         std::string message = "{\"data\":{\"nonce\":\"" + nonce + "\"},\"mqtt\":{\"enabled\":true}}";
-        REQUIRE( run_on_task(t, [&kii, &topic, &t, message] {
-            kii_code_t res = kii_send_push_message(&kii, &topic, message.c_str());
+        REQUIRE( run_on_task(t, [&kii, &topic, &t, message, to_thing] {
+            kii_code_t res = to_thing ?
+                kii_send_push_message_to_thing(&kii, kii._author.author_id, message.c_str()) :
+                kii_send_push_message(&kii, &topic, message.c_str());
             int status = khc_get_status_code(&kii._khc);
             std::lock_guard<std::mutex> lock(t.mutex);
             t.send_res = res;
@@ -316,14 +321,18 @@ TEST_CASE("MQTT push from the broker")
     }
     CHECK( t.connects.load() == 1 );
 
-    send("first-" + run_id);
+    send("first-" + run_id, false);
     REQUIRE( received(t, "first-" + run_id) );
+
+    // Straight to the thing, without the topic.
+    send("direct-" + run_id, true);
+    REQUIRE( received(t, "direct-" + run_id) );
 
     // Idle across several receive timeouts and keep-alive intervals. A timeout
     // taken for a lost connection, or a PINGREQ whose PINGRESP was not read,
     // would reconnect.
     std::this_thread::sleep_for(std::chrono::seconds(25));
-    send("idle-" + run_id);
+    send("idle-" + run_id, false);
     REQUIRE( received(t, "idle-" + run_id) );
     {
         std::lock_guard<std::mutex> lock(t.mutex);
@@ -344,7 +353,7 @@ TEST_CASE("MQTT push from the broker")
         REQUIRE_FALSE( t.exited );
     }
     CHECK( t.connects.load() == 2 );
-    send("reconnected-" + run_id);
+    send("reconnected-" + run_id, false);
     REQUIRE( received(t, "reconnected-" + run_id) );
 
     // Asked to stop, it ends within a receive timeout, and closes the
