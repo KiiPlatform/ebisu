@@ -275,6 +275,12 @@
       <anchor>a79eab5c5f48e03121033d6291619c7dea8fc54c71516a569079c207f4de28eb41</anchor>
       <arglist></arglist>
     </member>
+    <member kind="enumvalue">
+      <name>KII_ERR_CREATE_TASK</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a79eab5c5f48e03121033d6291619c7dea99b394e6cf600b27fb44550d52fbee3c</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="enumeration">
       <type></type>
       <name>kii_scope_type_t</name>

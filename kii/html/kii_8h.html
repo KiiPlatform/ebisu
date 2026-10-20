@@ -243,6 +243,8 @@ Enumerations</h2></td></tr>
 , <a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7deac9472b83ca9b65665e8b92b039033567">KII_ERR_RESP_STATUS</a>
 , <a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7dea95be3c52f09a17ab37cc5026f4f74c21">KII_ERR_PARSE_JSON</a>
 , <a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7dea8fc54c71516a569079c207f4de28eb41">KII_ERR_FAIL</a>
+, <br />
+&#160;&#160;<a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7dea99b394e6cf600b27fb44550d52fbee3c">KII_ERR_CREATE_TASK</a>
 <br />
  }</td></tr>
 <tr class="memdesc:a79eab5c5f48e03121033d6291619c7de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Error codes definition.  <a href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">More...</a><br /></td></tr>
@@ -352,7 +354,7 @@ Functions</h2></td></tr>
 <tr class="memdesc:a9cde2654b8a652bb01bb5952faf0e538"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get MQTT endpoint.  <br /></td></tr>
 <tr class="separator:a9cde2654b8a652bb01bb5952faf0e538"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2106af24a260dc351b0c17e388a4bd71" id="r_a2106af24a260dc351b0c17e388a4bd71"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a2106af24a260dc351b0c17e388a4bd71">kii_start_push_task</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, unsigned int keep_alive_interval_sec, <a class="el" href="kii_8h.html#afeba27d97c92ad7a3a03374248eaeb14">KII_PUSH_RECEIVED_CB</a> cb_push, void *userdata)</td></tr>
-<tr class="memdesc:a2106af24a260dc351b0c17e388a4bd71"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push is called when message is delivered to the thing.  <br /></td></tr>
+<tr class="memdesc:a2106af24a260dc351b0c17e388a4bd71"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push is called when message is delivered to the thing. The task is created by the callback set by <a class="el" href="kii_8h.html#a0544a628a2fbc798e4d2fa67e142c491" title="Set callback creates task.">kii_set_cb_task_create()</a>. If that callback is not set, or fails to create the task, no task is started and KII_ERR_CREATE_TASK is returned.  <br /></td></tr>
 <tr class="separator:a2106af24a260dc351b0c17e388a4bd71"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a88de31a3b85076df9a58727d2ab63d7f" id="r_a88de31a3b85076df9a58727d2ab63d7f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a88de31a3b85076df9a58727d2ab63d7f">kii_execute_server_code_version</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const char *version, const char *endpoint_name, const char *params)</td></tr>
 <tr class="memdesc:a88de31a3b85076df9a58727d2ab63d7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute a specific version of server code.  <br /></td></tr>
@@ -636,6 +638,8 @@ Functions</h2></td></tr>
 <tr><td class="fieldname"><a id="a79eab5c5f48e03121033d6291619c7dea95be3c52f09a17ab37cc5026f4f74c21" name="a79eab5c5f48e03121033d6291619c7dea95be3c52f09a17ab37cc5026f4f74c21"></a>KII_ERR_PARSE_JSON&#160;</td><td class="fielddoc"><p>REST API returns error status code. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a79eab5c5f48e03121033d6291619c7dea8fc54c71516a569079c207f4de28eb41" name="a79eab5c5f48e03121033d6291619c7dea8fc54c71516a569079c207f4de28eb41"></a>KII_ERR_FAIL&#160;</td><td class="fielddoc"><p>Other errors. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a79eab5c5f48e03121033d6291619c7dea99b394e6cf600b27fb44550d52fbee3c" name="a79eab5c5f48e03121033d6291619c7dea99b394e6cf600b27fb44550d52fbee3c"></a>KII_ERR_CREATE_TASK&#160;</td><td class="fielddoc"><p>Error in creating task. </p>
 </td></tr>
 </table>
 
@@ -2925,7 +2929,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
       </table>
 </div><div class="memdoc">
 
-<p>Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push is called when message is delivered to the thing. </p>
+<p>Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push is called when message is delivered to the thing. The task is created by the callback set by <a class="el" href="kii_8h.html#a0544a628a2fbc798e4d2fa67e142c491" title="Set callback creates task.">kii_set_cb_task_create()</a>. If that callback is not set, or fails to create the task, no task is started and KII_ERR_CREATE_TASK is returned. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
@@ -3573,7 +3577,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 10:17:08 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 20 2026 10:23:53 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
