@@ -1709,3 +1709,134 @@ TEST_CASE("KiiJson, NoTokenInputTest")
                     strlen(whitespace), cb_alloc, cb_free));
     }
 }
+
+// jsmn is built non-strict, so a key with no value is not a parse error:
+// {"a"} is an object holding one string, with no token after it for the
+// value. Each document below ends in such a key, and the token after the
+// last one parsed must not be taken for its value.
+//
+// parse_after() parses into a resource that a previous message was parsed
+// into, as kii and tio reuse theirs, and into the same buffer, left
+// uncleared. That message had a value where this one stops, so the token
+// after the last one parsed is still that value, its offsets still
+// pointing at its text.
+static jkii_parse_err_t parse_after(
+        const char* previous,
+        const char* json_string,
+        jkii_field_t* fields)
+{
+    char buf[256];
+    jkii_token_t tokens[256];
+    jkii_resource_t resource = { tokens, 256 };
+    jkii_field_t no_fields[1];
+    memset(no_fields, 0x00, sizeof(no_fields));
+
+    memcpy(buf, previous, strlen(previous));
+    REQUIRE(JKII_ERR_OK ==
+            jkii_parse(buf, strlen(previous), no_fields, &resource));
+    // No terminator: the rest of the previous message stays after this one.
+    memcpy(buf, json_string, strlen(json_string));
+    return jkii_parse(buf, strlen(json_string), fields, &resource);
+}
+
+// The allocator variant sizes the token array to the parse, so there is no
+// token after the last one.
+static jkii_parse_err_t parse_allocated(
+        const char* json_string,
+        jkii_field_t* fields)
+{
+    return jkii_parse_with_allocator(json_string, strlen(json_string),
+            fields, cb_alloc, cb_free);
+}
+
+TEST_CASE("KiiJson, OnlyKeyHasNoValue")
+{
+    const char json_string[] = "{\"a\"}";
+    char by_name[64];
+    char by_path[64];
+    jkii_parse_err_t res = JKII_ERR_OK;
+
+    jkii_field_t fields[3];
+    memset(fields, 0x00, sizeof(fields));
+    fields[0].name = "a";
+    fields[0].type = JKII_FIELD_TYPE_STRING;
+    fields[0].field_copy.string = by_name;
+    fields[0].field_copy_buff_size = sizeof(by_name) / sizeof(by_name[0]);
+    fields[1].path = "/a";
+    fields[1].type = JKII_FIELD_TYPE_STRING;
+    fields[1].field_copy.string = by_path;
+    fields[1].field_copy_buff_size = sizeof(by_path) / sizeof(by_path[0]);
+    fields[2].name = NULL;
+
+    SECTION("reused resource") {
+        res = parse_after("{\"a\":\"stale\"}", json_string, fields);
+    }
+    SECTION("allocator") {
+        res = parse_allocated(json_string, fields);
+    }
+    REQUIRE(JKII_ERR_PARTIAL == res);
+    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[1].result);
+}
+
+TEST_CASE("KiiJson, LastKeyHasNoValue")
+{
+    const char json_string[] = "{\"a\":1,\"b\"}";
+    jkii_parse_err_t res = JKII_ERR_OK;
+
+    jkii_field_t fields[6];
+    memset(fields, 0x00, sizeof(fields));
+    fields[0].name = "a";
+    fields[0].type = JKII_FIELD_TYPE_INTEGER;
+    fields[1].name = "b";
+    fields[1].type = JKII_FIELD_TYPE_ANY;
+    fields[2].path = "/b";
+    fields[2].type = JKII_FIELD_TYPE_ANY;
+    // Not there at all, but looking for it walks past b.
+    fields[3].name = "c";
+    fields[3].type = JKII_FIELD_TYPE_ANY;
+    fields[4].path = "/c";
+    fields[4].type = JKII_FIELD_TYPE_ANY;
+    fields[5].name = NULL;
+
+    SECTION("reused resource") {
+        res = parse_after("{\"a\":1,\"b\":\"stale\"}", json_string, fields);
+    }
+    SECTION("allocator") {
+        res = parse_allocated(json_string, fields);
+    }
+    REQUIRE(JKII_ERR_PARTIAL == res);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
+    REQUIRE(1 == fields[0].field_copy.int_value);
+    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[1].result);
+    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[2].result);
+    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[3].result);
+    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[4].result);
+}
+
+TEST_CASE("KiiJson, NestedKeyHasNoValue")
+{
+    const char json_string[] = "{\"a\":{\"b\"}}";
+    jkii_parse_err_t res = JKII_ERR_OK;
+
+    jkii_field_t fields[4];
+    memset(fields, 0x00, sizeof(fields));
+    fields[0].path = "/a";
+    fields[0].type = JKII_FIELD_TYPE_OBJECT;
+    fields[1].path = "/a/b";
+    fields[1].type = JKII_FIELD_TYPE_ANY;
+    fields[2].path = "/a/c";
+    fields[2].type = JKII_FIELD_TYPE_ANY;
+    fields[3].path = NULL;
+
+    SECTION("reused resource") {
+        res = parse_after("{\"a\":{\"b\":\"stale\"}}", json_string, fields);
+    }
+    SECTION("allocator") {
+        res = parse_allocated(json_string, fields);
+    }
+    REQUIRE(JKII_ERR_PARTIAL == res);
+    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
+    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[1].result);
+    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[2].result);
+}
