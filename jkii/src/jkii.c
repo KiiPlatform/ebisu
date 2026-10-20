@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <limits.h>
 #include <math.h>
 #include <errno.h>
@@ -18,9 +19,6 @@
 #include <jkii.h>
 #include <jkii_utils.h>
 
-#define EVAL(f, v) f(v)
-#define TOSTR(s) #s
-
 /* Compares a counted, non-terminated buffer against a string literal.
  *
  * The obvious memcmp(buf, "null", buf_len) is wrong in both directions. When
@@ -33,10 +31,12 @@
 #define M_JKII_EQ_LITERAL(buf, buf_len, literal) \
     ((buf_len) == sizeof(literal) - 1 && \
      memcmp((buf), (literal), sizeof(literal) - 1) == 0)
-#define LONG_MAX_STR EVAL(TOSTR, LONG_MAX)
-#define LONGBUFSIZE (sizeof(LONG_MAX_STR) / sizeof(char) + 1)
-#define INT_MAX_STR EVAL(TOSTR, INT_MAX)
-#define INTBUFSIZE (sizeof(INT_MAX_STR) / sizeof(char) + 1)
+/* The longest an int64_t is in decimal, INT64_MIN, written out: how a
+ * limits.h macro is spelled is up to the libc, and glibc's are hexadecimal. */
+#define INT64_MIN_STR "-9223372036854775808"
+/* With the terminator. An integer longer than that is out of range, since it
+ * may not have leading zeros. */
+#define INT64BUFSIZE sizeof(INT64_MIN_STR)
 
 /* "+ 3" denotes '-', '.', '\0' */
 #define DOUBLEBUFSIZE DBL_MAX_10_EXP + 3
@@ -185,26 +185,13 @@ static int _jkii_is_all_digit(const char* buf, size_t buf_len)
     return 1;
 }
 
-static int _jkii_is_int(const char* buf, size_t buf_len)
+/* Whether buf is written as an integer: digits, after an optional minus sign.
+ * Whether it is an int32_t or an int64_t depends on its value, which this does
+ * not look at: see _jkii_to_integer. */
+static int _jkii_is_integer(const char* buf, size_t buf_len)
 {
     M_JKII_ASSERT(buf != NULL);
-    if (buf_len > INTBUFSIZE) {
-        return 0;
-    }
-    if (*buf == '-') {
-        ++buf;
-        --buf_len;
-    }
-    return _jkii_is_all_digit(buf, buf_len);
-}
-
-static int _jkii_is_long(const char* buf, size_t buf_len)
-{
-    M_JKII_ASSERT(buf != NULL);
-    if (buf_len > LONGBUFSIZE) {
-        return 0;
-    }
-    if (*buf == '-') {
+    if (buf_len > 0 && *buf == '-') {
         ++buf;
         --buf_len;
     }
@@ -306,10 +293,36 @@ static int _jkii_is_double(const char* buf, size_t buf_len)
     return 1;
 }
 
+static jkii_primitive_err_t _jkii_to_int64(
+        const char* target,
+        size_t target_size,
+        int64_t* out_int64);
+
+/* An integer's type follows its value: JKII_FIELD_TYPE_INTEGER if it fits in
+ * an int32_t, JKII_FIELD_TYPE_LONG if not. One that could not be read at all is
+ * JKII_FIELD_TYPE_INTEGER, so that converting it as the field asks reports
+ * it. */
+static jkii_field_type_t _jkii_integer_type(
+        int64_t value,
+        jkii_primitive_err_t res)
+{
+    if (res == JKII_PRIMITIVE_ERR_INVALID ||
+            (res == JKII_PRIMITIVE_ERR_OK &&
+             INT32_MIN <= value && value <= INT32_MAX)) {
+        return JKII_FIELD_TYPE_INTEGER;
+    }
+    return JKII_FIELD_TYPE_LONG;
+}
+
+/* An integer's type depends on its value, so finding it means converting the
+ * integer: the result is handed back in out_integer and out_integer_res, for
+ * the field to take rather than convert it a second time. */
 static jkii_field_type_t _jkii_to_jkii_field_type(
         jsmntype_t jsmn_type,
         const char* buf,
-        size_t buf_len)
+        size_t buf_len,
+        int64_t* out_integer,
+        jkii_primitive_err_t* out_integer_res)
 {
     switch (jsmn_type)
     {
@@ -319,10 +332,9 @@ static jkii_field_type_t _jkii_to_jkii_field_type(
             } else if (M_JKII_EQ_LITERAL(buf, buf_len, "true") ||
                     M_JKII_EQ_LITERAL(buf, buf_len, "false")) {
                 return JKII_FIELD_TYPE_BOOLEAN;
-            } else if (_jkii_is_int(buf, buf_len) != 0) {
-                return JKII_FIELD_TYPE_INTEGER;
-            } else if (_jkii_is_long(buf, buf_len) != 0) {
-                return JKII_FIELD_TYPE_LONG;
+            } else if (_jkii_is_integer(buf, buf_len) != 0) {
+                *out_integer_res = _jkii_to_int64(buf, buf_len, out_integer);
+                return _jkii_integer_type(*out_integer, *out_integer_res);
             } else if (_jkii_is_double(buf, buf_len) != 0) {
                 return JKII_FIELD_TYPE_DOUBLE;
             } else {
@@ -360,20 +372,20 @@ static int _jkii_string_copy(
     return 0;
 }
 
-static jkii_primitive_err_t _jkii_to_long(
+static jkii_primitive_err_t _jkii_to_int64(
         const char* target,
         size_t target_size,
-        long* out_long)
+        int64_t* out_int64)
 {
-    char buf[LONGBUFSIZE];
+    char buf[INT64BUFSIZE];
     char* endptr = NULL;
     size_t buf_len = 0;
-    long long_value = 0;
+    long long value = 0;
     const char* digits = NULL;
     size_t digits_len = 0;
 
     M_JKII_ASSERT(target != NULL);
-    M_JKII_ASSERT(out_long != NULL);
+    M_JKII_ASSERT(out_int64 != NULL);
 
     /* A JSON number has no leading zeros: 0 and -0 are numbers, 00, 007 and
      * 010 are not. Checked before the length, so that a long run of zeros is
@@ -393,66 +405,106 @@ static jkii_primitive_err_t _jkii_to_long(
 
     if (buf_len <= target_size) {
         if (*target == '-') {
-            *out_long = LONG_MIN;
+            *out_int64 = INT64_MIN;
             return JKII_PRIMITIVE_ERR_UNDERFLOW;
         }
-        *out_long = LONG_MAX;
+        *out_int64 = INT64_MAX;
         return JKII_PRIMITIVE_ERR_OVERFLOW;
     }
     memcpy(buf, target, target_size);
 
     errno = 0;
     /* JSON numbers are decimal. Base 0 would read 0x and a leading 0 as
-     * hexadecimal and octal, which the checks above leave strtol no chance to
-     * do, but base 10 says so here. */
-    long_value = strtol(buf, &endptr, 10);
+     * hexadecimal and octal, which the checks above leave strtoll no chance to
+     * do, but base 10 says so here. long long has at least 64 bits, so every
+     * int64_t is in its range, whatever the width of long. */
+    value = strtoll(buf, &endptr, 10);
     if (endptr == buf) {
-        /* No digits, e.g. "-" or "". Whether strtol says so in errno is up
+        /* No digits, e.g. "-" or "". Whether strtoll says so in errno is up
          * to the libc: BSD and macOS set EINVAL, glibc and newlib do not.
          * Every libc leaves endptr at buf, so go by that. */
         return JKII_PRIMITIVE_ERR_INVALID;
     } else if (errno == ERANGE) {
-        if (long_value == LONG_MAX) {
-            *out_long = LONG_MAX;
-            return JKII_PRIMITIVE_ERR_OVERFLOW;
-        } else if (long_value == LONG_MIN) {
-            *out_long = LONG_MIN;
+        /* Past the long long range: strtoll gives LLONG_MAX or LLONG_MIN, so
+         * the sign tells which. */
+        if (value < 0) {
+            *out_int64 = INT64_MIN;
             return JKII_PRIMITIVE_ERR_UNDERFLOW;
         }
-        M_JKII_ASSERT(0);
+        *out_int64 = INT64_MAX;
+        return JKII_PRIMITIVE_ERR_OVERFLOW;
     }
 
     if (*endptr != '\0') {
         return JKII_PRIMITIVE_ERR_INVALID;
     }
 
-    *out_long = long_value;
+#if LLONG_MAX > INT64_MAX
+    /* Within the long long range but not the int64_t one. */
+    if (value > INT64_MAX) {
+        *out_int64 = INT64_MAX;
+        return JKII_PRIMITIVE_ERR_OVERFLOW;
+    } else if (value < INT64_MIN) {
+        *out_int64 = INT64_MIN;
+        return JKII_PRIMITIVE_ERR_UNDERFLOW;
+    }
+#endif
+
+    *out_int64 = (int64_t)value;
     return JKII_PRIMITIVE_ERR_OK;
 }
 
-static jkii_primitive_err_t _jkii_to_int(
-        const char* target,
-        size_t target_size,
-        int* out_int)
+/* Narrows the result of _jkii_to_int64() to an int32_t, saturating where it
+ * does not fit. */
+static jkii_primitive_err_t _jkii_narrow_to_int32(
+        int64_t value,
+        jkii_primitive_err_t res,
+        int32_t* out_int32)
 {
-    long long_value = 0;
+    M_JKII_ASSERT(out_int32 != NULL);
 
-    M_JKII_ASSERT(target != NULL);
-    M_JKII_ASSERT(out_int != NULL);
-
-    if (_jkii_to_long(target, target_size, &long_value) ==
-            JKII_PRIMITIVE_ERR_INVALID) {
+    if (res == JKII_PRIMITIVE_ERR_INVALID) {
         return JKII_PRIMITIVE_ERR_INVALID;
-    } else if (long_value > INT_MAX) {
-        *out_int = INT_MAX;
+    } else if (res == JKII_PRIMITIVE_ERR_OVERFLOW || value > INT32_MAX) {
+        *out_int32 = INT32_MAX;
         return JKII_PRIMITIVE_ERR_OVERFLOW;
-    } else if (long_value < INT_MIN) {
-        *out_int = INT_MIN;
+    } else if (res == JKII_PRIMITIVE_ERR_UNDERFLOW || value < INT32_MIN) {
+        *out_int32 = INT32_MIN;
         return JKII_PRIMITIVE_ERR_UNDERFLOW;
     }
 
-    *out_int = (int)long_value;
+    *out_int32 = (int32_t)value;
     return JKII_PRIMITIVE_ERR_OK;
+}
+
+/* Reads an integer as an int32_t if it fits in one and as an int64_t if not,
+ * so that the type follows the value rather than how many characters it takes
+ * or how wide int and long are. One that does not fit in an int64_t either is
+ * an int64_t that overflowed or underflowed, and out_integer then holds
+ * INT64_MAX or INT64_MIN. */
+static jkii_primitive_err_t _jkii_to_integer(
+        const char* target,
+        size_t target_size,
+        jkii_primitive_t* out_integer)
+{
+    int64_t value = 0;
+    jkii_primitive_err_t res = JKII_PRIMITIVE_ERR_INVALID;
+
+    M_JKII_ASSERT(target != NULL);
+    M_JKII_ASSERT(out_integer != NULL);
+
+    res = _jkii_to_int64(target, target_size, &value);
+    if (res == JKII_PRIMITIVE_ERR_INVALID) {
+        return res;
+    }
+    out_integer->type = _jkii_integer_type(value, res);
+    if (out_integer->type == JKII_FIELD_TYPE_INTEGER) {
+        out_integer->value.int_value = (int32_t)value;
+    } else {
+        out_integer->type = JKII_FIELD_TYPE_LONG;
+        out_integer->value.long_value = value;
+    }
+    return res;
 }
 
 static jkii_primitive_err_t _jkii_to_double(
@@ -518,6 +570,23 @@ static int _jkii_to_boolean(
     return -1;
 }
 
+/* An array index read from a path as a size_t. One that is negative or past
+ * the size_t range is SIZE_MAX, which no array reaches, since jsmn counts
+ * elements in an int. A cast alone makes -1 SIZE_MAX as well, but where size_t
+ * has 32 bits it would cut 4294967296 down to 0. */
+static size_t _jkii_to_index(int64_t value)
+{
+    if (value < 0) {
+        return SIZE_MAX;
+    }
+#if INT64_MAX > SIZE_MAX
+    if (value > (int64_t)SIZE_MAX) {
+        return SIZE_MAX;
+    }
+#endif
+    return (size_t)value;
+}
+
 static const char* _jkii_get_target(
         const char* path,
         _jkii_target_t* target)
@@ -556,18 +625,18 @@ static const char* _jkii_get_target(
 
     /* check contents. */
     if (*start == '[') {
-        long value = 0;
+        int64_t value = 0;
         ++start;
         target_len -= 2;
-        if (_jkii_is_long(start, target_len) == 0) {
+        if (_jkii_is_integer(start, target_len) == 0) {
             retval = NULL;
             goto exit;
-        } else if (_jkii_to_long(start, target_len, &value)
+        } else if (_jkii_to_int64(start, target_len, &value)
                 != JKII_PRIMITIVE_ERR_OK) {
             retval = NULL;
             goto exit;
         }
-        target->field.index = (size_t)value;
+        target->field.index = _jkii_to_index(value);
         target->parent_type = _JKII_PARENT_TYPE_ARRAY;
     } else {
         target->field.name = start;
@@ -698,10 +767,13 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
 {
     jkii_parse_err_t retval = JKII_ERR_OK;
     jkii_field_type_t type = JKII_FIELD_TYPE_ANY;
+    int64_t integer = 0;
+    jkii_primitive_err_t integer_res = JKII_PRIMITIVE_ERR_INVALID;
 
-    /* get actual type. */
+    /* get actual type, and an integer's value with it. */
     type = _jkii_to_jkii_field_type(value->type,
-            json_string + value->start, value->end - value->start);
+            json_string + value->start, value->end - value->start,
+            &integer, &integer_res);
     if (type == JKII_FIELD_TYPE_ANY) {
         /* fail to get actual type. */
         return JKII_ERR_INVALID_INPUT;
@@ -736,16 +808,16 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
             }
             break;
         case JKII_FIELD_TYPE_INTEGER:
-            if (type != JKII_FIELD_TYPE_INTEGER) {
+            /* An integer too large for an int32_t is still an integer: the
+             * conversion reports it as out of range. */
+            if (type != JKII_FIELD_TYPE_INTEGER &&
+                    type != JKII_FIELD_TYPE_LONG) {
                 field->type = type;
                 field->result = JKII_FIELD_ERR_TYPE_MISMATCH;
                 retval = JKII_ERR_PARTIAL;
             } else {
-                jkii_primitive_err_t result =
-                    _jkii_to_int(
-                            json_string + value->start,
-                            value->end - value->start,
-                            &(field->field_copy.int_value));
+                jkii_primitive_err_t result = _jkii_narrow_to_int32(
+                        integer, integer_res, &(field->field_copy.int_value));
                 switch (result) {
                     case JKII_PRIMITIVE_ERR_OK:
                         field->result = JKII_FIELD_ERR_OK;
@@ -771,11 +843,10 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
                 field->result = JKII_FIELD_ERR_TYPE_MISMATCH;
                 retval = JKII_ERR_PARTIAL;
             } else {
-                jkii_primitive_err_t result =
-                    _jkii_to_long(
-                            json_string + value->start,
-                            value->end - value->start,
-                            &(field->field_copy.long_value));
+                jkii_primitive_err_t result = integer_res;
+                if (result != JKII_PRIMITIVE_ERR_INVALID) {
+                    field->field_copy.long_value = integer;
+                }
                 switch (result) {
                     case JKII_PRIMITIVE_ERR_OK:
                         field->result = JKII_FIELD_ERR_OK;
@@ -1002,28 +1073,15 @@ jkii_primitive_err_t jkii_parse_primitive(
         result->value.boolean_value = JKII_FALSE;
         return JKII_PRIMITIVE_ERR_OK;
     }
-    int is_int = _jkii_is_int(primitive, primitive_length);
-    if (is_int != 0) {
-        int int_value = 0;
-        jkii_primitive_err_t res = 
-            _jkii_to_int(primitive, primitive_length, &int_value);
+    int is_integer = _jkii_is_integer(primitive, primitive_length);
+    if (is_integer != 0) {
+        jkii_primitive_t integer;
+        jkii_primitive_err_t res =
+            _jkii_to_integer(primitive, primitive_length, &integer);
         if (res != JKII_PRIMITIVE_ERR_OK) {
             return res;
         }
-        result->type = JKII_FIELD_TYPE_INTEGER;
-        result->value.int_value = int_value;
-        return JKII_PRIMITIVE_ERR_OK;
-    }
-    int is_long = _jkii_is_long(primitive, primitive_length);
-    if (is_long != 0) {
-        long long_value = 0;
-        jkii_primitive_err_t res = 
-            _jkii_to_long(primitive, primitive_length, &long_value);
-        if (res != JKII_PRIMITIVE_ERR_OK) {
-            return res;
-        }
-        result->type = JKII_FIELD_TYPE_LONG;
-        result->value.long_value = long_value;
+        *result = integer;
         return JKII_PRIMITIVE_ERR_OK;
     }
     int is_double = _jkii_is_double(primitive, primitive_length);

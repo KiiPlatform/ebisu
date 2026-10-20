@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <assert.h>
 #include <ctype.h>
+#include <limits.h>
+#include <stdint.h>
 
 #include "kii.h"
 #include "khc.h"
@@ -174,6 +176,28 @@ exit:
     return res;
 }
 
+/* jkii reads JSON integers as int32_t and int64_t, whatever the widths of int
+ * and long, so these check that a value fits where kii_mqtt_endpoint_t keeps
+ * it: a port in 16 bits, the TTL in an unsigned long, which may have 32. */
+
+static int _is_port(int32_t value)
+{
+    return 0 <= value && value <= 65535;
+}
+
+static int _fits_unsigned_long(int64_t value)
+{
+    if (value < 0) {
+        return 0;
+    }
+#if INT64_MAX > ULONG_MAX
+    if (value > (int64_t)ULONG_MAX) {
+        return 0;
+    }
+#endif
+    return 1;
+}
+
 kii_code_t kii_get_mqtt_endpoint(
         kii_t* kii,
         const char* installation_id,
@@ -238,9 +262,15 @@ kii_code_t kii_get_mqtt_endpoint(
         res = KII_ERR_PARSE_JSON;
         goto exit;
     }
-    endpoint->port_tcp = fields[4].field_copy.int_value;
-    endpoint->port_ssl = fields[5].field_copy.int_value;
-    endpoint->ttl = fields[6].field_copy.long_value;
+    if (_is_port(fields[4].field_copy.int_value) == 0 ||
+            _is_port(fields[5].field_copy.int_value) == 0 ||
+            _fits_unsigned_long(fields[6].field_copy.long_value) == 0) {
+        res = KII_ERR_PARSE_JSON;
+        goto exit;
+    }
+    endpoint->port_tcp = (unsigned int)fields[4].field_copy.int_value;
+    endpoint->port_ssl = (unsigned int)fields[5].field_copy.int_value;
+    endpoint->ttl = (unsigned long)fields[6].field_copy.long_value;
 
 exit:
     return res;
