@@ -369,9 +369,24 @@ static jkii_primitive_err_t _jkii_to_long(
     char* endptr = NULL;
     size_t buf_len = 0;
     long long_value = 0;
+    const char* digits = NULL;
+    size_t digits_len = 0;
 
     M_JKII_ASSERT(target != NULL);
     M_JKII_ASSERT(out_long != NULL);
+
+    /* A JSON number has no leading zeros: 0 and -0 are numbers, 00, 007 and
+     * 010 are not. Checked before the length, so that a long run of zeros is
+     * not taken for an overflow. */
+    digits = target;
+    digits_len = target_size;
+    if (digits_len > 0 && *digits == '-') {
+        ++digits;
+        --digits_len;
+    }
+    if (digits_len > 1 && digits[0] == '0') {
+        return JKII_PRIMITIVE_ERR_INVALID;
+    }
 
     buf_len = sizeof(buf) / sizeof(buf[0]);
     memset(buf, 0, sizeof(buf) / sizeof(buf[0]));
@@ -387,7 +402,10 @@ static jkii_primitive_err_t _jkii_to_long(
     memcpy(buf, target, target_size);
 
     errno = 0;
-    long_value = strtol(buf, &endptr, 0);
+    /* JSON numbers are decimal. Base 0 would read 0x and a leading 0 as
+     * hexadecimal and octal, which the checks above leave strtol no chance to
+     * do, but base 10 says so here. */
+    long_value = strtol(buf, &endptr, 10);
     if (endptr == buf) {
         /* No digits, e.g. "-" or "". Whether strtol says so in errno is up
          * to the libc: BSD and macOS set EINVAL, glibc and newlib do not.

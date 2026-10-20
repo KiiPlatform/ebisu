@@ -329,6 +329,69 @@ TEST_CASE("KiiJson, GetObjectNumberWithDigitsByName") {
     REQUIRE(-0.5 == field.field_copy.double_value);
 }
 
+// A JSON number has no leading zeros. jkii's integer check lets them through,
+// and strtol was called with base 0, which reads a leading 0 as octal: 010
+// came back as 8, and 08, not being octal, made the whole input invalid.
+TEST_CASE("KiiJson, GetObjectIntegerWithLeadingZeroByName") {
+    const char* const zeros[] = { "0", "-0" };
+    const char* const values[] = {
+        "00", "007", "08", "-08", "09", "010", "-010"
+    };
+    const jkii_field_type_t types[] = {
+        JKII_FIELD_TYPE_INTEGER,
+        JKII_FIELD_TYPE_LONG
+    };
+
+    for (const char* value : zeros) {
+        INFO("value " << value);
+        jkii_field_t field;
+
+        CHECK(JKII_ERR_OK ==
+                parse_number_by_name(value, JKII_FIELD_TYPE_INTEGER, &field));
+        CHECK(0 == field.field_copy.int_value);
+
+        CHECK(JKII_ERR_OK ==
+                parse_number_by_name(value, JKII_FIELD_TYPE_LONG, &field));
+        CHECK(0 == field.field_copy.long_value);
+    }
+
+    for (const char* value : values) {
+        for (jkii_field_type_t type : types) {
+            INFO("value " << value << ", type " << type);
+            jkii_field_t field;
+            jkii_parse_err_t res = parse_number_by_name(value, type, &field);
+            // Either the input is refused, or this field is reported failed.
+            if (res != JKII_ERR_INVALID_INPUT) {
+                CHECK(JKII_ERR_PARTIAL == res);
+                CHECK(JKII_FIELD_ERR_OK != field.result);
+            }
+        }
+    }
+}
+
+// Nor hexadecimal. These never reached strtol, whose base 0 would have read
+// them, because the type check refuses the x; now strtol would not either.
+TEST_CASE("KiiJson, GetObjectHexadecimalByName") {
+    const char* const values[] = { "0x10", "-0x10", "0X10" };
+    const jkii_field_type_t types[] = {
+        JKII_FIELD_TYPE_INTEGER,
+        JKII_FIELD_TYPE_LONG
+    };
+
+    for (const char* value : values) {
+        for (jkii_field_type_t type : types) {
+            INFO("value " << value << ", type " << type);
+            jkii_field_t field;
+            jkii_parse_err_t res = parse_number_by_name(value, type, &field);
+            // Either the input is refused, or this field is reported failed.
+            if (res != JKII_ERR_INVALID_INPUT) {
+                CHECK(JKII_ERR_PARTIAL == res);
+                CHECK(JKII_FIELD_ERR_OK != field.result);
+            }
+        }
+    }
+}
+
 TEST_CASE("KiiJson, GetObjectTrueByName") {
     const char json_string[] = "{\"key1\" : true}";
 
@@ -1289,6 +1352,49 @@ TEST_CASE("KiiJson, GetArrayIndexWithoutDigits") {
                 &resource);
         CHECK(JKII_ERR_PARTIAL == res);
         CHECK(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
+    }
+}
+
+// An index in a path follows the same rule, as the path grammar in jkii.h has
+// it: /[010] found element 8, and now finds nothing, as /[08] did.
+TEST_CASE("KiiJson, GetArrayIndexWithLeadingZero") {
+    // Each element is its own index.
+    const char json_string[] = "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]";
+    const struct {
+        const char* path;
+        int index; // -1: not found
+    } cases[] = {
+        { "/[0]", 0 }, { "/[8]", 8 }, { "/[10]", 10 }, { "/[11]", 11 },
+        { "/[00]", -1 }, { "/[08]", -1 }, { "/[09]", -1 },
+        { "/[010]", -1 }, { "/[011]", -1 }, { "/[0x1]", -1 }
+    };
+
+    for (const auto& c : cases) {
+        INFO("path " << c.path);
+
+        jkii_token_t tokens[16];
+        jkii_resource_t resource = { tokens, 16 };
+
+        jkii_field_t fields[2];
+        memset(fields, 0x00, sizeof(fields));
+
+        fields[0].path = c.path;
+        fields[0].type = JKII_FIELD_TYPE_INTEGER;
+        fields[1].name = NULL;
+
+        jkii_parse_err_t res = jkii_parse(
+                json_string,
+                strlen(json_string),
+                fields,
+                &resource);
+        if (c.index < 0) {
+            CHECK(JKII_ERR_PARTIAL == res);
+            CHECK(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
+        } else {
+            CHECK(JKII_ERR_OK == res);
+            CHECK(JKII_FIELD_ERR_OK == fields[0].result);
+            CHECK(c.index == fields[0].field_copy.int_value);
+        }
     }
 }
 
