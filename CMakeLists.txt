@@ -9,8 +9,11 @@ include(EbisuVersion)
 set_git_version_and_generate_header()
 
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-option(KHC_TRACE "Trace KHC activity to stdout" ON)
-option(TIO_TRACE "Trace TIO activity to stdout" ON)
+# Debugging output, so off unless asked for. KHC_TRACE prints every request and
+# response, headers and bodies included, to stdout; ctest shows a failing
+# test's output, so a test run that traces puts that output in its log.
+option(KHC_TRACE "Trace KHC activity to stdout" OFF)
+option(TIO_TRACE "Trace TIO activity to stdout" OFF)
 
 # On by default so a warning cannot quietly return: the four fixed in #192 sat
 # unnoticed for years because the build target only ran doxygen and compiled

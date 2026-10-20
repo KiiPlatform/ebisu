@@ -6,6 +6,7 @@
 #include "khc_impl.h"
 #include "khc_state_impl.h"
 
+#ifdef KHC_TRACE
 static void _trace_dump(char prefix, char* buf, size_t len) {
     for(int i=0;i<len;i++) {
         if (buf[i] == '\r') {
@@ -23,6 +24,7 @@ static void _trace_dump(char prefix, char* buf, size_t len) {
 static void _trace_op(char* op, int res) {
     printf("* %s = %d\n", op, res);
 }
+#endif
 
 khc_code khc_set_cb_sock_connect(
         khc* khc,
