@@ -212,6 +212,12 @@ int main(int argc, char** argv)
         exit(1);
     }
 
+    // A write to a connection the peer has reset raises SIGPIPE, which ends
+    // the process. SSL_write() can make one, and so can SSL_shutdown() in
+    // sock_cb_close(), which sends close_notify when a task reconnects. Have
+    // the write fail with EPIPE instead.
+    signal(SIGPIPE, SIG_IGN);
+
     tio_updater_t updater;
 
     socket_context_t updater_http_ctx;
