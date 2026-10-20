@@ -2546,6 +2546,60 @@ TEST_CASE( "MQTT PINGREQ timing" ) {
         }
     }
 
+    // The time elapsed is counted in milliseconds in a uint32_t. A receive
+    // timeout of more than 4294967 seconds wrapped round there to much less:
+    // 4294968 seconds and the wait after it came to 1.704 seconds, UINT32_MAX
+    // seconds and the wait to none at all, so PINGREQ was due far later than
+    // it should have been, or never. Counting now stops at UINT32_MAX.
+    SECTION("with a receive timeout too long to count in milliseconds") {
+        int call_recv = 0;
+        mqtt_ctx.on_recv = [&call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            ++call_recv;
+            return KHC_SOCK_FAIL; // the receive timed out
+        };
+        kii._keep_alive_interval = 65535;
+
+        for (uint32_t to_recv : { (uint32_t)4294968, UINT32_MAX }) {
+            INFO("receive timeout " << to_recv);
+            kii_set_mqtt_to_sock_recv(&kii, to_recv);
+            mqtt_state_t state;
+            _init_mqtt_state(&kii, &state);
+            state.info.task_state = KII_MQTT_ST_RECV_READY;
+            call_recv = 0;
+            _mqtt_state_recv_ready(&state);
+            REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+            REQUIRE( call_recv == 1 );
+            CHECK( state.elapsed_time_ms == UINT32_MAX );
+
+            _mqtt_state_recv_ready(&state);
+            CHECK( state.info.task_state == KII_MQTT_ST_SEND_PINGREQ );
+            CHECK( call_recv == 1 );
+        }
+    }
+
+    // A PUBLISH counts as a whole receive timeout, which stops at UINT32_MAX,
+    // and reading it then adds no more rather than wrapping round.
+    SECTION("with a message after a receive timeout too long to count") {
+        kii._keep_alive_interval = 65535;
+        kii_set_mqtt_to_sock_recv(&kii, UINT32_MAX);
+        mqtt_state_t state;
+        _init_mqtt_state(&kii, &state);
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+
+        size_t served = 0;
+        // No MQTT buffer is set, so the message is read and dropped.
+        serve_stream(mqtt_ctx, publish_packet("t", "message"), served);
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+        CHECK( state.elapsed_time_ms == UINT32_MAX );
+        _mqtt_state_recv_msg(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        CHECK( state.elapsed_time_ms == UINT32_MAX );
+
+        _mqtt_state_recv_ready(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_SEND_PINGREQ );
+    }
+
     // One PINGREQ after each receive that times out, which is as often as
     // the receive timeout allows, and no reconnecting.
     SECTION("with a receive timeout longer than the keep-alive") {
