@@ -1987,6 +1987,33 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( state.info.error == KII_MQTT_ERR_OK );
     }
 
+    // Discarding a packet with nothing after its fixed header used to report
+    // a failure, so such a packet made the task reconnect.
+    SECTION("recv ready discards an ignored packet with nothing after its fixed header") {
+        const std::string payload("message");
+        // Type 15, remaining length 0.
+        const std::string stream = std::string("\xf0\x00", 2) + publish_packet("topic", payload);
+        size_t served = 0;
+        serve_stream(mqtt_ctx, stream, served);
+        int call_push = 0;
+        push_ctx.on_push = [=, &call_push](const char* message, size_t message_length) {
+            ++call_push;
+            REQUIRE( std::string(message, message_length) == payload );
+        };
+
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        _mqtt_state_recv_ready(&state);
+        CHECK( served == 2 );
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+        _mqtt_state_recv_msg(&state);
+        REQUIRE( call_push == 1 );
+        REQUIRE( served == stream.length() );
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+    }
+
     // The same for a PUBLISH too large for the MQTT buffer: its last part is
     // shorter than 256 bytes.
     SECTION("recv msg discards a message larger than the buffer without reading into the next") {
@@ -2166,9 +2193,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         _mqtt_state_recv_connack(&state);
         REQUIRE( state.info.task_state == KII_MQTT_ST_RECONNECT );
         REQUIRE( state.info.error == KII_MQTT_ERR_OK );
-        // The type, the remaining length, which the end reads as 0, and the
-        // variable header, which is where the end is noticed.
-        REQUIRE( call_recv == 3 );
+        // The type, then the remaining length, which is where the end is
+        // noticed.
+        REQUIRE( call_recv == 2 );
     }
 
     SECTION("recv msg reconnects when the stream ends partway through a message") {
@@ -2220,11 +2247,12 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 4 );
     }
 
-    // Between packets the end reads as a header of type 0 and length 0, and
-    // recv ready discards that packet, which with nothing to read reports a
-    // failure. So this already reconnected. Were the fixed header to report the
-    // end as a failure instead, recv ready would take it for a receive timeout
-    // and wait on until the keep-alive interval ran out.
+    // The end of the stream used to read as a header of type 0 and length 0,
+    // which recv ready discarded, and discarding nothing reported a failure:
+    // it reconnected only by way of that. Now it reconnects on the end itself,
+    // without reading on. Reporting the end as a failure instead would make
+    // recv ready take it for a receive timeout and wait on until the
+    // keep-alive interval ran out.
     SECTION("recv ready reconnects when the stream ends between packets") {
         int call_recv = 0;
         recv_then_end_of_stream(mqtt_ctx, "", call_recv);
@@ -2235,7 +2263,36 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( state.info.task_state == KII_MQTT_ST_RECONNECT );
         REQUIRE( state.info.error == KII_MQTT_ERR_OK );
         REQUIRE( state.elapsed_time_ms == 0 );
-        REQUIRE( call_recv == 2 );
+        REQUIRE( call_recv == 1 );
+    }
+
+    // The end of the stream right after a packet's first byte used to read as
+    // a remaining length of 0, so a PINGRESP's type byte counted as the
+    // PINGRESP and a PUBLISH's moved on to reading the message.
+    SECTION("recv ready reconnects when the stream ends after a packet's type") {
+        const struct {
+            const char* name;
+            char type;
+        } packets[] = {
+            { "PINGRESP", '\xd0' },
+            { "PUBLISH", '\x30' },
+            { "PUBACK", '\x40' },
+        };
+        for (const auto& packet : packets) {
+            INFO(packet.name);
+            int call_recv = 0;
+            recv_then_end_of_stream(mqtt_ctx, std::string(1, packet.type), call_recv);
+
+            state.info.task_state = KII_MQTT_ST_RECV_READY;
+            state.pingresp_received = KII_FALSE;
+            state.elapsed_time_ms = 1000;
+            _mqtt_state_recv_ready(&state);
+            CHECK( state.info.task_state == KII_MQTT_ST_RECONNECT );
+            CHECK( state.info.error == KII_MQTT_ERR_OK );
+            CHECK( state.elapsed_time_ms == 0 );
+            CHECK( state.pingresp_received == KII_FALSE );
+            CHECK( call_recv == 2 );
+        }
     }
 }
 

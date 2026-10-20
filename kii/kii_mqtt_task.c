@@ -179,11 +179,13 @@ khc_sock_code_t _mqtt_send_pingreq(kii_t* kii)
 // Reads the first byte of a fixed header, which holds the packet type, and
 // returns what the recv callback returned, KHC_SOCK_AGAIN included: RECV_READY
 // handles a failure here, before any of a packet has been read, differently.
-static khc_sock_code_t _mqtt_recv_fixed_header_byte1(kii_t* kii, kii_mqtt_fixed_header* fixed_header)
+// Reads the first byte of a fixed header. KHC_SOCK_OK with *out_received 0 is
+// the end of the stream: the broker closed the connection.
+static khc_sock_code_t _mqtt_recv_fixed_header_byte1(kii_t* kii, kii_mqtt_fixed_header* fixed_header, size_t* out_received)
 {
     char c = '\0';
-    size_t received = 0;
-    khc_sock_code_t res = kii->_cb_mqtt_sock_recv(kii->_mqtt_sock_recv_ctx, &c, 1, &received);
+    *out_received = 0;
+    khc_sock_code_t res = kii->_cb_mqtt_sock_recv(kii->_mqtt_sock_recv_ctx, &c, 1, out_received);
     fixed_header->byte1 = c;
     return res;
 }
@@ -203,6 +205,10 @@ static khc_sock_code_t _mqtt_recv_fixed_header_rest(kii_t* kii, kii_mqtt_fixed_h
             // Don't accept non-blocking mode.
             return KHC_SOCK_FAIL;
         }
+        if (received == 0) {
+            // End of stream: the broker closed the connection.
+            return KHC_SOCK_FAIL;
+        }
         buff[i] = c2;
         if ((c2 & 128) == 0) { // Check continue bit.
             break;
@@ -218,9 +224,11 @@ static khc_sock_code_t _mqtt_recv_fixed_header_rest(kii_t* kii, kii_mqtt_fixed_h
 
 khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed_header)
 {
-    khc_sock_code_t res = _mqtt_recv_fixed_header_byte1(kii, fixed_header);
-    if (res != KHC_SOCK_OK) {
-        // KHC_SOCK_FAIL, or KHC_SOCK_AGAIN: don't accept non-blocking mode.
+    size_t received = 0;
+    khc_sock_code_t res = _mqtt_recv_fixed_header_byte1(kii, fixed_header, &received);
+    if (res != KHC_SOCK_OK || received == 0) {
+        // KHC_SOCK_FAIL, KHC_SOCK_AGAIN (don't accept non-blocking mode), or
+        // the end of the stream.
         return KHC_SOCK_FAIL;
     }
     return _mqtt_recv_fixed_header_rest(kii, fixed_header);
@@ -248,7 +256,8 @@ khc_sock_code_t _mqtt_recv_remaining_trash(kii_t* kii, unsigned long remaining_l
     char buff[buff_size];
     size_t received = 0;
     size_t total_received = 0;
-    khc_sock_code_t res = KHC_SOCK_FAIL;
+    // A packet with nothing after its fixed header leaves nothing to discard.
+    khc_sock_code_t res = KHC_SOCK_OK;
     while (total_received < remaining_length) {
         // Ask for no more than is left of this packet. recv on a stream
         // socket returns whatever is there up to the size asked for, so asking
@@ -552,7 +561,15 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
         return;
     }
     kii_mqtt_fixed_header fh;
-    khc_sock_code_t res = _mqtt_recv_fixed_header_byte1(kii, &fh);
+    size_t received = 0;
+    khc_sock_code_t res = _mqtt_recv_fixed_header_byte1(kii, &fh, &received);
+    if (res == KHC_SOCK_OK && received == 0) {
+        // End of stream: the broker closed the connection.
+        state->elapsed_time_ms = 0;
+        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        task_info->task_state = KII_MQTT_ST_RECONNECT;
+        return;
+    }
     if (res == KHC_SOCK_OK) {
         res = _mqtt_recv_fixed_header_rest(kii, &fh);
         if (res != KHC_SOCK_OK) {
