@@ -30,7 +30,16 @@ You can tweak the `make test` behavior by environemnt vars:
 
 - DEFAULT_SITE : specify the API hostname used for the test.
 
-- SOCKET_LOG : if defined, output send/recv buffer to stdout. (this will break your console when send/recv binary data.)
+- SOCKET_LOG : if defined, output send/recv buffer to stdout. (this will break your console when send/recv binary data.) The output holds tokens and passwords: never enable it where it is kept, as in CI, whose logs are public.
+
+## tio suite
+
+`large_test_tio` runs tio's handler and updater end to end, with a user owning
+the thing. It sets the application up itself as its admin, so it needs
+`CLIENT_ID` and `CLIENT_SECRET` in the environment when it runs, as CI exports
+them; without them it is skipped, except in CI, where it fails. The user and
+the thing each run creates are deleted at its end, and the admin and user
+tokens are requested to expire within minutes.
 
 ## using non-default app
 
