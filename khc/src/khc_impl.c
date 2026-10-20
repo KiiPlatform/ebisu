@@ -121,22 +121,68 @@ int _extract_content_length(const char* header, size_t header_length, size_t* ou
     return (sts == skip_separator) ? -1 : 0;
 }
 
+static int _hex_digit_value(char c) {
+    if ('0' <= c && c <= '9') {
+        return c - '0';
+    } else if ('a' <= c && c <= 'f') {
+        return c - 'a' + 10;
+    } else if ('A' <= c && c <= 'F') {
+        return c - 'A' + 10;
+    }
+    return -1;
+}
+
 int _read_chunk_size(const char* buff, size_t buff_size, size_t* out_chunk_size) {
     int crlf = 0;
-    for(int i = 0; i < buff_size; ++i) {
+    size_t line_size = 0;
+    for(size_t i = 0; i < buff_size; ++i) {
         if (buff[i] == '\r') {
             crlf = 1;
             continue;
         } else if (buff[i] == '\n' && crlf == 1) {
             crlf = 2;
+            line_size = i - 1;
             break;
         }
         crlf = 0;
     }
-    if (crlf == 2) {
-        *out_chunk_size = strtol(buff, NULL, 16);
+    if (crlf != 2) {
+        return 0;
     }
-    return (crlf == 2) ? 1 : 0;
+
+    // chunk-size is 1*HEXDIG, and must fit in a size_t.
+    size_t chunk_size = 0;
+    size_t i = 0;
+    for (; i < line_size; ++i) {
+        int digit = _hex_digit_value(buff[i]);
+        if (digit < 0) {
+            break;
+        }
+        if (chunk_size > SIZE_MAX >> 4) {
+            return -1;
+        }
+        chunk_size = (chunk_size << 4) | digit;
+    }
+    if (i == 0) {
+        return -1;
+    }
+    // Optional whitespace, then a chunk extension, which is ignored.
+    while (i < line_size && (buff[i] == ' ' || buff[i] == '\t')) {
+        ++i;
+    }
+    if (i < line_size && buff[i] != ';') {
+        return -1;
+    }
+    for (; i < line_size; ++i) {
+        // HTTP allows no control character but HTAB in an extension, and the
+        // caller finds the end of the line with strstr, which stops at a NUL.
+        unsigned char c = buff[i];
+        if ((c < 0x20 && c != '\t') || c == 0x7f) {
+            return -1;
+        }
+    }
+    *out_chunk_size = chunk_size;
+    return 1;
 }
 
 int _is_header_present(const char* header, const char* buff, size_t buff_size) {

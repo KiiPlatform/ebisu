@@ -894,6 +894,10 @@ void khc_state_resp_body_parse_chunk_size(khc* khc) {
         } else {
             khc->_state = KHC_STATE_RESP_BODY_SKIP_TRAILERS;
         }
+    } else if (has_chunk_size < 0) {
+        // Without a valid size the rest of the body can't be framed.
+        khc->_state = KHC_STATE_CLOSE;
+        khc->_result = KHC_ERR_FAIL;
     } else {
         if (khc->_resp_header_read_size > 0) {
             khc->_state = KHC_STATE_READ_CHUNK_SIZE_FROM_HEADER_BUFF;
@@ -945,10 +949,11 @@ void khc_state_resp_body_read_chunk_size(khc* khc) {
 }
 
 void khc_state_resp_body_parse_chunk_body(khc* khc) {
+    size_t chunk_remain = khc->_chunk_size - khc->_chunk_size_written;
     size_t target_size =
-        khc->_chunk_size > khc->_body_read_size + khc->_chunk_size_written ?
+        chunk_remain > khc->_body_read_size ?
         khc->_body_read_size :
-        khc->_chunk_size - khc->_chunk_size_written;
+        chunk_remain;
     size_t written = khc->_cb_write(khc->_stream_buff, target_size, khc->_write_data);
     if (written < target_size) { // Error in write callback.
         khc->_state = KHC_STATE_CLOSE;
@@ -1025,6 +1030,11 @@ void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
             if (read_size == 0) {
                 khc->_state = KHC_STATE_CLOSE;
                 khc->_result = KHC_ERR_FAIL;
+                return;
+            }
+            khc->_body_read_size += read_size;
+            if (khc->_body_read_size < 2) {
+                // Only the CR has come: skip the LF on the next read.
                 return;
             }
             khc->_body_read_size = 0;

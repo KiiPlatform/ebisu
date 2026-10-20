@@ -307,8 +307,8 @@ typedef struct khc {
     char* _body_fragment; /**< \private **/
     size_t _body_fragment_size; /**< \private **/
     int _chunked_resp; /**< \private **/
-    long _chunk_size; /**< \private **/
-    long _chunk_size_written; /**< \private **/
+    size_t _chunk_size; /**< \private **/
+    size_t _chunk_size_written; /**< \private **/
     size_t _resp_content_length; /**< \private **/
     int _read_end; /**< \private **/
 
