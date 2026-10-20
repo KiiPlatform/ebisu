@@ -8,6 +8,17 @@
 #include <float.h>
 #include <ctype.h>
 
+/* Some vendor libcs have an errno.h that declares neither errno nor the codes
+ * jkii checks. Defined here, once, for the file that uses them: in a public
+ * header every file including it defined errno again, and got EINVAL and
+ * ERANGE whether it wanted them or not. */
+#ifdef ERRNO_HACK_NEEDED
+int errno;
+#ifndef ERANGE
+#define ERANGE 34
+#endif
+#endif
+
 /* If your environment does not have assert, you must set JKII_NOASSERT define. */
 #ifdef JKII_NOASSERT
   #define M_JKII_ASSERT(s)

@@ -13,12 +13,6 @@ extern "C" {
 #endif
 
 
-#ifdef ERRNO_HACK_NEEDED
-int errno;
-#define EINVAL 22
-#define ERANGE 34
-#endif
-
 typedef enum jkii_primitive_err_t
 {
     JKII_PRIMITIVE_ERR_OK,
