@@ -601,9 +601,11 @@ kii_code_t kii_get_mqtt_endpoint(
  * MQTT keep alive interval in seconds. If 0, Keep Alive mechanism is disabled.
  * Otherwise, pingReq is sent to MQTT broker periodically with the specified interval.
  * Too short interval causes network congestion. We recommend to set this to few minutes.
+ * At most 65535, the largest MQTT can carry.
  * \param [in] cb_push  Callback called when push message delivered.
  * \param [in] userdata Context object passed to cb_push.
- * \return kii_code_t
+ * \return kii_code_t. KII_ERR_FAIL if keep_alive_interval_sec is larger than
+ * 65535, and the task is not started.
  */
 kii_code_t kii_start_push_task(
 		kii_t* kii,
