@@ -102,8 +102,10 @@ TEST_CASE( "HTTP chunked response test" ) {
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 200 );
     REQUIRE( on_connect_called == 1 );
-    REQUIRE( on_send_called == 5 );
-    REQUIRE( on_read_called == 1 );
+    // A GET sends no body: the request line, the host header and the end of
+    // the headers, without calling the read callback.
+    REQUIRE( on_send_called == 3 );
+    REQUIRE( on_read_called == 0 );
     REQUIRE( on_recv_called == 4 );
     REQUIRE( on_header_called == 12 );
     REQUIRE( on_write_called >= 6 );
@@ -208,8 +210,10 @@ TEST_CASE( "small buffer size test" ) {
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 200 );
     REQUIRE( on_connect_called == 1 );
-    REQUIRE( on_send_called == 5 );
-    REQUIRE( on_read_called == 1 );
+    // A GET sends no body: the request line, the host header and the end of
+    // the headers, without calling the read callback.
+    REQUIRE( on_send_called == 3 );
+    REQUIRE( on_read_called == 0 );
     REQUIRE( on_recv_called > 0 );
     REQUIRE( on_header_called == 12 );
     REQUIRE( on_write_called > 0 );
@@ -318,8 +322,10 @@ TEST_CASE( "random buffer size test" ) {
     REQUIRE( res == KHC_ERR_OK );
     REQUIRE( khc_get_status_code(&http) == 200 );
     REQUIRE( on_connect_called == 1 );
-    REQUIRE( on_send_called == 5 );
-    REQUIRE( on_read_called == 1 );
+    // A GET sends no body: the request line, the host header and the end of
+    // the headers, without calling the read callback.
+    REQUIRE( on_send_called == 3 );
+    REQUIRE( on_read_called == 0 );
     REQUIRE( on_recv_called > 0 );
     REQUIRE( on_header_called == 12 );
     REQUIRE( on_write_called > 0 );
@@ -432,7 +438,8 @@ TEST_CASE( "random chunk body test" ) {
     REQUIRE( khc_get_status_code(&http) == 200 );
     REQUIRE( on_connect_called == 1 );
     REQUIRE( on_send_called > 0 );
-    REQUIRE( on_read_called > 0 );
+    // A GET sends no body, so the read callback is not called.
+    REQUIRE( on_read_called == 0 );
     REQUIRE( on_recv_called > 0 );
     REQUIRE( on_header_called == 12 );
     REQUIRE( on_write_called > 0 );

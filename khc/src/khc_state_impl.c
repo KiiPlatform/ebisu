@@ -399,7 +399,10 @@ void khc_state_req_header_end(khc* khc) {
         } else {
             khc->_sent_length = 0;
         }
-        if (khc->_cb_read != NULL) {
+        // A method without a body ends the request here: its headers say
+        // nothing of one, so a body, or even the chunk ending an empty one,
+        // would be taken for the start of another request.
+        if (khc_method_can_have_body(khc) && khc->_cb_read != NULL) {
             khc->_state = KHC_STATE_REQ_BODY_READ;
         } else {
             khc->_resp_header_read_size = 0;
