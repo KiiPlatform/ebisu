@@ -176,21 +176,22 @@ khc_sock_code_t _mqtt_send_pingreq(kii_t* kii)
     return sock_err;
 }
 
-khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed_header)
+// Reads the first byte of a fixed header, which holds the packet type, and
+// returns what the recv callback returned, KHC_SOCK_AGAIN included: RECV_READY
+// handles a failure here, before any of a packet has been read, differently.
+static khc_sock_code_t _mqtt_recv_fixed_header_byte1(kii_t* kii, kii_mqtt_fixed_header* fixed_header)
 {
     char c = '\0';
     size_t received = 0;
-    // Read First byte.
     khc_sock_code_t res = kii->_cb_mqtt_sock_recv(kii->_mqtt_sock_recv_ctx, &c, 1, &received);
-    if (res == KHC_SOCK_FAIL) {
-        return KHC_SOCK_FAIL;
-    }
-    else if (res == KHC_SOCK_AGAIN) {
-        // Don't accept non-blocking mode.
-        return KHC_SOCK_FAIL;
-    }
     fixed_header->byte1 = c;
-    
+    return res;
+}
+
+// Reads the rest of a fixed header, the remaining length.
+static khc_sock_code_t _mqtt_recv_fixed_header_rest(kii_t* kii, kii_mqtt_fixed_header* fixed_header)
+{
+    size_t received = 0;
     char buff[4];
     for (int i = 0; i < 4; ++i) {
         char c2 = '\0';
@@ -213,6 +214,31 @@ khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed
 
     fixed_header->remaining_length = remaining_length;
     return KHC_SOCK_OK;
+}
+
+khc_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fixed_header)
+{
+    khc_sock_code_t res = _mqtt_recv_fixed_header_byte1(kii, fixed_header);
+    if (res != KHC_SOCK_OK) {
+        // KHC_SOCK_FAIL, or KHC_SOCK_AGAIN: don't accept non-blocking mode.
+        return KHC_SOCK_FAIL;
+    }
+    return _mqtt_recv_fixed_header_rest(kii, fixed_header);
+}
+
+// Whether the MQTT recv callback returning KHC_SOCK_FAIL just now means the
+// connection is lost, rather than that the receive timeout ran out. It returns
+// KHC_SOCK_FAIL for both, so only the callback set by
+// kii_set_cb_mqtt_sock_recv_timed_out() can tell. Without one, take it for a
+// timeout, as on an idle connection the receive keeps timing out.
+static kii_bool_t _mqtt_sock_recv_lost(kii_t* kii)
+{
+    if (kii->_cb_mqtt_sock_recv_timed_out == NULL) {
+        return KII_FALSE;
+    }
+    kii_bool_t timed_out = kii->_cb_mqtt_sock_recv_timed_out(
+            kii->_mqtt_sock_recv_timed_out_ctx);
+    return timed_out == KII_FALSE ? KII_TRUE : KII_FALSE;
 }
 
 // If the MQTT buffer size is insufficient,
@@ -526,8 +552,18 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
         return;
     }
     kii_mqtt_fixed_header fh;
-    khc_sock_code_t res = _mqtt_recv_fixed_header(kii, &fh);
+    khc_sock_code_t res = _mqtt_recv_fixed_header_byte1(kii, &fh);
     if (res == KHC_SOCK_OK) {
+        res = _mqtt_recv_fixed_header_rest(kii, &fh);
+        if (res != KHC_SOCK_OK) {
+            // A packet has started to arrive, so the next read would begin
+            // inside it and take its bytes for a fixed header. Reconnect,
+            // whether the receive timed out or failed, as RECV_MSG does.
+            state->elapsed_time_ms = 0;
+            kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+            task_info->task_state = KII_MQTT_ST_RECONNECT;
+            return;
+        }
         unsigned char mtype = fh.byte1 & 0xf0;
         if (mtype == 0x30) { // PUBLISH
             state->remaining_message_size = fh.remaining_length;
@@ -547,7 +583,14 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
                 task_info->task_state = KII_MQTT_ST_RECONNECT;
             }
         }
+    } else if (res == KHC_SOCK_FAIL && _mqtt_sock_recv_lost(kii) == KII_TRUE) {
+        // Waiting on would wait for a connection that is gone.
+        state->elapsed_time_ms = 0;
+        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        task_info->task_state = KII_MQTT_ST_RECONNECT;
     } else {
+        // No packet has started to arrive: the receive timed out, or returned
+        // KHC_SOCK_AGAIN, as it would in non-blocking mode.
         // Just repeat same state after the wait.
         _add_elapsed_ms(state, _to_recv_ms(kii));
         _add_elapsed_ms(state, WAIT_MS);

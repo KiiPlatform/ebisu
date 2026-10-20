@@ -2,6 +2,7 @@
 #define _tio_socket_impl_
 
 #include "khc_socket_callback.h"
+#include "kii_task_callback.h"
 
 #include "wiced.h"
 #include "wiced_log.h"
@@ -17,6 +18,9 @@ typedef struct _socket_context {
     int packet_offset;
 #endif
     int show_debug;
+    /* What the last mqtt_cb_recv() that failed got, for
+       mqtt_cb_recv_timed_out(). */
+    wiced_result_t recv_result;
 } socket_context_t;
 
 /* HTTP Callback functions */
@@ -42,6 +46,8 @@ khc_sock_code_t mqtt_cb_recv(
         char* buffer,
         size_t length_to_read,
         size_t* out_actual_length);
+
+kii_bool_t mqtt_cb_recv_timed_out(void* sock_ctx);
 
 khc_sock_code_t sock_cb_close(void* sock_ctx);
 

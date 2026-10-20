@@ -15,6 +15,9 @@ typedef struct socket_context_t {
     int sock;
     unsigned int to_recv;
     unsigned int to_send;
+    /* What the last sl_Recv() that failed returned, for
+       sock_cb_recv_timed_out(). */
+    int recv_error;
 } socket_context_t;
 
 typedef struct {
@@ -35,6 +38,9 @@ khc_sock_code_t
 khc_sock_code_t
     sock_cb_recv(void* sock_ctx, char* buffer, size_t length_to_read,
             size_t* out_actual_length);
+
+kii_bool_t
+    sock_cb_recv_timed_out(void* sock_ctx);
 
 khc_sock_code_t
     sock_cb_close(void* sock_context);

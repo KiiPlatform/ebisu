@@ -142,11 +142,16 @@ khc_sock_code_t
     socket_context_t* ctx = (socket_context_t*)socket_context;
     *out_actual_length = 0;
     int ret = SSL_read(ctx->ssl, buffer, length_to_read);
+    if (ret <= 0) {
+        /* errno first, before anything else can change it. */
+        ctx->recv_errno = errno;
+        ctx->recv_ssl_error = SSL_get_error(ctx->ssl, ret);
+    }
     if (ret > 0) {
         *out_actual_length = ret;
         return KHC_SOCK_OK;
     } else if (ret == 0) {
-        int ssl_error = SSL_get_error(ctx->ssl, ret);
+        int ssl_error = ctx->recv_ssl_error;
         if (ssl_error == SSL_ERROR_ZERO_RETURN) {
             return KHC_SOCK_OK;
         } else if (ssl_error == SSL_ERROR_WANT_READ || ssl_error == SSL_ERROR_WANT_WRITE) {
@@ -165,6 +170,25 @@ khc_sock_code_t
     } else {
         return KHC_SOCK_FAIL;
     }
+}
+
+/* sock_cb_recv() returns KHC_SOCK_FAIL both when the receive timeout set with
+   SO_RCVTIMEO in sock_cb_connect() runs out and when the connection fails.
+   The timeout makes the read fail with EAGAIN or EWOULDBLOCK, which OpenSSL
+   reports as SSL_ERROR_WANT_READ, and errno is only meaningful with
+   SSL_ERROR_SYSCALL. */
+kii_bool_t
+    sock_cb_recv_timed_out(void* socket_context)
+{
+    socket_context_t* ctx = (socket_context_t*)socket_context;
+    if (ctx->recv_ssl_error == SSL_ERROR_WANT_READ) {
+        return KII_TRUE;
+    }
+    if (ctx->recv_ssl_error == SSL_ERROR_SYSCALL &&
+            (ctx->recv_errno == EAGAIN || ctx->recv_errno == EWOULDBLOCK)) {
+        return KII_TRUE;
+    }
+    return KII_FALSE;
 }
 
 khc_sock_code_t

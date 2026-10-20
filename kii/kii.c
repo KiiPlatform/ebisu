@@ -69,6 +69,8 @@ void kii_init(kii_t* kii)
     kii->_task_exit_data = NULL;
     kii->_cb_delay_ms = NULL;
     kii->_delay_ms_data = NULL;
+    kii->_cb_mqtt_sock_recv_timed_out = NULL;
+    kii->_mqtt_sock_recv_timed_out_ctx = NULL;
     kii->_insecure_mqtt = KII_FALSE;
     kii->_use_m_0_header = KII_FALSE;
 }
@@ -189,6 +191,11 @@ void kii_set_cb_mqtt_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata) 
 void kii_set_cb_mqtt_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata) {
     kii->_cb_mqtt_sock_recv = cb;
     kii->_mqtt_sock_recv_ctx = userdata;
+}
+
+void kii_set_cb_mqtt_sock_recv_timed_out(kii_t* kii, KII_CB_SOCK_RECV_TIMED_OUT cb, void* userdata) {
+    kii->_cb_mqtt_sock_recv_timed_out = cb;
+    kii->_mqtt_sock_recv_timed_out_ctx = userdata;
 }
 
 void kii_set_cb_mqtt_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata) {

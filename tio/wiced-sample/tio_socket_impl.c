@@ -200,6 +200,7 @@ khc_sock_code_t mqtt_cb_recv(
         if (ctx->show_debug != 0) {
             wiced_log_printf("mqtt_cb_recv fail. [%d]\n", ret);
         }
+        ctx->recv_result = ret;
         return KHC_SOCK_FAIL;
     }
 }
@@ -292,10 +293,21 @@ mqtt_cb_recv(
         if (ctx->show_debug != 0) {
             wiced_log_printf("mqtt_cb_recv fail. [%d]\n", ret);
         }
+        ctx->recv_result = ret;
         return KHC_SOCK_FAIL;
     }
 }
 #endif
+
+/* mqtt_cb_recv() returns KHC_SOCK_FAIL for every failure. It waits with
+   WICED_NEVER_TIMEOUT, but should it time out, it returns KHC_SOCK_FAIL for
+   WICED_TIMEOUT too, not KHC_SOCK_OK with 0 bytes as sock_cb_recv() does: the
+   MQTT task would take that for the end of the stream and connect again. */
+kii_bool_t mqtt_cb_recv_timed_out(void* sock_ctx)
+{
+    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    return ctx->recv_result == WICED_TIMEOUT ? KII_TRUE : KII_FALSE;
+}
 
 khc_sock_code_t sock_cb_close(void* sock_ctx)
 {

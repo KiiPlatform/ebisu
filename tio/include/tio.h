@@ -388,11 +388,45 @@ void tio_handler_set_cb_sock_send_mqtt(tio_handler_t* handler, KHC_CB_SOCK_SEND 
  * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
+ *
+ * Return KHC_SOCK_FAIL when the receive timeout runs out with nothing
+ * received: tio_handler takes KHC_SOCK_OK with 0 bytes for the end of the
+ * stream, and connects again. tio_handler_set_cb_sock_recv_timed_out_mqtt()
+ * lets it tell such a timeout from a lost connection.
  * \param [out] handler tio_handler_t instance.
  * \param [in] cb_recv Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_recv.
  */
 void tio_handler_set_cb_sock_recv_mqtt(tio_handler_t* handler, KHC_CB_SOCK_RECV cb_recv, void* userdata);
+/**
+ * \brief Set callback telling a receive timeout from a failure on the MQTT(S)
+ * socket.
+ *
+ * Optional. While tio_handler waits for the next command, the recv callback
+ * set by tio_handler_set_cb_sock_recv_mqtt() returns KHC_SOCK_FAIL whenever
+ * its receive timeout runs out with nothing received, as it routinely does on
+ * an idle connection, and also when the connection is lost. Only the socket
+ * implementation can tell which, so tio_handler asks cb_timed_out. If it
+ * returns KII_FALSE, tio_handler closes the socket and connects again. If it
+ * returns KII_TRUE, tio_handler goes on waiting, and sends PINGREQ when the
+ * keep-alive interval requires.
+ *
+ * If this callback is not set, or set to NULL, every such KHC_SOCK_FAIL is
+ * taken for a timeout. A lost connection is then noticed only when a PINGREQ
+ * cannot be sent or goes unanswered, so with a keep-alive interval of 0 it is
+ * not noticed at all.
+ *
+ * cb_timed_out is asked only in that wait. A receive that fails partway
+ * through a message, or while waiting for the broker to answer CONNECT or
+ * SUBSCRIBE, makes tio_handler connect again whatever the cause. It is never
+ * called for the HTTP(S) socket.
+ *
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] cb_timed_out Callback function pointer, or NULL.
+ * \param [in] userdata Context object pointer passed to cb_timed_out,
+ * typically the one passed to tio_handler_set_cb_sock_recv_mqtt().
+ */
+void tio_handler_set_cb_sock_recv_timed_out_mqtt(tio_handler_t* handler, KII_CB_SOCK_RECV_TIMED_OUT cb_timed_out, void* userdata);
 /**
  * \brief Set socket close callback used for MQTT(S)
  *
@@ -479,6 +513,7 @@ void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_CB_TASK_CONTIN
  * - tio_handler_set_cb_sock_connect_mqtt()
  * - tio_handler_set_cb_sock_send_mqtt()
  * - tio_handler_set_cb_sock_recv_mqtt()
+ * - tio_handler_set_cb_sock_recv_timed_out_mqtt()
  * - tio_handler_set_cb_sock_close_mqtt()
  * - tio_handler_set_cb_task_continue()
  * - tio_handler_set_cb_task_exit()

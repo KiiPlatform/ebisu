@@ -213,6 +213,23 @@ typedef void (*KII_PUSH_RECEIVED_CB)(
         void* userdata);
 
 /**
+ * \brief Callback tells whether the last receive on the MQTT socket timed out.
+ *
+ * The recv callback set by kii_set_cb_mqtt_sock_recv() returns KHC_SOCK_FAIL
+ * both when its receive timeout runs out with nothing received, which is
+ * routine on an idle connection, and when the receive fails because the
+ * connection is lost. This callback tells the two apart. It is called right
+ * after such a KHC_SOCK_FAIL, before any other callback on the socket.
+ * See kii_set_cb_mqtt_sock_recv_timed_out().
+ *
+ * \param [in] sock_ctx Context object pointer given to
+ * kii_set_cb_mqtt_sock_recv_timed_out().
+ * \return KII_TRUE if the receive failed because its timeout ran out,
+ * KII_FALSE if it failed for any other reason.
+ */
+typedef kii_bool_t (*KII_CB_SOCK_RECV_TIMED_OUT)(void* sock_ctx);
+
+/**
  * \brief Stores data/ callbacks used by kii module.
  */
 typedef struct kii_t {
@@ -225,10 +242,12 @@ typedef struct kii_t {
     void* _mqtt_sock_connect_ctx; /**< \private */
     void* _mqtt_sock_send_ctx; /**< \private */
     void* _mqtt_sock_recv_ctx; /**< \private */
+    void* _mqtt_sock_recv_timed_out_ctx; /**< \private */
     void* _mqtt_sock_close_ctx; /**< \private */
     KHC_CB_SOCK_CONNECT _cb_mqtt_sock_connect; /**< \private */
     KHC_CB_SOCK_SEND _cb_mqtt_sock_send; /**< \private */
     KHC_CB_SOCK_RECV _cb_mqtt_sock_recv; /**< \private */
+    KII_CB_SOCK_RECV_TIMED_OUT _cb_mqtt_sock_recv_timed_out; /**< \private */
     KHC_CB_SOCK_CLOSE _cb_mqtt_sock_close_cb; /**< \private */
     uint32_t _mqtt_to_recv_sec; /**< \private */
     uint32_t _mqtt_to_send_sec; /**< \private */
@@ -1030,11 +1049,45 @@ void kii_set_cb_mqtt_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb_send, void* userd
  * kii_set_mqtt_to_sock_recv()/ kii_set_mqtt_to_sock_send() APIs.
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
+ *
+ * Return KHC_SOCK_FAIL when the receive timeout runs out with nothing
+ * received: the task takes KHC_SOCK_OK with 0 bytes for the end of the
+ * stream, and connects again. kii_set_cb_mqtt_sock_recv_timed_out() lets the
+ * task tell such a timeout from a lost connection.
  * \param [out] kii kii_t instance.
  * \param [in] cb_recv Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_recv.
  */
 void kii_set_cb_mqtt_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb_recv, void* userdata);
+/**
+ * \brief Set callback telling a receive timeout from a failure on the MQTT(S)
+ * socket.
+ *
+ * Optional. While the MQTT task waits for the next message, the recv callback
+ * set by kii_set_cb_mqtt_sock_recv() returns KHC_SOCK_FAIL whenever its
+ * receive timeout runs out with nothing received, as it routinely does on an
+ * idle connection, and also when the connection is lost. Only the socket
+ * implementation can tell which, so the task asks cb_timed_out. If it returns
+ * KII_FALSE, the task closes the socket and connects again. If it returns
+ * KII_TRUE, the task goes on waiting, and sends PINGREQ when the keep-alive
+ * interval requires.
+ *
+ * If this callback is not set, or set to NULL, every such KHC_SOCK_FAIL is
+ * taken for a timeout. A lost connection is then noticed only when a PINGREQ
+ * cannot be sent or goes unanswered, so with a keep-alive interval of 0 it is
+ * not noticed at all.
+ *
+ * cb_timed_out is asked only in that wait. A receive that fails partway
+ * through a message, or while waiting for the broker to answer CONNECT or
+ * SUBSCRIBE, makes the task connect again whatever the cause. It is never
+ * called for the HTTP(S) socket.
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] cb_timed_out Callback function pointer, or NULL.
+ * \param [in] userdata Context object pointer passed to cb_timed_out,
+ * typically the one passed to kii_set_cb_mqtt_sock_recv().
+ */
+void kii_set_cb_mqtt_sock_recv_timed_out(kii_t* kii, KII_CB_SOCK_RECV_TIMED_OUT cb_timed_out, void* userdata);
 /**
  * \brief Set socket close callback used for MQTT(S)
  *
@@ -1116,6 +1169,7 @@ void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE cb_continue, void
  * - kii_set_cb_mqtt_sock_send()
  * - kii_set_cb_mqtt_sock_connect()
  * - kii_set_cb_mqtt_sock_recv()
+ * - kii_set_cb_mqtt_sock_recv_timed_out()
  * - kii_set_cb_mqtt_sock_close()
  * - kii_set_cb_task_continue()
  * - kii_set_cb_task_exit()

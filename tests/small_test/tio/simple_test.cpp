@@ -40,6 +40,27 @@ TEST_CASE( "enable insecure test" ) {
     REQUIRE( updater._kii._insecure_mqtt == KII_FALSE );
 }
 
+static kii_bool_t recv_timed_out(void* sock_ctx)
+{
+    return KII_TRUE;
+}
+
+TEST_CASE( "tio_handler_set_cb_sock_recv_timed_out_mqtt sets the MQTT callback" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    REQUIRE( handler._kii._cb_mqtt_sock_recv_timed_out == nullptr );
+    REQUIRE( handler._kii._mqtt_sock_recv_timed_out_ctx == nullptr );
+
+    int sock_ctx = 0;
+    tio_handler_set_cb_sock_recv_timed_out_mqtt(&handler, recv_timed_out, &sock_ctx);
+    REQUIRE( handler._kii._cb_mqtt_sock_recv_timed_out == recv_timed_out );
+    REQUIRE( handler._kii._mqtt_sock_recv_timed_out_ctx == &sock_ctx );
+
+    tio_handler_set_cb_sock_recv_timed_out_mqtt(&handler, NULL, NULL);
+    REQUIRE( handler._kii._cb_mqtt_sock_recv_timed_out == nullptr );
+    REQUIRE( handler._kii._mqtt_sock_recv_timed_out_ctx == nullptr );
+}
+
 static kii_task_code_t count_task_create(const char* name, KII_TASK_ENTRY entry, void* entry_param, void* userdata)
 {
     ++*(int*)userdata;
