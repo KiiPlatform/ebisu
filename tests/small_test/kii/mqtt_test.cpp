@@ -471,6 +471,25 @@ TEST_CASE( "MQTT state test" ) {
     REQUIRE( call_recv == 3 );
 }
 
+// Serves data, then reports the end of the stream as khc_socket_callback.h
+// has a callback report that the peer closed the connection: KHC_SOCK_OK with
+// 0 bytes. A reader that does not stop there gets KHC_SOCK_FAIL from the
+// 100th call on, so that it fails the test's count of calls instead of
+// hanging the test.
+static void recv_then_end_of_stream(khct::cb::SockCtx& ctx, const std::string& data, int& call_recv)
+{
+    size_t served = 0;
+    ctx.on_recv = [data, served, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) mutable {
+        ++call_recv;
+        if (call_recv >= 100) {
+            return KHC_SOCK_FAIL;
+        }
+        *out_actual_length = data.copy(buffer, length_to_read, served);
+        served += *out_actual_length;
+        return KHC_SOCK_OK;
+    };
+}
+
 TEST_CASE( "MQTT state abnormal tests" ) {
     size_t kii_buff_size = 1024;
     char kii_buff[kii_buff_size];
@@ -1822,6 +1841,90 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         _mqtt_state_send_pingreq(&state);
         REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
         REQUIRE( call_send == 1 );
+    }
+
+    // When the broker closed the connection partway through a packet, reading
+    // the rest of it took each 0-byte read for no progress yet and called recv
+    // again, forever: the task spun without a delay, never reconnecting and
+    // never asking the continue callback whether to stop.
+    SECTION("recv connack reconnects when the stream ends in the fixed header") {
+        int call_recv = 0;
+        recv_then_end_of_stream(mqtt_ctx, "\x20", call_recv);
+
+        state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
+        _mqtt_state_recv_connack(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+        // The type, the remaining length, which the end reads as 0, and the
+        // variable header, which is where the end is noticed.
+        REQUIRE( call_recv == 3 );
+    }
+
+    SECTION("recv msg reconnects when the stream ends partway through a message") {
+        int call_recv = 0;
+        // Topic length 5, the topic, and 3 of the 10 bytes of the body.
+        recv_then_end_of_stream(mqtt_ctx, std::string("\x00\x05" "topic" "abc", 10), call_recv);
+        bool call_push = false;
+        push_ctx.on_push = [&call_push](const char* message, size_t message_length) {
+            call_push = true;
+        };
+
+        state.info.task_state = KII_MQTT_ST_RECV_MSG;
+        state.remaining_message_size = 17;
+        state.elapsed_time_ms = 1000;
+        _mqtt_state_recv_msg(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+        REQUIRE( state.elapsed_time_ms == 0 );
+        REQUIRE( call_push == false );
+        REQUIRE( call_recv == 2 );
+    }
+
+    SECTION("recv msg reconnects when the stream ends partway through a message it discards") {
+        int call_recv = 0;
+        // Read 256 bytes at a time, so two reads, then the end.
+        recv_then_end_of_stream(mqtt_ctx, std::string(300, 'x'), call_recv);
+
+        state.info.task_state = KII_MQTT_ST_RECV_MSG;
+        state.remaining_message_size = state.kii->_mqtt_buffer_size + 1;
+        state.elapsed_time_ms = 1000;
+        _mqtt_state_recv_msg(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+        REQUIRE( state.elapsed_time_ms == 0 );
+        REQUIRE( call_recv == 3 );
+    }
+
+    SECTION("recv ready reconnects when the stream ends partway through a packet it ignores") {
+        int call_recv = 0;
+        // PUBACK, remaining length 2, and 1 of those 2 bytes.
+        recv_then_end_of_stream(mqtt_ctx, std::string("\x40\x02\x00", 3), call_recv);
+
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        state.elapsed_time_ms = 1000;
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+        REQUIRE( state.elapsed_time_ms == 0 );
+        REQUIRE( call_recv == 4 );
+    }
+
+    // Between packets the end reads as a header of type 0 and length 0, and
+    // recv ready discards that packet, which with nothing to read reports a
+    // failure. So this already reconnected. Were the fixed header to report the
+    // end as a failure instead, recv ready would take it for a receive timeout
+    // and wait on until the keep-alive interval ran out.
+    SECTION("recv ready reconnects when the stream ends between packets") {
+        int call_recv = 0;
+        recv_then_end_of_stream(mqtt_ctx, "", call_recv);
+
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        state.elapsed_time_ms = 1000;
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+        REQUIRE( state.elapsed_time_ms == 0 );
+        REQUIRE( call_recv == 2 );
     }
 }
 
