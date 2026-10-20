@@ -7,7 +7,7 @@ env:
   APP_ID: ${{ secrets.APP_ID }}
   APP_KEY: ${{ secrets.APP_KEY }}
   CLIENT_ID: ${{ secrets.CLIENT_ID }}
-  CLIENT_SECRET: ${{ secrets.SECRET }}
+  CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
   DEFAULT_SITE: ${{ secrets.DEFAULT_SITE }}
 
 jobs:
