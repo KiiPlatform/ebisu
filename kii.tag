@@ -183,6 +183,13 @@
       <arglist>)(const char *message, size_t message_length, void *userdata)</arglist>
     </member>
     <member kind="typedef">
+      <type>kii_bool_t(*</type>
+      <name>KII_CB_SOCK_RECV_TIMED_OUT</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a175bcb2cec59b87652fe358b47caeb72</anchor>
+      <arglist>)(void *sock_ctx)</arglist>
+    </member>
+    <member kind="typedef">
       <type>struct kii_t</type>
       <name>kii_t</name>
       <anchorfile>kii_8h.html</anchorfile>
@@ -756,6 +763,13 @@
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a53f75c9d2fab7fc43c5e0478864727e9</anchor>
       <arglist>(kii_t *kii, KHC_CB_SOCK_RECV cb_recv, void *userdata)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_set_cb_mqtt_sock_recv_timed_out</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a24ff91737ab55e0a0af6a6a6cd711e9c</anchor>
+      <arglist>(kii_t *kii, KII_CB_SOCK_RECV_TIMED_OUT cb_timed_out, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>void</type>

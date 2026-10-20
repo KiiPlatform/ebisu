@@ -196,6 +196,7 @@ Socket callbacks.</h3>
 <p>Note that, <code>tio_handler</code> uses MQTT(s) to receive remote control commands and uses HTTP(s) to send the result of command execution.</p>
 <p>Application can choose to pass different implementations of socket functions or same one. If you choose to pass same pointer of the function, Please also check <a class="el" href="index.html#asynchronous-task-management">Asynchronous task management</a> section as well.</p>
 <p>For both MQTT and HTTP, using them over secure connection is highly recommended. Our cloud supports non-secure connection for now. However, we may terminate supports of insecure connections in the future.</p>
+<p><a class="anchor" id="mqtt-socket-notes"></a> </p>
 <h4><a class="anchor" id="autotoc_md8"></a>
 Notes about socket implementation used for MQTT.</h4>
 <p>Underlying socket implementation used for MQTT must be blocking mode and its recv/ send timeout must be shared with <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code>.</p>
@@ -204,7 +205,9 @@ Notes about socket implementation used for MQTT.</h4>
 <div class="fragment"><div class="line">tio_handler_set_mqtt_to_sock_recv(handler, 15);</div>
 <div class="line">tio_handler_set_mqtt_to_sock_send(handler, 15);</div>
 <div class="line">tio_handler_set_keep_alive_interval(handler, 300);</div>
-</div><!-- fragment --><p><a class="anchor" id="action-callback"></a> </p>
+</div><!-- fragment --><p>When the recv timeout runs out with nothing received, the MQTT recv callback should return <code>KHC_SOCK_FAIL</code>. <code>KHC_SOCK_OK</code> with 0 bytes means the broker closed the connection, and <code>tio_handler</code> connects again.</p>
+<p>A lost connection makes the recv callback return <code>KHC_SOCK_FAIL</code> as well. To tell it from a timeout, set the optional <code>tio_handler_set_cb_sock_recv_timed_out_mqtt()</code> callback: it returns <code>KII_TRUE</code> if the last receive timed out, and <code>KII_FALSE</code> if it failed otherwise, in which case <code>tio_handler</code> connects again. Without it, every <code>KHC_SOCK_FAIL</code> while waiting for a command is taken for a timeout, and a lost connection is only noticed when a <code>PINGREQ</code> fails or goes unanswered; with a keep-alive interval of 0, never. See <code>sock_cb_recv_timed_out()</code> in <a href="linux-sample/sock_cb_linux.c">linux-sample</a>.</p>
+<p><a class="anchor" id="action-callback"></a> </p>
 <h3><a class="anchor" id="autotoc_md9"></a>
 Action callback</h3>
 <p>Action callback is called when the IoT device receives remote control command. You can implement IoT device specific control in the callback such as turn on/ off devices or changes level of actuators, etc.</p>
@@ -249,6 +252,7 @@ Set-up &lt;tt&gt;tio_handler_t&lt;/tt&gt; instance</h2>
 <div class="line">tio_handler_set_cb_sock_connect_mqtt(handler, sock_cb_connect, mqtt_ssl_ctx);</div>
 <div class="line">tio_handler_set_cb_sock_send_mqtt(handler, sock_cb_send, mqtt_ssl_ctx);</div>
 <div class="line">tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);</div>
+<div class="line">tio_handler_set_cb_sock_recv_timed_out_mqtt(handler, sock_cb_recv_timed_out, mqtt_ssl_ctx);</div>
 <div class="line">tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);</div>
 <div class="line"> </div>
 <div class="line">tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);</div>
@@ -289,6 +293,7 @@ Socket callbacks.</h3>
 </div><!-- fragment --><div class="fragment"><div class="line">tio_handler_set_cb_sock_connect_mqtt(handler, sock_cb_connect, mqtt_ssl_ctx);</div>
 <div class="line">tio_handler_set_cb_sock_send_mqtt(handler, sock_cb_send, mqtt_ssl_ctx);</div>
 <div class="line">tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);</div>
+<div class="line">tio_handler_set_cb_sock_recv_timed_out_mqtt(handler, sock_cb_recv_timed_out, mqtt_ssl_ctx);</div>
 <div class="line">tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);</div>
 </div><!-- fragment --><h3><a class="anchor" id="autotoc_md16"></a>
 Set-up buffers</h3>
@@ -471,6 +476,7 @@ Tasks executed by &lt;tt&gt;tio_handler_t&lt;/tt&gt;.</h2>
 <li><code>tio_handler_set_cb_sock_connect_mqtt()</code></li>
 <li><code>tio_handler_set_cb_sock_send_mqtt()</code></li>
 <li><code>tio_handler_set_cb_sock_recv_mqtt()</code></li>
+<li><code>tio_handler_set_cb_sock_recv_timed_out_mqtt()</code> (Optional. See <a class="el" href="index.html#mqtt-socket-notes">Notes about socket implementation used for MQTT</a>.)</li>
 <li><code>tio_handler_set_cb_sock_close_mqtt()</code></li>
 <li><code>tio_handler_set_cb_delay_ms()</code></li>
 <li><code>tio_handler_start()</code> (<code>TIO_CB_ACTION</code> callback)</li>
@@ -515,7 +521,7 @@ Avoiding race condition</h2>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 10:57:00 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 20 2026 10:57:12 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

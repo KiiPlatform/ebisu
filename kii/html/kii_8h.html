@@ -218,6 +218,9 @@ typedef struct <a class="el" href="structkii__installation__id__t.html">kii_inst
 <tr class="memitem:afeba27d97c92ad7a3a03374248eaeb14" id="r_afeba27d97c92ad7a3a03374248eaeb14"><td class="memItemLeft" align="right" valign="top">typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#afeba27d97c92ad7a3a03374248eaeb14">KII_PUSH_RECEIVED_CB</a>) (const char *message, size_t message_length, void *userdata)</td></tr>
 <tr class="memdesc:afeba27d97c92ad7a3a03374248eaeb14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when received push message via MQTT.  <br /></td></tr>
 <tr class="separator:afeba27d97c92ad7a3a03374248eaeb14"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a175bcb2cec59b87652fe358b47caeb72" id="r_a175bcb2cec59b87652fe358b47caeb72"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">kii_bool_t</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a175bcb2cec59b87652fe358b47caeb72">KII_CB_SOCK_RECV_TIMED_OUT</a>) (void *sock_ctx)</td></tr>
+<tr class="memdesc:a175bcb2cec59b87652fe358b47caeb72"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback tells whether the last receive on the MQTT socket timed out.  <br /></td></tr>
+<tr class="separator:a175bcb2cec59b87652fe358b47caeb72"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab1332877c811291e2a9693aaa5c15858" id="r_ab1332877c811291e2a9693aaa5c15858"><td class="memItemLeft" align="right" valign="top"><a id="ab1332877c811291e2a9693aaa5c15858" name="ab1332877c811291e2a9693aaa5c15858"></a>
 typedef struct <a class="el" href="structkii__t.html">kii_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kii_t</b></td></tr>
 <tr class="memdesc:ab1332877c811291e2a9693aaa5c15858"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stores data/ callbacks used by kii module. <br /></td></tr>
@@ -429,6 +432,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a53f75c9d2fab7fc43c5e0478864727e9" id="r_a53f75c9d2fab7fc43c5e0478864727e9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a53f75c9d2fab7fc43c5e0478864727e9">kii_set_cb_mqtt_sock_recv</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#a148cf4bd26b43909c9eab71f37b4cda6">KHC_CB_SOCK_RECV</a> cb_recv, void *userdata)</td></tr>
 <tr class="memdesc:a53f75c9d2fab7fc43c5e0478864727e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket recv callback used for MQTT(S)  <br /></td></tr>
 <tr class="separator:a53f75c9d2fab7fc43c5e0478864727e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a24ff91737ab55e0a0af6a6a6cd711e9c" id="r_a24ff91737ab55e0a0af6a6a6cd711e9c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a24ff91737ab55e0a0af6a6a6cd711e9c">kii_set_cb_mqtt_sock_recv_timed_out</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii_8h.html#a175bcb2cec59b87652fe358b47caeb72">KII_CB_SOCK_RECV_TIMED_OUT</a> cb_timed_out, void *userdata)</td></tr>
+<tr class="memdesc:a24ff91737ab55e0a0af6a6a6cd711e9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set callback telling a receive timeout from a failure on the MQTT(S) socket.  <br /></td></tr>
+<tr class="separator:a24ff91737ab55e0a0af6a6a6cd711e9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4c1ba2c47261d6c1709298d435a8e77f" id="r_a4c1ba2c47261d6c1709298d435a8e77f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a4c1ba2c47261d6c1709298d435a8e77f">kii_set_cb_mqtt_sock_close</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../khc/html/khc__socket__callback_8h.html#af54fb240d589fb1044188bd4a81ab78d">KHC_CB_SOCK_CLOSE</a> cb_close, void *userdata)</td></tr>
 <tr class="memdesc:a4c1ba2c47261d6c1709298d435a8e77f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket close callback used for MQTT(S)  <br /></td></tr>
 <tr class="separator:a4c1ba2c47261d6c1709298d435a8e77f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -544,6 +550,30 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Size actually read. Returning 0 indicates that whole data is read. </dd></dl>
+
+</div>
+</div>
+<a id="a175bcb2cec59b87652fe358b47caeb72" name="a175bcb2cec59b87652fe358b47caeb72"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a175bcb2cec59b87652fe358b47caeb72">&#9670;&#160;</a></span>KII_CB_SOCK_RECV_TIMED_OUT</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef <a class="el" href="kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">kii_bool_t</a>(* KII_CB_SOCK_RECV_TIMED_OUT) (void *sock_ctx)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Callback tells whether the last receive on the MQTT socket timed out. </p>
+<p>The recv callback set by <a class="el" href="kii_8h.html#a53f75c9d2fab7fc43c5e0478864727e9" title="Set socket recv callback used for MQTT(S)">kii_set_cb_mqtt_sock_recv()</a> returns KHC_SOCK_FAIL both when its receive timeout runs out with nothing received, which is routine on an idle connection, and when the receive fails because the connection is lost. This callback tells the two apart. It is called right after such a KHC_SOCK_FAIL, before any other callback on the socket. See <a class="el" href="kii_8h.html#a24ff91737ab55e0a0af6a6a6cd711e9c" title="Set callback telling a receive timeout from a failure on the MQTT(S) socket.">kii_set_cb_mqtt_sock_recv_timed_out()</a>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">sock_ctx</td><td>Context object pointer given to <a class="el" href="kii_8h.html#a24ff91737ab55e0a0af6a6a6cd711e9c" title="Set callback telling a receive timeout from a failure on the MQTT(S) socket.">kii_set_cb_mqtt_sock_recv_timed_out()</a>. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>KII_TRUE if the receive failed because its timeout ran out, KII_FALSE if it failed for any other reason. </dd></dl>
 
 </div>
 </div>
@@ -2305,11 +2335,59 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><div class="memdoc">
 
 <p>Set socket recv callback used for MQTT(S) </p>
-<p>Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by <a class="el" href="kii_8h.html#a812b57be04fe37fc4a7ec66679f88db4" title="Set timeout of receiving data from socket user for MQTT(S)">kii_set_mqtt_to_sock_recv()</a>/ <a class="el" href="kii_8h.html#a822f223537c5c8851a79eb73e06d001b" title="Set timeout of sending data from socket user for MQTT(S)">kii_set_mqtt_to_sock_send()</a> APIs. It is necessary for sending pingReq message periodically to achieve Keep-Alive since we don't require system clock APIs abstraction. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by <a class="el" href="kii_8h.html#a812b57be04fe37fc4a7ec66679f88db4" title="Set timeout of receiving data from socket user for MQTT(S)">kii_set_mqtt_to_sock_recv()</a>/ <a class="el" href="kii_8h.html#a822f223537c5c8851a79eb73e06d001b" title="Set timeout of sending data from socket user for MQTT(S)">kii_set_mqtt_to_sock_send()</a> APIs. It is necessary for sending pingReq message periodically to achieve Keep-Alive since we don't require system clock APIs abstraction.</p>
+<p>Return KHC_SOCK_FAIL when the receive timeout runs out with nothing received: the task takes KHC_SOCK_OK with 0 bytes for the end of the stream, and connects again. <a class="el" href="kii_8h.html#a24ff91737ab55e0a0af6a6a6cd711e9c" title="Set callback telling a receive timeout from a failure on the MQTT(S) socket.">kii_set_cb_mqtt_sock_recv_timed_out()</a> lets the task tell such a timeout from a lost connection. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">cb_recv</td><td>Callback function pointer. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer passed to cb_recv. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a24ff91737ab55e0a0af6a6a6cd711e9c" name="a24ff91737ab55e0a0af6a6a6cd711e9c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a24ff91737ab55e0a0af6a6a6cd711e9c">&#9670;&#160;</a></span>kii_set_cb_mqtt_sock_recv_timed_out()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void kii_set_cb_mqtt_sock_recv_timed_out </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
+          <td class="paramname"><em>kii</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="kii_8h.html#a175bcb2cec59b87652fe358b47caeb72">KII_CB_SOCK_RECV_TIMED_OUT</a>&#160;</td>
+          <td class="paramname"><em>cb_timed_out</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>userdata</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set callback telling a receive timeout from a failure on the MQTT(S) socket. </p>
+<p>Optional. While the MQTT task waits for the next message, the recv callback set by <a class="el" href="kii_8h.html#a53f75c9d2fab7fc43c5e0478864727e9" title="Set socket recv callback used for MQTT(S)">kii_set_cb_mqtt_sock_recv()</a> returns KHC_SOCK_FAIL whenever its receive timeout runs out with nothing received, as it routinely does on an idle connection, and also when the connection is lost. Only the socket implementation can tell which, so the task asks cb_timed_out. If it returns KII_FALSE, the task closes the socket and connects again. If it returns KII_TRUE, the task goes on waiting, and sends PINGREQ when the keep-alive interval requires.</p>
+<p>If this callback is not set, or set to NULL, every such KHC_SOCK_FAIL is taken for a timeout. A lost connection is then noticed only when a PINGREQ cannot be sent or goes unanswered, so with a keep-alive interval of 0 it is not noticed at all.</p>
+<p>cb_timed_out is asked only in that wait. A receive that fails partway through a message, or while waiting for the broker to answer CONNECT or SUBSCRIBE, makes the task connect again whatever the cause. It is never called for the HTTP(S) socket.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cb_timed_out</td><td>Callback function pointer, or NULL. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer passed to cb_timed_out, typically the one passed to <a class="el" href="kii_8h.html#a53f75c9d2fab7fc43c5e0478864727e9" title="Set socket recv callback used for MQTT(S)">kii_set_cb_mqtt_sock_recv()</a>. </td></tr>
   </table>
   </dd>
 </dl>
@@ -2548,6 +2626,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 <li><a class="el" href="kii_8h.html#a92d3014f87739a42c28b592c3e9d323e" title="Set socket send callback used for MQTT(S)">kii_set_cb_mqtt_sock_send()</a></li>
 <li><a class="el" href="kii_8h.html#a6125a1326008370393f502e23cc43781" title="Set socket connect callback used for MQTT(S)">kii_set_cb_mqtt_sock_connect()</a></li>
 <li><a class="el" href="kii_8h.html#a53f75c9d2fab7fc43c5e0478864727e9" title="Set socket recv callback used for MQTT(S)">kii_set_cb_mqtt_sock_recv()</a></li>
+<li><a class="el" href="kii_8h.html#a24ff91737ab55e0a0af6a6a6cd711e9c" title="Set callback telling a receive timeout from a failure on the MQTT(S) socket.">kii_set_cb_mqtt_sock_recv_timed_out()</a></li>
 <li><a class="el" href="kii_8h.html#a4c1ba2c47261d6c1709298d435a8e77f" title="Set socket close callback used for MQTT(S)">kii_set_cb_mqtt_sock_close()</a></li>
 <li><a class="el" href="kii_8h.html#a308bbd95790fad608a661d8e5823c1d8" title="set callback determines whether to continue or discontinue task.">kii_set_cb_task_continue()</a></li>
 <li><a class="el" href="kii_8h.html#a5d4c80bb655870e967d5a90500bcda08" title="Callback called right before exit of MQTT task.">kii_set_cb_task_exit()</a></li>
@@ -3578,7 +3657,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 10:57:00 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 20 2026 10:57:12 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
