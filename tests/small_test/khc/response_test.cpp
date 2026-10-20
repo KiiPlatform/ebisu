@@ -4,7 +4,9 @@
 #include "http_test.h"
 #include "test_callbacks.h"
 #include <fstream>
+#include <stdint.h>
 #include <string.h>
+#include <string>
 
 TEST_CASE( "HTTP response test" ) {
     khc http;
@@ -413,4 +415,127 @@ TEST_CASE( "HTTP response 400 test" ) {
     REQUIRE( on_header_called == 2 );
     REQUIRE( on_write_called == 1 );
     REQUIRE( on_close_called == 1 );
+}
+
+namespace {
+
+struct ContentLengthResult {
+    khc_code res;
+    size_t content_length;
+    int on_header_called;
+    int on_write_called;
+    int on_close_called;
+};
+
+// Performs a GET whose response has the given header and a short body.
+ContentLengthResult perform_with_header(const std::string& header) {
+    khc http;
+    khc_init(&http);
+
+    khc_set_host(&http, "api.kii.com");
+    khc_set_method(&http, "GET");
+    khc_set_path(&http, "/api/apps");
+    khc_set_req_headers(&http, NULL);
+
+    khct::cb::SockCtx s_ctx;
+    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
+    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
+    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
+    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+
+    khct::cb::IOCtx io_ctx;
+    khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
+    khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
+
+    ContentLengthResult r = {};
+
+    s_ctx.on_connect = [](void* socket_context, const char* host, unsigned int port) {
+        return KHC_SOCK_OK;
+    };
+    s_ctx.on_send = [](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    istringstream is("HTTP/1.1 200 OK\r\n" + header + "\r\n\r\nbody");
+    s_ctx.on_recv = [&is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        *out_actual_length = is.read(buffer, length_to_read).gcount();
+        return KHC_SOCK_OK;
+    };
+    s_ctx.on_close = [&r](void* socket_ctx) {
+        ++r.on_close_called;
+        return KHC_SOCK_OK;
+    };
+    io_ctx.on_header = [&r](char *buffer, size_t size, void *userdata) {
+        ++r.on_header_called;
+        return size;
+    };
+    io_ctx.on_write = [&r](char *buffer, size_t size, void *userdata) {
+        ++r.on_write_called;
+        return size;
+    };
+
+    r.res = khc_perform(&http);
+    r.content_length = http._resp_content_length;
+    return r;
+}
+
+}
+
+// Content-Length was read with strtol, so on a 32-bit target 2147483648 came
+// back as LONG_MAX, and SIZE_MAX did on 32 and 64 bits alike.
+TEST_CASE( "Content-Length is read into a size_t" ) {
+    const struct {
+        std::string value;
+        size_t expected;
+    } cases[] = {
+        { "0", 0 },
+        { "10", 10 },
+        { "2147483648", (size_t)2147483648U },
+        { std::to_string((size_t)SIZE_MAX), SIZE_MAX },
+    };
+    for (const auto& c : cases) {
+        INFO("value " << c.value);
+        ContentLengthResult r = perform_with_header("Content-Length: " + c.value);
+        CHECK( r.res == KHC_ERR_OK );
+        CHECK( r.content_length == c.expected );
+        CHECK( r.on_header_called == 2 );
+        CHECK( r.on_write_called == 1 );
+        CHECK( r.on_close_called == 1 );
+    }
+}
+
+// With an invalid Content-Length the length of the body is unknown. The
+// response fails as a header khc cannot handle, once the header callback has
+// seen the header and before any of the body is written.
+TEST_CASE( "Invalid Content-Length fails the response" ) {
+    // SIZE_MAX is 2^n - 1, which never ends in 9.
+    std::string over = std::to_string((size_t)SIZE_MAX);
+    over.back() += 1;
+
+    const std::string values[] = {
+        "-1", "+5", "abc", "", "12abc", over, "123456789012345678901234567890"
+    };
+    for (const auto& value : values) {
+        INFO("value [" << value << "]");
+        ContentLengthResult r = perform_with_header("Content-Length: " + value);
+        CHECK( r.res == KHC_ERR_HEADER_CALLBACK );
+        CHECK( r.on_header_called == 2 );
+        CHECK( r.on_write_called == 0 );
+        CHECK( r.on_close_called == 1 );
+    }
+}
+
+// Only a header named Content-Length is one: a prefix of the name followed by
+// a colon used to match, and would now fail the response.
+TEST_CASE( "Header named like a prefix of Content-Length is not one" ) {
+    const std::string headers[] = { "Content: abc", "Content-Len: -1" };
+    for (const auto& header : headers) {
+        INFO("header [" << header << "]");
+        ContentLengthResult r = perform_with_header(header);
+        CHECK( r.res == KHC_ERR_OK );
+        CHECK( r.content_length == 0 );
+        CHECK( r.on_header_called == 2 );
+        CHECK( r.on_write_called == 1 );
+        CHECK( r.on_close_called == 1 );
+    }
 }

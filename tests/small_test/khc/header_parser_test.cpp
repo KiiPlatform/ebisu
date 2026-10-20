@@ -1,4 +1,6 @@
+#include <stdint.h>
 #include <string.h>
+#include <string>
 #include "catch.hpp"
 #include <khc.h>
 #include "khc_impl.h"
@@ -124,6 +126,76 @@ TEST_CASE( "_extract_content_length tests" ) {
         int res = _extract_content_length(NULL, 0, &len);
         REQUIRE( res == 0);
         REQUIRE( len == 0);
+    }
+}
+
+// Content-Length was read with strtol, so the result depended on the width of
+// long: on a 32-bit target 2147483648 saturated to LONG_MAX, and SIZE_MAX came
+// back as LONG_MAX on 32 and 64 bits alike. A value of one digit was not found
+// at all, because the value had to be at least two characters long.
+TEST_CASE( "_extract_content_length reads any value that fits a size_t" ) {
+    const struct {
+        std::string value;
+        size_t expected;
+    } cases[] = {
+        { "0", 0 },
+        { "7", 7 },
+        { "10", 10 },
+        { "2147483648", (size_t)2147483648U },
+        { "4294967295", (size_t)4294967295U },
+        { std::to_string((size_t)SIZE_MAX), SIZE_MAX },
+        { "0000000000000000000000000000001", 1 },
+    };
+    for (const auto& c : cases) {
+        INFO("value " << c.value);
+        const std::string str = "Content-Length: " + c.value + "\r\n";
+        size_t len = 77;
+        int res = _extract_content_length(str.c_str(), str.size() - 2, &len);
+        CHECK( res == 1 );
+        CHECK( len == c.expected );
+    }
+}
+
+// Content-Length is 1*DIGIT. strtol took a sign, so -1 was read as SIZE_MAX,
+// read junk or nothing as 0, stopped at trailing junk and saturated on
+// overflow. Each of these is now an invalid value, which is -1, and the output
+// is left alone.
+TEST_CASE( "_extract_content_length rejects an invalid value" ) {
+    // SIZE_MAX is 2^n - 1, which never ends in 9, so adding one to the last
+    // digit carries nowhere.
+    std::string over = std::to_string((size_t)SIZE_MAX);
+    over.back() += 1;
+
+    const std::string values[] = {
+        "-1", "+5", "-0", "abc", "", " \t ", "12abc", "1 2", "0x10", "5, 5",
+        over, "123456789012345678901234567890"
+    };
+    for (const auto& value : values) {
+        INFO("value [" << value << "]");
+        const std::string str = "Content-Length: " + value + "\r\n";
+        size_t len = 77;
+        int res = _extract_content_length(str.c_str(), str.size() - 2, &len);
+        CHECK( res == -1 );
+        CHECK( len == 77 );
+    }
+}
+
+// Only a header named Content-Length is one. The name was compared up to the
+// colon, so any prefix of it, even an empty one, matched, and a NUL in the name
+// matched the terminator of the key and went on comparing past its end.
+TEST_CASE( "_extract_content_length matches the whole header name" ) {
+    const std::string names[] = {
+        "", "C", "Content", "Content-Len", "Content-Lengt", "Content-Lengthy",
+        "Content-Length ", std::string("Content-Length\0", 15),
+        std::string("Content-Length\0\0", 16)
+    };
+    for (const auto& name : names) {
+        INFO("name [" << name << "] of " << name.size());
+        const std::string str = name + ": 50\r\n";
+        size_t len = 77;
+        int res = _extract_content_length(str.data(), str.size() - 2, &len);
+        CHECK( res == 0 );
+        CHECK( len == 77 );
     }
 }
 
