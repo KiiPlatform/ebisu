@@ -583,6 +583,37 @@ kii_code_t kii_delete_topic(
 		const kii_topic_t* topic);
 
 /**
+ * \brief Send a push message to a topic.
+ *
+ * Kii Cloud sends the message to the installations of every thing and user
+ * subscribed to the topic, the sender included. A thing's MQTT installation
+ * receives it through the callback given to kii_start_push_task(). The message is sent
+ * asynchronously: success means Kii Cloud accepted it, not that it has been
+ * delivered.
+ *
+ * \param [in,out] kii kii_t instance.
+ * \param [in] topic Specify the topic to send the message to. The author needs
+ * permission to send messages to it.
+ * \param [in] message The request body, a JSON object of type
+ * application/vnd.kii.SendPushMessageRequest+json, sent as it is. "data" is
+ * the message itself, a JSON object without nested objects or arrays, and at
+ * least one push network has to be enabled. An MQTT installation receives a
+ * message such as:
+ * \code
+ * {"data":{"key":"value"},"mqtt":{"enabled":true}}
+ * \endcode
+ * Kii Cloud's REST API reference describes the other fields.
+ * \return kii_code_t. KII_ERR_TOO_LARGE_DATA if the message does not fit in
+ * the buffer set by kii_set_buff(), and KII_ERR_RESP_STATUS if Kii Cloud
+ * refuses it, as with 400 for a message it takes as invalid or 404 for a topic
+ * that does not exist; khc_get_status_code() gives the status.
+ */
+kii_code_t kii_send_push_message(
+        kii_t* kii,
+        const kii_topic_t* topic,
+        const char* message);
+
+/**
  * \brief Install push notification.
  *
  * The step is required to get the endpoint of MQTT before connecting to it.

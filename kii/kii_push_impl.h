@@ -34,4 +34,9 @@ kii_code_t _put_topic(
 kii_code_t _delete_topic(
         kii_t* kii,
         const kii_topic_t* topic);
+
+kii_code_t _send_push_message(
+        kii_t* kii,
+        const kii_topic_t* topic,
+        const char* message);
 #endif

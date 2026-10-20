@@ -130,6 +130,29 @@ exit:
     return res;
 }
 
+kii_code_t kii_send_push_message(
+        kii_t* kii,
+        const kii_topic_t* topic,
+        const char* message)
+{
+    _reset_khc(kii);
+    _reset_buff(kii);
+
+    kii_code_t res = _send_push_message(kii, topic, message);
+    if (res != KII_ERR_OK) {
+        goto exit;
+    }
+
+    // Kii's guide documents 201, its API reference 200.
+    int resp_code = khc_get_status_code(&kii->_khc);
+    if(resp_code < 200 || 300 <= resp_code) {
+        res = KII_ERR_RESP_STATUS;
+        goto exit;
+    }
+exit:
+    return res;
+}
+
 kii_code_t kii_install_push(
         kii_t* kii,
         kii_bool_t development,
