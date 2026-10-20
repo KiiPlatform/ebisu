@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <chrono>
 #include <thread>
-#include <unistd.h>
 
 #include <kii.h>
 #include <jkii.h>
@@ -98,7 +97,7 @@ TEST_CASE("Thing tests")
         REQUIRE ( desc.get<std::string>() == std::string("The login name is locked") );
 
         // wait for unlock
-        sleep(3 + 1);
+        std::this_thread::sleep_for(std::chrono::seconds(3 + 1));
 
         // check unlocked
         ret = kii_auth_thing(&kii, vid.c_str(), password);

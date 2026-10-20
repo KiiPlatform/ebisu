@@ -63,9 +63,13 @@ function(ebisu_add_test_suite name)
     # per-test-case detail the CI report is built from -- that granularity is
     # what names the individual failing assertion on a pull request. Catch's own
     # junit reporter keeps it, so use that when reporting is asked for.
+    #
+    # --out=, not -o followed by the path: on Windows Catch takes an argument
+    # starting with '/' for an option, so under wine "-o /home/..." has no
+    # file to write to.
     set(command_args "")
     if(EBISU_TEST_JUNIT)
-        list(APPEND command_args -r junit -o ${EBISU_JUNIT_DIR}/${name}.xml)
+        list(APPEND command_args -r junit --out=${EBISU_JUNIT_DIR}/${name}.xml)
     endif()
 
     add_test(NAME ${name}
