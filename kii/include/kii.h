@@ -1194,6 +1194,9 @@ void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE cb_continue, void
 
  * Task exits when the task is discontinued by KII_CB_TASK_CONTINUE callback or
  * un-recoverble error occurs.
+ * If it has a connection to the MQTT broker open, it closes it first with the
+ * callback set by kii_set_cb_mqtt_sock_close(), so exit_cb is called with no
+ * MQTT connection open.
  * In exit_cb, you'll need to free memory used for MQTT buffer set by kii_set_mqtt_buff(),
  * Memory used for the userdata passed to following callbacks in case not yet freed.
 

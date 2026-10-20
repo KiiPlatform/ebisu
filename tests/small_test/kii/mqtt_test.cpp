@@ -6,6 +6,9 @@
 #include "test_callbacks.h"
 
 #include <stdint.h>
+#include <string.h>
+#include <deque>
+#include <functional>
 #include <sstream>
 #include <string>
 
@@ -2897,5 +2900,194 @@ TEST_CASE( "MQTT PINGREQ timing" ) {
             REQUIRE( state.pingresp_received == KII_TRUE );
             REQUIRE( served == 2 );
         }
+    }
+}
+
+namespace {
+
+struct ExitCtx {
+    // Whether the task is to go on in the state it is about to handle.
+    std::function<bool(kii_mqtt_task_state)> keep_going;
+    int closes = 0;
+    bool exited = false;
+    int closes_at_exit = -1;
+    kii_mqtt_task_info exit_info;
+};
+
+kii_bool_t exit_test_continue(void* task_info, void* userdata)
+{
+    ExitCtx* ctx = (ExitCtx*)userdata;
+    kii_mqtt_task_state state = ((kii_mqtt_task_info*)task_info)->task_state;
+    return ctx->keep_going(state) ? KII_TRUE : KII_FALSE;
+}
+
+void exit_test_exit(void* task_info, void* userdata)
+{
+    ExitCtx* ctx = (ExitCtx*)userdata;
+    ctx->exited = true;
+    ctx->closes_at_exit = ctx->closes;
+    ctx->exit_info = *(kii_mqtt_task_info*)task_info;
+}
+
+std::string http_response(const std::string& status_line, const std::string& body)
+{
+    return "HTTP/1.1 " + status_line + "\r\n"
+        "Content-Length: " + std::to_string(body.size()) + "\r\n"
+        "\r\n" + body;
+}
+
+}
+
+// The task used to leave its MQTT connection open when it ended, discontinued
+// or on an error, and the application could not close it: it cannot tell
+// whether the task has one open. The task now closes it, before calling the
+// exit callback, and only if it is open. This runs the whole task,
+// mqtt_start_task(), as the thread made for it does.
+TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
+    char buff[1024];
+    char mqtt_buff[1024];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, buff, sizeof(buff));
+    kii_set_json_parser_resource(&kii, &resource);
+    kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
+    kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
+    strcpy(kii._author.author_id, "th.1");
+    strcpy(kii._author.access_token, "tok");
+
+    // Installing push and getting the endpoint, each on a connection of its
+    // own, answered in turn.
+    std::deque<std::string> http_responses = {
+        http_response("201 Created",
+                "{\"installationID\":\"ins.1\",\"installationRegistrationID\":\"reg.1\"}"),
+        http_response("200 OK",
+                "{\"installationID\":\"ins.1\",\"username\":\"user\",\"password\":\"pass\","
+                "\"mqttTopic\":\"topic\",\"host\":\"broker\",\"portTCP\":1883,"
+                "\"portSSL\":8883,\"X-MQTT-TTL\":2147483647}"),
+    };
+    std::string http_resp;
+    size_t http_resp_pos = 0;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&](void*, const char*, unsigned int) {
+        if (http_responses.empty()) {
+            return KHC_SOCK_FAIL;
+        }
+        http_resp = http_responses.front();
+        http_responses.pop_front();
+        http_resp_pos = 0;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_recv = [&http_resp, &http_resp_pos](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        *out_actual_length = http_resp.copy(buffer, length_to_read, http_resp_pos);
+        http_resp_pos += *out_actual_length;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
+    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
+    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+
+    ExitCtx ctx;
+    kii_set_cb_task_continue(&kii, exit_test_continue, &ctx);
+    kii_set_cb_task_exit(&kii, exit_test_exit, &ctx);
+
+    // The broker accepts the connection and the subscription, then sends
+    // nothing more: each receive after that times out.
+    int connects = 0;
+    bool connect_ok = true;
+    khct::cb::SockCtx mqtt_ctx;
+    mqtt_ctx.on_connect = [&connects, &connect_ok](void*, const char*, unsigned int) {
+        ++connects;
+        return connect_ok ? KHC_SOCK_OK : KHC_SOCK_FAIL;
+    };
+    mqtt_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    mqtt_ctx.on_close = [&ctx](void*) {
+        ++ctx.closes;
+        return KHC_SOCK_OK;
+    };
+    size_t served = 0;
+    serve_stream(mqtt_ctx, std::string("\x20\x02\x00\x00" "\x90\x03\x00\x01\x00", 9), served);
+    kii_set_cb_mqtt_sock_connect(&kii, khct::cb::mock_connect, &mqtt_ctx);
+    kii_set_cb_mqtt_sock_send(&kii, khct::cb::mock_send, &mqtt_ctx);
+    kii_set_cb_mqtt_sock_recv(&kii, khct::cb::mock_recv, &mqtt_ctx);
+    kii_set_cb_mqtt_sock_close(&kii, khct::cb::mock_close, &mqtt_ctx);
+
+    SECTION("discontinued while connected") {
+        int timeouts = 0;
+        ctx.keep_going = [&timeouts](kii_mqtt_task_state state) {
+            // Ready, and a receive has timed out.
+            return !(state == KII_MQTT_ST_RECV_READY && ++timeouts > 1);
+        };
+
+        mqtt_start_task(&kii);
+
+        REQUIRE( ctx.exited );
+        CHECK( ctx.exit_info.task_state == KII_MQTT_ST_DISCONTINUED );
+        CHECK( ctx.exit_info.error == KII_MQTT_ERR_OK );
+        CHECK( connects == 1 );
+        CHECK( ctx.closes_at_exit == 1 );
+        CHECK( ctx.closes == 1 );
+    }
+
+    SECTION("discontinued before connecting") {
+        ctx.keep_going = [](kii_mqtt_task_state state) {
+            return state != KII_MQTT_ST_SOCK_CONNECT;
+        };
+
+        mqtt_start_task(&kii);
+
+        REQUIRE( ctx.exited );
+        CHECK( ctx.exit_info.task_state == KII_MQTT_ST_DISCONTINUED );
+        CHECK( connects == 0 );
+        CHECK( ctx.closes == 0 );
+    }
+
+    // The connection is closed to reconnect, and connecting again fails: it
+    // is not closed a second time.
+    SECTION("discontinued while connecting again after closing") {
+        served = 0;
+        serve_stream(mqtt_ctx, "", served); // no CONNACK
+        int connect_states = 0;
+        ctx.keep_going = [&connect_states, &connect_ok](kii_mqtt_task_state state) {
+            if (state == KII_MQTT_ST_SOCK_CONNECT) {
+                ++connect_states;
+                connect_ok = connect_states == 1;
+            }
+            return connect_states < 3;
+        };
+
+        mqtt_start_task(&kii);
+
+        REQUIRE( ctx.exited );
+        CHECK( ctx.exit_info.task_state == KII_MQTT_ST_DISCONTINUED );
+        CHECK( connects == 2 );
+        CHECK( ctx.closes == 1 );
+    }
+
+    SECTION("exiting on an error while connected") {
+        // Too small for CONNECT, which SEND_CONNECT finds once connected.
+        kii_set_mqtt_buff(&kii, mqtt_buff, 16);
+        ctx.keep_going = [](kii_mqtt_task_state) { return true; };
+
+        mqtt_start_task(&kii);
+
+        REQUIRE( ctx.exited );
+        CHECK( ctx.exit_info.task_state == KII_MQTT_ST_ERR_EXIT );
+        CHECK( ctx.exit_info.error == KII_MQTT_ERR_INSUFFICIENT_BUFF );
+        CHECK( connects == 1 );
+        CHECK( ctx.closes_at_exit == 1 );
     }
 }

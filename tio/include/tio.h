@@ -500,6 +500,9 @@ void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_CB_TASK_CONTIN
 
  * Task exits when the task is discontinued by KII_CB_TASK_CONTINUE callback or
  * un-recoverble error occurs.
+ * If it has a connection to the MQTT broker open, it closes it first with the
+ * callback set by tio_handler_set_cb_sock_close_mqtt(), so exit_cb is called
+ * with no MQTT connection open.
  * In exit_cb, you'll need to free memory used for buffers set by following APIs
  * - tio_handler_set_http_buff(),
  * - tio_handler_set_stream_buff(),

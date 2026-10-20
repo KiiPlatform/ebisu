@@ -327,6 +327,7 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
     state->elapsed_time_ms = 0;
     state->remaining_message_size = 0;
     state->pingresp_received = KII_TRUE;
+    state->sock_connected = KII_FALSE;
 }
 
 void _mqtt_state_install_push(mqtt_state_t* state)
@@ -387,6 +388,7 @@ void _mqtt_state_sock_connect(mqtt_state_t* state)
         // Transit to KII_MQTT_ST_GET_ENDPOINT if retroy count > max retry count
         kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
     } else {
+        state->sock_connected = KII_TRUE;
         task_info->task_state = KII_MQTT_ST_SEND_CONNECT;
     }
 }
@@ -453,6 +455,7 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
         // The installation ID is kept; if it is no longer valid either,
         // GET_ENDPOINT fails permanently and exits.
         kii->_cb_mqtt_sock_close_cb(kii->_mqtt_sock_close_ctx);
+        state->sock_connected = KII_FALSE;
         kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
         task_info->task_state = KII_MQTT_ST_GET_ENDPOINT;
     } else if (return_code != 0) {
@@ -690,6 +693,7 @@ void _mqtt_state_reconnect(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
     kii->_cb_mqtt_sock_close_cb(kii->_mqtt_sock_close_ctx);
+    state->sock_connected = KII_FALSE;
     state->info.task_state = KII_MQTT_ST_SOCK_CONNECT;
 }
 
@@ -722,6 +726,12 @@ void* mqtt_start_task(void* sdata)
             }
         }
         mqtt_state_handlers[state.info.task_state](&state);
+    }
+    // Discontinued, or exiting on an error, with a connection open: close it,
+    // as nothing else will. The application cannot tell whether one is open.
+    if (state.sock_connected == KII_TRUE) {
+        kii->_cb_mqtt_sock_close_cb(kii->_mqtt_sock_close_ctx);
+        state.sock_connected = KII_FALSE;
     }
     if (kii->_cb_task_exit != NULL) {
         kii->_cb_task_exit(&state.info, kii->_task_exit_data);
