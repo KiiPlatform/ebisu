@@ -14,6 +14,39 @@
 #include "large_test.h"
 #include "picojson.h"
 
+namespace {
+
+// The thing's latest state, read with its own token, once it has the value
+// given at path, a "/"-separated list of members: a state just uploaded may
+// take a moment to be read back. Null if it never does.
+picojson::value read_state(kii_t& kii, const std::string& path, const std::string& value)
+{
+    const std::string resource = "/thing-if/apps/" + std::string(APP_ID) + "/targets/thing:" +
+        kii._author.author_id + "/states";
+    for (int i = 0; i < 10; ++i) {
+        if (i > 0) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+        REQUIRE( kii_api_call_start(&kii, "GET", resource.c_str(), NULL, KII_TRUE) == KII_ERR_OK );
+        REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
+        REQUIRE( kii_get_resp_status(&kii) == 200 );
+        picojson::value state;
+        REQUIRE( picojson::parse(state, std::string(kii._rw_buff, kii_get_resp_body_length(&kii))).empty() );
+        picojson::value v = state;
+        std::istringstream members(path);
+        std::string member;
+        while (std::getline(members, member, '/') && v.is<picojson::object>()) {
+            v = v.contains(member) ? v.get(member) : picojson::value();
+        }
+        if (v.is<std::string>() && v.get<std::string>() == value) {
+            return state;
+        }
+    }
+    return picojson::value();
+}
+
+}
+
 TEST_CASE("TI Tests")
 {
     // To Avoid 429 Too Many Requests
@@ -39,6 +72,48 @@ TEST_CASE("TI Tests")
         REQUIRE( khc_get_status_code(&kii._khc) == 200 );
         REQUIRE( std::string(kii._author.author_id).length() > 0 );
         REQUIRE( std::string(kii._author.access_token).length() > 0 );
+    }
+
+    SECTION("Onboard with every parameter, read back")
+    {
+        const std::string vid = "ltest_vid_" + std::to_string(kiiltest::current_time());
+        kii_code_t res = kii_ti_onboard(&kii, vid.c_str(), "1234", "ltest_thing_type",
+                "ltest_firmware_version", "STANDALONE",
+                "{\"_vendor\":\"ltest-vendor\",\"_productName\":\"ltest-product\"}");
+        REQUIRE( res == KII_ERR_OK );
+
+        // The thing as Kii Cloud registered it, read with its own token.
+        const std::string path = "/api/apps/" + std::string(APP_ID) + "/things/" + kii._author.author_id;
+        REQUIRE( kii_api_call_start(&kii, "GET", path.c_str(), NULL, KII_TRUE) == KII_ERR_OK );
+        REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
+        REQUIRE( kii_get_resp_status(&kii) == 200 );
+        picojson::value thing;
+        REQUIRE( picojson::parse(thing, std::string(kii._rw_buff, kii_get_resp_body_length(&kii))).empty() );
+        auto field = [&thing](const char* name) {
+            return thing.contains(name) && thing.get(name).is<std::string>() ?
+                thing.get(name).get<std::string>() : std::string();
+        };
+        CHECK( field("_vendorThingID") == vid );
+        CHECK( field("_thingType") == "ltest_thing_type" );
+        CHECK( field("_firmwareVersion") == "ltest_firmware_version" );
+        CHECK( field("_layoutPosition") == "STANDALONE" );
+        CHECK( field("_vendor") == "ltest-vendor" );
+        CHECK( field("_productName") == "ltest-product" );
+    }
+
+    SECTION("Onboarding an existing thing with another password is refused")
+    {
+        const std::string vid = "ltest_vid_" + std::to_string(kiiltest::current_time());
+        REQUIRE( kii_ti_onboard(&kii, vid.c_str(), "1234", NULL, NULL, NULL, NULL) == KII_ERR_OK );
+
+        kii_code_t res = kii_ti_onboard(&kii, vid.c_str(), "4321", NULL, NULL, NULL, NULL);
+        REQUIRE( res == KII_ERR_RESP_STATUS );
+        int status = khc_get_status_code(&kii._khc);
+        CHECK( 400 <= status );
+        CHECK( status < 500 );
+
+        // The right one still onboards it.
+        REQUIRE( kii_ti_onboard(&kii, vid.c_str(), "1234", NULL, NULL, NULL, NULL) == KII_ERR_OK );
     }
 
     SECTION("Get firmware version")
@@ -100,16 +175,19 @@ TEST_CASE("TI Tests")
 
     SECTION("Put state")
     {
-        const char vid[] = "test1";
+        // A thing of the run's own: the state is read back, and the other CI
+        // cell uploads one at the same time.
+        const std::string vid = "ltest_vid_" + std::to_string(kiiltest::current_time());
         const char password[] = "1234";
-        kii_code_t res = kii_ti_onboard(&kii, vid, password, NULL, NULL, NULL, NULL);
+        kii_code_t res = kii_ti_onboard(&kii, vid.c_str(), password, NULL, NULL, NULL, NULL);
 
         REQUIRE( res == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 200 );
         REQUIRE( std::string(kii._author.author_id).length() > 0 );
         REQUIRE( std::string(kii._author.access_token).length() > 0 );
 
-        std::string body = "{\"dummyKey\":\"dummyvalue\"}";
+        const std::string value = "value-" + std::to_string(kiiltest::current_time());
+        std::string body = "{\"dummyKey\":\"" + value + "\"}";
         std::istringstream iss(body);
         std::function<size_t(char *buffer, size_t size, void *userdata)>
             on_read = [=, &iss](char *buffer, size_t size, void *userdata)
@@ -122,6 +200,7 @@ TEST_CASE("TI Tests")
 
         REQUIRE( res == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 204 );
+        CHECK_FALSE( read_state(kii, "dummyKey", value).is<picojson::null>() );
     }
 
     SECTION("Put bulk states")
@@ -170,7 +249,8 @@ TEST_CASE("TI Tests")
         REQUIRE( std::string(kii._author.author_id).length() > 0 );
         REQUIRE( std::string(kii._author.access_token).length() > 0 );
 
-        std::string body = "{\"ltest_trait_alias\":{\"string_field\":\"value\"}}";
+        const std::string value = "value-" + std::to_string(kiiltest::current_time());
+        std::string body = "{\"ltest_trait_alias\":{\"string_field\":\"" + value + "\"}}";
         std::istringstream iss(body);
         std::function<size_t(char *buffer, size_t size, void *userdata)>
             on_read = [=, &iss](char *buffer, size_t size, void *userdata)
@@ -183,6 +263,7 @@ TEST_CASE("TI Tests")
 
         REQUIRE( res == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 204 );
+        CHECK_FALSE( read_state(kii, "ltest_trait_alias/string_field", value).is<picojson::null>() );
     }
 
     SECTION("Patch bulk states")

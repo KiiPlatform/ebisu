@@ -17,6 +17,8 @@ if(EBISU_PLAIN_HTTP)
     list(APPEND large_test_defines PLAIN_HTTP)
 endif()
 
+# The dump holds tokens and passwords: never turn it on where the output is
+# kept, as in CI, whose logs are public.
 option(EBISU_SOCKET_LOG "Dump socket traffic during the large tests" OFF)
 if(EBISU_SOCKET_LOG)
     list(APPEND large_test_defines SOCKET_LOG)
@@ -86,5 +88,25 @@ ebisu_add_test_suite(large_test_kii
         ${PROJECT_SOURCE_DIR}/khc/include
         ${PROJECT_SOURCE_DIR}/jkii/include
         ${PROJECT_SOURCE_DIR}/jkii/libs/jsmn
+        ${large_test_socket_includes}
+    DEFINES ${large_test_defines})
+
+# tio end to end: the handler and the updater against the live application,
+# with a user owning the thing. The test sets the application up as its admin,
+# from CLIENT_ID and CLIENT_SECRET in the environment at run time.
+ebisu_add_test_suite(large_test_tio
+    LABEL large
+    WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tio
+    SOURCES
+        tio/tio_test.cpp
+        ${large_test_common}
+    LINK ${EBISU_TIO_OBJS} ${large_test_socket_libs} Threads::Threads
+    INCLUDES
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/kii
+        ${PROJECT_SOURCE_DIR}/khc/include
+        ${PROJECT_SOURCE_DIR}/jkii/include
+        ${PROJECT_SOURCE_DIR}/jkii/libs/jsmn
+        ${PROJECT_SOURCE_DIR}/tio/include
         ${large_test_socket_includes}
     DEFINES ${large_test_defines})
