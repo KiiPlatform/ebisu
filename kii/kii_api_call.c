@@ -8,7 +8,7 @@ static void _resource_cleanup(kii_t* kii)
     _reset_buff(kii);
     _req_headers_free_all(kii);
 
-    khc_reset_except_cb(&kii->_khc);
+    _reset_khc(kii);
 }
 
 kii_code_t kii_api_call_start(

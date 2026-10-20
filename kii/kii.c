@@ -144,10 +144,14 @@ void kii_set_buff(kii_t* kii, char* buff, size_t buff_size) {
 }
 
 void kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size) {
+    kii->_stream_buff = buff;
+    kii->_stream_buff_size = buff_size;
     khc_set_stream_buff(&kii->_khc, buff, buff_size);
 }
 
 void kii_set_resp_header_buff(kii_t* kii, char* buff, size_t buff_size) {
+    kii->_resp_header_buff = buff;
+    kii->_resp_header_buff_size = buff_size;
     khc_set_resp_header_buff(&kii->_khc, buff, buff_size);
 }
 
@@ -314,6 +318,18 @@ void _reset_buff(kii_t* kii) {
     kii->_rw_buff_req_size = 0;
     kii->_rw_buff[0] = '\0';
     kii->_etag[0] = '\0';
+}
+
+/* khc treats its stream and response header buffers as per-request, so
+ * khc_reset_except_cb() clears them along with the rest of the request state.
+ * kii's setters are per kii_t, and every API resets khc before its request,
+ * so the buffers have to be handed back to khc each time. Resetting khc
+ * directly instead left them NULL, and khc allocated its defaults for every
+ * request. */
+void _reset_khc(kii_t* kii) {
+    khc_reset_except_cb(&kii->_khc);
+    khc_set_stream_buff(&kii->_khc, kii->_stream_buff, kii->_stream_buff_size);
+    khc_set_resp_header_buff(&kii->_khc, kii->_resp_header_buff, kii->_resp_header_buff_size);
 }
 
 void _req_headers_free_all(kii_t* kii) {
