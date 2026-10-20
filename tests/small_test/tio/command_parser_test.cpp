@@ -5,6 +5,7 @@
 #include "command_parser.h"
 #include "jkii.h"
 #include "test_callbacks.h"
+#include <memory>
 #include <string>
 #include <string.h>
 typedef struct expected_parsed_actions {
@@ -249,6 +250,10 @@ void cb_parsed_action(char* command_id, tio_action_t* action, void* expected_act
     }
 }
 
+static void cb_parsed_action_count(char* command_id, tio_action_t* action, void* called) {
+    ++(*(int*)called);
+}
+
 TEST_CASE( "_parse_command" ) {
     tio_handler_t handler;
     jkii_token_t tokens[25];
@@ -302,6 +307,16 @@ TEST_CASE( "_parse_command" ) {
         tio_code_t res = _parse_command(&handler, command, strlen(command), cb_parsed_action, (void *)&expected);
         REQUIRE( TIO_ERR_OK == res);
         REQUIRE( 2 == expected.matched_count);
+    }
+
+    // The alias has to map to an array of actions. "" left nothing for
+    // jkii_parse to parse, which asserted and aborted the process.
+    SECTION("alias mapped to an empty string") {
+        const char command[] = "{\"commandID\":\"c\",\"actions\":[{\"alias\":\"\"}]}";
+        int called = 0;
+        tio_code_t res = _parse_command(&handler, command, strlen(command), cb_parsed_action_count, &called);
+        REQUIRE( TIO_ERR_PARSE_JSON == res);
+        REQUIRE( 0 == called);
     }
 }
 
@@ -588,4 +603,64 @@ TEST_CASE( "_handle_command result body opening does not fit" ) {
         REQUIRE( res == TIO_ERR_TOO_LARGE_DATA );
         REQUIRE( sent.empty() );
     }
+}
+
+// A command with nothing to parse where JSON is expected: an MQTT message with
+// an empty body, or an alias mapped to "" rather than to an array of actions.
+// Either left jkii_parse a zero length, which it asserted against. An alias
+// mapped to whitespace was parsed against the tokens left by the previous parse
+// instead, in every build. All of them have to be rejected like any other
+// malformed command.
+TEST_CASE( "_handle_command nothing to parse" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+
+    char kii_buff[2048];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
+    kii_set_json_parser_resource(&handler._kii, &resource);
+    kii_set_app_id(&handler._kii, "appid");
+    kii_set_site(&handler._kii, "api.kii.com");
+    strcpy(handler._kii._author.author_id, "thingid");
+
+    // The result request is begun before the actions are parsed. A rejected
+    // command must abandon it rather than send it, so connecting fails the
+    // test.
+    int connects = 0;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&connects](void*, const char*, unsigned int) {
+        ++connects;
+        return KHC_SOCK_FAIL;
+    };
+    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+
+    std::string command;
+
+    SECTION("empty payload") {
+        command = "";
+    }
+
+    SECTION("alias mapped to an empty string") {
+        command = "{\"commandID\":\"c\",\"actions\":[{\"alias\":\"\"}]}";
+    }
+
+    SECTION("alias mapped to whitespace") {
+        command = "{\"commandID\":\"c\",\"actions\":[{\"alias\":\"  \"}]}";
+    }
+
+    // Copied to an allocation of exactly its length, without a terminator, as
+    // a payload arrives.
+    std::unique_ptr<char[]> payload(new char[command.size()]);
+    memcpy(payload.get(), command.data(), command.size());
+
+    int called = 0;
+    tio_code_t res = _handle_command(
+            &handler, payload.get(), command.size(), cb_action_ok, &called);
+
+    REQUIRE( res == TIO_ERR_PARSE_JSON );
+    REQUIRE( called == 0 );
+    REQUIRE( connects == 0 );
+    // Released, as on the other paths that abandon the request.
+    REQUIRE( handler._kii._req_headers == NULL );
 }
