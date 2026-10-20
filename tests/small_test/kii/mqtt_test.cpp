@@ -1027,6 +1027,133 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 3 );
     }
 
+    // Return codes 4 and 5 refuse the credentials GET_ENDPOINT fetched.
+    // RECONNECT would present the same ones again and be refused forever.
+    SECTION("recv connack bad user name or password gets a new endpoint") {
+        int call_recv = 0;
+        mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            switch (call_recv) {
+                case 0: // fixed header - control packet type(2)
+                    REQUIRE( length_to_read == 1);
+                    buffer[0] = 0x20;
+                    *out_actual_length = 1;
+                    break;
+                case 1: // fixed header - remaining length (= 2)
+                    REQUIRE( length_to_read == 1);
+                    buffer[0] = 0x02;
+                    *out_actual_length = 1;
+                    break;
+                case 2: // variable header (2 bytes)
+                    REQUIRE( length_to_read == 2);
+                    buffer[0] = 0x00;
+                    buffer[1] = 0x04; // return code(Bad user name or password).
+                    *out_actual_length = 2;
+                    break;
+                default:
+                    FAIL();
+                    break;
+            }
+            ++call_recv;
+            return KHC_SOCK_OK;
+        };
+        int call_close = 0;
+        mqtt_ctx.on_close = [=, &call_close](void* socket_ctx) {
+            ++call_close;
+            return KHC_SOCK_OK;
+        };
+
+        state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
+        _mqtt_state_recv_connack(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_GET_ENDPOINT );
+        REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+        REQUIRE( call_recv == 3 );
+        REQUIRE( call_close == 1 );
+    }
+
+    SECTION("recv connack not authorized gets a new endpoint") {
+        int call_recv = 0;
+        mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            switch (call_recv) {
+                case 0: // fixed header - control packet type(2)
+                    REQUIRE( length_to_read == 1);
+                    buffer[0] = 0x20;
+                    *out_actual_length = 1;
+                    break;
+                case 1: // fixed header - remaining length (= 2)
+                    REQUIRE( length_to_read == 1);
+                    buffer[0] = 0x02;
+                    *out_actual_length = 1;
+                    break;
+                case 2: // variable header (2 bytes)
+                    REQUIRE( length_to_read == 2);
+                    buffer[0] = 0x00;
+                    buffer[1] = 0x05; // return code(Not authorized).
+                    *out_actual_length = 2;
+                    break;
+                default:
+                    FAIL();
+                    break;
+            }
+            ++call_recv;
+            return KHC_SOCK_OK;
+        };
+        int call_close = 0;
+        mqtt_ctx.on_close = [=, &call_close](void* socket_ctx) {
+            ++call_close;
+            return KHC_SOCK_OK;
+        };
+
+        state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
+        _mqtt_state_recv_connack(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_GET_ENDPOINT );
+        REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+        REQUIRE( call_recv == 3 );
+        REQUIRE( call_close == 1 );
+    }
+
+    // Any other refusal says nothing against the credentials, so they are
+    // kept and RECONNECT closes the socket.
+    SECTION("recv connack server unavailable reconnects") {
+        int call_recv = 0;
+        mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            switch (call_recv) {
+                case 0: // fixed header - control packet type(2)
+                    REQUIRE( length_to_read == 1);
+                    buffer[0] = 0x20;
+                    *out_actual_length = 1;
+                    break;
+                case 1: // fixed header - remaining length (= 2)
+                    REQUIRE( length_to_read == 1);
+                    buffer[0] = 0x02;
+                    *out_actual_length = 1;
+                    break;
+                case 2: // variable header (2 bytes)
+                    REQUIRE( length_to_read == 2);
+                    buffer[0] = 0x00;
+                    buffer[1] = 0x03; // return code(Server unavailable).
+                    *out_actual_length = 2;
+                    break;
+                default:
+                    FAIL();
+                    break;
+            }
+            ++call_recv;
+            return KHC_SOCK_OK;
+        };
+        int call_close = 0;
+        mqtt_ctx.on_close = [=, &call_close](void* socket_ctx) {
+            ++call_close;
+            return KHC_SOCK_OK;
+        };
+
+        state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
+        _mqtt_state_recv_connack(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+        REQUIRE( call_recv == 3 );
+        REQUIRE( call_close == 0 );
+    }
+
     SECTION("send subscribe got KHC_SOCK_AGAIN") {
         int call_send = 0;
         mqtt_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {

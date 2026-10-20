@@ -394,7 +394,17 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
         return;
     }
     char return_code = buff[1];
-    if (return_code != 0) {
+    if (return_code == 4 || return_code == 5) {
+        // Bad user name or password, or not authorized: the broker refused the
+        // credentials GET_ENDPOINT fetched, e.g. because they expired or were
+        // revoked. RECONNECT would present the same ones again and be refused
+        // forever, so close the socket as RECONNECT does and fetch new ones.
+        // The installation ID is kept; if it is no longer valid either,
+        // GET_ENDPOINT fails permanently and exits.
+        kii->_cb_mqtt_sock_close_cb(kii->_mqtt_sock_close_ctx);
+        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        task_info->task_state = KII_MQTT_ST_GET_ENDPOINT;
+    } else if (return_code != 0) {
         // CONNACK indicates failure.
         kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
