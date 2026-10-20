@@ -125,6 +125,14 @@ void tio_handler_set_cb_sock_recv_mqtt(
     kii_set_cb_mqtt_sock_recv(&handler->_kii, cb_recv, userdata);
 }
 
+void tio_handler_set_cb_sock_recv_timed_out_mqtt(
+        tio_handler_t* handler,
+        KII_CB_SOCK_RECV_TIMED_OUT cb_timed_out,
+        void* userdata)
+{
+    kii_set_cb_mqtt_sock_recv_timed_out(&handler->_kii, cb_timed_out, userdata);
+}
+
 void tio_handler_set_cb_sock_close_mqtt(
         tio_handler_t* handler,
         KHC_CB_SOCK_CLOSE cb_close,

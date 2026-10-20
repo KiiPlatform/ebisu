@@ -526,6 +526,22 @@ static void recv_then_end_of_stream(khct::cb::SockCtx& ctx, const std::string& d
     };
 }
 
+// Stands in for a platform's KII_CB_SOCK_RECV_TIMED_OUT: answers as told, and
+// records how often it was asked and with which context.
+struct RecvTimedOutMock {
+    kii_bool_t timed_out;
+    int calls;
+    void* sock_ctx;
+};
+static RecvTimedOutMock recv_timed_out_mock;
+
+static kii_bool_t mock_recv_timed_out(void* sock_ctx)
+{
+    ++recv_timed_out_mock.calls;
+    recv_timed_out_mock.sock_ctx = sock_ctx;
+    return recv_timed_out_mock.timed_out;
+}
+
 TEST_CASE( "MQTT state abnormal tests" ) {
     size_t kii_buff_size = 1024;
     char kii_buff[kii_buff_size];
@@ -565,6 +581,8 @@ TEST_CASE( "MQTT state abnormal tests" ) {
     _init_mqtt_state(&kii, &state);
     REQUIRE( state.info.task_state == KII_MQTT_ST_INSTALL_PUSH );
     REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+
+    recv_timed_out_mock = RecvTimedOutMock();
 
     SECTION("install push try again") {
         int call_connect = 0;
@@ -1485,6 +1503,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 0 );
     }
 
+    // With no callback set by kii_set_cb_mqtt_sock_recv_timed_out(), a receive
+    // that fails before any of a packet has arrived is taken for the receive
+    // timeout running out, as it always was.
     SECTION("recv ready got KHC_SOCK_FAIL 1") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
@@ -1506,6 +1527,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 0 );
     }
 
+    // In this section and the next, part of the fixed header has been read.
+    // Waiting on used to take the rest of the packet for the next one's fixed
+    // header.
     SECTION("recv ready got KHC_SOCK_AGAIN 2") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
@@ -1527,7 +1551,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
 
         state.info.task_state = KII_MQTT_ST_RECV_READY;
         _mqtt_state_recv_ready(&state);
-        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECONNECT );
         REQUIRE( state.info.error == KII_MQTT_ERR_OK );
         REQUIRE( call_recv == 1 );
     }
@@ -1553,9 +1577,193 @@ TEST_CASE( "MQTT state abnormal tests" ) {
 
         state.info.task_state = KII_MQTT_ST_RECV_READY;
         _mqtt_state_recv_ready(&state);
-        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECONNECT );
         REQUIRE( state.info.error == KII_MQTT_ERR_OK );
         REQUIRE( call_recv == 1 );
+    }
+
+    // The recv callback reports a receive timeout and a lost connection alike
+    // as KHC_SOCK_FAIL. Without the timed-out callback, recv ready can only
+    // take it for a timeout, so with keep-alive 0, which sends no PINGREQ to
+    // find out, it waits on a lost connection forever.
+    SECTION("recv ready without the timed-out callback waits on a failed receive, even with keep-alive 0") {
+        int call_recv = 0;
+        mqtt_ctx.on_recv = [&call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            ++call_recv;
+            return KHC_SOCK_FAIL;
+        };
+
+        kii._keep_alive_interval = 0;
+        kii_set_mqtt_to_sock_recv(&kii, 15);
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        state.elapsed_time_ms = 1000;
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+        REQUIRE( state.elapsed_time_ms == 1000 + 15000 + 1000 );
+        REQUIRE( call_recv == 1 );
+    }
+
+    SECTION("recv ready waits on when the timed-out callback says the receive timed out") {
+        int call_recv = 0;
+        mqtt_ctx.on_recv = [&call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            ++call_recv;
+            return KHC_SOCK_FAIL;
+        };
+        kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
+        recv_timed_out_mock.timed_out = KII_TRUE;
+
+        kii_set_mqtt_to_sock_recv(&kii, 15);
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        state.elapsed_time_ms = 1000;
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+        REQUIRE( state.elapsed_time_ms == 1000 + 15000 + 1000 );
+        REQUIRE( call_recv == 1 );
+        REQUIRE( recv_timed_out_mock.calls == 1 );
+    }
+
+    SECTION("recv ready reconnects when the timed-out callback says the receive did not time out") {
+        int call_recv = 0;
+        mqtt_ctx.on_recv = [&call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            ++call_recv;
+            return KHC_SOCK_FAIL;
+        };
+        kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
+        recv_timed_out_mock.timed_out = KII_FALSE;
+
+        // With keep-alive 0 this is the only way the loss is noticed.
+        for (unsigned int keep_alive : { 300u, 0u }) {
+            INFO("keep-alive " << keep_alive);
+            kii._keep_alive_interval = keep_alive;
+            call_recv = 0;
+            recv_timed_out_mock.calls = 0;
+            state.info.task_state = KII_MQTT_ST_RECV_READY;
+            state.elapsed_time_ms = 1000;
+            _mqtt_state_recv_ready(&state);
+            CHECK( state.info.task_state == KII_MQTT_ST_RECONNECT );
+            CHECK( state.info.error == KII_MQTT_ERR_OK );
+            CHECK( state.elapsed_time_ms == 0 );
+            CHECK( call_recv == 1 );
+            CHECK( recv_timed_out_mock.calls == 1 );
+        }
+    }
+
+    SECTION("recv ready asks the timed-out callback with the context it was given") {
+        mqtt_ctx.on_recv = [](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            return KHC_SOCK_FAIL;
+        };
+        kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
+        recv_timed_out_mock.timed_out = KII_TRUE;
+
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( recv_timed_out_mock.calls == 1 );
+        REQUIRE( recv_timed_out_mock.sock_ctx == &mqtt_ctx );
+    }
+
+    // khc reads the HTTP socket and has no use for it.
+    SECTION("the timed-out callback is not asked about the HTTP socket") {
+        http_ctx.on_connect = [](void* socket_context, const char* host, unsigned int port) {
+            return KHC_SOCK_OK;
+        };
+        http_ctx.on_send = [](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+            *out_sent_length = length;
+            return KHC_SOCK_OK;
+        };
+        int call_recv = 0;
+        http_ctx.on_recv = [&call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            ++call_recv;
+            return KHC_SOCK_FAIL;
+        };
+        http_ctx.on_close = [](void* socket_context) {
+            return KHC_SOCK_OK;
+        };
+        kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
+
+        _mqtt_state_install_push(&state);
+        REQUIRE( call_recv == 1 );
+        REQUIRE( recv_timed_out_mock.calls == 0 );
+    }
+
+    // Waiting for CONNACK, as for SUBACK, a receive that fails or times out
+    // means the broker did not answer, and either way the task reconnects.
+    SECTION("recv connack reconnects on a failed receive without asking the timed-out callback") {
+        int call_recv = 0;
+        mqtt_ctx.on_recv = [&call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            ++call_recv;
+            return KHC_SOCK_FAIL;
+        };
+        kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
+        recv_timed_out_mock.timed_out = KII_TRUE;
+
+        state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
+        _mqtt_state_recv_connack(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        REQUIRE( call_recv == 1 );
+        REQUIRE( recv_timed_out_mock.calls == 0 );
+    }
+
+    // Non-blocking sockets are not supported, but KHC_SOCK_AGAIN says only that
+    // nothing has arrived yet, so recv ready waits on as it always did.
+    SECTION("recv ready waits on KHC_SOCK_AGAIN without asking the timed-out callback") {
+        mqtt_ctx.on_recv = [](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            return KHC_SOCK_AGAIN;
+        };
+        kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
+        recv_timed_out_mock.timed_out = KII_FALSE;
+
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        REQUIRE( recv_timed_out_mock.calls == 0 );
+    }
+
+    // Once part of a packet has been read, the next read would start inside
+    // it, so the task reconnects whether the receive timed out or not.
+    SECTION("recv ready reconnects without asking the timed-out callback when the fixed header is cut off") {
+        const khc_sock_code_t codes[] = { KHC_SOCK_FAIL, KHC_SOCK_AGAIN };
+        for (khc_sock_code_t code : codes) {
+            INFO("recv returns " << code << " for the remaining length");
+            int call_recv = 0;
+            mqtt_ctx.on_recv = [code, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+                if (call_recv++ == 0) { // fixed header - PUBLISH
+                    buffer[0] = 0x30;
+                    *out_actual_length = 1;
+                    return KHC_SOCK_OK;
+                }
+                return code;
+            };
+            kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
+            recv_timed_out_mock.timed_out = KII_TRUE;
+            recv_timed_out_mock.calls = 0;
+
+            state.info.task_state = KII_MQTT_ST_RECV_READY;
+            state.elapsed_time_ms = 1000;
+            _mqtt_state_recv_ready(&state);
+            CHECK( state.info.task_state == KII_MQTT_ST_RECONNECT );
+            CHECK( state.info.error == KII_MQTT_ERR_OK );
+            CHECK( state.elapsed_time_ms == 0 );
+            CHECK( call_recv == 2 );
+            CHECK( recv_timed_out_mock.calls == 0 );
+        }
+    }
+
+    // The end of the stream is no failure the callback could call a timeout.
+    SECTION("recv ready reconnects at the end of the stream without asking the timed-out callback") {
+        int call_recv = 0;
+        recv_then_end_of_stream(mqtt_ctx, "", call_recv);
+        kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
+        recv_timed_out_mock.timed_out = KII_TRUE;
+
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        state.elapsed_time_ms = 1000;
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+        REQUIRE( state.elapsed_time_ms == 0 );
+        REQUIRE( recv_timed_out_mock.calls == 0 );
     }
 
     SECTION("recv msg got KHC_SOCK_AGAIN from _mqtt_recv_remaining_trash") {

@@ -91,8 +91,18 @@ khc_sock_code_t sock_cb_recv(
         Report("%.*s", ret, buffer);
         return KHC_SOCK_OK;
     } else {
+        ctx->recv_error = ret;
         return KHC_SOCK_FAIL;
     }
+}
+
+/* sock_cb_recv() returns KHC_SOCK_FAIL both when the receive timeout set with
+   SL_SO_RCVTIMEO in sock_cb_connect() runs out, for which sl_Recv() returns
+   SL_EAGAIN, and when the connection fails. */
+kii_bool_t sock_cb_recv_timed_out(void* socket_context)
+{
+    socket_context_t* ctx = (socket_context_t*) socket_context;
+    return ctx->recv_error == SL_EAGAIN ? KII_TRUE : KII_FALSE;
 }
 
 khc_sock_code_t sock_cb_close(void* socket_context)

@@ -194,6 +194,7 @@ If you choose to pass same pointer of the function, Please also check [Asynchron
 For both MQTT and HTTP, using them over secure connection is highly recommended.
 Our cloud supports non-secure connection for now. However, we may terminate supports of insecure connections in the future.
 
+<a name="mqtt-socket-notes"></a>
 #### Notes about socket implementation used for MQTT.
 
 Underlying socket implementation used for MQTT must be blocking mode and its recv/ send timeout must be shared with `tio_handler_t`.
@@ -208,6 +209,20 @@ Twice as large as recv/ send timeout works fine but recommend few minutes to avo
     tio_handler_set_mqtt_to_sock_send(handler, 15);
     tio_handler_set_keep_alive_interval(handler, 300);
 ```
+
+When the recv timeout runs out with nothing received, the MQTT recv callback
+should return `KHC_SOCK_FAIL`. `KHC_SOCK_OK` with 0 bytes means the broker
+closed the connection, and `tio_handler` connects again.
+
+A lost connection makes the recv callback return `KHC_SOCK_FAIL` as well.
+To tell it from a timeout, set the optional
+`tio_handler_set_cb_sock_recv_timed_out_mqtt()` callback: it returns
+`KII_TRUE` if the last receive timed out, and `KII_FALSE` if it failed
+otherwise, in which case `tio_handler` connects again. Without it, every
+`KHC_SOCK_FAIL` while waiting for a command is taken for a timeout, and a lost
+connection is only noticed when a `PINGREQ` fails or goes unanswered; with a
+keep-alive interval of 0, never.
+See `sock_cb_recv_timed_out()` in [linux-sample](linux-sample/sock_cb_linux.c).
 
 <a name="action-callback"></a>
 ### Action callback
@@ -265,6 +280,7 @@ The full code can be checked [handler_init() in example.c](linux-sample/example.
     tio_handler_set_cb_sock_connect_mqtt(handler, sock_cb_connect, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_send_mqtt(handler, sock_cb_send, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_recv_timed_out_mqtt(handler, sock_cb_recv_timed_out, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
 
     tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);
@@ -324,6 +340,7 @@ Different context objects named `http_ssl_ctx` and `mqtt_ssl_ctx` is used since 
     tio_handler_set_cb_sock_connect_mqtt(handler, sock_cb_connect, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_send_mqtt(handler, sock_cb_send, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);
+    tio_handler_set_cb_sock_recv_timed_out_mqtt(handler, sock_cb_recv_timed_out, mqtt_ssl_ctx);
     tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
 ```
 
@@ -609,6 +626,8 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
     - `tio_handler_set_cb_sock_connect_mqtt()`
     - `tio_handler_set_cb_sock_send_mqtt()`
     - `tio_handler_set_cb_sock_recv_mqtt()`
+    - `tio_handler_set_cb_sock_recv_timed_out_mqtt()`
+        (Optional. See [Notes about socket implementation used for MQTT](#mqtt-socket-notes).)
     - `tio_handler_set_cb_sock_close_mqtt()`
     - `tio_handler_set_cb_delay_ms()`
     - `tio_handler_start()` (`TIO_CB_ACTION` callback)

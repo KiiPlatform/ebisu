@@ -2,6 +2,7 @@
 #define __SOCK_CB_LINUX
 
 #include <khc_socket_callback.h>
+#include <kii_task_callback.h>
 #include <openssl/ssl.h>
 
 #ifdef __cplusplus
@@ -14,6 +15,10 @@ typedef struct {
     int socket;
     unsigned int to_recv;
     unsigned int to_send;
+    /* SSL_get_error() and errno after the last SSL_read() that read nothing,
+       for sock_cb_recv_timed_out(). */
+    int recv_ssl_error;
+    int recv_errno;
 } socket_context_t;
 
 khc_sock_code_t
@@ -29,6 +34,9 @@ khc_sock_code_t
 khc_sock_code_t
     sock_cb_recv(void* sock_ctx, char* buffer, size_t length_to_read,
             size_t* out_actual_length);
+
+kii_bool_t
+    sock_cb_recv_timed_out(void* sock_ctx);
 
 khc_sock_code_t
     sock_cb_close(void* sock_context);
