@@ -374,7 +374,12 @@ static jkii_primitive_err_t _jkii_to_long(
 
     errno = 0;
     long_value = strtol(buf, &endptr, 0);
-    if (errno == ERANGE) {
+    if (endptr == buf) {
+        /* No digits, e.g. "-" or "". Whether strtol says so in errno is up
+         * to the libc: BSD and macOS set EINVAL, glibc and newlib do not.
+         * Every libc leaves endptr at buf, so go by that. */
+        return JKII_PRIMITIVE_ERR_INVALID;
+    } else if (errno == ERANGE) {
         if (long_value == LONG_MAX) {
             *out_long = LONG_MAX;
             return JKII_PRIMITIVE_ERR_OVERFLOW;
@@ -382,10 +387,6 @@ static jkii_primitive_err_t _jkii_to_long(
             *out_long = LONG_MIN;
             return JKII_PRIMITIVE_ERR_UNDERFLOW;
         }
-        M_JKII_ASSERT(0);
-    } else if (errno == EINVAL) {
-        /* This situation must not be occurred. This situation is */
-        /* occurred when third argument of strtol is invalid. */
         M_JKII_ASSERT(0);
     }
 
@@ -448,7 +449,9 @@ static jkii_primitive_err_t _jkii_to_double(
 
     errno = 0;
     value = strtod(buf, &endptr);
-    if (value == 0 && *endptr != '\0') {
+    if (endptr == buf || *endptr != '\0') {
+        /* Nothing converted, or not all of it: strtod reads "1e" as 1 and
+         * stops at the "e". */
         return JKII_PRIMITIVE_ERR_INVALID;
     } else if (errno == ERANGE) {
         if (value == 0) {
