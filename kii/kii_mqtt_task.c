@@ -223,10 +223,17 @@ khc_sock_code_t _mqtt_recv_remaining_trash(kii_t* kii, unsigned long remaining_l
     size_t total_received = 0;
     khc_sock_code_t res = KHC_SOCK_FAIL;
     while (total_received < remaining_length) {
+        // Ask for no more than is left of this packet. recv on a stream
+        // socket returns whatever is there up to the size asked for, so asking
+        // for more takes the start of the next packet too when it has arrived.
+        size_t length_to_read = remaining_length - total_received;
+        if (length_to_read > buff_size) {
+            length_to_read = buff_size;
+        }
         res = kii->_cb_mqtt_sock_recv(
                 kii->_mqtt_sock_recv_ctx,
                 buff,
-                buff_size,
+                length_to_read,
                 &received);
         if (res == KHC_SOCK_FAIL) {
             return KHC_SOCK_FAIL;
