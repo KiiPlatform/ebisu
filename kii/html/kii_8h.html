@@ -2671,7 +2671,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><div class="memdoc">
 
 <p>Callback called right before exit of MQTT task. </p>
-<p>Task exits when the task is discontinued by KII_CB_TASK_CONTINUE callback or un-recoverble error occurs. In exit_cb, you'll need to free memory used for MQTT buffer set by <a class="el" href="kii_8h.html#adb5bef6d077b15fca3195ef7d39681cd" title="Set buffer used to parse MQTT message.">kii_set_mqtt_buff()</a>, Memory used for the userdata passed to following callbacks in case not yet freed.</p>
+<p>Task exits when the task is discontinued by KII_CB_TASK_CONTINUE callback or un-recoverble error occurs. If it has a connection to the MQTT broker open, it closes it first with the callback set by <a class="el" href="kii_8h.html#a4c1ba2c47261d6c1709298d435a8e77f" title="Set socket close callback used for MQTT(S)">kii_set_cb_mqtt_sock_close()</a>, so exit_cb is called with no MQTT connection open. In exit_cb, you'll need to free memory used for MQTT buffer set by <a class="el" href="kii_8h.html#adb5bef6d077b15fca3195ef7d39681cd" title="Set buffer used to parse MQTT message.">kii_set_mqtt_buff()</a>, Memory used for the userdata passed to following callbacks in case not yet freed.</p>
 <ul>
 <li><a class="el" href="kii_8h.html#a92d3014f87739a42c28b592c3e9d323e" title="Set socket send callback used for MQTT(S)">kii_set_cb_mqtt_sock_send()</a></li>
 <li><a class="el" href="kii_8h.html#a6125a1326008370393f502e23cc43781" title="Set socket connect callback used for MQTT(S)">kii_set_cb_mqtt_sock_connect()</a></li>
@@ -3707,7 +3707,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 14:54:04 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 20 2026 15:01:28 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
