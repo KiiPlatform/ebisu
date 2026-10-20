@@ -73,6 +73,13 @@ jobs:
   # assumes a 64-bit long, or prints a size_t as one, only shows up there.
   # Each in a plain debug build and under ASan + UBSan.
   #
+  # And on 64-bit Windows, which is LLP64: long is 32 bits there while pointers
+  # and size_t are 64, a combination neither of the others has, so code that
+  # keeps a size_t or a pointer in a long passes both and fails only there. That
+  # one is cross-compiled with mingw-w64 and run under wine, rather than on a
+  # Windows runner, so that it builds with the same CMake presets and GCC
+  # warnings as the rest.
+  #
   # ASan and UBSan catch a class of bug valgrind structurally cannot: overruns
   # of globals and string literals live in .rodata, not on the heap or stack.
   # That is how a memcmp reading past a string literal in the JSON parser
@@ -82,17 +89,18 @@ jobs:
   # jobs stay fast and never touch the live backend. The build job above runs
   # them under valgrind as well, on 64-bit.
   small:
-    name: small (${{ matrix.bits }}-bit, ${{ matrix.variant }})
+    name: ${{ matrix.name || format('small ({0}-bit, {1})', matrix.bits, matrix.variant) }}
     runs-on: ubuntu-latest
     # The large tests are configured whenever these are set, and the workflow
     # sets them for every job. This one runs only the small tests, so it leaves
     # the large ones out of the build: they need the secrets, and link OpenSSL,
-    # whose 64-bit headers a -m32 build cannot use.
+    # whose 64-bit headers a -m32 build cannot use, and which mingw-w64 does not
+    # have at all.
     env:
       APP_ID: ""
       DEFAULT_SITE: ""
     strategy:
-      # One width failing says nothing about the other.
+      # One width or platform failing says nothing about another.
       fail-fast: false
       matrix:
         bits: [64, 32]
@@ -114,6 +122,15 @@ jobs:
             variant: asan
             preset: asan-m32
             test-preset: asan-small-m32
+          # A cell of its own rather than a third value of bits or variant: it
+          # is one debug build, without ASan, which GCC does not provide for
+          # mingw-w64. The variant still has to be one the matrix does not
+          # list, or this entry would be merged into the four cells above.
+          - name: small (64-bit Windows, mingw-w64 + wine)
+            bits: 64
+            variant: mingw
+            preset: mingw
+            test-preset: small-mingw
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -123,6 +140,23 @@ jobs:
         run: |
           sudo apt-get -yq update
           sudo apt-get -yq install g++ cmake libssl-dev git ${{ matrix.bits == 32 && 'gcc-multilib g++-multilib' || '' }}
+      # wine64 runs 64-bit .exe files, and wine provides the /usr/bin/wine that
+      # the toolchain file names as the emulator. Their recommends add some
+      # 230 packages -- GTK, Mesa, GStreamer, fonts -- that a console program
+      # has no use for.
+      #
+      # wineboot creates the wine prefix up front, which the first test would
+      # otherwise do inside its own timing, with the other suites starting
+      # alongside it. WINEDEBUG=-all, here and in the test preset, quiets
+      # wine's complaints that there is no display and no 32-bit wine, neither
+      # of which a console program needs.
+      - name: Setup mingw-w64 and wine
+        if: matrix.variant == 'mingw'
+        env:
+          WINEDEBUG: -all
+        run: |
+          sudo apt-get -yq install --no-install-recommends g++-mingw-w64-x86-64-posix wine wine64
+          wineboot --init
       - name: configure
         run: cmake --preset ${{ matrix.preset }}
       - name: build

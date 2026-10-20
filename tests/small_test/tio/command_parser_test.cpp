@@ -571,7 +571,7 @@ TEST_CASE( "_handle_command empty objects" ) {
         REQUIRE( res == TIO_ERR_PARSE_JSON );
         REQUIRE( called == 0 );
         REQUIRE( !connected );
-        REQUIRE( handler._kii._req_headers == NULL );
+        REQUIRE( handler._kii._req_headers == nullptr );
     }
 
     SECTION("an empty action object is rejected") {
@@ -584,7 +584,7 @@ TEST_CASE( "_handle_command empty objects" ) {
         REQUIRE( res == TIO_ERR_PARSE_JSON );
         REQUIRE( called == 0 );
         REQUIRE( !connected );
-        REQUIRE( handler._kii._req_headers == NULL );
+        REQUIRE( handler._kii._req_headers == nullptr );
     }
 }
 
@@ -715,7 +715,7 @@ TEST_CASE( "_handle_command nothing to parse" ) {
     REQUIRE( called == 0 );
     REQUIRE( connects == 0 );
     // Released, as on the other paths that abandon the request.
-    REQUIRE( handler._kii._req_headers == NULL );
+    REQUIRE( handler._kii._req_headers == nullptr );
 }
 
 // jsmn is built non-strict, so a primitive action value such as abc or - is
@@ -816,7 +816,7 @@ TEST_CASE( "_handle_command invalid primitive values" ) {
         REQUIRE( res == TIO_ERR_PARSE_JSON );
         REQUIRE( called == 0 );
         REQUIRE( !connected );
-        REQUIRE( handler._kii._req_headers == NULL );
+        REQUIRE( handler._kii._req_headers == nullptr );
     }
 }
 

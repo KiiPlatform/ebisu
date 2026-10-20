@@ -59,6 +59,17 @@
         "CMAKE_EXE_LINKER_FLAGS": "-m32 -fsanitize=address,undefined",
         "CMAKE_SHARED_LINKER_FLAGS": "-m32 -fsanitize=address,undefined"
       }
+    },
+    {
+      "name": "mingw",
+      "inherits": "base",
+      "displayName": "Debug, 64-bit Windows",
+      "description": "Cross-compiled with mingw-w64 for 64-bit Windows, where long is 32 bits but pointers and size_t are 64; the tests run under wine. Leaves out the large tests, whose sockets are POSIX. Needs mingw-w64 and wine",
+      "toolchainFile": "${sourceDir}/cmake/mingw-w64-x86_64.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "EBISU_APP_ID": ""
+      }
     }
   ],
   "buildPresets": [
@@ -66,7 +77,8 @@
     { "name": "release", "configurePreset": "release", "jobs": 0 },
     { "name": "asan", "configurePreset": "asan", "jobs": 0 },
     { "name": "debug-m32", "configurePreset": "debug-m32", "jobs": 0 },
-    { "name": "asan-m32", "configurePreset": "asan-m32", "jobs": 0 }
+    { "name": "asan-m32", "configurePreset": "asan-m32", "jobs": 0 },
+    { "name": "mingw", "configurePreset": "mingw", "jobs": 0 }
   ],
   "testPresets": [
     {
@@ -122,6 +134,15 @@
       "configurePreset": "asan-m32",
       "displayName": "Small tests under ASan/UBSan, 32-bit",
       "filter": { "include": { "label": "small" } },
+      "execution": { "jobs": 0 }
+    },
+    {
+      "name": "small-mingw",
+      "inherits": "base",
+      "configurePreset": "mingw",
+      "displayName": "Small tests, 64-bit Windows under wine",
+      "filter": { "include": { "label": "small" } },
+      "environment": { "WINEDEBUG": "-all" },
       "execution": { "jobs": 0 }
     }
   ]

@@ -14,7 +14,10 @@ TEST_CASE( "HTTP chunked response test" ) {
     const size_t buff_size = DEFAULT_STREAM_BUFF_SIZE;
 
     ifstream ifs;
-    ifs.open("./data/resp-login-chunked.txt");
+    // Binary because the fixtures are CRLF, as HTTP is. In text mode Windows
+    // hands them back with LF line endings, and Resp, which splits headers on
+    // CRLF, takes the whole file for a single header.
+    ifs.open("./data/resp-login-chunked.txt", ios::binary);
 
     khct::http::Resp resp(ifs);
 
@@ -123,7 +126,7 @@ TEST_CASE( "small buffer size test" ) {
     char buff[buff_size];
 
     ifstream ifs;
-    ifs.open("./data/resp-login-chunked.txt");
+    ifs.open("./data/resp-login-chunked.txt", ios::binary);
 
     khct::http::Resp resp(ifs);
 
@@ -233,7 +236,7 @@ TEST_CASE( "random buffer size test" ) {
     cout << "Random Buffer Size: " << buff_size << endl;
 
     ifstream ifs;
-    ifs.open("./data/resp-login-chunked.txt");
+    ifs.open("./data/resp-login-chunked.txt", ios::binary);
 
     khct::http::Resp resp(ifs);
 
@@ -337,7 +340,7 @@ TEST_CASE( "random chunk body test" ) {
     khc_init(&http);
 
     ifstream ifs;
-    ifs.open("./data/resp-login-chunked-headers.txt");
+    ifs.open("./data/resp-login-chunked-headers.txt", ios::binary);
 
     khct::http::Resp resp(ifs);
 
@@ -348,7 +351,8 @@ TEST_CASE( "random chunk body test" ) {
     khct::http::create_random_chunked_body(responseBody, expectBody);
     resp.body = responseBody.str();
 
-    ofstream ofs("tmp_random_chunk_response.txt");
+    // Binary too, so that on Windows the dump is byte for byte what khc is fed.
+    ofstream ofs("tmp_random_chunk_response.txt", ios::binary);
     ofs << resp.to_string();
     ofs.close();
 

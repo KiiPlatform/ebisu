@@ -13,7 +13,10 @@ TEST_CASE( "HTTP response test" ) {
     khc_init(&http);
 
     ifstream ifs;
-    ifs.open("./data/resp-login.txt");
+    // Binary because the fixtures are CRLF, as HTTP is. In text mode Windows
+    // hands them back with LF line endings, and Resp, which splits headers on
+    // CRLF, takes the whole file for a single header.
+    ifs.open("./data/resp-login.txt", ios::binary);
 
     khct::http::Resp resp(ifs);
 
@@ -116,7 +119,7 @@ TEST_CASE( "Ignore HTTP status 100" ) {
     khc_init(&http);
 
     ifstream ifs;
-    ifs.open("./data/resp-login.txt");
+    ifs.open("./data/resp-login.txt", ios::binary);
 
     khct::http::Resp resp(ifs, true);
 
@@ -216,7 +219,7 @@ TEST_CASE( "Small resp header skip test" ) {
     char resp_header_buff[resp_header_buff_size];
 
     ifstream ifs;
-    ifs.open("./data/resp-login.txt");
+    ifs.open("./data/resp-login.txt", ios::binary);
 
     khct::http::Resp resp(ifs);
 
