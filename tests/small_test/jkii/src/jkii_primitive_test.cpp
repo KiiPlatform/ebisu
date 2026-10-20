@@ -225,3 +225,48 @@ TEST_CASE("KiiJson, PrimitiveNumberWithoutDigitsIsInvalid")
                 jkii_parse_primitive(value, strlen(value), &res));
     }
 }
+
+// A JSON number has no leading zeros. jkii's integer check lets them through,
+// and strtol was called with base 0, which reads a leading 0 as octal: 010
+// came back as 8 and 08 was invalid.
+TEST_CASE("KiiJson, PrimitiveIntegerWithLeadingZeroIsInvalid")
+{
+    const char* const zeros[] = { "0", "-0" };
+    for (const char* value : zeros) {
+        INFO("value " << value);
+        jkii_primitive_t res;
+        jkii_primitive_err_t err =
+            jkii_parse_primitive(value, strlen(value), &res);
+        CHECK(JKII_PRIMITIVE_ERR_OK == err);
+        if (err == JKII_PRIMITIVE_ERR_OK) {
+            CHECK(JKII_FIELD_TYPE_INTEGER == res.type);
+            CHECK(0 == res.value.int_value);
+        }
+    }
+
+    // The last is too long for a long: invalid all the same, not an overflow.
+    const char* const values[] = {
+        "00", "007", "08", "-08", "09", "010", "-010",
+        "00000000000000000000000000000005"
+    };
+    for (const char* value : values) {
+        INFO("value " << value);
+        jkii_primitive_t res;
+        CHECK(JKII_PRIMITIVE_ERR_INVALID ==
+                jkii_parse_primitive(value, strlen(value), &res));
+    }
+}
+
+// Nor hexadecimal. These never reached strtol, whose base 0 would have read
+// them, because the type check refuses the x; now strtol would not either.
+TEST_CASE("KiiJson, PrimitiveHexadecimalIsInvalid")
+{
+    const char* const values[] = { "0x10", "-0x10", "0X10" };
+
+    for (const char* value : values) {
+        INFO("value " << value);
+        jkii_primitive_t res;
+        CHECK(JKII_PRIMITIVE_ERR_INVALID ==
+                jkii_parse_primitive(value, strlen(value), &res));
+    }
+}
