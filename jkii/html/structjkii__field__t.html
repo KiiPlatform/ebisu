@@ -95,10 +95,10 @@ Data Fields</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abb9816cbe9da31ca71a95362ad917614" id="r_abb9816cbe9da31ca71a95362ad917614"><td class="memItemLeft" >&#160;&#160;&#160;char *&#160;&#160;&#160;<a class="el" href="structjkii__field__t.html#a819930194ef418853ab716ad36cc01e6">string</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
 <tr class="separator:abb9816cbe9da31ca71a95362ad917614"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6997e2e5f27f1b1752827d332b2cc689" id="r_a6997e2e5f27f1b1752827d332b2cc689"><td class="memItemLeft" >&#160;&#160;&#160;int&#160;&#160;&#160;<a class="el" href="structjkii__field__t.html#a2a4a7e6a815d3951add43545a845bf19">int_value</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
-<tr class="separator:a6997e2e5f27f1b1752827d332b2cc689"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afd92d61ffd288948adb28f7bd2d00376" id="r_afd92d61ffd288948adb28f7bd2d00376"><td class="memItemLeft" >&#160;&#160;&#160;long&#160;&#160;&#160;<a class="el" href="structjkii__field__t.html#adbe399051b2cf89ee6fb357078b25c9c">long_value</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
-<tr class="separator:afd92d61ffd288948adb28f7bd2d00376"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3dd1f034ab8070f1a810fca56b4216e8" id="r_a3dd1f034ab8070f1a810fca56b4216e8"><td class="memItemLeft" >&#160;&#160;&#160;int32_t&#160;&#160;&#160;<a class="el" href="structjkii__field__t.html#a50b7778350c45622b75a5d6849969d1f">int_value</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
+<tr class="separator:a3dd1f034ab8070f1a810fca56b4216e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f5f1913b53a692f650201ba1817fedf" id="r_a4f5f1913b53a692f650201ba1817fedf"><td class="memItemLeft" >&#160;&#160;&#160;int64_t&#160;&#160;&#160;<a class="el" href="structjkii__field__t.html#ab61d4194e05eaab56b021905e257d052">long_value</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
+<tr class="separator:a4f5f1913b53a692f650201ba1817fedf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a740c428b333ae4835b0effc6557a14af" id="r_a740c428b333ae4835b0effc6557a14af"><td class="memItemLeft" >&#160;&#160;&#160;double&#160;&#160;&#160;<a class="el" href="structjkii__field__t.html#a4473c495ef26173515f141c4ea4eca51">double_value</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
 <tr class="separator:a740c428b333ae4835b0effc6557a14af"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a962099953b4582cf3e10e6edb80c882f" id="r_a962099953b4582cf3e10e6edb80c882f"><td class="memItemLeft" >&#160;&#160;&#160;<a class="el" href="jkii_8h.html#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a>&#160;&#160;&#160;<a class="el" href="structjkii__field__t.html#af204e584160c0451d1272ba2ef9cbd20">boolean_value</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
@@ -196,33 +196,33 @@ jkii_field_t*). </p>
 
 </div>
 </div>
-<a id="a2a4a7e6a815d3951add43545a845bf19" name="a2a4a7e6a815d3951add43545a845bf19"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2a4a7e6a815d3951add43545a845bf19">&#9670;&#160;</a></span>int_value</h2>
+<a id="a50b7778350c45622b75a5d6849969d1f" name="a50b7778350c45622b75a5d6849969d1f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a50b7778350c45622b75a5d6849969d1f">&#9670;&#160;</a></span>int_value</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int jkii_field_t::int_value</td>
+          <td class="memname">int32_t jkii_field_t::int_value</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>This value is used if <a class="el" href="structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841">jkii_field_t::type</a> is jkii_field_type_t::JKII_FIELD_TYPE_INTEGER. If parsing target is overflowed, then this value is INT_MAX. If parsing is underflowed, then this value is INT_MIN. </p>
+<p>This value is used if <a class="el" href="structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841">jkii_field_t::type</a> is jkii_field_type_t::JKII_FIELD_TYPE_INTEGER. If parsing target is overflowed, then this value is INT32_MAX. If parsing is underflowed, then this value is INT32_MIN. </p>
 
 </div>
 </div>
-<a id="adbe399051b2cf89ee6fb357078b25c9c" name="adbe399051b2cf89ee6fb357078b25c9c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adbe399051b2cf89ee6fb357078b25c9c">&#9670;&#160;</a></span>long_value</h2>
+<a id="ab61d4194e05eaab56b021905e257d052" name="ab61d4194e05eaab56b021905e257d052"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab61d4194e05eaab56b021905e257d052">&#9670;&#160;</a></span>long_value</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">long jkii_field_t::long_value</td>
+          <td class="memname">int64_t jkii_field_t::long_value</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>This value is used if <a class="el" href="structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841">jkii_field_t::type</a> is jkii_field_type_t::JKII_FIELD_TYPE_LONG. If parsing target is overflowed, then this value is LONG_MAX. If parsing is underflowed, then this value is LONG_MIN. </p>
+<p>This value is used if <a class="el" href="structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841">jkii_field_t::type</a> is jkii_field_type_t::JKII_FIELD_TYPE_LONG. If parsing target is overflowed, then this value is INT64_MAX. If parsing is underflowed, then this value is INT64_MIN. </p>
 
 </div>
 </div>
@@ -264,7 +264,7 @@ jkii_field_t*).</p>
 <div class="line">field ::= [<span class="keywordtype">char</span> | escaped]+</div>
 <div class="line">char ::= any ascii characters expect <span class="charliteral">&#39;/&#39;</span>, <span class="charliteral">&#39;[&#39;</span>, <span class="charliteral">&#39;]&#39;</span> and <span class="charliteral">&#39;\&#39;</span></div>
 <div class="line">escaped = <span class="stringliteral">&quot;\\/&quot;</span> | <span class="stringliteral">&quot;\\[&quot;</span> | <span class="stringliteral">&quot;\\]&quot;</span> | <span class="stringliteral">&quot;\\&quot;</span></div>
-<div class="ttc" id="astructjkii__field__t_html_ade8bf5f5ddad91aedd67bb0a0ae40533"><div class="ttname"><a href="structjkii__field__t.html#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a></div><div class="ttdeci">const char * path</div><div class="ttdef"><b>Definition</b> jkii.h:238</div></div>
+<div class="ttc" id="astructjkii__field__t_html_ade8bf5f5ddad91aedd67bb0a0ae40533"><div class="ttname"><a href="structjkii__field__t.html#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a></div><div class="ttdeci">const char * path</div><div class="ttdef"><b>Definition</b> jkii.h:240</div></div>
 </div><!-- fragment --><p>If you want to get first element of color array in following json example:</p>
 <div class="fragment"><div class="line">{</div>
 <div class="line">    <span class="stringliteral">&quot;light&quot;</span> : {</div>
@@ -346,8 +346,9 @@ jkii_field_t*) ignore type checking.</p>
 <li>jkii_parse(jkii_t*, const char*, size_t,
     jkii_field_t*) set actual type.</li>
 <li>if expected type is not jkii_field_type_t::JKII_FIELD_TYPE_ANY, then <a class="el" href="structjkii__field__t.html#a490735c809794c5f8c4c07c423b9b7e6">jkii_field_t::result</a> becomes jkii_parse_err_t::JKII_FIELD_ERR_TYPE_MISMATCH.</li>
-<li>if expected type is jkii_field_type_t::JKII_FIELD_TYPE_ANY, then <a class="el" href="structjkii__field__t.html#a490735c809794c5f8c4c07c423b9b7e6">jkii_field_t::result</a> become jkii_parse_err_t::JKII_FIELD_ERR_OK. </li>
+<li>if expected type is jkii_field_type_t::JKII_FIELD_TYPE_ANY, then <a class="el" href="structjkii__field__t.html#a490735c809794c5f8c4c07c423b9b7e6">jkii_field_t::result</a> become jkii_parse_err_t::JKII_FIELD_ERR_OK.</li>
 </ul>
+<p>The actual type of an integer follows its value: jkii_field_type_t::JKII_FIELD_TYPE_INTEGER if it fits in an int32_t, jkii_field_type_t::JKII_FIELD_TYPE_LONG if it fits only in an int64_t. One that fits in neither is jkii_field_type_t::JKII_FIELD_TYPE_LONG with <a class="el" href="structjkii__field__t.html#a490735c809794c5f8c4c07c423b9b7e6">jkii_field_t::result</a> jkii_field_err_t::JKII_FIELD_ERR_NUM_OVERFLOW or jkii_field_err_t::JKII_FIELD_ERR_NUM_UNDERFLOW. Expected as jkii_field_type_t::JKII_FIELD_TYPE_INTEGER or jkii_field_type_t::JKII_FIELD_TYPE_LONG, any integer matches, and one past the range of the expected type is reported as overflow or underflow. </p>
 
 </div>
 </div>
@@ -357,7 +358,7 @@ jkii_field_t*) ignore type checking.</p>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 09:38:36 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 20 2026 09:50:58 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

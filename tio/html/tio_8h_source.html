@@ -84,306 +84,308 @@ $(document).ready(function() { init_codefold(0); });
 <div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef __tio__</span></div>
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define __tio__</span></div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
-<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="keyword">extern</span> <span class="stringliteral">&quot;C&quot;</span> {</div>
-<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &quot;<a class="codeRef" href="../../kii/html/kii_8h.html">kii.h</a>&quot;</span></div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &quot;<a class="codeRef" href="../../khc/html/khc_8h.html">khc.h</a>&quot;</span></div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &quot;<a class="codeRef" href="../../jkii/html/jkii_8h.html">jkii.h</a>&quot;</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="comment">/* The library is compiled with hidden visibility, so what this header declares</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="comment">   is exactly what the shared object exports. */</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#if defined(__GNUC__) || defined(__clang__)</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#pragma GCC visibility push(default)</span></div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="keyword">extern</span> <span class="keyword">const</span> <span class="keywordtype">char</span> TIO_TASK_NAME_UPDATE_STATE[];</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">kii_bool_t</a> <a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">tio_bool_t</a>;</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="keyword">typedef</span> <a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">kii_author_t</a> <a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">tio_author_t</a>;</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="keyword">typedef</span> <span class="keyword">enum</span> tio_code_t {</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    TIO_ERR_OK, </div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    TIO_ERR_SOCK_CONNECT, </div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    TIO_ERR_SOCK_SEND, </div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    TIO_ERR_SOCK_RECV, </div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    TIO_ERR_SOCK_CLOSE, </div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    TIO_ERR_WRITE_CALLBACK, </div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    TIO_ERR_HEADER_CALLBACK, </div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    TIO_ERR_ALLOCATION, </div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    TIO_ERR_TOO_LARGE_DATA, </div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    TIO_ERR_RESP_STATUS, </div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    TIO_ERR_PARSE_JSON, </div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    TIO_ERR_CREATE_TASK, </div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    TIO_ERR_FAIL </div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>} tio_code_t;</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span><span class="keyword">typedef</span> <span class="keyword">enum</span> tio_data_type_t {</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    TIO_TYPE_NULL, </div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    TIO_TYPE_BOOLEAN, </div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    TIO_TYPE_INTEGER, </div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    TIO_TYPE_DOUBLE, </div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    TIO_TYPE_STRING, </div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    TIO_TYPE_OBJECT, </div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    TIO_TYPE_ARRAY </div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>} tio_data_type_t;</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span> </div>
-<div class="foldopen" id="foldopen00073" data-start="{" data-end="};">
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno"><a class="line" href="structtio__action__value__t.html">   73</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structtio__action__value__t.html">tio_action_value_t</a> {</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno"><a class="line" href="structtio__action__value__t.html#ae37aa5cf6246ce83845320168a92e832">   74</a></span>    tio_data_type_t <a class="code hl_variable" href="structtio__action__value__t.html#ae37aa5cf6246ce83845320168a92e832">type</a>; </div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    <span class="keyword">union </span>{</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno"><a class="line" href="structtio__action__value__t.html#a6d17c1b2e1ad14fc98dcdf6d715b8538">   76</a></span>        <span class="keywordtype">long</span> <a class="code hl_variable" href="structtio__action__value__t.html#a6d17c1b2e1ad14fc98dcdf6d715b8538">long_value</a>; </div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno"><a class="line" href="structtio__action__value__t.html#af2132f619305f5535f068642d3064d87">   77</a></span>        <span class="keywordtype">double</span> <a class="code hl_variable" href="structtio__action__value__t.html#af2132f619305f5535f068642d3064d87">double_value</a>; </div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno"><a class="line" href="structtio__action__value__t.html#ac75507595c7f721705c920fb3dc6c437">   78</a></span>        <a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">tio_bool_t</a> <a class="code hl_variable" href="structtio__action__value__t.html#ac75507595c7f721705c920fb3dc6c437">bool_value</a>; </div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno"><a class="line" href="structtio__action__value__t.html#aa924dbe5c05e0df213710f356206dc4e">   79</a></span>        <span class="keyword">const</span> <span class="keywordtype">char</span> *<a class="code hl_variable" href="structtio__action__value__t.html#aa924dbe5c05e0df213710f356206dc4e">opaque_value</a>; </div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    } <a class="code hl_variable" href="structtio__action__value__t.html#a9487e84fbe922e3a1fade27909ef41a7">param</a>; </div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno"><a class="line" href="structtio__action__value__t.html#a2a32c6a02eff627a7892a17c5b1678bf">   90</a></span>    <span class="keywordtype">size_t</span> <a class="code hl_variable" href="structtio__action__value__t.html#a2a32c6a02eff627a7892a17c5b1678bf">opaque_value_length</a>;</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>} <a class="code hl_struct" href="structtio__action__value__t.html">tio_action_value_t</a>;</div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;stdint.h&gt;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="keyword">extern</span> <span class="stringliteral">&quot;C&quot;</span> {</div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &quot;<a class="codeRef" href="../../kii/html/kii_8h.html">kii.h</a>&quot;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &quot;<a class="codeRef" href="../../khc/html/khc_8h.html">khc.h</a>&quot;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &quot;<a class="codeRef" href="../../jkii/html/jkii_8h.html">jkii.h</a>&quot;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="comment">/* The library is compiled with hidden visibility, so what this header declares</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="comment">   is exactly what the shared object exports. */</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#if defined(__GNUC__) || defined(__clang__)</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#pragma GCC visibility push(default)</span></div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="keyword">extern</span> <span class="keyword">const</span> <span class="keywordtype">char</span> TIO_TASK_NAME_UPDATE_STATE[];</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">kii_bool_t</a> <a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">tio_bool_t</a>;</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="keyword">typedef</span> <a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">kii_author_t</a> <a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">tio_author_t</a>;</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="keyword">typedef</span> <span class="keyword">enum</span> tio_code_t {</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    TIO_ERR_OK, </div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    TIO_ERR_SOCK_CONNECT, </div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    TIO_ERR_SOCK_SEND, </div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    TIO_ERR_SOCK_RECV, </div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    TIO_ERR_SOCK_CLOSE, </div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    TIO_ERR_WRITE_CALLBACK, </div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    TIO_ERR_HEADER_CALLBACK, </div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    TIO_ERR_ALLOCATION, </div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    TIO_ERR_TOO_LARGE_DATA, </div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    TIO_ERR_RESP_STATUS, </div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    TIO_ERR_PARSE_JSON, </div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    TIO_ERR_CREATE_TASK, </div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    TIO_ERR_FAIL </div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>} tio_code_t;</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span><span class="keyword">typedef</span> <span class="keyword">enum</span> tio_data_type_t {</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    TIO_TYPE_NULL, </div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    TIO_TYPE_BOOLEAN, </div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    TIO_TYPE_INTEGER, </div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    TIO_TYPE_DOUBLE, </div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    TIO_TYPE_STRING, </div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    TIO_TYPE_OBJECT, </div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    TIO_TYPE_ARRAY </div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>} tio_data_type_t;</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span> </div>
+<div class="foldopen" id="foldopen00075" data-start="{" data-end="};">
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno"><a class="line" href="structtio__action__value__t.html">   75</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structtio__action__value__t.html">tio_action_value_t</a> {</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno"><a class="line" href="structtio__action__value__t.html#ae37aa5cf6246ce83845320168a92e832">   76</a></span>    tio_data_type_t <a class="code hl_variable" href="structtio__action__value__t.html#ae37aa5cf6246ce83845320168a92e832">type</a>; </div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    <span class="keyword">union </span>{</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno"><a class="line" href="structtio__action__value__t.html#af97df2666558442a1eebbfecbee78416">   78</a></span>        int64_t <a class="code hl_variable" href="structtio__action__value__t.html#af97df2666558442a1eebbfecbee78416">long_value</a>; </div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno"><a class="line" href="structtio__action__value__t.html#af2132f619305f5535f068642d3064d87">   81</a></span>        <span class="keywordtype">double</span> <a class="code hl_variable" href="structtio__action__value__t.html#af2132f619305f5535f068642d3064d87">double_value</a>; </div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno"><a class="line" href="structtio__action__value__t.html#ac75507595c7f721705c920fb3dc6c437">   82</a></span>        <a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">tio_bool_t</a> <a class="code hl_variable" href="structtio__action__value__t.html#ac75507595c7f721705c920fb3dc6c437">bool_value</a>; </div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno"><a class="line" href="structtio__action__value__t.html#aa924dbe5c05e0df213710f356206dc4e">   83</a></span>        <span class="keyword">const</span> <span class="keywordtype">char</span> *<a class="code hl_variable" href="structtio__action__value__t.html#aa924dbe5c05e0df213710f356206dc4e">opaque_value</a>; </div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    } <a class="code hl_variable" href="structtio__action__value__t.html#a9487e84fbe922e3a1fade27909ef41a7">param</a>; </div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno"><a class="line" href="structtio__action__value__t.html#a2a32c6a02eff627a7892a17c5b1678bf">   94</a></span>    <span class="keywordtype">size_t</span> <a class="code hl_variable" href="structtio__action__value__t.html#a2a32c6a02eff627a7892a17c5b1678bf">opaque_value_length</a>;</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>} <a class="code hl_struct" href="structtio__action__value__t.html">tio_action_value_t</a>;</div>
 </div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span> </div>
-<div class="foldopen" id="foldopen00096" data-start="{" data-end="};">
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno"><a class="line" href="structtio__action__t.html">   96</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structtio__action__t.html">tio_action_t</a> {</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno"><a class="line" href="structtio__action__t.html#a412290b7cbd2cd3838f66420ab1ba187">  101</a></span>    <span class="keyword">const</span> <span class="keywordtype">char</span>* <a class="code hl_variable" href="structtio__action__t.html#a412290b7cbd2cd3838f66420ab1ba187">alias</a>;</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno"><a class="line" href="structtio__action__t.html#ad376bb546c8147e2b0371c119932da2f">  105</a></span>    <span class="keywordtype">size_t</span> <a class="code hl_variable" href="structtio__action__t.html#ad376bb546c8147e2b0371c119932da2f">alias_length</a>;</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno"><a class="line" href="structtio__action__t.html#a74dfdccea29e4ea983cb1aaf3f9cebd3">  110</a></span>    <span class="keyword">const</span> <span class="keywordtype">char</span>* <a class="code hl_variable" href="structtio__action__t.html#a74dfdccea29e4ea983cb1aaf3f9cebd3">action_name</a>;</div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno"><a class="line" href="structtio__action__t.html#a2e4dec6108670f0f3e1db8ff8e58feba">  114</a></span>    <span class="keywordtype">size_t</span> <a class="code hl_variable" href="structtio__action__t.html#a2e4dec6108670f0f3e1db8ff8e58feba">action_name_length</a>;</div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno"><a class="line" href="structtio__action__t.html#a069ab662c25522130cfae04320c69cff">  118</a></span>    <a class="code hl_struct" href="structtio__action__value__t.html">tio_action_value_t</a> <a class="code hl_variable" href="structtio__action__t.html#a069ab662c25522130cfae04320c69cff">action_value</a>;</div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>} <a class="code hl_struct" href="structtio__action__t.html">tio_action_t</a>;</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span> </div>
+<div class="foldopen" id="foldopen00100" data-start="{" data-end="};">
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno"><a class="line" href="structtio__action__t.html">  100</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structtio__action__t.html">tio_action_t</a> {</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno"><a class="line" href="structtio__action__t.html#a412290b7cbd2cd3838f66420ab1ba187">  105</a></span>    <span class="keyword">const</span> <span class="keywordtype">char</span>* <a class="code hl_variable" href="structtio__action__t.html#a412290b7cbd2cd3838f66420ab1ba187">alias</a>;</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno"><a class="line" href="structtio__action__t.html#ad376bb546c8147e2b0371c119932da2f">  109</a></span>    <span class="keywordtype">size_t</span> <a class="code hl_variable" href="structtio__action__t.html#ad376bb546c8147e2b0371c119932da2f">alias_length</a>;</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno"><a class="line" href="structtio__action__t.html#a74dfdccea29e4ea983cb1aaf3f9cebd3">  114</a></span>    <span class="keyword">const</span> <span class="keywordtype">char</span>* <a class="code hl_variable" href="structtio__action__t.html#a74dfdccea29e4ea983cb1aaf3f9cebd3">action_name</a>;</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno"><a class="line" href="structtio__action__t.html#a2e4dec6108670f0f3e1db8ff8e58feba">  118</a></span>    <span class="keywordtype">size_t</span> <a class="code hl_variable" href="structtio__action__t.html#a2e4dec6108670f0f3e1db8ff8e58feba">action_name_length</a>;</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno"><a class="line" href="structtio__action__t.html#a069ab662c25522130cfae04320c69cff">  122</a></span>    <a class="code hl_struct" href="structtio__action__value__t.html">tio_action_value_t</a> <a class="code hl_variable" href="structtio__action__t.html#a069ab662c25522130cfae04320c69cff">action_value</a>;</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>} <a class="code hl_struct" href="structtio__action__t.html">tio_action_t</a>;</div>
 </div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span> </div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span><span class="preprocessor">#define TIO_ACTION_ERR_MESSAGE_MAX_SIZE 64</span></div>
 <div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span> </div>
-<div class="foldopen" id="foldopen00128" data-start="{" data-end="};">
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno"><a class="line" href="structtio__action__err__t.html">  128</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structtio__action__err__t.html">tio_action_err_t</a> {</div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno"><a class="line" href="structtio__action__err__t.html#aece44befd7f0b26314a54894a2fefff3">  129</a></span>    <span class="keywordtype">char</span> <a class="code hl_variable" href="structtio__action__err__t.html#aece44befd7f0b26314a54894a2fefff3">err_message</a>[TIO_ACTION_ERR_MESSAGE_MAX_SIZE]; </div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>} <a class="code hl_struct" href="structtio__action__err__t.html">tio_action_err_t</a>;</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span><span class="preprocessor">#define TIO_ACTION_ERR_MESSAGE_MAX_SIZE 64</span></div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span> </div>
+<div class="foldopen" id="foldopen00132" data-start="{" data-end="};">
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno"><a class="line" href="structtio__action__err__t.html">  132</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structtio__action__err__t.html">tio_action_err_t</a> {</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno"><a class="line" href="structtio__action__err__t.html#aece44befd7f0b26314a54894a2fefff3">  133</a></span>    <span class="keywordtype">char</span> <a class="code hl_variable" href="structtio__action__err__t.html#aece44befd7f0b26314a54894a2fefff3">err_message</a>[TIO_ACTION_ERR_MESSAGE_MAX_SIZE]; </div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>} <a class="code hl_struct" href="structtio__action__err__t.html">tio_action_err_t</a>;</div>
 </div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span> </div>
-<div class="foldopen" id="foldopen00135" data-start="{" data-end="};">
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno"><a class="line" href="structtio__action__result__data__t.html">  135</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structtio__action__result__data__t.html">tio_action_result_data_t</a> {</div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno"><a class="line" href="structtio__action__result__data__t.html#aa21434b0b8522eb4a49bca31d7c0fb5b">  136</a></span>    <span class="keywordtype">char</span> <a class="code hl_variable" href="structtio__action__result__data__t.html#aa21434b0b8522eb4a49bca31d7c0fb5b">json</a>[128]; </div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>} <a class="code hl_struct" href="structtio__action__result__data__t.html">tio_action_result_data_t</a>;</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span> </div>
+<div class="foldopen" id="foldopen00139" data-start="{" data-end="};">
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno"><a class="line" href="structtio__action__result__data__t.html">  139</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structtio__action__result__data__t.html">tio_action_result_data_t</a> {</div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno"><a class="line" href="structtio__action__result__data__t.html#aa21434b0b8522eb4a49bca31d7c0fb5b">  140</a></span>    <span class="keywordtype">char</span> <a class="code hl_variable" href="structtio__action__result__data__t.html#aa21434b0b8522eb4a49bca31d7c0fb5b">json</a>[128]; </div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>} <a class="code hl_struct" href="structtio__action__result__data__t.html">tio_action_result_data_t</a>;</div>
 </div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span> </div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span><span class="keyword">typedef</span> size_t (*TIO_CB_SIZE)(<span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span> </div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span><span class="keyword">typedef</span> size_t (*TIO_CB_READ)(<span class="keywordtype">char</span> *buffer, <span class="keywordtype">size_t</span> size, <span class="keywordtype">void</span> *userdata);</div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span> </div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">tio_bool_t</a> (*TIO_CB_ACTION)(<a class="code hl_struct" href="structtio__action__t.html">tio_action_t</a>* action, <a class="code hl_struct" href="structtio__action__err__t.html">tio_action_err_t</a>* err, <a class="code hl_struct" href="structtio__action__result__data__t.html">tio_action_result_data_t</a>* data, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span><span class="keyword">typedef</span> void (*TIO_CB_ERR)(tio_code_t code, <span class="keyword">const</span> <span class="keywordtype">char</span>* err_message, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">tio_bool_t</a> (*TIO_CB_PUSH)(<span class="keyword">const</span> <span class="keywordtype">char</span>* message, <span class="keywordtype">size_t</span> message_length, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span> </div>
-<div class="foldopen" id="foldopen00205" data-start="{" data-end="};">
-<div class="line"><a id="l00205" name="l00205"></a><span class="lineno"><a class="line" href="structtio__handler__t.html">  205</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a> {</div>
-<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>    TIO_CB_ACTION _cb_action; </div>
-<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>    <span class="keywordtype">void</span>* _cb_action_data; </div>
-<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>    TIO_CB_ERR _cb_err; </div>
-<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>    <span class="keywordtype">void</span>* _cb_err_data; </div>
-<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>    TIO_CB_PUSH _cb_push; </div>
-<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>    <span class="keywordtype">void</span>* _cb_push_data; </div>
-<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>    <a class="code hl_structRef" href="../../kii/html/structkii__t.html">kii_t</a> _kii; </div>
-<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>    <span class="keywordtype">size_t</span> _keep_alive_interval; </div>
-<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>    <a class="code hl_typedefRef" href="../../kii/html/kii__task__callback_8h.html#a66833479636e54ec6559fcb91c37263d">KII_CB_TASK_CONTINUE</a> _cb_task_continue; </div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>    <span class="keywordtype">void</span>* _task_continue_data; </div>
-<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>    <a class="code hl_typedefRef" href="../../kii/html/kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5">KII_CB_TASK_EXIT</a> _cb_task_exit; </div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>    <span class="keywordtype">void</span>* _task_exit_data; </div>
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>} <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>;</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span> </div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span><span class="keyword">typedef</span> size_t (*TIO_CB_SIZE)(<span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span> </div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span><span class="keyword">typedef</span> size_t (*TIO_CB_READ)(<span class="keywordtype">char</span> *buffer, <span class="keywordtype">size_t</span> size, <span class="keywordtype">void</span> *userdata);</div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span> </div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">tio_bool_t</a> (*TIO_CB_ACTION)(<a class="code hl_struct" href="structtio__action__t.html">tio_action_t</a>* action, <a class="code hl_struct" href="structtio__action__err__t.html">tio_action_err_t</a>* err, <a class="code hl_struct" href="structtio__action__result__data__t.html">tio_action_result_data_t</a>* data, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span><span class="keyword">typedef</span> void (*TIO_CB_ERR)(tio_code_t code, <span class="keyword">const</span> <span class="keywordtype">char</span>* err_message, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">tio_bool_t</a> (*TIO_CB_PUSH)(<span class="keyword">const</span> <span class="keywordtype">char</span>* message, <span class="keywordtype">size_t</span> message_length, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span> </div>
+<div class="foldopen" id="foldopen00209" data-start="{" data-end="};">
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno"><a class="line" href="structtio__handler__t.html">  209</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a> {</div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>    TIO_CB_ACTION _cb_action; </div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>    <span class="keywordtype">void</span>* _cb_action_data; </div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>    TIO_CB_ERR _cb_err; </div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>    <span class="keywordtype">void</span>* _cb_err_data; </div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>    TIO_CB_PUSH _cb_push; </div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>    <span class="keywordtype">void</span>* _cb_push_data; </div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>    <a class="code hl_structRef" href="../../kii/html/structkii__t.html">kii_t</a> _kii; </div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>    <span class="keywordtype">size_t</span> _keep_alive_interval; </div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>    <a class="code hl_typedefRef" href="../../kii/html/kii__task__callback_8h.html#a66833479636e54ec6559fcb91c37263d">KII_CB_TASK_CONTINUE</a> _cb_task_continue; </div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>    <span class="keywordtype">void</span>* _task_continue_data; </div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>    <a class="code hl_typedefRef" href="../../kii/html/kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5">KII_CB_TASK_EXIT</a> _cb_task_exit; </div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>    <span class="keywordtype">void</span>* _task_exit_data; </div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>} <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>;</div>
 </div>
-<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span> </div>
-<div class="foldopen" id="foldopen00223" data-start="{" data-end="};">
-<div class="line"><a id="l00223" name="l00223"></a><span class="lineno"><a class="line" href="structtio__handler__task__info__t.html">  223</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span>{</div>
-<div class="line"><a id="l00224" name="l00224"></a><span class="lineno"><a class="line" href="structtio__handler__task__info__t.html#a2b725069e1e91b1111e5ed37cce547a4">  224</a></span>    <a class="code hl_enumerationRef" href="../../kii/html/kii_8h.html#ace11a8cf8764373a85c96643195289b2">kii_mqtt_error</a> <a class="code hl_variable" href="structtio__handler__task__info__t.html#a2b725069e1e91b1111e5ed37cce547a4">error</a>; </div>
-<div class="line"><a id="l00225" name="l00225"></a><span class="lineno"><a class="line" href="structtio__handler__task__info__t.html#aec172492cb54a0cc922faf12b7a208d4">  225</a></span>    <a class="code hl_enumerationRef" href="../../kii/html/kii_8h.html#afbdebbbeb8812da258f2c985a2b10db3">kii_mqtt_task_state</a> <a class="code hl_variable" href="structtio__handler__task__info__t.html#aec172492cb54a0cc922faf12b7a208d4">task_state</a>; </div>
-<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>} <a class="code hl_struct" href="structtio__handler__task__info__t.html">tio_handler_task_info_t</a>;</div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span> </div>
+<div class="foldopen" id="foldopen00227" data-start="{" data-end="};">
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno"><a class="line" href="structtio__handler__task__info__t.html">  227</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span>{</div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno"><a class="line" href="structtio__handler__task__info__t.html#a2b725069e1e91b1111e5ed37cce547a4">  228</a></span>    <a class="code hl_enumerationRef" href="../../kii/html/kii_8h.html#ace11a8cf8764373a85c96643195289b2">kii_mqtt_error</a> <a class="code hl_variable" href="structtio__handler__task__info__t.html#a2b725069e1e91b1111e5ed37cce547a4">error</a>; </div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno"><a class="line" href="structtio__handler__task__info__t.html#aec172492cb54a0cc922faf12b7a208d4">  229</a></span>    <a class="code hl_enumerationRef" href="../../kii/html/kii_8h.html#afbdebbbeb8812da258f2c985a2b10db3">kii_mqtt_task_state</a> <a class="code hl_variable" href="structtio__handler__task__info__t.html#aec172492cb54a0cc922faf12b7a208d4">task_state</a>; </div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>} <a class="code hl_struct" href="structtio__handler__task__info__t.html">tio_handler_task_info_t</a>;</div>
 </div>
-<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span> </div>
-<div class="foldopen" id="foldopen00231" data-start="{" data-end="};">
-<div class="line"><a id="l00231" name="l00231"></a><span class="lineno"><a class="line" href="structtio__updater__t.html">  231</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a> {</div>
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>    TIO_CB_SIZE _cb_state_size; </div>
-<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>    <span class="keywordtype">void</span>* _cb_state_size_data; </div>
-<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>    TIO_CB_READ _state_reader; </div>
-<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>    <span class="keywordtype">void</span>* _state_reader_data; </div>
-<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>    TIO_CB_ERR _cb_err; </div>
-<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>    <span class="keywordtype">void</span>* _cb_err_data; </div>
-<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>    <a class="code hl_structRef" href="../../kii/html/structkii__t.html">kii_t</a> _kii; </div>
-<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>    <span class="keywordtype">size_t</span> _update_interval; </div>
-<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>    <a class="code hl_typedefRef" href="../../kii/html/kii__task__callback_8h.html#a66833479636e54ec6559fcb91c37263d">KII_CB_TASK_CONTINUE</a> _cb_task_continue; </div>
-<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>    <span class="keywordtype">void</span>* _task_continue_data; </div>
-<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>    <a class="code hl_typedefRef" href="../../kii/html/kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5">KII_CB_TASK_EXIT</a> _cb_task_exit; </div>
-<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>    <span class="keywordtype">void</span>* _task_exit_data; </div>
-<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>} <a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>;</div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span> </div>
+<div class="foldopen" id="foldopen00235" data-start="{" data-end="};">
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno"><a class="line" href="structtio__updater__t.html">  235</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a> {</div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>    TIO_CB_SIZE _cb_state_size; </div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>    <span class="keywordtype">void</span>* _cb_state_size_data; </div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>    TIO_CB_READ _state_reader; </div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>    <span class="keywordtype">void</span>* _state_reader_data; </div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>    TIO_CB_ERR _cb_err; </div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>    <span class="keywordtype">void</span>* _cb_err_data; </div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>    <a class="code hl_structRef" href="../../kii/html/structkii__t.html">kii_t</a> _kii; </div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>    <span class="keywordtype">size_t</span> _update_interval; </div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>    <a class="code hl_typedefRef" href="../../kii/html/kii__task__callback_8h.html#a66833479636e54ec6559fcb91c37263d">KII_CB_TASK_CONTINUE</a> _cb_task_continue; </div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>    <span class="keywordtype">void</span>* _task_continue_data; </div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>    <a class="code hl_typedefRef" href="../../kii/html/kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5">KII_CB_TASK_EXIT</a> _cb_task_exit; </div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span>    <span class="keywordtype">void</span>* _task_exit_data; </div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>} <a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>;</div>
 </div>
-<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span> </div>
-<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span><span class="keywordtype">void</span> tio_handler_init(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler);</div>
-<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span> </div>
-<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span><span class="keywordtype">void</span> tio_handler_set_cb_sock_connect_http(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KHC_CB_SOCK_CONNECT cb_connect, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span><span class="keywordtype">void</span> tio_handler_set_cb_sock_send_http(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KHC_CB_SOCK_SEND cb_send, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span><span class="keywordtype">void</span> tio_handler_set_cb_sock_recv_http(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KHC_CB_SOCK_RECV cb_recv, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span><span class="keywordtype">void</span> tio_handler_set_cb_sock_close_http(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KHC_CB_SOCK_CLOSE cb_close, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00287" name="l00287"></a><span class="lineno">  287</span> </div>
-<div class="line"><a id="l00305" name="l00305"></a><span class="lineno">  305</span><span class="keywordtype">void</span> tio_handler_set_http_buff(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keywordtype">char</span>* buff, <span class="keywordtype">size_t</span> buff_size);</div>
-<div class="line"><a id="l00306" name="l00306"></a><span class="lineno">  306</span> </div>
-<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span><span class="keywordtype">void</span> tio_handler_set_stream_buff(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keywordtype">char</span>* buff, <span class="keywordtype">size_t</span> buff_size);</div>
-<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span> </div>
-<div class="line"><a id="l00354" name="l00354"></a><span class="lineno">  354</span><span class="keywordtype">void</span> tio_handler_set_resp_header_buff(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keywordtype">char</span>* buff, <span class="keywordtype">size_t</span> buff_size);</div>
-<div class="line"><a id="l00355" name="l00355"></a><span class="lineno">  355</span> </div>
-<div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span><span class="keywordtype">void</span> tio_handler_set_cb_sock_connect_mqtt(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KHC_CB_SOCK_CONNECT cb_connect, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00379" name="l00379"></a><span class="lineno">  379</span><span class="keywordtype">void</span> tio_handler_set_cb_sock_send_mqtt(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KHC_CB_SOCK_SEND cb_send, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span><span class="keywordtype">void</span> tio_handler_set_cb_sock_recv_mqtt(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KHC_CB_SOCK_RECV cb_recv, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00403" name="l00403"></a><span class="lineno">  403</span><span class="keywordtype">void</span> tio_handler_set_cb_sock_close_mqtt(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KHC_CB_SOCK_CLOSE cb_close, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00415" name="l00415"></a><span class="lineno">  415</span><span class="keywordtype">void</span> tio_handler_set_mqtt_to_sock_recv(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> to_sock_recv_sec);</div>
-<div class="line"><a id="l00427" name="l00427"></a><span class="lineno">  427</span><span class="keywordtype">void</span> tio_handler_set_mqtt_to_sock_send(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> to_sock_send_sec);</div>
-<div class="line"><a id="l00435" name="l00435"></a><span class="lineno">  435</span><span class="keywordtype">void</span> tio_handler_set_cb_task_create(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KII_CB_TASK_CREATE cb_task_create, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00436" name="l00436"></a><span class="lineno">  436</span> </div>
-<div class="line"><a id="l00458" name="l00458"></a><span class="lineno">  458</span><span class="keywordtype">void</span> tio_handler_set_cb_task_continue(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KII_CB_TASK_CONTINUE cb_continue, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00459" name="l00459"></a><span class="lineno">  459</span> </div>
-<div class="line"><a id="l00494" name="l00494"></a><span class="lineno">  494</span><span class="keywordtype">void</span> tio_handler_set_cb_task_exit(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KII_CB_TASK_EXIT cb_exit, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00504" name="l00504"></a><span class="lineno">  504</span><span class="keywordtype">void</span> tio_handler_set_cb_delay_ms(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KII_CB_DELAY_MS cb_delay_ms, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00513" name="l00513"></a><span class="lineno">  513</span><span class="keywordtype">void</span> tio_handler_set_cb_err(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, TIO_CB_ERR cb_err, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00523" name="l00523"></a><span class="lineno">  523</span><span class="keywordtype">void</span> tio_handler_set_cb_push(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, TIO_CB_PUSH cb_push, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00524" name="l00524"></a><span class="lineno">  524</span> </div>
-<div class="line"><a id="l00544" name="l00544"></a><span class="lineno">  544</span><span class="keywordtype">void</span> tio_handler_set_mqtt_buff(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keywordtype">char</span>* buff, <span class="keywordtype">size_t</span> buff_size);</div>
-<div class="line"><a id="l00545" name="l00545"></a><span class="lineno">  545</span> </div>
-<div class="line"><a id="l00556" name="l00556"></a><span class="lineno">  556</span><span class="keywordtype">void</span> tio_handler_set_keep_alive_interval(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keywordtype">size_t</span> keep_alive_interval_sec);</div>
-<div class="line"><a id="l00557" name="l00557"></a><span class="lineno">  557</span> </div>
-<div class="line"><a id="l00565" name="l00565"></a><span class="lineno">  565</span><span class="keywordtype">void</span> tio_handler_set_app(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keyword">const</span> <span class="keywordtype">char</span>* app_id, <span class="keyword">const</span> <span class="keywordtype">char</span>* host);</div>
-<div class="line"><a id="l00566" name="l00566"></a><span class="lineno">  566</span> </div>
-<div class="line"><a id="l00576" name="l00576"></a><span class="lineno">  576</span><span class="keywordtype">void</span> tio_handler_set_json_parser_resource(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <a class="code hl_structRef" href="../../jkii/html/structjkii__resource__t.html">jkii_resource_t</a>* resource);</div>
-<div class="line"><a id="l00577" name="l00577"></a><span class="lineno">  577</span> </div>
-<div class="line"><a id="l00588" name="l00588"></a><span class="lineno">  588</span><span class="keywordtype">void</span> tio_handler_set_cb_json_parser_resource(</div>
-<div class="line"><a id="l00589" name="l00589"></a><span class="lineno">  589</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler,</div>
-<div class="line"><a id="l00590" name="l00590"></a><span class="lineno">  590</span>        JKII_CB_RESOURCE_ALLOC cb_alloc,</div>
-<div class="line"><a id="l00591" name="l00591"></a><span class="lineno">  591</span>        JKII_CB_RESOURCE_FREE cb_free);</div>
-<div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span> </div>
-<div class="line"><a id="l00604" name="l00604"></a><span class="lineno">  604</span><span class="keywordtype">void</span> tio_handler_set_cb_slist_resource(</div>
-<div class="line"><a id="l00605" name="l00605"></a><span class="lineno">  605</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler,</div>
-<div class="line"><a id="l00606" name="l00606"></a><span class="lineno">  606</span>        KHC_CB_SLIST_ALLOC cb_alloc,</div>
-<div class="line"><a id="l00607" name="l00607"></a><span class="lineno">  607</span>        KHC_CB_SLIST_FREE cb_free,</div>
-<div class="line"><a id="l00608" name="l00608"></a><span class="lineno">  608</span>        <span class="keywordtype">void</span>* cb_alloc_data,</div>
-<div class="line"><a id="l00609" name="l00609"></a><span class="lineno">  609</span>        <span class="keywordtype">void</span>* cb_free_data</div>
-<div class="line"><a id="l00610" name="l00610"></a><span class="lineno">  610</span>);</div>
-<div class="line"><a id="l00611" name="l00611"></a><span class="lineno">  611</span> </div>
-<div class="line"><a id="l00621" name="l00621"></a><span class="lineno">  621</span><span class="keywordtype">void</span> tio_handler_enable_insecure_http(</div>
-<div class="line"><a id="l00622" name="l00622"></a><span class="lineno">  622</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler,</div>
-<div class="line"><a id="l00623" name="l00623"></a><span class="lineno">  623</span>        <a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">tio_bool_t</a> enable_insecure_http</div>
-<div class="line"><a id="l00624" name="l00624"></a><span class="lineno">  624</span>);</div>
-<div class="line"><a id="l00625" name="l00625"></a><span class="lineno">  625</span> </div>
-<div class="line"><a id="l00635" name="l00635"></a><span class="lineno">  635</span><span class="keywordtype">void</span> tio_handler_enable_insecure_mqtt(</div>
-<div class="line"><a id="l00636" name="l00636"></a><span class="lineno">  636</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler,</div>
-<div class="line"><a id="l00637" name="l00637"></a><span class="lineno">  637</span>        <a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">tio_bool_t</a> enable_insecure_mqtt</div>
-<div class="line"><a id="l00638" name="l00638"></a><span class="lineno">  638</span>);</div>
-<div class="line"><a id="l00639" name="l00639"></a><span class="lineno">  639</span> </div>
-<div class="line"><a id="l00659" name="l00659"></a><span class="lineno">  659</span>tio_code_t tio_handler_onboard(</div>
-<div class="line"><a id="l00660" name="l00660"></a><span class="lineno">  660</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler,</div>
-<div class="line"><a id="l00661" name="l00661"></a><span class="lineno">  661</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* vendor_thing_id,</div>
-<div class="line"><a id="l00662" name="l00662"></a><span class="lineno">  662</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* password,</div>
-<div class="line"><a id="l00663" name="l00663"></a><span class="lineno">  663</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* thing_type,</div>
-<div class="line"><a id="l00664" name="l00664"></a><span class="lineno">  664</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* firmware_version,</div>
-<div class="line"><a id="l00665" name="l00665"></a><span class="lineno">  665</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* layout_position,</div>
-<div class="line"><a id="l00666" name="l00666"></a><span class="lineno">  666</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* thing_properties</div>
-<div class="line"><a id="l00667" name="l00667"></a><span class="lineno">  667</span>);</div>
-<div class="line"><a id="l00668" name="l00668"></a><span class="lineno">  668</span> </div>
-<div class="line"><a id="l00679" name="l00679"></a><span class="lineno">  679</span><span class="keyword">const</span> <a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">tio_author_t</a>* tio_handler_get_author(</div>
-<div class="line"><a id="l00680" name="l00680"></a><span class="lineno">  680</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler</div>
-<div class="line"><a id="l00681" name="l00681"></a><span class="lineno">  681</span>);</div>
-<div class="line"><a id="l00682" name="l00682"></a><span class="lineno">  682</span> </div>
-<div class="line"><a id="l00695" name="l00695"></a><span class="lineno">  695</span>tio_code_t tio_handler_start(</div>
-<div class="line"><a id="l00696" name="l00696"></a><span class="lineno">  696</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler,</div>
-<div class="line"><a id="l00697" name="l00697"></a><span class="lineno">  697</span>        <span class="keyword">const</span> <a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">tio_author_t</a>* author,</div>
-<div class="line"><a id="l00698" name="l00698"></a><span class="lineno">  698</span>        TIO_CB_ACTION cb_action,</div>
-<div class="line"><a id="l00699" name="l00699"></a><span class="lineno">  699</span>        <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00700" name="l00700"></a><span class="lineno">  700</span> </div>
-<div class="line"><a id="l00724" name="l00724"></a><span class="lineno">  724</span>tio_code_t tio_handler_handle_command(</div>
-<div class="line"><a id="l00725" name="l00725"></a><span class="lineno">  725</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler,</div>
-<div class="line"><a id="l00726" name="l00726"></a><span class="lineno">  726</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* command,</div>
-<div class="line"><a id="l00727" name="l00727"></a><span class="lineno">  727</span>        <span class="keywordtype">size_t</span> command_length,</div>
-<div class="line"><a id="l00728" name="l00728"></a><span class="lineno">  728</span>        TIO_CB_ACTION cb_action,</div>
-<div class="line"><a id="l00729" name="l00729"></a><span class="lineno">  729</span>        <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00730" name="l00730"></a><span class="lineno">  730</span> </div>
-<div class="line"><a id="l00741" name="l00741"></a><span class="lineno">  741</span><span class="keyword">typedef</span> void (*TIO_CB_PARSED_ACTION)(<span class="keywordtype">char</span>* command_id, <a class="code hl_struct" href="structtio__action__t.html">tio_action_t</a>* action, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00742" name="l00742"></a><span class="lineno">  742</span> </div>
-<div class="line"><a id="l00759" name="l00759"></a><span class="lineno">  759</span>tio_code_t tio_handler_parse_command(</div>
-<div class="line"><a id="l00760" name="l00760"></a><span class="lineno">  760</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler,</div>
-<div class="line"><a id="l00761" name="l00761"></a><span class="lineno">  761</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* command,</div>
-<div class="line"><a id="l00762" name="l00762"></a><span class="lineno">  762</span>        <span class="keywordtype">size_t</span> command_length,</div>
-<div class="line"><a id="l00763" name="l00763"></a><span class="lineno">  763</span>        TIO_CB_PARSED_ACTION cb_parsed_action,</div>
-<div class="line"><a id="l00764" name="l00764"></a><span class="lineno">  764</span>        <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00765" name="l00765"></a><span class="lineno">  765</span> </div>
-<div class="line"><a id="l00773" name="l00773"></a><span class="lineno">  773</span><span class="keywordtype">void</span> tio_updater_init(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater);</div>
-<div class="line"><a id="l00774" name="l00774"></a><span class="lineno">  774</span> </div>
-<div class="line"><a id="l00782" name="l00782"></a><span class="lineno">  782</span><span class="keywordtype">void</span> tio_updater_set_cb_sock_connect(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, KHC_CB_SOCK_CONNECT cb_connect, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00790" name="l00790"></a><span class="lineno">  790</span><span class="keywordtype">void</span> tio_updater_set_cb_sock_send(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, KHC_CB_SOCK_SEND cb_send, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00798" name="l00798"></a><span class="lineno">  798</span><span class="keywordtype">void</span> tio_updater_set_cb_sock_recv(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, KHC_CB_SOCK_RECV cb_recv, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00806" name="l00806"></a><span class="lineno">  806</span><span class="keywordtype">void</span> tio_updater_set_cb_sock_close(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, KHC_CB_SOCK_CLOSE cb_close, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00814" name="l00814"></a><span class="lineno">  814</span><span class="keywordtype">void</span> tio_updater_set_cb_task_create(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, KII_CB_TASK_CREATE cb_task_create, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00815" name="l00815"></a><span class="lineno">  815</span> </div>
-<div class="line"><a id="l00834" name="l00834"></a><span class="lineno">  834</span><span class="keywordtype">void</span> tio_updater_set_cb_task_continue(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, KII_CB_TASK_CONTINUE cb_continue, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00835" name="l00835"></a><span class="lineno">  835</span> </div>
-<div class="line"><a id="l00864" name="l00864"></a><span class="lineno">  864</span><span class="keywordtype">void</span> tio_updater_set_cb_task_exit(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, KII_CB_TASK_EXIT cb_exit, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00874" name="l00874"></a><span class="lineno">  874</span><span class="keywordtype">void</span> tio_updater_set_cb_delay_ms(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, KII_CB_DELAY_MS cb_delay_ms, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00883" name="l00883"></a><span class="lineno">  883</span><span class="keywordtype">void</span> tio_updater_set_cb_error(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, TIO_CB_ERR cb_err, <span class="keywordtype">void</span>* userdata);</div>
-<div class="line"><a id="l00884" name="l00884"></a><span class="lineno">  884</span> </div>
-<div class="line"><a id="l00903" name="l00903"></a><span class="lineno">  903</span><span class="keywordtype">void</span> tio_updater_set_buff(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <span class="keywordtype">char</span>* buff, <span class="keywordtype">size_t</span> buff_size);</div>
-<div class="line"><a id="l00904" name="l00904"></a><span class="lineno">  904</span> </div>
-<div class="line"><a id="l00929" name="l00929"></a><span class="lineno">  929</span><span class="keywordtype">void</span> tio_updater_set_stream_buff(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <span class="keywordtype">char</span>* buff, <span class="keywordtype">size_t</span> buff_size);</div>
-<div class="line"><a id="l00930" name="l00930"></a><span class="lineno">  930</span> </div>
-<div class="line"><a id="l00952" name="l00952"></a><span class="lineno">  952</span><span class="keywordtype">void</span> tio_updater_set_resp_header_buff(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <span class="keywordtype">char</span>* buff, <span class="keywordtype">size_t</span> buff_size);</div>
-<div class="line"><a id="l00960" name="l00960"></a><span class="lineno">  960</span><span class="keywordtype">void</span> tio_updater_set_app(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <span class="keyword">const</span> <span class="keywordtype">char</span>* app_id, <span class="keyword">const</span> <span class="keywordtype">char</span>* host);</div>
-<div class="line"><a id="l00967" name="l00967"></a><span class="lineno">  967</span><span class="keywordtype">void</span> tio_updater_set_interval(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <span class="keywordtype">size_t</span> update_interval_sec);</div>
-<div class="line"><a id="l00968" name="l00968"></a><span class="lineno">  968</span> </div>
-<div class="line"><a id="l00969" name="l00969"></a><span class="lineno">  969</span><span class="keywordtype">void</span> tio_updater_set_json_parser_resource(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <a class="code hl_structRef" href="../../jkii/html/structjkii__resource__t.html">jkii_resource_t</a>* resource);</div>
-<div class="line"><a id="l00970" name="l00970"></a><span class="lineno">  970</span> </div>
-<div class="line"><a id="l00971" name="l00971"></a><span class="lineno">  971</span><span class="keywordtype">void</span> tio_updater_set_cb_json_parser_resource(</div>
-<div class="line"><a id="l00972" name="l00972"></a><span class="lineno">  972</span>        <a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater,</div>
-<div class="line"><a id="l00973" name="l00973"></a><span class="lineno">  973</span>        JKII_CB_RESOURCE_ALLOC cb_alloc,</div>
-<div class="line"><a id="l00974" name="l00974"></a><span class="lineno">  974</span>        JKII_CB_RESOURCE_FREE cb_free);</div>
-<div class="line"><a id="l00975" name="l00975"></a><span class="lineno">  975</span> </div>
-<div class="line"><a id="l00987" name="l00987"></a><span class="lineno">  987</span><span class="keywordtype">void</span> tio_updater_set_cb_slist_resource(</div>
-<div class="line"><a id="l00988" name="l00988"></a><span class="lineno">  988</span>        <a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater,</div>
-<div class="line"><a id="l00989" name="l00989"></a><span class="lineno">  989</span>        KHC_CB_SLIST_ALLOC cb_alloc,</div>
-<div class="line"><a id="l00990" name="l00990"></a><span class="lineno">  990</span>        KHC_CB_SLIST_FREE cb_free,</div>
-<div class="line"><a id="l00991" name="l00991"></a><span class="lineno">  991</span>        <span class="keywordtype">void</span>* cb_alloc_data,</div>
-<div class="line"><a id="l00992" name="l00992"></a><span class="lineno">  992</span>        <span class="keywordtype">void</span>* cb_free_data</div>
-<div class="line"><a id="l00993" name="l00993"></a><span class="lineno">  993</span>);</div>
-<div class="line"><a id="l00994" name="l00994"></a><span class="lineno">  994</span> </div>
-<div class="line"><a id="l01004" name="l01004"></a><span class="lineno"> 1004</span><span class="keywordtype">void</span> tio_updater_enable_insecure_http(</div>
-<div class="line"><a id="l01005" name="l01005"></a><span class="lineno"> 1005</span>        <a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater,</div>
-<div class="line"><a id="l01006" name="l01006"></a><span class="lineno"> 1006</span>        <a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">tio_bool_t</a> enable_insecure_http</div>
-<div class="line"><a id="l01007" name="l01007"></a><span class="lineno"> 1007</span>);</div>
-<div class="line"><a id="l01008" name="l01008"></a><span class="lineno"> 1008</span> </div>
-<div class="line"><a id="l01028" name="l01028"></a><span class="lineno"> 1028</span>tio_code_t tio_updater_onboard(</div>
-<div class="line"><a id="l01029" name="l01029"></a><span class="lineno"> 1029</span>        <a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater,</div>
-<div class="line"><a id="l01030" name="l01030"></a><span class="lineno"> 1030</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* vendor_thing_id,</div>
-<div class="line"><a id="l01031" name="l01031"></a><span class="lineno"> 1031</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* password,</div>
-<div class="line"><a id="l01032" name="l01032"></a><span class="lineno"> 1032</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* thing_type,</div>
-<div class="line"><a id="l01033" name="l01033"></a><span class="lineno"> 1033</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* firmware_version,</div>
-<div class="line"><a id="l01034" name="l01034"></a><span class="lineno"> 1034</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* layout_position,</div>
-<div class="line"><a id="l01035" name="l01035"></a><span class="lineno"> 1035</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* thing_properties</div>
-<div class="line"><a id="l01036" name="l01036"></a><span class="lineno"> 1036</span>);</div>
-<div class="line"><a id="l01037" name="l01037"></a><span class="lineno"> 1037</span> </div>
-<div class="line"><a id="l01048" name="l01048"></a><span class="lineno"> 1048</span><span class="keyword">const</span> <a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">tio_author_t</a>* tio_updater_get_author(</div>
-<div class="line"><a id="l01049" name="l01049"></a><span class="lineno"> 1049</span>        <a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater</div>
-<div class="line"><a id="l01050" name="l01050"></a><span class="lineno"> 1050</span>);</div>
-<div class="line"><a id="l01051" name="l01051"></a><span class="lineno"> 1051</span> </div>
-<div class="line"><a id="l01067" name="l01067"></a><span class="lineno"> 1067</span>tio_code_t tio_updater_start(</div>
-<div class="line"><a id="l01068" name="l01068"></a><span class="lineno"> 1068</span>        <a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater,</div>
-<div class="line"><a id="l01069" name="l01069"></a><span class="lineno"> 1069</span>        <span class="keyword">const</span> <a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">tio_author_t</a>* author,</div>
-<div class="line"><a id="l01070" name="l01070"></a><span class="lineno"> 1070</span>        TIO_CB_SIZE cb_state_size,</div>
-<div class="line"><a id="l01071" name="l01071"></a><span class="lineno"> 1071</span>        <span class="keywordtype">void</span>* state_size_data,</div>
-<div class="line"><a id="l01072" name="l01072"></a><span class="lineno"> 1072</span>        TIO_CB_READ cb_read_state,</div>
-<div class="line"><a id="l01073" name="l01073"></a><span class="lineno"> 1073</span>        <span class="keywordtype">void</span>* read_state_data);</div>
-<div class="line"><a id="l01074" name="l01074"></a><span class="lineno"> 1074</span> </div>
-<div class="line"><a id="l01075" name="l01075"></a><span class="lineno"> 1075</span><span class="preprocessor">#if defined(__GNUC__) || defined(__clang__)</span></div>
-<div class="line"><a id="l01076" name="l01076"></a><span class="lineno"> 1076</span><span class="preprocessor">#pragma GCC visibility pop</span></div>
-<div class="line"><a id="l01077" name="l01077"></a><span class="lineno"> 1077</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span> </div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span><span class="keywordtype">void</span> tio_handler_init(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler);</div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span> </div>
+<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span><span class="keywordtype">void</span> tio_handler_set_cb_sock_connect_http(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KHC_CB_SOCK_CONNECT cb_connect, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span><span class="keywordtype">void</span> tio_handler_set_cb_sock_send_http(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KHC_CB_SOCK_SEND cb_send, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span><span class="keywordtype">void</span> tio_handler_set_cb_sock_recv_http(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KHC_CB_SOCK_RECV cb_recv, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span><span class="keywordtype">void</span> tio_handler_set_cb_sock_close_http(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KHC_CB_SOCK_CLOSE cb_close, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00291" name="l00291"></a><span class="lineno">  291</span> </div>
+<div class="line"><a id="l00309" name="l00309"></a><span class="lineno">  309</span><span class="keywordtype">void</span> tio_handler_set_http_buff(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keywordtype">char</span>* buff, <span class="keywordtype">size_t</span> buff_size);</div>
+<div class="line"><a id="l00310" name="l00310"></a><span class="lineno">  310</span> </div>
+<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span><span class="keywordtype">void</span> tio_handler_set_stream_buff(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keywordtype">char</span>* buff, <span class="keywordtype">size_t</span> buff_size);</div>
+<div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span> </div>
+<div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span><span class="keywordtype">void</span> tio_handler_set_resp_header_buff(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keywordtype">char</span>* buff, <span class="keywordtype">size_t</span> buff_size);</div>
+<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span> </div>
+<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span><span class="keywordtype">void</span> tio_handler_set_cb_sock_connect_mqtt(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KHC_CB_SOCK_CONNECT cb_connect, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span><span class="keywordtype">void</span> tio_handler_set_cb_sock_send_mqtt(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KHC_CB_SOCK_SEND cb_send, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span><span class="keywordtype">void</span> tio_handler_set_cb_sock_recv_mqtt(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KHC_CB_SOCK_RECV cb_recv, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00407" name="l00407"></a><span class="lineno">  407</span><span class="keywordtype">void</span> tio_handler_set_cb_sock_close_mqtt(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KHC_CB_SOCK_CLOSE cb_close, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00419" name="l00419"></a><span class="lineno">  419</span><span class="keywordtype">void</span> tio_handler_set_mqtt_to_sock_recv(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> to_sock_recv_sec);</div>
+<div class="line"><a id="l00431" name="l00431"></a><span class="lineno">  431</span><span class="keywordtype">void</span> tio_handler_set_mqtt_to_sock_send(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> to_sock_send_sec);</div>
+<div class="line"><a id="l00439" name="l00439"></a><span class="lineno">  439</span><span class="keywordtype">void</span> tio_handler_set_cb_task_create(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KII_CB_TASK_CREATE cb_task_create, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00440" name="l00440"></a><span class="lineno">  440</span> </div>
+<div class="line"><a id="l00462" name="l00462"></a><span class="lineno">  462</span><span class="keywordtype">void</span> tio_handler_set_cb_task_continue(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KII_CB_TASK_CONTINUE cb_continue, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00463" name="l00463"></a><span class="lineno">  463</span> </div>
+<div class="line"><a id="l00498" name="l00498"></a><span class="lineno">  498</span><span class="keywordtype">void</span> tio_handler_set_cb_task_exit(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KII_CB_TASK_EXIT cb_exit, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00508" name="l00508"></a><span class="lineno">  508</span><span class="keywordtype">void</span> tio_handler_set_cb_delay_ms(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, KII_CB_DELAY_MS cb_delay_ms, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00517" name="l00517"></a><span class="lineno">  517</span><span class="keywordtype">void</span> tio_handler_set_cb_err(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, TIO_CB_ERR cb_err, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00527" name="l00527"></a><span class="lineno">  527</span><span class="keywordtype">void</span> tio_handler_set_cb_push(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, TIO_CB_PUSH cb_push, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00528" name="l00528"></a><span class="lineno">  528</span> </div>
+<div class="line"><a id="l00548" name="l00548"></a><span class="lineno">  548</span><span class="keywordtype">void</span> tio_handler_set_mqtt_buff(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keywordtype">char</span>* buff, <span class="keywordtype">size_t</span> buff_size);</div>
+<div class="line"><a id="l00549" name="l00549"></a><span class="lineno">  549</span> </div>
+<div class="line"><a id="l00560" name="l00560"></a><span class="lineno">  560</span><span class="keywordtype">void</span> tio_handler_set_keep_alive_interval(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keywordtype">size_t</span> keep_alive_interval_sec);</div>
+<div class="line"><a id="l00561" name="l00561"></a><span class="lineno">  561</span> </div>
+<div class="line"><a id="l00569" name="l00569"></a><span class="lineno">  569</span><span class="keywordtype">void</span> tio_handler_set_app(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keyword">const</span> <span class="keywordtype">char</span>* app_id, <span class="keyword">const</span> <span class="keywordtype">char</span>* host);</div>
+<div class="line"><a id="l00570" name="l00570"></a><span class="lineno">  570</span> </div>
+<div class="line"><a id="l00580" name="l00580"></a><span class="lineno">  580</span><span class="keywordtype">void</span> tio_handler_set_json_parser_resource(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <a class="code hl_structRef" href="../../jkii/html/structjkii__resource__t.html">jkii_resource_t</a>* resource);</div>
+<div class="line"><a id="l00581" name="l00581"></a><span class="lineno">  581</span> </div>
+<div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span><span class="keywordtype">void</span> tio_handler_set_cb_json_parser_resource(</div>
+<div class="line"><a id="l00593" name="l00593"></a><span class="lineno">  593</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler,</div>
+<div class="line"><a id="l00594" name="l00594"></a><span class="lineno">  594</span>        JKII_CB_RESOURCE_ALLOC cb_alloc,</div>
+<div class="line"><a id="l00595" name="l00595"></a><span class="lineno">  595</span>        JKII_CB_RESOURCE_FREE cb_free);</div>
+<div class="line"><a id="l00596" name="l00596"></a><span class="lineno">  596</span> </div>
+<div class="line"><a id="l00608" name="l00608"></a><span class="lineno">  608</span><span class="keywordtype">void</span> tio_handler_set_cb_slist_resource(</div>
+<div class="line"><a id="l00609" name="l00609"></a><span class="lineno">  609</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler,</div>
+<div class="line"><a id="l00610" name="l00610"></a><span class="lineno">  610</span>        KHC_CB_SLIST_ALLOC cb_alloc,</div>
+<div class="line"><a id="l00611" name="l00611"></a><span class="lineno">  611</span>        KHC_CB_SLIST_FREE cb_free,</div>
+<div class="line"><a id="l00612" name="l00612"></a><span class="lineno">  612</span>        <span class="keywordtype">void</span>* cb_alloc_data,</div>
+<div class="line"><a id="l00613" name="l00613"></a><span class="lineno">  613</span>        <span class="keywordtype">void</span>* cb_free_data</div>
+<div class="line"><a id="l00614" name="l00614"></a><span class="lineno">  614</span>);</div>
+<div class="line"><a id="l00615" name="l00615"></a><span class="lineno">  615</span> </div>
+<div class="line"><a id="l00625" name="l00625"></a><span class="lineno">  625</span><span class="keywordtype">void</span> tio_handler_enable_insecure_http(</div>
+<div class="line"><a id="l00626" name="l00626"></a><span class="lineno">  626</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler,</div>
+<div class="line"><a id="l00627" name="l00627"></a><span class="lineno">  627</span>        <a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">tio_bool_t</a> enable_insecure_http</div>
+<div class="line"><a id="l00628" name="l00628"></a><span class="lineno">  628</span>);</div>
+<div class="line"><a id="l00629" name="l00629"></a><span class="lineno">  629</span> </div>
+<div class="line"><a id="l00639" name="l00639"></a><span class="lineno">  639</span><span class="keywordtype">void</span> tio_handler_enable_insecure_mqtt(</div>
+<div class="line"><a id="l00640" name="l00640"></a><span class="lineno">  640</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler,</div>
+<div class="line"><a id="l00641" name="l00641"></a><span class="lineno">  641</span>        <a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">tio_bool_t</a> enable_insecure_mqtt</div>
+<div class="line"><a id="l00642" name="l00642"></a><span class="lineno">  642</span>);</div>
+<div class="line"><a id="l00643" name="l00643"></a><span class="lineno">  643</span> </div>
+<div class="line"><a id="l00663" name="l00663"></a><span class="lineno">  663</span>tio_code_t tio_handler_onboard(</div>
+<div class="line"><a id="l00664" name="l00664"></a><span class="lineno">  664</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler,</div>
+<div class="line"><a id="l00665" name="l00665"></a><span class="lineno">  665</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* vendor_thing_id,</div>
+<div class="line"><a id="l00666" name="l00666"></a><span class="lineno">  666</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* password,</div>
+<div class="line"><a id="l00667" name="l00667"></a><span class="lineno">  667</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* thing_type,</div>
+<div class="line"><a id="l00668" name="l00668"></a><span class="lineno">  668</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* firmware_version,</div>
+<div class="line"><a id="l00669" name="l00669"></a><span class="lineno">  669</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* layout_position,</div>
+<div class="line"><a id="l00670" name="l00670"></a><span class="lineno">  670</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* thing_properties</div>
+<div class="line"><a id="l00671" name="l00671"></a><span class="lineno">  671</span>);</div>
+<div class="line"><a id="l00672" name="l00672"></a><span class="lineno">  672</span> </div>
+<div class="line"><a id="l00683" name="l00683"></a><span class="lineno">  683</span><span class="keyword">const</span> <a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">tio_author_t</a>* tio_handler_get_author(</div>
+<div class="line"><a id="l00684" name="l00684"></a><span class="lineno">  684</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler</div>
+<div class="line"><a id="l00685" name="l00685"></a><span class="lineno">  685</span>);</div>
+<div class="line"><a id="l00686" name="l00686"></a><span class="lineno">  686</span> </div>
+<div class="line"><a id="l00699" name="l00699"></a><span class="lineno">  699</span>tio_code_t tio_handler_start(</div>
+<div class="line"><a id="l00700" name="l00700"></a><span class="lineno">  700</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler,</div>
+<div class="line"><a id="l00701" name="l00701"></a><span class="lineno">  701</span>        <span class="keyword">const</span> <a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">tio_author_t</a>* author,</div>
+<div class="line"><a id="l00702" name="l00702"></a><span class="lineno">  702</span>        TIO_CB_ACTION cb_action,</div>
+<div class="line"><a id="l00703" name="l00703"></a><span class="lineno">  703</span>        <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00704" name="l00704"></a><span class="lineno">  704</span> </div>
+<div class="line"><a id="l00728" name="l00728"></a><span class="lineno">  728</span>tio_code_t tio_handler_handle_command(</div>
+<div class="line"><a id="l00729" name="l00729"></a><span class="lineno">  729</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler,</div>
+<div class="line"><a id="l00730" name="l00730"></a><span class="lineno">  730</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* command,</div>
+<div class="line"><a id="l00731" name="l00731"></a><span class="lineno">  731</span>        <span class="keywordtype">size_t</span> command_length,</div>
+<div class="line"><a id="l00732" name="l00732"></a><span class="lineno">  732</span>        TIO_CB_ACTION cb_action,</div>
+<div class="line"><a id="l00733" name="l00733"></a><span class="lineno">  733</span>        <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00734" name="l00734"></a><span class="lineno">  734</span> </div>
+<div class="line"><a id="l00745" name="l00745"></a><span class="lineno">  745</span><span class="keyword">typedef</span> void (*TIO_CB_PARSED_ACTION)(<span class="keywordtype">char</span>* command_id, <a class="code hl_struct" href="structtio__action__t.html">tio_action_t</a>* action, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00746" name="l00746"></a><span class="lineno">  746</span> </div>
+<div class="line"><a id="l00763" name="l00763"></a><span class="lineno">  763</span>tio_code_t tio_handler_parse_command(</div>
+<div class="line"><a id="l00764" name="l00764"></a><span class="lineno">  764</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler,</div>
+<div class="line"><a id="l00765" name="l00765"></a><span class="lineno">  765</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* command,</div>
+<div class="line"><a id="l00766" name="l00766"></a><span class="lineno">  766</span>        <span class="keywordtype">size_t</span> command_length,</div>
+<div class="line"><a id="l00767" name="l00767"></a><span class="lineno">  767</span>        TIO_CB_PARSED_ACTION cb_parsed_action,</div>
+<div class="line"><a id="l00768" name="l00768"></a><span class="lineno">  768</span>        <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00769" name="l00769"></a><span class="lineno">  769</span> </div>
+<div class="line"><a id="l00777" name="l00777"></a><span class="lineno">  777</span><span class="keywordtype">void</span> tio_updater_init(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater);</div>
+<div class="line"><a id="l00778" name="l00778"></a><span class="lineno">  778</span> </div>
+<div class="line"><a id="l00786" name="l00786"></a><span class="lineno">  786</span><span class="keywordtype">void</span> tio_updater_set_cb_sock_connect(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, KHC_CB_SOCK_CONNECT cb_connect, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00794" name="l00794"></a><span class="lineno">  794</span><span class="keywordtype">void</span> tio_updater_set_cb_sock_send(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, KHC_CB_SOCK_SEND cb_send, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00802" name="l00802"></a><span class="lineno">  802</span><span class="keywordtype">void</span> tio_updater_set_cb_sock_recv(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, KHC_CB_SOCK_RECV cb_recv, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00810" name="l00810"></a><span class="lineno">  810</span><span class="keywordtype">void</span> tio_updater_set_cb_sock_close(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, KHC_CB_SOCK_CLOSE cb_close, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00818" name="l00818"></a><span class="lineno">  818</span><span class="keywordtype">void</span> tio_updater_set_cb_task_create(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, KII_CB_TASK_CREATE cb_task_create, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00819" name="l00819"></a><span class="lineno">  819</span> </div>
+<div class="line"><a id="l00838" name="l00838"></a><span class="lineno">  838</span><span class="keywordtype">void</span> tio_updater_set_cb_task_continue(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, KII_CB_TASK_CONTINUE cb_continue, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00839" name="l00839"></a><span class="lineno">  839</span> </div>
+<div class="line"><a id="l00868" name="l00868"></a><span class="lineno">  868</span><span class="keywordtype">void</span> tio_updater_set_cb_task_exit(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, KII_CB_TASK_EXIT cb_exit, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00878" name="l00878"></a><span class="lineno">  878</span><span class="keywordtype">void</span> tio_updater_set_cb_delay_ms(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, KII_CB_DELAY_MS cb_delay_ms, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00887" name="l00887"></a><span class="lineno">  887</span><span class="keywordtype">void</span> tio_updater_set_cb_error(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, TIO_CB_ERR cb_err, <span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00888" name="l00888"></a><span class="lineno">  888</span> </div>
+<div class="line"><a id="l00907" name="l00907"></a><span class="lineno">  907</span><span class="keywordtype">void</span> tio_updater_set_buff(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <span class="keywordtype">char</span>* buff, <span class="keywordtype">size_t</span> buff_size);</div>
+<div class="line"><a id="l00908" name="l00908"></a><span class="lineno">  908</span> </div>
+<div class="line"><a id="l00933" name="l00933"></a><span class="lineno">  933</span><span class="keywordtype">void</span> tio_updater_set_stream_buff(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <span class="keywordtype">char</span>* buff, <span class="keywordtype">size_t</span> buff_size);</div>
+<div class="line"><a id="l00934" name="l00934"></a><span class="lineno">  934</span> </div>
+<div class="line"><a id="l00956" name="l00956"></a><span class="lineno">  956</span><span class="keywordtype">void</span> tio_updater_set_resp_header_buff(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <span class="keywordtype">char</span>* buff, <span class="keywordtype">size_t</span> buff_size);</div>
+<div class="line"><a id="l00964" name="l00964"></a><span class="lineno">  964</span><span class="keywordtype">void</span> tio_updater_set_app(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <span class="keyword">const</span> <span class="keywordtype">char</span>* app_id, <span class="keyword">const</span> <span class="keywordtype">char</span>* host);</div>
+<div class="line"><a id="l00971" name="l00971"></a><span class="lineno">  971</span><span class="keywordtype">void</span> tio_updater_set_interval(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <span class="keywordtype">size_t</span> update_interval_sec);</div>
+<div class="line"><a id="l00972" name="l00972"></a><span class="lineno">  972</span> </div>
+<div class="line"><a id="l00973" name="l00973"></a><span class="lineno">  973</span><span class="keywordtype">void</span> tio_updater_set_json_parser_resource(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <a class="code hl_structRef" href="../../jkii/html/structjkii__resource__t.html">jkii_resource_t</a>* resource);</div>
+<div class="line"><a id="l00974" name="l00974"></a><span class="lineno">  974</span> </div>
+<div class="line"><a id="l00975" name="l00975"></a><span class="lineno">  975</span><span class="keywordtype">void</span> tio_updater_set_cb_json_parser_resource(</div>
+<div class="line"><a id="l00976" name="l00976"></a><span class="lineno">  976</span>        <a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater,</div>
+<div class="line"><a id="l00977" name="l00977"></a><span class="lineno">  977</span>        JKII_CB_RESOURCE_ALLOC cb_alloc,</div>
+<div class="line"><a id="l00978" name="l00978"></a><span class="lineno">  978</span>        JKII_CB_RESOURCE_FREE cb_free);</div>
+<div class="line"><a id="l00979" name="l00979"></a><span class="lineno">  979</span> </div>
+<div class="line"><a id="l00991" name="l00991"></a><span class="lineno">  991</span><span class="keywordtype">void</span> tio_updater_set_cb_slist_resource(</div>
+<div class="line"><a id="l00992" name="l00992"></a><span class="lineno">  992</span>        <a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater,</div>
+<div class="line"><a id="l00993" name="l00993"></a><span class="lineno">  993</span>        KHC_CB_SLIST_ALLOC cb_alloc,</div>
+<div class="line"><a id="l00994" name="l00994"></a><span class="lineno">  994</span>        KHC_CB_SLIST_FREE cb_free,</div>
+<div class="line"><a id="l00995" name="l00995"></a><span class="lineno">  995</span>        <span class="keywordtype">void</span>* cb_alloc_data,</div>
+<div class="line"><a id="l00996" name="l00996"></a><span class="lineno">  996</span>        <span class="keywordtype">void</span>* cb_free_data</div>
+<div class="line"><a id="l00997" name="l00997"></a><span class="lineno">  997</span>);</div>
+<div class="line"><a id="l00998" name="l00998"></a><span class="lineno">  998</span> </div>
+<div class="line"><a id="l01008" name="l01008"></a><span class="lineno"> 1008</span><span class="keywordtype">void</span> tio_updater_enable_insecure_http(</div>
+<div class="line"><a id="l01009" name="l01009"></a><span class="lineno"> 1009</span>        <a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater,</div>
+<div class="line"><a id="l01010" name="l01010"></a><span class="lineno"> 1010</span>        <a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">tio_bool_t</a> enable_insecure_http</div>
+<div class="line"><a id="l01011" name="l01011"></a><span class="lineno"> 1011</span>);</div>
+<div class="line"><a id="l01012" name="l01012"></a><span class="lineno"> 1012</span> </div>
+<div class="line"><a id="l01032" name="l01032"></a><span class="lineno"> 1032</span>tio_code_t tio_updater_onboard(</div>
+<div class="line"><a id="l01033" name="l01033"></a><span class="lineno"> 1033</span>        <a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater,</div>
+<div class="line"><a id="l01034" name="l01034"></a><span class="lineno"> 1034</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* vendor_thing_id,</div>
+<div class="line"><a id="l01035" name="l01035"></a><span class="lineno"> 1035</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* password,</div>
+<div class="line"><a id="l01036" name="l01036"></a><span class="lineno"> 1036</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* thing_type,</div>
+<div class="line"><a id="l01037" name="l01037"></a><span class="lineno"> 1037</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* firmware_version,</div>
+<div class="line"><a id="l01038" name="l01038"></a><span class="lineno"> 1038</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* layout_position,</div>
+<div class="line"><a id="l01039" name="l01039"></a><span class="lineno"> 1039</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* thing_properties</div>
+<div class="line"><a id="l01040" name="l01040"></a><span class="lineno"> 1040</span>);</div>
+<div class="line"><a id="l01041" name="l01041"></a><span class="lineno"> 1041</span> </div>
+<div class="line"><a id="l01052" name="l01052"></a><span class="lineno"> 1052</span><span class="keyword">const</span> <a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">tio_author_t</a>* tio_updater_get_author(</div>
+<div class="line"><a id="l01053" name="l01053"></a><span class="lineno"> 1053</span>        <a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater</div>
+<div class="line"><a id="l01054" name="l01054"></a><span class="lineno"> 1054</span>);</div>
+<div class="line"><a id="l01055" name="l01055"></a><span class="lineno"> 1055</span> </div>
+<div class="line"><a id="l01071" name="l01071"></a><span class="lineno"> 1071</span>tio_code_t tio_updater_start(</div>
+<div class="line"><a id="l01072" name="l01072"></a><span class="lineno"> 1072</span>        <a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater,</div>
+<div class="line"><a id="l01073" name="l01073"></a><span class="lineno"> 1073</span>        <span class="keyword">const</span> <a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">tio_author_t</a>* author,</div>
+<div class="line"><a id="l01074" name="l01074"></a><span class="lineno"> 1074</span>        TIO_CB_SIZE cb_state_size,</div>
+<div class="line"><a id="l01075" name="l01075"></a><span class="lineno"> 1075</span>        <span class="keywordtype">void</span>* state_size_data,</div>
+<div class="line"><a id="l01076" name="l01076"></a><span class="lineno"> 1076</span>        TIO_CB_READ cb_read_state,</div>
+<div class="line"><a id="l01077" name="l01077"></a><span class="lineno"> 1077</span>        <span class="keywordtype">void</span>* read_state_data);</div>
 <div class="line"><a id="l01078" name="l01078"></a><span class="lineno"> 1078</span> </div>
-<div class="line"><a id="l01079" name="l01079"></a><span class="lineno"> 1079</span><span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a id="l01080" name="l01080"></a><span class="lineno"> 1080</span>}</div>
+<div class="line"><a id="l01079" name="l01079"></a><span class="lineno"> 1079</span><span class="preprocessor">#if defined(__GNUC__) || defined(__clang__)</span></div>
+<div class="line"><a id="l01080" name="l01080"></a><span class="lineno"> 1080</span><span class="preprocessor">#pragma GCC visibility pop</span></div>
 <div class="line"><a id="l01081" name="l01081"></a><span class="lineno"> 1081</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l01082" name="l01082"></a><span class="lineno"> 1082</span> </div>
-<div class="line"><a id="l01083" name="l01083"></a><span class="lineno"> 1083</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l01083" name="l01083"></a><span class="lineno"> 1083</span><span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a id="l01084" name="l01084"></a><span class="lineno"> 1084</span>}</div>
+<div class="line"><a id="l01085" name="l01085"></a><span class="lineno"> 1085</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l01086" name="l01086"></a><span class="lineno"> 1086</span> </div>
+<div class="line"><a id="l01087" name="l01087"></a><span class="lineno"> 1087</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="ajkii_8h_html"><div class="ttname"><a href="../../jkii/html/jkii_8h.html">jkii.h</a></div></div>
 <div class="ttc" id="akhc_8h_html"><div class="ttname"><a href="../../khc/html/khc_8h.html">khc.h</a></div></div>
 <div class="ttc" id="akii_8h_html"><div class="ttname"><a href="../../kii/html/kii_8h.html">kii.h</a></div></div>
@@ -395,33 +397,33 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="astructjkii__resource__t_html"><div class="ttname"><a href="../../jkii/html/structjkii__resource__t.html">jkii_resource_t</a></div></div>
 <div class="ttc" id="astructkii__author__t_html"><div class="ttname"><a href="../../kii/html/structkii__author__t.html">kii_author_t</a></div></div>
 <div class="ttc" id="astructkii__t_html"><div class="ttname"><a href="../../kii/html/structkii__t.html">kii_t</a></div></div>
-<div class="ttc" id="astructtio__action__err__t_html"><div class="ttname"><a href="structtio__action__err__t.html">tio_action_err_t</a></div><div class="ttdoc">Represents error.</div><div class="ttdef"><b>Definition</b> tio.h:128</div></div>
-<div class="ttc" id="astructtio__action__err__t_html_aece44befd7f0b26314a54894a2fefff3"><div class="ttname"><a href="structtio__action__err__t.html#aece44befd7f0b26314a54894a2fefff3">tio_action_err_t::err_message</a></div><div class="ttdeci">char err_message[TIO_ACTION_ERR_MESSAGE_MAX_SIZE]</div><div class="ttdoc">Error message (null terminated).</div><div class="ttdef"><b>Definition</b> tio.h:129</div></div>
-<div class="ttc" id="astructtio__action__result__data__t_html"><div class="ttname"><a href="structtio__action__result__data__t.html">tio_action_result_data_t</a></div><div class="ttdoc">Represents action result data.</div><div class="ttdef"><b>Definition</b> tio.h:135</div></div>
-<div class="ttc" id="astructtio__action__result__data__t_html_aa21434b0b8522eb4a49bca31d7c0fb5b"><div class="ttname"><a href="structtio__action__result__data__t.html#aa21434b0b8522eb4a49bca31d7c0fb5b">tio_action_result_data_t::json</a></div><div class="ttdeci">char json[128]</div><div class="ttdoc">json string (null terminated).</div><div class="ttdef"><b>Definition</b> tio.h:136</div></div>
-<div class="ttc" id="astructtio__action__t_html"><div class="ttname"><a href="structtio__action__t.html">tio_action_t</a></div><div class="ttdoc">Represents action.</div><div class="ttdef"><b>Definition</b> tio.h:96</div></div>
-<div class="ttc" id="astructtio__action__t_html_a069ab662c25522130cfae04320c69cff"><div class="ttname"><a href="structtio__action__t.html#a069ab662c25522130cfae04320c69cff">tio_action_t::action_value</a></div><div class="ttdeci">tio_action_value_t action_value</div><div class="ttdoc">Value of the action.</div><div class="ttdef"><b>Definition</b> tio.h:118</div></div>
-<div class="ttc" id="astructtio__action__t_html_a2e4dec6108670f0f3e1db8ff8e58feba"><div class="ttname"><a href="structtio__action__t.html#a2e4dec6108670f0f3e1db8ff8e58feba">tio_action_t::action_name_length</a></div><div class="ttdeci">size_t action_name_length</div><div class="ttdoc">Length of the action name.</div><div class="ttdef"><b>Definition</b> tio.h:114</div></div>
-<div class="ttc" id="astructtio__action__t_html_a412290b7cbd2cd3838f66420ab1ba187"><div class="ttname"><a href="structtio__action__t.html#a412290b7cbd2cd3838f66420ab1ba187">tio_action_t::alias</a></div><div class="ttdeci">const char * alias</div><div class="ttdoc">Name of the alias. You need to use alias_length field to determine the length. It might not be null t...</div><div class="ttdef"><b>Definition</b> tio.h:101</div></div>
-<div class="ttc" id="astructtio__action__t_html_a74dfdccea29e4ea983cb1aaf3f9cebd3"><div class="ttname"><a href="structtio__action__t.html#a74dfdccea29e4ea983cb1aaf3f9cebd3">tio_action_t::action_name</a></div><div class="ttdeci">const char * action_name</div><div class="ttdoc">Name of the action. You need to use action_name_length field to determine the length....</div><div class="ttdef"><b>Definition</b> tio.h:110</div></div>
-<div class="ttc" id="astructtio__action__t_html_ad376bb546c8147e2b0371c119932da2f"><div class="ttname"><a href="structtio__action__t.html#ad376bb546c8147e2b0371c119932da2f">tio_action_t::alias_length</a></div><div class="ttdeci">size_t alias_length</div><div class="ttdoc">Length of the alias name.</div><div class="ttdef"><b>Definition</b> tio.h:105</div></div>
-<div class="ttc" id="astructtio__action__value__t_html"><div class="ttname"><a href="structtio__action__value__t.html">tio_action_value_t</a></div><div class="ttdoc">Represents value of the action.</div><div class="ttdef"><b>Definition</b> tio.h:73</div></div>
-<div class="ttc" id="astructtio__action__value__t_html_a2a32c6a02eff627a7892a17c5b1678bf"><div class="ttname"><a href="structtio__action__value__t.html#a2a32c6a02eff627a7892a17c5b1678bf">tio_action_value_t::opaque_value_length</a></div><div class="ttdeci">size_t opaque_value_length</div><div class="ttdoc">Indicate length of opaque_value in case type is TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY.</div><div class="ttdef"><b>Definition</b> tio.h:90</div></div>
-<div class="ttc" id="astructtio__action__value__t_html_a6d17c1b2e1ad14fc98dcdf6d715b8538"><div class="ttname"><a href="structtio__action__value__t.html#a6d17c1b2e1ad14fc98dcdf6d715b8538">tio_action_value_t::long_value</a></div><div class="ttdeci">long long_value</div><div class="ttdef"><b>Definition</b> tio.h:76</div></div>
+<div class="ttc" id="astructtio__action__err__t_html"><div class="ttname"><a href="structtio__action__err__t.html">tio_action_err_t</a></div><div class="ttdoc">Represents error.</div><div class="ttdef"><b>Definition</b> tio.h:132</div></div>
+<div class="ttc" id="astructtio__action__err__t_html_aece44befd7f0b26314a54894a2fefff3"><div class="ttname"><a href="structtio__action__err__t.html#aece44befd7f0b26314a54894a2fefff3">tio_action_err_t::err_message</a></div><div class="ttdeci">char err_message[TIO_ACTION_ERR_MESSAGE_MAX_SIZE]</div><div class="ttdoc">Error message (null terminated).</div><div class="ttdef"><b>Definition</b> tio.h:133</div></div>
+<div class="ttc" id="astructtio__action__result__data__t_html"><div class="ttname"><a href="structtio__action__result__data__t.html">tio_action_result_data_t</a></div><div class="ttdoc">Represents action result data.</div><div class="ttdef"><b>Definition</b> tio.h:139</div></div>
+<div class="ttc" id="astructtio__action__result__data__t_html_aa21434b0b8522eb4a49bca31d7c0fb5b"><div class="ttname"><a href="structtio__action__result__data__t.html#aa21434b0b8522eb4a49bca31d7c0fb5b">tio_action_result_data_t::json</a></div><div class="ttdeci">char json[128]</div><div class="ttdoc">json string (null terminated).</div><div class="ttdef"><b>Definition</b> tio.h:140</div></div>
+<div class="ttc" id="astructtio__action__t_html"><div class="ttname"><a href="structtio__action__t.html">tio_action_t</a></div><div class="ttdoc">Represents action.</div><div class="ttdef"><b>Definition</b> tio.h:100</div></div>
+<div class="ttc" id="astructtio__action__t_html_a069ab662c25522130cfae04320c69cff"><div class="ttname"><a href="structtio__action__t.html#a069ab662c25522130cfae04320c69cff">tio_action_t::action_value</a></div><div class="ttdeci">tio_action_value_t action_value</div><div class="ttdoc">Value of the action.</div><div class="ttdef"><b>Definition</b> tio.h:122</div></div>
+<div class="ttc" id="astructtio__action__t_html_a2e4dec6108670f0f3e1db8ff8e58feba"><div class="ttname"><a href="structtio__action__t.html#a2e4dec6108670f0f3e1db8ff8e58feba">tio_action_t::action_name_length</a></div><div class="ttdeci">size_t action_name_length</div><div class="ttdoc">Length of the action name.</div><div class="ttdef"><b>Definition</b> tio.h:118</div></div>
+<div class="ttc" id="astructtio__action__t_html_a412290b7cbd2cd3838f66420ab1ba187"><div class="ttname"><a href="structtio__action__t.html#a412290b7cbd2cd3838f66420ab1ba187">tio_action_t::alias</a></div><div class="ttdeci">const char * alias</div><div class="ttdoc">Name of the alias. You need to use alias_length field to determine the length. It might not be null t...</div><div class="ttdef"><b>Definition</b> tio.h:105</div></div>
+<div class="ttc" id="astructtio__action__t_html_a74dfdccea29e4ea983cb1aaf3f9cebd3"><div class="ttname"><a href="structtio__action__t.html#a74dfdccea29e4ea983cb1aaf3f9cebd3">tio_action_t::action_name</a></div><div class="ttdeci">const char * action_name</div><div class="ttdoc">Name of the action. You need to use action_name_length field to determine the length....</div><div class="ttdef"><b>Definition</b> tio.h:114</div></div>
+<div class="ttc" id="astructtio__action__t_html_ad376bb546c8147e2b0371c119932da2f"><div class="ttname"><a href="structtio__action__t.html#ad376bb546c8147e2b0371c119932da2f">tio_action_t::alias_length</a></div><div class="ttdeci">size_t alias_length</div><div class="ttdoc">Length of the alias name.</div><div class="ttdef"><b>Definition</b> tio.h:109</div></div>
+<div class="ttc" id="astructtio__action__value__t_html"><div class="ttname"><a href="structtio__action__value__t.html">tio_action_value_t</a></div><div class="ttdoc">Represents value of the action.</div><div class="ttdef"><b>Definition</b> tio.h:75</div></div>
+<div class="ttc" id="astructtio__action__value__t_html_a2a32c6a02eff627a7892a17c5b1678bf"><div class="ttname"><a href="structtio__action__value__t.html#a2a32c6a02eff627a7892a17c5b1678bf">tio_action_value_t::opaque_value_length</a></div><div class="ttdeci">size_t opaque_value_length</div><div class="ttdoc">Indicate length of opaque_value in case type is TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY.</div><div class="ttdef"><b>Definition</b> tio.h:94</div></div>
 <div class="ttc" id="astructtio__action__value__t_html_a9487e84fbe922e3a1fade27909ef41a7"><div class="ttname"><a href="structtio__action__value__t.html#a9487e84fbe922e3a1fade27909ef41a7">tio_action_value_t::param</a></div><div class="ttdeci">union tio_action_value_t::@0 param</div><div class="ttdoc">Union stores value.</div></div>
-<div class="ttc" id="astructtio__action__value__t_html_aa924dbe5c05e0df213710f356206dc4e"><div class="ttname"><a href="structtio__action__value__t.html#aa924dbe5c05e0df213710f356206dc4e">tio_action_value_t::opaque_value</a></div><div class="ttdeci">const char * opaque_value</div><div class="ttdef"><b>Definition</b> tio.h:79</div></div>
-<div class="ttc" id="astructtio__action__value__t_html_ac75507595c7f721705c920fb3dc6c437"><div class="ttname"><a href="structtio__action__value__t.html#ac75507595c7f721705c920fb3dc6c437">tio_action_value_t::bool_value</a></div><div class="ttdeci">tio_bool_t bool_value</div><div class="ttdef"><b>Definition</b> tio.h:78</div></div>
-<div class="ttc" id="astructtio__action__value__t_html_ae37aa5cf6246ce83845320168a92e832"><div class="ttname"><a href="structtio__action__value__t.html#ae37aa5cf6246ce83845320168a92e832">tio_action_value_t::type</a></div><div class="ttdeci">tio_data_type_t type</div><div class="ttdoc">Data type of the value.</div><div class="ttdef"><b>Definition</b> tio.h:74</div></div>
-<div class="ttc" id="astructtio__action__value__t_html_af2132f619305f5535f068642d3064d87"><div class="ttname"><a href="structtio__action__value__t.html#af2132f619305f5535f068642d3064d87">tio_action_value_t::double_value</a></div><div class="ttdeci">double double_value</div><div class="ttdef"><b>Definition</b> tio.h:77</div></div>
-<div class="ttc" id="astructtio__handler__t_html"><div class="ttname"><a href="structtio__handler__t.html">tio_handler_t</a></div><div class="ttdoc">Stores data/ callbacks used by tio_handler.</div><div class="ttdef"><b>Definition</b> tio.h:205</div></div>
-<div class="ttc" id="astructtio__handler__task__info__t_html"><div class="ttname"><a href="structtio__handler__task__info__t.html">tio_handler_task_info_t</a></div><div class="ttdoc">Indicates handler state.</div><div class="ttdef"><b>Definition</b> tio.h:223</div></div>
-<div class="ttc" id="astructtio__handler__task__info__t_html_a2b725069e1e91b1111e5ed37cce547a4"><div class="ttname"><a href="structtio__handler__task__info__t.html#a2b725069e1e91b1111e5ed37cce547a4">tio_handler_task_info_t::error</a></div><div class="ttdeci">kii_mqtt_error error</div><div class="ttdef"><b>Definition</b> tio.h:224</div></div>
-<div class="ttc" id="astructtio__handler__task__info__t_html_aec172492cb54a0cc922faf12b7a208d4"><div class="ttname"><a href="structtio__handler__task__info__t.html#aec172492cb54a0cc922faf12b7a208d4">tio_handler_task_info_t::task_state</a></div><div class="ttdeci">kii_mqtt_task_state task_state</div><div class="ttdef"><b>Definition</b> tio.h:225</div></div>
-<div class="ttc" id="astructtio__updater__t_html"><div class="ttname"><a href="structtio__updater__t.html">tio_updater_t</a></div><div class="ttdoc">Stores data/ callbacks used by tio_updater.</div><div class="ttdef"><b>Definition</b> tio.h:231</div></div>
+<div class="ttc" id="astructtio__action__value__t_html_aa924dbe5c05e0df213710f356206dc4e"><div class="ttname"><a href="structtio__action__value__t.html#aa924dbe5c05e0df213710f356206dc4e">tio_action_value_t::opaque_value</a></div><div class="ttdeci">const char * opaque_value</div><div class="ttdef"><b>Definition</b> tio.h:83</div></div>
+<div class="ttc" id="astructtio__action__value__t_html_ac75507595c7f721705c920fb3dc6c437"><div class="ttname"><a href="structtio__action__value__t.html#ac75507595c7f721705c920fb3dc6c437">tio_action_value_t::bool_value</a></div><div class="ttdeci">tio_bool_t bool_value</div><div class="ttdef"><b>Definition</b> tio.h:82</div></div>
+<div class="ttc" id="astructtio__action__value__t_html_ae37aa5cf6246ce83845320168a92e832"><div class="ttname"><a href="structtio__action__value__t.html#ae37aa5cf6246ce83845320168a92e832">tio_action_value_t::type</a></div><div class="ttdeci">tio_data_type_t type</div><div class="ttdoc">Data type of the value.</div><div class="ttdef"><b>Definition</b> tio.h:76</div></div>
+<div class="ttc" id="astructtio__action__value__t_html_af2132f619305f5535f068642d3064d87"><div class="ttname"><a href="structtio__action__value__t.html#af2132f619305f5535f068642d3064d87">tio_action_value_t::double_value</a></div><div class="ttdeci">double double_value</div><div class="ttdef"><b>Definition</b> tio.h:81</div></div>
+<div class="ttc" id="astructtio__action__value__t_html_af97df2666558442a1eebbfecbee78416"><div class="ttname"><a href="structtio__action__value__t.html#af97df2666558442a1eebbfecbee78416">tio_action_value_t::long_value</a></div><div class="ttdeci">int64_t long_value</div><div class="ttdef"><b>Definition</b> tio.h:78</div></div>
+<div class="ttc" id="astructtio__handler__t_html"><div class="ttname"><a href="structtio__handler__t.html">tio_handler_t</a></div><div class="ttdoc">Stores data/ callbacks used by tio_handler.</div><div class="ttdef"><b>Definition</b> tio.h:209</div></div>
+<div class="ttc" id="astructtio__handler__task__info__t_html"><div class="ttname"><a href="structtio__handler__task__info__t.html">tio_handler_task_info_t</a></div><div class="ttdoc">Indicates handler state.</div><div class="ttdef"><b>Definition</b> tio.h:227</div></div>
+<div class="ttc" id="astructtio__handler__task__info__t_html_a2b725069e1e91b1111e5ed37cce547a4"><div class="ttname"><a href="structtio__handler__task__info__t.html#a2b725069e1e91b1111e5ed37cce547a4">tio_handler_task_info_t::error</a></div><div class="ttdeci">kii_mqtt_error error</div><div class="ttdef"><b>Definition</b> tio.h:228</div></div>
+<div class="ttc" id="astructtio__handler__task__info__t_html_aec172492cb54a0cc922faf12b7a208d4"><div class="ttname"><a href="structtio__handler__task__info__t.html#aec172492cb54a0cc922faf12b7a208d4">tio_handler_task_info_t::task_state</a></div><div class="ttdeci">kii_mqtt_task_state task_state</div><div class="ttdef"><b>Definition</b> tio.h:229</div></div>
+<div class="ttc" id="astructtio__updater__t_html"><div class="ttname"><a href="structtio__updater__t.html">tio_updater_t</a></div><div class="ttdoc">Stores data/ callbacks used by tio_updater.</div><div class="ttdef"><b>Definition</b> tio.h:235</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 09:38:36 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 20 2026 09:50:58 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

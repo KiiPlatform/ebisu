@@ -205,10 +205,10 @@
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>long</type>
+      <type>int64_t</type>
       <name>long_value</name>
       <anchorfile>structtio__action__value__t.html</anchorfile>
-      <anchor>a6d17c1b2e1ad14fc98dcdf6d715b8538</anchor>
+      <anchor>af97df2666558442a1eebbfecbee78416</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">

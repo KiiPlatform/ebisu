@@ -85,7 +85,8 @@ $(function() {
 
 <p>This is a file defining Kii JSON APIs.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;jsmn.h&gt;</code><br />
+<div class="textblock"><code>#include &lt;stdint.h&gt;</code><br />
+<code>#include &lt;jsmn.h&gt;</code><br />
 </div>
 <p><a href="jkii_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -363,9 +364,9 @@ size_t, jkii_field_t*) </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a226dc87d1ccd30b36a59a096b4df3a6ba0ca27ded3400c5279308f056c8e5eb14" name="a226dc87d1ccd30b36a59a096b4df3a6ba0ca27ded3400c5279308f056c8e5eb14"></a>JKII_FIELD_ERR_COPY&#160;</td><td class="fielddoc"><p>Coping string to <a class="el" href="structjkii__field__t.html#a819930194ef418853ab716ad36cc01e6">jkii_field_t::field_copy::string</a> is failed. <a class="el" href="structjkii__field__t.html#a92339c0771f78c56cf96edfa806ae59b">jkii_field_t::field_copy_buff_size</a> may shorter than actual length. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a226dc87d1ccd30b36a59a096b4df3a6ba14a08f2f8dcd6861859dd4f24692e089" name="a226dc87d1ccd30b36a59a096b4df3a6ba14a08f2f8dcd6861859dd4f24692e089"></a>JKII_FIELD_ERR_NUM_OVERFLOW&#160;</td><td class="fielddoc"><p>Coping int, long or double value to <a class="el" href="structjkii__field__t.html#a2a4a7e6a815d3951add43545a845bf19">jkii_field_t::field_copy::int_value</a>, <a class="el" href="structjkii__field__t.html#adbe399051b2cf89ee6fb357078b25c9c">jkii_field_t::field_copy::long_value</a> or <a class="el" href="structjkii__field__t.html#a4473c495ef26173515f141c4ea4eca51">jkii_field_t::field_copy::double_value</a> is failed. value is overflowed. </p>
+<tr><td class="fieldname"><a id="a226dc87d1ccd30b36a59a096b4df3a6ba14a08f2f8dcd6861859dd4f24692e089" name="a226dc87d1ccd30b36a59a096b4df3a6ba14a08f2f8dcd6861859dd4f24692e089"></a>JKII_FIELD_ERR_NUM_OVERFLOW&#160;</td><td class="fielddoc"><p>Coping int, long or double value to <a class="el" href="structjkii__field__t.html#a50b7778350c45622b75a5d6849969d1f">jkii_field_t::field_copy::int_value</a>, <a class="el" href="structjkii__field__t.html#ab61d4194e05eaab56b021905e257d052">jkii_field_t::field_copy::long_value</a> or <a class="el" href="structjkii__field__t.html#a4473c495ef26173515f141c4ea4eca51">jkii_field_t::field_copy::double_value</a> is failed. value is overflowed. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a226dc87d1ccd30b36a59a096b4df3a6ba6787f776cf4313c99297cab19e70af96" name="a226dc87d1ccd30b36a59a096b4df3a6ba6787f776cf4313c99297cab19e70af96"></a>JKII_FIELD_ERR_NUM_UNDERFLOW&#160;</td><td class="fielddoc"><p>Coping int, long or double value to <a class="el" href="structjkii__field__t.html#a2a4a7e6a815d3951add43545a845bf19">jkii_field_t::field_copy::int_value</a>, <a class="el" href="structjkii__field__t.html#adbe399051b2cf89ee6fb357078b25c9c">jkii_field_t::field_copy::long_value</a> or <a class="el" href="structjkii__field__t.html#a4473c495ef26173515f141c4ea4eca51">jkii_field_t::field_copy::double_value</a> is failed. value is underflowed. </p>
+<tr><td class="fieldname"><a id="a226dc87d1ccd30b36a59a096b4df3a6ba6787f776cf4313c99297cab19e70af96" name="a226dc87d1ccd30b36a59a096b4df3a6ba6787f776cf4313c99297cab19e70af96"></a>JKII_FIELD_ERR_NUM_UNDERFLOW&#160;</td><td class="fielddoc"><p>Coping int, long or double value to <a class="el" href="structjkii__field__t.html#a50b7778350c45622b75a5d6849969d1f">jkii_field_t::field_copy::int_value</a>, <a class="el" href="structjkii__field__t.html#ab61d4194e05eaab56b021905e257d052">jkii_field_t::field_copy::long_value</a> or <a class="el" href="structjkii__field__t.html#a4473c495ef26173515f141c4ea4eca51">jkii_field_t::field_copy::double_value</a> is failed. value is underflowed. </p>
 </td></tr>
 </table>
 
@@ -387,9 +388,9 @@ size_t, jkii_field_t*) </p>
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a5fe8d88e1452ceb3d2c07f69440c82b5a273c020553c1ee8b03caa0693e781fde" name="a5fe8d88e1452ceb3d2c07f69440c82b5a273c020553c1ee8b03caa0693e781fde"></a>JKII_FIELD_TYPE_ANY&#160;</td><td class="fielddoc"><p>This value denotes any JSON types. If this value is set to <a class="el" href="structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841">jkii_field_t::type</a>, then jkii_parse(jkii_t*,
    const char*, size_t, jkii_field_t*) ignore type checking. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a5fe8d88e1452ceb3d2c07f69440c82b5a41325ab8db67f5439a64df1967009180" name="a5fe8d88e1452ceb3d2c07f69440c82b5a41325ab8db67f5439a64df1967009180"></a>JKII_FIELD_TYPE_INTEGER&#160;</td><td class="fielddoc"><p>This values denotes an signed interger value. Maximum is INT_MAX and Minimum is INT_MIN. </p>
+<tr><td class="fieldname"><a id="a5fe8d88e1452ceb3d2c07f69440c82b5a41325ab8db67f5439a64df1967009180" name="a5fe8d88e1452ceb3d2c07f69440c82b5a41325ab8db67f5439a64df1967009180"></a>JKII_FIELD_TYPE_INTEGER&#160;</td><td class="fielddoc"><p>This value denotes a signed integer held as an int32_t: from INT32_MIN to INT32_MAX, whatever the width of int. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a5fe8d88e1452ceb3d2c07f69440c82b5a1d5e3fb266b150581be875d797197d38" name="a5fe8d88e1452ceb3d2c07f69440c82b5a1d5e3fb266b150581be875d797197d38"></a>JKII_FIELD_TYPE_LONG&#160;</td><td class="fielddoc"><p>This values denotes an signed interger value. Maximum is LONG_MAX and Minimum is LONG_MIN. </p>
+<tr><td class="fieldname"><a id="a5fe8d88e1452ceb3d2c07f69440c82b5a1d5e3fb266b150581be875d797197d38" name="a5fe8d88e1452ceb3d2c07f69440c82b5a1d5e3fb266b150581be875d797197d38"></a>JKII_FIELD_TYPE_LONG&#160;</td><td class="fielddoc"><p>This value denotes a signed integer held as an int64_t: from INT64_MIN to INT64_MAX, whatever the width of long. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a5fe8d88e1452ceb3d2c07f69440c82b5ad566be60030c4ecc7d691159031d989b" name="a5fe8d88e1452ceb3d2c07f69440c82b5ad566be60030c4ecc7d691159031d989b"></a>JKII_FIELD_TYPE_DOUBLE&#160;</td><td class="fielddoc"><p>This value denotes an double value. </p>
 </td></tr>
@@ -550,7 +551,7 @@ size_t, jkii_field_t*) </p>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 09:38:36 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 20 2026 09:50:58 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

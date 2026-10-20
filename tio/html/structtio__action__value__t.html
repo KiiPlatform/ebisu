@@ -88,8 +88,8 @@ tio_data_type_t&#160;</td><td class="memItemRight" valign="bottom"><b>type</b></
 <tr class="separator:ae37aa5cf6246ce83845320168a92e832"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9487e84fbe922e3a1fade27909ef41a7" id="r_a9487e84fbe922e3a1fade27909ef41a7"><td class="memItemLeft" >union {&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a445d89b8a9820fa2528d6d78538fccef" id="r_a445d89b8a9820fa2528d6d78538fccef"><td class="memItemLeft" >&#160;&#160;&#160;long&#160;&#160;&#160;<a class="el" href="structtio__action__value__t.html#a6d17c1b2e1ad14fc98dcdf6d715b8538">long_value</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
-<tr class="separator:a445d89b8a9820fa2528d6d78538fccef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac834678e7156648232ad376ef18a6318" id="r_ac834678e7156648232ad376ef18a6318"><td class="memItemLeft" >&#160;&#160;&#160;int64_t&#160;&#160;&#160;<a class="el" href="structtio__action__value__t.html#af97df2666558442a1eebbfecbee78416">long_value</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
+<tr class="separator:ac834678e7156648232ad376ef18a6318"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acf79f4357217e90024c7862beeb8813b" id="r_acf79f4357217e90024c7862beeb8813b"><td class="memItemLeft" >&#160;&#160;&#160;double&#160;&#160;&#160;<a class="el" href="structtio__action__value__t.html#af2132f619305f5535f068642d3064d87">double_value</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
 <tr class="separator:acf79f4357217e90024c7862beeb8813b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a60b39972de930bd1b067248ddb7f0300" id="r_a60b39972de930bd1b067248ddb7f0300"><td class="memItemLeft" >&#160;&#160;&#160;<a class="elRef" href="../../kii/html/kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">tio_bool_t</a>&#160;&#160;&#160;<a class="el" href="structtio__action__value__t.html#ac75507595c7f721705c920fb3dc6c437">bool_value</a>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
@@ -137,18 +137,18 @@ size_t&#160;</td><td class="memItemRight" valign="bottom"><b>opaque_value_length
 
 </div>
 </div>
-<a id="a6d17c1b2e1ad14fc98dcdf6d715b8538" name="a6d17c1b2e1ad14fc98dcdf6d715b8538"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6d17c1b2e1ad14fc98dcdf6d715b8538">&#9670;&#160;</a></span>long_value</h2>
+<a id="af97df2666558442a1eebbfecbee78416" name="af97df2666558442a1eebbfecbee78416"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af97df2666558442a1eebbfecbee78416">&#9670;&#160;</a></span>long_value</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">long tio_action_value_t::long_value</td>
+          <td class="memname">int64_t tio_action_value_t::long_value</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Value stored when type is TIO_TYPE_INTEGER </p>
+<p>Value stored when type is TIO_TYPE_INTEGER: any JSON integer from INT64_MIN to INT64_MAX, whatever the width of long. </p>
 
 </div>
 </div>
@@ -190,7 +190,7 @@ size_t&#160;</td><td class="memItemRight" valign="bottom"><b>opaque_value_length
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 09:38:36 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 20 2026 09:50:58 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

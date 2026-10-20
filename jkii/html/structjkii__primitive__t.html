@@ -85,14 +85,14 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a863c6fd9740d55c99d09e760179dd0d9" id="r_a863c6fd9740d55c99d09e760179dd0d9"><td class="memItemLeft" ><a id="a863c6fd9740d55c99d09e760179dd0d9" name="a863c6fd9740d55c99d09e760179dd0d9"></a>
 union {&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab57c5d58aea9cfa5840c1a75d6936ace" id="r_ab57c5d58aea9cfa5840c1a75d6936ace"><td class="memItemLeft" >
-&#160;&#160;&#160;int&#160;&#160;&#160;<b>int_value</b>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
-<tr class="memdesc:ab57c5d58aea9cfa5840c1a75d6936ace"><td class="mdescLeft">&#160;</td><td class="mdescRight">Valid when <a class="el" href="structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d" title="Type of the primitive that was parsed, selecting a member of value.">type</a> is JKII_FIELD_TYPE_INTEGER. <br /></td></tr>
-<tr class="separator:ab57c5d58aea9cfa5840c1a75d6936ace"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0e28566e8e79e430a2a31e31e74e6c31" id="r_a0e28566e8e79e430a2a31e31e74e6c31"><td class="memItemLeft" >
-&#160;&#160;&#160;long&#160;&#160;&#160;<b>long_value</b>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
-<tr class="memdesc:a0e28566e8e79e430a2a31e31e74e6c31"><td class="mdescLeft">&#160;</td><td class="mdescRight">Valid when <a class="el" href="structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d" title="Type of the primitive that was parsed, selecting a member of value.">type</a> is JKII_FIELD_TYPE_LONG. <br /></td></tr>
-<tr class="separator:a0e28566e8e79e430a2a31e31e74e6c31"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d4c5cfb5ea02329fd43a66dc849c4e2" id="r_a5d4c5cfb5ea02329fd43a66dc849c4e2"><td class="memItemLeft" >
+&#160;&#160;&#160;int32_t&#160;&#160;&#160;<b>int_value</b>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
+<tr class="memdesc:a5d4c5cfb5ea02329fd43a66dc849c4e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Valid when <a class="el" href="structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d" title="Type of the primitive that was parsed, selecting a member of value.">type</a> is JKII_FIELD_TYPE_INTEGER. <br /></td></tr>
+<tr class="separator:a5d4c5cfb5ea02329fd43a66dc849c4e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a985170dad4de9c5e6d2fd7347cacd10f" id="r_a985170dad4de9c5e6d2fd7347cacd10f"><td class="memItemLeft" >
+&#160;&#160;&#160;int64_t&#160;&#160;&#160;<b>long_value</b>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
+<tr class="memdesc:a985170dad4de9c5e6d2fd7347cacd10f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Valid when <a class="el" href="structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d" title="Type of the primitive that was parsed, selecting a member of value.">type</a> is JKII_FIELD_TYPE_LONG. <br /></td></tr>
+<tr class="separator:a985170dad4de9c5e6d2fd7347cacd10f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af2288cb42a03e455f89399662203373f" id="r_af2288cb42a03e455f89399662203373f"><td class="memItemLeft" >
 &#160;&#160;&#160;double&#160;&#160;&#160;<b>double_value</b>&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
 <tr class="memdesc:af2288cb42a03e455f89399662203373f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Valid when <a class="el" href="structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d" title="Type of the primitive that was parsed, selecting a member of value.">type</a> is JKII_FIELD_TYPE_DOUBLE. <br /></td></tr>
@@ -125,7 +125,8 @@ union {&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
 </div><div class="memdoc">
 
 <p>Type of the primitive that was parsed, selecting a member of <a class="el" href="structjkii__primitive__t.html#a863c6fd9740d55c99d09e760179dd0d9" title="The value. Which member is valid is given by type.">value</a>. </p>
-<p>JKII_FIELD_TYPE_NULL indicates the JSON literal null, in which case no member of <a class="el" href="structjkii__primitive__t.html#a863c6fd9740d55c99d09e760179dd0d9" title="The value. Which member is valid is given by type.">value</a> is set. </p>
+<p>JKII_FIELD_TYPE_NULL indicates the JSON literal null, in which case no member of <a class="el" href="structjkii__primitive__t.html#a863c6fd9740d55c99d09e760179dd0d9" title="The value. Which member is valid is given by type.">value</a> is set.</p>
+<p>An integer is JKII_FIELD_TYPE_INTEGER if it fits in an int32_t and JKII_FIELD_TYPE_LONG if it fits only in an int64_t, whatever the widths of int and long. One that fits in neither is reported as JKII_PRIMITIVE_ERR_OVERFLOW or JKII_PRIMITIVE_ERR_UNDERFLOW. </p>
 
 </div>
 </div>
@@ -135,7 +136,7 @@ union {&#160;</td><td class="memItemRight" valign="bottom"></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 09:38:36 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 20 2026 09:50:58 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

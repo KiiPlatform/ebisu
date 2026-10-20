@@ -291,17 +291,17 @@
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>int</type>
+      <type>int32_t</type>
       <name>int_value</name>
       <anchorfile>structjkii__field__t.html</anchorfile>
-      <anchor>a2a4a7e6a815d3951add43545a845bf19</anchor>
+      <anchor>a50b7778350c45622b75a5d6849969d1f</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>long</type>
+      <type>int64_t</type>
       <name>long_value</name>
       <anchorfile>structjkii__field__t.html</anchorfile>
-      <anchor>adbe399051b2cf89ee6fb357078b25c9c</anchor>
+      <anchor>ab61d4194e05eaab56b021905e257d052</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
@@ -337,17 +337,17 @@
     <name>jkii_primitive_t</name>
     <filename>structjkii__primitive__t.html</filename>
     <member kind="variable">
-      <type>int</type>
+      <type>int32_t</type>
       <name>int_value</name>
       <anchorfile>structjkii__primitive__t.html</anchorfile>
-      <anchor>a77e6095c778248b158704429e0feb3f6</anchor>
+      <anchor>a0f61e93be35fc06be6ac06c49cf6490c</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>long</type>
+      <type>int64_t</type>
       <name>long_value</name>
       <anchorfile>structjkii__primitive__t.html</anchorfile>
-      <anchor>a203e7d443f2d4f409908c50a5e4af4f2</anchor>
+      <anchor>aa803644965e24206807d1f5d078ae98b</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
