@@ -587,18 +587,28 @@ static size_t _jkii_to_index(int64_t value)
     return (size_t)value;
 }
 
-static const char* _jkii_get_target(
+/* Reads the segment at the start of path, "/field" or "/[index]", into
+ * target. Returns 0 if it is one, with *next at the '/' that starts the next
+ * segment, or NULL if it is the last. Returns -1, with *next NULL, if it is
+ * neither, such as an empty field, an index that does not read as a number,
+ * or a '[' with no ']' at the end of the segment. The path then finds
+ * nothing: taken for the last segment, with target left empty, it would find
+ * the value of a "" key. */
+static int _jkii_get_target(
         const char* path,
-        _jkii_target_t* target)
+        _jkii_target_t* target,
+        const char** next)
 {
     const char* start = NULL;
     const char* retval = NULL;
     size_t path_len = strlen(path);
     size_t target_len = 0;
     int before_is_bash_slash = 0;
+    int ret = -1;
 
     M_JKII_ASSERT(path != NULL);
     M_JKII_ASSERT(target != NULL);
+    M_JKII_ASSERT(next != NULL);
 
     if (path_len <= 1 || *path != '/' || strncmp(path, "//", 2) == 0) {
         retval = NULL;
@@ -627,6 +637,11 @@ static const char* _jkii_get_target(
     if (*start == '[') {
         int64_t value = 0;
         ++start;
+        /* The ']' has to end the segment, or "[10" would be read as 1. */
+        if (target_len < 2 || start[target_len - 2] != ']') {
+            retval = NULL;
+            goto exit;
+        }
         target_len -= 2;
         if (_jkii_is_integer(start, target_len) == 0) {
             retval = NULL;
@@ -643,10 +658,11 @@ static const char* _jkii_get_target(
         target->len = target_len;
         target->parent_type = _JKII_PARENT_TYPE_OBJECT;
     }
+    ret = 0;
 
 exit:
-
-    return retval;
+    *next = retval;
+    return ret;
 }
 
 static int _jkii_is_same_key(
@@ -709,7 +725,9 @@ static int _kii_jsmn_get_value_by_path(
     do {
         _jkii_target_t target;
         memset(&target, 0x00, sizeof(target));
-        next_root = _jkii_get_target( next_root, &target);
+        if (_jkii_get_target(next_root, &target, &next_root) != 0) {
+            return -1;
+        }
         if (root_token->type == JSMN_OBJECT &&
                 target.parent_type == _JKII_PARENT_TYPE_OBJECT) {
             size_t i = 0;
