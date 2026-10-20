@@ -2344,3 +2344,192 @@ TEST_CASE( "MQTT endpoint values out of range" ) {
         }
     }
 }
+
+static kii_task_code_t count_task_create(const char* name, KII_TASK_ENTRY entry, void* entry_param, void* userdata)
+{
+    ++*(int*)userdata;
+    return KII_TASKC_OK;
+}
+
+// CONNECT carries the keep-alive in 16 bits, and it was written there with no
+// check, so 70000 reached the broker as 4464 while the task pinged every 70000
+// seconds, and the broker dropped the connection in between.
+TEST_CASE( "MQTT keep-alive interval range" ) {
+    char mqtt_buff[1024];
+
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
+    kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
+    int call_task_create = 0;
+    kii_set_cb_task_create(&kii, count_task_create, &call_task_create);
+
+    khct::cb::SockCtx mqtt_ctx;
+    kii_set_cb_mqtt_sock_send(&kii, khct::cb::mock_send, &mqtt_ctx);
+    std::string sent;
+    mqtt_ctx.on_send = [&sent](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+        sent.append(buffer, length);
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+
+    SECTION("an interval MQTT can carry is sent as given") {
+        const struct {
+            unsigned int interval;
+            std::string bytes;
+        } cases[] = {
+            { 0, std::string("\x00\x00", 2) },
+            { 300, std::string("\x01\x2c", 2) },
+            { 65535, std::string("\xff\xff", 2) },
+        };
+
+        for (const auto& c : cases) {
+            INFO("keep-alive " << c.interval);
+            call_task_create = 0;
+            CHECK( kii_start_push_task(&kii, c.interval, khct::cb::cb_push, NULL) == KII_ERR_OK );
+            CHECK( call_task_create == 1 );
+
+            mqtt_state_t state;
+            _init_mqtt_state(&kii, &state);
+            strcpy(state.endpoint.topic, "dummyTopic");
+            strcpy(state.endpoint.username, "dummyUser");
+            strcpy(state.endpoint.password, "dummyPassword");
+            state.info.task_state = KII_MQTT_ST_SEND_CONNECT;
+            sent.clear();
+            _mqtt_state_send_connect(&state);
+            REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_CONNACK );
+            // After the fixed header, the protocol name, level and flags.
+            REQUIRE( sent.length() > 14 );
+            CHECK( sent.substr(12, 2) == c.bytes );
+        }
+    }
+
+    SECTION("an interval MQTT cannot carry does not start the task") {
+        const unsigned int intervals[] = { 65536, 70000, UINT_MAX };
+
+        for (unsigned int interval : intervals) {
+            INFO("keep-alive " << interval);
+            kii._keep_alive_interval = 300;
+            call_task_create = 0;
+            CHECK( kii_start_push_task(&kii, interval, khct::cb::cb_push, NULL) == KII_ERR_FAIL );
+            CHECK( call_task_create == 0 );
+            CHECK( kii._keep_alive_interval == 300 );
+        }
+    }
+}
+
+// PINGREQ is sent once the keep-alive less the receive timeout has elapsed.
+// That was worked out in unsigned int and kept in an int, so a receive timeout
+// longer than the keep-alive wrapped round to a time never reached, and no
+// PINGREQ was sent. With one as long, the task went to send PINGREQ again
+// straight after sending one, before its PINGRESP could be read, and so
+// reconnected. A keep-alive of 0, which disables PINGREQ, did the same when
+// there was no receive timeout.
+TEST_CASE( "MQTT PINGREQ timing" ) {
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
+
+    khct::cb::SockCtx mqtt_ctx;
+    kii_set_cb_mqtt_sock_send(&kii, khct::cb::mock_send, &mqtt_ctx);
+    kii_set_cb_mqtt_sock_recv(&kii, khct::cb::mock_recv, &mqtt_ctx);
+    int call_send = 0;
+    mqtt_ctx.on_send = [&call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+        ++call_send;
+        REQUIRE( std::string(buffer, length) == std::string("\xc0\x00", 2) );
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+
+    SECTION("after how long") {
+        int call_recv = 0;
+        mqtt_ctx.on_recv = [&call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            ++call_recv;
+            return KHC_SOCK_FAIL; // the receive timed out
+        };
+
+        const struct {
+            unsigned int keep_alive;
+            unsigned int to_recv;
+            unsigned int elapsed_ms;
+            bool pingreq;
+        } cases[] = {
+            // Early enough that a receive timing out ends within the keep-alive.
+            { 300, 5, 295000, false },
+            { 300, 5, 295001, true },
+            { 300, 0, 300000, false },
+            { 300, 0, 300001, true },
+            { 65535, 5, 65530000, false },
+            { 65535, 5, 65530001, true },
+            // A timeout as long as the keep-alive or longer leaves no time for
+            // that, so once the keep-alive is over. Sending PINGREQ and reading
+            // PINGRESP count as a second, and a keep-alive is at least that, so
+            // the PINGRESP is read before PINGREQ is due again.
+            { 30, 30, 30000, false },
+            { 30, 30, 30001, true },
+            { 10, 30, 10000, false },
+            { 10, 30, 10001, true },
+            { 1, 5, 1000, false },
+            { 1, 5, 1001, true },
+            { 65535, UINT_MAX, 65535000, false },
+            { 65535, UINT_MAX, 65535001, true },
+            // Never, as keep-alive is disabled.
+            { 0, 0, UINT_MAX, false },
+            { 0, 5, UINT_MAX, false },
+        };
+
+        for (const auto& c : cases) {
+            INFO("keep-alive " << c.keep_alive << ", receive timeout " << c.to_recv
+                    << ", elapsed " << c.elapsed_ms << " ms");
+            kii._keep_alive_interval = c.keep_alive;
+            kii_set_mqtt_to_sock_recv(&kii, c.to_recv);
+            mqtt_state_t state;
+            _init_mqtt_state(&kii, &state);
+            state.info.task_state = KII_MQTT_ST_RECV_READY;
+            state.elapsed_time_ms = c.elapsed_ms;
+            call_recv = 0;
+            _mqtt_state_recv_ready(&state);
+            if (c.pingreq) {
+                CHECK( state.info.task_state == KII_MQTT_ST_SEND_PINGREQ );
+                CHECK( call_recv == 0 );
+            } else {
+                CHECK( state.info.task_state == KII_MQTT_ST_RECV_READY );
+                CHECK( call_recv == 1 );
+            }
+        }
+    }
+
+    // One PINGREQ after each receive that times out, which is as often as
+    // the receive timeout allows, and no reconnecting.
+    SECTION("with a receive timeout longer than the keep-alive") {
+        size_t served = 0;
+        kii._keep_alive_interval = 10;
+        kii_set_mqtt_to_sock_recv(&kii, 30);
+        mqtt_state_t state;
+        _init_mqtt_state(&kii, &state);
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+
+        for (int i = 1; i <= 3; ++i) {
+            INFO("PINGREQ " << i);
+            served = 0;
+            serve_stream(mqtt_ctx, "", served);
+            _mqtt_state_recv_ready(&state);
+            REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+
+            // A receive has timed out, so the keep-alive is over.
+            _mqtt_state_recv_ready(&state);
+            REQUIRE( state.info.task_state == KII_MQTT_ST_SEND_PINGREQ );
+            _mqtt_state_send_pingreq(&state);
+            REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+            REQUIRE( call_send == i );
+
+            // The PINGRESP is read before PINGREQ is due again.
+            served = 0;
+            serve_stream(mqtt_ctx, std::string("\xd0\x00", 2), served);
+            _mqtt_state_recv_ready(&state);
+            REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+            REQUIRE( state.pingresp_received == KII_TRUE );
+            REQUIRE( served == 2 );
+        }
+    }
+}

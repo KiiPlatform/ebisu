@@ -278,6 +278,11 @@ exit:
 
 kii_code_t kii_start_push_task(kii_t* kii, unsigned int keep_alive_interval, KII_PUSH_RECEIVED_CB callback, void* userdata)
 {
+    // CONNECT carries the keep-alive in 16 bits. A longer one would reach the
+    // broker cut down to its low 16 bits while the task pinged on the whole.
+    if (keep_alive_interval > 65535) {
+        return KII_ERR_FAIL;
+    }
     kii->_keep_alive_interval = keep_alive_interval;
     kii->_cb_push_received = callback;
     kii->_push_data = userdata;

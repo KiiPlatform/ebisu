@@ -553,6 +553,8 @@ void tio_handler_set_mqtt_buff(tio_handler_t* handler, char* buff, size_t buff_s
  * Limitation: keep_alive_interval must be larger than socket recv/ send timeout set by
  * tio_handler_set_mqtt_to_sock_recv() / tio_handler_set_mqtt_to_sock_send().
  * Twice as large as recv/ send timeout works fine but recommend few minutes to avoid congestion.
+ * If 0, Keep-Alive is disabled. At most 65535, the largest MQTT can carry:
+ * tio_handler_start() fails with TIO_ERR_FAIL for a larger value.
  *
  * \param [out] handler tio_handler_t instance.
  * \param [in] keep_alive_interval_sec Keep-Alive interval in seconds.
@@ -695,6 +697,8 @@ const tio_author_t* tio_handler_get_author(
  * \param [in] author API author.
  * \param [in] cb_action Action callback called when received remote controll command.
  * \param [in] userdata Context object pointer passed to cb_action.
+ * \return tio_code_t. TIO_ERR_FAIL if the Keep-Alive interval set by
+ * tio_handler_set_keep_alive_interval() is larger than 65535.
  */
 tio_code_t tio_handler_start(
         tio_handler_t* handler,

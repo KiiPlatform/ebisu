@@ -298,6 +298,11 @@ tio_code_t tio_handler_start(
         TIO_CB_ACTION cb_action,
         void* userdata)
 {
+    // kii_start_push_task() turns away more than 65535 too, but takes an
+    // unsigned int, to which a larger size_t would be cut down first.
+    if (handler->_keep_alive_interval > 65535) {
+        return TIO_ERR_FAIL;
+    }
     handler->_kii._author = *author;
 
     handler->_cb_action = cb_action;

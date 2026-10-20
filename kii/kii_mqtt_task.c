@@ -66,7 +66,7 @@ khc_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) {
     *        User Name Flag     Password Flag    Will Retain        Will QoS     Will Flag   Clean Session   Reserved
     */
     kii->_mqtt_buffer[i++] = (char)0xc2;
-    /* Variable header:Keep Alive */
+    /* Variable header:Keep Alive, which kii_start_push_task() keeps to 16 bits */
     kii->_mqtt_buffer[i++] = (keep_alive_interval & 0xff00) >> 8;
     kii->_mqtt_buffer[i++] = keep_alive_interval & 0x00ff;
     /* Payload:Client Identifier */
@@ -489,8 +489,18 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
     kii_mqtt_task_info* task_info = &state->info;
-    const int thresh_ms = (kii->_keep_alive_interval - kii->_mqtt_to_recv_sec) * 1000;
-    if (state->elapsed_time_ms > thresh_ms) {
+    // A keep-alive of 0 disables PINGREQ. Otherwise send one early enough that
+    // a receive running into its timeout still ends within the keep-alive.
+    // A timeout as long as the keep-alive leaves no such margin. Then send one
+    // once the keep-alive is over, which is after any receive that times out,
+    // rather than at once: that would come back here straight after sending
+    // it, before its PINGRESP could be read, and reconnect for want of it.
+    const unsigned int keep_alive = kii->_keep_alive_interval;
+    const unsigned int to_recv = kii->_mqtt_to_recv_sec;
+    // kii_start_push_task() keeps the keep-alive to 65535, so this fits.
+    const unsigned int thresh_ms =
+        (to_recv < keep_alive ? keep_alive - to_recv : keep_alive) * 1000;
+    if (keep_alive > 0 && state->elapsed_time_ms > thresh_ms) {
         task_info->task_state = KII_MQTT_ST_SEND_PINGREQ;
         return;
     }
