@@ -452,7 +452,6 @@ tio_code_t _handle_command(
     const char* actions_array = command + fields[1].start;
     size_t actions_array_length = fields[1].end - fields[1].start;
     tio_action_t action;
-    size_t result_counts = 0;
     for (size_t alias_idx = 0; ; ++alias_idx) {
         char* actions_array_in_alias = NULL;
         size_t actions_array_in_alias_length = 0;
@@ -505,9 +504,13 @@ tio_code_t _handle_command(
                     action_result_data.json[0] = '\0';
                     tio_bool_t succeeded = cb_action(&action, &action_err, &action_result_data, cb_action_data);
                     char work_buff[256];
+                    // The index within the alias, whose results are an array
+                    // of their own: counted across the command, the first
+                    // result of every alias after the first was written with
+                    // a leading comma, and the server refused the body.
                     tio_code_t app_res = _append_action_result(
                             handler,
-                            result_counts,
+                            action_idx,
                             succeeded,
                             &action,
                             action_err.err_message,
@@ -519,7 +522,6 @@ tio_code_t _handle_command(
                         kii_cancel_request_being_prepared(&handler->_kii);
                         return app_res;
                     }
-                    ++result_counts;
                 } else if (pa_res == _CMD_PARSE_ARRAY_OUT_OF_INDEX) {
                     // Handled all actions in alias.
                     break;
