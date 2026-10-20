@@ -4,6 +4,9 @@
  */
 #ifndef _KII_TASK_CALLBACK
 #define _KII_TASK_CALLBACK
+
+#include <stdint.h>
+
 /* The library is compiled with hidden visibility, so what this header declares
    is exactly what the shared object exports. */
 #if defined(__GNUC__) || defined(__clang__)
@@ -58,7 +61,7 @@ typedef kii_task_code_t
  */
 typedef void
 (*KII_CB_DELAY_MS)
-    (unsigned int msec,
+    (uint32_t msec,
      void* userdata);
 
 /**

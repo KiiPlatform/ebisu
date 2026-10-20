@@ -196,11 +196,11 @@ void kii_set_cb_mqtt_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata
     kii->_mqtt_sock_close_ctx = userdata;
 }
 
-void kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec) {
+void kii_set_mqtt_to_sock_recv(kii_t* kii, uint32_t to_sock_recv_sec) {
     kii->_mqtt_to_recv_sec = to_sock_recv_sec;
 }
 
-void kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec) {
+void kii_set_mqtt_to_sock_send(kii_t* kii, uint32_t to_sock_send_sec) {
     kii->_mqtt_to_send_sec = to_sock_send_sec;
 }
 
@@ -269,8 +269,9 @@ const char* kii_get_etag(kii_t* kii) {
     return kii->_etag;
 }
 
-int kii_get_resp_status(kii_t* kii) {
-    return khc_get_status_code(&kii->_khc);
+uint16_t kii_get_resp_status(kii_t* kii) {
+    // khc reads the status code as three digits, so it is at most 999.
+    return (uint16_t)khc_get_status_code(&kii->_khc);
 }
 
 size_t kii_get_resp_body_length(kii_t* kii) {

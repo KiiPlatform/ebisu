@@ -9,6 +9,7 @@
 #include "kii_task_callback.h"
 
 #include <jkii.h>
+#include <stdint.h>
 /* The library is compiled with hidden visibility, so what this header declares
    is exactly what the shared object exports. */
 #if defined(__GNUC__) || defined(__clang__)
@@ -170,15 +171,15 @@ typedef struct kii_mqtt_endpoint_t {
      * \brief Port number used for non-secure connection.
      * Highly recommend use port_ssl.
      */
-    unsigned int port_tcp;
+    uint16_t port_tcp;
     /**
      * \brief Port number used for secure connection.
      */
-    unsigned int port_ssl;
+    uint16_t port_ssl;
     /**
      * \brief Obsoleted parameter. Ignore it.
      */
-    unsigned long ttl;
+    uint32_t ttl;
 } kii_mqtt_endpoint_t;
 
 /**
@@ -229,8 +230,8 @@ typedef struct kii_t {
     KHC_CB_SOCK_SEND _cb_mqtt_sock_send; /**< \private */
     KHC_CB_SOCK_RECV _cb_mqtt_sock_recv; /**< \private */
     KHC_CB_SOCK_CLOSE _cb_mqtt_sock_close_cb; /**< \private */
-    unsigned int _mqtt_to_recv_sec; /**< \private */
-    unsigned int _mqtt_to_send_sec; /**< \private */
+    uint32_t _mqtt_to_recv_sec; /**< \private */
+    uint32_t _mqtt_to_send_sec; /**< \private */
 
     KII_CB_TASK_CREATE _cb_task_create; /**< \private */
     void* _task_create_data; /**< \private */
@@ -247,12 +248,12 @@ typedef struct kii_t {
     KII_PUSH_RECEIVED_CB _cb_push_received; /**< \private */
     void* _push_data; /**< \private */
 
-    int _mqtt_connected; /**< \private */
+    kii_bool_t _mqtt_connected; /**< \private */
 
     char* _mqtt_buffer; /**< \private */
     size_t _mqtt_buffer_size; /**< \private */
 
-    unsigned int _keep_alive_interval; /**< \private */
+    uint16_t _keep_alive_interval; /**< \private */
 
     char* _rw_buff; /**< \private */
     size_t _rw_buff_size; /**< \private */
@@ -606,7 +607,9 @@ kii_code_t kii_get_mqtt_endpoint(
  * MQTT keep alive interval in seconds. If 0, Keep Alive mechanism is disabled.
  * Otherwise, pingReq is sent to MQTT broker periodically with the specified interval.
  * Too short interval causes network congestion. We recommend to set this to few minutes.
- * At most 65535, the largest MQTT can carry.
+ * At most 65535, the largest MQTT can carry. It is taken as a uint32_t
+ * rather than a uint16_t so that a larger value is turned away here rather
+ * than cut down to its low 16 bits where the function is called.
  * \param [in] cb_push  Callback called when push message delivered.
  * \param [in] userdata Context object passed to cb_push.
  * \return kii_code_t. KII_ERR_FAIL if keep_alive_interval_sec is larger than
@@ -614,7 +617,7 @@ kii_code_t kii_get_mqtt_endpoint(
  */
 kii_code_t kii_start_push_task(
 		kii_t* kii,
-        unsigned int keep_alive_interval_sec,
+        uint32_t keep_alive_interval_sec,
 		KII_PUSH_RECEIVED_CB cb_push,
         void* userdata);
 
@@ -1056,7 +1059,7 @@ void kii_set_cb_mqtt_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb_close, void* us
  * \param [out] kii kii_t instance.
  * \param [in] to_sock_recv_sec Socket recv timeout in seconds.
  */
-void kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec);
+void kii_set_mqtt_to_sock_recv(kii_t* kii, uint32_t to_sock_recv_sec);
 /**
  * \brief Set timeout of sending data from socket user for MQTT(S)
  *
@@ -1068,7 +1071,7 @@ void kii_set_mqtt_to_sock_recv(kii_t* kii, unsigned int to_sock_recv_sec);
  * \param [out] kii kii_t instance.
  * \param [in] to_sock_send_sec Socket send timeout in seconds.
  */
-void kii_set_mqtt_to_sock_send(kii_t* kii, unsigned int to_sock_send_sec);
+void kii_set_mqtt_to_sock_send(kii_t* kii, uint32_t to_sock_send_sec);
 
 /**
  * \brief Set callback creates task.
@@ -1195,7 +1198,7 @@ const char* kii_get_etag(kii_t* kii);
  * \param [in] kii kii_t instance.
  * \return HTTP status code.
  */
-int kii_get_resp_status(kii_t* kii);
+uint16_t kii_get_resp_status(kii_t* kii);
 
 /**
  * \brief Get response body length.

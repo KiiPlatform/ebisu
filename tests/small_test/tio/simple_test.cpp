@@ -1,9 +1,7 @@
 #include "catch.hpp"
 #include "tio.h"
 
-#include <limits.h>
 #include <stdint.h>
-#include <vector>
 
 TEST_CASE( "enable insecure test" ) {
     tio_handler_t handler;
@@ -48,9 +46,9 @@ static kii_task_code_t count_task_create(const char* name, KII_TASK_ENTRY entry,
     return KII_TASKC_OK;
 }
 
-// MQTT carries a keep-alive of at most 65535 seconds, which
-// kii_start_push_task() checks, but tio passes it the size_t it keeps as an
-// unsigned int, so one past UINT_MAX would arrive there cut down.
+// MQTT carries a keep-alive of at most 65535 seconds. tio takes it as a
+// uint32_t rather than a uint16_t, so a larger one arrives whole at
+// tio_handler_start() to be turned away, rather than cut down at the call.
 TEST_CASE( "tio_handler_start keep-alive range" ) {
     tio_handler_t handler;
     tio_handler_init(&handler);
@@ -58,7 +56,7 @@ TEST_CASE( "tio_handler_start keep-alive range" ) {
     tio_handler_set_cb_task_create(&handler, count_task_create, &call_task_create);
     tio_author_t author = {};
 
-    for (size_t interval : { (size_t)0, (size_t)300, (size_t)65535 }) {
+    for (uint32_t interval : { (uint32_t)0, (uint32_t)300, (uint32_t)65535 }) {
         INFO("keep-alive " << interval);
         call_task_create = 0;
         tio_handler_set_keep_alive_interval(&handler, interval);
@@ -67,12 +65,7 @@ TEST_CASE( "tio_handler_start keep-alive range" ) {
         CHECK( handler._kii._keep_alive_interval == interval );
     }
 
-    std::vector<size_t> too_long = { 65536, 70000, UINT_MAX };
-    if (SIZE_MAX > UINT_MAX) {
-        // 300 once cut down to an unsigned int.
-        too_long.push_back((size_t)UINT_MAX + 1 + 300);
-    }
-    for (size_t interval : too_long) {
+    for (uint32_t interval : { (uint32_t)65536, (uint32_t)70000, UINT32_MAX }) {
         INFO("keep-alive " << interval);
         call_task_create = 0;
         tio_handler_set_keep_alive_interval(&handler, interval);

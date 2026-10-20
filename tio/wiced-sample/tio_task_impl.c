@@ -52,7 +52,7 @@ kii_task_code_t cb_task_create
     }
 }
 
-void cb_delay_ms(unsigned int msec, void* userdata)
+void cb_delay_ms(uint32_t msec, void* userdata)
 {
     wiced_rtos_delay_milliseconds(msec);
 }

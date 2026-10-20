@@ -23,7 +23,7 @@ kii_task_code_t task_create_cb(
     }
 }
 
-void delay_ms_cb(unsigned int msec, void* userdata)
+void delay_ms_cb(uint32_t msec, void* userdata)
 {
     usleep(msec * 1000);
 }
