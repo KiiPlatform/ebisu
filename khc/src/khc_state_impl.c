@@ -649,8 +649,15 @@ void khc_state_resp_header_callback(khc* khc) {
 
         if (_is_chunked_encoding(khc->_resp_header_buff, header_size) == 1) {
             khc->_chunked_resp = 1;
-        } else if (_extract_content_length(khc->_resp_header_buff, header_size, &content_length) == 1) {
-            khc->_resp_content_length = content_length;
+        } else {
+            int extracted = _extract_content_length(khc->_resp_header_buff, header_size, &content_length);
+            if (extracted == 1) {
+                khc->_resp_content_length = content_length;
+            } else if (extracted == -1) { // Invalid Content-Length: body length unknown.
+                khc->_state = KHC_STATE_CLOSE;
+                khc->_result = KHC_ERR_HEADER_CALLBACK;
+                return;
+            }
         }
     }
 
