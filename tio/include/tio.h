@@ -692,6 +692,8 @@ const tio_author_t* tio_handler_get_author(
  * You can start tio_handler task by this method.
  * If the API returns TIO_ERR_OK, asynchronous task is started successfully and
  * callbacks set by tio_handler setter methods and this method is called when corresponding event occurs.
+ * If the callback set by tio_handler_set_cb_task_create() is not set, or fails
+ * to create the task, no task is started and the API returns TIO_ERR_CREATE_TASK.
  *
  * \param [in] handler tio_handler_t instance.
  * \param [in] author API author.

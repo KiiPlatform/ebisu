@@ -80,3 +80,44 @@ TEST_CASE( "tio_handler_start keep-alive range" ) {
         CHECK( call_task_create == 0 );
     }
 }
+
+// Stands in for the platform's task creation: counts the calls and returns the
+// result the test chose.
+struct TaskCreateCtx {
+    kii_task_code_t result;
+    int calls;
+};
+
+static kii_task_code_t mock_task_create(const char* name, KII_TASK_ENTRY entry, void* entry_param, void* userdata)
+{
+    TaskCreateCtx* ctx = (TaskCreateCtx*)userdata;
+    ++ctx->calls;
+    return ctx->result;
+}
+
+// tio_handler_start() returns what kii_start_push_task() does, which was
+// KII_ERR_OK whether or not the MQTT task had been created. A task that could
+// not be created is TIO_ERR_CREATE_TASK, as it is for tio_updater_start().
+TEST_CASE( "tio_handler_start reports a task it could not create" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    tio_author_t author = {};
+
+    SECTION("task created") {
+        TaskCreateCtx ctx = { KII_TASKC_OK, 0 };
+        tio_handler_set_cb_task_create(&handler, mock_task_create, &ctx);
+        CHECK( tio_handler_start(&handler, &author, NULL, NULL) == TIO_ERR_OK );
+        CHECK( ctx.calls == 1 );
+    }
+
+    SECTION("task not created") {
+        TaskCreateCtx ctx = { KII_TASKC_FAIL, 0 };
+        tio_handler_set_cb_task_create(&handler, mock_task_create, &ctx);
+        CHECK( tio_handler_start(&handler, &author, NULL, NULL) == TIO_ERR_CREATE_TASK );
+        CHECK( ctx.calls == 1 );
+    }
+
+    SECTION("no task-create callback") {
+        CHECK( tio_handler_start(&handler, &author, NULL, NULL) == TIO_ERR_CREATE_TASK );
+    }
+}
