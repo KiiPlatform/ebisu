@@ -138,13 +138,19 @@ int _check_double(const char* str, size_t len)
     return -1;
 }
 
-void _parse_primitive(
+_cmd_parser_code_t _parse_primitive(
         const char* action_value,
         size_t action_value_length,
         tio_action_t* out_action)
 {
     jkii_primitive_t jprim;
-    jkii_parse_primitive(action_value, action_value_length, &jprim);
+    // jsmn is built non-strict, so it passes primitives that are not JSON,
+    // such as abc or -. jkii does not set jprim for those, nor for numbers out
+    // of range.
+    jkii_primitive_err_t p_res = jkii_parse_primitive(action_value, action_value_length, &jprim);
+    if (p_res != JKII_PRIMITIVE_ERR_OK) {
+        return _CMD_PARSE_FAIL;
+    }
     switch (jprim.type) {
         case JKII_FIELD_TYPE_NULL:
             out_action->action_value.type = TIO_TYPE_NULL;
@@ -171,6 +177,7 @@ void _parse_primitive(
             // Programing error.
             break;
     }
+    return _CMD_PARSE_OK;
 }
 
 _cmd_parser_code_t _parse_action(
@@ -233,8 +240,7 @@ _cmd_parser_code_t _parse_action(
             out_action->action_value.param.opaque_value = action_value;
             break;
         case JSMN_PRIMITIVE:
-            _parse_primitive(action_value, action_value_length, out_action);
-            break;
+            return _parse_primitive(action_value, action_value_length, out_action);
         default:
             break;
     }
