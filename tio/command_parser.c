@@ -68,6 +68,11 @@ _cmd_parser_code_t _parse_first_kv(
 
     p_err = jsmn_parse(&parser, object, object_length, tokens, 64);
     if (p_err >= 0) {
+        // jsmn writes only the tokens it parsed: an object without both a key
+        // and a value, such as {}, leaves tokens[1] and tokens[2] unset.
+        if (p_err < 3) {
+            return _CMD_PARSE_FAIL;
+        }
         if (tokens[0].type != JSMN_OBJECT) {
             return _CMD_PARSE_FAIL;
         }
