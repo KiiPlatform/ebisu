@@ -1,5 +1,6 @@
 #include "catch.hpp"
 #include "kii.h"
+#include "picojson.h"
 #include "test_callbacks.h"
 
 #include <deque>
@@ -16,7 +17,7 @@ static std::string ok_response(const std::string& body) {
 // as its own. jkii_escape_str writes nothing when told the buffer is too small,
 // so a password longer than about twice the ID went out as whatever was on the
 // stack.
-TEST_CASE( "Thing password longer than the vendor thing ID is sent whole" ) {
+TEST_CASE( "Thing requests send the values they are given" ) {
     char kii_buff[1024];
     jkii_token_t tokens[64];
     jkii_resource_t resource = { tokens, 64 };
@@ -99,5 +100,35 @@ TEST_CASE( "Thing password longer than the vendor thing ID is sent whole" ) {
         REQUIRE( res == KII_ERR_OK );
         REQUIRE( sent.find("\"vendorThingID\":\"ab\"") != std::string::npos );
         REQUIRE( sent.find("\"thingPassword\":\"" + esc_password + "\"") != std::string::npos );
+    }
+
+    // thing_properties is a JSON object, embedded as the value of
+    // thingProperties. It was escaped as if it were a string's contents, so
+    // every quote in it went out as \" and the body was not JSON.
+    SECTION("kii_ti_onboard with thing_properties") {
+        responses.push_back(ok_response("{\"access_token\":\"anon\"}"));
+        responses.push_back(ok_response("{\"accessToken\":\"tok\",\"thingID\":\"th.1\"}"));
+
+        kii_code_t res = kii_ti_onboard(
+                &kii, vendor_thing_id, password, "type", NULL, NULL,
+                "{\"k\":1,\"s\":\"v\"}");
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( sent.find("\"thingProperties\":{\"k\":1,\"s\":\"v\"}") != std::string::npos );
+
+        // The body is sent chunked, in a single chunk at this size: it ends
+        // where the terminating zero-length chunk begins.
+        size_t start = sent.find("{\"vendorThingID\"");
+        size_t end = sent.rfind("\r\n0\r\n\r\n");
+        REQUIRE( start != std::string::npos );
+        REQUIRE( end != std::string::npos );
+        picojson::value v;
+        std::string err = picojson::parse(v, sent.substr(start, end - start));
+        REQUIRE( err == "" );
+        REQUIRE( v.is<picojson::object>() );
+        picojson::value props = v.get<picojson::object>()["thingProperties"];
+        REQUIRE( props.is<picojson::object>() );
+        REQUIRE( props.get<picojson::object>()["k"].get<double>() == 1 );
+        REQUIRE( props.get<picojson::object>()["s"].get<std::string>() == "v" );
     }
 }

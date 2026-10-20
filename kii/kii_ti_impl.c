@@ -201,16 +201,13 @@ kii_code_t _onboard(
     }
 
     if (thing_properties != NULL) {
-        char esc[strlen(thing_properties) * 2 + 1];
-        if (jkii_escape_str(thing_properties, esc, sizeof(esc)) < 0) {
-            _req_headers_free_all(kii);
-            return KII_ERR_TOO_LARGE_DATA;
-        }
+        // A JSON object, not a string: embedded as given, unlike the values
+        // above, which are escaped to go between quotes.
         content_len += snprintf(
                 &kii->_rw_buff[content_len],
                 kii->_rw_buff_size - content_len,
                 ",\"thingProperties\":%s",
-                esc);
+                thing_properties);
         if (content_len >= kii->_rw_buff_size) {
             _req_headers_free_all(kii);
             return KII_ERR_TOO_LARGE_DATA;
