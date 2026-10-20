@@ -1719,6 +1719,98 @@ TEST_CASE("KiiJson, GetComplexObject") {
     REQUIRE(0 == strcmp("value", fields[13].field_copy.string));
 }
 
+// A path segment that is neither a field nor an index, by the grammar in
+// jkii.h, finds nothing. It used to be read the same as the end of the path
+// with an empty field, so on an object with a "" key it found that key's
+// value; an unterminated index was read without its last digit.
+TEST_CASE("KiiJson, GetByInvalidPath") {
+    const char json_string[] =
+        "{\"\" : 1, \"a\" : [10, 20], \"b\" : {\"\" : 2, \"c\" : 3}}";
+    const char* const paths[] = {
+        // Not a number.
+        "/[abc]", "/[]", "/[-]", "/[+1]", "/[ 1]", "/[1 ]",
+        "/b/[abc]", "/b/[]", "/[abc]/c", "/b/[]/c",
+        // Negative, with a leading zero, too large, or into an object.
+        "/[-1]", "/b/[-1]", "/a/[-1]", "/[0]", "/[08]", "/b/[08]",
+        "/[9223372036854775808]", "/b/[9223372036854775808]",
+        "/[99999999999999999999]", "/[99999999999999999999999999]",
+        // No ']' to end it, or more after it.
+        "/[", "/[0", "/[1", "/b/[0", "/a/[1x", "/a/[10", "/[0]x", "/[0]]",
+        "/a/[1]x",
+        // Empty fields.
+        "/", "//", "//c", "/b/", "/b//c", "/a/[1]/",
+        // No leading '/'.
+        "b", "b/c", "[0]"
+    };
+
+    for (const char* path : paths) {
+        INFO("path " << path);
+
+        jkii_token_t tokens[16];
+        jkii_resource_t resource = { tokens, 16 };
+
+        jkii_field_t fields[2];
+        memset(fields, 0x00, sizeof(fields));
+
+        fields[0].path = path;
+        fields[0].type = JKII_FIELD_TYPE_INTEGER;
+        fields[1].name = NULL;
+
+        jkii_parse_err_t res = jkii_parse(
+                json_string,
+                strlen(json_string),
+                fields,
+                &resource);
+        CHECK(JKII_ERR_PARTIAL == res);
+        CHECK(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
+    }
+}
+
+// Valid paths into the same document, beside invalid ones, are still found.
+TEST_CASE("KiiJson, GetByValidPathBesideInvalid") {
+    const char json_string[] =
+        "{\"\" : 1, \"a\" : [10, 20], \"b\" : {\"\" : 2, \"c\" : 3},"
+        " \"[0]\" : 4}";
+
+    jkii_token_t tokens[16];
+    jkii_resource_t resource = { tokens, 16 };
+
+    jkii_field_t fields[7];
+    memset(fields, 0x00, sizeof(fields));
+
+    fields[0].path = "/a/[0]";
+    fields[0].type = JKII_FIELD_TYPE_INTEGER;
+    fields[1].path = "/[]";
+    fields[1].type = JKII_FIELD_TYPE_INTEGER;
+    fields[2].path = "/a/[1]";
+    fields[2].type = JKII_FIELD_TYPE_INTEGER;
+    fields[3].path = "/b/";
+    fields[3].type = JKII_FIELD_TYPE_INTEGER;
+    fields[4].path = "/b/c";
+    fields[4].type = JKII_FIELD_TYPE_INTEGER;
+    // An escaped '[' is part of a field, not the start of an index.
+    fields[5].path = "/\\[0\\]";
+    fields[5].type = JKII_FIELD_TYPE_INTEGER;
+    fields[6].path = NULL;
+
+    jkii_parse_err_t res = jkii_parse(
+            json_string,
+            strlen(json_string),
+            fields,
+            &resource);
+    CHECK(JKII_ERR_PARTIAL == res);
+    CHECK(JKII_FIELD_ERR_OK == fields[0].result);
+    CHECK(10 == fields[0].field_copy.int_value);
+    CHECK(JKII_FIELD_ERR_NOT_FOUND == fields[1].result);
+    CHECK(JKII_FIELD_ERR_OK == fields[2].result);
+    CHECK(20 == fields[2].field_copy.int_value);
+    CHECK(JKII_FIELD_ERR_NOT_FOUND == fields[3].result);
+    CHECK(JKII_FIELD_ERR_OK == fields[4].result);
+    CHECK(3 == fields[4].field_copy.int_value);
+    CHECK(JKII_FIELD_ERR_OK == fields[5].result);
+    CHECK(4 == fields[5].field_copy.int_value);
+}
+
 TEST_CASE("KiiJson, PushRetrieveEndpoint") {
     const char json_string[] =
         "{"
