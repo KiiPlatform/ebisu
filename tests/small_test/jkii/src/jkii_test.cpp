@@ -3,7 +3,10 @@
 #include <jkii.h>
 #include <jkii_utils.h>
 #include <math.h>
-#include <limits.h>
+#include <stdint.h>
+#include <string>
+#include <type_traits>
+#include <vector>
 
 static jkii_resource_t* cb_alloc(size_t required_size)
 {
@@ -269,6 +272,178 @@ static jkii_parse_err_t parse_number_by_name(
             &resource);
     *out_field = fields[0];
     return res;
+}
+
+// JSON integers are read as int32_t and int64_t, under the names jkii has
+// always had for them, so that they mean the same on every target.
+static_assert(std::is_same<
+        decltype(((jkii_field_t*)0)->field_copy.int_value), int32_t>::value,
+        "int_value is an int32_t");
+static_assert(std::is_same<
+        decltype(((jkii_field_t*)0)->field_copy.long_value), int64_t>::value,
+        "long_value is an int64_t");
+static_assert(std::is_same<
+        decltype(((jkii_primitive_t*)0)->value.int_value), int32_t>::value,
+        "int_value is an int32_t");
+static_assert(std::is_same<
+        decltype(((jkii_primitive_t*)0)->value.long_value), int64_t>::value,
+        "long_value is an int64_t");
+
+// The narrower of int32_t and int64_t that an integer fits in, if either.
+enum IntegerRange {
+    FITS_INT32,
+    FITS_INT64_ONLY,
+    FITS_NEITHER
+};
+
+struct IntegerCase {
+    std::string text;
+    IntegerRange range;
+    int64_t value; // unless FITS_NEITHER
+};
+
+static IntegerCase integer_case(int64_t value)
+{
+    char text[32];
+    snprintf(text, sizeof(text), "%lld", (long long)value);
+    IntegerRange range = FITS_INT64_ONLY;
+    if (INT32_MIN <= value && value <= INT32_MAX) {
+        range = FITS_INT32;
+    }
+    return IntegerCase{ text, range, value };
+}
+
+// Integers at the edges of the int32_t and int64_t ranges, and on either side
+// of the lengths jkii used to go by.
+//
+// jkii chose the type by length, from how the libc spells INT_MAX and
+// LONG_MAX. With glibc on 64-bit Linux, integers of up to 12 characters were
+// ints whatever their value, up to 21 were longs, and longer ones doubles.
+// The ranges were those of int and long, so where long is 32 bits, as on the
+// ARM targets, nothing past the int range could be read at all.
+static std::vector<IntegerCase> integer_range_cases()
+{
+    return {
+        integer_case(INT32_MAX),
+        integer_case((int64_t)INT32_MAX + 1),
+        integer_case(INT32_MIN),
+        integer_case((int64_t)INT32_MIN - 1),
+        integer_case(INT64_MAX),
+        integer_case(INT64_MIN),
+        integer_case(INT64_C(4294967296)),
+        integer_case(INT64_C(999999999999)),
+        integer_case(INT64_C(-99999999999)),
+        integer_case(INT64_C(9999999999999)),
+        IntegerCase{ "9223372036854775808", FITS_NEITHER, 0 },
+        IntegerCase{ "-9223372036854775809", FITS_NEITHER, 0 },
+        IntegerCase{ "10000000000000000000000", FITS_NEITHER, 0 },
+        IntegerCase{ "-10000000000000000000000", FITS_NEITHER, 0 },
+    };
+}
+
+// An integer is an INTEGER if it fits in an int32_t, a LONG if it fits only in
+// an int64_t, and out of range otherwise, whatever its length. Short integers
+// past the int range came back as int overflow instead of as longs, and very
+// long ones as doubles instead of as out of range.
+TEST_CASE("KiiJson, PrimitiveIntegerByRange") {
+    for (const IntegerCase& c : integer_range_cases()) {
+        INFO("value " << c.text);
+        const bool negative = c.text[0] == '-';
+        jkii_primitive_t res;
+        memset(&res, 0x00, sizeof(res));
+
+        jkii_primitive_err_t err =
+            jkii_parse_primitive(c.text.c_str(), c.text.size(), &res);
+        switch (c.range) {
+            case FITS_INT32:
+                CHECK(JKII_PRIMITIVE_ERR_OK == err);
+                CHECK(JKII_FIELD_TYPE_INTEGER == res.type);
+                CHECK(c.value == res.value.int_value);
+                break;
+            case FITS_INT64_ONLY:
+                CHECK(JKII_PRIMITIVE_ERR_OK == err);
+                CHECK(JKII_FIELD_TYPE_LONG == res.type);
+                CHECK(c.value == res.value.long_value);
+                break;
+            case FITS_NEITHER:
+                CHECK((negative ? JKII_PRIMITIVE_ERR_UNDERFLOW
+                                : JKII_PRIMITIVE_ERR_OVERFLOW) == err);
+                break;
+        }
+    }
+}
+
+// The same integers as fields. Asked for as any type, they come back as
+// primitives do, with one past the int64_t range a LONG that overflowed. Asked
+// for as an INTEGER, one past the int32_t range is out of range rather than a
+// type mismatch, as short ones already were; as a double, any integer is a
+// type mismatch, as all but very long ones already were.
+//
+// Where long was as wide as int, an int field is where the overflow was lost:
+// the long conversion gave LONG_MAX, which was INT_MAX, and the int conversion
+// took that for a value that fits.
+TEST_CASE("KiiJson, GetObjectIntegerByRange") {
+    for (const IntegerCase& c : integer_range_cases()) {
+        INFO("value " << c.text);
+        const bool negative = c.text[0] == '-';
+        const jkii_field_err_t out_of_range = negative ?
+            JKII_FIELD_ERR_NUM_UNDERFLOW : JKII_FIELD_ERR_NUM_OVERFLOW;
+        jkii_field_t field;
+        jkii_parse_err_t res;
+
+        res = parse_number_by_name(c.text.c_str(), JKII_FIELD_TYPE_ANY, &field);
+        switch (c.range) {
+            case FITS_INT32:
+                CHECK(JKII_ERR_OK == res);
+                CHECK(JKII_FIELD_TYPE_INTEGER == field.type);
+                CHECK(c.value == field.field_copy.int_value);
+                break;
+            case FITS_INT64_ONLY:
+                CHECK(JKII_ERR_OK == res);
+                CHECK(JKII_FIELD_TYPE_LONG == field.type);
+                CHECK(c.value == field.field_copy.long_value);
+                break;
+            case FITS_NEITHER:
+                CHECK(JKII_ERR_PARTIAL == res);
+                CHECK(out_of_range == field.result);
+                CHECK(JKII_FIELD_TYPE_LONG == field.type);
+                CHECK((negative ? INT64_MIN : INT64_MAX) ==
+                        field.field_copy.long_value);
+                break;
+        }
+
+        res = parse_number_by_name(
+                c.text.c_str(), JKII_FIELD_TYPE_INTEGER, &field);
+        CHECK(JKII_FIELD_TYPE_INTEGER == field.type);
+        if (c.range == FITS_INT32) {
+            CHECK(JKII_ERR_OK == res);
+            CHECK(c.value == field.field_copy.int_value);
+        } else {
+            CHECK(JKII_ERR_PARTIAL == res);
+            CHECK(out_of_range == field.result);
+            CHECK((negative ? INT32_MIN : INT32_MAX) ==
+                    field.field_copy.int_value);
+        }
+
+        res = parse_number_by_name(c.text.c_str(), JKII_FIELD_TYPE_LONG, &field);
+        CHECK(JKII_FIELD_TYPE_LONG == field.type);
+        if (c.range != FITS_NEITHER) {
+            CHECK(JKII_ERR_OK == res);
+            CHECK(c.value == field.field_copy.long_value);
+        } else {
+            CHECK(JKII_ERR_PARTIAL == res);
+            CHECK(out_of_range == field.result);
+            CHECK((negative ? INT64_MIN : INT64_MAX) ==
+                    field.field_copy.long_value);
+        }
+
+        res = parse_number_by_name(
+                c.text.c_str(), JKII_FIELD_TYPE_DOUBLE, &field);
+        CHECK(JKII_ERR_PARTIAL == res);
+        CHECK(JKII_FIELD_ERR_TYPE_MISMATCH == field.result);
+        CHECK((c.range == FITS_INT32 ? JKII_FIELD_TYPE_INTEGER
+                                     : JKII_FIELD_TYPE_LONG) == field.type);
+    }
 }
 
 // A sign, a point or an exponent marker without the digits that go with it is
@@ -1395,6 +1570,40 @@ TEST_CASE("KiiJson, GetArrayIndexWithLeadingZero") {
             CHECK(JKII_FIELD_ERR_OK == fields[0].result);
             CHECK(c.index == fields[0].field_copy.int_value);
         }
+    }
+}
+
+// An index in a path is read as an int64_t as well, and has to be one that a
+// size_t holds. Where size_t is 32 bits, a cast alone would take 4294967296
+// for 0 and 4294967297 for 1. A negative index is no index either.
+TEST_CASE("KiiJson, GetArrayIndexOutOfRange") {
+    const char json_string[] = "[0, 1, 2]";
+    const char* const paths[] = {
+        "/[3]", "/[-1]", "/[-2147483649]", "/[2147483648]",
+        "/[4294967296]", "/[4294967297]", "/[9223372036854775807]",
+        "/[9223372036854775808]", "/[18446744073709551617]"
+    };
+
+    for (const char* path : paths) {
+        INFO("path " << path);
+
+        jkii_token_t tokens[8];
+        jkii_resource_t resource = { tokens, 8 };
+
+        jkii_field_t fields[2];
+        memset(fields, 0x00, sizeof(fields));
+
+        fields[0].path = path;
+        fields[0].type = JKII_FIELD_TYPE_INTEGER;
+        fields[1].name = NULL;
+
+        jkii_parse_err_t res = jkii_parse(
+                json_string,
+                strlen(json_string),
+                fields,
+                &resource);
+        CHECK(JKII_ERR_PARTIAL == res);
+        CHECK(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
     }
 }
 

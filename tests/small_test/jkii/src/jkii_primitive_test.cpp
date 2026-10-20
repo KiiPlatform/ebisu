@@ -2,7 +2,7 @@
 #include <jkii.h>
 #include <jkii_utils.h>
 #include <math.h>
-#include <limits.h>
+#include <stdint.h>
 #include <string.h>
 #include <float.h>
 
@@ -16,48 +16,51 @@ TEST_CASE("KiiJson, PrimitiveInt")
     REQUIRE(1 == res.value.int_value);
 }
 
+// The ranges are those of int32_t and int64_t, whatever the widths of int and
+// long. These went by INT_MAX and LONG_MAX, so where long is 32 bits LONG_MAX
+// was an int and the long tests failed.
 TEST_CASE("KiiJson, PrimitiveIntMax")
 {
-    char str_buff[64];
-    snprintf(str_buff, 64, "%d", INT_MAX);
+    const char str[] = "2147483647";
     jkii_primitive_t res;
-    jkii_parse_primitive(str_buff, strlen(str_buff), &res);
+    REQUIRE(JKII_PRIMITIVE_ERR_OK ==
+            jkii_parse_primitive(str, strlen(str), &res));
 
     REQUIRE(JKII_FIELD_TYPE_INTEGER == res.type);
-    REQUIRE(INT_MAX == res.value.int_value);
+    REQUIRE(INT32_MAX == res.value.int_value);
 }
 
 TEST_CASE("KiiJson, PrimitiveIntMin")
 {
-    char str_buff[64];
-    snprintf(str_buff, 64, "%d", INT_MIN);
+    const char str[] = "-2147483648";
     jkii_primitive_t res;
-    jkii_parse_primitive(str_buff, strlen(str_buff), &res);
+    REQUIRE(JKII_PRIMITIVE_ERR_OK ==
+            jkii_parse_primitive(str, strlen(str), &res));
 
     REQUIRE(JKII_FIELD_TYPE_INTEGER == res.type);
-    REQUIRE(INT_MIN == res.value.int_value);
+    REQUIRE(INT32_MIN == res.value.int_value);
 }
 
 TEST_CASE("KiiJson, PrimitiveLongMin")
 {
-    char str_buff[64];
-    snprintf(str_buff, 64, "%ld", LONG_MIN);
+    const char str[] = "-9223372036854775808";
     jkii_primitive_t res;
-    jkii_parse_primitive(str_buff, strlen(str_buff), &res);
+    REQUIRE(JKII_PRIMITIVE_ERR_OK ==
+            jkii_parse_primitive(str, strlen(str), &res));
 
     REQUIRE(JKII_FIELD_TYPE_LONG == res.type);
-    REQUIRE(LONG_MIN == res.value.long_value);
+    REQUIRE(INT64_MIN == res.value.long_value);
 }
 
 TEST_CASE("KiiJson, PrimitiveLongMax")
 {
-    char str_buff[64];
-    snprintf(str_buff, 64, "%ld", LONG_MAX);
+    const char str[] = "9223372036854775807";
     jkii_primitive_t res;
-    jkii_parse_primitive(str_buff, strlen(str_buff), &res);
+    REQUIRE(JKII_PRIMITIVE_ERR_OK ==
+            jkii_parse_primitive(str, strlen(str), &res));
 
     REQUIRE(JKII_FIELD_TYPE_LONG == res.type);
-    REQUIRE(LONG_MAX == res.value.long_value);
+    REQUIRE(INT64_MAX == res.value.long_value);
 }
 
 TEST_CASE("KiiJson, PrimitiveDouble")
@@ -244,7 +247,8 @@ TEST_CASE("KiiJson, PrimitiveIntegerWithLeadingZeroIsInvalid")
         }
     }
 
-    // The last is too long for a long: invalid all the same, not an overflow.
+    // The last is too long for an int64_t: invalid all the same, not an
+    // overflow.
     const char* const values[] = {
         "00", "007", "08", "-08", "09", "010", "-010",
         "00000000000000000000000000000005"

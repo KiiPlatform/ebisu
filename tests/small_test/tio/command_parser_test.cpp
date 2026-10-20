@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 #include <string.h>
+#include <stdint.h>
+#include <type_traits>
 typedef struct expected_parsed_actions {
     const char* command_id;
     tio_action_t *expected_actions;
@@ -220,6 +222,56 @@ TEST_CASE( "_parse_action_object" ) {
         REQUIRE ( strcmp(alias_copy, alias) == 0 );
     }
 
+}
+
+// An integer action value is an int64_t, whatever the width of long. It was a
+// long, so where long is 32 bits, as on the ARM targets, no value past the int
+// range reached the action handler.
+static_assert(std::is_same<
+        decltype(((tio_action_value_t*)0)->param.long_value), int64_t>::value,
+        "long_value is an int64_t");
+
+TEST_CASE( "_parse_action integer values" ) {
+    tio_handler_t handler;
+    jkii_token_t tokens[16];
+    jkii_resource_t resource = { tokens, 16 };
+    handler._kii._json_resource = &resource;
+
+    const struct {
+        const char* text;
+        int64_t value;
+    } cases[] = {
+        { "23", 23 },
+        { "-23", -23 },
+        { "2147483647", INT32_MAX },
+        { "-2147483648", INT32_MIN },
+        { "2147483648", (int64_t)INT32_MAX + 1 },
+        { "-2147483649", (int64_t)INT32_MIN - 1 },
+        { "4294967296", INT64_C(4294967296) },
+        { "9223372036854775807", INT64_MAX },
+        { "-9223372036854775808", INT64_MIN }
+    };
+    const char alias[] = "myalias";
+
+    for (const auto& c : cases) {
+        INFO("value " << c.text);
+        std::string actions =
+            std::string("[{\"setValue\":") + c.text + "}]";
+        tio_action_t action;
+        memset(&action, 0, sizeof(action));
+
+        _cmd_parser_code_t p_res = _parse_action(
+                &handler,
+                alias,
+                strlen(alias),
+                actions.c_str(),
+                actions.length(),
+                0,
+                &action);
+        CHECK( p_res == _CMD_PARSE_OK );
+        CHECK( action.action_value.type == TIO_TYPE_INTEGER );
+        CHECK( action.action_value.param.long_value == c.value );
+    }
 }
 
 void cb_parsed_action(char* command_id, tio_action_t* action, void* expected_actions) {
