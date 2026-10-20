@@ -42,9 +42,9 @@ option(EBISU_WERROR "Treat compiler warnings as errors" ON)
 # what ISO C does not have, such as strdup or strncasecmp, so a POSIX dependency
 # fails the build too.
 #
-# C_STANDARD is for the linux sample, which is an application and not part of
-# the libraries: it gets the standard it names, with GNU extensions, and
-# without -pedantic.
+# C_STANDARD is for the samples, which are applications and not part of the
+# libraries: they get the standard they name, with GNU extensions, and without
+# -pedantic.
 function(ebisu_configure_target tgt)
   cmake_parse_arguments(PARSE_ARGV 1 arg "" "C_STANDARD" "")
   if(arg_C_STANDARD)
@@ -92,11 +92,6 @@ add_subdirectory(khc)
 add_subdirectory(kii)
 add_subdirectory(tio)
 
-option(EBISU_BUILD_SAMPLES "Build the linux sample application" OFF)
-if(EBISU_BUILD_SAMPLES)
-    add_subdirectory(tio/linux-sample)
-endif()
-
 # Tests and docs are for developing ebisu itself. Skipped when ebisu is embedded
 # in another project, which is how the vendor SDK builds consume it.
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -117,5 +112,17 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     include(CTest)
     if(BUILD_TESTING)
         add_subdirectory(tests)
+    endif()
+endif()
+
+# After include(CTest): the win32 sample has a test of its own.
+option(EBISU_BUILD_SAMPLES "Build the sample application for the target platform" OFF)
+if(EBISU_BUILD_SAMPLES)
+    # The linux sample needs OpenSSL and POSIX threads, and builds on macOS
+    # too; the win32 sample needs only what Windows provides.
+    if(WIN32)
+        add_subdirectory(tio/win32-sample)
+    else()
+        add_subdirectory(tio/linux-sample)
     endif()
 endif()

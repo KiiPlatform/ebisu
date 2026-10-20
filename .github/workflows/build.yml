@@ -78,7 +78,9 @@ jobs:
   # keeps a size_t or a pointer in a long passes both and fails only there. That
   # one is cross-compiled with mingw-w64 and run under wine, rather than on a
   # Windows runner, so that it builds with the same CMake presets and GCC
-  # warnings as the rest.
+  # warnings as the rest. Its preset builds the win32 sample too, and its small
+  # tests include the sample's TLS test, which runs against servers on
+  # 127.0.0.1 and so stays within the runner like the others.
   #
   # ASan and UBSan catch a class of bug valgrind structurally cannot: overruns
   # of globals and string literals live in .rodata, not on the heap or stack.
@@ -150,12 +152,17 @@ jobs:
       # alongside it. WINEDEBUG=-all, here and in the test preset, quiets
       # wine's complaints that there is no display and no 32-bit wine, neither
       # of which a console program needs.
+      #
+      # The win32 sample's TLS test runs its servers with python3 and makes its
+      # certificates with openssl, and is left out of the build without them.
+      # The runner image has both; they are named here so that it cannot
+      # quietly stop running.
       - name: Setup mingw-w64 and wine
         if: matrix.variant == 'mingw'
         env:
           WINEDEBUG: -all
         run: |
-          sudo apt-get -yq install --no-install-recommends g++-mingw-w64-x86-64-posix wine wine64
+          sudo apt-get -yq install --no-install-recommends g++-mingw-w64-x86-64-posix wine wine64 python3 openssl
           wineboot --init
       - name: configure
         run: cmake --preset ${{ matrix.preset }}

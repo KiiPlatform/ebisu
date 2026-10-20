@@ -64,11 +64,12 @@
       "name": "mingw",
       "inherits": "base",
       "displayName": "Debug, 64-bit Windows",
-      "description": "Cross-compiled with mingw-w64 for 64-bit Windows, where long is 32 bits but pointers and size_t are 64; the tests run under wine. Leaves out the large tests, whose sockets are POSIX. Needs mingw-w64 and wine",
+      "description": "Cross-compiled with mingw-w64 for 64-bit Windows, where long is 32 bits but pointers and size_t are 64; the tests run under wine. Leaves out the large tests, whose sockets are POSIX, and builds the win32 sample. Needs mingw-w64 and wine",
       "toolchainFile": "${sourceDir}/cmake/mingw-w64-x86_64.cmake",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "EBISU_APP_ID": ""
+        "EBISU_APP_ID": "",
+        "EBISU_BUILD_SAMPLES": "ON"
       }
     }
   ],
