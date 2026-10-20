@@ -337,3 +337,80 @@ TEST_CASE( "_handle_command action name length" ) {
         REQUIRE( res == TIO_ERR_TOO_LARGE_DATA );
     }
 }
+
+// kii_api_call_run reports only transport errors, so a refused action-result
+// request used to come back as TIO_ERR_OK, and the results were lost without
+// the error callback being told.
+TEST_CASE( "_handle_command response status" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+
+    char kii_buff[2048];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
+    kii_set_json_parser_resource(&handler._kii, &resource);
+    kii_set_app_id(&handler._kii, "appid");
+    kii_set_site(&handler._kii, "api.kii.com");
+    strcpy(handler._kii._author.author_id, "thingid");
+
+    // Each section sets the response before calling _handle_command.
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [](void*, const char*, unsigned int) { return KHC_SOCK_OK; };
+    http_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    size_t resp_pos = 0;
+    std::string resp;
+    http_ctx.on_recv = [&resp_pos, &resp](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        size_t n = resp.size() - resp_pos;
+        if (n > length_to_read) { n = length_to_read; }
+        memcpy(buffer, resp.data() + resp_pos, n);
+        resp_pos += n;
+        *out_actual_length = n;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_cb_http_sock_send(&handler._kii, khct::cb::mock_send, &http_ctx);
+    kii_set_cb_http_sock_recv(&handler._kii, khct::cb::mock_recv, &http_ctx);
+    kii_set_cb_http_sock_close(&handler._kii, khct::cb::mock_close, &http_ctx);
+    char resp_hdr_buff[512];
+    khc_set_resp_header_buff(&handler._kii._khc, resp_hdr_buff, sizeof(resp_hdr_buff));
+
+    int called = 0;
+    std::string command =
+        "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
+
+    SECTION("2xx is success") {
+        resp = "HTTP/1.1 204 No Content\r\nContent-Length: 0\r\n\r\n";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_OK );
+        REQUIRE( called == 1 );
+    }
+
+    SECTION("500 is reported") {
+        const std::string body = "{\"errorCode\":\"INTERNAL_SERVER_ERROR\"}";
+        resp = "HTTP/1.1 500 Internal Server Error\r\nContent-Length: " +
+            std::to_string(body.size()) + "\r\n\r\n" + body;
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_RESP_STATUS );
+        REQUIRE( called == 1 );
+    }
+
+    SECTION("401 is reported") {
+        const std::string body = "{\"errorCode\":\"WRONG_TOKEN\"}";
+        resp = "HTTP/1.1 401 Unauthorized\r\nContent-Length: " +
+            std::to_string(body.size()) + "\r\n\r\n" + body;
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_RESP_STATUS );
+        REQUIRE( called == 1 );
+    }
+}
