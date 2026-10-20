@@ -2929,13 +2929,13 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">keep_alive_interval_sec</td><td>MQTT Keep-Alive interval in seconds. MQTT keep alive interval in seconds. If 0, Keep Alive mechanism is disabled. Otherwise, pingReq is sent to MQTT broker periodically with the specified interval. Too short interval causes network congestion. We recommend to set this to few minutes. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">keep_alive_interval_sec</td><td>MQTT Keep-Alive interval in seconds. MQTT keep alive interval in seconds. If 0, Keep Alive mechanism is disabled. Otherwise, pingReq is sent to MQTT broker periodically with the specified interval. Too short interval causes network congestion. We recommend to set this to few minutes. At most 65535, the largest MQTT can carry. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">cb_push</td><td>Callback called when push message delivered. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object passed to cb_push. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>kii_code_t </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>kii_code_t. KII_ERR_FAIL if keep_alive_interval_sec is larger than 65535, and the task is not started. </dd></dl>
 
 </div>
 </div>
@@ -3573,7 +3573,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 10:08:52 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 20 2026 10:12:18 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
