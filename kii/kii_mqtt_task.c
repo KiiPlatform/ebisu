@@ -236,6 +236,10 @@ khc_sock_code_t _mqtt_recv_remaining_trash(kii_t* kii, unsigned long remaining_l
             return KHC_SOCK_FAIL;
         }
         else if (res == KHC_SOCK_OK) {
+            if (received == 0) {
+                // End of stream: the peer closed the connection.
+                return KHC_SOCK_FAIL;
+            }
             total_received += received;
         }
     }
@@ -261,6 +265,10 @@ khc_sock_code_t _mqtt_recv_remaining(kii_t* kii, unsigned long remaining_length,
             return KHC_SOCK_FAIL;
         }
         else if (res == KHC_SOCK_OK) {
+            if (received == 0) {
+                // End of stream: the peer closed the connection.
+                return KHC_SOCK_FAIL;
+            }
             total_received += received;
         }
     }
