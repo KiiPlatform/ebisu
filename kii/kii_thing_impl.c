@@ -44,8 +44,13 @@ kii_code_t _thing_auth(
     // Request body.
     char esc_vid[strlen(vendor_thing_id) * 2 + 1];
     char esc_pass[strlen(password) * 2 + 1];
-    jkii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid));
-    jkii_escape_str(password, esc_pass, sizeof(esc_vid));
+    // Unchecked, a failure would put something other than the value in the
+    // body: whatever was on the stack, if the buffer was never written.
+    if (jkii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid)) < 0 ||
+            jkii_escape_str(password, esc_pass, sizeof(esc_pass)) < 0) {
+        _req_headers_free_all(kii);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
 
     int content_len = snprintf(
             kii->_rw_buff,
@@ -108,9 +113,12 @@ kii_code_t _thing_register(
     char esc_vid[strlen(vendor_thing_id) * 2 + 1];
     char esc_pass[strlen(password) * 2 + 1];
     char esc_type[strlen(thing_type) * 2 + 1];
-    jkii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid));
-    jkii_escape_str(password, esc_pass, sizeof(esc_vid));
-    jkii_escape_str(thing_type, esc_type, sizeof(esc_type));
+    if (jkii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid)) < 0 ||
+            jkii_escape_str(password, esc_pass, sizeof(esc_pass)) < 0 ||
+            jkii_escape_str(thing_type, esc_type, sizeof(esc_type)) < 0) {
+        _req_headers_free_all(kii);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
 
     int content_len = snprintf(
             kii->_rw_buff,
