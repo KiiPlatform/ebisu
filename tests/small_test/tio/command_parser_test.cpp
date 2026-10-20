@@ -767,3 +767,67 @@ TEST_CASE( "_handle_command invalid primitive values" ) {
         REQUIRE( handler._kii._req_headers == NULL );
     }
 }
+
+// jsmn is built non-strict, so a command object with an unquoted key parses,
+// with the key as a primitive token. Looking /commandID or /actions up in it
+// has to be a parse error rather than an assertion.
+TEST_CASE( "_handle_command unquoted key" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+
+    char kii_buff[2048];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
+    kii_set_json_parser_resource(&handler._kii, &resource);
+    kii_set_app_id(&handler._kii, "appid");
+    kii_set_site(&handler._kii, "api.kii.com");
+    strcpy(handler._kii._author.author_id, "thingid");
+
+    // No request may be performed, so connecting is recorded and fails.
+    bool connected = false;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&connected](void*, const char*, unsigned int) {
+        connected = true;
+        return KHC_SOCK_FAIL;
+    };
+    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+
+    SECTION("an unquoted commandID key is rejected") {
+        int called = 0;
+        std::string command =
+            "{commandID:\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_PARSE_JSON );
+        REQUIRE( called == 0 );
+        REQUIRE( !connected );
+    }
+
+    SECTION("an unquoted actions key is rejected") {
+        int called = 0;
+        std::string command =
+            "{\"commandID\":\"cmd1\",actions:[{\"alias1\":[{\"turnPower\":true}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_PARSE_JSON );
+        REQUIRE( called == 0 );
+        REQUIRE( !connected );
+    }
+}
+
+TEST_CASE( "_parse_command unquoted key" ) {
+    tio_handler_t handler;
+    jkii_token_t tokens[25];
+    jkii_resource_t resource = { tokens, 25 };
+    handler._kii._json_resource = &resource;
+
+    int called = 0;
+    const char command[] = "{commandID:\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
+    tio_code_t res = _parse_command(&handler, command, strlen(command), cb_parsed_action_count, &called);
+
+    REQUIRE( res == TIO_ERR_PARSE_JSON );
+    REQUIRE( called == 0 );
+}

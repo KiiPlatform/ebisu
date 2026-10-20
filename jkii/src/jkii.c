@@ -653,7 +653,10 @@ static int _kii_jsmn_get_value_by_path(
                     root_index + index + 1 < tokens_num; ++i) {
                 const jsmntok_t* key_token = root_token + index;
                 const jsmntok_t* value_token = root_token + index + 1;
-                M_JKII_ASSERT(key_token->type == JSMN_STRING);
+                /* jsmn is not strict: an unquoted key is a primitive. */
+                if (key_token->type != JSMN_STRING) {
+                    return -1;
+                }
                 if (_jkii_is_same_key(&target,
                                 json_string + key_token->start,
                                 key_token->end - key_token->start) == 0) {

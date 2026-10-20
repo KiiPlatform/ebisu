@@ -1625,6 +1625,52 @@ TEST_CASE("KiiJson, CommandParseTest") {
     REQUIRE(JKII_FIELD_ERR_OK == fields[3].result);
 }
 
+// jsmn is built non-strict, so an unquoted key parses as a primitive token.
+// A path lookup that meets one fails, as a lookup by name already does.
+TEST_CASE("KiiJson, UnquotedKeyByPath") {
+    const char json_string[] = "{x:1}";
+
+    jkii_token_t tokens[256];
+    jkii_resource_t resource = { tokens, 256 };
+
+    jkii_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
+
+    fields[0].path = "/x";
+    fields[0].type = JKII_FIELD_TYPE_INTEGER;
+    fields[1].path = NULL;
+
+    jkii_parse_err_t res = jkii_parse(
+            json_string,
+            strlen(json_string),
+            fields,
+            &resource);
+    REQUIRE(JKII_ERR_PARTIAL == res);
+    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
+}
+
+TEST_CASE("KiiJson, UnquotedKeySecondLayerByPath") {
+    const char json_string[] = "{\"key1\" : {key2 : 100}}";
+
+    jkii_token_t tokens[256];
+    jkii_resource_t resource = { tokens, 256 };
+
+    jkii_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
+
+    fields[0].path = "/key1/key2";
+    fields[0].type = JKII_FIELD_TYPE_INTEGER;
+    fields[1].path = NULL;
+
+    jkii_parse_err_t res = jkii_parse(
+            json_string,
+            strlen(json_string),
+            fields,
+            &resource);
+    REQUIRE(JKII_ERR_PARTIAL == res);
+    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
+}
+
 TEST_CASE("KiiJson, NoTokensTest")
 {
     const char json_string[] = "{\"key1\" : \"value1\"}";
