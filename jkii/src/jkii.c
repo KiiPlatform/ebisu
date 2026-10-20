@@ -94,8 +94,14 @@ static jkii_parse_err_t _kii_jsmn_get_tokens(
     parse_result = jsmn_parse(&parser, json_string, json_string_len,
         resource->tokens, resource->tokens_num);
 
-    if (parse_result >= 0) {
+    if (parse_result > 0) {
         return JKII_ERR_OK;
+    } else if (parse_result == 0) {
+        /* Empty, whitespace only, or a NUL before the first token. That can
+         * come from the network, so it is invalid input rather than something
+         * to assert against. jsmn has left the tokens of the previous parse in
+         * place, which the caller would otherwise go on to read. */
+        return JKII_ERR_INVALID_INPUT;
     } else if (parse_result == JSMN_ERROR_NOMEM) {
         return JKII_ERR_TOKENS_SHORTAGE;
     } else if (parse_result == JSMN_ERROR_INVAL) {
@@ -875,7 +881,6 @@ jkii_parse_err_t jkii_parse(
     jkii_resource_t* resource)
 {
     M_JKII_ASSERT(json_string != NULL);
-    M_JKII_ASSERT(json_string_len > 0);
 
     if (resource == NULL || resource->tokens_num == 0) {
         return JKII_ERR_TOKENS_SHORTAGE;
@@ -904,7 +909,6 @@ jkii_parse_err_t jkii_parse_with_allocator(
     JKII_CB_RESOURCE_FREE cb_free)
 {
     M_JKII_ASSERT(json_string != NULL);
-    M_JKII_ASSERT(json_string_len > 0);
     M_JKII_ASSERT(cb_alloc != NULL);
     M_JKII_ASSERT(cb_free != NULL);
 
@@ -1075,7 +1079,6 @@ jkii_parse_err_t jkii_validate_root_object(
         jkii_resource_t* resource)
 {
     M_JKII_ASSERT(json_string != NULL);
-    M_JKII_ASSERT(json_string_len > 0);
 
     if (resource == NULL || resource->tokens_num == 0) {
         return JKII_ERR_TOKENS_SHORTAGE;
@@ -1102,7 +1105,6 @@ jkii_parse_err_t jkii_validate_root_object_with_allocator(
         JKII_CB_RESOURCE_FREE cb_free)
 {
     M_JKII_ASSERT(json_string != NULL);
-    M_JKII_ASSERT(json_string_len > 0);
     M_JKII_ASSERT(cb_alloc != NULL);
     M_JKII_ASSERT(cb_free != NULL);
 

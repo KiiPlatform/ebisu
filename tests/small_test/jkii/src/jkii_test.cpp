@@ -1646,3 +1646,66 @@ TEST_CASE("KiiJson, FailedAllocationTest")
 
     REQUIRE(JKII_ERR_ALLOCATION == res);
 }
+
+// A string with no JSON token in it is invalid input, not a programming error:
+// it can come from the network, e.g. a command whose alias maps to "" rather
+// than to an array of actions. The entry points asserted a non-zero length,
+// aborting any build with assertions enabled, and without them went on to read
+// the token array as the previous parse had left it. Whitespace alone was
+// never asserted against and took that second path in every build.
+TEST_CASE("KiiJson, NoTokenInputTest")
+{
+    const char previous[] = "{\"key1\" : \"value1\"}";
+    const char empty[] = "";
+    const char whitespace[] = " \t\r\n";
+    char buf[256];
+
+    jkii_token_t tokens[8];
+    jkii_resource_t resource = { tokens, 8 };
+
+    jkii_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
+
+    fields[0].name = "key1";
+    fields[0].type = JKII_FIELD_TYPE_STRING;
+    fields[0].field_copy.string = buf;
+    fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
+    fields[1].name = NULL;
+
+    // Leave the tokens of a valid object behind, as kii and tio do by reusing
+    // one resource for every parse.
+    REQUIRE(JKII_ERR_OK ==
+            jkii_parse(previous, strlen(previous), fields, &resource));
+
+    SECTION("jkii_parse") {
+        REQUIRE(JKII_ERR_INVALID_INPUT ==
+                jkii_parse(empty, 0, fields, &resource));
+        REQUIRE(JKII_ERR_INVALID_INPUT ==
+                jkii_parse(whitespace, strlen(whitespace), fields, &resource));
+    }
+
+    SECTION("jkii_parse_with_allocator") {
+        REQUIRE(JKII_ERR_INVALID_INPUT ==
+                jkii_parse_with_allocator(empty, 0, fields, cb_alloc, cb_free));
+        REQUIRE(JKII_ERR_INVALID_INPUT ==
+                jkii_parse_with_allocator(whitespace, strlen(whitespace),
+                    fields, cb_alloc, cb_free));
+    }
+
+    SECTION("jkii_validate_root_object") {
+        REQUIRE(JKII_ERR_INVALID_INPUT ==
+                jkii_validate_root_object(empty, 0, &resource));
+        REQUIRE(JKII_ERR_INVALID_INPUT ==
+                jkii_validate_root_object(whitespace, strlen(whitespace),
+                    &resource));
+    }
+
+    SECTION("jkii_validate_root_object_with_allocator") {
+        REQUIRE(JKII_ERR_INVALID_INPUT ==
+                jkii_validate_root_object_with_allocator(empty, 0,
+                    cb_alloc, cb_free));
+        REQUIRE(JKII_ERR_INVALID_INPUT ==
+                jkii_validate_root_object_with_allocator(whitespace,
+                    strlen(whitespace), cb_alloc, cb_free));
+    }
+}
