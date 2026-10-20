@@ -7,6 +7,40 @@
 
 #include <sstream>
 
+// A QoS 0 PUBLISH as the broker sends it: the fixed header, then the topic
+// length, the topic and the payload, with no packet identifier.
+static std::string publish_packet(const std::string& topic, const std::string& payload)
+{
+    std::string packet("\x30", 1);
+    size_t remaining_length = 2 + topic.length() + payload.length();
+    do {
+        char byte = remaining_length % 128;
+        remaining_length /= 128;
+        if (remaining_length > 0) {
+            byte |= 0x80;
+        }
+        packet += byte;
+    } while (remaining_length > 0);
+    packet += (char)(topic.length() >> 8);
+    packet += (char)(topic.length() & 0xff);
+    return packet + topic + payload;
+}
+
+// Serves data as recv on a stream socket does: whatever is left of it, up to
+// the size asked for. Once all of it has been read, nothing more arrives, so
+// reports what a socket whose receive timeout ran out reports.
+static void serve_stream(khct::cb::SockCtx& ctx, const std::string& data, size_t& served)
+{
+    ctx.on_recv = [data, &served](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        if (served == data.length()) {
+            return KHC_SOCK_FAIL;
+        }
+        *out_actual_length = data.copy(buffer, length_to_read, served);
+        served += *out_actual_length;
+        return KHC_SOCK_OK;
+    };
+}
+
 TEST_CASE( "MQTT state test" ) {
     size_t kii_buff_size = 1024;
     char kii_buff[kii_buff_size];
@@ -449,12 +483,12 @@ TEST_CASE( "MQTT state test" ) {
                 buffer[0] = (char)0x04;
                 *out_actual_length = 1;
                 break;
-            case 2: // remaining.
-                REQUIRE( length_to_read == 256);
+            case 2: // remaining: no more than the packet holds.
+                REQUIRE( length_to_read == 4);
                 buffer[0] = 'T';
                 buffer[1] = 'E';
                 buffer[2] = 'S';
-                buffer[4] = 'T';
+                buffer[3] = 'T';
                 *out_actual_length = 4;
                 break;
             default:
@@ -1709,6 +1743,73 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         _mqtt_state_recv_msg(&state);
         REQUIRE( call_push );
         REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+    }
+
+    // recv on a stream socket returns whatever is there, up to the size asked
+    // for. Discarding a packet asked for 256 bytes at a time however little of
+    // it was left, so when the next packet had already arrived it took the
+    // start of that one too, and then read the middle of it as a fixed header.
+    SECTION("recv ready discards an ignored packet without reading into the next") {
+        const std::string payload(300, 'p');
+        // PUBACK: remaining length 2, the packet identifier.
+        const std::string stream = std::string("\x40\x02\x00\x01", 4) + publish_packet("topic", payload);
+        size_t served = 0;
+        serve_stream(mqtt_ctx, stream, served);
+        int call_push = 0;
+        push_ctx.on_push = [=, &call_push](const char* message, size_t message_length) {
+            ++call_push;
+            REQUIRE( std::string(message, message_length) == payload );
+        };
+
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        _mqtt_state_recv_ready(&state);
+        CHECK( served == 4 );
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+        REQUIRE( state.remaining_message_size == 2 + 5 + payload.length() );
+
+        _mqtt_state_recv_msg(&state);
+        REQUIRE( call_push == 1 );
+        REQUIRE( served == stream.length() );
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        REQUIRE( state.info.error == KII_MQTT_ERR_OK );
+    }
+
+    // The same for a PUBLISH too large for the MQTT buffer: its last part is
+    // shorter than 256 bytes.
+    SECTION("recv msg discards a message larger than the buffer without reading into the next") {
+        const std::string large = publish_packet("topic", std::string(state.kii->_mqtt_buffer_size, 'x'));
+        const std::string payload(300, 'p');
+        const std::string stream = large + publish_packet("topic", payload);
+        size_t served = 0;
+        serve_stream(mqtt_ctx, stream, served);
+        int call_push = 0;
+        push_ctx.on_push = [=, &call_push](const char* message, size_t message_length) {
+            ++call_push;
+            REQUIRE( std::string(message, message_length) == payload );
+        };
+
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+        REQUIRE( state.remaining_message_size > state.kii->_mqtt_buffer_size );
+
+        _mqtt_state_recv_msg(&state);
+        CHECK( served == large.length() );
+        REQUIRE( call_push == 0 );
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+        REQUIRE( state.remaining_message_size == 2 + 5 + payload.length() );
+
+        _mqtt_state_recv_msg(&state);
+        REQUIRE( call_push == 1 );
+        REQUIRE( served == stream.length() );
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        REQUIRE( state.info.error == KII_MQTT_ERR_OK );
     }
 
     SECTION("send pingreq got KHC_SOCK_AGAIN") {
