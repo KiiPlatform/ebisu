@@ -96,6 +96,28 @@ TEST_CASE("Push Tests")
         CHECK(put_res2 == KII_ERR_OK);
         REQUIRE(khc_get_status_code(&kii._khc) == 409);
 
+        SECTION("Send push message to thing scope topic") {
+            // To Avoid 429 Too Many Requests
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+            const char message[] =
+                "{\"data\":{\"key\":\"value\"},\"mqtt\":{\"enabled\":true}}";
+            kii_code_t send_res = kii_send_push_message(&kii, &topic, message);
+            CHECK(send_res == KII_ERR_OK);
+            int status = khc_get_status_code(&kii._khc);
+            // Kii's guide documents 201, its API reference 200.
+            REQUIRE((status == 200 || status == 201));
+
+            kii_code_t del_res = kii_delete_topic(&kii, &topic);
+            CHECK(del_res == KII_ERR_OK);
+            REQUIRE(khc_get_status_code(&kii._khc) == 204);
+
+            // Sending to a topic that no longer exists results 404.
+            kii_code_t send_res2 = kii_send_push_message(&kii, &topic, message);
+            CHECK(send_res2 == KII_ERR_RESP_STATUS);
+            REQUIRE(khc_get_status_code(&kii._khc) == 404);
+        }
+
         SECTION("Delete thing scope topic") {
             // To Avoid 429 Too Many Requests
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
