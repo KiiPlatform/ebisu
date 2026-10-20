@@ -351,6 +351,22 @@ void khc_init(khc* khc);
 void khc_reset_except_cb(khc* khc);
 
 /**
+ * \brief Prepare to perform the same request again.
+ *
+ * Resets what sending the last request and reading its response left behind,
+ * so that the next khc_perform(khc*) sends the request again. The request
+ * itself -- host, path, method and headers -- remains, as do callbacks/
+ * userdata, the setting of khc_enable_insecure(khc*, bool) and the buffers set
+ * by khc_set_stream_buff(khc*, char*, size_t) and
+ * khc_set_resp_header_buff(khc*, char*, size_t).
+ *
+ * The body is read again through the read callback, which must start it over.
+ * \param [out] khc instance.
+ * \see khc_reset_except_cb(khc*)
+ */
+void khc_reset_except_request(khc* khc);
+
+/**
  * \brief Perform the HTTP session
  *
  * During the session, callback functions set by
@@ -557,7 +573,8 @@ void khc_enable_insecure(
  *
  * \param [in] khc instance.
  * \returns the three-digit HTTP status code of the response, or 0 if none
- * has been parsed since khc_init(khc*) or khc_reset_except_cb(khc*).
+ * has been parsed since khc_init(khc*), khc_reset_except_cb(khc*) or
+ * khc_reset_except_request(khc*).
  */
 uint16_t khc_get_status_code(
         khc* khc

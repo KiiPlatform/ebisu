@@ -106,6 +106,19 @@ void khc_reset_except_cb(khc* khc) {
     khc->_path[0] = '\0';
     khc->_method[0] = '\0';
 
+    khc_reset_except_request(khc);
+
+    // Response header Buffer
+    khc->_resp_header_buff = NULL;
+    khc->_resp_header_buff_size = 0;
+    khc->_resp_header_buff_allocated = false;
+    // Stream Buffer
+    khc->_stream_buff = NULL;
+    khc->_stream_buff_size = 0;
+    khc->_stream_buff_allocated = false;
+}
+
+void khc_reset_except_request(khc* khc) {
     // Internal states.
     khc->_state = KHC_STATE_IDLE;
     khc->_current_req_header = NULL;
@@ -126,15 +139,6 @@ void khc_reset_except_cb(khc* khc) {
     khc->_body_read_size = 0;
     khc->_result = KHC_ERR_OK;
     khc->_sent_length = 0;
-
-    // Response header Buffer
-    khc->_resp_header_buff = NULL;
-    khc->_resp_header_buff_size = 0;
-    khc->_resp_header_buff_allocated = false;
-    // Stream Buffer
-    khc->_stream_buff = NULL;
-    khc->_stream_buff_size = 0;
-    khc->_stream_buff_allocated = false;
 }
 
 void khc_enable_insecure(
