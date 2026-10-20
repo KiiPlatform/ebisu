@@ -24,6 +24,8 @@ tio_code_t _tio_convert_code(kii_code_t code) {
         return TIO_ERR_RESP_STATUS;
     case KII_ERR_PARSE_JSON:
         return TIO_ERR_PARSE_JSON;
+    case KII_ERR_CREATE_TASK:
+        return TIO_ERR_CREATE_TASK;
     case KII_ERR_FAIL:
     default:
         return TIO_ERR_FAIL;

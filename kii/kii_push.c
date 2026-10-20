@@ -286,10 +286,16 @@ kii_code_t kii_start_push_task(kii_t* kii, unsigned int keep_alive_interval, KII
     kii->_keep_alive_interval = keep_alive_interval;
     kii->_cb_push_received = callback;
     kii->_push_data = userdata;
-    kii->_cb_task_create(KII_TASK_NAME_MQTT,
+    if (kii->_cb_task_create == NULL) {
+        return KII_ERR_CREATE_TASK;
+    }
+    kii_task_code_t res = kii->_cb_task_create(KII_TASK_NAME_MQTT,
             mqtt_start_task,
             (void*)kii,
             kii->_task_create_data);
+    if (res != KII_TASKC_OK) {
+        return KII_ERR_CREATE_TASK;
+    }
     return KII_ERR_OK;
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

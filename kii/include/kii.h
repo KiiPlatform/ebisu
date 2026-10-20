@@ -122,7 +122,9 @@ typedef enum kii_code_t
     KII_ERR_TOO_LARGE_DATA, /**< \brief Data is larger than expected. */
     KII_ERR_RESP_STATUS, /**< \brief REST API returns error status code. */
     KII_ERR_PARSE_JSON, /**< \brief REST API returns error status code. */
-    KII_ERR_FAIL /**< \brief Other errors. */
+    KII_ERR_FAIL, /**< \brief Other errors. */
+    /* Added after KII_ERR_FAIL so that the codes above keep their values. */
+    KII_ERR_CREATE_TASK /**< \brief Error in creating task. */
 } kii_code_t;
 
 /** \brief Represents scope of bucket/ topic. */
@@ -595,6 +597,9 @@ kii_code_t kii_get_mqtt_endpoint(
  *  After succeeded, asynchronous task is started and
  * cb_push is called when message is delivered to the
  * thing.
+ * The task is created by the callback set by kii_set_cb_task_create().
+ * If that callback is not set, or fails to create the task, no task is
+ * started and KII_ERR_CREATE_TASK is returned.
 
  * \param [in,out] kii kii_t instance.
  * \param [in] keep_alive_interval_sec MQTT Keep-Alive interval in seconds.

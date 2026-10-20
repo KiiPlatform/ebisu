@@ -2233,6 +2233,53 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     REQUIRE( call_connect == 1 );
 }
 
+// Stands in for the platform's task creation: records the call and returns
+// the result the test chose.
+struct TaskCreateCtx {
+    kii_task_code_t result;
+    int calls;
+    std::string name;
+    void* entry_param;
+};
+
+static kii_task_code_t mock_task_create(const char* name, KII_TASK_ENTRY entry, void* entry_param, void* userdata)
+{
+    TaskCreateCtx* ctx = (TaskCreateCtx*)userdata;
+    ++ctx->calls;
+    ctx->name = name;
+    ctx->entry_param = entry_param;
+    return ctx->result;
+}
+
+// The task-create callback is what starts the MQTT task, so its result is
+// whether push is running. kii_start_push_task() ignored it and returned
+// KII_ERR_OK even when no task had been created, and called through the
+// callback without checking that one had been set.
+TEST_CASE( "kii_start_push_task reports a task it could not create" ) {
+    kii_t kii;
+    kii_init(&kii);
+
+    SECTION("task created") {
+        TaskCreateCtx ctx = { KII_TASKC_OK, 0 };
+        kii_set_cb_task_create(&kii, mock_task_create, &ctx);
+        CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        CHECK( ctx.calls == 1 );
+        CHECK( ctx.name == KII_TASK_NAME_MQTT );
+        CHECK( ctx.entry_param == &kii );
+    }
+
+    SECTION("task not created") {
+        TaskCreateCtx ctx = { KII_TASKC_FAIL, 0 };
+        kii_set_cb_task_create(&kii, mock_task_create, &ctx);
+        CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_CREATE_TASK );
+        CHECK( ctx.calls == 1 );
+    }
+
+    SECTION("no task-create callback") {
+        CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_CREATE_TASK );
+    }
+}
+
 // A 200 response to the MQTT endpoint request with the given ports and TTL.
 static std::string mqtt_endpoint_response(
         const std::string& port_tcp,
