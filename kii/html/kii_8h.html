@@ -2753,7 +2753,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 
 <p>Set response header buffer. </p>
 <p>The buffer is used to store single HTTP response header. If this method is not called or set NULL to the buffer, kii allocates memory of response header buffer when the HTTP session started and free when the HTTP session ends. The buffer allocated by kii is 256 bytes.</p>
-<p>If header is larger than the buffer, the header is skipped and not parsed. kii needs to parse Status Line, Content-Length, Transfer-Encoding and ETag header. The buffer must have enough size to store those headers. 256 bytes would be enough. If you set the buffer by the method, the method must be called before calling method initiate HTTP session such as <a class="el" href="kii_8h.html#a128f23578c2e848e6d20e05faae9b29d" title="Authorize thing with vendor thing id and password. After the authentication, access token is stored i...">kii_auth_thing()</a>, <a class="el" href="kii_8h.html#ac3ecf806fb18b0063b50291b8131dcfc" title="Post Kii object.">kii_post_object()</a>, etc. and memory used by the buffer can be safely freed after the method returned.</p>
+<p>If header is larger than the buffer, the header is skipped and not parsed. kii needs to parse Status Line, Content-Length, Transfer-Encoding and ETag header. The buffer must have enough size to store those headers. 256 bytes would be enough. If you set the buffer by the method, it is used by every HTTP session initiated afterwards by methods such as <a class="el" href="kii_8h.html#a128f23578c2e848e6d20e05faae9b29d" title="Authorize thing with vendor thing id and password. After the authentication, access token is stored i...">kii_auth_thing()</a>, <a class="el" href="kii_8h.html#ac3ecf806fb18b0063b50291b8131dcfc" title="Post Kii object.">kii_post_object()</a>, etc., until the method is called again. Memory used by the buffer must therefore stay valid, and must not be used for anything else, as long as the <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance is in use. To release it earlier, call the method with NULL first.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
@@ -2837,7 +2837,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 <p>Set stream buffer. Stream buffer is used store part of HTTP body when reading/ writing it from the network. </p>
 <p>If this method is not called or set NULL to the buffer, kii allocates memory of stream buffer when the HTTP session started and free when the HTTP session ends. The buffer allocated by kii is 1024 bytes.</p>
 <p>You can change the size of buffer depending on your request/ response size. It must be enough large to store size line in chunked encoded message. However, you may use much larger buffer since size line might require very small buffer as it consists of HEX size and CRLF for the better performance.</p>
-<p>If you set the buffer by the method, the method must be called before calling method initiate HTTP session such as <a class="el" href="kii_8h.html#a128f23578c2e848e6d20e05faae9b29d" title="Authorize thing with vendor thing id and password. After the authentication, access token is stored i...">kii_auth_thing()</a>, <a class="el" href="kii_8h.html#ac3ecf806fb18b0063b50291b8131dcfc" title="Post Kii object.">kii_post_object()</a>, etc. and memory used by the buffer can be safely freed after the method returned.</p>
+<p>If you set the buffer by the method, it is used by every HTTP session initiated afterwards by methods such as <a class="el" href="kii_8h.html#a128f23578c2e848e6d20e05faae9b29d" title="Authorize thing with vendor thing id and password. After the authentication, access token is stored i...">kii_auth_thing()</a>, <a class="el" href="kii_8h.html#ac3ecf806fb18b0063b50291b8131dcfc" title="Post Kii object.">kii_post_object()</a>, etc., until the method is called again. Memory used by the buffer must therefore stay valid, and must not be used for anything else, as long as the <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance is in use. To release it earlier, call the method with NULL first.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
@@ -3573,7 +3573,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 07:52:58 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 20 2026 07:54:21 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
