@@ -79,6 +79,16 @@ TEST_CASE( "_get_object_in_array" ) {
     }
 }
 
+// Leaves the stack below the caller's frame filled with JSMN_STRING, so a
+// callee reading a jsmntok_t that jsmn never wrote sees a string token.
+static void __attribute__((noinline)) fill_stack_with_jsmn_string()
+{
+    volatile int fill[4096];
+    for (size_t i = 0; i < sizeof(fill) / sizeof(fill[0]); ++i) {
+        fill[i] = JSMN_STRING;
+    }
+}
+
 TEST_CASE( "_parse_first_kv" ) {
     // TODO: Add other types test.
     SECTION("Int value") {
@@ -117,6 +127,49 @@ TEST_CASE( "_parse_first_kv" ) {
         REQUIRE( out_value_type == JSMN_PRIMITIVE );
     }
 
+    // jsmn fills only as many tokens as the object has, so an object without
+    // a key/value pair must be rejected before the key and value tokens are
+    // read. The stack is filled first so that unfilled tokens look like a
+    // string key rather than whatever happened to be left there.
+    SECTION("Empty object") {
+        const char json_obj[] = "{}";
+        char* out_key = NULL;
+        size_t out_key_len = 0;
+        char* out_value = NULL;
+        size_t out_value_len = 0;
+        jsmntype_t out_value_type = JSMN_OBJECT;
+        fill_stack_with_jsmn_string();
+        _cmd_parser_code_t p_res = _parse_first_kv(
+                json_obj,
+                strlen(json_obj),
+                &out_key,
+                &out_key_len,
+                &out_value,
+                &out_value_len,
+                &out_value_type);
+
+        REQUIRE( p_res == _CMD_PARSE_FAIL );
+    }
+
+    SECTION("Key without value") {
+        const char json_obj[] = "{\"a\"}";
+        char* out_key = NULL;
+        size_t out_key_len = 0;
+        char* out_value = NULL;
+        size_t out_value_len = 0;
+        jsmntype_t out_value_type = JSMN_OBJECT;
+        fill_stack_with_jsmn_string();
+        _cmd_parser_code_t p_res = _parse_first_kv(
+                json_obj,
+                strlen(json_obj),
+                &out_key,
+                &out_key_len,
+                &out_value,
+                &out_value_len,
+                &out_value_type);
+
+        REQUIRE( p_res == _CMD_PARSE_FAIL );
+    }
 }
 
 TEST_CASE( "_parse_action_object" ) {
@@ -412,5 +465,57 @@ TEST_CASE( "_handle_command response status" ) {
 
         REQUIRE( res == TIO_ERR_RESP_STATUS );
         REQUIRE( called == 1 );
+    }
+}
+
+// Commands arrive over MQTT, so an alias or action object without a key/value
+// pair has to be turned into a parse error: no action called, nothing sent, and
+// the result request _handle_command already started released.
+TEST_CASE( "_handle_command empty objects" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+
+    char kii_buff[2048];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
+    kii_set_json_parser_resource(&handler._kii, &resource);
+    kii_set_app_id(&handler._kii, "appid");
+    kii_set_site(&handler._kii, "api.kii.com");
+    strcpy(handler._kii._author.author_id, "thingid");
+
+    // No request may be performed, so connecting is recorded and fails.
+    bool connected = false;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&connected](void*, const char*, unsigned int) {
+        connected = true;
+        return KHC_SOCK_FAIL;
+    };
+    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+
+    SECTION("an empty alias object is rejected") {
+        int called = 0;
+        std::string command =
+            "{\"commandID\":\"cmd1\",\"actions\":[{}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_PARSE_JSON );
+        REQUIRE( called == 0 );
+        REQUIRE( !connected );
+        REQUIRE( handler._kii._req_headers == NULL );
+    }
+
+    SECTION("an empty action object is rejected") {
+        int called = 0;
+        std::string command =
+            "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_ok, &called);
+
+        REQUIRE( res == TIO_ERR_PARSE_JSON );
+        REQUIRE( called == 0 );
+        REQUIRE( !connected );
+        REQUIRE( handler._kii._req_headers == NULL );
     }
 }
