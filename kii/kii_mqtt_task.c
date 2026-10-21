@@ -336,7 +336,7 @@ void _mqtt_state_install_push(mqtt_state_t* state)
     kii_mqtt_task_info* task_info = &state->info;
     kii_code_t res = kii_install_push(kii, KII_FALSE, &state->ins_id);
     if (res != KII_ERR_OK) {
-        int status_code = khc_get_status_code(&kii->_khc);
+        uint16_t status_code = khc_get_status_code(&kii->_khc);
         if ((500 <= status_code && status_code < 600) || status_code == 429) {
             // Temporal error. Try again.
             kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
@@ -357,7 +357,7 @@ void _mqtt_state_get_endpoint(mqtt_state_t* state)
     kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
     kii_code_t  res = kii_get_mqtt_endpoint(kii, state->ins_id.id, &state->endpoint);
     if (res != KII_ERR_OK) {
-        int status_code = khc_get_status_code(&kii->_khc);
+        uint16_t status_code = khc_get_status_code(&kii->_khc);
         if ((500 <= status_code && status_code < 600) || status_code == 429) {
             // Temporal error. Try again.
         } else {

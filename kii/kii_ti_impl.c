@@ -56,7 +56,7 @@ kii_code_t _get_anonymous_token(
         return ret;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         return KII_ERR_RESP_STATUS;
     }
@@ -233,7 +233,7 @@ kii_code_t _onboard(
         return ret;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         return KII_ERR_RESP_STATUS;
     }
@@ -324,7 +324,7 @@ kii_code_t _put_firmware_version(
         return ret;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         return KII_ERR_RESP_STATUS;
     }
@@ -372,7 +372,7 @@ kii_code_t _get_firmware_version(
         return ret;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         return KII_ERR_RESP_STATUS;
     }
@@ -465,7 +465,7 @@ kii_code_t _upload_state(
         return ret;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         return KII_ERR_RESP_STATUS;
     }

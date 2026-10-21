@@ -22,7 +22,7 @@ kii_code_t kii_subscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
         goto exit;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if (resp_code != 204 && resp_code != 409) {
         res = KII_ERR_RESP_STATUS;
         goto exit;
@@ -42,7 +42,7 @@ kii_code_t kii_unsubscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
         goto exit;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         res = KII_ERR_RESP_STATUS;
         goto exit;
@@ -62,7 +62,7 @@ kii_code_t kii_subscribe_topic(kii_t* kii, const kii_topic_t* topic)
         goto exit;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if (resp_code != 204 && resp_code != 409) {
         res = KII_ERR_RESP_STATUS;
         goto exit;
@@ -82,7 +82,7 @@ kii_code_t kii_unsubscribe_topic(kii_t* kii, const kii_topic_t* topic)
         goto exit;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if (resp_code != 204 && resp_code != 409) {
         res = KII_ERR_RESP_STATUS;
     }
@@ -101,7 +101,7 @@ kii_code_t kii_put_topic(kii_t* kii, const kii_topic_t* topic)
         goto exit;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if (resp_code != 204 && resp_code != 409) {
         res = KII_ERR_RESP_STATUS;
         goto exit;
@@ -121,7 +121,7 @@ kii_code_t kii_delete_topic(kii_t* kii, const kii_topic_t* topic)
         goto exit;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         res = KII_ERR_RESP_STATUS;
         goto exit;
@@ -137,7 +137,7 @@ static kii_code_t _push_message_result(kii_t* kii, kii_code_t res)
         return res;
     }
     // Kii's guide documents 201, its API reference 200.
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         return KII_ERR_RESP_STATUS;
     }
@@ -179,7 +179,7 @@ kii_code_t kii_install_push(
         goto exit;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         res = KII_ERR_RESP_STATUS;
         goto exit;
@@ -238,7 +238,7 @@ kii_code_t kii_get_mqtt_endpoint(
         goto exit;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code)
     {
         res = KII_ERR_RESP_STATUS;

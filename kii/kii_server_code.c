@@ -81,7 +81,7 @@ kii_code_t kii_execute_server_code_version(
         goto exit;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         res = KII_ERR_RESP_STATUS;
         goto exit;

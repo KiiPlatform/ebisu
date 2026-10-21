@@ -21,7 +21,7 @@ kii_code_t kii_auth_thing(
         goto exit;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         ret = KII_ERR_RESP_STATUS;
         goto exit;
@@ -76,7 +76,7 @@ kii_code_t kii_register_thing(
         goto exit;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         ret = KII_ERR_RESP_STATUS;
         goto exit;
