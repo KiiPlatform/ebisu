@@ -137,3 +137,63 @@ kii_code_t _thing_register(
 
     return _convert_code(code);
 }
+
+kii_code_t _thing_refresh(
+        kii_t* kii,
+        const char* refresh_token)
+{
+    khc_set_host(&kii->_khc, kii->_app_host);
+    khc_set_method(&kii->_khc, "POST");
+    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/api/apps/%s/oauth2/token", kii->_app_id);
+    if (path_len >= kii->_rw_buff_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    khc_set_path(&kii->_khc, kii->_rw_buff);
+
+    // Request headers.
+    kii_code_t res = _set_app_id_header(kii);
+    if (res != KII_ERR_OK) {
+        _req_headers_free_all(kii);
+        return res;
+    }
+    res = _set_app_key_header(kii);
+    if (res != KII_ERR_OK) {
+        _req_headers_free_all(kii);
+        return res;
+    }
+    res = _set_content_type(kii, "application/vnd.kii.OauthTokenRequest+json");
+    if (res != KII_ERR_OK) {
+        _req_headers_free_all(kii);
+        return res;
+    }
+    if (kii->_use_m_0_header == KII_TRUE) {
+        res = _set_m_0_header(kii);
+        if (res != KII_ERR_OK) {
+            _req_headers_free_all(kii);
+            return res;
+        }
+    }
+    // Request body. Tokens are printable, which escaping at most doubles.
+    char esc_token[KII_REFRESH_TOKEN_MAX_SIZE * 2];
+    if (jkii_escape_str(refresh_token, esc_token, sizeof(esc_token)) < 0) {
+        _req_headers_free_all(kii);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+
+    int content_len = snprintf(
+            kii->_rw_buff,
+            kii->_rw_buff_size,
+            "{\"grant_type\":\"refresh_token\", \"refresh_token\":\"%s\"}",
+            esc_token);
+    if (content_len >= kii->_rw_buff_size) {
+        _req_headers_free_all(kii);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    kii->_rw_buff_req_size = content_len;
+
+    khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    khc_code code = khc_perform(&kii->_khc);
+    _req_headers_free_all(kii);
+
+    return _convert_code(code);
+}

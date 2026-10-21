@@ -5,6 +5,7 @@
 #include "kii.h"
 #include "kii_impl.h"
 #include "kii_req_impl.h"
+#include "kii_session_impl.h"
 
 static kii_code_t _execute_server_code(
         kii_t* kii,
@@ -60,7 +61,7 @@ static kii_code_t _execute_server_code(
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     return _convert_code(code);

@@ -91,6 +91,39 @@ typedef kii_bool_t
     (void* task_info,
     void* userdata);
 
+/**
+ * \brief Callback acquires or releases a lock.
+ *
+ * Set in pairs, one acquiring and one releasing, by kii_session_set_cb_lock().
+ * The lock need not be recursive.
+ *
+ * While it is held, other tasks may be kept waiting for the length of an HTTP
+ * request, and the callbacks ebisu makes in between include the socket
+ * callbacks. A platform on which no other task using the same session can run
+ * while the lock is held -- including inside those callbacks -- may implement
+ * both as no-ops.
+ *
+ * \param [in] userdata Context object pointer.
+ */
+typedef void
+(*KII_CB_LOCK)
+    (void* userdata);
+
+/**
+ * \brief Callback returns a monotonic time in milliseconds.
+ *
+ * The value must never decrease, and must not jump when the wall clock is
+ * changed, for example by NTP. Its origin is arbitrary; only differences are
+ * used. Platforms whose tick counter is 32 bits wide must extend it to 64, or
+ * it wraps after about 49.7 days.
+ *
+ * \param [in] userdata Context object pointer.
+ * \return Milliseconds elapsed since an arbitrary, fixed origin.
+ */
+typedef uint64_t
+(*KII_CB_MONOTONIC_MS)
+    (void* userdata);
+
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC visibility pop
 #endif

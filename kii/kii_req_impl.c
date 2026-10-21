@@ -1,4 +1,5 @@
 #include "kii_req_impl.h"
+#include "kii_session_impl.h"
 #include <string.h>
 
 kii_code_t _set_bucket_path(
@@ -232,6 +233,10 @@ kii_code_t _set_app_key_header(kii_t* kii)
 
 kii_code_t _set_auth_header(kii_t* kii)
 {
+    if (kii->_session != NULL) {
+        // Another kii_t sharing the session may have renewed the token.
+        _kii_session_sync(kii);
+    }
     return _set_auth_bearer_token(kii, kii->_author.access_token);
 }
 

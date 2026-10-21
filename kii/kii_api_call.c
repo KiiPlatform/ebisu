@@ -1,6 +1,7 @@
 #include "kii.h"
 #include "kii_impl.h"
 #include "kii_req_impl.h"
+#include "kii_session_impl.h"
 #include <string.h>
 
 static void _resource_cleanup(kii_t* kii)
@@ -119,7 +120,7 @@ kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* v
 kii_code_t kii_api_call_run(kii_t* kii)
 {
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     return _convert_code(code);

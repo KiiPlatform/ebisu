@@ -1,6 +1,7 @@
 #include "kii_ti_impl.h"
 #include "kii_impl.h"
 #include "kii_req_impl.h"
+#include "kii_session_impl.h"
 #include "jkii_wrapper.h"
 #include "jkii_utils.h"
 #include <string.h>
@@ -163,6 +164,10 @@ kii_code_t _onboard(
         return KII_ERR_FAIL;
     }
 
+    // Onboarding issues no refresh token: one held belongs to the tokens this
+    // replaces.
+    kii->_author.refresh_token[0] = '\0';
+
     // Where MQTT is enabled, the response also carries the endpoint of the
     // installation onboarding made.
     kii_mqtt_endpoint_t endpoint;
@@ -281,7 +286,7 @@ kii_code_t _put_firmware_version(
     kii->_rw_buff_req_size = content_len;
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     ret = _convert_code(code);
@@ -329,7 +334,7 @@ kii_code_t _get_firmware_version(
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     ret = _convert_code(code);
@@ -421,7 +426,9 @@ kii_code_t _upload_state(
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_set_cb_read(&kii->_khc, state_read_cb, state_read_cb_data);
-    khc_code code = khc_perform(&kii->_khc);
+    kii->_req_streamed = KII_TRUE;
+    khc_code code = _kii_perform(kii);
+    kii->_req_streamed = KII_FALSE;
     khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
     _req_headers_free_all(kii);
 

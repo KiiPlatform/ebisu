@@ -35,6 +35,8 @@ extern "C" {
 #define KII_AUTHOR_ID_MAX_SIZE 128
 /** \brief Size of kii_author_t::access_token. */
 #define KII_TOKEN_MAX_SIZE 128
+/** \brief Size of kii_author_t::refresh_token. */
+#define KII_REFRESH_TOKEN_MAX_SIZE 128
 /** \brief Size of kii_mqtt_endpoint_t::username. */
 #define KII_USERNAME_MAX_SIZE 64
 /** \brief Size of kii_mqtt_endpoint_t::password. */
@@ -159,7 +161,79 @@ typedef struct kii_author_t
     char author_id[KII_AUTHOR_ID_MAX_SIZE];
     /** \brief Access token of the author. */
     char access_token[KII_TOKEN_MAX_SIZE];
+    /**
+     * \brief Refresh token of the author.
+     *
+     * Empty when the server issued none. Only used through a kii_session_t.
+     */
+    char refresh_token[KII_REFRESH_TOKEN_MAX_SIZE];
 } kii_author_t;
+
+/**
+ * \brief Called when the tokens held by a session change.
+ *
+ * Called after a login, onboarding or registration through any kii_t attached
+ * to the session, and after every renewal of the access token.
+ *
+ * A refresh token can be used only once: renewing it invalidates the previous
+ * access token and refresh token. An author saved before the change can
+ * therefore no longer be renewed, so to restore the session after a restart
+ * the implementation must save the author before returning.
+ *
+ * Called with the session lock held. The implementation must not call ebisu
+ * APIs.
+ *
+ * \param [in] author The author now held by the session.
+ * \param [in] userdata Context object pointer passed to
+ * kii_session_set_cb_author_updated().
+ */
+typedef void (*KII_CB_AUTHOR_UPDATED)(const kii_author_t* author, void* userdata);
+
+/**
+ * \brief Tokens shared by the kii_t instances acting as the same thing.
+ *
+ * Renews the access token when it is close to expiry or the server refuses
+ * it, the way it was obtained:
+ * - one onboarding obtained, by onboarding again through Thing-IF with the
+ *   thing's credentials;
+ * - one a login or registration obtained, with the refresh token first, and
+ *   by logging in with the thing's credentials when there is none or the
+ *   server rejects it.
+ *
+ * A request whose body was built in the buffer set by kii_set_buff() is then
+ * sent again; see kii_set_session().
+ *
+ * Every kii_t acting as the thing must use the same session: a refresh
+ * invalidates the previous tokens, which would fail the requests of a kii_t
+ * holding its own copy, and sharing renews once for all of them.
+ *
+ * Initialize with kii_session_init(), set the lock and the clock, then attach
+ * with kii_set_session().
+ */
+typedef struct kii_session_t {
+    kii_author_t _author; /**< \private */
+    /** \private Incremented whenever _author changes. */
+    uint32_t _generation;
+    /** \private Whether _author is renewed ahead of expiry, which needs its
+     * lifetime. */
+    kii_bool_t _renew_at_known;
+    /** \private The monotonic time _author was stored at. */
+    uint64_t _stored_at_ms;
+    /** \private How long after _stored_at_ms it is renewed. */
+    uint64_t _renew_after_ms;
+    /** \private Whether _author is renewed by onboarding again rather than
+     * through Kii Cloud's token endpoint. */
+    kii_bool_t _renew_by_onboarding;
+    const char* _vendor_thing_id; /**< \private */
+    const char* _password; /**< \private */
+    KII_CB_AUTHOR_UPDATED _cb_author_updated; /**< \private */
+    void* _author_updated_data; /**< \private */
+    KII_CB_LOCK _cb_lock; /**< \private */
+    KII_CB_LOCK _cb_unlock; /**< \private */
+    void* _lock_data; /**< \private */
+    KII_CB_MONOTONIC_MS _cb_monotonic_ms; /**< \private */
+    void* _monotonic_ms_data; /**< \private */
+} kii_session_t;
 
 /** \brief Represents MQTT endpoint. */
 typedef struct kii_mqtt_endpoint_t {
@@ -302,6 +376,26 @@ typedef struct kii_t {
     kii_bool_t _insecure_mqtt; /**< \private */
     kii_bool_t _use_m_0_header; /**< \private */
 
+    kii_session_t* _session; /**< \private */
+    /** \private kii_session_t::_generation of the token copied into _author. */
+    uint32_t _session_generation;
+    /** \private Whether the request being performed carries the session's
+     * token. */
+    kii_bool_t _session_request;
+    /** \private Whether the last request performed was refused for the
+     * session's token, which was then renewed without sending the request
+     * again. */
+    kii_bool_t _session_refused;
+    /** \private Where in _rw_buff the response body is being written: past
+     * the request's body while a 403 to a request carrying the session's
+     * token is read, as it may refuse the token and have the request sent
+     * again, and otherwise 0. */
+    size_t _resp_offset;
+    /** \private Whether the request being prepared streams its body through
+     * callbacks of the caller's rather than through _rw_buff, so that it
+     * cannot be sent again from here. */
+    kii_bool_t _req_streamed;
+
     /** \private The MQTT endpoint the last kii_ti_onboard() returned, which
      * the push task connects with. */
     kii_mqtt_endpoint_t _onboarded_endpoint;
@@ -395,6 +489,155 @@ kii_code_t kii_register_thing(
 		const char* vendor_thing_id,
 		const char* thing_type,
 		const char* password);
+
+/**
+ * \brief Initializes kii_session_t instance.
+ *
+ * The session starts with an empty author. Set it with kii_session_set_author()
+ * when restoring a saved one, or obtain one by kii_auth_thing(),
+ * kii_register_thing() or kii_ti_onboard() through an attached kii_t.
+ *
+ * \param [out] session kii_session_t instance.
+ */
+void kii_session_init(kii_session_t* session);
+
+/**
+ * \brief Set the lock guarding the session.
+ *
+ * Required before kii_set_session(). See KII_CB_LOCK for when the callbacks may
+ * be no-ops.
+ *
+ * \param [out] session kii_session_t instance.
+ * \param [in] cb_lock Callback acquiring the lock.
+ * \param [in] cb_unlock Callback releasing the lock.
+ * \param [in] userdata Context object pointer passed to both callbacks.
+ */
+void kii_session_set_cb_lock(
+        kii_session_t* session,
+        KII_CB_LOCK cb_lock,
+        KII_CB_LOCK cb_unlock,
+        void* userdata);
+
+/**
+ * \brief Set the monotonic clock the session times token expiry with.
+ *
+ * Required before kii_set_session(). Called only with the session lock held.
+ *
+ * \param [out] session kii_session_t instance.
+ * \param [in] cb_monotonic_ms Callback returning the time.
+ * \param [in] userdata Context object pointer passed to cb_monotonic_ms.
+ */
+void kii_session_set_cb_monotonic_ms(
+        kii_session_t* session,
+        KII_CB_MONOTONIC_MS cb_monotonic_ms,
+        void* userdata);
+
+/**
+ * \brief Set the thing's credentials the session renews tokens with.
+ *
+ * A token onboarding obtained is renewed by onboarding again with them, so
+ * without them it cannot be renewed at all. A token a login obtained is
+ * renewed by logging in with them when there is no refresh token, or the server
+ * rejects it: after it expired, after a renewal whose response was lost, or
+ * after a restart with an author saved before the last renewal. Without them
+ * such a session cannot recover.
+ *
+ * The strings are not copied and must outlive the session.
+ *
+ * \param [out] session kii_session_t instance.
+ * \param [in] vendor_thing_id Thing identifier given by the vendor.
+ * \param [in] password Password of the thing given by the vendor.
+ */
+void kii_session_set_password(
+        kii_session_t* session,
+        const char* vendor_thing_id,
+        const char* password);
+
+/**
+ * \brief Set the callback told about new tokens.
+ *
+ * \param [out] session kii_session_t instance.
+ * \param [in] cb_author_updated Callback function pointer. See
+ * KII_CB_AUTHOR_UPDATED.
+ * \param [in] userdata Context object pointer passed to cb_author_updated.
+ */
+void kii_session_set_cb_author_updated(
+        kii_session_t* session,
+        KII_CB_AUTHOR_UPDATED cb_author_updated,
+        void* userdata);
+
+/**
+ * \brief Set the author held by the session, typically one saved earlier.
+ *
+ * Its expiry is unknown, so it is used until the server refuses it.
+ * KII_CB_AUTHOR_UPDATED is not called.
+ *
+ * \param [out] session kii_session_t instance.
+ * \param [in] author Author to hold.
+ */
+void kii_session_set_author(kii_session_t* session, const kii_author_t* author);
+
+/**
+ * \brief Set how the session renews the token it holds.
+ *
+ * kii_ti_onboard() through an attached kii_t sets it to onboarding again, and
+ * kii_auth_thing() and kii_register_thing() to the token endpoint, each for the
+ * token it obtains; renewals keep it. Set it after kii_session_set_author()
+ * when restoring an author onboarding obtained, which would otherwise be
+ * renewed through the token endpoint.
+ *
+ * \param [out] session kii_session_t instance.
+ * \param [in] by_onboarding KII_TRUE to renew by onboarding again through
+ * Thing-IF, KII_FALSE to renew through Kii Cloud's token endpoint.
+ */
+void kii_session_set_renew_by_onboarding(kii_session_t* session, kii_bool_t by_onboarding);
+
+/**
+ * \brief Copy the author held by the session.
+ *
+ * \param [in] session kii_session_t instance.
+ * \param [out] out_author The author is copied here.
+ */
+void kii_session_get_author(kii_session_t* session, kii_author_t* out_author);
+
+/**
+ * \brief Attach a session, or detach it with NULL.
+ *
+ * With a session attached:
+ * - Requests are authorized with the session's access token rather than one
+ *   set on the kii_t.
+ * - kii_auth_thing(), kii_register_thing() and kii_ti_onboard() store the
+ *   tokens they obtain in the session.
+ * - The access token is renewed shortly before it expires, and whenever the
+ *   server refuses a request authorized with it: 403 with the errorCode
+ *   WRONG_TOKEN, as Kii answers for a token that has expired or been
+ *   replaced. Such a request is then sent again, provided its body was built
+ *   in the buffer set by kii_set_buff(), and both the refusal and the renewal
+ *   fit in that buffer after the body; the renewal takes about 640 bytes,
+ *   or 1150 by onboarding, whose response carries the MQTT endpoint.
+ *   Otherwise the API reports the 403 as it would without a session --
+ *   KII_ERR_RESP_STATUS, or for kii_api_call_run() the status from
+ *   kii_get_resp_status() -- without its body, and calling it again uses the
+ *   renewed token. Other responses, other 403s included, reach the caller as
+ *   they would without a session.
+ * - A token issued without a lifetime, or with one that is not positive or
+ *   exceeds UINT32_MAX seconds, is renewed only when refused. Onboarding
+ *   issues neither a lifetime nor a refresh token, so its token is renewed
+ *   when refused, by onboarding again with the credentials set by
+ *   kii_session_set_password().
+ * - A renewal runs inside the request that needed it and takes about 1.5 KB
+ *   more stack than a request does.
+ *
+ * Every kii_t acting as the same thing must be attached to the same session.
+ * Attaching replaces the author held by kii with the session's, so attach
+ * before logging in or onboarding through kii, or give the session the author
+ * with kii_session_set_author().
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] session Session to attach, or NULL.
+ * \return KII_ERR_FAIL if the session has no lock or clock set.
+ */
+kii_code_t kii_set_session(kii_t* kii, kii_session_t* session);
 
 /**
  * \brief Post Kii object.
