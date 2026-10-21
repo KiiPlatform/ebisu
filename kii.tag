@@ -1247,8 +1247,9 @@
   </compound>
   <compound kind="page">
     <name>index</name>
-    <title>Build SDK</title>
+    <title>kii</title>
     <filename>index.html</filename>
-    <docanchor file="index.html" title="Build SDK">kii_readme</docanchor>
+    <docanchor file="index.html" title="kii">kii_readme</docanchor>
+    <docanchor file="index.html">kii_session</docanchor>
   </compound>
 </tagfile>
