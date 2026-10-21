@@ -9,12 +9,14 @@
 - Thing-IF states and firmware versions;
 - server code, and any other REST API call.
 
-[tio](../tio/README.md) is built on `kii` and covers what most devices need:
-receiving commands and uploading states. Use `kii` directly for the rest.
+[tio](https://github.com/KiiPlatform/ebisu/blob/master/tio/README.md) is built on `kii`
+and covers what most devices need: receiving commands and uploading states.
+Use `kii` directly for the rest.
 
 `kii` does no networking of its own. It sends HTTP requests with
-[khc](../khc/README.md), through socket callbacks the application supplies,
-and runs MQTT in a task the application creates.
+[khc](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md), through socket
+callbacks the application supplies, and runs MQTT in a task the application
+creates.
 
 ## Set up a `kii_t`
 
@@ -47,8 +49,9 @@ and runs MQTT in a task the application creates.
 - **JSON parser resource**: tokens `jkii` parses responses with. 256 are
   enough for most responses. `kii_set_cb_json_parser_resource()` allocates
   exactly as many as each response needs instead.
-- **Socket callbacks**: see [khc's socket callbacks](../khc/README.md). They
-  are asked to connect to port 443, for TLS, or to port 80 when
+- **Socket callbacks**: see
+  [khc's socket callbacks](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md).
+  They are asked to connect to port 443, for TLS, or to port 80 when
   `kii_enable_insecure_http()` is set.
 
 `kii` also uses the stream and response header buffers that `khc` does. Set
@@ -145,8 +148,8 @@ To restore a saved author, give it to the session with
 also call `kii_session_set_renew_by_onboarding()`, or the session renews it
 through Kii Cloud's token endpoint.
 
-The [tio README](../tio/README.md) has lock and clock implementations for
-`pthread`.
+The [tio README](https://github.com/KiiPlatform/ebisu/blob/master/tio/README.md) has lock
+and clock implementations for `pthread`.
 
 ## Objects
 
@@ -224,8 +227,8 @@ void push_received_cb(const char* message, size_t message_length, void* userdata
   `kii_set_cb_task_continue()` lets the application stop the task, and
   `kii_set_cb_task_exit()` is called as it exits, to free what it used. Both
   receive a `kii_mqtt_task_info*` saying what the task was doing and why it
-  stopped. The [tio README](../tio/README.md) has implementations for
-  `pthread`.
+  stopped. The [tio README](https://github.com/KiiPlatform/ebisu/blob/master/tio/README.md)
+  has implementations for `pthread`.
 
 After onboarding, the task connects with the MQTT endpoint onboarding returned.
 Otherwise it installs push and gets an endpoint from Kii Cloud first. The task
@@ -304,4 +307,5 @@ fit in the buffer.
 ## Building
 
 `kii` is built as part of ebisu, as described in the
-[top-level README](../README.md#building). `libkii` includes `khc` and `jkii`.
+[top-level README](https://github.com/KiiPlatform/ebisu/blob/master/README.md#building).
+`libkii` includes `khc` and `jkii`.
