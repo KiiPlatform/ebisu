@@ -503,7 +503,8 @@ khc_code khc_set_cb_sock_recv(
 /**
  * \brief Set socket close callback.
  *
- * NOTE: Currently khc uses HTTP 1.0 and close callback is called each HTTP session.
+ * Each request is sent with "Connection: Close", so once connected, the
+ * callback is called at the end of every request.
  * \param [out] khc instance.
  * \param [in] cb called when HTTP session ends.
  * \param [in] userdata context data of the callback.
@@ -533,6 +534,8 @@ khc_code khc_set_cb_read(
  *
  * The callback is called while reading response body.
  * Callback would be called several times until the whole response body is written.
+ * It is not called for a response without a body, such as an empty chunked
+ * one: khc_perform(khc*) returns as for any other response.
  * \param [out] khc instance.
  * \param [in] cb writes response body.
  * \param [in] userdata context data of the callback.
