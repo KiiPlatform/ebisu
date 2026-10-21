@@ -37,7 +37,7 @@ kii_code_t kii_auth_thing(
         goto exit;
     }
     if (kii->_session != NULL) {
-        _kii_session_publish(kii, expires_in_sec);
+        _kii_session_publish(kii, expires_in_sec, KII_FALSE);
     }
 
 exit:
@@ -97,7 +97,7 @@ kii_code_t kii_register_thing(
     }
     ret = KII_ERR_OK;
     if (kii->_session != NULL) {
-        _kii_session_publish(kii, 0);
+        _kii_session_publish(kii, 0, KII_FALSE);
     }
 
 exit:

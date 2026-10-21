@@ -69,6 +69,10 @@ khc_sock_code_t record_send(void* userdata, const char* buffer, size_t length,
 
 const char REFRESH_GRANT[] = "\"grant_type\":\"refresh_token\"";
 const char PASSWORD_GRANT[] = "\"grant_type\":\"password\"";
+// Onboarding through Thing-IF, as a request line has it.
+const char ONBOARDING[] = "/onboardings HTTP/1.1";
+// Anything asked of Kii Cloud's token endpoint, as a request line has it.
+const char TOKEN_ENDPOINT[] = "/oauth2/token HTTP/1.1";
 
 bool sent_has(const Sent& sent, const char* grant) {
     return sent.data.find(grant) != std::string::npos;
@@ -114,8 +118,13 @@ TEST_CASE( "The session renews a token the server refuses" ) {
     bucket.scope_id = onboarded.author_id;
     kii_object_id_t object_id;
 
-    SECTION("a request whose body was built in the buffer is sent again") {
-        // Kii's REST API.
+    // What kii sends from here on, to tell how a renewal went about it.
+    Sent sent = {kii._khc._cb_sock_send, kii._khc._sock_ctx_send, std::string()};
+    kii_set_cb_http_sock_send(&kii, record_send, &sent);
+
+    SECTION("a token onboarding obtained is renewed by onboarding again") {
+        // Kii's REST API: the request, whose body was built in the buffer, is
+        // sent again with the new token.
         spoil(&session);
         REQUIRE( kii_post_object(&kii, &bucket, "{\"k\":\"v\"}", NULL, &object_id) == KII_ERR_OK );
         REQUIRE( kii_get_resp_status(&kii) == 201 );
@@ -123,6 +132,9 @@ TEST_CASE( "The session renews a token the server refuses" ) {
         CHECK( std::string(renewed.author_id) == onboarded.author_id );
         CHECK_FALSE( same_token(renewed.access_token, UNKNOWN_TOKEN) );
         CHECK_FALSE( same_token(renewed.access_token, onboarded.access_token) );
+        // Onboarding again issues neither a refresh token nor a lifetime.
+        CHECK( empty(renewed.refresh_token) );
+        CHECK( session._renew_at_known == KII_FALSE );
 
         // Thing-IF's.
         spoil(&session);
@@ -133,28 +145,38 @@ TEST_CASE( "The session renews a token the server refuses" ) {
         REQUIRE( kii_ti_get_firmware_version(&kii, &version) == KII_ERR_OK );
         CHECK( std::string(version.firmware_version) == "ltest-1.0" );
 
-        // The login gave a refresh token: the application the tests run
+        // Both renewals onboarded again, through Thing-IF alone: nothing went
+        // to the token endpoint.
+        CHECK( sent_has(sent, ONBOARDING) );
+        CHECK_FALSE( sent_has(sent, TOKEN_ENDPOINT) );
+    }
+
+    SECTION("a token a login obtained is refreshed, and logged in again once the refresh is refused") {
+        // The login gives a refresh token: the application the tests run
         // against has refresh tokens enabled, which Kii applications do not by
-        // default. So the next renewal refreshes rather than logging in.
-        renewed = held(&session);
-        REQUIRE_FALSE( empty(renewed.refresh_token) );
-        Sent sent = {kii._khc._cb_sock_send, kii._khc._sock_ctx_send, std::string()};
-        kii_set_cb_http_sock_send(&kii, record_send, &sent);
+        // default.
+        REQUIRE( kii_auth_thing(&kii, vid.c_str(), password) == KII_ERR_OK );
+        const kii_author_t logged_in = held(&session);
+        REQUIRE_FALSE( empty(logged_in.refresh_token) );
+        CHECK( session._renew_by_onboarding == KII_FALSE );
+
+        sent.data.clear();
         spoil(&session);
         REQUIRE( kii_post_object(&kii, &bucket, "{\"k\":\"w\"}", NULL, &object_id) == KII_ERR_OK );
         CHECK( sent_has(sent, REFRESH_GRANT) );
         CHECK_FALSE( sent_has(sent, PASSWORD_GRANT) );
+        CHECK_FALSE( sent_has(sent, ONBOARDING) );
         kii_author_t refreshed = held(&session);
         CHECK_FALSE( same_token(refreshed.access_token, UNKNOWN_TOKEN) );
-        CHECK_FALSE( same_token(refreshed.access_token, renewed.access_token) );
+        CHECK_FALSE( same_token(refreshed.access_token, logged_in.access_token) );
         // The refresh token is replaced too.
         CHECK_FALSE( empty(refreshed.refresh_token) );
-        CHECK_FALSE( same_token(refreshed.refresh_token, renewed.refresh_token) );
+        CHECK_FALSE( same_token(refreshed.refresh_token, logged_in.refresh_token) );
 
         // The refresh token that refresh spent is refused, and the session
         // logs in with the password instead.
         std::this_thread::sleep_for(std::chrono::seconds(2));
-        kii_author_t spent = renewed;
+        kii_author_t spent = logged_in;
         strcpy(spent.access_token, UNKNOWN_TOKEN);
         kii_session_set_author(&session, &spent);
         sent.data.clear();
@@ -164,14 +186,13 @@ TEST_CASE( "The session renews a token the server refuses" ) {
         const kii_author_t relogged = held(&session);
         CHECK_FALSE( same_token(relogged.access_token, UNKNOWN_TOKEN) );
         CHECK_FALSE( empty(relogged.refresh_token) );
-        CHECK_FALSE( same_token(relogged.refresh_token, renewed.refresh_token) );
+        CHECK_FALSE( same_token(relogged.refresh_token, logged_in.refresh_token) );
     }
 
-    SECTION("the lifetime the server gives is read, and the token renewed ahead of expiry") {
-        // Onboarding gives no lifetime. The login that renews its token does.
+    SECTION("the lifetime a login gives is read, and the token renewed ahead of expiry") {
+        // Onboarding gives no lifetime. A login does.
         CHECK( session._renew_at_known == KII_FALSE );
-        spoil(&session);
-        REQUIRE( kii_post_object(&kii, &bucket, "{\"k\":\"v\"}", NULL, &object_id) == KII_ERR_OK );
+        REQUIRE( kii_auth_thing(&kii, vid.c_str(), password) == KII_ERR_OK );
         REQUIRE( session._renew_at_known == KII_TRUE );
         REQUIRE( session._renew_after_ms > 0 );
         const kii_author_t logged_in = held(&session);

@@ -564,7 +564,23 @@ TEST_CASE( "A push message refused for its token is sent again" ) {
     REQUIRE( contains(c.http.requests[2], message) );
 }
 
-TEST_CASE( "Onboarding stores its token in the session, used until refused" ) {
+// Onboarding again, authorized with the app's ID: how a token onboarding
+// obtained is renewed, through Thing-IF alone and never the token endpoint.
+std::string onboarded(const char* access_token) {
+    return http_response(200, std::string("{\"accessToken\":\"") + access_token +
+            "\",\"thingID\":\"th.1\",\"mqttEndpoint\":{\"installationID\":\"ins1\"}}");
+}
+const char ONBOARDING_LINE[] = "POST https://api.kii.com/thing-if/apps/app/onboardings HTTP/1.1";
+
+bool onboarding_again(const std::string& onboarding) {
+    return contains(onboarding, ONBOARDING_LINE) &&
+        // "app:dummy"
+        contains(onboarding, "Authorization: Basic YXBwOmR1bW15\r\n") &&
+        contains(onboarding, "\"vendorThingID\":\"vid\"") &&
+        contains(onboarding, "\"thingPassword\":\"pw\"");
+}
+
+TEST_CASE( "A token onboarding obtained is renewed by onboarding again" ) {
     Platform platform;
     kii_session_t session;
     init_session(&session, &platform);
@@ -576,37 +592,95 @@ TEST_CASE( "Onboarding stores its token in the session, used until refused" ) {
     REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
 
     // Its response has neither a refresh token nor a lifetime.
-    c.http.responses = {
-        http_response(200,
-                "{\"accessToken\":\"at1\",\"thingID\":\"th.1\","
-                "\"mqttEndpoint\":{\"installationID\":\"ins1\"}}")
-    };
+    c.http.responses = { onboarded("at1") };
     REQUIRE( kii_ti_onboard(&c.kii, "vid", "pw", NULL, NULL, NULL, NULL) == KII_ERR_OK );
 
     REQUIRE( platform.updates.size() == 1 );
-    kii_author_t onboarded = held(&session);
-    REQUIRE( std::string(onboarded.author_id) == "th.1" );
-    REQUIRE( std::string(onboarded.access_token) == "at1" );
-    REQUIRE( std::string(onboarded.refresh_token) == "" );
+    kii_author_t first = held(&session);
+    REQUIRE( std::string(first.author_id) == "th.1" );
+    REQUIRE( std::string(first.access_token) == "at1" );
+    REQUIRE( std::string(first.refresh_token) == "" );
     REQUIRE( session._renew_at_known == KII_FALSE );
+    REQUIRE( session._renew_by_onboarding == KII_TRUE );
 
-    // Once refused, the password gets a refresh token and a lifetime.
-    platform.now_ms = 5000;
+    // Refused, it onboards again, and the request is sent again.
     c.http.responses.push_back(REFUSED);
-    c.http.responses.push_back(http_response(200,
-            "{\"id\":\"th.1\",\"access_token\":\"at2\",\"refresh_token\":\"rt2\",\"expires_in\":100}"));
+    c.http.responses.push_back(onboarded("at2"));
     c.http.responses.push_back(DONE);
     REQUIRE( c.put(BODY) == KII_ERR_OK );
     REQUIRE( kii_get_resp_status(&c.kii) == 200 );
     REQUIRE( c.http.requests.size() == 4 );
     REQUIRE( contains(c.http.requests[1], "Authorization: Bearer at1\r\n") );
-    REQUIRE( contains(c.http.requests[2], "\"grant_type\":\"password\"") );
+    REQUIRE( onboarding_again(c.http.requests[2]) );
     REQUIRE( contains(c.http.requests[3], "Authorization: Bearer at2\r\n") );
     REQUIRE( contains(c.http.requests[3], BODY) );
-    REQUIRE( std::string(held(&session).refresh_token) == "rt2" );
-    REQUIRE( session._renew_at_known == KII_TRUE );
-    REQUIRE( session._stored_at_ms == 5000 );
-    REQUIRE( session._renew_after_ms == 80000 );
+    REQUIRE( platform.updates.size() == 2 );
+    REQUIRE( std::string(held(&session).access_token) == "at2" );
+    REQUIRE( std::string(held(&session).refresh_token) == "" );
+    REQUIRE( session._renew_at_known == KII_FALSE );
+
+    // And so on, each time: nothing ever goes to the token endpoint.
+    c.http.responses.push_back(REFUSED);
+    c.http.responses.push_back(onboarded("at3"));
+    c.http.responses.push_back(DONE);
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( c.http.requests.size() == 7 );
+    REQUIRE( onboarding_again(c.http.requests[5]) );
+    REQUIRE( contains(c.http.requests[6], "Authorization: Bearer at3\r\n") );
+    for (const std::string& request : c.http.requests) {
+        CHECK_FALSE( contains(request, TOKEN_LINE) );
+    }
+}
+
+TEST_CASE( "Without the thing's credentials, an onboarded token is not renewed" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    Client c;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+    c.http.responses = { onboarded("at1"), REFUSED };
+    REQUIRE( kii_ti_onboard(&c.kii, "vid", "pw", NULL, NULL, NULL, NULL) == KII_ERR_OK );
+
+    // kii_api_call_run() leaves the status to kii_get_resp_status().
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( kii_get_resp_status(&c.kii) == 403 );
+    REQUIRE( c.http.requests.size() == 2 );
+    REQUIRE( std::string(held(&session).access_token) == "at1" );
+}
+
+TEST_CASE( "How the token was obtained decides how it is renewed" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    kii_session_set_password(&session, "vid", "pw");
+    Client c;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+
+    SECTION("a login after onboarding renews through the token endpoint") {
+        c.http.responses = { onboarded("at1"),
+            refreshed("at2", "rt2", 100), REFUSED, refreshed("at3", "rt3", 100), DONE };
+        REQUIRE( kii_ti_onboard(&c.kii, "vid", "pw", NULL, NULL, NULL, NULL) == KII_ERR_OK );
+        REQUIRE( kii_auth_thing(&c.kii, "vid", "pw") == KII_ERR_OK );
+        REQUIRE( session._renew_by_onboarding == KII_FALSE );
+        REQUIRE( c.put(BODY) == KII_ERR_OK );
+        REQUIRE( c.http.requests.size() == 5 );
+        REQUIRE( contains(c.http.requests[3], "\"refresh_token\":\"rt2\"") );
+        REQUIRE( contains(c.http.requests[4], "Authorization: Bearer at3\r\n") );
+    }
+
+    SECTION("a restored author is renewed by onboarding when told so") {
+        kii_author_t saved = make_author("th.1", "at1", "");
+        kii_session_set_author(&session, &saved);
+        REQUIRE( session._renew_by_onboarding == KII_FALSE );
+        kii_session_set_renew_by_onboarding(&session, KII_TRUE);
+        c.http.responses = { REFUSED, onboarded("at2"), DONE };
+        REQUIRE( c.put(BODY) == KII_ERR_OK );
+        REQUIRE( c.http.requests.size() == 3 );
+        REQUIRE( onboarding_again(c.http.requests[1]) );
+        REQUIRE( contains(c.http.requests[2], "Authorization: Bearer at2\r\n") );
+        // Only the renewal told the author-updated callback.
+        REQUIRE( platform.updates.size() == 1 );
+    }
 }
 
 TEST_CASE( "A login replaces the refresh token, also with none" ) {

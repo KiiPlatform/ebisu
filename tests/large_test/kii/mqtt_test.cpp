@@ -2,7 +2,7 @@
 // receives what the thing sends to its own topic and straight to itself, stays
 // connected while idle
 // across receive timeouts and keep-alive pings, and reconnects after losing
-// the connection. With a session, it renews a token the server refuses.
+// the connection. With a session, a token the server refuses is renewed.
 //
 // The MQTT connection goes through the samples' socket callbacks, the Linux
 // sample's or the win32 sample's, so this runs them against the broker too.
@@ -455,9 +455,9 @@ TEST_CASE("The MQTT task renews a token the server refuses")
     REQUIRE( kii_ti_onboard(&kii, vid.c_str(), "1234", NULL, NULL, NULL, NULL) == KII_ERR_OK );
     const std::string thing_id = kii._author.author_id;
 
-    // The task installs push with a token the server refuses. The session
-    // renews it and the installation is sent again, so the task goes on to
-    // fetch the endpoint, connect and subscribe.
+    // The task starts with a token the server refuses. Whatever it asks of
+    // the server on its way to connecting, the session renews the token for,
+    // by onboarding again, and the task connects and subscribes.
     spoil(&session);
     REQUIRE( kii_start_push_task(&kii, KEEP_ALIVE, cb_push, &t) == KII_ERR_OK );
     StopTask stop_task{t};
@@ -468,9 +468,9 @@ TEST_CASE("The MQTT task renews a token the server refuses")
         std::lock_guard<std::mutex> lock(t.mutex);
         REQUIRE_FALSE( t.exited );
     }
-    CHECK_FALSE( spoiled(&session) );
 
-    // A push message sent with a refused token is sent again, and arrives.
+    // A push message sent with a refused token is sent again once the session
+    // has onboarded again, and arrives.
     spoil(&session);
     const std::string nonce = "renewed-" + std::to_string(kiiltest::current_time());
     const std::string message = "{\"data\":{\"nonce\":\"" + nonce + "\"},\"mqtt\":{\"enabled\":true}}";

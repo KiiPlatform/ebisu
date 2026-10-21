@@ -5,6 +5,7 @@
 #include "kii_impl.h"
 #include "kii_session_impl.h"
 #include "kii_thing_impl.h"
+#include "kii_ti_impl.h"
 #include "jkii_wrapper.h"
 
 /* Kii's own SDKs renew five minutes before expiry. Short-lived tokens get a
@@ -97,6 +98,18 @@ void kii_session_set_author(kii_session_t* session, const kii_author_t* author)
     }
 }
 
+void kii_session_set_renew_by_onboarding(kii_session_t* session, kii_bool_t by_onboarding)
+{
+    kii_bool_t locked = _has_lock(session);
+    if (locked == KII_TRUE) {
+        _lock(session);
+    }
+    session->_renew_by_onboarding = by_onboarding;
+    if (locked == KII_TRUE) {
+        _unlock(session);
+    }
+}
+
 void kii_session_get_author(kii_session_t* session, kii_author_t* out_author)
 {
     kii_bool_t locked = _has_lock(session);
@@ -178,10 +191,11 @@ static void _store_locked(
     }
 }
 
-void _kii_session_publish(kii_t* kii, int64_t expires_in_sec)
+void _kii_session_publish(kii_t* kii, int64_t expires_in_sec, kii_bool_t by_onboarding)
 {
     kii_session_t* session = kii->_session;
     _lock(session);
+    session->_renew_by_onboarding = by_onboarding;
     _store_locked(session, &kii->_author, expires_in_sec);
     _sync_locked(kii);
     _unlock(session);
@@ -282,6 +296,25 @@ static kii_code_t _token_response(
     return _kii_parse_token_response(kii, author, id_required, expires_in_sec);
 }
 
+/* Renews a token onboarding obtained by onboarding again, which issues a new
+ * one, with neither a lifetime nor a refresh token. */
+static kii_code_t _onboard_again(kii_t* kii, kii_author_t* author)
+{
+    kii_session_t* session = kii->_session;
+    if (session->_password == NULL) {
+        return KII_ERR_FAIL;
+    }
+    kii_code_t res = _onboard(kii, session->_vendor_thing_id,
+            session->_password, NULL, NULL, NULL, NULL);
+    if (res != KII_ERR_OK) {
+        return res;
+    }
+    /* _onboard() wrote the new token and the thing ID to kii->_author. */
+    *author = kii->_author;
+    author->refresh_token[0] = '\0';
+    return KII_ERR_OK;
+}
+
 /* Renews the session's token unless another kii_t did since this one took it,
  * or, when not forced, it is not yet due. Called with the session lock held,
  * and with kii->_rw_buff pointing at space the renewal may use. */
@@ -299,6 +332,14 @@ static kii_code_t _renew_locked(kii_t* kii, kii_bool_t force)
     kii_author_t author = session->_author;
     int64_t expires_in_sec = 0;
     kii_code_t res = KII_ERR_FAIL;
+    if (session->_renew_by_onboarding == KII_TRUE) {
+        res = _onboard_again(kii, &author);
+        if (res == KII_ERR_OK) {
+            _store_locked(session, &author, 0);
+        }
+        _sync_locked(kii);
+        return res;
+    }
     /* Having no refresh token is treated like having it refused. */
     kii_bool_t rejected = KII_TRUE;
     if (author.refresh_token[0] != '\0') {
@@ -393,7 +434,11 @@ static kii_code_t _renew_and_restore(
     size_t req_size = kii->_rw_buff_req_size;
     kii_bool_t streamed = kii->_req_streamed;
     size_t keep = (streamed == KII_TRUE) ? 0 : req_size + 1;
-    if (buff_size < keep + _KII_SESSION_RENEW_BUFF_SIZE) {
+    _lock(kii->_session);
+    size_t renewal_size = (kii->_session->_renew_by_onboarding == KII_TRUE) ?
+        _KII_SESSION_ONBOARD_BUFF_SIZE : _KII_SESSION_RENEW_BUFF_SIZE;
+    _unlock(kii->_session);
+    if (buff_size < keep + renewal_size) {
         if (force != KII_TRUE) {
             return KII_ERR_OK;
         }

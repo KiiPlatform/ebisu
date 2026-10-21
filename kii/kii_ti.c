@@ -18,8 +18,9 @@ kii_code_t kii_ti_onboard(
         return ret;
     }
     if (kii->_session != NULL) {
-        // Onboarding gives no lifetime: the token is used until refused.
-        _kii_session_publish(kii, 0);
+        // Onboarding gives no lifetime: the token is used until refused, and
+        // then renewed by onboarding again.
+        _kii_session_publish(kii, 0, KII_TRUE);
     }
 
     return KII_ERR_OK;

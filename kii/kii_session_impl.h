@@ -9,14 +9,23 @@
 #define _KII_SESSION_RENEW_BUFF_SIZE \
     (KII_AUTHOR_ID_MAX_SIZE + KII_TOKEN_MAX_SIZE + KII_REFRESH_TOKEN_MAX_SIZE + 256)
 
+/* Space a renewal by onboarding again needs: its response also carries the
+ * MQTT endpoint, where MQTT is enabled. */
+#define _KII_SESSION_ONBOARD_BUFF_SIZE \
+    (KII_AUTHOR_ID_MAX_SIZE + KII_TOKEN_MAX_SIZE + KII_INSTALLATION_ID_MAX_SIZE + \
+     KII_USERNAME_MAX_SIZE + KII_PASSWORD_MAX_SIZE + KII_TOPIC_MAX_SIZE + \
+     KII_HOST_MAX_SIZE + 512)
+
 /* Copies the session's author into kii->_author. */
 void _kii_session_sync(kii_t* kii);
 
-/* Stores the tokens a login just wrote to kii->_author in the session.
- * expires_in_sec is the token's lifetime as the response gave it, or 0 when it
- * gave none. One that is not positive or exceeds UINT32_MAX seconds leaves the
- * expiry unknown, as 0 does. */
-void _kii_session_publish(kii_t* kii, int64_t expires_in_sec);
+/* Stores the tokens a login or onboarding just wrote to kii->_author in the
+ * session, to be renewed the same way: by onboarding again when
+ * by_onboarding, and otherwise through the token endpoint. expires_in_sec is
+ * the token's lifetime as the response gave it, or 0 when it gave none. One
+ * that is not positive or exceeds UINT32_MAX seconds leaves the expiry
+ * unknown, as 0 does. */
+void _kii_session_publish(kii_t* kii, int64_t expires_in_sec, kii_bool_t by_onboarding);
 
 /* khc_perform() for requests that may carry the session's token: renews the
  * token close to expiry or when the server refuses it, and then sends the

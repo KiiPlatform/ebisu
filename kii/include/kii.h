@@ -192,14 +192,20 @@ typedef void (*KII_CB_AUTHOR_UPDATED)(const kii_author_t* author, void* userdata
 /**
  * \brief Tokens shared by the kii_t instances acting as the same thing.
  *
- * Renews the access token, with the refresh token first and the thing's
- * password when there is none or the server rejects it, when it is close to
- * expiry or the server refuses it. A request whose body was built in
- * the buffer set by kii_set_buff() is then sent again; see kii_set_session().
+ * Renews the access token when it is close to expiry or the server refuses
+ * it, the way it was obtained:
+ * - one onboarding obtained, by onboarding again through Thing-IF with the
+ *   thing's credentials;
+ * - one a login or registration obtained, with the refresh token first, and
+ *   by logging in with the thing's credentials when there is none or the
+ *   server rejects it.
  *
- * Every kii_t acting as the thing must use the same session: renewing
+ * A request whose body was built in the buffer set by kii_set_buff() is then
+ * sent again; see kii_set_session().
+ *
+ * Every kii_t acting as the thing must use the same session: a refresh
  * invalidates the previous tokens, which would fail the requests of a kii_t
- * holding its own copy.
+ * holding its own copy, and sharing renews once for all of them.
  *
  * Initialize with kii_session_init(), set the lock and the clock, then attach
  * with kii_set_session().
@@ -215,6 +221,9 @@ typedef struct kii_session_t {
     uint64_t _stored_at_ms;
     /** \private How long after _stored_at_ms it is renewed. */
     uint64_t _renew_after_ms;
+    /** \private Whether _author is renewed by onboarding again rather than
+     * through Kii Cloud's token endpoint. */
+    kii_bool_t _renew_by_onboarding;
     const char* _vendor_thing_id; /**< \private */
     const char* _password; /**< \private */
     KII_CB_AUTHOR_UPDATED _cb_author_updated; /**< \private */
@@ -524,12 +533,14 @@ void kii_session_set_cb_monotonic_ms(
         void* userdata);
 
 /**
- * \brief Set the credentials the session logs in with when it cannot refresh.
+ * \brief Set the thing's credentials the session renews tokens with.
  *
- * Used when there is no refresh token, or the server rejects it: after it
- * expired, after a renewal whose response was lost, or after a restart with an
- * author saved before the last renewal. Without them such a session cannot
- * recover.
+ * A token onboarding obtained is renewed by onboarding again with them, so
+ * without them it cannot be renewed at all. A token a login obtained is
+ * renewed by logging in with them when there is no refresh token, or the server
+ * rejects it: after it expired, after a renewal whose response was lost, or
+ * after a restart with an author saved before the last renewal. Without them
+ * such a session cannot recover.
  *
  * The strings are not copied and must outlive the session.
  *
@@ -567,6 +578,21 @@ void kii_session_set_cb_author_updated(
 void kii_session_set_author(kii_session_t* session, const kii_author_t* author);
 
 /**
+ * \brief Set how the session renews the token it holds.
+ *
+ * kii_ti_onboard() through an attached kii_t sets it to onboarding again, and
+ * kii_auth_thing() and kii_register_thing() to the token endpoint, each for the
+ * token it obtains; renewals keep it. Set it after kii_session_set_author()
+ * when restoring an author onboarding obtained, which would otherwise be
+ * renewed through the token endpoint.
+ *
+ * \param [out] session kii_session_t instance.
+ * \param [in] by_onboarding KII_TRUE to renew by onboarding again through
+ * Thing-IF, KII_FALSE to renew through Kii Cloud's token endpoint.
+ */
+void kii_session_set_renew_by_onboarding(kii_session_t* session, kii_bool_t by_onboarding);
+
+/**
  * \brief Copy the author held by the session.
  *
  * \param [in] session kii_session_t instance.
@@ -587,7 +613,8 @@ void kii_session_get_author(kii_session_t* session, kii_author_t* out_author);
  *   WRONG_TOKEN, as Kii answers for a token that has expired or been
  *   replaced. Such a request is then sent again, provided its body was built
  *   in the buffer set by kii_set_buff(), and both the refusal and the renewal
- *   fit in that buffer after the body; the renewal takes about 640 bytes.
+ *   fit in that buffer after the body; the renewal takes about 640 bytes,
+ *   or 1150 by onboarding, whose response carries the MQTT endpoint.
  *   Otherwise the API reports the 403 as it would without a session --
  *   KII_ERR_RESP_STATUS, or for kii_api_call_run() the status from
  *   kii_get_resp_status() -- without its body, and calling it again uses the
@@ -596,7 +623,8 @@ void kii_session_get_author(kii_session_t* session, kii_author_t* out_author);
  * - A token issued without a lifetime, or with one that is not positive or
  *   exceeds UINT32_MAX seconds, is renewed only when refused. Onboarding
  *   issues neither a lifetime nor a refresh token, so its token is renewed
- *   when first refused, with the password set by kii_session_set_password().
+ *   when refused, by onboarding again with the credentials set by
+ *   kii_session_set_password().
  * - A renewal runs inside the request that needed it and takes about 1.5 KB
  *   more stack than a request does.
  *
