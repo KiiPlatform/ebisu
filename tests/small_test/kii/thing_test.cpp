@@ -6,6 +6,7 @@
 #include <deque>
 #include <string>
 #include <string.h>
+#include <utility>
 
 static std::string ok_response(const std::string& body) {
     return "HTTP/1.1 200 OK\r\n"
@@ -90,23 +91,52 @@ TEST_CASE( "Thing requests send the values they are given" ) {
     }
 
     SECTION("kii_ti_onboard") {
-        // An anonymous token is fetched first, then the onboarding request.
-        responses.push_back(ok_response("{\"access_token\":\"anon\"}"));
+        // The onboarding request is the only one: the app's ID authorizes it.
         responses.push_back(ok_response("{\"accessToken\":\"tok\",\"thingID\":\"th.1\"}"));
 
         kii_code_t res = kii_ti_onboard(
                 &kii, vendor_thing_id, password, "type", NULL, NULL, NULL);
 
         REQUIRE( res == KII_ERR_OK );
+        REQUIRE( sent.find("POST https://api.kii.com/thing-if/apps/dummyAppID/onboardings HTTP/1.1\r\n") == 0 );
+        REQUIRE( sent.find("\r\nAuthorization: Basic ZHVtbXlBcHBJRDpkdW1teQ==\r\n") != std::string::npos );
         REQUIRE( sent.find("\"vendorThingID\":\"ab\"") != std::string::npos );
         REQUIRE( sent.find("\"thingPassword\":\"" + esc_password + "\"") != std::string::npos );
+    }
+
+    // The app's ID and a placeholder key, base64 encoded, whatever the
+    // credentials' length: one, two or no bytes left over a multiple of three,
+    // and the longest app ID there is room for.
+    SECTION("kii_ti_onboard is authorized with the app's ID") {
+        // 127 x's: 42 times "xxx", then "x:dummy".
+        std::string longest_basic;
+        for (int i = 0; i < 42; ++i) {
+            longest_basic += "eHh4";
+        }
+        longest_basic += "eDpkdW1teQ==";
+        const std::pair<std::string, std::string> apps[] = {
+            { "a", "YTpkdW1teQ==" },
+            { "ab", "YWI6ZHVtbXk=" },
+            { "abc", "YWJjOmR1bW15" },
+            { std::string(KII_APP_ID_MAX_SIZE - 1, 'x'), longest_basic },
+        };
+        for (const auto& app : apps) {
+            kii_set_app_id(&kii, app.first.c_str());
+            sent.clear();
+            responses.push_back(ok_response("{\"accessToken\":\"tok\",\"thingID\":\"th.1\"}"));
+
+            kii_code_t res = kii_ti_onboard(
+                    &kii, vendor_thing_id, password, "type", NULL, NULL, NULL);
+
+            REQUIRE( res == KII_ERR_OK );
+            CHECK( sent.find("\r\nAuthorization: Basic " + app.second + "\r\n") != std::string::npos );
+        }
     }
 
     // thing_properties is a JSON object, embedded as the value of
     // thingProperties. It was escaped as if it were a string's contents, so
     // every quote in it went out as \" and the body was not JSON.
     SECTION("kii_ti_onboard with thing_properties") {
-        responses.push_back(ok_response("{\"access_token\":\"anon\"}"));
         responses.push_back(ok_response("{\"accessToken\":\"tok\",\"thingID\":\"th.1\"}"));
 
         kii_code_t res = kii_ti_onboard(
