@@ -79,13 +79,13 @@ TEST_CASE( "The session renews a token the server refuses" ) {
     const kii_author_t onboarded = held(&session);
     REQUIRE( std::string(onboarded.access_token).length() > 0 );
 
-    SECTION("a request whose body was built in the buffer is sent again") {
-        kii_bucket_t bucket;
-        bucket.bucket_name = "ltest_session";
-        bucket.scope = KII_SCOPE_THING;
-        bucket.scope_id = onboarded.author_id;
-        kii_object_id_t object_id;
+    kii_bucket_t bucket;
+    bucket.bucket_name = "ltest_session";
+    bucket.scope = KII_SCOPE_THING;
+    bucket.scope_id = onboarded.author_id;
+    kii_object_id_t object_id;
 
+    SECTION("a request whose body was built in the buffer is sent again") {
         // Kii's REST API.
         spoil(&session);
         REQUIRE( kii_post_object(&kii, &bucket, "{\"k\":\"v\"}", NULL, &object_id) == KII_ERR_OK );
@@ -116,6 +116,32 @@ TEST_CASE( "The session renews a token the server refuses" ) {
             CHECK_FALSE( same_token(refreshed.access_token, UNKNOWN_TOKEN) );
             CHECK_FALSE( same_token(refreshed.access_token, renewed.access_token) );
         }
+    }
+
+    SECTION("the lifetime the server gives is read, and the token renewed ahead of expiry") {
+        // Onboarding gives no lifetime. The login that renews its token does.
+        CHECK( session._renew_at_known == KII_FALSE );
+        spoil(&session);
+        REQUIRE( kii_post_object(&kii, &bucket, "{\"k\":\"v\"}", NULL, &object_id) == KII_ERR_OK );
+        REQUIRE( session._renew_at_known == KII_TRUE );
+        REQUIRE( session._renew_after_ms > 0 );
+        const kii_author_t logged_in = held(&session);
+
+        // Not due yet.
+        now_ms = session._stored_at_ms + session._renew_after_ms - 1;
+        REQUIRE( kii_post_object(&kii, &bucket, "{\"k\":\"w\"}", NULL, &object_id) == KII_ERR_OK );
+        CHECK( same_token(held(&session).access_token, logged_in.access_token) );
+
+        // Due: renewed before the request, which the server never refused.
+        now_ms += 1;
+        REQUIRE( kii_post_object(&kii, &bucket, "{\"k\":\"x\"}", NULL, &object_id) == KII_ERR_OK );
+        REQUIRE( kii_get_resp_status(&kii) == 201 );
+        CHECK( kii._session_refused == KII_FALSE );
+        const kii_author_t ahead = held(&session);
+        CHECK( std::string(ahead.author_id) == onboarded.author_id );
+        CHECK_FALSE( same_token(ahead.access_token, logged_in.access_token) );
+        CHECK( session._renew_at_known == KII_TRUE );
+        CHECK( session._stored_at_ms == now_ms );
     }
 
     SECTION("a streamed request is refused with 403 WRONG_TOKEN, and the token renewed") {

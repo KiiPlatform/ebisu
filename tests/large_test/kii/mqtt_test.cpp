@@ -2,7 +2,7 @@
 // receives what the thing sends to its own topic and straight to itself, stays
 // connected while idle
 // across receive timeouts and keep-alive pings, and reconnects after losing
-// the connection.
+// the connection. With a session, it renews a token the server refuses.
 //
 // The MQTT connection goes through the samples' socket callbacks, the Linux
 // sample's or the win32 sample's, so this runs them against the broker too.
@@ -235,6 +235,69 @@ struct StopTask {
     }
 };
 
+// Has kii run the push task with t's callbacks and the broker's sockets.
+void set_up_task(kii_t* kii, MqttTest& t, char* mqtt_buff, size_t mqtt_buff_size)
+{
+#ifdef _WIN32
+    sock_cb_init_context(&t.sock, TO_RECV, TO_SEND);
+#else
+    memset(&t.sock, 0, sizeof(t.sock));
+    t.sock.to_recv = TO_RECV;
+    t.sock.to_send = TO_SEND;
+#endif
+    kii_set_mqtt_buff(kii, mqtt_buff, mqtt_buff_size);
+    kii_set_cb_mqtt_sock_connect(kii, cb_connect, &t);
+    kii_set_cb_mqtt_sock_send(kii, cb_send, &t);
+    kii_set_cb_mqtt_sock_recv(kii, cb_recv, &t);
+    kii_set_cb_mqtt_sock_recv_timed_out(kii, cb_recv_timed_out, &t);
+    kii_set_cb_mqtt_sock_close(kii, cb_close, &t);
+    kii_set_mqtt_to_sock_recv(kii, TO_RECV);
+    kii_set_mqtt_to_sock_send(kii, TO_SEND);
+    kii_set_cb_task_create(kii, cb_task_create, &t);
+    kii_set_cb_task_continue(kii, cb_continue, &t);
+    kii_set_cb_task_exit(kii, cb_exit, &t);
+    kii_set_cb_delay_ms(kii, cb_delay_ms, NULL);
+}
+
+// The session is used by the task and by the test's thread.
+void cb_session_lock(void* userdata)
+{
+    ((std::mutex*)userdata)->lock();
+}
+
+void cb_session_unlock(void* userdata)
+{
+    ((std::mutex*)userdata)->unlock();
+}
+
+uint64_t cb_session_now_ms(void* userdata)
+{
+    return (uint64_t)std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count();
+}
+
+// A token the server doesn't know, which it treats as it does an expired one.
+const char UNKNOWN_TOKEN[] = "ltest-unknown-token";
+
+// Has the session hold its author with an access token the server refuses.
+void spoil(kii_session_t* session)
+{
+    kii_author_t author;
+    kii_session_get_author(session, &author);
+    strcpy(author.access_token, UNKNOWN_TOKEN);
+    kii_session_set_author(session, &author);
+}
+
+// Whether the session still holds the token spoil() gave it. Compared here
+// rather than in an assertion, which would print the token, into logs that are
+// public.
+bool spoiled(kii_session_t* session)
+{
+    kii_author_t author;
+    kii_session_get_author(session, &author);
+    return strcmp(author.access_token, UNKNOWN_TOKEN) == 0;
+}
+
 }
 
 TEST_CASE("MQTT push from the broker")
@@ -252,25 +315,7 @@ TEST_CASE("MQTT push from the broker")
     kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &unused_mqtt_ssl_ctx, &resource);
 
     MqttTest t;
-#ifdef _WIN32
-    sock_cb_init_context(&t.sock, TO_RECV, TO_SEND);
-#else
-    memset(&t.sock, 0, sizeof(t.sock));
-    t.sock.to_recv = TO_RECV;
-    t.sock.to_send = TO_SEND;
-#endif
-    kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
-    kii_set_cb_mqtt_sock_connect(&kii, cb_connect, &t);
-    kii_set_cb_mqtt_sock_send(&kii, cb_send, &t);
-    kii_set_cb_mqtt_sock_recv(&kii, cb_recv, &t);
-    kii_set_cb_mqtt_sock_recv_timed_out(&kii, cb_recv_timed_out, &t);
-    kii_set_cb_mqtt_sock_close(&kii, cb_close, &t);
-    kii_set_mqtt_to_sock_recv(&kii, TO_RECV);
-    kii_set_mqtt_to_sock_send(&kii, TO_SEND);
-    kii_set_cb_task_create(&kii, cb_task_create, &t);
-    kii_set_cb_task_continue(&kii, cb_continue, &t);
-    kii_set_cb_task_exit(&kii, cb_exit, &t);
-    kii_set_cb_delay_ms(&kii, cb_delay_ms, NULL);
+    set_up_task(&kii, t, mqtt_buff, sizeof(mqtt_buff));
 
     // A thing of its own, so that no other run, such as the other CI cell's,
     // receives what this one sends.
@@ -380,4 +425,68 @@ TEST_CASE("MQTT push from the broker")
 
     // The task has ended, so the kii_t is this thread's again.
     CHECK( kii_delete_topic(&kii, &topic) == KII_ERR_OK );
+}
+
+TEST_CASE("The MQTT task renews a token the server refuses")
+{
+    // To Avoid 429 Too Many Requests
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    const size_t buff_size = 4096;
+    char buff[buff_size];
+    char mqtt_buff[2048];
+    kii_t kii;
+    ebisu::ltest::ssl::SSLData http_ssl_ctx;
+    ebisu::ltest::ssl::SSLData unused_mqtt_ssl_ctx;
+    jkii_token_t tokens[256];
+    jkii_resource_t resource = {tokens, 256};
+    kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &unused_mqtt_ssl_ctx, &resource);
+
+    MqttTest t;
+    set_up_task(&kii, t, mqtt_buff, sizeof(mqtt_buff));
+
+    std::mutex session_mutex;
+    kii_session_t session;
+    kii_session_init(&session);
+    kii_session_set_cb_lock(&session, cb_session_lock, cb_session_unlock, &session_mutex);
+    kii_session_set_cb_monotonic_ms(&session, cb_session_now_ms, NULL);
+    const std::string vid = "ltest_mqtt_session_" + std::to_string(kiiltest::current_time());
+    kii_session_set_password(&session, vid.c_str(), "1234");
+    REQUIRE( kii_set_session(&kii, &session) == KII_ERR_OK );
+    REQUIRE( kii_ti_onboard(&kii, vid.c_str(), "1234", NULL, NULL, NULL, NULL) == KII_ERR_OK );
+    const std::string thing_id = kii._author.author_id;
+
+    // The task installs push with a token the server refuses. The session
+    // renews it and the installation is sent again, so the task goes on to
+    // fetch the endpoint, connect and subscribe.
+    spoil(&session);
+    REQUIRE( kii_start_push_task(&kii, KEEP_ALIVE, cb_push, &t) == KII_ERR_OK );
+    StopTask stop_task{t};
+    REQUIRE( wait_for(t, 120, [&t] {
+        return t.count(KII_MQTT_ST_RECV_READY) > 0 || t.exited;
+    }) );
+    {
+        std::lock_guard<std::mutex> lock(t.mutex);
+        REQUIRE_FALSE( t.exited );
+    }
+    CHECK_FALSE( spoiled(&session) );
+
+    // A push message sent with a refused token is sent again, and arrives.
+    spoil(&session);
+    const std::string nonce = "renewed-" + std::to_string(kiiltest::current_time());
+    const std::string message = "{\"data\":{\"nonce\":\"" + nonce + "\"},\"mqtt\":{\"enabled\":true}}";
+    REQUIRE( run_on_task(t, [&kii, &t, &thing_id, &message] {
+        kii_code_t res = kii_send_push_message_to_thing(&kii, thing_id.c_str(), message.c_str());
+        int status = khc_get_status_code(&kii._khc);
+        std::lock_guard<std::mutex> lock(t.mutex);
+        t.send_res = res;
+        t.send_status = status;
+    }) );
+    {
+        std::lock_guard<std::mutex> lock(t.mutex);
+        INFO( "status " << t.send_status );
+        REQUIRE( t.send_res == KII_ERR_OK );
+    }
+    REQUIRE( received(t, nonce) );
+    CHECK_FALSE( spoiled(&session) );
+    CHECK( t.connects.load() == 1 );
 }
