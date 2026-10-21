@@ -301,6 +301,15 @@ typedef struct kii_t {
 
     kii_bool_t _insecure_mqtt; /**< \private */
     kii_bool_t _use_m_0_header; /**< \private */
+
+    /** \private The MQTT endpoint the last kii_ti_onboard() returned, which
+     * the push task connects with. */
+    kii_mqtt_endpoint_t _onboarded_endpoint;
+    /** \private The installation _onboarded_endpoint belongs to. */
+    kii_installation_id_t _onboarded_installation_id;
+    /** \private The thing _onboarded_endpoint was returned for, or empty
+     * when the last onboarding returned none. */
+    char _onboarded_thing_id[KII_AUTHOR_ID_MAX_SIZE];
 } kii_t;
 
 /**
@@ -676,6 +685,11 @@ kii_code_t kii_get_mqtt_endpoint(
  * The task is created by the callback set by kii_set_cb_task_create().
  * If that callback is not set, or fails to create the task, no task is
  * started and KII_ERR_CREATE_TASK is returned.
+ *
+ * After kii_ti_onboard() returned an MQTT endpoint for the thing kii acts as,
+ * the task connects with that endpoint. Otherwise it installs push and fetches
+ * the endpoint first. If the broker refuses the credentials, it fetches new ones
+ * for the same installation.
 
  * \param [in,out] kii kii_t instance.
  * \param [in] keep_alive_interval_sec MQTT Keep-Alive interval in seconds.
@@ -728,6 +742,10 @@ kii_code_t kii_execute_server_code(
  * \brief Execute onboarding.
 
  * Note: input params other than vendor_thing_id and password are ignored after the first registration.
+ *
+ * Where MQTT is enabled, onboarding also installs push and returns the MQTT
+ * endpoint, which is kept: kii_start_push_task() then connects with it, rather
+ * than installing push and fetching the endpoint from Kii Cloud.
  * \param [in, out] kii kii_t instance.
  * \param [in] vendor_thing_id Unique ID determined by device vendor.
  * \param [in] password Password of the device.

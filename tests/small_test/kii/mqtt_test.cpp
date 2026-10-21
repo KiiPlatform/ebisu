@@ -3,7 +3,7 @@
 #include "catch.hpp"
 #include "kii.h"
 #include "kii_mqtt_task.h"
-#include "test_callbacks.h"
+#include "http_script.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -3089,5 +3089,123 @@ TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
         CHECK( ctx.exit_info.error == KII_MQTT_ERR_INSUFFICIENT_BUFF );
         CHECK( connects == 1 );
         CHECK( ctx.closes_at_exit == 1 );
+    }
+}
+
+// Onboarding installs push and returns the MQTT endpoint, so the push task need
+// not install push and fetch the endpoint from Kii Cloud as well.
+TEST_CASE( "The push task connects with the endpoint onboarding returned" ) {
+    char kii_buff[2048];
+    char mqtt_buff[1024];
+    jkii_token_t tokens[128];
+    jkii_resource_t resource = {tokens, 128};
+
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
+    kii_set_json_parser_resource(&kii, &resource);
+    kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
+    khct::HttpScript http;
+    http.attach(&kii._khc);
+
+    const std::string endpoint =
+        "{\"installationID\":\"ins.1\",\"username\":\"user.1\",\"password\":\"pass.1\","
+        "\"mqttTopic\":\"topic.1\",\"host\":\"mqtt.example.com\",\"portTCP\":1883,"
+        "\"portSSL\":8883,\"portWS\":12470,\"portWSS\":12473,\"ttl\":2147483647}";
+    // Onboarding: a single request, authorized with the app's ID.
+    auto onboard = [&](const std::string& onboarding_body) {
+        http.responses.push_back(khct::http_response(200, onboarding_body));
+        return kii_ti_onboard(&kii, "vendor.1", "password", NULL, NULL, NULL, NULL);
+    };
+
+    SECTION("it connects with it, to the host and port it gave") {
+        REQUIRE( onboard("{\"accessToken\":\"tok\",\"thingID\":\"th.1\",\"mqttEndpoint\":" +
+                    endpoint + "}") == KII_ERR_OK );
+        CHECK( std::string(kii._author.access_token) == "tok" );
+
+        mqtt_state_t state;
+        _init_mqtt_state(&kii, &state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+        CHECK( std::string(state.ins_id.id) == "ins.1" );
+        CHECK( std::string(state.endpoint.username) == "user.1" );
+        CHECK( std::string(state.endpoint.password) == "pass.1" );
+        CHECK( std::string(state.endpoint.topic) == "topic.1" );
+        CHECK( state.endpoint.port_tcp == 1883 );
+
+        khct::cb::SockCtx mqtt_ctx;
+        std::string host;
+        uint16_t port = 0;
+        mqtt_ctx.on_connect = [&host, &port](void*, const char* h, uint16_t p) {
+            host = h;
+            port = p;
+            return KHC_SOCK_OK;
+        };
+        kii_set_cb_mqtt_sock_connect(&kii, khct::cb::mock_connect, &mqtt_ctx);
+        _mqtt_state_sock_connect(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_SEND_CONNECT );
+        CHECK( host == "mqtt.example.com" );
+        CHECK( port == 8883 );
+        // Only the onboarding went to the server.
+        CHECK( http.requests.size() == 1 );
+    }
+
+    SECTION("credentials the broker refuses are fetched again for the installation onboarding made") {
+        REQUIRE( onboard("{\"accessToken\":\"tok\",\"thingID\":\"th.1\",\"mqttEndpoint\":" +
+                    endpoint + "}") == KII_ERR_OK );
+        mqtt_state_t state;
+        _init_mqtt_state(&kii, &state);
+        // Where a refused CONNACK sends the task.
+        state.info.task_state = KII_MQTT_ST_GET_ENDPOINT;
+        http.responses.push_back(mqtt_endpoint_response("1883", "8883", "2147483647"));
+        _mqtt_state_get_endpoint(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+        REQUIRE( http.requests.size() == 2 );
+        CHECK( khct::contains(http.requests[1],
+                    "GET https://api.kii.com/api/apps/dummyAppID/installations/ins.1/mqtt-endpoint ") );
+    }
+
+    SECTION("without an endpoint it installs push and fetches one") {
+        const struct {
+            const char* what;
+            std::string body;
+        } cases[] = {
+            { "MQTT not enabled", "{\"accessToken\":\"tok\",\"thingID\":\"th.1\"}" },
+            { "an endpoint lacking its SSL port",
+                "{\"accessToken\":\"tok\",\"thingID\":\"th.1\",\"mqttEndpoint\":{\"installationID\":\"ins.1\","
+                "\"username\":\"user.1\",\"password\":\"pass.1\",\"mqttTopic\":\"topic.1\","
+                "\"host\":\"mqtt.example.com\",\"portTCP\":1883}}" },
+            { "an endpoint with a port out of range",
+                "{\"accessToken\":\"tok\",\"thingID\":\"th.1\",\"mqttEndpoint\":{\"installationID\":\"ins.1\","
+                "\"username\":\"user.1\",\"password\":\"pass.1\",\"mqttTopic\":\"topic.1\","
+                "\"host\":\"mqtt.example.com\",\"portTCP\":1883,\"portSSL\":65536}}" },
+        };
+        for (const auto& c : cases) {
+            INFO( c.what );
+            // An earlier onboarding's endpoint does not outlive the next one.
+            REQUIRE( onboard("{\"accessToken\":\"tok\",\"thingID\":\"th.1\",\"mqttEndpoint\":" +
+                        endpoint + "}") == KII_ERR_OK );
+            REQUIRE( onboard(c.body) == KII_ERR_OK );
+            CHECK( std::string(kii._author.access_token) == "tok" );
+            mqtt_state_t state;
+            _init_mqtt_state(&kii, &state);
+            CHECK( state.info.task_state == KII_MQTT_ST_INSTALL_PUSH );
+        }
+    }
+
+    SECTION("acting as another thing, it installs push and fetches an endpoint") {
+        REQUIRE( onboard("{\"accessToken\":\"tok\",\"thingID\":\"th.1\",\"mqttEndpoint\":" +
+                    endpoint + "}") == KII_ERR_OK );
+        strcpy(kii._author.author_id, "th.2");
+        mqtt_state_t state;
+        _init_mqtt_state(&kii, &state);
+        CHECK( state.info.task_state == KII_MQTT_ST_INSTALL_PUSH );
+    }
+
+    SECTION("an onboarding response without a token is still refused") {
+        CHECK( onboard("{\"thingID\":\"th.1\",\"mqttEndpoint\":" + endpoint + "}") ==
+                KII_ERR_PARSE_JSON );
     }
 }
