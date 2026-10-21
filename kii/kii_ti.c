@@ -10,15 +10,9 @@ kii_code_t kii_ti_onboard(
         const char* layout_position,
         const char* thing_properties)
 {
-    _kii_token_t out_token;
     kii_code_t ret = KII_ERR_FAIL;
 
-    ret = _get_anonymous_token(kii, &out_token);
-    if (ret != KII_ERR_OK) {
-        return ret;
-    }
-
-    ret = _onboard(kii, out_token.token, vendor_thing_id, password, thing_type, firmware_version, layout_position, thing_properties);
+    ret = _onboard(kii, vendor_thing_id, password, thing_type, firmware_version, layout_position, thing_properties);
     if (ret != KII_ERR_OK) {
         return ret;
     }

@@ -3,20 +3,8 @@
 
 #include "kii.h"
 
-// The other token is defined as 128
-#define KII_TI_TOKEN_MAX_SIZE 64
-
-typedef struct {
-    char token[KII_TI_TOKEN_MAX_SIZE];
-} _kii_token_t;
-
-kii_code_t _get_anonymous_token(
-        kii_t* kii,
-        _kii_token_t* out_token);
-
 kii_code_t _onboard(
         kii_t* kii,
-        const char* token,
         const char* vendor_thing_id,
         const char* password,
         const char* thing_type,

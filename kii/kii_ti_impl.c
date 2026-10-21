@@ -5,89 +5,8 @@
 #include "jkii_utils.h"
 #include <string.h>
 
-kii_code_t _get_anonymous_token(
-        kii_t* kii,
-        _kii_token_t* out_token)
-{
-    kii_code_t ret = KII_ERR_FAIL;
-    _reset_buff(kii);
-    _reset_khc(kii);
-
-    khc_set_host(&kii->_khc, kii->_app_host);
-    khc_set_method(&kii->_khc, "POST");
-
-    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/api/apps/%s/oauth2/token", kii->_app_id);
-    if (path_len >= kii->_rw_buff_size) {
-        return KII_ERR_TOO_LARGE_DATA;
-    }
-    khc_set_path(&kii->_khc, kii->_rw_buff);
-
-    // Request headers.
-    ret = _set_content_type(kii, "application/json");
-    if (ret != KII_ERR_OK) {
-        _req_headers_free_all(kii);
-        return ret;
-    }
-    if (kii->_use_m_0_header == KII_TRUE) {
-        ret = _set_m_0_header(kii);
-        if (ret != KII_ERR_OK) {
-            _req_headers_free_all(kii);
-            return ret;
-        }
-    }
-    // Request body.
-    int content_len = snprintf(
-            kii->_rw_buff,
-            kii->_rw_buff_size,
-            "{\"grant_type\":\"client_credentials\",\"client_id\":\"%s\",\"client_secret\":\"dummy\"}",
-            kii->_app_id);
-    if (content_len >= kii->_rw_buff_size) {
-        _req_headers_free_all(kii);
-        return KII_ERR_TOO_LARGE_DATA;
-    }
-    kii->_rw_buff_req_size = content_len;
-
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
-    _req_headers_free_all(kii);
-
-    ret = _convert_code(code);
-    if (ret != KII_ERR_OK) {
-        return ret;
-    }
-
-    uint16_t resp_code = khc_get_status_code(&kii->_khc);
-    if(resp_code < 200 || 300 <= resp_code) {
-        return KII_ERR_RESP_STATUS;
-    }
-
-    char* buff = kii->_rw_buff;
-    size_t buff_size = kii->_rw_buff_written;
-    if (buff == NULL) {
-        return KII_ERR_FAIL;
-    }
-
-    jkii_field_t fields[2];
-    jkii_parse_err_t result;
-    memset(fields, 0, sizeof(fields));
-    fields[0].name = "access_token";
-    fields[0].type = JKII_FIELD_TYPE_STRING;
-    fields[0].field_copy.string = out_token->token;
-    fields[0].field_copy_buff_size = sizeof(out_token->token) /
-        sizeof(out_token->token[0]);
-    fields[1].name = NULL;
-
-    result = _jkii_read_object(kii, buff, buff_size, fields);
-    if (result != JKII_ERR_OK) {
-        return KII_ERR_PARSE_JSON;
-    }
-
-    return KII_ERR_OK;
-}
-
 kii_code_t _onboard(
         kii_t* kii,
-        const char* token,
         const char* vendor_thing_id,
         const char* password,
         const char* thing_type,
@@ -109,7 +28,7 @@ kii_code_t _onboard(
     khc_set_path(&kii->_khc, kii->_rw_buff);
 
     // Request headers.
-    ret = _set_auth_bearer_token(kii, token);
+    ret = _set_auth_basic_app(kii);
     if (ret != KII_ERR_OK) {
         _req_headers_free_all(kii);
         return ret;

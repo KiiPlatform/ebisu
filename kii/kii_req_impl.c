@@ -254,6 +254,61 @@ kii_code_t _set_auth_bearer_token(kii_t* kii, const char* token)
     }
 }
 
+// Writes the base64 encoding of src's src_len bytes to dst, terminated. Returns
+// the encoding's length, or -1 if it doesn't fit in dst_size.
+static int _base64_encode(const char* src, size_t src_len, char* dst, size_t dst_size)
+{
+    static const char digits[] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    size_t out_len = (src_len + 2) / 3 * 4;
+    if (out_len >= dst_size) {
+        return -1;
+    }
+    const unsigned char* in = (const unsigned char*)src;
+    char* out = dst;
+    size_t i = 0;
+    for (; i + 2 < src_len; i += 3) {
+        uint32_t n = ((uint32_t)in[i] << 16) | ((uint32_t)in[i + 1] << 8) | in[i + 2];
+        *out++ = digits[(n >> 18) & 0x3f];
+        *out++ = digits[(n >> 12) & 0x3f];
+        *out++ = digits[(n >> 6) & 0x3f];
+        *out++ = digits[n & 0x3f];
+    }
+    if (i < src_len) {
+        uint32_t n = (uint32_t)in[i] << 16;
+        if (i + 1 < src_len) {
+            n |= (uint32_t)in[i + 1] << 8;
+        }
+        *out++ = digits[(n >> 18) & 0x3f];
+        *out++ = digits[(n >> 12) & 0x3f];
+        *out++ = (i + 1 < src_len) ? digits[(n >> 6) & 0x3f] : '=';
+        *out++ = '=';
+    }
+    *out = '\0';
+    return (int)out_len;
+}
+
+kii_code_t _set_auth_basic_app(kii_t* kii)
+{
+    // The app's ID authorizes the request. Its key isn't needed, so a
+    // placeholder stands in for it.
+    char credentials[KII_APP_ID_MAX_SIZE + sizeof(":dummy")];
+    int cred_len = snprintf(credentials, sizeof(credentials), "%s:dummy", kii->_app_id);
+    if (cred_len < 0 || (size_t)cred_len >= sizeof(credentials)) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    static const char prefix[] = "Basic ";
+    if (kii->_rw_buff_size < sizeof(prefix)) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    memcpy(kii->_rw_buff, prefix, sizeof(prefix));
+    if (_base64_encode(credentials, (size_t)cred_len, kii->_rw_buff + sizeof(prefix) - 1,
+                kii->_rw_buff_size - (sizeof(prefix) - 1)) < 0) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    return kii_api_call_append_header(kii, "Authorization", kii->_rw_buff);
+}
+
 kii_code_t _set_if_match(kii_t* kii, const char* etag)
 {
     if (etag == NULL || strlen(etag) == 0) {
