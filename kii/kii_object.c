@@ -25,7 +25,7 @@ kii_code_t kii_post_object(
         goto exit;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         ret = KII_ERR_RESP_STATUS;
         goto exit;
@@ -80,7 +80,7 @@ kii_code_t kii_put_object(
         goto exit;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         ret = KII_ERR_RESP_STATUS;
         goto exit;
@@ -111,7 +111,7 @@ kii_code_t kii_patch_object(
         goto exit;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         code = KII_ERR_RESP_STATUS;
         goto exit;
@@ -138,7 +138,7 @@ kii_code_t kii_delete_object(
         goto exit;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         res = KII_ERR_RESP_STATUS;
         goto exit;
@@ -164,7 +164,7 @@ kii_code_t kii_get_object(
         goto exit;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         ret = KII_ERR_RESP_STATUS;
         goto exit;
@@ -192,7 +192,7 @@ kii_code_t kii_upload_object_body(
         goto exit;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         ret = KII_ERR_RESP_STATUS;
         goto exit;
@@ -221,7 +221,7 @@ kii_code_t kii_download_object_body(
         goto exit;
     }
 
-    int resp_code = khc_get_status_code(&kii->_khc);
+    uint16_t resp_code = khc_get_status_code(&kii->_khc);
     if(resp_code < 200 || 300 <= resp_code) {
         ret = KII_ERR_RESP_STATUS;
         goto exit;

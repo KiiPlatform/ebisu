@@ -277,8 +277,7 @@ const char* kii_get_etag(kii_t* kii) {
 }
 
 uint16_t kii_get_resp_status(kii_t* kii) {
-    // khc reads the status code as three digits, so it is at most 999.
-    return (uint16_t)khc_get_status_code(&kii->_khc);
+    return khc_get_status_code(&kii->_khc);
 }
 
 size_t kii_get_resp_body_length(kii_t* kii) {
