@@ -1,6 +1,7 @@
 #include "tio_demo.h"
 
 #include <stdio.h>
+#include <mutex.h>
 
 #include "main.h"
 #include "tio.h"
@@ -183,6 +184,13 @@ void handler_init(
 #endif
 }
 
+void author_updated_callback(const kii_author_t* author, void* userdata)
+{
+    // A device that keeps its tokens across a restart saves the author here.
+    // This sample onboards at each start instead.
+    printf("author updated: %s\n", author->author_id);
+}
+
 tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata)
 {
     printf("tio_action_handler called\n");
@@ -210,6 +218,9 @@ static void show_help()
 }
 
 #define CMD_INDEX 1
+
+static MUTEX_STRUCT session_mutex;
+static kii_session_t session;
 
 int tio_main(int argc, char *argv[])
 {
@@ -277,6 +288,25 @@ int tio_main(int argc, char *argv[])
                 &handler_mqtt_ctx,
                 &handler_resource);
 
+        // The handler and the updater share their tokens through the session,
+        // which renews them as they expire.
+        if (_mutex_init(&session_mutex, NULL) != MQX_EOK) {
+            printf("failed to init the session mutex.\n");
+            return A_OK;
+        }
+        kii_session_init(&session);
+        kii_session_set_cb_lock(&session, cb_lock, cb_unlock, &session_mutex);
+        kii_session_set_cb_monotonic_ms(&session, cb_monotonic_ms, NULL);
+        kii_session_set_cb_author_updated(&session, author_updated_callback, NULL);
+        // Used to onboard again when the server refuses the token, or the broker
+        // the MQTT credentials.
+        kii_session_set_password(&session, VENDOR_ID, VENDOR_PASS);
+        if (tio_handler_set_session(handler, &session) != TIO_ERR_OK ||
+                tio_updater_set_session(updater, &session) != TIO_ERR_OK) {
+            printf("failed to set the session.\n");
+            return A_OK;
+        }
+
         tio_code_t result = tio_handler_onboard(
                 handler,
                 VENDOR_ID,
@@ -292,11 +322,11 @@ int tio_main(int argc, char *argv[])
             printf("succeed to onboard.\n");
         }
 
-        const kii_author_t* author = tio_handler_get_author(handler);
-        tio_handler_start(handler, author, tio_action_handler, NULL);
+        // Both take the author from the session.
+        tio_handler_start(handler, NULL, tio_action_handler, NULL);
         tio_updater_start(
                 updater,
-                author,
+                NULL,
                 updater_cb_state_size,
                 &updater_ctx,
                 updater_cb_read,

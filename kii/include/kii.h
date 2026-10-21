@@ -932,7 +932,9 @@ kii_code_t kii_get_mqtt_endpoint(
  * After kii_ti_onboard() returned an MQTT endpoint for the thing kii acts as,
  * the task connects with that endpoint. Otherwise it installs push and fetches
  * the endpoint first. If the broker refuses the credentials, it fetches new ones
- * for the same installation.
+ * for the same installation; or, when kii's session renews its token by
+ * onboarding again, it onboards again for new ones, which renews the token
+ * too.
 
  * \param [in,out] kii kii_t instance.
  * \param [in] keep_alive_interval_sec MQTT Keep-Alive interval in seconds.

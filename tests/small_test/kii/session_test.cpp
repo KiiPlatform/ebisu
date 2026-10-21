@@ -1064,3 +1064,82 @@ TEST_CASE( "Tasks refused at the same time renew the token once" ) {
         CHECK( std::string(held(&session).refresh_token) == "rt2" );
     }
 }
+
+// The response to onboarding where MQTT is enabled: its endpoint, user and
+// installation named after n.
+std::string onboarded_with_endpoint(const char* access_token, const std::string& n) {
+    return http_response(200, std::string("{\"accessToken\":\"") + access_token +
+            "\",\"thingID\":\"th.1\",\"mqttEndpoint\":{\"installationID\":\"ins." + n +
+            "\",\"username\":\"user." + n + "\",\"password\":\"pass." + n +
+            "\",\"mqttTopic\":\"topic." + n + "\",\"host\":\"mqtt.example.com\","
+            "\"portTCP\":1883,\"portSSL\":8883}}");
+}
+
+TEST_CASE( "Refused MQTT credentials are renewed by onboarding again" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    kii_session_set_password(&session, "vid", "pw");
+    Client c;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+    c.http.responses = { onboarded_with_endpoint("at1", "1") };
+    REQUIRE( kii_ti_onboard(&c.kii, "vid", "pw", NULL, NULL, NULL, NULL) == KII_ERR_OK );
+
+    mqtt_state_t state;
+    _init_mqtt_state(&c.kii, &state);
+    REQUIRE( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+    REQUIRE( std::string(state.endpoint.username) == "user.1" );
+    // Where a CONNACK refusing the credentials sends the task.
+    state.info.task_state = KII_MQTT_ST_GET_ENDPOINT;
+
+    SECTION("onboarding again gives new credentials, and a new token") {
+        c.http.responses.push_back(onboarded_with_endpoint("at2", "2"));
+        _mqtt_state_get_endpoint(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+        CHECK( std::string(state.ins_id.id) == "ins.2" );
+        CHECK( std::string(state.endpoint.username) == "user.2" );
+        CHECK( std::string(state.endpoint.password) == "pass.2" );
+        CHECK( std::string(state.endpoint.topic) == "topic.2" );
+        CHECK( state.endpoint.port_ssl == 8883 );
+        REQUIRE( c.http.requests.size() == 2 );
+        CHECK( onboarding_again(c.http.requests[1]) );
+        CHECK( std::string(held(&session).access_token) == "at2" );
+        CHECK( std::string(c.kii._author.access_token) == "at2" );
+        CHECK( platform.updates.size() == 2 );
+    }
+
+    SECTION("a server error is tried again") {
+        c.http.responses.push_back(http_response(503, "{}"));
+        _mqtt_state_get_endpoint(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_GET_ENDPOINT );
+        CHECK( state.info.error == KII_MQTT_ERR_OK );
+        CHECK( std::string(held(&session).access_token) == "at1" );
+    }
+
+    SECTION("a refused onboarding ends the task") {
+        c.http.responses.push_back(http_response(400, "{\"errorCode\":\"WRONG_PASSWORD\"}"));
+        _mqtt_state_get_endpoint(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_ERR_EXIT );
+        CHECK( state.info.error == KII_MQTT_ERR_GET_ENDPOINT );
+    }
+
+    SECTION("onboarding without an endpoint, MQTT no longer enabled, ends the task") {
+        c.http.responses.push_back(onboarded("at2"));
+        _mqtt_state_get_endpoint(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_ERR_EXIT );
+        CHECK( state.info.error == KII_MQTT_ERR_GET_ENDPOINT );
+    }
+
+    SECTION("a session renewing through the token endpoint fetches them from Kii Cloud") {
+        kii_session_set_renew_by_onboarding(&session, KII_FALSE);
+        c.http.responses.push_back(http_response(200,
+                "{\"installationID\":\"ins.1\",\"username\":\"user.3\",\"password\":\"pass.3\","
+                "\"mqttTopic\":\"topic.1\",\"host\":\"mqtt.example.com\",\"portTCP\":1883,"
+                "\"portSSL\":8883,\"X-MQTT-TTL\":2147483647}"));
+        _mqtt_state_get_endpoint(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+        CHECK( std::string(state.endpoint.username) == "user.3" );
+        REQUIRE( c.http.requests.size() == 2 );
+        CHECK( contains(c.http.requests[1], "/installations/ins.1/mqtt-endpoint") );
+    }
+}

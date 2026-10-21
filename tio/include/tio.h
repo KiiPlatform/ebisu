@@ -143,6 +143,11 @@ typedef struct tio_action_result_data_t {
 /**
  * \brief Callback asks for size of the state to be uploaded.
  *
+ * Called before each upload. It is called again, and the state read again
+ * from its beginning, when an upload the server refused for its access token
+ * is retried after the session renewed the token: the implementation must
+ * restart its TIO_CB_READ callback whenever it is called.
+ *
  * \param [in,out] userdata Context object pointer passed to tio_updater_start().
  * \return size of the state to be uploaded. if 0, TIO_CB_READ callback passed to tio_updater_start() is not called.
  */
@@ -721,10 +726,33 @@ tio_code_t tio_handler_onboard(
  * \param [in] handler tio_handler_t instance.
  * \return tio_author_t pointer.
  * You may need to copy the value of device ID and access token and store them.
+ * With a session set by tio_handler_set_session(), this is the handler's copy
+ * of the session's author as of its last request, which a renewal through the
+ * updater may since have replaced: store the author passed to
+ * KII_CB_AUTHOR_UPDATED instead.
  */
 const tio_author_t* tio_handler_get_author(
         tio_handler_t* handler
 );
+
+/**
+ * \brief Use a session for the handler's tokens.
+ *
+ * See kii_set_session(). The handler and the updater of the same device must
+ * use the same session. Set it before tio_handler_onboard(), which then stores
+ * the tokens it obtains in the session.
+ *
+ * The session renews the token by onboarding again through Thing-IF, with the
+ * credentials set by kii_session_set_password(), whenever the server refuses
+ * it, and the handler gets new MQTT credentials the same way when the broker
+ * refuses them; see kii_session_set_renew_by_onboarding(). tio reaches Kii
+ * Cloud's own API for neither.
+ *
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] session Session to use, or NULL to stop using one.
+ * \return TIO_ERR_FAIL if the session has no lock or clock set.
+ */
+tio_code_t tio_handler_set_session(tio_handler_t* handler, kii_session_t* session);
 
 /**
  * \brief Start tio_handler task.
@@ -736,11 +764,13 @@ const tio_author_t* tio_handler_get_author(
  * to create the task, no task is started and the API returns TIO_ERR_CREATE_TASK.
  *
  * \param [in] handler tio_handler_t instance.
- * \param [in] author API author.
+ * \param [in] author API author. Ignored, and may be NULL, when a session is
+ * set by tio_handler_set_session(): the session's author is used.
  * \param [in] cb_action Action callback called when received remote controll command.
  * \param [in] userdata Context object pointer passed to cb_action.
  * \return tio_code_t. TIO_ERR_FAIL if the Keep-Alive interval set by
- * tio_handler_set_keep_alive_interval() is larger than 65535.
+ * tio_handler_set_keep_alive_interval() is larger than 65535, or if author is
+ * NULL and no session is set.
  */
 tio_code_t tio_handler_start(
         tio_handler_t* handler,
@@ -1094,10 +1124,33 @@ tio_code_t tio_updater_onboard(
  * \param [in] updater tio_updater_t instance.
  * \return tio_author_t pointer.
  * You may need to copy the value of device ID and access token and store them.
+ * With a session set by tio_updater_set_session(), this is the updater's copy
+ * of the session's author as of its last request, which a renewal through the
+ * handler may since have replaced: store the author passed to
+ * KII_CB_AUTHOR_UPDATED instead.
  */
 const tio_author_t* tio_updater_get_author(
         tio_updater_t* updater
 );
+
+/**
+ * \brief Use a session for the updater's tokens.
+ *
+ * See kii_set_session(). The handler and the updater of the same device must
+ * use the same session. Set it before tio_updater_onboard(), which then stores
+ * the tokens it obtains in the session.
+ *
+ * The session renews the token by onboarding again through Thing-IF, with the
+ * credentials set by kii_session_set_password(), whenever the server refuses
+ * it, and the handler gets new MQTT credentials the same way when the broker
+ * refuses them; see kii_session_set_renew_by_onboarding(). tio reaches Kii
+ * Cloud's own API for neither.
+ *
+ * \param [out] updater tio_updater_t instance.
+ * \param [in] session Session to use, or NULL to stop using one.
+ * \return TIO_ERR_FAIL if the session has no lock or clock set.
+ */
+tio_code_t tio_updater_set_session(tio_updater_t* updater, kii_session_t* session);
 
 /**
  * \brief Start tio_updater task.
@@ -1107,12 +1160,14 @@ const tio_author_t* tio_updater_get_author(
  * callbacks set by tio_updater setter methods and this method is called when corresponding event occurs.
  *
  * \param [in] updater tio_updater_t instance.
- * \param [in] author API author.
+ * \param [in] author API author. Ignored, and may be NULL, when a session is
+ * set by tio_updater_set_session(): the session's author is used.
  * \param [in] cb_state_size Callback asking for size of the state to be uploaded.
  * \param [in] state_size_data Context object pointer passed to cb_state_size.
  * \param [in] cb_read_state Callback read state of the device.
  * \param [in] read_state_data Context object pointer passed to cb_read_state.
- * \return TIO_ERR_OK when succeeded to start task.
+ * \return TIO_ERR_OK when succeeded to start task. TIO_ERR_FAIL if author is
+ * NULL and no session is set.
  */
 tio_code_t tio_updater_start(
         tio_updater_t* updater,

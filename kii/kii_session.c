@@ -315,6 +315,32 @@ static kii_code_t _onboard_again(kii_t* kii, kii_author_t* author)
     return KII_ERR_OK;
 }
 
+kii_bool_t _kii_session_renews_by_onboarding(kii_t* kii)
+{
+    kii_session_t* session = kii->_session;
+    if (session == NULL) {
+        return KII_FALSE;
+    }
+    _lock(session);
+    kii_bool_t by_onboarding = session->_renew_by_onboarding;
+    _unlock(session);
+    return by_onboarding;
+}
+
+kii_code_t _kii_session_onboard_again(kii_t* kii)
+{
+    kii_session_t* session = kii->_session;
+    _lock(session);
+    kii_author_t author = session->_author;
+    kii_code_t res = _onboard_again(kii, &author);
+    if (res == KII_ERR_OK) {
+        _store_locked(session, &author, 0);
+    }
+    _sync_locked(kii);
+    _unlock(session);
+    return res;
+}
+
 /* Renews the session's token unless another kii_t did since this one took it,
  * or, when not forced, it is not yet due. Called with the session lock held,
  * and with kii->_rw_buff pointing at space the renewal may use. */

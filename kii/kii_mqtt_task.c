@@ -5,6 +5,7 @@
 
 #include "kii_mqtt_task.h"
 #include "kii.h"
+#include "kii_session_impl.h"
 
 #define WAIT_MS 1000
 #define ARRIVED_MSG_READ_TIME 500
@@ -357,12 +358,33 @@ void _mqtt_state_install_push(mqtt_state_t* state)
     }
 }
 
+/* Gets new MQTT credentials the way the thing's token is renewed: by onboarding
+ * again through Thing-IF, which renews the token too. */
+static kii_code_t _onboard_for_endpoint(mqtt_state_t* state)
+{
+    kii_t* kii = state->kii;
+    kii_code_t res = _kii_session_onboard_again(kii);
+    if (res != KII_ERR_OK) {
+        return res;
+    }
+    if (kii->_onboarded_thing_id[0] == '\0' ||
+            strcmp(kii->_onboarded_thing_id, kii->_author.author_id) != 0) {
+        /* Onboarding returned no endpoint: MQTT is not enabled. */
+        return KII_ERR_FAIL;
+    }
+    state->ins_id = kii->_onboarded_installation_id;
+    state->endpoint = kii->_onboarded_endpoint;
+    return KII_ERR_OK;
+}
+
 void _mqtt_state_get_endpoint(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
     kii_mqtt_task_info* task_info = &state->info;
     kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
-    kii_code_t  res = kii_get_mqtt_endpoint(kii, state->ins_id.id, &state->endpoint);
+    kii_code_t res = (_kii_session_renews_by_onboarding(kii) == KII_TRUE) ?
+        _onboard_for_endpoint(state) :
+        kii_get_mqtt_endpoint(kii, state->ins_id.id, &state->endpoint);
     if (res != KII_ERR_OK) {
         uint16_t status_code = khc_get_status_code(&kii->_khc);
         if ((500 <= status_code && status_code < 600) || status_code == 429) {
@@ -456,11 +478,12 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
     char return_code = buff[1];
     if (return_code == 4 || return_code == 5) {
         // Bad user name or password, or not authorized: the broker refused the
-        // credentials GET_ENDPOINT fetched, e.g. because they expired or were
-        // revoked. RECONNECT would present the same ones again and be refused
-        // forever, so close the socket as RECONNECT does and fetch new ones.
-        // The installation ID is kept; if it is no longer valid either,
-        // GET_ENDPOINT fails permanently and exits.
+        // credentials, e.g. because they expired or were revoked. RECONNECT
+        // would present the same ones again and be refused forever, so close
+        // the socket as RECONNECT does and get new ones: GET_ENDPOINT fetches
+        // them for the same installation, and if it is no longer valid either,
+        // fails permanently and exits; or, for a session that renews by
+        // onboarding again, onboards again.
         kii->_cb_mqtt_sock_close_cb(kii->_mqtt_sock_close_ctx);
         state->sock_connected = KII_FALSE;
         kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);

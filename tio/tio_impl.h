@@ -10,6 +10,9 @@ extern "C" {
 
 tio_code_t _tio_convert_code(kii_code_t code);
 
+/* Uploads the state once, if TIO_CB_SIZE reports any. */
+kii_code_t _tio_updater_upload(tio_updater_t* updater);
+
 #ifdef __cplusplus
 }
 #endif

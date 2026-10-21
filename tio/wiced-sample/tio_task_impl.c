@@ -56,4 +56,30 @@ void cb_delay_ms(uint32_t msec, void* userdata)
 {
     wiced_rtos_delay_milliseconds(msec);
 }
+
+void cb_lock(void* userdata)
+{
+    wiced_rtos_lock_mutex((wiced_mutex_t*)userdata);
+}
+
+void cb_unlock(void* userdata)
+{
+    wiced_rtos_unlock_mutex((wiced_mutex_t*)userdata);
+}
+
+/* wiced_time_get_time() counts milliseconds in 32 bits, which wrap after
+ * about 49.7 days. ebisu calls this only with the session lock held, so the
+ * wraps can be counted here without a lock of their own. */
+uint64_t cb_monotonic_ms(void* userdata)
+{
+    static uint32_t last = 0;
+    static uint64_t wraps = 0;
+    wiced_time_t now = 0;
+    wiced_time_get_time(&now);
+    if ((uint32_t)now < last) {
+        wraps += (uint64_t)1 << 32;
+    }
+    last = (uint32_t)now;
+    return wraps + (uint32_t)now;
+}
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

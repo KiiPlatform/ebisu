@@ -4,6 +4,9 @@
 #include <stdarg.h>
 
 #include "simplelink.h"
+#include "osi.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #ifndef NOTERM
 #include "uart_if.h"
 #endif
@@ -134,4 +137,29 @@ kii_task_code_t task_create_cb_impl(
 void delay_ms_cb_impl(uint32_t msec, void* userdata)
 {
     osi_Sleep(msec);
+}
+
+void lock_cb_impl(void* userdata)
+{
+    osi_LockObjLock((OsiLockObj_t*)userdata, OSI_WAIT_FOREVER);
+}
+
+void unlock_cb_impl(void* userdata)
+{
+    osi_LockObjUnlock((OsiLockObj_t*)userdata);
+}
+
+/* xTaskGetTickCount() counts in 32 bits, which at the SDK's configTICK_RATE_HZ
+ * of 1000 wrap after about 49.7 days. ebisu calls this only with the session
+ * lock held, so the wraps can be counted here without a lock of their own. */
+uint64_t monotonic_ms_cb_impl(void* userdata)
+{
+    static uint32_t last = 0;
+    static uint64_t wraps = 0;
+    uint32_t now = (uint32_t)xTaskGetTickCount();
+    if (now < last) {
+        wraps += (uint64_t)1 << 32;
+    }
+    last = now;
+    return (wraps + now) * 1000 / configTICK_RATE_HZ;
 }

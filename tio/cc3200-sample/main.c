@@ -697,6 +697,17 @@ void handler_init(
     tio_handler_set_json_parser_resource(handler, resource);
 }
 
+// The handler's tokens, renewed as they expire.
+static OsiLockObj_t session_lock;
+static kii_session_t session;
+
+void author_updated_callback(const kii_author_t* author, void* userdata)
+{
+    // A device that keeps its tokens across a restart saves the author here.
+    // This sample onboards at each start instead.
+    UART_PRINT("author updated: %s\n", author->author_id);
+}
+
 tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata)
 {
     UART_PRINT("tio_action_handler called\n");
@@ -747,6 +758,22 @@ void vCmdTask( void *pvParameters )
             &handler_mqtt_ctx,
             &handler_resource);
 
+    if (osi_LockObjCreate(&session_lock) != OSI_OK) {
+        UART_PRINT("create session lock failed.\n");
+        LOOP_FOREVER();
+    }
+    kii_session_init(&session);
+    kii_session_set_cb_lock(&session, lock_cb_impl, unlock_cb_impl, &session_lock);
+    kii_session_set_cb_monotonic_ms(&session, monotonic_ms_cb_impl, NULL);
+    kii_session_set_cb_author_updated(&session, author_updated_callback, NULL);
+    // Used to onboard again when the server refuses the token, or the broker
+    // the MQTT credentials.
+    kii_session_set_password(&session, VENDOR_THING_ID, THING_PASSWORD);
+    if (tio_handler_set_session(&handler, &session) != TIO_ERR_OK) {
+        UART_PRINT("set session failed.\n");
+        LOOP_FOREVER();
+    }
+
     UART_PRINT("handler init succeed.\n");
     char acCmdStore[MAX_MSG_LENGTH];
     int lRetVal;
@@ -758,8 +785,8 @@ void vCmdTask( void *pvParameters )
             tio_code_t ret = tio_handler_onboard(&handler, VENDOR_THING_ID, THING_PASSWORD, NULL, NULL, NULL, NULL);
             if (ret == TIO_ERR_OK) {
                 UART_PRINT("onboard succeed.\n");
-                const kii_author_t* author = tio_handler_get_author(&handler);
-                ret = tio_handler_start(&handler, author, tio_action_handler, NULL);
+                // The author comes from the session.
+                ret = tio_handler_start(&handler, NULL, tio_action_handler, NULL);
                 if (ret == TIO_ERR_OK) {
                     UART_PRINT("handler started.\n");
                 } else {

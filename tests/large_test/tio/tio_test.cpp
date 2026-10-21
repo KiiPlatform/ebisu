@@ -2,7 +2,10 @@
 // tio against Kii Cloud, end to end. A user owning a thing sends it commands;
 // tio's handler receives them over MQTT, runs their actions through the action
 // callback and posts the results, which the user reads back. tio's updater
-// uploads the thing's state, which the user reads back too.
+// uploads the thing's state, which the user reads back too. The two share a
+// session, and go on working through a token the server refuses, renewed once
+// for both by onboarding again, as are MQTT credentials the broker refuses: tio
+// reaches Thing-IF and the broker, and never Kii Cloud's own API.
 //
 // The test sets the application up itself, as its admin, with CLIENT_ID and
 // CLIENT_SECRET from the environment: a trait with an action of each JSON type
@@ -132,6 +135,14 @@ struct Action {
     std::string value;
 };
 
+struct Device;
+
+// A task's HTTP socket, whose sends the device records.
+struct RecordedSocket {
+    ebisu::ltest::ssl::SSLData* ssl;
+    Device* d;
+};
+
 struct Device {
     tio_handler_t handler;
     tio_updater_t updater;
@@ -144,8 +155,20 @@ struct Device {
     jkii_resource_t updater_resource;
     ebisu::ltest::ssl::SSLData handler_http;
     ebisu::ltest::ssl::SSLData updater_http;
+    RecordedSocket handler_sent;
+    RecordedSocket updater_sent;
+    // What the tasks sent over HTTP, to tell where they went. It holds tokens
+    // and the password, so it is searched and never printed.
+    std::mutex sent_mutex;
+    std::string sent;
     socket_context_t mqtt;
     std::vector<std::thread> tasks;
+
+    kii_session_t session;
+    std::mutex session_mutex;
+    // How many times the session's tokens changed. Changed with the session's
+    // lock held.
+    int author_updates = 0;
 
     std::mutex mutex;
     std::condition_variable changed;
@@ -161,6 +184,30 @@ struct Device {
     bool stop = false;
     int exits = 0;
 };
+
+khc_sock_code_t cb_record_send(void* userdata, const char* buffer, size_t length,
+        size_t* out_sent_length)
+{
+    RecordedSocket* r = (RecordedSocket*)userdata;
+    khc_sock_code_t res = ebisu::ltest::ssl::cb_send(r->ssl, buffer, length, out_sent_length);
+    if (res == KHC_SOCK_OK) {
+        std::lock_guard<std::mutex> lock(r->d->sent_mutex);
+        r->d->sent.append(buffer, *out_sent_length);
+    }
+    return res;
+}
+
+bool sent_has(Device& d, const char* text)
+{
+    std::lock_guard<std::mutex> lock(d.sent_mutex);
+    return d.sent.find(text) != std::string::npos;
+}
+
+void forget_sent(Device& d)
+{
+    std::lock_guard<std::mutex> lock(d.sent_mutex);
+    d.sent.clear();
+}
 
 kii_task_code_t cb_task_create(const char* name, KII_TASK_ENTRY entry,
         void* entry_param, void* userdata)
@@ -272,6 +319,56 @@ size_t cb_state_read(char* buffer, size_t size, void* userdata)
     return n;
 }
 
+void cb_session_lock(void* userdata)
+{
+    ((std::mutex*)userdata)->lock();
+}
+
+void cb_session_unlock(void* userdata)
+{
+    ((std::mutex*)userdata)->unlock();
+}
+
+uint64_t cb_session_now_ms(void* userdata)
+{
+    return (uint64_t)std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count();
+}
+
+void cb_author_updated(const kii_author_t* author, void* userdata)
+{
+    Device* d = (Device*)userdata;
+    ++d->author_updates;
+}
+
+int author_updates(Device& d)
+{
+    std::lock_guard<std::mutex> lock(d.session_mutex);
+    return d.author_updates;
+}
+
+// A token the server doesn't know, which it treats as it does an expired one.
+const char UNKNOWN_TOKEN[] = "ltest-unknown-token";
+
+// Has the session hold its author with an access token the server refuses.
+void spoil(kii_session_t* session)
+{
+    kii_author_t author;
+    kii_session_get_author(session, &author);
+    strcpy(author.access_token, UNKNOWN_TOKEN);
+    kii_session_set_author(session, &author);
+}
+
+// Whether the session still holds the token spoil() gave it. Compared here
+// rather than in an assertion, which would print the token, into logs that are
+// public.
+bool spoiled(kii_session_t* session)
+{
+    kii_author_t author;
+    kii_session_get_author(session, &author);
+    return strcmp(author.access_token, UNKNOWN_TOKEN) == 0;
+}
+
 void init_device(Device& d)
 {
     d.handler_resource = {d.handler_tokens, sizeof(d.handler_tokens) / sizeof(d.handler_tokens[0])};
@@ -293,7 +390,8 @@ void init_device(Device& d)
     tio_handler_set_cb_task_exit(h, cb_exit, &d);
     tio_handler_set_cb_err(h, cb_err, &d);
     tio_handler_set_cb_sock_connect_http(h, ebisu::ltest::ssl::cb_connect, &d.handler_http);
-    tio_handler_set_cb_sock_send_http(h, ebisu::ltest::ssl::cb_send, &d.handler_http);
+    d.handler_sent = {&d.handler_http, &d};
+    tio_handler_set_cb_sock_send_http(h, cb_record_send, &d.handler_sent);
     tio_handler_set_cb_sock_recv_http(h, ebisu::ltest::ssl::cb_recv, &d.handler_http);
     tio_handler_set_cb_sock_close_http(h, ebisu::ltest::ssl::cb_close, &d.handler_http);
     tio_handler_set_cb_sock_connect_mqtt(h, sock_cb_connect, &d.mqtt);
@@ -317,12 +415,18 @@ void init_device(Device& d)
     tio_updater_set_cb_task_exit(u, cb_exit, &d);
     tio_updater_set_cb_error(u, cb_err, &d);
     tio_updater_set_cb_sock_connect(u, ebisu::ltest::ssl::cb_connect, &d.updater_http);
-    tio_updater_set_cb_sock_send(u, ebisu::ltest::ssl::cb_send, &d.updater_http);
+    d.updater_sent = {&d.updater_http, &d};
+    tio_updater_set_cb_sock_send(u, cb_record_send, &d.updater_sent);
     tio_updater_set_cb_sock_recv(u, ebisu::ltest::ssl::cb_recv, &d.updater_http);
     tio_updater_set_cb_sock_close(u, ebisu::ltest::ssl::cb_close, &d.updater_http);
     tio_updater_set_buff(u, d.updater_buff, sizeof(d.updater_buff));
     tio_updater_set_interval(u, UPDATE_INTERVAL);
     tio_updater_set_json_parser_resource(u, &d.updater_resource);
+
+    kii_session_init(&d.session);
+    kii_session_set_cb_lock(&d.session, cb_session_lock, cb_session_unlock, &d.session_mutex);
+    kii_session_set_cb_monotonic_ms(&d.session, cb_session_now_ms, NULL);
+    kii_session_set_cb_author_updated(&d.session, cb_author_updated, &d);
 }
 
 // Waits up to seconds for done(), called with the device's mutex held.
@@ -459,25 +563,37 @@ TEST_CASE("tio against Kii Cloud")
     progress("thing onboarded by its owner");
     const std::string target = thing_if_path("/targets/thing:" + thing_id);
 
-    // The device onboards with the same vendor thing ID and password, and
-    // starts its tasks.
+    // The device onboards with the same vendor thing ID and password, into the
+    // session its tasks share, and starts them with the session's author.
     Device d;
     init_device(d);
+    kii_session_set_password(&d.session, vendor_thing_id.c_str(), thing_password.c_str());
+    REQUIRE( tio_handler_set_session(&d.handler, &d.session) == TIO_ERR_OK );
+    REQUIRE( tio_updater_set_session(&d.updater, &d.session) == TIO_ERR_OK );
     d.state = "{\"" + std::string(ALIAS1) + "\":{\"power\":true,\"presetTemperature\":23},\"" +
         ALIAS2 + "\":{\"mode\":\"first-" + run + "\"}}";
     REQUIRE( tio_handler_onboard(&d.handler, vendor_thing_id.c_str(), thing_password.c_str(),
                 THING_TYPE, FIRMWARE_VERSION, NULL, NULL) == TIO_ERR_OK );
-    const tio_author_t* author = tio_handler_get_author(&d.handler);
-    REQUIRE( std::string(author->author_id) == thing_id );
+    {
+        kii_author_t author;
+        kii_session_get_author(&d.session, &author);
+        REQUIRE( std::string(author.author_id) == thing_id );
+    }
+    CHECK( author_updates(d) == 1 );
     progress("device onboarded");
+    // The broker refuses the MQTT credentials onboarding returned, as it would
+    // once they were revoked.
+    strcpy(d.handler._kii._onboarded_endpoint.password, "ltest-refused");
+    forget_sent(d);
     StopDevice stop_device{d};
-    REQUIRE( tio_handler_start(&d.handler, author, cb_action, &d) == TIO_ERR_OK );
-    REQUIRE( tio_updater_start(&d.updater, author, cb_state_size, &d, cb_state_read, &d) == TIO_ERR_OK );
+    REQUIRE( tio_handler_start(&d.handler, NULL, cb_action, &d) == TIO_ERR_OK );
+    REQUIRE( tio_updater_start(&d.updater, NULL, cb_state_size, &d, cb_state_read, &d) == TIO_ERR_OK );
     progress("tasks started");
 
-    // The handler connects with the MQTT endpoint onboarding returned, and
-    // subscribes: it reaches Kii Cloud neither to install push nor to fetch the
-    // endpoint.
+    // The handler connects with the MQTT endpoint onboarding returned, without
+    // installing push or fetching the endpoint. Refused, it gets new
+    // credentials by onboarding again, which renews the token too, and
+    // subscribes.
     REQUIRE( wait_for(d, 120, [&d] {
         return std::find(d.handler_states.begin(), d.handler_states.end(),
                 KII_MQTT_ST_RECV_READY) != d.handler_states.end() || d.exits > 0;
@@ -486,8 +602,11 @@ TEST_CASE("tio against Kii Cloud")
         std::lock_guard<std::mutex> lock(d.mutex);
         REQUIRE( d.exits == 0 );
         CHECK( std::count(d.handler_states.begin(), d.handler_states.end(), KII_MQTT_ST_INSTALL_PUSH) == 0 );
-        CHECK( std::count(d.handler_states.begin(), d.handler_states.end(), KII_MQTT_ST_GET_ENDPOINT) == 0 );
+        CHECK( std::count(d.handler_states.begin(), d.handler_states.end(), KII_MQTT_ST_GET_ENDPOINT) == 1 );
     }
+    CHECK( sent_has(d, "/onboardings HTTP/1.1") );
+    CHECK_FALSE( sent_has(d, "/installations") );
+    CHECK( author_updates(d) == 2 );
     progress("handler ready");
 
     auto send_command = [&user, &target](const std::string& actions) {
@@ -608,22 +727,22 @@ TEST_CASE("tio against Kii Cloud")
     }
     progress("second command done");
 
+    // Reads the state until its mode is expected, up to a minute.
+    auto read_mode = [&user, &target](const std::string& expected) {
+        kiiltest::Response r = poll(60, [&] {
+            return user.call("GET", target + "/states", "", "");
+        }, [&expected](const kiiltest::Response& r) {
+            const picojson::value* alias = member(r.body, ALIAS2);
+            const picojson::value* mode = alias == NULL ? NULL : member(*alias, "mode");
+            return mode != NULL && mode->is<std::string>() && mode->get<std::string>() == expected;
+        });
+        INFO( "state: " << r.describe() );
+        REQUIRE( r.ok() );
+        return r;
+    };
+
     // The updater's uploads reach the user, the latest each time.
     {
-        // Reads the state until its mode is expected, up to a minute.
-        auto read_mode = [&user, &target](const std::string& expected) {
-            kiiltest::Response r = poll(60, [&] {
-                return user.call("GET", target + "/states", "", "");
-            }, [&expected](const kiiltest::Response& r) {
-                const picojson::value* alias = member(r.body, ALIAS2);
-                const picojson::value* mode = alias == NULL ? NULL : member(*alias, "mode");
-                return mode != NULL && mode->is<std::string>() && mode->get<std::string>() == expected;
-            });
-            INFO( "state: " << r.describe() );
-            REQUIRE( r.ok() );
-            return r;
-        };
-
         kiiltest::Response first = read_mode("first-" + run);
         const picojson::value* alias1 = member(first.body, ALIAS1);
         REQUIRE( alias1 != nullptr );
@@ -640,6 +759,42 @@ TEST_CASE("tio against Kii Cloud")
         CHECK( alias1->serialize() == "{\"power\":false,\"presetTemperature\":20}" );
     }
     progress("states read back");
+
+    // The server refuses the tasks' token. Whichever task is refused first has
+    // the session renew it, once, and the other takes the new one: the updater
+    // uploads again, from the start of the state, and a command's results are
+    // sent again, its action run once.
+    CHECK( author_updates(d) == 2 );
+    spoil(&d.session);
+    {
+        std::lock_guard<std::mutex> lock(d.mutex);
+        d.actions.clear();
+        d.state = "{\"" + std::string(ALIAS1) + "\":{\"power\":true,\"presetTemperature\":21},\"" +
+            ALIAS2 + "\":{\"mode\":\"renewed-" + run + "\"}}";
+    }
+    {
+        const std::string command_id = send_command(std::string("[") +
+                "{\"" + ALIAS1 + "\":[{\"turnPower\":true}]}]");
+        kiiltest::Response command = finished(command_id);
+        INFO( "command results: " << command.describe() );
+        INFO( "errors reported by the device: " << errors_of(d) );
+        REQUIRE( command.ok() );
+        CHECK( command.get("commandState") == "DONE" );
+        std::lock_guard<std::mutex> lock(d.mutex);
+        CHECK( d.actions.size() == 1 );
+    }
+    {
+        kiiltest::Response renewed = read_mode("renewed-" + run);
+        const picojson::value* alias1 = member(renewed.body, ALIAS1);
+        REQUIRE( alias1 != nullptr );
+        CHECK( alias1->serialize() == "{\"power\":true,\"presetTemperature\":21}" );
+    }
+    CHECK_FALSE( spoiled(&d.session) );
+    CHECK( author_updates(d) == 3 );
+    // Since the tasks started, nothing went to Kii Cloud's own API: neither
+    // renewal asked its token endpoint for anything.
+    CHECK_FALSE( sent_has(d, "/api/apps/") );
+    progress("token renewed");
 
     // Asked to stop, both tasks end: the handler within a receive timeout, the
     // updater within a second of its interval.

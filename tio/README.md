@@ -417,6 +417,96 @@ void tio_handler_set_cb_json_parser_resource(
 
 `cb_free` is called when the parse has been done.
 
+<a name="session"></a>
+## Set up a session
+
+Access tokens expire. A `kii_session_t` holds the thing's token and, whenever
+the server refuses it, renews it the way it was obtained: by onboarding again
+through Thing-IF, with the thing's vendor thing ID and password. It then sends
+the refused request again. When the MQTT broker refuses the handler's
+credentials, the handler gets new ones the same way, as onboarding returns the
+MQTT endpoint along with the token. tio thus talks only to Thing-IF and the
+MQTT broker.
+
+The `tio_handler_t` and the `tio_updater_t` of a device share one session, so
+that a token refused to either is renewed once, for both.
+
+Here's the set-up code extracted from [example.c](linux-sample/example.c).
+
+```c
+    kii_session_t session;
+    kii_session_init(&session);
+    kii_session_set_cb_lock(&session, lock_cb_impl, unlock_cb_impl, &session_mutex);
+    kii_session_set_cb_monotonic_ms(&session, monotonic_ms_cb_impl, NULL);
+    kii_session_set_cb_author_updated(&session, author_updated_callback, NULL);
+    if (tio_handler_set_session(&handler, &session) != TIO_ERR_OK ||
+            tio_updater_set_session(&updater, &session) != TIO_ERR_OK) {
+        printf("failed to set the session.\n");
+        exit(1);
+    }
+    // Used to onboard again when the server refuses the token, or the broker
+    // the MQTT credentials.
+    kii_session_set_password(&session, vendorThingID, password);
+```
+
+Set the session before [onboarding](#execute-onboarding), which then stores the
+token it obtains in the session. The samples onboard at each start. To use a
+token saved before a restart instead, give it to the session with
+`kii_session_set_author()`; the handler then gets its MQTT endpoint from Kii
+Cloud's API, as without onboarding, until the broker refuses the credentials.
+
+### Lock callbacks
+
+Required. The handler's MQTT task and the updater's task both use the session,
+and the lock keeps one of them from renewing the token while the other does. It
+is held for the length of the renewal request. It need not be recursive. On a
+platform where the two tasks cannot run at the same time, the callbacks can do
+nothing.
+
+```c
+void lock_cb_impl(void* userdata)
+{
+    pthread_mutex_lock((pthread_mutex_t*)userdata);
+}
+
+void unlock_cb_impl(void* userdata)
+{
+    pthread_mutex_unlock((pthread_mutex_t*)userdata);
+}
+```
+
+### Monotonic clock callback
+
+Required. Times the expiry of tokens that have a lifetime, which those
+onboarding issues do not. It returns milliseconds since any fixed origin, never goes back, and does not jump when the wall clock is set. A
+32-bit tick counter has to be extended to 64 bits, or it wraps after about 49.7
+days. The callback is called only with the session lock held, so it can count
+the wraps without a lock of its own.
+
+```c
+uint64_t monotonic_ms_cb_impl(void* userdata)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (uint64_t)ts.tv_sec * 1000 + (uint64_t)ts.tv_nsec / 1000000;
+}
+```
+
+### Author updated callback
+
+Called whenever the session's token changes: after onboarding and after every
+renewal. A device that keeps its token across a restart saves the author here;
+onboarding again leaves earlier tokens valid, so one that onboards at each
+start, as the samples do, need not. It is called with the session lock held and
+must not call `tio` or `kii` APIs.
+
+```c
+void author_updated_callback(const kii_author_t* author, void* userdata)
+{
+    save_author(author);
+}
+```
+
 <a name="execute-onboarding"></a>
 ## Execute onboarding
 
@@ -450,11 +540,12 @@ Alternatively, you can execute this step outside of the IoT Device and pass thin
 Now, it's ready to start `tio_handler_t` module.
 
 ```c
-    const kii_author_t* author = tio_handler_get_author(&handler);
-    tio_handler_start(&handler, author, tio_action_handler, NULL);
+    tio_handler_start(&handler, NULL, tio_action_handler, NULL);
 ```
 
-- `author` consists of thing ID and access token obtained in the step of [Onboarding](#execute-onboarding).
+- `author` is taken from the [session](#session) when one is set, and may be
+  NULL. Without a session, pass the thing ID and access token obtained in the
+  step of [Onboarding](#execute-onboarding), from `tio_handler_get_author()`.
 
 - `tio_action_handler` is the callback function pointer explained in [Action callback](#action-callback)
 
@@ -577,6 +668,7 @@ Other set-up process is similar to `tio_handler_t`.
 If you use both `tio_handler_t` and `tio_updater_t` for an IoT device, you just need to execute onboarding process from either one. No need to execute onboarding for both method since the thing ID bonding process just need to be executed once.
 
 After the onboarding has been done, you can get `tio_author_t` instance from either `tio_handler_t` or `tio_updater_t` and pass it to `tio_handler_start()` or `tio_updater_start()` method.
+With a [session](#session) shared by both, they take the author from it instead.
 
 ## Start module
 
@@ -594,7 +686,7 @@ Here's code extracted from [example app](linux-sample/example.c).
         &updater_file_ctx);
 ```
 
-- `author` : Pointer to `tio_author_t` instance obtained from onboarded `tio_handler_t`.
+- `author` : Pointer to `tio_author_t` instance obtained from onboarded `tio_handler_t`, or NULL when a [session](#session) is set.
 
 - `updater_cb_state_size` : [Size callback](#size-callback) function pointer.
 
@@ -671,5 +763,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 ## Avoiding race condition
 
 - Above 2 tasks `KII_TASK_NAME_MQTT` and `TIO_TASK_NAME_UPDATE_STATE` would be executed in parallel. Therefore, if the callback implementation shares the resource that need exclusive access, you need to implement access control mechanism.
+
+- Both tasks call the callbacks of a [session](#session) they share. Its lock callbacks guard the session itself.
 
 - You must prepare independent buffers which does not have overlaps.

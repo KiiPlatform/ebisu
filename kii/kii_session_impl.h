@@ -27,6 +27,15 @@ void _kii_session_sync(kii_t* kii);
  * unknown, as 0 does. */
 void _kii_session_publish(kii_t* kii, int64_t expires_in_sec, kii_bool_t by_onboarding);
 
+/* Whether kii's session renews its token by onboarding again. */
+kii_bool_t _kii_session_renews_by_onboarding(kii_t* kii);
+
+/* Onboards again through kii's session, which stores the new token, for new
+ * MQTT credentials as well: kii keeps the endpoint the response carries, as
+ * kii_ti_onboard() does. Uses kii's buffer and khc, so not while a request is
+ * under way. */
+kii_code_t _kii_session_onboard_again(kii_t* kii);
+
 /* khc_perform() for requests that may carry the session's token: renews the
  * token close to expiry or when the server refuses it, and then sends the
  * request again when its body allows. Without a session it is khc_perform(). */
