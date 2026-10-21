@@ -47,6 +47,17 @@ kii_task_code_t task_create_cb_impl(
  */
 void delay_ms_cb_impl(uint32_t msec, void* userdata);
 
+/** Implementation of the session lock callbacks.
+ *
+ * The handler and the updater run as separate threads, so this is a real
+ * mutex: userdata is the pthread_mutex_t.
+ */
+void lock_cb_impl(void* userdata);
+void unlock_cb_impl(void* userdata);
+
+/** Implementation of the session's monotonic clock. */
+uint64_t monotonic_ms_cb_impl(void* userdata);
+
 #ifdef __cplusplus
 }
 #endif

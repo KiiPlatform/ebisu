@@ -60,6 +60,15 @@ void sig_handler(int sig, siginfo_t *info, void *ctx) {
     term_flag = 1;
 }
 
+static pthread_mutex_t session_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+void author_updated_callback(const kii_author_t* author, void* userdata)
+{
+    // A device that keeps its tokens across a restart saves the author here.
+    // This sample onboards at each start instead.
+    printf("author updated: %s\n", author->author_id);
+}
+
 void updater_init(
         tio_updater_t* updater,
         char* buffer,
@@ -268,6 +277,19 @@ int main(int argc, char** argv)
             &handler_mqtt_ctx,
             &handler_resource);
 
+    // The handler and the updater share their tokens through the session, which
+    // renews them as they expire.
+    kii_session_t session;
+    kii_session_init(&session);
+    kii_session_set_cb_lock(&session, lock_cb_impl, unlock_cb_impl, &session_mutex);
+    kii_session_set_cb_monotonic_ms(&session, monotonic_ms_cb_impl, NULL);
+    kii_session_set_cb_author_updated(&session, author_updated_callback, NULL);
+    if (tio_handler_set_session(&handler, &session) != TIO_ERR_OK ||
+            tio_updater_set_session(&updater, &session) != TIO_ERR_OK) {
+        printf("failed to set the session.\n");
+        exit(1);
+    }
+
     if (argc < 2) {
         printf("too few arguments.\n");
         print_help();
@@ -297,6 +319,9 @@ int main(int argc, char** argv)
                     printf("password is not specifeid.\n");
                     exit(1);
                 }
+                // Used to onboard again when the server refuses the token, or the broker
+                // the MQTT credentials.
+                kii_session_set_password(&session, vendorThingID, password);
                 tio_code_t result = tio_handler_onboard(
                         &handler,
                         vendorThingID,
@@ -336,11 +361,11 @@ int main(int argc, char** argv)
         exit(0);
     }
 
-    const kii_author_t* author = tio_handler_get_author(&handler);
-    tio_handler_start(&handler, author, tio_action_handler, NULL);
+    // Both take the author from the session.
+    tio_handler_start(&handler, NULL, tio_action_handler, NULL);
     tio_updater_start(
             &updater,
-            author,
+            NULL,
             updater_cb_state_size,
             &updater_file_ctx,
             updater_cb_read,

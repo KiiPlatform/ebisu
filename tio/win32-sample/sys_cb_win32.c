@@ -54,3 +54,20 @@ void delay_ms_cb_impl(uint32_t msec, void* userdata)
 {
     Sleep(msec);
 }
+
+void lock_cb_impl(void* userdata)
+{
+    AcquireSRWLockExclusive((PSRWLOCK)userdata);
+}
+
+void unlock_cb_impl(void* userdata)
+{
+    ReleaseSRWLockExclusive((PSRWLOCK)userdata);
+}
+
+/* Milliseconds since the system started, in 64 bits, which do not wrap.
+   GetTickCount64() does not jump when the wall clock is set. */
+uint64_t monotonic_ms_cb_impl(void* userdata)
+{
+    return GetTickCount64();
+}

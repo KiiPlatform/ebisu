@@ -53,4 +53,13 @@ kii_task_code_t task_create_cb_impl(
 
 void delay_ms_cb_impl(uint32_t msec, void* userdata);
 
+/* Session lock callbacks: userdata is an OsiLockObj_t created by
+ * osi_LockObjCreate(). */
+void lock_cb_impl(void* userdata);
+
+void unlock_cb_impl(void* userdata);
+
+/* The session's monotonic clock: FreeRTOS's tick count, in milliseconds. */
+uint64_t monotonic_ms_cb_impl(void* userdata);
+
 #endif /* EBISU_CC3200_H_ */

@@ -76,6 +76,15 @@ static BOOL WINAPI console_ctrl_handler(DWORD ctrl_type) {
     }
 }
 
+static SRWLOCK session_lock = SRWLOCK_INIT;
+
+static void author_updated_callback(const kii_author_t* author, void* userdata)
+{
+    /* A device that keeps its tokens across a restart saves the author here.
+       This sample onboards at each start instead. */
+    printf("author updated: %s\n", author->author_id);
+}
+
 static void updater_init(
         tio_updater_t* updater,
         char* buffer,
@@ -359,6 +368,23 @@ int main(int argc, char** argv)
             &handler_mqtt_ctx,
             &handler_resource);
 
+    /* The handler and the updater share their tokens through the session,
+       which renews them as they expire. */
+    kii_session_t session;
+    kii_session_init(&session);
+    kii_session_set_cb_lock(&session, lock_cb_impl, unlock_cb_impl, &session_lock);
+    kii_session_set_cb_monotonic_ms(&session, monotonic_ms_cb_impl, NULL);
+    kii_session_set_cb_author_updated(&session, author_updated_callback, NULL);
+    if (tio_handler_set_session(&handler, &session) != TIO_ERR_OK ||
+            tio_updater_set_session(&updater, &session) != TIO_ERR_OK) {
+        printf("failed to set the session.\n");
+        WSACleanup();
+        return 1;
+    }
+    /* Used to onboard again when the server refuses the token, or the broker
+       the MQTT credentials. */
+    kii_session_set_password(&session, vendorThingID, password);
+
     tio_code_t result = tio_handler_onboard(
             &handler,
             vendorThingID,
@@ -374,8 +400,8 @@ int main(int argc, char** argv)
     }
     printf("Onboarding succeeded!\n");
 
-    const kii_author_t* author = tio_handler_get_author(&handler);
-    result = tio_handler_start(&handler, author, tio_action_handler, NULL);
+    /* Both take the author from the session. */
+    result = tio_handler_start(&handler, NULL, tio_action_handler, NULL);
     if (result != TIO_ERR_OK) {
         printf("failed to start the handler task.\n");
         WSACleanup();
@@ -383,7 +409,7 @@ int main(int argc, char** argv)
     }
     result = tio_updater_start(
             &updater,
-            author,
+            NULL,
             updater_cb_state_size,
             &updater_file_ctx,
             updater_cb_read,

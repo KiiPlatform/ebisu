@@ -25,6 +25,14 @@ void cb_delay_ms(
     uint32_t msec,
     void* userdata);
 
+/* Session lock callbacks: userdata is a MUTEX_STRUCT initialized by
+   _mutex_init(). */
+void cb_lock(void* userdata);
+
+void cb_unlock(void* userdata);
+
+uint64_t cb_monotonic_ms(void* userdata);
+
 #ifdef __cplusplus
 }
 #endif

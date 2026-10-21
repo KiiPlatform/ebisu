@@ -169,6 +169,13 @@ void handler_init(
 #endif
 }
 
+void author_updated_callback(const kii_author_t* author, void* userdata)
+{
+    // A device that keeps its tokens across a restart saves the author here.
+    // This sample onboards at each start instead.
+    wiced_log_printf("author updated: %s\n", author->author_id);
+}
+
 tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata)
 {
     wiced_log_printf("tio_action_handler called\n");
@@ -190,6 +197,9 @@ static char handler_http_buff[HANDLER_HTTP_BUFF_SIZE];
 static char handler_mqtt_buff[HANDLER_MQTT_BUFF_SIZE];
 static jkii_token_t handler_tokens[256];
 static jkii_resource_t handler_resource = {handler_tokens, 256};
+
+static wiced_mutex_t session_mutex;
+static kii_session_t session;
 
 static int tio_main(int argc, char *argv[])
 {
@@ -221,6 +231,22 @@ static int tio_main(int argc, char *argv[])
             &handler_mqtt_ctx,
             &handler_resource);
 
+    // The handler and the updater share their tokens through the session, which
+    // renews them as they expire.
+    wiced_rtos_init_mutex(&session_mutex);
+    kii_session_init(&session);
+    kii_session_set_cb_lock(&session, cb_lock, cb_unlock, &session_mutex);
+    kii_session_set_cb_monotonic_ms(&session, cb_monotonic_ms, NULL);
+    kii_session_set_cb_author_updated(&session, author_updated_callback, NULL);
+    // Used to onboard again when the server refuses the token, or the broker
+    // the MQTT credentials.
+    kii_session_set_password(&session, VENDOR_ID, VENDOR_PASS);
+    if (tio_handler_set_session(&handler, &session) != TIO_ERR_OK ||
+            tio_updater_set_session(&updater, &session) != TIO_ERR_OK) {
+        wiced_log_printf("failed to set the session.\n");
+        return ERR_CMD_OK;
+    }
+
     tio_code_t result = tio_handler_onboard(
             &handler,
             VENDOR_ID,
@@ -236,11 +262,11 @@ static int tio_main(int argc, char *argv[])
         wiced_log_printf("succeed to onboard.\n");
     }
 
-    const kii_author_t* author = tio_handler_get_author(&handler);
-    tio_handler_start(&handler, author, tio_action_handler, NULL);
+    // Both take the author from the session.
+    tio_handler_start(&handler, NULL, tio_action_handler, NULL);
     tio_updater_start(
             &updater,
-            author,
+            NULL,
             updater_cb_state_size,
             &updater_ctx,
             updater_cb_read,
