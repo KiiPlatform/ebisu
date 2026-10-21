@@ -33,7 +33,7 @@ For example, you can use these storage to store configuration data.
 
 For more details, please refer to [./kii/README.md](./kii/README.md)
 
-### khc
+## khc
 
 `khc` is a simple HTTP client library.
 
@@ -41,7 +41,7 @@ The module is developed to implement `tio` and `kii`.
 
 In most cases, you don't have to use this module directly in you IoT device application.
 
-For more details, please refer to [./kii/README.md](./kii/README.md)
+For more details, please refer to [./khc/README.md](./khc/README.md)
 
 ## jkii
 
