@@ -300,6 +300,22 @@ const tio_author_t* tio_handler_get_author(tio_handler_t* handler)
     return &handler->_kii._author;
 }
 
+/* tio's tokens come from onboarding, and so are renewed by onboarding again,
+ * through Thing-IF, as is the handler's MQTT endpoint. */
+static tio_code_t _set_session(kii_t* kii, kii_session_t* session)
+{
+    kii_code_t res = kii_set_session(kii, session);
+    if (res == KII_ERR_OK && session != NULL) {
+        kii_session_set_renew_by_onboarding(session, KII_TRUE);
+    }
+    return _tio_convert_code(res);
+}
+
+tio_code_t tio_handler_set_session(tio_handler_t* handler, kii_session_t* session)
+{
+    return _set_session(&handler->_kii, session);
+}
+
 tio_code_t tio_handler_start(
         tio_handler_t* handler,
         const tio_author_t* author,
@@ -311,7 +327,18 @@ tio_code_t tio_handler_start(
     if (handler->_keep_alive_interval > 65535) {
         return TIO_ERR_FAIL;
     }
-    handler->_kii._author = *author;
+    if (handler->_kii._session != NULL) {
+        // Attaching again takes the session's author, which onboarding or a
+        // renewal may have changed since it was first attached.
+        kii_code_t res = kii_set_session(&handler->_kii, handler->_kii._session);
+        if (res != KII_ERR_OK) {
+            return _tio_convert_code(res);
+        }
+    } else if (author != NULL) {
+        handler->_kii._author = *author;
+    } else {
+        return TIO_ERR_FAIL;
+    }
 
     handler->_cb_action = cb_action;
     handler->_cb_action_data = userdata;
@@ -456,6 +483,35 @@ void tio_updater_enable_insecure_http(
     kii_enable_insecure_http(&updater->_kii, enable_insecure_http);
 }
 
+static kii_code_t _put_state(tio_updater_t* updater)
+{
+    return kii_ti_put_state(
+            &updater->_kii,
+            updater->_state_reader,
+            updater->_state_reader_data,
+            NULL,
+            NULL,
+            NULL);
+}
+
+kii_code_t _tio_updater_upload(tio_updater_t* updater)
+{
+    size_t state_size = updater->_cb_state_size(updater->_cb_state_size_data);
+    if (state_size == 0) {
+        return KII_ERR_OK;
+    }
+    kii_code_t res = _put_state(updater);
+    if (res == KII_ERR_RESP_STATUS && updater->_kii._session_refused == KII_TRUE) {
+        // The session renewed the token the server refused, but kii cannot send
+        // a streamed body again: the reader has been read to the end. Start it
+        // over.
+        if (updater->_cb_state_size(updater->_cb_state_size_data) > 0) {
+            res = _put_state(updater);
+        }
+    }
+    return res;
+}
+
 static void* _update_state(void* data) {
     tio_updater_t* updater = (tio_updater_t*)data;
     uint32_t interval_remain_sec = updater->_update_interval;
@@ -474,20 +530,11 @@ static void* _update_state(void* data) {
         } else {
             updater->_kii._cb_delay_ms(interval_remain_sec * 1000, updater->_kii._delay_ms_data);
             interval_remain_sec = updater->_update_interval;
-            size_t state_size = updater->_cb_state_size(updater->_cb_state_size_data);
-            if (state_size > 0) {
-                kii_code_t res = kii_ti_put_state(
-                        &updater->_kii,
-                        updater->_state_reader,
-                        updater->_state_reader_data,
-                        NULL,
-                        NULL,
-                        NULL);
-                if (res != KII_ERR_OK) {
-                    tio_code_t code = _tio_convert_code(res);
-                    if (updater->_cb_err != NULL) {
-                        updater->_cb_err(code, "Failed to upload state", updater->_cb_err_data);
-                    }
+            kii_code_t res = _tio_updater_upload(updater);
+            if (res != KII_ERR_OK) {
+                tio_code_t code = _tio_convert_code(res);
+                if (updater->_cb_err != NULL) {
+                    updater->_cb_err(code, "Failed to upload state", updater->_cb_err_data);
                 }
             }
         }
@@ -552,6 +599,11 @@ const tio_author_t* tio_updater_get_author(
     return &updater->_kii._author;
 }
 
+tio_code_t tio_updater_set_session(tio_updater_t* updater, kii_session_t* session)
+{
+    return _set_session(&updater->_kii, session);
+}
+
 tio_code_t tio_updater_start(
         tio_updater_t* updater,
         const tio_author_t* author,
@@ -560,7 +612,18 @@ tio_code_t tio_updater_start(
         TIO_CB_READ state_reader,
         void* state_reader_data)
 {
-    updater->_kii._author = *author;
+    if (updater->_kii._session != NULL) {
+        // Attaching again takes the session's author, which onboarding or a
+        // renewal may have changed since it was first attached.
+        kii_code_t res = kii_set_session(&updater->_kii, updater->_kii._session);
+        if (res != KII_ERR_OK) {
+            return _tio_convert_code(res);
+        }
+    } else if (author != NULL) {
+        updater->_kii._author = *author;
+    } else {
+        return TIO_ERR_FAIL;
+    }
 
     updater->_cb_state_size = cb_state_size;
     updater->_cb_state_size_data = cb_state_size_data;

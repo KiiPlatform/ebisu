@@ -44,6 +44,7 @@ ebisu_add_test_suite(small_test_tio
     WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tio
     SOURCES
         tio/command_parser_test.cpp
+        tio/session_test.cpp
         tio/simple_test.cpp
     LINK ${EBISU_TIO_OBJS}
     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/tio ${PROJECT_SOURCE_DIR}/tio)
