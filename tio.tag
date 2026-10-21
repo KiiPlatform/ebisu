@@ -118,6 +118,20 @@
       <anchor>a66833479636e54ec6559fcb91c37263d</anchor>
       <arglist>)(void *task_info, void *userdata)</arglist>
     </member>
+    <member kind="typedef">
+      <type>void(*</type>
+      <name>KII_CB_LOCK</name>
+      <anchorfile>kii__task__callback_8h.html</anchorfile>
+      <anchor>ad51955150e2d3eb3a156615ccf9cf260</anchor>
+      <arglist>)(void *userdata)</arglist>
+    </member>
+    <member kind="typedef">
+      <type>uint64_t(*</type>
+      <name>KII_CB_MONOTONIC_MS</name>
+      <anchorfile>kii__task__callback_8h.html</anchorfile>
+      <anchor>a366d10ce95a0b7a20ba6548fb2509002</anchor>
+      <arglist>)(void *userdata)</arglist>
+    </member>
     <member kind="enumeration">
       <type></type>
       <name>kii_task_code_t</name>

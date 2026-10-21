@@ -137,27 +137,37 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    (<span class="keywordtype">void</span>* task_info,</div>
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    <span class="keywordtype">void</span>* userdata);</div>
 <div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span><span class="preprocessor">#if defined(__GNUC__) || defined(__clang__)</span></div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span><span class="preprocessor">#pragma GCC visibility pop</span></div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span><span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>}</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span> </div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span><span class="preprocessor">#endif </span><span class="comment">/* _KII_TASK_CALLBACK  */</span><span class="preprocessor"></span></div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span><span class="comment">/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */</span></div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno"><a class="line" href="kii__task__callback_8h.html#ad51955150e2d3eb3a156615ccf9cf260">  108</a></span><span class="keyword">typedef</span> void</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>(*<a class="code hl_typedef" href="kii__task__callback_8h.html#ad51955150e2d3eb3a156615ccf9cf260">KII_CB_LOCK</a>)</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>    (<span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span> </div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno"><a class="line" href="kii__task__callback_8h.html#a366d10ce95a0b7a20ba6548fb2509002">  123</a></span><span class="keyword">typedef</span> uint64_t</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>(*<a class="code hl_typedef" href="kii__task__callback_8h.html#a366d10ce95a0b7a20ba6548fb2509002">KII_CB_MONOTONIC_MS</a>)</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    (<span class="keywordtype">void</span>* userdata);</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span> </div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span><span class="preprocessor">#if defined(__GNUC__) || defined(__clang__)</span></div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span><span class="preprocessor">#pragma GCC visibility pop</span></div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span> </div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span><span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>}</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span> </div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span><span class="preprocessor">#endif </span><span class="comment">/* _KII_TASK_CALLBACK  */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span><span class="comment">/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */</span></div>
 <div class="ttc" id="akii__task__callback_8h_html_a0395b3c3b153a4ae039f9cbfb171c778"><div class="ttname"><a href="kii__task__callback_8h.html#a0395b3c3b153a4ae039f9cbfb171c778">KII_CB_TASK_CREATE</a></div><div class="ttdeci">kii_task_code_t(* KII_CB_TASK_CREATE)(const char *name, KII_TASK_ENTRY entry, void *entry_param, void *userdata)</div><div class="ttdoc">Callback asks to create task.</div><div class="ttdef"><b>Definition</b> kii_task_callback.h:52</div></div>
+<div class="ttc" id="akii__task__callback_8h_html_a366d10ce95a0b7a20ba6548fb2509002"><div class="ttname"><a href="kii__task__callback_8h.html#a366d10ce95a0b7a20ba6548fb2509002">KII_CB_MONOTONIC_MS</a></div><div class="ttdeci">uint64_t(* KII_CB_MONOTONIC_MS)(void *userdata)</div><div class="ttdoc">Callback returns a monotonic time in milliseconds.</div><div class="ttdef"><b>Definition</b> kii_task_callback.h:125</div></div>
 <div class="ttc" id="akii__task__callback_8h_html_a66833479636e54ec6559fcb91c37263d"><div class="ttname"><a href="kii__task__callback_8h.html#a66833479636e54ec6559fcb91c37263d">KII_CB_TASK_CONTINUE</a></div><div class="ttdeci">kii_bool_t(* KII_CB_TASK_CONTINUE)(void *task_info, void *userdata)</div><div class="ttdoc">Callback determines whether to continue task execution.</div><div class="ttdef"><b>Definition</b> kii_task_callback.h:91</div></div>
 <div class="ttc" id="akii__task__callback_8h_html_a803edec5a77dda169a7487f28eb7cf9a"><div class="ttname"><a href="kii__task__callback_8h.html#a803edec5a77dda169a7487f28eb7cf9a">KII_TASK_ENTRY</a></div><div class="ttdeci">void *(* KII_TASK_ENTRY)(void *value)</div><div class="ttdoc">Function executed in the task.</div><div class="ttdef"><b>Definition</b> kii_task_callback.h:41</div></div>
 <div class="ttc" id="akii__task__callback_8h_html_a8cb8ae6e0e48ea307aa8481d5e85feb0"><div class="ttname"><a href="kii__task__callback_8h.html#a8cb8ae6e0e48ea307aa8481d5e85feb0">kii_task_code_t</a></div><div class="ttdeci">kii_task_code_t</div><div class="ttdoc">Task codes.</div><div class="ttdef"><b>Definition</b> kii_task_callback.h:24</div></div>
 <div class="ttc" id="akii__task__callback_8h_html_aa498370678fa8bb2e7aef2d18bc315b5"><div class="ttname"><a href="kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5">KII_CB_TASK_EXIT</a></div><div class="ttdeci">void(* KII_CB_TASK_EXIT)(void *task_info, void *userdata)</div><div class="ttdoc">Callback called right before exit of the task.</div><div class="ttdef"><b>Definition</b> kii_task_callback.h:77</div></div>
 <div class="ttc" id="akii__task__callback_8h_html_acb31aab23022a785b6e80b3aa148b185"><div class="ttname"><a href="kii__task__callback_8h.html#acb31aab23022a785b6e80b3aa148b185">KII_CB_DELAY_MS</a></div><div class="ttdeci">void(* KII_CB_DELAY_MS)(uint32_t msec, void *userdata)</div><div class="ttdoc">Callback asks to delay/ sleep task.</div><div class="ttdef"><b>Definition</b> kii_task_callback.h:64</div></div>
+<div class="ttc" id="akii__task__callback_8h_html_ad51955150e2d3eb3a156615ccf9cf260"><div class="ttname"><a href="kii__task__callback_8h.html#ad51955150e2d3eb3a156615ccf9cf260">KII_CB_LOCK</a></div><div class="ttdeci">void(* KII_CB_LOCK)(void *userdata)</div><div class="ttdoc">Callback acquires or releases a lock.</div><div class="ttdef"><b>Definition</b> kii_task_callback.h:110</div></div>
 <div class="ttc" id="akii__task__callback_8h_html_ae275605d20f9b00b1ead9cbc8e3b3283"><div class="ttname"><a href="kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">kii_bool_t</a></div><div class="ttdeci">kii_bool_t</div><div class="ttdoc">Bool type definition.</div><div class="ttdef"><b>Definition</b> kii_task_callback.h:33</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 21 2026 16:39:01 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Wed Oct 21 2026 17:55:47 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

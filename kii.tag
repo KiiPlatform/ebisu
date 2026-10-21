@@ -8,6 +8,7 @@
     <class kind="struct">kii_bucket_t</class>
     <class kind="struct">kii_topic_t</class>
     <class kind="struct">kii_author_t</class>
+    <class kind="struct">kii_session_t</class>
     <class kind="struct">kii_mqtt_endpoint_t</class>
     <class kind="struct">kii_object_id_t</class>
     <class kind="struct">kii_installation_id_t</class>
@@ -33,6 +34,13 @@
       <name>KII_TOKEN_MAX_SIZE</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a430b4f23746528cf8103295f17ca33d6</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>KII_REFRESH_TOKEN_MAX_SIZE</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>ae090f4164ca0286465f7837280c3275f</anchor>
       <arglist></arglist>
     </member>
     <member kind="define">
@@ -152,6 +160,20 @@
       <name>kii_author_t</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a1dec66c56a70b2a128ea8d80a409478b</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>void(*</type>
+      <name>KII_CB_AUTHOR_UPDATED</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>ad1de685427c9868a3034e91c67621163</anchor>
+      <arglist>)(const kii_author_t *author, void *userdata)</arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct kii_session_t</type>
+      <name>kii_session_t</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>af6e728326f31d6421beb3169acd62f6e</anchor>
       <arglist></arglist>
     </member>
     <member kind="typedef">
@@ -483,6 +505,69 @@
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a113672afcdae61484731c80a3b7bc17e</anchor>
       <arglist>(kii_t *kii, const char *vendor_thing_id, const char *thing_type, const char *password)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_session_init</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a58ff8b06b612885dea237c6ba31d1820</anchor>
+      <arglist>(kii_session_t *session)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_session_set_cb_lock</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a872f254a6d88788d4daf0a0c5b513bfc</anchor>
+      <arglist>(kii_session_t *session, KII_CB_LOCK cb_lock, KII_CB_LOCK cb_unlock, void *userdata)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_session_set_cb_monotonic_ms</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a1a200e36a3af8bee216a2ad00c2d22df</anchor>
+      <arglist>(kii_session_t *session, KII_CB_MONOTONIC_MS cb_monotonic_ms, void *userdata)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_session_set_password</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>ae1036e32aa7dc6c1afa027dfd728ebbf</anchor>
+      <arglist>(kii_session_t *session, const char *vendor_thing_id, const char *password)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_session_set_cb_author_updated</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>ac3389943c7df0bafed6786e303b1561f</anchor>
+      <arglist>(kii_session_t *session, KII_CB_AUTHOR_UPDATED cb_author_updated, void *userdata)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_session_set_author</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a72459c7ed527d9feb934be7287570402</anchor>
+      <arglist>(kii_session_t *session, const kii_author_t *author)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_session_set_renew_by_onboarding</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a20216a7ebb203e546de0a987120e374b</anchor>
+      <arglist>(kii_session_t *session, kii_bool_t by_onboarding)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_session_get_author</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>ac375f90a4796877f0365d14f6dc73e45</anchor>
+      <arglist>(kii_session_t *session, kii_author_t *out_author)</arglist>
+    </member>
+    <member kind="function">
+      <type>kii_code_t</type>
+      <name>kii_set_session</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>ae33b3be622e96687b213d0fbfd6edf0f</anchor>
+      <arglist>(kii_t *kii, kii_session_t *session)</arglist>
     </member>
     <member kind="function">
       <type>kii_code_t</type>
@@ -944,6 +1029,20 @@
       <anchor>a66833479636e54ec6559fcb91c37263d</anchor>
       <arglist>)(void *task_info, void *userdata)</arglist>
     </member>
+    <member kind="typedef">
+      <type>void(*</type>
+      <name>KII_CB_LOCK</name>
+      <anchorfile>kii__task__callback_8h.html</anchorfile>
+      <anchor>ad51955150e2d3eb3a156615ccf9cf260</anchor>
+      <arglist>)(void *userdata)</arglist>
+    </member>
+    <member kind="typedef">
+      <type>uint64_t(*</type>
+      <name>KII_CB_MONOTONIC_MS</name>
+      <anchorfile>kii__task__callback_8h.html</anchorfile>
+      <anchor>a366d10ce95a0b7a20ba6548fb2509002</anchor>
+      <arglist>)(void *userdata)</arglist>
+    </member>
     <member kind="enumeration">
       <type></type>
       <name>kii_task_code_t</name>
@@ -975,6 +1074,13 @@
       <anchorfile>structkii__author__t.html</anchorfile>
       <anchor>aecbad5bf0ac42fe9c08a079ae4df2279</anchor>
       <arglist>[KII_TOKEN_MAX_SIZE]</arglist>
+    </member>
+    <member kind="variable">
+      <type>char</type>
+      <name>refresh_token</name>
+      <anchorfile>structkii__author__t.html</anchorfile>
+      <anchor>a150ca5d71e06a3e976aea59e7ebb0c46</anchor>
+      <arglist>[KII_REFRESH_TOKEN_MAX_SIZE]</arglist>
     </member>
   </compound>
   <compound kind="struct">
@@ -1094,6 +1200,10 @@
       <anchor>a19d17e0013f10a89fab4efbea6b2153a</anchor>
       <arglist>[KII_OBJECT_ID_MAX_SIZE]</arglist>
     </member>
+  </compound>
+  <compound kind="struct">
+    <name>kii_session_t</name>
+    <filename>structkii__session__t.html</filename>
   </compound>
   <compound kind="struct">
     <name>kii_t</name>

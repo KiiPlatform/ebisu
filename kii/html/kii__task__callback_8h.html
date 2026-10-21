@@ -112,6 +112,12 @@ typedef void *(*&#160;</td><td class="memItemRight" valign="bottom"><b>KII_TASK_
 <tr class="memitem:a66833479636e54ec6559fcb91c37263d" id="r_a66833479636e54ec6559fcb91c37263d"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">kii_bool_t</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii__task__callback_8h.html#a66833479636e54ec6559fcb91c37263d">KII_CB_TASK_CONTINUE</a>) (void *task_info, void *userdata)</td></tr>
 <tr class="memdesc:a66833479636e54ec6559fcb91c37263d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback determines whether to continue task execution.  <br /></td></tr>
 <tr class="separator:a66833479636e54ec6559fcb91c37263d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad51955150e2d3eb3a156615ccf9cf260" id="r_ad51955150e2d3eb3a156615ccf9cf260"><td class="memItemLeft" align="right" valign="top">typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii__task__callback_8h.html#ad51955150e2d3eb3a156615ccf9cf260">KII_CB_LOCK</a>) (void *userdata)</td></tr>
+<tr class="memdesc:ad51955150e2d3eb3a156615ccf9cf260"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback acquires or releases a lock.  <br /></td></tr>
+<tr class="separator:ad51955150e2d3eb3a156615ccf9cf260"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a366d10ce95a0b7a20ba6548fb2509002" id="r_a366d10ce95a0b7a20ba6548fb2509002"><td class="memItemLeft" align="right" valign="top">typedef uint64_t(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii__task__callback_8h.html#a366d10ce95a0b7a20ba6548fb2509002">KII_CB_MONOTONIC_MS</a>) (void *userdata)</td></tr>
+<tr class="memdesc:a366d10ce95a0b7a20ba6548fb2509002"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback returns a monotonic time in milliseconds.  <br /></td></tr>
+<tr class="separator:a366d10ce95a0b7a20ba6548fb2509002"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
@@ -149,6 +155,54 @@ Enumerations</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="ad51955150e2d3eb3a156615ccf9cf260" name="ad51955150e2d3eb3a156615ccf9cf260"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad51955150e2d3eb3a156615ccf9cf260">&#9670;&#160;</a></span>KII_CB_LOCK</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef void(* KII_CB_LOCK) (void *userdata)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Callback acquires or releases a lock. </p>
+<p>Set in pairs, one acquiring and one releasing, by <a class="el" href="kii_8h.html#a872f254a6d88788d4daf0a0c5b513bfc" title="Set the lock guarding the session.">kii_session_set_cb_lock()</a>. The lock need not be recursive.</p>
+<p>While it is held, other tasks may be kept waiting for the length of an HTTP request, and the callbacks ebisu makes in between include the socket callbacks. A platform on which no other task using the same session can run while the lock is held &ndash; including inside those callbacks &ndash; may implement both as no-ops.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a366d10ce95a0b7a20ba6548fb2509002" name="a366d10ce95a0b7a20ba6548fb2509002"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a366d10ce95a0b7a20ba6548fb2509002">&#9670;&#160;</a></span>KII_CB_MONOTONIC_MS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef uint64_t(* KII_CB_MONOTONIC_MS) (void *userdata)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Callback returns a monotonic time in milliseconds. </p>
+<p>The value must never decrease, and must not jump when the wall clock is changed, for example by NTP. Its origin is arbitrary; only differences are used. Platforms whose tick counter is 32 bits wide must extend it to 64, or it wraps after about 49.7 days.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Milliseconds elapsed since an arbitrary, fixed origin. </dd></dl>
 
 </div>
 </div>
@@ -227,7 +281,7 @@ Enumerations</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 21 2026 16:39:01 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Wed Oct 21 2026 17:55:47 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
