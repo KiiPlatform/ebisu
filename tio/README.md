@@ -47,8 +47,13 @@ typedef kii_task_code_t
 (*KII_CB_TASK_CREATE)
     (const char* name,
      KII_TASK_ENTRY entry,
-     void* param);
+     void* entry_param,
+     void* userdata);
 ```
+
+`entry` must be called with `entry_param`. `userdata` is the context object
+pointer given to `tio_handler_set_cb_task_create()` or
+`tio_updater_set_cb_task_create()`.
 
 Typical implementation with `pthread`:
 
@@ -56,7 +61,8 @@ Typical implementation with `pthread`:
 kii_task_code_t task_create_cb
     (const char* name,
      KII_TASK_ENTRY entry,
-     void* param)
+     void* param,
+     void* userdata)
 {
     pthread_t pthid;
     int ret = pthread_create(&pthid, NULL, entry, param);
@@ -161,7 +167,7 @@ typedef khc_sock_code_t
 
 typedef khc_sock_code_t
     (*KHC_CB_SOCK_SEND)
-    (void* sock_ctx, const char* buffer, size_t length);
+    (void* sock_ctx, const char* buffer, size_t length, size_t* out_sent_length);
 
 typedef khc_sock_code_t
     (*KHC_CB_SOCK_RECV)
@@ -236,14 +242,17 @@ Action callback signature:
 typedef tio_bool_t (*TIO_CB_ACTION)(
     tio_action_t* action,
     tio_action_err_t* err,
+    tio_action_result_data_t* data,
     void* userdata);
 ```
 
 - `tio_action_t.alias` is a string represents the alias of the trait which represents set of capabilities equipped.
+  It is not null-terminated: its length is `tio_action_t.alias_length`.
 
 eg.) "AirConditioner", "LevelMonitor", etc.
 
 - `tio_action_t.action_name` is a string represents the name of action.
+  It is not null-terminated: its length is `tio_action_t.action_name_length`.
 
 eg.) "setPresetTemperature", "executeMonitering", etc.
 
@@ -253,7 +262,9 @@ eg.) If the `action_name` is "setPresetTemperature", `action_value.type` might b
 
 When the execution is failed, you can set the message in `err` argument and returns false. The result of execution and error message is stored in the cloud.
 
-`user_data` argument is a context object pointer given to `tio_handler_start()` method.
+When it succeeds, you can set data to store with the result in `data`, as a null-terminated JSON string of at most 127 bytes. It must be valid JSON, or the command's results are not sent.
+
+`userdata` argument is a context object pointer given to `tio_handler_start()` method.
 
 Alias, action name, action value and its type is defined by the feature called `Trait`.
 
@@ -269,8 +280,8 @@ The full code can be checked [handler_init() in example.c](linux-sample/example.
 
     tio_handler_set_app(handler, KII_APP_ID, KII_APP_HOST);
 
-    tio_handler_set_cb_task_create(handler, task_create_cb_impl);
-    tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl);
+    tio_handler_set_cb_task_create(handler, task_create_cb_impl, NULL);
+    tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl, NULL);
 
     tio_handler_set_cb_sock_connect_http(handler, sock_cb_connect, http_ssl_ctx);
     tio_handler_set_cb_sock_send_http(handler, sock_cb_send, http_ssl_ctx);
@@ -318,8 +329,8 @@ To create your Kii Cloud App, Sign-up to [Developer console](https://developer.k
 Set callback function pointers.
 
 ```c
-    tio_handler_set_cb_task_create(handler, task_create_cb_impl);
-    tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl);
+    tio_handler_set_cb_task_create(handler, task_create_cb_impl, NULL);
+    tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl, NULL);
 ```
 
 ### Socket callbacks.
@@ -529,9 +540,9 @@ Alternatively, you can execute this step outside of the IoT Device and pass thin
             firmWareVersion,
             layoutPosition,
             properties);
-    tio_author_t* author = tio_handler_get_author(&handler);
+    const tio_author_t* author = tio_handler_get_author(&handler);
     /* thing ID and access token is stored in tio_author_t.
-    printf("thing ID: %s, access token %s\n", author->author_id, author->access_token);
+    printf("thing ID: %s\n", author->author_id);
     */
 ```
 
@@ -553,7 +564,7 @@ Now, it's ready to start `tio_handler_t` module.
   Passing NULL since we don't use context object in this example.
 
 This call results to execute asynchronous tasks created by [Task callbacks](#task-callbacks).
-The name of tasks initiated by this call is exported as macro `KII_TASK_NAME_MQTT` and `KII_TASK_NAME_PING_REQ` defined in `kii.h`.
+The name of the task initiated by this call is exported as macro `KII_TASK_NAME_MQTT` defined in `kii.h`.
 
 # Use `tio_updater_t`
 
@@ -580,6 +591,11 @@ Size callback is called to ask the size of new IoT device state.
 This callback is called before the read callback.
 If the returned size is 0, `tio_updater_t` skips updating device state.
 
+With a [session](#session), it is called again when the server refused an upload
+for its token and the session renewed it: the upload is then made again, and the
+state read again from its beginning. The read callback must start over whenever
+this callback is called.
+
 Signature of size callback:
 
 ```c
@@ -603,7 +619,7 @@ typedef size_t (*TIO_CB_READ)(
 
 - `buffer` : Callback implementation writes the state data to this buffer.
 
-- `size` : Requested size to be written to the buffer. If the returned value does not muches the requested size, `tio_updater` aborts the update process this time but the loop continues to run.
+- `size` : Size of the buffer. Return how many bytes were written, which can be fewer than `size`, and 0 once the whole state has been read.
 
 - `userdata` : Context object pointer passed to `tio_updater_start()` function.
 
@@ -639,8 +655,8 @@ The full code can be checked [updater_init() in example.c](linux-sample/example.
 
     tio_updater_set_app(updater, KII_APP_ID, KII_APP_HOST);
 
-    tio_updater_set_cb_task_create(updater, task_create_cb_impl);
-    tio_updater_set_cb_delay_ms(updater, delay_ms_cb_impl);
+    tio_updater_set_cb_task_create(updater, task_create_cb_impl, NULL);
+    tio_updater_set_cb_delay_ms(updater, delay_ms_cb_impl, NULL);
 
     tio_updater_set_buff(updater, buffer, buffer_size);
 
@@ -703,7 +719,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
 ## Tasks executed by `tio_handler_t`.
 
-- `KII_TASK_NAME_MQTT` is a name of the task defined at `kii.h` and passed as argument when `tio_handler_set_cb_task_create()` is called to create task/ thread.
+- `KII_TASK_NAME_MQTT` is a name of the task defined at `kii.h` and passed as argument when the callback set by `tio_handler_set_cb_task_create()` is called to create task/ thread.
 
     The task creation is requested once when the `tio_handler_start()` method is invoked.
 
@@ -737,7 +753,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
 ## Tasks executed by `tio_updater_t`.
 
-- `TIO_TASK_NAME_UPDATE_STATE` is a name of the task defined at `kii.h` and passed as argument when `tio_handler_set_cb_task_create()` is called to create task/ thread.
+- `TIO_TASK_NAME_UPDATE_STATE` is a name of the task declared in `tio.h` and passed as argument when the callback set by `tio_updater_set_cb_task_create()` is called to create task/ thread.
 
     The task creation is requested once when the `tio_updater_start()` method is invoked.
 
@@ -751,7 +767,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
     - `tio_updater_set_cb_sock_close()`
     - `tio_updater_set_cb_delay_ms()`
     - `tio_updater_start()` (`TIO_CB_SIZE`, `TIO_CB_READ` callbacks.)
-    - `tio_updater_set_cb_err()`
+    - `tio_updater_set_cb_error()`
         (Optional. In case set the error handler for debugging, etc.)
     - `tio_updater_set_cb_json_parser_resource()`
         (Optional. In case dynamic memory allocation is chosen for parsing JSON.)
