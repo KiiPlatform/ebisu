@@ -25,6 +25,9 @@ inline std::string http_response(uint16_t status, const std::string& body) {
 // An empty response refuses that connection instead. Running out of script
 // fails the connection too, which the test then sees as a transport error.
 //
+// With respond set, each request is answered with what it returns for the
+// request instead, for when the order of the requests is not known ahead.
+//
 // The callbacks capture this, so an instance must not be copied or moved
 // once attached.
 struct HttpScript {
@@ -33,6 +36,7 @@ struct HttpScript {
     size_t pos;
     khct::cb::SockCtx ctx;
     std::function<void(size_t)> on_connect;
+    std::function<std::string(const std::string& request)> respond;
 
     HttpScript() : pos(0) {
         ctx.on_connect = [this](void*, const char*, uint16_t) {
@@ -40,6 +44,9 @@ struct HttpScript {
             pos = 0;
             if (on_connect) {
                 on_connect(requests.size() - 1);
+            }
+            if (respond) {
+                return KHC_SOCK_OK;
             }
             if (requests.size() > responses.size() || current().empty()) {
                 return KHC_SOCK_FAIL;
@@ -52,6 +59,11 @@ struct HttpScript {
             return KHC_SOCK_OK;
         };
         ctx.on_recv = [this](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            if (respond && responses.size() < requests.size()) {
+                // khc has sent the whole request by the time it reads.
+                responses.resize(requests.size() - 1);
+                responses.push_back(respond(requests.back()));
+            }
             const std::string& resp = current();
             size_t n = resp.size() - pos;
             if (n > length_to_read) {
@@ -80,6 +92,15 @@ struct HttpScript {
         khc_set_cb_sock_recv(http, khct::cb::mock_recv, &ctx);
         khc_set_cb_sock_close(http, khct::cb::mock_close, &ctx);
     }
+
+#ifdef KII_H
+    void attach(kii_t* kii) {
+        kii_set_cb_http_sock_connect(kii, khct::cb::mock_connect, &ctx);
+        kii_set_cb_http_sock_send(kii, khct::cb::mock_send, &ctx);
+        kii_set_cb_http_sock_recv(kii, khct::cb::mock_recv, &ctx);
+        kii_set_cb_http_sock_close(kii, khct::cb::mock_close, &ctx);
+    }
+#endif
 };
 
 inline bool contains(const std::string& haystack, const std::string& needle) {

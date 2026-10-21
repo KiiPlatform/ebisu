@@ -1,5 +1,6 @@
 #include "kii.h"
 #include "kii_ti_impl.h"
+#include "kii_session_impl.h"
 
 kii_code_t kii_ti_onboard(
         kii_t* kii,
@@ -15,6 +16,10 @@ kii_code_t kii_ti_onboard(
     ret = _onboard(kii, vendor_thing_id, password, thing_type, firmware_version, layout_position, thing_properties);
     if (ret != KII_ERR_OK) {
         return ret;
+    }
+    if (kii->_session != NULL) {
+        // Onboarding gives no lifetime: the token is used until refused.
+        _kii_session_publish(kii, 0);
     }
 
     return KII_ERR_OK;

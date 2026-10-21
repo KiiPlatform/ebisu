@@ -14,4 +14,8 @@ kii_code_t _thing_register(
         const char* password,
         const char* thing_type);
 
+kii_code_t _thing_refresh(
+        kii_t* kii,
+        const char* refresh_token);
+
 #endif

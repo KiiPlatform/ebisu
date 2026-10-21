@@ -78,6 +78,7 @@ ebisu_add_test_suite(large_test_kii
         kii/object_test.cpp
         kii/push_test.cpp
         kii/server_code_test.cpp
+        kii/session_test.cpp
         kii/thing_test.cpp
         kii/ti_test.cpp
         ${large_test_common}

@@ -186,6 +186,7 @@ kii_code_t kii_upload_object_body(
     _reset_khc(kii);
     _reset_buff(kii);
     khc_set_cb_read(&kii->_khc, read_cb, userdata);
+    kii->_req_streamed = KII_TRUE;
 
     kii_code_t ret = _upload_body(kii, bucket, object_id, body_content_type);
     if (ret != KII_ERR_OK) {
@@ -200,6 +201,7 @@ kii_code_t kii_upload_object_body(
 
 exit:
     // Restore default callback.
+    kii->_req_streamed = KII_FALSE;
     khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
     return ret;
 }
@@ -215,6 +217,7 @@ kii_code_t kii_download_object_body(
     _reset_khc(kii);
     _reset_buff(kii);
     khc_set_cb_write(&kii->_khc, write_cb, userdata);
+    kii->_req_streamed = KII_TRUE;
 
     kii_code_t ret = _download_body(kii, bucket, object_id);
     if (ret != KII_ERR_OK) {
@@ -229,6 +232,7 @@ kii_code_t kii_download_object_body(
 
 exit:
     // Restore default callback.
+    kii->_req_streamed = KII_FALSE;
     khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
     return ret;
 }

@@ -1,5 +1,6 @@
 #include "kii.h"
 #include "kii_impl.h"
+#include "kii_session_impl.h"
 #include <string.h>
 
 #define KII_SDK_INFO "sn=te;sv=1.2.4"
@@ -11,16 +12,24 @@ size_t _cb_write_buff(char *buffer, size_t size, void *userdata)
 {
     kii_t *kii = (kii_t *)userdata;
     if (kii->_rw_buff_written == 0) {
-        memset(kii->_rw_buff, '\0', kii->_rw_buff_size);
+        // A response refusing the session's token has the request sent again,
+        // so it may have to be read past the request's body.
+        kii->_resp_offset = _kii_session_resp_offset(kii);
+        memset(kii->_rw_buff + kii->_resp_offset, '\0',
+                kii->_rw_buff_size - kii->_resp_offset);
     }
-    size_t remain = kii->_rw_buff_size - kii->_rw_buff_written;
+    if (kii->_rw_buff_size - kii->_resp_offset - kii->_rw_buff_written < size) {
+        // No room after the request's body, which is given up.
+        _kii_resp_to_start(kii);
+    }
+    size_t remain = kii->_rw_buff_size - kii->_resp_offset - kii->_rw_buff_written;
     size_t req_size = size;
     if (remain < req_size)
     {
         // Insufficient buffer size.
         return 0;
     }
-    memcpy(kii->_rw_buff + kii->_rw_buff_written, buffer, req_size);
+    memcpy(kii->_rw_buff + kii->_resp_offset + kii->_rw_buff_written, buffer, req_size);
     kii->_rw_buff_written += req_size;
     return req_size;
 }
@@ -322,6 +331,7 @@ kii_code_t _convert_code(khc_code khc_c) {
 void _reset_buff(kii_t* kii) {
     kii->_rw_buff_read = 0;
     kii->_rw_buff_written = 0;
+    kii->_resp_offset = 0;
     kii->_rw_buff_req_size = 0;
     kii->_rw_buff[0] = '\0';
     kii->_etag[0] = '\0';

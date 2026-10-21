@@ -2,6 +2,7 @@
 #include "kii_push_impl.h"
 #include "kii_impl.h"
 #include "kii_req_impl.h"
+#include "kii_session_impl.h"
 #include "kii.h"
 
 kii_code_t _install_push(
@@ -62,7 +63,7 @@ kii_code_t _install_push(
     kii->_rw_buff_req_size = body_len;
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     return _convert_code(code);
@@ -114,7 +115,7 @@ kii_code_t _get_mqtt_endpoint(
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     return _convert_code(code);
@@ -161,7 +162,7 @@ kii_code_t _subscribe_bucket(
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     return _convert_code(code);
@@ -208,7 +209,7 @@ kii_code_t _unsubscribe_bucket(
     }
 
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     return _convert_code(code);
@@ -256,7 +257,7 @@ kii_code_t _subscribe_topic(
         return res;
     }
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
     return _convert_code(code);
 }
@@ -303,7 +304,7 @@ kii_code_t _unsubscribe_topic(
         return res;
     }
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
     return _convert_code(code);
 }
@@ -351,7 +352,7 @@ kii_code_t _put_topic(
         return res;
     }
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
     return _convert_code(code);
 }
@@ -399,7 +400,7 @@ kii_code_t _delete_topic(
         return res;
     }
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
     return _convert_code(code);
 }
@@ -444,7 +445,7 @@ static kii_code_t _post_push_message(
         return res;
     }
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
+    khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
     return _convert_code(code);
 }
