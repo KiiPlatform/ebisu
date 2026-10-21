@@ -106,14 +106,17 @@ Task creation</h4>
 <div class="line">(*KII_CB_TASK_CREATE)</div>
 <div class="line">    (<span class="keyword">const</span> <span class="keywordtype">char</span>* name,</div>
 <div class="line">     <a class="code hl_typedefRef" href="../../kii/html/kii__task__callback_8h.html#a803edec5a77dda169a7487f28eb7cf9a">KII_TASK_ENTRY</a> entry,</div>
-<div class="line">     <span class="keywordtype">void</span>* param);</div>
+<div class="line">     <span class="keywordtype">void</span>* entry_param,</div>
+<div class="line">     <span class="keywordtype">void</span>* userdata);</div>
 <div class="ttc" id="akii__task__callback_8h_html_a803edec5a77dda169a7487f28eb7cf9a"><div class="ttname"><a href="../../kii/html/kii__task__callback_8h.html#a803edec5a77dda169a7487f28eb7cf9a">KII_TASK_ENTRY</a></div><div class="ttdeci">void *(* KII_TASK_ENTRY)(void *value)</div></div>
 <div class="ttc" id="akii__task__callback_8h_html_a8cb8ae6e0e48ea307aa8481d5e85feb0"><div class="ttname"><a href="../../kii/html/kii__task__callback_8h.html#a8cb8ae6e0e48ea307aa8481d5e85feb0">kii_task_code_t</a></div><div class="ttdeci">kii_task_code_t</div></div>
-</div><!-- fragment --><p>Typical implementation with <code>pthread</code>:</p>
+</div><!-- fragment --><p><code>entry</code> must be called with <code>entry_param</code>. <code>userdata</code> is the context object pointer given to <code>tio_handler_set_cb_task_create()</code> or <code>tio_updater_set_cb_task_create()</code>.</p>
+<p>Typical implementation with <code>pthread</code>:</p>
 <div class="fragment"><div class="line"><a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#a8cb8ae6e0e48ea307aa8481d5e85feb0">kii_task_code_t</a> task_create_cb</div>
 <div class="line">    (<span class="keyword">const</span> <span class="keywordtype">char</span>* name,</div>
 <div class="line">     KII_TASK_ENTRY entry,</div>
-<div class="line">     <span class="keywordtype">void</span>* param)</div>
+<div class="line">     <span class="keywordtype">void</span>* param,</div>
+<div class="line">     <span class="keywordtype">void</span>* userdata)</div>
 <div class="line">{</div>
 <div class="line">    pthread_t pthid;</div>
 <div class="line">    <span class="keywordtype">int</span> ret = pthread_create(&amp;pthid, NULL, entry, param);</div>
@@ -181,7 +184,7 @@ Socket callbacks.</h3>
 <div class="line"> </div>
 <div class="line"><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../khc/html/khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2">khc_sock_code_t</a></div>
 <div class="line">    (*KHC_CB_SOCK_SEND)</div>
-<div class="line">    (<span class="keywordtype">void</span>* sock_ctx, <span class="keyword">const</span> <span class="keywordtype">char</span>* buffer, <span class="keywordtype">size_t</span> length);</div>
+<div class="line">    (<span class="keywordtype">void</span>* sock_ctx, <span class="keyword">const</span> <span class="keywordtype">char</span>* buffer, <span class="keywordtype">size_t</span> length, <span class="keywordtype">size_t</span>* out_sent_length);</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../khc/html/khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2">khc_sock_code_t</a></div>
 <div class="line">    (*KHC_CB_SOCK_RECV)</div>
@@ -215,15 +218,17 @@ Action callback</h3>
 <div class="fragment"><div class="line"><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">tio_bool_t</a> (*TIO_CB_ACTION)(</div>
 <div class="line">    <a class="code hl_struct" href="structtio__action__t.html">tio_action_t</a>* action,</div>
 <div class="line">    <a class="code hl_struct" href="structtio__action__err__t.html">tio_action_err_t</a>* err,</div>
+<div class="line">    <a class="code hl_struct" href="structtio__action__result__data__t.html">tio_action_result_data_t</a>* data,</div>
 <div class="line">    <span class="keywordtype">void</span>* userdata);</div>
 <div class="ttc" id="astructtio__action__err__t_html"><div class="ttname"><a href="structtio__action__err__t.html">tio_action_err_t</a></div><div class="ttdoc">Represents error.</div><div class="ttdef"><b>Definition</b> tio.h:132</div></div>
+<div class="ttc" id="astructtio__action__result__data__t_html"><div class="ttname"><a href="structtio__action__result__data__t.html">tio_action_result_data_t</a></div><div class="ttdoc">Represents action result data.</div><div class="ttdef"><b>Definition</b> tio.h:139</div></div>
 <div class="ttc" id="astructtio__action__t_html"><div class="ttname"><a href="structtio__action__t.html">tio_action_t</a></div><div class="ttdoc">Represents action.</div><div class="ttdef"><b>Definition</b> tio.h:100</div></div>
 </div><!-- fragment --><ul>
-<li><code><a class="el" href="structtio__action__t.html#a412290b7cbd2cd3838f66420ab1ba187" title="Name of the alias. You need to use alias_length field to determine the length. It might not be null t...">tio_action_t.alias</a></code> is a string represents the alias of the trait which represents set of capabilities equipped.</li>
+<li><code><a class="el" href="structtio__action__t.html#a412290b7cbd2cd3838f66420ab1ba187" title="Name of the alias. You need to use alias_length field to determine the length. It might not be null t...">tio_action_t.alias</a></code> is a string represents the alias of the trait which represents set of capabilities equipped. It is not null-terminated: its length is <code><a class="el" href="structtio__action__t.html#ad376bb546c8147e2b0371c119932da2f" title="Length of the alias name.">tio_action_t.alias_length</a></code>.</li>
 </ul>
 <p>eg.) "AirConditioner", "LevelMonitor", etc.</p>
 <ul>
-<li><code><a class="el" href="structtio__action__t.html#a74dfdccea29e4ea983cb1aaf3f9cebd3" title="Name of the action. You need to use action_name_length field to determine the length....">tio_action_t.action_name</a></code> is a string represents the name of action.</li>
+<li><code><a class="el" href="structtio__action__t.html#a74dfdccea29e4ea983cb1aaf3f9cebd3" title="Name of the action. You need to use action_name_length field to determine the length....">tio_action_t.action_name</a></code> is a string represents the name of action. It is not null-terminated: its length is <code><a class="el" href="structtio__action__t.html#a2e4dec6108670f0f3e1db8ff8e58feba" title="Length of the action name.">tio_action_t.action_name_length</a></code>.</li>
 </ul>
 <p>eg.) "setPresetTemperature", "executeMonitering", etc.</p>
 <ul>
@@ -231,7 +236,8 @@ Action callback</h3>
 </ul>
 <p>eg.) If the <code>action_name</code> is "setPresetTemperature", <code>action_value.type</code> might be a <code>long_value</code> and it's value is 26, 18, etc.</p>
 <p>When the execution is failed, you can set the message in <code>err</code> argument and returns false. The result of execution and error message is stored in the cloud.</p>
-<p><code>user_data</code> argument is a context object pointer given to <code>tio_handler_start()</code> method.</p>
+<p>When it succeeds, you can set data to store with the result in <code>data</code>, as a null-terminated JSON string of at most 127 bytes. It must be valid JSON, or the command's results are not sent.</p>
+<p><code>userdata</code> argument is a context object pointer given to <code>tio_handler_start()</code> method.</p>
 <p>Alias, action name, action value and its type is defined by the feature called <code>Trait</code>.</p>
 <p>For more details about Trait, please refer to the <a href="http://docs.kii.com/en/guides/thingifsdk/">document</a>.</p>
 <h2><a class="anchor" id="autotoc_md10"></a>
@@ -241,8 +247,8 @@ Set-up &lt;tt&gt;tio_handler_t&lt;/tt&gt; instance</h2>
 <div class="line"> </div>
 <div class="line">tio_handler_set_app(handler, KII_APP_ID, KII_APP_HOST);</div>
 <div class="line"> </div>
-<div class="line">tio_handler_set_cb_task_create(handler, task_create_cb_impl);</div>
-<div class="line">tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl);</div>
+<div class="line">tio_handler_set_cb_task_create(handler, task_create_cb_impl, NULL);</div>
+<div class="line">tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl, NULL);</div>
 <div class="line"> </div>
 <div class="line">tio_handler_set_cb_sock_connect_http(handler, sock_cb_connect, http_ssl_ctx);</div>
 <div class="line">tio_handler_set_cb_sock_send_http(handler, sock_cb_send, http_ssl_ctx);</div>
@@ -280,8 +286,8 @@ Set-up callbacks</h3>
 <h4><a class="anchor" id="autotoc_md14"></a>
 Task callbacks.</h4>
 <p>Set callback function pointers.</p>
-<div class="fragment"><div class="line">tio_handler_set_cb_task_create(handler, task_create_cb_impl);</div>
-<div class="line">tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl);</div>
+<div class="fragment"><div class="line">tio_handler_set_cb_task_create(handler, task_create_cb_impl, NULL);</div>
+<div class="line">tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl, NULL);</div>
 </div><!-- fragment --><h3><a class="anchor" id="autotoc_md15"></a>
 Socket callbacks.</h3>
 <p>Set callback function pointers and context data pointers. If you application allocates memory/ resources for context data, application is responsible to free those memory/ resources.</p>
@@ -400,9 +406,9 @@ Execute onboarding</h2>
 <div class="line">        firmWareVersion,</div>
 <div class="line">        layoutPosition,</div>
 <div class="line">        properties);</div>
-<div class="line"><a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">tio_author_t</a>* author = tio_handler_get_author(&amp;handler);</div>
+<div class="line"><span class="keyword">const</span> <a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">tio_author_t</a>* author = tio_handler_get_author(&amp;handler);</div>
 <div class="line"><span class="comment">/* thing ID and access token is stored in tio_author_t.</span></div>
-<div class="line"><span class="comment">printf(&quot;thing ID: %s, access token %s\n&quot;, author-&gt;author_id, author-&gt;access_token);</span></div>
+<div class="line"><span class="comment">printf(&quot;thing ID: %s\n&quot;, author-&gt;author_id);</span></div>
 <div class="line"><span class="comment">*/</span></div>
 </div><!-- fragment --><h2><a class="anchor" id="autotoc_md25"></a>
 Start module</h2>
@@ -413,7 +419,7 @@ Start module</h2>
 <li><code>tio_action_handler</code> is the callback function pointer explained in <a class="el" href="index.html#action-callback">Action callback</a></li>
 <li>last argument is context object pointer can be referenced in action callback. Passing NULL since we don't use context object in this example.</li>
 </ul>
-<p>This call results to execute asynchronous tasks created by <a class="el" href="index.html#task-callbacks">Task callbacks</a>. The name of tasks initiated by this call is exported as macro <code>KII_TASK_NAME_MQTT</code> and <code>KII_TASK_NAME_PING_REQ</code> defined in <code><a class="elRef" href="../../kii/html/kii_8h.html">kii.h</a></code>.</p>
+<p>This call results to execute asynchronous tasks created by <a class="el" href="index.html#task-callbacks">Task callbacks</a>. The name of the task initiated by this call is exported as macro <code>KII_TASK_NAME_MQTT</code> defined in <code><a class="elRef" href="../../kii/html/kii_8h.html">kii.h</a></code>.</p>
 <h1><a class="anchor" id="autotoc_md26"></a>
 Use &lt;tt&gt;tio_updater_t&lt;/tt&gt;</h1>
 <h2><a class="anchor" id="autotoc_md27"></a>
@@ -431,6 +437,7 @@ State read callbacks</h3>
 <h4><a class="anchor" id="autotoc_md30"></a>
 Size callback.</h4>
 <p>Size callback is called to ask the size of new IoT device state. This callback is called before the read callback. If the returned size is 0, <code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code> skips updating device state.</p>
+<p>With a <a class="el" href="index.html#session">session</a>, it is called again when the server refused an upload for its token and the session renewed it: the upload is then made again, and the state read again from its beginning. The read callback must start over whenever this callback is called.</p>
 <p>Signature of size callback:</p>
 <div class="fragment"><div class="line"><span class="keyword">typedef</span> size_t (*TIO_CB_SIZE)(<span class="keywordtype">void</span>* userdata);</div>
 </div><!-- fragment --><p><code>userdata</code> is context object pointer given to <code>tio_updater_start()</code> argument.</p>
@@ -444,7 +451,7 @@ Read callback</h4>
 <div class="line">    <span class="keywordtype">void</span> *userdata);</div>
 </div><!-- fragment --><ul>
 <li><code>buffer</code> : Callback implementation writes the state data to this buffer.</li>
-<li><code>size</code> : Requested size to be written to the buffer. If the returned value does not muches the requested size, <code>tio_updater</code> aborts the update process this time but the loop continues to run.</li>
+<li><code>size</code> : Size of the buffer. Return how many bytes were written, which can be fewer than <code>size</code>, and 0 once the whole state has been read.</li>
 <li><code>userdata</code> : Context object pointer passed to <code>tio_updater_start()</code> function.</li>
 </ul>
 <p>Expected format of the IoT device state is defined by <code>Trait</code>.</p>
@@ -468,8 +475,8 @@ Set-up &lt;tt&gt;tio_updater_t&lt;/tt&gt; instance</h2>
 <div class="line"> </div>
 <div class="line">tio_updater_set_app(updater, KII_APP_ID, KII_APP_HOST);</div>
 <div class="line"> </div>
-<div class="line">tio_updater_set_cb_task_create(updater, task_create_cb_impl);</div>
-<div class="line">tio_updater_set_cb_delay_ms(updater, delay_ms_cb_impl);</div>
+<div class="line">tio_updater_set_cb_task_create(updater, task_create_cb_impl, NULL);</div>
+<div class="line">tio_updater_set_cb_delay_ms(updater, delay_ms_cb_impl, NULL);</div>
 <div class="line"> </div>
 <div class="line">tio_updater_set_buff(updater, buffer, buffer_size);</div>
 <div class="line"> </div>
@@ -518,7 +525,7 @@ Asynchronous task management</h1>
 <h2><a class="anchor" id="autotoc_md36"></a>
 Tasks executed by &lt;tt&gt;tio_handler_t&lt;/tt&gt;.</h2>
 <ul>
-<li><p class="startli"><code>KII_TASK_NAME_MQTT</code> is a name of the task defined at <code><a class="elRef" href="../../kii/html/kii_8h.html">kii.h</a></code> and passed as argument when <code>tio_handler_set_cb_task_create()</code> is called to create task/ thread.</p>
+<li><p class="startli"><code>KII_TASK_NAME_MQTT</code> is a name of the task defined at <code><a class="elRef" href="../../kii/html/kii_8h.html">kii.h</a></code> and passed as argument when the callback set by <code>tio_handler_set_cb_task_create()</code> is called to create task/ thread.</p>
 <p class="startli">The task creation is requested once when the <code>tio_handler_start()</code> method is invoked.</p>
 <p class="startli">This task is responsible for connecting to MQTT with the endpoint onboarding returned, receiving messages from MQTT and propagating them to the app by the <code>TIO_CB_ACTION</code> callback, and sending MQTT <code>PINGREQ</code> periodically. If the handler was started without onboarding, or the broker refuses the credentials, it gets the MQTT endpoint through the REST API instead.</p>
 <p class="startli">This task executes callbacks set by following APIs.</p><ul>
@@ -546,7 +553,7 @@ Tasks executed by &lt;tt&gt;tio_handler_t&lt;/tt&gt;.</h2>
 <h2><a class="anchor" id="autotoc_md37"></a>
 Tasks executed by &lt;tt&gt;tio_updater_t&lt;/tt&gt;.</h2>
 <ul>
-<li><p class="startli"><code>TIO_TASK_NAME_UPDATE_STATE</code> is a name of the task defined at <code><a class="elRef" href="../../kii/html/kii_8h.html">kii.h</a></code> and passed as argument when <code>tio_handler_set_cb_task_create()</code> is called to create task/ thread.</p>
+<li><p class="startli"><code>TIO_TASK_NAME_UPDATE_STATE</code> is a name of the task declared in <code><a class="el" href="tio_8h_source.html">tio.h</a></code> and passed as argument when the callback set by <code>tio_updater_set_cb_task_create()</code> is called to create task/ thread.</p>
 <p class="startli">The task creation is requested once when the <code>tio_updater_start()</code> method is invoked.</p>
 <p class="startli">This task is responsible for periodically updates the IoT device state with the specified interval.</p>
 <p class="startli">This task executes callbacks set by following APIs.</p><ul>
@@ -556,7 +563,7 @@ Tasks executed by &lt;tt&gt;tio_updater_t&lt;/tt&gt;.</h2>
 <li><code>tio_updater_set_cb_sock_close()</code></li>
 <li><code>tio_updater_set_cb_delay_ms()</code></li>
 <li><code>tio_updater_start()</code> (<code>TIO_CB_SIZE</code>, <code>TIO_CB_READ</code> callbacks.)</li>
-<li><code>tio_updater_set_cb_err()</code> (Optional. In case set the error handler for debugging, etc.)</li>
+<li><code>tio_updater_set_cb_error()</code> (Optional. In case set the error handler for debugging, etc.)</li>
 <li><code>tio_updater_set_cb_json_parser_resource()</code> (Optional. In case dynamic memory allocation is chosen for parsing JSON.)</li>
 </ul>
 <p class="startli">This task uses buffers set by following APIs.</p><ul>
@@ -575,7 +582,7 @@ Avoiding race condition</h2>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 21 2026 18:23:44 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Wed Oct 21 2026 23:05:59 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

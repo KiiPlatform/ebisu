@@ -843,7 +843,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 </div><div class="memdoc">
 
 <p>Set socket close callback. </p>
-<p>NOTE: Currently khc uses HTTP 1.0 and close callback is called each HTTP session. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Each request is sent with "Connection: Close", so once connected, the callback is called at the end of every request. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">khc</td><td>instance. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">cb</td><td>called when HTTP session ends. </td></tr>
@@ -1019,7 +1019,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 </div><div class="memdoc">
 
 <p>Set write callback. </p>
-<p>The callback is called while reading response body. Callback would be called several times until the whole response body is written. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>The callback is called while reading response body. Callback would be called several times until the whole response body is written. It is not called for a response without a body, such as an empty chunked one: <a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform(khc*)</a> returns as for any other response. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">khc</td><td>instance. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">cb</td><td>writes response body. </td></tr>
@@ -1448,7 +1448,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 21 2026 18:23:44 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Wed Oct 21 2026 23:05:59 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
