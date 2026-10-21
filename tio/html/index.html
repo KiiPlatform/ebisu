@@ -467,7 +467,7 @@ Tasks executed by &lt;tt&gt;tio_handler_t&lt;/tt&gt;.</h2>
 <ul>
 <li><p class="startli"><code>KII_TASK_NAME_MQTT</code> is a name of the task defined at <code><a class="elRef" href="../../kii/html/kii_8h.html">kii.h</a></code> and passed as argument when <code>tio_handler_set_cb_task_create()</code> is called to create task/ thread.</p>
 <p class="startli">The task creation is requested once when the <code>tio_handler_start()</code> method is invoked.</p>
-<p class="startli">This task is responsible for getting MQTT endpoint information thru REST API and connect, receive message from MQTT and propagate message to app by the <code>TIO_CB_ACTION</code> callback, and send MQTT <code>PINGREQ</code> periodically.</p>
+<p class="startli">This task is responsible for connecting to MQTT with the endpoint onboarding returned, receiving messages from MQTT and propagating them to the app by the <code>TIO_CB_ACTION</code> callback, and sending MQTT <code>PINGREQ</code> periodically. If the handler was started without onboarding, or the broker refuses the credentials, it gets the MQTT endpoint through the REST API instead.</p>
 <p class="startli">This task executes callbacks set by following APIs.</p><ul>
 <li><code>tio_handler_set_cb_sock_connect_http()</code></li>
 <li><code>tio_handler_set_cb_sock_send_http()</code></li>
@@ -521,7 +521,7 @@ Avoiding race condition</h2>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 21 2026 16:30:51 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Wed Oct 21 2026 16:39:01 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

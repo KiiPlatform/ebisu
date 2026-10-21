@@ -3110,6 +3110,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><div class="memdoc">
 
 <p>Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push is called when message is delivered to the thing. The task is created by the callback set by <a class="el" href="kii_8h.html#a0544a628a2fbc798e4d2fa67e142c491" title="Set callback creates task.">kii_set_cb_task_create()</a>. If that callback is not set, or fails to create the task, no task is started and KII_ERR_CREATE_TASK is returned. </p>
+<p>After <a class="el" href="kii_8h.html#adaf6e5b9a952127cacd4cbf2e911039c" title="Execute onboarding.">kii_ti_onboard()</a> returned an MQTT endpoint for the thing kii acts as, the task connects with that endpoint. Otherwise it installs push and fetches the endpoint first. If the broker refuses the credentials, it fetches new ones for the same installation.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
@@ -3294,7 +3295,8 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><div class="memdoc">
 
 <p>Execute onboarding. </p>
-<p>Note: input params other than vendor_thing_id and password are ignored after the first registration. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Note: input params other than vendor_thing_id and password are ignored after the first registration.</p>
+<p>Where MQTT is enabled, onboarding also installs push and returns the MQTT endpoint, which is kept: <a class="el" href="kii_8h.html#ad3242ecc51a7aa640eb1ca7786a4a149" title="Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push ...">kii_start_push_task()</a> then connects with it, rather than installing push and fetching the endpoint from Kii Cloud. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">vendor_thing_id</td><td>Unique ID determined by device vendor. </td></tr>
@@ -3757,7 +3759,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 21 2026 16:30:51 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Wed Oct 21 2026 16:39:01 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
