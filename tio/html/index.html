@@ -327,11 +327,66 @@ Set-up json parser resource</h3>
 <div class="line">    <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler,</div>
 <div class="line">    JKII_CB_RESOURCE_ALLOC cb_alloc,</div>
 <div class="line">    JKII_CB_RESOURCE_FREE cb_free);</div>
-<div class="ttc" id="astructtio__handler__t_html"><div class="ttname"><a href="structtio__handler__t.html">tio_handler_t</a></div><div class="ttdoc">Stores data/ callbacks used by tio_handler.</div><div class="ttdef"><b>Definition</b> tio.h:209</div></div>
+<div class="ttc" id="astructtio__handler__t_html"><div class="ttname"><a href="structtio__handler__t.html">tio_handler_t</a></div><div class="ttdoc">Stores data/ callbacks used by tio_handler.</div><div class="ttdef"><b>Definition</b> tio.h:214</div></div>
 </div><!-- fragment --><p><code>cb_alloc</code> is called when the token is required and it's number is exactly same as numbers need to parse json string.</p>
 <p><code>cb_free</code> is called when the parse has been done.</p>
-<p><a class="anchor" id="execute-onboarding"></a> </p>
+<p><a class="anchor" id="session"></a> </p>
 <h2><a class="anchor" id="autotoc_md20"></a>
+Set up a session</h2>
+<p>Access tokens expire. A <code><a class="elRef" href="../../kii/html/structkii__session__t.html">kii_session_t</a></code> holds the thing's token and, whenever the server refuses it, renews it the way it was obtained: by onboarding again through Thing-IF, with the thing's vendor thing ID and password. It then sends the refused request again. When the MQTT broker refuses the handler's credentials, the handler gets new ones the same way, as onboarding returns the MQTT endpoint along with the token. tio thus talks only to Thing-IF and the MQTT broker.</p>
+<p>The <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code> and the <code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code> of a device share one session, so that a token refused to either is renewed once, for both.</p>
+<p>Here's the set-up code extracted from <a href="linux-sample/example.c">example.c</a>.</p>
+<div class="fragment"><div class="line"><a class="code hl_structRef" href="../../kii/html/structkii__session__t.html">kii_session_t</a> session;</div>
+<div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#a58ff8b06b612885dea237c6ba31d1820">kii_session_init</a>(&amp;session);</div>
+<div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#a872f254a6d88788d4daf0a0c5b513bfc">kii_session_set_cb_lock</a>(&amp;session, lock_cb_impl, unlock_cb_impl, &amp;session_mutex);</div>
+<div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#a1a200e36a3af8bee216a2ad00c2d22df">kii_session_set_cb_monotonic_ms</a>(&amp;session, monotonic_ms_cb_impl, NULL);</div>
+<div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#ac3389943c7df0bafed6786e303b1561f">kii_session_set_cb_author_updated</a>(&amp;session, author_updated_callback, NULL);</div>
+<div class="line"><span class="keywordflow">if</span> (tio_handler_set_session(&amp;handler, &amp;session) != TIO_ERR_OK ||</div>
+<div class="line">        tio_updater_set_session(&amp;updater, &amp;session) != TIO_ERR_OK) {</div>
+<div class="line">    printf(<span class="stringliteral">&quot;failed to set the session.\n&quot;</span>);</div>
+<div class="line">    exit(1);</div>
+<div class="line">}</div>
+<div class="line"><span class="comment">// Used to onboard again when the server refuses the token, or the broker</span></div>
+<div class="line"><span class="comment">// the MQTT credentials.</span></div>
+<div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#ae1036e32aa7dc6c1afa027dfd728ebbf">kii_session_set_password</a>(&amp;session, vendorThingID, password);</div>
+<div class="ttc" id="akii_8h_html_a1a200e36a3af8bee216a2ad00c2d22df"><div class="ttname"><a href="../../kii/html/kii_8h.html#a1a200e36a3af8bee216a2ad00c2d22df">kii_session_set_cb_monotonic_ms</a></div><div class="ttdeci">void kii_session_set_cb_monotonic_ms(kii_session_t *session, KII_CB_MONOTONIC_MS cb_monotonic_ms, void *userdata)</div></div>
+<div class="ttc" id="akii_8h_html_a58ff8b06b612885dea237c6ba31d1820"><div class="ttname"><a href="../../kii/html/kii_8h.html#a58ff8b06b612885dea237c6ba31d1820">kii_session_init</a></div><div class="ttdeci">void kii_session_init(kii_session_t *session)</div></div>
+<div class="ttc" id="akii_8h_html_a872f254a6d88788d4daf0a0c5b513bfc"><div class="ttname"><a href="../../kii/html/kii_8h.html#a872f254a6d88788d4daf0a0c5b513bfc">kii_session_set_cb_lock</a></div><div class="ttdeci">void kii_session_set_cb_lock(kii_session_t *session, KII_CB_LOCK cb_lock, KII_CB_LOCK cb_unlock, void *userdata)</div></div>
+<div class="ttc" id="akii_8h_html_ac3389943c7df0bafed6786e303b1561f"><div class="ttname"><a href="../../kii/html/kii_8h.html#ac3389943c7df0bafed6786e303b1561f">kii_session_set_cb_author_updated</a></div><div class="ttdeci">void kii_session_set_cb_author_updated(kii_session_t *session, KII_CB_AUTHOR_UPDATED cb_author_updated, void *userdata)</div></div>
+<div class="ttc" id="akii_8h_html_ae1036e32aa7dc6c1afa027dfd728ebbf"><div class="ttname"><a href="../../kii/html/kii_8h.html#ae1036e32aa7dc6c1afa027dfd728ebbf">kii_session_set_password</a></div><div class="ttdeci">void kii_session_set_password(kii_session_t *session, const char *vendor_thing_id, const char *password)</div></div>
+<div class="ttc" id="astructkii__session__t_html"><div class="ttname"><a href="../../kii/html/structkii__session__t.html">kii_session_t</a></div></div>
+</div><!-- fragment --><p>Set the session before <a class="el" href="index.html#execute-onboarding">onboarding</a>, which then stores the token it obtains in the session. The samples onboard at each start. To use a token saved before a restart instead, give it to the session with <code><a class="elRef" href="../../kii/html/kii_8h.html#a72459c7ed527d9feb934be7287570402">kii_session_set_author()</a></code>; the handler then gets its MQTT endpoint from Kii Cloud's API, as without onboarding, until the broker refuses the credentials.</p>
+<h3><a class="anchor" id="autotoc_md21"></a>
+Lock callbacks</h3>
+<p>Required. The handler's MQTT task and the updater's task both use the session, and the lock keeps one of them from renewing the token while the other does. It is held for the length of the renewal request. It need not be recursive. On a platform where the two tasks cannot run at the same time, the callbacks can do nothing.</p>
+<div class="fragment"><div class="line"><span class="keywordtype">void</span> lock_cb_impl(<span class="keywordtype">void</span>* userdata)</div>
+<div class="line">{</div>
+<div class="line">    pthread_mutex_lock((pthread_mutex_t*)userdata);</div>
+<div class="line">}</div>
+<div class="line"> </div>
+<div class="line"><span class="keywordtype">void</span> unlock_cb_impl(<span class="keywordtype">void</span>* userdata)</div>
+<div class="line">{</div>
+<div class="line">    pthread_mutex_unlock((pthread_mutex_t*)userdata);</div>
+<div class="line">}</div>
+</div><!-- fragment --><h3><a class="anchor" id="autotoc_md22"></a>
+Monotonic clock callback</h3>
+<p>Required. Times the expiry of tokens that have a lifetime, which those onboarding issues do not. It returns milliseconds since any fixed origin, never goes back, and does not jump when the wall clock is set. A 32-bit tick counter has to be extended to 64 bits, or it wraps after about 49.7 days. The callback is called only with the session lock held, so it can count the wraps without a lock of its own.</p>
+<div class="fragment"><div class="line">uint64_t monotonic_ms_cb_impl(<span class="keywordtype">void</span>* userdata)</div>
+<div class="line">{</div>
+<div class="line">    <span class="keyword">struct </span>timespec ts;</div>
+<div class="line">    clock_gettime(CLOCK_MONOTONIC, &amp;ts);</div>
+<div class="line">    <span class="keywordflow">return</span> (uint64_t)ts.tv_sec * 1000 + (uint64_t)ts.tv_nsec / 1000000;</div>
+<div class="line">}</div>
+</div><!-- fragment --><h3><a class="anchor" id="autotoc_md23"></a>
+Author updated callback</h3>
+<p>Called whenever the session's token changes: after onboarding and after every renewal. A device that keeps its token across a restart saves the author here; onboarding again leaves earlier tokens valid, so one that onboards at each start, as the samples do, need not. It is called with the session lock held and must not call <code>tio</code> or <code>kii</code> APIs.</p>
+<div class="fragment"><div class="line"><span class="keywordtype">void</span> author_updated_callback(<span class="keyword">const</span> <a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">kii_author_t</a>* author, <span class="keywordtype">void</span>* userdata)</div>
+<div class="line">{</div>
+<div class="line">    save_author(author);</div>
+<div class="line">}</div>
+<div class="ttc" id="astructkii__author__t_html"><div class="ttname"><a href="../../kii/html/structkii__author__t.html">kii_author_t</a></div></div>
+</div><!-- fragment --><p><a class="anchor" id="execute-onboarding"></a> </p>
+<h2><a class="anchor" id="autotoc_md24"></a>
 Execute onboarding</h2>
 <p>For the first time, Step called <code>onboarding</code> is required. In this step, Identifier of IoT device (thing ID) is generated and stored in cloud.</p>
 <p>After the step, thing ID and access token is returned to IoT device. By using thing ID and access token, cloud can identify the device when the remote command is sent to the device with the thing ID or sensor data sent from the device with the token.</p>
@@ -349,40 +404,38 @@ Execute onboarding</h2>
 <div class="line"><span class="comment">/* thing ID and access token is stored in tio_author_t.</span></div>
 <div class="line"><span class="comment">printf(&quot;thing ID: %s, access token %s\n&quot;, author-&gt;author_id, author-&gt;access_token);</span></div>
 <div class="line"><span class="comment">*/</span></div>
-<div class="ttc" id="astructkii__author__t_html"><div class="ttname"><a href="../../kii/html/structkii__author__t.html">kii_author_t</a></div></div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md21"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md25"></a>
 Start module</h2>
 <p>Now, it's ready to start <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code> module.</p>
-<div class="fragment"><div class="line"><span class="keyword">const</span> <a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">kii_author_t</a>* author = tio_handler_get_author(&amp;handler);</div>
-<div class="line">tio_handler_start(&amp;handler, author, tio_action_handler, NULL);</div>
+<div class="fragment"><div class="line">tio_handler_start(&amp;handler, NULL, tio_action_handler, NULL);</div>
 </div><!-- fragment --><ul>
-<li><code>author</code> consists of thing ID and access token obtained in the step of <a class="el" href="index.html#execute-onboarding">Onboarding</a>.</li>
+<li><code>author</code> is taken from the <a class="el" href="index.html#session">session</a> when one is set, and may be NULL. Without a session, pass the thing ID and access token obtained in the step of <a class="el" href="index.html#execute-onboarding">Onboarding</a>, from <code>tio_handler_get_author()</code>.</li>
 <li><code>tio_action_handler</code> is the callback function pointer explained in <a class="el" href="index.html#action-callback">Action callback</a></li>
 <li>last argument is context object pointer can be referenced in action callback. Passing NULL since we don't use context object in this example.</li>
 </ul>
 <p>This call results to execute asynchronous tasks created by <a class="el" href="index.html#task-callbacks">Task callbacks</a>. The name of tasks initiated by this call is exported as macro <code>KII_TASK_NAME_MQTT</code> and <code>KII_TASK_NAME_PING_REQ</code> defined in <code><a class="elRef" href="../../kii/html/kii_8h.html">kii.h</a></code>.</p>
-<h1><a class="anchor" id="autotoc_md22"></a>
+<h1><a class="anchor" id="autotoc_md26"></a>
 Use &lt;tt&gt;tio_updater_t&lt;/tt&gt;</h1>
-<h2><a class="anchor" id="autotoc_md23"></a>
+<h2><a class="anchor" id="autotoc_md27"></a>
 Callback functions</h2>
-<h3><a class="anchor" id="autotoc_md24"></a>
+<h3><a class="anchor" id="autotoc_md28"></a>
 Task callbacks, socket callbacks</h3>
 <p>Similar to <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code>.</p>
 <p><code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code> only uses HTTP(s) and does not use MQTT(s).</p>
-<h3><a class="anchor" id="autotoc_md25"></a>
+<h3><a class="anchor" id="autotoc_md29"></a>
 State read callbacks</h3>
 <p><code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code> uploads the IoT device state such as sensor readings periodically with the specified interval.</p>
 <p>When the specified interval elapsed, <code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code> execute callback function to read the latest state of the IoT device.</p>
 <p>Application can implement the process reading values from sensors, etc.</p>
 <p><a class="anchor" id="size-callback"></a> </p>
-<h4><a class="anchor" id="autotoc_md26"></a>
+<h4><a class="anchor" id="autotoc_md30"></a>
 Size callback.</h4>
 <p>Size callback is called to ask the size of new IoT device state. This callback is called before the read callback. If the returned size is 0, <code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code> skips updating device state.</p>
 <p>Signature of size callback:</p>
 <div class="fragment"><div class="line"><span class="keyword">typedef</span> size_t (*TIO_CB_SIZE)(<span class="keywordtype">void</span>* userdata);</div>
 </div><!-- fragment --><p><code>userdata</code> is context object pointer given to <code>tio_updater_start()</code> argument.</p>
 <p><a class="anchor" id="read-callback"></a> </p>
-<h4><a class="anchor" id="autotoc_md27"></a>
+<h4><a class="anchor" id="autotoc_md31"></a>
 Read callback</h4>
 <p>Read callback is used to read actual IoT device state. Callback is repeatedly called until it returns 0.</p>
 <div class="fragment"><div class="line"><span class="keyword">typedef</span> size_t (*TIO_CB_READ)(</div>
@@ -408,7 +461,7 @@ Read callback</h4>
 <li><code>presetTemperature</code> is number type property defined in the <code>Trait</code>.</li>
 </ul>
 <p>For more details about format of the IoT device state and <code>Trait</code>, Please refer to (<a href="http://docs.kii.com/en/guides/thingifsdk/">http://docs.kii.com/en/guides/thingifsdk/</a>).</p>
-<h2><a class="anchor" id="autotoc_md28"></a>
+<h2><a class="anchor" id="autotoc_md32"></a>
 Set-up &lt;tt&gt;tio_updater_t&lt;/tt&gt; instance</h2>
 <p>Here's the set-up code extracted from example app. The full code can be checked <a href="linux-sample/example.c">updater_init() in example.c</a></p>
 <div class="fragment"><div class="line">tio_updater_init(updater);</div>
@@ -435,12 +488,12 @@ Set-up &lt;tt&gt;tio_updater_t&lt;/tt&gt; instance</h2>
 <li><code>tio_updater_set_interval()</code> specifies interval of uploading state in seconds.</li>
 </ul>
 <p>Other set-up process is similar to <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code>.</p>
-<h2><a class="anchor" id="autotoc_md29"></a>
+<h2><a class="anchor" id="autotoc_md33"></a>
 Execute onboarding</h2>
 <p><code>tio_updater_onboard()</code> method is similar to <code>tio_handler_onboard()</code>.</p>
 <p>If you use both <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code> and <code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code> for an IoT device, you just need to execute onboarding process from either one. No need to execute onboarding for both method since the thing ID bonding process just need to be executed once.</p>
-<p>After the onboarding has been done, you can get <code>tio_author_t</code> instance from either <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code> or <code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code> and pass it to <code>tio_handler_start()</code> or <code>tio_updater_start()</code> method.</p>
-<h2><a class="anchor" id="autotoc_md30"></a>
+<p>After the onboarding has been done, you can get <code>tio_author_t</code> instance from either <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code> or <code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code> and pass it to <code>tio_handler_start()</code> or <code>tio_updater_start()</code> method. With a <a class="el" href="index.html#session">session</a> shared by both, they take the author from it instead.</p>
+<h2><a class="anchor" id="autotoc_md34"></a>
 Start module</h2>
 <p>Now, it's ready to start the updater module.</p>
 <p>Here's code extracted from <a href="linux-sample/example.c">example app</a>.</p>
@@ -452,17 +505,17 @@ Start module</h2>
 <div class="line">    updater_cb_read,</div>
 <div class="line">    &amp;updater_file_ctx);</div>
 </div><!-- fragment --><ul>
-<li><code>author</code> : Pointer to <code>tio_author_t</code> instance obtained from onboarded <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code>.</li>
+<li><code>author</code> : Pointer to <code>tio_author_t</code> instance obtained from onboarded <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code>, or NULL when a <a class="el" href="index.html#session">session</a> is set.</li>
 <li><code>updater_cb_state_size</code> : <a class="el" href="index.html#size-callback">Size callback</a> function pointer.</li>
 <li><code>updater_cb_read</code> : <a class="el" href="index.html#read-callback">Read callback</a> function pointer.</li>
 <li><code>updater_file_ctx</code> : Context object pointer referenced from both size callback/ read callback.</li>
 </ul>
 <p><a class="anchor" id="asynchronous-task-management"></a> </p>
-<h1><a class="anchor" id="autotoc_md31"></a>
+<h1><a class="anchor" id="autotoc_md35"></a>
 Asynchronous task management</h1>
 <p><code>tio</code> execute multiple asynchronous tasks.</p>
 <p>The name of tasks executed by <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code> and <code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code> listed bellow.</p>
-<h2><a class="anchor" id="autotoc_md32"></a>
+<h2><a class="anchor" id="autotoc_md36"></a>
 Tasks executed by &lt;tt&gt;tio_handler_t&lt;/tt&gt;.</h2>
 <ul>
 <li><p class="startli"><code>KII_TASK_NAME_MQTT</code> is a name of the task defined at <code><a class="elRef" href="../../kii/html/kii_8h.html">kii.h</a></code> and passed as argument when <code>tio_handler_set_cb_task_create()</code> is called to create task/ thread.</p>
@@ -490,7 +543,7 @@ Tasks executed by &lt;tt&gt;tio_handler_t&lt;/tt&gt;.</h2>
 <p class="startli">Those two buffers must be separated and have no overlaps.</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md33"></a>
+<h2><a class="anchor" id="autotoc_md37"></a>
 Tasks executed by &lt;tt&gt;tio_updater_t&lt;/tt&gt;.</h2>
 <ul>
 <li><p class="startli"><code>TIO_TASK_NAME_UPDATE_STATE</code> is a name of the task defined at <code><a class="elRef" href="../../kii/html/kii_8h.html">kii.h</a></code> and passed as argument when <code>tio_handler_set_cb_task_create()</code> is called to create task/ thread.</p>
@@ -511,17 +564,18 @@ Tasks executed by &lt;tt&gt;tio_updater_t&lt;/tt&gt;.</h2>
 </ul>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md34"></a>
+<h2><a class="anchor" id="autotoc_md38"></a>
 Avoiding race condition</h2>
 <ul>
 <li>Above 2 tasks <code>KII_TASK_NAME_MQTT</code> and <code>TIO_TASK_NAME_UPDATE_STATE</code> would be executed in parallel. Therefore, if the callback implementation shares the resource that need exclusive access, you need to implement access control mechanism.</li>
+<li>Both tasks call the callbacks of a <a class="el" href="index.html#session">session</a> they share. Its lock callbacks guard the session itself.</li>
 <li>You must prepare independent buffers which does not have overlaps. </li>
 </ul>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Oct 21 2026 17:55:47 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Wed Oct 21 2026 18:23:44 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

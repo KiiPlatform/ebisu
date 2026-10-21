@@ -295,6 +295,7 @@
     <docanchor file="index.html">task-callbacks</docanchor>
     <docanchor file="index.html">mqtt-socket-notes</docanchor>
     <docanchor file="index.html">action-callback</docanchor>
+    <docanchor file="index.html">session</docanchor>
     <docanchor file="index.html">execute-onboarding</docanchor>
     <docanchor file="index.html">size-callback</docanchor>
     <docanchor file="index.html">read-callback</docanchor>
