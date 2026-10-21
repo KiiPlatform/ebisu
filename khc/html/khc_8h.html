@@ -234,6 +234,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 <tr class="memitem:aea7b6dde93cd97fc303a90c1414dba21" id="r_aea7b6dde93cd97fc303a90c1414dba21"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#aea7b6dde93cd97fc303a90c1414dba21">khc_reset_except_cb</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
 <tr class="memdesc:aea7b6dde93cd97fc303a90c1414dba21"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set initial value to members of khc other than callbacks.  <br /></td></tr>
 <tr class="separator:aea7b6dde93cd97fc303a90c1414dba21"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a652dba6d3ccda37a7c120fe479648504" id="r_a652dba6d3ccda37a7c120fe479648504"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a652dba6d3ccda37a7c120fe479648504">khc_reset_except_request</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
+<tr class="memdesc:a652dba6d3ccda37a7c120fe479648504"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prepare to perform the same request again.  <br /></td></tr>
+<tr class="separator:a652dba6d3ccda37a7c120fe479648504"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a75fd843af7f3de58bcba2d348878becc" id="r_a75fd843af7f3de58bcba2d348878becc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="khc_8h.html#a90be23875108e9a39942c3af90a6d789">khc_code</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc">khc_perform</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
 <tr class="memdesc:a75fd843af7f3de58bcba2d348878becc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perform the HTTP session.  <br /></td></tr>
 <tr class="separator:a75fd843af7f3de58bcba2d348878becc"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -579,7 +582,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>the three-digit HTTP status code of the response, or 0 if none has been parsed since <a class="el" href="khc_8h.html#a5cb75ed1f039e02286cacb8d097f233e" title="Set initial value to members of khc.">khc_init(khc*)</a> or <a class="el" href="khc_8h.html#aea7b6dde93cd97fc303a90c1414dba21" title="Set initial value to members of khc other than callbacks.">khc_reset_except_cb(khc*)</a>. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the three-digit HTTP status code of the response, or 0 if none has been parsed since <a class="el" href="khc_8h.html#a5cb75ed1f039e02286cacb8d097f233e" title="Set initial value to members of khc.">khc_init(khc*)</a>, <a class="el" href="khc_8h.html#aea7b6dde93cd97fc303a90c1414dba21" title="Set initial value to members of khc other than callbacks.">khc_reset_except_cb(khc*)</a> or <a class="el" href="khc_8h.html#a652dba6d3ccda37a7c120fe479648504" title="Prepare to perform the same request again.">khc_reset_except_request(khc*)</a>. </dd></dl>
 
 </div>
 </div>
@@ -688,6 +691,34 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
   </dd>
 </dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="khc_8h.html#a5cb75ed1f039e02286cacb8d097f233e" title="Set initial value to members of khc.">khc_init(khc*)</a> </dd></dl>
+
+</div>
+</div>
+<a id="a652dba6d3ccda37a7c120fe479648504" name="a652dba6d3ccda37a7c120fe479648504"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a652dba6d3ccda37a7c120fe479648504">&#9670;&#160;</a></span>khc_reset_except_request()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void khc_reset_except_request </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkhc.html">khc</a> *&#160;</td>
+          <td class="paramname"><em>khc</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Prepare to perform the same request again. </p>
+<p>Resets what sending the last request and reading its response left behind, so that the next <a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform(khc*)</a> sends the request again. The request itself &ndash; host, path, method and headers &ndash; remains, as do callbacks/ userdata, the setting of <a class="el" href="khc_8h.html#ab05e9076eb8e0e894603885d446499d9" title="Enable insecure connection.">khc_enable_insecure(khc*, bool)</a> and the buffers set by <a class="el" href="khc_8h.html#a59a8813c4c65fb2097b3461e5303d4fa" title="Set stream buffer.">khc_set_stream_buff(khc*, char*, size_t)</a> and <a class="el" href="khc_8h.html#afd2065be9638acf043438ac9e020d3b8" title="Set response header buffer.">khc_set_resp_header_buff(khc*, char*, size_t)</a>.</p>
+<p>The body is read again through the read callback, which must start it over. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">khc</td><td>instance. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="khc_8h.html#aea7b6dde93cd97fc303a90c1414dba21" title="Set initial value to members of khc other than callbacks.">khc_reset_except_cb(khc*)</a> </dd></dl>
 
 </div>
 </div>
@@ -1417,7 +1448,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 20 2026 20:28:36 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Wed Oct 21 2026 10:27:30 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

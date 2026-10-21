@@ -216,6 +216,13 @@
       <arglist>(khc *khc)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>khc_reset_except_request</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>a652dba6d3ccda37a7c120fe479648504</anchor>
+      <arglist>(khc *khc)</arglist>
+    </member>
+    <member kind="function">
       <type>khc_code</type>
       <name>khc_perform</name>
       <anchorfile>khc_8h.html</anchorfile>
