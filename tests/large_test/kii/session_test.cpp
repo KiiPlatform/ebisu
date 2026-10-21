@@ -45,6 +45,35 @@ bool same_token(const char* a, const char* b) {
     return strcmp(a, b) == 0;
 }
 
+bool empty(const char* token) {
+    return token[0] == '\0';
+}
+
+// What kii sent, recorded to tell which grant a renewal asked for. It holds
+// tokens and the password, so it is searched and never printed.
+struct Sent {
+    KHC_CB_SOCK_SEND send;
+    void* ctx;
+    std::string data;
+};
+
+khc_sock_code_t record_send(void* userdata, const char* buffer, size_t length,
+        size_t* out_sent_length) {
+    Sent* sent = (Sent*)userdata;
+    khc_sock_code_t res = sent->send(sent->ctx, buffer, length, out_sent_length);
+    if (res == KHC_SOCK_OK) {
+        sent->data.append(buffer, *out_sent_length);
+    }
+    return res;
+}
+
+const char REFRESH_GRANT[] = "\"grant_type\":\"refresh_token\"";
+const char PASSWORD_GRANT[] = "\"grant_type\":\"password\"";
+
+bool sent_has(const Sent& sent, const char* grant) {
+    return sent.data.find(grant) != std::string::npos;
+}
+
 // Has the session hold its author with an access token the server refuses.
 void spoil(kii_session_t* session) {
     kii_author_t author = held(session);
@@ -104,18 +133,38 @@ TEST_CASE( "The session renews a token the server refuses" ) {
         REQUIRE( kii_ti_get_firmware_version(&kii, &version) == KII_ERR_OK );
         CHECK( std::string(version.firmware_version) == "ltest-1.0" );
 
-        // With a refresh token, when the application issues them, the renewal
-        // refreshes rather than logging in.
+        // The login gave a refresh token: the application the tests run
+        // against has refresh tokens enabled, which Kii applications do not by
+        // default. So the next renewal refreshes rather than logging in.
         renewed = held(&session);
-        if (renewed.refresh_token[0] == '\0') {
-            WARN("The application issues no refresh tokens: only the password was used");
-        } else {
-            spoil(&session);
-            REQUIRE( kii_post_object(&kii, &bucket, "{\"k\":\"w\"}", NULL, &object_id) == KII_ERR_OK );
-            kii_author_t refreshed = held(&session);
-            CHECK_FALSE( same_token(refreshed.access_token, UNKNOWN_TOKEN) );
-            CHECK_FALSE( same_token(refreshed.access_token, renewed.access_token) );
-        }
+        REQUIRE_FALSE( empty(renewed.refresh_token) );
+        Sent sent = {kii._khc._cb_sock_send, kii._khc._sock_ctx_send, std::string()};
+        kii_set_cb_http_sock_send(&kii, record_send, &sent);
+        spoil(&session);
+        REQUIRE( kii_post_object(&kii, &bucket, "{\"k\":\"w\"}", NULL, &object_id) == KII_ERR_OK );
+        CHECK( sent_has(sent, REFRESH_GRANT) );
+        CHECK_FALSE( sent_has(sent, PASSWORD_GRANT) );
+        kii_author_t refreshed = held(&session);
+        CHECK_FALSE( same_token(refreshed.access_token, UNKNOWN_TOKEN) );
+        CHECK_FALSE( same_token(refreshed.access_token, renewed.access_token) );
+        // The refresh token is replaced too.
+        CHECK_FALSE( empty(refreshed.refresh_token) );
+        CHECK_FALSE( same_token(refreshed.refresh_token, renewed.refresh_token) );
+
+        // The refresh token that refresh spent is refused, and the session
+        // logs in with the password instead.
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+        kii_author_t spent = renewed;
+        strcpy(spent.access_token, UNKNOWN_TOKEN);
+        kii_session_set_author(&session, &spent);
+        sent.data.clear();
+        REQUIRE( kii_post_object(&kii, &bucket, "{\"k\":\"x\"}", NULL, &object_id) == KII_ERR_OK );
+        CHECK( sent_has(sent, REFRESH_GRANT) );
+        CHECK( sent_has(sent, PASSWORD_GRANT) );
+        const kii_author_t relogged = held(&session);
+        CHECK_FALSE( same_token(relogged.access_token, UNKNOWN_TOKEN) );
+        CHECK_FALSE( empty(relogged.refresh_token) );
+        CHECK_FALSE( same_token(relogged.refresh_token, renewed.refresh_token) );
     }
 
     SECTION("the lifetime the server gives is read, and the token renewed ahead of expiry") {
