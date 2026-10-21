@@ -324,6 +324,13 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
     memset(&state->endpoint, 0x00, sizeof(kii_mqtt_endpoint_t));
     state->info.error = KII_MQTT_ERR_OK;
     state->info.task_state = KII_MQTT_ST_INSTALL_PUSH;
+    if (kii->_onboarded_thing_id[0] != '\0' &&
+            strcmp(kii->_onboarded_thing_id, kii->_author.author_id) == 0) {
+        // Onboarding installed push and returned the endpoint: connect with it.
+        state->ins_id = kii->_onboarded_installation_id;
+        state->endpoint = kii->_onboarded_endpoint;
+        state->info.task_state = KII_MQTT_ST_SOCK_CONNECT;
+    }
     state->elapsed_time_ms = 0;
     state->remaining_message_size = 0;
     state->pingresp_received = KII_TRUE;

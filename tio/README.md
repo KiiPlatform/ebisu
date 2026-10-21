@@ -615,7 +615,7 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
     The task creation is requested once when the `tio_handler_start()` method is invoked.
 
-    This task is responsible for getting MQTT endpoint information thru REST API and connect, receive message from MQTT and propagate message to app by the `TIO_CB_ACTION` callback, and send MQTT `PINGREQ` periodically.
+    This task is responsible for connecting to MQTT with the endpoint onboarding returned, receiving messages from MQTT and propagating them to the app by the `TIO_CB_ACTION` callback, and sending MQTT `PINGREQ` periodically. If the handler was started without onboarding, or the broker refuses the credentials, it gets the MQTT endpoint through the REST API instead.
 
     This task executes callbacks set by following APIs.
 

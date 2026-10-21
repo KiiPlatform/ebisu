@@ -475,8 +475,9 @@ TEST_CASE("tio against Kii Cloud")
     REQUIRE( tio_updater_start(&d.updater, author, cb_state_size, &d, cb_state_read, &d) == TIO_ERR_OK );
     progress("tasks started");
 
-    // The handler installs push, fetches the endpoint, which can take some
-    // seconds to become available, connects and subscribes.
+    // The handler connects with the MQTT endpoint onboarding returned, and
+    // subscribes: it reaches Kii Cloud neither to install push nor to fetch the
+    // endpoint.
     REQUIRE( wait_for(d, 120, [&d] {
         return std::find(d.handler_states.begin(), d.handler_states.end(),
                 KII_MQTT_ST_RECV_READY) != d.handler_states.end() || d.exits > 0;
@@ -484,6 +485,8 @@ TEST_CASE("tio against Kii Cloud")
     {
         std::lock_guard<std::mutex> lock(d.mutex);
         REQUIRE( d.exits == 0 );
+        CHECK( std::count(d.handler_states.begin(), d.handler_states.end(), KII_MQTT_ST_INSTALL_PUSH) == 0 );
+        CHECK( std::count(d.handler_states.begin(), d.handler_states.end(), KII_MQTT_ST_GET_ENDPOINT) == 0 );
     }
     progress("handler ready");
 

@@ -310,14 +310,17 @@ TEST_CASE("MQTT push from the broker")
     REQUIRE( kii_start_push_task(&kii, KEEP_ALIVE, cb_push, &t) == KII_ERR_OK );
     StopTask stop_task{t};
 
-    // It installs push, fetches the endpoint, which can take some seconds to
-    // become available, connects and subscribes.
+    // It connects with the endpoint onboarding returned, and subscribes:
+    // onboarding installed push, so the task neither installs it nor fetches
+    // the endpoint.
     REQUIRE( wait_for(t, 120, [&t] {
         return t.count(KII_MQTT_ST_RECV_READY) > 0 || t.exited;
     }) );
     {
         std::lock_guard<std::mutex> lock(t.mutex);
         REQUIRE_FALSE( t.exited );
+        CHECK( t.count(KII_MQTT_ST_INSTALL_PUSH) == 0 );
+        CHECK( t.count(KII_MQTT_ST_GET_ENDPOINT) == 0 );
     }
     CHECK( t.connects.load() == 1 );
 
@@ -353,6 +356,10 @@ TEST_CASE("MQTT push from the broker")
         REQUIRE_FALSE( t.exited );
     }
     CHECK( t.connects.load() == 2 );
+    {
+        std::lock_guard<std::mutex> lock(t.mutex);
+        CHECK( t.count(KII_MQTT_ST_GET_ENDPOINT) == 0 );
+    }
     send("reconnected-" + run_id, false);
     REQUIRE( received(t, "reconnected-" + run_id) );
 

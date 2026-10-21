@@ -163,7 +163,15 @@ kii_code_t _onboard(
         return KII_ERR_FAIL;
     }
 
-    jkii_field_t fields[3];
+    // Where MQTT is enabled, the response also carries the endpoint of the
+    // installation onboarding made.
+    kii_mqtt_endpoint_t endpoint;
+    kii_installation_id_t installation_id;
+    memset(&endpoint, 0, sizeof(endpoint));
+    memset(&installation_id, 0, sizeof(installation_id));
+    kii->_onboarded_thing_id[0] = '\0';
+
+    jkii_field_t fields[10];
     jkii_parse_err_t result;
     memset(fields, 0, sizeof(fields));
     fields[0].name = "accessToken";
@@ -176,11 +184,49 @@ kii_code_t _onboard(
     fields[1].field_copy.string = kii->_author.author_id;
     fields[1].field_copy_buff_size = sizeof(kii->_author.author_id) /
         sizeof(kii->_author.author_id[0]);
-    fields[2].name = NULL;
+    fields[2].path = "/mqttEndpoint/installationID";
+    fields[2].type = JKII_FIELD_TYPE_STRING;
+    fields[2].field_copy.string = installation_id.id;
+    fields[2].field_copy_buff_size = sizeof(installation_id.id);
+    fields[3].path = "/mqttEndpoint/username";
+    fields[3].type = JKII_FIELD_TYPE_STRING;
+    fields[3].field_copy.string = endpoint.username;
+    fields[3].field_copy_buff_size = sizeof(endpoint.username);
+    fields[4].path = "/mqttEndpoint/password";
+    fields[4].type = JKII_FIELD_TYPE_STRING;
+    fields[4].field_copy.string = endpoint.password;
+    fields[4].field_copy_buff_size = sizeof(endpoint.password);
+    fields[5].path = "/mqttEndpoint/mqttTopic";
+    fields[5].type = JKII_FIELD_TYPE_STRING;
+    fields[5].field_copy.string = endpoint.topic;
+    fields[5].field_copy_buff_size = sizeof(endpoint.topic);
+    fields[6].path = "/mqttEndpoint/host";
+    fields[6].type = JKII_FIELD_TYPE_STRING;
+    fields[6].field_copy.string = endpoint.host;
+    fields[6].field_copy_buff_size = sizeof(endpoint.host);
+    fields[7].path = "/mqttEndpoint/portTCP";
+    fields[7].type = JKII_FIELD_TYPE_INTEGER;
+    fields[8].path = "/mqttEndpoint/portSSL";
+    fields[8].type = JKII_FIELD_TYPE_INTEGER;
+    fields[9].name = NULL;
 
     result = _jkii_read_object(kii, buff, buff_size, fields);
-    if (result != JKII_ERR_OK) {
+    if ((result != JKII_ERR_OK && result != JKII_ERR_PARTIAL) ||
+            fields[0].result != JKII_FIELD_ERR_OK ||
+            fields[1].result != JKII_FIELD_ERR_OK) {
         return KII_ERR_PARSE_JSON;
+    }
+
+    // Without the whole endpoint, the push task installs push and fetches it.
+    if (result == JKII_ERR_OK &&
+            0 < fields[7].field_copy.int_value && fields[7].field_copy.int_value <= 65535 &&
+            0 < fields[8].field_copy.int_value && fields[8].field_copy.int_value <= 65535) {
+        endpoint.port_tcp = (uint16_t)fields[7].field_copy.int_value;
+        endpoint.port_ssl = (uint16_t)fields[8].field_copy.int_value;
+        kii->_onboarded_endpoint = endpoint;
+        kii->_onboarded_installation_id = installation_id;
+        memcpy(kii->_onboarded_thing_id, kii->_author.author_id,
+                sizeof(kii->_onboarded_thing_id));
     }
 
     return KII_ERR_OK;
