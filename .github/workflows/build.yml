@@ -56,10 +56,23 @@ jobs:
         # longer a copy step reassembling it from per-component html/ output in
         # the source tree.
         run: cmake --build --preset debug --target docs
+      # Merges in quick succession start a run each, whose deploys raced: the
+      # first to push won and the others were rejected, failing their runs,
+      # with the site left showing whichever commit won. Only the newest
+      # commit's docs belong there, so the runs of older ones leave it alone.
+      - name: Check this is still master's head
+        id: head
+        if: github.ref == 'refs/heads/master'
+        run: |
+          if [ "$(git ls-remote origin refs/heads/master | cut -f1)" = "$GITHUB_SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "master has moved on; its own run deploys the docs"
+          fi
       - name: Deploy docs to GitHub pages
         # Only master's docs belong on gh-pages; without this any branch push
         # republishes the site.
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master' && steps.head.outputs.current == 'true'
         uses: peaceiris/actions-gh-pages@v4
         with:
           publish_dir: build/debug/ebisu-doc
