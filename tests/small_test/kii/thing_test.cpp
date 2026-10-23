@@ -14,6 +14,12 @@ static std::string ok_response(const std::string& body) {
         "\r\n" + body;
 }
 
+static kii_author_t author_of(kii_t* kii) {
+    kii_author_t author;
+    kii_get_author(kii, &author);
+    return author;
+}
+
 // The password was escaped with the size of the vendor thing ID's buffer passed
 // as its own. jkii_escape_str writes nothing when told the buffer is too small,
 // so a password longer than about twice the ID went out as whatever was on the
@@ -65,6 +71,10 @@ TEST_CASE( "Thing requests send the values they are given" ) {
     kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
     kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
 
+    // None until one is obtained.
+    REQUIRE( std::string(author_of(&kii).author_id) == "" );
+    REQUIRE( std::string(author_of(&kii).access_token) == "" );
+
     const char vendor_thing_id[] = "ab";
     // Far beyond twice the ID, and with characters JSON needs escaped.
     const char password[] = "a/password\"much-longer-than-the-vendor-thing-id";
@@ -78,6 +88,8 @@ TEST_CASE( "Thing requests send the values they are given" ) {
         REQUIRE( res == KII_ERR_OK );
         REQUIRE( sent.find("\"username\":\"VENDOR_THING_ID:ab\"") != std::string::npos );
         REQUIRE( sent.find("\"password\":\"" + esc_password + "\"") != std::string::npos );
+        REQUIRE( std::string(author_of(&kii).author_id) == "th.1" );
+        REQUIRE( std::string(author_of(&kii).access_token) == "tok" );
     }
 
     SECTION("kii_register_thing") {
@@ -88,6 +100,8 @@ TEST_CASE( "Thing requests send the values they are given" ) {
         REQUIRE( res == KII_ERR_OK );
         REQUIRE( sent.find("\"_vendorThingID\":\"ab\"") != std::string::npos );
         REQUIRE( sent.find("\"_password\":\"" + esc_password + "\"") != std::string::npos );
+        REQUIRE( std::string(author_of(&kii).author_id) == "th.1" );
+        REQUIRE( std::string(author_of(&kii).access_token) == "tok" );
     }
 
     SECTION("kii_ti_onboard") {
@@ -102,6 +116,8 @@ TEST_CASE( "Thing requests send the values they are given" ) {
         REQUIRE( sent.find("\r\nAuthorization: Basic ZHVtbXlBcHBJRDpkdW1teQ==\r\n") != std::string::npos );
         REQUIRE( sent.find("\"vendorThingID\":\"ab\"") != std::string::npos );
         REQUIRE( sent.find("\"thingPassword\":\"" + esc_password + "\"") != std::string::npos );
+        REQUIRE( std::string(author_of(&kii).author_id) == "th.1" );
+        REQUIRE( std::string(author_of(&kii).access_token) == "tok" );
     }
 
     // The app's ID and a placeholder key, base64 encoded, whatever the

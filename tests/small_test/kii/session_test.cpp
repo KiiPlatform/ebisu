@@ -350,6 +350,30 @@ TEST_CASE( "A token renewed through another kii_t is taken, not renewed again" )
     REQUIRE( platform.depth == 0 );
 }
 
+TEST_CASE( "kii_get_author gives the session's author, renewed through any kii_t" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    kii_author_t author = make_author("th.1", "at1", "rt1");
+    kii_session_set_author(&session, &author);
+    Client a;
+    Client b;
+    REQUIRE( kii_set_session(&a.kii, &session) == KII_ERR_OK );
+    REQUIRE( kii_set_session(&b.kii, &session) == KII_ERR_OK );
+
+    a.http.responses = { REFUSED, refreshed("at2", "rt2", 3600), DONE };
+    REQUIRE( a.put(BODY) == KII_ERR_OK );
+
+    // b has made no request since, and so still holds at1 itself.
+    REQUIRE( std::string(b.kii._author.access_token) == "at1" );
+    kii_author_t got;
+    kii_get_author(&b.kii, &got);
+    REQUIRE( std::string(got.author_id) == "th.1" );
+    REQUIRE( std::string(got.access_token) == "at2" );
+    REQUIRE( std::string(got.refresh_token) == "rt2" );
+    REQUIRE( platform.depth == 0 );
+}
+
 namespace {
 
 struct StateReader {

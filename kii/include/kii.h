@@ -491,6 +491,19 @@ kii_code_t kii_register_thing(
 		const char* password);
 
 /**
+ * \brief Copy the author: the thing's ID and its tokens.
+ *
+ * It is what kii_auth_thing(), kii_register_thing() or kii_ti_onboard()
+ * obtained, and empty before any of them succeeds. With a session attached, it
+ * is the session's, as kii_session_get_author() copies it, which another kii_t
+ * attached to the session may have renewed since this one's last request.
+ *
+ * \param [in] kii kii_t instance.
+ * \param [out] out_author The author is copied here.
+ */
+void kii_get_author(kii_t* kii, kii_author_t* out_author);
+
+/**
  * \brief Initializes kii_session_t instance.
  *
  * The session starts with an empty author. Set it with kii_session_set_author()
