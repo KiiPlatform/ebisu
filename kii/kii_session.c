@@ -16,6 +16,17 @@
  * scheduled. Kii's default, 2147483647 seconds, is within it. */
 #define _LIFETIME_MAX_SEC ((int64_t)UINT32_MAX)
 
+/* After the server refuses the thing's credentials, the session waits this
+ * long before trying them again, and twice as long after each further refusal,
+ * up to _PASSWORD_WAIT_MAX_MS. Where the application limits login attempts,
+ * refused logins lock the thing out, and a wrong password would otherwise be
+ * tried on every request refused for its token; spread out like this, few of
+ * them fall within the period the application counts them over. Not giving up
+ * altogether lets the thing log in again unattended once its password is put
+ * right on the server. */
+#define _PASSWORD_WAIT_MIN_MS ((uint64_t)5 * 60 * 1000)
+#define _PASSWORD_WAIT_MAX_MS ((uint64_t)60 * 60 * 1000)
+
 static const char _AUTH_HEADER_PREFIX[] = "Authorization: Bearer ";
 
 /* The errorCode of the 403 Kii answers for a token that is not valid: one that
@@ -48,15 +59,6 @@ void kii_session_set_cb_monotonic_ms(
     session->_monotonic_ms_data = userdata;
 }
 
-void kii_session_set_password(
-        kii_session_t* session,
-        const char* vendor_thing_id,
-        const char* password)
-{
-    session->_vendor_thing_id = vendor_thing_id;
-    session->_password = password;
-}
-
 void kii_session_set_cb_author_updated(
         kii_session_t* session,
         KII_CB_AUTHOR_UPDATED cb_author_updated,
@@ -80,6 +82,25 @@ static void _lock(kii_session_t* session)
 static void _unlock(kii_session_t* session)
 {
     session->_cb_unlock(session->_lock_data);
+}
+
+void kii_session_set_password(
+        kii_session_t* session,
+        const char* vendor_thing_id,
+        const char* password)
+{
+    /* Typically called before the lock is set, but also to put right
+     * credentials the server refused, while tasks run. */
+    kii_bool_t locked = _has_lock(session);
+    if (locked == KII_TRUE) {
+        _lock(session);
+    }
+    session->_vendor_thing_id = vendor_thing_id;
+    session->_password = password;
+    session->_password_wait_ms = 0;
+    if (locked == KII_TRUE) {
+        _unlock(session);
+    }
 }
 
 void kii_session_set_author(kii_session_t* session, const kii_author_t* author)
@@ -201,6 +222,41 @@ void _kii_session_publish(kii_t* kii, int64_t expires_in_sec, kii_bool_t by_onbo
     _unlock(session);
 }
 
+/* Whether the session may try the thing's credentials: it has them, and is not
+ * waiting after the server refused them. */
+static kii_bool_t _password_usable_locked(kii_session_t* session)
+{
+    if (session->_password == NULL) {
+        return KII_FALSE;
+    }
+    if (session->_password_wait_ms == 0) {
+        return KII_TRUE;
+    }
+    /* As in _due_locked(), the time elapsed rather than a deadline. */
+    uint64_t elapsed_ms = _now_ms(session) - session->_password_refused_at_ms;
+    return (elapsed_ms >= session->_password_wait_ms) ? KII_TRUE : KII_FALSE;
+}
+
+/* Records the outcome of a login or onboarding with the thing's credentials.
+ * An answer that refuses them starts a wait, longer than the last; one that
+ * accepts them ends it. When the server could not be asked, or failed, nothing
+ * is known about them. */
+static void _password_tried_locked(kii_session_t* session, kii_code_t res, kii_bool_t refused)
+{
+    if (res == KII_ERR_OK) {
+        session->_password_wait_ms = 0;
+    } else if (refused == KII_TRUE) {
+        uint64_t wait_ms = session->_password_wait_ms * 2;
+        if (wait_ms < _PASSWORD_WAIT_MIN_MS) {
+            wait_ms = _PASSWORD_WAIT_MIN_MS;
+        } else if (wait_ms > _PASSWORD_WAIT_MAX_MS) {
+            wait_ms = _PASSWORD_WAIT_MAX_MS;
+        }
+        session->_password_wait_ms = wait_ms;
+        session->_password_refused_at_ms = _now_ms(session);
+    }
+}
+
 static kii_bool_t _due_locked(kii_session_t* session)
 {
     if (session->_renew_at_known != KII_TRUE) {
@@ -297,15 +353,20 @@ static kii_code_t _token_response(
 }
 
 /* Renews a token onboarding obtained by onboarding again, which issues a new
- * one, with neither a lifetime nor a refresh token. */
+ * one, with neither a lifetime nor a refresh token. Called with the session
+ * lock held. */
 static kii_code_t _onboard_again(kii_t* kii, kii_author_t* author)
 {
     kii_session_t* session = kii->_session;
-    if (session->_password == NULL) {
+    if (_password_usable_locked(session) != KII_TRUE) {
         return KII_ERR_FAIL;
     }
     kii_code_t res = _onboard(kii, session->_vendor_thing_id,
             session->_password, NULL, NULL, NULL, NULL);
+    uint16_t status = khc_get_status_code(&kii->_khc);
+    _password_tried_locked(session, res,
+            (res == KII_ERR_RESP_STATUS && 400 <= status && status < 500) ?
+            KII_TRUE : KII_FALSE);
     if (res != KII_ERR_OK) {
         return res;
     }
@@ -376,7 +437,8 @@ static kii_code_t _renew_locked(kii_t* kii, kii_bool_t force)
     }
     /* The password stands in for a refresh token the server refused, not for
      * one it could not be asked about: that one may well still be valid. */
-    if (res != KII_ERR_OK && rejected == KII_TRUE && session->_password != NULL) {
+    if (res != KII_ERR_OK && rejected == KII_TRUE &&
+            _password_usable_locked(session) == KII_TRUE) {
         author = session->_author;
         /* A login starts a new pair, which has no refresh token unless the
          * server issues one. */
@@ -386,6 +448,7 @@ static kii_code_t _renew_locked(kii_t* kii, kii_bool_t force)
         res = _token_response(kii,
                 _thing_auth(kii, session->_vendor_thing_id, session->_password),
                 &author, KII_TRUE, &expires_in_sec, &rejected);
+        _password_tried_locked(session, res, rejected);
     }
     if (res == KII_ERR_OK) {
         _store_locked(session, &author, expires_in_sec);

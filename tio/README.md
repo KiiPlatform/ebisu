@@ -466,6 +466,12 @@ token saved before a restart instead, give it to the session with
 `kii_session_set_author()`; the handler then gets its MQTT endpoint from Kii
 Cloud's API, as without onboarding, until the broker refuses the credentials.
 
+Once the server refuses the password, the session doesn't try it again for 5
+minutes, then twice as long after each further refusal, up to an hour:
+where the application limits login attempts, trying a wrong password whenever
+a token is refused would soon lock the thing out. Meanwhile requests refused for
+their token fail. Calling `kii_session_set_password()` again ends the wait.
+
 ### Lock callbacks
 
 Required. The handler's MQTT task and the updater's task both use the session,
