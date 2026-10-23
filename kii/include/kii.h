@@ -226,6 +226,11 @@ typedef struct kii_session_t {
     kii_bool_t _renew_by_onboarding;
     const char* _vendor_thing_id; /**< \private */
     const char* _password; /**< \private */
+    /** \private How long after _password_refused_at_ms _password is tried
+     * again, or 0 unless the server refused it the last time it was tried. */
+    uint64_t _password_wait_ms;
+    /** \private The monotonic time the server last refused _password at. */
+    uint64_t _password_refused_at_ms;
     KII_CB_AUTHOR_UPDATED _cb_author_updated; /**< \private */
     void* _author_updated_data; /**< \private */
     KII_CB_LOCK _cb_lock; /**< \private */
@@ -555,7 +560,16 @@ void kii_session_set_cb_monotonic_ms(
  * after a restart with an author saved before the last renewal. Without them
  * such a session cannot recover.
  *
- * The strings are not copied and must outlive the session.
+ * Where the application limits login attempts, each login the server refuses
+ * counts against the thing, and enough of them lock it out for a while, the
+ * right password included. So once the server refuses these credentials, the
+ * session waits 5 minutes before trying them again, and twice as long after
+ * each further refusal, up to an hour. Meanwhile a request refused for its
+ * token is reported as it would be without them. The wait ends when the server
+ * accepts them, or when they are set again, which may be done at any time.
+ *
+ * The strings are not copied and must outlive the session, or remain valid
+ * until replaced by setting them again.
  *
  * \param [out] session kii_session_t instance.
  * \param [in] vendor_thing_id Thing identifier given by the vendor.

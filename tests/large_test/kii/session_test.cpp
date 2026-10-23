@@ -214,6 +214,29 @@ TEST_CASE( "The session renews a token the server refuses" ) {
         CHECK( session._stored_at_ms == now_ms );
     }
 
+    SECTION("a refused password is not tried again on the next refused request") {
+        // The application locks a thing out after two refused logins, as
+        // initapp.sh sets it up, onboarding included: trying the wrong
+        // password on each refused request would lock this one out.
+        const char wrong_password[] = "5678";
+        kii_session_set_password(&session, vid.c_str(), wrong_password);
+        spoil(&session);
+        REQUIRE( kii_post_object(&kii, &bucket, "{\"k\":\"v\"}", NULL, &object_id) == KII_ERR_RESP_STATUS );
+        REQUIRE( kii_get_resp_status(&kii) == 403 );
+        CHECK( sent_has(sent, ONBOARDING) );
+
+        sent.data.clear();
+        REQUIRE( kii_post_object(&kii, &bucket, "{\"k\":\"w\"}", NULL, &object_id) == KII_ERR_RESP_STATUS );
+        REQUIRE( kii_get_resp_status(&kii) == 403 );
+        CHECK_FALSE( sent_has(sent, ONBOARDING) );
+        CHECK_FALSE( sent_has(sent, TOKEN_ENDPOINT) );
+
+        // Refused once only, the thing is not locked out: the right password
+        // is still accepted.
+        REQUIRE( kii_ti_onboard(&kii, vid.c_str(), password, NULL, NULL, NULL, NULL) == KII_ERR_OK );
+        CHECK_FALSE( same_token(held(&session).access_token, UNKNOWN_TOKEN) );
+    }
+
     SECTION("a streamed request is refused with 403 WRONG_TOKEN, and the token renewed") {
         State state = { "{\"power\":true}", 0 };
         spoil(&session);
