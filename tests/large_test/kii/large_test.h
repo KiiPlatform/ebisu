@@ -50,6 +50,12 @@ inline void init(
     kii->_author.access_token[0] = '\0';
 }
 
+inline kii_author_t author(kii_t* kii) {
+    kii_author_t author;
+    kii_get_author(kii, &author);
+    return author;
+}
+
 // Microseconds since the epoch, which the tests name what they create by, so
 // that the CI cells running at once against the same application never pick
 // the same name.

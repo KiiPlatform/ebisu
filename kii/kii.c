@@ -293,6 +293,14 @@ size_t kii_get_resp_body_length(kii_t* kii) {
     return kii->_rw_buff_written;
 }
 
+void kii_get_author(kii_t* kii, kii_author_t* out_author) {
+    if (kii->_session != NULL) {
+        kii_session_get_author(kii->_session, out_author);
+    } else {
+        *out_author = kii->_author;
+    }
+}
+
 void kii_set_use_m_0_header_flag(kii_t* kii, kii_bool_t flag) {
     kii->_use_m_0_header = flag;
 }
