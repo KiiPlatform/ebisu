@@ -82,7 +82,14 @@ Most APIs are authorized with the thing's access token. Get one by:
 - **Logging in** a thing already registered, with `kii_auth_thing()`, or
   **registering** one, with `kii_register_thing()`.
 
-The token is then kept in the `kii_t`, or in its session.
+The thing's ID and token are then kept in the `kii_t`, or in its session, and
+`kii_get_author()` copies them:
+
+```c
+    kii_author_t author;
+    kii_get_author(&kii, &author);
+    printf("thing ID: %s\n", author.author_id);
+```
 
 <a name="kii_session"></a>
 ## Sessions

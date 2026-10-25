@@ -34,8 +34,8 @@ TEST_CASE("Thing tests")
 
         REQUIRE( ret == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 200 );
-        REQUIRE( std::string(kii._author.author_id).length() > 0 );
-        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).author_id).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).access_token).length() > 0 );
     }
 
     SECTION("Thing register") {
@@ -49,8 +49,8 @@ TEST_CASE("Thing tests")
 
         REQUIRE( ret == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 201 );
-        REQUIRE( std::string(kii._author.author_id).length() > 0 );
-        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).author_id).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).access_token).length() > 0 );
     }
 
     SECTION("Thing auth with lock/unlock") {
@@ -69,8 +69,8 @@ TEST_CASE("Thing tests")
 
         REQUIRE( ret == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 201 );
-        REQUIRE( std::string(kii._author.author_id).length() > 0 );
-        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).author_id).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).access_token).length() > 0 );
 
         // try to auth with wrong password
         for (int i = 0; i < 2; i++) {
@@ -104,7 +104,7 @@ TEST_CASE("Thing tests")
 
         REQUIRE( ret == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 200 );
-        REQUIRE( std::string(kii._author.author_id).length() > 0 );
-        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).author_id).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).access_token).length() > 0 );
     }
 }
