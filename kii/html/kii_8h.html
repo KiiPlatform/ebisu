@@ -2368,7 +2368,8 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 
 <p>Set the thing's credentials the session renews tokens with. </p>
 <p>A token onboarding obtained is renewed by onboarding again with them, so without them it cannot be renewed at all. A token a login obtained is renewed by logging in with them when there is no refresh token, or the server rejects it: after it expired, after a renewal whose response was lost, or after a restart with an author saved before the last renewal. Without them such a session cannot recover.</p>
-<p>The strings are not copied and must outlive the session.</p>
+<p>Where the application limits login attempts, each login the server refuses counts against the thing, and enough of them lock it out for a while, the right password included. So once the server refuses these credentials, the session waits 5 minutes before trying them again, and twice as long after each further refusal, up to an hour. Meanwhile a request refused for its token is reported as it would be without them. The wait ends when the server accepts them, or when they are set again, which may be done at any time.</p>
+<p>The strings are not copied and must outlive the session, or remain valid until replaced by setting them again.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">session</td><td><a class="el" href="structkii__session__t.html" title="Tokens shared by the kii_t instances acting as the same thing.">kii_session_t</a> instance. </td></tr>
@@ -4262,7 +4263,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Oct 25 2026 19:23:20 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Sun Oct 25 2026 20:40:41 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

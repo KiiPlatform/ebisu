@@ -362,6 +362,7 @@ Set up a session</h2>
 <div class="ttc" id="akii_8h_html_ae1036e32aa7dc6c1afa027dfd728ebbf"><div class="ttname"><a href="../../kii/html/kii_8h.html#ae1036e32aa7dc6c1afa027dfd728ebbf">kii_session_set_password</a></div><div class="ttdeci">void kii_session_set_password(kii_session_t *session, const char *vendor_thing_id, const char *password)</div></div>
 <div class="ttc" id="astructkii__session__t_html"><div class="ttname"><a href="../../kii/html/structkii__session__t.html">kii_session_t</a></div></div>
 </div><!-- fragment --><p>Set the session before <a class="el" href="index.html#execute-onboarding">onboarding</a>, which then stores the token it obtains in the session. The samples onboard at each start. To use a token saved before a restart instead, give it to the session with <code><a class="elRef" href="../../kii/html/kii_8h.html#a72459c7ed527d9feb934be7287570402">kii_session_set_author()</a></code>; the handler then gets its MQTT endpoint from Kii Cloud's API, as without onboarding, until the broker refuses the credentials.</p>
+<p>Once the server refuses the password, the session doesn't try it again for 5 minutes, then twice as long after each further refusal, up to an hour: where the application limits login attempts, trying a wrong password whenever a token is refused would soon lock the thing out. Meanwhile requests refused for their token fail. Calling <code><a class="elRef" href="../../kii/html/kii_8h.html#ae1036e32aa7dc6c1afa027dfd728ebbf">kii_session_set_password()</a></code> again ends the wait.</p>
 <h3><a class="anchor" id="autotoc_md21"></a>
 Lock callbacks</h3>
 <p>Required. The handler's MQTT task and the updater's task both use the session, and the lock keeps one of them from renewing the token while the other does. It is held for the length of the renewal request. It need not be recursive. On a platform where the two tasks cannot run at the same time, the callbacks can do nothing.</p>
@@ -582,7 +583,7 @@ Avoiding race condition</h2>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Oct 25 2026 19:23:20 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Sun Oct 25 2026 20:40:41 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
