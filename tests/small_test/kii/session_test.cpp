@@ -259,6 +259,121 @@ TEST_CASE( "A refresh that gets no answer does not fall back to the password" ) 
     REQUIRE( std::string(held(&session).refresh_token) == "rt1" );
 }
 
+const uint64_t MINUTE_MS = 60 * 1000;
+const char PASSWORD_GRANT[] = "\"grant_type\":\"password\"";
+
+// Where the application limits login attempts, trying a wrong password on every
+// refused request would lock the thing out.
+TEST_CASE( "A refused password is not tried again until the session has waited" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    kii_session_set_password(&session, "vid", "pw");
+    // No refresh token: a renewal logs in straight away.
+    kii_author_t author = make_author("th.1", "at1", "");
+    kii_session_set_author(&session, &author);
+    Client c;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+
+    // 5 minutes after the first refusal, twice as long after each further one,
+    // up to an hour.
+    const uint64_t waits[] = { 5, 10, 20, 40, 60, 60 };
+    for (uint64_t wait : waits) {
+        INFO("wait " << wait);
+        c.http.requests.clear();
+        c.http.responses = { REFUSED, INVALID_GRANT };
+        REQUIRE( c.put(BODY) == KII_ERR_OK );
+        REQUIRE( kii_get_resp_status(&c.kii) == 403 );
+        REQUIRE( c.http.requests.size() == 2 );
+        REQUIRE( contains(c.http.requests[1], PASSWORD_GRANT) );
+
+        // Meanwhile a refused request is only reported.
+        platform.now_ms += wait * MINUTE_MS - 1;
+        c.http.requests.clear();
+        c.http.responses = { REFUSED };
+        REQUIRE( c.put(BODY) == KII_ERR_OK );
+        REQUIRE( kii_get_resp_status(&c.kii) == 403 );
+        REQUIRE( c.http.requests.size() == 1 );
+        platform.now_ms += 1;
+    }
+
+    // Accepted, the request is sent again, and the wait is over.
+    c.http.requests.clear();
+    c.http.responses = { REFUSED, http_response(200, "{\"id\":\"th.1\",\"access_token\":\"at2\"}"), DONE };
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( kii_get_resp_status(&c.kii) == 200 );
+    REQUIRE( c.http.requests.size() == 3 );
+    REQUIRE( contains(c.http.requests[2], "Authorization: Bearer at2\r\n") );
+    REQUIRE( platform.updates.size() == 1 );
+
+    // So a refusal after that waits 5 minutes again.
+    c.http.requests.clear();
+    c.http.responses = { REFUSED, INVALID_GRANT };
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( c.http.requests.size() == 2 );
+    platform.now_ms += 5 * MINUTE_MS;
+    c.http.requests.clear();
+    c.http.responses = { REFUSED, INVALID_GRANT };
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( c.http.requests.size() == 2 );
+    REQUIRE( contains(c.http.requests[1], PASSWORD_GRANT) );
+    REQUIRE( platform.depth == 0 );
+}
+
+TEST_CASE( "Setting the credentials again ends the wait" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    kii_session_set_password(&session, "vid", "pw");
+    kii_author_t author = make_author("th.1", "at1", "");
+    kii_session_set_author(&session, &author);
+    Client c;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+
+    c.http.responses = { REFUSED, INVALID_GRANT };
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( c.http.requests.size() == 2 );
+
+    kii_session_set_password(&session, "vid", "pw2");
+    REQUIRE( platform.depth == 0 );
+    c.http.requests.clear();
+    c.http.responses = { REFUSED, http_response(200, "{\"id\":\"th.1\",\"access_token\":\"at2\"}"), DONE };
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( kii_get_resp_status(&c.kii) == 200 );
+    REQUIRE( c.http.requests.size() == 3 );
+    REQUIRE( contains(c.http.requests[1], "\"password\":\"pw2\"") );
+}
+
+TEST_CASE( "Only an answer refusing the password makes the session wait" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    kii_session_set_password(&session, "vid", "pw");
+    kii_author_t author = make_author("th.1", "at1", "");
+    kii_session_set_author(&session, &author);
+    Client c;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+
+    SECTION("a server error") {
+        c.http.responses = { REFUSED, http_response(503, "{}") };
+    }
+
+    SECTION("no answer") {
+        c.http.responses = { REFUSED, "" };
+    }
+
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( kii_get_resp_status(&c.kii) == 403 );
+    REQUIRE( c.http.requests.size() == 2 );
+
+    // Tried again at once.
+    c.http.requests.clear();
+    c.http.responses = { REFUSED, INVALID_GRANT };
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( c.http.requests.size() == 2 );
+    REQUIRE( contains(c.http.requests[1], PASSWORD_GRANT) );
+}
+
 TEST_CASE( "The token is refreshed ahead of expiry" ) {
     Platform platform;
     kii_session_t session;
@@ -670,6 +785,40 @@ TEST_CASE( "Without the thing's credentials, an onboarded token is not renewed" 
     REQUIRE( kii_get_resp_status(&c.kii) == 403 );
     REQUIRE( c.http.requests.size() == 2 );
     REQUIRE( std::string(held(&session).access_token) == "at1" );
+}
+
+TEST_CASE( "A refused onboarding is not tried again until the session has waited" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    kii_session_set_password(&session, "vid", "pw");
+    Client c;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+    c.http.responses = { onboarded("at1") };
+    REQUIRE( kii_ti_onboard(&c.kii, "vid", "pw", NULL, NULL, NULL, NULL) == KII_ERR_OK );
+
+    c.http.responses.push_back(REFUSED);
+    c.http.responses.push_back(http_response(400, "{\"errorCode\":\"WRONG_PASSWORD\"}"));
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( kii_get_resp_status(&c.kii) == 403 );
+    REQUIRE( c.http.requests.size() == 3 );
+    REQUIRE( onboarding_again(c.http.requests[2]) );
+
+    platform.now_ms += 5 * MINUTE_MS - 1;
+    c.http.responses.push_back(REFUSED);
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( kii_get_resp_status(&c.kii) == 403 );
+    REQUIRE( c.http.requests.size() == 4 );
+
+    platform.now_ms += 1;
+    c.http.responses.push_back(REFUSED);
+    c.http.responses.push_back(onboarded("at2"));
+    c.http.responses.push_back(DONE);
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( kii_get_resp_status(&c.kii) == 200 );
+    REQUIRE( c.http.requests.size() == 7 );
+    REQUIRE( onboarding_again(c.http.requests[5]) );
+    REQUIRE( contains(c.http.requests[6], "Authorization: Bearer at2\r\n") );
 }
 
 TEST_CASE( "How the token was obtained decides how it is renewed" ) {
@@ -1145,6 +1294,23 @@ TEST_CASE( "Refused MQTT credentials are renewed by onboarding again" ) {
         _mqtt_state_get_endpoint(&state);
         CHECK( state.info.task_state == KII_MQTT_ST_ERR_EXIT );
         CHECK( state.info.error == KII_MQTT_ERR_GET_ENDPOINT );
+
+        // A task started again does not onboard again until the session has
+        // waited.
+        state.info.task_state = KII_MQTT_ST_GET_ENDPOINT;
+        state.info.error = KII_MQTT_ERR_OK;
+        _mqtt_state_get_endpoint(&state);
+        CHECK( state.info.task_state != KII_MQTT_ST_SOCK_CONNECT );
+        CHECK( c.http.requests.size() == 2 );
+
+        platform.now_ms += 5 * MINUTE_MS;
+        c.http.responses.push_back(onboarded_with_endpoint("at2", "2"));
+        state.info.task_state = KII_MQTT_ST_GET_ENDPOINT;
+        state.info.error = KII_MQTT_ERR_OK;
+        _mqtt_state_get_endpoint(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+        CHECK( c.http.requests.size() == 3 );
+        CHECK( onboarding_again(c.http.requests[2]) );
     }
 
     SECTION("onboarding without an endpoint, MQTT no longer enabled, ends the task") {
