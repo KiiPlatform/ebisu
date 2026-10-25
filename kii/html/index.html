@@ -133,8 +133,14 @@ Authenticate the thing</h1>
 </li>
 <li><b>Logging in</b> a thing already registered, with <code><a class="el" href="kii_8h.html#a128f23578c2e848e6d20e05faae9b29d" title="Authorize thing with vendor thing id and password. After the authentication, access token is stored i...">kii_auth_thing()</a></code>, or <b>registering</b> one, with <code><a class="el" href="kii_8h.html#a113672afcdae61484731c80a3b7bc17e" title="Register a new thing. After the registration, access token is stored in kii instance and used to auth...">kii_register_thing()</a></code>.</li>
 </ul>
-<p>The token is then kept in the <code><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a></code>, or in its session.</p>
-<p><a class="anchor" id="kii_session"></a> </p>
+<p>The thing's ID and token are then kept in the <code><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a></code>, or in its session, and <code><a class="el" href="kii_8h.html#a5edbe47756b69904c87ee298a3924411" title="Copy the author: the thing&#39;s ID and its tokens.">kii_get_author()</a></code> copies them:</p>
+<div class="fragment"><div class="line"><a class="code hl_struct" href="structkii__author__t.html">kii_author_t</a> author;</div>
+<div class="line"><a class="code hl_function" href="kii_8h.html#a5edbe47756b69904c87ee298a3924411">kii_get_author</a>(&amp;kii, &amp;author);</div>
+<div class="line">printf(<span class="stringliteral">&quot;thing ID: %s\n&quot;</span>, author.<a class="code hl_variable" href="structkii__author__t.html#a7ef55277d3fc92e56bf79e3f1838891e">author_id</a>);</div>
+<div class="ttc" id="akii_8h_html_a5edbe47756b69904c87ee298a3924411"><div class="ttname"><a href="kii_8h.html#a5edbe47756b69904c87ee298a3924411">kii_get_author</a></div><div class="ttdeci">void kii_get_author(kii_t *kii, kii_author_t *out_author)</div><div class="ttdoc">Copy the author: the thing's ID and its tokens.</div></div>
+<div class="ttc" id="astructkii__author__t_html"><div class="ttname"><a href="structkii__author__t.html">kii_author_t</a></div><div class="ttdoc">Represents author of API.</div><div class="ttdef"><b>Definition</b> kii.h:159</div></div>
+<div class="ttc" id="astructkii__author__t_html_a7ef55277d3fc92e56bf79e3f1838891e"><div class="ttname"><a href="structkii__author__t.html#a7ef55277d3fc92e56bf79e3f1838891e">kii_author_t::author_id</a></div><div class="ttdeci">char author_id[KII_AUTHOR_ID_MAX_SIZE]</div><div class="ttdoc">ID of the author.</div><div class="ttdef"><b>Definition</b> kii.h:161</div></div>
+</div><!-- fragment --><p><a class="anchor" id="kii_session"></a> </p>
 <h1><a class="anchor" id="autotoc_md2"></a>
 Sessions</h1>
 <p>Access tokens expire. A <code><a class="el" href="structkii__session__t.html" title="Tokens shared by the kii_t instances acting as the same thing.">kii_session_t</a></code> holds the thing's tokens for every <code><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a></code> acting as the thing, and renews the access token the way it was obtained:</p>
@@ -167,8 +173,6 @@ Sessions</h1>
 <div class="ttc" id="akii_8h_html_ac375f90a4796877f0365d14f6dc73e45"><div class="ttname"><a href="kii_8h.html#ac375f90a4796877f0365d14f6dc73e45">kii_session_get_author</a></div><div class="ttdeci">void kii_session_get_author(kii_session_t *session, kii_author_t *out_author)</div><div class="ttdoc">Copy the author held by the session.</div></div>
 <div class="ttc" id="akii_8h_html_ae1036e32aa7dc6c1afa027dfd728ebbf"><div class="ttname"><a href="kii_8h.html#ae1036e32aa7dc6c1afa027dfd728ebbf">kii_session_set_password</a></div><div class="ttdeci">void kii_session_set_password(kii_session_t *session, const char *vendor_thing_id, const char *password)</div><div class="ttdoc">Set the thing's credentials the session renews tokens with.</div></div>
 <div class="ttc" id="akii_8h_html_ae33b3be622e96687b213d0fbfd6edf0f"><div class="ttname"><a href="kii_8h.html#ae33b3be622e96687b213d0fbfd6edf0f">kii_set_session</a></div><div class="ttdeci">kii_code_t kii_set_session(kii_t *kii, kii_session_t *session)</div><div class="ttdoc">Attach a session, or detach it with NULL.</div></div>
-<div class="ttc" id="astructkii__author__t_html"><div class="ttname"><a href="structkii__author__t.html">kii_author_t</a></div><div class="ttdoc">Represents author of API.</div><div class="ttdef"><b>Definition</b> kii.h:159</div></div>
-<div class="ttc" id="astructkii__author__t_html_a7ef55277d3fc92e56bf79e3f1838891e"><div class="ttname"><a href="structkii__author__t.html#a7ef55277d3fc92e56bf79e3f1838891e">kii_author_t::author_id</a></div><div class="ttdeci">char author_id[KII_AUTHOR_ID_MAX_SIZE]</div><div class="ttdoc">ID of the author.</div><div class="ttdef"><b>Definition</b> kii.h:161</div></div>
 <div class="ttc" id="astructkii__session__t_html"><div class="ttname"><a href="structkii__session__t.html">kii_session_t</a></div><div class="ttdoc">Tokens shared by the kii_t instances acting as the same thing.</div><div class="ttdef"><b>Definition</b> kii.h:213</div></div>
 </div><!-- fragment --><p>Attach the session to every <code><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a></code> acting as the thing before onboarding or logging in. The callbacks:</p>
 <ul>
@@ -311,7 +315,7 @@ Building</h1>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Oct 22 2026 06:20:54 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Sun Oct 25 2026 19:23:20 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

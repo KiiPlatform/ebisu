@@ -508,6 +508,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>kii_get_author</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a5edbe47756b69904c87ee298a3924411</anchor>
+      <arglist>(kii_t *kii, kii_author_t *out_author)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>kii_session_init</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a58ff8b06b612885dea237c6ba31d1820</anchor>
