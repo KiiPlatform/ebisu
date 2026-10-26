@@ -25,8 +25,8 @@ TEST_CASE("Push Tests")
 
     REQUIRE( auth_res == KII_ERR_OK );
     REQUIRE( khc_get_status_code(&kii._khc) == 200 );
-    REQUIRE( std::string(kii._author.author_id).length() > 0 );
-    REQUIRE( std::string(kii._author.access_token).length() > 0 );
+    REQUIRE( std::string(kiiltest::author(&kii).author_id).length() > 0 );
+    REQUIRE( std::string(kiiltest::author(&kii).access_token).length() > 0 );
 
     SECTION("Subscribe to app scope bucket") {
         kii_bucket_t bucket;
@@ -78,9 +78,10 @@ TEST_CASE("Push Tests")
         REQUIRE(khc_get_status_code(&kii._khc) == 204);
     }
     SECTION("Thing scope topic") {
+        const std::string thing_id = kiiltest::author(&kii).author_id;
         kii_topic_t topic;
         topic.scope = KII_SCOPE_THING;
-        topic.scope_id = kii._author.author_id;
+        topic.scope_id = thing_id.c_str();
         std::string name_base("topic-");
         std::string id = std::to_string(kiiltest::current_time());
         std::string name = name_base + id;

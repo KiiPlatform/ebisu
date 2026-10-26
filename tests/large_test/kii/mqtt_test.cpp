@@ -321,11 +321,12 @@ TEST_CASE("MQTT push from the broker")
     // receives what this one sends.
     std::string vid = "ltest_mqtt_" + std::to_string(kiiltest::current_time());
     REQUIRE( kii_ti_onboard(&kii, vid.c_str(), "1234", NULL, NULL, NULL, NULL) == KII_ERR_OK );
+    const std::string thing_id = kiiltest::author(&kii).author_id;
 
     std::string topic_name = "mqtt-" + std::to_string(kiiltest::current_time());
     kii_topic_t topic;
     topic.scope = KII_SCOPE_THING;
-    topic.scope_id = kii._author.author_id;
+    topic.scope_id = thing_id.c_str();
     topic.topic_name = topic_name.c_str();
     REQUIRE( kii_put_topic(&kii, &topic) == KII_ERR_OK );
     REQUIRE( khc_get_status_code(&kii._khc) == 204 );
@@ -335,11 +336,11 @@ TEST_CASE("MQTT push from the broker")
     // Sends a message carrying nonce on the task's thread: to the topic, or,
     // with to_thing, straight to the thing, the only one its own token may
     // send to.
-    auto send = [&kii, &topic, &t](const std::string& nonce, bool to_thing) {
+    auto send = [&kii, &thing_id, &topic, &t](const std::string& nonce, bool to_thing) {
         std::string message = "{\"data\":{\"nonce\":\"" + nonce + "\"},\"mqtt\":{\"enabled\":true}}";
-        REQUIRE( run_on_task(t, [&kii, &topic, &t, message, to_thing] {
+        REQUIRE( run_on_task(t, [&kii, &thing_id, &topic, &t, message, to_thing] {
             kii_code_t res = to_thing ?
-                kii_send_push_message_to_thing(&kii, kii._author.author_id, message.c_str()) :
+                kii_send_push_message_to_thing(&kii, thing_id.c_str(), message.c_str()) :
                 kii_send_push_message(&kii, &topic, message.c_str());
             int status = khc_get_status_code(&kii._khc);
             std::lock_guard<std::mutex> lock(t.mutex);
@@ -453,7 +454,7 @@ TEST_CASE("The MQTT task renews a token the server refuses")
     kii_session_set_password(&session, vid.c_str(), "1234");
     REQUIRE( kii_set_session(&kii, &session) == KII_ERR_OK );
     REQUIRE( kii_ti_onboard(&kii, vid.c_str(), "1234", NULL, NULL, NULL, NULL) == KII_ERR_OK );
-    const std::string thing_id = kii._author.author_id;
+    const std::string thing_id = kiiltest::author(&kii).author_id;
 
     // The task starts with a token the server refuses. Whatever it asks of
     // the server on its way to connecting, the session renews the token for,

@@ -25,8 +25,8 @@ TEST_CASE("API call tests")
 
     REQUIRE( auth_res == KII_ERR_OK );
     REQUIRE( khc_get_status_code(&kii._khc) == 200 );
-    REQUIRE( std::string(kii._author.author_id).length() > 0 );
-    REQUIRE( std::string(kii._author.access_token).length() > 0 );
+    REQUIRE( std::string(kiiltest::author(&kii).author_id).length() > 0 );
+    REQUIRE( std::string(kiiltest::author(&kii).access_token).length() > 0 );
 
     SECTION("API call") {
         // POST object
