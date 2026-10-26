@@ -17,20 +17,19 @@ function(set_git_version_and_generate_header)
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
-    # `git describe` runs here, at configure time, and nothing tells the build
-    # that its answer has changed: a commit, a checkout or a new tag left the
-    # version, the soname and the header as they were until cmake was run again
-    # by hand. So configuring again whenever git moves is left to the build, as
-    # for a CMakeLists.txt edited. It takes under a second.
+    # `git describe` runs at configure time only, and nothing told the build
+    # when its answer changed: after a commit, a checkout or a new tag, the
+    # version, the soname and ebisu_version.h stayed as they were until cmake
+    # was run again by hand. So the build configures again whenever git moves,
+    # as it does when a CMakeLists.txt is edited. That takes under a second.
     #
-    # What moves: HEAD's reflog, appended to on every commit, checkout, reset or
-    # rebase; the tags, loose ones in refs/tags, whose directory changes when
-    # one is added or removed, and packed ones in packed-refs; and the whole
-    # reftable stack, for a repository using that format instead. Asked of git
-    # rather than assumed under .git, which a worktree has as a file. Only those
-    # that exist are watched: one missing would have some generators configure
-    # on every build. Outside a git checkout there is nothing to watch, and the
-    # fallback version stays.
+    # What moves: HEAD's reflog, written on every commit, checkout, reset or
+    # rebase; the tags, loose ones in refs/tags, a directory that changes when
+    # one is added or removed, and packed ones in packed-refs; and, in a
+    # repository using the reftable format instead, its table list, rewritten
+    # on any change. Asked of git rather than assumed under .git, which is a
+    # file in a worktree. Only those that exist are watched. Outside a git
+    # checkout there is nothing to watch, and the fallback version stays.
     execute_process(
         COMMAND git rev-parse
             --git-path logs/HEAD
