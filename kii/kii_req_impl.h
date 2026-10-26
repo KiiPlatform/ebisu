@@ -63,4 +63,9 @@ kii_code_t _set_req_body(kii_t* kii, const char* body_contents);
 
 kii_code_t _set_m_0_header(kii_t* kii);
 
+/* Sends the request built in kii and frees its headers, whatever the outcome.
+ * Every request goes out through here, which adds the headers all of them
+ * carry. */
+kii_code_t _req_send(kii_t* kii);
+
 #endif

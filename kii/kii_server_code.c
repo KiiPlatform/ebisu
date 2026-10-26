@@ -5,7 +5,6 @@
 #include "kii.h"
 #include "kii_impl.h"
 #include "kii_req_impl.h"
-#include "kii_session_impl.h"
 
 static kii_code_t _execute_server_code(
         kii_t* kii,
@@ -46,13 +45,6 @@ static kii_code_t _execute_server_code(
         _req_headers_free_all(kii);
         return res;
     }
-    if (kii->_use_m_0_header == KII_TRUE) {
-        res = _set_m_0_header(kii);
-        if (res != KII_ERR_OK) {
-            _req_headers_free_all(kii);
-            return res;
-        }
-    }
     // Request body
     res = _set_req_body(kii, params);
     if (res != KII_ERR_OK) {
@@ -60,11 +52,7 @@ static kii_code_t _execute_server_code(
         return res;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = _kii_perform(kii);
-    _req_headers_free_all(kii);
-
-    return _convert_code(code);
+    return _req_send(kii);
 }
 
 kii_code_t kii_execute_server_code_version(

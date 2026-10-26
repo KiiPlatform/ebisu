@@ -3,8 +3,6 @@
 #include "kii_session_impl.h"
 #include <string.h>
 
-#define KII_SDK_INFO "sn=te;sv=1.2.4"
-
 const char _APP_KEY_HEADER[] = "X-Kii-Appkey: k";
 const char _CONTENT_LENGTH_ZERO[] = "Content-Length: 0";
 
@@ -59,7 +57,6 @@ size_t _cb_write_header(char *buffer, size_t size, void *userdata)
 void kii_init(kii_t* kii)
 {
     memset(kii, 0x00, sizeof(kii_t));
-    kii->_sdk_info = KII_SDK_INFO;
     khc_init(&kii->_khc);
     khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
     khc_set_cb_write(&kii->_khc, _cb_write_buff, kii);
@@ -69,7 +66,6 @@ void kii_init(kii_t* kii)
     kii->_cb_slist_free = khc_cb_slist_free;
     kii->_slist_alloc_data = NULL;
     kii->_slist_free_data = NULL;
-    kii->_sdk_info = KII_SDK_INFO;
     kii->_cb_task_create = NULL;
     kii->_task_create_data = NULL;
     kii->_cb_task_continue = NULL;

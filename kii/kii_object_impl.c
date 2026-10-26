@@ -2,7 +2,6 @@
 #include "kii_object_impl.h"
 #include "kii_impl.h"
 #include "kii_req_impl.h"
-#include "kii_session_impl.h"
 
 kii_code_t _post_object(
         kii_t* kii,
@@ -39,13 +38,6 @@ kii_code_t _post_object(
         _req_headers_free_all(kii);
         return ret;
     }
-    if (kii->_use_m_0_header == KII_TRUE) {
-        ret = _set_m_0_header(kii);
-        if (ret != KII_ERR_OK) {
-            _req_headers_free_all(kii);
-            return ret;
-        }
-    }
 
     // Request body
     ret = _set_req_body(kii, object_data);
@@ -54,10 +46,7 @@ kii_code_t _post_object(
         return ret;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = _kii_perform(kii);
-    _req_headers_free_all(kii);
-    return _convert_code(code);
+    return _req_send(kii);
 }
 
 kii_code_t _put_object(
@@ -103,13 +92,6 @@ kii_code_t _put_object(
         _req_headers_free_all(kii);
         return ret;
     }
-    if (kii->_use_m_0_header == KII_TRUE) {
-        ret = _set_m_0_header(kii);
-        if (ret != KII_ERR_OK) {
-            _req_headers_free_all(kii);
-            return ret;
-        }
-    }
 
     ret = _set_req_body(kii, object_data);
     if (ret != KII_ERR_OK) {
@@ -117,11 +99,7 @@ kii_code_t _put_object(
         return ret;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = _kii_perform(kii);
-    _req_headers_free_all(kii);
-
-    return _convert_code(code);
+    return _req_send(kii);
 }
 
 kii_code_t _patch_object(
@@ -160,13 +138,6 @@ kii_code_t _patch_object(
         _req_headers_free_all(kii);
         return ret;
     }
-    if (kii->_use_m_0_header == KII_TRUE) {
-        ret = _set_m_0_header(kii);
-        if (ret != KII_ERR_OK) {
-            _req_headers_free_all(kii);
-            return ret;
-        }
-    }
 
     ret = _set_req_body(kii, patch_data);
     if (ret != KII_ERR_OK) {
@@ -174,11 +145,7 @@ kii_code_t _patch_object(
         return ret;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = _kii_perform(kii);
-    _req_headers_free_all(kii);
-
-    return _convert_code(code);
+    return _req_send(kii);
 }
 
 kii_code_t _delete_object(
@@ -210,24 +177,13 @@ kii_code_t _delete_object(
         _req_headers_free_all(kii);
         return ret;
     }
-    if (kii->_use_m_0_header == KII_TRUE) {
-        ret = _set_m_0_header(kii);
-        if (ret != KII_ERR_OK) {
-            _req_headers_free_all(kii);
-            return ret;
-        }
-    }
     ret = _set_req_body(kii, "");
     if (ret != KII_ERR_OK) {
         _req_headers_free_all(kii);
         return ret;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = _kii_perform(kii);
-    _req_headers_free_all(kii);
-
-    return _convert_code(code);
+    return _req_send(kii);
 }
 
 kii_code_t _get_object(
@@ -259,24 +215,13 @@ kii_code_t _get_object(
         _req_headers_free_all(kii);
         return ret;
     }
-    if (kii->_use_m_0_header == KII_TRUE) {
-        ret = _set_m_0_header(kii);
-        if (ret != KII_ERR_OK) {
-            _req_headers_free_all(kii);
-            return ret;
-        }
-    }
     ret = _set_req_body(kii, "");
     if (ret != KII_ERR_OK) {
         _req_headers_free_all(kii);
         return ret;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = _kii_perform(kii);
-    _req_headers_free_all(kii);
-
-    return _convert_code(code);
+    return _req_send(kii);
 }
 
 kii_code_t _upload_body(
@@ -314,18 +259,8 @@ kii_code_t _upload_body(
         _req_headers_free_all(kii);
         return ret;
     }
-    if (kii->_use_m_0_header == KII_TRUE) {
-        ret = _set_m_0_header(kii);
-        if (ret != KII_ERR_OK) {
-            _req_headers_free_all(kii);
-            return ret;
-        }
-    }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code res = _kii_perform(kii);
-    _req_headers_free_all(kii);
-    return _convert_code(res);
+    return _req_send(kii);
 }
 
 kii_code_t _download_body(
@@ -357,21 +292,11 @@ kii_code_t _download_body(
         _req_headers_free_all(kii);
         return ret;
     }
-    if (kii->_use_m_0_header == KII_TRUE) {
-        ret = _set_m_0_header(kii);
-        if (ret != KII_ERR_OK) {
-            _req_headers_free_all(kii);
-            return ret;
-        }
-    }
     ret = _set_req_body(kii, "");
     if (ret != KII_ERR_OK) {
         _req_headers_free_all(kii);
         return ret;
     }
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code res = _kii_perform(kii);
-    _req_headers_free_all(kii);
-    return _convert_code(res);
+    return _req_send(kii);
 }
