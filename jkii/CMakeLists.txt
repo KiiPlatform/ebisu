@@ -24,6 +24,8 @@ target_include_directories(jkii
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/jsmn>)
+# Versioned like libkii and libtio, for the reason given in khc/CMakeLists.txt.
+set_target_properties(jkii PROPERTIES VERSION ${version} SOVERSION ${soversion})
 ebisu_configure_target(jkii)
 
 file(GLOB jkii_hdrs CONFIGURE_DEPENDS include/*.h libs/jsmn/jsmn.h)
