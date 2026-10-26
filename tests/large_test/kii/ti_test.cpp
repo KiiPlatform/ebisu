@@ -22,7 +22,7 @@ namespace {
 picojson::value read_state(kii_t& kii, const std::string& path, const std::string& value)
 {
     const std::string resource = "/thing-if/apps/" + std::string(APP_ID) + "/targets/thing:" +
-        kii._author.author_id + "/states";
+        kiiltest::author(&kii).author_id + "/states";
     for (int i = 0; i < 10; ++i) {
         if (i > 0) {
             std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -70,8 +70,8 @@ TEST_CASE("TI Tests")
 
         REQUIRE( res == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 200 );
-        REQUIRE( std::string(kii._author.author_id).length() > 0 );
-        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).author_id).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).access_token).length() > 0 );
     }
 
     SECTION("Onboard with every parameter, read back")
@@ -83,7 +83,7 @@ TEST_CASE("TI Tests")
         REQUIRE( res == KII_ERR_OK );
 
         // The thing as Kii Cloud registered it, read with its own token.
-        const std::string path = "/api/apps/" + std::string(APP_ID) + "/things/" + kii._author.author_id;
+        const std::string path = "/api/apps/" + std::string(APP_ID) + "/things/" + kiiltest::author(&kii).author_id;
         REQUIRE( kii_api_call_start(&kii, "GET", path.c_str(), NULL, KII_TRUE) == KII_ERR_OK );
         REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
         REQUIRE( kii_get_resp_status(&kii) == 200 );
@@ -127,8 +127,8 @@ TEST_CASE("TI Tests")
 
         REQUIRE( res == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 200 );
-        REQUIRE( std::string(kii._author.author_id).length() > 0 );
-        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).author_id).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).access_token).length() > 0 );
 
         kii_ti_firmware_version_t version;
         memset(&version, 0x00, sizeof(kii_ti_firmware_version_t));
@@ -149,8 +149,8 @@ TEST_CASE("TI Tests")
 
         REQUIRE( res == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 200 );
-        REQUIRE( std::string(kii._author.author_id).length() > 0 );
-        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).author_id).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).access_token).length() > 0 );
 
         kii_ti_firmware_version_t version;
         memset(&version, 0x00, sizeof(kii_ti_firmware_version_t));
@@ -183,8 +183,8 @@ TEST_CASE("TI Tests")
 
         REQUIRE( res == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 200 );
-        REQUIRE( std::string(kii._author.author_id).length() > 0 );
-        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).author_id).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).access_token).length() > 0 );
 
         const std::string value = "value-" + std::to_string(kiiltest::current_time());
         std::string body = "{\"dummyKey\":\"" + value + "\"}";
@@ -216,8 +216,8 @@ TEST_CASE("TI Tests")
 
         REQUIRE( res == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 200 );
-        REQUIRE( std::string(kii._author.author_id).length() > 0 );
-        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).author_id).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).access_token).length() > 0 );
 
         std::string body = "{\"states\":[{\"generatedAt\":" + std::to_string(t) + "000,\"payload\":{\"ltest_trait_alias\":{\"string_field\":\"value\"}}}]}";
         std::istringstream iss(body);
@@ -246,8 +246,8 @@ TEST_CASE("TI Tests")
 
         REQUIRE( res == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 200 );
-        REQUIRE( std::string(kii._author.author_id).length() > 0 );
-        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).author_id).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).access_token).length() > 0 );
 
         const std::string value = "value-" + std::to_string(kiiltest::current_time());
         std::string body = "{\"ltest_trait_alias\":{\"string_field\":\"" + value + "\"}}";
@@ -280,8 +280,8 @@ TEST_CASE("TI Tests")
 
         REQUIRE( res == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 200 );
-        REQUIRE( std::string(kii._author.author_id).length() > 0 );
-        REQUIRE( std::string(kii._author.access_token).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).author_id).length() > 0 );
+        REQUIRE( std::string(kiiltest::author(&kii).access_token).length() > 0 );
 
         std::string body = "{\"states\":[{\"generatedAt\":" + std::to_string(t) + "000,\"payload\":{\"ltest_trait_alias\":{\"string_field\":\"value\"}}}]}";
         std::istringstream iss(body);
@@ -322,8 +322,8 @@ TEST_CASE("Empty request payloads", "[empty-request]") {
 
     REQUIRE( res == KII_ERR_OK );
     REQUIRE( khc_get_status_code(&kii._khc) == 200 );
-    REQUIRE( std::string(kii._author.author_id).length() > 0 );
-    REQUIRE( std::string(kii._author.access_token).length() > 0 );
+    REQUIRE( std::string(kiiltest::author(&kii).author_id).length() > 0 );
+    REQUIRE( std::string(kiiltest::author(&kii).access_token).length() > 0 );
 
     SECTION("Put bulk states with empty callback")
     {
