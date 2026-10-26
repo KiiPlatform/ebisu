@@ -34,13 +34,6 @@ kii_code_t _thing_auth(
         _req_headers_free_all(kii);
         return res;
     }
-    if (kii->_use_m_0_header == KII_TRUE) {
-        res = _set_m_0_header(kii);
-        if (res != KII_ERR_OK) {
-            _req_headers_free_all(kii);
-            return res;
-        }
-    }
     // Request body.
     char esc_vid[strlen(vendor_thing_id) * 2 + 1];
     char esc_pass[strlen(password) * 2 + 1];
@@ -63,11 +56,7 @@ kii_code_t _thing_auth(
     }
     kii->_rw_buff_req_size = content_len;
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
-    _req_headers_free_all(kii);
-
-    return _convert_code(code);
+    return _req_send(kii);
 }
 
 kii_code_t _thing_register(
@@ -101,13 +90,6 @@ kii_code_t _thing_register(
         _req_headers_free_all(kii);
         return res;
     }
-    if (kii->_use_m_0_header == KII_TRUE) {
-        res = _set_m_0_header(kii);
-        if (res != KII_ERR_OK) {
-            _req_headers_free_all(kii);
-            return res;
-        }
-    }
 
     // Request body.
     char esc_vid[strlen(vendor_thing_id) * 2 + 1];
@@ -131,11 +113,7 @@ kii_code_t _thing_register(
     }
     kii->_rw_buff_req_size = content_len;
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
-    _req_headers_free_all(kii);
-
-    return _convert_code(code);
+    return _req_send(kii);
 }
 
 kii_code_t _thing_refresh(
@@ -166,13 +144,6 @@ kii_code_t _thing_refresh(
         _req_headers_free_all(kii);
         return res;
     }
-    if (kii->_use_m_0_header == KII_TRUE) {
-        res = _set_m_0_header(kii);
-        if (res != KII_ERR_OK) {
-            _req_headers_free_all(kii);
-            return res;
-        }
-    }
     // Request body. Tokens are printable, which escaping at most doubles.
     char esc_token[KII_REFRESH_TOKEN_MAX_SIZE * 2];
     if (jkii_escape_str(refresh_token, esc_token, sizeof(esc_token)) < 0) {
@@ -191,9 +162,5 @@ kii_code_t _thing_refresh(
     }
     kii->_rw_buff_req_size = content_len;
 
-    khc_set_req_headers(&kii->_khc, kii->_req_headers);
-    khc_code code = khc_perform(&kii->_khc);
-    _req_headers_free_all(kii);
-
-    return _convert_code(code);
+    return _req_send(kii);
 }

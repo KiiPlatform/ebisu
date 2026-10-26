@@ -2,7 +2,11 @@
 #include "kii_impl.h"
 #include "kii_req_impl.h"
 #include "kii_session_impl.h"
+#include "ebisu_version.h"
 #include <string.h>
+
+/* The SDK and its version, as git describe gives it for the tree built. */
+#define _SDK_INFO "sn=te;sv=" EBISU_VERSION_FULL
 
 static void _resource_cleanup(kii_t* kii)
 {
@@ -44,13 +48,6 @@ kii_code_t kii_api_call_start(
     }
     if (set_authentication_header == KII_TRUE) {
         res = _set_auth_header(kii);
-        if (res != KII_ERR_OK) {
-            _req_headers_free_all(kii);
-            return res;
-        }
-    }
-    if (kii->_use_m_0_header == KII_TRUE) {
-        res = _set_m_0_header(kii);
         if (res != KII_ERR_OK) {
             _req_headers_free_all(kii);
             return res;
@@ -117,11 +114,24 @@ kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* v
     return KII_ERR_OK;
 }
 
-kii_code_t kii_api_call_run(kii_t* kii)
+kii_code_t _req_send(kii_t* kii)
 {
+    kii_code_t res = kii_api_call_append_header(kii, "X-Kii-SDK", _SDK_INFO);
+    if (res == KII_ERR_OK && kii->_use_m_0_header == KII_TRUE) {
+        res = _set_m_0_header(kii);
+    }
+    if (res != KII_ERR_OK) {
+        _req_headers_free_all(kii);
+        return res;
+    }
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
     return _convert_code(code);
+}
+
+kii_code_t kii_api_call_run(kii_t* kii)
+{
+    return _req_send(kii);
 }

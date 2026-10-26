@@ -316,7 +316,6 @@ typedef struct kii_t {
 	kii_author_t _author; /**< \private */
 	char _app_id[KII_APP_ID_MAX_SIZE]; /**< \private */
 	char _app_host[KII_APP_HOST_MAX_SIZE]; /**< \private */
-    char* _sdk_info; /**< \private */
 
     void* _mqtt_sock_connect_ctx; /**< \private */
     void* _mqtt_sock_send_ctx; /**< \private */
@@ -1615,8 +1614,8 @@ size_t kii_get_resp_body_length(kii_t* kii);
 /**
  * \brief Send the "kii-m: 0" header with subsequent requests.
  *
- * Off by default. When enabled, the header is appended to the API calls that
- * build their own request headers, alongside the authorization header.
+ * Off by default. When enabled, every request carries the header, those built
+ * with kii_api_call_start() included.
  *
  * \param [out] kii kii_t instance.
  * \param [in] flag KII_TRUE to send the header, KII_FALSE to stop sending it.
