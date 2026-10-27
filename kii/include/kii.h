@@ -240,6 +240,59 @@ typedef struct kii_session_t {
     void* _monotonic_ms_data; /**< \private */
 } kii_session_t;
 
+/**
+ * \brief The time of day, for a device without a real-time clock.
+ *
+ * A TLS stack needs the time to check a certificate's validity period, and a
+ * device without a real-time clock has none until something tells it. Until
+ * then the clock has a floor, a time it is known not to be earlier than: when
+ * the library's source was built, or a time the application saved and set with
+ * kii_clock_set_floor(). Once a server states its time in a response to a
+ * kii_t the clock is set on with kii_set_clock(), or the application sets one
+ * with kii_clock_set_time(), the clock counts on from it with the monotonic
+ * clock.
+ *
+ * So a check made before then has a lower bound of the time only: a certificate
+ * that expired before it is known to have expired, but one that is not valid
+ * until later cannot be told from one that is valid now.
+ * kii_clock_check_validity() applies that, for socket callbacks to use when
+ * checking the server's certificate, and kii_clock_get_time() gives the time
+ * and which of the two it is, for a TLS stack to check with itself.
+ *
+ * Initialize with kii_clock_init(). The functions are safe to call from the
+ * socket callbacks, and from any task once kii_clock_set_cb_lock() has set a
+ * lock.
+ */
+typedef struct kii_clock_t {
+    /** \private Seconds since the epoch the time is known not to be earlier
+     * than. */
+    int64_t _floor;
+    /** \private Whether _time has been set. */
+    kii_bool_t _time_known;
+    /** \private A time given by a server or the application, in seconds since
+     * the epoch. */
+    int64_t _time;
+    /** \private The monotonic time _time was given at. */
+    uint64_t _time_at_ms;
+    KII_CB_MONOTONIC_MS _cb_monotonic_ms; /**< \private */
+    void* _monotonic_ms_data; /**< \private */
+    KII_CB_LOCK _cb_lock; /**< \private */
+    KII_CB_LOCK _cb_unlock; /**< \private */
+    void* _lock_data; /**< \private */
+} kii_clock_t;
+
+/** \brief Whether a validity period covers the time, as kii_clock_t knows it. */
+typedef enum kii_validity_t {
+    /** \brief Valid, as far as the time is known: within the period when the
+     * time is known, and not past its end when only a lower bound is. */
+    KII_VALIDITY_OK,
+    /** \brief Past the end of the period. */
+    KII_VALIDITY_EXPIRED,
+    /** \brief Before the start of the period, which is only told when the time
+     * is known. */
+    KII_VALIDITY_NOT_YET_VALID
+} kii_validity_t;
+
 /** \brief Represents MQTT endpoint. */
 typedef struct kii_mqtt_endpoint_t {
     char username[KII_USERNAME_MAX_SIZE]; /**< \brief Username used to connect. */
@@ -381,6 +434,8 @@ typedef struct kii_t {
     kii_bool_t _use_m_0_header; /**< \private */
 
     kii_session_t* _session; /**< \private */
+    /** \private Where the time each response states is kept, or NULL. */
+    kii_clock_t* _clock;
     /** \private kii_session_t::_generation of the token copied into _author. */
     uint32_t _session_generation;
     /** \private Whether the request being performed carries the session's
@@ -664,6 +719,111 @@ void kii_session_get_author(kii_session_t* session, kii_author_t* out_author);
  * \return KII_ERR_FAIL if the session has no lock or clock set.
  */
 kii_code_t kii_set_session(kii_t* kii, kii_session_t* session);
+
+/**
+ * \brief Initializes a kii_clock_t.
+ *
+ * The clock starts with no time, and a floor shortly before the library's
+ * source was built: EBISU_SOURCE_TIME, less a week for a committer whose clock
+ * was a little ahead, as khc_init() sets for khc_get_resp_date().
+ *
+ * \param [out] clock kii_clock_t instance.
+ * \param [in] cb_monotonic_ms The monotonic clock the time is counted on with.
+ * \param [in] userdata Context object pointer passed to cb_monotonic_ms.
+ */
+void kii_clock_init(
+        kii_clock_t* clock,
+        KII_CB_MONOTONIC_MS cb_monotonic_ms,
+        void* userdata);
+
+/**
+ * \brief Set the lock guarding the clock.
+ *
+ * Needed when more than one task uses the clock, as when kii_t of different
+ * tasks are set on it. The monotonic clock is called only with it held.
+ *
+ * The socket callbacks may use the clock while kii holds a session's lock, so
+ * this has to be a lock of its own, not a session's.
+ *
+ * \param [out] clock kii_clock_t instance.
+ * \param [in] cb_lock Callback acquiring the lock.
+ * \param [in] cb_unlock Callback releasing the lock.
+ * \param [in] userdata Context object pointer passed to both.
+ */
+void kii_clock_set_cb_lock(
+        kii_clock_t* clock,
+        KII_CB_LOCK cb_lock,
+        KII_CB_LOCK cb_unlock,
+        void* userdata);
+
+/**
+ * \brief Raise the time the clock is known not to be earlier than.
+ *
+ * A device can save the time from kii_clock_get_time() now and then, and set it
+ * here when it starts again, so that the time it knows never goes back further
+ * than that. A floor lower than the clock's is ignored.
+ *
+ * \param [out] clock kii_clock_t instance.
+ * \param [in] floor Seconds since 1970-01-01T00:00:00Z.
+ */
+void kii_clock_set_floor(kii_clock_t* clock, int64_t floor);
+
+/**
+ * \brief Give the clock the time.
+ *
+ * kii does so with the date of each response to a kii_t the clock is set on;
+ * this is for the time from anywhere else, a real-time clock or NTP. A time
+ * earlier than the clock's floor is ignored.
+ *
+ * \param [out] clock kii_clock_t instance.
+ * \param [in] now Seconds since 1970-01-01T00:00:00Z.
+ * \return KII_TRUE if the time was taken, KII_FALSE if it was earlier than the
+ * floor.
+ */
+kii_bool_t kii_clock_set_time(kii_clock_t* clock, int64_t now);
+
+/**
+ * \brief Get the time.
+ *
+ * \param [in] clock kii_clock_t instance.
+ * \param [out] out_now Seconds since 1970-01-01T00:00:00Z: the time, counted on
+ * from the last one given, or the floor while none has been, or while the
+ * floor is later.
+ * \return KII_TRUE if out_now is the time, to within a few seconds; KII_FALSE
+ * if it is the floor, a time that it is not earlier than.
+ */
+kii_bool_t kii_clock_get_time(kii_clock_t* clock, int64_t* out_now);
+
+/**
+ * \brief Check a validity period, a certificate's for instance, against the
+ * time.
+ *
+ * While the clock has the floor only, a period is valid unless it ended before
+ * the floor: a period starting later cannot be told from one that has started.
+ * khc_seconds_since_epoch() converts the dates a TLS stack gives.
+ *
+ * \param [in] clock kii_clock_t instance.
+ * \param [in] not_before Start of the period, seconds since the epoch.
+ * \param [in] not_after End of the period, inclusive, seconds since the epoch.
+ * \return Whether the period covers the time, as far as it is known.
+ */
+kii_validity_t kii_clock_check_validity(
+        kii_clock_t* clock,
+        int64_t not_before,
+        int64_t not_after);
+
+/**
+ * \brief Give a clock the time each response states.
+ *
+ * After each request, the date of its response, as kii_get_resp_date() gives
+ * it, is given to the clock, which counts on from it. Every kii_t of a device
+ * may share one clock, kii_clock_set_cb_lock() permitting.
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] clock Clock to set, or NULL.
+ * \return KII_ERR_FAIL if the clock has no monotonic clock.
+ */
+kii_code_t kii_set_clock(kii_t* kii, kii_clock_t* clock);
 
 /**
  * \brief Post Kii object.

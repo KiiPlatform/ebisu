@@ -67,8 +67,9 @@ static int _days_in_month(int year, int month)
     return days[month - 1];
 }
 
-/* Days from 1970-01-01 to a valid date of the Gregorian calendar, from 1970
- * on. The year is counted from March, so that a leap day comes last in it.
+/* Days from 1970-01-01 to a valid date of the Gregorian calendar, from year 1
+ * on, negative before 1970. The year is counted from March, so that a leap day
+ * comes last in it.
  * Howard Hinnant's days_from_civil, donated to the public domain, without its
  * handling of years before 0:
  * https://howardhinnant.github.io/date_algorithms.html#days_from_civil */
@@ -178,6 +179,28 @@ static int _parse_rfc850(const char* v, size_t len, int present_year, _http_date
         d->year += 100;
     }
     return _parse_time_of_day(s + 10, d);
+}
+
+bool khc_seconds_since_epoch(
+        int year,
+        int month,
+        int day,
+        int hour,
+        int minute,
+        int second,
+        int64_t* out_seconds)
+{
+    /* 60 is a leap second, which only ever ends a UTC day. */
+    if (out_seconds == NULL || year < 1 || year > 9999 || month < 1 || month > 12 ||
+            day < 1 || day > _days_in_month(year, month) ||
+            hour < 0 || hour > 23 || minute < 0 || minute > 59 ||
+            second < 0 || second > 60 ||
+            (second == 60 && (hour != 23 || minute != 59))) {
+        return false;
+    }
+    int64_t days = _days_since_epoch(year, month, day);
+    *out_seconds = ((days * 24 + hour) * 60 + minute) * 60 + second;
+    return true;
 }
 
 int64_t _parse_http_date(const char* header, size_t header_len, int64_t floor)

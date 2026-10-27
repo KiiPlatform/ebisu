@@ -524,6 +524,17 @@ void author_updated_callback(const kii_author_t* author, void* userdata)
 }
 ```
 
+<a name="clock"></a>
+## Keep the time
+
+A device without a real-time clock needs the time to check the server's
+certificate in its socket callbacks. The handler and the updater give a
+`kii_clock_t` the time each response states, with `tio_handler_set_clock()` and
+`tio_updater_set_clock()`. They run in tasks of their own, so a clock they share
+needs a lock, set by `kii_clock_set_cb_lock()`. That has to be a lock of its own,
+not the session's. The [kii README](../kii/README.md#the-time) describes the
+clock and how the socket callbacks use it.
+
 <a name="execute-onboarding"></a>
 ## Execute onboarding
 

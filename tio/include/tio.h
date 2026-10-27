@@ -755,6 +755,18 @@ const tio_author_t* tio_handler_get_author(
 tio_code_t tio_handler_set_session(tio_handler_t* handler, kii_session_t* session);
 
 /**
+ * \brief Give a clock the time each of the handler's responses states.
+ *
+ * See kii_set_clock(). The handler and the updater may share one clock, with a
+ * lock set by kii_clock_set_cb_lock(): they run in tasks of their own.
+ *
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] clock Clock to set, or NULL.
+ * \return TIO_ERR_FAIL if the clock has no monotonic clock.
+ */
+tio_code_t tio_handler_set_clock(tio_handler_t* handler, kii_clock_t* clock);
+
+/**
  * \brief Start tio_handler task.
  *
  * You can start tio_handler task by this method.
@@ -1151,6 +1163,17 @@ const tio_author_t* tio_updater_get_author(
  * \return TIO_ERR_FAIL if the session has no lock or clock set.
  */
 tio_code_t tio_updater_set_session(tio_updater_t* updater, kii_session_t* session);
+
+/**
+ * \brief Give a clock the time each of the updater's responses states.
+ *
+ * See tio_handler_set_clock().
+ *
+ * \param [out] updater tio_updater_t instance.
+ * \param [in] clock Clock to set, or NULL.
+ * \return TIO_ERR_FAIL if the clock has no monotonic clock.
+ */
+tio_code_t tio_updater_set_clock(tio_updater_t* updater, kii_clock_t* clock);
 
 /**
  * \brief Start tio_updater task.

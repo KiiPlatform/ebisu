@@ -316,6 +316,11 @@ tio_code_t tio_handler_set_session(tio_handler_t* handler, kii_session_t* sessio
     return _set_session(&handler->_kii, session);
 }
 
+tio_code_t tio_handler_set_clock(tio_handler_t* handler, kii_clock_t* clock)
+{
+    return _tio_convert_code(kii_set_clock(&handler->_kii, clock));
+}
+
 tio_code_t tio_handler_start(
         tio_handler_t* handler,
         const tio_author_t* author,
@@ -602,6 +607,11 @@ const tio_author_t* tio_updater_get_author(
 tio_code_t tio_updater_set_session(tio_updater_t* updater, kii_session_t* session)
 {
     return _set_session(&updater->_kii, session);
+}
+
+tio_code_t tio_updater_set_clock(tio_updater_t* updater, kii_clock_t* clock)
+{
+    return _tio_convert_code(kii_set_clock(&updater->_kii, clock));
 }
 
 tio_code_t tio_updater_start(

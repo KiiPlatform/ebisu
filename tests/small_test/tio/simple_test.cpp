@@ -145,3 +145,27 @@ TEST_CASE( "tio_updater_start without a task-create callback" ) {
 
     REQUIRE( tio_updater_start(&updater, &author, NULL, NULL, NULL, NULL) == TIO_ERR_CREATE_TASK );
 }
+
+namespace {
+uint64_t clock_now_ms(void*) { return 0; }
+}
+
+TEST_CASE( "The handler and the updater give a clock the time, through their kii_t" ) {
+    tio_handler_t handler;
+    tio_updater_t updater;
+    tio_handler_init(&handler);
+    tio_updater_init(&updater);
+
+    kii_clock_t clock;
+    kii_clock_init(&clock, NULL, NULL);
+    CHECK( tio_handler_set_clock(&handler, &clock) == TIO_ERR_FAIL );
+    CHECK( tio_updater_set_clock(&updater, &clock) == TIO_ERR_FAIL );
+    CHECK( handler._kii._clock == NULL );
+    CHECK( updater._kii._clock == NULL );
+
+    kii_clock_init(&clock, clock_now_ms, NULL);
+    CHECK( tio_handler_set_clock(&handler, &clock) == TIO_ERR_OK );
+    CHECK( tio_updater_set_clock(&updater, &clock) == TIO_ERR_OK );
+    CHECK( handler._kii._clock == &clock );
+    CHECK( updater._kii._clock == &clock );
+}

@@ -321,6 +321,40 @@ call's response, for a device without a real-time clock: khc's
 describes. It is as trustworthy as the connection it came through, so verify
 the server's certificate in the socket callbacks.
 
+## The time
+
+A device without a real-time clock needs the time to check the validity period
+of the server's certificate in its socket callbacks. A `kii_clock_t` keeps it.
+Until a server states its time, it has a floor: a time it is known not to be
+earlier than. From the first response on, it has the time the response states,
+counted on with the monotonic clock.
+
+```c
+    kii_clock_t clock;
+    kii_clock_init(&clock, monotonic_ms_cb_impl, NULL);
+    // Needed when kii_t of more than one task share the clock. Not the
+    // session's lock: the socket callbacks may use the clock while kii holds
+    // that one.
+    kii_clock_set_cb_lock(&clock, lock_cb_impl, unlock_cb_impl, &clock_mutex);
+    // A time the device saved before, if any. Without one, the floor is
+    // shortly before the library's source was built.
+    kii_clock_set_floor(&clock, saved_time);
+    kii_set_clock(&kii, &clock);
+```
+
+The socket callbacks then check the server's certificate against it:
+
+- `kii_clock_check_validity()` checks a validity period. With the floor only, a
+  certificate that ended before it has expired, but one that starts later
+  cannot be told from one that is valid now, so only the end is checked.
+  `khc_seconds_since_epoch()` converts the dates a TLS stack gives.
+- `kii_clock_get_time()` gives the time, and whether it is the time or only the
+  floor, for a TLS stack that checks validity itself: give it the time, and
+  while it is only the floor, ignore a certificate not being valid yet.
+
+The chain and the host name are checked in full either way: the clock only
+decides the validity period.
+
 ## Building
 
 `kii` is built as part of ebisu, as described in the
