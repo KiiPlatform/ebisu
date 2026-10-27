@@ -16,6 +16,7 @@ $(NAME)_SOURCES := ./tio_demo.c \
                    ./tio/jkii.c \
                    ./tio/jsmn.c \
                    ./tio/khc.c \
+                   ./tio/khc_http_date.c \
                    ./tio/khc_impl.c \
                    ./tio/khc_slist.c \
                    ./tio/khc_state_impl.c \
@@ -29,6 +30,7 @@ $(NAME)_SOURCES := ./tio_demo.c \
                    ./tio/kii_push_impl.c \
                    ./tio/kii_req_impl.c \
                    ./tio/kii_server_code.c \
+                   ./tio/kii_session.c \
                    ./tio/kii_thing.c \
                    ./tio/kii_thing_impl.c \
                    ./tio/kii_ti.c \

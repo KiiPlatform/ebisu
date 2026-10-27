@@ -24,6 +24,7 @@ all:
 	cp ./*.c $(TARGET_DIR)
 	cp ./*.h $(TARGET_DIR)
 	cp -r ccs/. $(TARGET_DIR)
+	sh ../../version/ebisu_version.sh $(TARGET_DIR)/ebisu_version.h
 
 clean:
 	rm -rf $(TARGET_DIR)

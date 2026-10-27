@@ -16,6 +16,8 @@ How to install these two tools are described in the document.
 The build steps are followings:
 
   1. Run make command on this folder. freertos\_ebisu\_demo folder is created.
+     It also writes ebisu\_version.h there, with the version `git describe` gives,
+     or 0.0.0 outside a git clone: run it where `sh` and `git` are found.
   1. Import freertos\_ebisu\_demo folder as CCS Project from CCS.
   1. Replace KII\_APP\_ID, KII\_APP\_HOST, VENDOR\_THING\_ID and THING\_PASSWORD in main.c to yours.
   1. Build sample application on CCS.

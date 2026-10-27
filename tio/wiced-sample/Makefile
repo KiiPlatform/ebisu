@@ -13,6 +13,7 @@ all:
 	cp ../*.c tio_iot/tio
 	cp ../*.h tio_iot/tio
 	cp ../include/*.h tio_iot/tio
+	sh ../../version/ebisu_version.sh tio_iot/tio/ebisu_version.h
 	cp ./*.c tio_iot
 	cp ./*.h tio_iot
 	cp ./tio_iot.mk tio_iot
