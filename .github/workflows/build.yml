@@ -258,3 +258,32 @@ jobs:
         with:
           report_paths: "**/test-results/junit/*.xml"
           check_name: JUnit Test Report (${{ matrix.name }})
+
+  # The embedded samples (GT202, WICED, CC3200) are built with their vendors'
+  # tools, from the files their Makefiles copy, and not with CMake. Those SDKs
+  # cannot be downloaded here, so this builds what of the samples is ebisu's as
+  # their builds do: the same files and include paths, for the boards'
+  # Cortex-M4, linked whole so that a source a build leaves out fails. It also
+  # checks that the version header their Makefiles write is the one CMake does.
+  samples:
+    name: samples (Cortex-M4, arm-none-eabi)
+    runs-on: ubuntu-latest
+    env:
+      APP_ID: ""
+      DEFAULT_SITE: ""
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Fetch tags
+        run: git fetch --unshallow --tags --force
+      - name: Setup build env
+        run: |
+          sudo apt-get -yq update
+          sudo apt-get -yq install --no-install-recommends cmake gcc-arm-none-eabi libnewlib-arm-none-eabi
+      # Only for the header CMake generates, to compare with the samples'.
+      - name: configure
+        run: cmake --preset debug -DBUILD_TESTING=OFF
+      - name: version header
+        run: tests/samples/check_version_header.sh build/debug/generated/ebisu_version.h
+      - name: build the samples' ebisu sources
+        run: tests/samples/cross_build.sh

@@ -24,6 +24,8 @@ describes how to configure terminal application to connect the board.
 
 ## Installation
 * Clone this repository and run make command on this directory, tio\_iot sub folder is created.  
+  It also writes ebisu\_version.h there, with the version `git describe` gives,
+  or 0.0.0 outside a git clone: run it where `sh` and `git` are found.
 * Copy tio\_iot folder to WICED-Studio-[version]/43xxx\_Wi-Fi/apps/demo.
 * Change wifi configuration "CLIENT\_AP\_\*" in tio\_iot/wifi\_config\_dct.h.
 * Change application setting "KII\_APP\_\*" and "VENDOR\_\*" in tio\_iot/tio\_demo.c.

@@ -26,6 +26,8 @@ C:\Freescale\Freescale\_MQX\_4\_1\demo\throughput\_demo\custom
 The build steps are followings:
 
   1. Run make command on this directory. custom sub directory created.
+     It also writes ebisu\_version.h there, with the version `git describe` gives,
+     or 0.0.0 outside a git clone: run it where `sh` and `git` are found.
   1. Copy all files in custom directory except to
   C:\Freescale\Freescale\_MQX\_4\_1\demo\throughput\_demo\custom.
   1. Open IAR workbench for ARM. 

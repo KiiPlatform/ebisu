@@ -13,6 +13,7 @@ all:
 	cp ../*.c custom/tio
 	cp ../*.h custom/tio
 	cp ../include/*.h custom/tio
+	sh ../../version/ebisu_version.sh custom/tio/ebisu_version.h
 	cp ./*.c custom
 	cp ./*.h custom
 
