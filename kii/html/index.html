@@ -334,7 +334,7 @@ The time</h1>
 <li><code><a class="el" href="kii_8h.html#a640db65a0bd20739d73956ec548d04ef" title="Forget the time, keeping what was counted as the floor.">kii_clock_forget_time()</a></code>, when the server's certificate is refused as not valid yet while the clock had the time. That suggests the time fell behind, the monotonic clock having stopped while the device slept and the server having renewed its certificate meanwhile. Forgotten, the time becomes a lower bound, the next connection goes through, and its response gives the clock the time again. Without it, the connection that would bring the time is refused, again and again.</li>
 </ul>
 <p>The chain and the host name are checked in full either way: the clock only decides the validity period.</p>
-<p>The socket callbacks of the <a href="../tio/linux-sample/sock_cb_linux.c">Linux</a> and <a href="../tio/win32-sample/sock_cb_win32.c">Win32</a> samples give their TLS stack the time, and the <a href="../tio/esp32-sample/main/sock_cb_esp32.c">ESP32</a> sample's check the validity periods themselves, mbedTLS not checking them.</p>
+<p>The socket callbacks of the <a href="../tio/linux-sample/sock_cb_linux.c">Linux</a> and <a href="../tio/win32-sample/sock_cb_win32.c">Win32</a> samples give their TLS stack the time, and those of the <a href="../tio/esp32-sample/main/sock_cb_esp32.c">ESP32</a> and <a href="../tio/freertos-sample/sock_cb_freertos.c">FreeRTOS</a> samples check the validity periods themselves, mbedTLS not checking them: the ESP32 one after the handshake, the FreeRTOS one during it, in mbedTLS's verify callback.</p>
 <p>A device that runs for a long time has the time again with every HTTP response. One that makes none for a while, only MQTT ones, has its time turn into a lower bound 24 hours after the last (<code><a class="el" href="kii_8h.html#a009f50aaf42f0914cbe66fda11a4b58b" title="Set how long a time given stays exact.">kii_clock_set_exact_for()</a></code> changes that), and a monotonic clock that goes back turns it into the floor: a monotonic clock drifts, and one cannot count on from a time when it goes back. A stale clock therefore never refuses a certificate as not yet valid, which could keep the device from connecting at all. The monotonic clock has to keep counting while the device sleeps, or the time falls behind while it still counts as exact. Saving the time now and then, and setting it with <code><a class="el" href="kii_8h.html#ada54df3e72787cbf9ffbd70b3aca9b7c" title="Raise the time the clock is known not to be earlier than.">kii_clock_set_floor()</a></code> after a restart, keeps the floor close to the time.</p>
 <h1><a class="anchor" id="autotoc_md10"></a>
 Building</h1>
@@ -343,7 +343,7 @@ Building</h1>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 27 2026 19:09:28 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 27 2026 20:20:21 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
