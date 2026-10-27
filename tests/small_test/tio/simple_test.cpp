@@ -160,8 +160,8 @@ TEST_CASE( "The handler and the updater give a clock the time, through their kii
     kii_clock_init(&clock, NULL, NULL);
     CHECK( tio_handler_set_clock(&handler, &clock) == TIO_ERR_FAIL );
     CHECK( tio_updater_set_clock(&updater, &clock) == TIO_ERR_FAIL );
-    CHECK( handler._kii._clock == NULL );
-    CHECK( updater._kii._clock == NULL );
+    CHECK( handler._kii._clock == nullptr );
+    CHECK( updater._kii._clock == nullptr );
 
     kii_clock_init(&clock, clock_now_ms, NULL);
     CHECK( tio_handler_set_clock(&handler, &clock) == TIO_ERR_OK );

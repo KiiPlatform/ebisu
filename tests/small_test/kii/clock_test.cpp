@@ -173,14 +173,14 @@ TEST_CASE( "kii_set_clock() needs a monotonic clock" ) {
     kii_clock_t clock;
     kii_clock_init(&clock, NULL, NULL);
     CHECK( kii_set_clock(&kii, &clock) == KII_ERR_FAIL );
-    CHECK( kii._clock == NULL );
+    CHECK( kii._clock == nullptr );
 
     Platform p;
     kii_clock_init(&clock, now_ms, &p);
     CHECK( kii_set_clock(&kii, &clock) == KII_ERR_OK );
     CHECK( kii._clock == &clock );
     CHECK( kii_set_clock(&kii, NULL) == KII_ERR_OK );
-    CHECK( kii._clock == NULL );
+    CHECK( kii._clock == nullptr );
 }
 
 namespace {
