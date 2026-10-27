@@ -14,7 +14,10 @@
 #define ipconfigUSE_DNS 1
 #define ipconfigUSE_DNS_CACHE 1
 #define ipconfigDNS_CACHE_ENTRIES 4
-#define ipconfigDNS_CACHE_NAME_LENGTH 64
+/* ipconfigDNS_CACHE_NAME_LENGTH stays at its default, the longest name DNS
+   has: it bounds every name in a reply, those a CNAME leads to included, and
+   one too long fails the lookup. Kii Cloud's MQTT host is a CNAME of a load
+   balancer's name of 69 characters. */
 #define ipconfigUSE_TCP 1
 
 /* vApplicationIPNetworkEventHook_Multi() tells the application the network is
