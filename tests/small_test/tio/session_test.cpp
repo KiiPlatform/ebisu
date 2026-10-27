@@ -99,7 +99,7 @@ TEST_CASE( "The updater uploads again when its token was renewed" ) {
     http.attach(&updater._kii);
     REQUIRE( tio_updater_set_session(&updater, &session) == TIO_ERR_OK );
     // tio's tokens come from onboarding, and are renewed by onboarding again.
-    REQUIRE( session._renew_by_onboarding == KII_TRUE );
+    REQUIRE( session._renew_mode == KII_RENEW_BY_ONBOARDING );
 
     State state = { "{\"alias\":{\"power\":true}}", 0, 0 };
     updater._cb_state_size = state_size;
