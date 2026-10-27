@@ -15,6 +15,10 @@ void _reset_khc(kii_t* kii);
 
 void _req_headers_free_all(kii_t* kii);
 
+/* Gives the clock set with kii_set_clock(), if any, the date of the response
+ * just read. */
+void _kii_clock_record(kii_t* kii);
+
 int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len);
 
 extern const char _APP_KEY_HEADER[];

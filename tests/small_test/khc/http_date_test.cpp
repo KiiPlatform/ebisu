@@ -323,7 +323,11 @@ TEST_CASE( "Every day from 1970 to 2400 is read as the calendar counts it" ) {
             }
         }
         std::string failed;
-        if (parse("Date: " + written(IMF, d, d.weekday, hour, minute, second)) != expected) {
+        int64_t converted = -1;
+        if (!khc_seconds_since_epoch(d.year, d.month, d.day, hour, minute, second, &converted) ||
+                converted != expected) {
+            failed = "khc_seconds_since_epoch: " + written(IMF, d, d.weekday, hour, minute, second);
+        } else if (parse("Date: " + written(IMF, d, d.weekday, hour, minute, second)) != expected) {
             failed = written(IMF, d, d.weekday, hour, minute, second);
         } else if (parse("Date: " + written(IMF, d, other_day, hour, minute, second)) != -2) {
             failed = written(IMF, d, other_day, hour, minute, second);
@@ -601,4 +605,42 @@ TEST_CASE( "khc_init() sets a floor shortly before the source was built" ) {
         REQUIRE( h.get() == KHC_ERR_OK );
         CHECK( khc_get_resp_date(&h.http) == e );
     }
+}
+
+TEST_CASE( "khc_seconds_since_epoch() converts UTC dates and times, before 1970 too" ) {
+    int64_t s = 0;
+    CHECK( khc_seconds_since_epoch(1970, 1, 1, 0, 0, 0, &s) );
+    CHECK( s == 0 );
+    CHECK( khc_seconds_since_epoch(1994, 11, 6, 8, 49, 37, &s) );
+    CHECK( s == 784111777 );
+    CHECK( khc_seconds_since_epoch(1969, 12, 31, 23, 59, 59, &s) );
+    CHECK( s == -1 );
+    CHECK( khc_seconds_since_epoch(1900, 3, 1, 0, 0, 0, &s) );
+    CHECK( s == -2203891200LL );
+    CHECK( khc_seconds_since_epoch(1600, 2, 29, 12, 0, 0, &s) );
+    CHECK( s == -11670955200LL );
+    CHECK( khc_seconds_since_epoch(1, 1, 1, 0, 0, 0, &s) );
+    CHECK( s == -62135596800LL );
+    CHECK( khc_seconds_since_epoch(9999, 12, 31, 23, 59, 59, &s) );
+    CHECK( s == 253402300799LL );
+    CHECK( khc_seconds_since_epoch(2016, 12, 31, 23, 59, 60, &s) );
+    CHECK( s == 1483228800 );
+
+    s = 12345;
+    const int refused[][6] = {
+        { 0, 1, 1, 0, 0, 0 }, { 10000, 1, 1, 0, 0, 0 },
+        { 2024, 0, 1, 0, 0, 0 }, { 2024, 13, 1, 0, 0, 0 },
+        { 2024, 1, 0, 0, 0, 0 }, { 2024, 4, 31, 0, 0, 0 },
+        { 2025, 2, 29, 0, 0, 0 }, { 1900, 2, 29, 0, 0, 0 },
+        { 2024, 1, 1, 24, 0, 0 }, { 2024, 1, 1, -1, 0, 0 },
+        { 2024, 1, 1, 0, 60, 0 }, { 2024, 1, 1, 0, 0, 61 },
+        { 2024, 1, 1, 12, 0, 60 }, { 2024, 1, 1, 0, 0, -1 },
+    };
+    for (const auto& f : refused) {
+        INFO( f[0] << "-" << f[1] << "-" << f[2] << " " << f[3] << ":" << f[4] << ":" << f[5] );
+        CHECK_FALSE( khc_seconds_since_epoch(f[0], f[1], f[2], f[3], f[4], f[5], &s) );
+    }
+    // Refused, it leaves the output alone.
+    CHECK( s == 12345 );
+    CHECK_FALSE( khc_seconds_since_epoch(2024, 1, 1, 0, 0, 0, NULL) );
 }

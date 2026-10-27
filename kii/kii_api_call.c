@@ -126,6 +126,7 @@ kii_code_t _req_send(kii_t* kii)
     }
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
     khc_code code = _kii_perform(kii);
+    _kii_clock_record(kii);
     _req_headers_free_all(kii);
 
     return _convert_code(code);

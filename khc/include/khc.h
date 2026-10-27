@@ -621,6 +621,32 @@ uint16_t khc_get_status_code(
 int64_t khc_get_resp_date(khc* khc);
 
 /**
+ * \brief Convert a UTC date and time to seconds since the epoch.
+ *
+ * The date of the Gregorian calendar, as a TLS stack gives a certificate's
+ * validity dates, for kii_clock_check_validity() for instance. Integer
+ * arithmetic only, without the C library's time functions.
+ *
+ * \param [in] year 1 to 9999.
+ * \param [in] month 1 to 12.
+ * \param [in] day 1 to the length of the month.
+ * \param [in] hour 0 to 23.
+ * \param [in] minute 0 to 59.
+ * \param [in] second 0 to 59, or 60 at 23:59 for a leap second.
+ * \param [out] out_seconds Seconds since 1970-01-01T00:00:00Z, negative before
+ * it.
+ * \returns true if converted, false if a field is out of range.
+ */
+bool khc_seconds_since_epoch(
+        int year,
+        int month,
+        int day,
+        int hour,
+        int minute,
+        int second,
+        int64_t* out_seconds);
+
+/**
  * \brief Check if the configured request method can have a request body.
  *
  * \param [in] khc instance.

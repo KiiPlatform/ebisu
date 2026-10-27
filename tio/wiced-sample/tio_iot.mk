@@ -22,6 +22,7 @@ $(NAME)_SOURCES := ./tio_demo.c \
                    ./tio/khc_state_impl.c \
                    ./tio/kii.c \
                    ./tio/kii_api_call.c \
+                   ./tio/kii_clock.c \
                    ./tio/kii_json_wrapper.c \
                    ./tio/kii_mqtt_task.c \
                    ./tio/kii_object.c \
