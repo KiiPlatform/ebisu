@@ -185,6 +185,8 @@ Implementations to start from:
 - [win32-sample](../tio/win32-sample/sock_cb_win32.c): Winsock and Schannel.
 - [esp32-sample](../tio/esp32-sample/main/sock_cb_esp32.c): ESP-IDF's esp-tls,
   mbedTLS over lwIP.
+- [freertos-sample](../tio/freertos-sample/sock_cb_freertos.c): mbedTLS over
+  FreeRTOS-Plus-TCP.
 
 ## Results
 
