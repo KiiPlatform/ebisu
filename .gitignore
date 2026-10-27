@@ -42,6 +42,10 @@ tests/small_test/tio/small-test
 tests/large_test/khc/large-test
 tests/large_test/kii/testapp
 test-results/
+# CTest's dashboard results, which ctest -T writes in the directory it runs in.
+Testing/
+# Written by the khc small tests into the directory they run in.
+tmp_random_chunk_response.txt
 
 # Doxygen output.
 html/
