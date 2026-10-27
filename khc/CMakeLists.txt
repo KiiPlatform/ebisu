@@ -14,6 +14,10 @@ ebisu_configure_target(ebisu_khc_objs)
 add_library(khc $<TARGET_OBJECTS:ebisu_khc_objs>)
 target_include_directories(khc
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+# Versioned like libkii and libtio. Without it the soname was plain libkhc.so,
+# so a program linked against libkhc recorded no major version and would load
+# one with a different ABI without a word.
+set_target_properties(khc PROPERTIES VERSION ${version} SOVERSION ${soversion})
 ebisu_configure_target(khc)
 
 file(GLOB khc_hdrs CONFIGURE_DEPENDS include/*.h)
