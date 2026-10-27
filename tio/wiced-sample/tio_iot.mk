@@ -16,6 +16,7 @@ $(NAME)_SOURCES := ./tio_demo.c \
                    ./tio/jkii.c \
                    ./tio/jsmn.c \
                    ./tio/khc.c \
+                   ./tio/khc_http_date.c \
                    ./tio/khc_impl.c \
                    ./tio/khc_slist.c \
                    ./tio/khc_state_impl.c \
