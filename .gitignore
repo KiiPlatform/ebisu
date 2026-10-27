@@ -24,6 +24,13 @@ build-tio/
 CMakeCache.txt
 CMakeFiles/
 
+# The ESP32 sample's ESP-IDF builds and their configuration.
+/tio/esp32-sample/build*/
+/tio/esp32-sample/sdkconfig
+/tio/esp32-sample/sdkconfig.old
+/tio/esp32-sample/managed_components/
+/tio/esp32-sample/dependencies.lock
+
 # Test binaries and results.
 tests/small_test/khc/testapp
 tests/small_test/kii/small-test
