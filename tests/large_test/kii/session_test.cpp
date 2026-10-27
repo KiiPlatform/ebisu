@@ -158,7 +158,7 @@ TEST_CASE( "The session renews a token the server refuses" ) {
         REQUIRE( kii_auth_thing(&kii, vid.c_str(), password) == KII_ERR_OK );
         const kii_author_t logged_in = held(&session);
         REQUIRE_FALSE( empty(logged_in.refresh_token) );
-        CHECK( session._renew_by_onboarding == KII_FALSE );
+        CHECK( session._renew_mode == KII_RENEW_BY_TOKEN_ENDPOINT );
 
         sent.data.clear();
         spoil(&session);

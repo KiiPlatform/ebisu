@@ -189,6 +189,16 @@ typedef struct kii_author_t
  */
 typedef void (*KII_CB_AUTHOR_UPDATED)(const kii_author_t* author, void* userdata);
 
+/** \brief How a session renews the token it holds. */
+typedef enum kii_renew_mode_t {
+    /** \brief Through Kii Cloud's token endpoint: with the refresh token, or
+     * with the thing's password when there is none or it is refused. */
+    KII_RENEW_BY_TOKEN_ENDPOINT,
+    /** \brief By onboarding again through Thing-IF, with the thing's
+     * credentials. */
+    KII_RENEW_BY_ONBOARDING
+} kii_renew_mode_t;
+
 /**
  * \brief Tokens shared by the kii_t instances acting as the same thing.
  *
@@ -221,9 +231,8 @@ typedef struct kii_session_t {
     uint64_t _stored_at_ms;
     /** \private How long after _stored_at_ms it is renewed. */
     uint64_t _renew_after_ms;
-    /** \private Whether _author is renewed by onboarding again rather than
-     * through Kii Cloud's token endpoint. */
-    kii_bool_t _renew_by_onboarding;
+    /** \private How _author is renewed. */
+    kii_renew_mode_t _renew_mode;
     const char* _vendor_thing_id; /**< \private */
     const char* _password; /**< \private */
     /** \private How long after _password_refused_at_ms _password is tried
@@ -670,11 +679,23 @@ void kii_session_set_author(kii_session_t* session, const kii_author_t* author);
 /**
  * \brief Set how the session renews the token it holds.
  *
- * kii_ti_onboard() through an attached kii_t sets it to onboarding again, and
- * kii_auth_thing() and kii_register_thing() to the token endpoint, each for the
- * token it obtains; renewals keep it. Set it after kii_session_set_author()
- * when restoring an author onboarding obtained, which would otherwise be
- * renewed through the token endpoint.
+ * kii_ti_onboard() through an attached kii_t sets it to
+ * KII_RENEW_BY_ONBOARDING, and kii_auth_thing() and kii_register_thing() to
+ * KII_RENEW_BY_TOKEN_ENDPOINT, each for the token it obtains; renewals keep it.
+ * Set it after kii_session_set_author() when restoring an author onboarding
+ * obtained, which would otherwise be renewed through the token endpoint.
+ *
+ * \param [out] session kii_session_t instance.
+ * \param [in] mode How to renew it. A value this version does not know is
+ * ignored, and the mode left as it was.
+ */
+void kii_session_set_renew_mode(kii_session_t* session, kii_renew_mode_t mode);
+
+/**
+ * \brief Set whether the session renews the token it holds by onboarding again.
+ *
+ * kii_session_set_renew_mode() with KII_RENEW_BY_ONBOARDING for KII_TRUE, and
+ * KII_RENEW_BY_TOKEN_ENDPOINT for KII_FALSE.
  *
  * \param [out] session kii_session_t instance.
  * \param [in] by_onboarding KII_TRUE to renew by onboarding again through

@@ -156,8 +156,8 @@ logging in. The callbacks:
 
 To restore a saved author, give it to the session with
 `kii_session_set_author()`. If onboarding obtained it,
-also call `kii_session_set_renew_by_onboarding()`, or the session renews it
-through Kii Cloud's token endpoint.
+also call `kii_session_set_renew_mode()` with `KII_RENEW_BY_ONBOARDING`, or the
+session renews it through Kii Cloud's token endpoint.
 
 The [tio README](https://github.com/KiiPlatform/ebisu/blob/master/tio/README.md) has lock
 and clock implementations for `pthread`.

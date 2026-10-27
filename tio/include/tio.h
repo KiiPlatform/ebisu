@@ -745,7 +745,7 @@ const tio_author_t* tio_handler_get_author(
  * The session renews the token by onboarding again through Thing-IF, with the
  * credentials set by kii_session_set_password(), whenever the server refuses
  * it, and the handler gets new MQTT credentials the same way when the broker
- * refuses them; see kii_session_set_renew_by_onboarding(). tio reaches Kii
+ * refuses them; see kii_session_set_renew_mode(). tio reaches Kii
  * Cloud's own API for neither.
  *
  * \param [out] handler tio_handler_t instance.
@@ -1155,7 +1155,7 @@ const tio_author_t* tio_updater_get_author(
  * The session renews the token by onboarding again through Thing-IF, with the
  * credentials set by kii_session_set_password(), whenever the server refuses
  * it, and the handler gets new MQTT credentials the same way when the broker
- * refuses them; see kii_session_set_renew_by_onboarding(). tio reaches Kii
+ * refuses them; see kii_session_set_renew_mode(). tio reaches Kii
  * Cloud's own API for neither.
  *
  * \param [out] updater tio_updater_t instance.

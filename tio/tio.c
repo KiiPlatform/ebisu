@@ -306,7 +306,7 @@ static tio_code_t _set_session(kii_t* kii, kii_session_t* session)
 {
     kii_code_t res = kii_set_session(kii, session);
     if (res == KII_ERR_OK && session != NULL) {
-        kii_session_set_renew_by_onboarding(session, KII_TRUE);
+        kii_session_set_renew_mode(session, KII_RENEW_BY_ONBOARDING);
     }
     return _tio_convert_code(res);
 }

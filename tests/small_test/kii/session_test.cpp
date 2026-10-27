@@ -804,7 +804,7 @@ TEST_CASE( "A token onboarding obtained is renewed by onboarding again" ) {
     REQUIRE( std::string(first.access_token) == "at1" );
     REQUIRE( std::string(first.refresh_token) == "" );
     REQUIRE( session._renew_at_known == KII_FALSE );
-    REQUIRE( session._renew_by_onboarding == KII_TRUE );
+    REQUIRE( session._renew_mode == KII_RENEW_BY_ONBOARDING );
 
     // Refused, it onboards again, and the request is sent again.
     c.http.responses.push_back(REFUSED);
@@ -898,7 +898,7 @@ TEST_CASE( "How the token was obtained decides how it is renewed" ) {
             refreshed("at2", "rt2", 100), REFUSED, refreshed("at3", "rt3", 100), DONE };
         REQUIRE( kii_ti_onboard(&c.kii, "vid", "pw", NULL, NULL, NULL, NULL) == KII_ERR_OK );
         REQUIRE( kii_auth_thing(&c.kii, "vid", "pw") == KII_ERR_OK );
-        REQUIRE( session._renew_by_onboarding == KII_FALSE );
+        REQUIRE( session._renew_mode == KII_RENEW_BY_TOKEN_ENDPOINT );
         REQUIRE( c.put(BODY) == KII_ERR_OK );
         REQUIRE( c.http.requests.size() == 5 );
         REQUIRE( contains(c.http.requests[3], "\"refresh_token\":\"rt2\"") );
@@ -908,8 +908,8 @@ TEST_CASE( "How the token was obtained decides how it is renewed" ) {
     SECTION("a restored author is renewed by onboarding when told so") {
         kii_author_t saved = make_author("th.1", "at1", "");
         kii_session_set_author(&session, &saved);
-        REQUIRE( session._renew_by_onboarding == KII_FALSE );
-        kii_session_set_renew_by_onboarding(&session, KII_TRUE);
+        REQUIRE( session._renew_mode == KII_RENEW_BY_TOKEN_ENDPOINT );
+        kii_session_set_renew_mode(&session, KII_RENEW_BY_ONBOARDING);
         c.http.responses = { REFUSED, onboarded("at2"), DONE };
         REQUIRE( c.put(BODY) == KII_ERR_OK );
         REQUIRE( c.http.requests.size() == 3 );
@@ -1396,4 +1396,31 @@ TEST_CASE( "Refused MQTT credentials are renewed by onboarding again" ) {
         REQUIRE( c.http.requests.size() == 2 );
         CHECK( contains(c.http.requests[1], "/installations/ins.1/mqtt-endpoint") );
     }
+}
+
+TEST_CASE( "The renewal mode is set by name, and an unknown one is ignored" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    REQUIRE( session._renew_mode == KII_RENEW_BY_TOKEN_ENDPOINT );
+
+    kii_session_set_renew_mode(&session, KII_RENEW_BY_ONBOARDING);
+    CHECK( session._renew_mode == KII_RENEW_BY_ONBOARDING );
+    // A mode a later version adds means nothing to this one: left as it was.
+    kii_session_set_renew_mode(&session, (kii_renew_mode_t)(KII_RENEW_BY_ONBOARDING + 1));
+    CHECK( session._renew_mode == KII_RENEW_BY_ONBOARDING );
+    kii_session_set_renew_mode(&session, (kii_renew_mode_t)-1);
+    CHECK( session._renew_mode == KII_RENEW_BY_ONBOARDING );
+    kii_session_set_renew_mode(&session, KII_RENEW_BY_TOKEN_ENDPOINT);
+    CHECK( session._renew_mode == KII_RENEW_BY_TOKEN_ENDPOINT );
+
+    // The setter of before, in its terms.
+    kii_session_set_renew_by_onboarding(&session, KII_TRUE);
+    CHECK( session._renew_mode == KII_RENEW_BY_ONBOARDING );
+    kii_session_set_renew_by_onboarding(&session, KII_FALSE);
+    CHECK( session._renew_mode == KII_RENEW_BY_TOKEN_ENDPOINT );
+
+    // Each with the lock held.
+    CHECK( platform.depth == 0 );
+    CHECK( platform.max_depth == 1 );
 }

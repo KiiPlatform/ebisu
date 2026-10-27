@@ -25,7 +25,7 @@ void _kii_session_sync(kii_t* kii);
  * the token's lifetime as the response gave it, or 0 when it gave none. One
  * that is not positive or exceeds UINT32_MAX seconds leaves the expiry
  * unknown, as 0 does. */
-void _kii_session_publish(kii_t* kii, int64_t expires_in_sec, kii_bool_t by_onboarding);
+void _kii_session_publish(kii_t* kii, int64_t expires_in_sec, kii_renew_mode_t mode);
 
 /* Whether kii's session renews its token by onboarding again. */
 kii_bool_t _kii_session_renews_by_onboarding(kii_t* kii);
