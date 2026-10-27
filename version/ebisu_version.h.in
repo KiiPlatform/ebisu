@@ -13,5 +13,12 @@
  * stay numeric for the VERSION and SOVERSION target properties.
  */
 #define EBISU_VERSION_FULL "@version_full@"
+/**
+ * \brief When the source built was committed, in seconds since the epoch.
+ *
+ * Nothing built from it can run earlier. Outside git, a fixed date no later
+ * than the source.
+ */
+#define EBISU_SOURCE_TIME @source_time@LL
 
 #endif

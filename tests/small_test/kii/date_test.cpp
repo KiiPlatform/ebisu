@@ -1,6 +1,7 @@
 #include "catch.hpp"
 #include "kii.h"
 #include "kii_impl.h"
+#include "ebisu_version.h"
 #include "test_callbacks.h"
 
 #include <functional>
@@ -13,12 +14,18 @@
 namespace {
 
 const char* const DAY_NAMES[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+const char* const DAY_NAMES_LONG[] = {
+    "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+};
 const char* const MONTH_NAMES[] = {
     "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 };
 
-int64_t parse(const std::string& header) {
-    return _parse_date(header.data(), header.size());
+// 2026-01-01T00:00:00Z
+const int64_t Y2026 = 1767225600;
+
+int64_t parse(const std::string& header, int64_t floor = 0) {
+    return _parse_date(header.data(), header.size(), floor);
 }
 
 // The checks below compare the parser with a calendar of their own, which walks
@@ -54,17 +61,34 @@ struct Day {
     }
 };
 
-std::string fixdate(const Day& d, int weekday, int hour, int minute, int second) {
+// How a date is written: the three forms of RFC 9110, and IMF-fixdate with UTC.
+enum Form { IMF, IMF_UTC, ASCTIME, ASCTIME_ZERO, RFC850 };
+
+std::string written(Form form, const Day& d, int weekday, int hour, int minute, int second) {
     char s[64];
-    snprintf(s, sizeof(s), "%s, %02d %s %04d %02d:%02d:%02d GMT",
-            DAY_NAMES[weekday], d.day, MONTH_NAMES[d.month - 1], d.year,
-            hour, minute, second);
+    const char* month = MONTH_NAMES[d.month - 1];
+    switch (form) {
+    case IMF:
+    case IMF_UTC:
+        snprintf(s, sizeof(s), "%s, %02d %s %04d %02d:%02d:%02d %s", DAY_NAMES[weekday],
+                d.day, month, d.year, hour, minute, second, (form == IMF) ? "GMT" : "UTC");
+        break;
+    case ASCTIME:
+    case ASCTIME_ZERO:
+        snprintf(s, sizeof(s), (form == ASCTIME) ? "%s %s %2d %02d:%02d:%02d %04d" : "%s %s %02d %02d:%02d:%02d %04d",
+                DAY_NAMES[weekday], month, d.day, hour, minute, second, d.year);
+        break;
+    case RFC850:
+        snprintf(s, sizeof(s), "%s, %02d-%s-%02d %02d:%02d:%02d GMT", DAY_NAMES_LONG[weekday],
+                d.day, month, d.year % 100, hour, minute, second);
+        break;
+    }
     return s;
 }
 
-// The IMF-fixdate of seconds since the epoch, counting from 1970 a year and
-// then a month at a time.
-std::string fixdate(int64_t seconds) {
+// How seconds since the epoch are written, counting from 1970 a year and then a
+// month at a time.
+std::string written(Form form, int64_t seconds) {
     Day d;
     d.since_epoch = seconds / 86400;
     d.weekday = (int)((d.since_epoch + 4) % 7);
@@ -79,7 +103,7 @@ std::string fixdate(int64_t seconds) {
     }
     d.day = (int)days + 1;
     int64_t rest = seconds % 86400;
-    return fixdate(d, d.weekday, (int)(rest / 3600), (int)(rest / 60 % 60), (int)(rest % 60));
+    return written(form, d, d.weekday, (int)(rest / 3600), (int)(rest / 60 % 60), (int)(rest % 60));
 }
 
 } // namespace
@@ -99,6 +123,8 @@ TEST_CASE( "Date headers in IMF-fixdate form are read as seconds since the epoch
     // A leap second, which ends a day.
     CHECK( parse("Date: Sat, 31 Dec 2016 23:59:60 GMT") == 1483228800 );
     CHECK( parse("Date: Tue, 30 Jun 2015 23:59:60 GMT") == 1435708800 );
+    // UTC for GMT, which some servers send.
+    CHECK( parse("Date: Sun, 06 Nov 1994 08:49:37 UTC") == 784111777 );
 
     // The name in any case, whitespace around the value or none.
     CHECK( parse("date: Sun, 06 Nov 1994 08:49:37 GMT") == 784111777 );
@@ -106,6 +132,89 @@ TEST_CASE( "Date headers in IMF-fixdate form are read as seconds since the epoch
     CHECK( parse("dAtE: Sun, 06 Nov 1994 08:49:37 GMT") == 784111777 );
     CHECK( parse("Date:Sun, 06 Nov 1994 08:49:37 GMT") == 784111777 );
     CHECK( parse("Date: \t Sun, 06 Nov 1994 08:49:37 GMT \t ") == 784111777 );
+}
+
+TEST_CASE( "Date headers in asctime() form are read, always as GMT" ) {
+    // RFC 9110's own example, the day padded with a space, or with a zero.
+    CHECK( parse("Date: Sun Nov  6 08:49:37 1994") == 784111777 );
+    CHECK( parse("Date: Sun Nov 06 08:49:37 1994") == 784111777 );
+    CHECK( parse("Date: Thu Feb 29 12:00:00 2024") == 1709208000 );
+    CHECK( parse("Date: Thu Jan  1 00:00:00 1970") == 0 );
+    CHECK( parse("Date: Sat Dec 31 23:59:60 2016") == 1483228800 );
+    CHECK( parse("Date:Sun Nov  6 08:49:37 1994 ") == 784111777 );
+
+    const char* malformed[] = {
+        // One space only before a single digit, or none.
+        "Date: Sun Nov 6 08:49:37 1994",
+        "Date: Sun Nov6 08:49:37 1994",
+        // A zone, which the form has none of.
+        "Date: Sun Nov  6 08:49:37 1994 GMT",
+        "Date: Sun Nov  6 08:49:37 GMT 1994",
+        // The day's name has to agree, and be the short one.
+        "Date: Mon Nov  6 08:49:37 1994",
+        "Date: Sunday Nov  6 08:49:37 1994",
+        // Out of range, or not digits.
+        "Date: Thu Jan  0 00:00:00 1970",
+        "Date: Sun Nov  x 08:49:37 1994",
+        "Date: Sun Nov  6 08:49:37 94",
+        "Date: Wed Dec 31 23:59:59 1969",
+    };
+    for (const char* header : malformed) {
+        INFO( header );
+        CHECK( parse(header) == -2 );
+    }
+}
+
+TEST_CASE( "Date headers in RFC 850 form are read, their year as RFC 9110 asks" ) {
+    // With a floor in 1970, the present is 1970: two digits up to 20 are a year
+    // up to 2020, and 21 to 69 more than 50 years ahead, so 1921 to 1969.
+    CHECK( parse("Date: Sunday, 06-Nov-94 08:49:37 GMT") == 784111777 );
+    CHECK( parse("Date: Thursday, 01-Jan-70 00:00:00 GMT") == 0 );
+    CHECK( parse("Date: Saturday, 01-Jan-77 00:00:00 GMT") == 220924800 );
+    CHECK( parse("Date: Monday, 15-Jun-20 12:00:00 GMT") == 1592222400 );
+    CHECK( parse("Date: Wednesday, 15-Jun-21 12:00:00 GMT") == -2 );
+    // With a floor in 2026: 26 to 76 are 2026 to 2076, 77 to 99 1977 to 1999,
+    // which the floor then refuses.
+    CHECK( parse("Date: Tuesday, 27-Oct-26 00:00:00 GMT", Y2026) == 1793059200 );
+    CHECK( parse("Date: Thursday, 31-Dec-76 23:59:59 GMT", Y2026) == 3376684799LL );
+    CHECK( parse("Date: Saturday, 01-Jan-77 00:00:00 GMT", Y2026) == -2 );
+    CHECK( parse("Date: Sunday, 06-Nov-94 08:49:37 GMT", Y2026) == -2 );
+    // Even where the day's name fits the year ahead: 2080-01-01 was a Monday,
+    // 1980-01-01 a Tuesday.
+    CHECK( parse("Date: Monday, 01-Jan-80 00:00:00 GMT", Y2026) == -2 );
+    // UTC for GMT, and whitespace around the value.
+    CHECK( parse("Date: Sunday, 06-Nov-94 08:49:37 UTC") == 784111777 );
+    CHECK( parse("Date:\tSunday, 06-Nov-94 08:49:37 GMT\t") == 784111777 );
+
+    const char* malformed[] = {
+        // The day's whole name, agreeing with the date.
+        "Date: Sun, 06-Nov-94 08:49:37 GMT",
+        "Date: Monday, 06-Nov-94 08:49:37 GMT",
+        "Date: sunday, 06-Nov-94 08:49:37 GMT",
+        "Date: Sunday 06-Nov-94 08:49:37 GMT",
+        "Date: Sunday,06-Nov-94 08:49:37 GMT",
+        // Two digits of the year, separated by dashes.
+        "Date: Sunday, 06-Nov-1994 08:49:37 GMT",
+        "Date: Sunday, 06 Nov 94 08:49:37 GMT",
+        "Date: Sunday, 06-Nov-9x 08:49:37 GMT",
+        // A zone, GMT or UTC.
+        "Date: Sunday, 06-Nov-94 08:49:37",
+        "Date: Sunday, 06-Nov-94 08:49:37 PST",
+    };
+    for (const char* header : malformed) {
+        INFO( header );
+        CHECK( parse(header) == -2 );
+    }
+}
+
+TEST_CASE( "A date earlier than the floor is not taken" ) {
+    CHECK( parse("Date: Thu, 01 Jan 2026 00:00:00 GMT", Y2026) == Y2026 );
+    CHECK( parse("Date: Wed, 31 Dec 2025 23:59:59 GMT", Y2026) == -2 );
+    CHECK( parse("Date: Wed Dec 31 23:59:59 2025", Y2026) == -2 );
+    CHECK( parse("Date: Thu, 01 Jan 1970 00:00:00 GMT", Y2026) == -2 );
+    // A floor before the epoch, or at it, refuses nothing.
+    CHECK( parse("Date: Thu, 01 Jan 1970 00:00:00 GMT", -1) == 0 );
+    CHECK( parse("Date: Thu, 01 Jan 1970 00:00:00 GMT", 0) == 0 );
 }
 
 TEST_CASE( "Other headers are not Date headers" ) {
@@ -125,30 +234,36 @@ TEST_CASE( "Other headers are not Date headers" ) {
         INFO( header );
         CHECK( parse(header) == -1 );
     }
-    CHECK( _parse_date(NULL, 0) == -1 );
-    CHECK( _parse_date(NULL, 35) == -1 );
+    CHECK( _parse_date(NULL, 0, 0) == -1 );
+    CHECK( _parse_date(NULL, 35, 0) == -1 );
 }
 
 TEST_CASE( "A Date header in another form has no date" ) {
     const char* malformed[] = {
         "Date:",
         "Date: ",
-        // The obsolete forms: RFC 850 and asctime().
-        "Date: Sunday, 06-Nov-94 08:49:37 GMT",
-        "Date: Sun Nov  6 08:49:37 1994",
         // Truncated, or followed by something else.
         "Date: Sun, 06 Nov 1994 08:49:37 GM",
         "Date: Sun, 06 Nov 1994 08:49:37 GMT+1",
         "Date: Sun, 06 Nov 1994 08:49:37 GMT x",
         "Date: Sun, 06 Nov 1994 08:49:37 GMT\r",
-        // Not GMT, or not in its case.
-        "Date: Sun, 06 Nov 1994 08:49:37 UTC",
+        // Neither GMT nor UTC, nor either in another case: no offsets, local zones
+        // or ISO 8601.
         "Date: Sun, 06 Nov 1994 08:49:37 gmt",
+        "Date: Sun, 06 Nov 1994 08:49:37 utc",
+        "Date: Sun, 06 Nov 1994 08:49:37 +0000",
+        "Date: Sun, 06 Nov 1994 08:49:37 -0000",
+        "Date: Sun, 06 Nov 1994 17:49:37 +0900",
+        "Date: Sun, 06 Nov 1994 17:49:37 JST",
+        "Date: Sun, 06 Nov 1994 08:49:37 Z",
+        "Date: 1994-11-06T08:49:37Z",
         // Names are case-sensitive, and the day's has to match the date.
         "Date: sun, 06 Nov 1994 08:49:37 GMT",
         "Date: Sun, 06 nov 1994 08:49:37 GMT",
         "Date: Mon, 06 Nov 1994 08:49:37 GMT",
         "Date: Sun, 06 Foo 1994 08:49:37 GMT",
+        // Day and month names in another language.
+        "Date: Dim, 06 nov 1994 08:49:37 GMT",
         // Out of range.
         "Date: Mon, 00 Nov 1994 08:49:37 GMT",
         "Date: Thu, 31 Nov 1994 08:49:37 GMT",
@@ -161,7 +276,9 @@ TEST_CASE( "A Date header in another form has no date" ) {
         "Date: Sun, 06 Nov 1994 08:49:60 GMT",
         "Date: Sat, 31 Dec 2016 23:58:60 GMT",
         "Date: Sat, 31 Dec 2016 22:59:60 GMT",
+        // Before the epoch: a 32-bit time_t wrapped past 2038 lands in 1901.
         "Date: Wed, 31 Dec 1969 23:59:59 GMT",
+        "Date: Fri, 13 Dec 1901 20:45:52 GMT",
         "Date: Mon, 01 Jan 0000 00:00:00 GMT",
         // Not digits, or not where they should be.
         "Date: Sun, 0a Nov 1994 08:49:37 GMT",
@@ -169,6 +286,8 @@ TEST_CASE( "A Date header in another form has no date" ) {
         "Date: Sun, -6 Nov 1994 08:49:37 GMT",
         "Date: Sun, +6 Nov 1994 08:49:37 GMT",
         "Date: Sun,  6 Nov 1994 08:49:37 GMT",
+        "Date: Sun, 6 Nov 1994 08:49:37 GMT",
+        "Date: Sun, 06 Nov 94 08:49:37 GMT",
         "Date: Sun, 06 Nov 1994 08.49.37 GMT",
         "Date: Sun 06 Nov 1994 08:49:37 GMT ",
         "Date: Sun, 06 Nov 1994  8:49:37 GMT",
@@ -182,22 +301,41 @@ TEST_CASE( "A Date header in another form has no date" ) {
 TEST_CASE( "Every day from 1970 to 2400 is read as the calendar counts it" ) {
     // A whole 400-year cycle and then some: 2000 and 2400 are leap years, 2100,
     // 2200 and 2300 are not. The time of day changes from day to day so that
-    // every hour, minute and second comes up.
+    // every hour, minute and second comes up. Every day is checked in
+    // IMF-fixdate, and in one of the other forms too, by turns, with its own
+    // day's name and with another. RFC 850's years are read against a floor in
+    // 1970 up to 2020, and against one in 2026 from then to 2076.
     int64_t days = 0;
     int64_t wrong = 0;
     std::string first_wrong;
+    const Form others[] = { IMF_UTC, ASCTIME, ASCTIME_ZERO, RFC850 };
     for (Day d; d.year <= 2400; d.next(), ++days) {
         int hour = (int)(d.since_epoch * 7 % 24);
         int minute = (int)(d.since_epoch * 13 % 60);
         int second = (int)(d.since_epoch * 17 % 60);
-        const std::string value = fixdate(d, d.weekday, hour, minute, second);
         const int64_t expected = d.since_epoch * 86400 + hour * 3600 + minute * 60 + second;
-        // And the same date with another day's name, a different one each day.
-        int other = (d.weekday + 1 + (int)(d.since_epoch % 6)) % 7;
-        bool ok = parse("Date: " + value) == expected &&
-            parse("Date: " + fixdate(d, other, hour, minute, second)) == -2;
-        if (!ok && wrong++ == 0) {
-            first_wrong = value;
+        int other_day = (d.weekday + 1 + (int)(d.since_epoch % 6)) % 7;
+        Form other = others[d.since_epoch % 4];
+        int64_t floor = 0;
+        if (other == RFC850) {
+            if (d.year >= 2026 && d.year <= 2076) {
+                floor = Y2026;
+            } else if (d.year > 2020) {
+                other = IMF_UTC;
+            }
+        }
+        std::string failed;
+        if (parse("Date: " + written(IMF, d, d.weekday, hour, minute, second)) != expected) {
+            failed = written(IMF, d, d.weekday, hour, minute, second);
+        } else if (parse("Date: " + written(IMF, d, other_day, hour, minute, second)) != -2) {
+            failed = written(IMF, d, other_day, hour, minute, second);
+        } else if (parse("Date: " + written(other, d, d.weekday, hour, minute, second), floor) != expected) {
+            failed = written(other, d, d.weekday, hour, minute, second);
+        } else if (parse("Date: " + written(other, d, other_day, hour, minute, second), floor) != -2) {
+            failed = written(other, d, other_day, hour, minute, second);
+        }
+        if (!failed.empty() && wrong++ == 0) {
+            first_wrong = failed;
         }
     }
     INFO( "first wrong: " << first_wrong );
@@ -206,28 +344,37 @@ TEST_CASE( "Every day from 1970 to 2400 is read as the calendar counts it" ) {
 }
 
 TEST_CASE( "A Date changed by one byte is taken only if it is still a date, written as such" ) {
-    const char* values[] = {
-        "Sun, 06 Nov 1994 08:49:37 GMT",
-        "Thu, 29 Feb 2024 12:00:00 GMT",
-        "Fri, 31 Dec 9999 23:59:59 GMT",
-        "Thu, 01 Jan 1970 00:00:00 GMT",
+    const struct { Form form; const char* value; } dates[] = {
+        { IMF, "Sun, 06 Nov 1994 08:49:37 GMT" },
+        { IMF, "Thu, 29 Feb 2024 12:00:00 GMT" },
+        { IMF, "Fri, 31 Dec 9999 23:59:59 GMT" },
+        { IMF, "Thu, 01 Jan 1970 00:00:00 GMT" },
+        { IMF_UTC, "Sun, 06 Nov 1994 08:49:37 UTC" },
+        { ASCTIME, "Sun Nov  6 08:49:37 1994" },
+        { ASCTIME_ZERO, "Thu Feb 29 12:00:00 2024" },
+        { RFC850, "Sunday, 06-Nov-94 08:49:37 GMT" },
+        { RFC850, "Wednesday, 31-Dec-69 23:59:59 GMT" },
     };
     int64_t taken = 0;
-    for (const char* original : values) {
-        const std::string value(original);
+    for (const auto& date : dates) {
+        const std::string value(date.value);
         for (size_t i = 0; i < value.size(); ++i) {
             for (int b = 0; b < 256; ++b) {
                 std::string changed = value;
                 changed[i] = (char)b;
-                int64_t date = parse("Date: " + changed);
-                if (date >= 0) {
-                    // Whatever is taken is exactly how that date is written.
+                int64_t seconds = parse("Date: " + changed);
+                if (seconds >= 0) {
+                    // Whatever is taken is exactly how that date is written, in
+                    // the same form; asctime()'s day either way.
                     INFO( "taken: " << changed );
-                    REQUIRE( fixdate(date) == changed );
+                    bool same = written(date.form, seconds) == changed ||
+                        (date.form == ASCTIME && written(ASCTIME_ZERO, seconds) == changed) ||
+                        (date.form == ASCTIME_ZERO && written(ASCTIME, seconds) == changed);
+                    REQUIRE( same );
                     ++taken;
                 } else {
                     INFO( "refused: " << changed );
-                    REQUIRE( date == -2 );
+                    REQUIRE( seconds == -2 );
                 }
             }
         }
@@ -237,15 +384,21 @@ TEST_CASE( "A Date changed by one byte is taken only if it is still a date, writ
 }
 
 TEST_CASE( "A Date cut short or followed by anything but whitespace has no date" ) {
-    const std::string header = "Date: Sun, 06 Nov 1994 08:49:37 GMT";
-    for (size_t n = 0; n < header.size(); ++n) {
-        INFO( header.substr(0, n) );
-        CHECK( parse(header.substr(0, n)) == ((n < 5) ? -1 : -2) );
-    }
-    for (int b = 0; b < 256; ++b) {
-        INFO( "followed by " << b );
-        bool whitespace = (b == ' ' || b == '\t');
-        CHECK( parse(header + (char)b) == (whitespace ? 784111777 : -2) );
+    const std::string headers[] = {
+        "Date: Sun, 06 Nov 1994 08:49:37 GMT",
+        "Date: Sun Nov  6 08:49:37 1994",
+        "Date: Sunday, 06-Nov-94 08:49:37 GMT",
+    };
+    for (const std::string& header : headers) {
+        for (size_t n = 0; n < header.size(); ++n) {
+            INFO( header.substr(0, n) );
+            CHECK( parse(header.substr(0, n)) == ((n < 5) ? -1 : -2) );
+        }
+        for (int b = 0; b < 256; ++b) {
+            INFO( header << " followed by " << b );
+            bool whitespace = (b == ' ' || b == '\t');
+            CHECK( parse(header + (char)b) == (whitespace ? 784111777 : -2) );
+        }
     }
 }
 
@@ -264,10 +417,14 @@ struct Client {
     size_t resp_pos;
     khct::cb::SockCtx http_ctx;
 
-    Client() : next(0), resp_pos(0) {
+    // Most of these responses are dated 1994: unless asked, refuse nothing.
+    explicit Client(bool keep_floor = false) : next(0), resp_pos(0) {
         resource.tokens = tokens;
         resource.tokens_num = 64;
         kii_init(&kii);
+        if (!keep_floor) {
+            kii._resp_date_floor = 0;
+        }
         kii_set_site(&kii, "api.kii.com");
         kii_set_app_id(&kii, "dummyAppID");
         kii_set_buff(&kii, buff, sizeof(buff));
@@ -327,8 +484,10 @@ TEST_CASE( "kii_get_resp_date() gives the Date of the last request's response" )
         response("HTTP/1.1 404 Not Found", { FEB_2024 }),
         // A response without one leaves no date from the earlier ones.
         response("HTTP/1.1 200 OK", {}),
-        // Nor does one whose Date isn't in IMF-fixdate form.
+        // The obsolete forms are dates too.
         response("HTTP/1.1 200 OK", { "Date: Sunday, 06-Nov-94 08:49:37 GMT" }),
+        // A Date in none of the three forms is not.
+        response("HTTP/1.1 200 OK", { "Date: 1994-11-06T08:49:37Z" }),
     };
     REQUIRE( c.get() == KII_ERR_OK );
     CHECK( kii_get_resp_date(&c.kii) == 784111777 );
@@ -339,6 +498,9 @@ TEST_CASE( "kii_get_resp_date() gives the Date of the last request's response" )
 
     REQUIRE( c.get() == KII_ERR_OK );
     CHECK( kii_get_resp_date(&c.kii) == -1 );
+
+    REQUIRE( c.get() == KII_ERR_OK );
+    CHECK( kii_get_resp_date(&c.kii) == 784111777 );
 
     REQUIRE( c.get() == KII_ERR_OK );
     CHECK( kii_get_resp_date(&c.kii) == -1 );
@@ -444,4 +606,26 @@ TEST_CASE( "A request sent again without a new start, and not answered, has no d
     // Neither a call starting nor a response clears it here: sending does.
     REQUIRE( kii_api_call_run(&c.kii) != KII_ERR_OK );
     CHECK( kii_get_resp_date(&c.kii) == -1 );
+}
+
+TEST_CASE( "kii_init() sets a floor shortly before the source was built" ) {
+    Client c(true);
+    REQUIRE( c.kii._resp_date_floor <= EBISU_SOURCE_TIME );
+    REQUIRE( c.kii._resp_date_floor > EBISU_SOURCE_TIME - 30 * 86400 );
+    const std::string after = "Date: " + written(IMF, EBISU_SOURCE_TIME + 86400);
+    const std::string before = "Date: " + written(IMF, EBISU_SOURCE_TIME - 30 * 86400);
+    c.responses = {
+        response("HTTP/1.1 200 OK", { after }),
+        // A server with no clock set, a month before the source, or 1994.
+        response("HTTP/1.1 200 OK", { "Date: Thu, 01 Jan 1970 00:00:00 GMT" }),
+        response("HTTP/1.1 200 OK", { before }),
+        response("HTTP/1.1 200 OK", { NOV_1994 }),
+    };
+    REQUIRE( c.get() == KII_ERR_OK );
+    CHECK( kii_get_resp_date(&c.kii) == EBISU_SOURCE_TIME + 86400 );
+    for (int i = 0; i < 3; ++i) {
+        INFO( c.responses[c.next] );
+        REQUIRE( c.get() == KII_ERR_OK );
+        CHECK( kii_get_resp_date(&c.kii) == -1 );
+    }
 }

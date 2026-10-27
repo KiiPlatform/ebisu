@@ -370,6 +370,9 @@ typedef struct kii_t {
      * -1 when there is none yet, -2 when the response had a malformed one or
      * several that disagree. */
     int64_t _resp_date;
+    /** \private Dates earlier than this are refused: shortly before the source
+     * was built. */
+    int64_t _resp_date_floor;
 
     jkii_resource_t* _json_resource; /**< \private */
 
@@ -1615,10 +1618,14 @@ uint16_t kii_get_resp_status(kii_t* kii);
  * talked to the server. The time is as trustworthy as the connection it came
  * through, so the socket callbacks must verify the server's certificate.
  *
- * Only the IMF-fixdate form servers are required to send is taken (RFC 9110,
- * section 5.6.7), as in "Sun, 06 Nov 1994 08:49:37 GMT". Anything else, the
- * obsolete forms included, counts as no Date header, and so does a response
- * with several that disagree or one in another form.
+ * The three forms of RFC 9110, section 5.6.7, are taken: the one servers must
+ * send, "Sun, 06 Nov 1994 08:49:37 GMT", and the obsolete RFC 850 and asctime()
+ * ones, "Sunday, 06-Nov-94 08:49:37 GMT" and "Sun Nov  6 08:49:37 1994". UTC is
+ * taken for GMT. RFC 850's two-digit year is read as RFC 9110 asks, against
+ * the year the library's source dates from. Anything else counts as no Date header,
+ * and so does a response with several that disagree or one in another form, or
+ * a date earlier than the source of the library, which no server running
+ * properly can send.
  *
  * The date is cleared when an API call starts and when each of its requests is
  * sent, so it never comes from an earlier call. Where a call gets several

@@ -198,6 +198,8 @@ TEST_CASE( "The date of a call that renewed the token is its last response's" ) 
     kii_author_t author = make_author("th.1", "at1", "rt1");
     kii_session_set_author(&session, &author);
     Client c;
+    // These responses are dated 1994.
+    c.kii._resp_date_floor = 0;
     REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
 
     // The refusal, the refresh and the request sent again each bring their own,

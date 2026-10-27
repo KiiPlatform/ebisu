@@ -24,8 +24,8 @@ int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len);
 
 /* Seconds since the epoch of a Date header line, as khc hands it to the header
  * callback. -1 when the line is not a Date header, -2 when it is one whose value
- * is not in IMF-fixdate form. */
-int64_t _parse_date(const char* header, size_t header_len);
+ * is in none of RFC 9110's three forms, or earlier than floor. */
+int64_t _parse_date(const char* header, size_t header_len, int64_t floor);
 
 /* Keeps the Date of the response whose lines the header callback is given. */
 void _record_resp_date(kii_t* kii, const char* line, size_t line_len);
