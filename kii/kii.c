@@ -285,6 +285,10 @@ uint16_t kii_get_resp_status(kii_t* kii) {
     return khc_get_status_code(&kii->_khc);
 }
 
+int64_t kii_get_resp_date(kii_t* kii) {
+    return khc_get_resp_date(&kii->_khc);
+}
+
 size_t kii_get_resp_body_length(kii_t* kii) {
     return kii->_rw_buff_written;
 }

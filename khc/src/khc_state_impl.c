@@ -5,6 +5,7 @@
 #include "khc.h"
 #include "khc_impl.h"
 #include "khc_state_impl.h"
+#include "khc_http_date.h"
 
 #ifdef KHC_TRACE
 static void _trace_dump(char prefix, char* buf, size_t len) {
@@ -627,6 +628,8 @@ void khc_state_resp_status_parse(khc* khc) {
         status_code = status_code * 10 + (d - '0');
     }
     khc->_status_code = status_code;
+    // A response of its own, an interim 1xx one included.
+    khc->_resp_date = -1;
     khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
     return;
 }
@@ -652,6 +655,7 @@ void khc_state_resp_header_callback(khc* khc) {
             khc->_result = KHC_ERR_HEADER_CALLBACK;
             return;
         }
+        _record_resp_date(khc, khc->_resp_header_buff, header_size);
 
         int chunked = _is_chunked_encoding(khc->_resp_header_buff, header_size);
         if (chunked == 1) {

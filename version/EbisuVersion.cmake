@@ -89,6 +89,21 @@ function(set_git_version_and_generate_header)
     set(soversion "${SOVERSION_STRING}")
     set(version_full "${VERSION_FULL_STRING}")
 
+    # When the source built was committed, in seconds since the epoch. Nothing
+    # built from it runs earlier, which lets khc refuse a server's date from
+    # before then. Outside git, the day this was written.
+    execute_process(
+        COMMAND git log -1 --format=%ct
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        OUTPUT_VARIABLE source_time
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if(NOT source_time MATCHES "^[0-9]+$")
+        # 2026-10-27T00:00:00Z
+        set(source_time 1793059200)
+    endif()
+
     # Into the build tree, not the source tree. This used to be written to
     # ${PROJECT_SOURCE_DIR}/include/ebisu_version.h -- once per component, so
     # configuring mutated four source directories and two build trees of

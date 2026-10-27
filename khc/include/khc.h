@@ -312,6 +312,10 @@ typedef struct khc {
     size_t _chunk_size; /**< \private **/
     size_t _chunk_size_written; /**< \private **/
     size_t _resp_content_length; /**< \private **/
+    /* The response's Date, as seconds since the epoch. -1 when there is none
+     * yet, -2 when the response had a malformed one or several that
+     * disagree. */
+    int64_t _resp_date; /**< \private **/
     bool _read_end; /**< \private **/
 
     size_t _body_read_size; /**< \private **/
@@ -321,6 +325,9 @@ typedef struct khc {
     khc_code _result; /**< \private **/
 
     bool _enable_insecure; /**< \private **/
+    /* Dates earlier than this are refused: shortly before the source was
+     * built. */
+    int64_t _resp_date_floor; /**< \private **/
 } khc;
 
 /**
@@ -582,6 +589,36 @@ void khc_enable_insecure(
 uint16_t khc_get_status_code(
         khc* khc
 );
+
+/**
+ * \brief Get the server's time, from the response's Date header.
+ *
+ * Servers state their time, to the second, in their responses. A device without
+ * a real-time clock can take its time from there, to put timestamps in what it
+ * reports for instance, or to check the validity of certificates once it has
+ * talked to the server. The time is as trustworthy as the connection it came
+ * through, so the socket callbacks must verify the server's certificate.
+ *
+ * The three forms of RFC 9110, section 5.6.7, are taken: the one servers must
+ * send, "Sun, 06 Nov 1994 08:49:37 GMT", and the obsolete RFC 850 and asctime()
+ * ones, "Sunday, 06-Nov-94 08:49:37 GMT" and "Sun Nov  6 08:49:37 1994". UTC is
+ * taken for GMT. RFC 850's two-digit year is read as RFC 9110 asks, against
+ * the year the library's source dates from. Anything else counts as no Date
+ * header, and so does a response with several that disagree or one in another
+ * form, or a date earlier than the source of the library, which no server
+ * running properly can send.
+ *
+ * The date is cleared when khc_perform(khc*) starts, at each response's status
+ * line, so that an interim 1xx response's never stands for the final one's, and
+ * by khc_reset_except_cb(khc*) and khc_reset_except_request(khc*). It is when
+ * the server sent the response: read it right after khc_perform(khc*), and count
+ * from there with the device's own clock.
+ *
+ * \param [in] khc instance.
+ * \returns Seconds since 1970-01-01T00:00:00Z when the response had a Date
+ * header, -1 otherwise.
+ */
+int64_t khc_get_resp_date(khc* khc);
 
 /**
  * \brief Check if the configured request method can have a request body.

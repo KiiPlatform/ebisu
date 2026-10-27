@@ -1603,6 +1603,23 @@ const char* kii_get_etag(kii_t* kii);
 uint16_t kii_get_resp_status(kii_t* kii);
 
 /**
+ * \brief Get the server's time, from the Date header of the last response.
+ *
+ * As khc_get_resp_date(khc*) gives it, for the kii_t's HTTP client: which forms
+ * are taken, and which dates refused, is described there.
+ *
+ * Every API call starts with it cleared, so it never comes from an earlier
+ * call. Where a call gets several responses, renewing the session's token for
+ * instance, it is the date of the response whose status kii_get_resp_status()
+ * gives: the request's own, sent again or not.
+ *
+ * \param [in] kii kii_t instance.
+ * \return Seconds since 1970-01-01T00:00:00Z when that response had a Date
+ * header, -1 otherwise.
+ */
+int64_t kii_get_resp_date(kii_t* kii);
+
+/**
  * \brief Get response body length.
  * If the response is chunked, decoded response body length is returned.
  *

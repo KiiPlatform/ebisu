@@ -315,6 +315,12 @@ response body being in the buffer. `KII_ERR_SOCK_*` come from the socket
 callbacks, and `KII_ERR_TOO_LARGE_DATA` from a request or response that doesn't
 fit in the buffer.
 
+`kii_get_resp_date()` gives the server's time, from the `Date` header of the
+call's response, for a device without a real-time clock: khc's
+`khc_get_resp_date()`, which the [khc README](../khc/README.md#results)
+describes. It is as trustworthy as the connection it came through, so verify
+the server's certificate in the socket callbacks.
+
 ## Building
 
 `kii` is built as part of ebisu, as described in the

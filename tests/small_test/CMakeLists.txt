@@ -7,6 +7,7 @@ ebisu_add_test_suite(small_test_khc
     SOURCES
         khc/chunk_size_line_test.cpp
         khc/header_parser_test.cpp
+        khc/http_date_test.cpp
         khc/http_test.cpp
         khc/reset_test.cpp
         khc/response_chunk_test.cpp
@@ -22,6 +23,7 @@ ebisu_add_test_suite(small_test_kii
     LABEL small
     WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/kii
     SOURCES
+        kii/date_test.cpp
         kii/mqtt_test.cpp
         kii/push_test.cpp
         kii/request_test.cpp
