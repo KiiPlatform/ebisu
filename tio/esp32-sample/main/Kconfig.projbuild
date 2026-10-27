@@ -1,0 +1,66 @@
+menu "ebisu sample"
+
+    config EBISU_SAMPLE_APP_ID
+        string "Kii application ID"
+        default "fj9xy2fsp0ld"
+        help
+            The ID of the Kii application the thing belongs to.
+
+    config EBISU_SAMPLE_APP_HOST
+        string "Kii Cloud host"
+        default "api-jp.kii.com"
+        help
+            The application's site: api-jp.kii.com, api.kii.com,
+            api-sg.kii.com or api-cn3.kii.com.
+
+    config EBISU_SAMPLE_VENDOR_THING_ID
+        string "Vendor thing ID"
+        default ""
+        help
+            The thing onboards with this vendor thing ID and the password
+            below, and is created if it does not exist.
+
+    config EBISU_SAMPLE_THING_PASSWORD
+        string "Thing password"
+        default ""
+
+    config EBISU_SAMPLE_THING_TYPE
+        string "Thing type"
+        default ""
+        help
+            Given when onboarding, unless empty.
+
+    config EBISU_SAMPLE_FIRMWARE_VERSION
+        string "Firmware version"
+        default ""
+        help
+            Given when onboarding, unless empty.
+
+    config EBISU_SAMPLE_STATE
+        string "State"
+        default "{\"AirconAlias\":{\"PresetTemperature\":20,\"RoomTemperature\":24}}"
+        help
+            The state the thing uploads, as JSON: its traits' states by alias.
+
+    config EBISU_SAMPLE_UPDATE_PERIOD
+        int "Seconds between state uploads"
+        default 60
+
+    config EBISU_SAMPLE_CLOCK_FLOOR
+        int "Earliest time, in seconds since the epoch"
+        default 0
+        help
+            A time the time is known not to be earlier than, if later than
+            when ebisu's source was committed: a device would save the time
+            now and then, and set it as the floor when it starts again. 0 for
+            none. Until a server states the time, a certificate is checked
+            against the floor, and refused only if it expired before it.
+
+    config EBISU_SAMPLE_TASK_STACK_SIZE
+        int "Stack size of ebisu's tasks, in bytes"
+        default 12288
+        help
+            Each task makes TLS connections, whose handshake takes most of
+            this.
+
+endmenu

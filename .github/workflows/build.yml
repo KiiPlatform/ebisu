@@ -287,3 +287,63 @@ jobs:
         run: tests/samples/check_version_header.sh build/debug/generated/ebisu_version.h
       - name: build the samples' ebisu sources
         run: tests/samples/cross_build.sh
+
+  # The ESP32 sample, built in Espressif's ESP-IDF image for a board's Wi-Fi and
+  # for the Ethernet QEMU emulates, and run in Espressif's QEMU, whose user-mode
+  # networking reaches the internet. Built with its clock's floor in 2040, it
+  # has to refuse Kii Cloud's certificate as expired. With the secrets, it runs
+  # against the live application: it onboards a thing of the run's own, its
+  # state reaches the thing's owner, and so do the results of a command the
+  # owner sends. See tests/samples/esp32_qemu.py.
+  esp32:
+    name: esp32 sample (ESP-IDF, QEMU)
+    runs-on: ubuntu-latest
+    container: espressif/idf:v5.5.5
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+        working-directory: tio/esp32-sample
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # For git describe, which ebisu_version.h takes the version from.
+          fetch-depth: 0
+      - name: Trust the checkout
+        # The container runs as root, and the checkout is the runner's user's:
+        # git would refuse to describe it.
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: build (Wi-Fi)
+        run: |
+          . "$IDF_PATH/export.sh"
+          idf.py -B build-wifi -D SDKCONFIG=build-wifi/sdkconfig build
+      - name: build for QEMU, with the clock's floor in 2040
+        run: |
+          . "$IDF_PATH/export.sh"
+          echo "CONFIG_EBISU_SAMPLE_CLOCK_FLOOR=2208988800" > "$RUNNER_TEMP/refused.cfg"
+          idf.py -B build-refused -D SDKCONFIG=build-refused/sdkconfig \
+              -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.qemu;$RUNNER_TEMP/refused.cfg" build
+          cd build-refused
+          python -m esptool --chip esp32 merge_bin --fill-flash-size 4MB -o flash.bin @flash_args
+      - name: certificate refused (QEMU)
+        run: |
+          . "$IDF_PATH/export.sh"
+          python ../../tests/samples/esp32_qemu.py refused build-refused/flash.bin
+      # The thing's settings, its password included, go into the runner's
+      # temporary directory, and the firmware into the build tree, neither of
+      # which is uploaded.
+      - name: build for QEMU, against the live application
+        if: env.CLIENT_ID != ''
+        run: |
+          . "$IDF_PATH/export.sh"
+          python ../../tests/samples/esp32_qemu.py live-config "$RUNNER_TEMP/live.cfg" "$RUNNER_TEMP/live.json"
+          idf.py -B build-live -D SDKCONFIG=build-live/sdkconfig \
+              -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.qemu;$RUNNER_TEMP/live.cfg" build
+          cd build-live
+          python -m esptool --chip esp32 merge_bin --fill-flash-size 4MB -o flash.bin @flash_args
+      - name: live (QEMU)
+        if: env.CLIENT_ID != ''
+        run: |
+          . "$IDF_PATH/export.sh"
+          python ../../tests/samples/esp32_qemu.py live build-live/flash.bin "$RUNNER_TEMP/live.json"

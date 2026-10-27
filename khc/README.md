@@ -183,6 +183,8 @@ Implementations to start from:
 
 - [linux-sample](../tio/linux-sample/sock_cb_linux.c): BSD sockets and OpenSSL.
 - [win32-sample](../tio/win32-sample/sock_cb_win32.c): Winsock and Schannel.
+- [esp32-sample](../tio/esp32-sample/main/sock_cb_esp32.c): ESP-IDF's esp-tls,
+  mbedTLS over lwIP.
 
 ## Results
 

@@ -1,0 +1,18 @@
+# Wi-Fi, set with idf.py menuconfig, under "Example Connection Configuration".
+# sdkconfig.qemu switches to the Ethernet QEMU emulates.
+CONFIG_EXAMPLE_CONNECT_WIFI=y
+CONFIG_EXAMPLE_CONNECT_IPV6=n
+
+# ebisu, mbedTLS and the network stack need more than the default 1 MB app
+# partition leaves room for.
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE=y
+
+# The server's certificate chains to one of the CA certificates ESP-IDF bundles,
+# and its validity period is checked, after the handshake, at the time a
+# kii_clock_t keeps: see sock_cb_esp32.c. That needs the certificates the
+# handshake received, and mbedTLS's own check of the dates off, which takes the
+# system's time, 1970 on a device that has not set it.
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=y
+CONFIG_MBEDTLS_SSL_KEEP_PEER_CERTIFICATE=y
+CONFIG_MBEDTLS_HAVE_TIME_DATE=n
