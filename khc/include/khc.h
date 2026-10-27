@@ -312,10 +312,10 @@ typedef struct khc {
     size_t _chunk_size; /**< \private **/
     size_t _chunk_size_written; /**< \private **/
     size_t _resp_content_length; /**< \private **/
-    /** \private The response's Date, as seconds since the epoch. -1 when there
-     * is none yet, -2 when the response had a malformed one or several that
-     * disagree. **/
-    int64_t _resp_date;
+    /* The response's Date, as seconds since the epoch. -1 when there is none
+     * yet, -2 when the response had a malformed one or several that
+     * disagree. */
+    int64_t _resp_date; /**< \private **/
     bool _read_end; /**< \private **/
 
     size_t _body_read_size; /**< \private **/
@@ -325,9 +325,9 @@ typedef struct khc {
     khc_code _result; /**< \private **/
 
     bool _enable_insecure; /**< \private **/
-    /** \private Dates earlier than this are refused: shortly before the source
-     * was built. **/
-    int64_t _resp_date_floor;
+    /* Dates earlier than this are refused: shortly before the source was
+     * built. */
+    int64_t _resp_date_floor; /**< \private **/
 } khc;
 
 /**

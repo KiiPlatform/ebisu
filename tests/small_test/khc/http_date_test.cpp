@@ -4,8 +4,6 @@
 #include "ebisu_version.h"
 #include "http_script.h"
 
-#include <functional>
-#include <sstream>
 #include <string>
 #include <stdio.h>
 #include <string.h>

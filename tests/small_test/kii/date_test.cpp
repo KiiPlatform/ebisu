@@ -1,9 +1,7 @@
 #include "catch.hpp"
 #include "kii.h"
-#include "ebisu_version.h"
 #include "test_callbacks.h"
 
-#include <functional>
 #include <string>
 #include <string.h>
 #include <vector>

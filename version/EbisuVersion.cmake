@@ -90,7 +90,7 @@ function(set_git_version_and_generate_header)
     set(version_full "${VERSION_FULL_STRING}")
 
     # When the source built was committed, in seconds since the epoch. Nothing
-    # built from it runs earlier, which lets kii refuse a server's date from
+    # built from it runs earlier, which lets khc refuse a server's date from
     # before then. Outside git, the day this was written.
     execute_process(
         COMMAND git log -1 --format=%ct
