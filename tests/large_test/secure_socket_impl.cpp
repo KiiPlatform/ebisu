@@ -19,87 +19,23 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
+namespace {
+
+socket_context_t* linux_context(void* socket_context)
+{
+    return &((ebisu::ltest::ssl::SSLData*)socket_context)->linux_ctx;
+}
+
+}
+
+// TLS goes through the Linux sample's callbacks, OpenSSL over BSD sockets, so
+// the large tests run them against the live server: the server's certificate
+// is checked at the tests' clock's time.
 khc_sock_code_t
-    ebisu::ltest::ssl::cb_connect(void* sock_ctx, const char* host,
+    ebisu::ltest::ssl::cb_connect(void* socket_context, const char* host,
             uint16_t port)
 {
-    int sock, ret;
-    struct hostent *servhost;
-    struct sockaddr_in server;
-    SSL *ssl = NULL;
-    SSL_CTX *ssl_ctx = NULL;
-
-    servhost = gethostbyname(host);
-    if (servhost == NULL) {
-        printf("failed to get host.\n");
-        return KHC_SOCK_FAIL;
-    }
-    memset(&server, 0x00, sizeof(server));
-    server.sin_family = AF_INET;
-    /* More secure. */
-    memcpy(&(server.sin_addr), servhost->h_addr, servhost->h_length);
-
-    /* Get Port number */
-    server.sin_port = htons(port);
-
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0) {
-        printf("failed to init socket.\n");
-        return KHC_SOCK_FAIL;
-    }
-
-    if (connect(sock, (struct sockaddr*) &server, sizeof(server)) == -1 ){
-        printf("failed to connect socket.\n");
-        return KHC_SOCK_FAIL;
-    }
-
-    SSL_library_init();
-    const SSL_METHOD *method =
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
-        TLSv1_2_client_method();
-#else
-        TLS_client_method();
-#endif
-    ssl_ctx = SSL_CTX_new(method);
-    if (ssl_ctx == NULL){
-        printf("failed to init ssl context.\n");
-        return KHC_SOCK_FAIL;
-    }
-
-#ifdef SSL_OP_IGNORE_UNEXPECTED_EOF
-    /* The server answers "Connection: close" and drops the transport without
-       sending a TLS close_notify. OpenSSL 1.1.1 surfaced that as
-       SSL_ERROR_SYSCALL with errno 0, i.e. an ordinary EOF; 3.0 turned it into
-       a hard "unexpected eof while reading" error instead. This option asks
-       for the old, lenient behaviour. */
-    SSL_CTX_set_options(ssl_ctx, SSL_OP_IGNORE_UNEXPECTED_EOF);
-#endif
-
-    ssl = SSL_new(ssl_ctx);
-    if (ssl == NULL){
-        printf("failed to init ssl.\n");
-        return KHC_SOCK_FAIL;
-    }
-
-    ret = SSL_set_fd(ssl, sock);
-    if (ret == 0){
-        printf("failed to set fd.\n");
-        return KHC_SOCK_FAIL;
-    }
-
-    ret = SSL_connect(ssl);
-    if (ret != 1) {
-        char sslErrStr[120];
-        ERR_error_string_n(ERR_get_error(), sslErrStr, 120);
-        printf("failed to connect: %s\n", sslErrStr);
-        return KHC_SOCK_FAIL;
-    }
-
-    ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)sock_ctx;
-    ctx->socket = sock;
-    ctx->ssl = ssl;
-    ctx->ssl_ctx = ssl_ctx;
-    return KHC_SOCK_OK;
+    return sock_cb_connect(linux_context(socket_context), host, port);
 }
 
 khc_sock_code_t
@@ -108,20 +44,16 @@ khc_sock_code_t
             size_t length,
             size_t* out_sent_length)
 {
-    ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
-    int ret = SSL_write(ctx->ssl, buffer, length);
-    if (ret > 0) {
-        *out_sent_length = ret;
+    khc_sock_code_t res = sock_cb_send(linux_context(socket_context),
+            buffer, length, out_sent_length);
 
 #ifdef SOCKET_LOG
-        printf("%.*s", ret, buffer);
+    if (res == KHC_SOCK_OK) {
+        printf("%.*s", (int)*out_sent_length, buffer);
+    }
 #endif
 
-        return KHC_SOCK_OK;
-    } else {
-        printf("failed to send\n");
-        return KHC_SOCK_FAIL;
-    }
+    return res;
 }
 
 khc_sock_code_t
@@ -130,76 +62,28 @@ khc_sock_code_t
             size_t length_to_read,
             size_t* out_actual_length)
 {
-    ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
-    *out_actual_length = 0;
-    int ret = SSL_read(ctx->ssl, buffer, length_to_read);
-    if (ret > 0) {
-        *out_actual_length = ret;
+    khc_sock_code_t res = sock_cb_recv(linux_context(socket_context),
+            buffer, length_to_read, out_actual_length);
 
 #ifdef SOCKET_LOG
-        printf("%.*s", ret, buffer);
+    if (res == KHC_SOCK_OK) {
+        printf("%.*s", (int)*out_actual_length, buffer);
+    }
 #endif
 
-        return KHC_SOCK_OK;
-    } else if (ret == 0) {
-        int ssl_error = SSL_get_error(ctx->ssl, ret);
-        if (ssl_error == SSL_ERROR_ZERO_RETURN) {
-            return KHC_SOCK_OK;
-        } else if (ssl_error == SSL_ERROR_WANT_READ || ssl_error == SSL_ERROR_WANT_WRITE) {
-            return KHC_SOCK_AGAIN;
-        } else if (ssl_error == SSL_ERROR_SYSCALL){
-            if (errno == 0){
-                return KHC_SOCK_OK;
-            } else {
-                printf("SSL_ERROR_SYSCALL: errno=%d: %s\n", errno, strerror(errno));
-                return KHC_SOCK_FAIL;
-            }
-        } else {
-            return KHC_SOCK_FAIL;
-        }
-        return KHC_SOCK_FAIL;
-    } else {
-        return KHC_SOCK_FAIL;
-    }
+    return res;
 }
 
 khc_sock_code_t
     ebisu::ltest::ssl::cb_close(void* socket_context)
 {
-    ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
-    /* 1 means the bidirectional shutdown completed. 0 means our close_notify
-       went out but the peer's has not arrived yet, which is not an error -- the
-       server answers with "Connection: close" and drops the connection, so the
-       second half rarely arrives. Everything below is torn down regardless, so
-       a unidirectional shutdown is all we need.
-       SSL_get_error() is only meaningful for a negative return.
-       See https://www.openssl.org/docs/man3.0/man3/SSL_shutdown.html */
-    bool shutdown_ok = true;
-    int ret = SSL_shutdown(ctx->ssl);
-    if (ret < 0) {
-        int sslErr = SSL_get_error(ctx->ssl, ret);
-        if (sslErr != SSL_ERROR_SYSCALL && sslErr != SSL_ERROR_ZERO_RETURN) {
-            char sslErrStr[120];
-            ERR_error_string_n(ERR_get_error(), sslErrStr, 120);
-            printf("failed to shutdown: %s\n", sslErrStr);
-            shutdown_ok = false;
-        }
-        /* Otherwise the peer closed the transport without a close_notify,
-           which is harmless while we are tearing the connection down. */
-    }
-    close(ctx->socket);
-    SSL_free(ctx->ssl);
-    SSL_CTX_free(ctx->ssl_ctx);
+    khc_sock_code_t res = sock_cb_close(linux_context(socket_context));
 
 #ifdef SOCKET_LOG
     printf("\n----------------------------------------------------------------------------------------------------\n\n\n");
 #endif
 
-    if (!shutdown_ok) {
-        printf("failed to close:\n");
-        return KHC_SOCK_FAIL;
-    }
-    return KHC_SOCK_OK;
+    return res;
 }
 
 /// raw
@@ -235,7 +119,7 @@ khc_sock_code_t
         return KHC_SOCK_FAIL;
     }
     ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
-    ctx->socket = sock;
+    ctx->linux_ctx.socket = sock;
     return KHC_SOCK_OK;
 }
 
@@ -246,7 +130,7 @@ khc_sock_code_t
             size_t* out_sent_length)
 {
     ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
-    int ret = send(ctx->socket, buffer, length, 0);
+    int ret = send(ctx->linux_ctx.socket, buffer, length, 0);
     if (ret > 0) {
         *out_sent_length = ret;
 
@@ -269,7 +153,7 @@ khc_sock_code_t
 {
     *out_actual_length = 0;
     ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
-    int ret = recv(ctx->socket, buffer, length_to_read, 0);
+    int ret = recv(ctx->linux_ctx.socket, buffer, length_to_read, 0);
     if (ret > 0) {
         *out_actual_length = ret;
 
@@ -289,9 +173,9 @@ khc_sock_code_t
     ebisu::ltest::tcp::cb_close(void* socket_context)
 {
     ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
-    shutdown(ctx->socket, SHUT_RDWR);
+    shutdown(ctx->linux_ctx.socket, SHUT_RDWR);
     // ignore close errors
-    close(ctx->socket);
+    close(ctx->linux_ctx.socket);
 
 #ifdef SOCKET_LOG
     printf("\n----------------------------------------------------------------------------------------------------\n\n\n");

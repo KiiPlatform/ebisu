@@ -360,6 +360,28 @@ static int handshake(socket_context_t* ctx)
  * validate, and its root store is the CA bundle of the system it runs on, so
  * this way the certificate is checked on both. Revocation is not checked,
  * which Schannel does only when asked to either. */
+/* FILETIME counts 100 ns intervals from 1601-01-01, 11644473600 seconds
+   before the Unix epoch. */
+static const ULONGLONG FILETIME_EPOCH_SECONDS = 11644473600ULL;
+
+static FILETIME filetime_of(int64_t seconds)
+{
+    ULARGE_INTEGER t;
+    t.QuadPart = ((ULONGLONG)seconds + FILETIME_EPOCH_SECONDS) * 10000000ULL;
+    FILETIME ft;
+    ft.dwLowDateTime = t.LowPart;
+    ft.dwHighDateTime = t.HighPart;
+    return ft;
+}
+
+static int64_t seconds_of(FILETIME ft)
+{
+    ULARGE_INTEGER t;
+    t.LowPart = ft.dwLowDateTime;
+    t.HighPart = ft.dwHighDateTime;
+    return (int64_t)(t.QuadPart / 10000000ULL) - (int64_t)FILETIME_EPOCH_SECONDS;
+}
+
 static int verify_server_certificate(socket_context_t* ctx)
 {
     PCCERT_CONTEXT cert = NULL;
@@ -387,7 +409,18 @@ static int verify_server_certificate(socket_context_t* ctx)
     chain_para.RequestedUsage.dwType = USAGE_MATCH_TYPE_AND;
     chain_para.RequestedUsage.Usage.cUsageIdentifier = 1;
     chain_para.RequestedUsage.Usage.rgpszUsageIdentifier = usages;
-    if (!CertGetCertificateChain(NULL, cert, NULL, cert->hCertStore,
+    /* Checked at the clock's time: its floor until a server has stated the
+       time, that time from then on. Without a clock, at the system's. */
+    FILETIME at;
+    FILETIME* at_ptr = NULL;
+    kii_bool_t time_exact = KII_TRUE;
+    int64_t now = 0;
+    if (ctx->clock != NULL) {
+        time_exact = kii_clock_get_time(ctx->clock, &now);
+        at = filetime_of(now);
+        at_ptr = &at;
+    }
+    if (!CertGetCertificateChain(NULL, cert, at_ptr, cert->hCertStore,
                 &chain_para, 0, NULL, &chain)) {
         print_error("CertGetCertificateChain", GetLastError());
         goto done;
@@ -404,6 +437,23 @@ static int verify_server_certificate(socket_context_t* ctx)
     policy_para.cbSize = sizeof(policy_para);
     policy_para.pvExtraPolicyPara = &ssl_para;
 
+    /* While the clock has only its floor, a certificate that is not valid yet
+       cannot be told from one that is: it may simply have been issued after
+       the floor. The policy then leaves the validity periods alone, and they
+       are checked here for expiry only. */
+    if (time_exact != KII_TRUE) {
+        policy_para.dwFlags = CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG;
+        PCERT_SIMPLE_CHAIN simple = chain->rgpChain[0];
+        for (DWORD i = 0; i < simple->cElement; ++i) {
+            PCERT_INFO info = simple->rgpElement[i]->pCertContext->pCertInfo;
+            if (kii_clock_check_validity(ctx->clock, seconds_of(info->NotBefore),
+                        seconds_of(info->NotAfter)) == KII_VALIDITY_EXPIRED) {
+                printf("server certificate for %s rejected: expired.\n", ctx->host);
+                goto done;
+            }
+        }
+    }
+
     CERT_CHAIN_POLICY_STATUS policy_status;
     memset(&policy_status, 0, sizeof(policy_status));
     policy_status.cbSize = sizeof(policy_status);
@@ -416,6 +466,23 @@ static int verify_server_certificate(socket_context_t* ctx)
     if (policy_status.dwError != 0) {
         printf("server certificate for %s rejected.\n", ctx->host);
         print_error("certificate", policy_status.dwError);
+        /* A certificate not valid yet at a time the clock had as exact: more
+           likely than one from the future, the time fell behind, the monotonic
+           clock having stopped while the device slept and the server having
+           renewed its certificate meanwhile. Forgotten, the time becomes a
+           lower bound, the next connection goes through, and its response
+           gives the clock the time again. */
+        if (ctx->clock != NULL && time_exact == KII_TRUE &&
+                policy_status.dwError == (DWORD)CERT_E_EXPIRED) {
+            PCERT_SIMPLE_CHAIN simple = chain->rgpChain[0];
+            for (DWORD i = 0; i < simple->cElement; ++i) {
+                PCERT_INFO info = simple->rgpElement[i]->pCertContext->pCertInfo;
+                if (seconds_of(info->NotBefore) > now) {
+                    kii_clock_forget_time(ctx->clock);
+                    break;
+                }
+            }
+        }
         goto done;
     }
     result = 0;

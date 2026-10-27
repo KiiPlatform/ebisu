@@ -37,6 +37,14 @@ TEST_CASE("API call tests")
         REQUIRE( server > 0 );
         CHECK( server > local - 900 );
         CHECK( server < local + 900 );
+
+        // And the tests' clock has it, as the time rather than a lower bound:
+        // every connection after this one checks the server's certificate at
+        // it.
+        int64_t clock_now = 0;
+        CHECK( kii_clock_get_time(ebisu::ltest::test_clock(), &clock_now) == KII_TRUE );
+        CHECK( clock_now > local - 900 );
+        CHECK( clock_now < local + 900 );
     }
 
     SECTION("API call") {

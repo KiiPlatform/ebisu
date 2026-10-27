@@ -11,6 +11,7 @@
 
 #include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/x509v3.h>
 #include <errno.h>
 
 /* Suppress warnings, because OpenSSL was deprecated in Mac. */
@@ -18,6 +19,48 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
+
+void sock_cb_init_context(
+        socket_context_t* ctx,
+        unsigned int to_recv,
+        unsigned int to_send)
+{
+    memset(ctx, 0, sizeof(*ctx));
+    ctx->socket = -1;
+    ctx->to_recv = to_recv;
+    ctx->to_send = to_send;
+}
+
+/* OpenSSL has checked the server's certificate chain, its host name and the
+   validity period of each certificate, at the clock's time when there is a
+   clock. While the clock has only a lower bound of the time, its floor, a
+   certificate that is not valid yet cannot be told from one that is: it may
+   simply have been issued after the floor. That alone is accepted here.
+   Everything else OpenSSL refused stands, a certificate that expired before
+   the floor included.
+
+   A certificate not valid yet at a time the clock had as exact is refused,
+   and the time forgotten: more likely than a certificate from the future, the
+   time fell behind, the monotonic clock having stopped while the device slept
+   and the server having renewed its certificate meanwhile. Checked against a
+   lower bound, the next connection goes through, and its response gives the
+   clock the time again. */
+static int verify_callback(int preverify_ok, X509_STORE_CTX* store)
+{
+    if (preverify_ok) {
+        return 1;
+    }
+    SSL* ssl = X509_STORE_CTX_get_ex_data(store, SSL_get_ex_data_X509_STORE_CTX_idx());
+    socket_context_t* ctx = (socket_context_t*)SSL_get_app_data(ssl);
+    if (X509_STORE_CTX_get_error(store) == X509_V_ERR_CERT_NOT_YET_VALID &&
+            ctx->clock != NULL) {
+        if (ctx->time_exact != KII_TRUE) {
+            return 1;
+        }
+        kii_clock_forget_time(ctx->clock);
+    }
+    return 0;
+}
 
 khc_sock_code_t
     sock_cb_connect(void* sock_ctx, const char* host,
@@ -28,6 +71,7 @@ khc_sock_code_t
     struct sockaddr_in server;
     SSL *ssl = NULL;
     SSL_CTX *ssl_ctx = NULL;
+    socket_context_t* ctx = (socket_context_t*)sock_ctx;
 
     servhost = gethostbyname(host);
     if (servhost == NULL) {
@@ -48,7 +92,6 @@ khc_sock_code_t
         return KHC_SOCK_FAIL;
     }
 
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
     if (ctx->to_recv > 0) {
         struct timeval tv;
         tv.tv_sec = ctx->to_recv;
@@ -65,7 +108,7 @@ khc_sock_code_t
 
     if (connect(sock, (struct sockaddr*) &server, sizeof(server)) == -1 ){
         printf("failed to connect socket.\n");
-        return KHC_SOCK_FAIL;
+        goto fail;
     }
 
     SSL_library_init();
@@ -78,7 +121,7 @@ khc_sock_code_t
     ssl_ctx = SSL_CTX_new(method);
     if (ssl_ctx == NULL){
         printf("failed to init ssl context.\n");
-        return KHC_SOCK_FAIL;
+        goto fail;
     }
 
 #ifdef SSL_OP_IGNORE_UNEXPECTED_EOF
@@ -90,30 +133,73 @@ khc_sock_code_t
     SSL_CTX_set_options(ssl_ctx, SSL_OP_IGNORE_UNEXPECTED_EOF);
 #endif
 
+    /* The server's certificate has to chain to one of the system's CA
+       certificates. */
+    if (SSL_CTX_set_default_verify_paths(ssl_ctx) != 1) {
+        printf("failed to load the CA certificates.\n");
+        goto fail;
+    }
+    SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, verify_callback);
+
     ssl = SSL_new(ssl_ctx);
     if (ssl == NULL){
         printf("failed to init ssl.\n");
-        return KHC_SOCK_FAIL;
+        goto fail;
+    }
+    SSL_set_app_data(ssl, ctx);
+
+    /* The name the server is to present a certificate for, and the one the
+       certificate has to be issued for. */
+    SSL_set_tlsext_host_name(ssl, host);
+    X509_VERIFY_PARAM* param = SSL_get0_param(ssl);
+    X509_VERIFY_PARAM_set_hostflags(param, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
+    if (X509_VERIFY_PARAM_set1_host(param, host, 0) != 1) {
+        printf("failed to set the host name to verify.\n");
+        goto fail;
+    }
+
+    /* Checked at the clock's time: its floor until a server has stated the
+       time, that time from then on. Without a clock, at the system's. */
+    if (ctx->clock != NULL) {
+        int64_t now = 0;
+        ctx->time_exact = kii_clock_get_time(ctx->clock, &now);
+        X509_VERIFY_PARAM_set_time(param, (time_t)now);
     }
 
     ret = SSL_set_fd(ssl, sock);
     if (ret == 0){
         printf("failed to set fd.\n");
-        return KHC_SOCK_FAIL;
+        goto fail;
     }
 
     ret = SSL_connect(ssl);
     if (ret != 1) {
-        char sslErrStr[120];
-        ERR_error_string_n(ERR_get_error(), sslErrStr, 120);
-        printf("failed to connect: %s\n", sslErrStr);
-        return KHC_SOCK_FAIL;
+        long verified = SSL_get_verify_result(ssl);
+        if (verified != X509_V_OK) {
+            printf("server certificate for %s rejected: %s\n", host,
+                    X509_verify_cert_error_string(verified));
+        } else {
+            char sslErrStr[120];
+            ERR_error_string_n(ERR_get_error(), sslErrStr, 120);
+            printf("failed to connect: %s\n", sslErrStr);
+        }
+        goto fail;
     }
 
     ctx->socket = sock;
     ctx->ssl = ssl;
     ctx->ssl_ctx = ssl_ctx;
     return KHC_SOCK_OK;
+
+fail:
+    if (ssl != NULL) {
+        SSL_free(ssl);
+    }
+    if (ssl_ctx != NULL) {
+        SSL_CTX_free(ssl_ctx);
+    }
+    close(sock);
+    return KHC_SOCK_FAIL;
 }
 
 khc_sock_code_t
