@@ -19,12 +19,13 @@ var searchData=
   ['kii_5fmqtt_5fendpoint_5ft_16',['kii_mqtt_endpoint_t',['../kii_8h.html#a53a2e148b08f4402ae67e5d4900e7e5b',1,'kii.h']]],
   ['kii_5fobject_5fid_5ft_17',['kii_object_id_t',['../kii_8h.html#a796fdd785ce829d5fc0a87e2b0e1e318',1,'kii.h']]],
   ['kii_5fpush_5freceived_5fcb_18',['KII_PUSH_RECEIVED_CB',['../kii_8h.html#afeba27d97c92ad7a3a03374248eaeb14',1,'kii.h']]],
-  ['kii_5fscope_5ftype_5ft_19',['kii_scope_type_t',['../kii_8h.html#a3b61ff426f4e30331ac59b1ade036d5b',1,'kii.h']]],
-  ['kii_5fsession_5ft_20',['kii_session_t',['../kii_8h.html#af6e728326f31d6421beb3169acd62f6e',1,'kii.h']]],
-  ['kii_5ft_21',['kii_t',['../kii_8h.html#ab1332877c811291e2a9693aaa5c15858',1,'kii.h']]],
-  ['kii_5ftask_5fcode_5ft_22',['kii_task_code_t',['../kii__task__callback_8h.html#aa7d48a35179c5c6885a5dd21f8fa57f2',1,'kii_task_callback.h']]],
-  ['kii_5ftask_5fentry_23',['KII_TASK_ENTRY',['../kii__task__callback_8h.html#a803edec5a77dda169a7487f28eb7cf9a',1,'kii_task_callback.h']]],
-  ['kii_5fti_5ffirmware_5fversion_5ft_24',['kii_ti_firmware_version_t',['../kii_8h.html#af136309d5e5e98f8d912e85a8869d107',1,'kii.h']]],
-  ['kii_5ftopic_5ft_25',['kii_topic_t',['../kii_8h.html#aeaa6057c19679d23ddf086d5684bce8c',1,'kii.h']]],
-  ['kii_5fvalidity_5ft_26',['kii_validity_t',['../kii_8h.html#a635c09fbee98d2a5e194a9068f2cb9b4',1,'kii.h']]]
+  ['kii_5frenew_5fmode_5ft_19',['kii_renew_mode_t',['../kii_8h.html#a2ceb6f84d61d2d8e6612a50015a9b773',1,'kii.h']]],
+  ['kii_5fscope_5ftype_5ft_20',['kii_scope_type_t',['../kii_8h.html#a3b61ff426f4e30331ac59b1ade036d5b',1,'kii.h']]],
+  ['kii_5fsession_5ft_21',['kii_session_t',['../kii_8h.html#af6e728326f31d6421beb3169acd62f6e',1,'kii.h']]],
+  ['kii_5ft_22',['kii_t',['../kii_8h.html#ab1332877c811291e2a9693aaa5c15858',1,'kii.h']]],
+  ['kii_5ftask_5fcode_5ft_23',['kii_task_code_t',['../kii__task__callback_8h.html#aa7d48a35179c5c6885a5dd21f8fa57f2',1,'kii_task_callback.h']]],
+  ['kii_5ftask_5fentry_24',['KII_TASK_ENTRY',['../kii__task__callback_8h.html#a803edec5a77dda169a7487f28eb7cf9a',1,'kii_task_callback.h']]],
+  ['kii_5fti_5ffirmware_5fversion_5ft_25',['kii_ti_firmware_version_t',['../kii_8h.html#af136309d5e5e98f8d912e85a8869d107',1,'kii.h']]],
+  ['kii_5ftopic_5ft_26',['kii_topic_t',['../kii_8h.html#aeaa6057c19679d23ddf086d5684bce8c',1,'kii.h']]],
+  ['kii_5fvalidity_5ft_27',['kii_validity_t',['../kii_8h.html#a635c09fbee98d2a5e194a9068f2cb9b4',1,'kii.h']]]
 ];

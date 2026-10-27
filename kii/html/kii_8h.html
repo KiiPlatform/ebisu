@@ -216,6 +216,10 @@ typedef struct <a class="el" href="structkii__author__t.html">kii_author_t</a>&#
 <tr class="memitem:ad1de685427c9868a3034e91c67621163" id="r_ad1de685427c9868a3034e91c67621163"><td class="memItemLeft" align="right" valign="top">typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ad1de685427c9868a3034e91c67621163">KII_CB_AUTHOR_UPDATED</a>) (const <a class="el" href="structkii__author__t.html">kii_author_t</a> *author, void *userdata)</td></tr>
 <tr class="memdesc:ad1de685427c9868a3034e91c67621163"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when the tokens held by a session change.  <br /></td></tr>
 <tr class="separator:ad1de685427c9868a3034e91c67621163"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ceb6f84d61d2d8e6612a50015a9b773" id="r_a2ceb6f84d61d2d8e6612a50015a9b773"><td class="memItemLeft" align="right" valign="top"><a id="a2ceb6f84d61d2d8e6612a50015a9b773" name="a2ceb6f84d61d2d8e6612a50015a9b773"></a>
+typedef enum <a class="el" href="kii_8h.html#a1ba4dacec1982de428fbe76b1aa35cca">kii_renew_mode_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kii_renew_mode_t</b></td></tr>
+<tr class="memdesc:a2ceb6f84d61d2d8e6612a50015a9b773"><td class="mdescLeft">&#160;</td><td class="mdescRight">How a session renews the token it holds. <br /></td></tr>
+<tr class="separator:a2ceb6f84d61d2d8e6612a50015a9b773"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af6e728326f31d6421beb3169acd62f6e" id="r_af6e728326f31d6421beb3169acd62f6e"><td class="memItemLeft" align="right" valign="top">typedef struct <a class="el" href="structkii__session__t.html">kii_session_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#af6e728326f31d6421beb3169acd62f6e">kii_session_t</a></td></tr>
 <tr class="memdesc:af6e728326f31d6421beb3169acd62f6e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Tokens shared by the <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instances acting as the same thing.  <br /></td></tr>
 <tr class="separator:af6e728326f31d6421beb3169acd62f6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -283,6 +287,11 @@ Enumerations</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:ad291064c8d47469d82a581e06a92d1dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents scope of bucket/ topic.  <a href="kii_8h.html#ad291064c8d47469d82a581e06a92d1dc">More...</a><br /></td></tr>
 <tr class="separator:ad291064c8d47469d82a581e06a92d1dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ba4dacec1982de428fbe76b1aa35cca" id="r_a1ba4dacec1982de428fbe76b1aa35cca"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a1ba4dacec1982de428fbe76b1aa35cca">kii_renew_mode_t</a> { <a class="el" href="kii_8h.html#a1ba4dacec1982de428fbe76b1aa35ccaabc143b337e95ee01b75ba8acf4173686">KII_RENEW_BY_TOKEN_ENDPOINT</a>
+, <a class="el" href="kii_8h.html#a1ba4dacec1982de428fbe76b1aa35ccaa1584c23cea78665eda99e07cc5bf8120">KII_RENEW_BY_ONBOARDING</a>
+ }</td></tr>
+<tr class="memdesc:a1ba4dacec1982de428fbe76b1aa35cca"><td class="mdescLeft">&#160;</td><td class="mdescRight">How a session renews the token it holds.  <a href="kii_8h.html#a1ba4dacec1982de428fbe76b1aa35cca">More...</a><br /></td></tr>
+<tr class="separator:a1ba4dacec1982de428fbe76b1aa35cca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a33712b8e06e363929e5019e6cd1059a6" id="r_a33712b8e06e363929e5019e6cd1059a6"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a33712b8e06e363929e5019e6cd1059a6">kii_validity_t</a> { <a class="el" href="kii_8h.html#a33712b8e06e363929e5019e6cd1059a6a94892a2f85fca59a7d9139ab92f1b885">KII_VALIDITY_OK</a>
 , <a class="el" href="kii_8h.html#a33712b8e06e363929e5019e6cd1059a6abc9810777cd69fae233df3c47d7ed5da">KII_VALIDITY_EXPIRED</a>
 , <a class="el" href="kii_8h.html#a33712b8e06e363929e5019e6cd1059a6a3fea544b532253ca23a529a9908876ff">KII_VALIDITY_NOT_YET_VALID</a>
@@ -362,8 +371,11 @@ Functions</h2></td></tr>
 <tr class="memitem:a72459c7ed527d9feb934be7287570402" id="r_a72459c7ed527d9feb934be7287570402"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a72459c7ed527d9feb934be7287570402">kii_session_set_author</a> (<a class="el" href="structkii__session__t.html">kii_session_t</a> *session, const <a class="el" href="structkii__author__t.html">kii_author_t</a> *author)</td></tr>
 <tr class="memdesc:a72459c7ed527d9feb934be7287570402"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the author held by the session, typically one saved earlier.  <br /></td></tr>
 <tr class="separator:a72459c7ed527d9feb934be7287570402"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a48c59467000bc3c2fe182ca3749c2fdc" id="r_a48c59467000bc3c2fe182ca3749c2fdc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a48c59467000bc3c2fe182ca3749c2fdc">kii_session_set_renew_mode</a> (<a class="el" href="structkii__session__t.html">kii_session_t</a> *session, <a class="el" href="kii_8h.html#a1ba4dacec1982de428fbe76b1aa35cca">kii_renew_mode_t</a> mode)</td></tr>
+<tr class="memdesc:a48c59467000bc3c2fe182ca3749c2fdc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set how the session renews the token it holds.  <br /></td></tr>
+<tr class="separator:a48c59467000bc3c2fe182ca3749c2fdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a20216a7ebb203e546de0a987120e374b" id="r_a20216a7ebb203e546de0a987120e374b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a20216a7ebb203e546de0a987120e374b">kii_session_set_renew_by_onboarding</a> (<a class="el" href="structkii__session__t.html">kii_session_t</a> *session, <a class="el" href="kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">kii_bool_t</a> by_onboarding)</td></tr>
-<tr class="memdesc:a20216a7ebb203e546de0a987120e374b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set how the session renews the token it holds.  <br /></td></tr>
+<tr class="memdesc:a20216a7ebb203e546de0a987120e374b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set whether the session renews the token it holds by onboarding again.  <br /></td></tr>
 <tr class="separator:a20216a7ebb203e546de0a987120e374b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac375f90a4796877f0365d14f6dc73e45" id="r_ac375f90a4796877f0365d14f6dc73e45"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ac375f90a4796877f0365d14f6dc73e45">kii_session_get_author</a> (<a class="el" href="structkii__session__t.html">kii_session_t</a> *session, <a class="el" href="structkii__author__t.html">kii_author_t</a> *out_author)</td></tr>
 <tr class="memdesc:ac375f90a4796877f0365d14f6dc73e45"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy the author held by the session.  <br /></td></tr>
@@ -905,6 +917,28 @@ Functions</h2></td></tr>
 <tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3acddcf8a4f850063b9fe95f0f88800b24" name="afbdebbbeb8812da258f2c985a2b10db3acddcf8a4f850063b9fe95f0f88800b24"></a>KII_MQTT_ST_ERR_EXIT&#160;</td><td class="fielddoc"><p>Exiting due to un-recoverble error. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3a82d610abc8b8d60b8aaabaa5c14df92d" name="afbdebbbeb8812da258f2c985a2b10db3a82d610abc8b8d60b8aaabaa5c14df92d"></a>KII_MQTT_ST_DISCONTINUED&#160;</td><td class="fielddoc"><p>Task discontinued by the application . </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<a id="a1ba4dacec1982de428fbe76b1aa35cca" name="a1ba4dacec1982de428fbe76b1aa35cca"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1ba4dacec1982de428fbe76b1aa35cca">&#9670;&#160;</a></span>kii_renew_mode_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="kii_8h.html#a1ba4dacec1982de428fbe76b1aa35cca">kii_renew_mode_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>How a session renews the token it holds. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a1ba4dacec1982de428fbe76b1aa35ccaabc143b337e95ee01b75ba8acf4173686" name="a1ba4dacec1982de428fbe76b1aa35ccaabc143b337e95ee01b75ba8acf4173686"></a>KII_RENEW_BY_TOKEN_ENDPOINT&#160;</td><td class="fielddoc"><p>Through Kii Cloud's token endpoint: with the refresh token, or with the thing's password when there is none or it is refused. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a1ba4dacec1982de428fbe76b1aa35ccaa1584c23cea78665eda99e07cc5bf8120" name="a1ba4dacec1982de428fbe76b1aa35ccaa1584c23cea78665eda99e07cc5bf8120"></a>KII_RENEW_BY_ONBOARDING&#160;</td><td class="fielddoc"><p>By onboarding again through Thing-IF, with the thing's credentials. </p>
 </td></tr>
 </table>
 
@@ -2851,12 +2885,50 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
       </table>
 </div><div class="memdoc">
 
-<p>Set how the session renews the token it holds. </p>
-<p><a class="el" href="kii_8h.html#adaf6e5b9a952127cacd4cbf2e911039c" title="Execute onboarding.">kii_ti_onboard()</a> through an attached <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> sets it to onboarding again, and <a class="el" href="kii_8h.html#a128f23578c2e848e6d20e05faae9b29d" title="Authorize thing with vendor thing id and password. After the authentication, access token is stored i...">kii_auth_thing()</a> and <a class="el" href="kii_8h.html#a113672afcdae61484731c80a3b7bc17e" title="Register a new thing. After the registration, access token is stored in kii instance and used to auth...">kii_register_thing()</a> to the token endpoint, each for the token it obtains; renewals keep it. Set it after <a class="el" href="kii_8h.html#a72459c7ed527d9feb934be7287570402" title="Set the author held by the session, typically one saved earlier.">kii_session_set_author()</a> when restoring an author onboarding obtained, which would otherwise be renewed through the token endpoint.</p>
+<p>Set whether the session renews the token it holds by onboarding again. </p>
+<p><a class="el" href="kii_8h.html#a48c59467000bc3c2fe182ca3749c2fdc" title="Set how the session renews the token it holds.">kii_session_set_renew_mode()</a> with KII_RENEW_BY_ONBOARDING for KII_TRUE, and KII_RENEW_BY_TOKEN_ENDPOINT for KII_FALSE.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">session</td><td><a class="el" href="structkii__session__t.html" title="Tokens shared by the kii_t instances acting as the same thing.">kii_session_t</a> instance. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">by_onboarding</td><td>KII_TRUE to renew by onboarding again through Thing-IF, KII_FALSE to renew through Kii Cloud's token endpoint. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a48c59467000bc3c2fe182ca3749c2fdc" name="a48c59467000bc3c2fe182ca3749c2fdc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a48c59467000bc3c2fe182ca3749c2fdc">&#9670;&#160;</a></span>kii_session_set_renew_mode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void kii_session_set_renew_mode </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__session__t.html">kii_session_t</a> *&#160;</td>
+          <td class="paramname"><em>session</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="kii_8h.html#a1ba4dacec1982de428fbe76b1aa35cca">kii_renew_mode_t</a>&#160;</td>
+          <td class="paramname"><em>mode</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set how the session renews the token it holds. </p>
+<p><a class="el" href="kii_8h.html#adaf6e5b9a952127cacd4cbf2e911039c" title="Execute onboarding.">kii_ti_onboard()</a> through an attached <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> sets it to KII_RENEW_BY_ONBOARDING, and <a class="el" href="kii_8h.html#a128f23578c2e848e6d20e05faae9b29d" title="Authorize thing with vendor thing id and password. After the authentication, access token is stored i...">kii_auth_thing()</a> and <a class="el" href="kii_8h.html#a113672afcdae61484731c80a3b7bc17e" title="Register a new thing. After the registration, access token is stored in kii instance and used to auth...">kii_register_thing()</a> to KII_RENEW_BY_TOKEN_ENDPOINT, each for the token it obtains; renewals keep it. Set it after <a class="el" href="kii_8h.html#a72459c7ed527d9feb934be7287570402" title="Set the author held by the session, typically one saved earlier.">kii_session_set_author()</a> when restoring an author onboarding obtained, which would otherwise be renewed through the token endpoint.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">session</td><td><a class="el" href="structkii__session__t.html" title="Tokens shared by the kii_t instances acting as the same thing.">kii_session_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">mode</td><td>How to renew it. A value this version does not know is ignored, and the mode left as it was. </td></tr>
   </table>
   </dd>
 </dl>
@@ -4746,7 +4818,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 27 2026 12:24:40 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 27 2026 13:59:00 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

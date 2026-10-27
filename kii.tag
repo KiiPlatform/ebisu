@@ -171,6 +171,13 @@
       <arglist>)(const kii_author_t *author, void *userdata)</arglist>
     </member>
     <member kind="typedef">
+      <type>enum kii_renew_mode_t</type>
+      <name>kii_renew_mode_t</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a2ceb6f84d61d2d8e6612a50015a9b773</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
       <type>struct kii_session_t</type>
       <name>kii_session_t</name>
       <anchorfile>kii_8h.html</anchorfile>
@@ -354,6 +361,25 @@
       <name>KII_SCOPE_THING</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>ad291064c8d47469d82a581e06a92d1dca7b6b4b2b3cfb594b1a5e68dbbe8a9390</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumeration">
+      <type></type>
+      <name>kii_renew_mode_t</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a1ba4dacec1982de428fbe76b1aa35cca</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_RENEW_BY_TOKEN_ENDPOINT</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a1ba4dacec1982de428fbe76b1aa35ccaabc143b337e95ee01b75ba8acf4173686</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_RENEW_BY_ONBOARDING</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a1ba4dacec1982de428fbe76b1aa35ccaa1584c23cea78665eda99e07cc5bf8120</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumeration">
@@ -594,6 +620,13 @@
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a72459c7ed527d9feb934be7287570402</anchor>
       <arglist>(kii_session_t *session, const kii_author_t *author)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_session_set_renew_mode</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a48c59467000bc3c2fe182ca3749c2fdc</anchor>
+      <arglist>(kii_session_t *session, kii_renew_mode_t mode)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
