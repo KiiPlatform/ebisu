@@ -9,6 +9,7 @@
     <class kind="struct">kii_topic_t</class>
     <class kind="struct">kii_author_t</class>
     <class kind="struct">kii_session_t</class>
+    <class kind="struct">kii_clock_t</class>
     <class kind="struct">kii_mqtt_endpoint_t</class>
     <class kind="struct">kii_object_id_t</class>
     <class kind="struct">kii_installation_id_t</class>
@@ -177,6 +178,20 @@
       <arglist></arglist>
     </member>
     <member kind="typedef">
+      <type>struct kii_clock_t</type>
+      <name>kii_clock_t</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>aa32c633eea4c798023aaf959aea61144</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>enum kii_validity_t</type>
+      <name>kii_validity_t</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a635c09fbee98d2a5e194a9068f2cb9b4</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
       <type>struct kii_mqtt_endpoint_t</type>
       <name>kii_mqtt_endpoint_t</name>
       <anchorfile>kii_8h.html</anchorfile>
@@ -339,6 +354,31 @@
       <name>KII_SCOPE_THING</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>ad291064c8d47469d82a581e06a92d1dca7b6b4b2b3cfb594b1a5e68dbbe8a9390</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumeration">
+      <type></type>
+      <name>kii_validity_t</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a33712b8e06e363929e5019e6cd1059a6</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_VALIDITY_OK</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a33712b8e06e363929e5019e6cd1059a6a94892a2f85fca59a7d9139ab92f1b885</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_VALIDITY_EXPIRED</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a33712b8e06e363929e5019e6cd1059a6abc9810777cd69fae233df3c47d7ed5da</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_VALIDITY_NOT_YET_VALID</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a33712b8e06e363929e5019e6cd1059a6a3fea544b532253ca23a529a9908876ff</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumeration">
@@ -575,6 +615,69 @@
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>ae33b3be622e96687b213d0fbfd6edf0f</anchor>
       <arglist>(kii_t *kii, kii_session_t *session)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_clock_init</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a9bbe284671fbe620c652b27881ab22e8</anchor>
+      <arglist>(kii_clock_t *clock, KII_CB_MONOTONIC_MS cb_monotonic_ms, void *userdata)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_clock_set_cb_lock</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>adf580e8117725f2210c7139ceca4543f</anchor>
+      <arglist>(kii_clock_t *clock, KII_CB_LOCK cb_lock, KII_CB_LOCK cb_unlock, void *userdata)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_clock_set_floor</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>ada54df3e72787cbf9ffbd70b3aca9b7c</anchor>
+      <arglist>(kii_clock_t *clock, int64_t floor)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_clock_set_exact_for</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a009f50aaf42f0914cbe66fda11a4b58b</anchor>
+      <arglist>(kii_clock_t *clock, uint32_t seconds)</arglist>
+    </member>
+    <member kind="function">
+      <type>kii_bool_t</type>
+      <name>kii_clock_set_time</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>aeb779efac1ef62d6a31676f942c2618f</anchor>
+      <arglist>(kii_clock_t *clock, int64_t now)</arglist>
+    </member>
+    <member kind="function">
+      <type>kii_bool_t</type>
+      <name>kii_clock_get_time</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a49be62c7684623ee84365b036db26d13</anchor>
+      <arglist>(kii_clock_t *clock, int64_t *out_now)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_clock_forget_time</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a640db65a0bd20739d73956ec548d04ef</anchor>
+      <arglist>(kii_clock_t *clock)</arglist>
+    </member>
+    <member kind="function">
+      <type>kii_validity_t</type>
+      <name>kii_clock_check_validity</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a75f7f82948805e3a0ddde4e80fcf7ecb</anchor>
+      <arglist>(kii_clock_t *clock, int64_t not_before, int64_t not_after)</arglist>
+    </member>
+    <member kind="function">
+      <type>kii_code_t</type>
+      <name>kii_set_clock</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a50d68561805f6e7bcd3761515669c86b</anchor>
+      <arglist>(kii_t *kii, kii_clock_t *clock)</arglist>
     </member>
     <member kind="function">
       <type>kii_code_t</type>
@@ -1121,6 +1224,10 @@
       <anchor>a017e05bd9ec6a26eeb4b9099da60f858</anchor>
       <arglist></arglist>
     </member>
+  </compound>
+  <compound kind="struct">
+    <name>kii_clock_t</name>
+    <filename>structkii__clock__t.html</filename>
   </compound>
   <compound kind="struct">
     <name>kii_installation_id_t</name>

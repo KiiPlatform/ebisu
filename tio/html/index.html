@@ -392,8 +392,12 @@ Author updated callback</h3>
 <div class="line">    save_author(author);</div>
 <div class="line">}</div>
 <div class="ttc" id="astructkii__author__t_html"><div class="ttname"><a href="../../kii/html/structkii__author__t.html">kii_author_t</a></div></div>
-</div><!-- fragment --><p><a class="anchor" id="execute-onboarding"></a> </p>
+</div><!-- fragment --><p><a class="anchor" id="clock"></a> </p>
 <h2><a class="anchor" id="autotoc_md24"></a>
+Keep the time</h2>
+<p>A device without a real-time clock needs the time to check the server's certificate in its socket callbacks. The handler and the updater give a <code><a class="elRef" href="../../kii/html/structkii__clock__t.html">kii_clock_t</a></code> the time each response states, with <code>tio_handler_set_clock()</code> and <code>tio_updater_set_clock()</code>. They run in tasks of their own, so a clock they share needs a lock, set by <code><a class="elRef" href="../../kii/html/kii_8h.html#adf580e8117725f2210c7139ceca4543f">kii_clock_set_cb_lock()</a></code>. That has to be a lock of its own, not the session's. The <a href="../kii/README.md#the-time">kii README</a> describes the clock and how the socket callbacks use it.</p>
+<p><a class="anchor" id="execute-onboarding"></a> </p>
+<h2><a class="anchor" id="autotoc_md25"></a>
 Execute onboarding</h2>
 <p>For the first time, Step called <code>onboarding</code> is required. In this step, Identifier of IoT device (thing ID) is generated and stored in cloud.</p>
 <p>After the step, thing ID and access token is returned to IoT device. By using thing ID and access token, cloud can identify the device when the remote command is sent to the device with the thing ID or sensor data sent from the device with the token.</p>
@@ -411,7 +415,7 @@ Execute onboarding</h2>
 <div class="line"><span class="comment">/* thing ID and access token is stored in tio_author_t.</span></div>
 <div class="line"><span class="comment">printf(&quot;thing ID: %s\n&quot;, author-&gt;author_id);</span></div>
 <div class="line"><span class="comment">*/</span></div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md25"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md26"></a>
 Start module</h2>
 <p>Now, it's ready to start <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code> module.</p>
 <div class="fragment"><div class="line">tio_handler_start(&amp;handler, NULL, tio_action_handler, NULL);</div>
@@ -421,21 +425,21 @@ Start module</h2>
 <li>last argument is context object pointer can be referenced in action callback. Passing NULL since we don't use context object in this example.</li>
 </ul>
 <p>This call results to execute asynchronous tasks created by <a class="el" href="index.html#task-callbacks">Task callbacks</a>. The name of the task initiated by this call is exported as macro <code>KII_TASK_NAME_MQTT</code> defined in <code><a class="elRef" href="../../kii/html/kii_8h.html">kii.h</a></code>.</p>
-<h1><a class="anchor" id="autotoc_md26"></a>
+<h1><a class="anchor" id="autotoc_md27"></a>
 Use &lt;tt&gt;tio_updater_t&lt;/tt&gt;</h1>
-<h2><a class="anchor" id="autotoc_md27"></a>
+<h2><a class="anchor" id="autotoc_md28"></a>
 Callback functions</h2>
-<h3><a class="anchor" id="autotoc_md28"></a>
+<h3><a class="anchor" id="autotoc_md29"></a>
 Task callbacks, socket callbacks</h3>
 <p>Similar to <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code>.</p>
 <p><code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code> only uses HTTP(s) and does not use MQTT(s).</p>
-<h3><a class="anchor" id="autotoc_md29"></a>
+<h3><a class="anchor" id="autotoc_md30"></a>
 State read callbacks</h3>
 <p><code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code> uploads the IoT device state such as sensor readings periodically with the specified interval.</p>
 <p>When the specified interval elapsed, <code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code> execute callback function to read the latest state of the IoT device.</p>
 <p>Application can implement the process reading values from sensors, etc.</p>
 <p><a class="anchor" id="size-callback"></a> </p>
-<h4><a class="anchor" id="autotoc_md30"></a>
+<h4><a class="anchor" id="autotoc_md31"></a>
 Size callback.</h4>
 <p>Size callback is called to ask the size of new IoT device state. This callback is called before the read callback. If the returned size is 0, <code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code> skips updating device state.</p>
 <p>With a <a class="el" href="index.html#session">session</a>, it is called again when the server refused an upload for its token and the session renewed it: the upload is then made again, and the state read again from its beginning. The read callback must start over whenever this callback is called.</p>
@@ -443,7 +447,7 @@ Size callback.</h4>
 <div class="fragment"><div class="line"><span class="keyword">typedef</span> size_t (*TIO_CB_SIZE)(<span class="keywordtype">void</span>* userdata);</div>
 </div><!-- fragment --><p><code>userdata</code> is context object pointer given to <code>tio_updater_start()</code> argument.</p>
 <p><a class="anchor" id="read-callback"></a> </p>
-<h4><a class="anchor" id="autotoc_md31"></a>
+<h4><a class="anchor" id="autotoc_md32"></a>
 Read callback</h4>
 <p>Read callback is used to read actual IoT device state. Callback is repeatedly called until it returns 0.</p>
 <div class="fragment"><div class="line"><span class="keyword">typedef</span> size_t (*TIO_CB_READ)(</div>
@@ -469,7 +473,7 @@ Read callback</h4>
 <li><code>presetTemperature</code> is number type property defined in the <code>Trait</code>.</li>
 </ul>
 <p>For more details about format of the IoT device state and <code>Trait</code>, Please refer to (<a href="http://docs.kii.com/en/guides/thingifsdk/">http://docs.kii.com/en/guides/thingifsdk/</a>).</p>
-<h2><a class="anchor" id="autotoc_md32"></a>
+<h2><a class="anchor" id="autotoc_md33"></a>
 Set-up &lt;tt&gt;tio_updater_t&lt;/tt&gt; instance</h2>
 <p>Here's the set-up code extracted from example app. The full code can be checked <a href="linux-sample/example.c">updater_init() in example.c</a></p>
 <div class="fragment"><div class="line">tio_updater_init(updater);</div>
@@ -496,12 +500,12 @@ Set-up &lt;tt&gt;tio_updater_t&lt;/tt&gt; instance</h2>
 <li><code>tio_updater_set_interval()</code> specifies interval of uploading state in seconds.</li>
 </ul>
 <p>Other set-up process is similar to <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code>.</p>
-<h2><a class="anchor" id="autotoc_md33"></a>
+<h2><a class="anchor" id="autotoc_md34"></a>
 Execute onboarding</h2>
 <p><code>tio_updater_onboard()</code> method is similar to <code>tio_handler_onboard()</code>.</p>
 <p>If you use both <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code> and <code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code> for an IoT device, you just need to execute onboarding process from either one. No need to execute onboarding for both method since the thing ID bonding process just need to be executed once.</p>
 <p>After the onboarding has been done, you can get <code>tio_author_t</code> instance from either <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code> or <code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code> and pass it to <code>tio_handler_start()</code> or <code>tio_updater_start()</code> method. With a <a class="el" href="index.html#session">session</a> shared by both, they take the author from it instead.</p>
-<h2><a class="anchor" id="autotoc_md34"></a>
+<h2><a class="anchor" id="autotoc_md35"></a>
 Start module</h2>
 <p>Now, it's ready to start the updater module.</p>
 <p>Here's code extracted from <a href="linux-sample/example.c">example app</a>.</p>
@@ -519,11 +523,11 @@ Start module</h2>
 <li><code>updater_file_ctx</code> : Context object pointer referenced from both size callback/ read callback.</li>
 </ul>
 <p><a class="anchor" id="asynchronous-task-management"></a> </p>
-<h1><a class="anchor" id="autotoc_md35"></a>
+<h1><a class="anchor" id="autotoc_md36"></a>
 Asynchronous task management</h1>
 <p><code>tio</code> execute multiple asynchronous tasks.</p>
 <p>The name of tasks executed by <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code> and <code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code> listed bellow.</p>
-<h2><a class="anchor" id="autotoc_md36"></a>
+<h2><a class="anchor" id="autotoc_md37"></a>
 Tasks executed by &lt;tt&gt;tio_handler_t&lt;/tt&gt;.</h2>
 <ul>
 <li><p class="startli"><code>KII_TASK_NAME_MQTT</code> is a name of the task defined at <code><a class="elRef" href="../../kii/html/kii_8h.html">kii.h</a></code> and passed as argument when the callback set by <code>tio_handler_set_cb_task_create()</code> is called to create task/ thread.</p>
@@ -551,7 +555,7 @@ Tasks executed by &lt;tt&gt;tio_handler_t&lt;/tt&gt;.</h2>
 <p class="startli">Those two buffers must be separated and have no overlaps.</p>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md37"></a>
+<h2><a class="anchor" id="autotoc_md38"></a>
 Tasks executed by &lt;tt&gt;tio_updater_t&lt;/tt&gt;.</h2>
 <ul>
 <li><p class="startli"><code>TIO_TASK_NAME_UPDATE_STATE</code> is a name of the task declared in <code><a class="el" href="tio_8h_source.html">tio.h</a></code> and passed as argument when the callback set by <code>tio_updater_set_cb_task_create()</code> is called to create task/ thread.</p>
@@ -572,7 +576,7 @@ Tasks executed by &lt;tt&gt;tio_updater_t&lt;/tt&gt;.</h2>
 </ul>
 </li>
 </ul>
-<h2><a class="anchor" id="autotoc_md38"></a>
+<h2><a class="anchor" id="autotoc_md39"></a>
 Avoiding race condition</h2>
 <ul>
 <li>Above 2 tasks <code>KII_TASK_NAME_MQTT</code> and <code>TIO_TASK_NAME_UPDATE_STATE</code> would be executed in parallel. Therefore, if the callback implementation shares the resource that need exclusive access, you need to implement access control mechanism.</li>
@@ -583,7 +587,7 @@ Avoiding race condition</h2>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 27 2026 09:25:30 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 27 2026 11:30:21 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

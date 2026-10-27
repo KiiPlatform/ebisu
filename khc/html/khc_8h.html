@@ -288,6 +288,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 <tr class="memitem:a0e1ee79bbbbeefbbac3228cb5ef0d9d8" id="r_a0e1ee79bbbbeefbbac3228cb5ef0d9d8"><td class="memItemLeft" align="right" valign="top">int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a0e1ee79bbbbeefbbac3228cb5ef0d9d8">khc_get_resp_date</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
 <tr class="memdesc:a0e1ee79bbbbeefbbac3228cb5ef0d9d8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the server's time, from the response's Date header.  <br /></td></tr>
 <tr class="separator:a0e1ee79bbbbeefbbac3228cb5ef0d9d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a88e402229a0fd13cf4079cd6ee81b1c3" id="r_a88e402229a0fd13cf4079cd6ee81b1c3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a88e402229a0fd13cf4079cd6ee81b1c3">khc_seconds_since_epoch</a> (int year, int month, int day, int hour, int minute, int second, int64_t *out_seconds)</td></tr>
+<tr class="memdesc:a88e402229a0fd13cf4079cd6ee81b1c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a UTC date and time to seconds since the epoch.  <br /></td></tr>
+<tr class="separator:a88e402229a0fd13cf4079cd6ee81b1c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1303a5750c70d26aa745b8b5a20b6635" id="r_a1303a5750c70d26aa745b8b5a20b6635"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a1303a5750c70d26aa745b8b5a20b6635">khc_method_can_have_body</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
 <tr class="memdesc:a1303a5750c70d26aa745b8b5a20b6635"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the configured request method can have a request body.  <br /></td></tr>
 <tr class="separator:a1303a5750c70d26aa745b8b5a20b6635"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -752,6 +755,80 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
   </dd>
 </dl>
 <dl class="section see"><dt>See also</dt><dd><a class="el" href="khc_8h.html#aea7b6dde93cd97fc303a90c1414dba21" title="Set initial value to members of khc other than callbacks.">khc_reset_except_cb(khc*)</a> </dd></dl>
+
+</div>
+</div>
+<a id="a88e402229a0fd13cf4079cd6ee81b1c3" name="a88e402229a0fd13cf4079cd6ee81b1c3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a88e402229a0fd13cf4079cd6ee81b1c3">&#9670;&#160;</a></span>khc_seconds_since_epoch()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool khc_seconds_since_epoch </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>year</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>month</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>day</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>hour</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>minute</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>second</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int64_t *&#160;</td>
+          <td class="paramname"><em>out_seconds</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Convert a UTC date and time to seconds since the epoch. </p>
+<p>The date of the Gregorian calendar, as a TLS stack gives a certificate's validity dates, for kii_clock_check_validity() for instance. Integer arithmetic only, without the C library's time functions.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">year</td><td>1 to 9999. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">month</td><td>1 to 12. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">day</td><td>1 to the length of the month. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">hour</td><td>0 to 23. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">minute</td><td>0 to 59. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">second</td><td>0 to 59, or 60 at 23:59 for a leap second. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_seconds</td><td>Seconds since 1970-01-01T00:00:00Z, negative before it. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if converted, false if a field is out of range. </dd></dl>
 
 </div>
 </div>
@@ -1481,7 +1558,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 27 2026 09:25:30 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 27 2026 11:30:21 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

@@ -33,5 +33,8 @@ var searchData=
   ['kii_5fscope_5fapp_30',['KII_SCOPE_APP',['../kii_8h.html#ad291064c8d47469d82a581e06a92d1dcaf4ac24e2bbddbc00ab0aa12f151fffd6',1,'kii.h']]],
   ['kii_5fscope_5fgroup_31',['KII_SCOPE_GROUP',['../kii_8h.html#ad291064c8d47469d82a581e06a92d1dca9768b6b29b6533fb18705d6ba256b377',1,'kii.h']]],
   ['kii_5fscope_5fthing_32',['KII_SCOPE_THING',['../kii_8h.html#ad291064c8d47469d82a581e06a92d1dca7b6b4b2b3cfb594b1a5e68dbbe8a9390',1,'kii.h']]],
-  ['kii_5fscope_5fuser_33',['KII_SCOPE_USER',['../kii_8h.html#ad291064c8d47469d82a581e06a92d1dcab75f6e39aeef01d768a2146661443dfd',1,'kii.h']]]
+  ['kii_5fscope_5fuser_33',['KII_SCOPE_USER',['../kii_8h.html#ad291064c8d47469d82a581e06a92d1dcab75f6e39aeef01d768a2146661443dfd',1,'kii.h']]],
+  ['kii_5fvalidity_5fexpired_34',['KII_VALIDITY_EXPIRED',['../kii_8h.html#a33712b8e06e363929e5019e6cd1059a6abc9810777cd69fae233df3c47d7ed5da',1,'kii.h']]],
+  ['kii_5fvalidity_5fnot_5fyet_5fvalid_35',['KII_VALIDITY_NOT_YET_VALID',['../kii_8h.html#a33712b8e06e363929e5019e6cd1059a6a3fea544b532253ca23a529a9908876ff',1,'kii.h']]],
+  ['kii_5fvalidity_5fok_36',['KII_VALIDITY_OK',['../kii_8h.html#a33712b8e06e363929e5019e6cd1059a6a94892a2f85fca59a7d9139ab92f1b885',1,'kii.h']]]
 ];

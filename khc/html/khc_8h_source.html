@@ -329,17 +329,26 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00592" name="l00592"></a><span class="lineno">  592</span> </div>
 <div class="line"><a id="l00621" name="l00621"></a><span class="lineno"><a class="line" href="khc_8h.html#a0e1ee79bbbbeefbbac3228cb5ef0d9d8">  621</a></span>int64_t <a class="code hl_function" href="khc_8h.html#a0e1ee79bbbbeefbbac3228cb5ef0d9d8">khc_get_resp_date</a>(<a class="code hl_struct" href="structkhc.html">khc</a>* <a class="code hl_struct" href="structkhc.html">khc</a>);</div>
 <div class="line"><a id="l00622" name="l00622"></a><span class="lineno">  622</span> </div>
-<div class="line"><a id="l00629" name="l00629"></a><span class="lineno"><a class="line" href="khc_8h.html#a1303a5750c70d26aa745b8b5a20b6635">  629</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="khc_8h.html#a1303a5750c70d26aa745b8b5a20b6635">khc_method_can_have_body</a>(<a class="code hl_struct" href="structkhc.html">khc</a>* <a class="code hl_struct" href="structkhc.html">khc</a>);</div>
-<div class="line"><a id="l00630" name="l00630"></a><span class="lineno">  630</span> </div>
-<div class="line"><a id="l00631" name="l00631"></a><span class="lineno">  631</span><span class="preprocessor">#if defined(__GNUC__) || defined(__clang__)</span></div>
-<div class="line"><a id="l00632" name="l00632"></a><span class="lineno">  632</span><span class="preprocessor">#pragma GCC visibility pop</span></div>
-<div class="line"><a id="l00633" name="l00633"></a><span class="lineno">  633</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00634" name="l00634"></a><span class="lineno">  634</span> </div>
-<div class="line"><a id="l00635" name="l00635"></a><span class="lineno">  635</span><span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a id="l00636" name="l00636"></a><span class="lineno">  636</span>}</div>
-<div class="line"><a id="l00637" name="l00637"></a><span class="lineno">  637</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00638" name="l00638"></a><span class="lineno">  638</span> </div>
-<div class="line"><a id="l00639" name="l00639"></a><span class="lineno">  639</span><span class="preprocessor">#endif </span><span class="comment">//__khc</span></div>
+<div class="line"><a id="l00640" name="l00640"></a><span class="lineno"><a class="line" href="khc_8h.html#a88e402229a0fd13cf4079cd6ee81b1c3">  640</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="khc_8h.html#a88e402229a0fd13cf4079cd6ee81b1c3">khc_seconds_since_epoch</a>(</div>
+<div class="line"><a id="l00641" name="l00641"></a><span class="lineno">  641</span>        <span class="keywordtype">int</span> year,</div>
+<div class="line"><a id="l00642" name="l00642"></a><span class="lineno">  642</span>        <span class="keywordtype">int</span> month,</div>
+<div class="line"><a id="l00643" name="l00643"></a><span class="lineno">  643</span>        <span class="keywordtype">int</span> day,</div>
+<div class="line"><a id="l00644" name="l00644"></a><span class="lineno">  644</span>        <span class="keywordtype">int</span> hour,</div>
+<div class="line"><a id="l00645" name="l00645"></a><span class="lineno">  645</span>        <span class="keywordtype">int</span> minute,</div>
+<div class="line"><a id="l00646" name="l00646"></a><span class="lineno">  646</span>        <span class="keywordtype">int</span> second,</div>
+<div class="line"><a id="l00647" name="l00647"></a><span class="lineno">  647</span>        int64_t* out_seconds);</div>
+<div class="line"><a id="l00648" name="l00648"></a><span class="lineno">  648</span> </div>
+<div class="line"><a id="l00655" name="l00655"></a><span class="lineno"><a class="line" href="khc_8h.html#a1303a5750c70d26aa745b8b5a20b6635">  655</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="khc_8h.html#a1303a5750c70d26aa745b8b5a20b6635">khc_method_can_have_body</a>(<a class="code hl_struct" href="structkhc.html">khc</a>* <a class="code hl_struct" href="structkhc.html">khc</a>);</div>
+<div class="line"><a id="l00656" name="l00656"></a><span class="lineno">  656</span> </div>
+<div class="line"><a id="l00657" name="l00657"></a><span class="lineno">  657</span><span class="preprocessor">#if defined(__GNUC__) || defined(__clang__)</span></div>
+<div class="line"><a id="l00658" name="l00658"></a><span class="lineno">  658</span><span class="preprocessor">#pragma GCC visibility pop</span></div>
+<div class="line"><a id="l00659" name="l00659"></a><span class="lineno">  659</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00660" name="l00660"></a><span class="lineno">  660</span> </div>
+<div class="line"><a id="l00661" name="l00661"></a><span class="lineno">  661</span><span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a id="l00662" name="l00662"></a><span class="lineno">  662</span>}</div>
+<div class="line"><a id="l00663" name="l00663"></a><span class="lineno">  663</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00664" name="l00664"></a><span class="lineno">  664</span> </div>
+<div class="line"><a id="l00665" name="l00665"></a><span class="lineno">  665</span><span class="preprocessor">#endif </span><span class="comment">//__khc</span></div>
 <div class="ttc" id="akhc_8h_html_a02713f2a404eb6f1487ecef3ce5fe2d9"><div class="ttname"><a href="khc_8h.html#a02713f2a404eb6f1487ecef3ce5fe2d9">khc_set_cb_sock_send</a></div><div class="ttdeci">khc_code khc_set_cb_sock_send(khc *khc, KHC_CB_SOCK_SEND cb, void *userdata)</div><div class="ttdoc">Set socket send callback.</div></div>
 <div class="ttc" id="akhc_8h_html_a0697b94cf117f1e6475d4b6a281fdab6"><div class="ttname"><a href="khc_8h.html#a0697b94cf117f1e6475d4b6a281fdab6">khc_slist_free_all</a></div><div class="ttdeci">void khc_slist_free_all(khc_slist *slist)</div><div class="ttdoc">Free memory used for the entire linked list.</div></div>
 <div class="ttc" id="akhc_8h_html_a0902ecf7e31cc403467fafbb7c287c6d"><div class="ttname"><a href="khc_8h.html#a0902ecf7e31cc403467fafbb7c287c6d">khc_set_cb_sock_close</a></div><div class="ttdeci">khc_code khc_set_cb_sock_close(khc *khc, KHC_CB_SOCK_CLOSE cb, void *userdata)</div><div class="ttdoc">Set socket close callback.</div></div>
@@ -366,6 +375,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="akhc_8h_html_a67fb3bf7ff0b65085e639aa5a1465cc3"><div class="ttname"><a href="khc_8h.html#a67fb3bf7ff0b65085e639aa5a1465cc3">khc_set_host</a></div><div class="ttdeci">khc_code khc_set_host(khc *khc, const char *host)</div><div class="ttdoc">Set host.</div></div>
 <div class="ttc" id="akhc_8h_html_a75fd843af7f3de58bcba2d348878becc"><div class="ttname"><a href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc">khc_perform</a></div><div class="ttdeci">khc_code khc_perform(khc *khc)</div><div class="ttdoc">Perform the HTTP session.</div></div>
 <div class="ttc" id="akhc_8h_html_a857caeeab83df303d0fe3a7d97601d0f"><div class="ttname"><a href="khc_8h.html#a857caeeab83df303d0fe3a7d97601d0f">khc_state</a></div><div class="ttdeci">khc_state</div><div class="ttdoc">Indicate state of khc.</div><div class="ttdef"><b>Definition</b> khc.h:184</div></div>
+<div class="ttc" id="akhc_8h_html_a88e402229a0fd13cf4079cd6ee81b1c3"><div class="ttname"><a href="khc_8h.html#a88e402229a0fd13cf4079cd6ee81b1c3">khc_seconds_since_epoch</a></div><div class="ttdeci">bool khc_seconds_since_epoch(int year, int month, int day, int hour, int minute, int second, int64_t *out_seconds)</div><div class="ttdoc">Convert a UTC date and time to seconds since the epoch.</div></div>
 <div class="ttc" id="akhc_8h_html_a90be23875108e9a39942c3af90a6d789"><div class="ttname"><a href="khc_8h.html#a90be23875108e9a39942c3af90a6d789">khc_code</a></div><div class="ttdeci">khc_code</div><div class="ttdoc">Error codes.</div><div class="ttdef"><b>Definition</b> khc.h:225</div></div>
 <div class="ttc" id="akhc_8h_html_a90be23875108e9a39942c3af90a6d789a23f70a0ca5536d5538cd259c0988a5d1"><div class="ttname"><a href="khc_8h.html#a90be23875108e9a39942c3af90a6d789a23f70a0ca5536d5538cd259c0988a5d1">KHC_ERR_SOCK_SEND</a></div><div class="ttdeci">@ KHC_ERR_SOCK_SEND</div><div class="ttdoc">Failure in receiving data.</div><div class="ttdef"><b>Definition</b> khc.h:233</div></div>
 <div class="ttc" id="akhc_8h_html_a90be23875108e9a39942c3af90a6d789a312c4dc6d68bf167f83aedc8def54cb1"><div class="ttname"><a href="khc_8h.html#a90be23875108e9a39942c3af90a6d789a312c4dc6d68bf167f83aedc8def54cb1">KHC_ERR_ALLOCATION</a></div><div class="ttdeci">@ KHC_ERR_ALLOCATION</div><div class="ttdoc">Data is too large and doesn't fit to buffers statically allocated.</div><div class="ttdef"><b>Definition</b> khc.h:241</div></div>
@@ -398,7 +408,7 @@ $(document).ready(function() { init_codefold(0); });
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 27 2026 09:25:30 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 27 2026 11:30:21 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

@@ -343,6 +343,13 @@
     </member>
     <member kind="function">
       <type>bool</type>
+      <name>khc_seconds_since_epoch</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>a88e402229a0fd13cf4079cd6ee81b1c3</anchor>
+      <arglist>(int year, int month, int day, int hour, int minute, int second, int64_t *out_seconds)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
       <name>khc_method_can_have_body</name>
       <anchorfile>khc_8h.html</anchorfile>
       <anchor>a1303a5750c70d26aa745b8b5a20b6635</anchor>
