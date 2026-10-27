@@ -294,7 +294,7 @@ jobs:
   # has to refuse Kii Cloud's certificate as expired. With the secrets, it runs
   # against the live application: it onboards a thing of the run's own, its
   # state reaches the thing's owner, and so do the results of a command the
-  # owner sends. See tests/samples/esp32_qemu.py.
+  # owner sends. See tests/samples/qemu_sample.py.
   esp32:
     name: esp32 sample (ESP-IDF, QEMU)
     runs-on: ubuntu-latest
@@ -329,7 +329,7 @@ jobs:
       - name: certificate refused (QEMU)
         run: |
           . "$IDF_PATH/export.sh"
-          python ../../tests/samples/esp32_qemu.py refused build-refused/flash.bin
+          python ../../tests/samples/qemu_sample.py esp32 refused build-refused/flash.bin
       # The thing's settings, its password included, go into the runner's
       # temporary directory, and the firmware into the build tree, neither of
       # which is uploaded.
@@ -337,7 +337,7 @@ jobs:
         if: env.CLIENT_ID != ''
         run: |
           . "$IDF_PATH/export.sh"
-          python ../../tests/samples/esp32_qemu.py live-config "$RUNNER_TEMP/live.cfg" "$RUNNER_TEMP/live.json"
+          python ../../tests/samples/qemu_sample.py esp32 live-config "$RUNNER_TEMP/live.cfg" "$RUNNER_TEMP/live.json"
           idf.py -B build-live -D SDKCONFIG=build-live/sdkconfig \
               -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.qemu;$RUNNER_TEMP/live.cfg" build
           cd build-live
@@ -346,4 +346,46 @@ jobs:
         if: env.CLIENT_ID != ''
         run: |
           . "$IDF_PATH/export.sh"
-          python ../../tests/samples/esp32_qemu.py live build-live/flash.bin "$RUNNER_TEMP/live.json"
+          python ../../tests/samples/qemu_sample.py esp32 live build-live/flash.bin "$RUNNER_TEMP/live.json"
+
+  # The FreeRTOS sample, on FreeRTOS-Plus-TCP and mbedTLS, built for the MPS2
+  # AN385 board QEMU emulates, a Cortex-M3 with a LAN9118 Ethernet controller,
+  # and run in QEMU, whose user-mode networking reaches the internet. As the
+  # ESP32 sample: built with its clock's floor in 2040, it has to refuse Kii
+  # Cloud's certificate as expired, and with the secrets it runs against the
+  # live application. See tests/samples/qemu_sample.py.
+  freertos:
+    name: freertos sample (Cortex-M3, QEMU)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: tio/freertos-sample
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # For git describe, which ebisu_version.h takes the version from.
+          fetch-depth: 0
+      - name: Setup build env
+        run: |
+          sudo apt-get -yq update
+          sudo apt-get -yq install --no-install-recommends cmake gcc-arm-none-eabi libnewlib-arm-none-eabi qemu-system-arm
+      - name: build with the clock's floor in 2040
+        run: |
+          cmake -B build-refused -D EBISU_SAMPLE_CLOCK_FLOOR=2208988800
+          cmake --build build-refused -j "$(nproc)"
+      - name: certificate refused (QEMU)
+        run: python3 ../../tests/samples/qemu_sample.py freertos refused build-refused/ebisu_freertos_sample.elf
+      # The thing's settings, its password included, go into the runner's
+      # temporary directory, and the firmware into the build tree, neither of
+      # which is uploaded.
+      - name: build against the live application
+        if: env.CLIENT_ID != ''
+        run: |
+          python3 ../../tests/samples/qemu_sample.py freertos live-config "$RUNNER_TEMP/live.cmake" "$RUNNER_TEMP/live.json"
+          cmake -B build-live -C "$RUNNER_TEMP/live.cmake"
+          cmake --build build-live -j "$(nproc)"
+      - name: live (QEMU)
+        if: env.CLIENT_ID != ''
+        run: python3 ../../tests/samples/qemu_sample.py freertos live build-live/ebisu_freertos_sample.elf "$RUNNER_TEMP/live.json"

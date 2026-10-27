@@ -364,8 +364,10 @@ decides the validity period.
 
 The socket callbacks of the [Linux](../tio/linux-sample/sock_cb_linux.c) and
 [Win32](../tio/win32-sample/sock_cb_win32.c) samples give their TLS stack the
-time, and the [ESP32](../tio/esp32-sample/main/sock_cb_esp32.c) sample's check
-the validity periods themselves, mbedTLS not checking them.
+time, and those of the [ESP32](../tio/esp32-sample/main/sock_cb_esp32.c) and
+[FreeRTOS](../tio/freertos-sample/sock_cb_freertos.c) samples check the
+validity periods themselves, mbedTLS not checking them: the ESP32 one after the
+handshake, the FreeRTOS one during it, in mbedTLS's verify callback.
 
 A device that runs for a long time has the time again with every HTTP response.
 One that makes none for a while, only MQTT ones, has its time turn into a lower

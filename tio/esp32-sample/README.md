@@ -60,7 +60,7 @@ qemu-system-xtensa -nographic -machine esp32 -m 4M \
     -drive file=flash.bin,if=mtd,format=raw -nic user,model=open_eth
 ```
 
-[tests/samples/esp32_qemu.py](../../tests/samples/esp32_qemu.py) is how CI runs
+[tests/samples/qemu_sample.py](../../tests/samples/qemu_sample.py) is how CI runs
 it:
 
 - with the clock's floor after Kii Cloud's certificate expires, the sample has

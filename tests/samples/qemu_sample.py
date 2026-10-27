@@ -1,24 +1,31 @@
 #!/usr/bin/env python3
-"""Runs the ESP32 sample in Espressif's QEMU, and checks what it does.
+"""Runs an embedded sample in QEMU, and checks what it does.
 
-  esp32_qemu.py refused <flash image>
+  qemu_sample.py <sample> refused <image>
       Built with its clock's floor after Kii Cloud's certificate expires, the
       sample has to refuse the certificate as expired, and so never onboard.
 
-  esp32_qemu.py live-config <sdkconfig fragment> <run file>
+  qemu_sample.py <sample> live-config <settings> <run file>
       Writes the settings of a build for the live run: the application's, from
       APP_ID and DEFAULT_SITE, and a thing of the run's own. The run file keeps
       the thing's for the live run.
 
-  esp32_qemu.py live <flash image> <run file>
+  qemu_sample.py <sample> live <image> <run file>
       Against the live application, as its admin, with CLIENT_ID and
       CLIENT_SECRET. A user owns the run's thing. The sample onboards it and
       uploads its state, which the user reads back, and receives a command the
       user sends, whose results the user reads back. The user and the thing are
       deleted at the end, and the admin's token revoked.
 
-The flash image is the sample's build merged into one, as esptool's merge_bin
-writes it. The device's console is printed as it comes.
+The samples:
+
+  esp32     tio/esp32-sample, in Espressif's QEMU. The image is the build merged
+            into one, as esptool's merge_bin writes it; the settings an
+            sdkconfig fragment.
+  freertos  tio/freertos-sample, in QEMU's MPS2 AN385. The image is the ELF
+            file; the settings a CMake script for -C.
+
+The device's console is printed as it comes.
 
 CI logs are public: tokens and passwords are never printed, and a failed
 request is described by its status and errorCode only. The admin's and the
@@ -37,34 +44,76 @@ import time
 import urllib.error
 import urllib.request
 
-THING_TYPE = "ltest_esp32_type"
-FIRMWARE_VERSION = "ltest_esp32_fw"
-TRAIT = "ltest_esp32_trait"
-ALIAS = "ltest_esp32_alias"
 TOKEN_LIFETIME_MS = 20 * 60 * 1000
 
 # What the device's console shows when it has crashed.
-CRASH = re.compile(r"Guru Meditation|abort\(\) was called|Backtrace:|stack overflow|assert failed")
+CRASH = re.compile(r"Guru Meditation|abort\(\) was called|Backtrace:|stack overflow|assert failed|FATAL:")
 ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
 
+def esp32_qemu(image):
+    return ["qemu-system-xtensa", "-nographic", "-machine", "esp32", "-m", "4M",
+            "-drive", f"file={image},if=mtd,format=raw",
+            "-nic", "user,model=open_eth"]
+
+
+def freertos_qemu(image):
+    # The console on the UART, and semihosting, which the sample reads the
+    # host's /dev/urandom with, for want of a random number generator.
+    return ["qemu-system-arm", "-machine", "mps2-an385", "-cpu", "cortex-m3",
+            "-display", "none", "-monitor", "none", "-serial", "stdio",
+            "-semihosting-config", "enable=on,target=native",
+            "-netdev", "user,id=net0", "-net", "nic,model=lan9118,netdev=net0",
+            "-kernel", image]
+
+
+def sdkconfig_setting(name, value):
+    if isinstance(value, str):
+        value = '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+    return f"CONFIG_EBISU_SAMPLE_{name}={value}\n"
+
+
+def cmake_setting(name, value):
+    value = str(value).replace("\\", "\\\\").replace('"', '\\"').replace("$", "\\$")
+    return f'set(EBISU_SAMPLE_{name} "{value}" CACHE STRING "")\n'
+
+
+SAMPLES = {
+    "esp32": (esp32_qemu, sdkconfig_setting),
+    "freertos": (freertos_qemu, cmake_setting),
+}
+
+
+class Sample:
+    """What differs from one sample to another, and the names of what the live
+    run sets up in the application, which differ too so that the samples' runs
+    can go at the same time."""
+
+    def __init__(self, name):
+        self.name = name
+        self.qemu, self.setting = SAMPLES[name]
+        prefix = f"ltest_{name}"
+        self.prefix = prefix
+        self.thing_type = f"{prefix}_type"
+        self.firmware_version = f"{prefix}_fw"
+        self.trait = f"{prefix}_trait"
+        self.alias = f"{prefix}_alias"
+
+
 def fail(message):
-    print(f"esp32_qemu: FAILED: {message}", flush=True)
+    print(f"qemu_sample: FAILED: {message}", flush=True)
     sys.exit(1)
 
 
 def step(message):
-    print(f"esp32_qemu: {message}", flush=True)
+    print(f"qemu_sample: {message}", flush=True)
 
 
 class Device:
     """The sample running in QEMU, with its console's lines as they come."""
 
-    def __init__(self, flash):
-        self.proc = subprocess.Popen(
-            ["qemu-system-xtensa", "-nographic", "-machine", "esp32", "-m", "4M",
-             "-drive", f"file={flash},if=mtd,format=raw",
-             "-nic", "user,model=open_eth"],
+    def __init__(self, sample, image):
+        self.proc = subprocess.Popen(sample.qemu(image),
             stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         self.lines = queue.Queue()
         threading.Thread(target=self._read, daemon=True).start()
@@ -102,8 +151,8 @@ class Device:
         self.proc.wait()
 
 
-def refused(flash):
-    device = Device(flash)
+def refused(sample, image):
+    device = Device(sample, image)
     try:
         line = device.wait_for(r"server certificate for \S+ refused: expired", 180,
                 refuse=r"onboarded|author updated")
@@ -190,44 +239,42 @@ def poll(seconds, call, done):
         time.sleep(3)
 
 
-def live_config(fragment, run_file):
+def live_config(sample, settings, run_file):
     run = str(time.time_ns() // 1000)
     thing = {
-        "vendor_thing_id": f"ltest_esp32_{run}",
+        "vendor_thing_id": f"{sample.prefix}_{run}",
         "password": secrets.token_hex(12),
         "run": run,
     }
-    state = json.dumps({ALIAS: {"mode": run}}, separators=(",", ":"))
-
-    def quoted(s):
-        return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
-
-    with open(fragment, "w") as f:
-        f.write(f"CONFIG_EBISU_SAMPLE_APP_ID={quoted(os.environ['APP_ID'])}\n")
-        f.write(f"CONFIG_EBISU_SAMPLE_APP_HOST={quoted(os.environ['DEFAULT_SITE'])}\n")
-        f.write(f"CONFIG_EBISU_SAMPLE_VENDOR_THING_ID={quoted(thing['vendor_thing_id'])}\n")
-        f.write(f"CONFIG_EBISU_SAMPLE_THING_PASSWORD={quoted(thing['password'])}\n")
-        f.write(f"CONFIG_EBISU_SAMPLE_THING_TYPE={quoted(THING_TYPE)}\n")
-        f.write(f"CONFIG_EBISU_SAMPLE_FIRMWARE_VERSION={quoted(FIRMWARE_VERSION)}\n")
-        f.write(f"CONFIG_EBISU_SAMPLE_STATE={quoted(state)}\n")
-        f.write("CONFIG_EBISU_SAMPLE_UPDATE_PERIOD=10\n")
+    state = json.dumps({sample.alias: {"mode": run}}, separators=(",", ":"))
+    with open(settings, "w") as f:
+        for name, value in (
+                ("APP_ID", os.environ["APP_ID"]),
+                ("APP_HOST", os.environ["DEFAULT_SITE"]),
+                ("VENDOR_THING_ID", thing["vendor_thing_id"]),
+                ("THING_PASSWORD", thing["password"]),
+                ("THING_TYPE", sample.thing_type),
+                ("FIRMWARE_VERSION", sample.firmware_version),
+                ("STATE", state),
+                ("UPDATE_PERIOD", 10)):
+            f.write(sample.setting(name, value))
     with open(run_file, "w") as f:
         json.dump(thing, f)
     step(f"run {run}")
 
 
-def set_up_application(kii, admin):
+def set_up_application(sample, kii, admin):
     """The thing type, its firmware version, the trait and its alias, unless
     they are there already."""
-    thing_type = kii.app(f"/configuration/thing-types/{THING_TYPE}")
+    thing_type = kii.app(f"/configuration/thing-types/{sample.thing_type}")
     require(kii.call("PUT", thing_type, "application/vnd.kii.ThingTypeConfigurationRequest+json",
             {"simpleFlow": True, "verificationCodeFlowStartedByUser": True,
              "verificationCodeFlowStartedByThing": True, "verificationCodeTimeout": 172800,
              "verificationCodeLength": 9}, admin), "thing type")
-    require(kii.call("PUT", f"{thing_type}/firmware-versions/{FIRMWARE_VERSION}", "text/plain", "",
+    require(kii.call("PUT", f"{thing_type}/firmware-versions/{sample.firmware_version}", "text/plain", "",
             admin), "firmware version", also=(409,))
 
-    trait = kii.thing_if(f"/traits/{TRAIT}/versions")
+    trait = kii.thing_if(f"/traits/{sample.trait}/versions")
     r = kii.call("GET", f"{trait}/1", token=admin)
     if r.status == 404:
         def schema(name):
@@ -238,13 +285,13 @@ def set_up_application(kii, admin):
     else:
         require(r, "trait")
 
-    require(kii.call("PUT", kii.thing_if(f"/configuration/thing-types/{THING_TYPE}"
-            f"/firmware-versions/{FIRMWARE_VERSION}/aliases/{ALIAS}"),
+    require(kii.call("PUT", kii.thing_if(f"/configuration/thing-types/{sample.thing_type}"
+            f"/firmware-versions/{sample.firmware_version}/aliases/{sample.alias}"),
             "application/vnd.kii.TraitAliasCreationRequest+json",
-            {"trait": TRAIT, "traitVersion": 1}, admin), "alias", also=(409,))
+            {"trait": sample.trait, "traitVersion": 1}, admin), "alias", also=(409,))
 
 
-def live(flash, run_file):
+def live(sample, image, run_file):
     with open(run_file) as f:
         thing = json.load(f)
     run = thing["run"]
@@ -259,10 +306,10 @@ def live(flash, run_file):
     to_delete = []
     device = None
     try:
-        set_up_application(kii, admin)
+        set_up_application(sample, kii, admin)
         step("application set up")
 
-        login = f"ltest_esp32_{run}"
+        login = f"{sample.prefix}_{run}"
         user_password = secrets.token_hex(12)
         r = require(kii.call("POST", kii.app("/users"), "application/vnd.kii.RegistrationRequest+json",
                 {"loginName": login, "password": user_password}, admin), "user registration")
@@ -277,8 +324,8 @@ def live(flash, run_file):
         r = require(kii.call("POST", kii.thing_if("/onboardings"),
                 "application/vnd.kii.OnboardingWithVendorThingIDByOwner+json",
                 {"vendorThingID": thing["vendor_thing_id"], "thingPassword": thing["password"],
-                 "owner": f"user:{user_id}", "thingType": THING_TYPE,
-                 "firmwareVersion": FIRMWARE_VERSION}, user), "onboarding by the owner")
+                 "owner": f"user:{user_id}", "thingType": sample.thing_type,
+                 "firmwareVersion": sample.firmware_version}, user), "onboarding by the owner")
         thing_id = r.get("thingID")
         to_delete.append(kii.app(f"/things/{thing_id}"))
         target = kii.thing_if(f"/targets/thing:{thing_id}")
@@ -287,7 +334,7 @@ def live(flash, run_file):
         # The device onboards with the same vendor thing ID and password: its
         # first connection is checked against the clock's floor, and the
         # response gives the clock the time, which the next are checked at.
-        device = Device(flash)
+        device = Device(sample, image)
         device.wait_for(r"\bonboarded\b", 240, refuse=r"refused")
         device.wait_for(r"the time: \d+, exact", 10)
         step("device onboarded, its clock exact")
@@ -296,17 +343,17 @@ def live(flash, run_file):
 
         r = poll(180, lambda: kii.call("GET", f"{target}/states", token=user),
                 lambda r: r.ok() and isinstance(r.body, dict)
-                and isinstance(r.body.get(ALIAS), dict) and r.body[ALIAS].get("mode") == run)
-        if not (r.ok() and r.body.get(ALIAS, {}).get("mode") == run):
+                and isinstance(r.body.get(sample.alias), dict) and r.body[sample.alias].get("mode") == run)
+        if not (r.ok() and r.body.get(sample.alias, {}).get("mode") == run):
             fail(f"the device's state did not arrive: {r.describe()}")
         step("state read back")
 
         mode = f"command-{run}"
         r = require(kii.call("POST", f"{target}/commands", "application/vnd.kii.CommandCreationRequest+json",
-                {"issuer": f"user:{user_id}", "actions": [{ALIAS: [{"setMode": mode}]}]}, user),
+                {"issuer": f"user:{user_id}", "actions": [{sample.alias: [{"setMode": mode}]}]}, user),
                 "command")
         command_id = r.get("commandID")
-        device.wait_for(rf"action {ALIAS} setMode: {mode}", 120)
+        device.wait_for(rf"action {sample.alias} setMode: {mode}", 120)
         r = poll(120, lambda: kii.call("GET", f"{target}/commands/{command_id}", token=user),
                 lambda r: r.get("commandState") in ("DONE", "INCOMPLETE"))
         if r.get("commandState") != "DONE":
@@ -324,12 +371,13 @@ def live(flash, run_file):
 
 
 def main(argv):
-    if len(argv) == 3 and argv[1] == "refused":
-        refused(argv[2])
-    elif len(argv) == 4 and argv[1] == "live-config":
-        live_config(argv[2], argv[3])
-    elif len(argv) == 4 and argv[1] == "live":
-        live(argv[2], argv[3])
+    sample = Sample(argv[1]) if len(argv) > 1 and argv[1] in SAMPLES else None
+    if sample is not None and len(argv) == 4 and argv[2] == "refused":
+        refused(sample, argv[3])
+    elif sample is not None and len(argv) == 5 and argv[2] == "live-config":
+        live_config(sample, argv[3], argv[4])
+    elif sample is not None and len(argv) == 5 and argv[2] == "live":
+        live(sample, argv[3], argv[4])
     else:
         print(__doc__)
         sys.exit(2)

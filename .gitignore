@@ -31,6 +31,9 @@ CMakeFiles/
 /tio/esp32-sample/managed_components/
 /tio/esp32-sample/dependencies.lock
 
+# The FreeRTOS sample's CMake builds.
+/tio/freertos-sample/build*/
+
 # Test binaries and results.
 tests/small_test/khc/testapp
 tests/small_test/kii/small-test
