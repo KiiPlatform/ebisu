@@ -254,7 +254,11 @@ typedef struct kii_session_t {
  *
  * So a check made before then has a lower bound of the time only: a certificate
  * that expired before it is known to have expired, but one that is not valid
- * until later cannot be told from one that is valid now.
+ * until later cannot be told from one that is valid now. The same goes long
+ * after a time was given, 24 hours by default (kii_clock_set_exact_for()): a
+ * monotonic clock drifts, so what it counts is then a lower bound too. And if
+ * the monotonic clock goes back, the time given becomes the floor, until the
+ * next.
  * kii_clock_check_validity() applies that, for socket callbacks to use when
  * checking the server's certificate, and kii_clock_get_time() gives the time
  * and which of the two it is, for a TLS stack to check with itself.
@@ -274,6 +278,8 @@ typedef struct kii_clock_t {
     int64_t _time;
     /** \private The monotonic time _time was given at. */
     uint64_t _time_at_ms;
+    /** \private How long after it was given _time counts as exact. */
+    uint64_t _exact_for_ms;
     KII_CB_MONOTONIC_MS _cb_monotonic_ms; /**< \private */
     void* _monotonic_ms_data; /**< \private */
     KII_CB_LOCK _cb_lock; /**< \private */
@@ -769,6 +775,21 @@ void kii_clock_set_cb_lock(
 void kii_clock_set_floor(kii_clock_t* clock, int64_t floor);
 
 /**
+ * \brief Set how long a time given stays exact.
+ *
+ * For that long after it was given, the clock counts on from a time and gives
+ * the result as the time. After that, as a lower bound only, allowing for a
+ * monotonic clock running up to 1% fast: kii_clock_check_validity() then no
+ * longer tells a validity period that has not started. A kii_t the clock is set
+ * on gives it a time with every response, so this matters to a device that
+ * makes no HTTP requests for a long time, only MQTT ones.
+ *
+ * \param [out] clock kii_clock_t instance.
+ * \param [in] seconds 24 hours by default. 0 never takes a time as exact.
+ */
+void kii_clock_set_exact_for(kii_clock_t* clock, uint32_t seconds);
+
+/**
  * \brief Give the clock the time.
  *
  * kii does so with the date of each response to a kii_t the clock is set on;
@@ -787,10 +808,11 @@ kii_bool_t kii_clock_set_time(kii_clock_t* clock, int64_t now);
  *
  * \param [in] clock kii_clock_t instance.
  * \param [out] out_now Seconds since 1970-01-01T00:00:00Z: the time, counted on
- * from the last one given, or the floor while none has been, or while the
- * floor is later.
+ * from the last one given; or a lower bound of it, which is the floor while no
+ * time has been given, or while the floor is later, or the time counted on
+ * less 1% once the time given is older than kii_clock_set_exact_for() allows.
  * \return KII_TRUE if out_now is the time, to within a few seconds; KII_FALSE
- * if it is the floor, a time that it is not earlier than.
+ * if it is a lower bound, a time that it is not earlier than.
  */
 kii_bool_t kii_clock_get_time(kii_clock_t* clock, int64_t* out_now);
 

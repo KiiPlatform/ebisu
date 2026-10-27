@@ -113,7 +113,9 @@ typedef void
  * \brief Callback returns a monotonic time in milliseconds.
  *
  * The value must never decrease, and must not jump when the wall clock is
- * changed, for example by NTP. Its origin is arbitrary; only differences are
+ * changed, for example by NTP. It must keep counting while the device sleeps:
+ * a tick counter that stops in low-power modes has tokens renewed late, and
+ * kii_clock_t falling behind. Its origin is arbitrary; only differences are
  * used. Platforms whose tick counter is 32 bits wide must extend it to 64, or
  * it wraps after about 49.7 days.
  *

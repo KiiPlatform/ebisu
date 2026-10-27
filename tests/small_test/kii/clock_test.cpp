@@ -107,14 +107,19 @@ TEST_CASE( "A time given is counted on with the monotonic clock" ) {
     CHECK( time_of(&clock, &exact) == JAN_2090 );
     p.now_ms += 1;
     CHECK( time_of(&clock, &exact) == JAN_2090 + 1 );
-    p.now_ms += 86400 * 1000ULL;
-    CHECK( time_of(&clock, &exact) == JAN_2090 + 86401 );
+    p.now_ms += 3600 * 1000ULL;
+    CHECK( time_of(&clock, &exact) == JAN_2090 + 3601 );
     CHECK( exact );
 
-    // A monotonic clock going back counts as no time elapsed.
+    // A monotonic clock going back cannot count on from the time given, which
+    // becomes the floor: the time is at least that.
     p.now_ms = 0;
     CHECK( time_of(&clock, &exact) == JAN_2090 );
-    CHECK( exact );
+    CHECK_FALSE( exact );
+    CHECK( clock._floor == JAN_2090 );
+    p.now_ms = 5000;
+    CHECK( time_of(&clock, &exact) == JAN_2090 );
+    CHECK_FALSE( exact );
 
     // A floor set later than the time counted on is the better bound, but a
     // bound only.
@@ -125,6 +130,71 @@ TEST_CASE( "A time given is counted on with the monotonic clock" ) {
     REQUIRE( kii_clock_set_time(&clock, JUN_2090 + 10) == KII_TRUE );
     CHECK( time_of(&clock, &exact) == JUN_2090 + 10 );
     CHECK( exact );
+}
+
+TEST_CASE( "A time given stays exact for a day, and is a lower bound after" ) {
+    Platform p;
+    kii_clock_t clock;
+    kii_clock_init(&clock, now_ms, &p);
+    bool exact = false;
+    REQUIRE( kii_clock_set_time(&clock, JAN_2090) == KII_TRUE );
+
+    p.now_ms += 24ULL * 3600 * 1000 - 1;
+    CHECK( time_of(&clock, &exact) == JAN_2090 + 86399 );
+    CHECK( exact );
+    // A day after: counted on, less 1%, and a lower bound only.
+    p.now_ms += 1;
+    CHECK( time_of(&clock, &exact) == JAN_2090 + 86400 - 864 );
+    CHECK_FALSE( exact );
+    p.now_ms += 99ULL * 86400 * 1000;
+    CHECK( time_of(&clock, &exact) == JAN_2090 + 100 * 86400 - 86400 );
+    CHECK_FALSE( exact );
+
+    // A response, or the application, giving the time again makes it exact.
+    REQUIRE( kii_clock_set_time(&clock, JUN_2090) == KII_TRUE );
+    CHECK( time_of(&clock, &exact) == JUN_2090 );
+    CHECK( exact );
+
+    // A lower floor than the stale count is no better bound; a higher one is.
+    kii_clock_init(&clock, now_ms, &p);
+    REQUIRE( kii_clock_set_time(&clock, JAN_2090) == KII_TRUE );
+    p.now_ms += 10ULL * 86400 * 1000;
+    kii_clock_set_floor(&clock, JAN_2090 + 10 * 86400);
+    CHECK( time_of(&clock, &exact) == JAN_2090 + 10 * 86400 );
+    CHECK_FALSE( exact );
+}
+
+TEST_CASE( "How long a time stays exact can be set, to never as well" ) {
+    Platform p;
+    kii_clock_t clock;
+    kii_clock_init(&clock, now_ms, &p);
+    bool exact = false;
+
+    kii_clock_set_exact_for(&clock, 60);
+    REQUIRE( kii_clock_set_time(&clock, JAN_2090) == KII_TRUE );
+    p.now_ms += 59999;
+    CHECK( time_of(&clock, &exact) == JAN_2090 + 59 );
+    CHECK( exact );
+    p.now_ms += 1;
+    CHECK( time_of(&clock, &exact) == JAN_2090 + 60 );
+    CHECK_FALSE( exact );
+
+    kii_clock_set_exact_for(&clock, 0);
+    REQUIRE( kii_clock_set_time(&clock, JUN_2090) == KII_TRUE );
+    CHECK( time_of(&clock, &exact) == JUN_2090 );
+    CHECK_FALSE( exact );
+}
+
+TEST_CASE( "A clock long without a time does not tell a period that has not started" ) {
+    Platform p;
+    kii_clock_t clock;
+    kii_clock_init(&clock, now_ms, &p);
+    REQUIRE( kii_clock_set_time(&clock, JAN_2090) == KII_TRUE );
+    p.now_ms += 30ULL * 86400 * 1000;
+    // 30 days on: at least JAN_2090 + 29.7 days. A certificate issued since
+    // cannot be told from one valid now, but one that ended before is expired.
+    CHECK( kii_clock_check_validity(&clock, JAN_2090 + 30 * 86400, JUN_2090) == KII_VALIDITY_OK );
+    CHECK( kii_clock_check_validity(&clock, JAN_2090, JAN_2090 + 29 * 86400) == KII_VALIDITY_EXPIRED );
 }
 
 TEST_CASE( "A validity period is checked against the time, or against its floor" ) {

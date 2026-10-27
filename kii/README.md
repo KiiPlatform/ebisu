@@ -355,6 +355,17 @@ The socket callbacks then check the server's certificate against it:
 The chain and the host name are checked in full either way: the clock only
 decides the validity period.
 
+A device that runs for a long time has the time again with every HTTP response.
+One that makes none for a while, only MQTT ones, has its time turn into a lower
+bound 24 hours after the last (`kii_clock_set_exact_for()` changes that), and a
+monotonic clock that goes back turns it into the floor: a monotonic clock
+drifts, and one cannot count on from a time when it goes back. A stale clock
+therefore never refuses a certificate as not yet valid, which could keep the
+device from connecting at all. The monotonic clock has to keep counting while
+the device sleeps, or the time falls behind while it still counts as exact.
+Saving the time now and then, and setting it with `kii_clock_set_floor()` after
+a restart, keeps the floor close to the time.
+
 ## Building
 
 `kii` is built as part of ebisu, as described in the

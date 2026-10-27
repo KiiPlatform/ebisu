@@ -28,6 +28,7 @@ void kii_clock_init(
      * clock was a little ahead. */
     clock->_floor = EBISU_SOURCE_TIME - 7 * 86400;
     clock->_time_known = KII_FALSE;
+    clock->_exact_for_ms = 24ULL * 3600 * 1000;
     clock->_cb_monotonic_ms = cb_monotonic_ms;
     clock->_monotonic_ms_data = userdata;
 }
@@ -41,6 +42,13 @@ void kii_clock_set_cb_lock(
     clock->_cb_lock = cb_lock;
     clock->_cb_unlock = cb_unlock;
     clock->_lock_data = userdata;
+}
+
+void kii_clock_set_exact_for(kii_clock_t* clock, uint32_t seconds)
+{
+    _lock_clock(clock);
+    clock->_exact_for_ms = (uint64_t)seconds * 1000;
+    _unlock_clock(clock);
 }
 
 void kii_clock_set_floor(kii_clock_t* clock, int64_t floor)
@@ -73,14 +81,29 @@ kii_bool_t kii_clock_get_time(kii_clock_t* clock, int64_t* out_now)
     int64_t now = clock->_floor;
     if (clock->_time_known == KII_TRUE && clock->_cb_monotonic_ms != NULL) {
         uint64_t now_ms = clock->_cb_monotonic_ms(clock->_monotonic_ms_data);
-        /* A monotonic clock that went back counts as no time elapsed, rather
-         * than as most of 2^64 milliseconds. */
-        uint64_t elapsed_ms = (now_ms >= clock->_time_at_ms) ? now_ms - clock->_time_at_ms : 0;
-        int64_t counted = clock->_time + (int64_t)(elapsed_ms / 1000);
-        /* A floor set later than the time counted on is the better bound. */
-        if (counted >= now) {
-            now = counted;
-            exact = KII_TRUE;
+        if (now_ms < clock->_time_at_ms) {
+            /* A monotonic clock that went back, a 32-bit tick counter wrapping
+             * for one, can no longer count on from the time given. The time is
+             * at least that, though: it becomes the floor, until the next. */
+            if (clock->_time > clock->_floor) {
+                clock->_floor = clock->_time;
+            }
+            clock->_time_known = KII_FALSE;
+            now = clock->_floor;
+        } else {
+            uint64_t elapsed_ms = now_ms - clock->_time_at_ms;
+            int64_t elapsed = (int64_t)(elapsed_ms / 1000);
+            kii_bool_t fresh = (elapsed_ms < clock->_exact_for_ms) ? KII_TRUE : KII_FALSE;
+            /* Long after the time was given, what a monotonic clock counts is
+             * a lower bound at best: one stopped while the device slept counts
+             * less than has passed, and one running fast, by up to 1% for an
+             * RC oscillator, more. */
+            int64_t counted = clock->_time + elapsed - ((fresh == KII_TRUE) ? 0 : elapsed / 100);
+            /* A floor set later than the time counted on is the better bound. */
+            if (counted >= now) {
+                now = counted;
+                exact = fresh;
+            }
         }
     }
     _unlock_clock(clock);
