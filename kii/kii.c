@@ -359,17 +359,13 @@ void _req_headers_free_all(kii_t* kii) {
 }
 
 int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len) {
-    char header_cpy[header_len + 1];
-    memcpy(header_cpy, header, header_len);
-    header_cpy[header_len] = '\0';
-
     const char etag_lower[] = "etag";
     const char etag_upper[] = "ETAG";
     size_t key_len = strlen(etag_lower);
     int state = 0;
     int j = 0;
     for (int i = 0; i < header_len; ++i) {
-        char c = header_cpy[i];
+        char c = header[i];
 
         if (state == 0) {
             if (c == etag_lower[i] || c == etag_upper[i]) {

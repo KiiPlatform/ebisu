@@ -175,3 +175,71 @@ TEST_CASE( "Stream and response header buffers are used by every request" ) {
     REQUIRE( recv_into_stream == 0 );
     REQUIRE( recv_elsewhere > 0 );
 }
+
+// Every response header line goes through the ETag parser, up to the size of the
+// response header buffer, so a long one must not cost its length in stack.
+TEST_CASE( "The ETag is read from the response, whatever the other headers" ) {
+    kii_t kii;
+    kii_init(&kii);
+    char kii_buff[1024];
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_site(&kii, "api.kii.com");
+    static char resp_header_buff[8192];
+    kii_set_resp_header_buff(&kii, resp_header_buff, sizeof(resp_header_buff));
+
+    std::string resp;
+    size_t resp_pos = 0;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&resp_pos](void*, const char*, unsigned int) {
+        resp_pos = 0;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_recv = [&resp, &resp_pos](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        size_t n = resp.size() - resp_pos;
+        if (n > length_to_read) { n = length_to_read; }
+        memcpy(buffer, resp.data() + resp_pos, n);
+        resp_pos += n;
+        *out_actual_length = n;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
+    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
+    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+
+    auto send = [&kii]() {
+        kii_code_t res = kii_api_call_start(&kii, "GET", "/api/apps/dummyAppID", NULL, KII_FALSE);
+        return (res == KII_ERR_OK) ? kii_api_call_run(&kii) : res;
+    };
+
+    const std::string cookie = "Set-Cookie: c=" + std::string(8000, 'x') + "\r\n";
+    resp = "HTTP/1.1 200 OK\r\n" + cookie +
+        "ETag: \"1\"\r\n"
+        "Content-Length: 2\r\n"
+        "\r\n"
+        "{}";
+    REQUIRE( send() == KII_ERR_OK );
+    CHECK( std::string(kii_get_etag(&kii)) == "\"1\"" );
+
+    // In any case, and with whitespace around the value.
+    resp = "HTTP/1.1 200 OK\r\n"
+        "etag:  \"2\" \r\n"
+        "Content-Length: 2\r\n"
+        "\r\n"
+        "{}";
+    REQUIRE( send() == KII_ERR_OK );
+    CHECK( std::string(kii_get_etag(&kii)) == "\"2\"" );
+
+    resp = "HTTP/1.1 200 OK\r\n"
+        "Content-Length: 2\r\n"
+        "\r\n"
+        "{}";
+    REQUIRE( send() == KII_ERR_OK );
+    CHECK( std::string(kii_get_etag(&kii)) == "" );
+}
