@@ -10,6 +10,7 @@
 
 #include <khc_socket_callback.h>
 #include <kii_task_callback.h>
+#include <kii.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,6 +23,9 @@ typedef struct {
     /* Receive and send timeouts in seconds; 0 waits for ever. */
     unsigned int to_recv;
     unsigned int to_send;
+    /* The time the server's certificate is checked at, or NULL for the
+       system's. See kii_clock_t. */
+    kii_clock_t* clock;
 
     /* The rest belongs to the callbacks. */
     /* The server's name, which its certificate must be issued for. */

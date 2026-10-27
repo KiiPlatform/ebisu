@@ -238,13 +238,8 @@ struct StopTask {
 // Has kii run the push task with t's callbacks and the broker's sockets.
 void set_up_task(kii_t* kii, MqttTest& t, char* mqtt_buff, size_t mqtt_buff_size)
 {
-#ifdef _WIN32
     sock_cb_init_context(&t.sock, TO_RECV, TO_SEND);
-#else
-    memset(&t.sock, 0, sizeof(t.sock));
-    t.sock.to_recv = TO_RECV;
-    t.sock.to_send = TO_SEND;
-#endif
+    t.sock.clock = ebisu::ltest::test_clock();
     kii_set_mqtt_buff(kii, mqtt_buff, mqtt_buff_size);
     kii_set_cb_mqtt_sock_connect(kii, cb_connect, &t);
     kii_set_cb_mqtt_sock_send(kii, cb_send, &t);

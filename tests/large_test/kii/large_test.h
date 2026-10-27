@@ -45,6 +45,7 @@ inline void init(
     kii_set_cb_mqtt_sock_recv(kii, ebisu::ltest::ssl::cb_recv, mqtt_ssl_ctx);
     kii_set_cb_mqtt_sock_close(kii, ebisu::ltest::ssl::cb_close, mqtt_ssl_ctx);
     kii_set_json_parser_resource(kii, resource);
+    kii_set_clock(kii, ebisu::ltest::test_clock());
 }
 
 inline kii_author_t author(kii_t* kii) {

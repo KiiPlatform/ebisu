@@ -77,6 +77,9 @@ static BOOL WINAPI console_ctrl_handler(DWORD ctrl_type) {
 }
 
 static SRWLOCK session_lock = SRWLOCK_INIT;
+/* The clock's, which has to be a lock of its own: the socket callbacks use the
+   clock while kii may hold the session's. */
+static SRWLOCK clock_lock = SRWLOCK_INIT;
 
 static void author_updated_callback(const kii_author_t* author, void* userdata)
 {
@@ -322,10 +325,19 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    /* The time the server's certificate is checked at, which this sample takes
+       from the server as a device without a real-time clock would: until the
+       first response, the clock has only a floor, a time it is known not to
+       be earlier than. */
+    kii_clock_t clock;
+    kii_clock_init(&clock, monotonic_ms_cb_impl, NULL);
+    kii_clock_set_cb_lock(&clock, lock_cb_impl, unlock_cb_impl, &clock_lock);
+
     tio_updater_t updater;
 
     socket_context_t updater_http_ctx;
     sock_cb_init_context(&updater_http_ctx, TO_RECV_SEC, TO_SEND_SEC);
+    updater_http_ctx.clock = &clock;
 
     jkii_token_t updater_tokens[256];
     jkii_resource_t updater_resource = {updater_tokens, 256};
@@ -345,9 +357,11 @@ int main(int argc, char** argv)
 
     socket_context_t handler_http_ctx;
     sock_cb_init_context(&handler_http_ctx, TO_RECV_SEC, TO_SEND_SEC);
+    handler_http_ctx.clock = &clock;
 
     socket_context_t handler_mqtt_ctx;
     sock_cb_init_context(&handler_mqtt_ctx, TO_RECV_SEC, TO_SEND_SEC);
+    handler_mqtt_ctx.clock = &clock;
 
     char handler_http_buff[HANDLER_HTTP_BUFF_SIZE];
     memset(handler_http_buff, 0x00, sizeof(char) * HANDLER_HTTP_BUFF_SIZE);
@@ -378,6 +392,13 @@ int main(int argc, char** argv)
     if (tio_handler_set_session(&handler, &session) != TIO_ERR_OK ||
             tio_updater_set_session(&updater, &session) != TIO_ERR_OK) {
         printf("failed to set the session.\n");
+        WSACleanup();
+        return 1;
+    }
+    /* Each response's date sets the clock. */
+    if (tio_handler_set_clock(&handler, &clock) != TIO_ERR_OK ||
+            tio_updater_set_clock(&updater, &clock) != TIO_ERR_OK) {
+        printf("failed to set the clock.\n");
         WSACleanup();
         return 1;
     }

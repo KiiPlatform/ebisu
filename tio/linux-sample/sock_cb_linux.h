@@ -3,6 +3,7 @@
 
 #include <khc_socket_callback.h>
 #include <kii_task_callback.h>
+#include <kii.h>
 #include <openssl/ssl.h>
 
 #ifdef __cplusplus
@@ -19,7 +20,20 @@ typedef struct {
        for sock_cb_recv_timed_out(). */
     int recv_ssl_error;
     int recv_errno;
+    /* The time the server's certificate is checked at, or NULL for the
+       system's. See kii_clock_t. */
+    kii_clock_t* clock;
+    /* Whether the clock had the time, rather than its floor only, when the
+       connection was made. */
+    kii_bool_t time_exact;
 } socket_context_t;
+
+/* Clears the context, with the timeouts of the socket, in seconds, 0 for none.
+   Set clock after it to check the server's certificate at its time. */
+void sock_cb_init_context(
+        socket_context_t* ctx,
+        unsigned int to_recv,
+        unsigned int to_send);
 
 khc_sock_code_t
     sock_cb_connect(void* sock_ctx, const char* host,
