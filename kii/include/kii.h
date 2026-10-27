@@ -258,7 +258,10 @@ typedef struct kii_session_t {
  * after a time was given, 24 hours by default (kii_clock_set_exact_for()): a
  * monotonic clock drifts, so what it counts is then a lower bound too. And if
  * the monotonic clock goes back, the time given becomes the floor, until the
- * next.
+ * next. A certificate refused as not valid yet while the clock had the time
+ * suggests the time fell behind: kii_clock_forget_time() makes it a lower bound
+ * until the next, so that the device connects again.
+ *
  * kii_clock_check_validity() applies that, for socket callbacks to use when
  * checking the server's certificate, and kii_clock_get_time() gives the time
  * and which of the two it is, for a TLS stack to check with itself.
@@ -815,6 +818,26 @@ kii_bool_t kii_clock_set_time(kii_clock_t* clock, int64_t now);
  * if it is a lower bound, a time that it is not earlier than.
  */
 kii_bool_t kii_clock_get_time(kii_clock_t* clock, int64_t* out_now);
+
+/**
+ * \brief Forget the time, keeping what was counted as the floor.
+ *
+ * For the socket callbacks to call when their TLS stack refuses the server's
+ * certificate as not valid yet, while the clock had the time. On a device whose
+ * monotonic clock stops while it sleeps, the time falls behind, and a server
+ * that renewed its certificate meanwhile presents one that starts after it.
+ * Without a time of the server's, the clock could not catch up: the connection
+ * that would bring one is refused. Forgotten, the time becomes a lower bound,
+ * which kii_clock_check_validity() and the socket callbacks do not refuse a
+ * certificate for not having started by, so the next connection goes through,
+ * and its response gives the clock the time again.
+ *
+ * What was counted on, less 1%, becomes the floor: the time is at least that,
+ * however the monotonic clock ran.
+ *
+ * \param [out] clock kii_clock_t instance.
+ */
+void kii_clock_forget_time(kii_clock_t* clock);
 
 /**
  * \brief Check a validity period, a certificate's for instance, against the

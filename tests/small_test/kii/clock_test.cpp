@@ -197,6 +197,50 @@ TEST_CASE( "A clock long without a time does not tell a period that has not star
     CHECK( kii_clock_check_validity(&clock, JAN_2090, JAN_2090 + 29 * 86400) == KII_VALIDITY_EXPIRED );
 }
 
+TEST_CASE( "Forgetting the time keeps what was counted, less 1%, as the floor" ) {
+    Platform p;
+    kii_clock_t clock;
+    kii_clock_init(&clock, now_ms, &p);
+    bool exact = true;
+
+    // Without a time, nothing to forget.
+    const int64_t floor = clock._floor;
+    kii_clock_forget_time(&clock);
+    CHECK( time_of(&clock, &exact) == floor );
+    CHECK_FALSE( exact );
+
+    // A fresh time: counted, less 1%.
+    REQUIRE( kii_clock_set_time(&clock, JAN_2090) == KII_TRUE );
+    p.now_ms += 3600 * 1000ULL;
+    kii_clock_forget_time(&clock);
+    CHECK( time_of(&clock, &exact) == JAN_2090 + 3600 - 36 );
+    CHECK_FALSE( exact );
+    // And it stays forgotten as the monotonic clock goes on.
+    p.now_ms += 3600 * 1000ULL;
+    CHECK( time_of(&clock, &exact) == JAN_2090 + 3600 - 36 );
+    CHECK_FALSE( exact );
+
+    // A stale time: counted less 1% already.
+    REQUIRE( kii_clock_set_time(&clock, JUN_2090) == KII_TRUE );
+    p.now_ms += 2ULL * 86400 * 1000;
+    kii_clock_forget_time(&clock);
+    CHECK( time_of(&clock, &exact) == JUN_2090 + 2 * 86400 - 1728 );
+    CHECK_FALSE( exact );
+
+    // After the monotonic clock went back, the time given.
+    kii_clock_init(&clock, now_ms, &p);
+    REQUIRE( kii_clock_set_time(&clock, JAN_2090) == KII_TRUE );
+    p.now_ms -= 1000;
+    kii_clock_forget_time(&clock);
+    CHECK( time_of(&clock, &exact) == JAN_2090 );
+    CHECK_FALSE( exact );
+
+    // A time given again is the time again.
+    REQUIRE( kii_clock_set_time(&clock, JUN_2090) == KII_TRUE );
+    CHECK( time_of(&clock, &exact) == JUN_2090 );
+    CHECK( exact );
+}
+
 TEST_CASE( "A validity period is checked against the time, or against its floor" ) {
     Platform p;
     kii_clock_t clock;
@@ -394,4 +438,58 @@ TEST_CASE( "Without a clock set, responses set none" ) {
     bool exact = true;
     CHECK( time_of(&clock, &exact) == clock._floor );
     CHECK_FALSE( exact );
+}
+
+TEST_CASE( "A certificate renewed while the clock fell behind is refused once, then taken" ) {
+    // The device's monotonic clock stopped while it slept for 10 days, during
+    // which the server renewed its certificate: valid from JAN_2090 + 10 days.
+    // A socket callback refusing it as not valid yet forgets the time, so the
+    // next connection is checked against a lower bound and goes through, and
+    // its response gives the clock the time again.
+    Platform p;
+    kii_clock_t clock;
+    kii_clock_init(&clock, now_ms, &p);
+    Client c(&clock);
+    REQUIRE( kii_set_clock(&c.kii, &clock) == KII_ERR_OK );
+    int64_t not_before = 0;
+    const int64_t not_after = JUN_2090 + 365 * 86400;
+    int refused = 0;
+    auto check_certificate = c.http_ctx.on_connect;
+    c.http_ctx.on_connect = [&](void* ctx, const char* host, unsigned int port) {
+        if (kii_clock_check_validity(&clock, not_before, not_after) != KII_VALIDITY_OK) {
+            kii_clock_forget_time(&clock);
+            ++refused;
+            return KHC_SOCK_FAIL;
+        }
+        return check_certificate(ctx, host, port);
+    };
+    c.responses = {
+        response(JAN_2090_DATE),
+        response("Date: Wed, 11 Jan 2090 00:00:00 GMT"),
+        response(""),
+    };
+
+    // Before the sleep: the old certificate, and the time from the response.
+    not_before = JAN_2090 - 86400;
+    REQUIRE( c.get() == KII_ERR_OK );
+    bool exact = false;
+    REQUIRE( time_of(&clock, &exact) == JAN_2090 );
+    REQUIRE( exact );
+
+    // After it: the clock says JAN_2090 still, the certificate is newer.
+    not_before = JAN_2090 + 10 * 86400;
+    CHECK( c.get() != KII_ERR_OK );
+    CHECK( refused == 1 );
+    CHECK( time_of(&clock, &exact) == JAN_2090 );
+    CHECK_FALSE( exact );
+
+    // The next connection goes through, and its response sets the time.
+    REQUIRE( c.get() == KII_ERR_OK );
+    CHECK( refused == 1 );
+    CHECK( time_of(&clock, &exact) == JAN_2090 + 10 * 86400 );
+    CHECK( exact );
+
+    // From then on, the renewed certificate is valid at the time.
+    REQUIRE( c.get() == KII_ERR_OK );
+    CHECK( refused == 1 );
 }

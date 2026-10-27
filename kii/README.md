@@ -351,6 +351,13 @@ The socket callbacks then check the server's certificate against it:
 - `kii_clock_get_time()` gives the time, and whether it is the time or only the
   floor, for a TLS stack that checks validity itself: give it the time, and
   while it is only the floor, ignore a certificate not being valid yet.
+- `kii_clock_forget_time()`, when the server's certificate is refused as not
+  valid yet while the clock had the time. That suggests the time fell behind,
+  the monotonic clock having stopped while the device slept and the server
+  having renewed its certificate meanwhile. Forgotten, the time becomes a lower
+  bound, the next connection goes through, and its response gives the clock the
+  time again. Without it, the connection that would bring the time is refused,
+  again and again.
 
 The chain and the host name are checked in full either way: the clock only
 decides the validity period.
