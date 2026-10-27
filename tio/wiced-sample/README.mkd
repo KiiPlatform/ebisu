@@ -2,6 +2,18 @@
 
 This is a demo application of TIO for WICED SDK v6.x.
 
+## Security
+
+**Do not use this sample's socket callbacks as they are in a product.** They
+use TLS, but initialize its context with no CA certificates and check no host
+name, so they do not authenticate the server. A product has to verify the
+server's certificate: its chain to a trusted CA, the host name it is issued
+for, and its validity period.
+The [kii README](../../kii/README.md#the-time) describes how to check the
+certificate at the right time on a device without a real-time clock, and the
+[Linux](../linux-sample/sock_cb_linux.c) and
+[Win32](../win32-sample/sock_cb_win32.c) samples' socket callbacks do so.
+
 ## Reference hardware
 Avnet BCM4343W IoT Starter Kit (AES-EVB-BCM4343W-G)
 

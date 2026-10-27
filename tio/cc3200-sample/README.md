@@ -1,5 +1,18 @@
 # Sample application on CC3200
 
+## Security
+
+**Do not use this sample's socket callbacks as they are in a product.** It
+connects to Kii Cloud and to the MQTT broker over plain HTTP and MQTT, without
+TLS, so nothing it sends is encrypted, its tokens and credentials included,
+and the server is not authenticated: see [SSL Connection](#ssl-connection). A
+product has to use TLS and verify the server's certificate: its chain to a
+trusted CA, the host name it is issued for, and its validity period.
+The [kii README](../../kii/README.md#the-time) describes how to check the
+certificate at the right time on a device without a real-time clock, and the
+[Linux](../linux-sample/sock_cb_linux.c) and
+[Win32](../win32-sample/sock_cb_win32.c) samples' socket callbacks do so.
+
 ## Required tools
 
 We built and tested this sample appliation on Windows 10.
