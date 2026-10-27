@@ -22,6 +22,7 @@ ebisu_add_test_suite(small_test_kii
     LABEL small
     WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/kii
     SOURCES
+        kii/date_test.cpp
         kii/mqtt_test.cpp
         kii/push_test.cpp
         kii/request_test.cpp

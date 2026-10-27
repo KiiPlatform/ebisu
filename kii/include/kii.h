@@ -366,6 +366,9 @@ typedef struct kii_t {
     khc_slist* _req_headers; /**< \private */
 
     char _etag[KII_ETAG_MAX_SIZE]; /**< \private */
+    /** \private The last response's Date header, as seconds since the epoch,
+     * or -1. */
+    int64_t _resp_date;
 
     jkii_resource_t* _json_resource; /**< \private */
 
@@ -1601,6 +1604,25 @@ const char* kii_get_etag(kii_t* kii);
  * \return HTTP status code.
  */
 uint16_t kii_get_resp_status(kii_t* kii);
+
+/**
+ * \brief Get the server's time, from the Date header of the last response.
+ *
+ * Kii Cloud states its time, to the second, in every response. A device without
+ * a real-time clock can take its time from there, to put timestamps in what it
+ * reports for instance, or to check the validity of certificates once it has
+ * talked to the server. The time is as trustworthy as the connection it came
+ * through, so the socket callbacks must verify the server's certificate.
+ *
+ * Only the IMF-fixdate form servers are required to send is taken (RFC 9110,
+ * section 5.6.7), as in "Sun, 06 Nov 1994 08:49:37 GMT". Anything else, the
+ * obsolete forms included, counts as no Date header.
+ *
+ * \param [in] kii kii_t instance.
+ * \return Seconds since 1970-01-01T00:00:00Z when the response to the last
+ * request had a Date header, -1 otherwise.
+ */
+int64_t kii_get_resp_date(kii_t* kii);
 
 /**
  * \brief Get response body length.

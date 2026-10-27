@@ -125,6 +125,8 @@ kii_code_t _req_send(kii_t* kii)
         return res;
     }
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    // Only this request's response may set it.
+    kii->_resp_date = -1;
     khc_code code = _kii_perform(kii);
     _req_headers_free_all(kii);
 
