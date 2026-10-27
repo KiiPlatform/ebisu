@@ -308,6 +308,7 @@ Other REST API calls</h1>
 <h1><a class="anchor" id="autotoc_md8"></a>
 Results</h1>
 <p>APIs return <code>KII_ERR_OK</code> on success. <code>KII_ERR_RESP_STATUS</code> means the server answered with an error status, which <code><a class="el" href="kii_8h.html#ae61dfefd97935dd1d068dd640ec30af1" title="Get HTTP status code.">kii_get_resp_status()</a></code> gives, the response body being in the buffer. <code>KII_ERR_SOCK_*</code> come from the socket callbacks, and <code>KII_ERR_TOO_LARGE_DATA</code> from a request or response that doesn't fit in the buffer.</p>
+<p><code><a class="el" href="kii_8h.html#ab36c0a18982d688d8a5c5307f1307ebc" title="Get the server&#39;s time, from the Date header of the last response.">kii_get_resp_date()</a></code> gives the server's time, from the <code>Date</code> header of the call's response, for a device without a real-time clock: khc's <code><a class="elRef" href="../../khc/html/khc_8h.html#a0e1ee79bbbbeefbbac3228cb5ef0d9d8">khc_get_resp_date()</a></code>, which the <a href="../khc/README.md#results">khc README</a> describes. It is as trustworthy as the connection it came through, so verify the server's certificate in the socket callbacks.</p>
 <h1><a class="anchor" id="autotoc_md9"></a>
 Building</h1>
 <p><code>kii</code> is built as part of ebisu, as described in the <a href="https://github.com/KiiPlatform/ebisu/blob/master/README.md#building">top-level README</a>. <code>libkii</code> includes <code>khc</code> and <code>jkii</code>. </p>
@@ -315,7 +316,7 @@ Building</h1>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 27 2026 07:32:09 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 27 2026 08:51:10 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

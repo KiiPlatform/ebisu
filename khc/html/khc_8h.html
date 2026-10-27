@@ -285,6 +285,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 <tr class="memitem:a566621dab015c69cb57dd1de88241c2a" id="r_a566621dab015c69cb57dd1de88241c2a"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a566621dab015c69cb57dd1de88241c2a">khc_get_status_code</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
 <tr class="memdesc:a566621dab015c69cb57dd1de88241c2a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get HTTP status code.  <br /></td></tr>
 <tr class="separator:a566621dab015c69cb57dd1de88241c2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0e1ee79bbbbeefbbac3228cb5ef0d9d8" id="r_a0e1ee79bbbbeefbbac3228cb5ef0d9d8"><td class="memItemLeft" align="right" valign="top">int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a0e1ee79bbbbeefbbac3228cb5ef0d9d8">khc_get_resp_date</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
+<tr class="memdesc:a0e1ee79bbbbeefbbac3228cb5ef0d9d8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the server's time, from the response's Date header.  <br /></td></tr>
+<tr class="separator:a0e1ee79bbbbeefbbac3228cb5ef0d9d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1303a5750c70d26aa745b8b5a20b6635" id="r_a1303a5750c70d26aa745b8b5a20b6635"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a1303a5750c70d26aa745b8b5a20b6635">khc_method_can_have_body</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
 <tr class="memdesc:a1303a5750c70d26aa745b8b5a20b6635"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the configured request method can have a request body.  <br /></td></tr>
 <tr class="separator:a1303a5750c70d26aa745b8b5a20b6635"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -556,6 +559,36 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a0e1ee79bbbbeefbbac3228cb5ef0d9d8" name="a0e1ee79bbbbeefbbac3228cb5ef0d9d8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0e1ee79bbbbeefbbac3228cb5ef0d9d8">&#9670;&#160;</a></span>khc_get_resp_date()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int64_t khc_get_resp_date </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkhc.html">khc</a> *&#160;</td>
+          <td class="paramname"><em>khc</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the server's time, from the response's Date header. </p>
+<p>Servers state their time, to the second, in their responses. A device without a real-time clock can take its time from there, to put timestamps in what it reports for instance, or to check the validity of certificates once it has talked to the server. The time is as trustworthy as the connection it came through, so the socket callbacks must verify the server's certificate.</p>
+<p>The three forms of RFC 9110, section 5.6.7, are taken: the one servers must send, "Sun, 06 Nov 1994 08:49:37 GMT", and the obsolete RFC 850 and asctime() ones, "Sunday, 06-Nov-94 08:49:37 GMT" and "Sun Nov  6 08:49:37 1994". UTC is taken for GMT. RFC 850's two-digit year is read as RFC 9110 asks, against the year the library's source dates from. Anything else counts as no Date header, and so does a response with several that disagree or one in another form, or a date earlier than the source of the library, which no server running properly can send.</p>
+<p>The date is cleared when <a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform(khc*)</a> starts, at each response's status line, so that an interim 1xx response's never stands for the final one's, and by <a class="el" href="khc_8h.html#aea7b6dde93cd97fc303a90c1414dba21" title="Set initial value to members of khc other than callbacks.">khc_reset_except_cb(khc*)</a> and <a class="el" href="khc_8h.html#a652dba6d3ccda37a7c120fe479648504" title="Prepare to perform the same request again.">khc_reset_except_request(khc*)</a>. It is when the server sent the response: read it right after <a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform(khc*)</a>, and count from there with the device's own clock.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">khc</td><td>instance. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Seconds since 1970-01-01T00:00:00Z when the response had a Date header, -1 otherwise. </dd></dl>
 
 </div>
 </div>
@@ -1448,7 +1481,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 27 2026 07:32:09 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Oct 27 2026 08:51:10 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

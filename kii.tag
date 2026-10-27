@@ -962,6 +962,13 @@
       <arglist>(kii_t *kii)</arglist>
     </member>
     <member kind="function">
+      <type>int64_t</type>
+      <name>kii_get_resp_date</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>ab36c0a18982d688d8a5c5307f1307ebc</anchor>
+      <arglist>(kii_t *kii)</arglist>
+    </member>
+    <member kind="function">
       <type>size_t</type>
       <name>kii_get_resp_body_length</name>
       <anchorfile>kii_8h.html</anchorfile>

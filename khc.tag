@@ -335,6 +335,13 @@
       <arglist>(khc *khc)</arglist>
     </member>
     <member kind="function">
+      <type>int64_t</type>
+      <name>khc_get_resp_date</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>a0e1ee79bbbbeefbbac3228cb5ef0d9d8</anchor>
+      <arglist>(khc *khc)</arglist>
+    </member>
+    <member kind="function">
       <type>bool</type>
       <name>khc_method_can_have_body</name>
       <anchorfile>khc_8h.html</anchorfile>
