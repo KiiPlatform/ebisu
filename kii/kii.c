@@ -51,10 +51,7 @@ size_t _cb_write_header(char *buffer, size_t size, void *userdata)
     // TODO: implement it later for getting Etag, etc.
     char* etag_buff = ((kii_t*)userdata)->_etag;
     _parse_etag(buffer, size, etag_buff, KII_ETAG_MAX_SIZE);
-    int64_t date = _parse_date(buffer, size);
-    if (date >= 0) {
-        ((kii_t*)userdata)->_resp_date = date;
-    }
+    _record_resp_date((kii_t*)userdata, buffer, size);
     return size;
 }
 
@@ -291,7 +288,7 @@ uint16_t kii_get_resp_status(kii_t* kii) {
 }
 
 int64_t kii_get_resp_date(kii_t* kii) {
-    return kii->_resp_date;
+    return (kii->_resp_date >= 0) ? kii->_resp_date : -1;
 }
 
 size_t kii_get_resp_body_length(kii_t* kii) {
@@ -348,6 +345,7 @@ void _reset_buff(kii_t* kii) {
     kii->_rw_buff_req_size = 0;
     kii->_rw_buff[0] = '\0';
     kii->_etag[0] = '\0';
+    kii->_resp_date = -1;
 }
 
 /* khc treats its stream and response header buffers as per-request, so
@@ -484,7 +482,7 @@ int64_t _parse_date(const char* header, size_t header_len)
     /* RFC 9110 allows no whitespace between a field's name and the colon. */
     static const char name[] = "date:";
     const size_t name_len = sizeof(name) - 1;
-    if (header_len < name_len) {
+    if (header == NULL || header_len < name_len) {
         return -1;
     }
     for (size_t i = 0; i < name_len; ++i) {
@@ -506,17 +504,17 @@ int64_t _parse_date(const char* header, size_t header_len)
      * Only whitespace may follow it. */
     const size_t fixdate_len = 29;
     if ((size_t)(end - v) < fixdate_len) {
-        return -1;
+        return -2;
     }
     for (const char* p = v + fixdate_len; p < end; ++p) {
         if (*p != ' ' && *p != '\t') {
-            return -1;
+            return -2;
         }
     }
     if (v[3] != ',' || v[4] != ' ' || v[7] != ' ' || v[11] != ' ' ||
             v[16] != ' ' || v[19] != ':' || v[22] != ':' || v[25] != ' ' ||
             memcmp(v + 26, "GMT", 3) != 0) {
-        return -1;
+        return -2;
     }
     int weekday = _find_name(v, _DAY_NAMES, 7);
     int day = _parse_digits(v + 5, 2);
@@ -524,18 +522,45 @@ int64_t _parse_date(const char* header, size_t header_len)
     int year = _parse_digits(v + 12, 4);
     int hour = _parse_digits(v + 17, 2);
     int minute = _parse_digits(v + 20, 2);
-    /* 60 is a leap second. */
     int second = _parse_digits(v + 23, 2);
+    /* 60 is a leap second, which only ever ends a UTC day. */
     if (weekday < 0 || month < 1 || year < 1970 ||
             day < 1 || day > _days_in_month(year, month) ||
             hour < 0 || hour > 23 || minute < 0 || minute > 59 ||
-            second < 0 || second > 60) {
-        return -1;
+            second < 0 || second > 60 ||
+            (second == 60 && (hour != 23 || minute != 59))) {
+        return -2;
     }
     int64_t days = _days_since_epoch(year, month, day);
     /* The day's name has to agree with the date: 1970-01-01 was a Thursday. */
     if ((days + 4) % 7 != weekday) {
-        return -1;
+        return -2;
     }
     return ((days * 24 + hour) * 60 + minute) * 60 + second;
+}
+
+void _record_resp_date(kii_t* kii, const char* line, size_t line_len)
+{
+    if (line == NULL) {
+        return;
+    }
+    /* khc hands each response's status line to the header callback before its
+     * headers, so it starts a response: a token renewal within the same call
+     * brings several. */
+    if (line_len >= 5 && memcmp(line, "HTTP/", 5) == 0) {
+        kii->_resp_date = -1;
+        return;
+    }
+    int64_t date = _parse_date(line, line_len);
+    if (date == -1) {
+        return;
+    }
+    /* A malformed Date, or Dates that disagree, leave the response without
+     * one rather than with whichever came last. -2 holds that until the next
+     * response. */
+    if (date == -2 || (kii->_resp_date != -1 && kii->_resp_date != date)) {
+        kii->_resp_date = -2;
+    } else {
+        kii->_resp_date = date;
+    }
 }

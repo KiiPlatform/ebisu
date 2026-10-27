@@ -3,13 +3,86 @@
 #include "kii_impl.h"
 #include "test_callbacks.h"
 
+#include <functional>
+#include <sstream>
 #include <string>
+#include <stdio.h>
 #include <string.h>
 #include <vector>
 
-static int64_t parse(const std::string& header) {
+namespace {
+
+const char* const DAY_NAMES[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+const char* const MONTH_NAMES[] = {
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+};
+
+int64_t parse(const std::string& header) {
     return _parse_date(header.data(), header.size());
 }
+
+// The checks below compare the parser with a calendar of their own, which walks
+// day by day rather than computing.
+bool leap(int year) {
+    if (year % 400 == 0) { return true; }
+    if (year % 100 == 0) { return false; }
+    return year % 4 == 0;
+}
+
+int month_length(int year, int month) {
+    switch (month) {
+    case 2: return leap(year) ? 29 : 28;
+    case 4: case 6: case 9: case 11: return 30;
+    default: return 31;
+    }
+}
+
+struct Day {
+    int year, month, day, weekday;
+    int64_t since_epoch;
+    Day() : year(1970), month(1), day(1), weekday(4), since_epoch(0) {}
+    void next() {
+        if (++day > month_length(year, month)) {
+            day = 1;
+            if (++month > 12) {
+                month = 1;
+                ++year;
+            }
+        }
+        weekday = (weekday + 1) % 7;
+        ++since_epoch;
+    }
+};
+
+std::string fixdate(const Day& d, int weekday, int hour, int minute, int second) {
+    char s[64];
+    snprintf(s, sizeof(s), "%s, %02d %s %04d %02d:%02d:%02d GMT",
+            DAY_NAMES[weekday], d.day, MONTH_NAMES[d.month - 1], d.year,
+            hour, minute, second);
+    return s;
+}
+
+// The IMF-fixdate of seconds since the epoch, counting from 1970 a year and
+// then a month at a time.
+std::string fixdate(int64_t seconds) {
+    Day d;
+    d.since_epoch = seconds / 86400;
+    d.weekday = (int)((d.since_epoch + 4) % 7);
+    int64_t days = d.since_epoch;
+    while (days >= (leap(d.year) ? 366 : 365)) {
+        days -= leap(d.year) ? 366 : 365;
+        ++d.year;
+    }
+    while (days >= month_length(d.year, d.month)) {
+        days -= month_length(d.year, d.month);
+        ++d.month;
+    }
+    d.day = (int)days + 1;
+    int64_t rest = seconds % 86400;
+    return fixdate(d, d.weekday, (int)(rest / 3600), (int)(rest / 60 % 60), (int)(rest % 60));
+}
+
+} // namespace
 
 TEST_CASE( "Date headers in IMF-fixdate form are read as seconds since the epoch" ) {
     // RFC 9110's own example.
@@ -19,30 +92,47 @@ TEST_CASE( "Date headers in IMF-fixdate form are read as seconds since the epoch
     CHECK( parse("Date: Thu, 29 Feb 2024 12:00:00 GMT") == 1709208000 );
     CHECK( parse("Date: Tue, 29 Feb 2000 00:00:00 GMT") == 951782400 );
     CHECK( parse("Date: Wed, 31 Dec 2025 23:59:59 GMT") == 1767225599 );
-    // Past 2^31 and 2^32 seconds.
+    // Past 2^31 and 2^32 seconds, and the last date four digits hold.
     CHECK( parse("Date: Tue, 19 Jan 2038 03:14:08 GMT") == 2147483648LL );
     CHECK( parse("Date: Sun, 07 Feb 2106 06:28:16 GMT") == 4294967296LL );
-    // A leap second.
+    CHECK( parse("Date: Fri, 31 Dec 9999 23:59:59 GMT") == 253402300799LL );
+    // A leap second, which ends a day.
     CHECK( parse("Date: Sat, 31 Dec 2016 23:59:60 GMT") == 1483228800 );
+    CHECK( parse("Date: Tue, 30 Jun 2015 23:59:60 GMT") == 1435708800 );
 
     // The name in any case, whitespace around the value or none.
     CHECK( parse("date: Sun, 06 Nov 1994 08:49:37 GMT") == 784111777 );
     CHECK( parse("DATE: Sun, 06 Nov 1994 08:49:37 GMT") == 784111777 );
+    CHECK( parse("dAtE: Sun, 06 Nov 1994 08:49:37 GMT") == 784111777 );
     CHECK( parse("Date:Sun, 06 Nov 1994 08:49:37 GMT") == 784111777 );
     CHECK( parse("Date: \t Sun, 06 Nov 1994 08:49:37 GMT \t ") == 784111777 );
 }
 
-TEST_CASE( "Anything but a Date header in IMF-fixdate form is no date" ) {
-    const char* not_dates[] = {
+TEST_CASE( "Other headers are not Date headers" ) {
+    const char* others[] = {
         "",
+        "D",
         "Date",
-        "Date:",
-        "Date: ",
+        "HTTP/1.1 200 OK",
         "Content-Length: 29",
         "X-Date: Sun, 06 Nov 1994 08:49:37 GMT",
         "Dates: Sun, 06 Nov 1994 08:49:37 GMT",
-        // No whitespace allowed before the colon.
+        // No whitespace allowed before the colon, or before the name.
         "Date : Sun, 06 Nov 1994 08:49:37 GMT",
+        " Date: Sun, 06 Nov 1994 08:49:37 GMT",
+    };
+    for (const char* header : others) {
+        INFO( header );
+        CHECK( parse(header) == -1 );
+    }
+    CHECK( _parse_date(NULL, 0) == -1 );
+    CHECK( _parse_date(NULL, 35) == -1 );
+}
+
+TEST_CASE( "A Date header in another form has no date" ) {
+    const char* malformed[] = {
+        "Date:",
+        "Date: ",
         // The obsolete forms: RFC 850 and asctime().
         "Date: Sunday, 06-Nov-94 08:49:37 GMT",
         "Date: Sun Nov  6 08:49:37 1994",
@@ -50,6 +140,7 @@ TEST_CASE( "Anything but a Date header in IMF-fixdate form is no date" ) {
         "Date: Sun, 06 Nov 1994 08:49:37 GM",
         "Date: Sun, 06 Nov 1994 08:49:37 GMT+1",
         "Date: Sun, 06 Nov 1994 08:49:37 GMT x",
+        "Date: Sun, 06 Nov 1994 08:49:37 GMT\r",
         // Not GMT, or not in its case.
         "Date: Sun, 06 Nov 1994 08:49:37 UTC",
         "Date: Sun, 06 Nov 1994 08:49:37 gmt",
@@ -66,99 +157,291 @@ TEST_CASE( "Anything but a Date header in IMF-fixdate form is no date" ) {
         "Date: Sun, 06 Nov 1994 24:00:00 GMT",
         "Date: Sun, 06 Nov 1994 08:60:00 GMT",
         "Date: Sun, 06 Nov 1994 08:49:61 GMT",
+        // A leap second anywhere but at the end of a day.
+        "Date: Sun, 06 Nov 1994 08:49:60 GMT",
+        "Date: Sat, 31 Dec 2016 23:58:60 GMT",
+        "Date: Sat, 31 Dec 2016 22:59:60 GMT",
         "Date: Wed, 31 Dec 1969 23:59:59 GMT",
+        "Date: Mon, 01 Jan 0000 00:00:00 GMT",
         // Not digits, or not where they should be.
         "Date: Sun, 0a Nov 1994 08:49:37 GMT",
         "Date: Sun, 06 Nov 19x4 08:49:37 GMT",
         "Date: Sun, -6 Nov 1994 08:49:37 GMT",
+        "Date: Sun, +6 Nov 1994 08:49:37 GMT",
         "Date: Sun,  6 Nov 1994 08:49:37 GMT",
         "Date: Sun, 06 Nov 1994 08.49.37 GMT",
         "Date: Sun 06 Nov 1994 08:49:37 GMT ",
+        "Date: Sun, 06 Nov 1994  8:49:37 GMT",
     };
-    for (const char* header : not_dates) {
+    for (const char* header : malformed) {
         INFO( header );
-        CHECK( parse(header) == -1 );
+        CHECK( parse(header) == -2 );
     }
 }
 
-// Each request opens its own connection, answered with resp.
-TEST_CASE( "kii_get_resp_date() gives the Date of the last request's response" ) {
-    char kii_buff[1024];
+TEST_CASE( "Every day from 1970 to 2400 is read as the calendar counts it" ) {
+    // A whole 400-year cycle and then some: 2000 and 2400 are leap years, 2100,
+    // 2200 and 2300 are not. The time of day changes from day to day so that
+    // every hour, minute and second comes up.
+    int64_t days = 0;
+    int64_t wrong = 0;
+    std::string first_wrong;
+    for (Day d; d.year <= 2400; d.next(), ++days) {
+        int hour = (int)(d.since_epoch * 7 % 24);
+        int minute = (int)(d.since_epoch * 13 % 60);
+        int second = (int)(d.since_epoch * 17 % 60);
+        const std::string value = fixdate(d, d.weekday, hour, minute, second);
+        const int64_t expected = d.since_epoch * 86400 + hour * 3600 + minute * 60 + second;
+        // And the same date with another day's name, a different one each day.
+        int other = (d.weekday + 1 + (int)(d.since_epoch % 6)) % 7;
+        bool ok = parse("Date: " + value) == expected &&
+            parse("Date: " + fixdate(d, other, hour, minute, second)) == -2;
+        if (!ok && wrong++ == 0) {
+            first_wrong = value;
+        }
+    }
+    INFO( "first wrong: " << first_wrong );
+    CHECK( wrong == 0 );
+    CHECK( days == 157420 );
+}
+
+TEST_CASE( "A Date changed by one byte is taken only if it is still a date, written as such" ) {
+    const char* values[] = {
+        "Sun, 06 Nov 1994 08:49:37 GMT",
+        "Thu, 29 Feb 2024 12:00:00 GMT",
+        "Fri, 31 Dec 9999 23:59:59 GMT",
+        "Thu, 01 Jan 1970 00:00:00 GMT",
+    };
+    int64_t taken = 0;
+    for (const char* original : values) {
+        const std::string value(original);
+        for (size_t i = 0; i < value.size(); ++i) {
+            for (int b = 0; b < 256; ++b) {
+                std::string changed = value;
+                changed[i] = (char)b;
+                int64_t date = parse("Date: " + changed);
+                if (date >= 0) {
+                    // Whatever is taken is exactly how that date is written.
+                    INFO( "taken: " << changed );
+                    REQUIRE( fixdate(date) == changed );
+                    ++taken;
+                } else {
+                    INFO( "refused: " << changed );
+                    REQUIRE( date == -2 );
+                }
+            }
+        }
+    }
+    // Some changes are other valid dates: another digit of the year, say.
+    CHECK( taken > 0 );
+}
+
+TEST_CASE( "A Date cut short or followed by anything but whitespace has no date" ) {
+    const std::string header = "Date: Sun, 06 Nov 1994 08:49:37 GMT";
+    for (size_t n = 0; n < header.size(); ++n) {
+        INFO( header.substr(0, n) );
+        CHECK( parse(header.substr(0, n)) == ((n < 5) ? -1 : -2) );
+    }
+    for (int b = 0; b < 256; ++b) {
+        INFO( "followed by " << b );
+        bool whitespace = (b == ' ' || b == '\t');
+        CHECK( parse(header + (char)b) == (whitespace ? 784111777 : -2) );
+    }
+}
+
+namespace {
+
+// A kii_t whose requests are each answered, on a connection of their own, by
+// the next of responses.
+struct Client {
+    char buff[1024];
     jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
-
+    jkii_resource_t resource;
     kii_t kii;
-    kii_init(&kii);
-    kii_set_site(&kii, "api.kii.com");
-    kii_set_app_id(&kii, "dummyAppID");
-    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
-    kii_set_json_parser_resource(&kii, &resource);
-
+    std::vector<std::string> responses;
+    size_t next;
     std::string resp;
-    size_t resp_pos = 0;
+    size_t resp_pos;
     khct::cb::SockCtx http_ctx;
-    http_ctx.on_connect = [&](void*, const char*, unsigned int) {
-        resp_pos = 0;
-        return KHC_SOCK_OK;
-    };
-    http_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
-        *out_sent_length = length;
-        return KHC_SOCK_OK;
-    };
-    http_ctx.on_recv = [&resp, &resp_pos](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
-        size_t n = resp.size() - resp_pos;
-        if (n > length_to_read) { n = length_to_read; }
-        memcpy(buffer, resp.data() + resp_pos, n);
-        resp_pos += n;
-        *out_actual_length = n;
-        return KHC_SOCK_OK;
-    };
-    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
-    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
 
-    auto send = [&kii]() {
+    Client() : next(0), resp_pos(0) {
+        resource.tokens = tokens;
+        resource.tokens_num = 64;
+        kii_init(&kii);
+        kii_set_site(&kii, "api.kii.com");
+        kii_set_app_id(&kii, "dummyAppID");
+        kii_set_buff(&kii, buff, sizeof(buff));
+        kii_set_json_parser_resource(&kii, &resource);
+        http_ctx.on_connect = [this](void*, const char*, unsigned int) {
+            resp = (next < responses.size()) ? responses[next] : std::string();
+            ++next;
+            resp_pos = 0;
+            return KHC_SOCK_OK;
+        };
+        http_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
+            *out_sent_length = length;
+            return KHC_SOCK_OK;
+        };
+        http_ctx.on_recv = [this](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            size_t n = resp.size() - resp_pos;
+            if (n > length_to_read) { n = length_to_read; }
+            memcpy(buffer, resp.data() + resp_pos, n);
+            resp_pos += n;
+            *out_actual_length = n;
+            return KHC_SOCK_OK;
+        };
+        http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+        kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
+        kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
+        kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
+        kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+    }
+
+    kii_code_t get() {
         kii_code_t res = kii_api_call_start(&kii, "GET", "/api/apps/dummyAppID", NULL, KII_FALSE);
         return (res == KII_ERR_OK) ? kii_api_call_run(&kii) : res;
-    };
+    }
+};
 
+std::string response(const std::string& status_line, const std::vector<std::string>& headers) {
+    std::string r = status_line + "\r\n";
+    for (const std::string& h : headers) {
+        r += h + "\r\n";
+    }
+    return r + "Content-Length: 2\r\n\r\n{}";
+}
+
+const std::string NOV_1994 = "Date: Sun, 06 Nov 1994 08:49:37 GMT";
+const std::string FEB_2024 = "Date: Thu, 29 Feb 2024 12:00:00 GMT";
+
+} // namespace
+
+TEST_CASE( "kii_get_resp_date() gives the Date of the last request's response" ) {
+    Client c;
     // None before any request.
-    REQUIRE( kii_get_resp_date(&kii) == -1 );
+    REQUIRE( kii_get_resp_date(&c.kii) == -1 );
 
-    resp = "HTTP/1.1 200 OK\r\n"
-        "Content-Length: 2\r\n"
-        "Date: Sun, 06 Nov 1994 08:49:37 GMT\r\n"
-        "\r\n"
-        "{}";
-    REQUIRE( send() == KII_ERR_OK );
-    CHECK( kii_get_resp_date(&kii) == 784111777 );
+    c.responses = {
+        response("HTTP/1.1 200 OK", { NOV_1994 }),
+        // An error response states the time too.
+        response("HTTP/1.1 404 Not Found", { FEB_2024 }),
+        // A response without one leaves no date from the earlier ones.
+        response("HTTP/1.1 200 OK", {}),
+        // Nor does one whose Date isn't in IMF-fixdate form.
+        response("HTTP/1.1 200 OK", { "Date: Sunday, 06-Nov-94 08:49:37 GMT" }),
+    };
+    REQUIRE( c.get() == KII_ERR_OK );
+    CHECK( kii_get_resp_date(&c.kii) == 784111777 );
 
-    // An error response states the time too.
-    resp = "HTTP/1.1 404 Not Found\r\n"
-        "Date: Thu, 29 Feb 2024 12:00:00 GMT\r\n"
-        "Content-Length: 2\r\n"
-        "\r\n"
-        "{}";
-    REQUIRE( send() == KII_ERR_OK );
-    REQUIRE( kii_get_resp_status(&kii) == 404 );
-    CHECK( kii_get_resp_date(&kii) == 1709208000 );
+    REQUIRE( c.get() == KII_ERR_OK );
+    REQUIRE( kii_get_resp_status(&c.kii) == 404 );
+    CHECK( kii_get_resp_date(&c.kii) == 1709208000 );
 
-    // A response without one leaves no date from the earlier ones.
-    resp = "HTTP/1.1 200 OK\r\n"
-        "Content-Length: 2\r\n"
-        "\r\n"
-        "{}";
-    REQUIRE( send() == KII_ERR_OK );
-    CHECK( kii_get_resp_date(&kii) == -1 );
+    REQUIRE( c.get() == KII_ERR_OK );
+    CHECK( kii_get_resp_date(&c.kii) == -1 );
 
-    // Nor does one whose Date isn't in IMF-fixdate form.
-    resp = "HTTP/1.1 200 OK\r\n"
-        "Date: Sunday, 06-Nov-94 08:49:37 GMT\r\n"
-        "Content-Length: 2\r\n"
+    REQUIRE( c.get() == KII_ERR_OK );
+    CHECK( kii_get_resp_date(&c.kii) == -1 );
+}
+
+TEST_CASE( "A response whose Dates are ambiguous has no date" ) {
+    Client c;
+    c.responses = {
+        // The same Date twice is still that date.
+        response("HTTP/1.1 200 OK", { NOV_1994, "date:  Sun, 06 Nov 1994 08:49:37 GMT" }),
+        // Two that disagree, in either order.
+        response("HTTP/1.1 200 OK", { NOV_1994, FEB_2024 }),
+        response("HTTP/1.1 200 OK", { FEB_2024, NOV_1994 }),
+        // A valid one beside a malformed one, in either order.
+        response("HTTP/1.1 200 OK", { NOV_1994, "Date: tomorrow" }),
+        response("HTTP/1.1 200 OK", { "Date: tomorrow", NOV_1994 }),
+        // Three, two of which agree.
+        response("HTTP/1.1 200 OK", { NOV_1994, FEB_2024, NOV_1994 }),
+    };
+    REQUIRE( c.get() == KII_ERR_OK );
+    CHECK( kii_get_resp_date(&c.kii) == 784111777 );
+    for (int i = 0; i < 5; ++i) {
+        INFO( c.responses[c.next] );
+        REQUIRE( c.get() == KII_ERR_OK );
+        CHECK( kii_get_resp_date(&c.kii) == -1 );
+    }
+    // And the next response is read afresh.
+    c.responses.push_back(response("HTTP/1.1 200 OK", { FEB_2024 }));
+    REQUIRE( c.get() == KII_ERR_OK );
+    CHECK( kii_get_resp_date(&c.kii) == 1709208000 );
+}
+
+TEST_CASE( "A call that sends nothing leaves no date from an earlier one" ) {
+    Client c;
+    c.responses = { response("HTTP/1.1 200 OK", { NOV_1994 }) };
+    REQUIRE( c.get() == KII_ERR_OK );
+    REQUIRE( kii_get_resp_date(&c.kii) == 784111777 );
+
+    // The call starts, and fails before any request goes out.
+    REQUIRE( kii_api_call_start(&c.kii, "POST", "/api/apps/dummyAppID/x",
+                "application/json", KII_FALSE) == KII_ERR_OK );
+    const std::string body(2 * sizeof(c.buff), 'x');
+    REQUIRE( kii_api_call_append_body(&c.kii, body.data(), body.size()) == KII_ERR_TOO_LARGE_DATA );
+    CHECK( kii_get_resp_date(&c.kii) == -1 );
+    CHECK( c.next == 1 );
+}
+
+TEST_CASE( "A Date after a header too long for the buffer is still read" ) {
+    Client c;
+    static char resp_header_buff[64];
+    kii_set_resp_header_buff(&c.kii, resp_header_buff, sizeof(resp_header_buff));
+    c.responses = {
+        // khc skips a header longer than its response header buffer.
+        response("HTTP/1.1 200 OK", { "Set-Cookie: c=" + std::string(200, 'x'), NOV_1994 }),
+        // Including a Date padded past it, which then isn't one.
+        response("HTTP/1.1 200 OK", { NOV_1994 + std::string(64, ' ') }),
+    };
+    REQUIRE( c.get() == KII_ERR_OK );
+    CHECK( kii_get_resp_date(&c.kii) == 784111777 );
+    REQUIRE( c.get() == KII_ERR_OK );
+    CHECK( kii_get_resp_date(&c.kii) == -1 );
+}
+
+TEST_CASE( "A Date among a chunked response's trailers is not taken" ) {
+    Client c;
+    c.responses = {
+        "HTTP/1.1 200 OK\r\n" + NOV_1994 + "\r\n"
+        "Transfer-Encoding: chunked\r\n"
         "\r\n"
-        "{}";
-    REQUIRE( send() == KII_ERR_OK );
-    CHECK( kii_get_resp_date(&kii) == -1 );
+        "2\r\n{}\r\n"
+        "0\r\n" + FEB_2024 + "\r\n"
+        "\r\n",
+        "HTTP/1.1 200 OK\r\n"
+        "Transfer-Encoding: chunked\r\n"
+        "\r\n"
+        "2\r\n{}\r\n"
+        "0\r\n" + FEB_2024 + "\r\n"
+        "\r\n",
+    };
+    REQUIRE( c.get() == KII_ERR_OK );
+    REQUIRE( kii_get_resp_body_length(&c.kii) == 2 );
+    CHECK( kii_get_resp_date(&c.kii) == 784111777 );
+    REQUIRE( c.get() == KII_ERR_OK );
+    CHECK( kii_get_resp_date(&c.kii) == -1 );
+}
+
+TEST_CASE( "A request that gets no response leaves no date from an earlier one" ) {
+    Client c;
+    // The second connection is answered with nothing at all.
+    c.responses = { response("HTTP/1.1 200 OK", { NOV_1994 }), "" };
+    REQUIRE( c.get() == KII_ERR_OK );
+    REQUIRE( kii_get_resp_date(&c.kii) == 784111777 );
+    REQUIRE( c.get() != KII_ERR_OK );
+    CHECK( kii_get_resp_date(&c.kii) == -1 );
+}
+
+TEST_CASE( "A request sent again without a new start, and not answered, has no date" ) {
+    Client c;
+    c.responses = { response("HTTP/1.1 200 OK", { NOV_1994 }), "" };
+    REQUIRE( kii_api_call_start(&c.kii, "GET", "/api/apps/dummyAppID", NULL, KII_FALSE) == KII_ERR_OK );
+    REQUIRE( kii_api_call_run(&c.kii) == KII_ERR_OK );
+    REQUIRE( kii_get_resp_date(&c.kii) == 784111777 );
+    // Neither a call starting nor a response clears it here: sending does.
+    REQUIRE( kii_api_call_run(&c.kii) != KII_ERR_OK );
+    CHECK( kii_get_resp_date(&c.kii) == -1 );
 }

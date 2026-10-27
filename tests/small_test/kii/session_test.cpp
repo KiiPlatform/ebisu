@@ -185,6 +185,45 @@ TEST_CASE( "A request refused for its token is sent again with a refreshed token
     REQUIRE( platform.max_depth == 1 );
 }
 
+// The response with a Date header after its status line.
+std::string dated(const std::string& resp, const std::string& date) {
+    size_t eol = resp.find("\r\n");
+    return resp.substr(0, eol + 2) + "Date: " + date + "\r\n" + resp.substr(eol + 2);
+}
+
+TEST_CASE( "The date of a call that renewed the token is its last response's" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    kii_author_t author = make_author("th.1", "at1", "rt1");
+    kii_session_set_author(&session, &author);
+    Client c;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+
+    // The refusal, the refresh and the request sent again each bring their own,
+    // a second apart.
+    c.http.responses = {
+        dated(REFUSED, "Sun, 06 Nov 1994 08:49:37 GMT"),
+        dated(refreshed("at2", "rt2", 3600), "Sun, 06 Nov 1994 08:49:38 GMT"),
+        dated(DONE, "Sun, 06 Nov 1994 08:49:39 GMT"),
+    };
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( c.http.requests.size() == 3 );
+    CHECK( kii_get_resp_date(&c.kii) == 784111779 );
+
+    // Without one in the last response, the earlier ones don't stand in for it.
+    kii_session_set_author(&session, &author);
+    c.http.requests.clear();
+    c.http.responses = {
+        dated(REFUSED, "Sun, 06 Nov 1994 08:49:37 GMT"),
+        dated(refreshed("at2", "rt2", 3600), "Sun, 06 Nov 1994 08:49:38 GMT"),
+        DONE,
+    };
+    REQUIRE( c.put(BODY) == KII_ERR_OK );
+    REQUIRE( c.http.requests.size() == 3 );
+    CHECK( kii_get_resp_date(&c.kii) == -1 );
+}
+
 TEST_CASE( "A refused refresh token falls back to the password" ) {
     Platform platform;
     kii_session_t session;

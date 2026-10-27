@@ -1,6 +1,7 @@
 #include "catch.hpp"
 #include "kii.h"
 #include <thread>
+#include <time.h>
 #include "large_test.h"
 #include "picojson.h"
 
@@ -27,6 +28,16 @@ TEST_CASE("API call tests")
     REQUIRE( khc_get_status_code(&kii._khc) == 200 );
     REQUIRE( std::string(kiiltest::author(&kii).author_id).length() > 0 );
     REQUIRE( std::string(kiiltest::author(&kii).access_token).length() > 0 );
+
+    SECTION("The server's time") {
+        // The login's response stated it, in the form kii takes. The machine
+        // running the tests keeps time too, within minutes of the server's.
+        int64_t server = kii_get_resp_date(&kii);
+        int64_t local = (int64_t)time(NULL);
+        REQUIRE( server > 0 );
+        CHECK( server > local - 900 );
+        CHECK( server < local + 900 );
+    }
 
     SECTION("API call") {
         // POST object

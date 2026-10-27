@@ -366,8 +366,9 @@ typedef struct kii_t {
     khc_slist* _req_headers; /**< \private */
 
     char _etag[KII_ETAG_MAX_SIZE]; /**< \private */
-    /** \private The last response's Date header, as seconds since the epoch,
-     * or -1. */
+    /** \private The last response's Date header, as seconds since the epoch.
+     * -1 when there is none yet, -2 when the response had a malformed one or
+     * several that disagree. */
     int64_t _resp_date;
 
     jkii_resource_t* _json_resource; /**< \private */
@@ -1616,11 +1617,18 @@ uint16_t kii_get_resp_status(kii_t* kii);
  *
  * Only the IMF-fixdate form servers are required to send is taken (RFC 9110,
  * section 5.6.7), as in "Sun, 06 Nov 1994 08:49:37 GMT". Anything else, the
- * obsolete forms included, counts as no Date header.
+ * obsolete forms included, counts as no Date header, and so does a response
+ * with several that disagree or one in another form.
+ *
+ * The date is cleared when an API call starts and when each of its requests is
+ * sent, so it never comes from an earlier call. Where a call gets several
+ * responses, renewing the session's token for instance, it is the last one's.
+ * It is when the server sent the response: read it right after the call, and
+ * count from there with the device's own clock.
  *
  * \param [in] kii kii_t instance.
- * \return Seconds since 1970-01-01T00:00:00Z when the response to the last
- * request had a Date header, -1 otherwise.
+ * \return Seconds since 1970-01-01T00:00:00Z when the last response of the last
+ * call had a Date header, -1 otherwise.
  */
 int64_t kii_get_resp_date(kii_t* kii);
 

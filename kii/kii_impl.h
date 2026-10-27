@@ -23,8 +23,12 @@ void _req_headers_free_all(kii_t* kii);
 int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len);
 
 /* Seconds since the epoch of a Date header line, as khc hands it to the header
- * callback, or -1 when the line is not a Date header in IMF-fixdate form. */
+ * callback. -1 when the line is not a Date header, -2 when it is one whose value
+ * is not in IMF-fixdate form. */
 int64_t _parse_date(const char* header, size_t header_len);
+
+/* Keeps the Date of the response whose lines the header callback is given. */
+void _record_resp_date(kii_t* kii, const char* line, size_t line_len);
 
 extern const char _APP_KEY_HEADER[];
 extern const char _CONTENT_LENGTH_ZERO[];
