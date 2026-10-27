@@ -199,7 +199,7 @@ TEST_CASE( "The date of a call that renewed the token is its last response's" ) 
     kii_session_set_author(&session, &author);
     Client c;
     // These responses are dated 1994.
-    c.kii._resp_date_floor = 0;
+    c.kii._khc._resp_date_floor = 0;
     REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
 
     // The refusal, the refresh and the request sent again each bring their own,
@@ -224,6 +224,29 @@ TEST_CASE( "The date of a call that renewed the token is its last response's" ) 
     REQUIRE( c.put(BODY) == KII_ERR_OK );
     REQUIRE( c.http.requests.size() == 3 );
     CHECK( kii_get_resp_date(&c.kii) == -1 );
+}
+
+TEST_CASE( "A request not sent again after the renewal keeps its 403's date" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    kii_author_t author = make_author("th.1", "at1", "rt1");
+    kii_session_set_author(&session, &author);
+    // The renewal needs about 640 bytes after a 300 byte body.
+    Client c(800);
+    // These responses are dated 1994.
+    c.kii._khc._resp_date_floor = 0;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+    const std::string body = "{\"k\":\"" + std::string(290, 'v') + "\"}";
+
+    c.http.responses = {
+        dated(REFUSED, "Sun, 06 Nov 1994 08:49:37 GMT"),
+        dated(refreshed("at2", "rt2", 3600), "Sun, 06 Nov 1994 08:49:38 GMT"),
+    };
+    REQUIRE( c.put(body) == KII_ERR_OK );
+    REQUIRE( c.http.requests.size() == 2 );
+    REQUIRE( kii_get_resp_status(&c.kii) == 403 );
+    CHECK( kii_get_resp_date(&c.kii) == 784111777 );
 }
 
 TEST_CASE( "A refused refresh token falls back to the password" ) {

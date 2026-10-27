@@ -366,13 +366,6 @@ typedef struct kii_t {
     khc_slist* _req_headers; /**< \private */
 
     char _etag[KII_ETAG_MAX_SIZE]; /**< \private */
-    /** \private The last response's Date header, as seconds since the epoch.
-     * -1 when there is none yet, -2 when the response had a malformed one or
-     * several that disagree. */
-    int64_t _resp_date;
-    /** \private Dates earlier than this are refused: shortly before the source
-     * was built. */
-    int64_t _resp_date_floor;
 
     jkii_resource_t* _json_resource; /**< \private */
 
@@ -1612,30 +1605,17 @@ uint16_t kii_get_resp_status(kii_t* kii);
 /**
  * \brief Get the server's time, from the Date header of the last response.
  *
- * Kii Cloud states its time, to the second, in every response. A device without
- * a real-time clock can take its time from there, to put timestamps in what it
- * reports for instance, or to check the validity of certificates once it has
- * talked to the server. The time is as trustworthy as the connection it came
- * through, so the socket callbacks must verify the server's certificate.
+ * As khc_get_resp_date(khc*) gives it, for the kii_t's HTTP client: which forms
+ * are taken, and which dates refused, is described there.
  *
- * The three forms of RFC 9110, section 5.6.7, are taken: the one servers must
- * send, "Sun, 06 Nov 1994 08:49:37 GMT", and the obsolete RFC 850 and asctime()
- * ones, "Sunday, 06-Nov-94 08:49:37 GMT" and "Sun Nov  6 08:49:37 1994". UTC is
- * taken for GMT. RFC 850's two-digit year is read as RFC 9110 asks, against
- * the year the library's source dates from. Anything else counts as no Date header,
- * and so does a response with several that disagree or one in another form, or
- * a date earlier than the source of the library, which no server running
- * properly can send.
- *
- * The date is cleared when an API call starts and when each of its requests is
- * sent, so it never comes from an earlier call. Where a call gets several
- * responses, renewing the session's token for instance, it is the last one's.
- * It is when the server sent the response: read it right after the call, and
- * count from there with the device's own clock.
+ * Every API call starts with it cleared, so it never comes from an earlier
+ * call. Where a call gets several responses, renewing the session's token for
+ * instance, it is the date of the response whose status kii_get_resp_status()
+ * gives: the request's own, sent again or not.
  *
  * \param [in] kii kii_t instance.
- * \return Seconds since 1970-01-01T00:00:00Z when the last response of the last
- * call had a Date header, -1 otherwise.
+ * \return Seconds since 1970-01-01T00:00:00Z when that response had a Date
+ * header, -1 otherwise.
  */
 int64_t kii_get_resp_date(kii_t* kii);
 

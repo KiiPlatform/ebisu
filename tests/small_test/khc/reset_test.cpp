@@ -104,6 +104,9 @@ struct Request {
         khc_set_cb_write(http, khct::cb::cb_write, &io);
         khc_set_cb_header(http, khct::cb::cb_header, &io);
         khc_enable_insecure(http, false);
+        // A setting too: khc_init() makes it and resets keep it. There is no
+        // function to change it.
+        http->_resp_date_floor = 0;
         khc_set_host(http, "api.kii.com");
         khc_set_method(http, "PUT");
         khc_set_path(http, "/x");

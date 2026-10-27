@@ -199,6 +199,14 @@ its status: a `404` or a `500` is a response like any other, and
 | `KHC_ERR_TOO_LARGE_DATA` | The status line doesn't fit in the response header buffer, or a chunk size line in the stream buffer. |
 | `KHC_ERR_FAIL` | The status code or a chunk size is malformed, or the connection closed partway through a chunked body. |
 
+`khc_get_resp_date()` gives the server's time from the response's `Date`
+header, as seconds since the epoch, for a device without a real-time clock. It
+takes the three forms RFC 9110 has recipients take, with UTC for GMT, and gives
+-1 for anything else, for several `Date`s that disagree, and for a date before
+the library's source, which no server running properly sends. The time is as
+trustworthy as the connection it came through, so verify the server's
+certificate in the socket callbacks.
+
 ## Tracing
 
 Configuring with `-DKHC_TRACE=ON` prints every request and response to

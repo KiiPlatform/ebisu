@@ -5,6 +5,7 @@
 #include "khc_impl.h"
 #include "khc_state_impl.h"
 #include "khc_socket_callback.h"
+#include "ebisu_version.h"
 
 void khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size) {
     khc->_resp_header_buff = buffer;
@@ -19,6 +20,8 @@ void khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size) {
 khc_code khc_perform(khc* khc) {
     khc->_state = KHC_STATE_IDLE;
     khc->_result = KHC_ERR_OK;
+    // Only this request's response may set it.
+    khc->_resp_date = -1;
 
     // malloc the necessary resources
     if (khc->_resp_header_buff == NULL) {
@@ -96,6 +99,8 @@ void khc_init(khc* khc) {
 
     // User settings.
     khc->_enable_insecure = false;
+    // A week's margin, for a committer whose clock was a little ahead.
+    khc->_resp_date_floor = EBISU_SOURCE_TIME - 7 * 86400;
 
     khc_reset_except_cb(khc);
 }
@@ -135,6 +140,7 @@ void khc_reset_except_request(khc* khc) {
     khc->_chunk_size = 0;
     khc->_chunk_size_written = 0;
     khc->_resp_content_length = 0;
+    khc->_resp_date = -1;
     khc->_read_end = false;
     khc->_body_read_size = 0;
     khc->_result = KHC_ERR_OK;
@@ -151,4 +157,8 @@ uint16_t khc_get_status_code(
         khc* khc
 ) {
     return khc->_status_code;
+}
+
+int64_t khc_get_resp_date(khc* khc) {
+    return (khc->_resp_date >= 0) ? khc->_resp_date : -1;
 }
