@@ -208,6 +208,30 @@ jobs:
         # passing.
         run: ctest --preset ${{ matrix.test-preset }}
 
+  # A short fuzz of everything that reads what the network brings, from the
+  # corpus in the repository, so that a change that breaks one of them on input
+  # no test thought of fails here. Clang, as GCC has no libFuzzer. Nothing is
+  # kept from run to run: the corpus grows by hand, from what a run finds.
+  fuzz:
+    name: fuzz (libFuzzer, ASan, UBSan)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Fetch tags
+        run: git fetch --unshallow --tags --force
+      - name: Setup build env
+        run: |
+          sudo apt-get -yq update
+          sudo apt-get -yq install --no-install-recommends cmake clang libclang-rt-dev
+      - name: configure
+        run: cmake --preset fuzz
+      - name: build
+        run: cmake --build --preset fuzz
+      - name: fuzz
+        run: tests/fuzz/run.sh 60
+
   # The large tests, against the live Kii application the secrets name: on
   # 64-bit Linux under valgrind, and on 64-bit Windows under wine, without
   # valgrind, which cannot run a Windows program. On Windows the tests' sockets
