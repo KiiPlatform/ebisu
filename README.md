@@ -61,8 +61,8 @@ for each major version.
 ## Breaking changes
 
 [UPGRADING.md](./UPGRADING.md) lists what an application has to change or check
-for each major version. For 3.0, most need one edit, to the port their connect
-callback takes, and a rebuild.
+for each major version. For 3.0, most need two edits, to the port their connect
+callback takes and to delete a setter that did nothing, and a rebuild.
 
 ## Building
 

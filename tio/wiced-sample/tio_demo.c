@@ -23,7 +23,6 @@ const char VENDOR_PASS[] = "1234";
 #define UPDATE_PERIOD_SEC 60
 
 #define TO_RECV_SEC 15
-#define TO_SEND_SEC 15
 
 bool term_flag = false;
 bool handler_terminated = false;
@@ -151,7 +150,6 @@ void handler_init(
     tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
 
     tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);
-    tio_handler_set_mqtt_to_sock_send(handler, TO_SEND_SEC);
 
     tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);
     tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);

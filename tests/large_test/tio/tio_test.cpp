@@ -400,7 +400,6 @@ void init_device(Device& d)
     tio_handler_set_cb_sock_recv_timed_out_mqtt(h, sock_cb_recv_timed_out, &d.mqtt);
     tio_handler_set_cb_sock_close_mqtt(h, sock_cb_close, &d.mqtt);
     tio_handler_set_mqtt_to_sock_recv(h, TO_RECV);
-    tio_handler_set_mqtt_to_sock_send(h, TO_SEND);
     tio_handler_set_http_buff(h, d.handler_http_buff, sizeof(d.handler_http_buff));
     tio_handler_set_mqtt_buff(h, d.handler_mqtt_buff, sizeof(d.handler_mqtt_buff));
     tio_handler_set_keep_alive_interval(h, KEEP_ALIVE);
