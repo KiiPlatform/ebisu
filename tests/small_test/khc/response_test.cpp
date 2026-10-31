@@ -430,13 +430,16 @@ struct ContentLengthResult {
     int on_close_called;
 };
 
-// Performs a GET whose response has the given header and a short body.
-ContentLengthResult perform_with_header(const std::string& header) {
+// Performs a request whose response has the given header and a short body.
+ContentLengthResult perform_with_header(
+        const std::string& header,
+        const std::string& status = "200 OK",
+        const std::string& method = "GET") {
     khc http;
     khc_init(&http);
 
     khc_set_host(&http, "api.kii.com");
-    khc_set_method(&http, "GET");
+    khc_set_method(&http, method.c_str());
     khc_set_path(&http, "/api/apps");
     khc_set_req_headers(&http, NULL);
 
@@ -459,7 +462,7 @@ ContentLengthResult perform_with_header(const std::string& header) {
         *out_sent_length = length;
         return KHC_SOCK_OK;
     };
-    istringstream is("HTTP/1.1 200 OK\r\n" + header + "\r\n\r\nbody");
+    istringstream is("HTTP/1.1 " + status + "\r\n" + header + "\r\n\r\nbody");
     s_ctx.on_recv = [&is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         *out_actual_length = is.read(buffer, length_to_read).gcount();
         return KHC_SOCK_OK;
@@ -492,6 +495,7 @@ TEST_CASE( "Content-Length is read into a size_t" ) {
         size_t expected;
     } cases[] = {
         { "0", 0 },
+        { "4", 4 },
         { "10", 10 },
         { "2147483648", (size_t)2147483648U },
         { std::to_string((size_t)SIZE_MAX), SIZE_MAX },
@@ -499,12 +503,57 @@ TEST_CASE( "Content-Length is read into a size_t" ) {
     for (const auto& c : cases) {
         INFO("value " << c.value);
         ContentLengthResult r = perform_with_header("Content-Length: " + c.value);
-        CHECK( r.res == KHC_ERR_OK );
+        // The body is 4 bytes.
+        CHECK( r.res == (c.expected > 4 ? KHC_ERR_SOCK_RECV : KHC_ERR_OK) );
         CHECK( r.content_length == c.expected );
         CHECK( r.on_header_called == 2 );
         CHECK( r.on_write_called == 1 );
         CHECK( r.on_close_called == 1 );
     }
+}
+
+// A response is delimited by the connection closing, so one cut short looked
+// complete.
+TEST_CASE( "A body shorter than its Content-Length fails the response" ) {
+    const std::string statuses[] = { "200 OK", "404 Not Found", "500 Internal Server Error" };
+    for (const auto& status : statuses) {
+        INFO("status " << status);
+        ContentLengthResult r = perform_with_header("Content-Length: 5", status);
+        CHECK( r.res == KHC_ERR_SOCK_RECV );
+        CHECK( r.on_write_called == 1 );
+        CHECK( r.on_close_called == 1 );
+    }
+}
+
+TEST_CASE( "A body as long as its Content-Length, or longer, is a response" ) {
+    for (int length : { 3, 4 }) {
+        INFO("length " << length);
+        ContentLengthResult r = perform_with_header("Content-Length: " + std::to_string(length));
+        CHECK( r.res == KHC_ERR_OK );
+        CHECK( r.on_write_called == 1 );
+    }
+}
+
+// These give the length a body would have had, and don't send one.
+TEST_CASE( "Content-Length of a response with no body" ) {
+    const std::string length = "Content-Length: 100";
+
+    SECTION("HEAD") {
+        CHECK( perform_with_header(length, "200 OK", "HEAD").res == KHC_ERR_OK );
+    }
+    SECTION("204") {
+        CHECK( perform_with_header(length, "204 No Content").res == KHC_ERR_OK );
+    }
+    SECTION("304") {
+        CHECK( perform_with_header(length, "304 Not Modified").res == KHC_ERR_OK );
+    }
+}
+
+TEST_CASE( "Content-Length of an interim response is not the final one's" ) {
+    ContentLengthResult r = perform_with_header(
+            "Content-Length: 100\r\n\r\nHTTP/1.1 200 OK", "100 Continue");
+    CHECK( r.res == KHC_ERR_OK );
+    CHECK( r.content_length == 0 );
 }
 
 // With an invalid Content-Length the length of the body is unknown. The
