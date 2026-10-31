@@ -60,8 +60,8 @@ for each major version.
 
 ## Building
 
-The project is a single CMake project. Configure and build presets cover the
-usual variants:
+The project is a single CMake project, which needs CMake 3.15. Configure and
+build presets, which need 3.21, cover the usual variants:
 
 ```
 cmake --preset debug          # or release, or asan

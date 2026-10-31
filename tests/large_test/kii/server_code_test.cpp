@@ -29,7 +29,6 @@ TEST_CASE("Server code tests")
     REQUIRE( std::string(kiiltest::author(&kii).access_token).length() > 0 );
 
     SECTION("Execute server code") {
-        // FIXME: Create echo endpoint by test tools beforehand.
         kii_code_t exec_res = kii_execute_server_code(
             &kii, "echo", "{\"message\":\"hello!\"}");
         REQUIRE( exec_res == KII_ERR_OK );
