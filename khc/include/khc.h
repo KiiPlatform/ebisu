@@ -231,7 +231,8 @@ typedef enum khc_code {
     KHC_ERR_SOCK_CLOSE,
     /**< \brief Failure in sending data. */
     KHC_ERR_SOCK_SEND,
-    /**< \brief Failure in receiving data. */
+    /**< \brief Failure in receiving data, or the connection closed before
+     * the response ended. */
     KHC_ERR_SOCK_RECV,
     /**< \brief Failure in handling response headers. */
     KHC_ERR_HEADER_CALLBACK,

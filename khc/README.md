@@ -196,12 +196,12 @@ its status: a `404` or a `500` is a response like any other, and
 
 | Result | Cause |
 |---|---|
-| `KHC_ERR_SOCK_CONNECT`, `KHC_ERR_SOCK_SEND`, `KHC_ERR_SOCK_RECV`, `KHC_ERR_SOCK_CLOSE` | A socket callback returned `KHC_SOCK_FAIL`. |
+| `KHC_ERR_SOCK_CONNECT`, `KHC_ERR_SOCK_SEND`, `KHC_ERR_SOCK_RECV`, `KHC_ERR_SOCK_CLOSE` | A socket callback returned `KHC_SOCK_FAIL`. `KHC_ERR_SOCK_RECV` also means the connection closed before the response ended. |
 | `KHC_ERR_HEADER_CALLBACK` | The header callback handled fewer bytes than given, or the response's `Content-Length` or `Transfer-Encoding` is malformed, unsupported or too long for the response header buffer. |
 | `KHC_ERR_WRITE_CALLBACK` | The write callback handled fewer bytes than given. |
 | `KHC_ERR_ALLOCATION` | A buffer `khc` allocates could not be allocated. |
 | `KHC_ERR_TOO_LARGE_DATA` | The status line doesn't fit in the response header buffer, or a chunk size line in the stream buffer. |
-| `KHC_ERR_FAIL` | The status code or a chunk size is malformed, or the connection closed partway through a chunked body. |
+| `KHC_ERR_FAIL` | The status code or a chunk size is malformed. |
 
 `khc_get_resp_date()` gives the server's time from the response's `Date`
 header, as seconds since the epoch, for a device without a real-time clock. It

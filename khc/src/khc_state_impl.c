@@ -707,7 +707,10 @@ void khc_state_resp_header_read(khc* khc) {
         khc->_resp_header_read_size += read_size;
         khc->_resp_header_buff[khc->_resp_header_read_size] = '\0';
         if (read_size == 0) {
-            khc->_read_end = true;
+            // Closed before the headers ended: nothing more will come.
+            khc->_state = KHC_STATE_CLOSE;
+            khc->_result = KHC_ERR_SOCK_RECV;
+            return;
         }
         khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
         return;
@@ -758,7 +761,10 @@ void khc_state_resp_header_skip(khc* khc) {
         khc->_resp_header_read_size += read_size;
         khc->_resp_header_buff[khc->_resp_header_read_size] = '\0';
         if (read_size == 0) {
-            khc->_read_end = true;
+            // Closed before the headers ended: nothing more will come.
+            khc->_state = KHC_STATE_CLOSE;
+            khc->_result = KHC_ERR_SOCK_RECV;
+            return;
         }
         // check header boundary.
         char* header_boundary = strstr(khc->_resp_header_buff, "\r\n");
@@ -942,7 +948,7 @@ void khc_state_resp_body_read_chunk_size(khc* khc) {
         khc->_body_read_size += read_size;
         if (read_size == 0) {
             khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_FAIL;
+            khc->_result = KHC_ERR_SOCK_RECV;
             return;
         }
         khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
@@ -1006,7 +1012,7 @@ void khc_state_resp_body_read_chunk_body(khc* khc) {
         #endif
         if (read_size == 0) {
             khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_FAIL;
+            khc->_result = KHC_ERR_SOCK_RECV;
             return;
         }
         khc->_body_read_size = read_size;
@@ -1044,7 +1050,7 @@ void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
             #endif
             if (read_size == 0) {
                 khc->_state = KHC_STATE_CLOSE;
-                khc->_result = KHC_ERR_FAIL;
+                khc->_result = KHC_ERR_SOCK_RECV;
                 return;
             }
             khc->_body_read_size += read_size;
