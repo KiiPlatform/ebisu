@@ -783,6 +783,43 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_close == 1 );
     }
 
+    SECTION("a failure on the network is tried again") {
+        enum FailAt { CONNECT, SEND, RECV };
+        const FailAt fail_ats[] = { CONNECT, SEND, RECV };
+        const kii_mqtt_task_state task_states[] = {
+            KII_MQTT_ST_INSTALL_PUSH, KII_MQTT_ST_GET_ENDPOINT
+        };
+        for (FailAt fail_at : fail_ats) {
+            for (kii_mqtt_task_state task_state : task_states) {
+                INFO("fail at " << fail_at << ", state " << task_state);
+                http_ctx.on_connect = [=](void* socket_context, const char* host, uint16_t port) {
+                    return fail_at == CONNECT ? KHC_SOCK_FAIL : KHC_SOCK_OK;
+                };
+                http_ctx.on_send = [=](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+                    *out_sent_length = length;
+                    return fail_at == SEND ? KHC_SOCK_FAIL : KHC_SOCK_OK;
+                };
+                http_ctx.on_recv = [=](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+                    *out_actual_length = 0;
+                    return KHC_SOCK_FAIL;
+                };
+                http_ctx.on_close = [=](void* socket_ctx) {
+                    return KHC_SOCK_OK;
+                };
+
+                state.info.task_state = task_state;
+                strcpy(state.ins_id.id, "dummyInstallationID");
+                if (task_state == KII_MQTT_ST_INSTALL_PUSH) {
+                    _mqtt_state_install_push(&state);
+                } else {
+                    _mqtt_state_get_endpoint(&state);
+                }
+                CHECK( state.info.task_state == task_state );
+                CHECK( state.info.error == KII_MQTT_ERR_OK );
+            }
+        }
+    }
+
     SECTION("sock connect got KHC_SOCK_AGAIN") {
         int call_connect = 0;
         mqtt_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, uint16_t port) {

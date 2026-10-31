@@ -338,14 +338,32 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
     state->sock_connected = KII_FALSE;
 }
 
+/* Whether a request that failed may succeed if tried again: the server said so,
+ * or it never answered, which is no reason to stop on a device that can lose
+ * its network at any time. */
+static kii_bool_t _is_temporary_error(kii_t* kii, kii_code_t res)
+{
+    switch (res) {
+        case KII_ERR_SOCK_CONNECT:
+        case KII_ERR_SOCK_CLOSE:
+        case KII_ERR_SOCK_SEND:
+        case KII_ERR_SOCK_RECV:
+            return KII_TRUE;
+        default:
+            break;
+    }
+    uint16_t status_code = khc_get_status_code(&kii->_khc);
+    return ((500 <= status_code && status_code < 600) || status_code == 429) ?
+        KII_TRUE : KII_FALSE;
+}
+
 void _mqtt_state_install_push(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
     kii_mqtt_task_info* task_info = &state->info;
     kii_code_t res = kii_install_push(kii, KII_FALSE, &state->ins_id);
     if (res != KII_ERR_OK) {
-        uint16_t status_code = khc_get_status_code(&kii->_khc);
-        if ((500 <= status_code && status_code < 600) || status_code == 429) {
+        if (_is_temporary_error(kii, res) == KII_TRUE) {
             // Temporal error. Try again.
             kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
         } else {
@@ -386,8 +404,7 @@ void _mqtt_state_get_endpoint(mqtt_state_t* state)
         _onboard_for_endpoint(state) :
         kii_get_mqtt_endpoint(kii, state->ins_id.id, &state->endpoint);
     if (res != KII_ERR_OK) {
-        uint16_t status_code = khc_get_status_code(&kii->_khc);
-        if ((500 <= status_code && status_code < 600) || status_code == 429) {
+        if (_is_temporary_error(kii, res) == KII_TRUE) {
             // Temporal error. Try again.
         } else {
             task_info->error = KII_MQTT_ERR_GET_ENDPOINT;

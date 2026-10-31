@@ -1353,6 +1353,16 @@ TEST_CASE( "Refused MQTT credentials are renewed by onboarding again" ) {
         CHECK( std::string(held(&session).access_token) == "at1" );
     }
 
+    SECTION("a network failure is tried again") {
+        kii_set_cb_http_sock_connect(&c.kii, [](void* sock_ctx, const char* host, uint16_t port) {
+            return KHC_SOCK_FAIL;
+        }, NULL);
+        _mqtt_state_get_endpoint(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_GET_ENDPOINT );
+        CHECK( state.info.error == KII_MQTT_ERR_OK );
+        CHECK( std::string(held(&session).access_token) == "at1" );
+    }
+
     SECTION("a refused onboarding ends the task") {
         c.http.responses.push_back(http_response(400, "{\"errorCode\":\"WRONG_PASSWORD\"}"));
         _mqtt_state_get_endpoint(&state);

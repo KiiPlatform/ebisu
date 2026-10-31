@@ -242,9 +242,12 @@ void push_received_cb(const char* message, size_t message_length, void* userdata
   has implementations for `pthread`.
 
 After onboarding, the task connects with the MQTT endpoint onboarding returned.
-Otherwise it installs push and gets an endpoint from Kii Cloud first. The task
-uses the `kii_t` it was started with until it exits: make requests from other
-tasks with another `kii_t`.
+Otherwise it installs push and gets an endpoint from Kii Cloud first. A request
+that fails on the network, or with a `5xx` or `429` response, is tried again, so
+a device can start the task before it has a network. Any other response ends
+the task, with the reason in `kii_mqtt_task_info`. The task uses the `kii_t` it
+was started with until it exits: make requests from other tasks with another
+`kii_t`.
 
 What reaches the thing:
 
