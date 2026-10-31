@@ -141,9 +141,88 @@ TEST_CASE( "tio_handler_start reports a task it could not create" ) {
 TEST_CASE( "tio_updater_start without a task-create callback" ) {
     tio_updater_t updater;
     tio_updater_init(&updater);
+    tio_updater_set_interval(&updater, 60);
     tio_author_t author = {};
 
     REQUIRE( tio_updater_start(&updater, &author, NULL, NULL, NULL, NULL) == TIO_ERR_CREATE_TASK );
+}
+
+TEST_CASE( "tio_updater_start without an interval" ) {
+    tio_updater_t updater;
+    tio_updater_init(&updater);
+    TaskCreateCtx ctx = { KII_TASKC_OK, 0 };
+    tio_updater_set_cb_task_create(&updater, mock_task_create, &ctx);
+    tio_author_t author = {};
+
+    CHECK( tio_updater_start(&updater, &author, NULL, NULL, NULL, NULL) == TIO_ERR_FAIL );
+    CHECK( ctx.calls == 0 );
+}
+
+namespace {
+
+// The updater's task, run to its end by the test.
+struct UpdaterTask {
+    int continues_left;
+    int continue_called;
+    int exit_called;
+    int state_size_called;
+    uint32_t delayed_ms;
+};
+
+kii_task_code_t run_task(const char* name, KII_TASK_ENTRY entry, void* entry_param, void* userdata)
+{
+    entry(entry_param);
+    return KII_TASKC_OK;
+}
+
+kii_bool_t updater_continue(void* task_info, void* userdata)
+{
+    UpdaterTask* task = (UpdaterTask*)userdata;
+    ++task->continue_called;
+    return task->continues_left-- > 0 ? KII_TRUE : KII_FALSE;
+}
+
+void updater_exit(void* task_info, void* userdata)
+{
+    ++((UpdaterTask*)userdata)->exit_called;
+}
+
+void updater_delay(uint32_t ms, void* userdata)
+{
+    ((UpdaterTask*)userdata)->delayed_ms += ms;
+}
+
+// Nothing to upload, so the task makes no request.
+size_t updater_state_size(void* userdata)
+{
+    ++((UpdaterTask*)userdata)->state_size_called;
+    return 0;
+}
+
+}
+
+// An interval of 1 second went straight to its wait and upload, without asking
+// whether to continue.
+TEST_CASE( "The updater asks to continue every second, at any interval" ) {
+    for (uint32_t interval : { (uint32_t)1, (uint32_t)2, (uint32_t)3, (uint32_t)60 }) {
+        INFO("interval " << interval);
+        tio_updater_t updater;
+        tio_updater_init(&updater);
+        UpdaterTask task = {};
+        task.continues_left = 6;
+        tio_updater_set_cb_task_create(&updater, run_task, NULL);
+        tio_updater_set_cb_task_continue(&updater, updater_continue, &task);
+        tio_updater_set_cb_task_exit(&updater, updater_exit, &task);
+        tio_updater_set_cb_delay_ms(&updater, updater_delay, &task);
+        tio_updater_set_interval(&updater, interval);
+        tio_author_t author = {};
+
+        CHECK( tio_updater_start(&updater, &author, updater_state_size, &task, NULL, NULL) == TIO_ERR_OK );
+        CHECK( task.continue_called == 7 );
+        CHECK( task.exit_called == 1 );
+        CHECK( task.delayed_ms == 6000 );
+        CHECK( task.state_size_called == (int)(6 / interval) );
+    }
 }
 
 namespace {
