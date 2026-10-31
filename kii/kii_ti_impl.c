@@ -255,11 +255,16 @@ kii_code_t _put_firmware_version(
     }
 
     // Request body.
+    char esc[strlen(firmware_version) * 2 + 1];
+    if (jkii_escape_str(firmware_version, esc, sizeof(esc)) < 0) {
+        _req_headers_free_all(kii);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
     int content_len = snprintf(
             kii->_rw_buff,
             kii->_rw_buff_size,
             "{\"firmwareVersion\":\"%s\"}",
-            firmware_version);
+            esc);
     if (content_len >= kii->_rw_buff_size) {
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
