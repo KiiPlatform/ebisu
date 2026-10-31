@@ -129,3 +129,58 @@ TEST_CASE( "Every request names the SDK and its version" ) {
         CHECK( count(requests[0], m_0) == m_0_count );
     }
 }
+
+// A failure to close was reported as a failure to connect, so
+// KII_ERR_SOCK_CLOSE and TIO_ERR_SOCK_CLOSE were never returned.
+TEST_CASE( "A request reports the socket operation that failed" ) {
+    char kii_buff[1024];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    kii_set_json_parser_resource(&kii, &resource);
+
+    khct::cb::SockCtx http_ctx;
+    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
+    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
+    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+
+    const struct {
+        const char* failing;
+        kii_code_t expected;
+    } cases[] = {
+        { "connect", KII_ERR_SOCK_CONNECT },
+        { "send", KII_ERR_SOCK_SEND },
+        { "recv", KII_ERR_SOCK_RECV },
+        { "close", KII_ERR_SOCK_CLOSE },
+    };
+    for (const auto& c : cases) {
+        INFO("failing " << c.failing);
+        const std::string failing = c.failing;
+        http_ctx.on_connect = [&failing](void*, const char*, unsigned int) {
+            return failing == "connect" ? KHC_SOCK_FAIL : KHC_SOCK_OK;
+        };
+        http_ctx.on_send = [&failing](void*, const char*, size_t length, size_t* out_sent_length) {
+            *out_sent_length = length;
+            return failing == "send" ? KHC_SOCK_FAIL : KHC_SOCK_OK;
+        };
+        const std::string resp = "HTTP/1.1 200 OK\r\n\r\n";
+        size_t resp_pos = 0;
+        http_ctx.on_recv = [&](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            *out_actual_length = resp.copy(buffer, length_to_read, resp_pos);
+            resp_pos += *out_actual_length;
+            return failing == "recv" ? KHC_SOCK_FAIL : KHC_SOCK_OK;
+        };
+        http_ctx.on_close = [&failing](void*) {
+            return failing == "close" ? KHC_SOCK_FAIL : KHC_SOCK_OK;
+        };
+
+        REQUIRE( kii_api_call_start(&kii, "GET", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );
+        CHECK( kii_api_call_run(&kii) == c.expected );
+    }
+}
