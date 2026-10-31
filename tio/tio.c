@@ -523,17 +523,16 @@ static void* _update_state(void* data) {
     while(1) {
         // Ask to continue every 1 second.
         const uint32_t interval_chk_cnt_sec = 1;
-        if (interval_remain_sec > interval_chk_cnt_sec) {
-            if (updater->_cb_task_continue != NULL) {
-                tio_bool_t cont = updater->_cb_task_continue(NULL, updater->_task_continue_data);
-                if (cont != KII_TRUE) {
-                    break;
-                }
+        if (updater->_cb_task_continue != NULL) {
+            tio_bool_t cont = updater->_cb_task_continue(NULL, updater->_task_continue_data);
+            if (cont != KII_TRUE) {
+                break;
             }
-            updater->_kii._cb_delay_ms(interval_chk_cnt_sec * 1000, updater->_kii._delay_ms_data);
+        }
+        updater->_kii._cb_delay_ms(interval_chk_cnt_sec * 1000, updater->_kii._delay_ms_data);
+        if (interval_remain_sec > interval_chk_cnt_sec) {
             interval_remain_sec -= interval_chk_cnt_sec;
         } else {
-            updater->_kii._cb_delay_ms(interval_remain_sec * 1000, updater->_kii._delay_ms_data);
             interval_remain_sec = updater->_update_interval;
             kii_code_t res = _tio_updater_upload(updater);
             if (res != KII_ERR_OK) {
@@ -543,8 +542,6 @@ static void* _update_state(void* data) {
                 }
             }
         }
-
-
     }
     if (updater->_cb_task_exit != NULL) {
         updater->_cb_task_exit(NULL, updater->_task_exit_data);
@@ -622,6 +619,10 @@ tio_code_t tio_updater_start(
         TIO_CB_READ state_reader,
         void* state_reader_data)
 {
+    // Unset, as there is no interval to default to.
+    if (updater->_update_interval == 0) {
+        return TIO_ERR_FAIL;
+    }
     if (updater->_kii._session != NULL) {
         // Attaching again takes the session's author, which onboarding or a
         // renewal may have changed since it was first attached.

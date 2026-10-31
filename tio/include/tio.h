@@ -1053,6 +1053,9 @@ void tio_updater_set_app(tio_updater_t* updater, const char* app_id, const char*
 /**
  * \brief Set interval of updating state.
  *
+ * Required: tio_updater_start() fails with TIO_ERR_FAIL if it is 0, the value
+ * tio_updater_init() sets.
+ *
  * \param [out] updater tio_updater_t instance.
  * \param [in] update_interval_sec Interval in seconds.
  */
@@ -1190,7 +1193,8 @@ tio_code_t tio_updater_set_clock(tio_updater_t* updater, kii_clock_t* clock);
  * \param [in] cb_read_state Callback read state of the device.
  * \param [in] read_state_data Context object pointer passed to cb_read_state.
  * \return TIO_ERR_OK when succeeded to start task. TIO_ERR_FAIL if author is
- * NULL and no session is set.
+ * NULL and no session is set, or if no interval is set by
+ * tio_updater_set_interval().
  */
 tio_code_t tio_updater_start(
         tio_updater_t* updater,

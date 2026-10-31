@@ -209,6 +209,7 @@ TEST_CASE( "With a session, start takes the session's author" ) {
     tio_updater_t updater;
     tio_updater_init(&updater);
     tio_updater_set_cb_task_create(&updater, cb_task_not_started, NULL);
+    tio_updater_set_interval(&updater, 60);
     REQUIRE( tio_updater_set_session(&updater, &session) == TIO_ERR_OK );
     REQUIRE( tio_updater_start(&updater, NULL, state_size, NULL, read_state, NULL) == TIO_ERR_OK );
     REQUIRE( std::string(updater._kii._author.access_token) == "at2" );
@@ -223,6 +224,7 @@ TEST_CASE( "Without a session, start needs an author" ) {
     tio_updater_t updater;
     tio_updater_init(&updater);
     tio_updater_set_cb_task_create(&updater, cb_task_not_started, NULL);
+    tio_updater_set_interval(&updater, 60);
     REQUIRE( tio_updater_start(&updater, NULL, state_size, NULL, read_state, NULL) == TIO_ERR_FAIL );
 }
 
