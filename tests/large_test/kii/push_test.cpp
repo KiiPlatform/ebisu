@@ -70,7 +70,6 @@ TEST_CASE("Push Tests")
         kii_code_t sub_res = kii_subscribe_topic(&kii, &topic);
         CHECK(sub_res == KII_ERR_OK);
         int status = khc_get_status_code(&kii._khc);
-        // TODO: Make admin operation tools in test and create new topic by the tool.
         REQUIRE((status == 204 || status == 409));
 
         kii_code_t del_res = kii_unsubscribe_topic(&kii, &topic);

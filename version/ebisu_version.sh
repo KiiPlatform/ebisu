@@ -1,8 +1,8 @@
 #!/bin/sh
 # Writes ebisu_version.h for a build that does not run CMake, as
 # version/EbisuVersion.cmake does for one that does: the embedded samples, which
-# their vendors' tools build from the files the samples' Makefiles copy. A CTest
-# test checks that the two write the same header.
+# their vendors' tools build from the files the samples' Makefiles copy. The
+# samples job in CI checks that the two write the same header.
 #
 # Usage: ebisu_version.sh <output>
 set -e
