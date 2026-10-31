@@ -1030,6 +1030,11 @@ void khc_state_resp_body_read_chunk_body(khc* khc) {
 
 void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
     if (khc->_body_read_size < 2) {
+        if (khc->_resp_header_read_size > 0) {
+            // What was read along with the headers comes first.
+            _move_resp_header_to_stream(khc);
+            return;
+        }
         size_t tmp_size = 2 - khc->_body_read_size;
         char tmp[tmp_size];
         size_t read_size = 0;
