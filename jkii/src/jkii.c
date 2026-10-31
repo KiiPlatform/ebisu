@@ -145,7 +145,7 @@ static int _kii_jsmn_get_value(
     M_JKII_ASSERT(name != NULL && strlen(name) > 0);
     M_JKII_ASSERT(out_token != NULL);
 
-    if (tokens[0].type != JSMN_OBJECT && tokens[0].size < 2) {
+    if (tokens[0].type != JSMN_OBJECT) {
         goto exit;
     }
 

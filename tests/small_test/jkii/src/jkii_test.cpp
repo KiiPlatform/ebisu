@@ -61,6 +61,52 @@ TEST_CASE("KiiJson, GetObjectStringByName") {
     REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
 }
 
+// Only an object has names: the elements of an array were taken for pairs of a
+// name and a value.
+TEST_CASE("KiiJson, ByNameInArrayRoot") {
+    const std::string jsons[] = {
+        "[\"key1\",\"value1\"]",
+        "[\"key1\",\"value1\",\"key2\",\"value2\"]",
+        "[\"key2\",\"value2\",\"key1\",\"value1\"]",
+    };
+    for (const auto& json : jsons) {
+        INFO(json);
+        jkii_token_t tokens[32];
+        jkii_resource_t resource = { tokens, 32 };
+        char buf[16];
+        jkii_field_t fields[2];
+        memset(fields, 0, sizeof(fields));
+        memset(buf, 0, sizeof(buf));
+        fields[0].name = "key1";
+        fields[0].type = JKII_FIELD_TYPE_STRING;
+        fields[0].field_copy.string = buf;
+        fields[0].field_copy_buff_size = sizeof(buf);
+        fields[1].name = NULL;
+
+        CHECK( jkii_parse(json.c_str(), json.size(), fields, &resource) == JKII_ERR_PARTIAL );
+        CHECK( fields[0].result == JKII_FIELD_ERR_NOT_FOUND );
+        CHECK( std::string(buf) == "" );
+    }
+}
+
+TEST_CASE("KiiJson, ByPathInArrayRoot") {
+    const std::string json = "[\"key1\",\"value1\"]";
+    jkii_token_t tokens[32];
+    jkii_resource_t resource = { tokens, 32 };
+    char buf[16];
+    jkii_field_t fields[2];
+    memset(fields, 0, sizeof(fields));
+    fields[0].path = "/[1]";
+    fields[0].type = JKII_FIELD_TYPE_STRING;
+    fields[0].field_copy.string = buf;
+    fields[0].field_copy_buff_size = sizeof(buf);
+    fields[1].name = NULL;
+    fields[1].path = NULL;
+
+    CHECK( jkii_parse(json.c_str(), json.size(), fields, &resource) == JKII_ERR_OK );
+    CHECK( std::string(buf) == "value1" );
+}
+
 TEST_CASE("KiiJson, GetObjectPositiveIntByName") {
     const char json_string[] = "{\"key1\" : 100}";
 
