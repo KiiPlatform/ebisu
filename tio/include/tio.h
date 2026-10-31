@@ -718,22 +718,20 @@ tio_code_t tio_handler_onboard(
 );
 
 /**
- * \brief Get author.
+ * \brief Copy the author.
  *
  * Author is used to authorize API call and consists of device ID and access token.
  * This API must be called after the successful execution of tio_handler_onboard().
  *
+ * With a session set by tio_handler_set_session(), it is the session's, as
+ * kii_session_get_author() copies it, so it is safe to call from any task. To
+ * store the author, use the one passed to KII_CB_AUTHOR_UPDATED, which also
+ * follows renewals.
+ *
  * \param [in] handler tio_handler_t instance.
- * \return tio_author_t pointer.
- * You may need to copy the value of device ID and access token and store them.
- * With a session set by tio_handler_set_session(), this is the handler's copy
- * of the session's author as of its last request, which a renewal through the
- * updater may since have replaced: store the author passed to
- * KII_CB_AUTHOR_UPDATED instead.
+ * \param [out] out_author The author is copied here.
  */
-const tio_author_t* tio_handler_get_author(
-        tio_handler_t* handler
-);
+void tio_handler_get_author(tio_handler_t* handler, tio_author_t* out_author);
 
 /**
  * \brief Use a session for the handler's tokens.
@@ -1128,22 +1126,20 @@ tio_code_t tio_updater_onboard(
 );
 
 /**
- * \brief Get author.
+ * \brief Copy the author.
  *
  * Author is used to authorize API call and consists of device ID and access token.
  * This API must be called after the successful execution of tio_updater_onboard().
  *
+ * With a session set by tio_updater_set_session(), it is the session's, as
+ * kii_session_get_author() copies it, so it is safe to call from any task. To
+ * store the author, use the one passed to KII_CB_AUTHOR_UPDATED, which also
+ * follows renewals.
+ *
  * \param [in] updater tio_updater_t instance.
- * \return tio_author_t pointer.
- * You may need to copy the value of device ID and access token and store them.
- * With a session set by tio_updater_set_session(), this is the updater's copy
- * of the session's author as of its last request, which a renewal through the
- * handler may since have replaced: store the author passed to
- * KII_CB_AUTHOR_UPDATED instead.
+ * \param [out] out_author The author is copied here.
  */
-const tio_author_t* tio_updater_get_author(
-        tio_updater_t* updater
-);
+void tio_updater_get_author(tio_updater_t* updater, tio_author_t* out_author);
 
 /**
  * \brief Use a session for the updater's tokens.

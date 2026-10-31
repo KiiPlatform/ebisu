@@ -214,6 +214,51 @@ TEST_CASE( "With a session, start takes the session's author" ) {
     REQUIRE( std::string(updater._kii._author.access_token) == "at2" );
 }
 
+// They returned a pointer to the kii_t's own copy, which stays as it was until
+// that kii_t's next request, and which its task may be writing.
+TEST_CASE( "The author comes from the session, however the other renewed it" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    REQUIRE( tio_handler_set_session(&handler, &session) == TIO_ERR_OK );
+    tio_updater_t updater;
+    tio_updater_init(&updater);
+    REQUIRE( tio_updater_set_session(&updater, &session) == TIO_ERR_OK );
+
+    kii_author_t renewed;
+    memset(&renewed, 0, sizeof(renewed));
+    strcpy(renewed.author_id, "th.1");
+    strcpy(renewed.access_token, "at2");
+    kii_session_set_author(&session, &renewed);
+
+    tio_author_t author;
+    memset(&author, 0, sizeof(author));
+    tio_handler_get_author(&handler, &author);
+    CHECK( std::string(author.access_token) == "at2" );
+
+    memset(&author, 0, sizeof(author));
+    tio_updater_get_author(&updater, &author);
+    CHECK( std::string(author.access_token) == "at2" );
+}
+
+TEST_CASE( "Without a session, the author is what onboarding left" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    strcpy(handler._kii._author.access_token, "at1");
+    tio_updater_t updater;
+    tio_updater_init(&updater);
+    strcpy(updater._kii._author.access_token, "at2");
+
+    tio_author_t author;
+    tio_handler_get_author(&handler, &author);
+    CHECK( std::string(author.access_token) == "at1" );
+    tio_updater_get_author(&updater, &author);
+    CHECK( std::string(author.access_token) == "at2" );
+}
+
 TEST_CASE( "Without a session, start needs an author" ) {
     tio_handler_t handler;
     tio_handler_init(&handler);
