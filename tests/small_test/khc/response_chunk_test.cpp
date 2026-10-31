@@ -562,13 +562,16 @@ struct ChunkedResult {
 // Performs a GET answered with the given chunked body. The socket hands over
 // the headers in one read, as khc needs the status line in one, and the body
 // at most max_recv bytes at a time, or as much as is asked for if 0.
-ChunkedResult perform_chunked(const string& chunked_body, size_t max_recv) {
+ChunkedResult perform_chunked(
+        const string& chunked_body,
+        size_t max_recv,
+        size_t stream_buff_size = DEFAULT_STREAM_BUFF_SIZE) {
     khc http;
     khc_init(&http);
 
     // Stale bytes in the stream buffer are hex digits, so that a size read
     // past what was received shows.
-    vector<char> stream_buff(DEFAULT_STREAM_BUFF_SIZE, 'f');
+    vector<char> stream_buff(stream_buff_size, 'f');
     khc_set_stream_buff(&http, stream_buff.data(), stream_buff.size());
 
     khc_set_host(&http, "api.kii.com");
@@ -679,5 +682,26 @@ TEST_CASE( "an invalid chunk size line fails the response" ) {
                 REQUIRE( r.on_close_called == 1 );
             }
         }
+    }
+}
+
+// A read can bring more of the body than the stream buffer holds, along with
+// the headers, into a response header buffer that is larger. The CRLF after a
+// chunk's data was then looked for on the socket, ahead of what was waiting
+// there.
+TEST_CASE( "chunks read along with the headers, into a larger header buffer" ) {
+    const string body = "abcdefghij";
+    string chunks;
+    for (char c : body) {
+        chunks += "1\r\n" + string(1, c) + "\r\n";
+    }
+    chunks += "0\r\n\r\n";
+
+    for (size_t stream_buff_size = 8; stream_buff_size < 32; ++stream_buff_size) {
+        INFO("stream buffer of " << stream_buff_size);
+        ChunkedResult r = perform_chunked(chunks, 0, stream_buff_size);
+        REQUIRE( r.res == KHC_ERR_OK );
+        REQUIRE( r.body == body );
+        REQUIRE( r.on_close_called == 1 );
     }
 }
