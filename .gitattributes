@@ -1,0 +1,3 @@
+# HTTP is CRLF, and these are responses byte for byte: a checkout that converts
+# them fails the khc tests that read them.
+tests/small_test/khc/data/* -text
