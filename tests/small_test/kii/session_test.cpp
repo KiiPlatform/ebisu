@@ -422,6 +422,14 @@ TEST_CASE( "Only an answer refusing the password makes the session wait" ) {
         c.http.responses = { REFUSED, http_response(503, "{}") };
     }
 
+    SECTION("too many requests") {
+        c.http.responses = { REFUSED, http_response(429, "{}") };
+    }
+
+    SECTION("a request that timed out") {
+        c.http.responses = { REFUSED, http_response(408, "{}") };
+    }
+
     SECTION("no answer") {
         c.http.responses = { REFUSED, "" };
     }
@@ -1361,6 +1369,17 @@ TEST_CASE( "Refused MQTT credentials are renewed by onboarding again" ) {
         CHECK( state.info.task_state == KII_MQTT_ST_GET_ENDPOINT );
         CHECK( state.info.error == KII_MQTT_ERR_OK );
         CHECK( std::string(held(&session).access_token) == "at1" );
+    }
+
+    SECTION("too many requests is tried again, without waiting for the password") {
+        c.http.responses.push_back(http_response(429, "{}"));
+        _mqtt_state_get_endpoint(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_GET_ENDPOINT );
+
+        c.http.responses.push_back(onboarded_with_endpoint("at2", "2"));
+        _mqtt_state_get_endpoint(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+        CHECK( std::string(held(&session).access_token) == "at2" );
     }
 
     SECTION("a refused onboarding ends the task") {
