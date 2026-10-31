@@ -1,0 +1,8 @@
+# Keeps the actions the workflows pin up to date. It doesn't cover the ESP-IDF
+# image a job runs in, whose digest build.yml pins by hand.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
