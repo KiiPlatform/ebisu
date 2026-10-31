@@ -572,3 +572,105 @@ TEST_CASE( "Header named like a prefix of Transfer-Encoding is not one" ) {
         CHECK( r.on_close_called == 1 );
     }
 }
+
+namespace {
+
+// Reads, in a test that has gone wrong, before it stops: closing is meant to
+// end the request on the first read that finds it.
+const int MAX_RECV_CALLS = 32;
+
+struct ClosedResult {
+    khc_code res;
+    int on_recv_called;
+    int on_close_called;
+};
+
+// Performs a GET whose response is the given bytes, then the connection
+// closing.
+ClosedResult perform_closing_after(const std::string& response) {
+    khc http;
+    khc_init(&http);
+
+    khc_set_host(&http, "api.kii.com");
+    khc_set_method(&http, "GET");
+    khc_set_path(&http, "/api/apps");
+    khc_set_req_headers(&http, NULL);
+
+    khct::cb::SockCtx s_ctx;
+    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
+    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
+    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
+    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+
+    khct::cb::IOCtx io_ctx;
+    khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
+    khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
+
+    ClosedResult r = {};
+
+    s_ctx.on_connect = [](void* socket_context, const char* host, uint16_t port) {
+        return KHC_SOCK_OK;
+    };
+    s_ctx.on_send = [](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    istringstream is(response);
+    s_ctx.on_recv = [&is, &r](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        if (++r.on_recv_called >= MAX_RECV_CALLS) {
+            return KHC_SOCK_FAIL;
+        }
+        *out_actual_length = is.read(buffer, length_to_read).gcount();
+        return KHC_SOCK_OK;
+    };
+    s_ctx.on_close = [&r](void* socket_ctx) {
+        ++r.on_close_called;
+        return KHC_SOCK_OK;
+    };
+    io_ctx.on_header = [](char *buffer, size_t size, void *userdata) {
+        return size;
+    };
+    io_ctx.on_write = [](char *buffer, size_t size, void *userdata) {
+        return size;
+    };
+
+    r.res = khc_perform(&http);
+    return r;
+}
+
+}
+
+// However far a response got, a connection that closes before it ends fails
+// the request as a failure to receive, on the first read that finds it closed.
+TEST_CASE( "A connection closed before the response ended" ) {
+    const std::string status_line = "HTTP/1.1 200 OK\r\n";
+    const std::string chunked = status_line + "Transfer-Encoding: chunked\r\n\r\n";
+    const std::string responses[] = {
+        // In the headers.
+        status_line,
+        status_line + "Content-Le",
+        status_line + "Content-Length: 4\r\n",
+        // In a header longer than the response header buffer.
+        status_line + "X-Long: " + std::string(1000, 'a'),
+        // In a chunked body.
+        chunked,
+        chunked + "4",
+        chunked + "4\r\nbo",
+        chunked + "4\r\nbody",
+        chunked + "4\r\nbody\r",
+    };
+    for (const auto& response : responses) {
+        INFO("response [" << response.substr(0, 80) << "]");
+        ClosedResult r = perform_closing_after(response);
+        CHECK( r.res == KHC_ERR_SOCK_RECV );
+        CHECK( r.on_recv_called < MAX_RECV_CALLS );
+        CHECK( r.on_close_called == 1 );
+    }
+}
+
+TEST_CASE( "A response ended by the connection closing" ) {
+    ClosedResult r = perform_closing_after("HTTP/1.1 200 OK\r\n\r\nbody");
+    CHECK( r.res == KHC_ERR_OK );
+    CHECK( r.on_recv_called < MAX_RECV_CALLS );
+    CHECK( r.on_close_called == 1 );
+}

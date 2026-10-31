@@ -1453,6 +1453,22 @@ TEST_CASE( "state abnormal tests." ) {
         REQUIRE( called );
     }
 
+    SECTION("resp body read chunk size closed.") {
+        http._state = KHC_STATE_RESP_BODY_READ_CHUNK_SIZE;
+
+        called = false;
+        s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            called = true;
+            *out_actual_length = 0;
+            return KHC_SOCK_OK;
+        };
+
+        khc_state_resp_body_read_chunk_size(&http);
+        REQUIRE( http._state == KHC_STATE_CLOSE );
+        REQUIRE( http._result == KHC_ERR_SOCK_RECV );
+        REQUIRE( called );
+    }
+
     SECTION("resp body read chunk size no buffer space.") {
         http._state = KHC_STATE_RESP_BODY_READ_CHUNK_SIZE;
         char sbuff[10];
@@ -1533,7 +1549,7 @@ TEST_CASE( "state abnormal tests." ) {
 
         khc_state_resp_body_read_chunk_body(&http);
         REQUIRE( http._state == KHC_STATE_CLOSE );
-        REQUIRE( http._result == KHC_ERR_FAIL );
+        REQUIRE( http._result == KHC_ERR_SOCK_RECV );
         REQUIRE( called );
     }
 
@@ -1582,7 +1598,7 @@ TEST_CASE( "state abnormal tests." ) {
 
         khc_state_resp_body_skip_chunk_body_crlf(&http);
         REQUIRE( http._state == KHC_STATE_CLOSE );
-        REQUIRE( http._result == KHC_ERR_FAIL );
+        REQUIRE( http._result == KHC_ERR_SOCK_RECV );
         REQUIRE( called );
     }
 
