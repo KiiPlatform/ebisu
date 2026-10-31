@@ -557,9 +557,10 @@ Alternatively, you can execute this step outside of the IoT Device and pass thin
             firmWareVersion,
             layoutPosition,
             properties);
-    const tio_author_t* author = tio_handler_get_author(&handler);
+    tio_author_t author;
+    tio_handler_copy_author(&handler, &author);
     /* thing ID and access token is stored in tio_author_t.
-    printf("thing ID: %s\n", author->author_id);
+    printf("thing ID: %s\n", author.author_id);
     */
 ```
 
@@ -573,7 +574,7 @@ Now, it's ready to start `tio_handler_t` module.
 
 - `author` is taken from the [session](#session) when one is set, and may be
   NULL. Without a session, pass the thing ID and access token obtained in the
-  step of [Onboarding](#execute-onboarding), from `tio_handler_get_author()`.
+  step of [Onboarding](#execute-onboarding), from `tio_handler_copy_author()`.
 
 - `tio_action_handler` is the callback function pointer explained in [Action callback](#action-callback)
 
