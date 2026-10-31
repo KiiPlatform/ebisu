@@ -630,6 +630,7 @@ void khc_state_resp_status_parse(khc* khc) {
     khc->_status_code = status_code;
     // A response of its own, an interim 1xx one included.
     khc->_resp_date = -1;
+    khc->_resp_content_length = 0;
     khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
     return;
 }
@@ -790,6 +791,18 @@ void khc_state_resp_header_skip(khc* khc) {
     }
 }
 
+/* The connection closing ends a body that isn't chunked. If less than the
+ * response's Content-Length came, it ended early. A response to HEAD, a 204 and
+ * a 304 have no body, whatever length they give. */
+static void _end_resp_body(khc* khc) {
+    khc->_state = KHC_STATE_CLOSE;
+    if (khc->_resp_body_received < khc->_resp_content_length &&
+            strcmp(khc->_method, "HEAD") != 0 &&
+            khc->_status_code != 204 && khc->_status_code != 304) {
+        khc->_result = KHC_ERR_SOCK_RECV;
+    }
+}
+
 void khc_state_resp_body_fragment(khc* khc) {
     if (khc->_resp_header_read_size > 0) {
         size_t written =
@@ -799,10 +812,11 @@ void khc_state_resp_body_fragment(khc* khc) {
             khc->_result = KHC_ERR_WRITE_CALLBACK;
             return;
         }
+        khc->_resp_body_received += written;
     }
 
     if (khc->_read_end) {
-        khc->_state = KHC_STATE_CLOSE;
+        _end_resp_body(khc);
         return;
     } else {
         khc->_state = KHC_STATE_RESP_BODY_READ;
@@ -858,7 +872,7 @@ void khc_state_resp_body_read(khc* khc) {
         khc->_body_read_size = read_size;
         if (read_size == 0) {
             khc->_read_end = true;
-            khc->_state = KHC_STATE_CLOSE;
+            _end_resp_body(khc);
             return;
         }
         khc->_state = KHC_STATE_RESP_BODY_CALLBACK;
@@ -886,8 +900,9 @@ void khc_state_resp_body_callback(khc* khc) {
         khc->_result = KHC_ERR_WRITE_CALLBACK;
         return;
     }
+    khc->_resp_body_received += written;
     if (khc->_read_end) {
-        khc->_state = KHC_STATE_CLOSE;
+        _end_resp_body(khc);
     } else {
         khc->_state = KHC_STATE_RESP_BODY_READ;
     }

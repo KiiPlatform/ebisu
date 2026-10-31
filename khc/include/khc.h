@@ -231,7 +231,8 @@ typedef enum khc_code {
     KHC_ERR_SOCK_CLOSE,
     /**< \brief Failure in sending data. */
     KHC_ERR_SOCK_SEND,
-    /**< \brief Failure in receiving data. */
+    /**< \brief Failure in receiving data, or the connection closed before
+     * the response ended. */
     KHC_ERR_SOCK_RECV,
     /**< \brief Failure in handling response headers. */
     KHC_ERR_HEADER_CALLBACK,
@@ -312,6 +313,8 @@ typedef struct khc {
     size_t _chunk_size; /**< \private **/
     size_t _chunk_size_written; /**< \private **/
     size_t _resp_content_length; /**< \private **/
+    /* How much of the body has come, outside a chunked one. */
+    size_t _resp_body_received; /**< \private **/
     /* The response's Date, as seconds since the epoch. -1 when there is none
      * yet, -2 when the response had a malformed one or several that
      * disagree. */
