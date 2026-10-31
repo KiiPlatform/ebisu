@@ -10,6 +10,13 @@
 #define WAIT_MS 1000
 #define ARRIVED_MSG_READ_TIME 500
 #define MSG_SEND_TIME 500
+/* The wait before another attempt to reach the cloud doubles from the first of
+ * these to the second, and what the task waits is half to all of that. */
+#define RETRY_WAIT_MIN_MS 2000
+#define RETRY_WAIT_MAX_MS 300000
+/* A broker that cannot be reached after this many attempts may have moved, so
+ * the task asks for the endpoint again. */
+#define MAX_CONNECT_FAILURES 8
 
 int _mqtt_encode(char* buf, unsigned long remaining_length)
 {
@@ -336,6 +343,29 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
     state->remaining_message_size = 0;
     state->pingresp_received = KII_TRUE;
     state->sock_connected = KII_FALSE;
+    state->retry_wait_ms = RETRY_WAIT_MIN_MS;
+    state->wait_left_ms = 0;
+    state->connect_failures = 0;
+}
+
+/* Waits longer each time, so that devices do not keep at a cloud that is
+ * refusing them or down, and part of the way at random, so that the ones that
+ * lost it together do not come back together. Nothing here has a source of
+ * randomness, but the thing's ID differs from device to device, and it is
+ * mixed with the wait so that a device's share changes as it goes. */
+static void _schedule_retry(mqtt_state_t* state)
+{
+    uint32_t wait_ms = state->retry_wait_ms;
+    // FNV-1a.
+    uint32_t hash = 2166136261U;
+    for (const char* c = state->kii->_author.author_id; *c != '\0'; ++c) {
+        hash = (hash ^ (unsigned char)*c) * 16777619U;
+    }
+    hash = (hash ^ wait_ms) * 16777619U;
+
+    state->wait_left_ms = wait_ms / 2 + hash % (wait_ms / 2 + 1);
+    state->retry_wait_ms = (wait_ms > RETRY_WAIT_MAX_MS / 2) ?
+        RETRY_WAIT_MAX_MS : wait_ms * 2;
 }
 
 /* Whether a request that failed may succeed if tried again: the server said so,
@@ -365,7 +395,7 @@ void _mqtt_state_install_push(mqtt_state_t* state)
     if (res != KII_ERR_OK) {
         if (_is_temporary_error(kii, res) == KII_TRUE) {
             // Temporal error. Try again.
-            kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+            _schedule_retry(state);
         } else {
             // Permanent error. Exit loop.
             task_info->error = KII_MQTT_ERR_INSTALLATION;
@@ -406,6 +436,7 @@ void _mqtt_state_get_endpoint(mqtt_state_t* state)
     if (res != KII_ERR_OK) {
         if (_is_temporary_error(kii, res) == KII_TRUE) {
             // Temporal error. Try again.
+            _schedule_retry(state);
         } else {
             task_info->error = KII_MQTT_ERR_GET_ENDPOINT;
             task_info->task_state = KII_MQTT_ST_ERR_EXIT;
@@ -430,10 +461,13 @@ void _mqtt_state_sock_connect(mqtt_state_t* state)
                 kii->_mqtt_sock_connect_ctx,
                 endpoint->host, port);
     if (con_res != KHC_SOCK_OK) {
-        // TODO: Introduce retry count.
-        // Transit to KII_MQTT_ST_GET_ENDPOINT if retroy count > max retry count
-        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        _schedule_retry(state);
+        if (++state->connect_failures >= MAX_CONNECT_FAILURES) {
+            state->connect_failures = 0;
+            task_info->task_state = KII_MQTT_ST_GET_ENDPOINT;
+        }
     } else {
+        state->connect_failures = 0;
         state->sock_connected = KII_TRUE;
         task_info->task_state = KII_MQTT_ST_SEND_CONNECT;
     }
@@ -503,7 +537,7 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
         // onboarding again, onboards again.
         kii->_cb_mqtt_sock_close_cb(kii->_mqtt_sock_close_ctx);
         state->sock_connected = KII_FALSE;
-        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        _schedule_retry(state);
         task_info->task_state = KII_MQTT_ST_GET_ENDPOINT;
     } else if (return_code != 0) {
         // CONNACK indicates failure.
@@ -564,6 +598,8 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
             buff[1] == 0x01 && // Identifier LSB
             (unsigned char)buff[2] != 0x80) // Return Code
     {
+        // Connected and subscribed: losing this is a new failure.
+        state->retry_wait_ms = RETRY_WAIT_MIN_MS;
         task_info->task_state = KII_MQTT_ST_RECV_READY;
     } else {
         kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
@@ -741,6 +777,7 @@ void _mqtt_state_reconnect(mqtt_state_t* state)
     kii_t* kii = state->kii;
     kii->_cb_mqtt_sock_close_cb(kii->_mqtt_sock_close_ctx);
     state->sock_connected = KII_FALSE;
+    _schedule_retry(state);
     state->info.task_state = KII_MQTT_ST_SOCK_CONNECT;
 }
 
@@ -771,6 +808,14 @@ void* mqtt_start_task(void* sdata)
                 state.info.task_state = KII_MQTT_ST_DISCONTINUED;
                 break;
             }
+        }
+        if (state.wait_left_ms > 0) {
+            // A second at a time, so that the application can stop the task
+            // however long the wait.
+            uint32_t wait_ms = state.wait_left_ms < WAIT_MS ? state.wait_left_ms : WAIT_MS;
+            kii->_cb_delay_ms(wait_ms, kii->_delay_ms_data);
+            state.wait_left_ms -= wait_ms;
+            continue;
         }
         mqtt_state_handlers[state.info.task_state](&state);
     }

@@ -10,6 +10,7 @@
 #include <deque>
 #include <functional>
 #include <sstream>
+#include <set>
 #include <string>
 
 // A QoS 0 PUBLISH as the broker sends it: the fixed header, then the topic
@@ -3097,13 +3098,9 @@ TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
     SECTION("discontinued while connecting again after closing") {
         served = 0;
         serve_stream(mqtt_ctx, "", served); // no CONNACK
-        int connect_states = 0;
-        ctx.keep_going = [&connect_states, &connect_ok](kii_mqtt_task_state state) {
-            if (state == KII_MQTT_ST_SOCK_CONNECT) {
-                ++connect_states;
-                connect_ok = connect_states == 1;
-            }
-            return connect_states < 3;
+        ctx.keep_going = [&connects, &connect_ok](kii_mqtt_task_state state) {
+            connect_ok = connects == 0;
+            return connects < 2;
         };
 
         mqtt_start_task(&kii);
@@ -3245,4 +3242,153 @@ TEST_CASE( "The push task connects with the endpoint onboarding returned" ) {
         CHECK( onboard("{\"thingID\":\"th.1\",\"mqttEndpoint\":" + endpoint + "}") ==
                 KII_ERR_PARSE_JSON );
     }
+}
+
+namespace {
+
+// Stops the task after the given number of calls, and adds up its waits.
+struct RetryCtx {
+    int continues_left;
+    uint32_t waited_ms;
+    uint32_t longest_wait_ms;
+    int connects;
+};
+
+kii_bool_t retry_continue(void* task_info, void* userdata) {
+    return ((RetryCtx*)userdata)->continues_left-- > 0 ? KII_TRUE : KII_FALSE;
+}
+
+void retry_delay(uint32_t ms, void* userdata) {
+    RetryCtx* ctx = (RetryCtx*)userdata;
+    ctx->waited_ms += ms;
+    if (ms > ctx->longest_wait_ms) {
+        ctx->longest_wait_ms = ms;
+    }
+}
+
+khc_sock_code_t retry_connect_fail(void* context, const char* host, uint16_t port) {
+    ++((RetryCtx*)context)->connects;
+    return KHC_SOCK_FAIL;
+}
+
+}
+
+TEST_CASE( "The waits between attempts" ) {
+    kii_t kii;
+    kii_init(&kii);
+    strcpy(kii._author.author_id, "th.1");
+    khct::cb::SockCtx mqtt_ctx;
+    kii_set_cb_mqtt_sock_close(&kii, khct::cb::mock_close, &mqtt_ctx);
+    mqtt_ctx.on_close = [](void* socket_ctx) { return KHC_SOCK_OK; };
+
+    mqtt_state_t state;
+    _init_mqtt_state(&kii, &state);
+
+    SECTION("double from about a second to at most five minutes") {
+        uint32_t base_ms = 2000;
+        for (int attempt = 0; attempt < 12; ++attempt) {
+            INFO("attempt " << attempt);
+            _mqtt_state_reconnect(&state);
+            CHECK( state.wait_left_ms >= base_ms / 2 );
+            CHECK( state.wait_left_ms <= base_ms );
+            base_ms = base_ms * 2 > 300000 ? 300000 : base_ms * 2;
+        }
+    }
+
+    SECTION("differ from one thing to another") {
+        std::set<uint32_t> waits;
+        for (int thing = 0; thing < 64; ++thing) {
+            strcpy(kii._author.author_id, ("th." + std::to_string(thing)).c_str());
+            _init_mqtt_state(&kii, &state);
+            state.retry_wait_ms = 300000;
+            _mqtt_state_reconnect(&state);
+            waits.insert(state.wait_left_ms);
+        }
+        CHECK( waits.size() > 32 );
+    }
+
+    SECTION("do not differ between runs of one thing") {
+        _mqtt_state_reconnect(&state);
+        uint32_t wait_ms = state.wait_left_ms;
+        _init_mqtt_state(&kii, &state);
+        _mqtt_state_reconnect(&state);
+        CHECK( state.wait_left_ms == wait_ms );
+    }
+}
+
+TEST_CASE( "A broker that cannot be reached" ) {
+    kii_t kii;
+    kii_init(&kii);
+    strcpy(kii._author.author_id, "th.1");
+    RetryCtx ctx = {};
+    kii_set_cb_mqtt_sock_connect(&kii, retry_connect_fail, &ctx);
+    kii_set_cb_delay_ms(&kii, retry_delay, &ctx);
+
+    mqtt_state_t state;
+    _init_mqtt_state(&kii, &state);
+    strcpy(state.endpoint.host, "mqtt.example.com");
+    state.info.task_state = KII_MQTT_ST_SOCK_CONNECT;
+
+    for (int attempt = 1; attempt < 8; ++attempt) {
+        INFO("attempt " << attempt);
+        _mqtt_state_sock_connect(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+        CHECK( state.wait_left_ms > 0 );
+    }
+    _mqtt_state_sock_connect(&state);
+    CHECK( state.info.task_state == KII_MQTT_ST_GET_ENDPOINT );
+    CHECK( state.info.error == KII_MQTT_ERR_OK );
+    CHECK( state.connect_failures == 0 );
+}
+
+// A wait of minutes in a single delay would leave the application waiting that
+// long for a stopped task.
+TEST_CASE( "The task can be stopped during a wait" ) {
+    kii_t kii;
+    kii_init(&kii);
+    strcpy(kii._author.author_id, "th.1");
+    strcpy(kii._onboarded_thing_id, "th.1");
+    strcpy(kii._onboarded_endpoint.host, "mqtt.example.com");
+
+    char kii_buff[512];
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+
+    RetryCtx ctx = {};
+    ctx.continues_left = 1000;
+    kii_set_cb_mqtt_sock_connect(&kii, retry_connect_fail, &ctx);
+    kii_set_cb_delay_ms(&kii, retry_delay, &ctx);
+    kii_set_cb_task_continue(&kii, retry_continue, &ctx);
+
+    // The broker is out of reach, and Kii Cloud says to try later.
+    khct::cb::SockCtx http_ctx;
+    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
+    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
+    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+    http_ctx.on_connect = [](void* socket_context, const char* host, uint16_t port) {
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_send = [](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    const std::string resp = "HTTP/1.1 503 Service Unavailable\r\n\r\n";
+    size_t resp_pos = 0;
+    http_ctx.on_recv = [&](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        *out_actual_length = resp.copy(buffer, length_to_read, resp_pos);
+        resp_pos += *out_actual_length;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_close = [&resp_pos](void* socket_ctx) {
+        resp_pos = 0;
+        return KHC_SOCK_OK;
+    };
+
+    mqtt_start_task(&kii);
+
+    CHECK( ctx.continues_left < 0 );
+    CHECK( ctx.longest_wait_ms <= 1000 );
+    // The task spent its time waiting, at long intervals by now.
+    CHECK( ctx.waited_ms > 900 * 1000 );
+    CHECK( ctx.connects == 8 );
 }
