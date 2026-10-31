@@ -3,27 +3,21 @@ on:
   workflow_dispatch:
   push:
 
-env:
-  APP_ID: ${{ secrets.APP_ID }}
-  APP_KEY: ${{ secrets.APP_KEY }}
-  CLIENT_ID: ${{ secrets.CLIENT_ID }}
-  CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-  DEFAULT_SITE: ${{ secrets.DEFAULT_SITE }}
+# What a job needs beyond reading the repository it asks for itself, and the
+# application's secrets go only to the steps that use them: the large tests and
+# the samples' live runs. Everything else here runs third-party actions and
+# containers, which have no use for them.
+permissions:
+  contents: read
 
 jobs:
   build:
     permissions:
-      contents: write
-      pages: write
-      id-token: write
-      checks: write
+      contents: write # to push the docs to gh-pages
+      checks: write # for the JUnit report
 
     runs-on: ubuntu-latest
-    # The large tests run in the large job below, so they are left out of this
-    # build: they are configured whenever these are set.
-    env:
-      APP_ID: ""
-      DEFAULT_SITE: ""
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,7 +41,7 @@ jobs:
         # -T memcheck is the CTest equivalent of the old MEMCHECK=1 valgrind wrapping.
         run: ctest --preset small --test-dir build/debug -T memcheck
       - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v6
+        uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d # v6.6.1
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "**/test-results/junit/*.xml"
@@ -86,7 +80,7 @@ jobs:
           fi
       - name: Deploy docs to GitHub pages
         if: steps.head.outputs.current == 'true'
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
         with:
           publish_dir: build/debug/ebisu-doc
           # Only this directory is replaced; the other versions' are kept.
@@ -95,7 +89,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Deploy the docs' index to GitHub pages
         if: github.ref == 'refs/heads/master' && steps.head.outputs.current == 'true'
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
         with:
           publish_dir: docs
           # Without this the root's deploy would remove every version's docs.
@@ -128,13 +122,7 @@ jobs:
   small:
     name: ${{ matrix.name || format('small ({0}-bit, {1})', matrix.bits, matrix.variant) }}
     runs-on: ubuntu-latest
-    # The large tests are configured whenever these are set, and the workflow
-    # sets them for every job. This one runs only the small tests, so it leaves
-    # the large ones out of the build: they need the secrets, and on Linux link
-    # OpenSSL, whose 64-bit headers a -m32 build cannot use.
-    env:
-      APP_ID: ""
-      DEFAULT_SITE: ""
+    timeout-minutes: 30
     strategy:
       # One width or platform failing says nothing about another.
       fail-fast: false
@@ -220,9 +208,10 @@ jobs:
   large:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
-      checks: write
+      checks: write # for the JUnit report
     strategy:
       # One platform failing says nothing about the other.
       fail-fast: false
@@ -258,11 +247,18 @@ jobs:
           sudo apt-get -yq install --no-install-recommends g++-mingw-w64-x86-64-posix wine wine64
           wineboot --init
           wineserver -w
+      # The large tests are configured when these two are set.
       - name: configure
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          DEFAULT_SITE: ${{ secrets.DEFAULT_SITE }}
         run: cmake --preset ${{ matrix.preset }} -DEBISU_TEST_JUNIT=ON
       - name: build
         run: cmake --build --preset ${{ matrix.preset }}
       - name: test (large)
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
         # The large presets retry once: these talk to a live backend and are not
         # deterministic, and without a retry a transient error lands on master
         # as a red build.
@@ -277,7 +273,7 @@ jobs:
             if [ -s "$f" ]; then echo "== $f"; cat "$f"; fi
           done
       - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v6
+        uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d # v6.6.1
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: "**/test-results/junit/*.xml"
@@ -292,9 +288,7 @@ jobs:
   samples:
     name: samples (Cortex-M4, arm-none-eabi)
     runs-on: ubuntu-latest
-    env:
-      APP_ID: ""
-      DEFAULT_SITE: ""
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -322,8 +316,12 @@ jobs:
   esp32:
     name: esp32 sample (ESP-IDF, QEMU)
     runs-on: ubuntu-latest
-    container: espressif/idf:v5.5.5
+    container: espressif/idf:v5.5.5@sha256:a9231d0697ab8f7517cc072e93b7c83e04907bfbfba80b6440d7dbbf90665cf2
     timeout-minutes: 30
+    # Whether the secrets are there, as a step's condition can't see them: a
+    # fork's pushes run without them.
+    env:
+      LIVE: ${{ secrets.CLIENT_ID != '' }}
     defaults:
       run:
         shell: bash
@@ -358,7 +356,12 @@ jobs:
       # temporary directory, and the firmware into the build tree, neither of
       # which is uploaded.
       - name: build for QEMU, against the live application
-        if: env.CLIENT_ID != ''
+        if: env.LIVE == 'true'
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          DEFAULT_SITE: ${{ secrets.DEFAULT_SITE }}
         run: |
           . "$IDF_PATH/export.sh"
           python ../../tests/samples/qemu_sample.py esp32 live-config "$RUNNER_TEMP/live.cfg" "$RUNNER_TEMP/live.json"
@@ -367,7 +370,12 @@ jobs:
           cd build-live
           python -m esptool --chip esp32 merge_bin --fill-flash-size 4MB -o flash.bin @flash_args
       - name: live (QEMU)
-        if: env.CLIENT_ID != ''
+        if: env.LIVE == 'true'
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          DEFAULT_SITE: ${{ secrets.DEFAULT_SITE }}
         run: |
           . "$IDF_PATH/export.sh"
           python ../../tests/samples/qemu_sample.py esp32 live build-live/flash.bin "$RUNNER_TEMP/live.json"
@@ -382,6 +390,9 @@ jobs:
     name: freertos sample (Cortex-M3, QEMU)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # As in the esp32 job.
+    env:
+      LIVE: ${{ secrets.CLIENT_ID != '' }}
     defaults:
       run:
         working-directory: tio/freertos-sample
@@ -405,11 +416,21 @@ jobs:
       # temporary directory, and the firmware into the build tree, neither of
       # which is uploaded.
       - name: build against the live application
-        if: env.CLIENT_ID != ''
+        if: env.LIVE == 'true'
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          DEFAULT_SITE: ${{ secrets.DEFAULT_SITE }}
         run: |
           python3 ../../tests/samples/qemu_sample.py freertos live-config "$RUNNER_TEMP/live.cmake" "$RUNNER_TEMP/live.json"
           cmake -B build-live -C "$RUNNER_TEMP/live.cmake"
           cmake --build build-live -j "$(nproc)"
       - name: live (QEMU)
-        if: env.CLIENT_ID != ''
+        if: env.LIVE == 'true'
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          DEFAULT_SITE: ${{ secrets.DEFAULT_SITE }}
         run: python3 ../../tests/samples/qemu_sample.py freertos live build-live/ebisu_freertos_sample.elf "$RUNNER_TEMP/live.json"
