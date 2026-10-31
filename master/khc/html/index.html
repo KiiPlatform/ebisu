@@ -166,7 +166,7 @@ $(function() {
 <div class="ttc" id="akhc_8h_html_afd2065be9638acf043438ac9e020d3b8"><div class="ttname"><a href="khc_8h.html#afd2065be9638acf043438ac9e020d3b8">khc_set_resp_header_buff</a></div><div class="ttdeci">void khc_set_resp_header_buff(khc *khc, char *buffer, size_t buff_size)</div><div class="ttdoc">Set response header buffer.</div></div>
 <div class="ttc" id="akhc_8h_html_afe54c0defe07585305e7a5c52a772b7f"><div class="ttname"><a href="khc_8h.html#afe54c0defe07585305e7a5c52a772b7f">khc_set_cb_header</a></div><div class="ttdeci">khc_code khc_set_cb_header(khc *khc, KHC_CB_HEADER cb, void *userdata)</div><div class="ttdoc">Set header callback.</div></div>
 <div class="ttc" id="astructkhc__slist_html"><div class="ttname"><a href="structkhc__slist.html">khc_slist</a></div><div class="ttdoc">Linked list.</div><div class="ttdef"><b>Definition</b> khc.h:77</div></div>
-<div class="ttc" id="astructkhc_html"><div class="ttname"><a href="structkhc.html">khc</a></div><div class="ttdoc">khc object.</div><div class="ttdef"><b>Definition</b> khc.h:255</div></div>
+<div class="ttc" id="astructkhc_html"><div class="ttname"><a href="structkhc.html">khc</a></div><div class="ttdoc">khc object.</div><div class="ttdef"><b>Definition</b> khc.h:256</div></div>
 </div><!-- fragment --><p>To send a body, use a method that has one and set a read callback. It is called until it returns 0:</p>
 <div class="fragment"><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct </span>{</div>
 <div class="line">    <span class="keyword">const</span> <span class="keywordtype">char</span>* data;</div>
@@ -209,7 +209,7 @@ $(function() {
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Result   </th><th class="markdownTableHeadNone">Cause    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>KHC_ERR_SOCK_CONNECT</code>, <code>KHC_ERR_SOCK_SEND</code>, <code>KHC_ERR_SOCK_RECV</code>, <code>KHC_ERR_SOCK_CLOSE</code>   </td><td class="markdownTableBodyNone">A socket callback returned <code>KHC_SOCK_FAIL</code>.    </td></tr>
+<td class="markdownTableBodyNone"><code>KHC_ERR_SOCK_CONNECT</code>, <code>KHC_ERR_SOCK_SEND</code>, <code>KHC_ERR_SOCK_RECV</code>, <code>KHC_ERR_SOCK_CLOSE</code>   </td><td class="markdownTableBodyNone">A socket callback returned <code>KHC_SOCK_FAIL</code>. <code>KHC_ERR_SOCK_RECV</code> also means the connection closed before the response ended.    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>KHC_ERR_HEADER_CALLBACK</code>   </td><td class="markdownTableBodyNone">The header callback handled fewer bytes than given, or the response's <code>Content-Length</code> or <code>Transfer-Encoding</code> is malformed, unsupported or too long for the response header buffer.    </td></tr>
 <tr class="markdownTableRowOdd">
@@ -219,7 +219,7 @@ $(function() {
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>KHC_ERR_TOO_LARGE_DATA</code>   </td><td class="markdownTableBodyNone">The status line doesn't fit in the response header buffer, or a chunk size line in the stream buffer.    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>KHC_ERR_FAIL</code>   </td><td class="markdownTableBodyNone">The status code or a chunk size is malformed, or the connection closed partway through a chunked body.   </td></tr>
+<td class="markdownTableBodyNone"><code>KHC_ERR_FAIL</code>   </td><td class="markdownTableBodyNone">The status code or a chunk size is malformed.   </td></tr>
 </table>
 <p><code><a class="el" href="khc_8h.html#a0e1ee79bbbbeefbbac3228cb5ef0d9d8" title="Get the server&#39;s time, from the response&#39;s Date header.">khc_get_resp_date()</a></code> gives the server's time from the response's <code>Date</code> header, as seconds since the epoch, for a device without a real-time clock. It takes the three forms RFC 9110 has recipients take, with UTC for GMT, and gives -1 for anything else, for several <code>Date</code>s that disagree, and for a date before the library's source, which no server running properly sends. The time is as trustworthy as the connection it came through, so verify the server's certificate in the socket callbacks.</p>
 <h1>Tracing</h1>
@@ -230,7 +230,7 @@ $(function() {
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Oct 27 2026 22:40:32 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Sat Oct 31 2026 12:39:07 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
