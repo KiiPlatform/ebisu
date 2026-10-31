@@ -560,8 +560,8 @@ struct ChunkedResult {
 };
 
 // Performs a GET answered with the given chunked body. The socket hands over
-// the headers in one read, as khc needs the status line in one, and the body
-// at most max_recv bytes at a time, or as much as is asked for if 0.
+// the headers in one read, and the body at most max_recv bytes at a time, or
+// as much as is asked for if 0.
 ChunkedResult perform_chunked(
         const string& chunked_body,
         size_t max_recv,

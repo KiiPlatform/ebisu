@@ -201,7 +201,7 @@ its status: a `404` or a `500` is a response like any other, and
 | `KHC_ERR_WRITE_CALLBACK` | The write callback handled fewer bytes than given. |
 | `KHC_ERR_ALLOCATION` | A buffer `khc` allocates could not be allocated. |
 | `KHC_ERR_TOO_LARGE_DATA` | The status line doesn't fit in the response header buffer, or a chunk size line in the stream buffer. |
-| `KHC_ERR_FAIL` | The status code or a chunk size is malformed. |
+| `KHC_ERR_FAIL` | The status line or a chunk size is malformed. |
 
 `khc_get_resp_date()` gives the server's time from the response's `Date`
 header, as seconds since the epoch, for a device without a real-time clock. It
