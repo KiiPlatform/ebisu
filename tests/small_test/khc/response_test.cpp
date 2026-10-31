@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <string>
+#include <vector>
 
 TEST_CASE( "HTTP response test" ) {
     khc http;
@@ -554,6 +555,122 @@ TEST_CASE( "Content-Length of an interim response is not the final one's" ) {
             "Content-Length: 100\r\n\r\nHTTP/1.1 200 OK", "100 Continue");
     CHECK( r.res == KHC_ERR_OK );
     CHECK( r.content_length == 0 );
+}
+
+namespace {
+
+// Performs a GET whose response comes in the given reads.
+khc_code perform_with_reads(const std::vector<std::string>& reads, uint16_t* status_code) {
+    khc http;
+    khc_init(&http);
+
+    khc_set_host(&http, "api.kii.com");
+    khc_set_method(&http, "GET");
+    khc_set_path(&http, "/api/apps");
+    khc_set_req_headers(&http, NULL);
+
+    khct::cb::SockCtx s_ctx;
+    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
+    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
+    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
+    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+
+    khct::cb::IOCtx io_ctx;
+    khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
+    khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
+
+    s_ctx.on_connect = [](void* socket_context, const char* host, uint16_t port) {
+        return KHC_SOCK_OK;
+    };
+    s_ctx.on_send = [](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    size_t next = 0;
+    s_ctx.on_recv = [&reads, &next](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        *out_actual_length = 0;
+        if (next < reads.size()) {
+            *out_actual_length = reads[next].copy(buffer, length_to_read);
+            ++next;
+        }
+        return KHC_SOCK_OK;
+    };
+    s_ctx.on_close = [](void* socket_ctx) {
+        return KHC_SOCK_OK;
+    };
+    io_ctx.on_header = [](char *buffer, size_t size, void *userdata) {
+        return size;
+    };
+    io_ctx.on_write = [](char *buffer, size_t size, void *userdata) {
+        return size;
+    };
+
+    khc_code res = khc_perform(&http);
+    *status_code = khc_get_status_code(&http);
+    return res;
+}
+
+}
+
+// A read returns what has arrived, wherever that ends. Taking one that held
+// part of the first line for a line too long failed the request.
+TEST_CASE( "A status line arriving in several reads" ) {
+    const std::string response = "HTTP/1.1 200 OK\r\n\r\nbody";
+    const size_t line_size = strlen("HTTP/1.1 200 OK\r\n");
+    for (size_t split = 1; split < line_size; ++split) {
+        INFO("split at " << split);
+        uint16_t status_code = 0;
+        khc_code res = perform_with_reads(
+                { response.substr(0, split), response.substr(split) }, &status_code);
+        CHECK( res == KHC_ERR_OK );
+        CHECK( status_code == 200 );
+    }
+
+    uint16_t status_code = 0;
+    std::vector<std::string> bytes;
+    for (char c : response) {
+        bytes.push_back(std::string(1, c));
+    }
+    CHECK( perform_with_reads(bytes, &status_code) == KHC_ERR_OK );
+    CHECK( status_code == 200 );
+}
+
+TEST_CASE( "A connection closed before the status line ended" ) {
+    const std::vector<std::string> reads_list[] = {
+        {},
+        { "HTTP/1.1 20" },
+        { "HTTP/1.1 200 OK" },
+        { "HTTP/1.1 ", "200 OK\r" },
+    };
+    for (const auto& reads : reads_list) {
+        INFO("first read of " << reads.size());
+        uint16_t status_code = 0;
+        CHECK( perform_with_reads(reads, &status_code) == KHC_ERR_SOCK_RECV );
+        CHECK( status_code == 0 );
+    }
+}
+
+TEST_CASE( "A first line that isn't a status line" ) {
+    const std::string lines[] = {
+        "\r\n",
+        "OK\r\n",
+        "HTTP/1.1\r\n",
+        "HTTP/1.1 20\r\n",
+        "FTP/1.1 200 OK\r\n",
+        "        200 OK\r\n",
+    };
+    for (const auto& line : lines) {
+        INFO("line [" << line << "]");
+        uint16_t status_code = 0;
+        CHECK( perform_with_reads({ line + "\r\nbody" }, &status_code) == KHC_ERR_FAIL );
+        CHECK( status_code == 0 );
+    }
+}
+
+TEST_CASE( "A status line without a reason phrase" ) {
+    uint16_t status_code = 0;
+    CHECK( perform_with_reads({ "HTTP/1.1 204\r\n\r\n" }, &status_code) == KHC_ERR_OK );
+    CHECK( status_code == 204 );
 }
 
 // With an invalid Content-Length the length of the body is unknown. The
