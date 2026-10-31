@@ -9,22 +9,19 @@ You can choose static or dynamic memory allocation.
 
 ## Build jkii
 
-Execute following command on this directory.
+Execute following command on the top directory of the repository.
 
 ```sh
-mkdir -p build
-cd build
-cmake ..
-make
+cmake --preset release
+cmake --build --preset release --target jkii
 ```
 
+The library is in `build/release/jkii`.
 
 ### Debug Build
 ```sh
-mkdir -p build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-make
+cmake --preset debug
+cmake --build --preset debug --target jkii
 ```
 
 ## Example
