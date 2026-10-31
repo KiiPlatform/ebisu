@@ -295,9 +295,9 @@ tio_code_t tio_handler_onboard(
     return _tio_convert_code(ret);
 }
 
-const tio_author_t* tio_handler_get_author(tio_handler_t* handler)
+void tio_handler_get_author(tio_handler_t* handler, tio_author_t* out_author)
 {
-    return &handler->_kii._author;
+    kii_get_author(&handler->_kii, out_author);
 }
 
 /* tio's tokens come from onboarding, and so are renewed by onboarding again,
@@ -598,10 +598,9 @@ tio_code_t tio_updater_onboard(
     return _tio_convert_code(ret);
 }
 
-const tio_author_t* tio_updater_get_author(
-        tio_updater_t* updater)
+void tio_updater_get_author(tio_updater_t* updater, tio_author_t* out_author)
 {
-    return &updater->_kii._author;
+    kii_get_author(&updater->_kii, out_author);
 }
 
 tio_code_t tio_updater_set_session(tio_updater_t* updater, kii_session_t* session)

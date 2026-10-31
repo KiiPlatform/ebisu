@@ -557,9 +557,10 @@ Alternatively, you can execute this step outside of the IoT Device and pass thin
             firmWareVersion,
             layoutPosition,
             properties);
-    const tio_author_t* author = tio_handler_get_author(&handler);
+    tio_author_t author;
+    tio_handler_get_author(&handler, &author);
     /* thing ID and access token is stored in tio_author_t.
-    printf("thing ID: %s\n", author->author_id);
+    printf("thing ID: %s\n", author.author_id);
     */
 ```
 
