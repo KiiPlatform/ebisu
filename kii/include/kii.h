@@ -124,7 +124,7 @@ typedef enum kii_code_t
     KII_ERR_ALLOCATION, /**< \brief Error in memory allocation. */
     KII_ERR_TOO_LARGE_DATA, /**< \brief Data is larger than expected. */
     KII_ERR_RESP_STATUS, /**< \brief REST API returns error status code. */
-    KII_ERR_PARSE_JSON, /**< \brief REST API returns error status code. */
+    KII_ERR_PARSE_JSON, /**< \brief Failed to parse the response's JSON. */
     KII_ERR_FAIL, /**< \brief Other errors. */
     /* Added after KII_ERR_FAIL so that the codes above keep their values. */
     KII_ERR_CREATE_TASK /**< \brief Error in creating task. */
@@ -1110,7 +1110,7 @@ kii_code_t kii_delete_topic(
  * \return kii_code_t. KII_ERR_TOO_LARGE_DATA if the message does not fit in
  * the buffer set by kii_set_buff(), and KII_ERR_RESP_STATUS if Kii Cloud
  * refuses it, as with 400 for a message it takes as invalid or 404 for a topic
- * that does not exist; khc_get_status_code() gives the status.
+ * that does not exist; kii_get_resp_status() gives the status.
  */
 kii_code_t kii_send_push_message(
         kii_t* kii,
@@ -1135,7 +1135,7 @@ kii_code_t kii_send_push_message(
  * can be left out; disabling it is refused.
  * \return kii_code_t. KII_ERR_TOO_LARGE_DATA if the message does not fit in
  * the buffer set by kii_set_buff(), and KII_ERR_RESP_STATUS if Kii Cloud
- * refuses it; khc_get_status_code() gives the status.
+ * refuses it; kii_get_resp_status() gives the status.
  */
 kii_code_t kii_send_push_message_to_thing(
         kii_t* kii,

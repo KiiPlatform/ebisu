@@ -28,7 +28,7 @@ typedef jsmntok_t jkii_token_t;
  */
 typedef struct jkii_resource_t {
 
-    /** Array to set jkii_t#tokens. */
+    /** Array to set jkii_resource_t#tokens. */
     jkii_token_t *tokens;
 
     /** Size of jkii_resource_t#tokens */
@@ -60,8 +60,7 @@ typedef enum jkii_boolean_t {
     JKII_TRUE
 } jkii_boolean_t;
 
-/** Return value of jkii_parse(jkii_t*, const char*,
- * size_t, jkii_field_t*) */
+/** Return value of jkii_parse() */
 typedef enum jkii_parse_err_t {
 
     /** JSON string is successfully parsed and all jkii_field_t
@@ -79,13 +78,12 @@ typedef enum jkii_parse_err_t {
     /** JSON string is successfully parsed but type of root object
      * type is unmatched to using function.
      *
-     * jkii_parse(jkii_t*, const char*, size_t,
-     * jkii_field_t*) requires JSON object if JSON array is
+     * jkii_parse() requires JSON object if JSON array is
      * passed, then this error is returned.
      */
     JKII_ERR_ROOT_TYPE,
 
-    /** jkii_t#tokens is not enough to parse JSON string.*/
+    /** jkii_resource_t#tokens is not enough to parse JSON string.*/
     JKII_ERR_TOKENS_SHORTAGE,
 
     /** JSON string is failed to parse. Passed string is not JSON string. */
@@ -134,8 +132,7 @@ typedef enum jkii_field_err_t {
 typedef enum jkii_field_type_t {
 
     /** This value denotes any JSON types. If this value is set to
-     * jkii_field_t#type, then jkii_parse(jkii_t*,
-     * const char*, size_t, jkii_field_t*) ignore type checking.
+     * jkii_field_t#type, then jkii_parse() ignore type checking.
      */
     JKII_FIELD_TYPE_ANY,
 
@@ -168,33 +165,28 @@ typedef enum jkii_field_type_t {
 
 /** JSON parsed field data.
  *
- * Input of jkii_parse(jkii_t*, const char*, size_t,
- * jkii_field_t*).
+ * Input of jkii_parse().
  *
  * Array of jkii_field_t is passed to
- * jkii_parse(jkii_t*, const char*, size_t,
- * jkii_field_t*).
+ * jkii_parse().
  *
 
  * End point of the array is specified by jkii_field_t#name and
  * jkii_field_t#path. If both of jkii_field_t#name and
- * jkii_field_t#path are NULL, jkii_parse(jkii_t*,
- * const char*, size_t, jkii_field_t*) consider that it is the end
+ * jkii_field_t#path are NULL, jkii_parse() consider that it is the end
  * point of the passed array.
  */
 typedef struct jkii_field_t {
 
     /** Parsing target key name. Input of
-     * jkii_parse(jkii_t*, const char*, size_t,
-     * jkii_field_t*).
+     * jkii_parse().
      *
      * Addressing a top-level field in a json object.
      */
     const char* name;
 
     /** Parsing target path. Input of
-     * jkii_parse(jkii_t*, const char*, size_t,
-     * jkii_field_t*).
+     * jkii_parse().
      *
      * This can point any field or element of array. BNF like notation
      * of path is following:
@@ -240,24 +232,20 @@ typedef struct jkii_field_t {
     const char* path;
 
     /** Field parse result. Output of
-     * jkii_parse(jkii_t*, const char*, size_t,
-     * jkii_field_t*).
+     * jkii_parse().
      */
     jkii_field_err_t result;
 
     /** Parsed target value type. Input and Output of
-     * jkii_parse(jkii_t*, const char*, size_t,
-     * jkii_field_t*). Inputted value is expected value type and
+     * jkii_parse(). Inputted value is expected value type and
      * outputted value is actual value type.
      *
      * If type is set as
      * jkii_field_type_t#JKII_FIELD_TYPE_ANY, then
-     * jkii_parse(jkii_t*, const char*, size_t,
-     * jkii_field_t*) ignore type checking.
+     * jkii_parse() ignore type checking.
      *
      * If actual type is not matched expected type:
-     *   - jkii_parse(jkii_t*, const char*, size_t,
-     *     jkii_field_t*) set actual type.
+     *   - jkii_parse() set actual type.
      *   - if expected type is not
      *     jkii_field_type_t#JKII_FIELD_TYPE_ANY, then
      *     jkii_field_t#result becomes
@@ -282,14 +270,12 @@ typedef struct jkii_field_t {
     jkii_field_type_t type;
 
     /** Start point of this field in given buffer. Output of
-     * jkii_parse(jkii_t*, const char*, size_t,
-     * jkii_field_t*).
+     * jkii_parse().
      */
     size_t start;
 
     /** End point of this field in given buffer. Output of
-     * jkii_parse(jkii_t*, const char*, size_t,
-     * jkii_field_t*).
+     * jkii_parse().
      */
     size_t end;
 

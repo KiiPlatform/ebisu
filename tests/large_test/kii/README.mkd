@@ -1,36 +1,28 @@
 ## Building and executing Test
 
-Test application can be built by following command:
+The tests are configured when the application they run against is known, from
+the environment or from `-DEBISU_APP_ID=` and `-DEBISU_DEFAULT_SITE=`. Execute
+following commands on the top directory of the repository:
 
 ```sh
-make
+APP_ID=... DEFAULT_SITE=... cmake --preset debug
+cmake --build --preset debug
+ctest --preset large
 ```
-
-After that, you can get `testapp`. You can execute this `testapp` by
-following command.
-
-```
-./testapp
-```
-
-You can do them once by
-```
-make test
-```
-
-You can tweak the `make test` behavior by environemnt vars:
-
-- JUNIT : if defined, it will generate junit-sylte test report under `test-result` directory.
-
-- MEMCHECK : if defined, run test under valgrind
-
-- PLAIN_HTTP : if defined, use raw HTTP instead of HTTPS, useful for packet capturing.
 
 - APP_ID : specify the app-id used for the test.
 
 - DEFAULT_SITE : specify the API hostname used for the test.
 
-- SOCKET_LOG : if defined, output send/recv buffer to stdout. (this will break your console when send/recv binary data.) The output holds tokens and passwords: never enable it where it is kept, as in CI, whose logs are public.
+Options, given to `cmake --preset debug`:
+
+- `-DEBISU_TEST_JUNIT=ON` : generate a JUnit test report under `build/debug/test-results`.
+
+- `-DEBISU_PLAIN_HTTP=ON` : use raw HTTP instead of HTTPS, useful for packet capturing.
+
+- `-DEBISU_SOCKET_LOG=ON` : output send/recv buffer to stdout. (this will break your console when send/recv binary data.) The output holds tokens and passwords: never enable it where it is kept, as in CI, whose logs are public.
+
+To run them under valgrind, use `ctest --preset large --test-dir build/debug -T memcheck`.
 
 ## tio suite
 
@@ -61,7 +53,7 @@ DEFAULT_SITE="${DEFAULT_SITE}" \
 APP_ID="${APP_ID}" \
 CLIENT_ID="${CLIENT_ID}" \
 CLIENT_SECRET="${CLIENT_SECRET}" \
-make initapp
+tests/large_test/initapp.sh
 ```
 
 Also you need to ensure that app has server-code enabled.

@@ -46,6 +46,13 @@ typedef struct jkii_primitive_t {
     jkii_field_type_t type;
 } jkii_primitive_t;
 
+/** Parse a JSON primitive: a number, true, false or null.
+ *
+ * \param [in] primitive The primitive. It need not be null-terminated.
+ * \param [in] primitive_length Its length.
+ * \param [out] result What it is, and its value.
+ * \return parse result.
+ */
 jkii_primitive_err_t jkii_parse_primitive(
     const char* primitive,
     size_t primitive_length,
@@ -71,11 +78,27 @@ jkii_primitive_err_t jkii_parse_primitive(
  */
 int jkii_escape_str(const char* str, char* buff, size_t buff_size);
 
+/** Check that a string is JSON with an object as its root.
+ *
+ * \param [in] json_string of JSON string.
+ * \param [in] json_string_len of JSON string.
+ * \param [in] resource of parser.
+ * \return JKII_ERR_OK, JKII_ERR_ROOT_TYPE if the root is anything else, or an
+ * error from parsing the string.
+ */
 jkii_parse_err_t jkii_validate_root_object(
         const char* json_string,
         size_t json_string_len,
         jkii_resource_t* resource);
 
+/** jkii_validate_root_object() with a custom memory allocator.
+ *
+ * \param [in] json_string of JSON string.
+ * \param [in] json_string_len of JSON string.
+ * \param [in] cb_alloc allocate resource
+ * \param [in] cb_free free resource
+ * \return As jkii_validate_root_object().
+ */
 jkii_parse_err_t jkii_validate_root_object_with_allocator(
         const char* json_string,
         size_t json_string_len,
