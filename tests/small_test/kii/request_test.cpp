@@ -184,3 +184,38 @@ TEST_CASE( "A request reports the socket operation that failed" ) {
         CHECK( kii_api_call_run(&kii) == c.expected );
     }
 }
+
+// Onboarding escapes the same value.
+TEST_CASE( "kii_ti_put_firmware_version escapes the version" ) {
+    char kii_buff[1024];
+
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+
+    std::string request;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [](void*, const char*, unsigned int) { return KHC_SOCK_OK; };
+    http_ctx.on_send = [&request](void*, const char* buffer, size_t length, size_t* out_sent_length) {
+        request.append(buffer, length);
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    const std::string resp = "HTTP/1.1 204 No Content\r\n\r\n";
+    size_t resp_pos = 0;
+    http_ctx.on_recv = [&](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        *out_actual_length = resp.copy(buffer, length_to_read, resp_pos);
+        resp_pos += *out_actual_length;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
+    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
+    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+
+    REQUIRE( kii_ti_put_firmware_version(&kii, "1.0\"\\") == KII_ERR_OK );
+    CHECK( count(request, "{\"firmwareVersion\":\"1.0\\\"\\\\\"}") == 1 );
+}
