@@ -212,10 +212,6 @@ void kii_set_mqtt_to_sock_recv(kii_t* kii, uint32_t to_sock_recv_sec) {
     kii->_mqtt_to_recv_sec = to_sock_recv_sec;
 }
 
-void kii_set_mqtt_to_sock_send(kii_t* kii, uint32_t to_sock_send_sec) {
-    kii->_mqtt_to_send_sec = to_sock_send_sec;
-}
-
 void kii_set_cb_task_create(kii_t* kii, KII_CB_TASK_CREATE cb, void* userdata) {
     kii->_cb_task_create = cb;
     kii->_task_create_data = userdata;

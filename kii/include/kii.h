@@ -399,7 +399,6 @@ typedef struct kii_t {
     KII_CB_SOCK_RECV_TIMED_OUT _cb_mqtt_sock_recv_timed_out; /**< \private */
     KHC_CB_SOCK_CLOSE _cb_mqtt_sock_close_cb; /**< \private */
     uint32_t _mqtt_to_recv_sec; /**< \private */
-    uint32_t _mqtt_to_send_sec; /**< \private */
 
     KII_CB_TASK_CREATE _cb_task_create; /**< \private */
     void* _task_create_data; /**< \private */
@@ -416,7 +415,6 @@ typedef struct kii_t {
     KII_PUSH_RECEIVED_CB _cb_push_received; /**< \private */
     void* _push_data; /**< \private */
 
-    kii_bool_t _mqtt_connected; /**< \private */
 
     char* _mqtt_buffer; /**< \private */
     size_t _mqtt_buffer_size; /**< \private */
@@ -690,18 +688,6 @@ void kii_session_set_author(kii_session_t* session, const kii_author_t* author);
  * ignored, and the mode left as it was.
  */
 void kii_session_set_renew_mode(kii_session_t* session, kii_renew_mode_t mode);
-
-/**
- * \brief Set whether the session renews the token it holds by onboarding again.
- *
- * kii_session_set_renew_mode() with KII_RENEW_BY_ONBOARDING for KII_TRUE, and
- * KII_RENEW_BY_TOKEN_ENDPOINT for KII_FALSE.
- *
- * \param [out] session kii_session_t instance.
- * \param [in] by_onboarding KII_TRUE to renew by onboarding again through
- * Thing-IF, KII_FALSE to renew through Kii Cloud's token endpoint.
- */
-void kii_session_set_renew_by_onboarding(kii_session_t* session, kii_bool_t by_onboarding);
 
 /**
  * \brief Copy the author held by the session.
@@ -1592,8 +1578,8 @@ void kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size);
 /**
  * \brief Set socket connect callback used for MQTT(S)
  *
- * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
- * kii_set_mqtt_to_sock_recv()/ kii_set_mqtt_to_sock_send() APIs.
+ * Note that socket used for MQTT must be blocking-mode, with a send timeout, and with a recv timeout
+ * the same as given to kii_set_mqtt_to_sock_recv().
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
  * \param [out] kii kii_t instance.
@@ -1604,8 +1590,8 @@ void kii_set_cb_mqtt_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb_connect, vo
 /**
  * \brief Set socket send callback used for MQTT(S)
  *
- * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
- * kii_set_mqtt_to_sock_recv()/ kii_set_mqtt_to_sock_send() APIs.
+ * Note that socket used for MQTT must be blocking-mode, with a send timeout, and with a recv timeout
+ * the same as given to kii_set_mqtt_to_sock_recv().
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
  * \param [out] kii kii_t instance.
@@ -1616,8 +1602,8 @@ void kii_set_cb_mqtt_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb_send, void* userd
 /**
  * \brief Set socket recv callback used for MQTT(S)
  *
- * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
- * kii_set_mqtt_to_sock_recv()/ kii_set_mqtt_to_sock_send() APIs.
+ * Note that socket used for MQTT must be blocking-mode, with a send timeout, and with a recv timeout
+ * the same as given to kii_set_mqtt_to_sock_recv().
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
  *
@@ -1662,8 +1648,8 @@ void kii_set_cb_mqtt_sock_recv_timed_out(kii_t* kii, KII_CB_SOCK_RECV_TIMED_OUT 
 /**
  * \brief Set socket close callback used for MQTT(S)
  *
- * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
- * kii_set_mqtt_to_sock_recv()/ kii_set_mqtt_to_sock_send() APIs.
+ * Note that socket used for MQTT must be blocking-mode, with a send timeout, and with a recv timeout
+ * the same as given to kii_set_mqtt_to_sock_recv().
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
  * \param [out] kii kii_t instance.
@@ -1684,19 +1670,6 @@ void kii_set_cb_mqtt_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb_close, void* us
  * \param [in] to_sock_recv_sec Socket recv timeout in seconds.
  */
 void kii_set_mqtt_to_sock_recv(kii_t* kii, uint32_t to_sock_recv_sec);
-/**
- * \brief Set timeout of sending data from socket user for MQTT(S)
- *
- * This setting is mandatory to achieve MQTT keep-alive mechanism.
- * We use timeout instead of requirering system clock access to periodically send pingReq.
- * Socket send implementation given to kii_set_cb_mqtt_sock_send()
- * must have same timeout specified by to_sock_send_sec.
- *
- * \param [out] kii kii_t instance.
- * \param [in] to_sock_send_sec Socket send timeout in seconds.
- */
-void kii_set_mqtt_to_sock_send(kii_t* kii, uint32_t to_sock_send_sec);
-
 /**
  * \brief Set callback creates task.
  *

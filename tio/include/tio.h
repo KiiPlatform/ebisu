@@ -365,8 +365,8 @@ void tio_handler_set_resp_header_buff(tio_handler_t* handler, char* buff, size_t
 /**
  * \brief Set socket connect callback used for MQTT(S)
  *
- * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
- * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
+ * Note that socket used for MQTT must be blocking-mode, with a send timeout, and with a recv timeout
+ * the same as given to tio_handler_set_mqtt_to_sock_recv().
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
  * \param [out] handler tio_handler_t instance.
@@ -377,8 +377,8 @@ void tio_handler_set_cb_sock_connect_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CO
 /**
  * \brief Set socket send callback used for MQTT(S)
  *
- * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
- * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
+ * Note that socket used for MQTT must be blocking-mode, with a send timeout, and with a recv timeout
+ * the same as given to tio_handler_set_mqtt_to_sock_recv().
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
  * \param [out] handler tio_handler_t instance.
@@ -389,8 +389,8 @@ void tio_handler_set_cb_sock_send_mqtt(tio_handler_t* handler, KHC_CB_SOCK_SEND 
 /**
  * \brief Set socket recv callback used for MQTT(S)
  *
- * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
- * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
+ * Note that socket used for MQTT must be blocking-mode, with a send timeout, and with a recv timeout
+ * the same as given to tio_handler_set_mqtt_to_sock_recv().
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
  *
@@ -435,8 +435,8 @@ void tio_handler_set_cb_sock_recv_timed_out_mqtt(tio_handler_t* handler, KII_CB_
 /**
  * \brief Set socket close callback used for MQTT(S)
  *
- * Note that socket used for MQTT must be blocking-mode and its recv/send timeout must be set by
- * tio_handler_set_mqtt_to_sock_recv()/ tio_handler_set_mqtt_to_sock_send() APIs.
+ * Note that socket used for MQTT must be blocking-mode, with a send timeout, and with a recv timeout
+ * the same as given to tio_handler_set_mqtt_to_sock_recv().
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
  * \param [out] handler tio_handler_t instance.
@@ -456,18 +456,6 @@ void tio_handler_set_cb_sock_close_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CLOS
  * \param [in] to_sock_recv_sec Socket recv timeout in seconds.
  */
 void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, uint32_t to_sock_recv_sec);
-/**
- * \brief Set timeout of sending data from socket user for MQTT(S)
- *
- * This setting is mandatory to achieve MQTT keep-alive mechanism.
- * We use timeout instead of requirering system clock access to periodically send pingReq.
- * Socket send implementation given to tio_handler_set_cb_sock_send_mqtt()
- * must have same timeout specified by to_sock_send_sec.
- *
- * \param [out] handler tio_handler_t instance.
- * \param [in] to_sock_send_sec Socket send timeout in seconds.
- */
-void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, uint32_t to_sock_send_sec);
 /**
  * \brief Set callback creates task.
  *
@@ -593,8 +581,7 @@ void tio_handler_set_mqtt_buff(tio_handler_t* handler, char* buff, size_t buff_s
 /**
  * \brief Set MQTT Keep-Alive interval.
  *
- * Limitation: keep_alive_interval must be larger than socket recv/ send timeout set by
- * tio_handler_set_mqtt_to_sock_recv() / tio_handler_set_mqtt_to_sock_send().
+ * Limitation: keep_alive_interval must be larger than the socket's recv and send timeouts.
  * Twice as large as recv/ send timeout works fine but recommend few minutes to avoid congestion.
  * If 0, Keep-Alive is disabled. At most 65535, the largest MQTT can carry:
  * tio_handler_start() fails with TIO_ERR_FAIL for a larger value. It is taken

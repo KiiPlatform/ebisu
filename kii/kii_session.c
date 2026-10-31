@@ -134,12 +134,6 @@ void kii_session_set_renew_mode(kii_session_t* session, kii_renew_mode_t mode)
     }
 }
 
-void kii_session_set_renew_by_onboarding(kii_session_t* session, kii_bool_t by_onboarding)
-{
-    kii_session_set_renew_mode(session, (by_onboarding == KII_TRUE) ?
-            KII_RENEW_BY_ONBOARDING : KII_RENEW_BY_TOKEN_ENDPOINT);
-}
-
 void kii_session_get_author(kii_session_t* session, kii_author_t* out_author)
 {
     kii_bool_t locked = _has_lock(session);

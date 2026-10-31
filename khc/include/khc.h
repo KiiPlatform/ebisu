@@ -298,16 +298,6 @@ typedef struct khc {
     size_t _resp_header_read_size; /**< \private **/
 
     uint16_t _status_code; /**< \private **/
-    /* Pointer to the double CRLF boundary in the resp_header_buffer */
-    char* _body_boundary; /**< \private **/
-
-    /* Header callback */
-    char* _cb_header_pos; /**< \private **/
-    /* Used to seek for CRFL effectively. */
-    size_t _cb_header_remaining_size; /**< \private **/
-
-    char* _body_fragment; /**< \private **/
-    size_t _body_fragment_size; /**< \private **/
     bool _chunked_resp; /**< \private **/
     size_t _chunk_size; /**< \private **/
     size_t _chunk_size_written; /**< \private **/

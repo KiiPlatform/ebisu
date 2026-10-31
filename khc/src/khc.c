@@ -131,11 +131,6 @@ void khc_reset_except_request(khc* khc) {
     khc->_read_req_end = false;
     khc->_resp_header_read_size = 0;
     khc->_status_code =0;
-    khc->_body_boundary = NULL;
-    khc->_cb_header_pos = NULL;
-    khc->_cb_header_remaining_size = 0;
-    khc->_body_fragment = NULL;
-    khc->_body_fragment_size = 0;
     khc->_chunked_resp = false;
     khc->_chunk_size = 0;
     khc->_chunk_size_written = 0;
