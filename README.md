@@ -87,7 +87,7 @@ Other useful targets and options:
 
 ```
 cmake --build --preset debug --target docs        # doxygen, into build/<preset>/ebisu-doc
-ctest --preset small -T memcheck                  # under valgrind
+ctest --preset small --test-dir build/debug -T memcheck  # under valgrind
 ctest --preset asan-small                         # under ASan and UBSan
 cmake --preset debug -DEBISU_BUILD_SAMPLES=ON     # also build tio/linux-sample
 ```

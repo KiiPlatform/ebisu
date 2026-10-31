@@ -186,7 +186,7 @@ typedef tio_bool_t (*TIO_CB_ACTION)(tio_action_t* action, tio_action_err_t* err,
  *
  * \param [in] code Error code.
  * \param [in] err_message Error message.
- * \param [in,out] userdata Context object pointer passed to tio_handler_set_cb_err()/ tio_updater_set_cb_err().
+ * \param [in,out] userdata Context object pointer passed to tio_handler_set_cb_err()/ tio_updater_set_cb_error().
  */
 typedef void (*TIO_CB_ERR)(tio_code_t code, const char* err_message, void* userdata);
 /**
@@ -495,7 +495,7 @@ void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_CB_TASK_CREATE c
  * \param [in] cb_continue Callback determines whether to continue or discontinue task.
  * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
  * and calls KII_CB_TASK_EXIT callback if set.
- * task_info argument type of the cb_continue (defined as void* in KII_CB_TASK_CONTINUE) is tio_handler_task_info*.
+ * task_info argument type of the cb_continue (defined as void* in KII_CB_TASK_CONTINUE) is kii_mqtt_task_info*.
  * \param [in] userdata Context data pointer passed as second argument when cb_continue is called.
  */
 void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_CB_TASK_CONTINUE cb_continue, void* userdata);
@@ -535,7 +535,7 @@ void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_CB_TASK_CONTIN
 
  * \param [out] handler tio_handler_t instance.
  * \param [in] cb_exit Called right before the exit.
- * task_info argument type of cb_exit (defined as void* in KII_CB_TASK_EXIT) is tio_handler_task_info*
+ * task_info argument type of cb_exit (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info*
  * \param [in] userdata Context data pointer passed as second argument when cb_exit is called.
  */
 void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_CB_TASK_EXIT cb_exit, void* userdata);
@@ -1061,8 +1061,21 @@ void tio_updater_set_app(tio_updater_t* updater, const char* app_id, const char*
  */
 void tio_updater_set_interval(tio_updater_t* updater, uint32_t update_interval_sec);
 
+/**
+ * \brief Set the resource used to parse JSON.
+ *
+ * \param [out] updater tio_updater_t instance.
+ * \param [in] resource Resource of the parser.
+ */
 void tio_updater_set_json_parser_resource(tio_updater_t* updater, jkii_resource_t* resource);
 
+/**
+ * \brief Set callbacks that allocate and free the resource used to parse JSON.
+ *
+ * \param [out] updater tio_updater_t instance.
+ * \param [in] cb_alloc Allocates the resource.
+ * \param [in] cb_free Frees the resource.
+ */
 void tio_updater_set_cb_json_parser_resource(
         tio_updater_t* updater,
         JKII_CB_RESOURCE_ALLOC cb_alloc,
@@ -1093,7 +1106,7 @@ void tio_updater_set_cb_slist_resource(
  * HTTP over ssl/tls is used by default.
  * If you need to use HTTP over plain tcp,
  * you need to call this method.
- * \param [out] handler tio_handler_t instance.
+ * \param [out] updater tio_updater_t instance.
  * \param [in] enable_insecure_http KII_TRUE indicates using insecure connection.
  */
 void tio_updater_enable_insecure_http(
