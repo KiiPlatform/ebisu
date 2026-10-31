@@ -317,7 +317,7 @@ kii_code_t _convert_code(khc_code khc_c) {
         case KHC_ERR_SOCK_CONNECT:
             return KII_ERR_SOCK_CONNECT;
         case KHC_ERR_SOCK_CLOSE:
-            return KII_ERR_SOCK_CONNECT;
+            return KII_ERR_SOCK_CLOSE;
         case KHC_ERR_SOCK_SEND:
             return KII_ERR_SOCK_SEND;
         case KHC_ERR_SOCK_RECV:
