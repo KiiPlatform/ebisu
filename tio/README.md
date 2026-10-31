@@ -203,7 +203,7 @@ Our cloud supports non-secure connection for now. However, we may terminate supp
 <a name="mqtt-socket-notes"></a>
 #### Notes about socket implementation used for MQTT.
 
-Underlying socket implementation used for MQTT must be blocking mode and its recv/ send timeout must be shared with `tio_handler_t`.
+Underlying socket implementation used for MQTT must be blocking mode, with a send timeout, and its recv timeout must be shared with `tio_handler_t`.
 
 We use socket timeout to estimate elapsed time since we sent last MQTT messages to send MQTT `PINGREQ` message periodically.
 
@@ -212,7 +212,6 @@ Twice as large as recv/ send timeout works fine but recommend few minutes to avo
 
 ```c
     tio_handler_set_mqtt_to_sock_recv(handler, 15);
-    tio_handler_set_mqtt_to_sock_send(handler, 15);
     tio_handler_set_keep_alive_interval(handler, 300);
 ```
 
@@ -295,7 +294,6 @@ The full code can be checked [handler_init() in example.c](linux-sample/example.
     tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
 
     tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);
-    tio_handler_set_mqtt_to_sock_send(handler, TO_SEND_SEC);
 
     tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);
     tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
@@ -379,7 +377,6 @@ You can see example [here](./linux-sample/sys_cb_linux.c)
 
 ```c
     tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);
-    tio_handler_set_mqtt_to_sock_send(handler, TO_SEND_SEC);
 ```
 
 ### Set-up MQTT Keep Alive interval.

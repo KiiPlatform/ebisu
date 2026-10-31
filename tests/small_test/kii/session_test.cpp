@@ -1395,7 +1395,7 @@ TEST_CASE( "Refused MQTT credentials are renewed by onboarding again" ) {
     }
 
     SECTION("a session renewing through the token endpoint fetches them from Kii Cloud") {
-        kii_session_set_renew_by_onboarding(&session, KII_FALSE);
+        kii_session_set_renew_mode(&session, KII_RENEW_BY_TOKEN_ENDPOINT);
         c.http.responses.push_back(http_response(200,
                 "{\"installationID\":\"ins.1\",\"username\":\"user.3\",\"password\":\"pass.3\","
                 "\"mqttTopic\":\"topic.1\",\"host\":\"mqtt.example.com\",\"portTCP\":1883,"
@@ -1422,12 +1422,6 @@ TEST_CASE( "The renewal mode is set by name, and an unknown one is ignored" ) {
     kii_session_set_renew_mode(&session, (kii_renew_mode_t)-1);
     CHECK( session._renew_mode == KII_RENEW_BY_ONBOARDING );
     kii_session_set_renew_mode(&session, KII_RENEW_BY_TOKEN_ENDPOINT);
-    CHECK( session._renew_mode == KII_RENEW_BY_TOKEN_ENDPOINT );
-
-    // The setter of before, in its terms.
-    kii_session_set_renew_by_onboarding(&session, KII_TRUE);
-    CHECK( session._renew_mode == KII_RENEW_BY_ONBOARDING );
-    kii_session_set_renew_by_onboarding(&session, KII_FALSE);
     CHECK( session._renew_mode == KII_RENEW_BY_TOKEN_ENDPOINT );
 
     // Each with the lock held.

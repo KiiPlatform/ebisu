@@ -149,7 +149,6 @@ static void init_handler(jkii_resource_t* resource)
     tio_handler_set_cb_sock_recv_timed_out_mqtt(&handler, sock_cb_recv_timed_out, &handler_mqtt_ctx);
     tio_handler_set_cb_sock_close_mqtt(&handler, sock_cb_close, &handler_mqtt_ctx);
     tio_handler_set_mqtt_to_sock_recv(&handler, TO_RECV_SEC);
-    tio_handler_set_mqtt_to_sock_send(&handler, TO_SEND_SEC);
 
     tio_handler_set_http_buff(&handler, handler_http_buff, sizeof(handler_http_buff));
     tio_handler_set_mqtt_buff(&handler, handler_mqtt_buff, sizeof(handler_mqtt_buff));

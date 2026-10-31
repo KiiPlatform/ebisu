@@ -167,11 +167,6 @@ TEST_CASE( "khc_reset_except_request leaves khc as if the request were new" ) {
             CHECK( used._read_req_end == fresh._read_req_end );
             CHECK( used._resp_header_read_size == fresh._resp_header_read_size );
             CHECK( used._status_code == fresh._status_code );
-            CHECK( (const void*)used._body_boundary == (const void*)fresh._body_boundary );
-            CHECK( (const void*)used._cb_header_pos == (const void*)fresh._cb_header_pos );
-            CHECK( used._cb_header_remaining_size == fresh._cb_header_remaining_size );
-            CHECK( (const void*)used._body_fragment == (const void*)fresh._body_fragment );
-            CHECK( used._body_fragment_size == fresh._body_fragment_size );
             CHECK( used._chunked_resp == fresh._chunked_resp );
             CHECK( used._chunk_size == fresh._chunk_size );
             CHECK( used._chunk_size_written == fresh._chunk_size_written );

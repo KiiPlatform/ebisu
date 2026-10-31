@@ -247,7 +247,6 @@ void set_up_task(kii_t* kii, MqttTest& t, char* mqtt_buff, size_t mqtt_buff_size
     kii_set_cb_mqtt_sock_recv_timed_out(kii, cb_recv_timed_out, &t);
     kii_set_cb_mqtt_sock_close(kii, cb_close, &t);
     kii_set_mqtt_to_sock_recv(kii, TO_RECV);
-    kii_set_mqtt_to_sock_send(kii, TO_SEND);
     kii_set_cb_task_create(kii, cb_task_create, &t);
     kii_set_cb_task_continue(kii, cb_continue, &t);
     kii_set_cb_task_exit(kii, cb_exit, &t);

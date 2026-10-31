@@ -146,11 +146,6 @@ void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, uint32_t to_sock_
     kii_set_mqtt_to_sock_recv(&handler->_kii, to_sock_recv_sec);
 }
 
-void tio_handler_set_mqtt_to_sock_send(tio_handler_t* handler, uint32_t to_sock_send_sec)
-{
-    kii_set_mqtt_to_sock_send(&handler->_kii, to_sock_send_sec);
-}
-
 void tio_handler_set_cb_task_create(
         tio_handler_t* handler,
         KII_CB_TASK_CREATE cb_task_create,

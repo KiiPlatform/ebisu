@@ -207,7 +207,6 @@ supplies the MQTT socket callbacks and a buffer for messages:
     kii_set_cb_mqtt_sock_recv_timed_out(&kii, sock_cb_recv_timed_out, &mqtt_sock_ctx);
     kii_set_cb_mqtt_sock_close(&kii, sock_cb_close, &mqtt_sock_ctx);
     kii_set_mqtt_to_sock_recv(&kii, 15);
-    kii_set_mqtt_to_sock_send(&kii, 15);
 
     kii_set_cb_task_create(&kii, task_create_cb, NULL);
     kii_set_cb_delay_ms(&kii, delay_ms_cb, NULL);
@@ -225,8 +224,8 @@ void push_received_cb(const char* message, size_t message_length, void* userdata
 }
 ```
 
-- **MQTT sockets**: blocking, with receive and send timeouts the same as those
-  given to `kii_set_mqtt_to_sock_recv()` and `kii_set_mqtt_to_sock_send()`.
+- **MQTT sockets**: blocking, with a send timeout, and a receive timeout the
+  same as given to `kii_set_mqtt_to_sock_recv()`.
   When the receive timeout runs out, the recv callback returns
   `KHC_SOCK_FAIL`. The optional `kii_set_cb_mqtt_sock_recv_timed_out()`
   callback tells such a timeout from a lost connection, after which the task
