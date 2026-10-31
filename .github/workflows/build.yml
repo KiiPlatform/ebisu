@@ -93,15 +93,33 @@ jobs:
           destination_dir: ${{ steps.docs.outputs.dir }}
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
+      # The site's root holds docs/'s files and the versions' directories, and
+      # anything else there is removed: until the docs were versioned,
+      # master's were published at the root, and docs/404.html now sends
+      # their old URLs to master/. The action above can only keep the whole
+      # root or replace it, the versions' directories with it.
       - name: Deploy the docs' index to GitHub pages
         if: github.ref == 'refs/heads/master' && steps.head.outputs.current == 'true'
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          publish_dir: docs
-          # Without this the root's deploy would remove every version's docs.
-          keep_files: true
-          publish_branch: gh-pages
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch --depth 1 origin gh-pages
+          git worktree add --detach "$RUNNER_TEMP/pages" FETCH_HEAD
+          cd "$RUNNER_TEMP/pages"
+          for entry in *; do
+            case "$entry" in
+              master|v[0-9]*) ;;
+              *) git rm -rq -- "$entry" ;;
+            esac
+          done
+          cp "$GITHUB_WORKSPACE"/docs/* .
+          git add -A
+          if git diff --cached --quiet; then
+            echo "the root is up to date"
+          else
+            git -c user.name='github-actions[bot]' \
+                -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+                commit -qm "deploy index: $GITHUB_SHA"
+            git push origin HEAD:refs/heads/gh-pages
+          fi
 
   # The small tests on 64-bit, and on 32-bit x86, where int and long are both
   # 32 bits as on the ARM Cortex-M targets the samples are for; code that
