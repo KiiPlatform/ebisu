@@ -93,6 +93,11 @@ add_subdirectory(small_test)
 # Checked when it builds rather than by ctest: nothing in it runs.
 add_subdirectory(header_check)
 
+option(EBISU_BUILD_FUZZERS "Build the libFuzzer targets in tests/fuzz. Needs clang" OFF)
+if(EBISU_BUILD_FUZZERS)
+    add_subdirectory(fuzz)
+endif()
+
 # The large tests exercise a live backend, and test_env.h raises #error when
 # APP_ID is absent, so they cannot even compile without credentials. Configure
 # them only when those are present rather than breaking the default build.
