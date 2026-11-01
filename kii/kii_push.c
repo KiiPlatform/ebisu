@@ -245,7 +245,6 @@ kii_code_t kii_get_mqtt_endpoint(
         goto exit;
     }
 
-    // TODO: get buffer and its length.
     char* buff = kii->_rw_buff;
     size_t buff_size = kii->_rw_buff_written;
     if (buff == NULL) {

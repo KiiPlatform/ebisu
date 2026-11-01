@@ -128,16 +128,6 @@ _cmd_parser_code_t _parse_alias(
     return res;
 }
 
-int _check_double(const char* str, size_t len)
-{
-    for (int i = 0; i < len; ++i) {
-        if (str[i] == '.' || str[i] == 'e' || str[i] == 'E') {
-            return 0;
-        }
-    }
-    return -1;
-}
-
 _cmd_parser_code_t _parse_primitive(
         const char* action_value,
         size_t action_value_length,

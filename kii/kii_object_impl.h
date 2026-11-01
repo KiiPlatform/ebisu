@@ -7,24 +7,6 @@ extern "C" {
 
 #include "kii.h"
 
-kii_code_t _make_bucket_path(
-        kii_t *kii,
-        const kii_bucket_t *bucket,
-        const char *objects,
-        const char *object_id,
-        const char *body,
-        int *path_len);
-
-kii_code_t _make_object_content_type(
-        kii_t *kii,
-        const char *object_content_type,
-        int *header_len);
-
-kii_code_t _make_object_body_content_type(
-        kii_t *kii,
-        const char *object_body_content_type,
-        int *header_len);
-
 kii_code_t _post_object(
         kii_t *kii,
         const kii_bucket_t *bucket,
