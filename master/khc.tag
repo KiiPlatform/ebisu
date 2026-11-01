@@ -328,6 +328,13 @@
       <arglist>(khc *khc, bool enable_insecure)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>khc_enable_absolute_target</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>a3b0cd0780345cbf9f6631aaf1c626cbd</anchor>
+      <arglist>(khc *khc, bool enable_absolute_target)</arglist>
+    </member>
+    <member kind="function">
       <type>uint16_t</type>
       <name>khc_get_status_code</name>
       <anchorfile>khc_8h.html</anchorfile>

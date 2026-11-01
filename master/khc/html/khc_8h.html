@@ -282,6 +282,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 <tr class="memitem:ab05e9076eb8e0e894603885d446499d9" id="r_ab05e9076eb8e0e894603885d446499d9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#ab05e9076eb8e0e894603885d446499d9">khc_enable_insecure</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>, bool enable_insecure)</td></tr>
 <tr class="memdesc:ab05e9076eb8e0e894603885d446499d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable insecure connection.  <br /></td></tr>
 <tr class="separator:ab05e9076eb8e0e894603885d446499d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b0cd0780345cbf9f6631aaf1c626cbd" id="r_a3b0cd0780345cbf9f6631aaf1c626cbd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a3b0cd0780345cbf9f6631aaf1c626cbd">khc_enable_absolute_target</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>, bool enable_absolute_target)</td></tr>
+<tr class="memdesc:a3b0cd0780345cbf9f6631aaf1c626cbd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Send the whole URL in the request line.  <br /></td></tr>
+<tr class="separator:a3b0cd0780345cbf9f6631aaf1c626cbd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a566621dab015c69cb57dd1de88241c2a" id="r_a566621dab015c69cb57dd1de88241c2a"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a566621dab015c69cb57dd1de88241c2a">khc_get_status_code</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
 <tr class="memdesc:a566621dab015c69cb57dd1de88241c2a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get HTTP status code.  <br /></td></tr>
 <tr class="separator:a566621dab015c69cb57dd1de88241c2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -534,6 +537,43 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
+<a id="a3b0cd0780345cbf9f6631aaf1c626cbd" name="a3b0cd0780345cbf9f6631aaf1c626cbd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3b0cd0780345cbf9f6631aaf1c626cbd">&#9670;&#160;</a></span>khc_enable_absolute_target()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void khc_enable_absolute_target </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkhc.html">khc</a> *&#160;</td>
+          <td class="paramname"><em>khc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>enable_absolute_target</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Send the whole URL in the request line. </p>
+<p>By default, khc sends the path, as in GET /v1/users HTTP/1.1, with the host in the Host header, which is what a server expects. A forward proxy that a request goes through in plain HTTP takes the URL instead, as in GET <a href="http://api.example.com/v1/users">http://api.example.com/v1/users</a> HTTP/1.1, and needs this method. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">khc</td><td>instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">enable_absolute_target</td><td>true for the whole URL, false (the default) for the path. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="ab05e9076eb8e0e894603885d446499d9" name="ab05e9076eb8e0e894603885d446499d9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab05e9076eb8e0e894603885d446499d9">&#9670;&#160;</a></span>khc_enable_insecure()</h2>
 
@@ -810,7 +850,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 </div><div class="memdoc">
 
 <p>Prepare to perform the same request again. </p>
-<p>Resets what sending the last request and reading its response left behind, so that the next <a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform(khc*)</a> sends the request again. The request itself &ndash; host, path, method and headers &ndash; remains, as do callbacks/ userdata, the setting of <a class="el" href="khc_8h.html#ab05e9076eb8e0e894603885d446499d9" title="Enable insecure connection.">khc_enable_insecure(khc*, bool)</a> and the buffers set by <a class="el" href="khc_8h.html#a59a8813c4c65fb2097b3461e5303d4fa" title="Set stream buffer.">khc_set_stream_buff(khc*, char*, size_t)</a> and <a class="el" href="khc_8h.html#afd2065be9638acf043438ac9e020d3b8" title="Set response header buffer.">khc_set_resp_header_buff(khc*, char*, size_t)</a>.</p>
+<p>Resets what sending the last request and reading its response left behind, so that the next <a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform(khc*)</a> sends the request again. The request itself &ndash; host, path, method and headers &ndash; remains, as do callbacks/ userdata, the settings of <a class="el" href="khc_8h.html#ab05e9076eb8e0e894603885d446499d9" title="Enable insecure connection.">khc_enable_insecure(khc*, bool)</a> and <a class="el" href="khc_8h.html#a3b0cd0780345cbf9f6631aaf1c626cbd" title="Send the whole URL in the request line.">khc_enable_absolute_target(khc*, bool)</a>, and the buffers set by <a class="el" href="khc_8h.html#a59a8813c4c65fb2097b3461e5303d4fa" title="Set stream buffer.">khc_set_stream_buff(khc*, char*, size_t)</a> and <a class="el" href="khc_8h.html#afd2065be9638acf043438ac9e020d3b8" title="Set response header buffer.">khc_set_resp_header_buff(khc*, char*, size_t)</a>.</p>
 <p>The body is read again through the read callback, which must start it over. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">khc</td><td>instance. </td></tr>
@@ -1621,7 +1661,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Nov 1 2026 19:35:38 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Sun Nov 1 2026 21:57:04 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

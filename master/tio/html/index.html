@@ -153,7 +153,8 @@ Task continue callback</h4>
 <h3><a class="anchor" id="autotoc_md5"></a>
 Task exit callback</h3>
 <p>Task exit callback is called when task continue callback returns <code>KII_FALSE</code> or unrecoverable error occurs.</p>
-<p>In this callback, you may need to free memories used for the handler task and other necessary steps when exiting task.</p>
+<p>In this callback, you may need to free memories used for the handler task and other necessary steps when exiting task. The task has closed its MQTT connection by then, so don't close it here. The callback may call <code>tio_handler_start()</code> to start the task again.</p>
+<p>Stop the task through the continue callback. A task ended any other way, such as by killing its thread, needs <code>tio_handler_init()</code> before starting again, as <code>tio_handler_start()</code> refuses while it counts as running. The same goes for <code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code>.</p>
 <p>In the example app, we don't give allocated memory to <code>tio_handler</code> and <code>pthread</code> doesn't requires special treatment when exit loop, just set flag that indicate task has been exited safely.</p>
 <div class="fragment"><div class="line"><span class="keywordtype">void</span> _handler_exit(<span class="keywordtype">void</span>* task_info, <span class="keywordtype">void</span>* userdata) {</div>
 <div class="line">    printf(<span class="stringliteral">&quot;_handler_exit called\n&quot;</span>);</div>
@@ -200,7 +201,8 @@ Socket callbacks.</h3>
 <div class="line"><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../khc/html/khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2">khc_sock_code_t</a></div>
 <div class="line">    (*KHC_CB_SOCK_CLOSE)(<span class="keywordtype">void</span>* sock_ctx);</div>
 <div class="ttc" id="akhc__socket__callback_8h_html_a13e4505815712d86adb95ab0ea867cf2"><div class="ttname"><a href="../../khc/html/khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2">khc_sock_code_t</a></div><div class="ttdeci">khc_sock_code_t</div></div>
-</div><!-- fragment --><p>You can see implementation with OpenSSL at <a href="linux-sample/sock_cb_linux.c">linux-sample</a></p>
+</div><!-- fragment --><p>You can see implementation with OpenSSL at <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c">linux-sample</a></p>
+<p>The <a href="https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#writing-callbacks">khc README</a> has what these callbacks have to do that <code>tio</code> can't check for them, such as timeouts and <code>SIGPIPE</code>.</p>
 <p><code>sock_ctx</code> argument is arbitrary data context which application can use. Application should pass the pointer of the data when calling <code>tio_handler_set_cb_sock_connect_http()</code>, <code>tio_handler_set_cb_sock_send_http()</code>, <code>tio_handler_set_cb_sock_recv_http()</code>, <code>tio_handler_set_cb_sock_close_http()</code>, <code>tio_handler_set_cb_sock_connect_mqtt()</code>, <code>tio_handler_set_cb_sock_send_mqtt()</code>, <code>tio_handler_set_cb_sock_recv_mqtt()</code>, <code>tio_handler_set_cb_sock_close_mqtt()</code> methods.</p>
 <p>Note that, <code>tio_handler</code> uses MQTT(s) to receive remote control commands and uses HTTP(s) to send the result of command execution.</p>
 <p>Application can choose to pass different implementations of socket functions or same one. If you choose to pass same pointer of the function, Please also check <a class="el" href="index.html#asynchronous-task-management">Asynchronous task management</a> section as well.</p>
@@ -214,7 +216,7 @@ Notes about socket implementation used for MQTT.</h4>
 <div class="fragment"><div class="line">tio_handler_set_mqtt_to_sock_recv(handler, 15);</div>
 <div class="line">tio_handler_set_keep_alive_interval(handler, 300);</div>
 </div><!-- fragment --><p>When the recv timeout runs out with nothing received, the MQTT recv callback should return <code>KHC_SOCK_FAIL</code>. <code>KHC_SOCK_OK</code> with 0 bytes means the broker closed the connection, and <code>tio_handler</code> connects again.</p>
-<p>A lost connection makes the recv callback return <code>KHC_SOCK_FAIL</code> as well. To tell it from a timeout, set the optional <code>tio_handler_set_cb_sock_recv_timed_out_mqtt()</code> callback: it returns <code>KII_TRUE</code> if the last receive timed out, and <code>KII_FALSE</code> if it failed otherwise, in which case <code>tio_handler</code> connects again. Without it, every <code>KHC_SOCK_FAIL</code> while waiting for a command is taken for a timeout, and a lost connection is only noticed when a <code>PINGREQ</code> fails or goes unanswered; with a keep-alive interval of 0, never. See <code>sock_cb_recv_timed_out()</code> in <a href="linux-sample/sock_cb_linux.c">linux-sample</a>.</p>
+<p>A lost connection makes the recv callback return <code>KHC_SOCK_FAIL</code> as well. To tell it from a timeout, set the optional <code>tio_handler_set_cb_sock_recv_timed_out_mqtt()</code> callback: it returns <code>KII_TRUE</code> if the last receive timed out, and <code>KII_FALSE</code> if it failed otherwise, in which case <code>tio_handler</code> connects again. Without it, every <code>KHC_SOCK_FAIL</code> while waiting for a command is taken for a timeout, and a lost connection is only noticed when a <code>PINGREQ</code> fails or goes unanswered; with a keep-alive interval of 0, never. See <code>sock_cb_recv_timed_out()</code> in <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c">linux-sample</a>.</p>
 <p><a class="anchor" id="action-callback"></a> </p>
 <h3><a class="anchor" id="autotoc_md9"></a>
 Action callback</h3>
@@ -247,7 +249,7 @@ Action callback</h3>
 <p>For more details about Trait, please refer to the <a href="http://docs.kii.com/en/guides/thingifsdk/">document</a>.</p>
 <h2><a class="anchor" id="autotoc_md10"></a>
 Set-up &lt;tt&gt;tio_handler_t&lt;/tt&gt; instance</h2>
-<p>Here's the set-up code extracted from example app. The full code can be checked <a href="linux-sample/example.c">handler_init() in example.c</a></p>
+<p>Here's the set-up code extracted from example app. The full code can be checked <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/example.c">handler_init() in example.c</a></p>
 <div class="fragment"><div class="line">tio_handler_init(handler);</div>
 <div class="line"> </div>
 <div class="line">tio_handler_set_app(handler, KII_APP_ID, KII_APP_HOST);</div>
@@ -344,7 +346,7 @@ Set-up json parser resource</h3>
 Set up a session</h2>
 <p>Access tokens expire. A <code><a class="elRef" href="../../kii/html/structkii__session__t.html">kii_session_t</a></code> holds the thing's token and, whenever the server refuses it, renews it the way it was obtained: by onboarding again through Thing-IF, with the thing's vendor thing ID and password. It then sends the refused request again. When the MQTT broker refuses the handler's credentials, the handler gets new ones the same way, as onboarding returns the MQTT endpoint along with the token. tio thus talks only to Thing-IF and the MQTT broker.</p>
 <p>The <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code> and the <code><a class="el" href="structtio__updater__t.html" title="Stores data/ callbacks used by tio_updater.">tio_updater_t</a></code> of a device share one session, so that a token refused to either is renewed once, for both.</p>
-<p>Here's the set-up code extracted from <a href="linux-sample/example.c">example.c</a>.</p>
+<p>Here's the set-up code extracted from <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/example.c">example.c</a>.</p>
 <div class="fragment"><div class="line"><a class="code hl_structRef" href="../../kii/html/structkii__session__t.html">kii_session_t</a> session;</div>
 <div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#a58ff8b06b612885dea237c6ba31d1820">kii_session_init</a>(&amp;session);</div>
 <div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#a872f254a6d88788d4daf0a0c5b513bfc">kii_session_set_cb_lock</a>(&amp;session, lock_cb_impl, unlock_cb_impl, &amp;session_mutex);</div>
@@ -398,7 +400,7 @@ Author updated callback</h3>
 </div><!-- fragment --><p><a class="anchor" id="clock"></a> </p>
 <h2><a class="anchor" id="autotoc_md24"></a>
 Keep the time</h2>
-<p>A device without a real-time clock needs the time to check the server's certificate in its socket callbacks. The handler and the updater give a <code><a class="elRef" href="../../kii/html/structkii__clock__t.html">kii_clock_t</a></code> the time each response states, with <code>tio_handler_set_clock()</code> and <code>tio_updater_set_clock()</code>. They run in tasks of their own, so a clock they share needs a lock, set by <code><a class="elRef" href="../../kii/html/kii_8h.html#adf580e8117725f2210c7139ceca4543f">kii_clock_set_cb_lock()</a></code>. That has to be a lock of its own, not the session's. The <a href="../kii/README.md#the-time">kii README</a> describes the clock and how the socket callbacks use it.</p>
+<p>A device without a real-time clock needs the time to check the server's certificate in its socket callbacks. The handler and the updater give a <code><a class="elRef" href="../../kii/html/structkii__clock__t.html">kii_clock_t</a></code> the time each response states, with <code>tio_handler_set_clock()</code> and <code>tio_updater_set_clock()</code>. They run in tasks of their own, so a clock they share needs a lock, set by <code><a class="elRef" href="../../kii/html/kii_8h.html#adf580e8117725f2210c7139ceca4543f">kii_clock_set_cb_lock()</a></code>. That has to be a lock of its own, not the session's. The <a href="https://github.com/KiiPlatform/ebisu/blob/master/kii/README.md#the-time">kii README</a> describes the clock and how the socket callbacks use it.</p>
 <p><a class="anchor" id="execute-onboarding"></a> </p>
 <h2><a class="anchor" id="autotoc_md25"></a>
 Execute onboarding</h2>
@@ -479,7 +481,7 @@ Read callback</h4>
 <p>For more details about format of the IoT device state and <code>Trait</code>, Please refer to (<a href="http://docs.kii.com/en/guides/thingifsdk/">http://docs.kii.com/en/guides/thingifsdk/</a>).</p>
 <h2><a class="anchor" id="autotoc_md33"></a>
 Set-up &lt;tt&gt;tio_updater_t&lt;/tt&gt; instance</h2>
-<p>Here's the set-up code extracted from example app. The full code can be checked <a href="linux-sample/example.c">updater_init() in example.c</a></p>
+<p>Here's the set-up code extracted from example app. The full code can be checked <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/example.c">updater_init() in example.c</a></p>
 <div class="fragment"><div class="line">tio_updater_init(updater);</div>
 <div class="line"> </div>
 <div class="line">tio_updater_set_app(updater, KII_APP_ID, KII_APP_HOST);</div>
@@ -512,7 +514,7 @@ Execute onboarding</h2>
 <h2><a class="anchor" id="autotoc_md35"></a>
 Start module</h2>
 <p>Now, it's ready to start the updater module.</p>
-<p>Here's code extracted from <a href="linux-sample/example.c">example app</a>.</p>
+<p>Here's code extracted from <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/example.c">example app</a>.</p>
 <div class="fragment"><div class="line">tio_updater_start(</div>
 <div class="line">    &amp;updater,</div>
 <div class="line">    author,</div>
@@ -591,7 +593,7 @@ Avoiding race condition</h2>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Nov 1 2026 19:35:39 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Sun Nov 1 2026 21:57:04 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

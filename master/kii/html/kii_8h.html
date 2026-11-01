@@ -344,6 +344,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a1d4b321dd8a70434bae5b07a70c14fba" id="r_a1d4b321dd8a70434bae5b07a70c14fba"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a1d4b321dd8a70434bae5b07a70c14fba">kii_enable_insecure_mqtt</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">kii_bool_t</a> enable_insecure_mqtt)</td></tr>
 <tr class="memdesc:a1d4b321dd8a70434bae5b07a70c14fba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable insecure MQTT connection.  <br /></td></tr>
 <tr class="separator:a1d4b321dd8a70434bae5b07a70c14fba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a79a6b0b0bb2ba8711e66159e115f8b9d" id="r_a79a6b0b0bb2ba8711e66159e115f8b9d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a79a6b0b0bb2ba8711e66159e115f8b9d">kii_enable_absolute_target</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">kii_bool_t</a> enable_absolute_target)</td></tr>
+<tr class="memdesc:a79a6b0b0bb2ba8711e66159e115f8b9d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Send the whole URL in HTTP request lines.  <br /></td></tr>
+<tr class="separator:a79a6b0b0bb2ba8711e66159e115f8b9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a128f23578c2e848e6d20e05faae9b29d" id="r_a128f23578c2e848e6d20e05faae9b29d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a128f23578c2e848e6d20e05faae9b29d">kii_auth_thing</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const char *vendor_thing_id, const char *password)</td></tr>
 <tr class="memdesc:a128f23578c2e848e6d20e05faae9b29d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Authorize thing with vendor thing id and password. After the authentication, access token is stored in kii instance and used to authorize other API calls.  <br /></td></tr>
 <tr class="separator:a128f23578c2e848e6d20e05faae9b29d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1711,6 +1714,43 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>kii_code_t </dd></dl>
+
+</div>
+</div>
+<a id="a79a6b0b0bb2ba8711e66159e115f8b9d" name="a79a6b0b0bb2ba8711e66159e115f8b9d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a79a6b0b0bb2ba8711e66159e115f8b9d">&#9670;&#160;</a></span>kii_enable_absolute_target()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void kii_enable_absolute_target </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
+          <td class="paramname"><em>kii</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">kii_bool_t</a>&#160;</td>
+          <td class="paramname"><em>enable_absolute_target</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Send the whole URL in HTTP request lines. </p>
+<p>By default, requests carry the path, with the host in the Host header. A forward proxy that requests go through in plain HTTP takes the URL instead, and needs this method. See <a class="elRef" href="../../khc/html/khc_8h.html#a3b0cd0780345cbf9f6631aaf1c626cbd">khc_enable_absolute_target()</a>. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">enable_absolute_target</td><td>KII_TRUE for the whole URL. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -4736,7 +4776,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Nov 1 2026 19:35:39 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Sun Nov 1 2026 21:57:04 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

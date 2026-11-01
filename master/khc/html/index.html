@@ -77,7 +77,7 @@ $(function() {
 <p><code>khc</code> does no networking of its own: the application supplies socket callbacks, which also do TLS. Request and response bodies stream through callbacks and a buffer of fixed size, so neither has to fit in memory.</p>
 <h1>Supported features</h1>
 <ul>
-<li><b>Requests</b>: any method, sent to the host's port 443, or 80 when <code><a class="el" href="khc_8h.html#ab05e9076eb8e0e894603885d446499d9" title="Enable insecure connection.">khc_enable_insecure()</a></code> is set. The request line carries the whole URL, as in <code>GET <a href="https://api.kii.com/path">https://api.kii.com/path</a> HTTP/1.1</code>, followed by a <code>HOST</code> header and the application's headers.</li>
+<li><b>Requests</b>: any method, sent to the host's port 443, or 80 when <code><a class="el" href="khc_8h.html#ab05e9076eb8e0e894603885d446499d9" title="Enable insecure connection.">khc_enable_insecure()</a></code> is set. The request line carries the path, as in <code>GET /path HTTP/1.1</code>, followed by a <code>HOST</code> header and the application's headers. <code><a class="el" href="khc_8h.html#a3b0cd0780345cbf9f6631aaf1c626cbd" title="Send the whole URL in the request line.">khc_enable_absolute_target()</a></code> has it carry the whole URL instead, for a forward proxy that requests go through in plain HTTP.</li>
 <li><b>Request bodies</b>: sent with <code>Transfer-Encoding: chunked</code>, one chunk for each call to the read callback, until it returns 0. Without a read callback, the request is sent with <code>Content-Length: 0</code>. <code>GET</code>, <code>HEAD</code> and <code>DELETE</code> requests are sent without a body.</li>
 <li><b>Responses</b>: the status line and each header are passed to the header callback, and the body to the write callback. After an interim <code>1xx</code> response, which goes through the header callback too, <code>khc</code> reads the final one.<ul>
 <li>A body sent with the chunked transfer coding is decoded; chunk extensions and trailers are ignored.</li>
@@ -89,10 +89,10 @@ $(function() {
 <h1>Limitations</h1>
 <ul>
 <li><b>One request per connection</b>: no keep-alive and no pipelining. <code><a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform()</a></code> connects, sends the request, reads the response and closes the connection, blocking until it is done.</li>
-<li><b>Nothing beyond HTTP framing</b>: redirects are not followed, and <code>3xx</code> responses reach the caller like any other. There's no support for compression, cookies or proxies. Authorization and content types are headers the application sets.</li>
+<li><b>Nothing beyond HTTP framing</b>: redirects are not followed, and <code>3xx</code> responses reach the caller like any other. There's no support for compression or cookies, nor for proxies beyond <code><a class="el" href="khc_8h.html#a3b0cd0780345cbf9f6631aaf1c626cbd" title="Send the whole URL in the request line.">khc_enable_absolute_target()</a></code>. Authorization and content types are headers the application sets.</li>
 <li><b>Transfer codings</b>: a response whose last transfer coding is not <code>chunked</code> is refused with <code>KHC_ERR_HEADER_CALLBACK</code>, as is one with a malformed <code>Content-Length</code>.</li>
 <li><b>Fixed-size request fields</b>: a host longer than 127 bytes, a path longer than 255 and a method longer than 15 are refused with <code>KHC_ERR_TOO_LARGE_DATA</code>.</li>
-<li><b>Long response headers</b>: a header that doesn't fit in the response header buffer is skipped without reaching the header callback. If it is <code>Content-Length</code> or <code>Transfer-Encoding</code>, which <code>khc</code> needs, the request fails with <code>KHC_ERR_HEADER_CALLBACK</code>.</li>
+<li><b>Long response headers</b>: a header that doesn't fit in the response header buffer is skipped without reaching the header callback, which <code><a class="el" href="khc_8h.html#a7f4889fa8b645d22e23e2336387512ea" title="Whether a response header was skipped.">khc_get_resp_header_skipped()</a></code> tells. If it is <code>Content-Length</code> or <code>Transfer-Encoding</code>, which <code>khc</code> needs, the request fails with <code>KHC_ERR_TOO_LARGE_DATA</code>.</li>
 </ul>
 <h1>Memory management</h1>
 <p>A <code>khc</code> instance holds its request line fields and state, and otherwise uses two buffers:</p>
@@ -198,10 +198,22 @@ $(function() {
 </ul>
 <p>Implementations to start from:</p>
 <ul>
-<li><a href="../tio/linux-sample/sock_cb_linux.c">linux-sample</a>: BSD sockets and OpenSSL.</li>
-<li><a href="../tio/win32-sample/sock_cb_win32.c">win32-sample</a>: Winsock and Schannel.</li>
-<li><a href="../tio/esp32-sample/main/sock_cb_esp32.c">esp32-sample</a>: ESP-IDF's esp-tls, mbedTLS over lwIP.</li>
-<li><a href="../tio/freertos-sample/sock_cb_freertos.c">freertos-sample</a>: mbedTLS over FreeRTOS-Plus-TCP.</li>
+<li><a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c">linux-sample</a>: BSD sockets and OpenSSL.</li>
+<li><a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/win32-sample/sock_cb_win32.c">win32-sample</a>: Winsock and Schannel.</li>
+<li><a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/esp32-sample/main/sock_cb_esp32.c">esp32-sample</a>: ESP-IDF's esp-tls, mbedTLS over lwIP.</li>
+<li><a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/freertos-sample/sock_cb_freertos.c">freertos-sample</a>: mbedTLS over FreeRTOS-Plus-TCP.</li>
+</ul>
+<h1>Writing callbacks</h1>
+<p>What <code>khc</code> leaves to the callbacks, which it can't check. <code>linux-sample</code> is the one to read for what socket callbacks have to do.</p>
+<ul>
+<li><b>Timeouts</b>: <code>khc</code> bounds nothing itself, so a callback that blocks holds the request for as long as it blocks. Give sockets a send and a receive timeout. On Linux the send timeout bounds <code>connect()</code> too. Nothing here bounds looking up the host, which takes as long as the system's resolver does.</li>
+<li><b>A timeout is <code>KHC_SOCK_FAIL</code></b>: <code>khc</code> calls a callback that returned <code>KHC_SOCK_AGAIN</code> again at once, so returning it for a timeout has a server that stopped answering hold the request for ever. <code>KHC_SOCK_AGAIN</code> is for a non-blocking socket, whose callback has to decide for itself when to give up.</li>
+<li><b>The end of the stream is <code>KHC_SOCK_OK</code> with 0 bytes</b>: that goes for a TLS connection the server closes without a <code>close_notify</code> too, which servers answering <code>Connection: Close</code> do. <code>linux-sample</code> shows how that looks to OpenSSL.</li>
+<li>**<code>SIGPIPE</code>**: sending on a connection the peer has closed raises <code>SIGPIPE</code>, which ends the process. Ignore it, as <code>linux-sample</code> does in <code>main()</code>, or use <code>MSG_NOSIGNAL</code> or <code>SO_NOSIGPIPE</code>. A TLS library sends on its own too, as OpenSSL does when closing.</li>
+<li><b>Close after a failure</b>: the close callback is called on a connection that has failed as well, so it has to cope with one. OpenSSL's <code>SSL_shutdown()</code> must not be called after a fatal error, for one. What it returns doesn't change the request's result.</li>
+<li><b>One request at a time</b>: a <code>khc</code> isn't re-entrant. Each task making requests at the same time needs one of its own, with buffers and socket contexts of its own.</li>
+<li><b>Callbacks running at once</b>: those of different tasks do, so whatever they share needs locking. OpenSSL before 1.1.0 needs locking callbacks of its own, which <code>linux-sample</code> sets up.</li>
+<li><b>Response size</b>: <code>khc</code> passes the body to the write callback as it arrives, whatever its length. A callback that stores it has to set its own limit, by handling fewer bytes than given, which ends the request with <code>KHC_ERR_WRITE_CALLBACK</code>.</li>
 </ul>
 <h1>Results</h1>
 <p><code><a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform()</a></code> returns <code>KHC_ERR_OK</code> once a response has been read, whatever its status: a <code>404</code> or a <code>500</code> is a response like any other, and <code><a class="el" href="khc_8h.html#a566621dab015c69cb57dd1de88241c2a" title="Get HTTP status code.">khc_get_status_code()</a></code> gives its status. Other results:</p>
@@ -211,27 +223,27 @@ $(function() {
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>KHC_ERR_SOCK_CONNECT</code>, <code>KHC_ERR_SOCK_SEND</code>, <code>KHC_ERR_SOCK_RECV</code>   </td><td class="markdownTableBodyNone">A socket callback returned <code>KHC_SOCK_FAIL</code>. <code>KHC_ERR_SOCK_RECV</code> also means the connection closed before the response ended.    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>KHC_ERR_HEADER_CALLBACK</code>   </td><td class="markdownTableBodyNone">The header callback handled fewer bytes than given, or the response's <code>Content-Length</code> or <code>Transfer-Encoding</code> is malformed, unsupported or too long for the response header buffer.    </td></tr>
+<td class="markdownTableBodyNone"><code>KHC_ERR_HEADER_CALLBACK</code>   </td><td class="markdownTableBodyNone">The header callback handled fewer bytes than given, or the response's <code>Content-Length</code> or <code>Transfer-Encoding</code> is malformed or unsupported.    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>KHC_ERR_WRITE_CALLBACK</code>   </td><td class="markdownTableBodyNone">The write callback handled fewer bytes than given.    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>KHC_ERR_ALLOCATION</code>   </td><td class="markdownTableBodyNone">A buffer <code>khc</code> allocates could not be allocated.    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>KHC_ERR_TOO_LARGE_DATA</code>   </td><td class="markdownTableBodyNone">The status line doesn't fit in the response header buffer, or a chunk size line in the stream buffer.    </td></tr>
+<td class="markdownTableBodyNone"><code>KHC_ERR_TOO_LARGE_DATA</code>   </td><td class="markdownTableBodyNone">The status line, <code>Content-Length</code> or <code>Transfer-Encoding</code> doesn't fit in the response header buffer, or a chunk size line in the stream buffer.    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>KHC_ERR_FAIL</code>   </td><td class="markdownTableBodyNone">The status line or a chunk size is malformed.   </td></tr>
+<td class="markdownTableBodyNone"><code>KHC_ERR_FAIL</code>   </td><td class="markdownTableBodyNone">The status line or a chunk size is malformed, or a socket, header or write callback isn't set, in which case nothing was sent.   </td></tr>
 </table>
 <p>Closing the socket comes last and doesn't change the result, as the server may already have acted on the request. <code><a class="el" href="khc_8h.html#a960e18dda03d60dded5c9a618138dd97" title="Whether closing the socket failed.">khc_get_close_failed()</a></code> says whether the close callback returned <code>KHC_SOCK_FAIL</code>.</p>
 <p><code><a class="el" href="khc_8h.html#a0e1ee79bbbbeefbbac3228cb5ef0d9d8" title="Get the server&#39;s time, from the response&#39;s Date header.">khc_get_resp_date()</a></code> gives the server's time from the response's <code>Date</code> header, as seconds since the epoch, for a device without a real-time clock. It takes the three forms RFC 9110 has recipients take, with UTC for GMT, and gives -1 for anything else, for several <code>Date</code>s that disagree, and for a date before the library's source, which no server running properly sends. The time is as trustworthy as the connection it came through, so verify the server's certificate in the socket callbacks.</p>
 <h1>Tracing</h1>
 <p>Configuring with <code>-DKHC_TRACE=ON</code> prints every request and response to stdout, headers and bodies included. That includes access tokens and passwords, so never enable it where its output is kept or shared.</p>
 <h1>Building</h1>
-<p><code>khc</code> is built as part of ebisu, as described in the <a href="../README.md#building">top-level README</a>. <code>libkii</code> includes it, and it is also built on its own as <code>libkhc</code>. </p>
+<p><code>khc</code> is built as part of ebisu, as described in the <a href="https://github.com/KiiPlatform/ebisu/blob/master/README.md#building">top-level README</a>. <code>libkii</code> includes it, and it is also built on its own as <code>libkhc</code>. </p>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Nov 1 2026 19:35:38 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Sun Nov 1 2026 21:57:04 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

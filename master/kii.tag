@@ -559,6 +559,13 @@
       <arglist>(kii_t *kii, kii_bool_t enable_insecure_mqtt)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>kii_enable_absolute_target</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a79a6b0b0bb2ba8711e66159e115f8b9d</anchor>
+      <arglist>(kii_t *kii, kii_bool_t enable_absolute_target)</arglist>
+    </member>
+    <member kind="function">
       <type>kii_code_t</type>
       <name>kii_auth_thing</name>
       <anchorfile>kii_8h.html</anchorfile>

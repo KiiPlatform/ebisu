@@ -275,19 +275,29 @@ Push</h1>
 <div class="ttc" id="astructkii__topic__t_html_a2ea6785013916b715b151da705a5d54a"><div class="ttname"><a href="structkii__topic__t.html#a2ea6785013916b715b151da705a5d54a">kii_topic_t::topic_name</a></div><div class="ttdeci">const char * topic_name</div><div class="ttdoc">Name of the topic.</div><div class="ttdef"><b>Definition</b> kii.h:154</div></div>
 </div><!-- fragment --></li>
 </ul>
-<h1><a class="anchor" id="autotoc_md5"></a>
+<h2><a class="anchor" id="autotoc_md5"></a>
+Writing task callbacks</h2>
+<p>What <code>kii</code> leaves to the task callbacks, with <code>linux-env</code> in the <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/linux-env/task_impl.c">Linux sample</a> to start from. The <a href="https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#writing-callbacks">khc README</a> has what socket callbacks have to do.</p>
+<ul>
+<li><b>Creating the task</b>: return <code>KII_TASKC_OK</code> only if it started. Nothing joins a task, so a thread has to be detached, or it stays behind when the task ends.</li>
+<li><b>Delaying</b>: wait the whole time asked for, a signal or not. <code>msec</code> is a <code>uint32_t</code>, so <code>usleep(msec * 1000)</code> overflows above about 71 minutes.</li>
+<li><b>Stopping the task</b>: have the continue callback return <code>KII_FALSE</code>, or let an error end it. <code><a class="el" href="kii_8h.html#ad3242ecc51a7aa640eb1ca7786a4a149" title="Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push ...">kii_start_push_task()</a></code> refuses while the task is running, and a task ended any other way, such as by killing its thread, needs <code><a class="el" href="kii_8h.html#a7ba3ce1d86f6048b7b3fefba36056410" title="Initializes kii_t instance.">kii_init()</a></code> before starting again.</li>
+<li><b>The exit callback</b>: the task has closed its connection by then, so only free what the application owns. It may start the task again.</li>
+<li><b>The stack</b>: tasks making requests need room for each request header line, and for a copy of <code>khc</code>, about 700 bytes on x86-64, when a <a class="el" href="index.html#kii_session">session</a> renews a token.</li>
+</ul>
+<h1><a class="anchor" id="autotoc_md6"></a>
 Thing-IF</h1>
 <ul>
 <li><code><a class="el" href="kii_8h.html#a6e04e62002ba5192abf39152c499a627" title="Put thing state.">kii_ti_put_state()</a></code> and <code><a class="el" href="kii_8h.html#a5bf7d72c2b9bb9eddf68a7ac49aa4540" title="Patch thing state.">kii_ti_patch_state()</a></code> upload the thing's state, and <code><a class="el" href="kii_8h.html#a96088b3f8df966a766f98c979ca6a6de" title="Put thing state in bulk.">kii_ti_put_bulk_states()</a></code> and <code><a class="el" href="kii_8h.html#ab70224f79201e72bee4aeb8db93939cc" title="Patch thing state in bulk.">kii_ti_patch_bulk_states()</a></code> several at once, read through a callback until it returns 0. <code>tio_updater_t</code> does this periodically.</li>
 <li><code><a class="el" href="kii_8h.html#aaab1b9126bf3ef38f62f35b064846d1c" title="Put firmware version.">kii_ti_put_firmware_version()</a></code> and <code><a class="el" href="kii_8h.html#af3a4c97bedabb6990a1811deb46fba62" title="Get current firmware version from the cloud.">kii_ti_get_firmware_version()</a></code> set and read the thing's firmware version.</li>
 </ul>
 <p>Commands arrive as push messages. <code>tio_handler_t</code> parses them, runs their actions and sends the results back.</p>
-<h1><a class="anchor" id="autotoc_md6"></a>
+<h1><a class="anchor" id="autotoc_md7"></a>
 Server code</h1>
 <div class="fragment"><div class="line">res = <a class="code hl_function" href="kii_8h.html#a54c7ef600d31e8e1f6826dbaa2742b04">kii_execute_server_code</a>(&amp;kii, <span class="stringliteral">&quot;your-endpoint&quot;</span>, <span class="stringliteral">&quot;{\&quot;param\&quot;:1}&quot;</span>);</div>
 <div class="ttc" id="akii_8h_html_a54c7ef600d31e8e1f6826dbaa2742b04"><div class="ttname"><a href="kii_8h.html#a54c7ef600d31e8e1f6826dbaa2742b04">kii_execute_server_code</a></div><div class="ttdeci">kii_code_t kii_execute_server_code(kii_t *kii, const char *endpoint_name, const char *params)</div><div class="ttdoc">Execute current version of server code.</div></div>
 </div><!-- fragment --><p>The result is in the buffer, <code><a class="el" href="kii_8h.html#acc772d67b6d4f9cf53e0c5ea864ceb5d" title="Get response body length. If the response is chunked, decoded response body length is returned.">kii_get_resp_body_length()</a></code> bytes long. <code><a class="el" href="kii_8h.html#a88de31a3b85076df9a58727d2ab63d7f" title="Execute a specific version of server code.">kii_execute_server_code_version()</a></code> runs a given version of the code.</p>
-<h1><a class="anchor" id="autotoc_md7"></a>
+<h1><a class="anchor" id="autotoc_md8"></a>
 Other REST API calls</h1>
 <p>Any other call can be built with <code>kii_api_call_*()</code>. The path is the whole path, application ID included:</p>
 <div class="fragment"><div class="line"><a class="code hl_function" href="kii_8h.html#a848b722808c9a43c9d66a2aca09a9c04">kii_api_call_start</a>(&amp;kii, <span class="stringliteral">&quot;POST&quot;</span>,</div>
@@ -304,11 +314,11 @@ Other REST API calls</h1>
 <div class="ttc" id="akii_8h_html_aa6640658ca65a4a54319b8ff474450c6"><div class="ttname"><a href="kii_8h.html#aa6640658ca65a4a54319b8ff474450c6">kii_api_call_run</a></div><div class="ttdeci">kii_code_t kii_api_call_run(kii_t *kii)</div><div class="ttdoc">Send request and retrieve response. Assume HTTP request is built by following APIs:</div></div>
 <div class="ttc" id="akii_8h_html_ae61dfefd97935dd1d068dd640ec30af1"><div class="ttname"><a href="kii_8h.html#ae61dfefd97935dd1d068dd640ec30af1">kii_get_resp_status</a></div><div class="ttdeci">uint16_t kii_get_resp_status(kii_t *kii)</div><div class="ttdoc">Get HTTP status code.</div></div>
 </div><!-- fragment --><p><code>KII_TRUE</code> authorizes the call with the thing's token. Headers can be added with <code><a class="el" href="kii_8h.html#aa9a202d325f0d5021d4d47ee6e78125c" title="Append request header.">kii_api_call_append_header()</a></code>. <code><a class="el" href="kii_8h.html#aa6640658ca65a4a54319b8ff474450c6" title="Send request and retrieve response. Assume HTTP request is built by following APIs:">kii_api_call_run()</a></code> returns <code>KII_ERR_OK</code> whatever the status, which <code><a class="el" href="kii_8h.html#ae61dfefd97935dd1d068dd640ec30af1" title="Get HTTP status code.">kii_get_resp_status()</a></code> gives. The response body is in the buffer, <code><a class="el" href="kii_8h.html#acc772d67b6d4f9cf53e0c5ea864ceb5d" title="Get response body length. If the response is chunked, decoded response body length is returned.">kii_get_resp_body_length()</a></code> bytes long.</p>
-<h1><a class="anchor" id="autotoc_md8"></a>
+<h1><a class="anchor" id="autotoc_md9"></a>
 Results</h1>
 <p>APIs return <code>KII_ERR_OK</code> on success. <code>KII_ERR_RESP_STATUS</code> means the server answered with an error status, which <code><a class="el" href="kii_8h.html#ae61dfefd97935dd1d068dd640ec30af1" title="Get HTTP status code.">kii_get_resp_status()</a></code> gives, the response body being in the buffer. <code>KII_ERR_SOCK_*</code> come from the socket callbacks, and <code>KII_ERR_TOO_LARGE_DATA</code> from a request or response that doesn't fit in the buffer.</p>
-<p><code><a class="el" href="kii_8h.html#ab36c0a18982d688d8a5c5307f1307ebc" title="Get the server&#39;s time, from the Date header of the last response.">kii_get_resp_date()</a></code> gives the server's time, from the <code>Date</code> header of the call's response, for a device without a real-time clock: khc's <code><a class="elRef" href="../../khc/html/khc_8h.html#a0e1ee79bbbbeefbbac3228cb5ef0d9d8">khc_get_resp_date()</a></code>, which the <a href="../khc/README.md#results">khc README</a> describes. It is as trustworthy as the connection it came through, so verify the server's certificate in the socket callbacks.</p>
-<h1><a class="anchor" id="autotoc_md9"></a>
+<p><code><a class="el" href="kii_8h.html#ab36c0a18982d688d8a5c5307f1307ebc" title="Get the server&#39;s time, from the Date header of the last response.">kii_get_resp_date()</a></code> gives the server's time, from the <code>Date</code> header of the call's response, for a device without a real-time clock: khc's <code><a class="elRef" href="../../khc/html/khc_8h.html#a0e1ee79bbbbeefbbac3228cb5ef0d9d8">khc_get_resp_date()</a></code>, which the <a href="https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#results">khc README</a> describes. It is as trustworthy as the connection it came through, so verify the server's certificate in the socket callbacks.</p>
+<h1><a class="anchor" id="autotoc_md10"></a>
 The time</h1>
 <p>A device without a real-time clock needs the time to check the validity period of the server's certificate in its socket callbacks. A <code><a class="el" href="structkii__clock__t.html" title="The time of day, for a device without a real-time clock.">kii_clock_t</a></code> keeps it. Until a server states its time, it has a floor: a time it is known not to be earlier than. From the first response on, it has the time the response states, counted on with the monotonic clock.</p>
 <div class="fragment"><div class="line"><a class="code hl_struct" href="structkii__clock__t.html">kii_clock_t</a> clock;</div>
@@ -333,16 +343,16 @@ The time</h1>
 <li><code><a class="el" href="kii_8h.html#a640db65a0bd20739d73956ec548d04ef" title="Forget the time, keeping what was counted as the floor.">kii_clock_forget_time()</a></code>, when the server's certificate is refused as not valid yet while the clock had the time. That suggests the time fell behind, the monotonic clock having stopped while the device slept and the server having renewed its certificate meanwhile. Forgotten, the time becomes a lower bound, the next connection goes through, and its response gives the clock the time again. Without it, the connection that would bring the time is refused, again and again.</li>
 </ul>
 <p>The chain and the host name are checked in full either way: the clock only decides the validity period.</p>
-<p>The socket callbacks of the <a href="../tio/linux-sample/sock_cb_linux.c">Linux</a> and <a href="../tio/win32-sample/sock_cb_win32.c">Win32</a> samples give their TLS stack the time, and those of the <a href="../tio/esp32-sample/main/sock_cb_esp32.c">ESP32</a> and <a href="../tio/freertos-sample/sock_cb_freertos.c">FreeRTOS</a> samples check the validity periods themselves, mbedTLS not checking them: the ESP32 one after the handshake, the FreeRTOS one during it, in mbedTLS's verify callback.</p>
+<p>The socket callbacks of the <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c">Linux</a> and <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/win32-sample/sock_cb_win32.c">Win32</a> samples give their TLS stack the time, and those of the <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/esp32-sample/main/sock_cb_esp32.c">ESP32</a> and <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/freertos-sample/sock_cb_freertos.c">FreeRTOS</a> samples check the validity periods themselves, mbedTLS not checking them: the ESP32 one after the handshake, the FreeRTOS one during it, in mbedTLS's verify callback.</p>
 <p>A device that runs for a long time has the time again with every HTTP response. One that makes none for a while, only MQTT ones, has its time turn into a lower bound 24 hours after the last (<code><a class="el" href="kii_8h.html#a009f50aaf42f0914cbe66fda11a4b58b" title="Set how long a time given stays exact.">kii_clock_set_exact_for()</a></code> changes that), and a monotonic clock that goes back turns it into the floor: a monotonic clock drifts, and one cannot count on from a time when it goes back. A stale clock therefore never refuses a certificate as not yet valid, which could keep the device from connecting at all. The monotonic clock has to keep counting while the device sleeps, or the time falls behind while it still counts as exact. Saving the time now and then, and setting it with <code><a class="el" href="kii_8h.html#ada54df3e72787cbf9ffbd70b3aca9b7c" title="Raise the time the clock is known not to be earlier than.">kii_clock_set_floor()</a></code> after a restart, keeps the floor close to the time.</p>
-<h1><a class="anchor" id="autotoc_md10"></a>
+<h1><a class="anchor" id="autotoc_md11"></a>
 Building</h1>
 <p><code>kii</code> is built as part of ebisu, as described in the <a href="https://github.com/KiiPlatform/ebisu/blob/master/README.md#building">top-level README</a>. <code>libkii</code> includes <code>khc</code> and <code>jkii</code>. </p>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Nov 1 2026 19:35:39 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Sun Nov 1 2026 21:57:04 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
