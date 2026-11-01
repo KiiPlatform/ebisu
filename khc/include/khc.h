@@ -323,6 +323,7 @@ typedef struct khc {
     bool _resp_header_skipped; /**< \private **/
 
     bool _enable_insecure; /**< \private **/
+    bool _absolute_target; /**< \private **/
     /* Dates earlier than this are refused: shortly before the source was
      * built. */
     int64_t _resp_date_floor; /**< \private **/
@@ -361,7 +362,8 @@ void khc_reset_except_cb(khc* khc);
  * Resets what sending the last request and reading its response left behind,
  * so that the next khc_perform(khc*) sends the request again. The request
  * itself -- host, path, method and headers -- remains, as do callbacks/
- * userdata, the setting of khc_enable_insecure(khc*, bool) and the buffers set
+ * userdata, the settings of khc_enable_insecure(khc*, bool) and
+ * khc_enable_absolute_target(khc*, bool), and the buffers set
  * by khc_set_stream_buff(khc*, char*, size_t) and
  * khc_set_resp_header_buff(khc*, char*, size_t).
  *
@@ -580,6 +582,21 @@ khc_code khc_set_cb_header(
 void khc_enable_insecure(
         khc* khc,
         bool enable_insecure);
+
+/**
+ * \brief Send the whole URL in the request line.
+ *
+ * By default, khc sends the path, as in GET /v1/users HTTP/1.1, with the host in
+ * the Host header, which is what a server expects. A forward proxy that a
+ * request goes through in plain HTTP takes the URL instead, as in
+ * GET http://api.example.com/v1/users HTTP/1.1, and needs this method.
+ * \param [out] khc instance.
+ * \param [in] enable_absolute_target true for the whole URL, false (the default)
+ * for the path.
+ */
+void khc_enable_absolute_target(
+        khc* khc,
+        bool enable_absolute_target);
 
 /**
  * \brief Get HTTP status code.

@@ -59,7 +59,7 @@ TEST_CASE( "HTTP minimal" ) {
     called = false;
     s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         called = true;
-        const char req_line[] = "GET https://api.kii.com/api/apps HTTP/1.1\r\n";
+        const char req_line[] = "GET /api/apps HTTP/1.1\r\n";
         REQUIRE( length == strlen(req_line) );
         REQUIRE( strncmp(buffer, req_line, length) == 0 );
         *out_sent_length = length;
@@ -233,7 +233,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     called = false;
     s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         called = true;
-        const char req_line[] = "GET https://api.kii.com/api/apps HTTP/1.1\r\n";
+        const char req_line[] = "GET /api/apps HTTP/1.1\r\n";
         REQUIRE( length == strlen(req_line) );
         REQUIRE( strncmp(buffer, req_line, length) == 0 );
         *out_sent_length = length;
@@ -459,7 +459,7 @@ TEST_CASE( "Socket send partial" ) {
     called = false;
     s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         called = true;
-        const char req_line[] = "POST https://api.kii";
+        const char req_line[] = "POST /ap";
         size_t req_len = strlen(req_line);
         REQUIRE( length > req_len );
         REQUIRE( strncmp(buffer, req_line, req_len) == 0 );
@@ -475,7 +475,7 @@ TEST_CASE( "Socket send partial" ) {
     called = false;
     s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         called = true;
-        const char req_line[] = ".com/api/apps H";
+        const char req_line[] = "i/apps H";
         size_t req_len = strlen(req_line);
         REQUIRE( length > req_len );
         REQUIRE( strncmp(buffer, req_line, req_len) == 0 );
@@ -1757,7 +1757,7 @@ TEST_CASE( "Enable insecure" ) {
     called = false;
     s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         called = true;
-        const char req_line[] = "GET http://api.kii.com/api/apps HTTP/1.1\r\n";
+        const char req_line[] = "GET /api/apps HTTP/1.1\r\n";
         REQUIRE( length == strlen(req_line) );
         REQUIRE( strncmp(buffer, req_line, length) == 0 );
         *out_sent_length = length;
@@ -1768,6 +1768,46 @@ TEST_CASE( "Enable insecure" ) {
     REQUIRE( http._state == KHC_STATE_REQ_HOST_HEADER );
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
+}
+
+// What the request line state sends.
+static std::string sent_request_line(const char* path, bool absolute, bool insecure) {
+    khc http;
+    khc_init(&http);
+    khc_set_host(&http, "api.kii.com");
+    khc_set_method(&http, "GET");
+    khc_set_path(&http, path);
+    khc_enable_absolute_target(&http, absolute);
+    khc_enable_insecure(&http, insecure);
+
+    std::string sent;
+    khct::cb::SockCtx s_ctx;
+    s_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
+        sent.append(buffer, length);
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
+
+    khc_state_req_line(&http);
+    return sent;
+}
+
+TEST_CASE( "The request line carries the path, for a server" ) {
+    CHECK( sent_request_line("/api/apps", false, false) == "GET /api/apps HTTP/1.1\r\n" );
+    CHECK( sent_request_line("/api/apps", false, true) == "GET /api/apps HTTP/1.1\r\n" );
+}
+
+// Which an origin server has to be sent for an empty one, as a request line has
+// to have something there.
+TEST_CASE( "An empty path goes out as /" ) {
+    CHECK( sent_request_line("", false, false) == "GET / HTTP/1.1\r\n" );
+    CHECK( sent_request_line("", true, false) == "GET https://api.kii.com/ HTTP/1.1\r\n" );
+}
+
+TEST_CASE( "The request line carries the whole URL, for a forward proxy" ) {
+    CHECK( sent_request_line("/api/apps", true, false) == "GET https://api.kii.com/api/apps HTTP/1.1\r\n" );
+    CHECK( sent_request_line("/api/apps", true, true) == "GET http://api.kii.com/api/apps HTTP/1.1\r\n" );
 }
 
 // What khc_perform() sends for a request with the method given and a read
@@ -1831,7 +1871,7 @@ static std::string sent_request(const char* method, const char* body) {
 }
 
 TEST_CASE( "Only a method that can have a body sends one" ) {
-    const std::string target = " https://api.kii.com/api/apps HTTP/1.1\r\nHOST: api.kii.com\r\n";
+    const std::string target = " /api/apps HTTP/1.1\r\nHOST: api.kii.com\r\n";
     // Nothing after the headers, which announce no body: not even the chunk
     // that would end an empty one.
     for (const char* method : {"GET", "HEAD", "DELETE"}) {

@@ -272,6 +272,12 @@ void kii_enable_insecure_mqtt(
     kii->_insecure_mqtt = enable_insecure_mqtt;
 }
 
+void kii_enable_absolute_target(
+    kii_t* kii,
+    kii_bool_t enable_absolute_target) {
+    khc_enable_absolute_target(&kii->_khc, enable_absolute_target == KII_TRUE);
+}
+
 const char* kii_get_etag(kii_t* kii) {
     return kii->_etag;
 }

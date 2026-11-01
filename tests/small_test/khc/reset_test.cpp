@@ -64,7 +64,7 @@ TEST_CASE( "khc_reset_except_request sends the same request again" ) {
 
     REQUIRE( script.requests.size() == 2 );
     REQUIRE( script.requests[0] == script.requests[1] );
-    REQUIRE( khct::contains(script.requests[1], "POST https://api.kii.com/x HTTP/1.1\r\n") );
+    REQUIRE( khct::contains(script.requests[1], "POST /x HTTP/1.1\r\n") );
     REQUIRE( khct::contains(script.requests[1], "X-Test: 1\r\n") );
     REQUIRE( khct::contains(script.requests[1], body) );
 
@@ -145,6 +145,7 @@ struct Request {
         khc_set_cb_write(http, khct::cb::cb_write, &io);
         khc_set_cb_header(http, khct::cb::cb_header, &io);
         khc_enable_insecure(http, false);
+        khc_enable_absolute_target(http, false);
         // A setting too: khc_init() makes it and resets keep it. There is no
         // function to change it.
         http->_resp_date_floor = 0;

@@ -677,6 +677,20 @@ void tio_handler_enable_insecure_mqtt(
 );
 
 /**
+ * \brief Send the whole URL in HTTP request lines.
+ *
+ * By default, requests carry the path, with the host in the Host header. A
+ * forward proxy that requests go through in plain HTTP takes the URL instead,
+ * and needs this method.
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] enable_absolute_target KII_TRUE for the whole URL.
+ */
+void tio_handler_enable_absolute_target(
+        tio_handler_t* handler,
+        tio_bool_t enable_absolute_target
+);
+
+/**
  * \brief Execute onboarding
  *
  * Onboarding step is required to register device to IoT cloud and obtain access token.
@@ -1123,6 +1137,20 @@ void tio_updater_set_cb_slist_resource(
 void tio_updater_enable_insecure_http(
         tio_updater_t* updater,
         tio_bool_t enable_insecure_http
+);
+
+/**
+ * \brief Send the whole URL in HTTP request lines.
+ *
+ * By default, requests carry the path, with the host in the Host header. A
+ * forward proxy that requests go through in plain HTTP takes the URL instead,
+ * and needs this method.
+ * \param [out] updater tio_updater_t instance.
+ * \param [in] enable_absolute_target KII_TRUE for the whole URL.
+ */
+void tio_updater_enable_absolute_target(
+        tio_updater_t* updater,
+        tio_bool_t enable_absolute_target
 );
 
 /**

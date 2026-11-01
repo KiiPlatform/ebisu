@@ -162,7 +162,7 @@ TEST_CASE( "Thing requests send the values they are given" ) {
                 &kii, vendor_thing_id, password, "type", NULL, NULL, NULL);
 
         REQUIRE( res == KII_ERR_OK );
-        REQUIRE( sent.find("POST https://api.kii.com/thing-if/apps/dummyAppID/onboardings HTTP/1.1\r\n") == 0 );
+        REQUIRE( sent.find("POST /thing-if/apps/dummyAppID/onboardings HTTP/1.1\r\n") == 0 );
         REQUIRE( sent.find("\r\nAuthorization: Basic ZHVtbXlBcHBJRDpkdW1teQ==\r\n") != std::string::npos );
         REQUIRE( sent.find("\"vendorThingID\":\"ab\"") != std::string::npos );
         REQUIRE( sent.find("\"thingPassword\":\"" + esc_password + "\"") != std::string::npos );

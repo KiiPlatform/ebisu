@@ -186,16 +186,18 @@ static const char schema_https[] = "https://";
 static const char schema_http[] = "http://";
 static const char http_version[] = "HTTP/1.1\r\n";
 
-static size_t request_line_len(khc* khc) {
-    char* method = khc->_method;
-    char* host = khc->_host;
+// The path, as an empty one has to go out as "/".
+static const char* request_path(khc* khc) {
     // Path must be started with '/'
-    char* path = khc->_path;
+    return khc->_path[0] != '\0' ? khc->_path : "/";
+}
 
+static size_t request_line_len(khc* khc) {
     const char* schema = khc->_enable_insecure ? schema_http : schema_https;
-    return ( // example)GET https://api.khc.com/v1/users HTTP1.1\r\n
-        strlen(method) + 1
-        + strlen(schema) + strlen(host) + strlen(path) + 1
+    size_t url_prefix_len = khc->_absolute_target ? strlen(schema) + strlen(khc->_host) : 0;
+    return ( // example)GET /v1/users HTTP1.1\r\n
+        strlen(khc->_method) + 1
+        + url_prefix_len + strlen(request_path(khc)) + 1
         + strlen(http_version)
         );
 }
@@ -203,16 +205,16 @@ static size_t request_line_len(khc* khc) {
 void khc_state_req_line(khc* khc) {
     size_t len = request_line_len(khc);
     char request_line[len+1];
-    char* host = khc->_host;
-    char* path = khc->_path;
 
     request_line[0] = '\0';
     strcat(request_line, khc->_method);
     strcat(request_line, " ");
-    const char* schema = khc->_enable_insecure ? schema_http : schema_https;
-    strcat(request_line, schema);
-    strcat(request_line, host);
-    strcat(request_line, path);
+    // Otherwise the host goes in the Host header, which is all a server wants.
+    if (khc->_absolute_target) {
+        strcat(request_line, khc->_enable_insecure ? schema_http : schema_https);
+        strcat(request_line, khc->_host);
+    }
+    strcat(request_line, request_path(khc));
     strcat(request_line, " ");
     strcat(request_line, http_version);
     char* send_pos = &request_line[khc->_sent_length];

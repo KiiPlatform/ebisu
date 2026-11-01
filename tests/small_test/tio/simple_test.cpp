@@ -7,6 +7,24 @@
 #include <string>
 #include <string.h>
 
+TEST_CASE( "enable absolute target test" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    REQUIRE( handler._kii._khc._absolute_target == false );
+    tio_handler_enable_absolute_target(&handler, KII_TRUE);
+    REQUIRE( handler._kii._khc._absolute_target == true );
+    tio_handler_enable_absolute_target(&handler, KII_FALSE);
+    REQUIRE( handler._kii._khc._absolute_target == false );
+
+    tio_updater_t updater;
+    tio_updater_init(&updater);
+    REQUIRE( updater._kii._khc._absolute_target == false );
+    tio_updater_enable_absolute_target(&updater, KII_TRUE);
+    REQUIRE( updater._kii._khc._absolute_target == true );
+    tio_updater_enable_absolute_target(&updater, KII_FALSE);
+    REQUIRE( updater._kii._khc._absolute_target == false );
+}
+
 TEST_CASE( "enable insecure test" ) {
     tio_handler_t handler;
 

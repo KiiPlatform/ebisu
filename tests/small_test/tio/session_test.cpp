@@ -47,7 +47,7 @@ const std::string REFUSED = http_response(403, "{\"errorCode\":\"WRONG_TOKEN\"}"
 // tio renews by onboarding again, a single request authorized with the app's
 // ID.
 const std::string ONBOARDED = http_response(200, "{\"accessToken\":\"at2\",\"thingID\":\"th.1\"}");
-const char ONBOARDING_LINE[] = "POST https://api.kii.com/thing-if/apps/app/onboardings HTTP/1.1";
+const char ONBOARDING_LINE[] = "POST /thing-if/apps/app/onboardings HTTP/1.1";
 // "app:dummy"
 const char APP_CREDENTIALS[] = "Authorization: Basic YXBwOmR1bW15\r\n";
 const std::string NO_CONTENT = http_response(204, "");
@@ -180,7 +180,7 @@ TEST_CASE( "A command's results are sent again after the token is renewed" ) {
     REQUIRE( contains(http.requests[1], ONBOARDING_LINE) );
     REQUIRE( contains(http.requests[1], APP_CREDENTIALS) );
     REQUIRE( contains(http.requests[2],
-                "PUT https://api.kii.com/thing-if/apps/app/targets/thing:th.1/commands/cmd1/action-results HTTP/1.1") );
+                "PUT /thing-if/apps/app/targets/thing:th.1/commands/cmd1/action-results HTTP/1.1") );
     REQUIRE( contains(http.requests[2], "Authorization: Bearer at2\r\n") );
     REQUIRE( contains(http.requests[2], result) );
     REQUIRE( kii_get_resp_status(&handler._kii) == 204 );
