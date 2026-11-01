@@ -123,3 +123,8 @@ Setting `LDFLAGS`/`CPPFLAGS` by hand is no longer necessary: the build locates
 OpenSSL with `find_package`, which works on both Apple Silicon and Intel
 prefixes. If you have it somewhere unusual, point CMake at it with
 `-DOPENSSL_ROOT_DIR=...`.
+
+## License
+
+ebisu is under the [Apache License 2.0](./LICENSE). [NOTICE](./NOTICE) lists the
+third-party code it includes, under those projects' own licenses.
