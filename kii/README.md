@@ -249,6 +249,15 @@ the task, with the reason in `kii_mqtt_task_info`. The task uses the `kii_t` it
 was started with until it exits: make requests from other tasks with another
 `kii_t`.
 
+While it can't reach the cloud or the broker, the task waits longer between
+attempts: from about a second to at most five minutes, doubling each time, and
+for a share of that which depends on the thing, so that devices that lost their
+connection together don't all come back together. The wait goes back to the
+start once a connection is subscribed. The continue callback is still called
+every second, so the application can stop the task during a wait. A broker it
+can't reach after 8 attempts may have moved, so it then asks for the endpoint
+again.
+
 What reaches the thing:
 
 - **Buckets and topics** it subscribes to, with `kii_subscribe_bucket()` and

@@ -36,6 +36,21 @@ typedef struct {
      * out, and only then.
      */
     kii_bool_t sock_connected;
+    /** \private
+     * How long the wait before the next attempt to reach the cloud is based
+     * on, in milliseconds. It doubles with each failure until a connection is
+     * subscribed.
+     */
+    uint32_t retry_wait_ms;
+    /** \private
+     * What is left of the wait, in milliseconds. The task checks whether to
+     * continue during it.
+     */
+    uint32_t wait_left_ms;
+    /** \private
+     * Attempts in a row to connect to the broker that have failed.
+     */
+    uint32_t connect_failures;
 } mqtt_state_t;
 
 void _init_mqtt_state(kii_t* kii, mqtt_state_t* state);
