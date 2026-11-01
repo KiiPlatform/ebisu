@@ -20,6 +20,9 @@ typedef struct {
        for sock_cb_recv_timed_out(). */
     int recv_ssl_error;
     int recv_errno;
+    /* Whether SSL_read() or SSL_write() ended the connection with an error,
+       after which SSL_shutdown() must not be called. */
+    kii_bool_t ssl_failed;
     /* The time the server's certificate is checked at, or NULL for the
        system's. See kii_clock_t. */
     kii_clock_t* clock;
