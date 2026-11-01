@@ -43,7 +43,7 @@ typedef enum tio_code_t {
     TIO_ERR_SOCK_CONNECT, /**< \brief Socket error in connection. */
     TIO_ERR_SOCK_SEND, /**< \brief Socket error in sending data. */
     TIO_ERR_SOCK_RECV, /**< \brief Socket error in receiving data. */
-    TIO_ERR_SOCK_CLOSE, /**< \brief Socket error in closing. */
+    TIO_ERR_SOCK_CLOSE, /**< \brief No longer returned: closing doesn't change a request's result. */
     TIO_ERR_WRITE_CALLBACK, /**< \brief Error in write callback. */
     TIO_ERR_HEADER_CALLBACK, /**< \brief Error in header callback. */
     TIO_ERR_ALLOCATION, /**< \brief Error in memory allocation. */

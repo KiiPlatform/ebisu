@@ -116,7 +116,7 @@ typedef enum kii_code_t
 {
     KII_ERR_OK, /**< \brief Succeeded */
     KII_ERR_SOCK_CONNECT, /**< \brief Socket error in connection. */
-    KII_ERR_SOCK_CLOSE, /**< \brief Socket error in closing. */
+    KII_ERR_SOCK_CLOSE, /**< \brief No longer returned: closing doesn't change a request's result. */
     KII_ERR_SOCK_SEND, /**< \brief Socket error in sending data. */
     KII_ERR_SOCK_RECV, /**< \brief Socket error in receiving data. */
     KII_ERR_HEADER_CALLBACK, /**< \brief Error in header callback. */

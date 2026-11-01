@@ -71,6 +71,47 @@ TEST_CASE( "khc_reset_except_request sends the same request again" ) {
     khc_slist_free_all(headers);
 }
 
+TEST_CASE( "khc_get_close_failed says what the last request's close did" ) {
+    khc http;
+    khc_init(&http);
+    khct::HttpScript script;
+    script.attach(&http);
+    khct::cb::IOCtx io;
+    io.on_write = [](char*, size_t size, void*) { return size; };
+    io.on_header = [](char*, size_t size, void*) { return size; };
+    khc_set_cb_write(&http, khct::cb::cb_write, &io);
+    khc_set_cb_header(&http, khct::cb::cb_header, &io);
+    khc_set_host(&http, "api.kii.com");
+    khc_set_method(&http, "POST");
+    khc_set_path(&http, "/x");
+    khc_set_req_headers(&http, NULL);
+    const auto close_fails = [](void*) { return KHC_SOCK_FAIL; };
+    const auto close_works = [](void*) { return KHC_SOCK_OK; };
+    script.responses = {
+        khct::http_response(200, "{}"),
+        khct::http_response(200, "{}"),
+        khct::http_response(200, "{}"),
+    };
+
+    CHECK_FALSE( khc_get_close_failed(&http) );
+
+    script.ctx.on_close = close_fails;
+    REQUIRE( khc_perform(&http) == KHC_ERR_OK );
+    CHECK( khc_get_status_code(&http) == 200 );
+    CHECK( khc_get_close_failed(&http) );
+
+    khc_reset_except_request(&http);
+    CHECK_FALSE( khc_get_close_failed(&http) );
+
+    REQUIRE( khc_perform(&http) == KHC_ERR_OK );
+    CHECK( khc_get_close_failed(&http) );
+
+    // A response is read the same whether or not the khc was reset first.
+    script.ctx.on_close = close_works;
+    khc_perform(&http);
+    CHECK_FALSE( khc_get_close_failed(&http) );
+}
+
 namespace {
 
 // The request every khc in the next test is given, and what it reads the body
@@ -181,6 +222,7 @@ TEST_CASE( "khc_reset_except_request leaves khc as if the request were new" ) {
             CHECK( used._body_read_size == fresh._body_read_size );
             CHECK( used._sent_length == fresh._sent_length );
             CHECK( used._result == fresh._result );
+            CHECK( used._close_failed == fresh._close_failed );
             CHECK( (const void*)used._stream_buff == (const void*)fresh._stream_buff );
             CHECK( (const void*)used._resp_header_buff == (const void*)fresh._resp_header_buff );
             // And whole, for a member not named here.

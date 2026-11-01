@@ -130,8 +130,9 @@ TEST_CASE( "Every request names the SDK and its version" ) {
     }
 }
 
-// A failure to close was reported as a failure to connect, so
-// KII_ERR_SOCK_CLOSE and TIO_ERR_SOCK_CLOSE were never returned.
+// Closing comes last, once the request has its result. A failure there replaced
+// it, so a response read whole came back as a failure, and the caller of a POST
+// the server had acted on would send it again.
 TEST_CASE( "A request reports the socket operation that failed" ) {
     char kii_buff[1024];
     jkii_token_t tokens[64];
@@ -157,11 +158,14 @@ TEST_CASE( "A request reports the socket operation that failed" ) {
         { "connect", KII_ERR_SOCK_CONNECT },
         { "send", KII_ERR_SOCK_SEND },
         { "recv", KII_ERR_SOCK_RECV },
-        { "close", KII_ERR_SOCK_CLOSE },
+        { "close", KII_ERR_OK },
+        { "recv and close", KII_ERR_SOCK_RECV },
     };
     for (const auto& c : cases) {
         INFO("failing " << c.failing);
         const std::string failing = c.failing;
+        const bool recv_fails = failing.find("recv") != std::string::npos;
+        const bool close_fails = failing.find("close") != std::string::npos;
         http_ctx.on_connect = [&failing](void*, const char*, unsigned int) {
             return failing == "connect" ? KHC_SOCK_FAIL : KHC_SOCK_OK;
         };
@@ -174,13 +178,13 @@ TEST_CASE( "A request reports the socket operation that failed" ) {
         http_ctx.on_recv = [&](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             *out_actual_length = resp.copy(buffer, length_to_read, resp_pos);
             resp_pos += *out_actual_length;
-            return failing == "recv" ? KHC_SOCK_FAIL : KHC_SOCK_OK;
+            return recv_fails ? KHC_SOCK_FAIL : KHC_SOCK_OK;
         };
-        http_ctx.on_close = [&failing](void*) {
-            return failing == "close" ? KHC_SOCK_FAIL : KHC_SOCK_OK;
+        http_ctx.on_close = [close_fails](void*) {
+            return close_fails ? KHC_SOCK_FAIL : KHC_SOCK_OK;
         };
 
-        REQUIRE( kii_api_call_start(&kii, "GET", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );
+        REQUIRE( kii_api_call_start(&kii, "POST", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );
         CHECK( kii_api_call_run(&kii) == c.expected );
     }
 }
