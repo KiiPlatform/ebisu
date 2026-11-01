@@ -1,0 +1,25 @@
+var searchData=
+[
+  ['keep_20alive_20interval_0',['Set-up MQTT Keep Alive interval.',['../index.html#autotoc_md19',1,'']]],
+  ['khc_5fcb_5fsock_5fclose_1',['KHC_CB_SOCK_CLOSE',['../khc__socket__callback_8h.html#af54fb240d589fb1044188bd4a81ab78d',1,'khc_socket_callback.h']]],
+  ['khc_5fcb_5fsock_5fconnect_2',['KHC_CB_SOCK_CONNECT',['../khc__socket__callback_8h.html#ae9552240ec64ad637e77cd63c3b65c65',1,'khc_socket_callback.h']]],
+  ['khc_5fcb_5fsock_5frecv_3',['KHC_CB_SOCK_RECV',['../khc__socket__callback_8h.html#a148cf4bd26b43909c9eab71f37b4cda6',1,'khc_socket_callback.h']]],
+  ['khc_5fcb_5fsock_5fsend_4',['KHC_CB_SOCK_SEND',['../khc__socket__callback_8h.html#a96345c64c6bcec1711d2ddaac43224c2',1,'khc_socket_callback.h']]],
+  ['khc_5fsock_5fagain_5',['KHC_SOCK_AGAIN',['../khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2a90a3f6acf289ae5d18feee3a67e69a1c',1,'khc_socket_callback.h']]],
+  ['khc_5fsock_5fcode_5ft_6',['khc_sock_code_t',['../khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2',1,'khc_sock_code_t:&#160;khc_socket_callback.h'],['../khc__socket__callback_8h.html#af497c50fbe34dcc5990d93c1e0c61909',1,'khc_sock_code_t:&#160;khc_socket_callback.h']]],
+  ['khc_5fsock_5ffail_7',['KHC_SOCK_FAIL',['../khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2a1cc5f5fa5f38faab5fa245a2e06e9d4a',1,'khc_socket_callback.h']]],
+  ['khc_5fsock_5fok_8',['KHC_SOCK_OK',['../khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2aad80f9912fd8afc2b80d157cee2c679e',1,'khc_socket_callback.h']]],
+  ['khc_5fsocket_5fcallback_2eh_9',['khc_socket_callback.h',['../khc__socket__callback_8h.html',1,'']]],
+  ['kii_5fbool_5ft_10',['kii_bool_t',['../kii__task__callback_8h.html#a945d43709851462a1803721525df2b89',1,'kii_bool_t:&#160;kii_task_callback.h'],['../kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283',1,'kii_bool_t:&#160;kii_task_callback.h']]],
+  ['kii_5fcb_5fdelay_5fms_11',['KII_CB_DELAY_MS',['../kii__task__callback_8h.html#aa8b275089808a99cff89acb673320273',1,'kii_task_callback.h']]],
+  ['kii_5fcb_5ftask_5fcontinue_12',['KII_CB_TASK_CONTINUE',['../kii__task__callback_8h.html#a66833479636e54ec6559fcb91c37263d',1,'kii_task_callback.h']]],
+  ['kii_5fcb_5ftask_5fcreate_13',['KII_CB_TASK_CREATE',['../kii__task__callback_8h.html#a0395b3c3b153a4ae039f9cbfb171c778',1,'kii_task_callback.h']]],
+  ['kii_5fcb_5ftask_5fexit_14',['KII_CB_TASK_EXIT',['../kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5',1,'kii_task_callback.h']]],
+  ['kii_5ffalse_15',['KII_FALSE',['../kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283a5b6419ebe908bb148cb2e3c9813f12ad',1,'kii_task_callback.h']]],
+  ['kii_5ftask_5fcallback_2eh_16',['kii_task_callback.h',['../kii__task__callback_8h.html',1,'']]],
+  ['kii_5ftask_5fcode_5ft_17',['kii_task_code_t',['../kii__task__callback_8h.html#a8cb8ae6e0e48ea307aa8481d5e85feb0',1,'kii_task_code_t:&#160;kii_task_callback.h'],['../kii__task__callback_8h.html#aa7d48a35179c5c6885a5dd21f8fa57f2',1,'kii_task_code_t:&#160;kii_task_callback.h']]],
+  ['kii_5ftask_5fentry_18',['KII_TASK_ENTRY',['../kii__task__callback_8h.html#a803edec5a77dda169a7487f28eb7cf9a',1,'kii_task_callback.h']]],
+  ['kii_5ftaskc_5ffail_19',['KII_TASKC_FAIL',['../kii__task__callback_8h.html#a8cb8ae6e0e48ea307aa8481d5e85feb0a873e2f05f00364dfdebc066aae79a298',1,'kii_task_callback.h']]],
+  ['kii_5ftaskc_5fok_20',['KII_TASKC_OK',['../kii__task__callback_8h.html#a8cb8ae6e0e48ea307aa8481d5e85feb0ae483ba1734319b97e8a925f8f66006be',1,'kii_task_callback.h']]],
+  ['kii_5ftrue_21',['KII_TRUE',['../kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283ac3207f675f4d34fb54102f98d4af8f27',1,'kii_task_callback.h']]]
+];
