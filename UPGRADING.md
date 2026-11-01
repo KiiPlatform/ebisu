@@ -147,8 +147,6 @@ Commands in tio:
 
 kii:
 
-- A socket that fails to close is `KII_ERR_SOCK_CLOSE`, and `TIO_ERR_SOCK_CLOSE`
-  in tio, not `KII_ERR_SOCK_CONNECT`.
 - `kii_get_mqtt_endpoint()` fails on a port outside 0 to 65535, or a TTL that is
   negative or above `UINT32_MAX`.
 - `kii_ti_put_firmware_version()` escapes the version, as onboarding always has.
@@ -164,6 +162,11 @@ khc, which kii and tio report in their own codes:
   `chunked`, is `KHC_ERR_HEADER_CALLBACK`, before any of the body is written.
 - An invalid chunk size, or a first line that isn't an HTTP status line, is
   `KHC_ERR_FAIL`.
+- A socket that fails to close no longer changes a request's result: a response
+  read whole is `KHC_ERR_OK`, and a request that failed keeps its failure. In
+  2.0 it was `KHC_ERR_SOCK_CLOSE`, which kii and tio reported as a failure to
+  connect. That code, `KII_ERR_SOCK_CLOSE` and `TIO_ERR_SOCK_CLOSE` stay defined
+  but aren't returned, and `khc_get_close_failed()` says whether it happened.
 - GET, HEAD and DELETE send no body, and don't call the read callback.
 
 jkii:
