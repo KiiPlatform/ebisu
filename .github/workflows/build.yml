@@ -254,6 +254,8 @@ jobs:
     permissions:
       contents: read
       checks: write # for the JUnit report
+    env:
+      LIVE: ${{ secrets.CLIENT_ID != '' }}
     strategy:
       # One platform failing says nothing about the other.
       fail-fast: false
@@ -297,7 +299,11 @@ jobs:
         run: cmake --preset ${{ matrix.preset }} -DEBISU_TEST_JUNIT=ON
       - name: build
         run: cmake --build --preset ${{ matrix.preset }}
+      # Dependabot's runs and forks' get no secrets, so no large test is
+      # configured and ctest fails for want of any. On master it still does:
+      # losing the secrets must not look like passing.
       - name: test (large)
+        if: env.LIVE == 'true' || github.ref == 'refs/heads/master'
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
