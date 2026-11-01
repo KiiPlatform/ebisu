@@ -68,6 +68,8 @@ kii_task_code_t task_create_cb
     int ret = pthread_create(&pthid, NULL, entry, param);
     if(ret == 0)
     {
+        /* Nothing joins a task, so its thread has to go by itself when it ends. */
+        pthread_detach(pthid);
         return KII_TASKC_OK;
     }
     else
@@ -145,12 +147,17 @@ typedef void
      void* userdata);
 ```
 
-Typical implementation with `usleep` provided by `libc`:
+Typical implementation with `nanosleep` provided by `libc`. `usleep(msec * 1000)`
+would overflow above about 71 minutes, and return early on a signal:
 
 ```c
 void delay_ms_cb(uint32_t msec, void* userdata)
 {
-    usleep(msec * 1000);
+    struct timespec left;
+    left.tv_sec = msec / 1000;
+    left.tv_nsec = (long)(msec % 1000) * 1000000;
+    while (nanosleep(&left, &left) == -1 && errno == EINTR) {
+    }
 }
 ```
 

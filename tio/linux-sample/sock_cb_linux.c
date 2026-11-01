@@ -163,6 +163,12 @@ khc_sock_code_t
     if (ctx->clock != NULL) {
         int64_t now = 0;
         ctx->time_exact = kii_clock_get_time(ctx->clock, &now);
+        /* A 32-bit time_t ends in 2038. Cut down to fit one, the time would
+           be decades out, and certificates refused for what they are not. */
+        if ((int64_t)(time_t)now != now) {
+            printf("the time does not fit in a time_t.\n");
+            goto fail;
+        }
         X509_VERIFY_PARAM_set_time(param, (time_t)now);
     }
 
