@@ -1,0 +1,51 @@
+<!doctype html>
+<!--
+  GitHub Pages serves this for any path the site does not have. Until the
+  docs were versioned, master's were published at the site's root, as
+  /ebisu/<component>/html/...; those paths are sent to the same page under
+  master/, which is what they showed.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page not found</title>
+<script>
+  (function () {
+    var old = location.pathname.match(/^\/ebisu\/((?:khc|jkii|kii|tio)\/.*)$/);
+    if (old) {
+      location.replace('/ebisu/master/' + old[1] + location.search + location.hash);
+    }
+  })();
+</script>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #ffffff;
+    --fg: #1f2328;
+    --link: #0969da;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117;
+      --fg: #e6edf3;
+      --link: #4493f8;
+    }
+  }
+  body {
+    margin: 0 auto;
+    max-width: 44rem;
+    padding: 2rem 1rem;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  h1 { font-size: 1.75rem; margin: 0 0 .5rem; }
+  a { color: var(--link); }
+</style>
+</head>
+<body>
+<h1>Page not found</h1>
+<p>The <a href="/ebisu/">ebisu API reference</a> lists each version's docs.</p>
+</body>
+</html>
