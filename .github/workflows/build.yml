@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Fetch tags
         run: git fetch --unshallow --tags --force
       - name: Setup build env
@@ -175,7 +175,7 @@ jobs:
             test-preset: small-mingw
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Fetch tags
         run: git fetch --unshallow --tags --force
       - name: Setup build env
@@ -224,7 +224,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Fetch tags
         run: git fetch --unshallow --tags --force
       - name: Setup build env
@@ -272,7 +272,7 @@ jobs:
             test: ctest --preset large-mingw
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Fetch tags
         run: git fetch --unshallow --tags --force
       - name: Setup build env
@@ -339,7 +339,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Fetch tags
         run: git fetch --unshallow --tags --force
       - name: Setup build env
@@ -376,7 +376,7 @@ jobs:
         working-directory: tio/esp32-sample
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # For git describe, which ebisu_version.h takes the version from.
           fetch-depth: 0
@@ -446,7 +446,7 @@ jobs:
         working-directory: tio/freertos-sample
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # For git describe, which ebisu_version.h takes the version from.
           fetch-depth: 0
