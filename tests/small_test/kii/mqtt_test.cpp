@@ -2306,6 +2306,20 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 1 );
     }
 
+    // MQTT's remaining length is at most four bytes, the last without the
+    // continuation bit.
+    SECTION("recv ready reconnects on a remaining length that does not end") {
+        int call_recv = 0;
+        recv_then_end_of_stream(mqtt_ctx, "\x30\xff\xff\xff\xff\x00", call_recv);
+
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        state.elapsed_time_ms = 1000;
+        _mqtt_state_recv_ready(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        CHECK( state.info.error == KII_MQTT_ERR_OK );
+        CHECK( call_recv == 5 );
+    }
+
     // The end of the stream right after a packet's first byte used to read as
     // a remaining length of 0, so a PINGRESP's type byte counted as the
     // PINGRESP and a PUBLISH's moved on to reading the message.

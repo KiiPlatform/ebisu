@@ -217,7 +217,11 @@ static khc_sock_code_t _mqtt_recv_fixed_header_rest(kii_t* kii, kii_mqtt_fixed_h
     }
 
     unsigned long remaining_length = 0;
-    _mqtt_decode(buff, &remaining_length);
+    // MQTT allows four bytes. A fourth that says more follow leaves the stream
+    // at a byte that is no packet's start.
+    if (_mqtt_decode(buff, &remaining_length) < 0) {
+        return KHC_SOCK_FAIL;
+    }
 
     fixed_header->remaining_length = remaining_length;
     return KHC_SOCK_OK;
