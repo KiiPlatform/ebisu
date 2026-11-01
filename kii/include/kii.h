@@ -120,9 +120,9 @@ typedef enum kii_code_t
     KII_ERR_SOCK_SEND, /**< \brief Socket error in sending data. */
     KII_ERR_SOCK_RECV, /**< \brief Socket error in receiving data. */
     KII_ERR_HEADER_CALLBACK, /**< \brief Error in header callback. */
-    KII_ERR_WRITE_CALLBACK, /**< \brief Error in write callback. */
+    KII_ERR_WRITE_CALLBACK, /**< \brief Error in a write callback the application gave. */
     KII_ERR_ALLOCATION, /**< \brief Error in memory allocation. */
-    KII_ERR_TOO_LARGE_DATA, /**< \brief Data is larger than expected. */
+    KII_ERR_TOO_LARGE_DATA, /**< \brief Data is larger than expected, as a response too large for the buffer set by kii_set_buff() is. */
     KII_ERR_RESP_STATUS, /**< \brief REST API returns error status code. */
     KII_ERR_PARSE_JSON, /**< \brief Failed to parse the response's JSON. */
     KII_ERR_FAIL, /**< \brief Other errors. */

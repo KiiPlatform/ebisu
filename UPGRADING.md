@@ -157,6 +157,11 @@ kii:
   negative or above `UINT32_MAX`.
 - `kii_ti_put_firmware_version()` escapes the version, as onboarding always has.
   A caller that escaped it first should stop.
+- A response too large for the buffer set by `kii_set_buff()` is
+  `KII_ERR_TOO_LARGE_DATA`, and `TIO_ERR_TOO_LARGE_DATA` in tio. In 2.0 it was
+  `KII_ERR_WRITE_CALLBACK` and `TIO_ERR_WRITE_CALLBACK`. `KII_ERR_WRITE_CALLBACK`
+  stays for a write callback given to `kii_download_object_body()`, and
+  `TIO_ERR_WRITE_CALLBACK` stays defined but isn't returned.
 
 khc, which kii and tio report in their own codes:
 
