@@ -1358,7 +1358,7 @@ TEST_CASE( "state abnormal tests." ) {
 
         khc_state_resp_header_skip(&http);
         REQUIRE( http._state == KHC_STATE_CLOSE );
-        REQUIRE( http._result == KHC_ERR_HEADER_CALLBACK );
+        REQUIRE( http._result == KHC_ERR_TOO_LARGE_DATA );
     }
 
     SECTION("resp header skip failed by Transfer-Encoding.") {
@@ -1370,7 +1370,7 @@ TEST_CASE( "state abnormal tests." ) {
 
         khc_state_resp_header_skip(&http);
         REQUIRE( http._state == KHC_STATE_CLOSE );
-        REQUIRE( http._result == KHC_ERR_HEADER_CALLBACK );
+        REQUIRE( http._result == KHC_ERR_TOO_LARGE_DATA );
     }
 
     SECTION("resp body fragment failed.") {

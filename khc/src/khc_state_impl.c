@@ -657,6 +657,7 @@ void khc_state_resp_header_callback(khc* khc) {
     if (header_boundary == NULL) {
         if (khc->_resp_header_buff_size == khc->_resp_header_read_size + 1) {
             // no space in _resp_header_buff.
+            khc->_resp_header_skipped = true;
             khc->_state = KHC_STATE_RESP_HEADER_SKIP;
             return;
         }
@@ -753,7 +754,7 @@ void khc_state_resp_header_skip(khc* khc) {
     if (_is_header_present("Content-Length", khc->_resp_header_buff, khc->_resp_header_read_size) == 1 ||
             _is_header_present("Transfer-Encoding", khc->_resp_header_buff, khc->_resp_header_read_size) == 1) {
         khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_HEADER_CALLBACK;
+        khc->_result = KHC_ERR_TOO_LARGE_DATA;
         return;
     }
 

@@ -18,9 +18,17 @@ void khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size) {
 }
 
 khc_code khc_perform(khc* khc) {
+    // Called without checking from here on. The read callback is left out of
+    // this: a request need not have a body.
+    if (khc->_cb_sock_connect == NULL || khc->_cb_sock_send == NULL ||
+            khc->_cb_sock_recv == NULL || khc->_cb_sock_close == NULL ||
+            khc->_cb_header == NULL || khc->_cb_write == NULL) {
+        return KHC_ERR_FAIL;
+    }
     khc->_state = KHC_STATE_IDLE;
     khc->_result = KHC_ERR_OK;
     khc->_close_failed = false;
+    khc->_resp_header_skipped = false;
     // Only this request's response may set it.
     khc->_resp_date = -1;
 
@@ -142,6 +150,7 @@ void khc_reset_except_request(khc* khc) {
     khc->_body_read_size = 0;
     khc->_result = KHC_ERR_OK;
     khc->_close_failed = false;
+    khc->_resp_header_skipped = false;
     khc->_sent_length = 0;
 }
 
@@ -159,6 +168,10 @@ uint16_t khc_get_status_code(
 
 bool khc_get_close_failed(khc* khc) {
     return khc->_close_failed;
+}
+
+bool khc_get_resp_header_skipped(khc* khc) {
+    return khc->_resp_header_skipped;
 }
 
 int64_t khc_get_resp_date(khc* khc) {

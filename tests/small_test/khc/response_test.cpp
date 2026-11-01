@@ -4,6 +4,7 @@
 #include "http_test.h"
 #include "test_callbacks.h"
 #include <fstream>
+#include <functional>
 #include <stdint.h>
 #include <string.h>
 #include <string>
@@ -839,4 +840,151 @@ TEST_CASE( "A response ended by the connection closing" ) {
     CHECK( r.res == KHC_ERR_OK );
     CHECK( r.on_recv_called < MAX_RECV_CALLS );
     CHECK( r.on_close_called == 1 );
+}
+
+namespace {
+
+struct HeaderResult {
+    khc_code res;
+    bool skipped;
+    std::vector<std::string> headers;
+    std::string body;
+};
+
+// Performs a GET answered with resp, read through a header buffer of 64 bytes.
+HeaderResult perform_with_small_header_buffer(const std::string& resp)
+{
+    char resp_header_buff[64];
+    khc http;
+    khc_init(&http);
+    khc_set_host(&http, "api.kii.com");
+    khc_set_method(&http, "GET");
+    khc_set_path(&http, "/api/apps");
+    khc_set_req_headers(&http, NULL);
+    khc_set_resp_header_buff(&http, resp_header_buff, sizeof(resp_header_buff));
+
+    size_t resp_pos = 0;
+    khct::cb::SockCtx s_ctx;
+    s_ctx.on_connect = [](void*, const char*, uint16_t) { return KHC_SOCK_OK; };
+    s_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    s_ctx.on_recv = [&](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        *out_actual_length = resp.copy(buffer, length_to_read, resp_pos);
+        resp_pos += *out_actual_length;
+        return KHC_SOCK_OK;
+    };
+    s_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
+    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
+    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
+    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+
+    HeaderResult result;
+    khct::cb::IOCtx io_ctx;
+    io_ctx.on_header = [&result](char* buffer, size_t size, void*) {
+        result.headers.push_back(std::string(buffer, size));
+        return size;
+    };
+    io_ctx.on_write = [&result](char* buffer, size_t size, void*) {
+        result.body.append(buffer, size);
+        return size;
+    };
+    khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
+    khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
+
+    result.res = khc_perform(&http);
+    result.skipped = khc_get_resp_header_skipped(&http);
+    return result;
+}
+
+}
+
+TEST_CASE( "A header too long for the buffer is skipped, and says so" ) {
+    HeaderResult r = perform_with_small_header_buffer(
+            "HTTP/1.1 200 OK\r\n"
+            "Set-Cookie: " + std::string(200, 'c') + "\r\n"
+            "X-Kept: yes\r\n"
+            "Content-Length: 4\r\n"
+            "\r\n"
+            "body");
+    CHECK( r.res == KHC_ERR_OK );
+    CHECK( r.skipped == true );
+    CHECK( r.body == "body" );
+    // The status line, then what fitted.
+    REQUIRE( r.headers.size() == 3 );
+    CHECK( r.headers[1] == "X-Kept: yes" );
+    CHECK( r.headers[2] == "Content-Length: 4" );
+}
+
+TEST_CASE( "Headers that fit skip nothing" ) {
+    HeaderResult r = perform_with_small_header_buffer(
+            "HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\nbody");
+    CHECK( r.res == KHC_ERR_OK );
+    CHECK( r.skipped == false );
+    CHECK( r.body == "body" );
+}
+
+// No callback failed, so KHC_ERR_HEADER_CALLBACK sent the reader the wrong way.
+// The buffer is what to change.
+TEST_CASE( "A framing header too long for the buffer is too large" ) {
+    const std::string spaces(100, ' ');
+    const char* framing[] = { "Content-Length:", "Transfer-Encoding:" };
+    for (const char* name : framing) {
+        INFO(name);
+        HeaderResult r = perform_with_small_header_buffer(
+                std::string("HTTP/1.1 200 OK\r\n") + name + spaces + "4\r\n\r\nbody");
+        CHECK( r.res == KHC_ERR_TOO_LARGE_DATA );
+        CHECK( r.skipped == true );
+    }
+}
+
+// Each was called without checking, so one left out crashed the request.
+TEST_CASE( "khc_perform needs its callbacks" ) {
+    const struct {
+        const char* left_out;
+        std::function<void(khc*)> unset;
+    } cases[] = {
+        { "connect", [](khc* h) { khc_set_cb_sock_connect(h, NULL, NULL); } },
+        { "send", [](khc* h) { khc_set_cb_sock_send(h, NULL, NULL); } },
+        { "recv", [](khc* h) { khc_set_cb_sock_recv(h, NULL, NULL); } },
+        { "close", [](khc* h) { khc_set_cb_sock_close(h, NULL, NULL); } },
+        { "write", [](khc* h) { khc_set_cb_write(h, NULL, NULL); } },
+        { "header", [](khc* h) { khc_set_cb_header(h, NULL, NULL); } },
+    };
+    for (const auto& c : cases) {
+        INFO("left out " << c.left_out);
+        khc http;
+        khc_init(&http);
+        khc_set_host(&http, "api.kii.com");
+        khc_set_method(&http, "GET");
+        khc_set_path(&http, "/api/apps");
+        khc_set_req_headers(&http, NULL);
+
+        int on_connect_called = 0;
+        khct::cb::SockCtx s_ctx;
+        s_ctx.on_connect = [&on_connect_called](void*, const char*, uint16_t) {
+            ++on_connect_called;
+            return KHC_SOCK_FAIL;
+        };
+        khct::cb::IOCtx io_ctx;
+        khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
+        khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
+        khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
+        khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+        khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
+        khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
+
+        c.unset(&http);
+        CHECK( khc_perform(&http) == KHC_ERR_FAIL );
+        CHECK( on_connect_called == 0 );
+    }
+}
+
+// A request with no body has nothing to read.
+TEST_CASE( "khc_perform does without the read callback" ) {
+    HeaderResult r = perform_with_small_header_buffer(
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
+    CHECK( r.res == KHC_ERR_OK );
 }
