@@ -22,7 +22,7 @@ jobs:
     concurrency: cleanapp
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: clean up
         env:
           APP_ID: ${{ secrets.APP_ID }}
