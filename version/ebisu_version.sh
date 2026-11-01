@@ -13,10 +13,20 @@ fi
 dir=$(cd "$(dirname "$0")" && pwd)
 root=$(dirname "$dir")
 
+# A source archive made by git has no repository to ask, and says what it would
+# have, as in EbisuVersion.cmake.
+archive=$dir/archive_version.txt
+if grep -qs '^time=[0-9]' "$archive"; then
+    describe=$(sed -n 's/^describe=//p' "$archive")
+    source_time=$(sed -n 's/^time=//p' "$archive")
+else
+    describe=$(git -C "$root" describe --tags 2>/dev/null || true)
+    source_time=$(git -C "$root" log -1 --format=%ct 2>/dev/null || true)
+fi
+
 # The numeric version is the first vX.Y.Z in `git describe --tags`, without the
 # v, or 0.0.0; the soversion is its major; the full version is `git describe`
 # output as it is, or the numeric version without git.
-describe=$(git -C "$root" describe --tags 2>/dev/null || true)
 version=$(printf '%s\n' "$describe" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 | sed 's/^v//')
 if [ -z "$version" ]; then
     version=0.0.0
@@ -25,7 +35,6 @@ soversion=${version%%.*}
 version_full=${describe:-$version}
 
 # When the source was committed, or the same fixed date as CMake's without git.
-source_time=$(git -C "$root" log -1 --format=%ct 2>/dev/null || true)
 case $source_time in
     ''|*[!0-9]*) source_time=1793059200 ;; # 2026-10-27T00:00:00Z
 esac

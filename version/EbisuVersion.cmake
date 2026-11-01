@@ -1,5 +1,5 @@
-# Derives the project version from `git describe --tags` and exposes it as a
-# generated ebisu_version.h.
+# Derives the project version from `git describe --tags`, or from what git wrote
+# into a source archive, and exposes it as a generated ebisu_version.h.
 
 # Captured at include time so the function does not depend on who calls it.
 set(EBISU_VERSION_MODULE_DIR ${CMAKE_CURRENT_LIST_DIR})
@@ -53,6 +53,17 @@ function(set_git_version_and_generate_header)
         endforeach()
     endif()
 
+    # A source archive made by git, as GitHub's are, has no repository to ask.
+    # git fills archive_version.txt in when it makes one (export-subst, in
+    # .gitattributes), and that then is the answer, over what was asked above:
+    # unpacked inside another project's repository, an archive would otherwise
+    # take that project's tags for its own.
+    file(READ ${EBISU_VERSION_MODULE_DIR}/archive_version.txt archive_version)
+    if(archive_version MATCHES "describe=([^\n]*)\ntime=([0-9]+)")
+        set(GIT_DESCRIBE "${CMAKE_MATCH_1}")
+        set(archive_time "${CMAKE_MATCH_2}")
+    endif()
+
     if(GIT_DESCRIBE)
         string(REGEX MATCH "v[0-9]+\\.[0-9]+\\.[0-9]+" VERSION_STRING ${GIT_DESCRIBE})
         if(VERSION_STRING)
@@ -91,7 +102,8 @@ function(set_git_version_and_generate_header)
 
     # When the source built was committed, in seconds since the epoch. Nothing
     # built from it runs earlier, which lets khc refuse a server's date from
-    # before then. Outside git, the day this was written.
+    # before then. A source archive says when; otherwise, outside git, the day
+    # this was written.
     execute_process(
         COMMAND git log -1 --format=%ct
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
@@ -99,7 +111,9 @@ function(set_git_version_and_generate_header)
         ERROR_QUIET
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
-    if(NOT source_time MATCHES "^[0-9]+$")
+    if(archive_time)
+        set(source_time "${archive_time}")
+    elseif(NOT source_time MATCHES "^[0-9]+$")
         # 2026-10-27T00:00:00Z
         set(source_time 1793059200)
     endif()
