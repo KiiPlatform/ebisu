@@ -1,7 +1,7 @@
 #!/bin/bash
 # Builds ebisu as each embedded sample's vendor build does: from the files the
 # sample's Makefile copies into the vendor's tree, with that build's include
-# paths, for the Cortex-M4 all three boards have, with arm-none-eabi-gcc. The
+# paths, for the Cortex-M4 both boards have, with arm-none-eabi-gcc. The
 # objects are then linked whole against newlib, so that a source a build leaves
 # out, or a header it cannot find, fails here rather than in the vendor's tools.
 # Whole, and without --gc-sections: a reference from a function nothing calls
@@ -10,7 +10,7 @@
 # The samples' own files are not built: they need their vendors' SDKs, which
 # cannot be downloaded without an account, or at all.
 #
-# Usage: cross_build.sh [gt202|wiced|cc3200]...   (all three by default)
+# Usage: cross_build.sh [gt202|cc3200]...   (both by default)
 set -euo pipefail
 
 root=$(cd "$(dirname "$0")/../.." && pwd)
@@ -78,21 +78,6 @@ gt202() {
     build gt202 "$work/gt202/tio" "$work"/gt202/tio/*.c
 }
 
-wiced() {
-    # WICED builds the sources tio_iot.mk lists, and nothing else: those in
-    # tio/ have to be exactly the ones the Makefile copies there.
-    copy wiced tio_iot
-    local dir="$work/wiced" listed copied
-    listed=$(tr -d '\r' < "$dir/tio_iot.mk" | grep -oE '\./tio/[A-Za-z0-9_]+\.c' | sort)
-    copied=$(cd "$dir" && ls ./tio/*.c | sort)
-    if [ "$listed" != "$copied" ]; then
-        echo "wiced: tio_iot.mk lists other sources than the Makefile copies:" >&2
-        diff <(echo "$listed") <(echo "$copied") | sed 's/^</  listed only:/; s/^>/  copied only:/' | grep only >&2
-        exit 1
-    fi
-    build wiced "$dir/tio" $(echo "$listed" | sed "s|^\./|$dir/|")
-}
-
 cc3200() {
     # Code Composer Studio builds the whole project, with these include paths.
     copy cc3200 freertos_ebisu_demo
@@ -103,11 +88,11 @@ cc3200() {
 
 samples=("$@")
 if [ ${#samples[@]} -eq 0 ]; then
-    samples=(gt202 wiced cc3200)
+    samples=(gt202 cc3200)
 fi
 for s in "${samples[@]}"; do
     case $s in
-        gt202|wiced|cc3200) "$s" ;;
+        gt202|cc3200) "$s" ;;
         *) echo "unknown sample: $s" >&2; exit 2 ;;
     esac
 done

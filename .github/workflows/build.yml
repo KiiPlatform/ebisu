@@ -327,7 +327,7 @@ jobs:
           report_paths: "**/test-results/junit/*.xml"
           check_name: JUnit Test Report (${{ matrix.name }})
 
-  # The embedded samples (GT202, WICED, CC3200) are built with their vendors'
+  # The embedded samples (GT202, CC3200) are built with their vendors'
   # tools, from the files their Makefiles copy, and not with CMake. Those SDKs
   # cannot be downloaded here, so this builds what of the samples is ebisu's as
   # their builds do: the same files and include paths, for the boards'

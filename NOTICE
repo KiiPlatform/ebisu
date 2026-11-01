@@ -35,5 +35,3 @@ notice:
 - picojson, in tests/picojson.h, used to build the tests: BSD 2-Clause.
 - Texas Instruments' pin configuration and linker files in tio/cc3200-sample:
   pinmux.c, pinmux.h and ccs/cc3200v1p32.cmd: BSD 3-Clause.
-- tio/wiced-sample/wifi_config_dct.h, from Cypress's WICED SDK: the terms stated
-  in the file.
