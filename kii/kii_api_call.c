@@ -129,6 +129,12 @@ kii_code_t _req_send(kii_t* kii)
     _kii_clock_record(kii);
     _req_headers_free_all(kii);
 
+    // kii's own write callback fails only when the response doesn't fit in the
+    // buffer. One the application gave, to download an object, fails for its
+    // own reasons.
+    if (code == KHC_ERR_WRITE_CALLBACK && kii->_khc._cb_write == _cb_write_buff) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
     return _convert_code(code);
 }
 

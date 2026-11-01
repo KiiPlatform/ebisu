@@ -223,3 +223,56 @@ TEST_CASE( "kii_ti_put_firmware_version escapes the version" ) {
     REQUIRE( kii_ti_put_firmware_version(&kii, "1.0\"\\") == KII_ERR_OK );
     CHECK( count(request, "{\"firmwareVersion\":\"1.0\\\"\\\\\"}") == 1 );
 }
+
+static size_t refuse_body(char*, size_t, void* userdata) {
+    ++*(int*)userdata;
+    return 0;
+}
+
+// The only reason kii's own write callback fails. An application's is another
+// matter, and keeps its code.
+TEST_CASE( "A response too large for the buffer is reported as such" ) {
+    char kii_buff[256];
+
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+
+    const std::string resp = "HTTP/1.1 200 OK\r\nContent-Length: 1024\r\n\r\n" + std::string(1024, 'x');
+    size_t resp_pos = 0;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&resp_pos](void*, const char*, unsigned int) {
+        resp_pos = 0;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_recv = [&](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        *out_actual_length = resp.copy(buffer, length_to_read, resp_pos);
+        resp_pos += *out_actual_length;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
+    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
+    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+
+    REQUIRE( kii_api_call_start(&kii, "GET", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );
+    CHECK( kii_api_call_run(&kii) == KII_ERR_TOO_LARGE_DATA );
+
+    SECTION("a callback the application gave keeps its own failure") {
+        kii_bucket_t bucket = { KII_SCOPE_THING, "th.1", "b" };
+        int calls = 0;
+        CHECK( kii_download_object_body(&kii, &bucket, "o", refuse_body, &calls) == KII_ERR_WRITE_CALLBACK );
+        CHECK( calls == 1 );
+
+        // And kii's is back for the next request.
+        REQUIRE( kii_api_call_start(&kii, "GET", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );
+        CHECK( kii_api_call_run(&kii) == KII_ERR_TOO_LARGE_DATA );
+    }
+}
