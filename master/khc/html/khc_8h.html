@@ -285,6 +285,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 <tr class="memitem:a566621dab015c69cb57dd1de88241c2a" id="r_a566621dab015c69cb57dd1de88241c2a"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a566621dab015c69cb57dd1de88241c2a">khc_get_status_code</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
 <tr class="memdesc:a566621dab015c69cb57dd1de88241c2a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get HTTP status code.  <br /></td></tr>
 <tr class="separator:a566621dab015c69cb57dd1de88241c2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a960e18dda03d60dded5c9a618138dd97" id="r_a960e18dda03d60dded5c9a618138dd97"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a960e18dda03d60dded5c9a618138dd97">khc_get_close_failed</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
+<tr class="memdesc:a960e18dda03d60dded5c9a618138dd97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether closing the socket failed.  <br /></td></tr>
+<tr class="separator:a960e18dda03d60dded5c9a618138dd97"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0e1ee79bbbbeefbbac3228cb5ef0d9d8" id="r_a0e1ee79bbbbeefbbac3228cb5ef0d9d8"><td class="memItemLeft" align="right" valign="top">int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a0e1ee79bbbbeefbbac3228cb5ef0d9d8">khc_get_resp_date</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
 <tr class="memdesc:a0e1ee79bbbbeefbbac3228cb5ef0d9d8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the server's time, from the response's Date header.  <br /></td></tr>
 <tr class="separator:a0e1ee79bbbbeefbbac3228cb5ef0d9d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -490,7 +493,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a90be23875108e9a39942c3af90a6d789ad362084b96bd996b692883323f38a71d" name="a90be23875108e9a39942c3af90a6d789ad362084b96bd996b692883323f38a71d"></a>KHC_ERR_OK&#160;</td><td class="fielddoc"><p>Operation succeeded. </p>
 <p>Failure in connecting to server. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a90be23875108e9a39942c3af90a6d789a63860890be328ec70b59ee94e6b3fa79" name="a90be23875108e9a39942c3af90a6d789a63860890be328ec70b59ee94e6b3fa79"></a>KHC_ERR_SOCK_CONNECT&#160;</td><td class="fielddoc"><p>Failure in closing connection. </p>
+<tr><td class="fieldname"><a id="a90be23875108e9a39942c3af90a6d789a63860890be328ec70b59ee94e6b3fa79" name="a90be23875108e9a39942c3af90a6d789a63860890be328ec70b59ee94e6b3fa79"></a>KHC_ERR_SOCK_CONNECT&#160;</td><td class="fielddoc"><p>No longer returned: closing doesn't change the result. See <a class="el" href="khc_8h.html#a960e18dda03d60dded5c9a618138dd97" title="Whether closing the socket failed.">khc_get_close_failed(khc*)</a>. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a90be23875108e9a39942c3af90a6d789a8371726af4f71dd9286834d572befa8a" name="a90be23875108e9a39942c3af90a6d789a8371726af4f71dd9286834d572befa8a"></a>KHC_ERR_SOCK_CLOSE&#160;</td><td class="fielddoc"><p>Failure in sending data. </p>
 </td></tr>
@@ -562,6 +565,34 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a960e18dda03d60dded5c9a618138dd97" name="a960e18dda03d60dded5c9a618138dd97"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a960e18dda03d60dded5c9a618138dd97">&#9670;&#160;</a></span>khc_get_close_failed()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool khc_get_close_failed </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkhc.html">khc</a> *&#160;</td>
+          <td class="paramname"><em>khc</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Whether closing the socket failed. </p>
+<p>Closing comes last and doesn't change what <a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform(khc*)</a> returns: a response read whole is still KHC_ERR_OK, and a request that failed keeps the failure that ended it. The socket may still be open, though, so this is for releasing it some other way.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">khc</td><td>instance. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the close callback returned KHC_SOCK_FAIL in the last <a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform(khc*)</a>, false if it hasn't since <a class="el" href="khc_8h.html#a5cb75ed1f039e02286cacb8d097f233e" title="Set initial value to members of khc.">khc_init(khc*)</a>, <a class="el" href="khc_8h.html#aea7b6dde93cd97fc303a90c1414dba21" title="Set initial value to members of khc other than callbacks.">khc_reset_except_cb(khc*)</a> or <a class="el" href="khc_8h.html#a652dba6d3ccda37a7c120fe479648504" title="Prepare to perform the same request again.">khc_reset_except_request(khc*)</a>. </dd></dl>
 
 </div>
 </div>
@@ -1558,7 +1589,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Nov 1 2026 15:27:12 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Sun Nov 1 2026 15:31:23 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
