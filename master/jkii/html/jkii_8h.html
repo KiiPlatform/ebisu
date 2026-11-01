@@ -257,12 +257,9 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>JSON parsed field data.</p>
-<p>Input of jkii_parse(jkii_t*, const char*, size_t,
-jkii_field_t*).</p>
-<p>Array of <a class="el" href="structjkii__field__t.html">jkii_field_t</a> is passed to jkii_parse(jkii_t*, const char*, size_t,
-jkii_field_t*).</p>
-<p>End point of the array is specified by <a class="el" href="structjkii__field__t.html#ad240e9f8d4144e2f73b023095a27b0f0">jkii_field_t::name</a> and <a class="el" href="structjkii__field__t.html#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a>. If both of <a class="el" href="structjkii__field__t.html#ad240e9f8d4144e2f73b023095a27b0f0">jkii_field_t::name</a> and <a class="el" href="structjkii__field__t.html#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a> are NULL, jkii_parse(jkii_t*,
-const char*, size_t, jkii_field_t*) consider that it is the end point of the passed array. </p>
+<p>Input of <a class="el" href="jkii_8h.html#a4793a01413e64a45474d0e23894da2da">jkii_parse()</a>.</p>
+<p>Array of <a class="el" href="structjkii__field__t.html">jkii_field_t</a> is passed to <a class="el" href="jkii_8h.html#a4793a01413e64a45474d0e23894da2da">jkii_parse()</a>.</p>
+<p>End point of the array is specified by <a class="el" href="structjkii__field__t.html#ad240e9f8d4144e2f73b023095a27b0f0">jkii_field_t::name</a> and <a class="el" href="structjkii__field__t.html#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a>. If both of <a class="el" href="structjkii__field__t.html#ad240e9f8d4144e2f73b023095a27b0f0">jkii_field_t::name</a> and <a class="el" href="structjkii__field__t.html#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a> are NULL, <a class="el" href="jkii_8h.html#a4793a01413e64a45474d0e23894da2da">jkii_parse()</a> consider that it is the end point of the passed array. </p>
 
 </div>
 </div>
@@ -292,8 +289,7 @@ const char*, size_t, jkii_field_t*) consider that it is the end point of the pas
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Return value of jkii_parse(jkii_t*, const char*,
-size_t, jkii_field_t*) </p>
+<p>Return value of <a class="el" href="jkii_8h.html#a4793a01413e64a45474d0e23894da2da">jkii_parse()</a> </p>
 
 </div>
 </div>
@@ -385,8 +381,7 @@ size_t, jkii_field_t*) </p>
 </div><div class="memdoc">
 <p>Type of parsed JSON field. This value is assigned to <a class="el" href="structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841">jkii_field_t::type</a>. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a5fe8d88e1452ceb3d2c07f69440c82b5a273c020553c1ee8b03caa0693e781fde" name="a5fe8d88e1452ceb3d2c07f69440c82b5a273c020553c1ee8b03caa0693e781fde"></a>JKII_FIELD_TYPE_ANY&#160;</td><td class="fielddoc"><p>This value denotes any JSON types. If this value is set to <a class="el" href="structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841">jkii_field_t::type</a>, then jkii_parse(jkii_t*,
-   const char*, size_t, jkii_field_t*) ignore type checking. </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a5fe8d88e1452ceb3d2c07f69440c82b5a273c020553c1ee8b03caa0693e781fde" name="a5fe8d88e1452ceb3d2c07f69440c82b5a273c020553c1ee8b03caa0693e781fde"></a>JKII_FIELD_TYPE_ANY&#160;</td><td class="fielddoc"><p>This value denotes any JSON types. If this value is set to <a class="el" href="structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841">jkii_field_t::type</a>, then <a class="el" href="jkii_8h.html#a4793a01413e64a45474d0e23894da2da">jkii_parse()</a> ignore type checking. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a5fe8d88e1452ceb3d2c07f69440c82b5a41325ab8db67f5439a64df1967009180" name="a5fe8d88e1452ceb3d2c07f69440c82b5a41325ab8db67f5439a64df1967009180"></a>JKII_FIELD_TYPE_INTEGER&#160;</td><td class="fielddoc"><p>This value denotes a signed integer held as an int32_t: from INT32_MIN to INT32_MAX, whatever the width of int. </p>
 </td></tr>
@@ -419,8 +414,7 @@ size_t, jkii_field_t*) </p>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Return value of jkii_parse(jkii_t*, const char*,
-size_t, jkii_field_t*) </p>
+<p>Return value of <a class="el" href="jkii_8h.html#a4793a01413e64a45474d0e23894da2da">jkii_parse()</a> </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a7c99e19b01ccd836a788cf794afc8792ac12ec4a57f74db1a3bb6a02fdb7ea6fe" name="a7c99e19b01ccd836a788cf794afc8792ac12ec4a57f74db1a3bb6a02fdb7ea6fe"></a>JKII_ERR_OK&#160;</td><td class="fielddoc"><p>JSON string is successfully parsed and all <a class="el" href="structjkii__field__t.html">jkii_field_t</a> variables are successfully set. i.e., all <a class="el" href="structjkii__field__t.html">jkii_field_t</a> type fields are JKII_FIELD_ERR_OK. </p>
 </td></tr>
@@ -429,7 +423,7 @@ size_t, jkii_field_t*) </p>
 <tr><td class="fieldname"><a id="a7c99e19b01ccd836a788cf794afc8792acb577be7115daba71b3e5c64c559bed9" name="a7c99e19b01ccd836a788cf794afc8792acb577be7115daba71b3e5c64c559bed9"></a>JKII_ERR_ROOT_TYPE&#160;</td><td class="fielddoc"><p>JSON string is successfully parsed but type of root object type is unmatched to using function.</p>
 <p>jkii_validate_root_object() requires a JSON object, and returns this error for anything else. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a7c99e19b01ccd836a788cf794afc8792aa1994c8ea018c38622491fc7068d3bb1" name="a7c99e19b01ccd836a788cf794afc8792aa1994c8ea018c38622491fc7068d3bb1"></a>JKII_ERR_TOKENS_SHORTAGE&#160;</td><td class="fielddoc"><p>jkii_t::tokens is not enough to parse JSON string. </p>
+<tr><td class="fieldname"><a id="a7c99e19b01ccd836a788cf794afc8792aa1994c8ea018c38622491fc7068d3bb1" name="a7c99e19b01ccd836a788cf794afc8792aa1994c8ea018c38622491fc7068d3bb1"></a>JKII_ERR_TOKENS_SHORTAGE&#160;</td><td class="fielddoc"><p><a class="el" href="structjkii__resource__t.html#adfd476e8fc0cfba750e837734287cb8a">jkii_resource_t::tokens</a> is not enough to parse JSON string. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a7c99e19b01ccd836a788cf794afc8792a32c838a9c10d51d215157abf1d5b6740" name="a7c99e19b01ccd836a788cf794afc8792a32c838a9c10d51d215157abf1d5b6740"></a>JKII_ERR_INVALID_INPUT&#160;</td><td class="fielddoc"><p>JSON string is failed to parse. Passed string is not JSON string. </p>
 </td></tr>
@@ -550,7 +544,7 @@ size_t, jkii_field_t*) </p>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Nov 1 2026 11:40:36 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Sun Nov 1 2026 11:50:41 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
