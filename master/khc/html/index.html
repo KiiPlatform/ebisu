@@ -219,7 +219,7 @@ $(function() {
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>KHC_ERR_TOO_LARGE_DATA</code>   </td><td class="markdownTableBodyNone">The status line doesn't fit in the response header buffer, or a chunk size line in the stream buffer.    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>KHC_ERR_FAIL</code>   </td><td class="markdownTableBodyNone">The status code or a chunk size is malformed.   </td></tr>
+<td class="markdownTableBodyNone"><code>KHC_ERR_FAIL</code>   </td><td class="markdownTableBodyNone">The status line or a chunk size is malformed.   </td></tr>
 </table>
 <p><code><a class="el" href="khc_8h.html#a0e1ee79bbbbeefbbac3228cb5ef0d9d8" title="Get the server&#39;s time, from the response&#39;s Date header.">khc_get_resp_date()</a></code> gives the server's time from the response's <code>Date</code> header, as seconds since the epoch, for a device without a real-time clock. It takes the three forms RFC 9110 has recipients take, with UTC for GMT, and gives -1 for anything else, for several <code>Date</code>s that disagree, and for a date before the library's source, which no server running properly sends. The time is as trustworthy as the connection it came through, so verify the server's certificate in the socket callbacks.</p>
 <h1>Tracing</h1>
@@ -230,7 +230,7 @@ $(function() {
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sat Oct 31 2026 12:39:07 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Sun Nov 1 2026 11:04:54 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

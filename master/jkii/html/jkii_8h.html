@@ -427,8 +427,7 @@ size_t, jkii_field_t*) </p>
 <tr><td class="fieldname"><a id="a7c99e19b01ccd836a788cf794afc8792ac7aa54138b3463eb8922d8cf568868ad" name="a7c99e19b01ccd836a788cf794afc8792ac7aa54138b3463eb8922d8cf568868ad"></a>JKII_ERR_PARTIAL&#160;</td><td class="fielddoc"><p>JSON string is successfully parsed but some <a class="el" href="structjkii__field__t.html">jkii_field_t</a> variables are failed. i.e., some <a class="el" href="structjkii__field__t.html">jkii_field_t</a> type fields are not JKII_FIELD_ERR_OK. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a7c99e19b01ccd836a788cf794afc8792acb577be7115daba71b3e5c64c559bed9" name="a7c99e19b01ccd836a788cf794afc8792acb577be7115daba71b3e5c64c559bed9"></a>JKII_ERR_ROOT_TYPE&#160;</td><td class="fielddoc"><p>JSON string is successfully parsed but type of root object type is unmatched to using function.</p>
-<p>jkii_parse(jkii_t*, const char*, size_t,
-   jkii_field_t*) requires JSON object if JSON array is passed, then this error is returned. </p>
+<p>jkii_validate_root_object() requires a JSON object, and returns this error for anything else. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a7c99e19b01ccd836a788cf794afc8792aa1994c8ea018c38622491fc7068d3bb1" name="a7c99e19b01ccd836a788cf794afc8792aa1994c8ea018c38622491fc7068d3bb1"></a>JKII_ERR_TOKENS_SHORTAGE&#160;</td><td class="fielddoc"><p>jkii_t::tokens is not enough to parse JSON string. </p>
 </td></tr>
@@ -551,7 +550,7 @@ size_t, jkii_field_t*) </p>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sat Oct 31 2026 12:39:07 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Sun Nov 1 2026 11:04:54 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
