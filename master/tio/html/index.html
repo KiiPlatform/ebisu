@@ -202,11 +202,10 @@ Socket callbacks.</h3>
 <p><a class="anchor" id="mqtt-socket-notes"></a> </p>
 <h4><a class="anchor" id="autotoc_md8"></a>
 Notes about socket implementation used for MQTT.</h4>
-<p>Underlying socket implementation used for MQTT must be blocking mode and its recv/ send timeout must be shared with <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code>.</p>
+<p>Underlying socket implementation used for MQTT must be blocking mode, with a send timeout, and its recv timeout must be shared with <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code>.</p>
 <p>We use socket timeout to estimate elapsed time since we sent last MQTT messages to send MQTT <code>PINGREQ</code> message periodically.</p>
 <p>MQTT keep alive interval must be larger than recv/ send timeout. Twice as large as recv/ send timeout works fine but recommend few minutes to avoid congestion.</p>
 <div class="fragment"><div class="line">tio_handler_set_mqtt_to_sock_recv(handler, 15);</div>
-<div class="line">tio_handler_set_mqtt_to_sock_send(handler, 15);</div>
 <div class="line">tio_handler_set_keep_alive_interval(handler, 300);</div>
 </div><!-- fragment --><p>When the recv timeout runs out with nothing received, the MQTT recv callback should return <code>KHC_SOCK_FAIL</code>. <code>KHC_SOCK_OK</code> with 0 bytes means the broker closed the connection, and <code>tio_handler</code> connects again.</p>
 <p>A lost connection makes the recv callback return <code>KHC_SOCK_FAIL</code> as well. To tell it from a timeout, set the optional <code>tio_handler_set_cb_sock_recv_timed_out_mqtt()</code> callback: it returns <code>KII_TRUE</code> if the last receive timed out, and <code>KII_FALSE</code> if it failed otherwise, in which case <code>tio_handler</code> connects again. Without it, every <code>KHC_SOCK_FAIL</code> while waiting for a command is taken for a timeout, and a lost connection is only noticed when a <code>PINGREQ</code> fails or goes unanswered; with a keep-alive interval of 0, never. See <code>sock_cb_recv_timed_out()</code> in <a href="linux-sample/sock_cb_linux.c">linux-sample</a>.</p>
@@ -262,7 +261,6 @@ Set-up &lt;tt&gt;tio_handler_t&lt;/tt&gt; instance</h2>
 <div class="line">tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);</div>
 <div class="line"> </div>
 <div class="line">tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);</div>
-<div class="line">tio_handler_set_mqtt_to_sock_send(handler, TO_SEND_SEC);</div>
 <div class="line"> </div>
 <div class="line">tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);</div>
 <div class="line">tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);</div>
@@ -313,7 +311,6 @@ Set-up MQTT socket timeout.</h3>
 <p><code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code> needs socket timeout in seconds to send MQTT <code>PINGREQ</code> periodically.</p>
 <p>Note that application must implement socket timeout in the socket callback implementation. You can see example <a href="./linux-sample/sys_cb_linux.c">here</a></p>
 <div class="fragment"><div class="line">tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);</div>
-<div class="line">tio_handler_set_mqtt_to_sock_send(handler, TO_SEND_SEC);</div>
 </div><!-- fragment --><h3><a class="anchor" id="autotoc_md18"></a>
 Set-up MQTT Keep Alive interval.</h3>
 <p>In the example, <code>HANDLER_KEEP_ALIVE_SEC</code> is defined as Macro and value is 300 (in seconds).</p>
@@ -411,16 +408,17 @@ Execute onboarding</h2>
 <div class="line">        firmWareVersion,</div>
 <div class="line">        layoutPosition,</div>
 <div class="line">        properties);</div>
-<div class="line"><span class="keyword">const</span> <a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">tio_author_t</a>* author = tio_handler_get_author(&amp;handler);</div>
+<div class="line"><a class="code hl_structRef" href="../../kii/html/structkii__author__t.html">tio_author_t</a> author;</div>
+<div class="line">tio_handler_copy_author(&amp;handler, &amp;author);</div>
 <div class="line"><span class="comment">/* thing ID and access token is stored in tio_author_t.</span></div>
-<div class="line"><span class="comment">printf(&quot;thing ID: %s\n&quot;, author-&gt;author_id);</span></div>
+<div class="line"><span class="comment">printf(&quot;thing ID: %s\n&quot;, author.author_id);</span></div>
 <div class="line"><span class="comment">*/</span></div>
 </div><!-- fragment --><h2><a class="anchor" id="autotoc_md26"></a>
 Start module</h2>
 <p>Now, it's ready to start <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code> module.</p>
 <div class="fragment"><div class="line">tio_handler_start(&amp;handler, NULL, tio_action_handler, NULL);</div>
 </div><!-- fragment --><ul>
-<li><code>author</code> is taken from the <a class="el" href="index.html#session">session</a> when one is set, and may be NULL. Without a session, pass the thing ID and access token obtained in the step of <a class="el" href="index.html#execute-onboarding">Onboarding</a>, from <code>tio_handler_get_author()</code>.</li>
+<li><code>author</code> is taken from the <a class="el" href="index.html#session">session</a> when one is set, and may be NULL. Without a session, pass the thing ID and access token obtained in the step of <a class="el" href="index.html#execute-onboarding">Onboarding</a>, from <code>tio_handler_copy_author()</code>.</li>
 <li><code>tio_action_handler</code> is the callback function pointer explained in <a class="el" href="index.html#action-callback">Action callback</a></li>
 <li>last argument is context object pointer can be referenced in action callback. Passing NULL since we don't use context object in this example.</li>
 </ul>
@@ -587,7 +585,7 @@ Avoiding race condition</h2>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Nov 1 2026 15:42:48 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Sun Nov 1 2026 15:58:03 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

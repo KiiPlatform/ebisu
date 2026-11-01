@@ -630,13 +630,6 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>kii_session_set_renew_by_onboarding</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a20216a7ebb203e546de0a987120e374b</anchor>
-      <arglist>(kii_session_t *session, kii_bool_t by_onboarding)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
       <name>kii_session_get_author</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>ac375f90a4796877f0365d14f6dc73e45</anchor>
@@ -1026,13 +1019,6 @@
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a812b57be04fe37fc4a7ec66679f88db4</anchor>
       <arglist>(kii_t *kii, uint32_t to_sock_recv_sec)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>kii_set_mqtt_to_sock_send</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a822f223537c5c8851a79eb73e06d001b</anchor>
-      <arglist>(kii_t *kii, uint32_t to_sock_send_sec)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
