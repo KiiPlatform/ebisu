@@ -115,6 +115,9 @@ Task exit callback is called when task continue callback returns `KII_FALSE`
 or unrecoverable error occurs.
 
 In this callback, you may need to free memories used for the handler task and other necessary steps when exiting task.
+The task has closed its MQTT connection by then, so don't close it here. The callback may call `tio_handler_start()` to start the task again.
+
+Stop the task through the continue callback. A task ended any other way, such as by killing its thread, needs `tio_handler_init()` before starting again, as `tio_handler_start()` refuses while it counts as running. The same goes for `tio_updater_t`.
 
 In the example app, we don't give allocated memory to `tio_handler` and `pthread` doesn't requires special treatment when exit loop, just set flag that indicate
 task has been exited safely.
@@ -186,6 +189,9 @@ typedef khc_sock_code_t
 ```
 
 You can see implementation with OpenSSL at [linux-sample](linux-sample/sock_cb_linux.c)
+
+The [khc README](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#writing-callbacks)
+has what these callbacks have to do that `tio` can't check for them, such as timeouts and `SIGPIPE`.
 
 `sock_ctx` argument is arbitrary data context which application can use.
 Application should pass the pointer of the data when calling
