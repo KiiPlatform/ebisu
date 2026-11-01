@@ -828,11 +828,11 @@ Functions</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="a79eab5c5f48e03121033d6291619c7dead91d57d51f1b7eeb3f29193acaddf6d9" name="a79eab5c5f48e03121033d6291619c7dead91d57d51f1b7eeb3f29193acaddf6d9"></a>KII_ERR_HEADER_CALLBACK&#160;</td><td class="fielddoc"><p>Error in header callback. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a79eab5c5f48e03121033d6291619c7dea2a796e5d50e605c3b3fa095be18f5c67" name="a79eab5c5f48e03121033d6291619c7dea2a796e5d50e605c3b3fa095be18f5c67"></a>KII_ERR_WRITE_CALLBACK&#160;</td><td class="fielddoc"><p>Error in write callback. </p>
+<tr><td class="fieldname"><a id="a79eab5c5f48e03121033d6291619c7dea2a796e5d50e605c3b3fa095be18f5c67" name="a79eab5c5f48e03121033d6291619c7dea2a796e5d50e605c3b3fa095be18f5c67"></a>KII_ERR_WRITE_CALLBACK&#160;</td><td class="fielddoc"><p>Error in a write callback the application gave. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a79eab5c5f48e03121033d6291619c7dead839e55c9df8a32740642cb33b802d9c" name="a79eab5c5f48e03121033d6291619c7dead839e55c9df8a32740642cb33b802d9c"></a>KII_ERR_ALLOCATION&#160;</td><td class="fielddoc"><p>Error in memory allocation. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a79eab5c5f48e03121033d6291619c7dea7d0fc4db434b704d555df6eeb452d7d7" name="a79eab5c5f48e03121033d6291619c7dea7d0fc4db434b704d555df6eeb452d7d7"></a>KII_ERR_TOO_LARGE_DATA&#160;</td><td class="fielddoc"><p>Data is larger than expected. </p>
+<tr><td class="fieldname"><a id="a79eab5c5f48e03121033d6291619c7dea7d0fc4db434b704d555df6eeb452d7d7" name="a79eab5c5f48e03121033d6291619c7dea7d0fc4db434b704d555df6eeb452d7d7"></a>KII_ERR_TOO_LARGE_DATA&#160;</td><td class="fielddoc"><p>Data is larger than expected, as a response too large for the buffer set by <a class="el" href="kii_8h.html#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a> is. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a79eab5c5f48e03121033d6291619c7deac9472b83ca9b65665e8b92b039033567" name="a79eab5c5f48e03121033d6291619c7deac9472b83ca9b65665e8b92b039033567"></a>KII_ERR_RESP_STATUS&#160;</td><td class="fielddoc"><p>REST API returns error status code. </p>
 </td></tr>
@@ -4097,7 +4097,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>kii_code_t. KII_ERR_FAIL if keep_alive_interval_sec is larger than 65535, and the task is not started. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>kii_code_t. KII_ERR_FAIL, with no task started, if keep_alive_interval_sec is larger than 65535, if cb_push, the callback set by <a class="el" href="kii_8h.html#a279015373defa4b13d772568a2be6fea" title="Callback asks to delay/ sleep task execution.">kii_set_cb_delay_ms()</a>, a socket callback or a buffer it needs is not set, or if the task of an earlier start is still running. That task runs until the callback set by <a class="el" href="kii_8h.html#a308bbd95790fad608a661d8e5823c1d8" title="set callback determines whether to continue or discontinue task.">kii_set_cb_task_continue()</a> ends it, or an error does, and has finished by the time the callback set by <a class="el" href="kii_8h.html#a5d4c80bb655870e967d5a90500bcda08" title="Callback called right before exit of MQTT task.">kii_set_cb_task_exit()</a> is called, which may start it again. A task ended any other way, such as by killing its thread, needs <a class="el" href="kii_8h.html#a7ba3ce1d86f6048b7b3fefba36056410" title="Initializes kii_t instance.">kii_init()</a> before starting again. KII_ERR_CREATE_TASK if no callback is set by <a class="el" href="kii_8h.html#a0544a628a2fbc798e4d2fa67e142c491" title="Set callback creates task.">kii_set_cb_task_create()</a>, or it fails. </dd></dl>
 
 </div>
 </div>
@@ -4736,7 +4736,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Nov 1 2026 15:58:03 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Sun Nov 1 2026 18:14:28 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
