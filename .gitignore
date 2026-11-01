@@ -46,6 +46,11 @@ test-results/
 Testing/
 # Written by the khc small tests into the directory they run in.
 tmp_random_chunk_response.txt
+# Findings, which libFuzzer writes into the directory it runs in.
+crash-*
+timeout-*
+oom-*
+leak-*
 
 # Doxygen output.
 html/

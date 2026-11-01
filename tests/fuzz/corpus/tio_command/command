@@ -1,0 +1,1 @@
+È{"commandID":"cmd1","actions":[{"alias1":[{"turnPower":true},{"setLevel":{"level":3}}]},{"alias2":[{"setName":"a\"b"}]}]}

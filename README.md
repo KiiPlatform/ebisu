@@ -89,6 +89,7 @@ Other useful targets and options:
 cmake --build --preset debug --target docs        # doxygen, into build/<preset>/ebisu-doc
 ctest --preset small -T memcheck                  # under valgrind
 ctest --preset asan-small                         # under ASan and UBSan
+cmake --preset fuzz && cmake --build --preset fuzz && tests/fuzz/run.sh 60  # fuzz each target for 60 seconds, with clang
 cmake --preset debug -DEBISU_BUILD_SAMPLES=ON     # also build tio/linux-sample
 ```
 
