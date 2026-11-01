@@ -241,7 +241,9 @@ typedef enum khc_code {
     KHC_ERR_WRITE_CALLBACK,
     /**< \brief Memory allocation error. */
     KHC_ERR_ALLOCATION,
-    /**< \brief Data is too large and doesn't fit to buffers statically allocated. */
+    /**< \brief Data is too large and doesn't fit to buffers statically
+     * allocated, as a Content-Length or Transfer-Encoding header too long for
+     * the buffer set by khc_set_resp_header_buff(khc*, char*, size_t) is. */
     KHC_ERR_TOO_LARGE_DATA,
     /**< \brief Other errors. */
     KHC_ERR_FAIL,
@@ -318,6 +320,7 @@ typedef struct khc {
 
     khc_code _result; /**< \private **/
     bool _close_failed; /**< \private **/
+    bool _resp_header_skipped; /**< \private **/
 
     bool _enable_insecure; /**< \private **/
     /* Dates earlier than this are refused: shortly before the source was
@@ -382,6 +385,9 @@ void khc_reset_except_request(khc* khc);
  * called.
  * This method blocks until the HTTP session ends.
  * \param [in, out] khc instance.
+ * \returns KHC_ERR_OK if the response was read whole. KHC_ERR_FAIL, without
+ * connecting, if a socket callback, the write callback or the header callback
+ * is not set. The read callback may be left out for a request with no body.
  */
 khc_code khc_perform(khc* khc);
 
@@ -429,9 +435,11 @@ khc_code khc_set_req_headers(khc* khc, khc_slist* headers);
  * The buffer allocated by the khc is 256 bytes.
 
  * The buffer is used to store single HTTP response header.
- * If header is larger than the buffer, the header is skipped and KHC_CB_HEADER is not called.
+ * If header is larger than the buffer, the header is skipped and KHC_CB_HEADER is not called,
+ * which khc_get_resp_header_skipped(khc*) tells.
  * khc needs to parse Status Line, Content-Length, Transfer-Encoding header to process HTTP message.
- * The buffer must have enough size to store those headers. 256 bytes would be enough.
+ * The buffer must have enough size to store those headers: khc_perform(khc*) returns
+ * KHC_ERR_TOO_LARGE_DATA if it doesn't. 256 bytes would be enough.
  * If you set the buffer by the method, the method must be called befor khc_perform(khc*)
  * and memory used by the buffer can be safely freed after khc_perform(khc*) returned.
 
@@ -599,6 +607,21 @@ uint16_t khc_get_status_code(
  * khc_reset_except_cb(khc*) or khc_reset_except_request(khc*).
  */
 bool khc_get_close_failed(khc* khc);
+
+/**
+ * \brief Whether a response header was skipped.
+ *
+ * A header too long for the buffer set by
+ * khc_set_resp_header_buff(khc*, char*, size_t) doesn't reach KHC_CB_HEADER.
+ * The response is otherwise read as usual, so this is how to tell that a header
+ * is missing because of that and not from the response.
+ *
+ * \param [in] khc instance.
+ * \returns true if the last khc_perform(khc*) skipped a header, false if it
+ * hasn't since khc_init(khc*), khc_reset_except_cb(khc*) or
+ * khc_reset_except_request(khc*).
+ */
+bool khc_get_resp_header_skipped(khc* khc);
 
 /**
  * \brief Get the server's time, from the response's Date header.

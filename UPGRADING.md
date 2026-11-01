@@ -190,6 +190,14 @@ khc, which kii and tio report in their own codes:
   2.0 it was `KHC_ERR_SOCK_CLOSE`, which kii and tio reported as a failure to
   connect. That code, `KII_ERR_SOCK_CLOSE` and `TIO_ERR_SOCK_CLOSE` stay defined
   but aren't returned, and `khc_get_close_failed()` says whether it happened.
+- A `Content-Length` or `Transfer-Encoding` header too long for the buffer set
+  by `khc_set_resp_header_buff()` is `KHC_ERR_TOO_LARGE_DATA`, and
+  `KII_ERR_TOO_LARGE_DATA` and `TIO_ERR_TOO_LARGE_DATA` above it. In 2.0 it was
+  `KHC_ERR_HEADER_CALLBACK`. Any other header too long is still skipped, and
+  `khc_get_resp_header_skipped()` says whether one was.
+- `khc_perform()` returns `KHC_ERR_FAIL`, without connecting, if a socket
+  callback, the write callback or the header callback isn't set. 2.0 crashed on
+  reaching it.
 - GET, HEAD and DELETE send no body, and don't call the read callback.
 
 jkii:
