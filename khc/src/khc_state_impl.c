@@ -1165,8 +1165,12 @@ void khc_state_close(khc* khc) {
         return;
     }
     if (close_res == KHC_SOCK_FAIL) {
+        // The request has its result by now, and this must not change it. After
+        // a whole response, a failure would make a POST the server has acted on
+        // look as if it had not been; after a failure, it would hide what went
+        // wrong.
         khc->_state = KHC_STATE_FINISHED;
-        khc->_result = KHC_ERR_SOCK_CLOSE;
+        khc->_close_failed = true;
         return;
     }
 }

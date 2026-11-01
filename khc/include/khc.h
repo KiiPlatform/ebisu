@@ -227,7 +227,8 @@ typedef enum khc_code {
     KHC_ERR_OK,
     /**< \brief Failure in connecting to server. */
     KHC_ERR_SOCK_CONNECT,
-    /**< \brief Failure in closing connection. */
+    /**< \brief No longer returned: closing doesn't change the result. See
+     * khc_get_close_failed(khc*). */
     KHC_ERR_SOCK_CLOSE,
     /**< \brief Failure in sending data. */
     KHC_ERR_SOCK_SEND,
@@ -326,6 +327,7 @@ typedef struct khc {
     size_t _sent_length; /**< \private **/
 
     khc_code _result; /**< \private **/
+    bool _close_failed; /**< \private **/
 
     bool _enable_insecure; /**< \private **/
     /* Dates earlier than this are refused: shortly before the source was
@@ -592,6 +594,21 @@ void khc_enable_insecure(
 uint16_t khc_get_status_code(
         khc* khc
 );
+
+/**
+ * \brief Whether closing the socket failed.
+ *
+ * Closing comes last and doesn't change what khc_perform(khc*) returns: a
+ * response read whole is still KHC_ERR_OK, and a request that failed keeps the
+ * failure that ended it. The socket may still be open, though, so this is for
+ * releasing it some other way.
+ *
+ * \param [in] khc instance.
+ * \returns true if the close callback returned KHC_SOCK_FAIL in the last
+ * khc_perform(khc*), false if it hasn't since khc_init(khc*),
+ * khc_reset_except_cb(khc*) or khc_reset_except_request(khc*).
+ */
+bool khc_get_close_failed(khc* khc);
 
 /**
  * \brief Get the server's time, from the response's Date header.

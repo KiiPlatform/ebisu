@@ -1694,7 +1694,25 @@ TEST_CASE( "state abnormal tests." ) {
 
         khc_state_close(&http);
         REQUIRE( http._state == KHC_STATE_FINISHED );
-        REQUIRE( http._result == KHC_ERR_SOCK_CLOSE );
+        REQUIRE( http._result == KHC_ERR_OK );
+        REQUIRE( khc_get_close_failed(&http) );
+        REQUIRE( called );
+    }
+
+    SECTION("close failed after the request did.") {
+        http._state = KHC_STATE_CLOSE;
+        http._result = KHC_ERR_SOCK_RECV;
+
+        called = false;
+        s_ctx.on_close = [=, &called](void* socket_context) {
+            called = true;
+            return KHC_SOCK_FAIL;
+        };
+
+        khc_state_close(&http);
+        REQUIRE( http._state == KHC_STATE_FINISHED );
+        REQUIRE( http._result == KHC_ERR_SOCK_RECV );
+        REQUIRE( khc_get_close_failed(&http) );
         REQUIRE( called );
     }
 }

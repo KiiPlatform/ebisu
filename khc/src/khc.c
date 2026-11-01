@@ -20,6 +20,7 @@ void khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size) {
 khc_code khc_perform(khc* khc) {
     khc->_state = KHC_STATE_IDLE;
     khc->_result = KHC_ERR_OK;
+    khc->_close_failed = false;
     // Only this request's response may set it.
     khc->_resp_date = -1;
 
@@ -145,6 +146,7 @@ void khc_reset_except_request(khc* khc) {
     khc->_read_end = false;
     khc->_body_read_size = 0;
     khc->_result = KHC_ERR_OK;
+    khc->_close_failed = false;
     khc->_sent_length = 0;
 }
 
@@ -158,6 +160,10 @@ uint16_t khc_get_status_code(
         khc* khc
 ) {
     return khc->_status_code;
+}
+
+bool khc_get_close_failed(khc* khc) {
+    return khc->_close_failed;
 }
 
 int64_t khc_get_resp_date(khc* khc) {
