@@ -181,11 +181,11 @@ arguments.
 
 Implementations to start from:
 
-- [linux-sample](../tio/linux-sample/sock_cb_linux.c): BSD sockets and OpenSSL.
-- [win32-sample](../tio/win32-sample/sock_cb_win32.c): Winsock and Schannel.
-- [esp32-sample](../tio/esp32-sample/main/sock_cb_esp32.c): ESP-IDF's esp-tls,
+- [linux-sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c): BSD sockets and OpenSSL.
+- [win32-sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/win32-sample/sock_cb_win32.c): Winsock and Schannel.
+- [esp32-sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/esp32-sample/main/sock_cb_esp32.c): ESP-IDF's esp-tls,
   mbedTLS over lwIP.
-- [freertos-sample](../tio/freertos-sample/sock_cb_freertos.c): mbedTLS over
+- [freertos-sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/freertos-sample/sock_cb_freertos.c): mbedTLS over
   FreeRTOS-Plus-TCP.
 
 ## Results
@@ -224,5 +224,5 @@ passwords, so never enable it where its output is kept or shared.
 ## Building
 
 `khc` is built as part of ebisu, as described in the
-[top-level README](../README.md#building). `libkii` includes it, and it is
+[top-level README](https://github.com/KiiPlatform/ebisu/blob/master/README.md#building). `libkii` includes it, and it is
 also built on its own as `libkhc`.

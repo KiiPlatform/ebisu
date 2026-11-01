@@ -185,7 +185,7 @@ typedef khc_sock_code_t
     (*KHC_CB_SOCK_CLOSE)(void* sock_ctx);
 ```
 
-You can see implementation with OpenSSL at [linux-sample](linux-sample/sock_cb_linux.c)
+You can see implementation with OpenSSL at [linux-sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c)
 
 `sock_ctx` argument is arbitrary data context which application can use.
 Application should pass the pointer of the data when calling
@@ -234,7 +234,7 @@ otherwise, in which case `tio_handler` connects again. Without it, every
 `KHC_SOCK_FAIL` while waiting for a command is taken for a timeout, and a lost
 connection is only noticed when a `PINGREQ` fails or goes unanswered; with a
 keep-alive interval of 0, never.
-See `sock_cb_recv_timed_out()` in [linux-sample](linux-sample/sock_cb_linux.c).
+See `sock_cb_recv_timed_out()` in [linux-sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c).
 
 <a name="action-callback"></a>
 ### Action callback
@@ -279,7 +279,7 @@ For more details about Trait, please refer to the [document](http://docs.kii.com
 ## Set-up `tio_handler_t` instance
 
 Here's the set-up code extracted from example app.
-The full code can be checked [handler_init() in example.c](linux-sample/example.c)
+The full code can be checked [handler_init() in example.c](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/example.c)
 
 ```c
     tio_handler_init(handler);
@@ -446,7 +446,7 @@ MQTT broker.
 The `tio_handler_t` and the `tio_updater_t` of a device share one session, so
 that a token refused to either is renewed once, for both.
 
-Here's the set-up code extracted from [example.c](linux-sample/example.c).
+Here's the set-up code extracted from [example.c](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/example.c).
 
 ```c
     kii_session_t session;
@@ -536,7 +536,7 @@ certificate in its socket callbacks. The handler and the updater give a
 `kii_clock_t` the time each response states, with `tio_handler_set_clock()` and
 `tio_updater_set_clock()`. They run in tasks of their own, so a clock they share
 needs a lock, set by `kii_clock_set_cb_lock()`. That has to be a lock of its own,
-not the session's. The [kii README](../kii/README.md#the-time) describes the
+not the session's. The [kii README](https://github.com/KiiPlatform/ebisu/blob/master/kii/README.md#the-time) describes the
 clock and how the socket callbacks use it.
 
 <a name="execute-onboarding"></a>
@@ -670,7 +670,7 @@ Please refer to (http://docs.kii.com/en/guides/thingifsdk/).
 ## Set-up `tio_updater_t` instance
 
 Here's the set-up code extracted from example app.
-The full code can be checked [updater_init() in example.c](linux-sample/example.c)
+The full code can be checked [updater_init() in example.c](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/example.c)
 
 ```
     tio_updater_init(updater);
@@ -712,7 +712,7 @@ With a [session](#session) shared by both, they take the author from it instead.
 
 Now, it's ready to start the updater module.
 
-Here's code extracted from [example app](linux-sample/example.c).
+Here's code extracted from [example app](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/example.c).
 
 ```c
     tio_updater_start(
