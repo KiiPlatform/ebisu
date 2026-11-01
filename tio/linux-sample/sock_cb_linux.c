@@ -5,6 +5,7 @@
 #include <sys/uio.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <pthread.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -19,6 +20,36 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
+
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+/* Before 1.1.0, OpenSSL leaves its locking to the application, and without it
+   the tasks' connections corrupt its state. The ID of a thread it takes from
+   the address of errno, which is one per thread here. */
+static pthread_mutex_t openssl_locks[CRYPTO_NUM_LOCKS];
+
+static void openssl_lock(int mode, int n, const char* file, int line)
+{
+    (void)file;
+    (void)line;
+    if (mode & CRYPTO_LOCK) {
+        pthread_mutex_lock(&openssl_locks[n]);
+    } else {
+        pthread_mutex_unlock(&openssl_locks[n]);
+    }
+}
+#endif
+
+static void init_openssl(void)
+{
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+    for (int i = 0; i < CRYPTO_NUM_LOCKS; ++i) {
+        pthread_mutex_init(&openssl_locks[i], NULL);
+    }
+    CRYPTO_set_locking_callback(openssl_lock);
+#endif
+    SSL_library_init();
+    SSL_load_error_strings();
+}
 
 void sock_cb_init_context(
         socket_context_t* ctx,
@@ -111,7 +142,9 @@ khc_sock_code_t
         goto fail;
     }
 
-    SSL_library_init();
+    /* The tasks connect at the same time, and it is not safe to run twice. */
+    static pthread_once_t openssl_initialized = PTHREAD_ONCE_INIT;
+    pthread_once(&openssl_initialized, init_openssl);
     const SSL_METHOD *method =
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L)
         TLSv1_2_client_method();
