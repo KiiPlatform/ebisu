@@ -246,6 +246,14 @@ static kii_bool_t _password_usable_locked(kii_session_t* session)
     return (elapsed_ms >= session->_password_wait_ms) ? KII_TRUE : KII_FALSE;
 }
 
+/* Whether a status from a login or onboarding refuses the credentials. 408 and
+ * 429 say the server wouldn't look at them yet, which says nothing about them. */
+static kii_bool_t _status_refuses(uint16_t status)
+{
+    return (400 <= status && status < 500 && status != 408 && status != 429) ?
+        KII_TRUE : KII_FALSE;
+}
+
 /* Records the outcome of a login or onboarding with the thing's credentials.
  * An answer that refuses them starts a wait, longer than the last; one that
  * accepts them ends it. When the server could not be asked, or failed, nothing
@@ -351,7 +359,7 @@ static kii_code_t _token_response(
         return sent;
     }
     uint16_t status = khc_get_status_code(&kii->_khc);
-    if (400 <= status && status < 500) {
+    if (_status_refuses(status) == KII_TRUE) {
         *rejected = KII_TRUE;
         return KII_ERR_RESP_STATUS;
     }
@@ -374,8 +382,7 @@ static kii_code_t _onboard_again(kii_t* kii, kii_author_t* author)
             session->_password, NULL, NULL, NULL, NULL);
     uint16_t status = khc_get_status_code(&kii->_khc);
     _password_tried_locked(session, res,
-            (res == KII_ERR_RESP_STATUS && 400 <= status && status < 500) ?
-            KII_TRUE : KII_FALSE);
+            (res == KII_ERR_RESP_STATUS) ? _status_refuses(status) : KII_FALSE);
     if (res != KII_ERR_OK) {
         return res;
     }
