@@ -1119,7 +1119,7 @@ TEST_CASE( "state abnormal tests." ) {
         REQUIRE( called );
     }
 
-    SECTION("resp status read no crlf.") {
+    SECTION("resp status read no crlf, with room for more.") {
         http._state = KHC_STATE_RESP_STATUS_READ;
         http._resp_header_read_size = 0;
 
@@ -1132,8 +1132,44 @@ TEST_CASE( "state abnormal tests." ) {
         };
 
         khc_state_resp_status_read(&http);
+        REQUIRE( http._state == KHC_STATE_RESP_STATUS_READ );
+        REQUIRE( http._result == KHC_ERR_OK );
+        REQUIRE( http._resp_header_read_size == strlen("no crlf") );
+        REQUIRE( called );
+    }
+
+    SECTION("resp status read no crlf, with the buffer full.") {
+        http._state = KHC_STATE_RESP_STATUS_READ;
+        http._resp_header_read_size = 0;
+
+        called = false;
+        s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            called = true;
+            memset(buffer, 'a', length_to_read);
+            *out_actual_length = length_to_read;
+            return KHC_SOCK_OK;
+        };
+
+        khc_state_resp_status_read(&http);
         REQUIRE( http._state == KHC_STATE_CLOSE );
         REQUIRE( http._result == KHC_ERR_TOO_LARGE_DATA );
+        REQUIRE( called );
+    }
+
+    SECTION("resp status read closed.") {
+        http._state = KHC_STATE_RESP_STATUS_READ;
+        http._resp_header_read_size = 0;
+
+        called = false;
+        s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            called = true;
+            *out_actual_length = 0;
+            return KHC_SOCK_OK;
+        };
+
+        khc_state_resp_status_read(&http);
+        REQUIRE( http._state == KHC_STATE_CLOSE );
+        REQUIRE( http._result == KHC_ERR_SOCK_RECV );
         REQUIRE( called );
     }
 

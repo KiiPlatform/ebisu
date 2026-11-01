@@ -588,13 +588,19 @@ void khc_state_resp_status_read(khc* khc) {
         if (read_size == 0) {
             khc->_read_end = true;
         }
-        // check CRLF. no exist -> ERROR.
-        if (strstr(khc->_resp_header_buff, "\r\n") == NULL) {
-            khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_TOO_LARGE_DATA;
+        if (strstr(khc->_resp_header_buff, "\r\n") != NULL) {
+            khc->_state = KHC_STATE_RESP_STATUS_PARSE;
             return;
         }
-        khc->_state = KHC_STATE_RESP_STATUS_PARSE;
+        if (khc->_resp_header_read_size + 1 == khc->_resp_header_buff_size) {
+            khc->_state = KHC_STATE_CLOSE;
+            khc->_result = KHC_ERR_TOO_LARGE_DATA;
+        } else if (read_size == 0) {
+            // Closed before the status line ended.
+            khc->_state = KHC_STATE_CLOSE;
+            khc->_result = KHC_ERR_SOCK_RECV;
+        }
+        // Otherwise a read can end anywhere: read the rest of the line.
         return;
     }
     #ifdef KHC_TRACE
@@ -614,11 +620,22 @@ void khc_state_resp_status_read(khc* khc) {
 
 void khc_state_resp_status_parse(khc* khc) {
     const char http_version[] = "HTTP/d.d ";
+    const size_t status_size = 3;
+    const char* line_end = strstr(khc->_resp_header_buff, "\r\n");
+    // Check the line itself: past it, the buffer may hold what an earlier
+    // response left there.
+    if (line_end == NULL ||
+            (size_t)(line_end - khc->_resp_header_buff) < strlen(http_version) + status_size ||
+            strncmp(khc->_resp_header_buff, "HTTP/", 5) != 0) {
+        khc->_state = KHC_STATE_CLOSE;
+        khc->_result = KHC_ERR_FAIL;
+        return;
+    }
     char* ptr = khc->_resp_header_buff + strlen(http_version);
 
     // Three digits, so at most 999.
     uint16_t status_code = 0;
-    for (int i = 0; i < 3; ++i) {
+    for (size_t i = 0; i < status_size; ++i) {
         char d = ptr[i];
         if (isdigit((unsigned char)d) == 0){
             khc->_state = KHC_STATE_CLOSE;
