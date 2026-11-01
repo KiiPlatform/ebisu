@@ -328,7 +328,7 @@ fit in the buffer.
 
 `kii_get_resp_date()` gives the server's time, from the `Date` header of the
 call's response, for a device without a real-time clock: khc's
-`khc_get_resp_date()`, which the [khc README](../khc/README.md#results)
+`khc_get_resp_date()`, which the [khc README](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#results)
 describes. It is as trustworthy as the connection it came through, so verify
 the server's certificate in the socket callbacks.
 
@@ -373,10 +373,10 @@ The socket callbacks then check the server's certificate against it:
 The chain and the host name are checked in full either way: the clock only
 decides the validity period.
 
-The socket callbacks of the [Linux](../tio/linux-sample/sock_cb_linux.c) and
-[Win32](../tio/win32-sample/sock_cb_win32.c) samples give their TLS stack the
-time, and those of the [ESP32](../tio/esp32-sample/main/sock_cb_esp32.c) and
-[FreeRTOS](../tio/freertos-sample/sock_cb_freertos.c) samples check the
+The socket callbacks of the [Linux](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c) and
+[Win32](https://github.com/KiiPlatform/ebisu/blob/master/tio/win32-sample/sock_cb_win32.c) samples give their TLS stack the
+time, and those of the [ESP32](https://github.com/KiiPlatform/ebisu/blob/master/tio/esp32-sample/main/sock_cb_esp32.c) and
+[FreeRTOS](https://github.com/KiiPlatform/ebisu/blob/master/tio/freertos-sample/sock_cb_freertos.c) samples check the
 validity periods themselves, mbedTLS not checking them: the ESP32 one after the
 handshake, the FreeRTOS one during it, in mbedTLS's verify callback.
 
