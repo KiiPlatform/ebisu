@@ -58,6 +58,12 @@ For more details, please refer to [./jkii/README.md](./jkii/README.md)
 Details of API are available in [API references](https://kiiplatform.github.io/ebisu/),
 for each major version.
 
+## Breaking changes
+
+[UPGRADING.md](./UPGRADING.md) lists what an application has to change or check
+for each major version. For 3.0, most need one edit, to the port their connect
+callback takes, and a rebuild.
+
 ## Building
 
 The project is a single CMake project, which needs CMake 3.15. Configure and
