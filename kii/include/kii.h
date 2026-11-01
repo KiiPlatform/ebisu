@@ -535,6 +535,19 @@ void kii_enable_insecure_mqtt(
         kii_bool_t enable_insecure_mqtt);
 
 /**
+ * \brief Send the whole URL in HTTP request lines.
+ *
+ * By default, requests carry the path, with the host in the Host header. A
+ * forward proxy that requests go through in plain HTTP takes the URL instead,
+ * and needs this method. See khc_enable_absolute_target().
+ * \param [out] kii kii_t instance.
+ * \param [in] enable_absolute_target KII_TRUE for the whole URL.
+ */
+void kii_enable_absolute_target(
+        kii_t* kii,
+        kii_bool_t enable_absolute_target);
+
+/**
  * \brief Authorize thing with vendor thing id and password.
  * After the authentication, access token is stored in
  * kii instance and used to authorize other API calls.

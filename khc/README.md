@@ -11,9 +11,10 @@ callbacks and a buffer of fixed size, so neither has to fit in memory.
 ## Supported features
 
 - **Requests**: any method, sent to the host's port 443, or 80 when
-  `khc_enable_insecure()` is set. The request line carries the whole URL, as in
-  `GET https://api.kii.com/path HTTP/1.1`, followed by a `HOST` header and the
-  application's headers.
+  `khc_enable_insecure()` is set. The request line carries the path, as in
+  `GET /path HTTP/1.1`, followed by a `HOST` header and the application's
+  headers. `khc_enable_absolute_target()` has it carry the whole URL instead, for
+  a forward proxy that requests go through in plain HTTP.
 - **Request bodies**: sent with `Transfer-Encoding: chunked`, one chunk for
   each call to the read callback, until it returns 0. Without a read callback,
   the request is sent with `Content-Length: 0`. `GET`, `HEAD` and `DELETE`
@@ -36,7 +37,8 @@ callbacks and a buffer of fixed size, so neither has to fit in memory.
   the connection, blocking until it is done.
 - **Nothing beyond HTTP framing**: redirects are not followed, and `3xx`
   responses reach the caller like any other. There's no support for
-  compression, cookies or proxies. Authorization and content types are headers
+  compression or cookies, nor for proxies beyond
+  `khc_enable_absolute_target()`. Authorization and content types are headers
   the application sets.
 - **Transfer codings**: a response whose last transfer coding is not
   `chunked` is refused with `KHC_ERR_HEADER_CALLBACK`, as is one with a

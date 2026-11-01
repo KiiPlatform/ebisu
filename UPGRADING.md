@@ -202,6 +202,12 @@ khc, which kii and tio report in their own codes:
   callback, the write callback or the header callback isn't set. 2.0 crashed on
   reaching it.
 - GET, HEAD and DELETE send no body, and don't call the read callback.
+- Request lines carry the path, as in `POST /path HTTP/1.1`, with the host in the
+  `Host` header, which is what a server expects. 2.0 sent the whole URL, as in
+  `POST https://host/path HTTP/1.1`. A forward proxy that requests go through in
+  plain HTTP needs the URL: ask for it with `khc_enable_absolute_target()`,
+  `kii_enable_absolute_target()`, `tio_handler_enable_absolute_target()` or
+  `tio_updater_enable_absolute_target()`.
 
 jkii:
 

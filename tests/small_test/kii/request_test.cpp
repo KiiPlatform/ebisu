@@ -297,3 +297,56 @@ TEST_CASE( "kii_api_call_append_header takes what fits in the buffer" ) {
     const std::string too_long = largest + "v";
     CHECK( kii_api_call_append_header(&kii, "k", too_long.c_str()) == KII_ERR_TOO_LARGE_DATA );
 }
+
+// Each request starts by resetting khc, which has to leave this as it is.
+TEST_CASE( "kii_enable_absolute_target holds for every request" ) {
+    char kii_buff[1024];
+
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+
+    std::string request;
+    const std::string resp = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n";
+    size_t resp_pos = 0;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&](void*, const char*, unsigned int) {
+        request.clear();
+        resp_pos = 0;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_send = [&request](void*, const char* buffer, size_t length, size_t* out_sent_length) {
+        request.append(buffer, length);
+        *out_sent_length = length;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_recv = [&](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        *out_actual_length = resp.copy(buffer, length_to_read, resp_pos);
+        resp_pos += *out_actual_length;
+        return KHC_SOCK_OK;
+    };
+    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
+    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
+    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+
+    SECTION("not by default") {
+        REQUIRE( kii_api_call_start(&kii, "GET", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );
+        REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
+        CHECK( request.find("GET /api/x HTTP/1.1\r\n") == 0 );
+        CHECK( count(request, "HOST: api.kii.com\r\n") == 1 );
+    }
+
+    SECTION("when asked") {
+        kii_enable_absolute_target(&kii, KII_TRUE);
+        for (int i = 0; i < 2; ++i) {
+            INFO("request " << i);
+            REQUIRE( kii_api_call_start(&kii, "GET", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );
+            REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
+            CHECK( request.find("GET https://api.kii.com/api/x HTTP/1.1\r\n") == 0 );
+        }
+    }
+}

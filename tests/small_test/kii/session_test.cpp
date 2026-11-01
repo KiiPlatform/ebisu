@@ -108,8 +108,8 @@ kii_author_t held(kii_session_t* session) {
     return author;
 }
 
-const char REQ_LINE[] = "PUT https://api.kii.com/api/apps/app/things/th.1/x HTTP/1.1";
-const char TOKEN_LINE[] = "POST https://api.kii.com/api/apps/app/oauth2/token HTTP/1.1";
+const char REQ_LINE[] = "PUT /api/apps/app/things/th.1/x HTTP/1.1";
+const char TOKEN_LINE[] = "POST /api/apps/app/oauth2/token HTTP/1.1";
 const char BODY[] = "{\"k\":\"v\"}";
 
 std::string refreshed(const char* access_token, const char* refresh_token, int64_t expires_in) {
@@ -602,7 +602,7 @@ TEST_CASE( "A streamed body is not sent again, but the token is renewed" ) {
     c.http.responses.push_back(http_response(204, ""));
     REQUIRE( kii_ti_put_state(&c.kii, read_state, &reader, NULL, NULL, NULL) == KII_ERR_OK );
     REQUIRE( c.http.requests.size() == 3 );
-    REQUIRE( contains(c.http.requests[2], "PUT https://api.kii.com/thing-if/apps/app/targets/thing:th.1/states HTTP/1.1") );
+    REQUIRE( contains(c.http.requests[2], "PUT /thing-if/apps/app/targets/thing:th.1/states HTTP/1.1") );
     REQUIRE( contains(c.http.requests[2], "Authorization: Bearer at2\r\n") );
     REQUIRE( contains(c.http.requests[2], reader.state) );
 }
@@ -761,13 +761,13 @@ TEST_CASE( "A push message refused for its token is sent again" ) {
         REQUIRE( kii_send_push_message(&c.kii, &topic, message) == KII_ERR_OK );
         REQUIRE( c.http.requests.size() == 3 );
         REQUIRE( contains(c.http.requests[2],
-                "POST https://api.kii.com/api/apps/app/things/th.1/topics/my-topic/push/messages HTTP/1.1") );
+                "POST /api/apps/app/things/th.1/topics/my-topic/push/messages HTTP/1.1") );
     }
     SECTION("straight to the thing") {
         REQUIRE( kii_send_push_message_to_thing(&c.kii, "th.1", message) == KII_ERR_OK );
         REQUIRE( c.http.requests.size() == 3 );
         REQUIRE( contains(c.http.requests[2],
-                "POST https://api.kii.com/api/apps/app/things/th.1/push/messages HTTP/1.1") );
+                "POST /api/apps/app/things/th.1/push/messages HTTP/1.1") );
     }
     REQUIRE( contains(c.http.requests[0], "Authorization: Bearer at1\r\n") );
     REQUIRE( contains(c.http.requests[1], "\"refresh_token\":\"rt1\"") );
@@ -781,7 +781,7 @@ std::string onboarded(const char* access_token) {
     return http_response(200, std::string("{\"accessToken\":\"") + access_token +
             "\",\"thingID\":\"th.1\",\"mqttEndpoint\":{\"installationID\":\"ins1\"}}");
 }
-const char ONBOARDING_LINE[] = "POST https://api.kii.com/thing-if/apps/app/onboardings HTTP/1.1";
+const char ONBOARDING_LINE[] = "POST /thing-if/apps/app/onboardings HTTP/1.1";
 
 bool onboarding_again(const std::string& onboarding) {
     return contains(onboarding, ONBOARDING_LINE) &&
@@ -1130,7 +1130,7 @@ std::string endpoint(const char* username) {
 }
 
 const char ENDPOINT_LINE[] =
-    "GET https://api.kii.com/api/apps/app/installations/ins1/mqtt-endpoint HTTP/1.1";
+    "GET /api/apps/app/installations/ins1/mqtt-endpoint HTTP/1.1";
 
 // Every failed receive is a lost connection, not a timeout.
 kii_bool_t cb_recv_never_timed_out(void*) {

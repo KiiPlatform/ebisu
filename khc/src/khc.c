@@ -108,6 +108,7 @@ void khc_init(khc* khc) {
 
     // User settings.
     khc->_enable_insecure = false;
+    khc->_absolute_target = false;
     // A week's margin, for a committer whose clock was a little ahead.
     khc->_resp_date_floor = EBISU_SOURCE_TIME - 7 * 86400;
 
@@ -158,6 +159,12 @@ void khc_enable_insecure(
         khc* khc,
         bool enable_insecure) {
     khc->_enable_insecure = enable_insecure;
+}
+
+void khc_enable_absolute_target(
+        khc* khc,
+        bool enable_absolute_target) {
+    khc->_absolute_target = enable_absolute_target;
 }
 
 uint16_t khc_get_status_code(

@@ -230,6 +230,13 @@ void tio_handler_enable_insecure_mqtt(
     kii_enable_insecure_mqtt(&handler->_kii, enable_insecure_mqtt);
 }
 
+void tio_handler_enable_absolute_target(
+        tio_handler_t* handler,
+        tio_bool_t enable_absolute_target)
+{
+    kii_enable_absolute_target(&handler->_kii, enable_absolute_target);
+}
+
 static void _cb_receive_push(const char* payload, size_t payload_length, void* userdata) {
     tio_handler_t* handler = (tio_handler_t*)userdata;
     tio_bool_t skip = KII_FALSE;
@@ -491,6 +498,13 @@ void tio_updater_enable_insecure_http(
         tio_bool_t enable_insecure_http)
 {
     kii_enable_insecure_http(&updater->_kii, enable_insecure_http);
+}
+
+void tio_updater_enable_absolute_target(
+        tio_updater_t* updater,
+        tio_bool_t enable_absolute_target)
+{
+    kii_enable_absolute_target(&updater->_kii, enable_absolute_target);
 }
 
 static kii_code_t _put_state(tio_updater_t* updater)

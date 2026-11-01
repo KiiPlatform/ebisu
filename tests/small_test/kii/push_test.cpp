@@ -67,7 +67,7 @@ TEST_CASE( "kii_send_push_message posts the message to the topic" ) {
         REQUIRE( kii_send_push_message(&kii, &topic, message.c_str()) == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 201 );
 
-        const std::string request_line = "POST https://api.kii.com"
+        const std::string request_line = "POST "
             "/api/apps/dummyAppID/things/th.1/topics/my-topic/push/messages HTTP/1.1\r\n";
         REQUIRE( sent.compare(0, request_line.size(), request_line) == 0 );
         CHECK( sent.find("\r\nContent-Type: application/vnd.kii.SendPushMessageRequest+json\r\n") != std::string::npos );
@@ -89,7 +89,7 @@ TEST_CASE( "kii_send_push_message posts the message to the topic" ) {
         resp = response("201 Created", "{\"pushMessageID\":\"pm.1\"}");
 
         REQUIRE( kii_send_push_message(&kii, &topic, message.c_str()) == KII_ERR_OK );
-        const std::string request_line = "POST https://api.kii.com"
+        const std::string request_line = "POST "
             "/api/apps/dummyAppID/topics/app-topic/push/messages HTTP/1.1\r\n";
         REQUIRE( sent.compare(0, request_line.size(), request_line) == 0 );
     }
@@ -100,7 +100,7 @@ TEST_CASE( "kii_send_push_message posts the message to the topic" ) {
         resp = response("201 Created", "{\"pushMessageID\":\"pm.1\"}");
 
         REQUIRE( kii_send_push_message(&kii, &topic, message.c_str()) == KII_ERR_OK );
-        const std::string request_line = "POST https://api.kii.com"
+        const std::string request_line = "POST "
             "/api/apps/dummyAppID/users/user.1/topics/my-topic/push/messages HTTP/1.1\r\n";
         REQUIRE( sent.compare(0, request_line.size(), request_line) == 0 );
     }
@@ -135,7 +135,7 @@ TEST_CASE( "kii_send_push_message posts the message to the topic" ) {
         REQUIRE( kii_send_push_message_to_thing(&kii, "th.2", message.c_str()) == KII_ERR_OK );
         REQUIRE( khc_get_status_code(&kii._khc) == 201 );
 
-        const std::string request_line = "POST https://api.kii.com"
+        const std::string request_line = "POST "
             "/api/apps/dummyAppID/things/th.2/push/messages HTTP/1.1\r\n";
         REQUIRE( sent.compare(0, request_line.size(), request_line) == 0 );
         CHECK( sent.find("\r\nContent-Type: application/vnd.kii.SendPushMessageRequest+json\r\n") != std::string::npos );
