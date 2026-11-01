@@ -104,6 +104,8 @@ Without CMake, as a vendor's build usually does:
   Makefiles of the embedded samples do.
 - Under `ERRNO_HACK_NEEDED`, `jkii_utils.h` no longer defines `errno`, `EINVAL`
   and `ERANGE`. Code that took them from there has to define its own.
+- `tio/wiced-sample` is gone. It was only a sample, and nothing in the libraries
+  depends on it.
 
 With CMake:
 
