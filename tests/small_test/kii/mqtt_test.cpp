@@ -4,6 +4,7 @@
 #include "kii.h"
 #include "kii_mqtt_task.h"
 #include "http_script.h"
+#include "task_needs.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -2560,6 +2561,7 @@ struct TaskCreateCtx {
     int calls;
     std::string name;
     void* entry_param;
+    KII_TASK_ENTRY entry;
 };
 
 static kii_task_code_t mock_task_create(const char* name, KII_TASK_ENTRY entry, void* entry_param, void* userdata)
@@ -2568,6 +2570,7 @@ static kii_task_code_t mock_task_create(const char* name, KII_TASK_ENTRY entry, 
     ++ctx->calls;
     ctx->name = name;
     ctx->entry_param = entry_param;
+    ctx->entry = entry;
     return ctx->result;
 }
 
@@ -2576,8 +2579,10 @@ static kii_task_code_t mock_task_create(const char* name, KII_TASK_ENTRY entry, 
 // KII_ERR_OK even when no task had been created, and called through the
 // callback without checking that one had been set.
 TEST_CASE( "kii_start_push_task reports a task it could not create" ) {
+    char buff[64];
     kii_t kii;
     kii_init(&kii);
+    khct::set_push_needs(&kii, buff, sizeof(buff));
 
     SECTION("task created") {
         TaskCreateCtx ctx = { KII_TASKC_OK, 0 };
@@ -2597,6 +2602,112 @@ TEST_CASE( "kii_start_push_task reports a task it could not create" ) {
 
     SECTION("no task-create callback") {
         CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_CREATE_TASK );
+    }
+}
+
+// The task uses all of this without checking, so one left out crashed it
+// whenever it got there, after kii_start_push_task() had returned KII_ERR_OK.
+TEST_CASE( "kii_start_push_task needs what the task uses" ) {
+    char buff[64];
+    kii_t kii;
+    kii_init(&kii);
+    khct::set_push_needs(&kii, buff, sizeof(buff));
+    TaskCreateCtx ctx = { KII_TASKC_OK, 0 };
+    kii_set_cb_task_create(&kii, mock_task_create, &ctx);
+
+    const struct {
+        const char* left_out;
+        std::function<void(kii_t*)> unset;
+    } cases[] = {
+        { "delay", [](kii_t* k) { kii_set_cb_delay_ms(k, NULL, NULL); } },
+        { "HTTP connect", [](kii_t* k) { kii_set_cb_http_sock_connect(k, NULL, NULL); } },
+        { "HTTP send", [](kii_t* k) { kii_set_cb_http_sock_send(k, NULL, NULL); } },
+        { "HTTP recv", [](kii_t* k) { kii_set_cb_http_sock_recv(k, NULL, NULL); } },
+        { "HTTP close", [](kii_t* k) { kii_set_cb_http_sock_close(k, NULL, NULL); } },
+        { "MQTT connect", [](kii_t* k) { kii_set_cb_mqtt_sock_connect(k, NULL, NULL); } },
+        { "MQTT send", [](kii_t* k) { kii_set_cb_mqtt_sock_send(k, NULL, NULL); } },
+        { "MQTT recv", [](kii_t* k) { kii_set_cb_mqtt_sock_recv(k, NULL, NULL); } },
+        { "MQTT close", [](kii_t* k) { kii_set_cb_mqtt_sock_close(k, NULL, NULL); } },
+        { "buffer", [](kii_t* k) { kii_set_buff(k, NULL, 0); } },
+        { "MQTT buffer", [](kii_t* k) { kii_set_mqtt_buff(k, NULL, 0); } },
+    };
+    const kii_t complete = kii;
+    for (const auto& c : cases) {
+        INFO("left out " << c.left_out);
+        c.unset(&kii);
+        CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_FAIL );
+        CHECK( ctx.calls == 0 );
+        kii = complete;
+    }
+
+    CHECK( kii_start_push_task(&kii, 300, NULL, NULL) == KII_ERR_FAIL );
+    CHECK( ctx.calls == 0 );
+
+    CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_OK );
+    CHECK( ctx.calls == 1 );
+}
+
+static kii_bool_t stop_task(void*, void*) {
+    return KII_FALSE;
+}
+
+struct RestartCtx {
+    kii_t* kii;
+    kii_code_t result;
+};
+
+static void restart_on_exit(void*, void* userdata) {
+    RestartCtx* ctx = (RestartCtx*)userdata;
+    ctx->result = kii_start_push_task(ctx->kii, 300, khct::cb::cb_push, NULL);
+}
+
+// A second task would share the first's sockets and buffers. Its exit is where
+// an application gets to start it again.
+TEST_CASE( "kii_start_push_task refuses while its task is running" ) {
+    char buff[64];
+    kii_t kii;
+    kii_init(&kii);
+    khct::set_push_needs(&kii, buff, sizeof(buff));
+    kii_set_cb_task_continue(&kii, stop_task, NULL);
+    TaskCreateCtx ctx = { KII_TASKC_OK, 0 };
+    kii_set_cb_task_create(&kii, mock_task_create, &ctx);
+
+    SECTION("until it has ended") {
+        REQUIRE( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_OK );
+
+        CHECK( kii_start_push_task(&kii, 60, khct::cb::cb_push, NULL) == KII_ERR_FAIL );
+        CHECK( ctx.calls == 1 );
+        CHECK( kii._keep_alive_interval == 300 );
+
+        ctx.entry(ctx.entry_param);
+        CHECK( kii_start_push_task(&kii, 60, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        CHECK( ctx.calls == 2 );
+        CHECK( kii._keep_alive_interval == 60 );
+    }
+
+    SECTION("but not from its exit callback") {
+        RestartCtx restart = { &kii, KII_ERR_FAIL };
+        kii_set_cb_task_exit(&kii, restart_on_exit, &restart);
+        REQUIRE( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_OK );
+
+        ctx.entry(ctx.entry_param);
+        CHECK( restart.result == KII_ERR_OK );
+        CHECK( ctx.calls == 2 );
+    }
+
+    SECTION("but not after a task that could not be created") {
+        ctx.result = KII_TASKC_FAIL;
+        REQUIRE( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_CREATE_TASK );
+
+        ctx.result = KII_TASKC_OK;
+        CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_OK );
+    }
+
+    SECTION("but not after kii_init()") {
+        REQUIRE( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_OK );
+
+        kii_init(&kii);
+        CHECK( kii._push_task_running == KII_FALSE );
     }
 }
 
@@ -2724,8 +2835,7 @@ TEST_CASE( "MQTT keep-alive interval range" ) {
 
     kii_t kii;
     kii_init(&kii);
-    kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
-    kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
+    khct::set_push_needs(&kii, mqtt_buff, sizeof(mqtt_buff));
     int call_task_create = 0;
     kii_set_cb_task_create(&kii, count_task_create, &call_task_create);
 
@@ -2753,6 +2863,8 @@ TEST_CASE( "MQTT keep-alive interval range" ) {
             call_task_create = 0;
             CHECK( kii_start_push_task(&kii, c.interval, khct::cb::cb_push, NULL) == KII_ERR_OK );
             CHECK( call_task_create == 1 );
+            // The callback runs no task, which would have said so when it ended.
+            kii._push_task_running = KII_FALSE;
 
             mqtt_state_t state;
             _init_mqtt_state(&kii, &state);

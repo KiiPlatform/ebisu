@@ -3,6 +3,7 @@
 #include "tio_impl.h"
 #include "command_parser.h"
 #include "http_script.h"
+#include "task_needs.h"
 
 #include <string>
 #include <vector>
@@ -190,8 +191,10 @@ TEST_CASE( "With a session, start takes the session's author" ) {
     kii_session_t session;
     init_session(&session, &platform);
 
+    char buff[64];
     tio_handler_t handler;
     tio_handler_init(&handler);
+    khct::set_push_needs(&handler._kii, buff, sizeof(buff));
     tio_handler_set_cb_task_create(&handler, cb_task_not_started, NULL);
     REQUIRE( tio_handler_set_session(&handler, &session) == TIO_ERR_OK );
 
@@ -208,6 +211,7 @@ TEST_CASE( "With a session, start takes the session's author" ) {
 
     tio_updater_t updater;
     tio_updater_init(&updater);
+    khct::set_updater_needs(&updater._kii, buff, sizeof(buff));
     tio_updater_set_cb_task_create(&updater, cb_task_not_started, NULL);
     tio_updater_set_interval(&updater, 60);
     REQUIRE( tio_updater_set_session(&updater, &session) == TIO_ERR_OK );

@@ -250,6 +250,7 @@ typedef struct tio_updater_t {
     void* _task_continue_data; /**< \private **/
     KII_CB_TASK_EXIT _cb_task_exit; /**< \private **/
     void* _task_exit_data; /**< \private **/
+    tio_bool_t _task_running; /**< \private **/
 } tio_updater_t;
 
 /**
@@ -783,9 +784,16 @@ tio_code_t tio_handler_set_clock(tio_handler_t* handler, kii_clock_t* clock);
  * set by tio_handler_set_session(): the session's author is used.
  * \param [in] cb_action Action callback called when received remote controll command.
  * \param [in] userdata Context object pointer passed to cb_action.
- * \return tio_code_t. TIO_ERR_FAIL if the Keep-Alive interval set by
- * tio_handler_set_keep_alive_interval() is larger than 65535, or if author is
- * NULL and no session is set.
+ * \return tio_code_t. TIO_ERR_FAIL, with no task started, if the Keep-Alive
+ * interval set by tio_handler_set_keep_alive_interval() is larger than 65535,
+ * if author is NULL and no session is set, if cb_action, the callback set by
+ * tio_handler_set_cb_delay_ms(), a socket callback or a buffer it needs is not
+ * set, or if the task of an earlier start is still running. That task runs
+ * until the callback set by tio_handler_set_cb_task_continue() ends it, or an
+ * error does, and has finished by the time the callback set by
+ * tio_handler_set_cb_task_exit() is called, which may start it again. A task
+ * ended any other way, such as by killing its thread, needs tio_handler_init()
+ * before starting again.
  */
 tio_code_t tio_handler_start(
         tio_handler_t* handler,
@@ -1224,9 +1232,15 @@ tio_code_t tio_updater_set_clock(tio_updater_t* updater, kii_clock_t* clock);
  * \param [in] state_size_data Context object pointer passed to cb_state_size.
  * \param [in] cb_read_state Callback read state of the device.
  * \param [in] read_state_data Context object pointer passed to cb_read_state.
- * \return TIO_ERR_OK when succeeded to start task. TIO_ERR_FAIL if author is
- * NULL and no session is set, or if no interval is set by
- * tio_updater_set_interval().
+ * \return TIO_ERR_OK when succeeded to start task. TIO_ERR_FAIL, with no task
+ * started, if author is NULL and no session is set, if no interval is set by
+ * tio_updater_set_interval(), if cb_state_size, cb_read_state, the callback set
+ * by tio_updater_set_cb_delay_ms(), a socket callback or the buffer is not set,
+ * or if the task of an earlier start is still running. That task runs until the
+ * callback set by tio_updater_set_cb_task_continue() ends it, and has finished
+ * by the time the callback set by tio_updater_set_cb_task_exit() is called,
+ * which may start it again. A task ended any other way, such as by killing its
+ * thread, needs tio_updater_init() before starting again.
  */
 tio_code_t tio_updater_start(
         tio_updater_t* updater,

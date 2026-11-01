@@ -829,6 +829,8 @@ void* mqtt_start_task(void* sdata)
         kii->_cb_mqtt_sock_close_cb(kii->_mqtt_sock_close_ctx);
         state.sock_connected = KII_FALSE;
     }
+    // Before the callback, which may start the task again.
+    kii->_push_task_running = KII_FALSE;
     if (kii->_cb_task_exit != NULL) {
         kii->_cb_task_exit(&state.info, kii->_task_exit_data);
     }

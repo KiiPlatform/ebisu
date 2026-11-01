@@ -420,6 +420,7 @@ typedef struct kii_t {
     size_t _mqtt_buffer_size; /**< \private */
 
     uint16_t _keep_alive_interval; /**< \private */
+    kii_bool_t _push_task_running; /**< \private */
 
     char* _rw_buff; /**< \private */
     size_t _rw_buff_size; /**< \private */
@@ -1184,8 +1185,15 @@ kii_code_t kii_get_mqtt_endpoint(
  * than cut down to its low 16 bits where the function is called.
  * \param [in] cb_push  Callback called when push message delivered.
  * \param [in] userdata Context object passed to cb_push.
- * \return kii_code_t. KII_ERR_FAIL if keep_alive_interval_sec is larger than
- * 65535, and the task is not started.
+ * \return kii_code_t. KII_ERR_FAIL, with no task started, if
+ * keep_alive_interval_sec is larger than 65535, if cb_push, the callback set by
+ * kii_set_cb_delay_ms(), a socket callback or a buffer it needs is not set, or
+ * if the task of an earlier start is still running. That task runs until the
+ * callback set by kii_set_cb_task_continue() ends it, or an error does, and has
+ * finished by the time the callback set by kii_set_cb_task_exit() is called,
+ * which may start it again. A task ended any other way, such as by killing its
+ * thread, needs kii_init() before starting again. KII_ERR_CREATE_TASK if no
+ * callback is set by kii_set_cb_task_create(), or it fails.
  */
 kii_code_t kii_start_push_task(
 		kii_t* kii,
