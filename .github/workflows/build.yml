@@ -351,6 +351,8 @@ jobs:
         run: cmake --preset debug -DBUILD_TESTING=OFF
       - name: version header
         run: tests/samples/check_version_header.sh build/debug/generated/ebisu_version.h
+      - name: version in a source archive
+        run: tests/samples/check_archive_version.sh build/debug/generated/ebisu_version.h
       - name: build the samples' ebisu sources
         run: tests/samples/cross_build.sh
 
