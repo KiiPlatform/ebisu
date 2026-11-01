@@ -21,6 +21,17 @@ void _kii_clock_record(kii_t* kii);
 
 int _parse_etag(char* header, size_t header_len, char* buff, size_t buff_len);
 
+/* Appends to the request body being built in the buffer, of length len so far:
+ * before, value escaped for a JSON string, and after. Returns the new length,
+ * or -1 if that doesn't fit, or if len is -1 already, so that calls can be
+ * chained and checked once. */
+int _kii_body_append(
+        kii_t* kii,
+        int len,
+        const char* before,
+        const char* value,
+        const char* after);
+
 extern const char _APP_KEY_HEADER[];
 extern const char _CONTENT_LENGTH_ZERO[];
 

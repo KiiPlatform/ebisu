@@ -80,6 +80,56 @@ TEST_CASE( "Thing requests send the values they are given" ) {
     const char password[] = "a/password\"much-longer-than-the-vendor-thing-id";
     const std::string esc_password = "a\\/password\\\"much-longer-than-the-vendor-thing-id";
 
+    // Six bytes each, which is more than the requests used to make room for.
+    const char control_chars[] = "\x01\x02\x03\x04";
+    const std::string esc_control_chars = "\\u0001\\u0002\\u0003\\u0004";
+
+    SECTION("kii_auth_thing with control characters") {
+        responses.push_back(ok_response("{\"id\":\"th.1\",\"access_token\":\"tok\"}"));
+
+        kii_code_t res = kii_auth_thing(&kii, control_chars, control_chars);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( sent.find("\"username\":\"VENDOR_THING_ID:" + esc_control_chars + "\"") != std::string::npos );
+        REQUIRE( sent.find("\"password\":\"" + esc_control_chars + "\"") != std::string::npos );
+    }
+
+    SECTION("kii_register_thing with control characters") {
+        responses.push_back(ok_response("{\"_thingID\":\"th.1\",\"_accessToken\":\"tok\"}"));
+
+        kii_code_t res = kii_register_thing(&kii, control_chars, control_chars, control_chars);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( sent.find("{\"_vendorThingID\":\"" + esc_control_chars + "\", "
+                    "\"_thingType\":\"" + esc_control_chars + "\", "
+                    "\"_password\":\"" + esc_control_chars + "\"}") != std::string::npos );
+    }
+
+    SECTION("kii_ti_onboard with control characters") {
+        responses.push_back(ok_response("{\"thingID\":\"th.1\",\"accessToken\":\"tok\"}"));
+
+        kii_code_t res = kii_ti_onboard(&kii, control_chars, control_chars,
+                control_chars, control_chars, control_chars, NULL);
+
+        REQUIRE( res == KII_ERR_OK );
+        REQUIRE( sent.find("{\"vendorThingID\":\"" + esc_control_chars + "\","
+                    "\"thingPassword\":\"" + esc_control_chars + "\","
+                    "\"thingType\":\"" + esc_control_chars + "\","
+                    "\"firmwareVersion\":\"" + esc_control_chars + "\","
+                    "\"layoutPosition\":\"" + esc_control_chars + "\"") != std::string::npos );
+    }
+
+    SECTION("a value that does not fit in the buffer") {
+        const std::string too_long(sizeof(kii_buff), 'x');
+
+        CHECK( kii_auth_thing(&kii, too_long.c_str(), password) == KII_ERR_TOO_LARGE_DATA );
+        CHECK( kii_auth_thing(&kii, vendor_thing_id, too_long.c_str()) == KII_ERR_TOO_LARGE_DATA );
+        CHECK( kii_register_thing(&kii, vendor_thing_id, too_long.c_str(), password) == KII_ERR_TOO_LARGE_DATA );
+        CHECK( kii_ti_onboard(&kii, vendor_thing_id, password, too_long.c_str(), NULL, NULL, NULL) == KII_ERR_TOO_LARGE_DATA );
+        CHECK( kii_ti_put_firmware_version(&kii, too_long.c_str()) == KII_ERR_TOO_LARGE_DATA );
+        CHECK( sent.empty() );
+    }
+
     SECTION("kii_auth_thing") {
         responses.push_back(ok_response("{\"id\":\"th.1\",\"access_token\":\"tok\"}"));
 

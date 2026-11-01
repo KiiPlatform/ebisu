@@ -276,3 +276,24 @@ TEST_CASE( "A response too large for the buffer is reported as such" ) {
         CHECK( kii_api_call_run(&kii) == KII_ERR_TOO_LARGE_DATA );
     }
 }
+
+// Put together on the stack of the task making the request, so its length can't
+// be left to whatever the application passes.
+TEST_CASE( "kii_api_call_append_header takes what fits in the buffer" ) {
+    char kii_buff[256];
+
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+
+    REQUIRE( kii_api_call_start(&kii, "POST", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );
+
+    // "k: " and the terminator.
+    const std::string largest(sizeof(kii_buff) - strlen("k: ") - 1, 'v');
+    CHECK( kii_api_call_append_header(&kii, "k", largest.c_str()) == KII_ERR_OK );
+
+    const std::string too_long = largest + "v";
+    CHECK( kii_api_call_append_header(&kii, "k", too_long.c_str()) == KII_ERR_TOO_LARGE_DATA );
+}

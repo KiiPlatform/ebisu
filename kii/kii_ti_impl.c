@@ -2,7 +2,6 @@
 #include "kii_impl.h"
 #include "kii_req_impl.h"
 #include "jkii_wrapper.h"
-#include "jkii_utils.h"
 #include <string.h>
 
 kii_code_t _onboard(
@@ -40,76 +39,25 @@ kii_code_t _onboard(
     }
 
     // Request body.
-    int content_len = 0;
-    char esc_vid[strlen(vendor_thing_id) * 2 + 1];
-    char esc_pass[strlen(password) * 2 + 1];
-    // Unchecked, a failure would put something other than the value in the
-    // body: whatever was on the stack, if the buffer was never written.
-    if (jkii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid)) < 0 ||
-            jkii_escape_str(password, esc_pass, sizeof(esc_pass)) < 0) {
-        _req_headers_free_all(kii);
-        return KII_ERR_TOO_LARGE_DATA;
-    }
-
-    content_len += snprintf(
-            kii->_rw_buff,
-            kii->_rw_buff_size,
-            "{\"vendorThingID\":\"%s\",\"thingPassword\":\"%s\"",
-            esc_vid, esc_pass);
-    if (content_len >= kii->_rw_buff_size) {
-        _req_headers_free_all(kii);
-        return KII_ERR_TOO_LARGE_DATA;
-    }
-
+    int content_len = _kii_body_append(kii, 0,
+            "{\"vendorThingID\":\"", vendor_thing_id, "");
+    content_len = _kii_body_append(kii, content_len,
+            "\",\"thingPassword\":\"", password, "\"");
     if (thing_type != NULL) {
-        char esc[strlen(thing_type) * 2 + 1];
-        if (jkii_escape_str(thing_type, esc, sizeof(esc)) < 0) {
-            _req_headers_free_all(kii);
-            return KII_ERR_TOO_LARGE_DATA;
-        }
-        content_len += snprintf(
-                &kii->_rw_buff[content_len],
-                kii->_rw_buff_size - content_len,
-                ",\"thingType\":\"%s\"",
-                esc);
-        if (content_len >= kii->_rw_buff_size) {
-            _req_headers_free_all(kii);
-            return KII_ERR_TOO_LARGE_DATA;
-        }
+        content_len = _kii_body_append(kii, content_len,
+                ",\"thingType\":\"", thing_type, "\"");
     }
-
     if (firmware_version != NULL) {
-        char esc[strlen(firmware_version) * 2 + 1];
-        if (jkii_escape_str(firmware_version, esc, sizeof(esc)) < 0) {
-            _req_headers_free_all(kii);
-            return KII_ERR_TOO_LARGE_DATA;
-        }
-        content_len += snprintf(
-                &kii->_rw_buff[content_len],
-                kii->_rw_buff_size - content_len,
-                ",\"firmwareVersion\":\"%s\"",
-                esc);
-        if (content_len >= kii->_rw_buff_size) {
-            _req_headers_free_all(kii);
-            return KII_ERR_TOO_LARGE_DATA;
-        }
+        content_len = _kii_body_append(kii, content_len,
+                ",\"firmwareVersion\":\"", firmware_version, "\"");
     }
-
     if (layout_position != NULL) {
-        char esc[strlen(layout_position) * 2 + 1];
-        if (jkii_escape_str(layout_position, esc, sizeof(esc)) < 0) {
-            _req_headers_free_all(kii);
-            return KII_ERR_TOO_LARGE_DATA;
-        }
-        content_len += snprintf(
-                &kii->_rw_buff[content_len],
-                kii->_rw_buff_size - content_len,
-                ",\"layoutPosition\":\"%s\"",
-                esc);
-        if (content_len >= kii->_rw_buff_size) {
-            _req_headers_free_all(kii);
-            return KII_ERR_TOO_LARGE_DATA;
-        }
+        content_len = _kii_body_append(kii, content_len,
+                ",\"layoutPosition\":\"", layout_position, "\"");
+    }
+    if (content_len < 0) {
+        _req_headers_free_all(kii);
+        return KII_ERR_TOO_LARGE_DATA;
     }
 
     if (thing_properties != NULL) {
@@ -255,17 +203,9 @@ kii_code_t _put_firmware_version(
     }
 
     // Request body.
-    char esc[strlen(firmware_version) * 2 + 1];
-    if (jkii_escape_str(firmware_version, esc, sizeof(esc)) < 0) {
-        _req_headers_free_all(kii);
-        return KII_ERR_TOO_LARGE_DATA;
-    }
-    int content_len = snprintf(
-            kii->_rw_buff,
-            kii->_rw_buff_size,
-            "{\"firmwareVersion\":\"%s\"}",
-            esc);
-    if (content_len >= kii->_rw_buff_size) {
+    int content_len = _kii_body_append(kii, 0,
+            "{\"firmwareVersion\":\"", firmware_version, "\"}");
+    if (content_len < 0) {
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }

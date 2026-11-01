@@ -3,10 +3,47 @@
 #include "kii_req_impl.h"
 #include "kii_session_impl.h"
 #include "ebisu_version.h"
+#include "jkii_utils.h"
 #include <string.h>
 
 /* The SDK and its version, as git describe gives it for the tree built. */
 #define _SDK_INFO "sn=te;sv=" EBISU_VERSION_FULL
+
+/* Copies str to the buffer at len, and returns the new length, or -1. */
+static int _body_copy(kii_t* kii, int len, const char* str)
+{
+    size_t room = kii->_rw_buff_size - len;
+    size_t str_len = strlen(str);
+    if (str_len >= room) {
+        return -1;
+    }
+    memcpy(&kii->_rw_buff[len], str, str_len + 1);
+    return len + (int)str_len;
+}
+
+int _kii_body_append(
+        kii_t* kii,
+        int len,
+        const char* before,
+        const char* value,
+        const char* after)
+{
+    if (len < 0) {
+        return -1;
+    }
+    len = _body_copy(kii, len, before);
+    if (len < 0) {
+        return -1;
+    }
+    // Into the buffer itself: a value has to fit there anyway, and the
+    // application decides how long it is, so it can't size an array on the
+    // stack of the task making the request.
+    int escaped = jkii_escape_str(value, &kii->_rw_buff[len], kii->_rw_buff_size - len);
+    if (escaped < 0) {
+        return -1;
+    }
+    return _body_copy(kii, len + escaped, after);
+}
 
 static void _resource_cleanup(kii_t* kii)
 {
@@ -97,6 +134,12 @@ kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* v
     size_t key_len = strlen(key);
     size_t val_len = strlen(value);
     size_t buff_size = key_len + val_len + 3;
+    // Which goes on the stack of the task making the request, and the
+    // application decides how long it is.
+    if (buff_size > kii->_rw_buff_size) {
+        _req_headers_free_all(kii);
+        return KII_ERR_TOO_LARGE_DATA;
+    }
     char buff[buff_size];
 
     int header_len = snprintf(buff, buff_size, "%s: %s", key, value);
