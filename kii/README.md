@@ -275,6 +275,27 @@ What reaches the thing:
             "{\"data\":{\"level\":\"high\"},\"mqtt\":{\"enabled\":true}}");
   ```
 
+### Writing task callbacks
+
+What `kii` leaves to the task callbacks, with `linux-env` in the
+[Linux sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/linux-env/task_impl.c) to start from. The
+[khc README](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#writing-callbacks)
+has what socket callbacks have to do.
+
+- **Creating the task**: return `KII_TASKC_OK` only if it started. Nothing joins
+  a task, so a thread has to be detached, or it stays behind when the task ends.
+- **Delaying**: wait the whole time asked for, a signal or not. `msec` is a
+  `uint32_t`, so `usleep(msec * 1000)` overflows above about 71 minutes.
+- **Stopping the task**: have the continue callback return `KII_FALSE`, or let an
+  error end it. `kii_start_push_task()` refuses while the task is running, and a
+  task ended any other way, such as by killing its thread, needs `kii_init()`
+  before starting again.
+- **The exit callback**: the task has closed its connection by then, so only
+  free what the application owns. It may start the task again.
+- **The stack**: tasks making requests need room for each request header line,
+  and for a copy of `khc`, about 700 bytes on x86-64, when a
+  [session](#kii_session) renews a token.
+
 ## Thing-IF
 
 - `kii_ti_put_state()` and `kii_ti_patch_state()` upload the thing's state, and

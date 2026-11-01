@@ -47,9 +47,10 @@ callbacks and a buffer of fixed size, so neither has to fit in memory.
   than 255 and a method longer than 15 are refused with
   `KHC_ERR_TOO_LARGE_DATA`.
 - **Long response headers**: a header that doesn't fit in the response header
-  buffer is skipped without reaching the header callback. If it is
-  `Content-Length` or `Transfer-Encoding`, which `khc` needs, the request fails
-  with `KHC_ERR_HEADER_CALLBACK`.
+  buffer is skipped without reaching the header callback, which
+  `khc_get_resp_header_skipped()` tells. If it is `Content-Length` or
+  `Transfer-Encoding`, which `khc` needs, the request fails with
+  `KHC_ERR_TOO_LARGE_DATA`.
 
 ## Memory management
 
@@ -190,6 +191,42 @@ Implementations to start from:
 - [freertos-sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/freertos-sample/sock_cb_freertos.c): mbedTLS over
   FreeRTOS-Plus-TCP.
 
+## Writing callbacks
+
+What `khc` leaves to the callbacks, which it can't check. `linux-sample` is the
+one to read for what socket callbacks have to do.
+
+- **Timeouts**: `khc` bounds nothing itself, so a callback that blocks holds the
+  request for as long as it blocks. Give sockets a send and a receive timeout.
+  On Linux the send timeout bounds `connect()` too. Nothing here bounds looking
+  up the host, which takes as long as the system's resolver does.
+- **A timeout is `KHC_SOCK_FAIL`**: `khc` calls a callback that returned
+  `KHC_SOCK_AGAIN` again at once, so returning it for a timeout has a server
+  that stopped answering hold the request for ever. `KHC_SOCK_AGAIN` is for a
+  non-blocking socket, whose callback has to decide for itself when to give up.
+- **The end of the stream is `KHC_SOCK_OK` with 0 bytes**: that goes for a TLS
+  connection the server closes without a `close_notify` too, which servers
+  answering `Connection: Close` do. `linux-sample` shows how that looks to
+  OpenSSL.
+- **`SIGPIPE`**: sending on a connection the peer has closed raises `SIGPIPE`,
+  which ends the process. Ignore it, as `linux-sample` does in `main()`, or use
+  `MSG_NOSIGNAL` or `SO_NOSIGPIPE`. A TLS library sends on its own too, as
+  OpenSSL does when closing.
+- **Close after a failure**: the close callback is called on a connection that
+  has failed as well, so it has to cope with one. OpenSSL's `SSL_shutdown()`
+  must not be called after a fatal error, for one. What it returns doesn't change
+  the request's result.
+- **One request at a time**: a `khc` isn't re-entrant. Each task making requests
+  at the same time needs one of its own, with buffers and socket contexts of its
+  own.
+- **Callbacks running at once**: those of different tasks do, so whatever they
+  share needs locking. OpenSSL before 1.1.0 needs locking callbacks of its own,
+  which `linux-sample` sets up.
+- **Response size**: `khc` passes the body to the write callback as it arrives,
+  whatever its length. A callback that stores it has to set its own limit, by
+  handling fewer bytes than given, which ends the request with
+  `KHC_ERR_WRITE_CALLBACK`.
+
 ## Results
 
 `khc_perform()` returns `KHC_ERR_OK` once a response has been read, whatever
@@ -199,11 +236,11 @@ its status: a `404` or a `500` is a response like any other, and
 | Result | Cause |
 |---|---|
 | `KHC_ERR_SOCK_CONNECT`, `KHC_ERR_SOCK_SEND`, `KHC_ERR_SOCK_RECV` | A socket callback returned `KHC_SOCK_FAIL`. `KHC_ERR_SOCK_RECV` also means the connection closed before the response ended. |
-| `KHC_ERR_HEADER_CALLBACK` | The header callback handled fewer bytes than given, or the response's `Content-Length` or `Transfer-Encoding` is malformed, unsupported or too long for the response header buffer. |
+| `KHC_ERR_HEADER_CALLBACK` | The header callback handled fewer bytes than given, or the response's `Content-Length` or `Transfer-Encoding` is malformed or unsupported. |
 | `KHC_ERR_WRITE_CALLBACK` | The write callback handled fewer bytes than given. |
 | `KHC_ERR_ALLOCATION` | A buffer `khc` allocates could not be allocated. |
-| `KHC_ERR_TOO_LARGE_DATA` | The status line doesn't fit in the response header buffer, or a chunk size line in the stream buffer. |
-| `KHC_ERR_FAIL` | The status line or a chunk size is malformed. |
+| `KHC_ERR_TOO_LARGE_DATA` | The status line, `Content-Length` or `Transfer-Encoding` doesn't fit in the response header buffer, or a chunk size line in the stream buffer. |
+| `KHC_ERR_FAIL` | The status line or a chunk size is malformed, or a socket, header or write callback isn't set, in which case nothing was sent. |
 
 Closing the socket comes last and doesn't change the result, as the server may
 already have acted on the request. `khc_get_close_failed()` says whether the
