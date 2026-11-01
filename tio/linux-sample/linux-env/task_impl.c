@@ -1,6 +1,7 @@
 #include "task_impl.h"
+#include <errno.h>
 #include <pthread.h>
-#include <unistd.h>
+#include <time.h>
 
 kii_task_code_t task_create_cb(
         const char* name,
@@ -15,6 +16,9 @@ kii_task_code_t task_create_cb(
 
     if(ret == 0)
     {
+        /* Nothing joins a task, so its thread has to go by itself when it
+           ends. */
+        pthread_detach(pthid);
         return KII_TASKC_OK;
     }
     else
@@ -25,6 +29,11 @@ kii_task_code_t task_create_cb(
 
 void delay_ms_cb(uint32_t msec, void* userdata)
 {
-    usleep(msec * 1000);
+    struct timespec left;
+    left.tv_sec = msec / 1000;
+    left.tv_nsec = (long)(msec % 1000) * 1000000;
+    /* A signal ends the sleep early, with what was left in left. */
+    while (nanosleep(&left, &left) == -1 && errno == EINTR) {
+    }
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

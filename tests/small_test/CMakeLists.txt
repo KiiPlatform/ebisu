@@ -43,6 +43,15 @@ ebisu_add_test_suite(small_test_jkii
         jkii/src/jkii_test.cpp
     LINK ${EBISU_JKII_OBJS})
 
+# The Linux sample's task callbacks, which need threads and nothing else.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(small_test_tio_linux_sources
+        tio/task_impl_test.cpp
+        ${PROJECT_SOURCE_DIR}/tio/linux-sample/linux-env/task_impl.c)
+    set(small_test_tio_linux_libs Threads::Threads)
+    set(small_test_tio_linux_includes ${PROJECT_SOURCE_DIR}/tio/linux-sample/linux-env)
+endif()
+
 ebisu_add_test_suite(small_test_tio
     LABEL small
     WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tio
@@ -50,5 +59,9 @@ ebisu_add_test_suite(small_test_tio
         tio/command_parser_test.cpp
         tio/session_test.cpp
         tio/simple_test.cpp
-    LINK ${EBISU_TIO_OBJS}
-    INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/tio ${PROJECT_SOURCE_DIR}/tio)
+        ${small_test_tio_linux_sources}
+    LINK ${EBISU_TIO_OBJS} ${small_test_tio_linux_libs}
+    INCLUDES
+        ${CMAKE_CURRENT_SOURCE_DIR}/tio
+        ${PROJECT_SOURCE_DIR}/tio
+        ${small_test_tio_linux_includes})
