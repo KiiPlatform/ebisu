@@ -79,9 +79,8 @@ typedef enum jkii_parse_err_t {
     /** JSON string is successfully parsed but type of root object
      * type is unmatched to using function.
      *
-     * jkii_parse(jkii_t*, const char*, size_t,
-     * jkii_field_t*) requires JSON object if JSON array is
-     * passed, then this error is returned.
+     * jkii_validate_root_object() requires a JSON object, and returns this
+     * error for anything else.
      */
     JKII_ERR_ROOT_TYPE,
 
