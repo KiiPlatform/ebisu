@@ -300,6 +300,11 @@ const tio_author_t* tio_handler_get_author(tio_handler_t* handler)
     return &handler->_kii._author;
 }
 
+void tio_handler_copy_author(tio_handler_t* handler, tio_author_t* out_author)
+{
+    kii_get_author(&handler->_kii, out_author);
+}
+
 /* tio's tokens come from onboarding, and so are renewed by onboarding again,
  * through Thing-IF, as is the handler's MQTT endpoint. */
 static tio_code_t _set_session(kii_t* kii, kii_session_t* session)
@@ -599,6 +604,11 @@ const tio_author_t* tio_updater_get_author(
         tio_updater_t* updater)
 {
     return &updater->_kii._author;
+}
+
+void tio_updater_copy_author(tio_updater_t* updater, tio_author_t* out_author)
+{
+    kii_get_author(&updater->_kii, out_author);
 }
 
 tio_code_t tio_updater_set_session(tio_updater_t* updater, kii_session_t* session)
