@@ -130,6 +130,16 @@ Starting tasks:
   that was never set gives the same codes, and `TIO_ERR_CREATE_TASK` from
   `tio_updater_start()`.
 
+- `kii_start_push_task()`, `tio_handler_start()` and `tio_updater_start()` return
+  `KII_ERR_FAIL` or `TIO_ERR_FAIL` if something the task uses isn't set: the
+  callback they are given, or for tio the state reader, the delay callback, a
+  socket callback or a buffer. 2.0 started a task that crashed on reaching it.
+- They return the same while the task of an earlier start is still running,
+  where 2.0 started a second one on the same sockets and buffers. It stops
+  running just before its exit callback, which can start it again. A task ended
+  any other way, such as by killing its thread, needs `kii_init()`,
+  `tio_handler_init()` or `tio_updater_init()` before starting again.
+
 The push task:
 
 - It closes its MQTT connection before calling the exit callback. An exit

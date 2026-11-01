@@ -302,25 +302,53 @@ exit:
     return res;
 }
 
+/* What the task uses without checking, so that one left out is found when
+ * starting it, rather than as a crash in the task. */
+static kii_bool_t _push_task_can_run(const kii_t* kii)
+{
+    const khc* http = &kii->_khc;
+    return (kii->_cb_delay_ms != NULL &&
+            http->_cb_sock_connect != NULL &&
+            http->_cb_sock_send != NULL &&
+            http->_cb_sock_recv != NULL &&
+            http->_cb_sock_close != NULL &&
+            kii->_cb_mqtt_sock_connect != NULL &&
+            kii->_cb_mqtt_sock_send != NULL &&
+            kii->_cb_mqtt_sock_recv != NULL &&
+            kii->_cb_mqtt_sock_close_cb != NULL &&
+            kii->_rw_buff != NULL &&
+            kii->_mqtt_buffer != NULL) ? KII_TRUE : KII_FALSE;
+}
+
 kii_code_t kii_start_push_task(kii_t* kii, uint32_t keep_alive_interval, KII_PUSH_RECEIVED_CB callback, void* userdata)
 {
+    // A second task would share the first's sockets and buffers.
+    if (kii->_push_task_running == KII_TRUE) {
+        return KII_ERR_FAIL;
+    }
     // CONNECT carries the keep-alive in 16 bits. A longer one would reach the
     // broker cut down to its low 16 bits while the task pinged on the whole.
     // The parameter is wider than that so that such a value gets here whole.
     if (keep_alive_interval > 65535) {
         return KII_ERR_FAIL;
     }
-    kii->_keep_alive_interval = (uint16_t)keep_alive_interval;
-    kii->_cb_push_received = callback;
-    kii->_push_data = userdata;
     if (kii->_cb_task_create == NULL) {
         return KII_ERR_CREATE_TASK;
     }
+    if (callback == NULL || _push_task_can_run(kii) != KII_TRUE) {
+        return KII_ERR_FAIL;
+    }
+    kii->_keep_alive_interval = (uint16_t)keep_alive_interval;
+    kii->_cb_push_received = callback;
+    kii->_push_data = userdata;
+    // Before creating it, as it may have finished by the time that returns.
+    kii->_push_task_running = KII_TRUE;
     kii_task_code_t res = kii->_cb_task_create(KII_TASK_NAME_MQTT,
             mqtt_start_task,
             (void*)kii,
             kii->_task_create_data);
     if (res != KII_TASKC_OK) {
+        kii->_push_task_running = KII_FALSE;
         return KII_ERR_CREATE_TASK;
     }
     return KII_ERR_OK;
