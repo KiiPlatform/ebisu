@@ -9,9 +9,11 @@ each version's [release notes](https://github.com/KiiPlatform/ebisu/releases).
 Compared with 2.0.0. 3.0 has not been released yet, so this section follows
 `master`.
 
-For most applications this is one edit and a rebuild. No function, constant or
-public struct member of 2.0.0 was removed, and v2.0.0's Linux sample builds and
-links against this code once its connect callback is changed.
+For most applications this is two edits and a rebuild. v2.0.0's Linux sample
+builds and links against this code once its connect callback is changed and its
+call to a setter that did nothing is deleted. Those setters are the only
+functions of 2.0.0 that were removed, and no constant or public struct member
+was.
 
 ### Code that stops compiling
 
@@ -49,6 +51,11 @@ Either mismatch is an error in C++, and in C with GCC 14 or later. Older C
 compilers only warn, with `-Wincompatible-pointer-types`. Change the callback
 all the same: calling a function through the wrong type is undefined.
 
+**`kii_set_mqtt_to_sock_send()` and `tio_handler_set_mqtt_to_sock_send()` are
+gone.** Delete the call. They stored a value nothing read, in 2.0 as well, so
+this changes nothing at run time. An MQTT socket still needs a send timeout,
+which is the application's to set in its socket callbacks, as the samples do.
+
 ### Values whose type changed
 
 These still compile. Check anything that depends on their width: format
@@ -60,8 +67,7 @@ strings, pointers to them, and narrower variables they are stored in.
 | `khc_method_can_have_body()` | result | `int` | `bool` |
 | `khc_enable_insecure()` | `enable_insecure` | `int` | `bool` |
 | `kii_start_push_task()` | keep-alive | `unsigned int` | `uint32_t` |
-| `kii_set_mqtt_to_sock_recv()`, `kii_set_mqtt_to_sock_send()` | timeout | `unsigned int` | `uint32_t` |
-| `tio_handler_set_mqtt_to_sock_recv()`, `tio_handler_set_mqtt_to_sock_send()` | timeout | `unsigned int` | `uint32_t` |
+| `kii_set_mqtt_to_sock_recv()`, `tio_handler_set_mqtt_to_sock_recv()` | timeout | `unsigned int` | `uint32_t` |
 | `tio_handler_set_keep_alive_interval()`, `tio_updater_set_interval()` | interval | `size_t` | `uint32_t` |
 | `jkii_field_t`, `jkii_primitive_t` | `int_value` | `int` | `int32_t` |
 | `jkii_field_t`, `jkii_primitive_t`, `tio_action_value_t` | `long_value` | `long` | `int64_t` |
@@ -80,7 +86,7 @@ value above `UINT32_MAX` is cut down before anything can check it.
 - `libkii` and `libtio` move to `.so.3`. `libkhc` and `libjkii` had no version
   in their soname, and now have one, `libkhc.so.3` and `libjkii.so.3`, with the
   same files and links as `libkii`.
-- `kii_t`, `tio_handler_t` and `tio_updater_t` are about 750 bytes larger on
+- `kii_t`, `tio_handler_t` and `tio_updater_t` are about 700 bytes larger on
   x86-64, and `kii_author_t` goes from 256 to 384 bytes with `refresh_token`.
   Check any static memory or task stack that holds one.
 - A device that saved a `kii_author_t` as bytes can read 2.0's into a zeroed
@@ -196,4 +202,4 @@ With one:
 - A `TIO_CB_SIZE` callback has to restart its `TIO_CB_READ` reader whenever it is
   called, as the updater uploads again after a token is renewed.
 - A renewal keeps a copy of `khc` on the stack of the task making the request,
-  about 750 bytes on x86-64. Allow for it in that task's stack.
+  about 700 bytes on x86-64. Allow for it in that task's stack.
