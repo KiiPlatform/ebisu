@@ -1426,7 +1426,9 @@ kii_code_t kii_api_call_append_body(
  * \param [in] kii kii_t instance.
  * \param [in] key Key of http header.
  * \param [in] value Value of http header.
- * \return kii_code_t.
+ * \return kii_code_t. KII_ERR_TOO_LARGE_DATA if the header is longer than the
+ * buffer set by kii_set_buff(). It is put together on the stack of the task
+ * calling this, which has to have room for it.
  */
 kii_code_t
 kii_api_call_append_header(

@@ -35,22 +35,11 @@ kii_code_t _thing_auth(
         return res;
     }
     // Request body.
-    char esc_vid[strlen(vendor_thing_id) * 2 + 1];
-    char esc_pass[strlen(password) * 2 + 1];
-    // Unchecked, a failure would put something other than the value in the
-    // body: whatever was on the stack, if the buffer was never written.
-    if (jkii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid)) < 0 ||
-            jkii_escape_str(password, esc_pass, sizeof(esc_pass)) < 0) {
-        _req_headers_free_all(kii);
-        return KII_ERR_TOO_LARGE_DATA;
-    }
-
-    int content_len = snprintf(
-            kii->_rw_buff,
-            kii->_rw_buff_size,
-            "{\"username\":\"VENDOR_THING_ID:%s\", \"password\":\"%s\", \"grant_type\":\"password\"}",
-            esc_vid, esc_pass);
-    if (content_len >= kii->_rw_buff_size) {
+    int content_len = _kii_body_append(kii, 0,
+            "{\"username\":\"VENDOR_THING_ID:", vendor_thing_id, "");
+    content_len = _kii_body_append(kii, content_len,
+            "\", \"password\":\"", password, "\", \"grant_type\":\"password\"}");
+    if (content_len < 0) {
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
@@ -92,22 +81,13 @@ kii_code_t _thing_register(
     }
 
     // Request body.
-    char esc_vid[strlen(vendor_thing_id) * 2 + 1];
-    char esc_pass[strlen(password) * 2 + 1];
-    char esc_type[strlen(thing_type) * 2 + 1];
-    if (jkii_escape_str(vendor_thing_id, esc_vid, sizeof(esc_vid)) < 0 ||
-            jkii_escape_str(password, esc_pass, sizeof(esc_pass)) < 0 ||
-            jkii_escape_str(thing_type, esc_type, sizeof(esc_type)) < 0) {
-        _req_headers_free_all(kii);
-        return KII_ERR_TOO_LARGE_DATA;
-    }
-
-    int content_len = snprintf(
-            kii->_rw_buff,
-            kii->_rw_buff_size,
-            "{\"_vendorThingID\":\"%s\", \"_thingType\":\"%s\", \"_password\":\"%s\"}",
-            esc_vid, esc_type, esc_pass);
-    if (content_len >= kii->_rw_buff_size) {
+    int content_len = _kii_body_append(kii, 0,
+            "{\"_vendorThingID\":\"", vendor_thing_id, "");
+    content_len = _kii_body_append(kii, content_len,
+            "\", \"_thingType\":\"", thing_type, "");
+    content_len = _kii_body_append(kii, content_len,
+            "\", \"_password\":\"", password, "\"}");
+    if (content_len < 0) {
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
