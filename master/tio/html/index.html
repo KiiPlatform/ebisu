@@ -122,6 +122,8 @@ Task creation</h4>
 <div class="line">    <span class="keywordtype">int</span> ret = pthread_create(&amp;pthid, NULL, entry, param);</div>
 <div class="line">    <span class="keywordflow">if</span>(ret == 0)</div>
 <div class="line">    {</div>
+<div class="line">        <span class="comment">/* Nothing joins a task, so its thread has to go by itself when it ends. */</span></div>
+<div class="line">        pthread_detach(pthid);</div>
 <div class="line">        <span class="keywordflow">return</span> KII_TASKC_OK;</div>
 <div class="line">    }</div>
 <div class="line">    <span class="keywordflow">else</span></div>
@@ -169,10 +171,14 @@ Delay callback</h4>
 <div class="line">(*KII_CB_DELAY_MS)</div>
 <div class="line">    (uint32_t msec,</div>
 <div class="line">     void* userdata);</div>
-</div><!-- fragment --><p>Typical implementation with <code>usleep</code> provided by <code>libc</code>:</p>
+</div><!-- fragment --><p>Typical implementation with <code>nanosleep</code> provided by <code>libc</code>. <code>usleep(msec * 1000)</code> would overflow above about 71 minutes, and return early on a signal:</p>
 <div class="fragment"><div class="line"><span class="keywordtype">void</span> delay_ms_cb(uint32_t msec, <span class="keywordtype">void</span>* userdata)</div>
 <div class="line">{</div>
-<div class="line">    usleep(msec * 1000);</div>
+<div class="line">    <span class="keyword">struct </span>timespec left;</div>
+<div class="line">    left.tv_sec = msec / 1000;</div>
+<div class="line">    left.tv_nsec = (long)(msec % 1000) * 1000000;</div>
+<div class="line">    <span class="keywordflow">while</span> (nanosleep(&amp;left, &amp;left) == -1 &amp;&amp; errno == EINTR) {</div>
+<div class="line">    }</div>
 <div class="line">}</div>
 </div><!-- fragment --><h3><a class="anchor" id="autotoc_md7"></a>
 Socket callbacks.</h3>
@@ -585,7 +591,7 @@ Avoiding race condition</h2>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Nov 1 2026 19:19:59 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Sun Nov 1 2026 19:35:39 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

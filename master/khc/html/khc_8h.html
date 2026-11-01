@@ -288,6 +288,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 <tr class="memitem:a960e18dda03d60dded5c9a618138dd97" id="r_a960e18dda03d60dded5c9a618138dd97"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a960e18dda03d60dded5c9a618138dd97">khc_get_close_failed</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
 <tr class="memdesc:a960e18dda03d60dded5c9a618138dd97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether closing the socket failed.  <br /></td></tr>
 <tr class="separator:a960e18dda03d60dded5c9a618138dd97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f4889fa8b645d22e23e2336387512ea" id="r_a7f4889fa8b645d22e23e2336387512ea"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a7f4889fa8b645d22e23e2336387512ea">khc_get_resp_header_skipped</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
+<tr class="memdesc:a7f4889fa8b645d22e23e2336387512ea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether a response header was skipped.  <br /></td></tr>
+<tr class="separator:a7f4889fa8b645d22e23e2336387512ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0e1ee79bbbbeefbbac3228cb5ef0d9d8" id="r_a0e1ee79bbbbeefbbac3228cb5ef0d9d8"><td class="memItemLeft" align="right" valign="top">int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a0e1ee79bbbbeefbbac3228cb5ef0d9d8">khc_get_resp_date</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
 <tr class="memdesc:a0e1ee79bbbbeefbbac3228cb5ef0d9d8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the server's time, from the response's Date header.  <br /></td></tr>
 <tr class="separator:a0e1ee79bbbbeefbbac3228cb5ef0d9d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -505,7 +508,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 </td></tr>
 <tr><td class="fieldname"><a id="a90be23875108e9a39942c3af90a6d789af5c7c4c210efc30b9d3cf642a0342f52" name="a90be23875108e9a39942c3af90a6d789af5c7c4c210efc30b9d3cf642a0342f52"></a>KHC_ERR_WRITE_CALLBACK&#160;</td><td class="fielddoc"><p>Memory allocation error. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a90be23875108e9a39942c3af90a6d789a312c4dc6d68bf167f83aedc8def54cb1" name="a90be23875108e9a39942c3af90a6d789a312c4dc6d68bf167f83aedc8def54cb1"></a>KHC_ERR_ALLOCATION&#160;</td><td class="fielddoc"><p>Data is too large and doesn't fit to buffers statically allocated. </p>
+<tr><td class="fieldname"><a id="a90be23875108e9a39942c3af90a6d789a312c4dc6d68bf167f83aedc8def54cb1" name="a90be23875108e9a39942c3af90a6d789a312c4dc6d68bf167f83aedc8def54cb1"></a>KHC_ERR_ALLOCATION&#160;</td><td class="fielddoc"><p>Data is too large and doesn't fit to buffers statically allocated, as a Content-Length or Transfer-Encoding header too long for the buffer set by <a class="el" href="khc_8h.html#afd2065be9638acf043438ac9e020d3b8" title="Set response header buffer.">khc_set_resp_header_buff(khc*, char*, size_t)</a> is. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a90be23875108e9a39942c3af90a6d789abdc61249fe00e89ee9f2d00f11561e13" name="a90be23875108e9a39942c3af90a6d789abdc61249fe00e89ee9f2d00f11561e13"></a>KHC_ERR_TOO_LARGE_DATA&#160;</td><td class="fielddoc"><p>Other errors. </p>
 </td></tr>
@@ -626,6 +629,34 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 
 </div>
 </div>
+<a id="a7f4889fa8b645d22e23e2336387512ea" name="a7f4889fa8b645d22e23e2336387512ea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7f4889fa8b645d22e23e2336387512ea">&#9670;&#160;</a></span>khc_get_resp_header_skipped()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool khc_get_resp_header_skipped </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkhc.html">khc</a> *&#160;</td>
+          <td class="paramname"><em>khc</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Whether a response header was skipped. </p>
+<p>A header too long for the buffer set by <a class="el" href="khc_8h.html#afd2065be9638acf043438ac9e020d3b8" title="Set response header buffer.">khc_set_resp_header_buff(khc*, char*, size_t)</a> doesn't reach KHC_CB_HEADER. The response is otherwise read as usual, so this is how to tell that a header is missing because of that and not from the response.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">khc</td><td>instance. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the last <a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform(khc*)</a> skipped a header, false if it hasn't since <a class="el" href="khc_8h.html#a5cb75ed1f039e02286cacb8d097f233e" title="Set initial value to members of khc.">khc_init(khc*)</a>, <a class="el" href="khc_8h.html#aea7b6dde93cd97fc303a90c1414dba21" title="Set initial value to members of khc other than callbacks.">khc_reset_except_cb(khc*)</a> or <a class="el" href="khc_8h.html#a652dba6d3ccda37a7c120fe479648504" title="Prepare to perform the same request again.">khc_reset_except_request(khc*)</a>. </dd></dl>
+
+</div>
+</div>
 <a id="a566621dab015c69cb57dd1de88241c2a" name="a566621dab015c69cb57dd1de88241c2a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a566621dab015c69cb57dd1de88241c2a">&#9670;&#160;</a></span>khc_get_status_code()</h2>
 
@@ -730,6 +761,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
   </table>
   </dd>
 </dl>
+<dl class="section return"><dt>Returns</dt><dd>KHC_ERR_OK if the response was read whole. KHC_ERR_FAIL, without connecting, if a socket callback, the write callback or the header callback is not set. The read callback may be left out for a request with no body. </dd></dl>
 
 </div>
 </div>
@@ -1353,7 +1385,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 
 <p>Set response header buffer. </p>
 <p>Set response header buffer pointer used by KHC_CB_HEADER. If this method is not called or set NULL to the buffer, khc allocates memory of response header buffer when the HTTP session started and free when the HTTP session ends. The buffer allocated by the khc is 256 bytes.</p>
-<p>The buffer is used to store single HTTP response header. If header is larger than the buffer, the header is skipped and KHC_CB_HEADER is not called. khc needs to parse Status Line, Content-Length, Transfer-Encoding header to process HTTP message. The buffer must have enough size to store those headers. 256 bytes would be enough. If you set the buffer by the method, the method must be called befor <a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform(khc*)</a> and memory used by the buffer can be safely freed after <a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform(khc*)</a> returned.</p>
+<p>The buffer is used to store single HTTP response header. If header is larger than the buffer, the header is skipped and KHC_CB_HEADER is not called, which <a class="el" href="khc_8h.html#a7f4889fa8b645d22e23e2336387512ea" title="Whether a response header was skipped.">khc_get_resp_header_skipped(khc*)</a> tells. khc needs to parse Status Line, Content-Length, Transfer-Encoding header to process HTTP message. The buffer must have enough size to store those headers: <a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform(khc*)</a> returns KHC_ERR_TOO_LARGE_DATA if it doesn't. 256 bytes would be enough. If you set the buffer by the method, the method must be called befor <a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform(khc*)</a> and memory used by the buffer can be safely freed after <a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform(khc*)</a> returned.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">khc</td><td>instance. </td></tr>
@@ -1589,7 +1621,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Nov 1 2026 19:19:59 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Sun Nov 1 2026 19:35:38 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
