@@ -1,7 +1,7 @@
 #include "catch.hpp"
 #include "kii.h"
 #include "ebisu_version.h"
-#include "test_callbacks.h"
+#include "http_script.h"
 
 #include <functional>
 #include <string>
@@ -333,5 +333,44 @@ TEST_CASE( "kii_enable_absolute_target holds for every request" ) {
             REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
             CHECK( request.find("GET https://api.kii.com/api/x HTTP/1.1\r\n") == 0 );
         }
+    }
+}
+
+// kii_api_call_start() and the server code call took no notice of
+// khc_set_path() or khc_set_method() failing on one too long for it, and sent
+// the request without it.
+TEST_CASE( "A path or method too long for khc is refused rather than left out" ) {
+    char kii_buff[4096];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    khct::HttpScript script;
+    script.attach(&kii);
+    script.responses = { "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n{}" };
+
+    SECTION("the path of kii_api_call_start") {
+        const std::string path = "/api/" + std::string(KHC_PATH_MAX_SIZE, 'p');
+        CHECK( kii_api_call_start(&kii, "GET", path.c_str(), NULL, KII_FALSE) == KII_ERR_TOO_LARGE_DATA );
+    }
+
+    SECTION("the method of kii_api_call_start") {
+        const std::string method(KHC_METHOD_MAX_SIZE, 'M');
+        CHECK( kii_api_call_start(&kii, method.c_str(), "/api/x", NULL, KII_FALSE) == KII_ERR_TOO_LARGE_DATA );
+    }
+
+    SECTION("a server code endpoint") {
+        const std::string endpoint(KHC_PATH_MAX_SIZE, 'e');
+        CHECK( kii_execute_server_code(&kii, endpoint.c_str(), "{}") == KII_ERR_TOO_LARGE_DATA );
+        CHECK( script.requests.empty() );
+    }
+
+    SECTION("but the longest that fit are sent") {
+        const std::string prefix = "/api/apps/dummyAppID/server-code/versions/current/";
+        const std::string endpoint(KHC_PATH_MAX_SIZE - 1 - prefix.size(), 'e');
+        CHECK( kii_execute_server_code(&kii, endpoint.c_str(), "{}") == KII_ERR_OK );
+        REQUIRE( script.requests.size() == 1 );
+        CHECK( script.requests[0].find("POST " + prefix + endpoint + " HTTP/1.1\r\n") == 0 );
     }
 }
