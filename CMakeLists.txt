@@ -87,7 +87,9 @@ function(ebisu_configure_target tgt)
     POSITION_INDEPENDENT_CODE ON
     C_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN ON)
-  target_link_libraries(${tgt} PUBLIC ebisu_version)
+  # ebisu_version.h is installed with the other headers, so the target is
+  # needed in the build tree only.
+  target_link_libraries(${tgt} PUBLIC $<BUILD_INTERFACE:ebisu_version>)
 endfunction()
 
 add_subdirectory(platform)
@@ -95,6 +97,8 @@ add_subdirectory(jkii)
 add_subdirectory(khc)
 add_subdirectory(kii)
 add_subdirectory(tio)
+
+include(EbisuPackage)
 
 # Tests and docs are for developing ebisu itself. Skipped when ebisu is embedded
 # in another project, which is how the vendor SDK builds consume it.

@@ -143,6 +143,33 @@ source; it turns `-pedantic-errors` into `-pedantic` as well:
 cmake -S . -B build -DEBISU_WERROR=OFF
 ```
 
+`cmake --install` puts the libraries, their headers, a CMake package and a
+pkg-config file for each library under the prefix:
+
+```
+cmake --install build --prefix /opt/ebisu
+```
+
+A CMake project then finds the package, whose targets are `ebisu::khc`,
+`ebisu::jkii`, `ebisu::kii` and `ebisu::tio`, and, where they were built,
+`ebisu::posix` and `ebisu::openssl`, the ports:
+
+```cmake
+find_package(ebisu 3 CONFIG REQUIRED)
+target_link_libraries(app PRIVATE ebisu::openssl ebisu::posix ebisu::tio)
+```
+
+Any other build asks pkg-config, for `ebisu-khc`, `ebisu-jkii`, `ebisu-kii`,
+`ebisu-tio`, `ebisu-posix` and `ebisu-openssl`. The ports are static and carry
+none of the rest of platform, so they come before the library:
+
+```
+cc app.c $(pkg-config --cflags --libs ebisu-openssl ebisu-posix ebisu-tio)
+```
+
+`tests/samples/package_consumer.sh` builds a program both ways against an
+installed copy, as CI does.
+
 ### macOS
 
 Install OpenSSL:

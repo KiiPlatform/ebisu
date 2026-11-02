@@ -302,6 +302,20 @@ jobs:
       - name: build and test
         run: tests/samples/musl.sh ${{ matrix.alpine }}
 
+  # What `cmake --install` puts under a prefix, built against: a program finds
+  # it through the CMake package and through pkg-config, and runs.
+  package:
+    name: install, then find_package and pkg-config
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Fetch tags
+        run: git fetch --unshallow --tags --force
+      - name: build, install and build against it
+        run: tests/samples/package_consumer.sh
+
   # The large tests, against the live Kii application the secrets name: on
   # 64-bit Linux under valgrind, and on 64-bit Windows under wine, without
   # valgrind, which cannot run a Windows program. On Windows the tests' sockets
