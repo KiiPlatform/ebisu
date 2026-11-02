@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <poll.h>
 #include <pthread.h>
+#include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,6 +65,25 @@ static void ensure_openssl(void)
 
 static int verify_callback(int preverify_ok, X509_STORE_CTX* store);
 
+#if defined(__GNUC__) || defined(__clang__)
+static void log_to(ebisu_logger_t* logger, ebisu_log_level_t level, const char* fmt, ...)
+    __attribute__((format(printf, 3, 4)));
+#endif
+
+/* Sends a diagnostic to logger, or to stderr without one. */
+static void log_to(ebisu_logger_t* logger, ebisu_log_level_t level, const char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    if (logger != NULL) {
+        logger->ops->log(logger, level, fmt, args);
+    } else {
+        vfprintf(stderr, fmt, args);
+        fputc('\n', stderr);
+    }
+    va_end(args);
+}
+
 /* An SSL_CTX trusting the CA certificates given, or the system's without any. */
 static SSL_CTX* new_ssl_ctx(const char* ca_file, const char* ca_path)
 {
@@ -76,7 +96,6 @@ static SSL_CTX* new_ssl_ctx(const char* ca_file, const char* ca_path)
 #endif
     SSL_CTX* ssl_ctx = SSL_CTX_new(method);
     if (ssl_ctx == NULL){
-        printf("failed to init ssl context.\n");
         return NULL;
     }
 
@@ -94,7 +113,6 @@ static SSL_CTX* new_ssl_ctx(const char* ca_file, const char* ca_path)
         SSL_CTX_load_verify_locations(ssl_ctx, ca_file, ca_path) :
         SSL_CTX_set_default_verify_paths(ssl_ctx);
     if (loaded != 1) {
-        printf("failed to load the CA certificates.\n");
         SSL_CTX_free(ssl_ctx);
         return NULL;
     }
@@ -178,6 +196,11 @@ void ebisu_openssl_socket_set_clock(ebisu_openssl_socket_t* sock, ebisu_clock_t*
     sock->clock = clock;
 }
 
+void ebisu_openssl_socket_set_logger(ebisu_openssl_socket_t* sock, ebisu_logger_t* logger)
+{
+    sock->logger = logger;
+}
+
 /* OpenSSL has checked the server's certificate chain, its host name and the
    validity period of each certificate, at the clock's time when there is a
    clock. While the clock has only a lower bound of the time, its floor, a
@@ -219,16 +242,18 @@ static void clear_errors(void)
     errno = 0;
 }
 
-static void print_ssl_failure(const char* what, int ssl_error, int saved_errno)
+static void log_ssl_failure(ebisu_logger_t* logger, const char* what, int ssl_error,
+        int saved_errno)
 {
     if (ssl_error == SSL_ERROR_SYSCALL) {
-        printf("failed to %s: errno=%d: %s\n", what, saved_errno, strerror(saved_errno));
+        log_to(logger, EBISU_LOG_ERROR, "failed to %s: errno=%d: %s", what, saved_errno,
+                strerror(saved_errno));
     } else if (ssl_error == SSL_ERROR_SSL) {
         char sslErrStr[120];
         ERR_error_string_n(ERR_get_error(), sslErrStr, 120);
-        printf("failed to %s: %s\n", what, sslErrStr);
+        log_to(logger, EBISU_LOG_ERROR, "failed to %s: %s", what, sslErrStr);
     } else {
-        printf("failed to %s: SSL_get_error()=%d\n", what, ssl_error);
+        log_to(logger, EBISU_LOG_ERROR, "failed to %s: SSL_get_error()=%d", what, ssl_error);
     }
 }
 
@@ -365,7 +390,8 @@ static void* run_lookup(void* arg)
 
 /* The host's addresses, NULL if it couldn't be looked up by deadline_ms, or
    ever if that is 0. */
-static struct addrinfo* look_up(const char* host, uint16_t port, int64_t deadline_ms)
+static struct addrinfo* look_up(const char* host, uint16_t port, int64_t deadline_ms,
+        ebisu_logger_t* logger)
 {
     char service[8];
     snprintf(service, sizeof(service), "%u", (unsigned int)port);
@@ -377,14 +403,15 @@ static struct addrinfo* look_up(const char* host, uint16_t port, int64_t deadlin
         struct addrinfo* result = NULL;
         int error = getaddrinfo(host, service, &hints, &result);
         if (error != 0) {
-            printf("failed to look up %s: %s\n", host, gai_strerror(error));
+            log_to(logger, EBISU_LOG_ERROR, "failed to look up %s: %s", host,
+                    gai_strerror(error));
             return NULL;
         }
         return result;
     }
 
     if (strlen(host) >= sizeof(((lookup_t*)0)->host)) {
-        printf("failed to look up a host name that long.\n");
+        log_to(logger, EBISU_LOG_ERROR, "failed to look up a host name that long.");
         return NULL;
     }
     lookup_t* lookup = (lookup_t*)calloc(1, sizeof(lookup_t));
@@ -417,9 +444,9 @@ static struct addrinfo* look_up(const char* host, uint16_t port, int64_t deadlin
     }
     pthread_mutex_unlock(&lookup->mutex);
     if (!done) {
-        printf("failed to look up %s in time.\n", host);
+        log_to(logger, EBISU_LOG_ERROR, "failed to look up %s in time.", host);
     } else if (error != 0) {
-        printf("failed to look up %s: %s\n", host, gai_strerror(error));
+        log_to(logger, EBISU_LOG_ERROR, "failed to look up %s: %s", host, gai_strerror(error));
     }
     release_lookup(lookup);
     return result;
@@ -455,11 +482,12 @@ static int connect_by(int sock, const struct sockaddr* addr, socklen_t addr_len,
 
 /* A socket connected to one of host's addresses, tried in the order the
    resolver gives them, or -1. */
-static int connect_to_host(const char* host, uint16_t port, unsigned int timeout_s)
+static int connect_to_host(const char* host, uint16_t port, unsigned int timeout_s,
+        ebisu_logger_t* logger)
 {
     int64_t timeout_ms = (int64_t)timeout_s * 1000;
     int64_t deadline_ms = timeout_ms > 0 ? monotonic_ms() + timeout_ms : 0;
-    struct addrinfo* addrs = look_up(host, port, deadline_ms);
+    struct addrinfo* addrs = look_up(host, port, deadline_ms, logger);
     if (addrs == NULL) {
         return -1;
     }
@@ -480,7 +508,7 @@ static int connect_to_host(const char* host, uint16_t port, unsigned int timeout
     }
     freeaddrinfo(addrs);
     if (sock < 0) {
-        printf("failed to connect to %s.\n", host);
+        log_to(logger, EBISU_LOG_ERROR, "failed to connect to %s.", host);
     }
     return sock;
 }
@@ -493,7 +521,7 @@ static ebisu_sock_code_t
     SSL *ssl = NULL;
     ebisu_openssl_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_openssl_socket_t, base);
 
-    sock = connect_to_host(host, port, ctx->to_connect);
+    sock = connect_to_host(host, port, ctx->to_connect, ctx->logger);
     if (sock < 0) {
         return EBISU_SOCK_FAIL;
     }
@@ -515,11 +543,12 @@ static ebisu_sock_code_t
     /* Shared with the other connections: the CA certificates are loaded once. */
     SSL_CTX* ssl_ctx = shared_ssl_ctx(ctx);
     if (ssl_ctx == NULL) {
+        log_to(ctx->logger, EBISU_LOG_ERROR, "failed to set up TLS.");
         goto fail;
     }
     ssl = SSL_new(ssl_ctx);
     if (ssl == NULL){
-        printf("failed to init ssl.\n");
+        log_to(ctx->logger, EBISU_LOG_ERROR, "failed to init ssl.");
         goto fail;
     }
     SSL_set_app_data(ssl, ctx);
@@ -530,7 +559,7 @@ static ebisu_sock_code_t
     X509_VERIFY_PARAM* param = SSL_get0_param(ssl);
     X509_VERIFY_PARAM_set_hostflags(param, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
     if (X509_VERIFY_PARAM_set1_host(param, host, 0) != 1) {
-        printf("failed to set the host name to verify.\n");
+        log_to(ctx->logger, EBISU_LOG_ERROR, "failed to set the host name to verify.");
         goto fail;
     }
 
@@ -542,7 +571,7 @@ static ebisu_sock_code_t
         /* A 32-bit time_t ends in 2038. Cut down to fit one, the time would
            be decades out, and certificates refused for what they are not. */
         if ((int64_t)(time_t)now != now) {
-            printf("the time does not fit in a time_t.\n");
+            log_to(ctx->logger, EBISU_LOG_ERROR, "the time does not fit in a time_t.");
             goto fail;
         }
         X509_VERIFY_PARAM_set_time(param, (time_t)now);
@@ -550,7 +579,7 @@ static ebisu_sock_code_t
 
     ret = SSL_set_fd(ssl, sock);
     if (ret == 0){
-        printf("failed to set fd.\n");
+        log_to(ctx->logger, EBISU_LOG_ERROR, "failed to set fd.");
         goto fail;
     }
 
@@ -559,12 +588,12 @@ static ebisu_sock_code_t
     if (ret != 1) {
         long verified = SSL_get_verify_result(ssl);
         if (verified != X509_V_OK) {
-            printf("server certificate for %s rejected: %s\n", host,
-                    X509_verify_cert_error_string(verified));
+            log_to(ctx->logger, EBISU_LOG_ERROR, "server certificate for %s rejected: %s",
+                    host, X509_verify_cert_error_string(verified));
         } else {
             char sslErrStr[120];
             ERR_error_string_n(ERR_get_error(), sslErrStr, 120);
-            printf("failed to connect: %s\n", sslErrStr);
+            log_to(ctx->logger, EBISU_LOG_ERROR, "failed to connect: %s", sslErrStr);
         }
         goto fail;
     }
@@ -601,7 +630,7 @@ static ebisu_sock_code_t
     if (ssl_error == SSL_ERROR_SYSCALL || ssl_error == SSL_ERROR_SSL) {
         ctx->ssl_failed = true;
     }
-    print_ssl_failure("send", ssl_error, saved_errno);
+    log_ssl_failure(ctx->logger, "send", ssl_error, saved_errno);
     return EBISU_SOCK_FAIL;
 }
 
@@ -644,7 +673,7 @@ static ebisu_sock_code_t
     default:
         break;
     }
-    print_ssl_failure("receive", ctx->recv_ssl_error, ctx->recv_errno);
+    log_ssl_failure(ctx->logger, "receive", ctx->recv_ssl_error, ctx->recv_errno);
     return EBISU_SOCK_FAIL;
 }
 
@@ -686,7 +715,7 @@ static ebisu_sock_code_t
             if (sslErr != SSL_ERROR_SYSCALL && sslErr != SSL_ERROR_ZERO_RETURN) {
                 char sslErrStr[120];
                 ERR_error_string_n(ERR_get_error(), sslErrStr, 120);
-                printf("failed to shutdown: %s\n", sslErrStr);
+                log_to(ctx->logger, EBISU_LOG_ERROR, "failed to shutdown: %s", sslErrStr);
                 shutdown_ok = 0;
             }
             /* Otherwise the peer closed the transport without a close_notify,
@@ -696,7 +725,7 @@ static ebisu_sock_code_t
     close(ctx->socket);
     SSL_free(ctx->ssl);
     if (!shutdown_ok) {
-        printf("failed to close:\n");
+        log_to(ctx->logger, EBISU_LOG_ERROR, "failed to close.");
         return EBISU_SOCK_FAIL;
     }
     return EBISU_SOCK_OK;
