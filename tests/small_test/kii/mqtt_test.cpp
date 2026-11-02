@@ -34,6 +34,21 @@ static std::string publish_packet(const std::string& topic, const std::string& p
     return packet + topic + payload;
 }
 
+// A QoS 1 PUBLISH, which carries a packet identifier after the topic. byte1 is
+// the fixed header's first byte, 0x32 unless the DUP or RETAIN flag is wanted.
+static std::string publish_qos1_packet(const std::string& topic, uint16_t id,
+        const std::string& payload, char byte1 = 0x32)
+{
+    std::string id_bytes;
+    id_bytes += (char)(id >> 8);
+    id_bytes += (char)(id & 0xff);
+    // Built as QoS 0's with the identifier at the payload's start, whose
+    // remaining length counts it.
+    std::string packet = publish_packet(topic, id_bytes + payload);
+    packet[0] = byte1;
+    return packet;
+}
+
 // Serves data as recv on a stream socket does: whatever is left of it, up to
 // the size asked for. Once all of it has been read, nothing more arrives, so
 // reports what a socket whose receive timeout ran out reports.
@@ -2653,6 +2668,257 @@ static ebisu_task_code_t mock_task_create(const char* name, EBISU_TASK_ENTRY ent
 // whether push is running. kii_start_push_task() ignored it and returned
 // KII_ERR_OK even when no task had been created, and called through the
 // callback without checking that one had been set.
+// The task subscribed at QoS 0 with a clean session, and read every PUBLISH
+// as QoS 0's. It now subscribes at the QoS set, acknowledges a QoS 1 message
+// with PUBACK, asks the broker to keep its session if told to, and takes the
+// messages such a broker sends before SUBACK.
+TEST_CASE( "QoS 1 and a session the broker keeps" ) {
+    char mqtt_buff[256];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
+    kii._keep_alive_interval = 300;
+    kii_set_system(&kii, khct::cb::delay_only_system());
+
+    // What was sent, and what had been when the push callback was called.
+    std::string sent;
+    bool send_ok = true;
+    khct::cb::SockCtx mqtt_ctx;
+    mqtt_ctx.on_send = [&sent, &send_ok](void*, const char* buffer, size_t length, size_t* out_sent_length) {
+        if (!send_ok) {
+            return EBISU_SOCK_FAIL;
+        }
+        sent.append(buffer, length);
+        *out_sent_length = length;
+        return EBISU_SOCK_OK;
+    };
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
+    std::vector<std::string> pushed;
+    std::vector<std::string> sent_at_push;
+    khct::cb::PushCtx push_ctx;
+    push_ctx.on_push = [&pushed, &sent_at_push, &sent](const char* message, size_t message_length) {
+        pushed.push_back(std::string(message, message_length));
+        sent_at_push.push_back(sent);
+    };
+    kii._cb_push_received = khct::cb::cb_push;
+    kii._push_data = &push_ctx;
+
+    mqtt_state_t state;
+    _init_mqtt_state(&kii, &state);
+    strcpy(state.endpoint.topic, "dummyTopic");
+    strcpy(state.endpoint.username, "dummyUser");
+    strcpy(state.endpoint.password, "dummyPassword");
+    size_t served = 0;
+
+    const std::string puback_7("\x40\x02\x00\x07", 4);
+
+    // CONNECT's flags come after the fixed header, of 2 bytes here, and the
+    // protocol name, whose length is in its second byte, and level.
+    auto connect_flags = [&sent]() {
+        REQUIRE( sent.size() > 4 );
+        const size_t at = 2 + 2 + (unsigned char)sent[3] + 1;
+        REQUIRE( sent.size() > at );
+        return (unsigned char)sent[at];
+    };
+
+    SECTION("CONNECT asks for a clean session by default") {
+        CHECK( kii._mqtt_clean_session == KII_TRUE );
+        state.info.task_state = KII_MQTT_ST_SEND_CONNECT;
+        _mqtt_state_send_connect(&state);
+        CHECK( connect_flags() == 0xc2 );
+    }
+
+    SECTION("CONNECT asks the broker to keep the session when told to") {
+        kii_set_mqtt_clean_session(&kii, KII_FALSE);
+        state.info.task_state = KII_MQTT_ST_SEND_CONNECT;
+        _mqtt_state_send_connect(&state);
+        CHECK( connect_flags() == 0xc0 );
+    }
+
+    SECTION("SUBSCRIBE asks for QoS 0 by default, and QoS 1 when set") {
+        CHECK( kii._mqtt_qos == KII_MQTT_QOS_0 );
+        state.info.task_state = KII_MQTT_ST_SEND_SUBSCRIBE;
+        _mqtt_state_send_subscribe(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_SUBACK );
+        REQUIRE_FALSE( sent.empty() );
+        CHECK( sent.back() == 0x00 );
+
+        sent.clear();
+        kii_set_mqtt_qos(&kii, KII_MQTT_QOS_1);
+        _mqtt_state_send_subscribe(&state);
+        REQUIRE_FALSE( sent.empty() );
+        CHECK( sent.back() == 0x01 );
+    }
+
+    SECTION("a SUBACK granting QoS 1 is a subscription") {
+        serve_stream(mqtt_ctx, std::string("\x90\x03\x00\x01\x01", 5), served);
+        state.info.task_state = KII_MQTT_ST_RECV_SUBACK;
+        _mqtt_state_recv_suback(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_READY );
+    }
+
+    SECTION("a QoS 1 message is handed over, then acknowledged") {
+        const std::string packet = publish_qos1_packet("dummyTopic", 7, "{\"a\":1}");
+        serve_stream(mqtt_ctx, packet, served);
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+        CHECK( state.message_qos == 1 );
+        _mqtt_state_recv_msg(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        // The body alone, without the packet identifier.
+        REQUIRE( pushed.size() == 1 );
+        CHECK( pushed[0] == "{\"a\":1}" );
+        CHECK( sent_at_push[0].empty() );
+        CHECK( sent == puback_7 );
+        CHECK( served == packet.size() );
+    }
+
+    SECTION("a QoS 1 message sent again with DUP is handed over and acknowledged again") {
+        const std::string packet = publish_qos1_packet("dummyTopic", 7, "{}") +
+            publish_qos1_packet("dummyTopic", 7, "{}", 0x3a);
+        serve_stream(mqtt_ctx, packet, served);
+        for (int i = 0; i < 2; ++i) {
+            state.info.task_state = KII_MQTT_ST_RECV_READY;
+            _mqtt_state_recv_ready(&state);
+            REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+            _mqtt_state_recv_msg(&state);
+        }
+        CHECK( pushed.size() == 2 );
+        CHECK( sent == puback_7 + puback_7 );
+    }
+
+    SECTION("a QoS 0 message isn't acknowledged") {
+        kii_set_mqtt_qos(&kii, KII_MQTT_QOS_1);
+        serve_stream(mqtt_ctx, publish_packet("dummyTopic", "{}"), served);
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+        CHECK( state.message_qos == 0 );
+        _mqtt_state_recv_msg(&state);
+        REQUIRE( pushed.size() == 1 );
+        CHECK( pushed[0] == "{}" );
+        CHECK( sent.empty() );
+    }
+
+    SECTION("a QoS 1 message too large for the buffer is dropped, and acknowledged") {
+        const std::string large = publish_qos1_packet("dummyTopic", 7, std::string(sizeof(mqtt_buff), 'x'));
+        const std::string next = publish_qos1_packet("dummyTopic", 8, "{}");
+        serve_stream(mqtt_ctx, large + next, served);
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+        REQUIRE( state.remaining_message_size > sizeof(mqtt_buff) );
+        _mqtt_state_recv_msg(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        CHECK( pushed.empty() );
+        CHECK( sent == puback_7 );
+        // Read to its end, and no further.
+        CHECK( served == large.size() );
+
+        _mqtt_state_recv_ready(&state);
+        _mqtt_state_recv_msg(&state);
+        CHECK( pushed.size() == 1 );
+        CHECK( sent == puback_7 + std::string("\x40\x02\x00\x08", 4) );
+        CHECK( served == large.size() + next.size() );
+    }
+
+    SECTION("a QoS 1 message with no room for its packet identifier is dropped, unacknowledged") {
+        // The topic's length leaves 1 byte after it, not 2.
+        const std::string packet("\x32\x07\x00\x04" "abcd" "\x07", 9);
+        serve_stream(mqtt_ctx, packet, served);
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+        _mqtt_state_recv_msg(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        CHECK( pushed.empty() );
+        CHECK( sent.empty() );
+    }
+
+    SECTION("a QoS 1 message too large for the buffer, with no room for its packet identifier") {
+        // A topic as long as the message, which has no room after it.
+        std::string packet("\x32", 1);
+        const size_t remaining = sizeof(mqtt_buff) + 10;
+        packet += (char)(0x80 | (remaining % 128));
+        packet += (char)(remaining / 128);
+        packet += (char)((remaining - 2) >> 8);
+        packet += (char)((remaining - 2) & 0xff);
+        packet.append(remaining - 2, 't');
+        serve_stream(mqtt_ctx, packet, served);
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+        _mqtt_state_recv_msg(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        CHECK( pushed.empty() );
+        CHECK( sent.empty() );
+        CHECK( served == packet.size() );
+    }
+
+    SECTION("a PUBACK that can't be sent reconnects") {
+        send_ok = false;
+        serve_stream(mqtt_ctx, publish_qos1_packet("dummyTopic", 7, "{}"), served);
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        _mqtt_state_recv_ready(&state);
+        _mqtt_state_recv_msg(&state);
+        CHECK( pushed.size() == 1 );
+        CHECK( state.info.task_state == KII_MQTT_ST_RECONNECT );
+    }
+
+    SECTION("a QoS 2 message reconnects, unread") {
+        serve_stream(mqtt_ctx, publish_qos1_packet("dummyTopic", 7, "{}", 0x34), served);
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+        CHECK( state.message_qos == 2 );
+        _mqtt_state_recv_msg(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        CHECK( pushed.empty() );
+        CHECK( sent.empty() );
+    }
+
+    // A broker that kept the session sends what it kept for the subscription,
+    // which may come before SUBACK. The task took any packet but SUBACK for a
+    // failure, and reconnected, to be sent the same again.
+    SECTION("messages before SUBACK are taken, then SUBACK") {
+        kii_set_mqtt_qos(&kii, KII_MQTT_QOS_1);
+        const std::string suback("\x90\x03\x00\x01\x01", 5);
+        serve_stream(mqtt_ctx, publish_qos1_packet("dummyTopic", 7, "{\"kept\":1}") +
+                publish_packet("dummyTopic", "{\"kept\":2}") + suback, served);
+        state.info.task_state = KII_MQTT_ST_RECV_SUBACK;
+        std::vector<kii_mqtt_task_state> states;
+        for (int i = 0; i < 8 && state.info.task_state != KII_MQTT_ST_RECV_READY &&
+                state.info.task_state != KII_MQTT_ST_RECONNECT; ++i) {
+            if (state.info.task_state == KII_MQTT_ST_RECV_SUBACK) {
+                _mqtt_state_recv_suback(&state);
+            } else {
+                REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+                _mqtt_state_recv_msg(&state);
+            }
+            states.push_back(state.info.task_state);
+        }
+        CHECK( states == std::vector<kii_mqtt_task_state>({
+                KII_MQTT_ST_RECV_MSG, KII_MQTT_ST_RECV_SUBACK,
+                KII_MQTT_ST_RECV_MSG, KII_MQTT_ST_RECV_SUBACK,
+                KII_MQTT_ST_RECV_READY }) );
+        CHECK( pushed == std::vector<std::string>({ "{\"kept\":1}", "{\"kept\":2}" }) );
+        CHECK( sent == puback_7 );
+        CHECK( state.awaiting_suback == KII_FALSE );
+    }
+
+    SECTION("a message before SUBACK that is cut off reconnects") {
+        const std::string packet = publish_qos1_packet("dummyTopic", 7, "{}");
+        serve_stream(mqtt_ctx, packet.substr(0, packet.size() - 1), served);
+        state.info.task_state = KII_MQTT_ST_RECV_SUBACK;
+        _mqtt_state_recv_suback(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+        _mqtt_state_recv_msg(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        CHECK( pushed.empty() );
+    }
+}
+
 TEST_CASE( "kii_start_push_task reports a task it could not create" ) {
     char buff[64];
     kii_t kii;

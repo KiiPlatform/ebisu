@@ -255,6 +255,14 @@ every second, so the application can stop the task during a wait. A broker it
 can't reach after 8 attempts may have moved, so it then asks for the endpoint
 again.
 
+The task subscribes at QoS 0 by default, so a message sent while it is
+reconnecting is lost. With `kii_set_mqtt_qos(&kii, KII_MQTT_QOS_1)`, a message
+sent at QoS 1, such as a push message whose `"mqtt"` object has `"qos": 1`, is
+sent again until the task acknowledges it, once the push callback has returned:
+it can arrive twice. With `kii_set_mqtt_clean_session(&kii, KII_FALSE)` as well,
+the broker keeps the thing's session, and the QoS 1 messages sent while the task
+is away, reconnecting or stopped, until it connects again.
+
 What reaches the thing:
 
 - **Buckets and topics** it subscribes to, with `kii_subscribe_bucket()` and

@@ -71,6 +71,8 @@ void kii_init(kii_t* kii)
     kii->_task_exit_data = NULL;
     kii->_insecure_mqtt = KII_FALSE;
     kii->_use_m_0_header = KII_FALSE;
+    kii->_mqtt_qos = KII_MQTT_QOS_0;
+    kii->_mqtt_clean_session = KII_TRUE;
 }
 
 /* Copies src into a fixed-size field, truncating rather than overflowing, and
@@ -139,6 +141,14 @@ void kii_set_http_socket(kii_t* kii, ebisu_socket_t* socket) {
 void kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size) {
     kii->_mqtt_buffer = buff;
     kii->_mqtt_buffer_size = buff_size;
+}
+
+void kii_set_mqtt_qos(kii_t* kii, kii_mqtt_qos_t qos) {
+    kii->_mqtt_qos = qos;
+}
+
+void kii_set_mqtt_clean_session(kii_t* kii, kii_bool_t clean_session) {
+    kii->_mqtt_clean_session = clean_session;
 }
 
 void kii_set_mqtt_socket(kii_t* kii, ebisu_socket_t* socket) {

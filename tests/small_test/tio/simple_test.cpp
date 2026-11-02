@@ -121,6 +121,17 @@ static ebisu_task_code_t count_task_create(const char* name, EBISU_TASK_ENTRY en
 // MQTT carries a keep-alive of at most 65535 seconds. tio takes it as a
 // uint32_t rather than a uint16_t, so a larger one arrives whole at
 // tio_handler_start() to be turned away, rather than cut down at the call.
+TEST_CASE( "tio_handler sets the QoS and the clean session on its kii" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    CHECK( handler._kii._mqtt_qos == KII_MQTT_QOS_0 );
+    CHECK( handler._kii._mqtt_clean_session == KII_TRUE );
+    tio_handler_set_mqtt_qos(&handler, KII_MQTT_QOS_1);
+    tio_handler_set_mqtt_clean_session(&handler, KII_FALSE);
+    CHECK( handler._kii._mqtt_qos == KII_MQTT_QOS_1 );
+    CHECK( handler._kii._mqtt_clean_session == KII_FALSE );
+}
+
 TEST_CASE( "tio_handler_start keep-alive range" ) {
     char buff[64];
     tio_handler_t handler;

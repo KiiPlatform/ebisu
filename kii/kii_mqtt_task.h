@@ -8,8 +8,6 @@ extern "C"
 
 #include "kii.h"
 
-typedef enum { QOS0, QOS1, QOS2 } kii_mqtt_qos;
-
 typedef struct {
     char byte1;
     unsigned long remaining_length;
@@ -31,6 +29,15 @@ typedef struct {
      */
     uint64_t elapsed_since_ms;
     unsigned long remaining_message_size;
+    /** \private
+     * The QoS of the PUBLISH whose fixed header was read last, from its flags.
+     */
+    unsigned int message_qos;
+    /** \private
+     * Whether that PUBLISH came while waiting for SUBACK, which is waited
+     * for again once it is read.
+     */
+    kii_bool_t awaiting_suback;
     /** \private
      * Whether the PINGRESP for the last PINGREQ has arrived.
      *
