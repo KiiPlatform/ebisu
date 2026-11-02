@@ -334,9 +334,45 @@ ebisu_sock_code_t _mqtt_recv_remaining(kii_t* kii, unsigned long remaining_lengt
     return res;
 }
 
+// Whether the system has a monotonic clock, which then times the keep-alive.
+// Without one, the time is estimated by adding up the waits and receive
+// timeouts the task goes through, which misses the time spent elsewhere, such
+// as in the push callback.
+static kii_bool_t _has_clock(const kii_t* kii)
+{
+    return (kii->_system != NULL && kii->_system->ops->monotonic_ms != NULL) ?
+        KII_TRUE : KII_FALSE;
+}
+
+// Starts the time since the last packet that counts for the keep-alive again,
+// at ms.
+static void _reset_elapsed(mqtt_state_t* state, uint32_t ms)
+{
+    kii_t* kii = state->kii;
+    state->elapsed_time_ms = ms;
+    if (_has_clock(kii) == KII_TRUE) {
+        // Unsigned, so this wraps round and back again if the clock is below
+        // ms, and the difference taken in _elapsed_ms() is still ms.
+        state->elapsed_since_ms = kii->_system->ops->monotonic_ms(kii->_system) - ms;
+    }
+}
+
+// The time since the last packet that counts for the keep-alive, in
+// milliseconds, at most UINT32_MAX.
+static uint32_t _elapsed_ms(const mqtt_state_t* state)
+{
+    kii_t* kii = state->kii;
+    if (_has_clock(kii) != KII_TRUE) {
+        return state->elapsed_time_ms;
+    }
+    uint64_t ms = kii->_system->ops->monotonic_ms(kii->_system) - state->elapsed_since_ms;
+    return ms > UINT32_MAX ? UINT32_MAX : (uint32_t)ms;
+}
+
 void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
 {
     state->kii = kii;
+    state->elapsed_since_ms = 0;
     memset(&state->endpoint, 0x00, sizeof(kii_mqtt_endpoint_t));
     state->info.error = KII_MQTT_ERR_OK;
     state->info.task_state = KII_MQTT_ST_INSTALL_PUSH;
@@ -347,7 +383,7 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
         state->endpoint = kii->_onboarded_endpoint;
         state->info.task_state = KII_MQTT_ST_SOCK_CONNECT;
     }
-    state->elapsed_time_ms = 0;
+    _reset_elapsed(state, 0);
     state->remaining_message_size = 0;
     state->pingresp_received = KII_TRUE;
     state->sock_connected = KII_FALSE;
@@ -502,6 +538,9 @@ void _mqtt_state_send_connect(mqtt_state_t* state)
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
     } else {
+        // The keep-alive counts from CONNECT. Before it, the clock may have
+        // gone on through the waits between attempts to reconnect.
+        _reset_elapsed(state, 0);
         task_info->task_state = KII_MQTT_ST_RECV_CONNACK;
     }
 }
@@ -650,7 +689,7 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
     // The keep-alive is a uint16_t, so this is at most 65535000 and fits.
     const uint32_t thresh_ms =
         (to_recv < keep_alive ? keep_alive - to_recv : keep_alive) * 1000;
-    if (keep_alive > 0 && state->elapsed_time_ms > thresh_ms) {
+    if (keep_alive > 0 && _elapsed_ms(state) > thresh_ms) {
         task_info->task_state = KII_MQTT_ST_SEND_PINGREQ;
         return;
     }
@@ -659,7 +698,7 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
     ebisu_sock_code_t res = _mqtt_recv_fixed_header_byte1(kii, &fh, &received);
     if (res == EBISU_SOCK_OK && received == 0) {
         // End of stream: the broker closed the connection.
-        state->elapsed_time_ms = 0;
+        _reset_elapsed(state, 0);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
@@ -670,7 +709,7 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
             // A packet has started to arrive, so the next read would begin
             // inside it and take its bytes for a fixed header. Reconnect,
             // whether the receive timed out or failed, as RECV_MSG does.
-            state->elapsed_time_ms = 0;
+            _reset_elapsed(state, 0);
             _delay_ms(kii, WAIT_MS);
             task_info->task_state = KII_MQTT_ST_RECONNECT;
             return;
@@ -689,14 +728,14 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
             // Read and ignore.
             res = _mqtt_recv_remaining_trash(kii, size);
             if (res != EBISU_SOCK_OK) {
-                state->elapsed_time_ms = 0;
+                _reset_elapsed(state, 0);
                 _delay_ms(kii, WAIT_MS);
                 task_info->task_state = KII_MQTT_ST_RECONNECT;
             }
         }
     } else if (res == EBISU_SOCK_FAIL && _mqtt_sock_recv_lost(kii) == KII_TRUE) {
         // Waiting on would wait for a connection that is gone.
-        state->elapsed_time_ms = 0;
+        _reset_elapsed(state, 0);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
     } else {
@@ -718,7 +757,7 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
         // Ignore message.
         ebisu_sock_code_t res = _mqtt_recv_remaining_trash(kii, remaining_message_size);
         if (res != EBISU_SOCK_OK) {
-            state->elapsed_time_ms = 0;
+            _reset_elapsed(state, 0);
             _delay_ms(kii, WAIT_MS);
             task_info->task_state = KII_MQTT_ST_RECONNECT;
         } else {
@@ -730,7 +769,7 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
         memset(kii->_mqtt_buffer, '\0', kii->_mqtt_buffer_size);
         ebisu_sock_code_t res = _mqtt_recv_remaining(kii, remaining_message_size, kii->_mqtt_buffer);
         if (res != EBISU_SOCK_OK) {
-            state->elapsed_time_ms = 0;
+            _reset_elapsed(state, 0);
             _delay_ms(kii, WAIT_MS);
             task_info->task_state = KII_MQTT_ST_RECONNECT;
         } else {
@@ -762,7 +801,7 @@ void _mqtt_state_send_pingreq(mqtt_state_t* state)
     // though sending may still appear to succeed. Reconnect rather than send
     // another and wait another keep-alive interval to find out.
     if (state->pingresp_received != KII_TRUE) {
-        state->elapsed_time_ms = 0;
+        _reset_elapsed(state, 0);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
@@ -770,12 +809,12 @@ void _mqtt_state_send_pingreq(mqtt_state_t* state)
 
     ebisu_sock_code_t res = _mqtt_send_pingreq(kii);
     if (res != EBISU_SOCK_OK) {
-        state->elapsed_time_ms = 0;
+        _reset_elapsed(state, 0);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
     } else {
         state->pingresp_received = KII_FALSE;
-        state->elapsed_time_ms = MSG_SEND_TIME;
+        _reset_elapsed(state, MSG_SEND_TIME);
         task_info->task_state = KII_MQTT_ST_RECV_READY;
     }
 }

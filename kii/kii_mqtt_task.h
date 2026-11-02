@@ -20,7 +20,16 @@ typedef struct {
     kii_installation_id_t ins_id;
     kii_mqtt_endpoint_t endpoint;
     kii_mqtt_task_info info;
+    /** \private
+     * The time since the last packet that counts for the keep-alive, in
+     * milliseconds, as estimated by adding up the task's waits and receive
+     * timeouts. Used when the system has no monotonic clock.
+     */
     uint32_t elapsed_time_ms;
+    /** \private
+     * When that time started, by the system's monotonic clock, if it has one.
+     */
+    uint64_t elapsed_since_ms;
     unsigned long remaining_message_size;
     /** \private
      * Whether the PINGRESP for the last PINGREQ has arrived.

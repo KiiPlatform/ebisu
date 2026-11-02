@@ -370,7 +370,10 @@ void tio_handler_set_mqtt_socket(tio_handler_t* handler, ebisu_socket_t* socket)
  * \brief Set timeout of receiving data from socket user for MQTT(S)
  *
  * This setting is mandatory to achieve MQTT keep-alive mechanism.
- * We use timeout instead of requirering system clock access to periodically send pingReq.
+ * PINGREQ is sent early enough that a receive running into this timeout still
+ * ends within the keep-alive. Without a monotonic_ms in the system set by
+ * tio_handler_set_system(), the time since the last packet is also estimated
+ * from it.
  * The recv of the socket set by tio_handler_set_mqtt_socket()
  * must have same timeout specified by to_sock_recv_sec.
  *
@@ -382,7 +385,9 @@ void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, uint32_t to_sock_
  * \brief Set the system: tasks, delays and a monotonic clock.
  *
  * The handler's task is created with its task_create, and waits with its
- * delay_ms.
+ * delay_ms. If it has a monotonic_ms, the task times the MQTT keep-alive by it.
+ * Otherwise it estimates the time by adding up its waits and receive timeouts,
+ * which misses the time spent elsewhere, such as in the action callback.
  *
  * \param [out] handler tio_handler_t instance.
  * \param [in] system The system. It has to outlive the handler.

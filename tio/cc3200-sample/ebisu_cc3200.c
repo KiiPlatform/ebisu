@@ -182,18 +182,21 @@ OsiReturnVal_e cc3200_lock_init(cc3200_lock_t* lock)
 }
 
 /* xTaskGetTickCount() counts in 32 bits, which at the SDK's configTICK_RATE_HZ
- * of 1000 wrap after about 49.7 days. ebisu calls this only with the session
- * lock held, so the wraps can be counted here without a lock of their own. */
+ * of 1000 wrap after about 49.7 days. ebisu calls this from more than one task,
+ * so the wraps are counted in a critical section. */
 static uint64_t monotonic_ms(ebisu_system_t* self)
 {
     static uint32_t last = 0;
     static uint64_t wraps = 0;
+    taskENTER_CRITICAL();
     uint32_t now = (uint32_t)xTaskGetTickCount();
     if (now < last) {
         wraps += (uint64_t)1 << 32;
     }
     last = now;
-    return (wraps + now) * 1000 / configTICK_RATE_HZ;
+    uint64_t ticks = wraps + now;
+    taskEXIT_CRITICAL();
+    return ticks * 1000 / configTICK_RATE_HZ;
 }
 
 static const ebisu_system_ops_t cc3200_system_ops = {
