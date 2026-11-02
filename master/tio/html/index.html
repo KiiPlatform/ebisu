@@ -117,7 +117,7 @@ The system</h3>
 <li><code>delay_ms</code> waits. <code>usleep(msec * 1000)</code> would overflow above about 71 minutes, and return early on a signal.</li>
 <li><code>monotonic_ms</code> gives milliseconds since any fixed origin. It never goes back, and does not jump when the wall clock is set. A 32-bit tick counter has to be extended to 64 bits, or it wraps after about 49.7 days.</li>
 </ul>
-<p>Typical implementation with <code>pthread</code>, as in <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sys_cb_linux.c">linux-sample</a>. A system with no state of its own can be one static object for everything:</p>
+<p>Typical implementation with <code>pthread</code>, as in <a href="https://github.com/KiiPlatform/ebisu/blob/master/platform/posix/src/ebisu_posix.c">platform's POSIX port</a>, which an application on Linux or macOS can link as it is, with <code><a class="elRef" href="../../platform/html/ebisu__posix_8h.html#a1d2bbb9e6c2952242e1c6738ad24f8d4">ebisu_posix_system()</a></code>. A system with no state of its own can be one static object for everything:</p>
 <div class="fragment"><div class="line"><span class="keyword">static</span> <a class="code hl_enumerationRef" href="../../platform/html/ebisu__system_8h.html#a90188fadee3bc027156aa75ab532454a">ebisu_task_code_t</a> task_create(<a class="code hl_structRef" href="../../platform/html/structebisu__system__t.html">ebisu_system_t</a>* self, <span class="keyword">const</span> <span class="keywordtype">char</span>* name,</div>
 <div class="line">        EBISU_TASK_ENTRY entry, <span class="keywordtype">void</span>* param)</div>
 <div class="line">{</div>
@@ -221,7 +221,7 @@ Sockets</h3>
 <div class="line">    ...</div>
 <div class="line">}</div>
 <div class="ttc" id="aebisu__object_8h_html_a5e7fdb772cc16ee485b366e1618a7136"><div class="ttname"><a href="../../platform/html/ebisu__object_8h.html#a5e7fdb772cc16ee485b366e1618a7136">EBISU_CONTAINER_OF</a></div><div class="ttdeci">#define EBISU_CONTAINER_OF(ptr, type, member)</div></div>
-</div><!-- fragment --><p>You can see implementation with OpenSSL at <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c">linux-sample</a></p>
+</div><!-- fragment --><p>You can see implementation with OpenSSL at <a href="https://github.com/KiiPlatform/ebisu/blob/master/platform/openssl/src/ebisu_openssl.c">platform's OpenSSL port</a>, which an application on Linux or macOS can link as it is, as the linux-sample does.</p>
 <p>The <a href="https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#writing-callbacks">khc README</a> has what these operations have to do that <code>tio</code> can't check for them, such as timeouts and <code>SIGPIPE</code>.</p>
 <p>Note that, <code>tio_handler</code> uses MQTT(s) to receive remote control commands and uses HTTP(s) to send the result of command execution, so it takes two sockets: one for each. Both can have the same operations, but they must be different objects, as the two connections are open at the same time. Please also check <a class="el" href="index.html#asynchronous-task-management">Asynchronous task management</a> section as well.</p>
 <p>For both MQTT and HTTP, using them over secure connection is highly recommended. Our cloud supports non-secure connection for now. However, we may terminate supports of insecure connections in the future.</p>
@@ -234,7 +234,7 @@ Notes about socket implementation used for MQTT.</h4>
 <div class="fragment"><div class="line">tio_handler_set_mqtt_to_sock_recv(handler, 15);</div>
 <div class="line">tio_handler_set_keep_alive_interval(handler, 300);</div>
 </div><!-- fragment --><p>When the recv timeout runs out with nothing received, the MQTT socket's recv should return <code>EBISU_SOCK_FAIL</code>. <code>EBISU_SOCK_OK</code> with 0 bytes means the broker closed the connection, and <code>tio_handler</code> connects again.</p>
-<p>A lost connection makes recv return <code>EBISU_SOCK_FAIL</code> as well. To tell it from a timeout, give the socket the optional <code>recv_timed_out</code> operation: it returns <code>true</code> if the last receive timed out, and <code>false</code> if it failed otherwise, in which case <code>tio_handler</code> connects again. Without it, every <code>EBISU_SOCK_FAIL</code> while waiting for a command is taken for a timeout, and a lost connection is only noticed when a <code>PINGREQ</code> fails or goes unanswered; with a keep-alive interval of 0, never. See <code>sock_cb_recv_timed_out()</code> in <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c">linux-sample</a>.</p>
+<p>A lost connection makes recv return <code>EBISU_SOCK_FAIL</code> as well. To tell it from a timeout, give the socket the optional <code>recv_timed_out</code> operation: it returns <code>true</code> if the last receive timed out, and <code>false</code> if it failed otherwise, in which case <code>tio_handler</code> connects again. Without it, every <code>EBISU_SOCK_FAIL</code> while waiting for a command is taken for a timeout, and a lost connection is only noticed when a <code>PINGREQ</code> fails or goes unanswered; with a keep-alive interval of 0, never. See <code>openssl_recv_timed_out()</code> in <a href="https://github.com/KiiPlatform/ebisu/blob/master/platform/openssl/src/ebisu_openssl.c">platform's OpenSSL port</a>.</p>
 <p><a class="anchor" id="action-callback"></a> </p>
 <h3><a class="anchor" id="autotoc_md7"></a>
 Action callback</h3>
@@ -272,7 +272,7 @@ Set-up &lt;tt&gt;tio_handler_t&lt;/tt&gt; instance</h2>
 <div class="line"> </div>
 <div class="line">tio_handler_set_app(handler, KII_APP_ID, KII_APP_HOST);</div>
 <div class="line"> </div>
-<div class="line">tio_handler_set_system(handler, linux_system());</div>
+<div class="line">tio_handler_set_system(handler, <a class="code hl_functionRef" href="../../platform/html/ebisu__posix_8h.html#a1d2bbb9e6c2952242e1c6738ad24f8d4">ebisu_posix_system</a>());</div>
 <div class="line"> </div>
 <div class="line">tio_handler_set_http_socket(handler, &amp;http_ssl_ctx-&gt;base);</div>
 <div class="line">tio_handler_set_mqtt_socket(handler, &amp;mqtt_ssl_ctx-&gt;base);</div>
@@ -288,6 +288,7 @@ Set-up &lt;tt&gt;tio_handler_t&lt;/tt&gt; instance</h2>
 <div class="line"> </div>
 <div class="line">tio_handler_set_cb_task_continue(handler, _handler_continue, NULL);</div>
 <div class="line">tio_handler_set_cb_task_exit(handler, _handler_exit, NULL);</div>
+<div class="ttc" id="aebisu__posix_8h_html_a1d2bbb9e6c2952242e1c6738ad24f8d4"><div class="ttname"><a href="../../platform/html/ebisu__posix_8h.html#a1d2bbb9e6c2952242e1c6738ad24f8d4">ebisu_posix_system</a></div><div class="ttdeci">ebisu_system_t * ebisu_posix_system(void)</div></div>
 </div><!-- fragment --><p>Here's anatomy of set-up calls.</p>
 <h3><a class="anchor" id="autotoc_md9"></a>
 &lt;tt&gt;tio_handler_init&lt;/tt&gt; call</h3>
@@ -298,7 +299,7 @@ Set-up &lt;tt&gt;tio_handler_t&lt;/tt&gt; instance</h2>
 <p>In the example, <code>KII_APP_ID</code> and <code>KII_APP_HOST</code> is defined as Macro. Those are used to identify work space in the cloud and the value is determined when you Kii Cloud App has been created. To create your Kii Cloud App, Sign-up to <a href="https://developer.kii.com">Developer console</a>.</p>
 <h3><a class="anchor" id="autotoc_md11"></a>
 Set-up the system and sockets</h3>
-<div class="fragment"><div class="line">tio_handler_set_system(handler, linux_system());</div>
+<div class="fragment"><div class="line">tio_handler_set_system(handler, <a class="code hl_functionRef" href="../../platform/html/ebisu__posix_8h.html#a1d2bbb9e6c2952242e1c6738ad24f8d4">ebisu_posix_system</a>());</div>
 </div><!-- fragment --><p>Different socket objects, <code>http_ssl_ctx</code> and <code>mqtt_ssl_ctx</code>, are used since the connection and it's life-cycle is different between them. <code>tio</code> keeps a pointer to each object, so they have to outlive the handler's task. If your application allocates memory/ resources for them, application is responsible to free those memory/ resources.</p>
 <div class="fragment"><div class="line">tio_handler_set_http_socket(handler, &amp;http_ssl_ctx-&gt;base);</div>
 <div class="line">tio_handler_set_mqtt_socket(handler, &amp;mqtt_ssl_ctx-&gt;base);</div>
@@ -312,7 +313,7 @@ Set-up buffers</h3>
 </div><!-- fragment --><h3><a class="anchor" id="autotoc_md13"></a>
 Set-up MQTT socket timeout.</h3>
 <p><code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code> needs socket timeout in seconds to send MQTT <code>PINGREQ</code> periodically.</p>
-<p>Note that application must implement socket timeout in the socket implementation. You can see example <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c">here</a></p>
+<p>Note that application must implement socket timeout in the socket implementation. You can see example <a href="https://github.com/KiiPlatform/ebisu/blob/master/platform/openssl/src/ebisu_openssl.c">here</a></p>
 <div class="fragment"><div class="line">tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);</div>
 </div><!-- fragment --><h3><a class="anchor" id="autotoc_md14"></a>
 Set-up MQTT Keep Alive interval.</h3>
@@ -345,7 +346,7 @@ Set up a session</h2>
 <div class="fragment"><div class="line"><a class="code hl_structRef" href="../../kii/html/structkii__session__t.html">kii_session_t</a> session;</div>
 <div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#a58ff8b06b612885dea237c6ba31d1820">kii_session_init</a>(&amp;session);</div>
 <div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#abefddc1c8a843a1a33f845f65b375fb8">kii_session_set_lock</a>(&amp;session, &amp;session_lock.base);</div>
-<div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#aa035526f1f96acd8f8bc2b66c031d511">kii_session_set_system</a>(&amp;session, linux_system());</div>
+<div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#aa035526f1f96acd8f8bc2b66c031d511">kii_session_set_system</a>(&amp;session, <a class="code hl_functionRef" href="../../platform/html/ebisu__posix_8h.html#a1d2bbb9e6c2952242e1c6738ad24f8d4">ebisu_posix_system</a>());</div>
 <div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#ac3389943c7df0bafed6786e303b1561f">kii_session_set_cb_author_updated</a>(&amp;session, author_updated_callback, NULL);</div>
 <div class="line"><span class="keywordflow">if</span> (tio_handler_set_session(&amp;handler, &amp;session) != TIO_ERR_OK ||</div>
 <div class="line">        tio_updater_set_session(&amp;updater, &amp;session) != TIO_ERR_OK) {</div>
@@ -385,7 +386,8 @@ Lock</h3>
 <div class="line"><span class="keyword">static</span> <span class="keyword">const</span> <a class="code hl_structRef" href="../../platform/html/structebisu__lock__ops__t.html">ebisu_lock_ops_t</a> linux_lock_ops = { lock, unlock };</div>
 <div class="ttc" id="astructebisu__lock__ops__t_html"><div class="ttname"><a href="../../platform/html/structebisu__lock__ops__t.html">ebisu_lock_ops_t</a></div></div>
 <div class="ttc" id="astructebisu__lock__t_html"><div class="ttname"><a href="../../platform/html/structebisu__lock__t.html">ebisu_lock_t</a></div></div>
-</div><!-- fragment --><h3><a class="anchor" id="autotoc_md18"></a>
+</div><!-- fragment --><p><a href="https://github.com/KiiPlatform/ebisu/blob/master/platform/posix/src/ebisu_posix.c">platform's POSIX port</a> has this one, <code><a class="elRef" href="../../platform/html/structebisu__posix__lock__t.html">ebisu_posix_lock_t</a></code>, initialized with <code><a class="elRef" href="../../platform/html/ebisu__posix_8h.html#a1c771ebce9cfb180f497092f6b8b5059">ebisu_posix_lock_init()</a></code>.</p>
+<h3><a class="anchor" id="autotoc_md18"></a>
 The system's monotonic clock</h3>
 <p>Required. The session times the expiry of tokens that have a lifetime, which those onboarding issues do not, with the <code>monotonic_ms</code> of the <a class="el" href="index.html#task-callbacks">system</a> set by <code><a class="elRef" href="../../kii/html/kii_8h.html#aa035526f1f96acd8f8bc2b66c031d511">kii_session_set_system()</a></code>. It is called only with the session lock held, so it can count the wraps of a 32-bit tick counter without a lock of its own.</p>
 <h3><a class="anchor" id="autotoc_md19"></a>
@@ -485,7 +487,7 @@ Set-up &lt;tt&gt;tio_updater_t&lt;/tt&gt; instance</h2>
 <div class="line"> </div>
 <div class="line">tio_updater_set_app(updater, KII_APP_ID, KII_APP_HOST);</div>
 <div class="line"> </div>
-<div class="line">tio_updater_set_system(updater, linux_system());</div>
+<div class="line">tio_updater_set_system(updater, <a class="code hl_functionRef" href="../../platform/html/ebisu__posix_8h.html#a1d2bbb9e6c2952242e1c6738ad24f8d4">ebisu_posix_system</a>());</div>
 <div class="line"> </div>
 <div class="line">tio_updater_set_buff(updater, buffer, buffer_size);</div>
 <div class="line"> </div>
@@ -578,7 +580,7 @@ Avoiding race condition</h2>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 09:09:30 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Mon Nov 2 2026 09:36:17 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

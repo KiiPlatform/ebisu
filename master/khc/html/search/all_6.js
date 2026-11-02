@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['next_0',['next',['../structkhc__slist.html#ad2427c9cd37a7ef8cc829d8cc652a1fd',1,'khc_slist']]]
+  ['monotonic_5fms_0',['monotonic_ms',['../../../platform/html/structebisu__system__ops__t.html#a2a245518f6edc8e03312e7458e4fd730',1,'ebisu_system_ops_t']]]
 ];

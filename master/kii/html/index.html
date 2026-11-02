@@ -261,7 +261,7 @@ Push</h1>
 </ul>
 <h2><a class="anchor" id="autotoc_md5"></a>
 Writing task callbacks</h2>
-<p>What <code>kii</code> leaves to the system and the task callbacks, with <code>linux-env</code> in the <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/linux-env/task_impl.c">Linux sample</a> to start from. The <a href="https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#writing-callbacks">khc README</a> has what socket callbacks have to do.</p>
+<p>What <code>kii</code> leaves to the system and the task callbacks, with <a href="https://github.com/KiiPlatform/ebisu/blob/master/platform/posix/src/ebisu_posix.c">platform's POSIX port</a> to start from. The <a href="https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#writing-callbacks">khc README</a> has what socket callbacks have to do.</p>
 <ul>
 <li><b>Creating the task</b>: <code>task_create</code> returns <code>EBISU_TASKC_OK</code> only if it started. Nothing joins a task, so a thread has to be detached, or it stays behind when the task ends.</li>
 <li><b>Delaying</b>: <code>delay_ms</code> waits the whole time asked for, a signal or not. <code>msec</code> is a <code>uint32_t</code>, so <code>usleep(msec * 1000)</code> overflows above about 71 minutes.</li>
@@ -327,7 +327,7 @@ The time</h1>
 <li><code><a class="elRef" href="../../platform/html/ebisu__clock_8h.html#aa00ab1f7611766edb574494ca947f07d">ebisu_clock_forget_time()</a></code>, when the server's certificate is refused as not valid yet while the clock had the time. That suggests the time fell behind, the monotonic clock having stopped while the device slept and the server having renewed its certificate meanwhile. Forgotten, the time becomes a lower bound, the next connection goes through, and its response gives the clock the time again. Without it, the connection that would bring the time is refused, again and again.</li>
 </ul>
 <p>The chain and the host name are checked in full either way: the clock only decides the validity period.</p>
-<p>The socket callbacks of the <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c">Linux</a> and <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/win32-sample/sock_cb_win32.c">Win32</a> samples give their TLS stack the time, and those of the <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/esp32-sample/main/sock_cb_esp32.c">ESP32</a> and <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/freertos-sample/sock_cb_freertos.c">FreeRTOS</a> samples check the validity periods themselves, mbedTLS not checking them: the ESP32 one after the handshake, the FreeRTOS one during it, in mbedTLS's verify callback.</p>
+<p>The sockets of <a href="https://github.com/KiiPlatform/ebisu/blob/master/platform/openssl/src/ebisu_openssl.c">platform's OpenSSL port</a> and of the <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/win32-sample/sock_cb_win32.c">Win32</a> samples give their TLS stack the time, and those of the <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/esp32-sample/main/sock_cb_esp32.c">ESP32</a> and <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/freertos-sample/sock_cb_freertos.c">FreeRTOS</a> samples check the validity periods themselves, mbedTLS not checking them: the ESP32 one after the handshake, the FreeRTOS one during it, in mbedTLS's verify callback.</p>
 <p>A device that runs for a long time has the time again with every HTTP response. One that makes none for a while, only MQTT ones, has its time turn into a lower bound 24 hours after the last (<code><a class="elRef" href="../../platform/html/ebisu__clock_8h.html#a7b8c62d02d3b1f1d10b33f6c9a31d5f2">ebisu_clock_set_exact_for()</a></code> changes that), and a monotonic clock that goes back turns it into the floor: a monotonic clock drifts, and one cannot count on from a time when it goes back. A stale clock therefore never refuses a certificate as not yet valid, which could keep the device from connecting at all. The monotonic clock has to keep counting while the device sleeps, or the time falls behind while it still counts as exact. Saving the time now and then, and setting it with <code><a class="elRef" href="../../platform/html/ebisu__clock_8h.html#a0cf4c12578e20cf46a64aa39871145c1">ebisu_clock_set_floor()</a></code> after a restart, keeps the floor close to the time.</p>
 <h1><a class="anchor" id="autotoc_md11"></a>
 Building</h1>
@@ -336,7 +336,7 @@ Building</h1>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 09:09:30 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Mon Nov 2 2026 09:36:17 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

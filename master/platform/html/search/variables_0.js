@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['close_0',['close',['../structebisu__socket__ops__t.html#afab911ce1025829b38f7df1096e67e7b',1,'ebisu_socket_ops_t']]],
-  ['connect_1',['connect',['../structebisu__socket__ops__t.html#ad7c954a124d7f7029c24052e1fbdc2c2',1,'ebisu_socket_ops_t']]]
+  ['base_0',['base',['../structebisu__posix__lock__t.html#a77630c857724e99e3bd71960e6101b13',1,'ebisu_posix_lock_t::base'],['../structebisu__openssl__socket__t.html#a0525a6b30d917271238a685b221b9739',1,'ebisu_openssl_socket_t::base']]]
 ];

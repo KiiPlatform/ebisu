@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['monotonic_5fms_0',['monotonic_ms',['../structebisu__system__ops__t.html#a2a245518f6edc8e03312e7458e4fd730',1,'ebisu_system_ops_t']]]
+  ['lock_0',['lock',['../structebisu__lock__ops__t.html#a745899b14950b7ba82f33d2cc6a85174',1,'ebisu_lock_ops_t']]]
 ];

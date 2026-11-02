@@ -83,12 +83,18 @@ $(function() {
 <li><b>The system and locks</b> (<code><a class="el" href="ebisu__system_8h.html" title="Task, delay, monotonic time and lock abstraction.">ebisu_system.h</a></code>): <code><a class="el" href="structebisu__system__t.html" title="The system: tasks, delays and a monotonic clock.">ebisu_system_t</a></code> creates tasks, delays them and reads a monotonic clock, and <code><a class="el" href="structebisu__lock__t.html" title="A lock.">ebisu_lock_t</a></code> is a lock.</li>
 <li><b>The clock</b> (<code><a class="el" href="ebisu__clock_8h.html" title="The time of day, for a device without a real-time clock.">ebisu_clock.h</a></code>): <code><a class="el" href="structebisu__clock__t.html" title="The time of day, for a device without a real-time clock.">ebisu_clock_t</a></code> keeps the time of day on a device without a real-time clock, for a TLS stack to check a certificate's validity period against. Socket callbacks use it directly, and <code>kii</code> and <code>tio</code> feed it with the time each response states.</li>
 </ul>
-<p>The samples under <code>tio</code> implement these for Linux, Windows, FreeRTOS and ESP32. </p>
+<h1>Ports</h1>
+<p>Implementations for a kind of system, each a static library of its own, built where what it needs is found. Link one beside <code>libkhc</code>, <code>libkii</code> or <code>libtio</code>, which have the rest of <code>platform</code>.</p>
+<ul>
+<li><b>POSIX</b> (<code><a class="el" href="ebisu__posix_8h.html" title="The system and a lock on POSIX.">ebisu_posix.h</a></code>, library <code>ebisu_posix</code>): <code><a class="el" href="ebisu__posix_8h.html#a1d2bbb9e6c2952242e1c6738ad24f8d4" title="The system on POSIX.">ebisu_posix_system()</a></code>, whose tasks are detached threads, whose delays are <code>nanosleep()</code> and whose monotonic clock is <code>CLOCK_MONOTONIC</code>, and <code><a class="el" href="structebisu__posix__lock__t.html" title="A lock that is a pthread mutex.">ebisu_posix_lock_t</a></code>, a pthread mutex. Needs POSIX threads.</li>
+<li><b>OpenSSL</b> (<code><a class="el" href="ebisu__openssl_8h.html" title="A socket of OpenSSL over BSD sockets.">ebisu_openssl.h</a></code>, library <code>ebisu_openssl</code>): <code><a class="el" href="structebisu__openssl__socket__t.html" title="A TLS connection over a blocking BSD socket, with OpenSSL.">ebisu_openssl_socket_t</a></code>, TLS over a blocking BSD socket, checking the server's certificate at an <code><a class="el" href="structebisu__clock__t.html" title="The time of day, for a device without a real-time clock.">ebisu_clock_t</a></code>'s time. Needs OpenSSL 1.0.2 or later, and POSIX threads.</li>
+</ul>
+<p>The Linux sample uses both. The samples for Windows, FreeRTOS and ESP32 have implementations of their own, under <code>tio</code>. </p>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 09:09:29 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Mon Nov 2 2026 09:36:17 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

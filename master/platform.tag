@@ -239,6 +239,70 @@
       <arglist></arglist>
     </member>
   </compound>
+  <compound kind="file">
+    <name>ebisu_openssl.h</name>
+    <path>openssl/include/</path>
+    <filename>ebisu__openssl_8h.html</filename>
+    <includes id="ebisu__clock_8h" name="ebisu_clock.h" local="no" import="no" module="no" objc="no">ebisu_clock.h</includes>
+    <includes id="ebisu__socket_8h" name="ebisu_socket.h" local="no" import="no" module="no" objc="no">ebisu_socket.h</includes>
+    <class kind="struct">ebisu_openssl_socket_t</class>
+    <member kind="typedef">
+      <type>struct ebisu_openssl_socket_t</type>
+      <name>ebisu_openssl_socket_t</name>
+      <anchorfile>ebisu__openssl_8h.html</anchorfile>
+      <anchor>a4dc56053c784610a590ee3fceb160913</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_openssl_socket_init</name>
+      <anchorfile>ebisu__openssl_8h.html</anchorfile>
+      <anchor>adbc237cc5b52c24a208886300ee0a8a2</anchor>
+      <arglist>(ebisu_openssl_socket_t *sock, unsigned int to_recv, unsigned int to_send)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_openssl_socket_set_clock</name>
+      <anchorfile>ebisu__openssl_8h.html</anchorfile>
+      <anchor>ad504ec9246a218a4cd22974b77da48f7</anchor>
+      <arglist>(ebisu_openssl_socket_t *sock, ebisu_clock_t *clock)</arglist>
+    </member>
+  </compound>
+  <compound kind="file">
+    <name>ebisu_posix.h</name>
+    <path>posix/include/</path>
+    <filename>ebisu__posix_8h.html</filename>
+    <includes id="ebisu__system_8h" name="ebisu_system.h" local="no" import="no" module="no" objc="no">ebisu_system.h</includes>
+    <class kind="struct">ebisu_posix_lock_t</class>
+    <member kind="typedef">
+      <type>struct ebisu_posix_lock_t</type>
+      <name>ebisu_posix_lock_t</name>
+      <anchorfile>ebisu__posix_8h.html</anchorfile>
+      <anchor>a22d27d681115334fe2e1410cbb2b9226</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="function">
+      <type>ebisu_system_t *</type>
+      <name>ebisu_posix_system</name>
+      <anchorfile>ebisu__posix_8h.html</anchorfile>
+      <anchor>a1d2bbb9e6c2952242e1c6738ad24f8d4</anchor>
+      <arglist>(void)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>ebisu_posix_lock_init</name>
+      <anchorfile>ebisu__posix_8h.html</anchorfile>
+      <anchor>a1c771ebce9cfb180f497092f6b8b5059</anchor>
+      <arglist>(ebisu_posix_lock_t *lock)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_posix_lock_destroy</name>
+      <anchorfile>ebisu__posix_8h.html</anchorfile>
+      <anchor>a48ff6977e6c447af50911fefb115690d</anchor>
+      <arglist>(ebisu_posix_lock_t *lock)</arglist>
+    </member>
+  </compound>
   <compound kind="struct">
     <name>ebisu_clock_t</name>
     <filename>structebisu__clock__t.html</filename>
@@ -269,6 +333,28 @@
       <name>ops</name>
       <anchorfile>structebisu__lock__t.html</anchorfile>
       <anchor>a71d30ddec61e4e6d4790bab56b4c0fa5</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_openssl_socket_t</name>
+    <filename>structebisu__openssl__socket__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_socket_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__openssl__socket__t.html</anchorfile>
+      <anchor>a0525a6b30d917271238a685b221b9739</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_posix_lock_t</name>
+    <filename>structebisu__posix__lock__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_lock_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__posix__lock__t.html</anchorfile>
+      <anchor>a77630c857724e99e3bd71960e6101b13</anchor>
       <arglist></arglist>
     </member>
   </compound>

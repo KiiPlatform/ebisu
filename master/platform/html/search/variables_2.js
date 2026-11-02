@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['lock_0',['lock',['../structebisu__lock__ops__t.html#a745899b14950b7ba82f33d2cc6a85174',1,'ebisu_lock_ops_t']]]
+  ['delay_5fms_0',['delay_ms',['../structebisu__system__ops__t.html#a28038f19ac8ae6170f028a366571e505',1,'ebisu_system_ops_t']]]
 ];

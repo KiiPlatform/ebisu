@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['task_5fcreate_0',['task_create',['../structebisu__system__ops__t.html#acb93b9e260c324f9f727d1eacefc5c94',1,'ebisu_system_ops_t']]]
+  ['send_0',['send',['../structebisu__socket__ops__t.html#adb543d912cc7f9758ed4713cfeed4666',1,'ebisu_socket_ops_t']]]
 ];
