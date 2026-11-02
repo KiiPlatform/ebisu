@@ -291,8 +291,13 @@ kii_code_t _convert_code(khc_code khc_c) {
         case KHC_ERR_FAIL:
             return KII_ERR_FAIL;
         // Only a read callback of the application's can give more than it was
-        // asked for, and kii sets no body length.
+        // asked for. The body length kii sets is that of its buffer, which its
+        // own read callback gives whole.
         case KHC_ERR_READ_CALLBACK:
+            return KII_ERR_FAIL;
+        // kii sets neither a timeout nor a continue callback on its khc.
+        case KHC_ERR_TIMEOUT:
+        case KHC_ERR_CANCELLED:
             return KII_ERR_FAIL;
     }
     return KII_ERR_FAIL;

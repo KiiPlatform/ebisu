@@ -35,7 +35,14 @@ callbacks and a buffer of fixed size, so neither has to fit in memory.
   - A response to `HEAD`, a `204` and a `304` end with their headers, whatever
     length they give.
 - **Non-blocking sockets**: a socket callback can return `EBISU_SOCK_AGAIN`, and
-  `khc` calls it again with the same arguments.
+  `khc` calls it again with the same arguments: at once, or, with a system set
+  by `khc_set_system()` that has a `delay_ms`, after `KHC_AGAIN_WAIT_MS`, 10
+  milliseconds unless defined otherwise.
+- **A timeout for the whole request**: `khc_set_timeout_ms()`, timed by the
+  system's `monotonic_ms`, ends a request that goes on longer with
+  `KHC_ERR_TIMEOUT`, however promptly each socket operation returns.
+- **Cancellation**: the callback set by `khc_set_cb_continue()` is asked between
+  steps, and ends the request with `KHC_ERR_CANCELLED` when it returns false.
 
 ## Limitations
 
@@ -222,15 +229,20 @@ Implementations to start from:
 What `khc` leaves to the callbacks, which it can't check. `linux-sample` is the
 one to read for what socket callbacks have to do.
 
-- **Timeouts**: `khc` bounds nothing itself, so a callback that blocks holds the
-  request for as long as it blocks. Give sockets a send and a receive timeout.
-  On Linux the send timeout bounds a blocking `connect()` too, but nothing in
-  the system bounds looking up the host, which takes as long as the resolver
-  does. platform's OpenSSL port bounds both, with its connect timeout.
+- **Timeouts**: `khc` checks the request's timeout, if one is set, between
+  socket operations, so a callback that blocks holds the request for as long as
+  it blocks. Give sockets a send and a receive timeout. On Linux the send
+  timeout bounds a blocking `connect()` too, but nothing in the system bounds
+  looking up the host, which takes as long as the resolver does. platform's
+  OpenSSL port bounds both, with its connect timeout.
 - **A timeout is `EBISU_SOCK_FAIL`**: `khc` calls a callback that returned
-  `EBISU_SOCK_AGAIN` again at once, so returning it for a timeout has a server
-  that stopped answering hold the request for ever. `EBISU_SOCK_AGAIN` is for a
-  non-blocking socket, whose callback has to decide for itself when to give up.
+  `EBISU_SOCK_AGAIN` again, so returning it for a timeout has a server that
+  stopped answering hold the request until the request's own timeout, if there
+  is one, and for ever otherwise. `EBISU_SOCK_AGAIN` is for a non-blocking
+  socket that isn't ready yet.
+- **Cancelling from another task**: the continue callback runs in the task
+  performing the request, and reads what the other task sets, under a lock or
+  as an atomic flag. It is asked at every step, so it has to be quick.
 - **The end of the stream is `EBISU_SOCK_OK` with 0 bytes**: that goes for a TLS
   connection the server closes without a `close_notify` too, which servers
   answering `Connection: Close` do. `linux-sample` shows how that looks to
@@ -268,11 +280,14 @@ its status: a `404` or a `500` is a response like any other, and
 | `KHC_ERR_ALLOCATION` | A buffer `khc` allocates could not be allocated. |
 | `KHC_ERR_TOO_LARGE_DATA` | The status line, `Content-Length` or `Transfer-Encoding` doesn't fit in the response header buffer, or a chunk size line in the stream buffer, or the stream buffer has no room for a request chunk's data besides its size line and CRLF. |
 | `KHC_ERR_READ_CALLBACK` | The read callback returned more than it was asked for, or 0 before the length set by `khc_set_req_body_length()`. |
-| `KHC_ERR_FAIL` | The status line or a chunk size is malformed, or a socket, header or write callback isn't set, in which case nothing was sent. |
+| `KHC_ERR_TIMEOUT` | The request went on longer than `khc_set_timeout_ms()` allows. |
+| `KHC_ERR_CANCELLED` | The continue callback returned false. |
+| `KHC_ERR_FAIL` | The status line or a chunk size is malformed, or a socket, header or write callback isn't set, or a timeout is set without a system with a `monotonic_ms`, in which case nothing was sent. |
 
 Closing the socket comes last and doesn't change the result, as the server may
 already have acted on the request. `khc_get_close_failed()` says whether the
-close callback returned `EBISU_SOCK_FAIL`.
+close callback returned `EBISU_SOCK_FAIL`, or returned `EBISU_SOCK_AGAIN` once
+the request had timed out or been cancelled, when it is not called again.
 
 `khc_get_resp_date()` gives the server's time from the response's `Date`
 header, as seconds since the epoch, for a device without a real-time clock. It

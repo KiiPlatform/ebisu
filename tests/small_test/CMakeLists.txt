@@ -6,6 +6,7 @@ ebisu_add_test_suite(small_test_khc
     WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/khc
     SOURCES
         khc/chunk_size_line_test.cpp
+        khc/deadline_test.cpp
         khc/header_parser_test.cpp
         khc/http_date_test.cpp
         khc/http_test.cpp

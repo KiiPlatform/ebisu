@@ -14,6 +14,7 @@ extern "C"
 #include <stdint.h>
 #include <stdio.h>
 #include <ebisu_socket.h>
+#include <ebisu_system.h>
 /* The library is compiled with hidden visibility, so what this header declares
    is exactly what the shared object exports. */
 #if defined(__GNUC__) || defined(__clang__)
@@ -31,6 +32,15 @@ extern "C"
 #define KHC_PATH_MAX_SIZE 256
 /** \brief Size of the method buffer written by khc_set_method(). */
 #define KHC_METHOD_MAX_SIZE 16
+
+/**
+ * \brief How long khc waits, in milliseconds, before calling a socket
+ * operation that returned EBISU_SOCK_AGAIN again, with the delay_ms of the
+ * system set by khc_set_system(khc*, ebisu_system_t*).
+ */
+#ifndef KHC_AGAIN_WAIT_MS
+#define KHC_AGAIN_WAIT_MS 10
+#endif
 
 /**
  * \brief Callback writes data.
@@ -73,6 +83,19 @@ typedef size_t (*KHC_CB_READ)(char *buffer, size_t size, void *userdata);
  * khc aborts HTTP session and khc_perform(khc*) returns KHC_ERR_HEADER_CALLBACK.
  */
 typedef size_t (*KHC_CB_HEADER)(char *buffer, size_t size, void *userdata);
+/**
+ * \brief Callback deciding whether a request goes on.
+ *
+ * Called between the steps of khc_perform(khc*), each a socket operation or a
+ * callback, so that another task can cancel a request: the implementation
+ * reads a flag that task sets, under whatever lock their system has.
+ *
+ * \param [in, out] userdata context data passed to
+ * khc_set_cb_continue(khc*, KHC_CB_CONTINUE, void*).
+ * \returns true to go on, false to cancel the request: khc_perform(khc*) closes
+ * the connection, if one is open, and returns KHC_ERR_CANCELLED.
+ */
+typedef bool (*KHC_CB_CONTINUE)(void *userdata);
 
 /**
  * \brief Linked list.
@@ -260,6 +283,12 @@ typedef enum khc_code {
      * a body of the length set by khc_set_req_body_length(khc*, size_t)
      * early. */
     KHC_ERR_READ_CALLBACK,
+    /**< \brief The request took longer than khc_set_timeout_ms(khc*,
+     * uint32_t) allows. */
+    KHC_ERR_TIMEOUT,
+    /**< \brief The callback set by khc_set_cb_continue(khc*,
+     * KHC_CB_CONTINUE, void*) cancelled the request. */
+    KHC_ERR_CANCELLED,
 } khc_code;
 
 /**
@@ -276,6 +305,16 @@ typedef struct khc {
     void* _read_data; /**< \private **/
     KHC_CB_HEADER _cb_header; /**< \private **/
     void* _header_data; /**< \private **/
+    KHC_CB_CONTINUE _cb_continue; /**< \private **/
+    void* _continue_data; /**< \private **/
+
+    ebisu_system_t* _system; /**< \private **/
+    /* How long a request may take, or 0 for no limit. */
+    uint32_t _timeout_ms; /**< \private **/
+    /* When the request being performed started, by the system's clock. */
+    uint64_t _started_ms; /**< \private **/
+    /* Whether the last step's socket operation returned EBISU_SOCK_AGAIN. */
+    bool _again; /**< \private **/
 
     /** \private Request header list */
     khc_slist* _req_headers;
@@ -403,6 +442,52 @@ void khc_reset_except_request(khc* khc);
  * the write callback or the header callback is not set. The read callback may be left out for a request with no body.
  */
 khc_code khc_perform(khc* khc);
+
+/**
+ * \brief Set the system: its clock times a request, and its delay waits for a
+ * socket that isn't ready.
+ *
+ * With a delay_ms, khc waits KHC_AGAIN_WAIT_MS before calling a socket
+ * operation that returned EBISU_SOCK_AGAIN again, rather than calling it again
+ * at once, over and over. With a monotonic_ms, the timeout set by
+ * khc_set_timeout_ms(khc*, uint32_t) can be used. khc_init(khc*) sets none,
+ * and the resets leave it.
+ *
+ * \param [out] khc instance.
+ * \param [in] system The system, or NULL. It has to outlive the requests.
+ */
+void khc_set_system(khc* khc, ebisu_system_t* system);
+
+/**
+ * \brief Set how long a request may take.
+ *
+ * From the start of khc_perform(khc*) to the end of the response. Once it has
+ * passed, khc_perform(khc*) closes the connection, if one is open, and returns
+ * KHC_ERR_TIMEOUT. It is checked between steps, so a socket operation that
+ * blocks runs to its own timeout first: it bounds a response that trickles in
+ * through receives that each end in time, or a slow handshake made of many.
+ *
+ * It needs the monotonic_ms of the system set by
+ * khc_set_system(khc*, ebisu_system_t*): without one, khc_perform(khc*)
+ * returns KHC_ERR_FAIL without connecting. khc_init(khc*) sets none, and the
+ * resets leave it.
+ *
+ * \param [out] khc instance.
+ * \param [in] timeout_ms The longest a request may take, in milliseconds, or 0
+ * for no limit.
+ */
+void khc_set_timeout_ms(khc* khc, uint32_t timeout_ms);
+
+/**
+ * \brief Set the callback deciding whether a request goes on.
+ *
+ * khc_init(khc*) sets none, and the resets leave it.
+ *
+ * \param [out] khc instance.
+ * \param [in] cb The callback, or NULL for none.
+ * \param [in] userdata Given to cb.
+ */
+void khc_set_cb_continue(khc* khc, KHC_CB_CONTINUE cb, void* userdata);
 
 /**
  * \brief Set host.
@@ -614,7 +699,8 @@ uint16_t khc_get_status_code(
  *
  * \param [in] khc instance.
  * \returns true if the close callback returned EBISU_SOCK_FAIL in the last
- * khc_perform(khc*), false if it hasn't since khc_init(khc*),
+ * khc_perform(khc*), or EBISU_SOCK_AGAIN once the request had timed out or been
+ * cancelled, when it isn't called again; false if it hasn't since khc_init(khc*),
  * khc_reset_except_cb(khc*) or khc_reset_except_request(khc*).
  */
 bool khc_get_close_failed(khc* khc);
