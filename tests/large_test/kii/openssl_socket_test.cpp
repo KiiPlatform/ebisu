@@ -322,6 +322,11 @@ struct LocalServer {
         ctx = SSL_CTX_new(SSLv23_server_method());
         REQUIRE( SSL_CTX_use_certificate(ctx, server_certificate()) == 1 );
         REQUIRE( SSL_CTX_use_PrivateKey(ctx, server_key()) == 1 );
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+        // ECDHE, which 1.0.2 has a server offer only when told to, and the
+        // port asks for, as servers have it.
+        REQUIRE( SSL_CTX_set_ecdh_auto(ctx, 1) == 1 );
+#endif
         thread = std::thread([this] { serve(); });
     }
 
@@ -449,6 +454,63 @@ TEST_CASE( "The OpenSSL socket trusts the CA certificates of its configuration" 
         ebisu_openssl_socket_init(&sock, 5, 5);
         CHECK( connect_to(&sock, server) == EBISU_SOCK_FAIL );
     }
+}
+
+namespace {
+
+// Has server speak TLS 1.2 at most, where its suites count, with these only.
+void limit_server(LocalServer& server, const char* ciphers)
+{
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+    REQUIRE( SSL_CTX_set_max_proto_version(server.ctx, TLS1_2_VERSION) == 1 );
+#endif
+    REQUIRE( SSL_CTX_set_cipher_list(server.ctx, ciphers) == 1 );
+}
+
+}
+
+// The port took the suites OpenSSL's build defaults to, and from OpenSSL 1.1
+// on, protocol versions from TLS 1.0.
+TEST_CASE( "The OpenSSL socket asks for TLS 1.2 or later, with forward secrecy and authenticated encryption" ) {
+    LocalServer server;
+    REQUIRE( server.listening );
+    CaFile ca;
+    ebisu_openssl_tls_t tls;
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    ebisu_openssl_socket_t sock;
+    ebisu_openssl_socket_init(&sock, 5, 5);
+    ebisu_openssl_socket_set_tls(&sock, &tls);
+
+    SECTION("a server with such a suite is connected to with it") {
+        limit_server(server, "ECDHE-RSA-AES128-GCM-SHA256");
+        REQUIRE( connect_to(&sock, server) == EBISU_SOCK_OK );
+        CHECK( std::string(SSL_get_cipher_name(sock.ssl)) == "ECDHE-RSA-AES128-GCM-SHA256" );
+        CHECK( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
+    }
+
+    SECTION("a server with only RSA key exchange is refused") {
+        limit_server(server, "AES128-GCM-SHA256:AES128-SHA");
+        CHECK( connect_to(&sock, server) == EBISU_SOCK_FAIL );
+    }
+
+    SECTION("a server with only CBC suites is refused") {
+        limit_server(server, "ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES128-SHA256");
+        CHECK( connect_to(&sock, server) == EBISU_SOCK_FAIL );
+    }
+
+    SECTION("a server with TLS 1.1 at most is refused") {
+        SSL_CTX_set_options(server.ctx, SSL_OP_NO_TLSv1_2);
+#ifdef SSL_OP_NO_TLSv1_3
+        SSL_CTX_set_options(server.ctx, SSL_OP_NO_TLSv1_3);
+#endif
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+        // Which OpenSSL 3 allows only at security level 0.
+        SSL_CTX_set_security_level(server.ctx, 0);
+#endif
+        CHECK( connect_to(&sock, server) == EBISU_SOCK_FAIL );
+    }
+
+    ebisu_openssl_tls_free(&tls);
 }
 
 TEST_CASE( "A TLS configuration whose CA certificates can't be loaded fails" ) {

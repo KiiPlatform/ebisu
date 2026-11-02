@@ -78,6 +78,11 @@ typedef struct ebisu_openssl_tls_t {
 /**
  * \brief Sets up a TLS configuration.
  *
+ * Its connections are TLS 1.2 or later, and in TLS 1.2 take only suites with
+ * forward secrecy and authenticated encryption: ECDHE or DHE, with AES-GCM or
+ * ChaCha20-Poly1305. So are those of the configuration sockets without one
+ * share.
+ *
  * For a device without the system's CA certificates, or with them where
  * OpenSSL doesn't look, give the CA certificates the servers' chain to.
  * Without either, the system's are used, from where OpenSSL was built to find
