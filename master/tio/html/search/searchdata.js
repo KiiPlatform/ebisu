@@ -5,8 +5,7 @@ var indexSectionsWithContent =
   2: "ejk",
   3: "abcdefhijlmnoprstuv",
   4: "k",
-  5: "k",
-  6: "t"
+  5: "t"
 };
 
 var indexSectionNames =
@@ -16,8 +15,7 @@ var indexSectionNames =
   2: "files",
   3: "variables",
   4: "typedefs",
-  5: "enums",
-  6: "pages"
+  5: "pages"
 };
 
 var indexSectionLabels =
@@ -27,7 +25,6 @@ var indexSectionLabels =
   2: "Files",
   3: "Variables",
   4: "Typedefs",
-  5: "Enumerations",
-  6: "Pages"
+  5: "Pages"
 };
 

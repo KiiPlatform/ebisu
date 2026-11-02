@@ -5,13 +5,6 @@
     <path>/home/runner/work/ebisu/ebisu/kii/include/</path>
     <filename>kii__task__callback_8h.html</filename>
     <member kind="typedef">
-      <type>enum kii_bool_t</type>
-      <name>kii_bool_t</name>
-      <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>a945d43709851462a1803721525df2b89</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="typedef">
       <type>void(*</type>
       <name>KII_CB_TASK_EXIT</name>
       <anchorfile>kii__task__callback_8h.html</anchorfile>
@@ -19,18 +12,11 @@
       <arglist>)(void *task_info, void *userdata)</arglist>
     </member>
     <member kind="typedef">
-      <type>kii_bool_t(*</type>
+      <type>bool(*</type>
       <name>KII_CB_TASK_CONTINUE</name>
       <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>a66833479636e54ec6559fcb91c37263d</anchor>
+      <anchor>ad160d0af530d336062646f36cbad22f3</anchor>
       <arglist>)(void *task_info, void *userdata)</arglist>
-    </member>
-    <member kind="enumeration">
-      <type></type>
-      <name>kii_bool_t</name>
-      <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>ae275605d20f9b00b1ead9cbc8e3b3283</anchor>
-      <arglist></arglist>
     </member>
   </compound>
   <compound kind="struct">
@@ -119,10 +105,10 @@
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>tio_bool_t</type>
+      <type>bool</type>
       <name>bool_value</name>
       <anchorfile>structtio__action__value__t.html</anchorfile>
-      <anchor>ac75507595c7f721705c920fb3dc6c437</anchor>
+      <anchor>a3e8117ff74584f831d8b289fc2f04f05</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">

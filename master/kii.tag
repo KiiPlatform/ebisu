@@ -553,15 +553,15 @@
       <type>void</type>
       <name>kii_enable_insecure_http</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a1ac5ab10b44de5397b7227e4e2aaca4e</anchor>
-      <arglist>(kii_t *kii, kii_bool_t enable_insecure_http)</arglist>
+      <anchor>a92b01e1888f561c5a91776818d32f726</anchor>
+      <arglist>(kii_t *kii, bool enable_insecure_http)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>kii_enable_insecure_mqtt</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a1d4b321dd8a70434bae5b07a70c14fba</anchor>
-      <arglist>(kii_t *kii, kii_bool_t enable_insecure_mqtt)</arglist>
+      <anchor>aea6712f6bf7e08d6f3d84a0c20d9a22f</anchor>
+      <arglist>(kii_t *kii, bool enable_insecure_mqtt)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -574,8 +574,8 @@
       <type>void</type>
       <name>kii_enable_absolute_target</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a79a6b0b0bb2ba8711e66159e115f8b9d</anchor>
-      <arglist>(kii_t *kii, kii_bool_t enable_absolute_target)</arglist>
+      <anchor>afaf8383962ca00268b0b668c831f165d</anchor>
+      <arglist>(kii_t *kii, bool enable_absolute_target)</arglist>
     </member>
     <member kind="function">
       <type>kii_code_t</type>
@@ -777,8 +777,8 @@
       <type>kii_code_t</type>
       <name>kii_install_push</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a53495a9269f8822e7f6e519ebb40d2f3</anchor>
-      <arglist>(kii_t *kii, kii_bool_t development, kii_installation_id_t *out_installation_id)</arglist>
+      <anchor>a8316ee62d49b7ace72f6c9964a347497</anchor>
+      <arglist>(kii_t *kii, bool development, kii_installation_id_t *out_installation_id)</arglist>
     </member>
     <member kind="function">
       <type>kii_code_t</type>
@@ -868,8 +868,8 @@
       <type>kii_code_t</type>
       <name>kii_api_call_start</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a848b722808c9a43c9d66a2aca09a9c04</anchor>
-      <arglist>(kii_t *kii, const char *http_method, const char *resource_path, const char *content_type, kii_bool_t set_authentication_header)</arglist>
+      <anchor>a0cc7c157807c5eac4598deeb6b1fe2be</anchor>
+      <arglist>(kii_t *kii, const char *http_method, const char *resource_path, const char *content_type, bool set_authentication_header)</arglist>
     </member>
     <member kind="function">
       <type>kii_code_t</type>
@@ -938,8 +938,8 @@
       <type>void</type>
       <name>kii_set_mqtt_clean_session</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>accf8d24d9a378006397b9fc54773ca9c</anchor>
-      <arglist>(kii_t *kii, kii_bool_t clean_session)</arglist>
+      <anchor>aaa66f396db8d5e91babf417ecfa0f1b5</anchor>
+      <arglist>(kii_t *kii, bool clean_session)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -1036,8 +1036,8 @@
       <type>void</type>
       <name>kii_set_use_m_0_header_flag</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a9f566e30857449a1899d80c91bfcdd6b</anchor>
-      <arglist>(kii_t *kii, kii_bool_t flag)</arglist>
+      <anchor>a5a67677ff2904593cbd93e5da52084c3</anchor>
+      <arglist>(kii_t *kii, bool flag)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -1052,13 +1052,6 @@
     <path>include/</path>
     <filename>kii__task__callback_8h.html</filename>
     <member kind="typedef">
-      <type>enum kii_bool_t</type>
-      <name>kii_bool_t</name>
-      <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>a945d43709851462a1803721525df2b89</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="typedef">
       <type>void(*</type>
       <name>KII_CB_TASK_EXIT</name>
       <anchorfile>kii__task__callback_8h.html</anchorfile>
@@ -1066,18 +1059,11 @@
       <arglist>)(void *task_info, void *userdata)</arglist>
     </member>
     <member kind="typedef">
-      <type>kii_bool_t(*</type>
+      <type>bool(*</type>
       <name>KII_CB_TASK_CONTINUE</name>
       <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>a66833479636e54ec6559fcb91c37263d</anchor>
+      <anchor>ad160d0af530d336062646f36cbad22f3</anchor>
       <arglist>)(void *task_info, void *userdata)</arglist>
-    </member>
-    <member kind="enumeration">
-      <type></type>
-      <name>kii_bool_t</name>
-      <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>ae275605d20f9b00b1ead9cbc8e3b3283</anchor>
-      <arglist></arglist>
     </member>
   </compound>
   <compound kind="struct">
