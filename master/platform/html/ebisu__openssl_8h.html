@@ -120,6 +120,9 @@ Functions</h2></td></tr>
 <tr class="memitem:adbc237cc5b52c24a208886300ee0a8a2" id="r_adbc237cc5b52c24a208886300ee0a8a2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ebisu__openssl_8h.html#adbc237cc5b52c24a208886300ee0a8a2">ebisu_openssl_socket_init</a> (<a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *sock, unsigned int to_recv, unsigned int to_send)</td></tr>
 <tr class="memdesc:adbc237cc5b52c24a208886300ee0a8a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the socket, with its timeouts, and makes base a socket of it.  <br /></td></tr>
 <tr class="separator:adbc237cc5b52c24a208886300ee0a8a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a360ec4c1f29d9ab30a4b41aaeedb560d" id="r_a360ec4c1f29d9ab30a4b41aaeedb560d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ebisu__openssl_8h.html#a360ec4c1f29d9ab30a4b41aaeedb560d">ebisu_openssl_socket_set_connect_timeout</a> (<a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *sock, unsigned int seconds)</td></tr>
+<tr class="memdesc:a360ec4c1f29d9ab30a4b41aaeedb560d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets how long connecting may take.  <br /></td></tr>
+<tr class="separator:a360ec4c1f29d9ab30a4b41aaeedb560d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afaa27f5cdf52db44f1a2d3532e901cb1" id="r_afaa27f5cdf52db44f1a2d3532e901cb1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ebisu__openssl_8h.html#afaa27f5cdf52db44f1a2d3532e901cb1">ebisu_openssl_socket_set_tls</a> (<a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *sock, <a class="el" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a> *tls)</td></tr>
 <tr class="memdesc:afaa27f5cdf52db44f1a2d3532e901cb1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the TLS configuration the socket connects with.  <br /></td></tr>
 <tr class="separator:afaa27f5cdf52db44f1a2d3532e901cb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -202,7 +205,7 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">sock</td><td>The socket. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">to_recv</td><td>Receive timeout in seconds, 0 for none. For MQTT, the one given to kii_set_mqtt_to_sock_recv(). </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">to_send</td><td>Send timeout in seconds, 0 for none. On Linux it bounds connecting too. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">to_send</td><td>Send timeout in seconds, 0 for none. It bounds looking up the host and each attempt to connect too, unless <a class="el" href="ebisu__openssl_8h.html#a360ec4c1f29d9ab30a4b41aaeedb560d" title="Sets how long connecting may take.">ebisu_openssl_socket_set_connect_timeout()</a> sets another. </td></tr>
   </table>
   </dd>
 </dl>
@@ -241,6 +244,44 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">sock</td><td>The socket. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">clock</td><td>The clock, or NULL for the system's time. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a360ec4c1f29d9ab30a4b41aaeedb560d" name="a360ec4c1f29d9ab30a4b41aaeedb560d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a360ec4c1f29d9ab30a4b41aaeedb560d">&#9670;&#160;</a></span>ebisu_openssl_socket_set_connect_timeout()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ebisu_openssl_socket_set_connect_timeout </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *&#160;</td>
+          <td class="paramname"><em>sock</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>seconds</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets how long connecting may take. </p>
+<p>The host is looked up with getaddrinfo(), and its addresses tried in the order it gives them, IPv6 and IPv4, until one connects. The timeout bounds the lookup, and each attempt to connect to an address, but not the TLS handshake, which the receive and send timeouts bound.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">sock</td><td>The socket. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">seconds</td><td>0 for no bound: the lookup takes as long as the system's resolver does, and an attempt as long as the system's TCP does. </td></tr>
   </table>
   </dd>
 </dl>
@@ -360,7 +401,7 @@ Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 10:16:48 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Mon Nov 2 2026 10:21:23 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

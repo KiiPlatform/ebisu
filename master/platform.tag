@@ -284,6 +284,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>ebisu_openssl_socket_set_connect_timeout</name>
+      <anchorfile>ebisu__openssl_8h.html</anchorfile>
+      <anchor>a360ec4c1f29d9ab30a4b41aaeedb560d</anchor>
+      <arglist>(ebisu_openssl_socket_t *sock, unsigned int seconds)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>ebisu_openssl_socket_set_tls</name>
       <anchorfile>ebisu__openssl_8h.html</anchorfile>
       <anchor>afaa27f5cdf52db44f1a2d3532e901cb1</anchor>
