@@ -71,11 +71,11 @@ static size_t read_state(char* buffer, size_t size, void* userdata)
     buffer[1] = '}';
     return 2;
 }
-static tio_bool_t action(tio_action_t* a, tio_action_err_t* err,
+static bool action(tio_action_t* a, tio_action_err_t* err,
         tio_action_result_data_t* data, void* userdata)
 {
     (void)a; (void)err; (void)data; (void)userdata;
-    return KII_TRUE;
+    return true;
 }
 
 static char http_buff[2048];
