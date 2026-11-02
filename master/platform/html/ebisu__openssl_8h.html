@@ -427,6 +427,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Sets up a TLS configuration. </p>
+<p>Its connections are TLS 1.2 or later, and in TLS 1.2 take only suites with forward secrecy and authenticated encryption: ECDHE or DHE, with AES-GCM or ChaCha20-Poly1305. So are those of the configuration sockets without one share.</p>
 <p>For a device without the system's CA certificates, or with them where OpenSSL doesn't look, give the CA certificates the servers' chain to. Without either, the system's are used, from where OpenSSL was built to find them, as when no configuration is set.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -443,7 +444,7 @@ Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 17:12:30 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Mon Nov 2 2026 17:14:25 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
