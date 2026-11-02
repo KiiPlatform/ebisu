@@ -543,6 +543,18 @@ void tio_handler_set_mqtt_buff(tio_handler_t* handler, char* buff, size_t buff_s
 void tio_handler_set_mqtt_qos(tio_handler_t* handler, kii_mqtt_qos_t qos);
 
 /**
+ * \brief Set the last will the handler's CONNECT carries.
+ *
+ * See kii_set_mqtt_will(). Set it before starting the handler.
+ *
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] will The will, kept as a pointer, or NULL for none.
+ * \return TIO_ERR_TOO_LARGE_DATA or TIO_ERR_FAIL, changing nothing, as
+ * kii_set_mqtt_will() returns them.
+ */
+tio_code_t tio_handler_set_mqtt_will(tio_handler_t* handler, const kii_mqtt_will_t* will);
+
+/**
  * \brief Set whether the handler asks for a clean session.
  *
  * See kii_set_mqtt_clean_session(): with false, and QoS 1, the broker

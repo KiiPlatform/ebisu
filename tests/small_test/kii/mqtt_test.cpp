@@ -2448,6 +2448,123 @@ TEST_CASE( "The version of MQTT CONNECT names" ) {
     }
 }
 
+// CONNECT had no will, so other clients had no way to learn that a device
+// had gone. One set by kii_set_mqtt_will() goes in each CONNECT.
+TEST_CASE( "CONNECT carries the last will" ) {
+    char mqtt_buff[1024];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
+    kii._keep_alive_interval = 300;
+    std::string sent;
+    khct::cb::SockCtx mqtt_ctx;
+    mqtt_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
+        sent.append(buffer, length);
+        *out_sent_length = length;
+        return EBISU_SOCK_OK;
+    };
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
+
+    mqtt_state_t state;
+    _init_mqtt_state(&kii, &state);
+    strcpy(state.endpoint.topic, "dummyTopic");
+    strcpy(state.endpoint.username, "dummyUser");
+    strcpy(state.endpoint.password, "dummyPassword");
+    const char message[] = { 'g', 'o', 'n', 'e', '\0', '!' };
+    kii_mqtt_will_t will = { "th/1/status", message, sizeof(message), KII_MQTT_QOS_1, true };
+
+    auto connect = [&state, &sent]() {
+        sent.clear();
+        state.info.task_state = KII_MQTT_ST_SEND_CONNECT;
+        _mqtt_state_send_connect(&state);
+    };
+
+    SECTION("byte for byte, after the client identifier") {
+        REQUIRE( kii_set_mqtt_will(&kii, &will) == KII_ERR_OK );
+        connect();
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_CONNACK );
+        const std::string payload = std::string("\x00\x0a" "dummyTopic", 12) +
+            std::string("\x00\x0b" "th/1/status", 13) +
+            std::string("\x00\x06" "gone\0!", 8) +
+            std::string("\x00\x09" "dummyUser" "\x00\x0d" "dummyPassword", 26);
+        // Username, password, will retain, will QoS 1, will, clean session.
+        const std::string expected = std::string("\x10\x45" "\x00\x04" "MQTT" "\x04" "\xee" "\x01\x2c", 12) +
+            payload;
+        CHECK( sent == expected );
+    }
+
+    SECTION("with its QoS and retain flags in CONNECT's flags") {
+        const struct { kii_mqtt_qos_t qos; bool retain; bool clean; unsigned char flags; } cases[] = {
+            { KII_MQTT_QOS_0, false, true, 0xc6 },
+            { KII_MQTT_QOS_1, false, true, 0xce },
+            { KII_MQTT_QOS_0, true, true, 0xe6 },
+            { KII_MQTT_QOS_1, true, false, 0xec },
+        };
+        for (const auto& c : cases) {
+            INFO( "qos " << c.qos << ", retain " << c.retain << ", clean " << c.clean );
+            will.qos = c.qos;
+            will.retain = c.retain;
+            kii_set_mqtt_clean_session(&kii, c.clean);
+            REQUIRE( kii_set_mqtt_will(&kii, &will) == KII_ERR_OK );
+            connect();
+            REQUIRE( sent.size() > 9 );
+            CHECK( (unsigned char)sent[9] == c.flags );
+        }
+    }
+
+    SECTION("none, as by default") {
+        REQUIRE( kii_set_mqtt_will(&kii, &will) == KII_ERR_OK );
+        REQUIRE( kii_set_mqtt_will(&kii, NULL) == KII_ERR_OK );
+        connect();
+        REQUIRE( sent.size() > 9 );
+        CHECK( (unsigned char)sent[9] == 0xc2 );
+        CHECK( sent.find("th/1/status") == std::string::npos );
+    }
+
+    SECTION("an empty message") {
+        kii_mqtt_will_t empty = { "t", NULL, 0, KII_MQTT_QOS_0, false };
+        REQUIRE( kii_set_mqtt_will(&kii, &empty) == KII_ERR_OK );
+        connect();
+        CHECK( sent.find(std::string("\x00\x01" "t" "\x00\x00" "\x00\x09" "dummyUser", 16)) != std::string::npos );
+    }
+
+    // 57 bytes for CONNECT without it, and 4 more for each length, the topic
+    // and the message.
+    SECTION("in the buffer CONNECT needs") {
+        REQUIRE( kii_set_mqtt_will(&kii, &will) == KII_ERR_OK );
+        const size_t needed = 57 + 4 + strlen(will.topic) + will.message_length;
+        kii_set_mqtt_buff(&kii, mqtt_buff, needed);
+        connect();
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_CONNACK );
+        kii_set_mqtt_buff(&kii, mqtt_buff, needed - 1);
+        connect();
+        CHECK( state.info.task_state == KII_MQTT_ST_ERR_EXIT );
+        CHECK( state.info.error == KII_MQTT_ERR_INSUFFICIENT_BUFF );
+        CHECK( sent.empty() );
+    }
+
+    SECTION("that CONNECT can carry, or none is set") {
+        REQUIRE( kii_set_mqtt_will(&kii, &will) == KII_ERR_OK );
+        const std::string long_topic(65536, 't');
+        kii_mqtt_will_t too_long = will;
+        too_long.topic = long_topic.c_str();
+        CHECK( kii_set_mqtt_will(&kii, &too_long) == KII_ERR_TOO_LARGE_DATA );
+        too_long = will;
+        too_long.message_length = 65536;
+        CHECK( kii_set_mqtt_will(&kii, &too_long) == KII_ERR_TOO_LARGE_DATA );
+        kii_mqtt_will_t bad = will;
+        bad.topic = NULL;
+        CHECK( kii_set_mqtt_will(&kii, &bad) == KII_ERR_FAIL );
+        bad = will;
+        bad.message = NULL;
+        CHECK( kii_set_mqtt_will(&kii, &bad) == KII_ERR_FAIL );
+        bad = will;
+        bad.qos = (kii_mqtt_qos_t)2;
+        CHECK( kii_set_mqtt_will(&kii, &bad) == KII_ERR_FAIL );
+        CHECK( kii._mqtt_will == &will );
+    }
+}
+
 TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     size_t kii_buff_size = 1024;
     char kii_buff[kii_buff_size];

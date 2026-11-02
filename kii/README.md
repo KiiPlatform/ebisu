@@ -276,6 +276,11 @@ it can arrive twice. With `kii_set_mqtt_clean_session(&kii, false)` as well,
 the broker keeps the thing's session, and the QoS 1 messages sent while the task
 is away, reconnecting or stopped, until it connects again.
 
+`kii_set_mqtt_will()` gives CONNECT a last will: a message the broker publishes
+if the connection is lost, rather than ended with the DISCONNECT the task sends
+when it stops, so that other clients can tell a device has gone. Whether it is
+published, and to whom, is the broker's.
+
 What reaches the thing:
 
 - **Buckets and topics** it subscribes to, with `kii_subscribe_bucket()` and

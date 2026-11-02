@@ -379,6 +379,24 @@ typedef enum kii_mqtt_qos_t {
 } kii_mqtt_qos_t;
 
 /**
+ * \brief A last will: the message the broker is to publish if the connection is
+ * lost, rather than ended with DISCONNECT, as the task ends it when it stops.
+ * Whether the broker publishes it, and who receives it, is the broker's.
+ */
+typedef struct kii_mqtt_will_t {
+    /** \brief The topic it is published on, terminated, at most 65535 bytes. */
+    const char* topic;
+    /** \brief The message, message_length bytes, which need not be text. */
+    const char* message;
+    /** \brief The message's length, at most 65535. */
+    size_t message_length;
+    /** \brief The QoS it is published at. */
+    kii_mqtt_qos_t qos;
+    /** \brief Whether the broker keeps it for those who subscribe later. */
+    bool retain;
+} kii_mqtt_will_t;
+
+/**
  * \brief Stores data/ callbacks used by kii module.
  */
 typedef struct kii_t {
@@ -408,6 +426,7 @@ typedef struct kii_t {
     char* _mqtt_buffer; /**< \private */
     size_t _mqtt_buffer_size; /**< \private */
     kii_mqtt_qos_t _mqtt_qos; /**< \private */
+    const kii_mqtt_will_t* _mqtt_will; /**< \private */
     bool _mqtt_clean_session; /**< \private */
 
     uint16_t _keep_alive_interval; /**< \private */
@@ -1491,6 +1510,24 @@ void kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size);
  * \param [in] qos The quality of service.
  */
 void kii_set_mqtt_qos(kii_t* kii, kii_mqtt_qos_t qos);
+
+/**
+ * \brief Set the last will CONNECT carries.
+ *
+ * The broker publishes it if the task's connection is lost, rather than ended
+ * with DISCONNECT, which the task sends when it stops: other clients can tell
+ * that the device went away. Each CONNECT carries it, and the buffer set by
+ * kii_set_mqtt_buff() has to hold it too, its topic and message. Set it before
+ * starting the task.
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] will The will, which is kept as a pointer, so it and what it
+ * points to have to outlive the task, or NULL for none, the default.
+ * \return KII_ERR_TOO_LARGE_DATA for a topic or message longer than 65535
+ * bytes, KII_ERR_FAIL for one without a topic, with a NULL message of some
+ * length, or with a QoS that isn't one; changing nothing.
+ */
+kii_code_t kii_set_mqtt_will(kii_t* kii, const kii_mqtt_will_t* will);
 
 /**
  * \brief Set whether the push task asks for a clean session.

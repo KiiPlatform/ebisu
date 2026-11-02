@@ -147,6 +147,21 @@ void kii_set_mqtt_qos(kii_t* kii, kii_mqtt_qos_t qos) {
     kii->_mqtt_qos = qos;
 }
 
+kii_code_t kii_set_mqtt_will(kii_t* kii, const kii_mqtt_will_t* will) {
+    if (will != NULL) {
+        if (will->topic == NULL || (will->message == NULL && will->message_length > 0) ||
+                (will->qos != KII_MQTT_QOS_0 && will->qos != KII_MQTT_QOS_1)) {
+            return KII_ERR_FAIL;
+        }
+        // CONNECT carries each with a length of 16 bits.
+        if (strlen(will->topic) > 65535 || will->message_length > 65535) {
+            return KII_ERR_TOO_LARGE_DATA;
+        }
+    }
+    kii->_mqtt_will = will;
+    return KII_ERR_OK;
+}
+
 void kii_set_mqtt_clean_session(kii_t* kii, bool clean_session) {
     kii->_mqtt_clean_session = clean_session;
 }
