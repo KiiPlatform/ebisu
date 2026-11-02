@@ -1,4 +1,4 @@
-#include <khc_socket_callback.h>
+#include <ebisu_socket.h>
 #include <functional>
 #include <stdint.h>
 
@@ -6,10 +6,10 @@ namespace khct {
 namespace cb {
 
 struct SockCtx {
-    std::function<khc_sock_code_t(void* socket_context, const char* host, uint16_t port)> on_connect;
-    std::function<khc_sock_code_t(void* socket_context, const char* buffer, size_t length, size_t* out_sent_length)> on_send;
-    std::function<khc_sock_code_t(void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length)> on_recv;
-    std::function<khc_sock_code_t(void* socket_context)> on_close;
+    std::function<ebisu_sock_code_t(void* socket_context, const char* host, uint16_t port)> on_connect;
+    std::function<ebisu_sock_code_t(void* socket_context, const char* buffer, size_t length, size_t* out_sent_length)> on_send;
+    std::function<ebisu_sock_code_t(void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length)> on_recv;
+    std::function<ebisu_sock_code_t(void* socket_context)> on_close;
 };
 
 struct IOCtx {
@@ -18,22 +18,22 @@ struct IOCtx {
     std::function<size_t(char *buffer, size_t size, void *userdata)> on_write;
 };
 
-inline khc_sock_code_t mock_connect(void* socket_context, const char* host, uint16_t port) {
+inline ebisu_sock_code_t mock_connect(void* socket_context, const char* host, uint16_t port) {
     SockCtx* ctx = (SockCtx*)socket_context;
     return ctx->on_connect(socket_context, host, port);
 }
 
-inline khc_sock_code_t mock_send (void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+inline ebisu_sock_code_t mock_send (void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
     SockCtx* ctx = (SockCtx*)socket_context;
     return ctx->on_send(socket_context, buffer, length, out_sent_length);
 }
 
-inline khc_sock_code_t mock_recv(void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+inline ebisu_sock_code_t mock_recv(void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
     SockCtx* ctx = (SockCtx*)socket_context;
     return ctx->on_recv(socket_context, buffer, length_to_read, out_actual_length);
 }
 
-inline khc_sock_code_t mock_close(void* socket_context) {
+inline ebisu_sock_code_t mock_close(void* socket_context) {
     SockCtx* ctx = (SockCtx*)socket_context;
     return ctx->on_close(socket_context);
 }

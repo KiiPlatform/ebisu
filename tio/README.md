@@ -43,10 +43,10 @@ Application developer needs to prepare following callback functions.
 Task create callback function signature is following.
 
 ```c
-typedef kii_task_code_t
-(*KII_CB_TASK_CREATE)
+typedef ebisu_task_code_t
+(*EBISU_CB_TASK_CREATE)
     (const char* name,
-     KII_TASK_ENTRY entry,
+     EBISU_TASK_ENTRY entry,
      void* entry_param,
      void* userdata);
 ```
@@ -58,9 +58,9 @@ pointer given to `tio_handler_set_cb_task_create()` or
 Typical implementation with `pthread`:
 
 ```c
-kii_task_code_t task_create_cb
+ebisu_task_code_t task_create_cb
     (const char* name,
-     KII_TASK_ENTRY entry,
+     EBISU_TASK_ENTRY entry,
      void* param,
      void* userdata)
 {
@@ -70,11 +70,11 @@ kii_task_code_t task_create_cb
     {
         /* Nothing joins a task, so its thread has to go by itself when it ends. */
         pthread_detach(pthid);
-        return KII_TASKC_OK;
+        return EBISU_TASKC_OK;
     }
     else
     {
-        return KII_TASKC_FAIL;
+        return EBISU_TASKC_FAIL;
     }
 }
 ```
@@ -145,7 +145,7 @@ Delay callback function signature is following.
 
 ```
 typedef void
-(*KII_CB_DELAY_MS)
+(*EBISU_CB_DELAY_MS)
     (uint32_t msec,
      void* userdata);
 ```
@@ -171,21 +171,21 @@ void delay_ms_cb(uint32_t msec, void* userdata)
 Socket callback functions signature:
 
 ```c
-typedef khc_sock_code_t
-    (*KHC_CB_SOCK_CONNECT)
+typedef ebisu_sock_code_t
+    (*EBISU_CB_SOCK_CONNECT)
     (void* sock_ctx, const char* host, uint16_t port);
 
-typedef khc_sock_code_t
-    (*KHC_CB_SOCK_SEND)
+typedef ebisu_sock_code_t
+    (*EBISU_CB_SOCK_SEND)
     (void* sock_ctx, const char* buffer, size_t length, size_t* out_sent_length);
 
-typedef khc_sock_code_t
-    (*KHC_CB_SOCK_RECV)
+typedef ebisu_sock_code_t
+    (*EBISU_CB_SOCK_RECV)
     (void* sock_ctx, char* buffer, size_t length_to_read,
      size_t* out_actual_length);
 
-typedef khc_sock_code_t
-    (*KHC_CB_SOCK_CLOSE)(void* sock_ctx);
+typedef ebisu_sock_code_t
+    (*EBISU_CB_SOCK_CLOSE)(void* sock_ctx);
 ```
 
 You can see implementation with OpenSSL at [linux-sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c)
@@ -229,15 +229,15 @@ Twice as large as recv/ send timeout works fine but recommend few minutes to avo
 ```
 
 When the recv timeout runs out with nothing received, the MQTT recv callback
-should return `KHC_SOCK_FAIL`. `KHC_SOCK_OK` with 0 bytes means the broker
+should return `EBISU_SOCK_FAIL`. `EBISU_SOCK_OK` with 0 bytes means the broker
 closed the connection, and `tio_handler` connects again.
 
-A lost connection makes the recv callback return `KHC_SOCK_FAIL` as well.
+A lost connection makes the recv callback return `EBISU_SOCK_FAIL` as well.
 To tell it from a timeout, set the optional
 `tio_handler_set_cb_sock_recv_timed_out_mqtt()` callback: it returns
 `KII_TRUE` if the last receive timed out, and `KII_FALSE` if it failed
 otherwise, in which case `tio_handler` connects again. Without it, every
-`KHC_SOCK_FAIL` while waiting for a command is taken for a timeout, and a lost
+`EBISU_SOCK_FAIL` while waiting for a command is taken for a timeout, and a lost
 connection is only noticed when a `PINGREQ` fails or goes unanswered; with a
 keep-alive interval of 0, never.
 See `sock_cb_recv_timed_out()` in [linux-sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c).
@@ -539,9 +539,9 @@ void author_updated_callback(const kii_author_t* author, void* userdata)
 
 A device without a real-time clock needs the time to check the server's
 certificate in its socket callbacks. The handler and the updater give a
-`kii_clock_t` the time each response states, with `tio_handler_set_clock()` and
+`ebisu_clock_t` the time each response states, with `tio_handler_set_clock()` and
 `tio_updater_set_clock()`. They run in tasks of their own, so a clock they share
-needs a lock, set by `kii_clock_set_cb_lock()`. That has to be a lock of its own,
+needs a lock, set by `ebisu_clock_set_cb_lock()`. That has to be a lock of its own,
 not the session's. The [kii README](https://github.com/KiiPlatform/ebisu/blob/master/kii/README.md#the-time) describes the
 clock and how the socket callbacks use it.
 

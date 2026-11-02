@@ -76,8 +76,8 @@ size_t read_state(char* buffer, size_t size, void* userdata) {
     return n;
 }
 
-kii_task_code_t cb_task_not_started(const char*, KII_TASK_ENTRY, void*, void*) {
-    return KII_TASKC_OK;
+ebisu_task_code_t cb_task_not_started(const char*, EBISU_TASK_ENTRY, void*, void*) {
+    return EBISU_TASKC_OK;
 }
 
 }

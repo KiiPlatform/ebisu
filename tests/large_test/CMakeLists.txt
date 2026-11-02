@@ -64,7 +64,7 @@ ebisu_add_test_suite(large_test_khc
         khc/post_test.cpp
         ${large_test_common}
     # kii's objects too: the sample socket callbacks check the server's
-    # certificate at a kii_clock_t's time.
+    # certificate at an ebisu_clock_t's time.
     LINK ${EBISU_KII_OBJS} ${large_test_socket_libs} Threads::Threads
     INCLUDES
         ${CMAKE_CURRENT_SOURCE_DIR}

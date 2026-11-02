@@ -46,14 +46,14 @@ TEST_CASE( "HTTP response test" ) {
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
         REQUIRE( port == 443 );
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     int on_send_called = 0;
     s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         ++on_send_called;
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     int on_read_called = 0;
@@ -74,7 +74,7 @@ TEST_CASE( "HTTP response test" ) {
         if (on_recv_called == 3)
             REQUIRE( length_to_read == 1024 );
         *out_actual_length = is.read(buffer, length_to_read).gcount();
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     int on_header_called = 0;
@@ -101,7 +101,7 @@ TEST_CASE( "HTTP response test" ) {
     int on_close_called = 0;
     s_ctx.on_close = [=, &on_close_called](void* socket_ctx) {
         ++on_close_called;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_code res = khc_perform(&http);
@@ -149,14 +149,14 @@ TEST_CASE( "Ignore HTTP status 100" ) {
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
         REQUIRE( port == 443 );
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     int on_send_called = 0;
     s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         ++on_send_called;
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     int on_read_called = 0;
@@ -172,7 +172,7 @@ TEST_CASE( "Ignore HTTP status 100" ) {
         ++on_recv_called;
         REQUIRE( length_to_read > 0 );
         *out_actual_length = is.read(buffer, length_to_read).gcount();
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     int on_header_called = 0;
@@ -199,7 +199,7 @@ TEST_CASE( "Ignore HTTP status 100" ) {
     int on_close_called = 0;
     s_ctx.on_close = [=, &on_close_called](void* socket_ctx) {
         ++on_close_called;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_code res = khc_perform(&http);
@@ -250,14 +250,14 @@ TEST_CASE( "Small resp header skip test" ) {
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
         REQUIRE( port == 443 );
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     int on_send_called = 0;
     s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         ++on_send_called;
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     int on_read_called = 0;
@@ -274,7 +274,7 @@ TEST_CASE( "Small resp header skip test" ) {
         if (on_recv_called == 1)
             REQUIRE( length_to_read == resp_header_buff_size - 1 );
         *out_actual_length = is.read(buffer, length_to_read).gcount();
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     int on_header_called = 0;
@@ -305,7 +305,7 @@ TEST_CASE( "Small resp header skip test" ) {
     int on_close_called = 0;
     s_ctx.on_close = [=, &on_close_called](void* socket_ctx) {
         ++on_close_called;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_code res = khc_perform(&http);
@@ -351,14 +351,14 @@ TEST_CASE( "HTTP response 400 test" ) {
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
         REQUIRE( port == 443 );
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     int on_send_called = 0;
     s_ctx.on_send = [=, &on_send_called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         ++on_send_called;
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     int on_read_called = 0;
@@ -374,7 +374,7 @@ TEST_CASE( "HTTP response 400 test" ) {
         ++on_recv_called;
         REQUIRE( length_to_read == 255 );
         *out_actual_length = is.read(buffer, length_to_read).gcount();
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     int on_header_called = 0;
@@ -401,7 +401,7 @@ TEST_CASE( "HTTP response 400 test" ) {
     int on_close_called = 0;
     s_ctx.on_close = [=, &on_close_called](void* socket_ctx) {
         ++on_close_called;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_code res = khc_perform(&http);
@@ -452,20 +452,20 @@ ContentLengthResult perform_with_header(
     ContentLengthResult r = {};
 
     s_ctx.on_connect = [](void* socket_context, const char* host, uint16_t port) {
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     s_ctx.on_send = [](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     istringstream is("HTTP/1.1 " + status + "\r\n" + header + "\r\n\r\nbody");
     s_ctx.on_recv = [&is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         *out_actual_length = is.read(buffer, length_to_read).gcount();
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     s_ctx.on_close = [&r](void* socket_ctx) {
         ++r.on_close_called;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     io_ctx.on_header = [&r](char *buffer, size_t size, void *userdata) {
         ++r.on_header_called;
@@ -575,11 +575,11 @@ khc_code perform_with_reads(const std::vector<std::string>& reads, uint16_t* sta
     khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
     s_ctx.on_connect = [](void* socket_context, const char* host, uint16_t port) {
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     s_ctx.on_send = [](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     size_t next = 0;
     s_ctx.on_recv = [&reads, &next](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
@@ -588,10 +588,10 @@ khc_code perform_with_reads(const std::vector<std::string>& reads, uint16_t* sta
             *out_actual_length = reads[next].copy(buffer, length_to_read);
             ++next;
         }
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     s_ctx.on_close = [](void* socket_ctx) {
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     io_ctx.on_header = [](char *buffer, size_t size, void *userdata) {
         return size;
@@ -770,23 +770,23 @@ ClosedResult perform_closing_after(const std::string& response) {
     ClosedResult r = {};
 
     s_ctx.on_connect = [](void* socket_context, const char* host, uint16_t port) {
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     s_ctx.on_send = [](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     istringstream is(response);
     s_ctx.on_recv = [&is, &r](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         if (++r.on_recv_called >= MAX_RECV_CALLS) {
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         }
         *out_actual_length = is.read(buffer, length_to_read).gcount();
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     s_ctx.on_close = [&r](void* socket_ctx) {
         ++r.on_close_called;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     io_ctx.on_header = [](char *buffer, size_t size, void *userdata) {
         return size;
@@ -859,17 +859,17 @@ HeaderResult perform_with_small_header_buffer(const std::string& resp)
 
     size_t resp_pos = 0;
     khct::cb::SockCtx s_ctx;
-    s_ctx.on_connect = [](void*, const char*, uint16_t) { return KHC_SOCK_OK; };
+    s_ctx.on_connect = [](void*, const char*, uint16_t) { return EBISU_SOCK_OK; };
     s_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     s_ctx.on_recv = [&](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         *out_actual_length = resp.copy(buffer, length_to_read, resp_pos);
         resp_pos += *out_actual_length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
-    s_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    s_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
     khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
     khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
     khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
@@ -960,7 +960,7 @@ TEST_CASE( "khc_perform needs its callbacks" ) {
         khct::cb::SockCtx s_ctx;
         s_ctx.on_connect = [&on_connect_called](void*, const char*, uint16_t) {
             ++on_connect_called;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
         khct::cb::IOCtx io_ctx;
         khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);

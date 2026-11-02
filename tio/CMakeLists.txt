@@ -4,7 +4,7 @@ target_include_directories(ebisu_tio_objs
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 target_link_libraries(ebisu_tio_objs
-    PRIVATE ebisu_kii_objs ebisu_khc_objs ebisu_jkii_objs ebisu_jsmn_objs)
+    PRIVATE ebisu_kii_objs ebisu_khc_objs ebisu_platform_objs ebisu_jkii_objs ebisu_jsmn_objs)
 if(TIO_TRACE)
     # Used only by tio/command_parser.c. This never took effect before: the
     # option was declared as KHC_TRACE a second time by mistake, while the
@@ -18,6 +18,7 @@ add_library(tio
     $<TARGET_OBJECTS:ebisu_tio_objs>
     $<TARGET_OBJECTS:ebisu_kii_objs>
     $<TARGET_OBJECTS:ebisu_khc_objs>
+    $<TARGET_OBJECTS:ebisu_platform_objs>
     $<TARGET_OBJECTS:ebisu_jkii_objs>
     $<TARGET_OBJECTS:ebisu_jsmn_objs>)
 # tio.h includes "kii.h", "khc.h" and "jkii.h".
@@ -26,6 +27,7 @@ target_include_directories(tio
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../kii/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../khc/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../platform/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../jkii/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../jkii/libs/jsmn>)
 set_target_properties(tio PROPERTIES VERSION ${version} SOVERSION ${soversion})
@@ -34,7 +36,6 @@ ebisu_configure_target(tio)
 install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/tio.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../khc/include/khc.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../khc/include/khc_socket_callback.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../kii/include/kii.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../kii/include/kii_task_callback.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../jkii/include/jkii.h

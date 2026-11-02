@@ -13,7 +13,7 @@
 #define TASK_PRIORITY (tskIDLE_PRIORITY + 2)
 
 typedef struct {
-    KII_TASK_ENTRY entry;
+    EBISU_TASK_ENTRY entry;
     void* param;
 } task_start_t;
 
@@ -26,24 +26,24 @@ static void task_main(void* arg)
     vTaskDelete(NULL);
 }
 
-kii_task_code_t task_create_cb_impl(
+ebisu_task_code_t task_create_cb_impl(
         const char* name,
-        KII_TASK_ENTRY entry,
+        EBISU_TASK_ENTRY entry,
         void* param,
         void* userdata)
 {
     task_start_t* start = malloc(sizeof(task_start_t));
     if (start == NULL) {
-        return KII_TASKC_FAIL;
+        return EBISU_TASKC_FAIL;
     }
     start->entry = entry;
     start->param = param;
     if (xTaskCreate(task_main, name, TASK_STACK_WORDS, start, TASK_PRIORITY,
                 NULL) != pdPASS) {
         free(start);
-        return KII_TASKC_FAIL;
+        return EBISU_TASKC_FAIL;
     }
-    return KII_TASKC_OK;
+    return EBISU_TASKC_OK;
 }
 
 void delay_ms_cb_impl(uint32_t msec, void* userdata)

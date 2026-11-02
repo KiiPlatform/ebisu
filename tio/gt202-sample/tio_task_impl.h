@@ -1,7 +1,7 @@
 #ifndef _TIO_TASK_IMPL
 #define _TIO_TASK_IMPL
 
-#include "kii_task_callback.h"
+#include <ebisu_task.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,9 +15,9 @@ enum
 
 void _tio_task(uint_32 temp);
 
-kii_task_code_t cb_task_create(
+ebisu_task_code_t cb_task_create(
     const char* name,
-    KII_TASK_ENTRY entry,
+    EBISU_TASK_ENTRY entry,
     void* param,
     void* userdata);
 

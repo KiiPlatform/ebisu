@@ -41,8 +41,8 @@ void kii_session_init(kii_session_t* session)
 
 void kii_session_set_cb_lock(
         kii_session_t* session,
-        KII_CB_LOCK cb_lock,
-        KII_CB_LOCK cb_unlock,
+        EBISU_CB_LOCK cb_lock,
+        EBISU_CB_LOCK cb_unlock,
         void* userdata)
 {
     session->_cb_lock = cb_lock;
@@ -52,7 +52,7 @@ void kii_session_set_cb_lock(
 
 void kii_session_set_cb_monotonic_ms(
         kii_session_t* session,
-        KII_CB_MONOTONIC_MS cb_monotonic_ms,
+        EBISU_CB_MONOTONIC_MS cb_monotonic_ms,
         void* userdata)
 {
     session->_cb_monotonic_ms = cb_monotonic_ms;

@@ -85,10 +85,10 @@ static int verify_callback(int preverify_ok, X509_STORE_CTX* store)
     socket_context_t* ctx = (socket_context_t*)SSL_get_app_data(ssl);
     if (X509_STORE_CTX_get_error(store) == X509_V_ERR_CERT_NOT_YET_VALID &&
             ctx->clock != NULL) {
-        if (ctx->time_exact != KII_TRUE) {
+        if (!ctx->time_exact) {
             return 1;
         }
-        kii_clock_forget_time(ctx->clock);
+        ebisu_clock_forget_time(ctx->clock);
     }
     return 0;
 }
@@ -116,7 +116,7 @@ static void print_ssl_failure(const char* what, int ssl_error, int saved_errno)
     }
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_connect(void* sock_ctx, const char* host,
             uint16_t port)
 {
@@ -130,7 +130,7 @@ khc_sock_code_t
     servhost = gethostbyname(host);
     if (servhost == NULL) {
         printf("failed to get host.\n");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
     memset(&server, 0x00, sizeof(server));
     server.sin_family = AF_INET;
@@ -143,7 +143,7 @@ khc_sock_code_t
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
         printf("failed to init socket.\n");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 
     if (ctx->to_recv > 0) {
@@ -218,7 +218,7 @@ khc_sock_code_t
        time, that time from then on. Without a clock, at the system's. */
     if (ctx->clock != NULL) {
         int64_t now = 0;
-        ctx->time_exact = kii_clock_get_time(ctx->clock, &now);
+        ctx->time_exact = ebisu_clock_get_time(ctx->clock, &now);
         /* A 32-bit time_t ends in 2038. Cut down to fit one, the time would
            be decades out, and certificates refused for what they are not. */
         if ((int64_t)(time_t)now != now) {
@@ -253,7 +253,7 @@ khc_sock_code_t
     ctx->ssl = ssl;
     ctx->ssl_ctx = ssl_ctx;
     ctx->ssl_failed = KII_FALSE;
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 
 fail:
     if (ssl != NULL) {
@@ -263,10 +263,10 @@ fail:
         SSL_CTX_free(ssl_ctx);
     }
     close(sock);
-    return KHC_SOCK_FAIL;
+    return EBISU_SOCK_FAIL;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_send(void* socket_context,
             const char* buffer,
             size_t length,
@@ -277,7 +277,7 @@ khc_sock_code_t
     int ret = SSL_write(ctx->ssl, buffer, length);
     if (ret > 0) {
         *out_sent_length = ret;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     }
     /* errno first, before anything else can change it. */
     int saved_errno = errno;
@@ -286,10 +286,10 @@ khc_sock_code_t
         ctx->ssl_failed = KII_TRUE;
     }
     print_ssl_failure("send", ssl_error, saved_errno);
-    return KHC_SOCK_FAIL;
+    return EBISU_SOCK_FAIL;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_recv(void* socket_context,
             char* buffer,
             size_t length_to_read,
@@ -301,25 +301,25 @@ khc_sock_code_t
     int ret = SSL_read(ctx->ssl, buffer, length_to_read);
     if (ret > 0) {
         *out_actual_length = ret;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     }
     /* errno first, before anything else can change it. */
     ctx->recv_errno = errno;
     ctx->recv_ssl_error = SSL_get_error(ctx->ssl, ret);
     switch (ctx->recv_ssl_error) {
     case SSL_ERROR_ZERO_RETURN:
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     case SSL_ERROR_WANT_READ:
     case SSL_ERROR_WANT_WRITE:
-        /* The receive timeout, as these sockets block. Not KHC_SOCK_AGAIN,
+        /* The receive timeout, as these sockets block. Not EBISU_SOCK_AGAIN,
            on which khc reads again at once, and for good if the server has
            gone. See sock_cb_recv_timed_out(). */
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     case SSL_ERROR_SYSCALL:
         ctx->ssl_failed = KII_TRUE;
         /* The end of the stream, from a peer that sent no close_notify. */
         if (ctx->recv_errno == 0) {
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         }
         break;
     case SSL_ERROR_SSL:
@@ -329,10 +329,10 @@ khc_sock_code_t
         break;
     }
     print_ssl_failure("receive", ctx->recv_ssl_error, ctx->recv_errno);
-    return KHC_SOCK_FAIL;
+    return EBISU_SOCK_FAIL;
 }
 
-/* sock_cb_recv() returns KHC_SOCK_FAIL both when the receive timeout set with
+/* sock_cb_recv() returns EBISU_SOCK_FAIL both when the receive timeout set with
    SO_RCVTIMEO in sock_cb_connect() runs out and when the connection fails.
    The timeout makes the read fail with EAGAIN or EWOULDBLOCK, which OpenSSL
    reports as SSL_ERROR_WANT_READ, and errno is only meaningful with
@@ -351,7 +351,7 @@ kii_bool_t
     return KII_FALSE;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_close(void* socket_context)
 {
     socket_context_t* ctx = (socket_context_t*)socket_context;
@@ -382,9 +382,9 @@ khc_sock_code_t
     SSL_CTX_free(ctx->ssl_ctx);
     if (!shutdown_ok) {
         printf("failed to close:\n");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 }
 
 #ifdef __APPLE__

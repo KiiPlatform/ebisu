@@ -29,14 +29,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const char* code_name(khc_sock_code_t code)
+static const char* code_name(ebisu_sock_code_t code)
 {
     switch (code) {
-        case KHC_SOCK_OK:
+        case EBISU_SOCK_OK:
             return "OK";
-        case KHC_SOCK_FAIL:
+        case EBISU_SOCK_FAIL:
             return "FAIL";
-        case KHC_SOCK_AGAIN:
+        case EBISU_SOCK_AGAIN:
             return "AGAIN";
     }
     return "?";
@@ -90,13 +90,13 @@ static int trust(const char* path)
     return 0;
 }
 
-static khc_sock_code_t send_all(socket_context_t* ctx, const char* data,
+static ebisu_sock_code_t send_all(socket_context_t* ctx, const char* data,
         size_t len, size_t* total, int* calls)
 {
-    khc_sock_code_t res = KHC_SOCK_OK;
+    ebisu_sock_code_t res = EBISU_SOCK_OK;
     *total = 0;
     *calls = 0;
-    while (*total < len && res == KHC_SOCK_OK) {
+    while (*total < len && res == EBISU_SOCK_OK) {
         size_t sent = 0;
         res = sock_cb_send(ctx, data + *total, len - *total, &sent);
         *total += sent;
@@ -137,7 +137,7 @@ static int run_step(socket_context_t* ctx, const char* host, uint16_t port,
         }
         size_t total;
         int calls;
-        khc_sock_code_t res = send_all(ctx, text, len, &total, &calls);
+        ebisu_sock_code_t res = send_all(ctx, text, len, &total, &calls);
         printf("STEP send %s %lu\n", code_name(res), (unsigned long)total);
         free(text);
     } else if (strncmp(step, "sendbig:", 8) == 0) {
@@ -148,7 +148,7 @@ static int run_step(socket_context_t* ctx, const char* host, uint16_t port,
         }
         size_t total;
         int calls;
-        khc_sock_code_t res = send_all(ctx, data, len, &total, &calls);
+        ebisu_sock_code_t res = send_all(ctx, data, len, &total, &calls);
         printf("STEP sendbig %s %lu calls=%d fnv=%016llx\n", code_name(res),
                 (unsigned long)total, calls,
                 (unsigned long long)fnv1a(FNV_OFFSET_BASIS, data, total));
@@ -158,9 +158,9 @@ static int run_step(socket_context_t* ctx, const char* host, uint16_t port,
         char* buf = (char*)malloc(size);
         size_t got = 0;
         DWORD start = GetTickCount();
-        khc_sock_code_t res = sock_cb_recv(ctx, buf, size, &got);
+        ebisu_sock_code_t res = sock_cb_recv(ctx, buf, size, &got);
         DWORD elapsed = GetTickCount() - start;
-        int timed_out = res == KHC_SOCK_FAIL &&
+        int timed_out = res == EBISU_SOCK_FAIL &&
             sock_cb_recv_timed_out(ctx) == KII_TRUE;
         printf("STEP recv %s %lu timed_out=%d ms=%lu data=", code_name(res),
                 (unsigned long)got, timed_out, (unsigned long)elapsed);
@@ -173,7 +173,7 @@ static int run_step(socket_context_t* ctx, const char* host, uint16_t port,
         uint64_t hash = FNV_OFFSET_BASIS;
         unsigned long long total = 0;
         unsigned long calls = 0;
-        khc_sock_code_t res;
+        ebisu_sock_code_t res;
         for (;;) {
             size_t got = 0;
             res = sock_cb_recv(ctx, buf, size, &got);
@@ -183,13 +183,13 @@ static int run_step(socket_context_t* ctx, const char* host, uint16_t port,
                         (unsigned long)got, (unsigned long)size);
                 return 1;
             }
-            if (res != KHC_SOCK_OK || got == 0) {
+            if (res != EBISU_SOCK_OK || got == 0) {
                 break;
             }
             hash = fnv1a(hash, buf, got);
             total += got;
         }
-        int timed_out = res == KHC_SOCK_FAIL &&
+        int timed_out = res == EBISU_SOCK_FAIL &&
             sock_cb_recv_timed_out(ctx) == KII_TRUE;
         printf("STEP drain %s bytes=%llu calls=%lu fnv=%016llx timed_out=%d\n",
                 code_name(res), total, calls, (unsigned long long)hash,

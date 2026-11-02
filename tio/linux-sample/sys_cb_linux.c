@@ -11,9 +11,9 @@ void delay_ms_cb_impl(uint32_t msec, void* userdata)
     delay_ms_cb(msec, userdata);
 }
 
-kii_task_code_t task_create_cb_impl(
+ebisu_task_code_t task_create_cb_impl(
         const char* name,
-        KII_TASK_ENTRY entry,
+        EBISU_TASK_ENTRY entry,
         void* param,
         void* userdata)
 {

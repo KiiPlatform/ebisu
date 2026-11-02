@@ -52,16 +52,16 @@ bool empty(const char* token) {
 // What kii sent, recorded to tell which grant a renewal asked for. It holds
 // tokens and the password, so it is searched and never printed.
 struct Sent {
-    KHC_CB_SOCK_SEND send;
+    EBISU_CB_SOCK_SEND send;
     void* ctx;
     std::string data;
 };
 
-khc_sock_code_t record_send(void* userdata, const char* buffer, size_t length,
+ebisu_sock_code_t record_send(void* userdata, const char* buffer, size_t length,
         size_t* out_sent_length) {
     Sent* sent = (Sent*)userdata;
-    khc_sock_code_t res = sent->send(sent->ctx, buffer, length, out_sent_length);
-    if (res == KHC_SOCK_OK) {
+    ebisu_sock_code_t res = sent->send(sent->ctx, buffer, length, out_sent_length);
+    if (res == EBISU_SOCK_OK) {
         sent->data.append(buffer, *out_sent_length);
     }
     return res;

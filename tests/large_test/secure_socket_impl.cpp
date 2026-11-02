@@ -31,24 +31,24 @@ socket_context_t* linux_context(void* socket_context)
 // TLS goes through the Linux sample's callbacks, OpenSSL over BSD sockets, so
 // the large tests run them against the live server: the server's certificate
 // is checked at the tests' clock's time.
-khc_sock_code_t
+ebisu_sock_code_t
     ebisu::ltest::ssl::cb_connect(void* socket_context, const char* host,
             uint16_t port)
 {
     return sock_cb_connect(linux_context(socket_context), host, port);
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     ebisu::ltest::ssl::cb_send(void* socket_context,
             const char* buffer,
             size_t length,
             size_t* out_sent_length)
 {
-    khc_sock_code_t res = sock_cb_send(linux_context(socket_context),
+    ebisu_sock_code_t res = sock_cb_send(linux_context(socket_context),
             buffer, length, out_sent_length);
 
 #ifdef SOCKET_LOG
-    if (res == KHC_SOCK_OK) {
+    if (res == EBISU_SOCK_OK) {
         printf("%.*s", (int)*out_sent_length, buffer);
     }
 #endif
@@ -56,17 +56,17 @@ khc_sock_code_t
     return res;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     ebisu::ltest::ssl::cb_recv(void* socket_context,
             char* buffer,
             size_t length_to_read,
             size_t* out_actual_length)
 {
-    khc_sock_code_t res = sock_cb_recv(linux_context(socket_context),
+    ebisu_sock_code_t res = sock_cb_recv(linux_context(socket_context),
             buffer, length_to_read, out_actual_length);
 
 #ifdef SOCKET_LOG
-    if (res == KHC_SOCK_OK) {
+    if (res == EBISU_SOCK_OK) {
         printf("%.*s", (int)*out_actual_length, buffer);
     }
 #endif
@@ -74,10 +74,10 @@ khc_sock_code_t
     return res;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     ebisu::ltest::ssl::cb_close(void* socket_context)
 {
-    khc_sock_code_t res = sock_cb_close(linux_context(socket_context));
+    ebisu_sock_code_t res = sock_cb_close(linux_context(socket_context));
 
 #ifdef SOCKET_LOG
     printf("\n----------------------------------------------------------------------------------------------------\n\n\n");
@@ -87,7 +87,7 @@ khc_sock_code_t
 }
 
 /// raw
-khc_sock_code_t
+ebisu_sock_code_t
     ebisu::ltest::tcp::cb_connect(void* socket_context, const char* host,
             uint16_t port)
 {
@@ -98,7 +98,7 @@ khc_sock_code_t
     servhost = gethostbyname(host);
     if (servhost == NULL) {
         printf("failed to get host.\n");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
     memset(&server, 0x00, sizeof(server));
     server.sin_family = AF_INET;
@@ -111,19 +111,19 @@ khc_sock_code_t
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
         printf("failed to init socket.\n");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 
     if (connect(sock, (struct sockaddr*) &server, sizeof(server)) == -1 ){
         printf("failed to connect socket.\n");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
     ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
     ctx->linux_ctx.socket = sock;
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     ebisu::ltest::tcp::cb_send(void* socket_context,
             const char* buffer,
             size_t length,
@@ -138,14 +138,14 @@ khc_sock_code_t
         printf("%.*s", ret, buffer);
 #endif
 
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     } else {
         printf("failed to send\n");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     ebisu::ltest::tcp::cb_recv(void* socket_context,
             char* buffer,
             size_t length_to_read,
@@ -161,15 +161,15 @@ khc_sock_code_t
         printf("%.*s", ret, buffer);
 #endif
 
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     } else if (ret == 0) {
-      return KHC_SOCK_OK;
+      return EBISU_SOCK_OK;
     } else {
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     ebisu::ltest::tcp::cb_close(void* socket_context)
 {
     ebisu::ltest::ssl::SSLData* ctx = (ebisu::ltest::ssl::SSLData*)socket_context;
@@ -181,7 +181,7 @@ khc_sock_code_t
     printf("\n----------------------------------------------------------------------------------------------------\n\n\n");
 #endif
 
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 }
 
 #ifdef __APPLE__

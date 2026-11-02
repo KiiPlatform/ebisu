@@ -42,7 +42,7 @@ TEST_CASE("API call tests")
         // every connection after this one checks the server's certificate at
         // it.
         int64_t clock_now = 0;
-        CHECK( kii_clock_get_time(ebisu::ltest::test_clock(), &clock_now) == KII_TRUE );
+        CHECK( ebisu_clock_get_time(ebisu::ltest::test_clock(), &clock_now) == true );
         CHECK( clock_now > local - 900 );
         CHECK( clock_now < local + 900 );
     }

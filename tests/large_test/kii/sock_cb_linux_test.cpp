@@ -108,7 +108,7 @@ struct Connection {
         server_fd = -1;
     }
 
-    khc_sock_code_t close_client() {
+    ebisu_sock_code_t close_client() {
         client_closed = true;
         return sock_cb_close(&client);
     }
@@ -133,7 +133,7 @@ TEST_CASE( "sock_cb_recv reads what the peer sent" ) {
 
     char buffer[16];
     size_t received = 0;
-    CHECK( sock_cb_recv(&c.client, buffer, sizeof(buffer), &received) == KHC_SOCK_OK );
+    CHECK( sock_cb_recv(&c.client, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK );
     REQUIRE( received == 5 );
     CHECK( std::string(buffer, received) == "hello" );
 }
@@ -146,14 +146,14 @@ TEST_CASE( "sock_cb_recv times out whatever an earlier failure left behind" ) {
 
     char buffer[16];
     size_t received = 0;
-    CHECK( sock_cb_recv(&c.client, buffer, sizeof(buffer), &received) == KHC_SOCK_FAIL );
+    CHECK( sock_cb_recv(&c.client, buffer, sizeof(buffer), &received) == EBISU_SOCK_FAIL );
     CHECK( received == 0 );
     CHECK( sock_cb_recv_timed_out(&c.client) == KII_TRUE );
     CHECK( c.client.ssl_failed == KII_FALSE );
 
     // And the connection is as good as it was.
     REQUIRE( SSL_write(c.server, "hello", 5) == 5 );
-    CHECK( sock_cb_recv(&c.client, buffer, sizeof(buffer), &received) == KHC_SOCK_OK );
+    CHECK( sock_cb_recv(&c.client, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK );
     CHECK( received == 5 );
 }
 
@@ -164,9 +164,9 @@ TEST_CASE( "sock_cb_recv takes a close_notify for the end of the stream" ) {
 
     char buffer[16];
     size_t received = 1;
-    CHECK( sock_cb_recv(&c.client, buffer, sizeof(buffer), &received) == KHC_SOCK_OK );
+    CHECK( sock_cb_recv(&c.client, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK );
     CHECK( received == 0 );
-    CHECK( c.close_client() == KHC_SOCK_OK );
+    CHECK( c.close_client() == EBISU_SOCK_OK );
 }
 
 // Servers answering "Connection: close" do this. errno is whatever the last
@@ -179,9 +179,9 @@ TEST_CASE( "sock_cb_recv takes a closed transport for the end of the stream" ) {
 
     char buffer[16];
     size_t received = 1;
-    CHECK( sock_cb_recv(&c.client, buffer, sizeof(buffer), &received) == KHC_SOCK_OK );
+    CHECK( sock_cb_recv(&c.client, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK );
     CHECK( received == 0 );
-    CHECK( c.close_client() == KHC_SOCK_OK );
+    CHECK( c.close_client() == EBISU_SOCK_OK );
 }
 
 // OpenSSL's documentation says SSL_shutdown() must not be called after this,
@@ -193,10 +193,10 @@ TEST_CASE( "A connection that failed is closed without SSL_shutdown" ) {
 
     char buffer[16];
     size_t received = 0;
-    CHECK( sock_cb_recv(&c.client, buffer, sizeof(buffer), &received) == KHC_SOCK_FAIL );
+    CHECK( sock_cb_recv(&c.client, buffer, sizeof(buffer), &received) == EBISU_SOCK_FAIL );
     CHECK( sock_cb_recv_timed_out(&c.client) == KII_FALSE );
     CHECK( c.client.ssl_failed == KII_TRUE );
-    CHECK( c.close_client() == KHC_SOCK_OK );
+    CHECK( c.close_client() == EBISU_SOCK_OK );
 }
 
 TEST_CASE( "sock_cb_send reports a connection that has gone" ) {
@@ -206,13 +206,13 @@ TEST_CASE( "sock_cb_send reports a connection that has gone" ) {
     // The first may fit in the socket's buffer, on the way to no one.
     const char data[] = "hello";
     size_t sent = 0;
-    khc_sock_code_t res = KHC_SOCK_OK;
-    for (int i = 0; i < 2 && res == KHC_SOCK_OK; ++i) {
+    ebisu_sock_code_t res = EBISU_SOCK_OK;
+    for (int i = 0; i < 2 && res == EBISU_SOCK_OK; ++i) {
         res = sock_cb_send(&c.client, data, sizeof(data), &sent);
     }
-    CHECK( res == KHC_SOCK_FAIL );
+    CHECK( res == EBISU_SOCK_FAIL );
     CHECK( c.client.ssl_failed == KII_TRUE );
-    CHECK( c.close_client() == KHC_SOCK_OK );
+    CHECK( c.close_client() == EBISU_SOCK_OK );
 }
 
 // The first attempt failing must not be held against the next.
@@ -221,7 +221,7 @@ TEST_CASE( "sock_cb_send sends with an earlier failure left behind" ) {
     leave_an_error_in_the_queue();
 
     size_t sent = 0;
-    CHECK( sock_cb_send(&c.client, "hello", 5, &sent) == KHC_SOCK_OK );
+    CHECK( sock_cb_send(&c.client, "hello", 5, &sent) == EBISU_SOCK_OK );
     CHECK( sent == 5 );
     char buffer[16];
     CHECK( SSL_read(c.server, buffer, sizeof(buffer)) == 5 );

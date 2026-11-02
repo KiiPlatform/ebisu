@@ -269,7 +269,7 @@ void tio_handler_init(tio_handler_t* handler);
  * \param [in] cb_connect Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_connect.
  */
-void tio_handler_set_cb_sock_connect_http(tio_handler_t* handler, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
+void tio_handler_set_cb_sock_connect_http(tio_handler_t* handler, EBISU_CB_SOCK_CONNECT cb_connect, void* userdata);
 /**
  * \brief Set socket send callback used for HTTP(S)
  *
@@ -277,7 +277,7 @@ void tio_handler_set_cb_sock_connect_http(tio_handler_t* handler, KHC_CB_SOCK_CO
  * \param [in] cb_send Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_send.
  */
-void tio_handler_set_cb_sock_send_http(tio_handler_t* handler, KHC_CB_SOCK_SEND cb_send, void* userdata);
+void tio_handler_set_cb_sock_send_http(tio_handler_t* handler, EBISU_CB_SOCK_SEND cb_send, void* userdata);
 /**
  * \brief Set socket recv callback used for HTTP(S)
  *
@@ -285,7 +285,7 @@ void tio_handler_set_cb_sock_send_http(tio_handler_t* handler, KHC_CB_SOCK_SEND 
  * \param [in] cb_recv Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_recv.
  */
-void tio_handler_set_cb_sock_recv_http(tio_handler_t* handler, KHC_CB_SOCK_RECV cb_recv, void* userdata);
+void tio_handler_set_cb_sock_recv_http(tio_handler_t* handler, EBISU_CB_SOCK_RECV cb_recv, void* userdata);
 /**
  * \brief Set socket close callback used for HTTP(S)
  *
@@ -293,7 +293,7 @@ void tio_handler_set_cb_sock_recv_http(tio_handler_t* handler, KHC_CB_SOCK_RECV 
  * \param [in] cb_close Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_close.
  */
-void tio_handler_set_cb_sock_close_http(tio_handler_t* handler, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
+void tio_handler_set_cb_sock_close_http(tio_handler_t* handler, EBISU_CB_SOCK_CLOSE cb_close, void* userdata);
 
 /**
  * \brief Set buffer used to construct/ parse HTTP request/ response.
@@ -374,7 +374,7 @@ void tio_handler_set_resp_header_buff(tio_handler_t* handler, char* buff, size_t
  * \param [in] cb_connect Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_connect.
  */
-void tio_handler_set_cb_sock_connect_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
+void tio_handler_set_cb_sock_connect_mqtt(tio_handler_t* handler, EBISU_CB_SOCK_CONNECT cb_connect, void* userdata);
 /**
  * \brief Set socket send callback used for MQTT(S)
  *
@@ -386,7 +386,7 @@ void tio_handler_set_cb_sock_connect_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CO
  * \param [in] cb_send Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_send.
  */
-void tio_handler_set_cb_sock_send_mqtt(tio_handler_t* handler, KHC_CB_SOCK_SEND cb_send, void* userdata);
+void tio_handler_set_cb_sock_send_mqtt(tio_handler_t* handler, EBISU_CB_SOCK_SEND cb_send, void* userdata);
 /**
  * \brief Set socket recv callback used for MQTT(S)
  *
@@ -395,21 +395,21 @@ void tio_handler_set_cb_sock_send_mqtt(tio_handler_t* handler, KHC_CB_SOCK_SEND 
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
  *
- * Return KHC_SOCK_FAIL when the receive timeout runs out with nothing
- * received: tio_handler takes KHC_SOCK_OK with 0 bytes for the end of the
+ * Return EBISU_SOCK_FAIL when the receive timeout runs out with nothing
+ * received: tio_handler takes EBISU_SOCK_OK with 0 bytes for the end of the
  * stream, and connects again. tio_handler_set_cb_sock_recv_timed_out_mqtt()
  * lets it tell such a timeout from a lost connection.
  * \param [out] handler tio_handler_t instance.
  * \param [in] cb_recv Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_recv.
  */
-void tio_handler_set_cb_sock_recv_mqtt(tio_handler_t* handler, KHC_CB_SOCK_RECV cb_recv, void* userdata);
+void tio_handler_set_cb_sock_recv_mqtt(tio_handler_t* handler, EBISU_CB_SOCK_RECV cb_recv, void* userdata);
 /**
  * \brief Set callback telling a receive timeout from a failure on the MQTT(S)
  * socket.
  *
  * Optional. While tio_handler waits for the next command, the recv callback
- * set by tio_handler_set_cb_sock_recv_mqtt() returns KHC_SOCK_FAIL whenever
+ * set by tio_handler_set_cb_sock_recv_mqtt() returns EBISU_SOCK_FAIL whenever
  * its receive timeout runs out with nothing received, as it routinely does on
  * an idle connection, and also when the connection is lost. Only the socket
  * implementation can tell which, so tio_handler asks cb_timed_out. If it
@@ -417,7 +417,7 @@ void tio_handler_set_cb_sock_recv_mqtt(tio_handler_t* handler, KHC_CB_SOCK_RECV 
  * returns KII_TRUE, tio_handler goes on waiting, and sends PINGREQ when the
  * keep-alive interval requires.
  *
- * If this callback is not set, or set to NULL, every such KHC_SOCK_FAIL is
+ * If this callback is not set, or set to NULL, every such EBISU_SOCK_FAIL is
  * taken for a timeout. A lost connection is then noticed only when a PINGREQ
  * cannot be sent or goes unanswered, so with a keep-alive interval of 0 it is
  * not noticed at all.
@@ -444,7 +444,7 @@ void tio_handler_set_cb_sock_recv_timed_out_mqtt(tio_handler_t* handler, KII_CB_
  * \param [in] cb_close Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_close.
  */
-void tio_handler_set_cb_sock_close_mqtt(tio_handler_t* handler, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
+void tio_handler_set_cb_sock_close_mqtt(tio_handler_t* handler, EBISU_CB_SOCK_CLOSE cb_close, void* userdata);
 /**
  * \brief Set timeout of receiving data from socket user for MQTT(S)
  *
@@ -464,7 +464,7 @@ void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, uint32_t to_sock_
  * \param [in] cb_task_create Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_task_create.
  */
-void tio_handler_set_cb_task_create(tio_handler_t* handler, KII_CB_TASK_CREATE cb_task_create, void* userdata);
+void tio_handler_set_cb_task_create(tio_handler_t* handler, EBISU_CB_TASK_CREATE cb_task_create, void* userdata);
 
 /**
  * \brief Set callback determines whether to continue or discontinue task.
@@ -537,7 +537,7 @@ void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_CB_TASK_EXIT cb_ex
  * \param [in] cb_delay_ms Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_delay_ms.
  */
-void tio_handler_set_cb_delay_ms(tio_handler_t* handler, KII_CB_DELAY_MS cb_delay_ms, void* userdata);
+void tio_handler_set_cb_delay_ms(tio_handler_t* handler, EBISU_CB_DELAY_MS cb_delay_ms, void* userdata);
 /**
  * \brief Set callback propagates error.
  * You can use it for debugging, etc or you can skip calling this API.
@@ -776,13 +776,13 @@ tio_code_t tio_handler_set_session(tio_handler_t* handler, kii_session_t* sessio
  * \brief Give a clock the time each of the handler's responses states.
  *
  * See kii_set_clock(). The handler and the updater may share one clock, with a
- * lock set by kii_clock_set_cb_lock(): they run in tasks of their own.
+ * lock set by ebisu_clock_set_cb_lock(): they run in tasks of their own.
  *
  * \param [out] handler tio_handler_t instance.
  * \param [in] clock Clock to set, or NULL.
  * \return TIO_ERR_FAIL if the clock has no monotonic clock.
  */
-tio_code_t tio_handler_set_clock(tio_handler_t* handler, kii_clock_t* clock);
+tio_code_t tio_handler_set_clock(tio_handler_t* handler, ebisu_clock_t* clock);
 
 /**
  * \brief Start tio_handler task.
@@ -896,7 +896,7 @@ void tio_updater_init(tio_updater_t* updater);
  * \param [in] cb_connect Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_connect.
  */
-void tio_updater_set_cb_sock_connect(tio_updater_t* updater, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
+void tio_updater_set_cb_sock_connect(tio_updater_t* updater, EBISU_CB_SOCK_CONNECT cb_connect, void* userdata);
 /**
  * \brief Set socket send callback used for HTTP(S)
  *
@@ -904,7 +904,7 @@ void tio_updater_set_cb_sock_connect(tio_updater_t* updater, KHC_CB_SOCK_CONNECT
  * \param [in] cb_send Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_send.
  */
-void tio_updater_set_cb_sock_send(tio_updater_t* updater, KHC_CB_SOCK_SEND cb_send, void* userdata);
+void tio_updater_set_cb_sock_send(tio_updater_t* updater, EBISU_CB_SOCK_SEND cb_send, void* userdata);
 /**
  * \brief Set socket recv callback used for HTTP(S)
  *
@@ -912,7 +912,7 @@ void tio_updater_set_cb_sock_send(tio_updater_t* updater, KHC_CB_SOCK_SEND cb_se
  * \param [in] cb_recv Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_recv.
  */
-void tio_updater_set_cb_sock_recv(tio_updater_t* updater, KHC_CB_SOCK_RECV cb_recv, void* userdata);
+void tio_updater_set_cb_sock_recv(tio_updater_t* updater, EBISU_CB_SOCK_RECV cb_recv, void* userdata);
 /**
  * \brief Set socket close callback used for HTTP(S)
  *
@@ -920,7 +920,7 @@ void tio_updater_set_cb_sock_recv(tio_updater_t* updater, KHC_CB_SOCK_RECV cb_re
  * \param [in] cb_close Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_close.
  */
-void tio_updater_set_cb_sock_close(tio_updater_t* updater, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
+void tio_updater_set_cb_sock_close(tio_updater_t* updater, EBISU_CB_SOCK_CLOSE cb_close, void* userdata);
 /**
  * \brief Set callback creates task.
  *
@@ -928,7 +928,7 @@ void tio_updater_set_cb_sock_close(tio_updater_t* updater, KHC_CB_SOCK_CLOSE cb_
  * \param [in] cb_task_create Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_task_create.
  */
-void tio_updater_set_cb_task_create(tio_updater_t* updater, KII_CB_TASK_CREATE cb_task_create, void* userdata);
+void tio_updater_set_cb_task_create(tio_updater_t* updater, EBISU_CB_TASK_CREATE cb_task_create, void* userdata);
 
 /**
  * \brief Set callback determines whether to continue or discontinue task.
@@ -988,7 +988,7 @@ void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_CB_TASK_EXIT cb_ex
  * \param [in] cb_delay_ms Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_delay_ms.
  */
-void tio_updater_set_cb_delay_ms(tio_updater_t* updater, KII_CB_DELAY_MS cb_delay_ms, void* userdata);
+void tio_updater_set_cb_delay_ms(tio_updater_t* updater, EBISU_CB_DELAY_MS cb_delay_ms, void* userdata);
 /**
  * \brief Set callback propagates error.
  * You can use it for debugging, etc or you can skip calling this API.
@@ -1244,7 +1244,7 @@ tio_code_t tio_updater_set_session(tio_updater_t* updater, kii_session_t* sessio
  * \param [in] clock Clock to set, or NULL.
  * \return TIO_ERR_FAIL if the clock has no monotonic clock.
  */
-tio_code_t tio_updater_set_clock(tio_updater_t* updater, kii_clock_t* clock);
+tio_code_t tio_updater_set_clock(tio_updater_t* updater, ebisu_clock_t* clock);
 
 /**
  * \brief Start tio_updater task.

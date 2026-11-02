@@ -406,11 +406,11 @@ TEST_CASE( "_handle_command action name length" ) {
     // the action name is written into gets inspected.
     std::string sent;
     khct::cb::SockCtx http_ctx;
-    http_ctx.on_connect = [](void*, const char*, unsigned int) { return KHC_SOCK_OK; };
+    http_ctx.on_connect = [](void*, const char*, unsigned int) { return EBISU_SOCK_OK; };
     http_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
         sent.append(buffer, length);
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     size_t resp_pos = 0;
     const std::string resp = "HTTP/1.1 204 No Content\r\nContent-Length: 0\r\n\r\n";
@@ -420,9 +420,9 @@ TEST_CASE( "_handle_command action name length" ) {
         memcpy(buffer, resp.data() + resp_pos, n);
         resp_pos += n;
         *out_actual_length = n;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
-    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
     kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
     kii_set_cb_http_sock_send(&handler._kii, khct::cb::mock_send, &http_ctx);
     kii_set_cb_http_sock_recv(&handler._kii, khct::cb::mock_recv, &http_ctx);
@@ -500,10 +500,10 @@ TEST_CASE( "_handle_command response status" ) {
 
     // Each section sets the response before calling _handle_command.
     khct::cb::SockCtx http_ctx;
-    http_ctx.on_connect = [](void*, const char*, unsigned int) { return KHC_SOCK_OK; };
+    http_ctx.on_connect = [](void*, const char*, unsigned int) { return EBISU_SOCK_OK; };
     http_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     size_t resp_pos = 0;
     std::string resp;
@@ -513,9 +513,9 @@ TEST_CASE( "_handle_command response status" ) {
         memcpy(buffer, resp.data() + resp_pos, n);
         resp_pos += n;
         *out_actual_length = n;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
-    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
     kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
     kii_set_cb_http_sock_send(&handler._kii, khct::cb::mock_send, &http_ctx);
     kii_set_cb_http_sock_recv(&handler._kii, khct::cb::mock_recv, &http_ctx);
@@ -580,7 +580,7 @@ TEST_CASE( "_handle_command empty objects" ) {
     khct::cb::SockCtx http_ctx;
     http_ctx.on_connect = [&connected](void*, const char*, unsigned int) {
         connected = true;
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     };
     kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
 
@@ -634,11 +634,11 @@ TEST_CASE( "_handle_command result body opening does not fit" ) {
     // seen as such rather than as a connection error.
     std::string sent;
     khct::cb::SockCtx http_ctx;
-    http_ctx.on_connect = [](void*, const char*, unsigned int) { return KHC_SOCK_OK; };
+    http_ctx.on_connect = [](void*, const char*, unsigned int) { return EBISU_SOCK_OK; };
     http_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
         sent.append(buffer, length);
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     size_t resp_pos = 0;
     const std::string resp = "HTTP/1.1 204 No Content\r\nContent-Length: 0\r\n\r\n";
@@ -648,9 +648,9 @@ TEST_CASE( "_handle_command result body opening does not fit" ) {
         memcpy(buffer, resp.data() + resp_pos, n);
         resp_pos += n;
         *out_actual_length = n;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
-    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
     kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
     kii_set_cb_http_sock_send(&handler._kii, khct::cb::mock_send, &http_ctx);
     kii_set_cb_http_sock_recv(&handler._kii, khct::cb::mock_recv, &http_ctx);
@@ -707,7 +707,7 @@ TEST_CASE( "_handle_command nothing to parse" ) {
     khct::cb::SockCtx http_ctx;
     http_ctx.on_connect = [&connects](void*, const char*, unsigned int) {
         ++connects;
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     };
     kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
 
@@ -822,7 +822,7 @@ TEST_CASE( "_handle_command invalid primitive values" ) {
     khct::cb::SockCtx http_ctx;
     http_ctx.on_connect = [&connected](void*, const char*, unsigned int) {
         connected = true;
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     };
     kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
 
@@ -864,7 +864,7 @@ TEST_CASE( "_handle_command unquoted key" ) {
     khct::cb::SockCtx http_ctx;
     http_ctx.on_connect = [&connected](void*, const char*, unsigned int) {
         connected = true;
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     };
     kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
 

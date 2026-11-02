@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-#include <kii_task_callback.h>
+#include <ebisu_task.h>
 
 /** Implementation of callback to create task.
  * this SDK requirest to implement this function in each
@@ -27,11 +27,11 @@ extern "C" {
  * @param [in] stk_size stack size of task
  * @param [in] priority priority of thisk
  *
- * @return KII_TASKC_OK if succeed to create task. otherwise KII_TASKC_FAIL.
+ * @return EBISU_TASKC_OK if succeed to create task. otherwise EBISU_TASKC_FAIL.
  */
-kii_task_code_t task_create_cb_impl(
+ebisu_task_code_t task_create_cb_impl(
         const char* name,
-        KII_TASK_ENTRY entry,
+        EBISU_TASK_ENTRY entry,
         void* param,
         void* userdata);
 

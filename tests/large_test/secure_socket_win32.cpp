@@ -34,24 +34,24 @@ socket_context_t* win32_context(void* socket_context)
 
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     ebisu::ltest::ssl::cb_connect(void* socket_context, const char* host,
             uint16_t port)
 {
     return sock_cb_connect(win32_context(socket_context), host, port);
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     ebisu::ltest::ssl::cb_send(void* socket_context,
             const char* buffer,
             size_t length,
             size_t* out_sent_length)
 {
-    khc_sock_code_t res = sock_cb_send(win32_context(socket_context),
+    ebisu_sock_code_t res = sock_cb_send(win32_context(socket_context),
             buffer, length, out_sent_length);
 
 #ifdef SOCKET_LOG
-    if (res == KHC_SOCK_OK) {
+    if (res == EBISU_SOCK_OK) {
         printf("%.*s", (int)*out_sent_length, buffer);
     }
 #endif
@@ -59,17 +59,17 @@ khc_sock_code_t
     return res;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     ebisu::ltest::ssl::cb_recv(void* socket_context,
             char* buffer,
             size_t length_to_read,
             size_t* out_actual_length)
 {
-    khc_sock_code_t res = sock_cb_recv(win32_context(socket_context),
+    ebisu_sock_code_t res = sock_cb_recv(win32_context(socket_context),
             buffer, length_to_read, out_actual_length);
 
 #ifdef SOCKET_LOG
-    if (res == KHC_SOCK_OK) {
+    if (res == EBISU_SOCK_OK) {
         printf("%.*s", (int)*out_actual_length, buffer);
     }
 #endif
@@ -77,10 +77,10 @@ khc_sock_code_t
     return res;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     ebisu::ltest::ssl::cb_close(void* socket_context)
 {
-    khc_sock_code_t res = sock_cb_close(win32_context(socket_context));
+    ebisu_sock_code_t res = sock_cb_close(win32_context(socket_context));
 
 #ifdef SOCKET_LOG
     printf("\n----------------------------------------------------------------------------------------------------\n\n\n");
@@ -90,7 +90,7 @@ khc_sock_code_t
 }
 
 /// raw
-khc_sock_code_t
+ebisu_sock_code_t
     ebisu::ltest::tcp::cb_connect(void* socket_context, const char* host,
             uint16_t port)
 {
@@ -105,7 +105,7 @@ khc_sock_code_t
     struct addrinfo* addrs = NULL;
     if (getaddrinfo(host, service, &hints, &addrs) != 0) {
         printf("failed to get host.\n");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 
     // The first address that accepts, IPv6 or IPv4.
@@ -124,13 +124,13 @@ khc_sock_code_t
     freeaddrinfo(addrs);
     if (sock == INVALID_SOCKET) {
         printf("failed to connect socket: %d\n", WSAGetLastError());
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
     win32_context(socket_context)->socket = sock;
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     ebisu::ltest::tcp::cb_send(void* socket_context,
             const char* buffer,
             size_t length,
@@ -146,14 +146,14 @@ khc_sock_code_t
         printf("%.*s", ret, buffer);
 #endif
 
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     } else {
         printf("failed to send: %d\n", WSAGetLastError());
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     ebisu::ltest::tcp::cb_recv(void* socket_context,
             char* buffer,
             size_t length_to_read,
@@ -170,16 +170,16 @@ khc_sock_code_t
         printf("%.*s", ret, buffer);
 #endif
 
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     } else if (ret == 0) {
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     } else {
         printf("failed to receive: %d\n", WSAGetLastError());
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     ebisu::ltest::tcp::cb_close(void* socket_context)
 {
     socket_context_t* ctx = win32_context(socket_context);
@@ -192,5 +192,5 @@ khc_sock_code_t
     printf("\n----------------------------------------------------------------------------------------------------\n\n\n");
 #endif
 
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 }

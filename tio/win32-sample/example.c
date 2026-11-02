@@ -328,9 +328,9 @@ int main(int argc, char** argv)
        from the server as a device without a real-time clock would: until the
        first response, the clock has only a floor, a time it is known not to
        be earlier than. */
-    kii_clock_t clock;
-    kii_clock_init(&clock, monotonic_ms_cb_impl, NULL);
-    kii_clock_set_cb_lock(&clock, lock_cb_impl, unlock_cb_impl, &clock_lock);
+    ebisu_clock_t clock;
+    ebisu_clock_init(&clock, monotonic_ms_cb_impl, NULL);
+    ebisu_clock_set_cb_lock(&clock, lock_cb_impl, unlock_cb_impl, &clock_lock);
 
     tio_updater_t updater;
 

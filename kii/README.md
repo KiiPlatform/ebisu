@@ -227,7 +227,7 @@ void push_received_cb(const char* message, size_t message_length, void* userdata
 - **MQTT sockets**: blocking, with a send timeout, and a receive timeout the
   same as given to `kii_set_mqtt_to_sock_recv()`.
   When the receive timeout runs out, the recv callback returns
-  `KHC_SOCK_FAIL`. The optional `kii_set_cb_mqtt_sock_recv_timed_out()`
+  `EBISU_SOCK_FAIL`. The optional `kii_set_cb_mqtt_sock_recv_timed_out()`
   callback tells such a timeout from a lost connection, after which the task
   connects again.
 - **Keep-alive**: the second argument of `kii_start_push_task()`, in seconds.
@@ -282,7 +282,7 @@ What `kii` leaves to the task callbacks, with `linux-env` in the
 [khc README](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#writing-callbacks)
 has what socket callbacks have to do.
 
-- **Creating the task**: return `KII_TASKC_OK` only if it started. Nothing joins
+- **Creating the task**: return `EBISU_TASKC_OK` only if it started. Nothing joins
   a task, so a thread has to be detached, or it stays behind when the task ends.
 - **Delaying**: wait the whole time asked for, a signal or not. `msec` is a
   `uint32_t`, so `usleep(msec * 1000)` overflows above about 71 minutes.
@@ -356,34 +356,34 @@ the server's certificate in the socket callbacks.
 ## The time
 
 A device without a real-time clock needs the time to check the validity period
-of the server's certificate in its socket callbacks. A `kii_clock_t` keeps it.
+of the server's certificate in its socket callbacks. An `ebisu_clock_t` keeps it.
 Until a server states its time, it has a floor: a time it is known not to be
 earlier than. From the first response on, it has the time the response states,
 counted on with the monotonic clock.
 
 ```c
-    kii_clock_t clock;
-    kii_clock_init(&clock, monotonic_ms_cb_impl, NULL);
+    ebisu_clock_t clock;
+    ebisu_clock_init(&clock, monotonic_ms_cb_impl, NULL);
     // Needed when kii_t of more than one task share the clock. Not the
     // session's lock: the socket callbacks may use the clock while kii holds
     // that one.
-    kii_clock_set_cb_lock(&clock, lock_cb_impl, unlock_cb_impl, &clock_mutex);
+    ebisu_clock_set_cb_lock(&clock, lock_cb_impl, unlock_cb_impl, &clock_mutex);
     // A time the device saved before, if any. Without one, the floor is
     // shortly before the library's source was built.
-    kii_clock_set_floor(&clock, saved_time);
+    ebisu_clock_set_floor(&clock, saved_time);
     kii_set_clock(&kii, &clock);
 ```
 
 The socket callbacks then check the server's certificate against it:
 
-- `kii_clock_check_validity()` checks a validity period. With the floor only, a
+- `ebisu_clock_check_validity()` checks a validity period. With the floor only, a
   certificate that ended before it has expired, but one that starts later
   cannot be told from one that is valid now, so only the end is checked.
   `khc_seconds_since_epoch()` converts the dates a TLS stack gives.
-- `kii_clock_get_time()` gives the time, and whether it is the time or only the
+- `ebisu_clock_get_time()` gives the time, and whether it is the time or only the
   floor, for a TLS stack that checks validity itself: give it the time, and
   while it is only the floor, ignore a certificate not being valid yet.
-- `kii_clock_forget_time()`, when the server's certificate is refused as not
+- `ebisu_clock_forget_time()`, when the server's certificate is refused as not
   valid yet while the clock had the time. That suggests the time fell behind,
   the monotonic clock having stopped while the device slept and the server
   having renewed its certificate meanwhile. Forgotten, the time becomes a lower
@@ -403,13 +403,13 @@ handshake, the FreeRTOS one during it, in mbedTLS's verify callback.
 
 A device that runs for a long time has the time again with every HTTP response.
 One that makes none for a while, only MQTT ones, has its time turn into a lower
-bound 24 hours after the last (`kii_clock_set_exact_for()` changes that), and a
+bound 24 hours after the last (`ebisu_clock_set_exact_for()` changes that), and a
 monotonic clock that goes back turns it into the floor: a monotonic clock
 drifts, and one cannot count on from a time when it goes back. A stale clock
 therefore never refuses a certificate as not yet valid, which could keep the
 device from connecting at all. The monotonic clock has to keep counting while
 the device sleeps, or the time falls behind while it still counts as exact.
-Saving the time now and then, and setting it with `kii_clock_set_floor()` after
+Saving the time now and then, and setting it with `ebisu_clock_set_floor()` after
 a restart, keeps the floor close to the time.
 
 ## Building

@@ -29,7 +29,7 @@ static void _trace_op(char* op, int res) {
 
 khc_code khc_set_cb_sock_connect(
         khc* khc,
-        KHC_CB_SOCK_CONNECT cb,
+        EBISU_CB_SOCK_CONNECT cb,
         void* userdata)
 {
     khc->_cb_sock_connect = cb;
@@ -39,7 +39,7 @@ khc_code khc_set_cb_sock_connect(
 
 khc_code khc_set_cb_sock_send(
         khc* khc,
-        KHC_CB_SOCK_SEND cb,
+        EBISU_CB_SOCK_SEND cb,
         void* userdata)
 {
     khc->_cb_sock_send = cb;
@@ -49,7 +49,7 @@ khc_code khc_set_cb_sock_send(
 
 khc_code khc_set_cb_sock_recv(
         khc* khc,
-        KHC_CB_SOCK_RECV cb,
+        EBISU_CB_SOCK_RECV cb,
         void* userdata)
 {
     khc->_cb_sock_recv = cb;
@@ -59,7 +59,7 @@ khc_code khc_set_cb_sock_recv(
 
 khc_code khc_set_cb_sock_close(
         khc* khc,
-        KHC_CB_SOCK_CLOSE cb,
+        EBISU_CB_SOCK_CLOSE cb,
         void* userdata)
 {
     khc->_cb_sock_close = cb;
@@ -163,19 +163,19 @@ void khc_state_idle(khc* khc) {
 
 void khc_state_connect(khc* khc) {
     const uint16_t port = khc->_enable_insecure ? 80:443;
-    khc_sock_code_t con_res = khc->_cb_sock_connect(khc->_sock_ctx_connect, khc->_host, port);
+    ebisu_sock_code_t con_res = khc->_cb_sock_connect(khc->_sock_ctx_connect, khc->_host, port);
     #ifdef KHC_TRACE
     _trace_op("connect", con_res);
     #endif
-    if (con_res == KHC_SOCK_OK) {
+    if (con_res == EBISU_SOCK_OK) {
         khc->_sent_length = 0;
         khc->_state = KHC_STATE_REQ_LINE;
         return;
     }
-    if (con_res == KHC_SOCK_AGAIN) {
+    if (con_res == EBISU_SOCK_AGAIN) {
         return;
     }
-    if (con_res == KHC_SOCK_FAIL) {
+    if (con_res == EBISU_SOCK_FAIL) {
         khc->_result = KHC_ERR_SOCK_CONNECT;
         khc->_state = KHC_STATE_FINISHED;
         return;
@@ -220,8 +220,8 @@ void khc_state_req_line(khc* khc) {
     char* send_pos = &request_line[khc->_sent_length];
     size_t send_len = strlen(send_pos);
     size_t sent_len = 0;
-    khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &sent_len);
-    if (send_res == KHC_SOCK_OK) {
+    ebisu_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &sent_len);
+    if (send_res == EBISU_SOCK_OK) {
         #ifdef KHC_TRACE
         _trace_dump('>', send_pos, sent_len);
         #endif
@@ -240,10 +240,10 @@ void khc_state_req_line(khc* khc) {
         _trace_op("send", send_res);
     }
     #endif
-    if (send_res == KHC_SOCK_AGAIN) {
+    if (send_res == EBISU_SOCK_AGAIN) {
         return;
     }
-    if (send_res == KHC_SOCK_FAIL) {
+    if (send_res == EBISU_SOCK_FAIL) {
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_SEND;
         return;
@@ -258,8 +258,8 @@ void khc_state_req_host_header(khc* khc) {
     char* send_pos = &buff[khc->_sent_length];
     size_t send_len = strlen(send_pos);
     size_t sent_len = 0;
-    khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &sent_len);
-    if (send_res == KHC_SOCK_OK) {
+    ebisu_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &sent_len);
+    if (send_res == EBISU_SOCK_OK) {
         #ifdef KHC_TRACE
         _trace_dump('>', send_pos, sent_len);
         #endif
@@ -279,10 +279,10 @@ void khc_state_req_host_header(khc* khc) {
         _trace_op("send", send_res);
     }
     #endif
-    if (send_res == KHC_SOCK_AGAIN) {
+    if (send_res == EBISU_SOCK_AGAIN) {
         return;
     }
-    if (send_res == KHC_SOCK_FAIL) {
+    if (send_res == EBISU_SOCK_FAIL) {
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_SEND;
         return;
@@ -314,8 +314,8 @@ void khc_state_req_header_send(khc* khc) {
     char* send_pos = &line[khc->_sent_length];
     size_t send_len = strlen(send_pos);
     size_t sent_len = 0;
-    khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &sent_len);
-    if (send_res == KHC_SOCK_OK) {
+    ebisu_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &sent_len);
+    if (send_res == EBISU_SOCK_OK) {
         #ifdef KHC_TRACE
         _trace_dump('>', send_pos, sent_len);
         #endif
@@ -334,10 +334,10 @@ void khc_state_req_header_send(khc* khc) {
         _trace_op("send", send_res);
     }
     #endif
-    if (send_res == KHC_SOCK_AGAIN) {
+    if (send_res == EBISU_SOCK_AGAIN) {
         return;
     }
-    if (send_res == KHC_SOCK_FAIL) {
+    if (send_res == EBISU_SOCK_FAIL) {
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_SEND;
         return;
@@ -349,8 +349,8 @@ void khc_state_req_header_send_crlf(khc* khc) {
     char* send_pos = &crlf[khc->_sent_length];
     size_t send_len = strlen(send_pos);
     size_t sent_len = 0;
-    khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &sent_len);
-    if (send_res == KHC_SOCK_OK) {
+    ebisu_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &sent_len);
+    if (send_res == EBISU_SOCK_OK) {
         #ifdef KHC_TRACE
         _trace_dump('>', send_pos, sent_len);
         #endif
@@ -370,10 +370,10 @@ void khc_state_req_header_send_crlf(khc* khc) {
         _trace_op("send", send_res);
     }
     #endif
-    if (send_res == KHC_SOCK_AGAIN) {
+    if (send_res == EBISU_SOCK_AGAIN) {
         return;
     }
-    if (send_res == KHC_SOCK_FAIL) {
+    if (send_res == EBISU_SOCK_FAIL) {
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_SEND;
         return;
@@ -392,8 +392,8 @@ void khc_state_req_header_end(khc* khc) {
     char* send_pos = &text[khc->_sent_length];
     size_t send_len = strlen(send_pos);
     size_t sent_len = 0;
-    khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &sent_len);
-    if (send_res == KHC_SOCK_OK) {
+    ebisu_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &sent_len);
+    if (send_res == EBISU_SOCK_OK) {
         #ifdef KHC_TRACE
         _trace_dump('>', send_pos, sent_len);
         #endif
@@ -421,10 +421,10 @@ void khc_state_req_header_end(khc* khc) {
         _trace_op("send", send_res);
     }
     #endif
-    if (send_res == KHC_SOCK_AGAIN) {
+    if (send_res == EBISU_SOCK_AGAIN) {
         return;
     }
-    if (send_res == KHC_SOCK_FAIL) {
+    if (send_res == EBISU_SOCK_FAIL) {
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_SEND;
         return;
@@ -468,8 +468,8 @@ void khc_state_req_body_send_size(khc* khc) {
     char* send_pos = &size_buff[khc->_sent_length];
     size_t send_len = strlen(send_pos);
     size_t sent_len = 0;
-    khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &sent_len);
-    if (send_res == KHC_SOCK_OK) {
+    ebisu_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &sent_len);
+    if (send_res == EBISU_SOCK_OK) {
         #ifdef KHC_TRACE
         _trace_dump('>', send_pos, sent_len);
         #endif
@@ -492,10 +492,10 @@ void khc_state_req_body_send_size(khc* khc) {
         _trace_op("send", send_res);
     }
     #endif
-    if (send_res == KHC_SOCK_AGAIN) {
+    if (send_res == EBISU_SOCK_AGAIN) {
         return;
     }
-    if (send_res == KHC_SOCK_FAIL) {
+    if (send_res == EBISU_SOCK_FAIL) {
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_SEND;
         return;
@@ -506,8 +506,8 @@ void khc_state_req_body_send(khc* khc) {
     char* send_pos = &khc->_stream_buff[khc->_sent_length];
     size_t send_len = khc->_read_size - khc->_sent_length;
     size_t sent_len = 0;
-    khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &sent_len);
-    if (send_res == KHC_SOCK_OK) {
+    ebisu_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &sent_len);
+    if (send_res == EBISU_SOCK_OK) {
         #ifdef KHC_TRACE
         _trace_dump('>', send_pos, sent_len);
         #endif
@@ -526,10 +526,10 @@ void khc_state_req_body_send(khc* khc) {
         _trace_op("send", send_res);
     }
     #endif
-    if (send_res == KHC_SOCK_AGAIN) {
+    if (send_res == EBISU_SOCK_AGAIN) {
         return;
     }
-    if (send_res == KHC_SOCK_FAIL) {
+    if (send_res == EBISU_SOCK_FAIL) {
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_SEND;
         return;
@@ -541,8 +541,8 @@ void khc_state_req_body_send_crlf(khc* khc) {
     char* send_pos = &crlf[khc->_sent_length];
     size_t send_len = strlen(send_pos);
     size_t sent_len = 0;
-    khc_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &sent_len);
-    if (send_res == KHC_SOCK_OK) {
+    ebisu_sock_code_t send_res = khc->_cb_sock_send(khc->_sock_ctx_send, send_pos, send_len, &sent_len);
+    if (send_res == EBISU_SOCK_OK) {
         #ifdef KHC_TRACE
         _trace_dump('>', send_pos, sent_len);
         #endif
@@ -566,10 +566,10 @@ void khc_state_req_body_send_crlf(khc* khc) {
         _trace_op("send", send_res);
     }
     #endif
-    if (send_res == KHC_SOCK_AGAIN) {
+    if (send_res == EBISU_SOCK_AGAIN) {
         return;
     }
-    if (send_res == KHC_SOCK_FAIL) {
+    if (send_res == EBISU_SOCK_FAIL) {
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_SEND;
         return;
@@ -579,9 +579,9 @@ void khc_state_req_body_send_crlf(khc* khc) {
 void khc_state_resp_status_read(khc* khc) {
     size_t read_size = 0;
     size_t read_req_size = khc->_resp_header_buff_size - khc->_resp_header_read_size - 1;
-    khc_sock_code_t read_res =
+    ebisu_sock_code_t read_res =
         khc->_cb_sock_recv(khc->_sock_ctx_recv, &khc->_resp_header_buff[khc->_resp_header_read_size], read_req_size, &read_size);
-    if (read_res == KHC_SOCK_OK) {
+    if (read_res == EBISU_SOCK_OK) {
         #ifdef KHC_TRACE
         _trace_dump('<', &khc->_resp_header_buff[khc->_resp_header_read_size], read_size);
         #endif
@@ -610,10 +610,10 @@ void khc_state_resp_status_read(khc* khc) {
         _trace_op("recv", read_res);
     }
     #endif
-    if (read_res == KHC_SOCK_AGAIN) {
+    if (read_res == EBISU_SOCK_AGAIN) {
         return;
     }
-    if (read_res == KHC_SOCK_FAIL) {
+    if (read_res == EBISU_SOCK_FAIL) {
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_RECV;
         return;
@@ -731,9 +731,9 @@ void khc_state_resp_header_callback(khc* khc) {
 void khc_state_resp_header_read(khc* khc) {
     size_t read_size = 0;
     size_t read_req_size = khc->_resp_header_buff_size - khc->_resp_header_read_size - 1;
-    khc_sock_code_t read_res =
+    ebisu_sock_code_t read_res =
         khc->_cb_sock_recv(khc->_sock_ctx_recv, &khc->_resp_header_buff[khc->_resp_header_read_size], read_req_size, &read_size);
-    if (read_res == KHC_SOCK_OK) {
+    if (read_res == EBISU_SOCK_OK) {
         #ifdef KHC_TRACE
         _trace_dump('<', &khc->_resp_header_buff[khc->_resp_header_read_size], read_size);
         #endif
@@ -753,10 +753,10 @@ void khc_state_resp_header_read(khc* khc) {
         _trace_op("recv", read_res);
     }
     #endif
-    if (read_res == KHC_SOCK_AGAIN) {
+    if (read_res == EBISU_SOCK_AGAIN) {
         return;
     }
-    if (read_res == KHC_SOCK_FAIL) {
+    if (read_res == EBISU_SOCK_FAIL) {
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_RECV;
         return;
@@ -782,12 +782,12 @@ void khc_state_resp_header_skip(khc* khc) {
 
     size_t read_size = 0;
     size_t read_req_size = khc->_resp_header_buff_size - khc->_resp_header_read_size - 1;
-    khc_sock_code_t read_res = khc->_cb_sock_recv(
+    ebisu_sock_code_t read_res = khc->_cb_sock_recv(
             khc->_sock_ctx_recv,
             &khc->_resp_header_buff[khc->_resp_header_read_size],
             read_req_size,
             &read_size);
-    if (read_res == KHC_SOCK_OK) {
+    if (read_res == EBISU_SOCK_OK) {
         #ifdef KHC_TRACE
         _trace_dump('<', &khc->_resp_header_buff[khc->_resp_header_read_size], read_size);
         #endif
@@ -819,10 +819,10 @@ void khc_state_resp_header_skip(khc* khc) {
         _trace_op("recv", read_res);
     }
     #endif
-    if (read_res == KHC_SOCK_AGAIN) {
+    if (read_res == EBISU_SOCK_AGAIN) {
         return;
     }
-    if (read_res == KHC_SOCK_FAIL) {
+    if (read_res == EBISU_SOCK_FAIL) {
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_RECV;
         return;
@@ -917,9 +917,9 @@ void khc_state_read_chunk_body_from_header_buff(khc* khc) {
 
 void khc_state_resp_body_read(khc* khc) {
     size_t read_size = 0;
-    khc_sock_code_t read_res =
+    ebisu_sock_code_t read_res =
         khc->_cb_sock_recv(khc->_sock_ctx_recv, khc->_stream_buff, khc->_stream_buff_size, &read_size);
-    if (read_res == KHC_SOCK_OK) {
+    if (read_res == EBISU_SOCK_OK) {
         #ifdef KHC_TRACE
         _trace_dump('<', khc->_stream_buff, read_size);
         #endif
@@ -937,10 +937,10 @@ void khc_state_resp_body_read(khc* khc) {
         _trace_op("recv", read_res);
     }
     #endif
-    if (read_res == KHC_SOCK_AGAIN) {
+    if (read_res == EBISU_SOCK_AGAIN) {
         return;
     }
-    if (read_res == KHC_SOCK_FAIL) {
+    if (read_res == EBISU_SOCK_FAIL) {
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_RECV;
         return;
@@ -1002,12 +1002,12 @@ void khc_state_resp_body_read_chunk_size(khc* khc) {
         khc->_result = KHC_ERR_TOO_LARGE_DATA;
         return;
     }
-    khc_sock_code_t read_res = khc->_cb_sock_recv(
+    ebisu_sock_code_t read_res = khc->_cb_sock_recv(
             khc->_sock_ctx_recv,
             &khc->_stream_buff[khc->_body_read_size],
             remain,
             &read_size);
-    if (read_res == KHC_SOCK_OK) {
+    if (read_res == EBISU_SOCK_OK) {
         #ifdef KHC_TRACE
         _trace_dump('<', &khc->_stream_buff[khc->_body_read_size], read_size);
         #endif
@@ -1025,10 +1025,10 @@ void khc_state_resp_body_read_chunk_size(khc* khc) {
         _trace_op("recv", read_res);
     }
     #endif
-    if (read_res == KHC_SOCK_AGAIN) {
+    if (read_res == EBISU_SOCK_AGAIN) {
         return;
     }
-    if (read_res == KHC_SOCK_FAIL) {
+    if (read_res == EBISU_SOCK_FAIL) {
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_RECV;
         return;
@@ -1067,12 +1067,12 @@ void khc_state_resp_body_parse_chunk_body(khc* khc) {
 
 void khc_state_resp_body_read_chunk_body(khc* khc) {
     size_t read_size = 0;
-    khc_sock_code_t read_res = khc->_cb_sock_recv(
+    ebisu_sock_code_t read_res = khc->_cb_sock_recv(
             khc->_sock_ctx_recv,
             khc->_stream_buff,
             khc->_stream_buff_size,
             &read_size);
-    if (read_res == KHC_SOCK_OK) {
+    if (read_res == EBISU_SOCK_OK) {
         #ifdef KHC_TRACE
         _trace_dump('<', khc->_stream_buff, read_size);
         #endif
@@ -1090,10 +1090,10 @@ void khc_state_resp_body_read_chunk_body(khc* khc) {
         _trace_op("recv", read_res);
     }
     #endif
-    if (read_res == KHC_SOCK_AGAIN) {
+    if (read_res == EBISU_SOCK_AGAIN) {
         return;
     }
-    if (read_res == KHC_SOCK_FAIL) {
+    if (read_res == EBISU_SOCK_FAIL) {
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_RECV;
         return;
@@ -1110,12 +1110,12 @@ void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
         size_t tmp_size = 2 - khc->_body_read_size;
         char tmp[tmp_size];
         size_t read_size = 0;
-        khc_sock_code_t read_res = khc->_cb_sock_recv(
+        ebisu_sock_code_t read_res = khc->_cb_sock_recv(
                 khc->_sock_ctx_recv,
                 tmp,
                 tmp_size,
                 &read_size);
-        if (read_res == KHC_SOCK_OK) {
+        if (read_res == EBISU_SOCK_OK) {
             #ifdef KHC_TRACE
             _trace_dump('<', tmp, read_size);
             #endif
@@ -1138,10 +1138,10 @@ void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
             _trace_op("recv", read_res);
         }
         #endif
-        if (read_res == KHC_SOCK_AGAIN) {
+        if (read_res == EBISU_SOCK_AGAIN) {
             return;
         }
-        if (read_res == KHC_SOCK_FAIL) {
+        if (read_res == EBISU_SOCK_FAIL) {
             khc->_state = KHC_STATE_CLOSE;
             khc->_result = KHC_ERR_SOCK_RECV;
             return;
@@ -1181,12 +1181,12 @@ void khc_state_resp_body_skip_trailers(khc* khc) {
     khc->_resp_header_read_size = 0;
 
     size_t read_size = 0;
-    khc_sock_code_t read_res = khc->_cb_sock_recv(
+    ebisu_sock_code_t read_res = khc->_cb_sock_recv(
             khc->_sock_ctx_recv,
             khc->_stream_buff,
             khc->_stream_buff_size,
             &read_size);
-    if (read_res == KHC_SOCK_OK) {
+    if (read_res == EBISU_SOCK_OK) {
         #ifdef KHC_TRACE
         _trace_dump('<', khc->_stream_buff, read_size);
         #endif
@@ -1202,10 +1202,10 @@ void khc_state_resp_body_skip_trailers(khc* khc) {
         _trace_op("recv", read_res);
     }
     #endif
-    if (read_res == KHC_SOCK_AGAIN) {
+    if (read_res == EBISU_SOCK_AGAIN) {
         return;
     }
-    if (read_res == KHC_SOCK_FAIL) {
+    if (read_res == EBISU_SOCK_FAIL) {
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_RECV;
         return;
@@ -1213,18 +1213,18 @@ void khc_state_resp_body_skip_trailers(khc* khc) {
 }
 
 void khc_state_close(khc* khc) {
-    khc_sock_code_t close_res = khc->_cb_sock_close(khc->_sock_ctx_close);
+    ebisu_sock_code_t close_res = khc->_cb_sock_close(khc->_sock_ctx_close);
     #ifdef KHC_TRACE
     _trace_op("close", close_res);
     #endif
-    if (close_res == KHC_SOCK_OK) {
+    if (close_res == EBISU_SOCK_OK) {
         khc->_state = KHC_STATE_FINISHED;
         return;
     }
-    if (close_res == KHC_SOCK_AGAIN) {
+    if (close_res == EBISU_SOCK_AGAIN) {
         return;
     }
-    if (close_res == KHC_SOCK_FAIL) {
+    if (close_res == EBISU_SOCK_FAIL) {
         // The request has its result by now, and this must not change it. After
         // a whole response, a failure would make a POST the server has acted on
         // look as if it had not been; after a failure, it would hide what went

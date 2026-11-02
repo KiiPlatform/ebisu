@@ -3,9 +3,9 @@
 #include <pthread.h>
 #include <time.h>
 
-kii_task_code_t task_create_cb(
+ebisu_task_code_t task_create_cb(
         const char* name,
-        KII_TASK_ENTRY entry,
+        EBISU_TASK_ENTRY entry,
         void* param,
         void* userdata)
 {
@@ -19,11 +19,11 @@ kii_task_code_t task_create_cb(
         /* Nothing joins a task, so its thread has to go by itself when it
            ends. */
         pthread_detach(pthid);
-        return KII_TASKC_OK;
+        return EBISU_TASKC_OK;
     }
     else
     {
-        return KII_TASKC_FAIL;
+        return EBISU_TASKC_FAIL;
     }
 }
 

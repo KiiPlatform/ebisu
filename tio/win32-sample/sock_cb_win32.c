@@ -413,10 +413,10 @@ static int verify_server_certificate(socket_context_t* ctx)
        time, that time from then on. Without a clock, at the system's. */
     FILETIME at;
     FILETIME* at_ptr = NULL;
-    kii_bool_t time_exact = KII_TRUE;
+    bool time_exact = true;
     int64_t now = 0;
     if (ctx->clock != NULL) {
-        time_exact = kii_clock_get_time(ctx->clock, &now);
+        time_exact = ebisu_clock_get_time(ctx->clock, &now);
         at = filetime_of(now);
         at_ptr = &at;
     }
@@ -441,13 +441,13 @@ static int verify_server_certificate(socket_context_t* ctx)
        cannot be told from one that is: it may simply have been issued after
        the floor. The policy then leaves the validity periods alone, and they
        are checked here for expiry only. */
-    if (time_exact != KII_TRUE) {
+    if (!time_exact) {
         policy_para.dwFlags = CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG;
         PCERT_SIMPLE_CHAIN simple = chain->rgpChain[0];
         for (DWORD i = 0; i < simple->cElement; ++i) {
             PCERT_INFO info = simple->rgpElement[i]->pCertContext->pCertInfo;
-            if (kii_clock_check_validity(ctx->clock, seconds_of(info->NotBefore),
-                        seconds_of(info->NotAfter)) == KII_VALIDITY_EXPIRED) {
+            if (ebisu_clock_check_validity(ctx->clock, seconds_of(info->NotBefore),
+                        seconds_of(info->NotAfter)) == EBISU_VALIDITY_EXPIRED) {
                 printf("server certificate for %s rejected: expired.\n", ctx->host);
                 goto done;
             }
@@ -472,13 +472,13 @@ static int verify_server_certificate(socket_context_t* ctx)
            renewed its certificate meanwhile. Forgotten, the time becomes a
            lower bound, the next connection goes through, and its response
            gives the clock the time again. */
-        if (ctx->clock != NULL && time_exact == KII_TRUE &&
+        if (ctx->clock != NULL && time_exact &&
                 policy_status.dwError == (DWORD)CERT_E_EXPIRED) {
             PCERT_SIMPLE_CHAIN simple = chain->rgpChain[0];
             for (DWORD i = 0; i < simple->cElement; ++i) {
                 PCERT_INFO info = simple->rgpElement[i]->pCertContext->pCertInfo;
                 if (seconds_of(info->NotBefore) > now) {
-                    kii_clock_forget_time(ctx->clock);
+                    ebisu_clock_forget_time(ctx->clock);
                     break;
                 }
             }
@@ -554,7 +554,7 @@ static int tls_connect(socket_context_t* ctx)
     return 0;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_connect(void* sock_ctx, const char* host,
             uint16_t port)
 {
@@ -567,23 +567,23 @@ khc_sock_code_t
     size_t host_len = strlen(host);
     if (host_len >= sizeof(ctx->host)) {
         printf("host name too long: %s\n", host);
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
     memcpy(ctx->host, host, host_len + 1);
 
     ctx->socket = tcp_connect(ctx->host, port, ctx->to_send);
     if (ctx->socket == INVALID_SOCKET) {
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
     /* Neither khc nor kii closes a connection that failed to open. */
     if (tls_connect(ctx) != 0) {
         teardown(ctx);
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_send(void* sock_ctx,
             const char* buffer,
             size_t length,
@@ -593,10 +593,10 @@ khc_sock_code_t
     *out_sent_length = 0;
     if (ctx->send_buf == NULL) {
         printf("failed to send: not connected.\n");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
     if (length == 0) {
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     }
 
     /* One record at most. The caller sends the rest in further calls. */
@@ -621,7 +621,7 @@ khc_sock_code_t
     SECURITY_STATUS status = EncryptMessage(&ctx->ctxt, 0, &desc, 0);
     if (status != SEC_E_OK) {
         print_error("EncryptMessage", (unsigned long)status);
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 
     /* The trailer can come out shorter than cbTrailer. */
@@ -629,10 +629,10 @@ khc_sock_code_t
         buffers[2].cbBuffer;
     if (send_all(ctx->socket, header, record_len) != 0) {
         printf("failed to send\n");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
     *out_sent_length = data_len;
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 }
 
 /* Forgets the record decrypted last, once all of its plaintext has been
@@ -712,7 +712,7 @@ static decrypt_result_t decrypt_record(socket_context_t* ctx)
     return DECRYPT_OK;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_recv(void* sock_ctx,
             char* buffer,
             size_t length_to_read,
@@ -723,7 +723,7 @@ khc_sock_code_t
     ctx->recv_timed_out = 0;
     if (ctx->recv_buf == NULL) {
         printf("failed to receive: not connected.\n");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 
     for (;;) {
@@ -740,12 +740,12 @@ khc_sock_code_t
                 drop_record(ctx);
             }
             *out_actual_length = len;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         }
 
         /* The end of the stream, 0 bytes, for this and any later call. */
         if (ctx->peer_closed) {
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         }
 
         if (ctx->recv_len > 0) {
@@ -756,7 +756,7 @@ khc_sock_code_t
                 ctx->peer_closed = 1;
                 continue;
             } else if (decrypted == DECRYPT_ERROR) {
-                return KHC_SOCK_FAIL;
+                return EBISU_SOCK_FAIL;
             }
             /* DECRYPT_INCOMPLETE: the rest of the record is to come. */
         }
@@ -764,24 +764,24 @@ khc_sock_code_t
         read_result_t read = read_some(ctx);
         if (read == READ_TIMEOUT) {
             ctx->recv_timed_out = 1;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         } else if (read == READ_EOF) {
             /* A server that answers "Connection: close" may end the TCP
                stream without a close_notify, which is an ordinary end of the
                stream, unless it ends in the middle of a record. */
             if (ctx->recv_len == 0) {
                 ctx->peer_closed = 1;
-                return KHC_SOCK_OK;
+                return EBISU_SOCK_OK;
             }
             printf("connection closed in the middle of a TLS record.\n");
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         } else if (read == READ_ERROR) {
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         }
     }
 }
 
-/* sock_cb_recv() returns KHC_SOCK_FAIL both when nothing arrives within
+/* sock_cb_recv() returns EBISU_SOCK_FAIL both when nothing arrives within
    to_recv and when the connection fails, and says which in recv_timed_out. A
    timeout leaves the connection usable: read_some() never started a recv()
    for it, and any part of a record that did arrive is kept. */
@@ -843,7 +843,7 @@ static int send_close_notify(socket_context_t* ctx)
     return 0;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_close(void* sock_ctx)
 {
     socket_context_t* ctx = (socket_context_t*)sock_ctx;
@@ -854,7 +854,7 @@ khc_sock_code_t
     teardown(ctx);
     if (!ok) {
         printf("failed to close:\n");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 }

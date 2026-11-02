@@ -5,22 +5,22 @@
 
 namespace {
 
-khc_sock_code_t sock_connect(void*, const char*, uint16_t) {
-    return KHC_SOCK_OK;
+ebisu_sock_code_t sock_connect(void*, const char*, uint16_t) {
+    return EBISU_SOCK_OK;
 }
 
-khc_sock_code_t sock_send(void*, const char*, size_t length, size_t* out_sent_length) {
+ebisu_sock_code_t sock_send(void*, const char*, size_t length, size_t* out_sent_length) {
     *out_sent_length = length;
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 }
 
-khc_sock_code_t sock_recv(void* context, char* buffer, size_t length, size_t* out_actual_length) {
+ebisu_sock_code_t sock_recv(void* context, char* buffer, size_t length, size_t* out_actual_length) {
     *out_actual_length = ((FuzzSocket*)context)->read(buffer, length);
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 }
 
-khc_sock_code_t sock_close(void*) {
-    return KHC_SOCK_OK;
+ebisu_sock_code_t sock_close(void*) {
+    return EBISU_SOCK_OK;
 }
 
 size_t on_header(char*, size_t size, void*) {

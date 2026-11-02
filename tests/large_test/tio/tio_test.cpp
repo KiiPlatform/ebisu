@@ -185,12 +185,12 @@ struct Device {
     int exits = 0;
 };
 
-khc_sock_code_t cb_record_send(void* userdata, const char* buffer, size_t length,
+ebisu_sock_code_t cb_record_send(void* userdata, const char* buffer, size_t length,
         size_t* out_sent_length)
 {
     RecordedSocket* r = (RecordedSocket*)userdata;
-    khc_sock_code_t res = ebisu::ltest::ssl::cb_send(r->ssl, buffer, length, out_sent_length);
-    if (res == KHC_SOCK_OK) {
+    ebisu_sock_code_t res = ebisu::ltest::ssl::cb_send(r->ssl, buffer, length, out_sent_length);
+    if (res == EBISU_SOCK_OK) {
         std::lock_guard<std::mutex> lock(r->d->sent_mutex);
         r->d->sent.append(buffer, *out_sent_length);
     }
@@ -209,12 +209,12 @@ void forget_sent(Device& d)
     d.sent.clear();
 }
 
-kii_task_code_t cb_task_create(const char* name, KII_TASK_ENTRY entry,
+ebisu_task_code_t cb_task_create(const char* name, EBISU_TASK_ENTRY entry,
         void* entry_param, void* userdata)
 {
     Device* d = (Device*)userdata;
     d->tasks.emplace_back(entry, entry_param);
-    return KII_TASKC_OK;
+    return EBISU_TASKC_OK;
 }
 
 void cb_delay_ms(uint32_t msec, void* userdata)

@@ -7,6 +7,7 @@
 
 #include "khc.h"
 #include "kii_task_callback.h"
+#include <ebisu_clock.h>
 
 #include <jkii.h>
 #include <stdint.h>
@@ -242,74 +243,12 @@ typedef struct kii_session_t {
     uint64_t _password_refused_at_ms;
     KII_CB_AUTHOR_UPDATED _cb_author_updated; /**< \private */
     void* _author_updated_data; /**< \private */
-    KII_CB_LOCK _cb_lock; /**< \private */
-    KII_CB_LOCK _cb_unlock; /**< \private */
+    EBISU_CB_LOCK _cb_lock; /**< \private */
+    EBISU_CB_LOCK _cb_unlock; /**< \private */
     void* _lock_data; /**< \private */
-    KII_CB_MONOTONIC_MS _cb_monotonic_ms; /**< \private */
+    EBISU_CB_MONOTONIC_MS _cb_monotonic_ms; /**< \private */
     void* _monotonic_ms_data; /**< \private */
 } kii_session_t;
-
-/**
- * \brief The time of day, for a device without a real-time clock.
- *
- * A TLS stack needs the time to check a certificate's validity period, and a
- * device without a real-time clock has none until something tells it. Until
- * then the clock has a floor, a time it is known not to be earlier than: when
- * the library's source was built, or a time the application saved and set with
- * kii_clock_set_floor(). Once a server states its time in a response to a
- * kii_t the clock is set on with kii_set_clock(), or the application sets one
- * with kii_clock_set_time(), the clock counts on from it with the monotonic
- * clock.
- *
- * So a check made before then has a lower bound of the time only: a certificate
- * that expired before it is known to have expired, but one that is not valid
- * until later cannot be told from one that is valid now. The same goes long
- * after a time was given, 24 hours by default (kii_clock_set_exact_for()): a
- * monotonic clock drifts, so what it counts is then a lower bound too. And if
- * the monotonic clock goes back, the time given becomes the floor, until the
- * next. A certificate refused as not valid yet while the clock had the time
- * suggests the time fell behind: kii_clock_forget_time() makes it a lower bound
- * until the next, so that the device connects again.
- *
- * kii_clock_check_validity() applies that, for socket callbacks to use when
- * checking the server's certificate, and kii_clock_get_time() gives the time
- * and which of the two it is, for a TLS stack to check with itself.
- *
- * Initialize with kii_clock_init(). The functions are safe to call from the
- * socket callbacks, and from any task once kii_clock_set_cb_lock() has set a
- * lock.
- */
-typedef struct kii_clock_t {
-    /** \private Seconds since the epoch the time is known not to be earlier
-     * than. */
-    int64_t _floor;
-    /** \private Whether _time has been set. */
-    kii_bool_t _time_known;
-    /** \private A time given by a server or the application, in seconds since
-     * the epoch. */
-    int64_t _time;
-    /** \private The monotonic time _time was given at. */
-    uint64_t _time_at_ms;
-    /** \private How long after it was given _time counts as exact. */
-    uint64_t _exact_for_ms;
-    KII_CB_MONOTONIC_MS _cb_monotonic_ms; /**< \private */
-    void* _monotonic_ms_data; /**< \private */
-    KII_CB_LOCK _cb_lock; /**< \private */
-    KII_CB_LOCK _cb_unlock; /**< \private */
-    void* _lock_data; /**< \private */
-} kii_clock_t;
-
-/** \brief Whether a validity period covers the time, as kii_clock_t knows it. */
-typedef enum kii_validity_t {
-    /** \brief Valid, as far as the time is known: within the period when the
-     * time is known, and not past its end when only a lower bound is. */
-    KII_VALIDITY_OK,
-    /** \brief Past the end of the period. */
-    KII_VALIDITY_EXPIRED,
-    /** \brief Before the start of the period, which is only told when the time
-     * is known. */
-    KII_VALIDITY_NOT_YET_VALID
-} kii_validity_t;
 
 /** \brief Represents MQTT endpoint. */
 typedef struct kii_mqtt_endpoint_t {
@@ -365,11 +304,11 @@ typedef void (*KII_PUSH_RECEIVED_CB)(
 /**
  * \brief Callback tells whether the last receive on the MQTT socket timed out.
  *
- * The recv callback set by kii_set_cb_mqtt_sock_recv() returns KHC_SOCK_FAIL
+ * The recv callback set by kii_set_cb_mqtt_sock_recv() returns EBISU_SOCK_FAIL
  * both when its receive timeout runs out with nothing received, which is
  * routine on an idle connection, and when the receive fails because the
  * connection is lost. This callback tells the two apart. It is called right
- * after such a KHC_SOCK_FAIL, before any other callback on the socket.
+ * after such a EBISU_SOCK_FAIL, before any other callback on the socket.
  * See kii_set_cb_mqtt_sock_recv_timed_out().
  *
  * \param [in] sock_ctx Context object pointer given to
@@ -393,14 +332,14 @@ typedef struct kii_t {
     void* _mqtt_sock_recv_ctx; /**< \private */
     void* _mqtt_sock_recv_timed_out_ctx; /**< \private */
     void* _mqtt_sock_close_ctx; /**< \private */
-    KHC_CB_SOCK_CONNECT _cb_mqtt_sock_connect; /**< \private */
-    KHC_CB_SOCK_SEND _cb_mqtt_sock_send; /**< \private */
-    KHC_CB_SOCK_RECV _cb_mqtt_sock_recv; /**< \private */
+    EBISU_CB_SOCK_CONNECT _cb_mqtt_sock_connect; /**< \private */
+    EBISU_CB_SOCK_SEND _cb_mqtt_sock_send; /**< \private */
+    EBISU_CB_SOCK_RECV _cb_mqtt_sock_recv; /**< \private */
     KII_CB_SOCK_RECV_TIMED_OUT _cb_mqtt_sock_recv_timed_out; /**< \private */
-    KHC_CB_SOCK_CLOSE _cb_mqtt_sock_close_cb; /**< \private */
+    EBISU_CB_SOCK_CLOSE _cb_mqtt_sock_close_cb; /**< \private */
     uint32_t _mqtt_to_recv_sec; /**< \private */
 
-    KII_CB_TASK_CREATE _cb_task_create; /**< \private */
+    EBISU_CB_TASK_CREATE _cb_task_create; /**< \private */
     void* _task_create_data; /**< \private */
 
     KII_CB_TASK_CONTINUE _cb_task_continue; /**< \private */
@@ -409,7 +348,7 @@ typedef struct kii_t {
     KII_CB_TASK_EXIT _cb_task_exit; /**< \private */
     void* _task_exit_data; /**< \private */
 
-    KII_CB_DELAY_MS _cb_delay_ms; /**< \private */
+    EBISU_CB_DELAY_MS _cb_delay_ms; /**< \private */
     void* _delay_ms_data; /**< \private */
 
     KII_PUSH_RECEIVED_CB _cb_push_received; /**< \private */
@@ -452,7 +391,7 @@ typedef struct kii_t {
 
     kii_session_t* _session; /**< \private */
     /** \private Where the time each response states is kept, or NULL. */
-    kii_clock_t* _clock;
+    ebisu_clock_t* _clock;
     /** \private kii_session_t::_generation of the token copied into _author. */
     uint32_t _session_generation;
     /** \private Whether the request being performed carries the session's
@@ -606,7 +545,7 @@ void kii_session_init(kii_session_t* session);
 /**
  * \brief Set the lock guarding the session.
  *
- * Required before kii_set_session(). See KII_CB_LOCK for when the callbacks may
+ * Required before kii_set_session(). See EBISU_CB_LOCK for when the callbacks may
  * be no-ops.
  *
  * \param [out] session kii_session_t instance.
@@ -616,8 +555,8 @@ void kii_session_init(kii_session_t* session);
  */
 void kii_session_set_cb_lock(
         kii_session_t* session,
-        KII_CB_LOCK cb_lock,
-        KII_CB_LOCK cb_unlock,
+        EBISU_CB_LOCK cb_lock,
+        EBISU_CB_LOCK cb_unlock,
         void* userdata);
 
 /**
@@ -631,7 +570,7 @@ void kii_session_set_cb_lock(
  */
 void kii_session_set_cb_monotonic_ms(
         kii_session_t* session,
-        KII_CB_MONOTONIC_MS cb_monotonic_ms,
+        EBISU_CB_MONOTONIC_MS cb_monotonic_ms,
         void* userdata);
 
 /**
@@ -751,145 +690,17 @@ void kii_session_get_author(kii_session_t* session, kii_author_t* out_author);
 kii_code_t kii_set_session(kii_t* kii, kii_session_t* session);
 
 /**
- * \brief Initializes a kii_clock_t.
- *
- * The clock starts with no time, and a floor shortly before the library's
- * source was built: EBISU_SOURCE_TIME, less a week for a committer whose clock
- * was a little ahead, as khc_init() sets for khc_get_resp_date().
- *
- * \param [out] clock kii_clock_t instance.
- * \param [in] cb_monotonic_ms The monotonic clock the time is counted on with.
- * \param [in] userdata Context object pointer passed to cb_monotonic_ms.
- */
-void kii_clock_init(
-        kii_clock_t* clock,
-        KII_CB_MONOTONIC_MS cb_monotonic_ms,
-        void* userdata);
-
-/**
- * \brief Set the lock guarding the clock.
- *
- * Needed when more than one task uses the clock, as when kii_t of different
- * tasks are set on it. The monotonic clock is called only with it held.
- *
- * The socket callbacks may use the clock while kii holds a session's lock, so
- * this has to be a lock of its own, not a session's.
- *
- * \param [out] clock kii_clock_t instance.
- * \param [in] cb_lock Callback acquiring the lock.
- * \param [in] cb_unlock Callback releasing the lock.
- * \param [in] userdata Context object pointer passed to both.
- */
-void kii_clock_set_cb_lock(
-        kii_clock_t* clock,
-        KII_CB_LOCK cb_lock,
-        KII_CB_LOCK cb_unlock,
-        void* userdata);
-
-/**
- * \brief Raise the time the clock is known not to be earlier than.
- *
- * A device can save the time from kii_clock_get_time() now and then, and set it
- * here when it starts again, so that the time it knows never goes back further
- * than that. A floor lower than the clock's is ignored.
- *
- * \param [out] clock kii_clock_t instance.
- * \param [in] floor Seconds since 1970-01-01T00:00:00Z.
- */
-void kii_clock_set_floor(kii_clock_t* clock, int64_t floor);
-
-/**
- * \brief Set how long a time given stays exact.
- *
- * For that long after it was given, the clock counts on from a time and gives
- * the result as the time. After that, as a lower bound only, allowing for a
- * monotonic clock running up to 1% fast: kii_clock_check_validity() then no
- * longer tells a validity period that has not started. A kii_t the clock is set
- * on gives it a time with every response, so this matters to a device that
- * makes no HTTP requests for a long time, only MQTT ones.
- *
- * \param [out] clock kii_clock_t instance.
- * \param [in] seconds 24 hours by default. 0 never takes a time as exact.
- */
-void kii_clock_set_exact_for(kii_clock_t* clock, uint32_t seconds);
-
-/**
- * \brief Give the clock the time.
- *
- * kii does so with the date of each response to a kii_t the clock is set on;
- * this is for the time from anywhere else, a real-time clock or NTP. A time
- * earlier than the clock's floor is ignored.
- *
- * \param [out] clock kii_clock_t instance.
- * \param [in] now Seconds since 1970-01-01T00:00:00Z.
- * \return KII_TRUE if the time was taken, KII_FALSE if it was earlier than the
- * floor.
- */
-kii_bool_t kii_clock_set_time(kii_clock_t* clock, int64_t now);
-
-/**
- * \brief Get the time.
- *
- * \param [in] clock kii_clock_t instance.
- * \param [out] out_now Seconds since 1970-01-01T00:00:00Z: the time, counted on
- * from the last one given; or a lower bound of it, which is the floor while no
- * time has been given, or while the floor is later, or the time counted on
- * less 1% once the time given is older than kii_clock_set_exact_for() allows.
- * \return KII_TRUE if out_now is the time, to within a few seconds; KII_FALSE
- * if it is a lower bound, a time that it is not earlier than.
- */
-kii_bool_t kii_clock_get_time(kii_clock_t* clock, int64_t* out_now);
-
-/**
- * \brief Forget the time, keeping what was counted as the floor.
- *
- * For the socket callbacks to call when their TLS stack refuses the server's
- * certificate as not valid yet, while the clock had the time. On a device whose
- * monotonic clock stops while it sleeps, the time falls behind, and a server
- * that renewed its certificate meanwhile presents one that starts after it.
- * Without a time of the server's, the clock could not catch up: the connection
- * that would bring one is refused. Forgotten, the time becomes a lower bound,
- * which kii_clock_check_validity() and the socket callbacks do not refuse a
- * certificate for not having started by, so the next connection goes through,
- * and its response gives the clock the time again.
- *
- * What was counted on, less 1%, becomes the floor: the time is at least that,
- * however the monotonic clock ran.
- *
- * \param [out] clock kii_clock_t instance.
- */
-void kii_clock_forget_time(kii_clock_t* clock);
-
-/**
- * \brief Check a validity period, a certificate's for instance, against the
- * time.
- *
- * While the clock has the floor only, a period is valid unless it ended before
- * the floor: a period starting later cannot be told from one that has started.
- * khc_seconds_since_epoch() converts the dates a TLS stack gives.
- *
- * \param [in] clock kii_clock_t instance.
- * \param [in] not_before Start of the period, seconds since the epoch.
- * \param [in] not_after End of the period, inclusive, seconds since the epoch.
- * \return Whether the period covers the time, as far as it is known.
- */
-kii_validity_t kii_clock_check_validity(
-        kii_clock_t* clock,
-        int64_t not_before,
-        int64_t not_after);
-
-/**
  * \brief Give a clock the time each response states.
  *
  * After each request, the date of its response, as kii_get_resp_date() gives
  * it, is given to the clock, which counts on from it. Every kii_t of a device
- * may share one clock, kii_clock_set_cb_lock() permitting.
+ * may share one clock, ebisu_clock_set_cb_lock() permitting.
  *
  * \param [out] kii kii_t instance.
  * \param [in] clock Clock to set, or NULL.
  * \return KII_ERR_FAIL if the clock has no monotonic clock.
  */
-kii_code_t kii_set_clock(kii_t* kii, kii_clock_t* clock);
+kii_code_t kii_set_clock(kii_t* kii, ebisu_clock_t* clock);
 
 /**
  * \brief Post Kii object.
@@ -1553,7 +1364,7 @@ void kii_set_resp_header_buff(kii_t* kii, char* buff, size_t buff_size);
  * \param [in] cb_connect Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_connect.
  */
-void kii_set_cb_http_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
+void kii_set_cb_http_sock_connect(kii_t* kii, EBISU_CB_SOCK_CONNECT cb_connect, void* userdata);
 /**
  * \brief Set socket send callback used for HTTP(S)
  *
@@ -1561,7 +1372,7 @@ void kii_set_cb_http_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb_connect, vo
  * \param [in] cb_send Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_send.
  */
-void kii_set_cb_http_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb_send, void* userdata);
+void kii_set_cb_http_sock_send(kii_t* kii, EBISU_CB_SOCK_SEND cb_send, void* userdata);
 /**
  * \brief Set socket recv callback used for HTTP(S)
  *
@@ -1569,7 +1380,7 @@ void kii_set_cb_http_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb_send, void* userd
  * \param [in] cb_recv Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_recv.
  */
-void kii_set_cb_http_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb_recv, void* userdata);
+void kii_set_cb_http_sock_recv(kii_t* kii, EBISU_CB_SOCK_RECV cb_recv, void* userdata);
 /**
  * \brief Set socket close callback used for HTTP(S)
  *
@@ -1577,7 +1388,7 @@ void kii_set_cb_http_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb_recv, void* userd
  * \param [in] cb_close Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_close.
  */
-void kii_set_cb_http_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
+void kii_set_cb_http_sock_close(kii_t* kii, EBISU_CB_SOCK_CLOSE cb_close, void* userdata);
 
 /**
  * \brief Set buffer used to parse MQTT message.
@@ -1609,7 +1420,7 @@ void kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size);
  * \param [in] cb_connect Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_connect.
  */
-void kii_set_cb_mqtt_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb_connect, void* userdata);
+void kii_set_cb_mqtt_sock_connect(kii_t* kii, EBISU_CB_SOCK_CONNECT cb_connect, void* userdata);
 /**
  * \brief Set socket send callback used for MQTT(S)
  *
@@ -1621,7 +1432,7 @@ void kii_set_cb_mqtt_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb_connect, vo
  * \param [in] cb_send Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_send.
  */
-void kii_set_cb_mqtt_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb_send, void* userdata);
+void kii_set_cb_mqtt_sock_send(kii_t* kii, EBISU_CB_SOCK_SEND cb_send, void* userdata);
 /**
  * \brief Set socket recv callback used for MQTT(S)
  *
@@ -1630,21 +1441,21 @@ void kii_set_cb_mqtt_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb_send, void* userd
  * It is necessary for sending pingReq message periodically to achieve Keep-Alive
  * since we don't require system clock APIs abstraction.
  *
- * Return KHC_SOCK_FAIL when the receive timeout runs out with nothing
- * received: the task takes KHC_SOCK_OK with 0 bytes for the end of the
+ * Return EBISU_SOCK_FAIL when the receive timeout runs out with nothing
+ * received: the task takes EBISU_SOCK_OK with 0 bytes for the end of the
  * stream, and connects again. kii_set_cb_mqtt_sock_recv_timed_out() lets the
  * task tell such a timeout from a lost connection.
  * \param [out] kii kii_t instance.
  * \param [in] cb_recv Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_recv.
  */
-void kii_set_cb_mqtt_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb_recv, void* userdata);
+void kii_set_cb_mqtt_sock_recv(kii_t* kii, EBISU_CB_SOCK_RECV cb_recv, void* userdata);
 /**
  * \brief Set callback telling a receive timeout from a failure on the MQTT(S)
  * socket.
  *
  * Optional. While the MQTT task waits for the next message, the recv callback
- * set by kii_set_cb_mqtt_sock_recv() returns KHC_SOCK_FAIL whenever its
+ * set by kii_set_cb_mqtt_sock_recv() returns EBISU_SOCK_FAIL whenever its
  * receive timeout runs out with nothing received, as it routinely does on an
  * idle connection, and also when the connection is lost. Only the socket
  * implementation can tell which, so the task asks cb_timed_out. If it returns
@@ -1652,7 +1463,7 @@ void kii_set_cb_mqtt_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb_recv, void* userd
  * KII_TRUE, the task goes on waiting, and sends PINGREQ when the keep-alive
  * interval requires.
  *
- * If this callback is not set, or set to NULL, every such KHC_SOCK_FAIL is
+ * If this callback is not set, or set to NULL, every such EBISU_SOCK_FAIL is
  * taken for a timeout. A lost connection is then noticed only when a PINGREQ
  * cannot be sent or goes unanswered, so with a keep-alive interval of 0 it is
  * not noticed at all.
@@ -1679,7 +1490,7 @@ void kii_set_cb_mqtt_sock_recv_timed_out(kii_t* kii, KII_CB_SOCK_RECV_TIMED_OUT 
  * \param [in] cb_close Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_close.
  */
-void kii_set_cb_mqtt_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb_close, void* userdata);
+void kii_set_cb_mqtt_sock_close(kii_t* kii, EBISU_CB_SOCK_CLOSE cb_close, void* userdata);
 
 /**
  * \brief Set timeout of receiving data from socket user for MQTT(S)
@@ -1700,7 +1511,7 @@ void kii_set_mqtt_to_sock_recv(kii_t* kii, uint32_t to_sock_recv_sec);
  * \param [in] cb_task_create Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_task_create.
  */
-void kii_set_cb_task_create(kii_t* kii, KII_CB_TASK_CREATE cb_task_create, void* userdata);
+void kii_set_cb_task_create(kii_t* kii, EBISU_CB_TASK_CREATE cb_task_create, void* userdata);
 
 /**
  * \brief set callback determines whether to continue or discontinue task.
@@ -1766,7 +1577,7 @@ void kii_set_cb_task_exit(kii_t* kii, KII_CB_TASK_EXIT cb_exit, void* userdata);
  * \param [in] cb_delay_ms Callback function pointer.
  * \param [in] userdata Context object pointer passed to cb_delay_ms.
  */
-void kii_set_cb_delay_ms(kii_t* kii, KII_CB_DELAY_MS cb_delay_ms, void* userdata);
+void kii_set_cb_delay_ms(kii_t* kii, EBISU_CB_DELAY_MS cb_delay_ms, void* userdata);
 
 /**
  * \brief Set JSON parser resource

@@ -8,7 +8,7 @@
 #define SECURITY_WIN32
 #include <security.h>
 
-#include <khc_socket_callback.h>
+#include <ebisu_socket.h>
 #include <kii_task_callback.h>
 #include <kii.h>
 
@@ -24,8 +24,8 @@ typedef struct {
     unsigned int to_recv;
     unsigned int to_send;
     /* The time the server's certificate is checked at, or NULL for the
-       system's. See kii_clock_t. */
-    kii_clock_t* clock;
+       system's. See ebisu_clock_t. */
+    ebisu_clock_t* clock;
 
     /* The rest belongs to the callbacks. */
     /* The server's name, which its certificate must be issued for. */
@@ -65,24 +65,24 @@ void sock_cb_init_context(
         unsigned int to_recv,
         unsigned int to_send);
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_connect(void* sock_ctx, const char* host,
             uint16_t port);
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_send(void* sock_ctx,
             const char* buffer,
             size_t length,
             size_t* out_sent_length);
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_recv(void* sock_ctx, char* buffer, size_t length_to_read,
             size_t* out_actual_length);
 
 kii_bool_t
     sock_cb_recv_timed_out(void* sock_ctx);
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_close(void* sock_ctx);
 
 #ifdef __cplusplus

@@ -13,17 +13,17 @@ struct Socket {
     size_t position;
 };
 
-khc_sock_code_t sock_connect(void* context, const char*, uint16_t) {
+ebisu_sock_code_t sock_connect(void* context, const char*, uint16_t) {
     ((Socket*)context)->position = 0;
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 }
 
-khc_sock_code_t sock_send(void*, const char*, size_t length, size_t* out_sent_length) {
+ebisu_sock_code_t sock_send(void*, const char*, size_t length, size_t* out_sent_length) {
     *out_sent_length = length;
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 }
 
-khc_sock_code_t sock_recv(void* context, char* buffer, size_t length, size_t* out_actual_length) {
+ebisu_sock_code_t sock_recv(void* context, char* buffer, size_t length, size_t* out_actual_length) {
     Socket* socket = (Socket*)context;
     size_t n = sizeof(RESPONSE) - 1 - socket->position;
     if (n > length) {
@@ -32,11 +32,11 @@ khc_sock_code_t sock_recv(void* context, char* buffer, size_t length, size_t* ou
     memcpy(buffer, RESPONSE + socket->position, n);
     socket->position += n;
     *out_actual_length = n;
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 }
 
-khc_sock_code_t sock_close(void*) {
-    return KHC_SOCK_OK;
+ebisu_sock_code_t sock_close(void*) {
+    return EBISU_SOCK_OK;
 }
 
 // Reads all it is given, for ASan to see the lengths are right, and fails every

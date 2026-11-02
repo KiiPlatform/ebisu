@@ -343,11 +343,11 @@ kii_code_t kii_start_push_task(kii_t* kii, uint32_t keep_alive_interval, KII_PUS
     kii->_push_data = userdata;
     // Before creating it, as it may have finished by the time that returns.
     kii->_push_task_running = KII_TRUE;
-    kii_task_code_t res = kii->_cb_task_create(KII_TASK_NAME_MQTT,
+    ebisu_task_code_t res = kii->_cb_task_create(KII_TASK_NAME_MQTT,
             mqtt_start_task,
             (void*)kii,
             kii->_task_create_data);
-    if (res != KII_TASKC_OK) {
+    if (res != EBISU_TASKC_OK) {
         kii->_push_task_running = KII_FALSE;
         return KII_ERR_CREATE_TASK;
     }

@@ -50,12 +50,12 @@ TEST_CASE( "Every request names the SDK and its version" ) {
     http_ctx.on_connect = [&](void*, const char*, unsigned int) {
         requests.push_back("");
         resp_pos = 0;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     http_ctx.on_send = [&requests](void*, const char* buffer, size_t length, size_t* out_sent_length) {
         requests.back().append(buffer, length);
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     http_ctx.on_recv = [&resp, &resp_pos](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         size_t n = resp.size() - resp_pos;
@@ -63,9 +63,9 @@ TEST_CASE( "Every request names the SDK and its version" ) {
         memcpy(buffer, resp.data() + resp_pos, n);
         resp_pos += n;
         *out_actual_length = n;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
-    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
     kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
     kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
     kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
@@ -167,21 +167,21 @@ TEST_CASE( "A request reports the socket operation that failed" ) {
         const bool recv_fails = failing.find("recv") != std::string::npos;
         const bool close_fails = failing.find("close") != std::string::npos;
         http_ctx.on_connect = [&failing](void*, const char*, unsigned int) {
-            return failing == "connect" ? KHC_SOCK_FAIL : KHC_SOCK_OK;
+            return failing == "connect" ? EBISU_SOCK_FAIL : EBISU_SOCK_OK;
         };
         http_ctx.on_send = [&failing](void*, const char*, size_t length, size_t* out_sent_length) {
             *out_sent_length = length;
-            return failing == "send" ? KHC_SOCK_FAIL : KHC_SOCK_OK;
+            return failing == "send" ? EBISU_SOCK_FAIL : EBISU_SOCK_OK;
         };
         const std::string resp = "HTTP/1.1 200 OK\r\n\r\n";
         size_t resp_pos = 0;
         http_ctx.on_recv = [&](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             *out_actual_length = resp.copy(buffer, length_to_read, resp_pos);
             resp_pos += *out_actual_length;
-            return recv_fails ? KHC_SOCK_FAIL : KHC_SOCK_OK;
+            return recv_fails ? EBISU_SOCK_FAIL : EBISU_SOCK_OK;
         };
         http_ctx.on_close = [close_fails](void*) {
-            return close_fails ? KHC_SOCK_FAIL : KHC_SOCK_OK;
+            return close_fails ? EBISU_SOCK_FAIL : EBISU_SOCK_OK;
         };
 
         REQUIRE( kii_api_call_start(&kii, "POST", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );
@@ -201,20 +201,20 @@ TEST_CASE( "kii_ti_put_firmware_version escapes the version" ) {
 
     std::string request;
     khct::cb::SockCtx http_ctx;
-    http_ctx.on_connect = [](void*, const char*, unsigned int) { return KHC_SOCK_OK; };
+    http_ctx.on_connect = [](void*, const char*, unsigned int) { return EBISU_SOCK_OK; };
     http_ctx.on_send = [&request](void*, const char* buffer, size_t length, size_t* out_sent_length) {
         request.append(buffer, length);
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     const std::string resp = "HTTP/1.1 204 No Content\r\n\r\n";
     size_t resp_pos = 0;
     http_ctx.on_recv = [&](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         *out_actual_length = resp.copy(buffer, length_to_read, resp_pos);
         resp_pos += *out_actual_length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
-    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
     kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
     kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
     kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
@@ -245,18 +245,18 @@ TEST_CASE( "A response too large for the buffer is reported as such" ) {
     khct::cb::SockCtx http_ctx;
     http_ctx.on_connect = [&resp_pos](void*, const char*, unsigned int) {
         resp_pos = 0;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     http_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     http_ctx.on_recv = [&](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         *out_actual_length = resp.copy(buffer, length_to_read, resp_pos);
         resp_pos += *out_actual_length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
-    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
     kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
     kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
     kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
@@ -315,19 +315,19 @@ TEST_CASE( "kii_enable_absolute_target holds for every request" ) {
     http_ctx.on_connect = [&](void*, const char*, unsigned int) {
         request.clear();
         resp_pos = 0;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     http_ctx.on_send = [&request](void*, const char* buffer, size_t length, size_t* out_sent_length) {
         request.append(buffer, length);
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     http_ctx.on_recv = [&](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         *out_actual_length = resp.copy(buffer, length_to_read, resp_pos);
         resp_pos += *out_actual_length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
-    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
     kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
     kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
     kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);

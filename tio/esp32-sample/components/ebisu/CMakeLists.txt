@@ -1,8 +1,9 @@
-# ebisu's libraries, jkii, khc, kii and tio, as one ESP-IDF component, built
+# ebisu's libraries, platform, jkii, khc, kii and tio, as one ESP-IDF component, built
 # from the repository's sources.
 get_filename_component(ebisu_root ${CMAKE_CURRENT_LIST_DIR}/../../../.. ABSOLUTE)
 
 file(GLOB ebisu_srcs
+    ${ebisu_root}/platform/src/*.c
     ${ebisu_root}/jkii/src/*.c
     ${ebisu_root}/jkii/libs/jsmn/jsmn.c
     ${ebisu_root}/khc/src/*.c
@@ -12,6 +13,7 @@ file(GLOB ebisu_srcs
 idf_component_register(
     SRCS ${ebisu_srcs}
     INCLUDE_DIRS
+        ${ebisu_root}/platform/include
         ${ebisu_root}/jkii/include
         ${ebisu_root}/jkii/libs/jsmn
         ${ebisu_root}/khc/include

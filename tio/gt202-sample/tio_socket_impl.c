@@ -20,7 +20,7 @@ void ssl_ctx_close() {
 #endif
 }
 
-    khc_sock_code_t
+    ebisu_sock_code_t
 sock_cb_connect(
         void* sock_ctx,
         const char* host,
@@ -37,7 +37,7 @@ sock_cb_connect(
     memset(&dnsRespInfo, 0, sizeof(dnsRespInfo));
     /*Check if driver is loaded*/
     if(IS_DRIVER_READY != A_OK){
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 
     // resolve the IP address of the host
@@ -46,7 +46,7 @@ sock_cb_connect(
         if (strlen(host) >= sizeof(dnsCfg.ahostname))
         {
             printf("GetERROR: host name too long\n");
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         }
         strcpy((char*)dnsCfg.ahostname, host);
         dnsCfg.domain = ATH_AF_INET;
@@ -54,7 +54,7 @@ sock_cb_connect(
         if (A_OK != custom_ip_resolve_hostname(handle, &dnsCfg, &dnsRespInfo))
         {
             printf("GetERROR: Unable to resolve host name\r\n");
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         }
         dnsRespInfo.ipaddrs_list[0] = A_BE2CPU32(dnsRespInfo.ipaddrs_list[0]);
     }
@@ -62,14 +62,14 @@ sock_cb_connect(
 #if CONNECT_SSL
     if (_ssl_ctx == NULL){
         printf("failed to init ssl context.\n");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 #endif
 
     sock = t_socket((void *)handle, ATH_AF_INET, SOCK_STREAM_TYPE, 0);
     if (sock < 0) {
         printf("failed to init socket.\n");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 
     memset(&hostAddr, 0x00, sizeof(hostAddr));
@@ -79,26 +79,26 @@ sock_cb_connect(
 
     if (t_connect((void *)handle, sock, &hostAddr, sizeof(hostAddr)) == A_ERROR){
         printf("failed to connect socket.\n");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 
 #if CONNECT_SSL
     ssl = SSL_new(_ssl_ctx);
     if (ssl == NULL){
         printf("failed to init ssl.\n");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 
     ret = SSL_set_fd(ssl, sock);
     if (ret < 0){
         printf("failed to set fd: %d\n", ret);
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 
     ret = SSL_connect(ssl);
     if (ret < 0) {
         printf("failed to connect: %d\n", ret);
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 #endif
 
@@ -107,10 +107,10 @@ sock_cb_connect(
     }
     ctx->sock = sock;
     ctx->ssl = ssl;
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 }
 
-    khc_sock_code_t
+    ebisu_sock_code_t
  sock_cb_send(
         void* sock_ctx,
         const char* buffer,
@@ -132,14 +132,14 @@ sock_cb_connect(
             printf("%.*s", ret, buffer);
         }
         *out_sent_length = ret;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     } else {
         printf("failed to send\n");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 }
 
-khc_sock_code_t sock_cb_recv(
+ebisu_sock_code_t sock_cb_recv(
         void* sock_ctx,
         char* buffer,
         size_t length_to_read,
@@ -181,33 +181,33 @@ khc_sock_code_t sock_cb_recv(
             printf("%.*s", received, buffer);
         }
         *out_actual_length = (size_t)received;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     } else if (received == 0) {
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
         /*
         int ssl_error = SSL_get_error(ctx->ssl, ret);
         if (ssl_error == SSL_ERROR_ZERO_RETURN) {
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         } else if (ssl_error == SSL_ERROR_WANT_READ || ssl_error == SSL_ERROR_WANT_WRITE) {
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         } else if (ssl_error == SSL_ERROR_SYSCALL){
             if (errno == 0){
-                return KHC_SOCK_OK;
+                return EBISU_SOCK_OK;
             } else {
                 printf("SSL_ERROR_SYSCALL: errno=%d: %s\n", errno, strerror(errno));
-                return KHC_SOCK_FAIL;
+                return EBISU_SOCK_FAIL;
             }
         } else {
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         }
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
         */
     } else {
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 }
 
-khc_sock_code_t mqtt_cb_recv(
+ebisu_sock_code_t mqtt_cb_recv(
         void* sock_ctx,
         char* buffer,
         size_t length_to_read,
@@ -241,33 +241,33 @@ khc_sock_code_t mqtt_cb_recv(
 
     if (received > 0) {
         *out_actual_length = (size_t)received;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     } else if (received == 0) {
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
         /*
         int ssl_error = SSL_get_error(ctx->ssl, ret);
         if (ssl_error == SSL_ERROR_ZERO_RETURN) {
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         } else if (ssl_error == SSL_ERROR_WANT_READ || ssl_error == SSL_ERROR_WANT_WRITE) {
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         } else if (ssl_error == SSL_ERROR_SYSCALL){
             if (errno == 0){
-                return KHC_SOCK_OK;
+                return EBISU_SOCK_OK;
             } else {
                 printf("SSL_ERROR_SYSCALL: errno=%d: %s\n", errno, strerror(errno));
-                return KHC_SOCK_FAIL;
+                return EBISU_SOCK_FAIL;
             }
         } else {
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         }
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
         */
     } else {
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 }
 
-khc_sock_code_t sock_cb_close(void* sock_ctx)
+ebisu_sock_code_t sock_cb_close(void* sock_ctx)
 {
     socket_context_t* ctx = (socket_context_t*)sock_ctx;
 #if CONNECT_SSL
@@ -283,5 +283,5 @@ khc_sock_code_t sock_cb_close(void* sock_ctx)
         }
         t_shutdown(handle, ctx->sock);
     }
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 }

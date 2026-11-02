@@ -128,9 +128,10 @@ target_include_directories(mbedtls
 target_compile_definitions(mbedtls PUBLIC
     MBEDTLS_CONFIG_FILE="sample_mbedtls_config.h")
 
-# ebisu's libraries, jkii, khc, kii and tio, from the repository's sources, as
+# ebisu's libraries, platform, jkii, khc, kii and tio, from the repository's sources, as
 # strictly as their own build compiles them.
 file(GLOB ebisu_srcs
+    ${ebisu_root}/platform/src/*.c
     ${ebisu_root}/jkii/src/*.c
     ${ebisu_root}/jkii/libs/jsmn/jsmn.c
     ${ebisu_root}/khc/src/*.c
@@ -139,6 +140,7 @@ file(GLOB ebisu_srcs
 add_library(ebisu STATIC ${ebisu_srcs})
 target_include_directories(ebisu
     PUBLIC
+        ${ebisu_root}/platform/include
         ${ebisu_root}/jkii/include
         ${ebisu_root}/jkii/libs/jsmn
         ${ebisu_root}/khc/include

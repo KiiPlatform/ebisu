@@ -1,7 +1,7 @@
 #ifndef _tio_socket_impl_
 #define _tio_socket_impl_
 
-#include "khc_socket_callback.h"
+#include <ebisu_socket.h>
 
 #include "main.h"
 
@@ -19,30 +19,30 @@ void ssl_ctx_init();
 void ssl_ctx_close();
 
 /* HTTP Callback functions */
-khc_sock_code_t sock_cb_connect(
+ebisu_sock_code_t sock_cb_connect(
         void* sock_ctx,
         const char* host,
         uint16_t port);
 
-khc_sock_code_t sock_cb_send(
+ebisu_sock_code_t sock_cb_send(
         void* sock_ctx,
         const char* buffer,
         size_t length,
         size_t* out_sent_length);
 
-khc_sock_code_t sock_cb_recv(
+ebisu_sock_code_t sock_cb_recv(
         void* sock_ctx,
         char* buffer,
         size_t length_to_read,
         size_t* out_actual_length);
 
-khc_sock_code_t mqtt_cb_recv(
+ebisu_sock_code_t mqtt_cb_recv(
         void* sock_ctx,
         char* buffer,
         size_t length_to_read,
         size_t* out_actual_length);
 
-khc_sock_code_t sock_cb_close(void* sock_ctx);
+ebisu_sock_code_t sock_cb_close(void* sock_ctx);
 
 void logger_cb(const char* format, ...);
 

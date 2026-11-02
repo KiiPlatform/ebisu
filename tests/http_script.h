@@ -46,17 +46,17 @@ struct HttpScript {
                 on_connect(requests.size() - 1);
             }
             if (respond) {
-                return KHC_SOCK_OK;
+                return EBISU_SOCK_OK;
             }
             if (requests.size() > responses.size() || current().empty()) {
-                return KHC_SOCK_FAIL;
+                return EBISU_SOCK_FAIL;
             }
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
         ctx.on_send = [this](void*, const char* buffer, size_t length, size_t* out_sent_length) {
             requests.back().append(buffer, length);
             *out_sent_length = length;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
         ctx.on_recv = [this](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             if (respond && responses.size() < requests.size()) {
@@ -72,9 +72,9 @@ struct HttpScript {
             memcpy(buffer, resp.data() + pos, n);
             pos += n;
             *out_actual_length = n;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
-        ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+        ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
     }
 
     HttpScript(const HttpScript&) = delete;

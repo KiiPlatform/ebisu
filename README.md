@@ -53,6 +53,17 @@ You can use this module to parse json encoded string or you can choose other 3rd
 
 For more details, please refer to [./jkii/README.md](./jkii/README.md)
 
+## platform
+
+`platform` is what ebisu needs from the device it runs on: socket, task, lock
+and monotonic clock callbacks, and a clock that keeps the time of day on a
+device without a real-time one.
+
+The other modules are built on it, and embed it, so you implement its callbacks
+but don't link it.
+
+For more details, please refer to [./platform/README.md](./platform/README.md)
+
 ## API references
 
 Details of API are available in [API references](https://kiiplatform.github.io/ebisu/),
@@ -61,7 +72,8 @@ for each major version.
 ## Breaking changes
 
 [UPGRADING.md](./UPGRADING.md) lists what an application has to change or check
-for each major version. For 3.0, most need two edits, to the port their connect
+for each major version. For 3.0, every application renames its socket and task
+callback types, and most then need two more edits, to the port their connect
 callback takes and to delete a setter that did nothing, and a rebuild.
 
 ## Building

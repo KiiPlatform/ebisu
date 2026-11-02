@@ -1,7 +1,7 @@
 #ifndef __SOCK_CB_LINUX
 #define __SOCK_CB_LINUX
 
-#include <khc_socket_callback.h>
+#include <ebisu_socket.h>
 #include <kii_task_callback.h>
 #include <kii.h>
 #include <openssl/ssl.h>
@@ -24,11 +24,11 @@ typedef struct {
        after which SSL_shutdown() must not be called. */
     kii_bool_t ssl_failed;
     /* The time the server's certificate is checked at, or NULL for the
-       system's. See kii_clock_t. */
-    kii_clock_t* clock;
+       system's. See ebisu_clock_t. */
+    ebisu_clock_t* clock;
     /* Whether the clock had the time, rather than its floor only, when the
        connection was made. */
-    kii_bool_t time_exact;
+    bool time_exact;
 } socket_context_t;
 
 /* Clears the context, with the timeouts of the socket, in seconds, 0 for none.
@@ -38,24 +38,24 @@ void sock_cb_init_context(
         unsigned int to_recv,
         unsigned int to_send);
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_connect(void* sock_ctx, const char* host,
             uint16_t port);
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_send(void* sock_ctx,
             const char* buffer,
             size_t length,
             size_t* out_sent_length);
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_recv(void* sock_ctx, char* buffer, size_t length_to_read,
             size_t* out_actual_length);
 
 kii_bool_t
     sock_cb_recv_timed_out(void* sock_ctx);
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_close(void* sock_context);
 
 #ifdef __cplusplus

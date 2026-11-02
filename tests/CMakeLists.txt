@@ -84,7 +84,7 @@ endfunction()
 # keeps those reachable, since visibility governs the dynamic symbol table and
 # not static linking.
 set(EBISU_JKII_OBJS ebisu_jkii_objs ebisu_jsmn_objs)
-set(EBISU_KHC_OBJS ebisu_khc_objs)
+set(EBISU_KHC_OBJS ebisu_khc_objs ebisu_platform_objs)
 set(EBISU_KII_OBJS ebisu_kii_objs ${EBISU_KHC_OBJS} ${EBISU_JKII_OBJS})
 set(EBISU_TIO_OBJS ebisu_tio_objs ${EBISU_KII_OBJS})
 

@@ -1088,23 +1088,23 @@ struct Broker {
         ctx.on_connect = [this](void*, const char*, uint16_t) {
             received.push_back("");
             pos = 0;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
         ctx.on_send = [this](void*, const char* buffer, size_t length, size_t* out_sent_length) {
             received.back().append(buffer, length);
             *out_sent_length = length;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
         ctx.on_recv = [this](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             size_t i = received.size() - 1;
             if (i >= served.size() || pos == served[i].size()) {
-                return KHC_SOCK_FAIL;
+                return EBISU_SOCK_FAIL;
             }
             *out_actual_length = served[i].copy(buffer, length_to_read, pos);
             pos += *out_actual_length;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
-        ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+        ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
     }
 
     Broker(const Broker&) = delete;
@@ -1363,7 +1363,7 @@ TEST_CASE( "Refused MQTT credentials are renewed by onboarding again" ) {
 
     SECTION("a network failure is tried again") {
         kii_set_cb_http_sock_connect(&c.kii, [](void* sock_ctx, const char* host, uint16_t port) {
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         }, NULL);
         _mqtt_state_get_endpoint(&state);
         CHECK( state.info.task_state == KII_MQTT_ST_GET_ENDPOINT );

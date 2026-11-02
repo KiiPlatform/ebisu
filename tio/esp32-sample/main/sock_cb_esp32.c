@@ -27,7 +27,7 @@ void sock_cb_init_context(
         socket_context_t* ctx,
         unsigned int to_recv,
         unsigned int to_send,
-        kii_clock_t* clock)
+        ebisu_clock_t* clock)
 {
     memset(ctx, 0, sizeof(*ctx));
     ctx->to_recv = to_recv;
@@ -44,7 +44,7 @@ static int set_timeout(int fd, int option, unsigned int seconds)
 }
 
 /* The validity period of a certificate, against the clock. */
-static kii_validity_t check_dates(kii_clock_t* clock, const mbedtls_x509_crt* crt)
+static ebisu_validity_t check_dates(ebisu_clock_t* clock, const mbedtls_x509_crt* crt)
 {
     const mbedtls_x509_time* from = &crt->valid_from;
     const mbedtls_x509_time* to = &crt->valid_to;
@@ -55,9 +55,9 @@ static kii_validity_t check_dates(kii_clock_t* clock, const mbedtls_x509_crt* cr
             !khc_seconds_since_epoch(to->year, to->mon, to->day,
                 to->hour, to->min, to->sec, &not_after)) {
         /* A date that is not one. */
-        return KII_VALIDITY_EXPIRED;
+        return EBISU_VALIDITY_EXPIRED;
     }
-    return kii_clock_check_validity(clock, not_before, not_after);
+    return ebisu_clock_check_validity(clock, not_before, not_after);
 }
 
 static int same_name(const mbedtls_x509_buf* a, const mbedtls_x509_buf* b)
@@ -82,13 +82,13 @@ static int same_name(const mbedtls_x509_buf* a, const mbedtls_x509_buf* b)
    and the server having renewed its certificate meanwhile. Checked against a
    lower bound, the next connection goes through, and its response gives the
    clock the time again. */
-static kii_validity_t check_chain(kii_clock_t* clock, const mbedtls_x509_crt* chain)
+static ebisu_validity_t check_chain(ebisu_clock_t* clock, const mbedtls_x509_crt* chain)
 {
     const mbedtls_x509_crt* crt = chain;
     /* As deep as mbedTLS verifies by default. */
     for (int depth = 0; crt != NULL && depth <= MBEDTLS_X509_MAX_INTERMEDIATE_CA + 1; ++depth) {
-        kii_validity_t validity = check_dates(clock, crt);
-        if (validity != KII_VALIDITY_OK) {
+        ebisu_validity_t validity = check_dates(clock, crt);
+        if (validity != EBISU_VALIDITY_OK) {
             return validity;
         }
         if (same_name(&crt->issuer_raw, &crt->subject_raw)) {
@@ -103,10 +103,10 @@ static kii_validity_t check_chain(kii_clock_t* clock, const mbedtls_x509_crt* ch
         }
         crt = issuer;
     }
-    return KII_VALIDITY_OK;
+    return EBISU_VALIDITY_OK;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_connect(void* sock_ctx, const char* host,
             uint16_t port)
 {
@@ -114,7 +114,7 @@ khc_sock_code_t
     ctx->tls = esp_tls_init();
     if (ctx->tls == NULL) {
         ESP_LOGE(TAG, "failed to allocate the TLS context");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
 
     /* The server's certificate has to chain to one of the CA certificates
@@ -135,11 +135,11 @@ khc_sock_code_t
         goto fail;
     }
     switch (check_chain(ctx->clock, chain)) {
-        case KII_VALIDITY_OK:
+        case EBISU_VALIDITY_OK:
             break;
-        case KII_VALIDITY_NOT_YET_VALID:
+        case EBISU_VALIDITY_NOT_YET_VALID:
             ESP_LOGE(TAG, "server certificate for %s refused: not valid yet", host);
-            kii_clock_forget_time(ctx->clock);
+            ebisu_clock_forget_time(ctx->clock);
             goto fail;
         default:
             ESP_LOGE(TAG, "server certificate for %s refused: expired", host);
@@ -153,15 +153,15 @@ khc_sock_code_t
         ESP_LOGE(TAG, "failed to set the timeouts");
         goto fail;
     }
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 
 fail:
     esp_tls_conn_destroy(ctx->tls);
     ctx->tls = NULL;
-    return KHC_SOCK_FAIL;
+    return EBISU_SOCK_FAIL;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_send(void* sock_ctx,
             const char* buffer,
             size_t length,
@@ -171,14 +171,14 @@ khc_sock_code_t
     ssize_t ret = esp_tls_conn_write(ctx->tls, buffer, length);
     if (ret > 0) {
         *out_sent_length = ret;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     }
     /* Failed, or timed out. */
     ESP_LOGE(TAG, "failed to send: -0x%x", (unsigned int)-ret);
-    return KHC_SOCK_FAIL;
+    return EBISU_SOCK_FAIL;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_recv(void* sock_ctx, char* buffer, size_t length_to_read,
             size_t* out_actual_length)
 {
@@ -187,17 +187,17 @@ khc_sock_code_t
     ssize_t ret = esp_tls_conn_read(ctx->tls, buffer, length_to_read);
     if (ret > 0) {
         *out_actual_length = ret;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     }
     ctx->recv_ret = ret;
     if (ret == 0) {
         /* The server closed the connection. */
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     }
-    return KHC_SOCK_FAIL;
+    return EBISU_SOCK_FAIL;
 }
 
-/* sock_cb_recv() returns KHC_SOCK_FAIL both when the receive timeout set in
+/* sock_cb_recv() returns EBISU_SOCK_FAIL both when the receive timeout set in
    sock_cb_connect() runs out and when the connection fails. The timeout makes
    lwIP's read fail with EAGAIN, which mbedTLS reports as wanting to read. */
 kii_bool_t
@@ -207,11 +207,11 @@ kii_bool_t
     return ctx->recv_ret == ESP_TLS_ERR_SSL_WANT_READ ? KII_TRUE : KII_FALSE;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_close(void* sock_ctx)
 {
     socket_context_t* ctx = (socket_context_t*)sock_ctx;
     int ret = esp_tls_conn_destroy(ctx->tls);
     ctx->tls = NULL;
-    return ret == 0 ? KHC_SOCK_OK : KHC_SOCK_FAIL;
+    return ret == 0 ? EBISU_SOCK_OK : EBISU_SOCK_FAIL;
 }
