@@ -227,7 +227,7 @@ typedef struct kii_session_t {
     uint32_t _generation;
     /** \private Whether _author is renewed ahead of expiry, which needs its
      * lifetime. */
-    kii_bool_t _renew_at_known;
+    bool _renew_at_known;
     /** \private The monotonic time _author was stored at. */
     uint64_t _stored_at_ms;
     /** \private How long after _stored_at_ms it is renewed. */
@@ -343,10 +343,10 @@ typedef struct kii_t {
     char* _mqtt_buffer; /**< \private */
     size_t _mqtt_buffer_size; /**< \private */
     kii_mqtt_qos_t _mqtt_qos; /**< \private */
-    kii_bool_t _mqtt_clean_session; /**< \private */
+    bool _mqtt_clean_session; /**< \private */
 
     uint16_t _keep_alive_interval; /**< \private */
-    kii_bool_t _push_task_running; /**< \private */
+    bool _push_task_running; /**< \private */
     /** \private The longest wait between the push task's attempts to reach
      * the cloud, in milliseconds, or 0 for five minutes. */
     uint32_t _mqtt_retry_wait_max_ms;
@@ -376,9 +376,9 @@ typedef struct kii_t {
     void* _slist_alloc_data; /**< \private */
     void* _slist_free_data; /**< \private */
 
-    kii_bool_t _insecure_mqtt; /**< \private */
+    bool _insecure_mqtt; /**< \private */
     kii_mqtt_version_t _mqtt_version; /**< \private */
-    kii_bool_t _use_m_0_header; /**< \private */
+    bool _use_m_0_header; /**< \private */
 
     kii_session_t* _session; /**< \private */
     /** \private Where the time each response states is kept, or NULL. */
@@ -387,11 +387,11 @@ typedef struct kii_t {
     uint32_t _session_generation;
     /** \private Whether the request being performed carries the session's
      * token. */
-    kii_bool_t _session_request;
+    bool _session_request;
     /** \private Whether the last request performed was refused for the
      * session's token, which was then renewed without sending the request
      * again. */
-    kii_bool_t _session_refused;
+    bool _session_refused;
     /** \private Where in _rw_buff the response body is being written: past
      * the request's body while a 403 to a request carrying the session's
      * token is read, as it may refuse the token and have the request sent
@@ -400,7 +400,7 @@ typedef struct kii_t {
     /** \private Whether the request being prepared streams its body through
      * callbacks of the caller's rather than through _rw_buff, so that it
      * cannot be sent again from here. */
-    kii_bool_t _req_streamed;
+    bool _req_streamed;
 
     /** \private The MQTT endpoint the last kii_ti_onboard() returned, which
      * the push task connects with. */
@@ -448,11 +448,11 @@ void kii_set_app_id(
  * If you need to use HTTP over plain tcp,
  * you need to call this method.
  * \param [out] kii kii_t instance.
- * \param [in] enable_insecure_http KII_TRUE indicates using insecure connection.
+ * \param [in] enable_insecure_http true indicates using insecure connection.
  */
 void kii_enable_insecure_http(
         kii_t* kii,
-        kii_bool_t enable_insecure_http);
+        bool enable_insecure_http);
 
 /**
  * \brief Enable insecure MQTT connection.
@@ -461,11 +461,11 @@ void kii_enable_insecure_http(
  * If you need to use MQTT over plain tcp,
  * you need to call this method.
  * \param [out] kii kii_t instance.
- * \param [in] enable_insecure_mqtt KII_TRUE indicates using insecure connection.
+ * \param [in] enable_insecure_mqtt true indicates using insecure connection.
  */
 void kii_enable_insecure_mqtt(
         kii_t* kii,
-        kii_bool_t enable_insecure_mqtt);
+        bool enable_insecure_mqtt);
 
 /**
  * \brief Set the version of MQTT the push task speaks.
@@ -490,11 +490,11 @@ void kii_set_mqtt_version(
  * forward proxy that requests go through in plain HTTP takes the URL instead,
  * and needs this method. See khc_enable_absolute_target().
  * \param [out] kii kii_t instance.
- * \param [in] enable_absolute_target KII_TRUE for the whole URL.
+ * \param [in] enable_absolute_target true for the whole URL.
  */
 void kii_enable_absolute_target(
         kii_t* kii,
-        kii_bool_t enable_absolute_target);
+        bool enable_absolute_target);
 
 /**
  * \brief Authorize thing with vendor thing id and password.
@@ -968,7 +968,7 @@ kii_code_t kii_send_push_message_to_thing(
  */
 kii_code_t kii_install_push(
         kii_t* kii,
-        kii_bool_t development,
+        bool development,
         kii_installation_id_t* out_installation_id);
 
 /**
@@ -1246,13 +1246,13 @@ kii_code_t kii_api_call_start(
         const char* http_method,
         const char* resource_path,
         const char* content_type,
-        kii_bool_t set_authentication_header);
+        bool set_authentication_header);
 
 /**
  * \brief Append request body.
  *
  * This function must be called between kii_api_call_start(kii_t*,
- * const char*, const char*, const char*, kii_bool_t) and
+ * const char*, const char*, const char*, bool) and
  * kii_api_call_run(kii_t*).
  *
  * \param [in] kii kii_t instance.
@@ -1269,7 +1269,7 @@ kii_code_t kii_api_call_append_body(
  * \brief Append request header.
  *
  * This function must be called between kii_api_call_start(kii_t*,
- * const char*, const char*, const char*, kii_bool_t) and
+ * const char*, const char*, const char*, bool) and
  * kii_api_call_run(kii_t*).
  *
  * \param [in] kii kii_t instance.
@@ -1289,7 +1289,7 @@ kii_api_call_append_header(
  * \brief Send request and retrieve response.
  * Assume HTTP request is built by following APIs:
  *
- * - kii_api_call_start(kii_t*, const char*,const char*, const char*, kii_bool_t)
+ * - kii_api_call_start(kii_t*, const char*,const char*, const char*, bool)
  * - kii_api_call_append_body(kii_t*, const char*, size_t)
  * - kii_api_call_append_header(kii_t*, const char*, const char*)
  *
@@ -1430,17 +1430,17 @@ void kii_set_mqtt_qos(kii_t* kii, kii_mqtt_qos_t qos);
 /**
  * \brief Set whether the push task asks for a clean session.
  *
- * KII_TRUE by default: the broker forgets the task's session, its
- * subscription included, when the connection ends. With KII_FALSE, it keeps
+ * true by default: the broker forgets the task's session, its
+ * subscription included, when the connection ends. With false, it keeps
  * the session, and with QoS 1 set by kii_set_mqtt_qos() the messages sent at
  * QoS 1 while the task is away, and sends them when it connects again: while
  * it reconnects, or after it is stopped and started again. The session is the
  * thing's, kept under its topic. Set it before starting the task.
  *
  * \param [out] kii kii_t instance.
- * \param [in] clean_session KII_FALSE to have the broker keep the session.
+ * \param [in] clean_session false to have the broker keep the session.
  */
-void kii_set_mqtt_clean_session(kii_t* kii, kii_bool_t clean_session);
+void kii_set_mqtt_clean_session(kii_t* kii, bool clean_session);
 
 /**
  * \brief Set the socket the MQTT task connects to the broker on.
@@ -1537,7 +1537,7 @@ void kii_set_system(kii_t* kii, ebisu_system_t* system);
 
  * \param [out] kii kii_t instance
  * \param [in] cb_continue Callback determines whether to continue or discontinue task.
- * If cb_continue returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
+ * If cb_continue returns true, task continues. Otherwise the task exits the infinite loop
  * and calls KII_CB_TASK_EXIT callback if set.
  * task_info argument type of the continue_cb function (defined as void* in KII_CB_TASK_EXIT) is kii_mqtt_task_info*.
  * \param [in] userdata Context data pointer passed as second argument when cb_continue is called.
@@ -1659,9 +1659,9 @@ size_t kii_get_resp_body_length(kii_t* kii);
  * with kii_api_call_start() included.
  *
  * \param [out] kii kii_t instance.
- * \param [in] flag KII_TRUE to send the header, KII_FALSE to stop sending it.
+ * \param [in] flag true to send the header, false to stop sending it.
  */
-void kii_set_use_m_0_header_flag(kii_t* kii, kii_bool_t flag);
+void kii_set_use_m_0_header_flag(kii_t* kii, bool flag);
 
 /**
  * \brief reset state of request currently under preparation.

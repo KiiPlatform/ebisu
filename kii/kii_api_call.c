@@ -58,7 +58,7 @@ kii_code_t kii_api_call_start(
         const char* http_method,
         const char* resource_path,
         const char* content_type,
-        kii_bool_t set_authentication_header)
+        bool set_authentication_header)
 {
     _resource_cleanup(kii);
     
@@ -87,7 +87,7 @@ kii_code_t kii_api_call_start(
             return res;
         }
     }
-    if (set_authentication_header == KII_TRUE) {
+    if (set_authentication_header) {
         res = _set_auth_header(kii);
         if (res != KII_ERR_OK) {
             _req_headers_free_all(kii);
@@ -164,7 +164,7 @@ kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* v
 kii_code_t _req_send(kii_t* kii)
 {
     kii_code_t res = kii_api_call_append_header(kii, "X-Kii-SDK", _SDK_INFO);
-    if (res == KII_ERR_OK && kii->_use_m_0_header == KII_TRUE) {
+    if (res == KII_ERR_OK && kii->_use_m_0_header) {
         res = _set_m_0_header(kii);
     }
     if (res != KII_ERR_OK) {

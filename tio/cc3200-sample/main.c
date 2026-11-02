@@ -647,10 +647,10 @@ static long WlanConnect()
 
 }
 
-tio_bool_t pushed_message_callback(const char* message, size_t message_length, void* userdata)
+bool pushed_message_callback(const char* message, size_t message_length, void* userdata)
 {
     // TODO: Implement.
-    return KII_FALSE;
+    return false;
 }
 
 void handler_init(
@@ -680,8 +680,8 @@ void handler_init(
     tio_handler_set_http_buff(handler, http_buffer, http_buffer_size);
     tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
 
-    tio_handler_enable_insecure_http(handler, KII_TRUE);
-    tio_handler_enable_insecure_mqtt(handler, KII_TRUE);
+    tio_handler_enable_insecure_http(handler, true);
+    tio_handler_enable_insecure_mqtt(handler, true);
 
     tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
 
@@ -699,11 +699,11 @@ void author_updated_callback(const kii_author_t* author, void* userdata)
     UART_PRINT("author updated: %s\n", author->author_id);
 }
 
-tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata)
+bool tio_action_handler(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata)
 {
     UART_PRINT("tio_action_handler called\n");
     UART_PRINT("%.*s: %.*s\n", (int)action->alias_length, action->alias,(int)action->action_name_length, action->action_name);
-    return KII_TRUE;
+    return true;
 }
 //******************************************************************************
 //

@@ -259,7 +259,7 @@ The task subscribes at QoS 0 by default, so a message sent while it is
 reconnecting is lost. With `kii_set_mqtt_qos(&kii, KII_MQTT_QOS_1)`, a message
 sent at QoS 1, such as a push message whose `"mqtt"` object has `"qos": 1`, is
 sent again until the task acknowledges it, once the push callback has returned:
-it can arrive twice. With `kii_set_mqtt_clean_session(&kii, KII_FALSE)` as well,
+it can arrive twice. With `kii_set_mqtt_clean_session(&kii, false)` as well,
 the broker keeps the thing's session, and the QoS 1 messages sent while the task
 is away, reconnecting or stopped, until it connects again.
 
@@ -292,7 +292,7 @@ has what socket callbacks have to do.
   a task, so a thread has to be detached, or it stays behind when the task ends.
 - **Delaying**: `delay_ms` waits the whole time asked for, a signal or not. `msec` is a
   `uint32_t`, so `usleep(msec * 1000)` overflows above about 71 minutes.
-- **Stopping the task**: have the continue callback return `KII_FALSE`, or let an
+- **Stopping the task**: have the continue callback return `false`, or let an
   error end it. `kii_start_push_task()` refuses while the task is running, and a
   task ended any other way, such as by killing its thread, needs `kii_init()`
   before starting again.
@@ -334,7 +334,7 @@ path, application ID included:
 ```c
     kii_api_call_start(&kii, "POST",
             "/api/apps/your-app-id/buckets/readings/objects",
-            "application/json", KII_TRUE);
+            "application/json", true);
     kii_api_call_append_body(&kii, "{\"temperature\":", 15);
     kii_api_call_append_body(&kii, "21.5}", 5);
     res = kii_api_call_run(&kii);
@@ -343,7 +343,7 @@ path, application ID included:
     }
 ```
 
-`KII_TRUE` authorizes the call with the thing's token. Headers can be added
+`true` authorizes the call with the thing's token. Headers can be added
 with `kii_api_call_append_header()`. `kii_api_call_run()` returns `KII_ERR_OK`
 whatever the status, which `kii_get_resp_status()` gives. The response body is
 in the buffer, `kii_get_resp_body_length()` bytes long.

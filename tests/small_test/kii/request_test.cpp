@@ -97,7 +97,7 @@ TEST_CASE( "Every request names the SDK and its version" ) {
             [&] { return kii_execute_server_code(&kii, "ep", "{}"); } },
         { "kii_api_call_run", "200 OK", "{}",
             [&] {
-                kii_code_t res = kii_api_call_start(&kii, "GET", "/api/apps/dummyAppID", NULL, KII_TRUE);
+                kii_code_t res = kii_api_call_start(&kii, "GET", "/api/apps/dummyAppID", NULL, true);
                 return (res == KII_ERR_OK) ? kii_api_call_run(&kii) : res;
             } },
     };
@@ -109,7 +109,7 @@ TEST_CASE( "Every request names the SDK and its version" ) {
         m_0_count = 0;
     }
     SECTION("with kii-m") {
-        kii_set_use_m_0_header_flag(&kii, KII_TRUE);
+        kii_set_use_m_0_header_flag(&kii, true);
         m_0_count = 1;
     }
     for (const call& c : calls) {
@@ -178,7 +178,7 @@ TEST_CASE( "A request reports the socket operation that failed" ) {
             return close_fails ? EBISU_SOCK_FAIL : EBISU_SOCK_OK;
         };
 
-        REQUIRE( kii_api_call_start(&kii, "POST", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );
+        REQUIRE( kii_api_call_start(&kii, "POST", "/api/x", NULL, false) == KII_ERR_OK );
         CHECK( kii_api_call_run(&kii) == c.expected );
     }
 }
@@ -250,7 +250,7 @@ TEST_CASE( "A response too large for the buffer is reported as such" ) {
     http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
     kii_set_http_socket(&kii, http_ctx.socket());
 
-    REQUIRE( kii_api_call_start(&kii, "GET", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );
+    REQUIRE( kii_api_call_start(&kii, "GET", "/api/x", NULL, false) == KII_ERR_OK );
     CHECK( kii_api_call_run(&kii) == KII_ERR_TOO_LARGE_DATA );
 
     SECTION("a callback the application gave keeps its own failure") {
@@ -260,7 +260,7 @@ TEST_CASE( "A response too large for the buffer is reported as such" ) {
         CHECK( calls == 1 );
 
         // And kii's is back for the next request.
-        REQUIRE( kii_api_call_start(&kii, "GET", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );
+        REQUIRE( kii_api_call_start(&kii, "GET", "/api/x", NULL, false) == KII_ERR_OK );
         CHECK( kii_api_call_run(&kii) == KII_ERR_TOO_LARGE_DATA );
     }
 }
@@ -276,7 +276,7 @@ TEST_CASE( "kii_api_call_append_header takes what fits in the buffer" ) {
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
 
-    REQUIRE( kii_api_call_start(&kii, "POST", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );
+    REQUIRE( kii_api_call_start(&kii, "POST", "/api/x", NULL, false) == KII_ERR_OK );
 
     // "k: " and the terminator.
     const std::string largest(sizeof(kii_buff) - strlen("k: ") - 1, 'v');
@@ -319,17 +319,17 @@ TEST_CASE( "kii_enable_absolute_target holds for every request" ) {
     kii_set_http_socket(&kii, http_ctx.socket());
 
     SECTION("not by default") {
-        REQUIRE( kii_api_call_start(&kii, "GET", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );
+        REQUIRE( kii_api_call_start(&kii, "GET", "/api/x", NULL, false) == KII_ERR_OK );
         REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
         CHECK( request.find("GET /api/x HTTP/1.1\r\n") == 0 );
         CHECK( count(request, "HOST: api.kii.com\r\n") == 1 );
     }
 
     SECTION("when asked") {
-        kii_enable_absolute_target(&kii, KII_TRUE);
+        kii_enable_absolute_target(&kii, true);
         for (int i = 0; i < 2; ++i) {
             INFO("request " << i);
-            REQUIRE( kii_api_call_start(&kii, "GET", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );
+            REQUIRE( kii_api_call_start(&kii, "GET", "/api/x", NULL, false) == KII_ERR_OK );
             REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
             CHECK( request.find("GET https://api.kii.com/api/x HTTP/1.1\r\n") == 0 );
         }
@@ -352,12 +352,12 @@ TEST_CASE( "A path or method too long for khc is refused rather than left out" )
 
     SECTION("the path of kii_api_call_start") {
         const std::string path = "/api/" + std::string(KHC_PATH_MAX_SIZE, 'p');
-        CHECK( kii_api_call_start(&kii, "GET", path.c_str(), NULL, KII_FALSE) == KII_ERR_TOO_LARGE_DATA );
+        CHECK( kii_api_call_start(&kii, "GET", path.c_str(), NULL, false) == KII_ERR_TOO_LARGE_DATA );
     }
 
     SECTION("the method of kii_api_call_start") {
         const std::string method(KHC_METHOD_MAX_SIZE, 'M');
-        CHECK( kii_api_call_start(&kii, method.c_str(), "/api/x", NULL, KII_FALSE) == KII_ERR_TOO_LARGE_DATA );
+        CHECK( kii_api_call_start(&kii, method.c_str(), "/api/x", NULL, false) == KII_ERR_TOO_LARGE_DATA );
     }
 
     SECTION("a server code endpoint") {
@@ -433,7 +433,7 @@ TEST_CASE( "A body kii holds whole goes with its length, a streamed one chunked"
 
     SECTION("a body appended to an API call") {
         const std::string body = "{\"k\":\"v\"}";
-        REQUIRE( kii_api_call_start(&kii, "PUT", "/api/x", "application/json", KII_FALSE) == KII_ERR_OK );
+        REQUIRE( kii_api_call_start(&kii, "PUT", "/api/x", "application/json", false) == KII_ERR_OK );
         REQUIRE( kii_api_call_append_body(&kii, body.c_str(), body.size()) == KII_ERR_OK );
         REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
         const std::string& sent = script.requests[0];
@@ -443,7 +443,7 @@ TEST_CASE( "A body kii holds whole goes with its length, a streamed one chunked"
     }
 
     SECTION("no body at all") {
-        REQUIRE( kii_api_call_start(&kii, "POST", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );
+        REQUIRE( kii_api_call_start(&kii, "POST", "/api/x", NULL, false) == KII_ERR_OK );
         REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
         const std::string& sent = script.requests[0];
         CHECK( count(sent, "\r\nContent-Length: 0\r\n") == 1 );
@@ -462,7 +462,7 @@ TEST_CASE( "A body kii holds whole goes with its length, a streamed one chunked"
     SECTION("a request sent again after a renewal keeps its length") {
         // Without a session nothing is sent again: the length set for the
         // request survives khc_reset_except_request() regardless.
-        REQUIRE( kii_api_call_start(&kii, "PUT", "/api/x", "application/json", KII_FALSE) == KII_ERR_OK );
+        REQUIRE( kii_api_call_start(&kii, "PUT", "/api/x", "application/json", false) == KII_ERR_OK );
         REQUIRE( kii_api_call_append_body(&kii, "{}", 2) == KII_ERR_OK );
         REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
         khc_reset_except_request(&kii._khc);

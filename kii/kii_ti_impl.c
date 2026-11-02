@@ -329,9 +329,9 @@ kii_code_t _upload_state(
     }
 
     khc_set_cb_read(&kii->_khc, state_read_cb, state_read_cb_data);
-    kii->_req_streamed = KII_TRUE;
+    kii->_req_streamed = true;
     ret = _req_send(kii);
-    kii->_req_streamed = KII_FALSE;
+    kii->_req_streamed = false;
     khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
     if (ret != KII_ERR_OK) {
         return ret;

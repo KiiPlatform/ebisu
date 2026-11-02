@@ -28,7 +28,7 @@ void _kii_session_sync(kii_t* kii);
 void _kii_session_publish(kii_t* kii, int64_t expires_in_sec, kii_renew_mode_t mode);
 
 /* Whether kii's session renews its token by onboarding again. */
-kii_bool_t _kii_session_renews_by_onboarding(kii_t* kii);
+bool _kii_session_renews_by_onboarding(kii_t* kii);
 
 /* Onboards again through kii's session, which stores the new token, for new
  * MQTT credentials as well: kii keeps the endpoint the response carries, as
@@ -60,7 +60,7 @@ void _kii_resp_to_start(kii_t* kii);
 kii_code_t _kii_parse_token_response(
         kii_t* kii,
         kii_author_t* author,
-        kii_bool_t id_required,
+        bool id_required,
         int64_t* out_expires_in_sec);
 
 #endif

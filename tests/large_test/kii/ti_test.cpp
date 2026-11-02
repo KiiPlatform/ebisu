@@ -27,7 +27,7 @@ picojson::value read_state(kii_t& kii, const std::string& path, const std::strin
         if (i > 0) {
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
-        REQUIRE( kii_api_call_start(&kii, "GET", resource.c_str(), NULL, KII_TRUE) == KII_ERR_OK );
+        REQUIRE( kii_api_call_start(&kii, "GET", resource.c_str(), NULL, true) == KII_ERR_OK );
         REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
         REQUIRE( kii_get_resp_status(&kii) == 200 );
         picojson::value state;
@@ -84,7 +84,7 @@ TEST_CASE("TI Tests")
 
         // The thing as Kii Cloud registered it, read with its own token.
         const std::string path = "/api/apps/" + std::string(APP_ID) + "/things/" + kiiltest::author(&kii).author_id;
-        REQUIRE( kii_api_call_start(&kii, "GET", path.c_str(), NULL, KII_TRUE) == KII_ERR_OK );
+        REQUIRE( kii_api_call_start(&kii, "GET", path.c_str(), NULL, true) == KII_ERR_OK );
         REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
         REQUIRE( kii_get_resp_status(&kii) == 200 );
         picojson::value thing;

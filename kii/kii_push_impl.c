@@ -6,7 +6,7 @@
 
 kii_code_t _install_push(
         kii_t* kii,
-        kii_bool_t development)
+        bool development)
 {
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "POST");
@@ -42,7 +42,7 @@ kii_code_t _install_push(
 
     // Request body
     const char* flag = "false";
-    if (development == KII_TRUE) {
+    if (development) {
         flag = "true";
     }
     int body_len = snprintf(kii->_rw_buff, kii->_rw_buff_size,

@@ -30,19 +30,19 @@ atomic_bool term_flag = false;
 atomic_bool handler_terminated = false;
 atomic_bool updater_terminated = false;
 
-tio_bool_t _handler_continue(void* task_info, void* userdata) {
-    if (term_flag == true) {
-        return KII_FALSE;
+bool _handler_continue(void* task_info, void* userdata) {
+    if (term_flag) {
+        return false;
     } else {
-        return KII_TRUE;
+        return true;
     }
 }
 
-tio_bool_t _updater_continue(void* task_info, void* userdata) {
-    if (term_flag == true) {
-        return KII_FALSE;
+bool _updater_continue(void* task_info, void* userdata) {
+    if (term_flag) {
+        return false;
     } else {
-        return KII_TRUE;
+        return true;
     }
 }
 
@@ -148,11 +148,11 @@ size_t updater_cb_read(char *buffer, size_t size, void *userdata)
     return read_size;
 }
 
-tio_bool_t pushed_message_callback(const char* message, size_t message_length, void* userdata)
+bool pushed_message_callback(const char* message, size_t message_length, void* userdata)
 {
     printf("pushed_message_callback called,\n");
     printf("%.*s\n", (int)message_length, message);
-    return KII_FALSE;
+    return false;
 }
 
 void handler_init(
@@ -189,11 +189,11 @@ void handler_init(
     tio_handler_set_cb_task_exit(handler, _handler_exit, NULL);
 }
 
-tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata)
+bool tio_action_handler(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata)
 {
     printf("tio_action_handler called\n");
     printf("%.*s: %.*s\n", (int)action->alias_length, action->alias,(int)action->action_name_length, action->action_name);
-    return KII_TRUE;
+    return true;
 }
 
 int main(int argc, char** argv)

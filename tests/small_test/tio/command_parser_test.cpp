@@ -377,7 +377,7 @@ TEST_CASE( "_parse_command" ) {
 // is a slice of the parsed command, so its length comes from the network; it
 // used to be copied onto the stack into an array sized by that length, letting
 // whoever publishes a command choose how much stack to consume.
-static tio_bool_t cb_action_ok(
+static bool cb_action_ok(
         tio_action_t* action,
         tio_action_err_t* err,
         tio_action_result_data_t* data,
@@ -385,7 +385,7 @@ static tio_bool_t cb_action_ok(
     err->err_message[0] = '\0';
     data->json[0] = '\0';
     ++(*(int*)userdata);
-    return KII_TRUE;
+    return true;
 }
 
 TEST_CASE( "_handle_command action name length" ) {
@@ -760,9 +760,9 @@ TEST_CASE( "_parse_command primitive values" ) {
         REQUIRE( res == TIO_ERR_OK );
         REQUIRE( actions.size() == 7 );
         REQUIRE( actions[0].action_value.type == TIO_TYPE_BOOLEAN );
-        REQUIRE( actions[0].action_value.param.bool_value == KII_TRUE );
+        REQUIRE( actions[0].action_value.param.bool_value == true );
         REQUIRE( actions[1].action_value.type == TIO_TYPE_BOOLEAN );
-        REQUIRE( actions[1].action_value.param.bool_value == KII_FALSE );
+        REQUIRE( actions[1].action_value.param.bool_value == false );
         REQUIRE( actions[2].action_value.type == TIO_TYPE_NULL );
         REQUIRE( actions[3].action_value.type == TIO_TYPE_INTEGER );
         REQUIRE( actions[3].action_value.param.long_value == 23 );

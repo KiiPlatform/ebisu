@@ -28,7 +28,7 @@ inline void init(
     kii_set_buff(kii, buffer, buffer_size);
 
 #ifdef PLAIN_HTTP
-    kii_enable_insecure_http(kii, KII_TRUE);
+    kii_enable_insecure_http(kii, true);
 #endif
     kii_set_http_socket(kii, http_ssl_ctx->http());
     kii_set_mqtt_socket(kii, mqtt_ssl_ctx->tls());

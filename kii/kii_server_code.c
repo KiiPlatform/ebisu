@@ -13,7 +13,7 @@ static kii_code_t _execute_server_code(
         const char* version,
         const char* endpoint_name,
         const char* params,
-        kii_bool_t as_thing,
+        bool as_thing,
         const char* access_token)
 {
     khc_set_host(&kii->_khc, kii->_app_host);
@@ -41,7 +41,7 @@ static kii_code_t _execute_server_code(
         _req_headers_free_all(kii);
         return res;
     }
-    if (as_thing == KII_TRUE) {
+    if (as_thing) {
         res = _set_auth_header(kii);
     } else if (access_token != NULL) {
         res = _set_auth_bearer_token(kii, access_token);
@@ -70,7 +70,7 @@ static kii_code_t _run_server_code(
         const char* version,
         const char* endpoint_name,
         const char* params,
-        kii_bool_t as_thing,
+        bool as_thing,
         const char* access_token)
 {
     _reset_khc(kii);
@@ -100,7 +100,7 @@ kii_code_t kii_execute_server_code_version(
         const char* endpoint_name,
         const char* params)
 {
-    return _run_server_code(kii, version, endpoint_name, params, KII_TRUE, NULL);
+    return _run_server_code(kii, version, endpoint_name, params, true, NULL);
 }
 
 kii_code_t kii_execute_server_code(
@@ -119,7 +119,7 @@ kii_code_t kii_execute_server_code_with_token(
         const char* access_token)
 {
     return _run_server_code(kii, version != NULL ? version : "current",
-            endpoint_name, params, KII_FALSE, access_token);
+            endpoint_name, params, false, access_token);
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
 

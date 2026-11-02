@@ -54,7 +54,7 @@ TEST_CASE("API call tests")
         REQUIRE(path_len <= 128);
         const char content_type[] = "application/json";
 
-        kii_code_t start_res = kii_api_call_start(&kii, "POST", path, content_type, KII_TRUE);
+        kii_code_t start_res = kii_api_call_start(&kii, "POST", path, content_type, true);
         REQUIRE (start_res == KII_ERR_OK);
 
         const char chunk1[] = "{\"long_text\" : \"";
@@ -89,7 +89,7 @@ TEST_CASE("API call tests")
             int path_len = snprintf(path, 128, "/api/apps/%s/buckets/test_bucket/objects/%s", kii._app_id, obj_id);
             REQUIRE(path_len <= 128);
 
-            start_res = kii_api_call_start(&kii, "GET", path, NULL, KII_FALSE);
+            start_res = kii_api_call_start(&kii, "GET", path, NULL, false);
             REQUIRE (start_res == KII_ERR_OK);
 
             run_res = kii_api_call_run(&kii);
@@ -111,7 +111,7 @@ TEST_CASE("API call tests")
             const char* obj_id = object_id.get<std::string>().c_str();
             int path_len = snprintf(path, 128, "/api/apps/%s/buckets/test_bucket/objects/%s", kii._app_id, obj_id);
             REQUIRE(path_len <= 128);
-            start_res = kii_api_call_start(&kii, "PUT", path, "application/json", KII_TRUE);
+            start_res = kii_api_call_start(&kii, "PUT", path, "application/json", true);
             REQUIRE (start_res == KII_ERR_OK);
 
             apend_res = kii_api_call_append_body(&kii, "{}", 2);

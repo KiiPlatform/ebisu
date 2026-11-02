@@ -149,7 +149,7 @@ _cmd_parser_code_t _parse_primitive(
             break;
         case JKII_FIELD_TYPE_BOOLEAN:
             out_action->action_value.type = TIO_TYPE_BOOLEAN;
-            out_action->action_value.param.bool_value = jprim.value.boolean_value == JKII_TRUE ? KII_TRUE : KII_FALSE;
+            out_action->action_value.param.bool_value = jprim.value.boolean_value == JKII_TRUE;
             break;
         case JKII_FIELD_TYPE_INTEGER:
             out_action->action_value.type = TIO_TYPE_INTEGER;
@@ -256,7 +256,7 @@ static tio_code_t _start_result_request(
             "PUT",
             command_result_path,
             "application/vnd.kii.CommandResultsUpdateRequest+json",
-            KII_TRUE);
+            true);
     if (s_res != KII_ERR_OK) {
         _trace_op("kii_api_call_start", s_res);
         return _tio_convert_code(s_res);
@@ -293,7 +293,7 @@ jkii_parse_err_t _validate_json(
 static tio_code_t _append_action_result(
         tio_handler_t* handler,
         size_t index,
-        tio_bool_t succeeded,
+        bool succeeded,
         tio_action_t* action,
         const char* err_message,
         const char* json_data,
@@ -325,7 +325,7 @@ static tio_code_t _append_action_result(
         return TIO_ERR_TOO_LARGE_DATA;
     }
     const int action_name_length = (int)action->action_name_length;
-    if (succeeded == KII_TRUE)
+    if (succeeded)
     {
         int len = snprintf(
                 work_buff, work_buff_size,
@@ -492,7 +492,7 @@ tio_code_t _handle_command(
                     action_err.err_message[0] = '\0';
                     tio_action_result_data_t action_result_data;
                     action_result_data.json[0] = '\0';
-                    tio_bool_t succeeded = cb_action(&action, &action_err, &action_result_data, cb_action_data);
+                    bool succeeded = cb_action(&action, &action_err, &action_result_data, cb_action_data);
                     char work_buff[256];
                     // The index within the alias, whose results are an array
                     // of their own: counted across the command, the first

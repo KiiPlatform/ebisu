@@ -23,7 +23,7 @@ void _task_exit(void* task_info, void* userdata) {
     }
 }
 
-tio_bool_t _task_continue(void* task_info, void* userdata) {
+bool _task_continue(void* task_info, void* userdata) {
     kii_mqtt_task_info* mqtt_info = (kii_mqtt_task_info*) task_info;
     tio_handler_task_info_t tio_task_info;
     _convert_task_info(mqtt_info, &tio_task_info);
@@ -31,7 +31,7 @@ tio_bool_t _task_continue(void* task_info, void* userdata) {
     if (handler->_cb_task_continue != NULL) {
         return handler->_cb_task_continue(&tio_task_info, handler->_task_continue_data);
     } else {
-        return KII_TRUE;
+        return true;
     }
 }
 
@@ -138,7 +138,7 @@ void tio_handler_set_mqtt_qos(tio_handler_t* handler, kii_mqtt_qos_t qos)
     kii_set_mqtt_qos(&handler->_kii, qos);
 }
 
-void tio_handler_set_mqtt_clean_session(tio_handler_t* handler, tio_bool_t clean_session)
+void tio_handler_set_mqtt_clean_session(tio_handler_t* handler, bool clean_session)
 {
     kii_set_mqtt_clean_session(&handler->_kii, clean_session);
 }
@@ -161,14 +161,14 @@ void tio_handler_set_app(
 
 void tio_handler_enable_insecure_http(
         tio_handler_t* handler,
-        tio_bool_t enable_insecure_http)
+        bool enable_insecure_http)
 {
     kii_enable_insecure_http(&handler->_kii, enable_insecure_http);
 }
 
 void tio_handler_enable_insecure_mqtt(
         tio_handler_t* handler,
-        tio_bool_t enable_insecure_mqtt)
+        bool enable_insecure_mqtt)
 {
     kii_enable_insecure_mqtt(&handler->_kii, enable_insecure_mqtt);
 }
@@ -182,18 +182,18 @@ void tio_handler_set_mqtt_version(
 
 void tio_handler_enable_absolute_target(
         tio_handler_t* handler,
-        tio_bool_t enable_absolute_target)
+        bool enable_absolute_target)
 {
     kii_enable_absolute_target(&handler->_kii, enable_absolute_target);
 }
 
 static void _cb_receive_push(const char* payload, size_t payload_length, void* userdata) {
     tio_handler_t* handler = (tio_handler_t*)userdata;
-    tio_bool_t skip = KII_FALSE;
+    bool skip = false;
     if (handler->_cb_push != NULL) {
         skip = handler->_cb_push(payload, payload_length, handler->_cb_push_data);
     }
-    if (skip == KII_FALSE) {
+    if (!skip) {
         tio_code_t handle_res = _handle_command(handler, payload, payload_length, handler->_cb_action, handler->_cb_action_data);
         if (handle_res != TIO_ERR_OK && handler->_cb_err != NULL) {
             handler->_cb_err(handle_res, "Failed to handle command", handler->_cb_err_data);
@@ -286,7 +286,7 @@ tio_code_t tio_handler_start(
 {
     // kii_start_push_task() turns these away too. Checking first leaves the
     // handler as it was when it does: a running task reads what is set below.
-    if (handler->_kii._push_task_running == KII_TRUE ||
+    if (handler->_kii._push_task_running ||
             handler->_keep_alive_interval > 65535) {
         return TIO_ERR_FAIL;
     }
@@ -339,7 +339,7 @@ void tio_updater_init(tio_updater_t* updater)
     updater->_task_continue_data = NULL;
     updater->_cb_task_exit = NULL;
     updater->_task_exit_data = NULL;
-    updater->_task_running = KII_FALSE;
+    updater->_task_running = false;
 }
 
 void tio_updater_set_socket(tio_updater_t* updater, ebisu_socket_t* socket)
@@ -408,14 +408,14 @@ void tio_updater_set_interval(
 
 void tio_updater_enable_insecure_http(
         tio_updater_t* updater,
-        tio_bool_t enable_insecure_http)
+        bool enable_insecure_http)
 {
     kii_enable_insecure_http(&updater->_kii, enable_insecure_http);
 }
 
 void tio_updater_enable_absolute_target(
         tio_updater_t* updater,
-        tio_bool_t enable_absolute_target)
+        bool enable_absolute_target)
 {
     kii_enable_absolute_target(&updater->_kii, enable_absolute_target);
 }
@@ -438,7 +438,7 @@ kii_code_t _tio_updater_upload(tio_updater_t* updater)
         return KII_ERR_OK;
     }
     kii_code_t res = _put_state(updater);
-    if (res == KII_ERR_RESP_STATUS && updater->_kii._session_refused == KII_TRUE) {
+    if (res == KII_ERR_RESP_STATUS && updater->_kii._session_refused) {
         // The session renewed the token the server refused, but kii cannot send
         // a streamed body again: the reader has been read to the end. Start it
         // over.
@@ -456,8 +456,8 @@ static void* _update_state(void* data) {
         // Ask to continue every 1 second.
         const uint32_t interval_chk_cnt_sec = 1;
         if (updater->_cb_task_continue != NULL) {
-            tio_bool_t cont = updater->_cb_task_continue(NULL, updater->_task_continue_data);
-            if (cont != KII_TRUE) {
+            bool cont = updater->_cb_task_continue(NULL, updater->_task_continue_data);
+            if (!cont) {
                 break;
             }
         }
@@ -476,7 +476,7 @@ static void* _update_state(void* data) {
         }
     }
     // Before the callback, which may start the task again.
-    updater->_task_running = KII_FALSE;
+    updater->_task_running = false;
     if (updater->_cb_task_exit != NULL) {
         updater->_cb_task_exit(NULL, updater->_task_exit_data);
     }
@@ -552,7 +552,7 @@ tio_code_t tio_updater_set_clock(tio_updater_t* updater, ebisu_clock_t* clock)
 
 /* What the task uses without checking, so that one left out is found when
  * starting it, rather than as a crash in the task. */
-static tio_bool_t _updater_task_can_run(const tio_updater_t* updater)
+static bool _updater_task_can_run(const tio_updater_t* updater)
 {
     const kii_t* kii = &updater->_kii;
     const ebisu_socket_t* sock = kii->_khc._socket;
@@ -562,7 +562,7 @@ static tio_bool_t _updater_task_can_run(const tio_updater_t* updater)
             sock->ops->send != NULL &&
             sock->ops->recv != NULL &&
             sock->ops->close != NULL &&
-            kii->_rw_buff != NULL) ? KII_TRUE : KII_FALSE;
+            kii->_rw_buff != NULL);
 }
 
 tio_code_t tio_updater_start(
@@ -575,7 +575,7 @@ tio_code_t tio_updater_start(
 {
     // A second task would share the first's socket and buffer, and a running
     // task reads what is set below.
-    if (updater->_task_running == KII_TRUE) {
+    if (updater->_task_running) {
         return TIO_ERR_FAIL;
     }
     // Unset, as there is no interval to default to.
@@ -587,7 +587,7 @@ tio_code_t tio_updater_start(
         return TIO_ERR_CREATE_TASK;
     }
     if (cb_state_size == NULL || state_reader == NULL ||
-            _updater_task_can_run(updater) != KII_TRUE) {
+            !_updater_task_can_run(updater)) {
         return TIO_ERR_FAIL;
     }
     if (updater->_kii._session != NULL) {
@@ -610,7 +610,7 @@ tio_code_t tio_updater_start(
     updater->_state_reader_data = state_reader_data;
 
     // Before creating it, as it may have finished by the time that returns.
-    updater->_task_running = KII_TRUE;
+    updater->_task_running = true;
     ebisu_task_code_t res = updater->_kii._system->ops->task_create(
             updater->_kii._system,
             TIO_TASK_NAME_UPDATE_STATE,
@@ -618,7 +618,7 @@ tio_code_t tio_updater_start(
             (void*)updater);
 
     if (res != EBISU_TASKC_OK) {
-        updater->_task_running = KII_FALSE;
+        updater->_task_running = false;
         return TIO_ERR_CREATE_TASK;
     }
     return TIO_ERR_OK;

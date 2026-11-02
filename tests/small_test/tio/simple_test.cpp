@@ -11,17 +11,17 @@ TEST_CASE( "enable absolute target test" ) {
     tio_handler_t handler;
     tio_handler_init(&handler);
     REQUIRE( handler._kii._khc._absolute_target == false );
-    tio_handler_enable_absolute_target(&handler, KII_TRUE);
+    tio_handler_enable_absolute_target(&handler, true);
     REQUIRE( handler._kii._khc._absolute_target == true );
-    tio_handler_enable_absolute_target(&handler, KII_FALSE);
+    tio_handler_enable_absolute_target(&handler, false);
     REQUIRE( handler._kii._khc._absolute_target == false );
 
     tio_updater_t updater;
     tio_updater_init(&updater);
     REQUIRE( updater._kii._khc._absolute_target == false );
-    tio_updater_enable_absolute_target(&updater, KII_TRUE);
+    tio_updater_enable_absolute_target(&updater, true);
     REQUIRE( updater._kii._khc._absolute_target == true );
-    tio_updater_enable_absolute_target(&updater, KII_FALSE);
+    tio_updater_enable_absolute_target(&updater, false);
     REQUIRE( updater._kii._khc._absolute_target == false );
 }
 
@@ -30,36 +30,36 @@ TEST_CASE( "enable insecure test" ) {
 
     tio_handler_init(&handler);
     REQUIRE( handler._kii._khc._enable_insecure == 0 );
-    REQUIRE( handler._kii._insecure_mqtt == KII_FALSE );
+    REQUIRE( handler._kii._insecure_mqtt == false );
 
-    tio_handler_enable_insecure_http(&handler, KII_TRUE);
+    tio_handler_enable_insecure_http(&handler, true);
     REQUIRE( handler._kii._khc._enable_insecure == 1 );
-    REQUIRE( handler._kii._insecure_mqtt == KII_FALSE );
+    REQUIRE( handler._kii._insecure_mqtt == false );
 
-    tio_handler_enable_insecure_mqtt(&handler, KII_TRUE);
+    tio_handler_enable_insecure_mqtt(&handler, true);
     REQUIRE( handler._kii._khc._enable_insecure == 1 );
-    REQUIRE( handler._kii._insecure_mqtt == KII_TRUE );
+    REQUIRE( handler._kii._insecure_mqtt == true );
 
-    tio_handler_enable_insecure_http(&handler, KII_FALSE);
+    tio_handler_enable_insecure_http(&handler, false);
     REQUIRE( handler._kii._khc._enable_insecure == 0 );
-    REQUIRE( handler._kii._insecure_mqtt == KII_TRUE );
+    REQUIRE( handler._kii._insecure_mqtt == true );
 
-    tio_handler_enable_insecure_mqtt(&handler, KII_FALSE);
+    tio_handler_enable_insecure_mqtt(&handler, false);
     REQUIRE( handler._kii._khc._enable_insecure == 0 );
-    REQUIRE( handler._kii._insecure_mqtt == KII_FALSE );
+    REQUIRE( handler._kii._insecure_mqtt == false );
 
     tio_updater_t updater;
     tio_updater_init(&updater);
     REQUIRE( updater._kii._khc._enable_insecure == 0 );
-    REQUIRE( updater._kii._insecure_mqtt == KII_FALSE );
+    REQUIRE( updater._kii._insecure_mqtt == false );
 
-    tio_updater_enable_insecure_http(&updater, KII_TRUE);
+    tio_updater_enable_insecure_http(&updater, true);
     REQUIRE( updater._kii._khc._enable_insecure == 1 );
-    REQUIRE( updater._kii._insecure_mqtt == KII_FALSE );
+    REQUIRE( updater._kii._insecure_mqtt == false );
 
-    tio_updater_enable_insecure_http(&updater, KII_FALSE);
+    tio_updater_enable_insecure_http(&updater, false);
     REQUIRE( updater._kii._khc._enable_insecure == 0 );
-    REQUIRE( updater._kii._insecure_mqtt == KII_FALSE );
+    REQUIRE( updater._kii._insecure_mqtt == false );
 }
 
 TEST_CASE( "tio_handler sets the version of MQTT on its kii" ) {
@@ -107,9 +107,9 @@ static ebisu_task_code_t fail_task_create(const char*, EBISU_TASK_ENTRY, void*, 
     return EBISU_TASKC_FAIL;
 }
 
-static tio_bool_t no_action(tio_action_t*, tio_action_err_t*, tio_action_result_data_t*, void*)
+static bool no_action(tio_action_t*, tio_action_err_t*, tio_action_result_data_t*, void*)
 {
-    return KII_TRUE;
+    return true;
 }
 
 static ebisu_task_code_t count_task_create(const char* name, EBISU_TASK_ENTRY entry, void* entry_param, void* userdata)
@@ -125,11 +125,11 @@ TEST_CASE( "tio_handler sets the QoS and the clean session on its kii" ) {
     tio_handler_t handler;
     tio_handler_init(&handler);
     CHECK( handler._kii._mqtt_qos == KII_MQTT_QOS_0 );
-    CHECK( handler._kii._mqtt_clean_session == KII_TRUE );
+    CHECK( handler._kii._mqtt_clean_session == true );
     tio_handler_set_mqtt_qos(&handler, KII_MQTT_QOS_1);
-    tio_handler_set_mqtt_clean_session(&handler, KII_FALSE);
+    tio_handler_set_mqtt_clean_session(&handler, false);
     CHECK( handler._kii._mqtt_qos == KII_MQTT_QOS_1 );
-    CHECK( handler._kii._mqtt_clean_session == KII_FALSE );
+    CHECK( handler._kii._mqtt_clean_session == false );
 }
 
 TEST_CASE( "tio_handler_start keep-alive range" ) {
@@ -153,7 +153,7 @@ TEST_CASE( "tio_handler_start keep-alive range" ) {
         CHECK( call_task_create == 1 );
         CHECK( handler._kii._keep_alive_interval == interval );
         // The callback runs no task, which would have said so when it ended.
-        handler._kii._push_task_running = KII_FALSE;
+        handler._kii._push_task_running = false;
     }
 
     for (uint32_t interval : { (uint32_t)65536, (uint32_t)70000, UINT32_MAX }) {
@@ -259,11 +259,11 @@ ebisu_task_code_t run_task(const char* name, EBISU_TASK_ENTRY entry, void* entry
     return EBISU_TASKC_OK;
 }
 
-kii_bool_t updater_continue(void* task_info, void* userdata)
+bool updater_continue(void* task_info, void* userdata)
 {
     UpdaterTask* task = (UpdaterTask*)userdata;
     ++task->continue_called;
-    return task->continues_left-- > 0 ? KII_TRUE : KII_FALSE;
+    return task->continues_left-- > 0;
 }
 
 void updater_exit(void* task_info, void* userdata)
@@ -306,9 +306,9 @@ static ebisu_task_code_t hold_task(const char*, EBISU_TASK_ENTRY entry, void* en
     return EBISU_TASKC_OK;
 }
 
-static kii_bool_t stop_task(void*, void*)
+static bool stop_task(void*, void*)
 {
-    return KII_FALSE;
+    return false;
 }
 
 // The running task reads what these set, so being refused has to leave it all
