@@ -32,4 +32,20 @@ set on.
   validity period against. Socket callbacks use it directly, and `kii` and `tio`
   feed it with the time each response states.
 
-The samples under `tio` implement these for Linux, Windows, FreeRTOS and ESP32.
+## Ports
+
+Implementations for a kind of system, each a static library of its own, built
+where what it needs is found. Link one beside `libkhc`, `libkii` or `libtio`,
+which have the rest of `platform`.
+
+- **POSIX** (`ebisu_posix.h`, library `ebisu_posix`): `ebisu_posix_system()`,
+  whose tasks are detached threads, whose delays are `nanosleep()` and whose
+  monotonic clock is `CLOCK_MONOTONIC`, and `ebisu_posix_lock_t`, a pthread
+  mutex. Needs POSIX threads.
+- **OpenSSL** (`ebisu_openssl.h`, library `ebisu_openssl`):
+  `ebisu_openssl_socket_t`, TLS over a blocking BSD socket, checking the
+  server's certificate at an `ebisu_clock_t`'s time. Needs OpenSSL 1.0.2 or
+  later, and POSIX threads.
+
+The Linux sample uses both. The samples for Windows, FreeRTOS and ESP32 have
+implementations of their own, under `tio`.

@@ -270,8 +270,8 @@ What reaches the thing:
 
 ### Writing task callbacks
 
-What `kii` leaves to the system and the task callbacks, with `linux-env` in the
-[Linux sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/linux-env/task_impl.c) to start from. The
+What `kii` leaves to the system and the task callbacks, with
+[platform's POSIX port](https://github.com/KiiPlatform/ebisu/blob/master/platform/posix/src/ebisu_posix.c) to start from. The
 [khc README](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#writing-callbacks)
 has what socket callbacks have to do.
 
@@ -387,7 +387,7 @@ The socket callbacks then check the server's certificate against it:
 The chain and the host name are checked in full either way: the clock only
 decides the validity period.
 
-The socket callbacks of the [Linux](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c) and
+The sockets of [platform's OpenSSL port](https://github.com/KiiPlatform/ebisu/blob/master/platform/openssl/src/ebisu_openssl.c) and of the
 [Win32](https://github.com/KiiPlatform/ebisu/blob/master/tio/win32-sample/sock_cb_win32.c) samples give their TLS stack the
 time, and those of the [ESP32](https://github.com/KiiPlatform/ebisu/blob/master/tio/esp32-sample/main/sock_cb_esp32.c) and
 [FreeRTOS](https://github.com/KiiPlatform/ebisu/blob/master/tio/freertos-sample/sock_cb_freertos.c) samples check the

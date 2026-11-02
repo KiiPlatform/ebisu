@@ -57,7 +57,8 @@ typedef struct ebisu_system_ops_t {
   clock is set. A 32-bit tick counter has to be extended to 64 bits, or it wraps after about 49.7 days.
 
 Typical implementation with `pthread`, as in
-[linux-sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sys_cb_linux.c). A system with no
+[platform's POSIX port](https://github.com/KiiPlatform/ebisu/blob/master/platform/posix/src/ebisu_posix.c), which an application on Linux or macOS can link as it is,
+with `ebisu_posix_system()`. A system with no
 state of its own can be one static object for everything:
 
 ```c
@@ -191,7 +192,8 @@ ebisu_sock_code_t sock_cb_close(ebisu_socket_t* self)
 }
 ```
 
-You can see implementation with OpenSSL at [linux-sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c)
+You can see implementation with OpenSSL at [platform's OpenSSL port](https://github.com/KiiPlatform/ebisu/blob/master/platform/openssl/src/ebisu_openssl.c),
+which an application on Linux or macOS can link as it is, as the linux-sample does.
 
 The [khc README](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#writing-callbacks)
 has what these operations have to do that `tio` can't check for them, such as timeouts and `SIGPIPE`.
@@ -229,7 +231,7 @@ which case `tio_handler` connects again. Without it, every
 `EBISU_SOCK_FAIL` while waiting for a command is taken for a timeout, and a lost
 connection is only noticed when a `PINGREQ` fails or goes unanswered; with a
 keep-alive interval of 0, never.
-See `sock_cb_recv_timed_out()` in [linux-sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c).
+See `openssl_recv_timed_out()` in [platform's OpenSSL port](https://github.com/KiiPlatform/ebisu/blob/master/platform/openssl/src/ebisu_openssl.c).
 
 <a name="action-callback"></a>
 ### Action callback
@@ -281,7 +283,7 @@ The full code can be checked [handler_init() in example.c](https://github.com/Ki
 
     tio_handler_set_app(handler, KII_APP_ID, KII_APP_HOST);
 
-    tio_handler_set_system(handler, linux_system());
+    tio_handler_set_system(handler, ebisu_posix_system());
 
     tio_handler_set_http_socket(handler, &http_ssl_ctx->base);
     tio_handler_set_mqtt_socket(handler, &mqtt_ssl_ctx->base);
@@ -316,7 +318,7 @@ To create your Kii Cloud App, Sign-up to [Developer console](https://developer.k
 ### Set-up the system and sockets
 
 ```c
-    tio_handler_set_system(handler, linux_system());
+    tio_handler_set_system(handler, ebisu_posix_system());
 ```
 
 Different socket objects, `http_ssl_ctx` and `mqtt_ssl_ctx`, are used since the connection and it's life-cycle is different between them.
@@ -348,7 +350,7 @@ Note that buffer for HTTP and MQTT must be isolated. Passing overlapping memory 
 `tio_handler_t` needs socket timeout in seconds to send MQTT `PINGREQ` periodically.
 
 Note that application must implement socket timeout in the socket implementation.
-You can see example [here](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c)
+You can see example [here](https://github.com/KiiPlatform/ebisu/blob/master/platform/openssl/src/ebisu_openssl.c)
 
 ```c
     tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);
@@ -420,7 +422,7 @@ Here's the set-up code extracted from [example.c](https://github.com/KiiPlatform
     kii_session_t session;
     kii_session_init(&session);
     kii_session_set_lock(&session, &session_lock.base);
-    kii_session_set_system(&session, linux_system());
+    kii_session_set_system(&session, ebisu_posix_system());
     kii_session_set_cb_author_updated(&session, author_updated_callback, NULL);
     if (tio_handler_set_session(&handler, &session) != TIO_ERR_OK ||
             tio_updater_set_session(&updater, &session) != TIO_ERR_OK) {
@@ -473,6 +475,9 @@ static void unlock(ebisu_lock_t* self)
 
 static const ebisu_lock_ops_t linux_lock_ops = { lock, unlock };
 ```
+
+[platform's POSIX port](https://github.com/KiiPlatform/ebisu/blob/master/platform/posix/src/ebisu_posix.c) has this
+one, `ebisu_posix_lock_t`, initialized with `ebisu_posix_lock_init()`.
 
 ### The system's monotonic clock
 
@@ -646,7 +651,7 @@ The full code can be checked [updater_init() in example.c](https://github.com/Ki
 
     tio_updater_set_app(updater, KII_APP_ID, KII_APP_HOST);
 
-    tio_updater_set_system(updater, linux_system());
+    tio_updater_set_system(updater, ebisu_posix_system());
 
     tio_updater_set_buff(updater, buffer, buffer_size);
 

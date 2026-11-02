@@ -29,7 +29,7 @@ struct WinsockStartup {
 
 socket_context_t* win32_context(ebisu_socket_t* self)
 {
-    return &ebisu::ltest::ssl::data_of(self)->win32;
+    return &ebisu::ltest::ssl::data_of(self)->platform;
 }
 
 }

@@ -60,7 +60,8 @@ and monotonic clock callbacks, and a clock that keeps the time of day on a
 device without a real-time one.
 
 The other modules are built on it, and embed it, so you implement its callbacks
-but don't link it.
+but don't link it. On Linux and macOS, its POSIX and OpenSSL ports implement
+them, as static libraries to link.
 
 For more details, please refer to [./platform/README.md](./platform/README.md)
 

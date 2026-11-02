@@ -17,12 +17,6 @@
 #include <kii.h>
 #include "large_test.h"
 
-#ifdef _WIN32
-#include "sock_cb_win32.h"
-#else
-#include "sock_cb_linux.h"
-#endif
-
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -44,7 +38,7 @@ const unsigned int TO_SEND = 10;
 const uint32_t KEEP_ALIVE = 10;
 
 struct MqttTest {
-    socket_context_t sock;
+    ebisu::ltest::platform_socket_t sock;
     // What kii is given: the sample's socket, through the callbacks below.
     struct SocketLink {
         ebisu_socket_t base;
@@ -97,14 +91,14 @@ ebisu_sock_code_t cb_connect(ebisu_socket_t* self, const char* host, uint16_t po
 {
     MqttTest* t = test_of(self);
     ++t->connects;
-    return sock_cb_connect(&t->sock.base, host, port);
+    return t->sock.base.ops->connect(&t->sock.base, host, port);
 }
 
 ebisu_sock_code_t cb_send(ebisu_socket_t* self, const char* buffer, size_t length,
         size_t* out_sent_length)
 {
     MqttTest* t = test_of(self);
-    return sock_cb_send(&t->sock.base, buffer, length, out_sent_length);
+    return t->sock.base.ops->send(&t->sock.base, buffer, length, out_sent_length);
 }
 
 ebisu_sock_code_t cb_recv(ebisu_socket_t* self, char* buffer, size_t length_to_read,
@@ -116,7 +110,7 @@ ebisu_sock_code_t cb_recv(ebisu_socket_t* self, char* buffer, size_t length_to_r
         *out_actual_length = 0;
         return EBISU_SOCK_FAIL;
     }
-    return sock_cb_recv(&t->sock.base, buffer, length_to_read, out_actual_length);
+    return t->sock.base.ops->recv(&t->sock.base, buffer, length_to_read, out_actual_length);
 }
 
 bool cb_recv_timed_out(ebisu_socket_t* self)
@@ -125,14 +119,14 @@ bool cb_recv_timed_out(ebisu_socket_t* self)
     if (t->recv_made_to_fail) {
         return false;
     }
-    return sock_cb_recv_timed_out(&t->sock.base);
+    return t->sock.base.ops->recv_timed_out(&t->sock.base);
 }
 
 ebisu_sock_code_t cb_close(ebisu_socket_t* self)
 {
     MqttTest* t = test_of(self);
     ++t->closes;
-    return sock_cb_close(&t->sock.base);
+    return t->sock.base.ops->close(&t->sock.base);
 }
 
 kii_bool_t cb_continue(void* task_info, void* userdata)
@@ -236,8 +230,8 @@ struct StopTask {
 // Has kii run the push task with t's callbacks and the broker's sockets.
 void set_up_task(kii_t* kii, MqttTest& t, char* mqtt_buff, size_t mqtt_buff_size)
 {
-    sock_cb_init_context(&t.sock, TO_RECV, TO_SEND);
-    t.sock.clock = ebisu::ltest::test_clock();
+    ebisu::ltest::init_platform_socket(&t.sock, TO_RECV, TO_SEND);
+    ebisu::ltest::set_platform_socket_clock(&t.sock, ebisu::ltest::test_clock());
     static const ebisu_socket_ops_t socket_ops = {
         cb_connect, cb_send, cb_recv, cb_close, cb_recv_timed_out
     };

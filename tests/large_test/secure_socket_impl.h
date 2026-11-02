@@ -6,7 +6,7 @@
 #ifdef _WIN32
 #include "sock_cb_win32.h"
 #else
-#include "sock_cb_linux.h"
+#include "ebisu_openssl.h"
 #endif
 
 #include <chrono>
@@ -99,8 +99,38 @@ inline ebisu_clock_t* test_clock()
     return &c.clock;
 }
 
+// The platform's socket, with TLS: the win32 sample's, Winsock and Schannel, or
+// platform's OpenSSL port, BSD sockets and OpenSSL.
+#ifdef _WIN32
+typedef socket_context_t platform_socket_t;
+
+inline void init_platform_socket(platform_socket_t* sock, unsigned int to_recv,
+        unsigned int to_send)
+{
+    sock_cb_init_context(sock, to_recv, to_send);
+}
+
+inline void set_platform_socket_clock(platform_socket_t* sock, ebisu_clock_t* clock)
+{
+    sock->clock = clock;
+}
+#else
+typedef ebisu_openssl_socket_t platform_socket_t;
+
+inline void init_platform_socket(platform_socket_t* sock, unsigned int to_recv,
+        unsigned int to_send)
+{
+    ebisu_openssl_socket_init(sock, to_recv, to_send);
+}
+
+inline void set_platform_socket_clock(platform_socket_t* sock, ebisu_clock_t* clock)
+{
+    ebisu_openssl_socket_set_clock(sock, clock);
+}
+#endif
+
 namespace ssl {
-// TLS, through the platform sample's socket.
+// TLS, through the platform's socket.
 extern const ebisu_socket_ops_t ops;
 }
 
@@ -118,27 +148,15 @@ struct SSLData
         ebisu_socket_t base;
         SSLData* owner;
     };
-#ifdef _WIN32
-    // The win32 sample's context: Winsock, with Schannel for TLS. A plain TCP
-    // connection uses only its socket.
-    socket_context_t win32;
-#else
-    // The Linux sample's context: BSD sockets, with OpenSSL for TLS. A plain
-    // TCP connection uses only its socket.
-    socket_context_t linux_ctx;
-#endif
+    // A plain TCP connection uses only its socket.
+    platform_socket_t platform;
     Link tls_link;
     Link tcp_link;
 
     SSLData() {
-        // No timeouts, as with OpenSSL.
-#ifdef _WIN32
-        sock_cb_init_context(&win32, 0, 0);
-        win32.clock = test_clock();
-#else
-        sock_cb_init_context(&linux_ctx, 0, 0);
-        linux_ctx.clock = test_clock();
-#endif
+        // No timeouts.
+        init_platform_socket(&platform, 0, 0);
+        set_platform_socket_clock(&platform, test_clock());
         tls_link.base.ops = &ssl::ops;
         tls_link.owner = this;
         tcp_link.base.ops = &tcp::ops;
@@ -147,13 +165,9 @@ struct SSLData
     SSLData(const SSLData&) = delete;
     SSLData& operator=(const SSLData&) = delete;
 
-    // The sample's socket, with its TLS.
+    // The platform's socket, with its TLS.
     ebisu_socket_t* sample() {
-#ifdef _WIN32
-        return &win32.base;
-#else
-        return &linux_ctx.base;
-#endif
+        return &platform.base;
     }
     ebisu_socket_t* tls() {
         return &tls_link.base;

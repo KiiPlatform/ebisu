@@ -44,13 +44,11 @@ ebisu_add_test_suite(small_test_jkii
         jkii/src/jkii_test.cpp
     LINK ${EBISU_JKII_OBJS})
 
-# The Linux sample's task callbacks, which need threads and nothing else.
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    set(small_test_tio_linux_sources
-        tio/task_impl_test.cpp
-        ${PROJECT_SOURCE_DIR}/tio/linux-sample/linux-env/task_impl.c)
-    set(small_test_tio_linux_libs Threads::Threads)
-    set(small_test_tio_linux_includes ${PROJECT_SOURCE_DIR}/tio/linux-sample/linux-env)
+# platform's POSIX port, which needs threads and nothing else. Linux only, as
+# the test reads a thread's attributes with pthread_getattr_np().
+if(TARGET ebisu_posix AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(small_test_tio_linux_sources tio/posix_test.cpp)
+    set(small_test_tio_linux_libs ebisu_posix)
 endif()
 
 ebisu_add_test_suite(small_test_tio
@@ -64,5 +62,4 @@ ebisu_add_test_suite(small_test_tio
     LINK ${EBISU_TIO_OBJS} ${small_test_tio_linux_libs}
     INCLUDES
         ${CMAKE_CURRENT_SOURCE_DIR}/tio
-        ${PROJECT_SOURCE_DIR}/tio
-        ${small_test_tio_linux_includes})
+        ${PROJECT_SOURCE_DIR}/tio)
