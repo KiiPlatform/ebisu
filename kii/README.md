@@ -27,7 +27,7 @@ creates.
     jkii_resource_t resource = { tokens, 256 };
 
     kii_init(&kii);
-    kii_set_site(&kii, "JP");
+    kii_set_site(&kii, "api-jp.kii.com");
     kii_set_app_id(&kii, "your-app-id");
 
     kii_set_buff(&kii, buff, sizeof(buff));
@@ -36,8 +36,9 @@ creates.
     kii_set_http_socket(&kii, &http_sock_ctx.base);
 ```
 
-- **Site**: one of `"JP"`, `"US"`, `"EU"`, `"SG"`, `"CN"` and `"CN3"`, or the
-  host name of your application's site.
+- **Site**: the host name of your application's site, as its settings give
+  it: `"api-jp.kii.com"` for Kii Cloud's public site. A site of its own has a
+  host of its own. `"JP"`, which 1.x took for the public site, still works.
 - **Buffer**: required. Requests are built in it and responses read into it,
   so it must hold the largest of them: 4096 bytes are typically enough. Object
   bodies and Thing-IF states stream through callbacks instead, whatever their
