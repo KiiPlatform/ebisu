@@ -188,8 +188,7 @@ int _read_chunk_size(const char* buff, size_t buff_size, size_t* out_chunk_size)
         return -1;
     }
     for (; i < line_size; ++i) {
-        // HTTP allows no control character but HTAB in an extension, and the
-        // caller finds the end of the line with strstr, which stops at a NUL.
+        // HTTP allows no control character but HTAB in an extension.
         unsigned char c = buff[i];
         if ((c < 0x20 && c != '\t') || c == 0x7f) {
             return -1;
