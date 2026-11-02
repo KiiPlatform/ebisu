@@ -271,16 +271,62 @@ static int wait_for(int fd, short events, int64_t deadline_ms)
    what they share by itself. */
 typedef struct {
     pthread_mutex_t mutex;
+    /* Signalled once the lookup is done. */
+    pthread_cond_t done_cond;
     /* Two while both use it, then one, then none, when it is freed. */
     int users;
     char host[256];
     char service[8];
     /* Set with the mutex held. */
+    int done;
     int error;
     struct addrinfo* result;
-    /* Written to once the lookup is done. */
-    int done_fds[2];
 } lookup_t;
+
+/* Initializes cond to time its waits by the monotonic clock, as the deadlines
+   are, so that setting the time of day doesn't move them. 0 on success. */
+static int init_done_cond(pthread_cond_t* cond)
+{
+#ifdef __APPLE__
+    /* macOS has no pthread_condattr_setclock(). wait_for_lookup() waits for a
+       time from now instead. */
+    return pthread_cond_init(cond, NULL);
+#else
+    pthread_condattr_t attr;
+    if (pthread_condattr_init(&attr) != 0) {
+        return -1;
+    }
+    int ret = pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+    if (ret == 0) {
+        ret = pthread_cond_init(cond, &attr);
+    }
+    pthread_condattr_destroy(&attr);
+    return ret;
+#endif
+}
+
+/* Waits, with lookup's mutex held, until it is done or deadline_ms passes. 1
+   when it is done, 0 when the deadline passed first. */
+static int wait_for_lookup(lookup_t* lookup, int64_t deadline_ms)
+{
+    while (!lookup->done) {
+        int64_t left = deadline_ms - monotonic_ms();
+        if (left <= 0) {
+            return 0;
+        }
+        struct timespec ts;
+#ifdef __APPLE__
+        ts.tv_sec = (time_t)(left / 1000);
+        ts.tv_nsec = (long)(left % 1000) * 1000000;
+        pthread_cond_timedwait_relative_np(&lookup->done_cond, &lookup->mutex, &ts);
+#else
+        ts.tv_sec = (time_t)(deadline_ms / 1000);
+        ts.tv_nsec = (long)(deadline_ms % 1000) * 1000000;
+        pthread_cond_timedwait(&lookup->done_cond, &lookup->mutex, &ts);
+#endif
+    }
+    return 1;
+}
 
 static void release_lookup(lookup_t* lookup)
 {
@@ -293,8 +339,7 @@ static void release_lookup(lookup_t* lookup)
     if (lookup->result != NULL) {
         freeaddrinfo(lookup->result);
     }
-    close(lookup->done_fds[0]);
-    close(lookup->done_fds[1]);
+    pthread_cond_destroy(&lookup->done_cond);
     pthread_mutex_destroy(&lookup->mutex);
     free(lookup);
 }
@@ -311,10 +356,9 @@ static void* run_lookup(void* arg)
     pthread_mutex_lock(&lookup->mutex);
     lookup->error = error;
     lookup->result = result;
+    lookup->done = 1;
+    pthread_cond_signal(&lookup->done_cond);
     pthread_mutex_unlock(&lookup->mutex);
-    char done = 1;
-    ssize_t written = write(lookup->done_fds[1], &done, 1);
-    (void)written;
     release_lookup(lookup);
     return NULL;
 }
@@ -347,7 +391,7 @@ static struct addrinfo* look_up(const char* host, uint16_t port, int64_t deadlin
     if (lookup == NULL) {
         return NULL;
     }
-    if (pipe(lookup->done_fds) != 0) {
+    if (init_done_cond(&lookup->done_cond) != 0) {
         free(lookup);
         return NULL;
     }
@@ -364,19 +408,18 @@ static struct addrinfo* look_up(const char* host, uint16_t port, int64_t deadlin
     pthread_detach(thread);
 
     struct addrinfo* result = NULL;
-    if (wait_for(lookup->done_fds[0], POLLIN, deadline_ms) == 1) {
-        pthread_mutex_lock(&lookup->mutex);
-        int error = lookup->error;
-        if (error == 0) {
-            result = lookup->result;
-            lookup->result = NULL;
-        }
-        pthread_mutex_unlock(&lookup->mutex);
-        if (error != 0) {
-            printf("failed to look up %s: %s\n", host, gai_strerror(error));
-        }
-    } else {
+    pthread_mutex_lock(&lookup->mutex);
+    int done = wait_for_lookup(lookup, deadline_ms);
+    int error = lookup->error;
+    if (done && error == 0) {
+        result = lookup->result;
+        lookup->result = NULL;
+    }
+    pthread_mutex_unlock(&lookup->mutex);
+    if (!done) {
         printf("failed to look up %s in time.\n", host);
+    } else if (error != 0) {
+        printf("failed to look up %s: %s\n", host, gai_strerror(error));
     }
     release_lookup(lookup);
     return result;
