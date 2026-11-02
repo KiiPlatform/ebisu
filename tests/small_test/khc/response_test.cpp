@@ -110,7 +110,7 @@ TEST_CASE( "HTTP response test" ) {
     REQUIRE( on_connect_called == 1 );
     REQUIRE( on_send_called == 3 );
     REQUIRE( on_read_called == 0 );
-    REQUIRE( on_recv_called == 4 );
+    REQUIRE( on_recv_called == 3 );
     REQUIRE( on_header_called == 12 );
     REQUIRE( on_write_called > 0 );
     REQUIRE( on_close_called == 1 );
@@ -208,7 +208,7 @@ TEST_CASE( "Ignore HTTP status 100" ) {
     REQUIRE( on_connect_called == 1 );
     REQUIRE( on_send_called == 3 );
     REQUIRE( on_read_called == 0 );
-    REQUIRE( on_recv_called == 5 );
+    REQUIRE( on_recv_called == 4 );
     REQUIRE( on_header_called == 14 );
     REQUIRE( on_write_called == 2 );
     REQUIRE( on_close_called == 1 );
@@ -314,7 +314,7 @@ TEST_CASE( "Small resp header skip test" ) {
     REQUIRE( on_connect_called == 1 );
     REQUIRE( on_send_called == 3 );
     REQUIRE( on_read_called == 0 );
-    REQUIRE( on_recv_called == 7 );
+    REQUIRE( on_recv_called == 6 );
     REQUIRE( on_header_called == 11 );
     REQUIRE( on_write_called > 0 );
     REQUIRE( on_close_called == 1 );
@@ -372,13 +372,7 @@ TEST_CASE( "HTTP response 400 test" ) {
     auto is = resp.to_istringstream();
     s_ctx.on_recv = [=, &on_recv_called, &is](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         ++on_recv_called;
-        if (on_recv_called == 1) {
-            // recv header.
-            REQUIRE( length_to_read == 255 );
-        } else {
-            // recv body(= 0).
-            REQUIRE( length_to_read == 1024 );
-        }
+        REQUIRE( length_to_read == 255 );
         *out_actual_length = is.read(buffer, length_to_read).gcount();
         return KHC_SOCK_OK;
     };
@@ -416,7 +410,7 @@ TEST_CASE( "HTTP response 400 test" ) {
     REQUIRE( on_connect_called == 1 );
     REQUIRE( on_send_called == 3 );
     REQUIRE( on_read_called == 0 );
-    REQUIRE( on_recv_called == 2 );
+    REQUIRE( on_recv_called == 1 );
     REQUIRE( on_header_called == 2 );
     REQUIRE( on_write_called == 1 );
     REQUIRE( on_close_called == 1 );
@@ -509,7 +503,7 @@ TEST_CASE( "Content-Length is read into a size_t" ) {
         CHECK( r.res == (c.expected > 4 ? KHC_ERR_SOCK_RECV : KHC_ERR_OK) );
         CHECK( r.content_length == c.expected );
         CHECK( r.on_header_called == 2 );
-        CHECK( r.on_write_called == 1 );
+        CHECK( r.on_write_called == (c.expected > 0 ? 1 : 0) );
         CHECK( r.on_close_called == 1 );
     }
 }

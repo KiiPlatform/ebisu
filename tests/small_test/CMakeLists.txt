@@ -11,6 +11,7 @@ ebisu_add_test_suite(small_test_khc
         khc/http_test.cpp
         khc/reset_test.cpp
         khc/response_chunk_test.cpp
+        khc/response_end_test.cpp
         khc/response_test.cpp
         khc/slist_test.cpp
         khc/state_trans_test.cpp

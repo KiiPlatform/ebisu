@@ -145,7 +145,9 @@ void khc_reset_except_request(khc* khc) {
     khc->_chunk_size = 0;
     khc->_chunk_size_written = 0;
     khc->_resp_content_length = 0;
+    khc->_resp_has_content_length = false;
     khc->_resp_body_received = 0;
+    khc->_trailer_end_matched = 0;
     khc->_resp_date = -1;
     khc->_read_end = false;
     khc->_body_read_size = 0;

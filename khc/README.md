@@ -23,10 +23,14 @@ callbacks and a buffer of fixed size, so neither has to fit in memory.
   callback, and the body to the write callback. After an interim `1xx`
   response, which goes through the header callback too, `khc` reads the final
   one.
-  - A body sent with the chunked transfer coding is decoded; chunk extensions
-    and trailers are ignored.
-  - Any other body is read until the server closes the connection, which it
-    does after the body, as every request is sent with `Connection: Close`.
+  - A body sent with the chunked transfer coding is decoded, up to the end of
+    the trailers; chunk extensions and trailers are ignored.
+  - Any other body with a `Content-Length` ends there. Anything after either
+    of these doesn't reach the write callback.
+  - A body with neither is read until the server closes the connection, which
+    it does after the body, as every request is sent with `Connection: Close`.
+  - A response to `HEAD`, a `204` and a `304` end with their headers, whatever
+    length they give.
 - **Non-blocking sockets**: a socket callback can return `KHC_SOCK_AGAIN`, and
   `khc` calls it again with the same arguments.
 
@@ -42,7 +46,7 @@ callbacks and a buffer of fixed size, so neither has to fit in memory.
   the application sets.
 - **Transfer codings**: a response whose last transfer coding is not
   `chunked` is refused with `KHC_ERR_HEADER_CALLBACK`, as is one with a
-  malformed `Content-Length`.
+  malformed `Content-Length`, or with several that disagree.
 - **Fixed-size request fields**: a host longer than 127 bytes, a path longer
   than 255 and a method longer than 15 are refused with
   `KHC_ERR_TOO_LARGE_DATA`.

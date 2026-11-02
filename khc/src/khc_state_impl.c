@@ -650,6 +650,7 @@ void khc_state_resp_status_parse(khc* khc) {
     // A response of its own, an interim 1xx one included.
     khc->_resp_date = -1;
     khc->_resp_content_length = 0;
+    khc->_resp_has_content_length = false;
     khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
     return;
 }
@@ -687,8 +688,15 @@ void khc_state_resp_header_callback(khc* khc) {
             return;
         } else {
             int extracted = _extract_content_length(khc->_resp_header_buff, header_size, &content_length);
-            if (extracted == 1) {
+            if (extracted == 1 && khc->_resp_has_content_length &&
+                    content_length != khc->_resp_content_length) {
+                // Lengths that disagree: body length unknown.
+                khc->_state = KHC_STATE_CLOSE;
+                khc->_result = KHC_ERR_HEADER_CALLBACK;
+                return;
+            } else if (extracted == 1) {
                 khc->_resp_content_length = content_length;
+                khc->_resp_has_content_length = true;
             } else if (extracted == -1) { // Invalid Content-Length: body length unknown.
                 khc->_state = KHC_STATE_CLOSE;
                 khc->_result = KHC_ERR_HEADER_CALLBACK;
@@ -705,7 +713,11 @@ void khc_state_resp_header_callback(khc* khc) {
         if (100 <= khc->_status_code && khc->_status_code < 200) {
             khc->_state = KHC_STATE_RESP_STATUS_READ;
         } else {
-            if (khc->_chunked_resp) {
+            if (strcmp(khc->_method, "HEAD") == 0 ||
+                    khc->_status_code == 204 || khc->_status_code == 304) {
+                // These have no body, whatever length they give.
+                khc->_state = KHC_STATE_CLOSE;
+            } else if (khc->_chunked_resp) {
                 khc->_body_read_size = 0;
                 khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
             } else {
@@ -817,23 +829,39 @@ void khc_state_resp_header_skip(khc* khc) {
     }
 }
 
-/* The connection closing ends a body that isn't chunked. If less than the
- * response's Content-Length came, it ended early. A response to HEAD, a 204 and
- * a 304 have no body, whatever length they give. */
+/* A body that isn't chunked ends at the response's Content-Length, or without
+ * one when the connection closes. If it closes short of that length, the body
+ * ended early. */
 static void _end_resp_body(khc* khc) {
     khc->_state = KHC_STATE_CLOSE;
-    if (khc->_resp_body_received < khc->_resp_content_length &&
-            strcmp(khc->_method, "HEAD") != 0 &&
-            khc->_status_code != 204 && khc->_status_code != 304) {
+    if (khc->_resp_body_received < khc->_resp_content_length) {
         khc->_result = KHC_ERR_SOCK_RECV;
     }
 }
 
+static bool _resp_body_complete(const khc* khc) {
+    return khc->_resp_has_content_length &&
+        khc->_resp_body_received >= khc->_resp_content_length;
+}
+
+/* How much of size bytes just read is body: what comes after Content-Length
+ * isn't. */
+static size_t _resp_body_part(const khc* khc, size_t size) {
+    if (!khc->_resp_has_content_length) {
+        return size;
+    }
+    if (_resp_body_complete(khc)) {
+        return 0;
+    }
+    size_t remain = khc->_resp_content_length - khc->_resp_body_received;
+    return size < remain ? size : remain;
+}
+
 void khc_state_resp_body_fragment(khc* khc) {
-    if (khc->_resp_header_read_size > 0) {
-        size_t written =
-            khc->_cb_write(khc->_resp_header_buff, khc->_resp_header_read_size, khc->_write_data);
-        if (written != khc->_resp_header_read_size) { // Error in write callback.
+    size_t size = _resp_body_part(khc, khc->_resp_header_read_size);
+    if (size > 0) {
+        size_t written = khc->_cb_write(khc->_resp_header_buff, size, khc->_write_data);
+        if (written != size) { // Error in write callback.
             khc->_state = KHC_STATE_CLOSE;
             khc->_result = KHC_ERR_WRITE_CALLBACK;
             return;
@@ -841,7 +869,7 @@ void khc_state_resp_body_fragment(khc* khc) {
         khc->_resp_body_received += written;
     }
 
-    if (khc->_read_end) {
+    if (khc->_read_end || _resp_body_complete(khc)) {
         _end_resp_body(khc);
         return;
     } else {
@@ -920,14 +948,15 @@ void khc_state_resp_body_read(khc* khc) {
 }
 
 void khc_state_resp_body_callback(khc* khc) {
-    size_t written = khc->_cb_write(khc->_stream_buff, khc->_body_read_size, khc->_write_data);
-    if (written < khc->_body_read_size) { // Error in write callback.
+    size_t size = _resp_body_part(khc, khc->_body_read_size);
+    size_t written = khc->_cb_write(khc->_stream_buff, size, khc->_write_data);
+    if (written < size) { // Error in write callback.
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_WRITE_CALLBACK;
         return;
     }
     khc->_resp_body_received += written;
-    if (khc->_read_end) {
+    if (khc->_read_end || _resp_body_complete(khc)) {
         _end_resp_body(khc);
     } else {
         khc->_state = KHC_STATE_RESP_BODY_READ;
@@ -948,6 +977,8 @@ void khc_state_resp_body_parse_chunk_size(khc* khc) {
         if (chunk_size > 0) {
             khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY;
         } else {
+            // The CRLF of this last chunk's line starts what ends the body.
+            khc->_trailer_end_matched = 2;
             khc->_state = KHC_STATE_RESP_BODY_SKIP_TRAILERS;
         }
     } else if (has_chunk_size < 0) {
@@ -1123,7 +1154,32 @@ void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
     }
 }
 
+/* Whether data has the empty line that ends the trailers. */
+static bool _find_trailer_end(khc* khc, const char* data, size_t size) {
+    const char trailer_end[] = "\r\n\r\n";
+    for (size_t i = 0; i < size; ++i) {
+        if (data[i] == trailer_end[khc->_trailer_end_matched]) {
+            ++khc->_trailer_end_matched;
+            if (khc->_trailer_end_matched == sizeof(trailer_end) - 1) {
+                return true;
+            }
+        } else {
+            khc->_trailer_end_matched = data[i] == '\r' ? 1 : 0;
+        }
+    }
+    return false;
+}
+
 void khc_state_resp_body_skip_trailers(khc* khc) {
+    // What was read along with the last chunk comes first.
+    if (_find_trailer_end(khc, khc->_stream_buff, khc->_body_read_size) ||
+            _find_trailer_end(khc, khc->_resp_header_buff, khc->_resp_header_read_size)) {
+        khc->_state = KHC_STATE_CLOSE;
+        return;
+    }
+    khc->_body_read_size = 0;
+    khc->_resp_header_read_size = 0;
+
     size_t read_size = 0;
     khc_sock_code_t read_res = khc->_cb_sock_recv(
             khc->_sock_ctx_recv,
@@ -1138,6 +1194,7 @@ void khc_state_resp_body_skip_trailers(khc* khc) {
             khc->_state = KHC_STATE_CLOSE;
             return;
         }
+        khc->_body_read_size = read_size;
         return;
     }
     #ifdef KHC_TRACE

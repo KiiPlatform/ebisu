@@ -186,6 +186,14 @@ khc, which kii and tio report in their own codes:
   chunked body.
 - An invalid `Content-Length`, or a `Transfer-Encoding` whose final coding isn't
   `chunked`, is `KHC_ERR_HEADER_CALLBACK`, before any of the body is written.
+- A response ends at its `Content-Length`, or after the trailers of a chunked
+  body, and `khc_perform()` then closes the connection. In 1.x it read on until
+  the server closed it, so a server that was slow to close turned a whole
+  response into `KHC_ERR_SOCK_RECV`, and whatever came after the body reached
+  the write callback. A response to `HEAD`, a `204` and a `304` end with their
+  headers. A body with neither a length nor chunks still ends with the
+  connection.
+- `Content-Length` headers that disagree are `KHC_ERR_HEADER_CALLBACK`.
 - An invalid chunk size, or a first line that isn't an HTTP status line, is
   `KHC_ERR_FAIL`.
 - A socket that fails to close no longer changes a request's result: a response

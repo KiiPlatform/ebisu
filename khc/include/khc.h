@@ -306,8 +306,11 @@ typedef struct khc {
     size_t _chunk_size; /**< \private **/
     size_t _chunk_size_written; /**< \private **/
     size_t _resp_content_length; /**< \private **/
+    bool _resp_has_content_length; /**< \private **/
     /* How much of the body has come, outside a chunked one. */
     size_t _resp_body_received; /**< \private **/
+    /* How much of the CRLF CRLF that ends a chunked body has come. */
+    size_t _trailer_end_matched; /**< \private **/
     /* The response's Date, as seconds since the epoch. -1 when there is none
      * yet, -2 when the response had a malformed one or several that
      * disagree. */
