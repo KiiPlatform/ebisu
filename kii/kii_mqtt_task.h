@@ -46,6 +46,12 @@ typedef struct {
      */
     kii_bool_t sock_connected;
     /** \private
+     * Whether the broker accepted CONNECT on that connection: from a CONNACK
+     * that accepts it until the connection is closed, so that the task says
+     * DISCONNECT before closing it on its way out.
+     */
+    kii_bool_t mqtt_connected;
+    /** \private
      * How long the wait before the next attempt to reach the cloud is based
      * on, in milliseconds. It doubles with each failure until a connection is
      * subscribed.

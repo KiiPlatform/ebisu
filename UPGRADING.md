@@ -201,7 +201,8 @@ The push task:
 
 - It closes its MQTT connection before calling the exit callback. An exit
   callback that closes it too now closes it twice, so it should only free what
-  it owns.
+  it owns. On a connection the broker accepted, it sends DISCONNECT first, as
+  1.x never did.
 - A network failure while installing push or fetching the endpoint is tried
   again, where 1.x ended the task. An application no longer sees the exit
   callback for these, and needn't restart the handler.

@@ -13,6 +13,7 @@
 #include <sstream>
 #include <set>
 #include <string>
+#include <vector>
 
 // A QoS 0 PUBLISH as the broker sends it: the fixed header, then the topic
 // length, the topic and the payload, with no packet identifier.
@@ -3126,12 +3127,21 @@ std::string http_response(const std::string& status_line, const std::string& bod
         "\r\n" + body;
 }
 
+// Whether what was sent ends with DISCONNECT.
+bool ends_with_disconnect(const std::string& sent)
+{
+    const std::string disconnect("\xe0\x00", 2);
+    return sent.size() >= disconnect.size() &&
+        sent.compare(sent.size() - disconnect.size(), disconnect.size(), disconnect) == 0;
+}
+
 }
 
 // The task used to leave its MQTT connection open when it ended, discontinued
 // or on an error, and the application could not close it: it cannot tell
 // whether the task has one open. The task now closes it, before calling the
-// exit callback, and only if it is open. This runs the whole task,
+// exit callback, and only if it is open. On one the broker accepted, it says
+// DISCONNECT first, which it never used to. This runs the whole task,
 // mqtt_start_task(), as the thread made for it does.
 TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
     char buff[1024];
@@ -3197,16 +3207,22 @@ TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
         ++connects;
         return connect_ok ? EBISU_SOCK_OK : EBISU_SOCK_FAIL;
     };
-    mqtt_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
+    // Everything sent on the MQTT socket, and what had been at each close.
+    std::string sent;
+    std::vector<std::string> sent_at_closes;
+    mqtt_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
+        sent.append(buffer, length);
         *out_sent_length = length;
         return EBISU_SOCK_OK;
     };
-    mqtt_ctx.on_close = [&ctx](void*) {
+    mqtt_ctx.on_close = [&ctx, &sent, &sent_at_closes](void*) {
         ++ctx.closes;
+        sent_at_closes.push_back(sent);
         return EBISU_SOCK_OK;
     };
+    const std::string connack_suback("\x20\x02\x00\x00" "\x90\x03\x00\x01\x00", 9);
     size_t served = 0;
-    serve_stream(mqtt_ctx, std::string("\x20\x02\x00\x00" "\x90\x03\x00\x01\x00", 9), served);
+    serve_stream(mqtt_ctx, connack_suback, served);
     kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
 
     SECTION("discontinued while connected") {
@@ -3224,6 +3240,11 @@ TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
         CHECK( connects == 1 );
         CHECK( ctx.closes_at_exit == 1 );
         CHECK( ctx.closes == 1 );
+        // DISCONNECT, after SUBSCRIBE, before the close, and once.
+        REQUIRE( sent_at_closes.size() == 1 );
+        CHECK( ends_with_disconnect(sent_at_closes[0]) );
+        CHECK( sent == sent_at_closes[0] );
+        CHECK( sent.find(std::string("\xe0\x00", 2)) == sent.size() - 2 );
     }
 
     SECTION("discontinued before connecting") {
@@ -3237,6 +3258,7 @@ TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
         CHECK( ctx.exit_info.task_state == KII_MQTT_ST_DISCONTINUED );
         CHECK( connects == 0 );
         CHECK( ctx.closes == 0 );
+        CHECK( sent.empty() );
     }
 
     // The connection is closed to reconnect, and connecting again fails: it
@@ -3255,6 +3277,34 @@ TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
         CHECK( ctx.exit_info.task_state == KII_MQTT_ST_DISCONTINUED );
         CHECK( connects == 2 );
         CHECK( ctx.closes == 1 );
+        // The broker never accepted CONNECT.
+        CHECK_FALSE( ends_with_disconnect(sent) );
+    }
+
+    // The broker ends a connection it accepted, and the task reconnects. It
+    // is discontinued before sending CONNECT again: neither close follows a
+    // DISCONNECT, the first as that connection is gone, the second as the
+    // broker hasn't accepted this one.
+    SECTION("closing a connection the broker ended, or hasn't accepted") {
+        mqtt_ctx.on_recv = [&connack_suback, &served](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+            // Then the end of the stream.
+            *out_actual_length = connack_suback.copy(buffer, length_to_read, served);
+            served += *out_actual_length;
+            return EBISU_SOCK_OK;
+        };
+        ctx.keep_going = [&connects](kii_mqtt_task_state state) {
+            return !(connects == 2 && state == KII_MQTT_ST_SEND_CONNECT);
+        };
+
+        mqtt_start_task(&kii);
+
+        REQUIRE( ctx.exited );
+        CHECK( ctx.exit_info.task_state == KII_MQTT_ST_DISCONTINUED );
+        CHECK( connects == 2 );
+        REQUIRE( sent_at_closes.size() == 2 );
+        CHECK_FALSE( ends_with_disconnect(sent_at_closes[0]) );
+        CHECK( sent_at_closes[1] == sent_at_closes[0] );
+        CHECK( sent == sent_at_closes[1] );
     }
 
     SECTION("exiting on an error while connected") {
@@ -3269,6 +3319,7 @@ TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
         CHECK( ctx.exit_info.error == KII_MQTT_ERR_INSUFFICIENT_BUFF );
         CHECK( connects == 1 );
         CHECK( ctx.closes_at_exit == 1 );
+        CHECK( sent.empty() );
     }
 }
 
