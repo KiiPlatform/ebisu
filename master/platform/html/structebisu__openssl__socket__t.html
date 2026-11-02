@@ -90,14 +90,14 @@ Data Fields</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A TLS connection over a blocking BSD socket, with OpenSSL. </p>
-<p>It verifies the server's certificate chain against the system's CA certificates, and the host name, at the time of the clock set by <a class="el" href="ebisu__openssl_8h.html#ad504ec9246a218a4cd22974b77da48f7" title="Sets the clock the server&#39;s certificate is checked at the time of.">ebisu_openssl_socket_set_clock()</a>, or the system's without one. A receive that times out is EBISU_SOCK_FAIL, which recv_timed_out tells from a lost connection. One serves one connection at a time, and is used again for the next once closed. OpenSSL 1.0.2 and later, initialized and made thread-safe on first use. </p>
+<p>It verifies the server's certificate chain against the system's CA certificates, and the host name, at the time of the clock set by <a class="el" href="ebisu__openssl_8h.html#ad504ec9246a218a4cd22974b77da48f7" title="Sets the clock the server&#39;s certificate is checked at the time of.">ebisu_openssl_socket_set_clock()</a>, or the system's without one, against the CA certificates of the configuration set by <a class="el" href="ebisu__openssl_8h.html#afaa27f5cdf52db44f1a2d3532e901cb1" title="Sets the TLS configuration the socket connects with.">ebisu_openssl_socket_set_tls()</a>, or the system's without one. A receive that times out is EBISU_SOCK_FAIL, which recv_timed_out tells from a lost connection. One serves one connection at a time, and is used again for the next once closed. OpenSSL 1.0.2 and later, initialized and made thread-safe on first use. </p>
 </div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>openssl/include/<a class="el" href="ebisu__openssl_8h_source.html">ebisu_openssl.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 09:36:17 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Mon Nov 2 2026 10:16:48 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

@@ -96,18 +96,33 @@ Data Structures</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A TLS connection over a blocking BSD socket, with OpenSSL.  <a href="structebisu__openssl__socket__t.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">The TLS configuration connections share.  <a href="structebisu__openssl__tls__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
 <tr class="memitem:a4dc56053c784610a590ee3fceb160913" id="r_a4dc56053c784610a590ee3fceb160913"><td class="memItemLeft" align="right" valign="top">typedef struct <a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ebisu__openssl_8h.html#a4dc56053c784610a590ee3fceb160913">ebisu_openssl_socket_t</a></td></tr>
 <tr class="memdesc:a4dc56053c784610a590ee3fceb160913"><td class="mdescLeft">&#160;</td><td class="mdescRight">A TLS connection over a blocking BSD socket, with OpenSSL.  <br /></td></tr>
 <tr class="separator:a4dc56053c784610a590ee3fceb160913"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0b259235952ff790e57847975a85bf3f" id="r_a0b259235952ff790e57847975a85bf3f"><td class="memItemLeft" align="right" valign="top">typedef struct <a class="el" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ebisu__openssl_8h.html#a0b259235952ff790e57847975a85bf3f">ebisu_openssl_tls_t</a></td></tr>
+<tr class="memdesc:a0b259235952ff790e57847975a85bf3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">The TLS configuration connections share.  <br /></td></tr>
+<tr class="separator:a0b259235952ff790e57847975a85bf3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a0cd7e01753d8d4c89fd6e4fb791ef517" id="r_a0cd7e01753d8d4c89fd6e4fb791ef517"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ebisu__openssl_8h.html#a0cd7e01753d8d4c89fd6e4fb791ef517">ebisu_openssl_tls_init</a> (<a class="el" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a> *tls, const char *ca_file, const char *ca_path)</td></tr>
+<tr class="memdesc:a0cd7e01753d8d4c89fd6e4fb791ef517"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets up a TLS configuration.  <br /></td></tr>
+<tr class="separator:a0cd7e01753d8d4c89fd6e4fb791ef517"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af15941ca02f6af688cce18ee10115528" id="r_af15941ca02f6af688cce18ee10115528"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ebisu__openssl_8h.html#af15941ca02f6af688cce18ee10115528">ebisu_openssl_tls_free</a> (<a class="el" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a> *tls)</td></tr>
+<tr class="memdesc:af15941ca02f6af688cce18ee10115528"><td class="mdescLeft">&#160;</td><td class="mdescRight">Frees a TLS configuration.  <br /></td></tr>
+<tr class="separator:af15941ca02f6af688cce18ee10115528"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adbc237cc5b52c24a208886300ee0a8a2" id="r_adbc237cc5b52c24a208886300ee0a8a2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ebisu__openssl_8h.html#adbc237cc5b52c24a208886300ee0a8a2">ebisu_openssl_socket_init</a> (<a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *sock, unsigned int to_recv, unsigned int to_send)</td></tr>
 <tr class="memdesc:adbc237cc5b52c24a208886300ee0a8a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears the socket, with its timeouts, and makes base a socket of it.  <br /></td></tr>
 <tr class="separator:adbc237cc5b52c24a208886300ee0a8a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afaa27f5cdf52db44f1a2d3532e901cb1" id="r_afaa27f5cdf52db44f1a2d3532e901cb1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ebisu__openssl_8h.html#afaa27f5cdf52db44f1a2d3532e901cb1">ebisu_openssl_socket_set_tls</a> (<a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *sock, <a class="el" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a> *tls)</td></tr>
+<tr class="memdesc:afaa27f5cdf52db44f1a2d3532e901cb1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the TLS configuration the socket connects with.  <br /></td></tr>
+<tr class="separator:afaa27f5cdf52db44f1a2d3532e901cb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad504ec9246a218a4cd22974b77da48f7" id="r_ad504ec9246a218a4cd22974b77da48f7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ebisu__openssl_8h.html#ad504ec9246a218a4cd22974b77da48f7">ebisu_openssl_socket_set_clock</a> (<a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *sock, <a class="el" href="structebisu__clock__t.html">ebisu_clock_t</a> *clock)</td></tr>
 <tr class="memdesc:ad504ec9246a218a4cd22974b77da48f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the clock the server's certificate is checked at the time of.  <br /></td></tr>
 <tr class="separator:ad504ec9246a218a4cd22974b77da48f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -128,7 +143,24 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>A TLS connection over a blocking BSD socket, with OpenSSL. </p>
-<p>It verifies the server's certificate chain against the system's CA certificates, and the host name, at the time of the clock set by <a class="el" href="ebisu__openssl_8h.html#ad504ec9246a218a4cd22974b77da48f7" title="Sets the clock the server&#39;s certificate is checked at the time of.">ebisu_openssl_socket_set_clock()</a>, or the system's without one. A receive that times out is EBISU_SOCK_FAIL, which recv_timed_out tells from a lost connection. One serves one connection at a time, and is used again for the next once closed. OpenSSL 1.0.2 and later, initialized and made thread-safe on first use. </p>
+<p>It verifies the server's certificate chain against the system's CA certificates, and the host name, at the time of the clock set by <a class="el" href="ebisu__openssl_8h.html#ad504ec9246a218a4cd22974b77da48f7" title="Sets the clock the server&#39;s certificate is checked at the time of.">ebisu_openssl_socket_set_clock()</a>, or the system's without one, against the CA certificates of the configuration set by <a class="el" href="ebisu__openssl_8h.html#afaa27f5cdf52db44f1a2d3532e901cb1" title="Sets the TLS configuration the socket connects with.">ebisu_openssl_socket_set_tls()</a>, or the system's without one. A receive that times out is EBISU_SOCK_FAIL, which recv_timed_out tells from a lost connection. One serves one connection at a time, and is used again for the next once closed. OpenSSL 1.0.2 and later, initialized and made thread-safe on first use. </p>
+
+</div>
+</div>
+<a id="a0b259235952ff790e57847975a85bf3f" name="a0b259235952ff790e57847975a85bf3f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0b259235952ff790e57847975a85bf3f">&#9670;&#160;</a></span>ebisu_openssl_tls_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef struct <a class="el" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a> <a class="el" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>The TLS configuration connections share. </p>
+<p>One SSL_CTX, with the CA certificates servers' certificates have to chain to, set up once rather than for each connection. Sockets of any number of tasks may share one. </p>
 
 </div>
 </div>
@@ -215,10 +247,120 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="afaa27f5cdf52db44f1a2d3532e901cb1" name="afaa27f5cdf52db44f1a2d3532e901cb1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afaa27f5cdf52db44f1a2d3532e901cb1">&#9670;&#160;</a></span>ebisu_openssl_socket_set_tls()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ebisu_openssl_socket_set_tls </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> *&#160;</td>
+          <td class="paramname"><em>sock</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a> *&#160;</td>
+          <td class="paramname"><em>tls</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets the TLS configuration the socket connects with. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">sock</td><td>The socket. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">tls</td><td>The configuration, which has to outlive the socket's connections, or NULL for one with the system's CA certificates, which every socket without one of its own shares. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="af15941ca02f6af688cce18ee10115528" name="af15941ca02f6af688cce18ee10115528"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af15941ca02f6af688cce18ee10115528">&#9670;&#160;</a></span>ebisu_openssl_tls_free()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ebisu_openssl_tls_free </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a> *&#160;</td>
+          <td class="paramname"><em>tls</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Frees a TLS configuration. </p>
+<p>Connections still open keep what they need of it, but no socket may connect with it any more.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">tls</td><td>The configuration. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a0cd7e01753d8d4c89fd6e4fb791ef517" name="a0cd7e01753d8d4c89fd6e4fb791ef517"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0cd7e01753d8d4c89fd6e4fb791ef517">&#9670;&#160;</a></span>ebisu_openssl_tls_init()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool ebisu_openssl_tls_init </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a> *&#160;</td>
+          <td class="paramname"><em>tls</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>ca_file</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>ca_path</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets up a TLS configuration. </p>
+<p>For a device without the system's CA certificates, or with them where OpenSSL doesn't look, give the CA certificates the servers' chain to. Without either, the system's are used, from where OpenSSL was built to find them, as when no configuration is set.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">tls</td><td>The configuration. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ca_file</td><td>File of PEM CA certificates, or NULL. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ca_path</td><td>Directory of CA certificates named by their hash, as openssl rehash or c_rehash names them, or NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true, or false, having printed why, if the certificates couldn't be loaded or OpenSSL failed. </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 09:36:17 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Mon Nov 2 2026 10:16:48 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

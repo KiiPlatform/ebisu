@@ -246,6 +246,7 @@
     <includes id="ebisu__clock_8h" name="ebisu_clock.h" local="no" import="no" module="no" objc="no">ebisu_clock.h</includes>
     <includes id="ebisu__socket_8h" name="ebisu_socket.h" local="no" import="no" module="no" objc="no">ebisu_socket.h</includes>
     <class kind="struct">ebisu_openssl_socket_t</class>
+    <class kind="struct">ebisu_openssl_tls_t</class>
     <member kind="typedef">
       <type>struct ebisu_openssl_socket_t</type>
       <name>ebisu_openssl_socket_t</name>
@@ -253,12 +254,40 @@
       <anchor>a4dc56053c784610a590ee3fceb160913</anchor>
       <arglist></arglist>
     </member>
+    <member kind="typedef">
+      <type>struct ebisu_openssl_tls_t</type>
+      <name>ebisu_openssl_tls_t</name>
+      <anchorfile>ebisu__openssl_8h.html</anchorfile>
+      <anchor>a0b259235952ff790e57847975a85bf3f</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>ebisu_openssl_tls_init</name>
+      <anchorfile>ebisu__openssl_8h.html</anchorfile>
+      <anchor>a0cd7e01753d8d4c89fd6e4fb791ef517</anchor>
+      <arglist>(ebisu_openssl_tls_t *tls, const char *ca_file, const char *ca_path)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_openssl_tls_free</name>
+      <anchorfile>ebisu__openssl_8h.html</anchorfile>
+      <anchor>af15941ca02f6af688cce18ee10115528</anchor>
+      <arglist>(ebisu_openssl_tls_t *tls)</arglist>
+    </member>
     <member kind="function">
       <type>void</type>
       <name>ebisu_openssl_socket_init</name>
       <anchorfile>ebisu__openssl_8h.html</anchorfile>
       <anchor>adbc237cc5b52c24a208886300ee0a8a2</anchor>
       <arglist>(ebisu_openssl_socket_t *sock, unsigned int to_recv, unsigned int to_send)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_openssl_socket_set_tls</name>
+      <anchorfile>ebisu__openssl_8h.html</anchorfile>
+      <anchor>afaa27f5cdf52db44f1a2d3532e901cb1</anchor>
+      <arglist>(ebisu_openssl_socket_t *sock, ebisu_openssl_tls_t *tls)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -346,6 +375,10 @@
       <anchor>a0525a6b30d917271238a685b221b9739</anchor>
       <arglist></arglist>
     </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_openssl_tls_t</name>
+    <filename>structebisu__openssl__tls__t.html</filename>
   </compound>
   <compound kind="struct">
     <name>ebisu_posix_lock_t</name>
