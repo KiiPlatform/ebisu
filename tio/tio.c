@@ -100,6 +100,11 @@ void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_CB_TASK_CONTIN
     handler->_task_continue_data = userdata;
 }
 
+void tio_handler_set_cb_mqtt_event(tio_handler_t* handler, KII_CB_MQTT_EVENT cb, void* userdata)
+{
+    kii_set_cb_mqtt_event(&handler->_kii, cb, userdata);
+}
+
 void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_CB_TASK_EXIT cb_exit, void* userdata)
 {
     handler->_cb_task_exit = cb_exit;

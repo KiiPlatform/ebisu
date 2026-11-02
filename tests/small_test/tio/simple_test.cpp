@@ -182,6 +182,21 @@ static ebisu_task_code_t mock_task_create(const char* name, EBISU_TASK_ENTRY ent
 // tio_handler_start() returns what kii_start_push_task() does, which was
 // KII_ERR_OK whether or not the MQTT task had been created. A task that could
 // not be created is TIO_ERR_CREATE_TASK, as it is for tio_updater_start().
+static void count_event(kii_mqtt_event_t, uint32_t, void* userdata)
+{
+    ++*(int*)userdata;
+}
+
+TEST_CASE( "tio_handler sets the MQTT event callback on its kii" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    CHECK( handler._kii._cb_mqtt_event == nullptr );
+    int events = 0;
+    tio_handler_set_cb_mqtt_event(&handler, count_event, &events);
+    CHECK( handler._kii._cb_mqtt_event == count_event );
+    CHECK( handler._kii._mqtt_event_data == &events );
+}
+
 TEST_CASE( "tio_handler_start reports a task it could not create" ) {
     char buff[64];
     tio_handler_t handler;

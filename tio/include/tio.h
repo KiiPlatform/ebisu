@@ -459,6 +459,18 @@ void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_CB_TASK_CONTIN
  * \param [in] userdata Context data pointer passed as second argument when cb_exit is called.
  */
 void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_CB_TASK_EXIT cb_exit, void* userdata);
+
+/**
+ * \brief Set the callback the handler's MQTT task tells why it reconnects,
+ * waits or drops a message.
+ *
+ * See kii_set_cb_mqtt_event(). Set it before starting the handler.
+ *
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] cb The callback, or NULL for none.
+ * \param [in] userdata Given to cb.
+ */
+void tio_handler_set_cb_mqtt_event(tio_handler_t* handler, KII_CB_MQTT_EVENT cb, void* userdata);
 /**
  * \brief Set callback propagates error.
  * You can use it for debugging, etc or you can skip calling this API.

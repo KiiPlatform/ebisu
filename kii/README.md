@@ -233,6 +233,12 @@ void push_received_cb(const char* message, size_t message_length, void* userdata
   receive a `kii_mqtt_task_info*` saying what the task was doing and why it
   stopped. The [tio README](https://github.com/KiiPlatform/ebisu/blob/master/tio/README.md)
   has implementations for `pthread`.
+- **Events**: optional, `kii_set_cb_mqtt_event()` sets a callback the task tells
+  why it reconnects, waits or drops a message, as it happens: a request that
+  failed, with its HTTP status, CONNACK's and SUBACK's codes, which send or
+  receive failed, an unanswered PINGREQ, a message too large or malformed.
+  Logging them is how to tell, in the field, a network that comes and goes from
+  credentials the broker refuses.
 
 After onboarding, the task connects with the MQTT endpoint onboarding returned.
 Otherwise it installs push and gets an endpoint from Kii Cloud first. A request
