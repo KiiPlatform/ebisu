@@ -626,98 +626,75 @@ TEST_CASE( "Socket send partial" ) {
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
 
+    // The read callback is given the stream buffer less room for the size line
+    // of the longest chunk that fits, "3f9\r\n", and the CRLF after it.
+    const size_t chunk_capacity = buff_size - 5 - 2;
     called = false;
     io_ctx.on_read = [=, &called](char *buffer, size_t size, void *userdata) {
         called = true;
-        REQUIRE( size == buff_size );
+        REQUIRE( size == chunk_capacity );
         const char body[] = "http body";
         strncpy(buffer, body, strlen(body));
         return strlen(body);
     };
     khc_state_req_body_read(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_SIZE );
+    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND );
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( http._read_req_end == false );
     REQUIRE( called );
 
+    // The size line, the data and the CRLF go out in one send. Of what this
+    // one doesn't take, the next send gets the rest.
+    std::string sent;
     called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+    s_ctx.on_send = [=, &called, &sent](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         called = true;
-        const char body[] = "9\r\n";
-        REQUIRE( length == strlen(body) );
-        REQUIRE( strncmp(buffer, body, length) == 0 );
-        *out_sent_length = length;
+        REQUIRE( length == strlen("9\r\nhttp body\r\n") );
+        *out_sent_length = 4;
+        sent.append(buffer, *out_sent_length);
         return EBISU_SOCK_OK;
     };
-    khc_state_req_body_send_size(&http);
+    khc_state_req_body_send(&http);
     REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND );
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
 
     called = false;
+    s_ctx.on_send = [=, &called, &sent](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
+        called = true;
+        *out_sent_length = length;
+        sent.append(buffer, length);
+        return EBISU_SOCK_OK;
+    };
+    khc_state_req_body_send(&http);
+    REQUIRE( http._state == KHC_STATE_REQ_BODY_READ );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( called );
+    REQUIRE( sent == "9\r\nhttp body\r\n" );
+
+    called = false;
+    io_ctx.on_read = [=, &called](char *buffer, size_t size, void *userdata) {
+        called = true;
+        REQUIRE( size == chunk_capacity );
+        return 0;
+    };
+    khc_state_req_body_read(&http);
+    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND );
+    REQUIRE( http._result == KHC_ERR_OK );
+    REQUIRE( http._read_req_end == true );
+    REQUIRE( called );
+
+    // The chunk of size 0 ends the body, with the CRLF ending the trailers.
+    called = false;
     s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         called = true;
-        const char body[] = "http body";
+        const char body[] = "0\r\n\r\n";
         REQUIRE( length == strlen(body) );
         REQUIRE( strncmp(buffer, body, length) == 0 );
         *out_sent_length = length;
         return EBISU_SOCK_OK;
     };
     khc_state_req_body_send(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_CRLF );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char body[] = "\r\n";
-        REQUIRE( length == strlen(body) );
-        REQUIRE( strncmp(buffer, body, length) == 0 );
-        *out_sent_length = length;
-        return EBISU_SOCK_OK;
-    };
-    khc_state_req_body_send_crlf(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_BODY_READ );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    io_ctx.on_read = [=, &called](char *buffer, size_t size, void *userdata) {
-        called = true;
-        REQUIRE( size == buff_size );
-        return 0;
-    };
-    khc_state_req_body_read(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_SIZE );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( http._read_req_end == true );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char body[] = "0\r\n";
-        REQUIRE( length == strlen(body) );
-        REQUIRE( strncmp(buffer, body, length) == 0 );
-        *out_sent_length = length;
-        return EBISU_SOCK_OK;
-    };
-    khc_state_req_body_send_size(&http);
-    REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_CRLF );
-    REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
-
-    called = false;
-    s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-        called = true;
-        const char body[] = "\r\n";
-        REQUIRE( length == strlen(body) );
-        REQUIRE( strncmp(buffer, body, length) == 0 );
-        *out_sent_length = length;
-        return EBISU_SOCK_OK;
-    };
-    khc_state_req_body_send_crlf(&http);
     REQUIRE( http._state == KHC_STATE_RESP_STATUS_READ );
     REQUIRE( http._result == KHC_ERR_OK );
     REQUIRE( called );
@@ -1010,41 +987,10 @@ TEST_CASE( "state abnormal tests." ) {
         REQUIRE( called );
     }
 
-    SECTION("state req body send size retry.") {
-        http._state = KHC_STATE_REQ_BODY_SEND_SIZE;
-        http._read_size = 1234;
-
-        called = false;
-        s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-            called = true;
-            return EBISU_SOCK_AGAIN;
-        };
-
-        khc_state_req_body_send_size(&http);
-        REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_SIZE );
-        REQUIRE( http._result == KHC_ERR_OK );
-        REQUIRE( called );
-    }
-
-    SECTION("state req body send size failed.") {
-        http._state = KHC_STATE_REQ_BODY_SEND_SIZE;
-        http._read_size = 1234;
-
-        called = false;
-        s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-            called = true;
-            return EBISU_SOCK_FAIL;
-        };
-
-        khc_state_req_body_send_size(&http);
-        REQUIRE( http._state == KHC_STATE_CLOSE );
-        REQUIRE( http._result == KHC_ERR_SOCK_SEND );
-        REQUIRE( called );
-    }
-
     SECTION("state req body send retry.") {
         http._state = KHC_STATE_REQ_BODY_SEND;
-        http._read_size = 1234;
+        http._req_frame_start = 0;
+        http._req_frame_size = 16;
         http._sent_length = 0;
 
         called = false;
@@ -1061,7 +1007,8 @@ TEST_CASE( "state abnormal tests." ) {
 
     SECTION("state req body send failed.") {
         http._state = KHC_STATE_REQ_BODY_SEND;
-        http._read_size = 1234;
+        http._req_frame_start = 0;
+        http._req_frame_size = 16;
         http._sent_length = 0;
 
         called = false;
@@ -1071,38 +1018,6 @@ TEST_CASE( "state abnormal tests." ) {
         };
 
         khc_state_req_body_send(&http);
-        REQUIRE( http._state == KHC_STATE_CLOSE );
-        REQUIRE( http._result == KHC_ERR_SOCK_SEND );
-        REQUIRE( called );
-    }
-
-    SECTION("state req body send crlf retry.") {
-        http._state = KHC_STATE_REQ_BODY_SEND_CRLF;
-        http._sent_length = 0;
-
-        called = false;
-        s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-            called = true;
-            return EBISU_SOCK_AGAIN;
-        };
-
-        khc_state_req_body_send_crlf(&http);
-        REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_CRLF );
-        REQUIRE( http._result == KHC_ERR_OK );
-        REQUIRE( called );
-    }
-
-    SECTION("state req body send crlf failed.") {
-        http._state = KHC_STATE_REQ_BODY_SEND_CRLF;
-        http._sent_length = 0;
-
-        called = false;
-        s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
-            called = true;
-            return EBISU_SOCK_FAIL;
-        };
-
-        khc_state_req_body_send_crlf(&http);
         REQUIRE( http._state == KHC_STATE_CLOSE );
         REQUIRE( http._result == KHC_ERR_SOCK_SEND );
         REQUIRE( called );

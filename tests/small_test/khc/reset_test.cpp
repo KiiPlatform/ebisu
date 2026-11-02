@@ -153,6 +153,7 @@ struct Request {
         khc_set_method(http, "PUT");
         khc_set_path(http, "/x");
         khc_set_req_headers(http, headers);
+        khc_set_req_body_length(http, KHC_REQ_BODY_LENGTH_UNKNOWN);
         if (own_buffers) {
             khc_set_stream_buff(http, stream_buff, sizeof(stream_buff));
             khc_set_resp_header_buff(http, resp_header_buff, sizeof(resp_header_buff));
@@ -207,6 +208,10 @@ TEST_CASE( "khc_reset_except_request leaves khc as if the request were new" ) {
             CHECK( used._current_req_header == fresh._current_req_header );
             CHECK( used._read_size == fresh._read_size );
             CHECK( used._read_req_end == fresh._read_req_end );
+            CHECK( used._req_body_length == fresh._req_body_length );
+            CHECK( used._req_body_left == fresh._req_body_left );
+            CHECK( used._req_frame_start == fresh._req_frame_start );
+            CHECK( used._req_frame_size == fresh._req_frame_size );
             CHECK( used._resp_header_read_size == fresh._resp_header_read_size );
             CHECK( used._status_code == fresh._status_code );
             CHECK( used._chunked_resp == fresh._chunked_resp );

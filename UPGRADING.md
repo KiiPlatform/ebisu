@@ -273,6 +273,12 @@ khc, which kii and tio report in their own codes:
   callback, the write callback or the header callback isn't set. 1.x crashed on
   reaching it.
 - GET, HEAD and DELETE send no body, and don't call the read callback.
+- Each chunk of a request body is sent in one send, with its size line and CRLF,
+  from the stream buffer. 1.x sent the three separately. The read callback is
+  offered the stream buffer less room for those, a few bytes, rather than all
+  of it, and a stream buffer with no room left for data, of 5 bytes or fewer,
+  is `KHC_ERR_TOO_LARGE_DATA`. A read callback that returns more than it was
+  asked for is `KHC_ERR_READ_CALLBACK`, a new code, and `KII_ERR_FAIL` in kii.
 - Request lines carry the path, as in `POST /path HTTP/1.1`, with the host in the
   `Host` header, which is what a server expects. 1.x sent the whole URL, as in
   `POST https://host/path HTTP/1.1`. A forward proxy that requests go through in

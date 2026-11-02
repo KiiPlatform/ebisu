@@ -48,11 +48,16 @@ typedef size_t (*KHC_CB_WRITE)(char *buffer, size_t size, void *userdata);
  * \brief Callback reads data.
  *
  * \param [out] buffer callback must writes data to this buffer.
- * \param [in] size requested read size.
+ * \param [in] size requested read size. For a chunked body, it is the stream
+ * buffer less a few bytes: each chunk is sent in one write, with its size line
+ * before it and CRLF after it in the same buffer.
  * \param [in, out] userdata context data passed to khc_set_cb_read(khc*, KHC_CB_READ, void*)
- * \returns Size of the bytes read.
+ * \returns Size of the bytes read, at most size, or khc_perform(khc*)
+ * returns KHC_ERR_READ_CALLBACK.
  * Returning 0 indicates that the whole data is read.
- * khc repeatedly call this callback until it returns 0.
+ * khc repeatedly call this callback until it returns 0, or, for a body of the
+ * length set by khc_set_req_body_length(khc*, size_t), until it has given
+ * that much.
  */
 typedef size_t (*KHC_CB_READ)(char *buffer, size_t size, void *userdata);
 /**
@@ -191,8 +196,11 @@ typedef enum khc_state {
     KHC_STATE_REQ_HEADER_SEND_CRLF,
     KHC_STATE_REQ_HEADER_END,
     KHC_STATE_REQ_BODY_READ,
+    /* No longer entered: a chunk's size line is sent with it, from
+     * KHC_STATE_REQ_BODY_SEND. */
     KHC_STATE_REQ_BODY_SEND_SIZE,
     KHC_STATE_REQ_BODY_SEND,
+    /* No longer entered: the CRLF ending a chunk is sent with it. */
     KHC_STATE_REQ_BODY_SEND_CRLF,
 
     KHC_STATE_RESP_STATUS_READ,
@@ -247,6 +255,11 @@ typedef enum khc_code {
     KHC_ERR_TOO_LARGE_DATA,
     /**< \brief Other errors. */
     KHC_ERR_FAIL,
+    /* Added after KHC_ERR_FAIL so that the codes above keep their values. */
+    /**< \brief The read callback gave more than it was asked for, or ended
+     * a body of the length set by khc_set_req_body_length(khc*, size_t)
+     * early. */
+    KHC_ERR_READ_CALLBACK,
 } khc_code;
 
 /**
@@ -284,6 +297,15 @@ typedef struct khc {
 
     size_t _read_size; /**< \private **/
     bool _read_req_end; /**< \private **/
+    /* The request body's length, or KHC_REQ_BODY_LENGTH_UNKNOWN to send it
+     * chunked. */
+    size_t _req_body_length; /**< \private **/
+    /* How much of a body of known length is still to be read. */
+    size_t _req_body_left; /**< \private **/
+    /* Where in the stream buffer what is being sent of the body starts, and
+     * its size: a chunk with its size line and CRLF, or plain data. */
+    size_t _req_frame_start; /**< \private **/
+    size_t _req_frame_size; /**< \private **/
 
     /* Response header buffer */
     char* _resp_header_buff; /**< \private **/
@@ -352,7 +374,8 @@ void khc_reset_except_cb(khc* khc);
  *
  * Resets what sending the last request and reading its response left behind,
  * so that the next khc_perform(khc*) sends the request again. The request
- * itself -- host, path, method and headers -- remains, as do callbacks/
+ * itself -- host, path, method, headers and the body length set by
+ * khc_set_req_body_length(khc*, size_t) -- remains, as do callbacks/
  * userdata, the settings of khc_enable_insecure(khc*, bool) and
  * khc_enable_absolute_target(khc*, bool), and the buffers set
  * by khc_set_stream_buff(khc*, char*, size_t) and
@@ -447,11 +470,13 @@ void khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size);
  * khc allocates memory of stream buffer when the HTTP session started
  * and free when the HTTP session ends.
  * The buffer allocated by khc is 1024 bytes.
-
- * You can change the size of buffer depending on your request/ response size.
- * It must be enough large to store size line in chunked encoded message.
- * However, you may use much larger buffer since size line might require very small buffer
- * as it consists of HEX size and CRLF for the better performance.
+ *
+ * The request body is sent a buffer at a time, in one write each: over TLS,
+ * at least one record each. 1024 bytes suit bodies of a few KB. For larger
+ * ones, on a slow or metered link, 4096 bytes or more send fewer, larger
+ * records, and responses are read in larger pieces too. A chunked body needs
+ * room for a chunk's size line and CRLF besides its data, a few bytes: with
+ * no room for data, khc_perform(khc*) returns KHC_ERR_TOO_LARGE_DATA.
  * If you set the buffer by the method, the method must be called befor khc_perform(khc*)
  * and memory used by the buffer can be safely freed after khc_perform(khc*) returned.
  *
@@ -488,6 +513,27 @@ khc_code khc_set_cb_read(
         khc* khc,
         KHC_CB_READ cb,
         void* userdata);
+
+/** \brief The request body's length is unknown: it is sent chunked. */
+#define KHC_REQ_BODY_LENGTH_UNKNOWN ((size_t)-1)
+
+/**
+ * \brief Set the length of the request body.
+ *
+ * With the length known, the body is sent with a Content-Length header rather
+ * than chunked, which some intermediaries handle poorly. The read callback set
+ * by khc_set_cb_read(khc*, KHC_CB_READ, void*) is asked for no more than is
+ * left of it, and has to give all of it: returning 0 before then fails the
+ * request with KHC_ERR_READ_CALLBACK, as the server would wait for the rest.
+ *
+ * khc_reset_except_cb(khc*) sets it back to KHC_REQ_BODY_LENGTH_UNKNOWN, and
+ * khc_reset_except_request(khc*) keeps it, as part of the request.
+ *
+ * \param [out] khc instance.
+ * \param [in] length The body's length in bytes, or
+ * KHC_REQ_BODY_LENGTH_UNKNOWN to send it chunked, as by default.
+ */
+void khc_set_req_body_length(khc* khc, size_t length);
 
 /**
  * \brief Set write callback.

@@ -16,9 +16,12 @@ callbacks and a buffer of fixed size, so neither has to fit in memory.
   headers. `khc_enable_absolute_target()` has it carry the whole URL instead, for
   a forward proxy that requests go through in plain HTTP.
 - **Request bodies**: sent with `Transfer-Encoding: chunked`, one chunk for
-  each call to the read callback, until it returns 0. Without a read callback,
-  the request is sent with `Content-Length: 0`. `GET`, `HEAD` and `DELETE`
-  requests are sent without a body.
+  each call to the read callback, until it returns 0, each chunk in one send
+  with its size line and CRLF. With the length set by
+  `khc_set_req_body_length()`, sent with `Content-Length` instead, as the read
+  callback gives it. Without a read callback, the request is sent with
+  `Content-Length: 0`. `GET`, `HEAD` and `DELETE` requests are sent without a
+  body.
 - **Responses**: the status line and each header are passed to the header
   callback, and the body to the write callback. After an interim `1xx`
   response, which goes through the header callback too, `khc` reads the final
@@ -62,10 +65,13 @@ A `khc` instance holds its request line fields and state, and otherwise uses
 two buffers:
 
 - **Stream buffer**: holds each chunk of the request body and of the response
-  body as it is read. It must hold at least a chunk size line, and a larger one
-  means fewer callbacks. Set it with `khc_set_stream_buff()`. Otherwise
-  `khc_perform()` allocates 1024 bytes with `malloc()` and frees them before
-  returning.
+  body as it is read. Each part of the request body is sent in one send, over
+  TLS at least one record, so a larger buffer means fewer records and fewer
+  callbacks. 1024 bytes suit bodies of a few KB; for larger ones on a slow or
+  metered link, 4096 or more. A chunk takes a few bytes of it for its size line
+  and CRLF, so the read callback is offered that much less. Set it with
+  `khc_set_stream_buff()`. Otherwise `khc_perform()` allocates 1024 bytes with
+  `malloc()` and frees them before returning.
 - **Response header buffer**: holds one response header at a time, and must
   fit the status line, `Content-Length` and `Transfer-Encoding`. 256 bytes are
   enough. Set it with `khc_set_resp_header_buff()`. Otherwise `khc_perform()`
@@ -160,6 +166,18 @@ static size_t on_read(char* buffer, size_t size, void* userdata)
     khc_set_cb_read(&http, on_read, &body);
 ```
 
+The callback may return less than `size`, but never more. When the body's
+length is known before it is sent, as here, `khc_set_req_body_length()` has it
+sent with a `Content-Length` rather than chunked, which some intermediaries
+handle poorly:
+
+```c
+    khc_set_req_body_length(&http, body.length);
+```
+
+The callback is then asked for no more than is left, and has to give all of
+it: returning 0 sooner is `KHC_ERR_READ_CALLBACK`.
+
 To make another request with the same callbacks, call `khc_reset_except_cb()`,
 then set the request and the buffers again. To send the same request again,
 call `khc_reset_except_request()`, which keeps the buffers too. The read
@@ -248,7 +266,8 @@ its status: a `404` or a `500` is a response like any other, and
 | `KHC_ERR_HEADER_CALLBACK` | The header callback handled fewer bytes than given, or the response's `Content-Length` or `Transfer-Encoding` is malformed or unsupported. |
 | `KHC_ERR_WRITE_CALLBACK` | The write callback handled fewer bytes than given. |
 | `KHC_ERR_ALLOCATION` | A buffer `khc` allocates could not be allocated. |
-| `KHC_ERR_TOO_LARGE_DATA` | The status line, `Content-Length` or `Transfer-Encoding` doesn't fit in the response header buffer, or a chunk size line in the stream buffer. |
+| `KHC_ERR_TOO_LARGE_DATA` | The status line, `Content-Length` or `Transfer-Encoding` doesn't fit in the response header buffer, or a chunk size line in the stream buffer, or the stream buffer has no room for a request chunk's data besides its size line and CRLF. |
+| `KHC_ERR_READ_CALLBACK` | The read callback returned more than it was asked for, or 0 before the length set by `khc_set_req_body_length()`. |
 | `KHC_ERR_FAIL` | The status line or a chunk size is malformed, or a socket, header or write callback isn't set, in which case nothing was sent. |
 
 Closing the socket comes last and doesn't change the result, as the server may
