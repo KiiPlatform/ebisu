@@ -45,7 +45,9 @@ which have the rest of `platform`.
   monotonic clock is `CLOCK_MONOTONIC`, and `ebisu_posix_lock_t`, a pthread
   mutex. Needs POSIX threads.
 - **OpenSSL** (`ebisu_openssl.h`, library `ebisu_openssl`):
-  `ebisu_openssl_socket_t`, TLS over a blocking BSD socket, checking the
+  `ebisu_openssl_socket_t`, TLS 1.2 or later over a blocking BSD socket,
+  taking in TLS 1.2 only suites with forward secrecy and authenticated
+  encryption, Mozilla's intermediate list, and checking the
   server's certificate at an `ebisu_clock_t`'s time. It looks the host up with
   `getaddrinfo()` and tries each of its addresses, IPv6 and IPv4, both within
   its connect timeout. Its connections share one

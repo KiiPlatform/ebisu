@@ -20,6 +20,14 @@
 #include <openssl/x509v3.h>
 #include <errno.h>
 
+/* TLS 1.2's suites with forward secrecy and authenticated encryption, Mozilla's
+   intermediate list. */
+#define TLS12_CIPHERS \
+    "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:" \
+    "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:" \
+    "ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:" \
+    "DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-CHACHA20-POLY1305"
+
 /* Suppress warnings, because OpenSSL was deprecated in Mac. */
 #ifdef __APPLE__
 #pragma GCC diagnostic push
@@ -284,6 +292,23 @@ static SSL_CTX* new_ssl_ctx(const char* ca_file, const char* ca_path)
        for the old, lenient behaviour. */
     SSL_CTX_set_options(ssl_ctx, SSL_OP_IGNORE_UNEXPECTED_EOF);
 #endif
+
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+    /* TLS 1.2 at least, as TLSv1_2_client_method() is for 1.0.2. Left to
+       itself, OpenSSL 1.1 goes down to TLS 1.0. */
+    if (SSL_CTX_set_min_proto_version(ssl_ctx, TLS1_2_VERSION) != 1) {
+        SSL_CTX_free(ssl_ctx);
+        return NULL;
+    }
+#endif
+    /* TLS 1.2's suites with forward secrecy and authenticated encryption,
+       Mozilla's intermediate list, rather than whatever OpenSSL's build
+       defaults to. Those an OpenSSL lacks, ChaCha20 before 1.1.0, are left
+       out. TLS 1.3's are all of that kind, and stay as OpenSSL has them. */
+    if (SSL_CTX_set_cipher_list(ssl_ctx, TLS12_CIPHERS) != 1) {
+        SSL_CTX_free(ssl_ctx);
+        return NULL;
+    }
 
     /* The server's certificate has to chain to one of these. */
     int loaded = (ca_file != NULL || ca_path != NULL) ?
