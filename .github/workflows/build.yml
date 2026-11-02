@@ -410,7 +410,8 @@ jobs:
   # cannot be downloaded here, so this builds what of the samples is ebisu's as
   # their builds do: the same files and include paths, for the boards'
   # Cortex-M4, linked whole so that a source a build leaves out fails. It also
-  # checks that the version header their Makefiles write is the one CMake does.
+  # checks that the version header their Makefiles write is the one CMake does,
+  # and reports the code size of the libraries and of a thing linked with them.
   samples:
     name: samples (Cortex-M4, arm-none-eabi)
     runs-on: ubuntu-latest
@@ -433,6 +434,10 @@ jobs:
         run: tests/samples/check_archive_version.sh build/debug/generated/ebisu_version.h
       - name: build the samples' ebisu sources
         run: tests/samples/cross_build.sh
+      # Into the job's summary: the shared libraries' text built each way, and
+      # a thing's for a Cortex-M3, with EBISU_MIN_SIZE and without.
+      - name: code size
+        run: tests/samples/size_report.sh
 
   # The ESP32 sample, built in Espressif's ESP-IDF image for a board's Wi-Fi and
   # for the Ethernet QEMU emulates, and run in Espressif's QEMU, whose user-mode

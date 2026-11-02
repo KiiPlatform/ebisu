@@ -170,6 +170,29 @@ cc app.c $(pkg-config --cflags --libs ebisu-openssl ebisu-posix ebisu-tio)
 `tests/samples/package_consumer.sh` builds a program both ways against an
 installed copy, as CI does.
 
+### Code size
+
+For a device short of flash, `-DEBISU_MIN_SIZE=ON` compiles the libraries with
+`-Os`, and each function and object in a section of its own, so that a link with
+`--gc-sections` leaves out what nothing uses. The shared libraries are linked so.
+A program linking the static libraries has to pass it to its own link, as most
+embedded builds already do. The static libraries are also built without
+position-independent code, unless `-DCMAKE_POSITION_INDEPENDENT_CODE=ON` asks
+for it, say to link them into a shared library of the application's.
+CMake's `-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON` adds link-time optimization,
+and a program linking the static libraries then links with `-flto` too:
+
+```
+cmake -B build/small -DCMAKE_BUILD_TYPE=MinSizeRel -DBUILD_SHARED_LIBS=OFF \
+    -DEBISU_MIN_SIZE=ON -DBUILD_TESTING=OFF
+```
+
+`tests/samples/size_report.sh` builds the libraries each way and reports their
+size, and that of a thing for a Cortex-M3 linked against them, as CI does. For
+that thing, with GCC 13, `EBISU_MIN_SIZE` takes the text, code and constant
+data, from about 57 KB to 51 KB, newlib-nano included, and link-time
+optimization to 49 KB.
+
 ### macOS
 
 Install OpenSSL:
