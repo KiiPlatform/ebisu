@@ -359,7 +359,9 @@ typedef enum kii_mqtt_event_t {
  * \brief Told what happens in the MQTT task, for diagnostics.
  *
  * Called in the task, as it happens, before what follows: the reconnection,
- * the wait or the exit. It must return soon, and not use the kii_t.
+ * the wait or the exit. It must return soon, and not use the kii_t. After
+ * KII_MQTT_EVENT_CONNECT_FAILED, _SEND_FAILED or _RECV_FAILED, the MQTT
+ * socket's last_error, asked from here, says why.
  *
  * \param [in] event What happened.
  * \param [in] detail More of it, as the event says.
@@ -1899,6 +1901,22 @@ const char* kii_get_etag(kii_t* kii);
  * \return HTTP status code.
  */
 uint16_t kii_get_resp_status(kii_t* kii);
+
+/**
+ * \brief Why the HTTP socket failed, in the last call.
+ *
+ * After KII_ERR_SOCK_CONNECT, KII_ERR_SOCK_SEND or KII_ERR_SOCK_RECV, what the
+ * socket's last_error said, as khc_get_sock_error(khc*, long*) gives it: a
+ * host that didn't resolve, a certificate refused, a timeout, a connection
+ * closed. Where a call made several requests, renewing the session's token
+ * for instance, it is the last one's.
+ *
+ * \param [in] kii kii_t instance.
+ * \param [out] out_detail More of it, or 0. May be NULL.
+ * \return Why, or EBISU_SOCK_ERROR_NONE when the socket can't tell or nothing
+ * failed.
+ */
+ebisu_sock_error_t kii_get_sock_error(kii_t* kii, long* out_detail);
 
 /**
  * \brief Get the server's time, from the Date header of the last response.

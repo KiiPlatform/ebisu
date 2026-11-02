@@ -37,6 +37,33 @@ typedef enum ebisu_sock_code_t {
     EBISU_SOCK_AGAIN
 } ebisu_sock_code_t;
 
+/** \brief Why a socket operation failed, as the socket can tell. See
+ * ebisu_socket_ops_t::last_error. */
+typedef enum ebisu_sock_error_t {
+    /** \brief Nothing failed, or the socket can't tell why. */
+    EBISU_SOCK_ERROR_NONE,
+    /** \brief The host name didn't resolve. The detail is the resolver's
+     * error, such as getaddrinfo()'s. */
+    EBISU_SOCK_ERROR_DNS,
+    /** \brief None of the host's addresses took the connection. The detail
+     * is the system's error, as errno has it. */
+    EBISU_SOCK_ERROR_CONNECT,
+    /** \brief TLS failed, in the handshake or after it, for another reason
+     * than the server's certificate. The detail is the TLS library's error. */
+    EBISU_SOCK_ERROR_TLS,
+    /** \brief The server's certificate was refused. The detail is why, as
+     * the TLS library says it, such as OpenSSL's X509_V_ERR_* codes. */
+    EBISU_SOCK_ERROR_VERIFY,
+    /** \brief A timeout ran out: looking the host up, connecting, sending or
+     * receiving. */
+    EBISU_SOCK_ERROR_TIMEOUT,
+    /** \brief The peer closed or reset the connection. */
+    EBISU_SOCK_ERROR_CLOSED,
+    /** \brief Another failure. The detail is the system's error, if there is
+     * one. */
+    EBISU_SOCK_ERROR_OTHER
+} ebisu_sock_error_t;
+
 /** \brief A socket. See struct ebisu_socket_t. */
 typedef struct ebisu_socket_t ebisu_socket_t;
 
@@ -102,6 +129,19 @@ typedef struct ebisu_socket_ops_t {
      * it failed for any other reason.
      */
     bool (*recv_timed_out)(ebisu_socket_t* self);
+
+    /** \brief Why the last operation that returned EBISU_SOCK_FAIL failed.
+     *
+     * Optional. khc asks it right after such a failure of connect, send or
+     * recv, before closing the socket, and khc_get_sock_error() gives the
+     * answer. An application can ask its MQTT socket from the callback set by
+     * kii_set_cb_mqtt_event().
+     *
+     * \param [in] self The socket.
+     * \param [out] out_detail More of it, as each ebisu_sock_error_t says, or 0.
+     * \return Why, or EBISU_SOCK_ERROR_NONE if the socket can't tell.
+     */
+    ebisu_sock_error_t (*last_error)(ebisu_socket_t* self, long* out_detail);
 } ebisu_socket_ops_t;
 
 /** \brief A socket.

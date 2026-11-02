@@ -315,6 +315,9 @@ typedef struct khc {
     uint64_t _started_ms; /**< \private **/
     /* Whether the last step's socket operation returned EBISU_SOCK_AGAIN. */
     bool _again; /**< \private **/
+    /* Why the socket failed, as it said right after, and more of it. */
+    ebisu_sock_error_t _sock_error; /**< \private **/
+    long _sock_error_detail; /**< \private **/
 
     /** \private Request header list */
     khc_slist* _req_headers;
@@ -704,6 +707,22 @@ uint16_t khc_get_status_code(
  * khc_reset_except_cb(khc*) or khc_reset_except_request(khc*).
  */
 bool khc_get_close_failed(khc* khc);
+
+/**
+ * \brief Why the socket failed, in the last khc_perform(khc*).
+ *
+ * After KHC_ERR_SOCK_CONNECT, KHC_ERR_SOCK_SEND or KHC_ERR_SOCK_RECV, what the
+ * socket's last_error said, right after the operation failed and before the
+ * socket was closed: a host that didn't resolve, a certificate refused, a
+ * timeout. EBISU_SOCK_ERROR_NONE for a socket without last_error, or when
+ * nothing failed. EBISU_SOCK_ERROR_CLOSED, from khc itself, for a connection
+ * that closed before the response ended.
+ *
+ * \param [in] khc instance.
+ * \param [out] out_detail More of it, as the socket gave it, or 0. May be NULL.
+ * \returns Why.
+ */
+ebisu_sock_error_t khc_get_sock_error(khc* khc, long* out_detail);
 
 /**
  * \brief Whether a response header was skipped.

@@ -785,6 +785,19 @@ tio_code_t tio_handler_set_session(tio_handler_t* handler, kii_session_t* sessio
 tio_code_t tio_handler_set_clock(tio_handler_t* handler, ebisu_clock_t* clock);
 
 /**
+ * \brief Why the handler's HTTP socket failed, in its last request.
+ *
+ * See kii_get_sock_error(). Call it from the error callback, in the
+ * handler's task, after TIO_ERR_SOCK_CONNECT, TIO_ERR_SOCK_SEND or
+ * TIO_ERR_SOCK_RECV.
+ *
+ * \param [in] handler tio_handler_t instance.
+ * \param [out] out_detail More of it, or 0. May be NULL.
+ * \return Why, or EBISU_SOCK_ERROR_NONE.
+ */
+ebisu_sock_error_t tio_handler_get_sock_error(tio_handler_t* handler, long* out_detail);
+
+/**
  * \brief Start tio_handler task.
  *
  * You can start tio_handler task by this method.
@@ -1221,6 +1234,18 @@ tio_code_t tio_updater_set_session(tio_updater_t* updater, kii_session_t* sessio
  * \return TIO_ERR_FAIL if the clock has no monotonic clock.
  */
 tio_code_t tio_updater_set_clock(tio_updater_t* updater, ebisu_clock_t* clock);
+
+/**
+ * \brief Why the updater's socket failed, in its last upload.
+ *
+ * See kii_get_sock_error(). Call it from the error callback, in the
+ * updater's task.
+ *
+ * \param [in] updater tio_updater_t instance.
+ * \param [out] out_detail More of it, or 0. May be NULL.
+ * \return Why, or EBISU_SOCK_ERROR_NONE.
+ */
+ebisu_sock_error_t tio_updater_get_sock_error(tio_updater_t* updater, long* out_detail);
 
 /**
  * \brief Start tio_updater task.

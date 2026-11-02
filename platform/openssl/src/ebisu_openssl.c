@@ -362,14 +362,54 @@ static ebisu_sock_code_t openssl_recv(ebisu_socket_t* self, char* buffer,
         size_t length_to_read, size_t* out_actual_length);
 static ebisu_sock_code_t openssl_close(ebisu_socket_t* self);
 static bool openssl_recv_timed_out(ebisu_socket_t* self);
+static ebisu_sock_error_t openssl_last_error(ebisu_socket_t* self, long* out_detail);
 
 static const ebisu_socket_ops_t openssl_ops = {
     openssl_connect,
     openssl_send,
     openssl_recv,
     openssl_close,
-    openssl_recv_timed_out
+    openssl_recv_timed_out,
+    openssl_last_error
 };
+
+/* Says why an operation failed, for last_error, and returns EBISU_SOCK_FAIL. */
+static ebisu_sock_code_t fail_with(ebisu_openssl_socket_t* ctx,
+        ebisu_sock_error_t error, long detail)
+{
+    ctx->error = error;
+    ctx->error_detail = detail;
+    return EBISU_SOCK_FAIL;
+}
+
+/* Why SSL_read() or SSL_write() failed, from SSL_get_error() and errno. */
+static ebisu_sock_error_t io_error(int ssl_error, int saved_errno, long* out_detail)
+{
+    *out_detail = 0;
+    switch (ssl_error) {
+    case SSL_ERROR_WANT_READ:
+    case SSL_ERROR_WANT_WRITE:
+        /* The socket's timeout, as these sockets block. */
+        return EBISU_SOCK_ERROR_TIMEOUT;
+    case SSL_ERROR_ZERO_RETURN:
+        return EBISU_SOCK_ERROR_CLOSED;
+    case SSL_ERROR_SYSCALL:
+        *out_detail = saved_errno;
+        if (saved_errno == EAGAIN || saved_errno == EWOULDBLOCK) {
+            return EBISU_SOCK_ERROR_TIMEOUT;
+        }
+        if (saved_errno == 0 || saved_errno == EPIPE || saved_errno == ECONNRESET) {
+            return EBISU_SOCK_ERROR_CLOSED;
+        }
+        return EBISU_SOCK_ERROR_OTHER;
+    case SSL_ERROR_SSL:
+        *out_detail = (long)ERR_peek_error();
+        return EBISU_SOCK_ERROR_TLS;
+    default:
+        *out_detail = ssl_error;
+        return EBISU_SOCK_ERROR_OTHER;
+    }
+}
 
 void ebisu_openssl_socket_init(
         ebisu_openssl_socket_t* ctx,
@@ -594,8 +634,10 @@ static void* run_lookup(void* arg)
 /* The host's addresses, NULL if it couldn't be looked up by deadline_ms, or
    ever if that is 0. */
 static struct addrinfo* look_up(const char* host, uint16_t port, int64_t deadline_ms,
-        ebisu_logger_t* logger)
+        ebisu_logger_t* logger, ebisu_sock_error_t* out_error, long* out_detail)
 {
+    *out_error = EBISU_SOCK_ERROR_OTHER;
+    *out_detail = 0;
     char service[8];
     snprintf(service, sizeof(service), "%u", (unsigned int)port);
     if (deadline_ms == 0) {
@@ -608,6 +650,8 @@ static struct addrinfo* look_up(const char* host, uint16_t port, int64_t deadlin
         if (error != 0) {
             log_to(logger, EBISU_LOG_ERROR, "failed to look up %s: %s", host,
                     gai_strerror(error));
+            *out_error = EBISU_SOCK_ERROR_DNS;
+            *out_detail = error;
             return NULL;
         }
         return result;
@@ -615,6 +659,7 @@ static struct addrinfo* look_up(const char* host, uint16_t port, int64_t deadlin
 
     if (strlen(host) >= sizeof(((lookup_t*)0)->host)) {
         log_to(logger, EBISU_LOG_ERROR, "failed to look up a host name that long.");
+        *out_error = EBISU_SOCK_ERROR_DNS;
         return NULL;
     }
     lookup_t* lookup = (lookup_t*)calloc(1, sizeof(lookup_t));
@@ -648,31 +693,47 @@ static struct addrinfo* look_up(const char* host, uint16_t port, int64_t deadlin
     pthread_mutex_unlock(&lookup->mutex);
     if (!done) {
         log_to(logger, EBISU_LOG_ERROR, "failed to look up %s in time.", host);
+        *out_error = EBISU_SOCK_ERROR_TIMEOUT;
     } else if (error != 0) {
         log_to(logger, EBISU_LOG_ERROR, "failed to look up %s: %s", host, gai_strerror(error));
+        *out_error = EBISU_SOCK_ERROR_DNS;
+        *out_detail = error;
     }
     release_lookup(lookup);
     return result;
 }
 
 /* Connects sock to addr by deadline_ms, or whenever TCP gives up if that is
-   0. 0 when connected, -1 otherwise. */
+   0. 0 when connected, -1 otherwise, with why in out_error and out_errno. */
 static int connect_by(int sock, const struct sockaddr* addr, socklen_t addr_len,
-        int64_t deadline_ms)
+        int64_t deadline_ms, ebisu_sock_error_t* out_error, int* out_errno)
 {
+    *out_error = EBISU_SOCK_ERROR_CONNECT;
+    *out_errno = 0;
     int flags = fcntl(sock, F_GETFL, 0);
     if (flags < 0 || fcntl(sock, F_SETFL, flags | O_NONBLOCK) != 0) {
+        *out_error = EBISU_SOCK_ERROR_OTHER;
+        *out_errno = errno;
         return -1;
     }
     int ret = connect(sock, addr, addr_len);
+    if (ret != 0) {
+        *out_errno = errno;
+    }
     if (ret != 0 && errno == EINPROGRESS) {
         ret = -1;
-        if (wait_for(sock, POLLOUT, deadline_ms) == 1) {
+        int ready = wait_for(sock, POLLOUT, deadline_ms);
+        if (ready == 1) {
             int error = 0;
             socklen_t len = sizeof(error);
             if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &error, &len) == 0 && error == 0) {
                 ret = 0;
+            } else {
+                *out_errno = error;
             }
+        } else if (ready == 0) {
+            *out_error = EBISU_SOCK_ERROR_TIMEOUT;
+            *out_errno = 0;
         }
     }
     /* Blocking again, for the handshake and what follows, which the receive
@@ -686,26 +747,34 @@ static int connect_by(int sock, const struct sockaddr* addr, socklen_t addr_len,
 /* A socket connected to one of host's addresses, tried in the order the
    resolver gives them, or -1. */
 static int connect_to_host(const char* host, uint16_t port, unsigned int timeout_s,
-        ebisu_logger_t* logger)
+        ebisu_logger_t* logger, ebisu_sock_error_t* out_error, long* out_detail)
 {
     int64_t timeout_ms = (int64_t)timeout_s * 1000;
     int64_t deadline_ms = timeout_ms > 0 ? monotonic_ms() + timeout_ms : 0;
-    struct addrinfo* addrs = look_up(host, port, deadline_ms, logger);
+    struct addrinfo* addrs = look_up(host, port, deadline_ms, logger, out_error, out_detail);
     if (addrs == NULL) {
         return -1;
     }
+    /* Why the last address failed, which is what is said. */
+    *out_error = EBISU_SOCK_ERROR_CONNECT;
+    *out_detail = 0;
     int sock = -1;
     for (struct addrinfo* ai = addrs; ai != NULL; ai = ai->ai_next) {
         sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
         if (sock < 0) {
+            *out_error = EBISU_SOCK_ERROR_OTHER;
+            *out_detail = errno;
             continue;
         }
         /* Each address gets the whole timeout: one that doesn't answer leaves
            the rest as much time as the first had. */
         int64_t attempt_deadline_ms = timeout_ms > 0 ? monotonic_ms() + timeout_ms : 0;
-        if (connect_by(sock, ai->ai_addr, ai->ai_addrlen, attempt_deadline_ms) == 0) {
+        int attempt_errno = 0;
+        if (connect_by(sock, ai->ai_addr, ai->ai_addrlen, attempt_deadline_ms,
+                    out_error, &attempt_errno) == 0) {
             break;
         }
+        *out_detail = attempt_errno;
         close(sock);
         sock = -1;
     }
@@ -724,10 +793,15 @@ static ebisu_sock_code_t
     SSL *ssl = NULL;
     ebisu_openssl_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_openssl_socket_t, base);
 
-    sock = connect_to_host(host, port, ctx->to_connect, ctx->logger);
+    ebisu_sock_error_t error = EBISU_SOCK_ERROR_OTHER;
+    long detail = 0;
+    sock = connect_to_host(host, port, ctx->to_connect, ctx->logger, &error, &detail);
     if (sock < 0) {
-        return EBISU_SOCK_FAIL;
+        return fail_with(ctx, error, detail);
     }
+    /* What a failure below is, unless it says otherwise. */
+    error = EBISU_SOCK_ERROR_TLS;
+    detail = 0;
 
     if (ctx->to_recv > 0) {
         struct timeval tv;
@@ -763,6 +837,7 @@ static ebisu_sock_code_t
     X509_VERIFY_PARAM_set_hostflags(param, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
     if (X509_VERIFY_PARAM_set1_host(param, host, 0) != 1) {
         log_to(ctx->logger, EBISU_LOG_ERROR, "failed to set the host name to verify.");
+        error = EBISU_SOCK_ERROR_OTHER;
         goto fail;
     }
 
@@ -775,6 +850,7 @@ static ebisu_sock_code_t
            be decades out, and certificates refused for what they are not. */
         if ((int64_t)(time_t)now != now) {
             log_to(ctx->logger, EBISU_LOG_ERROR, "the time does not fit in a time_t.");
+            error = EBISU_SOCK_ERROR_OTHER;
             goto fail;
         }
         X509_VERIFY_PARAM_set_time(param, (time_t)now);
@@ -783,6 +859,7 @@ static ebisu_sock_code_t
     ret = SSL_set_fd(ssl, sock);
     if (ret == 0){
         log_to(ctx->logger, EBISU_LOG_ERROR, "failed to set fd.");
+        error = EBISU_SOCK_ERROR_OTHER;
         goto fail;
     }
 
@@ -793,12 +870,23 @@ static ebisu_sock_code_t
     clear_errors();
     ret = SSL_connect(ssl);
     if (ret != 1) {
+        /* errno first, before anything else can change it. */
+        int saved_errno = errno;
+        int ssl_error = SSL_get_error(ssl, ret);
         forget_session(ssl_ctx, host, port);
         long verified = SSL_get_verify_result(ssl);
         if (verified != X509_V_OK) {
             log_to(ctx->logger, EBISU_LOG_ERROR, "server certificate for %s rejected: %s",
                     host, X509_verify_cert_error_string(verified));
+            error = EBISU_SOCK_ERROR_VERIFY;
+            detail = verified;
         } else {
+            /* A timeout, a peer that went, or TLS itself. */
+            error = io_error(ssl_error, saved_errno, &detail);
+            if (error == EBISU_SOCK_ERROR_OTHER || error == EBISU_SOCK_ERROR_TLS) {
+                error = EBISU_SOCK_ERROR_TLS;
+                detail = (long)ERR_peek_error();
+            }
             char sslErrStr[120];
             ERR_error_string_n(ERR_get_error(), sslErrStr, 120);
             log_to(ctx->logger, EBISU_LOG_ERROR, "failed to connect: %s", sslErrStr);
@@ -819,7 +907,7 @@ fail:
         SSL_free(ssl);
     }
     close(sock);
-    return EBISU_SOCK_FAIL;
+    return fail_with(ctx, error, detail);
 }
 
 static ebisu_sock_code_t
@@ -841,8 +929,10 @@ static ebisu_sock_code_t
     if (ssl_error == SSL_ERROR_SYSCALL || ssl_error == SSL_ERROR_SSL) {
         ctx->ssl_failed = true;
     }
+    long detail = 0;
+    ebisu_sock_error_t error = io_error(ssl_error, saved_errno, &detail);
     log_ssl_failure(ctx->logger, "send", ssl_error, saved_errno);
-    return EBISU_SOCK_FAIL;
+    return fail_with(ctx, error, detail);
 }
 
 static ebisu_sock_code_t
@@ -870,7 +960,7 @@ static ebisu_sock_code_t
         /* The receive timeout, as these sockets block. Not EBISU_SOCK_AGAIN,
            on which khc reads again at once, and for good if the server has
            gone. See openssl_recv_timed_out(). */
-        return EBISU_SOCK_FAIL;
+        return fail_with(ctx, EBISU_SOCK_ERROR_TIMEOUT, 0);
     case SSL_ERROR_SYSCALL:
         ctx->ssl_failed = true;
         /* The end of the stream, from a peer that sent no close_notify. */
@@ -884,8 +974,10 @@ static ebisu_sock_code_t
     default:
         break;
     }
+    long detail = 0;
+    ebisu_sock_error_t error = io_error(ctx->recv_ssl_error, ctx->recv_errno, &detail);
     log_ssl_failure(ctx->logger, "receive", ctx->recv_ssl_error, ctx->recv_errno);
-    return EBISU_SOCK_FAIL;
+    return fail_with(ctx, error, detail);
 }
 
 /* openssl_recv() returns EBISU_SOCK_FAIL both when the receive timeout set with
@@ -905,6 +997,14 @@ static bool
         return true;
     }
     return false;
+}
+
+static ebisu_sock_error_t
+    openssl_last_error(ebisu_socket_t* self, long* out_detail)
+{
+    ebisu_openssl_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_openssl_socket_t, base);
+    *out_detail = ctx->error_detail;
+    return ctx->error;
 }
 
 static ebisu_sock_code_t

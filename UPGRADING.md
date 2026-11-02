@@ -54,6 +54,9 @@ static const ebisu_socket_ops_t socket_ops = {
 
 ebisu keeps a pointer to each object, so it has to outlive what it is set on.
 The samples' `sock_cb_init_context()` and system functions show the whole of it.
+Initialize a table whole, as above: an operation it leaves out, such as the
+optional `last_error` after `recv_timed_out`, is then `NULL`, where one assigned
+field by field would be whatever the memory held.
 
 | 1.x | 3.0 |
 |---|---|

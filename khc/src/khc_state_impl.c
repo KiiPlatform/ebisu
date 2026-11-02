@@ -126,6 +126,22 @@ void khc_state_idle(khc* khc) {
     return;
 }
 
+// Asks the socket why its operation failed, before anything else is done
+// with it, closing it included.
+static void _record_sock_error(khc* khc) {
+    const ebisu_socket_ops_t* ops = khc->_socket->ops;
+    khc->_sock_error_detail = 0;
+    khc->_sock_error = (ops->last_error != NULL) ?
+        ops->last_error(khc->_socket, &khc->_sock_error_detail) :
+        EBISU_SOCK_ERROR_NONE;
+}
+
+// The connection closed before the response ended.
+static void _closed_early(khc* khc) {
+    khc->_sock_error = EBISU_SOCK_ERROR_CLOSED;
+    khc->_sock_error_detail = 0;
+}
+
 void khc_state_connect(khc* khc) {
     const uint16_t port = khc->_enable_insecure ? 80:443;
     ebisu_sock_code_t con_res = khc->_socket->ops->connect(khc->_socket, khc->_host, port);
@@ -142,6 +158,7 @@ void khc_state_connect(khc* khc) {
         return;
     }
     if (con_res == EBISU_SOCK_FAIL) {
+        _record_sock_error(khc);
         khc->_result = KHC_ERR_SOCK_CONNECT;
         khc->_state = KHC_STATE_FINISHED;
         return;
@@ -211,6 +228,7 @@ void khc_state_req_line(khc* khc) {
         return;
     }
     if (send_res == EBISU_SOCK_FAIL) {
+        _record_sock_error(khc);
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_SEND;
         return;
@@ -251,6 +269,7 @@ void khc_state_req_host_header(khc* khc) {
         return;
     }
     if (send_res == EBISU_SOCK_FAIL) {
+        _record_sock_error(khc);
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_SEND;
         return;
@@ -307,6 +326,7 @@ void khc_state_req_header_send(khc* khc) {
         return;
     }
     if (send_res == EBISU_SOCK_FAIL) {
+        _record_sock_error(khc);
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_SEND;
         return;
@@ -344,6 +364,7 @@ void khc_state_req_header_send_crlf(khc* khc) {
         return;
     }
     if (send_res == EBISU_SOCK_FAIL) {
+        _record_sock_error(khc);
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_SEND;
         return;
@@ -427,6 +448,7 @@ void khc_state_req_header_end(khc* khc) {
         return;
     }
     if (send_res == EBISU_SOCK_FAIL) {
+        _record_sock_error(khc);
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_SEND;
         return;
@@ -550,6 +572,7 @@ void khc_state_req_body_send(khc* khc) {
         return;
     }
     if (send_res == EBISU_SOCK_FAIL) {
+        _record_sock_error(khc);
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_SEND;
         return;
@@ -581,6 +604,7 @@ void khc_state_resp_status_read(khc* khc) {
             // Closed before the status line ended.
             khc->_state = KHC_STATE_CLOSE;
             khc->_result = KHC_ERR_SOCK_RECV;
+            _closed_early(khc);
         }
         // Otherwise a read can end anywhere: read the rest of the line.
         return;
@@ -595,6 +619,7 @@ void khc_state_resp_status_read(khc* khc) {
         return;
     }
     if (read_res == EBISU_SOCK_FAIL) {
+        _record_sock_error(khc);
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_RECV;
         return;
@@ -724,6 +749,7 @@ void khc_state_resp_header_read(khc* khc) {
             // Closed before the headers ended: nothing more will come.
             khc->_state = KHC_STATE_CLOSE;
             khc->_result = KHC_ERR_SOCK_RECV;
+            _closed_early(khc);
             return;
         }
         khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
@@ -739,6 +765,7 @@ void khc_state_resp_header_read(khc* khc) {
         return;
     }
     if (read_res == EBISU_SOCK_FAIL) {
+        _record_sock_error(khc);
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_RECV;
         return;
@@ -779,6 +806,7 @@ void khc_state_resp_header_skip(khc* khc) {
             // Closed before the headers ended: nothing more will come.
             khc->_state = KHC_STATE_CLOSE;
             khc->_result = KHC_ERR_SOCK_RECV;
+            _closed_early(khc);
             return;
         }
         // check header boundary.
@@ -806,6 +834,7 @@ void khc_state_resp_header_skip(khc* khc) {
         return;
     }
     if (read_res == EBISU_SOCK_FAIL) {
+        _record_sock_error(khc);
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_RECV;
         return;
@@ -819,6 +848,7 @@ static void _end_resp_body(khc* khc) {
     khc->_state = KHC_STATE_CLOSE;
     if (khc->_resp_body_received < khc->_resp_content_length) {
         khc->_result = KHC_ERR_SOCK_RECV;
+        _closed_early(khc);
     }
 }
 
@@ -925,6 +955,7 @@ void khc_state_resp_body_read(khc* khc) {
         return;
     }
     if (read_res == EBISU_SOCK_FAIL) {
+        _record_sock_error(khc);
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_RECV;
         return;
@@ -1013,6 +1044,7 @@ void khc_state_resp_body_read_chunk_size(khc* khc) {
         if (read_size == 0) {
             khc->_state = KHC_STATE_CLOSE;
             khc->_result = KHC_ERR_SOCK_RECV;
+            _closed_early(khc);
             return;
         }
         khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
@@ -1028,6 +1060,7 @@ void khc_state_resp_body_read_chunk_size(khc* khc) {
         return;
     }
     if (read_res == EBISU_SOCK_FAIL) {
+        _record_sock_error(khc);
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_RECV;
         return;
@@ -1078,6 +1111,7 @@ void khc_state_resp_body_read_chunk_body(khc* khc) {
         if (read_size == 0) {
             khc->_state = KHC_STATE_CLOSE;
             khc->_result = KHC_ERR_SOCK_RECV;
+            _closed_early(khc);
             return;
         }
         khc->_body_read_size = read_size;
@@ -1094,6 +1128,7 @@ void khc_state_resp_body_read_chunk_body(khc* khc) {
         return;
     }
     if (read_res == EBISU_SOCK_FAIL) {
+        _record_sock_error(khc);
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_RECV;
         return;
@@ -1122,6 +1157,7 @@ void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
             if (read_size == 0) {
                 khc->_state = KHC_STATE_CLOSE;
                 khc->_result = KHC_ERR_SOCK_RECV;
+                _closed_early(khc);
                 return;
             }
             khc->_body_read_size += read_size;
@@ -1143,6 +1179,7 @@ void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
             return;
         }
         if (read_res == EBISU_SOCK_FAIL) {
+            _record_sock_error(khc);
             khc->_state = KHC_STATE_CLOSE;
             khc->_result = KHC_ERR_SOCK_RECV;
             return;
@@ -1208,6 +1245,7 @@ void khc_state_resp_body_skip_trailers(khc* khc) {
         return;
     }
     if (read_res == EBISU_SOCK_FAIL) {
+        _record_sock_error(khc);
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_SOCK_RECV;
         return;

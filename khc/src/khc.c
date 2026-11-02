@@ -234,6 +234,15 @@ void khc_reset_except_request(khc* khc) {
     khc->_sent_length = 0;
     khc->_started_ms = 0;
     khc->_again = false;
+    khc->_sock_error = EBISU_SOCK_ERROR_NONE;
+    khc->_sock_error_detail = 0;
+}
+
+ebisu_sock_error_t khc_get_sock_error(khc* khc, long* out_detail) {
+    if (out_detail != NULL) {
+        *out_detail = khc->_sock_error_detail;
+    }
+    return khc->_sock_error;
 }
 
 void khc_set_req_body_length(khc* khc, size_t length) {
