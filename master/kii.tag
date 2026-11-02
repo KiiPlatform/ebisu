@@ -12,6 +12,7 @@
     <class kind="struct">kii_mqtt_endpoint_t</class>
     <class kind="struct">kii_object_id_t</class>
     <class kind="struct">kii_installation_id_t</class>
+    <class kind="struct">kii_mqtt_will_t</class>
     <class kind="struct">kii_t</class>
     <class kind="struct">kii_ti_firmware_version_t</class>
     <class kind="struct">kii_mqtt_task_info</class>
@@ -237,6 +238,13 @@
       <name>kii_mqtt_qos_t</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a07529064920b8334cde333db7e3d5e32</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct kii_mqtt_will_t</type>
+      <name>kii_mqtt_will_t</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a782aebfd274c30bb8cd488663a14196c</anchor>
       <arglist></arglist>
     </member>
     <member kind="typedef">
@@ -979,6 +987,13 @@
     </member>
     <member kind="function">
       <type>kii_code_t</type>
+      <name>kii_api_call_set_body_reader</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a34c1c55c0581e0170e57a10090424c27</anchor>
+      <arglist>(kii_t *kii, KII_CB_READ read_cb, void *userdata, size_t length)</arglist>
+    </member>
+    <member kind="function">
+      <type>kii_code_t</type>
       <name>kii_api_call_append_header</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>aa9a202d325f0d5021d4d47ee6e78125c</anchor>
@@ -1032,6 +1047,13 @@
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a0cbee0f3d267e2ee4e6d1dfca8d44021</anchor>
       <arglist>(kii_t *kii, kii_mqtt_qos_t qos)</arglist>
+    </member>
+    <member kind="function">
+      <type>kii_code_t</type>
+      <name>kii_set_mqtt_will</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>ac514b2bc4ce6b7d588e3c8c61d98d6f2</anchor>
+      <arglist>(kii_t *kii, const kii_mqtt_will_t *will)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -1308,6 +1330,45 @@
       <name>task_state</name>
       <anchorfile>structkii__mqtt__task__info.html</anchorfile>
       <anchor>a10dd846ce66170de1a124dc32cdc46b8</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>kii_mqtt_will_t</name>
+    <filename>structkii__mqtt__will__t.html</filename>
+    <member kind="variable">
+      <type>const char *</type>
+      <name>topic</name>
+      <anchorfile>structkii__mqtt__will__t.html</anchorfile>
+      <anchor>a7d5837120f2e2fc822a997c7ef069889</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>const char *</type>
+      <name>message</name>
+      <anchorfile>structkii__mqtt__will__t.html</anchorfile>
+      <anchor>a72f9cd4519a43f1d9f7125fe451bc225</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>size_t</type>
+      <name>message_length</name>
+      <anchorfile>structkii__mqtt__will__t.html</anchorfile>
+      <anchor>ae1d46847f8aec3d5693fd4e239095680</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>kii_mqtt_qos_t</type>
+      <name>qos</name>
+      <anchorfile>structkii__mqtt__will__t.html</anchorfile>
+      <anchor>a40e09ce00236b597e59c971b9a63cf73</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>bool</type>
+      <name>retain</name>
+      <anchorfile>structkii__mqtt__will__t.html</anchorfile>
+      <anchor>ad967f20d37b0a0ca970fed18e969f7f7</anchor>
       <arglist></arglist>
     </member>
   </compound>

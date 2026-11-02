@@ -1,11 +1,8 @@
 var searchData=
 [
-  ['task_5fcreate_0',['task_create',['../../../platform/html/structebisu__system__ops__t.html#acb93b9e260c324f9f727d1eacefc5c94',1,'ebisu_system_ops_t']]],
-  ['task_5fstate_1',['task_state',['../structkii__mqtt__task__info.html#a10dd846ce66170de1a124dc32cdc46b8',1,'kii_mqtt_task_info']]],
-  ['tokens_2',['tokens',['../../../jkii/html/structjkii__resource__t.html#adfd476e8fc0cfba750e837734287cb8a',1,'jkii_resource_t']]],
-  ['tokens_5fnum_3',['tokens_num',['../../../jkii/html/structjkii__resource__t.html#a831a9295c6f4eecfc2889e5792bd2953',1,'jkii_resource_t']]],
-  ['topic_4',['topic',['../structkii__mqtt__endpoint__t.html#a541920b531df8bb20f58e1dd7c0a3c81',1,'kii_mqtt_endpoint_t']]],
-  ['topic_5fname_5',['topic_name',['../structkii__topic__t.html#a2ea6785013916b715b151da705a5d54a',1,'kii_topic_t']]],
-  ['ttl_6',['ttl',['../structkii__mqtt__endpoint__t.html#a5fb0661ad3c79d4fae5c061052a59f1b',1,'kii_mqtt_endpoint_t']]],
-  ['type_7',['type',['../../../jkii/html/structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841',1,'jkii_field_t::type'],['../../../jkii/html/structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d',1,'jkii_primitive_t::type']]]
+  ['scope_0',['scope',['../structkii__bucket__t.html#aba6f08f67d2f5b57aaedceb75dfc0528',1,'kii_bucket_t::scope'],['../structkii__topic__t.html#a2967810519663f7e6de38f71098d9709',1,'kii_topic_t::scope']]],
+  ['scope_5fid_1',['scope_id',['../structkii__bucket__t.html#af5cdb5e5d4558d80a4196d7c91bc81be',1,'kii_bucket_t::scope_id'],['../structkii__topic__t.html#a194b3a3e1aefe07ba9662da0b4667c07',1,'kii_topic_t::scope_id']]],
+  ['send_2',['send',['../../../platform/html/structebisu__socket__ops__t.html#adb543d912cc7f9758ed4713cfeed4666',1,'ebisu_socket_ops_t']]],
+  ['start_3',['start',['../../../jkii/html/structjkii__field__t.html#a01a5294845f38f7c7567059894426ab4',1,'jkii_field_t']]],
+  ['string_4',['string',['../../../jkii/html/structjkii__field__t.html#a819930194ef418853ab716ad36cc01e6',1,'jkii_field_t']]]
 ];

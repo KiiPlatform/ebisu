@@ -116,6 +116,9 @@ Data Structures</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structkii__installation__id__t.html">kii_installation_id_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents installation ID.  <a href="structkii__installation__id__t.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structkii__mqtt__will__t.html">kii_mqtt_will_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A last will: the message the broker is to publish if the connection is lost, rather than ended with DISCONNECT, as the task ends it when it stops. Whether the broker publishes it, and who receives it, is the broker's.  <a href="structkii__mqtt__will__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structkii__t.html">kii_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stores data/ callbacks used by kii module.  <a href="structkii__t.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -250,6 +253,10 @@ typedef struct <a class="el" href="structkii__installation__id__t.html">kii_inst
 typedef enum <a class="el" href="kii_8h.html#a971acd03c2d0df621d7f60b0b4644dbb">kii_mqtt_qos_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kii_mqtt_qos_t</b></td></tr>
 <tr class="memdesc:a07529064920b8334cde333db7e3d5e32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Qualities of service the push task can subscribe with. <br /></td></tr>
 <tr class="separator:a07529064920b8334cde333db7e3d5e32"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a782aebfd274c30bb8cd488663a14196c" id="r_a782aebfd274c30bb8cd488663a14196c"><td class="memItemLeft" align="right" valign="top"><a id="a782aebfd274c30bb8cd488663a14196c" name="a782aebfd274c30bb8cd488663a14196c"></a>
+typedef struct <a class="el" href="structkii__mqtt__will__t.html">kii_mqtt_will_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kii_mqtt_will_t</b></td></tr>
+<tr class="memdesc:a782aebfd274c30bb8cd488663a14196c"><td class="mdescLeft">&#160;</td><td class="mdescRight">A last will: the message the broker is to publish if the connection is lost, rather than ended with DISCONNECT, as the task ends it when it stops. Whether the broker publishes it, and who receives it, is the broker's. <br /></td></tr>
+<tr class="separator:a782aebfd274c30bb8cd488663a14196c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab1332877c811291e2a9693aaa5c15858" id="r_ab1332877c811291e2a9693aaa5c15858"><td class="memItemLeft" align="right" valign="top"><a id="ab1332877c811291e2a9693aaa5c15858" name="ab1332877c811291e2a9693aaa5c15858"></a>
 typedef struct <a class="el" href="structkii__t.html">kii_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kii_t</b></td></tr>
 <tr class="memdesc:ab1332877c811291e2a9693aaa5c15858"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stores data/ callbacks used by kii module. <br /></td></tr>
@@ -505,6 +512,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a630b808717fedeb41a643b692617bc39" id="r_a630b808717fedeb41a643b692617bc39"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a630b808717fedeb41a643b692617bc39">kii_api_call_append_body</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const char *chunk, size_t chunk_size)</td></tr>
 <tr class="memdesc:a630b808717fedeb41a643b692617bc39"><td class="mdescLeft">&#160;</td><td class="mdescRight">Append request body.  <br /></td></tr>
 <tr class="separator:a630b808717fedeb41a643b692617bc39"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a34c1c55c0581e0170e57a10090424c27" id="r_a34c1c55c0581e0170e57a10090424c27"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a34c1c55c0581e0170e57a10090424c27">kii_api_call_set_body_reader</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii_8h.html#a8aff70d991d649449726c7967ade0f8d">KII_CB_READ</a> read_cb, void *userdata, size_t length)</td></tr>
+<tr class="memdesc:a34c1c55c0581e0170e57a10090424c27"><td class="mdescLeft">&#160;</td><td class="mdescRight">Have the request body read through a callback as it is sent.  <br /></td></tr>
+<tr class="separator:a34c1c55c0581e0170e57a10090424c27"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa9a202d325f0d5021d4d47ee6e78125c" id="r_aa9a202d325f0d5021d4d47ee6e78125c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#aa9a202d325f0d5021d4d47ee6e78125c">kii_api_call_append_header</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const char *key, const char *value)</td></tr>
 <tr class="memdesc:aa9a202d325f0d5021d4d47ee6e78125c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Append request header.  <br /></td></tr>
 <tr class="separator:aa9a202d325f0d5021d4d47ee6e78125c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -529,6 +539,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a0cbee0f3d267e2ee4e6d1dfca8d44021" id="r_a0cbee0f3d267e2ee4e6d1dfca8d44021"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a0cbee0f3d267e2ee4e6d1dfca8d44021">kii_set_mqtt_qos</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii_8h.html#a971acd03c2d0df621d7f60b0b4644dbb">kii_mqtt_qos_t</a> qos)</td></tr>
 <tr class="memdesc:a0cbee0f3d267e2ee4e6d1dfca8d44021"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the quality of service the push task subscribes with.  <br /></td></tr>
 <tr class="separator:a0cbee0f3d267e2ee4e6d1dfca8d44021"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac514b2bc4ce6b7d588e3c8c61d98d6f2" id="r_ac514b2bc4ce6b7d588e3c8c61d98d6f2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ac514b2bc4ce6b7d588e3c8c61d98d6f2">kii_set_mqtt_will</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const <a class="el" href="structkii__mqtt__will__t.html">kii_mqtt_will_t</a> *will)</td></tr>
+<tr class="memdesc:ac514b2bc4ce6b7d588e3c8c61d98d6f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the last will CONNECT carries.  <br /></td></tr>
+<tr class="separator:ac514b2bc4ce6b7d588e3c8c61d98d6f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaa66f396db8d5e91babf417ecfa0f1b5" id="r_aaa66f396db8d5e91babf417ecfa0f1b5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#aaa66f396db8d5e91babf417ecfa0f1b5">kii_set_mqtt_clean_session</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, bool clean_session)</td></tr>
 <tr class="memdesc:aaa66f396db8d5e91babf417ecfa0f1b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set whether the push task asks for a clean session.  <br /></td></tr>
 <tr class="separator:aaa66f396db8d5e91babf417ecfa0f1b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1178,6 +1191,61 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="kii_8h.
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>kii_code_t. </dd></dl>
+
+</div>
+</div>
+<a id="a34c1c55c0581e0170e57a10090424c27" name="a34c1c55c0581e0170e57a10090424c27"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a34c1c55c0581e0170e57a10090424c27">&#9670;&#160;</a></span>kii_api_call_set_body_reader()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a> kii_api_call_set_body_reader </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
+          <td class="paramname"><em>kii</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="kii_8h.html#a8aff70d991d649449726c7967ade0f8d">KII_CB_READ</a>&#160;</td>
+          <td class="paramname"><em>read_cb</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>userdata</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>length</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Have the request body read through a callback as it is sent. </p>
+<p>In place of <a class="el" href="kii_8h.html#a630b808717fedeb41a643b692617bc39" title="Append request body.">kii_api_call_append_body()</a>, between <a class="el" href="kii_8h.html#a0cc7c157807c5eac4598deeb6b1fe2be" title="Start making REST API call.">kii_api_call_start()</a> and <a class="el" href="kii_8h.html#aa6640658ca65a4a54319b8ff474450c6" title="Send request and retrieve response. Assume HTTP request is built by following APIs:">kii_api_call_run()</a>: the body never has to be held whole, so it can be longer than the buffer set by <a class="el" href="kii_8h.html#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a>, which then holds only the response. read_cb is called until it returns 0, as for <a class="el" href="kii_8h.html#a818b618ecdcb5fc08dbad0462d37f639" title="Upload object body.">kii_upload_object_body()</a>, with at most the stream buffer's size each time.</p>
+<p>With a length, the body goes with a Content-Length, and read_cb has to give exactly that much: more, or 0 sooner, fails the call with KII_ERR_FAIL, as the server would wait for the rest. With KHC_REQ_BODY_LENGTH_UNKNOWN it goes chunked, which some intermediaries handle poorly.</p>
+<p>With a session, a request the server refuses for its token isn't sent again, as its body has been read once: <a class="el" href="kii_8h.html#aa6640658ca65a4a54319b8ff474450c6" title="Send request and retrieve response. Assume HTTP request is built by following APIs:">kii_api_call_run()</a> gives the 403, and the next request goes with the renewed token.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">read_cb</td><td>Reads the body. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Given to read_cb. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">length</td><td>The body's length, or KHC_REQ_BODY_LENGTH_UNKNOWN. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>KII_ERR_FAIL if read_cb is NULL or <a class="el" href="kii_8h.html#a630b808717fedeb41a643b692617bc39" title="Append request body.">kii_api_call_append_body()</a> has appended to the body already. </dd></dl>
 
 </div>
 </div>
@@ -3430,6 +3498,45 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="kii_8h.
 
 </div>
 </div>
+<a id="ac514b2bc4ce6b7d588e3c8c61d98d6f2" name="ac514b2bc4ce6b7d588e3c8c61d98d6f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac514b2bc4ce6b7d588e3c8c61d98d6f2">&#9670;&#160;</a></span>kii_set_mqtt_will()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a> kii_set_mqtt_will </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
+          <td class="paramname"><em>kii</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structkii__mqtt__will__t.html">kii_mqtt_will_t</a> *&#160;</td>
+          <td class="paramname"><em>will</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the last will CONNECT carries. </p>
+<p>The broker publishes it if the task's connection is lost, rather than ended with DISCONNECT, which the task sends when it stops: other clients can tell that the device went away. Each CONNECT carries it, and the buffer set by <a class="el" href="kii_8h.html#adb5bef6d077b15fca3195ef7d39681cd" title="Set buffer used to parse MQTT message.">kii_set_mqtt_buff()</a> has to hold it too, its topic and message. Set it before starting the task.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">will</td><td>The will, which is kept as a pointer, so it and what it points to have to outlive the task, or NULL for none, the default. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>KII_ERR_TOO_LARGE_DATA for a topic or message longer than 65535 bytes, KII_ERR_FAIL for one without a topic, with a NULL message of some length, or with a QoS that isn't one; changing nothing. </dd></dl>
+
+</div>
+</div>
 <a id="a2c2e5b7c2387af3311c7fada1d4e9974" name="a2c2e5b7c2387af3311c7fada1d4e9974"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2c2e5b7c2387af3311c7fada1d4e9974">&#9670;&#160;</a></span>kii_set_request_timeout()</h2>
 
@@ -4411,7 +4518,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="kii_8h.
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 17:57:59 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Mon Nov 2 2026 18:37:37 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
