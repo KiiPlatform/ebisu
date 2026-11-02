@@ -79,7 +79,9 @@ ebisu_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) 
     * Bit   7                          6                        5                    4  3            2            1 0
     *        User Name Flag     Password Flag    Will Retain        Will QoS     Will Flag   Clean Session   Reserved
     */
-    kii->_mqtt_buffer[i++] = (char)0xc2;
+    /* Username and password, and clean session unless the broker is to keep
+     * the session. */
+    kii->_mqtt_buffer[i++] = (char)(kii->_mqtt_clean_session == KII_FALSE ? 0xc0 : 0xc2);
     /* Variable header:Keep Alive, which kii_start_push_task() keeps to 16 bits */
     kii->_mqtt_buffer[i++] = (keep_alive_interval & 0xff00) >> 8;
     kii->_mqtt_buffer[i++] = keep_alive_interval & 0x00ff;
@@ -126,7 +128,7 @@ ebisu_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) 
     return send_err;
 }
 
-ebisu_sock_code_t _mqtt_send_subscribe(kii_t* kii, const char* topic, kii_mqtt_qos qos)
+ebisu_sock_code_t _mqtt_send_subscribe(kii_t* kii, const char* topic, kii_mqtt_qos_t qos)
 {
     memset(kii->_mqtt_buffer, 0, kii->_mqtt_buffer_size);
     int i = 8;
@@ -385,6 +387,8 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
     }
     _reset_elapsed(state, 0);
     state->remaining_message_size = 0;
+    state->message_qos = 0;
+    state->awaiting_suback = KII_FALSE;
     state->pingresp_received = KII_TRUE;
     state->sock_connected = KII_FALSE;
     state->retry_wait_ms = RETRY_WAIT_MIN_MS;
@@ -605,8 +609,8 @@ void _mqtt_state_send_subscribe(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
     kii_mqtt_task_info* task_info = &state->info;
-    // TODO: enable to configure QoS.
-    ebisu_sock_code_t res = _mqtt_send_subscribe(kii, state->endpoint.topic, QOS0);
+    ebisu_sock_code_t res = _mqtt_send_subscribe(kii, state->endpoint.topic,
+            kii->_mqtt_qos == KII_MQTT_QOS_1 ? KII_MQTT_QOS_1 : KII_MQTT_QOS_0);
     if (res == EBISU_SOCK_FAIL) {
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
@@ -619,6 +623,7 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
     kii_mqtt_task_info* task_info = &state->info;
+    state->awaiting_suback = KII_FALSE;
     kii_mqtt_fixed_header fixed_header;
     ebisu_sock_code_t res = _mqtt_recv_fixed_header(kii, &fixed_header);
     if (res != EBISU_SOCK_OK) {
@@ -627,6 +632,16 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
         return;
     }
     unsigned char ptype = fixed_header.byte1 & 0xf0;
+    if (ptype == 0x30) {
+        // A broker may send messages before SUBACK, as one that kept the
+        // session does, for the subscription it kept. Take the message, then
+        // wait for SUBACK again.
+        state->remaining_message_size = fixed_header.remaining_length;
+        state->message_qos = ((unsigned char)fixed_header.byte1 >> 1) & 0x03;
+        state->awaiting_suback = KII_TRUE;
+        task_info->task_state = KII_MQTT_ST_RECV_MSG;
+        return;
+    }
     if (ptype != 0x90) {
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
@@ -717,6 +732,7 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
         unsigned char mtype = fh.byte1 & 0xf0;
         if (mtype == 0x30) { // PUBLISH
             state->remaining_message_size = fh.remaining_length;
+            state->message_qos = ((unsigned char)fh.byte1 >> 1) & 0x03;
             task_info->task_state = KII_MQTT_ST_RECV_MSG;
             // Estimate worst case.
             _add_elapsed_ms(state, _to_recv_ms(kii));
@@ -748,23 +764,98 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
     }
 }
 
+// Sends PUBACK, which acknowledges the QoS 1 message with packet identifier id.
+static ebisu_sock_code_t _mqtt_send_puback(kii_t* kii, uint16_t id)
+{
+    char buff[4];
+    buff[0] = (char)0x40;
+    buff[1] = 0x02;
+    buff[2] = (char)(id >> 8);
+    buff[3] = (char)(id & 0xff);
+    ebisu_sock_code_t sock_err = EBISU_SOCK_FAIL;
+    size_t total_sent = 0;
+    while (total_sent < sizeof(buff)) {
+        size_t sent_len = 0;
+        sock_err = kii->_mqtt_socket->ops->send(kii->_mqtt_socket, &buff[total_sent], sizeof(buff) - total_sent, &sent_len);
+        if (sock_err == EBISU_SOCK_AGAIN || sock_err == EBISU_SOCK_FAIL) {
+            // Don't accept non-blocking socket when send_err is EBISU_SOCK_AGAIN.
+            return EBISU_SOCK_FAIL;
+        }
+        total_sent += sent_len;
+    }
+    return sock_err;
+}
+
+// Reads and drops a message larger than the buffer. Of one at QoS 1, it reads
+// the packet identifier on the way, and says so, for the message to be
+// acknowledged all the same: the broker would send it again and again, and it
+// would never fit.
+static ebisu_sock_code_t _mqtt_recv_msg_trash(mqtt_state_t* state,
+        kii_bool_t* out_has_id, uint16_t* out_id)
+{
+    kii_t* kii = state->kii;
+    unsigned long left = state->remaining_message_size;
+    *out_has_id = KII_FALSE;
+    if (state->message_qos == 0 || left < 2) {
+        return _mqtt_recv_remaining_trash(kii, left);
+    }
+    char two[2];
+    ebisu_sock_code_t res = _mqtt_recv_remaining(kii, 2, two);
+    if (res != EBISU_SOCK_OK) {
+        return res;
+    }
+    left -= 2;
+    unsigned long topic_size = (unsigned char)two[0] * 256 + (unsigned char)two[1];
+    if (topic_size + 2 > left) {
+        // No room for a packet identifier after the topic.
+        return _mqtt_recv_remaining_trash(kii, left);
+    }
+    res = _mqtt_recv_remaining_trash(kii, topic_size);
+    if (res != EBISU_SOCK_OK) {
+        return res;
+    }
+    res = _mqtt_recv_remaining(kii, 2, two);
+    if (res != EBISU_SOCK_OK) {
+        return res;
+    }
+    res = _mqtt_recv_remaining_trash(kii, left - topic_size - 2);
+    if (res != EBISU_SOCK_OK) {
+        return res;
+    }
+    *out_has_id = KII_TRUE;
+    *out_id = (uint16_t)((unsigned char)two[0] * 256 + (unsigned char)two[1]);
+    return EBISU_SOCK_OK;
+}
+
 void _mqtt_state_recv_msg(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
     kii_mqtt_task_info* task_info = &state->info;
     const unsigned long remaining_message_size = state->remaining_message_size;
+    // Whether the message is at QoS 1, and so to be acknowledged, and with
+    // which packet identifier.
+    kii_bool_t has_id = KII_FALSE;
+    uint16_t id = 0;
+    if (state->message_qos > 1) {
+        // QoS 2, which the task never subscribes with, or 3, which there is
+        // none of: the broker has broken the protocol, and MQTT has the client
+        // close the connection.
+        _reset_elapsed(state, 0);
+        _delay_ms(kii, WAIT_MS);
+        task_info->task_state = KII_MQTT_ST_RECONNECT;
+        return;
+    }
     if (remaining_message_size > kii->_mqtt_buffer_size) {
         // Ignore message.
-        ebisu_sock_code_t res = _mqtt_recv_remaining_trash(kii, remaining_message_size);
+        ebisu_sock_code_t res = _mqtt_recv_msg_trash(state, &has_id, &id);
         if (res != EBISU_SOCK_OK) {
             _reset_elapsed(state, 0);
             _delay_ms(kii, WAIT_MS);
             task_info->task_state = KII_MQTT_ST_RECONNECT;
-        } else {
-            _add_elapsed_ms(state, ARRIVED_MSG_READ_TIME + WAIT_MS);
-            _delay_ms(kii, WAIT_MS);
-            task_info->task_state = KII_MQTT_ST_RECV_READY;
+            return;
         }
+        _add_elapsed_ms(state, ARRIVED_MSG_READ_TIME + WAIT_MS);
+        _delay_ms(kii, WAIT_MS);
     } else {
         memset(kii->_mqtt_buffer, '\0', kii->_mqtt_buffer_size);
         ebisu_sock_code_t res = _mqtt_recv_remaining(kii, remaining_message_size, kii->_mqtt_buffer);
@@ -772,24 +863,41 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
             _reset_elapsed(state, 0);
             _delay_ms(kii, WAIT_MS);
             task_info->task_state = KII_MQTT_ST_RECONNECT;
-        } else {
-            _add_elapsed_ms(state, ARRIVED_MSG_READ_TIME);
-            // 2 bytes: topic size. packet identifier is not present since QoS0
-            // The topic size comes from the message: read its bytes unsigned,
-            // as char may be signed, and check the topic fits before taking the
-            // rest as the body. A message where it does not has been read whole
-            // all the same, so drop it, as one larger than the buffer is.
-            if (remaining_message_size >= 2) {
-                unsigned int topic_size = (unsigned char)kii->_mqtt_buffer[0] * 256 + (unsigned char)kii->_mqtt_buffer[1];
-                if (topic_size <= remaining_message_size - 2) {
-                    char* body_ptr = kii->_mqtt_buffer + topic_size + 2;
-                    size_t body_length = remaining_message_size - topic_size - 2;
-                    kii->_cb_push_received(body_ptr, body_length, kii->_push_data);
+            return;
+        }
+        _add_elapsed_ms(state, ARRIVED_MSG_READ_TIME);
+        // 2 bytes: topic size, then the topic, and at QoS 1 a packet
+        // identifier of 2 bytes, then the body.
+        // The topic size comes from the message: read its bytes unsigned,
+        // as char may be signed, and check the topic and the packet identifier
+        // fit before taking the rest as the body. A message where they do not
+        // has been read whole all the same, so drop it, as one larger than the
+        // buffer is.
+        if (remaining_message_size >= 2) {
+            unsigned int topic_size = (unsigned char)kii->_mqtt_buffer[0] * 256 + (unsigned char)kii->_mqtt_buffer[1];
+            const unsigned int id_size = state->message_qos == 1 ? 2 : 0;
+            if (topic_size + id_size <= remaining_message_size - 2) {
+                char* id_ptr = kii->_mqtt_buffer + topic_size + 2;
+                if (id_size > 0) {
+                    has_id = KII_TRUE;
+                    id = (uint16_t)((unsigned char)id_ptr[0] * 256 + (unsigned char)id_ptr[1]);
                 }
+                char* body_ptr = id_ptr + id_size;
+                size_t body_length = remaining_message_size - topic_size - 2 - id_size;
+                kii->_cb_push_received(body_ptr, body_length, kii->_push_data);
             }
-            task_info->task_state = KII_MQTT_ST_RECV_READY;
         }
     }
+    // Once the push callback has returned, so that a message lost on its way to
+    // the application is sent again.
+    if (has_id == KII_TRUE && _mqtt_send_puback(kii, id) != EBISU_SOCK_OK) {
+        _reset_elapsed(state, 0);
+        _delay_ms(kii, WAIT_MS);
+        task_info->task_state = KII_MQTT_ST_RECONNECT;
+        return;
+    }
+    task_info->task_state = state->awaiting_suback == KII_TRUE ?
+        KII_MQTT_ST_RECV_SUBACK : KII_MQTT_ST_RECV_READY;
 }
 
 void _mqtt_state_send_pingreq(mqtt_state_t* state)

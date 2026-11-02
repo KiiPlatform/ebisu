@@ -128,6 +128,16 @@ void tio_handler_set_mqtt_buff(
     kii_set_mqtt_buff(&handler->_kii, buff, buff_size);
 }
 
+void tio_handler_set_mqtt_qos(tio_handler_t* handler, kii_mqtt_qos_t qos)
+{
+    kii_set_mqtt_qos(&handler->_kii, qos);
+}
+
+void tio_handler_set_mqtt_clean_session(tio_handler_t* handler, tio_bool_t clean_session)
+{
+    kii_set_mqtt_clean_session(&handler->_kii, clean_session);
+}
+
 void tio_handler_set_keep_alive_interval(
         tio_handler_t* handler,
         uint32_t keep_alive_interval)

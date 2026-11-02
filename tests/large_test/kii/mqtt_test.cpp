@@ -462,3 +462,95 @@ TEST_CASE("The MQTT task renews a token the server refuses")
     CHECK_FALSE( spoiled(&session) );
     CHECK( t.connects.load() == 1 );
 }
+
+// With QoS 1 and a session the broker keeps, a message sent at QoS 1 while the
+// task is stopped arrives once it is started again. One that arrived while it
+// ran was acknowledged, so it isn't sent again.
+TEST_CASE("QoS 1 messages sent while the task is away arrive when it is back")
+{
+    // To Avoid 429 Too Many Requests
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    const size_t buff_size = 4096;
+    char buff[buff_size];
+    char mqtt_buff[2048];
+    kii_t kii;
+    ebisu::ltest::ssl::SSLData http_ssl_ctx;
+    ebisu::ltest::ssl::SSLData unused_mqtt_ssl_ctx;
+    jkii_token_t tokens[256];
+    jkii_resource_t resource = {tokens, 256};
+    kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &unused_mqtt_ssl_ctx, &resource);
+
+    MqttTest t;
+    set_up_task(&kii, t, mqtt_buff, sizeof(mqtt_buff));
+    kii_set_mqtt_qos(&kii, KII_MQTT_QOS_1);
+    kii_set_mqtt_clean_session(&kii, KII_FALSE);
+
+    const std::string vid = "ltest_mqtt_qos1_" + std::to_string(kiiltest::current_time());
+    REQUIRE( kii_ti_onboard(&kii, vid.c_str(), "1234", NULL, NULL, NULL, NULL) == KII_ERR_OK );
+    const std::string thing_id = kiiltest::author(&kii).author_id;
+    const std::string run_id = std::to_string(kiiltest::current_time());
+    // Sent at QoS 1.
+    auto message = [](const std::string& nonce) {
+        return "{\"data\":{\"nonce\":\"" + nonce + "\"},\"mqtt\":{\"enabled\":true,\"qos\":1}}";
+    };
+
+    REQUIRE( kii_start_push_task(&kii, KEEP_ALIVE, cb_push, &t) == KII_ERR_OK );
+    StopTask stop_task{t};
+    REQUIRE( wait_for(t, 120, [&t] {
+        return t.count(KII_MQTT_ST_RECV_READY) > 0 || t.exited;
+    }) );
+    {
+        std::lock_guard<std::mutex> lock(t.mutex);
+        REQUIRE_FALSE( t.exited );
+    }
+
+    const std::string present = message("present-" + run_id);
+    REQUIRE( run_on_task(t, [&kii, &t, &thing_id, &present] {
+        kii_code_t res = kii_send_push_message_to_thing(&kii, thing_id.c_str(), present.c_str());
+        int status = khc_get_status_code(&kii._khc);
+        std::lock_guard<std::mutex> lock(t.mutex);
+        t.send_res = res;
+        t.send_status = status;
+    }) );
+    {
+        std::lock_guard<std::mutex> lock(t.mutex);
+        INFO( "status " << t.send_status );
+        REQUIRE( t.send_res == KII_ERR_OK );
+    }
+    REQUIRE( received(t, "present-" + run_id) );
+
+    // Stopped, so the kii_t is this thread's again.
+    {
+        std::lock_guard<std::mutex> lock(t.mutex);
+        t.stop = true;
+    }
+    REQUIRE( wait_for(t, TO_RECV * 3 + 10, [&t] { return t.exited; }) );
+    t.task.join();
+    // Long enough for the broker to have seen the connection end.
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    const std::string away = message("away-" + run_id);
+    {
+        kii_code_t res = kii_send_push_message_to_thing(&kii, thing_id.c_str(), away.c_str());
+        INFO( "status " << khc_get_status_code(&kii._khc) );
+        REQUIRE( res == KII_ERR_OK );
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(t.mutex);
+        t.stop = false;
+        t.exited = false;
+        t.states.clear();
+        t.received.clear();
+    }
+    REQUIRE( kii_start_push_task(&kii, KEEP_ALIVE, cb_push, &t) == KII_ERR_OK );
+    REQUIRE( received(t, "away-" + run_id) );
+    // Time for anything else the broker kept to arrive.
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    {
+        std::lock_guard<std::mutex> lock(t.mutex);
+        REQUIRE_FALSE( t.exited );
+        for (const std::string& m : t.received) {
+            CHECK( m.find("present-" + run_id) == std::string::npos );
+        }
+    }
+}

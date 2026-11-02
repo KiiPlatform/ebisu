@@ -491,6 +491,30 @@ void tio_handler_set_cb_push(tio_handler_t* handler, TIO_CB_PUSH cb_push, void* 
 void tio_handler_set_mqtt_buff(tio_handler_t* handler, char* buff, size_t buff_size);
 
 /**
+ * \brief Set the quality of service the handler subscribes with.
+ *
+ * See kii_set_mqtt_qos(): QoS 0 by default, and with QoS 1 a command sent at
+ * QoS 1 is sent until the handler acknowledges it, once the action callbacks
+ * have run, so it may arrive twice. Set it before starting the handler.
+ *
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] qos The quality of service.
+ */
+void tio_handler_set_mqtt_qos(tio_handler_t* handler, kii_mqtt_qos_t qos);
+
+/**
+ * \brief Set whether the handler asks for a clean session.
+ *
+ * See kii_set_mqtt_clean_session(): with KII_FALSE, and QoS 1, the broker
+ * keeps the commands sent at QoS 1 while the handler is away, and sends them
+ * when it connects again. Set it before starting the handler.
+ *
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] clean_session KII_FALSE to have the broker keep the session.
+ */
+void tio_handler_set_mqtt_clean_session(tio_handler_t* handler, tio_bool_t clean_session);
+
+/**
  * \brief Set MQTT Keep-Alive interval.
  *
  * Limitation: keep_alive_interval must be larger than the socket's recv and send timeouts.

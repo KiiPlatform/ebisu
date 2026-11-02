@@ -298,6 +298,16 @@ typedef void (*KII_PUSH_RECEIVED_CB)(
         size_t message_length,
         void* userdata);
 
+/** \brief Qualities of service the push task can subscribe with. */
+typedef enum kii_mqtt_qos_t {
+    /** \brief At most once, the default. A message the broker has no
+     * connection to send on is lost. */
+    KII_MQTT_QOS_0,
+    /** \brief At least once. The broker sends a message again until the task
+     * acknowledges it, so a message can arrive twice. */
+    KII_MQTT_QOS_1
+} kii_mqtt_qos_t;
+
 /**
  * \brief Stores data/ callbacks used by kii module.
  */
@@ -324,6 +334,8 @@ typedef struct kii_t {
 
     char* _mqtt_buffer; /**< \private */
     size_t _mqtt_buffer_size; /**< \private */
+    kii_mqtt_qos_t _mqtt_qos; /**< \private */
+    kii_bool_t _mqtt_clean_session; /**< \private */
 
     uint16_t _keep_alive_interval; /**< \private */
     kii_bool_t _push_task_running; /**< \private */
@@ -1368,6 +1380,39 @@ void kii_set_http_socket(kii_t* kii, ebisu_socket_t* socket);
  * \param [in] buff_size Size of the buffer.
  */
 void kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size);
+
+/**
+ * \brief Set the quality of service the push task subscribes with.
+ *
+ * QoS 0 by default. With QoS 1, a message the sender asks to be sent at QoS 1
+ * is sent until the task acknowledges it, which the task does once the push
+ * callback has returned, so a message sent as the connection is lost arrives
+ * after the task reconnects, and may arrive twice. Kii Cloud sends a push
+ * message at QoS 1 when its "mqtt" object has "qos": 1. A message is sent at
+ * the lower of the two. Set it before starting the task.
+ *
+ * A message too large for the buffer set by kii_set_mqtt_buff() is still
+ * dropped, and at QoS 1 acknowledged all the same, as it would never fit.
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] qos The quality of service.
+ */
+void kii_set_mqtt_qos(kii_t* kii, kii_mqtt_qos_t qos);
+
+/**
+ * \brief Set whether the push task asks for a clean session.
+ *
+ * KII_TRUE by default: the broker forgets the task's session, its
+ * subscription included, when the connection ends. With KII_FALSE, it keeps
+ * the session, and with QoS 1 set by kii_set_mqtt_qos() the messages sent at
+ * QoS 1 while the task is away, and sends them when it connects again: while
+ * it reconnects, or after it is stopped and started again. The session is the
+ * thing's, kept under its topic. Set it before starting the task.
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] clean_session KII_FALSE to have the broker keep the session.
+ */
+void kii_set_mqtt_clean_session(kii_t* kii, kii_bool_t clean_session);
 
 /**
  * \brief Set the socket the MQTT task connects to the broker on.
