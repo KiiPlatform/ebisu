@@ -240,6 +240,10 @@ typedef struct <a class="el" href="structkii__installation__id__t.html">kii_inst
 <tr class="memitem:afeba27d97c92ad7a3a03374248eaeb14" id="r_afeba27d97c92ad7a3a03374248eaeb14"><td class="memItemLeft" align="right" valign="top">typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#afeba27d97c92ad7a3a03374248eaeb14">KII_PUSH_RECEIVED_CB</a>) (const char *message, size_t message_length, void *userdata)</td></tr>
 <tr class="memdesc:afeba27d97c92ad7a3a03374248eaeb14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when received push message via MQTT.  <br /></td></tr>
 <tr class="separator:afeba27d97c92ad7a3a03374248eaeb14"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a07529064920b8334cde333db7e3d5e32" id="r_a07529064920b8334cde333db7e3d5e32"><td class="memItemLeft" align="right" valign="top"><a id="a07529064920b8334cde333db7e3d5e32" name="a07529064920b8334cde333db7e3d5e32"></a>
+typedef enum <a class="el" href="kii_8h.html#a971acd03c2d0df621d7f60b0b4644dbb">kii_mqtt_qos_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kii_mqtt_qos_t</b></td></tr>
+<tr class="memdesc:a07529064920b8334cde333db7e3d5e32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Qualities of service the push task can subscribe with. <br /></td></tr>
+<tr class="separator:a07529064920b8334cde333db7e3d5e32"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab1332877c811291e2a9693aaa5c15858" id="r_ab1332877c811291e2a9693aaa5c15858"><td class="memItemLeft" align="right" valign="top"><a id="ab1332877c811291e2a9693aaa5c15858" name="ab1332877c811291e2a9693aaa5c15858"></a>
 typedef struct <a class="el" href="structkii__t.html">kii_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kii_t</b></td></tr>
 <tr class="memdesc:ab1332877c811291e2a9693aaa5c15858"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stores data/ callbacks used by kii module. <br /></td></tr>
@@ -289,6 +293,11 @@ Enumerations</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:a81467f34ee2895b86ca3eb7b3bac37e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Versions of MQTT the push task can speak.  <a href="kii_8h.html#a81467f34ee2895b86ca3eb7b3bac37e6">More...</a><br /></td></tr>
 <tr class="separator:a81467f34ee2895b86ca3eb7b3bac37e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a971acd03c2d0df621d7f60b0b4644dbb" id="r_a971acd03c2d0df621d7f60b0b4644dbb"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a971acd03c2d0df621d7f60b0b4644dbb">kii_mqtt_qos_t</a> { <a class="el" href="kii_8h.html#a971acd03c2d0df621d7f60b0b4644dbba963217cd639f8179891935d8207ad632">KII_MQTT_QOS_0</a>
+, <a class="el" href="kii_8h.html#a971acd03c2d0df621d7f60b0b4644dbbafac745a5df8ea0fafaea7bc3d0440ca7">KII_MQTT_QOS_1</a>
+ }</td></tr>
+<tr class="memdesc:a971acd03c2d0df621d7f60b0b4644dbb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Qualities of service the push task can subscribe with.  <a href="kii_8h.html#a971acd03c2d0df621d7f60b0b4644dbb">More...</a><br /></td></tr>
+<tr class="separator:a971acd03c2d0df621d7f60b0b4644dbb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afbdebbbeb8812da258f2c985a2b10db3" id="r_afbdebbbeb8812da258f2c985a2b10db3"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#afbdebbbeb8812da258f2c985a2b10db3">kii_mqtt_task_state</a> { <br />
 &#160;&#160;<a class="el" href="kii_8h.html#afbdebbbeb8812da258f2c985a2b10db3a732682069159c445921e286c056aa6bb">KII_MQTT_ST_INSTALL_PUSH</a>
 , <a class="el" href="kii_8h.html#afbdebbbeb8812da258f2c985a2b10db3a10325842254cc0f24ec27ffb9798617d">KII_MQTT_ST_GET_ENDPOINT</a>
@@ -491,6 +500,12 @@ Functions</h2></td></tr>
 <tr class="memitem:adb5bef6d077b15fca3195ef7d39681cd" id="r_adb5bef6d077b15fca3195ef7d39681cd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#adb5bef6d077b15fca3195ef7d39681cd">kii_set_mqtt_buff</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, char *buff, size_t buff_size)</td></tr>
 <tr class="memdesc:adb5bef6d077b15fca3195ef7d39681cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set buffer used to parse MQTT message.  <br /></td></tr>
 <tr class="separator:adb5bef6d077b15fca3195ef7d39681cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0cbee0f3d267e2ee4e6d1dfca8d44021" id="r_a0cbee0f3d267e2ee4e6d1dfca8d44021"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a0cbee0f3d267e2ee4e6d1dfca8d44021">kii_set_mqtt_qos</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii_8h.html#a971acd03c2d0df621d7f60b0b4644dbb">kii_mqtt_qos_t</a> qos)</td></tr>
+<tr class="memdesc:a0cbee0f3d267e2ee4e6d1dfca8d44021"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the quality of service the push task subscribes with.  <br /></td></tr>
+<tr class="separator:a0cbee0f3d267e2ee4e6d1dfca8d44021"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:accf8d24d9a378006397b9fc54773ca9c" id="r_accf8d24d9a378006397b9fc54773ca9c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#accf8d24d9a378006397b9fc54773ca9c">kii_set_mqtt_clean_session</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">kii_bool_t</a> clean_session)</td></tr>
+<tr class="memdesc:accf8d24d9a378006397b9fc54773ca9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set whether the push task asks for a clean session.  <br /></td></tr>
+<tr class="separator:accf8d24d9a378006397b9fc54773ca9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a20a5ac73022650c043cbf81dcc362e68" id="r_a20a5ac73022650c043cbf81dcc362e68"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a20a5ac73022650c043cbf81dcc362e68">kii_set_mqtt_socket</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../platform/html/structebisu__socket__t.html">ebisu_socket_t</a> *socket)</td></tr>
 <tr class="memdesc:a20a5ac73022650c043cbf81dcc362e68"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the socket the MQTT task connects to the broker on.  <br /></td></tr>
 <tr class="separator:a20a5ac73022650c043cbf81dcc362e68"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -778,6 +793,28 @@ Functions</h2></td></tr>
 <tr><td class="fieldname"><a id="ace11a8cf8764373a85c96643195289b2aa32ccee9cf4b58d75cdeb92b36eee6a8" name="ace11a8cf8764373a85c96643195289b2aa32ccee9cf4b58d75cdeb92b36eee6a8"></a>KII_MQTT_ERR_GET_ENDPOINT&#160;</td><td class="fielddoc"><p>Un-recoverble error in getting MQTT endpoint. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ace11a8cf8764373a85c96643195289b2a9cdad92c2105b2fc05f9264be83d59a9" name="ace11a8cf8764373a85c96643195289b2a9cdad92c2105b2fc05f9264be83d59a9"></a>KII_MQTT_ERR_INSUFFICIENT_BUFF&#160;</td><td class="fielddoc"><p>Buffer set by <a class="el" href="kii_8h.html#adb5bef6d077b15fca3195ef7d39681cd" title="Set buffer used to parse MQTT message.">kii_set_mqtt_buff()</a> is too small. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<a id="a971acd03c2d0df621d7f60b0b4644dbb" name="a971acd03c2d0df621d7f60b0b4644dbb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a971acd03c2d0df621d7f60b0b4644dbb">&#9670;&#160;</a></span>kii_mqtt_qos_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="kii_8h.html#a971acd03c2d0df621d7f60b0b4644dbb">kii_mqtt_qos_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Qualities of service the push task can subscribe with. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a971acd03c2d0df621d7f60b0b4644dbba963217cd639f8179891935d8207ad632" name="a971acd03c2d0df621d7f60b0b4644dbba963217cd639f8179891935d8207ad632"></a>KII_MQTT_QOS_0&#160;</td><td class="fielddoc"><p>At most once, the default. A message the broker has no connection to send on is lost. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a971acd03c2d0df621d7f60b0b4644dbbafac745a5df8ea0fafaea7bc3d0440ca7" name="a971acd03c2d0df621d7f60b0b4644dbbafac745a5df8ea0fafaea7bc3d0440ca7"></a>KII_MQTT_QOS_1&#160;</td><td class="fielddoc"><p>At least once. The broker sends a message again until the task acknowledges it, so a message can arrive twice. </p>
 </td></tr>
 </table>
 
@@ -2995,6 +3032,83 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 
 </div>
 </div>
+<a id="accf8d24d9a378006397b9fc54773ca9c" name="accf8d24d9a378006397b9fc54773ca9c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#accf8d24d9a378006397b9fc54773ca9c">&#9670;&#160;</a></span>kii_set_mqtt_clean_session()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void kii_set_mqtt_clean_session </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
+          <td class="paramname"><em>kii</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">kii_bool_t</a>&#160;</td>
+          <td class="paramname"><em>clean_session</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set whether the push task asks for a clean session. </p>
+<p>KII_TRUE by default: the broker forgets the task's session, its subscription included, when the connection ends. With KII_FALSE, it keeps the session, and with QoS 1 set by <a class="el" href="kii_8h.html#a0cbee0f3d267e2ee4e6d1dfca8d44021" title="Set the quality of service the push task subscribes with.">kii_set_mqtt_qos()</a> the messages sent at QoS 1 while the task is away, and sends them when it connects again: while it reconnects, or after it is stopped and started again. The session is the thing's, kept under its topic. Set it before starting the task.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">clean_session</td><td>KII_FALSE to have the broker keep the session. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a0cbee0f3d267e2ee4e6d1dfca8d44021" name="a0cbee0f3d267e2ee4e6d1dfca8d44021"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0cbee0f3d267e2ee4e6d1dfca8d44021">&#9670;&#160;</a></span>kii_set_mqtt_qos()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void kii_set_mqtt_qos </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
+          <td class="paramname"><em>kii</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="kii_8h.html#a971acd03c2d0df621d7f60b0b4644dbb">kii_mqtt_qos_t</a>&#160;</td>
+          <td class="paramname"><em>qos</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the quality of service the push task subscribes with. </p>
+<p>QoS 0 by default. With QoS 1, a message the sender asks to be sent at QoS 1 is sent until the task acknowledges it, which the task does once the push callback has returned, so a message sent as the connection is lost arrives after the task reconnects, and may arrive twice. Kii Cloud sends a push message at QoS 1 when its "mqtt" object has "qos": 1. A message is sent at the lower of the two. Set it before starting the task.</p>
+<p>A message too large for the buffer set by <a class="el" href="kii_8h.html#adb5bef6d077b15fca3195ef7d39681cd" title="Set buffer used to parse MQTT message.">kii_set_mqtt_buff()</a> is still dropped, and at QoS 1 acknowledged all the same, as it would never fit.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">qos</td><td>The quality of service. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a01e28622c4c67c8b27e81522acea3070" name="a01e28622c4c67c8b27e81522acea3070"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a01e28622c4c67c8b27e81522acea3070">&#9670;&#160;</a></span>kii_set_mqtt_retry_wait_max()</h2>
 
@@ -4092,7 +4206,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 16:20:38 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Mon Nov 2 2026 16:47:57 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

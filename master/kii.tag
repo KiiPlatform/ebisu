@@ -219,6 +219,13 @@
       <arglist>)(const char *message, size_t message_length, void *userdata)</arglist>
     </member>
     <member kind="typedef">
+      <type>enum kii_mqtt_qos_t</type>
+      <name>kii_mqtt_qos_t</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a07529064920b8334cde333db7e3d5e32</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
       <type>struct kii_t</type>
       <name>kii_t</name>
       <anchorfile>kii_8h.html</anchorfile>
@@ -384,6 +391,25 @@
       <name>KII_MQTT_VERSION_3_1</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a81467f34ee2895b86ca3eb7b3bac37e6aade48833dc67d1c1fc25a8333c1fd370</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumeration">
+      <type></type>
+      <name>kii_mqtt_qos_t</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a971acd03c2d0df621d7f60b0b4644dbb</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_MQTT_QOS_0</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a971acd03c2d0df621d7f60b0b4644dbba963217cd639f8179891935d8207ad632</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_MQTT_QOS_1</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a971acd03c2d0df621d7f60b0b4644dbbafac745a5df8ea0fafaea7bc3d0440ca7</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumeration">
@@ -900,6 +926,20 @@
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>adb5bef6d077b15fca3195ef7d39681cd</anchor>
       <arglist>(kii_t *kii, char *buff, size_t buff_size)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_set_mqtt_qos</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a0cbee0f3d267e2ee4e6d1dfca8d44021</anchor>
+      <arglist>(kii_t *kii, kii_mqtt_qos_t qos)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_set_mqtt_clean_session</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>accf8d24d9a378006397b9fc54773ca9c</anchor>
+      <arglist>(kii_t *kii, kii_bool_t clean_session)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
