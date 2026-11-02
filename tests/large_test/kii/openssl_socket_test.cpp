@@ -78,7 +78,12 @@ struct Connection {
         // As the sample does: writes go to a peer that has gone.
         signal(SIGPIPE, SIG_IGN);
         // As the socket's connect does, which these tests don't go through.
-        SSL_library_init();
+        // Through the port, which with OpenSSL 1.0.2 also sets the locking
+        // callbacks: without them, the handshake below, on two threads at
+        // once, races in OpenSSL's shared state.
+        ebisu_openssl_tls_t tls;
+        REQUIRE( ebisu_openssl_tls_init(&tls, nullptr, nullptr) );
+        ebisu_openssl_tls_free(&tls);
 
         EVP_PKEY* key = server_key();
         X509* cert = server_certificate();
