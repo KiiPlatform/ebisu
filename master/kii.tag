@@ -191,6 +191,13 @@
       <arglist></arglist>
     </member>
     <member kind="typedef">
+      <type>enum kii_mqtt_version_t</type>
+      <name>kii_mqtt_version_t</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a9995f6dc04a1f3afbbc14c2dffd3ca3e</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
       <type>struct kii_object_id_t</type>
       <name>kii_object_id_t</name>
       <anchorfile>kii_8h.html</anchorfile>
@@ -362,6 +369,25 @@
     </member>
     <member kind="enumeration">
       <type></type>
+      <name>kii_mqtt_version_t</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a81467f34ee2895b86ca3eb7b3bac37e6</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_MQTT_VERSION_3_1_1</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a81467f34ee2895b86ca3eb7b3bac37e6a62445efe959ffd93fd4f732bfc671e7d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_MQTT_VERSION_3_1</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a81467f34ee2895b86ca3eb7b3bac37e6aade48833dc67d1c1fc25a8333c1fd370</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumeration">
+      <type></type>
       <name>kii_mqtt_task_state</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>afbdebbbeb8812da258f2c985a2b10db3</anchor>
@@ -510,6 +536,13 @@
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a1d4b321dd8a70434bae5b07a70c14fba</anchor>
       <arglist>(kii_t *kii, kii_bool_t enable_insecure_mqtt)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_set_mqtt_version</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a30a684c0efb710bc07718c773bf2e693</anchor>
+      <arglist>(kii_t *kii, kii_mqtt_version_t version)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -881,6 +914,13 @@
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a812b57be04fe37fc4a7ec66679f88db4</anchor>
       <arglist>(kii_t *kii, uint32_t to_sock_recv_sec)</arglist>
+    </member>
+    <member kind="function">
+      <type>kii_code_t</type>
+      <name>kii_set_mqtt_retry_wait_max</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a01e28622c4c67c8b27e81522acea3070</anchor>
+      <arglist>(kii_t *kii, uint32_t max_sec)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
