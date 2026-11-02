@@ -31,6 +31,8 @@ set on.
   device without a real-time clock, for a TLS stack to check a certificate's
   validity period against. Socket callbacks use it directly, and `kii` and `tio`
   feed it with the time each response states.
+- **Loggers** (`ebisu_log.h`): `ebisu_logger_t` is where a port's diagnostics
+  go, each with a level, such as the application's own log or syslog.
 
 ## Ports
 
@@ -49,7 +51,29 @@ which have the rest of `platform`.
   its connect timeout. Its connections share one
   `SSL_CTX`: the system's CA certificates, or those of an
   `ebisu_openssl_tls_t` set up with a CA file or directory, for a device
-  without the system's. Needs OpenSSL 1.0.2 or later, and POSIX threads.
+  without the system's. Why an operation failed goes to the logger set with
+  `ebisu_openssl_socket_set_logger()`, or to stderr. Needs OpenSSL 1.0.2 or
+  later, and POSIX threads.
 
-The Linux sample uses both. The samples for Windows, FreeRTOS and ESP32 have
+The Linux sample uses both.
+
+A daemon can send the OpenSSL port's diagnostics to syslog with a logger such as
+this one. `vsyslog()` isn't POSIX, but glibc, musl and the BSDs have it:
+
+```c
+#include <ebisu_openssl.h>
+#include <syslog.h>
+
+static void to_syslog(ebisu_logger_t* self, ebisu_log_level_t level,
+        const char* fmt, va_list args)
+{
+    static const int priorities[] = { LOG_ERR, LOG_WARNING, LOG_INFO, LOG_DEBUG };
+    vsyslog(priorities[level], fmt, args);
+}
+
+static const ebisu_logger_ops_t syslog_ops = { to_syslog };
+static ebisu_logger_t syslog_logger = { &syslog_ops };
+
+    ebisu_openssl_socket_set_logger(&sock, &syslog_logger);
+``` The samples for Windows, FreeRTOS and ESP32 have
 implementations of their own, under `tio`.

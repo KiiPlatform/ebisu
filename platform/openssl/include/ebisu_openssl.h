@@ -6,6 +6,7 @@
 #define _EBISU_OPENSSL
 
 #include <ebisu_clock.h>
+#include <ebisu_log.h>
 #include <ebisu_socket.h>
 #include <openssl/ssl.h>
 #include <stdbool.h>
@@ -29,8 +30,10 @@ extern "C" {
  * CA certificates of the configuration set by ebisu_openssl_socket_set_tls(),
  * or the system's without one. A receive that times out is EBISU_SOCK_FAIL,
  * which recv_timed_out tells from a lost connection. One serves one connection
- * at a time, and is used again for the next once closed. OpenSSL 1.0.2 and
- * later, initialized and made thread-safe on first use.
+ * at a time, and is used again for the next once closed. Why an operation
+ * failed goes to the logger set by ebisu_openssl_socket_set_logger(), or to
+ * stderr without one. OpenSSL 1.0.2 and later, initialized and made
+ * thread-safe on first use.
  */
 typedef struct ebisu_openssl_socket_t {
     ebisu_socket_t base; /**< \brief What ebisu is given. */
@@ -57,6 +60,8 @@ typedef struct ebisu_openssl_socket_t {
     /** \private Whether the clock had the time, rather than its floor only,
      * when the connection was made. */
     bool time_exact;
+    /** \private Where diagnostics go, or NULL for stderr. */
+    ebisu_logger_t* logger;
 } ebisu_openssl_socket_t;
 
 /**
@@ -82,8 +87,9 @@ typedef struct ebisu_openssl_tls_t {
  * \param [in] ca_file File of PEM CA certificates, or NULL.
  * \param [in] ca_path Directory of CA certificates named by their hash, as
  * openssl rehash or c_rehash names them, or NULL.
- * \return true, or false, having printed why, if the certificates couldn't be
- * loaded or OpenSSL failed.
+ * \return true, or false if the certificates couldn't be loaded or OpenSSL
+ * failed, which OpenSSL's error queue on the calling thread says more of, as
+ * ERR_get_error() reads it.
  */
 bool ebisu_openssl_tls_init(ebisu_openssl_tls_t* tls, const char* ca_file, const char* ca_path);
 
@@ -146,6 +152,19 @@ void ebisu_openssl_socket_set_tls(ebisu_openssl_socket_t* sock, ebisu_openssl_tl
  * \param [in] clock The clock, or NULL for the system's time.
  */
 void ebisu_openssl_socket_set_clock(ebisu_openssl_socket_t* sock, ebisu_clock_t* clock);
+
+/**
+ * \brief Sets where the socket's diagnostics go.
+ *
+ * Each is why an operation failed, at EBISU_LOG_ERROR: a host that didn't
+ * resolve or connect, a certificate rejected and why, OpenSSL's error. A
+ * receive that times out isn't one.
+ *
+ * \param [out] sock The socket.
+ * \param [in] logger The logger, which has to outlive the socket, or NULL for
+ * stderr.
+ */
+void ebisu_openssl_socket_set_logger(ebisu_openssl_socket_t* sock, ebisu_logger_t* logger);
 
 #ifdef __cplusplus
 }

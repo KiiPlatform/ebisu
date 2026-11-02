@@ -17,9 +17,13 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <chrono>
+#include <functional>
 #include <string>
 #include <thread>
+#include <utility>
+#include <vector>
 #include <netdb.h>
+#include <stdarg.h>
 
 namespace {
 
@@ -553,5 +557,130 @@ TEST_CASE( "The OpenSSL socket fails on a host that doesn't resolve" ) {
         ebisu_openssl_socket_init(&sock, 0, 0);
         ebisu_openssl_socket_set_connect_timeout(&sock, timeout);
         CHECK( sock.base.ops->connect(&sock.base, "ebisu-test.invalid", 443) == EBISU_SOCK_FAIL );
+    }
+}
+
+namespace {
+
+struct LogCtx;
+
+struct MockLogger {
+    ebisu_logger_t base;
+    LogCtx* owner;
+};
+
+// A logger that keeps what it is sent.
+struct LogCtx {
+    std::vector<std::pair<ebisu_log_level_t, std::string>> messages;
+    MockLogger logger;
+
+    LogCtx();
+    ebisu_logger_t* get() {
+        return &logger.base;
+    }
+};
+
+void record_log(ebisu_logger_t* self, ebisu_log_level_t level, const char* fmt, va_list args)
+{
+    char message[512];
+    vsnprintf(message, sizeof(message), fmt, args);
+    reinterpret_cast<MockLogger*>(self)->owner->messages.emplace_back(level, message);
+}
+
+const ebisu_logger_ops_t record_log_ops = { record_log };
+
+LogCtx::LogCtx()
+{
+    logger.base.ops = &record_log_ops;
+    logger.owner = this;
+}
+
+// What f wrote to stderr.
+std::string stderr_of(const std::function<void()>& f)
+{
+    fflush(stderr);
+    FILE* captured = tmpfile();
+    REQUIRE( captured != nullptr );
+    int saved = dup(2);
+    dup2(fileno(captured), 2);
+    f();
+    fflush(stderr);
+    dup2(saved, 2);
+    close(saved);
+    std::string out;
+    rewind(captured);
+    char buff[256];
+    size_t n;
+    while ((n = fread(buff, 1, sizeof(buff), captured)) > 0) {
+        out.append(buff, n);
+    }
+    fclose(captured);
+    return out;
+}
+
+bool starts_with(const std::string& s, const std::string& prefix)
+{
+    return s.compare(0, prefix.size(), prefix) == 0;
+}
+
+bool has(const std::string& s, const std::string& part)
+{
+    return s.find(part) != std::string::npos;
+}
+
+}
+
+// The port printed why it failed with printf(), to stdout, where an
+// application running as a daemon had no say in where it went.
+TEST_CASE( "The OpenSSL socket says why it failed to its logger, or to stderr" ) {
+    SECTION("a host that doesn't resolve") {
+        for (unsigned int timeout : { 5u, 0u }) {
+            INFO( "connect timeout " << timeout );
+            LogCtx log;
+            ebisu_openssl_socket_t sock;
+            ebisu_openssl_socket_init(&sock, 0, 0);
+            ebisu_openssl_socket_set_connect_timeout(&sock, timeout);
+            ebisu_openssl_socket_set_logger(&sock, log.get());
+            std::string err = stderr_of([&sock] {
+                CHECK( sock.base.ops->connect(&sock.base, "ebisu-test.invalid", 443) == EBISU_SOCK_FAIL );
+            });
+            // Not empty, perhaps: under qemu-user, the emulator writes its own
+            // warnings to the same stderr.
+            CHECK_FALSE( has(err, "failed to") );
+            REQUIRE( log.messages.size() == 1 );
+            CHECK( log.messages[0].first == EBISU_LOG_ERROR );
+            CHECK( starts_with(log.messages[0].second, "failed to look up ebisu-test.invalid: ") );
+            CHECK( log.messages[0].second.find('\n') == std::string::npos );
+        }
+    }
+
+    SECTION("a certificate the socket doesn't trust") {
+        LocalServer server;
+        REQUIRE( server.listening );
+        LogCtx log;
+        ebisu_openssl_socket_t sock;
+        ebisu_openssl_socket_init(&sock, 5, 5);
+        ebisu_openssl_socket_set_logger(&sock, log.get());
+        std::string err = stderr_of([&sock, &server] {
+            CHECK( connect_to(&sock, server) == EBISU_SOCK_FAIL );
+        });
+        CHECK_FALSE( has(err, "server certificate") );
+        CHECK_FALSE( has(err, "failed to") );
+        REQUIRE( log.messages.size() == 1 );
+        CHECK( log.messages[0].first == EBISU_LOG_ERROR );
+        CHECK( starts_with(log.messages[0].second, "server certificate for localhost rejected: ") );
+    }
+
+    SECTION("without a logger, to stderr") {
+        ebisu_openssl_socket_t sock;
+        ebisu_openssl_socket_init(&sock, 0, 0);
+        std::string err = stderr_of([&sock] {
+            CHECK( sock.base.ops->connect(&sock.base, "ebisu-test.invalid", 443) == EBISU_SOCK_FAIL );
+        });
+        // A line of its own, whatever the emulator writes around it.
+        CHECK( has(err, "failed to look up ebisu-test.invalid: ") );
+        size_t at = err.find("failed to look up");
+        CHECK( (at == 0 || err[at - 1] == '\n') );
+        CHECK( err.find('\n', at) != std::string::npos );
     }
 }
