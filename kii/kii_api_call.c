@@ -63,8 +63,12 @@ kii_code_t kii_api_call_start(
     _resource_cleanup(kii);
     
     khc_set_host(&kii->_khc, kii->_app_host);
-    khc_set_method(&kii->_khc, http_method);
-    khc_set_path(&kii->_khc, resource_path);
+    // Both come from the application. Too long for khc, the request would go
+    // without them.
+    if (khc_set_method(&kii->_khc, http_method) != KHC_ERR_OK ||
+            khc_set_path(&kii->_khc, resource_path) != KHC_ERR_OK) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
 
     kii_code_t res = _set_app_id_header(kii);
     if (res != KII_ERR_OK) {
