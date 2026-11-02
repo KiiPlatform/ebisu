@@ -8,7 +8,7 @@ kii_code_t kii_api_call_start(
         const char* http_method,
         const char* resource_path,
         const char* content_type,
-        kii_bool_t set_authentication_header);
+        bool set_authentication_header);
 
 kii_code_t kii_api_call_set_no_body(
         kii_t* kii);

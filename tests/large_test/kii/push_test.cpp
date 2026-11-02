@@ -134,7 +134,7 @@ TEST_CASE("Push Tests")
     }
     SECTION("Install push") {
         kii_installation_id_t ins_id;
-        kii_code_t ins_res = kii_install_push(&kii, KII_TRUE, &ins_id);
+        kii_code_t ins_res = kii_install_push(&kii, true, &ins_id);
         CHECK(ins_res == KII_ERR_OK);
         REQUIRE(khc_get_status_code(&kii._khc) == 201);
         REQUIRE(strlen(ins_id.id) > 0);

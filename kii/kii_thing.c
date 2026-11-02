@@ -32,7 +32,7 @@ kii_code_t kii_auth_thing(
     // issues one.
     kii->_author.refresh_token[0] = '\0';
     int64_t expires_in_sec = 0;
-    ret = _kii_parse_token_response(kii, &kii->_author, KII_TRUE, &expires_in_sec);
+    ret = _kii_parse_token_response(kii, &kii->_author, true, &expires_in_sec);
     if (ret != KII_ERR_OK) {
         goto exit;
     }

@@ -88,9 +88,31 @@ The rest moved to `platform` and was renamed, with no aliases for the old names:
 | `KII_TASKC_OK`, `KII_TASKC_FAIL` | `EBISU_TASKC_OK`, `EBISU_TASKC_FAIL` |
 | `KII_TASK_ENTRY` | `EBISU_TASK_ENTRY` |
 
-`kii_task_callback.h` remains for `kii_bool_t`, `KII_CB_TASK_EXIT` and
+`kii_task_callback.h` remains for `KII_CB_TASK_EXIT` and
 `KII_CB_TASK_CONTINUE`, which are still set with a function and a context
 pointer each. The types above are in `ebisu_system.h`, which `kii.h` includes.
+
+**`kii_bool_t` and `tio_bool_t` are gone, for C99's `bool`.** khc and platform
+take `bool` already, and `kii.h` and `tio.h` include `stdbool.h`. Every callback
+returning one, the task continue callback and tio's action and push callbacks,
+now returns `bool`, and every function taking or returning one, and every field,
+is `bool`. Replace the names, with no aliases for them:
+
+| 1.x | 3.0 |
+|---|---|
+| `kii_bool_t`, `tio_bool_t` | `bool` |
+| `KII_TRUE` | `true` |
+| `KII_FALSE` | `false` |
+
+With GNU sed, for each source file:
+
+```
+sed -i -e 's/\b\(kii\|tio\)_bool_t\b/bool/g' \
+    -e 's/\bKII_TRUE\b/true/g' -e 's/\bKII_FALSE\b/false/g' app.c
+```
+
+A comparison such as `== KII_TRUE` becomes `== true`, which means the same for a
+`bool`.
 
 **`kii_set_mqtt_to_sock_send()` and `tio_handler_set_mqtt_to_sock_send()` are
 gone.** Delete the call. They stored a value nothing read, in 1.x as well, so

@@ -69,10 +69,10 @@ void kii_init(kii_t* kii)
     kii->_task_continue_data = NULL;
     kii->_cb_task_exit = NULL;
     kii->_task_exit_data = NULL;
-    kii->_insecure_mqtt = KII_FALSE;
-    kii->_use_m_0_header = KII_FALSE;
+    kii->_insecure_mqtt = false;
+    kii->_use_m_0_header = false;
     kii->_mqtt_qos = KII_MQTT_QOS_0;
-    kii->_mqtt_clean_session = KII_TRUE;
+    kii->_mqtt_clean_session = true;
 }
 
 /* Copies src into a fixed-size field, truncating rather than overflowing, and
@@ -147,7 +147,7 @@ void kii_set_mqtt_qos(kii_t* kii, kii_mqtt_qos_t qos) {
     kii->_mqtt_qos = qos;
 }
 
-void kii_set_mqtt_clean_session(kii_t* kii, kii_bool_t clean_session) {
+void kii_set_mqtt_clean_session(kii_t* kii, bool clean_session) {
     kii->_mqtt_clean_session = clean_session;
 }
 
@@ -209,8 +209,8 @@ void kii_set_cb_slist_resource(
 
 void kii_enable_insecure_http(
     kii_t* kii,
-    kii_bool_t enable_insecure_http) {
-    if (enable_insecure_http == KII_TRUE) {
+    bool enable_insecure_http) {
+    if (enable_insecure_http) {
         khc_enable_insecure(&kii->_khc, 1);
     } else {
         khc_enable_insecure(&kii->_khc, 0);
@@ -219,7 +219,7 @@ void kii_enable_insecure_http(
 
 void kii_enable_insecure_mqtt(
     kii_t* kii,
-    kii_bool_t enable_insecure_mqtt) {
+    bool enable_insecure_mqtt) {
     kii->_insecure_mqtt = enable_insecure_mqtt;
 }
 
@@ -231,8 +231,8 @@ void kii_set_mqtt_version(
 
 void kii_enable_absolute_target(
     kii_t* kii,
-    kii_bool_t enable_absolute_target) {
-    khc_enable_absolute_target(&kii->_khc, enable_absolute_target == KII_TRUE);
+    bool enable_absolute_target) {
+    khc_enable_absolute_target(&kii->_khc, enable_absolute_target);
 }
 
 const char* kii_get_etag(kii_t* kii) {
@@ -259,7 +259,7 @@ void kii_get_author(kii_t* kii, kii_author_t* out_author) {
     }
 }
 
-void kii_set_use_m_0_header_flag(kii_t* kii, kii_bool_t flag) {
+void kii_set_use_m_0_header_flag(kii_t* kii, bool flag) {
     kii->_use_m_0_header = flag;
 }
 

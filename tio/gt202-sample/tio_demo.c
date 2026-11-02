@@ -38,19 +38,19 @@ bool term_flag = false;
 bool handler_terminated = false;
 bool updater_terminated = false;
 
-tio_bool_t _handler_continue(void* task_info, void* userdata) {
-    if (term_flag == true) {
-        return KII_FALSE;
+bool _handler_continue(void* task_info, void* userdata) {
+    if (term_flag) {
+        return false;
     } else {
-        return KII_TRUE;
+        return true;
     }
 }
 
-tio_bool_t _updater_continue(void* task_info, void* userdata) {
-    if (term_flag == true) {
-        return KII_FALSE;
+bool _updater_continue(void* task_info, void* userdata) {
+    if (term_flag) {
+        return false;
     } else {
-        return KII_TRUE;
+        return true;
     }
 }
 
@@ -90,9 +90,9 @@ void updater_init(
 
 #if CONNECT_SSL
     // no need to set value, this is default.
-    //tio_updater_enable_insecure_http(updater, KII_FALSE);
+    //tio_updater_enable_insecure_http(updater, false);
 #else
-    tio_updater_enable_insecure_http(updater, KII_TRUE);
+    tio_updater_enable_insecure_http(updater, true);
 #endif
 }
 
@@ -121,11 +121,11 @@ size_t updater_cb_read(char *buffer, size_t size, void *userdata)
     return read_size;
 }
 
-tio_bool_t pushed_message_callback(const char* message, size_t message_length, void* userdata)
+bool pushed_message_callback(const char* message, size_t message_length, void* userdata)
 {
     printf("pushed_message_callback called,\n");
     printf("%.*s\n", (int)message_length, message);
-    return KII_FALSE;
+    return false;
 }
 
 void handler_init(
@@ -163,11 +163,11 @@ void handler_init(
 
 #if CONNECT_SSL
     // no need to set value, this is default.
-    //tio_handler_enable_insecure_http(handler, KII_FALSE);
-    //tio_handler_enable_insecure_mqtt(handler, KII_FALSE);
+    //tio_handler_enable_insecure_http(handler, false);
+    //tio_handler_enable_insecure_mqtt(handler, false);
 #else
-    tio_handler_enable_insecure_http(handler, KII_TRUE);
-    tio_handler_enable_insecure_mqtt(handler, KII_TRUE);
+    tio_handler_enable_insecure_http(handler, true);
+    tio_handler_enable_insecure_mqtt(handler, true);
 #endif
 }
 
@@ -178,7 +178,7 @@ void author_updated_callback(const kii_author_t* author, void* userdata)
     printf("author updated: %s\n", author->author_id);
 }
 
-tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata)
+bool tio_action_handler(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata)
 {
     printf("tio_action_handler called\n");
     printf("%.*s: %.*s\n", (int)action->alias_length, action->alias,(int)action->action_name_length, action->action_name);
@@ -188,7 +188,7 @@ tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, tio_a
     printf("data   : %d bytes\n", (int_32)&__END_DATA - (int_32)&__START_DATA);
     printf("rodata : %d bytes\n", (int_32)&__END_RODATA - (int_32)&__START_RODATA);
 #endif
-    return KII_TRUE;
+    return true;
 }
 
 static void show_help()

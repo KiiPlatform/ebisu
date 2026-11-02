@@ -38,18 +38,18 @@ TEST_CASE( "Simple test" ) {
 
     SECTION("kii_enable_insecure_http test") {
         REQUIRE(kii._khc._enable_insecure == 0);
-        kii_enable_insecure_http(&kii, KII_TRUE);
+        kii_enable_insecure_http(&kii, true);
         REQUIRE(kii._khc._enable_insecure == 1);
-        kii_enable_insecure_http(&kii, KII_FALSE);
+        kii_enable_insecure_http(&kii, false);
         REQUIRE(kii._khc._enable_insecure == 0);
     }
 
     SECTION("kii_set_use_m_0 test") {
-        REQUIRE(kii._use_m_0_header == KII_FALSE);
-        kii_set_use_m_0_header_flag(&kii, KII_TRUE);
-        REQUIRE(kii._use_m_0_header == KII_TRUE);
-        kii_set_use_m_0_header_flag(&kii, KII_FALSE);
-        REQUIRE(kii._use_m_0_header == KII_FALSE);
+        REQUIRE(kii._use_m_0_header == false);
+        kii_set_use_m_0_header_flag(&kii, true);
+        REQUIRE(kii._use_m_0_header == true);
+        kii_set_use_m_0_header_flag(&kii, false);
+        REQUIRE(kii._use_m_0_header == false);
     }
 }
 
@@ -157,7 +157,7 @@ TEST_CASE( "Stream and response header buffers are used by every request" ) {
 
     // Two different APIs, each of which resets khc before its request.
     REQUIRE( kii_api_call_start(&kii, "POST", "/api/apps/dummyAppID/echo",
-                "application/json", KII_TRUE) == KII_ERR_OK );
+                "application/json", true) == KII_ERR_OK );
     const char body[] = "{\"key\":\"value\"}";
     REQUIRE( kii_api_call_append_body(&kii, body, strlen(body)) == KII_ERR_OK );
     REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
@@ -219,7 +219,7 @@ TEST_CASE( "The ETag is read from the response, whatever the other headers" ) {
     kii_set_http_socket(&kii, http_ctx.socket());
 
     auto send = [&kii]() {
-        kii_code_t res = kii_api_call_start(&kii, "GET", "/api/apps/dummyAppID", NULL, KII_FALSE);
+        kii_code_t res = kii_api_call_start(&kii, "GET", "/api/apps/dummyAppID", NULL, false);
         return (res == KII_ERR_OK) ? kii_api_call_run(&kii) : res;
     };
 

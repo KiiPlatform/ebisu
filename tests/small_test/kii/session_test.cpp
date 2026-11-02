@@ -92,7 +92,7 @@ struct Client {
     // Built like tio's command results, which is what most needs sending again.
     kii_code_t start(const std::string& body) {
         kii_code_t res = kii_api_call_start(
-                &kii, "PUT", "/api/apps/app/things/th.1/x", "application/json", KII_TRUE);
+                &kii, "PUT", "/api/apps/app/things/th.1/x", "application/json", true);
         if (res != KII_ERR_OK) {
             return res;
         }
@@ -663,7 +663,7 @@ TEST_CASE( "Only requests carrying the session's token are renewed" ) {
         kii_session_set_author(&session, &author);
         REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
 
-        REQUIRE( kii_api_call_start(&c.kii, "GET", "/api/apps/app/x", NULL, KII_FALSE) == KII_ERR_OK );
+        REQUIRE( kii_api_call_start(&c.kii, "GET", "/api/apps/app/x", NULL, false) == KII_ERR_OK );
         REQUIRE( kii_api_call_append_header(&c.kii, "Authorization", "Bearer other") == KII_ERR_OK );
         c.http.responses = { REFUSED };
         REQUIRE( kii_api_call_run(&c.kii) == KII_ERR_OK );
@@ -722,7 +722,7 @@ TEST_CASE( "Responses that do not refuse the token reach the caller whole" ) {
         CHECK( kii_get_resp_status(&c.kii) == r.status );
         CHECK( c.resp_body() == r.body );
         CHECK( c.http.requests.size() == 1 );
-        CHECK( c.kii._session_refused == KII_FALSE );
+        CHECK( c.kii._session_refused == false );
     }
     CHECK( platform.updates.empty() );
     CHECK( std::string(held(&session).access_token) == "at1" );
@@ -748,7 +748,7 @@ TEST_CASE( "A 403 with no room after the request's body" ) {
         REQUIRE( c.put(body) == KII_ERR_OK );
         REQUIRE( kii_get_resp_status(&c.kii) == 403 );
         REQUIRE( c.http.requests.size() == 2 );
-        REQUIRE( c.kii._session_refused == KII_TRUE );
+        REQUIRE( c.kii._session_refused == true );
         REQUIRE( std::string(held(&session).access_token) == "at2" );
 
         c.http.responses.push_back(DONE);
@@ -843,7 +843,7 @@ TEST_CASE( "A token onboarding obtained is renewed by onboarding again" ) {
     REQUIRE( std::string(first.author_id) == "th.1" );
     REQUIRE( std::string(first.access_token) == "at1" );
     REQUIRE( std::string(first.refresh_token) == "" );
-    REQUIRE( session._renew_at_known == KII_FALSE );
+    REQUIRE( session._renew_at_known == false );
     REQUIRE( session._renew_mode == KII_RENEW_BY_ONBOARDING );
 
     // Refused, it onboards again, and the request is sent again.
@@ -860,7 +860,7 @@ TEST_CASE( "A token onboarding obtained is renewed by onboarding again" ) {
     REQUIRE( platform.updates.size() == 2 );
     REQUIRE( std::string(held(&session).access_token) == "at2" );
     REQUIRE( std::string(held(&session).refresh_token) == "" );
-    REQUIRE( session._renew_at_known == KII_FALSE );
+    REQUIRE( session._renew_at_known == false );
 
     // And so on, each time: nothing ever goes to the token endpoint.
     c.http.responses.push_back(REFUSED);
@@ -974,7 +974,7 @@ TEST_CASE( "A login replaces the refresh token, also with none" ) {
     REQUIRE( std::string(held(&session).access_token) == "at2" );
     REQUIRE( std::string(held(&session).refresh_token) == "" );
     // Without an expiry it is used until refused.
-    REQUIRE( session._renew_at_known == KII_FALSE );
+    REQUIRE( session._renew_at_known == false );
 }
 
 namespace {
@@ -1017,7 +1017,7 @@ TEST_CASE( "Token lifetimes are read as 64-bit integers" ) {
         INFO("expires_in " << c.text);
         Login login(c.text, 1000);
         REQUIRE( login.res == KII_ERR_OK );
-        CHECK( login.session._renew_at_known == KII_TRUE );
+        CHECK( login.session._renew_at_known == true );
         CHECK( login.session._stored_at_ms == 1000 );
         CHECK( login.session._renew_after_ms == c.renew_after_ms );
     }
@@ -1045,7 +1045,7 @@ TEST_CASE( "A lifetime that cannot be scheduled keeps the token until refused" )
         INFO("expires_in " << text);
         Login login(text, 1000);
         REQUIRE( login.res == KII_ERR_OK );
-        CHECK( login.session._renew_at_known == KII_FALSE );
+        CHECK( login.session._renew_at_known == false );
         CHECK( login.platform.updates.size() == 1 );
         CHECK( std::string(held(&login.session).access_token) == "at1" );
         CHECK( std::string(held(&login.session).refresh_token) == "rt1" );
@@ -1078,7 +1078,7 @@ TEST_CASE( "A refresh whose lifetime cannot be scheduled still keeps its tokens"
     REQUIRE( contains(c.http.requests[2], "Authorization: Bearer at2\r\n") );
     REQUIRE( std::string(held(&session).access_token) == "at2" );
     REQUIRE( std::string(held(&session).refresh_token) == "rt2" );
-    REQUIRE( session._renew_at_known == KII_FALSE );
+    REQUIRE( session._renew_at_known == false );
 }
 
 TEST_CASE( "Renewal ahead of expiry does not depend on the clock's origin" ) {
@@ -1087,7 +1087,7 @@ TEST_CASE( "Renewal ahead of expiry does not depend on the clock's origin" ) {
     const uint64_t origin = UINT64_MAX - 1000;
     Login login("100", origin);
     REQUIRE( login.res == KII_ERR_OK );
-    REQUIRE( login.session._renew_at_known == KII_TRUE );
+    REQUIRE( login.session._renew_at_known == true );
 
     login.platform.now_ms = origin + 500;
     login.c.http.responses.push_back(DONE);
@@ -1167,14 +1167,14 @@ struct UntilThirdSubscription {
     int steps;
 };
 
-kii_bool_t cb_continue(void* task_info, void* userdata) {
+bool cb_continue(void* task_info, void* userdata) {
     UntilThirdSubscription* until = (UntilThirdSubscription*)userdata;
     kii_mqtt_task_info* info = (kii_mqtt_task_info*)task_info;
     if (++until->steps > 100) {
-        return KII_FALSE;
+        return false;
     }
     return (until->broker->received.size() == 3 &&
-            info->task_state == KII_MQTT_ST_RECV_READY) ? KII_FALSE : KII_TRUE;
+            info->task_state == KII_MQTT_ST_RECV_READY) ? false : true;
 }
 
 }

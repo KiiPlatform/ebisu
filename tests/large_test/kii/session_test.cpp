@@ -142,7 +142,7 @@ TEST_CASE( "The session renews a token the server refuses" ) {
         CHECK_FALSE( same_token(renewed.access_token, onboarded.access_token) );
         // Onboarding again issues neither a refresh token nor a lifetime.
         CHECK( empty(renewed.refresh_token) );
-        CHECK( session._renew_at_known == KII_FALSE );
+        CHECK( session._renew_at_known == false );
 
         // Thing-IF's.
         spoil(&session);
@@ -199,9 +199,9 @@ TEST_CASE( "The session renews a token the server refuses" ) {
 
     SECTION("the lifetime a login gives is read, and the token renewed ahead of expiry") {
         // Onboarding gives no lifetime. A login does.
-        CHECK( session._renew_at_known == KII_FALSE );
+        CHECK( session._renew_at_known == false );
         REQUIRE( kii_auth_thing(&kii, vid.c_str(), password) == KII_ERR_OK );
-        REQUIRE( session._renew_at_known == KII_TRUE );
+        REQUIRE( session._renew_at_known == true );
         REQUIRE( session._renew_after_ms > 0 );
         const kii_author_t logged_in = held(&session);
 
@@ -214,11 +214,11 @@ TEST_CASE( "The session renews a token the server refuses" ) {
         now_ms += 1;
         REQUIRE( kii_post_object(&kii, &bucket, "{\"k\":\"x\"}", NULL, &object_id) == KII_ERR_OK );
         REQUIRE( kii_get_resp_status(&kii) == 201 );
-        CHECK( kii._session_refused == KII_FALSE );
+        CHECK( kii._session_refused == false );
         const kii_author_t ahead = held(&session);
         CHECK( std::string(ahead.author_id) == onboarded.author_id );
         CHECK_FALSE( same_token(ahead.access_token, logged_in.access_token) );
-        CHECK( session._renew_at_known == KII_TRUE );
+        CHECK( session._renew_at_known == true );
         CHECK( session._stored_at_ms == now_ms );
     }
 
@@ -250,7 +250,7 @@ TEST_CASE( "The session renews a token the server refuses" ) {
         spoil(&session);
         REQUIRE( kii_ti_put_state(&kii, read_state, &state, "application/json", NULL, NULL) == KII_ERR_RESP_STATUS );
         REQUIRE( kii_get_resp_status(&kii) == 403 );
-        REQUIRE( kii._session_refused == KII_TRUE );
+        REQUIRE( kii._session_refused == true );
         CHECK_FALSE( same_token(held(&session).access_token, UNKNOWN_TOKEN) );
 
         state.pos = 0;

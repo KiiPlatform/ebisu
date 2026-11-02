@@ -544,13 +544,13 @@ static void recv_then_end_of_stream(khct::cb::SockCtx& ctx, const std::string& d
 // Stands in for a platform socket's recv_timed_out: answers as told, and
 // records how often it was asked and with which context.
 struct RecvTimedOutMock {
-    kii_bool_t timed_out;
+    bool timed_out;
     int calls;
     void* sock_ctx;
 };
 static RecvTimedOutMock recv_timed_out_mock;
 
-static kii_bool_t mock_recv_timed_out(void* sock_ctx)
+static bool mock_recv_timed_out(void* sock_ctx)
 {
     ++recv_timed_out_mock.calls;
     recv_timed_out_mock.sock_ctx = sock_ctx;
@@ -1657,9 +1657,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             return EBISU_SOCK_FAIL;
         };
         mqtt_ctx.on_recv_timed_out = [](void* sock_ctx) {
-            return mock_recv_timed_out(sock_ctx) == KII_TRUE;
+            return mock_recv_timed_out(sock_ctx) == true;
         };
-        recv_timed_out_mock.timed_out = KII_TRUE;
+        recv_timed_out_mock.timed_out = true;
 
         kii_set_mqtt_to_sock_recv(&kii, 15);
         state.info.task_state = KII_MQTT_ST_RECV_READY;
@@ -1679,9 +1679,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             return EBISU_SOCK_FAIL;
         };
         mqtt_ctx.on_recv_timed_out = [](void* sock_ctx) {
-            return mock_recv_timed_out(sock_ctx) == KII_TRUE;
+            return mock_recv_timed_out(sock_ctx) == true;
         };
-        recv_timed_out_mock.timed_out = KII_FALSE;
+        recv_timed_out_mock.timed_out = false;
 
         // With keep-alive 0 this is the only way the loss is noticed.
         for (unsigned int keep_alive : { 300u, 0u }) {
@@ -1705,9 +1705,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             return EBISU_SOCK_FAIL;
         };
         mqtt_ctx.on_recv_timed_out = [](void* sock_ctx) {
-            return mock_recv_timed_out(sock_ctx) == KII_TRUE;
+            return mock_recv_timed_out(sock_ctx) == true;
         };
-        recv_timed_out_mock.timed_out = KII_TRUE;
+        recv_timed_out_mock.timed_out = true;
 
         state.info.task_state = KII_MQTT_ST_RECV_READY;
         _mqtt_state_recv_ready(&state);
@@ -1733,7 +1733,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             return EBISU_SOCK_OK;
         };
         mqtt_ctx.on_recv_timed_out = [](void* sock_ctx) {
-            return mock_recv_timed_out(sock_ctx) == KII_TRUE;
+            return mock_recv_timed_out(sock_ctx) == true;
         };
 
         _mqtt_state_install_push(&state);
@@ -1750,9 +1750,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             return EBISU_SOCK_FAIL;
         };
         mqtt_ctx.on_recv_timed_out = [](void* sock_ctx) {
-            return mock_recv_timed_out(sock_ctx) == KII_TRUE;
+            return mock_recv_timed_out(sock_ctx) == true;
         };
-        recv_timed_out_mock.timed_out = KII_TRUE;
+        recv_timed_out_mock.timed_out = true;
 
         state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
         _mqtt_state_recv_connack(&state);
@@ -1768,9 +1768,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             return EBISU_SOCK_AGAIN;
         };
         mqtt_ctx.on_recv_timed_out = [](void* sock_ctx) {
-            return mock_recv_timed_out(sock_ctx) == KII_TRUE;
+            return mock_recv_timed_out(sock_ctx) == true;
         };
-        recv_timed_out_mock.timed_out = KII_FALSE;
+        recv_timed_out_mock.timed_out = false;
 
         state.info.task_state = KII_MQTT_ST_RECV_READY;
         _mqtt_state_recv_ready(&state);
@@ -1794,9 +1794,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                 return code;
             };
             mqtt_ctx.on_recv_timed_out = [](void* sock_ctx) {
-                return mock_recv_timed_out(sock_ctx) == KII_TRUE;
+                return mock_recv_timed_out(sock_ctx) == true;
             };
-            recv_timed_out_mock.timed_out = KII_TRUE;
+            recv_timed_out_mock.timed_out = true;
             recv_timed_out_mock.calls = 0;
 
             state.info.task_state = KII_MQTT_ST_RECV_READY;
@@ -1815,9 +1815,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         int call_recv = 0;
         recv_then_end_of_stream(mqtt_ctx, "", call_recv);
         mqtt_ctx.on_recv_timed_out = [](void* sock_ctx) {
-            return mock_recv_timed_out(sock_ctx) == KII_TRUE;
+            return mock_recv_timed_out(sock_ctx) == true;
         };
-        recv_timed_out_mock.timed_out = KII_TRUE;
+        recv_timed_out_mock.timed_out = true;
 
         state.info.task_state = KII_MQTT_ST_RECV_READY;
         state.elapsed_time_ms = 1000;
@@ -2147,11 +2147,11 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             return EBISU_SOCK_OK;
         };
 
-        REQUIRE( state.pingresp_received == KII_TRUE );
+        REQUIRE( state.pingresp_received == true );
         state.info.task_state = KII_MQTT_ST_SEND_PINGREQ;
         _mqtt_state_send_pingreq(&state);
         REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
-        REQUIRE( state.pingresp_received == KII_FALSE );
+        REQUIRE( state.pingresp_received == false );
     }
 
     SECTION("receiving pingresp clears the outstanding pingresp") {
@@ -2171,11 +2171,11 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             return EBISU_SOCK_OK;
         };
 
-        state.pingresp_received = KII_FALSE;
+        state.pingresp_received = false;
         state.info.task_state = KII_MQTT_ST_RECV_READY;
         _mqtt_state_recv_ready(&state);
         REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
-        REQUIRE( state.pingresp_received == KII_TRUE );
+        REQUIRE( state.pingresp_received == true );
     }
 
     // The point of the flag: a half-open connection can keep accepting sends
@@ -2189,7 +2189,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             return EBISU_SOCK_OK; // the socket still looks healthy
         };
 
-        state.pingresp_received = KII_FALSE;
+        state.pingresp_received = false;
         state.info.task_state = KII_MQTT_ST_SEND_PINGREQ;
         _mqtt_state_send_pingreq(&state);
         REQUIRE( state.info.task_state == KII_MQTT_ST_RECONNECT );
@@ -2201,7 +2201,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
     // _init_mqtt_state() runs once, before the state loop, and RECONNECT goes
     // to SOCK_CONNECT inside it. If the flag were not cleared when the new
     // connection is established, the first PINGREQ after any reconnect would
-    // see the previous connection's KII_FALSE and reconnect again, forever.
+    // see the previous connection's false and reconnect again, forever.
     SECTION("a reconnect does not leave the flag set for the new connection") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
@@ -2225,11 +2225,11 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         };
 
         // As left behind by the connection that died with a PINGREQ in flight.
-        state.pingresp_received = KII_FALSE;
+        state.pingresp_received = false;
         state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
         _mqtt_state_recv_connack(&state);
         REQUIRE( state.info.task_state == KII_MQTT_ST_SEND_SUBSCRIBE );
-        REQUIRE( state.pingresp_received == KII_TRUE );
+        REQUIRE( state.pingresp_received == true );
 
         int call_send = 0;
         mqtt_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
@@ -2360,13 +2360,13 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             recv_then_end_of_stream(mqtt_ctx, std::string(1, packet.type), call_recv);
 
             state.info.task_state = KII_MQTT_ST_RECV_READY;
-            state.pingresp_received = KII_FALSE;
+            state.pingresp_received = false;
             state.elapsed_time_ms = 1000;
             _mqtt_state_recv_ready(&state);
             CHECK( state.info.task_state == KII_MQTT_ST_RECONNECT );
             CHECK( state.info.error == KII_MQTT_ERR_OK );
             CHECK( state.elapsed_time_ms == 0 );
-            CHECK( state.pingresp_received == KII_FALSE );
+            CHECK( state.pingresp_received == false );
             CHECK( call_recv == 2 );
         }
     }
@@ -2477,10 +2477,10 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     kii._push_data = &push_ctx;
 
     REQUIRE(kii._khc._enable_insecure == 0);
-    REQUIRE(kii._insecure_mqtt == KII_FALSE);
-    kii_enable_insecure_mqtt(&kii, KII_TRUE);
+    REQUIRE(kii._insecure_mqtt == false);
+    kii_enable_insecure_mqtt(&kii, true);
     REQUIRE(kii._khc._enable_insecure == 0);
-    REQUIRE(kii._insecure_mqtt == KII_TRUE);
+    REQUIRE(kii._insecure_mqtt == true);
 
     mqtt_state_t state;
 
@@ -2722,14 +2722,14 @@ TEST_CASE( "QoS 1 and a session the broker keeps" ) {
     };
 
     SECTION("CONNECT asks for a clean session by default") {
-        CHECK( kii._mqtt_clean_session == KII_TRUE );
+        CHECK( kii._mqtt_clean_session == true );
         state.info.task_state = KII_MQTT_ST_SEND_CONNECT;
         _mqtt_state_send_connect(&state);
         CHECK( connect_flags() == 0xc2 );
     }
 
     SECTION("CONNECT asks the broker to keep the session when told to") {
-        kii_set_mqtt_clean_session(&kii, KII_FALSE);
+        kii_set_mqtt_clean_session(&kii, false);
         state.info.task_state = KII_MQTT_ST_SEND_CONNECT;
         _mqtt_state_send_connect(&state);
         CHECK( connect_flags() == 0xc0 );
@@ -2904,7 +2904,7 @@ TEST_CASE( "QoS 1 and a session the broker keeps" ) {
                 KII_MQTT_ST_RECV_READY }) );
         CHECK( pushed == std::vector<std::string>({ "{\"kept\":1}", "{\"kept\":2}" }) );
         CHECK( sent == puback_7 );
-        CHECK( state.awaiting_suback == KII_FALSE );
+        CHECK( state.awaiting_suback == false );
     }
 
     SECTION("a message before SUBACK that is cut off reconnects") {
@@ -3012,8 +3012,8 @@ TEST_CASE( "kii_start_push_task needs what the task uses" ) {
     CHECK( ctx.calls == 1 );
 }
 
-static kii_bool_t stop_task(void*, void*) {
-    return KII_FALSE;
+static bool stop_task(void*, void*) {
+    return false;
 }
 
 struct RestartCtx {
@@ -3076,7 +3076,7 @@ TEST_CASE( "kii_start_push_task refuses while its task is running" ) {
         REQUIRE( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_OK );
 
         kii_init(&kii);
-        CHECK( kii._push_task_running == KII_FALSE );
+        CHECK( kii._push_task_running == false );
     }
 }
 
@@ -3234,7 +3234,7 @@ TEST_CASE( "MQTT keep-alive interval range" ) {
             CHECK( kii_start_push_task(&kii, c.interval, khct::cb::cb_push, NULL) == KII_ERR_OK );
             CHECK( call_task_create == 1 );
             // The callback runs no task, which would have said so when it ended.
-            kii._push_task_running = KII_FALSE;
+            kii._push_task_running = false;
 
             mqtt_state_t state;
             _init_mqtt_state(&kii, &state);
@@ -3431,7 +3431,7 @@ TEST_CASE( "MQTT PINGREQ timing" ) {
             serve_stream(mqtt_ctx, std::string("\xd0\x00", 2), served);
             _mqtt_state_recv_ready(&state);
             REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
-            REQUIRE( state.pingresp_received == KII_TRUE );
+            REQUIRE( state.pingresp_received == true );
             REQUIRE( served == 2 );
         }
     }
@@ -3448,11 +3448,11 @@ struct ExitCtx {
     kii_mqtt_task_info exit_info;
 };
 
-kii_bool_t exit_test_continue(void* task_info, void* userdata)
+bool exit_test_continue(void* task_info, void* userdata)
 {
     ExitCtx* ctx = (ExitCtx*)userdata;
     kii_mqtt_task_state state = ((kii_mqtt_task_info*)task_info)->task_state;
-    return ctx->keep_going(state) ? KII_TRUE : KII_FALSE;
+    return ctx->keep_going(state);
 }
 
 void exit_test_exit(void* task_info, void* userdata)
@@ -3794,8 +3794,8 @@ struct RetryCtx {
     int connects;
 };
 
-kii_bool_t retry_continue(void* task_info, void* userdata) {
-    return ((RetryCtx*)userdata)->continues_left-- > 0 ? KII_TRUE : KII_FALSE;
+bool retry_continue(void* task_info, void* userdata) {
+    return ((RetryCtx*)userdata)->continues_left-- > 0;
 }
 
 void retry_delay(uint32_t ms, void* userdata) {

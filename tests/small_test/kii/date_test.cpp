@@ -59,7 +59,7 @@ struct Client {
     }
 
     kii_code_t get() {
-        kii_code_t res = kii_api_call_start(&kii, "GET", "/api/apps/dummyAppID", NULL, KII_FALSE);
+        kii_code_t res = kii_api_call_start(&kii, "GET", "/api/apps/dummyAppID", NULL, false);
         return (res == KII_ERR_OK) ? kii_api_call_run(&kii) : res;
     }
 };
@@ -118,7 +118,7 @@ TEST_CASE( "A call that sends nothing leaves no date from an earlier one" ) {
 
     // The call starts, and fails before any request goes out.
     REQUIRE( kii_api_call_start(&c.kii, "POST", "/api/apps/dummyAppID/x",
-                "application/json", KII_FALSE) == KII_ERR_OK );
+                "application/json", false) == KII_ERR_OK );
     const std::string body(2 * sizeof(c.buff), 'x');
     REQUIRE( kii_api_call_append_body(&c.kii, body.data(), body.size()) == KII_ERR_TOO_LARGE_DATA );
     CHECK( kii_get_resp_date(&c.kii) == -1 );
@@ -128,7 +128,7 @@ TEST_CASE( "A call that sends nothing leaves no date from an earlier one" ) {
 TEST_CASE( "A request sent again without a new start, and not answered, has no date" ) {
     Client c;
     c.responses = { response("HTTP/1.1 200 OK", { NOV_1994 }), "" };
-    REQUIRE( kii_api_call_start(&c.kii, "GET", "/api/apps/dummyAppID", NULL, KII_FALSE) == KII_ERR_OK );
+    REQUIRE( kii_api_call_start(&c.kii, "GET", "/api/apps/dummyAppID", NULL, false) == KII_ERR_OK );
     REQUIRE( kii_api_call_run(&c.kii) == KII_ERR_OK );
     REQUIRE( kii_get_resp_date(&c.kii) == 784111777 );
     // Neither a call starting nor a response clears it here: sending does.

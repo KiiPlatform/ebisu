@@ -129,7 +129,7 @@ ebisu_sock_code_t cb_close(ebisu_socket_t* self)
     return t->sock.base.ops->close(&t->sock.base);
 }
 
-kii_bool_t cb_continue(void* task_info, void* userdata)
+bool cb_continue(void* task_info, void* userdata)
 {
     MqttTest* t = (MqttTest*)userdata;
     kii_mqtt_task_state state = ((kii_mqtt_task_info*)task_info)->task_state;
@@ -141,7 +141,7 @@ kii_bool_t cb_continue(void* task_info, void* userdata)
             t->changed.notify_all();
         }
         if (t->stop) {
-            return KII_FALSE;
+            return false;
         }
         if (state == KII_MQTT_ST_RECV_READY) {
             step.swap(t->step);
@@ -153,7 +153,7 @@ kii_bool_t cb_continue(void* task_info, void* userdata)
         ++t->steps_done;
         t->changed.notify_all();
     }
-    return KII_TRUE;
+    return true;
 }
 
 void cb_exit(void* task_info, void* userdata)
@@ -483,7 +483,7 @@ TEST_CASE("QoS 1 messages sent while the task is away arrive when it is back")
     MqttTest t;
     set_up_task(&kii, t, mqtt_buff, sizeof(mqtt_buff));
     kii_set_mqtt_qos(&kii, KII_MQTT_QOS_1);
-    kii_set_mqtt_clean_session(&kii, KII_FALSE);
+    kii_set_mqtt_clean_session(&kii, false);
 
     const std::string vid = "ltest_mqtt_qos1_" + std::to_string(kiiltest::current_time());
     REQUIRE( kii_ti_onboard(&kii, vid.c_str(), "1234", NULL, NULL, NULL, NULL) == KII_ERR_OK );

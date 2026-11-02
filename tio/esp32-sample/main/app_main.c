@@ -67,7 +67,7 @@ static void author_updated(const kii_author_t* author, void* userdata)
     ESP_LOGI(TAG, "author updated: %s", author->author_id);
 }
 
-static kii_bool_t handler_continue(void* task_info, void* userdata)
+static bool handler_continue(void* task_info, void* userdata)
 {
     static kii_mqtt_task_state last = KII_MQTT_ST_DISCONTINUED;
     kii_mqtt_task_state task_state = ((tio_handler_task_info_t*)task_info)->task_state;
@@ -75,12 +75,12 @@ static kii_bool_t handler_continue(void* task_info, void* userdata)
         ESP_LOGI(TAG, "handler ready: waiting for commands");
     }
     last = task_state;
-    return KII_TRUE;
+    return true;
 }
 
-static kii_bool_t updater_continue(void* task_info, void* userdata)
+static bool updater_continue(void* task_info, void* userdata)
 {
-    return KII_TRUE;
+    return true;
 }
 
 static void task_exit(void* task_info, void* userdata)
@@ -93,7 +93,7 @@ static void task_error(tio_code_t code, const char* message, void* userdata)
     ESP_LOGW(TAG, "%s: error %d: %s", (const char*)userdata, code, message);
 }
 
-static tio_bool_t action_handler(tio_action_t* action, tio_action_err_t* err,
+static bool action_handler(tio_action_t* action, tio_action_err_t* err,
         tio_action_result_data_t* data, void* userdata)
 {
     const tio_action_value_t* value = &action->action_value;
@@ -107,7 +107,7 @@ static tio_bool_t action_handler(tio_action_t* action, tio_action_err_t* err,
                 (int)action->alias_length, action->alias,
                 (int)action->action_name_length, action->action_name);
     }
-    return KII_TRUE;
+    return true;
 }
 
 static size_t state_size(void* userdata)

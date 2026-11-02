@@ -44,12 +44,12 @@ static int is_set(volatile LONG* flag) {
     return InterlockedCompareExchange(flag, 0, 0) != 0;
 }
 
-static tio_bool_t _handler_continue(void* task_info, void* userdata) {
-    return is_set(&term_flag) ? KII_FALSE : KII_TRUE;
+static bool _handler_continue(void* task_info, void* userdata) {
+    return !is_set(&term_flag);
 }
 
-static tio_bool_t _updater_continue(void* task_info, void* userdata) {
-    return is_set(&term_flag) ? KII_FALSE : KII_TRUE;
+static bool _updater_continue(void* task_info, void* userdata) {
+    return !is_set(&term_flag);
 }
 
 static void _handler_exit(void* task_info, void* userdata) {
@@ -168,11 +168,11 @@ static size_t updater_cb_read(char *buffer, size_t size, void *userdata)
     return read_size;
 }
 
-static tio_bool_t pushed_message_callback(const char* message, size_t message_length, void* userdata)
+static bool pushed_message_callback(const char* message, size_t message_length, void* userdata)
 {
     printf("pushed_message_callback called,\n");
     printf("%.*s\n", (int)message_length, message);
-    return KII_FALSE;
+    return false;
 }
 
 static void handler_init(
@@ -209,11 +209,11 @@ static void handler_init(
     tio_handler_set_cb_task_exit(handler, _handler_exit, NULL);
 }
 
-static tio_bool_t tio_action_handler(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata)
+static bool tio_action_handler(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata)
 {
     printf("tio_action_handler called\n");
     printf("%.*s: %.*s\n", (int)action->alias_length, action->alias,(int)action->action_name_length, action->action_name);
-    return KII_TRUE;
+    return true;
 }
 
 /* If argv[*index] is --name=value, or --name followed by the value in the

@@ -36,7 +36,7 @@ static const char _WRONG_TOKEN[] = "WRONG_TOKEN";
 void kii_session_init(kii_session_t* session)
 {
     memset(session, 0x00, sizeof(kii_session_t));
-    session->_renew_at_known = KII_FALSE;
+    session->_renew_at_known = false;
 }
 
 void kii_session_set_lock(kii_session_t* session, ebisu_lock_t* lock)
@@ -58,9 +58,9 @@ void kii_session_set_cb_author_updated(
     session->_author_updated_data = userdata;
 }
 
-static kii_bool_t _has_lock(kii_session_t* session)
+static bool _has_lock(kii_session_t* session)
 {
-    return session->_lock != NULL ? KII_TRUE : KII_FALSE;
+    return session->_lock != NULL;
 }
 
 static void _lock(kii_session_t* session)
@@ -80,14 +80,14 @@ void kii_session_set_password(
 {
     /* Typically called before the lock is set, but also to put right
      * credentials the server refused, while tasks run. */
-    kii_bool_t locked = _has_lock(session);
-    if (locked == KII_TRUE) {
+    bool locked = _has_lock(session);
+    if (locked) {
         _lock(session);
     }
     session->_vendor_thing_id = vendor_thing_id;
     session->_password = password;
     session->_password_wait_ms = 0;
-    if (locked == KII_TRUE) {
+    if (locked) {
         _unlock(session);
     }
 }
@@ -96,14 +96,14 @@ void kii_session_set_author(kii_session_t* session, const kii_author_t* author)
 {
     /* Typically called while restoring a saved author, before the lock is
      * set or any task runs. */
-    kii_bool_t locked = _has_lock(session);
-    if (locked == KII_TRUE) {
+    bool locked = _has_lock(session);
+    if (locked) {
         _lock(session);
     }
     session->_author = *author;
-    session->_renew_at_known = KII_FALSE;
+    session->_renew_at_known = false;
     ++session->_generation;
-    if (locked == KII_TRUE) {
+    if (locked) {
         _unlock(session);
     }
 }
@@ -113,24 +113,24 @@ void kii_session_set_renew_mode(kii_session_t* session, kii_renew_mode_t mode)
     if (mode != KII_RENEW_BY_TOKEN_ENDPOINT && mode != KII_RENEW_BY_ONBOARDING) {
         return;
     }
-    kii_bool_t locked = _has_lock(session);
-    if (locked == KII_TRUE) {
+    bool locked = _has_lock(session);
+    if (locked) {
         _lock(session);
     }
     session->_renew_mode = mode;
-    if (locked == KII_TRUE) {
+    if (locked) {
         _unlock(session);
     }
 }
 
 void kii_session_get_author(kii_session_t* session, kii_author_t* out_author)
 {
-    kii_bool_t locked = _has_lock(session);
-    if (locked == KII_TRUE) {
+    bool locked = _has_lock(session);
+    if (locked) {
         _lock(session);
     }
     *out_author = session->_author;
-    if (locked == KII_TRUE) {
+    if (locked) {
         _unlock(session);
     }
 }
@@ -151,7 +151,7 @@ void _kii_session_sync(kii_t* kii)
 kii_code_t kii_set_session(kii_t* kii, kii_session_t* session)
 {
     if (session != NULL &&
-            (_has_lock(session) != KII_TRUE || session->_system == NULL ||
+            (!_has_lock(session) || session->_system == NULL ||
              session->_system->ops->monotonic_ms == NULL)) {
         return KII_ERR_FAIL;
     }
@@ -168,17 +168,17 @@ static uint64_t _now_ms(kii_session_t* session)
 }
 
 /* How long after it was issued a token with this lifetime is renewed, or
- * KII_FALSE when that is unknown.
+ * false when that is unknown.
  *
  * 0 is a response that gave no lifetime. One that is negative, or longer than
  * _LIFETIME_MAX_SEC, cannot be scheduled either; the token is kept all the
  * same, rather than failing the login or refresh that issued it, and renewed
  * when the server refuses it. Within range the lifetime is at most
  * 4294967295000 ms, far from overflowing. */
-static kii_bool_t _renew_after_ms(int64_t expires_in_sec, uint64_t* out_ms)
+static bool _renew_after_ms(int64_t expires_in_sec, uint64_t* out_ms)
 {
     if (expires_in_sec <= 0 || expires_in_sec > _LIFETIME_MAX_SEC) {
-        return KII_FALSE;
+        return false;
     }
     uint64_t lifetime_ms = (uint64_t)expires_in_sec * 1000;
     uint64_t margin_ms = lifetime_ms / 5;
@@ -186,7 +186,7 @@ static kii_bool_t _renew_after_ms(int64_t expires_in_sec, uint64_t* out_ms)
         margin_ms = _RENEW_MARGIN_MAX_MS;
     }
     *out_ms = lifetime_ms - margin_ms;
-    return KII_TRUE;
+    return true;
 }
 
 static void _store_locked(
@@ -196,7 +196,7 @@ static void _store_locked(
 {
     session->_author = *author;
     session->_renew_at_known = _renew_after_ms(expires_in_sec, &session->_renew_after_ms);
-    if (session->_renew_at_known == KII_TRUE) {
+    if (session->_renew_at_known) {
         session->_stored_at_ms = _now_ms(session);
     }
     ++session->_generation;
@@ -217,36 +217,35 @@ void _kii_session_publish(kii_t* kii, int64_t expires_in_sec, kii_renew_mode_t m
 
 /* Whether the session may try the thing's credentials: it has them, and is not
  * waiting after the server refused them. */
-static kii_bool_t _password_usable_locked(kii_session_t* session)
+static bool _password_usable_locked(kii_session_t* session)
 {
     if (session->_password == NULL) {
-        return KII_FALSE;
+        return false;
     }
     if (session->_password_wait_ms == 0) {
-        return KII_TRUE;
+        return true;
     }
     /* As in _due_locked(), the time elapsed rather than a deadline. */
     uint64_t elapsed_ms = _now_ms(session) - session->_password_refused_at_ms;
-    return (elapsed_ms >= session->_password_wait_ms) ? KII_TRUE : KII_FALSE;
+    return (elapsed_ms >= session->_password_wait_ms);
 }
 
 /* Whether a status from a login or onboarding refuses the credentials. 408 and
  * 429 say the server wouldn't look at them yet, which says nothing about them. */
-static kii_bool_t _status_refuses(uint16_t status)
+static bool _status_refuses(uint16_t status)
 {
-    return (400 <= status && status < 500 && status != 408 && status != 429) ?
-        KII_TRUE : KII_FALSE;
+    return (400 <= status && status < 500 && status != 408 && status != 429);
 }
 
 /* Records the outcome of a login or onboarding with the thing's credentials.
  * An answer that refuses them starts a wait, longer than the last; one that
  * accepts them ends it. When the server could not be asked, or failed, nothing
  * is known about them. */
-static void _password_tried_locked(kii_session_t* session, kii_code_t res, kii_bool_t refused)
+static void _password_tried_locked(kii_session_t* session, kii_code_t res, bool refused)
 {
     if (res == KII_ERR_OK) {
         session->_password_wait_ms = 0;
-    } else if (refused == KII_TRUE) {
+    } else if (refused) {
         uint64_t wait_ms = session->_password_wait_ms * 2;
         if (wait_ms < _PASSWORD_WAIT_MIN_MS) {
             wait_ms = _PASSWORD_WAIT_MIN_MS;
@@ -258,22 +257,22 @@ static void _password_tried_locked(kii_session_t* session, kii_code_t res, kii_b
     }
 }
 
-static kii_bool_t _due_locked(kii_session_t* session)
+static bool _due_locked(kii_session_t* session)
 {
-    if (session->_renew_at_known != KII_TRUE) {
-        return KII_FALSE;
+    if (!session->_renew_at_known) {
+        return false;
     }
     /* The time elapsed rather than a deadline: the clock's origin is
      * arbitrary, and a deadline added to a large one could wrap around and be
      * due at once. The unsigned difference is right wherever the origin is. */
     uint64_t elapsed_ms = _now_ms(session) - session->_stored_at_ms;
-    return (elapsed_ms >= session->_renew_after_ms) ? KII_TRUE : KII_FALSE;
+    return (elapsed_ms >= session->_renew_after_ms);
 }
 
 kii_code_t _kii_parse_token_response(
         kii_t* kii,
         kii_author_t* author,
-        kii_bool_t id_required,
+        bool id_required,
         int64_t* out_expires_in_sec)
 {
     char* buff = kii->_rw_buff;
@@ -311,7 +310,7 @@ kii_code_t _kii_parse_token_response(
         return KII_ERR_PARSE_JSON;
     }
     if (fields[0].result != JKII_FIELD_ERR_OK &&
-            (id_required == KII_TRUE || fields[0].result != JKII_FIELD_ERR_NOT_FOUND)) {
+            (id_required || fields[0].result != JKII_FIELD_ERR_NOT_FOUND)) {
         return KII_ERR_PARSE_JSON;
     }
     /* A refresh token too long to keep is an error, not an absence: the one it
@@ -334,17 +333,17 @@ static kii_code_t _token_response(
         kii_t* kii,
         kii_code_t sent,
         kii_author_t* author,
-        kii_bool_t id_required,
+        bool id_required,
         int64_t* expires_in_sec,
-        kii_bool_t* rejected)
+        bool* rejected)
 {
-    *rejected = KII_FALSE;
+    *rejected = false;
     if (sent != KII_ERR_OK) {
         return sent;
     }
     uint16_t status = khc_get_status_code(&kii->_khc);
-    if (_status_refuses(status) == KII_TRUE) {
-        *rejected = KII_TRUE;
+    if (_status_refuses(status)) {
+        *rejected = true;
         return KII_ERR_RESP_STATUS;
     }
     if (status < 200 || 300 <= status) {
@@ -359,14 +358,14 @@ static kii_code_t _token_response(
 static kii_code_t _onboard_again(kii_t* kii, kii_author_t* author)
 {
     kii_session_t* session = kii->_session;
-    if (_password_usable_locked(session) != KII_TRUE) {
+    if (!_password_usable_locked(session)) {
         return KII_ERR_FAIL;
     }
     kii_code_t res = _onboard(kii, session->_vendor_thing_id,
             session->_password, NULL, NULL, NULL, NULL);
     uint16_t status = khc_get_status_code(&kii->_khc);
     _password_tried_locked(session, res,
-            (res == KII_ERR_RESP_STATUS) ? _status_refuses(status) : KII_FALSE);
+            res == KII_ERR_RESP_STATUS && _status_refuses(status));
     if (res != KII_ERR_OK) {
         return res;
     }
@@ -376,14 +375,14 @@ static kii_code_t _onboard_again(kii_t* kii, kii_author_t* author)
     return KII_ERR_OK;
 }
 
-kii_bool_t _kii_session_renews_by_onboarding(kii_t* kii)
+bool _kii_session_renews_by_onboarding(kii_t* kii)
 {
     kii_session_t* session = kii->_session;
     if (session == NULL) {
-        return KII_FALSE;
+        return false;
     }
     _lock(session);
-    kii_bool_t by_onboarding = (session->_renew_mode == KII_RENEW_BY_ONBOARDING) ? KII_TRUE : KII_FALSE;
+    bool by_onboarding = (session->_renew_mode == KII_RENEW_BY_ONBOARDING);
     _unlock(session);
     return by_onboarding;
 }
@@ -405,14 +404,14 @@ kii_code_t _kii_session_onboard_again(kii_t* kii)
 /* Renews the session's token unless another kii_t did since this one took it,
  * or, when not forced, it is not yet due. Called with the session lock held,
  * and with kii->_rw_buff pointing at space the renewal may use. */
-static kii_code_t _renew_locked(kii_t* kii, kii_bool_t force)
+static kii_code_t _renew_locked(kii_t* kii, bool force)
 {
     kii_session_t* session = kii->_session;
     if (session->_generation != kii->_session_generation) {
         _sync_locked(kii);
         return KII_ERR_OK;
     }
-    if (force != KII_TRUE && _due_locked(session) != KII_TRUE) {
+    if (!force && !_due_locked(session)) {
         return KII_ERR_OK;
     }
 
@@ -428,17 +427,17 @@ static kii_code_t _renew_locked(kii_t* kii, kii_bool_t force)
         return res;
     }
     /* Having no refresh token is treated like having it refused. */
-    kii_bool_t rejected = KII_TRUE;
+    bool rejected = true;
     if (author.refresh_token[0] != '\0') {
         _reset_buff(kii);
         _reset_khc(kii);
         res = _token_response(kii, _thing_refresh(kii, author.refresh_token),
-                &author, KII_FALSE, &expires_in_sec, &rejected);
+                &author, false, &expires_in_sec, &rejected);
     }
     /* The password stands in for a refresh token the server refused, not for
      * one it could not be asked about: that one may well still be valid. */
-    if (res != KII_ERR_OK && rejected == KII_TRUE &&
-            _password_usable_locked(session) == KII_TRUE) {
+    if (res != KII_ERR_OK && rejected &&
+            _password_usable_locked(session)) {
         author = session->_author;
         /* A login starts a new pair, which has no refresh token unless the
          * server issues one. */
@@ -447,7 +446,7 @@ static kii_code_t _renew_locked(kii_t* kii, kii_bool_t force)
         _reset_khc(kii);
         res = _token_response(kii,
                 _thing_auth(kii, session->_vendor_thing_id, session->_password),
-                &author, KII_TRUE, &expires_in_sec, &rejected);
+                &author, true, &expires_in_sec, &rejected);
         _password_tried_locked(session, res, rejected);
     }
     if (res == KII_ERR_OK) {
@@ -460,19 +459,19 @@ static kii_code_t _renew_locked(kii_t* kii, kii_bool_t force)
 /* Whether the request being prepared carries the session's token. Looking at
  * the header itself, rather than at which function built it, also covers
  * requests an application builds with kii_api_call_start(). */
-static kii_bool_t _has_session_token(kii_t* kii)
+static bool _has_session_token(kii_t* kii)
 {
     if (kii->_author.access_token[0] == '\0') {
-        return KII_FALSE;
+        return false;
     }
     size_t prefix_len = strlen(_AUTH_HEADER_PREFIX);
     for (khc_slist* node = kii->_req_headers; node != NULL; node = node->next) {
         if (strncmp(node->data, _AUTH_HEADER_PREFIX, prefix_len) == 0 &&
                 strcmp(node->data + prefix_len, kii->_author.access_token) == 0) {
-            return KII_TRUE;
+            return true;
         }
     }
-    return KII_FALSE;
+    return false;
 }
 
 /* Points the request's Authorization header at kii->_author's token. */
@@ -514,21 +513,21 @@ static kii_code_t _replace_auth_header(kii_t* kii)
  * body is not attempted. */
 static kii_code_t _renew_and_restore(
         kii_t* kii,
-        kii_bool_t force,
-        kii_bool_t* out_resendable)
+        bool force,
+        bool* out_resendable)
 {
-    *out_resendable = KII_FALSE;
+    *out_resendable = false;
     char* buff = kii->_rw_buff;
     size_t buff_size = kii->_rw_buff_size;
     size_t req_size = kii->_rw_buff_req_size;
-    kii_bool_t streamed = kii->_req_streamed;
-    size_t keep = (streamed == KII_TRUE) ? 0 : req_size + 1;
+    bool streamed = kii->_req_streamed;
+    size_t keep = (streamed) ? 0 : req_size + 1;
     _lock(kii->_session);
     size_t renewal_size = (kii->_session->_renew_mode == KII_RENEW_BY_ONBOARDING) ?
         _KII_SESSION_ONBOARD_BUFF_SIZE : _KII_SESSION_RENEW_BUFF_SIZE;
     _unlock(kii->_session);
     if (buff_size < keep + renewal_size) {
-        if (force != KII_TRUE) {
+        if (!force) {
             return KII_ERR_OK;
         }
         keep = 0;
@@ -539,7 +538,7 @@ static kii_code_t _renew_and_restore(
     khc request = kii->_khc;
     khc_slist* headers = kii->_req_headers;
     kii->_req_headers = NULL;
-    kii->_req_streamed = KII_FALSE;
+    kii->_req_streamed = false;
     kii->_rw_buff = buff + keep;
     kii->_rw_buff_size = buff_size - keep;
     khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
@@ -565,25 +564,25 @@ static kii_code_t _renew_and_restore(
     if (res == KII_ERR_OK) {
         res = header_res;
     }
-    if (res == KII_ERR_OK && streamed != KII_TRUE && keep > 0) {
-        *out_resendable = KII_TRUE;
+    if (res == KII_ERR_OK && !streamed && keep > 0) {
+        *out_resendable = true;
     }
     return res;
 }
 
-static kii_bool_t _renewal_due(kii_t* kii)
+static bool _renewal_due(kii_t* kii)
 {
     kii_session_t* session = kii->_session;
     _lock(session);
-    kii_bool_t due = (session->_generation != kii->_session_generation ||
-            _due_locked(session) == KII_TRUE) ? KII_TRUE : KII_FALSE;
+    bool due = (session->_generation != kii->_session_generation ||
+            _due_locked(session));
     _unlock(session);
     return due;
 }
 
 size_t _kii_session_resp_offset(kii_t* kii)
 {
-    if (kii->_session_request != KII_TRUE || kii->_req_streamed == KII_TRUE ||
+    if (!kii->_session_request || kii->_req_streamed ||
             khc_get_status_code(&kii->_khc) != 403) {
         return 0;
     }
@@ -605,10 +604,10 @@ void _kii_resp_to_start(kii_t* kii)
 
 /* Whether the response refuses the token it was sent with. Kii answers 401
  * for other reasons, a request without credentials among them. */
-static kii_bool_t _token_refused(kii_t* kii)
+static bool _token_refused(kii_t* kii)
 {
     if (khc_get_status_code(&kii->_khc) != 403) {
-        return KII_FALSE;
+        return false;
     }
     char error_code[sizeof(_WRONG_TOKEN)];
     jkii_field_t fields[2];
@@ -622,42 +621,42 @@ static kii_bool_t _token_refused(kii_t* kii)
             kii->_rw_buff + kii->_resp_offset, kii->_rw_buff_written, fields);
     return ((result == JKII_ERR_OK || result == JKII_ERR_PARTIAL) &&
             fields[0].result == JKII_FIELD_ERR_OK &&
-            strcmp(error_code, _WRONG_TOKEN) == 0) ? KII_TRUE : KII_FALSE;
+            strcmp(error_code, _WRONG_TOKEN) == 0);
 }
 
 khc_code _kii_perform(kii_t* kii)
 {
-    kii->_session_refused = KII_FALSE;
-    if (kii->_session == NULL || _has_session_token(kii) != KII_TRUE) {
+    kii->_session_refused = false;
+    if (kii->_session == NULL || !_has_session_token(kii)) {
         return khc_perform(&kii->_khc);
     }
 
-    kii_bool_t resendable = KII_FALSE;
-    if (_renewal_due(kii) == KII_TRUE) {
+    bool resendable = false;
+    if (_renewal_due(kii)) {
         /* Failing here is not fatal: the token may still be accepted, and a
          * refusal is handled below. */
-        _renew_and_restore(kii, KII_FALSE, &resendable);
+        _renew_and_restore(kii, false, &resendable);
     }
 
-    kii->_session_request = KII_TRUE;
+    kii->_session_request = true;
     khc_code code = khc_perform(&kii->_khc);
-    kii->_session_request = KII_FALSE;
-    if (code != KHC_ERR_OK || _token_refused(kii) != KII_TRUE) {
+    kii->_session_request = false;
+    if (code != KHC_ERR_OK || !_token_refused(kii)) {
         _kii_resp_to_start(kii);
         return code;
     }
 
     /* The refusal was read past the request's body, unless there was no room
      * for it there. */
-    kii_bool_t body_kept = (kii->_resp_offset > 0) ? KII_TRUE : KII_FALSE;
-    kii_code_t res = _renew_and_restore(kii, KII_TRUE, &resendable);
+    bool body_kept = (kii->_resp_offset > 0);
+    kii_code_t res = _renew_and_restore(kii, true, &resendable);
     if (res != KII_ERR_OK) {
         return code;
     }
-    if (resendable != KII_TRUE || body_kept != KII_TRUE) {
+    if (!resendable || !body_kept) {
         /* Not sent again, the request leaves the caller its 403, and the next
          * one the token the renewal obtained. */
-        kii->_session_refused = KII_TRUE;
+        kii->_session_refused = true;
         return code;
     }
     khc_reset_except_request(&kii->_khc);

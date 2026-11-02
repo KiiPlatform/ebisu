@@ -188,7 +188,7 @@ void forget_sent(Device& d)
     d.sent.clear();
 }
 
-kii_bool_t cb_handler_continue(void* task_info, void* userdata)
+bool cb_handler_continue(void* task_info, void* userdata)
 {
     Device* d = (Device*)userdata;
     kii_mqtt_task_state state = ((tio_handler_task_info_t*)task_info)->task_state;
@@ -197,14 +197,14 @@ kii_bool_t cb_handler_continue(void* task_info, void* userdata)
         d->handler_states.push_back(state);
         d->changed.notify_all();
     }
-    return d->stop ? KII_FALSE : KII_TRUE;
+    return d->stop ? false : true;
 }
 
-kii_bool_t cb_updater_continue(void* task_info, void* userdata)
+bool cb_updater_continue(void* task_info, void* userdata)
 {
     Device* d = (Device*)userdata;
     std::lock_guard<std::mutex> lock(d->mutex);
-    return d->stop ? KII_FALSE : KII_TRUE;
+    return d->stop ? false : true;
 }
 
 void cb_exit(void* task_info, void* userdata)
@@ -226,7 +226,7 @@ std::string value_of(const tio_action_value_t& v)
 {
     switch (v.type) {
         case TIO_TYPE_BOOLEAN:
-            return v.param.bool_value == KII_TRUE ? "true" : "false";
+            return v.param.bool_value == true ? "true" : "false";
         case TIO_TYPE_INTEGER:
             return std::to_string(v.param.long_value);
         case TIO_TYPE_DOUBLE:
@@ -242,7 +242,7 @@ std::string value_of(const tio_action_value_t& v)
 
 // Records the action. setMode "unsupported" fails, and setPresetTemperature
 // reports the temperature applied as its result's data.
-tio_bool_t cb_action(tio_action_t* action, tio_action_err_t* err,
+bool cb_action(tio_action_t* action, tio_action_err_t* err,
         tio_action_result_data_t* data, void* userdata)
 {
     Device* d = (Device*)userdata;
@@ -258,12 +258,12 @@ tio_bool_t cb_action(tio_action_t* action, tio_action_err_t* err,
     }
     if (a.name == "setMode" && a.value == "unsupported") {
         snprintf(err->err_message, sizeof(err->err_message), "mode not supported");
-        return KII_FALSE;
+        return false;
     }
     if (a.name == "setPresetTemperature") {
         snprintf(data->json, sizeof(data->json), "{\"applied\":%s}", a.value.c_str());
     }
-    return KII_TRUE;
+    return true;
 }
 
 size_t cb_state_size(void* userdata)

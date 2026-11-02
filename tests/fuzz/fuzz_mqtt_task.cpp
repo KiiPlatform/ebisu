@@ -59,8 +59,8 @@ const ebisu_socket_ops_t HTTP_OPS = { http_connect, http_send, http_recv, sock_c
 const ebisu_socket_ops_t MQTT_OPS = { mqtt_connect, mqtt_send, mqtt_recv, sock_close, NULL };
 const ebisu_system_ops_t SYSTEM_OPS = { NULL, delay_ms, NULL };
 
-kii_bool_t task_continue(void*, void* userdata) {
-    return ++((Task*)userdata)->states < MAX_STATES ? KII_TRUE : KII_FALSE;
+bool task_continue(void*, void* userdata) {
+    return ++((Task*)userdata)->states < MAX_STATES;
 }
 
 // Reads all it is given, for ASan to see the message's length is right.

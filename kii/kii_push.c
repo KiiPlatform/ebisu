@@ -168,7 +168,7 @@ kii_code_t kii_send_push_message_to_thing(
 
 kii_code_t kii_install_push(
         kii_t* kii,
-        kii_bool_t development,
+        bool development,
         kii_installation_id_t* out_installation_id)
 {
     _reset_khc(kii);
@@ -304,28 +304,28 @@ exit:
 
 /* What the task uses without checking, so that one left out is found when
  * starting it, rather than as a crash in the task. */
-static kii_bool_t _socket_can_run(const ebisu_socket_t* sock)
+static bool _socket_can_run(const ebisu_socket_t* sock)
 {
     return (sock != NULL && sock->ops != NULL &&
             sock->ops->connect != NULL &&
             sock->ops->send != NULL &&
             sock->ops->recv != NULL &&
-            sock->ops->close != NULL) ? KII_TRUE : KII_FALSE;
+            sock->ops->close != NULL);
 }
 
-static kii_bool_t _push_task_can_run(const kii_t* kii)
+static bool _push_task_can_run(const kii_t* kii)
 {
     return (kii->_system->ops->delay_ms != NULL &&
-            _socket_can_run(kii->_khc._socket) == KII_TRUE &&
-            _socket_can_run(kii->_mqtt_socket) == KII_TRUE &&
+            _socket_can_run(kii->_khc._socket) &&
+            _socket_can_run(kii->_mqtt_socket) &&
             kii->_rw_buff != NULL &&
-            kii->_mqtt_buffer != NULL) ? KII_TRUE : KII_FALSE;
+            kii->_mqtt_buffer != NULL);
 }
 
 kii_code_t kii_start_push_task(kii_t* kii, uint32_t keep_alive_interval, KII_PUSH_RECEIVED_CB callback, void* userdata)
 {
     // A second task would share the first's sockets and buffers.
-    if (kii->_push_task_running == KII_TRUE) {
+    if (kii->_push_task_running) {
         return KII_ERR_FAIL;
     }
     // CONNECT carries the keep-alive in 16 bits. A longer one would reach the
@@ -337,20 +337,20 @@ kii_code_t kii_start_push_task(kii_t* kii, uint32_t keep_alive_interval, KII_PUS
     if (kii->_system == NULL || kii->_system->ops->task_create == NULL) {
         return KII_ERR_CREATE_TASK;
     }
-    if (callback == NULL || _push_task_can_run(kii) != KII_TRUE) {
+    if (callback == NULL || !_push_task_can_run(kii)) {
         return KII_ERR_FAIL;
     }
     kii->_keep_alive_interval = (uint16_t)keep_alive_interval;
     kii->_cb_push_received = callback;
     kii->_push_data = userdata;
     // Before creating it, as it may have finished by the time that returns.
-    kii->_push_task_running = KII_TRUE;
+    kii->_push_task_running = true;
     ebisu_task_code_t res = kii->_system->ops->task_create(kii->_system,
             KII_TASK_NAME_MQTT,
             mqtt_start_task,
             (void*)kii);
     if (res != EBISU_TASKC_OK) {
-        kii->_push_task_running = KII_FALSE;
+        kii->_push_task_running = false;
         return KII_ERR_CREATE_TASK;
     }
     return KII_ERR_OK;

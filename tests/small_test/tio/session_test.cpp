@@ -133,7 +133,7 @@ TEST_CASE( "The updater uploads again when its token was renewed" ) {
 
 namespace {
 
-tio_bool_t cb_action(
+bool cb_action(
         tio_action_t* action,
         tio_action_err_t* err,
         tio_action_result_data_t* data,
@@ -141,7 +141,7 @@ tio_bool_t cb_action(
     err->err_message[0] = '\0';
     data->json[0] = '\0';
     ++(*(int*)userdata);
-    return KII_TRUE;
+    return true;
 }
 
 }

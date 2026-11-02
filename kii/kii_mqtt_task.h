@@ -37,7 +37,7 @@ typedef struct {
      * Whether that PUBLISH came while waiting for SUBACK, which is waited
      * for again once it is read.
      */
-    kii_bool_t awaiting_suback;
+    bool awaiting_suback;
     /** \private
      * Whether the PINGRESP for the last PINGREQ has arrived.
      *
@@ -45,19 +45,19 @@ typedef struct {
      * a half-open TCP connection can take many retransmission timeouts. Missing
      * PINGRESP detects it within one keep-alive interval instead.
      */
-    kii_bool_t pingresp_received;
+    bool pingresp_received;
     /** \private
      * Whether the MQTT socket is connected: from a successful connect until
      * the close callback is called, so that the task closes it on its way
      * out, and only then.
      */
-    kii_bool_t sock_connected;
+    bool sock_connected;
     /** \private
      * Whether the broker accepted CONNECT on that connection: from a CONNACK
      * that accepts it until the connection is closed, so that the task says
      * DISCONNECT before closing it on its way out.
      */
-    kii_bool_t mqtt_connected;
+    bool mqtt_connected;
     /** \private
      * How long the wait before the next attempt to reach the cloud is based
      * on, in milliseconds. It doubles with each failure until a connection is

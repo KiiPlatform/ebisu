@@ -123,7 +123,7 @@ private:
             const std::string& token) {
         Response r;
         r.res = kii_api_call_start(&kii_, method.c_str(), path.c_str(),
-                content_type.empty() ? NULL : content_type.c_str(), KII_FALSE);
+                content_type.empty() ? NULL : content_type.c_str(), false);
         if (r.res == KII_ERR_OK && !token.empty()) {
             r.res = kii_api_call_append_header(&kii_, "Authorization", ("Bearer " + token).c_str());
         }

@@ -92,7 +92,7 @@ ebisu_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) 
     */
     /* Username and password, and clean session unless the broker is to keep
      * the session. */
-    kii->_mqtt_buffer[i++] = (char)(kii->_mqtt_clean_session == KII_FALSE ? 0xc0 : 0xc2);
+    kii->_mqtt_buffer[i++] = (char)(kii->_mqtt_clean_session ? 0xc2 : 0xc0);
     /* Variable header:Keep Alive, which kii_start_push_task() keeps to 16 bits */
     kii->_mqtt_buffer[i++] = (keep_alive_interval & 0xff00) >> 8;
     kii->_mqtt_buffer[i++] = keep_alive_interval & 0x00ff;
@@ -281,13 +281,13 @@ ebisu_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fix
 // EBISU_SOCK_FAIL for both, so only the
 // socket's recv_timed_out can tell. Without one, take it for a timeout, as on
 // an idle connection the receive keeps timing out.
-static kii_bool_t _mqtt_sock_recv_lost(kii_t* kii)
+static bool _mqtt_sock_recv_lost(kii_t* kii)
 {
     ebisu_socket_t* sock = kii->_mqtt_socket;
     if (sock->ops->recv_timed_out == NULL) {
-        return KII_FALSE;
+        return false;
     }
-    return sock->ops->recv_timed_out(sock) ? KII_FALSE : KII_TRUE;
+    return !sock->ops->recv_timed_out(sock);
 }
 
 // If the MQTT buffer size is insufficient,
@@ -363,10 +363,9 @@ ebisu_sock_code_t _mqtt_recv_remaining(kii_t* kii, unsigned long remaining_lengt
 // Without one, the time is estimated by adding up the waits and receive
 // timeouts the task goes through, which misses the time spent elsewhere, such
 // as in the push callback.
-static kii_bool_t _has_clock(const kii_t* kii)
+static bool _has_clock(const kii_t* kii)
 {
-    return (kii->_system != NULL && kii->_system->ops->monotonic_ms != NULL) ?
-        KII_TRUE : KII_FALSE;
+    return (kii->_system != NULL && kii->_system->ops->monotonic_ms != NULL);
 }
 
 // Starts the time since the last packet that counts for the keep-alive again,
@@ -375,7 +374,7 @@ static void _reset_elapsed(mqtt_state_t* state, uint32_t ms)
 {
     kii_t* kii = state->kii;
     state->elapsed_time_ms = ms;
-    if (_has_clock(kii) == KII_TRUE) {
+    if (_has_clock(kii)) {
         // Unsigned, so this wraps round and back again if the clock is below
         // ms, and the difference taken in _elapsed_ms() is still ms.
         state->elapsed_since_ms = kii->_system->ops->monotonic_ms(kii->_system) - ms;
@@ -387,7 +386,7 @@ static void _reset_elapsed(mqtt_state_t* state, uint32_t ms)
 static uint32_t _elapsed_ms(const mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
-    if (_has_clock(kii) != KII_TRUE) {
+    if (!_has_clock(kii)) {
         return state->elapsed_time_ms;
     }
     uint64_t ms = kii->_system->ops->monotonic_ms(kii->_system) - state->elapsed_since_ms;
@@ -411,10 +410,10 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
     _reset_elapsed(state, 0);
     state->remaining_message_size = 0;
     state->message_qos = 0;
-    state->awaiting_suback = KII_FALSE;
-    state->pingresp_received = KII_TRUE;
-    state->sock_connected = KII_FALSE;
-    state->mqtt_connected = KII_FALSE;
+    state->awaiting_suback = false;
+    state->pingresp_received = true;
+    state->sock_connected = false;
+    state->mqtt_connected = false;
     state->retry_wait_ms = RETRY_WAIT_MIN_MS;
     state->wait_left_ms = 0;
     state->connect_failures = 0;
@@ -445,29 +444,28 @@ static void _schedule_retry(mqtt_state_t* state)
 /* Whether a request that failed may succeed if tried again: the server said so,
  * or it never answered, which is no reason to stop on a device that can lose
  * its network at any time. */
-static kii_bool_t _is_temporary_error(kii_t* kii, kii_code_t res)
+static bool _is_temporary_error(kii_t* kii, kii_code_t res)
 {
     switch (res) {
         case KII_ERR_SOCK_CONNECT:
         case KII_ERR_SOCK_CLOSE:
         case KII_ERR_SOCK_SEND:
         case KII_ERR_SOCK_RECV:
-            return KII_TRUE;
+            return true;
         default:
             break;
     }
     uint16_t status_code = khc_get_status_code(&kii->_khc);
-    return ((500 <= status_code && status_code < 600) || status_code == 429) ?
-        KII_TRUE : KII_FALSE;
+    return ((500 <= status_code && status_code < 600) || status_code == 429);
 }
 
 void _mqtt_state_install_push(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
     kii_mqtt_task_info* task_info = &state->info;
-    kii_code_t res = kii_install_push(kii, KII_FALSE, &state->ins_id);
+    kii_code_t res = kii_install_push(kii, false, &state->ins_id);
     if (res != KII_ERR_OK) {
-        if (_is_temporary_error(kii, res) == KII_TRUE) {
+        if (_is_temporary_error(kii, res)) {
             // Temporal error. Try again.
             _schedule_retry(state);
         } else {
@@ -504,11 +502,11 @@ void _mqtt_state_get_endpoint(mqtt_state_t* state)
     kii_t* kii = state->kii;
     kii_mqtt_task_info* task_info = &state->info;
     _delay_ms(kii, WAIT_MS);
-    kii_code_t res = (_kii_session_renews_by_onboarding(kii) == KII_TRUE) ?
+    kii_code_t res = (_kii_session_renews_by_onboarding(kii)) ?
         _onboard_for_endpoint(state) :
         kii_get_mqtt_endpoint(kii, state->ins_id.id, &state->endpoint);
     if (res != KII_ERR_OK) {
-        if (_is_temporary_error(kii, res) == KII_TRUE) {
+        if (_is_temporary_error(kii, res)) {
             // Temporal error. Try again.
             _schedule_retry(state);
         } else {
@@ -526,7 +524,7 @@ void _mqtt_state_sock_connect(mqtt_state_t* state)
     kii_mqtt_task_info* task_info = &state->info;
     kii_mqtt_endpoint_t* endpoint = &state->endpoint;
     uint16_t port = endpoint->port_ssl;
-    if (kii->_insecure_mqtt == KII_TRUE) {
+    if (kii->_insecure_mqtt) {
         port = endpoint->port_tcp;
     }
 
@@ -542,7 +540,7 @@ void _mqtt_state_sock_connect(mqtt_state_t* state)
         }
     } else {
         state->connect_failures = 0;
-        state->sock_connected = KII_TRUE;
+        state->sock_connected = true;
         task_info->task_state = KII_MQTT_ST_SEND_CONNECT;
     }
 }
@@ -617,7 +615,7 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
         // fails permanently and exits; or, for a session that renews by
         // onboarding again, onboards again.
         kii->_mqtt_socket->ops->close(kii->_mqtt_socket);
-        state->sock_connected = KII_FALSE;
+        state->sock_connected = false;
         _schedule_retry(state);
         task_info->task_state = KII_MQTT_ST_GET_ENDPOINT;
     } else if (return_code != 0) {
@@ -627,11 +625,11 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
     } else {
         // The connection is usable again, so the previous one's outstanding
         // PINGREQ no longer counts. Without this the first PINGREQ after any
-        // reconnect would see the stale KII_FALSE and reconnect again, forever.
+        // reconnect would see the stale false and reconnect again, forever.
         // _init_mqtt_state() runs once, before the state loop, so it cannot do
         // this: RECONNECT goes to SOCK_CONNECT inside the loop.
-        state->pingresp_received = KII_TRUE;
-        state->mqtt_connected = KII_TRUE;
+        state->pingresp_received = true;
+        state->mqtt_connected = true;
         task_info->task_state = KII_MQTT_ST_SEND_SUBSCRIBE;
     }
 }
@@ -654,7 +652,7 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
     kii_mqtt_task_info* task_info = &state->info;
-    state->awaiting_suback = KII_FALSE;
+    state->awaiting_suback = false;
     kii_mqtt_fixed_header fixed_header;
     ebisu_sock_code_t res = _mqtt_recv_fixed_header(kii, &fixed_header);
     if (res != EBISU_SOCK_OK) {
@@ -669,7 +667,7 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
         // wait for SUBACK again.
         state->remaining_message_size = fixed_header.remaining_length;
         state->message_qos = ((unsigned char)fixed_header.byte1 >> 1) & 0x03;
-        state->awaiting_suback = KII_TRUE;
+        state->awaiting_suback = true;
         task_info->task_state = KII_MQTT_ST_RECV_MSG;
         return;
     }
@@ -768,7 +766,7 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
             // Estimate worst case.
             _add_elapsed_ms(state, _to_recv_ms(kii));
         } else if (mtype == 0xD0) { // PINGRESP
-            state->pingresp_received = KII_TRUE;
+            state->pingresp_received = true;
             _add_elapsed_ms(state, ARRIVED_MSG_READ_TIME);
         } else { // Ignore other messages.
             unsigned long size = fh.remaining_length;
@@ -780,7 +778,7 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
                 task_info->task_state = KII_MQTT_ST_RECONNECT;
             }
         }
-    } else if (res == EBISU_SOCK_FAIL && _mqtt_sock_recv_lost(kii) == KII_TRUE) {
+    } else if (res == EBISU_SOCK_FAIL && _mqtt_sock_recv_lost(kii)) {
         // Waiting on would wait for a connection that is gone.
         _reset_elapsed(state, 0);
         _delay_ms(kii, WAIT_MS);
@@ -822,11 +820,11 @@ static ebisu_sock_code_t _mqtt_send_puback(kii_t* kii, uint16_t id)
 // acknowledged all the same: the broker would send it again and again, and it
 // would never fit.
 static ebisu_sock_code_t _mqtt_recv_msg_trash(mqtt_state_t* state,
-        kii_bool_t* out_has_id, uint16_t* out_id)
+        bool* out_has_id, uint16_t* out_id)
 {
     kii_t* kii = state->kii;
     unsigned long left = state->remaining_message_size;
-    *out_has_id = KII_FALSE;
+    *out_has_id = false;
     if (state->message_qos == 0 || left < 2) {
         return _mqtt_recv_remaining_trash(kii, left);
     }
@@ -853,7 +851,7 @@ static ebisu_sock_code_t _mqtt_recv_msg_trash(mqtt_state_t* state,
     if (res != EBISU_SOCK_OK) {
         return res;
     }
-    *out_has_id = KII_TRUE;
+    *out_has_id = true;
     *out_id = (uint16_t)((unsigned char)two[0] * 256 + (unsigned char)two[1]);
     return EBISU_SOCK_OK;
 }
@@ -865,7 +863,7 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
     const unsigned long remaining_message_size = state->remaining_message_size;
     // Whether the message is at QoS 1, and so to be acknowledged, and with
     // which packet identifier.
-    kii_bool_t has_id = KII_FALSE;
+    bool has_id = false;
     uint16_t id = 0;
     if (state->message_qos > 1) {
         // QoS 2, which the task never subscribes with, or 3, which there is
@@ -910,7 +908,7 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
             if (topic_size + id_size <= remaining_message_size - 2) {
                 char* id_ptr = kii->_mqtt_buffer + topic_size + 2;
                 if (id_size > 0) {
-                    has_id = KII_TRUE;
+                    has_id = true;
                     id = (uint16_t)((unsigned char)id_ptr[0] * 256 + (unsigned char)id_ptr[1]);
                 }
                 char* body_ptr = id_ptr + id_size;
@@ -921,13 +919,13 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
     }
     // Once the push callback has returned, so that a message lost on its way to
     // the application is sent again.
-    if (has_id == KII_TRUE && _mqtt_send_puback(kii, id) != EBISU_SOCK_OK) {
+    if (has_id && _mqtt_send_puback(kii, id) != EBISU_SOCK_OK) {
         _reset_elapsed(state, 0);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
     }
-    task_info->task_state = state->awaiting_suback == KII_TRUE ?
+    task_info->task_state = state->awaiting_suback ?
         KII_MQTT_ST_RECV_SUBACK : KII_MQTT_ST_RECV_READY;
 }
 
@@ -939,7 +937,7 @@ void _mqtt_state_send_pingreq(mqtt_state_t* state)
     // The previous PINGREQ was never answered, so the connection is gone even
     // though sending may still appear to succeed. Reconnect rather than send
     // another and wait another keep-alive interval to find out.
-    if (state->pingresp_received != KII_TRUE) {
+    if (!state->pingresp_received) {
         _reset_elapsed(state, 0);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
@@ -952,7 +950,7 @@ void _mqtt_state_send_pingreq(mqtt_state_t* state)
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
     } else {
-        state->pingresp_received = KII_FALSE;
+        state->pingresp_received = false;
         _reset_elapsed(state, MSG_SEND_TIME);
         task_info->task_state = KII_MQTT_ST_RECV_READY;
     }
@@ -962,8 +960,8 @@ void _mqtt_state_reconnect(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
     kii->_mqtt_socket->ops->close(kii->_mqtt_socket);
-    state->sock_connected = KII_FALSE;
-    state->mqtt_connected = KII_FALSE;
+    state->sock_connected = false;
+    state->mqtt_connected = false;
     _schedule_retry(state);
     state->info.task_state = KII_MQTT_ST_SOCK_CONNECT;
 }
@@ -990,8 +988,8 @@ void* mqtt_start_task(void* sdata)
 
     while(state.info.task_state < KII_MQTT_ST_ERR_EXIT) {
         if (kii->_cb_task_continue != NULL) {
-            kii_bool_t cont = kii->_cb_task_continue(&state.info, kii->_task_continue_data);
-            if (cont != KII_TRUE) {
+            bool cont = kii->_cb_task_continue(&state.info, kii->_task_continue_data);
+            if (!cont) {
                 state.info.task_state = KII_MQTT_ST_DISCONTINUED;
                 break;
             }
@@ -1008,21 +1006,21 @@ void* mqtt_start_task(void* sdata)
     }
     // Discontinued, or exiting on an error, with a connection open: close it,
     // as nothing else will. The application cannot tell whether one is open.
-    if (state.sock_connected == KII_TRUE) {
+    if (state.sock_connected) {
         // The broker accepted the connection, so say DISCONNECT, which tells
         // it the client is leaving rather than lost: it can end the session at
         // once, rather than once the keep-alive runs out. A reconnect doesn't,
         // as the connection it leaves is broken or refused. Whether it is sent
         // makes no difference to what follows.
-        if (state.mqtt_connected == KII_TRUE) {
+        if (state.mqtt_connected) {
             _mqtt_send_disconnect(kii);
-            state.mqtt_connected = KII_FALSE;
+            state.mqtt_connected = false;
         }
         kii->_mqtt_socket->ops->close(kii->_mqtt_socket);
-        state.sock_connected = KII_FALSE;
+        state.sock_connected = false;
     }
     // Before the callback, which may start the task again.
-    kii->_push_task_running = KII_FALSE;
+    kii->_push_task_running = false;
     if (kii->_cb_task_exit != NULL) {
         kii->_cb_task_exit(&state.info, kii->_task_exit_data);
     }

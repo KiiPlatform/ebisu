@@ -44,7 +44,7 @@ const ebisu_socket_ops_t SOCKET_OPS = { sock_connect, sock_send, sock_recv, sock
 
 // Reads all it is given, for ASan to see the lengths are right, and fails every
 // other action, for the path that reports a failure.
-tio_bool_t on_action(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata) {
+bool on_action(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata) {
     size_t* sum = (size_t*)userdata;
     for (size_t i = 0; i < action->alias_length; ++i) {
         *sum += (unsigned char)action->alias[i];
@@ -54,9 +54,9 @@ tio_bool_t on_action(tio_action_t* action, tio_action_err_t* err, tio_action_res
     }
     if (*sum & 1) {
         strcpy(err->err_message, "failed \"on purpose\"");
-        return KII_FALSE;
+        return false;
     }
-    return KII_TRUE;
+    return true;
 }
 
 }

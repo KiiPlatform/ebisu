@@ -109,20 +109,17 @@ Task continue callback is used to determine whether to continue or exit task fro
 Task continue callback signature:
 
 ```c
-typedef kii_bool_t
-(*KII_CB_TASK_CONTINUE)
-    (void* task_info,
-    void* userdata);
+typedef bool (*KII_CB_TASK_CONTINUE)(void* task_info, void* userdata);
 ```
 
 Implementation in example app:
 
 ```c
-tio_bool_t _handler_continue(void* task_info, void* userdata) {
-    if (term_flag == true) {
-        return KII_FALSE;
+bool _handler_continue(void* task_info, void* userdata) {
+    if (term_flag) {
+        return false;
     } else {
-        return KII_TRUE;
+        return true;
     }
 }
 ```
@@ -134,7 +131,7 @@ Note that we use `atomic_bool` type introduced in C11 since `term_flag` is refer
 
 ### Task exit callback
 
-Task exit callback is called when task continue callback returns `KII_FALSE`
+Task exit callback is called when task continue callback returns `false`
 or unrecoverable error occurs.
 
 In this callback, you may need to free memories used for the handler task and other necessary steps when exiting task.
@@ -247,7 +244,7 @@ You can implement IoT device specific control in the callback such as turn on/ o
 Action callback signature:
 
 ```c
-typedef tio_bool_t (*TIO_CB_ACTION)(
+typedef bool (*TIO_CB_ACTION)(
     tio_action_t* action,
     tio_action_err_t* err,
     tio_action_result_data_t* data,

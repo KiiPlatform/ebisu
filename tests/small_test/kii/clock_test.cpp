@@ -359,7 +359,7 @@ struct Client {
     }
 
     kii_code_t get() {
-        kii_code_t res = kii_api_call_start(&kii, "GET", "/api/apps/dummyAppID", NULL, KII_FALSE);
+        kii_code_t res = kii_api_call_start(&kii, "GET", "/api/apps/dummyAppID", NULL, false);
         return (res == KII_ERR_OK) ? kii_api_call_run(&kii) : res;
     }
 };

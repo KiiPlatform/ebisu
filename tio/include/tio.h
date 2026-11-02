@@ -1,6 +1,7 @@
 #ifndef __tio__
 #define __tio__
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -23,11 +24,6 @@ extern "C" {
  * The name task_create of the system set by tio_updater_set_system() is given.
  */
 extern const char TIO_TASK_NAME_UPDATE_STATE[];
-
-/**
- * \brief Boolean type.
- */
-typedef kii_bool_t tio_bool_t;
 
 /**
  * \brief Author of API.
@@ -78,7 +74,7 @@ typedef struct tio_action_value_t {
                               * any JSON integer from INT64_MIN to INT64_MAX,
                               * whatever the width of long. */
         double double_value; /**< Value stored when type is TIO_TYPE_DOUBLE */
-        tio_bool_t bool_value; /**< Value stored when type is TIO_TYPE_BOOLEAN */
+        bool bool_value; /**< Value stored when type is TIO_TYPE_BOOLEAN */
         const char *opaque_value; /**< Value stored when type is TIO_TYPE_STRING, TIO_TYPE_OBJECT or TIO_TYPE_ARRAY */
     } param; /**< \brief Union stores value.
               *
@@ -176,7 +172,7 @@ typedef size_t (*TIO_CB_READ)(char *buffer, size_t size, void *userdata);
  * Reported error is recoreded in cloud. When succeeded, the argument can be ignored.
  * \param [in,out] userdata Context object pointer given to tio_handler_start().
  */
-typedef tio_bool_t (*TIO_CB_ACTION)(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata);
+typedef bool (*TIO_CB_ACTION)(tio_action_t* action, tio_action_err_t* err, tio_action_result_data_t* data, void* userdata);
 /**
  * \brief Callback propagates error information.
  *
@@ -193,9 +189,9 @@ typedef void (*TIO_CB_ERR)(tio_code_t code, const char* err_message, void* userd
  *
  * By default tio_handler handles remote controll command and ignores other kind of messages.
  * If you send message to the devices other than remote controll command, you can use this callback to handle them.
- * This callback is called before TIO_CB_ACTION callback, and if it returns KII_TRUE, tio_handler skips parsing message as remote controll command
+ * This callback is called before TIO_CB_ACTION callback, and if it returns true, tio_handler skips parsing message as remote controll command
  * and TIO_CB_ACTION callback won't be called.
- * if it returns KII_FALSE, tio_handler try to parse message as remote controll command and call TIO_CB_ACTION callback as well
+ * if it returns false, tio_handler try to parse message as remote controll command and call TIO_CB_ACTION callback as well
  * if the message is remote controll command.
  * If you only needs to handle remote contoll command, you don't have to implement this callback and call tio_handler_set_cb_push().
  *
@@ -203,9 +199,9 @@ typedef void (*TIO_CB_ERR)(tio_code_t code, const char* err_message, void* userd
  * Could be remote controll command or other message sent by Kii Topic/ Kii Bucket subscription.
  * \param [in] message_length Length of the message.
  * \param [in,out] userdata Context object pointer passed to tio_handler_set_cb_push().
- * \return KII_TRUE results skip handling message as remote controll command, KII_FALSE results try to handle message as remote controll command.
+ * \return true results skip handling message as remote controll command, false results try to handle message as remote controll command.
  */
-typedef tio_bool_t (*TIO_CB_PUSH)(const char* message, size_t message_length, void* userdata);
+typedef bool (*TIO_CB_PUSH)(const char* message, size_t message_length, void* userdata);
 
 /**
  * \brief Stores data/ callbacks used by tio_handler.
@@ -249,7 +245,7 @@ typedef struct tio_updater_t {
     void* _task_continue_data; /**< \private **/
     KII_CB_TASK_EXIT _cb_task_exit; /**< \private **/
     void* _task_exit_data; /**< \private **/
-    tio_bool_t _task_running; /**< \private **/
+    bool _task_running; /**< \private **/
 } tio_updater_t;
 
 /**
@@ -423,7 +419,7 @@ void tio_handler_set_system(tio_handler_t* handler, ebisu_system_t* system);
 
  * \param [out] handler tio_handler_t instance
  * \param [in] cb_continue Callback determines whether to continue or discontinue task.
- * If continue_cb returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
+ * If continue_cb returns true, task continues. Otherwise the task exits the infinite loop
  * and calls KII_CB_TASK_EXIT callback if set.
  * task_info argument type of the cb_continue (defined as void* in KII_CB_TASK_CONTINUE) is kii_mqtt_task_info*.
  * \param [in] userdata Context data pointer passed as second argument when cb_continue is called.
@@ -519,14 +515,14 @@ void tio_handler_set_mqtt_qos(tio_handler_t* handler, kii_mqtt_qos_t qos);
 /**
  * \brief Set whether the handler asks for a clean session.
  *
- * See kii_set_mqtt_clean_session(): with KII_FALSE, and QoS 1, the broker
+ * See kii_set_mqtt_clean_session(): with false, and QoS 1, the broker
  * keeps the commands sent at QoS 1 while the handler is away, and sends them
  * when it connects again. Set it before starting the handler.
  *
  * \param [out] handler tio_handler_t instance.
- * \param [in] clean_session KII_FALSE to have the broker keep the session.
+ * \param [in] clean_session false to have the broker keep the session.
  */
-void tio_handler_set_mqtt_clean_session(tio_handler_t* handler, tio_bool_t clean_session);
+void tio_handler_set_mqtt_clean_session(tio_handler_t* handler, bool clean_session);
 
 /**
  * \brief Set MQTT Keep-Alive interval.
@@ -604,11 +600,11 @@ void tio_handler_set_cb_slist_resource(
  * If you need to use HTTP over plain tcp,
  * you need to call this method.
  * \param [out] handler tio_handler_t instance.
- * \param [in] enable_insecure_http KII_TRUE indicates using insecure connection.
+ * \param [in] enable_insecure_http true indicates using insecure connection.
  */
 void tio_handler_enable_insecure_http(
         tio_handler_t* handler,
-        tio_bool_t enable_insecure_http
+        bool enable_insecure_http
 );
 
 /**
@@ -618,11 +614,11 @@ void tio_handler_enable_insecure_http(
  * If you need to use MQTT over plain tcp,
  * you need to call this method.
  * \param [out] handler tio_handler_t instance.
- * \param [in] enable_insecure_mqtt KII_TRUE indicates using insecure connection.
+ * \param [in] enable_insecure_mqtt true indicates using insecure connection.
  */
 void tio_handler_enable_insecure_mqtt(
         tio_handler_t* handler,
-        tio_bool_t enable_insecure_mqtt
+        bool enable_insecure_mqtt
 );
 
 /**
@@ -645,11 +641,11 @@ void tio_handler_set_mqtt_version(
  * forward proxy that requests go through in plain HTTP takes the URL instead,
  * and needs this method.
  * \param [out] handler tio_handler_t instance.
- * \param [in] enable_absolute_target KII_TRUE for the whole URL.
+ * \param [in] enable_absolute_target true for the whole URL.
  */
 void tio_handler_enable_absolute_target(
         tio_handler_t* handler,
-        tio_bool_t enable_absolute_target
+        bool enable_absolute_target
 );
 
 /**
@@ -786,7 +782,7 @@ tio_code_t tio_handler_start(
  *
  * In the case, your app needs to handle command asynchronously. Your app can
  * receive the command in the TIO_CB_PUSH callback, and then use tio_handler_parse_command
- * to handle each action asynchronously. Your app should return KII_TRUE to the
+ * to handle each action asynchronously. Your app should return true to the
  * TIO_CB_PUSH callback to skip automatically command handling logic. When your
  * app is ready to respond to the command, then invoke this method.
  *
@@ -880,7 +876,7 @@ void tio_updater_set_system(tio_updater_t* updater, ebisu_system_t* system);
 
  * \param [out] updater tio_updater_t instances
  * \param [in] cb_continue Callback determines whether to continue or discontinue task.
- * If cb_continue returns KII_TRUE, task continues. Otherwise the task exits the infinite loop
+ * If cb_continue returns true, task continues. Otherwise the task exits the infinite loop
  * and calls KII_CB_TASK_EXIT callback if set.
  * task_info argument of the cb_continue (defined as void* in KII_CB_TASK_CONTINUE) is always NULL.
  * \param [in] userdata Context data pointer passed as second argument when cb_continue is called.
@@ -1056,11 +1052,11 @@ void tio_updater_set_cb_slist_resource(
  * If you need to use HTTP over plain tcp,
  * you need to call this method.
  * \param [out] updater tio_updater_t instance.
- * \param [in] enable_insecure_http KII_TRUE indicates using insecure connection.
+ * \param [in] enable_insecure_http true indicates using insecure connection.
  */
 void tio_updater_enable_insecure_http(
         tio_updater_t* updater,
-        tio_bool_t enable_insecure_http
+        bool enable_insecure_http
 );
 
 /**
@@ -1070,11 +1066,11 @@ void tio_updater_enable_insecure_http(
  * forward proxy that requests go through in plain HTTP takes the URL instead,
  * and needs this method.
  * \param [out] updater tio_updater_t instance.
- * \param [in] enable_absolute_target KII_TRUE for the whole URL.
+ * \param [in] enable_absolute_target true for the whole URL.
  */
 void tio_updater_enable_absolute_target(
         tio_updater_t* updater,
-        tio_bool_t enable_absolute_target
+        bool enable_absolute_target
 );
 
 /**

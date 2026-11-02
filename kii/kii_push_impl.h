@@ -5,7 +5,7 @@
 
 kii_code_t _install_push(
         kii_t* kii,
-        kii_bool_t development);
+        bool development);
 
 kii_code_t _get_mqtt_endpoint(
         kii_t* kii,
