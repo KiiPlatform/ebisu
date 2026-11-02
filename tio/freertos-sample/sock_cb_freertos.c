@@ -56,7 +56,8 @@ static const ebisu_socket_ops_t sock_cb_ops = {
     sock_cb_send,
     sock_cb_recv,
     sock_cb_close,
-    sock_cb_recv_timed_out
+    sock_cb_recv_timed_out,
+    sock_cb_last_error
 };
 
 void sock_cb_init_context(
@@ -71,6 +72,32 @@ void sock_cb_init_context(
     ctx->to_recv = to_recv;
     ctx->to_send = to_send;
     ctx->clock = clock;
+}
+
+/* Says why the operation failing now failed, for sock_cb_last_error(). */
+static void set_error(socket_context_t* ctx, ebisu_sock_error_t error, long detail)
+{
+    ctx->error = error;
+    ctx->error_detail = detail;
+}
+
+/* Why the handshake, a read or a write failed, from mbedTLS's error. */
+static ebisu_sock_error_t tls_error(int ret)
+{
+    switch (ret) {
+        case MBEDTLS_ERR_SSL_WANT_READ:
+        case MBEDTLS_ERR_SSL_WANT_WRITE:
+            /* The socket's timeout, as bio_send() and bio_recv() tell it. */
+            return EBISU_SOCK_ERROR_TIMEOUT;
+        case MBEDTLS_ERR_SSL_CONN_EOF:
+        case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
+            return EBISU_SOCK_ERROR_CLOSED;
+        case MBEDTLS_ERR_NET_RECV_FAILED:
+        case MBEDTLS_ERR_NET_SEND_FAILED:
+            return EBISU_SOCK_ERROR_OTHER;
+        default:
+            return EBISU_SOCK_ERROR_TLS;
+    }
 }
 
 static void set_timeouts(Socket_t socket, TickType_t to_recv, TickType_t to_send)
@@ -190,12 +217,14 @@ ebisu_sock_code_t
     uint32_t address = FreeRTOS_gethostbyname(host);
     if (address == 0) {
         sample_log("failed to resolve %s", host);
+        set_error(ctx, EBISU_SOCK_ERROR_DNS, 0);
         return EBISU_SOCK_FAIL;
     }
     ctx->socket = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_STREAM,
             FREERTOS_IPPROTO_TCP);
     if (ctx->socket == FREERTOS_INVALID_SOCKET) {
         sample_log("failed to create a socket");
+        set_error(ctx, EBISU_SOCK_ERROR_OTHER, 0);
         return EBISU_SOCK_FAIL;
     }
     const TickType_t handshake_timeout = pdMS_TO_TICKS(HANDSHAKE_TIMEOUT_MS);
@@ -209,6 +238,9 @@ ebisu_sock_code_t
     BaseType_t err = FreeRTOS_connect(ctx->socket, &server, sizeof(server));
     if (err != 0) {
         sample_log("failed to connect to %s:%u: %ld", host, port, (long)err);
+        /* A FreeRTOS-Plus-TCP errno, negated. */
+        set_error(ctx, err == -pdFREERTOS_ERRNO_ETIMEDOUT ?
+                EBISU_SOCK_ERROR_TIMEOUT : EBISU_SOCK_ERROR_CONNECT, (long)-err);
         goto close_socket;
     }
 
@@ -219,6 +251,7 @@ ebisu_sock_code_t
     }
     if (ret != 0) {
         log_tls_error("failed to set up TLS for", host, ret);
+        set_error(ctx, EBISU_SOCK_ERROR_TLS, ret);
         goto free_tls;
     }
     mbedtls_ssl_set_verify(&ctx->ssl, verify_dates, ctx->clock);
@@ -235,9 +268,11 @@ ebisu_sock_code_t
     }
     if (ret == MBEDTLS_ERR_X509_CERT_VERIFY_FAILED) {
         log_refused(ctx, host);
+        set_error(ctx, EBISU_SOCK_ERROR_VERIFY, (long)mbedtls_ssl_get_verify_result(&ctx->ssl));
         goto free_tls;
     } else if (ret != 0) {
         log_tls_error("TLS handshake failed with", host, ret);
+        set_error(ctx, tls_error(ret), ret);
         goto free_tls;
     }
 
@@ -267,6 +302,7 @@ ebisu_sock_code_t
     }
     /* Failed, or timed out. */
     sample_log("failed to send: -0x%04x", (unsigned int)-ret);
+    set_error(ctx, tls_error(ret), ret);
     return EBISU_SOCK_FAIL;
 }
 
@@ -287,6 +323,7 @@ ebisu_sock_code_t
         /* The server closed the connection. */
         return EBISU_SOCK_OK;
     }
+    set_error(ctx, tls_error(ret), ret);
     return EBISU_SOCK_FAIL;
 }
 
@@ -299,6 +336,17 @@ bool
 {
     socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     return ctx->recv_ret == MBEDTLS_ERR_SSL_WANT_READ;
+}
+
+/* Why the last operation that returned EBISU_SOCK_FAIL failed. The detail is
+   mbedTLS's error, its verify flags, MBEDTLS_X509_BADCERT_*, for a certificate
+   refused, or FreeRTOS-Plus-TCP's errno for an address that refused. */
+ebisu_sock_error_t
+    sock_cb_last_error(ebisu_socket_t* self, long* out_detail)
+{
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
+    *out_detail = ctx->error_detail;
+    return ctx->error;
 }
 
 ebisu_sock_code_t

@@ -335,10 +335,10 @@ class Test:
         self.env = dict(os.environ, WINEPREFIX=prefix, WINEDEBUG='-all')
         self.failures = 0
 
-    def run(self, port, to_recv, *steps):
+    def run(self, port, to_recv, *steps, host='localhost'):
         """The output of schannel_socket_test.exe, and the STEP lines in it, split
         into the step and the rest."""
-        out = subprocess.run([self.wine, self.exe, 'localhost', str(port), str(to_recv)] + list(steps),
+        out = subprocess.run([self.wine, self.exe, host, str(port), str(to_recv)] + list(steps),
                              env=self.env, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                              text=True, timeout=TIMEOUT).stdout.replace('\r', '')
         steps = [(line.split(' ', 2) + [''])[1:3] for line in out.splitlines() if line.startswith('STEP ')]
@@ -358,6 +358,18 @@ def field(result, key):
 
 def step(steps, i):
     return steps[i] if i < len(steps) else ('', '')
+
+
+def result_code(steps, i):
+    """(step, code) of steps[i], whatever follows the code."""
+    name, rest = step(steps, i)
+    return name, rest.split(' ')[0]
+
+
+def last_error(steps, i):
+    """(error, detail) of steps[i], as last_error said after it failed."""
+    rest = step(steps, i)[1]
+    return field(rest, 'error'), field(rest, 'detail')
 
 
 def recv_result(steps, i):
@@ -406,6 +418,8 @@ def run_tests(t, d):
     t.check('receive timeout: FAIL, timed out after %s ms, and the data still arrives' % [x[3] for x in r[:2]],
             r[0][:3] == ('FAIL', 0, '1') and r[1][:3] == ('FAIL', 0, '1') and
             all(1900 <= x[3] <= 4000 for x in r[:2]) and r[2][::4] == ('OK', 'late\\n'), out)
+    t.check('receive timeout: last_error TIMEOUT, and nothing logged',
+            last_error(steps, 2) == ('TIMEOUT', '0') and 'LOG ' not in out, out)
 
     out, steps = t.run(port, 2, 'connect', 'send:partial 5000 split record\\n', 'recv:100', 'recv:100',
                        'recv:100', 'close')
@@ -417,6 +431,7 @@ def run_tests(t, d):
     out, steps = t.run(port, 10, 'connect', 'send:sleep 300\\nreset\\n', 'recv:100', 'close')
     r = recv_result(steps, 2)
     t.check('reset: FAIL, not timed out', r[:3] == ('FAIL', 0, '0') and r[3] < 5000, out)
+    t.check('reset: last_error CLOSED, with WSAECONNRESET', last_error(steps, 2) == ('CLOSED', '2746'), out)
 
     n = len(good.ends)
     out, steps = t.run(port, 10, 'connect', 'send:close_notify bye\\n', 'recv:100', 'recv:100', 'recv:100',
@@ -439,6 +454,8 @@ def run_tests(t, d):
     r = recv_result(steps, 2)
     t.check('end of the TCP stream inside a record: FAIL, not timed out',
             r[:3] == ('FAIL', 0, '0'), out)
+    t.check('end of the TCP stream inside a record: last_error CLOSED',
+            last_error(steps, 2)[0] == 'CLOSED', out)
 
     big = Server(os.path.join(d, 'big.pem'), os.path.join(d, 'big.key'))
     out, steps = t.run(big.port, 10, 'connect', 'send:echo hello\\n', 'recv:100', 'close')
@@ -448,13 +465,18 @@ def run_tests(t, d):
     for name, error in (('self', '0x800b0109'), ('wrongname', '0x800b010f'), ('expired', '0x800b0101')):
         srv = Server(os.path.join(d, name + '.pem'), os.path.join(d, name + '.key'))
         out, steps = t.run(srv.port, 10, 'connect', 'close')
-        t.check('certificate %s refused with %s' % (name, error),
-                step(steps, 0) == ('connect', 'FAIL') and error in out, out)
+        t.check('certificate %s refused with %s, logged' % (name, error),
+                result_code(steps, 0) == ('connect', 'FAIL') and
+                'LOG error server certificate for localhost rejected' in out and error in out, out)
+        t.check('certificate %s refused: last_error VERIFY, %s' % (name, error),
+                last_error(steps, 0) == ('VERIFY', error[2:]), out)
 
     silent = Server(silent=True)
     out, steps = t.run(silent.port, 1, 'connect', 'close')
     t.check('server that never answers the ClientHello: connect FAILs after the receive timeout',
-            step(steps, 0) == ('connect', 'FAIL') and 'timed out' in out, out)
+            result_code(steps, 0) == ('connect', 'FAIL') and 'LOG error TLS handshake timed out' in out, out)
+    t.check('server that never answers the ClientHello: last_error TIMEOUT',
+            last_error(steps, 0)[0] == 'TIMEOUT', out)
 
     closed = socket.socket()
     closed.bind(('127.0.0.1', 0))
@@ -462,8 +484,15 @@ def run_tests(t, d):
     closed.close()
     out, steps = t.run(closed_port, 1, 'connect', 'recv:10', 'close')
     t.check('connection refused: connect FAILs, and so does recv',
-            step(steps, 0) == ('connect', 'FAIL') and recv_result(steps, 1)[:3] == ('FAIL', 0, '0') and
+            result_code(steps, 0) == ('connect', 'FAIL') and recv_result(steps, 1)[:3] == ('FAIL', 0, '0') and
             step(steps, 2) == ('close', 'OK'), out)
+    t.check('connection refused: last_error CONNECT, with WSAECONNREFUSED',
+            last_error(steps, 0) == ('CONNECT', '274d'), out)
+
+    # .invalid never resolves (RFC 6761).
+    out, steps = t.run(443, 1, 'connect', 'close', host='ebisu-test.invalid')
+    t.check('host that does not resolve: last_error DNS',
+            result_code(steps, 0) == ('connect', 'FAIL') and last_error(steps, 0)[0] == 'DNS', out)
 
 
 def main():

@@ -60,6 +60,22 @@ static const char* or_null(const char* s)
     return s[0] == '\0' ? NULL : s;
 }
 
+/* For the log. */
+static const char* sock_error_name(ebisu_sock_error_t error)
+{
+    switch (error) {
+        case EBISU_SOCK_ERROR_NONE: return "none";
+        case EBISU_SOCK_ERROR_DNS: return "dns";
+        case EBISU_SOCK_ERROR_CONNECT: return "connect";
+        case EBISU_SOCK_ERROR_TLS: return "tls";
+        case EBISU_SOCK_ERROR_VERIFY: return "verify";
+        case EBISU_SOCK_ERROR_TIMEOUT: return "timeout";
+        case EBISU_SOCK_ERROR_CLOSED: return "closed";
+        case EBISU_SOCK_ERROR_OTHER: return "other";
+    }
+    return "?";
+}
+
 static void author_updated(const kii_author_t* author, void* userdata)
 {
     /* A device that keeps its tokens across a restart saves the author here.
@@ -222,7 +238,11 @@ void app_main(void)
         if (result == TIO_ERR_OK) {
             break;
         }
-        ESP_LOGW(TAG, "failed to onboard: %d; trying again in 10 seconds", result);
+        /* Why, if a connection failed. */
+        long detail = 0;
+        ebisu_sock_error_t sock_error = tio_handler_get_sock_error(&handler, &detail);
+        ESP_LOGW(TAG, "failed to onboard: %d, socket error %s, detail %ld; trying again in 10 seconds",
+                result, sock_error_name(sock_error), detail);
         log_time();
         vTaskDelay(pdMS_TO_TICKS(10000));
     }

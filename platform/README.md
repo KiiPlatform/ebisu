@@ -71,9 +71,10 @@ which have the rest of `platform`.
   `ebisu_clock_t`'s time: a chain to a root in the Windows root store, valid
   for server authentication, issued for the host. It drives Schannel itself,
   keeping what it has received but not yet returned, and waits for a receive
-  with `select()`, so that a timeout leaves the connection usable. Why an
-  operation failed is printed to stdout. Needs only what Windows provides,
-  `ws2_32`, `secur32` and `crypt32`, which it links.
+  with `select()`, so that a timeout leaves the connection usable. Its
+  `last_error` says why an operation failed, which also goes to the logger set
+  with `ebisu_schannel_socket_set_logger()`, or to stderr. Needs only what
+  Windows provides, `ws2_32`, `secur32` and `crypt32`, which it links.
 
 The Linux sample uses the POSIX and OpenSSL ports, and the Windows sample the
 Win32 and Schannel ones.

@@ -8,7 +8,8 @@
  *
  *   schannel_socket_test <host> <port> <receive timeout, s> <step>...
  *       Runs the steps in order on one ebisu_schannel_socket_t, printing a line
- *       starting with "STEP" for each:
+ *       starting with "STEP" for each, and what the socket logs on lines of
+ *       their own, starting with "LOG" and the level:
  *       connect          connect
  *       send:<text>      send until all of text is sent; \n in
  *                        text stands for a newline
@@ -18,12 +19,16 @@
  *       drain:<n>        recv into an n-byte buffer until it fails
  *                        or returns 0 bytes, and the FNV-1a hash of it all
  *       close            close
+ *
+ *       After a connect, send or recv that fails, last_error is printed too,
+ *       as error=<name> detail=<hex>.
  */
 #include "ebisu_schannel.h"
 
 #include <windows.h>
 #include <wincrypt.h>
 
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +46,45 @@ static const char* code_name(ebisu_sock_code_t code)
     }
     return "?";
 }
+
+static const char* error_name(ebisu_sock_error_t error)
+{
+    switch (error) {
+        case EBISU_SOCK_ERROR_NONE: return "NONE";
+        case EBISU_SOCK_ERROR_DNS: return "DNS";
+        case EBISU_SOCK_ERROR_CONNECT: return "CONNECT";
+        case EBISU_SOCK_ERROR_TLS: return "TLS";
+        case EBISU_SOCK_ERROR_VERIFY: return "VERIFY";
+        case EBISU_SOCK_ERROR_TIMEOUT: return "TIMEOUT";
+        case EBISU_SOCK_ERROR_CLOSED: return "CLOSED";
+        case EBISU_SOCK_ERROR_OTHER: return "OTHER";
+    }
+    return "?";
+}
+
+/* What last_error says, after a step that failed. */
+static void print_last_error(ebisu_schannel_socket_t* ctx, ebisu_sock_code_t res)
+{
+    if (res != EBISU_SOCK_FAIL) {
+        return;
+    }
+    long detail = 0;
+    ebisu_sock_error_t error = ctx->base.ops->last_error(&ctx->base, &detail);
+    printf(" error=%s detail=%lx", error_name(error), (unsigned long)detail);
+}
+
+static void to_stdout(ebisu_logger_t* self, ebisu_log_level_t level,
+        const char* fmt, va_list args)
+{
+    static const char* const levels[] = { "error", "warning", "info", "debug" };
+    (void)self;
+    printf("LOG %s ", levels[level]);
+    vprintf(fmt, args);
+    printf("\n");
+}
+
+static const ebisu_logger_ops_t stdout_ops = { to_stdout };
+static ebisu_logger_t stdout_logger = { &stdout_ops };
 
 #define FNV_OFFSET_BASIS 0xcbf29ce484222325ULL
 
@@ -123,7 +167,10 @@ static int run_step(ebisu_schannel_socket_t* ctx, const char* host, uint16_t por
         const char* step)
 {
     if (strcmp(step, "connect") == 0) {
-        printf("STEP connect %s\n", code_name(ctx->base.ops->connect(&ctx->base, host, port)));
+        ebisu_sock_code_t res = ctx->base.ops->connect(&ctx->base, host, port);
+        printf("STEP connect %s", code_name(res));
+        print_last_error(ctx, res);
+        printf("\n");
     } else if (strncmp(step, "send:", 5) == 0) {
         size_t len = 0;
         char* text = (char*)malloc(strlen(step));
@@ -138,7 +185,9 @@ static int run_step(ebisu_schannel_socket_t* ctx, const char* host, uint16_t por
         size_t total;
         int calls;
         ebisu_sock_code_t res = send_all(ctx, text, len, &total, &calls);
-        printf("STEP send %s %lu\n", code_name(res), (unsigned long)total);
+        printf("STEP send %s %lu", code_name(res), (unsigned long)total);
+        print_last_error(ctx, res);
+        printf("\n");
         free(text);
     } else if (strncmp(step, "sendbig:", 8) == 0) {
         size_t len = (size_t)strtoul(step + 8, NULL, 10);
@@ -162,8 +211,10 @@ static int run_step(ebisu_schannel_socket_t* ctx, const char* host, uint16_t por
         DWORD elapsed = GetTickCount() - start;
         int timed_out = res == EBISU_SOCK_FAIL &&
             ctx->base.ops->recv_timed_out(&ctx->base);
-        printf("STEP recv %s %lu timed_out=%d ms=%lu data=", code_name(res),
+        printf("STEP recv %s %lu timed_out=%d ms=%lu", code_name(res),
                 (unsigned long)got, timed_out, (unsigned long)elapsed);
+        print_last_error(ctx, res);
+        printf(" data=");
         print_escaped(buf, got > 64 ? 64 : got);
         printf("\n");
         free(buf);
@@ -223,6 +274,7 @@ int main(int argc, char** argv)
     }
     ebisu_schannel_socket_t ctx;
     ebisu_schannel_socket_init(&ctx, (unsigned int)atoi(argv[3]), 10);
+    ebisu_schannel_socket_set_logger(&ctx, &stdout_logger);
     int result = 0;
     for (int i = 4; i < argc && result == 0; ++i) {
         result = run_step(&ctx, argv[1], (uint16_t)atoi(argv[2]), argv[i]);

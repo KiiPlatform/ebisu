@@ -1,10 +1,12 @@
 #include "sock_cb_esp32.h"
 
+#include <errno.h>
 #include <string.h>
 #include <sys/socket.h>
 
 #include <esp_crt_bundle.h>
 #include <esp_log.h>
+#include <mbedtls/net_sockets.h>
 #include <mbedtls/ssl.h>
 #include <mbedtls/x509_crt.h>
 
@@ -28,7 +30,8 @@ static const ebisu_socket_ops_t sock_cb_ops = {
     sock_cb_send,
     sock_cb_recv,
     sock_cb_close,
-    sock_cb_recv_timed_out
+    sock_cb_recv_timed_out,
+    sock_cb_last_error
 };
 
 void sock_cb_init_context(
@@ -42,6 +45,75 @@ void sock_cb_init_context(
     ctx->to_recv = to_recv;
     ctx->to_send = to_send;
     ctx->clock = clock;
+}
+
+/* Says why the operation failing now failed, for sock_cb_last_error(). */
+static void set_error(socket_context_t* ctx, ebisu_sock_error_t error, long detail)
+{
+    ctx->error = error;
+    ctx->error_detail = detail;
+}
+
+/* Why the handshake, a read or a write failed, from mbedTLS's error. */
+static ebisu_sock_error_t tls_error(int ret)
+{
+    switch (ret) {
+        case MBEDTLS_ERR_SSL_WANT_READ:
+        case MBEDTLS_ERR_SSL_WANT_WRITE:
+        case MBEDTLS_ERR_SSL_TIMEOUT:
+            /* The socket's timeout. */
+            return EBISU_SOCK_ERROR_TIMEOUT;
+        case MBEDTLS_ERR_NET_CONN_RESET:
+        case MBEDTLS_ERR_SSL_CONN_EOF:
+        case MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY:
+            return EBISU_SOCK_ERROR_CLOSED;
+        case MBEDTLS_ERR_NET_RECV_FAILED:
+        case MBEDTLS_ERR_NET_SEND_FAILED:
+            return EBISU_SOCK_ERROR_OTHER;
+        default:
+            return EBISU_SOCK_ERROR_TLS;
+    }
+}
+
+/* Why esp_tls_conn_new_sync() failed, from what ESP-TLS kept of it: the step
+   that failed, the socket's errno, and mbedTLS's error, negated, with the
+   verify flags if the server's certificate was refused. */
+static void set_connect_error(socket_context_t* ctx)
+{
+    esp_tls_error_handle_t handle = NULL;
+    if (esp_tls_get_error_handle(ctx->tls, &handle) != ESP_OK) {
+        set_error(ctx, EBISU_SOCK_ERROR_OTHER, 0);
+        return;
+    }
+    int step = 0;
+    int sock_errno = 0;
+    int tls_code = 0;
+    int flags = 0;
+    esp_tls_get_and_clear_error_type(handle, ESP_TLS_ERR_TYPE_ESP, &step);
+    esp_tls_get_and_clear_error_type(handle, ESP_TLS_ERR_TYPE_SYSTEM, &sock_errno);
+    esp_tls_get_and_clear_error_type(handle, ESP_TLS_ERR_TYPE_MBEDTLS, &tls_code);
+    esp_tls_get_and_clear_error_type(handle, ESP_TLS_ERR_TYPE_MBEDTLS_CERT_FLAGS, &flags);
+    switch (step) {
+        case ESP_ERR_ESP_TLS_CANNOT_RESOLVE_HOSTNAME:
+            set_error(ctx, EBISU_SOCK_ERROR_DNS, 0);
+            break;
+        case ESP_ERR_ESP_TLS_FAILED_CONNECT_TO_HOST:
+            set_error(ctx, EBISU_SOCK_ERROR_CONNECT, sock_errno);
+            break;
+        case ESP_ERR_ESP_TLS_CONNECTION_TIMEOUT:
+            set_error(ctx, EBISU_SOCK_ERROR_TIMEOUT, 0);
+            break;
+        case ESP_ERR_MBEDTLS_SSL_HANDSHAKE_FAILED:
+            if (flags != 0) {
+                set_error(ctx, EBISU_SOCK_ERROR_VERIFY, flags);
+            } else {
+                set_error(ctx, tls_error(-tls_code), -tls_code);
+            }
+            break;
+        default:
+            set_error(ctx, EBISU_SOCK_ERROR_OTHER, step);
+            break;
+    }
 }
 
 static int set_timeout(int fd, int option, unsigned int seconds)
@@ -123,6 +195,7 @@ ebisu_sock_code_t
     ctx->tls = esp_tls_init();
     if (ctx->tls == NULL) {
         ESP_LOGE(TAG, "failed to allocate the TLS context");
+        set_error(ctx, EBISU_SOCK_ERROR_OTHER, 0);
         return EBISU_SOCK_FAIL;
     }
 
@@ -134,6 +207,7 @@ ebisu_sock_code_t
     };
     if (esp_tls_conn_new_sync(host, strlen(host), port, &cfg, ctx->tls) != 1) {
         ESP_LOGE(TAG, "failed to connect to %s:%u", host, port);
+        set_connect_error(ctx);
         goto fail;
     }
 
@@ -141,6 +215,7 @@ ebisu_sock_code_t
     const mbedtls_x509_crt* chain = ssl == NULL ? NULL : mbedtls_ssl_get_peer_cert(ssl);
     if (chain == NULL) {
         ESP_LOGE(TAG, "no certificate from %s to check", host);
+        set_error(ctx, EBISU_SOCK_ERROR_VERIFY, 0);
         goto fail;
     }
     switch (check_chain(ctx->clock, chain)) {
@@ -149,9 +224,11 @@ ebisu_sock_code_t
         case EBISU_VALIDITY_NOT_YET_VALID:
             ESP_LOGE(TAG, "server certificate for %s refused: not valid yet", host);
             ebisu_clock_forget_time(ctx->clock);
+            set_error(ctx, EBISU_SOCK_ERROR_VERIFY, MBEDTLS_X509_BADCERT_FUTURE);
             goto fail;
         default:
             ESP_LOGE(TAG, "server certificate for %s refused: expired", host);
+            set_error(ctx, EBISU_SOCK_ERROR_VERIFY, MBEDTLS_X509_BADCERT_EXPIRED);
             goto fail;
     }
 
@@ -159,6 +236,7 @@ ebisu_sock_code_t
     if (esp_tls_get_conn_sockfd(ctx->tls, &fd) != ESP_OK ||
             set_timeout(fd, SO_RCVTIMEO, ctx->to_recv) != 0 ||
             set_timeout(fd, SO_SNDTIMEO, ctx->to_send) != 0) {
+        set_error(ctx, EBISU_SOCK_ERROR_OTHER, errno);
         ESP_LOGE(TAG, "failed to set the timeouts");
         goto fail;
     }
@@ -184,6 +262,7 @@ ebisu_sock_code_t
     }
     /* Failed, or timed out. */
     ESP_LOGE(TAG, "failed to send: -0x%x", (unsigned int)-ret);
+    set_error(ctx, tls_error(ret), ret);
     return EBISU_SOCK_FAIL;
 }
 
@@ -203,6 +282,7 @@ ebisu_sock_code_t
         /* The server closed the connection. */
         return EBISU_SOCK_OK;
     }
+    set_error(ctx, tls_error(ret), ret);
     return EBISU_SOCK_FAIL;
 }
 
@@ -214,6 +294,17 @@ bool
 {
     socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     return ctx->recv_ret == ESP_TLS_ERR_SSL_WANT_READ;
+}
+
+/* Why the last operation that returned EBISU_SOCK_FAIL failed. The detail is
+   mbedTLS's error, its verify flags, MBEDTLS_X509_BADCERT_*, for a certificate
+   refused, or errno for an address that refused. */
+ebisu_sock_error_t
+    sock_cb_last_error(ebisu_socket_t* self, long* out_detail)
+{
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
+    *out_detail = ctx->error_detail;
+    return ctx->error;
 }
 
 ebisu_sock_code_t

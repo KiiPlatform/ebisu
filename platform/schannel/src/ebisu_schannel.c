@@ -17,6 +17,7 @@
 #include <wincrypt.h>
 
 #include <limits.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,10 +57,38 @@ typedef enum {
     DECRYPT_ERROR
 } decrypt_result_t;
 
-/* Prints what failed with a Winsock, Win32, SSPI or certificate error code,
-   and the system's text for it where there is one. */
-static void print_error(const char* what, unsigned long code)
+#if defined(__GNUC__) || defined(__clang__)
+static void log_to(ebisu_logger_t* logger, ebisu_log_level_t level, const char* fmt, ...)
+    __attribute__((format(printf, 3, 4)));
+static void log_code(ebisu_schannel_socket_t* ctx, unsigned long code, const char* fmt, ...)
+    __attribute__((format(printf, 3, 4)));
+#endif
+
+/* Sends a diagnostic to logger, or to stderr without one. */
+static void log_to(ebisu_logger_t* logger, ebisu_log_level_t level, const char* fmt, ...)
 {
+    va_list args;
+    va_start(args, fmt);
+    if (logger != NULL) {
+        logger->ops->log(logger, level, fmt, args);
+    } else if (level <= EBISU_LOG_WARNING) {
+        vfprintf(stderr, fmt, args);
+        fputc('\n', stderr);
+    }
+    va_end(args);
+}
+
+/* Logs what failed with a Winsock, Win32, SSPI or certificate error code, and
+   the system's text for it where there is one. */
+static void log_code(ebisu_schannel_socket_t* ctx, unsigned long code, const char* fmt, ...)
+{
+    char what[320];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(what, sizeof(what), fmt, args);
+    va_end(args);
+    what[sizeof(what) - 1] = '\0';
+
     char text[256];
     DWORD len = FormatMessageA(
             FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -70,7 +99,31 @@ static void print_error(const char* what, unsigned long code)
         --len;
     }
     text[len] = '\0';
-    printf("%s: 0x%08lx%s%s\n", what, code, len > 0 ? " " : "", text);
+    log_to(ctx->logger, EBISU_LOG_ERROR, "%s: 0x%08lx%s%s", what, code,
+            len > 0 ? " " : "", text);
+}
+
+/* Says why the operation failing now failed, for last_error. */
+static void set_error(ebisu_schannel_socket_t* ctx, ebisu_sock_error_t error, long detail)
+{
+    ctx->error = error;
+    ctx->error_detail = detail;
+}
+
+/* What a Winsock error is, on a connection made. */
+static ebisu_sock_error_t wsa_error(int code)
+{
+    switch (code) {
+        case WSAETIMEDOUT:
+            return EBISU_SOCK_ERROR_TIMEOUT;
+        case WSAECONNRESET:
+        case WSAECONNABORTED:
+        case WSAESHUTDOWN:
+        case WSAENOTCONN:
+            return EBISU_SOCK_ERROR_CLOSED;
+        default:
+            return EBISU_SOCK_ERROR_OTHER;
+    }
 }
 
 static void set_buffer(SecBuffer* buffer, unsigned long type, void* data,
@@ -97,13 +150,15 @@ static ebisu_sock_code_t schannel_recv(ebisu_socket_t* self, char* buffer,
         size_t length_to_read, size_t* out_actual_length);
 static ebisu_sock_code_t schannel_close(ebisu_socket_t* self);
 static bool schannel_recv_timed_out(ebisu_socket_t* self);
+static ebisu_sock_error_t schannel_last_error(ebisu_socket_t* self, long* out_detail);
 
 static const ebisu_socket_ops_t schannel_ops = {
     schannel_connect,
     schannel_send,
     schannel_recv,
     schannel_close,
-    schannel_recv_timed_out
+    schannel_recv_timed_out,
+    schannel_last_error
 };
 
 void ebisu_schannel_socket_init(
@@ -121,6 +176,11 @@ void ebisu_schannel_socket_init(
 void ebisu_schannel_socket_set_clock(ebisu_schannel_socket_t* sock, ebisu_clock_t* clock)
 {
     sock->clock = clock;
+}
+
+void ebisu_schannel_socket_set_logger(ebisu_schannel_socket_t* sock, ebisu_logger_t* logger)
+{
+    sock->logger = logger;
 }
 
 /* Releases everything the connection holds, whatever state it is in, and
@@ -150,8 +210,7 @@ static void teardown(ebisu_schannel_socket_t* ctx)
     ctx->peer_closed = 0;
 }
 
-static SOCKET tcp_connect(const char* host, uint16_t port,
-        unsigned int to_send)
+static SOCKET tcp_connect(ebisu_schannel_socket_t* ctx, uint16_t port)
 {
     char service[6];
     snprintf(service, sizeof(service), "%u", (unsigned int)port);
@@ -162,10 +221,10 @@ static SOCKET tcp_connect(const char* host, uint16_t port,
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
     struct addrinfo* addrs = NULL;
-    int err = getaddrinfo(host, service, &hints, &addrs);
+    int err = getaddrinfo(ctx->host, service, &hints, &addrs);
     if (err != 0) {
-        printf("failed to get host %s.\n", host);
-        print_error("getaddrinfo", (unsigned long)err);
+        log_code(ctx, (unsigned long)err, "failed to look up %s", ctx->host);
+        set_error(ctx, EBISU_SOCK_ERROR_DNS, err);
         return INVALID_SOCKET;
     }
 
@@ -187,19 +246,22 @@ static SOCKET tcp_connect(const char* host, uint16_t port,
     }
     freeaddrinfo(addrs);
     if (sock == INVALID_SOCKET) {
-        printf("failed to connect socket.\n");
-        print_error("connect", (unsigned long)last_error);
+        log_code(ctx, (unsigned long)last_error, "failed to connect to %s", ctx->host);
+        set_error(ctx, last_error == WSAETIMEDOUT ?
+                EBISU_SOCK_ERROR_TIMEOUT : EBISU_SOCK_ERROR_CONNECT, last_error);
         return INVALID_SOCKET;
     }
 
     /* A send that cannot complete within the timeout fails, and the
        connection is given up. There is no SO_RCVTIMEO: read_some() waits
        for the receive timeout itself. */
-    if (to_send > 0) {
-        DWORD ms = to_send > MAXDWORD / 1000 ? MAXDWORD : to_send * 1000;
+    if (ctx->to_send > 0) {
+        DWORD ms = ctx->to_send > MAXDWORD / 1000 ? MAXDWORD : ctx->to_send * 1000;
         if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO,
                     (const char*)&ms, sizeof(ms)) != 0) {
-            print_error("setsockopt(SO_SNDTIMEO)", WSAGetLastError());
+            int code = WSAGetLastError();
+            log_code(ctx, (unsigned long)code, "setsockopt(SO_SNDTIMEO)");
+            set_error(ctx, EBISU_SOCK_ERROR_OTHER, code);
             closesocket(sock);
             return INVALID_SOCKET;
         }
@@ -207,13 +269,15 @@ static SOCKET tcp_connect(const char* host, uint16_t port,
     return sock;
 }
 
-static int send_all(SOCKET sock, const char* data, size_t length)
+static int send_all(ebisu_schannel_socket_t* ctx, const char* data, size_t length)
 {
     while (length > 0) {
         int chunk = length > INT_MAX ? INT_MAX : (int)length;
-        int sent = send(sock, data, chunk, 0);
+        int sent = send(ctx->socket, data, chunk, 0);
         if (sent == SOCKET_ERROR) {
-            print_error("send failed", WSAGetLastError());
+            int code = WSAGetLastError();
+            log_code(ctx, (unsigned long)code, "failed to send");
+            set_error(ctx, wsa_error(code), code);
             return -1;
         }
         data += sent;
@@ -235,7 +299,9 @@ static read_result_t read_some(ebisu_schannel_socket_t* ctx)
 {
     size_t room = TLS_MAX_RECORD_SIZE - ctx->recv_len;
     if (room == 0) {
-        printf("TLS record larger than %d bytes.\n", TLS_MAX_RECORD_SIZE);
+        log_to(ctx->logger, EBISU_LOG_ERROR, "a TLS record larger than %d bytes.",
+                TLS_MAX_RECORD_SIZE);
+        set_error(ctx, EBISU_SOCK_ERROR_TLS, 0);
         return READ_ERROR;
     }
 
@@ -249,20 +315,26 @@ static read_result_t read_some(ebisu_schannel_socket_t* ctx)
     int ready = select(0, &readable, NULL, NULL,
             ctx->to_recv > 0 ? &timeout : NULL);
     if (ready == SOCKET_ERROR) {
-        print_error("select failed", WSAGetLastError());
+        int code = WSAGetLastError();
+        log_code(ctx, (unsigned long)code, "select failed");
+        set_error(ctx, EBISU_SOCK_ERROR_OTHER, code);
         return READ_ERROR;
     }
     if (ready == 0) {
+        set_error(ctx, EBISU_SOCK_ERROR_TIMEOUT, 0);
         return READ_TIMEOUT;
     }
 
     int received = recv(ctx->socket, ctx->recv_buf + ctx->recv_len,
             (int)room, 0);
     if (received == SOCKET_ERROR) {
-        print_error("recv failed", WSAGetLastError());
+        int code = WSAGetLastError();
+        log_code(ctx, (unsigned long)code, "failed to receive");
+        set_error(ctx, wsa_error(code), code);
         return READ_ERROR;
     }
     if (received == 0) {
+        set_error(ctx, EBISU_SOCK_ERROR_CLOSED, 0);
         return READ_EOF;
     }
     ctx->recv_len += (size_t)received;
@@ -327,7 +399,7 @@ static int handshake(ebisu_schannel_socket_t* ctx)
         int sent = 0;
         if (out[0].pvBuffer != NULL) {
             if (out[0].cbBuffer > 0) {
-                sent = send_all(ctx->socket, out[0].pvBuffer, out[0].cbBuffer);
+                sent = send_all(ctx, out[0].pvBuffer, out[0].cbBuffer);
             }
             FreeContextBuffer(out[0].pvBuffer);
         }
@@ -346,12 +418,9 @@ static int handshake(ebisu_schannel_socket_t* ctx)
                 /* The server's next message has arrived already. */
                 continue;
             }
-        } else if (status == SEC_I_INCOMPLETE_CREDENTIALS) {
-            printf("the server asked for a client certificate, "
-                    "which this sample does not have.\n");
-            return -1;
         } else {
-            print_error("TLS handshake failed", (unsigned long)status);
+            log_code(ctx, (unsigned long)status, "TLS handshake failed");
+            set_error(ctx, EBISU_SOCK_ERROR_TLS, (long)status);
             return -1;
         }
 
@@ -359,11 +428,11 @@ static int handshake(ebisu_schannel_socket_t* ctx)
             case READ_OK:
                 break;
             case READ_TIMEOUT:
-                printf("TLS handshake timed out.\n");
+                log_to(ctx->logger, EBISU_LOG_ERROR, "TLS handshake timed out.");
                 return -1;
             case READ_EOF:
-                printf("the server closed the connection "
-                        "during the TLS handshake.\n");
+                log_to(ctx->logger, EBISU_LOG_ERROR,
+                        "the server closed the connection during the TLS handshake.");
                 return -1;
             default:
                 return -1;
@@ -411,7 +480,8 @@ static int verify_server_certificate(ebisu_schannel_socket_t* ctx)
     SECURITY_STATUS status = QueryContextAttributesA(
             &ctx->ctxt, SECPKG_ATTR_REMOTE_CERT_CONTEXT, &cert);
     if (status != SEC_E_OK || cert == NULL) {
-        print_error("no server certificate", (unsigned long)status);
+        log_code(ctx, (unsigned long)status, "no server certificate");
+        set_error(ctx, EBISU_SOCK_ERROR_VERIFY, (long)status);
         return -1;
     }
 
@@ -420,7 +490,9 @@ static int verify_server_certificate(ebisu_schannel_socket_t* ctx)
     WCHAR server_name[256];
     if (MultiByteToWideChar(CP_UTF8, 0, ctx->host, -1, server_name,
                 sizeof(server_name) / sizeof(server_name[0])) == 0) {
-        print_error("host name", GetLastError());
+        DWORD code = GetLastError();
+        log_code(ctx, code, "host name");
+        set_error(ctx, EBISU_SOCK_ERROR_OTHER, (long)code);
         goto done;
     }
 
@@ -445,7 +517,9 @@ static int verify_server_certificate(ebisu_schannel_socket_t* ctx)
     }
     if (!CertGetCertificateChain(NULL, cert, at_ptr, cert->hCertStore,
                 &chain_para, 0, NULL, &chain)) {
-        print_error("CertGetCertificateChain", GetLastError());
+        DWORD code = GetLastError();
+        log_code(ctx, code, "CertGetCertificateChain");
+        set_error(ctx, EBISU_SOCK_ERROR_OTHER, (long)code);
         goto done;
     }
 
@@ -471,7 +545,9 @@ static int verify_server_certificate(ebisu_schannel_socket_t* ctx)
             PCERT_INFO info = simple->rgpElement[i]->pCertContext->pCertInfo;
             if (ebisu_clock_check_validity(ctx->clock, seconds_of(info->NotBefore),
                         seconds_of(info->NotAfter)) == EBISU_VALIDITY_EXPIRED) {
-                printf("server certificate for %s rejected: expired.\n", ctx->host);
+                log_to(ctx->logger, EBISU_LOG_ERROR,
+                        "server certificate for %s rejected: expired.", ctx->host);
+                set_error(ctx, EBISU_SOCK_ERROR_VERIFY, (long)CERT_E_EXPIRED);
                 goto done;
             }
         }
@@ -483,12 +559,15 @@ static int verify_server_certificate(ebisu_schannel_socket_t* ctx)
 
     if (!CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_SSL, chain,
                 &policy_para, &policy_status)) {
-        print_error("CertVerifyCertificateChainPolicy", GetLastError());
+        DWORD code = GetLastError();
+        log_code(ctx, code, "CertVerifyCertificateChainPolicy");
+        set_error(ctx, EBISU_SOCK_ERROR_OTHER, (long)code);
         goto done;
     }
     if (policy_status.dwError != 0) {
-        printf("server certificate for %s rejected.\n", ctx->host);
-        print_error("certificate", policy_status.dwError);
+        log_code(ctx, policy_status.dwError, "server certificate for %s rejected",
+                ctx->host);
+        set_error(ctx, EBISU_SOCK_ERROR_VERIFY, (long)policy_status.dwError);
         /* A certificate not valid yet at a time the clock had as exact: more
            likely than one from the future, the time fell behind, the monotonic
            clock having stopped while the device slept and the server having
@@ -543,14 +622,16 @@ static int tls_connect(ebisu_schannel_socket_t* ctx)
             &ctx->cred,
             NULL);
     if (status != SEC_E_OK) {
-        print_error("AcquireCredentialsHandle", (unsigned long)status);
+        log_code(ctx, (unsigned long)status, "AcquireCredentialsHandle");
+        set_error(ctx, EBISU_SOCK_ERROR_TLS, (long)status);
         return -1;
     }
     ctx->has_cred = 1;
 
     ctx->recv_buf = (char*)malloc(TLS_MAX_RECORD_SIZE);
     if (ctx->recv_buf == NULL) {
-        printf("failed to allocate the receive buffer.\n");
+        log_to(ctx->logger, EBISU_LOG_ERROR, "failed to allocate the receive buffer.");
+        set_error(ctx, EBISU_SOCK_ERROR_OTHER, 0);
         return -1;
     }
 
@@ -564,14 +645,15 @@ static int tls_connect(ebisu_schannel_socket_t* ctx)
     status = QueryContextAttributesA(
             &ctx->ctxt, SECPKG_ATTR_STREAM_SIZES, &ctx->sizes);
     if (status != SEC_E_OK) {
-        print_error("QueryContextAttributes(STREAM_SIZES)",
-                (unsigned long)status);
+        log_code(ctx, (unsigned long)status, "QueryContextAttributes(STREAM_SIZES)");
+        set_error(ctx, EBISU_SOCK_ERROR_TLS, (long)status);
         return -1;
     }
     ctx->send_buf = (char*)malloc(ctx->sizes.cbHeader +
             ctx->sizes.cbMaximumMessage + ctx->sizes.cbTrailer);
     if (ctx->send_buf == NULL) {
-        printf("failed to allocate the send buffer.\n");
+        log_to(ctx->logger, EBISU_LOG_ERROR, "failed to allocate the send buffer.");
+        set_error(ctx, EBISU_SOCK_ERROR_OTHER, 0);
         return -1;
     }
     return 0;
@@ -589,12 +671,13 @@ static ebisu_sock_code_t
 
     size_t host_len = strlen(host);
     if (host_len >= sizeof(ctx->host)) {
-        printf("host name too long: %s\n", host);
+        log_to(ctx->logger, EBISU_LOG_ERROR, "failed to look up a host name that long.");
+        set_error(ctx, EBISU_SOCK_ERROR_DNS, 0);
         return EBISU_SOCK_FAIL;
     }
     memcpy(ctx->host, host, host_len + 1);
 
-    ctx->socket = tcp_connect(ctx->host, port, ctx->to_send);
+    ctx->socket = tcp_connect(ctx, port);
     if (ctx->socket == INVALID_SOCKET) {
         return EBISU_SOCK_FAIL;
     }
@@ -615,7 +698,8 @@ static ebisu_sock_code_t
     ebisu_schannel_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_schannel_socket_t, base);
     *out_sent_length = 0;
     if (ctx->send_buf == NULL) {
-        printf("failed to send: not connected.\n");
+        log_to(ctx->logger, EBISU_LOG_ERROR, "failed to send: not connected.");
+        set_error(ctx, EBISU_SOCK_ERROR_OTHER, 0);
         return EBISU_SOCK_FAIL;
     }
     if (length == 0) {
@@ -643,15 +727,15 @@ static ebisu_sock_code_t
     set_buffer_desc(&desc, buffers, 4);
     SECURITY_STATUS status = EncryptMessage(&ctx->ctxt, 0, &desc, 0);
     if (status != SEC_E_OK) {
-        print_error("EncryptMessage", (unsigned long)status);
+        log_code(ctx, (unsigned long)status, "EncryptMessage");
+        set_error(ctx, EBISU_SOCK_ERROR_TLS, (long)status);
         return EBISU_SOCK_FAIL;
     }
 
     /* The trailer can come out shorter than cbTrailer. */
     size_t record_len = (size_t)buffers[0].cbBuffer + buffers[1].cbBuffer +
         buffers[2].cbBuffer;
-    if (send_all(ctx->socket, header, record_len) != 0) {
-        printf("failed to send\n");
+    if (send_all(ctx, header, record_len) != 0) {
         return EBISU_SOCK_FAIL;
     }
     *out_sent_length = data_len;
@@ -689,7 +773,8 @@ static decrypt_result_t decrypt_record(ebisu_schannel_socket_t* ctx)
     }
     if (status != SEC_E_OK && status != SEC_I_CONTEXT_EXPIRED &&
             status != SEC_I_RENEGOTIATE) {
-        print_error("DecryptMessage", (unsigned long)status);
+        log_code(ctx, (unsigned long)status, "DecryptMessage");
+        set_error(ctx, EBISU_SOCK_ERROR_TLS, (long)status);
         return DECRYPT_ERROR;
     }
 
@@ -722,11 +807,12 @@ static decrypt_result_t decrypt_record(ebisu_schannel_socket_t* ctx)
     }
     if (status == SEC_I_RENEGOTIATE) {
         /* A TLS 1.2 server asking for a new handshake, which TLS 1.3 has done
-           away with. This sample does not renegotiate, and wine's Schannel
+           away with. This socket does not renegotiate, and wine's Schannel
            could not test it if it did: it does not write the ClientHello
            until the server has sent something more. */
-        printf("the server asked to renegotiate, "
-                "which this sample does not support.\n");
+        log_to(ctx->logger, EBISU_LOG_ERROR,
+                "the server asked to renegotiate, which this socket does not support.");
+        set_error(ctx, EBISU_SOCK_ERROR_TLS, (long)status);
         return DECRYPT_ERROR;
     }
     if (ctx->plain_len == 0) {
@@ -745,7 +831,8 @@ static ebisu_sock_code_t
     *out_actual_length = 0;
     ctx->recv_timed_out = 0;
     if (ctx->recv_buf == NULL) {
-        printf("failed to receive: not connected.\n");
+        log_to(ctx->logger, EBISU_LOG_ERROR, "failed to receive: not connected.");
+        set_error(ctx, EBISU_SOCK_ERROR_OTHER, 0);
         return EBISU_SOCK_FAIL;
     }
 
@@ -796,7 +883,8 @@ static ebisu_sock_code_t
                 ctx->peer_closed = 1;
                 return EBISU_SOCK_OK;
             }
-            printf("connection closed in the middle of a TLS record.\n");
+            log_to(ctx->logger, EBISU_LOG_ERROR,
+                    "connection closed in the middle of a TLS record.");
             return EBISU_SOCK_FAIL;
         } else if (read == READ_ERROR) {
             return EBISU_SOCK_FAIL;
@@ -815,6 +903,14 @@ static bool
     return ctx->recv_timed_out != 0;
 }
 
+static ebisu_sock_error_t
+    schannel_last_error(ebisu_socket_t* self, long* out_detail)
+{
+    ebisu_schannel_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_schannel_socket_t, base);
+    *out_detail = ctx->error_detail;
+    return ctx->error;
+}
+
 /* Sends close_notify. Fails only if Schannel cannot make one. Not being able
    to send it is the normal outcome when the peer has closed the connection
    already, as a server answering "Connection: close" does, and harmless when
@@ -828,8 +924,8 @@ static int send_close_notify(ebisu_schannel_socket_t* ctx)
     set_buffer_desc(&in_desc, in, 1);
     SECURITY_STATUS status = ApplyControlToken(&ctx->ctxt, &in_desc);
     if (status != SEC_E_OK) {
-        print_error("ApplyControlToken(SCHANNEL_SHUTDOWN)",
-                (unsigned long)status);
+        log_code(ctx, (unsigned long)status, "ApplyControlToken(SCHANNEL_SHUTDOWN)");
+        set_error(ctx, EBISU_SOCK_ERROR_TLS, (long)status);
         return -1;
     }
 
@@ -860,7 +956,8 @@ static int send_close_notify(ebisu_schannel_socket_t* ctx)
         FreeContextBuffer(out[0].pvBuffer);
     }
     if (FAILED(status)) {
-        print_error("failed to make close_notify", (unsigned long)status);
+        log_code(ctx, (unsigned long)status, "failed to make close_notify");
+        set_error(ctx, EBISU_SOCK_ERROR_TLS, (long)status);
         return -1;
     }
     return 0;
@@ -876,7 +973,6 @@ static ebisu_sock_code_t
     }
     teardown(ctx);
     if (!ok) {
-        printf("failed to close:\n");
         return EBISU_SOCK_FAIL;
     }
     return EBISU_SOCK_OK;

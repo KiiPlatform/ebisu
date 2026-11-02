@@ -12,6 +12,7 @@
 #include <security.h>
 
 #include <ebisu_clock.h>
+#include <ebisu_log.h>
 #include <ebisu_socket.h>
 #include <stdbool.h>
 
@@ -36,8 +37,14 @@ extern "C" {
  * isn't checked. A receive that times out is EBISU_SOCK_FAIL, which
  * recv_timed_out tells from a lost connection, and leaves the connection as it
  * was. One serves one connection at a time, and is used again for the next once
- * closed. Why an operation failed is printed to stdout. Winsock has to have
- * been started, with WSAStartup(), before the first connection.
+ * closed. Why an operation failed, its last_error says: a host that didn't
+ * resolve, with getaddrinfo()'s error, an address that refused, with the
+ * Winsock error, a certificate refused, with the CERT_E_* or TRUST_E_* code, a
+ * TLS failure, with the SSPI status, a timeout, or a peer that closed or reset
+ * the connection, with the Winsock error if there is one. It also goes to the
+ * logger set by ebisu_schannel_socket_set_logger(), or to stderr without one.
+ * Winsock has to have been started, with WSAStartup(), before the first
+ * connection.
  */
 typedef struct ebisu_schannel_socket_t {
     ebisu_socket_t base; /**< \brief What ebisu is given. */
@@ -74,6 +81,12 @@ typedef struct ebisu_schannel_socket_t {
     /* Whether the last receive failed because nothing arrived within
        to_recv, for recv_timed_out. */
     int recv_timed_out; /**< \private */
+    /* Where diagnostics go, or NULL for stderr. */
+    ebisu_logger_t* logger; /**< \private */
+    /* Why the last operation that returned EBISU_SOCK_FAIL failed, for
+       last_error, and more of it. */
+    ebisu_sock_error_t error; /**< \private */
+    long error_detail; /**< \private */
 
     /* A record being encrypted: header, at most cbMaximumMessage bytes of
        data, and trailer. */
@@ -103,6 +116,19 @@ void ebisu_schannel_socket_init(
  * \param [in] clock The clock, or NULL for the system's time.
  */
 void ebisu_schannel_socket_set_clock(ebisu_schannel_socket_t* sock, ebisu_clock_t* clock);
+
+/**
+ * \brief Sets where the socket's diagnostics go.
+ *
+ * Why an operation failed, at EBISU_LOG_ERROR: a host that didn't resolve or
+ * connect, a certificate refused and why, Schannel's or Winsock's error, with
+ * the system's text for it. A receive that times out isn't one.
+ *
+ * \param [out] sock The socket.
+ * \param [in] logger The logger, which has to outlive the socket, or NULL for
+ * stderr.
+ */
+void ebisu_schannel_socket_set_logger(ebisu_schannel_socket_t* sock, ebisu_logger_t* logger);
 
 #ifdef __cplusplus
 }
