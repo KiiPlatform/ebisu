@@ -70,13 +70,12 @@ TEST_CASE( "kii_send_push_message posts the message to the topic" ) {
         CHECK( sent.find("\r\nContent-Type: application/vnd.kii.SendPushMessageRequest+json\r\n") != std::string::npos );
         CHECK( sent.find("\r\nAuthorization: Bearer tok\r\n") != std::string::npos );
         CHECK( sent.find("\r\nX-Kii-Appid: dummyAppID\r\n") != std::string::npos );
-        // The body is the message as it was given, in one chunk.
+        // The body is the message as it was given, with its length.
+        CHECK( sent.find("\r\nContent-Length: " + std::to_string(message.size()) + "\r\n") != std::string::npos );
+        CHECK( sent.find("Transfer-Encoding") == std::string::npos );
         size_t headers_end = sent.find("\r\n\r\n");
         REQUIRE( headers_end != std::string::npos );
-        char chunk_size[16];
-        snprintf(chunk_size, sizeof(chunk_size), "%x", (unsigned int)message.size());
-        REQUIRE( sent.substr(headers_end + 4) ==
-                std::string(chunk_size) + "\r\n" + message + "\r\n0\r\n\r\n" );
+        REQUIRE( sent.substr(headers_end + 4) == message );
     }
 
     SECTION("to an app scope topic") {
@@ -138,12 +137,10 @@ TEST_CASE( "kii_send_push_message posts the message to the topic" ) {
         CHECK( sent.find("\r\nContent-Type: application/vnd.kii.SendPushMessageRequest+json\r\n") != std::string::npos );
         CHECK( sent.find("\r\nAuthorization: Bearer tok\r\n") != std::string::npos );
         CHECK( sent.find("\r\nX-Kii-Appid: dummyAppID\r\n") != std::string::npos );
+        CHECK( sent.find("\r\nContent-Length: " + std::to_string(message.size()) + "\r\n") != std::string::npos );
         size_t headers_end = sent.find("\r\n\r\n");
         REQUIRE( headers_end != std::string::npos );
-        char chunk_size[16];
-        snprintf(chunk_size, sizeof(chunk_size), "%x", (unsigned int)message.size());
-        REQUIRE( sent.substr(headers_end + 4) ==
-                std::string(chunk_size) + "\r\n" + message + "\r\n0\r\n\r\n" );
+        REQUIRE( sent.substr(headers_end + 4) == message );
     }
 
     SECTION("straight to a thing, refused") {

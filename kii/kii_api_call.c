@@ -172,6 +172,12 @@ kii_code_t _req_send(kii_t* kii)
         return res;
     }
     khc_set_req_headers(&kii->_khc, kii->_req_headers);
+    // A body kii holds whole in its buffer goes with its length, rather than
+    // chunked, which some intermediaries handle poorly. One the application
+    // streams through a callback of its own is still chunked.
+    if (kii->_khc._cb_read == _cb_read_buff) {
+        khc_set_req_body_length(&kii->_khc, kii->_rw_buff_req_size);
+    }
     khc_code code = _kii_perform(kii);
     _kii_clock_record(kii);
     _req_headers_free_all(kii);

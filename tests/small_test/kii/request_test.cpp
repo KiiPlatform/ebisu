@@ -414,3 +414,58 @@ TEST_CASE( "Server code runs with the token given, or none" ) {
     CHECK( script.requests[2].find("POST /api/apps/dummyAppID/server-code/versions/v2/ep HTTP/1.1\r\n") == 0 );
     CHECK( count_in(script.requests[2], "Authorization") == 0 );
 }
+
+// Every body went chunked, which some intermediaries handle poorly, though kii
+// had the length of the ones it holds whole in its buffer.
+TEST_CASE( "A body kii holds whole goes with its length, a streamed one chunked" ) {
+    char kii_buff[4096];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    strcpy(kii._author.author_id, "th.1");
+    strcpy(kii._author.access_token, "tok");
+    khct::HttpScript script;
+    script.attach(&kii);
+    const std::string ok = "HTTP/1.1 204 No Content\r\n\r\n";
+    script.responses = { ok, ok, ok };
+
+    SECTION("a body appended to an API call") {
+        const std::string body = "{\"k\":\"v\"}";
+        REQUIRE( kii_api_call_start(&kii, "PUT", "/api/x", "application/json", KII_FALSE) == KII_ERR_OK );
+        REQUIRE( kii_api_call_append_body(&kii, body.c_str(), body.size()) == KII_ERR_OK );
+        REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
+        const std::string& sent = script.requests[0];
+        CHECK( count(sent, "\r\nContent-Length: " + std::to_string(body.size()) + "\r\n") == 1 );
+        CHECK( count(sent, "Transfer-Encoding") == 0 );
+        CHECK( sent.substr(sent.size() - body.size()) == body );
+    }
+
+    SECTION("no body at all") {
+        REQUIRE( kii_api_call_start(&kii, "POST", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );
+        REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
+        const std::string& sent = script.requests[0];
+        CHECK( count(sent, "\r\nContent-Length: 0\r\n") == 1 );
+        CHECK( sent.substr(sent.size() - 4) == "\r\n\r\n" );
+    }
+
+    SECTION("a state streamed through the application's callback") {
+        size_t pos = 0;
+        REQUIRE( kii_ti_put_state(&kii, read_state, &pos, NULL, NULL, NULL) == KII_ERR_OK );
+        const std::string& sent = script.requests[0];
+        CHECK( count(sent, "Transfer-Encoding: chunked\r\n") == 1 );
+        CHECK( count(sent, "Content-Length") == 0 );
+        CHECK( count(sent, std::string(state) + "\r\n0\r\n\r\n") == 1 );
+    }
+
+    SECTION("a request sent again after a renewal keeps its length") {
+        // Without a session nothing is sent again: the length set for the
+        // request survives khc_reset_except_request() regardless.
+        REQUIRE( kii_api_call_start(&kii, "PUT", "/api/x", "application/json", KII_FALSE) == KII_ERR_OK );
+        REQUIRE( kii_api_call_append_body(&kii, "{}", 2) == KII_ERR_OK );
+        REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
+        khc_reset_except_request(&kii._khc);
+        CHECK( kii._khc._req_body_length == 2 );
+    }
+}

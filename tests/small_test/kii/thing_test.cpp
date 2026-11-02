@@ -209,14 +209,13 @@ TEST_CASE( "Thing requests send the values they are given" ) {
         REQUIRE( res == KII_ERR_OK );
         REQUIRE( sent.find("\"thingProperties\":{\"k\":1,\"s\":\"v\"}") != std::string::npos );
 
-        // The body is sent chunked, in a single chunk at this size: it ends
-        // where the terminating zero-length chunk begins.
+        // The body is sent with its length, and ends the request.
         size_t start = sent.find("{\"vendorThingID\"");
-        size_t end = sent.rfind("\r\n0\r\n\r\n");
         REQUIRE( start != std::string::npos );
-        REQUIRE( end != std::string::npos );
+        const std::string body = sent.substr(start);
+        CHECK( sent.find("\r\nContent-Length: " + std::to_string(body.size()) + "\r\n") != std::string::npos );
         picojson::value v;
-        std::string err = picojson::parse(v, sent.substr(start, end - start));
+        std::string err = picojson::parse(v, body);
         REQUIRE( err == "" );
         REQUIRE( v.is<picojson::object>() );
         picojson::value props = v.get<picojson::object>()["thingProperties"];

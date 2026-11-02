@@ -223,6 +223,10 @@ Commands in tio:
 
 kii:
 
+- A request whose body kii holds whole in its buffer, every request but a state
+  or an object body streamed through a callback of the application's, is sent
+  with `Content-Length` rather than `Transfer-Encoding: chunked`. A streamed body
+  is still chunked.
 - `kii_set_site()` takes the host name of the application's site. 1.x also
   took `"US"`, `"SG"`, `"EU"` and `"CN3"` for hosts it knew, which are now taken
   as host names themselves: pass the host instead. `"JP"` still gives
