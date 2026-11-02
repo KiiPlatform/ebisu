@@ -381,6 +381,17 @@ TEST_CASE( "tio_handler_start refuses while its task is running" ) {
     CHECK( std::string(handler._kii._author.author_id) == "other" );
 }
 
+TEST_CASE( "tio_handler sets the last will on its kii" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    kii_mqtt_will_t will = { "t", "gone", 4, KII_MQTT_QOS_0, false };
+    CHECK( tio_handler_set_mqtt_will(&handler, &will) == TIO_ERR_OK );
+    CHECK( handler._kii._mqtt_will == &will );
+    kii_mqtt_will_t bad = { NULL, "gone", 4, KII_MQTT_QOS_0, false };
+    CHECK( tio_handler_set_mqtt_will(&handler, &bad) == TIO_ERR_FAIL );
+    CHECK( handler._kii._mqtt_will == &will );
+}
+
 TEST_CASE( "tio_handler_start needs an action callback" ) {
     char buff[64];
     tio_handler_t handler;

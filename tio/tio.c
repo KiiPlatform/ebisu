@@ -148,6 +148,11 @@ void tio_handler_set_mqtt_qos(tio_handler_t* handler, kii_mqtt_qos_t qos)
     kii_set_mqtt_qos(&handler->_kii, qos);
 }
 
+tio_code_t tio_handler_set_mqtt_will(tio_handler_t* handler, const kii_mqtt_will_t* will)
+{
+    return _tio_convert_code(kii_set_mqtt_will(&handler->_kii, will));
+}
+
 void tio_handler_set_mqtt_clean_session(tio_handler_t* handler, bool clean_session)
 {
     kii_set_mqtt_clean_session(&handler->_kii, clean_session);

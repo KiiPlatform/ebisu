@@ -99,8 +99,14 @@ ebisu_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) 
     *        User Name Flag     Password Flag    Will Retain        Will QoS     Will Flag   Clean Session   Reserved
     */
     /* Username and password, and clean session unless the broker is to keep
-     * the session. */
-    kii->_mqtt_buffer[i++] = (char)(kii->_mqtt_clean_session ? 0xc2 : 0xc0);
+     * the session, and the will, if there is one, with its QoS and retain. */
+    const kii_mqtt_will_t* will = kii->_mqtt_will;
+    unsigned char flags = kii->_mqtt_clean_session ? 0xc2 : 0xc0;
+    if (will != NULL) {
+        flags |= 0x04 | (will->qos == KII_MQTT_QOS_1 ? 0x08 : 0x00) |
+            (will->retain ? 0x20 : 0x00);
+    }
+    kii->_mqtt_buffer[i++] = (char)flags;
     /* Variable header:Keep Alive, which kii_start_push_task() keeps to 16 bits */
     kii->_mqtt_buffer[i++] = (keep_alive_interval & 0xff00) >> 8;
     kii->_mqtt_buffer[i++] = keep_alive_interval & 0x00ff;
@@ -109,6 +115,21 @@ ebisu_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) 
     kii->_mqtt_buffer[i++] = strlen(endpoint->topic) & 0x00ff;
     strcpy(&(kii->_mqtt_buffer[i]), endpoint->topic);
     i += strlen(endpoint->topic);
+    if (will != NULL) {
+        /* Payload:Will Topic */
+        const size_t will_topic_len = strlen(will->topic);
+        kii->_mqtt_buffer[i++] = (will_topic_len & 0xff00) >> 8;
+        kii->_mqtt_buffer[i++] = will_topic_len & 0x00ff;
+        memcpy(&kii->_mqtt_buffer[i], will->topic, will_topic_len);
+        i += will_topic_len;
+        /* Payload:Will Message */
+        kii->_mqtt_buffer[i++] = (will->message_length & 0xff00) >> 8;
+        kii->_mqtt_buffer[i++] = will->message_length & 0x00ff;
+        if (will->message_length > 0) {
+            memcpy(&kii->_mqtt_buffer[i], will->message, will->message_length);
+        }
+        i += will->message_length;
+    }
     /* Payload:User Name */
     kii->_mqtt_buffer[i++] = (strlen(endpoint->username) & 0xff00) >> 8;
     kii->_mqtt_buffer[i++] = strlen(endpoint->username) & 0x00ff;
@@ -570,8 +591,11 @@ void _mqtt_state_send_connect(mqtt_state_t* state)
     // The 8 bytes kept for the fixed header, the variable header with the
     // protocol name, 2 bytes before each string, and a terminator after the
     // last, which it is copied with.
+    // And the will's topic and message, with 2 bytes before each.
+    const size_t will_size = kii->_mqtt_will == NULL ? 0 :
+        4 + strlen(kii->_mqtt_will->topic) + kii->_mqtt_will->message_length;
     if (kii->_mqtt_buffer_size < 21 + strlen(_mqtt_protocol_name(kii)) +
-            strlen(endpoint->topic) +
+            strlen(endpoint->topic) + will_size +
             strlen(endpoint->username) + strlen(endpoint->password)) {
         task_info->error = KII_MQTT_ERR_INSUFFICIENT_BUFF;
         task_info->task_state = KII_MQTT_ST_ERR_EXIT;
