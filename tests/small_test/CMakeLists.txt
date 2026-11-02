@@ -43,6 +43,7 @@ ebisu_add_test_suite(small_test_jkii
     WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/jkii
     SOURCES
         jkii/src/jkii_escape_test.cpp
+        jkii/src/jkii_lines_test.cpp
         jkii/src/jkii_primitive_test.cpp
         jkii/src/jkii_test.cpp
         jkii/src/jkii_writer_test.cpp
