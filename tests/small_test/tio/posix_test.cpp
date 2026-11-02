@@ -1,5 +1,5 @@
 #include "catch.hpp"
-#include "task_impl.h"
+#include "ebisu_posix.h"
 
 #include <atomic>
 #include <chrono>
@@ -20,7 +20,7 @@ struct DetachState {
     std::atomic<int> state;
 };
 
-// Waits for task_create_cb() to have returned, as what it does after creating
+// Waits for task_create to have returned, as what it does after creating
 // the thread is what counts.
 void* report_detach_state(void* param)
 {
@@ -39,7 +39,7 @@ void* report_detach_state(void* param)
 
 }
 
-TEST_CASE( "delay_ms_cb sleeps on through a signal" ) {
+TEST_CASE( "The POSIX system's delay sleeps on through a signal" ) {
     struct sigaction action;
     struct sigaction previous;
     memset(&action, 0, sizeof(action));
@@ -51,7 +51,8 @@ TEST_CASE( "delay_ms_cb sleeps on through a signal" ) {
     REQUIRE( setitimer(ITIMER_REAL, &timer, nullptr) == 0 );
 
     auto start = std::chrono::steady_clock::now();
-    delay_ms_cb(nullptr, 100);
+    ebisu_system_t* system = ebisu_posix_system();
+    system->ops->delay_ms(system, 100);
     auto elapsed = std::chrono::steady_clock::now() - start;
 
     sigaction(SIGALRM, &previous, nullptr);
@@ -59,16 +60,37 @@ TEST_CASE( "delay_ms_cb sleeps on through a signal" ) {
 }
 
 // Nothing joins a task, so a joinable thread stays behind when it ends.
-TEST_CASE( "task_create_cb leaves nothing behind when the task ends" ) {
+TEST_CASE( "The POSIX system's tasks leave nothing behind when they end" ) {
     DetachState d;
     d.created = false;
     d.state = -1;
 
-    REQUIRE( task_create_cb(nullptr, "task", report_detach_state, &d) == EBISU_TASKC_OK );
+    ebisu_system_t* system = ebisu_posix_system();
+    REQUIRE( system->ops->task_create(system, "task", report_detach_state, &d) == EBISU_TASKC_OK );
     d.created = true;
     while (d.state == -1) {
         sched_yield();
     }
 
     CHECK( d.state == PTHREAD_CREATE_DETACHED );
+}
+
+TEST_CASE( "The POSIX system's monotonic clock goes forward" ) {
+    ebisu_system_t* system = ebisu_posix_system();
+    uint64_t before = system->ops->monotonic_ms(system);
+    system->ops->delay_ms(system, 20);
+    uint64_t after = system->ops->monotonic_ms(system);
+    CHECK( after >= before + 20 );
+    CHECK( after < before + 2000 );
+}
+
+TEST_CASE( "The POSIX lock is a mutex" ) {
+    ebisu_posix_lock_t lock;
+    REQUIRE( ebisu_posix_lock_init(&lock) == 0 );
+    lock.base.ops->lock(&lock.base);
+    CHECK( pthread_mutex_trylock(&lock.mutex) != 0 );
+    lock.base.ops->unlock(&lock.base);
+    REQUIRE( pthread_mutex_trylock(&lock.mutex) == 0 );
+    pthread_mutex_unlock(&lock.mutex);
+    ebisu_posix_lock_destroy(&lock);
 }

@@ -28,14 +28,14 @@ ebisu_socket_t* sample_socket(ebisu_socket_t* self)
 
 }
 
-// TLS goes through the Linux sample's callbacks, OpenSSL over BSD sockets, so
+// TLS goes through platform's OpenSSL port, OpenSSL over BSD sockets, so
 // the large tests run them against the live server: the server's certificate
 // is checked at the tests' clock's time.
 static ebisu_sock_code_t
     cb_connect_ssl(ebisu_socket_t* self, const char* host,
             uint16_t port)
 {
-    return sock_cb_connect(sample_socket(self), host, port);
+    return sample_socket(self)->ops->connect(sample_socket(self), host, port);
 }
 
 static ebisu_sock_code_t
@@ -44,7 +44,7 @@ static ebisu_sock_code_t
             size_t length,
             size_t* out_sent_length)
 {
-    ebisu_sock_code_t res = sock_cb_send(sample_socket(self),
+    ebisu_sock_code_t res = sample_socket(self)->ops->send(sample_socket(self),
             buffer, length, out_sent_length);
 
 #ifdef SOCKET_LOG
@@ -62,7 +62,7 @@ static ebisu_sock_code_t
             size_t length_to_read,
             size_t* out_actual_length)
 {
-    ebisu_sock_code_t res = sock_cb_recv(sample_socket(self),
+    ebisu_sock_code_t res = sample_socket(self)->ops->recv(sample_socket(self),
             buffer, length_to_read, out_actual_length);
 
 #ifdef SOCKET_LOG
@@ -77,7 +77,7 @@ static ebisu_sock_code_t
 static ebisu_sock_code_t
     cb_close_ssl(ebisu_socket_t* self)
 {
-    ebisu_sock_code_t res = sock_cb_close(sample_socket(self));
+    ebisu_sock_code_t res = sample_socket(self)->ops->close(sample_socket(self));
 
 #ifdef SOCKET_LOG
     printf("\n----------------------------------------------------------------------------------------------------\n\n\n");
@@ -119,7 +119,7 @@ static ebisu_sock_code_t
         return EBISU_SOCK_FAIL;
     }
     ebisu::ltest::ssl::SSLData* ctx = ebisu::ltest::ssl::data_of(self);
-    ctx->linux_ctx.socket = sock;
+    ctx->platform.socket = sock;
     return EBISU_SOCK_OK;
 }
 
@@ -130,7 +130,7 @@ static ebisu_sock_code_t
             size_t* out_sent_length)
 {
     ebisu::ltest::ssl::SSLData* ctx = ebisu::ltest::ssl::data_of(self);
-    int ret = send(ctx->linux_ctx.socket, buffer, length, 0);
+    int ret = send(ctx->platform.socket, buffer, length, 0);
     if (ret > 0) {
         *out_sent_length = ret;
 
@@ -153,7 +153,7 @@ static ebisu_sock_code_t
 {
     *out_actual_length = 0;
     ebisu::ltest::ssl::SSLData* ctx = ebisu::ltest::ssl::data_of(self);
-    int ret = recv(ctx->linux_ctx.socket, buffer, length_to_read, 0);
+    int ret = recv(ctx->platform.socket, buffer, length_to_read, 0);
     if (ret > 0) {
         *out_actual_length = ret;
 
@@ -173,9 +173,9 @@ static ebisu_sock_code_t
     cb_close_tcp(ebisu_socket_t* self)
 {
     ebisu::ltest::ssl::SSLData* ctx = ebisu::ltest::ssl::data_of(self);
-    shutdown(ctx->linux_ctx.socket, SHUT_RDWR);
+    shutdown(ctx->platform.socket, SHUT_RDWR);
     // ignore close errors
-    close(ctx->linux_ctx.socket);
+    close(ctx->platform.socket);
 
 #ifdef SOCKET_LOG
     printf("\n----------------------------------------------------------------------------------------------------\n\n\n");

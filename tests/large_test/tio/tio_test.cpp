@@ -23,10 +23,7 @@
 #include <tio.h>
 #include "rest.h"
 
-#ifdef _WIN32
-#include "sock_cb_win32.h"
-#else
-#include "sock_cb_linux.h"
+#ifndef _WIN32
 #include <signal.h>
 #endif
 
@@ -154,7 +151,7 @@ struct Device {
     // and the password, so it is searched and never printed.
     std::mutex sent_mutex;
     std::string sent;
-    socket_context_t mqtt;
+    ebisu::ltest::platform_socket_t mqtt;
     std::vector<std::thread> tasks;
     ebisu::ltest::ThreadSystem system;
 
@@ -326,7 +323,7 @@ void init_device(Device& d)
 {
     d.handler_resource = {d.handler_tokens, sizeof(d.handler_tokens) / sizeof(d.handler_tokens[0])};
     d.updater_resource = {d.updater_tokens, sizeof(d.updater_tokens) / sizeof(d.updater_tokens[0])};
-    sock_cb_init_context(&d.mqtt, TO_RECV, TO_SEND);
+    ebisu::ltest::init_platform_socket(&d.mqtt, TO_RECV, TO_SEND);
     d.system.keep = [&d](std::thread task) { d.tasks.push_back(std::move(task)); };
     auto record = [&d](const char* data, size_t length) {
         std::lock_guard<std::mutex> lock(d.sent_mutex);

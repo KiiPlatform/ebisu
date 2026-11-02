@@ -1,5 +1,5 @@
 #include "catch.hpp"
-#include "sock_cb_linux.h"
+#include "ebisu_openssl.h"
 
 #include <openssl/err.h>
 #include <openssl/rsa.h>
@@ -42,11 +42,11 @@ X509* issue_certificate(EVP_PKEY* key)
     return cert;
 }
 
-// A TLS connection over a socketpair: the sample's callbacks at one end, as
-// sock_cb_connect() would have left them, and the test at the other. Generating
+// A TLS connection over a socketpair: platform's OpenSSL port at one end, as
+// the socket's connect would have left them, and the test at the other. Generating
 // the key is slow, under valgrind above all, so the tests share one.
 struct Connection {
-    socket_context_t client;
+    ebisu_openssl_socket_t client;
     SSL_CTX* server_ctx;
     SSL* server;
     int server_fd;
@@ -55,7 +55,7 @@ struct Connection {
     Connection() : client_closed(false) {
         // As the sample does: writes go to a peer that has gone.
         signal(SIGPIPE, SIG_IGN);
-        // As sock_cb_connect() does, which these tests don't go through.
+        // As the socket's connect does, which these tests don't go through.
         SSL_library_init();
 
         static EVP_PKEY* key = generate_key();
@@ -71,11 +71,11 @@ struct Connection {
         server = SSL_new(server_ctx);
         SSL_set_fd(server, server_fd);
 
-        sock_cb_init_context(&client, 0, 0);
+        ebisu_openssl_socket_init(&client, 0, 0);
         client.socket = fds[1];
         client.ssl_ctx = SSL_CTX_new(SSLv23_client_method());
 #ifdef SSL_OP_IGNORE_UNEXPECTED_EOF
-        // As sock_cb_connect() has it.
+        // As the socket's connect has it.
         SSL_CTX_set_options(client.ssl_ctx, SSL_OP_IGNORE_UNEXPECTED_EOF);
 #endif
         client.ssl = SSL_new(client.ssl_ctx);
@@ -93,7 +93,7 @@ struct Connection {
 
     ~Connection() {
         if (!client_closed) {
-            sock_cb_close(&client.base);
+            client.base.ops->close(&client.base);
         }
         SSL_free(server);
         SSL_CTX_free(server_ctx);
@@ -110,7 +110,7 @@ struct Connection {
 
     ebisu_sock_code_t close_client() {
         client_closed = true;
-        return sock_cb_close(&client.base);
+        return client.base.ops->close(&client.base);
     }
 };
 
@@ -127,51 +127,51 @@ void leave_an_error_in_the_queue()
 
 }
 
-TEST_CASE( "sock_cb_recv reads what the peer sent" ) {
+TEST_CASE( "The OpenSSL socket's recv reads what the peer sent" ) {
     Connection c;
     REQUIRE( SSL_write(c.server, "hello", 5) == 5 );
 
     char buffer[16];
     size_t received = 0;
-    CHECK( sock_cb_recv(&c.client.base, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK );
+    CHECK( c.client.base.ops->recv(&c.client.base, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK );
     REQUIRE( received == 5 );
     CHECK( std::string(buffer, received) == "hello" );
 }
 
 // The push task waits for a message with this timeout, over and over: a
 // timeout taken for a failure has it drop a connection nothing is wrong with.
-TEST_CASE( "sock_cb_recv times out whatever an earlier failure left behind" ) {
+TEST_CASE( "The OpenSSL socket's recv times out whatever an earlier failure left behind" ) {
     Connection c;
     leave_an_error_in_the_queue();
 
     char buffer[16];
     size_t received = 0;
-    CHECK( sock_cb_recv(&c.client.base, buffer, sizeof(buffer), &received) == EBISU_SOCK_FAIL );
+    CHECK( c.client.base.ops->recv(&c.client.base, buffer, sizeof(buffer), &received) == EBISU_SOCK_FAIL );
     CHECK( received == 0 );
-    CHECK( sock_cb_recv_timed_out(&c.client.base) == true );
+    CHECK( c.client.base.ops->recv_timed_out(&c.client.base) == true );
     CHECK( c.client.ssl_failed == false );
 
     // And the connection is as good as it was.
     REQUIRE( SSL_write(c.server, "hello", 5) == 5 );
-    CHECK( sock_cb_recv(&c.client.base, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK );
+    CHECK( c.client.base.ops->recv(&c.client.base, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK );
     CHECK( received == 5 );
 }
 
-TEST_CASE( "sock_cb_recv takes a close_notify for the end of the stream" ) {
+TEST_CASE( "The OpenSSL socket's recv takes a close_notify for the end of the stream" ) {
     Connection c;
     leave_an_error_in_the_queue();
     SSL_shutdown(c.server);
 
     char buffer[16];
     size_t received = 1;
-    CHECK( sock_cb_recv(&c.client.base, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK );
+    CHECK( c.client.base.ops->recv(&c.client.base, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK );
     CHECK( received == 0 );
     CHECK( c.close_client() == EBISU_SOCK_OK );
 }
 
 // Servers answering "Connection: close" do this. errno is whatever the last
 // call to fail on this thread left there, until SSL_read() has run.
-TEST_CASE( "sock_cb_recv takes a closed transport for the end of the stream" ) {
+TEST_CASE( "The OpenSSL socket's recv takes a closed transport for the end of the stream" ) {
     Connection c;
     c.close_server_socket();
     leave_an_error_in_the_queue();
@@ -179,7 +179,7 @@ TEST_CASE( "sock_cb_recv takes a closed transport for the end of the stream" ) {
 
     char buffer[16];
     size_t received = 1;
-    CHECK( sock_cb_recv(&c.client.base, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK );
+    CHECK( c.client.base.ops->recv(&c.client.base, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK );
     CHECK( received == 0 );
     CHECK( c.close_client() == EBISU_SOCK_OK );
 }
@@ -193,13 +193,13 @@ TEST_CASE( "A connection that failed is closed without SSL_shutdown" ) {
 
     char buffer[16];
     size_t received = 0;
-    CHECK( sock_cb_recv(&c.client.base, buffer, sizeof(buffer), &received) == EBISU_SOCK_FAIL );
-    CHECK( sock_cb_recv_timed_out(&c.client.base) == false );
+    CHECK( c.client.base.ops->recv(&c.client.base, buffer, sizeof(buffer), &received) == EBISU_SOCK_FAIL );
+    CHECK( c.client.base.ops->recv_timed_out(&c.client.base) == false );
     CHECK( c.client.ssl_failed == true );
     CHECK( c.close_client() == EBISU_SOCK_OK );
 }
 
-TEST_CASE( "sock_cb_send reports a connection that has gone" ) {
+TEST_CASE( "The OpenSSL socket's send reports a connection that has gone" ) {
     Connection c;
     c.close_server_socket();
 
@@ -208,7 +208,7 @@ TEST_CASE( "sock_cb_send reports a connection that has gone" ) {
     size_t sent = 0;
     ebisu_sock_code_t res = EBISU_SOCK_OK;
     for (int i = 0; i < 2 && res == EBISU_SOCK_OK; ++i) {
-        res = sock_cb_send(&c.client.base, data, sizeof(data), &sent);
+        res = c.client.base.ops->send(&c.client.base, data, sizeof(data), &sent);
     }
     CHECK( res == EBISU_SOCK_FAIL );
     CHECK( c.client.ssl_failed == true );
@@ -216,12 +216,12 @@ TEST_CASE( "sock_cb_send reports a connection that has gone" ) {
 }
 
 // The first attempt failing must not be held against the next.
-TEST_CASE( "sock_cb_send sends with an earlier failure left behind" ) {
+TEST_CASE( "The OpenSSL socket's send sends with an earlier failure left behind" ) {
     Connection c;
     leave_an_error_in_the_queue();
 
     size_t sent = 0;
-    CHECK( sock_cb_send(&c.client.base, "hello", 5, &sent) == EBISU_SOCK_OK );
+    CHECK( c.client.base.ops->send(&c.client.base, "hello", 5, &sent) == EBISU_SOCK_OK );
     CHECK( sent == 5 );
     char buffer[16];
     CHECK( SSL_read(c.server, buffer, sizeof(buffer)) == 5 );

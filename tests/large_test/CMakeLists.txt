@@ -24,14 +24,14 @@ if(EBISU_SOCKET_LOG)
     list(APPEND large_test_defines SOCKET_LOG)
 endif()
 
-# Shared by both large suites: the socket callbacks, with TLS and, for
-# EBISU_PLAIN_HTTP, without. OpenSSL over BSD sockets, except on Windows, where
+# Shared by both large suites: the sockets, with TLS and, for
+# EBISU_PLAIN_HTTP, without. platform's OpenSSL port, except on Windows, where
 # they are the win32 sample's, over Winsock and Schannel, so that the sample's
 # TLS runs against the live server too.
 #
-# kii/mqtt_test.cpp connects to the MQTT broker through the platform's sample
-# callbacks, which time out their receives as the push task needs: the win32
-# sample's, or the Linux sample's, sock_cb_linux.c.
+# kii/mqtt_test.cpp connects to the MQTT broker through the platform's socket,
+# which times out its receives as the push task needs: the win32 sample's, or
+# platform's OpenSSL port.
 if(WIN32)
     set(large_test_common
         ${CMAKE_CURRENT_SOURCE_DIR}/secure_socket_win32.cpp
@@ -43,16 +43,14 @@ if(WIN32)
     # Without it, windows.h pulls in winsock.h, which clashes with winsock2.h.
     list(APPEND large_test_defines WIN32_LEAN_AND_MEAN)
 else()
-    find_package(OpenSSL REQUIRED)
-    set(large_test_common
-        ${CMAKE_CURRENT_SOURCE_DIR}/secure_socket_impl.cpp
-        ${PROJECT_SOURCE_DIR}/tio/linux-sample/sock_cb_linux.c)
-    set(large_test_socket_libs OpenSSL::SSL OpenSSL::Crypto)
-    set(large_test_socket_includes
-        ${PROJECT_SOURCE_DIR}/tio/linux-sample
-        ${PROJECT_SOURCE_DIR}/kii/include)
+    if(NOT TARGET ebisu_openssl)
+        message(FATAL_ERROR "The large tests need platform's OpenSSL port")
+    endif()
+    set(large_test_common ${CMAKE_CURRENT_SOURCE_DIR}/secure_socket_impl.cpp)
+    set(large_test_socket_libs ebisu_openssl)
+    set(large_test_socket_includes ${PROJECT_SOURCE_DIR}/kii/include)
     # Needs no backend, only OpenSSL, which the small suites don't link.
-    set(large_test_kii_openssl kii/sock_cb_linux_test.cpp)
+    set(large_test_kii_openssl kii/openssl_socket_test.cpp)
 endif()
 
 ebisu_add_test_suite(large_test_khc
