@@ -51,6 +51,13 @@ ebisu_add_test_suite(small_test_jkii
         jkii/src/jkii_writer_test.cpp
     LINK ${EBISU_JKII_OBJS})
 
+ebisu_add_test_suite(small_test_platform
+    LABEL small
+    WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/platform
+    SOURCES
+        platform/str_test.cpp
+    LINK ebisu_platform_objs)
+
 # platform's POSIX port, which needs threads and nothing else. Linux only, as
 # the test reads a thread's attributes with pthread_getattr_np().
 if(TARGET ebisu_posix AND CMAKE_SYSTEM_NAME STREQUAL "Linux")

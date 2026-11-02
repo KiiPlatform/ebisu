@@ -20,6 +20,7 @@ ebisu_add_fuzzer(fuzz_khc_response LINK ${EBISU_KHC_OBJS})
 ebisu_add_fuzzer(fuzz_jkii_parse LINK ${EBISU_JKII_OBJS})
 ebisu_add_fuzzer(fuzz_jkii_writer LINK ${EBISU_JKII_OBJS})
 ebisu_add_fuzzer(fuzz_jkii_lines LINK ${EBISU_JKII_OBJS})
+ebisu_add_fuzzer(fuzz_ebisu_str LINK ebisu_platform_objs)
 ebisu_add_fuzzer(fuzz_mqtt_task
     LINK ${EBISU_KII_OBJS}
     INCLUDES ${PROJECT_SOURCE_DIR}/kii)
