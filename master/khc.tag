@@ -4,7 +4,6 @@
     <name>khc.h</name>
     <path>include/</path>
     <filename>khc_8h.html</filename>
-    <includes id="khc__socket__callback_8h" name="khc_socket_callback.h" local="yes" import="no" module="no" objc="no">khc_socket_callback.h</includes>
     <class kind="struct">khc_slist</class>
     <class kind="struct">khc</class>
     <member kind="define">
@@ -275,29 +274,29 @@
       <type>khc_code</type>
       <name>khc_set_cb_sock_connect</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a54f8f9bdcb11eead39b1665d705c5465</anchor>
-      <arglist>(khc *khc, KHC_CB_SOCK_CONNECT cb, void *userdata)</arglist>
+      <anchor>a6624acc943cadb511447cbd62ff0ef38</anchor>
+      <arglist>(khc *khc, EBISU_CB_SOCK_CONNECT cb, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>khc_code</type>
       <name>khc_set_cb_sock_send</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a02713f2a404eb6f1487ecef3ce5fe2d9</anchor>
-      <arglist>(khc *khc, KHC_CB_SOCK_SEND cb, void *userdata)</arglist>
+      <anchor>a896b1834a588d53d1ac292cf5973e611</anchor>
+      <arglist>(khc *khc, EBISU_CB_SOCK_SEND cb, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>khc_code</type>
       <name>khc_set_cb_sock_recv</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>af922aa613df95d2c8bb10a2844d1d399</anchor>
-      <arglist>(khc *khc, KHC_CB_SOCK_RECV cb, void *userdata)</arglist>
+      <anchor>ac34965780c4d2fd994b20a001fbbf23e</anchor>
+      <arglist>(khc *khc, EBISU_CB_SOCK_RECV cb, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>khc_code</type>
       <name>khc_set_cb_sock_close</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a0902ecf7e31cc403467fafbb7c287c6d</anchor>
-      <arglist>(khc *khc, KHC_CB_SOCK_CLOSE cb, void *userdata)</arglist>
+      <anchor>afc9a5e3eaec6511f9822535d7d63ac18</anchor>
+      <arglist>(khc *khc, EBISU_CB_SOCK_CLOSE cb, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>khc_code</type>
@@ -375,71 +374,6 @@
       <anchorfile>khc_8h.html</anchorfile>
       <anchor>a1303a5750c70d26aa745b8b5a20b6635</anchor>
       <arglist>(khc *khc)</arglist>
-    </member>
-  </compound>
-  <compound kind="file">
-    <name>khc_socket_callback.h</name>
-    <path>include/</path>
-    <filename>khc__socket__callback_8h.html</filename>
-    <member kind="typedef">
-      <type>enum khc_sock_code_t</type>
-      <name>khc_sock_code_t</name>
-      <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>af497c50fbe34dcc5990d93c1e0c61909</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="typedef">
-      <type>khc_sock_code_t(*</type>
-      <name>KHC_CB_SOCK_CONNECT</name>
-      <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>acdd52bbdab0132000516103e5474b72f</anchor>
-      <arglist>)(void *sock_ctx, const char *host, uint16_t port)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>khc_sock_code_t(*</type>
-      <name>KHC_CB_SOCK_SEND</name>
-      <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>a96345c64c6bcec1711d2ddaac43224c2</anchor>
-      <arglist>)(void *sock_ctx, const char *buffer, size_t length, size_t *out_sent_length)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>khc_sock_code_t(*</type>
-      <name>KHC_CB_SOCK_RECV</name>
-      <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>a148cf4bd26b43909c9eab71f37b4cda6</anchor>
-      <arglist>)(void *sock_ctx, char *buffer, size_t length_to_read, size_t *out_actual_length)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>khc_sock_code_t(*</type>
-      <name>KHC_CB_SOCK_CLOSE</name>
-      <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>af54fb240d589fb1044188bd4a81ab78d</anchor>
-      <arglist>)(void *sock_ctx)</arglist>
-    </member>
-    <member kind="enumeration">
-      <type></type>
-      <name>khc_sock_code_t</name>
-      <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>a13e4505815712d86adb95ab0ea867cf2</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>KHC_SOCK_OK</name>
-      <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>a13e4505815712d86adb95ab0ea867cf2aad80f9912fd8afc2b80d157cee2c679e</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>KHC_SOCK_FAIL</name>
-      <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>a13e4505815712d86adb95ab0ea867cf2a1cc5f5fa5f38faab5fa245a2e06e9d4a</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>KHC_SOCK_AGAIN</name>
-      <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>a13e4505815712d86adb95ab0ea867cf2a90a3f6acf289ae5d18feee3a67e69a1c</anchor>
-      <arglist></arglist>
     </member>
   </compound>
   <compound kind="struct">

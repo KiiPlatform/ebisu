@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['khc_0',['khc',['../structkhc.html',1,'']]],
-  ['khc_5fslist_1',['khc_slist',['../structkhc__slist.html',1,'']]]
+  ['ebisu_5fclock_5ft_0',['ebisu_clock_t',['../../../platform/html/structebisu__clock__t.html',1,'']]]
 ];

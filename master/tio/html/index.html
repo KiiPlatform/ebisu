@@ -102,19 +102,19 @@ Task callbacks</h3>
 <h4><a class="anchor" id="autotoc_md3"></a>
 Task creation</h4>
 <p>Task create callback function signature is following.</p>
-<div class="fragment"><div class="line"><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#a8cb8ae6e0e48ea307aa8481d5e85feb0">kii_task_code_t</a></div>
-<div class="line">(*KII_CB_TASK_CREATE)</div>
+<div class="fragment"><div class="line"><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../platform/html/ebisu__task_8h.html#a90188fadee3bc027156aa75ab532454a">ebisu_task_code_t</a></div>
+<div class="line">(*EBISU_CB_TASK_CREATE)</div>
 <div class="line">    (<span class="keyword">const</span> <span class="keywordtype">char</span>* name,</div>
-<div class="line">     <a class="code hl_typedefRef" href="../../kii/html/kii__task__callback_8h.html#a803edec5a77dda169a7487f28eb7cf9a">KII_TASK_ENTRY</a> entry,</div>
+<div class="line">     <a class="code hl_typedefRef" href="../../platform/html/ebisu__task_8h.html#aa88036fe3014d1b2c19cd4808b5424d7">EBISU_TASK_ENTRY</a> entry,</div>
 <div class="line">     <span class="keywordtype">void</span>* entry_param,</div>
 <div class="line">     <span class="keywordtype">void</span>* userdata);</div>
-<div class="ttc" id="akii__task__callback_8h_html_a803edec5a77dda169a7487f28eb7cf9a"><div class="ttname"><a href="../../kii/html/kii__task__callback_8h.html#a803edec5a77dda169a7487f28eb7cf9a">KII_TASK_ENTRY</a></div><div class="ttdeci">void *(* KII_TASK_ENTRY)(void *value)</div></div>
-<div class="ttc" id="akii__task__callback_8h_html_a8cb8ae6e0e48ea307aa8481d5e85feb0"><div class="ttname"><a href="../../kii/html/kii__task__callback_8h.html#a8cb8ae6e0e48ea307aa8481d5e85feb0">kii_task_code_t</a></div><div class="ttdeci">kii_task_code_t</div></div>
+<div class="ttc" id="aebisu__task_8h_html_a90188fadee3bc027156aa75ab532454a"><div class="ttname"><a href="../../platform/html/ebisu__task_8h.html#a90188fadee3bc027156aa75ab532454a">ebisu_task_code_t</a></div><div class="ttdeci">ebisu_task_code_t</div></div>
+<div class="ttc" id="aebisu__task_8h_html_aa88036fe3014d1b2c19cd4808b5424d7"><div class="ttname"><a href="../../platform/html/ebisu__task_8h.html#aa88036fe3014d1b2c19cd4808b5424d7">EBISU_TASK_ENTRY</a></div><div class="ttdeci">void *(* EBISU_TASK_ENTRY)(void *value)</div></div>
 </div><!-- fragment --><p><code>entry</code> must be called with <code>entry_param</code>. <code>userdata</code> is the context object pointer given to <code>tio_handler_set_cb_task_create()</code> or <code>tio_updater_set_cb_task_create()</code>.</p>
 <p>Typical implementation with <code>pthread</code>:</p>
-<div class="fragment"><div class="line"><a class="code hl_enumerationRef" href="../../kii/html/kii__task__callback_8h.html#a8cb8ae6e0e48ea307aa8481d5e85feb0">kii_task_code_t</a> task_create_cb</div>
+<div class="fragment"><div class="line"><a class="code hl_enumerationRef" href="../../platform/html/ebisu__task_8h.html#a90188fadee3bc027156aa75ab532454a">ebisu_task_code_t</a> task_create_cb</div>
 <div class="line">    (<span class="keyword">const</span> <span class="keywordtype">char</span>* name,</div>
-<div class="line">     KII_TASK_ENTRY entry,</div>
+<div class="line">     EBISU_TASK_ENTRY entry,</div>
 <div class="line">     <span class="keywordtype">void</span>* param,</div>
 <div class="line">     <span class="keywordtype">void</span>* userdata)</div>
 <div class="line">{</div>
@@ -124,11 +124,11 @@ Task creation</h4>
 <div class="line">    {</div>
 <div class="line">        <span class="comment">/* Nothing joins a task, so its thread has to go by itself when it ends. */</span></div>
 <div class="line">        pthread_detach(pthid);</div>
-<div class="line">        <span class="keywordflow">return</span> KII_TASKC_OK;</div>
+<div class="line">        <span class="keywordflow">return</span> EBISU_TASKC_OK;</div>
 <div class="line">    }</div>
 <div class="line">    <span class="keywordflow">else</span></div>
 <div class="line">    {</div>
-<div class="line">        <span class="keywordflow">return</span> KII_TASKC_FAIL;</div>
+<div class="line">        <span class="keywordflow">return</span> EBISU_TASKC_FAIL;</div>
 <div class="line">    }</div>
 <div class="line">}</div>
 </div><!-- fragment --><h4><a class="anchor" id="autotoc_md4"></a>
@@ -169,7 +169,7 @@ Delay callback</h4>
 <p><code>tio</code> needs abstraction with callbacks since the way varies in different environments.</p>
 <p>Delay callback function signature is following.</p>
 <div class="fragment"><div class="line">typedef void</div>
-<div class="line">(*KII_CB_DELAY_MS)</div>
+<div class="line">(*EBISU_CB_DELAY_MS)</div>
 <div class="line">    (uint32_t msec,</div>
 <div class="line">     void* userdata);</div>
 </div><!-- fragment --><p>Typical implementation with <code>nanosleep</code> provided by <code>libc</code>. <code>usleep(msec * 1000)</code> would overflow above about 71 minutes, and return early on a signal:</p>
@@ -185,22 +185,22 @@ Delay callback</h4>
 Socket callbacks.</h3>
 <p><code>tio</code> provides abstraction of socket related functions.</p>
 <p>Socket callback functions signature:</p>
-<div class="fragment"><div class="line"><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../khc/html/khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2">khc_sock_code_t</a></div>
-<div class="line">    (*KHC_CB_SOCK_CONNECT)</div>
+<div class="fragment"><div class="line"><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../platform/html/ebisu__socket_8h.html#a7b634b2cbb6bc4349dab223fbee058ba">ebisu_sock_code_t</a></div>
+<div class="line">    (*EBISU_CB_SOCK_CONNECT)</div>
 <div class="line">    (<span class="keywordtype">void</span>* sock_ctx, <span class="keyword">const</span> <span class="keywordtype">char</span>* host, uint16_t port);</div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../khc/html/khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2">khc_sock_code_t</a></div>
-<div class="line">    (*KHC_CB_SOCK_SEND)</div>
+<div class="line"><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../platform/html/ebisu__socket_8h.html#a7b634b2cbb6bc4349dab223fbee058ba">ebisu_sock_code_t</a></div>
+<div class="line">    (*EBISU_CB_SOCK_SEND)</div>
 <div class="line">    (<span class="keywordtype">void</span>* sock_ctx, <span class="keyword">const</span> <span class="keywordtype">char</span>* buffer, <span class="keywordtype">size_t</span> length, <span class="keywordtype">size_t</span>* out_sent_length);</div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../khc/html/khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2">khc_sock_code_t</a></div>
-<div class="line">    (*KHC_CB_SOCK_RECV)</div>
+<div class="line"><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../platform/html/ebisu__socket_8h.html#a7b634b2cbb6bc4349dab223fbee058ba">ebisu_sock_code_t</a></div>
+<div class="line">    (*EBISU_CB_SOCK_RECV)</div>
 <div class="line">    (<span class="keywordtype">void</span>* sock_ctx, <span class="keywordtype">char</span>* buffer, <span class="keywordtype">size_t</span> length_to_read,</div>
 <div class="line">     <span class="keywordtype">size_t</span>* out_actual_length);</div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../khc/html/khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2">khc_sock_code_t</a></div>
-<div class="line">    (*KHC_CB_SOCK_CLOSE)(<span class="keywordtype">void</span>* sock_ctx);</div>
-<div class="ttc" id="akhc__socket__callback_8h_html_a13e4505815712d86adb95ab0ea867cf2"><div class="ttname"><a href="../../khc/html/khc__socket__callback_8h.html#a13e4505815712d86adb95ab0ea867cf2">khc_sock_code_t</a></div><div class="ttdeci">khc_sock_code_t</div></div>
+<div class="line"><span class="keyword">typedef</span> <a class="code hl_enumerationRef" href="../../platform/html/ebisu__socket_8h.html#a7b634b2cbb6bc4349dab223fbee058ba">ebisu_sock_code_t</a></div>
+<div class="line">    (*EBISU_CB_SOCK_CLOSE)(<span class="keywordtype">void</span>* sock_ctx);</div>
+<div class="ttc" id="aebisu__socket_8h_html_a7b634b2cbb6bc4349dab223fbee058ba"><div class="ttname"><a href="../../platform/html/ebisu__socket_8h.html#a7b634b2cbb6bc4349dab223fbee058ba">ebisu_sock_code_t</a></div><div class="ttdeci">ebisu_sock_code_t</div></div>
 </div><!-- fragment --><p>You can see implementation with OpenSSL at <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c">linux-sample</a></p>
 <p>The <a href="https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#writing-callbacks">khc README</a> has what these callbacks have to do that <code>tio</code> can't check for them, such as timeouts and <code>SIGPIPE</code>.</p>
 <p><code>sock_ctx</code> argument is arbitrary data context which application can use. Application should pass the pointer of the data when calling <code>tio_handler_set_cb_sock_connect_http()</code>, <code>tio_handler_set_cb_sock_send_http()</code>, <code>tio_handler_set_cb_sock_recv_http()</code>, <code>tio_handler_set_cb_sock_close_http()</code>, <code>tio_handler_set_cb_sock_connect_mqtt()</code>, <code>tio_handler_set_cb_sock_send_mqtt()</code>, <code>tio_handler_set_cb_sock_recv_mqtt()</code>, <code>tio_handler_set_cb_sock_close_mqtt()</code> methods.</p>
@@ -215,8 +215,8 @@ Notes about socket implementation used for MQTT.</h4>
 <p>MQTT keep alive interval must be larger than recv/ send timeout. Twice as large as recv/ send timeout works fine but recommend few minutes to avoid congestion.</p>
 <div class="fragment"><div class="line">tio_handler_set_mqtt_to_sock_recv(handler, 15);</div>
 <div class="line">tio_handler_set_keep_alive_interval(handler, 300);</div>
-</div><!-- fragment --><p>When the recv timeout runs out with nothing received, the MQTT recv callback should return <code>KHC_SOCK_FAIL</code>. <code>KHC_SOCK_OK</code> with 0 bytes means the broker closed the connection, and <code>tio_handler</code> connects again.</p>
-<p>A lost connection makes the recv callback return <code>KHC_SOCK_FAIL</code> as well. To tell it from a timeout, set the optional <code>tio_handler_set_cb_sock_recv_timed_out_mqtt()</code> callback: it returns <code>KII_TRUE</code> if the last receive timed out, and <code>KII_FALSE</code> if it failed otherwise, in which case <code>tio_handler</code> connects again. Without it, every <code>KHC_SOCK_FAIL</code> while waiting for a command is taken for a timeout, and a lost connection is only noticed when a <code>PINGREQ</code> fails or goes unanswered; with a keep-alive interval of 0, never. See <code>sock_cb_recv_timed_out()</code> in <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c">linux-sample</a>.</p>
+</div><!-- fragment --><p>When the recv timeout runs out with nothing received, the MQTT recv callback should return <code>EBISU_SOCK_FAIL</code>. <code>EBISU_SOCK_OK</code> with 0 bytes means the broker closed the connection, and <code>tio_handler</code> connects again.</p>
+<p>A lost connection makes the recv callback return <code>EBISU_SOCK_FAIL</code> as well. To tell it from a timeout, set the optional <code>tio_handler_set_cb_sock_recv_timed_out_mqtt()</code> callback: it returns <code>KII_TRUE</code> if the last receive timed out, and <code>KII_FALSE</code> if it failed otherwise, in which case <code>tio_handler</code> connects again. Without it, every <code>EBISU_SOCK_FAIL</code> while waiting for a command is taken for a timeout, and a lost connection is only noticed when a <code>PINGREQ</code> fails or goes unanswered; with a keep-alive interval of 0, never. See <code>sock_cb_recv_timed_out()</code> in <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c">linux-sample</a>.</p>
 <p><a class="anchor" id="action-callback"></a> </p>
 <h3><a class="anchor" id="autotoc_md9"></a>
 Action callback</h3>
@@ -349,8 +349,8 @@ Set up a session</h2>
 <p>Here's the set-up code extracted from <a href="https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/example.c">example.c</a>.</p>
 <div class="fragment"><div class="line"><a class="code hl_structRef" href="../../kii/html/structkii__session__t.html">kii_session_t</a> session;</div>
 <div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#a58ff8b06b612885dea237c6ba31d1820">kii_session_init</a>(&amp;session);</div>
-<div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#a872f254a6d88788d4daf0a0c5b513bfc">kii_session_set_cb_lock</a>(&amp;session, lock_cb_impl, unlock_cb_impl, &amp;session_mutex);</div>
-<div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#a1a200e36a3af8bee216a2ad00c2d22df">kii_session_set_cb_monotonic_ms</a>(&amp;session, monotonic_ms_cb_impl, NULL);</div>
+<div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#a1592ddc6b62ed44700d452571a350f71">kii_session_set_cb_lock</a>(&amp;session, lock_cb_impl, unlock_cb_impl, &amp;session_mutex);</div>
+<div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#ab69cee2bc83b5f4c15ef21ebf843ad7f">kii_session_set_cb_monotonic_ms</a>(&amp;session, monotonic_ms_cb_impl, NULL);</div>
 <div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#ac3389943c7df0bafed6786e303b1561f">kii_session_set_cb_author_updated</a>(&amp;session, author_updated_callback, NULL);</div>
 <div class="line"><span class="keywordflow">if</span> (tio_handler_set_session(&amp;handler, &amp;session) != TIO_ERR_OK ||</div>
 <div class="line">        tio_updater_set_session(&amp;updater, &amp;session) != TIO_ERR_OK) {</div>
@@ -360,9 +360,9 @@ Set up a session</h2>
 <div class="line"><span class="comment">// Used to onboard again when the server refuses the token, or the broker</span></div>
 <div class="line"><span class="comment">// the MQTT credentials.</span></div>
 <div class="line"><a class="code hl_functionRef" href="../../kii/html/kii_8h.html#ae1036e32aa7dc6c1afa027dfd728ebbf">kii_session_set_password</a>(&amp;session, vendorThingID, password);</div>
-<div class="ttc" id="akii_8h_html_a1a200e36a3af8bee216a2ad00c2d22df"><div class="ttname"><a href="../../kii/html/kii_8h.html#a1a200e36a3af8bee216a2ad00c2d22df">kii_session_set_cb_monotonic_ms</a></div><div class="ttdeci">void kii_session_set_cb_monotonic_ms(kii_session_t *session, KII_CB_MONOTONIC_MS cb_monotonic_ms, void *userdata)</div></div>
+<div class="ttc" id="akii_8h_html_a1592ddc6b62ed44700d452571a350f71"><div class="ttname"><a href="../../kii/html/kii_8h.html#a1592ddc6b62ed44700d452571a350f71">kii_session_set_cb_lock</a></div><div class="ttdeci">void kii_session_set_cb_lock(kii_session_t *session, EBISU_CB_LOCK cb_lock, EBISU_CB_LOCK cb_unlock, void *userdata)</div></div>
 <div class="ttc" id="akii_8h_html_a58ff8b06b612885dea237c6ba31d1820"><div class="ttname"><a href="../../kii/html/kii_8h.html#a58ff8b06b612885dea237c6ba31d1820">kii_session_init</a></div><div class="ttdeci">void kii_session_init(kii_session_t *session)</div></div>
-<div class="ttc" id="akii_8h_html_a872f254a6d88788d4daf0a0c5b513bfc"><div class="ttname"><a href="../../kii/html/kii_8h.html#a872f254a6d88788d4daf0a0c5b513bfc">kii_session_set_cb_lock</a></div><div class="ttdeci">void kii_session_set_cb_lock(kii_session_t *session, KII_CB_LOCK cb_lock, KII_CB_LOCK cb_unlock, void *userdata)</div></div>
+<div class="ttc" id="akii_8h_html_ab69cee2bc83b5f4c15ef21ebf843ad7f"><div class="ttname"><a href="../../kii/html/kii_8h.html#ab69cee2bc83b5f4c15ef21ebf843ad7f">kii_session_set_cb_monotonic_ms</a></div><div class="ttdeci">void kii_session_set_cb_monotonic_ms(kii_session_t *session, EBISU_CB_MONOTONIC_MS cb_monotonic_ms, void *userdata)</div></div>
 <div class="ttc" id="akii_8h_html_ac3389943c7df0bafed6786e303b1561f"><div class="ttname"><a href="../../kii/html/kii_8h.html#ac3389943c7df0bafed6786e303b1561f">kii_session_set_cb_author_updated</a></div><div class="ttdeci">void kii_session_set_cb_author_updated(kii_session_t *session, KII_CB_AUTHOR_UPDATED cb_author_updated, void *userdata)</div></div>
 <div class="ttc" id="akii_8h_html_ae1036e32aa7dc6c1afa027dfd728ebbf"><div class="ttname"><a href="../../kii/html/kii_8h.html#ae1036e32aa7dc6c1afa027dfd728ebbf">kii_session_set_password</a></div><div class="ttdeci">void kii_session_set_password(kii_session_t *session, const char *vendor_thing_id, const char *password)</div></div>
 <div class="ttc" id="astructkii__session__t_html"><div class="ttname"><a href="../../kii/html/structkii__session__t.html">kii_session_t</a></div></div>
@@ -400,7 +400,7 @@ Author updated callback</h3>
 </div><!-- fragment --><p><a class="anchor" id="clock"></a> </p>
 <h2><a class="anchor" id="autotoc_md24"></a>
 Keep the time</h2>
-<p>A device without a real-time clock needs the time to check the server's certificate in its socket callbacks. The handler and the updater give a <code><a class="elRef" href="../../kii/html/structkii__clock__t.html">kii_clock_t</a></code> the time each response states, with <code>tio_handler_set_clock()</code> and <code>tio_updater_set_clock()</code>. They run in tasks of their own, so a clock they share needs a lock, set by <code><a class="elRef" href="../../kii/html/kii_8h.html#adf580e8117725f2210c7139ceca4543f">kii_clock_set_cb_lock()</a></code>. That has to be a lock of its own, not the session's. The <a href="https://github.com/KiiPlatform/ebisu/blob/master/kii/README.md#the-time">kii README</a> describes the clock and how the socket callbacks use it.</p>
+<p>A device without a real-time clock needs the time to check the server's certificate in its socket callbacks. The handler and the updater give a <code><a class="elRef" href="../../platform/html/structebisu__clock__t.html">ebisu_clock_t</a></code> the time each response states, with <code>tio_handler_set_clock()</code> and <code>tio_updater_set_clock()</code>. They run in tasks of their own, so a clock they share needs a lock, set by <code><a class="elRef" href="../../platform/html/ebisu__clock_8h.html#a2ed02822fa8e33727d72b2197f584488">ebisu_clock_set_cb_lock()</a></code>. That has to be a lock of its own, not the session's. The <a href="https://github.com/KiiPlatform/ebisu/blob/master/kii/README.md#the-time">kii README</a> describes the clock and how the socket callbacks use it.</p>
 <p><a class="anchor" id="execute-onboarding"></a> </p>
 <h2><a class="anchor" id="autotoc_md25"></a>
 Execute onboarding</h2>
@@ -593,7 +593,7 @@ Avoiding race condition</h2>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 07:34:28 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Mon Nov 2 2026 08:46:14 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

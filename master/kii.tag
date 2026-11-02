@@ -9,7 +9,6 @@
     <class kind="struct">kii_topic_t</class>
     <class kind="struct">kii_author_t</class>
     <class kind="struct">kii_session_t</class>
-    <class kind="struct">kii_clock_t</class>
     <class kind="struct">kii_mqtt_endpoint_t</class>
     <class kind="struct">kii_object_id_t</class>
     <class kind="struct">kii_installation_id_t</class>
@@ -182,20 +181,6 @@
       <name>kii_session_t</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>af6e728326f31d6421beb3169acd62f6e</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="typedef">
-      <type>struct kii_clock_t</type>
-      <name>kii_clock_t</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>aa32c633eea4c798023aaf959aea61144</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="typedef">
-      <type>enum kii_validity_t</type>
-      <name>kii_validity_t</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a635c09fbee98d2a5e194a9068f2cb9b4</anchor>
       <arglist></arglist>
     </member>
     <member kind="typedef">
@@ -380,31 +365,6 @@
       <name>KII_RENEW_BY_ONBOARDING</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a1ba4dacec1982de428fbe76b1aa35ccaa1584c23cea78665eda99e07cc5bf8120</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumeration">
-      <type></type>
-      <name>kii_validity_t</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a33712b8e06e363929e5019e6cd1059a6</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>KII_VALIDITY_OK</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a33712b8e06e363929e5019e6cd1059a6a94892a2f85fca59a7d9139ab92f1b885</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>KII_VALIDITY_EXPIRED</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a33712b8e06e363929e5019e6cd1059a6abc9810777cd69fae233df3c47d7ed5da</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>KII_VALIDITY_NOT_YET_VALID</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a33712b8e06e363929e5019e6cd1059a6a3fea544b532253ca23a529a9908876ff</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumeration">
@@ -597,15 +557,15 @@
       <type>void</type>
       <name>kii_session_set_cb_lock</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a872f254a6d88788d4daf0a0c5b513bfc</anchor>
-      <arglist>(kii_session_t *session, KII_CB_LOCK cb_lock, KII_CB_LOCK cb_unlock, void *userdata)</arglist>
+      <anchor>a1592ddc6b62ed44700d452571a350f71</anchor>
+      <arglist>(kii_session_t *session, EBISU_CB_LOCK cb_lock, EBISU_CB_LOCK cb_unlock, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>kii_session_set_cb_monotonic_ms</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a1a200e36a3af8bee216a2ad00c2d22df</anchor>
-      <arglist>(kii_session_t *session, KII_CB_MONOTONIC_MS cb_monotonic_ms, void *userdata)</arglist>
+      <anchor>ab69cee2bc83b5f4c15ef21ebf843ad7f</anchor>
+      <arglist>(kii_session_t *session, EBISU_CB_MONOTONIC_MS cb_monotonic_ms, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -650,67 +610,11 @@
       <arglist>(kii_t *kii, kii_session_t *session)</arglist>
     </member>
     <member kind="function">
-      <type>void</type>
-      <name>kii_clock_init</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a9bbe284671fbe620c652b27881ab22e8</anchor>
-      <arglist>(kii_clock_t *clock, KII_CB_MONOTONIC_MS cb_monotonic_ms, void *userdata)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>kii_clock_set_cb_lock</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>adf580e8117725f2210c7139ceca4543f</anchor>
-      <arglist>(kii_clock_t *clock, KII_CB_LOCK cb_lock, KII_CB_LOCK cb_unlock, void *userdata)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>kii_clock_set_floor</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>ada54df3e72787cbf9ffbd70b3aca9b7c</anchor>
-      <arglist>(kii_clock_t *clock, int64_t floor)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>kii_clock_set_exact_for</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a009f50aaf42f0914cbe66fda11a4b58b</anchor>
-      <arglist>(kii_clock_t *clock, uint32_t seconds)</arglist>
-    </member>
-    <member kind="function">
-      <type>kii_bool_t</type>
-      <name>kii_clock_set_time</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>aeb779efac1ef62d6a31676f942c2618f</anchor>
-      <arglist>(kii_clock_t *clock, int64_t now)</arglist>
-    </member>
-    <member kind="function">
-      <type>kii_bool_t</type>
-      <name>kii_clock_get_time</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a49be62c7684623ee84365b036db26d13</anchor>
-      <arglist>(kii_clock_t *clock, int64_t *out_now)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>kii_clock_forget_time</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a640db65a0bd20739d73956ec548d04ef</anchor>
-      <arglist>(kii_clock_t *clock)</arglist>
-    </member>
-    <member kind="function">
-      <type>kii_validity_t</type>
-      <name>kii_clock_check_validity</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a75f7f82948805e3a0ddde4e80fcf7ecb</anchor>
-      <arglist>(kii_clock_t *clock, int64_t not_before, int64_t not_after)</arglist>
-    </member>
-    <member kind="function">
       <type>kii_code_t</type>
       <name>kii_set_clock</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a50d68561805f6e7bcd3761515669c86b</anchor>
-      <arglist>(kii_t *kii, kii_clock_t *clock)</arglist>
+      <anchor>a57c6fda4618d2de3d63abde6d47845a1</anchor>
+      <arglist>(kii_t *kii, ebisu_clock_t *clock)</arglist>
     </member>
     <member kind="function">
       <type>kii_code_t</type>
@@ -954,29 +858,29 @@
       <type>void</type>
       <name>kii_set_cb_http_sock_connect</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a2da9f4270de88d128d37e6ebde08540b</anchor>
-      <arglist>(kii_t *kii, KHC_CB_SOCK_CONNECT cb_connect, void *userdata)</arglist>
+      <anchor>a942c052473b9794747f868695c18e43e</anchor>
+      <arglist>(kii_t *kii, EBISU_CB_SOCK_CONNECT cb_connect, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>kii_set_cb_http_sock_send</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>ae2b2ac2283f285b5f2771731a80ecdfb</anchor>
-      <arglist>(kii_t *kii, KHC_CB_SOCK_SEND cb_send, void *userdata)</arglist>
+      <anchor>a6c9276150c0112b4e3416d92ffa37ed0</anchor>
+      <arglist>(kii_t *kii, EBISU_CB_SOCK_SEND cb_send, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>kii_set_cb_http_sock_recv</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a9e3e9ce59e18d212b5a961ca8650c2ad</anchor>
-      <arglist>(kii_t *kii, KHC_CB_SOCK_RECV cb_recv, void *userdata)</arglist>
+      <anchor>a9553805638cf9639d741fa9d36392a77</anchor>
+      <arglist>(kii_t *kii, EBISU_CB_SOCK_RECV cb_recv, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>kii_set_cb_http_sock_close</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a491beb9abda4a3e26dbffb6f10b37f4d</anchor>
-      <arglist>(kii_t *kii, KHC_CB_SOCK_CLOSE cb_close, void *userdata)</arglist>
+      <anchor>aaafaa9a6fd538d49c75ff086d3777b8f</anchor>
+      <arglist>(kii_t *kii, EBISU_CB_SOCK_CLOSE cb_close, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -989,22 +893,22 @@
       <type>void</type>
       <name>kii_set_cb_mqtt_sock_connect</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a6125a1326008370393f502e23cc43781</anchor>
-      <arglist>(kii_t *kii, KHC_CB_SOCK_CONNECT cb_connect, void *userdata)</arglist>
+      <anchor>a4404d1dec7257927ed98683c267b4069</anchor>
+      <arglist>(kii_t *kii, EBISU_CB_SOCK_CONNECT cb_connect, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>kii_set_cb_mqtt_sock_send</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a92d3014f87739a42c28b592c3e9d323e</anchor>
-      <arglist>(kii_t *kii, KHC_CB_SOCK_SEND cb_send, void *userdata)</arglist>
+      <anchor>aaefd11add58c94340fe50148701faef7</anchor>
+      <arglist>(kii_t *kii, EBISU_CB_SOCK_SEND cb_send, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>kii_set_cb_mqtt_sock_recv</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a53f75c9d2fab7fc43c5e0478864727e9</anchor>
-      <arglist>(kii_t *kii, KHC_CB_SOCK_RECV cb_recv, void *userdata)</arglist>
+      <anchor>a777a18c9bfab9812071b7131ada6c314</anchor>
+      <arglist>(kii_t *kii, EBISU_CB_SOCK_RECV cb_recv, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -1017,8 +921,8 @@
       <type>void</type>
       <name>kii_set_cb_mqtt_sock_close</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a4c1ba2c47261d6c1709298d435a8e77f</anchor>
-      <arglist>(kii_t *kii, KHC_CB_SOCK_CLOSE cb_close, void *userdata)</arglist>
+      <anchor>ae590b5f559969e348a5673a39be5fde9</anchor>
+      <arglist>(kii_t *kii, EBISU_CB_SOCK_CLOSE cb_close, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -1031,8 +935,8 @@
       <type>void</type>
       <name>kii_set_cb_task_create</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a0544a628a2fbc798e4d2fa67e142c491</anchor>
-      <arglist>(kii_t *kii, KII_CB_TASK_CREATE cb_task_create, void *userdata)</arglist>
+      <anchor>ad6fcbd11254d9a0539e8a287c93bdef7</anchor>
+      <arglist>(kii_t *kii, EBISU_CB_TASK_CREATE cb_task_create, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -1052,8 +956,8 @@
       <type>void</type>
       <name>kii_set_cb_delay_ms</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a279015373defa4b13d772568a2be6fea</anchor>
-      <arglist>(kii_t *kii, KII_CB_DELAY_MS cb_delay_ms, void *userdata)</arglist>
+      <anchor>a7ee552761beac9a2c42be4bb627e9bad</anchor>
+      <arglist>(kii_t *kii, EBISU_CB_DELAY_MS cb_delay_ms, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -1124,39 +1028,11 @@
     <path>include/</path>
     <filename>kii__task__callback_8h.html</filename>
     <member kind="typedef">
-      <type>enum kii_task_code_t</type>
-      <name>kii_task_code_t</name>
-      <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>aa7d48a35179c5c6885a5dd21f8fa57f2</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="typedef">
       <type>enum kii_bool_t</type>
       <name>kii_bool_t</name>
       <anchorfile>kii__task__callback_8h.html</anchorfile>
       <anchor>a945d43709851462a1803721525df2b89</anchor>
       <arglist></arglist>
-    </member>
-    <member kind="typedef">
-      <type>void *(*</type>
-      <name>KII_TASK_ENTRY</name>
-      <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>a803edec5a77dda169a7487f28eb7cf9a</anchor>
-      <arglist>)(void *value)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>kii_task_code_t(*</type>
-      <name>KII_CB_TASK_CREATE</name>
-      <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>a0395b3c3b153a4ae039f9cbfb171c778</anchor>
-      <arglist>)(const char *name, KII_TASK_ENTRY entry, void *entry_param, void *userdata)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>void(*</type>
-      <name>KII_CB_DELAY_MS</name>
-      <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>acb31aab23022a785b6e80b3aa148b185</anchor>
-      <arglist>)(uint32_t msec, void *userdata)</arglist>
     </member>
     <member kind="typedef">
       <type>void(*</type>
@@ -1171,27 +1047,6 @@
       <anchorfile>kii__task__callback_8h.html</anchorfile>
       <anchor>a66833479636e54ec6559fcb91c37263d</anchor>
       <arglist>)(void *task_info, void *userdata)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>void(*</type>
-      <name>KII_CB_LOCK</name>
-      <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>ad51955150e2d3eb3a156615ccf9cf260</anchor>
-      <arglist>)(void *userdata)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>uint64_t(*</type>
-      <name>KII_CB_MONOTONIC_MS</name>
-      <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>a366d10ce95a0b7a20ba6548fb2509002</anchor>
-      <arglist>)(void *userdata)</arglist>
-    </member>
-    <member kind="enumeration">
-      <type></type>
-      <name>kii_task_code_t</name>
-      <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>a8cb8ae6e0e48ea307aa8481d5e85feb0</anchor>
-      <arglist></arglist>
     </member>
     <member kind="enumeration">
       <type></type>
@@ -1250,10 +1105,6 @@
       <anchor>a017e05bd9ec6a26eeb4b9099da60f858</anchor>
       <arglist></arglist>
     </member>
-  </compound>
-  <compound kind="struct">
-    <name>kii_clock_t</name>
-    <filename>structkii__clock__t.html</filename>
   </compound>
   <compound kind="struct">
     <name>kii_installation_id_t</name>

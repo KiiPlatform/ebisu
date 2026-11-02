@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['khc_2eh_0',['khc.h',['../khc_8h.html',1,'']]],
-  ['khc_5fsocket_5fcallback_2eh_1',['khc_socket_callback.h',['../khc__socket__callback_8h.html',1,'']]]
+  ['ebisu_5fclock_2eh_0',['ebisu_clock.h',['../../../platform/html/ebisu__clock_8h.html',1,'']]],
+  ['ebisu_5fsocket_2eh_1',['ebisu_socket.h',['../../../platform/html/ebisu__socket_8h.html',1,'']]],
+  ['ebisu_5ftask_2eh_2',['ebisu_task.h',['../../../platform/html/ebisu__task_8h.html',1,'']]]
 ];

@@ -1,108 +1,15 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
 <tagfile doxygen_version="1.9.8">
   <compound kind="file">
-    <name>khc_socket_callback.h</name>
-    <path>/home/runner/work/ebisu/ebisu/khc/include/</path>
-    <filename>khc__socket__callback_8h.html</filename>
-    <member kind="typedef">
-      <type>enum khc_sock_code_t</type>
-      <name>khc_sock_code_t</name>
-      <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>af497c50fbe34dcc5990d93c1e0c61909</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="typedef">
-      <type>khc_sock_code_t(*</type>
-      <name>KHC_CB_SOCK_CONNECT</name>
-      <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>acdd52bbdab0132000516103e5474b72f</anchor>
-      <arglist>)(void *sock_ctx, const char *host, uint16_t port)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>khc_sock_code_t(*</type>
-      <name>KHC_CB_SOCK_SEND</name>
-      <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>a96345c64c6bcec1711d2ddaac43224c2</anchor>
-      <arglist>)(void *sock_ctx, const char *buffer, size_t length, size_t *out_sent_length)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>khc_sock_code_t(*</type>
-      <name>KHC_CB_SOCK_RECV</name>
-      <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>a148cf4bd26b43909c9eab71f37b4cda6</anchor>
-      <arglist>)(void *sock_ctx, char *buffer, size_t length_to_read, size_t *out_actual_length)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>khc_sock_code_t(*</type>
-      <name>KHC_CB_SOCK_CLOSE</name>
-      <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>af54fb240d589fb1044188bd4a81ab78d</anchor>
-      <arglist>)(void *sock_ctx)</arglist>
-    </member>
-    <member kind="enumeration">
-      <type></type>
-      <name>khc_sock_code_t</name>
-      <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>a13e4505815712d86adb95ab0ea867cf2</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>KHC_SOCK_OK</name>
-      <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>a13e4505815712d86adb95ab0ea867cf2aad80f9912fd8afc2b80d157cee2c679e</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>KHC_SOCK_FAIL</name>
-      <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>a13e4505815712d86adb95ab0ea867cf2a1cc5f5fa5f38faab5fa245a2e06e9d4a</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
-      <name>KHC_SOCK_AGAIN</name>
-      <anchorfile>khc__socket__callback_8h.html</anchorfile>
-      <anchor>a13e4505815712d86adb95ab0ea867cf2a90a3f6acf289ae5d18feee3a67e69a1c</anchor>
-      <arglist></arglist>
-    </member>
-  </compound>
-  <compound kind="file">
     <name>kii_task_callback.h</name>
     <path>/home/runner/work/ebisu/ebisu/kii/include/</path>
     <filename>kii__task__callback_8h.html</filename>
-    <member kind="typedef">
-      <type>enum kii_task_code_t</type>
-      <name>kii_task_code_t</name>
-      <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>aa7d48a35179c5c6885a5dd21f8fa57f2</anchor>
-      <arglist></arglist>
-    </member>
     <member kind="typedef">
       <type>enum kii_bool_t</type>
       <name>kii_bool_t</name>
       <anchorfile>kii__task__callback_8h.html</anchorfile>
       <anchor>a945d43709851462a1803721525df2b89</anchor>
       <arglist></arglist>
-    </member>
-    <member kind="typedef">
-      <type>void *(*</type>
-      <name>KII_TASK_ENTRY</name>
-      <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>a803edec5a77dda169a7487f28eb7cf9a</anchor>
-      <arglist>)(void *value)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>kii_task_code_t(*</type>
-      <name>KII_CB_TASK_CREATE</name>
-      <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>a0395b3c3b153a4ae039f9cbfb171c778</anchor>
-      <arglist>)(const char *name, KII_TASK_ENTRY entry, void *entry_param, void *userdata)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>void(*</type>
-      <name>KII_CB_DELAY_MS</name>
-      <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>acb31aab23022a785b6e80b3aa148b185</anchor>
-      <arglist>)(uint32_t msec, void *userdata)</arglist>
     </member>
     <member kind="typedef">
       <type>void(*</type>
@@ -117,27 +24,6 @@
       <anchorfile>kii__task__callback_8h.html</anchorfile>
       <anchor>a66833479636e54ec6559fcb91c37263d</anchor>
       <arglist>)(void *task_info, void *userdata)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>void(*</type>
-      <name>KII_CB_LOCK</name>
-      <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>ad51955150e2d3eb3a156615ccf9cf260</anchor>
-      <arglist>)(void *userdata)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>uint64_t(*</type>
-      <name>KII_CB_MONOTONIC_MS</name>
-      <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>a366d10ce95a0b7a20ba6548fb2509002</anchor>
-      <arglist>)(void *userdata)</arglist>
-    </member>
-    <member kind="enumeration">
-      <type></type>
-      <name>kii_task_code_t</name>
-      <anchorfile>kii__task__callback_8h.html</anchorfile>
-      <anchor>a8cb8ae6e0e48ea307aa8481d5e85feb0</anchor>
-      <arglist></arglist>
     </member>
     <member kind="enumeration">
       <type></type>

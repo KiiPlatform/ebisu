@@ -1,5 +1,9 @@
 var searchData=
 [
-  ['end_0',['end',['../../../jkii/html/structjkii__field__t.html#a552fea2d1651b8e200ea82008493c7b3',1,'jkii_field_t']]],
-  ['error_1',['error',['../structkii__mqtt__task__info.html#a92ee0b673e721c1deb760bb6853ec42e',1,'kii_mqtt_task_info']]]
+  ['ebisu_5fclock_2eh_0',['ebisu_clock.h',['../../../platform/html/ebisu__clock_8h.html',1,'']]],
+  ['ebisu_5fclock_5ft_1',['ebisu_clock_t',['../../../platform/html/structebisu__clock__t.html',1,'']]],
+  ['ebisu_5fsocket_2eh_2',['ebisu_socket.h',['../../../platform/html/ebisu__socket_8h.html',1,'']]],
+  ['ebisu_5ftask_2eh_3',['ebisu_task.h',['../../../platform/html/ebisu__task_8h.html',1,'']]],
+  ['end_4',['end',['../../../jkii/html/structjkii__field__t.html#a552fea2d1651b8e200ea82008493c7b3',1,'jkii_field_t']]],
+  ['error_5',['error',['../structkii__mqtt__task__info.html#a92ee0b673e721c1deb760bb6853ec42e',1,'kii_mqtt_task_info']]]
 ];
