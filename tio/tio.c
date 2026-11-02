@@ -84,6 +84,11 @@ void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, uint32_t to_sock_
     kii_set_mqtt_to_sock_recv(&handler->_kii, to_sock_recv_sec);
 }
 
+tio_code_t tio_handler_set_mqtt_retry_wait_max(tio_handler_t* handler, uint32_t max_sec)
+{
+    return _tio_convert_code(kii_set_mqtt_retry_wait_max(&handler->_kii, max_sec));
+}
+
 void tio_handler_set_system(tio_handler_t* handler, ebisu_system_t* system)
 {
     kii_set_system(&handler->_kii, system);

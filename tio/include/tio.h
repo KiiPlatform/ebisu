@@ -381,6 +381,19 @@ void tio_handler_set_mqtt_socket(tio_handler_t* handler, ebisu_socket_t* socket)
  * \param [in] to_sock_recv_sec Socket recv timeout in seconds.
  */
 void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, uint32_t to_sock_recv_sec);
+
+/**
+ * \brief Set the longest wait between attempts to reach the cloud.
+ *
+ * See kii_set_mqtt_retry_wait_max(): the handler's task waits as the push task
+ * does. Set it before starting the handler.
+ *
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] max_sec The longest wait, in seconds: 300, five minutes, unless
+ * this sets another. From 1 to 4294967.
+ * \return TIO_ERR_FAIL, changing nothing, if max_sec is out of that range.
+ */
+tio_code_t tio_handler_set_mqtt_retry_wait_max(tio_handler_t* handler, uint32_t max_sec);
 /**
  * \brief Set the system: tasks, delays and a monotonic clock.
  *
