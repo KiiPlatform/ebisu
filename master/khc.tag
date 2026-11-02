@@ -29,6 +29,13 @@
     </member>
     <member kind="define">
       <type>#define</type>
+      <name>KHC_AGAIN_WAIT_MS</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>ada01f6a443b3a0a8667b608fc2db8f25</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
       <name>KHC_REQ_BODY_LENGTH_UNKNOWN</name>
       <anchorfile>khc_8h.html</anchorfile>
       <anchor>a0fefd590b69df986dda16f6b8356a0a9</anchor>
@@ -54,6 +61,13 @@
       <anchorfile>khc_8h.html</anchorfile>
       <anchor>a28da65fe4a96bed6b6ac8150b9481a20</anchor>
       <arglist>)(char *buffer, size_t size, void *userdata)</arglist>
+    </member>
+    <member kind="typedef">
+      <type>bool(*</type>
+      <name>KHC_CB_CONTINUE</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>a43421b59d8e43f1a9688a3a34fae6c96</anchor>
+      <arglist>)(void *userdata)</arglist>
     </member>
     <member kind="typedef">
       <type>struct khc_slist</type>
@@ -171,6 +185,12 @@
       <anchor>a90be23875108e9a39942c3af90a6d789a3612ca2692ccace4e8e11157cf04c6bb</anchor>
       <arglist></arglist>
     </member>
+    <member kind="enumvalue">
+      <name>KHC_ERR_TIMEOUT</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>a90be23875108e9a39942c3af90a6d789a257ea24324a4076f4020ca8348488592</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="function">
       <type>khc_slist *</type>
       <name>khc_cb_slist_alloc</name>
@@ -240,6 +260,27 @@
       <anchorfile>khc_8h.html</anchorfile>
       <anchor>a75fd843af7f3de58bcba2d348878becc</anchor>
       <arglist>(khc *khc)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>khc_set_system</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>aa3441f9ae19ba2128b987c3b13571544</anchor>
+      <arglist>(khc *khc, ebisu_system_t *system)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>khc_set_timeout_ms</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>afbc90a9006ee882364cfcf1790b5e4db</anchor>
+      <arglist>(khc *khc, uint32_t timeout_ms)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>khc_set_cb_continue</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>ad364d05cf1b54ef8a840e839fa2db308</anchor>
+      <arglist>(khc *khc, KHC_CB_CONTINUE cb, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>khc_code</type>

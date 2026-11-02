@@ -86,7 +86,9 @@ $(function() {
 <li>A response to <code>HEAD</code>, a <code>204</code> and a <code>304</code> end with their headers, whatever length they give.</li>
 </ul>
 </li>
-<li><b>Non-blocking sockets</b>: a socket callback can return <code>EBISU_SOCK_AGAIN</code>, and <code>khc</code> calls it again with the same arguments.</li>
+<li><b>Non-blocking sockets</b>: a socket callback can return <code>EBISU_SOCK_AGAIN</code>, and <code>khc</code> calls it again with the same arguments: at once, or, with a system set by <code><a class="el" href="khc_8h.html#aa3441f9ae19ba2128b987c3b13571544" title="Set the system: its clock times a request, and its delay waits for a socket that isn&#39;t ready.">khc_set_system()</a></code> that has a <code>delay_ms</code>, after <code>KHC_AGAIN_WAIT_MS</code>, 10 milliseconds unless defined otherwise.</li>
+<li><b>A timeout for the whole request</b>: <code><a class="el" href="khc_8h.html#afbc90a9006ee882364cfcf1790b5e4db" title="Set how long a request may take.">khc_set_timeout_ms()</a></code>, timed by the system's <code>monotonic_ms</code>, ends a request that goes on longer with <code>KHC_ERR_TIMEOUT</code>, however promptly each socket operation returns.</li>
+<li><b>Cancellation</b>: the callback set by <code><a class="el" href="khc_8h.html#ad364d05cf1b54ef8a840e839fa2db308" title="Set the callback deciding whether a request goes on.">khc_set_cb_continue()</a></code> is asked between steps, and ends the request with <code>KHC_ERR_CANCELLED</code> when it returns false.</li>
 </ul>
 <h1>Limitations</h1>
 <ul>
@@ -154,15 +156,15 @@ $(function() {
 <div class="ttc" id="akhc_8h_html_a66d6d377286feccbf320117f7ffa1692"><div class="ttname"><a href="khc_8h.html#a66d6d377286feccbf320117f7ffa1692">khc_set_path</a></div><div class="ttdeci">khc_code khc_set_path(khc *khc, const char *path)</div><div class="ttdoc">Set path.</div></div>
 <div class="ttc" id="akhc_8h_html_a67fb3bf7ff0b65085e639aa5a1465cc3"><div class="ttname"><a href="khc_8h.html#a67fb3bf7ff0b65085e639aa5a1465cc3">khc_set_host</a></div><div class="ttdeci">khc_code khc_set_host(khc *khc, const char *host)</div><div class="ttdoc">Set host.</div></div>
 <div class="ttc" id="akhc_8h_html_a75fd843af7f3de58bcba2d348878becc"><div class="ttname"><a href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc">khc_perform</a></div><div class="ttdeci">khc_code khc_perform(khc *khc)</div><div class="ttdoc">Perform the HTTP session.</div></div>
-<div class="ttc" id="akhc_8h_html_a90be23875108e9a39942c3af90a6d789"><div class="ttname"><a href="khc_8h.html#a90be23875108e9a39942c3af90a6d789">khc_code</a></div><div class="ttdeci">khc_code</div><div class="ttdoc">Error codes.</div><div class="ttdef"><b>Definition</b> khc.h:233</div></div>
-<div class="ttc" id="akhc_8h_html_a90be23875108e9a39942c3af90a6d789ad362084b96bd996b692883323f38a71d"><div class="ttname"><a href="khc_8h.html#a90be23875108e9a39942c3af90a6d789ad362084b96bd996b692883323f38a71d">KHC_ERR_OK</a></div><div class="ttdeci">@ KHC_ERR_OK</div><div class="ttdoc">Operation succeeded.</div><div class="ttdef"><b>Definition</b> khc.h:235</div></div>
+<div class="ttc" id="akhc_8h_html_a90be23875108e9a39942c3af90a6d789"><div class="ttname"><a href="khc_8h.html#a90be23875108e9a39942c3af90a6d789">khc_code</a></div><div class="ttdeci">khc_code</div><div class="ttdoc">Error codes.</div><div class="ttdef"><b>Definition</b> khc.h:256</div></div>
+<div class="ttc" id="akhc_8h_html_a90be23875108e9a39942c3af90a6d789ad362084b96bd996b692883323f38a71d"><div class="ttname"><a href="khc_8h.html#a90be23875108e9a39942c3af90a6d789ad362084b96bd996b692883323f38a71d">KHC_ERR_OK</a></div><div class="ttdeci">@ KHC_ERR_OK</div><div class="ttdoc">Operation succeeded.</div><div class="ttdef"><b>Definition</b> khc.h:258</div></div>
 <div class="ttc" id="akhc_8h_html_aa873888c09db4188eadb6b4b1cb511db"><div class="ttname"><a href="khc_8h.html#aa873888c09db4188eadb6b4b1cb511db">khc_set_socket</a></div><div class="ttdeci">void khc_set_socket(khc *khc, ebisu_socket_t *socket)</div><div class="ttdoc">Set the socket requests are sent on.</div></div>
 <div class="ttc" id="akhc_8h_html_ac28ce7ac10ab32d62f0bdc0c5f3915c2"><div class="ttname"><a href="khc_8h.html#ac28ce7ac10ab32d62f0bdc0c5f3915c2">khc_set_req_headers</a></div><div class="ttdeci">khc_code khc_set_req_headers(khc *khc, khc_slist *headers)</div><div class="ttdoc">Set request headers.</div></div>
 <div class="ttc" id="akhc_8h_html_ac6acc9ee82789a8986a4a2b7e586a6f0"><div class="ttname"><a href="khc_8h.html#ac6acc9ee82789a8986a4a2b7e586a6f0">khc_set_cb_write</a></div><div class="ttdeci">khc_code khc_set_cb_write(khc *khc, KHC_CB_WRITE cb, void *userdata)</div><div class="ttdoc">Set write callback.</div></div>
 <div class="ttc" id="akhc_8h_html_afd2065be9638acf043438ac9e020d3b8"><div class="ttname"><a href="khc_8h.html#afd2065be9638acf043438ac9e020d3b8">khc_set_resp_header_buff</a></div><div class="ttdeci">void khc_set_resp_header_buff(khc *khc, char *buffer, size_t buff_size)</div><div class="ttdoc">Set response header buffer.</div></div>
 <div class="ttc" id="akhc_8h_html_afe54c0defe07585305e7a5c52a772b7f"><div class="ttname"><a href="khc_8h.html#afe54c0defe07585305e7a5c52a772b7f">khc_set_cb_header</a></div><div class="ttdeci">khc_code khc_set_cb_header(khc *khc, KHC_CB_HEADER cb, void *userdata)</div><div class="ttdoc">Set header callback.</div></div>
-<div class="ttc" id="astructkhc__slist_html"><div class="ttname"><a href="structkhc__slist.html">khc_slist</a></div><div class="ttdoc">Linked list.</div><div class="ttdef"><b>Definition</b> khc.h:82</div></div>
-<div class="ttc" id="astructkhc_html"><div class="ttname"><a href="structkhc.html">khc</a></div><div class="ttdoc">khc object.</div><div class="ttdef"><b>Definition</b> khc.h:272</div></div>
+<div class="ttc" id="astructkhc__slist_html"><div class="ttname"><a href="structkhc__slist.html">khc_slist</a></div><div class="ttdoc">Linked list.</div><div class="ttdef"><b>Definition</b> khc.h:105</div></div>
+<div class="ttc" id="astructkhc_html"><div class="ttname"><a href="structkhc.html">khc</a></div><div class="ttdoc">khc object.</div><div class="ttdef"><b>Definition</b> khc.h:301</div></div>
 </div><!-- fragment --><p>To send a body, use a method that has one and set a read callback. It is called until it returns 0:</p>
 <div class="fragment"><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct </span>{</div>
 <div class="line">    <span class="keyword">const</span> <span class="keywordtype">char</span>* data;</div>
@@ -207,8 +209,9 @@ $(function() {
 <h1>Writing callbacks</h1>
 <p>What <code>khc</code> leaves to the callbacks, which it can't check. <code>linux-sample</code> is the one to read for what socket callbacks have to do.</p>
 <ul>
-<li><b>Timeouts</b>: <code>khc</code> bounds nothing itself, so a callback that blocks holds the request for as long as it blocks. Give sockets a send and a receive timeout. On Linux the send timeout bounds a blocking <code>connect()</code> too, but nothing in the system bounds looking up the host, which takes as long as the resolver does. platform's OpenSSL port bounds both, with its connect timeout.</li>
-<li><b>A timeout is <code>EBISU_SOCK_FAIL</code></b>: <code>khc</code> calls a callback that returned <code>EBISU_SOCK_AGAIN</code> again at once, so returning it for a timeout has a server that stopped answering hold the request for ever. <code>EBISU_SOCK_AGAIN</code> is for a non-blocking socket, whose callback has to decide for itself when to give up.</li>
+<li><b>Timeouts</b>: <code>khc</code> checks the request's timeout, if one is set, between socket operations, so a callback that blocks holds the request for as long as it blocks. Give sockets a send and a receive timeout. On Linux the send timeout bounds a blocking <code>connect()</code> too, but nothing in the system bounds looking up the host, which takes as long as the resolver does. platform's OpenSSL port bounds both, with its connect timeout.</li>
+<li><b>A timeout is <code>EBISU_SOCK_FAIL</code></b>: <code>khc</code> calls a callback that returned <code>EBISU_SOCK_AGAIN</code> again, so returning it for a timeout has a server that stopped answering hold the request until the request's own timeout, if there is one, and for ever otherwise. <code>EBISU_SOCK_AGAIN</code> is for a non-blocking socket that isn't ready yet.</li>
+<li><b>Cancelling from another task</b>: the continue callback runs in the task performing the request, and reads what the other task sets, under a lock or as an atomic flag. It is asked at every step, so it has to be quick.</li>
 <li><b>The end of the stream is <code>EBISU_SOCK_OK</code> with 0 bytes</b>: that goes for a TLS connection the server closes without a <code>close_notify</code> too, which servers answering <code>Connection: Close</code> do. <code>linux-sample</code> shows how that looks to OpenSSL.</li>
 <li>**<code>SIGPIPE</code>**: sending on a connection the peer has closed raises <code>SIGPIPE</code>, which ends the process. Ignore it, as <code>linux-sample</code> does in <code>main()</code>, or use <code>MSG_NOSIGNAL</code> or <code>SO_NOSIGPIPE</code>. A TLS library sends on its own too, as OpenSSL does when closing.</li>
 <li><b>Close after a failure</b>: the close callback is called on a connection that has failed as well, so it has to cope with one. OpenSSL's <code>SSL_shutdown()</code> must not be called after a fatal error, for one. What it returns doesn't change the request's result.</li>
@@ -234,9 +237,13 @@ $(function() {
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>KHC_ERR_READ_CALLBACK</code>   </td><td class="markdownTableBodyNone">The read callback returned more than it was asked for, or 0 before the length set by <code><a class="el" href="khc_8h.html#ab2a74fefe79e599b67ed3e2717c9f41d" title="Set the length of the request body.">khc_set_req_body_length()</a></code>.    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>KHC_ERR_FAIL</code>   </td><td class="markdownTableBodyNone">The status line or a chunk size is malformed, or a socket, header or write callback isn't set, in which case nothing was sent.   </td></tr>
+<td class="markdownTableBodyNone"><code>KHC_ERR_TIMEOUT</code>   </td><td class="markdownTableBodyNone">The request went on longer than <code><a class="el" href="khc_8h.html#afbc90a9006ee882364cfcf1790b5e4db" title="Set how long a request may take.">khc_set_timeout_ms()</a></code> allows.    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>KHC_ERR_CANCELLED</code>   </td><td class="markdownTableBodyNone">The continue callback returned false.    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>KHC_ERR_FAIL</code>   </td><td class="markdownTableBodyNone">The status line or a chunk size is malformed, or a socket, header or write callback isn't set, or a timeout is set without a system with a <code>monotonic_ms</code>, in which case nothing was sent.   </td></tr>
 </table>
-<p>Closing the socket comes last and doesn't change the result, as the server may already have acted on the request. <code><a class="el" href="khc_8h.html#a960e18dda03d60dded5c9a618138dd97" title="Whether closing the socket failed.">khc_get_close_failed()</a></code> says whether the close callback returned <code>EBISU_SOCK_FAIL</code>.</p>
+<p>Closing the socket comes last and doesn't change the result, as the server may already have acted on the request. <code><a class="el" href="khc_8h.html#a960e18dda03d60dded5c9a618138dd97" title="Whether closing the socket failed.">khc_get_close_failed()</a></code> says whether the close callback returned <code>EBISU_SOCK_FAIL</code>, or returned <code>EBISU_SOCK_AGAIN</code> once the request had timed out or been cancelled, when it is not called again.</p>
 <p><code><a class="el" href="khc_8h.html#a0e1ee79bbbbeefbbac3228cb5ef0d9d8" title="Get the server&#39;s time, from the response&#39;s Date header.">khc_get_resp_date()</a></code> gives the server's time from the response's <code>Date</code> header, as seconds since the epoch, for a device without a real-time clock. It takes the three forms RFC 9110 has recipients take, with UTC for GMT, and gives -1 for anything else, for several <code>Date</code>s that disagree, and for a date before the library's source, which no server running properly sends. The time is as trustworthy as the connection it came through, so verify the server's certificate in the socket callbacks.</p>
 <h1>Tracing</h1>
 <p>Configuring with <code>-DKHC_TRACE=ON</code> prints every request and response to stdout, headers and bodies included. That includes access tokens and passwords, so never enable it where its output is kept or shared.</p>
@@ -246,7 +253,7 @@ $(function() {
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 16:47:56 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Mon Nov 2 2026 16:59:21 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

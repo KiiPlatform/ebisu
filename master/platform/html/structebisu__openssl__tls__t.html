@@ -80,14 +80,14 @@ $(function() {
 <p><code>#include &lt;<a class="el" href="ebisu__openssl_8h_source.html">ebisu_openssl.h</a>&gt;</code></p>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>The TLS configuration connections share. </p>
-<p>One SSL_CTX, with the CA certificates servers' certificates have to chain to, set up once rather than for each connection. Sockets of any number of tasks may share one. </p>
+<p>One SSL_CTX, with the CA certificates servers' certificates have to chain to, set up once rather than for each connection. Sockets of any number of tasks may share one. It keeps the TLS sessions of the last connections to a few hosts, for the next connection to each to resume, until it is freed. Sockets without a configuration share the one with the system's CA certificates, which is never freed. </p>
 </div><hr/>The documentation for this struct was generated from the following file:<ul>
 <li>openssl/include/<a class="el" href="ebisu__openssl_8h_source.html">ebisu_openssl.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 16:47:56 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Mon Nov 2 2026 16:59:21 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
