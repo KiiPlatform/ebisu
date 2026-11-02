@@ -3997,6 +3997,245 @@ TEST_CASE( "The task can be stopped during a wait" ) {
     CHECK( ctx.connects == 8 );
 }
 
+// The continue callback saw the task's state and the exit callback the error
+// that ended it, and nothing said why the task reconnected, waited or dropped
+// a message. The event callback is told.
+TEST_CASE( "The MQTT task tells the event callback why" ) {
+    char buff[1024];
+    char mqtt_buff[256];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, buff, sizeof(buff));
+    kii_set_json_parser_resource(&kii, &resource);
+    kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
+    kii_set_system(&kii, khct::cb::delay_only_system());
+    kii._keep_alive_interval = 300;
+    strcpy(kii._author.author_id, "th.1");
+    strcpy(kii._author.access_token, "tok");
+
+    std::vector<std::pair<kii_mqtt_event_t, uint32_t>> events;
+    kii_set_cb_mqtt_event(&kii, [](kii_mqtt_event_t event, uint32_t detail, void* userdata) {
+        ((std::vector<std::pair<kii_mqtt_event_t, uint32_t>>*)userdata)->emplace_back(event, detail);
+    }, &events);
+    auto told = [&events](kii_mqtt_event_t event, uint32_t detail) {
+        return events == std::vector<std::pair<kii_mqtt_event_t, uint32_t>>({ { event, detail } });
+    };
+
+    // Kii Cloud answers with http_resp, or doesn't connect without one.
+    std::string http_resp;
+    size_t http_pos = 0;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&http_resp](void*, const char*, uint16_t) {
+        return http_resp.empty() ? EBISU_SOCK_FAIL : EBISU_SOCK_OK;
+    };
+    http_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return EBISU_SOCK_OK;
+    };
+    http_ctx.on_recv = [&http_resp, &http_pos](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        *out_actual_length = http_resp.copy(buffer, length_to_read, http_pos);
+        http_pos += *out_actual_length;
+        return EBISU_SOCK_OK;
+    };
+    http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
+    kii_set_http_socket(&kii, http_ctx.socket());
+
+    bool send_ok = true;
+    khct::cb::SockCtx mqtt_ctx;
+    mqtt_ctx.on_connect = [](void*, const char*, uint16_t) { return EBISU_SOCK_OK; };
+    mqtt_ctx.on_send = [&send_ok](void*, const char*, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return send_ok ? EBISU_SOCK_OK : EBISU_SOCK_FAIL;
+    };
+    mqtt_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
+    size_t served = 0;
+
+    khct::cb::PushCtx push_ctx;
+    push_ctx.on_push = [](const char*, size_t) {};
+    kii._cb_push_received = khct::cb::cb_push;
+    kii._push_data = &push_ctx;
+
+    mqtt_state_t state;
+    _init_mqtt_state(&kii, &state);
+    strcpy(state.ins_id.id, "ins.1");
+    strcpy(state.endpoint.host, "broker");
+    strcpy(state.endpoint.topic, "dummyTopic");
+    strcpy(state.endpoint.username, "dummyUser");
+    strcpy(state.endpoint.password, "dummyPassword");
+
+    SECTION("installing push refused, with the status") {
+        http_resp = http_response("503 Service Unavailable", "{}");
+        _mqtt_state_install_push(&state);
+        CHECK( told(KII_MQTT_EVENT_INSTALL_FAILED, 503) );
+    }
+
+    SECTION("installing push without a response") {
+        _mqtt_state_install_push(&state);
+        CHECK( told(KII_MQTT_EVENT_INSTALL_FAILED, 0) );
+    }
+
+    SECTION("getting the endpoint refused") {
+        http_resp = http_response("404 Not Found", "{}");
+        _mqtt_state_get_endpoint(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_ERR_EXIT );
+        CHECK( told(KII_MQTT_EVENT_ENDPOINT_FAILED, 404) );
+    }
+
+    SECTION("connecting failed, counted") {
+        mqtt_ctx.on_connect = [](void*, const char*, uint16_t) { return EBISU_SOCK_FAIL; };
+        _mqtt_state_sock_connect(&state);
+        _mqtt_state_sock_connect(&state);
+        CHECK( events == std::vector<std::pair<kii_mqtt_event_t, uint32_t>>({
+                { KII_MQTT_EVENT_CONNECT_FAILED, 1 }, { KII_MQTT_EVENT_CONNECT_FAILED, 2 } }) );
+    }
+
+    SECTION("sending CONNECT failed") {
+        send_ok = false;
+        _mqtt_state_send_connect(&state);
+        CHECK( told(KII_MQTT_EVENT_SEND_FAILED, KII_MQTT_ST_SEND_CONNECT) );
+    }
+
+    SECTION("CONNACK accepting, and refusing, with its code") {
+        serve_stream(mqtt_ctx, std::string("\x20\x02\x00\x00", 4), served);
+        _mqtt_state_recv_connack(&state);
+        CHECK( told(KII_MQTT_EVENT_CONNACK, 0) );
+        events.clear();
+        served = 0;
+        serve_stream(mqtt_ctx, std::string("\x20\x02\x00\x05", 4), served);
+        _mqtt_state_recv_connack(&state);
+        CHECK( told(KII_MQTT_EVENT_CONNACK, 5) );
+    }
+
+    SECTION("something else in place of CONNACK") {
+        serve_stream(mqtt_ctx, std::string("\x90\x03\x00\x01\x00", 5), served);
+        _mqtt_state_recv_connack(&state);
+        CHECK( told(KII_MQTT_EVENT_UNEXPECTED_PACKET, 0x90) );
+    }
+
+    SECTION("no CONNACK") {
+        serve_stream(mqtt_ctx, "", served);
+        _mqtt_state_recv_connack(&state);
+        CHECK( told(KII_MQTT_EVENT_RECV_FAILED, KII_MQTT_ST_RECV_CONNACK) );
+    }
+
+    SECTION("sending SUBSCRIBE failed") {
+        send_ok = false;
+        _mqtt_state_send_subscribe(&state);
+        CHECK( told(KII_MQTT_EVENT_SEND_FAILED, KII_MQTT_ST_SEND_SUBSCRIBE) );
+    }
+
+    SECTION("SUBACK granting, and refusing, with its code") {
+        serve_stream(mqtt_ctx, std::string("\x90\x03\x00\x01\x01", 5), served);
+        _mqtt_state_recv_suback(&state);
+        CHECK( told(KII_MQTT_EVENT_SUBACK, 1) );
+        events.clear();
+        served = 0;
+        serve_stream(mqtt_ctx, std::string("\x90\x03\x00\x01\x80", 5), served);
+        _mqtt_state_recv_suback(&state);
+        CHECK( told(KII_MQTT_EVENT_SUBACK, 0x80) );
+    }
+
+    SECTION("SUBACK for another subscription") {
+        serve_stream(mqtt_ctx, std::string("\x90\x03\x00\x02\x00", 5), served);
+        _mqtt_state_recv_suback(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        CHECK( told(KII_MQTT_EVENT_UNEXPECTED_PACKET, 0x90) );
+    }
+
+    SECTION("the broker closing the connection") {
+        mqtt_ctx.on_recv = [](void*, char*, size_t, size_t* out_actual_length) {
+            *out_actual_length = 0;
+            return EBISU_SOCK_OK;
+        };
+        _mqtt_state_recv_ready(&state);
+        CHECK( told(KII_MQTT_EVENT_CLOSED_BY_BROKER, 0) );
+    }
+
+    SECTION("a packet cut off while waiting") {
+        serve_stream(mqtt_ctx, std::string("\x30", 1), served);
+        _mqtt_state_recv_ready(&state);
+        CHECK( told(KII_MQTT_EVENT_RECV_FAILED, KII_MQTT_ST_RECV_READY) );
+    }
+
+    SECTION("the connection lost while waiting") {
+        serve_stream(mqtt_ctx, "", served);
+        mqtt_ctx.on_recv_timed_out = [](void*) { return false; };
+        _mqtt_state_recv_ready(&state);
+        CHECK( told(KII_MQTT_EVENT_RECV_FAILED, KII_MQTT_ST_RECV_READY) );
+    }
+
+    SECTION("a receive timing out while waiting is no event") {
+        serve_stream(mqtt_ctx, "", served);
+        _mqtt_state_recv_ready(&state);
+        CHECK( events.empty() );
+    }
+
+    SECTION("an unanswered PINGREQ, with the keep-alive") {
+        state.pingresp_received = false;
+        _mqtt_state_send_pingreq(&state);
+        CHECK( told(KII_MQTT_EVENT_PING_TIMEOUT, 300) );
+    }
+
+    SECTION("sending PINGREQ failed") {
+        send_ok = false;
+        _mqtt_state_send_pingreq(&state);
+        CHECK( told(KII_MQTT_EVENT_SEND_FAILED, KII_MQTT_ST_SEND_PINGREQ) );
+    }
+
+    SECTION("a message too large, with its length") {
+        const std::string packet = publish_packet("dummyTopic", std::string(300, 'x'));
+        serve_stream(mqtt_ctx, packet, served);
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+        _mqtt_state_recv_msg(&state);
+        CHECK( told(KII_MQTT_EVENT_MESSAGE_TOO_LARGE, 2 + 10 + 300) );
+    }
+
+    SECTION("a message whose topic doesn't fit, with its length") {
+        serve_stream(mqtt_ctx, std::string("\x30\x04\x00\x09" "ab", 6), served);
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+        _mqtt_state_recv_msg(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        CHECK( told(KII_MQTT_EVENT_MESSAGE_MALFORMED, 4) );
+    }
+
+    SECTION("a message handed over is no event") {
+        serve_stream(mqtt_ctx, publish_packet("dummyTopic", "{}"), served);
+        _mqtt_state_recv_ready(&state);
+        _mqtt_state_recv_msg(&state);
+        CHECK( events.empty() );
+    }
+
+    SECTION("a message at QoS 2") {
+        serve_stream(mqtt_ctx, publish_qos1_packet("dummyTopic", 7, "{}", 0x34), served);
+        _mqtt_state_recv_ready(&state);
+        _mqtt_state_recv_msg(&state);
+        CHECK( told(KII_MQTT_EVENT_UNEXPECTED_PACKET, 0x34) );
+    }
+
+    SECTION("sending PUBACK failed") {
+        send_ok = false;
+        serve_stream(mqtt_ctx, publish_qos1_packet("dummyTopic", 7, "{}"), served);
+        _mqtt_state_recv_ready(&state);
+        _mqtt_state_recv_msg(&state);
+        CHECK( told(KII_MQTT_EVENT_SEND_FAILED, KII_MQTT_ST_RECV_MSG) );
+    }
+
+    SECTION("without a callback, nothing is told") {
+        kii_set_cb_mqtt_event(&kii, NULL, NULL);
+        send_ok = false;
+        _mqtt_state_send_pingreq(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        CHECK( events.empty() );
+    }
+}
+
 // The task estimated the time since its last packet by adding up its waits and
 // receive timeouts, so time spent elsewhere, such as in the push callback, went
 // uncounted, and a receive that returned at once counted for its whole timeout.

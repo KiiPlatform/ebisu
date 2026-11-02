@@ -12,6 +12,14 @@ static void _delay_ms(kii_t* kii, uint32_t msec)
     kii->_system->ops->delay_ms(kii->_system, msec);
 }
 
+// Tells the event callback, if there is one.
+static void _event(kii_t* kii, kii_mqtt_event_t event, uint32_t detail)
+{
+    if (kii->_cb_mqtt_event != NULL) {
+        kii->_cb_mqtt_event(event, detail, kii->_mqtt_event_data);
+    }
+}
+
 #define WAIT_MS 1000
 #define ARRIVED_MSG_READ_TIME 500
 #define MSG_SEND_TIME 500
@@ -465,6 +473,7 @@ void _mqtt_state_install_push(mqtt_state_t* state)
     kii_mqtt_task_info* task_info = &state->info;
     kii_code_t res = kii_install_push(kii, false, &state->ins_id);
     if (res != KII_ERR_OK) {
+        _event(kii, KII_MQTT_EVENT_INSTALL_FAILED, khc_get_status_code(&kii->_khc));
         if (_is_temporary_error(kii, res)) {
             // Temporal error. Try again.
             _schedule_retry(state);
@@ -506,6 +515,7 @@ void _mqtt_state_get_endpoint(mqtt_state_t* state)
         _onboard_for_endpoint(state) :
         kii_get_mqtt_endpoint(kii, state->ins_id.id, &state->endpoint);
     if (res != KII_ERR_OK) {
+        _event(kii, KII_MQTT_EVENT_ENDPOINT_FAILED, khc_get_status_code(&kii->_khc));
         if (_is_temporary_error(kii, res)) {
             // Temporal error. Try again.
             _schedule_retry(state);
@@ -533,6 +543,7 @@ void _mqtt_state_sock_connect(mqtt_state_t* state)
                 kii->_mqtt_socket,
                 endpoint->host, port);
     if (con_res != EBISU_SOCK_OK) {
+        _event(kii, KII_MQTT_EVENT_CONNECT_FAILED, state->connect_failures + 1);
         _schedule_retry(state);
         if (++state->connect_failures >= MAX_CONNECT_FAILURES) {
             state->connect_failures = 0;
@@ -567,6 +578,7 @@ void _mqtt_state_send_connect(mqtt_state_t* state)
     }
     ebisu_sock_code_t send_err = _mqtt_send_connect(kii, endpoint);
     if (send_err == EBISU_SOCK_FAIL) {
+        _event(kii, KII_MQTT_EVENT_SEND_FAILED, KII_MQTT_ST_SEND_CONNECT);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
     } else {
@@ -584,6 +596,7 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
     kii_mqtt_fixed_header fixed_header;
     ebisu_sock_code_t res = _mqtt_recv_fixed_header(kii, &fixed_header);
     if (res != EBISU_SOCK_OK) {
+        _event(kii, KII_MQTT_EVENT_RECV_FAILED, KII_MQTT_ST_RECV_CONNACK);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
@@ -591,6 +604,7 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
     char ptype = fixed_header.byte1 & 0xf0;
     if (ptype != 0x20) {
         // Must not happens. CONNACK must be the first response.
+        _event(kii, KII_MQTT_EVENT_UNEXPECTED_PACKET, (unsigned char)fixed_header.byte1);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
@@ -601,11 +615,13 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
     memset(buff, '\0', length);
     ebisu_sock_code_t res2 = _mqtt_recv_remaining(kii, length, buff);
     if (res2 != EBISU_SOCK_OK) {
+        _event(kii, KII_MQTT_EVENT_RECV_FAILED, KII_MQTT_ST_RECV_CONNACK);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
     }
     char return_code = buff[1];
+    _event(kii, KII_MQTT_EVENT_CONNACK, (unsigned char)return_code);
     if (return_code == 4 || return_code == 5) {
         // Bad user name or password, or not authorized: the broker refused the
         // credentials, e.g. because they expired or were revoked. RECONNECT
@@ -641,6 +657,7 @@ void _mqtt_state_send_subscribe(mqtt_state_t* state)
     ebisu_sock_code_t res = _mqtt_send_subscribe(kii, state->endpoint.topic,
             kii->_mqtt_qos == KII_MQTT_QOS_1 ? KII_MQTT_QOS_1 : KII_MQTT_QOS_0);
     if (res == EBISU_SOCK_FAIL) {
+        _event(kii, KII_MQTT_EVENT_SEND_FAILED, KII_MQTT_ST_SEND_SUBSCRIBE);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
     } else { // KHC_ERR_OK.
@@ -656,6 +673,7 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
     kii_mqtt_fixed_header fixed_header;
     ebisu_sock_code_t res = _mqtt_recv_fixed_header(kii, &fixed_header);
     if (res != EBISU_SOCK_OK) {
+        _event(kii, KII_MQTT_EVENT_RECV_FAILED, KII_MQTT_ST_RECV_SUBACK);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
@@ -672,6 +690,7 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
         return;
     }
     if (ptype != 0x90) {
+        _event(kii, KII_MQTT_EVENT_UNEXPECTED_PACKET, (unsigned char)fixed_header.byte1);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
@@ -681,9 +700,16 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
     memset(buff, '\0', len);
     ebisu_sock_code_t res2 = _mqtt_recv_remaining(kii, len, buff);
     if (res2 != EBISU_SOCK_OK) {
+        _event(kii, KII_MQTT_EVENT_RECV_FAILED, KII_MQTT_ST_RECV_SUBACK);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
+    }
+    if (buff[0] != 0x00 || buff[1] != 0x01) {
+        // For a SUBSCRIBE other than the task's, whose identifier is 1.
+        _event(kii, KII_MQTT_EVENT_UNEXPECTED_PACKET, (unsigned char)fixed_header.byte1);
+    } else {
+        _event(kii, KII_MQTT_EVENT_SUBACK, (unsigned char)buff[2]);
     }
     if (buff[0] == 0x00 && // Identifier MSB
             buff[1] == 0x01 && // Identifier LSB
@@ -742,6 +768,7 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
     ebisu_sock_code_t res = _mqtt_recv_fixed_header_byte1(kii, &fh, &received);
     if (res == EBISU_SOCK_OK && received == 0) {
         // End of stream: the broker closed the connection.
+        _event(kii, KII_MQTT_EVENT_CLOSED_BY_BROKER, 0);
         _reset_elapsed(state, 0);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
@@ -753,6 +780,7 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
             // A packet has started to arrive, so the next read would begin
             // inside it and take its bytes for a fixed header. Reconnect,
             // whether the receive timed out or failed, as RECV_MSG does.
+            _event(kii, KII_MQTT_EVENT_RECV_FAILED, KII_MQTT_ST_RECV_READY);
             _reset_elapsed(state, 0);
             _delay_ms(kii, WAIT_MS);
             task_info->task_state = KII_MQTT_ST_RECONNECT;
@@ -773,6 +801,7 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
             // Read and ignore.
             res = _mqtt_recv_remaining_trash(kii, size);
             if (res != EBISU_SOCK_OK) {
+                _event(kii, KII_MQTT_EVENT_RECV_FAILED, KII_MQTT_ST_RECV_READY);
                 _reset_elapsed(state, 0);
                 _delay_ms(kii, WAIT_MS);
                 task_info->task_state = KII_MQTT_ST_RECONNECT;
@@ -780,6 +809,7 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
         }
     } else if (res == EBISU_SOCK_FAIL && _mqtt_sock_recv_lost(kii)) {
         // Waiting on would wait for a connection that is gone.
+        _event(kii, KII_MQTT_EVENT_RECV_FAILED, KII_MQTT_ST_RECV_READY);
         _reset_elapsed(state, 0);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
@@ -869,6 +899,7 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
         // QoS 2, which the task never subscribes with, or 3, which there is
         // none of: the broker has broken the protocol, and MQTT has the client
         // close the connection.
+        _event(kii, KII_MQTT_EVENT_UNEXPECTED_PACKET, 0x30 | (state->message_qos << 1));
         _reset_elapsed(state, 0);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
@@ -878,17 +909,20 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
         // Ignore message.
         ebisu_sock_code_t res = _mqtt_recv_msg_trash(state, &has_id, &id);
         if (res != EBISU_SOCK_OK) {
+            _event(kii, KII_MQTT_EVENT_RECV_FAILED, KII_MQTT_ST_RECV_MSG);
             _reset_elapsed(state, 0);
             _delay_ms(kii, WAIT_MS);
             task_info->task_state = KII_MQTT_ST_RECONNECT;
             return;
         }
+        _event(kii, KII_MQTT_EVENT_MESSAGE_TOO_LARGE, (uint32_t)remaining_message_size);
         _add_elapsed_ms(state, ARRIVED_MSG_READ_TIME + WAIT_MS);
         _delay_ms(kii, WAIT_MS);
     } else {
         memset(kii->_mqtt_buffer, '\0', kii->_mqtt_buffer_size);
         ebisu_sock_code_t res = _mqtt_recv_remaining(kii, remaining_message_size, kii->_mqtt_buffer);
         if (res != EBISU_SOCK_OK) {
+            _event(kii, KII_MQTT_EVENT_RECV_FAILED, KII_MQTT_ST_RECV_MSG);
             _reset_elapsed(state, 0);
             _delay_ms(kii, WAIT_MS);
             task_info->task_state = KII_MQTT_ST_RECONNECT;
@@ -902,10 +936,12 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
         // fit before taking the rest as the body. A message where they do not
         // has been read whole all the same, so drop it, as one larger than the
         // buffer is.
+        bool malformed = true;
         if (remaining_message_size >= 2) {
             unsigned int topic_size = (unsigned char)kii->_mqtt_buffer[0] * 256 + (unsigned char)kii->_mqtt_buffer[1];
             const unsigned int id_size = state->message_qos == 1 ? 2 : 0;
             if (topic_size + id_size <= remaining_message_size - 2) {
+                malformed = false;
                 char* id_ptr = kii->_mqtt_buffer + topic_size + 2;
                 if (id_size > 0) {
                     has_id = true;
@@ -916,10 +952,14 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
                 kii->_cb_push_received(body_ptr, body_length, kii->_push_data);
             }
         }
+        if (malformed) {
+            _event(kii, KII_MQTT_EVENT_MESSAGE_MALFORMED, (uint32_t)remaining_message_size);
+        }
     }
     // Once the push callback has returned, so that a message lost on its way to
     // the application is sent again.
     if (has_id && _mqtt_send_puback(kii, id) != EBISU_SOCK_OK) {
+        _event(kii, KII_MQTT_EVENT_SEND_FAILED, KII_MQTT_ST_RECV_MSG);
         _reset_elapsed(state, 0);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
@@ -938,6 +978,7 @@ void _mqtt_state_send_pingreq(mqtt_state_t* state)
     // though sending may still appear to succeed. Reconnect rather than send
     // another and wait another keep-alive interval to find out.
     if (!state->pingresp_received) {
+        _event(kii, KII_MQTT_EVENT_PING_TIMEOUT, kii->_keep_alive_interval);
         _reset_elapsed(state, 0);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
@@ -946,6 +987,7 @@ void _mqtt_state_send_pingreq(mqtt_state_t* state)
 
     ebisu_sock_code_t res = _mqtt_send_pingreq(kii);
     if (res != EBISU_SOCK_OK) {
+        _event(kii, KII_MQTT_EVENT_SEND_FAILED, KII_MQTT_ST_SEND_PINGREQ);
         _reset_elapsed(state, 0);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;

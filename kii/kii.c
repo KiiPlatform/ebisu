@@ -182,6 +182,11 @@ void kii_set_cb_task_exit(kii_t* kii, KII_CB_TASK_EXIT cb, void* userdata) {
     kii->_task_exit_data = userdata;
 }
 
+void kii_set_cb_mqtt_event(kii_t* kii, KII_CB_MQTT_EVENT cb, void* userdata) {
+    kii->_cb_mqtt_event = cb;
+    kii->_mqtt_event_data = userdata;
+}
+
 void kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource) {
     kii->_json_resource = resource;
 }

@@ -293,6 +293,66 @@ typedef struct kii_installation_id_t {
 struct kii_t;
 
 /**
+ * \brief What the MQTT task tells the callback set by kii_set_cb_mqtt_event().
+ *
+ * Each comes with a detail, which the event says the meaning of.
+ */
+typedef enum kii_mqtt_event_t {
+    /** \brief Installing push failed. The detail is the response's HTTP
+     * status, or 0 without a response. */
+    KII_MQTT_EVENT_INSTALL_FAILED,
+    /** \brief Getting the endpoint failed, or onboarding again for it. The
+     * detail is as for KII_MQTT_EVENT_INSTALL_FAILED. */
+    KII_MQTT_EVENT_ENDPOINT_FAILED,
+    /** \brief Connecting to the broker failed. The detail is how many
+     * attempts in a row have. */
+    KII_MQTT_EVENT_CONNECT_FAILED,
+    /** \brief The broker answered CONNECT. The detail is CONNACK's return
+     * code: 0 when it accepted, 1 for a protocol version it doesn't speak, 2
+     * for an identifier it refused, 3 when it is unavailable, 4 for bad
+     * credentials and 5 when not authorized. */
+    KII_MQTT_EVENT_CONNACK,
+    /** \brief The broker answered SUBSCRIBE. The detail is SUBACK's return
+     * code: the QoS it granted, or 0x80 when it refused. */
+    KII_MQTT_EVENT_SUBACK,
+    /** \brief Sending to the broker failed. The detail is the task's state, a
+     * kii_mqtt_task_state, which says what it was sending. */
+    KII_MQTT_EVENT_SEND_FAILED,
+    /** \brief Receiving from the broker failed, or ended partway through a
+     * packet, the connection lost. The detail is the task's state. */
+    KII_MQTT_EVENT_RECV_FAILED,
+    /** \brief The broker closed the connection while the task waited for a
+     * message. The detail is 0. */
+    KII_MQTT_EVENT_CLOSED_BY_BROKER,
+    /** \brief A packet the task can't take where it came: anything but CONNACK
+     * first, anything but SUBACK or a message after SUBSCRIBE, SUBACK for
+     * another subscription, or a message at QoS 2 or more. The detail is the
+     * packet's first byte, its type and flags. */
+    KII_MQTT_EVENT_UNEXPECTED_PACKET,
+    /** \brief A PINGREQ was still unanswered when the next was due. The detail
+     * is the keep-alive, in seconds. */
+    KII_MQTT_EVENT_PING_TIMEOUT,
+    /** \brief A message too large for the buffer set by kii_set_mqtt_buff()
+     * was dropped. The detail is its length, after its fixed header. */
+    KII_MQTT_EVENT_MESSAGE_TOO_LARGE,
+    /** \brief A message whose topic, or packet identifier, didn't fit in it
+     * was dropped. The detail is its length. */
+    KII_MQTT_EVENT_MESSAGE_MALFORMED
+} kii_mqtt_event_t;
+
+/**
+ * \brief Told what happens in the MQTT task, for diagnostics.
+ *
+ * Called in the task, as it happens, before what follows: the reconnection,
+ * the wait or the exit. It must return soon, and not use the kii_t.
+ *
+ * \param [in] event What happened.
+ * \param [in] detail More of it, as the event says.
+ * \param [in] userdata Given to kii_set_cb_mqtt_event().
+ */
+typedef void (*KII_CB_MQTT_EVENT)(kii_mqtt_event_t event, uint32_t detail, void* userdata);
+
+/**
  * \brief Called when received push message via MQTT.
  *
  * \param [in] message Received message.
@@ -335,6 +395,9 @@ typedef struct kii_t {
 
     KII_CB_TASK_EXIT _cb_task_exit; /**< \private */
     void* _task_exit_data; /**< \private */
+
+    KII_CB_MQTT_EVENT _cb_mqtt_event; /**< \private */
+    void* _mqtt_event_data; /**< \private */
 
     KII_PUSH_RECEIVED_CB _cb_push_received; /**< \private */
     void* _push_data; /**< \private */
@@ -1570,6 +1633,21 @@ void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE cb_continue, void
  * \param [in] userdata Context data pointer passed as second argument when cb_exit is called.
  */
 void kii_set_cb_task_exit(kii_t* kii, KII_CB_TASK_EXIT cb_exit, void* userdata);
+
+/**
+ * \brief Set the callback the MQTT task tells why it reconnects, waits or
+ * drops a message.
+ *
+ * The continue callback sees the task's state, and the exit callback the
+ * error that ended it. This tells the rest: a failed request, CONNACK's and
+ * SUBACK's codes, which send or receive failed, an unanswered PINGREQ, a
+ * message dropped. Optional. Set it before starting the task.
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] cb The callback, or NULL for none.
+ * \param [in] userdata Given to cb.
+ */
+void kii_set_cb_mqtt_event(kii_t* kii, KII_CB_MQTT_EVENT cb, void* userdata);
 /**
  * \brief Set JSON parser resource
  * \param [out] kii kii_t instance.
