@@ -381,6 +381,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
 
+    // The empty line after the last chunk has come: nothing is left to read.
     called = false;
     s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         called = true;
@@ -391,7 +392,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     REQUIRE( http._state == KHC_STATE_CLOSE );
     REQUIRE( http._read_end == false );
     REQUIRE( http._result == KHC_ERR_OK );
-    REQUIRE( called );
+    REQUIRE( !called );
 
     called = false;
     s_ctx.on_close = [=, &called](void* socket_ctx) {

@@ -116,7 +116,8 @@ TEST_CASE( "Stream and response header buffers are used by every request" ) {
     int recv_into_stream = 0;
     int recv_elsewhere = 0;
     size_t resp_pos = 0;
-    const std::string resp = "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n{}";
+    // No Content-Length, so that the end is read into the stream buffer too.
+    const std::string resp = "HTTP/1.1 200 OK\r\n\r\n{}";
     khct::cb::SockCtx http_ctx;
     http_ctx.on_connect = [&resp_pos](void*, const char*, unsigned int) {
         resp_pos = 0;

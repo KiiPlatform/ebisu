@@ -213,7 +213,9 @@ TEST_CASE( "khc_reset_except_request leaves khc as if the request were new" ) {
             CHECK( used._chunk_size == fresh._chunk_size );
             CHECK( used._chunk_size_written == fresh._chunk_size_written );
             CHECK( used._resp_content_length == fresh._resp_content_length );
+            CHECK( used._resp_has_content_length == fresh._resp_has_content_length );
             CHECK( used._resp_body_received == fresh._resp_body_received );
+            CHECK( used._trailer_end_matched == fresh._trailer_end_matched );
             CHECK( used._read_end == fresh._read_end );
             CHECK( used._body_read_size == fresh._body_read_size );
             CHECK( used._sent_length == fresh._sent_length );
