@@ -29,7 +29,11 @@ if(UNIX)
         target_compile_definitions(ebisu_posix PRIVATE _DEFAULT_SOURCE)
         ebisu_configure_target(ebisu_posix)
         install(FILES posix/include/ebisu_posix.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-        install(TARGETS ebisu_posix ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        # ebisu::posix in the CMake package.
+        set_target_properties(ebisu_posix PROPERTIES EXPORT_NAME posix)
+        install(TARGETS ebisu_posix EXPORT ebisu-targets
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
     endif()
 
     # Found is not enough: a 32-bit build on a 64-bit host finds the host's
@@ -64,6 +68,10 @@ if(UNIX)
         target_compile_definitions(ebisu_openssl PRIVATE _DEFAULT_SOURCE)
         ebisu_configure_target(ebisu_openssl)
         install(FILES openssl/include/ebisu_openssl.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-        install(TARGETS ebisu_openssl ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        # ebisu::openssl in the CMake package.
+        set_target_properties(ebisu_openssl PROPERTIES EXPORT_NAME openssl)
+        install(TARGETS ebisu_openssl EXPORT ebisu-targets
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
     endif()
 endif()

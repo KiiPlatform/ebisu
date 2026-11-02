@@ -1,0 +1,10 @@
+prefix=${pcfiledir}/@pc_prefix_from_dir@
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+
+Name: ebisu-@pc_name@
+Description: @pc_description@
+Version: @version@
+Requires: @pc_requires@
+Cflags: -I${includedir}
+Libs: -L${libdir} -l@pc_lib@ @pc_libs_extra@

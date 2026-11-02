@@ -31,7 +31,8 @@ file(GLOB khc_hdrs CONFIGURE_DEPENDS include/*.h)
 # it would shadow the freshly generated header with a stale version string.
 list(REMOVE_ITEM khc_hdrs ${CMAKE_CURRENT_SOURCE_DIR}/include/ebisu_version.h)
 install(FILES ${khc_hdrs} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(TARGETS khc
+install(TARGETS khc EXPORT ebisu-targets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

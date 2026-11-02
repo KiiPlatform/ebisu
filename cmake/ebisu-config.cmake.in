@@ -1,0 +1,13 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+# What the ports link, where they were built.
+if(@EBISU_PACKAGE_NEEDS_THREADS@)
+    find_dependency(Threads)
+endif()
+if(@EBISU_PACKAGE_NEEDS_OPENSSL@)
+    find_dependency(OpenSSL)
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/ebisu-targets.cmake")
+check_required_components(ebisu)
