@@ -304,18 +304,20 @@ exit:
 
 /* What the task uses without checking, so that one left out is found when
  * starting it, rather than as a crash in the task. */
+static kii_bool_t _socket_can_run(const ebisu_socket_t* sock)
+{
+    return (sock != NULL && sock->ops != NULL &&
+            sock->ops->connect != NULL &&
+            sock->ops->send != NULL &&
+            sock->ops->recv != NULL &&
+            sock->ops->close != NULL) ? KII_TRUE : KII_FALSE;
+}
+
 static kii_bool_t _push_task_can_run(const kii_t* kii)
 {
-    const khc* http = &kii->_khc;
-    return (kii->_cb_delay_ms != NULL &&
-            http->_cb_sock_connect != NULL &&
-            http->_cb_sock_send != NULL &&
-            http->_cb_sock_recv != NULL &&
-            http->_cb_sock_close != NULL &&
-            kii->_cb_mqtt_sock_connect != NULL &&
-            kii->_cb_mqtt_sock_send != NULL &&
-            kii->_cb_mqtt_sock_recv != NULL &&
-            kii->_cb_mqtt_sock_close_cb != NULL &&
+    return (kii->_system->ops->delay_ms != NULL &&
+            _socket_can_run(kii->_khc._socket) == KII_TRUE &&
+            _socket_can_run(kii->_mqtt_socket) == KII_TRUE &&
             kii->_rw_buff != NULL &&
             kii->_mqtt_buffer != NULL) ? KII_TRUE : KII_FALSE;
 }
@@ -332,7 +334,7 @@ kii_code_t kii_start_push_task(kii_t* kii, uint32_t keep_alive_interval, KII_PUS
     if (keep_alive_interval > 65535) {
         return KII_ERR_FAIL;
     }
-    if (kii->_cb_task_create == NULL) {
+    if (kii->_system == NULL || kii->_system->ops->task_create == NULL) {
         return KII_ERR_CREATE_TASK;
     }
     if (callback == NULL || _push_task_can_run(kii) != KII_TRUE) {
@@ -343,10 +345,10 @@ kii_code_t kii_start_push_task(kii_t* kii, uint32_t keep_alive_interval, KII_PUS
     kii->_push_data = userdata;
     // Before creating it, as it may have finished by the time that returns.
     kii->_push_task_running = KII_TRUE;
-    ebisu_task_code_t res = kii->_cb_task_create(KII_TASK_NAME_MQTT,
+    ebisu_task_code_t res = kii->_system->ops->task_create(kii->_system,
+            KII_TASK_NAME_MQTT,
             mqtt_start_task,
-            (void*)kii,
-            kii->_task_create_data);
+            (void*)kii);
     if (res != EBISU_TASKC_OK) {
         kii->_push_task_running = KII_FALSE;
         return KII_ERR_CREATE_TASK;

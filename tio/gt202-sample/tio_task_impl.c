@@ -7,7 +7,6 @@ typedef struct _data {
     const char* name;
     EBISU_TASK_ENTRY entry;
     void* param;
-    void* userdata;
 } _data_t;
 
 void _tio_task(uint_32 temp)
@@ -17,11 +16,11 @@ void _tio_task(uint_32 temp)
     free(data);
 }
 
-ebisu_task_code_t cb_task_create
-    (const char* name,
+static ebisu_task_code_t task_create
+    (ebisu_system_t* self,
+     const char* name,
      EBISU_TASK_ENTRY entry,
-     void* param,
-     void* userdata)
+     void* param)
 {
     _data_t* data = NULL;
     uint_32 task = TIO_MQTT_TASK;
@@ -30,7 +29,6 @@ ebisu_task_code_t cb_task_create
     data->name = name;
     data->entry = entry;
     data->param = param;
-    data->userdata = userdata;
 
     if (ATH_STRCMP(name, "task_update_state") == 0) {
       task = TIO_UPDATER_TASK;
@@ -41,27 +39,50 @@ ebisu_task_code_t cb_task_create
     return EBISU_TASKC_OK;
 }
 
-void cb_delay_ms(uint32_t msec, void* userdata)
+static void delay_ms(ebisu_system_t* self, uint32_t msec)
 {
     _time_delay(msec);
 }
 
-void cb_lock(void* userdata)
+static void lock(ebisu_lock_t* self)
 {
-    _mutex_lock((MUTEX_STRUCT_PTR)userdata);
+    _mutex_lock(&EBISU_CONTAINER_OF(self, gt202_lock_t, base)->mutex);
 }
 
-void cb_unlock(void* userdata)
+static void unlock(ebisu_lock_t* self)
 {
-    _mutex_unlock((MUTEX_STRUCT_PTR)userdata);
+    _mutex_unlock(&EBISU_CONTAINER_OF(self, gt202_lock_t, base)->mutex);
+}
+
+static const ebisu_lock_ops_t gt202_lock_ops = {
+    lock,
+    unlock
+};
+
+uint_32 gt202_lock_init(gt202_lock_t* lock)
+{
+    lock->base.ops = &gt202_lock_ops;
+    return _mutex_init(&lock->mutex, NULL);
 }
 
 /* _time_get_elapsed() is the time since MQX started, which _time_set() leaves
    alone. Its seconds are 32 bits wide, so it does not wrap for 136 years. */
-uint64_t cb_monotonic_ms(void* userdata)
+static uint64_t monotonic_ms(ebisu_system_t* self)
 {
     TIME_STRUCT elapsed;
     _time_get_elapsed(&elapsed);
     return (uint64_t)elapsed.SECONDS * 1000 + elapsed.MILLISECONDS;
+}
+static const ebisu_system_ops_t gt202_system_ops = {
+    task_create,
+    delay_ms,
+    monotonic_ms
+};
+
+static ebisu_system_t system_ = { &gt202_system_ops };
+
+ebisu_system_t* gt202_system(void)
+{
+    return &system_;
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

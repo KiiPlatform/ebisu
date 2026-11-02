@@ -10,70 +10,92 @@ Compared with 1.3, the last 1.x release line. v2.0.0 was tagged on the way, and
 what it changed is included here. 3.0 has not been released yet, so this section
 follows `master`.
 
-Every application has to rename its callback types, and most then have two more
-edits and a rebuild: changing the connect callback, and deleting a call to a
-setter that did nothing. Apart from the renames, those setters are the only
-functions of 1.x that were removed, and no constant or public struct member was.
+Every application changes how it gives ebisu its sockets and its system, and
+most then have one more edit and a rebuild.
 
 ### Code that stops compiling
 
-**The socket and task callback types moved to `platform` and were renamed.** They
-are the same types under new names, with no aliases for the old ones:
+**Sockets and the system are objects, set with one call each.** In 1.x each
+socket and task callback was set on its own, with a context pointer of its own.
+In 3.0 a socket is an `ebisu_socket_t` and the system an `ebisu_system_t`, each
+a pointer to a table of operations, in
+[platform](https://github.com/KiiPlatform/ebisu/blob/master/platform/README.md).
+Each operation gets the object as its first argument, in place of the context
+pointer: embed the object in the struct that was the context, and get that back
+with `EBISU_CONTAINER_OF()`.
+
+```c
+// 1.x
+khc_sock_code_t cb_connect(void* sock_ctx, const char* host, unsigned int port)
+{
+    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    ...
+}
+...
+    tio_handler_set_cb_sock_connect_http(handler, cb_connect, &http_ctx);
+    tio_handler_set_cb_sock_send_http(handler, cb_send, &http_ctx);
+    tio_handler_set_cb_sock_recv_http(handler, cb_recv, &http_ctx);
+    tio_handler_set_cb_sock_close_http(handler, cb_close, &http_ctx);
+
+// 3.0, with ebisu_socket_t base as a member of socket_context_t
+ebisu_sock_code_t cb_connect(ebisu_socket_t* self, const char* host, uint16_t port)
+{
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
+    ...
+}
+
+static const ebisu_socket_ops_t socket_ops = {
+    cb_connect, cb_send, cb_recv, cb_close, NULL
+};
+...
+    http_ctx.base.ops = &socket_ops;
+    tio_handler_set_http_socket(handler, &http_ctx.base);
+```
+
+ebisu keeps a pointer to each object, so it has to outlive what it is set on.
+The samples' `sock_cb_init_context()` and system functions show the whole of it.
+
+| 1.x | 3.0 |
+|---|---|
+| `khc_set_cb_sock_connect()`, `_send()`, `_recv()` and `_close()` | `khc_set_socket()` |
+| `kii_set_cb_http_sock_connect()`, `_send()`, `_recv()` and `_close()` | `kii_set_http_socket()` |
+| `kii_set_cb_mqtt_sock_connect()`, `_send()`, `_recv()` and `_close()` | `kii_set_mqtt_socket()` |
+| `tio_handler_set_cb_sock_connect_http()`, `_send_http()`, `_recv_http()` and `_close_http()` | `tio_handler_set_http_socket()` |
+| `tio_handler_set_cb_sock_connect_mqtt()`, `_send_mqtt()`, `_recv_mqtt()` and `_close_mqtt()` | `tio_handler_set_mqtt_socket()` |
+| `tio_updater_set_cb_sock_connect()`, `_send()`, `_recv()` and `_close()` | `tio_updater_set_socket()` |
+| `kii_set_cb_task_create()` and `kii_set_cb_delay_ms()` | `kii_set_system()` |
+| `tio_handler_set_cb_task_create()` and `tio_handler_set_cb_delay_ms()` | `tio_handler_set_system()` |
+| `tio_updater_set_cb_task_create()` and `tio_updater_set_cb_delay_ms()` | `tio_updater_set_system()` |
+
+The operations' types replace the callback types `KHC_CB_SOCK_CONNECT`,
+`KHC_CB_SOCK_SEND`, `KHC_CB_SOCK_RECV`, `KHC_CB_SOCK_CLOSE`,
+`KII_CB_TASK_CREATE` and `KII_CB_DELAY_MS`, which are gone. Two arguments
+changed type besides: the connect operation takes its port as a `uint16_t`, and
+the delay its milliseconds as a `uint32_t`, which with arm-none-eabi GCC and
+newlib is `unsigned long`. A function of the wrong type in an operations table is
+an error in C++, and in C with GCC 14 or later. Older C compilers only warn, with
+`-Wincompatible-pointer-types`: fix it all the same, as calling a function
+through the wrong type is undefined.
+
+The rest moved to `platform` and was renamed, with no aliases for the old names:
 
 | 1.x | 3.0 |
 |---|---|
 | `khc_socket_callback.h` | `ebisu_socket.h` |
 | `khc_sock_code_t` | `ebisu_sock_code_t` |
 | `KHC_SOCK_OK`, `KHC_SOCK_FAIL`, `KHC_SOCK_AGAIN` | `EBISU_SOCK_OK`, `EBISU_SOCK_FAIL`, `EBISU_SOCK_AGAIN` |
-| `KHC_CB_SOCK_CONNECT`, `KHC_CB_SOCK_SEND`, `KHC_CB_SOCK_RECV`, `KHC_CB_SOCK_CLOSE` | `EBISU_CB_SOCK_CONNECT`, `EBISU_CB_SOCK_SEND`, `EBISU_CB_SOCK_RECV`, `EBISU_CB_SOCK_CLOSE` |
 | `kii_task_code_t` | `ebisu_task_code_t` |
 | `KII_TASKC_OK`, `KII_TASKC_FAIL` | `EBISU_TASKC_OK`, `EBISU_TASKC_FAIL` |
 | `KII_TASK_ENTRY` | `EBISU_TASK_ENTRY` |
-| `KII_CB_TASK_CREATE` | `EBISU_CB_TASK_CREATE` |
-| `KII_CB_DELAY_MS` | `EBISU_CB_DELAY_MS` |
 
 `kii_task_callback.h` remains for `kii_bool_t`, `KII_CB_TASK_EXIT` and
-`KII_CB_TASK_CONTINUE`. The types above are in `ebisu_task.h`, which `kii.h`
-includes.
-
-**The connect callback takes its port as a `uint16_t`.** Every application
-implements `EBISU_CB_SOCK_CONNECT`:
-
-```c
-// 1.x
-khc_sock_code_t cb_connect(void* sock_ctx, const char* host, unsigned int port);
-// 3.0
-ebisu_sock_code_t cb_connect(void* sock_ctx, const char* host, uint16_t port);
-```
-
-It is what `khc_set_cb_sock_connect()`, `kii_set_cb_http_sock_connect()`,
-`kii_set_cb_mqtt_sock_connect()`, `tio_handler_set_cb_sock_connect_http()`,
-`tio_handler_set_cb_sock_connect_mqtt()` and
-`tio_updater_set_cb_sock_connect()` take.
-
-**The delay callback takes its milliseconds as a `uint32_t`.** This is
-`EBISU_CB_DELAY_MS`, which `kii_set_cb_delay_ms()`,
-`tio_handler_set_cb_delay_ms()` and `tio_updater_set_cb_delay_ms()` take:
-
-```c
-// 1.x
-void cb_delay_ms(unsigned int msec, void* userdata);
-// 3.0
-void cb_delay_ms(uint32_t msec, void* userdata);
-```
-
-Where `uint32_t` is `unsigned int`, as on x86, the old declaration is still the
-same type. With arm-none-eabi GCC and newlib, `uint32_t` is `unsigned long`, so
-it no longer matches.
-
-Either mismatch is an error in C++, and in C with GCC 14 or later. Older C
-compilers only warn, with `-Wincompatible-pointer-types`. Change the callback
-all the same: calling a function through the wrong type is undefined.
+`KII_CB_TASK_CONTINUE`, which are still set with a function and a context
+pointer each. The types above are in `ebisu_system.h`, which `kii.h` includes.
 
 **`kii_set_mqtt_to_sock_send()` and `tio_handler_set_mqtt_to_sock_send()` are
 gone.** Delete the call. They stored a value nothing read, in 1.x as well, so
 this changes nothing at run time. An MQTT socket still needs a send timeout,
-which is the application's to set in its socket callbacks, as the samples do.
+which is the application's to set in its socket, as the samples do.
 
 ### Values whose type changed
 
@@ -153,17 +175,18 @@ Starting tasks:
 - `kii_start_push_task()` and `tio_handler_start()` refuse a keep-alive above
   65535, with `KII_ERR_FAIL` and `TIO_ERR_FAIL`. 1.x sent the broker the value
   cut down to 16 bits.
-- The result of the task-create callback now counts, so it has to return
+- The result of the system's `task_create` counts, so it has to return
   `EBISU_TASKC_OK` when it succeeds. Anything else makes `kii_start_push_task()`
   return the new `KII_ERR_CREATE_TASK` and `tio_handler_start()` return
-  `TIO_ERR_CREATE_TASK`, where 1.x ignored it and reported success. A callback
-  that was never set gives the same codes, and `TIO_ERR_CREATE_TASK` from
-  `tio_updater_start()`.
+  `TIO_ERR_CREATE_TASK`, where 1.x ignored it and reported success. No system,
+  or one without a `task_create`, gives the same codes, and
+  `TIO_ERR_CREATE_TASK` from `tio_updater_start()`.
 
 - `kii_start_push_task()`, `tio_handler_start()` and `tio_updater_start()` return
   `KII_ERR_FAIL` or `TIO_ERR_FAIL` if something the task uses isn't set: the
-  callback they are given, or for tio the state reader, the delay callback, a
-  socket callback or a buffer. 1.x started a task that crashed on reaching it.
+  callback they are given, or for tio the state reader, the system's
+  `delay_ms`, a socket or one of its operations, or a buffer. 1.x started a
+  task that crashed on reaching it.
 - They return the same while the task of an earlier start is still running,
   where 1.x started a second one on the same sockets and buffers. It stops
   running just before its exit callback, which can start it again. A task ended

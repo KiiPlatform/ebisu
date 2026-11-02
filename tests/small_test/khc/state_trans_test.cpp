@@ -28,10 +28,7 @@ TEST_CASE( "HTTP minimal" ) {
     khc_set_req_headers(&http, NULL);
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khct::cb::IOCtx io_ctx;
     // no set cb_read.
@@ -202,10 +199,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     khc_set_req_headers(&http, NULL);
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khct::cb::IOCtx io_ctx;
     khc_set_cb_read(&http, khct::cb::cb_read, &io_ctx);
@@ -429,10 +423,7 @@ TEST_CASE( "Socket send partial" ) {
     khc_set_req_headers(&http, req_headers);
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khct::cb::IOCtx io_ctx;
     khc_set_cb_read(&http, khct::cb::cb_read, &io_ctx);
@@ -821,10 +812,7 @@ TEST_CASE( "state abnormal tests." ) {
     khc_set_resp_header_buff(&http, resp_header_buff, resp_header_buff_size);
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khct::cb::IOCtx io_ctx;
     // no set cb_read.
@@ -1732,10 +1720,7 @@ TEST_CASE( "Enable insecure" ) {
     REQUIRE( http._enable_insecure == true );
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khc_state_idle(&http);
     REQUIRE( http._state == KHC_STATE_CONNECT );
@@ -1788,7 +1773,7 @@ static std::string sent_request_line(const char* path, bool absolute, bool insec
         *out_sent_length = length;
         return EBISU_SOCK_OK;
     };
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khc_state_req_line(&http);
     return sent;
@@ -1843,10 +1828,7 @@ static std::string sent_request(const char* method, const char* body) {
     s_ctx.on_close = [](void* socket_context) {
         return EBISU_SOCK_OK;
     };
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     bool body_read = false;
     khct::cb::IOCtx io_ctx;

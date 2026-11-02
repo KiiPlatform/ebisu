@@ -10,13 +10,35 @@
 
 namespace {
 
-// One task: the lock has nothing to keep apart.
-void cb_lock(void*) {}
-void cb_unlock(void*) {}
+// One task: the lock has nothing to keep apart. The system's monotonic clock
+// reads now_ms, which the test moves.
+struct OneTask {
+    struct LockLink {
+        ebisu_lock_t base;
+    } lock;
+    struct SystemLink {
+        ebisu_system_t base;
+        OneTask* owner;
+    } system;
+    uint64_t now_ms = 0;
 
-uint64_t cb_now(void* userdata) {
-    return *(uint64_t*)userdata;
-}
+    OneTask() {
+        static const ebisu_lock_ops_t lock_ops = {
+            [](ebisu_lock_t*) {},
+            [](ebisu_lock_t*) {},
+        };
+        static const ebisu_system_ops_t system_ops = {
+            NULL,
+            NULL,
+            [](ebisu_system_t* self) { return ((SystemLink*)self)->owner->now_ms; },
+        };
+        lock.base.ops = &lock_ops;
+        system.base.ops = &system_ops;
+        system.owner = this;
+    }
+    OneTask(const OneTask&) = delete;
+    OneTask& operator=(const OneTask&) = delete;
+};
 
 // A token the server doesn't know, which it treats as it does an expired one.
 const char UNKNOWN_TOKEN[] = "ltest-unknown-token";
@@ -49,24 +71,6 @@ bool empty(const char* token) {
     return token[0] == '\0';
 }
 
-// What kii sent, recorded to tell which grant a renewal asked for. It holds
-// tokens and the password, so it is searched and never printed.
-struct Sent {
-    EBISU_CB_SOCK_SEND send;
-    void* ctx;
-    std::string data;
-};
-
-ebisu_sock_code_t record_send(void* userdata, const char* buffer, size_t length,
-        size_t* out_sent_length) {
-    Sent* sent = (Sent*)userdata;
-    ebisu_sock_code_t res = sent->send(sent->ctx, buffer, length, out_sent_length);
-    if (res == EBISU_SOCK_OK) {
-        sent->data.append(buffer, *out_sent_length);
-    }
-    return res;
-}
-
 const char REFRESH_GRANT[] = "\"grant_type\":\"refresh_token\"";
 const char PASSWORD_GRANT[] = "\"grant_type\":\"password\"";
 // Onboarding through Thing-IF, as a request line has it.
@@ -74,8 +78,8 @@ const char ONBOARDING[] = "/onboardings HTTP/1.1";
 // Anything asked of Kii Cloud's token endpoint, as a request line has it.
 const char TOKEN_ENDPOINT[] = "/oauth2/token HTTP/1.1";
 
-bool sent_has(const Sent& sent, const char* grant) {
-    return sent.data.find(grant) != std::string::npos;
+bool sent_has(const std::string& sent, const char* grant) {
+    return sent.find(grant) != std::string::npos;
 }
 
 // Has the session hold its author with an access token the server refuses.
@@ -98,11 +102,12 @@ TEST_CASE( "The session renews a token the server refuses" ) {
     jkii_resource_t resource = {tokens, 256};
     kiiltest::init(&kii, buff, sizeof(buff), &http_ssl_ctx, &mqtt_ssl_ctx, &resource);
 
-    uint64_t now_ms = 0;
+    OneTask one_task;
+    uint64_t& now_ms = one_task.now_ms;
     kii_session_t session;
     kii_session_init(&session);
-    kii_session_set_cb_lock(&session, cb_lock, cb_unlock, NULL);
-    kii_session_set_cb_monotonic_ms(&session, cb_now, &now_ms);
+    kii_session_set_lock(&session, &one_task.lock.base);
+    kii_session_set_system(&session, &one_task.system.base);
     const std::string vid = "ltest_session_" + std::to_string(kiiltest::current_time());
     const char password[] = "1234";
     kii_session_set_password(&session, vid.c_str(), password);
@@ -118,9 +123,12 @@ TEST_CASE( "The session renews a token the server refuses" ) {
     bucket.scope_id = onboarded.author_id;
     kii_object_id_t object_id;
 
-    // What kii sends from here on, to tell how a renewal went about it.
-    Sent sent = {kii._khc._cb_sock_send, kii._khc._sock_ctx_send, std::string()};
-    kii_set_cb_http_sock_send(&kii, record_send, &sent);
+    // What kii sends from here on, to tell how a renewal went about it. It
+    // holds tokens and the password, so it is searched and never printed.
+    std::string sent;
+    ebisu::ltest::ObservedSocket observed(http_ssl_ctx.http());
+    observed.on_sent = [&sent](const char* data, size_t length) { sent.append(data, length); };
+    kii_set_http_socket(&kii, observed.get());
 
     SECTION("a token onboarding obtained is renewed by onboarding again") {
         // Kii's REST API: the request, whose body was built in the buffer, is
@@ -160,7 +168,7 @@ TEST_CASE( "The session renews a token the server refuses" ) {
         REQUIRE_FALSE( empty(logged_in.refresh_token) );
         CHECK( session._renew_mode == KII_RENEW_BY_TOKEN_ENDPOINT );
 
-        sent.data.clear();
+        sent.clear();
         spoil(&session);
         REQUIRE( kii_post_object(&kii, &bucket, "{\"k\":\"w\"}", NULL, &object_id) == KII_ERR_OK );
         CHECK( sent_has(sent, REFRESH_GRANT) );
@@ -179,7 +187,7 @@ TEST_CASE( "The session renews a token the server refuses" ) {
         kii_author_t spent = logged_in;
         strcpy(spent.access_token, UNKNOWN_TOKEN);
         kii_session_set_author(&session, &spent);
-        sent.data.clear();
+        sent.clear();
         REQUIRE( kii_post_object(&kii, &bucket, "{\"k\":\"x\"}", NULL, &object_id) == KII_ERR_OK );
         CHECK( sent_has(sent, REFRESH_GRANT) );
         CHECK( sent_has(sent, PASSWORD_GRANT) );
@@ -225,7 +233,7 @@ TEST_CASE( "The session renews a token the server refuses" ) {
         REQUIRE( kii_get_resp_status(&kii) == 403 );
         CHECK( sent_has(sent, ONBOARDING) );
 
-        sent.data.clear();
+        sent.clear();
         REQUIRE( kii_post_object(&kii, &bucket, "{\"k\":\"w\"}", NULL, &object_id) == KII_ERR_RESP_STATUS );
         REQUIRE( kii_get_resp_status(&kii) == 403 );
         CHECK_FALSE( sent_has(sent, ONBOARDING) );

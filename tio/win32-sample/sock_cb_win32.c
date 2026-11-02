@@ -89,12 +89,21 @@ static void set_buffer_desc(SecBufferDesc* desc, SecBuffer* buffers,
     desc->pBuffers = buffers;
 }
 
+static const ebisu_socket_ops_t sock_cb_ops = {
+    sock_cb_connect,
+    sock_cb_send,
+    sock_cb_recv,
+    sock_cb_close,
+    sock_cb_recv_timed_out
+};
+
 void sock_cb_init_context(
         socket_context_t* ctx,
         unsigned int to_recv,
         unsigned int to_send)
 {
     memset(ctx, 0, sizeof(*ctx));
+    ctx->base.ops = &sock_cb_ops;
     ctx->to_recv = to_recv;
     ctx->to_send = to_send;
     ctx->socket = INVALID_SOCKET;
@@ -555,10 +564,10 @@ static int tls_connect(socket_context_t* ctx)
 }
 
 ebisu_sock_code_t
-    sock_cb_connect(void* sock_ctx, const char* host,
+    sock_cb_connect(ebisu_socket_t* self, const char* host,
             uint16_t port)
 {
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     /* Neither khc nor kii connects again without closing first, but should
        that change, the old connection must not leak. */
     teardown(ctx);
@@ -584,12 +593,12 @@ ebisu_sock_code_t
 }
 
 ebisu_sock_code_t
-    sock_cb_send(void* sock_ctx,
+    sock_cb_send(ebisu_socket_t* self,
             const char* buffer,
             size_t length,
             size_t* out_sent_length)
 {
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     *out_sent_length = 0;
     if (ctx->send_buf == NULL) {
         printf("failed to send: not connected.\n");
@@ -713,12 +722,12 @@ static decrypt_result_t decrypt_record(socket_context_t* ctx)
 }
 
 ebisu_sock_code_t
-    sock_cb_recv(void* sock_ctx,
+    sock_cb_recv(ebisu_socket_t* self,
             char* buffer,
             size_t length_to_read,
             size_t* out_actual_length)
 {
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     *out_actual_length = 0;
     ctx->recv_timed_out = 0;
     if (ctx->recv_buf == NULL) {
@@ -785,11 +794,11 @@ ebisu_sock_code_t
    to_recv and when the connection fails, and says which in recv_timed_out. A
    timeout leaves the connection usable: read_some() never started a recv()
    for it, and any part of a record that did arrive is kept. */
-kii_bool_t
-    sock_cb_recv_timed_out(void* sock_ctx)
+bool
+    sock_cb_recv_timed_out(ebisu_socket_t* self)
 {
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
-    return ctx->recv_timed_out ? KII_TRUE : KII_FALSE;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
+    return ctx->recv_timed_out != 0;
 }
 
 /* Sends close_notify. Fails only if Schannel cannot make one. Not being able
@@ -844,9 +853,9 @@ static int send_close_notify(socket_context_t* ctx)
 }
 
 ebisu_sock_code_t
-    sock_cb_close(void* sock_ctx)
+    sock_cb_close(ebisu_socket_t* self)
 {
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     int ok = 1;
     if (ctx->has_ctxt && ctx->send_buf != NULL) {
         ok = send_close_notify(ctx) == 0;

@@ -5,7 +5,7 @@
 #ifndef _EBISU_CLOCK
 #define _EBISU_CLOCK
 
-#include "ebisu_task.h"
+#include "ebisu_system.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -48,7 +48,7 @@ extern "C" {
  * and which of the two it is, for a TLS stack to check with itself.
  *
  * Initialize with ebisu_clock_init(). The functions are safe to call from the
- * socket callbacks, and from any task once ebisu_clock_set_cb_lock() has set a
+ * socket callbacks, and from any task once ebisu_clock_set_lock() has set a
  * lock.
  */
 typedef struct ebisu_clock_t {
@@ -64,11 +64,10 @@ typedef struct ebisu_clock_t {
     uint64_t _time_at_ms;
     /** \private How long after it was given _time counts as exact. */
     uint64_t _exact_for_ms;
-    EBISU_CB_MONOTONIC_MS _cb_monotonic_ms; /**< \private */
-    void* _monotonic_ms_data; /**< \private */
-    EBISU_CB_LOCK _cb_lock; /**< \private */
-    EBISU_CB_LOCK _cb_unlock; /**< \private */
-    void* _lock_data; /**< \private */
+    /** \private Whose monotonic clock the time is counted on with. */
+    ebisu_system_t* _system;
+    /** \private The lock guarding the clock, or NULL. */
+    ebisu_lock_t* _lock;
 } ebisu_clock_t;
 
 /** \brief Whether a validity period covers the time, as ebisu_clock_t knows it. */
@@ -91,13 +90,10 @@ typedef enum ebisu_validity_t {
  * was a little ahead, as khc_init() sets for khc_get_resp_date().
  *
  * \param [out] clock ebisu_clock_t instance.
- * \param [in] cb_monotonic_ms The monotonic clock the time is counted on with.
- * \param [in] userdata Context object pointer passed to cb_monotonic_ms.
+ * \param [in] system The system whose monotonic clock the time is counted on
+ * with. It has to outlive the clock.
  */
-void ebisu_clock_init(
-        ebisu_clock_t* clock,
-        EBISU_CB_MONOTONIC_MS cb_monotonic_ms,
-        void* userdata);
+void ebisu_clock_init(ebisu_clock_t* clock, ebisu_system_t* system);
 
 /**
  * \brief Set the lock guarding the clock.
@@ -109,15 +105,9 @@ void ebisu_clock_init(
  * this has to be a lock of its own, not a session's.
  *
  * \param [out] clock ebisu_clock_t instance.
- * \param [in] cb_lock Callback acquiring the lock.
- * \param [in] cb_unlock Callback releasing the lock.
- * \param [in] userdata Context object pointer passed to both.
+ * \param [in] lock The lock, or NULL for none. It has to outlive the clock.
  */
-void ebisu_clock_set_cb_lock(
-        ebisu_clock_t* clock,
-        EBISU_CB_LOCK cb_lock,
-        EBISU_CB_LOCK cb_unlock,
-        void* userdata);
+void ebisu_clock_set_lock(ebisu_clock_t* clock, ebisu_lock_t* lock);
 
 /**
  * \brief Raise the time the clock is known not to be earlier than.

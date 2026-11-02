@@ -27,27 +27,27 @@ struct WinsockStartup {
     }
 } winsock_startup;
 
-socket_context_t* win32_context(void* socket_context)
+socket_context_t* win32_context(ebisu_socket_t* self)
 {
-    return &((ebisu::ltest::ssl::SSLData*)socket_context)->win32;
+    return &ebisu::ltest::ssl::data_of(self)->win32;
 }
 
 }
 
-ebisu_sock_code_t
-    ebisu::ltest::ssl::cb_connect(void* socket_context, const char* host,
+static ebisu_sock_code_t
+    cb_connect_ssl(ebisu_socket_t* self, const char* host,
             uint16_t port)
 {
-    return sock_cb_connect(win32_context(socket_context), host, port);
+    return sock_cb_connect(&win32_context(self)->base, host, port);
 }
 
-ebisu_sock_code_t
-    ebisu::ltest::ssl::cb_send(void* socket_context,
+static ebisu_sock_code_t
+    cb_send_ssl(ebisu_socket_t* self,
             const char* buffer,
             size_t length,
             size_t* out_sent_length)
 {
-    ebisu_sock_code_t res = sock_cb_send(win32_context(socket_context),
+    ebisu_sock_code_t res = sock_cb_send(&win32_context(self)->base,
             buffer, length, out_sent_length);
 
 #ifdef SOCKET_LOG
@@ -59,13 +59,13 @@ ebisu_sock_code_t
     return res;
 }
 
-ebisu_sock_code_t
-    ebisu::ltest::ssl::cb_recv(void* socket_context,
+static ebisu_sock_code_t
+    cb_recv_ssl(ebisu_socket_t* self,
             char* buffer,
             size_t length_to_read,
             size_t* out_actual_length)
 {
-    ebisu_sock_code_t res = sock_cb_recv(win32_context(socket_context),
+    ebisu_sock_code_t res = sock_cb_recv(&win32_context(self)->base,
             buffer, length_to_read, out_actual_length);
 
 #ifdef SOCKET_LOG
@@ -77,10 +77,10 @@ ebisu_sock_code_t
     return res;
 }
 
-ebisu_sock_code_t
-    ebisu::ltest::ssl::cb_close(void* socket_context)
+static ebisu_sock_code_t
+    cb_close_ssl(ebisu_socket_t* self)
 {
-    ebisu_sock_code_t res = sock_cb_close(win32_context(socket_context));
+    ebisu_sock_code_t res = sock_cb_close(&win32_context(self)->base);
 
 #ifdef SOCKET_LOG
     printf("\n----------------------------------------------------------------------------------------------------\n\n\n");
@@ -90,8 +90,8 @@ ebisu_sock_code_t
 }
 
 /// raw
-ebisu_sock_code_t
-    ebisu::ltest::tcp::cb_connect(void* socket_context, const char* host,
+static ebisu_sock_code_t
+    cb_connect_tcp(ebisu_socket_t* self, const char* host,
             uint16_t port)
 {
     char service[6];
@@ -126,17 +126,17 @@ ebisu_sock_code_t
         printf("failed to connect socket: %d\n", WSAGetLastError());
         return EBISU_SOCK_FAIL;
     }
-    win32_context(socket_context)->socket = sock;
+    win32_context(self)->socket = sock;
     return EBISU_SOCK_OK;
 }
 
-ebisu_sock_code_t
-    ebisu::ltest::tcp::cb_send(void* socket_context,
+static ebisu_sock_code_t
+    cb_send_tcp(ebisu_socket_t* self,
             const char* buffer,
             size_t length,
             size_t* out_sent_length)
 {
-    socket_context_t* ctx = win32_context(socket_context);
+    socket_context_t* ctx = win32_context(self);
     int ret = send(ctx->socket, buffer,
             length > INT_MAX ? INT_MAX : (int)length, 0);
     if (ret > 0) {
@@ -153,14 +153,14 @@ ebisu_sock_code_t
     }
 }
 
-ebisu_sock_code_t
-    ebisu::ltest::tcp::cb_recv(void* socket_context,
+static ebisu_sock_code_t
+    cb_recv_tcp(ebisu_socket_t* self,
             char* buffer,
             size_t length_to_read,
             size_t* out_actual_length)
 {
     *out_actual_length = 0;
-    socket_context_t* ctx = win32_context(socket_context);
+    socket_context_t* ctx = win32_context(self);
     int ret = recv(ctx->socket, buffer,
             length_to_read > INT_MAX ? INT_MAX : (int)length_to_read, 0);
     if (ret > 0) {
@@ -179,10 +179,10 @@ ebisu_sock_code_t
     }
 }
 
-ebisu_sock_code_t
-    ebisu::ltest::tcp::cb_close(void* socket_context)
+static ebisu_sock_code_t
+    cb_close_tcp(ebisu_socket_t* self)
 {
-    socket_context_t* ctx = win32_context(socket_context);
+    socket_context_t* ctx = win32_context(self);
     shutdown(ctx->socket, SD_BOTH);
     // ignore close errors
     closesocket(ctx->socket);
@@ -194,3 +194,11 @@ ebisu_sock_code_t
 
     return EBISU_SOCK_OK;
 }
+
+const ebisu_socket_ops_t ebisu::ltest::ssl::ops = {
+    cb_connect_ssl, cb_send_ssl, cb_recv_ssl, cb_close_ssl, NULL
+};
+
+const ebisu_socket_ops_t ebisu::ltest::tcp::ops = {
+    cb_connect_tcp, cb_send_tcp, cb_recv_tcp, cb_close_tcp, NULL
+};

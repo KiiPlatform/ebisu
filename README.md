@@ -72,9 +72,9 @@ for each major version.
 ## Breaking changes
 
 [UPGRADING.md](./UPGRADING.md) lists what an application has to change or check
-for each major version. For 3.0, every application renames its socket and task
-callback types, and most then need two more edits, to the port their connect
-callback takes and to delete a setter that did nothing, and a rebuild.
+for each major version. For 3.0, every application changes how it gives ebisu
+its sockets and its system, which are objects set with one call each, and most
+then need to delete a setter that did nothing, and a rebuild.
 
 ## Building
 

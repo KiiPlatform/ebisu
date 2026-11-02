@@ -17,6 +17,10 @@ const int64_t JUN_2090 = 3801211200LL;
 const char JAN_2090_DATE[] = "Date: Sun, 01 Jan 2090 00:00:00 GMT";
 const char JUN_2090_DATE[] = "Date: Thu, 15 Jun 2090 12:00:00 GMT";
 
+uint64_t now_ms(void* userdata);
+void lock(void* userdata);
+void unlock(void* userdata);
+
 // The monotonic clock and lock the tests hand the clock, and what it did with
 // them.
 struct Platform {
@@ -26,8 +30,14 @@ struct Platform {
     int locks;
     int clock_reads_unlocked;
     bool locked;
+    khct::cb::SystemCtx system;
+    khct::cb::LockCtx lock;
     Platform() : now_ms(1000000), depth(0), max_depth(0), locks(0),
-        clock_reads_unlocked(0), locked(false) {}
+        clock_reads_unlocked(0), locked(false) {
+        system.on_monotonic_ms = [this] { return ::now_ms(this); };
+        lock.on_lock = [this] { ::lock(this); };
+        lock.on_unlock = [this] { ::unlock(this); };
+    }
 };
 
 uint64_t now_ms(void* userdata) {
@@ -61,7 +71,7 @@ int64_t time_of(ebisu_clock_t* clock, bool* exact) {
 TEST_CASE( "A new clock has the floor khc has, and no time" ) {
     Platform p;
     ebisu_clock_t clock;
-    ebisu_clock_init(&clock, now_ms, &p);
+    ebisu_clock_init(&clock, p.system.system());
     khc http;
     khc_init(&http);
     CHECK( clock._floor == http._resp_date_floor );
@@ -75,7 +85,7 @@ TEST_CASE( "A new clock has the floor khc has, and no time" ) {
 TEST_CASE( "The floor is only ever raised" ) {
     Platform p;
     ebisu_clock_t clock;
-    ebisu_clock_init(&clock, now_ms, &p);
+    ebisu_clock_init(&clock, p.system.system());
     const int64_t floor = clock._floor;
     bool exact = true;
 
@@ -91,7 +101,7 @@ TEST_CASE( "The floor is only ever raised" ) {
 TEST_CASE( "A time given is counted on with the monotonic clock" ) {
     Platform p;
     ebisu_clock_t clock;
-    ebisu_clock_init(&clock, now_ms, &p);
+    ebisu_clock_init(&clock, p.system.system());
     bool exact = false;
 
     // Earlier than the floor: not taken.
@@ -135,7 +145,7 @@ TEST_CASE( "A time given is counted on with the monotonic clock" ) {
 TEST_CASE( "A time given stays exact for a day, and is a lower bound after" ) {
     Platform p;
     ebisu_clock_t clock;
-    ebisu_clock_init(&clock, now_ms, &p);
+    ebisu_clock_init(&clock, p.system.system());
     bool exact = false;
     REQUIRE( ebisu_clock_set_time(&clock, JAN_2090) == true );
 
@@ -156,7 +166,7 @@ TEST_CASE( "A time given stays exact for a day, and is a lower bound after" ) {
     CHECK( exact );
 
     // A lower floor than the stale count is no better bound; a higher one is.
-    ebisu_clock_init(&clock, now_ms, &p);
+    ebisu_clock_init(&clock, p.system.system());
     REQUIRE( ebisu_clock_set_time(&clock, JAN_2090) == true );
     p.now_ms += 10ULL * 86400 * 1000;
     ebisu_clock_set_floor(&clock, JAN_2090 + 10 * 86400);
@@ -167,7 +177,7 @@ TEST_CASE( "A time given stays exact for a day, and is a lower bound after" ) {
 TEST_CASE( "How long a time stays exact can be set, to never as well" ) {
     Platform p;
     ebisu_clock_t clock;
-    ebisu_clock_init(&clock, now_ms, &p);
+    ebisu_clock_init(&clock, p.system.system());
     bool exact = false;
 
     ebisu_clock_set_exact_for(&clock, 60);
@@ -188,7 +198,7 @@ TEST_CASE( "How long a time stays exact can be set, to never as well" ) {
 TEST_CASE( "A clock long without a time does not tell a period that has not started" ) {
     Platform p;
     ebisu_clock_t clock;
-    ebisu_clock_init(&clock, now_ms, &p);
+    ebisu_clock_init(&clock, p.system.system());
     REQUIRE( ebisu_clock_set_time(&clock, JAN_2090) == true );
     p.now_ms += 30ULL * 86400 * 1000;
     // 30 days on: at least JAN_2090 + 29.7 days. A certificate issued since
@@ -200,7 +210,7 @@ TEST_CASE( "A clock long without a time does not tell a period that has not star
 TEST_CASE( "Forgetting the time keeps what was counted, less 1%, as the floor" ) {
     Platform p;
     ebisu_clock_t clock;
-    ebisu_clock_init(&clock, now_ms, &p);
+    ebisu_clock_init(&clock, p.system.system());
     bool exact = true;
 
     // Without a time, nothing to forget.
@@ -228,7 +238,7 @@ TEST_CASE( "Forgetting the time keeps what was counted, less 1%, as the floor" )
     CHECK_FALSE( exact );
 
     // After the monotonic clock went back, the time given.
-    ebisu_clock_init(&clock, now_ms, &p);
+    ebisu_clock_init(&clock, p.system.system());
     REQUIRE( ebisu_clock_set_time(&clock, JAN_2090) == true );
     p.now_ms -= 1000;
     ebisu_clock_forget_time(&clock);
@@ -244,7 +254,7 @@ TEST_CASE( "Forgetting the time keeps what was counted, less 1%, as the floor" )
 TEST_CASE( "A validity period is checked against the time, or against its floor" ) {
     Platform p;
     ebisu_clock_t clock;
-    ebisu_clock_init(&clock, now_ms, &p);
+    ebisu_clock_init(&clock, p.system.system());
     ebisu_clock_set_floor(&clock, JAN_2090);
 
     // With the floor only: expired if it ended before it, valid otherwise,
@@ -266,8 +276,8 @@ TEST_CASE( "With a lock set, the clock is used and read only with it held" ) {
     Platform p;
     p.locked = true;
     ebisu_clock_t clock;
-    ebisu_clock_init(&clock, now_ms, &p);
-    ebisu_clock_set_cb_lock(&clock, lock, unlock, &p);
+    ebisu_clock_init(&clock, p.system.system());
+    ebisu_clock_set_lock(&clock, p.lock.get());
 
     int64_t now = 0;
     ebisu_clock_set_floor(&clock, JAN_2090);
@@ -285,12 +295,12 @@ TEST_CASE( "kii_set_clock() needs a monotonic clock" ) {
     kii_t kii;
     kii_init(&kii);
     ebisu_clock_t clock;
-    ebisu_clock_init(&clock, NULL, NULL);
+    ebisu_clock_init(&clock, NULL);
     CHECK( kii_set_clock(&kii, &clock) == KII_ERR_FAIL );
     CHECK( kii._clock == nullptr );
 
     Platform p;
-    ebisu_clock_init(&clock, now_ms, &p);
+    ebisu_clock_init(&clock, p.system.system());
     CHECK( kii_set_clock(&kii, &clock) == KII_ERR_OK );
     CHECK( kii._clock == &clock );
     CHECK( kii_set_clock(&kii, NULL) == KII_ERR_OK );
@@ -345,10 +355,7 @@ struct Client {
             return EBISU_SOCK_OK;
         };
         http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
-        kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
-        kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
-        kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
-        kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+        kii_set_http_socket(&kii, http_ctx.socket());
     }
 
     kii_code_t get() {
@@ -367,7 +374,7 @@ std::string response(const std::string& date) {
 TEST_CASE( "The first connection has the floor, and the next the time the server stated" ) {
     Platform p;
     ebisu_clock_t clock;
-    ebisu_clock_init(&clock, now_ms, &p);
+    ebisu_clock_init(&clock, p.system.system());
     Client c(&clock);
     REQUIRE( kii_set_clock(&c.kii, &clock) == KII_ERR_OK );
     c.responses = { response(JAN_2090_DATE), response(""), response(JUN_2090_DATE) };
@@ -395,7 +402,7 @@ TEST_CASE( "The first connection has the floor, and the next the time the server
 TEST_CASE( "Every kii_t sharing a clock has the time one of them got" ) {
     Platform p;
     ebisu_clock_t clock;
-    ebisu_clock_init(&clock, now_ms, &p);
+    ebisu_clock_init(&clock, p.system.system());
     Client first(&clock);
     Client second(&clock);
     REQUIRE( kii_set_clock(&first.kii, &clock) == KII_ERR_OK );
@@ -413,7 +420,7 @@ TEST_CASE( "Every kii_t sharing a clock has the time one of them got" ) {
 TEST_CASE( "A date earlier than the clock's floor does not set it" ) {
     Platform p;
     ebisu_clock_t clock;
-    ebisu_clock_init(&clock, now_ms, &p);
+    ebisu_clock_init(&clock, p.system.system());
     // Saved by the device: later than the server says, which khc's own floor
     // cannot know.
     ebisu_clock_set_floor(&clock, JUN_2090);
@@ -431,7 +438,7 @@ TEST_CASE( "A date earlier than the clock's floor does not set it" ) {
 TEST_CASE( "Without a clock set, responses set none" ) {
     Platform p;
     ebisu_clock_t clock;
-    ebisu_clock_init(&clock, now_ms, &p);
+    ebisu_clock_init(&clock, p.system.system());
     Client c(&clock);
     c.responses = { response(JAN_2090_DATE) };
     REQUIRE( c.get() == KII_ERR_OK );
@@ -448,7 +455,7 @@ TEST_CASE( "A certificate renewed while the clock fell behind is refused once, t
     // its response gives the clock the time again.
     Platform p;
     ebisu_clock_t clock;
-    ebisu_clock_init(&clock, now_ms, &p);
+    ebisu_clock_init(&clock, p.system.system());
     Client c(&clock);
     REQUIRE( kii_set_clock(&c.kii, &clock) == KII_ERR_OK );
     int64_t not_before = 0;

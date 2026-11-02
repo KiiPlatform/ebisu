@@ -1,28 +1,28 @@
 #ifndef SYS_CB_ESP32_H
 #define SYS_CB_ESP32_H
 
-#include <ebisu_task.h>
+#include <ebisu_system.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Runs entry(param) in a FreeRTOS task of its own. */
-ebisu_task_code_t task_create_cb_impl(
-        const char* name,
-        EBISU_TASK_ENTRY entry,
-        void* param,
-        void* userdata);
+/* The system: tasks are FreeRTOS tasks of their own, delays vTaskDelay(), and
+   the monotonic clock is milliseconds since boot, from esp_timer, which keeps
+   counting through light sleep. Deep sleep restarts the device. It has no
+   state, so one serves everything. */
+ebisu_system_t* esp32_system(void);
 
-void delay_ms_cb_impl(uint32_t msec, void* userdata);
+/* A lock that is a FreeRTOS mutex. */
+typedef struct {
+    ebisu_lock_t base;
+    SemaphoreHandle_t mutex;
+} esp32_lock_t;
 
-/* userdata is a SemaphoreHandle_t, a mutex. */
-void lock_cb_impl(void* userdata);
-void unlock_cb_impl(void* userdata);
-
-/* Milliseconds since boot, from esp_timer, which keeps counting through light
-   sleep. Deep sleep restarts the device. */
-uint64_t monotonic_ms_cb_impl(void* userdata);
+/* Creates the mutex, and makes base a lock of it. */
+void esp32_lock_init(esp32_lock_t* lock);
 
 #ifdef __cplusplus
 }

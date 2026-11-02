@@ -274,16 +274,7 @@ typedef struct khc {
     /* State machine */
     khc_state _state; /**< \private **/
 
-    /* Socket functions. */
-    EBISU_CB_SOCK_CONNECT _cb_sock_connect; /**< \private **/
-    EBISU_CB_SOCK_SEND _cb_sock_send; /**< \private **/
-    EBISU_CB_SOCK_RECV _cb_sock_recv; /**< \private **/
-    EBISU_CB_SOCK_CLOSE _cb_sock_close; /**< \private **/
-    /* Socket context. */
-    void* _sock_ctx_connect; /**< \private **/
-    void* _sock_ctx_send; /**< \private **/
-    void* _sock_ctx_recv; /**< \private **/
-    void* _sock_ctx_close; /**< \private **/
+    ebisu_socket_t* _socket; /**< \private **/
 
     khc_slist* _current_req_header; /**< \private **/
 
@@ -344,11 +335,8 @@ void khc_init(khc* khc);
 /**
  * \brief  Set initial value to members of khc other than callbacks.
  * 
- * Callbacks/ userdata set by following methods remain untouched.
- * khc_set_cb_sock_connect(khc*, EBISU_CB_SOCK_CONNECT, void*),
- * khc_set_cb_sock_send(khc*, EBISU_CB_SOCK_SEND, void*),
- * khc_set_cb_sock_recv(khc*, EBISU_CB_SOCK_RECV, void*),
- * khc_set_cb_sock_close(khc*, EBISU_CB_SOCK_CLOSE, void*),
+ * The socket set by khc_set_socket(khc*, ebisu_socket_t*), and the callbacks/
+ * userdata set by following methods remain untouched.
  * khc_set_cb_read(khc*, KHC_CB_READ, void*),
  * khc_set_cb_write(khc*, KHC_CB_WRITE, void*) and
  * khc_set_cb_header(khc*, KHC_CB_HEADER, void*)
@@ -379,11 +367,8 @@ void khc_reset_except_request(khc* khc);
 /**
  * \brief Perform the HTTP session
  *
- * During the session, callback functions set by
- * khc_set_cb_sock_connect(khc*, EBISU_CB_SOCK_CONNECT, void*),
- * khc_set_cb_sock_send(khc*, EBISU_CB_SOCK_SEND, void*),
- * khc_set_cb_sock_recv(khc*, EBISU_CB_SOCK_RECV, void*),
- * khc_set_cb_sock_close(khc*, EBISU_CB_SOCK_CLOSE, void*),
+ * During the session, the socket set by khc_set_socket(khc*, ebisu_socket_t*),
+ * and callback functions set by
  * khc_set_cb_read(khc*, KHC_CB_READ, void*),
  * khc_set_cb_write(khc*, KHC_CB_WRITE, void*) and
  * khc_set_cb_header(khc*, KHC_CB_HEADER, void*)
@@ -391,8 +376,8 @@ void khc_reset_except_request(khc* khc);
  * This method blocks until the HTTP session ends.
  * \param [in, out] khc instance.
  * \returns KHC_ERR_OK if the response was read whole. KHC_ERR_FAIL, without
- * connecting, if a socket callback, the write callback or the header callback
- * is not set. The read callback may be left out for a request with no body.
+ * connecting, if the socket, one of its operations other than recv_timed_out,
+ * the write callback or the header callback is not set. The read callback may be left out for a request with no body.
  */
 khc_code khc_perform(khc* khc);
 
@@ -477,57 +462,17 @@ void khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size);
 void khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size);
 
 /**
- * \brief Set socket connect callback.
+ * \brief Set the socket requests are sent on.
  *
+ * Its send operation is called several times during the HTTP session,
+ * depending on the size of the request, and its recv operation until the
+ * length of data it reads is 0. Each request is sent with
+ * "Connection: Close", so once connected, its close operation is called at the
+ * end of every request.
  * \param [out] khc instance.
- * \param [in] cb called when socket connection to the server is required.
- * \param [in] userdata context data of the callback.
+ * \param [in] socket The socket. It has to outlive khc, or be replaced first.
  */
-khc_code khc_set_cb_sock_connect(
-        khc* khc,
-        EBISU_CB_SOCK_CONNECT cb,
-        void* userdata);
-
-/**
- * \brief Set socket send callback.
- *
- * Callback would be called several times during the HTTP session depending on the size of the request.
- * \param [out] khc instance.
- * \param [in] cb called when send data to the connected server is required.
- * \param [in] userdata context data of the callback.
- */
-khc_code khc_set_cb_sock_send(
-        khc* khc,
-        EBISU_CB_SOCK_SEND cb,
-        void* userdata);
-
-/**
- * \brief Set socket recv callback.
- *
- * Callback would be called several times until
- * the length of data read by the callback is 0.
- * \param [out] khc instance.
- * \param [in] cb called when receive data from the connected server is required.
- * \param [in] userdata context data of the callback.
- */
-khc_code khc_set_cb_sock_recv(
-        khc* khc,
-        EBISU_CB_SOCK_RECV cb,
-        void* userdata);
-
-/**
- * \brief Set socket close callback.
- *
- * Each request is sent with "Connection: Close", so once connected, the
- * callback is called at the end of every request.
- * \param [out] khc instance.
- * \param [in] cb called when HTTP session ends.
- * \param [in] userdata context data of the callback.
- */
-khc_code khc_set_cb_sock_close(
-        khc* khc,
-        EBISU_CB_SOCK_CLOSE cb,
-        void* userdata);
+void khc_set_socket(khc* khc, ebisu_socket_t* socket);
 
 /**
  * \brief Set read callback.

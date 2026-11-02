@@ -104,9 +104,9 @@ extern uVectorEntry __vector_table;
 
 static OsiLockObj_t m_mutex;
 
-// Stack size in bytes and priority of the handler's MQTT task, which
-// task_create_cb_impl() takes as its userdata.
-static task_context_t mqtt_task_ctx = { OSI_STACK_SIZE * 4, 1 };
+// Its tasks have stacks of OSI_STACK_SIZE * 4 bytes, at priority 1, which the
+// handler's MQTT task needs.
+static cc3200_system_t cc3200_system;
 
 //*****************************************************************************
 //                 GLOBAL VARIABLES -- End
@@ -657,10 +657,10 @@ void handler_init(
         tio_handler_t* handler,
         char* http_buffer,
         int http_buffer_size,
-        void* http_sock_ctx,
+        socket_context_t* http_sock_ctx,
         char* mqtt_buffer,
         int mqtt_buffer_size,
-        void* mqtt_sock_ctx,
+        socket_context_t* mqtt_sock_ctx,
         jkii_resource_t* resource)
 {
     tio_handler_init(handler);
@@ -669,19 +669,11 @@ void handler_init(
 
 //    tio_handler_set_cb_push(handler, pushed_message_callback, NULL);
 
-    tio_handler_set_cb_task_create(handler, task_create_cb_impl, &mqtt_task_ctx);
-    tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl, NULL);
+    cc3200_system_init(&cc3200_system, OSI_STACK_SIZE * 4, 1);
+    tio_handler_set_system(handler, &cc3200_system.base);
 
-    tio_handler_set_cb_sock_connect_http(handler, sock_cb_connect, http_sock_ctx);
-    tio_handler_set_cb_sock_send_http(handler, sock_cb_send, http_sock_ctx);
-    tio_handler_set_cb_sock_recv_http(handler, sock_cb_recv, http_sock_ctx);
-    tio_handler_set_cb_sock_close_http(handler, sock_cb_close, http_sock_ctx);
-
-    tio_handler_set_cb_sock_connect_mqtt(handler, sock_cb_connect, mqtt_sock_ctx);
-    tio_handler_set_cb_sock_send_mqtt(handler, sock_cb_send, mqtt_sock_ctx);
-    tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_sock_ctx);
-    tio_handler_set_cb_sock_recv_timed_out_mqtt(handler, sock_cb_recv_timed_out, mqtt_sock_ctx);
-    tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_sock_ctx);
+    tio_handler_set_http_socket(handler, &http_sock_ctx->base);
+    tio_handler_set_mqtt_socket(handler, &mqtt_sock_ctx->base);
 
     tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);
 
@@ -697,7 +689,7 @@ void handler_init(
 }
 
 // The handler's tokens, renewed as they expire.
-static OsiLockObj_t session_lock;
+static cc3200_lock_t session_lock;
 static kii_session_t session;
 
 void author_updated_callback(const kii_author_t* author, void* userdata)
@@ -731,12 +723,10 @@ void vCmdTask( void *pvParameters )
     tio_handler_t handler;
 
     socket_context_t handler_http_ctx;
-    handler_http_ctx.to_recv = TO_RECV_SEC;
-    handler_http_ctx.to_send = TO_SEND_SEC;
+    sock_cb_init_context(&handler_http_ctx, TO_RECV_SEC, TO_SEND_SEC);
 
     socket_context_t handler_mqtt_ctx;
-    handler_mqtt_ctx.to_recv = TO_RECV_SEC;
-    handler_mqtt_ctx.to_send = TO_SEND_SEC;
+    sock_cb_init_context(&handler_mqtt_ctx, TO_RECV_SEC, TO_SEND_SEC);
 
     char handler_http_buff[HANDLER_HTTP_BUFF_SIZE];
     memset(handler_http_buff, 0x00, sizeof(char) * HANDLER_HTTP_BUFF_SIZE);
@@ -757,13 +747,13 @@ void vCmdTask( void *pvParameters )
             &handler_mqtt_ctx,
             &handler_resource);
 
-    if (osi_LockObjCreate(&session_lock) != OSI_OK) {
+    if (cc3200_lock_init(&session_lock) != OSI_OK) {
         UART_PRINT("create session lock failed.\n");
         LOOP_FOREVER();
     }
     kii_session_init(&session);
-    kii_session_set_cb_lock(&session, lock_cb_impl, unlock_cb_impl, &session_lock);
-    kii_session_set_cb_monotonic_ms(&session, monotonic_ms_cb_impl, NULL);
+    kii_session_set_lock(&session, &session_lock.base);
+    kii_session_set_system(&session, &cc3200_system.base);
     kii_session_set_cb_author_updated(&session, author_updated_callback, NULL);
     // Used to onboard again when the server refuses the token, or the broker
     // the MQTT credentials.

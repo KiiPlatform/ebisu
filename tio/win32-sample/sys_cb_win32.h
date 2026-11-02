@@ -1,30 +1,29 @@
 #ifndef SYS_CB_WIN32_H
 #define SYS_CB_WIN32_H
 
-/* Task callbacks for tio_handler and tio_updater on Windows. */
+/* The system for tio_handler and tio_updater on Windows. */
 
-#include <ebisu_task.h>
+#include <ebisu_system.h>
+#include <windows.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Runs entry(param) on a thread of its own, which nothing waits for. */
-ebisu_task_code_t task_create_cb_impl(
-        const char* name,
-        EBISU_TASK_ENTRY entry,
-        void* param,
-        void* userdata);
+/* The system: each task runs on a thread of its own, which nothing waits for,
+   delays Sleep() and the monotonic clock is GetTickCount64(). It has no state,
+   so one serves everything. */
+ebisu_system_t* win32_system(void);
 
-void delay_ms_cb_impl(uint32_t msec, void* userdata);
+/* A lock that is an SRWLOCK. The handler and the updater run on threads of
+   their own, so the session's lock has to be a real one. */
+typedef struct {
+    ebisu_lock_t base;
+    SRWLOCK srwlock;
+} win32_lock_t;
 
-/* The session's lock. The handler and the updater run on threads of their
-   own, so this is a real lock: userdata is an SRWLOCK. */
-void lock_cb_impl(void* userdata);
-void unlock_cb_impl(void* userdata);
-
-/* The session's monotonic clock. */
-uint64_t monotonic_ms_cb_impl(void* userdata);
+/* Initializes the SRWLOCK, and makes base a lock of it. */
+void win32_lock_init(win32_lock_t* lock);
 
 #ifdef __cplusplus
 }

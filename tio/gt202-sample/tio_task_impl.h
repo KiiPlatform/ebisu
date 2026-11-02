@@ -1,7 +1,9 @@
 #ifndef _TIO_TASK_IMPL
 #define _TIO_TASK_IMPL
 
-#include <ebisu_task.h>
+#include <ebisu_system.h>
+#include <mqx.h>
+#include <mutex.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,23 +17,19 @@ enum
 
 void _tio_task(uint_32 temp);
 
-ebisu_task_code_t cb_task_create(
-    const char* name,
-    EBISU_TASK_ENTRY entry,
-    void* param,
-    void* userdata);
+/* The system: tasks are MQX tasks, delays _time_delay(), and the monotonic
+   clock _time_get_elapsed(). It has no state, so one serves everything. */
+ebisu_system_t* gt202_system(void);
 
-void cb_delay_ms(
-    uint32_t msec,
-    void* userdata);
+/* A lock that is an MQX mutex. */
+typedef struct {
+    ebisu_lock_t base;
+    MUTEX_STRUCT mutex;
+} gt202_lock_t;
 
-/* Session lock callbacks: userdata is a MUTEX_STRUCT initialized by
-   _mutex_init(). */
-void cb_lock(void* userdata);
-
-void cb_unlock(void* userdata);
-
-uint64_t cb_monotonic_ms(void* userdata);
+/* Initializes the mutex, and makes base a lock of it. What _mutex_init()
+   returns. */
+uint_32 gt202_lock_init(gt202_lock_t* lock);
 
 #ifdef __cplusplus
 }

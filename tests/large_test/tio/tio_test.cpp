@@ -135,14 +135,6 @@ struct Action {
     std::string value;
 };
 
-struct Device;
-
-// A task's HTTP socket, whose sends the device records.
-struct RecordedSocket {
-    ebisu::ltest::ssl::SSLData* ssl;
-    Device* d;
-};
-
 struct Device {
     tio_handler_t handler;
     tio_updater_t updater;
@@ -155,17 +147,19 @@ struct Device {
     jkii_resource_t updater_resource;
     ebisu::ltest::ssl::SSLData handler_http;
     ebisu::ltest::ssl::SSLData updater_http;
-    RecordedSocket handler_sent;
-    RecordedSocket updater_sent;
+    // The tasks' HTTP sockets, whose sends the device records.
+    ebisu::ltest::ObservedSocket handler_sent{handler_http.tls()};
+    ebisu::ltest::ObservedSocket updater_sent{updater_http.tls()};
     // What the tasks sent over HTTP, to tell where they went. It holds tokens
     // and the password, so it is searched and never printed.
     std::mutex sent_mutex;
     std::string sent;
     socket_context_t mqtt;
     std::vector<std::thread> tasks;
+    ebisu::ltest::ThreadSystem system;
 
     kii_session_t session;
-    std::mutex session_mutex;
+    ebisu::ltest::MutexLock session_lock;
     // How many times the session's tokens changed. Changed with the session's
     // lock held.
     int author_updates = 0;
@@ -185,18 +179,6 @@ struct Device {
     int exits = 0;
 };
 
-ebisu_sock_code_t cb_record_send(void* userdata, const char* buffer, size_t length,
-        size_t* out_sent_length)
-{
-    RecordedSocket* r = (RecordedSocket*)userdata;
-    ebisu_sock_code_t res = ebisu::ltest::ssl::cb_send(r->ssl, buffer, length, out_sent_length);
-    if (res == EBISU_SOCK_OK) {
-        std::lock_guard<std::mutex> lock(r->d->sent_mutex);
-        r->d->sent.append(buffer, *out_sent_length);
-    }
-    return res;
-}
-
 bool sent_has(Device& d, const char* text)
 {
     std::lock_guard<std::mutex> lock(d.sent_mutex);
@@ -207,19 +189,6 @@ void forget_sent(Device& d)
 {
     std::lock_guard<std::mutex> lock(d.sent_mutex);
     d.sent.clear();
-}
-
-ebisu_task_code_t cb_task_create(const char* name, EBISU_TASK_ENTRY entry,
-        void* entry_param, void* userdata)
-{
-    Device* d = (Device*)userdata;
-    d->tasks.emplace_back(entry, entry_param);
-    return EBISU_TASKC_OK;
-}
-
-void cb_delay_ms(uint32_t msec, void* userdata)
-{
-    std::this_thread::sleep_for(std::chrono::milliseconds(msec));
 }
 
 kii_bool_t cb_handler_continue(void* task_info, void* userdata)
@@ -319,22 +288,6 @@ size_t cb_state_read(char* buffer, size_t size, void* userdata)
     return n;
 }
 
-void cb_session_lock(void* userdata)
-{
-    ((std::mutex*)userdata)->lock();
-}
-
-void cb_session_unlock(void* userdata)
-{
-    ((std::mutex*)userdata)->unlock();
-}
-
-uint64_t cb_session_now_ms(void* userdata)
-{
-    return (uint64_t)std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now().time_since_epoch()).count();
-}
-
 void cb_author_updated(const kii_author_t* author, void* userdata)
 {
     Device* d = (Device*)userdata;
@@ -343,7 +296,7 @@ void cb_author_updated(const kii_author_t* author, void* userdata)
 
 int author_updates(Device& d)
 {
-    std::lock_guard<std::mutex> lock(d.session_mutex);
+    std::lock_guard<std::mutex> lock(d.session_lock.mutex);
     return d.author_updates;
 }
 
@@ -373,32 +326,24 @@ void init_device(Device& d)
 {
     d.handler_resource = {d.handler_tokens, sizeof(d.handler_tokens) / sizeof(d.handler_tokens[0])};
     d.updater_resource = {d.updater_tokens, sizeof(d.updater_tokens) / sizeof(d.updater_tokens[0])};
-#ifdef _WIN32
     sock_cb_init_context(&d.mqtt, TO_RECV, TO_SEND);
-#else
-    memset(&d.mqtt, 0, sizeof(d.mqtt));
-    d.mqtt.to_recv = TO_RECV;
-    d.mqtt.to_send = TO_SEND;
-#endif
+    d.system.keep = [&d](std::thread task) { d.tasks.push_back(std::move(task)); };
+    auto record = [&d](const char* data, size_t length) {
+        std::lock_guard<std::mutex> lock(d.sent_mutex);
+        d.sent.append(data, length);
+    };
+    d.handler_sent.on_sent = record;
+    d.updater_sent.on_sent = record;
 
     tio_handler_t* h = &d.handler;
     tio_handler_init(h);
     tio_handler_set_app(h, APP_ID, DEFAULT_SITE);
-    tio_handler_set_cb_task_create(h, cb_task_create, &d);
-    tio_handler_set_cb_delay_ms(h, cb_delay_ms, NULL);
+    tio_handler_set_system(h, d.system.get());
     tio_handler_set_cb_task_continue(h, cb_handler_continue, &d);
     tio_handler_set_cb_task_exit(h, cb_exit, &d);
     tio_handler_set_cb_err(h, cb_err, &d);
-    tio_handler_set_cb_sock_connect_http(h, ebisu::ltest::ssl::cb_connect, &d.handler_http);
-    d.handler_sent = {&d.handler_http, &d};
-    tio_handler_set_cb_sock_send_http(h, cb_record_send, &d.handler_sent);
-    tio_handler_set_cb_sock_recv_http(h, ebisu::ltest::ssl::cb_recv, &d.handler_http);
-    tio_handler_set_cb_sock_close_http(h, ebisu::ltest::ssl::cb_close, &d.handler_http);
-    tio_handler_set_cb_sock_connect_mqtt(h, sock_cb_connect, &d.mqtt);
-    tio_handler_set_cb_sock_send_mqtt(h, sock_cb_send, &d.mqtt);
-    tio_handler_set_cb_sock_recv_mqtt(h, sock_cb_recv, &d.mqtt);
-    tio_handler_set_cb_sock_recv_timed_out_mqtt(h, sock_cb_recv_timed_out, &d.mqtt);
-    tio_handler_set_cb_sock_close_mqtt(h, sock_cb_close, &d.mqtt);
+    tio_handler_set_http_socket(h, d.handler_sent.get());
+    tio_handler_set_mqtt_socket(h, &d.mqtt.base);
     tio_handler_set_mqtt_to_sock_recv(h, TO_RECV);
     tio_handler_set_http_buff(h, d.handler_http_buff, sizeof(d.handler_http_buff));
     tio_handler_set_mqtt_buff(h, d.handler_mqtt_buff, sizeof(d.handler_mqtt_buff));
@@ -408,23 +353,18 @@ void init_device(Device& d)
     tio_updater_t* u = &d.updater;
     tio_updater_init(u);
     tio_updater_set_app(u, APP_ID, DEFAULT_SITE);
-    tio_updater_set_cb_task_create(u, cb_task_create, &d);
-    tio_updater_set_cb_delay_ms(u, cb_delay_ms, NULL);
+    tio_updater_set_system(u, d.system.get());
     tio_updater_set_cb_task_continue(u, cb_updater_continue, &d);
     tio_updater_set_cb_task_exit(u, cb_exit, &d);
     tio_updater_set_cb_error(u, cb_err, &d);
-    tio_updater_set_cb_sock_connect(u, ebisu::ltest::ssl::cb_connect, &d.updater_http);
-    d.updater_sent = {&d.updater_http, &d};
-    tio_updater_set_cb_sock_send(u, cb_record_send, &d.updater_sent);
-    tio_updater_set_cb_sock_recv(u, ebisu::ltest::ssl::cb_recv, &d.updater_http);
-    tio_updater_set_cb_sock_close(u, ebisu::ltest::ssl::cb_close, &d.updater_http);
+    tio_updater_set_socket(u, d.updater_sent.get());
     tio_updater_set_buff(u, d.updater_buff, sizeof(d.updater_buff));
     tio_updater_set_interval(u, UPDATE_INTERVAL);
     tio_updater_set_json_parser_resource(u, &d.updater_resource);
 
     kii_session_init(&d.session);
-    kii_session_set_cb_lock(&d.session, cb_session_lock, cb_session_unlock, &d.session_mutex);
-    kii_session_set_cb_monotonic_ms(&d.session, cb_session_now_ms, NULL);
+    kii_session_set_lock(&d.session, d.session_lock.get());
+    kii_session_set_system(&d.session, d.system.get());
     kii_session_set_cb_author_updated(&d.session, cb_author_updated, &d);
 }
 

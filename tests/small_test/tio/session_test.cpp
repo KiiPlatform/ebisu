@@ -14,17 +14,16 @@ using khct::http_response;
 
 namespace {
 
+// Its lock does nothing.
 struct Platform {
     uint64_t now_ms;
     std::vector<kii_author_t> updates;
-    Platform() : now_ms(0) {}
+    khct::cb::LockCtx lock;
+    khct::cb::SystemCtx system;
+    Platform() : now_ms(0) {
+        system.on_monotonic_ms = [this] { return now_ms; };
+    }
 };
-
-void cb_noop_lock(void*) {}
-
-uint64_t cb_now(void* userdata) {
-    return ((Platform*)userdata)->now_ms;
-}
 
 void cb_updated(const kii_author_t* author, void* userdata) {
     ((Platform*)userdata)->updates.push_back(*author);
@@ -32,8 +31,8 @@ void cb_updated(const kii_author_t* author, void* userdata) {
 
 void init_session(kii_session_t* session, Platform* platform) {
     kii_session_init(session);
-    kii_session_set_cb_lock(session, cb_noop_lock, cb_noop_lock, NULL);
-    kii_session_set_cb_monotonic_ms(session, cb_now, platform);
+    kii_session_set_lock(session, platform->lock.get());
+    kii_session_set_system(session, platform->system.system());
     kii_session_set_cb_author_updated(session, cb_updated, platform);
     kii_session_set_password(session, "vid", "pw");
     kii_author_t author;
@@ -95,7 +94,7 @@ TEST_CASE( "The updater uploads again when its token was renewed" ) {
     tio_updater_set_app(&updater, "app", "api.kii.com");
     tio_updater_set_buff(&updater, buff, sizeof(buff));
     tio_updater_set_json_parser_resource(&updater, &resource);
-    tio_updater_set_cb_delay_ms(&updater, khct::cb::cb_delay_ms, NULL);
+    tio_updater_set_system(&updater, khct::cb::delay_only_system());
     khct::HttpScript http;
     http.attach(&updater._kii);
     REQUIRE( tio_updater_set_session(&updater, &session) == TIO_ERR_OK );
@@ -160,7 +159,7 @@ TEST_CASE( "A command's results are sent again after the token is renewed" ) {
     tio_handler_set_app(&handler, "app", "api.kii.com");
     tio_handler_set_http_buff(&handler, buff, sizeof(buff));
     tio_handler_set_json_parser_resource(&handler, &resource);
-    tio_handler_set_cb_delay_ms(&handler, khct::cb::cb_delay_ms, NULL);
+    tio_handler_set_system(&handler, khct::cb::delay_only_system());
     khct::HttpScript http;
     http.attach(&handler._kii);
     REQUIRE( tio_handler_set_session(&handler, &session) == TIO_ERR_OK );
@@ -195,7 +194,11 @@ TEST_CASE( "With a session, start takes the session's author" ) {
     tio_handler_t handler;
     tio_handler_init(&handler);
     khct::set_push_needs(&handler._kii, buff, sizeof(buff));
-    tio_handler_set_cb_task_create(&handler, cb_task_not_started, NULL);
+    khct::cb::SystemCtx handler_sys;
+    handler_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+        return cb_task_not_started(name, entry, entry_param, NULL);
+    };
+    tio_handler_set_system(&handler, handler_sys.system());
     REQUIRE( tio_handler_set_session(&handler, &session) == TIO_ERR_OK );
 
     // Changed since it was attached, as onboarding through the other task
@@ -212,7 +215,11 @@ TEST_CASE( "With a session, start takes the session's author" ) {
     tio_updater_t updater;
     tio_updater_init(&updater);
     khct::set_updater_needs(&updater._kii, buff, sizeof(buff));
-    tio_updater_set_cb_task_create(&updater, cb_task_not_started, NULL);
+    khct::cb::SystemCtx updater_sys;
+    updater_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+        return cb_task_not_started(name, entry, entry_param, NULL);
+    };
+    tio_updater_set_system(&updater, updater_sys.system());
     tio_updater_set_interval(&updater, 60);
     REQUIRE( tio_updater_set_session(&updater, &session) == TIO_ERR_OK );
     REQUIRE( tio_updater_start(&updater, NULL, state_size, NULL, read_state, NULL) == TIO_ERR_OK );
@@ -270,12 +277,20 @@ TEST_CASE( "Without a session, the author is what onboarding left" ) {
 TEST_CASE( "Without a session, start needs an author" ) {
     tio_handler_t handler;
     tio_handler_init(&handler);
-    tio_handler_set_cb_task_create(&handler, cb_task_not_started, NULL);
+    khct::cb::SystemCtx handler_sys;
+    handler_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+        return cb_task_not_started(name, entry, entry_param, NULL);
+    };
+    tio_handler_set_system(&handler, handler_sys.system());
     REQUIRE( tio_handler_start(&handler, NULL, cb_action, NULL) == TIO_ERR_FAIL );
 
     tio_updater_t updater;
     tio_updater_init(&updater);
-    tio_updater_set_cb_task_create(&updater, cb_task_not_started, NULL);
+    khct::cb::SystemCtx updater_sys;
+    updater_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+        return cb_task_not_started(name, entry, entry_param, NULL);
+    };
+    tio_updater_set_system(&updater, updater_sys.system());
     tio_updater_set_interval(&updater, 60);
     REQUIRE( tio_updater_start(&updater, NULL, state_size, NULL, read_state, NULL) == TIO_ERR_FAIL );
 }

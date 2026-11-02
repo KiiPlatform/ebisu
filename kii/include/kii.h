@@ -24,8 +24,7 @@ extern "C" {
 
 /**
  * \brief MQTT task name.
- * Name can be referenced inside task create callback set by
- * kii_set_cb_task_create().
+ * The name task_create of the system set by kii_set_system() is given.
  */
 #define KII_TASK_NAME_MQTT "kii_mqtt_task"
 
@@ -243,11 +242,8 @@ typedef struct kii_session_t {
     uint64_t _password_refused_at_ms;
     KII_CB_AUTHOR_UPDATED _cb_author_updated; /**< \private */
     void* _author_updated_data; /**< \private */
-    EBISU_CB_LOCK _cb_lock; /**< \private */
-    EBISU_CB_LOCK _cb_unlock; /**< \private */
-    void* _lock_data; /**< \private */
-    EBISU_CB_MONOTONIC_MS _cb_monotonic_ms; /**< \private */
-    void* _monotonic_ms_data; /**< \private */
+    ebisu_lock_t* _lock; /**< \private */
+    ebisu_system_t* _system; /**< \private */
 } kii_session_t;
 
 /** \brief Represents MQTT endpoint. */
@@ -302,23 +298,6 @@ typedef void (*KII_PUSH_RECEIVED_CB)(
         void* userdata);
 
 /**
- * \brief Callback tells whether the last receive on the MQTT socket timed out.
- *
- * The recv callback set by kii_set_cb_mqtt_sock_recv() returns EBISU_SOCK_FAIL
- * both when its receive timeout runs out with nothing received, which is
- * routine on an idle connection, and when the receive fails because the
- * connection is lost. This callback tells the two apart. It is called right
- * after such a EBISU_SOCK_FAIL, before any other callback on the socket.
- * See kii_set_cb_mqtt_sock_recv_timed_out().
- *
- * \param [in] sock_ctx Context object pointer given to
- * kii_set_cb_mqtt_sock_recv_timed_out().
- * \return KII_TRUE if the receive failed because its timeout ran out,
- * KII_FALSE if it failed for any other reason.
- */
-typedef kii_bool_t (*KII_CB_SOCK_RECV_TIMED_OUT)(void* sock_ctx);
-
-/**
  * \brief Stores data/ callbacks used by kii module.
  */
 typedef struct kii_t {
@@ -327,29 +306,16 @@ typedef struct kii_t {
 	char _app_id[KII_APP_ID_MAX_SIZE]; /**< \private */
 	char _app_host[KII_APP_HOST_MAX_SIZE]; /**< \private */
 
-    void* _mqtt_sock_connect_ctx; /**< \private */
-    void* _mqtt_sock_send_ctx; /**< \private */
-    void* _mqtt_sock_recv_ctx; /**< \private */
-    void* _mqtt_sock_recv_timed_out_ctx; /**< \private */
-    void* _mqtt_sock_close_ctx; /**< \private */
-    EBISU_CB_SOCK_CONNECT _cb_mqtt_sock_connect; /**< \private */
-    EBISU_CB_SOCK_SEND _cb_mqtt_sock_send; /**< \private */
-    EBISU_CB_SOCK_RECV _cb_mqtt_sock_recv; /**< \private */
-    KII_CB_SOCK_RECV_TIMED_OUT _cb_mqtt_sock_recv_timed_out; /**< \private */
-    EBISU_CB_SOCK_CLOSE _cb_mqtt_sock_close_cb; /**< \private */
+    ebisu_socket_t* _mqtt_socket; /**< \private */
     uint32_t _mqtt_to_recv_sec; /**< \private */
 
-    EBISU_CB_TASK_CREATE _cb_task_create; /**< \private */
-    void* _task_create_data; /**< \private */
+    ebisu_system_t* _system; /**< \private */
 
     KII_CB_TASK_CONTINUE _cb_task_continue; /**< \private */
     void* _task_continue_data; /**< \private */
 
     KII_CB_TASK_EXIT _cb_task_exit; /**< \private */
     void* _task_exit_data; /**< \private */
-
-    EBISU_CB_DELAY_MS _cb_delay_ms; /**< \private */
-    void* _delay_ms_data; /**< \private */
 
     KII_PUSH_RECEIVED_CB _cb_push_received; /**< \private */
     void* _push_data; /**< \private */
@@ -545,33 +511,25 @@ void kii_session_init(kii_session_t* session);
 /**
  * \brief Set the lock guarding the session.
  *
- * Required before kii_set_session(). See EBISU_CB_LOCK for when the callbacks may
- * be no-ops.
+ * Required before kii_set_session(). See ebisu_lock_ops_t for when the lock may
+ * do nothing.
  *
  * \param [out] session kii_session_t instance.
- * \param [in] cb_lock Callback acquiring the lock.
- * \param [in] cb_unlock Callback releasing the lock.
- * \param [in] userdata Context object pointer passed to both callbacks.
+ * \param [in] lock The lock. It has to outlive the session.
  */
-void kii_session_set_cb_lock(
-        kii_session_t* session,
-        EBISU_CB_LOCK cb_lock,
-        EBISU_CB_LOCK cb_unlock,
-        void* userdata);
+void kii_session_set_lock(kii_session_t* session, ebisu_lock_t* lock);
 
 /**
- * \brief Set the monotonic clock the session times token expiry with.
+ * \brief Set the system whose monotonic clock the session times token expiry
+ * with.
  *
- * Required before kii_set_session(). Called only with the session lock held.
+ * Required before kii_set_session(). Its monotonic_ms is called only with the
+ * session lock held.
  *
  * \param [out] session kii_session_t instance.
- * \param [in] cb_monotonic_ms Callback returning the time.
- * \param [in] userdata Context object pointer passed to cb_monotonic_ms.
+ * \param [in] system The system. It has to outlive the session.
  */
-void kii_session_set_cb_monotonic_ms(
-        kii_session_t* session,
-        EBISU_CB_MONOTONIC_MS cb_monotonic_ms,
-        void* userdata);
+void kii_session_set_system(kii_session_t* session, ebisu_system_t* system);
 
 /**
  * \brief Set the thing's credentials the session renews tokens with.
@@ -694,7 +652,7 @@ kii_code_t kii_set_session(kii_t* kii, kii_session_t* session);
  *
  * After each request, the date of its response, as kii_get_resp_date() gives
  * it, is given to the clock, which counts on from it. Every kii_t of a device
- * may share one clock, ebisu_clock_set_cb_lock() permitting.
+ * may share one clock, ebisu_clock_set_lock() permitting.
  *
  * \param [out] kii kii_t instance.
  * \param [in] clock Clock to set, or NULL.
@@ -988,9 +946,9 @@ kii_code_t kii_get_mqtt_endpoint(
  *  After succeeded, asynchronous task is started and
  * cb_push is called when message is delivered to the
  * thing.
- * The task is created by the callback set by kii_set_cb_task_create().
- * If that callback is not set, or fails to create the task, no task is
- * started and KII_ERR_CREATE_TASK is returned.
+ * The task is created by task_create of the system set by kii_set_system().
+ * If there is none, or it fails to create the task, no task is started and
+ * KII_ERR_CREATE_TASK is returned.
  *
  * After kii_ti_onboard() returned an MQTT endpoint for the thing kii acts as,
  * the task connects with that endpoint. Otherwise it installs push and fetches
@@ -1010,14 +968,14 @@ kii_code_t kii_get_mqtt_endpoint(
  * \param [in] cb_push  Callback called when push message delivered.
  * \param [in] userdata Context object passed to cb_push.
  * \return kii_code_t. KII_ERR_FAIL, with no task started, if
- * keep_alive_interval_sec is larger than 65535, if cb_push, the callback set by
- * kii_set_cb_delay_ms(), a socket callback or a buffer it needs is not set, or
+ * keep_alive_interval_sec is larger than 65535, if cb_push, the system's
+ * delay_ms, a socket or an operation of one, or a buffer it needs is not set, or
  * if the task of an earlier start is still running. That task runs until the
  * callback set by kii_set_cb_task_continue() ends it, or an error does, and has
  * finished by the time the callback set by kii_set_cb_task_exit() is called,
  * which may start it again. A task ended any other way, such as by killing its
  * thread, needs kii_init() before starting again. KII_ERR_CREATE_TASK if no
- * callback is set by kii_set_cb_task_create(), or it fails.
+ * system with a task_create is set by kii_set_system(), or it fails.
  */
 kii_code_t kii_start_push_task(
 		kii_t* kii,
@@ -1358,37 +1316,12 @@ void kii_set_stream_buff(kii_t* kii, char* buff, size_t buff_size);
 void kii_set_resp_header_buff(kii_t* kii, char* buff, size_t buff_size);
 
 /**
- * \brief Set socket connect callback used for HTTP(S)
+ * \brief Set the socket HTTP(S) requests are sent on.
  *
  * \param [out] kii kii_t instance.
- * \param [in] cb_connect Callback function pointer.
- * \param [in] userdata Context object pointer passed to cb_connect.
+ * \param [in] socket The socket. It has to outlive kii, or be replaced first.
  */
-void kii_set_cb_http_sock_connect(kii_t* kii, EBISU_CB_SOCK_CONNECT cb_connect, void* userdata);
-/**
- * \brief Set socket send callback used for HTTP(S)
- *
- * \param [out] kii kii_t instance.
- * \param [in] cb_send Callback function pointer.
- * \param [in] userdata Context object pointer passed to cb_send.
- */
-void kii_set_cb_http_sock_send(kii_t* kii, EBISU_CB_SOCK_SEND cb_send, void* userdata);
-/**
- * \brief Set socket recv callback used for HTTP(S)
- *
- * \param [out] kii kii_t instance.
- * \param [in] cb_recv Callback function pointer.
- * \param [in] userdata Context object pointer passed to cb_recv.
- */
-void kii_set_cb_http_sock_recv(kii_t* kii, EBISU_CB_SOCK_RECV cb_recv, void* userdata);
-/**
- * \brief Set socket close callback used for HTTP(S)
- *
- * \param [out] kii kii_t instance.
- * \param [in] cb_close Callback function pointer.
- * \param [in] userdata Context object pointer passed to cb_close.
- */
-void kii_set_cb_http_sock_close(kii_t* kii, EBISU_CB_SOCK_CLOSE cb_close, void* userdata);
+void kii_set_http_socket(kii_t* kii, ebisu_socket_t* socket);
 
 /**
  * \brief Set buffer used to parse MQTT message.
@@ -1410,94 +1343,41 @@ void kii_set_cb_http_sock_close(kii_t* kii, EBISU_CB_SOCK_CLOSE cb_close, void* 
 void kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size);
 
 /**
- * \brief Set socket connect callback used for MQTT(S)
+ * \brief Set the socket the MQTT task connects to the broker on.
  *
- * Note that socket used for MQTT must be blocking-mode, with a send timeout, and with a recv timeout
- * the same as given to kii_set_mqtt_to_sock_recv().
- * It is necessary for sending pingReq message periodically to achieve Keep-Alive
- * since we don't require system clock APIs abstraction.
- * \param [out] kii kii_t instance.
- * \param [in] cb_connect Callback function pointer.
- * \param [in] userdata Context object pointer passed to cb_connect.
- */
-void kii_set_cb_mqtt_sock_connect(kii_t* kii, EBISU_CB_SOCK_CONNECT cb_connect, void* userdata);
-/**
- * \brief Set socket send callback used for MQTT(S)
+ * It must be blocking, with a send timeout, and with a receive timeout the same
+ * as given to kii_set_mqtt_to_sock_recv(): the task sends PINGREQ when the
+ * keep-alive interval requires between receives that time out.
  *
- * Note that socket used for MQTT must be blocking-mode, with a send timeout, and with a recv timeout
- * the same as given to kii_set_mqtt_to_sock_recv().
- * It is necessary for sending pingReq message periodically to achieve Keep-Alive
- * since we don't require system clock APIs abstraction.
- * \param [out] kii kii_t instance.
- * \param [in] cb_send Callback function pointer.
- * \param [in] userdata Context object pointer passed to cb_send.
- */
-void kii_set_cb_mqtt_sock_send(kii_t* kii, EBISU_CB_SOCK_SEND cb_send, void* userdata);
-/**
- * \brief Set socket recv callback used for MQTT(S)
+ * Its recv returns EBISU_SOCK_FAIL when the receive timeout runs out with
+ * nothing received: the task takes EBISU_SOCK_OK with 0 bytes for the end of
+ * the stream, and connects again.
  *
- * Note that socket used for MQTT must be blocking-mode, with a send timeout, and with a recv timeout
- * the same as given to kii_set_mqtt_to_sock_recv().
- * It is necessary for sending pingReq message periodically to achieve Keep-Alive
- * since we don't require system clock APIs abstraction.
+ * While the task waits for the next message, an EBISU_SOCK_FAIL from recv
+ * comes routinely from the timeout on an idle connection, and also from a lost
+ * connection. Only the socket can tell which, so the task asks its
+ * recv_timed_out. If that returns false, the task closes the socket and
+ * connects again. If it returns true, the task goes on waiting, and sends
+ * PINGREQ when the keep-alive interval requires. If the socket has no
+ * recv_timed_out, every such EBISU_SOCK_FAIL is taken for a timeout. A lost
+ * connection is then noticed only when a PINGREQ cannot be sent or goes
+ * unanswered, so with a keep-alive interval of 0 it is not noticed at all.
  *
- * Return EBISU_SOCK_FAIL when the receive timeout runs out with nothing
- * received: the task takes EBISU_SOCK_OK with 0 bytes for the end of the
- * stream, and connects again. kii_set_cb_mqtt_sock_recv_timed_out() lets the
- * task tell such a timeout from a lost connection.
- * \param [out] kii kii_t instance.
- * \param [in] cb_recv Callback function pointer.
- * \param [in] userdata Context object pointer passed to cb_recv.
- */
-void kii_set_cb_mqtt_sock_recv(kii_t* kii, EBISU_CB_SOCK_RECV cb_recv, void* userdata);
-/**
- * \brief Set callback telling a receive timeout from a failure on the MQTT(S)
- * socket.
- *
- * Optional. While the MQTT task waits for the next message, the recv callback
- * set by kii_set_cb_mqtt_sock_recv() returns EBISU_SOCK_FAIL whenever its
- * receive timeout runs out with nothing received, as it routinely does on an
- * idle connection, and also when the connection is lost. Only the socket
- * implementation can tell which, so the task asks cb_timed_out. If it returns
- * KII_FALSE, the task closes the socket and connects again. If it returns
- * KII_TRUE, the task goes on waiting, and sends PINGREQ when the keep-alive
- * interval requires.
- *
- * If this callback is not set, or set to NULL, every such EBISU_SOCK_FAIL is
- * taken for a timeout. A lost connection is then noticed only when a PINGREQ
- * cannot be sent or goes unanswered, so with a keep-alive interval of 0 it is
- * not noticed at all.
- *
- * cb_timed_out is asked only in that wait. A receive that fails partway
+ * recv_timed_out is asked only in that wait. A receive that fails partway
  * through a message, or while waiting for the broker to answer CONNECT or
- * SUBSCRIBE, makes the task connect again whatever the cause. It is never
- * called for the HTTP(S) socket.
+ * SUBSCRIBE, makes the task connect again whatever the cause.
  *
  * \param [out] kii kii_t instance.
- * \param [in] cb_timed_out Callback function pointer, or NULL.
- * \param [in] userdata Context object pointer passed to cb_timed_out,
- * typically the one passed to kii_set_cb_mqtt_sock_recv().
+ * \param [in] socket The socket. It has to outlive the task.
  */
-void kii_set_cb_mqtt_sock_recv_timed_out(kii_t* kii, KII_CB_SOCK_RECV_TIMED_OUT cb_timed_out, void* userdata);
-/**
- * \brief Set socket close callback used for MQTT(S)
- *
- * Note that socket used for MQTT must be blocking-mode, with a send timeout, and with a recv timeout
- * the same as given to kii_set_mqtt_to_sock_recv().
- * It is necessary for sending pingReq message periodically to achieve Keep-Alive
- * since we don't require system clock APIs abstraction.
- * \param [out] kii kii_t instance.
- * \param [in] cb_close Callback function pointer.
- * \param [in] userdata Context object pointer passed to cb_close.
- */
-void kii_set_cb_mqtt_sock_close(kii_t* kii, EBISU_CB_SOCK_CLOSE cb_close, void* userdata);
+void kii_set_mqtt_socket(kii_t* kii, ebisu_socket_t* socket);
 
 /**
  * \brief Set timeout of receiving data from socket user for MQTT(S)
  *
  * This setting is mandatory to achieve MQTT keep-alive mechanism.
  * We use timeout instead of requirering system clock access to periodically send pingReq.
- * Socket recv implementation given to kii_set_cb_mqtt_sock_recv()
+ * The recv of the socket set by kii_set_mqtt_socket()
  * must have same timeout specified by to_sock_recv_sec.
  *
  * \param [out] kii kii_t instance.
@@ -1505,13 +1385,14 @@ void kii_set_cb_mqtt_sock_close(kii_t* kii, EBISU_CB_SOCK_CLOSE cb_close, void* 
  */
 void kii_set_mqtt_to_sock_recv(kii_t* kii, uint32_t to_sock_recv_sec);
 /**
- * \brief Set callback creates task.
+ * \brief Set the system: tasks, delays and a monotonic clock.
+ *
+ * The MQTT task is created with its task_create, and waits with its delay_ms.
  *
  * \param [out] kii kii_t instance.
- * \param [in] cb_task_create Callback function pointer.
- * \param [in] userdata Context object pointer passed to cb_task_create.
+ * \param [in] system The system. It has to outlive kii.
  */
-void kii_set_cb_task_create(kii_t* kii, EBISU_CB_TASK_CREATE cb_task_create, void* userdata);
+void kii_set_system(kii_t* kii, ebisu_system_t* system);
 
 /**
  * \brief set callback determines whether to continue or discontinue task.
@@ -1542,18 +1423,11 @@ void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE cb_continue, void
  * Task exits when the task is discontinued by KII_CB_TASK_CONTINUE callback or
  * un-recoverble error occurs.
  * If it has a connection to the MQTT broker open, it closes it first with the
- * callback set by kii_set_cb_mqtt_sock_close(), so exit_cb is called with no
+ * close of the socket set by kii_set_mqtt_socket(), so exit_cb is called with no
  * MQTT connection open.
  * In exit_cb, you'll need to free memory used for MQTT buffer set by kii_set_mqtt_buff(),
- * Memory used for the userdata passed to following callbacks in case not yet freed.
-
- * - kii_set_cb_mqtt_sock_send()
- * - kii_set_cb_mqtt_sock_connect()
- * - kii_set_cb_mqtt_sock_recv()
- * - kii_set_cb_mqtt_sock_recv_timed_out()
- * - kii_set_cb_mqtt_sock_close()
- * - kii_set_cb_task_continue()
- * - kii_set_cb_task_exit()
+ * the socket set by kii_set_mqtt_socket(), and the userdata passed to
+ * kii_set_cb_task_continue() and kii_set_cb_task_exit(), in case not yet freed.
 
  * In addition, you may need to call task/ thread termination API.
  * It depends on the task/ threading framework you used to create task/ thread.
@@ -1568,17 +1442,6 @@ void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE cb_continue, void
  * \param [in] userdata Context data pointer passed as second argument when cb_exit is called.
  */
 void kii_set_cb_task_exit(kii_t* kii, KII_CB_TASK_EXIT cb_exit, void* userdata);
-/**
- * \brief Callback asks to delay/ sleep task execution.
- *
- * Called when the task needs to delay/ sleep.
- *
- * \param [out] kii kii_t instance
- * \param [in] cb_delay_ms Callback function pointer.
- * \param [in] userdata Context object pointer passed to cb_delay_ms.
- */
-void kii_set_cb_delay_ms(kii_t* kii, EBISU_CB_DELAY_MS cb_delay_ms, void* userdata);
-
 /**
  * \brief Set JSON parser resource
  * \param [out] kii kii_t instance.

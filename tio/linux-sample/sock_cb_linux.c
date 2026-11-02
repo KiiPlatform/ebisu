@@ -51,12 +51,21 @@ static void init_openssl(void)
     SSL_load_error_strings();
 }
 
+static const ebisu_socket_ops_t sock_cb_ops = {
+    sock_cb_connect,
+    sock_cb_send,
+    sock_cb_recv,
+    sock_cb_close,
+    sock_cb_recv_timed_out
+};
+
 void sock_cb_init_context(
         socket_context_t* ctx,
         unsigned int to_recv,
         unsigned int to_send)
 {
     memset(ctx, 0, sizeof(*ctx));
+    ctx->base.ops = &sock_cb_ops;
     ctx->socket = -1;
     ctx->to_recv = to_recv;
     ctx->to_send = to_send;
@@ -117,7 +126,7 @@ static void print_ssl_failure(const char* what, int ssl_error, int saved_errno)
 }
 
 ebisu_sock_code_t
-    sock_cb_connect(void* sock_ctx, const char* host,
+    sock_cb_connect(ebisu_socket_t* self, const char* host,
             uint16_t port)
 {
     int sock, ret;
@@ -125,7 +134,7 @@ ebisu_sock_code_t
     struct sockaddr_in server;
     SSL *ssl = NULL;
     SSL_CTX *ssl_ctx = NULL;
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
 
     servhost = gethostbyname(host);
     if (servhost == NULL) {
@@ -252,7 +261,7 @@ ebisu_sock_code_t
     ctx->socket = sock;
     ctx->ssl = ssl;
     ctx->ssl_ctx = ssl_ctx;
-    ctx->ssl_failed = KII_FALSE;
+    ctx->ssl_failed = false;
     return EBISU_SOCK_OK;
 
 fail:
@@ -267,12 +276,12 @@ fail:
 }
 
 ebisu_sock_code_t
-    sock_cb_send(void* socket_context,
+    sock_cb_send(ebisu_socket_t* self,
             const char* buffer,
             size_t length,
             size_t* out_sent_length)
 {
-    socket_context_t* ctx = (socket_context_t*)socket_context;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     clear_errors();
     int ret = SSL_write(ctx->ssl, buffer, length);
     if (ret > 0) {
@@ -283,19 +292,19 @@ ebisu_sock_code_t
     int saved_errno = errno;
     int ssl_error = SSL_get_error(ctx->ssl, ret);
     if (ssl_error == SSL_ERROR_SYSCALL || ssl_error == SSL_ERROR_SSL) {
-        ctx->ssl_failed = KII_TRUE;
+        ctx->ssl_failed = true;
     }
     print_ssl_failure("send", ssl_error, saved_errno);
     return EBISU_SOCK_FAIL;
 }
 
 ebisu_sock_code_t
-    sock_cb_recv(void* socket_context,
+    sock_cb_recv(ebisu_socket_t* self,
             char* buffer,
             size_t length_to_read,
             size_t* out_actual_length)
 {
-    socket_context_t* ctx = (socket_context_t*)socket_context;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     *out_actual_length = 0;
     clear_errors();
     int ret = SSL_read(ctx->ssl, buffer, length_to_read);
@@ -316,14 +325,14 @@ ebisu_sock_code_t
            gone. See sock_cb_recv_timed_out(). */
         return EBISU_SOCK_FAIL;
     case SSL_ERROR_SYSCALL:
-        ctx->ssl_failed = KII_TRUE;
+        ctx->ssl_failed = true;
         /* The end of the stream, from a peer that sent no close_notify. */
         if (ctx->recv_errno == 0) {
             return EBISU_SOCK_OK;
         }
         break;
     case SSL_ERROR_SSL:
-        ctx->ssl_failed = KII_TRUE;
+        ctx->ssl_failed = true;
         break;
     default:
         break;
@@ -337,24 +346,24 @@ ebisu_sock_code_t
    The timeout makes the read fail with EAGAIN or EWOULDBLOCK, which OpenSSL
    reports as SSL_ERROR_WANT_READ, and errno is only meaningful with
    SSL_ERROR_SYSCALL. */
-kii_bool_t
-    sock_cb_recv_timed_out(void* socket_context)
+bool
+    sock_cb_recv_timed_out(ebisu_socket_t* self)
 {
-    socket_context_t* ctx = (socket_context_t*)socket_context;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     if (ctx->recv_ssl_error == SSL_ERROR_WANT_READ) {
-        return KII_TRUE;
+        return true;
     }
     if (ctx->recv_ssl_error == SSL_ERROR_SYSCALL &&
             (ctx->recv_errno == EAGAIN || ctx->recv_errno == EWOULDBLOCK)) {
-        return KII_TRUE;
+        return true;
     }
-    return KII_FALSE;
+    return false;
 }
 
 ebisu_sock_code_t
-    sock_cb_close(void* socket_context)
+    sock_cb_close(ebisu_socket_t* self)
 {
-    socket_context_t* ctx = (socket_context_t*)socket_context;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     /* 1 means the bidirectional shutdown completed. 0 means our close_notify
        went out but the peer's has not arrived yet, which is not an error and is
        the normal outcome against a server that closes the connection itself.
@@ -362,7 +371,7 @@ ebisu_sock_code_t
        all we need. SSL_get_error() is only meaningful for a negative return.
        See https://www.openssl.org/docs/man3.0/man3/SSL_shutdown.html */
     int shutdown_ok = 1;
-    if (ctx->ssl_failed != KII_TRUE) {
+    if (!ctx->ssl_failed) {
         clear_errors();
         int ret = SSL_shutdown(ctx->ssl);
         if (ret < 0) {

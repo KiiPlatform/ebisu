@@ -50,10 +50,7 @@ TEST_CASE( "kii_send_push_message posts the message to the topic" ) {
         return EBISU_SOCK_OK;
     };
     http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
-    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+    kii_set_http_socket(&kii, http_ctx.socket());
 
     const std::string message = "{\"data\":{\"key\":\"value\"},\"mqtt\":{\"enabled\":true}}";
     kii_topic_t topic;

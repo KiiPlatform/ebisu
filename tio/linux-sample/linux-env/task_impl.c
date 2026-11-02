@@ -4,10 +4,10 @@
 #include <time.h>
 
 ebisu_task_code_t task_create_cb(
+        ebisu_system_t* self,
         const char* name,
         EBISU_TASK_ENTRY entry,
-        void* param,
-        void* userdata)
+        void* param)
 {
     int ret;
     pthread_t pthid;
@@ -27,7 +27,7 @@ ebisu_task_code_t task_create_cb(
     }
 }
 
-void delay_ms_cb(uint32_t msec, void* userdata)
+void delay_ms_cb(ebisu_system_t* self, uint32_t msec)
 {
     struct timespec left;
     left.tv_sec = msec / 1000;

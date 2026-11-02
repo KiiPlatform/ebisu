@@ -22,7 +22,7 @@ void ssl_ctx_close() {
 
     ebisu_sock_code_t
 sock_cb_connect(
-        void* sock_ctx,
+        ebisu_socket_t* self,
         const char* host,
         uint16_t port)
 {
@@ -32,7 +32,7 @@ sock_cb_connect(
     SOCKADDR_T hostAddr;
     A_UINT32 sock;
     SSL *ssl = NULL;
-    socket_context_t *ctx = (socket_context_t*)sock_ctx;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
 
     memset(&dnsRespInfo, 0, sizeof(dnsRespInfo));
     /*Check if driver is loaded*/
@@ -112,13 +112,13 @@ sock_cb_connect(
 
     ebisu_sock_code_t
  sock_cb_send(
-        void* sock_ctx,
+        ebisu_socket_t* self,
         const char* buffer,
         size_t length,
         size_t* out_sent_length)
 {
     int ret;
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     char* custom = CUSTOM_ALLOC(length);
     memcpy(custom, buffer, length);
 #if CONNECT_SSL
@@ -140,12 +140,12 @@ sock_cb_connect(
 }
 
 ebisu_sock_code_t sock_cb_recv(
-        void* sock_ctx,
+        ebisu_socket_t* self,
         char* buffer,
         size_t length_to_read,
         size_t* out_actual_length)
 {
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     *out_actual_length = 0;
     // SSL_read() and t_recv() return the length read, or a negative error,
     // which a size_t would turn into a huge length.
@@ -208,12 +208,12 @@ ebisu_sock_code_t sock_cb_recv(
 }
 
 ebisu_sock_code_t mqtt_cb_recv(
-        void* sock_ctx,
+        ebisu_socket_t* self,
         char* buffer,
         size_t length_to_read,
         size_t* out_actual_length)
 {
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     *out_actual_length = 0;
     // SSL_read() and t_recv() return the length read, or a negative error,
     // which a size_t would turn into a huge length.
@@ -267,9 +267,9 @@ ebisu_sock_code_t mqtt_cb_recv(
     }
 }
 
-ebisu_sock_code_t sock_cb_close(void* sock_ctx)
+ebisu_sock_code_t sock_cb_close(ebisu_socket_t* self)
 {
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
 #if CONNECT_SSL
     if (ctx->ssl != NULL)
     {
@@ -284,4 +284,39 @@ ebisu_sock_code_t sock_cb_close(void* sock_ctx)
         t_shutdown(handle, ctx->sock);
     }
     return EBISU_SOCK_OK;
+}
+
+static const ebisu_socket_ops_t http_ops = {
+    sock_cb_connect,
+    sock_cb_send,
+    sock_cb_recv,
+    sock_cb_close,
+    NULL
+};
+
+static const ebisu_socket_ops_t mqtt_ops = {
+    sock_cb_connect,
+    sock_cb_send,
+    mqtt_cb_recv,
+    sock_cb_close,
+    NULL
+};
+
+static void init_context(socket_context_t* ctx, const ebisu_socket_ops_t* ops,
+        unsigned int to_recv, unsigned int to_send)
+{
+    memset(ctx, 0, sizeof(*ctx));
+    ctx->base.ops = ops;
+    ctx->to_recv = to_recv;
+    ctx->to_send = to_send;
+}
+
+void sock_cb_init_http(socket_context_t* ctx, unsigned int to_recv, unsigned int to_send)
+{
+    init_context(ctx, &http_ops, to_recv, to_send);
+}
+
+void sock_cb_init_mqtt(socket_context_t* ctx, unsigned int to_recv, unsigned int to_send)
+{
+    init_context(ctx, &mqtt_ops, to_recv, to_send);
 }

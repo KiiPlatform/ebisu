@@ -32,54 +32,76 @@ You can choose to run both `tio_handler_t` and `tio_updater_t` or either one.
 Application developer needs to prepare following callback functions.
 
 <a name="task-callbacks"></a>
-### Task callbacks
+### The system
 
-`tio_handler_t` needs executing task asynchronously since it keeps waiting for commands sent to MQTT topic.
+`tio_handler_t` needs executing task asynchronously since it keeps waiting for commands sent to MQTT topic,
+and both it and `tio_updater_t` need to wait between attempts. The way of doing both varies in different
+environments, so the application gives `tio` an `ebisu_system_t`, from
+[platform](https://github.com/KiiPlatform/ebisu/blob/master/platform/README.md).
 
-`tio` needs abstraction with callbacks since the way of dispatch async tasks varies in different environments.
-
-#### Task creation
-
-Task create callback function signature is following.
+It is a struct holding a pointer to a table of operations, which `tio` calls with the system itself as their
+first argument:
 
 ```c
-typedef ebisu_task_code_t
-(*EBISU_CB_TASK_CREATE)
-    (const char* name,
-     EBISU_TASK_ENTRY entry,
-     void* entry_param,
-     void* userdata);
+typedef struct ebisu_system_ops_t {
+    ebisu_task_code_t (*task_create)(ebisu_system_t* self, const char* name,
+            EBISU_TASK_ENTRY entry, void* entry_param);
+    void (*delay_ms)(ebisu_system_t* self, uint32_t msec);
+    uint64_t (*monotonic_ms)(ebisu_system_t* self);
+} ebisu_system_ops_t;
 ```
 
-`entry` must be called with `entry_param`. `userdata` is the context object
-pointer given to `tio_handler_set_cb_task_create()` or
-`tio_updater_set_cb_task_create()`.
+- `task_create` runs `entry(entry_param)` in a task of its own.
+- `delay_ms` waits. `usleep(msec * 1000)` would overflow above about 71 minutes, and return early on a signal.
+- `monotonic_ms` gives milliseconds since any fixed origin. It never goes back, and does not jump when the wall
+  clock is set. A 32-bit tick counter has to be extended to 64 bits, or it wraps after about 49.7 days.
 
-Typical implementation with `pthread`:
+Typical implementation with `pthread`, as in
+[linux-sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sys_cb_linux.c). A system with no
+state of its own can be one static object for everything:
 
 ```c
-ebisu_task_code_t task_create_cb
-    (const char* name,
-     EBISU_TASK_ENTRY entry,
-     void* param,
-     void* userdata)
+static ebisu_task_code_t task_create(ebisu_system_t* self, const char* name,
+        EBISU_TASK_ENTRY entry, void* param)
 {
     pthread_t pthid;
-    int ret = pthread_create(&pthid, NULL, entry, param);
-    if(ret == 0)
-    {
-        /* Nothing joins a task, so its thread has to go by itself when it ends. */
-        pthread_detach(pthid);
-        return EBISU_TASKC_OK;
-    }
-    else
-    {
+    if (pthread_create(&pthid, NULL, entry, param) != 0) {
         return EBISU_TASKC_FAIL;
     }
+    /* Nothing joins a task, so its thread has to go by itself when it ends. */
+    pthread_detach(pthid);
+    return EBISU_TASKC_OK;
+}
+
+static void delay_ms(ebisu_system_t* self, uint32_t msec)
+{
+    struct timespec left;
+    left.tv_sec = msec / 1000;
+    left.tv_nsec = (long)(msec % 1000) * 1000000;
+    while (nanosleep(&left, &left) == -1 && errno == EINTR) {
+    }
+}
+
+static uint64_t monotonic_ms(ebisu_system_t* self)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (uint64_t)ts.tv_sec * 1000 + (uint64_t)ts.tv_nsec / 1000000;
+}
+
+static const ebisu_system_ops_t linux_system_ops = { task_create, delay_ms, monotonic_ms };
+static ebisu_system_t system_ = { &linux_system_ops };
+
+ebisu_system_t* linux_system(void)
+{
+    return &system_;
 }
 ```
 
-#### Task continue callback
+A system that needs state, such as a stack size for its tasks, embeds `ebisu_system_t` in a struct of its own and
+gets that back from `self` with `EBISU_CONTAINER_OF()`, as sockets do below.
+
+### Task continue callback
 
 Task continue callback is used to determine whether to continue or exit task from the loop.
 
@@ -135,80 +157,48 @@ Details of memory management when exiting handler task, please refer to API refe
 
 We use `atomic_bool` here since the flag is referenced in main thread as well before exiting the process. (`_handler_exit()` is executed in handler task thread.)
 
-#### Delay callback
+### Sockets
 
-In some situation program needs to wait for specified period of time to avoid the loop runs too fast or making too many requests to servers, etc.
-
-`tio` needs abstraction with callbacks since the way varies in different environments.
-
-Delay callback function signature is following.
-
-```
-typedef void
-(*EBISU_CB_DELAY_MS)
-    (uint32_t msec,
-     void* userdata);
-```
-
-Typical implementation with `nanosleep` provided by `libc`. `usleep(msec * 1000)`
-would overflow above about 71 minutes, and return early on a signal:
+`tio` provides abstraction of socket related functions. Each connection is an `ebisu_socket_t`: a pointer to a table
+of operations, which `tio` calls with the socket itself as their first argument.
 
 ```c
-void delay_ms_cb(uint32_t msec, void* userdata)
+typedef struct ebisu_socket_ops_t {
+    ebisu_sock_code_t (*connect)(ebisu_socket_t* self, const char* host, uint16_t port);
+    ebisu_sock_code_t (*send)(ebisu_socket_t* self, const char* buffer, size_t length,
+            size_t* out_sent_length);
+    ebisu_sock_code_t (*recv)(ebisu_socket_t* self, char* buffer, size_t length_to_read,
+            size_t* out_actual_length);
+    ebisu_sock_code_t (*close)(ebisu_socket_t* self);
+    bool (*recv_timed_out)(ebisu_socket_t* self);  /* Optional, MQTT only. */
+} ebisu_socket_ops_t;
+```
+
+An implementation embeds `ebisu_socket_t` in the struct holding the connection's state, and gets that back from
+`self` with `EBISU_CONTAINER_OF()`:
+
+```c
+typedef struct {
+    ebisu_socket_t base;
+    SSL* ssl;
+    int socket;
+} socket_context_t;
+
+ebisu_sock_code_t sock_cb_close(ebisu_socket_t* self)
 {
-    struct timespec left;
-    left.tv_sec = msec / 1000;
-    left.tv_nsec = (long)(msec % 1000) * 1000000;
-    while (nanosleep(&left, &left) == -1 && errno == EINTR) {
-    }
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
+    ...
 }
-```
-
-### Socket callbacks.
-
-`tio` provides abstraction of socket related functions.
-
-Socket callback functions signature:
-
-```c
-typedef ebisu_sock_code_t
-    (*EBISU_CB_SOCK_CONNECT)
-    (void* sock_ctx, const char* host, uint16_t port);
-
-typedef ebisu_sock_code_t
-    (*EBISU_CB_SOCK_SEND)
-    (void* sock_ctx, const char* buffer, size_t length, size_t* out_sent_length);
-
-typedef ebisu_sock_code_t
-    (*EBISU_CB_SOCK_RECV)
-    (void* sock_ctx, char* buffer, size_t length_to_read,
-     size_t* out_actual_length);
-
-typedef ebisu_sock_code_t
-    (*EBISU_CB_SOCK_CLOSE)(void* sock_ctx);
 ```
 
 You can see implementation with OpenSSL at [linux-sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c)
 
 The [khc README](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#writing-callbacks)
-has what these callbacks have to do that `tio` can't check for them, such as timeouts and `SIGPIPE`.
+has what these operations have to do that `tio` can't check for them, such as timeouts and `SIGPIPE`.
 
-`sock_ctx` argument is arbitrary data context which application can use.
-Application should pass the pointer of the data when calling
-`tio_handler_set_cb_sock_connect_http()`,
-`tio_handler_set_cb_sock_send_http()`,
-`tio_handler_set_cb_sock_recv_http()`,
-`tio_handler_set_cb_sock_close_http()`,
-`tio_handler_set_cb_sock_connect_mqtt()`,
-`tio_handler_set_cb_sock_send_mqtt()`,
-`tio_handler_set_cb_sock_recv_mqtt()`,
-`tio_handler_set_cb_sock_close_mqtt()`
- methods.
-
-Note that, `tio_handler` uses MQTT(s) to receive remote control commands and uses HTTP(s) to send the result of command execution.
-
-Application can choose to pass different implementations of socket functions or same one.
-If you choose to pass same pointer of the function, Please also check [Asynchronous task management](#asynchronous-task-management) section as well.
+Note that, `tio_handler` uses MQTT(s) to receive remote control commands and uses HTTP(s) to send the result of command execution,
+so it takes two sockets: one for each. Both can have the same operations, but they must be different objects, as the two
+connections are open at the same time. Please also check [Asynchronous task management](#asynchronous-task-management) section as well.
 
 For both MQTT and HTTP, using them over secure connection is highly recommended.
 Our cloud supports non-secure connection for now. However, we may terminate supports of insecure connections in the future.
@@ -228,15 +218,14 @@ Twice as large as recv/ send timeout works fine but recommend few minutes to avo
     tio_handler_set_keep_alive_interval(handler, 300);
 ```
 
-When the recv timeout runs out with nothing received, the MQTT recv callback
+When the recv timeout runs out with nothing received, the MQTT socket's recv
 should return `EBISU_SOCK_FAIL`. `EBISU_SOCK_OK` with 0 bytes means the broker
 closed the connection, and `tio_handler` connects again.
 
-A lost connection makes the recv callback return `EBISU_SOCK_FAIL` as well.
-To tell it from a timeout, set the optional
-`tio_handler_set_cb_sock_recv_timed_out_mqtt()` callback: it returns
-`KII_TRUE` if the last receive timed out, and `KII_FALSE` if it failed
-otherwise, in which case `tio_handler` connects again. Without it, every
+A lost connection makes recv return `EBISU_SOCK_FAIL` as well. To tell it from a
+timeout, give the socket the optional `recv_timed_out` operation: it returns
+`true` if the last receive timed out, and `false` if it failed otherwise, in
+which case `tio_handler` connects again. Without it, every
 `EBISU_SOCK_FAIL` while waiting for a command is taken for a timeout, and a lost
 connection is only noticed when a `PINGREQ` fails or goes unanswered; with a
 keep-alive interval of 0, never.
@@ -292,19 +281,10 @@ The full code can be checked [handler_init() in example.c](https://github.com/Ki
 
     tio_handler_set_app(handler, KII_APP_ID, KII_APP_HOST);
 
-    tio_handler_set_cb_task_create(handler, task_create_cb_impl, NULL);
-    tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl, NULL);
+    tio_handler_set_system(handler, linux_system());
 
-    tio_handler_set_cb_sock_connect_http(handler, sock_cb_connect, http_ssl_ctx);
-    tio_handler_set_cb_sock_send_http(handler, sock_cb_send, http_ssl_ctx);
-    tio_handler_set_cb_sock_recv_http(handler, sock_cb_recv, http_ssl_ctx);
-    tio_handler_set_cb_sock_close_http(handler, sock_cb_close, http_ssl_ctx);
-
-    tio_handler_set_cb_sock_connect_mqtt(handler, sock_cb_connect, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_send_mqtt(handler, sock_cb_send, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_recv_timed_out_mqtt(handler, sock_cb_recv_timed_out, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
+    tio_handler_set_http_socket(handler, &http_ssl_ctx->base);
+    tio_handler_set_mqtt_socket(handler, &mqtt_ssl_ctx->base);
 
     tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);
 
@@ -333,37 +313,19 @@ In the example, `KII_APP_ID` and `KII_APP_HOST` is defined as Macro.
 Those are used to identify work space in the cloud and the value is determined when you Kii Cloud App has been created.
 To create your Kii Cloud App, Sign-up to [Developer console](https://developer.kii.com).
 
-### Set-up callbacks
-
-#### Task callbacks.
-
-Set callback function pointers.
+### Set-up the system and sockets
 
 ```c
-    tio_handler_set_cb_task_create(handler, task_create_cb_impl, NULL);
-    tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl, NULL);
+    tio_handler_set_system(handler, linux_system());
 ```
 
-### Socket callbacks.
-
-Set callback function pointers and context data pointers.
-If you application allocates memory/ resources for context data, application is responsible to free those memory/ resources.
-
-Different context objects named `http_ssl_ctx` and `mqtt_ssl_ctx` is used since the connection and it's life-cycle is different between them.
+Different socket objects, `http_ssl_ctx` and `mqtt_ssl_ctx`, are used since the connection and it's life-cycle is different between them.
+`tio` keeps a pointer to each object, so they have to outlive the handler's task. If your application allocates memory/ resources for them,
+application is responsible to free those memory/ resources.
 
 ```c
-    tio_handler_set_cb_sock_connect_http(handler, sock_cb_connect, http_ssl_ctx);
-    tio_handler_set_cb_sock_send_http(handler, sock_cb_send, http_ssl_ctx);
-    tio_handler_set_cb_sock_recv_http(handler, sock_cb_recv, http_ssl_ctx);
-    tio_handler_set_cb_sock_close_http(handler, sock_cb_close, http_ssl_ctx);
-```
-
-```c
-    tio_handler_set_cb_sock_connect_mqtt(handler, sock_cb_connect, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_send_mqtt(handler, sock_cb_send, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_recv_timed_out_mqtt(handler, sock_cb_recv_timed_out, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
+    tio_handler_set_http_socket(handler, &http_ssl_ctx->base);
+    tio_handler_set_mqtt_socket(handler, &mqtt_ssl_ctx->base);
 ```
 
 ### Set-up buffers
@@ -385,8 +347,8 @@ Note that buffer for HTTP and MQTT must be isolated. Passing overlapping memory 
 
 `tio_handler_t` needs socket timeout in seconds to send MQTT `PINGREQ` periodically.
 
-Note that application must implement socket timeout in the socket callback implementation.
-You can see example [here](./linux-sample/sys_cb_linux.c)
+Note that application must implement socket timeout in the socket implementation.
+You can see example [here](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/sock_cb_linux.c)
 
 ```c
     tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);
@@ -457,8 +419,8 @@ Here's the set-up code extracted from [example.c](https://github.com/KiiPlatform
 ```c
     kii_session_t session;
     kii_session_init(&session);
-    kii_session_set_cb_lock(&session, lock_cb_impl, unlock_cb_impl, &session_mutex);
-    kii_session_set_cb_monotonic_ms(&session, monotonic_ms_cb_impl, NULL);
+    kii_session_set_lock(&session, &session_lock.base);
+    kii_session_set_system(&session, linux_system());
     kii_session_set_cb_author_updated(&session, author_updated_callback, NULL);
     if (tio_handler_set_session(&handler, &session) != TIO_ERR_OK ||
             tio_updater_set_session(&updater, &session) != TIO_ERR_OK) {
@@ -482,42 +444,43 @@ where the application limits login attempts, trying a wrong password whenever
 a token is refused would soon lock the thing out. Meanwhile requests refused for
 their token fail. Calling `kii_session_set_password()` again ends the wait.
 
-### Lock callbacks
+### Lock
 
 Required. The handler's MQTT task and the updater's task both use the session,
 and the lock keeps one of them from renewing the token while the other does. It
 is held for the length of the renewal request. It need not be recursive. On a
-platform where the two tasks cannot run at the same time, the callbacks can do
+platform where the two tasks cannot run at the same time, its operations can do
 nothing.
 
-```c
-void lock_cb_impl(void* userdata)
-{
-    pthread_mutex_lock((pthread_mutex_t*)userdata);
-}
-
-void unlock_cb_impl(void* userdata)
-{
-    pthread_mutex_unlock((pthread_mutex_t*)userdata);
-}
-```
-
-### Monotonic clock callback
-
-Required. Times the expiry of tokens that have a lifetime, which those
-onboarding issues do not. It returns milliseconds since any fixed origin, never goes back, and does not jump when the wall clock is set. A
-32-bit tick counter has to be extended to 64 bits, or it wraps after about 49.7
-days. The callback is called only with the session lock held, so it can count
-the wraps without a lock of its own.
+An `ebisu_lock_t` is a pointer to its operations, embedded in the struct holding
+the mutex:
 
 ```c
-uint64_t monotonic_ms_cb_impl(void* userdata)
+typedef struct {
+    ebisu_lock_t base;
+    pthread_mutex_t mutex;
+} linux_lock_t;
+
+static void lock(ebisu_lock_t* self)
 {
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (uint64_t)ts.tv_sec * 1000 + (uint64_t)ts.tv_nsec / 1000000;
+    pthread_mutex_lock(&EBISU_CONTAINER_OF(self, linux_lock_t, base)->mutex);
 }
+
+static void unlock(ebisu_lock_t* self)
+{
+    pthread_mutex_unlock(&EBISU_CONTAINER_OF(self, linux_lock_t, base)->mutex);
+}
+
+static const ebisu_lock_ops_t linux_lock_ops = { lock, unlock };
 ```
+
+### The system's monotonic clock
+
+Required. The session times the expiry of tokens that have a lifetime, which
+those onboarding issues do not, with the `monotonic_ms` of the
+[system](#task-callbacks) set by `kii_session_set_system()`. It is called only
+with the session lock held, so it can count the wraps of a 32-bit tick counter
+without a lock of its own.
 
 ### Author updated callback
 
@@ -541,7 +504,7 @@ A device without a real-time clock needs the time to check the server's
 certificate in its socket callbacks. The handler and the updater give a
 `ebisu_clock_t` the time each response states, with `tio_handler_set_clock()` and
 `tio_updater_set_clock()`. They run in tasks of their own, so a clock they share
-needs a lock, set by `ebisu_clock_set_cb_lock()`. That has to be a lock of its own,
+needs a lock, set by `ebisu_clock_set_lock()`. That has to be a lock of its own,
 not the session's. The [kii README](https://github.com/KiiPlatform/ebisu/blob/master/kii/README.md#the-time) describes the
 clock and how the socket callbacks use it.
 
@@ -598,11 +561,11 @@ The name of the task initiated by this call is exported as macro `KII_TASK_NAME_
 
 ## Callback functions
 
-### Task callbacks, socket callbacks
+### The system, task callbacks, sockets
 
 Similar to `tio_handler_t`.
 
-`tio_updater_t` only uses HTTP(s) and does not use MQTT(s).
+`tio_updater_t` only uses HTTP(s) and does not use MQTT(s), so it takes one socket.
 
 ### State read callbacks
 
@@ -678,20 +641,16 @@ Please refer to (http://docs.kii.com/en/guides/thingifsdk/).
 Here's the set-up code extracted from example app.
 The full code can be checked [updater_init() in example.c](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/example.c)
 
-```
+```c
     tio_updater_init(updater);
 
     tio_updater_set_app(updater, KII_APP_ID, KII_APP_HOST);
 
-    tio_updater_set_cb_task_create(updater, task_create_cb_impl, NULL);
-    tio_updater_set_cb_delay_ms(updater, delay_ms_cb_impl, NULL);
+    tio_updater_set_system(updater, linux_system());
 
     tio_updater_set_buff(updater, buffer, buffer_size);
 
-    tio_updater_set_cb_sock_connect(updater, sock_cb_connect, sock_ssl_ctx);
-    tio_updater_set_cb_sock_send(updater, sock_cb_send, sock_ssl_ctx);
-    tio_updater_set_cb_sock_recv(updater, sock_cb_recv, sock_ssl_ctx);
-    tio_updater_set_cb_sock_close(updater, sock_cb_close, sock_ssl_ctx);
+    tio_updater_set_socket(updater, &sock_ssl_ctx->base);
 
     tio_updater_set_interval(updater, UPDATE_PERIOD_SEC);
 
@@ -747,25 +706,18 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
 ## Tasks executed by `tio_handler_t`.
 
-- `KII_TASK_NAME_MQTT` is a name of the task defined at `kii.h` and passed as argument when the callback set by `tio_handler_set_cb_task_create()` is called to create task/ thread.
+- `KII_TASK_NAME_MQTT` is a name of the task defined at `kii.h` and passed as argument when `task_create` of the system set by `tio_handler_set_system()` is called to create task/ thread.
 
     The task creation is requested once when the `tio_handler_start()` method is invoked.
 
     This task is responsible for connecting to MQTT with the endpoint onboarding returned, receiving messages from MQTT and propagating them to the app by the `TIO_CB_ACTION` callback, and sending MQTT `PINGREQ` periodically. If the handler was started without onboarding, or the broker refuses the credentials, it gets the MQTT endpoint through the REST API instead.
 
-    This task executes callbacks set by following APIs.
+    This task calls the operations of the objects, and the callbacks, set by following APIs.
 
-    - `tio_handler_set_cb_sock_connect_http()`
-    - `tio_handler_set_cb_sock_send_http()`
-    - `tio_handler_set_cb_sock_recv_http()`
-    - `tio_handler_set_cb_sock_close_http()`
-    - `tio_handler_set_cb_sock_connect_mqtt()`
-    - `tio_handler_set_cb_sock_send_mqtt()`
-    - `tio_handler_set_cb_sock_recv_mqtt()`
-    - `tio_handler_set_cb_sock_recv_timed_out_mqtt()`
-        (Optional. See [Notes about socket implementation used for MQTT](#mqtt-socket-notes).)
-    - `tio_handler_set_cb_sock_close_mqtt()`
-    - `tio_handler_set_cb_delay_ms()`
+    - `tio_handler_set_http_socket()`
+    - `tio_handler_set_mqtt_socket()`
+        (Its `recv_timed_out` is optional. See [Notes about socket implementation used for MQTT](#mqtt-socket-notes).)
+    - `tio_handler_set_system()` (`delay_ms`)
     - `tio_handler_start()` (`TIO_CB_ACTION` callback)
     - `tio_handler_set_cb_err()`
         (Optional. In case set the error handler for debugging, etc.)
@@ -781,19 +733,16 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
 ## Tasks executed by `tio_updater_t`.
 
-- `TIO_TASK_NAME_UPDATE_STATE` is a name of the task declared in `tio.h` and passed as argument when the callback set by `tio_updater_set_cb_task_create()` is called to create task/ thread.
+- `TIO_TASK_NAME_UPDATE_STATE` is a name of the task declared in `tio.h` and passed as argument when `task_create` of the system set by `tio_updater_set_system()` is called to create task/ thread.
 
     The task creation is requested once when the `tio_updater_start()` method is invoked.
 
     This task is responsible for periodically updates the IoT device state with the specified interval.
 
-    This task executes callbacks set by following APIs.
+    This task calls the operations of the objects, and the callbacks, set by following APIs.
 
-    - `tio_updater_set_cb_sock_connect()`
-    - `tio_updater_set_cb_sock_send()`
-    - `tio_updater_set_cb_sock_recv()`
-    - `tio_updater_set_cb_sock_close()`
-    - `tio_updater_set_cb_delay_ms()`
+    - `tio_updater_set_socket()`
+    - `tio_updater_set_system()` (`delay_ms`)
     - `tio_updater_start()` (`TIO_CB_SIZE`, `TIO_CB_READ` callbacks.)
     - `tio_updater_set_cb_error()`
         (Optional. In case set the error handler for debugging, etc.)
@@ -808,6 +757,6 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
 
 - Above 2 tasks `KII_TASK_NAME_MQTT` and `TIO_TASK_NAME_UPDATE_STATE` would be executed in parallel. Therefore, if the callback implementation shares the resource that need exclusive access, you need to implement access control mechanism.
 
-- Both tasks call the callbacks of a [session](#session) they share. Its lock callbacks guard the session itself.
+- Both tasks call the callbacks of a [session](#session) they share. Its lock guards the session itself.
 
 - You must prepare independent buffers which does not have overlaps.

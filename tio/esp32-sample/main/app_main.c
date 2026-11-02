@@ -39,6 +39,8 @@ static tio_handler_t handler;
 static tio_updater_t updater;
 static kii_session_t session;
 static ebisu_clock_t device_clock;
+static esp32_lock_t clock_lock;
+static esp32_lock_t session_lock;
 static socket_context_t handler_http_ctx;
 static socket_context_t handler_mqtt_ctx;
 static socket_context_t updater_http_ctx;
@@ -128,22 +130,13 @@ static void init_handler(jkii_resource_t* resource)
 {
     tio_handler_init(&handler);
     tio_handler_set_app(&handler, CONFIG_EBISU_SAMPLE_APP_ID, CONFIG_EBISU_SAMPLE_APP_HOST);
-    tio_handler_set_cb_task_create(&handler, task_create_cb_impl, NULL);
-    tio_handler_set_cb_delay_ms(&handler, delay_ms_cb_impl, NULL);
+    tio_handler_set_system(&handler, esp32_system());
     tio_handler_set_cb_task_continue(&handler, handler_continue, NULL);
     tio_handler_set_cb_task_exit(&handler, task_exit, "handler");
     tio_handler_set_cb_err(&handler, task_error, "handler");
 
-    tio_handler_set_cb_sock_connect_http(&handler, sock_cb_connect, &handler_http_ctx);
-    tio_handler_set_cb_sock_send_http(&handler, sock_cb_send, &handler_http_ctx);
-    tio_handler_set_cb_sock_recv_http(&handler, sock_cb_recv, &handler_http_ctx);
-    tio_handler_set_cb_sock_close_http(&handler, sock_cb_close, &handler_http_ctx);
-
-    tio_handler_set_cb_sock_connect_mqtt(&handler, sock_cb_connect, &handler_mqtt_ctx);
-    tio_handler_set_cb_sock_send_mqtt(&handler, sock_cb_send, &handler_mqtt_ctx);
-    tio_handler_set_cb_sock_recv_mqtt(&handler, sock_cb_recv, &handler_mqtt_ctx);
-    tio_handler_set_cb_sock_recv_timed_out_mqtt(&handler, sock_cb_recv_timed_out, &handler_mqtt_ctx);
-    tio_handler_set_cb_sock_close_mqtt(&handler, sock_cb_close, &handler_mqtt_ctx);
+    tio_handler_set_http_socket(&handler, &handler_http_ctx.base);
+    tio_handler_set_mqtt_socket(&handler, &handler_mqtt_ctx.base);
     tio_handler_set_mqtt_to_sock_recv(&handler, TO_RECV_SEC);
 
     tio_handler_set_http_buff(&handler, handler_http_buff, sizeof(handler_http_buff));
@@ -156,16 +149,12 @@ static void init_updater(jkii_resource_t* resource)
 {
     tio_updater_init(&updater);
     tio_updater_set_app(&updater, CONFIG_EBISU_SAMPLE_APP_ID, CONFIG_EBISU_SAMPLE_APP_HOST);
-    tio_updater_set_cb_task_create(&updater, task_create_cb_impl, NULL);
-    tio_updater_set_cb_delay_ms(&updater, delay_ms_cb_impl, NULL);
+    tio_updater_set_system(&updater, esp32_system());
     tio_updater_set_cb_task_continue(&updater, updater_continue, NULL);
     tio_updater_set_cb_task_exit(&updater, task_exit, "updater");
     tio_updater_set_cb_error(&updater, task_error, "updater");
 
-    tio_updater_set_cb_sock_connect(&updater, sock_cb_connect, &updater_http_ctx);
-    tio_updater_set_cb_sock_send(&updater, sock_cb_send, &updater_http_ctx);
-    tio_updater_set_cb_sock_recv(&updater, sock_cb_recv, &updater_http_ctx);
-    tio_updater_set_cb_sock_close(&updater, sock_cb_close, &updater_http_ctx);
+    tio_updater_set_socket(&updater, &updater_http_ctx.base);
 
     tio_updater_set_buff(&updater, updater_http_buff, sizeof(updater_http_buff));
     tio_updater_set_interval(&updater, CONFIG_EBISU_SAMPLE_UPDATE_PERIOD);
@@ -185,8 +174,9 @@ void app_main(void)
        response, the clock has only a floor, a time it is known not to be
        earlier than. The clock has a lock of its own: the socket callbacks use
        it while kii may hold the session's. */
-    ebisu_clock_init(&device_clock, monotonic_ms_cb_impl, NULL);
-    ebisu_clock_set_cb_lock(&device_clock, lock_cb_impl, unlock_cb_impl, xSemaphoreCreateMutex());
+    esp32_lock_init(&clock_lock);
+    ebisu_clock_init(&device_clock, esp32_system());
+    ebisu_clock_set_lock(&device_clock, &clock_lock.base);
     if (CONFIG_EBISU_SAMPLE_CLOCK_FLOOR > 0) {
         ebisu_clock_set_floor(&device_clock, CONFIG_EBISU_SAMPLE_CLOCK_FLOOR);
     }
@@ -205,8 +195,9 @@ void app_main(void)
        which renews them as they expire, and each response's date sets the
        clock. */
     kii_session_init(&session);
-    kii_session_set_cb_lock(&session, lock_cb_impl, unlock_cb_impl, xSemaphoreCreateMutex());
-    kii_session_set_cb_monotonic_ms(&session, monotonic_ms_cb_impl, NULL);
+    esp32_lock_init(&session_lock);
+    kii_session_set_lock(&session, &session_lock.base);
+    kii_session_set_system(&session, esp32_system());
     kii_session_set_cb_author_updated(&session, author_updated, NULL);
     if (tio_handler_set_session(&handler, &session) != TIO_ERR_OK ||
             tio_updater_set_session(&updater, &session) != TIO_ERR_OK ||

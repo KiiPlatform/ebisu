@@ -7,6 +7,11 @@
 #include "kii.h"
 #include "kii_session_impl.h"
 
+static void _delay_ms(kii_t* kii, uint32_t msec)
+{
+    kii->_system->ops->delay_ms(kii->_system, msec);
+}
+
 #define WAIT_MS 1000
 #define ARRIVED_MSG_READ_TIME 500
 #define MSG_SEND_TIME 500
@@ -110,7 +115,7 @@ ebisu_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) 
     size_t total_sent = 0;
     while (total_sent < j) {
         size_t sent_len = 0;
-        send_err = kii->_cb_mqtt_sock_send(kii->_mqtt_sock_send_ctx,
+        send_err = kii->_mqtt_socket->ops->send(kii->_mqtt_socket,
                 &kii->_mqtt_buffer[total_sent], j - total_sent, &sent_len);
         if (send_err == EBISU_SOCK_AGAIN || send_err == EBISU_SOCK_FAIL) {
             // Don't accept non-blocking socket when send_err is EBISU_SOCK_AGAIN.
@@ -154,7 +159,7 @@ ebisu_sock_code_t _mqtt_send_subscribe(kii_t* kii, const char* topic, kii_mqtt_q
     size_t total_sent = 0;
     while (total_sent < j) {
         size_t sent_len = 0;
-        send_err = kii->_cb_mqtt_sock_send(kii->_mqtt_sock_send_ctx,
+        send_err = kii->_mqtt_socket->ops->send(kii->_mqtt_socket,
                 &kii->_mqtt_buffer[total_sent], j - total_sent, &sent_len);
         if (send_err == EBISU_SOCK_AGAIN || send_err == EBISU_SOCK_FAIL) {
             // Don't accept non-blocking socket when send_err is EBISU_SOCK_AGAIN.
@@ -174,7 +179,7 @@ ebisu_sock_code_t _mqtt_send_pingreq(kii_t* kii)
     size_t total_sent = 0;
     while (total_sent < sizeof(buff)) {
         size_t sent_len = 0;
-        sock_err = kii->_cb_mqtt_sock_send(kii->_mqtt_sock_send_ctx, &buff[total_sent], sizeof(buff) - total_sent, &sent_len);
+        sock_err = kii->_mqtt_socket->ops->send(kii->_mqtt_socket, &buff[total_sent], sizeof(buff) - total_sent, &sent_len);
         if (sock_err == EBISU_SOCK_AGAIN || sock_err == EBISU_SOCK_FAIL) {
             // Don't accept non-blocking socket when send_err is EBISU_SOCK_AGAIN.
             return EBISU_SOCK_FAIL;
@@ -193,7 +198,7 @@ static ebisu_sock_code_t _mqtt_recv_fixed_header_byte1(kii_t* kii, kii_mqtt_fixe
 {
     char c = '\0';
     *out_received = 0;
-    ebisu_sock_code_t res = kii->_cb_mqtt_sock_recv(kii->_mqtt_sock_recv_ctx, &c, 1, out_received);
+    ebisu_sock_code_t res = kii->_mqtt_socket->ops->recv(kii->_mqtt_socket, &c, 1, out_received);
     fixed_header->byte1 = c;
     return res;
 }
@@ -205,7 +210,7 @@ static ebisu_sock_code_t _mqtt_recv_fixed_header_rest(kii_t* kii, kii_mqtt_fixed
     char buff[4];
     for (int i = 0; i < 4; ++i) {
         char c2 = '\0';
-        ebisu_sock_code_t res = kii->_cb_mqtt_sock_recv(kii->_mqtt_sock_recv_ctx, &c2, 1, &received);
+        ebisu_sock_code_t res = kii->_mqtt_socket->ops->recv(kii->_mqtt_socket, &c2, 1, &received);
         if (res == EBISU_SOCK_FAIL) {
             return EBISU_SOCK_FAIL;
         }
@@ -248,17 +253,16 @@ ebisu_sock_code_t _mqtt_recv_fixed_header(kii_t* kii, kii_mqtt_fixed_header* fix
 
 // Whether the MQTT recv callback returning EBISU_SOCK_FAIL just now means the
 // connection is lost, rather than that the receive timeout ran out. It returns
-// EBISU_SOCK_FAIL for both, so only the callback set by
-// kii_set_cb_mqtt_sock_recv_timed_out() can tell. Without one, take it for a
-// timeout, as on an idle connection the receive keeps timing out.
+// EBISU_SOCK_FAIL for both, so only the
+// socket's recv_timed_out can tell. Without one, take it for a timeout, as on
+// an idle connection the receive keeps timing out.
 static kii_bool_t _mqtt_sock_recv_lost(kii_t* kii)
 {
-    if (kii->_cb_mqtt_sock_recv_timed_out == NULL) {
+    ebisu_socket_t* sock = kii->_mqtt_socket;
+    if (sock->ops->recv_timed_out == NULL) {
         return KII_FALSE;
     }
-    kii_bool_t timed_out = kii->_cb_mqtt_sock_recv_timed_out(
-            kii->_mqtt_sock_recv_timed_out_ctx);
-    return timed_out == KII_FALSE ? KII_TRUE : KII_FALSE;
+    return sock->ops->recv_timed_out(sock) ? KII_FALSE : KII_TRUE;
 }
 
 // If the MQTT buffer size is insufficient,
@@ -278,8 +282,8 @@ ebisu_sock_code_t _mqtt_recv_remaining_trash(kii_t* kii, unsigned long remaining
         if (length_to_read > buff_size) {
             length_to_read = buff_size;
         }
-        res = kii->_cb_mqtt_sock_recv(
-                kii->_mqtt_sock_recv_ctx,
+        res = kii->_mqtt_socket->ops->recv(
+                kii->_mqtt_socket,
                 buff,
                 length_to_read,
                 &received);
@@ -307,8 +311,8 @@ ebisu_sock_code_t _mqtt_recv_remaining(kii_t* kii, unsigned long remaining_lengt
     size_t total_received = 0;
     ebisu_sock_code_t res = EBISU_SOCK_FAIL;
     while (total_received < remaining_length) {
-        res = kii->_cb_mqtt_sock_recv(
-                kii->_mqtt_sock_recv_ctx,
+        res = kii->_mqtt_socket->ops->recv(
+                kii->_mqtt_socket,
                 buff + total_received,
                 remaining_length - total_received,
                 &received);
@@ -433,7 +437,7 @@ void _mqtt_state_get_endpoint(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
     kii_mqtt_task_info* task_info = &state->info;
-    kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+    _delay_ms(kii, WAIT_MS);
     kii_code_t res = (_kii_session_renews_by_onboarding(kii) == KII_TRUE) ?
         _onboard_for_endpoint(state) :
         kii_get_mqtt_endpoint(kii, state->ins_id.id, &state->endpoint);
@@ -461,8 +465,8 @@ void _mqtt_state_sock_connect(mqtt_state_t* state)
     }
 
     ebisu_sock_code_t con_res =
-        kii->_cb_mqtt_sock_connect(
-                kii->_mqtt_sock_connect_ctx,
+        kii->_mqtt_socket->ops->connect(
+                kii->_mqtt_socket,
                 endpoint->host, port);
     if (con_res != EBISU_SOCK_OK) {
         _schedule_retry(state);
@@ -495,7 +499,7 @@ void _mqtt_state_send_connect(mqtt_state_t* state)
     }
     ebisu_sock_code_t send_err = _mqtt_send_connect(kii, endpoint);
     if (send_err == EBISU_SOCK_FAIL) {
-        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
     } else {
         task_info->task_state = KII_MQTT_ST_RECV_CONNACK;
@@ -509,14 +513,14 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
     kii_mqtt_fixed_header fixed_header;
     ebisu_sock_code_t res = _mqtt_recv_fixed_header(kii, &fixed_header);
     if (res != EBISU_SOCK_OK) {
-        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
     }
     char ptype = fixed_header.byte1 & 0xf0;
     if (ptype != 0x20) {
         // Must not happens. CONNACK must be the first response.
-        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
     }
@@ -526,7 +530,7 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
     memset(buff, '\0', length);
     ebisu_sock_code_t res2 = _mqtt_recv_remaining(kii, length, buff);
     if (res2 != EBISU_SOCK_OK) {
-        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
     }
@@ -539,13 +543,13 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
         // them for the same installation, and if it is no longer valid either,
         // fails permanently and exits; or, for a session that renews by
         // onboarding again, onboards again.
-        kii->_cb_mqtt_sock_close_cb(kii->_mqtt_sock_close_ctx);
+        kii->_mqtt_socket->ops->close(kii->_mqtt_socket);
         state->sock_connected = KII_FALSE;
         _schedule_retry(state);
         task_info->task_state = KII_MQTT_ST_GET_ENDPOINT;
     } else if (return_code != 0) {
         // CONNACK indicates failure.
-        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
     } else {
         // The connection is usable again, so the previous one's outstanding
@@ -565,7 +569,7 @@ void _mqtt_state_send_subscribe(mqtt_state_t* state)
     // TODO: enable to configure QoS.
     ebisu_sock_code_t res = _mqtt_send_subscribe(kii, state->endpoint.topic, QOS0);
     if (res == EBISU_SOCK_FAIL) {
-        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
     } else { // KHC_ERR_OK.
         task_info->task_state = KII_MQTT_ST_RECV_SUBACK;
@@ -579,13 +583,13 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
     kii_mqtt_fixed_header fixed_header;
     ebisu_sock_code_t res = _mqtt_recv_fixed_header(kii, &fixed_header);
     if (res != EBISU_SOCK_OK) {
-        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
     }
     unsigned char ptype = fixed_header.byte1 & 0xf0;
     if (ptype != 0x90) {
-        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
     }
@@ -594,7 +598,7 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
     memset(buff, '\0', len);
     ebisu_sock_code_t res2 = _mqtt_recv_remaining(kii, len, buff);
     if (res2 != EBISU_SOCK_OK) {
-        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
     }
@@ -606,7 +610,7 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
         state->retry_wait_ms = RETRY_WAIT_MIN_MS;
         task_info->task_state = KII_MQTT_ST_RECV_READY;
     } else {
-        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
     }
 }
@@ -656,7 +660,7 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
     if (res == EBISU_SOCK_OK && received == 0) {
         // End of stream: the broker closed the connection.
         state->elapsed_time_ms = 0;
-        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
     }
@@ -667,7 +671,7 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
             // inside it and take its bytes for a fixed header. Reconnect,
             // whether the receive timed out or failed, as RECV_MSG does.
             state->elapsed_time_ms = 0;
-            kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+            _delay_ms(kii, WAIT_MS);
             task_info->task_state = KII_MQTT_ST_RECONNECT;
             return;
         }
@@ -686,14 +690,14 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
             res = _mqtt_recv_remaining_trash(kii, size);
             if (res != EBISU_SOCK_OK) {
                 state->elapsed_time_ms = 0;
-                kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+                _delay_ms(kii, WAIT_MS);
                 task_info->task_state = KII_MQTT_ST_RECONNECT;
             }
         }
     } else if (res == EBISU_SOCK_FAIL && _mqtt_sock_recv_lost(kii) == KII_TRUE) {
         // Waiting on would wait for a connection that is gone.
         state->elapsed_time_ms = 0;
-        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
     } else {
         // No packet has started to arrive: the receive timed out, or returned
@@ -701,7 +705,7 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
         // Just repeat same state after the wait.
         _add_elapsed_ms(state, _to_recv_ms(kii));
         _add_elapsed_ms(state, WAIT_MS);
-        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        _delay_ms(kii, WAIT_MS);
     }
 }
 
@@ -715,11 +719,11 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
         ebisu_sock_code_t res = _mqtt_recv_remaining_trash(kii, remaining_message_size);
         if (res != EBISU_SOCK_OK) {
             state->elapsed_time_ms = 0;
-            kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+            _delay_ms(kii, WAIT_MS);
             task_info->task_state = KII_MQTT_ST_RECONNECT;
         } else {
             _add_elapsed_ms(state, ARRIVED_MSG_READ_TIME + WAIT_MS);
-            kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+            _delay_ms(kii, WAIT_MS);
             task_info->task_state = KII_MQTT_ST_RECV_READY;
         }
     } else {
@@ -727,7 +731,7 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
         ebisu_sock_code_t res = _mqtt_recv_remaining(kii, remaining_message_size, kii->_mqtt_buffer);
         if (res != EBISU_SOCK_OK) {
             state->elapsed_time_ms = 0;
-            kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+            _delay_ms(kii, WAIT_MS);
             task_info->task_state = KII_MQTT_ST_RECONNECT;
         } else {
             _add_elapsed_ms(state, ARRIVED_MSG_READ_TIME);
@@ -759,7 +763,7 @@ void _mqtt_state_send_pingreq(mqtt_state_t* state)
     // another and wait another keep-alive interval to find out.
     if (state->pingresp_received != KII_TRUE) {
         state->elapsed_time_ms = 0;
-        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
     }
@@ -767,7 +771,7 @@ void _mqtt_state_send_pingreq(mqtt_state_t* state)
     ebisu_sock_code_t res = _mqtt_send_pingreq(kii);
     if (res != EBISU_SOCK_OK) {
         state->elapsed_time_ms = 0;
-        kii->_cb_delay_ms(WAIT_MS, kii->_delay_ms_data);
+        _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
     } else {
         state->pingresp_received = KII_FALSE;
@@ -779,7 +783,7 @@ void _mqtt_state_send_pingreq(mqtt_state_t* state)
 void _mqtt_state_reconnect(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
-    kii->_cb_mqtt_sock_close_cb(kii->_mqtt_sock_close_ctx);
+    kii->_mqtt_socket->ops->close(kii->_mqtt_socket);
     state->sock_connected = KII_FALSE;
     _schedule_retry(state);
     state->info.task_state = KII_MQTT_ST_SOCK_CONNECT;
@@ -817,7 +821,7 @@ void* mqtt_start_task(void* sdata)
             // A second at a time, so that the application can stop the task
             // however long the wait.
             uint32_t wait_ms = state.wait_left_ms < WAIT_MS ? state.wait_left_ms : WAIT_MS;
-            kii->_cb_delay_ms(wait_ms, kii->_delay_ms_data);
+            _delay_ms(kii, wait_ms);
             state.wait_left_ms -= wait_ms;
             continue;
         }
@@ -826,7 +830,7 @@ void* mqtt_start_task(void* sdata)
     // Discontinued, or exiting on an error, with a connection open: close it,
     // as nothing else will. The application cannot tell whether one is open.
     if (state.sock_connected == KII_TRUE) {
-        kii->_cb_mqtt_sock_close_cb(kii->_mqtt_sock_close_ctx);
+        kii->_mqtt_socket->ops->close(kii->_mqtt_socket);
         state.sock_connected = KII_FALSE;
     }
     // Before the callback, which may start the task again.

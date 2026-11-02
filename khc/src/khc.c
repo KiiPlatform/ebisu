@@ -20,8 +20,9 @@ void khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size) {
 khc_code khc_perform(khc* khc) {
     // Called without checking from here on. The read callback is left out of
     // this: a request need not have a body.
-    if (khc->_cb_sock_connect == NULL || khc->_cb_sock_send == NULL ||
-            khc->_cb_sock_recv == NULL || khc->_cb_sock_close == NULL ||
+    const ebisu_socket_ops_t* ops = khc->_socket != NULL ? khc->_socket->ops : NULL;
+    if (ops == NULL || ops->connect == NULL || ops->send == NULL ||
+            ops->recv == NULL || ops->close == NULL ||
             khc->_cb_header == NULL || khc->_cb_write == NULL) {
         return KHC_ERR_FAIL;
     }
@@ -94,17 +95,7 @@ void khc_init(khc* khc) {
     khc->_cb_read = NULL;
     khc->_read_data = NULL;
 
-    khc->_cb_sock_connect = NULL;
-    khc->_sock_ctx_connect = NULL;
-
-    khc->_cb_sock_send = NULL;
-    khc->_sock_ctx_send = NULL;
-
-    khc->_cb_sock_recv = NULL;
-    khc->_sock_ctx_recv = NULL;
-
-    khc->_cb_sock_close = NULL;
-    khc->_sock_ctx_close = NULL;
+    khc->_socket = NULL;
 
     // User settings.
     khc->_enable_insecure = false;

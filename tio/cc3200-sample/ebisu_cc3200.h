@@ -9,10 +9,12 @@
 #define EBISU_CC3200_H_
 
 #include <ebisu_socket.h>
-#include <ebisu_task.h>
-#include "kii_task_callback.h"
+#include <ebisu_system.h>
+#include "osi.h"
 
 typedef struct socket_context_t {
+    /* What tio is given. */
+    ebisu_socket_t base;
     int sock;
     unsigned int to_recv;
     unsigned int to_send;
@@ -21,46 +23,55 @@ typedef struct socket_context_t {
     int recv_error;
 } socket_context_t;
 
+/* The system: tasks are OSI tasks of stk_size bytes of stack, at priority,
+ * delays osi_Sleep(), and the monotonic clock FreeRTOS's tick count, in
+ * milliseconds. */
 typedef struct {
+    ebisu_system_t base;
     unsigned int stk_size;
     unsigned int priority;
-} task_context_t;
+} cc3200_system_t;
+
+/* A lock that is an OsiLockObj_t. */
+typedef struct {
+    ebisu_lock_t base;
+    OsiLockObj_t lock;
+} cc3200_lock_t;
+
+/* Clears the context, with the timeouts of the socket, in seconds, and makes
+ * its base a socket of the functions below. */
+void sock_cb_init_context(
+        socket_context_t* ctx,
+        unsigned int to_recv,
+        unsigned int to_send);
 
 ebisu_sock_code_t
-    sock_cb_connect(void* sock_ctx, const char* host,
+    sock_cb_connect(ebisu_socket_t* self, const char* host,
             uint16_t port);
 
 ebisu_sock_code_t
-    sock_cb_send(void* sock_ctx,
+    sock_cb_send(ebisu_socket_t* self,
             const char* buffer,
             size_t length,
             size_t* out_sent_length);
 
 ebisu_sock_code_t
-    sock_cb_recv(void* sock_ctx, char* buffer, size_t length_to_read,
+    sock_cb_recv(ebisu_socket_t* self, char* buffer, size_t length_to_read,
             size_t* out_actual_length);
 
-kii_bool_t
-    sock_cb_recv_timed_out(void* sock_ctx);
+bool
+    sock_cb_recv_timed_out(ebisu_socket_t* self);
 
 ebisu_sock_code_t
-    sock_cb_close(void* sock_context);
+    sock_cb_close(ebisu_socket_t* self);
 
-ebisu_task_code_t task_create_cb_impl(
-        const char* name,
-        EBISU_TASK_ENTRY entry,
-        void* param,
-        void* userdata);
+void cc3200_system_init(
+        cc3200_system_t* system,
+        unsigned int stk_size,
+        unsigned int priority);
 
-void delay_ms_cb_impl(uint32_t msec, void* userdata);
-
-/* Session lock callbacks: userdata is an OsiLockObj_t created by
- * osi_LockObjCreate(). */
-void lock_cb_impl(void* userdata);
-
-void unlock_cb_impl(void* userdata);
-
-/* The session's monotonic clock: FreeRTOS's tick count, in milliseconds. */
-uint64_t monotonic_ms_cb_impl(void* userdata);
+/* Creates the lock object, and makes base a lock of it. What
+ * osi_LockObjCreate() returns. */
+OsiReturnVal_e cc3200_lock_init(cc3200_lock_t* lock);
 
 #endif /* EBISU_CC3200_H_ */
