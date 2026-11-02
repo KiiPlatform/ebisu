@@ -24,13 +24,23 @@ kii_author_t make_author(const char* id, const char* access_token, const char* r
     return author;
 }
 
+void cb_lock(void* userdata);
+void cb_unlock(void* userdata);
+uint64_t cb_now(void* userdata);
+
 // What the session asks of the platform, plus a record of what it was told.
 struct Platform {
     uint64_t now_ms;
     int depth;
     int max_depth;
     std::vector<kii_author_t> updates;
-    Platform() : now_ms(0), depth(0), max_depth(0) {}
+    khct::cb::LockCtx lock;
+    khct::cb::SystemCtx system;
+    Platform() : now_ms(0), depth(0), max_depth(0) {
+        lock.on_lock = [this] { cb_lock(this); };
+        lock.on_unlock = [this] { cb_unlock(this); };
+        system.on_monotonic_ms = [this] { return cb_now(this); };
+    }
 };
 
 void cb_lock(void* userdata) {
@@ -55,8 +65,8 @@ void cb_updated(const kii_author_t* author, void* userdata) {
 
 void init_session(kii_session_t* session, Platform* platform) {
     kii_session_init(session);
-    kii_session_set_cb_lock(session, cb_lock, cb_unlock, platform);
-    kii_session_set_cb_monotonic_ms(session, cb_now, platform);
+    kii_session_set_lock(session, platform->lock.get());
+    kii_session_set_system(session, platform->system.system());
     kii_session_set_cb_author_updated(session, cb_updated, platform);
 }
 
@@ -75,7 +85,7 @@ struct Client {
         kii_set_app_id(&kii, "app");
         kii_set_buff(&kii, buff, buff_size);
         kii_set_json_parser_resource(&kii, &resource);
-        kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
+        kii_set_system(&kii, khct::cb::delay_only_system());
         http.attach(&kii);
     }
 
@@ -133,9 +143,12 @@ TEST_CASE( "kii_set_session requires the lock and the clock" ) {
 
     kii_session_init(&session);
     REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_FAIL );
-    kii_session_set_cb_lock(&session, cb_lock, cb_unlock, &platform);
+    kii_session_set_lock(&session, platform.lock.get());
     REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_FAIL );
-    kii_session_set_cb_monotonic_ms(&session, cb_now, &platform);
+    platform.system.ops.monotonic_ms = NULL;
+    kii_session_set_system(&session, platform.system.system());
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_FAIL );
+    platform.system.ops.monotonic_ms = khct::cb::mock_monotonic_ms;
     REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
     REQUIRE( c.kii._session == &session );
 
@@ -1111,10 +1124,7 @@ struct Broker {
     Broker& operator=(const Broker&) = delete;
 
     void attach(kii_t* kii) {
-        kii_set_cb_mqtt_sock_connect(kii, khct::cb::mock_connect, &ctx);
-        kii_set_cb_mqtt_sock_send(kii, khct::cb::mock_send, &ctx);
-        kii_set_cb_mqtt_sock_recv(kii, khct::cb::mock_recv, &ctx);
-        kii_set_cb_mqtt_sock_close(kii, khct::cb::mock_close, &ctx);
+        kii_set_mqtt_socket(kii, ctx.socket());
     }
 };
 
@@ -1131,11 +1141,6 @@ std::string endpoint(const char* username) {
 
 const char ENDPOINT_LINE[] =
     "GET /api/apps/app/installations/ins1/mqtt-endpoint HTTP/1.1";
-
-// Every failed receive is a lost connection, not a timeout.
-kii_bool_t cb_recv_never_timed_out(void*) {
-    return KII_FALSE;
-}
 
 // Runs the MQTT task until it has subscribed on its third connection.
 struct UntilThirdSubscription {
@@ -1167,7 +1172,8 @@ TEST_CASE( "The MQTT task renews an expired token to fetch new credentials" ) {
     kii_set_mqtt_buff(&c.kii, mqtt_buff, sizeof(mqtt_buff));
     Broker broker;
     broker.attach(&c.kii);
-    kii_set_cb_mqtt_sock_recv_timed_out(&c.kii, cb_recv_never_timed_out, NULL);
+    // Every failed receive is a lost connection, not a timeout.
+    broker.ctx.on_recv_timed_out = [](void*) { return false; };
     UntilThirdSubscription until = { &broker, 0 };
     kii_set_cb_task_continue(&c.kii, cb_continue, &until);
 
@@ -1212,25 +1218,19 @@ TEST_CASE( "The MQTT task renews an expired token to fetch new credentials" ) {
 
 namespace {
 
-// A lock that is one, for tasks that really run at once.
+// A lock that is one, for tasks that really run at once. The system's
+// monotonic clock stays at 0.
 struct SharedPlatform {
     std::mutex mutex;
     std::atomic<int> refreshes;
     std::vector<kii_author_t> updates;
-    SharedPlatform() : refreshes(0) {}
+    khct::cb::LockCtx lock;
+    khct::cb::SystemCtx system;
+    SharedPlatform() : refreshes(0) {
+        lock.on_lock = [this] { mutex.lock(); };
+        lock.on_unlock = [this] { mutex.unlock(); };
+    }
 };
-
-void cb_mutex_lock(void* userdata) {
-    ((SharedPlatform*)userdata)->mutex.lock();
-}
-
-void cb_mutex_unlock(void* userdata) {
-    ((SharedPlatform*)userdata)->mutex.unlock();
-}
-
-uint64_t cb_zero(void*) {
-    return 0;
-}
 
 void cb_shared_updated(const kii_author_t* author, void* userdata) {
     ((SharedPlatform*)userdata)->updates.push_back(*author);
@@ -1261,8 +1261,8 @@ TEST_CASE( "Tasks refused at the same time renew the token once" ) {
         SharedPlatform platform;
         kii_session_t session;
         kii_session_init(&session);
-        kii_session_set_cb_lock(&session, cb_mutex_lock, cb_mutex_unlock, &platform);
-        kii_session_set_cb_monotonic_ms(&session, cb_zero, NULL);
+        kii_session_set_lock(&session, platform.lock.get());
+        kii_session_set_system(&session, platform.system.system());
         kii_session_set_cb_author_updated(&session, cb_shared_updated, &platform);
         kii_author_t author = make_author("th.1", "at1", "rt1");
         kii_session_set_author(&session, &author);
@@ -1362,9 +1362,9 @@ TEST_CASE( "Refused MQTT credentials are renewed by onboarding again" ) {
     }
 
     SECTION("a network failure is tried again") {
-        kii_set_cb_http_sock_connect(&c.kii, [](void* sock_ctx, const char* host, uint16_t port) {
+        c.http.ctx.on_connect = [](void* sock_ctx, const char* host, uint16_t port) {
             return EBISU_SOCK_FAIL;
-        }, NULL);
+        };
         _mqtt_state_get_endpoint(&state);
         CHECK( state.info.task_state == KII_MQTT_ST_GET_ENDPOINT );
         CHECK( state.info.error == KII_MQTT_ERR_OK );

@@ -3,7 +3,8 @@
 
 kii_code_t kii_set_clock(kii_t* kii, ebisu_clock_t* clock)
 {
-    if (clock != NULL && clock->_cb_monotonic_ms == NULL) {
+    if (clock != NULL &&
+            (clock->_system == NULL || clock->_system->ops->monotonic_ms == NULL)) {
         return KII_ERR_FAIL;
     }
     kii->_clock = clock;

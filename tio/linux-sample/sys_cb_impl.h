@@ -1,62 +1,32 @@
 /**
- * @file tio_environment_dependent.h
- * @brief This is a file defining environment dependent functions.
- * this SDKrequires to implement these functions in each target
- * environment.
+ * @file sys_cb_impl.h
+ * @brief What this sample implements of the system, for Linux.
  */
 #ifndef _TIO_ENVIRONMENT_DEPENDENT_
 #define _TIO_ENVIRONMENT_DEPENDENT_
+
+#include <ebisu_system.h>
+#include <pthread.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <ebisu_task.h>
+/** The system: tasks are threads, delays nanosleep() and the monotonic clock
+ * is CLOCK_MONOTONIC. It has no state, so one serves everything. */
+ebisu_system_t* linux_system(void);
 
-/** Implementation of callback to create task.
- * this SDK requirest to implement this function in each
- * target environment.
+/** A lock that is a mutex.
  *
- * This function is assigned to fields
- * kii_t#kii_core_t#kii_http_context_t#kii_http_context_t#task_create_cb
- * of command handler and state updater.
- *
- * @param [in] name name of task.
- * @param [in] entry entry of task.
- * @param [in] stk_start start position of stack area.
- * @param [in] stk_size stack size of task
- * @param [in] priority priority of thisk
- *
- * @return EBISU_TASKC_OK if succeed to create task. otherwise EBISU_TASKC_FAIL.
- */
-ebisu_task_code_t task_create_cb_impl(
-        const char* name,
-        EBISU_TASK_ENTRY entry,
-        void* param,
-        void* userdata);
+ * The handler and the updater run as separate threads, so the session's lock
+ * has to be a real one. */
+typedef struct {
+    ebisu_lock_t base;
+    pthread_mutex_t mutex;
+} linux_lock_t;
 
-/** Implementation of callback to delay task.
- * this SDK requirest to implement this function in each
- * target environment.
- *
- * This function is assigned to fields
- * kii_t#kii_core_t#kii_http_context_t#kii_http_context_t#delay_ms_cb
- * of command handler and state updater.
- *
- * @param[in] msec millisecond to delay.
- */
-void delay_ms_cb_impl(uint32_t msec, void* userdata);
-
-/** Implementation of the session lock callbacks.
- *
- * The handler and the updater run as separate threads, so this is a real
- * mutex: userdata is the pthread_mutex_t.
- */
-void lock_cb_impl(void* userdata);
-void unlock_cb_impl(void* userdata);
-
-/** Implementation of the session's monotonic clock. */
-uint64_t monotonic_ms_cb_impl(void* userdata);
+/** Initializes the mutex, and makes base a lock of it. */
+void linux_lock_init(linux_lock_t* lock);
 
 #ifdef __cplusplus
 }

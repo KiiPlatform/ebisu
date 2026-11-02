@@ -423,10 +423,7 @@ TEST_CASE( "_handle_command action name length" ) {
         return EBISU_SOCK_OK;
     };
     http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
-    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&handler._kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&handler._kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&handler._kii, khct::cb::mock_close, &http_ctx);
+    kii_set_http_socket(&handler._kii, http_ctx.socket());
     char resp_hdr_buff[512];
     khc_set_resp_header_buff(&handler._kii._khc, resp_hdr_buff, sizeof(resp_hdr_buff));
 
@@ -516,10 +513,7 @@ TEST_CASE( "_handle_command response status" ) {
         return EBISU_SOCK_OK;
     };
     http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
-    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&handler._kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&handler._kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&handler._kii, khct::cb::mock_close, &http_ctx);
+    kii_set_http_socket(&handler._kii, http_ctx.socket());
     char resp_hdr_buff[512];
     khc_set_resp_header_buff(&handler._kii._khc, resp_hdr_buff, sizeof(resp_hdr_buff));
 
@@ -582,7 +576,7 @@ TEST_CASE( "_handle_command empty objects" ) {
         connected = true;
         return EBISU_SOCK_FAIL;
     };
-    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_http_socket(&handler._kii, http_ctx.socket());
 
     SECTION("an empty alias object is rejected") {
         int called = 0;
@@ -651,10 +645,7 @@ TEST_CASE( "_handle_command result body opening does not fit" ) {
         return EBISU_SOCK_OK;
     };
     http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
-    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&handler._kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&handler._kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&handler._kii, khct::cb::mock_close, &http_ctx);
+    kii_set_http_socket(&handler._kii, http_ctx.socket());
     char resp_hdr_buff[512];
     khc_set_resp_header_buff(&handler._kii._khc, resp_hdr_buff, sizeof(resp_hdr_buff));
 
@@ -709,7 +700,7 @@ TEST_CASE( "_handle_command nothing to parse" ) {
         ++connects;
         return EBISU_SOCK_FAIL;
     };
-    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_http_socket(&handler._kii, http_ctx.socket());
 
     std::string command;
 
@@ -824,7 +815,7 @@ TEST_CASE( "_handle_command invalid primitive values" ) {
         connected = true;
         return EBISU_SOCK_FAIL;
     };
-    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_http_socket(&handler._kii, http_ctx.socket());
 
     const char* values[] = { "abc", "-", "tru", "0e", "1e999" };
     for (const char* value : values) {
@@ -866,7 +857,7 @@ TEST_CASE( "_handle_command unquoted key" ) {
         connected = true;
         return EBISU_SOCK_FAIL;
     };
-    kii_set_cb_http_sock_connect(&handler._kii, khct::cb::mock_connect, &http_ctx);
+    kii_set_http_socket(&handler._kii, http_ctx.socket());
 
     SECTION("an unquoted commandID key is rejected") {
         int called = 0;

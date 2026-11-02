@@ -1,21 +1,21 @@
 #ifndef _KII_TASK_IMPL
 #define _KII_TASK_IMPL
 
-#include <ebisu_task.h>
+#include <ebisu_system.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 ebisu_task_code_t task_create_cb
-    (const char* name,
+    (ebisu_system_t* self,
+     const char* name,
      EBISU_TASK_ENTRY entry,
-     void* param,
-     void* userdata);
+     void* param);
 
 void delay_ms_cb
-    (uint32_t msec,
-     void* userdata);
+    (ebisu_system_t* self,
+     uint32_t msec);
 
 #ifdef __cplusplus
 }

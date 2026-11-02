@@ -1,29 +1,28 @@
 #ifndef SYS_CB_FREERTOS_H
 #define SYS_CB_FREERTOS_H
 
-#include <ebisu_task.h>
+#include <ebisu_system.h>
+#include <FreeRTOS.h>
+#include <semphr.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Runs entry(param) in a FreeRTOS task of its own. */
-ebisu_task_code_t task_create_cb_impl(
-        const char* name,
-        EBISU_TASK_ENTRY entry,
-        void* param,
-        void* userdata);
+/* The system: tasks are FreeRTOS tasks of their own, delays vTaskDelay(), and
+   the monotonic clock is milliseconds since the scheduler started, from
+   FreeRTOS's tick count, which tickless idle keeps counting. A sleep that stops
+   the tick's timer stops it too. It has no state, so one serves everything. */
+ebisu_system_t* freertos_system(void);
 
-void delay_ms_cb_impl(uint32_t msec, void* userdata);
+/* A lock that is a FreeRTOS mutex. */
+typedef struct {
+    ebisu_lock_t base;
+    SemaphoreHandle_t mutex;
+} freertos_lock_t;
 
-/* userdata is a SemaphoreHandle_t, a mutex. */
-void lock_cb_impl(void* userdata);
-void unlock_cb_impl(void* userdata);
-
-/* Milliseconds since the scheduler started, from FreeRTOS's tick count, which
-   tickless idle keeps counting. A sleep that stops the tick's timer stops it
-   too. */
-uint64_t monotonic_ms_cb_impl(void* userdata);
+/* Creates the mutex, and makes base a lock of it. */
+void freertos_lock_init(freertos_lock_t* lock);
 
 #ifdef __cplusplus
 }

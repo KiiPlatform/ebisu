@@ -1,8 +1,9 @@
 #ifndef SOCK_CB_ESP32_H
 #define SOCK_CB_ESP32_H
 
+#include <ebisu_clock.h>
 #include <ebisu_socket.h>
-#include <kii.h>
+#include <stdbool.h>
 #include <esp_tls.h>
 
 #ifdef __cplusplus
@@ -10,6 +11,8 @@ extern "C" {
 #endif
 
 typedef struct {
+    /* What tio is given. */
+    ebisu_socket_t base;
     esp_tls_t* tls;
     /* Timeouts of the connection's receives and sends, in seconds, 0 for
        none. */
@@ -31,24 +34,24 @@ void sock_cb_init_context(
         ebisu_clock_t* clock);
 
 ebisu_sock_code_t
-    sock_cb_connect(void* sock_ctx, const char* host,
+    sock_cb_connect(ebisu_socket_t* self, const char* host,
             uint16_t port);
 
 ebisu_sock_code_t
-    sock_cb_send(void* sock_ctx,
+    sock_cb_send(ebisu_socket_t* self,
             const char* buffer,
             size_t length,
             size_t* out_sent_length);
 
 ebisu_sock_code_t
-    sock_cb_recv(void* sock_ctx, char* buffer, size_t length_to_read,
+    sock_cb_recv(ebisu_socket_t* self, char* buffer, size_t length_to_read,
             size_t* out_actual_length);
 
-kii_bool_t
-    sock_cb_recv_timed_out(void* sock_ctx);
+bool
+    sock_cb_recv_timed_out(ebisu_socket_t* self);
 
 ebisu_sock_code_t
-    sock_cb_close(void* sock_ctx);
+    sock_cb_close(ebisu_socket_t* self);
 
 #ifdef __cplusplus
 }

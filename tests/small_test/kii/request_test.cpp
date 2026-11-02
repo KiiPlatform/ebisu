@@ -66,10 +66,7 @@ TEST_CASE( "Every request names the SDK and its version" ) {
         return EBISU_SOCK_OK;
     };
     http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
-    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+    kii_set_http_socket(&kii, http_ctx.socket());
 
     kii_bucket_t bucket = { KII_SCOPE_THING, "th.1", "b" };
     kii_topic_t topic = { KII_SCOPE_THING, "th.1", "t" };
@@ -146,10 +143,7 @@ TEST_CASE( "A request reports the socket operation that failed" ) {
     kii_set_json_parser_resource(&kii, &resource);
 
     khct::cb::SockCtx http_ctx;
-    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+    kii_set_http_socket(&kii, http_ctx.socket());
 
     const struct {
         const char* failing;
@@ -215,10 +209,7 @@ TEST_CASE( "kii_ti_put_firmware_version escapes the version" ) {
         return EBISU_SOCK_OK;
     };
     http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
-    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+    kii_set_http_socket(&kii, http_ctx.socket());
 
     REQUIRE( kii_ti_put_firmware_version(&kii, "1.0\"\\") == KII_ERR_OK );
     CHECK( count(request, "{\"firmwareVersion\":\"1.0\\\"\\\\\"}") == 1 );
@@ -257,10 +248,7 @@ TEST_CASE( "A response too large for the buffer is reported as such" ) {
         return EBISU_SOCK_OK;
     };
     http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
-    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+    kii_set_http_socket(&kii, http_ctx.socket());
 
     REQUIRE( kii_api_call_start(&kii, "GET", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );
     CHECK( kii_api_call_run(&kii) == KII_ERR_TOO_LARGE_DATA );
@@ -328,10 +316,7 @@ TEST_CASE( "kii_enable_absolute_target holds for every request" ) {
         return EBISU_SOCK_OK;
     };
     http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
-    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+    kii_set_http_socket(&kii, http_ctx.socket());
 
     SECTION("not by default") {
         REQUIRE( kii_api_call_start(&kii, "GET", "/api/x", NULL, KII_FALSE) == KII_ERR_OK );

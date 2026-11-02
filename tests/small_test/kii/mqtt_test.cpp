@@ -66,17 +66,11 @@ TEST_CASE( "MQTT state test" ) {
     kii._keep_alive_interval = 300;
 
     khct::cb::SockCtx http_ctx;
-    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+    kii_set_http_socket(&kii, http_ctx.socket());
     khct::cb::SockCtx mqtt_ctx;
-    kii_set_cb_mqtt_sock_connect(&kii, khct::cb::mock_connect, &mqtt_ctx);
-    kii_set_cb_mqtt_sock_send(&kii, khct::cb::mock_send, &mqtt_ctx);
-    kii_set_cb_mqtt_sock_recv(&kii, khct::cb::mock_recv, &mqtt_ctx);
-    kii_set_cb_mqtt_sock_close(&kii, khct::cb::mock_close, &mqtt_ctx);
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
 
-    kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
+    kii_set_system(&kii, khct::cb::delay_only_system());
 
     khct::cb::PushCtx push_ctx;
     kii._cb_push_received = khct::cb::cb_push;
@@ -531,7 +525,7 @@ static void recv_then_end_of_stream(khct::cb::SockCtx& ctx, const std::string& d
     };
 }
 
-// Stands in for a platform's KII_CB_SOCK_RECV_TIMED_OUT: answers as told, and
+// Stands in for a platform socket's recv_timed_out: answers as told, and
 // records how often it was asked and with which context.
 struct RecvTimedOutMock {
     kii_bool_t timed_out;
@@ -565,17 +559,11 @@ TEST_CASE( "MQTT state abnormal tests" ) {
     kii._keep_alive_interval = 300;
 
     khct::cb::SockCtx http_ctx;
-    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+    kii_set_http_socket(&kii, http_ctx.socket());
     khct::cb::SockCtx mqtt_ctx;
-    kii_set_cb_mqtt_sock_connect(&kii, khct::cb::mock_connect, &mqtt_ctx);
-    kii_set_cb_mqtt_sock_send(&kii, khct::cb::mock_send, &mqtt_ctx);
-    kii_set_cb_mqtt_sock_recv(&kii, khct::cb::mock_recv, &mqtt_ctx);
-    kii_set_cb_mqtt_sock_close(&kii, khct::cb::mock_close, &mqtt_ctx);
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
 
-    kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
+    kii_set_system(&kii, khct::cb::delay_only_system());
 
     khct::cb::PushCtx push_ctx;
     kii._cb_push_received = khct::cb::cb_push;
@@ -1545,7 +1533,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 0 );
     }
 
-    // With no callback set by kii_set_cb_mqtt_sock_recv_timed_out(), a receive
+    // With a socket that has no recv_timed_out, a receive
     // that fails before any of a packet has arrived is taken for the receive
     // timeout running out, as it always was.
     SECTION("recv ready got EBISU_SOCK_FAIL 1") {
@@ -1652,7 +1640,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             ++call_recv;
             return EBISU_SOCK_FAIL;
         };
-        kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
+        mqtt_ctx.on_recv_timed_out = [](void* sock_ctx) {
+            return mock_recv_timed_out(sock_ctx) == KII_TRUE;
+        };
         recv_timed_out_mock.timed_out = KII_TRUE;
 
         kii_set_mqtt_to_sock_recv(&kii, 15);
@@ -1672,7 +1662,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             ++call_recv;
             return EBISU_SOCK_FAIL;
         };
-        kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
+        mqtt_ctx.on_recv_timed_out = [](void* sock_ctx) {
+            return mock_recv_timed_out(sock_ctx) == KII_TRUE;
+        };
         recv_timed_out_mock.timed_out = KII_FALSE;
 
         // With keep-alive 0 this is the only way the loss is noticed.
@@ -1696,7 +1688,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         mqtt_ctx.on_recv = [](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             return EBISU_SOCK_FAIL;
         };
-        kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
+        mqtt_ctx.on_recv_timed_out = [](void* sock_ctx) {
+            return mock_recv_timed_out(sock_ctx) == KII_TRUE;
+        };
         recv_timed_out_mock.timed_out = KII_TRUE;
 
         state.info.task_state = KII_MQTT_ST_RECV_READY;
@@ -1722,7 +1716,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         http_ctx.on_close = [](void* socket_context) {
             return EBISU_SOCK_OK;
         };
-        kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
+        mqtt_ctx.on_recv_timed_out = [](void* sock_ctx) {
+            return mock_recv_timed_out(sock_ctx) == KII_TRUE;
+        };
 
         _mqtt_state_install_push(&state);
         REQUIRE( call_recv == 1 );
@@ -1737,7 +1733,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             ++call_recv;
             return EBISU_SOCK_FAIL;
         };
-        kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
+        mqtt_ctx.on_recv_timed_out = [](void* sock_ctx) {
+            return mock_recv_timed_out(sock_ctx) == KII_TRUE;
+        };
         recv_timed_out_mock.timed_out = KII_TRUE;
 
         state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
@@ -1753,7 +1751,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         mqtt_ctx.on_recv = [](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             return EBISU_SOCK_AGAIN;
         };
-        kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
+        mqtt_ctx.on_recv_timed_out = [](void* sock_ctx) {
+            return mock_recv_timed_out(sock_ctx) == KII_TRUE;
+        };
         recv_timed_out_mock.timed_out = KII_FALSE;
 
         state.info.task_state = KII_MQTT_ST_RECV_READY;
@@ -1777,7 +1777,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                 }
                 return code;
             };
-            kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
+            mqtt_ctx.on_recv_timed_out = [](void* sock_ctx) {
+                return mock_recv_timed_out(sock_ctx) == KII_TRUE;
+            };
             recv_timed_out_mock.timed_out = KII_TRUE;
             recv_timed_out_mock.calls = 0;
 
@@ -1796,7 +1798,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
     SECTION("recv ready reconnects at the end of the stream without asking the timed-out callback") {
         int call_recv = 0;
         recv_then_end_of_stream(mqtt_ctx, "", call_recv);
-        kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
+        mqtt_ctx.on_recv_timed_out = [](void* sock_ctx) {
+            return mock_recv_timed_out(sock_ctx) == KII_TRUE;
+        };
         recv_timed_out_mock.timed_out = KII_TRUE;
 
         state.info.task_state = KII_MQTT_ST_RECV_READY;
@@ -2370,17 +2374,11 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     kii._keep_alive_interval = 300;
 
     khct::cb::SockCtx http_ctx;
-    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+    kii_set_http_socket(&kii, http_ctx.socket());
     khct::cb::SockCtx mqtt_ctx;
-    kii_set_cb_mqtt_sock_connect(&kii, khct::cb::mock_connect, &mqtt_ctx);
-    kii_set_cb_mqtt_sock_send(&kii, khct::cb::mock_send, &mqtt_ctx);
-    kii_set_cb_mqtt_sock_recv(&kii, khct::cb::mock_recv, &mqtt_ctx);
-    kii_set_cb_mqtt_sock_close(&kii, khct::cb::mock_close, &mqtt_ctx);
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
 
-    kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
+    kii_set_system(&kii, khct::cb::delay_only_system());
 
     khct::cb::PushCtx push_ctx;
     kii._cb_push_received = khct::cb::cb_push;
@@ -2586,7 +2584,11 @@ TEST_CASE( "kii_start_push_task reports a task it could not create" ) {
 
     SECTION("task created") {
         TaskCreateCtx ctx = { EBISU_TASKC_OK, 0 };
-        kii_set_cb_task_create(&kii, mock_task_create, &ctx);
+        khct::cb::SystemCtx kii_sys;
+        kii_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+            return mock_task_create(name, entry, entry_param, &ctx);
+        };
+        kii_set_system(&kii, kii_sys.system());
         CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_OK );
         CHECK( ctx.calls == 1 );
         CHECK( ctx.name == KII_TASK_NAME_MQTT );
@@ -2595,7 +2597,11 @@ TEST_CASE( "kii_start_push_task reports a task it could not create" ) {
 
     SECTION("task not created") {
         TaskCreateCtx ctx = { EBISU_TASKC_FAIL, 0 };
-        kii_set_cb_task_create(&kii, mock_task_create, &ctx);
+        khct::cb::SystemCtx kii_sys;
+        kii_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+            return mock_task_create(name, entry, entry_param, &ctx);
+        };
+        kii_set_system(&kii, kii_sys.system());
         CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_CREATE_TASK );
         CHECK( ctx.calls == 1 );
     }
@@ -2613,31 +2619,47 @@ TEST_CASE( "kii_start_push_task needs what the task uses" ) {
     kii_init(&kii);
     khct::set_push_needs(&kii, buff, sizeof(buff));
     TaskCreateCtx ctx = { EBISU_TASKC_OK, 0 };
-    kii_set_cb_task_create(&kii, mock_task_create, &ctx);
+    khct::cb::SystemCtx kii_sys;
+    kii_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+        return mock_task_create(name, entry, entry_param, &ctx);
+    };
+    kii_set_system(&kii, kii_sys.system());
+    khct::cb::SockCtx http_ctx;
+    kii_set_http_socket(&kii, http_ctx.socket());
+    khct::cb::SockCtx mqtt_ctx;
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
 
     const struct {
         const char* left_out;
-        std::function<void(kii_t*)> unset;
+        std::function<void()> unset;
     } cases[] = {
-        { "delay", [](kii_t* k) { kii_set_cb_delay_ms(k, NULL, NULL); } },
-        { "HTTP connect", [](kii_t* k) { kii_set_cb_http_sock_connect(k, NULL, NULL); } },
-        { "HTTP send", [](kii_t* k) { kii_set_cb_http_sock_send(k, NULL, NULL); } },
-        { "HTTP recv", [](kii_t* k) { kii_set_cb_http_sock_recv(k, NULL, NULL); } },
-        { "HTTP close", [](kii_t* k) { kii_set_cb_http_sock_close(k, NULL, NULL); } },
-        { "MQTT connect", [](kii_t* k) { kii_set_cb_mqtt_sock_connect(k, NULL, NULL); } },
-        { "MQTT send", [](kii_t* k) { kii_set_cb_mqtt_sock_send(k, NULL, NULL); } },
-        { "MQTT recv", [](kii_t* k) { kii_set_cb_mqtt_sock_recv(k, NULL, NULL); } },
-        { "MQTT close", [](kii_t* k) { kii_set_cb_mqtt_sock_close(k, NULL, NULL); } },
-        { "buffer", [](kii_t* k) { kii_set_buff(k, NULL, 0); } },
-        { "MQTT buffer", [](kii_t* k) { kii_set_mqtt_buff(k, NULL, 0); } },
+        { "delay", [&] { kii_sys.ops.delay_ms = NULL; } },
+        { "HTTP socket", [&] { kii_set_http_socket(&kii, NULL); } },
+        { "HTTP connect", [&] { http_ctx.ops.connect = NULL; } },
+        { "HTTP send", [&] { http_ctx.ops.send = NULL; } },
+        { "HTTP recv", [&] { http_ctx.ops.recv = NULL; } },
+        { "HTTP close", [&] { http_ctx.ops.close = NULL; } },
+        { "MQTT socket", [&] { kii_set_mqtt_socket(&kii, NULL); } },
+        { "MQTT connect", [&] { mqtt_ctx.ops.connect = NULL; } },
+        { "MQTT send", [&] { mqtt_ctx.ops.send = NULL; } },
+        { "MQTT recv", [&] { mqtt_ctx.ops.recv = NULL; } },
+        { "MQTT close", [&] { mqtt_ctx.ops.close = NULL; } },
+        { "buffer", [&] { kii_set_buff(&kii, NULL, 0); } },
+        { "MQTT buffer", [&] { kii_set_mqtt_buff(&kii, NULL, 0); } },
     };
     const kii_t complete = kii;
+    const ebisu_system_ops_t sys_ops = kii_sys.ops;
+    const ebisu_socket_ops_t http_ops = http_ctx.ops;
+    const ebisu_socket_ops_t mqtt_ops = mqtt_ctx.ops;
     for (const auto& c : cases) {
         INFO("left out " << c.left_out);
-        c.unset(&kii);
+        c.unset();
         CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_FAIL );
         CHECK( ctx.calls == 0 );
         kii = complete;
+        kii_sys.ops = sys_ops;
+        http_ctx.ops = http_ops;
+        mqtt_ctx.ops = mqtt_ops;
     }
 
     CHECK( kii_start_push_task(&kii, 300, NULL, NULL) == KII_ERR_FAIL );
@@ -2670,7 +2692,11 @@ TEST_CASE( "kii_start_push_task refuses while its task is running" ) {
     khct::set_push_needs(&kii, buff, sizeof(buff));
     kii_set_cb_task_continue(&kii, stop_task, NULL);
     TaskCreateCtx ctx = { EBISU_TASKC_OK, 0 };
-    kii_set_cb_task_create(&kii, mock_task_create, &ctx);
+    khct::cb::SystemCtx kii_sys;
+    kii_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+        return mock_task_create(name, entry, entry_param, &ctx);
+    };
+    kii_set_system(&kii, kii_sys.system());
 
     SECTION("until it has ended") {
         REQUIRE( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_OK );
@@ -2757,11 +2783,8 @@ TEST_CASE( "MQTT endpoint values out of range" ) {
     kii_set_json_parser_resource(&kii, &jkii_resource);
 
     khct::cb::SockCtx http_ctx;
-    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
-    kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
+    kii_set_http_socket(&kii, http_ctx.socket());
+    kii_set_system(&kii, khct::cb::delay_only_system());
 
     http_ctx.on_connect = [](void* socket_context, const char* host, uint16_t port) {
         return EBISU_SOCK_OK;
@@ -2837,10 +2860,14 @@ TEST_CASE( "MQTT keep-alive interval range" ) {
     kii_init(&kii);
     khct::set_push_needs(&kii, mqtt_buff, sizeof(mqtt_buff));
     int call_task_create = 0;
-    kii_set_cb_task_create(&kii, count_task_create, &call_task_create);
+    khct::cb::SystemCtx kii_sys;
+    kii_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+        return count_task_create(name, entry, entry_param, &call_task_create);
+    };
+    kii_set_system(&kii, kii_sys.system());
 
     khct::cb::SockCtx mqtt_ctx;
-    kii_set_cb_mqtt_sock_send(&kii, khct::cb::mock_send, &mqtt_ctx);
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
     std::string sent;
     mqtt_ctx.on_send = [&sent](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         sent.append(buffer, length);
@@ -2907,11 +2934,10 @@ TEST_CASE( "MQTT keep-alive interval range" ) {
 TEST_CASE( "MQTT PINGREQ timing" ) {
     kii_t kii;
     kii_init(&kii);
-    kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
+    kii_set_system(&kii, khct::cb::delay_only_system());
 
     khct::cb::SockCtx mqtt_ctx;
-    kii_set_cb_mqtt_sock_send(&kii, khct::cb::mock_send, &mqtt_ctx);
-    kii_set_cb_mqtt_sock_recv(&kii, khct::cb::mock_recv, &mqtt_ctx);
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
     int call_send = 0;
     mqtt_ctx.on_send = [&call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         ++call_send;
@@ -3120,7 +3146,7 @@ TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
     kii_set_buff(&kii, buff, sizeof(buff));
     kii_set_json_parser_resource(&kii, &resource);
     kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
-    kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
+    kii_set_system(&kii, khct::cb::delay_only_system());
     strcpy(kii._author.author_id, "th.1");
     strcpy(kii._author.access_token, "tok");
 
@@ -3156,10 +3182,7 @@ TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
         return EBISU_SOCK_OK;
     };
     http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
-    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+    kii_set_http_socket(&kii, http_ctx.socket());
 
     ExitCtx ctx;
     kii_set_cb_task_continue(&kii, exit_test_continue, &ctx);
@@ -3184,10 +3207,7 @@ TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
     };
     size_t served = 0;
     serve_stream(mqtt_ctx, std::string("\x20\x02\x00\x00" "\x90\x03\x00\x01\x00", 9), served);
-    kii_set_cb_mqtt_sock_connect(&kii, khct::cb::mock_connect, &mqtt_ctx);
-    kii_set_cb_mqtt_sock_send(&kii, khct::cb::mock_send, &mqtt_ctx);
-    kii_set_cb_mqtt_sock_recv(&kii, khct::cb::mock_recv, &mqtt_ctx);
-    kii_set_cb_mqtt_sock_close(&kii, khct::cb::mock_close, &mqtt_ctx);
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
 
     SECTION("discontinued while connected") {
         int timeouts = 0;
@@ -3267,7 +3287,7 @@ TEST_CASE( "The push task connects with the endpoint onboarding returned" ) {
     kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
     kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
     kii_set_json_parser_resource(&kii, &resource);
-    kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
+    kii_set_system(&kii, khct::cb::delay_only_system());
     khct::HttpScript http;
     http.attach(&kii._khc);
 
@@ -3303,7 +3323,7 @@ TEST_CASE( "The push task connects with the endpoint onboarding returned" ) {
             port = p;
             return EBISU_SOCK_OK;
         };
-        kii_set_cb_mqtt_sock_connect(&kii, khct::cb::mock_connect, &mqtt_ctx);
+        kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
         _mqtt_state_sock_connect(&state);
         CHECK( state.info.task_state == KII_MQTT_ST_SEND_CONNECT );
         CHECK( host == "mqtt.example.com" );
@@ -3404,7 +3424,7 @@ TEST_CASE( "The waits between attempts" ) {
     kii_init(&kii);
     strcpy(kii._author.author_id, "th.1");
     khct::cb::SockCtx mqtt_ctx;
-    kii_set_cb_mqtt_sock_close(&kii, khct::cb::mock_close, &mqtt_ctx);
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
     mqtt_ctx.on_close = [](void* socket_ctx) { return EBISU_SOCK_OK; };
 
     mqtt_state_t state;
@@ -3447,8 +3467,14 @@ TEST_CASE( "A broker that cannot be reached" ) {
     kii_init(&kii);
     strcpy(kii._author.author_id, "th.1");
     RetryCtx ctx = {};
-    kii_set_cb_mqtt_sock_connect(&kii, retry_connect_fail, &ctx);
-    kii_set_cb_delay_ms(&kii, retry_delay, &ctx);
+    khct::cb::SockCtx mqtt_ctx;
+    mqtt_ctx.on_connect = [&ctx](void*, const char* host, uint16_t port) {
+        return retry_connect_fail(&ctx, host, port);
+    };
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
+    khct::cb::SystemCtx sys;
+    sys.on_delay_ms = [&ctx](uint32_t ms) { retry_delay(ms, &ctx); };
+    kii_set_system(&kii, sys.system());
 
     mqtt_state_t state;
     _init_mqtt_state(&kii, &state);
@@ -3481,16 +3507,19 @@ TEST_CASE( "The task can be stopped during a wait" ) {
 
     RetryCtx ctx = {};
     ctx.continues_left = 1000;
-    kii_set_cb_mqtt_sock_connect(&kii, retry_connect_fail, &ctx);
-    kii_set_cb_delay_ms(&kii, retry_delay, &ctx);
+    khct::cb::SockCtx mqtt_ctx;
+    mqtt_ctx.on_connect = [&ctx](void*, const char* host, uint16_t port) {
+        return retry_connect_fail(&ctx, host, port);
+    };
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
+    khct::cb::SystemCtx sys;
+    sys.on_delay_ms = [&ctx](uint32_t ms) { retry_delay(ms, &ctx); };
+    kii_set_system(&kii, sys.system());
     kii_set_cb_task_continue(&kii, retry_continue, &ctx);
 
     // The broker is out of reach, and Kii Cloud says to try later.
     khct::cb::SockCtx http_ctx;
-    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+    kii_set_http_socket(&kii, http_ctx.socket());
     http_ctx.on_connect = [](void* socket_context, const char* host, uint16_t port) {
         return EBISU_SOCK_OK;
     };

@@ -23,6 +23,14 @@ static const char* TAG = "sock_cb";
    QEMU. The connection's own timeouts are set after it. */
 #define HANDSHAKE_TIMEOUT_MS 30000
 
+static const ebisu_socket_ops_t sock_cb_ops = {
+    sock_cb_connect,
+    sock_cb_send,
+    sock_cb_recv,
+    sock_cb_close,
+    sock_cb_recv_timed_out
+};
+
 void sock_cb_init_context(
         socket_context_t* ctx,
         unsigned int to_recv,
@@ -30,6 +38,7 @@ void sock_cb_init_context(
         ebisu_clock_t* clock)
 {
     memset(ctx, 0, sizeof(*ctx));
+    ctx->base.ops = &sock_cb_ops;
     ctx->to_recv = to_recv;
     ctx->to_send = to_send;
     ctx->clock = clock;
@@ -107,10 +116,10 @@ static ebisu_validity_t check_chain(ebisu_clock_t* clock, const mbedtls_x509_crt
 }
 
 ebisu_sock_code_t
-    sock_cb_connect(void* sock_ctx, const char* host,
+    sock_cb_connect(ebisu_socket_t* self, const char* host,
             uint16_t port)
 {
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     ctx->tls = esp_tls_init();
     if (ctx->tls == NULL) {
         ESP_LOGE(TAG, "failed to allocate the TLS context");
@@ -162,12 +171,12 @@ fail:
 }
 
 ebisu_sock_code_t
-    sock_cb_send(void* sock_ctx,
+    sock_cb_send(ebisu_socket_t* self,
             const char* buffer,
             size_t length,
             size_t* out_sent_length)
 {
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     ssize_t ret = esp_tls_conn_write(ctx->tls, buffer, length);
     if (ret > 0) {
         *out_sent_length = ret;
@@ -179,10 +188,10 @@ ebisu_sock_code_t
 }
 
 ebisu_sock_code_t
-    sock_cb_recv(void* sock_ctx, char* buffer, size_t length_to_read,
+    sock_cb_recv(ebisu_socket_t* self, char* buffer, size_t length_to_read,
             size_t* out_actual_length)
 {
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     *out_actual_length = 0;
     ssize_t ret = esp_tls_conn_read(ctx->tls, buffer, length_to_read);
     if (ret > 0) {
@@ -200,17 +209,17 @@ ebisu_sock_code_t
 /* sock_cb_recv() returns EBISU_SOCK_FAIL both when the receive timeout set in
    sock_cb_connect() runs out and when the connection fails. The timeout makes
    lwIP's read fail with EAGAIN, which mbedTLS reports as wanting to read. */
-kii_bool_t
-    sock_cb_recv_timed_out(void* sock_ctx)
+bool
+    sock_cb_recv_timed_out(ebisu_socket_t* self)
 {
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
-    return ctx->recv_ret == ESP_TLS_ERR_SSL_WANT_READ ? KII_TRUE : KII_FALSE;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
+    return ctx->recv_ret == ESP_TLS_ERR_SSL_WANT_READ;
 }
 
 ebisu_sock_code_t
-    sock_cb_close(void* sock_ctx)
+    sock_cb_close(ebisu_socket_t* self)
 {
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     int ret = esp_tls_conn_destroy(ctx->tls);
     ctx->tls = NULL;
     return ret == 0 ? EBISU_SOCK_OK : EBISU_SOCK_FAIL;

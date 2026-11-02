@@ -37,10 +37,7 @@ Result perform(const Peer& peer) {
     khc_set_stream_buff(&http, stream_buff.data(), stream_buff.size());
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khct::cb::IOCtx io_ctx;
     khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);

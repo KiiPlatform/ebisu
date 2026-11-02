@@ -30,10 +30,7 @@ TEST_CASE( "HTTP response test" ) {
     khc_set_req_headers(&http, NULL);
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khct::cb::IOCtx io_ctx;
     // no set cb_read.
@@ -133,10 +130,7 @@ TEST_CASE( "Ignore HTTP status 100" ) {
     khc_set_req_headers(&http, NULL);
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khct::cb::IOCtx io_ctx;
     // no set cb_read.
@@ -234,10 +228,7 @@ TEST_CASE( "Small resp header skip test" ) {
     khc_set_resp_header_buff(&http, resp_header_buff, resp_header_buff_size);
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khct::cb::IOCtx io_ctx;
     // no set cb_read.
@@ -335,10 +326,7 @@ TEST_CASE( "HTTP response 400 test" ) {
     khc_set_req_headers(&http, NULL);
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khct::cb::IOCtx io_ctx;
     // no set cb_read.
@@ -440,10 +428,7 @@ ContentLengthResult perform_with_header(
     khc_set_req_headers(&http, NULL);
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khct::cb::IOCtx io_ctx;
     khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
@@ -565,10 +550,7 @@ khc_code perform_with_reads(const std::vector<std::string>& reads, uint16_t* sta
     khc_set_req_headers(&http, NULL);
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khct::cb::IOCtx io_ctx;
     khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
@@ -758,10 +740,7 @@ ClosedResult perform_closing_after(const std::string& response) {
     khc_set_req_headers(&http, NULL);
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khct::cb::IOCtx io_ctx;
     khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
@@ -870,10 +849,7 @@ HeaderResult perform_with_small_header_buffer(const std::string& resp)
         return EBISU_SOCK_OK;
     };
     s_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     HeaderResult result;
     khct::cb::IOCtx io_ctx;
@@ -935,17 +911,18 @@ TEST_CASE( "A framing header too long for the buffer is too large" ) {
 }
 
 // Each was called without checking, so one left out crashed the request.
-TEST_CASE( "khc_perform needs its callbacks" ) {
+TEST_CASE( "khc_perform needs its socket and callbacks" ) {
     const struct {
         const char* left_out;
-        std::function<void(khc*)> unset;
+        std::function<void(khc*, khct::cb::SockCtx&)> unset;
     } cases[] = {
-        { "connect", [](khc* h) { khc_set_cb_sock_connect(h, NULL, NULL); } },
-        { "send", [](khc* h) { khc_set_cb_sock_send(h, NULL, NULL); } },
-        { "recv", [](khc* h) { khc_set_cb_sock_recv(h, NULL, NULL); } },
-        { "close", [](khc* h) { khc_set_cb_sock_close(h, NULL, NULL); } },
-        { "write", [](khc* h) { khc_set_cb_write(h, NULL, NULL); } },
-        { "header", [](khc* h) { khc_set_cb_header(h, NULL, NULL); } },
+        { "socket", [](khc* h, khct::cb::SockCtx&) { khc_set_socket(h, NULL); } },
+        { "connect", [](khc*, khct::cb::SockCtx& s) { s.ops.connect = NULL; } },
+        { "send", [](khc*, khct::cb::SockCtx& s) { s.ops.send = NULL; } },
+        { "recv", [](khc*, khct::cb::SockCtx& s) { s.ops.recv = NULL; } },
+        { "close", [](khc*, khct::cb::SockCtx& s) { s.ops.close = NULL; } },
+        { "write", [](khc* h, khct::cb::SockCtx&) { khc_set_cb_write(h, NULL, NULL); } },
+        { "header", [](khc* h, khct::cb::SockCtx&) { khc_set_cb_header(h, NULL, NULL); } },
     };
     for (const auto& c : cases) {
         INFO("left out " << c.left_out);
@@ -963,14 +940,11 @@ TEST_CASE( "khc_perform needs its callbacks" ) {
             return EBISU_SOCK_FAIL;
         };
         khct::cb::IOCtx io_ctx;
-        khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-        khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-        khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-        khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+        khc_set_socket(&http, s_ctx.socket());
         khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);
         khc_set_cb_header(&http, khct::cb::cb_header, &io_ctx);
 
-        c.unset(&http);
+        c.unset(&http, s_ctx);
         CHECK( khc_perform(&http) == KHC_ERR_FAIL );
         CHECK( on_connect_called == 0 );
     }

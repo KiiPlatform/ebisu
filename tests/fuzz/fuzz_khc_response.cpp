@@ -5,23 +5,30 @@
 
 namespace {
 
-ebisu_sock_code_t sock_connect(void*, const char*, uint16_t) {
+struct Socket {
+    ebisu_socket_t base;
+    FuzzSocket fuzz;
+};
+
+ebisu_sock_code_t sock_connect(ebisu_socket_t*, const char*, uint16_t) {
     return EBISU_SOCK_OK;
 }
 
-ebisu_sock_code_t sock_send(void*, const char*, size_t length, size_t* out_sent_length) {
+ebisu_sock_code_t sock_send(ebisu_socket_t*, const char*, size_t length, size_t* out_sent_length) {
     *out_sent_length = length;
     return EBISU_SOCK_OK;
 }
 
-ebisu_sock_code_t sock_recv(void* context, char* buffer, size_t length, size_t* out_actual_length) {
-    *out_actual_length = ((FuzzSocket*)context)->read(buffer, length);
+ebisu_sock_code_t sock_recv(ebisu_socket_t* self, char* buffer, size_t length, size_t* out_actual_length) {
+    *out_actual_length = ((Socket*)self)->fuzz.read(buffer, length);
     return EBISU_SOCK_OK;
 }
 
-ebisu_sock_code_t sock_close(void*) {
+ebisu_sock_code_t sock_close(ebisu_socket_t*) {
     return EBISU_SOCK_OK;
 }
+
+const ebisu_socket_ops_t SOCKET_OPS = { sock_connect, sock_send, sock_recv, sock_close, NULL };
 
 size_t on_header(char*, size_t size, void*) {
     return size;
@@ -50,11 +57,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     khc_set_path(&http, "/");
     khc_set_req_headers(&http, NULL);
 
-    FuzzSocket socket = { input.data, input.size, max_read, 0 };
-    khc_set_cb_sock_connect(&http, sock_connect, NULL);
-    khc_set_cb_sock_send(&http, sock_send, NULL);
-    khc_set_cb_sock_recv(&http, sock_recv, &socket);
-    khc_set_cb_sock_close(&http, sock_close, NULL);
+    Socket socket = { { &SOCKET_OPS }, { input.data, input.size, max_read, 0 } };
+    khc_set_socket(&http, &socket.base);
     khc_set_cb_header(&http, on_header, NULL);
     khc_set_cb_write(&http, on_write, NULL);
 

@@ -62,25 +62,25 @@ TEST_CASE( "enable insecure test" ) {
     REQUIRE( updater._kii._insecure_mqtt == KII_FALSE );
 }
 
-static kii_bool_t recv_timed_out(void* sock_ctx)
-{
-    return KII_TRUE;
-}
-
-TEST_CASE( "tio_handler_set_cb_sock_recv_timed_out_mqtt sets the MQTT callback" ) {
+TEST_CASE( "tio_handler sets its sockets and system on its kii" ) {
     tio_handler_t handler;
     tio_handler_init(&handler);
-    REQUIRE( handler._kii._cb_mqtt_sock_recv_timed_out == nullptr );
-    REQUIRE( handler._kii._mqtt_sock_recv_timed_out_ctx == nullptr );
+    REQUIRE( handler._kii._khc._socket == nullptr );
+    REQUIRE( handler._kii._mqtt_socket == nullptr );
+    REQUIRE( handler._kii._system == nullptr );
 
-    int sock_ctx = 0;
-    tio_handler_set_cb_sock_recv_timed_out_mqtt(&handler, recv_timed_out, &sock_ctx);
-    REQUIRE( handler._kii._cb_mqtt_sock_recv_timed_out == recv_timed_out );
-    REQUIRE( handler._kii._mqtt_sock_recv_timed_out_ctx == &sock_ctx );
+    khct::cb::SockCtx http_ctx;
+    khct::cb::SockCtx mqtt_ctx;
+    khct::cb::SystemCtx sys;
+    tio_handler_set_http_socket(&handler, http_ctx.socket());
+    tio_handler_set_mqtt_socket(&handler, mqtt_ctx.socket());
+    tio_handler_set_system(&handler, sys.system());
+    REQUIRE( handler._kii._khc._socket == http_ctx.socket() );
+    REQUIRE( handler._kii._mqtt_socket == mqtt_ctx.socket() );
+    REQUIRE( handler._kii._system == sys.system() );
 
-    tio_handler_set_cb_sock_recv_timed_out_mqtt(&handler, NULL, NULL);
-    REQUIRE( handler._kii._cb_mqtt_sock_recv_timed_out == nullptr );
-    REQUIRE( handler._kii._mqtt_sock_recv_timed_out_ctx == nullptr );
+    tio_handler_set_mqtt_socket(&handler, NULL);
+    REQUIRE( handler._kii._mqtt_socket == nullptr );
 }
 
 static ebisu_task_code_t fail_task_create(const char*, EBISU_TASK_ENTRY, void*, void*)
@@ -108,7 +108,11 @@ TEST_CASE( "tio_handler_start keep-alive range" ) {
     tio_handler_init(&handler);
     khct::set_push_needs(&handler._kii, buff, sizeof(buff));
     int call_task_create = 0;
-    tio_handler_set_cb_task_create(&handler, count_task_create, &call_task_create);
+    khct::cb::SystemCtx handler_sys;
+    handler_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+        return count_task_create(name, entry, entry_param, &call_task_create);
+    };
+    tio_handler_set_system(&handler, handler_sys.system());
     tio_author_t author = {};
 
     for (uint32_t interval : { (uint32_t)0, (uint32_t)300, (uint32_t)65535 }) {
@@ -157,14 +161,22 @@ TEST_CASE( "tio_handler_start reports a task it could not create" ) {
 
     SECTION("task created") {
         TaskCreateCtx ctx = { EBISU_TASKC_OK, 0 };
-        tio_handler_set_cb_task_create(&handler, mock_task_create, &ctx);
+        khct::cb::SystemCtx handler_sys;
+        handler_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+            return mock_task_create(name, entry, entry_param, &ctx);
+        };
+        tio_handler_set_system(&handler, handler_sys.system());
         CHECK( tio_handler_start(&handler, &author, no_action, NULL) == TIO_ERR_OK );
         CHECK( ctx.calls == 1 );
     }
 
     SECTION("task not created") {
         TaskCreateCtx ctx = { EBISU_TASKC_FAIL, 0 };
-        tio_handler_set_cb_task_create(&handler, mock_task_create, &ctx);
+        khct::cb::SystemCtx handler_sys;
+        handler_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+            return mock_task_create(name, entry, entry_param, &ctx);
+        };
+        tio_handler_set_system(&handler, handler_sys.system());
         CHECK( tio_handler_start(&handler, &author, no_action, NULL) == TIO_ERR_CREATE_TASK );
         CHECK( ctx.calls == 1 );
     }
@@ -189,7 +201,11 @@ TEST_CASE( "tio_updater_start without an interval" ) {
     tio_updater_t updater;
     tio_updater_init(&updater);
     TaskCreateCtx ctx = { EBISU_TASKC_OK, 0 };
-    tio_updater_set_cb_task_create(&updater, mock_task_create, &ctx);
+    khct::cb::SystemCtx updater_sys;
+    updater_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+        return mock_task_create(name, entry, entry_param, &ctx);
+    };
+    tio_updater_set_system(&updater, updater_sys.system());
     tio_author_t author = {};
 
     CHECK( tio_updater_start(&updater, &author, NULL, NULL, NULL, NULL) == TIO_ERR_FAIL );
@@ -274,7 +290,11 @@ TEST_CASE( "tio_handler_start refuses while its task is running" ) {
     khct::set_push_needs(&handler._kii, buff, sizeof(buff));
     tio_handler_set_cb_task_continue(&handler, stop_task, NULL);
     HeldTask held = {};
-    tio_handler_set_cb_task_create(&handler, hold_task, &held);
+    khct::cb::SystemCtx handler_sys;
+    handler_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+        return hold_task(name, entry, entry_param, &held);
+    };
+    tio_handler_set_system(&handler, handler_sys.system());
     tio_author_t author = {};
     strcpy(author.author_id, "first");
     REQUIRE( tio_handler_start(&handler, &author, no_action, NULL) == TIO_ERR_OK );
@@ -299,7 +319,11 @@ TEST_CASE( "tio_handler_start needs an action callback" ) {
     tio_handler_init(&handler);
     khct::set_push_needs(&handler._kii, buff, sizeof(buff));
     HeldTask held = {};
-    tio_handler_set_cb_task_create(&handler, hold_task, &held);
+    khct::cb::SystemCtx handler_sys;
+    handler_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+        return hold_task(name, entry, entry_param, &held);
+    };
+    tio_handler_set_system(&handler, handler_sys.system());
     tio_author_t author = {};
 
     CHECK( tio_handler_start(&handler, &author, NULL, NULL) == TIO_ERR_FAIL );
@@ -315,28 +339,39 @@ TEST_CASE( "tio_updater_start needs what the task uses" ) {
     khct::set_updater_needs(&updater._kii, buff, sizeof(buff));
     tio_updater_set_interval(&updater, 60);
     HeldTask held = {};
-    tio_updater_set_cb_task_create(&updater, hold_task, &held);
+    khct::cb::SystemCtx updater_sys;
+    updater_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+        return hold_task(name, entry, entry_param, &held);
+    };
+    tio_updater_set_system(&updater, updater_sys.system());
+    khct::cb::SockCtx http_ctx;
+    tio_updater_set_socket(&updater, http_ctx.socket());
     tio_author_t author = {};
     UpdaterTask task = {};
 
     const struct {
         const char* left_out;
-        std::function<void(kii_t*)> unset;
+        std::function<void()> unset;
     } cases[] = {
-        { "delay", [](kii_t* k) { kii_set_cb_delay_ms(k, NULL, NULL); } },
-        { "connect", [](kii_t* k) { kii_set_cb_http_sock_connect(k, NULL, NULL); } },
-        { "send", [](kii_t* k) { kii_set_cb_http_sock_send(k, NULL, NULL); } },
-        { "recv", [](kii_t* k) { kii_set_cb_http_sock_recv(k, NULL, NULL); } },
-        { "close", [](kii_t* k) { kii_set_cb_http_sock_close(k, NULL, NULL); } },
-        { "buffer", [](kii_t* k) { kii_set_buff(k, NULL, 0); } },
+        { "delay", [&] { updater_sys.ops.delay_ms = NULL; } },
+        { "socket", [&] { tio_updater_set_socket(&updater, NULL); } },
+        { "connect", [&] { http_ctx.ops.connect = NULL; } },
+        { "send", [&] { http_ctx.ops.send = NULL; } },
+        { "recv", [&] { http_ctx.ops.recv = NULL; } },
+        { "close", [&] { http_ctx.ops.close = NULL; } },
+        { "buffer", [&] { kii_set_buff(&updater._kii, NULL, 0); } },
     };
     const tio_updater_t complete = updater;
+    const ebisu_system_ops_t sys_ops = updater_sys.ops;
+    const ebisu_socket_ops_t http_ops = http_ctx.ops;
     for (const auto& c : cases) {
         INFO("left out " << c.left_out);
-        c.unset(&updater._kii);
+        c.unset();
         CHECK( tio_updater_start(&updater, &author, updater_state_size, &task, updater_read, NULL) == TIO_ERR_FAIL );
         CHECK( held.calls == 0 );
         updater = complete;
+        updater_sys.ops = sys_ops;
+        http_ctx.ops = http_ops;
     }
 
     CHECK( tio_updater_start(&updater, &author, NULL, NULL, updater_read, NULL) == TIO_ERR_FAIL );
@@ -368,7 +403,11 @@ TEST_CASE( "tio_updater_start refuses while its task is running" ) {
     tio_updater_set_interval(&updater, 60);
     tio_updater_set_cb_task_continue(&updater, stop_task, NULL);
     HeldTask held = {};
-    tio_updater_set_cb_task_create(&updater, hold_task, &held);
+    khct::cb::SystemCtx updater_sys;
+    updater_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+        return hold_task(name, entry, entry_param, &held);
+    };
+    tio_updater_set_system(&updater, updater_sys.system());
     tio_author_t author = {};
     strcpy(author.author_id, "first");
     UpdaterTask task = {};
@@ -398,10 +437,16 @@ TEST_CASE( "tio_updater_start refuses while its task is running" ) {
     }
 
     SECTION("but not after a task that could not be created") {
-        tio_updater_set_cb_task_create(&updater, fail_task_create, NULL);
+        khct::cb::SystemCtx updater_sys;
+        updater_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+            return fail_task_create(name, entry, entry_param, NULL);
+        };
+        tio_updater_set_system(&updater, updater_sys.system());
         REQUIRE( tio_updater_start(&updater, &author, updater_state_size, &task, updater_read, NULL) == TIO_ERR_CREATE_TASK );
 
-        tio_updater_set_cb_task_create(&updater, hold_task, &held);
+        updater_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+            return hold_task(name, entry, entry_param, &held);
+        };
         CHECK( tio_updater_start(&updater, &author, updater_state_size, &task, updater_read, NULL) == TIO_ERR_OK );
     }
 }
@@ -417,10 +462,14 @@ TEST_CASE( "The updater asks to continue every second, at any interval" ) {
         khct::set_updater_needs(&updater._kii, buff, sizeof(buff));
         UpdaterTask task = {};
         task.continues_left = 6;
-        tio_updater_set_cb_task_create(&updater, run_task, NULL);
+        khct::cb::SystemCtx updater_sys;
+        updater_sys.on_task_create = [&](const char* name, EBISU_TASK_ENTRY entry, void* entry_param) {
+            return run_task(name, entry, entry_param, NULL);
+        };
+        updater_sys.on_delay_ms = [&task](uint32_t ms) { updater_delay(ms, &task); };
+        tio_updater_set_system(&updater, updater_sys.system());
         tio_updater_set_cb_task_continue(&updater, updater_continue, &task);
         tio_updater_set_cb_task_exit(&updater, updater_exit, &task);
-        tio_updater_set_cb_delay_ms(&updater, updater_delay, &task);
         tio_updater_set_interval(&updater, interval);
         tio_author_t author = {};
 
@@ -432,10 +481,6 @@ TEST_CASE( "The updater asks to continue every second, at any interval" ) {
     }
 }
 
-namespace {
-uint64_t clock_now_ms(void*) { return 0; }
-}
-
 TEST_CASE( "The handler and the updater give a clock the time, through their kii_t" ) {
     tio_handler_t handler;
     tio_updater_t updater;
@@ -443,13 +488,14 @@ TEST_CASE( "The handler and the updater give a clock the time, through their kii
     tio_updater_init(&updater);
 
     ebisu_clock_t clock;
-    ebisu_clock_init(&clock, NULL, NULL);
+    ebisu_clock_init(&clock, NULL);
     CHECK( tio_handler_set_clock(&handler, &clock) == TIO_ERR_FAIL );
     CHECK( tio_updater_set_clock(&updater, &clock) == TIO_ERR_FAIL );
     CHECK( handler._kii._clock == nullptr );
     CHECK( updater._kii._clock == nullptr );
 
-    ebisu_clock_init(&clock, clock_now_ms, NULL);
+    khct::cb::SystemCtx sys;
+    ebisu_clock_init(&clock, sys.system());
     CHECK( tio_handler_set_clock(&handler, &clock) == TIO_ERR_OK );
     CHECK( tio_updater_set_clock(&updater, &clock) == TIO_ERR_OK );
     CHECK( handler._kii._clock == &clock );

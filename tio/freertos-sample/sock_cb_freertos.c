@@ -51,6 +51,14 @@ int sock_cb_init_tls(const char* ca_pem, size_t ca_pem_size)
     return 0;
 }
 
+static const ebisu_socket_ops_t sock_cb_ops = {
+    sock_cb_connect,
+    sock_cb_send,
+    sock_cb_recv,
+    sock_cb_close,
+    sock_cb_recv_timed_out
+};
+
 void sock_cb_init_context(
         socket_context_t* ctx,
         unsigned int to_recv,
@@ -58,6 +66,7 @@ void sock_cb_init_context(
         ebisu_clock_t* clock)
 {
     memset(ctx, 0, sizeof(*ctx));
+    ctx->base.ops = &sock_cb_ops;
     ctx->socket = FREERTOS_INVALID_SOCKET;
     ctx->to_recv = to_recv;
     ctx->to_send = to_send;
@@ -174,10 +183,10 @@ static void log_refused(socket_context_t* ctx, const char* host)
 }
 
 ebisu_sock_code_t
-    sock_cb_connect(void* sock_ctx, const char* host,
+    sock_cb_connect(ebisu_socket_t* self, const char* host,
             uint16_t port)
 {
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     uint32_t address = FreeRTOS_gethostbyname(host);
     if (address == 0) {
         sample_log("failed to resolve %s", host);
@@ -245,12 +254,12 @@ close_socket:
 }
 
 ebisu_sock_code_t
-    sock_cb_send(void* sock_ctx,
+    sock_cb_send(ebisu_socket_t* self,
             const char* buffer,
             size_t length,
             size_t* out_sent_length)
 {
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     int ret = mbedtls_ssl_write(&ctx->ssl, (const unsigned char*)buffer, length);
     if (ret > 0) {
         *out_sent_length = ret;
@@ -262,10 +271,10 @@ ebisu_sock_code_t
 }
 
 ebisu_sock_code_t
-    sock_cb_recv(void* sock_ctx, char* buffer, size_t length_to_read,
+    sock_cb_recv(ebisu_socket_t* self, char* buffer, size_t length_to_read,
             size_t* out_actual_length)
 {
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     *out_actual_length = 0;
     int ret = mbedtls_ssl_read(&ctx->ssl, (unsigned char*)buffer, length_to_read);
     if (ret > 0) {
@@ -285,17 +294,17 @@ ebisu_sock_code_t
    sock_cb_connect() runs out and when the connection fails. The timeout ends
    FreeRTOS_recv() with nothing read, which bio_recv() tells mbedTLS is wanting
    to read. */
-kii_bool_t
-    sock_cb_recv_timed_out(void* sock_ctx)
+bool
+    sock_cb_recv_timed_out(ebisu_socket_t* self)
 {
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
-    return ctx->recv_ret == MBEDTLS_ERR_SSL_WANT_READ ? KII_TRUE : KII_FALSE;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
+    return ctx->recv_ret == MBEDTLS_ERR_SSL_WANT_READ;
 }
 
 ebisu_sock_code_t
-    sock_cb_close(void* sock_ctx)
+    sock_cb_close(ebisu_socket_t* self)
 {
-    socket_context_t* ctx = (socket_context_t*)sock_ctx;
+    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
     if (ctx->socket == FREERTOS_INVALID_SOCKET) {
         return EBISU_SOCK_OK;
     }

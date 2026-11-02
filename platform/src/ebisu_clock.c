@@ -5,22 +5,29 @@
 
 static void _lock_clock(ebisu_clock_t* clock)
 {
-    if (clock->_cb_lock != NULL) {
-        clock->_cb_lock(clock->_lock_data);
+    if (clock->_lock != NULL) {
+        clock->_lock->ops->lock(clock->_lock);
     }
 }
 
 static void _unlock_clock(ebisu_clock_t* clock)
 {
-    if (clock->_cb_unlock != NULL) {
-        clock->_cb_unlock(clock->_lock_data);
+    if (clock->_lock != NULL) {
+        clock->_lock->ops->unlock(clock->_lock);
     }
 }
 
-void ebisu_clock_init(
-        ebisu_clock_t* clock,
-        EBISU_CB_MONOTONIC_MS cb_monotonic_ms,
-        void* userdata)
+static bool _has_monotonic(const ebisu_clock_t* clock)
+{
+    return clock->_system != NULL && clock->_system->ops->monotonic_ms != NULL;
+}
+
+static uint64_t _monotonic_ms(ebisu_clock_t* clock)
+{
+    return clock->_system->ops->monotonic_ms(clock->_system);
+}
+
+void ebisu_clock_init(ebisu_clock_t* clock, ebisu_system_t* system)
 {
     memset(clock, 0, sizeof(*clock));
     /* The floor khc_init() sets khc: a week's margin, for a committer whose
@@ -28,19 +35,12 @@ void ebisu_clock_init(
     clock->_floor = EBISU_SOURCE_TIME - 7 * 86400;
     clock->_time_known = false;
     clock->_exact_for_ms = 24ULL * 3600 * 1000;
-    clock->_cb_monotonic_ms = cb_monotonic_ms;
-    clock->_monotonic_ms_data = userdata;
+    clock->_system = system;
 }
 
-void ebisu_clock_set_cb_lock(
-        ebisu_clock_t* clock,
-        EBISU_CB_LOCK cb_lock,
-        EBISU_CB_LOCK cb_unlock,
-        void* userdata)
+void ebisu_clock_set_lock(ebisu_clock_t* clock, ebisu_lock_t* lock)
 {
-    clock->_cb_lock = cb_lock;
-    clock->_cb_unlock = cb_unlock;
-    clock->_lock_data = userdata;
+    clock->_lock = lock;
 }
 
 void ebisu_clock_set_exact_for(ebisu_clock_t* clock, uint32_t seconds)
@@ -63,9 +63,9 @@ bool ebisu_clock_set_time(ebisu_clock_t* clock, int64_t now)
 {
     bool taken = false;
     _lock_clock(clock);
-    if (now >= clock->_floor && clock->_cb_monotonic_ms != NULL) {
+    if (now >= clock->_floor && _has_monotonic(clock)) {
         clock->_time = now;
-        clock->_time_at_ms = clock->_cb_monotonic_ms(clock->_monotonic_ms_data);
+        clock->_time_at_ms = _monotonic_ms(clock);
         clock->_time_known = true;
         taken = true;
     }
@@ -80,10 +80,10 @@ bool ebisu_clock_set_time(ebisu_clock_t* clock, int64_t now)
  * time is forgotten, until the next. false when there is no time. */
 static bool _counted(ebisu_clock_t* clock, int64_t* out_counted, bool* out_exact)
 {
-    if (!clock->_time_known || clock->_cb_monotonic_ms == NULL) {
+    if (!clock->_time_known || !_has_monotonic(clock)) {
         return false;
     }
-    uint64_t now_ms = clock->_cb_monotonic_ms(clock->_monotonic_ms_data);
+    uint64_t now_ms = _monotonic_ms(clock);
     if (now_ms < clock->_time_at_ms) {
         if (clock->_time > clock->_floor) {
             clock->_floor = clock->_time;

@@ -11,26 +11,36 @@ namespace {
 const int MAX_STATES = 512;
 
 struct Task {
+    // The MQTT socket.
+    ebisu_socket_t base;
     FuzzSocket socket;
     int states;
     size_t received;
 };
 
-ebisu_sock_code_t http_connect(void*, const char*, uint16_t) {
+ebisu_sock_code_t http_connect(ebisu_socket_t*, const char*, uint16_t) {
     return EBISU_SOCK_FAIL;
 }
 
-ebisu_sock_code_t mqtt_connect(void*, const char*, uint16_t) {
+ebisu_sock_code_t http_send(ebisu_socket_t*, const char*, size_t, size_t*) {
+    return EBISU_SOCK_FAIL;
+}
+
+ebisu_sock_code_t http_recv(ebisu_socket_t*, char*, size_t, size_t*) {
+    return EBISU_SOCK_FAIL;
+}
+
+ebisu_sock_code_t mqtt_connect(ebisu_socket_t*, const char*, uint16_t) {
     return EBISU_SOCK_OK;
 }
 
-ebisu_sock_code_t mqtt_send(void*, const char*, size_t length, size_t* out_sent_length) {
+ebisu_sock_code_t mqtt_send(ebisu_socket_t*, const char*, size_t length, size_t* out_sent_length) {
     *out_sent_length = length;
     return EBISU_SOCK_OK;
 }
 
-ebisu_sock_code_t mqtt_recv(void* context, char* buffer, size_t length, size_t* out_actual_length) {
-    Task* task = (Task*)context;
+ebisu_sock_code_t mqtt_recv(ebisu_socket_t* self, char* buffer, size_t length, size_t* out_actual_length) {
+    Task* task = (Task*)self;
     // The task keeps connecting again when a connection ends, so here reading
     // after it closed is no finding: the number of states ends the run.
     task->socket.reads_after_close = 0;
@@ -38,12 +48,16 @@ ebisu_sock_code_t mqtt_recv(void* context, char* buffer, size_t length, size_t* 
     return EBISU_SOCK_OK;
 }
 
-ebisu_sock_code_t sock_close(void*) {
+ebisu_sock_code_t sock_close(ebisu_socket_t*) {
     return EBISU_SOCK_OK;
 }
 
-void delay_ms(uint32_t, void*) {
+void delay_ms(ebisu_system_t*, uint32_t) {
 }
+
+const ebisu_socket_ops_t HTTP_OPS = { http_connect, http_send, http_recv, sock_close, NULL };
+const ebisu_socket_ops_t MQTT_OPS = { mqtt_connect, mqtt_send, mqtt_recv, sock_close, NULL };
+const ebisu_system_ops_t SYSTEM_OPS = { NULL, delay_ms, NULL };
 
 kii_bool_t task_continue(void*, void* userdata) {
     return ++((Task*)userdata)->states < MAX_STATES ? KII_TRUE : KII_FALSE;
@@ -81,14 +95,12 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     kii_set_buff(&kii, http_buff.data(), http_buff.size());
     kii_set_mqtt_buff(&kii, mqtt_buff.data(), mqtt_buff.size());
 
-    Task task = { { (const uint8_t*)stream.data(), stream.size(), max_read, 0 }, 0, 0 };
-    kii_set_cb_http_sock_connect(&kii, http_connect, NULL);
-    kii_set_cb_http_sock_close(&kii, sock_close, NULL);
-    kii_set_cb_mqtt_sock_connect(&kii, mqtt_connect, NULL);
-    kii_set_cb_mqtt_sock_send(&kii, mqtt_send, NULL);
-    kii_set_cb_mqtt_sock_recv(&kii, mqtt_recv, &task);
-    kii_set_cb_mqtt_sock_close(&kii, sock_close, NULL);
-    kii_set_cb_delay_ms(&kii, delay_ms, NULL);
+    Task task = { { &MQTT_OPS }, { (const uint8_t*)stream.data(), stream.size(), max_read, 0 }, 0, 0 };
+    ebisu_socket_t http = { &HTTP_OPS };
+    ebisu_system_t system = { &SYSTEM_OPS };
+    kii_set_http_socket(&kii, &http);
+    kii_set_mqtt_socket(&kii, &task.base);
+    kii_set_system(&kii, &system);
     kii_set_cb_task_continue(&kii, task_continue, &task);
     kii._cb_push_received = on_push;
     kii._push_data = &task;

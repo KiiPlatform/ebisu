@@ -26,17 +26,11 @@ TEST_CASE( "Simple test" ) {
     kii._keep_alive_interval = 300;
 
     khct::cb::SockCtx http_ctx;
-    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+    kii_set_http_socket(&kii, http_ctx.socket());
     khct::cb::SockCtx mqtt_ctx;
-    kii_set_cb_mqtt_sock_connect(&kii, khct::cb::mock_connect, &mqtt_ctx);
-    kii_set_cb_mqtt_sock_send(&kii, khct::cb::mock_send, &mqtt_ctx);
-    kii_set_cb_mqtt_sock_recv(&kii, khct::cb::mock_recv, &mqtt_ctx);
-    kii_set_cb_mqtt_sock_close(&kii, khct::cb::mock_close, &mqtt_ctx);
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
 
-    kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
+    kii_set_system(&kii, khct::cb::delay_only_system());
 
     khct::cb::PushCtx push_ctx;
     kii._cb_push_received = khct::cb::cb_push;
@@ -143,10 +137,7 @@ TEST_CASE( "Stream and response header buffers are used by every request" ) {
         return EBISU_SOCK_OK;
     };
     http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
-    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+    kii_set_http_socket(&kii, http_ctx.socket());
 
     // Two different APIs, each of which resets khc before its request.
     REQUIRE( kii_api_call_start(&kii, "POST", "/api/apps/dummyAppID/echo",
@@ -209,10 +200,7 @@ TEST_CASE( "The ETag is read from the response, whatever the other headers" ) {
         return EBISU_SOCK_OK;
     };
     http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
-    kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
-    kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
-    kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
-    kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
+    kii_set_http_socket(&kii, http_ctx.socket());
 
     auto send = [&kii]() {
         kii_code_t res = kii_api_call_start(&kii, "GET", "/api/apps/dummyAppID", NULL, KII_FALSE);

@@ -21,11 +21,11 @@ static unsigned __stdcall task_main(void* arg)
     return 0;
 }
 
-ebisu_task_code_t task_create_cb_impl(
+static ebisu_task_code_t task_create(
+        ebisu_system_t* self,
         const char* name,
         EBISU_TASK_ENTRY entry,
-        void* param,
-        void* userdata)
+        void* param)
 {
     task_start_t* start = (task_start_t*)malloc(sizeof(*start));
     if (start == NULL) {
@@ -50,24 +50,48 @@ ebisu_task_code_t task_create_cb_impl(
     return EBISU_TASKC_OK;
 }
 
-void delay_ms_cb_impl(uint32_t msec, void* userdata)
+static void delay_ms(ebisu_system_t* self, uint32_t msec)
 {
     Sleep(msec);
 }
 
-void lock_cb_impl(void* userdata)
-{
-    AcquireSRWLockExclusive((PSRWLOCK)userdata);
-}
-
-void unlock_cb_impl(void* userdata)
-{
-    ReleaseSRWLockExclusive((PSRWLOCK)userdata);
-}
-
 /* Milliseconds since the system started, in 64 bits, which do not wrap.
    GetTickCount64() does not jump when the wall clock is set. */
-uint64_t monotonic_ms_cb_impl(void* userdata)
+static uint64_t monotonic_ms(ebisu_system_t* self)
 {
     return GetTickCount64();
+}
+
+static const ebisu_system_ops_t win32_system_ops = {
+    task_create,
+    delay_ms,
+    monotonic_ms
+};
+
+static ebisu_system_t system_ = { &win32_system_ops };
+
+ebisu_system_t* win32_system(void)
+{
+    return &system_;
+}
+
+static void lock(ebisu_lock_t* self)
+{
+    AcquireSRWLockExclusive(&EBISU_CONTAINER_OF(self, win32_lock_t, base)->srwlock);
+}
+
+static void unlock(ebisu_lock_t* self)
+{
+    ReleaseSRWLockExclusive(&EBISU_CONTAINER_OF(self, win32_lock_t, base)->srwlock);
+}
+
+static const ebisu_lock_ops_t win32_lock_ops = {
+    lock,
+    unlock
+};
+
+void win32_lock_init(win32_lock_t* lock)
+{
+    lock->base.ops = &win32_lock_ops;
+    InitializeSRWLock(&lock->srwlock);
 }

@@ -45,6 +45,12 @@ const uint32_t KEEP_ALIVE = 10;
 
 struct MqttTest {
     socket_context_t sock;
+    // What kii is given: the sample's socket, through the callbacks below.
+    struct SocketLink {
+        ebisu_socket_t base;
+        MqttTest* t;
+    } socket;
+    ebisu::ltest::ThreadSystem system;
     std::thread task;
 
     std::mutex mutex;
@@ -82,59 +88,51 @@ struct MqttTest {
     }
 };
 
-ebisu_sock_code_t cb_connect(void* ctx, const char* host, uint16_t port)
+MqttTest* test_of(ebisu_socket_t* self)
 {
-    MqttTest* t = (MqttTest*)ctx;
-    ++t->connects;
-    return sock_cb_connect(&t->sock, host, port);
+    return ((MqttTest::SocketLink*)self)->t;
 }
 
-ebisu_sock_code_t cb_send(void* ctx, const char* buffer, size_t length,
+ebisu_sock_code_t cb_connect(ebisu_socket_t* self, const char* host, uint16_t port)
+{
+    MqttTest* t = test_of(self);
+    ++t->connects;
+    return sock_cb_connect(&t->sock.base, host, port);
+}
+
+ebisu_sock_code_t cb_send(ebisu_socket_t* self, const char* buffer, size_t length,
         size_t* out_sent_length)
 {
-    MqttTest* t = (MqttTest*)ctx;
-    return sock_cb_send(&t->sock, buffer, length, out_sent_length);
+    MqttTest* t = test_of(self);
+    return sock_cb_send(&t->sock.base, buffer, length, out_sent_length);
 }
 
-ebisu_sock_code_t cb_recv(void* ctx, char* buffer, size_t length_to_read,
+ebisu_sock_code_t cb_recv(ebisu_socket_t* self, char* buffer, size_t length_to_read,
         size_t* out_actual_length)
 {
-    MqttTest* t = (MqttTest*)ctx;
+    MqttTest* t = test_of(self);
     t->recv_made_to_fail = t->fail_next_recv.exchange(false);
     if (t->recv_made_to_fail) {
         *out_actual_length = 0;
         return EBISU_SOCK_FAIL;
     }
-    return sock_cb_recv(&t->sock, buffer, length_to_read, out_actual_length);
+    return sock_cb_recv(&t->sock.base, buffer, length_to_read, out_actual_length);
 }
 
-kii_bool_t cb_recv_timed_out(void* ctx)
+bool cb_recv_timed_out(ebisu_socket_t* self)
 {
-    MqttTest* t = (MqttTest*)ctx;
+    MqttTest* t = test_of(self);
     if (t->recv_made_to_fail) {
-        return KII_FALSE;
+        return false;
     }
-    return sock_cb_recv_timed_out(&t->sock);
+    return sock_cb_recv_timed_out(&t->sock.base);
 }
 
-ebisu_sock_code_t cb_close(void* ctx)
+ebisu_sock_code_t cb_close(ebisu_socket_t* self)
 {
-    MqttTest* t = (MqttTest*)ctx;
+    MqttTest* t = test_of(self);
     ++t->closes;
-    return sock_cb_close(&t->sock);
-}
-
-ebisu_task_code_t cb_task_create(const char* name, EBISU_TASK_ENTRY entry,
-        void* entry_param, void* userdata)
-{
-    MqttTest* t = (MqttTest*)userdata;
-    t->task = std::thread(entry, entry_param);
-    return EBISU_TASKC_OK;
-}
-
-void cb_delay_ms(uint32_t msec, void* userdata)
-{
-    std::this_thread::sleep_for(std::chrono::milliseconds(msec));
+    return sock_cb_close(&t->sock.base);
 }
 
 kii_bool_t cb_continue(void* task_info, void* userdata)
@@ -240,34 +238,18 @@ void set_up_task(kii_t* kii, MqttTest& t, char* mqtt_buff, size_t mqtt_buff_size
 {
     sock_cb_init_context(&t.sock, TO_RECV, TO_SEND);
     t.sock.clock = ebisu::ltest::test_clock();
+    static const ebisu_socket_ops_t socket_ops = {
+        cb_connect, cb_send, cb_recv, cb_close, cb_recv_timed_out
+    };
+    t.socket.base.ops = &socket_ops;
+    t.socket.t = &t;
+    t.system.keep = [&t](std::thread task) { t.task = std::move(task); };
     kii_set_mqtt_buff(kii, mqtt_buff, mqtt_buff_size);
-    kii_set_cb_mqtt_sock_connect(kii, cb_connect, &t);
-    kii_set_cb_mqtt_sock_send(kii, cb_send, &t);
-    kii_set_cb_mqtt_sock_recv(kii, cb_recv, &t);
-    kii_set_cb_mqtt_sock_recv_timed_out(kii, cb_recv_timed_out, &t);
-    kii_set_cb_mqtt_sock_close(kii, cb_close, &t);
+    kii_set_mqtt_socket(kii, &t.socket.base);
     kii_set_mqtt_to_sock_recv(kii, TO_RECV);
-    kii_set_cb_task_create(kii, cb_task_create, &t);
+    kii_set_system(kii, t.system.get());
     kii_set_cb_task_continue(kii, cb_continue, &t);
     kii_set_cb_task_exit(kii, cb_exit, &t);
-    kii_set_cb_delay_ms(kii, cb_delay_ms, NULL);
-}
-
-// The session is used by the task and by the test's thread.
-void cb_session_lock(void* userdata)
-{
-    ((std::mutex*)userdata)->lock();
-}
-
-void cb_session_unlock(void* userdata)
-{
-    ((std::mutex*)userdata)->unlock();
-}
-
-uint64_t cb_session_now_ms(void* userdata)
-{
-    return (uint64_t)std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
 // A token the server doesn't know, which it treats as it does an expired one.
@@ -439,11 +421,12 @@ TEST_CASE("The MQTT task renews a token the server refuses")
     MqttTest t;
     set_up_task(&kii, t, mqtt_buff, sizeof(mqtt_buff));
 
-    std::mutex session_mutex;
+    // The session is used by the task and by the test's thread.
+    ebisu::ltest::MutexLock session_lock;
     kii_session_t session;
     kii_session_init(&session);
-    kii_session_set_cb_lock(&session, cb_session_lock, cb_session_unlock, &session_mutex);
-    kii_session_set_cb_monotonic_ms(&session, cb_session_now_ms, NULL);
+    kii_session_set_lock(&session, session_lock.get());
+    kii_session_set_system(&session, t.system.get());
     const std::string vid = "ltest_mqtt_session_" + std::to_string(kiiltest::current_time());
     kii_session_set_password(&session, vid.c_str(), "1234");
     REQUIRE( kii_set_session(&kii, &session) == KII_ERR_OK );

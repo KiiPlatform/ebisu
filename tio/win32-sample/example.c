@@ -76,10 +76,10 @@ static BOOL WINAPI console_ctrl_handler(DWORD ctrl_type) {
     }
 }
 
-static SRWLOCK session_lock = SRWLOCK_INIT;
-/* The clock's, which has to be a lock of its own: the socket callbacks use the
-   clock while kii may hold the session's. */
-static SRWLOCK clock_lock = SRWLOCK_INIT;
+static win32_lock_t session_lock;
+/* The clock's, which has to be a lock of its own: the sockets use the clock
+   while kii may hold the session's. */
+static win32_lock_t clock_lock;
 
 static void author_updated_callback(const kii_author_t* author, void* userdata)
 {
@@ -92,22 +92,18 @@ static void updater_init(
         tio_updater_t* updater,
         char* buffer,
         int buffer_size,
-        void* sock_ssl_ctx,
+        socket_context_t* sock_ssl_ctx,
         jkii_resource_t* resource)
 {
     tio_updater_init(updater);
 
     tio_updater_set_app(updater, KII_APP_ID, KII_APP_HOST);
 
-    tio_updater_set_cb_task_create(updater, task_create_cb_impl, NULL);
-    tio_updater_set_cb_delay_ms(updater, delay_ms_cb_impl, NULL);
+    tio_updater_set_system(updater, win32_system());
 
     tio_updater_set_buff(updater, buffer, buffer_size);
 
-    tio_updater_set_cb_sock_connect(updater, sock_cb_connect, sock_ssl_ctx);
-    tio_updater_set_cb_sock_send(updater, sock_cb_send, sock_ssl_ctx);
-    tio_updater_set_cb_sock_recv(updater, sock_cb_recv, sock_ssl_ctx);
-    tio_updater_set_cb_sock_close(updater, sock_cb_close, sock_ssl_ctx);
+    tio_updater_set_socket(updater, &sock_ssl_ctx->base);
 
     tio_updater_set_interval(updater, UPDATE_PERIOD_SEC);
 
@@ -183,10 +179,10 @@ static void handler_init(
         tio_handler_t* handler,
         char* http_buffer,
         int http_buffer_size,
-        void* http_ssl_ctx,
+        socket_context_t* http_ssl_ctx,
         char* mqtt_buffer,
         int mqtt_buffer_size,
-        void* mqtt_ssl_ctx,
+        socket_context_t* mqtt_ssl_ctx,
         jkii_resource_t* resource)
 {
     tio_handler_init(handler);
@@ -195,19 +191,10 @@ static void handler_init(
 
     tio_handler_set_cb_push(handler, pushed_message_callback, NULL);
 
-    tio_handler_set_cb_task_create(handler, task_create_cb_impl, NULL);
-    tio_handler_set_cb_delay_ms(handler, delay_ms_cb_impl, NULL);
+    tio_handler_set_system(handler, win32_system());
 
-    tio_handler_set_cb_sock_connect_http(handler, sock_cb_connect, http_ssl_ctx);
-    tio_handler_set_cb_sock_send_http(handler, sock_cb_send, http_ssl_ctx);
-    tio_handler_set_cb_sock_recv_http(handler, sock_cb_recv, http_ssl_ctx);
-    tio_handler_set_cb_sock_close_http(handler, sock_cb_close, http_ssl_ctx);
-
-    tio_handler_set_cb_sock_connect_mqtt(handler, sock_cb_connect, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_send_mqtt(handler, sock_cb_send, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_recv_mqtt(handler, sock_cb_recv, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_recv_timed_out_mqtt(handler, sock_cb_recv_timed_out, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
+    tio_handler_set_http_socket(handler, &http_ssl_ctx->base);
+    tio_handler_set_mqtt_socket(handler, &mqtt_ssl_ctx->base);
 
     tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);
 
@@ -329,8 +316,10 @@ int main(int argc, char** argv)
        first response, the clock has only a floor, a time it is known not to
        be earlier than. */
     ebisu_clock_t clock;
-    ebisu_clock_init(&clock, monotonic_ms_cb_impl, NULL);
-    ebisu_clock_set_cb_lock(&clock, lock_cb_impl, unlock_cb_impl, &clock_lock);
+    win32_lock_init(&session_lock);
+    win32_lock_init(&clock_lock);
+    ebisu_clock_init(&clock, win32_system());
+    ebisu_clock_set_lock(&clock, &clock_lock.base);
 
     tio_updater_t updater;
 
@@ -385,8 +374,8 @@ int main(int argc, char** argv)
        which renews them as they expire. */
     kii_session_t session;
     kii_session_init(&session);
-    kii_session_set_cb_lock(&session, lock_cb_impl, unlock_cb_impl, &session_lock);
-    kii_session_set_cb_monotonic_ms(&session, monotonic_ms_cb_impl, NULL);
+    kii_session_set_lock(&session, &session_lock.base);
+    kii_session_set_system(&session, win32_system());
     kii_session_set_cb_author_updated(&session, author_updated_callback, NULL);
     if (tio_handler_set_session(&handler, &session) != TIO_ERR_OK ||
             tio_updater_set_session(&updater, &session) != TIO_ERR_OK) {

@@ -33,10 +33,7 @@ creates.
     kii_set_buff(&kii, buff, sizeof(buff));
     kii_set_json_parser_resource(&kii, &resource);
 
-    kii_set_cb_http_sock_connect(&kii, sock_cb_connect, &http_sock_ctx);
-    kii_set_cb_http_sock_send(&kii, sock_cb_send, &http_sock_ctx);
-    kii_set_cb_http_sock_recv(&kii, sock_cb_recv, &http_sock_ctx);
-    kii_set_cb_http_sock_close(&kii, sock_cb_close, &http_sock_ctx);
+    kii_set_http_socket(&kii, &http_sock_ctx.base);
 ```
 
 - **Site**: one of `"JP"`, `"US"`, `"EU"`, `"SG"`, `"CN"` and `"CN3"`, or the
@@ -49,8 +46,8 @@ creates.
 - **JSON parser resource**: tokens `jkii` parses responses with. 256 are
   enough for most responses. `kii_set_cb_json_parser_resource()` allocates
   exactly as many as each response needs instead.
-- **Socket callbacks**: see
-  [khc's socket callbacks](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md).
+- **Socket**: an `ebisu_socket_t`, which kii keeps a pointer to; see
+  [khc's socket callbacks](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#socket-callbacks).
   They are asked to connect to port 443, for TLS, or to port 80 when
   `kii_enable_insecure_http()` is set.
 
@@ -116,8 +113,8 @@ calling it again uses the new token.
 ```c
     kii_session_t session;
     kii_session_init(&session);
-    kii_session_set_cb_lock(&session, lock_cb, unlock_cb, &session_mutex);
-    kii_session_set_cb_monotonic_ms(&session, monotonic_ms_cb, NULL);
+    kii_session_set_lock(&session, &session_lock.base);
+    kii_session_set_system(&session, &system);
     kii_session_set_password(&session, vendor_thing_id, password);
     kii_session_set_cb_author_updated(&session, author_updated_cb, NULL);
 
@@ -133,15 +130,16 @@ calling it again uses the new token.
 ```
 
 Attach the session to every `kii_t` acting as the thing before onboarding or
-logging in. The callbacks:
+logging in. What it is given:
 
-- **Lock**: required. Keeps one task from renewing the token while another
-  does, held for the length of the renewal request. It need not be recursive.
-  On a platform where no other task using the session can run meanwhile, it
-  can do nothing.
-- **Monotonic clock**: required. Milliseconds since any fixed origin, never
-  going back, and not jumping when the wall clock is set. A 32-bit tick counter
-  has to be extended to 64 bits. It is called only with the lock held.
+- **Lock**: required, an `ebisu_lock_t`. Keeps one task from renewing the token
+  while another does, held for the length of the renewal request. It need not
+  be recursive. On a platform where no other task using the session can run
+  meanwhile, its operations can do nothing.
+- **System**: required, for its monotonic clock: milliseconds since any fixed
+  origin, never going back, and not jumping when the wall clock is set. A
+  32-bit tick counter has to be extended to 64 bits. It is called only with the
+  lock held.
 - **Credentials**: the vendor thing ID and password to onboard or log in again
   with. Without them, a token onboarding obtained is never renewed. The strings
   are not copied. Once the server refuses them, they are not tried again for 5
@@ -195,21 +193,16 @@ thing:
 
 The push task keeps an MQTT connection to Kii Cloud's broker and hands every
 message it receives to a callback. The application creates the task, and
-supplies the MQTT socket callbacks and a buffer for messages:
+supplies the MQTT socket and a buffer for messages:
 
 ```c
     char mqtt_buff[2048];
     kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
 
-    kii_set_cb_mqtt_sock_connect(&kii, sock_cb_connect, &mqtt_sock_ctx);
-    kii_set_cb_mqtt_sock_send(&kii, sock_cb_send, &mqtt_sock_ctx);
-    kii_set_cb_mqtt_sock_recv(&kii, sock_cb_recv, &mqtt_sock_ctx);
-    kii_set_cb_mqtt_sock_recv_timed_out(&kii, sock_cb_recv_timed_out, &mqtt_sock_ctx);
-    kii_set_cb_mqtt_sock_close(&kii, sock_cb_close, &mqtt_sock_ctx);
+    kii_set_mqtt_socket(&kii, &mqtt_sock_ctx.base);
     kii_set_mqtt_to_sock_recv(&kii, 15);
 
-    kii_set_cb_task_create(&kii, task_create_cb, NULL);
-    kii_set_cb_delay_ms(&kii, delay_ms_cb, NULL);
+    kii_set_system(&kii, &system);
     kii_set_cb_task_continue(&kii, task_continue_cb, NULL);
     kii_set_cb_task_exit(&kii, task_exit_cb, NULL);
 
@@ -226,14 +219,14 @@ void push_received_cb(const char* message, size_t message_length, void* userdata
 
 - **MQTT sockets**: blocking, with a send timeout, and a receive timeout the
   same as given to `kii_set_mqtt_to_sock_recv()`.
-  When the receive timeout runs out, the recv callback returns
-  `EBISU_SOCK_FAIL`. The optional `kii_set_cb_mqtt_sock_recv_timed_out()`
-  callback tells such a timeout from a lost connection, after which the task
-  connects again.
+  When the receive timeout runs out, recv returns `EBISU_SOCK_FAIL`. The
+  socket's optional `recv_timed_out` tells such a timeout from a lost
+  connection, after which the task connects again.
 - **Keep-alive**: the second argument of `kii_start_push_task()`, in seconds.
   It must be longer than the socket timeouts; a few minutes is recommended. 0
   turns it off, and a lost connection may then go unnoticed.
-- **Task callbacks**: creating the task and delaying it are required.
+- **System**: an `ebisu_system_t`, whose `task_create` creates the task and
+  whose `delay_ms` it waits with. Both are required.
   `kii_set_cb_task_continue()` lets the application stop the task, and
   `kii_set_cb_task_exit()` is called as it exits, to free what it used. Both
   receive a `kii_mqtt_task_info*` saying what the task was doing and why it
@@ -277,14 +270,14 @@ What reaches the thing:
 
 ### Writing task callbacks
 
-What `kii` leaves to the task callbacks, with `linux-env` in the
+What `kii` leaves to the system and the task callbacks, with `linux-env` in the
 [Linux sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/linux-sample/linux-env/task_impl.c) to start from. The
 [khc README](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#writing-callbacks)
 has what socket callbacks have to do.
 
-- **Creating the task**: return `EBISU_TASKC_OK` only if it started. Nothing joins
+- **Creating the task**: `task_create` returns `EBISU_TASKC_OK` only if it started. Nothing joins
   a task, so a thread has to be detached, or it stays behind when the task ends.
-- **Delaying**: wait the whole time asked for, a signal or not. `msec` is a
+- **Delaying**: `delay_ms` waits the whole time asked for, a signal or not. `msec` is a
   `uint32_t`, so `usleep(msec * 1000)` overflows above about 71 minutes.
 - **Stopping the task**: have the continue callback return `KII_FALSE`, or let an
   error end it. `kii_start_push_task()` refuses while the task is running, and a
@@ -363,11 +356,11 @@ counted on with the monotonic clock.
 
 ```c
     ebisu_clock_t clock;
-    ebisu_clock_init(&clock, monotonic_ms_cb_impl, NULL);
+    ebisu_clock_init(&clock, &system);
     // Needed when kii_t of more than one task share the clock. Not the
     // session's lock: the socket callbacks may use the clock while kii holds
     // that one.
-    ebisu_clock_set_cb_lock(&clock, lock_cb_impl, unlock_cb_impl, &clock_mutex);
+    ebisu_clock_set_lock(&clock, &clock_lock.base);
     // A time the device saved before, if any. Without one, the floor is
     // shortly before the library's source was built.
     ebisu_clock_set_floor(&clock, saved_time);

@@ -98,7 +98,7 @@ static ebisu_sock_code_t send_all(socket_context_t* ctx, const char* data,
     *calls = 0;
     while (*total < len && res == EBISU_SOCK_OK) {
         size_t sent = 0;
-        res = sock_cb_send(ctx, data + *total, len - *total, &sent);
+        res = sock_cb_send(&ctx->base, data + *total, len - *total, &sent);
         *total += sent;
         ++*calls;
     }
@@ -123,7 +123,7 @@ static int run_step(socket_context_t* ctx, const char* host, uint16_t port,
         const char* step)
 {
     if (strcmp(step, "connect") == 0) {
-        printf("STEP connect %s\n", code_name(sock_cb_connect(ctx, host, port)));
+        printf("STEP connect %s\n", code_name(sock_cb_connect(&ctx->base, host, port)));
     } else if (strncmp(step, "send:", 5) == 0) {
         size_t len = 0;
         char* text = (char*)malloc(strlen(step));
@@ -158,10 +158,10 @@ static int run_step(socket_context_t* ctx, const char* host, uint16_t port,
         char* buf = (char*)malloc(size);
         size_t got = 0;
         DWORD start = GetTickCount();
-        ebisu_sock_code_t res = sock_cb_recv(ctx, buf, size, &got);
+        ebisu_sock_code_t res = sock_cb_recv(&ctx->base, buf, size, &got);
         DWORD elapsed = GetTickCount() - start;
         int timed_out = res == EBISU_SOCK_FAIL &&
-            sock_cb_recv_timed_out(ctx) == KII_TRUE;
+            sock_cb_recv_timed_out(&ctx->base);
         printf("STEP recv %s %lu timed_out=%d ms=%lu data=", code_name(res),
                 (unsigned long)got, timed_out, (unsigned long)elapsed);
         print_escaped(buf, got > 64 ? 64 : got);
@@ -176,7 +176,7 @@ static int run_step(socket_context_t* ctx, const char* host, uint16_t port,
         ebisu_sock_code_t res;
         for (;;) {
             size_t got = 0;
-            res = sock_cb_recv(ctx, buf, size, &got);
+            res = sock_cb_recv(&ctx->base, buf, size, &got);
             ++calls;
             if (got > size) {
                 printf("STEP drain received %lu into %lu bytes\n",
@@ -190,13 +190,13 @@ static int run_step(socket_context_t* ctx, const char* host, uint16_t port,
             total += got;
         }
         int timed_out = res == EBISU_SOCK_FAIL &&
-            sock_cb_recv_timed_out(ctx) == KII_TRUE;
+            sock_cb_recv_timed_out(&ctx->base);
         printf("STEP drain %s bytes=%llu calls=%lu fnv=%016llx timed_out=%d\n",
                 code_name(res), total, calls, (unsigned long long)hash,
                 timed_out);
         free(buf);
     } else if (strcmp(step, "close") == 0) {
-        printf("STEP close %s\n", code_name(sock_cb_close(ctx)));
+        printf("STEP close %s\n", code_name(sock_cb_close(&ctx->base)));
     } else {
         printf("unknown step %s\n", step);
         return 1;

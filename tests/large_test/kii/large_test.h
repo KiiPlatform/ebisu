@@ -17,8 +17,8 @@ inline void init(
         kii_t* kii,
         char* buffer,
         int buffer_size,
-        void* http_ssl_ctx,
-        void* mqtt_ssl_ctx,
+        ebisu::ltest::ssl::SSLData* http_ssl_ctx,
+        ebisu::ltest::ssl::SSLData* mqtt_ssl_ctx,
         jkii_resource_t* resource)
 {
     kii_init(kii);
@@ -29,21 +29,9 @@ inline void init(
 
 #ifdef PLAIN_HTTP
     kii_enable_insecure_http(kii, KII_TRUE);
-    kii_set_cb_http_sock_connect(kii, ebisu::ltest::tcp::cb_connect, http_ssl_ctx);
-    kii_set_cb_http_sock_send(kii, ebisu::ltest::tcp::cb_send, http_ssl_ctx);
-    kii_set_cb_http_sock_recv(kii, ebisu::ltest::tcp::cb_recv, http_ssl_ctx);
-    kii_set_cb_http_sock_close(kii, ebisu::ltest::tcp::cb_close, http_ssl_ctx);
-#else
-    kii_set_cb_http_sock_connect(kii, ebisu::ltest::ssl::cb_connect, http_ssl_ctx);
-    kii_set_cb_http_sock_send(kii, ebisu::ltest::ssl::cb_send, http_ssl_ctx);
-    kii_set_cb_http_sock_recv(kii, ebisu::ltest::ssl::cb_recv, http_ssl_ctx);
-    kii_set_cb_http_sock_close(kii, ebisu::ltest::ssl::cb_close, http_ssl_ctx);
 #endif
-
-    kii_set_cb_mqtt_sock_connect(kii, ebisu::ltest::ssl::cb_connect, mqtt_ssl_ctx);
-    kii_set_cb_mqtt_sock_send(kii, ebisu::ltest::ssl::cb_send, mqtt_ssl_ctx);
-    kii_set_cb_mqtt_sock_recv(kii, ebisu::ltest::ssl::cb_recv, mqtt_ssl_ctx);
-    kii_set_cb_mqtt_sock_close(kii, ebisu::ltest::ssl::cb_close, mqtt_ssl_ctx);
+    kii_set_http_socket(kii, http_ssl_ctx->http());
+    kii_set_mqtt_socket(kii, mqtt_ssl_ctx->tls());
     kii_set_json_parser_resource(kii, resource);
     kii_set_clock(kii, ebisu::ltest::test_clock());
 }

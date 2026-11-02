@@ -39,24 +39,14 @@ void kii_session_init(kii_session_t* session)
     session->_renew_at_known = KII_FALSE;
 }
 
-void kii_session_set_cb_lock(
-        kii_session_t* session,
-        EBISU_CB_LOCK cb_lock,
-        EBISU_CB_LOCK cb_unlock,
-        void* userdata)
+void kii_session_set_lock(kii_session_t* session, ebisu_lock_t* lock)
 {
-    session->_cb_lock = cb_lock;
-    session->_cb_unlock = cb_unlock;
-    session->_lock_data = userdata;
+    session->_lock = lock;
 }
 
-void kii_session_set_cb_monotonic_ms(
-        kii_session_t* session,
-        EBISU_CB_MONOTONIC_MS cb_monotonic_ms,
-        void* userdata)
+void kii_session_set_system(kii_session_t* session, ebisu_system_t* system)
 {
-    session->_cb_monotonic_ms = cb_monotonic_ms;
-    session->_monotonic_ms_data = userdata;
+    session->_system = system;
 }
 
 void kii_session_set_cb_author_updated(
@@ -70,18 +60,17 @@ void kii_session_set_cb_author_updated(
 
 static kii_bool_t _has_lock(kii_session_t* session)
 {
-    return (session->_cb_lock != NULL && session->_cb_unlock != NULL) ?
-        KII_TRUE : KII_FALSE;
+    return session->_lock != NULL ? KII_TRUE : KII_FALSE;
 }
 
 static void _lock(kii_session_t* session)
 {
-    session->_cb_lock(session->_lock_data);
+    session->_lock->ops->lock(session->_lock);
 }
 
 static void _unlock(kii_session_t* session)
 {
-    session->_cb_unlock(session->_lock_data);
+    session->_lock->ops->unlock(session->_lock);
 }
 
 void kii_session_set_password(
@@ -162,7 +151,8 @@ void _kii_session_sync(kii_t* kii)
 kii_code_t kii_set_session(kii_t* kii, kii_session_t* session)
 {
     if (session != NULL &&
-            (_has_lock(session) != KII_TRUE || session->_cb_monotonic_ms == NULL)) {
+            (_has_lock(session) != KII_TRUE || session->_system == NULL ||
+             session->_system->ops->monotonic_ms == NULL)) {
         return KII_ERR_FAIL;
     }
     kii->_session = session;
@@ -174,7 +164,7 @@ kii_code_t kii_set_session(kii_t* kii, kii_session_t* session)
 
 static uint64_t _now_ms(kii_session_t* session)
 {
-    return session->_cb_monotonic_ms(session->_monotonic_ms_data);
+    return session->_system->ops->monotonic_ms(session->_system);
 }
 
 /* How long after it was issued a token with this lifetime is renewed, or

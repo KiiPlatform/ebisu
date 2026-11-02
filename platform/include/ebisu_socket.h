@@ -4,6 +4,9 @@
 #ifndef _EBISU_SOCKET
 #define _EBISU_SOCKET
 
+#include "ebisu_object.h"
+
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 /* The library is compiled with hidden visibility, so what this header declares
@@ -19,7 +22,7 @@ extern "C" {
 
 /** \brief Indicates socket callback result */
 typedef enum ebisu_sock_code_t {
-    /** \brief Retrun this code when operation succeed. */
+    /** \brief Return this code when operation succeed. */
     EBISU_SOCK_OK,
 
     /** \brief Return this code when operation failed. */
@@ -27,69 +30,87 @@ typedef enum ebisu_sock_code_t {
 
     /** \brief Return this code when operation is in progress.
      *
-     * This code is used when the underlying socket is non-bloking mode.
-     * The callback is called again with the same argument
-     * until the callbacks returns EBISU_SOCK_OK or EBISU_SOCK_FAIL.
+     * This code is used when the underlying socket is non-blocking mode.
+     * The operation is called again with the same arguments
+     * until it returns EBISU_SOCK_OK or EBISU_SOCK_FAIL.
      */
     EBISU_SOCK_AGAIN
 } ebisu_sock_code_t;
 
-/** \brief Callback function connects socket to server.
- *
- * Applications must implement this callback in the target enviroment.
- *
- * @param [in] sock_ctx context object.
- * @param [in] host host name.
- * @param [in] port TCP port number.
- * @returns ebisu_sock_code_t
- */
-typedef ebisu_sock_code_t
-    (*EBISU_CB_SOCK_CONNECT)
-    (void* sock_ctx, const char* host, uint16_t port);
+/** \brief A socket. See struct ebisu_socket_t. */
+typedef struct ebisu_socket_t ebisu_socket_t;
 
-/** \brief Callback function sends data to server.
+/** \brief What a socket does.
  *
- * Applications must implement this callback in the target enviroment.
- * This callback is called repeatedly in the HTTP session
- * untill the whole request is sent.
- *
- * @param [in] sock_ctx context object.
- * @param [in] buffer data to send server.
- * @param [in] length length of buffer.
- * @param [out] out_sent_length data size sent to server.
- * @returns ebisu_sock_code_t
+ * Applications implement these for the target environment, doing TLS inside
+ * them unless the connection is insecure. See ebisu_object.h for how self
+ * leads to the socket's state.
  */
-typedef ebisu_sock_code_t
-    (*EBISU_CB_SOCK_SEND)
-    (void* sock_ctx, const char* buffer, size_t length, size_t* out_sent_length);
+typedef struct ebisu_socket_ops_t {
+    /** \brief Connects to the server.
+     *
+     * \param [in] self The socket.
+     * \param [in] host Host name.
+     * \param [in] port TCP port number.
+     */
+    ebisu_sock_code_t (*connect)(ebisu_socket_t* self, const char* host, uint16_t port);
 
-/** \brief Callback function receives data from server.
+    /** \brief Sends data to the server.
+     *
+     * Called repeatedly until the whole request is sent: it may send fewer
+     * bytes than asked.
+     *
+     * \param [in] self The socket.
+     * \param [in] buffer Data to send.
+     * \param [in] length Length of buffer.
+     * \param [out] out_sent_length How many bytes were sent.
+     */
+    ebisu_sock_code_t (*send)(ebisu_socket_t* self, const char* buffer, size_t length,
+            size_t* out_sent_length);
+
+    /** \brief Receives data from the server.
+     *
+     * Called repeatedly until out_actual_length is set to 0, which, with
+     * EBISU_SOCK_OK, means the server closed the connection.
+     *
+     * \param [in] self The socket.
+     * \param [out] buffer Where data read from the socket must be written.
+     * \param [in] length_to_read Maximum size requested to read.
+     * \param [out] out_actual_length How many bytes were read.
+     */
+    ebisu_sock_code_t (*recv)(ebisu_socket_t* self, char* buffer, size_t length_to_read,
+            size_t* out_actual_length);
+
+    /** \brief Closes the socket.
+     *
+     * \param [in] self The socket.
+     */
+    ebisu_sock_code_t (*close)(ebisu_socket_t* self);
+
+    /** \brief Whether the last receive failed because its timeout ran out.
+     *
+     * Optional, and asked only by the MQTT task. Its recv returns
+     * EBISU_SOCK_FAIL both when its receive timeout runs out with nothing
+     * received, which is routine on an idle connection, and when the
+     * connection is lost. This tells the two apart. It is called right after
+     * such an EBISU_SOCK_FAIL, before any other operation on the socket. See
+     * kii_set_mqtt_socket() for what the task does with the answer, and
+     * without one.
+     *
+     * \param [in] self The socket.
+     * \return true if the receive failed because its timeout ran out, false if
+     * it failed for any other reason.
+     */
+    bool (*recv_timed_out)(ebisu_socket_t* self);
+} ebisu_socket_ops_t;
+
+/** \brief A socket.
  *
- * Applications must implement this callback in the target enviroment.
- * This callback is called repeatedly in the HTTP session
- * untill out_actual_length value is set to 0.
- *
- * @param [in] sock_ctx context object.
- * @param [out] buffer data read from the socket must be written here.
- * @param [in] length_to_read Maximum size requested to read.
- * @param [out] out_actual_length actual data size read from the socket.
- * @returns ebisu_sock_code_t
+ * Embed it in the struct holding the socket's state, as ebisu_object.h shows.
  */
-typedef ebisu_sock_code_t
-    (*EBISU_CB_SOCK_RECV)
-    (void* sock_ctx, char* buffer, size_t length_to_read,
-     size_t* out_actual_length);
-
-/** \brief Callback closes socket.
- *
- * Applications must implement this callback in the target enviroment.
- *
- * @param [in] sock_ctx context object.
- * @returns ebisu_sock_code_t
- */
-typedef ebisu_sock_code_t
-    (*EBISU_CB_SOCK_CLOSE)(void* sock_ctx);
-
+struct ebisu_socket_t {
+    const ebisu_socket_ops_t* ops; /**< \brief What the socket does. */
+};
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC visibility pop

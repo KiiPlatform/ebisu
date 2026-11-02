@@ -43,15 +43,9 @@ TEST_CASE( "HTTP Post" ) {
     ebisu::ltest::ssl::SSLData s_ctx;
 #ifdef PLAIN_HTTP
     khc_enable_insecure(&http, true);
-    khc_set_cb_sock_connect(&http, ebisu::ltest::tcp::cb_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, ebisu::ltest::tcp::cb_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, ebisu::ltest::tcp::cb_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, ebisu::ltest::tcp::cb_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.tcp());
 #else
-    khc_set_cb_sock_connect(&http, ebisu::ltest::ssl::cb_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, ebisu::ltest::ssl::cb_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, ebisu::ltest::ssl::cb_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, ebisu::ltest::ssl::cb_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.tls());
 #endif
 
     khct::cb::IOCtx io_ctx;

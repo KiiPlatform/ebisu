@@ -29,10 +29,7 @@ TEST_CASE( "HTTP chunked response test" ) {
     khc_set_req_headers(&http, NULL);
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khct::cb::IOCtx io_ctx;
     khc_set_cb_read(&http, khct::cb::cb_read, &io_ctx);
@@ -141,10 +138,7 @@ TEST_CASE( "small buffer size test" ) {
     khc_set_stream_buff(&http, buff, buff_size);
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khct::cb::IOCtx io_ctx;
     khc_set_cb_read(&http, khct::cb::cb_read, &io_ctx);
@@ -253,10 +247,7 @@ TEST_CASE( "random buffer size test" ) {
     khc_set_stream_buff(&http, buff, buff_size);
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khct::cb::IOCtx io_ctx;
     khc_set_cb_read(&http, khct::cb::cb_read, &io_ctx);
@@ -368,10 +359,7 @@ TEST_CASE( "random chunk body test" ) {
     khc_set_req_headers(&http, NULL);
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khct::cb::IOCtx io_ctx;
     khc_set_cb_read(&http, khct::cb::cb_read, &io_ctx);
@@ -465,10 +453,7 @@ TEST_CASE( "HTTP response 400 test(chunked)" ) {
     khc_set_req_headers(&http, NULL);
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khct::cb::IOCtx io_ctx;
     // no set cb_read.
@@ -574,10 +559,7 @@ ChunkedResult perform_chunked(
     khc_set_req_headers(&http, NULL);
 
     khct::cb::SockCtx s_ctx;
-    khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
-    khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
-    khc_set_cb_sock_recv(&http, khct::cb::mock_recv, &s_ctx);
-    khc_set_cb_sock_close(&http, khct::cb::mock_close, &s_ctx);
+    khc_set_socket(&http, s_ctx.socket());
 
     khct::cb::IOCtx io_ctx;
     khc_set_cb_write(&http, khct::cb::cb_write, &io_ctx);

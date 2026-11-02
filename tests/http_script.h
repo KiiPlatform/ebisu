@@ -87,18 +87,12 @@ struct HttpScript {
     }
 
     void attach(khc* http) {
-        khc_set_cb_sock_connect(http, khct::cb::mock_connect, &ctx);
-        khc_set_cb_sock_send(http, khct::cb::mock_send, &ctx);
-        khc_set_cb_sock_recv(http, khct::cb::mock_recv, &ctx);
-        khc_set_cb_sock_close(http, khct::cb::mock_close, &ctx);
+        khc_set_socket(http, ctx.socket());
     }
 
 #ifdef KII_H
     void attach(kii_t* kii) {
-        kii_set_cb_http_sock_connect(kii, khct::cb::mock_connect, &ctx);
-        kii_set_cb_http_sock_send(kii, khct::cb::mock_send, &ctx);
-        kii_set_cb_http_sock_recv(kii, khct::cb::mock_recv, &ctx);
-        kii_set_cb_http_sock_close(kii, khct::cb::mock_close, &ctx);
+        kii_set_http_socket(kii, ctx.socket());
     }
 #endif
 };

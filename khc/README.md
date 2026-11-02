@@ -122,10 +122,7 @@ A `GET` request:
     khc_set_stream_buff(&http, stream_buff, sizeof(stream_buff));
     khc_set_resp_header_buff(&http, header_buff, sizeof(header_buff));
 
-    khc_set_cb_sock_connect(&http, sock_cb_connect, &sock_ctx);
-    khc_set_cb_sock_send(&http, sock_cb_send, &sock_ctx);
-    khc_set_cb_sock_recv(&http, sock_cb_recv, &sock_ctx);
-    khc_set_cb_sock_close(&http, sock_cb_close, &sock_ctx);
+    khc_set_socket(&http, &sock_ctx.base);
     khc_set_cb_header(&http, on_header, NULL);
     khc_set_cb_write(&http, on_write, NULL);
 
@@ -170,23 +167,28 @@ callback must then start the body over.
 
 ## Socket callbacks
 
-Declared in `ebisu_socket.h`, part of
-[platform](https://github.com/KiiPlatform/ebisu/blob/master/platform/README.md).
-Each returns `EBISU_SOCK_OK`,
-`EBISU_SOCK_FAIL`, or `EBISU_SOCK_AGAIN` to be called again with the same
-arguments.
+The socket is an `ebisu_socket_t`, declared in `ebisu_socket.h`, part of
+[platform](https://github.com/KiiPlatform/ebisu/blob/master/platform/README.md):
+a pointer to a table of operations, which `khc` calls with the socket itself,
+`self`, as their first argument. An implementation embeds it in the struct
+holding the connection's state, and gets that back with `EBISU_CONTAINER_OF()`.
+`khc` keeps a pointer to the socket, so it has to outlive the requests. Each
+operation returns `EBISU_SOCK_OK`, `EBISU_SOCK_FAIL`, or `EBISU_SOCK_AGAIN` to
+be called again with the same arguments.
 
-- **Connect** (`sock_ctx`, `host`, `port`): opens the connection, doing the TLS
+- **Connect** (`self`, `host`, `port`): opens the connection, doing the TLS
   handshake unless the connection is insecure.
-- **Send** (`sock_ctx`, `buffer`, `length`, `out_sent_length`): may send fewer
+- **Send** (`self`, `buffer`, `length`, `out_sent_length`): may send fewer
   bytes than asked, setting `out_sent_length` to how many it sent; `khc` sends
   the rest in later calls.
-- **Recv** (`sock_ctx`, `buffer`, `length_to_read`, `out_actual_length`): sets
+- **Recv** (`self`, `buffer`, `length_to_read`, `out_actual_length`): sets
   `out_actual_length` to how many bytes it read. 0 means the server closed the
   connection.
-- **Close** (`sock_ctx`): closes the connection. Once connected, it is called
+- **Close** (`self`): closes the connection. Once connected, it is called
   when the request ends, whether it succeeded or not. It is not called when
   connecting fails.
+
+`recv_timed_out`, the fifth, is for kii's MQTT task, and `khc` doesn't call it.
 
 Implementations to start from:
 

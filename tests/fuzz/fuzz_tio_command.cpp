@@ -10,21 +10,22 @@ namespace {
 const char RESPONSE[] = "HTTP/1.1 204 No Content\r\nContent-Length: 0\r\n\r\n";
 
 struct Socket {
+    ebisu_socket_t base;
     size_t position;
 };
 
-ebisu_sock_code_t sock_connect(void* context, const char*, uint16_t) {
-    ((Socket*)context)->position = 0;
+ebisu_sock_code_t sock_connect(ebisu_socket_t* self, const char*, uint16_t) {
+    ((Socket*)self)->position = 0;
     return EBISU_SOCK_OK;
 }
 
-ebisu_sock_code_t sock_send(void*, const char*, size_t length, size_t* out_sent_length) {
+ebisu_sock_code_t sock_send(ebisu_socket_t*, const char*, size_t length, size_t* out_sent_length) {
     *out_sent_length = length;
     return EBISU_SOCK_OK;
 }
 
-ebisu_sock_code_t sock_recv(void* context, char* buffer, size_t length, size_t* out_actual_length) {
-    Socket* socket = (Socket*)context;
+ebisu_sock_code_t sock_recv(ebisu_socket_t* self, char* buffer, size_t length, size_t* out_actual_length) {
+    Socket* socket = (Socket*)self;
     size_t n = sizeof(RESPONSE) - 1 - socket->position;
     if (n > length) {
         n = length;
@@ -35,9 +36,11 @@ ebisu_sock_code_t sock_recv(void* context, char* buffer, size_t length, size_t* 
     return EBISU_SOCK_OK;
 }
 
-ebisu_sock_code_t sock_close(void*) {
+ebisu_sock_code_t sock_close(ebisu_socket_t*) {
     return EBISU_SOCK_OK;
 }
+
+const ebisu_socket_ops_t SOCKET_OPS = { sock_connect, sock_send, sock_recv, sock_close, NULL };
 
 // Reads all it is given, for ASan to see the lengths are right, and fails every
 // other action, for the path that reports a failure.
@@ -79,11 +82,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     khc_set_resp_header_buff(&handler._kii._khc, resp_header_buff.data(), resp_header_buff.size());
     strcpy(handler._kii._author.author_id, "th.1");
 
-    Socket socket = { 0 };
-    kii_set_cb_http_sock_connect(&handler._kii, sock_connect, &socket);
-    kii_set_cb_http_sock_send(&handler._kii, sock_send, &socket);
-    kii_set_cb_http_sock_recv(&handler._kii, sock_recv, &socket);
-    kii_set_cb_http_sock_close(&handler._kii, sock_close, &socket);
+    Socket socket = { { &SOCKET_OPS }, 0 };
+    kii_set_http_socket(&handler._kii, &socket.base);
 
     size_t sum = 0;
     _handle_command(&handler, command.data(), command.size(), on_action, &sum);

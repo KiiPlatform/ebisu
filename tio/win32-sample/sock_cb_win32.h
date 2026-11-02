@@ -8,18 +8,20 @@
 #define SECURITY_WIN32
 #include <security.h>
 
+#include <ebisu_clock.h>
 #include <ebisu_socket.h>
-#include <kii_task_callback.h>
-#include <kii.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* One connection. Initialise it with sock_cb_init_context(), then pass it as
-   the context of all of the callbacks below; a context serves one connection
-   at a time, and is reused for the next one after sock_cb_close(). */
+/* One connection. Initialise it with sock_cb_init_context(), then give its
+   base as the socket; a context serves one connection at a time, and is reused
+   for the next one after sock_cb_close(). */
 typedef struct {
+    /* What khc and kii are given. */
+    ebisu_socket_t base;
     /* Receive and send timeouts in seconds; 0 waits for ever. */
     unsigned int to_recv;
     unsigned int to_send;
@@ -66,24 +68,24 @@ void sock_cb_init_context(
         unsigned int to_send);
 
 ebisu_sock_code_t
-    sock_cb_connect(void* sock_ctx, const char* host,
+    sock_cb_connect(ebisu_socket_t* self, const char* host,
             uint16_t port);
 
 ebisu_sock_code_t
-    sock_cb_send(void* sock_ctx,
+    sock_cb_send(ebisu_socket_t* self,
             const char* buffer,
             size_t length,
             size_t* out_sent_length);
 
 ebisu_sock_code_t
-    sock_cb_recv(void* sock_ctx, char* buffer, size_t length_to_read,
+    sock_cb_recv(ebisu_socket_t* self, char* buffer, size_t length_to_read,
             size_t* out_actual_length);
 
-kii_bool_t
-    sock_cb_recv_timed_out(void* sock_ctx);
+bool
+    sock_cb_recv_timed_out(ebisu_socket_t* self);
 
 ebisu_sock_code_t
-    sock_cb_close(void* sock_ctx);
+    sock_cb_close(ebisu_socket_t* self);
 
 #ifdef __cplusplus
 }

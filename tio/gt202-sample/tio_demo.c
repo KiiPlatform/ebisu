@@ -68,22 +68,18 @@ void updater_init(
         tio_updater_t* updater,
         char* buffer,
         int buffer_size,
-        void* sock_ssl_ctx,
+        socket_context_t* sock_ssl_ctx,
         jkii_resource_t* resource)
 {
     tio_updater_init(updater);
 
     tio_updater_set_app(updater, KII_APP_ID, KII_APP_HOST);
 
-    tio_updater_set_cb_task_create(updater, cb_task_create, NULL);
-    tio_updater_set_cb_delay_ms(updater, cb_delay_ms, NULL);
+    tio_updater_set_system(updater, gt202_system());
 
     tio_updater_set_buff(updater, buffer, buffer_size);
 
-    tio_updater_set_cb_sock_connect(updater, sock_cb_connect, sock_ssl_ctx);
-    tio_updater_set_cb_sock_send(updater, sock_cb_send, sock_ssl_ctx);
-    tio_updater_set_cb_sock_recv(updater, sock_cb_recv, sock_ssl_ctx);
-    tio_updater_set_cb_sock_close(updater, sock_cb_close, sock_ssl_ctx);
+    tio_updater_set_socket(updater, &sock_ssl_ctx->base);
 
     tio_updater_set_interval(updater, UPDATE_PERIOD_SEC);
 
@@ -136,10 +132,10 @@ void handler_init(
         tio_handler_t* handler,
         char* http_buffer,
         int http_buffer_size,
-        void* http_ssl_ctx,
+        socket_context_t* http_ssl_ctx,
         char* mqtt_buffer,
         int mqtt_buffer_size,
-        void* mqtt_ssl_ctx,
+        socket_context_t* mqtt_ssl_ctx,
         jkii_resource_t* resource)
 {
     tio_handler_init(handler);
@@ -148,18 +144,10 @@ void handler_init(
 
     tio_handler_set_cb_push(handler, pushed_message_callback, NULL);
 
-    tio_handler_set_cb_task_create(handler, cb_task_create, NULL);
-    tio_handler_set_cb_delay_ms(handler, cb_delay_ms, NULL);
+    tio_handler_set_system(handler, gt202_system());
 
-    tio_handler_set_cb_sock_connect_http(handler, sock_cb_connect, http_ssl_ctx);
-    tio_handler_set_cb_sock_send_http(handler, sock_cb_send, http_ssl_ctx);
-    tio_handler_set_cb_sock_recv_http(handler, sock_cb_recv, http_ssl_ctx);
-    tio_handler_set_cb_sock_close_http(handler, sock_cb_close, http_ssl_ctx);
-
-    tio_handler_set_cb_sock_connect_mqtt(handler, sock_cb_connect, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_send_mqtt(handler, sock_cb_send, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_recv_mqtt(handler, mqtt_cb_recv, mqtt_ssl_ctx);
-    tio_handler_set_cb_sock_close_mqtt(handler, sock_cb_close, mqtt_ssl_ctx);
+    tio_handler_set_http_socket(handler, &http_ssl_ctx->base);
+    tio_handler_set_mqtt_socket(handler, &mqtt_ssl_ctx->base);
 
     tio_handler_set_mqtt_to_sock_recv(handler, TO_RECV_SEC);
 
@@ -218,7 +206,7 @@ static void show_help()
 
 #define CMD_INDEX 1
 
-static MUTEX_STRUCT session_mutex;
+static gt202_lock_t session_lock;
 static kii_session_t session;
 
 int tio_main(int argc, char *argv[])
@@ -238,9 +226,7 @@ int tio_main(int argc, char *argv[])
         tio_updater_t* updater = malloc(sizeof(tio_updater_t));
 
         socket_context_t updater_http_ctx;
-        updater_http_ctx.to_recv = TO_RECV_SEC;
-        updater_http_ctx.to_send = TO_SEND_SEC;
-        updater_http_ctx.show_debug = 0;
+        sock_cb_init_http(&updater_http_ctx, TO_RECV_SEC, TO_SEND_SEC);
 
         jkii_token_t* updater_tokens = malloc(sizeof(jkii_token_t) * 256);
         jkii_resource_t updater_resource = { updater_tokens, 256};
@@ -259,14 +245,10 @@ int tio_main(int argc, char *argv[])
         tio_handler_t* handler = malloc(sizeof(tio_handler_t));
 
         socket_context_t handler_http_ctx;
-        handler_http_ctx.to_recv = TO_RECV_SEC;
-        handler_http_ctx.to_send = TO_SEND_SEC;
-        handler_http_ctx.show_debug = 0;
+        sock_cb_init_http(&handler_http_ctx, TO_RECV_SEC, TO_SEND_SEC);
 
         socket_context_t handler_mqtt_ctx;
-        handler_mqtt_ctx.to_recv = TO_RECV_SEC;
-        handler_mqtt_ctx.to_send = TO_SEND_SEC;
-        handler_mqtt_ctx.show_debug = 0;
+        sock_cb_init_mqtt(&handler_mqtt_ctx, TO_RECV_SEC, TO_SEND_SEC);
 
         char* handler_http_buff = malloc(HANDLER_HTTP_BUFF_SIZE);
         memset(handler_http_buff, 0x00, sizeof(char) * HANDLER_HTTP_BUFF_SIZE);
@@ -289,13 +271,13 @@ int tio_main(int argc, char *argv[])
 
         // The handler and the updater share their tokens through the session,
         // which renews them as they expire.
-        if (_mutex_init(&session_mutex, NULL) != MQX_EOK) {
+        if (gt202_lock_init(&session_lock) != MQX_EOK) {
             printf("failed to init the session mutex.\n");
             return A_OK;
         }
         kii_session_init(&session);
-        kii_session_set_cb_lock(&session, cb_lock, cb_unlock, &session_mutex);
-        kii_session_set_cb_monotonic_ms(&session, cb_monotonic_ms, NULL);
+        kii_session_set_lock(&session, &session_lock.base);
+        kii_session_set_system(&session, gt202_system());
         kii_session_set_cb_author_updated(&session, author_updated_callback, NULL);
         // Used to onboard again when the server refuses the token, or the broker
         // the MQTT credentials.

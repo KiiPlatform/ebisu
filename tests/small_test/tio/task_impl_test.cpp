@@ -51,7 +51,7 @@ TEST_CASE( "delay_ms_cb sleeps on through a signal" ) {
     REQUIRE( setitimer(ITIMER_REAL, &timer, nullptr) == 0 );
 
     auto start = std::chrono::steady_clock::now();
-    delay_ms_cb(100, nullptr);
+    delay_ms_cb(nullptr, 100);
     auto elapsed = std::chrono::steady_clock::now() - start;
 
     sigaction(SIGALRM, &previous, nullptr);
@@ -64,7 +64,7 @@ TEST_CASE( "task_create_cb leaves nothing behind when the task ends" ) {
     d.created = false;
     d.state = -1;
 
-    REQUIRE( task_create_cb("task", report_detach_state, &d, nullptr) == EBISU_TASKC_OK );
+    REQUIRE( task_create_cb(nullptr, "task", report_detach_state, &d) == EBISU_TASKC_OK );
     d.created = true;
     while (d.state == -1) {
         sched_yield();

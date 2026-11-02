@@ -23,11 +23,11 @@ static void task_main(void* arg)
     vTaskDelete(NULL);
 }
 
-ebisu_task_code_t task_create_cb_impl(
+static ebisu_task_code_t task_create(
+        ebisu_system_t* self,
         const char* name,
         EBISU_TASK_ENTRY entry,
-        void* param,
-        void* userdata)
+        void* param)
 {
     task_start_t* start = malloc(sizeof(task_start_t));
     if (start == NULL) {
@@ -43,24 +43,48 @@ ebisu_task_code_t task_create_cb_impl(
     return EBISU_TASKC_OK;
 }
 
-void delay_ms_cb_impl(uint32_t msec, void* userdata)
+static void delay_ms(ebisu_system_t* self, uint32_t msec)
 {
     TickType_t ticks = pdMS_TO_TICKS(msec);
     /* At least a tick, so that a short delay still lets other tasks run. */
     vTaskDelay(ticks > 0 ? ticks : 1);
 }
 
-void lock_cb_impl(void* userdata)
-{
-    xSemaphoreTake((SemaphoreHandle_t)userdata, portMAX_DELAY);
-}
-
-void unlock_cb_impl(void* userdata)
-{
-    xSemaphoreGive((SemaphoreHandle_t)userdata);
-}
-
-uint64_t monotonic_ms_cb_impl(void* userdata)
+static uint64_t monotonic_ms(ebisu_system_t* self)
 {
     return (uint64_t)esp_timer_get_time() / 1000;
+}
+
+static const ebisu_system_ops_t esp32_system_ops = {
+    task_create,
+    delay_ms,
+    monotonic_ms
+};
+
+static ebisu_system_t system_ = { &esp32_system_ops };
+
+ebisu_system_t* esp32_system(void)
+{
+    return &system_;
+}
+
+static void lock(ebisu_lock_t* self)
+{
+    xSemaphoreTake(EBISU_CONTAINER_OF(self, esp32_lock_t, base)->mutex, portMAX_DELAY);
+}
+
+static void unlock(ebisu_lock_t* self)
+{
+    xSemaphoreGive(EBISU_CONTAINER_OF(self, esp32_lock_t, base)->mutex);
+}
+
+static const ebisu_lock_ops_t esp32_lock_ops = {
+    lock,
+    unlock
+};
+
+void esp32_lock_init(esp32_lock_t* lock)
+{
+    lock->base.ops = &esp32_lock_ops;
+    lock->mutex = xSemaphoreCreateMutex();
 }
