@@ -170,10 +170,12 @@ ebisu_sock_code_t _mqtt_send_subscribe(kii_t* kii, const char* topic, kii_mqtt_q
     return send_err;
 }
 
-ebisu_sock_code_t _mqtt_send_pingreq(kii_t* kii)
+// Sends a packet that is a fixed header alone, with nothing after it: PINGREQ
+// or DISCONNECT.
+static ebisu_sock_code_t _mqtt_send_header_only(kii_t* kii, char byte1)
 {
     char buff[2];
-    buff[0] = (char)0xc0;
+    buff[0] = byte1;
     buff[1] = 0x00;
     ebisu_sock_code_t sock_err = EBISU_SOCK_FAIL;
     size_t total_sent = 0;
@@ -187,6 +189,16 @@ ebisu_sock_code_t _mqtt_send_pingreq(kii_t* kii)
         total_sent += sent_len;
     }
     return sock_err;
+}
+
+ebisu_sock_code_t _mqtt_send_pingreq(kii_t* kii)
+{
+    return _mqtt_send_header_only(kii, (char)0xc0);
+}
+
+static ebisu_sock_code_t _mqtt_send_disconnect(kii_t* kii)
+{
+    return _mqtt_send_header_only(kii, (char)0xe0);
 }
 
 // Reads the first byte of a fixed header, which holds the packet type, and
@@ -387,6 +399,7 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
     state->remaining_message_size = 0;
     state->pingresp_received = KII_TRUE;
     state->sock_connected = KII_FALSE;
+    state->mqtt_connected = KII_FALSE;
     state->retry_wait_ms = RETRY_WAIT_MIN_MS;
     state->wait_left_ms = 0;
     state->connect_failures = 0;
@@ -597,6 +610,7 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
         // _init_mqtt_state() runs once, before the state loop, so it cannot do
         // this: RECONNECT goes to SOCK_CONNECT inside the loop.
         state->pingresp_received = KII_TRUE;
+        state->mqtt_connected = KII_TRUE;
         task_info->task_state = KII_MQTT_ST_SEND_SUBSCRIBE;
     }
 }
@@ -824,6 +838,7 @@ void _mqtt_state_reconnect(mqtt_state_t* state)
     kii_t* kii = state->kii;
     kii->_mqtt_socket->ops->close(kii->_mqtt_socket);
     state->sock_connected = KII_FALSE;
+    state->mqtt_connected = KII_FALSE;
     _schedule_retry(state);
     state->info.task_state = KII_MQTT_ST_SOCK_CONNECT;
 }
@@ -869,6 +884,15 @@ void* mqtt_start_task(void* sdata)
     // Discontinued, or exiting on an error, with a connection open: close it,
     // as nothing else will. The application cannot tell whether one is open.
     if (state.sock_connected == KII_TRUE) {
+        // The broker accepted the connection, so say DISCONNECT, which tells
+        // it the client is leaving rather than lost: it can end the session at
+        // once, rather than once the keep-alive runs out. A reconnect doesn't,
+        // as the connection it leaves is broken or refused. Whether it is sent
+        // makes no difference to what follows.
+        if (state.mqtt_connected == KII_TRUE) {
+            _mqtt_send_disconnect(kii);
+            state.mqtt_connected = KII_FALSE;
+        }
         kii->_mqtt_socket->ops->close(kii->_mqtt_socket);
         state.sock_connected = KII_FALSE;
     }

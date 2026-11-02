@@ -1457,7 +1457,8 @@ void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE cb_continue, void
  * un-recoverble error occurs.
  * If it has a connection to the MQTT broker open, it closes it first with the
  * close of the socket set by kii_set_mqtt_socket(), so exit_cb is called with no
- * MQTT connection open.
+ * MQTT connection open. On a connection the broker accepted, it sends
+ * DISCONNECT before closing it.
  * In exit_cb, you'll need to free memory used for MQTT buffer set by kii_set_mqtt_buff(),
  * the socket set by kii_set_mqtt_socket(), and the userdata passed to
  * kii_set_cb_task_continue() and kii_set_cb_task_exit(), in case not yet freed.

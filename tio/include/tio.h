@@ -424,7 +424,8 @@ void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_CB_TASK_CONTIN
  * un-recoverble error occurs.
  * If it has a connection to the MQTT broker open, it closes it first with the
  * close of the socket set by tio_handler_set_mqtt_socket(), so exit_cb is
- * called with no MQTT connection open.
+ * called with no MQTT connection open. On a connection the broker accepted, it
+ * sends DISCONNECT before closing it.
  * In exit_cb, you'll need to free memory used for buffers set by following APIs
  * - tio_handler_set_http_buff(),
  * - tio_handler_set_stream_buff(),
