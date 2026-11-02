@@ -6,11 +6,15 @@
 #include "kii_impl.h"
 #include "kii_req_impl.h"
 
+// With as_thing, the request carries the token of the thing kii acts as, and
+// otherwise access_token, or none if it is NULL.
 static kii_code_t _execute_server_code(
         kii_t* kii,
         const char* version,
         const char* endpoint_name,
-        const char* params)
+        const char* params,
+        kii_bool_t as_thing,
+        const char* access_token)
 {
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "POST");
@@ -37,7 +41,11 @@ static kii_code_t _execute_server_code(
         _req_headers_free_all(kii);
         return res;
     }
-    res = _set_auth_header(kii);
+    if (as_thing == KII_TRUE) {
+        res = _set_auth_header(kii);
+    } else if (access_token != NULL) {
+        res = _set_auth_bearer_token(kii, access_token);
+    }
     if (res != KII_ERR_OK) {
         _req_headers_free_all(kii);
         return res;
@@ -57,17 +65,20 @@ static kii_code_t _execute_server_code(
     return _req_send(kii);
 }
 
-kii_code_t kii_execute_server_code_version(
+static kii_code_t _run_server_code(
         kii_t* kii,
         const char* version,
         const char* endpoint_name,
-        const char* params)
+        const char* params,
+        kii_bool_t as_thing,
+        const char* access_token)
 {
     _reset_khc(kii);
     _reset_buff(kii);
 
 
-    kii_code_t res = _execute_server_code(kii, version, endpoint_name, params);
+    kii_code_t res = _execute_server_code(kii, version, endpoint_name, params,
+            as_thing, access_token);
     if (res != KII_ERR_OK) {
         goto exit;
     }
@@ -83,12 +94,32 @@ exit:
 }
 
 
+kii_code_t kii_execute_server_code_version(
+        kii_t* kii,
+        const char* version,
+        const char* endpoint_name,
+        const char* params)
+{
+    return _run_server_code(kii, version, endpoint_name, params, KII_TRUE, NULL);
+}
+
 kii_code_t kii_execute_server_code(
         kii_t* kii,
         const char* endpoint_name,
         const char* params)
 {
     return kii_execute_server_code_version(kii, "current", endpoint_name, params);
+}
+
+kii_code_t kii_execute_server_code_with_token(
+        kii_t* kii,
+        const char* version,
+        const char* endpoint_name,
+        const char* params,
+        const char* access_token)
+{
+    return _run_server_code(kii, version != NULL ? version : "current",
+            endpoint_name, params, KII_FALSE, access_token);
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */
 

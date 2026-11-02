@@ -309,7 +309,10 @@ actions and sends the results back.
 ```
 
 The result is in the buffer, `kii_get_resp_body_length()` bytes long.
-`kii_execute_server_code_version()` runs a given version of the code.
+`kii_execute_server_code_version()` runs a given version of the code. Both send
+the token of the thing `kii` acts as. `kii_execute_server_code_with_token()`
+sends another instead, an application administrator's or a user's, or none, for
+an endpoint that runs without one. A session never renews or replaces it.
 
 ## Other REST API calls
 
