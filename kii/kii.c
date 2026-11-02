@@ -213,6 +213,12 @@ void kii_enable_insecure_mqtt(
     kii->_insecure_mqtt = enable_insecure_mqtt;
 }
 
+void kii_set_mqtt_version(
+    kii_t* kii,
+    kii_mqtt_version_t version) {
+    kii->_mqtt_version = version;
+}
+
 void kii_enable_absolute_target(
     kii_t* kii,
     kii_bool_t enable_absolute_target) {

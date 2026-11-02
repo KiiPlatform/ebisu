@@ -268,6 +268,14 @@ typedef struct kii_mqtt_endpoint_t {
     uint32_t ttl;
 } kii_mqtt_endpoint_t;
 
+/** \brief Versions of MQTT the push task can speak. */
+typedef enum kii_mqtt_version_t {
+    /** \brief MQTT 3.1.1, the default. */
+    KII_MQTT_VERSION_3_1_1,
+    /** \brief MQTT 3.1, which 1.x spoke, for a broker with nothing later. */
+    KII_MQTT_VERSION_3_1
+} kii_mqtt_version_t;
+
 /**
  * \brief Represents object ID.
  */
@@ -357,6 +365,7 @@ typedef struct kii_t {
     void* _slist_free_data; /**< \private */
 
     kii_bool_t _insecure_mqtt; /**< \private */
+    kii_mqtt_version_t _mqtt_version; /**< \private */
     kii_bool_t _use_m_0_header; /**< \private */
 
     kii_session_t* _session; /**< \private */
@@ -445,6 +454,22 @@ void kii_enable_insecure_http(
 void kii_enable_insecure_mqtt(
         kii_t* kii,
         kii_bool_t enable_insecure_mqtt);
+
+/**
+ * \brief Set the version of MQTT the push task speaks.
+ *
+ * MQTT 3.1.1 by default, which is what brokers expect today, Kii Cloud's
+ * among them. A broker that refuses it answers CONNECT with return code 1,
+ * unacceptable protocol version, and the task goes on trying: for one with
+ * nothing later, set MQTT 3.1, which 1.x spoke. Set it before starting the
+ * task.
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] version The version.
+ */
+void kii_set_mqtt_version(
+        kii_t* kii,
+        kii_mqtt_version_t version);
 
 /**
  * \brief Send the whole URL in HTTP request lines.

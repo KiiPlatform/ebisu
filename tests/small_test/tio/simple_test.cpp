@@ -62,6 +62,14 @@ TEST_CASE( "enable insecure test" ) {
     REQUIRE( updater._kii._insecure_mqtt == KII_FALSE );
 }
 
+TEST_CASE( "tio_handler sets the version of MQTT on its kii" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    CHECK( handler._kii._mqtt_version == KII_MQTT_VERSION_3_1_1 );
+    tio_handler_set_mqtt_version(&handler, KII_MQTT_VERSION_3_1);
+    CHECK( handler._kii._mqtt_version == KII_MQTT_VERSION_3_1 );
+}
+
 TEST_CASE( "tio_handler sets its sockets and system on its kii" ) {
     tio_handler_t handler;
     tio_handler_init(&handler);
