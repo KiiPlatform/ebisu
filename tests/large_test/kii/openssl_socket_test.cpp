@@ -16,8 +16,10 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <chrono>
 #include <string>
 #include <thread>
+#include <netdb.h>
 
 namespace {
 
@@ -250,28 +252,59 @@ TEST_CASE( "The OpenSSL socket's send sends with an earlier failure left behind"
 
 namespace {
 
-// A TLS server on a loopback port of its own, with the certificate for
-// localhost, taking connections one after another until the test is done.
+// The loopback address of family, AF_INET or AF_INET6, with port.
+struct sockaddr_storage loopback(int family, uint16_t port)
+{
+    struct sockaddr_storage addr;
+    memset(&addr, 0, sizeof(addr));
+    if (family == AF_INET6) {
+        struct sockaddr_in6* in6 = (struct sockaddr_in6*)&addr;
+        in6->sin6_family = AF_INET6;
+        in6->sin6_addr = in6addr_loopback;
+        in6->sin6_port = htons(port);
+    } else {
+        struct sockaddr_in* in = (struct sockaddr_in*)&addr;
+        in->sin_family = AF_INET;
+        in->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        in->sin_port = htons(port);
+    }
+    return addr;
+}
+
+socklen_t length_of(int family)
+{
+    return family == AF_INET6 ? sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in);
+}
+
+// A TLS server on a loopback port of its own, IPv4's or IPv6's, with the
+// certificate for localhost, taking connections one after another until the
+// test is done. listening is false where the family can't be listened on.
 struct LocalServer {
+    int family;
     int listen_fd;
+    bool listening;
     uint16_t port;
     SSL_CTX* ctx;
     bool stopping;
     std::thread thread;
 
-    LocalServer() : stopping(false) {
+    explicit LocalServer(int family = AF_INET) : family(family), listening(false), port(0),
+            ctx(nullptr), stopping(false) {
         signal(SIGPIPE, SIG_IGN);
-        listen_fd = socket(AF_INET, SOCK_STREAM, 0);
-        REQUIRE( listen_fd >= 0 );
-        struct sockaddr_in addr;
-        memset(&addr, 0, sizeof(addr));
-        addr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-        REQUIRE( bind(listen_fd, (struct sockaddr*)&addr, sizeof(addr)) == 0 );
+        listen_fd = socket(family, SOCK_STREAM, 0);
+        if (listen_fd < 0) {
+            return;
+        }
+        struct sockaddr_storage addr = loopback(family, 0);
+        if (bind(listen_fd, (struct sockaddr*)&addr, length_of(family)) != 0) {
+            return;
+        }
         REQUIRE( listen(listen_fd, 4) == 0 );
         socklen_t len = sizeof(addr);
         REQUIRE( getsockname(listen_fd, (struct sockaddr*)&addr, &len) == 0 );
-        port = ntohs(addr.sin_port);
+        port = ntohs(family == AF_INET6 ?
+                ((struct sockaddr_in6*)&addr)->sin6_port : ((struct sockaddr_in*)&addr)->sin_port);
+        listening = true;
         // So that it never waits for ever, whatever the test does.
         struct timeval timeout = { 10, 0 };
         setsockopt(listen_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
@@ -284,15 +317,17 @@ struct LocalServer {
     }
 
     ~LocalServer() {
+        if (!listening) {
+            if (listen_fd >= 0) {
+                close(listen_fd);
+            }
+            return;
+        }
         stopping = true;
         // Wakes accept() with a connection that only says to stop.
-        int fd = socket(AF_INET, SOCK_STREAM, 0);
-        struct sockaddr_in addr;
-        memset(&addr, 0, sizeof(addr));
-        addr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-        addr.sin_port = htons(port);
-        connect(fd, (struct sockaddr*)&addr, sizeof(addr));
+        int fd = socket(family, SOCK_STREAM, 0);
+        struct sockaddr_storage addr = loopback(family, port);
+        connect(fd, (struct sockaddr*)&addr, length_of(family));
         thread.join();
         close(fd);
         close(listen_fd);
@@ -374,6 +409,7 @@ ebisu_sock_code_t connect_to(ebisu_openssl_socket_t* sock, const LocalServer& se
 
 TEST_CASE( "The OpenSSL socket trusts the CA certificates of its configuration" ) {
     LocalServer server;
+    REQUIRE( server.listening );
 
     SECTION("from a file") {
         CaFile ca;
@@ -416,6 +452,7 @@ TEST_CASE( "A TLS configuration whose CA certificates can't be loaded fails" ) {
 // SSL_CTX of its own.
 TEST_CASE( "The OpenSSL sockets of a configuration share its SSL_CTX" ) {
     LocalServer server;
+    REQUIRE( server.listening );
     CaFile ca;
     ebisu_openssl_tls_t tls;
     REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
@@ -433,4 +470,83 @@ TEST_CASE( "The OpenSSL sockets of a configuration share its SSL_CTX" ) {
         CHECK( sock->base.ops->close(&sock->base) == EBISU_SOCK_OK );
     }
     ebisu_openssl_tls_free(&tls);
+}
+
+namespace {
+
+// Whether host has addresses of both IPv4 and IPv6.
+bool has_both_families(const char* host)
+{
+    struct addrinfo hints;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    struct addrinfo* addrs = nullptr;
+    if (getaddrinfo(host, "443", &hints, &addrs) != 0) {
+        return false;
+    }
+    bool v4 = false;
+    bool v6 = false;
+    for (struct addrinfo* ai = addrs; ai != nullptr; ai = ai->ai_next) {
+        v4 = v4 || ai->ai_family == AF_INET;
+        v6 = v6 || ai->ai_family == AF_INET6;
+    }
+    freeaddrinfo(addrs);
+    return v4 && v6;
+}
+
+}
+
+// The port looked hosts up with gethostbyname(), which knows IPv4 only, and
+// connected to the first address it gave: a server on another was out of
+// reach.
+TEST_CASE( "The OpenSSL socket tries each of the host's addresses" ) {
+    if (!has_both_families("localhost")) {
+        WARN( "localhost has no IPv4 and IPv6 addresses both: skipped" );
+        return;
+    }
+    for (int family : { AF_INET, AF_INET6 }) {
+        INFO( "server on " << (family == AF_INET6 ? "IPv6" : "IPv4") );
+        LocalServer server(family);
+        if (!server.listening) {
+            WARN( "can't listen on loopback of this family: skipped" );
+            continue;
+        }
+        CaFile ca;
+        ebisu_openssl_tls_t tls;
+        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+        for (unsigned int timeout : { 5u, 0u }) {
+            INFO( "connect timeout " << timeout );
+            ebisu_openssl_socket_t sock;
+            ebisu_openssl_socket_init(&sock, 5, 5);
+            ebisu_openssl_socket_set_connect_timeout(&sock, timeout);
+            ebisu_openssl_socket_set_tls(&sock, &tls);
+            REQUIRE( connect_to(&sock, server) == EBISU_SOCK_OK );
+            CHECK( sock.base.ops->close(&sock.base) == EBISU_SOCK_OK );
+        }
+        ebisu_openssl_tls_free(&tls);
+    }
+}
+
+// Where nothing answers, connect() waited for TCP to give up, about two
+// minutes on Linux, unless a send timeout cut it short.
+TEST_CASE( "The OpenSSL socket gives up connecting at its connect timeout" ) {
+    ebisu_openssl_socket_t sock;
+    ebisu_openssl_socket_init(&sock, 0, 0);
+    ebisu_openssl_socket_set_connect_timeout(&sock, 1);
+    auto start = std::chrono::steady_clock::now();
+    // TEST-NET-1, which nothing answers on.
+    CHECK( sock.base.ops->connect(&sock.base, "192.0.2.1", 443) == EBISU_SOCK_FAIL );
+    auto elapsed = std::chrono::steady_clock::now() - start;
+    CHECK( std::chrono::duration_cast<std::chrono::seconds>(elapsed).count() < 5 );
+}
+
+TEST_CASE( "The OpenSSL socket fails on a host that doesn't resolve" ) {
+    for (unsigned int timeout : { 5u, 0u }) {
+        INFO( "connect timeout " << timeout );
+        ebisu_openssl_socket_t sock;
+        ebisu_openssl_socket_init(&sock, 0, 0);
+        ebisu_openssl_socket_set_connect_timeout(&sock, timeout);
+        CHECK( sock.base.ops->connect(&sock.base, "ebisu-test.invalid", 443) == EBISU_SOCK_FAIL );
+    }
 }

@@ -3,11 +3,15 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/uio.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <poll.h>
 #include <pthread.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <openssl/crypto.h>
@@ -156,6 +160,12 @@ void ebisu_openssl_socket_init(
     ctx->socket = -1;
     ctx->to_recv = to_recv;
     ctx->to_send = to_send;
+    ctx->to_connect = to_send;
+}
+
+void ebisu_openssl_socket_set_connect_timeout(ebisu_openssl_socket_t* sock, unsigned int seconds)
+{
+    sock->to_connect = seconds;
 }
 
 void ebisu_openssl_socket_set_tls(ebisu_openssl_socket_t* sock, ebisu_openssl_tls_t* tls)
@@ -222,32 +232,226 @@ static void print_ssl_failure(const char* what, int ssl_error, int saved_errno)
     }
 }
 
+static int64_t monotonic_ms(void)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (int64_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
+
+/* Waits for fd to be ready for events until deadline_ms, or for ever if it is
+   0. 1 when it is, 0 when the deadline passed, -1 on failure. */
+static int wait_for(int fd, short events, int64_t deadline_ms)
+{
+    while (1) {
+        int timeout_ms = -1;
+        if (deadline_ms > 0) {
+            int64_t left = deadline_ms - monotonic_ms();
+            if (left <= 0) {
+                return 0;
+            }
+            timeout_ms = left > 60000 ? 60000 : (int)left;
+        }
+        struct pollfd p;
+        p.fd = fd;
+        p.events = events;
+        p.revents = 0;
+        int ret = poll(&p, 1, timeout_ms);
+        if (ret > 0) {
+            return 1;
+        }
+        if (ret < 0 && errno != EINTR) {
+            return -1;
+        }
+    }
+}
+
+/* A lookup on a thread of its own, which the connecting task waits for no
+   longer than its timeout. A task that gives up leaves it to finish and free
+   what they share by itself. */
+typedef struct {
+    pthread_mutex_t mutex;
+    /* Two while both use it, then one, then none, when it is freed. */
+    int users;
+    char host[256];
+    char service[8];
+    /* Set with the mutex held. */
+    int error;
+    struct addrinfo* result;
+    /* Written to once the lookup is done. */
+    int done_fds[2];
+} lookup_t;
+
+static void release_lookup(lookup_t* lookup)
+{
+    pthread_mutex_lock(&lookup->mutex);
+    int users = --lookup->users;
+    pthread_mutex_unlock(&lookup->mutex);
+    if (users > 0) {
+        return;
+    }
+    if (lookup->result != NULL) {
+        freeaddrinfo(lookup->result);
+    }
+    close(lookup->done_fds[0]);
+    close(lookup->done_fds[1]);
+    pthread_mutex_destroy(&lookup->mutex);
+    free(lookup);
+}
+
+static void* run_lookup(void* arg)
+{
+    lookup_t* lookup = (lookup_t*)arg;
+    struct addrinfo hints;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    struct addrinfo* result = NULL;
+    int error = getaddrinfo(lookup->host, lookup->service, &hints, &result);
+    pthread_mutex_lock(&lookup->mutex);
+    lookup->error = error;
+    lookup->result = result;
+    pthread_mutex_unlock(&lookup->mutex);
+    char done = 1;
+    ssize_t written = write(lookup->done_fds[1], &done, 1);
+    (void)written;
+    release_lookup(lookup);
+    return NULL;
+}
+
+/* The host's addresses, NULL if it couldn't be looked up by deadline_ms, or
+   ever if that is 0. */
+static struct addrinfo* look_up(const char* host, uint16_t port, int64_t deadline_ms)
+{
+    char service[8];
+    snprintf(service, sizeof(service), "%u", (unsigned int)port);
+    if (deadline_ms == 0) {
+        struct addrinfo hints;
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_socktype = SOCK_STREAM;
+        struct addrinfo* result = NULL;
+        int error = getaddrinfo(host, service, &hints, &result);
+        if (error != 0) {
+            printf("failed to look up %s: %s\n", host, gai_strerror(error));
+            return NULL;
+        }
+        return result;
+    }
+
+    if (strlen(host) >= sizeof(((lookup_t*)0)->host)) {
+        printf("failed to look up a host name that long.\n");
+        return NULL;
+    }
+    lookup_t* lookup = (lookup_t*)calloc(1, sizeof(lookup_t));
+    if (lookup == NULL) {
+        return NULL;
+    }
+    if (pipe(lookup->done_fds) != 0) {
+        free(lookup);
+        return NULL;
+    }
+    pthread_mutex_init(&lookup->mutex, NULL);
+    lookup->users = 2;
+    strcpy(lookup->host, host);
+    strcpy(lookup->service, service);
+    pthread_t thread;
+    if (pthread_create(&thread, NULL, run_lookup, lookup) != 0) {
+        lookup->users = 1;
+        release_lookup(lookup);
+        return NULL;
+    }
+    pthread_detach(thread);
+
+    struct addrinfo* result = NULL;
+    if (wait_for(lookup->done_fds[0], POLLIN, deadline_ms) == 1) {
+        pthread_mutex_lock(&lookup->mutex);
+        int error = lookup->error;
+        if (error == 0) {
+            result = lookup->result;
+            lookup->result = NULL;
+        }
+        pthread_mutex_unlock(&lookup->mutex);
+        if (error != 0) {
+            printf("failed to look up %s: %s\n", host, gai_strerror(error));
+        }
+    } else {
+        printf("failed to look up %s in time.\n", host);
+    }
+    release_lookup(lookup);
+    return result;
+}
+
+/* Connects sock to addr by deadline_ms, or whenever TCP gives up if that is
+   0. 0 when connected, -1 otherwise. */
+static int connect_by(int sock, const struct sockaddr* addr, socklen_t addr_len,
+        int64_t deadline_ms)
+{
+    int flags = fcntl(sock, F_GETFL, 0);
+    if (flags < 0 || fcntl(sock, F_SETFL, flags | O_NONBLOCK) != 0) {
+        return -1;
+    }
+    int ret = connect(sock, addr, addr_len);
+    if (ret != 0 && errno == EINPROGRESS) {
+        ret = -1;
+        if (wait_for(sock, POLLOUT, deadline_ms) == 1) {
+            int error = 0;
+            socklen_t len = sizeof(error);
+            if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &error, &len) == 0 && error == 0) {
+                ret = 0;
+            }
+        }
+    }
+    /* Blocking again, for the handshake and what follows, which the receive
+       and send timeouts bound. */
+    if (fcntl(sock, F_SETFL, flags) != 0) {
+        return -1;
+    }
+    return ret;
+}
+
+/* A socket connected to one of host's addresses, tried in the order the
+   resolver gives them, or -1. */
+static int connect_to_host(const char* host, uint16_t port, unsigned int timeout_s)
+{
+    int64_t timeout_ms = (int64_t)timeout_s * 1000;
+    int64_t deadline_ms = timeout_ms > 0 ? monotonic_ms() + timeout_ms : 0;
+    struct addrinfo* addrs = look_up(host, port, deadline_ms);
+    if (addrs == NULL) {
+        return -1;
+    }
+    int sock = -1;
+    for (struct addrinfo* ai = addrs; ai != NULL; ai = ai->ai_next) {
+        sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+        if (sock < 0) {
+            continue;
+        }
+        /* Each address gets the whole timeout: one that doesn't answer leaves
+           the rest as much time as the first had. */
+        int64_t attempt_deadline_ms = timeout_ms > 0 ? monotonic_ms() + timeout_ms : 0;
+        if (connect_by(sock, ai->ai_addr, ai->ai_addrlen, attempt_deadline_ms) == 0) {
+            break;
+        }
+        close(sock);
+        sock = -1;
+    }
+    freeaddrinfo(addrs);
+    if (sock < 0) {
+        printf("failed to connect to %s.\n", host);
+    }
+    return sock;
+}
+
 static ebisu_sock_code_t
     openssl_connect(ebisu_socket_t* self, const char* host,
             uint16_t port)
 {
     int sock, ret;
-    struct hostent *servhost;
-    struct sockaddr_in server;
     SSL *ssl = NULL;
     ebisu_openssl_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_openssl_socket_t, base);
 
-    servhost = gethostbyname(host);
-    if (servhost == NULL) {
-        printf("failed to get host.\n");
-        return EBISU_SOCK_FAIL;
-    }
-    memset(&server, 0x00, sizeof(server));
-    server.sin_family = AF_INET;
-    /* More secure. */
-    memcpy(&(server.sin_addr), servhost->h_addr, servhost->h_length);
-
-    /* Get Port number */
-    server.sin_port = htons(port);
-
-    sock = socket(AF_INET, SOCK_STREAM, 0);
+    sock = connect_to_host(host, port, ctx->to_connect);
     if (sock < 0) {
-        printf("failed to init socket.\n");
         return EBISU_SOCK_FAIL;
     }
 
@@ -263,11 +467,6 @@ static ebisu_sock_code_t
         tv.tv_sec = ctx->to_send;
         tv.tv_usec = 0;
         setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof tv);
-    }
-
-    if (connect(sock, (struct sockaddr*) &server, sizeof(server)) == -1 ){
-        printf("failed to connect socket.\n");
-        goto fail;
     }
 
     /* Shared with the other connections: the CA certificates are loaded once. */
