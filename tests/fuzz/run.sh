@@ -10,7 +10,7 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
-for name in khc_response jkii_parse mqtt_task tio_command; do
+for name in khc_response jkii_parse jkii_writer mqtt_task tio_command; do
     echo "== $name"
     mkdir "$work/$name"
     dict=""

@@ -36,7 +36,7 @@ endfunction()
 # has no library of its own, so its headers are checked against khc, which
 # embeds it.
 ebisu_check_headers(khc khc.h ebisu_object.h ebisu_socket.h ebisu_system.h ebisu_clock.h)
-ebisu_check_headers(jkii jkii.h jkii_utils.h jsmn.h)
+ebisu_check_headers(jkii jkii.h jkii_utils.h jkii_writer.h jsmn.h)
 ebisu_check_headers(kii kii.h kii_task_callback.h)
 ebisu_check_headers(tio tio.h)
 ebisu_check_headers(ebisu_version ebisu_version.h)

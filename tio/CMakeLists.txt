@@ -40,6 +40,7 @@ install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../kii/include/kii_task_callback.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../jkii/include/jkii.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../jkii/include/jkii_utils.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../jkii/include/jkii_writer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/../jkii/libs/jsmn/jsmn.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(TARGETS tio
