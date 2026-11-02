@@ -2,7 +2,8 @@
 # find_package(ebisu), and a pkg-config file for each library.
 #
 # The package's targets are ebisu::khc, ebisu::jkii, ebisu::kii and ebisu::tio,
-# and, where they were built, ebisu::posix and ebisu::openssl, the ports. Like
+# and, where they were built, ebisu::posix and ebisu::openssl, or ebisu::win32
+# and ebisu::schannel on Windows, the ports. Like
 # the libraries, the headers are all installed in one directory, which each
 # target adds to the include path. A port carries none of the rest of platform:
 # link it with one of the libraries, as the README says.
@@ -69,4 +70,13 @@ if(TARGET ebisu_openssl)
     _ebisu_pkg_config(openssl ebisu_openssl
         "OpenSSL port of ebisu's platform: link it before khc, kii or tio"
         REQUIRES openssl LIBS -pthread)
+endif()
+if(TARGET ebisu_win32)
+    _ebisu_pkg_config(win32 ebisu_win32
+        "Win32 port of ebisu's platform: link it before khc, kii or tio")
+endif()
+if(TARGET ebisu_schannel)
+    _ebisu_pkg_config(schannel ebisu_schannel
+        "Schannel port of ebisu's platform: link it before khc, kii or tio"
+        LIBS "-lws2_32 -lsecur32 -lcrypt32")
 endif()

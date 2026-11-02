@@ -417,8 +417,8 @@ The socket callbacks then check the server's certificate against it:
 The chain and the host name are checked in full either way: the clock only
 decides the validity period.
 
-The sockets of [platform's OpenSSL port](https://github.com/KiiPlatform/ebisu/blob/master/platform/openssl/src/ebisu_openssl.c) and of the
-[Win32](https://github.com/KiiPlatform/ebisu/blob/master/tio/win32-sample/sock_cb_win32.c) samples give their TLS stack the
+The sockets of platform's [OpenSSL](https://github.com/KiiPlatform/ebisu/blob/master/platform/openssl/src/ebisu_openssl.c) and
+[Schannel](https://github.com/KiiPlatform/ebisu/blob/master/platform/schannel/src/ebisu_schannel.c) ports give their TLS stack the
 time, and those of the [ESP32](https://github.com/KiiPlatform/ebisu/blob/master/tio/esp32-sample/main/sock_cb_esp32.c) and
 [FreeRTOS](https://github.com/KiiPlatform/ebisu/blob/master/tio/freertos-sample/sock_cb_freertos.c) samples check the
 validity periods themselves, mbedTLS not checking them: the ESP32 one after the

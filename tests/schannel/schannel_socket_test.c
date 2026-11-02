@@ -1,25 +1,25 @@
-/* Calls the callbacks in sock_cb_win32.c one at a time, as tls_test.py tells
- * it to, and prints what each returned.
+/* Calls the operations of platform's Schannel port one at a time, as
+ * tls_test.py tells it to, and prints what each returned.
  *
- *   sock_cb_test trust <certificate.der>
+ *   schannel_socket_test trust <certificate.der>
  *       Adds the certificate to the local machine's root store, so that
  *       servers with certificates it issued are trusted. Only under wine,
  *       where tls_test.py runs it in a wine prefix of its own.
  *
- *   sock_cb_test <host> <port> <receive timeout, s> <step>...
- *       Runs the steps in order on one socket_context_t, printing a line
+ *   schannel_socket_test <host> <port> <receive timeout, s> <step>...
+ *       Runs the steps in order on one ebisu_schannel_socket_t, printing a line
  *       starting with "STEP" for each:
- *       connect          sock_cb_connect()
- *       send:<text>      sock_cb_send() until all of text is sent; \n in
+ *       connect          connect
+ *       send:<text>      send until all of text is sent; \n in
  *                        text stands for a newline
- *       sendbig:<n>      sock_cb_send() until n bytes are sent
- *       recv:<n>         one sock_cb_recv() into an n-byte buffer, and
- *                        sock_cb_recv_timed_out() if it failed
- *       drain:<n>        sock_cb_recv() into an n-byte buffer until it fails
+ *       sendbig:<n>      send until n bytes are sent
+ *       recv:<n>         one recv into an n-byte buffer, and
+ *                        recv_timed_out if it failed
+ *       drain:<n>        recv into an n-byte buffer until it fails
  *                        or returns 0 bytes, and the FNV-1a hash of it all
- *       close            sock_cb_close()
+ *       close            close
  */
-#include "sock_cb_win32.h"
+#include "ebisu_schannel.h"
 
 #include <windows.h>
 #include <wincrypt.h>
@@ -90,7 +90,7 @@ static int trust(const char* path)
     return 0;
 }
 
-static ebisu_sock_code_t send_all(socket_context_t* ctx, const char* data,
+static ebisu_sock_code_t send_all(ebisu_schannel_socket_t* ctx, const char* data,
         size_t len, size_t* total, int* calls)
 {
     ebisu_sock_code_t res = EBISU_SOCK_OK;
@@ -98,7 +98,7 @@ static ebisu_sock_code_t send_all(socket_context_t* ctx, const char* data,
     *calls = 0;
     while (*total < len && res == EBISU_SOCK_OK) {
         size_t sent = 0;
-        res = sock_cb_send(&ctx->base, data + *total, len - *total, &sent);
+        res = ctx->base.ops->send(&ctx->base, data + *total, len - *total, &sent);
         *total += sent;
         ++*calls;
     }
@@ -119,11 +119,11 @@ static void print_escaped(const char* data, size_t len)
     }
 }
 
-static int run_step(socket_context_t* ctx, const char* host, uint16_t port,
+static int run_step(ebisu_schannel_socket_t* ctx, const char* host, uint16_t port,
         const char* step)
 {
     if (strcmp(step, "connect") == 0) {
-        printf("STEP connect %s\n", code_name(sock_cb_connect(&ctx->base, host, port)));
+        printf("STEP connect %s\n", code_name(ctx->base.ops->connect(&ctx->base, host, port)));
     } else if (strncmp(step, "send:", 5) == 0) {
         size_t len = 0;
         char* text = (char*)malloc(strlen(step));
@@ -158,10 +158,10 @@ static int run_step(socket_context_t* ctx, const char* host, uint16_t port,
         char* buf = (char*)malloc(size);
         size_t got = 0;
         DWORD start = GetTickCount();
-        ebisu_sock_code_t res = sock_cb_recv(&ctx->base, buf, size, &got);
+        ebisu_sock_code_t res = ctx->base.ops->recv(&ctx->base, buf, size, &got);
         DWORD elapsed = GetTickCount() - start;
         int timed_out = res == EBISU_SOCK_FAIL &&
-            sock_cb_recv_timed_out(&ctx->base);
+            ctx->base.ops->recv_timed_out(&ctx->base);
         printf("STEP recv %s %lu timed_out=%d ms=%lu data=", code_name(res),
                 (unsigned long)got, timed_out, (unsigned long)elapsed);
         print_escaped(buf, got > 64 ? 64 : got);
@@ -176,7 +176,7 @@ static int run_step(socket_context_t* ctx, const char* host, uint16_t port,
         ebisu_sock_code_t res;
         for (;;) {
             size_t got = 0;
-            res = sock_cb_recv(&ctx->base, buf, size, &got);
+            res = ctx->base.ops->recv(&ctx->base, buf, size, &got);
             ++calls;
             if (got > size) {
                 printf("STEP drain received %lu into %lu bytes\n",
@@ -190,13 +190,13 @@ static int run_step(socket_context_t* ctx, const char* host, uint16_t port,
             total += got;
         }
         int timed_out = res == EBISU_SOCK_FAIL &&
-            sock_cb_recv_timed_out(&ctx->base);
+            ctx->base.ops->recv_timed_out(&ctx->base);
         printf("STEP drain %s bytes=%llu calls=%lu fnv=%016llx timed_out=%d\n",
                 code_name(res), total, calls, (unsigned long long)hash,
                 timed_out);
         free(buf);
     } else if (strcmp(step, "close") == 0) {
-        printf("STEP close %s\n", code_name(sock_cb_close(&ctx->base)));
+        printf("STEP close %s\n", code_name(ctx->base.ops->close(&ctx->base)));
     } else {
         printf("unknown step %s\n", step);
         return 1;
@@ -211,8 +211,8 @@ int main(int argc, char** argv)
         return trust(argv[2]);
     }
     if (argc < 5) {
-        printf("usage: sock_cb_test trust <certificate.der>\n"
-                "       sock_cb_test <host> <port> <receive timeout> <step>...\n");
+        printf("usage: schannel_socket_test trust <certificate.der>\n"
+                "       schannel_socket_test <host> <port> <receive timeout> <step>...\n");
         return 2;
     }
 
@@ -221,8 +221,8 @@ int main(int argc, char** argv)
         printf("WSAStartup failed\n");
         return 1;
     }
-    socket_context_t ctx;
-    sock_cb_init_context(&ctx, (unsigned int)atoi(argv[3]), 10);
+    ebisu_schannel_socket_t ctx;
+    ebisu_schannel_socket_init(&ctx, (unsigned int)atoi(argv[3]), 10);
     int result = 0;
     for (int i = 4; i < argc && result == 0; ++i) {
         result = run_step(&ctx, argv[1], (uint16_t)atoi(argv[2]), argv[i]);

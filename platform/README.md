@@ -59,8 +59,22 @@ which have the rest of `platform`.
   takes it. Why an operation failed goes to the logger set with
   `ebisu_openssl_socket_set_logger()`, or to stderr. Needs OpenSSL 1.0.2 or
   later, and POSIX threads.
+- **Win32** (`ebisu_win32.h`, library `ebisu_win32`): `ebisu_win32_system()`,
+  whose tasks are threads of their own, made with `_beginthreadex()`, whose
+  delays are `Sleep()` and whose monotonic clock is `GetTickCount64()`, and
+  `ebisu_win32_lock_t`, an SRWLOCK.
+- **Schannel** (`ebisu_schannel.h`, library `ebisu_schannel`):
+  `ebisu_schannel_socket_t`, TLS over Winsock 2 with Schannel, through SSPI,
+  checking the server's certificate itself with crypt32, at an
+  `ebisu_clock_t`'s time: a chain to a root in the Windows root store, valid
+  for server authentication, issued for the host. It drives Schannel itself,
+  keeping what it has received but not yet returned, and waits for a receive
+  with `select()`, so that a timeout leaves the connection usable. Why an
+  operation failed is printed to stdout. Needs only what Windows provides,
+  `ws2_32`, `secur32` and `crypt32`, which it links.
 
-The Linux sample uses both.
+The Linux sample uses the POSIX and OpenSSL ports, and the Windows sample the
+Win32 and Schannel ones.
 
 A daemon can send the OpenSSL port's diagnostics to syslog with a logger such as
 this one. `vsyslog()` isn't POSIX, but glibc, musl and the BSDs have it:
@@ -80,5 +94,7 @@ static const ebisu_logger_ops_t syslog_ops = { to_syslog };
 static ebisu_logger_t syslog_logger = { &syslog_ops };
 
     ebisu_openssl_socket_set_logger(&sock, &syslog_logger);
-``` The samples for Windows, FreeRTOS and ESP32 have
-implementations of their own, under `tio`.
+```
+
+The samples for FreeRTOS and ESP32 have implementations of their own, under
+`tio`.

@@ -26,22 +26,18 @@ endif()
 
 # Shared by both large suites: the sockets, with TLS and, for
 # EBISU_PLAIN_HTTP, without. platform's OpenSSL port, except on Windows, where
-# they are the win32 sample's, over Winsock and Schannel, so that the sample's
-# TLS runs against the live server too.
+# they are its Schannel port, over Winsock and Schannel, so that the port's TLS
+# runs against the live server too.
 #
 # kii/mqtt_test.cpp connects to the MQTT broker through the platform's socket,
-# which times out its receives as the push task needs: the win32 sample's, or
-# platform's OpenSSL port.
+# which times out its receives as the push task needs: the Schannel port, or
+# the OpenSSL port.
 if(WIN32)
-    set(large_test_common
-        ${CMAKE_CURRENT_SOURCE_DIR}/secure_socket_win32.cpp
-        ${PROJECT_SOURCE_DIR}/tio/win32-sample/sock_cb_win32.c)
-    set(large_test_socket_libs ws2_32 secur32 crypt32)
-    set(large_test_socket_includes
-        ${PROJECT_SOURCE_DIR}/tio/win32-sample
-        ${PROJECT_SOURCE_DIR}/kii/include)
-    # Without it, windows.h pulls in winsock.h, which clashes with winsock2.h.
-    list(APPEND large_test_defines WIN32_LEAN_AND_MEAN)
+    set(large_test_common ${CMAKE_CURRENT_SOURCE_DIR}/secure_socket_win32.cpp)
+    # ws2_32 for the plain sockets of EBISU_PLAIN_HTTP too, which the port
+    # brings, with WIN32_LEAN_AND_MEAN.
+    set(large_test_socket_libs ebisu_schannel)
+    set(large_test_socket_includes ${PROJECT_SOURCE_DIR}/kii/include)
 else()
     if(NOT TARGET ebisu_openssl)
         message(FATAL_ERROR "The large tests need platform's OpenSSL port")

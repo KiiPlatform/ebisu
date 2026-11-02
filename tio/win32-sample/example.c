@@ -14,8 +14,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sock_cb_win32.h"
-#include "sys_cb_win32.h"
+#include "ebisu_schannel.h"
+#include "ebisu_win32.h"
 
 static void print_help(void) {
     printf("sub commands: [onboard|update]\n\n");
@@ -76,10 +76,10 @@ static BOOL WINAPI console_ctrl_handler(DWORD ctrl_type) {
     }
 }
 
-static win32_lock_t session_lock;
+static ebisu_win32_lock_t session_lock;
 /* The clock's, which has to be a lock of its own: the sockets use the clock
    while kii may hold the session's. */
-static win32_lock_t clock_lock;
+static ebisu_win32_lock_t clock_lock;
 
 static void author_updated_callback(const kii_author_t* author, void* userdata)
 {
@@ -92,14 +92,14 @@ static void updater_init(
         tio_updater_t* updater,
         char* buffer,
         int buffer_size,
-        socket_context_t* sock_ssl_ctx,
+        ebisu_schannel_socket_t* sock_ssl_ctx,
         jkii_resource_t* resource)
 {
     tio_updater_init(updater);
 
     tio_updater_set_app(updater, KII_APP_ID, KII_APP_HOST);
 
-    tio_updater_set_system(updater, win32_system());
+    tio_updater_set_system(updater, ebisu_win32_system());
 
     tio_updater_set_buff(updater, buffer, buffer_size);
 
@@ -179,10 +179,10 @@ static void handler_init(
         tio_handler_t* handler,
         char* http_buffer,
         int http_buffer_size,
-        socket_context_t* http_ssl_ctx,
+        ebisu_schannel_socket_t* http_ssl_ctx,
         char* mqtt_buffer,
         int mqtt_buffer_size,
-        socket_context_t* mqtt_ssl_ctx,
+        ebisu_schannel_socket_t* mqtt_ssl_ctx,
         jkii_resource_t* resource)
 {
     tio_handler_init(handler);
@@ -191,7 +191,7 @@ static void handler_init(
 
     tio_handler_set_cb_push(handler, pushed_message_callback, NULL);
 
-    tio_handler_set_system(handler, win32_system());
+    tio_handler_set_system(handler, ebisu_win32_system());
 
     tio_handler_set_http_socket(handler, &http_ssl_ctx->base);
     tio_handler_set_mqtt_socket(handler, &mqtt_ssl_ctx->base);
@@ -316,16 +316,16 @@ int main(int argc, char** argv)
        first response, the clock has only a floor, a time it is known not to
        be earlier than. */
     ebisu_clock_t clock;
-    win32_lock_init(&session_lock);
-    win32_lock_init(&clock_lock);
-    ebisu_clock_init(&clock, win32_system());
+    ebisu_win32_lock_init(&session_lock);
+    ebisu_win32_lock_init(&clock_lock);
+    ebisu_clock_init(&clock, ebisu_win32_system());
     ebisu_clock_set_lock(&clock, &clock_lock.base);
 
     tio_updater_t updater;
 
-    socket_context_t updater_http_ctx;
-    sock_cb_init_context(&updater_http_ctx, TO_RECV_SEC, TO_SEND_SEC);
-    updater_http_ctx.clock = &clock;
+    ebisu_schannel_socket_t updater_http_ctx;
+    ebisu_schannel_socket_init(&updater_http_ctx, TO_RECV_SEC, TO_SEND_SEC);
+    ebisu_schannel_socket_set_clock(&updater_http_ctx, &clock);
 
     jkii_token_t updater_tokens[256];
     jkii_resource_t updater_resource = {updater_tokens, 256};
@@ -343,13 +343,13 @@ int main(int argc, char** argv)
 
     tio_handler_t handler;
 
-    socket_context_t handler_http_ctx;
-    sock_cb_init_context(&handler_http_ctx, TO_RECV_SEC, TO_SEND_SEC);
-    handler_http_ctx.clock = &clock;
+    ebisu_schannel_socket_t handler_http_ctx;
+    ebisu_schannel_socket_init(&handler_http_ctx, TO_RECV_SEC, TO_SEND_SEC);
+    ebisu_schannel_socket_set_clock(&handler_http_ctx, &clock);
 
-    socket_context_t handler_mqtt_ctx;
-    sock_cb_init_context(&handler_mqtt_ctx, TO_RECV_SEC, TO_SEND_SEC);
-    handler_mqtt_ctx.clock = &clock;
+    ebisu_schannel_socket_t handler_mqtt_ctx;
+    ebisu_schannel_socket_init(&handler_mqtt_ctx, TO_RECV_SEC, TO_SEND_SEC);
+    ebisu_schannel_socket_set_clock(&handler_mqtt_ctx, &clock);
 
     char handler_http_buff[HANDLER_HTTP_BUFF_SIZE];
     memset(handler_http_buff, 0x00, sizeof(char) * HANDLER_HTTP_BUFF_SIZE);
@@ -375,7 +375,7 @@ int main(int argc, char** argv)
     kii_session_t session;
     kii_session_init(&session);
     kii_session_set_lock(&session, &session_lock.base);
-    kii_session_set_system(&session, win32_system());
+    kii_session_set_system(&session, ebisu_win32_system());
     kii_session_set_cb_author_updated(&session, author_updated_callback, NULL);
     if (tio_handler_set_session(&handler, &session) != TIO_ERR_OK ||
             tio_updater_set_session(&updater, &session) != TIO_ERR_OK) {

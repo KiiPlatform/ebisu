@@ -93,6 +93,11 @@ add_subdirectory(small_test)
 # Checked when it builds rather than by ctest: nothing in it runs.
 add_subdirectory(header_check)
 
+# platform's Schannel port, run under wine.
+if(WIN32 AND CMAKE_CROSSCOMPILING_EMULATOR)
+    add_subdirectory(schannel)
+endif()
+
 option(EBISU_BUILD_FUZZERS "Build the libFuzzer targets in tests/fuzz. Needs clang" OFF)
 if(EBISU_BUILD_FUZZERS)
     add_subdirectory(fuzz)

@@ -10,8 +10,8 @@ product has to use TLS and verify the server's certificate: its chain to a
 trusted CA, the host name it is issued for, and its validity period.
 The [kii README](../../kii/README.md#the-time) describes how to check the
 certificate at the right time on a device without a real-time clock, and the
-[Linux](../linux-sample/sock_cb_linux.c),
-[Win32](../win32-sample/sock_cb_win32.c),
+[OpenSSL](../../platform/openssl/src/ebisu_openssl.c) and
+[Schannel](../../platform/schannel/src/ebisu_schannel.c) ports', the
 [ESP32](../esp32-sample/main/sock_cb_esp32.c) and
 [FreeRTOS](../freertos-sample/sock_cb_freertos.c) samples' socket callbacks
 do so, the last two with mbedTLS.

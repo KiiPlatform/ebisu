@@ -1,4 +1,4 @@
-/* Socket callbacks over Winsock 2 and Schannel.
+/* platform's Schannel port: a socket over Winsock 2 and Schannel.
  *
  * The TLS client follows the SSPI sequence Microsoft documents for Schannel:
  * AcquireCredentialsHandle(), then InitializeSecurityContext() until the
@@ -8,9 +8,9 @@
  *
  * Schannel does not do any I/O itself. It takes what has been received and
  * says what it needs next, so this file keeps the bytes received but not yet
- * used in socket_context_t#recv_buf; see sock_cb_win32.h. */
+ * used in ebisu_schannel_socket_t#recv_buf; see ebisu_schannel.h. */
 
-#include "sock_cb_win32.h"
+#include "ebisu_schannel.h"
 
 #include <ws2tcpip.h>
 #include <schannel.h>
@@ -89,29 +89,43 @@ static void set_buffer_desc(SecBufferDesc* desc, SecBuffer* buffers,
     desc->pBuffers = buffers;
 }
 
-static const ebisu_socket_ops_t sock_cb_ops = {
-    sock_cb_connect,
-    sock_cb_send,
-    sock_cb_recv,
-    sock_cb_close,
-    sock_cb_recv_timed_out
+static ebisu_sock_code_t schannel_connect(ebisu_socket_t* self, const char* host,
+        uint16_t port);
+static ebisu_sock_code_t schannel_send(ebisu_socket_t* self, const char* buffer,
+        size_t length, size_t* out_sent_length);
+static ebisu_sock_code_t schannel_recv(ebisu_socket_t* self, char* buffer,
+        size_t length_to_read, size_t* out_actual_length);
+static ebisu_sock_code_t schannel_close(ebisu_socket_t* self);
+static bool schannel_recv_timed_out(ebisu_socket_t* self);
+
+static const ebisu_socket_ops_t schannel_ops = {
+    schannel_connect,
+    schannel_send,
+    schannel_recv,
+    schannel_close,
+    schannel_recv_timed_out
 };
 
-void sock_cb_init_context(
-        socket_context_t* ctx,
+void ebisu_schannel_socket_init(
+        ebisu_schannel_socket_t* ctx,
         unsigned int to_recv,
         unsigned int to_send)
 {
     memset(ctx, 0, sizeof(*ctx));
-    ctx->base.ops = &sock_cb_ops;
+    ctx->base.ops = &schannel_ops;
     ctx->to_recv = to_recv;
     ctx->to_send = to_send;
     ctx->socket = INVALID_SOCKET;
 }
 
+void ebisu_schannel_socket_set_clock(ebisu_schannel_socket_t* sock, ebisu_clock_t* clock)
+{
+    sock->clock = clock;
+}
+
 /* Releases everything the connection holds, whatever state it is in, and
-   leaves the context ready for the next sock_cb_connect(). */
-static void teardown(socket_context_t* ctx)
+   leaves the context ready for the next schannel_connect(). */
+static void teardown(ebisu_schannel_socket_t* ctx)
 {
     if (ctx->socket != INVALID_SOCKET) {
         closesocket(ctx->socket);
@@ -217,7 +231,7 @@ static int send_all(SOCKET sock, const char* data, size_t length)
  * using its socket after every idle timeout. A recv() that only starts once
  * select() has seen data, the end of the stream or an error never blocks, so
  * a timeout here leaves the socket as it was, and the TLS stream with it. */
-static read_result_t read_some(socket_context_t* ctx)
+static read_result_t read_some(ebisu_schannel_socket_t* ctx)
 {
     size_t room = TLS_MAX_RECORD_SIZE - ctx->recv_len;
     if (room == 0) {
@@ -259,7 +273,7 @@ static read_result_t read_some(socket_context_t* ctx)
    buffer gives the number of bytes at the end of the input that it did not
    use, which are the start of the next message. Keeps those, and only those,
    at the start of recv_buf. */
-static void keep_extra(socket_context_t* ctx, const SecBuffer* buffers,
+static void keep_extra(ebisu_schannel_socket_t* ctx, const SecBuffer* buffers,
         unsigned long count)
 {
     size_t extra = 0;
@@ -274,7 +288,7 @@ static void keep_extra(socket_context_t* ctx, const SecBuffer* buffers,
 
 /* Runs the handshake. What the server sends is read into recv_buf, and
    whatever is left in it at the end is the start of the application data. */
-static int handshake(socket_context_t* ctx)
+static int handshake(ebisu_schannel_socket_t* ctx)
 {
     for (;;) {
         SecBuffer in[2];
@@ -391,7 +405,7 @@ static int64_t seconds_of(FILETIME ft)
     return (int64_t)(t.QuadPart / 10000000ULL) - (int64_t)FILETIME_EPOCH_SECONDS;
 }
 
-static int verify_server_certificate(socket_context_t* ctx)
+static int verify_server_certificate(ebisu_schannel_socket_t* ctx)
 {
     PCCERT_CONTEXT cert = NULL;
     SECURITY_STATUS status = QueryContextAttributesA(
@@ -504,7 +518,7 @@ done:
     return result;
 }
 
-static int tls_connect(socket_context_t* ctx)
+static int tls_connect(ebisu_schannel_socket_t* ctx)
 {
     /* SCHANNEL_CRED, with which Schannel negotiates TLS 1.2 at most: TLS 1.3
        needs SCH_CREDENTIALS, which older versions of Windows do not have. No
@@ -563,11 +577,11 @@ static int tls_connect(socket_context_t* ctx)
     return 0;
 }
 
-ebisu_sock_code_t
-    sock_cb_connect(ebisu_socket_t* self, const char* host,
+static ebisu_sock_code_t
+    schannel_connect(ebisu_socket_t* self, const char* host,
             uint16_t port)
 {
-    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
+    ebisu_schannel_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_schannel_socket_t, base);
     /* Neither khc nor kii connects again without closing first, but should
        that change, the old connection must not leak. */
     teardown(ctx);
@@ -592,13 +606,13 @@ ebisu_sock_code_t
     return EBISU_SOCK_OK;
 }
 
-ebisu_sock_code_t
-    sock_cb_send(ebisu_socket_t* self,
+static ebisu_sock_code_t
+    schannel_send(ebisu_socket_t* self,
             const char* buffer,
             size_t length,
             size_t* out_sent_length)
 {
-    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
+    ebisu_schannel_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_schannel_socket_t, base);
     *out_sent_length = 0;
     if (ctx->send_buf == NULL) {
         printf("failed to send: not connected.\n");
@@ -646,7 +660,7 @@ ebisu_sock_code_t
 
 /* Forgets the record decrypted last, once all of its plaintext has been
    returned, keeping whatever follows it in recv_buf. */
-static void drop_record(socket_context_t* ctx)
+static void drop_record(ebisu_schannel_socket_t* ctx)
 {
     memmove(ctx->recv_buf, ctx->recv_buf + ctx->record_len,
             ctx->recv_len - ctx->record_len);
@@ -657,7 +671,7 @@ static void drop_record(socket_context_t* ctx)
 }
 
 /* Decrypts the record at the start of recv_buf, if all of it has arrived. */
-static decrypt_result_t decrypt_record(socket_context_t* ctx)
+static decrypt_result_t decrypt_record(ebisu_schannel_socket_t* ctx)
 {
     /* The record's content type, from its header, as received. */
     const unsigned char content_type = (unsigned char)ctx->recv_buf[0];
@@ -721,13 +735,13 @@ static decrypt_result_t decrypt_record(socket_context_t* ctx)
     return DECRYPT_OK;
 }
 
-ebisu_sock_code_t
-    sock_cb_recv(ebisu_socket_t* self,
+static ebisu_sock_code_t
+    schannel_recv(ebisu_socket_t* self,
             char* buffer,
             size_t length_to_read,
             size_t* out_actual_length)
 {
-    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
+    ebisu_schannel_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_schannel_socket_t, base);
     *out_actual_length = 0;
     ctx->recv_timed_out = 0;
     if (ctx->recv_buf == NULL) {
@@ -790,14 +804,14 @@ ebisu_sock_code_t
     }
 }
 
-/* sock_cb_recv() returns EBISU_SOCK_FAIL both when nothing arrives within
+/* schannel_recv() returns EBISU_SOCK_FAIL both when nothing arrives within
    to_recv and when the connection fails, and says which in recv_timed_out. A
    timeout leaves the connection usable: read_some() never started a recv()
    for it, and any part of a record that did arrive is kept. */
-bool
-    sock_cb_recv_timed_out(ebisu_socket_t* self)
+static bool
+    schannel_recv_timed_out(ebisu_socket_t* self)
 {
-    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
+    ebisu_schannel_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_schannel_socket_t, base);
     return ctx->recv_timed_out != 0;
 }
 
@@ -805,7 +819,7 @@ bool
    to send it is the normal outcome when the peer has closed the connection
    already, as a server answering "Connection: close" does, and harmless when
    the connection is being torn down anyway. */
-static int send_close_notify(socket_context_t* ctx)
+static int send_close_notify(ebisu_schannel_socket_t* ctx)
 {
     DWORD type = SCHANNEL_SHUTDOWN;
     SecBuffer in[1];
@@ -852,10 +866,10 @@ static int send_close_notify(socket_context_t* ctx)
     return 0;
 }
 
-ebisu_sock_code_t
-    sock_cb_close(ebisu_socket_t* self)
+static ebisu_sock_code_t
+    schannel_close(ebisu_socket_t* self)
 {
-    socket_context_t* ctx = EBISU_CONTAINER_OF(self, socket_context_t, base);
+    ebisu_schannel_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_schannel_socket_t, base);
     int ok = 1;
     if (ctx->has_ctxt && ctx->send_buf != NULL) {
         ok = send_close_notify(ctx) == 0;

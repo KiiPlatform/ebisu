@@ -4,7 +4,7 @@
 #include <ebisu_socket.h>
 #include "kii.h"
 #ifdef _WIN32
-#include "sock_cb_win32.h"
+#include "ebisu_schannel.h"
 #else
 #include "ebisu_openssl.h"
 #endif
@@ -99,20 +99,20 @@ inline ebisu_clock_t* test_clock()
     return &c.clock;
 }
 
-// The platform's socket, with TLS: the win32 sample's, Winsock and Schannel, or
-// platform's OpenSSL port, BSD sockets and OpenSSL.
+// The platform's socket, with TLS: platform's Schannel port, Winsock and
+// Schannel, or its OpenSSL port, BSD sockets and OpenSSL.
 #ifdef _WIN32
-typedef socket_context_t platform_socket_t;
+typedef ebisu_schannel_socket_t platform_socket_t;
 
 inline void init_platform_socket(platform_socket_t* sock, unsigned int to_recv,
         unsigned int to_send)
 {
-    sock_cb_init_context(sock, to_recv, to_send);
+    ebisu_schannel_socket_init(sock, to_recv, to_send);
 }
 
 inline void set_platform_socket_clock(platform_socket_t* sock, ebisu_clock_t* clock)
 {
-    sock->clock = clock;
+    ebisu_schannel_socket_set_clock(sock, clock);
 }
 #else
 typedef ebisu_openssl_socket_t platform_socket_t;
