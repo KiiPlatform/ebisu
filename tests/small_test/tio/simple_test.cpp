@@ -83,6 +83,17 @@ TEST_CASE( "tio_handler sets its sockets and system on its kii" ) {
     REQUIRE( handler._kii._mqtt_socket == nullptr );
 }
 
+TEST_CASE( "tio_handler sets the longest wait between attempts on its kii" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    CHECK( handler._kii._mqtt_retry_wait_max_ms == 0 );
+
+    CHECK( tio_handler_set_mqtt_retry_wait_max(&handler, 30) == TIO_ERR_OK );
+    CHECK( handler._kii._mqtt_retry_wait_max_ms == 30000 );
+    CHECK( tio_handler_set_mqtt_retry_wait_max(&handler, 0) == TIO_ERR_FAIL );
+    CHECK( handler._kii._mqtt_retry_wait_max_ms == 30000 );
+}
+
 static ebisu_task_code_t fail_task_create(const char*, EBISU_TASK_ENTRY, void*, void*)
 {
     return EBISU_TASKC_FAIL;

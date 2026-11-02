@@ -16,7 +16,8 @@ static void _delay_ms(kii_t* kii, uint32_t msec)
 #define ARRIVED_MSG_READ_TIME 500
 #define MSG_SEND_TIME 500
 /* The wait before another attempt to reach the cloud doubles from the first of
- * these to the second, and what the task waits is half to all of that. */
+ * these to the second, unless kii_set_mqtt_retry_wait_max() set another, and
+ * what the task waits is half to all of that. */
 #define RETRY_WAIT_MIN_MS 2000
 #define RETRY_WAIT_MAX_MS 300000
 /* A broker that cannot be reached after this many attempts may have moved, so
@@ -412,7 +413,10 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
  * mixed with the wait so that a device's share changes as it goes. */
 static void _schedule_retry(mqtt_state_t* state)
 {
-    uint32_t wait_ms = state->retry_wait_ms;
+    const uint32_t max_ms = state->kii->_mqtt_retry_wait_max_ms != 0 ?
+        state->kii->_mqtt_retry_wait_max_ms : RETRY_WAIT_MAX_MS;
+    // A longest wait shorter than the first wait cuts that short too.
+    uint32_t wait_ms = state->retry_wait_ms < max_ms ? state->retry_wait_ms : max_ms;
     // FNV-1a.
     uint32_t hash = 2166136261U;
     for (const char* c = state->kii->_author.author_id; *c != '\0'; ++c) {
@@ -421,8 +425,7 @@ static void _schedule_retry(mqtt_state_t* state)
     hash = (hash ^ wait_ms) * 16777619U;
 
     state->wait_left_ms = wait_ms / 2 + hash % (wait_ms / 2 + 1);
-    state->retry_wait_ms = (wait_ms > RETRY_WAIT_MAX_MS / 2) ?
-        RETRY_WAIT_MAX_MS : wait_ms * 2;
+    state->retry_wait_ms = (wait_ms > max_ms / 2) ? max_ms : wait_ms * 2;
 }
 
 /* Whether a request that failed may succeed if tried again: the server said so,

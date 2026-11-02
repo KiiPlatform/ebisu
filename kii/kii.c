@@ -149,6 +149,15 @@ void kii_set_mqtt_to_sock_recv(kii_t* kii, uint32_t to_sock_recv_sec) {
     kii->_mqtt_to_recv_sec = to_sock_recv_sec;
 }
 
+kii_code_t kii_set_mqtt_retry_wait_max(kii_t* kii, uint32_t max_sec) {
+    // The task keeps it in milliseconds. 0 would have it try again at once.
+    if (max_sec == 0 || max_sec > UINT32_MAX / 1000) {
+        return KII_ERR_FAIL;
+    }
+    kii->_mqtt_retry_wait_max_ms = max_sec * 1000;
+    return KII_ERR_OK;
+}
+
 void kii_set_system(kii_t* kii, ebisu_system_t* system) {
     kii->_system = system;
 }

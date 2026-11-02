@@ -3492,6 +3492,61 @@ TEST_CASE( "The waits between attempts" ) {
         }
     }
 
+    SECTION("double up to the longest wait set") {
+        REQUIRE( kii_set_mqtt_retry_wait_max(&kii, 30) == KII_ERR_OK );
+        uint32_t base_ms = 2000;
+        for (int attempt = 0; attempt < 8; ++attempt) {
+            INFO("attempt " << attempt);
+            _mqtt_state_reconnect(&state);
+            CHECK( state.wait_left_ms >= base_ms / 2 );
+            CHECK( state.wait_left_ms <= base_ms );
+            base_ms = base_ms * 2 > 30000 ? 30000 : base_ms * 2;
+        }
+        CHECK( state.retry_wait_ms == 30000 );
+    }
+
+    SECTION("double past five minutes to a longer longest wait") {
+        REQUIRE( kii_set_mqtt_retry_wait_max(&kii, 3600) == KII_ERR_OK );
+        uint32_t base_ms = 2000;
+        uint32_t longest_ms = 0;
+        for (int attempt = 0; attempt < 14; ++attempt) {
+            INFO("attempt " << attempt);
+            _mqtt_state_reconnect(&state);
+            CHECK( state.wait_left_ms >= base_ms / 2 );
+            CHECK( state.wait_left_ms <= base_ms );
+            longest_ms = state.wait_left_ms > longest_ms ? state.wait_left_ms : longest_ms;
+            base_ms = base_ms * 2 > 3600000 ? 3600000 : base_ms * 2;
+        }
+        CHECK( longest_ms >= 1800000 );
+        CHECK( state.retry_wait_ms == 3600000 );
+    }
+
+    SECTION("a longest wait shorter than the first cuts that short too") {
+        REQUIRE( kii_set_mqtt_retry_wait_max(&kii, 1) == KII_ERR_OK );
+        for (int attempt = 0; attempt < 4; ++attempt) {
+            INFO("attempt " << attempt);
+            _mqtt_state_reconnect(&state);
+            CHECK( state.wait_left_ms >= 500 );
+            CHECK( state.wait_left_ms <= 1000 );
+        }
+    }
+
+    SECTION("the longest wait the setter takes") {
+        CHECK( kii_set_mqtt_retry_wait_max(&kii, 4294967) == KII_ERR_OK );
+        CHECK( kii._mqtt_retry_wait_max_ms == 4294967000U );
+        state.retry_wait_ms = 4294967000U;
+        _mqtt_state_reconnect(&state);
+        CHECK( state.wait_left_ms >= 4294967000U / 2 );
+        CHECK( state.retry_wait_ms == 4294967000U );
+    }
+
+    SECTION("a longest wait out of range changes nothing") {
+        REQUIRE( kii_set_mqtt_retry_wait_max(&kii, 30) == KII_ERR_OK );
+        CHECK( kii_set_mqtt_retry_wait_max(&kii, 0) == KII_ERR_FAIL );
+        CHECK( kii_set_mqtt_retry_wait_max(&kii, 4294968) == KII_ERR_FAIL );
+        CHECK( kii._mqtt_retry_wait_max_ms == 30000 );
+    }
+
     SECTION("differ from one thing to another") {
         std::set<uint32_t> waits;
         for (int thing = 0; thing < 64; ++thing) {

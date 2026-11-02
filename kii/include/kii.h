@@ -327,6 +327,9 @@ typedef struct kii_t {
 
     uint16_t _keep_alive_interval; /**< \private */
     kii_bool_t _push_task_running; /**< \private */
+    /** \private The longest wait between the push task's attempts to reach
+     * the cloud, in milliseconds, or 0 for five minutes. */
+    uint32_t _mqtt_retry_wait_max_ms;
 
     char* _rw_buff; /**< \private */
     size_t _rw_buff_size; /**< \private */
@@ -1414,6 +1417,27 @@ void kii_set_mqtt_socket(kii_t* kii, ebisu_socket_t* socket);
  * \param [in] to_sock_recv_sec Socket recv timeout in seconds.
  */
 void kii_set_mqtt_to_sock_recv(kii_t* kii, uint32_t to_sock_recv_sec);
+
+/**
+ * \brief Set the longest wait between the push task's attempts to reach the
+ * cloud.
+ *
+ * When an attempt fails, to install push, to get the endpoint, or to connect
+ * to the broker and subscribe, the task waits before the next. The wait starts
+ * at 2 seconds and doubles with each failure in a row, up to this, and what
+ * the task waits is half to all of it, a share that depends on the thing, so
+ * that devices that lost the cloud together don't come back together. A
+ * subscribed connection starts it over.
+ *
+ * A shorter one brings a device back sooner after an outage, and has more
+ * devices try during it. Set it before starting the task.
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] max_sec The longest wait, in seconds: 300, five minutes, unless
+ * this sets another. From 1 to 4294967, the most milliseconds a uint32_t holds.
+ * \return KII_ERR_FAIL, changing nothing, if max_sec is out of that range.
+ */
+kii_code_t kii_set_mqtt_retry_wait_max(kii_t* kii, uint32_t max_sec);
 /**
  * \brief Set the system: tasks, delays and a monotonic clock.
  *

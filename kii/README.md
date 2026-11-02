@@ -245,8 +245,9 @@ was started with until it exits: make requests from other tasks with another
 While it can't reach the cloud or the broker, the task waits longer between
 attempts: from about a second to at most five minutes, doubling each time, and
 for a share of that which depends on the thing, so that devices that lost their
-connection together don't all come back together. The wait goes back to the
-start once a connection is subscribed. The continue callback is still called
+connection together don't all come back together.
+`kii_set_mqtt_retry_wait_max()` sets another longest wait. The wait goes back to
+the start once a connection is subscribed. The continue callback is still called
 every second, so the application can stop the task during a wait. A broker it
 can't reach after 8 attempts may have moved, so it then asks for the endpoint
 again.

@@ -213,6 +213,8 @@ The push task:
   tried every second or two. A device can take up to five minutes to come back
   after a long outage. Reaching a subscribed connection starts the waits again.
   After 8 failures in a row the task asks for the endpoint again.
+  `kii_set_mqtt_retry_wait_max()` and `tio_handler_set_mqtt_retry_wait_max()`
+  set another longest wait.
 
 Commands in tio:
 
