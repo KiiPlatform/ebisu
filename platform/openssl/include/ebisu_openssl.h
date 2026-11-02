@@ -41,6 +41,9 @@ typedef struct ebisu_openssl_socket_t {
     int socket; /**< \private */
     unsigned int to_recv; /**< \private */
     unsigned int to_send; /**< \private */
+    /** \private Bounds looking up the host, and each attempt to connect to
+     * one of its addresses, in seconds, 0 for none. */
+    unsigned int to_connect;
     /** \private SSL_get_error() and errno after the last SSL_read() that read
      * nothing, for recv_timed_out. */
     int recv_ssl_error;
@@ -100,13 +103,28 @@ void ebisu_openssl_tls_free(ebisu_openssl_tls_t* tls);
  * \param [out] sock The socket.
  * \param [in] to_recv Receive timeout in seconds, 0 for none. For MQTT, the
  * one given to kii_set_mqtt_to_sock_recv().
- * \param [in] to_send Send timeout in seconds, 0 for none. On Linux it bounds
- * connecting too.
+ * \param [in] to_send Send timeout in seconds, 0 for none. It bounds looking
+ * up the host and each attempt to connect too, unless
+ * ebisu_openssl_socket_set_connect_timeout() sets another.
  */
 void ebisu_openssl_socket_init(
         ebisu_openssl_socket_t* sock,
         unsigned int to_recv,
         unsigned int to_send);
+
+/**
+ * \brief Sets how long connecting may take.
+ *
+ * The host is looked up with getaddrinfo(), and its addresses tried in the
+ * order it gives them, IPv6 and IPv4, until one connects. The timeout bounds
+ * the lookup, and each attempt to connect to an address, but not the TLS
+ * handshake, which the receive and send timeouts bound.
+ *
+ * \param [out] sock The socket.
+ * \param [in] seconds 0 for no bound: the lookup takes as long as the system's
+ * resolver does, and an attempt as long as the system's TCP does.
+ */
+void ebisu_openssl_socket_set_connect_timeout(ebisu_openssl_socket_t* sock, unsigned int seconds);
 
 /**
  * \brief Sets the TLS configuration the socket connects with.

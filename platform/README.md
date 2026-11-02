@@ -44,7 +44,9 @@ which have the rest of `platform`.
   mutex. Needs POSIX threads.
 - **OpenSSL** (`ebisu_openssl.h`, library `ebisu_openssl`):
   `ebisu_openssl_socket_t`, TLS over a blocking BSD socket, checking the
-  server's certificate at an `ebisu_clock_t`'s time. Its connections share one
+  server's certificate at an `ebisu_clock_t`'s time. It looks the host up with
+  `getaddrinfo()` and tries each of its addresses, IPv6 and IPv4, both within
+  its connect timeout. Its connections share one
   `SSL_CTX`: the system's CA certificates, or those of an
   `ebisu_openssl_tls_t` set up with a CA file or directory, for a device
   without the system's. Needs OpenSSL 1.0.2 or later, and POSIX threads.

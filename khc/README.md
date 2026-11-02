@@ -206,8 +206,9 @@ one to read for what socket callbacks have to do.
 
 - **Timeouts**: `khc` bounds nothing itself, so a callback that blocks holds the
   request for as long as it blocks. Give sockets a send and a receive timeout.
-  On Linux the send timeout bounds `connect()` too. Nothing here bounds looking
-  up the host, which takes as long as the system's resolver does.
+  On Linux the send timeout bounds a blocking `connect()` too, but nothing in
+  the system bounds looking up the host, which takes as long as the resolver
+  does. platform's OpenSSL port bounds both, with its connect timeout.
 - **A timeout is `EBISU_SOCK_FAIL`**: `khc` calls a callback that returned
   `EBISU_SOCK_AGAIN` again at once, so returning it for a timeout has a server
   that stopped answering hold the request for ever. `EBISU_SOCK_AGAIN` is for a
