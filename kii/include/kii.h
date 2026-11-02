@@ -1350,6 +1350,37 @@ kii_code_t kii_api_call_append_body(
         size_t chunk_size);
 
 /**
+ * \brief Have the request body read through a callback as it is sent.
+ *
+ * In place of kii_api_call_append_body(), between kii_api_call_start() and
+ * kii_api_call_run(): the body never has to be held whole, so it can be
+ * longer than the buffer set by kii_set_buff(), which then holds only the
+ * response. read_cb is called until it returns 0, as for
+ * kii_upload_object_body(), with at most the stream buffer's size each time.
+ *
+ * With a length, the body goes with a Content-Length, and read_cb has to give
+ * exactly that much: more, or 0 sooner, fails the call with KII_ERR_FAIL, as
+ * the server would wait for the rest. With KHC_REQ_BODY_LENGTH_UNKNOWN it goes
+ * chunked, which some intermediaries handle poorly.
+ *
+ * With a session, a request the server refuses for its token isn't sent
+ * again, as its body has been read once: kii_api_call_run() gives the 403, and
+ * the next request goes with the renewed token.
+ *
+ * \param [in, out] kii kii_t instance.
+ * \param [in] read_cb Reads the body.
+ * \param [in] userdata Given to read_cb.
+ * \param [in] length The body's length, or KHC_REQ_BODY_LENGTH_UNKNOWN.
+ * \return KII_ERR_FAIL if read_cb is NULL or kii_api_call_append_body() has
+ * appended to the body already.
+ */
+kii_code_t kii_api_call_set_body_reader(
+        kii_t* kii,
+        KII_CB_READ read_cb,
+        void* userdata,
+        size_t length);
+
+/**
  * \brief Append request header.
  *
  * This function must be called between kii_api_call_start(kii_t*,

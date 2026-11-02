@@ -45,12 +45,21 @@ int _kii_body_append(
     return _body_copy(kii, len + escaped, after);
 }
 
+/* Takes the body from the buffer again, after one set by
+ * kii_api_call_set_body_reader(). */
+static void _body_from_buff(kii_t* kii)
+{
+    kii->_req_streamed = false;
+    khc_set_cb_read(&kii->_khc, _cb_read_buff, kii);
+}
+
 static void _resource_cleanup(kii_t* kii)
 {
     _reset_buff(kii);
     _req_headers_free_all(kii);
 
     _reset_khc(kii);
+    _body_from_buff(kii);
 }
 
 kii_code_t kii_api_call_start(
@@ -103,11 +112,33 @@ kii_code_t kii_api_call_set_no_body(kii_t* kii)
     return KII_ERR_OK;
 }
 
+kii_code_t kii_api_call_set_body_reader(
+        kii_t* kii,
+        KII_CB_READ read_cb,
+        void* userdata,
+        size_t length)
+{
+    // One body or the other: the buffer's would not be sent.
+    if (read_cb == NULL || kii->_rw_buff_req_size > 0) {
+        _req_headers_free_all(kii);
+        return KII_ERR_FAIL;
+    }
+    khc_set_cb_read(&kii->_khc, read_cb, userdata);
+    khc_set_req_body_length(&kii->_khc, length);
+    kii->_req_streamed = true;
+    return KII_ERR_OK;
+}
+
 kii_code_t kii_api_call_append_body(
         kii_t* kii,
         const char* chunk,
         size_t chunk_size)
 {
+    // After kii_api_call_set_body_reader(), it would not be sent.
+    if (kii->_req_streamed) {
+        _req_headers_free_all(kii);
+        return KII_ERR_FAIL;
+    }
     size_t total = kii->_rw_buff_req_size + chunk_size;
     if (total + 1 > kii->_rw_buff_size) {
         _req_headers_free_all(kii);
@@ -193,5 +224,8 @@ kii_code_t _req_send(kii_t* kii)
 
 kii_code_t kii_api_call_run(kii_t* kii)
 {
-    return _req_send(kii);
+    kii_code_t res = _req_send(kii);
+    // A body set by kii_api_call_set_body_reader() was this call's.
+    _body_from_buff(kii);
+    return res;
 }
