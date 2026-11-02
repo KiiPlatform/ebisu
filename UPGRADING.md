@@ -159,6 +159,10 @@ With CMake:
 - The Makefiles at the root, in each component, in `tio/linux-sample` and in the
   tests are gone. See Building in the [README](./README.md#building). The cc3200
   and gt202 samples keep theirs.
+- `tio/arm-toolchain.cmake`, for armv5t with soft floating point, and
+  `tio/README.ARM.mkd` are gone. `cmake/arm-linux-gnueabihf.cmake` cross-compiles
+  for armv7-a with hard floating point; see Building in the
+  [README](./README.md#building) for another ARM target.
 - `KHC_TRACE` is off by default, where 1.x had it on. Pass `-DKHC_TRACE=ON` to
   get the trace back. `TIO_TRACE`, which no option set in 1.x, is an option now,
   and off too.
