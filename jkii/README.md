@@ -7,7 +7,9 @@ This design is inspired by [microjson](http://www.catb.org/esr/microjson/).
 jkii is designed to fit resource limited environment.
 You can choose static or dynamic memory allocation.
 
-It writes JSON too, with `jkii_writer.h`: see Writing JSON below.
+It writes JSON too, and JSON Lines, with `jkii_writer.h`: see Writing JSON
+below. It reads JSON Lines, a record at a time, with `jkii_lines.h`: see
+Reading JSON Lines below.
 
 ## Build jkii
 
@@ -141,6 +143,36 @@ Numbers are written without `printf`: integers of 64 bits, and doubles with a
 fixed number of decimals, with `.` whatever the locale. Objects and arrays nest
 up to `JKII_WRITER_MAX_DEPTH`, 16 unless defined otherwise for jkii and for
 everything using it.
+
+## Reading JSON Lines
+
+JSON Lines, or NDJSON, keeps one JSON value on each line. A device can append a
+record without rewriting the rest, and read them back one at a time with a
+buffer the size of a record. A `jkii_lines_t` is fed the data as it comes, from
+file reads or from a response's chunks, in pieces of any size, and gives each
+record whole, terminated, for `jkii_parse()`:
+
+```c
+char record[256];
+jkii_lines_t r;
+jkii_lines_init(&r, record, sizeof(record));
+// For each piece of data, until it is consumed:
+size_t used = 0;
+const char* line = NULL;
+size_t line_len = 0;
+if (jkii_lines_feed(&r, data, len, &used, &line, &line_len) == JKII_LINES_RECORD) {
+    // line holds the record.
+}
+// Then feed it data + used, len - used.
+```
+
+A record ends at `\n`, with a `\r` before it taken off too, and empty or blank
+lines are skipped. A record longer than the buffer is `JKII_LINES_TOO_LONG`, and
+skipped up to its `\n`, so that the reader goes on with the next one rather than
+failing. At the end, `jkii_lines_finish()` gives a last record with no `\n` after
+it, as after a power loss while appending, as `JKII_LINES_TRUNCATED`.
+
+`jkii_write_record_end()` writes them: see Writing JSON above.
 
 ## Dependency.
 
