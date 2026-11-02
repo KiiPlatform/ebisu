@@ -158,6 +158,13 @@ void tio_handler_enable_insecure_mqtt(
     kii_enable_insecure_mqtt(&handler->_kii, enable_insecure_mqtt);
 }
 
+void tio_handler_set_mqtt_version(
+        tio_handler_t* handler,
+        kii_mqtt_version_t version)
+{
+    kii_set_mqtt_version(&handler->_kii, version);
+}
+
 void tio_handler_enable_absolute_target(
         tio_handler_t* handler,
         tio_bool_t enable_absolute_target)

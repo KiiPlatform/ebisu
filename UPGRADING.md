@@ -205,6 +205,9 @@ The push task:
 - A network failure while installing push or fetching the endpoint is tried
   again, where 1.x ended the task. An application no longer sees the exit
   callback for these, and needn't restart the handler.
+- It speaks MQTT 3.1.1, where 1.x spoke 3.1. Kii Cloud's broker takes both. For
+  a broker with nothing later than 3.1, which refuses CONNECT with return code
+  1, set 3.1 with `kii_set_mqtt_version()` or `tio_handler_set_mqtt_version()`.
 - It reconnects when a PINGREQ is still unanswered by the time the next is due.
   1.x only noticed a dead connection when sending failed, so a device on a link
   too slow to answer within the keep-alive interval now reconnects.

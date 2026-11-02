@@ -241,8 +241,8 @@ TEST_CASE( "MQTT state test" ) {
     mqtt_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         if (call_send == 0) {
             const char expect[] = {
-                0x10, 0x32, // remaining_size = 50
-                0x00, 0x06, 'M', 'Q', 'I', 's', 'd', 'p', 0x03, (char)0xc2,
+                0x10, 0x30, // remaining_size = 48
+                0x00, 0x04, 'M', 'Q', 'T', 'T', 0x04, (char)0xc2,
                 0x01, 0x2c, // _keep_alive_interval = 300
                 0x00, 0x0a, 'd', 'u', 'm', 'm', 'y', 'T', 'o', 'p', 'i', 'c',
                 0x00, 0x09, 'd', 'u', 'm', 'm', 'y', 'U', 's', 'e', 'r',
@@ -2356,6 +2356,82 @@ TEST_CASE( "MQTT state abnormal tests" ) {
     }
 }
 
+// CONNECT names MQTT 3.1.1, where it used to name 3.1, which a broker with
+// nothing later can still be given.
+TEST_CASE( "The version of MQTT CONNECT names" ) {
+    char mqtt_buff[1024];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
+    kii._keep_alive_interval = 300;
+    std::string sent;
+    khct::cb::SockCtx mqtt_ctx;
+    mqtt_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
+        sent.append(buffer, length);
+        *out_sent_length = length;
+        return EBISU_SOCK_OK;
+    };
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
+
+    mqtt_state_t state;
+    _init_mqtt_state(&kii, &state);
+    strcpy(state.endpoint.topic, "dummyTopic");
+    strcpy(state.endpoint.username, "dummyUser");
+    strcpy(state.endpoint.password, "dummyPassword");
+    const std::string payload(
+        "\x00\x0a" "dummyTopic" "\x00\x09" "dummyUser" "\x00\x0d" "dummyPassword", 38);
+    // The flags, username, password and clean session, and the keep-alive.
+    const std::string flags_keep_alive("\xc2\x01\x2c", 3);
+
+    SECTION("3.1.1 by default") {
+        CHECK( kii._mqtt_version == KII_MQTT_VERSION_3_1_1 );
+        state.info.task_state = KII_MQTT_ST_SEND_CONNECT;
+        _mqtt_state_send_connect(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_CONNACK );
+        CHECK( sent == std::string("\x10\x30" "\x00\x04" "MQTT" "\x04", 9) +
+                flags_keep_alive + payload );
+    }
+
+    SECTION("3.1 set") {
+        kii_set_mqtt_version(&kii, KII_MQTT_VERSION_3_1);
+        state.info.task_state = KII_MQTT_ST_SEND_CONNECT;
+        _mqtt_state_send_connect(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_CONNACK );
+        CHECK( sent == std::string("\x10\x32" "\x00\x06" "MQIsdp" "\x03", 11) +
+                flags_keep_alive + payload );
+    }
+
+    SECTION("3.1.1 set again") {
+        kii_set_mqtt_version(&kii, KII_MQTT_VERSION_3_1);
+        kii_set_mqtt_version(&kii, KII_MQTT_VERSION_3_1_1);
+        state.info.task_state = KII_MQTT_ST_SEND_CONNECT;
+        _mqtt_state_send_connect(&state);
+        CHECK( sent.compare(0, 9, std::string("\x10\x30" "\x00\x04" "MQTT" "\x04", 9)) == 0 );
+    }
+
+    // The buffer holds 8 bytes for the fixed header, CONNECT after them, and
+    // the terminator the last string is copied with: 57 bytes in 3.1.1, whose
+    // protocol name is 2 shorter, and 59 in 3.1.
+    SECTION("the buffer CONNECT needs") {
+        const kii_mqtt_version_t version = GENERATE(KII_MQTT_VERSION_3_1_1, KII_MQTT_VERSION_3_1);
+        const size_t needed = version == KII_MQTT_VERSION_3_1 ? 59 : 57;
+        const bool fits = GENERATE(true, false);
+        INFO("version " << version << ", buffer " << (fits ? needed : needed - 1));
+        kii_set_mqtt_version(&kii, version);
+        kii_set_mqtt_buff(&kii, mqtt_buff, fits ? needed : needed - 1);
+        state.info.task_state = KII_MQTT_ST_SEND_CONNECT;
+        _mqtt_state_send_connect(&state);
+        if (fits) {
+            CHECK( state.info.task_state == KII_MQTT_ST_RECV_CONNACK );
+            CHECK( sent.size() == needed - 8 - 1 + 2 );
+        } else {
+            CHECK( state.info.task_state == KII_MQTT_ST_ERR_EXIT );
+            CHECK( state.info.error == KII_MQTT_ERR_INSUFFICIENT_BUFF );
+            CHECK( sent.empty() );
+        }
+    }
+}
+
 TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     size_t kii_buff_size = 1024;
     char kii_buff[kii_buff_size];
@@ -2902,9 +2978,10 @@ TEST_CASE( "MQTT keep-alive interval range" ) {
             sent.clear();
             _mqtt_state_send_connect(&state);
             REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_CONNACK );
-            // After the fixed header, the protocol name, level and flags.
-            REQUIRE( sent.length() > 14 );
-            CHECK( sent.substr(12, 2) == c.bytes );
+            // After the fixed header, MQTT 3.1.1's protocol name, level and
+            // flags.
+            REQUIRE( sent.length() > 12 );
+            CHECK( sent.substr(10, 2) == c.bytes );
         }
     }
 

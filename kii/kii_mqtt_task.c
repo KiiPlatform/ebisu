@@ -23,6 +23,18 @@ static void _delay_ms(kii_t* kii, uint32_t msec)
  * the task asks for the endpoint again. */
 #define MAX_CONNECT_FAILURES 8
 
+/* What CONNECT names the version of MQTT it speaks with: the protocol name,
+ * and the protocol level. */
+static const char* _mqtt_protocol_name(const kii_t* kii)
+{
+    return kii->_mqtt_version == KII_MQTT_VERSION_3_1 ? "MQIsdp" : "MQTT";
+}
+
+static char _mqtt_protocol_level(const kii_t* kii)
+{
+    return kii->_mqtt_version == KII_MQTT_VERSION_3_1 ? 0x03 : 0x04;
+}
+
 int _mqtt_encode(char* buf, unsigned long remaining_length)
 {
     int rc = 0;
@@ -64,16 +76,14 @@ ebisu_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) 
     memset(kii->_mqtt_buffer, 0, kii->_mqtt_buffer_size);
     int i = 8; /* reserver 8 bytes for header */
     /* Variable header:Protocol Name bytes */
+    const char* protocol_name = _mqtt_protocol_name(kii);
+    const size_t protocol_name_len = strlen(protocol_name);
     kii->_mqtt_buffer[i++] = 0x00;
-    kii->_mqtt_buffer[i++] = 0x06;
-    kii->_mqtt_buffer[i++] = 'M';
-    kii->_mqtt_buffer[i++] = 'Q';
-    kii->_mqtt_buffer[i++] = 'I';
-    kii->_mqtt_buffer[i++] = 's';
-    kii->_mqtt_buffer[i++] = 'd';
-    kii->_mqtt_buffer[i++] = 'p';
+    kii->_mqtt_buffer[i++] = (char)protocol_name_len;
+    memcpy(&kii->_mqtt_buffer[i], protocol_name, protocol_name_len);
+    i += protocol_name_len;
     /* Variable header:Protocol Level */
-    kii->_mqtt_buffer[i++] = 0x03;
+    kii->_mqtt_buffer[i++] = _mqtt_protocol_level(kii);
     /* Variable header:Connect Flags */
     /*
     * Bit   7                          6                        5                    4  3            2            1 0
@@ -527,7 +537,11 @@ void _mqtt_state_send_connect(mqtt_state_t* state)
         task_info->task_state = KII_MQTT_ST_ERR_EXIT;
         return;
     }
-    if (kii->_mqtt_buffer_size < 27 + strlen(endpoint->topic) +
+    // The 8 bytes kept for the fixed header, the variable header with the
+    // protocol name, 2 bytes before each string, and a terminator after the
+    // last, which it is copied with.
+    if (kii->_mqtt_buffer_size < 21 + strlen(_mqtt_protocol_name(kii)) +
+            strlen(endpoint->topic) +
             strlen(endpoint->username) + strlen(endpoint->password)) {
         task_info->error = KII_MQTT_ERR_INSUFFICIENT_BUFF;
         task_info->task_state = KII_MQTT_ST_ERR_EXIT;

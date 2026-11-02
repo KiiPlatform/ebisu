@@ -242,6 +242,9 @@ the task, with the reason in `kii_mqtt_task_info`. The task uses the `kii_t` it
 was started with until it exits: make requests from other tasks with another
 `kii_t`.
 
+The task speaks MQTT 3.1.1. `kii_set_mqtt_version()` sets MQTT 3.1 instead, for
+a broker with nothing later.
+
 While it can't reach the cloud or the broker, the task waits longer between
 attempts: from about a second to at most five minutes, doubling each time, and
 for a share of that which depends on the thing, so that devices that lost their

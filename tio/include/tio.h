@@ -588,6 +588,19 @@ void tio_handler_enable_insecure_mqtt(
 );
 
 /**
+ * \brief Set the version of MQTT the handler speaks.
+ *
+ * See kii_set_mqtt_version(): MQTT 3.1.1 by default, and MQTT 3.1, which 1.x
+ * spoke, for a broker with nothing later. Set it before starting the handler.
+ *
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] version The version.
+ */
+void tio_handler_set_mqtt_version(
+        tio_handler_t* handler,
+        kii_mqtt_version_t version);
+
+/**
  * \brief Send the whole URL in HTTP request lines.
  *
  * By default, requests carry the path, with the host in the Host header. A
