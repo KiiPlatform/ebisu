@@ -34,11 +34,15 @@ if(UNIX)
 
     # Found is not enough: a 32-bit build on a 64-bit host finds the host's
     # OpenSSL, whose headers and libraries are for the other architecture.
+    # A static OpenSSL also needs threads and the dynamic loader's library,
+    # which FindOpenSSL leaves out of the libraries it names here, and, in the
+    # CMake versions this project supports, can leave out of its targets too.
     find_package(OpenSSL)
     if(OPENSSL_FOUND)
         include(CheckCSourceCompiles)
         set(CMAKE_REQUIRED_INCLUDES ${OPENSSL_INCLUDE_DIR})
-        set(CMAKE_REQUIRED_LIBRARIES ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
+        set(CMAKE_REQUIRED_LIBRARIES ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY}
+            ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT})
         check_c_source_compiles(
             "#include <openssl/ssl.h>\nint main(void) { return SSL_library_init(); }"
             EBISU_OPENSSL_USABLE)
@@ -51,8 +55,10 @@ if(UNIX)
             PUBLIC
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/openssl/include>
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
-        # Threads for OpenSSL 1.0.2's locking.
-        target_link_libraries(ebisu_openssl PUBLIC OpenSSL::SSL OpenSSL::Crypto Threads::Threads)
+        # Threads for OpenSSL 1.0.2's locking, and with the dynamic loader's
+        # library for a static OpenSSL, as above.
+        target_link_libraries(ebisu_openssl
+            PUBLIC OpenSSL::SSL OpenSSL::Crypto Threads::Threads ${CMAKE_DL_LIBS})
         # BSD sockets and hostent's h_addr are POSIX and BSD, which glibc
         # declares under -std=c99 only with _DEFAULT_SOURCE.
         target_compile_definitions(ebisu_openssl PRIVATE _DEFAULT_SOURCE)
