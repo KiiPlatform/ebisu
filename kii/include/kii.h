@@ -106,7 +106,8 @@ typedef size_t (*KII_CB_WRITE)(char *buff, size_t size, void *userdata);
  * \param [out] buffer Buffer stores data read.
  * \param [in] size Requested size to read.
  * \param [in] userdata Context object pointer set by APIs requires this callback.
- * \return Size actually read. Returning 0 indicates that whole data is read.
+ * \return Size actually read, at most size, or the API returns KII_ERR_FAIL.
+ * Returning 0 indicates that whole data is read.
  */
 typedef size_t (*KII_CB_READ)(char *buffer, size_t size, void *userdata);
 /**

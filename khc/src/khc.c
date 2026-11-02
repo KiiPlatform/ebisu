@@ -111,6 +111,7 @@ void khc_reset_except_cb(khc* khc) {
     khc->_host[0] = '\0';
     khc->_path[0] = '\0';
     khc->_method[0] = '\0';
+    khc->_req_body_length = KHC_REQ_BODY_LENGTH_UNKNOWN;
 
     khc_reset_except_request(khc);
 
@@ -130,6 +131,9 @@ void khc_reset_except_request(khc* khc) {
     khc->_current_req_header = NULL;
     khc->_read_size = 0;
     khc->_read_req_end = false;
+    khc->_req_body_left = 0;
+    khc->_req_frame_start = 0;
+    khc->_req_frame_size = 0;
     khc->_resp_header_read_size = 0;
     khc->_status_code =0;
     khc->_chunked_resp = false;
@@ -146,6 +150,10 @@ void khc_reset_except_request(khc* khc) {
     khc->_close_failed = false;
     khc->_resp_header_skipped = false;
     khc->_sent_length = 0;
+}
+
+void khc_set_req_body_length(khc* khc, size_t length) {
+    khc->_req_body_length = length;
 }
 
 void khc_enable_insecure(

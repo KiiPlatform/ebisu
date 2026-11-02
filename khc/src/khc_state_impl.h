@@ -28,9 +28,7 @@ void khc_state_req_header_send(khc* khc);
 void khc_state_req_header_send_crlf(khc* khc);
 void khc_state_req_header_end(khc* khc);
 void khc_state_req_body_read(khc* khc);
-void khc_state_req_body_send_size(khc* khc);
 void khc_state_req_body_send(khc* khc);
-void khc_state_req_body_send_crlf(khc* khc);
 
 void khc_state_resp_status_read(khc* khc);
 void khc_state_resp_status_parse(khc* khc);

@@ -345,15 +345,45 @@ void khc_state_req_header_send_crlf(khc* khc) {
     }
 }
 
-void khc_state_req_header_end(khc* khc) {
-    char* text = NULL;
-    if(!khc_method_can_have_body(khc)) {
-        text = "Connection: Close\r\n\r\n";
-    } else if(khc->_cb_read == NULL) {
-        text = "Content-Length: 0\r\nConnection: Close\r\n\r\n";
-    } else {
-        text = "Transfer-Encoding: chunked\r\nConnection: Close\r\n\r\n";
+// Whether the request has a body to read from the read callback.
+static bool _has_req_body(khc* khc) {
+    return khc_method_can_have_body(khc) && khc->_cb_read != NULL &&
+        khc->_req_body_length != 0;
+}
+
+// Written by hand, as the chunk size line is.
+static size_t _decimal(size_t value, char* out) {
+    char digits[sizeof(size_t) * 3];
+    size_t digits_len = 0;
+    do {
+        digits[digits_len++] = (char)('0' + value % 10);
+        value /= 10;
+    } while (value != 0);
+    size_t len = 0;
+    while (digits_len > 0) {
+        out[len++] = digits[--digits_len];
     }
+    out[len] = '\0';
+    return len;
+}
+
+void khc_state_req_header_end(khc* khc) {
+    static const char connection_close[] = "Connection: Close\r\n\r\n";
+    char text[sizeof("Content-Length: \r\n") + sizeof(size_t) * 3 + sizeof(connection_close)];
+    text[0] = '\0';
+    if(!khc_method_can_have_body(khc)) {
+        // Nothing more than Connection.
+    } else if(khc->_cb_read == NULL) {
+        strcpy(text, "Content-Length: 0\r\n");
+    } else if(khc->_req_body_length != KHC_REQ_BODY_LENGTH_UNKNOWN) {
+        strcpy(text, "Content-Length: ");
+        size_t len = strlen(text);
+        len += _decimal(khc->_req_body_length, &text[len]);
+        strcpy(&text[len], "\r\n");
+    } else {
+        strcpy(text, "Transfer-Encoding: chunked\r\n");
+    }
+    strcat(text, connection_close);
     char* send_pos = &text[khc->_sent_length];
     size_t send_len = strlen(send_pos);
     size_t sent_len = 0;
@@ -372,7 +402,8 @@ void khc_state_req_header_end(khc* khc) {
         // A method without a body ends the request here: its headers say
         // nothing of one, so a body, or even the chunk ending an empty one,
         // would be taken for the start of another request.
-        if (khc_method_can_have_body(khc) && khc->_cb_read != NULL) {
+        if (_has_req_body(khc)) {
+            khc->_req_body_left = khc->_req_body_length;
             khc->_state = KHC_STATE_REQ_BODY_READ;
         } else {
             khc->_resp_header_read_size = 0;
@@ -396,13 +427,65 @@ void khc_state_req_header_end(khc* khc) {
     }
 }
 
-void khc_state_req_body_read(khc* khc) {
-    khc->_read_size = khc->_cb_read(khc->_stream_buff, khc->_stream_buff_size, khc->_read_data);
-    if (khc->_read_size == 0) {
-        khc->_read_req_end = true;
+static void _fail_req_body(khc* khc, khc_code result) {
+    khc->_state = KHC_STATE_CLOSE;
+    khc->_result = result;
+}
+
+// The number of hex digits of size.
+static size_t _hex_digits(size_t size) {
+    size_t digits = 1;
+    while (size >>= 4) {
+        ++digits;
     }
-    khc->_state = KHC_STATE_REQ_BODY_SEND_SIZE;
-    return;
+    return digits;
+}
+
+// Reads the next part of the body into the stream buffer, framed as it is to
+// be sent, so that each part goes out in one send: over TLS, one record rather
+// than three for each chunk.
+void khc_state_req_body_read(khc* khc) {
+    if (khc->_req_body_length != KHC_REQ_BODY_LENGTH_UNKNOWN) {
+        size_t want = khc->_req_body_left < khc->_stream_buff_size ?
+            khc->_req_body_left : khc->_stream_buff_size;
+        size_t got = khc->_cb_read(khc->_stream_buff, want, khc->_read_data);
+        if (got == 0 || got > want) {
+            _fail_req_body(khc, KHC_ERR_READ_CALLBACK);
+            return;
+        }
+        khc->_req_body_left -= got;
+        khc->_read_size = got;
+        khc->_read_req_end = khc->_req_body_left == 0;
+        khc->_req_frame_start = 0;
+        khc->_req_frame_size = got;
+        khc->_state = KHC_STATE_REQ_BODY_SEND;
+        return;
+    }
+
+    // Room for the longest size line a chunk that fits can have before the
+    // data, and for CRLF after it.
+    size_t line_room = _hex_digits(khc->_stream_buff_size) + 2;
+    if (khc->_stream_buff_size <= line_room + 2) {
+        _fail_req_body(khc, KHC_ERR_TOO_LARGE_DATA);
+        return;
+    }
+    size_t capacity = khc->_stream_buff_size - line_room - 2;
+    char* data = &khc->_stream_buff[line_room];
+    size_t got = khc->_cb_read(data, capacity, khc->_read_data);
+    if (got > capacity) {
+        _fail_req_body(khc, KHC_ERR_READ_CALLBACK);
+        return;
+    }
+    char line[KHC_CHUNK_SIZE_LINE_SIZE];
+    size_t line_len = _khc_chunk_size_line(got, line);
+    khc->_req_frame_start = line_room - line_len;
+    memcpy(&khc->_stream_buff[khc->_req_frame_start], line, line_len);
+    memcpy(&data[got], "\r\n", 2);
+    khc->_req_frame_size = line_len + got + 2;
+    khc->_read_size = got;
+    // The chunk of size 0 ends the body.
+    khc->_read_req_end = got == 0;
+    khc->_state = KHC_STATE_REQ_BODY_SEND;
 }
 
 // Written by hand rather than with snprintf: no printf length modifier matches
@@ -427,84 +510,9 @@ size_t _khc_chunk_size_line(size_t size, char out[KHC_CHUNK_SIZE_LINE_SIZE]) {
     return len;
 }
 
-void khc_state_req_body_send_size(khc* khc) {
-    char size_buff[KHC_CHUNK_SIZE_LINE_SIZE];
-    _khc_chunk_size_line(khc->_read_size, size_buff);
-    char* send_pos = &size_buff[khc->_sent_length];
-    size_t send_len = strlen(send_pos);
-    size_t sent_len = 0;
-    ebisu_sock_code_t send_res = khc->_socket->ops->send(khc->_socket, send_pos, send_len, &sent_len);
-    if (send_res == EBISU_SOCK_OK) {
-        #ifdef KHC_TRACE
-        _trace_dump('>', send_pos, sent_len);
-        #endif
-        if (sent_len < send_len) {
-            khc->_sent_length += sent_len;
-            // retry.
-            return;
-        } else {
-            khc->_sent_length = 0;
-        }
-        if (khc->_read_req_end) {
-            khc->_state = KHC_STATE_REQ_BODY_SEND_CRLF;
-        } else {
-            khc->_state = KHC_STATE_REQ_BODY_SEND;
-        }
-        return;
-    }
-    #ifdef KHC_TRACE
-    else {
-        _trace_op("send", send_res);
-    }
-    #endif
-    if (send_res == EBISU_SOCK_AGAIN) {
-        return;
-    }
-    if (send_res == EBISU_SOCK_FAIL) {
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_SOCK_SEND;
-        return;
-    }
-}
-
 void khc_state_req_body_send(khc* khc) {
-    char* send_pos = &khc->_stream_buff[khc->_sent_length];
-    size_t send_len = khc->_read_size - khc->_sent_length;
-    size_t sent_len = 0;
-    ebisu_sock_code_t send_res = khc->_socket->ops->send(khc->_socket, send_pos, send_len, &sent_len);
-    if (send_res == EBISU_SOCK_OK) {
-        #ifdef KHC_TRACE
-        _trace_dump('>', send_pos, sent_len);
-        #endif
-        if (sent_len < send_len) {
-            khc->_sent_length += sent_len;
-            // retry.
-            return;
-        } else {
-            khc->_sent_length = 0;
-        }
-        khc->_state = KHC_STATE_REQ_BODY_SEND_CRLF;
-        return;
-    }
-    #ifdef KHC_TRACE
-    else {
-        _trace_op("send", send_res);
-    }
-    #endif
-    if (send_res == EBISU_SOCK_AGAIN) {
-        return;
-    }
-    if (send_res == EBISU_SOCK_FAIL) {
-        khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_SOCK_SEND;
-        return;
-    }
-}
-
-void khc_state_req_body_send_crlf(khc* khc) {
-    char crlf[] = "\r\n";
-    char* send_pos = &crlf[khc->_sent_length];
-    size_t send_len = strlen(send_pos);
+    char* send_pos = &khc->_stream_buff[khc->_req_frame_start + khc->_sent_length];
+    size_t send_len = khc->_req_frame_size - khc->_sent_length;
     size_t sent_len = 0;
     ebisu_sock_code_t send_res = khc->_socket->ops->send(khc->_socket, send_pos, send_len, &sent_len);
     if (send_res == EBISU_SOCK_OK) {
@@ -1210,9 +1218,11 @@ const KHC_STATE_HANDLER state_handlers[] = {
     khc_state_req_header_send_crlf,
     khc_state_req_header_end,
     khc_state_req_body_read,
-    khc_state_req_body_send_size,
+    // KHC_STATE_REQ_BODY_SEND_SIZE, which is no longer entered.
     khc_state_req_body_send,
-    khc_state_req_body_send_crlf,
+    khc_state_req_body_send,
+    // KHC_STATE_REQ_BODY_SEND_CRLF, which is no longer entered.
+    khc_state_req_body_send,
 
     khc_state_resp_status_read,
     khc_state_resp_status_parse,
