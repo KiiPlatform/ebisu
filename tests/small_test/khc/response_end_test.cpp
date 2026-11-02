@@ -49,11 +49,11 @@ Result perform(const Peer& peer) {
     Result result = {};
 
     s_ctx.on_connect = [](void*, const char*, uint16_t) {
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     s_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     size_t next = 0;
     size_t offset = 0;
@@ -61,10 +61,10 @@ Result perform(const Peer& peer) {
         *out_actual_length = 0;
         if (next == peer.reads.size()) {
             if (peer.closes) {
-                return KHC_SOCK_OK;
+                return EBISU_SOCK_OK;
             }
             ++result.timeouts;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         }
         *out_actual_length = peer.reads[next].copy(buffer, length_to_read, offset);
         offset += *out_actual_length;
@@ -72,11 +72,11 @@ Result perform(const Peer& peer) {
             ++next;
             offset = 0;
         }
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     s_ctx.on_close = [&result](void*) {
         ++result.on_close_called;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     io_ctx.on_header = [](char*, size_t size, void*) {
         return size;

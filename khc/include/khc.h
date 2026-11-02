@@ -13,7 +13,7 @@ extern "C"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "khc_socket_callback.h"
+#include <ebisu_socket.h>
 /* The library is compiled with hidden visibility, so what this header declares
    is exactly what the shared object exports. */
 #if defined(__GNUC__) || defined(__clang__)
@@ -275,10 +275,10 @@ typedef struct khc {
     khc_state _state; /**< \private **/
 
     /* Socket functions. */
-    KHC_CB_SOCK_CONNECT _cb_sock_connect; /**< \private **/
-    KHC_CB_SOCK_SEND _cb_sock_send; /**< \private **/
-    KHC_CB_SOCK_RECV _cb_sock_recv; /**< \private **/
-    KHC_CB_SOCK_CLOSE _cb_sock_close; /**< \private **/
+    EBISU_CB_SOCK_CONNECT _cb_sock_connect; /**< \private **/
+    EBISU_CB_SOCK_SEND _cb_sock_send; /**< \private **/
+    EBISU_CB_SOCK_RECV _cb_sock_recv; /**< \private **/
+    EBISU_CB_SOCK_CLOSE _cb_sock_close; /**< \private **/
     /* Socket context. */
     void* _sock_ctx_connect; /**< \private **/
     void* _sock_ctx_send; /**< \private **/
@@ -345,10 +345,10 @@ void khc_init(khc* khc);
  * \brief  Set initial value to members of khc other than callbacks.
  * 
  * Callbacks/ userdata set by following methods remain untouched.
- * khc_set_cb_sock_connect(khc*, KHC_CB_SOCK_CONNECT, void*),
- * khc_set_cb_sock_send(khc*, KHC_CB_SOCK_SEND, void*),
- * khc_set_cb_sock_recv(khc*, KHC_CB_SOCK_RECV, void*),
- * khc_set_cb_sock_close(khc*, KHC_CB_SOCK_CLOSE, void*),
+ * khc_set_cb_sock_connect(khc*, EBISU_CB_SOCK_CONNECT, void*),
+ * khc_set_cb_sock_send(khc*, EBISU_CB_SOCK_SEND, void*),
+ * khc_set_cb_sock_recv(khc*, EBISU_CB_SOCK_RECV, void*),
+ * khc_set_cb_sock_close(khc*, EBISU_CB_SOCK_CLOSE, void*),
  * khc_set_cb_read(khc*, KHC_CB_READ, void*),
  * khc_set_cb_write(khc*, KHC_CB_WRITE, void*) and
  * khc_set_cb_header(khc*, KHC_CB_HEADER, void*)
@@ -380,10 +380,10 @@ void khc_reset_except_request(khc* khc);
  * \brief Perform the HTTP session
  *
  * During the session, callback functions set by
- * khc_set_cb_sock_connect(khc*, KHC_CB_SOCK_CONNECT, void*),
- * khc_set_cb_sock_send(khc*, KHC_CB_SOCK_SEND, void*),
- * khc_set_cb_sock_recv(khc*, KHC_CB_SOCK_RECV, void*),
- * khc_set_cb_sock_close(khc*, KHC_CB_SOCK_CLOSE, void*),
+ * khc_set_cb_sock_connect(khc*, EBISU_CB_SOCK_CONNECT, void*),
+ * khc_set_cb_sock_send(khc*, EBISU_CB_SOCK_SEND, void*),
+ * khc_set_cb_sock_recv(khc*, EBISU_CB_SOCK_RECV, void*),
+ * khc_set_cb_sock_close(khc*, EBISU_CB_SOCK_CLOSE, void*),
  * khc_set_cb_read(khc*, KHC_CB_READ, void*),
  * khc_set_cb_write(khc*, KHC_CB_WRITE, void*) and
  * khc_set_cb_header(khc*, KHC_CB_HEADER, void*)
@@ -485,7 +485,7 @@ void khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size);
  */
 khc_code khc_set_cb_sock_connect(
         khc* khc,
-        KHC_CB_SOCK_CONNECT cb,
+        EBISU_CB_SOCK_CONNECT cb,
         void* userdata);
 
 /**
@@ -498,7 +498,7 @@ khc_code khc_set_cb_sock_connect(
  */
 khc_code khc_set_cb_sock_send(
         khc* khc,
-        KHC_CB_SOCK_SEND cb,
+        EBISU_CB_SOCK_SEND cb,
         void* userdata);
 
 /**
@@ -512,7 +512,7 @@ khc_code khc_set_cb_sock_send(
  */
 khc_code khc_set_cb_sock_recv(
         khc* khc,
-        KHC_CB_SOCK_RECV cb,
+        EBISU_CB_SOCK_RECV cb,
         void* userdata);
 
 /**
@@ -526,7 +526,7 @@ khc_code khc_set_cb_sock_recv(
  */
 khc_code khc_set_cb_sock_close(
         khc* khc,
-        KHC_CB_SOCK_CLOSE cb,
+        EBISU_CB_SOCK_CLOSE cb,
         void* userdata);
 
 /**
@@ -622,7 +622,7 @@ uint16_t khc_get_status_code(
  * releasing it some other way.
  *
  * \param [in] khc instance.
- * \returns true if the close callback returned KHC_SOCK_FAIL in the last
+ * \returns true if the close callback returned EBISU_SOCK_FAIL in the last
  * khc_perform(khc*), false if it hasn't since khc_init(khc*),
  * khc_reset_except_cb(khc*) or khc_reset_except_request(khc*).
  */
@@ -677,7 +677,7 @@ int64_t khc_get_resp_date(khc* khc);
  * \brief Convert a UTC date and time to seconds since the epoch.
  *
  * The date of the Gregorian calendar, as a TLS stack gives a certificate's
- * validity dates, for kii_clock_check_validity() for instance. Integer
+ * validity dates, for ebisu_clock_check_validity() for instance. Integer
  * arithmetic only, without the C library's time functions.
  *
  * \param [in] year 1 to 9999.

@@ -82,28 +82,28 @@ struct MqttTest {
     }
 };
 
-khc_sock_code_t cb_connect(void* ctx, const char* host, uint16_t port)
+ebisu_sock_code_t cb_connect(void* ctx, const char* host, uint16_t port)
 {
     MqttTest* t = (MqttTest*)ctx;
     ++t->connects;
     return sock_cb_connect(&t->sock, host, port);
 }
 
-khc_sock_code_t cb_send(void* ctx, const char* buffer, size_t length,
+ebisu_sock_code_t cb_send(void* ctx, const char* buffer, size_t length,
         size_t* out_sent_length)
 {
     MqttTest* t = (MqttTest*)ctx;
     return sock_cb_send(&t->sock, buffer, length, out_sent_length);
 }
 
-khc_sock_code_t cb_recv(void* ctx, char* buffer, size_t length_to_read,
+ebisu_sock_code_t cb_recv(void* ctx, char* buffer, size_t length_to_read,
         size_t* out_actual_length)
 {
     MqttTest* t = (MqttTest*)ctx;
     t->recv_made_to_fail = t->fail_next_recv.exchange(false);
     if (t->recv_made_to_fail) {
         *out_actual_length = 0;
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
     return sock_cb_recv(&t->sock, buffer, length_to_read, out_actual_length);
 }
@@ -117,19 +117,19 @@ kii_bool_t cb_recv_timed_out(void* ctx)
     return sock_cb_recv_timed_out(&t->sock);
 }
 
-khc_sock_code_t cb_close(void* ctx)
+ebisu_sock_code_t cb_close(void* ctx)
 {
     MqttTest* t = (MqttTest*)ctx;
     ++t->closes;
     return sock_cb_close(&t->sock);
 }
 
-kii_task_code_t cb_task_create(const char* name, KII_TASK_ENTRY entry,
+ebisu_task_code_t cb_task_create(const char* name, EBISU_TASK_ENTRY entry,
         void* entry_param, void* userdata)
 {
     MqttTest* t = (MqttTest*)userdata;
     t->task = std::thread(entry, entry_param);
-    return KII_TASKC_OK;
+    return EBISU_TASKC_OK;
 }
 
 void cb_delay_ms(uint32_t msec, void* userdata)

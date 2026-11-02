@@ -10,21 +10,40 @@ Compared with 1.3, the last 1.x release line. v2.0.0 was tagged on the way, and
 what it changed is included here. 3.0 has not been released yet, so this section
 follows `master`.
 
-For most applications this is two edits and a rebuild: changing the connect
-callback, and deleting a call to a setter that did nothing. Those setters are
-the only functions of 1.x that were removed, and no constant or public struct
-member was.
+Every application has to rename its callback types, and most then have two more
+edits and a rebuild: changing the connect callback, and deleting a call to a
+setter that did nothing. Apart from the renames, those setters are the only
+functions of 1.x that were removed, and no constant or public struct member was.
 
 ### Code that stops compiling
 
+**The socket and task callback types moved to `platform` and were renamed.** They
+are the same types under new names, with no aliases for the old ones:
+
+| 1.x | 3.0 |
+|---|---|
+| `khc_socket_callback.h` | `ebisu_socket.h` |
+| `khc_sock_code_t` | `ebisu_sock_code_t` |
+| `KHC_SOCK_OK`, `KHC_SOCK_FAIL`, `KHC_SOCK_AGAIN` | `EBISU_SOCK_OK`, `EBISU_SOCK_FAIL`, `EBISU_SOCK_AGAIN` |
+| `KHC_CB_SOCK_CONNECT`, `KHC_CB_SOCK_SEND`, `KHC_CB_SOCK_RECV`, `KHC_CB_SOCK_CLOSE` | `EBISU_CB_SOCK_CONNECT`, `EBISU_CB_SOCK_SEND`, `EBISU_CB_SOCK_RECV`, `EBISU_CB_SOCK_CLOSE` |
+| `kii_task_code_t` | `ebisu_task_code_t` |
+| `KII_TASKC_OK`, `KII_TASKC_FAIL` | `EBISU_TASKC_OK`, `EBISU_TASKC_FAIL` |
+| `KII_TASK_ENTRY` | `EBISU_TASK_ENTRY` |
+| `KII_CB_TASK_CREATE` | `EBISU_CB_TASK_CREATE` |
+| `KII_CB_DELAY_MS` | `EBISU_CB_DELAY_MS` |
+
+`kii_task_callback.h` remains for `kii_bool_t`, `KII_CB_TASK_EXIT` and
+`KII_CB_TASK_CONTINUE`. The types above are in `ebisu_task.h`, which `kii.h`
+includes.
+
 **The connect callback takes its port as a `uint16_t`.** Every application
-implements `KHC_CB_SOCK_CONNECT`:
+implements `EBISU_CB_SOCK_CONNECT`:
 
 ```c
 // 1.x
 khc_sock_code_t cb_connect(void* sock_ctx, const char* host, unsigned int port);
 // 3.0
-khc_sock_code_t cb_connect(void* sock_ctx, const char* host, uint16_t port);
+ebisu_sock_code_t cb_connect(void* sock_ctx, const char* host, uint16_t port);
 ```
 
 It is what `khc_set_cb_sock_connect()`, `kii_set_cb_http_sock_connect()`,
@@ -33,7 +52,7 @@ It is what `khc_set_cb_sock_connect()`, `kii_set_cb_http_sock_connect()`,
 `tio_updater_set_cb_sock_connect()` take.
 
 **The delay callback takes its milliseconds as a `uint32_t`.** This is
-`KII_CB_DELAY_MS`, which `kii_set_cb_delay_ms()`,
+`EBISU_CB_DELAY_MS`, which `kii_set_cb_delay_ms()`,
 `tio_handler_set_cb_delay_ms()` and `tio_updater_set_cb_delay_ms()` take:
 
 ```c
@@ -100,8 +119,9 @@ value above `UINT32_MAX` is cut down before anything can check it.
 
 Without CMake, as a vendor's build usually does:
 
-- Add `khc/src/khc_http_date.c`, `kii/kii_clock.c` and `kii/kii_session.c` to
-  the sources.
+- Add `platform/src/*.c`, `khc/src/khc_http_date.c`, `kii/kii_clock.c` and
+  `kii/kii_session.c` to the sources, and `platform/include` to the include
+  path.
 - The sources now include a generated `ebisu_version.h`. Write it with
   `version/ebisu_version.sh <output>` and put it on the include path, as the
   Makefiles of the embedded samples do.
@@ -134,7 +154,7 @@ Starting tasks:
   65535, with `KII_ERR_FAIL` and `TIO_ERR_FAIL`. 1.x sent the broker the value
   cut down to 16 bits.
 - The result of the task-create callback now counts, so it has to return
-  `KII_TASKC_OK` when it succeeds. Anything else makes `kii_start_push_task()`
+  `EBISU_TASKC_OK` when it succeeds. Anything else makes `kii_start_push_task()`
   return the new `KII_ERR_CREATE_TASK` and `tio_handler_start()` return
   `TIO_ERR_CREATE_TASK`, where 1.x ignored it and reported success. A callback
   that was never set gives the same codes, and `TIO_ERR_CREATE_TASK` from

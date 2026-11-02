@@ -45,17 +45,17 @@ TEST_CASE( "Thing requests send the values they are given" ) {
     khct::cb::SockCtx http_ctx;
     http_ctx.on_connect = [&](void*, const char*, unsigned int) {
         if (responses.empty()) {
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         }
         resp = responses.front();
         responses.pop_front();
         resp_pos = 0;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     http_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
         sent.append(buffer, length);
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     http_ctx.on_recv = [&resp, &resp_pos](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         size_t n = resp.size() - resp_pos;
@@ -63,9 +63,9 @@ TEST_CASE( "Thing requests send the values they are given" ) {
         memcpy(buffer, resp.data() + resp_pos, n);
         resp_pos += n;
         *out_actual_length = n;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
-    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
     kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
     kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
     kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);

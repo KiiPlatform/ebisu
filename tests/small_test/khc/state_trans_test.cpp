@@ -48,7 +48,7 @@ TEST_CASE( "HTTP minimal" ) {
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
         REQUIRE( port == 443 );
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_state_connect(&http);
@@ -63,7 +63,7 @@ TEST_CASE( "HTTP minimal" ) {
         REQUIRE( length == strlen(req_line) );
         REQUIRE( strncmp(buffer, req_line, length) == 0 );
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_state_req_line(&http);
@@ -78,7 +78,7 @@ TEST_CASE( "HTTP minimal" ) {
         REQUIRE( length == strlen(host_hdr) );
         REQUIRE( strncmp(buffer, host_hdr, length) == 0 );
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_req_host_header(&http);
     REQUIRE( http._state == KHC_STATE_REQ_HEADER );
@@ -97,7 +97,7 @@ TEST_CASE( "HTTP minimal" ) {
         REQUIRE( length == len );
         REQUIRE( strncmp(buffer, h, len) == 0 );
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_state_req_header_end(&http);
@@ -111,7 +111,7 @@ TEST_CASE( "HTTP minimal" ) {
         called = true;
         REQUIRE( length_to_read == resp_header_buff_size - 1 );
         *out_actual_length = is.read(buffer, length_to_read).gcount();
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_state_resp_status_read(&http);
@@ -158,7 +158,7 @@ TEST_CASE( "HTTP minimal" ) {
         called = true;
         REQUIRE( length_to_read == buff_size);
         *out_actual_length = is.read(buffer, length_to_read).gcount();
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_resp_body_read(&http);
     REQUIRE( http._state == KHC_STATE_CLOSE );
@@ -169,7 +169,7 @@ TEST_CASE( "HTTP minimal" ) {
     called = false;
     s_ctx.on_close = [=, &called](void* socket_ctx) {
         called = true;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_close(&http);
     REQUIRE( http._state == KHC_STATE_FINISHED );
@@ -222,7 +222,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
         REQUIRE( port == 443 );
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_state_connect(&http);
@@ -237,7 +237,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
         REQUIRE( length == strlen(req_line) );
         REQUIRE( strncmp(buffer, req_line, length) == 0 );
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_state_req_line(&http);
@@ -252,7 +252,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
         REQUIRE( length == strlen(host_hdr) );
         REQUIRE( strncmp(buffer, host_hdr, length) == 0 );
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_req_host_header(&http);
     REQUIRE( http._state == KHC_STATE_REQ_HEADER );
@@ -271,7 +271,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
         REQUIRE( length == strlen(h) );
         REQUIRE( strncmp(buffer, h, len) == 0 );
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     // A GET has no body, so none follows the headers, not even the chunk
@@ -287,7 +287,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
         called = true;
         REQUIRE( length_to_read == resp_header_buff_size - 1 );
         *out_actual_length = is.read(buffer, length_to_read).gcount();
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_state_resp_status_read(&http);
@@ -386,7 +386,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         called = true;
         *out_actual_length = 0;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_resp_body_skip_trailers(&http);
     REQUIRE( http._state == KHC_STATE_CLOSE );
@@ -397,7 +397,7 @@ TEST_CASE( "HTTP 1.1 chunked minimal" ) {
     called = false;
     s_ctx.on_close = [=, &called](void* socket_ctx) {
         called = true;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_close(&http);
     REQUIRE( http._state == KHC_STATE_FINISHED );
@@ -449,7 +449,7 @@ TEST_CASE( "Socket send partial" ) {
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
         REQUIRE( port == 443 );
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_state_connect(&http);
@@ -465,7 +465,7 @@ TEST_CASE( "Socket send partial" ) {
         REQUIRE( length > req_len );
         REQUIRE( strncmp(buffer, req_line, req_len) == 0 );
         *out_sent_length = req_len;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_state_req_line(&http);
@@ -481,7 +481,7 @@ TEST_CASE( "Socket send partial" ) {
         REQUIRE( length > req_len );
         REQUIRE( strncmp(buffer, req_line, req_len) == 0 );
         *out_sent_length = req_len;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_state_req_line(&http);
@@ -497,7 +497,7 @@ TEST_CASE( "Socket send partial" ) {
         REQUIRE( length == req_len );
         REQUIRE( strncmp(buffer, req_line, req_len) == 0 );
         *out_sent_length = req_len;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_state_req_line(&http);
@@ -513,7 +513,7 @@ TEST_CASE( "Socket send partial" ) {
         REQUIRE( length > host_len );
         REQUIRE( strncmp(buffer, host_hdr, host_len) == 0 );
         *out_sent_length = host_len;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_req_host_header(&http);
     REQUIRE( http._state == KHC_STATE_REQ_HOST_HEADER );
@@ -528,7 +528,7 @@ TEST_CASE( "Socket send partial" ) {
         REQUIRE( length == host_len );
         REQUIRE( strncmp(buffer, host_hdr, host_len) == 0 );
         *out_sent_length = host_len;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_req_host_header(&http);
     REQUIRE( http._state == KHC_STATE_REQ_HEADER );
@@ -547,7 +547,7 @@ TEST_CASE( "Socket send partial" ) {
         REQUIRE( length > len );
         REQUIRE( strncmp(buffer, hdr, len) == 0 );
         *out_sent_length = len;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_req_header_send(&http);
     REQUIRE( http._state == KHC_STATE_REQ_HEADER_SEND );
@@ -562,7 +562,7 @@ TEST_CASE( "Socket send partial" ) {
         REQUIRE( length > len );
         REQUIRE( strncmp(buffer, hdr, len) == 0 );
         *out_sent_length = len;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_req_header_send(&http);
     REQUIRE( http._state == KHC_STATE_REQ_HEADER_SEND );
@@ -577,7 +577,7 @@ TEST_CASE( "Socket send partial" ) {
         REQUIRE( length == len );
         REQUIRE( strncmp(buffer, hdr, len) == 0 );
         *out_sent_length = len;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_req_header_send(&http);
     REQUIRE( http._state == KHC_STATE_REQ_HEADER_SEND_CRLF );
@@ -592,7 +592,7 @@ TEST_CASE( "Socket send partial" ) {
         REQUIRE( length == len );
         REQUIRE( strncmp(buffer, hdr, len) == 0 );
         *out_sent_length = len;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_req_header_send_crlf(&http);
     REQUIRE( http._state == KHC_STATE_REQ_HEADER );
@@ -611,7 +611,7 @@ TEST_CASE( "Socket send partial" ) {
         REQUIRE( length > len );
         REQUIRE( strncmp(buffer, hdr, len) == 0 );
         *out_sent_length = len;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_state_req_header_end(&http);
@@ -627,7 +627,7 @@ TEST_CASE( "Socket send partial" ) {
         REQUIRE( length == len );
         REQUIRE( strncmp(buffer, hdr, len) == 0 );
         *out_sent_length = len;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_state_req_header_end(&http);
@@ -656,7 +656,7 @@ TEST_CASE( "Socket send partial" ) {
         REQUIRE( length == strlen(body) );
         REQUIRE( strncmp(buffer, body, length) == 0 );
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_req_body_send_size(&http);
     REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND );
@@ -670,7 +670,7 @@ TEST_CASE( "Socket send partial" ) {
         REQUIRE( length == strlen(body) );
         REQUIRE( strncmp(buffer, body, length) == 0 );
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_req_body_send(&http);
     REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_CRLF );
@@ -684,7 +684,7 @@ TEST_CASE( "Socket send partial" ) {
         REQUIRE( length == strlen(body) );
         REQUIRE( strncmp(buffer, body, length) == 0 );
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_req_body_send_crlf(&http);
     REQUIRE( http._state == KHC_STATE_REQ_BODY_READ );
@@ -710,7 +710,7 @@ TEST_CASE( "Socket send partial" ) {
         REQUIRE( length == strlen(body) );
         REQUIRE( strncmp(buffer, body, length) == 0 );
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_req_body_send_size(&http);
     REQUIRE( http._state == KHC_STATE_REQ_BODY_SEND_CRLF );
@@ -724,7 +724,7 @@ TEST_CASE( "Socket send partial" ) {
         REQUIRE( length == strlen(body) );
         REQUIRE( strncmp(buffer, body, length) == 0 );
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_req_body_send_crlf(&http);
     REQUIRE( http._state == KHC_STATE_RESP_STATUS_READ );
@@ -737,7 +737,7 @@ TEST_CASE( "Socket send partial" ) {
         called = true;
         REQUIRE( length_to_read == resp_header_buff_size - 1 );
         *out_actual_length = is.read(buffer, length_to_read).gcount();
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_state_resp_status_read(&http);
@@ -784,7 +784,7 @@ TEST_CASE( "Socket send partial" ) {
         called = true;
         REQUIRE( length_to_read == buff_size);
         *out_actual_length = is.read(buffer, length_to_read).gcount();
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_resp_body_read(&http);
     REQUIRE( http._state == KHC_STATE_CLOSE );
@@ -795,7 +795,7 @@ TEST_CASE( "Socket send partial" ) {
     called = false;
     s_ctx.on_close = [=, &called](void* socket_ctx) {
         called = true;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_state_close(&http);
     REQUIRE( http._state == KHC_STATE_FINISHED );
@@ -840,7 +840,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_connect = [=, &called](void* socket_context, const char* host, uint16_t port) {
             called = true;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         khc_state_connect(&http);
@@ -853,7 +853,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_connect = [=, &called](void* socket_context, const char* host, uint16_t port) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_connect(&http);
@@ -868,7 +868,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             called = true;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         khc_state_req_line(&http);
@@ -883,7 +883,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_req_line(&http);
@@ -898,7 +898,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             called = true;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         khc_state_req_host_header(&http);
@@ -913,7 +913,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_req_host_header(&http);
@@ -933,7 +933,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             called = true;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         khc_state_req_header_send(&http);
@@ -953,7 +953,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_req_header_send(&http);
@@ -968,7 +968,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             called = true;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         khc_state_req_header_send_crlf(&http);
@@ -983,7 +983,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_req_header_send_crlf(&http);
@@ -998,7 +998,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             called = true;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         khc_state_req_header_end(&http);
@@ -1013,7 +1013,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_req_header_end(&http);
@@ -1029,7 +1029,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             called = true;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         khc_state_req_body_send_size(&http);
@@ -1045,7 +1045,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_req_body_send_size(&http);
@@ -1062,7 +1062,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             called = true;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         khc_state_req_body_send(&http);
@@ -1079,7 +1079,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_req_body_send(&http);
@@ -1095,7 +1095,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             called = true;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         khc_state_req_body_send_crlf(&http);
@@ -1111,7 +1111,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_send = [=, &called](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_req_body_send_crlf(&http);
@@ -1129,7 +1129,7 @@ TEST_CASE( "state abnormal tests." ) {
             called = true;
             strcpy(buffer, "no crlf");
             *out_actual_length = strlen(buffer);
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         khc_state_resp_status_read(&http);
@@ -1148,7 +1148,7 @@ TEST_CASE( "state abnormal tests." ) {
             called = true;
             memset(buffer, 'a', length_to_read);
             *out_actual_length = length_to_read;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         khc_state_resp_status_read(&http);
@@ -1165,7 +1165,7 @@ TEST_CASE( "state abnormal tests." ) {
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
             *out_actual_length = 0;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         khc_state_resp_status_read(&http);
@@ -1181,7 +1181,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         khc_state_resp_status_read(&http);
@@ -1197,7 +1197,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_resp_status_read(&http);
@@ -1215,7 +1215,7 @@ TEST_CASE( "state abnormal tests." ) {
             called = true;
             strcpy(buffer, "HTTP/1.1 abc no number status\r\n");
             *out_actual_length = strlen(buffer);
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         khc_state_resp_status_read(&http);
@@ -1237,7 +1237,7 @@ TEST_CASE( "state abnormal tests." ) {
             called = true;
             strcpy(buffer, "HTTP/1.1 2\xb9" "0 OK\r\n");
             *out_actual_length = strlen(buffer);
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         khc_state_resp_status_read(&http);
@@ -1257,7 +1257,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         khc_state_resp_header_read(&http);
@@ -1273,7 +1273,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_resp_header_read(&http);
@@ -1291,7 +1291,7 @@ TEST_CASE( "state abnormal tests." ) {
             called = true;
             strcpy(buffer, "X-HEADER: dummy value\r\n");
             *out_actual_length = strlen(buffer);
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         khc_state_resp_header_read(&http);
@@ -1322,7 +1322,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         khc_state_resp_header_skip(&http);
@@ -1341,7 +1341,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_resp_header_skip(&http);
@@ -1419,7 +1419,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         khc_state_resp_body_read(&http);
@@ -1434,7 +1434,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_resp_body_read(&http);
@@ -1466,7 +1466,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         khc_state_resp_body_read_chunk_size(&http);
@@ -1481,7 +1481,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_resp_body_read_chunk_size(&http);
@@ -1497,7 +1497,7 @@ TEST_CASE( "state abnormal tests." ) {
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
             *out_actual_length = 0;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         khc_state_resp_body_read_chunk_size(&http);
@@ -1516,7 +1516,7 @@ TEST_CASE( "state abnormal tests." ) {
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
             *out_actual_length = length_to_read;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         khc_state_resp_body_read_chunk_size(&http);
@@ -1550,7 +1550,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         khc_state_resp_body_read_chunk_body(&http);
@@ -1565,7 +1565,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_resp_body_read_chunk_body(&http);
@@ -1581,7 +1581,7 @@ TEST_CASE( "state abnormal tests." ) {
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
             *out_actual_length = 0;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         khc_state_resp_body_read_chunk_body(&http);
@@ -1597,7 +1597,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         khc_state_resp_body_skip_chunk_body_crlf(&http);
@@ -1613,7 +1613,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_resp_body_skip_chunk_body_crlf(&http);
@@ -1630,7 +1630,7 @@ TEST_CASE( "state abnormal tests." ) {
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
             *out_actual_length = 0;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         khc_state_resp_body_skip_chunk_body_crlf(&http);
@@ -1645,7 +1645,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         khc_state_resp_body_skip_trailers(&http);
@@ -1660,7 +1660,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_recv = [=, &called](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_resp_body_skip_trailers(&http);
@@ -1675,7 +1675,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_close = [=, &called](void* socket_context) {
             called = true;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         khc_state_close(&http);
@@ -1690,7 +1690,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_close = [=, &called](void* socket_context) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_close(&http);
@@ -1707,7 +1707,7 @@ TEST_CASE( "state abnormal tests." ) {
         called = false;
         s_ctx.on_close = [=, &called](void* socket_context) {
             called = true;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         khc_state_close(&http);
@@ -1747,7 +1747,7 @@ TEST_CASE( "Enable insecure" ) {
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
         REQUIRE( port == 80 );
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_state_connect(&http);
@@ -1762,7 +1762,7 @@ TEST_CASE( "Enable insecure" ) {
         REQUIRE( length == strlen(req_line) );
         REQUIRE( strncmp(buffer, req_line, length) == 0 );
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     khc_state_req_line(&http);
@@ -1786,7 +1786,7 @@ static std::string sent_request_line(const char* path, bool absolute, bool insec
     s_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
         sent.append(buffer, length);
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);
 
@@ -1829,19 +1829,19 @@ static std::string sent_request(const char* method, const char* body) {
     std::istringstream resp("HTTP/1.1 204 No Content\r\n\r\n");
     khct::cb::SockCtx s_ctx;
     s_ctx.on_connect = [](void* socket_context, const char* host, uint16_t port) {
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     s_ctx.on_send = [&sent](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         sent.append(buffer, length);
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     s_ctx.on_recv = [&resp](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         *out_actual_length = resp.read(buffer, length_to_read).gcount();
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     s_ctx.on_close = [](void* socket_context) {
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     khc_set_cb_sock_connect(&http, khct::cb::mock_connect, &s_ctx);
     khc_set_cb_sock_send(&http, khct::cb::mock_send, &s_ctx);

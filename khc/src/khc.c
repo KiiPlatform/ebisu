@@ -4,7 +4,7 @@
 #include "khc.h"
 #include "khc_impl.h"
 #include "khc_state_impl.h"
-#include "khc_socket_callback.h"
+#include <ebisu_socket.h>
 #include "ebisu_version.h"
 
 void khc_set_resp_header_buff(khc* khc, char* buffer, size_t buff_size) {

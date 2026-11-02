@@ -40,11 +40,11 @@ struct Client {
             resp = (next < responses.size()) ? responses[next] : std::string();
             ++next;
             resp_pos = 0;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
         http_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
             *out_sent_length = length;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
         http_ctx.on_recv = [this](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             size_t n = resp.size() - resp_pos;
@@ -52,9 +52,9 @@ struct Client {
             memcpy(buffer, resp.data() + resp_pos, n);
             resp_pos += n;
             *out_actual_length = n;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
-        http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+        http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
         kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
         kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
         kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);

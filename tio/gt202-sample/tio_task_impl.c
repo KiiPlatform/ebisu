@@ -5,7 +5,7 @@
 
 typedef struct _data {
     const char* name;
-    KII_TASK_ENTRY entry;
+    EBISU_TASK_ENTRY entry;
     void* param;
     void* userdata;
 } _data_t;
@@ -17,9 +17,9 @@ void _tio_task(uint_32 temp)
     free(data);
 }
 
-kii_task_code_t cb_task_create
+ebisu_task_code_t cb_task_create
     (const char* name,
-     KII_TASK_ENTRY entry,
+     EBISU_TASK_ENTRY entry,
      void* param,
      void* userdata)
 {
@@ -38,7 +38,7 @@ kii_task_code_t cb_task_create
 
     _task_create(0, task, (uint_32) data);
 
-    return KII_TASKC_OK;
+    return EBISU_TASKC_OK;
 }
 
 void cb_delay_ms(uint32_t msec, void* userdata)

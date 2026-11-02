@@ -1,15 +1,15 @@
 #ifndef _KII_TASK_IMPL
 #define _KII_TASK_IMPL
 
-#include <kii_task_callback.h>
+#include <ebisu_task.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-kii_task_code_t task_create_cb
+ebisu_task_code_t task_create_cb
     (const char* name,
-     KII_TASK_ENTRY entry,
+     EBISU_TASK_ENTRY entry,
      void* param,
      void* userdata);
 

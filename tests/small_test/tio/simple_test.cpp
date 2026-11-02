@@ -83,9 +83,9 @@ TEST_CASE( "tio_handler_set_cb_sock_recv_timed_out_mqtt sets the MQTT callback" 
     REQUIRE( handler._kii._mqtt_sock_recv_timed_out_ctx == nullptr );
 }
 
-static kii_task_code_t fail_task_create(const char*, KII_TASK_ENTRY, void*, void*)
+static ebisu_task_code_t fail_task_create(const char*, EBISU_TASK_ENTRY, void*, void*)
 {
-    return KII_TASKC_FAIL;
+    return EBISU_TASKC_FAIL;
 }
 
 static tio_bool_t no_action(tio_action_t*, tio_action_err_t*, tio_action_result_data_t*, void*)
@@ -93,10 +93,10 @@ static tio_bool_t no_action(tio_action_t*, tio_action_err_t*, tio_action_result_
     return KII_TRUE;
 }
 
-static kii_task_code_t count_task_create(const char* name, KII_TASK_ENTRY entry, void* entry_param, void* userdata)
+static ebisu_task_code_t count_task_create(const char* name, EBISU_TASK_ENTRY entry, void* entry_param, void* userdata)
 {
     ++*(int*)userdata;
-    return KII_TASKC_OK;
+    return EBISU_TASKC_OK;
 }
 
 // MQTT carries a keep-alive of at most 65535 seconds. tio takes it as a
@@ -134,11 +134,11 @@ TEST_CASE( "tio_handler_start keep-alive range" ) {
 // Stands in for the platform's task creation: counts the calls and returns the
 // result the test chose.
 struct TaskCreateCtx {
-    kii_task_code_t result;
+    ebisu_task_code_t result;
     int calls;
 };
 
-static kii_task_code_t mock_task_create(const char* name, KII_TASK_ENTRY entry, void* entry_param, void* userdata)
+static ebisu_task_code_t mock_task_create(const char* name, EBISU_TASK_ENTRY entry, void* entry_param, void* userdata)
 {
     TaskCreateCtx* ctx = (TaskCreateCtx*)userdata;
     ++ctx->calls;
@@ -156,14 +156,14 @@ TEST_CASE( "tio_handler_start reports a task it could not create" ) {
     tio_author_t author = {};
 
     SECTION("task created") {
-        TaskCreateCtx ctx = { KII_TASKC_OK, 0 };
+        TaskCreateCtx ctx = { EBISU_TASKC_OK, 0 };
         tio_handler_set_cb_task_create(&handler, mock_task_create, &ctx);
         CHECK( tio_handler_start(&handler, &author, no_action, NULL) == TIO_ERR_OK );
         CHECK( ctx.calls == 1 );
     }
 
     SECTION("task not created") {
-        TaskCreateCtx ctx = { KII_TASKC_FAIL, 0 };
+        TaskCreateCtx ctx = { EBISU_TASKC_FAIL, 0 };
         tio_handler_set_cb_task_create(&handler, mock_task_create, &ctx);
         CHECK( tio_handler_start(&handler, &author, no_action, NULL) == TIO_ERR_CREATE_TASK );
         CHECK( ctx.calls == 1 );
@@ -188,7 +188,7 @@ TEST_CASE( "tio_updater_start without a task-create callback" ) {
 TEST_CASE( "tio_updater_start without an interval" ) {
     tio_updater_t updater;
     tio_updater_init(&updater);
-    TaskCreateCtx ctx = { KII_TASKC_OK, 0 };
+    TaskCreateCtx ctx = { EBISU_TASKC_OK, 0 };
     tio_updater_set_cb_task_create(&updater, mock_task_create, &ctx);
     tio_author_t author = {};
 
@@ -207,10 +207,10 @@ struct UpdaterTask {
     uint32_t delayed_ms;
 };
 
-kii_task_code_t run_task(const char* name, KII_TASK_ENTRY entry, void* entry_param, void* userdata)
+ebisu_task_code_t run_task(const char* name, EBISU_TASK_ENTRY entry, void* entry_param, void* userdata)
 {
     entry(entry_param);
-    return KII_TASKC_OK;
+    return EBISU_TASKC_OK;
 }
 
 kii_bool_t updater_continue(void* task_info, void* userdata)
@@ -246,18 +246,18 @@ size_t updater_read(char*, size_t, void*)
 
 // The task-create callback leaves the task to the test, which ends it.
 struct HeldTask {
-    KII_TASK_ENTRY entry;
+    EBISU_TASK_ENTRY entry;
     void* entry_param;
     int calls;
 };
 
-static kii_task_code_t hold_task(const char*, KII_TASK_ENTRY entry, void* entry_param, void* userdata)
+static ebisu_task_code_t hold_task(const char*, EBISU_TASK_ENTRY entry, void* entry_param, void* userdata)
 {
     HeldTask* held = (HeldTask*)userdata;
     held->entry = entry;
     held->entry_param = entry_param;
     ++held->calls;
-    return KII_TASKC_OK;
+    return EBISU_TASKC_OK;
 }
 
 static kii_bool_t stop_task(void*, void*)
@@ -442,14 +442,14 @@ TEST_CASE( "The handler and the updater give a clock the time, through their kii
     tio_handler_init(&handler);
     tio_updater_init(&updater);
 
-    kii_clock_t clock;
-    kii_clock_init(&clock, NULL, NULL);
+    ebisu_clock_t clock;
+    ebisu_clock_init(&clock, NULL, NULL);
     CHECK( tio_handler_set_clock(&handler, &clock) == TIO_ERR_FAIL );
     CHECK( tio_updater_set_clock(&updater, &clock) == TIO_ERR_FAIL );
     CHECK( handler._kii._clock == nullptr );
     CHECK( updater._kii._clock == nullptr );
 
-    kii_clock_init(&clock, clock_now_ms, NULL);
+    ebisu_clock_init(&clock, clock_now_ms, NULL);
     CHECK( tio_handler_set_clock(&handler, &clock) == TIO_ERR_OK );
     CHECK( tio_updater_set_clock(&updater, &clock) == TIO_ERR_OK );
     CHECK( handler._kii._clock == &clock );

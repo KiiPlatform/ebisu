@@ -21,7 +21,7 @@ The server's certificate has to chain to one of the CA certificates ESP-IDF
 bundles, and be issued for the host. ESP-IDF's mbedTLS does not check the
 validity period itself: it would do so at the system's time, which is 1970 on
 a device that has not set it. The socket callbacks check it after the
-handshake instead, at the time a `kii_clock_t` keeps, which the device learns
+handshake instead, at the time an `ebisu_clock_t` keeps, which the device learns
 from the server. Until the first response, the clock has only a floor, a time
 it is known not to be earlier than, and only a certificate that expired before
 it can be told. The [kii README](../../kii/README.md#the-time) describes the

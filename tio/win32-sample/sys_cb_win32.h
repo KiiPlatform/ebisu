@@ -3,16 +3,16 @@
 
 /* Task callbacks for tio_handler and tio_updater on Windows. */
 
-#include <kii_task_callback.h>
+#include <ebisu_task.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Runs entry(param) on a thread of its own, which nothing waits for. */
-kii_task_code_t task_create_cb_impl(
+ebisu_task_code_t task_create_cb_impl(
         const char* name,
-        KII_TASK_ENTRY entry,
+        EBISU_TASK_ENTRY entry,
         void* param,
         void* userdata);
 

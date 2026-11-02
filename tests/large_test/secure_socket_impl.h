@@ -1,7 +1,7 @@
 #ifndef __KHC_CORE_SOCKET
 #define __KHC_CORE_SOCKET
 
-#include "khc_socket_callback.h"
+#include <ebisu_socket.h>
 #include "kii.h"
 #ifdef _WIN32
 #include "sock_cb_win32.h"
@@ -19,17 +19,17 @@ namespace ltest {
 // real-time clock has it: the floor until the first response to a kii_t it is
 // set on, the time the server stated from then on. One for every test, with a
 // lock, for the push task's thread.
-inline kii_clock_t* test_clock()
+inline ebisu_clock_t* test_clock()
 {
     static std::mutex mutex;
     struct Clock {
-        kii_clock_t clock;
+        ebisu_clock_t clock;
         Clock() {
-            kii_clock_init(&clock, [](void*) -> uint64_t {
+            ebisu_clock_init(&clock, [](void*) -> uint64_t {
                 return (uint64_t)std::chrono::duration_cast<std::chrono::milliseconds>(
                         std::chrono::steady_clock::now().time_since_epoch()).count();
             }, nullptr);
-            kii_clock_set_cb_lock(&clock,
+            ebisu_clock_set_cb_lock(&clock,
                     [](void* m) { ((std::mutex*)m)->lock(); },
                     [](void* m) { ((std::mutex*)m)->unlock(); },
                     &mutex);
@@ -66,45 +66,45 @@ struct SSLData
 #endif
 };
 
-khc_sock_code_t
+ebisu_sock_code_t
     cb_connect(void* socket_context, const char* host,
             uint16_t port);
 
-khc_sock_code_t
+ebisu_sock_code_t
     cb_send(void* socket_context,
             const char* buffer,
             size_t length,
             size_t* out_sent_length);
 
-khc_sock_code_t
+ebisu_sock_code_t
     cb_recv(void* socket_context,
             char* buffer,
             size_t length_to_read,
             size_t* out_actual_length);
 
-khc_sock_code_t
+ebisu_sock_code_t
     cb_close(void* socket_context);
 
 }
 
 namespace tcp {
-khc_sock_code_t
+ebisu_sock_code_t
     cb_connect(void* socket_context, const char* host,
             uint16_t port);
 
-khc_sock_code_t
+ebisu_sock_code_t
     cb_send(void* socket_context,
             const char* buffer,
             size_t length,
             size_t* out_sent_length);
 
-khc_sock_code_t
+ebisu_sock_code_t
     cb_recv(void* socket_context,
             char* buffer,
             size_t length_to_read,
             size_t* out_actual_length);
 
-khc_sock_code_t
+ebisu_sock_code_t
     cb_close(void* socket_context);
 }
 

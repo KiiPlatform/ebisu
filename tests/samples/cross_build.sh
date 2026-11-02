@@ -66,7 +66,8 @@ copy() {
     local sample=$1 dir=$2 src="$work/src"
     if [ ! -d "$src" ]; then
         mkdir -p "$src"
-        cp -r "$root"/jkii "$root"/khc "$root"/kii "$root"/tio "$root"/version "$src"
+        cp -r "$root"/platform "$root"/jkii "$root"/khc "$root"/kii "$root"/tio \
+            "$root"/version "$src"
     fi
     make -s -C "$src/tio/$sample-sample" >/dev/null
     mv "$src/tio/$sample-sample/$dir" "$work/$sample"
@@ -82,8 +83,8 @@ cc3200() {
     # Code Composer Studio builds the whole project, with these include paths.
     copy cc3200 freertos_ebisu_demo
     local d="$work/cc3200"
-    build cc3200 "$d:$d/jkii/include:$d/jkii/libs/jsmn:$d/khc/include:$d/kii/include:$d/tio/include" \
-        "$d"/jkii/src/*.c "$d"/jkii/libs/jsmn/*.c "$d"/khc/src/*.c "$d"/kii/*.c "$d"/tio/*.c
+    build cc3200 "$d:$d/platform/include:$d/jkii/include:$d/jkii/libs/jsmn:$d/khc/include:$d/kii/include:$d/tio/include" \
+        "$d"/platform/src/*.c "$d"/jkii/src/*.c "$d"/jkii/libs/jsmn/*.c "$d"/khc/src/*.c "$d"/kii/*.c "$d"/tio/*.c
 }
 
 samples=("$@")

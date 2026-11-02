@@ -8,7 +8,7 @@
 
 /* No MBEDTLS_HAVE_TIME_DATE: mbedTLS would check the certificates' validity
    periods at the system's time, which a device without a real-time clock does
-   not have. sock_cb_freertos.c checks them at a kii_clock_t's instead. */
+   not have. sock_cb_freertos.c checks them at an ebisu_clock_t's instead. */
 
 /* No MBEDTLS_THREADING_C either: the tasks share only the TLS configuration,
    which they read, and the random generator, which random.c locks. */

@@ -10,7 +10,7 @@ CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE=y
 
 # The server's certificate chains to one of the CA certificates ESP-IDF bundles,
 # and its validity period is checked, after the handshake, at the time a
-# kii_clock_t keeps: see sock_cb_esp32.c. That needs the certificates the
+# ebisu_clock_t keeps: see sock_cb_esp32.c. That needs the certificates the
 # handshake received, and mbedTLS's own check of the dates off, which takes the
 # system's time, 1970 on a device that has not set it.
 CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=y

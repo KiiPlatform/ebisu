@@ -161,19 +161,19 @@ void kii_set_resp_header_buff(kii_t* kii, char* buff, size_t buff_size) {
     khc_set_resp_header_buff(&kii->_khc, buff, buff_size);
 }
 
-void kii_set_cb_http_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata) {
+void kii_set_cb_http_sock_connect(kii_t* kii, EBISU_CB_SOCK_CONNECT cb, void* userdata) {
     khc_set_cb_sock_connect(&kii->_khc, cb, userdata);
 }
 
-void kii_set_cb_http_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata) {
+void kii_set_cb_http_sock_send(kii_t* kii, EBISU_CB_SOCK_SEND cb, void* userdata) {
     khc_set_cb_sock_send(&kii->_khc, cb, userdata);
 }
 
-void kii_set_cb_http_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata) {
+void kii_set_cb_http_sock_recv(kii_t* kii, EBISU_CB_SOCK_RECV cb, void* userdata) {
     khc_set_cb_sock_recv(&kii->_khc, cb, userdata);
 }
 
-void kii_set_cb_http_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata) {
+void kii_set_cb_http_sock_close(kii_t* kii, EBISU_CB_SOCK_CLOSE cb, void* userdata) {
     khc_set_cb_sock_close(&kii->_khc, cb, userdata);
 }
 
@@ -182,17 +182,17 @@ void kii_set_mqtt_buff(kii_t* kii, char* buff, size_t buff_size) {
     kii->_mqtt_buffer_size = buff_size;
 }
 
-void kii_set_cb_mqtt_sock_connect(kii_t* kii, KHC_CB_SOCK_CONNECT cb, void* userdata) {
+void kii_set_cb_mqtt_sock_connect(kii_t* kii, EBISU_CB_SOCK_CONNECT cb, void* userdata) {
     kii->_cb_mqtt_sock_connect = cb;
     kii->_mqtt_sock_connect_ctx = userdata;
 }
 
-void kii_set_cb_mqtt_sock_send(kii_t* kii, KHC_CB_SOCK_SEND cb, void* userdata) {
+void kii_set_cb_mqtt_sock_send(kii_t* kii, EBISU_CB_SOCK_SEND cb, void* userdata) {
     kii->_cb_mqtt_sock_send = cb;
     kii->_mqtt_sock_send_ctx = userdata;
 }
 
-void kii_set_cb_mqtt_sock_recv(kii_t* kii, KHC_CB_SOCK_RECV cb, void* userdata) {
+void kii_set_cb_mqtt_sock_recv(kii_t* kii, EBISU_CB_SOCK_RECV cb, void* userdata) {
     kii->_cb_mqtt_sock_recv = cb;
     kii->_mqtt_sock_recv_ctx = userdata;
 }
@@ -202,7 +202,7 @@ void kii_set_cb_mqtt_sock_recv_timed_out(kii_t* kii, KII_CB_SOCK_RECV_TIMED_OUT 
     kii->_mqtt_sock_recv_timed_out_ctx = userdata;
 }
 
-void kii_set_cb_mqtt_sock_close(kii_t* kii, KHC_CB_SOCK_CLOSE cb, void* userdata) {
+void kii_set_cb_mqtt_sock_close(kii_t* kii, EBISU_CB_SOCK_CLOSE cb, void* userdata) {
     kii->_cb_mqtt_sock_close_cb = cb;
     kii->_mqtt_sock_close_ctx = userdata;
 }
@@ -211,7 +211,7 @@ void kii_set_mqtt_to_sock_recv(kii_t* kii, uint32_t to_sock_recv_sec) {
     kii->_mqtt_to_recv_sec = to_sock_recv_sec;
 }
 
-void kii_set_cb_task_create(kii_t* kii, KII_CB_TASK_CREATE cb, void* userdata) {
+void kii_set_cb_task_create(kii_t* kii, EBISU_CB_TASK_CREATE cb, void* userdata) {
     kii->_cb_task_create = cb;
     kii->_task_create_data = userdata;
 }
@@ -226,7 +226,7 @@ void kii_set_cb_task_exit(kii_t* kii, KII_CB_TASK_EXIT cb, void* userdata) {
     kii->_task_exit_data = userdata;
 }
 
-void kii_set_cb_delay_ms(kii_t* kii, KII_CB_DELAY_MS cb, void* userdata) {
+void kii_set_cb_delay_ms(kii_t* kii, EBISU_CB_DELAY_MS cb, void* userdata) {
     kii->_cb_delay_ms = cb;
     kii->_delay_ms_data = userdata;
 }

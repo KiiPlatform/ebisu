@@ -42,7 +42,7 @@ static jkii_token_t updater_tokens[TOKENS];
 static tio_handler_t handler;
 static tio_updater_t updater;
 static kii_session_t session;
-static kii_clock_t device_clock;
+static ebisu_clock_t device_clock;
 static socket_context_t handler_http_ctx;
 static socket_context_t handler_mqtt_ctx;
 static socket_context_t updater_http_ctx;
@@ -53,8 +53,8 @@ static size_t state_read;
 static void log_time(void)
 {
     int64_t now = 0;
-    kii_bool_t exact = kii_clock_get_time(&device_clock, &now);
-    sample_log("the time: %lld, %s", (long long)now, exact == KII_TRUE ? "exact" : "a lower bound");
+    bool exact = ebisu_clock_get_time(&device_clock, &now);
+    sample_log("the time: %lld, %s", (long long)now, exact ? "exact" : "a lower bound");
 }
 
 static const char* or_null(const char* s)
@@ -190,10 +190,10 @@ static void app_task(void* arg)
        response, the clock has only a floor, a time it is known not to be
        earlier than. The clock has a lock of its own: the socket callbacks use
        it while kii may hold the session's. */
-    kii_clock_init(&device_clock, monotonic_ms_cb_impl, NULL);
-    kii_clock_set_cb_lock(&device_clock, lock_cb_impl, unlock_cb_impl, xSemaphoreCreateMutex());
+    ebisu_clock_init(&device_clock, monotonic_ms_cb_impl, NULL);
+    ebisu_clock_set_cb_lock(&device_clock, lock_cb_impl, unlock_cb_impl, xSemaphoreCreateMutex());
     if (EBISU_SAMPLE_CLOCK_FLOOR > 0) {
-        kii_clock_set_floor(&device_clock, EBISU_SAMPLE_CLOCK_FLOOR);
+        ebisu_clock_set_floor(&device_clock, EBISU_SAMPLE_CLOCK_FLOOR);
     }
     log_time();
 

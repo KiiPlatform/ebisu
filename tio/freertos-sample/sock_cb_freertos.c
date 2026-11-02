@@ -55,7 +55,7 @@ void sock_cb_init_context(
         socket_context_t* ctx,
         unsigned int to_recv,
         unsigned int to_send,
-        kii_clock_t* clock)
+        ebisu_clock_t* clock)
 {
     memset(ctx, 0, sizeof(*ctx));
     ctx->socket = FREERTOS_INVALID_SOCKET;
@@ -104,7 +104,7 @@ static int bio_recv(void* socket, unsigned char* buffer, size_t length)
 }
 
 /* The validity period of a certificate, against the clock. */
-static kii_validity_t check_dates(kii_clock_t* clock, const mbedtls_x509_crt* crt)
+static ebisu_validity_t check_dates(ebisu_clock_t* clock, const mbedtls_x509_crt* crt)
 {
     const mbedtls_x509_time* from = &crt->valid_from;
     const mbedtls_x509_time* to = &crt->valid_to;
@@ -115,9 +115,9 @@ static kii_validity_t check_dates(kii_clock_t* clock, const mbedtls_x509_crt* cr
             !khc_seconds_since_epoch(to->year, to->mon, to->day,
                 to->hour, to->min, to->sec, &not_after)) {
         /* A date that is not one. */
-        return KII_VALIDITY_EXPIRED;
+        return EBISU_VALIDITY_EXPIRED;
     }
-    return kii_clock_check_validity(clock, not_before, not_after);
+    return ebisu_clock_check_validity(clock, not_before, not_after);
 }
 
 /* mbedTLS calls this for each certificate of the chain it verified, from the
@@ -128,10 +128,10 @@ static kii_validity_t check_dates(kii_clock_t* clock, const mbedtls_x509_crt* cr
 static int verify_dates(void* clock, mbedtls_x509_crt* crt, int depth, uint32_t* flags)
 {
     (void)depth;
-    switch (check_dates((kii_clock_t*)clock, crt)) {
-        case KII_VALIDITY_OK:
+    switch (check_dates((ebisu_clock_t*)clock, crt)) {
+        case EBISU_VALIDITY_OK:
             break;
-        case KII_VALIDITY_NOT_YET_VALID:
+        case EBISU_VALIDITY_NOT_YET_VALID:
             *flags |= MBEDTLS_X509_BADCERT_FUTURE;
             break;
         default:
@@ -159,7 +159,7 @@ static void log_refused(socket_context_t* ctx, const char* host)
     uint32_t flags = mbedtls_ssl_get_verify_result(&ctx->ssl);
     if (flags & MBEDTLS_X509_BADCERT_FUTURE) {
         sample_log("server certificate for %s refused: not valid yet", host);
-        kii_clock_forget_time(ctx->clock);
+        ebisu_clock_forget_time(ctx->clock);
     } else if (flags & MBEDTLS_X509_BADCERT_EXPIRED) {
         sample_log("server certificate for %s refused: expired", host);
     } else {
@@ -173,7 +173,7 @@ static void log_refused(socket_context_t* ctx, const char* host)
     }
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_connect(void* sock_ctx, const char* host,
             uint16_t port)
 {
@@ -181,13 +181,13 @@ khc_sock_code_t
     uint32_t address = FreeRTOS_gethostbyname(host);
     if (address == 0) {
         sample_log("failed to resolve %s", host);
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
     ctx->socket = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_STREAM,
             FREERTOS_IPPROTO_TCP);
     if (ctx->socket == FREERTOS_INVALID_SOCKET) {
         sample_log("failed to create a socket");
-        return KHC_SOCK_FAIL;
+        return EBISU_SOCK_FAIL;
     }
     const TickType_t handshake_timeout = pdMS_TO_TICKS(HANDSHAKE_TIMEOUT_MS);
     set_timeouts(ctx->socket, handshake_timeout, handshake_timeout);
@@ -234,17 +234,17 @@ khc_sock_code_t
 
     set_timeouts(ctx->socket, seconds_to_ticks(ctx->to_recv),
             seconds_to_ticks(ctx->to_send));
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 
 free_tls:
     mbedtls_ssl_free(&ctx->ssl);
 close_socket:
     FreeRTOS_closesocket(ctx->socket);
     ctx->socket = FREERTOS_INVALID_SOCKET;
-    return KHC_SOCK_FAIL;
+    return EBISU_SOCK_FAIL;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_send(void* sock_ctx,
             const char* buffer,
             size_t length,
@@ -254,14 +254,14 @@ khc_sock_code_t
     int ret = mbedtls_ssl_write(&ctx->ssl, (const unsigned char*)buffer, length);
     if (ret > 0) {
         *out_sent_length = ret;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     }
     /* Failed, or timed out. */
     sample_log("failed to send: -0x%04x", (unsigned int)-ret);
-    return KHC_SOCK_FAIL;
+    return EBISU_SOCK_FAIL;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_recv(void* sock_ctx, char* buffer, size_t length_to_read,
             size_t* out_actual_length)
 {
@@ -270,18 +270,18 @@ khc_sock_code_t
     int ret = mbedtls_ssl_read(&ctx->ssl, (unsigned char*)buffer, length_to_read);
     if (ret > 0) {
         *out_actual_length = ret;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     }
     ctx->recv_ret = ret;
     if (ret == 0 || ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY ||
             ret == MBEDTLS_ERR_SSL_CONN_EOF) {
         /* The server closed the connection. */
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     }
-    return KHC_SOCK_FAIL;
+    return EBISU_SOCK_FAIL;
 }
 
-/* sock_cb_recv() returns KHC_SOCK_FAIL both when the receive timeout set in
+/* sock_cb_recv() returns EBISU_SOCK_FAIL both when the receive timeout set in
    sock_cb_connect() runs out and when the connection fails. The timeout ends
    FreeRTOS_recv() with nothing read, which bio_recv() tells mbedTLS is wanting
    to read. */
@@ -292,12 +292,12 @@ kii_bool_t
     return ctx->recv_ret == MBEDTLS_ERR_SSL_WANT_READ ? KII_TRUE : KII_FALSE;
 }
 
-khc_sock_code_t
+ebisu_sock_code_t
     sock_cb_close(void* sock_ctx)
 {
     socket_context_t* ctx = (socket_context_t*)sock_ctx;
     if (ctx->socket == FREERTOS_INVALID_SOCKET) {
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     }
     /* The server may have closed the connection already. */
     (void)mbedtls_ssl_close_notify(&ctx->ssl);
@@ -316,5 +316,5 @@ khc_sock_code_t
     }
     FreeRTOS_closesocket(ctx->socket);
     ctx->socket = FREERTOS_INVALID_SOCKET;
-    return KHC_SOCK_OK;
+    return EBISU_SOCK_OK;
 }

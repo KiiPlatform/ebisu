@@ -1,6 +1,6 @@
 /**
  * @file kii_task_callback.h
- * @brief Task/ Thread abstraction.
+ * @brief Callbacks into the tasks kii runs.
  */
 #ifndef _KII_TASK_CALLBACK
 #define _KII_TASK_CALLBACK
@@ -19,14 +19,6 @@ extern "C" {
 #endif
 
 /**
- * \brief Task codes.
- */
-typedef enum kii_task_code_t {
-    KII_TASKC_OK,
-    KII_TASKC_FAIL
-} kii_task_code_t;
-
-/**
  * \brief Bool type definition
  */
 typedef enum kii_bool_t
@@ -34,35 +26,6 @@ typedef enum kii_bool_t
     KII_FALSE = 0,
     KII_TRUE
 } kii_bool_t;
-
-/**
- * \brief Function executed in the task.
- */
-typedef void* (*KII_TASK_ENTRY)(void* value);
-
-/**
- * \brief Callback asks to create task.
- * \param [in] name Name of the task.
- * \param [in] entry Function must be executed by the task.
- * \param [in] entry_param Must be passed to entry as argument.
- * \param [in] userdata Context object pointer.
- */
-typedef kii_task_code_t
-(*KII_CB_TASK_CREATE)
-    (const char* name,
-     KII_TASK_ENTRY entry,
-     void* entry_param,
-     void* userdata);
-
-/**
- * \brief Callback asks to delay/ sleep task.
- * \param [in] msec Time requested to delay/ sleep in milliseconds.
- * \param [in] userdata Context object pointer.
- */
-typedef void
-(*KII_CB_DELAY_MS)
-    (uint32_t msec,
-     void* userdata);
 
 /**
  * \brief Callback called right before exit of the task.
@@ -90,41 +53,6 @@ typedef kii_bool_t
 (*KII_CB_TASK_CONTINUE)
     (void* task_info,
     void* userdata);
-
-/**
- * \brief Callback acquires or releases a lock.
- *
- * Set in pairs, one acquiring and one releasing, by kii_session_set_cb_lock().
- * The lock need not be recursive.
- *
- * While it is held, other tasks may be kept waiting for the length of an HTTP
- * request, and the callbacks ebisu makes in between include the socket
- * callbacks. A platform on which no other task using the same session can run
- * while the lock is held -- including inside those callbacks -- may implement
- * both as no-ops.
- *
- * \param [in] userdata Context object pointer.
- */
-typedef void
-(*KII_CB_LOCK)
-    (void* userdata);
-
-/**
- * \brief Callback returns a monotonic time in milliseconds.
- *
- * The value must never decrease, and must not jump when the wall clock is
- * changed, for example by NTP. It must keep counting while the device sleeps:
- * a tick counter that stops in low-power modes has tokens renewed late, and
- * kii_clock_t falling behind. Its origin is arbitrary; only differences are
- * used. Platforms whose tick counter is 32 bits wide must extend it to 64, or
- * it wraps after about 49.7 days.
- *
- * \param [in] userdata Context object pointer.
- * \return Milliseconds elapsed since an arbitrary, fixed origin.
- */
-typedef uint64_t
-(*KII_CB_MONOTONIC_MS)
-    (void* userdata);
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC visibility pop

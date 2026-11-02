@@ -85,8 +85,8 @@ TEST_CASE( "khc_get_close_failed says what the last request's close did" ) {
     khc_set_method(&http, "POST");
     khc_set_path(&http, "/x");
     khc_set_req_headers(&http, NULL);
-    const auto close_fails = [](void*) { return KHC_SOCK_FAIL; };
-    const auto close_works = [](void*) { return KHC_SOCK_OK; };
+    const auto close_fails = [](void*) { return EBISU_SOCK_FAIL; };
+    const auto close_works = [](void*) { return EBISU_SOCK_OK; };
     script.responses = {
         khct::http_response(200, "{}"),
         khct::http_response(200, "{}"),

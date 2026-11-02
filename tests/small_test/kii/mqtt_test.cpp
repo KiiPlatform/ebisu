@@ -40,11 +40,11 @@ static void serve_stream(khct::cb::SockCtx& ctx, const std::string& data, size_t
 {
     ctx.on_recv = [data, &served](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         if (served == data.length()) {
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         }
         *out_actual_length = data.copy(buffer, length_to_read, served);
         served += *out_actual_length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 }
 
@@ -94,7 +94,7 @@ TEST_CASE( "MQTT state test" ) {
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
         REQUIRE( port == 443 );
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     int call_send = 0;
@@ -106,7 +106,7 @@ TEST_CASE( "MQTT state test" ) {
         }
         ++call_send;
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     int call_recv = 0;
@@ -133,13 +133,13 @@ TEST_CASE( "MQTT state test" ) {
     http_ctx.on_recv = [=, &call_recv, &ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         ++call_recv;
         *out_actual_length = ss.read(buffer, length_to_read).gcount();
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     int call_close = 0;
     http_ctx.on_close = [=, &call_close](void* socket_ctx) {
         ++call_close;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     _mqtt_state_install_push(&state);
@@ -157,7 +157,7 @@ TEST_CASE( "MQTT state test" ) {
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
         REQUIRE( port == 443 );
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     call_send = 0;
@@ -169,7 +169,7 @@ TEST_CASE( "MQTT state test" ) {
         }
         ++call_send;
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     call_recv = 0;
@@ -204,13 +204,13 @@ TEST_CASE( "MQTT state test" ) {
     http_ctx.on_recv = [=, &call_recv, &ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         ++call_recv;
         *out_actual_length = ss.read(buffer, length_to_read).gcount();
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     call_close = 0;
     http_ctx.on_close = [=, &call_close](void* socket_ctx) {
         ++call_close;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     _mqtt_state_get_endpoint(&state);
@@ -235,7 +235,7 @@ TEST_CASE( "MQTT state test" ) {
         REQUIRE( strlen(host) == strlen(exp_host) );
         REQUIRE( strncmp(host, exp_host, strlen(exp_host)) == 0 );
         REQUIRE( port == 8883 );
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     _mqtt_state_sock_connect(&state);
@@ -259,7 +259,7 @@ TEST_CASE( "MQTT state test" ) {
         }
         ++call_send;
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     _mqtt_state_send_connect(&state);
@@ -291,7 +291,7 @@ TEST_CASE( "MQTT state test" ) {
                 break;
         }
         ++call_recv;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     _mqtt_state_recv_connack(&state);
@@ -313,7 +313,7 @@ TEST_CASE( "MQTT state test" ) {
         }
         ++call_send;
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     _mqtt_state_send_subscribe(&state);
@@ -346,7 +346,7 @@ TEST_CASE( "MQTT state test" ) {
                 break;
         }
         ++call_recv;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     _mqtt_state_recv_suback(&state);
@@ -377,7 +377,7 @@ TEST_CASE( "MQTT state test" ) {
                 break;
         }
         ++call_recv;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     _mqtt_state_recv_ready(&state);
@@ -413,7 +413,7 @@ TEST_CASE( "MQTT state test" ) {
     mqtt_ctx.on_recv = [=, &call_recv, &ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         ++call_recv;
         *out_actual_length = ss.read(buffer, length_to_read).gcount();
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     bool call_push = false;
@@ -443,7 +443,7 @@ TEST_CASE( "MQTT state test" ) {
         }
         ++call_send;
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     _mqtt_state_send_pingreq(&state);
     REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
@@ -469,7 +469,7 @@ TEST_CASE( "MQTT state test" ) {
                 break;
         }
         ++call_recv;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     _mqtt_state_recv_ready(&state);
@@ -503,7 +503,7 @@ TEST_CASE( "MQTT state test" ) {
                 break;
         }
         ++call_recv;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     _mqtt_state_recv_ready(&state);
@@ -512,9 +512,9 @@ TEST_CASE( "MQTT state test" ) {
     REQUIRE( call_recv == 3 );
 }
 
-// Serves data, then reports the end of the stream as khc_socket_callback.h
-// has a callback report that the peer closed the connection: KHC_SOCK_OK with
-// 0 bytes. A reader that does not stop there gets KHC_SOCK_FAIL from the
+// Serves data, then reports the end of the stream as ebisu_socket.h
+// has a callback report that the peer closed the connection: EBISU_SOCK_OK with
+// 0 bytes. A reader that does not stop there gets EBISU_SOCK_FAIL from the
 // 100th call on, so that it fails the test's count of calls instead of
 // hanging the test.
 static void recv_then_end_of_stream(khct::cb::SockCtx& ctx, const std::string& data, int& call_recv)
@@ -523,11 +523,11 @@ static void recv_then_end_of_stream(khct::cb::SockCtx& ctx, const std::string& d
     ctx.on_recv = [data, served, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) mutable {
         ++call_recv;
         if (call_recv >= 100) {
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         }
         *out_actual_length = data.copy(buffer, length_to_read, served);
         served += *out_actual_length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 }
 
@@ -596,7 +596,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
             REQUIRE( strlen(host) == strlen("api.kii.com") );
             REQUIRE( port == 443 );
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         int call_send = 0;
@@ -608,7 +608,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             }
             ++call_send;
             *out_sent_length = length;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         int call_recv = 0;
@@ -619,13 +619,13 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         http_ctx.on_recv = [=, &call_recv, &ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             ++call_recv;
             *out_actual_length = ss.read(buffer, length_to_read).gcount();
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         int call_close = 0;
         http_ctx.on_close = [=, &call_close](void* socket_ctx) {
             ++call_close;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         _mqtt_state_install_push(&state);
@@ -644,7 +644,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
             REQUIRE( strlen(host) == strlen("api.kii.com") );
             REQUIRE( port == 443 );
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         int call_send = 0;
@@ -656,7 +656,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             }
             ++call_send;
             *out_sent_length = length;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         int call_recv = 0;
@@ -667,13 +667,13 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         http_ctx.on_recv = [=, &call_recv, &ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             ++call_recv;
             *out_actual_length = ss.read(buffer, length_to_read).gcount();
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         int call_close = 0;
         http_ctx.on_close = [=, &call_close](void* socket_ctx) {
             ++call_close;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         _mqtt_state_install_push(&state);
@@ -692,7 +692,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
             REQUIRE( strlen(host) == strlen("api.kii.com") );
             REQUIRE( port == 443 );
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         int call_send = 0;
@@ -704,7 +704,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             }
             ++call_send;
             *out_sent_length = length;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         int call_recv = 0;
@@ -715,13 +715,13 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         http_ctx.on_recv = [=, &call_recv, &ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             ++call_recv;
             *out_actual_length = ss.read(buffer, length_to_read).gcount();
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         int call_close = 0;
         http_ctx.on_close = [=, &call_close](void* socket_ctx) {
             ++call_close;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_GET_ENDPOINT;
@@ -742,7 +742,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
             REQUIRE( strlen(host) == strlen("api.kii.com") );
             REQUIRE( port == 443 );
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         int call_send = 0;
@@ -754,7 +754,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             }
             ++call_send;
             *out_sent_length = length;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         int call_recv = 0;
@@ -765,13 +765,13 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         http_ctx.on_recv = [=, &call_recv, &ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             ++call_recv;
             *out_actual_length = ss.read(buffer, length_to_read).gcount();
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         int call_close = 0;
         http_ctx.on_close = [=, &call_close](void* socket_ctx) {
             ++call_close;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_GET_ENDPOINT;
@@ -795,18 +795,18 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             for (kii_mqtt_task_state task_state : task_states) {
                 INFO("fail at " << fail_at << ", state " << task_state);
                 http_ctx.on_connect = [=](void* socket_context, const char* host, uint16_t port) {
-                    return fail_at == CONNECT ? KHC_SOCK_FAIL : KHC_SOCK_OK;
+                    return fail_at == CONNECT ? EBISU_SOCK_FAIL : EBISU_SOCK_OK;
                 };
                 http_ctx.on_send = [=](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
                     *out_sent_length = length;
-                    return fail_at == SEND ? KHC_SOCK_FAIL : KHC_SOCK_OK;
+                    return fail_at == SEND ? EBISU_SOCK_FAIL : EBISU_SOCK_OK;
                 };
                 http_ctx.on_recv = [=](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
                     *out_actual_length = 0;
-                    return KHC_SOCK_FAIL;
+                    return EBISU_SOCK_FAIL;
                 };
                 http_ctx.on_close = [=](void* socket_ctx) {
-                    return KHC_SOCK_OK;
+                    return EBISU_SOCK_OK;
                 };
 
                 state.info.task_state = task_state;
@@ -822,7 +822,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         }
     }
 
-    SECTION("sock connect got KHC_SOCK_AGAIN") {
+    SECTION("sock connect got EBISU_SOCK_AGAIN") {
         int call_connect = 0;
         mqtt_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, uint16_t port) {
             const char* exp_host = "jp-mqtt-dummy.kii.com";
@@ -830,7 +830,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             REQUIRE( strlen(host) == strlen(exp_host) );
             REQUIRE( strncmp(host, exp_host, strlen(exp_host)) == 0 );
             REQUIRE( port == 8883 );
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         state.info.task_state = KII_MQTT_ST_SOCK_CONNECT;
@@ -843,7 +843,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_connect == 1 );
     }
 
-    SECTION("sock connect got KHC_SOCK_FAIL") {
+    SECTION("sock connect got EBISU_SOCK_FAIL") {
         int call_connect = 0;
         mqtt_ctx.on_connect = [=, &call_connect](void* socket_context, const char* host, uint16_t port) {
             const char* exp_host = "jp-mqtt-dummy.kii.com";
@@ -851,7 +851,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             REQUIRE( strlen(host) == strlen(exp_host) );
             REQUIRE( strncmp(host, exp_host, strlen(exp_host)) == 0 );
             REQUIRE( port == 8883 );
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         state.info.task_state = KII_MQTT_ST_SOCK_CONNECT;
@@ -888,11 +888,11 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( state.info.error == KII_MQTT_ERR_INSUFFICIENT_BUFF );
     }
 
-    SECTION("send connect got KHC_SOCK_AGAIN") {
+    SECTION("send connect got EBISU_SOCK_AGAIN") {
         int call_send = 0;
         mqtt_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             ++call_send;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         state.info.task_state = KII_MQTT_ST_SEND_CONNECT;
@@ -905,11 +905,11 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_send == 1 );
     }
 
-    SECTION("send connect got KHC_SOCK_FAIL") {
+    SECTION("send connect got EBISU_SOCK_FAIL") {
         int call_send = 0;
         mqtt_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             ++call_send;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         state.info.task_state = KII_MQTT_ST_SEND_CONNECT;
@@ -922,18 +922,18 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_send == 1 );
     }
 
-    SECTION("recv connack got KHC_SOCK_AGAIN 1") {
+    SECTION("recv connack got EBISU_SOCK_AGAIN 1") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             switch (call_recv) {
                 case 0: // fixed header - control packet type(2)
-                    return KHC_SOCK_AGAIN;
+                    return EBISU_SOCK_AGAIN;
                 default:
                     FAIL();
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
@@ -943,18 +943,18 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 0 );
     }
 
-    SECTION("recv connack got KHC_SOCK_FAIL 1") {
+    SECTION("recv connack got EBISU_SOCK_FAIL 1") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             switch (call_recv) {
                 case 0: // fixed header - control packet type(2)
-                    return KHC_SOCK_FAIL;
+                    return EBISU_SOCK_FAIL;
                 default:
                     FAIL();
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
@@ -964,7 +964,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 0 );
     }
 
-    SECTION("recv connack got KHC_SOCK_AGAIN 2") {
+    SECTION("recv connack got EBISU_SOCK_AGAIN 2") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             switch (call_recv) {
@@ -974,13 +974,13 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     *out_actual_length = 1;
                     break;
                 case 1: // fixed header - remaining length (= 2)
-                    return KHC_SOCK_AGAIN;
+                    return EBISU_SOCK_AGAIN;
                 default:
                     FAIL();
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
@@ -990,7 +990,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 1 );
     }
 
-    SECTION("recv connack got KHC_SOCK_FAIL 2") {
+    SECTION("recv connack got EBISU_SOCK_FAIL 2") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             switch (call_recv) {
@@ -1000,13 +1000,13 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     *out_actual_length = 1;
                     break;
                 case 1: // fixed header - remaining length (= 2)
-                    return KHC_SOCK_FAIL;
+                    return EBISU_SOCK_FAIL;
                 default:
                     FAIL();
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
@@ -1016,7 +1016,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 1 );
     }
 
-    SECTION("recv connack got KHC_SOCK_AGAIN 3") {
+    SECTION("recv connack got EBISU_SOCK_AGAIN 3") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             switch (call_recv) {
@@ -1031,13 +1031,13 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     *out_actual_length = 1;
                     break;
                 case 2: // variable header (2 bytes)
-                    return KHC_SOCK_AGAIN;
+                    return EBISU_SOCK_AGAIN;
                 default:
                     FAIL();
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
@@ -1047,7 +1047,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 2 );
     }
 
-    SECTION("recv connack got KHC_SOCK_FAIL 3") {
+    SECTION("recv connack got EBISU_SOCK_FAIL 3") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             switch (call_recv) {
@@ -1062,13 +1062,13 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     *out_actual_length = 1;
                     break;
                 case 2: // variable header (2 bytes)
-                    return KHC_SOCK_FAIL;
+                    return EBISU_SOCK_FAIL;
                 default:
                     FAIL();
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
@@ -1097,7 +1097,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
@@ -1132,7 +1132,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
@@ -1169,12 +1169,12 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
         int call_close = 0;
         mqtt_ctx.on_close = [=, &call_close](void* socket_ctx) {
             ++call_close;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
@@ -1210,12 +1210,12 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
         int call_close = 0;
         mqtt_ctx.on_close = [=, &call_close](void* socket_ctx) {
             ++call_close;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
@@ -1253,12 +1253,12 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
         int call_close = 0;
         mqtt_ctx.on_close = [=, &call_close](void* socket_ctx) {
             ++call_close;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
@@ -1269,11 +1269,11 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_close == 0 );
     }
 
-    SECTION("send subscribe got KHC_SOCK_AGAIN") {
+    SECTION("send subscribe got EBISU_SOCK_AGAIN") {
         int call_send = 0;
         mqtt_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             ++call_send;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         state.info.task_state = KII_MQTT_ST_SEND_SUBSCRIBE;
@@ -1283,11 +1283,11 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_send == 1 );
     }
 
-    SECTION("send subscribe got KHC_SOCK_FAIL") {
+    SECTION("send subscribe got EBISU_SOCK_FAIL") {
         int call_send = 0;
         mqtt_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             ++call_send;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         state.info.task_state = KII_MQTT_ST_SEND_SUBSCRIBE;
@@ -1297,19 +1297,19 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_send == 1 );
     }
 
-    SECTION("recv suback got KHC_SOCK_AGAIN 1") {
+    SECTION("recv suback got EBISU_SOCK_AGAIN 1") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             switch (call_recv) {
                 case 0: // fixed header - control packet type(9)
-                    return KHC_SOCK_AGAIN;
+                    return EBISU_SOCK_AGAIN;
                     break;
                 default:
                     FAIL();
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_SUBACK;
@@ -1319,19 +1319,19 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 0 );
     }
 
-    SECTION("recv suback got KHC_SOCK_FAIL 1") {
+    SECTION("recv suback got EBISU_SOCK_FAIL 1") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             switch (call_recv) {
                 case 0: // fixed header - control packet type(9)
-                    return KHC_SOCK_FAIL;
+                    return EBISU_SOCK_FAIL;
                     break;
                 default:
                     FAIL();
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_SUBACK;
@@ -1341,7 +1341,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 0 );
     }
 
-    SECTION("recv suback got KHC_SOCK_AGAIN 2") {
+    SECTION("recv suback got EBISU_SOCK_AGAIN 2") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             switch (call_recv) {
@@ -1351,14 +1351,14 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     *out_actual_length = 1;
                     break;
                 case 1: // fixed header - remaining length (= 3)
-                    return KHC_SOCK_AGAIN;
+                    return EBISU_SOCK_AGAIN;
                     break;
                 default:
                     FAIL();
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_SUBACK;
@@ -1368,7 +1368,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 1 );
     }
 
-    SECTION("recv suback got KHC_SOCK_FAIL 2") {
+    SECTION("recv suback got EBISU_SOCK_FAIL 2") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             switch (call_recv) {
@@ -1378,14 +1378,14 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     *out_actual_length = 1;
                     break;
                 case 1: // fixed header - remaining length (= 3)
-                    return KHC_SOCK_FAIL;
+                    return EBISU_SOCK_FAIL;
                     break;
                 default:
                     FAIL();
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_SUBACK;
@@ -1395,7 +1395,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 1 );
     }
 
-    SECTION("recv suback got KHC_SOCK_AGAIN 3") {
+    SECTION("recv suback got EBISU_SOCK_AGAIN 3") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             switch (call_recv) {
@@ -1410,14 +1410,14 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     *out_actual_length = 1;
                     break;
                 case 2: // variable header (3 bytes)
-                    return KHC_SOCK_AGAIN;
+                    return EBISU_SOCK_AGAIN;
                     break;
                 default:
                     FAIL();
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_SUBACK;
@@ -1427,7 +1427,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 2 );
     }
 
-    SECTION("recv suback got KHC_SOCK_FAIL 3") {
+    SECTION("recv suback got EBISU_SOCK_FAIL 3") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             switch (call_recv) {
@@ -1442,14 +1442,14 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     *out_actual_length = 1;
                     break;
                 case 2: // variable header (3 bytes)
-                    return KHC_SOCK_FAIL;
+                    return EBISU_SOCK_FAIL;
                     break;
                 default:
                     FAIL();
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_SUBACK;
@@ -1478,7 +1478,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_SUBACK;
@@ -1514,7 +1514,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_SUBACK;
@@ -1524,18 +1524,18 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 3 );
     }
 
-    SECTION("recv ready got KHC_SOCK_AGAIN 1") {
+    SECTION("recv ready got EBISU_SOCK_AGAIN 1") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             switch (call_recv) {
                 case 0: // fixed header - Publish
-                    return KHC_SOCK_AGAIN;
+                    return EBISU_SOCK_AGAIN;
                 default:
                     FAIL();
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_READY;
@@ -1548,18 +1548,18 @@ TEST_CASE( "MQTT state abnormal tests" ) {
     // With no callback set by kii_set_cb_mqtt_sock_recv_timed_out(), a receive
     // that fails before any of a packet has arrived is taken for the receive
     // timeout running out, as it always was.
-    SECTION("recv ready got KHC_SOCK_FAIL 1") {
+    SECTION("recv ready got EBISU_SOCK_FAIL 1") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             switch (call_recv) {
                 case 0: // fixed header - Publish
-                    return KHC_SOCK_FAIL;
+                    return EBISU_SOCK_FAIL;
                 default:
                     FAIL();
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_READY;
@@ -1572,7 +1572,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
     // In this section and the next, part of the fixed header has been read.
     // Waiting on used to take the rest of the packet for the next one's fixed
     // header.
-    SECTION("recv ready got KHC_SOCK_AGAIN 2") {
+    SECTION("recv ready got EBISU_SOCK_AGAIN 2") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             switch (call_recv) {
@@ -1582,13 +1582,13 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     *out_actual_length = 1;
                     break;
                 case 1: // fixed header - remaining length[0]
-                    return KHC_SOCK_AGAIN;
+                    return EBISU_SOCK_AGAIN;
                 default:
                     FAIL();
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_READY;
@@ -1598,7 +1598,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 1 );
     }
 
-    SECTION("recv ready got KHC_SOCK_FAIL 2") {
+    SECTION("recv ready got EBISU_SOCK_FAIL 2") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             switch (call_recv) {
@@ -1608,13 +1608,13 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     *out_actual_length = 1;
                     break;
                 case 1: // fixed header - remaining length[0]
-                    return KHC_SOCK_FAIL;
+                    return EBISU_SOCK_FAIL;
                 default:
                     FAIL();
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_READY;
@@ -1625,14 +1625,14 @@ TEST_CASE( "MQTT state abnormal tests" ) {
     }
 
     // The recv callback reports a receive timeout and a lost connection alike
-    // as KHC_SOCK_FAIL. Without the timed-out callback, recv ready can only
+    // as EBISU_SOCK_FAIL. Without the timed-out callback, recv ready can only
     // take it for a timeout, so with keep-alive 0, which sends no PINGREQ to
     // find out, it waits on a lost connection forever.
     SECTION("recv ready without the timed-out callback waits on a failed receive, even with keep-alive 0") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [&call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             ++call_recv;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         kii._keep_alive_interval = 0;
@@ -1650,7 +1650,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         int call_recv = 0;
         mqtt_ctx.on_recv = [&call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             ++call_recv;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
         kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
         recv_timed_out_mock.timed_out = KII_TRUE;
@@ -1670,7 +1670,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         int call_recv = 0;
         mqtt_ctx.on_recv = [&call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             ++call_recv;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
         kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
         recv_timed_out_mock.timed_out = KII_FALSE;
@@ -1694,7 +1694,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
 
     SECTION("recv ready asks the timed-out callback with the context it was given") {
         mqtt_ctx.on_recv = [](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
         kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
         recv_timed_out_mock.timed_out = KII_TRUE;
@@ -1708,19 +1708,19 @@ TEST_CASE( "MQTT state abnormal tests" ) {
     // khc reads the HTTP socket and has no use for it.
     SECTION("the timed-out callback is not asked about the HTTP socket") {
         http_ctx.on_connect = [](void* socket_context, const char* host, unsigned int port) {
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
         http_ctx.on_send = [](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             *out_sent_length = length;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
         int call_recv = 0;
         http_ctx.on_recv = [&call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             ++call_recv;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
         http_ctx.on_close = [](void* socket_context) {
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
         kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
 
@@ -1735,7 +1735,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         int call_recv = 0;
         mqtt_ctx.on_recv = [&call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             ++call_recv;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
         kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
         recv_timed_out_mock.timed_out = KII_TRUE;
@@ -1747,11 +1747,11 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( recv_timed_out_mock.calls == 0 );
     }
 
-    // Non-blocking sockets are not supported, but KHC_SOCK_AGAIN says only that
+    // Non-blocking sockets are not supported, but EBISU_SOCK_AGAIN says only that
     // nothing has arrived yet, so recv ready waits on as it always did.
-    SECTION("recv ready waits on KHC_SOCK_AGAIN without asking the timed-out callback") {
+    SECTION("recv ready waits on EBISU_SOCK_AGAIN without asking the timed-out callback") {
         mqtt_ctx.on_recv = [](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
         kii_set_cb_mqtt_sock_recv_timed_out(&kii, mock_recv_timed_out, &mqtt_ctx);
         recv_timed_out_mock.timed_out = KII_FALSE;
@@ -1765,15 +1765,15 @@ TEST_CASE( "MQTT state abnormal tests" ) {
     // Once part of a packet has been read, the next read would start inside
     // it, so the task reconnects whether the receive timed out or not.
     SECTION("recv ready reconnects without asking the timed-out callback when the fixed header is cut off") {
-        const khc_sock_code_t codes[] = { KHC_SOCK_FAIL, KHC_SOCK_AGAIN };
-        for (khc_sock_code_t code : codes) {
+        const ebisu_sock_code_t codes[] = { EBISU_SOCK_FAIL, EBISU_SOCK_AGAIN };
+        for (ebisu_sock_code_t code : codes) {
             INFO("recv returns " << code << " for the remaining length");
             int call_recv = 0;
             mqtt_ctx.on_recv = [code, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
                 if (call_recv++ == 0) { // fixed header - PUBLISH
                     buffer[0] = 0x30;
                     *out_actual_length = 1;
-                    return KHC_SOCK_OK;
+                    return EBISU_SOCK_OK;
                 }
                 return code;
             };
@@ -1808,11 +1808,11 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( recv_timed_out_mock.calls == 0 );
     }
 
-    SECTION("recv msg got KHC_SOCK_AGAIN from _mqtt_recv_remaining_trash") {
+    SECTION("recv msg got EBISU_SOCK_AGAIN from _mqtt_recv_remaining_trash") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             ++call_recv;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_MSG;
@@ -1823,11 +1823,11 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 1 );
     }
 
-    SECTION("recv msg got KHC_SOCK_FAIL from _mqtt_recv_remaining_trash") {
+    SECTION("recv msg got EBISU_SOCK_FAIL from _mqtt_recv_remaining_trash") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             ++call_recv;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_MSG;
@@ -1838,11 +1838,11 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 1 );
     }
 
-    SECTION("recv msg got KHC_SOCK_AGAIN from _mqtt_recv_remaining") {
+    SECTION("recv msg got EBISU_SOCK_AGAIN from _mqtt_recv_remaining") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             ++call_recv;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_MSG;
@@ -1853,11 +1853,11 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( call_recv == 1 );
     }
 
-    SECTION("recv msg got KHC_SOCK_FAIL from _mqtt_recv_remaining") {
+    SECTION("recv msg got EBISU_SOCK_FAIL from _mqtt_recv_remaining") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [=, &call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             ++call_recv;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_MSG;
@@ -1877,7 +1877,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         mqtt_ctx.on_recv = [=, &served](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             *out_actual_length = packet.copy(buffer, length_to_read, served);
             served += *out_actual_length;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
         bool call_push = false;
         size_t push_length = 0;
@@ -1903,7 +1903,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         mqtt_ctx.on_recv = [=, &served](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             *out_actual_length = packet.copy(buffer, length_to_read, served);
             served += *out_actual_length;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
         bool call_push = false;
         size_t push_length = 0;
@@ -1927,7 +1927,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         int call_recv = 0;
         mqtt_ctx.on_recv = [&call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             ++call_recv;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
         bool call_push = false;
         push_ctx.on_push = [&call_push](const char* message, size_t message_length) {
@@ -1950,7 +1950,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         mqtt_ctx.on_recv = [=, &served](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             *out_actual_length = packet.copy(buffer, length_to_read, served);
             served += *out_actual_length;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
         bool call_push = false;
         const char* mqtt_buffer = state.kii->_mqtt_buffer;
@@ -1978,7 +1978,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         mqtt_ctx.on_recv = [=, &served](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             *out_actual_length = packet.copy(buffer, length_to_read, served);
             served += *out_actual_length;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
         bool call_push = false;
         const char* mqtt_buffer = state.kii->_mqtt_buffer;
@@ -2091,11 +2091,11 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( state.info.error == KII_MQTT_ERR_OK );
     }
 
-    SECTION("send pingreq got KHC_SOCK_AGAIN") {
+    SECTION("send pingreq got EBISU_SOCK_AGAIN") {
         int call_send = 0;
         mqtt_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             ++call_send;
-            return KHC_SOCK_AGAIN;
+            return EBISU_SOCK_AGAIN;
         };
 
         state.info.task_state = KII_MQTT_ST_SEND_PINGREQ;
@@ -2106,11 +2106,11 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         REQUIRE( state.elapsed_time_ms == 0 );
     }
 
-    SECTION("send pingreq got KHC_SOCK_FAIL") {
+    SECTION("send pingreq got EBISU_SOCK_FAIL") {
         int call_send = 0;
         mqtt_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             ++call_send;
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         };
 
         state.info.task_state = KII_MQTT_ST_SEND_PINGREQ;
@@ -2124,7 +2124,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
     SECTION("sending pingreq marks the pingresp outstanding") {
         mqtt_ctx.on_send = [=](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             *out_sent_length = length;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         REQUIRE( state.pingresp_received == KII_TRUE );
@@ -2148,7 +2148,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         state.pingresp_received = KII_FALSE;
@@ -2166,7 +2166,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         mqtt_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             ++call_send;
             *out_sent_length = length;
-            return KHC_SOCK_OK; // the socket still looks healthy
+            return EBISU_SOCK_OK; // the socket still looks healthy
         };
 
         state.pingresp_received = KII_FALSE;
@@ -2201,7 +2201,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
                     break;
             }
             ++call_recv;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         // As left behind by the connection that died with a PINGREQ in flight.
@@ -2215,7 +2215,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         mqtt_ctx.on_send = [=, &call_send](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
             ++call_send;
             *out_sent_length = length;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
         state.info.task_state = KII_MQTT_ST_SEND_PINGREQ;
         _mqtt_state_send_pingreq(&state);
@@ -2404,7 +2404,7 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
         REQUIRE( port == 443 );
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     int call_send = 0;
@@ -2416,7 +2416,7 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
         }
         ++call_send;
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     int call_recv = 0;
@@ -2443,13 +2443,13 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     http_ctx.on_recv = [=, &call_recv, &ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         ++call_recv;
         *out_actual_length = ss.read(buffer, length_to_read).gcount();
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     int call_close = 0;
     http_ctx.on_close = [=, &call_close](void* socket_ctx) {
         ++call_close;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     _mqtt_state_install_push(&state);
@@ -2467,7 +2467,7 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
         REQUIRE( strncmp(host, "api.kii.com", strlen("api.kii.com")) == 0 );
         REQUIRE( strlen(host) == strlen("api.kii.com") );
         REQUIRE( port == 443 );
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     call_send = 0;
@@ -2479,7 +2479,7 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
         }
         ++call_send;
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     call_recv = 0;
@@ -2514,13 +2514,13 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     http_ctx.on_recv = [=, &call_recv, &ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         ++call_recv;
         *out_actual_length = ss.read(buffer, length_to_read).gcount();
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     call_close = 0;
     http_ctx.on_close = [=, &call_close](void* socket_ctx) {
         ++call_close;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     _mqtt_state_get_endpoint(&state);
@@ -2545,7 +2545,7 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
         REQUIRE( strlen(host) == strlen(exp_host) );
         REQUIRE( strncmp(host, exp_host, strlen(exp_host)) == 0 );
         REQUIRE( port == 1883 );
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     _mqtt_state_sock_connect(&state);
@@ -2557,14 +2557,14 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
 // Stands in for the platform's task creation: records the call and returns
 // the result the test chose.
 struct TaskCreateCtx {
-    kii_task_code_t result;
+    ebisu_task_code_t result;
     int calls;
     std::string name;
     void* entry_param;
-    KII_TASK_ENTRY entry;
+    EBISU_TASK_ENTRY entry;
 };
 
-static kii_task_code_t mock_task_create(const char* name, KII_TASK_ENTRY entry, void* entry_param, void* userdata)
+static ebisu_task_code_t mock_task_create(const char* name, EBISU_TASK_ENTRY entry, void* entry_param, void* userdata)
 {
     TaskCreateCtx* ctx = (TaskCreateCtx*)userdata;
     ++ctx->calls;
@@ -2585,7 +2585,7 @@ TEST_CASE( "kii_start_push_task reports a task it could not create" ) {
     khct::set_push_needs(&kii, buff, sizeof(buff));
 
     SECTION("task created") {
-        TaskCreateCtx ctx = { KII_TASKC_OK, 0 };
+        TaskCreateCtx ctx = { EBISU_TASKC_OK, 0 };
         kii_set_cb_task_create(&kii, mock_task_create, &ctx);
         CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_OK );
         CHECK( ctx.calls == 1 );
@@ -2594,7 +2594,7 @@ TEST_CASE( "kii_start_push_task reports a task it could not create" ) {
     }
 
     SECTION("task not created") {
-        TaskCreateCtx ctx = { KII_TASKC_FAIL, 0 };
+        TaskCreateCtx ctx = { EBISU_TASKC_FAIL, 0 };
         kii_set_cb_task_create(&kii, mock_task_create, &ctx);
         CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_CREATE_TASK );
         CHECK( ctx.calls == 1 );
@@ -2612,7 +2612,7 @@ TEST_CASE( "kii_start_push_task needs what the task uses" ) {
     kii_t kii;
     kii_init(&kii);
     khct::set_push_needs(&kii, buff, sizeof(buff));
-    TaskCreateCtx ctx = { KII_TASKC_OK, 0 };
+    TaskCreateCtx ctx = { EBISU_TASKC_OK, 0 };
     kii_set_cb_task_create(&kii, mock_task_create, &ctx);
 
     const struct {
@@ -2669,7 +2669,7 @@ TEST_CASE( "kii_start_push_task refuses while its task is running" ) {
     kii_init(&kii);
     khct::set_push_needs(&kii, buff, sizeof(buff));
     kii_set_cb_task_continue(&kii, stop_task, NULL);
-    TaskCreateCtx ctx = { KII_TASKC_OK, 0 };
+    TaskCreateCtx ctx = { EBISU_TASKC_OK, 0 };
     kii_set_cb_task_create(&kii, mock_task_create, &ctx);
 
     SECTION("until it has ended") {
@@ -2696,10 +2696,10 @@ TEST_CASE( "kii_start_push_task refuses while its task is running" ) {
     }
 
     SECTION("but not after a task that could not be created") {
-        ctx.result = KII_TASKC_FAIL;
+        ctx.result = EBISU_TASKC_FAIL;
         REQUIRE( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_CREATE_TASK );
 
-        ctx.result = KII_TASKC_OK;
+        ctx.result = EBISU_TASKC_OK;
         CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_OK );
     }
 
@@ -2764,14 +2764,14 @@ TEST_CASE( "MQTT endpoint values out of range" ) {
     kii_set_cb_delay_ms(&kii, khct::cb::cb_delay_ms, NULL);
 
     http_ctx.on_connect = [](void* socket_context, const char* host, uint16_t port) {
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     http_ctx.on_send = [](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     http_ctx.on_close = [](void* socket_ctx) {
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     const struct {
@@ -2800,7 +2800,7 @@ TEST_CASE( "MQTT endpoint values out of range" ) {
         ss << mqtt_endpoint_response(c.port_tcp, c.port_ssl, c.ttl);
         http_ctx.on_recv = [&ss](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             *out_actual_length = ss.read(buffer, length_to_read).gcount();
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
 
         mqtt_state_t state;
@@ -2821,10 +2821,10 @@ TEST_CASE( "MQTT endpoint values out of range" ) {
     }
 }
 
-static kii_task_code_t count_task_create(const char* name, KII_TASK_ENTRY entry, void* entry_param, void* userdata)
+static ebisu_task_code_t count_task_create(const char* name, EBISU_TASK_ENTRY entry, void* entry_param, void* userdata)
 {
     ++*(int*)userdata;
-    return KII_TASKC_OK;
+    return EBISU_TASKC_OK;
 }
 
 // CONNECT carries the keep-alive in 16 bits, and it was written there with no
@@ -2845,7 +2845,7 @@ TEST_CASE( "MQTT keep-alive interval range" ) {
     mqtt_ctx.on_send = [&sent](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         sent.append(buffer, length);
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     SECTION("an interval MQTT can carry is sent as given") {
@@ -2917,14 +2917,14 @@ TEST_CASE( "MQTT PINGREQ timing" ) {
         ++call_send;
         REQUIRE( std::string(buffer, length) == std::string("\xc0\x00", 2) );
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     SECTION("after how long") {
         int call_recv = 0;
         mqtt_ctx.on_recv = [&call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             ++call_recv;
-            return KHC_SOCK_FAIL; // the receive timed out
+            return EBISU_SOCK_FAIL; // the receive timed out
         };
 
         const struct {
@@ -2987,7 +2987,7 @@ TEST_CASE( "MQTT PINGREQ timing" ) {
         int call_recv = 0;
         mqtt_ctx.on_recv = [&call_recv](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
             ++call_recv;
-            return KHC_SOCK_FAIL; // the receive timed out
+            return EBISU_SOCK_FAIL; // the receive timed out
         };
         kii._keep_alive_interval = 65535;
 
@@ -3139,23 +3139,23 @@ TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
     khct::cb::SockCtx http_ctx;
     http_ctx.on_connect = [&](void*, const char*, unsigned int) {
         if (http_responses.empty()) {
-            return KHC_SOCK_FAIL;
+            return EBISU_SOCK_FAIL;
         }
         http_resp = http_responses.front();
         http_responses.pop_front();
         http_resp_pos = 0;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     http_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     http_ctx.on_recv = [&http_resp, &http_resp_pos](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         *out_actual_length = http_resp.copy(buffer, length_to_read, http_resp_pos);
         http_resp_pos += *out_actual_length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
-    http_ctx.on_close = [](void*) { return KHC_SOCK_OK; };
+    http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
     kii_set_cb_http_sock_connect(&kii, khct::cb::mock_connect, &http_ctx);
     kii_set_cb_http_sock_send(&kii, khct::cb::mock_send, &http_ctx);
     kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
@@ -3172,15 +3172,15 @@ TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
     khct::cb::SockCtx mqtt_ctx;
     mqtt_ctx.on_connect = [&connects, &connect_ok](void*, const char*, unsigned int) {
         ++connects;
-        return connect_ok ? KHC_SOCK_OK : KHC_SOCK_FAIL;
+        return connect_ok ? EBISU_SOCK_OK : EBISU_SOCK_FAIL;
     };
     mqtt_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     mqtt_ctx.on_close = [&ctx](void*) {
         ++ctx.closes;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     size_t served = 0;
     serve_stream(mqtt_ctx, std::string("\x20\x02\x00\x00" "\x90\x03\x00\x01\x00", 9), served);
@@ -3301,7 +3301,7 @@ TEST_CASE( "The push task connects with the endpoint onboarding returned" ) {
         mqtt_ctx.on_connect = [&host, &port](void*, const char* h, uint16_t p) {
             host = h;
             port = p;
-            return KHC_SOCK_OK;
+            return EBISU_SOCK_OK;
         };
         kii_set_cb_mqtt_sock_connect(&kii, khct::cb::mock_connect, &mqtt_ctx);
         _mqtt_state_sock_connect(&state);
@@ -3392,9 +3392,9 @@ void retry_delay(uint32_t ms, void* userdata) {
     }
 }
 
-khc_sock_code_t retry_connect_fail(void* context, const char* host, uint16_t port) {
+ebisu_sock_code_t retry_connect_fail(void* context, const char* host, uint16_t port) {
     ++((RetryCtx*)context)->connects;
-    return KHC_SOCK_FAIL;
+    return EBISU_SOCK_FAIL;
 }
 
 }
@@ -3405,7 +3405,7 @@ TEST_CASE( "The waits between attempts" ) {
     strcpy(kii._author.author_id, "th.1");
     khct::cb::SockCtx mqtt_ctx;
     kii_set_cb_mqtt_sock_close(&kii, khct::cb::mock_close, &mqtt_ctx);
-    mqtt_ctx.on_close = [](void* socket_ctx) { return KHC_SOCK_OK; };
+    mqtt_ctx.on_close = [](void* socket_ctx) { return EBISU_SOCK_OK; };
 
     mqtt_state_t state;
     _init_mqtt_state(&kii, &state);
@@ -3492,22 +3492,22 @@ TEST_CASE( "The task can be stopped during a wait" ) {
     kii_set_cb_http_sock_recv(&kii, khct::cb::mock_recv, &http_ctx);
     kii_set_cb_http_sock_close(&kii, khct::cb::mock_close, &http_ctx);
     http_ctx.on_connect = [](void* socket_context, const char* host, uint16_t port) {
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     http_ctx.on_send = [](void* socket_context, const char* buffer, size_t length, size_t* out_sent_length) {
         *out_sent_length = length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     const std::string resp = "HTTP/1.1 503 Service Unavailable\r\n\r\n";
     size_t resp_pos = 0;
     http_ctx.on_recv = [&](void* socket_context, char* buffer, size_t length_to_read, size_t* out_actual_length) {
         *out_actual_length = resp.copy(buffer, length_to_read, resp_pos);
         resp_pos += *out_actual_length;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
     http_ctx.on_close = [&resp_pos](void* socket_ctx) {
         resp_pos = 0;
-        return KHC_SOCK_OK;
+        return EBISU_SOCK_OK;
     };
 
     mqtt_start_task(&kii);

@@ -64,12 +64,12 @@ pieces TCP likes, and the MQTT task reads one byte at a time.
 - The server certificate must chain to a root in the Windows root store, be
   issued for the host name and be in date. Revocation is not checked.
   Under wine the root store is the CA bundle of the system wine runs on.
-- A receive that times out returns `KHC_SOCK_FAIL`, and
+- A receive that times out returns `EBISU_SOCK_FAIL`, and
   `sock_cb_recv_timed_out()` tells the MQTT task it was a timeout, so it waits
   on instead of connecting again. The wait is a `select()`, rather than
   `SO_RCVTIMEO`, so that no `recv()` is ever cut short by the timeout: Winsock
   documents that as leaving the socket in an indeterminate state.
-- The end of the stream, `KHC_SOCK_OK` with 0 bytes, is a close_notify or the
+- The end of the stream, `EBISU_SOCK_OK` with 0 bytes, is a close_notify or the
   end of the TCP stream between records; a reset, or an end in the middle of a
   record, is a failure.
 - Renegotiation is not supported: a server that asks for it gets a failed

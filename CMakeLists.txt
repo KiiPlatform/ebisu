@@ -90,6 +90,7 @@ function(ebisu_configure_target tgt)
   target_link_libraries(${tgt} PUBLIC ebisu_version)
 endfunction()
 
+add_subdirectory(platform)
 add_subdirectory(jkii)
 add_subdirectory(khc)
 add_subdirectory(kii)

@@ -64,7 +64,7 @@ TEST_CASE( "task_create_cb leaves nothing behind when the task ends" ) {
     d.created = false;
     d.state = -1;
 
-    REQUIRE( task_create_cb("task", report_detach_state, &d, nullptr) == KII_TASKC_OK );
+    REQUIRE( task_create_cb("task", report_detach_state, &d, nullptr) == EBISU_TASKC_OK );
     d.created = true;
     while (d.state == -1) {
         sched_yield();

@@ -55,7 +55,7 @@ void tio_handler_init(tio_handler_t* handler)
 
 void tio_handler_set_cb_sock_connect_http(
         tio_handler_t* handler,
-        KHC_CB_SOCK_CONNECT cb_connect,
+        EBISU_CB_SOCK_CONNECT cb_connect,
         void* userdata)
 {
     kii_set_cb_http_sock_connect(&handler->_kii, cb_connect, userdata);
@@ -63,7 +63,7 @@ void tio_handler_set_cb_sock_connect_http(
 
 void tio_handler_set_cb_sock_send_http(
         tio_handler_t* handler,
-        KHC_CB_SOCK_SEND cb_send,
+        EBISU_CB_SOCK_SEND cb_send,
         void* userdata)
 {
     kii_set_cb_http_sock_send(&handler->_kii, cb_send, userdata);
@@ -71,7 +71,7 @@ void tio_handler_set_cb_sock_send_http(
 
 void tio_handler_set_cb_sock_recv_http(
         tio_handler_t* handler,
-        KHC_CB_SOCK_RECV cb_recv,
+        EBISU_CB_SOCK_RECV cb_recv,
         void* userdata)
 {
     kii_set_cb_http_sock_recv(&handler->_kii, cb_recv, userdata);
@@ -79,7 +79,7 @@ void tio_handler_set_cb_sock_recv_http(
 
 void tio_handler_set_cb_sock_close_http(
         tio_handler_t* handler,
-        KHC_CB_SOCK_CLOSE cb_close,
+        EBISU_CB_SOCK_CLOSE cb_close,
         void* userdata)
 {
     kii_set_cb_http_sock_close(&handler->_kii, cb_close, userdata);
@@ -103,7 +103,7 @@ void tio_handler_set_resp_header_buff(tio_handler_t* handler, char* buff, size_t
 
 void tio_handler_set_cb_sock_connect_mqtt(
         tio_handler_t* handler,
-        KHC_CB_SOCK_CONNECT cb_connect,
+        EBISU_CB_SOCK_CONNECT cb_connect,
         void* userdata)
 {
     kii_set_cb_mqtt_sock_connect(&handler->_kii, cb_connect, userdata);
@@ -111,7 +111,7 @@ void tio_handler_set_cb_sock_connect_mqtt(
 
 void tio_handler_set_cb_sock_send_mqtt(
         tio_handler_t* handler,
-        KHC_CB_SOCK_SEND cb_send,
+        EBISU_CB_SOCK_SEND cb_send,
         void* userdata)
 {
     kii_set_cb_mqtt_sock_send(&handler->_kii, cb_send, userdata);
@@ -119,7 +119,7 @@ void tio_handler_set_cb_sock_send_mqtt(
 
 void tio_handler_set_cb_sock_recv_mqtt(
         tio_handler_t* handler,
-        KHC_CB_SOCK_RECV cb_recv,
+        EBISU_CB_SOCK_RECV cb_recv,
         void* userdata)
 {
     kii_set_cb_mqtt_sock_recv(&handler->_kii, cb_recv, userdata);
@@ -135,7 +135,7 @@ void tio_handler_set_cb_sock_recv_timed_out_mqtt(
 
 void tio_handler_set_cb_sock_close_mqtt(
         tio_handler_t* handler,
-        KHC_CB_SOCK_CLOSE cb_close,
+        EBISU_CB_SOCK_CLOSE cb_close,
         void* userdata)
 {
     kii_set_cb_mqtt_sock_close(&handler->_kii, cb_close, userdata);
@@ -148,7 +148,7 @@ void tio_handler_set_mqtt_to_sock_recv(tio_handler_t* handler, uint32_t to_sock_
 
 void tio_handler_set_cb_task_create(
         tio_handler_t* handler,
-        KII_CB_TASK_CREATE cb_task_create,
+        EBISU_CB_TASK_CREATE cb_task_create,
         void* userdata)
 {
     kii_set_cb_task_create(&handler->_kii, cb_task_create, userdata);
@@ -168,7 +168,7 @@ void tio_handler_set_cb_task_exit(tio_handler_t* handler, KII_CB_TASK_EXIT cb_ex
 
 void tio_handler_set_cb_delay_ms(
         tio_handler_t* handler,
-        KII_CB_DELAY_MS cb_delay_ms,
+        EBISU_CB_DELAY_MS cb_delay_ms,
         void* userdata)
 {
     kii_set_cb_delay_ms(&handler->_kii, cb_delay_ms, userdata);
@@ -323,7 +323,7 @@ tio_code_t tio_handler_set_session(tio_handler_t* handler, kii_session_t* sessio
     return _set_session(&handler->_kii, session);
 }
 
-tio_code_t tio_handler_set_clock(tio_handler_t* handler, kii_clock_t* clock)
+tio_code_t tio_handler_set_clock(tio_handler_t* handler, ebisu_clock_t* clock)
 {
     return _tio_convert_code(kii_set_clock(&handler->_kii, clock));
 }
@@ -394,7 +394,7 @@ void tio_updater_init(tio_updater_t* updater)
 
 void tio_updater_set_cb_sock_connect(
         tio_updater_t* updater,
-        KHC_CB_SOCK_CONNECT cb_connect,
+        EBISU_CB_SOCK_CONNECT cb_connect,
         void* userdata)
 {
     kii_set_cb_http_sock_connect(&updater->_kii, cb_connect, userdata);
@@ -402,7 +402,7 @@ void tio_updater_set_cb_sock_connect(
 
 void tio_updater_set_cb_sock_send(
         tio_updater_t* updater,
-        KHC_CB_SOCK_SEND cb_send,
+        EBISU_CB_SOCK_SEND cb_send,
         void* userdata)
 {
     kii_set_cb_http_sock_send(&updater->_kii, cb_send, userdata);
@@ -410,7 +410,7 @@ void tio_updater_set_cb_sock_send(
 
 void tio_updater_set_cb_sock_recv(
         tio_updater_t* updater,
-        KHC_CB_SOCK_RECV cb_recv,
+        EBISU_CB_SOCK_RECV cb_recv,
         void* userdata)
 {
     kii_set_cb_http_sock_recv(&updater->_kii, cb_recv, userdata);
@@ -418,7 +418,7 @@ void tio_updater_set_cb_sock_recv(
 
 void tio_updater_set_cb_sock_close(
         tio_updater_t* updater,
-        KHC_CB_SOCK_CLOSE cb_close,
+        EBISU_CB_SOCK_CLOSE cb_close,
         void* userdata)
 {
     kii_set_cb_http_sock_close(&updater->_kii, cb_close, userdata);
@@ -426,7 +426,7 @@ void tio_updater_set_cb_sock_close(
 
 void tio_updater_set_cb_task_create(
         tio_updater_t* updater,
-        KII_CB_TASK_CREATE cb_task_create,
+        EBISU_CB_TASK_CREATE cb_task_create,
         void* userdata)
 {
     kii_set_cb_task_create(&updater->_kii, cb_task_create, userdata);
@@ -446,7 +446,7 @@ void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_CB_TASK_EXIT cb_ex
 
 void tio_updater_set_cb_delay_ms(
         tio_updater_t* updater,
-        KII_CB_DELAY_MS cb_delay_ms,
+        EBISU_CB_DELAY_MS cb_delay_ms,
         void* userdata)
 {
     kii_set_cb_delay_ms(&updater->_kii, cb_delay_ms, userdata);
@@ -632,7 +632,7 @@ tio_code_t tio_updater_set_session(tio_updater_t* updater, kii_session_t* sessio
     return _set_session(&updater->_kii, session);
 }
 
-tio_code_t tio_updater_set_clock(tio_updater_t* updater, kii_clock_t* clock)
+tio_code_t tio_updater_set_clock(tio_updater_t* updater, ebisu_clock_t* clock)
 {
     return _tio_convert_code(kii_set_clock(&updater->_kii, clock));
 }
@@ -697,13 +697,13 @@ tio_code_t tio_updater_start(
 
     // Before creating it, as it may have finished by the time that returns.
     updater->_task_running = KII_TRUE;
-    kii_task_code_t res = updater->_kii._cb_task_create(
+    ebisu_task_code_t res = updater->_kii._cb_task_create(
             TIO_TASK_NAME_UPDATE_STATE,
             _update_state,
             (void*)updater,
             updater->_kii._task_create_data);
 
-    if (res != KII_TASKC_OK) {
+    if (res != EBISU_TASKC_OK) {
         updater->_task_running = KII_FALSE;
         return TIO_ERR_CREATE_TASK;
     }
