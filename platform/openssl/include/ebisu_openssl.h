@@ -30,7 +30,10 @@ extern "C" {
  * CA certificates of the configuration set by ebisu_openssl_socket_set_tls(),
  * or the system's without one. A receive that times out is EBISU_SOCK_FAIL,
  * which recv_timed_out tells from a lost connection. One serves one connection
- * at a time, and is used again for the next once closed. Why an operation
+ * at a time, and is used again for the next once closed. A connection offers
+ * the server the session of the last one to the same host and port to resume,
+ * from those its configuration keeps, which saves most of the handshake if the
+ * server takes it. Why an operation
  * failed goes to the logger set by ebisu_openssl_socket_set_logger(), or to
  * stderr without one. OpenSSL 1.0.2 and later, initialized and made
  * thread-safe on first use.
@@ -62,6 +65,9 @@ typedef struct ebisu_openssl_socket_t {
     bool time_exact;
     /** \private Where diagnostics go, or NULL for stderr. */
     ebisu_logger_t* logger;
+    /** \private The port of the connection open, which the sessions the
+     * server gives are kept under, with its host. */
+    uint16_t port;
 } ebisu_openssl_socket_t;
 
 /**
@@ -69,7 +75,10 @@ typedef struct ebisu_openssl_socket_t {
  *
  * One SSL_CTX, with the CA certificates servers' certificates have to chain
  * to, set up once rather than for each connection. Sockets of any number of
- * tasks may share one.
+ * tasks may share one. It keeps the TLS sessions of the last connections to a
+ * few hosts, for the next connection to each to resume, until it is freed.
+ * Sockets without a configuration share the one with the system's CA
+ * certificates, which is never freed.
  */
 typedef struct ebisu_openssl_tls_t {
     SSL_CTX* ssl_ctx; /**< \private */
@@ -156,13 +165,14 @@ void ebisu_openssl_socket_set_clock(ebisu_openssl_socket_t* sock, ebisu_clock_t*
 /**
  * \brief Sets where the socket's diagnostics go.
  *
- * Each is why an operation failed, at EBISU_LOG_ERROR: a host that didn't
- * resolve or connect, a certificate rejected and why, OpenSSL's error. A
- * receive that times out isn't one.
+ * Why an operation failed, at EBISU_LOG_ERROR: a host that didn't resolve or
+ * connect, a certificate rejected and why, OpenSSL's error. A receive that
+ * times out isn't one. And at EBISU_LOG_DEBUG, a connection that resumed a
+ * session.
  *
  * \param [out] sock The socket.
  * \param [in] logger The logger, which has to outlive the socket, or NULL for
- * stderr.
+ * stderr, which gets the errors only.
  */
 void ebisu_openssl_socket_set_logger(ebisu_openssl_socket_t* sock, ebisu_logger_t* logger);
 
