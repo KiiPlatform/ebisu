@@ -62,6 +62,13 @@ A `kii_t` makes one request at a time, and APIs block until the response has
 been read. Tasks making requests at the same time each need a `kii_t` of their
 own, with buffers of their own, attached to the same [session](#kii_session).
 
+With a system set by `kii_set_system()`, the push task's, requests use it too.
+A socket that returns `EBISU_SOCK_AGAIN` is called again after its `delay_ms`
+of 10 milliseconds, rather than at once. With its `monotonic_ms`,
+`kii_set_request_timeout()` bounds each request as a whole, so that a server
+answering a byte at a time can't hold one for ever: past it, the request is
+`KII_ERR_TIMEOUT`.
+
 ## Authenticate the thing
 
 Most APIs are authorized with the thing's access token. Get one by:
@@ -360,7 +367,8 @@ APIs return `KII_ERR_OK` on success. `KII_ERR_RESP_STATUS` means the server
 answered with an error status, which `kii_get_resp_status()` gives, the
 response body being in the buffer. `KII_ERR_SOCK_*` come from the socket
 callbacks, and `KII_ERR_TOO_LARGE_DATA` from a request or response that doesn't
-fit in the buffer.
+fit in the buffer. `KII_ERR_TIMEOUT` is a request that took longer than
+`kii_set_request_timeout()` allows.
 
 `kii_get_resp_date()` gives the server's time, from the `Date` header of the
 call's response, for a device without a real-time clock: khc's

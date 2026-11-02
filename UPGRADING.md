@@ -260,6 +260,10 @@ kii:
   as host names themselves: pass the host instead. `"JP"` still gives
   `"api-jp.kii.com"`, the public site. `tio_handler_set_app()` and
   `tio_updater_set_app()`, which pass theirs on, took them too.
+- With a system set by `kii_set_system()`, `tio_handler_set_system()` or
+  `tio_updater_set_system()`, a request whose socket returns `EBISU_SOCK_AGAIN`
+  waits 10 ms with the system's `delay_ms` before calling it again, where 1.x
+  called it again at once.
 - `kii_get_mqtt_endpoint()` fails on a port outside 0 to 65535, or a TTL that is
   negative or above `UINT32_MAX`.
 - `kii_ti_put_firmware_version()` escapes the version, as onboarding always has.

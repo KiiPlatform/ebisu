@@ -128,7 +128,9 @@ typedef enum kii_code_t
     KII_ERR_PARSE_JSON, /**< \brief Failed to parse the response's JSON. */
     KII_ERR_FAIL, /**< \brief Other errors. */
     /* Added after KII_ERR_FAIL so that the codes above keep their values. */
-    KII_ERR_CREATE_TASK /**< \brief Error in creating task. */
+    KII_ERR_CREATE_TASK, /**< \brief Error in creating task. */
+    /** \brief The request took longer than kii_set_request_timeout() allows. */
+    KII_ERR_TIMEOUT
 } kii_code_t;
 
 /** \brief Represents scope of bucket/ topic. */
@@ -1579,10 +1581,37 @@ kii_code_t kii_set_mqtt_retry_wait_max(kii_t* kii, uint32_t max_sec);
  * estimates the time by adding up its waits and receive timeouts, which misses
  * the time spent elsewhere, such as in the push callback.
  *
+ * Requests use it too, as khc_set_system(khc*, ebisu_system_t*) describes: a
+ * socket operation that returns EBISU_SOCK_AGAIN is called again after a delay
+ * of KHC_AGAIN_WAIT_MS, and the timeout set by kii_set_request_timeout() is
+ * timed by its monotonic_ms.
+ *
  * \param [out] kii kii_t instance.
  * \param [in] system The system. It has to outlive kii.
  */
 void kii_set_system(kii_t* kii, ebisu_system_t* system);
+
+/**
+ * \brief Set how long a request may take.
+ *
+ * From connecting to the end of the response, so that a server that answers a
+ * byte at a time, each within the socket's receive timeout, can't hold the
+ * request for ever. Once it has passed, the request is KII_ERR_TIMEOUT. It is
+ * checked between socket operations, so one that blocks runs to its own
+ * timeout first. A request that renews the session's token, and the request
+ * sent again after it, are timed each on its own. It applies to the push task's
+ * requests too, which try again after a timeout.
+ *
+ * It needs the monotonic_ms of the system set by kii_set_system(): without
+ * one, a request fails with KII_ERR_FAIL, sending nothing.
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] timeout_sec The longest a request may take, in seconds, or 0,
+ * the default, for no limit. At most 4294967, the most milliseconds a uint32_t
+ * holds.
+ * \return KII_ERR_FAIL, changing nothing, for a longer one.
+ */
+kii_code_t kii_set_request_timeout(kii_t* kii, uint32_t timeout_sec);
 
 /**
  * \brief set callback determines whether to continue or discontinue task.

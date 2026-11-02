@@ -46,7 +46,11 @@ typedef enum tio_code_t {
     TIO_ERR_RESP_STATUS, /**< \brief REST API returns error status code. */
     TIO_ERR_PARSE_JSON, /**< \brief Error in parsing JSON. */
     TIO_ERR_CREATE_TASK, /**< \brief Error in creating task. */
-    TIO_ERR_FAIL /**< \brief Other errors. */
+    TIO_ERR_FAIL, /**< \brief Other errors. */
+    /* Added after TIO_ERR_FAIL so that the codes above keep their values. */
+    /** \brief A request took longer than tio_handler_set_request_timeout() or
+     * tio_updater_set_request_timeout() allows. */
+    TIO_ERR_TIMEOUT
 } tio_code_t;
 
 /**
@@ -402,6 +406,20 @@ tio_code_t tio_handler_set_mqtt_retry_wait_max(tio_handler_t* handler, uint32_t 
  * \param [in] system The system. It has to outlive the handler.
  */
 void tio_handler_set_system(tio_handler_t* handler, ebisu_system_t* system);
+
+/**
+ * \brief Set how long each of the handler's requests may take.
+ *
+ * See kii_set_request_timeout(): it needs the monotonic_ms of the system set
+ * by tio_handler_set_system(), and a request that takes longer is
+ * TIO_ERR_TIMEOUT, to the error callback.
+ *
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] timeout_sec In seconds, or 0, the default, for no limit. At most
+ * 4294967.
+ * \return TIO_ERR_FAIL, changing nothing, for a longer one.
+ */
+tio_code_t tio_handler_set_request_timeout(tio_handler_t* handler, uint32_t timeout_sec);
 
 /**
  * \brief Set callback determines whether to continue or discontinue task.
@@ -874,6 +892,20 @@ void tio_updater_set_socket(tio_updater_t* updater, ebisu_socket_t* socket);
  * \param [in] system The system. It has to outlive the updater.
  */
 void tio_updater_set_system(tio_updater_t* updater, ebisu_system_t* system);
+
+/**
+ * \brief Set how long each upload of the state may take.
+ *
+ * See kii_set_request_timeout(): it needs the monotonic_ms of the system set
+ * by tio_updater_set_system(), and an upload that takes longer is
+ * TIO_ERR_TIMEOUT, to the error callback.
+ *
+ * \param [out] updater tio_updater_t instance.
+ * \param [in] timeout_sec In seconds, or 0, the default, for no limit. At most
+ * 4294967.
+ * \return TIO_ERR_FAIL, changing nothing, for a longer one.
+ */
+tio_code_t tio_updater_set_request_timeout(tio_updater_t* updater, uint32_t timeout_sec);
 
 /**
  * \brief Set callback determines whether to continue or discontinue task.

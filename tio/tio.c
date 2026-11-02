@@ -94,6 +94,11 @@ void tio_handler_set_system(tio_handler_t* handler, ebisu_system_t* system)
     kii_set_system(&handler->_kii, system);
 }
 
+tio_code_t tio_handler_set_request_timeout(tio_handler_t* handler, uint32_t timeout_sec)
+{
+    return _tio_convert_code(kii_set_request_timeout(&handler->_kii, timeout_sec));
+}
+
 void tio_handler_set_cb_task_continue(tio_handler_t* handler, KII_CB_TASK_CONTINUE cb_continue, void* userdata)
 {
     handler->_cb_task_continue = cb_continue;
@@ -355,6 +360,11 @@ void tio_updater_set_socket(tio_updater_t* updater, ebisu_socket_t* socket)
 void tio_updater_set_system(tio_updater_t* updater, ebisu_system_t* system)
 {
     kii_set_system(&updater->_kii, system);
+}
+
+tio_code_t tio_updater_set_request_timeout(tio_updater_t* updater, uint32_t timeout_sec)
+{
+    return _tio_convert_code(kii_set_request_timeout(&updater->_kii, timeout_sec));
 }
 
 void tio_updater_set_cb_task_continue(tio_updater_t* updater, KII_CB_TASK_CONTINUE cb_continue, void* userdata)

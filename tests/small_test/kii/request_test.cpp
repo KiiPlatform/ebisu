@@ -469,3 +469,80 @@ TEST_CASE( "A body kii holds whole goes with its length, a streamed one chunked"
         CHECK( kii._khc._req_body_length == 2 );
     }
 }
+
+// A request called a socket operation that returned EBISU_SOCK_AGAIN again at
+// once, and nothing bounded it as a whole. The system set by kii_set_system()
+// now has it wait, and kii_set_request_timeout() bounds it.
+TEST_CASE( "kii's requests wait for their socket, and time out" ) {
+    char kii_buff[1024];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    kii_set_json_parser_resource(&kii, &resource);
+    strcpy(kii._author.author_id, "th.1");
+    strcpy(kii._author.access_token, "tok");
+    khct::HttpScript script;
+    script.attach(&kii);
+    script.responses = { khct::http_response(204, ""), khct::http_response(204, "") };
+
+    // A clock the system's delay moves on, as the socket below may.
+    uint64_t now = 1000;
+    std::vector<uint32_t> delays;
+    khct::cb::SystemCtx sys;
+    sys.on_delay_ms = [&now, &delays](uint32_t ms) {
+        delays.push_back(ms);
+        now += ms;
+    };
+    sys.on_monotonic_ms = [&now]() { return now; };
+    kii_topic_t topic = { KII_SCOPE_THING, "th.1", "t" };
+
+    SECTION("a socket not ready is waited for with the system's delay") {
+        int agains = 2;
+        auto connect = script.ctx.on_connect;
+        script.ctx.on_connect = [&agains, connect](void* ctx, const char* host, uint16_t port) {
+            return agains-- > 0 ? EBISU_SOCK_AGAIN : connect(ctx, host, port);
+        };
+        kii_set_system(&kii, sys.system());
+        CHECK( kii_put_topic(&kii, &topic) == KII_ERR_OK );
+        CHECK( delays == std::vector<uint32_t>(2, KHC_AGAIN_WAIT_MS) );
+    }
+
+    SECTION("a response trickling in past the timeout is KII_ERR_TIMEOUT") {
+        kii_set_system(&kii, sys.system());
+        REQUIRE( kii_set_request_timeout(&kii, 1) == KII_ERR_OK );
+        auto recv = script.ctx.on_recv;
+        script.ctx.on_recv = [&now, recv](void* ctx, char* buffer, size_t, size_t* out_actual_length) {
+            now += 100;
+            return recv(ctx, buffer, 1, out_actual_length);
+        };
+        CHECK( kii_put_topic(&kii, &topic) == KII_ERR_TIMEOUT );
+        CHECK( kii_get_resp_status(&kii) == 0 );
+    }
+
+    SECTION("each request is timed from its own start") {
+        kii_set_system(&kii, sys.system());
+        REQUIRE( kii_set_request_timeout(&kii, 1) == KII_ERR_OK );
+        CHECK( kii_put_topic(&kii, &topic) == KII_ERR_OK );
+        now += 5000;
+        CHECK( kii_put_topic(&kii, &topic) == KII_ERR_OK );
+    }
+
+    SECTION("a timeout without a clock sends nothing") {
+        REQUIRE( kii_set_request_timeout(&kii, 1) == KII_ERR_OK );
+        CHECK( kii_put_topic(&kii, &topic) == KII_ERR_FAIL );
+        CHECK( script.requests.empty() );
+    }
+
+    SECTION("the timeouts it takes") {
+        CHECK( kii_set_request_timeout(&kii, 4294967) == KII_ERR_OK );
+        CHECK( kii._khc._timeout_ms == 4294967000U );
+        CHECK( kii_set_request_timeout(&kii, 4294968) == KII_ERR_FAIL );
+        CHECK( kii._khc._timeout_ms == 4294967000U );
+        CHECK( kii_set_request_timeout(&kii, 0) == KII_ERR_OK );
+        CHECK( kii._khc._timeout_ms == 0 );
+    }
+}

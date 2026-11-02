@@ -459,6 +459,7 @@ static bool _is_temporary_error(kii_t* kii, kii_code_t res)
         case KII_ERR_SOCK_CLOSE:
         case KII_ERR_SOCK_SEND:
         case KII_ERR_SOCK_RECV:
+        case KII_ERR_TIMEOUT:
             return true;
         default:
             break;
