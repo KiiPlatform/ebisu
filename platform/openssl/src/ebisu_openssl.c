@@ -70,18 +70,195 @@ static void log_to(ebisu_logger_t* logger, ebisu_log_level_t level, const char* 
     __attribute__((format(printf, 3, 4)));
 #endif
 
-/* Sends a diagnostic to logger, or to stderr without one. */
+/* Sends a diagnostic to logger, or to stderr without one, where only what went
+   wrong goes: not a resumed session on every connection. */
 static void log_to(ebisu_logger_t* logger, ebisu_log_level_t level, const char* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
     if (logger != NULL) {
         logger->ops->log(logger, level, fmt, args);
-    } else {
+    } else if (level <= EBISU_LOG_WARNING) {
         vfprintf(stderr, fmt, args);
         fputc('\n', stderr);
     }
     va_end(args);
+}
+
+/* The sessions of the last connections to a few hosts, each offered to the
+   next connection to the same host and port to resume: the server may take it
+   and skip most of the handshake, which on a slow link costs more than many a
+   request. One per SSL_CTX, kept in its ex_data, so that the sockets sharing a
+   configuration share them, and SSL_CTX_free() frees them. */
+#define SESSION_CACHE_SIZE 4
+#define SESSION_HOST_SIZE 256
+
+typedef struct {
+    char host[SESSION_HOST_SIZE];
+    uint16_t port;
+    SSL_SESSION* session; /* NULL for an entry not in use. */
+} cached_session_t;
+
+typedef struct {
+    pthread_mutex_t lock;
+    cached_session_t entries[SESSION_CACHE_SIZE];
+    /* The entry the next host replaces when none is free. */
+    unsigned int next;
+} session_cache_t;
+
+static int session_cache_index = -1;
+
+static void free_session_cache(void* parent, void* ptr, CRYPTO_EX_DATA* ad,
+        int idx, long argl, void* argp)
+{
+    (void)parent;
+    (void)ad;
+    (void)idx;
+    (void)argl;
+    (void)argp;
+    session_cache_t* cache = (session_cache_t*)ptr;
+    if (cache == NULL) {
+        return;
+    }
+    for (int i = 0; i < SESSION_CACHE_SIZE; ++i) {
+        if (cache->entries[i].session != NULL) {
+            SSL_SESSION_free(cache->entries[i].session);
+        }
+    }
+    pthread_mutex_destroy(&cache->lock);
+    free(cache);
+}
+
+static void init_session_cache_index(void)
+{
+    session_cache_index = SSL_CTX_get_ex_new_index(0, NULL, NULL, NULL, free_session_cache);
+}
+
+static session_cache_t* session_cache_of(SSL_CTX* ssl_ctx)
+{
+    if (session_cache_index < 0) {
+        return NULL;
+    }
+    return (session_cache_t*)SSL_CTX_get_ex_data(ssl_ctx, session_cache_index);
+}
+
+/* The entry for host and port, or NULL. Called with the lock held. */
+static cached_session_t* find_session(session_cache_t* cache, const char* host, uint16_t port)
+{
+    for (int i = 0; i < SESSION_CACHE_SIZE; ++i) {
+        cached_session_t* entry = &cache->entries[i];
+        if (entry->session != NULL && entry->port == port &&
+                strcmp(entry->host, host) == 0) {
+            return entry;
+        }
+    }
+    return NULL;
+}
+
+/* Offers ssl the session kept for host and port, if there is one it can
+   resume. */
+static void offer_session(SSL* ssl, const char* host, uint16_t port)
+{
+    session_cache_t* cache = session_cache_of(SSL_get_SSL_CTX(ssl));
+    if (cache == NULL) {
+        return;
+    }
+    pthread_mutex_lock(&cache->lock);
+    cached_session_t* entry = find_session(cache, host, port);
+#if (OPENSSL_VERSION_NUMBER >= 0x10101000L)
+    if (entry != NULL && !SSL_SESSION_is_resumable(entry->session)) {
+        entry = NULL;
+    }
+#endif
+    if (entry != NULL) {
+        /* Which takes a reference of its own. */
+        SSL_set_session(ssl, entry->session);
+    }
+    pthread_mutex_unlock(&cache->lock);
+}
+
+/* Drops the session kept for host and port, after a handshake that failed,
+   which it may have been the cause of. */
+static void forget_session(SSL_CTX* ssl_ctx, const char* host, uint16_t port)
+{
+    session_cache_t* cache = session_cache_of(ssl_ctx);
+    if (cache == NULL) {
+        return;
+    }
+    pthread_mutex_lock(&cache->lock);
+    cached_session_t* entry = find_session(cache, host, port);
+    if (entry != NULL) {
+        SSL_SESSION_free(entry->session);
+        entry->session = NULL;
+    }
+    pthread_mutex_unlock(&cache->lock);
+}
+
+/* Called with each session the server gives: at the end of the handshake, or,
+   in TLS 1.3, when its tickets are read, after it. Keeps the session, in place
+   of the last one for the same host and port. Returning 1 keeps the reference
+   it is given. */
+static int on_new_session(SSL* ssl, SSL_SESSION* session)
+{
+    ebisu_openssl_socket_t* ctx = (ebisu_openssl_socket_t*)SSL_get_app_data(ssl);
+    /* The name the server was asked for, which the certificate was checked
+       against. */
+    const char* host = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+    session_cache_t* cache = session_cache_of(SSL_get_SSL_CTX(ssl));
+    if (ctx == NULL || host == NULL || cache == NULL ||
+            strlen(host) >= SESSION_HOST_SIZE) {
+        return 0;
+    }
+    pthread_mutex_lock(&cache->lock);
+    cached_session_t* entry = find_session(cache, host, ctx->port);
+    if (entry == NULL) {
+        for (int i = 0; i < SESSION_CACHE_SIZE && entry == NULL; ++i) {
+            if (cache->entries[i].session == NULL) {
+                entry = &cache->entries[i];
+            }
+        }
+    }
+    if (entry == NULL) {
+        entry = &cache->entries[cache->next];
+        cache->next = (cache->next + 1) % SESSION_CACHE_SIZE;
+    }
+    if (entry->session != NULL) {
+        SSL_SESSION_free(entry->session);
+    }
+    strcpy(entry->host, host);
+    entry->port = ctx->port;
+    entry->session = session;
+    pthread_mutex_unlock(&cache->lock);
+    return 1;
+}
+
+/* Gives ssl_ctx a cache of sessions to resume. Without one, as when memory
+   runs out, connections make a full handshake each, and work all the same. */
+static void add_session_cache(SSL_CTX* ssl_ctx)
+{
+    static pthread_once_t index_made = PTHREAD_ONCE_INIT;
+    pthread_once(&index_made, init_session_cache_index);
+    if (session_cache_index < 0) {
+        return;
+    }
+    session_cache_t* cache = (session_cache_t*)calloc(1, sizeof(*cache));
+    if (cache == NULL) {
+        return;
+    }
+    if (pthread_mutex_init(&cache->lock, NULL) != 0) {
+        free(cache);
+        return;
+    }
+    if (SSL_CTX_set_ex_data(ssl_ctx, session_cache_index, cache) != 1) {
+        pthread_mutex_destroy(&cache->lock);
+        free(cache);
+        return;
+    }
+    /* OpenSSL's own cache is the server's: a client's sessions are offered by
+       the application, from the callback's. */
+    SSL_CTX_set_session_cache_mode(ssl_ctx,
+            SSL_SESS_CACHE_CLIENT | SSL_SESS_CACHE_NO_INTERNAL_STORE);
+    SSL_CTX_sess_set_new_cb(ssl_ctx, on_new_session);
 }
 
 /* An SSL_CTX trusting the CA certificates given, or the system's without any. */
@@ -117,6 +294,7 @@ static SSL_CTX* new_ssl_ctx(const char* ca_file, const char* ca_path)
         return NULL;
     }
     SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, verify_callback);
+    add_session_cache(ssl_ctx);
     return ssl_ctx;
 }
 
@@ -583,9 +761,14 @@ static ebisu_sock_code_t
         goto fail;
     }
 
+    /* For the sessions the server gives to be kept under. */
+    ctx->port = port;
+    offer_session(ssl, host, port);
+
     clear_errors();
     ret = SSL_connect(ssl);
     if (ret != 1) {
+        forget_session(ssl_ctx, host, port);
         long verified = SSL_get_verify_result(ssl);
         if (verified != X509_V_OK) {
             log_to(ctx->logger, EBISU_LOG_ERROR, "server certificate for %s rejected: %s",
@@ -598,6 +781,9 @@ static ebisu_sock_code_t
         goto fail;
     }
 
+    if (SSL_session_reused(ssl)) {
+        log_to(ctx->logger, EBISU_LOG_DEBUG, "resumed the TLS session with %s.", host);
+    }
     ctx->socket = sock;
     ctx->ssl = ssl;
     ctx->ssl_failed = false;

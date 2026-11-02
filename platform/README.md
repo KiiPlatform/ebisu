@@ -51,7 +51,10 @@ which have the rest of `platform`.
   its connect timeout. Its connections share one
   `SSL_CTX`: the system's CA certificates, or those of an
   `ebisu_openssl_tls_t` set up with a CA file or directory, for a device
-  without the system's. Why an operation failed goes to the logger set with
+  without the system's. The `SSL_CTX` keeps the TLS sessions of the last
+  connections to a few hosts, and a connection offers the server the one for its
+  host and port to resume, which saves most of the handshake when the server
+  takes it. Why an operation failed goes to the logger set with
   `ebisu_openssl_socket_set_logger()`, or to stderr. Needs OpenSSL 1.0.2 or
   later, and POSIX threads.
 

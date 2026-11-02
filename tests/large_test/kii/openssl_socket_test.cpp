@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <chrono>
 #include <functional>
+#include <memory>
 #include <string>
 #include <thread>
 #include <utility>
@@ -288,8 +289,11 @@ socklen_t length_of(int family)
 // A TLS server on a loopback port of its own, IPv4's or IPv6's, with the
 // certificate for localhost, taking connections one after another until the
 // test is done. listening is false where the family can't be listened on.
+// With greet, it sends a byte once the handshake is done: in TLS 1.3, the
+// client reads the server's session tickets on its way to it.
 struct LocalServer {
     int family;
+    bool greet;
     int listen_fd;
     bool listening;
     uint16_t port;
@@ -297,8 +301,8 @@ struct LocalServer {
     bool stopping;
     std::thread thread;
 
-    explicit LocalServer(int family = AF_INET) : family(family), listening(false), port(0),
-            ctx(nullptr), stopping(false) {
+    explicit LocalServer(int family = AF_INET, bool greet = false) : family(family),
+            greet(greet), listening(false), port(0), ctx(nullptr), stopping(false) {
         signal(SIGPIPE, SIG_IGN);
         listen_fd = socket(family, SOCK_STREAM, 0);
         if (listen_fd < 0) {
@@ -357,6 +361,9 @@ struct LocalServer {
             SSL* ssl = SSL_new(ctx);
             SSL_set_fd(ssl, fd);
             if (SSL_accept(ssl) == 1) {
+                if (greet) {
+                    SSL_write(ssl, "!", 1);
+                }
                 // Until the client closes.
                 char c;
                 SSL_read(ssl, &c, 1);
@@ -478,6 +485,84 @@ TEST_CASE( "The OpenSSL sockets of a configuration share its SSL_CTX" ) {
         CHECK( SSL_get_SSL_CTX(sock->ssl) == tls.ssl_ctx );
         CHECK( sock->base.ops->close(&sock->base) == EBISU_SOCK_OK );
     }
+    ebisu_openssl_tls_free(&tls);
+}
+
+namespace {
+
+// Connects sock to server, reads its greeting, and closes, saying whether the
+// connection resumed a session.
+bool connect_resumed(ebisu_openssl_socket_t* sock, const LocalServer& server)
+{
+    REQUIRE( connect_to(sock, server) == EBISU_SOCK_OK );
+    bool resumed = SSL_session_reused(sock->ssl) == 1;
+    char c = 0;
+    size_t received = 0;
+    CHECK( sock->base.ops->recv(&sock->base, &c, 1, &received) == EBISU_SOCK_OK );
+    CHECK( received == 1 );
+    CHECK( sock->base.ops->close(&sock->base) == EBISU_SOCK_OK );
+    return resumed;
+}
+
+}
+
+// Every connection made a full handshake, though each request has one of its
+// own: the configuration now keeps the session of the last connection to a
+// host, for the next to resume.
+TEST_CASE( "The OpenSSL socket resumes the session of the last connection to the host" ) {
+    LocalServer server(AF_INET, true);
+    REQUIRE( server.listening );
+    CaFile ca;
+    ebisu_openssl_tls_t tls;
+    REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+    ebisu_openssl_socket_t sock;
+    ebisu_openssl_socket_init(&sock, 5, 5);
+    ebisu_openssl_socket_set_tls(&sock, &tls);
+
+    CHECK_FALSE( connect_resumed(&sock, server) );
+
+    SECTION("the next connection resumes it, and the one after") {
+        CHECK( connect_resumed(&sock, server) );
+        CHECK( connect_resumed(&sock, server) );
+    }
+
+    SECTION("another socket of the configuration resumes it") {
+        ebisu_openssl_socket_t other;
+        ebisu_openssl_socket_init(&other, 5, 5);
+        ebisu_openssl_socket_set_tls(&other, &tls);
+        CHECK( connect_resumed(&other, server) );
+    }
+
+    SECTION("a socket of another configuration doesn't") {
+        ebisu_openssl_tls_t other_tls;
+        REQUIRE( ebisu_openssl_tls_init(&other_tls, ca.path, nullptr) );
+        ebisu_openssl_socket_t other;
+        ebisu_openssl_socket_init(&other, 5, 5);
+        ebisu_openssl_socket_set_tls(&other, &other_tls);
+        CHECK_FALSE( connect_resumed(&other, server) );
+        ebisu_openssl_tls_free(&other_tls);
+    }
+
+    SECTION("a connection to another port doesn't, and each keeps its own") {
+        LocalServer other(AF_INET, true);
+        REQUIRE( other.listening );
+        CHECK_FALSE( connect_resumed(&sock, other) );
+        CHECK( connect_resumed(&sock, server) );
+        CHECK( connect_resumed(&sock, other) );
+    }
+
+    SECTION("more hosts than it keeps push the oldest out") {
+        std::vector<std::unique_ptr<LocalServer>> others;
+        for (int i = 0; i < 4; ++i) {
+            others.emplace_back(new LocalServer(AF_INET, true));
+            REQUIRE( others.back()->listening );
+            CHECK_FALSE( connect_resumed(&sock, *others.back()) );
+        }
+        CHECK_FALSE( connect_resumed(&sock, server) );
+        CHECK( connect_resumed(&sock, *others.back()) );
+    }
+
+    // What the configuration kept is freed with it, which valgrind checks.
     ebisu_openssl_tls_free(&tls);
 }
 
