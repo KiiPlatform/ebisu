@@ -17,6 +17,60 @@ void khc_set_stream_buff(khc* khc, char* buffer, size_t buff_size) {
     khc->_stream_buff_size = buff_size;
 }
 
+void khc_set_system(khc* khc, ebisu_system_t* system) {
+    khc->_system = system;
+}
+
+void khc_set_timeout_ms(khc* khc, uint32_t timeout_ms) {
+    khc->_timeout_ms = timeout_ms;
+}
+
+void khc_set_cb_continue(khc* khc, KHC_CB_CONTINUE cb, void* userdata) {
+    khc->_cb_continue = cb;
+    khc->_continue_data = userdata;
+}
+
+static uint64_t _now_ms(khc* khc) {
+    return khc->_system->ops->monotonic_ms(khc->_system);
+}
+
+// Why the request is to stop before its next step, if it is: it took too long,
+// or the continue callback cancelled it. KHC_ERR_OK if it goes on.
+static khc_code _stop_reason(khc* khc) {
+    if (khc->_timeout_ms > 0 &&
+            _now_ms(khc) - khc->_started_ms >= khc->_timeout_ms) {
+        return KHC_ERR_TIMEOUT;
+    }
+    if (khc->_cb_continue != NULL && !khc->_cb_continue(khc->_continue_data)) {
+        return KHC_ERR_CANCELLED;
+    }
+    return KHC_ERR_OK;
+}
+
+// Stops the request for reason, closing the connection if one is open, as any
+// failure does.
+static void _stop(khc* khc, khc_code reason) {
+    switch (khc->_state) {
+        case KHC_STATE_IDLE:
+        case KHC_STATE_CONNECT:
+            // Not connected yet.
+            khc->_result = reason;
+            khc->_state = KHC_STATE_FINISHED;
+            break;
+        case KHC_STATE_CLOSE:
+            // Closing, after the response or a failure, or after stopping, and
+            // the close returned EBISU_SOCK_AGAIN: it is given up on. The
+            // request keeps its result.
+            khc->_close_failed = true;
+            khc->_state = KHC_STATE_FINISHED;
+            break;
+        default:
+            khc->_result = reason;
+            khc->_state = KHC_STATE_CLOSE;
+            break;
+    }
+}
+
 khc_code khc_perform(khc* khc) {
     // Called without checking from here on. The read callback is left out of
     // this: a request need not have a body.
@@ -25,6 +79,16 @@ khc_code khc_perform(khc* khc) {
             ops->recv == NULL || ops->close == NULL ||
             khc->_cb_header == NULL || khc->_cb_write == NULL) {
         return KHC_ERR_FAIL;
+    }
+    // A timeout needs a clock to be measured with.
+    if (khc->_timeout_ms > 0 && (khc->_system == NULL ||
+            khc->_system->ops == NULL || khc->_system->ops->monotonic_ms == NULL)) {
+        return KHC_ERR_FAIL;
+    }
+    const bool can_wait = khc->_system != NULL && khc->_system->ops != NULL &&
+        khc->_system->ops->delay_ms != NULL;
+    if (khc->_timeout_ms > 0) {
+        khc->_started_ms = _now_ms(khc);
     }
     khc->_state = KHC_STATE_IDLE;
     khc->_result = KHC_ERR_OK;
@@ -60,7 +124,20 @@ khc_code khc_perform(khc* khc) {
     }
 
     while(khc->_state != KHC_STATE_FINISHED) {
+        khc_code reason = _stop_reason(khc);
+        if (reason != KHC_ERR_OK) {
+            _stop(khc, reason);
+            // Closing the connection, if there is one, is this step. Should
+            // it return EBISU_SOCK_AGAIN, the next is given up on.
+            if (khc->_state != KHC_STATE_CLOSE) {
+                continue;
+            }
+        }
+        khc->_again = false;
         state_handlers[khc->_state](khc);
+        if (khc->_again && can_wait) {
+            khc->_system->ops->delay_ms(khc->_system, KHC_AGAIN_WAIT_MS);
+        }
     }
 
     // free the allocated resource
@@ -96,6 +173,11 @@ void khc_init(khc* khc) {
     khc->_read_data = NULL;
 
     khc->_socket = NULL;
+
+    khc->_cb_continue = NULL;
+    khc->_continue_data = NULL;
+    khc->_system = NULL;
+    khc->_timeout_ms = 0;
 
     // User settings.
     khc->_enable_insecure = false;
@@ -150,6 +232,8 @@ void khc_reset_except_request(khc* khc) {
     khc->_close_failed = false;
     khc->_resp_header_skipped = false;
     khc->_sent_length = 0;
+    khc->_started_ms = 0;
+    khc->_again = false;
 }
 
 void khc_set_req_body_length(khc* khc, size_t length) {

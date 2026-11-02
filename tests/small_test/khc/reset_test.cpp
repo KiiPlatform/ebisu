@@ -146,6 +146,9 @@ struct Request {
         khc_set_cb_header(http, khct::cb::cb_header, &io);
         khc_enable_insecure(http, false);
         khc_enable_absolute_target(http, false);
+        khc_set_system(http, NULL);
+        khc_set_timeout_ms(http, 0);
+        khc_set_cb_continue(http, NULL, NULL);
         // A setting too: khc_init() makes it and resets keep it. There is no
         // function to change it.
         http->_resp_date_floor = 0;
@@ -226,6 +229,8 @@ TEST_CASE( "khc_reset_except_request leaves khc as if the request were new" ) {
             CHECK( used._sent_length == fresh._sent_length );
             CHECK( used._result == fresh._result );
             CHECK( used._close_failed == fresh._close_failed );
+            CHECK( used._started_ms == fresh._started_ms );
+            CHECK( used._again == fresh._again );
             CHECK( (const void*)used._stream_buff == (const void*)fresh._stream_buff );
             CHECK( (const void*)used._resp_header_buff == (const void*)fresh._resp_header_buff );
             // And whole, for a member not named here.
