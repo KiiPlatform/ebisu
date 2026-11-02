@@ -45,6 +45,7 @@ ebisu_add_test_suite(small_test_jkii
         jkii/src/jkii_escape_test.cpp
         jkii/src/jkii_primitive_test.cpp
         jkii/src/jkii_test.cpp
+        jkii/src/jkii_writer_test.cpp
     LINK ${EBISU_JKII_OBJS})
 
 # platform's POSIX port, which needs threads and nothing else. Linux only, as

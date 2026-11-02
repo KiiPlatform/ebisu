@@ -18,6 +18,7 @@ add_custom_target(ebisu_fuzzers)
 
 ebisu_add_fuzzer(fuzz_khc_response LINK ${EBISU_KHC_OBJS})
 ebisu_add_fuzzer(fuzz_jkii_parse LINK ${EBISU_JKII_OBJS})
+ebisu_add_fuzzer(fuzz_jkii_writer LINK ${EBISU_JKII_OBJS})
 ebisu_add_fuzzer(fuzz_mqtt_task
     LINK ${EBISU_KII_OBJS}
     INCLUDES ${PROJECT_SOURCE_DIR}/kii)
