@@ -546,3 +546,147 @@ TEST_CASE( "kii's requests wait for their socket, and time out" ) {
         CHECK( kii._khc._timeout_ms == 0 );
     }
 }
+
+namespace {
+
+// Gives body, at most size at a time, in pieces of at most piece if set.
+struct BodyReader {
+    std::string body;
+    size_t pos = 0;
+    size_t piece = 0;
+    int calls = 0;
+};
+
+size_t read_body(char* buffer, size_t size, void* userdata)
+{
+    BodyReader* r = (BodyReader*)userdata;
+    ++r->calls;
+    size_t n = r->body.size() - r->pos;
+    if (n > size) { n = size; }
+    if (r->piece > 0 && n > r->piece) { n = r->piece; }
+    memcpy(buffer, r->body.data() + r->pos, n);
+    r->pos += n;
+    return n;
+}
+
+// The body of a request, after its headers, decoded if chunked.
+std::string body_of(const std::string& request)
+{
+    size_t start = request.find("\r\n\r\n");
+    REQUIRE( start != std::string::npos );
+    std::string rest = request.substr(start + 4);
+    if (request.find("Transfer-Encoding: chunked\r\n") == std::string::npos) {
+        return rest;
+    }
+    std::string body;
+    size_t pos = 0;
+    while (true) {
+        size_t line_end = rest.find("\r\n", pos);
+        REQUIRE( line_end != std::string::npos );
+        size_t size = std::stoul(rest.substr(pos, line_end - pos), nullptr, 16);
+        if (size == 0) {
+            return body;
+        }
+        body += rest.substr(line_end + 2, size);
+        pos = line_end + 2 + size + 2;
+    }
+}
+
+}
+
+// kii_api_call_append_body() copied the whole body into the buffer, which
+// also takes the response: a large body needed a large buffer for every kii_t.
+// One read through a callback never has to be held whole.
+TEST_CASE( "An API call's body read through a callback" ) {
+    char kii_buff[256];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    kii_set_json_parser_resource(&kii, &resource);
+    khct::HttpScript script;
+    script.attach(&kii);
+    script.responses = {
+        khct::http_response(200, "{\"ok\":true}"),
+        khct::http_response(200, "{\"ok\":true}"),
+    };
+    // Several times the buffer, with a byte of each value.
+    BodyReader reader;
+    for (int i = 0; i < 4; ++i) {
+        for (int c = 0; c < 256; ++c) {
+            reader.body += (char)c;
+        }
+    }
+    auto start = [&kii]() {
+        REQUIRE( kii_api_call_start(&kii, "POST", "/api/apps/dummyAppID/big",
+                    "application/octet-stream", false) == KII_ERR_OK );
+    };
+
+    SECTION("with its length, whole, and the response in the buffer") {
+        start();
+        REQUIRE( kii_api_call_set_body_reader(&kii, read_body, &reader, reader.body.size()) == KII_ERR_OK );
+        CHECK( kii_api_call_run(&kii) == KII_ERR_OK );
+        REQUIRE( script.requests.size() == 1 );
+        CHECK( khct::contains(script.requests[0], "Content-Length: 1024\r\n") );
+        CHECK_FALSE( khct::contains(script.requests[0], "Transfer-Encoding") );
+        CHECK( body_of(script.requests[0]) == reader.body );
+        CHECK( kii_get_resp_status(&kii) == 200 );
+        CHECK( std::string(kii_buff, kii_get_resp_body_length(&kii)) == "{\"ok\":true}" );
+    }
+
+    SECTION("chunked, without one") {
+        reader.piece = 100;
+        start();
+        REQUIRE( kii_api_call_set_body_reader(&kii, read_body, &reader, KHC_REQ_BODY_LENGTH_UNKNOWN) == KII_ERR_OK );
+        CHECK( kii_api_call_run(&kii) == KII_ERR_OK );
+        REQUIRE( script.requests.size() == 1 );
+        CHECK( khct::contains(script.requests[0], "Transfer-Encoding: chunked\r\n") );
+        CHECK( body_of(script.requests[0]) == reader.body );
+        CHECK( reader.calls > 10 );
+    }
+
+    SECTION("ending before its length fails the call") {
+        reader.body.resize(1000);
+        start();
+        REQUIRE( kii_api_call_set_body_reader(&kii, read_body, &reader, 1024) == KII_ERR_OK );
+        CHECK( kii_api_call_run(&kii) == KII_ERR_FAIL );
+    }
+
+    SECTION("is the call's alone: the next takes its body from the buffer") {
+        start();
+        REQUIRE( kii_api_call_set_body_reader(&kii, read_body, &reader, reader.body.size()) == KII_ERR_OK );
+        REQUIRE( kii_api_call_run(&kii) == KII_ERR_OK );
+        int calls = reader.calls;
+        start();
+        REQUIRE( kii_api_call_append_body(&kii, "{\"a\":1}", 7) == KII_ERR_OK );
+        CHECK( kii_api_call_run(&kii) == KII_ERR_OK );
+        REQUIRE( script.requests.size() == 2 );
+        CHECK( body_of(script.requests[1]) == "{\"a\":1}" );
+        CHECK( khct::contains(script.requests[1], "Content-Length: 7\r\n") );
+        CHECK( reader.calls == calls );
+    }
+
+    SECTION("is the call's alone, though it isn't run") {
+        start();
+        REQUIRE( kii_api_call_set_body_reader(&kii, read_body, &reader, reader.body.size()) == KII_ERR_OK );
+        start();
+        REQUIRE( kii_api_call_append_body(&kii, "{\"a\":1}", 7) == KII_ERR_OK );
+        CHECK( kii_api_call_run(&kii) == KII_ERR_OK );
+        CHECK( body_of(script.requests[0]) == "{\"a\":1}" );
+        CHECK( reader.calls == 0 );
+    }
+
+    SECTION("in place of an appended body, not as well") {
+        start();
+        REQUIRE( kii_api_call_append_body(&kii, "{}", 2) == KII_ERR_OK );
+        CHECK( kii_api_call_set_body_reader(&kii, read_body, &reader, 2) == KII_ERR_FAIL );
+        start();
+        REQUIRE( kii_api_call_set_body_reader(&kii, read_body, &reader, 2) == KII_ERR_OK );
+        CHECK( kii_api_call_append_body(&kii, "{}", 2) == KII_ERR_FAIL );
+        start();
+        CHECK( kii_api_call_set_body_reader(&kii, NULL, NULL, 2) == KII_ERR_FAIL );
+    }
+}

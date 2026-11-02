@@ -305,9 +305,9 @@ kii_code_t _convert_code(khc_code khc_c) {
             return KII_ERR_TOO_LARGE_DATA;
         case KHC_ERR_FAIL:
             return KII_ERR_FAIL;
-        // Only a read callback of the application's can give more than it was
-        // asked for. The body length kii sets is that of its buffer, which its
-        // own read callback gives whole.
+        // A read callback of the application's gave more than it was asked
+        // for, or less than kii_api_call_set_body_reader()'s length. kii's own
+        // gives its buffer's body whole.
         case KHC_ERR_READ_CALLBACK:
             return KII_ERR_FAIL;
         case KHC_ERR_TIMEOUT:

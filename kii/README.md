@@ -361,6 +361,32 @@ with `kii_api_call_append_header()`. `kii_api_call_run()` returns `KII_ERR_OK`
 whatever the status, which `kii_get_resp_status()` gives. The response body is
 in the buffer, `kii_get_resp_body_length()` bytes long.
 
+A body appended this way is held whole in the buffer, before the response. One
+longer than the buffer can be read through a callback as it is sent instead,
+with `kii_api_call_set_body_reader()`, and the buffer then needs room for the
+response only. Given its length, it goes with a `Content-Length`:
+
+```c
+size_t read_readings(char* buffer, size_t size, void* userdata)
+{
+    /* Up to size bytes of the body, 0 once it has all been read. */
+    return fread(buffer, 1, size, (FILE*)userdata);
+}
+...
+    kii_api_call_start(&kii, "POST",
+            "/api/apps/your-app-id/buckets/readings/objects",
+            "application/json", true);
+    kii_api_call_set_body_reader(&kii, read_readings, file, file_size);
+    res = kii_api_call_run(&kii);
+```
+
+With `KHC_REQ_BODY_LENGTH_UNKNOWN` for the length it goes chunked. `jkii`'s
+[writer](https://github.com/KiiPlatform/ebisu/blob/master/jkii/README.md) can
+write a JSON body a piece at a time from the callback, into the buffer it is
+given. With a session, a call whose token the server refuses isn't sent again
+with the renewed one, as its body has been read: `kii_api_call_run()` gives the
+`403`.
+
 ## Results
 
 APIs return `KII_ERR_OK` on success. `KII_ERR_RESP_STATUS` means the server
