@@ -32,7 +32,9 @@ ebisu_add_test_suite(small_test_kii
         kii/session_test.cpp
         kii/simple_test.cpp
         kii/thing_test.cpp
-    LINK ${EBISU_KII_OBJS}
+    # session_test runs tasks on std::thread, which before glibc 2.34 needs
+    # libpthread.
+    LINK ${EBISU_KII_OBJS} Threads::Threads
     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/kii ${PROJECT_SOURCE_DIR}/kii)
 
 ebisu_add_test_suite(small_test_jkii
