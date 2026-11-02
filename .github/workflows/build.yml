@@ -238,29 +238,26 @@ jobs:
       - name: fuzz
         run: tests/fuzz/run.sh 60
 
-  # platform's OpenSSL port supports OpenSSL from 1.0.2, which no runner has:
-  # here it is built, with the POSIX port, against 1.0.2 and 1.1.1 in Ubuntu
-  # 18.04, and their tests run. Every other job builds them against the
-  # runner's own OpenSSL.
+  # platform's OpenSSL port supports the OpenSSL of the target devices, which
+  # no runner has: 1.0.2p and 1.1.1i are the oldest of each series they ship.
+  # Here each is built from its release tarball, the ports against it, and
+  # their tests run. Every other job builds the ports against the runner's own
+  # OpenSSL.
   openssl:
     name: ${{ format('OpenSSL {0} ports', matrix.version) }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - version: 1.0.2
-            package: libssl1.0-dev
-          - version: 1.1.1
-            package: libssl-dev
+        version: [1.0.2p, 1.1.1i]
     steps:
       - name: Checkout
         uses: actions/checkout@v7
       - name: Fetch tags
         run: git fetch --unshallow --tags --force
       - name: build and test
-        run: tests/samples/openssl_ports.sh ${{ matrix.package }}
+        run: tests/samples/openssl_ports.sh ${{ matrix.version }}
 
   # The large tests, against the live Kii application the secrets name: on
   # 64-bit Linux under valgrind, and on 64-bit Windows under wine, without
