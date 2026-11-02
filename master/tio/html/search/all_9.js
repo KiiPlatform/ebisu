@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['keep_20alive_20interval_0',['Set-up MQTT Keep Alive interval.',['../index.html#autotoc_md18',1,'']]],
-  ['keep_20the_20time_1',['Keep the time',['../index.html#autotoc_md24',1,'']]],
+  ['keep_20alive_20interval_0',['Set-up MQTT Keep Alive interval.',['../index.html#autotoc_md14',1,'']]],
+  ['keep_20the_20time_1',['Keep the time',['../index.html#autotoc_md20',1,'']]],
   ['khc_2',['khc',['../../../khc/html/structkhc.html',1,'']]],
   ['khc_2eh_3',['khc.h',['../../../khc/html/khc_8h.html',1,'']]],
   ['khc_5fslist_4',['khc_slist',['../../../khc/html/structkhc__slist.html',1,'']]],

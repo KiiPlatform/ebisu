@@ -271,32 +271,11 @@
       <arglist>(khc *khc, char *buffer, size_t buff_size)</arglist>
     </member>
     <member kind="function">
-      <type>khc_code</type>
-      <name>khc_set_cb_sock_connect</name>
+      <type>void</type>
+      <name>khc_set_socket</name>
       <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a6624acc943cadb511447cbd62ff0ef38</anchor>
-      <arglist>(khc *khc, EBISU_CB_SOCK_CONNECT cb, void *userdata)</arglist>
-    </member>
-    <member kind="function">
-      <type>khc_code</type>
-      <name>khc_set_cb_sock_send</name>
-      <anchorfile>khc_8h.html</anchorfile>
-      <anchor>a896b1834a588d53d1ac292cf5973e611</anchor>
-      <arglist>(khc *khc, EBISU_CB_SOCK_SEND cb, void *userdata)</arglist>
-    </member>
-    <member kind="function">
-      <type>khc_code</type>
-      <name>khc_set_cb_sock_recv</name>
-      <anchorfile>khc_8h.html</anchorfile>
-      <anchor>ac34965780c4d2fd994b20a001fbbf23e</anchor>
-      <arglist>(khc *khc, EBISU_CB_SOCK_RECV cb, void *userdata)</arglist>
-    </member>
-    <member kind="function">
-      <type>khc_code</type>
-      <name>khc_set_cb_sock_close</name>
-      <anchorfile>khc_8h.html</anchorfile>
-      <anchor>afc9a5e3eaec6511f9822535d7d63ac18</anchor>
-      <arglist>(khc *khc, EBISU_CB_SOCK_CLOSE cb, void *userdata)</arglist>
+      <anchor>aa873888c09db4188eadb6b4b1cb511db</anchor>
+      <arglist>(khc *khc, ebisu_socket_t *socket)</arglist>
     </member>
     <member kind="function">
       <type>khc_code</type>

@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['value_0',['value',['../../../jkii/html/structjkii__primitive__t.html#a863c6fd9740d55c99d09e760179dd0d9',1,'jkii_primitive_t']]]
+  ['unlock_0',['unlock',['../../../platform/html/structebisu__lock__ops__t.html#a25112960416a6dabd5b93862db66528a',1,'ebisu_lock_ops_t']]],
+  ['up_20a_20tt_20kii_5ft_20tt_1',['Set up a &lt;tt&gt;kii_t&lt;/tt&gt;',['../index.html#autotoc_md0',1,'']]],
+  ['username_2',['username',['../structkii__mqtt__endpoint__t.html#aec4ade1f997ee17af5360af5611f0c8f',1,'kii_mqtt_endpoint_t']]]
 ];

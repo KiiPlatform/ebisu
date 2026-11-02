@@ -212,13 +212,6 @@
       <arglist>)(const char *message, size_t message_length, void *userdata)</arglist>
     </member>
     <member kind="typedef">
-      <type>kii_bool_t(*</type>
-      <name>KII_CB_SOCK_RECV_TIMED_OUT</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a175bcb2cec59b87652fe358b47caeb72</anchor>
-      <arglist>)(void *sock_ctx)</arglist>
-    </member>
-    <member kind="typedef">
       <type>struct kii_t</type>
       <name>kii_t</name>
       <anchorfile>kii_8h.html</anchorfile>
@@ -555,17 +548,17 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>kii_session_set_cb_lock</name>
+      <name>kii_session_set_lock</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a1592ddc6b62ed44700d452571a350f71</anchor>
-      <arglist>(kii_session_t *session, EBISU_CB_LOCK cb_lock, EBISU_CB_LOCK cb_unlock, void *userdata)</arglist>
+      <anchor>abefddc1c8a843a1a33f845f65b375fb8</anchor>
+      <arglist>(kii_session_t *session, ebisu_lock_t *lock)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
-      <name>kii_session_set_cb_monotonic_ms</name>
+      <name>kii_session_set_system</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>ab69cee2bc83b5f4c15ef21ebf843ad7f</anchor>
-      <arglist>(kii_session_t *session, EBISU_CB_MONOTONIC_MS cb_monotonic_ms, void *userdata)</arglist>
+      <anchor>aa035526f1f96acd8f8bc2b66c031d511</anchor>
+      <arglist>(kii_session_t *session, ebisu_system_t *system)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -856,31 +849,10 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>kii_set_cb_http_sock_connect</name>
+      <name>kii_set_http_socket</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a942c052473b9794747f868695c18e43e</anchor>
-      <arglist>(kii_t *kii, EBISU_CB_SOCK_CONNECT cb_connect, void *userdata)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>kii_set_cb_http_sock_send</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a6c9276150c0112b4e3416d92ffa37ed0</anchor>
-      <arglist>(kii_t *kii, EBISU_CB_SOCK_SEND cb_send, void *userdata)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>kii_set_cb_http_sock_recv</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a9553805638cf9639d741fa9d36392a77</anchor>
-      <arglist>(kii_t *kii, EBISU_CB_SOCK_RECV cb_recv, void *userdata)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>kii_set_cb_http_sock_close</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>aaafaa9a6fd538d49c75ff086d3777b8f</anchor>
-      <arglist>(kii_t *kii, EBISU_CB_SOCK_CLOSE cb_close, void *userdata)</arglist>
+      <anchor>a9fa6301c6f9e3d05bf70070ef5e98d13</anchor>
+      <arglist>(kii_t *kii, ebisu_socket_t *socket)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -891,38 +863,10 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>kii_set_cb_mqtt_sock_connect</name>
+      <name>kii_set_mqtt_socket</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a4404d1dec7257927ed98683c267b4069</anchor>
-      <arglist>(kii_t *kii, EBISU_CB_SOCK_CONNECT cb_connect, void *userdata)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>kii_set_cb_mqtt_sock_send</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>aaefd11add58c94340fe50148701faef7</anchor>
-      <arglist>(kii_t *kii, EBISU_CB_SOCK_SEND cb_send, void *userdata)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>kii_set_cb_mqtt_sock_recv</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a777a18c9bfab9812071b7131ada6c314</anchor>
-      <arglist>(kii_t *kii, EBISU_CB_SOCK_RECV cb_recv, void *userdata)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>kii_set_cb_mqtt_sock_recv_timed_out</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a24ff91737ab55e0a0af6a6a6cd711e9c</anchor>
-      <arglist>(kii_t *kii, KII_CB_SOCK_RECV_TIMED_OUT cb_timed_out, void *userdata)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>kii_set_cb_mqtt_sock_close</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>ae590b5f559969e348a5673a39be5fde9</anchor>
-      <arglist>(kii_t *kii, EBISU_CB_SOCK_CLOSE cb_close, void *userdata)</arglist>
+      <anchor>a20a5ac73022650c043cbf81dcc362e68</anchor>
+      <arglist>(kii_t *kii, ebisu_socket_t *socket)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -933,10 +877,10 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>kii_set_cb_task_create</name>
+      <name>kii_set_system</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>ad6fcbd11254d9a0539e8a287c93bdef7</anchor>
-      <arglist>(kii_t *kii, EBISU_CB_TASK_CREATE cb_task_create, void *userdata)</arglist>
+      <anchor>a19398ca6a022a1025714df3ce49e4389</anchor>
+      <arglist>(kii_t *kii, ebisu_system_t *system)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -951,13 +895,6 @@
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a5d4c80bb655870e967d5a90500bcda08</anchor>
       <arglist>(kii_t *kii, KII_CB_TASK_EXIT cb_exit, void *userdata)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>kii_set_cb_delay_ms</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a7ee552761beac9a2c42be4bb627e9bad</anchor>
-      <arglist>(kii_t *kii, EBISU_CB_DELAY_MS cb_delay_ms, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>void</type>

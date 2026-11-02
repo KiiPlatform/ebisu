@@ -130,7 +130,7 @@ Data Structures</h2></td></tr>
 Macros</h2></td></tr>
 <tr class="memitem:a48f058506a462a68bdf8fbd4c661accf" id="r_a48f058506a462a68bdf8fbd4c661accf"><td class="memItemLeft" align="right" valign="top"><a id="a48f058506a462a68bdf8fbd4c661accf" name="a48f058506a462a68bdf8fbd4c661accf"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>KII_TASK_NAME_MQTT</b>&#160;&#160;&#160;&quot;kii_mqtt_task&quot;</td></tr>
-<tr class="memdesc:a48f058506a462a68bdf8fbd4c661accf"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT task name. Name can be referenced inside task create callback set by <a class="el" href="kii_8h.html#ad6fcbd11254d9a0539e8a287c93bdef7" title="Set callback creates task.">kii_set_cb_task_create()</a>. <br /></td></tr>
+<tr class="memdesc:a48f058506a462a68bdf8fbd4c661accf"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT task name. The name task_create of the system set by <a class="el" href="kii_8h.html#a19398ca6a022a1025714df3ce49e4389" title="Set the system: tasks, delays and a monotonic clock.">kii_set_system()</a> is given. <br /></td></tr>
 <tr class="separator:a48f058506a462a68bdf8fbd4c661accf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a954de624a9c08e935ab8ded034ee0b95" id="r_a954de624a9c08e935ab8ded034ee0b95"><td class="memItemLeft" align="right" valign="top"><a id="a954de624a9c08e935ab8ded034ee0b95" name="a954de624a9c08e935ab8ded034ee0b95"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>KII_AUTHOR_ID_MAX_SIZE</b>&#160;&#160;&#160;128</td></tr>
@@ -236,9 +236,6 @@ typedef struct <a class="el" href="structkii__installation__id__t.html">kii_inst
 <tr class="memitem:afeba27d97c92ad7a3a03374248eaeb14" id="r_afeba27d97c92ad7a3a03374248eaeb14"><td class="memItemLeft" align="right" valign="top">typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#afeba27d97c92ad7a3a03374248eaeb14">KII_PUSH_RECEIVED_CB</a>) (const char *message, size_t message_length, void *userdata)</td></tr>
 <tr class="memdesc:afeba27d97c92ad7a3a03374248eaeb14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when received push message via MQTT.  <br /></td></tr>
 <tr class="separator:afeba27d97c92ad7a3a03374248eaeb14"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a175bcb2cec59b87652fe358b47caeb72" id="r_a175bcb2cec59b87652fe358b47caeb72"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">kii_bool_t</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a175bcb2cec59b87652fe358b47caeb72">KII_CB_SOCK_RECV_TIMED_OUT</a>) (void *sock_ctx)</td></tr>
-<tr class="memdesc:a175bcb2cec59b87652fe358b47caeb72"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback tells whether the last receive on the MQTT socket timed out.  <br /></td></tr>
-<tr class="separator:a175bcb2cec59b87652fe358b47caeb72"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab1332877c811291e2a9693aaa5c15858" id="r_ab1332877c811291e2a9693aaa5c15858"><td class="memItemLeft" align="right" valign="top"><a id="ab1332877c811291e2a9693aaa5c15858" name="ab1332877c811291e2a9693aaa5c15858"></a>
 typedef struct <a class="el" href="structkii__t.html">kii_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kii_t</b></td></tr>
 <tr class="memdesc:ab1332877c811291e2a9693aaa5c15858"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stores data/ callbacks used by kii module. <br /></td></tr>
@@ -344,12 +341,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a58ff8b06b612885dea237c6ba31d1820" id="r_a58ff8b06b612885dea237c6ba31d1820"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a58ff8b06b612885dea237c6ba31d1820">kii_session_init</a> (<a class="el" href="structkii__session__t.html">kii_session_t</a> *session)</td></tr>
 <tr class="memdesc:a58ff8b06b612885dea237c6ba31d1820"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes <a class="el" href="structkii__session__t.html" title="Tokens shared by the kii_t instances acting as the same thing.">kii_session_t</a> instance.  <br /></td></tr>
 <tr class="separator:a58ff8b06b612885dea237c6ba31d1820"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1592ddc6b62ed44700d452571a350f71" id="r_a1592ddc6b62ed44700d452571a350f71"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a1592ddc6b62ed44700d452571a350f71">kii_session_set_cb_lock</a> (<a class="el" href="structkii__session__t.html">kii_session_t</a> *session, <a class="elRef" href="../../platform/html/ebisu__task_8h.html#a2d0a87d7cb40c29ce98738310f630728">EBISU_CB_LOCK</a> cb_lock, <a class="elRef" href="../../platform/html/ebisu__task_8h.html#a2d0a87d7cb40c29ce98738310f630728">EBISU_CB_LOCK</a> cb_unlock, void *userdata)</td></tr>
-<tr class="memdesc:a1592ddc6b62ed44700d452571a350f71"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the lock guarding the session.  <br /></td></tr>
-<tr class="separator:a1592ddc6b62ed44700d452571a350f71"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab69cee2bc83b5f4c15ef21ebf843ad7f" id="r_ab69cee2bc83b5f4c15ef21ebf843ad7f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ab69cee2bc83b5f4c15ef21ebf843ad7f">kii_session_set_cb_monotonic_ms</a> (<a class="el" href="structkii__session__t.html">kii_session_t</a> *session, <a class="elRef" href="../../platform/html/ebisu__task_8h.html#a1da5e106d6c8a76fbfa58819a424d915">EBISU_CB_MONOTONIC_MS</a> cb_monotonic_ms, void *userdata)</td></tr>
-<tr class="memdesc:ab69cee2bc83b5f4c15ef21ebf843ad7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the monotonic clock the session times token expiry with.  <br /></td></tr>
-<tr class="separator:ab69cee2bc83b5f4c15ef21ebf843ad7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abefddc1c8a843a1a33f845f65b375fb8" id="r_abefddc1c8a843a1a33f845f65b375fb8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#abefddc1c8a843a1a33f845f65b375fb8">kii_session_set_lock</a> (<a class="el" href="structkii__session__t.html">kii_session_t</a> *session, <a class="elRef" href="../../platform/html/structebisu__lock__t.html">ebisu_lock_t</a> *lock)</td></tr>
+<tr class="memdesc:abefddc1c8a843a1a33f845f65b375fb8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the lock guarding the session.  <br /></td></tr>
+<tr class="separator:abefddc1c8a843a1a33f845f65b375fb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa035526f1f96acd8f8bc2b66c031d511" id="r_aa035526f1f96acd8f8bc2b66c031d511"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#aa035526f1f96acd8f8bc2b66c031d511">kii_session_set_system</a> (<a class="el" href="structkii__session__t.html">kii_session_t</a> *session, <a class="elRef" href="../../platform/html/structebisu__system__t.html">ebisu_system_t</a> *system)</td></tr>
+<tr class="memdesc:aa035526f1f96acd8f8bc2b66c031d511"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the system whose monotonic clock the session times token expiry with.  <br /></td></tr>
+<tr class="separator:aa035526f1f96acd8f8bc2b66c031d511"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae1036e32aa7dc6c1afa027dfd728ebbf" id="r_ae1036e32aa7dc6c1afa027dfd728ebbf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ae1036e32aa7dc6c1afa027dfd728ebbf">kii_session_set_password</a> (<a class="el" href="structkii__session__t.html">kii_session_t</a> *session, const char *vendor_thing_id, const char *password)</td></tr>
 <tr class="memdesc:ae1036e32aa7dc6c1afa027dfd728ebbf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the thing's credentials the session renews tokens with.  <br /></td></tr>
 <tr class="separator:ae1036e32aa7dc6c1afa027dfd728ebbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -423,7 +420,7 @@ Functions</h2></td></tr>
 <tr class="memdesc:a9cde2654b8a652bb01bb5952faf0e538"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get MQTT endpoint.  <br /></td></tr>
 <tr class="separator:a9cde2654b8a652bb01bb5952faf0e538"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad3242ecc51a7aa640eb1ca7786a4a149" id="r_ad3242ecc51a7aa640eb1ca7786a4a149"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ad3242ecc51a7aa640eb1ca7786a4a149">kii_start_push_task</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, uint32_t keep_alive_interval_sec, <a class="el" href="kii_8h.html#afeba27d97c92ad7a3a03374248eaeb14">KII_PUSH_RECEIVED_CB</a> cb_push, void *userdata)</td></tr>
-<tr class="memdesc:ad3242ecc51a7aa640eb1ca7786a4a149"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push is called when message is delivered to the thing. The task is created by the callback set by <a class="el" href="kii_8h.html#ad6fcbd11254d9a0539e8a287c93bdef7" title="Set callback creates task.">kii_set_cb_task_create()</a>. If that callback is not set, or fails to create the task, no task is started and KII_ERR_CREATE_TASK is returned.  <br /></td></tr>
+<tr class="memdesc:ad3242ecc51a7aa640eb1ca7786a4a149"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push is called when message is delivered to the thing. The task is created by task_create of the system set by <a class="el" href="kii_8h.html#a19398ca6a022a1025714df3ce49e4389" title="Set the system: tasks, delays and a monotonic clock.">kii_set_system()</a>. If there is none, or it fails to create the task, no task is started and KII_ERR_CREATE_TASK is returned.  <br /></td></tr>
 <tr class="separator:ad3242ecc51a7aa640eb1ca7786a4a149"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a88de31a3b85076df9a58727d2ab63d7f" id="r_a88de31a3b85076df9a58727d2ab63d7f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a88de31a3b85076df9a58727d2ab63d7f">kii_execute_server_code_version</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const char *version, const char *endpoint_name, const char *params)</td></tr>
 <tr class="memdesc:a88de31a3b85076df9a58727d2ab63d7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute a specific version of server code.  <br /></td></tr>
@@ -473,51 +470,27 @@ Functions</h2></td></tr>
 <tr class="memitem:afeac6cc4848254cf840956e5cee04bcd" id="r_afeac6cc4848254cf840956e5cee04bcd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#afeac6cc4848254cf840956e5cee04bcd">kii_set_resp_header_buff</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, char *buff, size_t buff_size)</td></tr>
 <tr class="memdesc:afeac6cc4848254cf840956e5cee04bcd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set response header buffer.  <br /></td></tr>
 <tr class="separator:afeac6cc4848254cf840956e5cee04bcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a942c052473b9794747f868695c18e43e" id="r_a942c052473b9794747f868695c18e43e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a942c052473b9794747f868695c18e43e">kii_set_cb_http_sock_connect</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../platform/html/ebisu__socket_8h.html#a780e229bbc3fcf953655a2bfc62c38da">EBISU_CB_SOCK_CONNECT</a> cb_connect, void *userdata)</td></tr>
-<tr class="memdesc:a942c052473b9794747f868695c18e43e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket connect callback used for HTTP(S)  <br /></td></tr>
-<tr class="separator:a942c052473b9794747f868695c18e43e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6c9276150c0112b4e3416d92ffa37ed0" id="r_a6c9276150c0112b4e3416d92ffa37ed0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a6c9276150c0112b4e3416d92ffa37ed0">kii_set_cb_http_sock_send</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../platform/html/ebisu__socket_8h.html#a6893a04d2aaab7f3c1c7538d5b91ca36">EBISU_CB_SOCK_SEND</a> cb_send, void *userdata)</td></tr>
-<tr class="memdesc:a6c9276150c0112b4e3416d92ffa37ed0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket send callback used for HTTP(S)  <br /></td></tr>
-<tr class="separator:a6c9276150c0112b4e3416d92ffa37ed0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9553805638cf9639d741fa9d36392a77" id="r_a9553805638cf9639d741fa9d36392a77"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a9553805638cf9639d741fa9d36392a77">kii_set_cb_http_sock_recv</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../platform/html/ebisu__socket_8h.html#acf0f4d76d750ddc101f50e0c1d578c9e">EBISU_CB_SOCK_RECV</a> cb_recv, void *userdata)</td></tr>
-<tr class="memdesc:a9553805638cf9639d741fa9d36392a77"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket recv callback used for HTTP(S)  <br /></td></tr>
-<tr class="separator:a9553805638cf9639d741fa9d36392a77"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaafaa9a6fd538d49c75ff086d3777b8f" id="r_aaafaa9a6fd538d49c75ff086d3777b8f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#aaafaa9a6fd538d49c75ff086d3777b8f">kii_set_cb_http_sock_close</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../platform/html/ebisu__socket_8h.html#adef9314ef39820eb6dba3c7aca22bbc4">EBISU_CB_SOCK_CLOSE</a> cb_close, void *userdata)</td></tr>
-<tr class="memdesc:aaafaa9a6fd538d49c75ff086d3777b8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket close callback used for HTTP(S)  <br /></td></tr>
-<tr class="separator:aaafaa9a6fd538d49c75ff086d3777b8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9fa6301c6f9e3d05bf70070ef5e98d13" id="r_a9fa6301c6f9e3d05bf70070ef5e98d13"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a9fa6301c6f9e3d05bf70070ef5e98d13">kii_set_http_socket</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../platform/html/structebisu__socket__t.html">ebisu_socket_t</a> *socket)</td></tr>
+<tr class="memdesc:a9fa6301c6f9e3d05bf70070ef5e98d13"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the socket HTTP(S) requests are sent on.  <br /></td></tr>
+<tr class="separator:a9fa6301c6f9e3d05bf70070ef5e98d13"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adb5bef6d077b15fca3195ef7d39681cd" id="r_adb5bef6d077b15fca3195ef7d39681cd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#adb5bef6d077b15fca3195ef7d39681cd">kii_set_mqtt_buff</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, char *buff, size_t buff_size)</td></tr>
 <tr class="memdesc:adb5bef6d077b15fca3195ef7d39681cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set buffer used to parse MQTT message.  <br /></td></tr>
 <tr class="separator:adb5bef6d077b15fca3195ef7d39681cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4404d1dec7257927ed98683c267b4069" id="r_a4404d1dec7257927ed98683c267b4069"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a4404d1dec7257927ed98683c267b4069">kii_set_cb_mqtt_sock_connect</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../platform/html/ebisu__socket_8h.html#a780e229bbc3fcf953655a2bfc62c38da">EBISU_CB_SOCK_CONNECT</a> cb_connect, void *userdata)</td></tr>
-<tr class="memdesc:a4404d1dec7257927ed98683c267b4069"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket connect callback used for MQTT(S)  <br /></td></tr>
-<tr class="separator:a4404d1dec7257927ed98683c267b4069"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaefd11add58c94340fe50148701faef7" id="r_aaefd11add58c94340fe50148701faef7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#aaefd11add58c94340fe50148701faef7">kii_set_cb_mqtt_sock_send</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../platform/html/ebisu__socket_8h.html#a6893a04d2aaab7f3c1c7538d5b91ca36">EBISU_CB_SOCK_SEND</a> cb_send, void *userdata)</td></tr>
-<tr class="memdesc:aaefd11add58c94340fe50148701faef7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket send callback used for MQTT(S)  <br /></td></tr>
-<tr class="separator:aaefd11add58c94340fe50148701faef7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a777a18c9bfab9812071b7131ada6c314" id="r_a777a18c9bfab9812071b7131ada6c314"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a777a18c9bfab9812071b7131ada6c314">kii_set_cb_mqtt_sock_recv</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../platform/html/ebisu__socket_8h.html#acf0f4d76d750ddc101f50e0c1d578c9e">EBISU_CB_SOCK_RECV</a> cb_recv, void *userdata)</td></tr>
-<tr class="memdesc:a777a18c9bfab9812071b7131ada6c314"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket recv callback used for MQTT(S)  <br /></td></tr>
-<tr class="separator:a777a18c9bfab9812071b7131ada6c314"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a24ff91737ab55e0a0af6a6a6cd711e9c" id="r_a24ff91737ab55e0a0af6a6a6cd711e9c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a24ff91737ab55e0a0af6a6a6cd711e9c">kii_set_cb_mqtt_sock_recv_timed_out</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii_8h.html#a175bcb2cec59b87652fe358b47caeb72">KII_CB_SOCK_RECV_TIMED_OUT</a> cb_timed_out, void *userdata)</td></tr>
-<tr class="memdesc:a24ff91737ab55e0a0af6a6a6cd711e9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set callback telling a receive timeout from a failure on the MQTT(S) socket.  <br /></td></tr>
-<tr class="separator:a24ff91737ab55e0a0af6a6a6cd711e9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae590b5f559969e348a5673a39be5fde9" id="r_ae590b5f559969e348a5673a39be5fde9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ae590b5f559969e348a5673a39be5fde9">kii_set_cb_mqtt_sock_close</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../platform/html/ebisu__socket_8h.html#adef9314ef39820eb6dba3c7aca22bbc4">EBISU_CB_SOCK_CLOSE</a> cb_close, void *userdata)</td></tr>
-<tr class="memdesc:ae590b5f559969e348a5673a39be5fde9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set socket close callback used for MQTT(S)  <br /></td></tr>
-<tr class="separator:ae590b5f559969e348a5673a39be5fde9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a20a5ac73022650c043cbf81dcc362e68" id="r_a20a5ac73022650c043cbf81dcc362e68"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a20a5ac73022650c043cbf81dcc362e68">kii_set_mqtt_socket</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../platform/html/structebisu__socket__t.html">ebisu_socket_t</a> *socket)</td></tr>
+<tr class="memdesc:a20a5ac73022650c043cbf81dcc362e68"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the socket the MQTT task connects to the broker on.  <br /></td></tr>
+<tr class="separator:a20a5ac73022650c043cbf81dcc362e68"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a812b57be04fe37fc4a7ec66679f88db4" id="r_a812b57be04fe37fc4a7ec66679f88db4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a812b57be04fe37fc4a7ec66679f88db4">kii_set_mqtt_to_sock_recv</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, uint32_t to_sock_recv_sec)</td></tr>
 <tr class="memdesc:a812b57be04fe37fc4a7ec66679f88db4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set timeout of receiving data from socket user for MQTT(S)  <br /></td></tr>
 <tr class="separator:a812b57be04fe37fc4a7ec66679f88db4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad6fcbd11254d9a0539e8a287c93bdef7" id="r_ad6fcbd11254d9a0539e8a287c93bdef7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ad6fcbd11254d9a0539e8a287c93bdef7">kii_set_cb_task_create</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../platform/html/ebisu__task_8h.html#aef4e8f233b69f92311c3c78b3ac2efc2">EBISU_CB_TASK_CREATE</a> cb_task_create, void *userdata)</td></tr>
-<tr class="memdesc:ad6fcbd11254d9a0539e8a287c93bdef7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set callback creates task.  <br /></td></tr>
-<tr class="separator:ad6fcbd11254d9a0539e8a287c93bdef7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19398ca6a022a1025714df3ce49e4389" id="r_a19398ca6a022a1025714df3ce49e4389"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a19398ca6a022a1025714df3ce49e4389">kii_set_system</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../platform/html/structebisu__system__t.html">ebisu_system_t</a> *system)</td></tr>
+<tr class="memdesc:a19398ca6a022a1025714df3ce49e4389"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the system: tasks, delays and a monotonic clock.  <br /></td></tr>
+<tr class="separator:a19398ca6a022a1025714df3ce49e4389"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a308bbd95790fad608a661d8e5823c1d8" id="r_a308bbd95790fad608a661d8e5823c1d8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a308bbd95790fad608a661d8e5823c1d8">kii_set_cb_task_continue</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii__task__callback_8h.html#a66833479636e54ec6559fcb91c37263d">KII_CB_TASK_CONTINUE</a> cb_continue, void *userdata)</td></tr>
 <tr class="memdesc:a308bbd95790fad608a661d8e5823c1d8"><td class="mdescLeft">&#160;</td><td class="mdescRight">set callback determines whether to continue or discontinue task.  <br /></td></tr>
 <tr class="separator:a308bbd95790fad608a661d8e5823c1d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5d4c80bb655870e967d5a90500bcda08" id="r_a5d4c80bb655870e967d5a90500bcda08"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a5d4c80bb655870e967d5a90500bcda08">kii_set_cb_task_exit</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5">KII_CB_TASK_EXIT</a> cb_exit, void *userdata)</td></tr>
 <tr class="memdesc:a5d4c80bb655870e967d5a90500bcda08"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback called right before exit of MQTT task.  <br /></td></tr>
 <tr class="separator:a5d4c80bb655870e967d5a90500bcda08"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7ee552761beac9a2c42be4bb627e9bad" id="r_a7ee552761beac9a2c42be4bb627e9bad"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a7ee552761beac9a2c42be4bb627e9bad">kii_set_cb_delay_ms</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../platform/html/ebisu__task_8h.html#a1a6065581c7d054ea6e6298c4a7f0f00">EBISU_CB_DELAY_MS</a> cb_delay_ms, void *userdata)</td></tr>
-<tr class="memdesc:a7ee552761beac9a2c42be4bb627e9bad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback asks to delay/ sleep task execution.  <br /></td></tr>
-<tr class="separator:a7ee552761beac9a2c42be4bb627e9bad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace208de016c2792d00a43374638bb34c" id="r_ace208de016c2792d00a43374638bb34c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ace208de016c2792d00a43374638bb34c">kii_set_json_parser_resource</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../jkii/html/structjkii__resource__t.html">jkii_resource_t</a> *resource)</td></tr>
 <tr class="memdesc:ace208de016c2792d00a43374638bb34c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set JSON parser resource.  <br /></td></tr>
 <tr class="separator:ace208de016c2792d00a43374638bb34c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -641,30 +614,6 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Size actually read. Returning 0 indicates that whole data is read. </dd></dl>
-
-</div>
-</div>
-<a id="a175bcb2cec59b87652fe358b47caeb72" name="a175bcb2cec59b87652fe358b47caeb72"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a175bcb2cec59b87652fe358b47caeb72">&#9670;&#160;</a></span>KII_CB_SOCK_RECV_TIMED_OUT</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">typedef <a class="el" href="kii__task__callback_8h.html#ae275605d20f9b00b1ead9cbc8e3b3283">kii_bool_t</a>(* KII_CB_SOCK_RECV_TIMED_OUT) (void *sock_ctx)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Callback tells whether the last receive on the MQTT socket timed out. </p>
-<p>The recv callback set by <a class="el" href="kii_8h.html#a777a18c9bfab9812071b7131ada6c314" title="Set socket recv callback used for MQTT(S)">kii_set_cb_mqtt_sock_recv()</a> returns EBISU_SOCK_FAIL both when its receive timeout runs out with nothing received, which is routine on an idle connection, and when the receive fails because the connection is lost. This callback tells the two apart. It is called right after such a EBISU_SOCK_FAIL, before any other callback on the socket. See <a class="el" href="kii_8h.html#a24ff91737ab55e0a0af6a6a6cd711e9c" title="Set callback telling a receive timeout from a failure on the MQTT(S) socket.">kii_set_cb_mqtt_sock_recv_timed_out()</a>.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">sock_ctx</td><td>Context object pointer given to <a class="el" href="kii_8h.html#a24ff91737ab55e0a0af6a6a6cd711e9c" title="Set callback telling a receive timeout from a failure on the MQTT(S) socket.">kii_set_cb_mqtt_sock_recv_timed_out()</a>. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>KII_TRUE if the receive failed because its timeout ran out, KII_FALSE if it failed for any other reason. </dd></dl>
 
 </div>
 </div>
@@ -2341,14 +2290,14 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 
 </div>
 </div>
-<a id="a1592ddc6b62ed44700d452571a350f71" name="a1592ddc6b62ed44700d452571a350f71"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1592ddc6b62ed44700d452571a350f71">&#9670;&#160;</a></span>kii_session_set_cb_lock()</h2>
+<a id="abefddc1c8a843a1a33f845f65b375fb8" name="abefddc1c8a843a1a33f845f65b375fb8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abefddc1c8a843a1a33f845f65b375fb8">&#9670;&#160;</a></span>kii_session_set_lock()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void kii_session_set_cb_lock </td>
+          <td class="memname">void kii_session_set_lock </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structkii__session__t.html">kii_session_t</a> *&#160;</td>
           <td class="paramname"><em>session</em>, </td>
@@ -2356,20 +2305,8 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="elRef" href="../../platform/html/ebisu__task_8h.html#a2d0a87d7cb40c29ce98738310f630728">EBISU_CB_LOCK</a>&#160;</td>
-          <td class="paramname"><em>cb_lock</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="elRef" href="../../platform/html/ebisu__task_8h.html#a2d0a87d7cb40c29ce98738310f630728">EBISU_CB_LOCK</a>&#160;</td>
-          <td class="paramname"><em>cb_unlock</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>userdata</em>&#160;</td>
+          <td class="paramtype"><a class="elRef" href="../../platform/html/structebisu__lock__t.html">ebisu_lock_t</a> *&#160;</td>
+          <td class="paramname"><em>lock</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -2380,58 +2317,11 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><div class="memdoc">
 
 <p>Set the lock guarding the session. </p>
-<p>Required before <a class="el" href="kii_8h.html#ae33b3be622e96687b213d0fbfd6edf0f" title="Attach a session, or detach it with NULL.">kii_set_session()</a>. See EBISU_CB_LOCK for when the callbacks may be no-ops.</p>
+<p>Required before <a class="el" href="kii_8h.html#ae33b3be622e96687b213d0fbfd6edf0f" title="Attach a session, or detach it with NULL.">kii_set_session()</a>. See <a class="elRef" href="../../platform/html/structebisu__lock__ops__t.html">ebisu_lock_ops_t</a> for when the lock may do nothing.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">session</td><td><a class="el" href="structkii__session__t.html" title="Tokens shared by the kii_t instances acting as the same thing.">kii_session_t</a> instance. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_lock</td><td>Callback acquiring the lock. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_unlock</td><td>Callback releasing the lock. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer passed to both callbacks. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="ab69cee2bc83b5f4c15ef21ebf843ad7f" name="ab69cee2bc83b5f4c15ef21ebf843ad7f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab69cee2bc83b5f4c15ef21ebf843ad7f">&#9670;&#160;</a></span>kii_session_set_cb_monotonic_ms()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void kii_session_set_cb_monotonic_ms </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="structkii__session__t.html">kii_session_t</a> *&#160;</td>
-          <td class="paramname"><em>session</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="elRef" href="../../platform/html/ebisu__task_8h.html#a1da5e106d6c8a76fbfa58819a424d915">EBISU_CB_MONOTONIC_MS</a>&#160;</td>
-          <td class="paramname"><em>cb_monotonic_ms</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>userdata</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Set the monotonic clock the session times token expiry with. </p>
-<p>Required before <a class="el" href="kii_8h.html#ae33b3be622e96687b213d0fbfd6edf0f" title="Attach a session, or detach it with NULL.">kii_set_session()</a>. Called only with the session lock held.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">session</td><td><a class="el" href="structkii__session__t.html" title="Tokens shared by the kii_t instances acting as the same thing.">kii_session_t</a> instance. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_monotonic_ms</td><td>Callback returning the time. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer passed to cb_monotonic_ms. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">lock</td><td>The lock. It has to outlive the session. </td></tr>
   </table>
   </dd>
 </dl>
@@ -2517,6 +2407,44 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">session</td><td><a class="el" href="structkii__session__t.html" title="Tokens shared by the kii_t instances acting as the same thing.">kii_session_t</a> instance. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">mode</td><td>How to renew it. A value this version does not know is ignored, and the mode left as it was. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="aa035526f1f96acd8f8bc2b66c031d511" name="aa035526f1f96acd8f8bc2b66c031d511"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa035526f1f96acd8f8bc2b66c031d511">&#9670;&#160;</a></span>kii_session_set_system()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void kii_session_set_system </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__session__t.html">kii_session_t</a> *&#160;</td>
+          <td class="paramname"><em>session</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="elRef" href="../../platform/html/structebisu__system__t.html">ebisu_system_t</a> *&#160;</td>
+          <td class="paramname"><em>system</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the system whose monotonic clock the session times token expiry with. </p>
+<p>Required before <a class="el" href="kii_8h.html#ae33b3be622e96687b213d0fbfd6edf0f" title="Attach a session, or detach it with NULL.">kii_set_session()</a>. Its monotonic_ms is called only with the session lock held.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">session</td><td><a class="el" href="structkii__session__t.html" title="Tokens shared by the kii_t instances acting as the same thing.">kii_session_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">system</td><td>The system. It has to outlive the session. </td></tr>
   </table>
   </dd>
 </dl>
@@ -2611,227 +2539,6 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 
 </div>
 </div>
-<a id="a7ee552761beac9a2c42be4bb627e9bad" name="a7ee552761beac9a2c42be4bb627e9bad"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7ee552761beac9a2c42be4bb627e9bad">&#9670;&#160;</a></span>kii_set_cb_delay_ms()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void kii_set_cb_delay_ms </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
-          <td class="paramname"><em>kii</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="elRef" href="../../platform/html/ebisu__task_8h.html#a1a6065581c7d054ea6e6298c4a7f0f00">EBISU_CB_DELAY_MS</a>&#160;</td>
-          <td class="paramname"><em>cb_delay_ms</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>userdata</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Callback asks to delay/ sleep task execution. </p>
-<p>Called when the task needs to delay/ sleep.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_delay_ms</td><td>Callback function pointer. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer passed to cb_delay_ms. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="aaafaa9a6fd538d49c75ff086d3777b8f" name="aaafaa9a6fd538d49c75ff086d3777b8f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaafaa9a6fd538d49c75ff086d3777b8f">&#9670;&#160;</a></span>kii_set_cb_http_sock_close()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void kii_set_cb_http_sock_close </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
-          <td class="paramname"><em>kii</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="elRef" href="../../platform/html/ebisu__socket_8h.html#adef9314ef39820eb6dba3c7aca22bbc4">EBISU_CB_SOCK_CLOSE</a>&#160;</td>
-          <td class="paramname"><em>cb_close</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>userdata</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Set socket close callback used for HTTP(S) </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_close</td><td>Callback function pointer. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer passed to cb_close. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a942c052473b9794747f868695c18e43e" name="a942c052473b9794747f868695c18e43e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a942c052473b9794747f868695c18e43e">&#9670;&#160;</a></span>kii_set_cb_http_sock_connect()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void kii_set_cb_http_sock_connect </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
-          <td class="paramname"><em>kii</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="elRef" href="../../platform/html/ebisu__socket_8h.html#a780e229bbc3fcf953655a2bfc62c38da">EBISU_CB_SOCK_CONNECT</a>&#160;</td>
-          <td class="paramname"><em>cb_connect</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>userdata</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Set socket connect callback used for HTTP(S) </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_connect</td><td>Callback function pointer. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer passed to cb_connect. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a9553805638cf9639d741fa9d36392a77" name="a9553805638cf9639d741fa9d36392a77"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9553805638cf9639d741fa9d36392a77">&#9670;&#160;</a></span>kii_set_cb_http_sock_recv()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void kii_set_cb_http_sock_recv </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
-          <td class="paramname"><em>kii</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="elRef" href="../../platform/html/ebisu__socket_8h.html#acf0f4d76d750ddc101f50e0c1d578c9e">EBISU_CB_SOCK_RECV</a>&#160;</td>
-          <td class="paramname"><em>cb_recv</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>userdata</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Set socket recv callback used for HTTP(S) </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_recv</td><td>Callback function pointer. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer passed to cb_recv. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a6c9276150c0112b4e3416d92ffa37ed0" name="a6c9276150c0112b4e3416d92ffa37ed0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6c9276150c0112b4e3416d92ffa37ed0">&#9670;&#160;</a></span>kii_set_cb_http_sock_send()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void kii_set_cb_http_sock_send </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
-          <td class="paramname"><em>kii</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="elRef" href="../../platform/html/ebisu__socket_8h.html#a6893a04d2aaab7f3c1c7538d5b91ca36">EBISU_CB_SOCK_SEND</a>&#160;</td>
-          <td class="paramname"><em>cb_send</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>userdata</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Set socket send callback used for HTTP(S) </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_send</td><td>Callback function pointer. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer passed to cb_send. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <a id="a644e3299e543b6dc1d32f8fd84cc6437" name="a644e3299e543b6dc1d32f8fd84cc6437"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a644e3299e543b6dc1d32f8fd84cc6437">&#9670;&#160;</a></span>kii_set_cb_json_parser_resource()</h2>
 
@@ -2870,230 +2577,6 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">cb_alloc</td><td>allocator callback. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">cb_free</td><td>free callback should free memories allocated in cb_alloc. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="ae590b5f559969e348a5673a39be5fde9" name="ae590b5f559969e348a5673a39be5fde9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae590b5f559969e348a5673a39be5fde9">&#9670;&#160;</a></span>kii_set_cb_mqtt_sock_close()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void kii_set_cb_mqtt_sock_close </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
-          <td class="paramname"><em>kii</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="elRef" href="../../platform/html/ebisu__socket_8h.html#adef9314ef39820eb6dba3c7aca22bbc4">EBISU_CB_SOCK_CLOSE</a>&#160;</td>
-          <td class="paramname"><em>cb_close</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>userdata</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Set socket close callback used for MQTT(S) </p>
-<p>Note that socket used for MQTT must be blocking-mode, with a send timeout, and with a recv timeout the same as given to <a class="el" href="kii_8h.html#a812b57be04fe37fc4a7ec66679f88db4" title="Set timeout of receiving data from socket user for MQTT(S)">kii_set_mqtt_to_sock_recv()</a>. It is necessary for sending pingReq message periodically to achieve Keep-Alive since we don't require system clock APIs abstraction. </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_close</td><td>Callback function pointer. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer passed to cb_close. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a4404d1dec7257927ed98683c267b4069" name="a4404d1dec7257927ed98683c267b4069"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4404d1dec7257927ed98683c267b4069">&#9670;&#160;</a></span>kii_set_cb_mqtt_sock_connect()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void kii_set_cb_mqtt_sock_connect </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
-          <td class="paramname"><em>kii</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="elRef" href="../../platform/html/ebisu__socket_8h.html#a780e229bbc3fcf953655a2bfc62c38da">EBISU_CB_SOCK_CONNECT</a>&#160;</td>
-          <td class="paramname"><em>cb_connect</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>userdata</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Set socket connect callback used for MQTT(S) </p>
-<p>Note that socket used for MQTT must be blocking-mode, with a send timeout, and with a recv timeout the same as given to <a class="el" href="kii_8h.html#a812b57be04fe37fc4a7ec66679f88db4" title="Set timeout of receiving data from socket user for MQTT(S)">kii_set_mqtt_to_sock_recv()</a>. It is necessary for sending pingReq message periodically to achieve Keep-Alive since we don't require system clock APIs abstraction. </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_connect</td><td>Callback function pointer. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer passed to cb_connect. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a777a18c9bfab9812071b7131ada6c314" name="a777a18c9bfab9812071b7131ada6c314"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a777a18c9bfab9812071b7131ada6c314">&#9670;&#160;</a></span>kii_set_cb_mqtt_sock_recv()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void kii_set_cb_mqtt_sock_recv </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
-          <td class="paramname"><em>kii</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="elRef" href="../../platform/html/ebisu__socket_8h.html#acf0f4d76d750ddc101f50e0c1d578c9e">EBISU_CB_SOCK_RECV</a>&#160;</td>
-          <td class="paramname"><em>cb_recv</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>userdata</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Set socket recv callback used for MQTT(S) </p>
-<p>Note that socket used for MQTT must be blocking-mode, with a send timeout, and with a recv timeout the same as given to <a class="el" href="kii_8h.html#a812b57be04fe37fc4a7ec66679f88db4" title="Set timeout of receiving data from socket user for MQTT(S)">kii_set_mqtt_to_sock_recv()</a>. It is necessary for sending pingReq message periodically to achieve Keep-Alive since we don't require system clock APIs abstraction.</p>
-<p>Return EBISU_SOCK_FAIL when the receive timeout runs out with nothing received: the task takes EBISU_SOCK_OK with 0 bytes for the end of the stream, and connects again. <a class="el" href="kii_8h.html#a24ff91737ab55e0a0af6a6a6cd711e9c" title="Set callback telling a receive timeout from a failure on the MQTT(S) socket.">kii_set_cb_mqtt_sock_recv_timed_out()</a> lets the task tell such a timeout from a lost connection. </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_recv</td><td>Callback function pointer. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer passed to cb_recv. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="a24ff91737ab55e0a0af6a6a6cd711e9c" name="a24ff91737ab55e0a0af6a6a6cd711e9c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a24ff91737ab55e0a0af6a6a6cd711e9c">&#9670;&#160;</a></span>kii_set_cb_mqtt_sock_recv_timed_out()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void kii_set_cb_mqtt_sock_recv_timed_out </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
-          <td class="paramname"><em>kii</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="kii_8h.html#a175bcb2cec59b87652fe358b47caeb72">KII_CB_SOCK_RECV_TIMED_OUT</a>&#160;</td>
-          <td class="paramname"><em>cb_timed_out</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>userdata</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Set callback telling a receive timeout from a failure on the MQTT(S) socket. </p>
-<p>Optional. While the MQTT task waits for the next message, the recv callback set by <a class="el" href="kii_8h.html#a777a18c9bfab9812071b7131ada6c314" title="Set socket recv callback used for MQTT(S)">kii_set_cb_mqtt_sock_recv()</a> returns EBISU_SOCK_FAIL whenever its receive timeout runs out with nothing received, as it routinely does on an idle connection, and also when the connection is lost. Only the socket implementation can tell which, so the task asks cb_timed_out. If it returns KII_FALSE, the task closes the socket and connects again. If it returns KII_TRUE, the task goes on waiting, and sends PINGREQ when the keep-alive interval requires.</p>
-<p>If this callback is not set, or set to NULL, every such EBISU_SOCK_FAIL is taken for a timeout. A lost connection is then noticed only when a PINGREQ cannot be sent or goes unanswered, so with a keep-alive interval of 0 it is not noticed at all.</p>
-<p>cb_timed_out is asked only in that wait. A receive that fails partway through a message, or while waiting for the broker to answer CONNECT or SUBSCRIBE, makes the task connect again whatever the cause. It is never called for the HTTP(S) socket.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_timed_out</td><td>Callback function pointer, or NULL. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer passed to cb_timed_out, typically the one passed to <a class="el" href="kii_8h.html#a777a18c9bfab9812071b7131ada6c314" title="Set socket recv callback used for MQTT(S)">kii_set_cb_mqtt_sock_recv()</a>. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="aaefd11add58c94340fe50148701faef7" name="aaefd11add58c94340fe50148701faef7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaefd11add58c94340fe50148701faef7">&#9670;&#160;</a></span>kii_set_cb_mqtt_sock_send()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void kii_set_cb_mqtt_sock_send </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
-          <td class="paramname"><em>kii</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="elRef" href="../../platform/html/ebisu__socket_8h.html#a6893a04d2aaab7f3c1c7538d5b91ca36">EBISU_CB_SOCK_SEND</a>&#160;</td>
-          <td class="paramname"><em>cb_send</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>userdata</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Set socket send callback used for MQTT(S) </p>
-<p>Note that socket used for MQTT must be blocking-mode, with a send timeout, and with a recv timeout the same as given to <a class="el" href="kii_8h.html#a812b57be04fe37fc4a7ec66679f88db4" title="Set timeout of receiving data from socket user for MQTT(S)">kii_set_mqtt_to_sock_recv()</a>. It is necessary for sending pingReq message periodically to achieve Keep-Alive since we don't require system clock APIs abstraction. </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_send</td><td>Callback function pointer. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer passed to cb_send. </td></tr>
   </table>
   </dd>
 </dl>
@@ -3206,50 +2689,6 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 
 </div>
 </div>
-<a id="ad6fcbd11254d9a0539e8a287c93bdef7" name="ad6fcbd11254d9a0539e8a287c93bdef7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad6fcbd11254d9a0539e8a287c93bdef7">&#9670;&#160;</a></span>kii_set_cb_task_create()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void kii_set_cb_task_create </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
-          <td class="paramname"><em>kii</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="elRef" href="../../platform/html/ebisu__task_8h.html#aef4e8f233b69f92311c3c78b3ac2efc2">EBISU_CB_TASK_CREATE</a>&#160;</td>
-          <td class="paramname"><em>cb_task_create</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>userdata</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Set callback creates task. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_task_create</td><td>Callback function pointer. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Context object pointer passed to cb_task_create. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <a id="a5d4c80bb655870e967d5a90500bcda08" name="a5d4c80bb655870e967d5a90500bcda08"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5d4c80bb655870e967d5a90500bcda08">&#9670;&#160;</a></span>kii_set_cb_task_exit()</h2>
 
@@ -3283,16 +2722,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><div class="memdoc">
 
 <p>Callback called right before exit of MQTT task. </p>
-<p>Task exits when the task is discontinued by KII_CB_TASK_CONTINUE callback or un-recoverble error occurs. If it has a connection to the MQTT broker open, it closes it first with the callback set by <a class="el" href="kii_8h.html#ae590b5f559969e348a5673a39be5fde9" title="Set socket close callback used for MQTT(S)">kii_set_cb_mqtt_sock_close()</a>, so exit_cb is called with no MQTT connection open. In exit_cb, you'll need to free memory used for MQTT buffer set by <a class="el" href="kii_8h.html#adb5bef6d077b15fca3195ef7d39681cd" title="Set buffer used to parse MQTT message.">kii_set_mqtt_buff()</a>, Memory used for the userdata passed to following callbacks in case not yet freed.</p>
-<ul>
-<li><a class="el" href="kii_8h.html#aaefd11add58c94340fe50148701faef7" title="Set socket send callback used for MQTT(S)">kii_set_cb_mqtt_sock_send()</a></li>
-<li><a class="el" href="kii_8h.html#a4404d1dec7257927ed98683c267b4069" title="Set socket connect callback used for MQTT(S)">kii_set_cb_mqtt_sock_connect()</a></li>
-<li><a class="el" href="kii_8h.html#a777a18c9bfab9812071b7131ada6c314" title="Set socket recv callback used for MQTT(S)">kii_set_cb_mqtt_sock_recv()</a></li>
-<li><a class="el" href="kii_8h.html#a24ff91737ab55e0a0af6a6a6cd711e9c" title="Set callback telling a receive timeout from a failure on the MQTT(S) socket.">kii_set_cb_mqtt_sock_recv_timed_out()</a></li>
-<li><a class="el" href="kii_8h.html#ae590b5f559969e348a5673a39be5fde9" title="Set socket close callback used for MQTT(S)">kii_set_cb_mqtt_sock_close()</a></li>
-<li><a class="el" href="kii_8h.html#a308bbd95790fad608a661d8e5823c1d8" title="set callback determines whether to continue or discontinue task.">kii_set_cb_task_continue()</a></li>
-<li><a class="el" href="kii_8h.html#a5d4c80bb655870e967d5a90500bcda08" title="Callback called right before exit of MQTT task.">kii_set_cb_task_exit()</a></li>
-</ul>
+<p>Task exits when the task is discontinued by KII_CB_TASK_CONTINUE callback or un-recoverble error occurs. If it has a connection to the MQTT broker open, it closes it first with the close of the socket set by <a class="el" href="kii_8h.html#a20a5ac73022650c043cbf81dcc362e68" title="Set the socket the MQTT task connects to the broker on.">kii_set_mqtt_socket()</a>, so exit_cb is called with no MQTT connection open. In exit_cb, you'll need to free memory used for MQTT buffer set by <a class="el" href="kii_8h.html#adb5bef6d077b15fca3195ef7d39681cd" title="Set buffer used to parse MQTT message.">kii_set_mqtt_buff()</a>, the socket set by <a class="el" href="kii_8h.html#a20a5ac73022650c043cbf81dcc362e68" title="Set the socket the MQTT task connects to the broker on.">kii_set_mqtt_socket()</a>, and the userdata passed to <a class="el" href="kii_8h.html#a308bbd95790fad608a661d8e5823c1d8" title="set callback determines whether to continue or discontinue task.">kii_set_cb_task_continue()</a> and <a class="el" href="kii_8h.html#a5d4c80bb655870e967d5a90500bcda08" title="Callback called right before exit of MQTT task.">kii_set_cb_task_exit()</a>, in case not yet freed.</p>
 <p>In addition, you may need to call task/ thread termination API. It depends on the task/ threading framework you used to create task/ thread. After the exit_cb returned, task function immediately returns.</p>
 <p>If this API is not called or set NULL, task function immediately returns when task is discontinued or un-recoverble error occurs.</p>
 <dl class="params"><dt>Parameters</dt><dd>
@@ -3333,7 +2763,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><div class="memdoc">
 
 <p>Give a clock the time each response states. </p>
-<p>After each request, the date of its response, as <a class="el" href="kii_8h.html#ab36c0a18982d688d8a5c5307f1307ebc" title="Get the server&#39;s time, from the Date header of the last response.">kii_get_resp_date()</a> gives it, is given to the clock, which counts on from it. Every <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> of a device may share one clock, <a class="elRef" href="../../platform/html/ebisu__clock_8h.html#a2ed02822fa8e33727d72b2197f584488">ebisu_clock_set_cb_lock()</a> permitting.</p>
+<p>After each request, the date of its response, as <a class="el" href="kii_8h.html#ab36c0a18982d688d8a5c5307f1307ebc" title="Get the server&#39;s time, from the Date header of the last response.">kii_get_resp_date()</a> gives it, is given to the clock, which counts on from it. Every <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> of a device may share one clock, <a class="elRef" href="../../platform/html/ebisu__clock_8h.html#a3c26369c70ce325e9d32dfa68122a9cb">ebisu_clock_set_lock()</a> permitting.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
@@ -3342,6 +2772,43 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>KII_ERR_FAIL if the clock has no monotonic clock. </dd></dl>
+
+</div>
+</div>
+<a id="a9fa6301c6f9e3d05bf70070ef5e98d13" name="a9fa6301c6f9e3d05bf70070ef5e98d13"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9fa6301c6f9e3d05bf70070ef5e98d13">&#9670;&#160;</a></span>kii_set_http_socket()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void kii_set_http_socket </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
+          <td class="paramname"><em>kii</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="elRef" href="../../platform/html/structebisu__socket__t.html">ebisu_socket_t</a> *&#160;</td>
+          <td class="paramname"><em>socket</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the socket HTTP(S) requests are sent on. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">socket</td><td>The socket. It has to outlive kii, or be replaced first. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -3428,6 +2895,47 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 
 </div>
 </div>
+<a id="a20a5ac73022650c043cbf81dcc362e68" name="a20a5ac73022650c043cbf81dcc362e68"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a20a5ac73022650c043cbf81dcc362e68">&#9670;&#160;</a></span>kii_set_mqtt_socket()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void kii_set_mqtt_socket </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
+          <td class="paramname"><em>kii</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="elRef" href="../../platform/html/structebisu__socket__t.html">ebisu_socket_t</a> *&#160;</td>
+          <td class="paramname"><em>socket</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the socket the MQTT task connects to the broker on. </p>
+<p>It must be blocking, with a send timeout, and with a receive timeout the same as given to <a class="el" href="kii_8h.html#a812b57be04fe37fc4a7ec66679f88db4" title="Set timeout of receiving data from socket user for MQTT(S)">kii_set_mqtt_to_sock_recv()</a>: the task sends PINGREQ when the keep-alive interval requires between receives that time out.</p>
+<p>Its recv returns EBISU_SOCK_FAIL when the receive timeout runs out with nothing received: the task takes EBISU_SOCK_OK with 0 bytes for the end of the stream, and connects again.</p>
+<p>While the task waits for the next message, an EBISU_SOCK_FAIL from recv comes routinely from the timeout on an idle connection, and also from a lost connection. Only the socket can tell which, so the task asks its recv_timed_out. If that returns false, the task closes the socket and connects again. If it returns true, the task goes on waiting, and sends PINGREQ when the keep-alive interval requires. If the socket has no recv_timed_out, every such EBISU_SOCK_FAIL is taken for a timeout. A lost connection is then noticed only when a PINGREQ cannot be sent or goes unanswered, so with a keep-alive interval of 0 it is not noticed at all.</p>
+<p>recv_timed_out is asked only in that wait. A receive that fails partway through a message, or while waiting for the broker to answer CONNECT or SUBSCRIBE, makes the task connect again whatever the cause.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">socket</td><td>The socket. It has to outlive the task. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a812b57be04fe37fc4a7ec66679f88db4" name="a812b57be04fe37fc4a7ec66679f88db4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a812b57be04fe37fc4a7ec66679f88db4">&#9670;&#160;</a></span>kii_set_mqtt_to_sock_recv()</h2>
 
@@ -3455,7 +2963,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><div class="memdoc">
 
 <p>Set timeout of receiving data from socket user for MQTT(S) </p>
-<p>This setting is mandatory to achieve MQTT keep-alive mechanism. We use timeout instead of requirering system clock access to periodically send pingReq. Socket recv implementation given to <a class="el" href="kii_8h.html#a777a18c9bfab9812071b7131ada6c314" title="Set socket recv callback used for MQTT(S)">kii_set_cb_mqtt_sock_recv()</a> must have same timeout specified by to_sock_recv_sec.</p>
+<p>This setting is mandatory to achieve MQTT keep-alive mechanism. We use timeout instead of requirering system clock access to periodically send pingReq. The recv of the socket set by <a class="el" href="kii_8h.html#a20a5ac73022650c043cbf81dcc362e68" title="Set the socket the MQTT task connects to the broker on.">kii_set_mqtt_socket()</a> must have same timeout specified by to_sock_recv_sec.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
@@ -3642,6 +3150,44 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 
 </div>
 </div>
+<a id="a19398ca6a022a1025714df3ce49e4389" name="a19398ca6a022a1025714df3ce49e4389"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a19398ca6a022a1025714df3ce49e4389">&#9670;&#160;</a></span>kii_set_system()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void kii_set_system </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
+          <td class="paramname"><em>kii</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="elRef" href="../../platform/html/structebisu__system__t.html">ebisu_system_t</a> *&#160;</td>
+          <td class="paramname"><em>system</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the system: tasks, delays and a monotonic clock. </p>
+<p>The MQTT task is created with its task_create, and waits with its delay_ms.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">system</td><td>The system. It has to outlive kii. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a9f566e30857449a1899d80c91bfcdd6b" name="a9f566e30857449a1899d80c91bfcdd6b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9f566e30857449a1899d80c91bfcdd6b">&#9670;&#160;</a></span>kii_set_use_m_0_header_flag()</h2>
 
@@ -3718,7 +3264,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
       </table>
 </div><div class="memdoc">
 
-<p>Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push is called when message is delivered to the thing. The task is created by the callback set by <a class="el" href="kii_8h.html#ad6fcbd11254d9a0539e8a287c93bdef7" title="Set callback creates task.">kii_set_cb_task_create()</a>. If that callback is not set, or fails to create the task, no task is started and KII_ERR_CREATE_TASK is returned. </p>
+<p>Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push is called when message is delivered to the thing. The task is created by task_create of the system set by <a class="el" href="kii_8h.html#a19398ca6a022a1025714df3ce49e4389" title="Set the system: tasks, delays and a monotonic clock.">kii_set_system()</a>. If there is none, or it fails to create the task, no task is started and KII_ERR_CREATE_TASK is returned. </p>
 <p>After <a class="el" href="kii_8h.html#adaf6e5b9a952127cacd4cbf2e911039c" title="Execute onboarding.">kii_ti_onboard()</a> returned an MQTT endpoint for the thing kii acts as, the task connects with that endpoint. Otherwise it installs push and fetches the endpoint first. If the broker refuses the credentials, it fetches new ones for the same installation; or, when kii's session renews its token by onboarding again, it onboards again for new ones, which renews the token too.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -3729,7 +3275,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>kii_code_t. KII_ERR_FAIL, with no task started, if keep_alive_interval_sec is larger than 65535, if cb_push, the callback set by <a class="el" href="kii_8h.html#a7ee552761beac9a2c42be4bb627e9bad" title="Callback asks to delay/ sleep task execution.">kii_set_cb_delay_ms()</a>, a socket callback or a buffer it needs is not set, or if the task of an earlier start is still running. That task runs until the callback set by <a class="el" href="kii_8h.html#a308bbd95790fad608a661d8e5823c1d8" title="set callback determines whether to continue or discontinue task.">kii_set_cb_task_continue()</a> ends it, or an error does, and has finished by the time the callback set by <a class="el" href="kii_8h.html#a5d4c80bb655870e967d5a90500bcda08" title="Callback called right before exit of MQTT task.">kii_set_cb_task_exit()</a> is called, which may start it again. A task ended any other way, such as by killing its thread, needs <a class="el" href="kii_8h.html#a7ba3ce1d86f6048b7b3fefba36056410" title="Initializes kii_t instance.">kii_init()</a> before starting again. KII_ERR_CREATE_TASK if no callback is set by <a class="el" href="kii_8h.html#ad6fcbd11254d9a0539e8a287c93bdef7" title="Set callback creates task.">kii_set_cb_task_create()</a>, or it fails. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>kii_code_t. KII_ERR_FAIL, with no task started, if keep_alive_interval_sec is larger than 65535, if cb_push, the system's delay_ms, a socket or an operation of one, or a buffer it needs is not set, or if the task of an earlier start is still running. That task runs until the callback set by <a class="el" href="kii_8h.html#a308bbd95790fad608a661d8e5823c1d8" title="set callback determines whether to continue or discontinue task.">kii_set_cb_task_continue()</a> ends it, or an error does, and has finished by the time the callback set by <a class="el" href="kii_8h.html#a5d4c80bb655870e967d5a90500bcda08" title="Callback called right before exit of MQTT task.">kii_set_cb_task_exit()</a> is called, which may start it again. A task ended any other way, such as by killing its thread, needs <a class="el" href="kii_8h.html#a7ba3ce1d86f6048b7b3fefba36056410" title="Initializes kii_t instance.">kii_init()</a> before starting again. KII_ERR_CREATE_TASK if no system with a task_create is set by <a class="el" href="kii_8h.html#a19398ca6a022a1025714df3ce49e4389" title="Set the system: tasks, delays and a monotonic clock.">kii_set_system()</a>, or it fails. </dd></dl>
 
 </div>
 </div>
@@ -4368,7 +3914,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 08:46:14 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Mon Nov 2 2026 09:09:30 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

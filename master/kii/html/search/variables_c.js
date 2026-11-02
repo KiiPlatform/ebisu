@@ -1,10 +1,7 @@
 var searchData=
 [
-  ['task_5fstate_0',['task_state',['../structkii__mqtt__task__info.html#a10dd846ce66170de1a124dc32cdc46b8',1,'kii_mqtt_task_info']]],
-  ['tokens_1',['tokens',['../../../jkii/html/structjkii__resource__t.html#adfd476e8fc0cfba750e837734287cb8a',1,'jkii_resource_t']]],
-  ['tokens_5fnum_2',['tokens_num',['../../../jkii/html/structjkii__resource__t.html#a831a9295c6f4eecfc2889e5792bd2953',1,'jkii_resource_t']]],
-  ['topic_3',['topic',['../structkii__mqtt__endpoint__t.html#a541920b531df8bb20f58e1dd7c0a3c81',1,'kii_mqtt_endpoint_t']]],
-  ['topic_5fname_4',['topic_name',['../structkii__topic__t.html#a2ea6785013916b715b151da705a5d54a',1,'kii_topic_t']]],
-  ['ttl_5',['ttl',['../structkii__mqtt__endpoint__t.html#a5fb0661ad3c79d4fae5c061052a59f1b',1,'kii_mqtt_endpoint_t']]],
-  ['type_6',['type',['../../../jkii/html/structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841',1,'jkii_field_t::type'],['../../../jkii/html/structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d',1,'jkii_primitive_t::type']]]
+  ['password_0',['password',['../structkii__mqtt__endpoint__t.html#a1ff8d308170fe4d683839e85ab9d6474',1,'kii_mqtt_endpoint_t']]],
+  ['path_1',['path',['../../../jkii/html/structjkii__field__t.html#ade8bf5f5ddad91aedd67bb0a0ae40533',1,'jkii_field_t']]],
+  ['port_5fssl_2',['port_ssl',['../structkii__mqtt__endpoint__t.html#a6014189c0f3ba23551adffa445ef367f',1,'kii_mqtt_endpoint_t']]],
+  ['port_5ftcp_3',['port_tcp',['../structkii__mqtt__endpoint__t.html#a38eb17e4f01a30aaf90c02f0a9651d56',1,'kii_mqtt_endpoint_t']]]
 ];

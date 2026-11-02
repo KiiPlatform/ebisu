@@ -1,7 +1,4 @@
 var searchData=
 [
-  ['scope_0',['scope',['../structkii__bucket__t.html#aba6f08f67d2f5b57aaedceb75dfc0528',1,'kii_bucket_t::scope'],['../structkii__topic__t.html#a2967810519663f7e6de38f71098d9709',1,'kii_topic_t::scope']]],
-  ['scope_5fid_1',['scope_id',['../structkii__bucket__t.html#af5cdb5e5d4558d80a4196d7c91bc81be',1,'kii_bucket_t::scope_id'],['../structkii__topic__t.html#a194b3a3e1aefe07ba9662da0b4667c07',1,'kii_topic_t::scope_id']]],
-  ['start_2',['start',['../../../jkii/html/structjkii__field__t.html#a01a5294845f38f7c7567059894426ab4',1,'jkii_field_t']]],
-  ['string_3',['string',['../../../jkii/html/structjkii__field__t.html#a819930194ef418853ab716ad36cc01e6',1,'jkii_field_t']]]
+  ['ops_0',['ops',['../../../platform/html/structebisu__lock__t.html#a71d30ddec61e4e6d4790bab56b4c0fa5',1,'ebisu_lock_t::ops'],['../../../platform/html/structebisu__socket__t.html#aff2c41c492bffd29686c2970f4a4a375',1,'ebisu_socket_t::ops'],['../../../platform/html/structebisu__system__t.html#a9710fe0c41ebd32f126d0d00b73fbb81',1,'ebisu_system_t::ops']]]
 ];

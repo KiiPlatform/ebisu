@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['opaque_5fvalue_0',['opaque_value',['../structtio__action__value__t.html#aa924dbe5c05e0df213710f356206dc4e',1,'tio_action_value_t']]],
-  ['opaque_5fvalue_5flength_1',['opaque_value_length',['../structtio__action__value__t.html#a2a32c6a02eff627a7892a17c5b1678bf',1,'tio_action_value_t']]]
+  ['monotonic_5fms_0',['monotonic_ms',['../../../platform/html/structebisu__system__ops__t.html#a2a245518f6edc8e03312e7458e4fd730',1,'ebisu_system_ops_t']]]
 ];

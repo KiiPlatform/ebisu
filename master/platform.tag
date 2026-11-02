@@ -4,7 +4,7 @@
     <name>ebisu_clock.h</name>
     <path>include/</path>
     <filename>ebisu__clock_8h.html</filename>
-    <includes id="ebisu__task_8h" name="ebisu_task.h" local="yes" import="no" module="no" objc="no">ebisu_task.h</includes>
+    <includes id="ebisu__system_8h" name="ebisu_system.h" local="yes" import="no" module="no" objc="no">ebisu_system.h</includes>
     <class kind="struct">ebisu_clock_t</class>
     <member kind="typedef">
       <type>struct ebisu_clock_t</type>
@@ -49,15 +49,15 @@
       <type>void</type>
       <name>ebisu_clock_init</name>
       <anchorfile>ebisu__clock_8h.html</anchorfile>
-      <anchor>a043704837c735ab8251b8cfd0b1f6fb1</anchor>
-      <arglist>(ebisu_clock_t *clock, EBISU_CB_MONOTONIC_MS cb_monotonic_ms, void *userdata)</arglist>
+      <anchor>a4c85dfcb6d4b520957c2bf1ee26f5414</anchor>
+      <arglist>(ebisu_clock_t *clock, ebisu_system_t *system)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
-      <name>ebisu_clock_set_cb_lock</name>
+      <name>ebisu_clock_set_lock</name>
       <anchorfile>ebisu__clock_8h.html</anchorfile>
-      <anchor>a2ed02822fa8e33727d72b2197f584488</anchor>
-      <arglist>(ebisu_clock_t *clock, EBISU_CB_LOCK cb_lock, EBISU_CB_LOCK cb_unlock, void *userdata)</arglist>
+      <anchor>a3c26369c70ce325e9d32dfa68122a9cb</anchor>
+      <arglist>(ebisu_clock_t *clock, ebisu_lock_t *lock)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -103,9 +103,24 @@
     </member>
   </compound>
   <compound kind="file">
+    <name>ebisu_object.h</name>
+    <path>include/</path>
+    <filename>ebisu__object_8h.html</filename>
+    <member kind="define">
+      <type>#define</type>
+      <name>EBISU_CONTAINER_OF</name>
+      <anchorfile>ebisu__object_8h.html</anchorfile>
+      <anchor>a5e7fdb772cc16ee485b366e1618a7136</anchor>
+      <arglist>(ptr, type, member)</arglist>
+    </member>
+  </compound>
+  <compound kind="file">
     <name>ebisu_socket.h</name>
     <path>include/</path>
     <filename>ebisu__socket_8h.html</filename>
+    <includes id="ebisu__object_8h" name="ebisu_object.h" local="yes" import="no" module="no" objc="no">ebisu_object.h</includes>
+    <class kind="struct">ebisu_socket_ops_t</class>
+    <class kind="struct">ebisu_socket_t</class>
     <member kind="typedef">
       <type>enum ebisu_sock_code_t</type>
       <name>ebisu_sock_code_t</name>
@@ -114,32 +129,18 @@
       <arglist></arglist>
     </member>
     <member kind="typedef">
-      <type>ebisu_sock_code_t(*</type>
-      <name>EBISU_CB_SOCK_CONNECT</name>
+      <type>struct ebisu_socket_t</type>
+      <name>ebisu_socket_t</name>
       <anchorfile>ebisu__socket_8h.html</anchorfile>
-      <anchor>a780e229bbc3fcf953655a2bfc62c38da</anchor>
-      <arglist>)(void *sock_ctx, const char *host, uint16_t port)</arglist>
+      <anchor>af0e306cd72dfb837b228cdc12fae19a7</anchor>
+      <arglist></arglist>
     </member>
     <member kind="typedef">
-      <type>ebisu_sock_code_t(*</type>
-      <name>EBISU_CB_SOCK_SEND</name>
+      <type>struct ebisu_socket_ops_t</type>
+      <name>ebisu_socket_ops_t</name>
       <anchorfile>ebisu__socket_8h.html</anchorfile>
-      <anchor>a6893a04d2aaab7f3c1c7538d5b91ca36</anchor>
-      <arglist>)(void *sock_ctx, const char *buffer, size_t length, size_t *out_sent_length)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>ebisu_sock_code_t(*</type>
-      <name>EBISU_CB_SOCK_RECV</name>
-      <anchorfile>ebisu__socket_8h.html</anchorfile>
-      <anchor>acf0f4d76d750ddc101f50e0c1d578c9e</anchor>
-      <arglist>)(void *sock_ctx, char *buffer, size_t length_to_read, size_t *out_actual_length)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>ebisu_sock_code_t(*</type>
-      <name>EBISU_CB_SOCK_CLOSE</name>
-      <anchorfile>ebisu__socket_8h.html</anchorfile>
-      <anchor>adef9314ef39820eb6dba3c7aca22bbc4</anchor>
-      <arglist>)(void *sock_ctx)</arglist>
+      <anchor>af6e42460441a6c5a4a33d9086aba41e0</anchor>
+      <arglist></arglist>
     </member>
     <member kind="enumeration">
       <type></type>
@@ -168,62 +169,194 @@
     </member>
   </compound>
   <compound kind="file">
-    <name>ebisu_task.h</name>
+    <name>ebisu_system.h</name>
     <path>include/</path>
-    <filename>ebisu__task_8h.html</filename>
+    <filename>ebisu__system_8h.html</filename>
+    <includes id="ebisu__object_8h" name="ebisu_object.h" local="yes" import="no" module="no" objc="no">ebisu_object.h</includes>
+    <class kind="struct">ebisu_system_ops_t</class>
+    <class kind="struct">ebisu_system_t</class>
+    <class kind="struct">ebisu_lock_ops_t</class>
+    <class kind="struct">ebisu_lock_t</class>
     <member kind="typedef">
       <type>enum ebisu_task_code_t</type>
       <name>ebisu_task_code_t</name>
-      <anchorfile>ebisu__task_8h.html</anchorfile>
+      <anchorfile>ebisu__system_8h.html</anchorfile>
       <anchor>aaa3b1940a5a1fe2b64e28b21470d52ff</anchor>
       <arglist></arglist>
     </member>
     <member kind="typedef">
       <type>void *(*</type>
       <name>EBISU_TASK_ENTRY</name>
-      <anchorfile>ebisu__task_8h.html</anchorfile>
+      <anchorfile>ebisu__system_8h.html</anchorfile>
       <anchor>aa88036fe3014d1b2c19cd4808b5424d7</anchor>
       <arglist>)(void *value)</arglist>
     </member>
     <member kind="typedef">
-      <type>ebisu_task_code_t(*</type>
-      <name>EBISU_CB_TASK_CREATE</name>
-      <anchorfile>ebisu__task_8h.html</anchorfile>
-      <anchor>aef4e8f233b69f92311c3c78b3ac2efc2</anchor>
-      <arglist>)(const char *name, EBISU_TASK_ENTRY entry, void *entry_param, void *userdata)</arglist>
+      <type>struct ebisu_system_t</type>
+      <name>ebisu_system_t</name>
+      <anchorfile>ebisu__system_8h.html</anchorfile>
+      <anchor>a46cc0d1b6d1d6eea76e3dad3ec8115a1</anchor>
+      <arglist></arglist>
     </member>
     <member kind="typedef">
-      <type>void(*</type>
-      <name>EBISU_CB_DELAY_MS</name>
-      <anchorfile>ebisu__task_8h.html</anchorfile>
-      <anchor>a1a6065581c7d054ea6e6298c4a7f0f00</anchor>
-      <arglist>)(uint32_t msec, void *userdata)</arglist>
+      <type>struct ebisu_system_ops_t</type>
+      <name>ebisu_system_ops_t</name>
+      <anchorfile>ebisu__system_8h.html</anchorfile>
+      <anchor>af1cb97f5f05599dd432cd58a05b321c3</anchor>
+      <arglist></arglist>
     </member>
     <member kind="typedef">
-      <type>void(*</type>
-      <name>EBISU_CB_LOCK</name>
-      <anchorfile>ebisu__task_8h.html</anchorfile>
-      <anchor>a2d0a87d7cb40c29ce98738310f630728</anchor>
-      <arglist>)(void *userdata)</arglist>
+      <type>struct ebisu_lock_t</type>
+      <name>ebisu_lock_t</name>
+      <anchorfile>ebisu__system_8h.html</anchorfile>
+      <anchor>a9c40062bf30682a38e5e15c6a30853e2</anchor>
+      <arglist></arglist>
     </member>
     <member kind="typedef">
-      <type>uint64_t(*</type>
-      <name>EBISU_CB_MONOTONIC_MS</name>
-      <anchorfile>ebisu__task_8h.html</anchorfile>
-      <anchor>a1da5e106d6c8a76fbfa58819a424d915</anchor>
-      <arglist>)(void *userdata)</arglist>
+      <type>struct ebisu_lock_ops_t</type>
+      <name>ebisu_lock_ops_t</name>
+      <anchorfile>ebisu__system_8h.html</anchorfile>
+      <anchor>abfd4a8c349bec0a5c1b5a97e25da50af</anchor>
+      <arglist></arglist>
     </member>
     <member kind="enumeration">
       <type></type>
       <name>ebisu_task_code_t</name>
-      <anchorfile>ebisu__task_8h.html</anchorfile>
+      <anchorfile>ebisu__system_8h.html</anchorfile>
       <anchor>a90188fadee3bc027156aa75ab532454a</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_TASKC_OK</name>
+      <anchorfile>ebisu__system_8h.html</anchorfile>
+      <anchor>a90188fadee3bc027156aa75ab532454aa21b207febbcc0f779b0754a6da63d0d4</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_TASKC_FAIL</name>
+      <anchorfile>ebisu__system_8h.html</anchorfile>
+      <anchor>a90188fadee3bc027156aa75ab532454aadb245d24463ad5c39c95dae216af46ea</anchor>
       <arglist></arglist>
     </member>
   </compound>
   <compound kind="struct">
     <name>ebisu_clock_t</name>
     <filename>structebisu__clock__t.html</filename>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_lock_ops_t</name>
+    <filename>structebisu__lock__ops__t.html</filename>
+    <member kind="variable">
+      <type>void(*</type>
+      <name>lock</name>
+      <anchorfile>structebisu__lock__ops__t.html</anchorfile>
+      <anchor>a745899b14950b7ba82f33d2cc6a85174</anchor>
+      <arglist>)(ebisu_lock_t *self)</arglist>
+    </member>
+    <member kind="variable">
+      <type>void(*</type>
+      <name>unlock</name>
+      <anchorfile>structebisu__lock__ops__t.html</anchorfile>
+      <anchor>a25112960416a6dabd5b93862db66528a</anchor>
+      <arglist>)(ebisu_lock_t *self)</arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_lock_t</name>
+    <filename>structebisu__lock__t.html</filename>
+    <member kind="variable">
+      <type>const ebisu_lock_ops_t *</type>
+      <name>ops</name>
+      <anchorfile>structebisu__lock__t.html</anchorfile>
+      <anchor>a71d30ddec61e4e6d4790bab56b4c0fa5</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_socket_ops_t</name>
+    <filename>structebisu__socket__ops__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_sock_code_t(*</type>
+      <name>connect</name>
+      <anchorfile>structebisu__socket__ops__t.html</anchorfile>
+      <anchor>ad7c954a124d7f7029c24052e1fbdc2c2</anchor>
+      <arglist>)(ebisu_socket_t *self, const char *host, uint16_t port)</arglist>
+    </member>
+    <member kind="variable">
+      <type>ebisu_sock_code_t(*</type>
+      <name>send</name>
+      <anchorfile>structebisu__socket__ops__t.html</anchorfile>
+      <anchor>adb543d912cc7f9758ed4713cfeed4666</anchor>
+      <arglist>)(ebisu_socket_t *self, const char *buffer, size_t length, size_t *out_sent_length)</arglist>
+    </member>
+    <member kind="variable">
+      <type>ebisu_sock_code_t(*</type>
+      <name>recv</name>
+      <anchorfile>structebisu__socket__ops__t.html</anchorfile>
+      <anchor>a28417969117e077e747944faac38efa8</anchor>
+      <arglist>)(ebisu_socket_t *self, char *buffer, size_t length_to_read, size_t *out_actual_length)</arglist>
+    </member>
+    <member kind="variable">
+      <type>ebisu_sock_code_t(*</type>
+      <name>close</name>
+      <anchorfile>structebisu__socket__ops__t.html</anchorfile>
+      <anchor>afab911ce1025829b38f7df1096e67e7b</anchor>
+      <arglist>)(ebisu_socket_t *self)</arglist>
+    </member>
+    <member kind="variable">
+      <type>bool(*</type>
+      <name>recv_timed_out</name>
+      <anchorfile>structebisu__socket__ops__t.html</anchorfile>
+      <anchor>af8c5f0ab8132bb300aa61db25a4a8073</anchor>
+      <arglist>)(ebisu_socket_t *self)</arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_socket_t</name>
+    <filename>structebisu__socket__t.html</filename>
+    <member kind="variable">
+      <type>const ebisu_socket_ops_t *</type>
+      <name>ops</name>
+      <anchorfile>structebisu__socket__t.html</anchorfile>
+      <anchor>aff2c41c492bffd29686c2970f4a4a375</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_system_ops_t</name>
+    <filename>structebisu__system__ops__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_task_code_t(*</type>
+      <name>task_create</name>
+      <anchorfile>structebisu__system__ops__t.html</anchorfile>
+      <anchor>acb93b9e260c324f9f727d1eacefc5c94</anchor>
+      <arglist>)(ebisu_system_t *self, const char *name, EBISU_TASK_ENTRY entry, void *entry_param)</arglist>
+    </member>
+    <member kind="variable">
+      <type>void(*</type>
+      <name>delay_ms</name>
+      <anchorfile>structebisu__system__ops__t.html</anchorfile>
+      <anchor>a28038f19ac8ae6170f028a366571e505</anchor>
+      <arglist>)(ebisu_system_t *self, uint32_t msec)</arglist>
+    </member>
+    <member kind="variable">
+      <type>uint64_t(*</type>
+      <name>monotonic_ms</name>
+      <anchorfile>structebisu__system__ops__t.html</anchorfile>
+      <anchor>a2a245518f6edc8e03312e7458e4fd730</anchor>
+      <arglist>)(ebisu_system_t *self)</arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_system_t</name>
+    <filename>structebisu__system__t.html</filename>
+    <member kind="variable">
+      <type>const ebisu_system_ops_t *</type>
+      <name>ops</name>
+      <anchorfile>structebisu__system__t.html</anchorfile>
+      <anchor>a9710fe0c41ebd32f126d0d00b73fbb81</anchor>
+      <arglist></arglist>
+    </member>
   </compound>
   <compound kind="page">
     <name>index</name>

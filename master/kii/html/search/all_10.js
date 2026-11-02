@@ -1,17 +1,11 @@
 var searchData=
 [
-  ['task_20callbacks_0',['Writing task callbacks',['../index.html#autotoc_md5',1,'']]],
-  ['task_5fstate_1',['task_state',['../structkii__mqtt__task__info.html#a10dd846ce66170de1a124dc32cdc46b8',1,'kii_mqtt_task_info']]],
-  ['the_20thing_2',['Authenticate the thing',['../index.html#autotoc_md1',1,'']]],
-  ['the_20time_3',['The time',['../index.html#autotoc_md10',1,'']]],
-  ['thing_4',['Authenticate the thing',['../index.html#autotoc_md1',1,'']]],
-  ['thing_20if_5',['Thing-IF',['../index.html#autotoc_md6',1,'']]],
-  ['time_6',['The time',['../index.html#autotoc_md10',1,'']]],
-  ['tokens_7',['tokens',['../../../jkii/html/structjkii__resource__t.html#adfd476e8fc0cfba750e837734287cb8a',1,'jkii_resource_t']]],
-  ['tokens_5fnum_8',['tokens_num',['../../../jkii/html/structjkii__resource__t.html#a831a9295c6f4eecfc2889e5792bd2953',1,'jkii_resource_t']]],
-  ['topic_9',['topic',['../structkii__mqtt__endpoint__t.html#a541920b531df8bb20f58e1dd7c0a3c81',1,'kii_mqtt_endpoint_t']]],
-  ['topic_5fname_10',['topic_name',['../structkii__topic__t.html#a2ea6785013916b715b151da705a5d54a',1,'kii_topic_t']]],
-  ['tt_20kii_5ft_20tt_11',['Set up a &lt;tt&gt;kii_t&lt;/tt&gt;',['../index.html#autotoc_md0',1,'']]],
-  ['ttl_12',['ttl',['../structkii__mqtt__endpoint__t.html#a5fb0661ad3c79d4fae5c061052a59f1b',1,'kii_mqtt_endpoint_t']]],
-  ['type_13',['type',['../../../jkii/html/structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841',1,'jkii_field_t::type'],['../../../jkii/html/structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d',1,'jkii_primitive_t::type']]]
+  ['scope_0',['scope',['../structkii__bucket__t.html#aba6f08f67d2f5b57aaedceb75dfc0528',1,'kii_bucket_t::scope'],['../structkii__topic__t.html#a2967810519663f7e6de38f71098d9709',1,'kii_topic_t::scope']]],
+  ['scope_5fid_1',['scope_id',['../structkii__bucket__t.html#af5cdb5e5d4558d80a4196d7c91bc81be',1,'kii_bucket_t::scope_id'],['../structkii__topic__t.html#a194b3a3e1aefe07ba9662da0b4667c07',1,'kii_topic_t::scope_id']]],
+  ['send_2',['send',['../../../platform/html/structebisu__socket__ops__t.html#adb543d912cc7f9758ed4713cfeed4666',1,'ebisu_socket_ops_t']]],
+  ['server_20code_3',['Server code',['../index.html#autotoc_md7',1,'']]],
+  ['sessions_4',['Sessions',['../index.html#autotoc_md2',1,'']]],
+  ['set_20up_20a_20tt_20kii_5ft_20tt_5',['Set up a &lt;tt&gt;kii_t&lt;/tt&gt;',['../index.html#autotoc_md0',1,'']]],
+  ['start_6',['start',['../../../jkii/html/structjkii__field__t.html#a01a5294845f38f7c7567059894426ab4',1,'jkii_field_t']]],
+  ['string_7',['string',['../../../jkii/html/structjkii__field__t.html#a819930194ef418853ab716ad36cc01e6',1,'jkii_field_t']]]
 ];

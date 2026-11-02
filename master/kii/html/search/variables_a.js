@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['refresh_5ftoken_0',['refresh_token',['../structkii__author__t.html#a150ca5d71e06a3e976aea59e7ebb0c46',1,'kii_author_t']]],
-  ['result_1',['result',['../../../jkii/html/structjkii__field__t.html#a490735c809794c5f8c4c07c423b9b7e6',1,'jkii_field_t']]]
+  ['name_0',['name',['../../../jkii/html/structjkii__field__t.html#ad240e9f8d4144e2f73b023095a27b0f0',1,'jkii_field_t']]],
+  ['next_1',['next',['../../../khc/html/structkhc__slist.html#ad2427c9cd37a7ef8cc829d8cc652a1fd',1,'khc_slist']]]
 ];

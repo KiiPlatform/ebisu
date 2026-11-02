@@ -1,12 +1,13 @@
 var searchData=
 [
-  ['call_0',['call',['../index.html#autotoc_md11',1,'&lt;tt&gt;tio_handler_init&lt;/tt&gt; call'],['../index.html#autotoc_md12',1,'&lt;tt&gt;tio_handler_set_app&lt;/tt&gt; call']]],
-  ['callback_1',['callback',['../index.html#autotoc_md9',1,'Action callback'],['../index.html#autotoc_md23',1,'Author updated callback'],['../index.html#autotoc_md6',1,'Delay callback'],['../index.html#autotoc_md22',1,'Monotonic clock callback'],['../index.html#autotoc_md32',1,'Read callback'],['../index.html#autotoc_md31',1,'Size callback.'],['../index.html#autotoc_md4',1,'Task continue callback'],['../index.html#autotoc_md5',1,'Task exit callback']]],
-  ['callback_20functions_2',['callback functions',['../index.html#autotoc_md28',1,'Callback functions'],['../index.html#autotoc_md1',1,'Callback functions']]],
-  ['callbacks_3',['callbacks',['../index.html#autotoc_md21',1,'Lock callbacks'],['../index.html#autotoc_md13',1,'Set-up callbacks'],['../index.html#autotoc_md15',1,'Socket callbacks.'],['../index.html#autotoc_md7',1,'Socket callbacks.'],['../index.html#autotoc_md30',1,'State read callbacks'],['../index.html#autotoc_md2',1,'Task callbacks'],['../index.html#autotoc_md14',1,'Task callbacks.']]],
-  ['callbacks_20socket_20callbacks_4',['Task callbacks, socket callbacks',['../index.html#autotoc_md29',1,'']]],
-  ['clock_20callback_5',['Monotonic clock callback',['../index.html#autotoc_md22',1,'']]],
-  ['condition_6',['Avoiding race condition',['../index.html#autotoc_md39',1,'']]],
-  ['continue_20callback_7',['Task continue callback',['../index.html#autotoc_md4',1,'']]],
-  ['creation_8',['Task creation',['../index.html#autotoc_md3',1,'']]]
+  ['call_0',['call',['../index.html#autotoc_md9',1,'&lt;tt&gt;tio_handler_init&lt;/tt&gt; call'],['../index.html#autotoc_md10',1,'&lt;tt&gt;tio_handler_set_app&lt;/tt&gt; call']]],
+  ['callback_1',['callback',['../index.html#autotoc_md7',1,'Action callback'],['../index.html#autotoc_md19',1,'Author updated callback'],['../index.html#autotoc_md28',1,'Read callback'],['../index.html#autotoc_md27',1,'Size callback.'],['../index.html#autotoc_md3',1,'Task continue callback'],['../index.html#autotoc_md4',1,'Task exit callback']]],
+  ['callback_20functions_2',['callback functions',['../index.html#autotoc_md1',1,'Callback functions'],['../index.html#autotoc_md24',1,'Callback functions']]],
+  ['callbacks_3',['State read callbacks',['../index.html#autotoc_md26',1,'']]],
+  ['callbacks_20sockets_4',['The system, task callbacks, sockets',['../index.html#autotoc_md25',1,'']]],
+  ['clock_5',['The system&apos;s monotonic clock',['../index.html#autotoc_md18',1,'']]],
+  ['close_6',['close',['../../../platform/html/structebisu__socket__ops__t.html#afab911ce1025829b38f7df1096e67e7b',1,'ebisu_socket_ops_t']]],
+  ['condition_7',['Avoiding race condition',['../index.html#autotoc_md35',1,'']]],
+  ['connect_8',['connect',['../../../platform/html/structebisu__socket__ops__t.html#ad7c954a124d7f7029c24052e1fbdc2c2',1,'ebisu_socket_ops_t']]],
+  ['continue_20callback_9',['Task continue callback',['../index.html#autotoc_md3',1,'']]]
 ];

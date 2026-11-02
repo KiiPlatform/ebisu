@@ -1,8 +1,6 @@
 var searchData=
 [
-  ['password_0',['password',['../structkii__mqtt__endpoint__t.html#a1ff8d308170fe4d683839e85ab9d6474',1,'kii_mqtt_endpoint_t']]],
-  ['path_1',['path',['../../../jkii/html/structjkii__field__t.html#ade8bf5f5ddad91aedd67bb0a0ae40533',1,'jkii_field_t']]],
-  ['port_5fssl_2',['port_ssl',['../structkii__mqtt__endpoint__t.html#a6014189c0f3ba23551adffa445ef367f',1,'kii_mqtt_endpoint_t']]],
-  ['port_5ftcp_3',['port_tcp',['../structkii__mqtt__endpoint__t.html#a38eb17e4f01a30aaf90c02f0a9651d56',1,'kii_mqtt_endpoint_t']]],
-  ['push_4',['Push',['../index.html#autotoc_md4',1,'']]]
+  ['objects_0',['Objects',['../index.html#autotoc_md3',1,'']]],
+  ['ops_1',['ops',['../../../platform/html/structebisu__lock__t.html#a71d30ddec61e4e6d4790bab56b4c0fa5',1,'ebisu_lock_t::ops'],['../../../platform/html/structebisu__socket__t.html#aff2c41c492bffd29686c2970f4a4a375',1,'ebisu_socket_t::ops'],['../../../platform/html/structebisu__system__t.html#a9710fe0c41ebd32f126d0d00b73fbb81',1,'ebisu_system_t::ops']]],
+  ['other_20rest_20api_20calls_2',['Other REST API calls',['../index.html#autotoc_md8',1,'']]]
 ];
