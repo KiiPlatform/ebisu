@@ -1016,6 +1016,29 @@ kii_code_t kii_execute_server_code(
 		const char* params);
 
 /**
+ * \brief Execute server code with a token other than the thing's, or none.
+ *
+ * kii_execute_server_code() and kii_execute_server_code_version() send the
+ * token of the thing kii acts as. This sends the one given: an application
+ * administrator's, a user's or another thing's, or none, for an endpoint that
+ * runs without one. A session never renews or replaces it.
+ *
+ * \param [in,out] kii kii_t instance.
+ * \param [in] version Version identifier to be used during execution, or NULL
+ * for the current one.
+ * \param [in] endpoint_name Name of the endpoint to be executed.
+ * \param [in] params Parameters given to endpoint. Expect JSON object.
+ * \param [in] access_token Token sent as a bearer token, or NULL to send none.
+ * \return kii_code_t
+ */
+kii_code_t kii_execute_server_code_with_token(
+        kii_t* kii,
+        const char* version,
+        const char* endpoint_name,
+        const char* params,
+        const char* access_token);
+
+/**
  * \brief Execute onboarding.
 
  * Note: input params other than vendor_thing_id and password are ignored after the first registration.

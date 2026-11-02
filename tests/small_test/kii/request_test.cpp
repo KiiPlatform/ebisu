@@ -374,3 +374,43 @@ TEST_CASE( "A path or method too long for khc is refused rather than left out" )
         CHECK( script.requests[0].find("POST " + prefix + endpoint + " HTTP/1.1\r\n") == 0 );
     }
 }
+
+namespace {
+
+size_t count_in(const std::string& s, const std::string& what) {
+    size_t n = 0;
+    for (size_t pos = s.find(what); pos != std::string::npos; pos = s.find(what, pos + 1)) {
+        ++n;
+    }
+    return n;
+}
+
+}
+
+// Server code always went with the token of the thing kii acts as.
+TEST_CASE( "Server code runs with the token given, or none" ) {
+    char kii_buff[4096];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    strcpy(kii._author.author_id, "th.1");
+    strcpy(kii._author.access_token, "thing-token");
+    khct::HttpScript script;
+    script.attach(&kii);
+    const std::string ok = "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n{}";
+    script.responses = { ok, ok, ok };
+
+    REQUIRE( kii_execute_server_code(&kii, "ep", "{}") == KII_ERR_OK );
+    CHECK( count_in(script.requests[0], "Authorization: Bearer thing-token\r\n") == 1 );
+
+    REQUIRE( kii_execute_server_code_with_token(&kii, NULL, "ep", "{}", "admin-token") == KII_ERR_OK );
+    CHECK( script.requests[1].find("POST /api/apps/dummyAppID/server-code/versions/current/ep HTTP/1.1\r\n") == 0 );
+    CHECK( count_in(script.requests[1], "Authorization: Bearer admin-token\r\n") == 1 );
+    CHECK( count_in(script.requests[1], "Authorization") == 1 );
+
+    REQUIRE( kii_execute_server_code_with_token(&kii, "v2", "ep", "{}", NULL) == KII_ERR_OK );
+    CHECK( script.requests[2].find("POST /api/apps/dummyAppID/server-code/versions/v2/ep HTTP/1.1\r\n") == 0 );
+    CHECK( count_in(script.requests[2], "Authorization") == 0 );
+}
