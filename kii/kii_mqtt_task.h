@@ -77,6 +77,9 @@ typedef struct {
 
 void _init_mqtt_state(kii_t* kii, mqtt_state_t* state);
 
+/* Whether each string of endpoint is terminated within its array. */
+bool _kii_mqtt_endpoint_terminated(const kii_mqtt_endpoint_t* endpoint);
+
 typedef void (*MQTT_STATE_HANDLER)(mqtt_state_t* state);
 
 void _mqtt_state_install_push(mqtt_state_t* state);

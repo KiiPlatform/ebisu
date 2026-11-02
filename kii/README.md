@@ -276,6 +276,20 @@ it can arrive twice. With `kii_set_mqtt_clean_session(&kii, false)` as well,
 the broker keeps the thing's session, and the QoS 1 messages sent while the task
 is away, reconnecting or stopped, until it connects again.
 
+For a broker whose credentials the application has some other way,
+`kii_start_mqtt_task_with_endpoint()` starts the task with a
+`kii_mqtt_endpoint_t` of its own: the host, the port, the credentials, and the
+topic to subscribe to. The task neither installs push nor needs the HTTP socket
+or the buffer. `kii_set_mqtt_client_id()` sets a client identifier other than
+the topic, and when the broker refuses the credentials, the callback set by
+`kii_set_cb_mqtt_credentials()` gives new ones, or the task ends with
+`KII_MQTT_ERR_CREDENTIALS`. Brokers that hand out longer fields than
+`kii_mqtt_endpoint_t` holds can be given room by defining `KII_USERNAME_MAX_SIZE`,
+`KII_PASSWORD_MAX_SIZE`, `KII_TOPIC_MAX_SIZE` and `KII_HOST_MAX_SIZE`, alike
+for kii and everything using it. A session that renews by onboarding again
+then needs as much more room in the buffer, as onboarding's response carries
+the endpoint.
+
 `kii_set_mqtt_will()` gives CONNECT a last will: a message the broker publishes
 if the connection is lost, rather than ended with the DISCONNECT the task sends
 when it stops, so that other clients can tell a device has gone. Whether it is
