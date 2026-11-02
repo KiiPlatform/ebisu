@@ -237,6 +237,12 @@ typedef struct <a class="el" href="structkii__object__id__t.html">kii_object_id_
 typedef struct <a class="el" href="structkii__installation__id__t.html">kii_installation_id_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kii_installation_id_t</b></td></tr>
 <tr class="memdesc:ab62fe7308c125c8b5643ba99c3626ed1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents installation ID. <br /></td></tr>
 <tr class="separator:ab62fe7308c125c8b5643ba99c3626ed1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a32686619b8614789a4cae2bf5a71d0dc" id="r_a32686619b8614789a4cae2bf5a71d0dc"><td class="memItemLeft" align="right" valign="top">typedef enum <a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677c">kii_mqtt_event_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a32686619b8614789a4cae2bf5a71d0dc">kii_mqtt_event_t</a></td></tr>
+<tr class="memdesc:a32686619b8614789a4cae2bf5a71d0dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">What the MQTT task tells the callback set by <a class="el" href="kii_8h.html#a853c3e530701ed2821591d8e04572606" title="Set the callback the MQTT task tells why it reconnects, waits or drops a message.">kii_set_cb_mqtt_event()</a>.  <br /></td></tr>
+<tr class="separator:a32686619b8614789a4cae2bf5a71d0dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5cb747d170789f6d5beaf457af3dbee2" id="r_a5cb747d170789f6d5beaf457af3dbee2"><td class="memItemLeft" align="right" valign="top">typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a5cb747d170789f6d5beaf457af3dbee2">KII_CB_MQTT_EVENT</a>) (<a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677c">kii_mqtt_event_t</a> event, uint32_t detail, void *userdata)</td></tr>
+<tr class="memdesc:a5cb747d170789f6d5beaf457af3dbee2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Told what happens in the MQTT task, for diagnostics.  <br /></td></tr>
+<tr class="separator:a5cb747d170789f6d5beaf457af3dbee2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afeba27d97c92ad7a3a03374248eaeb14" id="r_afeba27d97c92ad7a3a03374248eaeb14"><td class="memItemLeft" align="right" valign="top">typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#afeba27d97c92ad7a3a03374248eaeb14">KII_PUSH_RECEIVED_CB</a>) (const char *message, size_t message_length, void *userdata)</td></tr>
 <tr class="memdesc:afeba27d97c92ad7a3a03374248eaeb14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Called when received push message via MQTT.  <br /></td></tr>
 <tr class="separator:afeba27d97c92ad7a3a03374248eaeb14"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -272,6 +278,7 @@ Enumerations</h2></td></tr>
 , <a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7dea8fc54c71516a569079c207f4de28eb41">KII_ERR_FAIL</a>
 , <br />
 &#160;&#160;<a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7dea99b394e6cf600b27fb44550d52fbee3c">KII_ERR_CREATE_TASK</a>
+, <a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7dea66a395536a20b569738a1a4f4611b745">KII_ERR_TIMEOUT</a>
 <br />
  }</td></tr>
 <tr class="memdesc:a79eab5c5f48e03121033d6291619c7de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Error codes definition.  <a href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">More...</a><br /></td></tr>
@@ -293,6 +300,25 @@ Enumerations</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:a81467f34ee2895b86ca3eb7b3bac37e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Versions of MQTT the push task can speak.  <a href="kii_8h.html#a81467f34ee2895b86ca3eb7b3bac37e6">More...</a><br /></td></tr>
 <tr class="separator:a81467f34ee2895b86ca3eb7b3bac37e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a719bdf1a2b7209f8f03dd16a10b3677c" id="r_a719bdf1a2b7209f8f03dd16a10b3677c"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677c">kii_mqtt_event_t</a> { <br />
+&#160;&#160;<a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677caf426992885db7215cebcfb0f016a12d7">KII_MQTT_EVENT_INSTALL_FAILED</a>
+, <a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677ca9883fdfd47b79154fbc4a5d1e0b9c0fc">KII_MQTT_EVENT_ENDPOINT_FAILED</a>
+, <a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677ca7e2e612c3dc4edca57d8022201e68feb">KII_MQTT_EVENT_CONNECT_FAILED</a>
+, <a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677ca2aa7ff0f7443c11c47ccfb960d16b6bc">KII_MQTT_EVENT_CONNACK</a>
+, <br />
+&#160;&#160;<a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677cadff3dd1e39ad81e7838315e1553e90ef">KII_MQTT_EVENT_SUBACK</a>
+, <a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677ca16fb05f3dca69f3fd9e3cebe5f79798d">KII_MQTT_EVENT_SEND_FAILED</a>
+, <a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677ca8e6b57e9fcd56bda99b528353dba54b5">KII_MQTT_EVENT_RECV_FAILED</a>
+, <a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677cae87b6bd5ed17b00e613ca9c24c702181">KII_MQTT_EVENT_CLOSED_BY_BROKER</a>
+, <br />
+&#160;&#160;<a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677ca901d9cc417215185b34aef0cb3bc5bcf">KII_MQTT_EVENT_UNEXPECTED_PACKET</a>
+, <a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677caa7c34d9b4f2b2663a5f40f7f23926f26">KII_MQTT_EVENT_PING_TIMEOUT</a>
+, <a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677ca90377d211fd89f1201b720a4a3177077">KII_MQTT_EVENT_MESSAGE_TOO_LARGE</a>
+, <a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677cacc1daccd601a7c8e49bced451e9a3ec0">KII_MQTT_EVENT_MESSAGE_MALFORMED</a>
+<br />
+ }</td></tr>
+<tr class="memdesc:a719bdf1a2b7209f8f03dd16a10b3677c"><td class="mdescLeft">&#160;</td><td class="mdescRight">What the MQTT task tells the callback set by <a class="el" href="kii_8h.html#a853c3e530701ed2821591d8e04572606" title="Set the callback the MQTT task tells why it reconnects, waits or drops a message.">kii_set_cb_mqtt_event()</a>.  <a href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677c">More...</a><br /></td></tr>
+<tr class="separator:a719bdf1a2b7209f8f03dd16a10b3677c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a971acd03c2d0df621d7f60b0b4644dbb" id="r_a971acd03c2d0df621d7f60b0b4644dbb"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a971acd03c2d0df621d7f60b0b4644dbb">kii_mqtt_qos_t</a> { <a class="el" href="kii_8h.html#a971acd03c2d0df621d7f60b0b4644dbba963217cd639f8179891935d8207ad632">KII_MQTT_QOS_0</a>
 , <a class="el" href="kii_8h.html#a971acd03c2d0df621d7f60b0b4644dbbafac745a5df8ea0fafaea7bc3d0440ca7">KII_MQTT_QOS_1</a>
  }</td></tr>
@@ -518,12 +544,18 @@ Functions</h2></td></tr>
 <tr class="memitem:a19398ca6a022a1025714df3ce49e4389" id="r_a19398ca6a022a1025714df3ce49e4389"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a19398ca6a022a1025714df3ce49e4389">kii_set_system</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../platform/html/structebisu__system__t.html">ebisu_system_t</a> *system)</td></tr>
 <tr class="memdesc:a19398ca6a022a1025714df3ce49e4389"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the system: tasks, delays and a monotonic clock.  <br /></td></tr>
 <tr class="separator:a19398ca6a022a1025714df3ce49e4389"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c2e5b7c2387af3311c7fada1d4e9974" id="r_a2c2e5b7c2387af3311c7fada1d4e9974"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a2c2e5b7c2387af3311c7fada1d4e9974">kii_set_request_timeout</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, uint32_t timeout_sec)</td></tr>
+<tr class="memdesc:a2c2e5b7c2387af3311c7fada1d4e9974"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set how long a request may take.  <br /></td></tr>
+<tr class="separator:a2c2e5b7c2387af3311c7fada1d4e9974"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a308bbd95790fad608a661d8e5823c1d8" id="r_a308bbd95790fad608a661d8e5823c1d8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a308bbd95790fad608a661d8e5823c1d8">kii_set_cb_task_continue</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii__task__callback_8h.html#ad160d0af530d336062646f36cbad22f3">KII_CB_TASK_CONTINUE</a> cb_continue, void *userdata)</td></tr>
 <tr class="memdesc:a308bbd95790fad608a661d8e5823c1d8"><td class="mdescLeft">&#160;</td><td class="mdescRight">set callback determines whether to continue or discontinue task.  <br /></td></tr>
 <tr class="separator:a308bbd95790fad608a661d8e5823c1d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5d4c80bb655870e967d5a90500bcda08" id="r_a5d4c80bb655870e967d5a90500bcda08"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a5d4c80bb655870e967d5a90500bcda08">kii_set_cb_task_exit</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5">KII_CB_TASK_EXIT</a> cb_exit, void *userdata)</td></tr>
 <tr class="memdesc:a5d4c80bb655870e967d5a90500bcda08"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback called right before exit of MQTT task.  <br /></td></tr>
 <tr class="separator:a5d4c80bb655870e967d5a90500bcda08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a853c3e530701ed2821591d8e04572606" id="r_a853c3e530701ed2821591d8e04572606"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a853c3e530701ed2821591d8e04572606">kii_set_cb_mqtt_event</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii_8h.html#a5cb747d170789f6d5beaf457af3dbee2">KII_CB_MQTT_EVENT</a> cb, void *userdata)</td></tr>
+<tr class="memdesc:a853c3e530701ed2821591d8e04572606"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the callback the MQTT task tells why it reconnects, waits or drops a message.  <br /></td></tr>
+<tr class="separator:a853c3e530701ed2821591d8e04572606"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace208de016c2792d00a43374638bb34c" id="r_ace208de016c2792d00a43374638bb34c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ace208de016c2792d00a43374638bb34c">kii_set_json_parser_resource</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../jkii/html/structjkii__resource__t.html">jkii_resource_t</a> *resource)</td></tr>
 <tr class="memdesc:ace208de016c2792d00a43374638bb34c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set JSON parser resource.  <br /></td></tr>
 <tr class="separator:ace208de016c2792d00a43374638bb34c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -616,6 +648,31 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a5cb747d170789f6d5beaf457af3dbee2" name="a5cb747d170789f6d5beaf457af3dbee2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5cb747d170789f6d5beaf457af3dbee2">&#9670;&#160;</a></span>KII_CB_MQTT_EVENT</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef void(* KII_CB_MQTT_EVENT) (<a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677c">kii_mqtt_event_t</a> event, uint32_t detail, void *userdata)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Told what happens in the MQTT task, for diagnostics. </p>
+<p>Called in the task, as it happens, before what follows: the reconnection, the wait or the exit. It must return soon, and not use the <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">event</td><td>What happened. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">detail</td><td>More of it, as the event says. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Given to <a class="el" href="kii_8h.html#a853c3e530701ed2821591d8e04572606" title="Set the callback the MQTT task tells why it reconnects, waits or drops a message.">kii_set_cb_mqtt_event()</a>. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a8aff70d991d649449726c7967ade0f8d" name="a8aff70d991d649449726c7967ade0f8d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8aff70d991d649449726c7967ade0f8d">&#9670;&#160;</a></span>KII_CB_READ</h2>
 
@@ -677,6 +734,23 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Size actually written. If the returned value and size argument value is different, API execution is aborted and API returns KII_ERR_WRITE_CALLBACK. </dd></dl>
+
+</div>
+</div>
+<a id="a32686619b8614789a4cae2bf5a71d0dc" name="a32686619b8614789a4cae2bf5a71d0dc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a32686619b8614789a4cae2bf5a71d0dc">&#9670;&#160;</a></span>kii_mqtt_event_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef enum <a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677c">kii_mqtt_event_t</a> <a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677c">kii_mqtt_event_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>What the MQTT task tells the callback set by <a class="el" href="kii_8h.html#a853c3e530701ed2821591d8e04572606" title="Set the callback the MQTT task tells why it reconnects, waits or drops a message.">kii_set_cb_mqtt_event()</a>. </p>
+<p>Each comes with a detail, which the event says the meaning of. </p>
 
 </div>
 </div>
@@ -768,6 +842,8 @@ Functions</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="a79eab5c5f48e03121033d6291619c7dea99b394e6cf600b27fb44550d52fbee3c" name="a79eab5c5f48e03121033d6291619c7dea99b394e6cf600b27fb44550d52fbee3c"></a>KII_ERR_CREATE_TASK&#160;</td><td class="fielddoc"><p>Error in creating task. </p>
 </td></tr>
+<tr><td class="fieldname"><a id="a79eab5c5f48e03121033d6291619c7dea66a395536a20b569738a1a4f4611b745" name="a79eab5c5f48e03121033d6291619c7dea66a395536a20b569738a1a4f4611b745"></a>KII_ERR_TIMEOUT&#160;</td><td class="fielddoc"><p>The request took longer than <a class="el" href="kii_8h.html#a2c2e5b7c2387af3311c7fada1d4e9974" title="Set how long a request may take.">kii_set_request_timeout()</a> allows. </p>
+</td></tr>
 </table>
 
 </div>
@@ -793,6 +869,49 @@ Functions</h2></td></tr>
 <tr><td class="fieldname"><a id="ace11a8cf8764373a85c96643195289b2aa32ccee9cf4b58d75cdeb92b36eee6a8" name="ace11a8cf8764373a85c96643195289b2aa32ccee9cf4b58d75cdeb92b36eee6a8"></a>KII_MQTT_ERR_GET_ENDPOINT&#160;</td><td class="fielddoc"><p>Un-recoverble error in getting MQTT endpoint. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ace11a8cf8764373a85c96643195289b2a9cdad92c2105b2fc05f9264be83d59a9" name="ace11a8cf8764373a85c96643195289b2a9cdad92c2105b2fc05f9264be83d59a9"></a>KII_MQTT_ERR_INSUFFICIENT_BUFF&#160;</td><td class="fielddoc"><p>Buffer set by <a class="el" href="kii_8h.html#adb5bef6d077b15fca3195ef7d39681cd" title="Set buffer used to parse MQTT message.">kii_set_mqtt_buff()</a> is too small. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<a id="a719bdf1a2b7209f8f03dd16a10b3677c" name="a719bdf1a2b7209f8f03dd16a10b3677c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a719bdf1a2b7209f8f03dd16a10b3677c">&#9670;&#160;</a></span>kii_mqtt_event_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="kii_8h.html#a719bdf1a2b7209f8f03dd16a10b3677c">kii_mqtt_event_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>What the MQTT task tells the callback set by <a class="el" href="kii_8h.html#a853c3e530701ed2821591d8e04572606" title="Set the callback the MQTT task tells why it reconnects, waits or drops a message.">kii_set_cb_mqtt_event()</a>. </p>
+<p>Each comes with a detail, which the event says the meaning of. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677caf426992885db7215cebcfb0f016a12d7" name="a719bdf1a2b7209f8f03dd16a10b3677caf426992885db7215cebcfb0f016a12d7"></a>KII_MQTT_EVENT_INSTALL_FAILED&#160;</td><td class="fielddoc"><p>Installing push failed. The detail is the response's HTTP status, or 0 without a response. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca9883fdfd47b79154fbc4a5d1e0b9c0fc" name="a719bdf1a2b7209f8f03dd16a10b3677ca9883fdfd47b79154fbc4a5d1e0b9c0fc"></a>KII_MQTT_EVENT_ENDPOINT_FAILED&#160;</td><td class="fielddoc"><p>Getting the endpoint failed, or onboarding again for it. The detail is as for KII_MQTT_EVENT_INSTALL_FAILED. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca7e2e612c3dc4edca57d8022201e68feb" name="a719bdf1a2b7209f8f03dd16a10b3677ca7e2e612c3dc4edca57d8022201e68feb"></a>KII_MQTT_EVENT_CONNECT_FAILED&#160;</td><td class="fielddoc"><p>Connecting to the broker failed. The detail is how many attempts in a row have. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca2aa7ff0f7443c11c47ccfb960d16b6bc" name="a719bdf1a2b7209f8f03dd16a10b3677ca2aa7ff0f7443c11c47ccfb960d16b6bc"></a>KII_MQTT_EVENT_CONNACK&#160;</td><td class="fielddoc"><p>The broker answered CONNECT. The detail is CONNACK's return code: 0 when it accepted, 1 for a protocol version it doesn't speak, 2 for an identifier it refused, 3 when it is unavailable, 4 for bad credentials and 5 when not authorized. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677cadff3dd1e39ad81e7838315e1553e90ef" name="a719bdf1a2b7209f8f03dd16a10b3677cadff3dd1e39ad81e7838315e1553e90ef"></a>KII_MQTT_EVENT_SUBACK&#160;</td><td class="fielddoc"><p>The broker answered SUBSCRIBE. The detail is SUBACK's return code: the QoS it granted, or 0x80 when it refused. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca16fb05f3dca69f3fd9e3cebe5f79798d" name="a719bdf1a2b7209f8f03dd16a10b3677ca16fb05f3dca69f3fd9e3cebe5f79798d"></a>KII_MQTT_EVENT_SEND_FAILED&#160;</td><td class="fielddoc"><p>Sending to the broker failed. The detail is the task's state, a kii_mqtt_task_state, which says what it was sending. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca8e6b57e9fcd56bda99b528353dba54b5" name="a719bdf1a2b7209f8f03dd16a10b3677ca8e6b57e9fcd56bda99b528353dba54b5"></a>KII_MQTT_EVENT_RECV_FAILED&#160;</td><td class="fielddoc"><p>Receiving from the broker failed, or ended partway through a packet, the connection lost. The detail is the task's state. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677cae87b6bd5ed17b00e613ca9c24c702181" name="a719bdf1a2b7209f8f03dd16a10b3677cae87b6bd5ed17b00e613ca9c24c702181"></a>KII_MQTT_EVENT_CLOSED_BY_BROKER&#160;</td><td class="fielddoc"><p>The broker closed the connection while the task waited for a message. The detail is 0. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca901d9cc417215185b34aef0cb3bc5bcf" name="a719bdf1a2b7209f8f03dd16a10b3677ca901d9cc417215185b34aef0cb3bc5bcf"></a>KII_MQTT_EVENT_UNEXPECTED_PACKET&#160;</td><td class="fielddoc"><p>A packet the task can't take where it came: anything but CONNACK first, anything but SUBACK or a message after SUBSCRIBE, SUBACK for another subscription, or a message at QoS 2 or more. The detail is the packet's first byte, its type and flags. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677caa7c34d9b4f2b2663a5f40f7f23926f26" name="a719bdf1a2b7209f8f03dd16a10b3677caa7c34d9b4f2b2663a5f40f7f23926f26"></a>KII_MQTT_EVENT_PING_TIMEOUT&#160;</td><td class="fielddoc"><p>A PINGREQ was still unanswered when the next was due. The detail is the keep-alive, in seconds. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca90377d211fd89f1201b720a4a3177077" name="a719bdf1a2b7209f8f03dd16a10b3677ca90377d211fd89f1201b720a4a3177077"></a>KII_MQTT_EVENT_MESSAGE_TOO_LARGE&#160;</td><td class="fielddoc"><p>A message too large for the buffer set by <a class="el" href="kii_8h.html#adb5bef6d077b15fca3195ef7d39681cd" title="Set buffer used to parse MQTT message.">kii_set_mqtt_buff()</a> was dropped. The detail is its length, after its fixed header. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677cacc1daccd601a7c8e49bced451e9a3ec0" name="a719bdf1a2b7209f8f03dd16a10b3677cacc1daccd601a7c8e49bced451e9a3ec0"></a>KII_MQTT_EVENT_MESSAGE_MALFORMED&#160;</td><td class="fielddoc"><p>A message whose topic, or packet identifier, didn't fit in it was dropped. The detail is its length. </p>
 </td></tr>
 </table>
 
@@ -2720,6 +2839,51 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="kii_8h.
 
 </div>
 </div>
+<a id="a853c3e530701ed2821591d8e04572606" name="a853c3e530701ed2821591d8e04572606"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a853c3e530701ed2821591d8e04572606">&#9670;&#160;</a></span>kii_set_cb_mqtt_event()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void kii_set_cb_mqtt_event </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
+          <td class="paramname"><em>kii</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="kii_8h.html#a5cb747d170789f6d5beaf457af3dbee2">KII_CB_MQTT_EVENT</a>&#160;</td>
+          <td class="paramname"><em>cb</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>userdata</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the callback the MQTT task tells why it reconnects, waits or drops a message. </p>
+<p>The continue callback sees the task's state, and the exit callback the error that ended it. This tells the rest: a failed request, CONNACK's and SUBACK's codes, which send or receive failed, an unanswered PINGREQ, a message dropped. Optional. Set it before starting the task.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cb</td><td>The callback, or NULL for none. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Given to cb. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="af8d81eaeba5dfa0aceff7347e8f7419a" name="af8d81eaeba5dfa0aceff7347e8f7419a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af8d81eaeba5dfa0aceff7347e8f7419a">&#9670;&#160;</a></span>kii_set_cb_slist_resource()</h2>
 
@@ -3266,6 +3430,46 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="kii_8h.
 
 </div>
 </div>
+<a id="a2c2e5b7c2387af3311c7fada1d4e9974" name="a2c2e5b7c2387af3311c7fada1d4e9974"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2c2e5b7c2387af3311c7fada1d4e9974">&#9670;&#160;</a></span>kii_set_request_timeout()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a> kii_set_request_timeout </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
+          <td class="paramname"><em>kii</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint32_t&#160;</td>
+          <td class="paramname"><em>timeout_sec</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set how long a request may take. </p>
+<p>From connecting to the end of the response, so that a server that answers a byte at a time, each within the socket's receive timeout, can't hold the request for ever. Once it has passed, the request is KII_ERR_TIMEOUT. It is checked between socket operations, so one that blocks runs to its own timeout first. A request that renews the session's token, and the request sent again after it, are timed each on its own. It applies to the push task's requests too, which try again after a timeout.</p>
+<p>It needs the monotonic_ms of the system set by <a class="el" href="kii_8h.html#a19398ca6a022a1025714df3ce49e4389" title="Set the system: tasks, delays and a monotonic clock.">kii_set_system()</a>: without one, a request fails with KII_ERR_FAIL, sending nothing.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">timeout_sec</td><td>The longest a request may take, in seconds, or 0, the default, for no limit. At most 4294967, the most milliseconds a uint32_t holds. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>KII_ERR_FAIL, changing nothing, for a longer one. </dd></dl>
+
+</div>
+</div>
 <a id="afeac6cc4848254cf840956e5cee04bcd" name="afeac6cc4848254cf840956e5cee04bcd"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#afeac6cc4848254cf840956e5cee04bcd">&#9670;&#160;</a></span>kii_set_resp_header_buff()</h2>
 
@@ -3470,6 +3674,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="kii_8h.
 
 <p>Set the system: tasks, delays and a monotonic clock. </p>
 <p>The MQTT task is created with its task_create, and waits with its delay_ms. If it has a monotonic_ms, the task times the keep-alive by it. Otherwise it estimates the time by adding up its waits and receive timeouts, which misses the time spent elsewhere, such as in the push callback.</p>
+<p>Requests use it too, as <a class="elRef" href="../../khc/html/khc_8h.html#aa3441f9ae19ba2128b987c3b13571544">khc_set_system(khc*, ebisu_system_t*)</a> describes: a socket operation that returns EBISU_SOCK_AGAIN is called again after a delay of KHC_AGAIN_WAIT_MS, and the timeout set by <a class="el" href="kii_8h.html#a2c2e5b7c2387af3311c7fada1d4e9974" title="Set how long a request may take.">kii_set_request_timeout()</a> is timed by its monotonic_ms.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
@@ -4206,7 +4411,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="kii_8h.
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 17:30:29 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Mon Nov 2 2026 17:57:59 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

@@ -212,6 +212,20 @@
       <arglist></arglist>
     </member>
     <member kind="typedef">
+      <type>enum kii_mqtt_event_t</type>
+      <name>kii_mqtt_event_t</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a32686619b8614789a4cae2bf5a71d0dc</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>void(*</type>
+      <name>KII_CB_MQTT_EVENT</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a5cb747d170789f6d5beaf457af3dbee2</anchor>
+      <arglist>)(kii_mqtt_event_t event, uint32_t detail, void *userdata)</arglist>
+    </member>
+    <member kind="typedef">
       <type>void(*</type>
       <name>KII_PUSH_RECEIVED_CB</name>
       <anchorfile>kii_8h.html</anchorfile>
@@ -324,6 +338,12 @@
       <anchor>a79eab5c5f48e03121033d6291619c7dea99b394e6cf600b27fb44550d52fbee3c</anchor>
       <arglist></arglist>
     </member>
+    <member kind="enumvalue">
+      <name>KII_ERR_TIMEOUT</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a79eab5c5f48e03121033d6291619c7dea66a395536a20b569738a1a4f4611b745</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="enumeration">
       <type></type>
       <name>kii_scope_type_t</name>
@@ -391,6 +411,85 @@
       <name>KII_MQTT_VERSION_3_1</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a81467f34ee2895b86ca3eb7b3bac37e6aade48833dc67d1c1fc25a8333c1fd370</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumeration">
+      <type></type>
+      <name>kii_mqtt_event_t</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a719bdf1a2b7209f8f03dd16a10b3677c</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_MQTT_EVENT_INSTALL_FAILED</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a719bdf1a2b7209f8f03dd16a10b3677caf426992885db7215cebcfb0f016a12d7</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_MQTT_EVENT_ENDPOINT_FAILED</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a719bdf1a2b7209f8f03dd16a10b3677ca9883fdfd47b79154fbc4a5d1e0b9c0fc</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_MQTT_EVENT_CONNECT_FAILED</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a719bdf1a2b7209f8f03dd16a10b3677ca7e2e612c3dc4edca57d8022201e68feb</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_MQTT_EVENT_CONNACK</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a719bdf1a2b7209f8f03dd16a10b3677ca2aa7ff0f7443c11c47ccfb960d16b6bc</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_MQTT_EVENT_SUBACK</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a719bdf1a2b7209f8f03dd16a10b3677cadff3dd1e39ad81e7838315e1553e90ef</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_MQTT_EVENT_SEND_FAILED</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a719bdf1a2b7209f8f03dd16a10b3677ca16fb05f3dca69f3fd9e3cebe5f79798d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_MQTT_EVENT_RECV_FAILED</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a719bdf1a2b7209f8f03dd16a10b3677ca8e6b57e9fcd56bda99b528353dba54b5</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_MQTT_EVENT_CLOSED_BY_BROKER</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a719bdf1a2b7209f8f03dd16a10b3677cae87b6bd5ed17b00e613ca9c24c702181</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_MQTT_EVENT_UNEXPECTED_PACKET</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a719bdf1a2b7209f8f03dd16a10b3677ca901d9cc417215185b34aef0cb3bc5bcf</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_MQTT_EVENT_PING_TIMEOUT</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a719bdf1a2b7209f8f03dd16a10b3677caa7c34d9b4f2b2663a5f40f7f23926f26</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_MQTT_EVENT_MESSAGE_TOO_LARGE</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a719bdf1a2b7209f8f03dd16a10b3677ca90377d211fd89f1201b720a4a3177077</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>KII_MQTT_EVENT_MESSAGE_MALFORMED</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a719bdf1a2b7209f8f03dd16a10b3677cacc1daccd601a7c8e49bced451e9a3ec0</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumeration">
@@ -970,6 +1069,13 @@
       <arglist>(kii_t *kii, ebisu_system_t *system)</arglist>
     </member>
     <member kind="function">
+      <type>kii_code_t</type>
+      <name>kii_set_request_timeout</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a2c2e5b7c2387af3311c7fada1d4e9974</anchor>
+      <arglist>(kii_t *kii, uint32_t timeout_sec)</arglist>
+    </member>
+    <member kind="function">
       <type>void</type>
       <name>kii_set_cb_task_continue</name>
       <anchorfile>kii_8h.html</anchorfile>
@@ -982,6 +1088,13 @@
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a5d4c80bb655870e967d5a90500bcda08</anchor>
       <arglist>(kii_t *kii, KII_CB_TASK_EXIT cb_exit, void *userdata)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_set_cb_mqtt_event</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a853c3e530701ed2821591d8e04572606</anchor>
+      <arglist>(kii_t *kii, KII_CB_MQTT_EVENT cb, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
