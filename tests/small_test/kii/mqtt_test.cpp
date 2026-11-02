@@ -3547,3 +3547,107 @@ TEST_CASE( "The task can be stopped during a wait" ) {
     CHECK( ctx.waited_ms > 900 * 1000 );
     CHECK( ctx.connects == 8 );
 }
+
+// The task estimated the time since its last packet by adding up its waits and
+// receive timeouts, so time spent elsewhere, such as in the push callback, went
+// uncounted, and a receive that returned at once counted for its whole timeout.
+// With a monotonic clock in the system, the keep-alive is timed by it.
+TEST_CASE( "The MQTT keep-alive is timed by the system's monotonic clock" ) {
+    char mqtt_buff[1024];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
+    kii._keep_alive_interval = 300;
+    kii_set_mqtt_to_sock_recv(&kii, 15);
+    // PINGREQ is due 285 seconds after the last packet: the keep-alive less
+    // the time a receive may take.
+    const uint64_t due_ms = 285 * 1000;
+
+    khct::cb::SockCtx mqtt_ctx;
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
+
+    uint64_t now_ms = 1000;
+    khct::cb::SystemCtx sys;
+    sys.on_monotonic_ms = [&now_ms] { return now_ms; };
+    kii_set_system(&kii, sys.system());
+
+    khct::cb::PushCtx push_ctx;
+    kii._cb_push_received = khct::cb::cb_push;
+    kii._push_data = &push_ctx;
+
+    mqtt_state_t state;
+    _init_mqtt_state(&kii, &state);
+
+    SECTION("time spent in the push callback counts") {
+        const std::string message = std::string("\x00\x05topic", 7) + "{}";
+        std::istringstream in(std::string("\x30", 1) + (char)message.size() + message);
+        mqtt_ctx.on_recv = [&in](void*, char* buffer, size_t length, size_t* out) {
+            *out = in.read(buffer, length).gcount();
+            REQUIRE( *out > 0 );
+            return EBISU_SOCK_OK;
+        };
+        push_ctx.on_push = [&now_ms, due_ms](const char*, size_t) { now_ms += due_ms + 1; };
+
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+        _mqtt_state_recv_msg(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+
+        // Due now, rather than after another receive.
+        _mqtt_state_recv_ready(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_SEND_PINGREQ );
+    }
+
+    SECTION("a receive that returns at once counts for no more than it took") {
+        int receives = 0;
+        mqtt_ctx.on_recv = [&receives](void*, char*, size_t, size_t*) {
+            ++receives;
+            return EBISU_SOCK_AGAIN;
+        };
+        // Each counted for the receive timeout and the wait after it, 16
+        // seconds, which 20 of them take past the keep-alive.
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        for (int i = 0; i < 20; ++i) {
+            INFO("receive " << i);
+            _mqtt_state_recv_ready(&state);
+            REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        }
+        CHECK( receives == 20 );
+
+        now_ms += due_ms + 1;
+        _mqtt_state_recv_ready(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_SEND_PINGREQ );
+        CHECK( receives == 20 );
+    }
+
+    SECTION("the keep-alive counts from CONNECT") {
+        // Waiting between attempts to connect, which the clock goes on through.
+        now_ms += 600 * 1000;
+        strcpy(state.endpoint.topic, "topic");
+        strcpy(state.endpoint.username, "user");
+        strcpy(state.endpoint.password, "password");
+        mqtt_ctx.on_send = [](void*, const char*, size_t length, size_t* out) {
+            *out = length;
+            return EBISU_SOCK_OK;
+        };
+        state.info.task_state = KII_MQTT_ST_SEND_CONNECT;
+        _mqtt_state_send_connect(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_CONNACK );
+
+        int receives = 0;
+        mqtt_ctx.on_recv = [&receives](void*, char*, size_t, size_t*) {
+            ++receives;
+            return EBISU_SOCK_AGAIN;
+        };
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        _mqtt_state_recv_ready(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        CHECK( receives == 1 );
+
+        now_ms += due_ms + 1;
+        _mqtt_state_recv_ready(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_SEND_PINGREQ );
+        CHECK( receives == 1 );
+    }
+}

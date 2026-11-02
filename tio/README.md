@@ -210,7 +210,12 @@ Our cloud supports non-secure connection for now. However, we may terminate supp
 
 Underlying socket implementation used for MQTT must be blocking mode, with a send timeout, and its recv timeout must be shared with `tio_handler_t`.
 
-We use socket timeout to estimate elapsed time since we sent last MQTT messages to send MQTT `PINGREQ` message periodically.
+With a `monotonic_ms` in the system set by `tio_handler_set_system()`,
+`tio_handler` times the keep-alive by it, and sends `PINGREQ` early enough that
+a receive running into its timeout still ends within the keep-alive. Without
+one, it estimates the time since the last MQTT message it sent from the recv
+timeout and its own waits, which misses the time spent elsewhere, such as in
+the action callback.
 
 MQTT keep alive interval must be larger than recv/ send timeout.
 Twice as large as recv/ send timeout works fine but recommend few minutes to avoid congestion.

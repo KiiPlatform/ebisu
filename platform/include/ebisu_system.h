@@ -74,6 +74,10 @@ typedef struct ebisu_system_ops_t {
      * differences are used. Platforms whose tick counter is 32 bits wide must
      * extend it to 64, or it wraps after about 49.7 days.
      *
+     * More than one task may call it at once: the MQTT task times its
+     * keep-alive by it, while a session or an ebisu_clock_t reads it in
+     * another task.
+     *
      * \param [in] self The system.
      * \return Milliseconds elapsed since an arbitrary, fixed origin.
      */

@@ -141,9 +141,11 @@ inline uint64_t mock_monotonic_ms(ebisu_system_t* self) {
 }
 
 // A system that only delays, at once, as the tests' delay callback used to.
+// Without a monotonic clock, the MQTT task estimates its keep-alive.
 inline ebisu_system_t* delay_only_system() {
     static SystemCtx ctx;
     ctx.ops.task_create = NULL;
+    ctx.ops.monotonic_ms = NULL;
     return ctx.system();
 }
 
