@@ -280,7 +280,7 @@ Thing-IF</h1>
 Server code</h1>
 <div class="fragment"><div class="line">res = <a class="code hl_function" href="kii_8h.html#a54c7ef600d31e8e1f6826dbaa2742b04">kii_execute_server_code</a>(&amp;kii, <span class="stringliteral">&quot;your-endpoint&quot;</span>, <span class="stringliteral">&quot;{\&quot;param\&quot;:1}&quot;</span>);</div>
 <div class="ttc" id="akii_8h_html_a54c7ef600d31e8e1f6826dbaa2742b04"><div class="ttname"><a href="kii_8h.html#a54c7ef600d31e8e1f6826dbaa2742b04">kii_execute_server_code</a></div><div class="ttdeci">kii_code_t kii_execute_server_code(kii_t *kii, const char *endpoint_name, const char *params)</div><div class="ttdoc">Execute current version of server code.</div></div>
-</div><!-- fragment --><p>The result is in the buffer, <code><a class="el" href="kii_8h.html#acc772d67b6d4f9cf53e0c5ea864ceb5d" title="Get response body length. If the response is chunked, decoded response body length is returned.">kii_get_resp_body_length()</a></code> bytes long. <code><a class="el" href="kii_8h.html#a88de31a3b85076df9a58727d2ab63d7f" title="Execute a specific version of server code.">kii_execute_server_code_version()</a></code> runs a given version of the code.</p>
+</div><!-- fragment --><p>The result is in the buffer, <code><a class="el" href="kii_8h.html#acc772d67b6d4f9cf53e0c5ea864ceb5d" title="Get response body length. If the response is chunked, decoded response body length is returned.">kii_get_resp_body_length()</a></code> bytes long. <code><a class="el" href="kii_8h.html#a88de31a3b85076df9a58727d2ab63d7f" title="Execute a specific version of server code.">kii_execute_server_code_version()</a></code> runs a given version of the code. Both send the token of the thing <code>kii</code> acts as. <code><a class="el" href="kii_8h.html#a980766f47ebc738c8cf1a3702722f56e" title="Execute server code with a token other than the thing&#39;s, or none.">kii_execute_server_code_with_token()</a></code> sends another instead, an application administrator's or a user's, or none, for an endpoint that runs without one. A session never renews or replaces it.</p>
 <h1><a class="anchor" id="autotoc_md8"></a>
 Other REST API calls</h1>
 <p>Any other call can be built with <code>kii_api_call_*()</code>. The path is the whole path, application ID included:</p>
@@ -336,7 +336,7 @@ Building</h1>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 13:17:30 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Mon Nov 2 2026 14:27:37 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

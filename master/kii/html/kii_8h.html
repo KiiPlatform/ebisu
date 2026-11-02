@@ -428,6 +428,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a54c7ef600d31e8e1f6826dbaa2742b04" id="r_a54c7ef600d31e8e1f6826dbaa2742b04"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a54c7ef600d31e8e1f6826dbaa2742b04">kii_execute_server_code</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const char *endpoint_name, const char *params)</td></tr>
 <tr class="memdesc:a54c7ef600d31e8e1f6826dbaa2742b04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute current version of server code.  <br /></td></tr>
 <tr class="separator:a54c7ef600d31e8e1f6826dbaa2742b04"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a980766f47ebc738c8cf1a3702722f56e" id="r_a980766f47ebc738c8cf1a3702722f56e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a980766f47ebc738c8cf1a3702722f56e">kii_execute_server_code_with_token</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const char *version, const char *endpoint_name, const char *params, const char *access_token)</td></tr>
+<tr class="memdesc:a980766f47ebc738c8cf1a3702722f56e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute server code with a token other than the thing's, or none.  <br /></td></tr>
+<tr class="separator:a980766f47ebc738c8cf1a3702722f56e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adaf6e5b9a952127cacd4cbf2e911039c" id="r_adaf6e5b9a952127cacd4cbf2e911039c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#adaf6e5b9a952127cacd4cbf2e911039c">kii_ti_onboard</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const char *vendor_thing_id, const char *password, const char *thing_type, const char *firmware_version, const char *layout_position, const char *thing_properties)</td></tr>
 <tr class="memdesc:adaf6e5b9a952127cacd4cbf2e911039c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute onboarding.  <br /></td></tr>
 <tr class="separator:adaf6e5b9a952127cacd4cbf2e911039c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1459,6 +1462,66 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
     <tr><td class="paramdir">[in]</td><td class="paramname">version</td><td>Version identifier to be used during execution. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">endpoint_name</td><td>Name of the endpoint to be executed. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">params</td><td>Parameters given to endpoint. Expect JSON object. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>kii_code_t </dd></dl>
+
+</div>
+</div>
+<a id="a980766f47ebc738c8cf1a3702722f56e" name="a980766f47ebc738c8cf1a3702722f56e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a980766f47ebc738c8cf1a3702722f56e">&#9670;&#160;</a></span>kii_execute_server_code_with_token()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a> kii_execute_server_code_with_token </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
+          <td class="paramname"><em>kii</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>version</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>endpoint_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>params</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>access_token</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Execute server code with a token other than the thing's, or none. </p>
+<p><a class="el" href="kii_8h.html#a54c7ef600d31e8e1f6826dbaa2742b04" title="Execute current version of server code.">kii_execute_server_code()</a> and <a class="el" href="kii_8h.html#a88de31a3b85076df9a58727d2ab63d7f" title="Execute a specific version of server code.">kii_execute_server_code_version()</a> send the token of the thing kii acts as. This sends the one given: an application administrator's, a user's or another thing's, or none, for an endpoint that runs without one. A session never renews or replaces it.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">version</td><td>Version identifier to be used during execution, or NULL for the current one. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">endpoint_name</td><td>Name of the endpoint to be executed. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">params</td><td>Parameters given to endpoint. Expect JSON object. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">access_token</td><td>Token sent as a bearer token, or NULL to send none. </td></tr>
   </table>
   </dd>
 </dl>
@@ -3914,7 +3977,7 @@ const char*, const char*, const char*, kii_bool_t)</a> and <a class="el" href="k
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 13:17:30 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Mon Nov 2 2026 14:27:37 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

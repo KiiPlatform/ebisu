@@ -751,6 +751,13 @@
     </member>
     <member kind="function">
       <type>kii_code_t</type>
+      <name>kii_execute_server_code_with_token</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a980766f47ebc738c8cf1a3702722f56e</anchor>
+      <arglist>(kii_t *kii, const char *version, const char *endpoint_name, const char *params, const char *access_token)</arglist>
+    </member>
+    <member kind="function">
+      <type>kii_code_t</type>
       <name>kii_ti_onboard</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>adaf6e5b9a952127cacd4cbf2e911039c</anchor>
