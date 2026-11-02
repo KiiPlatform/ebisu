@@ -44,8 +44,10 @@ which have the rest of `platform`.
   mutex. Needs POSIX threads.
 - **OpenSSL** (`ebisu_openssl.h`, library `ebisu_openssl`):
   `ebisu_openssl_socket_t`, TLS over a blocking BSD socket, checking the
-  server's certificate at an `ebisu_clock_t`'s time. Needs OpenSSL 1.0.2 or
-  later, and POSIX threads.
+  server's certificate at an `ebisu_clock_t`'s time. Its connections share one
+  `SSL_CTX`: the system's CA certificates, or those of an
+  `ebisu_openssl_tls_t` set up with a CA file or directory, for a device
+  without the system's. Needs OpenSSL 1.0.2 or later, and POSIX threads.
 
 The Linux sample uses both. The samples for Windows, FreeRTOS and ESP32 have
 implementations of their own, under `tio`.

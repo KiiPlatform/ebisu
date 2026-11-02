@@ -51,6 +51,84 @@ static void init_openssl(void)
     SSL_load_error_strings();
 }
 
+/* The tasks connect at the same time, and it is not safe to run twice. */
+static void ensure_openssl(void)
+{
+    static pthread_once_t openssl_initialized = PTHREAD_ONCE_INIT;
+    pthread_once(&openssl_initialized, init_openssl);
+}
+
+static int verify_callback(int preverify_ok, X509_STORE_CTX* store);
+
+/* An SSL_CTX trusting the CA certificates given, or the system's without any. */
+static SSL_CTX* new_ssl_ctx(const char* ca_file, const char* ca_path)
+{
+    ensure_openssl();
+    const SSL_METHOD *method =
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+        TLSv1_2_client_method();
+#else
+        TLS_client_method();
+#endif
+    SSL_CTX* ssl_ctx = SSL_CTX_new(method);
+    if (ssl_ctx == NULL){
+        printf("failed to init ssl context.\n");
+        return NULL;
+    }
+
+#ifdef SSL_OP_IGNORE_UNEXPECTED_EOF
+    /* Servers that answer "Connection: close" drop the transport without
+       sending a TLS close_notify. OpenSSL 1.1.1 surfaced that as
+       SSL_ERROR_SYSCALL with errno 0, i.e. an ordinary EOF; 3.0 turned it into
+       a hard "unexpected eof while reading" error instead. This option asks
+       for the old, lenient behaviour. */
+    SSL_CTX_set_options(ssl_ctx, SSL_OP_IGNORE_UNEXPECTED_EOF);
+#endif
+
+    /* The server's certificate has to chain to one of these. */
+    int loaded = (ca_file != NULL || ca_path != NULL) ?
+        SSL_CTX_load_verify_locations(ssl_ctx, ca_file, ca_path) :
+        SSL_CTX_set_default_verify_paths(ssl_ctx);
+    if (loaded != 1) {
+        printf("failed to load the CA certificates.\n");
+        SSL_CTX_free(ssl_ctx);
+        return NULL;
+    }
+    SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, verify_callback);
+    return ssl_ctx;
+}
+
+/* The one sockets without a configuration of their own share, made at the
+   first connection. NULL if that failed. */
+static SSL_CTX* default_ssl_ctx = NULL;
+
+static void init_default_ssl_ctx(void)
+{
+    default_ssl_ctx = new_ssl_ctx(NULL, NULL);
+}
+
+static SSL_CTX* shared_ssl_ctx(ebisu_openssl_socket_t* sock)
+{
+    if (sock->tls != NULL) {
+        return sock->tls->ssl_ctx;
+    }
+    static pthread_once_t made = PTHREAD_ONCE_INIT;
+    pthread_once(&made, init_default_ssl_ctx);
+    return default_ssl_ctx;
+}
+
+bool ebisu_openssl_tls_init(ebisu_openssl_tls_t* tls, const char* ca_file, const char* ca_path)
+{
+    tls->ssl_ctx = new_ssl_ctx(ca_file, ca_path);
+    return tls->ssl_ctx != NULL;
+}
+
+void ebisu_openssl_tls_free(ebisu_openssl_tls_t* tls)
+{
+    SSL_CTX_free(tls->ssl_ctx);
+    tls->ssl_ctx = NULL;
+}
+
 static ebisu_sock_code_t openssl_connect(ebisu_socket_t* self, const char* host,
         uint16_t port);
 static ebisu_sock_code_t openssl_send(ebisu_socket_t* self, const char* buffer,
@@ -78,6 +156,11 @@ void ebisu_openssl_socket_init(
     ctx->socket = -1;
     ctx->to_recv = to_recv;
     ctx->to_send = to_send;
+}
+
+void ebisu_openssl_socket_set_tls(ebisu_openssl_socket_t* sock, ebisu_openssl_tls_t* tls)
+{
+    sock->tls = tls;
 }
 
 void ebisu_openssl_socket_set_clock(ebisu_openssl_socket_t* sock, ebisu_clock_t* clock)
@@ -147,7 +230,6 @@ static ebisu_sock_code_t
     struct hostent *servhost;
     struct sockaddr_in server;
     SSL *ssl = NULL;
-    SSL_CTX *ssl_ctx = NULL;
     ebisu_openssl_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_openssl_socket_t, base);
 
     servhost = gethostbyname(host);
@@ -188,38 +270,11 @@ static ebisu_sock_code_t
         goto fail;
     }
 
-    /* The tasks connect at the same time, and it is not safe to run twice. */
-    static pthread_once_t openssl_initialized = PTHREAD_ONCE_INIT;
-    pthread_once(&openssl_initialized, init_openssl);
-    const SSL_METHOD *method =
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
-        TLSv1_2_client_method();
-#else
-        TLS_client_method();
-#endif
-    ssl_ctx = SSL_CTX_new(method);
-    if (ssl_ctx == NULL){
-        printf("failed to init ssl context.\n");
+    /* Shared with the other connections: the CA certificates are loaded once. */
+    SSL_CTX* ssl_ctx = shared_ssl_ctx(ctx);
+    if (ssl_ctx == NULL) {
         goto fail;
     }
-
-#ifdef SSL_OP_IGNORE_UNEXPECTED_EOF
-    /* Servers that answer "Connection: close" drop the transport without
-       sending a TLS close_notify. OpenSSL 1.1.1 surfaced that as
-       SSL_ERROR_SYSCALL with errno 0, i.e. an ordinary EOF; 3.0 turned it into
-       a hard "unexpected eof while reading" error instead. This option asks
-       for the old, lenient behaviour. */
-    SSL_CTX_set_options(ssl_ctx, SSL_OP_IGNORE_UNEXPECTED_EOF);
-#endif
-
-    /* The server's certificate has to chain to one of the system's CA
-       certificates. */
-    if (SSL_CTX_set_default_verify_paths(ssl_ctx) != 1) {
-        printf("failed to load the CA certificates.\n");
-        goto fail;
-    }
-    SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, verify_callback);
-
     ssl = SSL_new(ssl_ctx);
     if (ssl == NULL){
         printf("failed to init ssl.\n");
@@ -274,16 +329,12 @@ static ebisu_sock_code_t
 
     ctx->socket = sock;
     ctx->ssl = ssl;
-    ctx->ssl_ctx = ssl_ctx;
     ctx->ssl_failed = false;
     return EBISU_SOCK_OK;
 
 fail:
     if (ssl != NULL) {
         SSL_free(ssl);
-    }
-    if (ssl_ctx != NULL) {
-        SSL_CTX_free(ssl_ctx);
     }
     close(sock);
     return EBISU_SOCK_FAIL;
@@ -402,7 +453,6 @@ static ebisu_sock_code_t
     }
     close(ctx->socket);
     SSL_free(ctx->ssl);
-    SSL_CTX_free(ctx->ssl_ctx);
     if (!shutdown_ok) {
         printf("failed to close:\n");
         return EBISU_SOCK_FAIL;
