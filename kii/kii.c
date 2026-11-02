@@ -170,6 +170,16 @@ kii_code_t kii_set_mqtt_retry_wait_max(kii_t* kii, uint32_t max_sec) {
 
 void kii_set_system(kii_t* kii, ebisu_system_t* system) {
     kii->_system = system;
+    // The requests wait for their sockets with it, and are timed by it.
+    khc_set_system(&kii->_khc, system);
+}
+
+kii_code_t kii_set_request_timeout(kii_t* kii, uint32_t timeout_sec) {
+    if (timeout_sec > UINT32_MAX / 1000) {
+        return KII_ERR_FAIL;
+    }
+    khc_set_timeout_ms(&kii->_khc, timeout_sec * 1000);
+    return KII_ERR_OK;
 }
 
 void kii_set_cb_task_continue(kii_t* kii, KII_CB_TASK_CONTINUE cb, void* userdata) {
@@ -295,8 +305,9 @@ kii_code_t _convert_code(khc_code khc_c) {
         // own read callback gives whole.
         case KHC_ERR_READ_CALLBACK:
             return KII_ERR_FAIL;
-        // kii sets neither a timeout nor a continue callback on its khc.
         case KHC_ERR_TIMEOUT:
+            return KII_ERR_TIMEOUT;
+        // kii sets no continue callback on its khc.
         case KHC_ERR_CANCELLED:
             return KII_ERR_FAIL;
     }

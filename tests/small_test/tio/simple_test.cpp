@@ -132,6 +132,29 @@ TEST_CASE( "tio_handler sets the QoS and the clean session on its kii" ) {
     CHECK( handler._kii._mqtt_clean_session == false );
 }
 
+TEST_CASE( "tio_handler and tio_updater set the request timeout on their kii" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    CHECK( tio_handler_set_request_timeout(&handler, 30) == TIO_ERR_OK );
+    CHECK( handler._kii._khc._timeout_ms == 30000 );
+    CHECK( tio_handler_set_request_timeout(&handler, 4294968) == TIO_ERR_FAIL );
+    CHECK( handler._kii._khc._timeout_ms == 30000 );
+
+    tio_updater_t updater;
+    tio_updater_init(&updater);
+    CHECK( tio_updater_set_request_timeout(&updater, 20) == TIO_ERR_OK );
+    CHECK( updater._kii._khc._timeout_ms == 20000 );
+    CHECK( tio_updater_set_request_timeout(&updater, 4294968) == TIO_ERR_FAIL );
+    CHECK( updater._kii._khc._timeout_ms == 20000 );
+
+    // Their systems are their requests' too.
+    khct::cb::SystemCtx sys;
+    tio_handler_set_system(&handler, sys.system());
+    tio_updater_set_system(&updater, sys.system());
+    CHECK( handler._kii._khc._system == sys.system() );
+    CHECK( updater._kii._khc._system == sys.system() );
+}
+
 TEST_CASE( "tio_handler_start keep-alive range" ) {
     char buff[64];
     tio_handler_t handler;

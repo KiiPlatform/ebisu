@@ -3813,6 +3813,46 @@ ebisu_sock_code_t retry_connect_fail(void* context, const char* host, uint16_t p
 
 }
 
+// A request that times out never had an answer, like one that fails on the
+// network, so the push task tries it again rather than ending.
+TEST_CASE( "A request of the push task that times out is tried again" ) {
+    char buff[1024];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, buff, sizeof(buff));
+    kii_set_json_parser_resource(&kii, &resource);
+    strcpy(kii._author.author_id, "th.1");
+    strcpy(kii._author.access_token, "tok");
+    uint64_t now = 1000;
+    khct::cb::SystemCtx sys;
+    sys.on_delay_ms = [&now](uint32_t ms) { now += ms; };
+    sys.on_monotonic_ms = [&now]() { return now; };
+    kii_set_system(&kii, sys.system());
+    REQUIRE( kii_set_request_timeout(&kii, 1) == KII_ERR_OK );
+
+    // Kii Cloud answers a byte every 100 ms.
+    khct::HttpScript script;
+    script.attach(&kii);
+    script.responses = { khct::http_response(201, "{\"installationID\":\"ins.1\"}") };
+    auto recv = script.ctx.on_recv;
+    script.ctx.on_recv = [&now, recv](void* ctx, char* buffer, size_t, size_t* out_actual_length) {
+        now += 100;
+        return recv(ctx, buffer, 1, out_actual_length);
+    };
+
+    mqtt_state_t state;
+    _init_mqtt_state(&kii, &state);
+    REQUIRE( state.info.task_state == KII_MQTT_ST_INSTALL_PUSH );
+    _mqtt_state_install_push(&state);
+    CHECK( state.info.task_state == KII_MQTT_ST_INSTALL_PUSH );
+    CHECK( state.info.error == KII_MQTT_ERR_OK );
+    CHECK( state.wait_left_ms > 0 );
+}
+
 TEST_CASE( "The waits between attempts" ) {
     kii_t kii;
     kii_init(&kii);
