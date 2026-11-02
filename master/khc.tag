@@ -27,6 +27,13 @@
       <anchor>ae34f7ab4d0288491b284718bb5973415</anchor>
       <arglist></arglist>
     </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>KHC_REQ_BODY_LENGTH_UNKNOWN</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>a0fefd590b69df986dda16f6b8356a0a9</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="typedef">
       <type>size_t(*</type>
       <name>KHC_CB_WRITE</name>
@@ -158,6 +165,12 @@
       <anchor>a90be23875108e9a39942c3af90a6d789abdc61249fe00e89ee9f2d00f11561e13</anchor>
       <arglist></arglist>
     </member>
+    <member kind="enumvalue">
+      <name>KHC_ERR_READ_CALLBACK</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>a90be23875108e9a39942c3af90a6d789a3612ca2692ccace4e8e11157cf04c6bb</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="function">
       <type>khc_slist *</type>
       <name>khc_cb_slist_alloc</name>
@@ -283,6 +296,13 @@
       <anchorfile>khc_8h.html</anchorfile>
       <anchor>a1ea30cbdfd91b2ba3bb156bfa693bcab</anchor>
       <arglist>(khc *khc, KHC_CB_READ cb, void *userdata)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>khc_set_req_body_length</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>ab2a74fefe79e599b67ed3e2717c9f41d</anchor>
+      <arglist>(khc *khc, size_t length)</arglist>
     </member>
     <member kind="function">
       <type>khc_code</type>

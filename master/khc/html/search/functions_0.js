@@ -20,12 +20,13 @@ var searchData=
   ['khc_5fset_5fhost_17',['khc_set_host',['../khc_8h.html#a67fb3bf7ff0b65085e639aa5a1465cc3',1,'khc.h']]],
   ['khc_5fset_5fmethod_18',['khc_set_method',['../khc_8h.html#a3f16b241faeeb8e623e605fac9ed3901',1,'khc.h']]],
   ['khc_5fset_5fpath_19',['khc_set_path',['../khc_8h.html#a66d6d377286feccbf320117f7ffa1692',1,'khc.h']]],
-  ['khc_5fset_5freq_5fheaders_20',['khc_set_req_headers',['../khc_8h.html#ac28ce7ac10ab32d62f0bdc0c5f3915c2',1,'khc.h']]],
-  ['khc_5fset_5fresp_5fheader_5fbuff_21',['khc_set_resp_header_buff',['../khc_8h.html#afd2065be9638acf043438ac9e020d3b8',1,'khc.h']]],
-  ['khc_5fset_5fsocket_22',['khc_set_socket',['../khc_8h.html#aa873888c09db4188eadb6b4b1cb511db',1,'khc.h']]],
-  ['khc_5fset_5fstream_5fbuff_23',['khc_set_stream_buff',['../khc_8h.html#a59a8813c4c65fb2097b3461e5303d4fa',1,'khc.h']]],
-  ['khc_5fslist_5fappend_24',['khc_slist_append',['../khc_8h.html#a0c00d03901759308af4a906ad3a4bf57',1,'khc.h']]],
-  ['khc_5fslist_5fappend_5fusing_5fcb_5falloc_25',['khc_slist_append_using_cb_alloc',['../khc_8h.html#ae829b7d6c6b4adf4c43c5ce2084a1cfa',1,'khc.h']]],
-  ['khc_5fslist_5ffree_5fall_26',['khc_slist_free_all',['../khc_8h.html#a0697b94cf117f1e6475d4b6a281fdab6',1,'khc.h']]],
-  ['khc_5fslist_5ffree_5fall_5fusing_5fcb_5ffree_27',['khc_slist_free_all_using_cb_free',['../khc_8h.html#a601f7b3c5298824462683436df2807fa',1,'khc.h']]]
+  ['khc_5fset_5freq_5fbody_5flength_20',['khc_set_req_body_length',['../khc_8h.html#ab2a74fefe79e599b67ed3e2717c9f41d',1,'khc.h']]],
+  ['khc_5fset_5freq_5fheaders_21',['khc_set_req_headers',['../khc_8h.html#ac28ce7ac10ab32d62f0bdc0c5f3915c2',1,'khc.h']]],
+  ['khc_5fset_5fresp_5fheader_5fbuff_22',['khc_set_resp_header_buff',['../khc_8h.html#afd2065be9638acf043438ac9e020d3b8',1,'khc.h']]],
+  ['khc_5fset_5fsocket_23',['khc_set_socket',['../khc_8h.html#aa873888c09db4188eadb6b4b1cb511db',1,'khc.h']]],
+  ['khc_5fset_5fstream_5fbuff_24',['khc_set_stream_buff',['../khc_8h.html#a59a8813c4c65fb2097b3461e5303d4fa',1,'khc.h']]],
+  ['khc_5fslist_5fappend_25',['khc_slist_append',['../khc_8h.html#a0c00d03901759308af4a906ad3a4bf57',1,'khc.h']]],
+  ['khc_5fslist_5fappend_5fusing_5fcb_5falloc_26',['khc_slist_append_using_cb_alloc',['../khc_8h.html#ae829b7d6c6b4adf4c43c5ce2084a1cfa',1,'khc.h']]],
+  ['khc_5fslist_5ffree_5fall_27',['khc_slist_free_all',['../khc_8h.html#a0697b94cf117f1e6475d4b6a281fdab6',1,'khc.h']]],
+  ['khc_5fslist_5ffree_5fall_5fusing_5fcb_5ffree_28',['khc_slist_free_all_using_cb_free',['../khc_8h.html#a601f7b3c5298824462683436df2807fa',1,'khc.h']]]
 ];

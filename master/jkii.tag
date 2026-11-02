@@ -238,6 +238,280 @@
       <arglist>(const char *json_string, size_t json_string_len, jkii_field_t *fields, JKII_CB_RESOURCE_ALLOC cb_alloc, JKII_CB_RESOURCE_FREE cb_free)</arglist>
     </member>
   </compound>
+  <compound kind="file">
+    <name>jkii_lines.h</name>
+    <path>include/</path>
+    <filename>jkii__lines_8h.html</filename>
+    <class kind="struct">jkii_lines_t</class>
+    <member kind="typedef">
+      <type>enum jkii_lines_err_t</type>
+      <name>jkii_lines_err_t</name>
+      <anchorfile>jkii__lines_8h.html</anchorfile>
+      <anchor>a69d1b690e0cd7de900e97b910394dcc4</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct jkii_lines_t</type>
+      <name>jkii_lines_t</name>
+      <anchorfile>jkii__lines_8h.html</anchorfile>
+      <anchor>a99e669e8cd9f536ebd494b03e38c21ea</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumeration">
+      <type></type>
+      <name>jkii_lines_err_t</name>
+      <anchorfile>jkii__lines_8h.html</anchorfile>
+      <anchor>a74827940849d65e5332f034d5ef06f32</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>JKII_LINES_RECORD</name>
+      <anchorfile>jkii__lines_8h.html</anchorfile>
+      <anchor>a74827940849d65e5332f034d5ef06f32ab30d28a57b30357ac0682916514d9f85</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>JKII_LINES_NEED_MORE</name>
+      <anchorfile>jkii__lines_8h.html</anchorfile>
+      <anchor>a74827940849d65e5332f034d5ef06f32a54907ae5823fdbd9443a0e21b0581c6b</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>JKII_LINES_TOO_LONG</name>
+      <anchorfile>jkii__lines_8h.html</anchorfile>
+      <anchor>a74827940849d65e5332f034d5ef06f32ae0e37367f151d34057a934b7c3f77a6d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>JKII_LINES_TRUNCATED</name>
+      <anchorfile>jkii__lines_8h.html</anchorfile>
+      <anchor>a74827940849d65e5332f034d5ef06f32ab18756901a5c9b189e7ceb4639a42559</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>JKII_LINES_END</name>
+      <anchorfile>jkii__lines_8h.html</anchorfile>
+      <anchor>a74827940849d65e5332f034d5ef06f32a667f301fcc216b4c934c6c72b228b7d2</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>jkii_lines_init</name>
+      <anchorfile>jkii__lines_8h.html</anchorfile>
+      <anchor>af40391c0105795f8215646c6b9421bd8</anchor>
+      <arglist>(jkii_lines_t *r, char *buff, size_t buff_size)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_lines_err_t</type>
+      <name>jkii_lines_feed</name>
+      <anchorfile>jkii__lines_8h.html</anchorfile>
+      <anchor>aa8a9ab1677e174b7021340555d239846</anchor>
+      <arglist>(jkii_lines_t *r, const char *data, size_t len, size_t *out_consumed, const char **out_line, size_t *out_line_len)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_lines_err_t</type>
+      <name>jkii_lines_finish</name>
+      <anchorfile>jkii__lines_8h.html</anchorfile>
+      <anchor>ae223cc0dcb12a38e55fa27f7ed058c60</anchor>
+      <arglist>(jkii_lines_t *r, const char **out_line, size_t *out_line_len)</arglist>
+    </member>
+  </compound>
+  <compound kind="file">
+    <name>jkii_writer.h</name>
+    <path>include/</path>
+    <filename>jkii__writer_8h.html</filename>
+    <class kind="struct">jkii_writer_t</class>
+    <member kind="define">
+      <type>#define</type>
+      <name>JKII_WRITER_MAX_DEPTH</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a51e8cbd6550db97f228d9d6029f56ef2</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>enum jkii_write_err_t</type>
+      <name>jkii_write_err_t</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>aba3851bc9277e568dc063bcba4e7b384</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>size_t(*</type>
+      <name>JKII_CB_WRITE</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a606735ff2664c72a91553be14964a3b0</anchor>
+      <arglist>)(const char *data, size_t size, void *userdata)</arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct jkii_writer_t</type>
+      <name>jkii_writer_t</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>aad8aa3970042e9d29e6ba7548c11089d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumeration">
+      <type></type>
+      <name>jkii_write_err_t</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a034e2b06447b8ec9dffc0489935da5b3</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>JKII_WRITE_OK</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a034e2b06447b8ec9dffc0489935da5b3a87d364113d66022016cf8e1ff32f7ab1</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>JKII_WRITE_ERR_TOO_LARGE</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a034e2b06447b8ec9dffc0489935da5b3aec0cda130034fee804200c4eac00918f</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>JKII_WRITE_ERR_STRUCTURE</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a034e2b06447b8ec9dffc0489935da5b3a8311bf8fe54bdf47d282d3303a340414</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>JKII_WRITE_ERR_TOO_DEEP</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a034e2b06447b8ec9dffc0489935da5b3abc654d50e64c064ac7a41517c4907d6c</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>JKII_WRITE_ERR_VALUE</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a034e2b06447b8ec9dffc0489935da5b3a4ce5d2948763874e8808664302515956</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>JKII_WRITE_ERR_CALLBACK</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a034e2b06447b8ec9dffc0489935da5b3ad94ab3fd7e186adfca736193038ed5f6</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>jkii_writer_init_buff</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>ab80274bae6c44bdf937e89136b4a2781</anchor>
+      <arglist>(jkii_writer_t *w, char *buff, size_t buff_size)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>jkii_writer_init_cb</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>aab6dbcc0be8df635587e06e1c05cd94a</anchor>
+      <arglist>(jkii_writer_t *w, char *buff, size_t buff_size, JKII_CB_WRITE cb, void *userdata)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
+      <name>jkii_write_object_start</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>ab18fc029011f776c7a0c43a705623a43</anchor>
+      <arglist>(jkii_writer_t *w)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
+      <name>jkii_write_object_end</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a695a1e3ceccf4f4958baa7622a3f5606</anchor>
+      <arglist>(jkii_writer_t *w)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
+      <name>jkii_write_array_start</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>ad4c4c2bb6aaab90242ea69e5926c439a</anchor>
+      <arglist>(jkii_writer_t *w)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
+      <name>jkii_write_array_end</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a43068faf6cea12c6537acb54106708c4</anchor>
+      <arglist>(jkii_writer_t *w)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
+      <name>jkii_write_key</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a7a44441a314551dfea240a4c07366f68</anchor>
+      <arglist>(jkii_writer_t *w, const char *key)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
+      <name>jkii_write_string</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>aae07d95f0d66cdaa66bce4f9b253f11e</anchor>
+      <arglist>(jkii_writer_t *w, const char *s)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
+      <name>jkii_write_string_n</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>aba7d17157e85a38d2b4fda6e62e6f4f1</anchor>
+      <arglist>(jkii_writer_t *w, const char *s, size_t n)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
+      <name>jkii_write_int</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>ae4c2c98991132cce0d85902b28a74b88</anchor>
+      <arglist>(jkii_writer_t *w, int64_t v)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
+      <name>jkii_write_uint</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a23bc3008a259815bc9e25e9bf5b82915</anchor>
+      <arglist>(jkii_writer_t *w, uint64_t v)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
+      <name>jkii_write_double</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a7987f45e43166e38eaa5f525459fb7d7</anchor>
+      <arglist>(jkii_writer_t *w, double v, int decimals)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
+      <name>jkii_write_bool</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a1fcc1d2d8aac2c43559a73075a4aa1a0</anchor>
+      <arglist>(jkii_writer_t *w, int v)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
+      <name>jkii_write_null</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a1dd835d066f81d4566b3123b61882a62</anchor>
+      <arglist>(jkii_writer_t *w)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
+      <name>jkii_write_raw</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>af2cd4b8b9115aed7b28538fdd1ff76ec</anchor>
+      <arglist>(jkii_writer_t *w, const char *json, size_t n)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
+      <name>jkii_write_record_end</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>a9a0563fef8815c079f46761c04e238f5</anchor>
+      <arglist>(jkii_writer_t *w)</arglist>
+    </member>
+    <member kind="function">
+      <type>jkii_write_err_t</type>
+      <name>jkii_writer_finish</name>
+      <anchorfile>jkii__writer_8h.html</anchorfile>
+      <anchor>aa29b3b9110dcbd550b625f420dfeafac</anchor>
+      <arglist>(jkii_writer_t *w, size_t *out_len)</arglist>
+    </member>
+  </compound>
   <compound kind="struct">
     <name>jkii_field_t</name>
     <filename>structjkii__field__t.html</filename>
@@ -334,6 +608,10 @@
     </member>
   </compound>
   <compound kind="struct">
+    <name>jkii_lines_t</name>
+    <filename>structjkii__lines__t.html</filename>
+  </compound>
+  <compound kind="struct">
     <name>jkii_primitive_t</name>
     <filename>structjkii__primitive__t.html</filename>
     <member kind="variable">
@@ -396,6 +674,10 @@
       <anchor>a831a9295c6f4eecfc2889e5792bd2953</anchor>
       <arglist></arglist>
     </member>
+  </compound>
+  <compound kind="struct">
+    <name>jkii_writer_t</name>
+    <filename>structjkii__writer__t.html</filename>
   </compound>
   <compound kind="page">
     <name>index</name>

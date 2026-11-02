@@ -74,6 +74,7 @@ $(function() {
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="jkii_readme"></a> jkii is JSON parser library written in c (conforms to c99). It allows to specify multiple fields by jsonpath notation to obtain its values. This design is inspired by <a href="http://www.catb.org/esr/microjson/">microjson</a>.</p>
 <p>jkii is designed to fit resource limited environment. You can choose static or dynamic memory allocation.</p>
+<p>It writes JSON too, and JSON Lines, with <code><a class="el" href="jkii__writer_8h.html" title="Writing JSON, bounded, into a buffer or out through a callback.">jkii_writer.h</a></code>: see Writing JSON below. It reads JSON Lines, a record at a time, with <code><a class="el" href="jkii__lines_8h.html" title="Reading JSON Lines: one JSON value a line, fed in pieces of any size.">jkii_lines.h</a></code>: see Reading JSON Lines below.</p>
 <h1><a class="anchor" id="autotoc_md0"></a>
 Build jkii</h1>
 <p>Execute following command on the top directory of the repository.</p>
@@ -129,6 +130,79 @@ Example</h1>
 <div class="ttc" id="astructjkii__field__t_html_ade8bf5f5ddad91aedd67bb0a0ae40533"><div class="ttname"><a href="structjkii__field__t.html#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a></div><div class="ttdeci">const char * path</div><div class="ttdef"><b>Definition</b> jkii.h:232</div></div>
 <div class="ttc" id="astructjkii__resource__t_html"><div class="ttname"><a href="structjkii__resource__t.html">jkii_resource_t</a></div><div class="ttdef"><b>Definition</b> jkii.h:29</div></div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md3"></a>
+Writing JSON</h1>
+<p>A <code><a class="el" href="structjkii__writer__t.html" title="A writer. Set it up with jkii_writer_init_buff() or jkii_writer_init_cb(); its members are private.">jkii_writer_t</a></code> writes JSON into a buffer, or out through a callback a buffer at a time. It puts in the commas, colons and quotes itself, escapes strings as <code>jkii_escape_str()</code> does, and refuses what wouldn't be JSON: a value where a key is expected, the wrong end of a container, or NaN. It never truncates: a buffer too small is <code>JKII_WRITE_ERR_TOO_LARGE</code>, and <code><a class="el" href="jkii__writer_8h.html#aa29b3b9110dcbd550b625f420dfeafac" title="Ends the JSON.">jkii_writer_finish()</a></code> says how much was needed. Each call returns the first error so far, so the result of <code><a class="el" href="jkii__writer_8h.html#aa29b3b9110dcbd550b625f420dfeafac" title="Ends the JSON.">jkii_writer_finish()</a></code> is the one to check.</p>
+<div class="fragment"><div class="line"><span class="keywordtype">char</span> body[64];</div>
+<div class="line"><span class="keywordtype">size_t</span> len = 0;</div>
+<div class="line"><a class="code hl_struct" href="structjkii__writer__t.html">jkii_writer_t</a> w;</div>
+<div class="line"><a class="code hl_function" href="jkii__writer_8h.html#ab80274bae6c44bdf937e89136b4a2781">jkii_writer_init_buff</a>(&amp;w, body, <span class="keyword">sizeof</span>(body));</div>
+<div class="line"><a class="code hl_function" href="jkii__writer_8h.html#ab18fc029011f776c7a0c43a705623a43">jkii_write_object_start</a>(&amp;w);</div>
+<div class="line"><a class="code hl_function" href="jkii__writer_8h.html#a7a44441a314551dfea240a4c07366f68">jkii_write_key</a>(&amp;w, <span class="stringliteral">&quot;power&quot;</span>);</div>
+<div class="line"><a class="code hl_function" href="jkii__writer_8h.html#a1fcc1d2d8aac2c43559a73075a4aa1a0">jkii_write_bool</a>(&amp;w, 1);</div>
+<div class="line"><a class="code hl_function" href="jkii__writer_8h.html#a7a44441a314551dfea240a4c07366f68">jkii_write_key</a>(&amp;w, <span class="stringliteral">&quot;temperature&quot;</span>);</div>
+<div class="line"><a class="code hl_function" href="jkii__writer_8h.html#a7987f45e43166e38eaa5f525459fb7d7">jkii_write_double</a>(&amp;w, 21.5, 1);</div>
+<div class="line"><a class="code hl_function" href="jkii__writer_8h.html#a695a1e3ceccf4f4958baa7622a3f5606">jkii_write_object_end</a>(&amp;w);</div>
+<div class="line"><span class="keywordflow">if</span> (<a class="code hl_function" href="jkii__writer_8h.html#aa29b3b9110dcbd550b625f420dfeafac">jkii_writer_finish</a>(&amp;w, &amp;len) == <a class="code hl_enumvalue" href="jkii__writer_8h.html#a034e2b06447b8ec9dffc0489935da5b3a87d364113d66022016cf8e1ff32f7ab1">JKII_WRITE_OK</a>) {</div>
+<div class="line">    <span class="comment">// body holds {&quot;power&quot;:true,&quot;temperature&quot;:21.5}, terminated, and len is 33.</span></div>
+<div class="line">}</div>
+<div class="ttc" id="ajkii__writer_8h_html_a034e2b06447b8ec9dffc0489935da5b3a87d364113d66022016cf8e1ff32f7ab1"><div class="ttname"><a href="jkii__writer_8h.html#a034e2b06447b8ec9dffc0489935da5b3a87d364113d66022016cf8e1ff32f7ab1">JKII_WRITE_OK</a></div><div class="ttdeci">@ JKII_WRITE_OK</div><div class="ttdoc">Written.</div><div class="ttdef"><b>Definition</b> jkii_writer.h:63</div></div>
+<div class="ttc" id="ajkii__writer_8h_html_a1fcc1d2d8aac2c43559a73075a4aa1a0"><div class="ttname"><a href="jkii__writer_8h.html#a1fcc1d2d8aac2c43559a73075a4aa1a0">jkii_write_bool</a></div><div class="ttdeci">jkii_write_err_t jkii_write_bool(jkii_writer_t *w, int v)</div><div class="ttdoc">Writes true, for v other than 0, or false.</div></div>
+<div class="ttc" id="ajkii__writer_8h_html_a695a1e3ceccf4f4958baa7622a3f5606"><div class="ttname"><a href="jkii__writer_8h.html#a695a1e3ceccf4f4958baa7622a3f5606">jkii_write_object_end</a></div><div class="ttdeci">jkii_write_err_t jkii_write_object_end(jkii_writer_t *w)</div><div class="ttdoc">Closes the object open innermost.</div></div>
+<div class="ttc" id="ajkii__writer_8h_html_a7987f45e43166e38eaa5f525459fb7d7"><div class="ttname"><a href="jkii__writer_8h.html#a7987f45e43166e38eaa5f525459fb7d7">jkii_write_double</a></div><div class="ttdeci">jkii_write_err_t jkii_write_double(jkii_writer_t *w, double v, int decimals)</div><div class="ttdoc">Writes a number with a fixed number of decimals.</div></div>
+<div class="ttc" id="ajkii__writer_8h_html_a7a44441a314551dfea240a4c07366f68"><div class="ttname"><a href="jkii__writer_8h.html#a7a44441a314551dfea240a4c07366f68">jkii_write_key</a></div><div class="ttdeci">jkii_write_err_t jkii_write_key(jkii_writer_t *w, const char *key)</div><div class="ttdoc">Writes the key of the next member of the object open innermost.</div></div>
+<div class="ttc" id="ajkii__writer_8h_html_aa29b3b9110dcbd550b625f420dfeafac"><div class="ttname"><a href="jkii__writer_8h.html#aa29b3b9110dcbd550b625f420dfeafac">jkii_writer_finish</a></div><div class="ttdeci">jkii_write_err_t jkii_writer_finish(jkii_writer_t *w, size_t *out_len)</div><div class="ttdoc">Ends the JSON.</div></div>
+<div class="ttc" id="ajkii__writer_8h_html_ab18fc029011f776c7a0c43a705623a43"><div class="ttname"><a href="jkii__writer_8h.html#ab18fc029011f776c7a0c43a705623a43">jkii_write_object_start</a></div><div class="ttdeci">jkii_write_err_t jkii_write_object_start(jkii_writer_t *w)</div><div class="ttdoc">Opens an object, as a value.</div></div>
+<div class="ttc" id="ajkii__writer_8h_html_ab80274bae6c44bdf937e89136b4a2781"><div class="ttname"><a href="jkii__writer_8h.html#ab80274bae6c44bdf937e89136b4a2781">jkii_writer_init_buff</a></div><div class="ttdeci">void jkii_writer_init_buff(jkii_writer_t *w, char *buff, size_t buff_size)</div><div class="ttdoc">Sets up a writer into a buffer.</div></div>
+<div class="ttc" id="astructjkii__writer__t_html"><div class="ttname"><a href="structjkii__writer__t.html">jkii_writer_t</a></div><div class="ttdoc">A writer. Set it up with jkii_writer_init_buff() or jkii_writer_init_cb(); its members are private.</div><div class="ttdef"><b>Definition</b> jkii_writer.h:98</div></div>
+</div><!-- fragment --><p>With a NULL buffer of size 0, nothing is written and <code><a class="el" href="jkii__writer_8h.html#aa29b3b9110dcbd550b625f420dfeafac" title="Ends the JSON.">jkii_writer_finish()</a></code> gives the length, to size a buffer. <code><a class="el" href="jkii__writer_8h.html#aab6dbcc0be8df635587e06e1c05cd94a" title="Sets up a writer out through a callback.">jkii_writer_init_cb()</a></code> gives the output to a callback whenever its buffer is full, so the JSON can be larger than any buffer, as a request body or a file can.</p>
+<p>It writes JSON Lines too, one value a line, as for a log or a batch of records: <code><a class="el" href="jkii__writer_8h.html#a9a0563fef8815c079f46761c04e238f5" title="Ends a record of JSON Lines: the value at the top, which has to be whole, is followed by &#39;\n&#39;,...">jkii_write_record_end()</a></code> after each value ends its line, and the next value starts the next, with no array around them and no commas between. Through a callback, the batch can go out as a request body, or be appended to a file, without being held whole.</p>
+<div class="fragment"><div class="line"><span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> i = 0; i &lt; count; ++i) {</div>
+<div class="line">    <a class="code hl_function" href="jkii__writer_8h.html#ab18fc029011f776c7a0c43a705623a43">jkii_write_object_start</a>(&amp;w);</div>
+<div class="line">    <a class="code hl_function" href="jkii__writer_8h.html#a7a44441a314551dfea240a4c07366f68">jkii_write_key</a>(&amp;w, <span class="stringliteral">&quot;t&quot;</span>);</div>
+<div class="line">    <a class="code hl_function" href="jkii__writer_8h.html#a23bc3008a259815bc9e25e9bf5b82915">jkii_write_uint</a>(&amp;w, samples[i].time);</div>
+<div class="line">    <a class="code hl_function" href="jkii__writer_8h.html#a7a44441a314551dfea240a4c07366f68">jkii_write_key</a>(&amp;w, <span class="stringliteral">&quot;v&quot;</span>);</div>
+<div class="line">    <a class="code hl_function" href="jkii__writer_8h.html#a7987f45e43166e38eaa5f525459fb7d7">jkii_write_double</a>(&amp;w, samples[i].value, 2);</div>
+<div class="line">    <a class="code hl_function" href="jkii__writer_8h.html#a695a1e3ceccf4f4958baa7622a3f5606">jkii_write_object_end</a>(&amp;w);</div>
+<div class="line">    <a class="code hl_function" href="jkii__writer_8h.html#a9a0563fef8815c079f46761c04e238f5">jkii_write_record_end</a>(&amp;w);</div>
+<div class="line">}</div>
+<div class="ttc" id="ajkii__writer_8h_html_a23bc3008a259815bc9e25e9bf5b82915"><div class="ttname"><a href="jkii__writer_8h.html#a23bc3008a259815bc9e25e9bf5b82915">jkii_write_uint</a></div><div class="ttdeci">jkii_write_err_t jkii_write_uint(jkii_writer_t *w, uint64_t v)</div><div class="ttdoc">Writes an unsigned integer.</div></div>
+<div class="ttc" id="ajkii__writer_8h_html_a9a0563fef8815c079f46761c04e238f5"><div class="ttname"><a href="jkii__writer_8h.html#a9a0563fef8815c079f46761c04e238f5">jkii_write_record_end</a></div><div class="ttdeci">jkii_write_err_t jkii_write_record_end(jkii_writer_t *w)</div><div class="ttdoc">Ends a record of JSON Lines: the value at the top, which has to be whole, is followed by '\n',...</div></div>
+</div><!-- fragment --><p>To append a record to a file of JSON Lines, write it with a writer of its own, into a buffer, and append the buffer with one write, so that a write cut short, as by a power loss, leaves at most that line cut short. If the file doesn't end with <code>\n</code>, because its last write was cut short, write one first, so that the new record starts a line of its own rather than running on from that one:</p>
+<div class="fragment"><div class="line"><span class="keywordtype">char</span> line[256];</div>
+<div class="line"><span class="keywordtype">size_t</span> len = 0;</div>
+<div class="line"><a class="code hl_struct" href="structjkii__writer__t.html">jkii_writer_t</a> w;</div>
+<div class="line"><a class="code hl_function" href="jkii__writer_8h.html#ab80274bae6c44bdf937e89136b4a2781">jkii_writer_init_buff</a>(&amp;w, line, <span class="keyword">sizeof</span>(line));</div>
+<div class="line"><a class="code hl_function" href="jkii__writer_8h.html#ab18fc029011f776c7a0c43a705623a43">jkii_write_object_start</a>(&amp;w);</div>
+<div class="line"><a class="code hl_function" href="jkii__writer_8h.html#a7a44441a314551dfea240a4c07366f68">jkii_write_key</a>(&amp;w, <span class="stringliteral">&quot;t&quot;</span>);</div>
+<div class="line"><a class="code hl_function" href="jkii__writer_8h.html#a23bc3008a259815bc9e25e9bf5b82915">jkii_write_uint</a>(&amp;w, now);</div>
+<div class="line"><a class="code hl_function" href="jkii__writer_8h.html#a695a1e3ceccf4f4958baa7622a3f5606">jkii_write_object_end</a>(&amp;w);</div>
+<div class="line"><a class="code hl_function" href="jkii__writer_8h.html#a9a0563fef8815c079f46761c04e238f5">jkii_write_record_end</a>(&amp;w);</div>
+<div class="line"><span class="keywordflow">if</span> (<a class="code hl_function" href="jkii__writer_8h.html#aa29b3b9110dcbd550b625f420dfeafac">jkii_writer_finish</a>(&amp;w, &amp;len) == <a class="code hl_enumvalue" href="jkii__writer_8h.html#a034e2b06447b8ec9dffc0489935da5b3a87d364113d66022016cf8e1ff32f7ab1">JKII_WRITE_OK</a>) {</div>
+<div class="line">    <span class="comment">// Append len bytes of line to the file: a write() with O_APPEND, or</span></div>
+<div class="line">    <span class="comment">// fwrite() to a FILE opened with &quot;a&quot;.</span></div>
+<div class="line">}</div>
+</div><!-- fragment --><p>Numbers are written without <code>printf</code>: integers of 64 bits, and doubles with a fixed number of decimals, with <code>.</code> whatever the locale. Objects and arrays nest up to <code>JKII_WRITER_MAX_DEPTH</code>, 16 unless defined otherwise for jkii and for everything using it.</p>
+<h1><a class="anchor" id="autotoc_md4"></a>
+Reading JSON Lines</h1>
+<p>JSON Lines, or NDJSON, keeps one JSON value on each line. A device can append a record without rewriting the rest, and read them back one at a time with a buffer the size of a record. A <code><a class="el" href="structjkii__lines__t.html" title="A reader. Set it up with jkii_lines_init(); its members are private.">jkii_lines_t</a></code> is fed the data as it comes, from file reads or from a response's chunks, in pieces of any size, and gives each record whole, terminated, for <code><a class="el" href="jkii_8h.html#a4793a01413e64a45474d0e23894da2da">jkii_parse()</a></code>:</p>
+<div class="fragment"><div class="line"><span class="keywordtype">char</span> record[256];</div>
+<div class="line"><a class="code hl_struct" href="structjkii__lines__t.html">jkii_lines_t</a> r;</div>
+<div class="line"><a class="code hl_function" href="jkii__lines_8h.html#af40391c0105795f8215646c6b9421bd8">jkii_lines_init</a>(&amp;r, record, <span class="keyword">sizeof</span>(record));</div>
+<div class="line"><span class="comment">// For each piece of data, until it is consumed:</span></div>
+<div class="line"><span class="keywordtype">size_t</span> used = 0;</div>
+<div class="line"><span class="keyword">const</span> <span class="keywordtype">char</span>* line = NULL;</div>
+<div class="line"><span class="keywordtype">size_t</span> line_len = 0;</div>
+<div class="line"><span class="keywordflow">if</span> (<a class="code hl_function" href="jkii__lines_8h.html#aa8a9ab1677e174b7021340555d239846">jkii_lines_feed</a>(&amp;r, data, len, &amp;used, &amp;line, &amp;line_len) == <a class="code hl_enumvalue" href="jkii__lines_8h.html#a74827940849d65e5332f034d5ef06f32ab30d28a57b30357ac0682916514d9f85">JKII_LINES_RECORD</a>) {</div>
+<div class="line">    <span class="comment">// line holds the record.</span></div>
+<div class="line">}</div>
+<div class="line"><span class="comment">// Then feed it data + used, len - used.</span></div>
+<div class="ttc" id="ajkii__lines_8h_html_a74827940849d65e5332f034d5ef06f32ab30d28a57b30357ac0682916514d9f85"><div class="ttname"><a href="jkii__lines_8h.html#a74827940849d65e5332f034d5ef06f32ab30d28a57b30357ac0682916514d9f85">JKII_LINES_RECORD</a></div><div class="ttdeci">@ JKII_LINES_RECORD</div><div class="ttdoc">A record is whole: it is what the line points to.</div><div class="ttdef"><b>Definition</b> jkii_lines.h:51</div></div>
+<div class="ttc" id="ajkii__lines_8h_html_aa8a9ab1677e174b7021340555d239846"><div class="ttname"><a href="jkii__lines_8h.html#aa8a9ab1677e174b7021340555d239846">jkii_lines_feed</a></div><div class="ttdeci">jkii_lines_err_t jkii_lines_feed(jkii_lines_t *r, const char *data, size_t len, size_t *out_consumed, const char **out_line, size_t *out_line_len)</div><div class="ttdoc">Feeds a reader what has come, as it comes: a whole file, or a piece of a response,...</div></div>
+<div class="ttc" id="ajkii__lines_8h_html_af40391c0105795f8215646c6b9421bd8"><div class="ttname"><a href="jkii__lines_8h.html#af40391c0105795f8215646c6b9421bd8">jkii_lines_init</a></div><div class="ttdeci">void jkii_lines_init(jkii_lines_t *r, char *buff, size_t buff_size)</div><div class="ttdoc">Sets up a reader.</div></div>
+<div class="ttc" id="astructjkii__lines__t_html"><div class="ttname"><a href="structjkii__lines__t.html">jkii_lines_t</a></div><div class="ttdoc">A reader. Set it up with jkii_lines_init(); its members are private.</div><div class="ttdef"><b>Definition</b> jkii_lines.h:67</div></div>
+</div><!-- fragment --><p>A record ends at <code>\n</code>, with a <code>\r</code> before it taken off too, and empty or blank lines are skipped. A record longer than the buffer is <code>JKII_LINES_TOO_LONG</code>, and skipped up to its <code>\n</code>, so that the reader goes on with the next one rather than failing. At the end, <code><a class="el" href="jkii__lines_8h.html#ae223cc0dcb12a38e55fa27f7ed058c60" title="Ends the data, and gives what is left of it.">jkii_lines_finish()</a></code> gives a last record with no <code>\n</code> after it, as after a power loss while appending, as <code>JKII_LINES_TRUNCATED</code>.</p>
+<p><code><a class="el" href="jkii__writer_8h.html#a9a0563fef8815c079f46761c04e238f5" title="Ends a record of JSON Lines: the value at the top, which has to be whole, is followed by &#39;\n&#39;,...">jkii_write_record_end()</a></code> writes them: see Writing JSON above.</p>
+<h1><a class="anchor" id="autotoc_md5"></a>
 Dependency.</h1>
 <p>jkii uses <a href="http://zserge.com/jsmn.html">jsmn</a>. It is statically linked by default.</p>
 <p>jsmn is published under <a href="http://opensource.org/licenses/mit-license.php">MIT License</a>. </p>
@@ -136,7 +210,7 @@ Dependency.</h1>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 11:33:14 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Mon Nov 2 2026 13:17:30 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

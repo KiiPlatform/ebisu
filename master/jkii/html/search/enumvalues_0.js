@@ -20,5 +20,16 @@ var searchData=
   ['jkii_5ffield_5ftype_5flong_17',['JKII_FIELD_TYPE_LONG',['../jkii_8h.html#a5fe8d88e1452ceb3d2c07f69440c82b5a1d5e3fb266b150581be875d797197d38',1,'jkii.h']]],
   ['jkii_5ffield_5ftype_5fnull_18',['JKII_FIELD_TYPE_NULL',['../jkii_8h.html#a5fe8d88e1452ceb3d2c07f69440c82b5a245e35d75df76163d923b498c7aa41df',1,'jkii.h']]],
   ['jkii_5ffield_5ftype_5fobject_19',['JKII_FIELD_TYPE_OBJECT',['../jkii_8h.html#a5fe8d88e1452ceb3d2c07f69440c82b5a804de79680f9d24e344fcbce03e0f8ba',1,'jkii.h']]],
-  ['jkii_5ffield_5ftype_5fstring_20',['JKII_FIELD_TYPE_STRING',['../jkii_8h.html#a5fe8d88e1452ceb3d2c07f69440c82b5a9a10a60bbf6e5c6ffe3cda5e9dec159a',1,'jkii.h']]]
+  ['jkii_5ffield_5ftype_5fstring_20',['JKII_FIELD_TYPE_STRING',['../jkii_8h.html#a5fe8d88e1452ceb3d2c07f69440c82b5a9a10a60bbf6e5c6ffe3cda5e9dec159a',1,'jkii.h']]],
+  ['jkii_5flines_5fend_21',['JKII_LINES_END',['../jkii__lines_8h.html#a74827940849d65e5332f034d5ef06f32a667f301fcc216b4c934c6c72b228b7d2',1,'jkii_lines.h']]],
+  ['jkii_5flines_5fneed_5fmore_22',['JKII_LINES_NEED_MORE',['../jkii__lines_8h.html#a74827940849d65e5332f034d5ef06f32a54907ae5823fdbd9443a0e21b0581c6b',1,'jkii_lines.h']]],
+  ['jkii_5flines_5frecord_23',['JKII_LINES_RECORD',['../jkii__lines_8h.html#a74827940849d65e5332f034d5ef06f32ab30d28a57b30357ac0682916514d9f85',1,'jkii_lines.h']]],
+  ['jkii_5flines_5ftoo_5flong_24',['JKII_LINES_TOO_LONG',['../jkii__lines_8h.html#a74827940849d65e5332f034d5ef06f32ae0e37367f151d34057a934b7c3f77a6d',1,'jkii_lines.h']]],
+  ['jkii_5flines_5ftruncated_25',['JKII_LINES_TRUNCATED',['../jkii__lines_8h.html#a74827940849d65e5332f034d5ef06f32ab18756901a5c9b189e7ceb4639a42559',1,'jkii_lines.h']]],
+  ['jkii_5fwrite_5ferr_5fcallback_26',['JKII_WRITE_ERR_CALLBACK',['../jkii__writer_8h.html#a034e2b06447b8ec9dffc0489935da5b3ad94ab3fd7e186adfca736193038ed5f6',1,'jkii_writer.h']]],
+  ['jkii_5fwrite_5ferr_5fstructure_27',['JKII_WRITE_ERR_STRUCTURE',['../jkii__writer_8h.html#a034e2b06447b8ec9dffc0489935da5b3a8311bf8fe54bdf47d282d3303a340414',1,'jkii_writer.h']]],
+  ['jkii_5fwrite_5ferr_5ftoo_5fdeep_28',['JKII_WRITE_ERR_TOO_DEEP',['../jkii__writer_8h.html#a034e2b06447b8ec9dffc0489935da5b3abc654d50e64c064ac7a41517c4907d6c',1,'jkii_writer.h']]],
+  ['jkii_5fwrite_5ferr_5ftoo_5flarge_29',['JKII_WRITE_ERR_TOO_LARGE',['../jkii__writer_8h.html#a034e2b06447b8ec9dffc0489935da5b3aec0cda130034fee804200c4eac00918f',1,'jkii_writer.h']]],
+  ['jkii_5fwrite_5ferr_5fvalue_30',['JKII_WRITE_ERR_VALUE',['../jkii__writer_8h.html#a034e2b06447b8ec9dffc0489935da5b3a4ce5d2948763874e8808664302515956',1,'jkii_writer.h']]],
+  ['jkii_5fwrite_5fok_31',['JKII_WRITE_OK',['../jkii__writer_8h.html#a034e2b06447b8ec9dffc0489935da5b3a87d364113d66022016cf8e1ff32f7ab1',1,'jkii_writer.h']]]
 ];

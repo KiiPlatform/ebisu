@@ -229,7 +229,7 @@ Sockets</h3>
 <h4><a class="anchor" id="autotoc_md6"></a>
 Notes about socket implementation used for MQTT.</h4>
 <p>Underlying socket implementation used for MQTT must be blocking mode, with a send timeout, and its recv timeout must be shared with <code><a class="el" href="structtio__handler__t.html" title="Stores data/ callbacks used by tio_handler.">tio_handler_t</a></code>.</p>
-<p>We use socket timeout to estimate elapsed time since we sent last MQTT messages to send MQTT <code>PINGREQ</code> message periodically.</p>
+<p>With a <code>monotonic_ms</code> in the system set by <code>tio_handler_set_system()</code>, <code>tio_handler</code> times the keep-alive by it, and sends <code>PINGREQ</code> early enough that a receive running into its timeout still ends within the keep-alive. Without one, it estimates the time since the last MQTT message it sent from the recv timeout and its own waits, which misses the time spent elsewhere, such as in the action callback.</p>
 <p>MQTT keep alive interval must be larger than recv/ send timeout. Twice as large as recv/ send timeout works fine but recommend few minutes to avoid congestion.</p>
 <div class="fragment"><div class="line">tio_handler_set_mqtt_to_sock_recv(handler, 15);</div>
 <div class="line">tio_handler_set_keep_alive_interval(handler, 300);</div>
@@ -580,7 +580,7 @@ Avoiding race condition</h2>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 11:33:14 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Mon Nov 2 2026 13:17:31 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

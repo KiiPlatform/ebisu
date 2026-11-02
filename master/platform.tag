@@ -103,6 +103,65 @@
     </member>
   </compound>
   <compound kind="file">
+    <name>ebisu_log.h</name>
+    <path>include/</path>
+    <filename>ebisu__log_8h.html</filename>
+    <class kind="struct">ebisu_logger_ops_t</class>
+    <class kind="struct">ebisu_logger_t</class>
+    <member kind="typedef">
+      <type>enum ebisu_log_level_t</type>
+      <name>ebisu_log_level_t</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>a1e989cf944c554850be22c00495c28b6</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_logger_t</type>
+      <name>ebisu_logger_t</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>a94ac6ad513e2d836f9bbe0366ea47b44</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_logger_ops_t</type>
+      <name>ebisu_logger_ops_t</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>a6a4379602c0457f39fa3a4eef936cc32</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumeration">
+      <type></type>
+      <name>ebisu_log_level_t</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>a42e3fb546ca916214c4afd79eddce535</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_LOG_ERROR</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>a42e3fb546ca916214c4afd79eddce535a9f54b49b57b006ccef48132d4180ba07</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_LOG_WARNING</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>a42e3fb546ca916214c4afd79eddce535a2ed83f71fe32b50977e89849e8edd219</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_LOG_INFO</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>a42e3fb546ca916214c4afd79eddce535ababfb518b73f6be08d795ad16c9b36aa</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_LOG_DEBUG</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>a42e3fb546ca916214c4afd79eddce535a72cb7f90a0acc64fa2d563cefea16a7a</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="file">
     <name>ebisu_object.h</name>
     <path>include/</path>
     <filename>ebisu__object_8h.html</filename>
@@ -244,6 +303,7 @@
     <path>openssl/include/</path>
     <filename>ebisu__openssl_8h.html</filename>
     <includes id="ebisu__clock_8h" name="ebisu_clock.h" local="no" import="no" module="no" objc="no">ebisu_clock.h</includes>
+    <includes id="ebisu__log_8h" name="ebisu_log.h" local="no" import="no" module="no" objc="no">ebisu_log.h</includes>
     <includes id="ebisu__socket_8h" name="ebisu_socket.h" local="no" import="no" module="no" objc="no">ebisu_socket.h</includes>
     <class kind="struct">ebisu_openssl_socket_t</class>
     <class kind="struct">ebisu_openssl_tls_t</class>
@@ -302,6 +362,13 @@
       <anchorfile>ebisu__openssl_8h.html</anchorfile>
       <anchor>ad504ec9246a218a4cd22974b77da48f7</anchor>
       <arglist>(ebisu_openssl_socket_t *sock, ebisu_clock_t *clock)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_openssl_socket_set_logger</name>
+      <anchorfile>ebisu__openssl_8h.html</anchorfile>
+      <anchor>a85279e489e808b094e800a9f6d544878</anchor>
+      <arglist>(ebisu_openssl_socket_t *sock, ebisu_logger_t *logger)</arglist>
     </member>
   </compound>
   <compound kind="file">
@@ -369,6 +436,28 @@
       <name>ops</name>
       <anchorfile>structebisu__lock__t.html</anchorfile>
       <anchor>a71d30ddec61e4e6d4790bab56b4c0fa5</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_logger_ops_t</name>
+    <filename>structebisu__logger__ops__t.html</filename>
+    <member kind="variable">
+      <type>void(*</type>
+      <name>log</name>
+      <anchorfile>structebisu__logger__ops__t.html</anchorfile>
+      <anchor>af27fdf43827399fa9407f8cb6000b0e8</anchor>
+      <arglist>)(ebisu_logger_t *self, ebisu_log_level_t level, const char *fmt, va_list args)</arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_logger_t</name>
+    <filename>structebisu__logger__t.html</filename>
+    <member kind="variable">
+      <type>const ebisu_logger_ops_t *</type>
+      <name>ops</name>
+      <anchorfile>structebisu__logger__t.html</anchorfile>
+      <anchor>a664af796bdac52391732995055c0d340</anchor>
       <arglist></arglist>
     </member>
   </compound>
