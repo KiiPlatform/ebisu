@@ -395,10 +395,13 @@ void kii_init(
         kii_t* kii);
 
 /**
- * \brief Set site.
+ * \brief Set the site: the host of the application's API.
+ *
+ * As the application's settings give it, such as "api-jp.kii.com" for Kii
+ * Cloud's public site. A site of its own has a host of its own. "JP", which
+ * 1.x took for the public site, still gives "api-jp.kii.com".
  * \param [out] kii kii_t instance.
- * \param [in] site should be a hostname or alias one of
- * "CN", "CN3", "JP", "US", "SG" or "EU".
+ * \param [in] site Host name of the site, which is copied.
  */
 void kii_set_site(
         kii_t* kii,

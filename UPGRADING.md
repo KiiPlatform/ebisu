@@ -219,6 +219,11 @@ Commands in tio:
 
 kii:
 
+- `kii_set_site()` takes the host name of the application's site. 1.x also
+  took `"US"`, `"SG"`, `"EU"` and `"CN3"` for hosts it knew, which are now taken
+  as host names themselves: pass the host instead. `"JP"` still gives
+  `"api-jp.kii.com"`, the public site. `tio_handler_set_app()` and
+  `tio_updater_set_app()`, which pass theirs on, took them too.
 - `kii_get_mqtt_endpoint()` fails on a port outside 0 to 65535, or a TTL that is
   negative or above `UINT32_MAX`.
 - `kii_ti_put_firmware_version()` escapes the version, as onboarding always has.

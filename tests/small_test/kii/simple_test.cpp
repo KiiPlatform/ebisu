@@ -79,6 +79,22 @@ TEST_CASE( "Over-long app id and site are truncated and stay terminated" ) {
     REQUIRE( std::string(kii._app_id) == "dummyAppID" );
 }
 
+// It turned "JP", "US", "SG", "EU" and "CN3" into hosts of a list of its own,
+// which a site of the application's own was never on. "JP", the public site,
+// stays for 1.x's applications.
+TEST_CASE( "kii_set_site takes the host as given" ) {
+    kii_t kii;
+    kii_init(&kii);
+    for (const char* site : { "api-jp.kii.com", "kii.example.com", "US", "SG", "EU", "CN3" }) {
+        INFO("site " << site);
+        kii_set_site(&kii, site);
+        CHECK( std::string(kii._app_host) == site );
+    }
+
+    kii_set_site(&kii, "JP");
+    CHECK( std::string(kii._app_host) == "api-jp.kii.com" );
+}
+
 static bool points_into(const char* p, const char* buff, size_t buff_size) {
     uintptr_t addr = (uintptr_t)p;
     uintptr_t begin = (uintptr_t)buff;

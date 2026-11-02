@@ -98,32 +98,9 @@ void kii_set_site(
         kii_t* kii,
         const char* site)
 {
-    char* host;
-    if(strcmp(site, "CN3") == 0)
-    {
-        host = "api-cn3.kii.com";
-    }
-    else if(strcmp(site, "JP") == 0)
-    {
-        host = "api-jp.kii.com";
-    }
-    else if(strcmp(site, "US") == 0)
-    {
-        host = "api.kii.com";
-    }
-    else if(strcmp(site, "SG") == 0)
-    {
-        host = "api-sg.kii.com";
-    }
-    else if (strcmp(site, "EU") == 0)
-    {
-        host = "api-eu.kii.com";
-    }
-    else
-    {
-        /* Let's enable to set custom host */
-        host = (char*)site;
-    }
+    /* What 1.x took for Kii Cloud's public site, which its applications may
+     * still pass. */
+    const char* host = strcmp(site, "JP") == 0 ? "api-jp.kii.com" : site;
     _kii_copy_bounded(kii->_app_host, sizeof(kii->_app_host), host);
 }
 
