@@ -144,7 +144,7 @@ size_t updater_cb_read(char *buffer, size_t size, void *userdata)
 
     fclose(fp);
 
-    printf("updater_cb_read: %ld / %ld\n", ctx->file_read, ctx->file_size);
+    printf("updater_cb_read: %zu / %zu\n", ctx->file_read, ctx->file_size);
     return read_size;
 }
 
