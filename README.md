@@ -102,6 +102,25 @@ Cross-compiled for 64-bit Windows with `cmake --preset mingw`, they run under
 wine with `ctest --preset large-mingw`, over the win32 sample's Winsock and
 Schannel callbacks in place of OpenSSL.
 
+For 32-bit ARM Linux, armv7-a with hardware floating point, the toolchain file
+is `cmake/arm-linux-gnueabihf.cmake`, and the small tests run under qemu-arm.
+The libraries need only the C library. platform's OpenSSL port and the Linux
+sample also need an OpenSSL built for the target, named with
+`-DOPENSSL_ROOT_DIR`:
+
+```
+cmake -B build/armhf -DCMAKE_TOOLCHAIN_FILE=cmake/arm-linux-gnueabihf.cmake \
+    -DOPENSSL_ROOT_DIR=/path/to/arm/openssl -DEBISU_BUILD_SAMPLES=ON
+cmake --build build/armhf
+ctest --test-dir build/armhf -L small
+```
+
+For another ARM target, copy the toolchain file and change its compiler and
+flags. With an older compiler, `-DEBISU_WERROR=OFF` keeps a warning it adds from
+failing the build, and without a C++ compiler for the target,
+`-DBUILD_TESTING=OFF` leaves the tests out. `tests/samples/armhf.sh` builds it
+all in Debian stretch, glibc 2.24, against OpenSSL 1.0.2 or 1.1.1, as CI does.
+
 Other useful targets and options:
 
 ```

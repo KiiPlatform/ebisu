@@ -259,6 +259,49 @@ jobs:
       - name: build and test
         run: tests/samples/openssl_ports.sh ${{ matrix.version }}
 
+  # 32-bit ARM Linux, armv7-a with hardware floating point, cross-compiled in
+  # Debian stretch against each OpenSSL the job above builds: the libraries,
+  # the ports and the Linux sample. The small tests and the OpenSSL port's run
+  # under qemu-arm. Stretch's glibc, 2.24, is older than the oldest the targets
+  # have, so the job fails if anything needs a symbol newer than GLIBC_2.26.
+  armhf:
+    name: ${{ format('armhf Linux, OpenSSL {0}', matrix.version) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [1.0.2p, 1.1.1i]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Fetch tags
+        run: git fetch --unshallow --tags --force
+      - name: build and test
+        run: tests/samples/armhf.sh ${{ matrix.version }}
+
+  # 32-bit x86 Linux on musl, with Alpine's own OpenSSL, on both sides of musl
+  # 1.2.0, which made time_t 64 bits on 32-bit targets.
+  musl:
+    name: ${{ format('musl {0}, 32-bit', matrix.musl) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - alpine: '3.12'
+            musl: 1.1.24
+          - alpine: '3.20'
+            musl: 1.2.5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Fetch tags
+        run: git fetch --unshallow --tags --force
+      - name: build and test
+        run: tests/samples/musl.sh ${{ matrix.alpine }}
+
   # The large tests, against the live Kii application the secrets name: on
   # 64-bit Linux under valgrind, and on 64-bit Windows under wine, without
   # valgrind, which cannot run a Windows program. On Windows the tests' sockets
