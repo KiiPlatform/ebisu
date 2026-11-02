@@ -24,6 +24,16 @@ option(TIO_TRACE "Trace TIO activity to stdout" OFF)
 # Turn this off rather than patching the source: -DEBISU_WERROR=OFF.
 option(EBISU_WERROR "Treat compiler warnings as errors" ON)
 
+# For devices short of flash. The libraries are compiled for size, -Os, with
+# each function and each object in a section of its own, so that a link with
+# --gc-sections leaves out whatever nothing uses. The shared libraries are
+# linked so here; a program linking the static ones has to pass it to its own
+# link. The static libraries are also built without position-independent code,
+# which costs size and gains nothing on a target with no shared libraries,
+# unless CMAKE_POSITION_INDEPENDENT_CODE asks for it, as for linking them into
+# a shared library of the application's. See README.md.
+option(EBISU_MIN_SIZE "Build the libraries for the smallest code" OFF)
+
 # ebisu_configure_target(<target> [C_STANDARD <version>])
 #
 # Applies the settings every Ebisu target shares.
@@ -74,8 +84,26 @@ function(ebisu_configure_target tgt)
   target_compile_options(${tgt} PRIVATE
     $<$<C_COMPILER_ID:GNU,Clang,AppleClang>:-Wall>
     $<$<AND:$<BOOL:${EBISU_WERROR}>,$<C_COMPILER_ID:GNU,Clang,AppleClang>>:-Werror>)
+  set(pic ON)
+  if(EBISU_MIN_SIZE)
+    # After the build type's flags, so that -Os is the optimization that
+    # counts whatever the build type.
+    target_compile_options(${tgt} PRIVATE
+      "$<$<C_COMPILER_ID:GNU,Clang,AppleClang>:-Os;-ffunction-sections;-fdata-sections>")
+    get_target_property(type ${tgt} TYPE)
+    if(type STREQUAL "SHARED_LIBRARY")
+      if(APPLE)
+        target_link_options(${tgt} PRIVATE LINKER:-dead_strip)
+      elseif(NOT WIN32)
+        target_link_options(${tgt} PRIVATE LINKER:--gc-sections)
+      endif()
+    elseif(NOT BUILD_SHARED_LIBS AND NOT CMAKE_POSITION_INDEPENDENT_CODE)
+      set(pic OFF)
+    endif()
+  endif()
   # Every object may end up inside a shared library, including the ones that
-  # reach it indirectly through $<TARGET_OBJECTS:...>.
+  # reach it indirectly through $<TARGET_OBJECTS:...>, unless EBISU_MIN_SIZE
+  # builds them all static.
   #
   # Hidden by default, so the shared objects export what the public headers
   # declare and nothing else. Being non-static because a helper is called from
@@ -84,7 +112,7 @@ function(ebisu_configure_target tgt)
   # which 108 appeared in no installed header. The public headers each push
   # default visibility around their declarations.
   set_target_properties(${tgt} PROPERTIES
-    POSITION_INDEPENDENT_CODE ON
+    POSITION_INDEPENDENT_CODE ${pic}
     C_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN ON)
   # ebisu_version.h is installed with the other headers, so the target is
