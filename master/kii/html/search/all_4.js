@@ -18,11 +18,14 @@ var searchData=
   ['ebisu_5fsocket_2eh_15',['ebisu_socket.h',['../../../platform/html/ebisu__socket_8h.html',1,'']]],
   ['ebisu_5fsocket_5fops_5ft_16',['ebisu_socket_ops_t',['../../../platform/html/structebisu__socket__ops__t.html',1,'']]],
   ['ebisu_5fsocket_5ft_17',['ebisu_socket_t',['../../../platform/html/structebisu__socket__t.html',1,'']]],
-  ['ebisu_5fsystem_2eh_18',['ebisu_system.h',['../../../platform/html/ebisu__system_8h.html',1,'']]],
-  ['ebisu_5fsystem_5fops_5ft_19',['ebisu_system_ops_t',['../../../platform/html/structebisu__system__ops__t.html',1,'']]],
-  ['ebisu_5fsystem_5ft_20',['ebisu_system_t',['../../../platform/html/structebisu__system__t.html',1,'']]],
-  ['ebisu_5fwin32_2eh_21',['ebisu_win32.h',['../../../platform/html/ebisu__win32_8h.html',1,'']]],
-  ['ebisu_5fwin32_5flock_5ft_22',['ebisu_win32_lock_t',['../../../platform/html/structebisu__win32__lock__t.html',1,'']]],
-  ['end_23',['end',['../../../jkii/html/structjkii__field__t.html#a552fea2d1651b8e200ea82008493c7b3',1,'jkii_field_t']]],
-  ['error_24',['error',['../structkii__mqtt__task__info.html#a92ee0b673e721c1deb760bb6853ec42e',1,'kii_mqtt_task_info']]]
+  ['ebisu_5fspan_5ft_18',['ebisu_span_t',['../../../platform/html/structebisu__span__t.html',1,'']]],
+  ['ebisu_5fstr_2eh_19',['ebisu_str.h',['../../../platform/html/ebisu__str_8h.html',1,'']]],
+  ['ebisu_5fstrbuf_5ft_20',['ebisu_strbuf_t',['../../../platform/html/structebisu__strbuf__t.html',1,'']]],
+  ['ebisu_5fsystem_2eh_21',['ebisu_system.h',['../../../platform/html/ebisu__system_8h.html',1,'']]],
+  ['ebisu_5fsystem_5fops_5ft_22',['ebisu_system_ops_t',['../../../platform/html/structebisu__system__ops__t.html',1,'']]],
+  ['ebisu_5fsystem_5ft_23',['ebisu_system_t',['../../../platform/html/structebisu__system__t.html',1,'']]],
+  ['ebisu_5fwin32_2eh_24',['ebisu_win32.h',['../../../platform/html/ebisu__win32_8h.html',1,'']]],
+  ['ebisu_5fwin32_5flock_5ft_25',['ebisu_win32_lock_t',['../../../platform/html/structebisu__win32__lock__t.html',1,'']]],
+  ['end_26',['end',['../../../jkii/html/structjkii__field__t.html#a552fea2d1651b8e200ea82008493c7b3',1,'jkii_field_t']]],
+  ['error_27',['error',['../structkii__mqtt__task__info.html#a92ee0b673e721c1deb760bb6853ec42e',1,'kii_mqtt_task_info']]]
 ];

@@ -7,6 +7,7 @@ var searchData=
   ['ebisu_5fposix_2eh_4',['ebisu_posix.h',['../../../platform/html/ebisu__posix_8h.html',1,'']]],
   ['ebisu_5fschannel_2eh_5',['ebisu_schannel.h',['../../../platform/html/ebisu__schannel_8h.html',1,'']]],
   ['ebisu_5fsocket_2eh_6',['ebisu_socket.h',['../../../platform/html/ebisu__socket_8h.html',1,'']]],
-  ['ebisu_5fsystem_2eh_7',['ebisu_system.h',['../../../platform/html/ebisu__system_8h.html',1,'']]],
-  ['ebisu_5fwin32_2eh_8',['ebisu_win32.h',['../../../platform/html/ebisu__win32_8h.html',1,'']]]
+  ['ebisu_5fstr_2eh_7',['ebisu_str.h',['../../../platform/html/ebisu__str_8h.html',1,'']]],
+  ['ebisu_5fsystem_2eh_8',['ebisu_system.h',['../../../platform/html/ebisu__system_8h.html',1,'']]],
+  ['ebisu_5fwin32_2eh_9',['ebisu_win32.h',['../../../platform/html/ebisu__win32_8h.html',1,'']]]
 ];
