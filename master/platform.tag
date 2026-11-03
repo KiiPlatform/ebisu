@@ -188,6 +188,13 @@
       <arglist></arglist>
     </member>
     <member kind="typedef">
+      <type>enum ebisu_sock_error_t</type>
+      <name>ebisu_sock_error_t</name>
+      <anchorfile>ebisu__socket_8h.html</anchorfile>
+      <anchor>af8cc3d6d42f30eea15da340261f2d657</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
       <type>struct ebisu_socket_t</type>
       <name>ebisu_socket_t</name>
       <anchorfile>ebisu__socket_8h.html</anchorfile>
@@ -224,6 +231,61 @@
       <name>EBISU_SOCK_AGAIN</name>
       <anchorfile>ebisu__socket_8h.html</anchorfile>
       <anchor>a7b634b2cbb6bc4349dab223fbee058baa3d0e5d85e07a8c0918b3b24ceaa53a44</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumeration">
+      <type></type>
+      <name>ebisu_sock_error_t</name>
+      <anchorfile>ebisu__socket_8h.html</anchorfile>
+      <anchor>a19f16391089f04ceb79936a6ecc26963</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_SOCK_ERROR_NONE</name>
+      <anchorfile>ebisu__socket_8h.html</anchorfile>
+      <anchor>a19f16391089f04ceb79936a6ecc26963ab1081167e61254a9e5c105643e1ea671</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_SOCK_ERROR_DNS</name>
+      <anchorfile>ebisu__socket_8h.html</anchorfile>
+      <anchor>a19f16391089f04ceb79936a6ecc26963a9372c342614a90ecd5b2bc32d982c9c3</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_SOCK_ERROR_CONNECT</name>
+      <anchorfile>ebisu__socket_8h.html</anchorfile>
+      <anchor>a19f16391089f04ceb79936a6ecc26963a060e8ad7b6b55ad00dc10b1309a205a2</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_SOCK_ERROR_TLS</name>
+      <anchorfile>ebisu__socket_8h.html</anchorfile>
+      <anchor>a19f16391089f04ceb79936a6ecc26963a0317b7ceb445d76314d2f153ddd59765</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_SOCK_ERROR_VERIFY</name>
+      <anchorfile>ebisu__socket_8h.html</anchorfile>
+      <anchor>a19f16391089f04ceb79936a6ecc26963a22c267c81816001b90572b3f08bc8278</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_SOCK_ERROR_TIMEOUT</name>
+      <anchorfile>ebisu__socket_8h.html</anchorfile>
+      <anchor>a19f16391089f04ceb79936a6ecc26963a4b34064a92d2a7a69201e8805b547887</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_SOCK_ERROR_CLOSED</name>
+      <anchorfile>ebisu__socket_8h.html</anchorfile>
+      <anchor>a19f16391089f04ceb79936a6ecc26963ab7a641310a57f3a2e49eb2bd85746963</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_SOCK_ERROR_OTHER</name>
+      <anchorfile>ebisu__socket_8h.html</anchorfile>
+      <anchor>a19f16391089f04ceb79936a6ecc26963a25c85a793f6a5231da0c877f65699d19</anchor>
       <arglist></arglist>
     </member>
   </compound>
@@ -592,6 +654,13 @@
       <anchorfile>structebisu__socket__ops__t.html</anchorfile>
       <anchor>af8c5f0ab8132bb300aa61db25a4a8073</anchor>
       <arglist>)(ebisu_socket_t *self)</arglist>
+    </member>
+    <member kind="variable">
+      <type>ebisu_sock_error_t(*</type>
+      <name>last_error</name>
+      <anchorfile>structebisu__socket__ops__t.html</anchorfile>
+      <anchor>a7d723df34a7a3ec7b0813d4949375fda</anchor>
+      <arglist>)(ebisu_socket_t *self, long *out_detail)</arglist>
     </member>
   </compound>
   <compound kind="struct">

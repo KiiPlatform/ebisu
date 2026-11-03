@@ -310,6 +310,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>khc_cb_slist_free</b>
 <tr class="memitem:a960e18dda03d60dded5c9a618138dd97" id="r_a960e18dda03d60dded5c9a618138dd97"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a960e18dda03d60dded5c9a618138dd97">khc_get_close_failed</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
 <tr class="memdesc:a960e18dda03d60dded5c9a618138dd97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether closing the socket failed.  <br /></td></tr>
 <tr class="separator:a960e18dda03d60dded5c9a618138dd97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8ba60ff46c996714ab1d945a68bb7898" id="r_a8ba60ff46c996714ab1d945a68bb7898"><td class="memItemLeft" align="right" valign="top"><a class="elRef" href="../../platform/html/ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a8ba60ff46c996714ab1d945a68bb7898">khc_get_sock_error</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>, long *out_detail)</td></tr>
+<tr class="memdesc:a8ba60ff46c996714ab1d945a68bb7898"><td class="mdescLeft">&#160;</td><td class="mdescRight">Why the socket failed, in the last <a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform(khc*)</a>.  <br /></td></tr>
+<tr class="separator:a8ba60ff46c996714ab1d945a68bb7898"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7f4889fa8b645d22e23e2336387512ea" id="r_a7f4889fa8b645d22e23e2336387512ea"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="khc_8h.html#a7f4889fa8b645d22e23e2336387512ea">khc_get_resp_header_skipped</a> (<a class="el" href="structkhc.html">khc</a> *<a class="el" href="structkhc.html">khc</a>)</td></tr>
 <tr class="memdesc:a7f4889fa8b645d22e23e2336387512ea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether a response header was skipped.  <br /></td></tr>
 <tr class="separator:a7f4889fa8b645d22e23e2336387512ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -744,6 +747,45 @@ KHC_CB_CONTINUE, void*)</a> cancelled the request. </p>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if the last <a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform(khc*)</a> skipped a header, false if it hasn't since <a class="el" href="khc_8h.html#a5cb75ed1f039e02286cacb8d097f233e" title="Set initial value to members of khc.">khc_init(khc*)</a>, <a class="el" href="khc_8h.html#aea7b6dde93cd97fc303a90c1414dba21" title="Set initial value to members of khc other than callbacks.">khc_reset_except_cb(khc*)</a> or <a class="el" href="khc_8h.html#a652dba6d3ccda37a7c120fe479648504" title="Prepare to perform the same request again.">khc_reset_except_request(khc*)</a>. </dd></dl>
+
+</div>
+</div>
+<a id="a8ba60ff46c996714ab1d945a68bb7898" name="a8ba60ff46c996714ab1d945a68bb7898"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8ba60ff46c996714ab1d945a68bb7898">&#9670;&#160;</a></span>khc_get_sock_error()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="elRef" href="../../platform/html/ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a> khc_get_sock_error </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkhc.html">khc</a> *&#160;</td>
+          <td class="paramname"><em>khc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">long *&#160;</td>
+          <td class="paramname"><em>out_detail</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Why the socket failed, in the last <a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform(khc*)</a>. </p>
+<p>After KHC_ERR_SOCK_CONNECT, KHC_ERR_SOCK_SEND or KHC_ERR_SOCK_RECV, what the socket's last_error said, right after the operation failed and before the socket was closed: a host that didn't resolve, a certificate refused, a timeout. EBISU_SOCK_ERROR_NONE for a socket without last_error, or when nothing failed. EBISU_SOCK_ERROR_CLOSED, from khc itself, for a connection that closed before the response ended.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">khc</td><td>instance. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_detail</td><td>More of it, as the socket gave it, or 0. May be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Why. </dd></dl>
 
 </div>
 </div>
@@ -1733,7 +1775,7 @@ KHC_CB_CONTINUE, void*)</a> cancelled the request. </p>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 3 2026 07:43:44 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Nov 3 2026 07:53:08 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

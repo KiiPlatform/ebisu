@@ -103,6 +103,10 @@ Typedefs</h2></td></tr>
 typedef enum <a class="el" href="ebisu__socket_8h.html#a7b634b2cbb6bc4349dab223fbee058ba">ebisu_sock_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ebisu_sock_code_t</b></td></tr>
 <tr class="memdesc:a2845d194b5ba641d5321831147cef126"><td class="mdescLeft">&#160;</td><td class="mdescRight">Indicates socket callback result. <br /></td></tr>
 <tr class="separator:a2845d194b5ba641d5321831147cef126"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af8cc3d6d42f30eea15da340261f2d657" id="r_af8cc3d6d42f30eea15da340261f2d657"><td class="memItemLeft" align="right" valign="top"><a id="af8cc3d6d42f30eea15da340261f2d657" name="af8cc3d6d42f30eea15da340261f2d657"></a>
+typedef enum <a class="el" href="ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ebisu_sock_error_t</b></td></tr>
+<tr class="memdesc:af8cc3d6d42f30eea15da340261f2d657"><td class="mdescLeft">&#160;</td><td class="mdescRight">Why a socket operation failed, as the socket can tell. See <a class="el" href="structebisu__socket__ops__t.html#a7d723df34a7a3ec7b0813d4949375fda" title="Why the last operation that returned EBISU_SOCK_FAIL failed.">ebisu_socket_ops_t::last_error</a>. <br /></td></tr>
+<tr class="separator:af8cc3d6d42f30eea15da340261f2d657"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af0e306cd72dfb837b228cdc12fae19a7" id="r_af0e306cd72dfb837b228cdc12fae19a7"><td class="memItemLeft" align="right" valign="top"><a id="af0e306cd72dfb837b228cdc12fae19a7" name="af0e306cd72dfb837b228cdc12fae19a7"></a>
 typedef struct <a class="el" href="structebisu__socket__t.html">ebisu_socket_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>ebisu_socket_t</b></td></tr>
 <tr class="memdesc:af0e306cd72dfb837b228cdc12fae19a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">A socket. See struct <a class="el" href="structebisu__socket__t.html" title="A socket.">ebisu_socket_t</a>. <br /></td></tr>
@@ -119,6 +123,20 @@ Enumerations</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:a7b634b2cbb6bc4349dab223fbee058ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Indicates socket callback result.  <a href="ebisu__socket_8h.html#a7b634b2cbb6bc4349dab223fbee058ba">More...</a><br /></td></tr>
 <tr class="separator:a7b634b2cbb6bc4349dab223fbee058ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19f16391089f04ceb79936a6ecc26963" id="r_a19f16391089f04ceb79936a6ecc26963"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a> { <br />
+&#160;&#160;<a class="el" href="ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963ab1081167e61254a9e5c105643e1ea671">EBISU_SOCK_ERROR_NONE</a>
+, <a class="el" href="ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963a9372c342614a90ecd5b2bc32d982c9c3">EBISU_SOCK_ERROR_DNS</a>
+, <a class="el" href="ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963a060e8ad7b6b55ad00dc10b1309a205a2">EBISU_SOCK_ERROR_CONNECT</a>
+, <a class="el" href="ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963a0317b7ceb445d76314d2f153ddd59765">EBISU_SOCK_ERROR_TLS</a>
+, <br />
+&#160;&#160;<a class="el" href="ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963a22c267c81816001b90572b3f08bc8278">EBISU_SOCK_ERROR_VERIFY</a>
+, <a class="el" href="ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963a4b34064a92d2a7a69201e8805b547887">EBISU_SOCK_ERROR_TIMEOUT</a>
+, <a class="el" href="ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963ab7a641310a57f3a2e49eb2bd85746963">EBISU_SOCK_ERROR_CLOSED</a>
+, <a class="el" href="ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963a25c85a793f6a5231da0c877f65699d19">EBISU_SOCK_ERROR_OTHER</a>
+<br />
+ }</td></tr>
+<tr class="memdesc:a19f16391089f04ceb79936a6ecc26963"><td class="mdescLeft">&#160;</td><td class="mdescRight">Why a socket operation failed, as the socket can tell. See <a class="el" href="structebisu__socket__ops__t.html#a7d723df34a7a3ec7b0813d4949375fda" title="Why the last operation that returned EBISU_SOCK_FAIL failed.">ebisu_socket_ops_t::last_error</a>.  <a href="ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">More...</a><br /></td></tr>
+<tr class="separator:a19f16391089f04ceb79936a6ecc26963"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Provides socket abstraction. </p>
@@ -166,10 +184,44 @@ Enumerations</h2></td></tr>
 
 </div>
 </div>
+<a id="a19f16391089f04ceb79936a6ecc26963" name="a19f16391089f04ceb79936a6ecc26963"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a19f16391089f04ceb79936a6ecc26963">&#9670;&#160;</a></span>ebisu_sock_error_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Why a socket operation failed, as the socket can tell. See <a class="el" href="structebisu__socket__ops__t.html#a7d723df34a7a3ec7b0813d4949375fda" title="Why the last operation that returned EBISU_SOCK_FAIL failed.">ebisu_socket_ops_t::last_error</a>. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a19f16391089f04ceb79936a6ecc26963ab1081167e61254a9e5c105643e1ea671" name="a19f16391089f04ceb79936a6ecc26963ab1081167e61254a9e5c105643e1ea671"></a>EBISU_SOCK_ERROR_NONE&#160;</td><td class="fielddoc"><p>Nothing failed, or the socket can't tell why. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a19f16391089f04ceb79936a6ecc26963a9372c342614a90ecd5b2bc32d982c9c3" name="a19f16391089f04ceb79936a6ecc26963a9372c342614a90ecd5b2bc32d982c9c3"></a>EBISU_SOCK_ERROR_DNS&#160;</td><td class="fielddoc"><p>The host name didn't resolve. The detail is the resolver's error, such as getaddrinfo()'s. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a19f16391089f04ceb79936a6ecc26963a060e8ad7b6b55ad00dc10b1309a205a2" name="a19f16391089f04ceb79936a6ecc26963a060e8ad7b6b55ad00dc10b1309a205a2"></a>EBISU_SOCK_ERROR_CONNECT&#160;</td><td class="fielddoc"><p>None of the host's addresses took the connection. The detail is the system's error, as errno has it. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a19f16391089f04ceb79936a6ecc26963a0317b7ceb445d76314d2f153ddd59765" name="a19f16391089f04ceb79936a6ecc26963a0317b7ceb445d76314d2f153ddd59765"></a>EBISU_SOCK_ERROR_TLS&#160;</td><td class="fielddoc"><p>TLS failed, in the handshake or after it, for another reason than the server's certificate. The detail is the TLS library's error. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a19f16391089f04ceb79936a6ecc26963a22c267c81816001b90572b3f08bc8278" name="a19f16391089f04ceb79936a6ecc26963a22c267c81816001b90572b3f08bc8278"></a>EBISU_SOCK_ERROR_VERIFY&#160;</td><td class="fielddoc"><p>The server's certificate was refused. The detail is why, as the TLS library says it, such as OpenSSL's X509_V_ERR_* codes. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a19f16391089f04ceb79936a6ecc26963a4b34064a92d2a7a69201e8805b547887" name="a19f16391089f04ceb79936a6ecc26963a4b34064a92d2a7a69201e8805b547887"></a>EBISU_SOCK_ERROR_TIMEOUT&#160;</td><td class="fielddoc"><p>A timeout ran out: looking the host up, connecting, sending or receiving. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a19f16391089f04ceb79936a6ecc26963ab7a641310a57f3a2e49eb2bd85746963" name="a19f16391089f04ceb79936a6ecc26963ab7a641310a57f3a2e49eb2bd85746963"></a>EBISU_SOCK_ERROR_CLOSED&#160;</td><td class="fielddoc"><p>The peer closed or reset the connection. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a19f16391089f04ceb79936a6ecc26963a25c85a793f6a5231da0c877f65699d19" name="a19f16391089f04ceb79936a6ecc26963a25c85a793f6a5231da0c877f65699d19"></a>EBISU_SOCK_ERROR_OTHER&#160;</td><td class="fielddoc"><p>Another failure. The detail is the system's error, if there is one. </p>
+</td></tr>
+</table>
+
+</div>
+</div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 3 2026 07:43:44 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Nov 3 2026 07:53:08 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

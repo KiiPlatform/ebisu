@@ -98,6 +98,9 @@ Data Fields</h2></td></tr>
 <tr class="memitem:af8c5f0ab8132bb300aa61db25a4a8073" id="r_af8c5f0ab8132bb300aa61db25a4a8073"><td class="memItemLeft" align="right" valign="top">bool(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structebisu__socket__ops__t.html#af8c5f0ab8132bb300aa61db25a4a8073">recv_timed_out</a> )(<a class="el" href="structebisu__socket__t.html">ebisu_socket_t</a> *self)</td></tr>
 <tr class="memdesc:af8c5f0ab8132bb300aa61db25a4a8073"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether the last receive failed because its timeout ran out.  <br /></td></tr>
 <tr class="separator:af8c5f0ab8132bb300aa61db25a4a8073"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d723df34a7a3ec7b0813d4949375fda" id="r_a7d723df34a7a3ec7b0813d4949375fda"><td class="memItemLeft" align="right" valign="top"><a class="el" href="ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structebisu__socket__ops__t.html#a7d723df34a7a3ec7b0813d4949375fda">last_error</a> )(<a class="el" href="structebisu__socket__t.html">ebisu_socket_t</a> *self, long *out_detail)</td></tr>
+<tr class="memdesc:a7d723df34a7a3ec7b0813d4949375fda"><td class="mdescLeft">&#160;</td><td class="mdescRight">Why the last operation that returned EBISU_SOCK_FAIL failed.  <br /></td></tr>
+<tr class="separator:a7d723df34a7a3ec7b0813d4949375fda"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>What a socket does. </p>
@@ -146,6 +149,31 @@ Data Fields</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a7d723df34a7a3ec7b0813d4949375fda" name="a7d723df34a7a3ec7b0813d4949375fda"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7d723df34a7a3ec7b0813d4949375fda">&#9670;&#160;</a></span>last_error</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a>(* ebisu_socket_ops_t::last_error) (<a class="el" href="structebisu__socket__t.html">ebisu_socket_t</a> *self, long *out_detail)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Why the last operation that returned EBISU_SOCK_FAIL failed. </p>
+<p>Optional. khc asks it right after such a failure of connect, send or recv, before closing the socket, and khc_get_sock_error() gives the answer. An application can ask its MQTT socket from the callback set by kii_set_cb_mqtt_event().</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">self</td><td>The socket. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_detail</td><td>More of it, as each ebisu_sock_error_t says, or 0. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Why, or EBISU_SOCK_ERROR_NONE if the socket can't tell. </dd></dl>
 
 </div>
 </div>
@@ -231,7 +259,7 @@ Data Fields</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 3 2026 07:43:44 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Nov 3 2026 07:53:08 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

@@ -1188,6 +1188,13 @@
       <arglist>(kii_t *kii)</arglist>
     </member>
     <member kind="function">
+      <type>ebisu_sock_error_t</type>
+      <name>kii_get_sock_error</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>ae1cd89c32442e3df563ec4a17fe58208</anchor>
+      <arglist>(kii_t *kii, long *out_detail)</arglist>
+    </member>
+    <member kind="function">
       <type>int64_t</type>
       <name>kii_get_resp_date</name>
       <anchorfile>kii_8h.html</anchorfile>

@@ -198,7 +198,7 @@ $(function() {
 <li><b>Recv</b> (<code>self</code>, <code>buffer</code>, <code>length_to_read</code>, <code>out_actual_length</code>): sets <code>out_actual_length</code> to how many bytes it read. 0 means the server closed the connection.</li>
 <li><b>Close</b> (<code>self</code>): closes the connection. Once connected, it is called when the request ends, whether it succeeded or not. It is not called when connecting fails.</li>
 </ul>
-<p><code>recv_timed_out</code>, the fifth, is for kii's MQTT task, and <code>khc</code> doesn't call it.</p>
+<p><code>recv_timed_out</code>, the fifth, is for kii's MQTT task, and <code>khc</code> doesn't call it. <code>last_error</code>, the sixth, optional too, says why the last operation that returned <code>EBISU_SOCK_FAIL</code> failed: a host that didn't resolve, an address that refused, TLS, a certificate refused, a timeout, a peer that closed, each with a detail such as errno or the certificate's verification result. <code>khc</code> asks it right after a failure, before closing, and <code><a class="el" href="khc_8h.html#a8ba60ff46c996714ab1d945a68bb7898" title="Why the socket failed, in the last khc_perform(khc*).">khc_get_sock_error()</a></code> gives the answer.</p>
 <p>Implementations to start from:</p>
 <ul>
 <li><a href="https://github.com/KiiPlatform/ebisu/blob/master/platform/openssl/src/ebisu_openssl.c">platform's OpenSSL port</a>: BSD sockets and OpenSSL, which applications can link as it is.</li>
@@ -225,7 +225,7 @@ $(function() {
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Result   </th><th class="markdownTableHeadNone">Cause    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>KHC_ERR_SOCK_CONNECT</code>, <code>KHC_ERR_SOCK_SEND</code>, <code>KHC_ERR_SOCK_RECV</code>   </td><td class="markdownTableBodyNone">A socket callback returned <code>EBISU_SOCK_FAIL</code>. <code>KHC_ERR_SOCK_RECV</code> also means the connection closed before the response ended.    </td></tr>
+<td class="markdownTableBodyNone"><code>KHC_ERR_SOCK_CONNECT</code>, <code>KHC_ERR_SOCK_SEND</code>, <code>KHC_ERR_SOCK_RECV</code>   </td><td class="markdownTableBodyNone">A socket callback returned <code>EBISU_SOCK_FAIL</code>, and <code><a class="el" href="khc_8h.html#a8ba60ff46c996714ab1d945a68bb7898" title="Why the socket failed, in the last khc_perform(khc*).">khc_get_sock_error()</a></code> says why, as the socket's <code>last_error</code> told it. <code>KHC_ERR_SOCK_RECV</code> also means the connection closed before the response ended, for which it says <code>EBISU_SOCK_ERROR_CLOSED</code>.    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>KHC_ERR_HEADER_CALLBACK</code>   </td><td class="markdownTableBodyNone">The header callback handled fewer bytes than given, or the response's <code>Content-Length</code> or <code>Transfer-Encoding</code> is malformed or unsupported.    </td></tr>
 <tr class="markdownTableRowOdd">
@@ -253,7 +253,7 @@ $(function() {
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 3 2026 07:43:44 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Nov 3 2026 07:53:08 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

@@ -388,6 +388,13 @@
       <arglist>(khc *khc)</arglist>
     </member>
     <member kind="function">
+      <type>ebisu_sock_error_t</type>
+      <name>khc_get_sock_error</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>a8ba60ff46c996714ab1d945a68bb7898</anchor>
+      <arglist>(khc *khc, long *out_detail)</arglist>
+    </member>
+    <member kind="function">
       <type>bool</type>
       <name>khc_get_resp_header_skipped</name>
       <anchorfile>khc_8h.html</anchorfile>
