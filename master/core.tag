@@ -606,6 +606,86 @@
       <arglist></arglist>
     </member>
   </compound>
+  <compound kind="file">
+    <name>ebisu_time.h</name>
+    <path>include/</path>
+    <filename>ebisu__time_8h.html</filename>
+    <class kind="struct">ebisu_civil_time_t</class>
+    <member kind="typedef">
+      <type>struct ebisu_civil_time_t</type>
+      <name>ebisu_civil_time_t</name>
+      <anchorfile>ebisu__time_8h.html</anchorfile>
+      <anchor>ad327c82321f65eb00b002979c91e19ea</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>ebisu_time_from_civil</name>
+      <anchorfile>ebisu__time_8h.html</anchorfile>
+      <anchor>a5a0f3e53e949f6cad1134f58d1df632c</anchor>
+      <arglist>(int year, int month, int day, int hour, int minute, int second, int64_t *out_seconds)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>ebisu_time_to_civil</name>
+      <anchorfile>ebisu__time_8h.html</anchorfile>
+      <anchor>ac5e28e8f61669eb81df1ed85703267a6</anchor>
+      <arglist>(int64_t seconds, ebisu_civil_time_t *out)</arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_civil_time_t</name>
+    <filename>structebisu__civil__time__t.html</filename>
+    <member kind="variable">
+      <type>int</type>
+      <name>year</name>
+      <anchorfile>structebisu__civil__time__t.html</anchorfile>
+      <anchor>abb4eca81fdae088b09e6ca3cdd2bef5e</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>int</type>
+      <name>month</name>
+      <anchorfile>structebisu__civil__time__t.html</anchorfile>
+      <anchor>a776a99e99d9af8e39db4c460dc7ac78d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>int</type>
+      <name>day</name>
+      <anchorfile>structebisu__civil__time__t.html</anchorfile>
+      <anchor>aeadd124b187fff8daa2c04b0831af49f</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>int</type>
+      <name>hour</name>
+      <anchorfile>structebisu__civil__time__t.html</anchorfile>
+      <anchor>acc1eb569fcb52c1d6b94d882db794383</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>int</type>
+      <name>minute</name>
+      <anchorfile>structebisu__civil__time__t.html</anchorfile>
+      <anchor>a5d122f787fdebe2bf6d6735d3c21530a</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>int</type>
+      <name>second</name>
+      <anchorfile>structebisu__civil__time__t.html</anchorfile>
+      <anchor>a93d3b2af6194e4a47b6ff8800d0e1f89</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>int</type>
+      <name>weekday</name>
+      <anchorfile>structebisu__civil__time__t.html</anchorfile>
+      <anchor>af9b043a87c344be4a1cb12aabb3a8f79</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
   <compound kind="struct">
     <name>ebisu_clock_t</name>
     <filename>structebisu__clock__t.html</filename>

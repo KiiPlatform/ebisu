@@ -336,7 +336,7 @@ The time</h1>
 <div class="ttc" id="astructebisu__clock__t_html"><div class="ttname"><a href="../../core/html/structebisu__clock__t.html">ebisu_clock_t</a></div></div>
 </div><!-- fragment --><p>The socket callbacks then check the server's certificate against it:</p>
 <ul>
-<li><code><a class="elRef" href="../../core/html/ebisu__clock_8h.html#a5a05722564b0b889afc6c506ecc73435">ebisu_clock_check_validity()</a></code> checks a validity period. With the floor only, a certificate that ended before it has expired, but one that starts later cannot be told from one that is valid now, so only the end is checked. <code><a class="elRef" href="../../khc/html/khc_8h.html#a88e402229a0fd13cf4079cd6ee81b1c3">khc_seconds_since_epoch()</a></code> converts the dates a TLS stack gives.</li>
+<li><code><a class="elRef" href="../../core/html/ebisu__clock_8h.html#a5a05722564b0b889afc6c506ecc73435">ebisu_clock_check_validity()</a></code> checks a validity period. With the floor only, a certificate that ended before it has expired, but one that starts later cannot be told from one that is valid now, so only the end is checked. <code><a class="elRef" href="../../core/html/ebisu__time_8h.html#a5a0f3e53e949f6cad1134f58d1df632c">ebisu_time_from_civil()</a></code> converts the dates a TLS stack gives.</li>
 <li><code><a class="elRef" href="../../core/html/ebisu__clock_8h.html#a45709ee63c0559d9f29e5c199e1085bc">ebisu_clock_get_time()</a></code> gives the time, and whether it is the time or only the floor, for a TLS stack that checks validity itself: give it the time, and while it is only the floor, ignore a certificate not being valid yet.</li>
 <li><code><a class="elRef" href="../../core/html/ebisu__clock_8h.html#aa00ab1f7611766edb574494ca947f07d">ebisu_clock_forget_time()</a></code>, when the server's certificate is refused as not valid yet while the clock had the time. That suggests the time fell behind, the monotonic clock having stopped while the device slept and the server having renewed its certificate meanwhile. Forgotten, the time becomes a lower bound, the next connection goes through, and its response gives the clock the time again. Without it, the connection that would bring the time is refused, again and again.</li>
 </ul>
@@ -350,7 +350,7 @@ Building</h1>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 3 2026 18:22:32 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Nov 3 2026 18:40:36 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

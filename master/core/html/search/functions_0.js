@@ -32,5 +32,7 @@ var searchData=
   ['ebisu_5fstrbuf_5finit_29',['ebisu_strbuf_init',['../ebisu__str_8h.html#a987edf454101a781081e9108d6b4fddc',1,'ebisu_str.h']]],
   ['ebisu_5fstrbuf_5fok_30',['ebisu_strbuf_ok',['../ebisu__str_8h.html#accb5345552bbd23ed89c21bfe269aa8e',1,'ebisu_str.h']]],
   ['ebisu_5fstrbuf_5froom_31',['ebisu_strbuf_room',['../ebisu__str_8h.html#aa73134d9c0c4cf2386aad8fdd4211ef4',1,'ebisu_str.h']]],
-  ['ebisu_5fstrlcpy_32',['ebisu_strlcpy',['../ebisu__str_8h.html#a9745d04f60b5f273f02d225029c110df',1,'ebisu_str.h']]]
+  ['ebisu_5fstrlcpy_32',['ebisu_strlcpy',['../ebisu__str_8h.html#a9745d04f60b5f273f02d225029c110df',1,'ebisu_str.h']]],
+  ['ebisu_5ftime_5ffrom_5fcivil_33',['ebisu_time_from_civil',['../ebisu__time_8h.html#a5a0f3e53e949f6cad1134f58d1df632c',1,'ebisu_time.h']]],
+  ['ebisu_5ftime_5fto_5fcivil_34',['ebisu_time_to_civil',['../ebisu__time_8h.html#ac5e28e8f61669eb81df1ed85703267a6',1,'ebisu_time.h']]]
 ];

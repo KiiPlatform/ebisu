@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['send_0',['send',['../../../core/html/structebisu__socket__ops__t.html#adb543d912cc7f9758ed4713cfeed4666',1,'ebisu_socket_ops_t']]],
-  ['size_1',['size',['../../../core/html/structebisu__strbuf__t.html#a0f33a1d98be1357c1aa03020b0d2fdad',1,'ebisu_strbuf_t']]]
+  ['recv_0',['recv',['../../../core/html/structebisu__socket__ops__t.html#a28417969117e077e747944faac38efa8',1,'ebisu_socket_ops_t']]],
+  ['recv_5ftimed_5fout_1',['recv_timed_out',['../../../core/html/structebisu__socket__ops__t.html#af8c5f0ab8132bb300aa61db25a4a8073',1,'ebisu_socket_ops_t']]]
 ];

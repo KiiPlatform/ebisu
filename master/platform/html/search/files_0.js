@@ -10,5 +10,6 @@ var searchData=
   ['ebisu_5fsocket_2eh_7',['ebisu_socket.h',['../../../core/html/ebisu__socket_8h.html',1,'']]],
   ['ebisu_5fstr_2eh_8',['ebisu_str.h',['../../../core/html/ebisu__str_8h.html',1,'']]],
   ['ebisu_5fsystem_2eh_9',['ebisu_system.h',['../../../core/html/ebisu__system_8h.html',1,'']]],
-  ['ebisu_5fwin32_2eh_10',['ebisu_win32.h',['../ebisu__win32_8h.html',1,'']]]
+  ['ebisu_5ftime_2eh_10',['ebisu_time.h',['../../../core/html/ebisu__time_8h.html',1,'']]],
+  ['ebisu_5fwin32_2eh_11',['ebisu_win32.h',['../ebisu__win32_8h.html',1,'']]]
 ];
