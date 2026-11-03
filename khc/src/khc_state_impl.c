@@ -948,13 +948,27 @@ void khc_state_resp_body_callback(khc* khc) {
     return;
 }
 
+// The first CRLF within the first len bytes of buff, which holds no
+// terminator, or NULL.
+static const char* _find_crlf(const char* buff, size_t len) {
+    for (size_t i = 0; i + 1 < len; ++i) {
+        if (buff[i] == '\r' && buff[i + 1] == '\n') {
+            return &buff[i];
+        }
+    }
+    return NULL;
+}
+
 void khc_state_resp_body_parse_chunk_size(khc* khc) {
     size_t chunk_size = 0;
     int has_chunk_size = _read_chunk_size(khc->_stream_buff, khc->_body_read_size, &chunk_size);
     if (has_chunk_size == 1) {
         khc->_chunk_size = chunk_size;
         khc->_chunk_size_written = 0;
-        const char* chunk_end = strstr(khc->_stream_buff, "\r\n");
+        // The CRLF _read_chunk_size() found, which ends the size line. Not
+        // with strstr(): the stream buffer holds what has been read, with no
+        // terminator after it, so it would read on past the end.
+        const char* chunk_end = _find_crlf(khc->_stream_buff, khc->_body_read_size);
         size_t remain = khc->_body_read_size - (chunk_end + 2 - khc->_stream_buff);
         memmove(khc->_stream_buff, chunk_end + 2, remain);
         khc->_body_read_size = remain;
