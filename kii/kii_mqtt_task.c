@@ -110,11 +110,12 @@ ebisu_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) 
     /* Variable header:Keep Alive, which kii_start_push_task() keeps to 16 bits */
     kii->_mqtt_buffer[i++] = (keep_alive_interval & 0xff00) >> 8;
     kii->_mqtt_buffer[i++] = keep_alive_interval & 0x00ff;
-    /* Payload:Client Identifier */
-    kii->_mqtt_buffer[i++] = (strlen(endpoint->topic) & 0xff00) >> 8;
-    kii->_mqtt_buffer[i++] = strlen(endpoint->topic) & 0x00ff;
-    strcpy(&(kii->_mqtt_buffer[i]), endpoint->topic);
-    i += strlen(endpoint->topic);
+    /* Payload:Client Identifier, the topic unless one is set */
+    const char* client_id = kii->_mqtt_client_id != NULL ? kii->_mqtt_client_id : endpoint->topic;
+    kii->_mqtt_buffer[i++] = (strlen(client_id) & 0xff00) >> 8;
+    kii->_mqtt_buffer[i++] = strlen(client_id) & 0x00ff;
+    strcpy(&(kii->_mqtt_buffer[i]), client_id);
+    i += strlen(client_id);
     if (will != NULL) {
         /* Payload:Will Topic */
         const size_t will_topic_len = strlen(will->topic);
@@ -429,7 +430,11 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
     memset(&state->endpoint, 0x00, sizeof(kii_mqtt_endpoint_t));
     state->info.error = KII_MQTT_ERR_OK;
     state->info.task_state = KII_MQTT_ST_INSTALL_PUSH;
-    if (kii->_onboarded_thing_id[0] != '\0' &&
+    if (kii->_mqtt_endpoint_given) {
+        // The application's own: connect with it, nothing to install.
+        state->endpoint = kii->_mqtt_endpoint;
+        state->info.task_state = KII_MQTT_ST_SOCK_CONNECT;
+    } else if (kii->_onboarded_thing_id[0] != '\0' &&
             strcmp(kii->_onboarded_thing_id, kii->_author.author_id) == 0) {
         // Onboarding installed push and returned the endpoint: connect with it.
         state->ins_id = kii->_onboarded_installation_id;
@@ -569,7 +574,11 @@ void _mqtt_state_sock_connect(mqtt_state_t* state)
         _schedule_retry(state);
         if (++state->connect_failures >= MAX_CONNECT_FAILURES) {
             state->connect_failures = 0;
-            task_info->task_state = KII_MQTT_ST_GET_ENDPOINT;
+            // An endpoint of the application's can't be asked for again: go
+            // on trying it.
+            if (!kii->_mqtt_endpoint_given) {
+                task_info->task_state = KII_MQTT_ST_GET_ENDPOINT;
+            }
         }
     } else {
         state->connect_failures = 0;
@@ -594,8 +603,9 @@ void _mqtt_state_send_connect(mqtt_state_t* state)
     // And the will's topic and message, with 2 bytes before each.
     const size_t will_size = kii->_mqtt_will == NULL ? 0 :
         4 + strlen(kii->_mqtt_will->topic) + kii->_mqtt_will->message_length;
+    const char* client_id = kii->_mqtt_client_id != NULL ? kii->_mqtt_client_id : endpoint->topic;
     if (kii->_mqtt_buffer_size < 21 + strlen(_mqtt_protocol_name(kii)) +
-            strlen(endpoint->topic) + will_size +
+            strlen(client_id) + will_size +
             strlen(endpoint->username) + strlen(endpoint->password)) {
         task_info->error = KII_MQTT_ERR_INSUFFICIENT_BUFF;
         task_info->task_state = KII_MQTT_ST_ERR_EXIT;
@@ -657,6 +667,20 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
         // onboarding again, onboards again.
         kii->_mqtt_socket->ops->close(kii->_mqtt_socket);
         state->sock_connected = false;
+        if (kii->_mqtt_endpoint_given) {
+            // Kii Cloud has none for an endpoint of the application's: ask the
+            // application, and end the task if it has none either.
+            if (kii->_cb_mqtt_credentials != NULL &&
+                    kii->_cb_mqtt_credentials(&state->endpoint, kii->_mqtt_credentials_data) &&
+                    _kii_mqtt_endpoint_terminated(&state->endpoint)) {
+                _schedule_retry(state);
+                task_info->task_state = KII_MQTT_ST_SOCK_CONNECT;
+            } else {
+                task_info->error = KII_MQTT_ERR_CREDENTIALS;
+                task_info->task_state = KII_MQTT_ST_ERR_EXIT;
+            }
+            return;
+        }
         _schedule_retry(state);
         task_info->task_state = KII_MQTT_ST_GET_ENDPOINT;
     } else if (return_code != 0) {

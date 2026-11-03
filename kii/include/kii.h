@@ -37,14 +37,27 @@ extern "C" {
 #define KII_TOKEN_MAX_SIZE 128
 /** \brief Size of kii_author_t::refresh_token. */
 #define KII_REFRESH_TOKEN_MAX_SIZE 128
+/* The sizes of kii_mqtt_endpoint_t's fields can be defined otherwise, for a
+ * broker that gives longer ones: alike for kii and everything using it, as
+ * they change the layout of kii_mqtt_endpoint_t and kii_t. A session renewing
+ * by onboarding again needs as much more room in the buffer set by
+ * kii_set_buff(), as onboarding's response carries the endpoint. */
 /** \brief Size of kii_mqtt_endpoint_t::username. */
+#ifndef KII_USERNAME_MAX_SIZE
 #define KII_USERNAME_MAX_SIZE 64
+#endif
 /** \brief Size of kii_mqtt_endpoint_t::password. */
+#ifndef KII_PASSWORD_MAX_SIZE
 #define KII_PASSWORD_MAX_SIZE 128
+#endif
 /** \brief Size of kii_mqtt_endpoint_t::topic. */
+#ifndef KII_TOPIC_MAX_SIZE
 #define KII_TOPIC_MAX_SIZE 64
+#endif
 /** \brief Size of kii_mqtt_endpoint_t::host. */
+#ifndef KII_HOST_MAX_SIZE
 #define KII_HOST_MAX_SIZE 64
+#endif
 /** \brief Size of kii_object_id_t::id. */
 #define KII_OBJECT_ID_MAX_SIZE 64
 /** \brief Size of kii_installation_id_t::id. */
@@ -397,6 +410,22 @@ typedef struct kii_mqtt_will_t {
 } kii_mqtt_will_t;
 
 /**
+ * \brief Asked for new credentials when the broker refuses those of a task
+ * started with kii_start_mqtt_task_with_endpoint().
+ *
+ * Called in the task, after a CONNACK refusing them, with code 4 or 5. Write
+ * the new ones, or anything else of the endpoint that changes, into endpoint,
+ * each field terminated within its array, and return true to connect with
+ * them, after a wait as for any failed attempt. Return false to end the task
+ * with KII_MQTT_ERR_CREDENTIALS. It must not use the kii_t.
+ *
+ * \param [in, out] endpoint What the task connected with, to be changed.
+ * \param [in] userdata Given to kii_set_cb_mqtt_credentials().
+ * \return Whether to connect again with endpoint.
+ */
+typedef bool (*KII_CB_MQTT_CREDENTIALS)(kii_mqtt_endpoint_t* endpoint, void* userdata);
+
+/**
  * \brief Stores data/ callbacks used by kii module.
  */
 typedef struct kii_t {
@@ -427,6 +456,15 @@ typedef struct kii_t {
     size_t _mqtt_buffer_size; /**< \private */
     kii_mqtt_qos_t _mqtt_qos; /**< \private */
     const kii_mqtt_will_t* _mqtt_will; /**< \private */
+    /** \private The client identifier, or NULL for the endpoint's topic. */
+    const char* _mqtt_client_id;
+    /** \private Whether the task connects with _mqtt_endpoint, as
+     * kii_start_mqtt_task_with_endpoint() started it, rather than by push's
+     * own flow. */
+    bool _mqtt_endpoint_given;
+    kii_mqtt_endpoint_t _mqtt_endpoint; /**< \private */
+    KII_CB_MQTT_CREDENTIALS _cb_mqtt_credentials; /**< \private */
+    void* _mqtt_credentials_data; /**< \private */
     bool _mqtt_clean_session; /**< \private */
 
     uint16_t _keep_alive_interval; /**< \private */
@@ -1110,6 +1148,67 @@ kii_code_t kii_start_push_task(
         uint32_t keep_alive_interval_sec,
 		KII_PUSH_RECEIVED_CB cb_push,
         void* userdata);
+
+/**
+ * \brief Start the MQTT task with an endpoint of the application's.
+ *
+ * As kii_start_push_task(), but for a broker the application has the
+ * credentials of, obtained some other way: the task connects with a copy of
+ * endpoint, rather than installing push or using what onboarding returned,
+ * and subscribes to its topic. Neither the HTTP socket nor the buffer set by
+ * kii_set_buff() is needed.
+ *
+ * When the broker refuses the credentials, the task asks the callback set by
+ * kii_set_cb_mqtt_credentials() for new ones. Without one, or if it gives
+ * none, the task ends, with KII_MQTT_ERR_CREDENTIALS. When it can't reach the
+ * broker, it goes on trying, with the waits kii_set_mqtt_retry_wait_max()
+ * bounds.
+ *
+ * \param [in, out] kii kii_t instance.
+ * \param [in] endpoint The broker, the credentials and the topic: host,
+ * port_ssl, or port_tcp with kii_enable_insecure_mqtt(), username, password
+ * and topic. The client identifier is the topic unless
+ * kii_set_mqtt_client_id() sets another. Copied.
+ * \param [in] keep_alive_interval_sec As for kii_start_push_task().
+ * \param [in] cb_push Called with each message.
+ * \param [in] userdata Given to cb_push.
+ * \return kii_code_t. KII_ERR_TOO_LARGE_DATA if a string of endpoint isn't
+ * terminated within its array, KII_ERR_FAIL if its host or topic is empty, or
+ * as kii_start_push_task() for the rest, all with no task started.
+ */
+kii_code_t kii_start_mqtt_task_with_endpoint(
+        kii_t* kii,
+        const kii_mqtt_endpoint_t* endpoint,
+        uint32_t keep_alive_interval_sec,
+        KII_PUSH_RECEIVED_CB cb_push,
+        void* userdata);
+
+/**
+ * \brief Set the client identifier CONNECT carries.
+ *
+ * The endpoint's topic by default, as Kii Cloud's broker takes it. Another
+ * broker may want another. Set it before starting the task.
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] client_id The identifier, terminated, kept as a pointer, so it
+ * has to outlive the task, or NULL for the topic.
+ * \return KII_ERR_TOO_LARGE_DATA, changing nothing, for one longer than
+ * 65535 bytes, which CONNECT can't carry.
+ */
+kii_code_t kii_set_mqtt_client_id(kii_t* kii, const char* client_id);
+
+/**
+ * \brief Set the callback asked for new credentials when the broker refuses
+ * those of a task started with kii_start_mqtt_task_with_endpoint().
+ *
+ * A task started with kii_start_push_task() gets new ones from Kii Cloud
+ * instead, and doesn't call it. Set it before starting the task.
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] cb The callback, or NULL for none.
+ * \param [in] userdata Given to cb.
+ */
+void kii_set_cb_mqtt_credentials(kii_t* kii, KII_CB_MQTT_CREDENTIALS cb, void* userdata);
 
 /**
  * \brief Execute a specific version of server code.
@@ -1872,7 +1971,11 @@ typedef enum
     KII_MQTT_ERR_OK, /**< \brief No errors so far. */
     KII_MQTT_ERR_INSTALLATION, /**< \brief Un-recoverble error in push installation. */
     KII_MQTT_ERR_GET_ENDPOINT, /**< \brief Un-recoverble error in getting MQTT endpoint. */
-    KII_MQTT_ERR_INSUFFICIENT_BUFF /**< \brief Buffer set by kii_set_mqtt_buff() is too small. */
+    KII_MQTT_ERR_INSUFFICIENT_BUFF, /**< \brief Buffer set by kii_set_mqtt_buff() is too small. */
+    /** \brief The broker refused the credentials of a task started with
+     * kii_start_mqtt_task_with_endpoint(), and the callback set by
+     * kii_set_cb_mqtt_credentials() gave no new ones, or there is none. */
+    KII_MQTT_ERR_CREDENTIALS
 } kii_mqtt_error;
 
 /**

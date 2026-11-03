@@ -313,16 +313,20 @@ static bool _socket_can_run(const ebisu_socket_t* sock)
             sock->ops->close != NULL);
 }
 
-static bool _push_task_can_run(const kii_t* kii)
+/* Whether the task can run. One with an endpoint of the application's makes
+ * no requests of Kii Cloud, so needs neither the HTTP socket nor the buffer. */
+static bool _push_task_can_run(const kii_t* kii, bool endpoint_given)
 {
     return (kii->_system->ops->delay_ms != NULL &&
-            _socket_can_run(kii->_khc._socket) &&
+            (endpoint_given || _socket_can_run(kii->_khc._socket)) &&
             _socket_can_run(kii->_mqtt_socket) &&
-            kii->_rw_buff != NULL &&
+            (endpoint_given || kii->_rw_buff != NULL) &&
             kii->_mqtt_buffer != NULL);
 }
 
-kii_code_t kii_start_push_task(kii_t* kii, uint32_t keep_alive_interval, KII_PUSH_RECEIVED_CB callback, void* userdata)
+static kii_code_t _start_task(kii_t* kii, uint32_t keep_alive_interval,
+        KII_PUSH_RECEIVED_CB callback, void* userdata,
+        const kii_mqtt_endpoint_t* endpoint)
 {
     // A second task would share the first's sockets and buffers.
     if (kii->_push_task_running) {
@@ -337,8 +341,12 @@ kii_code_t kii_start_push_task(kii_t* kii, uint32_t keep_alive_interval, KII_PUS
     if (kii->_system == NULL || kii->_system->ops->task_create == NULL) {
         return KII_ERR_CREATE_TASK;
     }
-    if (callback == NULL || !_push_task_can_run(kii)) {
+    if (callback == NULL || !_push_task_can_run(kii, endpoint != NULL)) {
         return KII_ERR_FAIL;
+    }
+    kii->_mqtt_endpoint_given = endpoint != NULL;
+    if (endpoint != NULL) {
+        kii->_mqtt_endpoint = *endpoint;
     }
     kii->_keep_alive_interval = (uint16_t)keep_alive_interval;
     kii->_cb_push_received = callback;
@@ -354,5 +362,43 @@ kii_code_t kii_start_push_task(kii_t* kii, uint32_t keep_alive_interval, KII_PUS
         return KII_ERR_CREATE_TASK;
     }
     return KII_ERR_OK;
+}
+
+kii_code_t kii_start_push_task(kii_t* kii, uint32_t keep_alive_interval, KII_PUSH_RECEIVED_CB callback, void* userdata)
+{
+    return _start_task(kii, keep_alive_interval, callback, userdata, NULL);
+}
+
+/* Whether each string of endpoint is terminated within its array. */
+static bool _endpoint_terminated(const kii_mqtt_endpoint_t* endpoint)
+{
+    return memchr(endpoint->username, '\0', sizeof(endpoint->username)) != NULL &&
+        memchr(endpoint->password, '\0', sizeof(endpoint->password)) != NULL &&
+        memchr(endpoint->topic, '\0', sizeof(endpoint->topic)) != NULL &&
+        memchr(endpoint->host, '\0', sizeof(endpoint->host)) != NULL;
+}
+
+kii_code_t kii_start_mqtt_task_with_endpoint(
+        kii_t* kii,
+        const kii_mqtt_endpoint_t* endpoint,
+        uint32_t keep_alive_interval,
+        KII_PUSH_RECEIVED_CB callback,
+        void* userdata)
+{
+    if (endpoint == NULL) {
+        return KII_ERR_FAIL;
+    }
+    if (!_endpoint_terminated(endpoint)) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    if (endpoint->host[0] == '\0' || endpoint->topic[0] == '\0') {
+        return KII_ERR_FAIL;
+    }
+    return _start_task(kii, keep_alive_interval, callback, userdata, endpoint);
+}
+
+bool _kii_mqtt_endpoint_terminated(const kii_mqtt_endpoint_t* endpoint)
+{
+    return _endpoint_terminated(endpoint);
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

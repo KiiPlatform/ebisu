@@ -147,6 +147,20 @@ void kii_set_mqtt_qos(kii_t* kii, kii_mqtt_qos_t qos) {
     kii->_mqtt_qos = qos;
 }
 
+kii_code_t kii_set_mqtt_client_id(kii_t* kii, const char* client_id) {
+    // CONNECT carries it with a length of 16 bits.
+    if (client_id != NULL && strlen(client_id) > 65535) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    kii->_mqtt_client_id = client_id;
+    return KII_ERR_OK;
+}
+
+void kii_set_cb_mqtt_credentials(kii_t* kii, KII_CB_MQTT_CREDENTIALS cb, void* userdata) {
+    kii->_cb_mqtt_credentials = cb;
+    kii->_mqtt_credentials_data = userdata;
+}
+
 kii_code_t kii_set_mqtt_will(kii_t* kii, const kii_mqtt_will_t* will) {
     if (will != NULL) {
         if (will->topic == NULL || (will->message == NULL && will->message_length > 0) ||

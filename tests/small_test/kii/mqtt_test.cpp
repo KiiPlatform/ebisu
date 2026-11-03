@@ -4068,6 +4068,204 @@ TEST_CASE( "The waits between attempts" ) {
     }
 }
 
+namespace {
+
+struct CredentialsCtx {
+    int calls = 0;
+    bool give = true;
+    bool unterminated = false;
+};
+
+bool give_credentials(kii_mqtt_endpoint_t* endpoint, void* userdata)
+{
+    CredentialsCtx* ctx = (CredentialsCtx*)userdata;
+    ++ctx->calls;
+    if (ctx->unterminated) {
+        memset(endpoint->password, 'p', sizeof(endpoint->password));
+    } else {
+        strcpy(endpoint->password, "newPassword");
+    }
+    return ctx->give;
+}
+
+}
+
+// The task could only start with push's own flow: an application that had a
+// broker's credentials some other way had to write the task's private fields.
+TEST_CASE( "The MQTT task with an endpoint of the application's" ) {
+    char mqtt_buff[1024];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
+    strcpy(kii._author.author_id, "th.1");
+    int tasks = 0;
+    khct::cb::SystemCtx sys;
+    sys.on_task_create = [&tasks](const char*, EBISU_TASK_ENTRY, void*) {
+        ++tasks;
+        return EBISU_TASKC_OK;
+    };
+    kii_set_system(&kii, sys.system());
+    std::string sent;
+    bool connect_ok = true;
+    khct::cb::SockCtx mqtt_ctx;
+    mqtt_ctx.on_connect = [&connect_ok](void*, const char*, uint16_t) {
+        return connect_ok ? EBISU_SOCK_OK : EBISU_SOCK_FAIL;
+    };
+    mqtt_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
+        sent.append(buffer, length);
+        *out_sent_length = length;
+        return EBISU_SOCK_OK;
+    };
+    mqtt_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
+    size_t served = 0;
+
+    kii_mqtt_endpoint_t endpoint;
+    memset(&endpoint, 0, sizeof(endpoint));
+    strcpy(endpoint.host, "broker.example.com");
+    strcpy(endpoint.topic, "devices/1");
+    strcpy(endpoint.username, "user");
+    strcpy(endpoint.password, "pass");
+    endpoint.port_ssl = 8883;
+
+    SECTION("starts with neither the HTTP socket nor the buffer, with a copy") {
+        REQUIRE( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        CHECK( tasks == 1 );
+        strcpy(endpoint.host, "changed");
+        CHECK( strcmp(kii._mqtt_endpoint.host, "broker.example.com") == 0 );
+        CHECK( kii._keep_alive_interval == 60 );
+    }
+
+    SECTION("refuses an endpoint that isn't one, starting nothing") {
+        kii_mqtt_endpoint_t bad = endpoint;
+        memset(bad.username, 'u', sizeof(bad.username));
+        CHECK( kii_start_mqtt_task_with_endpoint(&kii, &bad, 60, khct::cb::cb_push, NULL) == KII_ERR_TOO_LARGE_DATA );
+        bad = endpoint;
+        memset(bad.host, 'h', sizeof(bad.host));
+        CHECK( kii_start_mqtt_task_with_endpoint(&kii, &bad, 60, khct::cb::cb_push, NULL) == KII_ERR_TOO_LARGE_DATA );
+        bad = endpoint;
+        bad.host[0] = '\0';
+        CHECK( kii_start_mqtt_task_with_endpoint(&kii, &bad, 60, khct::cb::cb_push, NULL) == KII_ERR_FAIL );
+        bad = endpoint;
+        bad.topic[0] = '\0';
+        CHECK( kii_start_mqtt_task_with_endpoint(&kii, &bad, 60, khct::cb::cb_push, NULL) == KII_ERR_FAIL );
+        CHECK( kii_start_mqtt_task_with_endpoint(&kii, NULL, 60, khct::cb::cb_push, NULL) == KII_ERR_FAIL );
+        CHECK( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 65536, khct::cb::cb_push, NULL) == KII_ERR_FAIL );
+        CHECK( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60, NULL, NULL) == KII_ERR_FAIL );
+        CHECK( tasks == 0 );
+    }
+
+    SECTION("connects with it, whatever onboarding returned") {
+        strcpy(kii._onboarded_thing_id, "th.1");
+        strcpy(kii._onboarded_endpoint.host, "kii-broker");
+        REQUIRE( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        mqtt_state_t state;
+        _init_mqtt_state(&kii, &state);
+        CHECK( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+        CHECK( strcmp(state.endpoint.host, "broker.example.com") == 0 );
+
+        // A push task started after it uses push's own again.
+        kii._push_task_running = false;
+        char buff[256];
+        kii_set_buff(&kii, buff, sizeof(buff));
+        khct::cb::SockCtx http_ctx;
+        kii_set_http_socket(&kii, http_ctx.socket());
+        REQUIRE( kii_start_push_task(&kii, 60, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        _init_mqtt_state(&kii, &state);
+        CHECK( strcmp(state.endpoint.host, "kii-broker") == 0 );
+    }
+
+    SECTION("with the client identifier set, or the topic") {
+        REQUIRE( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        mqtt_state_t state;
+        _init_mqtt_state(&kii, &state);
+        state.info.task_state = KII_MQTT_ST_SEND_CONNECT;
+        _mqtt_state_send_connect(&state);
+        CHECK( sent.find(std::string("\x00\x09" "devices/1" "\x00\x04" "user", 17)) != std::string::npos );
+
+        REQUIRE( kii_set_mqtt_client_id(&kii, "client-7") == KII_ERR_OK );
+        sent.clear();
+        _mqtt_state_send_connect(&state);
+        CHECK( sent.find(std::string("\x00\x08" "client-7" "\x00\x04" "user", 16)) != std::string::npos );
+        CHECK( sent.find("devices/1") == std::string::npos );
+
+        const std::string long_id(65536, 'c');
+        CHECK( kii_set_mqtt_client_id(&kii, long_id.c_str()) == KII_ERR_TOO_LARGE_DATA );
+        CHECK( kii_set_mqtt_client_id(&kii, NULL) == KII_ERR_OK );
+        sent.clear();
+        _mqtt_state_send_connect(&state);
+        CHECK( sent.find("devices/1") != std::string::npos );
+    }
+
+    SECTION("asks for new credentials when the broker refuses them") {
+        CredentialsCtx creds;
+        kii_set_cb_mqtt_credentials(&kii, give_credentials, &creds);
+        REQUIRE( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        mqtt_state_t state;
+        _init_mqtt_state(&kii, &state);
+        const std::string refused("\x20\x02\x00\x05", 4);
+
+        SECTION("and connects with them") {
+            serve_stream(mqtt_ctx, refused, served);
+            _mqtt_state_recv_connack(&state);
+            CHECK( creds.calls == 1 );
+            CHECK( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+            CHECK( state.wait_left_ms > 0 );
+            CHECK( strcmp(state.endpoint.password, "newPassword") == 0 );
+        }
+
+        SECTION("or ends without") {
+            creds.give = false;
+            serve_stream(mqtt_ctx, refused, served);
+            _mqtt_state_recv_connack(&state);
+            CHECK( creds.calls == 1 );
+            CHECK( state.info.task_state == KII_MQTT_ST_ERR_EXIT );
+            CHECK( state.info.error == KII_MQTT_ERR_CREDENTIALS );
+        }
+
+        SECTION("or ends with ones that aren't") {
+            creds.unterminated = true;
+            serve_stream(mqtt_ctx, refused, served);
+            _mqtt_state_recv_connack(&state);
+            CHECK( state.info.task_state == KII_MQTT_ST_ERR_EXIT );
+            CHECK( state.info.error == KII_MQTT_ERR_CREDENTIALS );
+        }
+
+        SECTION("or ends without a callback") {
+            kii_set_cb_mqtt_credentials(&kii, NULL, NULL);
+            serve_stream(mqtt_ctx, refused, served);
+            _mqtt_state_recv_connack(&state);
+            CHECK( creds.calls == 0 );
+            CHECK( state.info.task_state == KII_MQTT_ST_ERR_EXIT );
+            CHECK( state.info.error == KII_MQTT_ERR_CREDENTIALS );
+        }
+    }
+
+    SECTION("isn't asked of a push task, which gets them from Kii Cloud") {
+        CredentialsCtx creds;
+        kii_set_cb_mqtt_credentials(&kii, give_credentials, &creds);
+        mqtt_state_t state;
+        _init_mqtt_state(&kii, &state);
+        state.endpoint = endpoint;
+        serve_stream(mqtt_ctx, std::string("\x20\x02\x00\x05", 4), served);
+        _mqtt_state_recv_connack(&state);
+        CHECK( creds.calls == 0 );
+        CHECK( state.info.task_state == KII_MQTT_ST_GET_ENDPOINT );
+    }
+
+    SECTION("goes on trying a broker it can't reach") {
+        connect_ok = false;
+        REQUIRE( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        mqtt_state_t state;
+        _init_mqtt_state(&kii, &state);
+        for (int attempt = 0; attempt < 10; ++attempt) {
+            INFO( "attempt " << attempt );
+            _mqtt_state_sock_connect(&state);
+            CHECK( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
+        }
+    }
+}
+
 TEST_CASE( "A broker that cannot be reached" ) {
     kii_t kii;
     kii_init(&kii);
