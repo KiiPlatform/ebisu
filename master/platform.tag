@@ -473,6 +473,7 @@
     <path>schannel/include/</path>
     <filename>ebisu__schannel_8h.html</filename>
     <includes id="ebisu__clock_8h" name="ebisu_clock.h" local="no" import="no" module="no" objc="no">ebisu_clock.h</includes>
+    <includes id="ebisu__log_8h" name="ebisu_log.h" local="no" import="no" module="no" objc="no">ebisu_log.h</includes>
     <includes id="ebisu__socket_8h" name="ebisu_socket.h" local="no" import="no" module="no" objc="no">ebisu_socket.h</includes>
     <class kind="struct">ebisu_schannel_socket_t</class>
     <member kind="typedef">
@@ -495,6 +496,13 @@
       <anchorfile>ebisu__schannel_8h.html</anchorfile>
       <anchor>abc316edc7cfd99ae6f132654e184b24e</anchor>
       <arglist>(ebisu_schannel_socket_t *sock, ebisu_clock_t *clock)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_schannel_socket_set_logger</name>
+      <anchorfile>ebisu__schannel_8h.html</anchorfile>
+      <anchor>aa3b8c7de20857678edb3db44fdee1c3c</anchor>
+      <arglist>(ebisu_schannel_socket_t *sock, ebisu_logger_t *logger)</arglist>
     </member>
   </compound>
   <compound kind="file">
