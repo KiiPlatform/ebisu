@@ -35,6 +35,20 @@ void check_parsers(const std::vector<char>& bytes, unsigned int decimals) {
         uint64_t back = 0;
         if (!ebisu_strbuf_ok(&sb) || ebisu_parse_hex(buff, sb.len, UINT64_MAX, &back) != EBISU_PARSE_OK || back != u) abort();
     }
+    // Bytes, into room for one fewer than half the length and room for all.
+    uint8_t parsed[24];
+    size_t parsed_len = 0;
+    if (len >= 2 && ebisu_parse_hex_bytes(s, len, parsed, len / 2 - 1, &parsed_len) == EBISU_PARSE_OK) abort();
+    if (ebisu_parse_hex_bytes(s, len, parsed, sizeof(parsed), &parsed_len) == EBISU_PARSE_OK) {
+        if (parsed_len != len / 2) abort();
+        ebisu_strbuf_init(&sb, buff, sizeof(buff));
+        ebisu_strbuf_append_hex_bytes(&sb, parsed, parsed_len);
+        if (!ebisu_strbuf_ok(&sb) || sb.len != len) abort();
+        for (size_t k = 0; k < len; ++k) {
+            char c = s[k] >= 'A' && s[k] <= 'F' ? (char)(s[k] - 'A' + 'a') : s[k];
+            if (buff[k] != c) abort();
+        }
+    }
     int64_t i = 0;
     if (ebisu_parse_int(s, len, INT64_MIN, INT64_MAX, &i) == EBISU_PARSE_OK) {
         ebisu_strbuf_init(&sb, buff, sizeof(buff));
@@ -116,7 +130,7 @@ void check_builder(FuzzInput* in) {
         uint8_t n = in->take();
         std::string piece;
         char tmp[64];
-        switch (op % 6) {
+        switch (op % 7) {
         case 0: {
             piece.assign((const char*)in->data, n < in->size ? n : in->size);
             in->data += piece.size();
@@ -156,6 +170,17 @@ void check_builder(FuzzInput* in) {
             piece = tmp;
             ebisu_strbuf_append_hex(&sb, (uint64_t)n * 0x10001ULL, 0);
             break;
+        case 5: {
+            size_t count = n < in->size ? n : in->size;
+            for (size_t i = 0; i < count; ++i) {
+                snprintf(tmp, sizeof(tmp), "%02x", in->data[i]);
+                piece += tmp;
+            }
+            ebisu_strbuf_append_hex_bytes(&sb, count > 0 ? in->data : nullptr, count);
+            in->data += count;
+            in->size -= count;
+            break;
+        }
         default:
             snprintf(tmp, sizeof(tmp), "%llu", (unsigned long long)n * 99991ULL);
             piece = tmp;
