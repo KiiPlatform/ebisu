@@ -257,6 +257,9 @@ typedef enum <a class="el" href="kii_8h.html#a971acd03c2d0df621d7f60b0b4644dbb">
 typedef struct <a class="el" href="structkii__mqtt__will__t.html">kii_mqtt_will_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kii_mqtt_will_t</b></td></tr>
 <tr class="memdesc:a782aebfd274c30bb8cd488663a14196c"><td class="mdescLeft">&#160;</td><td class="mdescRight">A last will: the message the broker is to publish if the connection is lost, rather than ended with DISCONNECT, as the task ends it when it stops. Whether the broker publishes it, and who receives it, is the broker's. <br /></td></tr>
 <tr class="separator:a782aebfd274c30bb8cd488663a14196c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a146369853075d06cc7978d24082b125d" id="r_a146369853075d06cc7978d24082b125d"><td class="memItemLeft" align="right" valign="top">typedef bool(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a146369853075d06cc7978d24082b125d">KII_CB_MQTT_CREDENTIALS</a>) (<a class="el" href="structkii__mqtt__endpoint__t.html">kii_mqtt_endpoint_t</a> *endpoint, void *userdata)</td></tr>
+<tr class="memdesc:a146369853075d06cc7978d24082b125d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Asked for new credentials when the broker refuses those of a task started with <a class="el" href="kii_8h.html#a7403193a9455e7aea02dc4ef48265c70" title="Start the MQTT task with an endpoint of the application&#39;s.">kii_start_mqtt_task_with_endpoint()</a>.  <br /></td></tr>
+<tr class="separator:a146369853075d06cc7978d24082b125d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab1332877c811291e2a9693aaa5c15858" id="r_ab1332877c811291e2a9693aaa5c15858"><td class="memItemLeft" align="right" valign="top"><a id="ab1332877c811291e2a9693aaa5c15858" name="ab1332877c811291e2a9693aaa5c15858"></a>
 typedef struct <a class="el" href="structkii__t.html">kii_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>kii_t</b></td></tr>
 <tr class="memdesc:ab1332877c811291e2a9693aaa5c15858"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stores data/ callbacks used by kii module. <br /></td></tr>
@@ -352,10 +355,14 @@ Enumerations</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:afbdebbbeb8812da258f2c985a2b10db3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents MQTT task state.  <a href="kii_8h.html#afbdebbbeb8812da258f2c985a2b10db3">More...</a><br /></td></tr>
 <tr class="separator:afbdebbbeb8812da258f2c985a2b10db3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ace11a8cf8764373a85c96643195289b2" id="r_ace11a8cf8764373a85c96643195289b2"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ace11a8cf8764373a85c96643195289b2">kii_mqtt_error</a> { <a class="el" href="kii_8h.html#ace11a8cf8764373a85c96643195289b2acbcfb4685d031175132599b1f925b798">KII_MQTT_ERR_OK</a>
+<tr class="memitem:ace11a8cf8764373a85c96643195289b2" id="r_ace11a8cf8764373a85c96643195289b2"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ace11a8cf8764373a85c96643195289b2">kii_mqtt_error</a> { <br />
+&#160;&#160;<a class="el" href="kii_8h.html#ace11a8cf8764373a85c96643195289b2acbcfb4685d031175132599b1f925b798">KII_MQTT_ERR_OK</a>
 , <a class="el" href="kii_8h.html#ace11a8cf8764373a85c96643195289b2afde8aeb9b4525616e3c461412e54d726">KII_MQTT_ERR_INSTALLATION</a>
 , <a class="el" href="kii_8h.html#ace11a8cf8764373a85c96643195289b2aa32ccee9cf4b58d75cdeb92b36eee6a8">KII_MQTT_ERR_GET_ENDPOINT</a>
 , <a class="el" href="kii_8h.html#ace11a8cf8764373a85c96643195289b2a9cdad92c2105b2fc05f9264be83d59a9">KII_MQTT_ERR_INSUFFICIENT_BUFF</a>
+, <br />
+&#160;&#160;<a class="el" href="kii_8h.html#ace11a8cf8764373a85c96643195289b2ad0063cb9e8b7ec3ae2ed2241ad50115b">KII_MQTT_ERR_CREDENTIALS</a>
+<br />
  }</td></tr>
 <tr class="memdesc:ace11a8cf8764373a85c96643195289b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT error codes.  <a href="kii_8h.html#ace11a8cf8764373a85c96643195289b2">More...</a><br /></td></tr>
 <tr class="separator:ace11a8cf8764373a85c96643195289b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -476,6 +483,15 @@ Functions</h2></td></tr>
 <tr class="memitem:ad3242ecc51a7aa640eb1ca7786a4a149" id="r_ad3242ecc51a7aa640eb1ca7786a4a149"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ad3242ecc51a7aa640eb1ca7786a4a149">kii_start_push_task</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, uint32_t keep_alive_interval_sec, <a class="el" href="kii_8h.html#afeba27d97c92ad7a3a03374248eaeb14">KII_PUSH_RECEIVED_CB</a> cb_push, void *userdata)</td></tr>
 <tr class="memdesc:ad3242ecc51a7aa640eb1ca7786a4a149"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push is called when message is delivered to the thing. The task is created by task_create of the system set by <a class="el" href="kii_8h.html#a19398ca6a022a1025714df3ce49e4389" title="Set the system: tasks, delays and a monotonic clock.">kii_set_system()</a>. If there is none, or it fails to create the task, no task is started and KII_ERR_CREATE_TASK is returned.  <br /></td></tr>
 <tr class="separator:ad3242ecc51a7aa640eb1ca7786a4a149"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7403193a9455e7aea02dc4ef48265c70" id="r_a7403193a9455e7aea02dc4ef48265c70"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a7403193a9455e7aea02dc4ef48265c70">kii_start_mqtt_task_with_endpoint</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const <a class="el" href="structkii__mqtt__endpoint__t.html">kii_mqtt_endpoint_t</a> *endpoint, uint32_t keep_alive_interval_sec, <a class="el" href="kii_8h.html#afeba27d97c92ad7a3a03374248eaeb14">KII_PUSH_RECEIVED_CB</a> cb_push, void *userdata)</td></tr>
+<tr class="memdesc:a7403193a9455e7aea02dc4ef48265c70"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start the MQTT task with an endpoint of the application's.  <br /></td></tr>
+<tr class="separator:a7403193a9455e7aea02dc4ef48265c70"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa38e08813014ca4c5751718863f5cf47" id="r_aa38e08813014ca4c5751718863f5cf47"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#aa38e08813014ca4c5751718863f5cf47">kii_set_mqtt_client_id</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const char *client_id)</td></tr>
+<tr class="memdesc:aa38e08813014ca4c5751718863f5cf47"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the client identifier CONNECT carries.  <br /></td></tr>
+<tr class="separator:aa38e08813014ca4c5751718863f5cf47"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a547c8e56022dc1ba57f3ee70776e65db" id="r_a547c8e56022dc1ba57f3ee70776e65db"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a547c8e56022dc1ba57f3ee70776e65db">kii_set_cb_mqtt_credentials</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii_8h.html#a146369853075d06cc7978d24082b125d">KII_CB_MQTT_CREDENTIALS</a> cb, void *userdata)</td></tr>
+<tr class="memdesc:a547c8e56022dc1ba57f3ee70776e65db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the callback asked for new credentials when the broker refuses those of a task started with <a class="el" href="kii_8h.html#a7403193a9455e7aea02dc4ef48265c70" title="Start the MQTT task with an endpoint of the application&#39;s.">kii_start_mqtt_task_with_endpoint()</a>.  <br /></td></tr>
+<tr class="separator:a547c8e56022dc1ba57f3ee70776e65db"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a88de31a3b85076df9a58727d2ab63d7f" id="r_a88de31a3b85076df9a58727d2ab63d7f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a88de31a3b85076df9a58727d2ab63d7f">kii_execute_server_code_version</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const char *version, const char *endpoint_name, const char *params)</td></tr>
 <tr class="memdesc:a88de31a3b85076df9a58727d2ab63d7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute a specific version of server code.  <br /></td></tr>
 <tr class="separator:a88de31a3b85076df9a58727d2ab63d7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -658,6 +674,31 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a146369853075d06cc7978d24082b125d" name="a146369853075d06cc7978d24082b125d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a146369853075d06cc7978d24082b125d">&#9670;&#160;</a></span>KII_CB_MQTT_CREDENTIALS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef bool(* KII_CB_MQTT_CREDENTIALS) (<a class="el" href="structkii__mqtt__endpoint__t.html">kii_mqtt_endpoint_t</a> *endpoint, void *userdata)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Asked for new credentials when the broker refuses those of a task started with <a class="el" href="kii_8h.html#a7403193a9455e7aea02dc4ef48265c70" title="Start the MQTT task with an endpoint of the application&#39;s.">kii_start_mqtt_task_with_endpoint()</a>. </p>
+<p>Called in the task, after a CONNACK refusing them, with code 4 or 5. Write the new ones, or anything else of the endpoint that changes, into endpoint, each field terminated within its array, and return true to connect with them, after a wait as for any failed attempt. Return false to end the task with KII_MQTT_ERR_CREDENTIALS. It must not use the <a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">endpoint</td><td>What the task connected with, to be changed. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Given to <a class="el" href="kii_8h.html#a547c8e56022dc1ba57f3ee70776e65db" title="Set the callback asked for new credentials when the broker refuses those of a task started with kii_s...">kii_set_cb_mqtt_credentials()</a>. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Whether to connect again with endpoint. </dd></dl>
 
 </div>
 </div>
@@ -882,6 +923,8 @@ Functions</h2></td></tr>
 <tr><td class="fieldname"><a id="ace11a8cf8764373a85c96643195289b2aa32ccee9cf4b58d75cdeb92b36eee6a8" name="ace11a8cf8764373a85c96643195289b2aa32ccee9cf4b58d75cdeb92b36eee6a8"></a>KII_MQTT_ERR_GET_ENDPOINT&#160;</td><td class="fielddoc"><p>Un-recoverble error in getting MQTT endpoint. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ace11a8cf8764373a85c96643195289b2a9cdad92c2105b2fc05f9264be83d59a9" name="ace11a8cf8764373a85c96643195289b2a9cdad92c2105b2fc05f9264be83d59a9"></a>KII_MQTT_ERR_INSUFFICIENT_BUFF&#160;</td><td class="fielddoc"><p>Buffer set by <a class="el" href="kii_8h.html#adb5bef6d077b15fca3195ef7d39681cd" title="Set buffer used to parse MQTT message.">kii_set_mqtt_buff()</a> is too small. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ace11a8cf8764373a85c96643195289b2ad0063cb9e8b7ec3ae2ed2241ad50115b" name="ace11a8cf8764373a85c96643195289b2ad0063cb9e8b7ec3ae2ed2241ad50115b"></a>KII_MQTT_ERR_CREDENTIALS&#160;</td><td class="fielddoc"><p>The broker refused the credentials of a task started with <a class="el" href="kii_8h.html#a7403193a9455e7aea02dc4ef48265c70" title="Start the MQTT task with an endpoint of the application&#39;s.">kii_start_mqtt_task_with_endpoint()</a>, and the callback set by <a class="el" href="kii_8h.html#a547c8e56022dc1ba57f3ee70776e65db" title="Set the callback asked for new credentials when the broker refuses those of a task started with kii_s...">kii_set_cb_mqtt_credentials()</a> gave no new ones, or there is none. </p>
 </td></tr>
 </table>
 
@@ -2907,6 +2950,51 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="kii_8h.
 
 </div>
 </div>
+<a id="a547c8e56022dc1ba57f3ee70776e65db" name="a547c8e56022dc1ba57f3ee70776e65db"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a547c8e56022dc1ba57f3ee70776e65db">&#9670;&#160;</a></span>kii_set_cb_mqtt_credentials()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void kii_set_cb_mqtt_credentials </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
+          <td class="paramname"><em>kii</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="kii_8h.html#a146369853075d06cc7978d24082b125d">KII_CB_MQTT_CREDENTIALS</a>&#160;</td>
+          <td class="paramname"><em>cb</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>userdata</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the callback asked for new credentials when the broker refuses those of a task started with <a class="el" href="kii_8h.html#a7403193a9455e7aea02dc4ef48265c70" title="Start the MQTT task with an endpoint of the application&#39;s.">kii_start_mqtt_task_with_endpoint()</a>. </p>
+<p>A task started with <a class="el" href="kii_8h.html#ad3242ecc51a7aa640eb1ca7786a4a149" title="Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push ...">kii_start_push_task()</a> gets new ones from Kii Cloud instead, and doesn't call it. Set it before starting the task.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cb</td><td>The callback, or NULL for none. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Given to cb. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a853c3e530701ed2821591d8e04572606" name="a853c3e530701ed2821591d8e04572606"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a853c3e530701ed2821591d8e04572606">&#9670;&#160;</a></span>kii_set_cb_mqtt_event()</h2>
 
@@ -3299,6 +3387,45 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="kii_8h.
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="aa38e08813014ca4c5751718863f5cf47" name="aa38e08813014ca4c5751718863f5cf47"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa38e08813014ca4c5751718863f5cf47">&#9670;&#160;</a></span>kii_set_mqtt_client_id()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a> kii_set_mqtt_client_id </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
+          <td class="paramname"><em>kii</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>client_id</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the client identifier CONNECT carries. </p>
+<p>The endpoint's topic by default, as Kii Cloud's broker takes it. Another broker may want another. Set it before starting the task.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">client_id</td><td>The identifier, terminated, kept as a pointer, so it has to outlive the task, or NULL for the topic. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>KII_ERR_TOO_LARGE_DATA, changing nothing, for one longer than 65535 bytes, which CONNECT can't carry. </dd></dl>
 
 </div>
 </div>
@@ -3827,6 +3954,67 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="kii_8h.
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a7403193a9455e7aea02dc4ef48265c70" name="a7403193a9455e7aea02dc4ef48265c70"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7403193a9455e7aea02dc4ef48265c70">&#9670;&#160;</a></span>kii_start_mqtt_task_with_endpoint()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="kii_8h.html#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a> kii_start_mqtt_task_with_endpoint </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
+          <td class="paramname"><em>kii</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structkii__mqtt__endpoint__t.html">kii_mqtt_endpoint_t</a> *&#160;</td>
+          <td class="paramname"><em>endpoint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint32_t&#160;</td>
+          <td class="paramname"><em>keep_alive_interval_sec</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="kii_8h.html#afeba27d97c92ad7a3a03374248eaeb14">KII_PUSH_RECEIVED_CB</a>&#160;</td>
+          <td class="paramname"><em>cb_push</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>userdata</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Start the MQTT task with an endpoint of the application's. </p>
+<p>As <a class="el" href="kii_8h.html#ad3242ecc51a7aa640eb1ca7786a4a149" title="Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push ...">kii_start_push_task()</a>, but for a broker the application has the credentials of, obtained some other way: the task connects with a copy of endpoint, rather than installing push or using what onboarding returned, and subscribes to its topic. Neither the HTTP socket nor the buffer set by <a class="el" href="kii_8h.html#ae7e91d48a26389dc911d799e41fa149d" title="Set buffer used to construct/ parse HTTP request/ response.">kii_set_buff()</a> is needed.</p>
+<p>When the broker refuses the credentials, the task asks the callback set by <a class="el" href="kii_8h.html#a547c8e56022dc1ba57f3ee70776e65db" title="Set the callback asked for new credentials when the broker refuses those of a task started with kii_s...">kii_set_cb_mqtt_credentials()</a> for new ones. Without one, or if it gives none, the task ends, with KII_MQTT_ERR_CREDENTIALS. When it can't reach the broker, it goes on trying, with the waits <a class="el" href="kii_8h.html#a01e28622c4c67c8b27e81522acea3070" title="Set the longest wait between the push task&#39;s attempts to reach the cloud.">kii_set_mqtt_retry_wait_max()</a> bounds.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">endpoint</td><td>The broker, the credentials and the topic: host, port_ssl, or port_tcp with <a class="el" href="kii_8h.html#aea6712f6bf7e08d6f3d84a0c20d9a22f" title="Enable insecure MQTT connection.">kii_enable_insecure_mqtt()</a>, username, password and topic. The client identifier is the topic unless <a class="el" href="kii_8h.html#aa38e08813014ca4c5751718863f5cf47" title="Set the client identifier CONNECT carries.">kii_set_mqtt_client_id()</a> sets another. Copied. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">keep_alive_interval_sec</td><td>As for <a class="el" href="kii_8h.html#ad3242ecc51a7aa640eb1ca7786a4a149" title="Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push ...">kii_start_push_task()</a>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cb_push</td><td>Called with each message. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">userdata</td><td>Given to cb_push. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>kii_code_t. KII_ERR_TOO_LARGE_DATA if a string of endpoint isn't terminated within its array, KII_ERR_FAIL if its host or topic is empty, or as <a class="el" href="kii_8h.html#ad3242ecc51a7aa640eb1ca7786a4a149" title="Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and cb_push ...">kii_start_push_task()</a> for the rest, all with no task started. </dd></dl>
 
 </div>
 </div>
@@ -4518,7 +4706,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="kii_8h.
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Nov 2 2026 18:37:37 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Nov 3 2026 07:43:44 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

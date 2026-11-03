@@ -248,6 +248,13 @@
       <arglist></arglist>
     </member>
     <member kind="typedef">
+      <type>bool(*</type>
+      <name>KII_CB_MQTT_CREDENTIALS</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a146369853075d06cc7978d24082b125d</anchor>
+      <arglist>)(kii_mqtt_endpoint_t *endpoint, void *userdata)</arglist>
+    </member>
+    <member kind="typedef">
       <type>struct kii_t</type>
       <name>kii_t</name>
       <anchorfile>kii_8h.html</anchorfile>
@@ -635,6 +642,12 @@
       <anchor>ace11a8cf8764373a85c96643195289b2a9cdad92c2105b2fc05f9264be83d59a9</anchor>
       <arglist></arglist>
     </member>
+    <member kind="enumvalue">
+      <name>KII_MQTT_ERR_CREDENTIALS</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>ace11a8cf8764373a85c96643195289b2ad0063cb9e8b7ec3ae2ed2241ad50115b</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="function">
       <type>void</type>
       <name>kii_init</name>
@@ -900,6 +913,27 @@
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>ad3242ecc51a7aa640eb1ca7786a4a149</anchor>
       <arglist>(kii_t *kii, uint32_t keep_alive_interval_sec, KII_PUSH_RECEIVED_CB cb_push, void *userdata)</arglist>
+    </member>
+    <member kind="function">
+      <type>kii_code_t</type>
+      <name>kii_start_mqtt_task_with_endpoint</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a7403193a9455e7aea02dc4ef48265c70</anchor>
+      <arglist>(kii_t *kii, const kii_mqtt_endpoint_t *endpoint, uint32_t keep_alive_interval_sec, KII_PUSH_RECEIVED_CB cb_push, void *userdata)</arglist>
+    </member>
+    <member kind="function">
+      <type>kii_code_t</type>
+      <name>kii_set_mqtt_client_id</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>aa38e08813014ca4c5751718863f5cf47</anchor>
+      <arglist>(kii_t *kii, const char *client_id)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_set_cb_mqtt_credentials</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a547c8e56022dc1ba57f3ee70776e65db</anchor>
+      <arglist>(kii_t *kii, KII_CB_MQTT_CREDENTIALS cb, void *userdata)</arglist>
     </member>
     <member kind="function">
       <type>kii_code_t</type>

@@ -13,10 +13,14 @@ var searchData=
   ['ebisu_5fopenssl_5ftls_5ft_10',['ebisu_openssl_tls_t',['../../../platform/html/structebisu__openssl__tls__t.html',1,'']]],
   ['ebisu_5fposix_2eh_11',['ebisu_posix.h',['../../../platform/html/ebisu__posix_8h.html',1,'']]],
   ['ebisu_5fposix_5flock_5ft_12',['ebisu_posix_lock_t',['../../../platform/html/structebisu__posix__lock__t.html',1,'']]],
-  ['ebisu_5fsocket_2eh_13',['ebisu_socket.h',['../../../platform/html/ebisu__socket_8h.html',1,'']]],
-  ['ebisu_5fsocket_5fops_5ft_14',['ebisu_socket_ops_t',['../../../platform/html/structebisu__socket__ops__t.html',1,'']]],
-  ['ebisu_5fsocket_5ft_15',['ebisu_socket_t',['../../../platform/html/structebisu__socket__t.html',1,'']]],
-  ['ebisu_5fsystem_2eh_16',['ebisu_system.h',['../../../platform/html/ebisu__system_8h.html',1,'']]],
-  ['ebisu_5fsystem_5fops_5ft_17',['ebisu_system_ops_t',['../../../platform/html/structebisu__system__ops__t.html',1,'']]],
-  ['ebisu_5fsystem_5ft_18',['ebisu_system_t',['../../../platform/html/structebisu__system__t.html',1,'']]]
+  ['ebisu_5fschannel_2eh_13',['ebisu_schannel.h',['../../../platform/html/ebisu__schannel_8h.html',1,'']]],
+  ['ebisu_5fschannel_5fsocket_5ft_14',['ebisu_schannel_socket_t',['../../../platform/html/structebisu__schannel__socket__t.html',1,'']]],
+  ['ebisu_5fsocket_2eh_15',['ebisu_socket.h',['../../../platform/html/ebisu__socket_8h.html',1,'']]],
+  ['ebisu_5fsocket_5fops_5ft_16',['ebisu_socket_ops_t',['../../../platform/html/structebisu__socket__ops__t.html',1,'']]],
+  ['ebisu_5fsocket_5ft_17',['ebisu_socket_t',['../../../platform/html/structebisu__socket__t.html',1,'']]],
+  ['ebisu_5fsystem_2eh_18',['ebisu_system.h',['../../../platform/html/ebisu__system_8h.html',1,'']]],
+  ['ebisu_5fsystem_5fops_5ft_19',['ebisu_system_ops_t',['../../../platform/html/structebisu__system__ops__t.html',1,'']]],
+  ['ebisu_5fsystem_5ft_20',['ebisu_system_t',['../../../platform/html/structebisu__system__t.html',1,'']]],
+  ['ebisu_5fwin32_2eh_21',['ebisu_win32.h',['../../../platform/html/ebisu__win32_8h.html',1,'']]],
+  ['ebisu_5fwin32_5flock_5ft_22',['ebisu_win32_lock_t',['../../../platform/html/structebisu__win32__lock__t.html',1,'']]]
 ];
