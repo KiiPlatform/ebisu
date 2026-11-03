@@ -653,7 +653,7 @@ TEST_CASE( "an invalid chunk size line fails the response" ) {
                 ChunkedResult r = perform_chunked(
                         before.chunks + line + "\r\nhello\r\n0\r\n\r\n",
                         max_recv);
-                REQUIRE( r.res == KHC_ERR_FAIL );
+                REQUIRE( r.res == KHC_ERR_INVALID_RESPONSE );
                 REQUIRE( r.body == before.body );
                 REQUIRE( r.on_close_called == 1 );
             }

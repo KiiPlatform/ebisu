@@ -336,6 +336,8 @@ kii_code_t _convert_code(khc_code khc_c) {
         // kii sets no continue callback on its khc.
         case KHC_ERR_CANCELLED:
             return KII_ERR_FAIL;
+        case KHC_ERR_INVALID_RESPONSE:
+            return KII_ERR_INVALID_RESPONSE;
     }
     return KII_ERR_FAIL;
 }

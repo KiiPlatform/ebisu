@@ -301,7 +301,7 @@ TEST_CASE( "Several Content-Length headers" ) {
     SECTION("that disagree") {
         Result r = perform(peer_with({
             STATUS + "Content-Length: 4\r\nContent-Length: 3\r\n\r\nbody" }));
-        CHECK( r.res == KHC_ERR_HEADER_CALLBACK );
+        CHECK( r.res == KHC_ERR_INVALID_RESPONSE );
         CHECK( r.body == "" );
         CHECK( r.on_close_called == 1 );
     }

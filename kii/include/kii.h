@@ -143,7 +143,10 @@ typedef enum kii_code_t
     /* Added after KII_ERR_FAIL so that the codes above keep their values. */
     KII_ERR_CREATE_TASK, /**< \brief Error in creating task. */
     /** \brief The request took longer than kii_set_request_timeout() allows. */
-    KII_ERR_TIMEOUT
+    KII_ERR_TIMEOUT,
+    /** \brief The response isn't HTTP kii can read: its status line isn't
+     * one, or its framing doesn't say where its body ends. */
+    KII_ERR_INVALID_RESPONSE
 } kii_code_t;
 
 /** \brief Represents scope of bucket/ topic. */

@@ -55,7 +55,7 @@ callbacks and a buffer of fixed size, so neither has to fit in memory.
   `khc_enable_absolute_target()`. Authorization and content types are headers
   the application sets.
 - **Transfer codings**: a response whose last transfer coding is not
-  `chunked` is refused with `KHC_ERR_HEADER_CALLBACK`, as is one with a
+  `chunked` is refused with `KHC_ERR_INVALID_RESPONSE`, as is one with a
   malformed `Content-Length`, or with several that disagree.
 - **Fixed-size request fields**: a host longer than 127 bytes, a path longer
   than 255 and a method longer than 15 are refused with
@@ -280,14 +280,15 @@ its status: a `404` or a `500` is a response like any other, and
 | Result | Cause |
 |---|---|
 | `KHC_ERR_SOCK_CONNECT`, `KHC_ERR_SOCK_SEND`, `KHC_ERR_SOCK_RECV` | A socket callback returned `EBISU_SOCK_FAIL`, and `khc_get_sock_error()` says why, as the socket's `last_error` told it. `KHC_ERR_SOCK_RECV` also means the connection closed before the response ended, for which it says `EBISU_SOCK_ERROR_CLOSED`. |
-| `KHC_ERR_HEADER_CALLBACK` | The header callback handled fewer bytes than given, or the response's `Content-Length` or `Transfer-Encoding` is malformed or unsupported. |
+| `KHC_ERR_HEADER_CALLBACK` | The header callback handled fewer bytes than given. |
 | `KHC_ERR_WRITE_CALLBACK` | The write callback handled fewer bytes than given. |
 | `KHC_ERR_ALLOCATION` | A buffer `khc` allocates could not be allocated. |
 | `KHC_ERR_TOO_LARGE_DATA` | The status line, `Content-Length` or `Transfer-Encoding` doesn't fit in the response header buffer, or a chunk size line in the stream buffer, or the stream buffer has no room for a request chunk's data besides its size line and CRLF. |
 | `KHC_ERR_READ_CALLBACK` | The read callback returned more than it was asked for, or 0 before the length set by `khc_set_req_body_length()`. |
 | `KHC_ERR_TIMEOUT` | The request went on longer than `khc_set_timeout_ms()` allows. |
 | `KHC_ERR_CANCELLED` | The continue callback returned false. |
-| `KHC_ERR_FAIL` | The status line or a chunk size is malformed, or a socket, header or write callback isn't set, or a timeout is set without a system with a `monotonic_ms`, in which case nothing was sent. |
+| `KHC_ERR_INVALID_RESPONSE` | The response isn't one khc can read: its status line isn't one, its `Content-Length` or `Transfer-Encoding` is malformed or unsupported, or a chunk size is malformed. |
+| `KHC_ERR_FAIL` | A socket, header or write callback isn't set, or a timeout is set without a system with a `monotonic_ms`, in which case nothing was sent. |
 
 Closing the socket comes last and doesn't change the result, as the server may
 already have acted on the request. `khc_get_close_failed()` says whether the

@@ -299,3 +299,19 @@ TEST_CASE( "tio refuses a session without the lock or the clock" ) {
     tio_updater_init(&updater);
     REQUIRE( tio_updater_set_session(&updater, &session) == TIO_ERR_FAIL );
 }
+
+TEST_CASE( "A response tio can't read is TIO_ERR_INVALID_RESPONSE" ) {
+    CHECK( _tio_convert_code(KII_ERR_INVALID_RESPONSE) == TIO_ERR_INVALID_RESPONSE );
+
+    tio_updater_t updater;
+    tio_updater_init(&updater);
+    char buff[2048];
+    tio_updater_set_app(&updater, "app", "api.kii.com");
+    tio_updater_set_buff(&updater, buff, sizeof(buff));
+    tio_updater_set_system(&updater, khct::cb::delay_only_system());
+    khct::HttpScript http;
+    http.attach(&updater._kii);
+    http.responses = { "HTTP/1.1 abc OK\r\n\r\n" };
+    CHECK( tio_updater_onboard(&updater, "vid", "pass", NULL, NULL, NULL, NULL) ==
+            TIO_ERR_INVALID_RESPONSE );
+}
