@@ -314,6 +314,37 @@ TEST_CASE( "An interim response's Content-Length doesn't end the final body" ) {
     check_ends_without_waiting(perform(peer), "body");
 }
 
+// After an interim response khc read again before looking at what it had read
+// already, so a final response that came in the same read as the interim one
+// waited for one more read: on a connection left open, until it timed out.
+TEST_CASE( "A final response read along with an interim one doesn't wait" ) {
+    const std::string interims[] = {
+        "HTTP/1.1 100 Continue\r\n\r\n",
+        "HTTP/1.1 103 Early Hints\r\nLink: </a.css>; rel=preload\r\n\r\n",
+        "HTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 102 Processing\r\n\r\n",
+    };
+    const std::string finals[] = {
+        STATUS + "Content-Length: 4\r\n\r\nbody",
+        CHUNKED + "4\r\nbody\r\n0\r\n\r\n",
+    };
+    for (const auto& interim : interims) {
+        for (const auto& final_response : finals) {
+            INFO("interim " << interim << "final " << final_response);
+            for (const auto& reads : splits_of(interim + final_response)) {
+                INFO("first read " << reads[0]);
+                check_ends_without_waiting(perform(peer_with(reads)), "body");
+            }
+        }
+    }
+}
+
+TEST_CASE( "A final response's status line after an interim one still comes in parts" ) {
+    check_ends_without_waiting(perform(peer_with({
+        "HTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 2", "00 OK\r\nContent-Length: 4\r\n\r\nbody" })), "body");
+    check_ends_without_waiting(perform(peer_with({
+        "HTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 200 OK\r", "\nContent-Length: 4\r\n\r\nbody" })), "body");
+}
+
 // An interim response's Transfer-Encoding was kept for the final one, whose
 // body was then read as chunks whatever it said: one of a Content-Length
 // failed, as did one with neither a length nor chunks.

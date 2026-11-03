@@ -730,7 +730,13 @@ void khc_state_resp_header_callback(khc* khc) {
 
     if (header_size == 0) {
         if (100 <= khc->_status_code && khc->_status_code < 200) {
-            khc->_state = KHC_STATE_RESP_STATUS_READ;
+            // The final response may have come with this one, its status
+            // line whole: then there is nothing to wait for.
+            if (_find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size) != NULL) {
+                khc->_state = KHC_STATE_RESP_STATUS_PARSE;
+            } else {
+                khc->_state = KHC_STATE_RESP_STATUS_READ;
+            }
         } else {
             if (strcmp(khc->_method, "HEAD") == 0 ||
                     khc->_status_code == 204 || khc->_status_code == 304) {
