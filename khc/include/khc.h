@@ -367,6 +367,8 @@ typedef struct khc {
     /* Whether the response's status line has reached the header callback:
      * the lines after it are headers. */
     bool _resp_status_line_given; /**< \private **/
+    /* Whether the status line said HTTP/1.0, which has no chunks. */
+    bool _resp_version_1_0; /**< \private **/
     bool _chunked_resp; /**< \private **/
     size_t _chunk_size; /**< \private **/
     size_t _chunk_size_written; /**< \private **/

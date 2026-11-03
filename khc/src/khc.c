@@ -223,6 +223,7 @@ void khc_reset_except_request(khc* khc) {
     khc->_resp_header_read_size = 0;
     khc->_status_code =0;
     khc->_resp_status_line_given = false;
+    khc->_resp_version_1_0 = false;
     khc->_chunked_resp = false;
     khc->_chunk_size = 0;
     khc->_chunk_size_written = 0;

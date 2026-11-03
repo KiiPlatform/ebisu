@@ -56,7 +56,11 @@ callbacks and a buffer of fixed size, so neither has to fit in memory.
   the application sets.
 - **Transfer codings**: a response whose last transfer coding is not
   `chunked` is refused with `KHC_ERR_INVALID_RESPONSE`, as is one with a
-  malformed `Content-Length`, or with several that disagree.
+  malformed `Content-Length`, or with several that disagree. So is a chunked
+  one with a `Content-Length` too, or from HTTP/1.0, which has no chunks, and
+  one whose chunks' data isn't followed by a CRLF. Trailers are skipped,
+  without being checked, and a connection closed among them still ends the
+  response, the whole body having come.
 - **Fixed-size request fields**: a host longer than 127 bytes, a path longer
   than 255 and a method longer than 15 are refused with
   `KHC_ERR_TOO_LARGE_DATA`.
