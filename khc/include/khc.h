@@ -364,6 +364,9 @@ typedef struct khc {
     size_t _resp_header_read_size; /**< \private **/
 
     uint16_t _status_code; /**< \private **/
+    /* Whether the response's status line has reached the header callback:
+     * the lines after it are headers. */
+    bool _resp_status_line_given; /**< \private **/
     bool _chunked_resp; /**< \private **/
     size_t _chunk_size; /**< \private **/
     size_t _chunk_size_written; /**< \private **/

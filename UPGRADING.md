@@ -357,8 +357,16 @@ khc, which kii and tio report in their own codes:
   - a `Transfer-Encoding` whose final coding isn't `chunked`;
   - `Content-Length` headers that disagree;
   - an invalid chunk size;
-  - a first line that isn't an HTTP status line, which 1.x returned as
-    `KHC_ERR_FAIL`.
+  - a first line that isn't an HTTP/1.x status line, which 1.x returned as
+    `KHC_ERR_FAIL`, or one 1.x took that isn't one: another version, a code
+    that isn't three digits followed by a space or the line's end, or a
+    control character in the reason phrase;
+  - a header that isn't one, which 1.x gave the header callback as it came:
+    one whose name isn't a token, with no colon or with whitespace before it,
+    one that starts with a space or a tab, continuing the line before in the
+    obsolete line folding, or one whose value holds a control character, a
+    NUL, a CR or an LF among them. That goes for a header too long for the
+    buffer, which is still skipped, and for an interim response's headers.
 
   `KHC_ERR_HEADER_CALLBACK` is only ever the header callback's own failure, and
   `KHC_ERR_FAIL` is a request khc didn't make.

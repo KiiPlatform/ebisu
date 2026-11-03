@@ -1,5 +1,6 @@
 // An HTTP response, in reads of any length, through buffers of any size.
 #include <khc.h>
+#include <stdlib.h>
 #include <vector>
 #include "fuzz_input.h"
 
@@ -30,7 +31,15 @@ ebisu_sock_code_t sock_close(ebisu_socket_t*) {
 
 const ebisu_socket_ops_t SOCKET_OPS = { sock_connect, sock_send, sock_recv, sock_close, NULL };
 
-size_t on_header(char*, size_t size, void*) {
+// A line khc gives is a status line or a header, which holds no line ending
+// and no NUL: one that did would have been read another way by something else
+// on the way.
+size_t on_header(char* buffer, size_t size, void*) {
+    for (size_t i = 0; i < size; ++i) {
+        if (buffer[i] == '\r' || buffer[i] == '\n' || buffer[i] == '\0') {
+            abort();
+        }
+    }
     return size;
 }
 
