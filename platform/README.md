@@ -1,11 +1,11 @@
 # platform {#platform_readme}
 
 `platform` is what ebisu needs from the device it runs on, and the tools built
-on that. It is the lowest layer: `khc`, `kii` and `tio` all sit on it, and it
+on that. It is the lowest layer: `jkii`, `khc`, `kii` and `tio` all sit on it, and it
 depends on none of them.
 
-It isn't a library of its own. `khc`, `kii` and `tio` each embed it, so nothing
-more has to be linked. Without CMake, add `platform/src/*.c` to the sources and
+It isn't a library of its own. `jkii`, `khc`, `kii` and `tio` each embed it, so
+nothing more has to be linked. Without CMake, add `platform/src/*.c` to the sources and
 `platform/include` to the include path.
 
 ## Objects, not loose callbacks
@@ -33,6 +33,12 @@ set on.
   device without a real-time clock, for a TLS stack to check a certificate's
   validity period against. Socket callbacks use it directly, and `kii` and `tio`
   feed it with the time each response states.
+- **Strings and numbers** (`ebisu_str.h`): bounded copies, a string builder
+  over a fixed buffer that fails instead of cutting a string short, and that a
+  function of the caller's, such as an escaper or an encoder, can write into,
+  strict parsers of decimal, hexadecimal and fixed-point numbers from spans
+  that need no NUL, and splitting on a delimiter without copying. No
+  allocation, floating point, locale or `errno`.
 - **Loggers** (`ebisu_log.h`): `ebisu_logger_t` is where a port's diagnostics
   go, each with a level, such as the application's own log or syslog.
 
