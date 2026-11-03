@@ -10,6 +10,7 @@
 #include "jkii_wrapper.h"
 #include "kii_push_impl.h"
 #include "kii_impl.h"
+#include <ebisu_mem.h>
 
 
 kii_code_t kii_subscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)
@@ -299,6 +300,8 @@ kii_code_t kii_get_mqtt_endpoint(
     endpoint->ttl = (uint32_t)fields[6].field_copy.long_value;
 
 exit:
+    // The response carried the MQTT credentials.
+    _kii_clear_buffers(kii);
     return res;
 }
 

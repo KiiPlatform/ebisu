@@ -4,6 +4,7 @@
 #include <time.h>
 
 #include "kii_mqtt_task.h"
+#include <ebisu_mem.h>
 #include "kii.h"
 #include "kii_session_impl.h"
 
@@ -162,10 +163,14 @@ ebisu_sock_code_t _mqtt_send_connect(kii_t* kii, kii_mqtt_endpoint_t* endpoint) 
                 &kii->_mqtt_buffer[total_sent], j - total_sent, &sent_len);
         if (send_err == EBISU_SOCK_AGAIN || send_err == EBISU_SOCK_FAIL) {
             // Don't accept non-blocking socket when send_err is EBISU_SOCK_AGAIN.
-            return EBISU_SOCK_FAIL;
+            send_err = EBISU_SOCK_FAIL;
+            break;
         }
         total_sent += sent_len;
     }
+    // The packet, where it was built and where it was sent from, carries the
+    // password.
+    ebisu_secure_zero(kii->_mqtt_buffer, (size_t)i);
     return send_err;
 }
 
@@ -1119,6 +1124,8 @@ void* mqtt_start_task(void* sdata)
         kii->_mqtt_socket->ops->close(kii->_mqtt_socket);
         state.sock_connected = false;
     }
+    // The task's copy of the endpoint, with its credentials.
+    ebisu_secure_zero(&state.endpoint, sizeof(state.endpoint));
     // Before the callback, which may start the task again.
     kii->_push_task_running = false;
     if (kii->_cb_task_exit != NULL) {

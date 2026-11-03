@@ -1,5 +1,6 @@
 #include "kii_req_impl.h"
 #include "kii_session_impl.h"
+#include <ebisu_mem.h>
 #include <string.h>
 
 kii_code_t _set_bucket_path(
@@ -250,9 +251,13 @@ kii_code_t _set_auth_bearer_token(kii_t* kii, const char* token)
                 "Bearer %s",
                 token);
         if (header_len >= kii->_rw_buff_size) {
+            ebisu_secure_zero(kii->_rw_buff, kii->_rw_buff_size);
             return KII_ERR_TOO_LARGE_DATA;
         }
-        return kii_api_call_append_header(kii, "Authorization", kii->_rw_buff);
+        kii_code_t res = kii_api_call_append_header(kii, "Authorization", kii->_rw_buff);
+        // Not left for what the buffer holds next, which may be shorter.
+        ebisu_secure_zero(kii->_rw_buff, (size_t)header_len);
+        return res;
     } else {
         // Nothing to do.
         return KII_ERR_OK;

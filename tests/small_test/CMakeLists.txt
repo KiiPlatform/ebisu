@@ -32,6 +32,7 @@ ebisu_add_test_suite(small_test_kii
         kii/mqtt_test.cpp
         kii/push_test.cpp
         kii/request_test.cpp
+        kii/secrets_test.cpp
         kii/session_test.cpp
         kii/simple_test.cpp
         kii/thing_test.cpp
@@ -55,6 +56,7 @@ ebisu_add_test_suite(small_test_platform
     LABEL small
     WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/platform
     SOURCES
+        platform/mem_test.cpp
         platform/str_test.cpp
     LINK ebisu_platform_objs)
 

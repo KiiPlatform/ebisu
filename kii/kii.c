@@ -1,6 +1,7 @@
 #include "kii.h"
 #include "kii_impl.h"
 #include "kii_session_impl.h"
+#include <ebisu_mem.h>
 #include <string.h>
 
 const char _APP_KEY_HEADER[] = "X-Kii-Appkey: k";
@@ -371,6 +372,28 @@ void _reset_khc(kii_t* kii) {
     khc_reset_except_cb(&kii->_khc);
     khc_set_stream_buff(&kii->_khc, kii->_stream_buff, kii->_stream_buff_size);
     khc_set_resp_header_buff(&kii->_khc, kii->_resp_header_buff, kii->_resp_header_buff_size);
+}
+
+void _kii_clear_buffers(kii_t* kii) {
+    if (kii->_rw_buff != NULL) {
+        // A response refusing the request holds none, and says why: it stays,
+        // and what follows it, the rest of the request, goes. One accepting it
+        // goes too, as it may carry a token, and with it the body's length.
+        uint16_t status = khc_get_status_code(&kii->_khc);
+        size_t keep = 0;
+        if (status < 200 || 300 <= status) {
+            keep = kii->_resp_offset + kii->_rw_buff_written;
+            if (keep > kii->_rw_buff_size) {
+                keep = kii->_rw_buff_size;
+            }
+        } else {
+            kii->_rw_buff_written = 0;
+        }
+        ebisu_secure_zero(kii->_rw_buff + keep, kii->_rw_buff_size - keep);
+    }
+    if (kii->_stream_buff != NULL) {
+        ebisu_secure_zero(kii->_stream_buff, kii->_stream_buff_size);
+    }
 }
 
 void _req_headers_free_all(kii_t* kii) {

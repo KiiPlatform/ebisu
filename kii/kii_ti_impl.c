@@ -2,9 +2,10 @@
 #include "kii_impl.h"
 #include "kii_req_impl.h"
 #include "jkii_wrapper.h"
+#include <ebisu_mem.h>
 #include <string.h>
 
-kii_code_t _onboard(
+static kii_code_t _onboard_and_read(
         kii_t* kii,
         const char* vendor_thing_id,
         const char* password,
@@ -101,8 +102,8 @@ kii_code_t _onboard(
     }
 
     // Onboarding issues no refresh token: one held belongs to the tokens this
-    // replaces.
-    kii->_author.refresh_token[0] = '\0';
+    // replaces, and is cleared whole.
+    ebisu_secure_zero(kii->_author.refresh_token, sizeof(kii->_author.refresh_token));
 
     // Where MQTT is enabled, the response also carries the endpoint of the
     // installation onboarding made.
@@ -155,6 +156,7 @@ kii_code_t _onboard(
     if ((result != JKII_ERR_OK && result != JKII_ERR_PARTIAL) ||
             fields[0].result != JKII_FIELD_ERR_OK ||
             fields[1].result != JKII_FIELD_ERR_OK) {
+        ebisu_secure_zero(&endpoint, sizeof(endpoint));
         return KII_ERR_PARSE_JSON;
     }
 
@@ -169,8 +171,27 @@ kii_code_t _onboard(
         memcpy(kii->_onboarded_thing_id, kii->_author.author_id,
                 sizeof(kii->_onboarded_thing_id));
     }
+    // Its password, which kii keeps only where it was copied to.
+    ebisu_secure_zero(&endpoint, sizeof(endpoint));
 
     return KII_ERR_OK;
+}
+
+kii_code_t _onboard(
+        kii_t* kii,
+        const char* vendor_thing_id,
+        const char* password,
+        const char* thing_type,
+        const char* firmware_version,
+        const char* layout_position,
+        const char* thing_properties)
+{
+    kii_code_t ret = _onboard_and_read(kii, vendor_thing_id, password,
+            thing_type, firmware_version, layout_position, thing_properties);
+    // The request carried the password, and its response the token and the
+    // MQTT credentials.
+    _kii_clear_buffers(kii);
+    return ret;
 }
 
 kii_code_t _put_firmware_version(

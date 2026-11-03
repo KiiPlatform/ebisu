@@ -262,6 +262,11 @@ kii:
   once the setter returned. Set `NULL` before freeing it. The handler's and the
   updater's setters pass theirs on, so a `tio_handler_t` and a `tio_updater_t`
   can no longer share one: their tasks would use it at once.
+- After `kii_auth_thing()`, `kii_register_thing()`, `kii_ti_onboard()` and
+  `kii_get_mqtt_endpoint()` succeed, the buffers set by `kii_set_buff()` and
+  `kii_set_stream_buff()` are cleared, and `kii_get_resp_body_length()` is 0:
+  their requests and responses held a password, tokens or MQTT credentials. 1.x
+  left the response there. One that refused the request stays, as it says why.
 - A request whose body kii holds whole in its buffer, every request but a state
   or an object body streamed through a callback of the application's, is sent
   with `Content-Length` rather than `Transfer-Encoding: chunked`. A streamed body
@@ -337,6 +342,9 @@ khc, which kii and tio report in their own codes:
   plain HTTP needs the URL: ask for it with `khc_enable_absolute_target()`,
   `kii_enable_absolute_target()`, `tio_handler_enable_absolute_target()` or
   `tio_updater_enable_absolute_target()`.
+- `khc_slist_free_all()` and `khc_slist_free_all_using_cb_free()` clear each
+  node's string before freeing it, as a request header may carry a token. A
+  free callback finds it all zeros.
 
 jkii:
 

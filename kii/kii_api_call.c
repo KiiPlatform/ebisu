@@ -4,6 +4,7 @@
 #include "kii_session_impl.h"
 #include "ebisu_version.h"
 #include "jkii_utils.h"
+#include <ebisu_mem.h>
 #include <string.h>
 
 /* The SDK and its version, as git describe gives it for the tree built. */
@@ -179,10 +180,13 @@ kii_code_t kii_api_call_append_header(kii_t* kii, const char* key, const char* v
 
     int header_len = snprintf(buff, buff_size, "%s: %s", key, value);
     if (header_len >= buff_size) {
+        ebisu_secure_zero(buff, buff_size);
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
     khc_slist* list = khc_slist_append_using_cb_alloc(kii->_req_headers, buff, header_len, kii->_cb_slist_alloc, kii->_slist_alloc_data);
+    // An Authorization header carries a token.
+    ebisu_secure_zero(buff, buff_size);
     if (list == NULL) {
         _req_headers_free_all(kii);
         return KII_ERR_ALLOCATION;

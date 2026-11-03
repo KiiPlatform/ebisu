@@ -2515,6 +2515,53 @@ TEST_CASE( "The buffer SUBSCRIBE needs" ) {
     }
 }
 
+// CONNECT carries the password, which stayed in the buffer until a packet long
+// enough came in over it.
+TEST_CASE( "CONNECT's password is cleared from the buffer once sent" ) {
+    // Defined, as the test looks through all of it.
+    char mqtt_buff[256] = { 0 };
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
+    kii._keep_alive_interval = 300;
+    kii_set_system(&kii, khct::cb::delay_only_system());
+    std::string sent;
+    bool fail = false;
+    khct::cb::SockCtx mqtt_ctx;
+    mqtt_ctx.on_send = [&sent, &fail](void*, const char* buffer, size_t length, size_t* out_sent_length) {
+        if (fail) {
+            return EBISU_SOCK_FAIL;
+        }
+        sent.append(buffer, length);
+        *out_sent_length = length;
+        return EBISU_SOCK_OK;
+    };
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
+
+    mqtt_state_t state;
+    _init_mqtt_state(&kii, &state);
+    strcpy(state.endpoint.topic, "dummyTopic");
+    strcpy(state.endpoint.username, "dummyUser");
+    strcpy(state.endpoint.password, "MQTT-PASSWORD-SECRET");
+    const std::string password("MQTT-PASSWORD-SECRET");
+
+    SECTION("sent") {
+        state.info.task_state = KII_MQTT_ST_SEND_CONNECT;
+        _mqtt_state_send_connect(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_CONNACK );
+        CHECK( sent.find(password) != std::string::npos );
+        CHECK( std::string(mqtt_buff, sizeof(mqtt_buff)).find(password) == std::string::npos );
+    }
+
+    SECTION("not sent") {
+        fail = true;
+        state.info.task_state = KII_MQTT_ST_SEND_CONNECT;
+        _mqtt_state_send_connect(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECONNECT );
+        CHECK( std::string(mqtt_buff, sizeof(mqtt_buff)).find(password) == std::string::npos );
+    }
+}
+
 // CONNECT had no will, so other clients had no way to learn that a device
 // had gone. One set by kii_set_mqtt_will() goes in each CONNECT.
 TEST_CASE( "CONNECT carries the last will" ) {

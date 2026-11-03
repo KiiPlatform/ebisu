@@ -15,6 +15,13 @@ void _reset_khc(kii_t* kii);
 
 void _req_headers_free_all(kii_t* kii);
 
+/* Clears the buffer set by kii_set_buff(), as kii->_rw_buff points at it, and
+ * the one set by kii_set_stream_buff(), after a request whose body or response
+ * held a secret: a password, a token or MQTT credentials. A response whose
+ * status refused the request is kept, as it says why and holds none. khc
+ * clears a stream buffer of its own as it frees it. */
+void _kii_clear_buffers(kii_t* kii);
+
 /* Gives the clock set with kii_set_clock(), if any, the date of the response
  * just read. */
 void _kii_clock_record(kii_t* kii);

@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "khc.h"
+#include <ebisu_mem.h>
 
 khc_slist* khc_cb_slist_alloc(const char* str, size_t str_len, void* data) {
     char* copy = malloc(str_len+1);
@@ -64,6 +65,11 @@ void khc_slist_free_all_using_cb_free(
     curr = slist;
     while (curr != NULL) {
         khc_slist *next = curr->next;
+        // A request header may carry a token, as Authorization does, and
+        // whatever frees it may leave it where it was.
+        if (curr->data != NULL) {
+            ebisu_secure_zero(curr->data, strlen(curr->data));
+        }
         cb_free(curr, cb_free_data);
         curr = next;
     }

@@ -3,6 +3,7 @@
 #include "kii_req_impl.h"
 #include "jkii_wrapper.h"
 #include "jkii_utils.h"
+#include <ebisu_mem.h>
 #include <string.h>
 
 kii_code_t _thing_auth(
@@ -127,6 +128,7 @@ kii_code_t _thing_refresh(
     // Request body. Tokens are printable, which escaping at most doubles.
     char esc_token[KII_REFRESH_TOKEN_MAX_SIZE * 2];
     if (jkii_escape_str(refresh_token, esc_token, sizeof(esc_token)) < 0) {
+        ebisu_secure_zero(esc_token, sizeof(esc_token));
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
@@ -136,6 +138,7 @@ kii_code_t _thing_refresh(
             kii->_rw_buff_size,
             "{\"grant_type\":\"refresh_token\", \"refresh_token\":\"%s\"}",
             esc_token);
+    ebisu_secure_zero(esc_token, sizeof(esc_token));
     if (content_len >= kii->_rw_buff_size) {
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;

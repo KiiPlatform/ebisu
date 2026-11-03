@@ -41,6 +41,11 @@ set on.
   allocation, floating point, locale or `errno`.
 - **Loggers** (`ebisu_log.h`): `ebisu_logger_t` is where a port's diagnostics
   go, each with a level, such as the application's own log or syslog.
+- **Clearing secrets** (`ebisu_mem.h`): `ebisu_secure_zero()` sets memory to 0
+  in a way the compiler can't take for a store nothing reads, and leave out, as
+  it may a `memset()` just before memory is freed or goes out of scope. ebisu
+  clears with it what held a password, a token or MQTT credentials once done
+  with them, and an application can with its own.
 
 ## Ports
 

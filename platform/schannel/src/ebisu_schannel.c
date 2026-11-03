@@ -12,6 +12,8 @@
 
 #include "ebisu_schannel.h"
 
+#include <ebisu_mem.h>
+
 #include <ws2tcpip.h>
 #include <schannel.h>
 #include <wincrypt.h>
@@ -199,8 +201,17 @@ static void teardown(ebisu_schannel_socket_t* ctx)
         FreeCredentialsHandle(&ctx->cred);
         ctx->has_cred = 0;
     }
+    /* What was decrypted in place, and what was about to be encrypted, are
+       requests and responses, with their tokens and passwords. */
+    if (ctx->recv_buf != NULL) {
+        ebisu_secure_zero(ctx->recv_buf, TLS_MAX_RECORD_SIZE);
+    }
     free(ctx->recv_buf);
     ctx->recv_buf = NULL;
+    if (ctx->send_buf != NULL) {
+        ebisu_secure_zero(ctx->send_buf, ctx->sizes.cbHeader +
+                ctx->sizes.cbMaximumMessage + ctx->sizes.cbTrailer);
+    }
     free(ctx->send_buf);
     ctx->send_buf = NULL;
     ctx->recv_len = 0;
