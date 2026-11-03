@@ -283,6 +283,10 @@ const char* kii_get_etag(kii_t* kii) {
     return kii->_etag;
 }
 
+ebisu_sock_error_t kii_get_sock_error(kii_t* kii, long* out_detail) {
+    return khc_get_sock_error(&kii->_khc, out_detail);
+}
+
 uint16_t kii_get_resp_status(kii_t* kii) {
     return khc_get_status_code(&kii->_khc);
 }

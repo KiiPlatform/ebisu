@@ -33,8 +33,11 @@ extern "C" {
  * at a time, and is used again for the next once closed. A connection offers
  * the server the session of the last one to the same host and port to resume,
  * from those its configuration keeps, which saves most of the handshake if the
- * server takes it. Why an operation
- * failed goes to the logger set by ebisu_openssl_socket_set_logger(), or to
+ * server takes it. Why an operation failed, its last_error says: a host that
+ * didn't resolve, with getaddrinfo()'s error, an address that refused, with
+ * errno, a certificate rejected, with X509_V_ERR_*, another TLS failure, with
+ * OpenSSL's error code, a timeout, or a peer that closed. It also
+ * goes to the logger set by ebisu_openssl_socket_set_logger(), or to
  * stderr without one. OpenSSL 1.0.2 and later, initialized and made
  * thread-safe on first use.
  */
@@ -68,6 +71,10 @@ typedef struct ebisu_openssl_socket_t {
     /** \private The port of the connection open, which the sessions the
      * server gives are kept under, with its host. */
     uint16_t port;
+    /** \private Why the last operation that returned EBISU_SOCK_FAIL failed,
+     * for last_error, and more of it. */
+    ebisu_sock_error_t error;
+    long error_detail; /**< \private */
 } ebisu_openssl_socket_t;
 
 /**

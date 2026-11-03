@@ -411,8 +411,10 @@ with the renewed one, as its body has been read: `kii_api_call_run()` gives the
 APIs return `KII_ERR_OK` on success. `KII_ERR_RESP_STATUS` means the server
 answered with an error status, which `kii_get_resp_status()` gives, the
 response body being in the buffer. `KII_ERR_SOCK_*` come from the socket
-callbacks, and `KII_ERR_TOO_LARGE_DATA` from a request or response that doesn't
-fit in the buffer. `KII_ERR_TIMEOUT` is a request that took longer than
+callbacks, and `kii_get_sock_error()` says why, from the socket's `last_error`:
+a host that didn't resolve, a certificate refused, a timeout.
+`KII_ERR_TOO_LARGE_DATA` comes from a request or response that doesn't fit in
+the buffer. `KII_ERR_TIMEOUT` is a request that took longer than
 `kii_set_request_timeout()` allows.
 
 `kii_get_resp_date()` gives the server's time, from the `Date` header of the

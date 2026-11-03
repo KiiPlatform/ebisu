@@ -214,6 +214,11 @@ be called again with the same arguments.
   connecting fails.
 
 `recv_timed_out`, the fifth, is for kii's MQTT task, and `khc` doesn't call it.
+`last_error`, the sixth, optional too, says why the last operation that returned
+`EBISU_SOCK_FAIL` failed: a host that didn't resolve, an address that refused,
+TLS, a certificate refused, a timeout, a peer that closed, each with a detail
+such as errno or the certificate's verification result. `khc` asks it right
+after a failure, before closing, and `khc_get_sock_error()` gives the answer.
 
 Implementations to start from:
 
@@ -274,7 +279,7 @@ its status: a `404` or a `500` is a response like any other, and
 
 | Result | Cause |
 |---|---|
-| `KHC_ERR_SOCK_CONNECT`, `KHC_ERR_SOCK_SEND`, `KHC_ERR_SOCK_RECV` | A socket callback returned `EBISU_SOCK_FAIL`. `KHC_ERR_SOCK_RECV` also means the connection closed before the response ended. |
+| `KHC_ERR_SOCK_CONNECT`, `KHC_ERR_SOCK_SEND`, `KHC_ERR_SOCK_RECV` | A socket callback returned `EBISU_SOCK_FAIL`, and `khc_get_sock_error()` says why, as the socket's `last_error` told it. `KHC_ERR_SOCK_RECV` also means the connection closed before the response ended, for which it says `EBISU_SOCK_ERROR_CLOSED`. |
 | `KHC_ERR_HEADER_CALLBACK` | The header callback handled fewer bytes than given, or the response's `Content-Length` or `Transfer-Encoding` is malformed or unsupported. |
 | `KHC_ERR_WRITE_CALLBACK` | The write callback handled fewer bytes than given. |
 | `KHC_ERR_ALLOCATION` | A buffer `khc` allocates could not be allocated. |

@@ -470,6 +470,30 @@ TEST_CASE( "A body kii holds whole goes with its length, a streamed one chunked"
     }
 }
 
+TEST_CASE( "kii says why its HTTP socket failed" ) {
+    char kii_buff[1024];
+    jkii_token_t tokens[64];
+    jkii_resource_t resource = { tokens, 64 };
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    kii_set_json_parser_resource(&kii, &resource);
+    khct::HttpScript script;
+    script.attach(&kii);
+    // The connection is refused, and the socket says the host didn't resolve.
+    script.ctx.on_last_error = [](long* out_detail) {
+        *out_detail = -2;
+        return EBISU_SOCK_ERROR_DNS;
+    };
+    kii_topic_t topic = { KII_SCOPE_THING, "th.1", "t" };
+    CHECK( kii_put_topic(&kii, &topic) == KII_ERR_SOCK_CONNECT );
+    long detail = 0;
+    CHECK( kii_get_sock_error(&kii, &detail) == EBISU_SOCK_ERROR_DNS );
+    CHECK( detail == -2 );
+}
+
 // A request called a socket operation that returned EBISU_SOCK_AGAIN again at
 // once, and nothing bounded it as a whole. The system set by kii_set_system()
 // now has it wait, and kii_set_request_timeout() bounds it.

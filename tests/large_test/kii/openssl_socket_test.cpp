@@ -709,6 +709,116 @@ TEST_CASE( "The OpenSSL socket fails on a host that doesn't resolve" ) {
 
 namespace {
 
+// A loopback port nothing listens on: one just bound and let go.
+uint16_t closed_port()
+{
+    int fd = socket(AF_INET, SOCK_STREAM, 0);
+    REQUIRE( fd >= 0 );
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    REQUIRE( bind(fd, (struct sockaddr*)&addr, sizeof(addr)) == 0 );
+    socklen_t len = sizeof(addr);
+    REQUIRE( getsockname(fd, (struct sockaddr*)&addr, &len) == 0 );
+    close(fd);
+    return ntohs(addr.sin_port);
+}
+
+ebisu_sock_error_t last_error(ebisu_openssl_socket_t* sock, long* detail)
+{
+    REQUIRE( sock->base.ops->last_error != nullptr );
+    return sock->base.ops->last_error(&sock->base, detail);
+}
+
+}
+
+// Every failure to connect was the same EBISU_SOCK_FAIL, a host that didn't
+// resolve and a certificate refused alike. last_error tells them apart.
+TEST_CASE( "The OpenSSL socket says why it failed" ) {
+    ebisu_openssl_socket_t sock;
+    ebisu_openssl_socket_init(&sock, 5, 5);
+    long detail = -1;
+
+    SECTION("a host that doesn't resolve, with the resolver's error") {
+        for (unsigned int timeout : { 5u, 0u }) {
+            INFO( "connect timeout " << timeout );
+            ebisu_openssl_socket_set_connect_timeout(&sock, timeout);
+            REQUIRE( sock.base.ops->connect(&sock.base, "ebisu-test.invalid", 443) == EBISU_SOCK_FAIL );
+            CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_DNS );
+            CHECK( detail != 0 );
+        }
+    }
+
+    SECTION("an address that refuses, with errno") {
+        REQUIRE( sock.base.ops->connect(&sock.base, "127.0.0.1", closed_port()) == EBISU_SOCK_FAIL );
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_CONNECT );
+        CHECK( detail == ECONNREFUSED );
+    }
+
+    SECTION("an address that doesn't answer in time") {
+        ebisu_openssl_socket_set_connect_timeout(&sock, 1);
+        // TEST-NET-1, which nothing answers on.
+        REQUIRE( sock.base.ops->connect(&sock.base, "192.0.2.1", 443) == EBISU_SOCK_FAIL );
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_TIMEOUT );
+    }
+
+    SECTION("a certificate refused, with why") {
+        LocalServer server;
+        REQUIRE( server.listening );
+        // The system's CA certificates, which don't know the server's.
+        REQUIRE( connect_to(&sock, server) == EBISU_SOCK_FAIL );
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_VERIFY );
+        CHECK( detail == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT );
+    }
+
+    SECTION("a handshake that fails, with OpenSSL's error") {
+        LocalServer server;
+        REQUIRE( server.listening );
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L)
+        REQUIRE( SSL_CTX_set_max_proto_version(server.ctx, TLS1_2_VERSION) == 1 );
+#endif
+        // Suites the port doesn't offer.
+        REQUIRE( SSL_CTX_set_cipher_list(server.ctx, "AES128-SHA") == 1 );
+        CaFile ca;
+        ebisu_openssl_tls_t tls;
+        REQUIRE( ebisu_openssl_tls_init(&tls, ca.path, nullptr) );
+        ebisu_openssl_socket_set_tls(&sock, &tls);
+        REQUIRE( connect_to(&sock, server) == EBISU_SOCK_FAIL );
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_TLS );
+        CHECK( detail != 0 );
+        ebisu_openssl_tls_free(&tls);
+    }
+}
+
+TEST_CASE( "The OpenSSL socket says a receive timed out, or a peer went" ) {
+    Connection c;
+    long detail = -1;
+
+    SECTION("a receive that times out") {
+        char buffer[16];
+        size_t received = 0;
+        REQUIRE( c.client.base.ops->recv(&c.client.base, buffer, sizeof(buffer), &received) == EBISU_SOCK_FAIL );
+        CHECK( last_error(&c.client, &detail) == EBISU_SOCK_ERROR_TIMEOUT );
+        CHECK( detail == 0 );
+    }
+
+    SECTION("a send to a peer that has gone") {
+        c.close_server_socket();
+        const char data[] = "hello";
+        size_t sent = 0;
+        ebisu_sock_code_t res = EBISU_SOCK_OK;
+        for (int i = 0; i < 2 && res == EBISU_SOCK_OK; ++i) {
+            res = c.client.base.ops->send(&c.client.base, data, sizeof(data), &sent);
+        }
+        REQUIRE( res == EBISU_SOCK_FAIL );
+        CHECK( last_error(&c.client, &detail) == EBISU_SOCK_ERROR_CLOSED );
+        CHECK( detail == EPIPE );
+    }
+}
+
+namespace {
+
 struct LogCtx;
 
 struct MockLogger {

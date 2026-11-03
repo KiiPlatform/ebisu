@@ -288,6 +288,11 @@ tio_code_t tio_handler_set_session(tio_handler_t* handler, kii_session_t* sessio
     return _set_session(&handler->_kii, session);
 }
 
+ebisu_sock_error_t tio_handler_get_sock_error(tio_handler_t* handler, long* out_detail)
+{
+    return kii_get_sock_error(&handler->_kii, out_detail);
+}
+
 tio_code_t tio_handler_set_clock(tio_handler_t* handler, ebisu_clock_t* clock)
 {
     return _tio_convert_code(kii_set_clock(&handler->_kii, clock));
@@ -563,6 +568,11 @@ void tio_updater_copy_author(tio_updater_t* updater, tio_author_t* out_author)
 tio_code_t tio_updater_set_session(tio_updater_t* updater, kii_session_t* session)
 {
     return _set_session(&updater->_kii, session);
+}
+
+ebisu_sock_error_t tio_updater_get_sock_error(tio_updater_t* updater, long* out_detail)
+{
+    return kii_get_sock_error(&updater->_kii, out_detail);
 }
 
 tio_code_t tio_updater_set_clock(tio_updater_t* updater, ebisu_clock_t* clock)

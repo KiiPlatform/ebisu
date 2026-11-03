@@ -23,6 +23,8 @@ set on.
 
 - **Sockets** (`ebisu_socket.h`): the callbacks that connect, send, receive and
   close. TLS happens inside them, so ebisu sees a TLS connection as a socket.
+  An optional `last_error` says why one failed, as an `ebisu_sock_error_t` and
+  a detail, which khc, kii and tio pass on.
   [Writing callbacks](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#writing-callbacks)
   says what they have to do.
 - **The system and locks** (`ebisu_system.h`): `ebisu_system_t` creates
@@ -56,9 +58,9 @@ which have the rest of `platform`.
   without the system's. The `SSL_CTX` keeps the TLS sessions of the last
   connections to a few hosts, and a connection offers the server the one for its
   host and port to resume, which saves most of the handshake when the server
-  takes it. Why an operation failed goes to the logger set with
-  `ebisu_openssl_socket_set_logger()`, or to stderr. Needs OpenSSL 1.0.2 or
-  later, and POSIX threads.
+  takes it. Its `last_error` says why an operation failed, which also goes to
+  the logger set with `ebisu_openssl_socket_set_logger()`, or to stderr. Needs
+  OpenSSL 1.0.2 or later, and POSIX threads.
 - **Win32** (`ebisu_win32.h`, library `ebisu_win32`): `ebisu_win32_system()`,
   whose tasks are threads of their own, made with `_beginthreadex()`, whose
   delays are `Sleep()` and whose monotonic clock is `GetTickCount64()`, and

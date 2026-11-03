@@ -265,6 +265,22 @@ TEST_CASE( "tio_updater_start without a task-create callback" ) {
     REQUIRE( tio_updater_start(&updater, &author, NULL, NULL, NULL, NULL) == TIO_ERR_CREATE_TASK );
 }
 
+TEST_CASE( "tio_handler and tio_updater say why their socket failed" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    tio_updater_t updater;
+    tio_updater_init(&updater);
+    long detail = -1;
+    CHECK( tio_handler_get_sock_error(&handler, &detail) == EBISU_SOCK_ERROR_NONE );
+    CHECK( detail == 0 );
+    handler._kii._khc._sock_error = EBISU_SOCK_ERROR_VERIFY;
+    handler._kii._khc._sock_error_detail = 18;
+    CHECK( tio_handler_get_sock_error(&handler, &detail) == EBISU_SOCK_ERROR_VERIFY );
+    CHECK( detail == 18 );
+    updater._kii._khc._sock_error = EBISU_SOCK_ERROR_TIMEOUT;
+    CHECK( tio_updater_get_sock_error(&updater, NULL) == EBISU_SOCK_ERROR_TIMEOUT );
+}
+
 TEST_CASE( "tio_updater_start without an interval" ) {
     tio_updater_t updater;
     tio_updater_init(&updater);
