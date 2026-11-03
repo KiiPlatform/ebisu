@@ -191,6 +191,12 @@
       <anchor>a90be23875108e9a39942c3af90a6d789a257ea24324a4076f4020ca8348488592</anchor>
       <arglist></arglist>
     </member>
+    <member kind="enumvalue">
+      <name>KHC_ERR_CANCELLED</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>a90be23875108e9a39942c3af90a6d789a22c1ba4ceba113d4b6c4e025ce798f22</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="function">
       <type>khc_slist *</type>
       <name>khc_cb_slist_alloc</name>

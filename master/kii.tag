@@ -359,6 +359,12 @@
       <anchor>a79eab5c5f48e03121033d6291619c7dea66a395536a20b569738a1a4f4611b745</anchor>
       <arglist></arglist>
     </member>
+    <member kind="enumvalue">
+      <name>KII_ERR_INVALID_RESPONSE</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a79eab5c5f48e03121033d6291619c7deabc2e448bc526db666becd67291573b21</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="enumeration">
       <type></type>
       <name>kii_scope_type_t</name>

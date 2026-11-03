@@ -216,7 +216,8 @@ Enumerations</h2></td></tr>
 , <a class="el" href="khc_8h.html#a90be23875108e9a39942c3af90a6d789a3612ca2692ccace4e8e11157cf04c6bb">KHC_ERR_READ_CALLBACK</a>
 , <a class="el" href="khc_8h.html#a90be23875108e9a39942c3af90a6d789a257ea24324a4076f4020ca8348488592">KHC_ERR_TIMEOUT</a>
 , <br />
-&#160;&#160;<b>KHC_ERR_CANCELLED</b>
+&#160;&#160;<a class="el" href="khc_8h.html#a90be23875108e9a39942c3af90a6d789a22c1ba4ceba113d4b6c4e025ce798f22">KHC_ERR_CANCELLED</a>
+, <b>KHC_ERR_INVALID_RESPONSE</b>
 <br />
  }</td></tr>
 <tr class="memdesc:a90be23875108e9a39942c3af90a6d789"><td class="mdescLeft">&#160;</td><td class="mdescRight">Error codes.  <a href="khc_8h.html#a90be23875108e9a39942c3af90a6d789">More...</a><br /></td></tr>
@@ -564,6 +565,8 @@ uint32_t)</a> allows. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a90be23875108e9a39942c3af90a6d789a257ea24324a4076f4020ca8348488592" name="a90be23875108e9a39942c3af90a6d789a257ea24324a4076f4020ca8348488592"></a>KHC_ERR_TIMEOUT&#160;</td><td class="fielddoc"><p>The callback set by <a class="el" href="khc_8h.html#ad364d05cf1b54ef8a840e839fa2db308" title="Set the callback deciding whether a request goes on.">khc_set_cb_continue(khc*,
 KHC_CB_CONTINUE, void*)</a> cancelled the request. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a90be23875108e9a39942c3af90a6d789a22c1ba4ceba113d4b6c4e025ce798f22" name="a90be23875108e9a39942c3af90a6d789a22c1ba4ceba113d4b6c4e025ce798f22"></a>KHC_ERR_CANCELLED&#160;</td><td class="fielddoc"><p>The response isn't one khc can read: its status line isn't one, or its Content-Length, Transfer-Encoding or chunks don't say where its body ends. </p>
 </td></tr>
 </table>
 
@@ -1698,7 +1701,7 @@ KHC_CB_CONTINUE, void*)</a> cancelled the request. </p>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 3 2026 18:40:36 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Nov 3 2026 23:14:54 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
