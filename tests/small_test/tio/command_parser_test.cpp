@@ -18,57 +18,47 @@ typedef struct expected_parsed_actions {
     int matched_count;
 } expected_parsed_actions;
 
-TEST_CASE( "_get_object_in_array" ) {
-    const char json_arr[] = "[{\"a\":1},{\"b\":2}]";
-
-
+TEST_CASE( "_next_object_in_array" ) {
     char* obj_str = NULL;
     size_t obj_str_len = 0;
+    jkii_member_iter_t iter;
+    memset(&iter, 0x00, sizeof(iter));
 
-    SECTION("Get object at index 0") {
-        _cmd_parser_code_t p_res = _get_object_in_array(
-                json_arr,
-                strlen(json_arr),
-                0,
-                &obj_str,
-                &obj_str_len
-                );
-        REQUIRE( p_res == _CMD_PARSE_OK );
-        REQUIRE( obj_str_len == 7);
-        char obj_str_copy[obj_str_len+1];
-        strncpy(obj_str_copy, obj_str, obj_str_len);
-        // strncpy writes no terminator when the source is at least as long as
-        // the count, and obj_str is not terminated at obj_str_len, so strcmp
-        // below read the uninitialised last byte of this array.
-        obj_str_copy[obj_str_len] = '\0';
-        REQUIRE( strcmp(obj_str_copy, "{\"a\":1}") == 0 );
+    SECTION("Walks the objects, then ends") {
+        const char json_arr[] = "[{\"a\":1}, {\"b\":{\"c\":[2]}}]";
+        std::vector<std::string> got;
+        _cmd_parser_code_t p_res;
+        while ((p_res = _next_object_in_array(json_arr, strlen(json_arr),
+                        &iter, &obj_str, &obj_str_len)) == _CMD_PARSE_OK) {
+            got.push_back(std::string(obj_str, obj_str_len));
+        }
+        CHECK( p_res == _CMD_PARSE_ARRAY_OUT_OF_INDEX );
+        CHECK( got == std::vector<std::string>({ "{\"a\":1}", "{\"b\":{\"c\":[2]}}" }) );
     }
 
-    SECTION("Get object at index 1") {
-        _cmd_parser_code_t p_res = _get_object_in_array(
-                json_arr,
-                strlen(json_arr),
-                1,
-                &obj_str,
-                &obj_str_len
-                );
-        REQUIRE( p_res == _CMD_PARSE_OK );
-        REQUIRE( obj_str_len == 7);
-        char obj_str_copy[obj_str_len+1];
-        strncpy(obj_str_copy, obj_str, obj_str_len);
-        obj_str_copy[obj_str_len] = '\0';
-        REQUIRE( strcmp(obj_str_copy, "{\"b\":2}") == 0 );
+    SECTION("An empty array has none") {
+        CHECK( _next_object_in_array("[]", 2, &iter, &obj_str, &obj_str_len)
+                == _CMD_PARSE_ARRAY_OUT_OF_INDEX );
     }
 
-    SECTION("Get object at index 2") {
-        _cmd_parser_code_t p_res = _get_object_in_array(
-                json_arr,
-                strlen(json_arr),
-                2,
-                &obj_str,
-                &obj_str_len
-                );
-        REQUIRE( p_res == _CMD_PARSE_ARRAY_OUT_OF_INDEX );
+    // As when the elements were looked up by index.
+    SECTION("An element that isn't an object ends the walk") {
+        const char json_arr[] = "[{\"a\":1},7,{\"b\":2}]";
+        CHECK( _next_object_in_array(json_arr, strlen(json_arr), &iter,
+                    &obj_str, &obj_str_len) == _CMD_PARSE_OK );
+        CHECK( _next_object_in_array(json_arr, strlen(json_arr), &iter,
+                    &obj_str, &obj_str_len) == _CMD_PARSE_ARRAY_OUT_OF_INDEX );
+    }
+
+    SECTION("An object has no elements") {
+        const char json_obj[] = "{\"a\":{\"b\":1}}";
+        CHECK( _next_object_in_array(json_obj, strlen(json_obj), &iter,
+                    &obj_str, &obj_str_len) == _CMD_PARSE_ARRAY_OUT_OF_INDEX );
+    }
+
+    SECTION("Neither an array nor an object fails") {
+        CHECK( _next_object_in_array("5", 1, &iter, &obj_str, &obj_str_len)
+                == _CMD_PARSE_FAIL );
     }
 }
 
@@ -158,6 +148,8 @@ TEST_CASE( "_parse_action_object" ) {
     // TODO: Add other types tests.
     SECTION("Object action") {
         const char json_str[] = "[{\"setPower\":{\"power\":true}}]";
+        jkii_member_iter_t iter;
+        memset(&iter, 0x00, sizeof(iter));
         const char alias[] = "myalias";
         _cmd_parser_code_t p_res = _parse_action(
                 &handler,
@@ -165,7 +157,7 @@ TEST_CASE( "_parse_action_object" ) {
                 strlen(alias),
                 json_str,
                 strlen(json_str),
-                0,
+                &iter,
                 &action);
 
         REQUIRE( p_res == _CMD_PARSE_OK );
@@ -228,6 +220,8 @@ TEST_CASE( "_parse_action integer values" ) {
             std::string("[{\"setValue\":") + c.text + "}]";
         tio_action_t action;
         memset(&action, 0, sizeof(action));
+        jkii_member_iter_t iter;
+        memset(&iter, 0x00, sizeof(iter));
 
         _cmd_parser_code_t p_res = _parse_action(
                 &handler,
@@ -235,7 +229,7 @@ TEST_CASE( "_parse_action integer values" ) {
                 strlen(alias),
                 actions.c_str(),
                 actions.length(),
-                0,
+                &iter,
                 &action);
         CHECK( p_res == _CMD_PARSE_OK );
         CHECK( action.action_value.type == TIO_TYPE_INTEGER );
@@ -274,6 +268,34 @@ void cb_parsed_action(char* command_id, tio_action_t* action, void* expected_act
 
 static void cb_parsed_action_count(char* command_id, tio_action_t* action, void* called) {
     ++(*(int*)called);
+}
+
+static void cb_record_action(char* command_id, tio_action_t* action, void* names) {
+    (void)command_id;
+    ((std::vector<std::string>*)names)->push_back(
+            std::string(action->alias, action->alias_length) + "/" +
+            std::string(action->action_name, action->action_name_length));
+}
+
+TEST_CASE( "_parse_command gives every action of every alias, in order" ) {
+    tio_handler_t handler;
+    std::string command = "{\"commandID\":\"c1\",\"actions\":[";
+    std::vector<std::string> expected;
+    for (int a = 0; a < 3; ++a) {
+        command += std::string(a ? "," : "") + "{\"alias" + std::to_string(a) + "\":[";
+        for (int i = 0; i < 10; ++i) {
+            std::string name = "action" + std::to_string(i);
+            command += std::string(i ? "," : "") + "{\"" + name + "\":{\"v\":[" + std::to_string(i) + "]}}";
+            expected.push_back("alias" + std::to_string(a) + "/" + name);
+        }
+        command += "]}";
+    }
+    command += "]}";
+
+    std::vector<std::string> got;
+    REQUIRE( _parse_command(&handler, command.c_str(), command.length(),
+                cb_record_action, &got) == TIO_ERR_OK );
+    CHECK( got == expected );
 }
 
 TEST_CASE( "_parse_command" ) {
