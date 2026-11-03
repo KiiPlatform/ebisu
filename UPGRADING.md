@@ -254,6 +254,14 @@ Commands in tio:
 
 kii:
 
+- A buffer set with `kii_set_stream_buff()` or `kii_set_resp_header_buff()` is
+  used by every request from then on, until it is set again, so it has to stay
+  valid, and be used for nothing else, while the `kii_t` is in use. 1.x used it
+  only when it was set between `kii_api_call_start()` and `kii_api_call_run()`,
+  gave every other request buffers of khc's own, and said it could be freed
+  once the setter returned. Set `NULL` before freeing it. The handler's and the
+  updater's setters pass theirs on, so a `tio_handler_t` and a `tio_updater_t`
+  can no longer share one: their tasks would use it at once.
 - A request whose body kii holds whole in its buffer, every request but a state
   or an object body streamed through a callback of the application's, is sent
   with `Content-Length` rather than `Transfer-Encoding: chunked`. A streamed body
@@ -274,6 +282,11 @@ kii:
 - `kii_api_call_append_header()` returns `KII_ERR_TOO_LARGE_DATA` for a header
   longer than the buffer set by `kii_set_buff()`. 1.x took any length, on the
   stack of the task calling it.
+- `kii_api_call_start()` returns `KII_ERR_TOO_LARGE_DATA`, sending nothing, for
+  a path of 256 bytes or more or a method of 16 or more, and so do
+  `kii_execute_server_code()` and `kii_execute_server_code_version()` for an
+  endpoint whose path, with the application's ID and the version, comes to 256
+  bytes or more. 1.x sent the request all the same, to the wrong path.
 - A response too large for the buffer set by `kii_set_buff()` is
   `KII_ERR_TOO_LARGE_DATA`, and `TIO_ERR_TOO_LARGE_DATA` in tio. In 1.x it was
   `KII_ERR_WRITE_CALLBACK` and `TIO_ERR_WRITE_CALLBACK`. `KII_ERR_WRITE_CALLBACK`
@@ -334,6 +347,8 @@ jkii:
 - Integers with leading zeros are invalid, path indices such as `/[010]`
   included. 1.x read them as octal. `0` and `-0` are still numbers.
 - Numbers without digits, such as `-`, `1e` and `1e+`, are invalid.
+- Only `null`, `true` and `false` in full are those values. 1.x took a prefix of
+  one, such as `n` or `t`, for it.
 - Empty or whitespace-only input is `JKII_ERR_INVALID_INPUT`.
 - Fields looked up by name are found only in an object. In an array, 1.x took
   the elements for pairs of a name and a value. Fields looked up by path still
