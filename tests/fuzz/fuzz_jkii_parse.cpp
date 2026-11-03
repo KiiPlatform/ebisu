@@ -1,6 +1,7 @@
 // A JSON document, asked for a field of each type by a name and a path the
 // input chooses: a line of them, then the document. Its root's members are
-// walked too.
+// walked too, and their names and strings unescaped. The name, escaped, has
+// to unescape to itself.
 #include <jkii.h>
 #include <jkii_utils.h>
 #include <stdlib.h>
@@ -8,6 +9,16 @@
 #include <string>
 #include <vector>
 #include "fuzz_input.h"
+
+// Characters of a string in the document, unescaped into a buffer of their
+// length and the terminator, which always suffices: either they are refused,
+// or what comes out is no longer and is a string of that length.
+static void unescape_fits(const char* s, size_t len) {
+    std::vector<char> out(len + 1);
+    int out_len = jkii_unescape_str(s, len, out.data(), out.size());
+    if (out_len < -1 || out_len > (int)len) abort();
+    if (out_len == -1 ? out[0] != '\0' : strlen(out.data()) != (size_t)out_len) abort();
+}
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     std::string input((const char*)data, size);
@@ -60,10 +71,22 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
         if (member.value < begin || member.value + member.value_length > end) abort();
         if (member.key != NULL && (member.key < begin || member.key + member.key_length > end)) abort();
         if (++members > document.size()) abort();
+        if (member.key != NULL) {
+            unescape_fits(member.key, member.key_length);
+        }
+        if (member.type == JKII_FIELD_TYPE_STRING) {
+            unescape_fits(member.value, member.value_length);
+        }
     }
     jkii_validate_root_object(begin, document.size());
 
-    std::vector<char> escaped(key.size() * 2 + 1);
-    jkii_escape_str(key.c_str(), escaped.data(), escaped.size());
+    // Six times as long, which any escaping fits in, then back.
+    std::vector<char> escaped(key.size() * 6 + 1);
+    int escaped_len = jkii_escape_str(key.c_str(), escaped.data(), escaped.size());
+    if (escaped_len < 0) abort();
+    std::vector<char> unescaped(key.size() + 1);
+    int unescaped_len = jkii_unescape_str(escaped.data(), (size_t)escaped_len,
+            unescaped.data(), unescaped.size());
+    if (unescaped_len != (int)key.size() || memcmp(unescaped.data(), key.c_str(), key.size() + 1) != 0) abort();
     return 0;
 }
