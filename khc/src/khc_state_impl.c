@@ -579,6 +579,17 @@ void khc_state_req_body_send(khc* khc) {
     }
 }
 
+// The first CRLF within the first len bytes of buff, or NULL. By length,
+// not with strstr(): a NUL among what was read would hide the rest of it.
+static const char* _find_crlf(const char* buff, size_t len) {
+    for (size_t i = 0; i + 1 < len; ++i) {
+        if (buff[i] == '\r' && buff[i + 1] == '\n') {
+            return &buff[i];
+        }
+    }
+    return NULL;
+}
+
 void khc_state_resp_status_read(khc* khc) {
     size_t read_size = 0;
     size_t read_req_size = khc->_resp_header_buff_size - khc->_resp_header_read_size - 1;
@@ -593,7 +604,7 @@ void khc_state_resp_status_read(khc* khc) {
         if (read_size == 0) {
             khc->_read_end = true;
         }
-        if (strstr(khc->_resp_header_buff, "\r\n") != NULL) {
+        if (_find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size) != NULL) {
             khc->_state = KHC_STATE_RESP_STATUS_PARSE;
             return;
         }
@@ -629,7 +640,7 @@ void khc_state_resp_status_read(khc* khc) {
 void khc_state_resp_status_parse(khc* khc) {
     const char http_version[] = "HTTP/d.d ";
     const size_t status_size = 3;
-    const char* line_end = strstr(khc->_resp_header_buff, "\r\n");
+    const char* line_end = _find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size);
     // Check the line itself: past it, the buffer may hold what an earlier
     // response left there.
     if (line_end == NULL ||
@@ -662,7 +673,7 @@ void khc_state_resp_status_parse(khc* khc) {
 }
 
 void khc_state_resp_header_callback(khc* khc) {
-    char* header_boundary = strstr(khc->_resp_header_buff, "\r\n");
+    const char* header_boundary = _find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size);
     if (header_boundary == NULL) {
         if (khc->_resp_header_buff_size == khc->_resp_header_read_size + 1) {
             // no space in _resp_header_buff.
@@ -810,7 +821,7 @@ void khc_state_resp_header_skip(khc* khc) {
             return;
         }
         // check header boundary.
-        char* header_boundary = strstr(khc->_resp_header_buff, "\r\n");
+        const char* header_boundary = _find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size);
         if (header_boundary == NULL) {
             // re-skip.
             return;
@@ -977,17 +988,6 @@ void khc_state_resp_body_callback(khc* khc) {
         khc->_state = KHC_STATE_RESP_BODY_READ;
     }
     return;
-}
-
-// The first CRLF within the first len bytes of buff, which holds no
-// terminator, or NULL.
-static const char* _find_crlf(const char* buff, size_t len) {
-    for (size_t i = 0; i + 1 < len; ++i) {
-        if (buff[i] == '\r' && buff[i + 1] == '\n') {
-            return &buff[i];
-        }
-    }
-    return NULL;
 }
 
 void khc_state_resp_body_parse_chunk_size(khc* khc) {
