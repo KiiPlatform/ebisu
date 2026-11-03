@@ -182,6 +182,11 @@ jobs:
         run: |
           sudo apt-get -yq update
           sudo apt-get -yq install g++ cmake libssl-dev git ${{ matrix.bits == 32 && 'gcc-multilib g++-multilib' || '' }}
+      # jkii's tests read numbers in a locale whose decimal point is a comma,
+      # which the runner image lacks. Under wine, Windows has one already.
+      - name: Generate a locale with a decimal comma
+        if: matrix.variant != 'mingw'
+        run: sudo locale-gen de_DE.UTF-8
       # wine64 runs 64-bit .exe files, and wine provides the /usr/bin/wine that
       # the toolchain file names as the emulator. Their recommends add some
       # 230 packages -- GTK, Mesa, GStreamer, fonts -- that a console program

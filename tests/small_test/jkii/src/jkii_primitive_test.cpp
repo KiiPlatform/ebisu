@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <float.h>
+#include <locale.h>
+#include <string>
 
 TEST_CASE("KiiJson, PrimitiveInt")
 {
@@ -289,4 +291,63 @@ TEST_CASE("KiiJson, PrimitiveHexadecimalIsInvalid")
         CHECK(JKII_PRIMITIVE_ERR_INVALID ==
                 jkii_parse_primitive(value, strlen(value), &res));
     }
+}
+
+// strtod() reads the decimal point the locale sets, while JSON's is always
+// '.'. So in a program that set a locale whose decimal point is a comma, no
+// number with a fraction was read: strtod() stopped at the '.', and what was
+// left of it made the number invalid.
+TEST_CASE("KiiJson, PrimitiveDoubleWhateverTheLocale")
+{
+    // Names of such locales on Linux, then on Windows.
+    const char* const names[] = {
+        "de_DE.UTF-8", "de_DE.utf8", "de_DE", "fr_FR.UTF-8", "es_ES.UTF-8",
+        "German_Germany.1252", "German", "de-DE"
+    };
+    // Put back whatever happens, as the other tests expect the C locale.
+    struct Restore {
+        std::string saved;
+        ~Restore() { setlocale(LC_NUMERIC, saved.c_str()); }
+    } restore = { setlocale(LC_NUMERIC, NULL) };
+    const char* set = NULL;
+    for (const char* name : names) {
+        if (setlocale(LC_NUMERIC, name) != NULL &&
+                strcmp(localeconv()->decimal_point, ",") == 0) {
+            set = name;
+            break;
+        }
+    }
+    if (set == NULL) {
+        WARN("no locale with a decimal comma here, so this isn't tested");
+        return;
+    }
+    INFO("locale " << set);
+
+    const struct {
+        const char* str;
+        double value;
+    } cases[] = {
+        { "25.5", 25.5 }, { "-0.1", -0.1 }, { "1.5e3", 1500.0 },
+        { "2.25E-1", 0.225 }, { "1e2", 100.0 }
+    };
+    for (const auto& c : cases) {
+        INFO("value " << c.str);
+        jkii_primitive_t res;
+        REQUIRE(JKII_PRIMITIVE_ERR_OK ==
+                jkii_parse_primitive(c.str, strlen(c.str), &res));
+        CHECK(JKII_FIELD_TYPE_DOUBLE == res.type);
+        CHECK(c.value == res.value.double_value);
+    }
+
+    // And in a field of an object, as tio's commands and kii's responses are.
+    const char json[] = "{\"key1\" : 25.5}";
+    jkii_token_t tokens[16];
+    jkii_resource_t resource = { tokens, 16 };
+    jkii_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
+    fields[0].name = "key1";
+    fields[0].type = JKII_FIELD_TYPE_DOUBLE;
+    CHECK(JKII_ERR_OK == jkii_parse(json, strlen(json), fields, &resource));
+    CHECK(JKII_FIELD_ERR_OK == fields[0].result);
+    CHECK(25.5 == fields[0].field_copy.double_value);
 }
