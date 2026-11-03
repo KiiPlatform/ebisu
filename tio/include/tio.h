@@ -819,6 +819,9 @@ tio_code_t tio_handler_start(
  * Command may includes multiple actions. The callback TIO_CB_ACTION is invoked
  * per action.
  *
+ * A malformed command is refused whole: it returns TIO_ERR_PARSE_JSON before
+ * the callback is invoked for any action, and sends nothing.
+ *
  * \param [in] handler tio_handler_t instance.
  * \param [in] command received command.
  * \param [in] command_length Size of command.
@@ -858,7 +861,8 @@ typedef void (*TIO_CB_PARSED_ACTION)(char* command_id, tio_action_t* action, voi
  * \param [in] command_length Length of received command.
  * \param [in] cb_parsed_action TIO_CB_PARSED_ACTION callback called when parsed a action.
  * \param [in] userdata Context object pointer passed to cb_parsed_action.
- * \return TIO_ERR_OK when succeeded to parse the command.
+ * \return TIO_ERR_OK when succeeded to parse the command. TIO_ERR_PARSE_JSON
+ * for a malformed command, before cb_parsed_action is called for any action.
  */
 tio_code_t tio_handler_parse_command(
         tio_handler_t* handler,
