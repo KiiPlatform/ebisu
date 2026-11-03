@@ -350,6 +350,10 @@ jkii:
 - Only `null`, `true` and `false` in full are those values. 1.x took a prefix of
   one, such as `n` or `t`, for it.
 - Empty or whitespace-only input is `JKII_ERR_INVALID_INPUT`.
+- jsmn is built with its strict grammar, so an unquoted or non-string key, as in
+  `{x:1}`, and a member without its colon, as in `{"a"{"b":1}}`, are
+  `JKII_ERR_INVALID_INPUT`. 1.x took `{x:1}` for an object whose key no lookup
+  found, and the key before a missing colon for the parent of what followed.
 - Fields looked up by name are found only in an object. In an array, 1.x took
   the elements for pairs of a name and a value. Fields looked up by path still
   reach an array's elements.

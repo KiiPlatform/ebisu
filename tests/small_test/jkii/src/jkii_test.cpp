@@ -1972,8 +1972,9 @@ TEST_CASE("KiiJson, CommandParseTest") {
     REQUIRE(JKII_FIELD_ERR_OK == fields[3].result);
 }
 
-// jsmn is built non-strict, so an unquoted key parses as a primitive token.
-// A path lookup that meets one fails, as a lookup by name already does.
+// jsmn is built strict, so an unquoted key is not JSON, wherever it is and
+// whatever is looked up. Built lenient, it parsed as a primitive, which no
+// lookup found.
 TEST_CASE("KiiJson, UnquotedKeyByPath") {
     const char json_string[] = "{x:1}";
 
@@ -1992,8 +1993,7 @@ TEST_CASE("KiiJson, UnquotedKeyByPath") {
             strlen(json_string),
             fields,
             &resource);
-    REQUIRE(JKII_ERR_PARTIAL == res);
-    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
+    REQUIRE(JKII_ERR_INVALID_INPUT == res);
 }
 
 TEST_CASE("KiiJson, UnquotedKeySecondLayerByPath") {
@@ -2014,8 +2014,29 @@ TEST_CASE("KiiJson, UnquotedKeySecondLayerByPath") {
             strlen(json_string),
             fields,
             &resource);
-    REQUIRE(JKII_ERR_PARTIAL == res);
-    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
+    REQUIRE(JKII_ERR_INVALID_INPUT == res);
+}
+
+// What jsmn's strict grammar refuses, and its lenient one took. Taken, a
+// missing colon also made a key the parent of what followed it.
+TEST_CASE("KiiJson, StrictGrammar") {
+    const char* const inputs[] = {
+        "{x:1}", "{1:2}", "{\"a\":{b:1}}", "{\"a\"{\"b\":1}}", "{\"a\" 1}",
+        "{\"a\":{\"a\"{\"a\":1}}}"
+    };
+    for (const char* json_string : inputs) {
+        INFO("input " << json_string);
+        jkii_token_t tokens[64];
+        jkii_resource_t resource = { tokens, 64 };
+        jkii_field_t fields[2];
+        memset(fields, 0x00, sizeof(fields));
+        fields[0].name = "a";
+        fields[0].type = JKII_FIELD_TYPE_ANY;
+        CHECK(JKII_ERR_INVALID_INPUT ==
+                jkii_parse(json_string, strlen(json_string), fields, &resource));
+        CHECK(JKII_ERR_INVALID_INPUT ==
+                jkii_validate_root_object(json_string, strlen(json_string), &resource));
+    }
 }
 
 TEST_CASE("KiiJson, NoTokensTest")
@@ -2209,7 +2230,7 @@ TEST_CASE("KiiJson, NoTokenInputTest")
     }
 }
 
-// jsmn is built non-strict, so a key with no value is not a parse error:
+// Even strict, jsmn takes a key with no value for valid:
 // {"a"} is an object holding one string, with no token after it for the
 // value. Each document below ends in such a key, and the token after the
 // last one parsed must not be taken for its value.
