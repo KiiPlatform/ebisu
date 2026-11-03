@@ -2,6 +2,8 @@
 
 #include <string.h>
 
+#include "ebisu_time.h"
+
 static const char _DAY_NAMES[7][3] = {
     { 'S', 'u', 'n' }, { 'M', 'o', 'n' }, { 'T', 'u', 'e' }, { 'W', 'e', 'd' },
     { 'T', 'h', 'u' }, { 'F', 'r', 'i' }, { 'S', 'a', 't' }
@@ -53,45 +55,14 @@ static int _parse_digits(const char* s, size_t n)
     return value;
 }
 
-static int _is_leap(int year)
-{
-    return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
-}
-
-static int _days_in_month(int year, int month)
-{
-    static const int days[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-    if (month == 2 && _is_leap(year)) {
-        return 29;
-    }
-    return days[month - 1];
-}
-
-/* Days from 1970-01-01 to a valid date of the Gregorian calendar, from year 1
- * on, negative before 1970. The year is counted from March, so that a leap day
- * comes last in it.
- * Howard Hinnant's days_from_civil, donated to the public domain, without its
- * handling of years before 0:
- * https://howardhinnant.github.io/date_algorithms.html#days_from_civil */
-static int64_t _days_since_epoch(int year, int month, int day)
-{
-    int64_t y = (month <= 2) ? year - 1 : year;
-    int64_t m = (month <= 2) ? month + 9 : month - 3;
-    int64_t days = y * 365 + y / 4 - y / 100 + y / 400 + (153 * m + 2) / 5 + day - 1;
-    /* The same count for 1970-01-01. */
-    return days - 719468;
-}
-
 /* The year seconds since the epoch fall in; 1970 for anything earlier. */
 static int _year_of(int64_t seconds)
 {
-    int year = 1970;
-    int64_t days = (seconds > 0) ? seconds / 86400 : 0;
-    while (days >= (_is_leap(year) ? 366 : 365)) {
-        days -= _is_leap(year) ? 366 : 365;
-        ++year;
+    ebisu_civil_time_t civil;
+    if (seconds > 0 && ebisu_time_to_civil(seconds, &civil)) {
+        return civil.year;
     }
-    return year;
+    return 1970;
 }
 
 /* "08:49:37" */
@@ -181,28 +152,6 @@ static int _parse_rfc850(const char* v, size_t len, int present_year, _http_date
     return _parse_time_of_day(s + 10, d);
 }
 
-bool khc_seconds_since_epoch(
-        int year,
-        int month,
-        int day,
-        int hour,
-        int minute,
-        int second,
-        int64_t* out_seconds)
-{
-    /* 60 is a leap second, which only ever ends a UTC day. */
-    if (out_seconds == NULL || year < 1 || year > 9999 || month < 1 || month > 12 ||
-            day < 1 || day > _days_in_month(year, month) ||
-            hour < 0 || hour > 23 || minute < 0 || minute > 59 ||
-            second < 0 || second > 60 ||
-            (second == 60 && (hour != 23 || minute != 59))) {
-        return false;
-    }
-    int64_t days = _days_since_epoch(year, month, day);
-    *out_seconds = ((days * 24 + hour) * 60 + minute) * 60 + second;
-    return true;
-}
-
 int64_t _parse_http_date(const char* header, size_t header_len, int64_t floor)
 {
     /* RFC 9110 allows no whitespace between a field's name and the colon. */
@@ -240,20 +189,17 @@ int64_t _parse_http_date(const char* header, size_t header_len, int64_t floor)
             _parse_rfc850(v, len, _year_of(floor), &d) != 0) {
         return -2;
     }
-    /* 60 is a leap second, which only ever ends a UTC day. */
-    if (d.weekday < 0 || d.month < 1 || d.year < 1970 ||
-            d.day < 1 || d.day > _days_in_month(d.year, d.month) ||
-            d.hour < 0 || d.hour > 23 || d.minute < 0 || d.minute > 59 ||
-            d.second < 0 || d.second > 60 ||
-            (d.second == 60 && (d.hour != 23 || d.minute != 59))) {
+    /* The day's midnight as well, for its name, which has to agree with the
+     * date: 1970-01-01 was a Thursday. A leap second's date is the next
+     * day's midnight. */
+    int64_t date = 0;
+    int64_t midnight = 0;
+    if (d.weekday < 0 || d.year < 1970 ||
+            !ebisu_time_from_civil(d.year, d.month, d.day, d.hour, d.minute, d.second, &date) ||
+            !ebisu_time_from_civil(d.year, d.month, d.day, 0, 0, 0, &midnight) ||
+            (midnight / 86400 + 4) % 7 != d.weekday) {
         return -2;
     }
-    int64_t days = _days_since_epoch(d.year, d.month, d.day);
-    /* The day's name has to agree with the date: 1970-01-01 was a Thursday. */
-    if ((days + 4) % 7 != d.weekday) {
-        return -2;
-    }
-    int64_t date = ((days * 24 + d.hour) * 60 + d.minute) * 60 + d.second;
     return (date < floor) ? -2 : date;
 }
 

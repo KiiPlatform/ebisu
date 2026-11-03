@@ -39,8 +39,11 @@ set on.
   function of the caller's, such as an escaper or an encoder, can write into,
   strict parsers of decimal, hexadecimal and fixed-point numbers from spans
   that need no NUL, bytes to hexadecimal and back, and splitting on a
-  delimiter without copying. No
-  allocation, floating point, locale or `errno`.
+  delimiter without copying. No allocation, floating point, locale or `errno`.
+- **Dates** (`ebisu_time.h`): a UTC date and time of the Gregorian calendar to
+  seconds since the epoch and back, from year 1 to 9999, as `timegm()` and
+  `gmtime()` would but without the C library, for a certificate's dates or an
+  ISO 8601 timestamp.
 - **Loggers** (`ebisu_log.h`): `ebisu_logger_t` is where a port's diagnostics
   go, each with a level, such as the application's own log or syslog.
 - **Clearing secrets** (`ebisu_mem.h`): `ebisu_secure_zero()` sets memory to 0

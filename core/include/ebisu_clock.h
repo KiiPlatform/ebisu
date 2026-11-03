@@ -189,7 +189,7 @@ void ebisu_clock_forget_time(ebisu_clock_t* clock);
  *
  * While the clock has the floor only, a period is valid unless it ended before
  * the floor: a period starting later cannot be told from one that has started.
- * khc_seconds_since_epoch() converts the dates a TLS stack gives.
+ * ebisu_time_from_civil() converts the dates a TLS stack gives.
  *
  * \param [in] clock ebisu_clock_t instance.
  * \param [in] not_before Start of the period, seconds since the epoch.
