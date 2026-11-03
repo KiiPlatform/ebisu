@@ -227,19 +227,6 @@ void kii_set_cb_mqtt_event(kii_t* kii, KII_CB_MQTT_EVENT cb, void* userdata) {
     kii->_mqtt_event_data = userdata;
 }
 
-void kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource) {
-    kii->_json_resource = resource;
-}
-
-void kii_set_cb_json_parser_resource(
-    kii_t* kii,
-    JKII_CB_RESOURCE_ALLOC cb_alloc,
-    JKII_CB_RESOURCE_FREE cb_free)
-{
-    kii->_cb_json_alloc = cb_alloc;
-    kii->_cb_json_free = cb_free;
-}
-
 void kii_set_cb_slist_resource(
         kii_t* kii,
         KHC_CB_SLIST_ALLOC cb_alloc,

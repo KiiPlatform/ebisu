@@ -216,21 +216,6 @@ static void _cb_receive_push(const char* payload, size_t payload_length, void* u
     }
 }
 
-void tio_handler_set_json_parser_resource(
-        tio_handler_t* handler,
-        jkii_resource_t* resource)
-{
-    kii_set_json_parser_resource(&handler->_kii, resource);
-}
-
-void tio_handler_set_cb_json_parser_resource(
-        tio_handler_t* handler,
-        JKII_CB_RESOURCE_ALLOC cb_alloc,
-        JKII_CB_RESOURCE_FREE cb_free)
-{
-    kii_set_cb_json_parser_resource(&handler->_kii, cb_alloc, cb_free);
-}
-
 void tio_handler_set_cb_slist_resource(
         tio_handler_t* handler,
         KHC_CB_SLIST_ALLOC cb_alloc,
@@ -506,21 +491,6 @@ static void* _update_state(void* data) {
         updater->_cb_task_exit(NULL, updater->_task_exit_data);
     }
     return NULL;
-}
-
-void tio_updater_set_json_parser_resource(
-        tio_updater_t* updater,
-        jkii_resource_t* resource)
-{
-    kii_set_json_parser_resource(&updater->_kii, resource);
-}
-
-void tio_updater_set_cb_json_parser_resource(
-        tio_updater_t* updater,
-        JKII_CB_RESOURCE_ALLOC cb_alloc,
-        JKII_CB_RESOURCE_FREE cb_free)
-{
-    kii_set_cb_json_parser_resource(&updater->_kii, cb_alloc, cb_free);
 }
 
 void tio_updater_set_cb_slist_resource(

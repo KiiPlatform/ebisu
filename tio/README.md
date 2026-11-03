@@ -297,8 +297,6 @@ The full code can be checked [handler_init() in example.c](https://github.com/Ki
 
     tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
 
-    tio_handler_set_json_parser_resource(handler, resource);
-
     tio_handler_set_cb_task_continue(handler, _handler_continue, NULL);
     tio_handler_set_cb_task_exit(handler, _handler_exit, NULL);
 ```
@@ -377,32 +375,6 @@ MQTT keep alive interval must be larger than recv/ send timeout.
 ```c
     tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
 ```
-
-### Set-up json parser resource
-
-`tio_handler_t` uses `jkii` json parser library.
-`jkii` uses array of tokens to parse json string.
-
-In this example, allocates 256 tokens statically.
-
-```c
-    tio_handler_set_json_parser_resource(handler, resource);
-```
-
-Number of tokens to be used to parse json varies depending on how complex the target json string is.
-If you defined complex(i.e, a lot of fields or long arrays in the commands) control command, you would need to give larger number.
-Alternatively, you can use dynamic allocation for tokens by using following API:
-
-```c
-void tio_handler_set_cb_json_parser_resource(
-    tio_handler_t* handler,
-    JKII_CB_RESOURCE_ALLOC cb_alloc,
-    JKII_CB_RESOURCE_FREE cb_free);
-```
-
-`cb_alloc` is called when the token is required and it's number is exactly same as numbers need to parse json string.
-
-`cb_free` is called when the parse has been done.
 
 <a name="session"></a>
 ## Set up a session
@@ -661,8 +633,6 @@ The full code can be checked [updater_init() in example.c](https://github.com/Ki
 
     tio_updater_set_interval(updater, UPDATE_PERIOD_SEC);
 
-    tio_updater_set_json_parser_resource(updater, resource);
-
     tio_updater_set_cb_task_continue(updater, _updater_continue, NULL);
     tio_updater_set_cb_task_exit(updater, _updater_exit, NULL);
 ```
@@ -728,8 +698,6 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
     - `tio_handler_start()` (`TIO_CB_ACTION` callback)
     - `tio_handler_set_cb_err()`
         (Optional. In case set the error handler for debugging, etc.)
-    - `tio_handler_set_cb_json_parser_resource()`
-        (Optional. In case dynamic memory allocation is chosen for parsing JSON.)
 
     This task uses buffers set by following APIs.
 
@@ -753,8 +721,6 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
     - `tio_updater_start()` (`TIO_CB_SIZE`, `TIO_CB_READ` callbacks.)
     - `tio_updater_set_cb_error()`
         (Optional. In case set the error handler for debugging, etc.)
-    - `tio_updater_set_cb_json_parser_resource()`
-        (Optional. In case dynamic memory allocation is chosen for parsing JSON.)
 
     This task uses buffers set by following APIs.
 

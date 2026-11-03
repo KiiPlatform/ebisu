@@ -93,8 +93,7 @@ struct Response {
 class Rest {
 public:
     Rest() {
-        resource_ = {tokens_, sizeof(tokens_) / sizeof(tokens_[0])};
-        init(&kii_, buff_, sizeof(buff_), &http_ctx_, &mqtt_ctx_, &resource_);
+        init(&kii_, buff_, sizeof(buff_), &http_ctx_, &mqtt_ctx_);
     }
 
     Rest(const Rest&) = delete;
@@ -147,8 +146,6 @@ private:
 
     kii_t kii_;
     char buff_[16384];
-    jkii_token_t tokens_[64];
-    jkii_resource_t resource_;
     ebisu::ltest::ssl::SSLData http_ctx_;
     ebisu::ltest::ssl::SSLData mqtt_ctx_;
 };

@@ -74,7 +74,8 @@ copy() {
 }
 
 gt202() {
-    # Everything goes into custom/tio, which the IAR project builds whole.
+    # Everything goes into custom/tio, which the IAR project builds whole, but
+    # for its coreJSON folder, which jkii_core_json.c includes.
     copy gt202 custom
     build gt202 "$work/gt202/tio" "$work"/gt202/tio/*.c
 }
@@ -83,8 +84,8 @@ cc3200() {
     # Code Composer Studio builds the whole project, with these include paths.
     copy cc3200 freertos_ebisu_demo
     local d="$work/cc3200"
-    build cc3200 "$d:$d/core/include:$d/jkii/include:$d/jkii/libs/jsmn:$d/khc/include:$d/kii/include:$d/tio/include" \
-        "$d"/core/src/*.c "$d"/jkii/src/*.c "$d"/jkii/libs/jsmn/*.c "$d"/khc/src/*.c "$d"/kii/*.c "$d"/tio/*.c
+    build cc3200 "$d:$d/core/include:$d/jkii/include:$d/jkii/libs:$d/khc/include:$d/kii/include:$d/tio/include" \
+        "$d"/core/src/*.c "$d"/jkii/src/*.c "$d"/khc/src/*.c "$d"/kii/*.c "$d"/tio/*.c
 }
 
 samples=("$@")

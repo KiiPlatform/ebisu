@@ -5,10 +5,9 @@
 #ifndef JKII_H
 #define JKII_H
 
+#include <stddef.h>
 #include <stdint.h>
 
-#define JSMN_HEADER
-#include <jsmn.h>
 /* The library is compiled with hidden visibility, so what this header declares
    is exactly what the shared object exports. */
 #if defined(__GNUC__) || defined(__clang__)
@@ -19,40 +18,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/** JSON token data to parse JSON string. */
-typedef jsmntok_t jkii_token_t;
-
-/** Resource used by KII JSON library. Fields of this struct
- * determines max number of tokens inside json can be parsed.
- */
-typedef struct jkii_resource_t {
-
-    /** Array to set jkii_resource_t#tokens. */
-    jkii_token_t *tokens;
-
-    /** Size of jkii_resource_t#tokens */
-    size_t tokens_num;
-
-} jkii_resource_t;
-
-/** Resource allocator for jkii_resource_t.
- * \param[in] required_size required token size.
- * \return jkii_resource_t instance of NULL if failed to allocate resource.
- */
-typedef jkii_resource_t*
-    (*JKII_CB_RESOURCE_ALLOC)(
-        size_t required_size);
-
-/** Resource deallocator for jkii_resource_t.
- *
- * Called with a resource obtained from the matching
- * ::JKII_CB_RESOURCE_ALLOC callback.
- *
- * \param[in] resource resource to free.
- */
-typedef void (*JKII_CB_RESOURCE_FREE)(
-    jkii_resource_t* resource);
 
 /** Boolean type */
 typedef enum jkii_boolean_t {
@@ -79,18 +44,17 @@ typedef enum jkii_parse_err_t {
      * type is unmatched to using function.
      *
      * jkii_validate_root_object() requires a JSON object, and returns this
-     * error for anything else.
+     * error for anything else, and jkii_next_member() an object or an array.
      */
     JKII_ERR_ROOT_TYPE,
 
-    /** jkii_resource_t#tokens is not enough to parse JSON string.*/
-    JKII_ERR_TOKENS_SHORTAGE,
-
-    /** JSON string is failed to parse. Passed string is not JSON string. */
+    /** The string is not JSON, as ECMA-404 has it, or nests objects and
+     * arrays deeper than 32 levels.
+     */
     JKII_ERR_INVALID_INPUT,
 
-    /** Allocation failed. */
-    JKII_ERR_ALLOCATION,
+    /** jkii_next_member() has given every member there is. */
+    JKII_ERR_NOT_FOUND
 } jkii_parse_err_t;
 
 /** Field parsing result. Assigned to jkii_field_t#result. */
@@ -335,32 +299,68 @@ typedef struct jkii_field_t {
 } jkii_field_t;
 
 /** Parse JSON string.
+ *
+ * The string has to be one JSON object or array, after whitespace if any,
+ * and before whitespace if any: valid JSON, as ECMA-404 has it, which is
+ * checked whole, nesting objects and arrays at most 32 levels deep. Nothing
+ * is allocated, and the string is not changed.
+ *
  *  \param [in] json_string of JSON string.
  *  \param [in] json_string_len of JSON string.
  *  \param [in,out] fields of kii JSON parser.
- *  \param [in] resource of parser.
  *  \return parse result.
  */
 jkii_parse_err_t jkii_parse(
         const char* json_string,
         size_t json_string_len,
-        jkii_field_t* fields,
-        jkii_resource_t* resource);
+        jkii_field_t* fields);
 
-/** Parse JSON string with custom memory allocator.
- *  \param [in] json_string of JSON string.
- *  \param [in] json_string_len of JSON string.
- *  \param [in,out] fields of kii JSON parser.
- *  \param [in] cb_alloc allocate resource
- *  \param [in] cb_free free resource
- *  \return parse result.
+/** A member of an object, or an element of an array, as jkii_next_member()
+ * gives it. Its pointers are into the string given to jkii_next_member().
  */
-jkii_parse_err_t jkii_parse_with_allocator(
-    const char* json_string,
-    size_t json_string_len,
-    jkii_field_t* fields,
-    JKII_CB_RESOURCE_ALLOC cb_alloc,
-    JKII_CB_RESOURCE_FREE cb_free);
+typedef struct jkii_member_t {
+    /** The member's name, as written between its quotes, escapes and all, or
+     * NULL for an array's element. */
+    const char* key;
+    /** Length of jkii_member_t#key. */
+    size_t key_length;
+    /** The value: a string's characters between its quotes, as written,
+     * and anything else whole, an object or an array with its brackets. */
+    const char* value;
+    /** Length of jkii_member_t#value. */
+    size_t value_length;
+    /** The value's type, a number's as jkii_field_t#type has it: an integer's
+     * follows its value. */
+    jkii_field_type_t type;
+} jkii_member_t;
+
+/** Where jkii_next_member() has got to in an object or an array. Zeroed, it
+ * starts at the first member.
+ */
+typedef struct jkii_member_iter_t {
+    size_t _start; /**< \private */
+    size_t _next; /**< \private */
+} jkii_member_iter_t;
+
+/** Gives the next member of the object, or element of the array, that a JSON
+ * string is.
+ *
+ * The first call, with iter zeroed, checks the string as jkii_parse() does,
+ * so it has to stay as it is until the last.
+ *
+ * \param [in] json_string The object or the array.
+ * \param [in] json_string_len Its length.
+ * \param [in,out] iter Where the last call got to, zeroed for the first.
+ * \param [out] out_member The member, set only when JKII_ERR_OK is returned.
+ * \return JKII_ERR_OK with the next member, JKII_ERR_NOT_FOUND when there
+ * is none left, JKII_ERR_INVALID_INPUT if the string is not JSON, or
+ * JKII_ERR_ROOT_TYPE if it is neither an object nor an array.
+ */
+jkii_parse_err_t jkii_next_member(
+        const char* json_string,
+        size_t json_string_len,
+        jkii_member_iter_t* iter,
+        jkii_member_t* out_member);
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC visibility pop

@@ -6,9 +6,11 @@ It includes the third-party code below, under those projects' own licenses.
 Compiled into libebisu_jkii, which libebisu_kii and libebisu_tio link, and into
 anything linking them statically:
 
-jsmn, in jkii/libs/jsmn
+coreJSON v3.3.1, in jkii/libs/coreJSON, from https://github.com/FreeRTOS/coreJSON
 
-Copyright (c) 2010 Serge A. Zaitsev
+Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+
+SPDX-License-Identifier: MIT
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

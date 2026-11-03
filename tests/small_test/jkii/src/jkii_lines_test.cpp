@@ -76,13 +76,11 @@ TEST_CASE( "JSON Lines are read a record at a time" ) {
     size_t line_len = 0;
     REQUIRE( jkii_lines_feed(&r, data.data(), data.size(), &used, &line, &line_len) == JKII_LINES_RECORD );
     CHECK( used == strlen("{\"a\":1}\n") );
-    jkii_token_t tokens[8];
-    jkii_resource_t resource = { tokens, 8 };
     jkii_field_t fields[2];
     memset(fields, 0, sizeof(fields));
     fields[0].name = "a";
     fields[0].type = JKII_FIELD_TYPE_INTEGER;
-    CHECK( jkii_parse(line, line_len, fields, &resource) == JKII_ERR_OK );
+    CHECK( jkii_parse(line, line_len, fields) == JKII_ERR_OK );
     CHECK( fields[0].field_copy.int_value == 1 );
 }
 

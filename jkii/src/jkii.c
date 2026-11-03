@@ -30,6 +30,7 @@ int errno;
 
 #include <jkii.h>
 #include <jkii_utils.h>
+#include "jkii_core_json.h"
 
 /* Compares a counted, non-terminated buffer against a string literal.
  *
@@ -67,121 +68,78 @@ typedef struct _jkii_target_t {
     _jkii_parent_type_t parent_type;
 } _jkii_target_t;
 
-static size_t _jkii_count_contained_token(const jsmntok_t* token)
+/* A value in the document: where it is, its length and its type, as coreJSON
+ * gives them. A string's is its characters between its quotes. */
+typedef struct _jkii_value_t {
+    const char* ptr;
+    size_t len;
+    JSONTypes_t type;
+} _jkii_value_t;
+
+static int _jkii_is_space(char c)
 {
-    size_t retval = 0;
-    int token_num = 1;
-    do {
-        ++retval;
-        token_num += token->size;
-        --token_num;
-        ++token;
-    } while (token_num > 0);
-    return retval;
+    return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 }
 
-static int _calculate_required_token_num(
-    const char* json_string,
-    size_t json_string_len)
-{
-    M_JKII_ASSERT(json_string != NULL);
-    jsmn_parser parser;
-
-    jsmn_init(&parser);
-    int res = jsmn_parse(&parser, json_string, json_string_len, NULL, 0);
-    return res;
-}
-
-static jkii_parse_err_t _kii_jsmn_get_tokens(
+/* Checks the whole document, which has to be JSON, and gives its root. */
+static jkii_parse_err_t _jkii_root(
         const char* json_string,
         size_t json_string_len,
-        jkii_resource_t* resource,
-        size_t* out_tokens_num)
+        _jkii_value_t* out_root)
 {
-    jsmn_parser parser;
-    int parse_result = JSMN_ERROR_NOMEM;
-
-    M_JKII_ASSERT(json_string != NULL);
-
-    jsmn_init(&parser);
-    parse_result = jsmn_parse(&parser, json_string, json_string_len,
-        resource->tokens, resource->tokens_num);
-
-    if (parse_result > 0) {
-        if (out_tokens_num != NULL) {
-            *out_tokens_num = (size_t)parse_result;
-        }
-        return JKII_ERR_OK;
-    } else if (parse_result == 0) {
-        /* Empty, whitespace only, or a NUL before the first token. That can
-         * come from the network, so it is invalid input rather than something
-         * to assert against. jsmn has left the tokens of the previous parse in
-         * place, which the caller would otherwise go on to read. */
-        return JKII_ERR_INVALID_INPUT;
-    } else if (parse_result == JSMN_ERROR_NOMEM) {
-        return JKII_ERR_TOKENS_SHORTAGE;
-    } else if (parse_result == JSMN_ERROR_INVAL) {
-        return JKII_ERR_INVALID_INPUT;
-    } else if (parse_result == JSMN_ERROR_PART) {
-        return JKII_ERR_INVALID_INPUT;
-    } else {
+    size_t i = 0;
+    if (json_string_len == 0 ||
+            JSON_Validate(json_string, json_string_len) != JSONSuccess) {
+        /* Empty or whitespace only too, which can come from the network. */
         return JKII_ERR_INVALID_INPUT;
     }
-}
-
-static int _kii_jsmn_get_value(
-        const char* json_string,
-        size_t json_string_len,
-        const jsmntok_t* tokens,
-        size_t tokens_num,
-        const char* name,
-        jsmntok_t** out_token)
-{
-    int i = 0;
-    int index = 1;
-    int ret = -1;
-
-    M_JKII_ASSERT(json_string != NULL);
-    M_JKII_ASSERT(tokens != NULL);
-    M_JKII_ASSERT(name != NULL && strlen(name) > 0);
-    M_JKII_ASSERT(out_token != NULL);
-
-    if (tokens[0].type != JSMN_OBJECT) {
-        goto exit;
+    while (i < json_string_len && _jkii_is_space(json_string[i])) {
+        ++i;
     }
-
-    /* Even strict, jsmn takes a key with no value: {"a"} is an object
-     * holding a single string. Look no further than the tokens this
-     * parse produced; past them lie an earlier parse's tokens, or none. */
-    for (i = 0; i < tokens[0].size && (size_t)index + 1 < tokens_num; ++i) {
-        const jsmntok_t* key_token = tokens + index;
-        const jsmntok_t* value_token = tokens + index + 1;
-        int key_len = key_token->end - key_token->start;
-        if (key_token->type != JSMN_STRING) {
-            goto exit;
-        }
-        if (strlen(name) == key_len &&
-                strncmp(name, json_string + key_token->start, key_len) == 0) {
-            ret = 0;
-            *out_token = (jsmntok_t*)value_token;
+    out_root->ptr = json_string;
+    out_root->len = json_string_len;
+    switch (json_string[i]) {
+        case '{':
+            out_root->type = JSONObject;
             break;
-        }
-        switch (value_token->type) {
-            case JSMN_STRING:
-            case JSMN_PRIMITIVE:
-                index += 2;
-                break;
-            case JSMN_OBJECT:
-            case JSMN_ARRAY:
-                index += _jkii_count_contained_token(value_token) + 1;
-                break;
-            case JSMN_UNDEFINED:
-                goto exit;
+        case '[':
+            out_root->type = JSONArray;
+            break;
+        default:
+            /* A string, a number, true, false or null. */
+            out_root->type = JSONInvalid;
+            break;
+    }
+    return JKII_ERR_OK;
+}
+
+static void _jkii_value_of_pair(const JSONPair_t* pair, _jkii_value_t* out)
+{
+    out->ptr = pair->value;
+    out->len = pair->valueLength;
+    out->type = pair->jsonType;
+}
+
+/* The value of the first member of object whose key is name, compared as
+ * written, escapes and all. */
+static int _jkii_find_member_by_name(
+        const _jkii_value_t* object,
+        const char* name,
+        _jkii_value_t* out_value)
+{
+    size_t start = 0;
+    size_t next = 0;
+    size_t name_len = strlen(name);
+    JSONPair_t pair;
+    while (JSON_Iterate(object->ptr, object->len, &start, &next, &pair) ==
+            JSONSuccess) {
+        if (pair.keyLength == name_len &&
+                memcmp(pair.key, name, name_len) == 0) {
+            _jkii_value_of_pair(&pair, out_value);
+            return 0;
         }
     }
-
-exit:
-    return ret;
+    return -1;
 }
 
 static int _jkii_is_all_digit(const char* buf, size_t buf_len)
@@ -330,38 +288,36 @@ static jkii_field_type_t _jkii_integer_type(
  * integer: the result is handed back in out_integer and out_integer_res, for
  * the field to take rather than convert it a second time. */
 static jkii_field_type_t _jkii_to_jkii_field_type(
-        jsmntype_t jsmn_type,
+        JSONTypes_t json_type,
         const char* buf,
         size_t buf_len,
         int64_t* out_integer,
         jkii_primitive_err_t* out_integer_res)
 {
-    switch (jsmn_type)
+    switch (json_type)
     {
-        case JSMN_PRIMITIVE:
-            if (M_JKII_EQ_LITERAL(buf, buf_len, "null")) {
-                return JKII_FIELD_TYPE_NULL;
-            } else if (M_JKII_EQ_LITERAL(buf, buf_len, "true") ||
-                    M_JKII_EQ_LITERAL(buf, buf_len, "false")) {
-                return JKII_FIELD_TYPE_BOOLEAN;
-            } else if (_jkii_is_integer(buf, buf_len) != 0) {
+        case JSONNumber:
+            if (_jkii_is_integer(buf, buf_len) != 0) {
                 *out_integer_res = _jkii_to_int64(buf, buf_len, out_integer);
                 return _jkii_integer_type(*out_integer, *out_integer_res);
             } else if (_jkii_is_double(buf, buf_len) != 0) {
                 return JKII_FIELD_TYPE_DOUBLE;
-            } else {
-                /* unexpected case. */
-                return JKII_FIELD_TYPE_ANY;
             }
-        case JSMN_OBJECT:
+            /* coreJSON has checked it is a number. */
+            return JKII_FIELD_TYPE_ANY;
+        case JSONTrue:
+        case JSONFalse:
+            return JKII_FIELD_TYPE_BOOLEAN;
+        case JSONNull:
+            return JKII_FIELD_TYPE_NULL;
+        case JSONObject:
             return JKII_FIELD_TYPE_OBJECT;
-        case JSMN_ARRAY:
+        case JSONArray:
             return JKII_FIELD_TYPE_ARRAY;
-        case JSMN_STRING:
+        case JSONString:
             return JKII_FIELD_TYPE_STRING;
+        case JSONInvalid:
         default:
-            /* programming error */
-            M_JKII_ASSERT(0);
             return JKII_FIELD_TYPE_ANY;
     }
 }
@@ -608,9 +564,9 @@ static int _jkii_to_boolean(
 }
 
 /* An array index read from a path as a size_t. One that is negative or past
- * the size_t range is SIZE_MAX, which no array reaches, since jsmn counts
- * elements in an int. A cast alone makes -1 SIZE_MAX as well, but where size_t
- * has 32 bits it would cut 4294967296 down to 0. */
+ * the size_t range is SIZE_MAX, which no array reaches, as it could not fit in
+ * memory. A cast alone makes -1 SIZE_MAX as well, but where size_t has 32 bits
+ * it would cut 4294967296 down to 0. */
 static size_t _jkii_to_index(int64_t value)
 {
     if (value < 0) {
@@ -743,83 +699,58 @@ static int _jkii_is_same_key(
     return retval;
 }
 
-static int _kii_jsmn_get_value_by_path(
-        const char* json_string,
-        size_t json_string_len,
-        const jsmntok_t* tokens,
-        size_t tokens_num,
+/* The value the path leads to from root, a segment at a time: a member of an
+ * object, or an element of an array. */
+static int _jkii_find_by_path(
+        const _jkii_value_t* root,
         const char* path,
-        jsmntok_t** out_token)
+        _jkii_value_t* out_value)
 {
     const char* next_root = path;
-    const jsmntok_t* root_token = tokens;
+    _jkii_value_t current = *root;
 
-    M_JKII_ASSERT(json_string != NULL);
-    M_JKII_ASSERT(tokens != NULL);
     M_JKII_ASSERT(path != NULL && strlen(path) > 0);
-    M_JKII_ASSERT(out_token != NULL);
+    M_JKII_ASSERT(out_value != NULL);
 
     do {
         _jkii_target_t target;
+        size_t start = 0;
+        size_t next = 0;
+        size_t i = 0;
+        int found = 0;
+        JSONPair_t pair;
         memset(&target, 0x00, sizeof(target));
         if (_jkii_get_target(next_root, &target, &next_root) != 0) {
             return -1;
         }
-        if (root_token->type == JSMN_OBJECT &&
+        if (current.type == JSONObject &&
                 target.parent_type == _JKII_PARENT_TYPE_OBJECT) {
-            size_t i = 0;
-            size_t index = 1;
-            const size_t root_index = (size_t)(root_token - tokens);
-            const size_t root_token_size = (size_t)root_token->size;
-            const jsmntok_t* next_token = NULL;
-            /* As in _kii_jsmn_get_value(), a key may be the last token. */
-            for (i = 0; i < root_token_size &&
-                    root_index + index + 1 < tokens_num; ++i) {
-                const jsmntok_t* key_token = root_token + index;
-                const jsmntok_t* value_token = root_token + index + 1;
-                /* Strict, jsmn refuses a key that is not a string. Checked
-                 * all the same, as what follows relies on it. */
-                if (key_token->type != JSMN_STRING) {
-                    return -1;
-                }
-                if (_jkii_is_same_key(&target,
-                                json_string + key_token->start,
-                                key_token->end - key_token->start) == 0) {
-                    next_token = value_token;
-                    break;
-                }
-                index += _jkii_count_contained_token(value_token) + 1;
+            while (!found && JSON_Iterate(current.ptr, current.len, &start,
+                            &next, &pair) == JSONSuccess) {
+                found = _jkii_is_same_key(&target, pair.key,
+                        pair.keyLength) == 0;
             }
-            if (next_token == NULL) {
-                return -1;
-            }
-            root_token = next_token;
-        } else  if (root_token->type == JSMN_ARRAY &&
+        } else if (current.type == JSONArray &&
                 target.parent_type == _JKII_PARENT_TYPE_ARRAY) {
-            size_t i = 0;
-            const size_t root_token_size = (size_t)root_token->size;
-            if (target.field.index >= root_token_size) {
-                return -1;
+            while (!found && JSON_Iterate(current.ptr, current.len, &start,
+                            &next, &pair) == JSONSuccess) {
+                found = (i++ == target.field.index);
             }
-            for (i = 0; i < target.field.index; ++i) {
-                root_token += _jkii_count_contained_token(
-                        root_token + 1);
-            }
-            ++root_token;
-        } else {
+        }
+        if (!found) {
             return -1;
         }
+        _jkii_value_of_pair(&pair, &current);
     } while (next_root != NULL);
 
-    *out_token = (jsmntok_t*)root_token;
+    *out_value = current;
     return 0;
 }
 
-static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
+static jkii_parse_err_t _jkii_convert_value_to_field(
         jkii_field_t* field,
-        const jsmntok_t* value,
-        const char* json_string,
-        size_t json_string_len)
+        const _jkii_value_t* value,
+        const char* json_string)
 {
     jkii_parse_err_t retval = JKII_ERR_OK;
     jkii_field_type_t type = JKII_FIELD_TYPE_ANY;
@@ -827,8 +758,7 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
     jkii_primitive_err_t integer_res = JKII_PRIMITIVE_ERR_INVALID;
 
     /* get actual type, and an integer's value with it. */
-    type = _jkii_to_jkii_field_type(value->type,
-            json_string + value->start, value->end - value->start,
+    type = _jkii_to_jkii_field_type(value->type, value->ptr, value->len,
             &integer, &integer_res);
     if (type == JKII_FIELD_TYPE_ANY) {
         /* fail to get actual type. */
@@ -839,8 +769,8 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
         field->type = type;
     }
 
-    field->start = value->start;
-    field->end = value->end;
+    field->start = (size_t)(value->ptr - json_string);
+    field->end = field->start + value->len;
 
     switch (field->type) {
         case JKII_FIELD_TYPE_STRING:
@@ -853,8 +783,8 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
             } else if (field->field_copy.string == NULL) {
                 field->result = JKII_FIELD_ERR_OK;
             } else if (_jkii_string_copy(
-                            json_string + value->start,
-                            value->end - value->start,
+                            value->ptr,
+                            value->len,
                             field->field_copy.string,
                             field->field_copy_buff_size) == 0) {
                 field->result = JKII_FIELD_ERR_OK;
@@ -929,8 +859,8 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
             } else {
                 jkii_primitive_err_t result =
                     _jkii_to_double(
-                            json_string + value->start,
-                            value->end - value->start,
+                            value->ptr,
+                            value->len,
                             &(field->field_copy.double_value));
                 switch (result) {
                     case JKII_PRIMITIVE_ERR_OK:
@@ -955,8 +885,7 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
                 field->type = type;
                 field->result = JKII_FIELD_ERR_TYPE_MISMATCH;
                 retval = JKII_ERR_PARTIAL;
-            } else if (_jkii_to_boolean(json_string + value->start,
-                            value->end - value->start,
+            } else if (_jkii_to_boolean(value->ptr, value->len,
                             &(field->field_copy.boolean_value)) == 0) {
                 field->result = JKII_FIELD_ERR_OK;
             } else {
@@ -970,8 +899,7 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
                 field->type = type;
                 field->result = JKII_FIELD_ERR_TYPE_MISMATCH;
                 retval = JKII_ERR_PARTIAL;
-            } else if (memcmp(json_string + value->start, "null",
-                            value->end - value->start) == 0) {
+            } else if (M_JKII_EQ_LITERAL(value->ptr, value->len, "null")) {
                 field->result = JKII_FIELD_ERR_OK;
             } else {
                 field->type = type;
@@ -989,35 +917,27 @@ static jkii_parse_err_t _jkii_convert_jsmntok_to_field(
 
 static jkii_parse_err_t _jkii_parse_fields(
     const char* json_string,
-    size_t json_string_len,
-    jkii_field_t* fields,
-    jkii_resource_t* resource,
-    size_t tokens_num)
+    const _jkii_value_t* root,
+    jkii_field_t* fields)
 {
     jkii_parse_err_t ret = JKII_ERR_OK;
     for (jkii_field_t* field = fields; field->name != NULL || field->path != NULL; ++field) {
         int result = -1;
-        jsmntok_t* value = NULL;
+        _jkii_value_t value;
 
-        /* get jsmntok_t pointing target value. */
         if (field->path != NULL) {
-            result = _kii_jsmn_get_value_by_path(json_string,
-                    json_string_len, resource->tokens, tokens_num,
-                    field->path, &value);
-        } else {
-            result = _kii_jsmn_get_value(json_string, json_string_len,
-                    resource->tokens, tokens_num, field->name, &value);
+            result = _jkii_find_by_path(root, field->path, &value);
+        } else if (root->type == JSONObject) {
+            result = _jkii_find_member_by_name(root, field->name, &value);
         }
-        if (result != 0 || value == NULL)
+        if (result != 0)
         {
             ret = JKII_ERR_PARTIAL;
             field->result = JKII_FIELD_ERR_NOT_FOUND;
             continue;
         }
 
-        /* convert jsmntok_t to jkii_field_t. */
-        switch (_jkii_convert_jsmntok_to_field(field, value,
-                        json_string, json_string_len)) {
+        switch (_jkii_convert_value_to_field(field, &value, json_string)) {
             case JKII_ERR_OK:
                 break;
             case JKII_ERR_PARTIAL:
@@ -1025,7 +945,6 @@ static jkii_parse_err_t _jkii_parse_fields(
                 break;
             case JKII_ERR_INVALID_INPUT:
                 return JKII_ERR_INVALID_INPUT;
-            case JKII_ERR_ROOT_TYPE:
             default:
               /* unexpected error. */
               M_JKII_ASSERT(0);
@@ -1038,73 +957,61 @@ static jkii_parse_err_t _jkii_parse_fields(
 jkii_parse_err_t jkii_parse(
     const char* json_string,
     size_t json_string_len,
-    jkii_field_t* fields,
-    jkii_resource_t* resource)
+    jkii_field_t* fields)
 {
+    _jkii_value_t root;
     M_JKII_ASSERT(json_string != NULL);
 
-    if (resource == NULL || resource->tokens_num == 0) {
-        return JKII_ERR_TOKENS_SHORTAGE;
-    }
-
-    jkii_parse_err_t res = JKII_ERR_INVALID_INPUT;
-    size_t tokens_num = 0;
-    res = _kii_jsmn_get_tokens(json_string, json_string_len, resource,
-            &tokens_num);
+    jkii_parse_err_t res = _jkii_root(json_string, json_string_len, &root);
     if (res != JKII_ERR_OK) {
         return res;
     }
-
-    jsmntype_t type = resource->tokens[0].type;
-    if (type != JSMN_ARRAY && type != JSMN_OBJECT) {
+    if (root.type != JSONArray && root.type != JSONObject) {
         return JKII_ERR_INVALID_INPUT;
     }
-    res = _jkii_parse_fields(json_string, json_string_len, fields, resource,
-            tokens_num);
-
-    return res;
+    return _jkii_parse_fields(json_string, &root, fields);
 }
 
-jkii_parse_err_t jkii_parse_with_allocator(
-    const char* json_string,
-    size_t json_string_len,
-    jkii_field_t* fields,
-    JKII_CB_RESOURCE_ALLOC cb_alloc,
-    JKII_CB_RESOURCE_FREE cb_free)
+jkii_parse_err_t jkii_next_member(
+        const char* json_string,
+        size_t json_string_len,
+        jkii_member_iter_t* iter,
+        jkii_member_t* out_member)
 {
+    JSONPair_t pair;
+    JSONStatus_t status = JSONNotFound;
+    int64_t integer = 0;
+    jkii_primitive_err_t integer_res = JKII_PRIMITIVE_ERR_INVALID;
+
     M_JKII_ASSERT(json_string != NULL);
-    M_JKII_ASSERT(cb_alloc != NULL);
-    M_JKII_ASSERT(cb_free != NULL);
+    M_JKII_ASSERT(iter != NULL);
+    M_JKII_ASSERT(out_member != NULL);
 
-    jkii_resource_t *resource;
-    int required = _calculate_required_token_num(json_string, json_string_len);
-    if (required > 0) {
-        resource = cb_alloc(required);
-        if (resource == NULL)
-        {
-            return JKII_ERR_ALLOCATION;
+    /* Checked whole on the first call, as JSON_Iterate() requires. */
+    if (iter->_start == 0 && iter->_next == 0) {
+        _jkii_value_t root;
+        jkii_parse_err_t res = _jkii_root(json_string, json_string_len, &root);
+        if (res != JKII_ERR_OK) {
+            return res;
         }
-    } else {
+        if (root.type != JSONArray && root.type != JSONObject) {
+            return JKII_ERR_ROOT_TYPE;
+        }
+    }
+    status = JSON_Iterate(json_string, json_string_len, &iter->_start,
+            &iter->_next, &pair);
+    if (status == JSONNotFound) {
+        return JKII_ERR_NOT_FOUND;
+    } else if (status != JSONSuccess) {
         return JKII_ERR_INVALID_INPUT;
     }
-
-    size_t tokens_num = 0;
-    jkii_parse_err_t res = _kii_jsmn_get_tokens(json_string, json_string_len, resource, &tokens_num);
-    if (res != JKII_ERR_OK) {
-        cb_free(resource);
-        return res;
-    }
-
-    jsmntype_t type = resource->tokens[0].type;
-    if (type != JSMN_ARRAY && type != JSMN_OBJECT) {
-        cb_free(resource);
-        return JKII_ERR_INVALID_INPUT;
-    }
-    res = _jkii_parse_fields(json_string, json_string_len, fields, resource,
-            tokens_num);
-
-    cb_free(resource);
-    return res;
+    out_member->key = pair.key;
+    out_member->key_length = pair.keyLength;
+    out_member->value = pair.value;
+    out_member->value_length = pair.valueLength;
+    out_member->type = _jkii_to_jkii_field_type(pair.jsonType, pair.value,
+            pair.valueLength, &integer, &integer_res);
+    return JKII_ERR_OK;
 }
 
 jkii_primitive_err_t jkii_parse_primitive(
@@ -1228,63 +1135,17 @@ int jkii_escape_str(const char* str, char* buff, size_t buff_size) {
 
 jkii_parse_err_t jkii_validate_root_object(
         const char* json_string,
-        size_t json_string_len,
-        jkii_resource_t* resource)
+        size_t json_string_len)
 {
+    _jkii_value_t root;
     M_JKII_ASSERT(json_string != NULL);
 
-    if (resource == NULL || resource->tokens_num == 0) {
-        return JKII_ERR_TOKENS_SHORTAGE;
-    }
-
-    jkii_parse_err_t res = JKII_ERR_INVALID_INPUT;
-    res = _kii_jsmn_get_tokens(json_string, json_string_len, resource, NULL);
+    jkii_parse_err_t res = _jkii_root(json_string, json_string_len, &root);
     if (res != JKII_ERR_OK) {
         return res;
     }
-
-    jsmntype_t type = resource->tokens[0].type;
-    if (type != JSMN_OBJECT) {
+    if (root.type != JSONObject) {
         return JKII_ERR_ROOT_TYPE;
     }
-
-    return JKII_ERR_OK;
-}
-
-jkii_parse_err_t jkii_validate_root_object_with_allocator(
-        const char* json_string,
-        size_t json_string_len,
-        JKII_CB_RESOURCE_ALLOC cb_alloc,
-        JKII_CB_RESOURCE_FREE cb_free)
-{
-    M_JKII_ASSERT(json_string != NULL);
-    M_JKII_ASSERT(cb_alloc != NULL);
-    M_JKII_ASSERT(cb_free != NULL);
-
-    jkii_resource_t *resource;
-    int required = _calculate_required_token_num(json_string, json_string_len);
-    if (required > 0) {
-        resource = cb_alloc(required);
-        if (resource == NULL)
-        {
-            return JKII_ERR_ALLOCATION;
-        }
-    } else {
-        return JKII_ERR_INVALID_INPUT;
-    }
-
-    jkii_parse_err_t res = _kii_jsmn_get_tokens(json_string, json_string_len, resource, NULL);
-    if (res != JKII_ERR_OK) {
-        cb_free(resource);
-        return res;
-    }
-
-    jsmntype_t type = resource->tokens[0].type;
-    if (type != JSMN_OBJECT) {
-        cb_free(resource);
-        return JKII_ERR_ROOT_TYPE;
-    }
-
-    cb_free(resource);
     return JKII_ERR_OK;
 }

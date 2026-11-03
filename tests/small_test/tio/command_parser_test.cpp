@@ -21,17 +21,12 @@ typedef struct expected_parsed_actions {
 TEST_CASE( "_get_object_in_array" ) {
     const char json_arr[] = "[{\"a\":1},{\"b\":2}]";
 
-    jkii_token_t tokens[16];
-    jkii_resource_t resource = {tokens, 16};
 
     char* obj_str = NULL;
     size_t obj_str_len = 0;
 
     SECTION("Get object at index 0") {
         _cmd_parser_code_t p_res = _get_object_in_array(
-                &resource,
-                NULL,
-                NULL,
                 json_arr,
                 strlen(json_arr),
                 0,
@@ -51,9 +46,6 @@ TEST_CASE( "_get_object_in_array" ) {
 
     SECTION("Get object at index 1") {
         _cmd_parser_code_t p_res = _get_object_in_array(
-                &resource,
-                NULL,
-                NULL,
                 json_arr,
                 strlen(json_arr),
                 1,
@@ -70,9 +62,6 @@ TEST_CASE( "_get_object_in_array" ) {
 
     SECTION("Get object at index 2") {
         _cmd_parser_code_t p_res = _get_object_in_array(
-                &resource,
-                NULL,
-                NULL,
                 json_arr,
                 strlen(json_arr),
                 2,
@@ -80,16 +69,6 @@ TEST_CASE( "_get_object_in_array" ) {
                 &obj_str_len
                 );
         REQUIRE( p_res == _CMD_PARSE_ARRAY_OUT_OF_INDEX );
-    }
-}
-
-// Leaves the stack below the caller's frame filled with JSMN_STRING, so a
-// callee reading a jsmntok_t that jsmn never wrote sees a string token.
-static void __attribute__((noinline)) fill_stack_with_jsmn_string()
-{
-    volatile int fill[4096];
-    for (size_t i = 0; i < sizeof(fill) / sizeof(fill[0]); ++i) {
-        fill[i] = JSMN_STRING;
     }
 }
 
@@ -101,7 +80,7 @@ TEST_CASE( "_parse_first_kv" ) {
         size_t out_key_len = 0;
         char* out_value = NULL;
         size_t out_value_len = 0;
-        jsmntype_t out_value_type = JSMN_OBJECT;
+        jkii_field_type_t out_value_type = JKII_FIELD_TYPE_OBJECT;
         _cmd_parser_code_t p_res = _parse_first_kv(
                 json_obj,
                 strlen(json_obj),
@@ -128,21 +107,17 @@ TEST_CASE( "_parse_first_kv" ) {
         REQUIRE( strcmp(out_value_copy, "1") == 0 );
 
         // Check value type.
-        REQUIRE( out_value_type == JSMN_PRIMITIVE );
+        REQUIRE( out_value_type == JKII_FIELD_TYPE_INTEGER );
     }
 
-    // jsmn fills only as many tokens as the object has, so an object without
-    // a key/value pair must be rejected before the key and value tokens are
-    // read. The stack is filled first so that unfilled tokens look like a
-    // string key rather than whatever happened to be left there.
+    // An object without a member has no first one.
     SECTION("Empty object") {
         const char json_obj[] = "{}";
         char* out_key = NULL;
         size_t out_key_len = 0;
         char* out_value = NULL;
         size_t out_value_len = 0;
-        jsmntype_t out_value_type = JSMN_OBJECT;
-        fill_stack_with_jsmn_string();
+        jkii_field_type_t out_value_type = JKII_FIELD_TYPE_OBJECT;
         _cmd_parser_code_t p_res = _parse_first_kv(
                 json_obj,
                 strlen(json_obj),
@@ -155,14 +130,14 @@ TEST_CASE( "_parse_first_kv" ) {
         REQUIRE( p_res == _CMD_PARSE_FAIL );
     }
 
+    // Nor is a key without a value JSON.
     SECTION("Key without value") {
         const char json_obj[] = "{\"a\"}";
         char* out_key = NULL;
         size_t out_key_len = 0;
         char* out_value = NULL;
         size_t out_value_len = 0;
-        jsmntype_t out_value_type = JSMN_OBJECT;
-        fill_stack_with_jsmn_string();
+        jkii_field_type_t out_value_type = JKII_FIELD_TYPE_OBJECT;
         _cmd_parser_code_t p_res = _parse_first_kv(
                 json_obj,
                 strlen(json_obj),
@@ -179,9 +154,6 @@ TEST_CASE( "_parse_first_kv" ) {
 TEST_CASE( "_parse_action_object" ) {
     tio_action_t action;
     tio_handler_t handler;
-    jkii_token_t tokens[16];
-    jkii_resource_t resource = { tokens, 16 };
-    handler._kii._json_resource = &resource;
 
     // TODO: Add other types tests.
     SECTION("Object action") {
@@ -233,9 +205,6 @@ static_assert(std::is_same<
 
 TEST_CASE( "_parse_action integer values" ) {
     tio_handler_t handler;
-    jkii_token_t tokens[16];
-    jkii_resource_t resource = { tokens, 16 };
-    handler._kii._json_resource = &resource;
 
     const struct {
         const char* text;
@@ -309,9 +278,6 @@ static void cb_parsed_action_count(char* command_id, tio_action_t* action, void*
 
 TEST_CASE( "_parse_command" ) {
     tio_handler_t handler;
-    jkii_token_t tokens[25];
-    jkii_resource_t resource = { tokens, 25 };
-    handler._kii._json_resource = &resource;
 
     SECTION("has 1 alias, 1 action") {
         const char command[] = "{\"commandID\":\"eed568b4-409c-11e9-b3ec-22000aad0899\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
@@ -393,10 +359,7 @@ TEST_CASE( "_handle_command action name length" ) {
     tio_handler_init(&handler);
 
     char kii_buff[2048];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
     kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
-    kii_set_json_parser_resource(&handler._kii, &resource);
     kii_set_app_id(&handler._kii, "appid");
     kii_set_site(&handler._kii, "api.kii.com");
     strcpy(handler._kii._author.author_id, "thingid");
@@ -487,10 +450,7 @@ TEST_CASE( "_handle_command response status" ) {
     tio_handler_init(&handler);
 
     char kii_buff[2048];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
     kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
-    kii_set_json_parser_resource(&handler._kii, &resource);
     kii_set_app_id(&handler._kii, "appid");
     kii_set_site(&handler._kii, "api.kii.com");
     strcpy(handler._kii._author.author_id, "thingid");
@@ -561,10 +521,7 @@ TEST_CASE( "_handle_command empty objects" ) {
     tio_handler_init(&handler);
 
     char kii_buff[2048];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
     kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
-    kii_set_json_parser_resource(&handler._kii, &resource);
     kii_set_app_id(&handler._kii, "appid");
     kii_set_site(&handler._kii, "api.kii.com");
     strcpy(handler._kii._author.author_id, "thingid");
@@ -616,10 +573,7 @@ TEST_CASE( "_handle_command result body opening does not fit" ) {
     // Too short for {"actionResults":[ and its terminator, long enough for
     // {"alias1":[ -- so the appends that follow do not catch it either.
     char kii_buff[16];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
     kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
-    kii_set_json_parser_resource(&handler._kii, &resource);
     kii_set_app_id(&handler._kii, "appid");
     kii_set_site(&handler._kii, "api.kii.com");
     strcpy(handler._kii._author.author_id, "thingid");
@@ -683,10 +637,7 @@ TEST_CASE( "_handle_command nothing to parse" ) {
     tio_handler_init(&handler);
 
     char kii_buff[2048];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
     kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
-    kii_set_json_parser_resource(&handler._kii, &resource);
     kii_set_app_id(&handler._kii, "appid");
     kii_set_site(&handler._kii, "api.kii.com");
     strcpy(handler._kii._author.author_id, "thingid");
@@ -732,10 +683,9 @@ TEST_CASE( "_handle_command nothing to parse" ) {
     REQUIRE( handler._kii._req_headers == nullptr );
 }
 
-// jsmn is built non-strict, so a primitive action value such as abc or - is
-// tokenized even though it is not JSON. jkii cannot read it, nor a number out
-// of range such as 1e999, and the action used to reach the callback with its
-// value type and value never set.
+// A primitive action value such as abc or - is not JSON, which jsmn tokenized
+// all the same, and jkii cannot read a number out of range such as 1e999. The
+// action used to reach the callback with its value type and value never set.
 static void cb_parsed_action_copy(char* command_id, tio_action_t* action, void* userdata) {
     std::vector<tio_action_t>* actions = (std::vector<tio_action_t>*)userdata;
     actions->push_back(*action);
@@ -743,9 +693,6 @@ static void cb_parsed_action_copy(char* command_id, tio_action_t* action, void* 
 
 TEST_CASE( "_parse_command primitive values" ) {
     tio_handler_t handler;
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
-    handler._kii._json_resource = &resource;
 
     std::vector<tio_action_t> actions;
 
@@ -800,10 +747,7 @@ TEST_CASE( "_handle_command invalid primitive values" ) {
     tio_handler_init(&handler);
 
     char kii_buff[2048];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
     kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
-    kii_set_json_parser_resource(&handler._kii, &resource);
     kii_set_app_id(&handler._kii, "appid");
     kii_set_site(&handler._kii, "api.kii.com");
     strcpy(handler._kii._author.author_id, "thingid");
@@ -834,18 +778,15 @@ TEST_CASE( "_handle_command invalid primitive values" ) {
     }
 }
 
-// jsmn is built non-strict, so a command object with an unquoted key parses,
-// with the key as a primitive token. Looking /commandID or /actions up in it
-// has to be a parse error rather than an assertion.
+// A command object with an unquoted key isn't JSON, which jsmn, built
+// lenient, parsed with the key as a primitive token. Looking /commandID or
+// /actions up in it has to be a parse error rather than an assertion.
 TEST_CASE( "_handle_command unquoted key" ) {
     tio_handler_t handler;
     tio_handler_init(&handler);
 
     char kii_buff[2048];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
     kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
-    kii_set_json_parser_resource(&handler._kii, &resource);
     kii_set_app_id(&handler._kii, "appid");
     kii_set_site(&handler._kii, "api.kii.com");
     strcpy(handler._kii._author.author_id, "thingid");
@@ -886,9 +827,6 @@ TEST_CASE( "_handle_command unquoted key" ) {
 
 TEST_CASE( "_parse_command unquoted key" ) {
     tio_handler_t handler;
-    jkii_token_t tokens[25];
-    jkii_resource_t resource = { tokens, 25 };
-    handler._kii._json_resource = &resource;
 
     int called = 0;
     const char command[] = "{commandID:\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";

@@ -3,9 +3,11 @@ all:
 	cp ../../core/src/*.c custom/tio
 	cp ../../core/include/*.h custom/tio
 	cp ../../jkii/src/*.c custom/tio
+	cp ../../jkii/src/*.h custom/tio
 	cp ../../jkii/include/*.h custom/tio
-	cp ../../jkii/libs/jsmn/*.c custom/tio
-	cp ../../jkii/libs/jsmn/*.h custom/tio
+	mkdir -p custom/tio/coreJSON
+	cp ../../jkii/libs/coreJSON/*.c custom/tio/coreJSON
+	cp ../../jkii/libs/coreJSON/*.h custom/tio/coreJSON
 	cp ../../khc/src/*.c custom/tio
 	cp ../../khc/src/*.h custom/tio
 	cp ../../khc/include/*.h custom/tio

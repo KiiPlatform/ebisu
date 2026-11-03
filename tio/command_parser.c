@@ -12,9 +12,6 @@
 #endif
 
 _cmd_parser_code_t _get_object_in_array(
-        jkii_resource_t* resource,
-        JKII_CB_RESOURCE_ALLOC cb_alloc,
-        JKII_CB_RESOURCE_FREE cb_free,
         const char* json_array,
         size_t json_array_length,
         size_t index,
@@ -34,13 +31,7 @@ _cmd_parser_code_t _get_object_in_array(
     field[0].result = JKII_FIELD_ERR_OK;
     field[1].path = NULL;
 
-    jkii_parse_err_t res = JKII_ERR_INVALID_INPUT;
-    if (resource != NULL) {
-        res = jkii_parse(json_array, json_array_length, field, resource);
-    } else {
-        res = jkii_parse_with_allocator(json_array, json_array_length, field, cb_alloc, cb_free);
-    }
-
+    jkii_parse_err_t res = jkii_parse(json_array, json_array_length, field);
     if (res == JKII_ERR_OK) {
         *out_object = (char*)(json_array + field[0].start);
         *out_object_length = field[0].end - field[0].start;
@@ -59,37 +50,22 @@ _cmd_parser_code_t _parse_first_kv(
         size_t* out_key_length,
         char** out_value,
         size_t* out_value_length,
-        jsmntype_t* out_value_type)
+        jkii_field_type_t* out_value_type)
 {
-    jsmn_parser parser;
-    jsmn_init(&parser);
-    int p_err = JSMN_ERROR_NOMEM;
-    jsmntok_t tokens[64];
-
-    p_err = jsmn_parse(&parser, object, object_length, tokens, 64);
-    if (p_err >= 0) {
-        // jsmn writes only the tokens it parsed: an object without both a key
-        // and a value, such as {}, leaves tokens[1] and tokens[2] unset.
-        if (p_err < 3) {
-            return _CMD_PARSE_FAIL;
-        }
-        if (tokens[0].type != JSMN_OBJECT) {
-            return _CMD_PARSE_FAIL;
-        }
-        if (tokens[1].type != JSMN_STRING) {
-            return _CMD_PARSE_FAIL;
-        }
-        *out_key = (char*)(object + tokens[1].start);
-        *out_key_length = tokens[1].end - tokens[1].start;
-        *out_value = (char*)(object + tokens[2].start);
-        *out_value_length = tokens[2].end - tokens[2].start;
-        *out_value_type = tokens[2].type;
-        return _CMD_PARSE_OK;
-    } else if (p_err == JSMN_ERROR_NOMEM) {
-        return _CMD_PARSE_ERR_DATA_TOO_LARGE;
-    } else {
+    jkii_member_iter_t iter;
+    jkii_member_t member;
+    memset(&iter, 0x00, sizeof(iter));
+    // An object, with a member: an array's element has no key.
+    if (jkii_next_member(object, object_length, &iter, &member) != JKII_ERR_OK ||
+            member.key == NULL) {
         return _CMD_PARSE_FAIL;
     }
+    *out_key = (char*)member.key;
+    *out_key_length = member.key_length;
+    *out_value = (char*)member.value;
+    *out_value_length = member.value_length;
+    *out_value_type = member.type;
+    return _CMD_PARSE_OK;
 }
 
 _cmd_parser_code_t _parse_alias(
@@ -105,9 +81,6 @@ _cmd_parser_code_t _parse_alias(
     char* alias;
     size_t alias_length;
     _cmd_parser_code_t res = _get_object_in_array(
-            handler->_kii._json_resource,
-            handler->_kii._cb_json_alloc,
-            handler->_kii._cb_json_free,
             actions_array,
             actions_array_length,
             alias_index,
@@ -116,7 +89,7 @@ _cmd_parser_code_t _parse_alias(
     if (res != _CMD_PARSE_OK) {
         return res;
     }
-    jsmntype_t alias_type = JSMN_OBJECT;
+    jkii_field_type_t alias_type = JKII_FIELD_TYPE_OBJECT;
     res = _parse_first_kv(
             alias,
             alias_length,
@@ -134,8 +107,8 @@ _cmd_parser_code_t _parse_primitive(
         tio_action_t* out_action)
 {
     jkii_primitive_t jprim;
-    // jsmn, even strict, passes primitives that are not JSON, such as - or 1e.
-    // jkii does not set jprim for those, nor for numbers out of range.
+    // jkii has checked it is JSON, but does not set jprim for a number out of
+    // range.
     jkii_primitive_err_t p_res = jkii_parse_primitive(action_value, action_value_length, &jprim);
     if (p_res != JKII_PRIMITIVE_ERR_OK) {
         return _CMD_PARSE_FAIL;
@@ -181,9 +154,6 @@ _cmd_parser_code_t _parse_action(
     char* action_object = NULL;
     size_t action_object_length = 0;
     _cmd_parser_code_t res = _get_object_in_array(
-            handler->_kii._json_resource,
-            handler->_kii._cb_json_alloc,
-            handler->_kii._cb_json_free,
             actions_array_in_alias,
             actions_array_in_alias_length,
             action_index,
@@ -196,7 +166,7 @@ _cmd_parser_code_t _parse_action(
     size_t action_name_length = 0;
     char* action_value = NULL;
     size_t action_value_length = 0;
-    jsmntype_t action_type = JSMN_OBJECT;
+    jkii_field_type_t action_type = JKII_FIELD_TYPE_OBJECT;
     res = _parse_first_kv(
             action_object,
             action_object_length,
@@ -213,25 +183,24 @@ _cmd_parser_code_t _parse_action(
     out_action->action_name = action_name;
     out_action->action_name_length = action_name_length;
     switch (action_type) {
-        case JSMN_ARRAY:
+        case JKII_FIELD_TYPE_ARRAY:
             out_action->action_value.type = TIO_TYPE_ARRAY;
             out_action->action_value.opaque_value_length = action_value_length;
             out_action->action_value.param.opaque_value = action_value;
             break;
-        case JSMN_OBJECT:
+        case JKII_FIELD_TYPE_OBJECT:
             out_action->action_value.type = TIO_TYPE_OBJECT;
             out_action->action_value.opaque_value_length = action_value_length;
             out_action->action_value.param.opaque_value = action_value;
             break;
-        case JSMN_STRING:
+        case JKII_FIELD_TYPE_STRING:
             out_action->action_value.type = TIO_TYPE_STRING;
             out_action->action_value.opaque_value_length = action_value_length;
             out_action->action_value.param.opaque_value = action_value;
             break;
-        case JSMN_PRIMITIVE:
-            return _parse_primitive(action_value, action_value_length, out_action);
         default:
-            break;
+            // A number, true, false or null.
+            return _parse_primitive(action_value, action_value_length, out_action);
     }
     return _CMD_PARSE_OK;
 }
@@ -277,16 +246,8 @@ jkii_parse_err_t _validate_json(
         const char* json_string,
         size_t json_string_size)
 {
-    jkii_resource_t* resource = handler->_kii._json_resource;
-    jkii_parse_err_t res = JKII_ERR_INVALID_INPUT;
-    if (resource != NULL) {
-        res = jkii_validate_root_object(json_string, json_string_size, resource);
-    } else {
-        JKII_CB_RESOURCE_ALLOC cb_alloc = handler->_kii._cb_json_alloc;
-        JKII_CB_RESOURCE_FREE cb_free = handler->_kii._cb_json_free;
-        res = jkii_validate_root_object_with_allocator(json_string, json_string_size, cb_alloc, cb_free);
-    }
-    return res;
+    (void)handler;
+    return jkii_validate_root_object(json_string, json_string_size);
 }
 
 static tio_code_t _append_action_result(
@@ -559,16 +520,8 @@ jkii_parse_err_t _parse_json(
         size_t json_string_size,
         jkii_field_t* fields)
 {
-    jkii_resource_t* resource = handler->_kii._json_resource;
-    jkii_parse_err_t res = JKII_ERR_INVALID_INPUT;
-    if (resource != NULL) {
-        res = jkii_parse(json_string, json_string_size, fields, resource);
-    } else {
-        JKII_CB_RESOURCE_ALLOC cb_alloc = handler->_kii._cb_json_alloc;
-        JKII_CB_RESOURCE_FREE cb_free = handler->_kii._cb_json_free;
-        res = jkii_parse_with_allocator(json_string, json_string_size, fields, cb_alloc, cb_free);
-    }
-    return res;
+    (void)handler;
+    return jkii_parse(json_string, json_string_size, fields);
 }
 
 

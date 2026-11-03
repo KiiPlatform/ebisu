@@ -6,7 +6,6 @@
 #include "kii_session_impl.h"
 #include "kii_thing_impl.h"
 #include "kii_ti_impl.h"
-#include "jkii_wrapper.h"
 #include <ebisu_mem.h>
 
 /* Kii's own SDKs renew five minutes before expiry. Short-lived tokens get a
@@ -303,7 +302,7 @@ kii_code_t _kii_parse_token_response(
     fields[3].type = JKII_FIELD_TYPE_LONG;
     fields[4].name = NULL;
 
-    jkii_parse_err_t result = _jkii_read_object(kii, buff, buff_size, fields);
+    jkii_parse_err_t result = jkii_parse(buff, buff_size, fields);
     if (result != JKII_ERR_OK && result != JKII_ERR_PARTIAL) {
         return KII_ERR_PARSE_JSON;
     }
@@ -632,8 +631,8 @@ static bool _token_refused(kii_t* kii)
     fields[0].field_copy.string = error_code;
     fields[0].field_copy_buff_size = sizeof(error_code);
     fields[1].name = NULL;
-    jkii_parse_err_t result = _jkii_read_object(kii,
-            kii->_rw_buff + kii->_resp_offset, kii->_rw_buff_written, fields);
+    jkii_parse_err_t result = jkii_parse(kii->_rw_buff + kii->_resp_offset,
+            kii->_rw_buff_written, fields);
     return ((result == JKII_ERR_OK || result == JKII_ERR_PARTIAL) &&
             fields[0].result == JKII_FIELD_ERR_OK &&
             strcmp(error_code, _WRONG_TOKEN) == 0);

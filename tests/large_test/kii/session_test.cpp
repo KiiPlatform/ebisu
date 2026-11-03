@@ -98,9 +98,7 @@ TEST_CASE( "The session renews a token the server refuses" ) {
     kii_t kii;
     ebisu::ltest::ssl::SSLData http_ssl_ctx;
     ebisu::ltest::ssl::SSLData mqtt_ssl_ctx;
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = {tokens, 256};
-    kiiltest::init(&kii, buff, sizeof(buff), &http_ssl_ctx, &mqtt_ssl_ctx, &resource);
+    kiiltest::init(&kii, buff, sizeof(buff), &http_ssl_ctx, &mqtt_ssl_ctx);
 
     OneTask one_task;
     uint64_t& now_ms = one_task.now_ms;

@@ -1,7 +1,10 @@
 // A JSON document, asked for a field of each type by a name and a path the
-// input chooses: a line of them, then the document.
+// input chooses: a line of them, then the document. Its root's members are
+// walked too.
 #include <jkii.h>
 #include <jkii_utils.h>
+#include <stdlib.h>
+#include <string.h>
 #include <string>
 #include <vector>
 #include "fuzz_input.h"
@@ -27,8 +30,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     };
     for (bool by_name : { true, false }) {
         for (jkii_field_type_t type : types) {
-            jkii_token_t tokens[32];
-            jkii_resource_t resource = { tokens, 32 };
             char copy[16];
             jkii_field_t fields[2];
             memset(fields, 0, sizeof(fields));
@@ -43,9 +44,24 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 fields[0].field_copy.string = copy;
                 fields[0].field_copy_buff_size = sizeof(copy);
             }
-            jkii_parse(document.data(), document.size(), fields, &resource);
+            jkii_parse(document.data(), document.size(), fields);
         }
     }
+
+    // Every member of the root, if it is an object or an array: each within the
+    // document, and only as many as it could hold.
+    const char* begin = document.data();
+    const char* end = begin + document.size();
+    jkii_member_iter_t iter;
+    memset(&iter, 0, sizeof(iter));
+    jkii_member_t member;
+    size_t members = 0;
+    while (jkii_next_member(begin, document.size(), &iter, &member) == JKII_ERR_OK) {
+        if (member.value < begin || member.value + member.value_length > end) abort();
+        if (member.key != NULL && (member.key < begin || member.key + member.key_length > end)) abort();
+        if (++members > document.size()) abort();
+    }
+    jkii_validate_root_object(begin, document.size());
 
     std::vector<char> escaped(key.size() * 2 + 1);
     jkii_escape_str(key.c_str(), escaped.data(), escaped.size());

@@ -6,7 +6,6 @@
 #include "kii_impl.h"
 #include "kii_thing_impl.h"
 #include "kii_session_impl.h"
-#include "jkii_wrapper.h"
 #include <ebisu_mem.h>
 
 kii_code_t kii_auth_thing(
@@ -93,7 +92,7 @@ kii_code_t kii_register_thing(
         sizeof(kii->_author.author_id[0]);
     fields[2].name = NULL;
 
-    result = _jkii_read_object(kii, buff, buff_size, fields);
+    result = jkii_parse(buff, buff_size, fields);
     if (result != JKII_ERR_OK) {
         ret = KII_ERR_PARSE_JSON;
         goto exit;

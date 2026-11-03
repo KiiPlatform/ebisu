@@ -34,7 +34,7 @@ endfunction()
 # What each library installs.
 ebisu_check_headers(ebisu_core ebisu_object.h ebisu_socket.h ebisu_system.h ebisu_clock.h ebisu_log.h ebisu_str.h ebisu_mem.h)
 ebisu_check_headers(khc khc.h)
-ebisu_check_headers(jkii jkii.h jkii_utils.h jkii_writer.h jkii_lines.h jsmn.h)
+ebisu_check_headers(jkii jkii.h jkii_utils.h jkii_writer.h jkii_lines.h)
 ebisu_check_headers(kii kii.h kii_task_callback.h)
 ebisu_check_headers(tio tio.h)
 ebisu_check_headers(ebisu_version ebisu_version.h)

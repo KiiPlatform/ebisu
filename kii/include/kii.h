@@ -490,11 +490,6 @@ typedef struct kii_t {
 
     char _etag[KII_ETAG_MAX_SIZE]; /**< \private */
 
-    jkii_resource_t* _json_resource; /**< \private */
-
-    JKII_CB_RESOURCE_ALLOC _cb_json_alloc; /**< \private */
-    JKII_CB_RESOURCE_FREE _cb_json_free; /**< \private */
-
     KHC_CB_SLIST_ALLOC _cb_slist_alloc; /**< \private */
     KHC_CB_SLIST_FREE _cb_slist_free; /**< \private */
     void* _slist_alloc_data; /**< \private */
@@ -1846,27 +1841,6 @@ void kii_set_cb_task_exit(kii_t* kii, KII_CB_TASK_EXIT cb_exit, void* userdata);
  * \param [in] userdata Given to cb.
  */
 void kii_set_cb_mqtt_event(kii_t* kii, KII_CB_MQTT_EVENT cb, void* userdata);
-/**
- * \brief Set JSON parser resource
- * \param [out] kii kii_t instance.
- * \param [in] resource to be used parse JSON. 256 tokens_num might be enough for almost all usecases.
- * If you need to parse large object or allocate exact size of memory used,
- * see kii_set_cb_json_parser_resource(kii_t, JKII_CB_RESOURCE_ALLOC, JKII_CB_RESOURCE_FREE)
- */
-void kii_set_json_parser_resource(kii_t* kii, jkii_resource_t* resource);
-
-/**
- * \brief Set JSON parser resource allocators.
- * To use Allocator instead of fixed size memory given by kii_set_json_parser_resource(kii_t, jkii_resource_t),
- * call kii_set_json_parser_resource(kii_t, jkii_resource_t) with NULL resource argument.
- * \param [out] kii kii_t instance.
- * \param [in] cb_alloc allocator callback.
- * \param [in] cb_free free callback should free memories allocated in cb_alloc.
- */
-void kii_set_cb_json_parser_resource(kii_t* kii,
-        JKII_CB_RESOURCE_ALLOC cb_alloc,
-        JKII_CB_RESOURCE_FREE cb_free);
-
 /**
  * \brief Set khc_slist (linked list) resource allocators.
 

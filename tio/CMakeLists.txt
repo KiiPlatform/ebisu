@@ -4,7 +4,7 @@ target_include_directories(ebisu_tio_objs
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 target_link_libraries(ebisu_tio_objs
-    PRIVATE ebisu_kii_objs ebisu_khc_objs ebisu_core_objs ebisu_jkii_objs ebisu_jsmn_objs)
+    PRIVATE ebisu_kii_objs ebisu_khc_objs ebisu_core_objs ebisu_jkii_objs)
 if(TIO_TRACE)
     # Used only by tio/command_parser.c. This never took effect before: the
     # option was declared as KHC_TRACE a second time by mistake, while the
@@ -17,7 +17,7 @@ ebisu_configure_target(ebisu_tio_objs)
 add_library(tio $<TARGET_OBJECTS:ebisu_tio_objs>)
 target_include_directories(tio
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
-# tio.h includes kii.h, and tio's sources call jkii and jsmn as well.
+# tio.h includes kii.h, and tio's sources call jkii as well.
 target_link_libraries(tio PUBLIC kii jkii)
 set_target_properties(tio PROPERTIES
     OUTPUT_NAME ebisu_tio VERSION ${version} SOVERSION ${soversion})

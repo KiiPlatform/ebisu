@@ -54,7 +54,7 @@ cflags=(-std=c99 -pedantic-errors -Wall -Werror -fvisibility=hidden -fPIC -D_DEF
 inc=(-I/opt/openssl/include -I/src/core/include -I/src/platform/openssl/include
     -I/src/platform/posix/include -I/out)
 tinc=("${inc[@]}" -I/src/tests -I/src/tests/large_test -I/src/kii/include -I/src/kii
-    -I/src/khc/include -I/src/jkii/include -I/src/jkii/libs/jsmn)
+    -I/src/khc/include -I/src/jkii/include)
 libs=(/opt/openssl/lib/libssl.a /opt/openssl/lib/libcrypto.a -ldl -lpthread)
 mkdir -p /tmp/b
 cd /tmp/b

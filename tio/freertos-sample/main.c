@@ -20,7 +20,6 @@
 #define HANDLER_MQTT_BUFF_SIZE 2048
 #define HANDLER_KEEP_ALIVE_SEC 300
 #define UPDATER_HTTP_BUFF_SIZE 4096
-#define TOKENS 256
 
 #define TO_RECV_SEC 15
 #define TO_SEND_SEC 15
@@ -36,8 +35,6 @@ extern const size_t ca_pem_size;
 static char handler_http_buff[HANDLER_HTTP_BUFF_SIZE];
 static char handler_mqtt_buff[HANDLER_MQTT_BUFF_SIZE];
 static char updater_http_buff[UPDATER_HTTP_BUFF_SIZE];
-static jkii_token_t handler_tokens[TOKENS];
-static jkii_token_t updater_tokens[TOKENS];
 
 static tio_handler_t handler;
 static tio_updater_t updater;
@@ -146,7 +143,7 @@ static size_t state_read_cb(char* buffer, size_t size, void* userdata)
     return n;
 }
 
-static void init_handler(jkii_resource_t* resource)
+static void init_handler(void)
 {
     tio_handler_init(&handler);
     tio_handler_set_app(&handler, EBISU_SAMPLE_APP_ID, EBISU_SAMPLE_APP_HOST);
@@ -162,10 +159,9 @@ static void init_handler(jkii_resource_t* resource)
     tio_handler_set_http_buff(&handler, handler_http_buff, sizeof(handler_http_buff));
     tio_handler_set_mqtt_buff(&handler, handler_mqtt_buff, sizeof(handler_mqtt_buff));
     tio_handler_set_keep_alive_interval(&handler, HANDLER_KEEP_ALIVE_SEC);
-    tio_handler_set_json_parser_resource(&handler, resource);
 }
 
-static void init_updater(jkii_resource_t* resource)
+static void init_updater(void)
 {
     tio_updater_init(&updater);
     tio_updater_set_app(&updater, EBISU_SAMPLE_APP_ID, EBISU_SAMPLE_APP_HOST);
@@ -178,7 +174,6 @@ static void init_updater(jkii_resource_t* resource)
 
     tio_updater_set_buff(&updater, updater_http_buff, sizeof(updater_http_buff));
     tio_updater_set_interval(&updater, EBISU_SAMPLE_UPDATE_PERIOD);
-    tio_updater_set_json_parser_resource(&updater, resource);
 }
 
 static void app_task(void* arg)
@@ -207,10 +202,8 @@ static void app_task(void* arg)
     sock_cb_init_context(&handler_mqtt_ctx, TO_RECV_SEC, TO_SEND_SEC, &device_clock);
     sock_cb_init_context(&updater_http_ctx, TO_RECV_SEC, TO_SEND_SEC, &device_clock);
 
-    static jkii_resource_t handler_resource = { handler_tokens, TOKENS };
-    static jkii_resource_t updater_resource = { updater_tokens, TOKENS };
-    init_handler(&handler_resource);
-    init_updater(&updater_resource);
+    init_handler();
+    init_updater();
 
     /* The handler and the updater share their tokens through the session,
        which renews them as they expire, and each response's date sets the

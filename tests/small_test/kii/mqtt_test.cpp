@@ -69,8 +69,6 @@ TEST_CASE( "MQTT state test" ) {
     char kii_buff[kii_buff_size];
     size_t mqtt_buff_size = 1024;
     char mqtt_buff[kii_buff_size];
-    jkii_token_t jkii_tokens[256];
-    jkii_resource_t jkii_resource = {jkii_tokens, 256};
 
     kii_t kii;
     kii_init(&kii);
@@ -78,7 +76,6 @@ TEST_CASE( "MQTT state test" ) {
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, kii_buff_size);
     kii_set_mqtt_buff(&kii, mqtt_buff, mqtt_buff_size);
-    kii_set_json_parser_resource(&kii, &jkii_resource);
     kii._keep_alive_interval = 300;
 
     khct::cb::SockCtx http_ctx;
@@ -562,8 +559,6 @@ TEST_CASE( "MQTT state abnormal tests" ) {
     char kii_buff[kii_buff_size];
     size_t mqtt_buff_size = 1024;
     char mqtt_buff[kii_buff_size];
-    jkii_token_t jkii_tokens[256];
-    jkii_resource_t jkii_resource = {jkii_tokens, 256};
 
     kii_t kii;
     kii_init(&kii);
@@ -571,7 +566,6 @@ TEST_CASE( "MQTT state abnormal tests" ) {
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, kii_buff_size);
     kii_set_mqtt_buff(&kii, mqtt_buff, mqtt_buff_size);
-    kii_set_json_parser_resource(&kii, &jkii_resource);
     kii._keep_alive_interval = 300;
 
     khct::cb::SockCtx http_ctx;
@@ -2684,8 +2678,6 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     char kii_buff[kii_buff_size];
     size_t mqtt_buff_size = 1024;
     char mqtt_buff[kii_buff_size];
-    jkii_token_t jkii_tokens[256];
-    jkii_resource_t jkii_resource = {jkii_tokens, 256};
 
     kii_t kii;
     kii_init(&kii);
@@ -2693,7 +2685,6 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, kii_buff_size);
     kii_set_mqtt_buff(&kii, mqtt_buff, mqtt_buff_size);
-    kii_set_json_parser_resource(&kii, &jkii_resource);
     kii._keep_alive_interval = 300;
 
     khct::cb::SockCtx http_ctx;
@@ -3345,8 +3336,6 @@ TEST_CASE( "MQTT endpoint values out of range" ) {
     char kii_buff[kii_buff_size];
     size_t mqtt_buff_size = 1024;
     char mqtt_buff[kii_buff_size];
-    jkii_token_t jkii_tokens[256];
-    jkii_resource_t jkii_resource = {jkii_tokens, 256};
 
     kii_t kii;
     kii_init(&kii);
@@ -3354,7 +3343,6 @@ TEST_CASE( "MQTT endpoint values out of range" ) {
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, kii_buff_size);
     kii_set_mqtt_buff(&kii, mqtt_buff, mqtt_buff_size);
-    kii_set_json_parser_resource(&kii, &jkii_resource);
 
     khct::cb::SockCtx http_ctx;
     kii_set_http_socket(&kii, http_ctx.socket());
@@ -3720,15 +3708,12 @@ bool ends_with_disconnect(const std::string& sent)
 TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
     char buff[1024];
     char mqtt_buff[1024];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
 
     kii_t kii;
     kii_init(&kii);
     kii_set_site(&kii, "api.kii.com");
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, buff, sizeof(buff));
-    kii_set_json_parser_resource(&kii, &resource);
     kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
     kii_set_system(&kii, khct::cb::delay_only_system());
     strcpy(kii._author.author_id, "th.1");
@@ -3902,8 +3887,6 @@ TEST_CASE( "The push task closes its MQTT connection when it ends" ) {
 TEST_CASE( "The push task connects with the endpoint onboarding returned" ) {
     char kii_buff[2048];
     char mqtt_buff[1024];
-    jkii_token_t tokens[128];
-    jkii_resource_t resource = {tokens, 128};
 
     kii_t kii;
     kii_init(&kii);
@@ -3911,7 +3894,6 @@ TEST_CASE( "The push task connects with the endpoint onboarding returned" ) {
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
     kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
-    kii_set_json_parser_resource(&kii, &resource);
     kii_set_system(&kii, khct::cb::delay_only_system());
     khct::HttpScript http;
     http.attach(&kii._khc);
@@ -4048,14 +4030,11 @@ ebisu_sock_code_t retry_connect_fail(void* context, const char* host, uint16_t p
 // network, so the push task tries it again rather than ending.
 TEST_CASE( "A request of the push task that times out is tried again" ) {
     char buff[1024];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
     kii_t kii;
     kii_init(&kii);
     kii_set_site(&kii, "api.kii.com");
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, buff, sizeof(buff));
-    kii_set_json_parser_resource(&kii, &resource);
     strcpy(kii._author.author_id, "th.1");
     strcpy(kii._author.access_token, "tok");
     uint64_t now = 1000;
@@ -4472,14 +4451,11 @@ TEST_CASE( "The task can be stopped during a wait" ) {
 TEST_CASE( "The MQTT task tells the event callback why" ) {
     char buff[1024];
     char mqtt_buff[256];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
     kii_t kii;
     kii_init(&kii);
     kii_set_site(&kii, "api.kii.com");
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, buff, sizeof(buff));
-    kii_set_json_parser_resource(&kii, &resource);
     kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
     kii_set_system(&kii, khct::cb::delay_only_system());
     kii._keep_alive_interval = 300;

@@ -21,10 +21,8 @@ TEST_CASE("Thing tests")
     kii_t kii;
     ebisu::ltest::ssl::SSLData http_ssl_ctx;
     ebisu::ltest::ssl::SSLData mqtt_ssl_ctx;
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = {tokens, 256};
 
-    kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &mqtt_ssl_ctx, &resource);
+    kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &mqtt_ssl_ctx);
 
     SECTION("Thing auth") {
         kii_code_t ret = KII_ERR_FAIL;

@@ -43,8 +43,6 @@ void cb_free(khc_slist* node, void* data) {
 struct Client {
     char buff[2048];
     char stream[512];
-    jkii_token_t tokens[128];
-    jkii_resource_t resource;
     kii_t kii;
     khct::HttpScript http;
     Headers headers;
@@ -53,14 +51,11 @@ struct Client {
         // Defined, as holds() looks through all of both.
         memset(buff, 0, sizeof(buff));
         memset(stream, 0, sizeof(stream));
-        resource.tokens = tokens;
-        resource.tokens_num = 128;
         kii_init(&kii);
         kii_set_site(&kii, "api.kii.com");
         kii_set_app_id(&kii, "app");
         kii_set_buff(&kii, buff, sizeof(buff));
         kii_set_stream_buff(&kii, stream, sizeof(stream));
-        kii_set_json_parser_resource(&kii, &resource);
         kii_set_cb_slist_resource(&kii, cb_alloc, cb_free, &headers, &headers);
         http.attach(&kii);
     }

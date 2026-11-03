@@ -87,7 +87,6 @@ ebisu_add_test_suite(large_test_kii
         ${CMAKE_CURRENT_SOURCE_DIR}/kii
         ${PROJECT_SOURCE_DIR}/khc/include
         ${PROJECT_SOURCE_DIR}/jkii/include
-        ${PROJECT_SOURCE_DIR}/jkii/libs/jsmn
         ${large_test_socket_includes}
     DEFINES ${large_test_defines})
 
@@ -106,7 +105,6 @@ ebisu_add_test_suite(large_test_tio
         ${CMAKE_CURRENT_SOURCE_DIR}/kii
         ${PROJECT_SOURCE_DIR}/khc/include
         ${PROJECT_SOURCE_DIR}/jkii/include
-        ${PROJECT_SOURCE_DIR}/jkii/libs/jsmn
         ${PROJECT_SOURCE_DIR}/tio/include
         ${large_test_socket_includes}
     DEFINES ${large_test_defines})

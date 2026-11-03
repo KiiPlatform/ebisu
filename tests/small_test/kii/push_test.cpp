@@ -14,15 +14,12 @@ static std::string response(const std::string& status_line, const std::string& b
 
 TEST_CASE( "kii_send_push_message posts the message to the topic" ) {
     char kii_buff[1024];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
 
     kii_t kii;
     kii_init(&kii);
     kii_set_site(&kii, "api.kii.com");
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
-    kii_set_json_parser_resource(&kii, &resource);
     strcpy(kii._author.author_id, "th.1");
     strcpy(kii._author.access_token, "tok");
 

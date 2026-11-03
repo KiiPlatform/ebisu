@@ -73,10 +73,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 
     tio_handler_t handler;
     tio_handler_init(&handler);
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
     kii_set_buff(&handler._kii, http_buff.data(), http_buff.size());
-    kii_set_json_parser_resource(&handler._kii, &resource);
     kii_set_app_id(&handler._kii, "app");
     kii_set_site(&handler._kii, "api.kii.com");
     khc_set_resp_header_buff(&handler._kii._khc, resp_header_buff.data(), resp_header_buff.size());

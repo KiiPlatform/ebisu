@@ -5,7 +5,6 @@ get_filename_component(ebisu_root ${CMAKE_CURRENT_LIST_DIR}/../../../.. ABSOLUTE
 file(GLOB ebisu_srcs
     ${ebisu_root}/core/src/*.c
     ${ebisu_root}/jkii/src/*.c
-    ${ebisu_root}/jkii/libs/jsmn/jsmn.c
     ${ebisu_root}/khc/src/*.c
     ${ebisu_root}/kii/*.c
     ${ebisu_root}/tio/*.c)
@@ -15,11 +14,11 @@ idf_component_register(
     INCLUDE_DIRS
         ${ebisu_root}/core/include
         ${ebisu_root}/jkii/include
-        ${ebisu_root}/jkii/libs/jsmn
         ${ebisu_root}/khc/include
         ${ebisu_root}/kii/include
         ${ebisu_root}/tio/include
     PRIV_INCLUDE_DIRS
+        ${ebisu_root}/jkii/libs
         ${ebisu_root}/khc/src
         ${ebisu_root}/kii
         ${ebisu_root}/tio)

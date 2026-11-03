@@ -13,8 +13,6 @@ TEST_CASE( "Simple test" ) {
     char kii_buff[kii_buff_size];
     size_t mqtt_buff_size = 1024;
     char mqtt_buff[kii_buff_size];
-    jkii_token_t jkii_tokens[256];
-    jkii_resource_t jkii_resource = {jkii_tokens, 256};
 
     kii_t kii;
     kii_init(&kii);
@@ -22,7 +20,6 @@ TEST_CASE( "Simple test" ) {
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, kii_buff_size);
     kii_set_mqtt_buff(&kii, mqtt_buff, mqtt_buff_size);
-    kii_set_json_parser_resource(&kii, &jkii_resource);
     kii._keep_alive_interval = 300;
 
     khct::cb::SockCtx http_ctx;

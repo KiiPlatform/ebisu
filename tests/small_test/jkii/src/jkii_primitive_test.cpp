@@ -341,13 +341,11 @@ TEST_CASE("KiiJson, PrimitiveDoubleWhateverTheLocale")
 
     // And in a field of an object, as tio's commands and kii's responses are.
     const char json[] = "{\"key1\" : 25.5}";
-    jkii_token_t tokens[16];
-    jkii_resource_t resource = { tokens, 16 };
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
     fields[0].name = "key1";
     fields[0].type = JKII_FIELD_TYPE_DOUBLE;
-    CHECK(JKII_ERR_OK == jkii_parse(json, strlen(json), fields, &resource));
+    CHECK(JKII_ERR_OK == jkii_parse(json, strlen(json), fields));
     CHECK(JKII_FIELD_ERR_OK == fields[0].result);
     CHECK(25.5 == fields[0].field_copy.double_value);
 }
