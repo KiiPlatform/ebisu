@@ -9,7 +9,9 @@ Ethernet QEMU emulates. CI runs it in QEMU against Kii Cloud.
   sample](../linux-sample/example.c) does, with its settings from `idf.py
   menuconfig`.
 - [main/sock_cb_esp32.c](main/sock_cb_esp32.c): the socket callbacks, on
-  ESP-IDF's esp-tls, which uses mbedTLS over lwIP.
+  ESP-IDF's esp-tls, which uses mbedTLS over lwIP. Their `last_error` says why
+  one failed, from what esp-tls keeps of it and mbedTLS's error, which the
+  sample logs when onboarding fails.
 - [main/sys_cb_esp32.c](main/sys_cb_esp32.c): tasks, delays and locks on
   FreeRTOS, and the monotonic clock on `esp_timer`.
 - [components/ebisu](components/ebisu/CMakeLists.txt): ebisu's libraries, built
@@ -64,7 +66,7 @@ qemu-system-xtensa -nographic -machine esp32 -m 4M \
 it:
 
 - with the clock's floor after Kii Cloud's certificate expires, the sample has
-  to refuse the certificate;
+  to refuse the certificate, and its socket's `last_error` has to say so;
 - against the application CI tests with, the sample onboards a thing of the
   run's own, its state reaches the thing's owner, and so does the result of a
   command the owner sends.

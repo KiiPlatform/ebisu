@@ -3,7 +3,8 @@
 
   qemu_sample.py <sample> refused <image>
       Built with its clock's floor after Kii Cloud's certificate expires, the
-      sample has to refuse the certificate as expired, and so never onboard.
+      sample has to refuse the certificate as expired, and so never onboard,
+      and its socket's last_error has to say so.
 
   qemu_sample.py <sample> live-config <settings> <run file>
       Writes the settings of a build for the live run: the application's, from
@@ -157,6 +158,11 @@ def refused(sample, image):
         line = device.wait_for(r"server certificate for \S+ refused: expired", 180,
                 refuse=r"onboarded|author updated")
         step(f"refused as it should be: {line}")
+        # The socket's last_error, through tio_handler_get_sock_error(): a
+        # certificate refused, MBEDTLS_X509_BADCERT_EXPIRED.
+        line = device.wait_for(r"failed to onboard: -?\d+, socket error verify, detail 1\b", 30,
+                refuse=r"onboarded|author updated")
+        step(f"and the sample is told why: {line}")
     finally:
         device.stop()
 

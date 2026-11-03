@@ -23,6 +23,10 @@ typedef struct {
     int recv_ret;
     /* The time the server's certificate is checked at. See ebisu_clock_t. */
     ebisu_clock_t* clock;
+    /* Why the last operation that failed did, for sock_cb_last_error(), and
+       more of it. */
+    ebisu_sock_error_t error;
+    long error_detail;
 } socket_context_t;
 
 /* Clears the context, with the timeouts of the socket, in seconds, 0 for none,
@@ -49,6 +53,9 @@ ebisu_sock_code_t
 
 bool
     sock_cb_recv_timed_out(ebisu_socket_t* self);
+
+ebisu_sock_error_t
+    sock_cb_last_error(ebisu_socket_t* self, long* out_detail);
 
 ebisu_sock_code_t
     sock_cb_close(ebisu_socket_t* self);
