@@ -370,6 +370,91 @@ TEST_CASE("ebisu_parse_hex") {
     CHECK(v == 99);
 }
 
+TEST_CASE("ebisu_parse_hex_bytes") {
+    uint8_t out[4];
+    size_t out_len = 99;
+    auto bytes_of = [&](const std::string& s, size_t out_size) {
+        Exact e(s);
+        memset(out, 0x55, sizeof(out));
+        out_len = 99;
+        return ebisu_parse_hex_bytes(e.ptr(), e.len(), out, out_size, &out_len);
+    };
+    CHECK(bytes_of("01aB", sizeof(out)) == EBISU_PARSE_OK);
+    CHECK(out_len == 2);
+    CHECK(out[0] == 0x01);
+    CHECK(out[1] == 0xab);
+    CHECK(out[2] == 0x55);
+    CHECK(bytes_of("00ff7F80", sizeof(out)) == EBISU_PARSE_OK);
+    CHECK(out_len == 4);
+    CHECK(out[0] == 0x00);
+    CHECK(out[1] == 0xff);
+    CHECK(out[2] == 0x7f);
+    CHECK(out[3] == 0x80);
+
+    // Nothing is written, out_len included, unless it parses.
+    CHECK(bytes_of("", sizeof(out)) == EBISU_PARSE_EMPTY);
+    CHECK(bytes_of("abc", sizeof(out)) == EBISU_PARSE_INVALID);
+    CHECK(bytes_of("0x01", sizeof(out)) == EBISU_PARSE_INVALID);
+    CHECK(bytes_of("01 02", sizeof(out)) == EBISU_PARSE_INVALID);
+    CHECK(bytes_of("0g", sizeof(out)) == EBISU_PARSE_INVALID);
+    CHECK(bytes_of("0102030405", sizeof(out)) == EBISU_PARSE_RANGE);
+    CHECK(bytes_of("01", 0) == EBISU_PARSE_RANGE);
+    // A character that isn't a digit is INVALID even where out is too small.
+    CHECK(bytes_of("010203040g", sizeof(out)) == EBISU_PARSE_INVALID);
+    CHECK(bytes_of("010203040", sizeof(out)) == EBISU_PARSE_INVALID);
+    CHECK(out_len == 99);
+    CHECK(out[0] == 0x55);
+
+    // Exactly the room there is.
+    CHECK(bytes_of("01020304", sizeof(out)) == EBISU_PARSE_OK);
+    CHECK(out_len == 4);
+    CHECK(ebisu_parse_hex_bytes("01", 2, nullptr, 0, &out_len) == EBISU_PARSE_RANGE);
+}
+
+TEST_CASE("ebisu_strbuf_append_hex_bytes") {
+    const uint8_t bytes[] = { 0x00, 0x01, 0xab, 0xff };
+    char buff[16];
+    ebisu_strbuf_t sb;
+
+    ebisu_strbuf_init(&sb, buff, sizeof(buff));
+    ebisu_strbuf_append_hex_bytes(&sb, bytes, sizeof(bytes));
+    CHECK(ebisu_strbuf_ok(&sb));
+    CHECK(std::string(buff) == "0001abff");
+    ebisu_strbuf_append_hex_bytes(&sb, nullptr, 0);
+    CHECK(ebisu_strbuf_ok(&sb));
+    CHECK(sb.len == 8);
+
+    SECTION("exactly the room there is") {
+        char small[9];
+        ebisu_strbuf_init(&sb, small, sizeof(small));
+        ebisu_strbuf_append_hex_bytes(&sb, bytes, sizeof(bytes));
+        CHECK(ebisu_strbuf_ok(&sb));
+        CHECK(std::string(small) == "0001abff");
+    }
+    SECTION("bytes that don't fit are not cut short") {
+        char small[8];
+        ebisu_strbuf_init(&sb, small, sizeof(small));
+        ebisu_strbuf_append(&sb, "x");
+        ebisu_strbuf_append_hex_bytes(&sb, bytes, sizeof(bytes) - 1);
+        CHECK(ebisu_strbuf_ok(&sb));
+        ebisu_strbuf_append_hex_bytes(&sb, bytes, 1);
+        CHECK_FALSE(ebisu_strbuf_ok(&sb));
+        CHECK(std::string(small) == "x0001ab");
+    }
+    SECTION("with no buffer") {
+        ebisu_strbuf_init(&sb, nullptr, 0);
+        ebisu_strbuf_append_hex_bytes(&sb, bytes, 1);
+        CHECK_FALSE(ebisu_strbuf_ok(&sb));
+    }
+
+    // And back.
+    uint8_t back[4];
+    size_t back_len = 0;
+    REQUIRE(ebisu_parse_hex_bytes(buff, 8, back, sizeof(back), &back_len) == EBISU_PARSE_OK);
+    CHECK(back_len == sizeof(bytes));
+    CHECK(memcmp(back, bytes, sizeof(bytes)) == 0);
+}
+
 TEST_CASE("ebisu_parse_fixed") {
     int64_t v = 99;
     CHECK(fixed_of("12.5", 2, &v) == EBISU_PARSE_OK);

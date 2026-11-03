@@ -118,6 +118,25 @@ void ebisu_strbuf_append_hex(ebisu_strbuf_t* sb, uint64_t v, unsigned int min_di
     ebisu_strbuf_append_n(sb, p, (size_t)(&digits[sizeof(digits)] - p));
 }
 
+void ebisu_strbuf_append_hex_bytes(ebisu_strbuf_t* sb, const uint8_t* bytes, size_t n)
+{
+    size_t i;
+    if (sb->overflow || n == 0) {
+        return;
+    }
+    /* As in ebisu_strbuf_append_n(), for two digits a byte, without 2 * n,
+       which could wrap. */
+    if (sb->size == 0 || n > (sb->size - sb->len - 1) / 2) {
+        sb->overflow = true;
+        return;
+    }
+    for (i = 0; i < n; ++i) {
+        sb->buff[sb->len++] = _hex_digits[bytes[i] >> 4];
+        sb->buff[sb->len++] = _hex_digits[bytes[i] & 0xf];
+    }
+    sb->buff[sb->len] = '\0';
+}
+
 void ebisu_strbuf_append_fixed(ebisu_strbuf_t* sb, int64_t v, unsigned int decimals)
 {
     /* Sign, 19 integer digits at most, the point and the decimals. */
@@ -234,6 +253,33 @@ ebisu_parse_err_t ebisu_parse_uint(const char* s, size_t len, uint64_t max, uint
 ebisu_parse_err_t ebisu_parse_hex(const char* s, size_t len, uint64_t max, uint64_t* out)
 {
     return _parse_digits(s, len, 16, max, out);
+}
+
+ebisu_parse_err_t ebisu_parse_hex_bytes(const char* s, size_t len, uint8_t* out,
+        size_t out_size, size_t* out_len)
+{
+    size_t i;
+
+    if (len == 0) {
+        return EBISU_PARSE_EMPTY;
+    }
+    /* Every byte is checked before the room is, as in _parse_digits(). */
+    if (len % 2 != 0) {
+        return EBISU_PARSE_INVALID;
+    }
+    for (i = 0; i < len; ++i) {
+        if (_digit(s[i], 16) < 0) {
+            return EBISU_PARSE_INVALID;
+        }
+    }
+    if (len / 2 > out_size) {
+        return EBISU_PARSE_RANGE;
+    }
+    for (i = 0; i < len / 2; ++i) {
+        out[i] = (uint8_t)(_digit(s[2 * i], 16) * 16 + _digit(s[2 * i + 1], 16));
+    }
+    *out_len = len / 2;
+    return EBISU_PARSE_OK;
 }
 
 /* Takes a leading '+' or '-' off s. */

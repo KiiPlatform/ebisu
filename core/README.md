@@ -38,7 +38,8 @@ set on.
   over a fixed buffer that fails instead of cutting a string short, and that a
   function of the caller's, such as an escaper or an encoder, can write into,
   strict parsers of decimal, hexadecimal and fixed-point numbers from spans
-  that need no NUL, and splitting on a delimiter without copying. No
+  that need no NUL, bytes to hexadecimal and back, and splitting on a
+  delimiter without copying. No
   allocation, floating point, locale or `errno`.
 - **Loggers** (`ebisu_log.h`): `ebisu_logger_t` is where a port's diagnostics
   go, each with a level, such as the application's own log or syslog.

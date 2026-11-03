@@ -125,6 +125,16 @@ void ebisu_strbuf_append_uint(ebisu_strbuf_t* sb, uint64_t v);
 void ebisu_strbuf_append_hex(ebisu_strbuf_t* sb, uint64_t v, unsigned int min_digits);
 
 /**
+ * \brief Appends bytes in lowercase hexadecimal, two digits for each:
+ * { 0x01, 0xab } is "01ab".
+ *
+ * \param [in,out] sb The builder.
+ * \param [in] bytes The bytes. May be NULL when n is 0.
+ * \param [in] n How many.
+ */
+void ebisu_strbuf_append_hex_bytes(ebisu_strbuf_t* sb, const uint8_t* bytes, size_t n);
+
+/**
  * \brief Appends a scaled integer as a decimal number: (12345, 2) is
  * "123.45", (-5, 2) is "-0.05" and (7, 0) is "7".
  *
@@ -234,6 +244,23 @@ ebisu_parse_err_t ebisu_parse_int(const char* s, size_t len, int64_t min, int64_
  * \return #EBISU_PARSE_OK, or why not.
  */
 ebisu_parse_err_t ebisu_parse_hex(const char* s, size_t len, uint64_t max, uint64_t* out);
+
+/**
+ * \brief Parses hexadecimal into bytes, two digits for each, and either case
+ * of 'a' to 'f': "01AB" is { 0x01, 0xab }.
+ *
+ * An odd number of digits is #EBISU_PARSE_INVALID, and more bytes than out
+ * has room for are #EBISU_PARSE_RANGE.
+ *
+ * \param [in] s The bytes.
+ * \param [in] len How many.
+ * \param [out] out The bytes parsed. May be NULL when out_size is 0.
+ * \param [in] out_size Size of out, in bytes.
+ * \param [out] out_len How many bytes were parsed: len / 2.
+ * \return #EBISU_PARSE_OK, or why not.
+ */
+ebisu_parse_err_t ebisu_parse_hex_bytes(const char* s, size_t len, uint8_t* out,
+        size_t out_size, size_t* out_len);
 
 /**
  * \brief Parses a decimal number into a scaled integer: with decimals 2,
