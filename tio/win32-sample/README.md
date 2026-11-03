@@ -1,7 +1,9 @@
 # TIO sample application on Windows
 
 The [linux sample](../linux-sample/README.mkd) on the Win32 API, with the same
-tasks, callbacks and command line. It needs nothing beyond what Windows
+tasks, callbacks and command line. As the linux sample uses platform's POSIX
+and OpenSSL ports, it uses its [Win32 and Schannel
+ports](../../platform/README.md#ports), which need nothing beyond what Windows
 provides:
 
 | | linux sample | win32 sample |
@@ -55,7 +57,7 @@ time.
 
 ## TLS
 
-`sock_cb_win32.c` drives Schannel itself, and keeps what it has received but
+[platform's Schannel port](../../platform/schannel/src/ebisu_schannel.c) drives Schannel itself, and keeps what it has received but
 not yet returned between calls: TLS records come apart and together in any
 pieces TCP likes, and the MQTT task reads one byte at a time.
 
@@ -65,7 +67,7 @@ pieces TCP likes, and the MQTT task reads one byte at a time.
   issued for the host name and be in date. Revocation is not checked.
   Under wine the root store is the CA bundle of the system wine runs on.
 - A receive that times out returns `EBISU_SOCK_FAIL`, and
-  `sock_cb_recv_timed_out()` tells the MQTT task it was a timeout, so it waits
+  its `recv_timed_out` tells the MQTT task it was a timeout, so it waits
   on instead of connecting again. The wait is a `select()`, rather than
   `SO_RCVTIMEO`, so that no `recv()` is ever cut short by the timeout: Winsock
   documents that as leaving the socket in an indeterminate state.
@@ -75,8 +77,8 @@ pieces TCP likes, and the MQTT task reads one byte at a time.
 - Renegotiation is not supported: a server that asks for it gets a failed
   receive.
 
-Wine's Schannel differs from Windows' in two ways the sample deals with: it
-accepts any certificate, so the sample validates with crypt32, which wine
+Wine's Schannel differs from Windows' in two ways the port deals with: it
+accepts any certificate, so the port validates with crypt32, which wine
 implements, rather than leave it to Schannel; and it reports a close_notify as
 an empty record rather than `SEC_I_CONTEXT_EXPIRED`.
 
@@ -88,8 +90,9 @@ with: one made by `wineboot` in a container build step, say, which ended before
 
 ## Test
 
-`ctest --preset small-mingw` includes `win32app_sock_cb`, which runs
-`test/tls_test.py`: `test/sock_cb_test.c` calls the socket callbacks against
+`ctest --preset small-mingw` includes `schannel_socket`, which runs
+[`tests/schannel/tls_test.py`](../../tests/schannel/tls_test.py):
+`schannel_socket_test.c` calls the port's socket operations against
 TLS servers on 127.0.0.1 whose ciphertext the script controls, covering large
 and fragmented records, timeouts, resets, close_notify and refused
 certificates. It needs Python 3.9 or later and the `openssl` command, makes a

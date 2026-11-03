@@ -1,5 +1,5 @@
-// The socket callbacks of secure_socket_impl.h on Windows. TLS goes through the
-// win32 sample's callbacks, Winsock and Schannel, so the large tests run them
+// The socket callbacks of secure_socket_impl.h on Windows. TLS goes through
+// platform's Schannel port, Winsock and Schannel, so the large tests run it
 // against the live server too. PLAIN_HTTP uses Winsock alone.
 
 #include "secure_socket_impl.h"
@@ -27,7 +27,7 @@ struct WinsockStartup {
     }
 } winsock_startup;
 
-socket_context_t* win32_context(ebisu_socket_t* self)
+ebisu_schannel_socket_t* win32_context(ebisu_socket_t* self)
 {
     return &ebisu::ltest::ssl::data_of(self)->platform;
 }
@@ -38,7 +38,7 @@ static ebisu_sock_code_t
     cb_connect_ssl(ebisu_socket_t* self, const char* host,
             uint16_t port)
 {
-    return sock_cb_connect(&win32_context(self)->base, host, port);
+    return win32_context(self)->base.ops->connect(&win32_context(self)->base, host, port);
 }
 
 static ebisu_sock_code_t
@@ -47,7 +47,7 @@ static ebisu_sock_code_t
             size_t length,
             size_t* out_sent_length)
 {
-    ebisu_sock_code_t res = sock_cb_send(&win32_context(self)->base,
+    ebisu_sock_code_t res = win32_context(self)->base.ops->send(&win32_context(self)->base,
             buffer, length, out_sent_length);
 
 #ifdef SOCKET_LOG
@@ -65,7 +65,7 @@ static ebisu_sock_code_t
             size_t length_to_read,
             size_t* out_actual_length)
 {
-    ebisu_sock_code_t res = sock_cb_recv(&win32_context(self)->base,
+    ebisu_sock_code_t res = win32_context(self)->base.ops->recv(&win32_context(self)->base,
             buffer, length_to_read, out_actual_length);
 
 #ifdef SOCKET_LOG
@@ -80,7 +80,7 @@ static ebisu_sock_code_t
 static ebisu_sock_code_t
     cb_close_ssl(ebisu_socket_t* self)
 {
-    ebisu_sock_code_t res = sock_cb_close(&win32_context(self)->base);
+    ebisu_sock_code_t res = win32_context(self)->base.ops->close(&win32_context(self)->base);
 
 #ifdef SOCKET_LOG
     printf("\n----------------------------------------------------------------------------------------------------\n\n\n");
@@ -136,7 +136,7 @@ static ebisu_sock_code_t
             size_t length,
             size_t* out_sent_length)
 {
-    socket_context_t* ctx = win32_context(self);
+    ebisu_schannel_socket_t* ctx = win32_context(self);
     int ret = send(ctx->socket, buffer,
             length > INT_MAX ? INT_MAX : (int)length, 0);
     if (ret > 0) {
@@ -160,7 +160,7 @@ static ebisu_sock_code_t
             size_t* out_actual_length)
 {
     *out_actual_length = 0;
-    socket_context_t* ctx = win32_context(self);
+    ebisu_schannel_socket_t* ctx = win32_context(self);
     int ret = recv(ctx->socket, buffer,
             length_to_read > INT_MAX ? INT_MAX : (int)length_to_read, 0);
     if (ret > 0) {
@@ -182,7 +182,7 @@ static ebisu_sock_code_t
 static ebisu_sock_code_t
     cb_close_tcp(ebisu_socket_t* self)
 {
-    socket_context_t* ctx = win32_context(self);
+    ebisu_schannel_socket_t* ctx = win32_context(self);
     shutdown(ctx->socket, SD_BOTH);
     // ignore close errors
     closesocket(ctx->socket);

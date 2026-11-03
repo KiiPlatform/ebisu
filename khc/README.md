@@ -218,7 +218,7 @@ be called again with the same arguments.
 Implementations to start from:
 
 - [platform's OpenSSL port](https://github.com/KiiPlatform/ebisu/blob/master/platform/openssl/src/ebisu_openssl.c): BSD sockets and OpenSSL, which applications can link as it is.
-- [win32-sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/win32-sample/sock_cb_win32.c): Winsock and Schannel.
+- [platform's Schannel port](https://github.com/KiiPlatform/ebisu/blob/master/platform/schannel/src/ebisu_schannel.c): Winsock and Schannel, which applications on Windows can link as it is.
 - [esp32-sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/esp32-sample/main/sock_cb_esp32.c): ESP-IDF's esp-tls,
   mbedTLS over lwIP.
 - [freertos-sample](https://github.com/KiiPlatform/ebisu/blob/master/tio/freertos-sample/sock_cb_freertos.c): mbedTLS over

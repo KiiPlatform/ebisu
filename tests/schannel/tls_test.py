@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Tests the win32 sample's socket callbacks, sock_cb_win32.c, under wine.
+"""Tests platform's Schannel port, ebisu_schannel.c, under wine.
 
-Runs sock_cb_test.exe against TLS servers on 127.0.0.1 that this script
+Runs schannel_socket_test.exe against TLS servers on 127.0.0.1 that this script
 controls down to how the ciphertext is cut into TCP segments: large and
 fragmented records, receive timeouts, resets, close_notify, the end of the TCP
 stream, and certificates that must be refused.
@@ -10,7 +10,7 @@ Wine's root store is the CA bundle of the system it runs on, so the test makes
 a CA of its own with the openssl command and a wine prefix of its own, whose
 root store it adds the CA to. Nothing outside a temporary directory is touched.
 
-    tls_test.py <sock_cb_test.exe> [--wine <wine>] [--workdir <directory>]
+    tls_test.py <schannel_socket_test.exe> [--wine <wine>] [--workdir <directory>]
 """
 import argparse
 import os
@@ -76,7 +76,7 @@ def make_certificates(d):
     with open(os.path.join(d, 'serial'), 'w') as f:
         f.write('1000\n')
     openssl(d, 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', 'ca.key', '-out', 'ca.pem',
-            '-days', '2', '-subj', '/CN=ebisu win32 sample test CA', '-config', 'ca.cnf', '-extensions', 'v3_ca')
+            '-days', '2', '-subj', '/CN=ebisu Schannel test CA', '-config', 'ca.cnf', '-extensions', 'v3_ca')
     openssl(d, 'x509', '-in', 'ca.pem', '-outform', 'der', '-out', 'ca.der')
 
     def issue(name, dns, dates, more_names=()):
@@ -336,7 +336,7 @@ class Test:
         self.failures = 0
 
     def run(self, port, to_recv, *steps):
-        """The output of sock_cb_test.exe, and the STEP lines in it, split
+        """The output of schannel_socket_test.exe, and the STEP lines in it, split
         into the step and the rest."""
         out = subprocess.run([self.wine, self.exe, 'localhost', str(port), str(to_recv)] + list(steps),
                              env=self.env, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
@@ -468,7 +468,7 @@ def run_tests(t, d):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
-    parser.add_argument('exe', help='sock_cb_test.exe')
+    parser.add_argument('exe', help='schannel_socket_test.exe')
     parser.add_argument('--wine', default='wine')
     parser.add_argument('--workdir', help='where to make the temporary directory, which holds a wine prefix '
                         'of some hundreds of megabytes; the system default if left out')
@@ -476,7 +476,7 @@ def main():
 
     if args.workdir:
         os.makedirs(args.workdir, exist_ok=True)
-    tmp = tempfile.mkdtemp(prefix='ebisu-win32-tls-', dir=args.workdir)
+    tmp = tempfile.mkdtemp(prefix='ebisu-schannel-tls-', dir=args.workdir)
     prefix = os.path.join(tmp, 'wineprefix')
     # Without Mono and Gecko, which wineboot would otherwise offer to install.
     env = dict(os.environ, WINEPREFIX=prefix, WINEDEBUG='-all', WINEDLLOVERRIDES='mscoree,mshtml=')

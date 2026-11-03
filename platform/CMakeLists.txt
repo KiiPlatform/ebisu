@@ -75,3 +75,39 @@ if(UNIX)
             INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
     endif()
 endif()
+
+# The Windows ports: the system and a lock on the Win32 API, and TLS over
+# Winsock 2 with Schannel, with crypt32 to check the server's certificate, so
+# they need nothing beyond what Windows provides.
+if(WIN32)
+    add_library(ebisu_win32 STATIC win32/src/ebisu_win32.c)
+    target_include_directories(ebisu_win32
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/win32/include>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+    # Without it, windows.h pulls in winsock.h, the 1.1 API, which then
+    # clashes with winsock2.h in what includes both.
+    target_compile_definitions(ebisu_win32 PUBLIC WIN32_LEAN_AND_MEAN)
+    ebisu_configure_target(ebisu_win32)
+    install(FILES win32/include/ebisu_win32.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+    # ebisu::win32 in the CMake package.
+    set_target_properties(ebisu_win32 PROPERTIES EXPORT_NAME win32)
+    install(TARGETS ebisu_win32 EXPORT ebisu-targets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+    add_library(ebisu_schannel STATIC schannel/src/ebisu_schannel.c)
+    target_include_directories(ebisu_schannel
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/schannel/include>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+    target_link_libraries(ebisu_schannel PUBLIC ws2_32 secur32 crypt32)
+    target_compile_definitions(ebisu_schannel PUBLIC WIN32_LEAN_AND_MEAN)
+    ebisu_configure_target(ebisu_schannel)
+    install(FILES schannel/include/ebisu_schannel.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+    # ebisu::schannel in the CMake package.
+    set_target_properties(ebisu_schannel PROPERTIES EXPORT_NAME schannel)
+    install(TARGETS ebisu_schannel EXPORT ebisu-targets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+endif()
