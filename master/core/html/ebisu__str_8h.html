@@ -157,6 +157,9 @@ Functions</h2></td></tr>
 <tr class="memitem:ad278936c67df60098937976f7128e035" id="r_ad278936c67df60098937976f7128e035"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ebisu__str_8h.html#ad278936c67df60098937976f7128e035">ebisu_strbuf_append_hex</a> (<a class="el" href="structebisu__strbuf__t.html">ebisu_strbuf_t</a> *sb, uint64_t v, unsigned int min_digits)</td></tr>
 <tr class="memdesc:ad278936c67df60098937976f7128e035"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends an unsigned integer in lowercase hexadecimal, without "0x".  <br /></td></tr>
 <tr class="separator:ad278936c67df60098937976f7128e035"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50eb363ffdf48b70bc9c10b28269496b" id="r_a50eb363ffdf48b70bc9c10b28269496b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ebisu__str_8h.html#a50eb363ffdf48b70bc9c10b28269496b">ebisu_strbuf_append_hex_bytes</a> (<a class="el" href="structebisu__strbuf__t.html">ebisu_strbuf_t</a> *sb, const uint8_t *bytes, size_t n)</td></tr>
+<tr class="memdesc:a50eb363ffdf48b70bc9c10b28269496b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends bytes in lowercase hexadecimal, two digits for each: { 0x01, 0xab } is "01ab".  <br /></td></tr>
+<tr class="separator:a50eb363ffdf48b70bc9c10b28269496b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2ea1b86908eeb1b2665b396219ddbbc1" id="r_a2ea1b86908eeb1b2665b396219ddbbc1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ebisu__str_8h.html#a2ea1b86908eeb1b2665b396219ddbbc1">ebisu_strbuf_append_fixed</a> (<a class="el" href="structebisu__strbuf__t.html">ebisu_strbuf_t</a> *sb, int64_t v, unsigned int decimals)</td></tr>
 <tr class="memdesc:a2ea1b86908eeb1b2665b396219ddbbc1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends a scaled integer as a decimal number: (12345, 2) is "123.45", (-5, 2) is "-0.05" and (7, 0) is "7".  <br /></td></tr>
 <tr class="separator:a2ea1b86908eeb1b2665b396219ddbbc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -178,6 +181,9 @@ Functions</h2></td></tr>
 <tr class="memitem:add4a3ea64bded35ea45ca7ed037b3061" id="r_add4a3ea64bded35ea45ca7ed037b3061"><td class="memItemLeft" align="right" valign="top"><a class="el" href="ebisu__str_8h.html#a0f1cfa4702e7646801104b7c0668e41f">ebisu_parse_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ebisu__str_8h.html#add4a3ea64bded35ea45ca7ed037b3061">ebisu_parse_hex</a> (const char *s, size_t len, uint64_t max, uint64_t *out)</td></tr>
 <tr class="memdesc:add4a3ea64bded35ea45ca7ed037b3061"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses an unsigned hexadecimal integer: digits and either case of 'a' to 'f', without "0x".  <br /></td></tr>
 <tr class="separator:add4a3ea64bded35ea45ca7ed037b3061"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac190c169a26b65b96b7c161fb30554e7" id="r_ac190c169a26b65b96b7c161fb30554e7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="ebisu__str_8h.html#a0f1cfa4702e7646801104b7c0668e41f">ebisu_parse_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ebisu__str_8h.html#ac190c169a26b65b96b7c161fb30554e7">ebisu_parse_hex_bytes</a> (const char *s, size_t len, uint8_t *out, size_t out_size, size_t *out_len)</td></tr>
+<tr class="memdesc:ac190c169a26b65b96b7c161fb30554e7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses hexadecimal into bytes, two digits for each, and either case of 'a' to 'f': "01AB" is { 0x01, 0xab }.  <br /></td></tr>
+<tr class="separator:ac190c169a26b65b96b7c161fb30554e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5b2fc52ed6578fd55c0b4c42577bddad" id="r_a5b2fc52ed6578fd55c0b4c42577bddad"><td class="memItemLeft" align="right" valign="top"><a class="el" href="ebisu__str_8h.html#a0f1cfa4702e7646801104b7c0668e41f">ebisu_parse_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ebisu__str_8h.html#a5b2fc52ed6578fd55c0b4c42577bddad">ebisu_parse_fixed</a> (const char *s, size_t len, unsigned int decimals, int64_t min, int64_t max, int64_t *out)</td></tr>
 <tr class="memdesc:a5b2fc52ed6578fd55c0b4c42577bddad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parses a decimal number into a scaled integer: with decimals 2, "12.5" is 1250, "-0.05" is -5 and "7" is 700.  <br /></td></tr>
 <tr class="separator:a5b2fc52ed6578fd55c0b4c42577bddad"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -378,6 +384,66 @@ Functions</h2></td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">len</td><td>How many. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">max</td><td>The largest value taken. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">out</td><td>The value. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="ebisu__str_8h.html#a0f1cfa4702e7646801104b7c0668e41fac15c39f6f9582e6150a32eb123c1feeb" title="Parsed.">EBISU_PARSE_OK</a>, or why not. </dd></dl>
+
+</div>
+</div>
+<a id="ac190c169a26b65b96b7c161fb30554e7" name="ac190c169a26b65b96b7c161fb30554e7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac190c169a26b65b96b7c161fb30554e7">&#9670;&#160;</a></span>ebisu_parse_hex_bytes()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="ebisu__str_8h.html#a0f1cfa4702e7646801104b7c0668e41f">ebisu_parse_err_t</a> ebisu_parse_hex_bytes </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>s</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>len</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t *&#160;</td>
+          <td class="paramname"><em>out</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>out_size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t *&#160;</td>
+          <td class="paramname"><em>out_len</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Parses hexadecimal into bytes, two digits for each, and either case of 'a' to 'f': "01AB" is { 0x01, 0xab }. </p>
+<p>An odd number of digits is <a class="el" href="ebisu__str_8h.html#a0f1cfa4702e7646801104b7c0668e41faab3de77ee928d12b864b955c56ed2fb8" title="Something in it isn&#39;t part of the number.">EBISU_PARSE_INVALID</a>, and more bytes than out has room for are <a class="el" href="ebisu__str_8h.html#a0f1cfa4702e7646801104b7c0668e41fa25a04a6edc9ef3102c66698b778a9887" title="A number, but beyond what the type or the bounds given take.">EBISU_PARSE_RANGE</a>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">s</td><td>The bytes. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">len</td><td>How many. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out</td><td>The bytes parsed. May be NULL when out_size is 0. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">out_size</td><td>Size of out, in bytes. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_len</td><td>How many bytes were parsed: len / 2. </td></tr>
   </table>
   </dd>
 </dl>
@@ -881,6 +947,50 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a50eb363ffdf48b70bc9c10b28269496b" name="a50eb363ffdf48b70bc9c10b28269496b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a50eb363ffdf48b70bc9c10b28269496b">&#9670;&#160;</a></span>ebisu_strbuf_append_hex_bytes()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ebisu_strbuf_append_hex_bytes </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__strbuf__t.html">ebisu_strbuf_t</a> *&#160;</td>
+          <td class="paramname"><em>sb</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const uint8_t *&#160;</td>
+          <td class="paramname"><em>bytes</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>n</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Appends bytes in lowercase hexadecimal, two digits for each: { 0x01, 0xab } is "01ab". </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">sb</td><td>The builder. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">bytes</td><td>The bytes. May be NULL when n is 0. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">n</td><td>How many. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a13a7a04399b6871f1503d0bc3011ec28" name="a13a7a04399b6871f1503d0bc3011ec28"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a13a7a04399b6871f1503d0bc3011ec28">&#9670;&#160;</a></span>ebisu_strbuf_append_int()</h2>
 
@@ -1196,7 +1306,7 @@ Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 3 2026 15:14:44 for core by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Nov 3 2026 18:22:32 for core by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

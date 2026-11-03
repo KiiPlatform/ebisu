@@ -424,6 +424,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>ebisu_strbuf_append_hex_bytes</name>
+      <anchorfile>ebisu__str_8h.html</anchorfile>
+      <anchor>a50eb363ffdf48b70bc9c10b28269496b</anchor>
+      <arglist>(ebisu_strbuf_t *sb, const uint8_t *bytes, size_t n)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>ebisu_strbuf_append_fixed</name>
       <anchorfile>ebisu__str_8h.html</anchorfile>
       <anchor>a2ea1b86908eeb1b2665b396219ddbbc1</anchor>
@@ -470,6 +477,13 @@
       <anchorfile>ebisu__str_8h.html</anchorfile>
       <anchor>add4a3ea64bded35ea45ca7ed037b3061</anchor>
       <arglist>(const char *s, size_t len, uint64_t max, uint64_t *out)</arglist>
+    </member>
+    <member kind="function">
+      <type>ebisu_parse_err_t</type>
+      <name>ebisu_parse_hex_bytes</name>
+      <anchorfile>ebisu__str_8h.html</anchorfile>
+      <anchor>ac190c169a26b65b96b7c161fb30554e7</anchor>
+      <arglist>(const char *s, size_t len, uint8_t *out, size_t out_size, size_t *out_len)</arglist>
     </member>
     <member kind="function">
       <type>ebisu_parse_err_t</type>
