@@ -1,7 +1,6 @@
 #include "kii_ti_impl.h"
 #include "kii_impl.h"
 #include "kii_req_impl.h"
-#include "jkii_wrapper.h"
 #include <ebisu_mem.h>
 #include <string.h>
 
@@ -152,7 +151,7 @@ static kii_code_t _onboard_and_read(
     fields[8].type = JKII_FIELD_TYPE_INTEGER;
     fields[9].name = NULL;
 
-    result = _jkii_read_object(kii, buff, buff_size, fields);
+    result = jkii_parse(buff, buff_size, fields);
     if ((result != JKII_ERR_OK && result != JKII_ERR_PARTIAL) ||
             fields[0].result != JKII_FIELD_ERR_OK ||
             fields[1].result != JKII_FIELD_ERR_OK) {
@@ -295,7 +294,7 @@ kii_code_t _get_firmware_version(
         sizeof(out_version->firmware_version[0]);
     fields[1].name = NULL;
 
-    result = _jkii_read_object(kii, buff, buff_size, fields);
+    result = jkii_parse(buff, buff_size, fields);
     if (result != JKII_ERR_OK) {
         return KII_ERR_PARSE_JSON;
     }

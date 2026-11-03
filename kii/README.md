@@ -23,15 +23,12 @@ creates.
 ```c
     kii_t kii;
     char buff[4096];
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     kii_init(&kii);
     kii_set_site(&kii, "api-jp.kii.com");
     kii_set_app_id(&kii, "your-app-id");
 
     kii_set_buff(&kii, buff, sizeof(buff));
-    kii_set_json_parser_resource(&kii, &resource);
 
     kii_set_http_socket(&kii, &http_sock_ctx.base);
 ```
@@ -44,9 +41,6 @@ creates.
   bodies and Thing-IF states stream through callbacks instead, whatever their
   size. With a session, leave room after a request's body for the session to
   renew the token and send the request again; see [Sessions](#kii_session).
-- **JSON parser resource**: tokens `jkii` parses responses with. 256 are
-  enough for most responses. `kii_set_cb_json_parser_resource()` allocates
-  exactly as many as each response needs instead.
 - **Socket**: an `ebisu_socket_t`, which kii keeps a pointer to; see
   [khc's socket callbacks](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#socket-callbacks).
   They are asked to connect to port 443, for TLS, or to port 80 when

@@ -4,8 +4,8 @@ jkii is JSON parser library written in c (conforms to c99).
 It allows to specify multiple fields by jsonpath notation to obtain its values.
 This design is inspired by [microjson](http://www.catb.org/esr/microjson/).
 
-jkii is designed to fit resource limited environment.
-You can choose static or dynamic memory allocation.
+jkii is designed to fit resource limited environment. It allocates nothing,
+and needs no memory but its stack.
 
 It writes JSON too, and JSON Lines, with `jkii_writer.h`: see Writing JSON
 below. It reads JSON Lines, a record at a time, with `jkii_lines.h`: see
@@ -53,18 +53,33 @@ fields[0].field_copy.string = buf;
 fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
 fields[1].path = NULL;
 
-jkii_token_t tokens[8];
-jkii_resource_t resource = {tokens, 8};
-
 jkii_parse_err_t result = jkii_parse(
         json_string,
-        sizeof(json_string) / sizeof(json_string[0]),
-        &fields,
-        &resource);
+        strlen(json_string),
+        fields);
 
 if (result == JKII_ERR_OK) {
     // success to extract "hoo" value.
     // you can find "hoo" value in buf array.
+}
+```
+
+The string has to be JSON, as ECMA-404 has it, which jkii checks whole before
+looking anything up: anything else is `JKII_ERR_INVALID_INPUT`, as is nesting
+objects and arrays deeper than 32 levels. jkii allocates nothing, and needs no
+memory but its stack: it doesn't break the string into tokens first.
+
+`jkii_next_member()` walks the members of an object, or the elements of an
+array, one at a time, for when their names aren't known in advance:
+
+```c
+jkii_member_iter_t iter;
+jkii_member_t member;
+memset(&iter, 0x00, sizeof(iter));
+while (jkii_next_member(json_string, strlen(json_string), &iter, &member) ==
+        JKII_ERR_OK) {
+    // member.key and member.key_length, member.value and member.value_length,
+    // as written in json_string, and member.type.
 }
 ```
 
@@ -174,11 +189,10 @@ it, as after a power loss while appending, as `JKII_LINES_TRUNCATED`.
 
 `jkii_write_record_end()` writes them: see Writing JSON above.
 
-## Dependency.
+## Dependency
 
-jkii uses [jsmn](http://zserge.com/jsmn.html).
-It is statically linked by default.
-
-jsmn is published under [MIT
-License](http://opensource.org/licenses/mit-license.php).
+jkii parses with [coreJSON](https://github.com/FreeRTOS/coreJSON), the FreeRTOS
+project's JSON parser, under the MIT license, which `jkii/libs/coreJSON` holds.
+It is compiled into `libebisu_jkii`, which exports none of it, and its header
+isn't installed.
 

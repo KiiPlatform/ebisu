@@ -133,7 +133,6 @@ target_compile_definitions(mbedtls PUBLIC
 file(GLOB ebisu_srcs
     ${ebisu_root}/core/src/*.c
     ${ebisu_root}/jkii/src/*.c
-    ${ebisu_root}/jkii/libs/jsmn/jsmn.c
     ${ebisu_root}/khc/src/*.c
     ${ebisu_root}/kii/*.c
     ${ebisu_root}/tio/*.c)
@@ -142,11 +141,11 @@ target_include_directories(ebisu
     PUBLIC
         ${ebisu_root}/core/include
         ${ebisu_root}/jkii/include
-        ${ebisu_root}/jkii/libs/jsmn
         ${ebisu_root}/khc/include
         ${ebisu_root}/kii/include
         ${ebisu_root}/tio/include
     PRIVATE
+        ${ebisu_root}/jkii/libs
         ${ebisu_root}/khc/src
         ${ebisu_root}/kii
         ${ebisu_root}/tio)

@@ -660,8 +660,7 @@ void handler_init(
         socket_context_t* http_sock_ctx,
         char* mqtt_buffer,
         int mqtt_buffer_size,
-        socket_context_t* mqtt_sock_ctx,
-        jkii_resource_t* resource)
+        socket_context_t* mqtt_sock_ctx)
 {
     tio_handler_init(handler);
 
@@ -684,8 +683,6 @@ void handler_init(
     tio_handler_enable_insecure_mqtt(handler, true);
 
     tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
-
-    tio_handler_set_json_parser_resource(handler, resource);
 }
 
 // The handler's tokens, renewed as they expire.
@@ -734,9 +731,6 @@ void vCmdTask( void *pvParameters )
     char handler_mqtt_buff[HANDLER_MQTT_BUFF_SIZE];
     memset(handler_mqtt_buff, 0x00, sizeof(char) * HANDLER_MQTT_BUFF_SIZE);
 
-    jkii_token_t handler_tokens[256];
-    jkii_resource_t handler_resource = {handler_tokens, 256};
-
     handler_init(
             &handler,
             handler_http_buff,
@@ -744,8 +738,7 @@ void vCmdTask( void *pvParameters )
             &handler_http_ctx,
             handler_mqtt_buff,
             HANDLER_MQTT_BUFF_SIZE,
-            &handler_mqtt_ctx,
-            &handler_resource);
+            &handler_mqtt_ctx);
 
     if (cc3200_lock_init(&session_lock) != OSI_OK) {
         UART_PRINT("create session lock failed.\n");

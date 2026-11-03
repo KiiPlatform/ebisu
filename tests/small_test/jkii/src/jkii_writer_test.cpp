@@ -109,8 +109,6 @@ TEST_CASE( "The JSON writer puts in the commas, colons and quotes" ) {
 
     // What it wrote parses.
     std::string json = json_of(state);
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
     char mode[16];
     jkii_field_t fields[3];
     memset(fields, 0, sizeof(fields));
@@ -120,7 +118,7 @@ TEST_CASE( "The JSON writer puts in the commas, colons and quotes" ) {
     fields[0].field_copy_buff_size = sizeof(mode);
     fields[1].name = "presetTemperature";
     fields[1].type = JKII_FIELD_TYPE_INTEGER;
-    CHECK( jkii_parse(json.c_str(), json.size(), fields, &resource) == JKII_ERR_OK );
+    CHECK( jkii_parse(json.c_str(), json.size(), fields) == JKII_ERR_OK );
     CHECK( std::string(mode) == "dry" );
     CHECK( fields[1].field_copy.int_value == -5 );
 }

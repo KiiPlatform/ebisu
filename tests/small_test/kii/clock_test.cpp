@@ -314,8 +314,6 @@ namespace {
 // opens, as a socket callback checking the server's certificate would.
 struct Client {
     char buff[1024];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource;
     kii_t kii;
     ebisu_clock_t* clock;
     std::vector<std::string> responses;
@@ -326,13 +324,10 @@ struct Client {
     khct::cb::SockCtx http_ctx;
 
     explicit Client(ebisu_clock_t* c) : clock(c), next(0), resp_pos(0) {
-        resource.tokens = tokens;
-        resource.tokens_num = 64;
         kii_init(&kii);
         kii_set_site(&kii, "api.kii.com");
         kii_set_app_id(&kii, "dummyAppID");
         kii_set_buff(&kii, buff, sizeof(buff));
-        kii_set_json_parser_resource(&kii, &resource);
         http_ctx.on_connect = [this](void*, const char*, unsigned int) {
             int64_t now = 0;
             bool exact = ebisu_clock_get_time(clock, &now);

@@ -7,7 +7,6 @@
 #include "kii.h"
 #include "khc.h"
 #include "kii_mqtt_task.h"
-#include "jkii_wrapper.h"
 #include "kii_push_impl.h"
 #include "kii_impl.h"
 #include <ebisu_mem.h>
@@ -202,7 +201,7 @@ kii_code_t kii_install_push(
     fields[0].field_copy_buff_size = sizeof(out_installation_id->id);
     fields[1].name = NULL;
 
-    parse_result = _jkii_read_object(kii, buff, buff_size, fields);
+    parse_result = jkii_parse(buff, buff_size, fields);
     if (parse_result != JKII_ERR_OK) {
         res = KII_ERR_PARSE_JSON;
         goto exit;
@@ -284,7 +283,7 @@ kii_code_t kii_get_mqtt_endpoint(
     fields[6].type = JKII_FIELD_TYPE_LONG;
     fields[7].name = NULL;
 
-    parse_result = _jkii_read_object(kii, buff, buff_size, fields);
+    parse_result = jkii_parse(buff, buff_size, fields);
     if (parse_result != JKII_ERR_OK) {
         res = KII_ERR_PARSE_JSON;
         goto exit;

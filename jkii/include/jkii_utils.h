@@ -78,32 +78,17 @@ jkii_primitive_err_t jkii_parse_primitive(
  */
 int jkii_escape_str(const char* str, char* buff, size_t buff_size);
 
-/** Check that a string is JSON with an object as its root.
+/** Check that a string is JSON with an object as its root, as jkii_parse()
+ * checks it.
  *
  * \param [in] json_string of JSON string.
  * \param [in] json_string_len of JSON string.
- * \param [in] resource of parser.
- * \return JKII_ERR_OK, JKII_ERR_ROOT_TYPE if the root is anything else, or an
- * error from parsing the string.
+ * \return JKII_ERR_OK, JKII_ERR_ROOT_TYPE if the root is anything else, or
+ * JKII_ERR_INVALID_INPUT if the string is not JSON.
  */
 jkii_parse_err_t jkii_validate_root_object(
         const char* json_string,
-        size_t json_string_len,
-        jkii_resource_t* resource);
-
-/** jkii_validate_root_object() with a custom memory allocator.
- *
- * \param [in] json_string of JSON string.
- * \param [in] json_string_len of JSON string.
- * \param [in] cb_alloc allocate resource
- * \param [in] cb_free free resource
- * \return As jkii_validate_root_object().
- */
-jkii_parse_err_t jkii_validate_root_object_with_allocator(
-        const char* json_string,
-        size_t json_string_len,
-        JKII_CB_RESOURCE_ALLOC cb_alloc,
-        JKII_CB_RESOURCE_FREE cb_free);
+        size_t json_string_len);
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC visibility pop

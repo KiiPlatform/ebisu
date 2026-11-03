@@ -8,42 +8,10 @@
 #include <type_traits>
 #include <vector>
 
-static jkii_resource_t* cb_alloc(size_t required_size)
-{
-    jkii_resource_t* res =
-        (jkii_resource_t*)malloc(sizeof(jkii_resource_t));
-    if (res == NULL) {
-        return NULL;
-    }
-    jkii_token_t *tokens =
-        (jkii_token_t*)malloc(sizeof(jkii_token_t) * required_size);
-    if (tokens == NULL) {
-        free(res);
-        return NULL;
-    }
-    res->tokens = tokens;
-    res->tokens_num = required_size;
-    return res;
-}
-
-static void cb_free(jkii_resource_t* resource) {
-    free(resource->tokens);
-    free(resource);
-}
-
-
-static jkii_resource_t* allocate_cb_fail(
-        size_t required_size)
-{
-    return NULL;
-}
-
 TEST_CASE("KiiJson, GetObjectStringByName") {
     const char json_string[] = "{\"key1\" : \"value1\"}";
     char buf[256];
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
 
@@ -55,7 +23,7 @@ TEST_CASE("KiiJson, GetObjectStringByName") {
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    jkii_parse_err_t res = jkii_parse(json_string, strlen(json_string), fields, &resource);
+    jkii_parse_err_t res = jkii_parse(json_string, strlen(json_string), fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
@@ -71,8 +39,6 @@ TEST_CASE("KiiJson, ByNameInArrayRoot") {
     };
     for (const auto& json : jsons) {
         INFO(json);
-        jkii_token_t tokens[32];
-        jkii_resource_t resource = { tokens, 32 };
         char buf[16];
         jkii_field_t fields[2];
         memset(fields, 0, sizeof(fields));
@@ -83,7 +49,7 @@ TEST_CASE("KiiJson, ByNameInArrayRoot") {
         fields[0].field_copy_buff_size = sizeof(buf);
         fields[1].name = NULL;
 
-        CHECK( jkii_parse(json.c_str(), json.size(), fields, &resource) == JKII_ERR_PARTIAL );
+        CHECK( jkii_parse(json.c_str(), json.size(), fields) == JKII_ERR_PARTIAL );
         CHECK( fields[0].result == JKII_FIELD_ERR_NOT_FOUND );
         CHECK( std::string(buf) == "" );
     }
@@ -91,8 +57,6 @@ TEST_CASE("KiiJson, ByNameInArrayRoot") {
 
 TEST_CASE("KiiJson, ByPathInArrayRoot") {
     const std::string json = "[\"key1\",\"value1\"]";
-    jkii_token_t tokens[32];
-    jkii_resource_t resource = { tokens, 32 };
     char buf[16];
     jkii_field_t fields[2];
     memset(fields, 0, sizeof(fields));
@@ -103,15 +67,13 @@ TEST_CASE("KiiJson, ByPathInArrayRoot") {
     fields[1].name = NULL;
     fields[1].path = NULL;
 
-    CHECK( jkii_parse(json.c_str(), json.size(), fields, &resource) == JKII_ERR_OK );
+    CHECK( jkii_parse(json.c_str(), json.size(), fields) == JKII_ERR_OK );
     CHECK( std::string(buf) == "value1" );
 }
 
 TEST_CASE("KiiJson, GetObjectPositiveIntByName") {
     const char json_string[] = "{\"key1\" : 100}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
 
@@ -124,8 +86,7 @@ TEST_CASE("KiiJson, GetObjectPositiveIntByName") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(100 == fields[0].field_copy.int_value);
@@ -134,8 +95,6 @@ TEST_CASE("KiiJson, GetObjectPositiveIntByName") {
 TEST_CASE("KiiJson, GetObjectNegativeIntByName") {
     const char json_string[] = "{\"key1\" : -100}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
 
@@ -148,8 +107,7 @@ TEST_CASE("KiiJson, GetObjectNegativeIntByName") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(-100 == fields[0].field_copy.int_value);
@@ -157,8 +115,6 @@ TEST_CASE("KiiJson, GetObjectNegativeIntByName") {
 
 TEST_CASE("KiiJson, GetObjectPositiveLongByName") {
     const char json_string[] = "{\"key1\" : 1099511627776}";
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -170,8 +126,7 @@ TEST_CASE("KiiJson, GetObjectPositiveLongByName") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(1099511627776 == fields[0].field_copy.long_value);
@@ -180,8 +135,6 @@ TEST_CASE("KiiJson, GetObjectPositiveLongByName") {
 TEST_CASE("KiiJson, GetObjectNegativeLongByName") {
     const char json_string[] = "{\"key1\" : -1099511627776}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -193,8 +146,7 @@ TEST_CASE("KiiJson, GetObjectNegativeLongByName") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(-1099511627776 == fields[0].field_copy.long_value);
@@ -203,8 +155,6 @@ TEST_CASE("KiiJson, GetObjectNegativeLongByName") {
 TEST_CASE("KiiJson, GetObjectPositiveDotDoubleByName") {
     const char json_string[] = "{\"key1\" : 0.1}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -216,8 +166,7 @@ TEST_CASE("KiiJson, GetObjectPositiveDotDoubleByName") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(fields[0].field_copy.double_value == 0.1);
@@ -226,8 +175,6 @@ TEST_CASE("KiiJson, GetObjectPositiveDotDoubleByName") {
 TEST_CASE("KiiJson, GetObjectNegativeDotDoubleByName") {
     const char json_string[] = "{\"key1\" : -0.1}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -239,8 +186,7 @@ TEST_CASE("KiiJson, GetObjectNegativeDotDoubleByName") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(fields[0].field_copy.double_value == -0.1);
@@ -249,8 +195,6 @@ TEST_CASE("KiiJson, GetObjectNegativeDotDoubleByName") {
 TEST_CASE("KiiJson, GetObjectPositiveEDoubleByName") {
     const char json_string[] = "{\"key1\" : 1e-1}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -262,8 +206,7 @@ TEST_CASE("KiiJson, GetObjectPositiveEDoubleByName") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
@@ -272,8 +215,6 @@ TEST_CASE("KiiJson, GetObjectPositiveEDoubleByName") {
 TEST_CASE("KiiJson, GetObjectNegativeEDoubleByName") {
     const char json_string[] = "{\"key1\" : -1e-1}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -285,8 +226,7 @@ TEST_CASE("KiiJson, GetObjectNegativeEDoubleByName") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
@@ -301,8 +241,6 @@ static jkii_parse_err_t parse_number_by_name(
     char json_string[64];
     snprintf(json_string, sizeof(json_string), "{\"key1\" : %s}", value);
 
-    jkii_token_t tokens[8];
-    jkii_resource_t resource = { tokens, 8 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -314,8 +252,7 @@ static jkii_parse_err_t parse_number_by_name(
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     *out_field = fields[0];
     return res;
 }
@@ -493,12 +430,13 @@ TEST_CASE("KiiJson, GetObjectIntegerByRange") {
 }
 
 // A sign, a point or an exponent marker without the digits that go with it is
-// not a number, but jsmn passes any primitive through, so one can arrive in a
-// command or a response. "-" passes jkii's type check as an integer and "1e"
-// as a double, so they reach strtol and strtod, which convert nothing of "-"
+// not a number. jsmn passed any primitive through, so one could arrive in a
+// command or a response: "-" passed jkii's type check as an integer and "1e"
+// as a double, so they reached strtol and strtod, which convert nothing of "-"
 // and only the "1" of "1e". Whether strtol reports that in errno is left to
 // the libc: glibc does not, BSD and macOS set EINVAL, which jkii asserted
-// against. "1e" was read as 1 and reported as parsed, on every libc.
+// against. "1e" was read as 1 and reported as parsed, on every libc. coreJSON
+// refuses them all.
 TEST_CASE("KiiJson, GetObjectNumberWithoutDigitsByName") {
     const char* const values[] = { "-", "+", ".", "-.", "1e", "1e+", "-1E-" };
     const jkii_field_type_t types[] = {
@@ -616,8 +554,6 @@ TEST_CASE("KiiJson, GetObjectHexadecimalByName") {
 TEST_CASE("KiiJson, GetObjectTrueByName") {
     const char json_string[] = "{\"key1\" : true}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -629,8 +565,7 @@ TEST_CASE("KiiJson, GetObjectTrueByName") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(JKII_TRUE == fields[0].field_copy.boolean_value);
@@ -639,8 +574,6 @@ TEST_CASE("KiiJson, GetObjectTrueByName") {
 TEST_CASE("KiiJson, GetObjectFalseByName") {
     const char json_string[] = "{\"key1\" : false}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -652,8 +585,7 @@ TEST_CASE("KiiJson, GetObjectFalseByName") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(JKII_FALSE == fields[0].field_copy.boolean_value);
@@ -664,8 +596,6 @@ TEST_CASE("KiiJson, GetObjectStringByPath") {
     const char json_string[] = "{\"key1\" : \"value1\"}";
     char buf[256];
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -679,8 +609,7 @@ TEST_CASE("KiiJson, GetObjectStringByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
@@ -689,8 +618,6 @@ TEST_CASE("KiiJson, GetObjectStringByPath") {
 TEST_CASE("KiiJson, GetObjectPositiveIntByPath") {
     const char json_string[] = "{\"key1\" : 100}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -702,8 +629,7 @@ TEST_CASE("KiiJson, GetObjectPositiveIntByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(100 == fields[0].field_copy.int_value);
@@ -712,8 +638,6 @@ TEST_CASE("KiiJson, GetObjectPositiveIntByPath") {
 TEST_CASE("KiiJson, GetObjectNegativeIntByPath") {
     const char json_string[] = "{\"key1\" : -100}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -725,8 +649,7 @@ TEST_CASE("KiiJson, GetObjectNegativeIntByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(-100 == fields[0].field_copy.int_value);
@@ -735,8 +658,6 @@ TEST_CASE("KiiJson, GetObjectNegativeIntByPath") {
 TEST_CASE("KiiJson, GetObjectPositiveLongByPath") {
     const char json_string[] = "{\"key1\" : 1099511627776}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -748,8 +669,7 @@ TEST_CASE("KiiJson, GetObjectPositiveLongByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(1099511627776 == fields[0].field_copy.long_value);
@@ -758,8 +678,6 @@ TEST_CASE("KiiJson, GetObjectPositiveLongByPath") {
 TEST_CASE("KiiJson, GetObjectNegativeLongByPath") {
     const char json_string[] = "{\"key1\" : -1099511627776}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -771,8 +689,7 @@ TEST_CASE("KiiJson, GetObjectNegativeLongByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(-1099511627776 == fields[0].field_copy.long_value);
@@ -781,8 +698,6 @@ TEST_CASE("KiiJson, GetObjectNegativeLongByPath") {
 TEST_CASE("KiiJson, GetObjectPositiveDotDoubleByPath") {
     const char json_string[] = "{\"key1\" : 0.1}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -794,8 +709,7 @@ TEST_CASE("KiiJson, GetObjectPositiveDotDoubleByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
@@ -804,8 +718,6 @@ TEST_CASE("KiiJson, GetObjectPositiveDotDoubleByPath") {
 TEST_CASE("KiiJson, GetObjectNegativeDotDoubleByPath") {
     const char json_string[] = "{\"key1\" : -0.1}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -817,8 +729,7 @@ TEST_CASE("KiiJson, GetObjectNegativeDotDoubleByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
@@ -827,8 +738,6 @@ TEST_CASE("KiiJson, GetObjectNegativeDotDoubleByPath") {
 TEST_CASE("KiiJson, GetObjectPositiveEDoubleByPath") {
     const char json_string[] = "{\"key1\" : 1e-1}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -840,8 +749,7 @@ TEST_CASE("KiiJson, GetObjectPositiveEDoubleByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
@@ -850,8 +758,6 @@ TEST_CASE("KiiJson, GetObjectPositiveEDoubleByPath") {
 TEST_CASE("KiiJson, GetObjectNegativeEDoubleByPath") {
     const char json_string[] = "{\"key1\" : -1e-1}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -863,8 +769,7 @@ TEST_CASE("KiiJson, GetObjectNegativeEDoubleByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
@@ -873,8 +778,6 @@ TEST_CASE("KiiJson, GetObjectNegativeEDoubleByPath") {
 TEST_CASE("KiiJson, GetObjectNullByPath") {
     const char json_string[] = "{\"key1\" : null}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -886,8 +789,7 @@ TEST_CASE("KiiJson, GetObjectNullByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
 }
@@ -895,8 +797,6 @@ TEST_CASE("KiiJson, GetObjectNullByPath") {
 TEST_CASE("KiiJson, GetObjectTrueByPath") {
     const char json_string[] = "{\"key1\" : true}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -908,8 +808,7 @@ TEST_CASE("KiiJson, GetObjectTrueByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(JKII_TRUE == fields[0].field_copy.boolean_value);
@@ -918,8 +817,6 @@ TEST_CASE("KiiJson, GetObjectTrueByPath") {
 TEST_CASE("KiiJson, GetObjectFalseByPath") {
     const char json_string[] = "{\"key1\" : false}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -931,8 +828,7 @@ TEST_CASE("KiiJson, GetObjectFalseByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(JKII_FALSE == fields[0].field_copy.boolean_value);
@@ -942,8 +838,6 @@ TEST_CASE("KiiJson, GetObjectSecondLayerStringByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : \"value1\"}}";
     char buf[256];
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -957,8 +851,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerStringByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
@@ -967,8 +860,6 @@ TEST_CASE("KiiJson, GetObjectSecondLayerStringByPath") {
 TEST_CASE("KiiJson, GetObjectSecondLayerPositiveIntByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : 100}}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -980,8 +871,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerPositiveIntByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(100 == fields[0].field_copy.int_value);
@@ -990,8 +880,6 @@ TEST_CASE("KiiJson, GetObjectSecondLayerPositiveIntByPath") {
 TEST_CASE("KiiJson, GetObjectSecondLayerNegativeIntByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : -100}}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1003,8 +891,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerNegativeIntByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(-100 == fields[0].field_copy.int_value);
@@ -1013,8 +900,6 @@ TEST_CASE("KiiJson, GetObjectSecondLayerNegativeIntByPath") {
 TEST_CASE("KiiJson, GetObjectSecondLayerPositiveLongByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : 1099511627776}}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1026,8 +911,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerPositiveLongByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(1099511627776 == fields[0].field_copy.long_value);
@@ -1036,8 +920,6 @@ TEST_CASE("KiiJson, GetObjectSecondLayerPositiveLongByPath") {
 TEST_CASE("KiiJson, GetObjectSecondLayerNegativeLongByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : -1099511627776}}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1049,8 +931,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerNegativeLongByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(-1099511627776 == fields[0].field_copy.long_value);
@@ -1059,8 +940,6 @@ TEST_CASE("KiiJson, GetObjectSecondLayerNegativeLongByPath") {
 TEST_CASE("KiiJson, GetObjectSecondLayerPositiveDotDoubleByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : 0.1}}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1072,8 +951,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerPositiveDotDoubleByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
@@ -1082,8 +960,6 @@ TEST_CASE("KiiJson, GetObjectSecondLayerPositiveDotDoubleByPath") {
 TEST_CASE("KiiJson, GetObjectSecondLayerNegativeDotDoubleByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : -0.1}}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1095,8 +971,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerNegativeDotDoubleByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
@@ -1105,8 +980,6 @@ TEST_CASE("KiiJson, GetObjectSecondLayerNegativeDotDoubleByPath") {
 TEST_CASE("KiiJson, GetObjectSecondLayerPositiveEDoubleByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : 1e-1}}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1118,8 +991,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerPositiveEDoubleByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
@@ -1128,8 +1000,6 @@ TEST_CASE("KiiJson, GetObjectSecondLayerPositiveEDoubleByPath") {
 TEST_CASE("KiiJson, GetObjectSecondLayerNegativeEDoubleByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : -1e-1}}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1141,8 +1011,7 @@ TEST_CASE("KiiJson, GetObjectSecondLayerNegativeEDoubleByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
@@ -1152,8 +1021,6 @@ TEST_CASE("KiiJson, GetObjectThirdLayerStringByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : \"value1\"}}}";
     char buf[256];
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1167,8 +1034,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerStringByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
@@ -1177,8 +1043,6 @@ TEST_CASE("KiiJson, GetObjectThirdLayerStringByPath") {
 TEST_CASE("KiiJson, GetObjectThirdLayerPositiveIntByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : 100}}}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1190,8 +1054,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerPositiveIntByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(100 == fields[0].field_copy.int_value);
@@ -1200,8 +1063,6 @@ TEST_CASE("KiiJson, GetObjectThirdLayerPositiveIntByPath") {
 TEST_CASE("KiiJson, GetObjectThirdLayerNegativeIntByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : -100}}}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1213,8 +1074,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerNegativeIntByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(-100 == fields[0].field_copy.int_value);
@@ -1224,8 +1084,6 @@ TEST_CASE("KiiJson, GetObjectThirdLayerPositiveLongByPath") {
     const char json_string[] =
         "{\"key1\" : {\"key2\" : {\"key3\" : 1099511627776}}}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1237,8 +1095,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerPositiveLongByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(1099511627776 == fields[0].field_copy.long_value);
@@ -1248,8 +1105,6 @@ TEST_CASE("KiiJson, GetObjectThirdLayerNegativeLongByPath") {
     const char json_string[] =
         "{\"key1\" : {\"key2\" : {\"key3\" : -1099511627776}}}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1261,8 +1116,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerNegativeLongByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(-1099511627776 == fields[0].field_copy.long_value);
@@ -1271,8 +1125,6 @@ TEST_CASE("KiiJson, GetObjectThirdLayerNegativeLongByPath") {
 TEST_CASE("KiiJson, GetObjectThirdLayerPositiveDotDoubleByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : 0.1}}}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1284,8 +1136,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerPositiveDotDoubleByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
@@ -1294,8 +1145,6 @@ TEST_CASE("KiiJson, GetObjectThirdLayerPositiveDotDoubleByPath") {
 TEST_CASE("KiiJson, GetObjectThirdLayerNegativeDotDoubleByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : -0.1}}}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1307,8 +1156,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerNegativeDotDoubleByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value + 0.1));
@@ -1317,8 +1165,6 @@ TEST_CASE("KiiJson, GetObjectThirdLayerNegativeDotDoubleByPath") {
 TEST_CASE("KiiJson, GetObjectThirdLayerPositiveEDoubleByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : 1e-1}}}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1330,8 +1176,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerPositiveEDoubleByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - (1e-1)));
@@ -1340,8 +1185,6 @@ TEST_CASE("KiiJson, GetObjectThirdLayerPositiveEDoubleByPath") {
 TEST_CASE("KiiJson, GetObjectThirdLayerNegativeEDoubleByPath") {
     const char json_string[] = "{\"key1\" : {\"key2\" : {\"key3\" : -1e-1}}}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1353,8 +1196,7 @@ TEST_CASE("KiiJson, GetObjectThirdLayerNegativeEDoubleByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - (-1e-1)));
@@ -1364,8 +1206,6 @@ TEST_CASE("KiiJson, GetArrayString") {
     const char json_string[] = "[\"value1\"]";
     char buf[256];
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1379,8 +1219,7 @@ TEST_CASE("KiiJson, GetArrayString") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
@@ -1389,8 +1228,6 @@ TEST_CASE("KiiJson, GetArrayString") {
 TEST_CASE("KiiJson, GetArrayInt") {
     const char json_string[] = "[100]";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1402,8 +1239,7 @@ TEST_CASE("KiiJson, GetArrayInt") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(100 == fields[0].field_copy.int_value);
@@ -1412,8 +1248,6 @@ TEST_CASE("KiiJson, GetArrayInt") {
 TEST_CASE("KiiJson, GetArrayLong") {
     const char json_string[] = "[1099511627776]";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1425,8 +1259,7 @@ TEST_CASE("KiiJson, GetArrayLong") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(1099511627776 == fields[0].field_copy.long_value);
@@ -1435,8 +1268,6 @@ TEST_CASE("KiiJson, GetArrayLong") {
 TEST_CASE("KiiJson, GetArrayDouble") {
     const char json_string[] = "[1e-1]";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1448,8 +1279,7 @@ TEST_CASE("KiiJson, GetArrayDouble") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(0.0001 >= fabs(fields[0].field_copy.double_value - 0.1));
@@ -1458,8 +1288,6 @@ TEST_CASE("KiiJson, GetArrayDouble") {
 TEST_CASE("KiiJson, GetArrayIntIndex1") {
     const char json_string[] = "[0, 100]";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1471,8 +1299,7 @@ TEST_CASE("KiiJson, GetArrayIntIndex1") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(100 == fields[0].field_copy.int_value);
@@ -1481,8 +1308,6 @@ TEST_CASE("KiiJson, GetArrayIntIndex1") {
 TEST_CASE("KiiJson, GetArrayNull") {
     const char json_string[] = "[null]";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1494,8 +1319,7 @@ TEST_CASE("KiiJson, GetArrayNull") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
 }
@@ -1503,8 +1327,6 @@ TEST_CASE("KiiJson, GetArrayNull") {
 TEST_CASE("KiiJson, GetArrayTrue") {
     const char json_string[] = "[true]";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1516,8 +1338,7 @@ TEST_CASE("KiiJson, GetArrayTrue") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(JKII_TRUE == fields[0].field_copy.boolean_value);
@@ -1526,8 +1347,6 @@ TEST_CASE("KiiJson, GetArrayTrue") {
 TEST_CASE("KiiJson, GetArrayFalse") {
     const char json_string[] = "[false]";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1539,8 +1358,7 @@ TEST_CASE("KiiJson, GetArrayFalse") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(JKII_FALSE == fields[0].field_copy.boolean_value);
@@ -1556,8 +1374,6 @@ TEST_CASE("KiiJson, GetArrayIndexWithoutDigits") {
     for (const char* path : paths) {
         INFO("path " << path);
 
-        jkii_token_t tokens[8];
-        jkii_resource_t resource = { tokens, 8 };
 
         jkii_field_t fields[2];
         memset(fields, 0x00, sizeof(fields));
@@ -1569,8 +1385,7 @@ TEST_CASE("KiiJson, GetArrayIndexWithoutDigits") {
         jkii_parse_err_t res = jkii_parse(
                 json_string,
                 strlen(json_string),
-                fields,
-                &resource);
+                fields);
         CHECK(JKII_ERR_PARTIAL == res);
         CHECK(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
     }
@@ -1593,8 +1408,6 @@ TEST_CASE("KiiJson, GetArrayIndexWithLeadingZero") {
     for (const auto& c : cases) {
         INFO("path " << c.path);
 
-        jkii_token_t tokens[16];
-        jkii_resource_t resource = { tokens, 16 };
 
         jkii_field_t fields[2];
         memset(fields, 0x00, sizeof(fields));
@@ -1606,8 +1419,7 @@ TEST_CASE("KiiJson, GetArrayIndexWithLeadingZero") {
         jkii_parse_err_t res = jkii_parse(
                 json_string,
                 strlen(json_string),
-                fields,
-                &resource);
+                fields);
         if (c.index < 0) {
             CHECK(JKII_ERR_PARTIAL == res);
             CHECK(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
@@ -1633,8 +1445,6 @@ TEST_CASE("KiiJson, GetArrayIndexOutOfRange") {
     for (const char* path : paths) {
         INFO("path " << path);
 
-        jkii_token_t tokens[8];
-        jkii_resource_t resource = { tokens, 8 };
 
         jkii_field_t fields[2];
         memset(fields, 0x00, sizeof(fields));
@@ -1646,8 +1456,7 @@ TEST_CASE("KiiJson, GetArrayIndexOutOfRange") {
         jkii_parse_err_t res = jkii_parse(
                 json_string,
                 strlen(json_string),
-                fields,
-                &resource);
+                fields);
         CHECK(JKII_ERR_PARTIAL == res);
         CHECK(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
     }
@@ -1672,9 +1481,9 @@ TEST_CASE("KiiJson, GetComplexObject") {
             "null,"
             "{"
                 "\"child2-1\" : \"child value\","
-                "\"child2-2\" : [true],"
+                "\"child2-2\" : [true]"
             "}"
-            "]"
+            "],"
             "\"parent3\" : {"
             "\"first\" : { \"second\" : { \"third\" : \"value\" } }"
             "}"
@@ -1683,8 +1492,6 @@ TEST_CASE("KiiJson, GetComplexObject") {
     char child2_1buf[256];
     char value_buf[256];
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[15];
     memset(fields, 0x00, sizeof(fields));
@@ -1731,8 +1538,7 @@ TEST_CASE("KiiJson, GetComplexObject") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(JKII_FIELD_ERR_OK == fields[1].result);
@@ -1792,8 +1598,6 @@ TEST_CASE("KiiJson, GetByInvalidPath") {
     for (const char* path : paths) {
         INFO("path " << path);
 
-        jkii_token_t tokens[16];
-        jkii_resource_t resource = { tokens, 16 };
 
         jkii_field_t fields[2];
         memset(fields, 0x00, sizeof(fields));
@@ -1805,8 +1609,7 @@ TEST_CASE("KiiJson, GetByInvalidPath") {
         jkii_parse_err_t res = jkii_parse(
                 json_string,
                 strlen(json_string),
-                fields,
-                &resource);
+                fields);
         CHECK(JKII_ERR_PARTIAL == res);
         CHECK(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
     }
@@ -1818,8 +1621,6 @@ TEST_CASE("KiiJson, GetByValidPathBesideInvalid") {
         "{\"\" : 1, \"a\" : [10, 20], \"b\" : {\"\" : 2, \"c\" : 3},"
         " \"[0]\" : 4}";
 
-    jkii_token_t tokens[16];
-    jkii_resource_t resource = { tokens, 16 };
 
     jkii_field_t fields[7];
     memset(fields, 0x00, sizeof(fields));
@@ -1842,8 +1643,7 @@ TEST_CASE("KiiJson, GetByValidPathBesideInvalid") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     CHECK(JKII_ERR_PARTIAL == res);
     CHECK(JKII_FIELD_ERR_OK == fields[0].result);
     CHECK(10 == fields[0].field_copy.int_value);
@@ -1870,8 +1670,6 @@ TEST_CASE("KiiJson, PushRetrieveEndpoint") {
             "\"X-MQTT-TTL\" : 2147483647"
         "}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[8];
     char username[64];
@@ -1911,8 +1709,7 @@ TEST_CASE("KiiJson, PushRetrieveEndpoint") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(JKII_FIELD_ERR_OK == fields[1].result);
@@ -1937,8 +1734,6 @@ TEST_CASE("KiiJson, CommandParseTest") {
                          "]"
         "}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[5];
     char schema[64];
@@ -1963,8 +1758,7 @@ TEST_CASE("KiiJson, CommandParseTest") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_OK == res);
     REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
     REQUIRE(JKII_FIELD_ERR_OK == fields[1].result);
@@ -1972,14 +1766,11 @@ TEST_CASE("KiiJson, CommandParseTest") {
     REQUIRE(JKII_FIELD_ERR_OK == fields[3].result);
 }
 
-// jsmn is built strict, so an unquoted key is not JSON, wherever it is and
-// whatever is looked up. Built lenient, it parsed as a primitive, which no
-// lookup found.
+// An unquoted key is not JSON, wherever it is and whatever is looked up. jsmn,
+// built lenient, parsed one as a primitive, which no lookup found.
 TEST_CASE("KiiJson, UnquotedKeyByPath") {
     const char json_string[] = "{x:1}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -1991,16 +1782,13 @@ TEST_CASE("KiiJson, UnquotedKeyByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_INVALID_INPUT == res);
 }
 
 TEST_CASE("KiiJson, UnquotedKeySecondLayerByPath") {
     const char json_string[] = "{\"key1\" : {key2 : 100}}";
 
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
 
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
@@ -2012,177 +1800,44 @@ TEST_CASE("KiiJson, UnquotedKeySecondLayerByPath") {
     jkii_parse_err_t res = jkii_parse(
             json_string,
             strlen(json_string),
-            fields,
-            &resource);
+            fields);
     REQUIRE(JKII_ERR_INVALID_INPUT == res);
 }
 
-// What jsmn's strict grammar refuses, and its lenient one took. Taken, a
-// missing colon also made a key the parent of what followed it.
+// What isn't JSON. jsmn's lenient grammar took all of these, and its strict
+// one the stray and missing commas and colons. Taken, a missing colon also
+// made a key the parent of what followed it.
 TEST_CASE("KiiJson, StrictGrammar") {
     const char* const inputs[] = {
         "{x:1}", "{1:2}", "{\"a\":{b:1}}", "{\"a\"{\"b\":1}}", "{\"a\" 1}",
-        "{\"a\":{\"a\"{\"a\":1}}}"
+        "{\"a\":{\"a\"{\"a\":1}}}", "{\"a\":1,}", "{,\"a\":1}",
+        "{\"a\":1,,\"b\":2}", "{\"a\":1 \"b\":2}", "[\"a\" \"b\"]", "{\"a\"::1}",
+        "{\"a\":1:2}", "{\"a\":[1:2]}", "{\"a\":1}}", "{\"a\":\"\\q\"}",
+        "{\"a\":'x'}", "{\"a\":tru}", "{\"a\":01}", "{\"a\":-}", "{\"a\":1e}",
+        "{\"a\":1} x"
     };
     for (const char* json_string : inputs) {
         INFO("input " << json_string);
-        jkii_token_t tokens[64];
-        jkii_resource_t resource = { tokens, 64 };
         jkii_field_t fields[2];
         memset(fields, 0x00, sizeof(fields));
         fields[0].name = "a";
         fields[0].type = JKII_FIELD_TYPE_ANY;
         CHECK(JKII_ERR_INVALID_INPUT ==
-                jkii_parse(json_string, strlen(json_string), fields, &resource));
+                jkii_parse(json_string, strlen(json_string), fields));
         CHECK(JKII_ERR_INVALID_INPUT ==
-                jkii_validate_root_object(json_string, strlen(json_string), &resource));
+                jkii_validate_root_object(json_string, strlen(json_string)));
     }
 }
 
-TEST_CASE("KiiJson, NoTokensTest")
-{
-    const char json_string[] = "{\"key1\" : \"value1\"}";
-    char buf[256];
-
-    jkii_field_t fields[2];
-    memset(fields, 0x00, sizeof(fields));
-
-    fields[0].name = "key1";
-    fields[0].type = JKII_FIELD_TYPE_STRING;
-    fields[0].field_copy.string = buf;
-    fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
-    fields[1].name = NULL;
-
-    jkii_parse_err_t res = jkii_parse(
-            json_string,
-            strlen(json_string),
-            fields,
-            NULL);
-    REQUIRE(JKII_ERR_TOKENS_SHORTAGE == res);
-}
-
-TEST_CASE("KiiJson, TokensShortageTest")
-{
-    const char json_string[] = "{\"key1\" : \"value1\"}";
-    char buf[256];
-
-    jkii_token_t tokens[1];
-    jkii_resource_t resource = { tokens, 1 };
-
-    jkii_field_t fields[2];
-    memset(fields, 0x00, sizeof(fields));
-
-    fields[0].name = "key1";
-    fields[0].type = JKII_FIELD_TYPE_STRING;
-    fields[0].field_copy.string = buf;
-    fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
-    fields[1].name = NULL;
-
-    jkii_parse_err_t res = jkii_parse(
-            json_string,
-            strlen(json_string),
-            fields,
-            &resource);
-    REQUIRE(JKII_ERR_TOKENS_SHORTAGE == res);
-}
-
-TEST_CASE("KiiJson, ExactTokensTest")
-{
-    const char json_string[] = "{\"key1\" : \"value1\"}";
-    char buf[256];
-
-    jkii_token_t tokens[3];
-    jkii_resource_t resource = { tokens, 3 };
-
-    jkii_field_t fields[2];
-    memset(fields, 0x00, sizeof(fields));
-
-    fields[0].name = "key1";
-    fields[0].type = JKII_FIELD_TYPE_STRING;
-    fields[0].field_copy.string = buf;
-    fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
-    fields[1].name = NULL;
-
-    jkii_parse_err_t res = jkii_parse(
-            json_string,
-            strlen(json_string),
-            fields,
-            &resource);
-    REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
-    REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
-
-    REQUIRE((jkii_token_t*)NULL != resource.tokens);
-    REQUIRE(3 == resource.tokens_num);
-}
-
-TEST_CASE("KiiJson, AllocatorTest")
-{
-    const char json_string[] = "{\"key1\" : \"value1\"}";
-    char buf[256];
-
-    jkii_field_t fields[2];
-    memset(fields, 0x00, sizeof(fields));
-
-    fields[0].name = "key1";
-    fields[0].type = JKII_FIELD_TYPE_STRING;
-    fields[0].field_copy.string = buf;
-    fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
-    fields[1].name = NULL;
-
-    jkii_parse_err_t res = jkii_parse_with_allocator(
-            json_string,
-            strlen(json_string),
-            fields,
-            cb_alloc,
-            cb_free);
-
-    REQUIRE(JKII_ERR_OK == res);
-    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
-    REQUIRE(0 == strcmp("value1", fields[0].field_copy.string));
-}
-
-TEST_CASE("KiiJson, FailedAllocationTest")
-{
-    const char json_string[] = "{\"key1\" : \"value1\"}";
-    char buf[256];
-
-    jkii_field_t fields[2];
-    memset(fields, 0x00, sizeof(fields));
-
-    fields[0].name = "key1";
-    fields[0].type = JKII_FIELD_TYPE_STRING;
-    fields[0].field_copy.string = buf;
-    fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
-    fields[1].name = NULL;
-
-
-    jkii_parse_err_t res = jkii_parse_with_allocator(
-            json_string,
-            strlen(json_string),
-            fields,
-            allocate_cb_fail,
-            cb_free);
-
-    REQUIRE(JKII_ERR_ALLOCATION == res);
-}
-
-// A string with no JSON token in it is invalid input, not a programming error:
-// it can come from the network, e.g. a command whose alias maps to "" rather
-// than to an array of actions. The entry points asserted a non-zero length,
-// aborting any build with assertions enabled, and without them went on to read
-// the token array as the previous parse had left it. Whitespace alone was
-// never asserted against and took that second path in every build.
+// Empty or whitespace only is invalid input, not a programming error: it can
+// come from the network, e.g. a command whose alias maps to "" rather than to
+// an array of actions.
 TEST_CASE("KiiJson, NoTokenInputTest")
 {
-    const char previous[] = "{\"key1\" : \"value1\"}";
     const char empty[] = "";
     const char whitespace[] = " \t\r\n";
     char buf[256];
 
-    jkii_token_t tokens[8];
-    jkii_resource_t resource = { tokens, 8 };
-
     jkii_field_t fields[2];
     memset(fields, 0x00, sizeof(fields));
 
@@ -2192,171 +1847,112 @@ TEST_CASE("KiiJson, NoTokenInputTest")
     fields[0].field_copy_buff_size = sizeof(buf) / sizeof(buf[0]);
     fields[1].name = NULL;
 
-    // Leave the tokens of a valid object behind, as kii and tio do by reusing
-    // one resource for every parse.
-    REQUIRE(JKII_ERR_OK ==
-            jkii_parse(previous, strlen(previous), fields, &resource));
-
     SECTION("jkii_parse") {
         REQUIRE(JKII_ERR_INVALID_INPUT ==
-                jkii_parse(empty, 0, fields, &resource));
+                jkii_parse(empty, 0, fields));
         REQUIRE(JKII_ERR_INVALID_INPUT ==
-                jkii_parse(whitespace, strlen(whitespace), fields, &resource));
-    }
-
-    SECTION("jkii_parse_with_allocator") {
-        REQUIRE(JKII_ERR_INVALID_INPUT ==
-                jkii_parse_with_allocator(empty, 0, fields, cb_alloc, cb_free));
-        REQUIRE(JKII_ERR_INVALID_INPUT ==
-                jkii_parse_with_allocator(whitespace, strlen(whitespace),
-                    fields, cb_alloc, cb_free));
+                jkii_parse(whitespace, strlen(whitespace), fields));
     }
 
     SECTION("jkii_validate_root_object") {
         REQUIRE(JKII_ERR_INVALID_INPUT ==
-                jkii_validate_root_object(empty, 0, &resource));
+                jkii_validate_root_object(empty, 0));
         REQUIRE(JKII_ERR_INVALID_INPUT ==
-                jkii_validate_root_object(whitespace, strlen(whitespace),
-                    &resource));
-    }
-
-    SECTION("jkii_validate_root_object_with_allocator") {
-        REQUIRE(JKII_ERR_INVALID_INPUT ==
-                jkii_validate_root_object_with_allocator(empty, 0,
-                    cb_alloc, cb_free));
-        REQUIRE(JKII_ERR_INVALID_INPUT ==
-                jkii_validate_root_object_with_allocator(whitespace,
-                    strlen(whitespace), cb_alloc, cb_free));
+                jkii_validate_root_object(whitespace, strlen(whitespace)));
     }
 }
 
-// Even strict, jsmn takes a key with no value for valid:
-// {"a"} is an object holding one string, with no token after it for the
-// value. Each document below ends in such a key, and the token after the
-// last one parsed must not be taken for its value.
-//
-// parse_after() parses into a resource that a previous message was parsed
-// into, as kii and tio reuse theirs, and into the same buffer, left
-// uncleared. That message had a value where this one stops, so the token
-// after the last one parsed is still that value, its offsets still
-// pointing at its text.
-static jkii_parse_err_t parse_after(
-        const char* previous,
-        const char* json_string,
-        jkii_field_t* fields)
+// A key with no value isn't JSON. jsmn took {"a"} for an object holding one
+// string, and the token after the last one parsed, left by an earlier parse,
+// for its value, which these were written against.
+TEST_CASE("KiiJson, KeyWithoutValueIsInvalid")
 {
-    char buf[256];
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = { tokens, 256 };
-    jkii_field_t no_fields[1];
-    memset(no_fields, 0x00, sizeof(no_fields));
-
-    memcpy(buf, previous, strlen(previous));
-    REQUIRE(JKII_ERR_OK ==
-            jkii_parse(buf, strlen(previous), no_fields, &resource));
-    // No terminator: the rest of the previous message stays after this one.
-    memcpy(buf, json_string, strlen(json_string));
-    return jkii_parse(buf, strlen(json_string), fields, &resource);
+    const char* const inputs[] = { "{\"a\"}", "{\"a\":1,\"b\"}", "{\"a\":{\"b\"}}" };
+    for (const char* json_string : inputs) {
+        INFO("input " << json_string);
+        jkii_field_t fields[3];
+        memset(fields, 0x00, sizeof(fields));
+        fields[0].name = "a";
+        fields[0].type = JKII_FIELD_TYPE_ANY;
+        fields[1].path = "/a/b";
+        fields[1].type = JKII_FIELD_TYPE_ANY;
+        fields[2].name = NULL;
+        CHECK(JKII_ERR_INVALID_INPUT ==
+                jkii_parse(json_string, strlen(json_string), fields));
+        CHECK(JKII_ERR_INVALID_INPUT ==
+                jkii_validate_root_object(json_string, strlen(json_string)));
+    }
 }
 
-// The allocator variant sizes the token array to the parse, so there is no
-// token after the last one.
-static jkii_parse_err_t parse_allocated(
-        const char* json_string,
-        jkii_field_t* fields)
-{
-    return jkii_parse_with_allocator(json_string, strlen(json_string),
-            fields, cb_alloc, cb_free);
+namespace {
+
+std::string span(const char* p, size_t n) {
+    return p != NULL ? std::string(p, n) : std::string("(null)");
 }
 
-TEST_CASE("KiiJson, OnlyKeyHasNoValue")
-{
-    const char json_string[] = "{\"a\"}";
-    char by_name[64];
-    char by_path[64];
-    jkii_parse_err_t res = JKII_ERR_OK;
+} // namespace
 
-    jkii_field_t fields[3];
-    memset(fields, 0x00, sizeof(fields));
-    fields[0].name = "a";
-    fields[0].type = JKII_FIELD_TYPE_STRING;
-    fields[0].field_copy.string = by_name;
-    fields[0].field_copy_buff_size = sizeof(by_name) / sizeof(by_name[0]);
-    fields[1].path = "/a";
-    fields[1].type = JKII_FIELD_TYPE_STRING;
-    fields[1].field_copy.string = by_path;
-    fields[1].field_copy_buff_size = sizeof(by_path) / sizeof(by_path[0]);
-    fields[2].name = NULL;
-
-    SECTION("reused resource") {
-        res = parse_after("{\"a\":\"stale\"}", json_string, fields);
+TEST_CASE("jkii_next_member gives an object's members and an array's elements") {
+    SECTION("an object") {
+        const char json[] = " {\"a\":1, \"b\":\"x\\\"y\", \"c\":[true,null], \"d\":{\"e\":2.5}} ";
+        jkii_member_iter_t iter;
+        memset(&iter, 0, sizeof(iter));
+        jkii_member_t m;
+        std::vector<std::string> got;
+        std::vector<jkii_field_type_t> types;
+        while (jkii_next_member(json, strlen(json), &iter, &m) == JKII_ERR_OK) {
+            got.push_back(span(m.key, m.key_length) + "=" + span(m.value, m.value_length));
+            types.push_back(m.type);
+        }
+        CHECK(got == std::vector<std::string>({ "a=1", "b=x\\\"y", "c=[true,null]", "d={\"e\":2.5}" }));
+        CHECK(types == std::vector<jkii_field_type_t>({ JKII_FIELD_TYPE_INTEGER,
+                JKII_FIELD_TYPE_STRING, JKII_FIELD_TYPE_ARRAY, JKII_FIELD_TYPE_OBJECT }));
+        // And none after the last.
+        CHECK(jkii_next_member(json, strlen(json), &iter, &m) == JKII_ERR_NOT_FOUND);
     }
-    SECTION("allocator") {
-        res = parse_allocated(json_string, fields);
+    SECTION("an array, whose elements have no key") {
+        const char json[] = "[1, 9223372036854775807, 1.5, false, null, \"s\"]";
+        jkii_member_iter_t iter;
+        memset(&iter, 0, sizeof(iter));
+        jkii_member_t m;
+        std::vector<jkii_field_type_t> types;
+        while (jkii_next_member(json, strlen(json), &iter, &m) == JKII_ERR_OK) {
+            CHECK(m.key == nullptr);
+            types.push_back(m.type);
+        }
+        CHECK(types == std::vector<jkii_field_type_t>({ JKII_FIELD_TYPE_INTEGER,
+                JKII_FIELD_TYPE_LONG, JKII_FIELD_TYPE_DOUBLE, JKII_FIELD_TYPE_BOOLEAN,
+                JKII_FIELD_TYPE_NULL, JKII_FIELD_TYPE_STRING }));
     }
-    REQUIRE(JKII_ERR_PARTIAL == res);
-    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[0].result);
-    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[1].result);
+    SECTION("an empty one, and what isn't one") {
+        jkii_member_iter_t iter;
+        jkii_member_t m;
+        memset(&iter, 0, sizeof(iter));
+        CHECK(jkii_next_member("{}", 2, &iter, &m) == JKII_ERR_NOT_FOUND);
+        memset(&iter, 0, sizeof(iter));
+        CHECK(jkii_next_member("\"s\"", 3, &iter, &m) == JKII_ERR_ROOT_TYPE);
+        memset(&iter, 0, sizeof(iter));
+        CHECK(jkii_next_member("{\"a\":1,}", 8, &iter, &m) == JKII_ERR_INVALID_INPUT);
+        memset(&iter, 0, sizeof(iter));
+        CHECK(jkii_next_member("", 0, &iter, &m) == JKII_ERR_INVALID_INPUT);
+    }
 }
 
-TEST_CASE("KiiJson, LastKeyHasNoValue")
-{
-    const char json_string[] = "{\"a\":1,\"b\"}";
-    jkii_parse_err_t res = JKII_ERR_OK;
-
-    jkii_field_t fields[6];
-    memset(fields, 0x00, sizeof(fields));
-    fields[0].name = "a";
-    fields[0].type = JKII_FIELD_TYPE_INTEGER;
-    fields[1].name = "b";
-    fields[1].type = JKII_FIELD_TYPE_ANY;
-    fields[2].path = "/b";
-    fields[2].type = JKII_FIELD_TYPE_ANY;
-    // Not there at all, but looking for it walks past b.
-    fields[3].name = "c";
-    fields[3].type = JKII_FIELD_TYPE_ANY;
-    fields[4].path = "/c";
-    fields[4].type = JKII_FIELD_TYPE_ANY;
-    fields[5].name = NULL;
-
-    SECTION("reused resource") {
-        res = parse_after("{\"a\":1,\"b\":\"stale\"}", json_string, fields);
+// coreJSON's JSON_MAX_DEPTH, 32 by default, keeps how deep its checks go
+// bounded, on a stack that may be small.
+TEST_CASE("KiiJson, NestingDeeperThan32IsInvalid") {
+    for (int depth : { 32, 33 }) {
+        INFO("depth " << depth);
+        std::string json = std::string(depth, '[') + std::string(depth, ']');
+        jkii_field_t fields[2];
+        memset(fields, 0x00, sizeof(fields));
+        fields[0].path = "/[0]";
+        fields[0].type = JKII_FIELD_TYPE_ANY;
+        jkii_parse_err_t res = jkii_parse(json.data(), json.size(), fields);
+        if (depth <= 32) {
+            CHECK(JKII_ERR_OK == res);
+        } else {
+            CHECK(JKII_ERR_INVALID_INPUT == res);
+        }
     }
-    SECTION("allocator") {
-        res = parse_allocated(json_string, fields);
-    }
-    REQUIRE(JKII_ERR_PARTIAL == res);
-    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
-    REQUIRE(1 == fields[0].field_copy.int_value);
-    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[1].result);
-    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[2].result);
-    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[3].result);
-    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[4].result);
-}
-
-TEST_CASE("KiiJson, NestedKeyHasNoValue")
-{
-    const char json_string[] = "{\"a\":{\"b\"}}";
-    jkii_parse_err_t res = JKII_ERR_OK;
-
-    jkii_field_t fields[4];
-    memset(fields, 0x00, sizeof(fields));
-    fields[0].path = "/a";
-    fields[0].type = JKII_FIELD_TYPE_OBJECT;
-    fields[1].path = "/a/b";
-    fields[1].type = JKII_FIELD_TYPE_ANY;
-    fields[2].path = "/a/c";
-    fields[2].type = JKII_FIELD_TYPE_ANY;
-    fields[3].path = NULL;
-
-    SECTION("reused resource") {
-        res = parse_after("{\"a\":{\"b\":\"stale\"}}", json_string, fields);
-    }
-    SECTION("allocator") {
-        res = parse_allocated(json_string, fields);
-    }
-    REQUIRE(JKII_ERR_PARTIAL == res);
-    REQUIRE(JKII_FIELD_ERR_OK == fields[0].result);
-    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[1].result);
-    REQUIRE(JKII_FIELD_ERR_NOT_FOUND == fields[2].result);
 }

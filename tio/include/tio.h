@@ -591,32 +591,6 @@ void tio_handler_set_keep_alive_interval(tio_handler_t* handler, uint32_t keep_a
 void tio_handler_set_app(tio_handler_t* handler, const char* app_id, const char* host);
 
 /**
- * \brief Set JSON parser resource.
- *
- * Set JSON parser resource. Required number of token depending on the remote controll command definition.
- * If you choose to allocate memory dynamically, you can call tio_handler_set_cb_json_parser_resource() instead.
- *
- * \param [out] handler tio_handler_t instance.
- * \param [in] resource used to parse JSON.
- */
-void tio_handler_set_json_parser_resource(tio_handler_t* handler, jkii_resource_t* resource);
-
-/**
- * \brief JSON parser resource callbacks.
- *
- * Set JSON parser resource callback.
- * If you choose to allocate memory statically, you can call tio_handler_set_json_parser_resource() instead.
- *
- * \param [out] handler tio_handler_t instance.
- * \param [in] cb_alloc allocation callback.
- * \param [in] cb_free free callback.
- */
-void tio_handler_set_cb_json_parser_resource(
-        tio_handler_t* handler,
-        JKII_CB_RESOURCE_ALLOC cb_alloc,
-        JKII_CB_RESOURCE_FREE cb_free);
-
-/**
  * \brief Set custom memory allocator for the linked list used to constuct request headers of HTTP.
 
  * If this method is not called, default memory allocator using malloc/ free is used.
@@ -1074,26 +1048,6 @@ void tio_updater_set_app(tio_updater_t* updater, const char* app_id, const char*
  * \param [in] update_interval_sec Interval in seconds.
  */
 void tio_updater_set_interval(tio_updater_t* updater, uint32_t update_interval_sec);
-
-/**
- * \brief Set the resource used to parse JSON.
- *
- * \param [out] updater tio_updater_t instance.
- * \param [in] resource Resource of the parser.
- */
-void tio_updater_set_json_parser_resource(tio_updater_t* updater, jkii_resource_t* resource);
-
-/**
- * \brief Set callbacks that allocate and free the resource used to parse JSON.
- *
- * \param [out] updater tio_updater_t instance.
- * \param [in] cb_alloc Allocates the resource.
- * \param [in] cb_free Frees the resource.
- */
-void tio_updater_set_cb_json_parser_resource(
-        tio_updater_t* updater,
-        JKII_CB_RESOURCE_ALLOC cb_alloc,
-        JKII_CB_RESOURCE_FREE cb_free);
 
 /**
  * \brief Set custom memory allocator for the linked list used to constuct request headers of HTTP.

@@ -1,7 +1,6 @@
 #include "kii_thing_impl.h"
 #include "kii_impl.h"
 #include "kii_req_impl.h"
-#include "jkii_wrapper.h"
 #include "jkii_utils.h"
 #include <ebisu_mem.h>
 #include <string.h>

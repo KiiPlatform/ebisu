@@ -15,8 +15,6 @@ namespace {
 // the next of responses.
 struct Client {
     char buff[1024];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource;
     kii_t kii;
     std::vector<std::string> responses;
     size_t next;
@@ -26,8 +24,6 @@ struct Client {
 
     // Most of these responses are dated 1994: unless asked, refuse nothing.
     explicit Client(bool keep_floor = false) : next(0), resp_pos(0) {
-        resource.tokens = tokens;
-        resource.tokens_num = 64;
         kii_init(&kii);
         if (!keep_floor) {
             kii._khc._resp_date_floor = 0;
@@ -35,7 +31,6 @@ struct Client {
         kii_set_site(&kii, "api.kii.com");
         kii_set_app_id(&kii, "dummyAppID");
         kii_set_buff(&kii, buff, sizeof(buff));
-        kii_set_json_parser_resource(&kii, &resource);
         http_ctx.on_connect = [this](void*, const char*, unsigned int) {
             resp = (next < responses.size()) ? responses[next] : std::string();
             ++next;

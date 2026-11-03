@@ -117,6 +117,24 @@ sed -i -e 's/\b\(kii\|tio\)_bool_t\b/bool/g' \
 A comparison such as `== KII_TRUE` becomes `== true`, which means the same for a
 `bool`.
 
+**jkii's tokens are gone.** jkii parses with coreJSON, which needs no token
+array, so `jkii_token_t`, `jkii_resource_t`, `JKII_CB_RESOURCE_ALLOC` and
+`JKII_CB_RESOURCE_FREE` are gone, and what took them:
+
+| 1.x | 3.0 |
+|---|---|
+| `jkii_parse(json, len, fields, &resource)` | `jkii_parse(json, len, fields)` |
+| `jkii_validate_root_object(json, len, &resource)` | `jkii_validate_root_object(json, len)` |
+| `jkii_parse_with_allocator()`, `jkii_validate_root_object_with_allocator()` | `jkii_parse()`, `jkii_validate_root_object()` |
+| `kii_set_json_parser_resource()`, `kii_set_cb_json_parser_resource()` | nothing: delete the call |
+| `tio_handler_set_json_parser_resource()`, `tio_handler_set_cb_json_parser_resource()` | nothing: delete the call |
+| `tio_updater_set_json_parser_resource()`, `tio_updater_set_cb_json_parser_resource()` | nothing: delete the call |
+
+`JKII_ERR_TOKENS_SHORTAGE` and `JKII_ERR_ALLOCATION` went with them, and the
+memory the tokens took can go too. `jkii.h` no longer includes `jsmn.h`, which
+isn't installed, so code that used jsmn's names through it, such as
+`jsmntok_t` or `jsmn_parse()`, has to have jsmn of its own.
+
 **`kii_set_mqtt_to_sock_send()` and `tio_handler_set_mqtt_to_sock_send()` are
 gone.** Delete the call. They stored a value nothing read, in 1.x as well, so
 this changes nothing at run time. An MQTT socket still needs a send timeout,
@@ -170,6 +188,11 @@ Without CMake, as a vendor's build usually does:
 - Add `core/src/*.c`, `khc/src/khc_http_date.c`, `kii/kii_clock.c` and
   `kii/kii_session.c` to the sources, and `core/include` to the include path.
   A port, for a system ebisu has one for, is under `platform/`.
+- `jkii/libs/jsmn` is gone. Leave `jkii/libs/jsmn/jsmn.c` out, and put
+  `jkii/libs` on the include path of jkii's sources, whose `jkii_core_json.c`
+  compiles coreJSON under names of jkii's own. Don't build
+  `jkii/libs/coreJSON/core_json.c` itself as well, which would be a second copy
+  that nothing calls.
 - The sources now include a generated `ebisu_version.h`. Write it with
   `version/ebisu_version.sh <output>` and put it on the include path, as the
   Makefiles of the embedded samples do.
@@ -372,10 +395,14 @@ jkii:
 - Only `null`, `true` and `false` in full are those values. 1.x took a prefix of
   one, such as `n` or `t`, for it.
 - Empty or whitespace-only input is `JKII_ERR_INVALID_INPUT`.
-- jsmn is built with its strict grammar, so an unquoted or non-string key, as in
-  `{x:1}`, and a member without its colon, as in `{"a"{"b":1}}`, are
-  `JKII_ERR_INVALID_INPUT`. 1.x took `{x:1}` for an object whose key no lookup
-  found, and the key before a missing colon for the parent of what followed.
+- The whole string is checked to be JSON, as ECMA-404 has it, before anything
+  is looked up, and anything else is `JKII_ERR_INVALID_INPUT`: an unquoted or
+  non-string key, as in `{x:1}`; a missing or stray comma or colon, as in
+  `{"a":1,}` or `{"a"{"b":1}}`; a key without a value, as in `{"a"}`; a control
+  character or a bad escape in a string; text after the root object or array.
+  So is nesting objects and arrays deeper than 32 levels. 1.x, with jsmn's
+  lenient grammar, took them all, `{x:1}` for an object whose key no lookup
+  found and the key before a missing colon for the parent of what followed.
 - Fields looked up by name are found only in an object. In an array, 1.x took
   the elements for pairs of a name and a value. Fields looked up by path still
   reach an array's elements.

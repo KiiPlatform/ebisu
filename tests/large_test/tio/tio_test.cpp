@@ -138,10 +138,6 @@ struct Device {
     char handler_http_buff[4096];
     char handler_mqtt_buff[4096];
     char updater_buff[4096];
-    jkii_token_t handler_tokens[256];
-    jkii_resource_t handler_resource;
-    jkii_token_t updater_tokens[256];
-    jkii_resource_t updater_resource;
     ebisu::ltest::ssl::SSLData handler_http;
     ebisu::ltest::ssl::SSLData updater_http;
     // The tasks' HTTP sockets, whose sends the device records.
@@ -321,8 +317,6 @@ bool spoiled(kii_session_t* session)
 
 void init_device(Device& d)
 {
-    d.handler_resource = {d.handler_tokens, sizeof(d.handler_tokens) / sizeof(d.handler_tokens[0])};
-    d.updater_resource = {d.updater_tokens, sizeof(d.updater_tokens) / sizeof(d.updater_tokens[0])};
     ebisu::ltest::init_platform_socket(&d.mqtt, TO_RECV, TO_SEND);
     d.system.keep = [&d](std::thread task) { d.tasks.push_back(std::move(task)); };
     auto record = [&d](const char* data, size_t length) {
@@ -345,7 +339,6 @@ void init_device(Device& d)
     tio_handler_set_http_buff(h, d.handler_http_buff, sizeof(d.handler_http_buff));
     tio_handler_set_mqtt_buff(h, d.handler_mqtt_buff, sizeof(d.handler_mqtt_buff));
     tio_handler_set_keep_alive_interval(h, KEEP_ALIVE);
-    tio_handler_set_json_parser_resource(h, &d.handler_resource);
 
     tio_updater_t* u = &d.updater;
     tio_updater_init(u);
@@ -357,7 +350,6 @@ void init_device(Device& d)
     tio_updater_set_socket(u, d.updater_sent.get());
     tio_updater_set_buff(u, d.updater_buff, sizeof(d.updater_buff));
     tio_updater_set_interval(u, UPDATE_INTERVAL);
-    tio_updater_set_json_parser_resource(u, &d.updater_resource);
 
     kii_session_init(&d.session);
     kii_session_set_lock(&d.session, d.session_lock.get());

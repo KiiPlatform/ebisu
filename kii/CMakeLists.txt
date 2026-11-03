@@ -5,7 +5,7 @@ target_include_directories(ebisu_kii_objs
     # kii's own sources include its private headers by bare name.
     PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 target_link_libraries(ebisu_kii_objs
-    PRIVATE ebisu_khc_objs ebisu_core_objs ebisu_jkii_objs ebisu_jsmn_objs)
+    PRIVATE ebisu_khc_objs ebisu_core_objs ebisu_jkii_objs)
 ebisu_configure_target(ebisu_kii_objs)
 
 # kii alone: khc, jkii and ebisu_core are libraries of their own, which it

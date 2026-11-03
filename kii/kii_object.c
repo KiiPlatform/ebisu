@@ -3,7 +3,6 @@
 #include <stdlib.h>
 
 #include "kii.h"
-#include "jkii_wrapper.h"
 #include "kii_impl.h"
 #include "kii_object_impl.h"
 
@@ -47,7 +46,7 @@ kii_code_t kii_post_object(
     fields[0].field_copy_buff_size = sizeof(out_object_id->id);
     fields[1].name = NULL;
 
-    result = _jkii_read_object(kii, buff, buff_size, fields);
+    result = jkii_parse(buff, buff_size, fields);
     if (result != JKII_ERR_OK) {
         ret = KII_ERR_PARSE_JSON;
         goto exit;

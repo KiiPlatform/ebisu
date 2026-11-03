@@ -50,7 +50,11 @@ ebisu_add_test_suite(small_test_jkii
         jkii/src/jkii_primitive_test.cpp
         jkii/src/jkii_test.cpp
         jkii/src/jkii_writer_test.cpp
-    LINK ${EBISU_JKII_OBJS})
+        # An application's own coreJSON, beside jkii's.
+        jkii/src/app_core_json_test.cpp
+        ${PROJECT_SOURCE_DIR}/jkii/libs/coreJSON/core_json.c
+    LINK ${EBISU_JKII_OBJS}
+    INCLUDES ${PROJECT_SOURCE_DIR}/jkii/libs/coreJSON)
 
 ebisu_add_test_suite(small_test_core
     LABEL small

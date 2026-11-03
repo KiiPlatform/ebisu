@@ -72,21 +72,16 @@ void init_session(kii_session_t* session, Platform* platform) {
 
 struct Client {
     char buff[4096];
-    jkii_token_t tokens[256];
-    jkii_resource_t resource;
     kii_t kii;
     khct::HttpScript http;
 
     explicit Client(size_t buff_size = 4096) {
         // Defined, as a test may look through all of it.
         memset(buff, 0, sizeof(buff));
-        resource.tokens = tokens;
-        resource.tokens_num = 256;
         kii_init(&kii);
         kii_set_site(&kii, "api.kii.com");
         kii_set_app_id(&kii, "app");
         kii_set_buff(&kii, buff, buff_size);
-        kii_set_json_parser_resource(&kii, &resource);
         kii_set_system(&kii, khct::cb::delay_only_system());
         http.attach(&kii);
     }

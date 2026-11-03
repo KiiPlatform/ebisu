@@ -89,11 +89,8 @@ TEST_CASE( "The updater uploads again when its token was renewed" ) {
     tio_updater_t updater;
     tio_updater_init(&updater);
     char buff[2048];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
     tio_updater_set_app(&updater, "app", "api.kii.com");
     tio_updater_set_buff(&updater, buff, sizeof(buff));
-    tio_updater_set_json_parser_resource(&updater, &resource);
     tio_updater_set_system(&updater, khct::cb::delay_only_system());
     khct::HttpScript http;
     http.attach(&updater._kii);
@@ -154,11 +151,8 @@ TEST_CASE( "A command's results are sent again after the token is renewed" ) {
     tio_handler_t handler;
     tio_handler_init(&handler);
     char buff[2048];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
     tio_handler_set_app(&handler, "app", "api.kii.com");
     tio_handler_set_http_buff(&handler, buff, sizeof(buff));
-    tio_handler_set_json_parser_resource(&handler, &resource);
     tio_handler_set_system(&handler, khct::cb::delay_only_system());
     khct::HttpScript http;
     http.attach(&handler._kii);

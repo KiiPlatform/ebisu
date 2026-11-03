@@ -31,15 +31,12 @@ static size_t count(const std::string& s, const std::string& what) {
 // carry. One of each kind is sent here.
 TEST_CASE( "Every request names the SDK and its version" ) {
     char kii_buff[1024];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
 
     kii_t kii;
     kii_init(&kii);
     kii_set_site(&kii, "api.kii.com");
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
-    kii_set_json_parser_resource(&kii, &resource);
 
     // Each request opens its own connection, answered with resp, and what is
     // sent through it is kept apart from the other requests'.
@@ -132,15 +129,12 @@ TEST_CASE( "Every request names the SDK and its version" ) {
 // the server had acted on would send it again.
 TEST_CASE( "A request reports the socket operation that failed" ) {
     char kii_buff[1024];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
 
     kii_t kii;
     kii_init(&kii);
     kii_set_site(&kii, "api.kii.com");
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
-    kii_set_json_parser_resource(&kii, &resource);
 
     khct::cb::SockCtx http_ctx;
     kii_set_http_socket(&kii, http_ctx.socket());
@@ -472,14 +466,11 @@ TEST_CASE( "A body kii holds whole goes with its length, a streamed one chunked"
 
 TEST_CASE( "kii says why its HTTP socket failed" ) {
     char kii_buff[1024];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
     kii_t kii;
     kii_init(&kii);
     kii_set_site(&kii, "api.kii.com");
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
-    kii_set_json_parser_resource(&kii, &resource);
     khct::HttpScript script;
     script.attach(&kii);
     // The connection is refused, and the socket says the host didn't resolve.
@@ -499,14 +490,11 @@ TEST_CASE( "kii says why its HTTP socket failed" ) {
 // now has it wait, and kii_set_request_timeout() bounds it.
 TEST_CASE( "kii's requests wait for their socket, and time out" ) {
     char kii_buff[1024];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
     kii_t kii;
     kii_init(&kii);
     kii_set_site(&kii, "api.kii.com");
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
-    kii_set_json_parser_resource(&kii, &resource);
     strcpy(kii._author.author_id, "th.1");
     strcpy(kii._author.access_token, "tok");
     khct::HttpScript script;
@@ -623,14 +611,11 @@ std::string body_of(const std::string& request)
 // One read through a callback never has to be held whole.
 TEST_CASE( "An API call's body read through a callback" ) {
     char kii_buff[256];
-    jkii_token_t tokens[64];
-    jkii_resource_t resource = { tokens, 64 };
     kii_t kii;
     kii_init(&kii);
     kii_set_site(&kii, "api.kii.com");
     kii_set_app_id(&kii, "dummyAppID");
     kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
-    kii_set_json_parser_resource(&kii, &resource);
     khct::HttpScript script;
     script.attach(&kii);
     script.responses = {

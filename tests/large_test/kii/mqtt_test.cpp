@@ -280,9 +280,7 @@ TEST_CASE("MQTT push from the broker")
     kii_t kii;
     ebisu::ltest::ssl::SSLData http_ssl_ctx;
     ebisu::ltest::ssl::SSLData unused_mqtt_ssl_ctx;
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = {tokens, 256};
-    kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &unused_mqtt_ssl_ctx, &resource);
+    kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &unused_mqtt_ssl_ctx);
 
     MqttTest t;
     set_up_task(&kii, t, mqtt_buff, sizeof(mqtt_buff));
@@ -408,9 +406,7 @@ TEST_CASE("The MQTT task renews a token the server refuses")
     kii_t kii;
     ebisu::ltest::ssl::SSLData http_ssl_ctx;
     ebisu::ltest::ssl::SSLData unused_mqtt_ssl_ctx;
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = {tokens, 256};
-    kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &unused_mqtt_ssl_ctx, &resource);
+    kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &unused_mqtt_ssl_ctx);
 
     MqttTest t;
     set_up_task(&kii, t, mqtt_buff, sizeof(mqtt_buff));
@@ -476,9 +472,7 @@ TEST_CASE("QoS 1 messages sent while the task is away arrive when it is back")
     kii_t kii;
     ebisu::ltest::ssl::SSLData http_ssl_ctx;
     ebisu::ltest::ssl::SSLData unused_mqtt_ssl_ctx;
-    jkii_token_t tokens[256];
-    jkii_resource_t resource = {tokens, 256};
-    kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &unused_mqtt_ssl_ctx, &resource);
+    kiiltest::init(&kii, buff, buff_size, &http_ssl_ctx, &unused_mqtt_ssl_ctx);
 
     MqttTest t;
     set_up_task(&kii, t, mqtt_buff, sizeof(mqtt_buff));

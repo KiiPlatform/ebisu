@@ -68,8 +68,7 @@ void updater_init(
         tio_updater_t* updater,
         char* buffer,
         int buffer_size,
-        socket_context_t* sock_ssl_ctx,
-        jkii_resource_t* resource)
+        socket_context_t* sock_ssl_ctx)
 {
     tio_updater_init(updater);
 
@@ -82,8 +81,6 @@ void updater_init(
     tio_updater_set_socket(updater, &sock_ssl_ctx->base);
 
     tio_updater_set_interval(updater, UPDATE_PERIOD_SEC);
-
-    tio_updater_set_json_parser_resource(updater, resource);
 
     tio_updater_set_cb_task_continue(updater, _updater_continue, NULL);
     tio_updater_set_cb_task_exit(updater, _updater_exit, NULL);
@@ -135,8 +132,7 @@ void handler_init(
         socket_context_t* http_ssl_ctx,
         char* mqtt_buffer,
         int mqtt_buffer_size,
-        socket_context_t* mqtt_ssl_ctx,
-        jkii_resource_t* resource)
+        socket_context_t* mqtt_ssl_ctx)
 {
     tio_handler_init(handler);
 
@@ -155,8 +151,6 @@ void handler_init(
     tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
 
     tio_handler_set_keep_alive_interval(handler, HANDLER_KEEP_ALIVE_SEC);
-
-    tio_handler_set_json_parser_resource(handler, resource);
 
     tio_handler_set_cb_task_continue(handler, _handler_continue, NULL);
     tio_handler_set_cb_task_exit(handler, _handler_exit, NULL);
@@ -228,9 +222,6 @@ int tio_main(int argc, char *argv[])
         socket_context_t updater_http_ctx;
         sock_cb_init_http(&updater_http_ctx, TO_RECV_SEC, TO_SEND_SEC);
 
-        jkii_token_t* updater_tokens = malloc(sizeof(jkii_token_t) * 256);
-        jkii_resource_t updater_resource = { updater_tokens, 256};
-
         updater_context_t updater_ctx;
 
         char* updater_buff = malloc(UPDATER_HTTP_BUFF_SIZE);
@@ -239,8 +230,7 @@ int tio_main(int argc, char *argv[])
                 updater,
                 updater_buff,
                 UPDATER_HTTP_BUFF_SIZE,
-                &updater_http_ctx,
-                &updater_resource);
+                &updater_http_ctx);
 
         tio_handler_t* handler = malloc(sizeof(tio_handler_t));
 
@@ -256,9 +246,6 @@ int tio_main(int argc, char *argv[])
         char* handler_mqtt_buff = malloc(HANDLER_MQTT_BUFF_SIZE);
         memset(handler_mqtt_buff, 0x00, sizeof(char) * HANDLER_MQTT_BUFF_SIZE);
 
-        jkii_token_t* handler_tokens = malloc(sizeof(jkii_token_t) * 256);
-        jkii_resource_t handler_resource = {handler_tokens, 256};
-
         handler_init(
                 handler,
                 handler_http_buff,
@@ -266,8 +253,7 @@ int tio_main(int argc, char *argv[])
                 &handler_http_ctx,
                 handler_mqtt_buff,
                 HANDLER_MQTT_BUFF_SIZE,
-                &handler_mqtt_ctx,
-                &handler_resource);
+                &handler_mqtt_ctx);
 
         // The handler and the updater share their tokens through the session,
         // which renews them as they expire.
@@ -317,12 +303,10 @@ int tio_main(int argc, char *argv[])
         }
 
         free(updater);
-        free(updater_tokens);
         free(updater_buff);
         free(handler);
         free(handler_http_buff);
         free(handler_mqtt_buff);
-        free(handler_tokens);
 
 #if CONNECT_SSL
         ssl_ctx_close();
