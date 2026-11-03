@@ -134,9 +134,8 @@ _cmd_parser_code_t _parse_primitive(
         tio_action_t* out_action)
 {
     jkii_primitive_t jprim;
-    // jsmn is built non-strict, so it passes primitives that are not JSON,
-    // such as abc or -. jkii does not set jprim for those, nor for numbers out
-    // of range.
+    // jsmn, even strict, passes primitives that are not JSON, such as - or 1e.
+    // jkii does not set jprim for those, nor for numbers out of range.
     jkii_primitive_err_t p_res = jkii_parse_primitive(action_value, action_value_length, &jprim);
     if (p_res != JKII_PRIMITIVE_ERR_OK) {
         return _CMD_PARSE_FAIL;

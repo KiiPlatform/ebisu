@@ -150,8 +150,8 @@ static int _kii_jsmn_get_value(
         goto exit;
     }
 
-    /* jsmn is not strict, so a key need not have a value: {"a"} is an
-     * object holding a single string. Look no further than the tokens this
+    /* Even strict, jsmn takes a key with no value: {"a"} is an object
+     * holding a single string. Look no further than the tokens this
      * parse produced; past them lie an earlier parse's tokens, or none. */
     for (i = 0; i < tokens[0].size && (size_t)index + 1 < tokens_num; ++i) {
         const jsmntok_t* key_token = tokens + index;
@@ -777,7 +777,8 @@ static int _kii_jsmn_get_value_by_path(
                     root_index + index + 1 < tokens_num; ++i) {
                 const jsmntok_t* key_token = root_token + index;
                 const jsmntok_t* value_token = root_token + index + 1;
-                /* jsmn is not strict: an unquoted key is a primitive. */
+                /* Strict, jsmn refuses a key that is not a string. Checked
+                 * all the same, as what follows relies on it. */
                 if (key_token->type != JSMN_STRING) {
                     return -1;
                 }
