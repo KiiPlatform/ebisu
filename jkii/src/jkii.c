@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <float.h>
 #include <ctype.h>
+#include <locale.h>
 
 /* Some vendor libcs have an errno.h that declares neither errno nor the codes
  * jkii checks. Defined here, once, for the file that uses them: in a public
@@ -518,6 +519,28 @@ static jkii_primitive_err_t _jkii_to_integer(
     return res;
 }
 
+/* Puts the locale's decimal point in place of the '.' in the number of len
+ * bytes in buf, terminated, which holds size. strtod() reads the decimal point
+ * the locale sets, a comma in many, while JSON's is always '.', so a program
+ * that set such a locale had no number with a fraction read. Returns 0, or -1
+ * if the number no longer fits, with a decimal point of more than a byte. */
+static int _jkii_localize_decimal_point(char* buf, size_t size, size_t len)
+{
+    const char* point = localeconv()->decimal_point;
+    size_t point_len = strlen(point);
+    char* dot = (char*)memchr(buf, '.', len);
+    if (dot == NULL || point_len == 0 || (point_len == 1 && point[0] == '.')) {
+        return 0;
+    }
+    if (len - 1 + point_len >= size) {
+        return -1;
+    }
+    /* What follows the '.', and the terminator. */
+    memmove(dot + point_len, dot + 1, len - (size_t)(dot - buf));
+    memcpy(dot, point, point_len);
+    return 0;
+}
+
 static jkii_primitive_err_t _jkii_to_double(
         const char* target,
         size_t target_size,
@@ -541,6 +564,9 @@ static jkii_primitive_err_t _jkii_to_double(
       return JKII_PRIMITIVE_ERR_INVALID;
     }
     memcpy(buf, target, target_size);
+    if (_jkii_localize_decimal_point(buf, buf_len, target_size) != 0) {
+        return JKII_PRIMITIVE_ERR_INVALID;
+    }
 
     errno = 0;
     value = strtod(buf, &endptr);
