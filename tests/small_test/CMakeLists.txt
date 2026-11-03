@@ -63,6 +63,7 @@ ebisu_add_test_suite(small_test_core
     SOURCES
         core/mem_test.cpp
         core/str_test.cpp
+        core/time_test.cpp
     LINK ebisu_core_objs)
 
 # platform's POSIX port, which needs threads and nothing else. Linux only, as

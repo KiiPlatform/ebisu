@@ -10,7 +10,7 @@
 #include <mbedtls/ssl.h>
 #include <mbedtls/x509_crt.h>
 
-#include <khc.h>
+#include <ebisu_time.h>
 
 #if !defined(MBEDTLS_SSL_KEEP_PEER_CERTIFICATE)
 #error "The certificates' dates are checked after the handshake, from the certificates it received: set CONFIG_MBEDTLS_SSL_KEEP_PEER_CERTIFICATE."
@@ -131,9 +131,9 @@ static ebisu_validity_t check_dates(ebisu_clock_t* clock, const mbedtls_x509_crt
     const mbedtls_x509_time* to = &crt->valid_to;
     int64_t not_before = 0;
     int64_t not_after = 0;
-    if (!khc_seconds_since_epoch(from->year, from->mon, from->day,
+    if (!ebisu_time_from_civil(from->year, from->mon, from->day,
                 from->hour, from->min, from->sec, &not_before) ||
-            !khc_seconds_since_epoch(to->year, to->mon, to->day,
+            !ebisu_time_from_civil(to->year, to->mon, to->day,
                 to->hour, to->min, to->sec, &not_after)) {
         /* A date that is not one. */
         return EBISU_VALIDITY_EXPIRED;

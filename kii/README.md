@@ -454,7 +454,7 @@ The socket callbacks then check the server's certificate against it:
 - `ebisu_clock_check_validity()` checks a validity period. With the floor only, a
   certificate that ended before it has expired, but one that starts later
   cannot be told from one that is valid now, so only the end is checked.
-  `khc_seconds_since_epoch()` converts the dates a TLS stack gives.
+  `ebisu_time_from_civil()` converts the dates a TLS stack gives.
 - `ebisu_clock_get_time()` gives the time, and whether it is the time or only the
   floor, for a TLS stack that checks validity itself: give it the time, and
   while it is only the floor, ignore a certificate not being valid yet.
