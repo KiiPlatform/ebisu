@@ -653,10 +653,12 @@ void khc_state_resp_status_parse(khc* khc) {
         status_code = status_code * 10 + (d - '0');
     }
     khc->_status_code = status_code;
-    // A response of its own, an interim 1xx one included.
+    // A response of its own, an interim 1xx one included: what framed the
+    // one before doesn't frame this one.
     khc->_resp_date = -1;
     khc->_resp_content_length = 0;
     khc->_resp_has_content_length = false;
+    khc->_chunked_resp = false;
     khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
     return;
 }
