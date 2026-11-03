@@ -1128,7 +1128,7 @@ TEST_CASE( "state abnormal tests." ) {
 
         khc_state_resp_status_parse(&http);
         REQUIRE( http._state == KHC_STATE_CLOSE );
-        REQUIRE( http._result == KHC_ERR_FAIL );
+        REQUIRE( http._result == KHC_ERR_INVALID_RESPONSE );
     }
 
     SECTION("resp status parse non-ASCII byte.") {
@@ -1150,7 +1150,7 @@ TEST_CASE( "state abnormal tests." ) {
 
         khc_state_resp_status_parse(&http);
         REQUIRE( http._state == KHC_STATE_CLOSE );
-        REQUIRE( http._result == KHC_ERR_FAIL );
+        REQUIRE( http._result == KHC_ERR_INVALID_RESPONSE );
     }
 
     SECTION("resp header read retry.") {

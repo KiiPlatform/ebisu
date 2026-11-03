@@ -699,3 +699,33 @@ TEST_CASE( "An API call's body read through a callback" ) {
         CHECK( kii_api_call_set_body_reader(&kii, NULL, NULL, 2) == KII_ERR_FAIL );
     }
 }
+
+// It was KII_ERR_FAIL for a status line, and KII_ERR_HEADER_CALLBACK for
+// framing, though no callback had failed.
+TEST_CASE( "A response khc can't read is KII_ERR_INVALID_RESPONSE" ) {
+    char kii_buff[1024];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    strcpy(kii._author.author_id, "th.1");
+    strcpy(kii._author.access_token, "tok");
+    khct::HttpScript script;
+    script.attach(&kii);
+    kii_topic_t topic = { KII_SCOPE_THING, "th.1", "t" };
+    const std::string responses[] = {
+        "HTTP/1.1 abc OK\r\n\r\n",
+        "SIP/2.0 200 OK\r\n\r\n",
+        "HTTP/1.1 204 No Content\r\nContent-Length: 1x\r\n\r\n",
+        "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nContent-Length: 3\r\n\r\nabc",
+        "HTTP/1.1 200 OK\r\nTransfer-Encoding: gzip\r\n\r\nabc",
+        "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\nzz\r\nabc\r\n0\r\n\r\n",
+    };
+    for (const auto& response : responses) {
+        INFO( response );
+        script.responses = { response };
+        script.requests.clear();
+        CHECK( kii_put_topic(&kii, &topic) == KII_ERR_INVALID_RESPONSE );
+    }
+}

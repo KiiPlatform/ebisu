@@ -28,6 +28,8 @@ tio_code_t _tio_convert_code(kii_code_t code) {
         return TIO_ERR_CREATE_TASK;
     case KII_ERR_TIMEOUT:
         return TIO_ERR_TIMEOUT;
+    case KII_ERR_INVALID_RESPONSE:
+        return TIO_ERR_INVALID_RESPONSE;
     case KII_ERR_FAIL:
     default:
         return TIO_ERR_FAIL;

@@ -292,6 +292,10 @@ typedef enum khc_code {
     /**< \brief The callback set by khc_set_cb_continue(khc*,
      * KHC_CB_CONTINUE, void*) cancelled the request. */
     KHC_ERR_CANCELLED,
+    /**< \brief The response isn't one khc can read: its status line isn't
+     * one, or its Content-Length, Transfer-Encoding or chunks don't say where
+     * its body ends. */
+    KHC_ERR_INVALID_RESPONSE,
 } khc_code;
 
 /**

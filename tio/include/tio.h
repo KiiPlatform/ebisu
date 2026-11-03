@@ -50,7 +50,10 @@ typedef enum tio_code_t {
     /* Added after TIO_ERR_FAIL so that the codes above keep their values. */
     /** \brief A request took longer than tio_handler_set_request_timeout() or
      * tio_updater_set_request_timeout() allows. */
-    TIO_ERR_TIMEOUT
+    TIO_ERR_TIMEOUT,
+    /** \brief A response isn't HTTP tio can read: its status line isn't one,
+     * or its framing doesn't say where its body ends. */
+    TIO_ERR_INVALID_RESPONSE
 } tio_code_t;
 
 /**

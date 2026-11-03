@@ -639,7 +639,7 @@ TEST_CASE( "A first line that isn't a status line" ) {
     for (const auto& line : lines) {
         INFO("line [" << line << "]");
         uint16_t status_code = 0;
-        CHECK( perform_with_reads({ line + "\r\nbody" }, &status_code) == KHC_ERR_FAIL );
+        CHECK( perform_with_reads({ line + "\r\nbody" }, &status_code) == KHC_ERR_INVALID_RESPONSE );
         CHECK( status_code == 0 );
     }
 }
@@ -664,7 +664,7 @@ TEST_CASE( "Invalid Content-Length fails the response" ) {
     for (const auto& value : values) {
         INFO("value [" << value << "]");
         ContentLengthResult r = perform_with_header("Content-Length: " + value);
-        CHECK( r.res == KHC_ERR_HEADER_CALLBACK );
+        CHECK( r.res == KHC_ERR_INVALID_RESPONSE );
         CHECK( r.on_header_called == 2 );
         CHECK( r.on_write_called == 0 );
         CHECK( r.on_close_called == 1 );
@@ -695,7 +695,7 @@ TEST_CASE( "Transfer-Encoding not ending in chunked fails the response" ) {
     for (const auto& value : values) {
         INFO("value [" << value << "]");
         ContentLengthResult r = perform_with_header("Transfer-Encoding: " + value);
-        CHECK( r.res == KHC_ERR_HEADER_CALLBACK );
+        CHECK( r.res == KHC_ERR_INVALID_RESPONSE );
         CHECK( r.on_header_called == 2 );
         CHECK( r.on_write_called == 0 );
         CHECK( r.on_close_called == 1 );

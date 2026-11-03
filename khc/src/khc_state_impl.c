@@ -647,7 +647,7 @@ void khc_state_resp_status_parse(khc* khc) {
             (size_t)(line_end - khc->_resp_header_buff) < strlen(http_version) + status_size ||
             strncmp(khc->_resp_header_buff, "HTTP/", 5) != 0) {
         khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_FAIL;
+        khc->_result = KHC_ERR_INVALID_RESPONSE;
         return;
     }
     char* ptr = khc->_resp_header_buff + strlen(http_version);
@@ -658,7 +658,7 @@ void khc_state_resp_status_parse(khc* khc) {
         char d = ptr[i];
         if (isdigit((unsigned char)d) == 0){
             khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_FAIL;
+            khc->_result = KHC_ERR_INVALID_RESPONSE;
             return;
         }
         status_code = status_code * 10 + (d - '0');
@@ -703,7 +703,7 @@ void khc_state_resp_header_callback(khc* khc) {
             khc->_chunked_resp = true;
         } else if (chunked == -1) { // Transfer coding khc cannot remove.
             khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_HEADER_CALLBACK;
+            khc->_result = KHC_ERR_INVALID_RESPONSE;
             return;
         } else {
             int extracted = _extract_content_length(khc->_resp_header_buff, header_size, &content_length);
@@ -711,14 +711,14 @@ void khc_state_resp_header_callback(khc* khc) {
                     content_length != khc->_resp_content_length) {
                 // Lengths that disagree: body length unknown.
                 khc->_state = KHC_STATE_CLOSE;
-                khc->_result = KHC_ERR_HEADER_CALLBACK;
+                khc->_result = KHC_ERR_INVALID_RESPONSE;
                 return;
             } else if (extracted == 1) {
                 khc->_resp_content_length = content_length;
                 khc->_resp_has_content_length = true;
             } else if (extracted == -1) { // Invalid Content-Length: body length unknown.
                 khc->_state = KHC_STATE_CLOSE;
-                khc->_result = KHC_ERR_HEADER_CALLBACK;
+                khc->_result = KHC_ERR_INVALID_RESPONSE;
                 return;
             }
         }
@@ -1015,7 +1015,7 @@ void khc_state_resp_body_parse_chunk_size(khc* khc) {
     } else if (has_chunk_size < 0) {
         // Without a valid size the rest of the body can't be framed.
         khc->_state = KHC_STATE_CLOSE;
-        khc->_result = KHC_ERR_FAIL;
+        khc->_result = KHC_ERR_INVALID_RESPONSE;
     } else {
         if (khc->_resp_header_read_size > 0) {
             khc->_state = KHC_STATE_READ_CHUNK_SIZE_FROM_HEADER_BUFF;
