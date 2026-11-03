@@ -5,7 +5,7 @@
 #   with EBISU_MIN_SIZE;
 # - a program for a Cortex-M3 without an operating system, a thing that
 #   onboards and runs tio's handler and updater, linked with --gc-sections
-#   against the installed static libtio.a, built MinSizeRel, with
+#   against the installed static libraries, built MinSizeRel, with
 #   EBISU_MIN_SIZE, and with link-time optimization as well.
 #
 # Text is code and constant data, what takes flash; data and bss take RAM.
@@ -45,10 +45,10 @@ text() {
 configure_build "$work/release" -DCMAKE_BUILD_TYPE=Release
 configure_build "$work/minsizerel" -DCMAKE_BUILD_TYPE=MinSizeRel
 configure_build "$work/min" -DCMAKE_BUILD_TYPE=MinSizeRel -DEBISU_MIN_SIZE=ON
-for lib in jkii khc kii tio; do
-    row="| lib$lib.so"
+for lib in core jkii khc kii tio; do
+    row="| libebisu_$lib.so"
     for b in release minsizerel min; do
-        row="$row | $(text "$(find "$work/$b/$lib" -maxdepth 1 -name "lib$lib.so.*.*.*" -type f)")"
+        row="$row | $(text "$(find "$work/$b/$lib" -maxdepth 1 -name "libebisu_$lib.so.*.*.*" -type f)")"
     done
     echo "$row |" >> "$report"
 done
@@ -134,14 +134,15 @@ EOF
             -I "$work/$name/prefix/include" -c "$work/thing.c" -o "$work/$name/thing.o"
         arm-none-eabi-gcc "${arm[@]}" -Os "${flags[@]}" --specs=nano.specs --specs=nosys.specs \
             -Wl,--gc-sections -Wl,--fatal-warnings "$work/$name/thing.o" \
-            "$work/$name/prefix/lib/libtio.a" -o "$work/$name/thing.elf"
+            -L "$work/$name/prefix/lib" -lebisu_tio -lebisu_kii -lebisu_khc -lebisu_jkii \
+            -lebisu_core -o "$work/$name/thing.elf"
         size "$work/$name/thing.elf" | awk 'NR > 1 { print $1, $2, $3 }'
     }
     {
         echo
         echo "### A thing on a Cortex-M3, $(arm-none-eabi-gcc --version | head -1)"
         echo
-        echo "The program, newlib-nano included, linked with \`--gc-sections\` against the static \`libtio.a\`, in bytes."
+        echo "The program, newlib-nano included, linked with \`--gc-sections\` against the static libraries, in bytes."
         echo
         echo "| Build | Text | Data | Bss |"
         echo "|---|---|---|---|"

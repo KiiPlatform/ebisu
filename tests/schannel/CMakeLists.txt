@@ -8,9 +8,9 @@ if(Python3_FOUND AND EBISU_OPENSSL_COMMAND)
     add_executable(schannel_socket_test schannel_socket_test.c)
     # crypt32 for trust, which adds the test's CA to the root store.
     target_link_libraries(schannel_socket_test PRIVATE ebisu_schannel crypt32)
-    # A port carries none of the rest of platform: its clock, here, without a
-    # library to find under wine.
-    target_link_libraries(schannel_socket_test PRIVATE ebisu_platform_objs)
+    # The port links ebisu_core, which a shared build makes a DLL: its objects
+    # here instead, so that there is no library to find under wine.
+    target_link_libraries(schannel_socket_test PRIVATE ebisu_core_objs)
     ebisu_configure_target(schannel_socket_test C_STANDARD 11)
 
     add_test(NAME schannel_socket

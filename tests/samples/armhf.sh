@@ -111,8 +111,9 @@ echo "newest glibc symbol version needed: GLIBC_$newest"
 [ "$failed" = 0 ]
 
 echo "stripped sizes, MinSizeRel, armv7-a hard float:"
-for f in /tmp/build/khc/libkhc.so /tmp/build/kii/libkii.so /tmp/build/tio/libtio.so \
-        /tmp/build/tio/linux-sample/exampleapp; do
+for f in /tmp/build/core/libebisu_core.so /tmp/build/jkii/libebisu_jkii.so \
+        /tmp/build/khc/libebisu_khc.so /tmp/build/kii/libebisu_kii.so \
+        /tmp/build/tio/libebisu_tio.so /tmp/build/tio/linux-sample/exampleapp; do
     arm-linux-gnueabihf-strip -o /tmp/stripped "$(readlink -f "$f")"
-    printf '  %-12s %8d bytes\n' "$(basename "$f")" "$(stat -c %s /tmp/stripped)"
+    printf '  %-18s %8d bytes\n' "$(basename "$f")" "$(stat -c %s /tmp/stripped)"
 done

@@ -496,5 +496,6 @@ a restart, keeps the floor close to the time.
 ## Building
 
 `kii` is built as part of ebisu, as described in the
-[top-level README](https://github.com/KiiPlatform/ebisu/blob/master/README.md#building).
-`libkii` includes `khc` and `jkii`.
+[top-level README](https://github.com/KiiPlatform/ebisu/blob/master/README.md#building),
+as `libebisu_kii`, which links `libebisu_khc`, `libebisu_jkii` and
+`libebisu_core`.

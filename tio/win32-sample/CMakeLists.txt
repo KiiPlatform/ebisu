@@ -5,7 +5,6 @@
 add_executable(win32app example.c)
 
 target_include_directories(win32app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-# The ports before tio, which has the core they call into.
 target_link_libraries(win32app PRIVATE ebisu_schannel ebisu_win32 tio)
 # gnu11 without -pedantic, like the linux sample: an application, built against
 # the Windows headers, which use Microsoft extensions such as nameless unions.
@@ -15,12 +14,15 @@ target_link_libraries(win32app PRIVATE ebisu_schannel ebisu_win32 tio)
 ebisu_configure_target(win32app C_STANDARD 11)
 
 # The sample reads state.json from the directory it runs in, so put one next
-# to it, and libtio.dll too, where Windows looks for it first.
+# to it, and the DLLs too, where Windows looks for them first: tio's and those
+# of the libraries below it.
 configure_file(state.json ${CMAKE_CURRENT_BINARY_DIR}/state.json COPYONLY)
 get_target_property(tio_type tio TYPE)
 if(tio_type STREQUAL "SHARED_LIBRARY")
     add_custom_command(TARGET win32app POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:tio> $<TARGET_FILE_DIR:win32app>
+            $<TARGET_FILE:tio> $<TARGET_FILE:kii> $<TARGET_FILE:khc>
+            $<TARGET_FILE:jkii> $<TARGET_FILE:ebisu_core>
+            $<TARGET_FILE_DIR:win32app>
         VERBATIM)
 endif()

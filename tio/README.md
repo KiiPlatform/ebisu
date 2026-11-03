@@ -37,7 +37,7 @@ Application developer needs to prepare following callback functions.
 `tio_handler_t` needs executing task asynchronously since it keeps waiting for commands sent to MQTT topic,
 and both it and `tio_updater_t` need to wait between attempts. The way of doing both varies in different
 environments, so the application gives `tio` an `ebisu_system_t`, from
-[platform](https://github.com/KiiPlatform/ebisu/blob/master/platform/README.md).
+[core](https://github.com/KiiPlatform/ebisu/blob/master/core/README.md).
 
 It is a struct holding a pointer to a table of operations, which `tio` calls with the system itself as their
 first argument:

@@ -19,7 +19,7 @@ most then have one more edit and a rebuild.
 socket and task callback was set on its own, with a context pointer of its own.
 In 3.0 a socket is an `ebisu_socket_t` and the system an `ebisu_system_t`, each
 a pointer to a table of operations, in
-[platform](https://github.com/KiiPlatform/ebisu/blob/master/platform/README.md).
+[core](https://github.com/KiiPlatform/ebisu/blob/master/core/README.md).
 Each operation gets the object as its first argument, in place of the context
 pointer: embed the object in the struct that was the context, and get that back
 with `EBISU_CONTAINER_OF()`.
@@ -80,7 +80,7 @@ an error in C++, and in C with GCC 14 or later. Older C compilers only warn, wit
 `-Wincompatible-pointer-types`: fix it all the same, as calling a function
 through the wrong type is undefined.
 
-The rest moved to `platform` and was renamed, with no aliases for the old names:
+The rest moved to `core` and was renamed, with no aliases for the old names:
 
 | 1.x | 3.0 |
 |---|---|
@@ -95,7 +95,7 @@ The rest moved to `platform` and was renamed, with no aliases for the old names:
 `KII_CB_TASK_CONTINUE`, which are still set with a function and a context
 pointer each. The types above are in `ebisu_system.h`, which `kii.h` includes.
 
-**`kii_bool_t` and `tio_bool_t` are gone, for C99's `bool`.** khc and platform
+**`kii_bool_t` and `tio_bool_t` are gone, for C99's `bool`.** khc and core
 take `bool` already, and `kii.h` and `tio.h` include `stdbool.h`. Every callback
 returning one, the task continue callback and tio's action and push callbacks,
 now returns `bool`, and every function taking or returning one, and every field,
@@ -149,9 +149,10 @@ value above `UINT32_MAX` is cut down before anything can check it.
 - The layouts of `khc`, `kii_t`, `kii_author_t`, `kii_mqtt_endpoint_t`,
   `tio_handler_t` and `tio_updater_t` changed. Code built against 1.x's headers
   can't use 3.0's libraries.
-- `libkii` and `libtio` move to `.so.3`. `libkhc` and `libjkii` had no version
-  in their soname, and now have one, `libkhc.so.3` and `libjkii.so.3`, with the
-  same files and links as `libkii`.
+- The libraries are `libebisu_khc`, `libebisu_jkii`, `libebisu_kii` and
+  `libebisu_tio`, all `.so.3`, with `libebisu_core` below them, where 1.x's were
+  `libkhc`, `libjkii`, `libkii` and `libtio`, and `libkhc` and `libjkii` had no
+  version in their soname. Linking them is under Building.
 - The shared libraries export only what the public headers declare. Code that
   called anything else in them, such as `_extract_content_length()` or
   `_get_anonymous_token()`, no longer links.
@@ -166,9 +167,9 @@ value above `UINT32_MAX` is cut down before anything can check it.
 
 Without CMake, as a vendor's build usually does:
 
-- Add `platform/src/*.c`, `khc/src/khc_http_date.c`, `kii/kii_clock.c` and
-  `kii/kii_session.c` to the sources, and `platform/include` to the include
-  path.
+- Add `core/src/*.c`, `khc/src/khc_http_date.c`, `kii/kii_clock.c` and
+  `kii/kii_session.c` to the sources, and `core/include` to the include path.
+  A port, for a system ebisu has one for, is under `platform/`.
 - The sources now include a generated `ebisu_version.h`. Write it with
   `version/ebisu_version.sh <output>` and put it on the include path, as the
   Makefiles of the embedded samples do.
@@ -191,6 +192,19 @@ With CMake:
 - `KHC_TRACE` is off by default, where 1.x had it on. Pass `-DKHC_TRACE=ON` to
   get the trace back. `TIO_TRACE`, which no option set in 1.x, is an option now,
   and off too.
+
+Linking:
+
+- Link `-lebisu_tio` where 1.x linked `-ltio`, and likewise for the others,
+  with no aliases for the old names.
+- Each library holds its own code alone, and links the ones below it. In 1.x,
+  `libkii` held khc's and jkii's code too, and `libtio` all of it, so `-ltio` was
+  enough. Against the static libraries, or calling any of them directly, link
+  them all, in this order: `-lebisu_tio -lebisu_kii -lebisu_khc -lebisu_jkii
+  -lebisu_core`.
+- The CMake package's targets, `ebisu::tio` and the others, and the pkg-config
+  files, `ebisu-tio` and the others, keep their names, and bring in what each
+  library links. A build using either changes nothing.
 
 ### Behaviour changes
 

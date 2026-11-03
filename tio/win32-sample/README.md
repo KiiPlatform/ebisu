@@ -23,8 +23,8 @@ cmake --preset mingw
 cmake --build --preset mingw
 ```
 
-This makes `build/mingw/tio/win32-sample/win32app.exe`, with `libtio.dll` and
-`state.json` beside it. The preset needs mingw-w64 (`mingw64-gcc` and
+This makes `build/mingw/tio/win32-sample/win32app.exe`, with `libebisu_tio.dll`,
+the DLLs of the libraries it links, and `state.json` beside it. The preset needs mingw-w64 (`mingw64-gcc` and
 `mingw64-gcc-c++` on Fedora, `g++-mingw-w64-x86-64-posix` on Debian and
 Ubuntu) and wine.
 

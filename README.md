@@ -53,15 +53,21 @@ You can use this module to parse json encoded string or you can choose other 3rd
 
 For more details, please refer to [./jkii/README.md](./jkii/README.md)
 
+## core
+
+`core` is what the other modules are written against: socket, system and lock
+interfaces, which the device implements, a clock that keeps the time of day on
+a device without a real-time one, a logger interface, and the bounded string,
+number and memory utilities they all use. It is a library of its own,
+`libebisu_core`, which they link.
+
+For more details, please refer to [./core/README.md](./core/README.md)
+
 ## platform
 
-`platform` is what ebisu needs from the device it runs on: socket, task, lock
-and monotonic clock callbacks, and a clock that keeps the time of day on a
-device without a real-time one.
-
-The other modules are built on it, and embed it, so you implement its callbacks
-but don't link it. On Linux and macOS, its POSIX and OpenSSL ports implement
-them, as static libraries to link.
+`platform` holds the ports, which implement `core`'s interfaces for a kind of
+system each: POSIX threads and OpenSSL on Linux and macOS, and the Win32 API
+and Schannel on Windows, as static libraries to link.
 
 For more details, please refer to [./platform/README.md](./platform/README.md)
 
@@ -144,28 +150,36 @@ cmake -S . -B build -DEBISU_WERROR=OFF
 ```
 
 `cmake --install` puts the libraries, their headers, a CMake package and a
-pkg-config file for each library under the prefix:
+pkg-config file for each library under the prefix. The libraries are
+`libebisu_core`, `libebisu_jkii`, `libebisu_khc`, `libebisu_kii` and
+`libebisu_tio`, each with its own code alone, linking the ones below it:
 
 ```
 cmake --install build --prefix /opt/ebisu
 ```
 
-A CMake project then finds the package, whose targets are `ebisu::khc`,
-`ebisu::jkii`, `ebisu::kii` and `ebisu::tio`, and, where they were built,
-`ebisu::posix` and `ebisu::openssl`, the ports:
+A CMake project then finds the package, whose targets are `ebisu::core`,
+`ebisu::khc`, `ebisu::jkii`, `ebisu::kii` and `ebisu::tio`, and, where they were
+built, `ebisu::posix` and `ebisu::openssl`, the ports. Each brings in the
+libraries it links:
 
 ```cmake
 find_package(ebisu 3 CONFIG REQUIRED)
 target_link_libraries(app PRIVATE ebisu::openssl ebisu::posix ebisu::tio)
 ```
 
-Any other build asks pkg-config, for `ebisu-khc`, `ebisu-jkii`, `ebisu-kii`,
-`ebisu-tio`, `ebisu-posix` and `ebisu-openssl`. The ports are static and carry
-none of the rest of platform, so they come before the library:
+Any other build asks pkg-config, for `ebisu-core`, `ebisu-khc`, `ebisu-jkii`,
+`ebisu-kii`, `ebisu-tio`, `ebisu-posix` and `ebisu-openssl`, each of which
+requires what its library links. The ports are static, so they come before the
+library:
 
 ```
 cc app.c $(pkg-config --cflags --libs ebisu-openssl ebisu-posix ebisu-tio)
 ```
+
+which, for the libraries, gives `-lebisu_tio -lebisu_kii -lebisu_khc
+-lebisu_jkii -lebisu_core`, the order a link by hand against the static
+libraries needs too.
 
 `tests/samples/package_consumer.sh` builds a program both ways against an
 installed copy, as CI does.
@@ -190,8 +204,8 @@ cmake -B build/small -DCMAKE_BUILD_TYPE=MinSizeRel -DBUILD_SHARED_LIBS=OFF \
 `tests/samples/size_report.sh` builds the libraries each way and reports their
 size, and that of a thing for a Cortex-M3 linked against them, as CI does. For
 that thing, with GCC 13, `EBISU_MIN_SIZE` takes the text, code and constant
-data, from about 57 KB to 51 KB, newlib-nano included, and link-time
-optimization to 49 KB.
+data, from about 61 KB to 54 KB, newlib-nano included, and link-time
+optimization to 52 KB.
 
 ### macOS
 

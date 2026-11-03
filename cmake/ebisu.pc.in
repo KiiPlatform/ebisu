@@ -6,5 +6,6 @@ Name: ebisu-@pc_name@
 Description: @pc_description@
 Version: @version@
 Requires: @pc_requires@
+Requires.private: @pc_requires_private@
 Cflags: -I${includedir}
 Libs: -L${libdir} -l@pc_lib@ @pc_libs_extra@
