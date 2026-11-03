@@ -1133,6 +1133,133 @@ int jkii_escape_str(const char* str, char* buff, size_t buff_size) {
     return (int)pos;
 }
 
+/* The UTF-16 code unit of the \u escape at s, the backslash, of which len
+ * bytes are left, or -1 if it isn't one. */
+static long _jkii_unicode_escape(const char* s, size_t len)
+{
+    long unit = 0;
+    if (len < 6 || s[0] != '\\' || s[1] != 'u') {
+        return -1;
+    }
+    for (size_t i = 2; i < 6; ++i) {
+        char c = s[i];
+        int digit;
+        if (c >= '0' && c <= '9') {
+            digit = c - '0';
+        } else if (c >= 'a' && c <= 'f') {
+            digit = c - 'a' + 10;
+        } else if (c >= 'A' && c <= 'F') {
+            digit = c - 'A' + 10;
+        } else {
+            return -1;
+        }
+        unit = unit * 16 + digit;
+    }
+    return unit;
+}
+
+/* Writes a code point, which is not a surrogate, as UTF-8, and returns how
+ * many bytes that took. */
+static size_t _jkii_utf8(unsigned long cp, char* out)
+{
+    if (cp < 0x80) {
+        out[0] = (char)cp;
+        return 1;
+    }
+    if (cp < 0x800) {
+        out[0] = (char)(0xc0 | (cp >> 6));
+        out[1] = (char)(0x80 | (cp & 0x3f));
+        return 2;
+    }
+    if (cp < 0x10000) {
+        out[0] = (char)(0xe0 | (cp >> 12));
+        out[1] = (char)(0x80 | ((cp >> 6) & 0x3f));
+        out[2] = (char)(0x80 | (cp & 0x3f));
+        return 3;
+    }
+    out[0] = (char)(0xf0 | (cp >> 18));
+    out[1] = (char)(0x80 | ((cp >> 12) & 0x3f));
+    out[2] = (char)(0x80 | ((cp >> 6) & 0x3f));
+    out[3] = (char)(0x80 | (cp & 0x3f));
+    return 4;
+}
+
+int jkii_unescape_str(const char* str, size_t str_len, char* buff, size_t buff_size) {
+    size_t pos = 0;
+    size_t i = 0;
+    M_JKII_ASSERT(str != NULL || str_len == 0);
+    if (buff_size == 0) {
+        return -1;
+    }
+    while (i < str_len) {
+        unsigned char c = (unsigned char)str[i];
+        char out[4];
+        size_t out_len = 1;
+        if (c == '"' || c < 0x20) {
+            return _jkii_escape_fail(buff, buff_size);
+        } else if (c != '\\') {
+            out[0] = (char)c;
+            i += 1;
+        } else if (str_len - i < 2) {
+            return _jkii_escape_fail(buff, buff_size);
+        } else if (str[i + 1] != 'u') {
+            switch (str[i + 1]) {
+                case '"':
+                case '\\':
+                case '/':
+                    out[0] = str[i + 1];
+                    break;
+                case 'b':
+                    out[0] = '\b';
+                    break;
+                case 'f':
+                    out[0] = '\f';
+                    break;
+                case 'n':
+                    out[0] = '\n';
+                    break;
+                case 'r':
+                    out[0] = '\r';
+                    break;
+                case 't':
+                    out[0] = '\t';
+                    break;
+                default:
+                    return _jkii_escape_fail(buff, buff_size);
+            }
+            i += 2;
+        } else {
+            long unit = _jkii_unicode_escape(&str[i], str_len - i);
+            unsigned long cp = (unsigned long)unit;
+            // -1 isn't an escape, and 0 would end the string. A low
+            // surrogate can only come second.
+            if (unit <= 0 || (unit >= 0xdc00 && unit <= 0xdfff)) {
+                return _jkii_escape_fail(buff, buff_size);
+            }
+            i += 6;
+            if (unit >= 0xd800 && unit <= 0xdbff) {
+                long low = _jkii_unicode_escape(&str[i], str_len - i);
+                if (low < 0xdc00 || low > 0xdfff) {
+                    return _jkii_escape_fail(buff, buff_size);
+                }
+                i += 6;
+                cp = 0x10000 + (((unsigned long)unit - 0xd800) << 10) +
+                    ((unsigned long)low - 0xdc00);
+            }
+            out_len = _jkii_utf8(cp, out);
+        }
+        // pos < buff_size throughout, so this cannot wrap. The + 1 keeps
+        // room for the terminator.
+        if (buff_size - pos < out_len + 1 || pos + out_len > (size_t)INT_MAX) {
+            return _jkii_escape_fail(buff, buff_size);
+        }
+        memcpy(&buff[pos], out, out_len);
+        pos += out_len;
+    }
+    buff[pos] = '\0';
+    return (int)pos;
+}
+
 jkii_parse_err_t jkii_validate_root_object(
         const char* json_string,
         size_t json_string_len)

@@ -254,7 +254,9 @@ typedef struct jkii_field_t {
         /** This value is used if jkii_field_t#type is
          * jkii_field_type_t#JKII_FIELD_TYPE_STRING,
          * jkii_field_type_t#JKII_FIELD_TYPE_OBJECT or
-         * jkii_field_type_t#JKII_FIELD_TYPE_ARRAY.
+         * jkii_field_type_t#JKII_FIELD_TYPE_ARRAY. A string's characters
+         * between its quotes are copied as written, escapes and all, which
+         * jkii_unescape_str() undoes.
          */
         char* string;
 
@@ -319,13 +321,14 @@ jkii_parse_err_t jkii_parse(
  * gives it. Its pointers are into the string given to jkii_next_member().
  */
 typedef struct jkii_member_t {
-    /** The member's name, as written between its quotes, escapes and all, or
-     * NULL for an array's element. */
+    /** The member's name, as written between its quotes, escapes and all,
+     * which jkii_unescape_str() undoes, or NULL for an array's element. */
     const char* key;
     /** Length of jkii_member_t#key. */
     size_t key_length;
     /** The value: a string's characters between its quotes, as written,
-     * and anything else whole, an object or an array with its brackets. */
+     * escapes and all, as for jkii_member_t#key, and anything else whole, an
+     * object or an array with its brackets. */
     const char* value;
     /** Length of jkii_member_t#value. */
     size_t value_length;

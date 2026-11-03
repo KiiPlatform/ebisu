@@ -78,6 +78,36 @@ jkii_primitive_err_t jkii_parse_primitive(
  */
 int jkii_escape_str(const char* str, char* buff, size_t buff_size);
 
+/** Undo the escapes of a JSON string, as jkii_escape_str() or anything else
+ * that writes JSON escapes it.
+ *
+ * For a string's characters between its quotes, escapes and all, as
+ * jkii_next_member() and jkii_parse() give them. \\" \\\\ \\/ \\b \\f \\n \\r
+ * \\t become the characters they stand for, and \\uXXXX, with the hex digits
+ * in either case, becomes the character's UTF-8: a character beyond U+FFFF
+ * is a pair of them, a high surrogate followed by a low one. Other bytes,
+ * including UTF-8 sequences, are copied unchanged.
+ *
+ * What a JSON string can't hold is refused: another escape, a '\\' at the
+ * end, \\u without four hex digits after it, a surrogate that isn't half of
+ * such a pair, and a '"' or a byte below 0x20 that isn't escaped. So is
+ * \\u0000, which a C string can't hold.
+ *
+ * Unescaping never makes a string longer, so a buffer of str_len + 1 always
+ * suffices.
+ *
+ * \param [in] str The characters, which need no NUL after them. May be NULL
+ * when str_len is 0.
+ * \param [in] str_len How many.
+ * \param [out] buff receives the unescaped, null-terminated string. Nothing
+ * is written at or past buff_size. On failure it holds an empty string,
+ * provided buff_size is not 0.
+ * \param [in] buff_size size of buff, including the terminator.
+ * \return length of the unescaped string, excluding the terminator, or -1 if
+ * str is refused or buff is too small.
+ */
+int jkii_unescape_str(const char* str, size_t str_len, char* buff, size_t buff_size);
+
 /** Check that a string is JSON with an object as its root, as jkii_parse()
  * checks it.
  *

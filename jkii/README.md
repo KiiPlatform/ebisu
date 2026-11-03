@@ -83,6 +83,18 @@ while (jkii_next_member(json_string, strlen(json_string), &iter, &member) ==
 }
 ```
 
+Strings, names included, come as written between their quotes, escapes and
+all, whether from `jkii_parse()` or `jkii_next_member()`.
+`jkii_unescape_str()` undoes the escapes, `\uXXXX` included, into a buffer:
+one byte longer than the string always fits.
+
+```c
+char key[32];
+if (jkii_unescape_str(member.key, member.key_length, key, sizeof(key)) >= 0) {
+    // key holds the member's name, terminated: "a/b" for "a\/b".
+}
+```
+
 ## Writing JSON
 
 A `jkii_writer_t` writes JSON into a buffer, or out through a callback a buffer

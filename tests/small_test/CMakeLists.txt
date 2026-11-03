@@ -49,6 +49,7 @@ ebisu_add_test_suite(small_test_jkii
         jkii/src/jkii_lines_test.cpp
         jkii/src/jkii_primitive_test.cpp
         jkii/src/jkii_test.cpp
+        jkii/src/jkii_unescape_test.cpp
         jkii/src/jkii_writer_test.cpp
         # An application's own coreJSON, beside jkii's.
         jkii/src/app_core_json_test.cpp
