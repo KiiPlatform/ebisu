@@ -15,10 +15,12 @@ typedef enum _cmd_parser_code_t {
     _CMD_PARSE_FAIL
 } _cmd_parser_code_t;
 
-_cmd_parser_code_t _get_object_in_array(
+// The next object in json_array, which iter, zeroed before the first call,
+// walks. _CMD_PARSE_ARRAY_OUT_OF_INDEX after the last.
+_cmd_parser_code_t _next_object_in_array(
         const char* json_array,
         size_t json_array_length,
-        size_t index,
+        jkii_member_iter_t* iter,
         char** out_object,
         size_t* out_object_length);
 
@@ -39,7 +41,7 @@ _cmd_parser_code_t _parse_action(
         size_t alias_length,
         const char* actions_array_in_alias,
         size_t actions_array_in_alias_length,
-        size_t action_index,
+        jkii_member_iter_t* action_iter,
         tio_action_t* out_action);
 
 tio_code_t _handle_command(
