@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['path_0',['path',['../structjkii__field__t.html#ade8bf5f5ddad91aedd67bb0a0ae40533',1,'jkii_field_t']]]
+  ['name_0',['name',['../structjkii__field__t.html#ad240e9f8d4144e2f73b023095a27b0f0',1,'jkii_field_t']]]
 ];

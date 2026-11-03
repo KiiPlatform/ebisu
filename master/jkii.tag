@@ -4,36 +4,9 @@
     <name>jkii.h</name>
     <path>include/</path>
     <filename>jkii_8h.html</filename>
-    <class kind="struct">jkii_resource_t</class>
     <class kind="struct">jkii_field_t</class>
-    <member kind="typedef">
-      <type>jsmntok_t</type>
-      <name>jkii_token_t</name>
-      <anchorfile>jkii_8h.html</anchorfile>
-      <anchor>ab9a2c8ed41a6b2a14102de46cfd8bcce</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="typedef">
-      <type>struct jkii_resource_t</type>
-      <name>jkii_resource_t</name>
-      <anchorfile>jkii_8h.html</anchorfile>
-      <anchor>a452dced9e5f98b308c923ac8df9ea158</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="typedef">
-      <type>jkii_resource_t *(*</type>
-      <name>JKII_CB_RESOURCE_ALLOC</name>
-      <anchorfile>jkii_8h.html</anchorfile>
-      <anchor>afcce849926c48d98835a7c07e2ba0fd1</anchor>
-      <arglist>)(size_t required_size)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>void(*</type>
-      <name>JKII_CB_RESOURCE_FREE</name>
-      <anchorfile>jkii_8h.html</anchorfile>
-      <anchor>a6419ee6ba358566315b0f98c2c1cbd51</anchor>
-      <arglist>)(jkii_resource_t *resource)</arglist>
-    </member>
+    <class kind="struct">jkii_member_t</class>
+    <class kind="struct">jkii_member_iter_t</class>
     <member kind="typedef">
       <type>enum jkii_boolean_t</type>
       <name>jkii_boolean_t</name>
@@ -69,6 +42,20 @@
       <anchor>abfe54c75e23435c665b7f2dcc78e7b99</anchor>
       <arglist></arglist>
     </member>
+    <member kind="typedef">
+      <type>struct jkii_member_t</type>
+      <name>jkii_member_t</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>a33408f8166b22dbc5cfa2c7b56a98d5f</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct jkii_member_iter_t</type>
+      <name>jkii_member_iter_t</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>a625d184d963edb8ca346afde6a43f658</anchor>
+      <arglist></arglist>
+    </member>
     <member kind="enumeration">
       <type></type>
       <name>jkii_boolean_t</name>
@@ -102,21 +89,15 @@
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
-      <name>JKII_ERR_TOKENS_SHORTAGE</name>
-      <anchorfile>jkii_8h.html</anchorfile>
-      <anchor>a7c99e19b01ccd836a788cf794afc8792aa1994c8ea018c38622491fc7068d3bb1</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="enumvalue">
       <name>JKII_ERR_INVALID_INPUT</name>
       <anchorfile>jkii_8h.html</anchorfile>
       <anchor>a7c99e19b01ccd836a788cf794afc8792a32c838a9c10d51d215157abf1d5b6740</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
-      <name>JKII_ERR_ALLOCATION</name>
+      <name>JKII_ERR_NOT_FOUND</name>
       <anchorfile>jkii_8h.html</anchorfile>
-      <anchor>a7c99e19b01ccd836a788cf794afc8792a45f549f0f06f1cdbfd84d04323d28053</anchor>
+      <anchor>a7c99e19b01ccd836a788cf794afc8792a585090e8630fcf9518f541757002f4a1</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumeration">
@@ -227,15 +208,15 @@
       <type>jkii_parse_err_t</type>
       <name>jkii_parse</name>
       <anchorfile>jkii_8h.html</anchorfile>
-      <anchor>a4793a01413e64a45474d0e23894da2da</anchor>
-      <arglist>(const char *json_string, size_t json_string_len, jkii_field_t *fields, jkii_resource_t *resource)</arglist>
+      <anchor>a41ad96e57ad3b992e2f173336f6755f7</anchor>
+      <arglist>(const char *json_string, size_t json_string_len, jkii_field_t *fields)</arglist>
     </member>
     <member kind="function">
       <type>jkii_parse_err_t</type>
-      <name>jkii_parse_with_allocator</name>
+      <name>jkii_next_member</name>
       <anchorfile>jkii_8h.html</anchorfile>
-      <anchor>a4b9010bf54967baa34c7608a27e99d23</anchor>
-      <arglist>(const char *json_string, size_t json_string_len, jkii_field_t *fields, JKII_CB_RESOURCE_ALLOC cb_alloc, JKII_CB_RESOURCE_FREE cb_free)</arglist>
+      <anchor>a1abb4f25c1fab77f02ceeed2e988f401</anchor>
+      <arglist>(const char *json_string, size_t json_string_len, jkii_member_iter_t *iter, jkii_member_t *out_member)</arglist>
     </member>
   </compound>
   <compound kind="file">
@@ -612,6 +593,49 @@
     <filename>structjkii__lines__t.html</filename>
   </compound>
   <compound kind="struct">
+    <name>jkii_member_iter_t</name>
+    <filename>structjkii__member__iter__t.html</filename>
+  </compound>
+  <compound kind="struct">
+    <name>jkii_member_t</name>
+    <filename>structjkii__member__t.html</filename>
+    <member kind="variable">
+      <type>const char *</type>
+      <name>key</name>
+      <anchorfile>structjkii__member__t.html</anchorfile>
+      <anchor>a59c73f95abf1537745b9b0c744695517</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>size_t</type>
+      <name>key_length</name>
+      <anchorfile>structjkii__member__t.html</anchorfile>
+      <anchor>a9231355bb207946584972854c011c8eb</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>const char *</type>
+      <name>value</name>
+      <anchorfile>structjkii__member__t.html</anchorfile>
+      <anchor>a0f288ffdcc9d3b98b69d00f28e84ca92</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>size_t</type>
+      <name>value_length</name>
+      <anchorfile>structjkii__member__t.html</anchorfile>
+      <anchor>a0e77eeb09c0118246785b017014949bf</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>jkii_field_type_t</type>
+      <name>type</name>
+      <anchorfile>structjkii__member__t.html</anchorfile>
+      <anchor>a57e03f0a189c7437759a3542520f57a2</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
     <name>jkii_primitive_t</name>
     <filename>structjkii__primitive__t.html</filename>
     <member kind="variable">
@@ -654,24 +678,6 @@
       <name>type</name>
       <anchorfile>structjkii__primitive__t.html</anchorfile>
       <anchor>a6638f757159547c319de5aedb377cc2d</anchor>
-      <arglist></arglist>
-    </member>
-  </compound>
-  <compound kind="struct">
-    <name>jkii_resource_t</name>
-    <filename>structjkii__resource__t.html</filename>
-    <member kind="variable">
-      <type>jkii_token_t *</type>
-      <name>tokens</name>
-      <anchorfile>structjkii__resource__t.html</anchorfile>
-      <anchor>adfd476e8fc0cfba750e837734287cb8a</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="variable">
-      <type>size_t</type>
-      <name>tokens_num</name>
-      <anchorfile>structjkii__resource__t.html</anchorfile>
-      <anchor>a831a9295c6f4eecfc2889e5792bd2953</anchor>
       <arglist></arglist>
     </member>
   </compound>

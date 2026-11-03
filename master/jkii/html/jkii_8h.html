@@ -75,7 +75,6 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Data Structures</a> &#124;
-<a href="#define-members">Macros</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
 <a href="#enum-members">Enumerations</a> &#124;
 <a href="#func-members">Functions</a>  </div>
@@ -85,28 +84,22 @@ $(function() {
 
 <p>This is a file defining Kii JSON APIs.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;stdint.h&gt;</code><br />
-<code>#include &lt;jsmn.h&gt;</code><br />
+<div class="textblock"><code>#include &lt;stddef.h&gt;</code><br />
+<code>#include &lt;stdint.h&gt;</code><br />
 </div>
 <p><a href="jkii_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Data Structures</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structjkii__resource__t.html">jkii_resource_t</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structjkii__field__t.html">jkii_field_t</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structjkii__member__t.html">jkii_member_t</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structjkii__member__iter__t.html">jkii_member_iter_t</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:ab9a2c8ed41a6b2a14102de46cfd8bcce" id="r_ab9a2c8ed41a6b2a14102de46cfd8bcce"><td class="memItemLeft" align="right" valign="top">typedef jsmntok_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="jkii_8h.html#ab9a2c8ed41a6b2a14102de46cfd8bcce">jkii_token_t</a></td></tr>
-<tr class="separator:ab9a2c8ed41a6b2a14102de46cfd8bcce"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a452dced9e5f98b308c923ac8df9ea158" id="r_a452dced9e5f98b308c923ac8df9ea158"><td class="memItemLeft" align="right" valign="top">typedef struct <a class="el" href="structjkii__resource__t.html">jkii_resource_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="jkii_8h.html#a452dced9e5f98b308c923ac8df9ea158">jkii_resource_t</a></td></tr>
-<tr class="separator:a452dced9e5f98b308c923ac8df9ea158"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afcce849926c48d98835a7c07e2ba0fd1" id="r_afcce849926c48d98835a7c07e2ba0fd1"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="structjkii__resource__t.html">jkii_resource_t</a> *(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="jkii_8h.html#afcce849926c48d98835a7c07e2ba0fd1">JKII_CB_RESOURCE_ALLOC</a>) (size_t required_size)</td></tr>
-<tr class="separator:afcce849926c48d98835a7c07e2ba0fd1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6419ee6ba358566315b0f98c2c1cbd51" id="r_a6419ee6ba358566315b0f98c2c1cbd51"><td class="memItemLeft" align="right" valign="top">typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="jkii_8h.html#a6419ee6ba358566315b0f98c2c1cbd51">JKII_CB_RESOURCE_FREE</a>) (<a class="el" href="structjkii__resource__t.html">jkii_resource_t</a> *resource)</td></tr>
-<tr class="separator:a6419ee6ba358566315b0f98c2c1cbd51"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a79373dc6dd050f3df82ab81e66d6e9a2" id="r_a79373dc6dd050f3df82ab81e66d6e9a2"><td class="memItemLeft" align="right" valign="top">typedef enum <a class="el" href="jkii_8h.html#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="jkii_8h.html#a79373dc6dd050f3df82ab81e66d6e9a2">jkii_boolean_t</a></td></tr>
 <tr class="separator:a79373dc6dd050f3df82ab81e66d6e9a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a308377fd5d9eb3c6fc9af26e51cb1070" id="r_a308377fd5d9eb3c6fc9af26e51cb1070"><td class="memItemLeft" align="right" valign="top">typedef enum <a class="el" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="jkii_8h.html#a308377fd5d9eb3c6fc9af26e51cb1070">jkii_parse_err_t</a></td></tr>
@@ -117,6 +110,10 @@ Typedefs</h2></td></tr>
 <tr class="separator:add9f0f2403e3d6cd1a4d09ec542047c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abfe54c75e23435c665b7f2dcc78e7b99" id="r_abfe54c75e23435c665b7f2dcc78e7b99"><td class="memItemLeft" align="right" valign="top">typedef struct <a class="el" href="structjkii__field__t.html">jkii_field_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="jkii_8h.html#abfe54c75e23435c665b7f2dcc78e7b99">jkii_field_t</a></td></tr>
 <tr class="separator:abfe54c75e23435c665b7f2dcc78e7b99"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a33408f8166b22dbc5cfa2c7b56a98d5f" id="r_a33408f8166b22dbc5cfa2c7b56a98d5f"><td class="memItemLeft" align="right" valign="top">typedef struct <a class="el" href="structjkii__member__t.html">jkii_member_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="jkii_8h.html#a33408f8166b22dbc5cfa2c7b56a98d5f">jkii_member_t</a></td></tr>
+<tr class="separator:a33408f8166b22dbc5cfa2c7b56a98d5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a625d184d963edb8ca346afde6a43f658" id="r_a625d184d963edb8ca346afde6a43f658"><td class="memItemLeft" align="right" valign="top">typedef struct <a class="el" href="structjkii__member__iter__t.html">jkii_member_iter_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="jkii_8h.html#a625d184d963edb8ca346afde6a43f658">jkii_member_iter_t</a></td></tr>
+<tr class="separator:a625d184d963edb8ca346afde6a43f658"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
@@ -128,10 +125,9 @@ Enumerations</h2></td></tr>
 &#160;&#160;<a class="el" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792ac12ec4a57f74db1a3bb6a02fdb7ea6fe">JKII_ERR_OK</a>
 , <a class="el" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792ac7aa54138b3463eb8922d8cf568868ad">JKII_ERR_PARTIAL</a>
 , <a class="el" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792acb577be7115daba71b3e5c64c559bed9">JKII_ERR_ROOT_TYPE</a>
-, <a class="el" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792aa1994c8ea018c38622491fc7068d3bb1">JKII_ERR_TOKENS_SHORTAGE</a>
+, <a class="el" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792a32c838a9c10d51d215157abf1d5b6740">JKII_ERR_INVALID_INPUT</a>
 , <br />
-&#160;&#160;<a class="el" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792a32c838a9c10d51d215157abf1d5b6740">JKII_ERR_INVALID_INPUT</a>
-, <a class="el" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792a45f549f0f06f1cdbfd84d04323d28053">JKII_ERR_ALLOCATION</a>
+&#160;&#160;<a class="el" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792a585090e8630fcf9518f541757002f4a1">JKII_ERR_NOT_FOUND</a>
 <br />
  }</td></tr>
 <tr class="separator:a7c99e19b01ccd836a788cf794afc8792"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -164,10 +160,10 @@ Enumerations</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a4793a01413e64a45474d0e23894da2da" id="r_a4793a01413e64a45474d0e23894da2da"><td class="memItemLeft" align="right" valign="top"><a class="el" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="jkii_8h.html#a4793a01413e64a45474d0e23894da2da">jkii_parse</a> (const char *json_string, size_t json_string_len, <a class="el" href="structjkii__field__t.html">jkii_field_t</a> *fields, <a class="el" href="structjkii__resource__t.html">jkii_resource_t</a> *resource)</td></tr>
-<tr class="separator:a4793a01413e64a45474d0e23894da2da"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4b9010bf54967baa34c7608a27e99d23" id="r_a4b9010bf54967baa34c7608a27e99d23"><td class="memItemLeft" align="right" valign="top"><a class="el" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="jkii_8h.html#a4b9010bf54967baa34c7608a27e99d23">jkii_parse_with_allocator</a> (const char *json_string, size_t json_string_len, <a class="el" href="structjkii__field__t.html">jkii_field_t</a> *fields, <a class="el" href="jkii_8h.html#afcce849926c48d98835a7c07e2ba0fd1">JKII_CB_RESOURCE_ALLOC</a> cb_alloc, <a class="el" href="jkii_8h.html#a6419ee6ba358566315b0f98c2c1cbd51">JKII_CB_RESOURCE_FREE</a> cb_free)</td></tr>
-<tr class="separator:a4b9010bf54967baa34c7608a27e99d23"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a41ad96e57ad3b992e2f173336f6755f7" id="r_a41ad96e57ad3b992e2f173336f6755f7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="jkii_8h.html#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse</a> (const char *json_string, size_t json_string_len, <a class="el" href="structjkii__field__t.html">jkii_field_t</a> *fields)</td></tr>
+<tr class="separator:a41ad96e57ad3b992e2f173336f6755f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1abb4f25c1fab77f02ceeed2e988f401" id="r_a1abb4f25c1fab77f02ceeed2e988f401"><td class="memItemLeft" align="right" valign="top"><a class="el" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member</a> (const char *json_string, size_t json_string_len, <a class="el" href="structjkii__member__iter__t.html">jkii_member_iter_t</a> *iter, <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *out_member)</td></tr>
+<tr class="separator:a1abb4f25c1fab77f02ceeed2e988f401"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This is a file defining Kii JSON APIs. </p>
@@ -184,49 +180,6 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Boolean type </p>
-
-</div>
-</div>
-<a id="afcce849926c48d98835a7c07e2ba0fd1" name="afcce849926c48d98835a7c07e2ba0fd1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afcce849926c48d98835a7c07e2ba0fd1">&#9670;&#160;</a></span>JKII_CB_RESOURCE_ALLOC</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">typedef <a class="el" href="structjkii__resource__t.html">jkii_resource_t</a> *(* JKII_CB_RESOURCE_ALLOC) (size_t required_size)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Resource allocator for <a class="el" href="structjkii__resource__t.html">jkii_resource_t</a>. </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">required_size</td><td>required token size. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="structjkii__resource__t.html">jkii_resource_t</a> instance of NULL if failed to allocate resource. </dd></dl>
-
-</div>
-</div>
-<a id="a6419ee6ba358566315b0f98c2c1cbd51" name="a6419ee6ba358566315b0f98c2c1cbd51"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6419ee6ba358566315b0f98c2c1cbd51">&#9670;&#160;</a></span>JKII_CB_RESOURCE_FREE</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">typedef void(* JKII_CB_RESOURCE_FREE) (<a class="el" href="structjkii__resource__t.html">jkii_resource_t</a> *resource)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Resource deallocator for <a class="el" href="structjkii__resource__t.html">jkii_resource_t</a>.</p>
-<p>Called with a resource obtained from the matching <a class="el" href="jkii_8h.html#afcce849926c48d98835a7c07e2ba0fd1">JKII_CB_RESOURCE_ALLOC</a> callback.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">resource</td><td>resource to free. </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
@@ -257,9 +210,9 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>JSON parsed field data.</p>
-<p>Input of <a class="el" href="jkii_8h.html#a4793a01413e64a45474d0e23894da2da">jkii_parse()</a>.</p>
-<p>Array of <a class="el" href="structjkii__field__t.html">jkii_field_t</a> is passed to <a class="el" href="jkii_8h.html#a4793a01413e64a45474d0e23894da2da">jkii_parse()</a>.</p>
-<p>End point of the array is specified by <a class="el" href="structjkii__field__t.html#ad240e9f8d4144e2f73b023095a27b0f0">jkii_field_t::name</a> and <a class="el" href="structjkii__field__t.html#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a>. If both of <a class="el" href="structjkii__field__t.html#ad240e9f8d4144e2f73b023095a27b0f0">jkii_field_t::name</a> and <a class="el" href="structjkii__field__t.html#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a> are NULL, <a class="el" href="jkii_8h.html#a4793a01413e64a45474d0e23894da2da">jkii_parse()</a> consider that it is the end point of the passed array. </p>
+<p>Input of <a class="el" href="jkii_8h.html#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse()</a>.</p>
+<p>Array of <a class="el" href="structjkii__field__t.html">jkii_field_t</a> is passed to <a class="el" href="jkii_8h.html#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse()</a>.</p>
+<p>End point of the array is specified by <a class="el" href="structjkii__field__t.html#ad240e9f8d4144e2f73b023095a27b0f0">jkii_field_t::name</a> and <a class="el" href="structjkii__field__t.html#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a>. If both of <a class="el" href="structjkii__field__t.html#ad240e9f8d4144e2f73b023095a27b0f0">jkii_field_t::name</a> and <a class="el" href="structjkii__field__t.html#ade8bf5f5ddad91aedd67bb0a0ae40533">jkii_field_t::path</a> are NULL, <a class="el" href="jkii_8h.html#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse()</a> consider that it is the end point of the passed array. </p>
 
 </div>
 </div>
@@ -278,6 +231,36 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a625d184d963edb8ca346afde6a43f658" name="a625d184d963edb8ca346afde6a43f658"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a625d184d963edb8ca346afde6a43f658">&#9670;&#160;</a></span>jkii_member_iter_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef struct <a class="el" href="structjkii__member__iter__t.html">jkii_member_iter_t</a> <a class="el" href="structjkii__member__iter__t.html">jkii_member_iter_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Where <a class="el" href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a> has got to in an object or an array. Zeroed, it starts at the first member. </p>
+
+</div>
+</div>
+<a id="a33408f8166b22dbc5cfa2c7b56a98d5f" name="a33408f8166b22dbc5cfa2c7b56a98d5f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a33408f8166b22dbc5cfa2c7b56a98d5f">&#9670;&#160;</a></span>jkii_member_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef struct <a class="el" href="structjkii__member__t.html">jkii_member_t</a> <a class="el" href="structjkii__member__t.html">jkii_member_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>A member of an object, or an element of an array, as <a class="el" href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a> gives it. Its pointers are into the string given to <a class="el" href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a>. </p>
+
+</div>
+</div>
 <a id="a308377fd5d9eb3c6fc9af26e51cb1070" name="a308377fd5d9eb3c6fc9af26e51cb1070"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a308377fd5d9eb3c6fc9af26e51cb1070">&#9670;&#160;</a></span>jkii_parse_err_t</h2>
 
@@ -289,37 +272,7 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Return value of <a class="el" href="jkii_8h.html#a4793a01413e64a45474d0e23894da2da">jkii_parse()</a> </p>
-
-</div>
-</div>
-<a id="a452dced9e5f98b308c923ac8df9ea158" name="a452dced9e5f98b308c923ac8df9ea158"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a452dced9e5f98b308c923ac8df9ea158">&#9670;&#160;</a></span>jkii_resource_t</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">typedef struct <a class="el" href="structjkii__resource__t.html">jkii_resource_t</a> <a class="el" href="structjkii__resource__t.html">jkii_resource_t</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Resource used by KII JSON library. Fields of this struct determines max number of tokens inside json can be parsed. </p>
-
-</div>
-</div>
-<a id="ab9a2c8ed41a6b2a14102de46cfd8bcce" name="ab9a2c8ed41a6b2a14102de46cfd8bcce"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab9a2c8ed41a6b2a14102de46cfd8bcce">&#9670;&#160;</a></span>jkii_token_t</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">typedef jsmntok_t <a class="el" href="jkii_8h.html#ab9a2c8ed41a6b2a14102de46cfd8bcce">jkii_token_t</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>JSON token data to parse JSON string. </p>
+<p>Return value of <a class="el" href="jkii_8h.html#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse()</a> </p>
 
 </div>
 </div>
@@ -381,7 +334,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 <p>Type of parsed JSON field. This value is assigned to <a class="el" href="structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841">jkii_field_t::type</a>. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a5fe8d88e1452ceb3d2c07f69440c82b5a273c020553c1ee8b03caa0693e781fde" name="a5fe8d88e1452ceb3d2c07f69440c82b5a273c020553c1ee8b03caa0693e781fde"></a>JKII_FIELD_TYPE_ANY&#160;</td><td class="fielddoc"><p>This value denotes any JSON types. If this value is set to <a class="el" href="structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841">jkii_field_t::type</a>, then <a class="el" href="jkii_8h.html#a4793a01413e64a45474d0e23894da2da">jkii_parse()</a> ignore type checking. </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a5fe8d88e1452ceb3d2c07f69440c82b5a273c020553c1ee8b03caa0693e781fde" name="a5fe8d88e1452ceb3d2c07f69440c82b5a273c020553c1ee8b03caa0693e781fde"></a>JKII_FIELD_TYPE_ANY&#160;</td><td class="fielddoc"><p>This value denotes any JSON types. If this value is set to <a class="el" href="structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841">jkii_field_t::type</a>, then <a class="el" href="jkii_8h.html#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse()</a> ignore type checking. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a5fe8d88e1452ceb3d2c07f69440c82b5a41325ab8db67f5439a64df1967009180" name="a5fe8d88e1452ceb3d2c07f69440c82b5a41325ab8db67f5439a64df1967009180"></a>JKII_FIELD_TYPE_INTEGER&#160;</td><td class="fielddoc"><p>This value denotes a signed integer held as an int32_t: from INT32_MIN to INT32_MAX, whatever the width of int. </p>
 </td></tr>
@@ -414,28 +367,78 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Return value of <a class="el" href="jkii_8h.html#a4793a01413e64a45474d0e23894da2da">jkii_parse()</a> </p>
+<p>Return value of <a class="el" href="jkii_8h.html#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse()</a> </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a7c99e19b01ccd836a788cf794afc8792ac12ec4a57f74db1a3bb6a02fdb7ea6fe" name="a7c99e19b01ccd836a788cf794afc8792ac12ec4a57f74db1a3bb6a02fdb7ea6fe"></a>JKII_ERR_OK&#160;</td><td class="fielddoc"><p>JSON string is successfully parsed and all <a class="el" href="structjkii__field__t.html">jkii_field_t</a> variables are successfully set. i.e., all <a class="el" href="structjkii__field__t.html">jkii_field_t</a> type fields are JKII_FIELD_ERR_OK. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a7c99e19b01ccd836a788cf794afc8792ac7aa54138b3463eb8922d8cf568868ad" name="a7c99e19b01ccd836a788cf794afc8792ac7aa54138b3463eb8922d8cf568868ad"></a>JKII_ERR_PARTIAL&#160;</td><td class="fielddoc"><p>JSON string is successfully parsed but some <a class="el" href="structjkii__field__t.html">jkii_field_t</a> variables are failed. i.e., some <a class="el" href="structjkii__field__t.html">jkii_field_t</a> type fields are not JKII_FIELD_ERR_OK. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a7c99e19b01ccd836a788cf794afc8792acb577be7115daba71b3e5c64c559bed9" name="a7c99e19b01ccd836a788cf794afc8792acb577be7115daba71b3e5c64c559bed9"></a>JKII_ERR_ROOT_TYPE&#160;</td><td class="fielddoc"><p>JSON string is successfully parsed but type of root object type is unmatched to using function.</p>
-<p>jkii_validate_root_object() requires a JSON object, and returns this error for anything else. </p>
+<p>jkii_validate_root_object() requires a JSON object, and returns this error for anything else, and <a class="el" href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a> an object or an array. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a7c99e19b01ccd836a788cf794afc8792aa1994c8ea018c38622491fc7068d3bb1" name="a7c99e19b01ccd836a788cf794afc8792aa1994c8ea018c38622491fc7068d3bb1"></a>JKII_ERR_TOKENS_SHORTAGE&#160;</td><td class="fielddoc"><p><a class="el" href="structjkii__resource__t.html#adfd476e8fc0cfba750e837734287cb8a">jkii_resource_t::tokens</a> is not enough to parse JSON string. </p>
+<tr><td class="fieldname"><a id="a7c99e19b01ccd836a788cf794afc8792a32c838a9c10d51d215157abf1d5b6740" name="a7c99e19b01ccd836a788cf794afc8792a32c838a9c10d51d215157abf1d5b6740"></a>JKII_ERR_INVALID_INPUT&#160;</td><td class="fielddoc"><p>The string is not JSON, as ECMA-404 has it, or nests objects and arrays deeper than 32 levels. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a7c99e19b01ccd836a788cf794afc8792a32c838a9c10d51d215157abf1d5b6740" name="a7c99e19b01ccd836a788cf794afc8792a32c838a9c10d51d215157abf1d5b6740"></a>JKII_ERR_INVALID_INPUT&#160;</td><td class="fielddoc"><p>JSON string is failed to parse. Passed string is not JSON string. </p>
-</td></tr>
-<tr><td class="fieldname"><a id="a7c99e19b01ccd836a788cf794afc8792a45f549f0f06f1cdbfd84d04323d28053" name="a7c99e19b01ccd836a788cf794afc8792a45f549f0f06f1cdbfd84d04323d28053"></a>JKII_ERR_ALLOCATION&#160;</td><td class="fielddoc"><p>Allocation failed. </p>
+<tr><td class="fieldname"><a id="a7c99e19b01ccd836a788cf794afc8792a585090e8630fcf9518f541757002f4a1" name="a7c99e19b01ccd836a788cf794afc8792a585090e8630fcf9518f541757002f4a1"></a>JKII_ERR_NOT_FOUND&#160;</td><td class="fielddoc"><p><a class="el" href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a> has given every member there is. </p>
 </td></tr>
 </table>
 
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="a4793a01413e64a45474d0e23894da2da" name="a4793a01413e64a45474d0e23894da2da"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4793a01413e64a45474d0e23894da2da">&#9670;&#160;</a></span>jkii_parse()</h2>
+<a id="a1abb4f25c1fab77f02ceeed2e988f401" name="a1abb4f25c1fab77f02ceeed2e988f401"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1abb4f25c1fab77f02ceeed2e988f401">&#9670;&#160;</a></span>jkii_next_member()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a> jkii_next_member </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>json_string</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>json_string_len</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structjkii__member__iter__t.html">jkii_member_iter_t</a> *&#160;</td>
+          <td class="paramname"><em>iter</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structjkii__member__t.html">jkii_member_t</a> *&#160;</td>
+          <td class="paramname"><em>out_member</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Gives the next member of the object, or element of the array, that a JSON string is.</p>
+<p>The first call, with iter zeroed, checks the string as <a class="el" href="jkii_8h.html#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse()</a> does, so it has to stay as it is until the last.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">json_string</td><td>The object or the array. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">json_string_len</td><td>Its length. </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">iter</td><td>Where the last call got to, zeroed for the first. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_member</td><td>The member, set only when JKII_ERR_OK is returned. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>JKII_ERR_OK with the next member, JKII_ERR_NOT_FOUND when there is none left, JKII_ERR_INVALID_INPUT if the string is not JSON, or JKII_ERR_ROOT_TYPE if it is neither an object nor an array. </dd></dl>
+
+</div>
+</div>
+<a id="a41ad96e57ad3b992e2f173336f6755f7" name="a41ad96e57ad3b992e2f173336f6755f7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a41ad96e57ad3b992e2f173336f6755f7">&#9670;&#160;</a></span>jkii_parse()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -456,13 +459,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="structjkii__field__t.html">jkii_field_t</a> *&#160;</td>
-          <td class="paramname"><em>fields</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="structjkii__resource__t.html">jkii_resource_t</a> *&#160;</td>
-          <td class="paramname"><em>resource</em>&#160;</td>
+          <td class="paramname"><em>fields</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -471,69 +468,13 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Parse JSON string. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Parse JSON string.</p>
+<p>The string has to be one JSON object or array, after whitespace if any, and before whitespace if any: valid JSON, as ECMA-404 has it, which is checked whole, nesting objects and arrays at most 32 levels deep. Nothing is allocated, and the string is not changed.</p>
+<dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">json_string</td><td>of JSON string. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">json_string_len</td><td>of JSON string. </td></tr>
     <tr><td class="paramdir">[in,out]</td><td class="paramname">fields</td><td>of kii JSON parser. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">resource</td><td>of parser. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>parse result. </dd></dl>
-
-</div>
-</div>
-<a id="a4b9010bf54967baa34c7608a27e99d23" name="a4b9010bf54967baa34c7608a27e99d23"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4b9010bf54967baa34c7608a27e99d23">&#9670;&#160;</a></span>jkii_parse_with_allocator()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a> jkii_parse_with_allocator </td>
-          <td>(</td>
-          <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>json_string</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>json_string_len</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="structjkii__field__t.html">jkii_field_t</a> *&#160;</td>
-          <td class="paramname"><em>fields</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="jkii_8h.html#afcce849926c48d98835a7c07e2ba0fd1">JKII_CB_RESOURCE_ALLOC</a>&#160;</td>
-          <td class="paramname"><em>cb_alloc</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="jkii_8h.html#a6419ee6ba358566315b0f98c2c1cbd51">JKII_CB_RESOURCE_FREE</a>&#160;</td>
-          <td class="paramname"><em>cb_free</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Parse JSON string with custom memory allocator. </p><dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">json_string</td><td>of JSON string. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">json_string_len</td><td>of JSON string. </td></tr>
-    <tr><td class="paramdir">[in,out]</td><td class="paramname">fields</td><td>of kii JSON parser. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_alloc</td><td>allocate resource </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_free</td><td>free resource </td></tr>
   </table>
   </dd>
 </dl>
@@ -544,7 +485,7 @@ Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 3 2026 12:55:56 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Nov 3 2026 13:24:45 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

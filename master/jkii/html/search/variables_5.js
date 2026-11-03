@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['long_5fvalue_0',['long_value',['../structjkii__field__t.html#ab61d4194e05eaab56b021905e257d052',1,'jkii_field_t::long_value'],['../structjkii__primitive__t.html#aa803644965e24206807d1f5d078ae98b',1,'jkii_primitive_t::long_value']]]
+  ['key_0',['key',['../structjkii__member__t.html#a59c73f95abf1537745b9b0c744695517',1,'jkii_member_t']]],
+  ['key_5flength_1',['key_length',['../structjkii__member__t.html#a9231355bb207946584972854c011c8eb',1,'jkii_member_t']]]
 ];

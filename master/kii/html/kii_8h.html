@@ -585,12 +585,6 @@ Functions</h2></td></tr>
 <tr class="memitem:a853c3e530701ed2821591d8e04572606" id="r_a853c3e530701ed2821591d8e04572606"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a853c3e530701ed2821591d8e04572606">kii_set_cb_mqtt_event</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="kii_8h.html#a5cb747d170789f6d5beaf457af3dbee2">KII_CB_MQTT_EVENT</a> cb, void *userdata)</td></tr>
 <tr class="memdesc:a853c3e530701ed2821591d8e04572606"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the callback the MQTT task tells why it reconnects, waits or drops a message.  <br /></td></tr>
 <tr class="separator:a853c3e530701ed2821591d8e04572606"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ace208de016c2792d00a43374638bb34c" id="r_ace208de016c2792d00a43374638bb34c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#ace208de016c2792d00a43374638bb34c">kii_set_json_parser_resource</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../jkii/html/structjkii__resource__t.html">jkii_resource_t</a> *resource)</td></tr>
-<tr class="memdesc:ace208de016c2792d00a43374638bb34c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set JSON parser resource.  <br /></td></tr>
-<tr class="separator:ace208de016c2792d00a43374638bb34c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a644e3299e543b6dc1d32f8fd84cc6437" id="r_a644e3299e543b6dc1d32f8fd84cc6437"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#a644e3299e543b6dc1d32f8fd84cc6437">kii_set_cb_json_parser_resource</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../jkii/html/jkii_8h.html#afcce849926c48d98835a7c07e2ba0fd1">JKII_CB_RESOURCE_ALLOC</a> cb_alloc, <a class="elRef" href="../../jkii/html/jkii_8h.html#a6419ee6ba358566315b0f98c2c1cbd51">JKII_CB_RESOURCE_FREE</a> cb_free)</td></tr>
-<tr class="memdesc:a644e3299e543b6dc1d32f8fd84cc6437"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set JSON parser resource allocators. To use Allocator instead of fixed size memory given by kii_set_json_parser_resource(kii_t, jkii_resource_t), call kii_set_json_parser_resource(kii_t, jkii_resource_t) with NULL resource argument.  <br /></td></tr>
-<tr class="separator:a644e3299e543b6dc1d32f8fd84cc6437"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af8d81eaeba5dfa0aceff7347e8f7419a" id="r_af8d81eaeba5dfa0aceff7347e8f7419a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="kii_8h.html#af8d81eaeba5dfa0aceff7347e8f7419a">kii_set_cb_slist_resource</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../khc/html/khc_8h.html#a14e10ebf817cb0b1dc8dca9ce3794b9c">KHC_CB_SLIST_ALLOC</a> cb_alloc, <a class="elRef" href="../../khc/html/khc_8h.html#a32bafb6cf1da963a57d8a167efe9f833">KHC_CB_SLIST_FREE</a> cb_free, void *cb_alloc_data, void *cb_free_data)</td></tr>
 <tr class="memdesc:af8d81eaeba5dfa0aceff7347e8f7419a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set <a class="elRef" href="../../khc/html/structkhc__slist.html">khc_slist</a> (linked list) resource allocators.  <br /></td></tr>
 <tr class="separator:af8d81eaeba5dfa0aceff7347e8f7419a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -2948,50 +2942,6 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="kii_8h.
 
 </div>
 </div>
-<a id="a644e3299e543b6dc1d32f8fd84cc6437" name="a644e3299e543b6dc1d32f8fd84cc6437"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a644e3299e543b6dc1d32f8fd84cc6437">&#9670;&#160;</a></span>kii_set_cb_json_parser_resource()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void kii_set_cb_json_parser_resource </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
-          <td class="paramname"><em>kii</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="elRef" href="../../jkii/html/jkii_8h.html#afcce849926c48d98835a7c07e2ba0fd1">JKII_CB_RESOURCE_ALLOC</a>&#160;</td>
-          <td class="paramname"><em>cb_alloc</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="elRef" href="../../jkii/html/jkii_8h.html#a6419ee6ba358566315b0f98c2c1cbd51">JKII_CB_RESOURCE_FREE</a>&#160;</td>
-          <td class="paramname"><em>cb_free</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Set JSON parser resource allocators. To use Allocator instead of fixed size memory given by kii_set_json_parser_resource(kii_t, jkii_resource_t), call kii_set_json_parser_resource(kii_t, jkii_resource_t) with NULL resource argument. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_alloc</td><td>allocator callback. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_free</td><td>free callback should free memories allocated in cb_alloc. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <a id="a547c8e56022dc1ba57f3ee70776e65db" name="a547c8e56022dc1ba57f3ee70776e65db"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a547c8e56022dc1ba57f3ee70776e65db">&#9670;&#160;</a></span>kii_set_cb_mqtt_credentials()</h2>
 
@@ -3305,43 +3255,6 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="kii_8h.
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">socket</td><td>The socket. It has to outlive kii, or be replaced first. </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
-<a id="ace208de016c2792d00a43374638bb34c" name="ace208de016c2792d00a43374638bb34c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ace208de016c2792d00a43374638bb34c">&#9670;&#160;</a></span>kii_set_json_parser_resource()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void kii_set_json_parser_resource </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *&#160;</td>
-          <td class="paramname"><em>kii</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="elRef" href="../../jkii/html/structjkii__resource__t.html">jkii_resource_t</a> *&#160;</td>
-          <td class="paramname"><em>resource</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Set JSON parser resource. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">resource</td><td>to be used parse JSON. 256 tokens_num might be enough for almost all usecases. If you need to parse large object or allocate exact size of memory used, see kii_set_cb_json_parser_resource(kii_t, JKII_CB_RESOURCE_ALLOC, JKII_CB_RESOURCE_FREE) </td></tr>
   </table>
   </dd>
 </dl>
@@ -4748,7 +4661,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="kii_8h.
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 3 2026 12:55:56 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Nov 3 2026 13:24:45 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

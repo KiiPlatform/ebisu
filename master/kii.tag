@@ -1154,20 +1154,6 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>kii_set_json_parser_resource</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>ace208de016c2792d00a43374638bb34c</anchor>
-      <arglist>(kii_t *kii, jkii_resource_t *resource)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>kii_set_cb_json_parser_resource</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a644e3299e543b6dc1d32f8fd84cc6437</anchor>
-      <arglist>(kii_t *kii, JKII_CB_RESOURCE_ALLOC cb_alloc, JKII_CB_RESOURCE_FREE cb_free)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
       <name>kii_set_cb_slist_resource</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>af8d81eaeba5dfa0aceff7347e8f7419a</anchor>

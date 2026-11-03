@@ -5,6 +5,6 @@ var searchData=
   ['bucket_5fname_2',['bucket_name',['../../../kii/html/structkii__bucket__t.html#a017e05bd9ec6a26eeb4b9099da60f858',1,'kii_bucket_t']]],
   ['buff_3',['buff',['../../../core/html/structebisu__strbuf__t.html#a0387a9ac7fc90b16ebd2ce20af50eccd',1,'ebisu_strbuf_t']]],
   ['buffers_4',['Set-up buffers',['../index.html#autotoc_md12',1,'']]],
-  ['by_20tt_20tio_5fhandler_5ft_20tt_5',['Tasks executed by &lt;tt&gt;tio_handler_t&lt;/tt&gt;.',['../index.html#autotoc_md33',1,'']]],
-  ['by_20tt_20tio_5fupdater_5ft_20tt_6',['Tasks executed by &lt;tt&gt;tio_updater_t&lt;/tt&gt;.',['../index.html#autotoc_md34',1,'']]]
+  ['by_20tt_20tio_5fhandler_5ft_20tt_5',['Tasks executed by &lt;tt&gt;tio_handler_t&lt;/tt&gt;.',['../index.html#autotoc_md32',1,'']]],
+  ['by_20tt_20tio_5fupdater_5ft_20tt_6',['Tasks executed by &lt;tt&gt;tio_updater_t&lt;/tt&gt;.',['../index.html#autotoc_md33',1,'']]]
 ];
