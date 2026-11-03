@@ -193,7 +193,7 @@ callback must then start the body over.
 ## Socket callbacks
 
 The socket is an `ebisu_socket_t`, declared in `ebisu_socket.h`, part of
-[platform](https://github.com/KiiPlatform/ebisu/blob/master/platform/README.md):
+[core](https://github.com/KiiPlatform/ebisu/blob/master/core/README.md):
 a pointer to a table of operations, which `khc` calls with the socket itself,
 `self`, as their first argument. An implementation embeds it in the struct
 holding the connection's state, and gets that back with `EBISU_CONTAINER_OF()`.
@@ -311,5 +311,5 @@ passwords, so never enable it where its output is kept or shared.
 ## Building
 
 `khc` is built as part of ebisu, as described in the
-[top-level README](https://github.com/KiiPlatform/ebisu/blob/master/README.md#building). `libkii` includes it, and it is
-also built on its own as `libkhc`.
+[top-level README](https://github.com/KiiPlatform/ebisu/blob/master/README.md#building), as
+`libebisu_khc`, which links `libebisu_core`, and which `libebisu_kii` links.

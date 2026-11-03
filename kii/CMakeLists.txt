@@ -5,40 +5,23 @@ target_include_directories(ebisu_kii_objs
     # kii's own sources include its private headers by bare name.
     PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 target_link_libraries(ebisu_kii_objs
-    PRIVATE ebisu_khc_objs ebisu_platform_objs ebisu_jkii_objs ebisu_jsmn_objs)
+    PRIVATE ebisu_khc_objs ebisu_core_objs ebisu_jkii_objs ebisu_jsmn_objs)
 ebisu_configure_target(ebisu_kii_objs)
 
-# libkii keeps what it has always had -- kii plus khc, jkii and jsmn, with
-# platform as what khc was split from -- so anything linking -lkii alone still resolves. The difference is that
-# those sources are now compiled once for the whole project instead of once per
-# component, and under one set of flags rather than "-Wall" here and
-# "-Wall -std=c99" there.
-add_library(kii
-    $<TARGET_OBJECTS:ebisu_kii_objs>
-    $<TARGET_OBJECTS:ebisu_khc_objs>
-    $<TARGET_OBJECTS:ebisu_platform_objs>
-    $<TARGET_OBJECTS:ebisu_jkii_objs>
-    $<TARGET_OBJECTS:ebisu_jsmn_objs>)
-# kii.h includes "khc.h" and <jkii.h>, which in turn pulls <jsmn.h>.
+# kii alone: khc, jkii and ebisu_core are libraries of their own, which it
+# links.
+add_library(kii $<TARGET_OBJECTS:ebisu_kii_objs>)
 target_include_directories(kii
-    PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../khc/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../platform/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../jkii/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../jkii/libs/jsmn>)
-set_target_properties(kii PROPERTIES VERSION ${version} SOVERSION ${soversion})
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+# kii.h includes khc.h, jkii.h and ebisu_core's headers.
+target_link_libraries(kii PUBLIC khc jkii ebisu_core)
+set_target_properties(kii PROPERTIES
+    OUTPUT_NAME ebisu_kii VERSION ${version} SOVERSION ${soversion})
 ebisu_configure_target(kii)
 
 install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/kii.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/kii_task_callback.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../khc/include/khc.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../jkii/include/jkii.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../jkii/include/jkii_utils.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../jkii/include/jkii_writer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../jkii/include/jkii_lines.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../jkii/libs/jsmn/jsmn.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(TARGETS kii EXPORT ebisu-targets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

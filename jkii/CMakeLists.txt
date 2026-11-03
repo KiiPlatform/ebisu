@@ -1,5 +1,5 @@
-# jsmn is vendored, and kii/tio embed it directly, so it gets its own object
-# library rather than being globbed in wherever it is needed.
+# jsmn is vendored. libebisu_jkii holds it, as jkii.h includes jsmn.h, and the
+# tests link it on its own, so it gets an object library of its own.
 file(GLOB jsmn_srcs CONFIGURE_DEPENDS libs/jsmn/*.c)
 add_library(ebisu_jsmn_objs OBJECT ${jsmn_srcs})
 target_include_directories(ebisu_jsmn_objs
@@ -11,27 +11,27 @@ add_library(ebisu_jkii_objs OBJECT ${jkii_srcs})
 target_include_directories(ebisu_jkii_objs
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/jsmn>)
-# For ebisu_str.h, as khc has it.
-target_link_libraries(ebisu_jkii_objs PUBLIC ebisu_platform_objs)
+# For ebisu_str.h.
+target_link_libraries(ebisu_jkii_objs PUBLIC ebisu_core_objs)
 ebisu_configure_target(ebisu_jkii_objs)
 
-# jkii and jsmn, and platform, whose strings and numbers jkii's sources can use,
-# as libkhc embeds it.
+# jkii and jsmn, which jkii.h includes. ebisu_core, whose strings and numbers
+# jkii's sources can use, is linked, not embedded.
 add_library(jkii
     $<TARGET_OBJECTS:ebisu_jkii_objs>
-    $<TARGET_OBJECTS:ebisu_jsmn_objs>
-    $<TARGET_OBJECTS:ebisu_platform_objs>)
-# jkii.h includes <jsmn.h>, so jsmn's directory is part of the public interface,
-# and platform's is, for what libjkii embeds of it. Installing flattens these
-# into one include dir, which is why the split never showed up before targets
-# were linked directly.
+    $<TARGET_OBJECTS:ebisu_jsmn_objs>)
+# jkii.h includes <jsmn.h>, so jsmn's directory is part of the public interface.
+# Installing flattens these into one include dir, which is why the split never
+# showed up before targets were linked directly.
 target_include_directories(jkii
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/jsmn>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../platform/include>)
-# Versioned like libkii and libtio, for the reason given in khc/CMakeLists.txt.
-set_target_properties(jkii PROPERTIES VERSION ${version} SOVERSION ${soversion})
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/jsmn>)
+target_link_libraries(jkii PRIVATE ebisu_core)
+# libebisu_jkii, versioned like the others, for the reason given in
+# khc/CMakeLists.txt.
+set_target_properties(jkii PROPERTIES
+    OUTPUT_NAME ebisu_jkii VERSION ${version} SOVERSION ${soversion})
 ebisu_configure_target(jkii)
 
 file(GLOB jkii_hdrs CONFIGURE_DEPENDS include/*.h libs/jsmn/jsmn.h)

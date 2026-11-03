@@ -66,6 +66,7 @@ should use that version's reference below. Moving from 1.x? See the
   <a href="v3/kii/html/index.html">kii</a>
   <a href="v3/khc/html/index.html">khc</a>
   <a href="v3/jkii/html/index.html">jkii</a>
+  <a href="v3/core/html/index.html">core</a>
   <a href="v3/platform/html/index.html">platform</a></p>
 
 <h2>ebisu 1.x</h2>
@@ -81,6 +82,7 @@ should use that version's reference below. Moving from 1.x? See the
   <a href="master/kii/html/index.html">kii</a>
   <a href="master/khc/html/index.html">khc</a>
   <a href="master/jkii/html/index.html">jkii</a>
+  <a href="master/core/html/index.html">core</a>
   <a href="master/platform/html/index.html">platform</a></p>
 
 <h2>Components</h2>
@@ -94,8 +96,12 @@ should use that version's reference below. Moving from 1.x? See the
   <dd>The HTTP client tio and kii use.</dd>
   <dt>jkii</dt>
   <dd>The JSON parser tio and kii use.</dd>
+  <dt>core</dt>
+  <dd>What every component is written against: the socket, system, clock and
+    logger abstractions, and the string, number and memory utilities they share.</dd>
   <dt>platform</dt>
-  <dd>What ebisu needs from the device: socket, task and clock abstractions.</dd>
+  <dd>The core's abstractions implemented for POSIX with OpenSSL, and for Windows
+    with Schannel.</dd>
 </dl>
 </body>
 </html>

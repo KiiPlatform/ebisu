@@ -1,12 +1,12 @@
 # What is installed for other projects to build against: a CMake package, for
 # find_package(ebisu), and a pkg-config file for each library.
 #
-# The package's targets are ebisu::khc, ebisu::jkii, ebisu::kii and ebisu::tio,
-# and, where they were built, ebisu::posix and ebisu::openssl, or ebisu::win32
-# and ebisu::schannel on Windows, the ports. Like
-# the libraries, the headers are all installed in one directory, which each
-# target adds to the include path. A port carries none of the rest of platform:
-# link it with one of the libraries, as the README says.
+# The package's targets are ebisu::core, ebisu::khc, ebisu::jkii, ebisu::kii and
+# ebisu::tio, and, where they were built, ebisu::posix and ebisu::openssl, or
+# ebisu::win32 and ebisu::schannel on Windows, the ports. Each library holds its
+# own code alone, and its target, like its pkg-config file, brings in the ones
+# it links. Like the libraries, the headers are all installed in one directory,
+# which each target adds to the include path.
 
 include(CMakePackageConfigHelpers)
 
@@ -46,37 +46,44 @@ file(RELATIVE_PATH pc_prefix_from_dir /root/${pc_dir} /root)
 string(REGEX REPLACE "/$" "" pc_prefix_from_dir "${pc_prefix_from_dir}")
 
 function(_ebisu_pkg_config name lib description)
-    cmake_parse_arguments(PARSE_ARGV 3 arg "" "REQUIRES;LIBS" "")
+    cmake_parse_arguments(PARSE_ARGV 3 arg "" "LIBS" "REQUIRES;REQUIRES_PRIVATE")
     set(pc_name ${name})
     set(pc_lib ${lib})
     set(pc_description ${description})
-    set(pc_requires "${arg_REQUIRES}")
+    string(REPLACE ";" " " pc_requires "${arg_REQUIRES}")
+    string(REPLACE ";" " " pc_requires_private "${arg_REQUIRES_PRIVATE}")
     set(pc_libs_extra "${arg_LIBS}")
     configure_file(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/ebisu.pc.in
         ${PROJECT_BINARY_DIR}/pkgconfig/ebisu-${name}.pc @ONLY)
     install(FILES ${PROJECT_BINARY_DIR}/pkgconfig/ebisu-${name}.pc DESTINATION ${pc_dir})
 endfunction()
 
-_ebisu_pkg_config(khc khc "HTTP client of ebisu")
-_ebisu_pkg_config(jkii jkii "JSON parser of ebisu")
-_ebisu_pkg_config(kii kii "Kii Cloud client of ebisu, with khc and jkii")
-_ebisu_pkg_config(tio tio "Thing-IF client of ebisu, with kii, khc and jkii")
+# What each requires is what its headers include, and jkii's sources use the
+# core without its headers including it.
+_ebisu_pkg_config(core ebisu_core
+    "Core of ebisu: the abstractions it is written against, and its utilities")
+_ebisu_pkg_config(khc ebisu_khc "HTTP client of ebisu" REQUIRES ebisu-core)
+_ebisu_pkg_config(jkii ebisu_jkii "JSON parser of ebisu" REQUIRES_PRIVATE ebisu-core)
+_ebisu_pkg_config(kii ebisu_kii "Kii Cloud client of ebisu"
+    REQUIRES ebisu-khc ebisu-jkii ebisu-core)
+_ebisu_pkg_config(tio ebisu_tio "Thing-IF client of ebisu" REQUIRES ebisu-kii ebisu-jkii)
 if(TARGET ebisu_posix)
     _ebisu_pkg_config(posix ebisu_posix
-        "POSIX port of ebisu's platform: link it before khc, kii or tio"
-        LIBS -pthread)
+        "POSIX port of ebisu: the system and locks on POSIX threads"
+        REQUIRES ebisu-core LIBS -pthread)
 endif()
 if(TARGET ebisu_openssl)
     _ebisu_pkg_config(openssl ebisu_openssl
-        "OpenSSL port of ebisu's platform: link it before khc, kii or tio"
-        REQUIRES openssl LIBS -pthread)
+        "OpenSSL port of ebisu: sockets over TLS with OpenSSL"
+        REQUIRES ebisu-core openssl LIBS -pthread)
 endif()
 if(TARGET ebisu_win32)
     _ebisu_pkg_config(win32 ebisu_win32
-        "Win32 port of ebisu's platform: link it before khc, kii or tio")
+        "Win32 port of ebisu: the system and locks on the Win32 API"
+        REQUIRES ebisu-core)
 endif()
 if(TARGET ebisu_schannel)
     _ebisu_pkg_config(schannel ebisu_schannel
-        "Schannel port of ebisu's platform: link it before khc, kii or tio"
-        LIBS "-lws2_32 -lsecur32 -lcrypt32")
+        "Schannel port of ebisu: sockets over TLS with Schannel"
+        REQUIRES ebisu-core LIBS "-lws2_32 -lsecur32 -lcrypt32")
 endif()

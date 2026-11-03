@@ -51,14 +51,14 @@ make install_sw > /tmp/openssl-install.log
 /opt/openssl/bin/openssl version
 
 cflags=(-std=c99 -pedantic-errors -Wall -Werror -fvisibility=hidden -fPIC -D_DEFAULT_SOURCE)
-inc=(-I/opt/openssl/include -I/src/platform/include -I/src/platform/openssl/include
+inc=(-I/opt/openssl/include -I/src/core/include -I/src/platform/openssl/include
     -I/src/platform/posix/include -I/out)
 tinc=("${inc[@]}" -I/src/tests -I/src/tests/large_test -I/src/kii/include -I/src/kii
     -I/src/khc/include -I/src/jkii/include -I/src/jkii/libs/jsmn)
 libs=(/opt/openssl/lib/libssl.a /opt/openssl/lib/libcrypto.a -ldl -lpthread)
 mkdir -p /tmp/b
 cd /tmp/b
-gcc "${cflags[@]}" "${inc[@]}" -c /src/platform/src/ebisu_clock.c -o clock.o
+gcc "${cflags[@]}" "${inc[@]}" -c /src/core/src/ebisu_clock.c -o clock.o
 gcc "${cflags[@]}" "${inc[@]}" -c /src/platform/openssl/src/ebisu_openssl.c -o openssl.o
 gcc "${cflags[@]}" "${inc[@]}" -c /src/platform/posix/src/ebisu_posix.c -o posix.o
 

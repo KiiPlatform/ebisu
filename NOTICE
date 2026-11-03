@@ -3,7 +3,8 @@ ebisu is licensed under the Apache License 2.0: see LICENSE.
 It includes the third-party code below, under those projects' own licenses.
 
 
-Compiled into libjkii, and so into libkii, libtio and anything linking them:
+Compiled into libebisu_jkii, which libebisu_kii and libebisu_tio link, and into
+anything linking them statically:
 
 jsmn, in jkii/libs/jsmn
 

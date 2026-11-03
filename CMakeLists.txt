@@ -120,6 +120,7 @@ function(ebisu_configure_target tgt)
   target_link_libraries(${tgt} PUBLIC $<BUILD_INTERFACE:ebisu_version>)
 endfunction()
 
+add_subdirectory(core)
 add_subdirectory(platform)
 add_subdirectory(jkii)
 add_subdirectory(khc)

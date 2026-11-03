@@ -3,7 +3,7 @@ add_library(ebisu_khc_objs OBJECT ${khc_srcs})
 target_include_directories(ebisu_khc_objs
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
-target_link_libraries(ebisu_khc_objs PUBLIC ebisu_platform_objs)
+target_link_libraries(ebisu_khc_objs PUBLIC ebisu_core_objs)
 if(KHC_TRACE)
     # Used only by khc/src/khc_state_impl.c. Previously added with
     # ADD_DEFINITIONS in three separate components, which meant the khc sources
@@ -12,17 +12,16 @@ if(KHC_TRACE)
 endif()
 ebisu_configure_target(ebisu_khc_objs)
 
-add_library(khc
-    $<TARGET_OBJECTS:ebisu_khc_objs>
-    $<TARGET_OBJECTS:ebisu_platform_objs>)
+add_library(khc $<TARGET_OBJECTS:ebisu_khc_objs>)
 target_include_directories(khc
-    PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../platform/include>)
-# Versioned like libkii and libtio. Without it the soname was plain libkhc.so,
-# so a program linked against libkhc recorded no major version and would load
-# one with a different ABI without a word.
-set_target_properties(khc PROPERTIES VERSION ${version} SOVERSION ${soversion})
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+# khc.h includes ebisu_socket.h and ebisu_system.h.
+target_link_libraries(khc PUBLIC ebisu_core)
+# libebisu_khc, versioned like the others. Without a version the soname was
+# plain libkhc.so, so a program linked against it recorded no major version and
+# would load one with a different ABI without a word.
+set_target_properties(khc PROPERTIES
+    OUTPUT_NAME ebisu_khc VERSION ${version} SOVERSION ${soversion})
 ebisu_configure_target(khc)
 
 file(GLOB khc_hdrs CONFIGURE_DEPENDS include/*.h)

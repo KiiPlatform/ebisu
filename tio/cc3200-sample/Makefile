@@ -1,14 +1,14 @@
 TARGET_DIR=freertos_ebisu_demo
-PLATFORM_DIR=$(TARGET_DIR)/platform
+CORE_DIR=$(TARGET_DIR)/core
 JKII_DIR=$(TARGET_DIR)/jkii
 KHC_DIR=$(TARGET_DIR)/khc
 KII_DIR=$(TARGET_DIR)/kii
 TIO_DIR=$(TARGET_DIR)/tio
 
 all:
-	mkdir -p $(PLATFORM_DIR)
-	cp -r ../../platform/src $(PLATFORM_DIR)
-	cp -r ../../platform/include $(PLATFORM_DIR)
+	mkdir -p $(CORE_DIR)
+	cp -r ../../core/src $(CORE_DIR)
+	cp -r ../../core/include $(CORE_DIR)
 	mkdir -p $(JKII_DIR)
 	cp -r ../../jkii/src $(JKII_DIR)
 	cp -r ../../jkii/include $(JKII_DIR)
