@@ -162,6 +162,18 @@
     </member>
   </compound>
   <compound kind="file">
+    <name>ebisu_mem.h</name>
+    <path>include/</path>
+    <filename>ebisu__mem_8h.html</filename>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_secure_zero</name>
+      <anchorfile>ebisu__mem_8h.html</anchorfile>
+      <anchor>a32244a5750a1713af5af8a0a3465b5f9</anchor>
+      <arglist>(void *p, size_t n)</arglist>
+    </member>
+  </compound>
+  <compound kind="file">
     <name>ebisu_object.h</name>
     <path>include/</path>
     <filename>ebisu__object_8h.html</filename>

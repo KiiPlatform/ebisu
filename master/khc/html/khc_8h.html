@@ -1718,7 +1718,7 @@ KHC_CB_CONTINUE, void*)</a> cancelled the request. </p>
 </div><div class="memdoc">
 
 <p>Free memory used for the entire linked list. </p>
-<p>Linked list constructed by <a class="el" href="khc_8h.html#a0c00d03901759308af4a906ad3a4bf57" title="Add node to the linked list.">khc_slist_append(khc_slist*, const char*, size_t)</a> must be freed by this method. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Linked list constructed by <a class="el" href="khc_8h.html#a0c00d03901759308af4a906ad3a4bf57" title="Add node to the linked list.">khc_slist_append(khc_slist*, const char*, size_t)</a> must be freed by this method. Each node's string is cleared first, as a request header may carry a token. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">slist</td><td>pointer to the linked list (first node). </td></tr>
   </table>
@@ -1760,7 +1760,7 @@ KHC_CB_CONTINUE, void*)</a> cancelled the request. </p>
 </div><div class="memdoc">
 
 <p>Free memory used for the entire linked list constructed by custom allocator. </p>
-<p>Linked list constructed by <a class="el" href="khc_8h.html#ae829b7d6c6b4adf4c43c5ce2084a1cfa" title="Add node to the linked list. Node is allocated by specified allocator.">khc_slist_append_using_cb_alloc(khc_slist*, const char*, size_t length, KHC_CB_SLIST_ALLOC, void*)</a> must be freed by this method and matching free callback.</p>
+<p>Linked list constructed by <a class="el" href="khc_8h.html#ae829b7d6c6b4adf4c43c5ce2084a1cfa" title="Add node to the linked list. Node is allocated by specified allocator.">khc_slist_append_using_cb_alloc(khc_slist*, const char*, size_t length, KHC_CB_SLIST_ALLOC, void*)</a> must be freed by this method and matching free callback. Each node's string, which KHC_CB_SLIST_ALLOC copied, is cleared before cb_free is called with the node, as a request header may carry a token.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">slist</td><td>pointer to the linked list (first node). </td></tr>
@@ -1775,7 +1775,7 @@ KHC_CB_CONTINUE, void*)</a> cancelled the request. </p>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 3 2026 12:19:51 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Nov 3 2026 12:43:50 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
