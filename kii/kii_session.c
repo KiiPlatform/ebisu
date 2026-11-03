@@ -7,6 +7,7 @@
 #include "kii_thing_impl.h"
 #include "kii_ti_impl.h"
 #include "jkii_wrapper.h"
+#include <ebisu_mem.h>
 
 /* Kii's own SDKs renew five minutes before expiry. Short-lived tokens get a
  * fifth of their lifetime instead, so they are not renewed as soon as issued. */
@@ -338,18 +339,22 @@ static kii_code_t _token_response(
         bool* rejected)
 {
     *rejected = false;
-    if (sent != KII_ERR_OK) {
-        return sent;
+    kii_code_t res = sent;
+    if (res == KII_ERR_OK) {
+        uint16_t status = khc_get_status_code(&kii->_khc);
+        if (_status_refuses(status)) {
+            *rejected = true;
+            res = KII_ERR_RESP_STATUS;
+        } else if (status < 200 || 300 <= status) {
+            res = KII_ERR_RESP_STATUS;
+        } else {
+            res = _kii_parse_token_response(kii, author, id_required, expires_in_sec);
+        }
     }
-    uint16_t status = khc_get_status_code(&kii->_khc);
-    if (_status_refuses(status)) {
-        *rejected = true;
-        return KII_ERR_RESP_STATUS;
-    }
-    if (status < 200 || 300 <= status) {
-        return KII_ERR_RESP_STATUS;
-    }
-    return _kii_parse_token_response(kii, author, id_required, expires_in_sec);
+    /* The request carried the refresh token or the password, and its response
+     * the tokens. */
+    _kii_clear_buffers(kii);
+    return res;
 }
 
 /* Renews a token onboarding obtained by onboarding again, which issues a new
@@ -371,7 +376,7 @@ static kii_code_t _onboard_again(kii_t* kii, kii_author_t* author)
     }
     /* _onboard() wrote the new token and the thing ID to kii->_author. */
     *author = kii->_author;
-    author->refresh_token[0] = '\0';
+    ebisu_secure_zero(author->refresh_token, sizeof(author->refresh_token));
     return KII_ERR_OK;
 }
 
@@ -396,6 +401,7 @@ kii_code_t _kii_session_onboard_again(kii_t* kii)
     if (res == KII_ERR_OK) {
         _store_locked(session, &author, 0);
     }
+    ebisu_secure_zero(&author, sizeof(author));
     _sync_locked(kii);
     _unlock(session);
     return res;
@@ -415,6 +421,7 @@ static kii_code_t _renew_locked(kii_t* kii, bool force)
         return KII_ERR_OK;
     }
 
+    /* A copy of the tokens, cleared before returning. */
     kii_author_t author = session->_author;
     int64_t expires_in_sec = 0;
     kii_code_t res = KII_ERR_FAIL;
@@ -423,6 +430,7 @@ static kii_code_t _renew_locked(kii_t* kii, bool force)
         if (res == KII_ERR_OK) {
             _store_locked(session, &author, 0);
         }
+        ebisu_secure_zero(&author, sizeof(author));
         _sync_locked(kii);
         return res;
     }
@@ -441,7 +449,7 @@ static kii_code_t _renew_locked(kii_t* kii, bool force)
         author = session->_author;
         /* A login starts a new pair, which has no refresh token unless the
          * server issues one. */
-        author.refresh_token[0] = '\0';
+        ebisu_secure_zero(author.refresh_token, sizeof(author.refresh_token));
         _reset_buff(kii);
         _reset_khc(kii);
         res = _token_response(kii,
@@ -452,6 +460,7 @@ static kii_code_t _renew_locked(kii_t* kii, bool force)
     if (res == KII_ERR_OK) {
         _store_locked(session, &author, expires_in_sec);
     }
+    ebisu_secure_zero(&author, sizeof(author));
     _sync_locked(kii);
     return res;
 }
@@ -481,9 +490,11 @@ static kii_code_t _replace_auth_header(kii_t* kii)
     int len = snprintf(line, sizeof(line), "%s%s",
             _AUTH_HEADER_PREFIX, kii->_author.access_token);
     if (len < 0 || (size_t)len >= sizeof(line)) {
+        ebisu_secure_zero(line, sizeof(line));
         return KII_ERR_TOO_LARGE_DATA;
     }
     khc_slist* node = kii->_cb_slist_alloc(line, len, kii->_slist_alloc_data);
+    ebisu_secure_zero(line, sizeof(line));
     if (node == NULL) {
         return KII_ERR_ALLOCATION;
     }
@@ -497,6 +508,10 @@ static kii_code_t _replace_auth_header(kii_t* kii)
     if (*link != NULL) {
         khc_slist* old = *link;
         node->next = old->next;
+        /* With the token it replaces, as khc_slist_free_all() would. */
+        if (old->data != NULL) {
+            ebisu_secure_zero(old->data, strlen(old->data));
+        }
         kii->_cb_slist_free(old, kii->_slist_free_data);
     }
     *link = node;

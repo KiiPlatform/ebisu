@@ -4,6 +4,7 @@
 #include "khc.h"
 #include "khc_impl.h"
 #include "khc_state_impl.h"
+#include <ebisu_mem.h>
 #include <ebisu_socket.h>
 #include "ebisu_version.h"
 
@@ -140,14 +141,17 @@ khc_code khc_perform(khc* khc) {
         }
     }
 
-    // free the allocated resource
+    // free the allocated resource, cleared first: a request's body and its
+    // response pass through them, a password or a token among them.
     if (khc->_stream_buff_allocated) {
+        ebisu_secure_zero(khc->_stream_buff, khc->_stream_buff_size);
         free(khc->_stream_buff);
         khc->_stream_buff = NULL;
         khc->_stream_buff_size = 0;
         khc->_stream_buff_allocated = false;
     }
     if (khc->_resp_header_buff_allocated) {
+        ebisu_secure_zero(khc->_resp_header_buff, khc->_resp_header_buff_size);
         free(khc->_resp_header_buff);
         khc->_resp_header_buff = NULL;
         khc->_resp_header_buff_size = 0;

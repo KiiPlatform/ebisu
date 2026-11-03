@@ -78,6 +78,8 @@ struct Client {
     khct::HttpScript http;
 
     explicit Client(size_t buff_size = 4096) {
+        // Defined, as a test may look through all of it.
+        memset(buff, 0, sizeof(buff));
         resource.tokens = tokens;
         resource.tokens_num = 256;
         kii_init(&kii);
@@ -1465,4 +1467,28 @@ TEST_CASE( "The renewal mode is set by name, and an unknown one is ignored" ) {
     // Each with the lock held.
     CHECK( platform.depth == 0 );
     CHECK( platform.max_depth == 1 );
+}
+
+// The renewal borrows the buffer: the refresh token went out from it, and the
+// new tokens came back into it. A request whose streamed body can't be sent
+// again leaves the 403 to the caller, and the buffer as the renewal left it.
+TEST_CASE( "A renewal leaves no token in the buffer" ) {
+    Platform platform;
+    kii_session_t session;
+    init_session(&session, &platform);
+    kii_author_t author = make_author("th.1", "at1", "rt1-SECRET");
+    kii_session_set_author(&session, &author);
+    Client c;
+    REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+
+    StateReader reader = { "{\"alias\":{\"power\":true}}", 0 };
+    c.http.responses = { REFUSED, refreshed("at2-SECRET", "rt2-SECRET", 3600) };
+    REQUIRE( kii_ti_put_state(&c.kii, read_state, &reader, NULL, NULL, NULL) == KII_ERR_RESP_STATUS );
+    REQUIRE( contains(c.http.requests[1], "\"refresh_token\":\"rt1-SECRET\"") );
+    REQUIRE( std::string(held(&session).refresh_token) == "rt2-SECRET" );
+
+    const std::string buff(c.buff, sizeof(c.buff));
+    CHECK( buff.find("rt1-SECRET") == std::string::npos );
+    CHECK( buff.find("rt2-SECRET") == std::string::npos );
+    CHECK( buff.find("at2-SECRET") == std::string::npos );
 }

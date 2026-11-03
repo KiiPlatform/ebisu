@@ -1,6 +1,8 @@
 #include <string.h>
 #include "catch.hpp"
 #include "khc.h"
+#include <string>
+#include <vector>
 
 TEST_CASE( "slist append (1)" ) {
     khc_slist* list = NULL;
@@ -77,4 +79,41 @@ TEST_CASE( "slist append (3)" ) {
 
     khc_slist_free_all_using_cb_free(appended, cb_free, &ctx);
     REQUIRE( ctx.free_requested_node == appended );
+}
+
+namespace {
+
+// What each node's string was when the free callback was given it, and how
+// long it was when allocated.
+struct FreedCtx {
+    std::vector<size_t> lengths;
+    std::vector<std::string> at_free;
+};
+
+khc_slist* cb_alloc_recording(const char* str, size_t len, void* data) {
+    ((FreedCtx*)data)->lengths.push_back(len);
+    return khc_cb_slist_alloc(str, len, NULL);
+}
+
+void cb_free_recording(khc_slist* node, void* data) {
+    FreedCtx* ctx = (FreedCtx*)data;
+    size_t len = ctx->lengths[ctx->at_free.size()];
+    ctx->at_free.push_back(std::string(node->data, len));
+    khc_cb_slist_free(node, NULL);
+}
+
+} // namespace
+
+// A request header may carry a token, as Authorization does, and a free
+// callback may leave it where it was.
+TEST_CASE( "slist strings are cleared before they are freed" ) {
+    FreedCtx ctx;
+    khc_slist* list = khc_slist_append_using_cb_alloc(NULL, "Authorization: Bearer at1", 25,
+            cb_alloc_recording, &ctx);
+    list = khc_slist_append_using_cb_alloc(list, "X-Other: v", 10, cb_alloc_recording, &ctx);
+    REQUIRE( list != nullptr );
+    khc_slist_free_all_using_cb_free(list, cb_free_recording, &ctx);
+    REQUIRE( ctx.at_free.size() == 2 );
+    CHECK( ctx.at_free[0] == std::string(25, '\0') );
+    CHECK( ctx.at_free[1] == std::string(10, '\0') );
 }

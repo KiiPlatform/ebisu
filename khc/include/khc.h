@@ -185,6 +185,7 @@ khc_slist* khc_slist_append_using_cb_alloc(
  * \brief Free memory used for the entire linked list.
 
  * Linked list constructed by khc_slist_append(khc_slist*, const char*, size_t) must be freed by this method.
+ * Each node's string is cleared first, as a request header may carry a token.
  * \param [in, out] slist pointer to the linked list (first node).
  */
 void khc_slist_free_all(khc_slist* slist);
@@ -193,7 +194,9 @@ void khc_slist_free_all(khc_slist* slist);
  * \brief Free memory used for the entire linked list constructed by custom allocator.
  *
  * Linked list constructed by khc_slist_append_using_cb_alloc(khc_slist*, const char*, size_t length, KHC_CB_SLIST_ALLOC, void*)
- * must be freed by this method and matching free callback.
+ * must be freed by this method and matching free callback. Each node's
+ * string, which KHC_CB_SLIST_ALLOC copied, is cleared before cb_free is called
+ * with the node, as a request header may carry a token.
 
  * \param [in, out] slist pointer to the linked list (first node).
  * \param [in] cb_free free callback.

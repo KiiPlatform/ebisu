@@ -7,6 +7,7 @@
 #include "kii_thing_impl.h"
 #include "kii_session_impl.h"
 #include "jkii_wrapper.h"
+#include <ebisu_mem.h>
 
 kii_code_t kii_auth_thing(
         kii_t* kii,
@@ -29,8 +30,8 @@ kii_code_t kii_auth_thing(
     }
 
     // A login starts a new pair, which has no refresh token unless the server
-    // issues one.
-    kii->_author.refresh_token[0] = '\0';
+    // issues one. Cleared whole, not just cut short.
+    ebisu_secure_zero(kii->_author.refresh_token, sizeof(kii->_author.refresh_token));
     int64_t expires_in_sec = 0;
     ret = _kii_parse_token_response(kii, &kii->_author, true, &expires_in_sec);
     if (ret != KII_ERR_OK) {
@@ -41,6 +42,8 @@ kii_code_t kii_auth_thing(
     }
 
 exit:
+    // The request carried the password, and its response the tokens.
+    _kii_clear_buffers(kii);
     return ret;
 }
 
@@ -74,7 +77,7 @@ kii_code_t kii_register_thing(
         goto exit;
     }
 
-    kii->_author.refresh_token[0] = '\0';
+    ebisu_secure_zero(kii->_author.refresh_token, sizeof(kii->_author.refresh_token));
     jkii_field_t fields[3];
     jkii_parse_err_t result;
     memset(fields, 0, sizeof(fields));
@@ -101,6 +104,8 @@ kii_code_t kii_register_thing(
     }
 
 exit:
+    // The request carried the password, and its response the tokens.
+    _kii_clear_buffers(kii);
     return ret;
 }
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

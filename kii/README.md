@@ -417,6 +417,17 @@ a host that didn't resolve, a certificate refused, a timeout.
 the buffer. `KII_ERR_TIMEOUT` is a request that took longer than
 `kii_set_request_timeout()` allows.
 
+`kii_auth_thing()`, `kii_register_thing()`, `kii_ti_onboard()`,
+`kii_get_mqtt_endpoint()` and a session's renewal send a password or a token,
+or receive tokens or MQTT credentials. After each, kii clears the buffers set by
+`kii_set_buff()` and `kii_set_stream_buff()` with `ebisu_secure_zero()`, so
+`kii_get_resp_body_length()` is 0 after one that succeeded. A response that
+refused the request holds no secret and says why, so it stays. kii clears its
+other copies as well: those on its stack, header lines as they are freed, and
+the MQTT buffer once CONNECT is sent. What it keeps to use, the `kii_t`'s
+tokens and MQTT endpoint and a `kii_session_t`'s, the application clears when
+done with them.
+
 `kii_get_resp_date()` gives the server's time, from the `Date` header of the
 call's response, for a device without a real-time clock: khc's
 `khc_get_resp_date()`, which the [khc README](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#results)

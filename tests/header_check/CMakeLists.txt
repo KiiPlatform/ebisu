@@ -35,7 +35,7 @@ endfunction()
 # libraries they contain as well, which are checked against those here. platform
 # has no library of its own, so its headers are checked against khc, which
 # embeds it.
-ebisu_check_headers(khc khc.h ebisu_object.h ebisu_socket.h ebisu_system.h ebisu_clock.h ebisu_str.h)
+ebisu_check_headers(khc khc.h ebisu_object.h ebisu_socket.h ebisu_system.h ebisu_clock.h ebisu_str.h ebisu_mem.h)
 ebisu_check_headers(jkii jkii.h jkii_utils.h jkii_writer.h jkii_lines.h jsmn.h)
 ebisu_check_headers(kii kii.h kii_task_callback.h)
 ebisu_check_headers(tio tio.h)
