@@ -703,6 +703,15 @@ void _mqtt_state_send_subscribe(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
     kii_mqtt_task_info* task_info = &state->info;
+    // The 8 bytes kept for the fixed header, the packet identifier, 2 bytes
+    // before the topic, and the QoS after it, which takes the place of the
+    // terminator the topic is copied with. CONNECT's check counts the topic
+    // only when it is the client identifier.
+    if (kii->_mqtt_buffer_size < 13 + strlen(state->endpoint.topic)) {
+        task_info->error = KII_MQTT_ERR_INSUFFICIENT_BUFF;
+        task_info->task_state = KII_MQTT_ST_ERR_EXIT;
+        return;
+    }
     ebisu_sock_code_t res = _mqtt_send_subscribe(kii, state->endpoint.topic,
             kii->_mqtt_qos == KII_MQTT_QOS_1 ? KII_MQTT_QOS_1 : KII_MQTT_QOS_0);
     if (res == EBISU_SOCK_FAIL) {

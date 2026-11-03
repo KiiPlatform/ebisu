@@ -2448,6 +2448,73 @@ TEST_CASE( "The version of MQTT CONNECT names" ) {
     }
 }
 
+// SUBSCRIBE was written into the buffer unchecked, as CONNECT's check counted
+// the topic, which was its client identifier. A client identifier of the
+// application's took its place there, so a buffer CONNECT fitted in could be
+// too small for SUBSCRIBE's topic.
+TEST_CASE( "The buffer SUBSCRIBE needs" ) {
+    kii_t kii;
+    kii_init(&kii);
+    kii._keep_alive_interval = 300;
+    std::string sent;
+    khct::cb::SockCtx mqtt_ctx;
+    mqtt_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
+        sent.append(buffer, length);
+        *out_sent_length = length;
+        return EBISU_SOCK_OK;
+    };
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
+    REQUIRE( kii_set_mqtt_client_id(&kii, "c") == KII_ERR_OK );
+
+    mqtt_state_t state;
+    _init_mqtt_state(&kii, &state);
+    const std::string topic(KII_TOPIC_MAX_SIZE - 1, 't');
+    strcpy(state.endpoint.topic, topic.c_str());
+    strcpy(state.endpoint.username, "u");
+    strcpy(state.endpoint.password, "p");
+
+    // 8 bytes for the fixed header, the packet identifier, 2 bytes before the
+    // topic and the QoS after it.
+    const size_t needed = 8 + 2 + 2 + topic.size() + 1;
+    // CONNECT's, as in the test case above, is far less with this topic.
+    const size_t connect_needs = 8 + 2 + 4 + 1 + 1 + 2 + (2 + 1) + (2 + 1) + (2 + 1) + 1;
+    REQUIRE( connect_needs < needed );
+
+    SECTION("CONNECT fits in what it needs") {
+        // On the heap, so that a write past it is one under ASan.
+        std::vector<char> buff(connect_needs);
+        kii_set_mqtt_buff(&kii, buff.data(), buff.size());
+        state.info.task_state = KII_MQTT_ST_SEND_CONNECT;
+        _mqtt_state_send_connect(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_CONNACK );
+        CHECK( sent.size() == connect_needs - 8 - 1 + 2 );
+    }
+
+    SECTION("SUBSCRIBE fails, sending nothing, in a buffer too small for its topic") {
+        for (size_t size : { connect_needs, needed - 1 }) {
+            INFO("buffer " << size);
+            std::vector<char> buff(size);
+            kii_set_mqtt_buff(&kii, buff.data(), buff.size());
+            state.info.task_state = KII_MQTT_ST_SEND_SUBSCRIBE;
+            state.info.error = KII_MQTT_ERR_OK;
+            _mqtt_state_send_subscribe(&state);
+            CHECK( state.info.task_state == KII_MQTT_ST_ERR_EXIT );
+            CHECK( state.info.error == KII_MQTT_ERR_INSUFFICIENT_BUFF );
+            CHECK( sent.empty() );
+        }
+    }
+
+    SECTION("SUBSCRIBE fits in what it needs") {
+        std::vector<char> buff(needed);
+        kii_set_mqtt_buff(&kii, buff.data(), buff.size());
+        state.info.task_state = KII_MQTT_ST_SEND_SUBSCRIBE;
+        _mqtt_state_send_subscribe(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_SUBACK );
+        // The fixed header, of 2 bytes, then the rest.
+        CHECK( sent == std::string("\x82\x44" "\x00\x01" "\x00\x3f", 6) + topic + std::string(1, '\0') );
+    }
+}
+
 // CONNECT had no will, so other clients had no way to learn that a device
 // had gone. One set by kii_set_mqtt_will() goes in each CONNECT.
 TEST_CASE( "CONNECT carries the last will" ) {
