@@ -313,3 +313,42 @@ TEST_CASE( "An interim response's Content-Length doesn't end the final body" ) {
     peer.closes = true;
     check_ends_without_waiting(perform(peer), "body");
 }
+
+// An interim response's Transfer-Encoding was kept for the final one, whose
+// body was then read as chunks whatever it said: one of a Content-Length
+// failed, as did one with neither a length nor chunks.
+TEST_CASE( "An interim response's Transfer-Encoding doesn't frame the final body" ) {
+    const std::string interims[] = {
+        "HTTP/1.1 100 Continue\r\nTransfer-Encoding: chunked\r\n\r\n",
+        "HTTP/1.1 103 Early Hints\r\nTransfer-Encoding: chunked\r\n\r\n",
+        "HTTP/1.1 100 Continue\r\nTransfer-Encoding: chunked\r\n\r\n"
+            "HTTP/1.1 102 Processing\r\n\r\n",
+    };
+    // The server closes after the response, as it does after one khc asks
+    // to close.
+    auto closing = [](const std::vector<std::string>& reads) {
+        Peer peer = peer_with(reads);
+        peer.closes = true;
+        return peer;
+    };
+    for (const auto& interim : interims) {
+        SECTION("with a Content-Length: " + interim) {
+            for (const auto& reads : splits_of(interim + STATUS + "Content-Length: 4\r\n\r\nbody")) {
+                INFO("first read " << reads[0]);
+                check_ends_without_waiting(perform(closing(reads)), "body");
+            }
+        }
+        SECTION("with neither a length nor chunks: " + interim) {
+            for (const auto& reads : splits_of(interim + STATUS + "\r\nbody")) {
+                INFO("first read " << reads[0]);
+                check_ends_without_waiting(perform(closing(reads)), "body");
+            }
+        }
+        SECTION("chunked itself: " + interim) {
+            for (const auto& reads : splits_of(interim + CHUNKED + "4\r\nbody\r\n0\r\n\r\n")) {
+                INFO("first read " << reads[0]);
+                check_ends_without_waiting(perform(closing(reads)), "body");
+            }
+        }
+    }
+}
