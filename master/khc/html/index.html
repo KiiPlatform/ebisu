@@ -191,7 +191,7 @@ $(function() {
 </div><!-- fragment --><p>The callback is then asked for no more than is left, and has to give all of it: returning 0 sooner is <code>KHC_ERR_READ_CALLBACK</code>.</p>
 <p>To make another request with the same callbacks, call <code><a class="el" href="khc_8h.html#aea7b6dde93cd97fc303a90c1414dba21" title="Set initial value to members of khc other than callbacks.">khc_reset_except_cb()</a></code>, then set the request and the buffers again. To send the same request again, call <code><a class="el" href="khc_8h.html#a652dba6d3ccda37a7c120fe479648504" title="Prepare to perform the same request again.">khc_reset_except_request()</a></code>, which keeps the buffers too. The read callback must then start the body over.</p>
 <h1>Socket callbacks</h1>
-<p>The socket is an <code><a class="elRef" href="../../platform/html/structebisu__socket__t.html">ebisu_socket_t</a></code>, declared in <code><a class="elRef" href="../../platform/html/ebisu__socket_8h.html">ebisu_socket.h</a></code>, part of <a href="https://github.com/KiiPlatform/ebisu/blob/master/platform/README.md">platform</a>: a pointer to a table of operations, which <code>khc</code> calls with the socket itself, <code>self</code>, as their first argument. An implementation embeds it in the struct holding the connection's state, and gets that back with <code><a class="elRef" href="../../platform/html/ebisu__object_8h.html#a5e7fdb772cc16ee485b366e1618a7136">EBISU_CONTAINER_OF()</a></code>. <code>khc</code> keeps a pointer to the socket, so it has to outlive the requests. Each operation returns <code>EBISU_SOCK_OK</code>, <code>EBISU_SOCK_FAIL</code>, or <code>EBISU_SOCK_AGAIN</code> to be called again with the same arguments.</p>
+<p>The socket is an <code><a class="elRef" href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a></code>, declared in <code><a class="elRef" href="../../core/html/ebisu__socket_8h.html">ebisu_socket.h</a></code>, part of <a href="https://github.com/KiiPlatform/ebisu/blob/master/core/README.md">core</a>: a pointer to a table of operations, which <code>khc</code> calls with the socket itself, <code>self</code>, as their first argument. An implementation embeds it in the struct holding the connection's state, and gets that back with <code><a class="elRef" href="../../core/html/ebisu__object_8h.html#a5e7fdb772cc16ee485b366e1618a7136">EBISU_CONTAINER_OF()</a></code>. <code>khc</code> keeps a pointer to the socket, so it has to outlive the requests. Each operation returns <code>EBISU_SOCK_OK</code>, <code>EBISU_SOCK_FAIL</code>, or <code>EBISU_SOCK_AGAIN</code> to be called again with the same arguments.</p>
 <ul>
 <li><b>Connect</b> (<code>self</code>, <code>host</code>, <code>port</code>): opens the connection, doing the TLS handshake unless the connection is insecure.</li>
 <li><b>Send</b> (<code>self</code>, <code>buffer</code>, <code>length</code>, <code>out_sent_length</code>): may send fewer bytes than asked, setting <code>out_sent_length</code> to how many it sent; <code>khc</code> sends the rest in later calls.</li>
@@ -248,12 +248,12 @@ $(function() {
 <h1>Tracing</h1>
 <p>Configuring with <code>-DKHC_TRACE=ON</code> prints every request and response to stdout, headers and bodies included. That includes access tokens and passwords, so never enable it where its output is kept or shared.</p>
 <h1>Building</h1>
-<p><code>khc</code> is built as part of ebisu, as described in the <a href="https://github.com/KiiPlatform/ebisu/blob/master/README.md#building">top-level README</a>. <code>libkii</code> includes it, and it is also built on its own as <code>libkhc</code>. </p>
+<p><code>khc</code> is built as part of ebisu, as described in the <a href="https://github.com/KiiPlatform/ebisu/blob/master/README.md#building">top-level README</a>, as <code>libebisu_khc</code>, which links <code>libebisu_core</code>, and which <code>libebisu_kii</code> links. </p>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 3 2026 12:43:50 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Nov 3 2026 12:55:56 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

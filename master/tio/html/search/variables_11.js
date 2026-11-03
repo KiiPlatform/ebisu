@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['task_5fcreate_0',['task_create',['../../../platform/html/structebisu__system__ops__t.html#acb93b9e260c324f9f727d1eacefc5c94',1,'ebisu_system_ops_t']]],
+  ['task_5fcreate_0',['task_create',['../../../core/html/structebisu__system__ops__t.html#acb93b9e260c324f9f727d1eacefc5c94',1,'ebisu_system_ops_t']]],
   ['task_5fstate_1',['task_state',['../../../kii/html/structkii__mqtt__task__info.html#a10dd846ce66170de1a124dc32cdc46b8',1,'kii_mqtt_task_info::task_state'],['../structtio__handler__task__info__t.html#aec172492cb54a0cc922faf12b7a208d4',1,'tio_handler_task_info_t::task_state']]],
   ['tokens_2',['tokens',['../../../jkii/html/structjkii__resource__t.html#adfd476e8fc0cfba750e837734287cb8a',1,'jkii_resource_t']]],
   ['tokens_5fnum_3',['tokens_num',['../../../jkii/html/structjkii__resource__t.html#a831a9295c6f4eecfc2889e5792bd2953',1,'jkii_resource_t']]],

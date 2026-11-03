@@ -1,26 +1,8 @@
 var searchData=
 [
-  ['ebisu_5fclock_5ft_0',['ebisu_clock_t',['../ebisu__clock_8h.html#a01e37dc83e0abae84e96c4912fa1f687',1,'ebisu_clock.h']]],
-  ['ebisu_5flock_5fops_5ft_1',['ebisu_lock_ops_t',['../ebisu__system_8h.html#abfd4a8c349bec0a5c1b5a97e25da50af',1,'ebisu_system.h']]],
-  ['ebisu_5flock_5ft_2',['ebisu_lock_t',['../ebisu__system_8h.html#a9c40062bf30682a38e5e15c6a30853e2',1,'ebisu_system.h']]],
-  ['ebisu_5flog_5flevel_5ft_3',['ebisu_log_level_t',['../ebisu__log_8h.html#a1e989cf944c554850be22c00495c28b6',1,'ebisu_log.h']]],
-  ['ebisu_5flogger_5fops_5ft_4',['ebisu_logger_ops_t',['../ebisu__log_8h.html#a6a4379602c0457f39fa3a4eef936cc32',1,'ebisu_log.h']]],
-  ['ebisu_5flogger_5ft_5',['ebisu_logger_t',['../ebisu__log_8h.html#a94ac6ad513e2d836f9bbe0366ea47b44',1,'ebisu_log.h']]],
-  ['ebisu_5fopenssl_5fsocket_5ft_6',['ebisu_openssl_socket_t',['../ebisu__openssl_8h.html#a4dc56053c784610a590ee3fceb160913',1,'ebisu_openssl.h']]],
-  ['ebisu_5fopenssl_5ftls_5ft_7',['ebisu_openssl_tls_t',['../ebisu__openssl_8h.html#a0b259235952ff790e57847975a85bf3f',1,'ebisu_openssl.h']]],
-  ['ebisu_5fparse_5ferr_5ft_8',['ebisu_parse_err_t',['../ebisu__str_8h.html#a0665b9597a1372d128d16e50a96d710a',1,'ebisu_str.h']]],
-  ['ebisu_5fposix_5flock_5ft_9',['ebisu_posix_lock_t',['../ebisu__posix_8h.html#a22d27d681115334fe2e1410cbb2b9226',1,'ebisu_posix.h']]],
-  ['ebisu_5fschannel_5fsocket_5ft_10',['ebisu_schannel_socket_t',['../ebisu__schannel_8h.html#a843245dd145c7210d297a099d38cdb59',1,'ebisu_schannel.h']]],
-  ['ebisu_5fsock_5fcode_5ft_11',['ebisu_sock_code_t',['../ebisu__socket_8h.html#a2845d194b5ba641d5321831147cef126',1,'ebisu_socket.h']]],
-  ['ebisu_5fsock_5ferror_5ft_12',['ebisu_sock_error_t',['../ebisu__socket_8h.html#af8cc3d6d42f30eea15da340261f2d657',1,'ebisu_socket.h']]],
-  ['ebisu_5fsocket_5fops_5ft_13',['ebisu_socket_ops_t',['../ebisu__socket_8h.html#af6e42460441a6c5a4a33d9086aba41e0',1,'ebisu_socket.h']]],
-  ['ebisu_5fsocket_5ft_14',['ebisu_socket_t',['../ebisu__socket_8h.html#af0e306cd72dfb837b228cdc12fae19a7',1,'ebisu_socket.h']]],
-  ['ebisu_5fspan_5ft_15',['ebisu_span_t',['../ebisu__str_8h.html#a9a7c15b507dc86c7401f566823b004b4',1,'ebisu_str.h']]],
-  ['ebisu_5fstrbuf_5ft_16',['ebisu_strbuf_t',['../ebisu__str_8h.html#afb7637ea30bc00a2c41e9a39883a464b',1,'ebisu_str.h']]],
-  ['ebisu_5fsystem_5fops_5ft_17',['ebisu_system_ops_t',['../ebisu__system_8h.html#af1cb97f5f05599dd432cd58a05b321c3',1,'ebisu_system.h']]],
-  ['ebisu_5fsystem_5ft_18',['ebisu_system_t',['../ebisu__system_8h.html#a46cc0d1b6d1d6eea76e3dad3ec8115a1',1,'ebisu_system.h']]],
-  ['ebisu_5ftask_5fcode_5ft_19',['ebisu_task_code_t',['../ebisu__system_8h.html#aaa3b1940a5a1fe2b64e28b21470d52ff',1,'ebisu_system.h']]],
-  ['ebisu_5ftask_5fentry_20',['EBISU_TASK_ENTRY',['../ebisu__system_8h.html#aa88036fe3014d1b2c19cd4808b5424d7',1,'ebisu_system.h']]],
-  ['ebisu_5fvalidity_5ft_21',['ebisu_validity_t',['../ebisu__clock_8h.html#a1cbb339f4419d4fe901d9ca09fa70573',1,'ebisu_clock.h']]],
-  ['ebisu_5fwin32_5flock_5ft_22',['ebisu_win32_lock_t',['../ebisu__win32_8h.html#a7c637645697f264f1b8c632579c1267b',1,'ebisu_win32.h']]]
+  ['ebisu_5fopenssl_5fsocket_5ft_0',['ebisu_openssl_socket_t',['../ebisu__openssl_8h.html#a4dc56053c784610a590ee3fceb160913',1,'ebisu_openssl.h']]],
+  ['ebisu_5fopenssl_5ftls_5ft_1',['ebisu_openssl_tls_t',['../ebisu__openssl_8h.html#a0b259235952ff790e57847975a85bf3f',1,'ebisu_openssl.h']]],
+  ['ebisu_5fposix_5flock_5ft_2',['ebisu_posix_lock_t',['../ebisu__posix_8h.html#a22d27d681115334fe2e1410cbb2b9226',1,'ebisu_posix.h']]],
+  ['ebisu_5fschannel_5fsocket_5ft_3',['ebisu_schannel_socket_t',['../ebisu__schannel_8h.html#a843245dd145c7210d297a099d38cdb59',1,'ebisu_schannel.h']]],
+  ['ebisu_5fwin32_5flock_5ft_4',['ebisu_win32_lock_t',['../ebisu__win32_8h.html#a7c637645697f264f1b8c632579c1267b',1,'ebisu_win32.h']]]
 ];

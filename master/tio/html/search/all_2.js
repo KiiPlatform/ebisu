@@ -6,8 +6,8 @@ var searchData=
   ['callbacks_3',['State read callbacks',['../index.html#autotoc_md26',1,'']]],
   ['callbacks_20sockets_4',['The system, task callbacks, sockets',['../index.html#autotoc_md25',1,'']]],
   ['clock_5',['The system&apos;s monotonic clock',['../index.html#autotoc_md18',1,'']]],
-  ['close_6',['close',['../../../platform/html/structebisu__socket__ops__t.html#afab911ce1025829b38f7df1096e67e7b',1,'ebisu_socket_ops_t']]],
+  ['close_6',['close',['../../../core/html/structebisu__socket__ops__t.html#afab911ce1025829b38f7df1096e67e7b',1,'ebisu_socket_ops_t']]],
   ['condition_7',['Avoiding race condition',['../index.html#autotoc_md35',1,'']]],
-  ['connect_8',['connect',['../../../platform/html/structebisu__socket__ops__t.html#ad7c954a124d7f7029c24052e1fbdc2c2',1,'ebisu_socket_ops_t']]],
+  ['connect_8',['connect',['../../../core/html/structebisu__socket__ops__t.html#ad7c954a124d7f7029c24052e1fbdc2c2',1,'ebisu_socket_ops_t']]],
   ['continue_20callback_9',['Task continue callback',['../index.html#autotoc_md3',1,'']]]
 ];

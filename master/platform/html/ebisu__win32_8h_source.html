@@ -23,7 +23,7 @@
   <td id="projectalign">
    <div id="projectname">platform<span id="projectnumber">&#160;2.0.0</span>
    </div>
-   <div id="projectbrief">What ebisu needs from the device it runs on.</div>
+   <div id="projectbrief">ebisu&#39;s abstractions implemented for the systems it runs on.</div>
   </td>
  </tr>
  </tbody>
@@ -86,7 +86,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#ifndef _EBISU_WIN32</span></div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#define _EBISU_WIN32</span></div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;<a class="code" href="ebisu__system_8h.html">ebisu_system.h</a>&gt;</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;<a class="codeRef" href="../../core/html/ebisu__system_8h.html">ebisu_system.h</a>&gt;</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;windows.h&gt;</span></div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
@@ -100,11 +100,11 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="keyword">extern</span> <span class="stringliteral">&quot;C&quot;</span> {</div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno"><a class="line" href="ebisu__win32_8h.html#a8d84f62ef6dfdfc190453a04cb3b2045">   32</a></span><a class="code hl_struct" href="structebisu__system__t.html">ebisu_system_t</a>* <a class="code hl_function" href="ebisu__win32_8h.html#a8d84f62ef6dfdfc190453a04cb3b2045">ebisu_win32_system</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno"><a class="line" href="ebisu__win32_8h.html#a8d84f62ef6dfdfc190453a04cb3b2045">   32</a></span><a class="code hl_structRef" href="../../core/html/structebisu__system__t.html">ebisu_system_t</a>* <a class="code hl_function" href="ebisu__win32_8h.html#a8d84f62ef6dfdfc190453a04cb3b2045">ebisu_win32_system</a>(<span class="keywordtype">void</span>);</div>
 <div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
 <div class="foldopen" id="foldopen00035" data-start="{" data-end="};">
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno"><a class="line" href="structebisu__win32__lock__t.html">   35</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structebisu__win32__lock__t.html">ebisu_win32_lock_t</a> {</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno"><a class="line" href="structebisu__win32__lock__t.html#aa14f0b279bf832d647bc9a080cb2d897">   36</a></span>    <a class="code hl_struct" href="structebisu__lock__t.html">ebisu_lock_t</a> <a class="code hl_variable" href="structebisu__win32__lock__t.html#aa14f0b279bf832d647bc9a080cb2d897">base</a>; </div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno"><a class="line" href="structebisu__win32__lock__t.html#aa14f0b279bf832d647bc9a080cb2d897">   36</a></span>    <a class="code hl_structRef" href="../../core/html/structebisu__lock__t.html">ebisu_lock_t</a> <a class="code hl_variable" href="structebisu__win32__lock__t.html#aa14f0b279bf832d647bc9a080cb2d897">base</a>; </div>
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>    SRWLOCK srwlock; </div>
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno"><a class="line" href="ebisu__win32_8h.html#a7c637645697f264f1b8c632579c1267b">   38</a></span>} <a class="code hl_struct" href="structebisu__win32__lock__t.html">ebisu_win32_lock_t</a>;</div>
 </div>
@@ -121,17 +121,17 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span><span class="preprocessor">#endif </span><span class="comment">/* _EBISU_WIN32 */</span><span class="preprocessor"></span></div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span><span class="comment">/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */</span></div>
-<div class="ttc" id="aebisu__system_8h_html"><div class="ttname"><a href="ebisu__system_8h.html">ebisu_system.h</a></div><div class="ttdoc">Task, delay, monotonic time and lock abstraction.</div></div>
+<div class="ttc" id="aebisu__system_8h_html"><div class="ttname"><a href="../../core/html/ebisu__system_8h.html">ebisu_system.h</a></div></div>
 <div class="ttc" id="aebisu__win32_8h_html_a8d84f62ef6dfdfc190453a04cb3b2045"><div class="ttname"><a href="ebisu__win32_8h.html#a8d84f62ef6dfdfc190453a04cb3b2045">ebisu_win32_system</a></div><div class="ttdeci">ebisu_system_t * ebisu_win32_system(void)</div><div class="ttdoc">The system on Windows.</div></div>
 <div class="ttc" id="aebisu__win32_8h_html_aa77cb4447ff9ac43260fc0622ba4b6fd"><div class="ttname"><a href="ebisu__win32_8h.html#aa77cb4447ff9ac43260fc0622ba4b6fd">ebisu_win32_lock_init</a></div><div class="ttdeci">void ebisu_win32_lock_init(ebisu_win32_lock_t *lock)</div><div class="ttdoc">Initializes the SRWLOCK, and makes base a lock of it.</div></div>
-<div class="ttc" id="astructebisu__lock__t_html"><div class="ttname"><a href="structebisu__lock__t.html">ebisu_lock_t</a></div><div class="ttdoc">A lock.</div><div class="ttdef"><b>Definition</b> ebisu_system.h:127</div></div>
-<div class="ttc" id="astructebisu__system__t_html"><div class="ttname"><a href="structebisu__system__t.html">ebisu_system_t</a></div><div class="ttdoc">The system: tasks, delays and a monotonic clock.</div><div class="ttdef"><b>Definition</b> ebisu_system.h:93</div></div>
+<div class="ttc" id="astructebisu__lock__t_html"><div class="ttname"><a href="../../core/html/structebisu__lock__t.html">ebisu_lock_t</a></div></div>
+<div class="ttc" id="astructebisu__system__t_html"><div class="ttname"><a href="../../core/html/structebisu__system__t.html">ebisu_system_t</a></div></div>
 <div class="ttc" id="astructebisu__win32__lock__t_html"><div class="ttname"><a href="structebisu__win32__lock__t.html">ebisu_win32_lock_t</a></div><div class="ttdoc">A lock that is an SRWLOCK, which needs no destroying.</div><div class="ttdef"><b>Definition</b> ebisu_win32.h:35</div></div>
 <div class="ttc" id="astructebisu__win32__lock__t_html_aa14f0b279bf832d647bc9a080cb2d897"><div class="ttname"><a href="structebisu__win32__lock__t.html#aa14f0b279bf832d647bc9a080cb2d897">ebisu_win32_lock_t::base</a></div><div class="ttdeci">ebisu_lock_t base</div><div class="ttdoc">What ebisu is given.</div><div class="ttdef"><b>Definition</b> ebisu_win32.h:36</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 3 2026 12:43:50 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Nov 3 2026 12:55:56 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

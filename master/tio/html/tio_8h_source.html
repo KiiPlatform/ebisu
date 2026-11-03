@@ -222,7 +222,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span> </div>
 <div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span><span class="keywordtype">void</span> tio_handler_init(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler);</div>
 <div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span> </div>
-<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span><span class="keywordtype">void</span> tio_handler_set_http_socket(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <a class="code hl_structRef" href="../../platform/html/structebisu__socket__t.html">ebisu_socket_t</a>* socket);</div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span><span class="keywordtype">void</span> tio_handler_set_http_socket(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <a class="code hl_structRef" href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a>* socket);</div>
 <div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span> </div>
 <div class="line"><a id="l00289" name="l00289"></a><span class="lineno">  289</span><span class="keywordtype">void</span> tio_handler_set_http_buff(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keywordtype">char</span>* buff, <span class="keywordtype">size_t</span> buff_size);</div>
 <div class="line"><a id="l00290" name="l00290"></a><span class="lineno">  290</span> </div>
@@ -230,11 +230,11 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00316" name="l00316"></a><span class="lineno">  316</span> </div>
 <div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span><span class="keywordtype">void</span> tio_handler_set_resp_header_buff(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keywordtype">char</span>* buff, <span class="keywordtype">size_t</span> buff_size);</div>
 <div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span> </div>
-<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span><span class="keywordtype">void</span> tio_handler_set_mqtt_socket(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <a class="code hl_structRef" href="../../platform/html/structebisu__socket__t.html">ebisu_socket_t</a>* socket);</div>
+<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span><span class="keywordtype">void</span> tio_handler_set_mqtt_socket(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <a class="code hl_structRef" href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a>* socket);</div>
 <div class="line"><a id="l00383" name="l00383"></a><span class="lineno">  383</span><span class="keywordtype">void</span> tio_handler_set_mqtt_to_sock_recv(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, uint32_t to_sock_recv_sec);</div>
 <div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span> </div>
 <div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span>tio_code_t tio_handler_set_mqtt_retry_wait_max(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, uint32_t max_sec);</div>
-<div class="line"><a id="l00408" name="l00408"></a><span class="lineno">  408</span><span class="keywordtype">void</span> tio_handler_set_system(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <a class="code hl_structRef" href="../../platform/html/structebisu__system__t.html">ebisu_system_t</a>* system);</div>
+<div class="line"><a id="l00408" name="l00408"></a><span class="lineno">  408</span><span class="keywordtype">void</span> tio_handler_set_system(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <a class="code hl_structRef" href="../../core/html/structebisu__system__t.html">ebisu_system_t</a>* system);</div>
 <div class="line"><a id="l00409" name="l00409"></a><span class="lineno">  409</span> </div>
 <div class="line"><a id="l00422" name="l00422"></a><span class="lineno">  422</span>tio_code_t tio_handler_set_request_timeout(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, uint32_t timeout_sec);</div>
 <div class="line"><a id="l00423" name="l00423"></a><span class="lineno">  423</span> </div>
@@ -310,9 +310,9 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00755" name="l00755"></a><span class="lineno">  755</span> </div>
 <div class="line"><a id="l00773" name="l00773"></a><span class="lineno">  773</span>tio_code_t tio_handler_set_session(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <a class="code hl_structRef" href="../../kii/html/structkii__session__t.html">kii_session_t</a>* session);</div>
 <div class="line"><a id="l00774" name="l00774"></a><span class="lineno">  774</span> </div>
-<div class="line"><a id="l00785" name="l00785"></a><span class="lineno">  785</span>tio_code_t tio_handler_set_clock(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <a class="code hl_structRef" href="../../platform/html/structebisu__clock__t.html">ebisu_clock_t</a>* clock);</div>
+<div class="line"><a id="l00785" name="l00785"></a><span class="lineno">  785</span>tio_code_t tio_handler_set_clock(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <a class="code hl_structRef" href="../../core/html/structebisu__clock__t.html">ebisu_clock_t</a>* clock);</div>
 <div class="line"><a id="l00786" name="l00786"></a><span class="lineno">  786</span> </div>
-<div class="line"><a id="l00798" name="l00798"></a><span class="lineno">  798</span><a class="code hl_enumerationRef" href="../../platform/html/ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a> tio_handler_get_sock_error(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keywordtype">long</span>* out_detail);</div>
+<div class="line"><a id="l00798" name="l00798"></a><span class="lineno">  798</span><a class="code hl_enumerationRef" href="../../core/html/ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a> tio_handler_get_sock_error(<a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler, <span class="keywordtype">long</span>* out_detail);</div>
 <div class="line"><a id="l00799" name="l00799"></a><span class="lineno">  799</span> </div>
 <div class="line"><a id="l00825" name="l00825"></a><span class="lineno">  825</span>tio_code_t tio_handler_start(</div>
 <div class="line"><a id="l00826" name="l00826"></a><span class="lineno">  826</span>        <a class="code hl_struct" href="structtio__handler__t.html">tio_handler_t</a>* handler,</div>
@@ -338,8 +338,8 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00895" name="l00895"></a><span class="lineno">  895</span> </div>
 <div class="line"><a id="l00903" name="l00903"></a><span class="lineno">  903</span><span class="keywordtype">void</span> tio_updater_init(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater);</div>
 <div class="line"><a id="l00904" name="l00904"></a><span class="lineno">  904</span> </div>
-<div class="line"><a id="l00910" name="l00910"></a><span class="lineno">  910</span><span class="keywordtype">void</span> tio_updater_set_socket(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <a class="code hl_structRef" href="../../platform/html/structebisu__socket__t.html">ebisu_socket_t</a>* socket);</div>
-<div class="line"><a id="l00919" name="l00919"></a><span class="lineno">  919</span><span class="keywordtype">void</span> tio_updater_set_system(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <a class="code hl_structRef" href="../../platform/html/structebisu__system__t.html">ebisu_system_t</a>* system);</div>
+<div class="line"><a id="l00910" name="l00910"></a><span class="lineno">  910</span><span class="keywordtype">void</span> tio_updater_set_socket(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <a class="code hl_structRef" href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a>* socket);</div>
+<div class="line"><a id="l00919" name="l00919"></a><span class="lineno">  919</span><span class="keywordtype">void</span> tio_updater_set_system(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <a class="code hl_structRef" href="../../core/html/structebisu__system__t.html">ebisu_system_t</a>* system);</div>
 <div class="line"><a id="l00920" name="l00920"></a><span class="lineno">  920</span> </div>
 <div class="line"><a id="l00933" name="l00933"></a><span class="lineno">  933</span>tio_code_t tio_updater_set_request_timeout(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, uint32_t timeout_sec);</div>
 <div class="line"><a id="l00934" name="l00934"></a><span class="lineno">  934</span> </div>
@@ -399,9 +399,9 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l01207" name="l01207"></a><span class="lineno"> 1207</span> </div>
 <div class="line"><a id="l01225" name="l01225"></a><span class="lineno"> 1225</span>tio_code_t tio_updater_set_session(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <a class="code hl_structRef" href="../../kii/html/structkii__session__t.html">kii_session_t</a>* session);</div>
 <div class="line"><a id="l01226" name="l01226"></a><span class="lineno"> 1226</span> </div>
-<div class="line"><a id="l01236" name="l01236"></a><span class="lineno"> 1236</span>tio_code_t tio_updater_set_clock(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <a class="code hl_structRef" href="../../platform/html/structebisu__clock__t.html">ebisu_clock_t</a>* clock);</div>
+<div class="line"><a id="l01236" name="l01236"></a><span class="lineno"> 1236</span>tio_code_t tio_updater_set_clock(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <a class="code hl_structRef" href="../../core/html/structebisu__clock__t.html">ebisu_clock_t</a>* clock);</div>
 <div class="line"><a id="l01237" name="l01237"></a><span class="lineno"> 1237</span> </div>
-<div class="line"><a id="l01248" name="l01248"></a><span class="lineno"> 1248</span><a class="code hl_enumerationRef" href="../../platform/html/ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a> tio_updater_get_sock_error(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <span class="keywordtype">long</span>* out_detail);</div>
+<div class="line"><a id="l01248" name="l01248"></a><span class="lineno"> 1248</span><a class="code hl_enumerationRef" href="../../core/html/ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a> tio_updater_get_sock_error(<a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater, <span class="keywordtype">long</span>* out_detail);</div>
 <div class="line"><a id="l01249" name="l01249"></a><span class="lineno"> 1249</span> </div>
 <div class="line"><a id="l01274" name="l01274"></a><span class="lineno"> 1274</span>tio_code_t tio_updater_start(</div>
 <div class="line"><a id="l01275" name="l01275"></a><span class="lineno"> 1275</span>        <a class="code hl_struct" href="structtio__updater__t.html">tio_updater_t</a>* updater,</div>
@@ -420,7 +420,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l01288" name="l01288"></a><span class="lineno"> 1288</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l01289" name="l01289"></a><span class="lineno"> 1289</span> </div>
 <div class="line"><a id="l01290" name="l01290"></a><span class="lineno"> 1290</span><span class="preprocessor">#endif</span></div>
-<div class="ttc" id="aebisu__socket_8h_html_a19f16391089f04ceb79936a6ecc26963"><div class="ttname"><a href="../../platform/html/ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a></div><div class="ttdeci">ebisu_sock_error_t</div></div>
+<div class="ttc" id="aebisu__socket_8h_html_a19f16391089f04ceb79936a6ecc26963"><div class="ttname"><a href="../../core/html/ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a></div><div class="ttdeci">ebisu_sock_error_t</div></div>
 <div class="ttc" id="ajkii_8h_html"><div class="ttname"><a href="../../jkii/html/jkii_8h.html">jkii.h</a></div></div>
 <div class="ttc" id="akhc_8h_html"><div class="ttname"><a href="../../khc/html/khc_8h.html">khc.h</a></div></div>
 <div class="ttc" id="akii_8h_html"><div class="ttname"><a href="../../kii/html/kii_8h.html">kii.h</a></div></div>
@@ -430,9 +430,9 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="akii_8h_html_afbdebbbeb8812da258f2c985a2b10db3"><div class="ttname"><a href="../../kii/html/kii_8h.html#afbdebbbeb8812da258f2c985a2b10db3">kii_mqtt_task_state</a></div><div class="ttdeci">kii_mqtt_task_state</div></div>
 <div class="ttc" id="akii__task__callback_8h_html_aa498370678fa8bb2e7aef2d18bc315b5"><div class="ttname"><a href="../../kii/html/kii__task__callback_8h.html#aa498370678fa8bb2e7aef2d18bc315b5">KII_CB_TASK_EXIT</a></div><div class="ttdeci">void(* KII_CB_TASK_EXIT)(void *task_info, void *userdata)</div></div>
 <div class="ttc" id="akii__task__callback_8h_html_ad160d0af530d336062646f36cbad22f3"><div class="ttname"><a href="../../kii/html/kii__task__callback_8h.html#ad160d0af530d336062646f36cbad22f3">KII_CB_TASK_CONTINUE</a></div><div class="ttdeci">bool(* KII_CB_TASK_CONTINUE)(void *task_info, void *userdata)</div></div>
-<div class="ttc" id="astructebisu__clock__t_html"><div class="ttname"><a href="../../platform/html/structebisu__clock__t.html">ebisu_clock_t</a></div></div>
-<div class="ttc" id="astructebisu__socket__t_html"><div class="ttname"><a href="../../platform/html/structebisu__socket__t.html">ebisu_socket_t</a></div></div>
-<div class="ttc" id="astructebisu__system__t_html"><div class="ttname"><a href="../../platform/html/structebisu__system__t.html">ebisu_system_t</a></div></div>
+<div class="ttc" id="astructebisu__clock__t_html"><div class="ttname"><a href="../../core/html/structebisu__clock__t.html">ebisu_clock_t</a></div></div>
+<div class="ttc" id="astructebisu__socket__t_html"><div class="ttname"><a href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a></div></div>
+<div class="ttc" id="astructebisu__system__t_html"><div class="ttname"><a href="../../core/html/structebisu__system__t.html">ebisu_system_t</a></div></div>
 <div class="ttc" id="astructjkii__resource__t_html"><div class="ttname"><a href="../../jkii/html/structjkii__resource__t.html">jkii_resource_t</a></div></div>
 <div class="ttc" id="astructkii__author__t_html"><div class="ttname"><a href="../../kii/html/structkii__author__t.html">kii_author_t</a></div></div>
 <div class="ttc" id="astructkii__mqtt__will__t_html"><div class="ttname"><a href="../../kii/html/structkii__mqtt__will__t.html">kii_mqtt_will_t</a></div></div>
@@ -464,7 +464,7 @@ $(document).ready(function() { init_codefold(0); });
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 3 2026 12:43:50 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Nov 3 2026 12:55:56 for tio by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

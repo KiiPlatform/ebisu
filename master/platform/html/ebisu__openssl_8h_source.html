@@ -23,7 +23,7 @@
   <td id="projectalign">
    <div id="projectname">platform<span id="projectnumber">&#160;2.0.0</span>
    </div>
-   <div id="projectbrief">What ebisu needs from the device it runs on.</div>
+   <div id="projectbrief">ebisu&#39;s abstractions implemented for the systems it runs on.</div>
   </td>
  </tr>
  </tbody>
@@ -86,9 +86,9 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#ifndef _EBISU_OPENSSL</span></div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#define _EBISU_OPENSSL</span></div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;<a class="code" href="ebisu__clock_8h.html">ebisu_clock.h</a>&gt;</span></div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;<a class="code" href="ebisu__log_8h.html">ebisu_log.h</a>&gt;</span></div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;<a class="code" href="ebisu__socket_8h.html">ebisu_socket.h</a>&gt;</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;<a class="codeRef" href="../../core/html/ebisu__clock_8h.html">ebisu_clock.h</a>&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;<a class="codeRef" href="../../core/html/ebisu__log_8h.html">ebisu_log.h</a>&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;<a class="codeRef" href="../../core/html/ebisu__socket_8h.html">ebisu_socket.h</a>&gt;</span></div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;openssl/ssl.h&gt;</span></div>
 <div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;stdbool.h&gt;</span></div>
 <div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
@@ -104,7 +104,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span> </div>
 <div class="foldopen" id="foldopen00044" data-start="{" data-end="};">
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno"><a class="line" href="structebisu__openssl__socket__t.html">   44</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code hl_struct" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a> {</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno"><a class="line" href="structebisu__openssl__socket__t.html#a0525a6b30d917271238a685b221b9739">   45</a></span>    <a class="code hl_struct" href="structebisu__socket__t.html">ebisu_socket_t</a> <a class="code hl_variable" href="structebisu__openssl__socket__t.html#a0525a6b30d917271238a685b221b9739">base</a>; </div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno"><a class="line" href="structebisu__openssl__socket__t.html#a0525a6b30d917271238a685b221b9739">   45</a></span>    <a class="code hl_structRef" href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a> <a class="code hl_variable" href="structebisu__openssl__socket__t.html#a0525a6b30d917271238a685b221b9739">base</a>; </div>
 <div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    SSL *ssl; </div>
 <div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="keyword">struct </span><a class="code hl_struct" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a>* tls;</div>
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keywordtype">int</span> socket; </div>
@@ -114,11 +114,11 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    <span class="keywordtype">int</span> recv_ssl_error;</div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    <span class="keywordtype">int</span> recv_errno; </div>
 <div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    <span class="keywordtype">bool</span> ssl_failed;</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    <a class="code hl_struct" href="structebisu__clock__t.html">ebisu_clock_t</a>* clock;</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    <a class="code hl_structRef" href="../../core/html/structebisu__clock__t.html">ebisu_clock_t</a>* clock;</div>
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    <span class="keywordtype">bool</span> time_exact;</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    <a class="code hl_struct" href="structebisu__logger__t.html">ebisu_logger_t</a>* logger;</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    <a class="code hl_structRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a>* logger;</div>
 <div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    uint16_t port;</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    <a class="code hl_enumeration" href="ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a> error;</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    <a class="code hl_enumerationRef" href="../../core/html/ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a> error;</div>
 <div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    <span class="keywordtype">long</span> error_detail; </div>
 <div class="line"><a id="l00078" name="l00078"></a><span class="lineno"><a class="line" href="ebisu__openssl_8h.html#a4dc56053c784610a590ee3fceb160913">   78</a></span>} <a class="code hl_struct" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a>;</div>
 </div>
@@ -142,9 +142,9 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span> </div>
 <div class="line"><a id="l00164" name="l00164"></a><span class="lineno"><a class="line" href="ebisu__openssl_8h.html#afaa27f5cdf52db44f1a2d3532e901cb1">  164</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__openssl_8h.html#afaa27f5cdf52db44f1a2d3532e901cb1">ebisu_openssl_socket_set_tls</a>(<a class="code hl_struct" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a>* sock, <a class="code hl_struct" href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a>* tls);</div>
 <div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span> </div>
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno"><a class="line" href="ebisu__openssl_8h.html#ad504ec9246a218a4cd22974b77da48f7">  175</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__openssl_8h.html#ad504ec9246a218a4cd22974b77da48f7">ebisu_openssl_socket_set_clock</a>(<a class="code hl_struct" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a>* sock, <a class="code hl_struct" href="structebisu__clock__t.html">ebisu_clock_t</a>* clock);</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno"><a class="line" href="ebisu__openssl_8h.html#ad504ec9246a218a4cd22974b77da48f7">  175</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__openssl_8h.html#ad504ec9246a218a4cd22974b77da48f7">ebisu_openssl_socket_set_clock</a>(<a class="code hl_struct" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a>* sock, <a class="code hl_structRef" href="../../core/html/structebisu__clock__t.html">ebisu_clock_t</a>* clock);</div>
 <div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span> </div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno"><a class="line" href="ebisu__openssl_8h.html#a85279e489e808b094e800a9f6d544878">  189</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__openssl_8h.html#a85279e489e808b094e800a9f6d544878">ebisu_openssl_socket_set_logger</a>(<a class="code hl_struct" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a>* sock, <a class="code hl_struct" href="structebisu__logger__t.html">ebisu_logger_t</a>* logger);</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno"><a class="line" href="ebisu__openssl_8h.html#a85279e489e808b094e800a9f6d544878">  189</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="ebisu__openssl_8h.html#a85279e489e808b094e800a9f6d544878">ebisu_openssl_socket_set_logger</a>(<a class="code hl_struct" href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a>* sock, <a class="code hl_structRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a>* logger);</div>
 <div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span> </div>
 <div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span><span class="preprocessor">#ifdef __cplusplus</span></div>
 <div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>}</div>
@@ -156,8 +156,8 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span> </div>
 <div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span><span class="preprocessor">#endif </span><span class="comment">/* _EBISU_OPENSSL */</span><span class="preprocessor"></span></div>
 <div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span><span class="comment">/* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */</span></div>
-<div class="ttc" id="aebisu__clock_8h_html"><div class="ttname"><a href="ebisu__clock_8h.html">ebisu_clock.h</a></div><div class="ttdoc">The time of day, for a device without a real-time clock.</div></div>
-<div class="ttc" id="aebisu__log_8h_html"><div class="ttname"><a href="ebisu__log_8h.html">ebisu_log.h</a></div><div class="ttdoc">Where a port's diagnostics go.</div></div>
+<div class="ttc" id="aebisu__clock_8h_html"><div class="ttname"><a href="../../core/html/ebisu__clock_8h.html">ebisu_clock.h</a></div></div>
+<div class="ttc" id="aebisu__log_8h_html"><div class="ttname"><a href="../../core/html/ebisu__log_8h.html">ebisu_log.h</a></div></div>
 <div class="ttc" id="aebisu__openssl_8h_html_a0cd7e01753d8d4c89fd6e4fb791ef517"><div class="ttname"><a href="ebisu__openssl_8h.html#a0cd7e01753d8d4c89fd6e4fb791ef517">ebisu_openssl_tls_init</a></div><div class="ttdeci">bool ebisu_openssl_tls_init(ebisu_openssl_tls_t *tls, const char *ca_file, const char *ca_path)</div><div class="ttdoc">Sets up a TLS configuration.</div></div>
 <div class="ttc" id="aebisu__openssl_8h_html_a360ec4c1f29d9ab30a4b41aaeedb560d"><div class="ttname"><a href="ebisu__openssl_8h.html#a360ec4c1f29d9ab30a4b41aaeedb560d">ebisu_openssl_socket_set_connect_timeout</a></div><div class="ttdeci">void ebisu_openssl_socket_set_connect_timeout(ebisu_openssl_socket_t *sock, unsigned int seconds)</div><div class="ttdoc">Sets how long connecting may take.</div></div>
 <div class="ttc" id="aebisu__openssl_8h_html_a85279e489e808b094e800a9f6d544878"><div class="ttname"><a href="ebisu__openssl_8h.html#a85279e489e808b094e800a9f6d544878">ebisu_openssl_socket_set_logger</a></div><div class="ttdeci">void ebisu_openssl_socket_set_logger(ebisu_openssl_socket_t *sock, ebisu_logger_t *logger)</div><div class="ttdoc">Sets where the socket's diagnostics go.</div></div>
@@ -165,18 +165,18 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="aebisu__openssl_8h_html_adbc237cc5b52c24a208886300ee0a8a2"><div class="ttname"><a href="ebisu__openssl_8h.html#adbc237cc5b52c24a208886300ee0a8a2">ebisu_openssl_socket_init</a></div><div class="ttdeci">void ebisu_openssl_socket_init(ebisu_openssl_socket_t *sock, unsigned int to_recv, unsigned int to_send)</div><div class="ttdoc">Clears the socket, with its timeouts, and makes base a socket of it.</div></div>
 <div class="ttc" id="aebisu__openssl_8h_html_af15941ca02f6af688cce18ee10115528"><div class="ttname"><a href="ebisu__openssl_8h.html#af15941ca02f6af688cce18ee10115528">ebisu_openssl_tls_free</a></div><div class="ttdeci">void ebisu_openssl_tls_free(ebisu_openssl_tls_t *tls)</div><div class="ttdoc">Frees a TLS configuration.</div></div>
 <div class="ttc" id="aebisu__openssl_8h_html_afaa27f5cdf52db44f1a2d3532e901cb1"><div class="ttname"><a href="ebisu__openssl_8h.html#afaa27f5cdf52db44f1a2d3532e901cb1">ebisu_openssl_socket_set_tls</a></div><div class="ttdeci">void ebisu_openssl_socket_set_tls(ebisu_openssl_socket_t *sock, ebisu_openssl_tls_t *tls)</div><div class="ttdoc">Sets the TLS configuration the socket connects with.</div></div>
-<div class="ttc" id="aebisu__socket_8h_html"><div class="ttname"><a href="ebisu__socket_8h.html">ebisu_socket.h</a></div></div>
-<div class="ttc" id="aebisu__socket_8h_html_a19f16391089f04ceb79936a6ecc26963"><div class="ttname"><a href="ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a></div><div class="ttdeci">ebisu_sock_error_t</div><div class="ttdoc">Why a socket operation failed, as the socket can tell. See ebisu_socket_ops_t::last_error.</div><div class="ttdef"><b>Definition</b> ebisu_socket.h:42</div></div>
-<div class="ttc" id="astructebisu__clock__t_html"><div class="ttname"><a href="structebisu__clock__t.html">ebisu_clock_t</a></div><div class="ttdoc">The time of day, for a device without a real-time clock.</div><div class="ttdef"><b>Definition</b> ebisu_clock.h:54</div></div>
-<div class="ttc" id="astructebisu__logger__t_html"><div class="ttname"><a href="structebisu__logger__t.html">ebisu_logger_t</a></div><div class="ttdoc">A logger: where diagnostics go, such as stderr, syslog or the device's own log.</div><div class="ttdef"><b>Definition</b> ebisu_log.h:49</div></div>
+<div class="ttc" id="aebisu__socket_8h_html"><div class="ttname"><a href="../../core/html/ebisu__socket_8h.html">ebisu_socket.h</a></div></div>
+<div class="ttc" id="aebisu__socket_8h_html_a19f16391089f04ceb79936a6ecc26963"><div class="ttname"><a href="../../core/html/ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a></div><div class="ttdeci">ebisu_sock_error_t</div></div>
+<div class="ttc" id="astructebisu__clock__t_html"><div class="ttname"><a href="../../core/html/structebisu__clock__t.html">ebisu_clock_t</a></div></div>
+<div class="ttc" id="astructebisu__logger__t_html"><div class="ttname"><a href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a></div></div>
 <div class="ttc" id="astructebisu__openssl__socket__t_html"><div class="ttname"><a href="structebisu__openssl__socket__t.html">ebisu_openssl_socket_t</a></div><div class="ttdoc">A TLS connection over a blocking BSD socket, with OpenSSL.</div><div class="ttdef"><b>Definition</b> ebisu_openssl.h:44</div></div>
 <div class="ttc" id="astructebisu__openssl__socket__t_html_a0525a6b30d917271238a685b221b9739"><div class="ttname"><a href="structebisu__openssl__socket__t.html#a0525a6b30d917271238a685b221b9739">ebisu_openssl_socket_t::base</a></div><div class="ttdeci">ebisu_socket_t base</div><div class="ttdoc">What ebisu is given.</div><div class="ttdef"><b>Definition</b> ebisu_openssl.h:45</div></div>
 <div class="ttc" id="astructebisu__openssl__tls__t_html"><div class="ttname"><a href="structebisu__openssl__tls__t.html">ebisu_openssl_tls_t</a></div><div class="ttdoc">The TLS configuration connections share.</div><div class="ttdef"><b>Definition</b> ebisu_openssl.h:90</div></div>
-<div class="ttc" id="astructebisu__socket__t_html"><div class="ttname"><a href="structebisu__socket__t.html">ebisu_socket_t</a></div><div class="ttdoc">A socket.</div><div class="ttdef"><b>Definition</b> ebisu_socket.h:151</div></div>
+<div class="ttc" id="astructebisu__socket__t_html"><div class="ttname"><a href="../../core/html/structebisu__socket__t.html">ebisu_socket_t</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 3 2026 12:43:50 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Tue Nov 3 2026 12:55:56 for platform by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

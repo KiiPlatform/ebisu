@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['unlock_0',['unlock',['../../../platform/html/structebisu__lock__ops__t.html#a25112960416a6dabd5b93862db66528a',1,'ebisu_lock_ops_t']]],
+  ['unlock_0',['unlock',['../../../core/html/structebisu__lock__ops__t.html#a25112960416a6dabd5b93862db66528a',1,'ebisu_lock_ops_t']]],
   ['up_20a_20session_1',['Set up a session',['../index.html#autotoc_md16',1,'']]],
   ['up_20buffers_2',['Set-up buffers',['../index.html#autotoc_md12',1,'']]],
   ['up_20json_20parser_20resource_3',['Set-up json parser resource',['../index.html#autotoc_md15',1,'']]],

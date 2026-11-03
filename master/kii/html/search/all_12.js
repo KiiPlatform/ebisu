@@ -1,7 +1,7 @@
 var searchData=
 [
   ['task_20callbacks_0',['Writing task callbacks',['../index.html#autotoc_md5',1,'']]],
-  ['task_5fcreate_1',['task_create',['../../../platform/html/structebisu__system__ops__t.html#acb93b9e260c324f9f727d1eacefc5c94',1,'ebisu_system_ops_t']]],
+  ['task_5fcreate_1',['task_create',['../../../core/html/structebisu__system__ops__t.html#acb93b9e260c324f9f727d1eacefc5c94',1,'ebisu_system_ops_t']]],
   ['task_5fstate_2',['task_state',['../structkii__mqtt__task__info.html#a10dd846ce66170de1a124dc32cdc46b8',1,'kii_mqtt_task_info']]],
   ['the_20thing_3',['Authenticate the thing',['../index.html#autotoc_md1',1,'']]],
   ['the_20time_4',['The time',['../index.html#autotoc_md10',1,'']]],
