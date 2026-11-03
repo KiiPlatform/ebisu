@@ -41,19 +41,18 @@ TEST_CASE( "_next_object_in_array" ) {
                 == _CMD_PARSE_ARRAY_OUT_OF_INDEX );
     }
 
-    // As when the elements were looked up by index.
-    SECTION("An element that isn't an object ends the walk") {
+    SECTION("An element that isn't an object fails") {
         const char json_arr[] = "[{\"a\":1},7,{\"b\":2}]";
         CHECK( _next_object_in_array(json_arr, strlen(json_arr), &iter,
                     &obj_str, &obj_str_len) == _CMD_PARSE_OK );
         CHECK( _next_object_in_array(json_arr, strlen(json_arr), &iter,
-                    &obj_str, &obj_str_len) == _CMD_PARSE_ARRAY_OUT_OF_INDEX );
+                    &obj_str, &obj_str_len) == _CMD_PARSE_FAIL );
     }
 
-    SECTION("An object has no elements") {
+    SECTION("An object fails, even with an object for a member") {
         const char json_obj[] = "{\"a\":{\"b\":1}}";
         CHECK( _next_object_in_array(json_obj, strlen(json_obj), &iter,
-                    &obj_str, &obj_str_len) == _CMD_PARSE_ARRAY_OUT_OF_INDEX );
+                    &obj_str, &obj_str_len) == _CMD_PARSE_FAIL );
     }
 
     SECTION("Neither an array nor an object fails") {
@@ -856,4 +855,68 @@ TEST_CASE( "_parse_command unquoted key" ) {
 
     REQUIRE( res == TIO_ERR_PARSE_JSON );
     REQUIRE( called == 0 );
+}
+
+// An alias or an action that isn't an object, or an alias whose actions aren't
+// an array, ended the walk as the end of the array would: the command was
+// taken as good, with the actions before it alone, and those after it were
+// dropped. A malformed command is refused whole, before any of its actions
+// runs, wherever the malformed part is.
+static const char* const malformed_commands[] = {
+    // An alias that isn't an object, after one that is.
+    "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]},\"junk\",{\"alias2\":[{\"setTemp\":23}]}]}",
+    // An action that isn't an object, after one that is.
+    "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true},7,{\"setTemp\":23}]}]}",
+    // An alias whose actions are an object, not an array.
+    "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":{\"turnPower\":{\"power\":true}}}]}",
+    // The same, after an alias that is good.
+    "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]},{\"alias2\":{\"setTemp\":{\"t\":23}}}]}",
+    // An empty action object, after an action that is good.
+    "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true},{}]}]}",
+    // A value jkii can't read, after an action that is good.
+    "{\"commandID\":\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true},{\"setX\":1e999}]}]}",
+};
+
+TEST_CASE( "_parse_command malformed commands" ) {
+    tio_handler_t handler;
+    for (const char* command : malformed_commands) {
+        CAPTURE( command );
+        int called = 0;
+        tio_code_t res = _parse_command(&handler, command, strlen(command),
+                cb_parsed_action_count, &called);
+        CHECK( res == TIO_ERR_PARSE_JSON );
+        CHECK( called == 0 );
+    }
+}
+
+TEST_CASE( "_handle_command malformed commands" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+
+    char kii_buff[2048];
+    kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
+    kii_set_app_id(&handler._kii, "appid");
+    kii_set_site(&handler._kii, "api.kii.com");
+    strcpy(handler._kii._author.author_id, "thingid");
+
+    // No request may be performed, so connecting is recorded and fails.
+    bool connected = false;
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [&connected](void*, const char*, unsigned int) {
+        connected = true;
+        return EBISU_SOCK_FAIL;
+    };
+    kii_set_http_socket(&handler._kii, http_ctx.socket());
+
+    for (const char* command : malformed_commands) {
+        CAPTURE( command );
+        connected = false;
+        int called = 0;
+        tio_code_t res = _handle_command(
+                &handler, command, strlen(command), cb_action_ok, &called);
+        CHECK( res == TIO_ERR_PARSE_JSON );
+        CHECK( called == 0 );
+        CHECK( !connected );
+        CHECK( handler._kii._req_headers == nullptr );
+    }
 }

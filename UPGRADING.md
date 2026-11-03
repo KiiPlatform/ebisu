@@ -288,6 +288,14 @@ Commands in tio:
   The action has already run by then.
 - A command with an empty alias or action object, or with an action value jkii
   can't parse, is `TIO_ERR_PARSE_JSON` and doesn't reach the action callback.
+- So is a command with an alias or an action that isn't an object, or an alias
+  whose actions aren't an array. 1.x took one for the end of its array: it ran
+  the actions before it, dropped those after it, and sent their results as
+  those of the whole command.
+- A malformed command is refused whole, before any of its actions reaches the
+  callback of `tio_handler_handle_command()` or of
+  `tio_handler_parse_command()`, wherever the malformed part is. 1.x ran the
+  actions before it, and sent no result for them.
 
 kii:
 

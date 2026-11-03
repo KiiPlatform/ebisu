@@ -16,7 +16,8 @@ typedef enum _cmd_parser_code_t {
 } _cmd_parser_code_t;
 
 // The next object in json_array, which iter, zeroed before the first call,
-// walks. _CMD_PARSE_ARRAY_OUT_OF_INDEX after the last.
+// walks. _CMD_PARSE_ARRAY_OUT_OF_INDEX after the last, and _CMD_PARSE_FAIL
+// for an element that isn't an object, or for json_array not an array.
 _cmd_parser_code_t _next_object_in_array(
         const char* json_array,
         size_t json_array_length,

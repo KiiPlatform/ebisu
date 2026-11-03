@@ -26,9 +26,10 @@ _cmd_parser_code_t _next_object_in_array(
             iter, &member);
     if (res == JKII_ERR_OK) {
         // An element that isn't an object, or a member of what is an object
-        // and not an array, ends the walk, as it did looked up by index.
+        // and not an array, is malformed. Taken for the end of the array, it
+        // dropped what came after it, and the command was taken as good.
         if (member.key != NULL || member.type != JKII_FIELD_TYPE_OBJECT) {
-            return _CMD_PARSE_ARRAY_OUT_OF_INDEX;
+            return _CMD_PARSE_FAIL;
         }
         *out_object = (char*)member.value;
         *out_object_length = member.value_length;
@@ -95,6 +96,10 @@ _cmd_parser_code_t _parse_alias(
             out_actions_array_in_alias,
             out_actions_array_in_alias_length,
             &alias_type);
+    if (res == _CMD_PARSE_OK && alias_type != JKII_FIELD_TYPE_ARRAY) {
+        // An alias's actions are an array.
+        return _CMD_PARSE_FAIL;
+    }
     return res;
 }
 
@@ -200,6 +205,31 @@ _cmd_parser_code_t _parse_action(
             return _parse_primitive(action_value, action_value_length, out_action);
     }
     return _CMD_PARSE_OK;
+}
+
+static tio_code_t _walk_command(
+        tio_handler_t* handler,
+        const char* command,
+        size_t command_length,
+        const TIO_CB_PARSED_ACTION cb_parsed_action,
+        void* userdata);
+
+static void _ignore_action(char* command_id, tio_action_t* action, void* userdata)
+{
+    (void)command_id;
+    (void)action;
+    (void)userdata;
+}
+
+// A malformed command is refused whole, before any of its actions runs:
+// refused when the walk reached its malformed part, it had run the actions
+// before it, whose results were never sent.
+static tio_code_t _check_command(
+        tio_handler_t* handler,
+        const char* command,
+        size_t command_length)
+{
+    return _walk_command(handler, command, command_length, _ignore_action, NULL);
 }
 
 static tio_code_t _start_result_request(
@@ -373,6 +403,11 @@ tio_code_t _handle_command(
         TIO_CB_ACTION cb_action,
         void* cb_action_data)
 {
+    tio_code_t c_res = _check_command(handler, command, command_length);
+    if (c_res != TIO_ERR_OK) {
+        return c_res;
+    }
+
     jkii_field_t fields[3];
     char command_id[64];
     memset(fields, 0x00, sizeof(fields));
@@ -527,6 +562,21 @@ jkii_parse_err_t _parse_json(
 
 
 tio_code_t _parse_command(
+        tio_handler_t* handler,
+        const char* command,
+        size_t command_length,
+        const TIO_CB_PARSED_ACTION cb_parsed_action,
+        void* userdata)
+{
+    tio_code_t c_res = _check_command(handler, command, command_length);
+    if (c_res != TIO_ERR_OK) {
+        return c_res;
+    }
+    return _walk_command(handler, command, command_length, cb_parsed_action,
+            userdata);
+}
+
+static tio_code_t _walk_command(
         tio_handler_t* handler,
         const char* command,
         size_t command_length,
