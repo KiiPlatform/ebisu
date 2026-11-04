@@ -2,6 +2,7 @@
 // CONNACK and a SUBACK that let it through or that the input makes up.
 #include <kii.h>
 #include <kii_mqtt_task.h>
+#include <stdlib.h>
 #include <string>
 #include <vector>
 #include "fuzz_input.h"
@@ -34,7 +35,12 @@ ebisu_sock_code_t mqtt_connect(ebisu_socket_t*, const char*, uint16_t) {
     return EBISU_SOCK_OK;
 }
 
-ebisu_sock_code_t mqtt_send(ebisu_socket_t*, const char*, size_t length, size_t* out_sent_length) {
+// The task sends each packet whole. A PUBACK of identifier 0 acknowledges a
+// message MQTT doesn't allow, which the task is to refuse.
+ebisu_sock_code_t mqtt_send(ebisu_socket_t*, const char* buffer, size_t length, size_t* out_sent_length) {
+    if (length == 4 && buffer[0] == 0x40 && buffer[2] == 0 && buffer[3] == 0) {
+        abort();
+    }
     *out_sent_length = length;
     return EBISU_SOCK_OK;
 }

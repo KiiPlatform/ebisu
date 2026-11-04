@@ -34,6 +34,11 @@ typedef struct {
      */
     unsigned int message_qos;
     /** \private
+     * Whether that PUBLISH has the DUP flag, which only one at QoS 1 or 2 may
+     * have.
+     */
+    bool message_dup;
+    /** \private
      * Whether that PUBLISH came while waiting for SUBACK, which is waited
      * for again once it is read.
      */

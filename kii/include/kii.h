@@ -337,16 +337,26 @@ typedef enum kii_mqtt_event_t {
      * kii_mqtt_task_state, which says what it was sending. */
     KII_MQTT_EVENT_SEND_FAILED,
     /** \brief Receiving from the broker failed, or ended partway through a
-     * packet, the connection lost. The detail is the task's state. */
+     * packet, the connection lost, or gave a remaining length MQTT doesn't
+     * allow: longer than four bytes, or than it takes. The detail is the
+     * task's state. */
     KII_MQTT_EVENT_RECV_FAILED,
     /** \brief The broker closed the connection while the task waited for a
      * message. The detail is 0. */
     KII_MQTT_EVENT_CLOSED_BY_BROKER,
-    /** \brief A packet the task can't take where it came: anything but CONNACK
-     * first, anything but SUBACK or a message after SUBSCRIBE, SUBACK for
-     * another subscription, a message at QoS 2 or more, or a CONNACK, a SUBACK
-     * or a PINGRESP of another length than its type has. The detail is the
-     * packet's first byte, its type and flags. */
+    /** \brief A packet the task can't take where it came, or that MQTT 3.1.1
+     * doesn't allow a broker to send, and the task reconnects:
+     * - anything but CONNACK first, anything but SUBACK or a message after
+     *   SUBSCRIBE, and anything but a message or PINGRESP after SUBACK;
+     * - a packet whose type has other flags than MQTT gives it;
+     * - a CONNACK, a SUBACK or a PINGRESP of another length than its type has;
+     * - CONNACK's reserved acknowledge flags, or Session Present on a refusal
+     *   or for a clean session;
+     * - SUBACK for another subscription, or with a reserved return code or a
+     *   QoS higher than asked for;
+     * - a message at QoS 2 or more, or with DUP at QoS 0.
+     *
+     * The detail is the packet's first byte, its type and flags. */
     KII_MQTT_EVENT_UNEXPECTED_PACKET,
     /** \brief A PINGREQ was still unanswered when the next was due. The detail
      * is the keep-alive, in seconds. */
@@ -354,8 +364,11 @@ typedef enum kii_mqtt_event_t {
     /** \brief A message too large for the buffer set by kii_set_mqtt_buff()
      * was dropped. The detail is its length, after its fixed header. */
     KII_MQTT_EVENT_MESSAGE_TOO_LARGE,
-    /** \brief A message whose topic, or packet identifier, didn't fit in it
-     * was dropped. The detail is its length. */
+    /** \brief A message whose topic, or packet identifier, didn't fit in it,
+     * or that MQTT doesn't allow: an empty topic, one with a wildcard, U+0000
+     * or ill-formed UTF-8, or a packet identifier of 0. Of a message too large
+     * for the buffer, only the topic's length is checked. The task drops it
+     * and reconnects. The detail is its length. */
     KII_MQTT_EVENT_MESSAGE_MALFORMED
 } kii_mqtt_event_t;
 
