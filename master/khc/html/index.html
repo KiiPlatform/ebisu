@@ -97,6 +97,7 @@ $(function() {
 <li><b>Transfer codings</b>: a response whose last transfer coding is not <code>chunked</code> is refused with <code>KHC_ERR_INVALID_RESPONSE</code>, as is one with a malformed <code>Content-Length</code>, or with several that disagree.</li>
 <li><b>Fixed-size request fields</b>: a host longer than 127 bytes, a path longer than 255 and a method longer than 15 are refused with <code>KHC_ERR_TOO_LARGE_DATA</code>.</li>
 <li><b>Long response headers</b>: a header that doesn't fit in the response header buffer is skipped without reaching the header callback, which <code><a class="el" href="khc_8h.html#a7f4889fa8b645d22e23e2336387512ea" title="Whether a response header was skipped.">khc_get_resp_header_skipped()</a></code> tells. If it is <code>Content-Length</code> or <code>Transfer-Encoding</code>, which <code>khc</code> needs, the request fails with <code>KHC_ERR_TOO_LARGE_DATA</code>.</li>
+<li><b>Strict lines</b>: the status line has to be HTTP/1.x, a space, three digits, and nothing more or a space and a reason phrase. Each header has to be a name of token characters, a colon right after it, and a value. A reason phrase or a value may hold spaces, tabs, visible ASCII and bytes from 0x80 up, and no other control character. A line that starts with a space or a tab, the obsolete line folding, isn't taken either. Anything else is refused with <code>KHC_ERR_INVALID_RESPONSE</code>: something else on the way, a proxy for instance, could read it another way than <code>khc</code> would.</li>
 </ul>
 <h1>Memory management</h1>
 <p>A <code>khc</code> instance holds its request line fields and state, and otherwise uses two buffers:</p>
@@ -255,7 +256,7 @@ $(function() {
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Nov 3 2026 23:31:55 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Wed Nov 4 2026 06:46:00 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
