@@ -642,15 +642,16 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
         return;
     }
     char ptype = fixed_header.byte1 & 0xf0;
-    if (ptype != 0x20) {
-        // Must not happens. CONNACK must be the first response.
+    // CONNACK has to be the first packet, and its variable header is always
+    // 2 bytes: after one that says otherwise, what is read next wouldn't be
+    // where the next packet starts.
+    enum { length = 2 };
+    if (ptype != 0x20 || fixed_header.remaining_length != length) {
         _event(kii, KII_MQTT_EVENT_UNEXPECTED_PACKET, (unsigned char)fixed_header.byte1);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
     }
-    // CONNACK variable header LENGTH is always 2.
-    enum { length = 2 };
     char buff[length];
     memset(buff, '\0', length);
     ebisu_sock_code_t res2 = _mqtt_recv_remaining(kii, length, buff);
@@ -752,13 +753,14 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
         task_info->task_state = KII_MQTT_ST_RECV_MSG;
         return;
     }
-    if (ptype != 0x90) {
+    // The packet identifier, and a return code for the one topic subscribed.
+    enum { len = 3 };
+    if (ptype != 0x90 || fixed_header.remaining_length != len) {
         _event(kii, KII_MQTT_EVENT_UNEXPECTED_PACKET, (unsigned char)fixed_header.byte1);
         _delay_ms(kii, WAIT_MS);
         task_info->task_state = KII_MQTT_ST_RECONNECT;
         return;
     }
-    enum { len = 3 };
     char buff[len];
     memset(buff, '\0', len);
     ebisu_sock_code_t res2 = _mqtt_recv_remaining(kii, len, buff);
@@ -856,6 +858,13 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
             task_info->task_state = KII_MQTT_ST_RECV_MSG;
             // Estimate worst case.
             _add_elapsed_ms(state, _to_recv_ms(kii));
+        } else if (mtype == 0xD0 && fh.remaining_length != 0) {
+            // A PINGRESP is its fixed header alone. What one says follows it
+            // would otherwise be read as the next packet.
+            _event(kii, KII_MQTT_EVENT_UNEXPECTED_PACKET, (unsigned char)fh.byte1);
+            _reset_elapsed(state, 0);
+            _delay_ms(kii, WAIT_MS);
+            task_info->task_state = KII_MQTT_ST_RECONNECT;
         } else if (mtype == 0xD0) { // PINGRESP
             state->pingresp_received = true;
             _add_elapsed_ms(state, ARRIVED_MSG_READ_TIME);

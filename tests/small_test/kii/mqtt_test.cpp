@@ -4784,3 +4784,146 @@ TEST_CASE( "The MQTT keep-alive is timed by the system's monotonic clock" ) {
         CHECK( receives == 1 );
     }
 }
+
+// CONNACK was read as 2 bytes after its fixed header, SUBACK as 3 and PINGRESP
+// as none, whatever remaining length the fixed header gave. After one that gave
+// another, the task read the next packet from the wrong byte, or the next
+// packet's bytes as the rest of this one.
+TEST_CASE( "CONNACK, SUBACK and PINGRESP of another length are refused" ) {
+    char mqtt_buff[256];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
+    kii_set_system(&kii, khct::cb::delay_only_system());
+    kii._keep_alive_interval = 300;
+
+    std::vector<std::pair<kii_mqtt_event_t, uint32_t>> events;
+    kii_set_cb_mqtt_event(&kii, [](kii_mqtt_event_t event, uint32_t detail, void* userdata) {
+        ((std::vector<std::pair<kii_mqtt_event_t, uint32_t>>*)userdata)->emplace_back(event, detail);
+    }, &events);
+
+    khct::cb::SockCtx mqtt_ctx;
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
+    size_t served = 0;
+
+    int pushes = 0;
+    khct::cb::PushCtx push_ctx;
+    push_ctx.on_push = [&pushes](const char*, size_t) { ++pushes; };
+    kii._cb_push_received = khct::cb::cb_push;
+    kii._push_data = &push_ctx;
+
+    mqtt_state_t state;
+    _init_mqtt_state(&kii, &state);
+
+    // Each followed by a packet the task would take, and the length of its
+    // fixed header, all that is to be read of it.
+    struct Packet {
+        std::string bytes;
+        size_t header;
+    };
+    const std::string suback("\x90\x03\x00\x01\x00", 5);
+    const std::string publish = publish_packet("topic", "message");
+
+    SECTION("CONNACK") {
+        const Packet connacks[] = {
+            { std::string("\x20\x00", 2), 2 },
+            { std::string("\x20\x01\x00", 3), 2 },
+            { std::string("\x20\x03\x00\x00\x00", 5), 2 },
+            { std::string("\x20\x7f", 2) + std::string(127, '\0'), 2 },
+            { std::string("\x20\x80\x01", 3) + std::string(128, '\0'), 3 },
+        };
+        for (const Packet& connack : connacks) {
+            INFO("remaining length " << (int)(unsigned char)connack.bytes[1]);
+            events.clear();
+            served = 0;
+            serve_stream(mqtt_ctx, connack.bytes + suback, served);
+            state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
+            _mqtt_state_recv_connack(&state);
+            CHECK( state.info.task_state == KII_MQTT_ST_RECONNECT );
+            CHECK( state.mqtt_connected == false );
+            CHECK( served == connack.header );
+            CHECK( events == std::vector<std::pair<kii_mqtt_event_t, uint32_t>>({
+                    { KII_MQTT_EVENT_UNEXPECTED_PACKET, 0x20 } }) );
+        }
+        // One of 2 is still taken, and nothing after it read.
+        events.clear();
+        served = 0;
+        serve_stream(mqtt_ctx, std::string("\x20\x02\x00\x00", 4) + suback, served);
+        state.info.task_state = KII_MQTT_ST_RECV_CONNACK;
+        _mqtt_state_recv_connack(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_SEND_SUBSCRIBE );
+        CHECK( served == 4 );
+    }
+
+    SECTION("SUBACK") {
+        const Packet subacks[] = {
+            { std::string("\x90\x00", 2), 2 },
+            { std::string("\x90\x02\x00\x01", 4), 2 },
+            { std::string("\x90\x04\x00\x01\x00\x00", 6), 2 },
+            // Two return codes, for two topics where the task subscribed one.
+            { std::string("\x90\x04\x00\x01\x00\x01", 6), 2 },
+            { std::string("\x90\x80\x01", 3) + std::string(128, '\0'), 3 },
+        };
+        for (const Packet& packet : subacks) {
+            INFO("remaining length " << (int)(unsigned char)packet.bytes[1]);
+            events.clear();
+            served = 0;
+            pushes = 0;
+            serve_stream(mqtt_ctx, packet.bytes + publish, served);
+            state.info.task_state = KII_MQTT_ST_RECV_SUBACK;
+            _mqtt_state_recv_suback(&state);
+            CHECK( state.info.task_state == KII_MQTT_ST_RECONNECT );
+            CHECK( served == packet.header );
+            CHECK( pushes == 0 );
+            CHECK( events == std::vector<std::pair<kii_mqtt_event_t, uint32_t>>({
+                    { KII_MQTT_EVENT_UNEXPECTED_PACKET, 0x90 } }) );
+        }
+        events.clear();
+        served = 0;
+        serve_stream(mqtt_ctx, suback + publish, served);
+        state.info.task_state = KII_MQTT_ST_RECV_SUBACK;
+        _mqtt_state_recv_suback(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        CHECK( served == suback.length() );
+    }
+
+    SECTION("PINGRESP") {
+        const Packet pingresps[] = {
+            // What follows would have been read as a PUBLISH's fixed header.
+            { std::string("\xd0\x01\x30", 3), 2 },
+            { std::string("\xd0\x02\x00\x00", 4), 2 },
+            { std::string("\xd0\x80\x01", 3) + std::string(128, '\0'), 3 },
+        };
+        for (const Packet& packet : pingresps) {
+            INFO("remaining length " << (int)(unsigned char)packet.bytes[1]);
+            events.clear();
+            served = 0;
+            pushes = 0;
+            serve_stream(mqtt_ctx, packet.bytes + publish, served);
+            state.info.task_state = KII_MQTT_ST_RECV_READY;
+            state.pingresp_received = false;
+            _mqtt_state_recv_ready(&state);
+            CHECK( state.info.task_state == KII_MQTT_ST_RECONNECT );
+            CHECK( state.pingresp_received == false );
+            CHECK( served == packet.header );
+            CHECK( events == std::vector<std::pair<kii_mqtt_event_t, uint32_t>>({
+                    { KII_MQTT_EVENT_UNEXPECTED_PACKET, 0xd0 } }) );
+        }
+        // One of 0 is still taken, and the message after it read.
+        events.clear();
+        served = 0;
+        pushes = 0;
+        serve_stream(mqtt_ctx, std::string("\xd0\x00", 2) + publish, served);
+        state.info.task_state = KII_MQTT_ST_RECV_READY;
+        state.pingresp_received = false;
+        _mqtt_state_recv_ready(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        CHECK( state.pingresp_received == true );
+        _mqtt_state_recv_ready(&state);
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+        _mqtt_state_recv_msg(&state);
+        CHECK( pushes == 1 );
+        CHECK( served == 2 + publish.length() );
+        CHECK( events.empty() );
+    }
+}
