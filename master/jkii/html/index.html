@@ -136,7 +136,15 @@ Example</h1>
 <div class="ttc" id="ajkii_8h_html_a1abb4f25c1fab77f02ceeed2e988f401"><div class="ttname"><a href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member</a></div><div class="ttdeci">jkii_parse_err_t jkii_next_member(const char *json_string, size_t json_string_len, jkii_member_iter_t *iter, jkii_member_t *out_member)</div></div>
 <div class="ttc" id="astructjkii__member__iter__t_html"><div class="ttname"><a href="structjkii__member__iter__t.html">jkii_member_iter_t</a></div><div class="ttdef"><b>Definition</b> jkii.h:343</div></div>
 <div class="ttc" id="astructjkii__member__t_html"><div class="ttname"><a href="structjkii__member__t.html">jkii_member_t</a></div><div class="ttdef"><b>Definition</b> jkii.h:323</div></div>
-</div><!-- fragment --><p>Strings, names included, come as written between their quotes, escapes and all, whether from <code><a class="el" href="jkii_8h.html#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse()</a></code> or <code><a class="el" href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a></code>. <code>jkii_unescape_str()</code> undoes the escapes, <code>\uXXXX</code> included, into a buffer: one byte longer than the string always fits.</p>
+</div><!-- fragment --><p><code><a class="el" href="jkii_8h.html#adfa6f89edc29e6f8b9543d9b6d9a4d40">jkii_root_value()</a></code> gives a document that may be any value, <code>"ok"</code>, <code>42</code> or <code>null</code> as well as an object or an array, as a member without a key: its span, without the whitespace around it, and its type, a number's as for a member. An object or an array can then be walked with <code><a class="el" href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a></code> on that span:</p>
+<div class="fragment"><div class="line"><a class="code hl_struct" href="structjkii__member__t.html">jkii_member_t</a> root;</div>
+<div class="line"><span class="keywordflow">if</span> (<a class="code hl_function" href="jkii_8h.html#adfa6f89edc29e6f8b9543d9b6d9a4d40">jkii_root_value</a>(reply, reply_length, &amp;root) == <a class="code hl_enumvalue" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792ac12ec4a57f74db1a3bb6a02fdb7ea6fe">JKII_ERR_OK</a> &amp;&amp;</div>
+<div class="line">        root.<a class="code hl_variable" href="structjkii__member__t.html#a57e03f0a189c7437759a3542520f57a2">type</a> == <a class="code hl_enumvalue" href="jkii_8h.html#a5fe8d88e1452ceb3d2c07f69440c82b5a9a10a60bbf6e5c6ffe3cda5e9dec159a">JKII_FIELD_TYPE_STRING</a>) {</div>
+<div class="line">    <span class="comment">// root.value and root.value_length: the string, between its quotes.</span></div>
+<div class="line">}</div>
+<div class="ttc" id="ajkii_8h_html_adfa6f89edc29e6f8b9543d9b6d9a4d40"><div class="ttname"><a href="jkii_8h.html#adfa6f89edc29e6f8b9543d9b6d9a4d40">jkii_root_value</a></div><div class="ttdeci">jkii_parse_err_t jkii_root_value(const char *json_string, size_t json_string_len, jkii_member_t *out_value)</div></div>
+<div class="ttc" id="astructjkii__member__t_html_a57e03f0a189c7437759a3542520f57a2"><div class="ttname"><a href="structjkii__member__t.html#a57e03f0a189c7437759a3542520f57a2">jkii_member_t::type</a></div><div class="ttdeci">jkii_field_type_t type</div><div class="ttdef"><b>Definition</b> jkii.h:337</div></div>
+</div><!-- fragment --><p>Strings, names included, come as written between their quotes, escapes and all, whether from <code><a class="el" href="jkii_8h.html#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse()</a></code>, <code><a class="el" href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a></code> or <code><a class="el" href="jkii_8h.html#adfa6f89edc29e6f8b9543d9b6d9a4d40">jkii_root_value()</a></code>. <code>jkii_unescape_str()</code> undoes the escapes, <code>\uXXXX</code> included, into a buffer: one byte longer than the string always fits.</p>
 <div class="fragment"><div class="line"><span class="keywordtype">char</span> key[32];</div>
 <div class="line"><span class="keywordflow">if</span> (jkii_unescape_str(member.<a class="code hl_variable" href="structjkii__member__t.html#a59c73f95abf1537745b9b0c744695517">key</a>, member.<a class="code hl_variable" href="structjkii__member__t.html#a9231355bb207946584972854c011c8eb">key_length</a>, key, <span class="keyword">sizeof</span>(key)) &gt;= 0) {</div>
 <div class="line">    <span class="comment">// key holds the member&#39;s name, terminated: &quot;a/b&quot; for &quot;a\/b&quot;.</span></div>
@@ -223,7 +231,7 @@ Dependency</h1>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Nov 4 2026 06:55:30 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Wed Nov 4 2026 07:34:49 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

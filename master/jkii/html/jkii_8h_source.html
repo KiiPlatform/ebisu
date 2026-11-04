@@ -220,15 +220,20 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>        <a class="code hl_struct" href="structjkii__member__iter__t.html">jkii_member_iter_t</a>* iter,</div>
 <div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span>        <a class="code hl_struct" href="structjkii__member__t.html">jkii_member_t</a>* out_member);</div>
 <div class="line"><a id="l00367" name="l00367"></a><span class="lineno">  367</span> </div>
-<div class="line"><a id="l00368" name="l00368"></a><span class="lineno">  368</span><span class="preprocessor">#if defined(__GNUC__) || defined(__clang__)</span></div>
-<div class="line"><a id="l00369" name="l00369"></a><span class="lineno">  369</span><span class="preprocessor">#pragma GCC visibility pop</span></div>
-<div class="line"><a id="l00370" name="l00370"></a><span class="lineno">  370</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00371" name="l00371"></a><span class="lineno">  371</span> </div>
-<div class="line"><a id="l00372" name="l00372"></a><span class="lineno">  372</span><span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a id="l00373" name="l00373"></a><span class="lineno">  373</span>}</div>
-<div class="line"><a id="l00374" name="l00374"></a><span class="lineno">  374</span><span class="preprocessor">#endif</span></div>
-<div class="line"><a id="l00375" name="l00375"></a><span class="lineno">  375</span> </div>
-<div class="line"><a id="l00376" name="l00376"></a><span class="lineno">  376</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00383" name="l00383"></a><span class="lineno"><a class="line" href="jkii_8h.html#adfa6f89edc29e6f8b9543d9b6d9a4d40">  383</a></span><a class="code hl_enumeration" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a> <a class="code hl_function" href="jkii_8h.html#adfa6f89edc29e6f8b9543d9b6d9a4d40">jkii_root_value</a>(</div>
+<div class="line"><a id="l00384" name="l00384"></a><span class="lineno">  384</span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* json_string,</div>
+<div class="line"><a id="l00385" name="l00385"></a><span class="lineno">  385</span>        <span class="keywordtype">size_t</span> json_string_len,</div>
+<div class="line"><a id="l00386" name="l00386"></a><span class="lineno">  386</span>        <a class="code hl_struct" href="structjkii__member__t.html">jkii_member_t</a>* out_value);</div>
+<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span> </div>
+<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span><span class="preprocessor">#if defined(__GNUC__) || defined(__clang__)</span></div>
+<div class="line"><a id="l00389" name="l00389"></a><span class="lineno">  389</span><span class="preprocessor">#pragma GCC visibility pop</span></div>
+<div class="line"><a id="l00390" name="l00390"></a><span class="lineno">  390</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00391" name="l00391"></a><span class="lineno">  391</span> </div>
+<div class="line"><a id="l00392" name="l00392"></a><span class="lineno">  392</span><span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span>}</div>
+<div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00395" name="l00395"></a><span class="lineno">  395</span> </div>
+<div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="ajkii_8h_html_a1abb4f25c1fab77f02ceeed2e988f401"><div class="ttname"><a href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member</a></div><div class="ttdeci">jkii_parse_err_t jkii_next_member(const char *json_string, size_t json_string_len, jkii_member_iter_t *iter, jkii_member_t *out_member)</div></div>
 <div class="ttc" id="ajkii_8h_html_a226dc87d1ccd30b36a59a096b4df3a6b"><div class="ttname"><a href="jkii_8h.html#a226dc87d1ccd30b36a59a096b4df3a6b">jkii_field_err_t</a></div><div class="ttdeci">jkii_field_err_t</div><div class="ttdef"><b>Definition</b> jkii.h:61</div></div>
 <div class="ttc" id="ajkii_8h_html_a226dc87d1ccd30b36a59a096b4df3a6ba0ca27ded3400c5279308f056c8e5eb14"><div class="ttname"><a href="jkii_8h.html#a226dc87d1ccd30b36a59a096b4df3a6ba0ca27ded3400c5279308f056c8e5eb14">JKII_FIELD_ERR_COPY</a></div><div class="ttdeci">@ JKII_FIELD_ERR_COPY</div><div class="ttdef"><b>Definition</b> jkii.h:75</div></div>
@@ -255,6 +260,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="ajkii_8h_html_a7c99e19b01ccd836a788cf794afc8792ac7aa54138b3463eb8922d8cf568868ad"><div class="ttname"><a href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792ac7aa54138b3463eb8922d8cf568868ad">JKII_ERR_PARTIAL</a></div><div class="ttdeci">@ JKII_ERR_PARTIAL</div><div class="ttdef"><b>Definition</b> jkii.h:41</div></div>
 <div class="ttc" id="ajkii_8h_html_a7c99e19b01ccd836a788cf794afc8792acb577be7115daba71b3e5c64c559bed9"><div class="ttname"><a href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792acb577be7115daba71b3e5c64c559bed9">JKII_ERR_ROOT_TYPE</a></div><div class="ttdeci">@ JKII_ERR_ROOT_TYPE</div><div class="ttdef"><b>Definition</b> jkii.h:49</div></div>
 <div class="ttc" id="ajkii_8h_html_ad4bbea9cae26b6694b8c43e8d764ab29"><div class="ttname"><a href="jkii_8h.html#ad4bbea9cae26b6694b8c43e8d764ab29">jkii_boolean_t</a></div><div class="ttdeci">jkii_boolean_t</div><div class="ttdef"><b>Definition</b> jkii.h:23</div></div>
+<div class="ttc" id="ajkii_8h_html_adfa6f89edc29e6f8b9543d9b6d9a4d40"><div class="ttname"><a href="jkii_8h.html#adfa6f89edc29e6f8b9543d9b6d9a4d40">jkii_root_value</a></div><div class="ttdeci">jkii_parse_err_t jkii_root_value(const char *json_string, size_t json_string_len, jkii_member_t *out_value)</div></div>
 <div class="ttc" id="astructjkii__field__t_html"><div class="ttname"><a href="structjkii__field__t.html">jkii_field_t</a></div><div class="ttdef"><b>Definition</b> jkii.h:143</div></div>
 <div class="ttc" id="astructjkii__field__t_html_a01a5294845f38f7c7567059894426ab4"><div class="ttname"><a href="structjkii__field__t.html#a01a5294845f38f7c7567059894426ab4">jkii_field_t::start</a></div><div class="ttdeci">size_t start</div><div class="ttdef"><b>Definition</b> jkii.h:239</div></div>
 <div class="ttc" id="astructjkii__field__t_html_a4473c495ef26173515f141c4ea4eca51"><div class="ttname"><a href="structjkii__field__t.html#a4473c495ef26173515f141c4ea4eca51">jkii_field_t::double_value</a></div><div class="ttdeci">double double_value</div><div class="ttdef"><b>Definition</b> jkii.h:284</div></div>
@@ -279,7 +285,7 @@ $(document).ready(function() { init_codefold(0); });
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Nov 4 2026 06:55:30 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Wed Nov 4 2026 07:34:49 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>

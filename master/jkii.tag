@@ -218,6 +218,13 @@
       <anchor>a1abb4f25c1fab77f02ceeed2e988f401</anchor>
       <arglist>(const char *json_string, size_t json_string_len, jkii_member_iter_t *iter, jkii_member_t *out_member)</arglist>
     </member>
+    <member kind="function">
+      <type>jkii_parse_err_t</type>
+      <name>jkii_root_value</name>
+      <anchorfile>jkii_8h.html</anchorfile>
+      <anchor>adfa6f89edc29e6f8b9543d9b6d9a4d40</anchor>
+      <arglist>(const char *json_string, size_t json_string_len, jkii_member_t *out_value)</arglist>
+    </member>
   </compound>
   <compound kind="file">
     <name>jkii_lines.h</name>

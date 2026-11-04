@@ -164,6 +164,8 @@ Functions</h2></td></tr>
 <tr class="separator:a41ad96e57ad3b992e2f173336f6755f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1abb4f25c1fab77f02ceeed2e988f401" id="r_a1abb4f25c1fab77f02ceeed2e988f401"><td class="memItemLeft" align="right" valign="top"><a class="el" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member</a> (const char *json_string, size_t json_string_len, <a class="el" href="structjkii__member__iter__t.html">jkii_member_iter_t</a> *iter, <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *out_member)</td></tr>
 <tr class="separator:a1abb4f25c1fab77f02ceeed2e988f401"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adfa6f89edc29e6f8b9543d9b6d9a4d40" id="r_adfa6f89edc29e6f8b9543d9b6d9a4d40"><td class="memItemLeft" align="right" valign="top"><a class="el" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="jkii_8h.html#adfa6f89edc29e6f8b9543d9b6d9a4d40">jkii_root_value</a> (const char *json_string, size_t json_string_len, <a class="el" href="structjkii__member__t.html">jkii_member_t</a> *out_value)</td></tr>
+<tr class="separator:adfa6f89edc29e6f8b9543d9b6d9a4d40"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This is a file defining Kii JSON APIs. </p>
@@ -482,10 +484,55 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="adfa6f89edc29e6f8b9543d9b6d9a4d40" name="adfa6f89edc29e6f8b9543d9b6d9a4d40"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adfa6f89edc29e6f8b9543d9b6d9a4d40">&#9670;&#160;</a></span>jkii_root_value()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="jkii_8h.html#a7c99e19b01ccd836a788cf794afc8792">jkii_parse_err_t</a> jkii_root_value </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>json_string</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>json_string_len</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structjkii__member__t.html">jkii_member_t</a> *&#160;</td>
+          <td class="paramname"><em>out_value</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Gives the value a JSON string is, of any type, as <a class="el" href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a> gives a member.</p>
+<p>The string is checked as <a class="el" href="jkii_8h.html#a41ad96e57ad3b992e2f173336f6755f7">jkii_parse()</a> does, but may be any value, not only an object or an array: a string, a number, true, false or null too. The value comes without the whitespace around it, as <a class="el" href="structjkii__member__t.html">jkii_member_t</a> has it, and without a key. An object or an array can then be walked with <a class="el" href="jkii_8h.html#a1abb4f25c1fab77f02ceeed2e988f401">jkii_next_member()</a> on <a class="el" href="structjkii__member__t.html#a0f288ffdcc9d3b98b69d00f28e84ca92">jkii_member_t::value</a>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">json_string</td><td>The value. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">json_string_len</td><td>Its length. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">out_value</td><td>The value, with <a class="el" href="structjkii__member__t.html#a59c73f95abf1537745b9b0c744695517">jkii_member_t::key</a> NULL, set only when JKII_ERR_OK is returned. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>JKII_ERR_OK, or JKII_ERR_INVALID_INPUT if the string is not JSON. </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Nov 4 2026 06:55:30 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Wed Nov 4 2026 07:34:49 for jkii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
