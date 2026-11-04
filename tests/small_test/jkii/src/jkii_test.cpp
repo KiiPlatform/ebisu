@@ -1938,6 +1938,162 @@ TEST_CASE("jkii_next_member gives an object's members and an array's elements") 
     }
 }
 
+namespace {
+
+struct RootValue {
+    std::string json;
+    std::string value;
+    jkii_field_type_t type;
+};
+
+const RootValue ROOT_VALUES[] = {
+    { "\"ok\"", "ok", JKII_FIELD_TYPE_STRING },
+    { "\"\"", "", JKII_FIELD_TYPE_STRING },
+    { "\" a \"", " a ", JKII_FIELD_TYPE_STRING },
+    { "\"a\\\"b\\u00e9\\n\"", "a\\\"b\\u00e9\\n", JKII_FIELD_TYPE_STRING },
+    { "0", "0", JKII_FIELD_TYPE_INTEGER },
+    { "-0", "-0", JKII_FIELD_TYPE_INTEGER },
+    { "42", "42", JKII_FIELD_TYPE_INTEGER },
+    { "-2147483648", "-2147483648", JKII_FIELD_TYPE_INTEGER },
+    { "2147483648", "2147483648", JKII_FIELD_TYPE_LONG },
+    { "-9223372036854775808", "-9223372036854775808", JKII_FIELD_TYPE_LONG },
+    { "9223372036854775808", "9223372036854775808", JKII_FIELD_TYPE_LONG },
+    { "1.5", "1.5", JKII_FIELD_TYPE_DOUBLE },
+    { "1e3", "1e3", JKII_FIELD_TYPE_DOUBLE },
+    { "-2.5E-3", "-2.5E-3", JKII_FIELD_TYPE_DOUBLE },
+    { "true", "true", JKII_FIELD_TYPE_BOOLEAN },
+    { "false", "false", JKII_FIELD_TYPE_BOOLEAN },
+    { "null", "null", JKII_FIELD_TYPE_NULL },
+    { "{}", "{}", JKII_FIELD_TYPE_OBJECT },
+    { "{\"a\": [1, \"x\"]}", "{\"a\": [1, \"x\"]}", JKII_FIELD_TYPE_OBJECT },
+    { "[]", "[]", JKII_FIELD_TYPE_ARRAY },
+    { "[1, {\"b\": null}]", "[1, {\"b\": null}]", JKII_FIELD_TYPE_ARRAY },
+};
+
+const char* const WHITESPACE[] = { "", " ", "\t", "\r\n", " \t\r\n " };
+
+} // namespace
+
+TEST_CASE("jkii_root_value gives a document of any type") {
+    for (const RootValue& r : ROOT_VALUES) {
+        for (const char* before : WHITESPACE) {
+            for (const char* after : WHITESPACE) {
+                // Not terminated, and followed by what isn't the document's.
+                const std::string json = before + r.json + after;
+                const std::string buffer = json + "]x";
+                INFO("json [" << json << "]");
+                jkii_member_t m;
+                REQUIRE(jkii_root_value(buffer.data(), json.size(), &m) == JKII_ERR_OK);
+                CHECK(m.key == nullptr);
+                CHECK(m.key_length == 0);
+                CHECK(span(m.value, m.value_length) == r.value);
+                CHECK(m.type == r.type);
+                // Within the document, where the value is written.
+                CHECK(m.value == buffer.data() + strlen(before) +
+                        (r.type == JKII_FIELD_TYPE_STRING ? 1 : 0));
+            }
+        }
+    }
+}
+
+// What jkii_next_member() gives each of them as an element, value and type.
+TEST_CASE("jkii_root_value gives a value as jkii_next_member gives a member") {
+    std::string array = "[";
+    for (const RootValue& r : ROOT_VALUES) {
+        array += (array.size() > 1 ? ", " : "") + r.json;
+    }
+    array += "]";
+    jkii_member_iter_t iter;
+    memset(&iter, 0, sizeof(iter));
+    jkii_member_t element;
+    for (const RootValue& r : ROOT_VALUES) {
+        INFO("json [" << r.json << "]");
+        REQUIRE(jkii_next_member(array.data(), array.size(), &iter, &element) == JKII_ERR_OK);
+        jkii_member_t root;
+        REQUIRE(jkii_root_value(r.json.data(), r.json.size(), &root) == JKII_ERR_OK);
+        CHECK(span(root.value, root.value_length) == span(element.value, element.value_length));
+        CHECK(root.type == element.type);
+    }
+    CHECK(jkii_next_member(array.data(), array.size(), &iter, &element) == JKII_ERR_NOT_FOUND);
+}
+
+TEST_CASE("jkii_root_value gives an object or an array to walk") {
+    SECTION("an object") {
+        const char json[] = "\r\n {\"a\": 1, \"b\": \"x\"} \n";
+        jkii_member_t root;
+        REQUIRE(jkii_root_value(json, strlen(json), &root) == JKII_ERR_OK);
+        jkii_member_iter_t iter;
+        memset(&iter, 0, sizeof(iter));
+        jkii_member_t m;
+        std::vector<std::string> got;
+        while (jkii_next_member(root.value, root.value_length, &iter, &m) == JKII_ERR_OK) {
+            got.push_back(span(m.key, m.key_length) + "=" + span(m.value, m.value_length));
+        }
+        CHECK(got == std::vector<std::string>({ "a=1", "b=x" }));
+    }
+    SECTION("an array") {
+        const char json[] = " [\"s\", 2.5, null] ";
+        jkii_member_t root;
+        REQUIRE(jkii_root_value(json, strlen(json), &root) == JKII_ERR_OK);
+        jkii_member_iter_t iter;
+        memset(&iter, 0, sizeof(iter));
+        jkii_member_t m;
+        std::vector<jkii_field_type_t> types;
+        while (jkii_next_member(root.value, root.value_length, &iter, &m) == JKII_ERR_OK) {
+            types.push_back(m.type);
+        }
+        CHECK(types == std::vector<jkii_field_type_t>({ JKII_FIELD_TYPE_STRING,
+                JKII_FIELD_TYPE_DOUBLE, JKII_FIELD_TYPE_NULL }));
+    }
+}
+
+TEST_CASE("jkii_root_value refuses what isn't one JSON value") {
+    const std::string invalid[] = {
+        "", " ", " \t\r\n ",
+        // Values that aren't whole, or aren't JSON's.
+        "\"ok", "ok\"", "'ok'", "tru", "nul", "True", "NULL", "+1", ".5", "1.", "01",
+        "0x10", "1e", "-", "NaN", "Infinity",
+        // A control character in a string, and an escape JSON has not.
+        "\"a\nb\"", std::string("\"a\0b\"", 5), "\"\\x41\"",
+        // More than one value, or something after it.
+        "1 2", "\"a\" \"b\"", "true false", "{} {}", "[] 1", "1,", "null]",
+        std::string("1\0", 2), "1\v", "\f1",
+        { "{\"a\":1,}" }, "[1,]", "{\"a\"}", "[",
+        // Deeper than coreJSON goes.
+        std::string(33, '[') + std::string(33, ']'),
+    };
+    for (const std::string& json : invalid) {
+        INFO("json [" << json << "]");
+        jkii_member_t m;
+        memset(&m, 0x5a, sizeof(m));
+        jkii_member_t untouched;
+        memset(&untouched, 0x5a, sizeof(untouched));
+        CHECK(jkii_root_value(json.data(), json.size(), &m) == JKII_ERR_INVALID_INPUT);
+        CHECK(memcmp(&m, &untouched, sizeof(m)) == 0);
+    }
+}
+
+// jkii_root_value() reads the root's type, which the other functions only
+// check for an object or an array.
+TEST_CASE("A root that is neither an object nor an array is still refused elsewhere") {
+    for (const RootValue& r : ROOT_VALUES) {
+        if (r.type == JKII_FIELD_TYPE_OBJECT || r.type == JKII_FIELD_TYPE_ARRAY) {
+            continue;
+        }
+        INFO("json [" << r.json << "]");
+        jkii_field_t fields[2];
+        memset(fields, 0x00, sizeof(fields));
+        fields[0].path = "/a";
+        fields[0].type = JKII_FIELD_TYPE_ANY;
+        CHECK(jkii_parse(r.json.data(), r.json.size(), fields) == JKII_ERR_INVALID_INPUT);
+        jkii_member_iter_t iter;
+        memset(&iter, 0, sizeof(iter));
+        jkii_member_t m;
+        CHECK(jkii_next_member(r.json.data(), r.json.size(), &iter, &m) == JKII_ERR_ROOT_TYPE);
+        CHECK(jkii_validate_root_object(r.json.data(), r.json.size()) == JKII_ERR_ROOT_TYPE);
+    }
+}
+
 // coreJSON's JSON_MAX_DEPTH, 32 by default, keeps how deep its checks go
 // bounded, on a stack that may be small.
 TEST_CASE("KiiJson, NestingDeeperThan32IsInvalid") {

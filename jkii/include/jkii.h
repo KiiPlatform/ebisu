@@ -365,6 +365,26 @@ jkii_parse_err_t jkii_next_member(
         jkii_member_iter_t* iter,
         jkii_member_t* out_member);
 
+/** Gives the value a JSON string is, of any type, as jkii_next_member() gives
+ * a member.
+ *
+ * The string is checked as jkii_parse() does, but may be any value, not only
+ * an object or an array: a string, a number, true, false or null too. The
+ * value comes without the whitespace around it, as jkii_member_t has it, and
+ * without a key. An object or an array can then be walked with
+ * jkii_next_member() on jkii_member_t#value.
+ *
+ * \param [in] json_string The value.
+ * \param [in] json_string_len Its length.
+ * \param [out] out_value The value, with jkii_member_t#key NULL, set only when
+ * JKII_ERR_OK is returned.
+ * \return JKII_ERR_OK, or JKII_ERR_INVALID_INPUT if the string is not JSON.
+ */
+jkii_parse_err_t jkii_root_value(
+        const char* json_string,
+        size_t json_string_len,
+        jkii_member_t* out_value);
+
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC visibility pop
 #endif

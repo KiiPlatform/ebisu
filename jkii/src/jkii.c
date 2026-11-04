@@ -105,9 +105,21 @@ static jkii_parse_err_t _jkii_root(
         case '[':
             out_root->type = JSONArray;
             break;
+        case '"':
+            out_root->type = JSONString;
+            break;
+        case 't':
+            out_root->type = JSONTrue;
+            break;
+        case 'f':
+            out_root->type = JSONFalse;
+            break;
+        case 'n':
+            out_root->type = JSONNull;
+            break;
         default:
-            /* A string, a number, true, false or null. */
-            out_root->type = JSONInvalid;
+            /* A number, the only value left that JSON_Validate() takes. */
+            out_root->type = JSONNumber;
             break;
     }
     return JKII_ERR_OK;
@@ -1011,6 +1023,45 @@ jkii_parse_err_t jkii_next_member(
     out_member->value_length = pair.valueLength;
     out_member->type = _jkii_to_jkii_field_type(pair.jsonType, pair.value,
             pair.valueLength, &integer, &integer_res);
+    return JKII_ERR_OK;
+}
+
+jkii_parse_err_t jkii_root_value(
+        const char* json_string,
+        size_t json_string_len,
+        jkii_member_t* out_value)
+{
+    _jkii_value_t root;
+    size_t start = 0;
+    size_t end = json_string_len;
+    int64_t integer = 0;
+    jkii_primitive_err_t integer_res = JKII_PRIMITIVE_ERR_INVALID;
+
+    M_JKII_ASSERT(json_string != NULL);
+    M_JKII_ASSERT(out_value != NULL);
+
+    jkii_parse_err_t res = _jkii_root(json_string, json_string_len, &root);
+    if (res != JKII_ERR_OK) {
+        return res;
+    }
+    /* JSON_Validate() has taken a value, so there is one between the spaces. */
+    while (_jkii_is_space(json_string[start])) {
+        ++start;
+    }
+    while (_jkii_is_space(json_string[end - 1])) {
+        --end;
+    }
+    if (root.type == JSONString) {
+        /* Its characters between its quotes, as for a member. */
+        ++start;
+        --end;
+    }
+    out_value->key = NULL;
+    out_value->key_length = 0;
+    out_value->value = &json_string[start];
+    out_value->value_length = end - start;
+    out_value->type = _jkii_to_jkii_field_type(root.type, out_value->value,
+            out_value->value_length, &integer, &integer_res);
     return JKII_ERR_OK;
 }
 
