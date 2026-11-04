@@ -198,6 +198,68 @@ int _read_chunk_size(const char* buff, size_t buff_size, size_t* out_chunk_size)
     return 1;
 }
 
+static bool _is_field_char(unsigned char c) {
+    return c == '\t' || (c >= 0x20 && c != 0x7f);
+}
+
+bool _is_field_text(const char* text, size_t text_length) {
+    for (size_t i = 0; i < text_length; ++i) {
+        if (!_is_field_char((unsigned char)text[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/* tchar of RFC 9110, section 5.6.2. */
+static bool _is_token_char(unsigned char c) {
+    if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+        return true;
+    }
+    return c != '\0' && strchr("!#$%&'*+-.^_`|~", c) != NULL;
+}
+
+/* The length of the name a header starts with, up to its colon, or 0 if it
+ * doesn't start with a name and a colon within data_length. */
+static size_t _header_name_length(const char* data, size_t data_length) {
+    size_t i = 0;
+    while (i < data_length && _is_token_char((unsigned char)data[i])) {
+        ++i;
+    }
+    return (i > 0 && i < data_length && data[i] == ':') ? i : 0;
+}
+
+bool _is_header_line(const char* line, size_t line_length) {
+    size_t name_length = _header_name_length(line, line_length);
+    return name_length > 0 &&
+        _is_field_text(&line[name_length + 1], line_length - name_length - 1);
+}
+
+bool _is_header_start(const char* data, size_t data_length) {
+    if (data_length > 0 && data[data_length - 1] == '\r') {
+        --data_length;
+    }
+    return _is_header_line(data, data_length);
+}
+
+bool _is_status_line(const char* line, size_t line_length) {
+    /* "HTTP/1.1 200", the least a status line is. */
+    const size_t least = 12;
+    if (line_length < least || memcmp(line, "HTTP/1.", 7) != 0 ||
+            line[7] < '0' || line[7] > '9' || line[8] != ' ') {
+        return false;
+    }
+    for (size_t i = 9; i < 12; ++i) {
+        if (line[i] < '0' || line[i] > '9') {
+            return false;
+        }
+    }
+    if (line_length == least) {
+        return true;
+    }
+    return line[least] == ' ' && _is_field_text(&line[least + 1], line_length - least - 1);
+}
+
 int _is_header_present(const char* header, const char* buff, size_t buff_size) {
     int header_length = strlen(header);
     for (int i = 0; i < buff_size; ++i) {

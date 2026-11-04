@@ -638,32 +638,19 @@ void khc_state_resp_status_read(khc* khc) {
 }
 
 void khc_state_resp_status_parse(khc* khc) {
-    const char http_version[] = "HTTP/d.d ";
-    const size_t status_size = 3;
     const char* line_end = _find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size);
     // Check the line itself: past it, the buffer may hold what an earlier
     // response left there.
     if (line_end == NULL ||
-            (size_t)(line_end - khc->_resp_header_buff) < strlen(http_version) + status_size ||
-            strncmp(khc->_resp_header_buff, "HTTP/", 5) != 0) {
+            !_is_status_line(khc->_resp_header_buff, (size_t)(line_end - khc->_resp_header_buff))) {
         khc->_state = KHC_STATE_CLOSE;
         khc->_result = KHC_ERR_INVALID_RESPONSE;
         return;
     }
-    char* ptr = khc->_resp_header_buff + strlen(http_version);
-
-    // Three digits, so at most 999.
-    uint16_t status_code = 0;
-    for (size_t i = 0; i < status_size; ++i) {
-        char d = ptr[i];
-        if (isdigit((unsigned char)d) == 0){
-            khc->_state = KHC_STATE_CLOSE;
-            khc->_result = KHC_ERR_INVALID_RESPONSE;
-            return;
-        }
-        status_code = status_code * 10 + (d - '0');
-    }
-    khc->_status_code = status_code;
+    // The three digits after "HTTP/1.1 ", so at most 999.
+    const char* digits = khc->_resp_header_buff + 9;
+    khc->_status_code = (uint16_t)((digits[0] - '0') * 100 + (digits[1] - '0') * 10 + (digits[2] - '0'));
+    khc->_resp_status_line_given = false;
     // A response of its own, an interim 1xx one included: what framed the
     // one before doesn't frame this one.
     khc->_resp_date = -1;
@@ -678,7 +665,13 @@ void khc_state_resp_header_callback(khc* khc) {
     const char* header_boundary = _find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size);
     if (header_boundary == NULL) {
         if (khc->_resp_header_buff_size == khc->_resp_header_read_size + 1) {
-            // no space in _resp_header_buff.
+            // no space in _resp_header_buff. What there is of the header is
+            // checked now, as what comes after it is while it is skipped.
+            if (!_is_header_start(khc->_resp_header_buff, khc->_resp_header_read_size)) {
+                khc->_state = KHC_STATE_CLOSE;
+                khc->_result = KHC_ERR_INVALID_RESPONSE;
+                return;
+            }
             khc->_resp_header_skipped = true;
             khc->_state = KHC_STATE_RESP_HEADER_SKIP;
             return;
@@ -687,6 +680,15 @@ void khc_state_resp_header_callback(khc* khc) {
         return;
     }
     size_t header_size = header_boundary - khc->_resp_header_buff;
+    // The status line, checked already, comes first, and the headers after
+    // it. A line that starts with a space or a tab, which continues the one
+    // before in the obsolete line folding, isn't one.
+    if (header_size > 0 && khc->_resp_status_line_given &&
+            !_is_header_line(khc->_resp_header_buff, header_size)) {
+        khc->_state = KHC_STATE_CLOSE;
+        khc->_result = KHC_ERR_INVALID_RESPONSE;
+        return;
+    }
     if (header_size > 0) {
         size_t content_length = 0;
         size_t header_written = khc->_cb_header(khc->_resp_header_buff,
@@ -696,6 +698,7 @@ void khc_state_resp_header_callback(khc* khc) {
             khc->_result = KHC_ERR_HEADER_CALLBACK;
             return;
         }
+        khc->_resp_status_line_given = true;
         _record_resp_date(khc, khc->_resp_header_buff, header_size);
 
         int chunked = _is_chunked_encoding(khc->_resp_header_buff, header_size);
@@ -830,6 +833,18 @@ void khc_state_resp_header_skip(khc* khc) {
         }
         // check header boundary.
         const char* header_boundary = _find_crlf(khc->_resp_header_buff, khc->_resp_header_read_size);
+        // The rest of the value, up to its CRLF, or a CR that may start it.
+        size_t value_size = header_boundary != NULL ?
+            (size_t)(header_boundary - khc->_resp_header_buff) :
+            khc->_resp_header_read_size;
+        if (header_boundary == NULL && khc->_resp_header_buff[value_size - 1] == '\r') {
+            --value_size;
+        }
+        if (!_is_field_text(khc->_resp_header_buff, value_size)) {
+            khc->_state = KHC_STATE_CLOSE;
+            khc->_result = KHC_ERR_INVALID_RESPONSE;
+            return;
+        }
         if (header_boundary == NULL) {
             // re-skip.
             return;

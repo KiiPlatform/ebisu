@@ -336,3 +336,107 @@ TEST_CASE( "_read_chunk_size rejects invalid sizes" ) {
         REQUIRE( out_size == 12345 );
     }
 }
+
+namespace {
+
+bool status_line(const std::string& s) {
+    return _is_status_line(s.data(), s.size());
+}
+
+bool header_line(const std::string& s) {
+    return _is_header_line(s.data(), s.size());
+}
+
+bool header_start(const std::string& s) {
+    return _is_header_start(s.data(), s.size());
+}
+
+bool field_text(const std::string& s) {
+    return _is_field_text(s.data(), s.size());
+}
+
+// tchar of RFC 9110, section 5.6.2, written out.
+bool is_tchar(int c) {
+    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+        std::string("!#$%&'*+-.^_`|~").find((char)c) != std::string::npos;
+}
+
+}
+
+TEST_CASE( "_is_field_text takes HTAB, SP, visible ASCII and bytes from 0x80 up" ) {
+    for (int c = 0; c < 256; ++c) {
+        INFO( "byte " << c );
+        const bool expected = c == '\t' || (c >= 0x20 && c != 0x7f);
+        CHECK( field_text(std::string(1, (char)c)) == expected );
+        CHECK( field_text("a" + std::string(1, (char)c) + "b") == expected );
+    }
+    CHECK( field_text("") );
+    CHECK( _is_field_text(NULL, 0) );
+}
+
+TEST_CASE( "_is_header_line takes a name of tchar only, then a colon" ) {
+    for (int c = 0; c < 256; ++c) {
+        INFO( "byte " << c );
+        CHECK( header_line(std::string(1, (char)c) + ": v") == is_tchar(c) );
+        // A colon there ends the name "X" instead.
+        CHECK( header_line("X" + std::string(1, (char)c) + "A: v") == (is_tchar(c) || c == ':') );
+        // As the value, anything _is_field_text takes.
+        CHECK( header_line("X-A: " + std::string(1, (char)c)) == field_text(std::string(1, (char)c)) );
+    }
+    CHECK( header_line("X-A:") );
+    CHECK( header_line("X-A: a:b") );
+    CHECK_FALSE( header_line("") );
+    CHECK_FALSE( header_line(":") );
+    CHECK_FALSE( header_line("X-A") );
+    CHECK_FALSE( header_line("X-A ") );
+    CHECK_FALSE( header_line("X-A :v") );
+    CHECK_FALSE( header_line(" X-A: v") );
+    CHECK_FALSE( _is_header_line(NULL, 0) );
+}
+
+TEST_CASE( "_is_header_start takes what there is of a header, with a CR last" ) {
+    CHECK( header_start("X-A:") );
+    CHECK( header_start("X-A: v") );
+    CHECK( header_start("X-A: v\r") );
+    CHECK_FALSE( header_start("X-A: v\r\r") );
+    CHECK_FALSE( header_start("X-A: v\rx") );
+    CHECK_FALSE( header_start("X-A: v\n") );
+    // The name and its colon have to fit.
+    CHECK_FALSE( header_start("X-Long-Name") );
+    CHECK_FALSE( header_start("X-Long-Name\r") );
+    CHECK_FALSE( header_start("X A: v") );
+    CHECK_FALSE( header_start("") );
+    CHECK_FALSE( header_start("\r") );
+}
+
+TEST_CASE( "_is_status_line takes HTTP/1.x, three digits and a reason phrase" ) {
+    CHECK( status_line("HTTP/1.1 200 OK") );
+    CHECK( status_line("HTTP/1.0 200 OK") );
+    CHECK( status_line("HTTP/1.1 200") );
+    CHECK( status_line("HTTP/1.1 200 ") );
+    CHECK( status_line("HTTP/1.1 000 X") );
+    CHECK( status_line("HTTP/1.1 999 X") );
+    for (int c = '0'; c <= '9'; ++c) {
+        CHECK( status_line("HTTP/1." + std::string(1, (char)c) + " 200 OK") );
+    }
+    for (int c = 0; c < 256; ++c) {
+        INFO( "byte " << c );
+        const std::string b(1, (char)c);
+        CHECK( status_line("HTTP/1.1 200 " + b) == field_text(b) );
+        CHECK( status_line("HTTP/1.1 200 O" + b + "K") == field_text(b) );
+        CHECK( status_line("HTTP/1.1 20" + b + " OK") == (c >= '0' && c <= '9') );
+        CHECK( status_line("HTTP/1." + b + " 200 OK") == (c >= '0' && c <= '9') );
+        CHECK( status_line("HTTP/1.1 200" + b + "OK") == (c == ' ') );
+        CHECK( status_line("HTTP/1.1" + b + "200 OK") == (c == ' ') );
+        CHECK( status_line("HTTP/" + b + ".1 200 OK") == (c == '1') );
+    }
+    CHECK_FALSE( status_line("") );
+    CHECK_FALSE( status_line("HTTP/1.1") );
+    CHECK_FALSE( status_line("HTTP/1.1 ") );
+    CHECK_FALSE( status_line("HTTP/1.1 20") );
+    CHECK_FALSE( status_line("HTTP/1.1 2000") );
+    CHECK_FALSE( status_line("HTTP/1.10 200 OK") );
+    CHECK_FALSE( status_line("HTTP/2.0 200 OK") );
+    CHECK_FALSE( status_line("http/1.1 200 OK") );
+    CHECK_FALSE( _is_status_line(NULL, 0) );
+}

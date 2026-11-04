@@ -704,8 +704,10 @@ TEST_CASE( "Transfer-Encoding not ending in chunked fails the response" ) {
 
 // Only a header named Transfer-Encoding is one: a prefix of the name followed
 // by a colon used to turn on chunked decoding of a body that is not chunked.
+// The empty prefix isn't a name at all, and response_parse_test.cpp has it
+// refused.
 TEST_CASE( "Header named like a prefix of Transfer-Encoding is not one" ) {
-    const std::string headers[] = { "T: chunked", "Transfer: chunked", ": chunked" };
+    const std::string headers[] = { "T: chunked", "Transfer: chunked" };
     for (const auto& header : headers) {
         INFO("header [" << header << "]");
         ContentLengthResult r = perform_with_header(header);

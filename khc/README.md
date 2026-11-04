@@ -65,6 +65,14 @@ callbacks and a buffer of fixed size, so neither has to fit in memory.
   `khc_get_resp_header_skipped()` tells. If it is `Content-Length` or
   `Transfer-Encoding`, which `khc` needs, the request fails with
   `KHC_ERR_TOO_LARGE_DATA`.
+- **Strict lines**: the status line has to be HTTP/1.x, a space, three digits,
+  and nothing more or a space and a reason phrase. Each header has to be a
+  name of token characters, a colon right after it, and a value. A reason
+  phrase or a value may hold spaces, tabs, visible ASCII and bytes from 0x80
+  up, and no other control character. A line that starts with a space or a
+  tab, the obsolete line folding, isn't taken either. Anything else is refused
+  with `KHC_ERR_INVALID_RESPONSE`: something else on the way, a proxy for
+  instance, could read it another way than `khc` would.
 
 ## Memory management
 
