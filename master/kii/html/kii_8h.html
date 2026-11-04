@@ -961,7 +961,7 @@ Functions</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677cae87b6bd5ed17b00e613ca9c24c702181" name="a719bdf1a2b7209f8f03dd16a10b3677cae87b6bd5ed17b00e613ca9c24c702181"></a>KII_MQTT_EVENT_CLOSED_BY_BROKER&#160;</td><td class="fielddoc"><p>The broker closed the connection while the task waited for a message. The detail is 0. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca901d9cc417215185b34aef0cb3bc5bcf" name="a719bdf1a2b7209f8f03dd16a10b3677ca901d9cc417215185b34aef0cb3bc5bcf"></a>KII_MQTT_EVENT_UNEXPECTED_PACKET&#160;</td><td class="fielddoc"><p>A packet the task can't take where it came: anything but CONNACK first, anything but SUBACK or a message after SUBSCRIBE, SUBACK for another subscription, or a message at QoS 2 or more. The detail is the packet's first byte, its type and flags. </p>
+<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca901d9cc417215185b34aef0cb3bc5bcf" name="a719bdf1a2b7209f8f03dd16a10b3677ca901d9cc417215185b34aef0cb3bc5bcf"></a>KII_MQTT_EVENT_UNEXPECTED_PACKET&#160;</td><td class="fielddoc"><p>A packet the task can't take where it came: anything but CONNACK first, anything but SUBACK or a message after SUBSCRIBE, SUBACK for another subscription, a message at QoS 2 or more, or a CONNACK, a SUBACK or a PINGRESP of another length than its type has. The detail is the packet's first byte, its type and flags. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677caa7c34d9b4f2b2663a5f40f7f23926f26" name="a719bdf1a2b7209f8f03dd16a10b3677caa7c34d9b4f2b2663a5f40f7f23926f26"></a>KII_MQTT_EVENT_PING_TIMEOUT&#160;</td><td class="fielddoc"><p>A PINGREQ was still unanswered when the next was due. The detail is the keep-alive, in seconds. </p>
 </td></tr>
@@ -4664,7 +4664,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="kii_8h.
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Nov 4 2026 07:34:49 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Wed Nov 4 2026 16:15:13 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
