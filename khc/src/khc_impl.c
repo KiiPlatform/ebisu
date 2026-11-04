@@ -180,11 +180,13 @@ int _read_chunk_size(const char* buff, size_t buff_size, size_t* out_chunk_size)
     if (i == 0) {
         return -1;
     }
-    // Optional whitespace, then a chunk extension, which is ignored.
+    // Optional whitespace before a chunk extension, which is ignored, and
+    // before nothing else (RFC 9112, section 7.1.1).
+    size_t digits_end = i;
     while (i < line_size && (buff[i] == ' ' || buff[i] == '\t')) {
         ++i;
     }
-    if (i < line_size && buff[i] != ';') {
+    if (i < line_size ? buff[i] != ';' : i != digits_end) {
         return -1;
     }
     for (; i < line_size; ++i) {

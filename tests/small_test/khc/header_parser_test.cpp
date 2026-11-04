@@ -290,9 +290,10 @@ TEST_CASE( "_read_chunk_size reads sizes up to SIZE_MAX" ) {
         { std::string(sizeof(size_t) * 2, 'f') + "\r\n", SIZE_MAX },
         // Leading zeros don't make a size too large.
         { std::string(sizeof(size_t) * 4, '0') + "a\r\n", 0xa },
-        // Whitespace and chunk extensions are ignored.
-        { "5 \r\n", 5 },
+        // Chunk extensions are ignored, with whitespace before them.
         { "5;name\r\n", 5 },
+        { "5 ;name\r\n", 5 },
+        { "5\t;name\r\n", 5 },
         { "5;name=value\r\n", 5 },
         { "5 \t;name=\"quoted value\" ; other\r\n", 5 },
         { "5\r\nhello\r\n", 5 },
@@ -319,6 +320,10 @@ TEST_CASE( "_read_chunk_size rejects invalid sizes" ) {
         "0x5\r\n",
         "5 6\r\n",
         ";name\r\n",
+        // Whitespace before nothing, which RFC 9112 doesn't allow.
+        "5 \r\n",
+        "5\t\r\n",
+        "5  \r\n",
         // One past SIZE_MAX, and 20 hex digits, too many for 64 bits.
         "1" + std::string(sizeof(size_t) * 2, '0') + "\r\n",
         "123456789abcdef01234\r\n",

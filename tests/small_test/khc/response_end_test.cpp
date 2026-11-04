@@ -257,14 +257,22 @@ TEST_CASE( "A last chunk whose end doesn't come times out" ) {
     CHECK( r.timeouts == 1 );
 }
 
-TEST_CASE( "Chunks decide where a body ends, not Content-Length" ) {
+// Chunks used to decide where the body ended, as RFC 9112 has it, which also
+// says a message with both "ought to be handled as an error": something else
+// on the way may have gone by the Content-Length.
+TEST_CASE( "Chunks with a Content-Length too are refused" ) {
     const std::string body = "\r\n\r\n4\r\nbody\r\n0\r\n\r\n";
     const std::string chunked = "Transfer-Encoding: chunked";
 
-    check_ends_without_waiting(
-            perform(peer_with({ STATUS + chunked + "\r\nContent-Length: 1" + body })), "body");
-    check_ends_without_waiting(
-            perform(peer_with({ STATUS + "Content-Length: 1\r\n" + chunked + body })), "body");
+    for (const std::string& response : {
+            STATUS + chunked + "\r\nContent-Length: 1" + body,
+            STATUS + "Content-Length: 1\r\n" + chunked + body,
+            STATUS + "Content-Length: 4\r\n" + chunked + body }) {
+        Result r = perform(peer_with({ response }));
+        CHECK( r.res == KHC_ERR_INVALID_RESPONSE );
+        CHECK( r.body == "" );
+        CHECK( r.on_close_called == 1 );
+    }
 }
 
 TEST_CASE( "A response with no body ends with its headers" ) {

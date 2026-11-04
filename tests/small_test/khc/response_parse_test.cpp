@@ -3,6 +3,7 @@
 #include "catch.hpp"
 #include <khc.h>
 #include "test_callbacks.h"
+#include <stdlib.h>
 #include <string>
 #include <vector>
 
@@ -441,5 +442,135 @@ TEST_CASE( "A header too long for the buffer is checked as it is skipped" ) {
             INFO( "header " << printable(header) );
             check_refused("HTTP/1.1 200 OK\r\n" + header + tail, { "HTTP/1.1 200 OK" }, 40);
         }
+    }
+}
+
+namespace {
+
+const std::string CHUNKED_200 = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n";
+const std::vector<std::string> CHUNKED_HEADERS = { "HTTP/1.1 200 OK", "Transfer-Encoding: chunked" };
+
+// A chunked body refused, having given body of it, through stream buffers
+// small and large, wherever the reads end.
+void check_chunks_refused(const std::string& chunks, const std::string& body_before) {
+    for (size_t stream_buff_size : { 8, 16, 256 }) {
+        for (const auto& reads : splits_of(CHUNKED_200 + chunks)) {
+            Reply reply;
+            reply.reads = reads;
+            reply.stream_buff_size = stream_buff_size;
+            Outcome out = perform(reply);
+            INFO( "chunks " << printable(chunks) << ", stream buffer of " << stream_buff_size );
+            INFO( reads.size() << " reads, the first of " << reads[0].size() << " bytes" );
+            CHECK( out.res == KHC_ERR_INVALID_RESPONSE );
+            CHECK( out.headers == CHUNKED_HEADERS );
+            CHECK( out.body == body_before );
+        }
+    }
+}
+
+// A chunk size line has to fit in the stream buffer: stream_buff_sizes are
+// those it fits in.
+void check_chunks_taken(const std::string& chunks, const std::string& body,
+        const std::vector<size_t>& stream_buff_sizes = { 8, 16, 256 }) {
+    for (size_t stream_buff_size : stream_buff_sizes) {
+        for (const auto& reads : splits_of(CHUNKED_200 + chunks)) {
+            Reply reply;
+            reply.reads = reads;
+            reply.stream_buff_size = stream_buff_size;
+            Outcome out = perform(reply);
+            INFO( "chunks " << printable(chunks) << ", stream buffer of " << stream_buff_size );
+            INFO( reads.size() << " reads, the first of " << reads[0].size() << " bytes" );
+            CHECK( out.res == KHC_ERR_OK );
+            CHECK( out.body == body );
+        }
+    }
+}
+
+}
+
+// The two bytes after a chunk's data were skipped, whatever they were: a
+// chunk whose size was wrong went on as if it had been right.
+TEST_CASE( "A chunk's data ends with a CRLF, or the response is refused" ) {
+    for (const std::string& after : std::vector<std::string>{ "XX", "\r\r", "\n\n", "\rX", "X\n",
+            "\n\r", " \r", "\r ", std::string("\0\0", 2) }) {
+        check_chunks_refused("5\r\nhello" + after + "3\r\nabc\r\n0\r\n\r\n", "hello");
+        check_chunks_refused("5\r\nhello" + after + "0\r\n\r\n", "hello");
+    }
+    // A size one short, and one long.
+    check_chunks_refused("4\r\nhello\r\n0\r\n\r\n", "hell");
+    check_chunks_refused("6\r\nhello\r\n0\r\n\r\n", "hello\r");
+    // A bare LF in place of the CRLF.
+    check_chunks_refused("5\r\nhello\n0\r\n\r\n", "hello");
+    // After a chunk read whole, and then the bad one.
+    check_chunks_refused("3\r\nabc\r\n5\r\nhelloXX0\r\n\r\n", "abchello");
+}
+
+TEST_CASE( "Chunks that end where their sizes say are taken" ) {
+    check_chunks_taken("5\r\nhello\r\n0\r\n\r\n", "hello");
+    check_chunks_taken("5\r\nhello\r\n3\r\nabc\r\n0\r\n\r\n", "helloabc");
+    check_chunks_taken("1\r\n\r\r\n1\r\n\n\r\n0\r\n\r\n", "\r\n");
+    check_chunks_taken("2\r\n\r\n\r\n0\r\n\r\n", "\r\n");
+    check_chunks_taken("5 ;a=b\r\nhello\r\n0\r\n\r\n", "hello");
+    check_chunks_taken("5;a=\"x y\"\r\nhello\r\n0;z\r\n\r\n", "hello", { 16, 256 });
+}
+
+TEST_CASE( "A chunk size followed by whitespace and nothing else is refused" ) {
+    check_chunks_refused("5 \r\nhello\r\n0\r\n\r\n", "");
+    check_chunks_refused("5\t\r\nhello\r\n0\r\n\r\n", "");
+    check_chunks_refused("5\r\nhello\r\n0 \r\n\r\n", "hello");
+}
+
+TEST_CASE( "Chunks and a Content-Length together are refused" ) {
+    for (const std::string& response : std::vector<std::string>{
+            "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Length: 5\r\n\r\n5\r\nhello\r\n0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 5\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n",
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\n" }) {
+        Expected refused = { KHC_ERR_INVALID_RESPONSE, 0, {}, "" };
+        for (const auto& reads : splits_of(response)) {
+            Reply reply;
+            reply.reads = reads;
+            Outcome out = perform(reply);
+            INFO( "response " << printable(response) );
+            CHECK( out.res == refused.res );
+            CHECK( out.body == "" );
+        }
+    }
+    SECTION("but not where there is no body") {
+        for (const std::string& status : std::vector<std::string>{ "204 No Content", "304 Not Modified" }) {
+            check_every_split("HTTP/1.1 " + status + "\r\nContent-Length: 5\r\n"
+                    "Transfer-Encoding: chunked\r\n\r\n",
+                    { KHC_ERR_OK, (uint16_t)atoi(status.c_str()),
+                      { "HTTP/1.1 " + status, "Content-Length: 5", "Transfer-Encoding: chunked" }, "" });
+        }
+        Reply reply;
+        reply.method = "HEAD";
+        reply.reads = { "HTTP/1.1 200 OK\r\nContent-Length: 5\r\nTransfer-Encoding: chunked\r\n\r\n" };
+        CHECK( perform(reply).res == KHC_ERR_OK );
+    }
+}
+
+// HTTP/1.0 has no chunks: RFC 9112 has a message of it with Transfer-Encoding
+// treated as if its framing were faulty, which it likely is, a proxy having
+// passed chunks on that it didn't decode.
+TEST_CASE( "Chunks in an HTTP/1.0 response are refused" ) {
+    for (const auto& reads : splits_of(
+            "HTTP/1.0 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n")) {
+        Reply reply;
+        reply.reads = reads;
+        Outcome out = perform(reply);
+        CHECK( out.res == KHC_ERR_INVALID_RESPONSE );
+        CHECK( out.body == "" );
+    }
+    SECTION("while its Content-Length, or none, frames it") {
+        check_every_split("HTTP/1.0 200 OK\r\nContent-Length: 5\r\n\r\nhello",
+                { KHC_ERR_OK, 200, { "HTTP/1.0 200 OK", "Content-Length: 5" }, "hello" });
+        check_every_split("HTTP/1.0 200 OK\r\n\r\nhello",
+                { KHC_ERR_OK, 200, { "HTTP/1.0 200 OK" }, "hello" });
+    }
+    SECTION("but not where there is no body") {
+        Reply reply;
+        reply.method = "HEAD";
+        reply.reads = { "HTTP/1.0 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n" };
+        CHECK( perform(reply).res == KHC_ERR_OK );
     }
 }

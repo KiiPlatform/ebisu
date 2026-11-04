@@ -351,12 +351,16 @@ khc, which kii and tio report in their own codes:
   chunked body.
 - A response khc can't read is `KHC_ERR_INVALID_RESPONSE`, a new code, and
   `KII_ERR_INVALID_RESPONSE` and `TIO_ERR_INVALID_RESPONSE` above it. It covers
-  the following, all but the chunk size refused before any of the body is
-  written:
+  the following, all but what is wrong in the chunks refused before any of the
+  body is written:
   - an invalid `Content-Length`;
   - a `Transfer-Encoding` whose final coding isn't `chunked`;
   - `Content-Length` headers that disagree;
-  - an invalid chunk size;
+  - `Transfer-Encoding: chunked` together with a `Content-Length`, or in an
+    HTTP/1.0 response, which 1.x read as chunks;
+  - an invalid chunk size, a size followed by whitespace with no extension
+    after it among them, or a chunk whose data isn't followed by a CRLF, which
+    1.x skipped two bytes after whatever they were;
   - a first line that isn't an HTTP/1.x status line, which 1.x returned as
     `KHC_ERR_FAIL`, or one 1.x took that isn't one: another version, a code
     that isn't three digits followed by a space or the line's end, or a

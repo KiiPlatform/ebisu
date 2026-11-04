@@ -651,6 +651,7 @@ void khc_state_resp_status_parse(khc* khc) {
     const char* digits = khc->_resp_header_buff + 9;
     khc->_status_code = (uint16_t)((digits[0] - '0') * 100 + (digits[1] - '0') * 10 + (digits[2] - '0'));
     khc->_resp_status_line_given = false;
+    khc->_resp_version_1_0 = khc->_resp_header_buff[7] == '0';
     // A response of its own, an interim 1xx one included: what framed the
     // one before doesn't frame this one.
     khc->_resp_date = -1;
@@ -745,6 +746,13 @@ void khc_state_resp_header_callback(khc* khc) {
                     khc->_status_code == 204 || khc->_status_code == 304) {
                 // These have no body, whatever length they give.
                 khc->_state = KHC_STATE_CLOSE;
+            } else if (khc->_chunked_resp &&
+                    (khc->_resp_has_content_length || khc->_resp_version_1_0)) {
+                // Chunks with a Content-Length too, or in an HTTP/1.0 response,
+                // which has none: framing that something else on the way may
+                // have read another way (RFC 9112, sections 6.1 and 6.3).
+                khc->_state = KHC_STATE_CLOSE;
+                khc->_result = KHC_ERR_INVALID_RESPONSE;
             } else if (khc->_chunked_resp) {
                 khc->_body_read_size = 0;
                 khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
@@ -1158,7 +1166,20 @@ void khc_state_resp_body_read_chunk_body(khc* khc) {
     }
 }
 
+// The CRLF that ends a chunk's data, of which the first size bytes of data
+// have come.
+static bool _is_chunk_data_end(const char* data, size_t size) {
+    return memcmp(data, "\r\n", size) == 0;
+}
+
 void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
+    if (!_is_chunk_data_end(khc->_stream_buff, khc->_body_read_size < 2 ? khc->_body_read_size : 2)) {
+        // Something else after the data: the chunk's size didn't say where
+        // it ended.
+        khc->_state = KHC_STATE_CLOSE;
+        khc->_result = KHC_ERR_INVALID_RESPONSE;
+        return;
+    }
     if (khc->_body_read_size < 2) {
         if (khc->_resp_header_read_size > 0) {
             // What was read along with the headers comes first.
@@ -1183,9 +1204,17 @@ void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
                 _closed_early(khc);
                 return;
             }
+            // What came has to be what was left of the CRLF.
+            if (memcmp(tmp, &"\r\n"[khc->_body_read_size], read_size) != 0) {
+                khc->_state = KHC_STATE_CLOSE;
+                khc->_result = KHC_ERR_INVALID_RESPONSE;
+                return;
+            }
             khc->_body_read_size += read_size;
             if (khc->_body_read_size < 2) {
-                // Only the CR has come: skip the LF on the next read.
+                // Only the CR has come: it is kept, for the check above, and
+                // the LF read next.
+                khc->_stream_buff[0] = '\r';
                 return;
             }
             khc->_body_read_size = 0;
