@@ -94,7 +94,7 @@ $(function() {
 <ul>
 <li><b>One request per connection</b>: no keep-alive and no pipelining. <code><a class="el" href="khc_8h.html#a75fd843af7f3de58bcba2d348878becc" title="Perform the HTTP session.">khc_perform()</a></code> connects, sends the request, reads the response and closes the connection, blocking until it is done.</li>
 <li><b>Nothing beyond HTTP framing</b>: redirects are not followed, and <code>3xx</code> responses reach the caller like any other. There's no support for compression or cookies, nor for proxies beyond <code><a class="el" href="khc_8h.html#a3b0cd0780345cbf9f6631aaf1c626cbd" title="Send the whole URL in the request line.">khc_enable_absolute_target()</a></code>. Authorization and content types are headers the application sets.</li>
-<li><b>Transfer codings</b>: a response whose last transfer coding is not <code>chunked</code> is refused with <code>KHC_ERR_INVALID_RESPONSE</code>, as is one with a malformed <code>Content-Length</code>, or with several that disagree.</li>
+<li><b>Transfer codings</b>: a response whose last transfer coding is not <code>chunked</code> is refused with <code>KHC_ERR_INVALID_RESPONSE</code>, as is one with a malformed <code>Content-Length</code>, or with several that disagree. So is a chunked one with a <code>Content-Length</code> too, or from HTTP/1.0, which has no chunks, and one whose chunks' data isn't followed by a CRLF. Trailers are skipped, without being checked, and a connection closed among them still ends the response, the whole body having come.</li>
 <li><b>Fixed-size request fields</b>: a host longer than 127 bytes, a path longer than 255 and a method longer than 15 are refused with <code>KHC_ERR_TOO_LARGE_DATA</code>.</li>
 <li><b>Long response headers</b>: a header that doesn't fit in the response header buffer is skipped without reaching the header callback, which <code><a class="el" href="khc_8h.html#a7f4889fa8b645d22e23e2336387512ea" title="Whether a response header was skipped.">khc_get_resp_header_skipped()</a></code> tells. If it is <code>Content-Length</code> or <code>Transfer-Encoding</code>, which <code>khc</code> needs, the request fails with <code>KHC_ERR_TOO_LARGE_DATA</code>.</li>
 <li><b>Strict lines</b>: the status line has to be HTTP/1.x, a space, three digits, and nothing more or a space and a reason phrase. Each header has to be a name of token characters, a colon right after it, and a value. A reason phrase or a value may hold spaces, tabs, visible ASCII and bytes from 0x80 up, and no other control character. A line that starts with a space or a tab, the obsolete line folding, isn't taken either. Anything else is refused with <code>KHC_ERR_INVALID_RESPONSE</code>: something else on the way, a proxy for instance, could read it another way than <code>khc</code> would.</li>
@@ -256,7 +256,7 @@ $(function() {
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Nov 4 2026 06:46:00 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Wed Nov 4 2026 06:55:30 for khc by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
