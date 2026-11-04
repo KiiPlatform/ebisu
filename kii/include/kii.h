@@ -344,7 +344,8 @@ typedef enum kii_mqtt_event_t {
     KII_MQTT_EVENT_CLOSED_BY_BROKER,
     /** \brief A packet the task can't take where it came: anything but CONNACK
      * first, anything but SUBACK or a message after SUBSCRIBE, SUBACK for
-     * another subscription, or a message at QoS 2 or more. The detail is the
+     * another subscription, a message at QoS 2 or more, or a CONNACK, a SUBACK
+     * or a PINGRESP of another length than its type has. The detail is the
      * packet's first byte, its type and flags. */
     KII_MQTT_EVENT_UNEXPECTED_PACKET,
     /** \brief A PINGREQ was still unanswered when the next was due. The detail
