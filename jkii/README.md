@@ -83,8 +83,22 @@ while (jkii_next_member(json_string, strlen(json_string), &iter, &member) ==
 }
 ```
 
+`jkii_root_value()` gives a document that may be any value, `"ok"`, `42` or
+`null` as well as an object or an array, as a member without a key: its span,
+without the whitespace around it, and its type, a number's as for a member.
+An object or an array can then be walked with `jkii_next_member()` on that
+span:
+
+```c
+jkii_member_t root;
+if (jkii_root_value(reply, reply_length, &root) == JKII_ERR_OK &&
+        root.type == JKII_FIELD_TYPE_STRING) {
+    // root.value and root.value_length: the string, between its quotes.
+}
+```
+
 Strings, names included, come as written between their quotes, escapes and
-all, whether from `jkii_parse()` or `jkii_next_member()`.
+all, whether from `jkii_parse()`, `jkii_next_member()` or `jkii_root_value()`.
 `jkii_unescape_str()` undoes the escapes, `\uXXXX` included, into a buffer:
 one byte longer than the string always fits.
 

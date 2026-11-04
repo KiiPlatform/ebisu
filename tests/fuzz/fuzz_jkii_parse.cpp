@@ -1,7 +1,7 @@
 // A JSON document, asked for a field of each type by a name and a path the
 // input chooses: a line of them, then the document. Its root's members are
 // walked too, and their names and strings unescaped. The name, escaped, has
-// to unescape to itself.
+// to unescape to itself. Its root is read as a value of any type too.
 #include <jkii.h>
 #include <jkii_utils.h>
 #include <stdlib.h>
@@ -79,6 +79,34 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
         }
     }
     jkii_validate_root_object(begin, document.size());
+
+    // The root as a value, of any type: within the document, taken whenever
+    // jkii_next_member() takes it, and an object or an array that walks as
+    // the document does.
+    jkii_member_t root;
+    jkii_parse_err_t root_res = jkii_root_value(begin, document.size(), &root);
+    memset(&iter, 0, sizeof(iter));
+    jkii_parse_err_t first_res = jkii_next_member(begin, document.size(), &iter, &member);
+    if ((root_res == JKII_ERR_OK) != (first_res != JKII_ERR_INVALID_INPUT)) abort();
+    if (root_res == JKII_ERR_OK) {
+        if (root.key != NULL || root.value < begin || root.value + root.value_length > end) abort();
+        const bool walks = root.type == JKII_FIELD_TYPE_OBJECT || root.type == JKII_FIELD_TYPE_ARRAY;
+        if (walks != (first_res != JKII_ERR_ROOT_TYPE)) abort();
+        if (root.type == JKII_FIELD_TYPE_STRING) {
+            unescape_fits(root.value, root.value_length);
+        }
+        if (walks) {
+            jkii_member_iter_t root_iter;
+            memset(&root_iter, 0, sizeof(root_iter));
+            jkii_member_t root_member;
+            size_t root_members = 0;
+            while (jkii_next_member(root.value, root.value_length, &root_iter, &root_member) ==
+                    JKII_ERR_OK) {
+                ++root_members;
+            }
+            if (root_members != members) abort();
+        }
+    }
 
     // Six times as long, which any escaping fits in, then back.
     std::vector<char> escaped(key.size() * 6 + 1);
