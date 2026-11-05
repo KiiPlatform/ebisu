@@ -280,6 +280,21 @@ The push task:
   After 8 failures in a row the task asks for the endpoint again.
   `kii_set_mqtt_retry_wait_max()` and `tio_handler_set_mqtt_retry_wait_max()`
   set another longest wait.
+- It reconnects on what MQTT 3.1.1 doesn't allow a broker to send, as MQTT has
+  a client do, where 1.x dropped it and went on, or took it:
+  - a packet whose type has other flags than MQTT gives it, or that a client
+    which only subscribes never gets, such as a PUBACK or a second CONNACK;
+  - a remaining length written in more bytes than it takes;
+  - a CONNACK with reserved acknowledge flags, or with Session Present on a
+    refusal or for a clean session;
+  - a SUBACK with a reserved return code, or granting a higher QoS than asked
+    for;
+  - a message with DUP at QoS 0, or a packet identifier of 0 at QoS 1;
+  - a message whose topic is empty, or holds a wildcard, U+0000 or ill-formed
+    UTF-8, or which has no room for its topic or packet identifier.
+
+  `KII_MQTT_EVENT_UNEXPECTED_PACKET`, `KII_MQTT_EVENT_MESSAGE_MALFORMED` and
+  `KII_MQTT_EVENT_RECV_FAILED` tell which.
 
 Commands in tio:
 
