@@ -14,8 +14,17 @@ release=$1
 root=$(cd "$(dirname "$0")/../.." && pwd)
 
 if [ "${MUSL_INSIDE:-}" != 1 ]; then
+    # musl 1.1.24 makes every socket call through socketcall(2) on 32-bit x86,
+    # which Docker 29's default seccomp profile refuses, with ENOSYS, as it
+    # can't see the call's arguments: apk couldn't fetch, nor the tests open a
+    # socket. musl 1.2.5 makes the calls directly, which the profile allows, so
+    # it keeps the profile.
+    seccomp=
+    if [ "$release" = 3.12 ]; then
+        seccomp="--security-opt seccomp=unconfined"
+    fi
     # shellcheck disable=SC2086
-    "${DOCKER:-docker}" run --rm ${DOCKER_OPTS:-} --platform linux/386 -e MUSL_INSIDE=1 \
+    "${DOCKER:-docker}" run --rm ${DOCKER_OPTS:-} $seccomp --platform linux/386 -e MUSL_INSIDE=1 \
         -v "$root:/src:ro" "docker.io/library/alpine:$release" \
         sh -c 'apk add --no-cache bash > /dev/null && bash /src/tests/samples/musl.sh "$0"' "$release"
     exit
