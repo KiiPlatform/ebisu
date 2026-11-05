@@ -120,6 +120,12 @@ cmake --build --preset debug --target broker_test_kii
 tests/broker_test/with_broker.py ctest --preset broker
 ```
 
+They connect over the platform's socket, as the large tests do: platform's
+OpenSSL port, or its Schannel port on Windows, where they run under wine with
+`ctest --preset broker-mingw`. Schannel trusts the Windows root store, so the
+tests add the run's CA to the root store of the wine prefix they run in, and
+remove it when they end. They refuse to run on a real Windows machine.
+
 For 32-bit ARM Linux, armv7-a with hardware floating point, the toolchain file
 is `cmake/arm-linux-gnueabihf.cmake`, and the small tests run under qemu-arm.
 The libraries need only the C library. platform's OpenSSL port and the Linux

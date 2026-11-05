@@ -5,9 +5,10 @@
 // broker keeps, MQTT 3.1, refused credentials, the will, the keep-alive,
 // messages too large for the buffer, and the broker closing the connection.
 //
-// The task connects over platform's OpenSSL port, trusting the run's CA. The
-// task only subscribes, so the messages are published by a client of the
-// test's own, below.
+// The task connects over the platform's socket, trusting the run's CA:
+// platform's Schannel port on Windows, and its OpenSSL port elsewhere. The task
+// only subscribes, so the messages are published by a client of the test's
+// own, below.
 //
 // Each test case has topics and client identifiers of its own, under one the
 // run is named by, so that none sees another's messages or session.
@@ -15,13 +16,20 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 #include <kii.h>
+#ifdef _WIN32
+#include <ebisu_schannel.h>
+#include <wincrypt.h>
+#else
 #include <ebisu_openssl.h>
+#endif
 
 #include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <fstream>
 #include <functional>
+#include <iterator>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -67,7 +75,103 @@ const Broker& broker()
     return b;
 }
 
-// The TLS configuration every connection shares, trusting the run's CA.
+// The platform's socket, trusting the run's CA: platform's Schannel port on
+// Windows, and its OpenSSL port elsewhere.
+#ifdef _WIN32
+typedef ebisu_schannel_socket_t platform_socket_t;
+
+// The Schannel port trusts the roots the Windows root store holds, so the
+// run's CA is added to it for the run, and removed afterwards. Only under wine,
+// whose prefix the tests run in, never to a real machine's root store. Winsock
+// is started too, which has to be before the first connection.
+//
+// The root store's registry, rather than the system store: under wine 10, a
+// certificate deleted through the system store stays in the registry. It is
+// closed straight after each change, as under wine 10 the socket sees a change
+// only once the store is closed.
+struct Trust {
+    bool winsock = false;
+    std::vector<BYTE> der;
+    bool added = false;
+    std::string error;
+
+    static HCERTSTORE open_root() {
+        return CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_A, 0, 0, CERT_SYSTEM_STORE_LOCAL_MACHINE, "ROOT");
+    }
+
+    Trust() {
+        WSADATA data;
+        winsock = WSAStartup(MAKEWORD(2, 2), &data) == 0;
+        if (!winsock) {
+            error = "WSAStartup failed";
+            return;
+        }
+        HMODULE ntdll = GetModuleHandleA("ntdll.dll");
+        if (ntdll == nullptr || GetProcAddress(ntdll, "wine_get_version") == nullptr) {
+            error = "on Windows, the broker tests run only under wine: they add the run's CA to the root store";
+            return;
+        }
+        std::ifstream file(broker().ca, std::ios::binary);
+        const std::string pem((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        DWORD length = 0;
+        if (pem.empty() || !CryptStringToBinaryA(pem.c_str(), (DWORD)pem.size(),
+                    CRYPT_STRING_BASE64HEADER, nullptr, &length, nullptr, nullptr)) {
+            error = "the CA's certificate couldn't be loaded";
+            return;
+        }
+        der.resize(length);
+        if (!CryptStringToBinaryA(pem.c_str(), (DWORD)pem.size(),
+                    CRYPT_STRING_BASE64HEADER, der.data(), &length, nullptr, nullptr)) {
+            error = "the CA's certificate couldn't be loaded";
+            return;
+        }
+        HCERTSTORE store = open_root();
+        added = store != nullptr && CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
+                der.data(), (DWORD)der.size(), CERT_STORE_ADD_REPLACE_EXISTING, nullptr);
+        if (store != nullptr) {
+            CertCloseStore(store, 0);
+        }
+        if (!added) {
+            error = "the CA's certificate couldn't be added to the root store";
+        }
+    }
+    ~Trust() {
+        if (added) {
+            HCERTSTORE store = open_root();
+            PCCERT_CONTEXT ours = CertCreateCertificateContext(X509_ASN_ENCODING, der.data(), (DWORD)der.size());
+            if (store != nullptr && ours != nullptr) {
+                // Freed by deleting it.
+                PCCERT_CONTEXT found = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
+                        CERT_FIND_EXISTING, ours, nullptr);
+                if (found != nullptr) {
+                    CertDeleteCertificateFromStore(found);
+                }
+            }
+            if (ours != nullptr) {
+                CertFreeCertificateContext(ours);
+            }
+            if (store != nullptr) {
+                CertCloseStore(store, 0);
+            }
+        }
+        if (winsock) {
+            WSACleanup();
+        }
+    }
+};
+
+void init_platform_socket(platform_socket_t* sock, unsigned int to_recv, unsigned int to_send)
+{
+    static Trust t;
+    if (!t.error.empty()) {
+        FAIL( t.error );
+    }
+    ebisu_schannel_socket_init(sock, to_recv, to_send);
+}
+#else
+typedef ebisu_openssl_socket_t platform_socket_t;
+
+// The TLS configuration every connection shares.
 struct Tls {
     ebisu_openssl_tls_t tls;
     bool ok;
@@ -79,14 +183,16 @@ struct Tls {
     }
 };
 
-ebisu_openssl_tls_t* broker_tls()
+void init_platform_socket(platform_socket_t* sock, unsigned int to_recv, unsigned int to_send)
 {
     static Tls t;
     if (!t.ok) {
         FAIL( "the CA's certificate couldn't be loaded" );
     }
-    return &t.tls;
+    ebisu_openssl_socket_init(sock, to_recv, to_send);
+    ebisu_openssl_socket_set_tls(sock, &t.tls);
 }
+#endif
 
 // What the test case's topics are under, and its client identifiers start
 // with: named by the time the run started.
@@ -164,7 +270,7 @@ struct Received {
 // The task, on a kii_t of its own, subscribing to topic as client_id, with what
 // it does recorded.
 struct Task {
-    ebisu_openssl_socket_t sock;
+    platform_socket_t sock;
     // What kii is given: sock, through the callbacks below.
     struct Link {
         ebisu_socket_t base;
@@ -205,8 +311,7 @@ struct Task {
     Task(const std::string& topic, const std::string& client_id, size_t buff_size = 1024)
         : buff(buff_size), client_id(client_id) {
         const Broker& b = broker();
-        ebisu_openssl_socket_init(&sock, TO_RECV, TO_SEND);
-        ebisu_openssl_socket_set_tls(&sock, broker_tls());
+        init_platform_socket(&sock, TO_RECV, TO_SEND);
         static const ebisu_socket_ops_t ops = {
             cb_connect, cb_send, cb_recv, cb_close, cb_recv_timed_out, nullptr
         };
@@ -425,13 +530,12 @@ struct Task {
 // A client of the test's own, for what the task doesn't do: it publishes, and
 // it connects as another client would.
 struct Client {
-    ebisu_openssl_socket_t sock;
+    platform_socket_t sock;
     bool connected = false;
     uint16_t next_id = 1;
 
     Client() {
-        ebisu_openssl_socket_init(&sock, 10, TO_SEND);
-        ebisu_openssl_socket_set_tls(&sock, broker_tls());
+        init_platform_socket(&sock, 10, TO_SEND);
     }
     Client(const Client&) = delete;
     Client& operator=(const Client&) = delete;

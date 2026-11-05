@@ -131,6 +131,15 @@
       "filter": { "include": { "label": "broker" } }
     },
     {
+      "name": "broker-mingw",
+      "inherits": "base",
+      "configurePreset": "mingw",
+      "displayName": "Broker tests, 64-bit Windows under wine",
+      "description": "Against a Mosquitto broker, over platform's Schannel port: configure with -DEBISU_TEST_BROKER=ON, and run under tests/broker_test/with_broker.py, in a wine prefix the run's CA may be added to",
+      "filter": { "include": { "label": "broker" } },
+      "environment": { "WINEDEBUG": "-all" }
+    },
+    {
       "name": "all",
       "inherits": "base",
       "configurePreset": "debug",
