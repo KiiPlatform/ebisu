@@ -208,6 +208,9 @@ jobs:
           WINEDEBUG: -all
         run: |
           sudo apt-get -yq install --no-install-recommends g++-mingw-w64-x86-64-posix wine wine64 python3 openssl
+          # Ubuntu 26.04's wine leaves wineserver out of the PATH, where
+          # tls_test.py looks for it.
+          command -v wineserver > /dev/null || sudo ln -s "$(dpkg -L wine64 | grep -m1 '/wineserver$')" /usr/local/bin/wineserver
           wineboot --init
       - name: configure
         run: cmake --preset ${{ matrix.preset }}
@@ -372,6 +375,8 @@ jobs:
           WINEDEBUG: -all
         run: |
           sudo apt-get -yq install --no-install-recommends g++-mingw-w64-x86-64-posix wine wine64
+          # As in the small job.
+          command -v wineserver > /dev/null || sudo ln -s "$(dpkg -L wine64 | grep -m1 '/wineserver$')" /usr/local/bin/wineserver
           wineboot --init
           wineserver -w
       # The large tests are configured when these two are set.
