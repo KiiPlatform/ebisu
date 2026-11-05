@@ -327,7 +327,6 @@ static bool _push_task_can_run(const kii_t* kii, bool endpoint_given)
 }
 
 static kii_code_t _start_task(kii_t* kii, uint32_t keep_alive_interval,
-        KII_PUSH_RECEIVED_CB callback, void* userdata,
         const kii_mqtt_endpoint_t* endpoint)
 {
     // A second task would share the first's sockets and buffers.
@@ -343,7 +342,7 @@ static kii_code_t _start_task(kii_t* kii, uint32_t keep_alive_interval,
     if (kii->_system == NULL || kii->_system->ops->task_create == NULL) {
         return KII_ERR_CREATE_TASK;
     }
-    if (callback == NULL || !_push_task_can_run(kii, endpoint != NULL)) {
+    if (kii->_cb_mqtt_message == NULL || !_push_task_can_run(kii, endpoint != NULL)) {
         return KII_ERR_FAIL;
     }
     kii->_mqtt_endpoint_given = endpoint != NULL;
@@ -351,8 +350,6 @@ static kii_code_t _start_task(kii_t* kii, uint32_t keep_alive_interval,
         kii->_mqtt_endpoint = *endpoint;
     }
     kii->_keep_alive_interval = (uint16_t)keep_alive_interval;
-    kii->_cb_push_received = callback;
-    kii->_push_data = userdata;
     // Before creating it, as it may have finished by the time that returns.
     kii->_push_task_running = true;
     ebisu_task_code_t res = kii->_system->ops->task_create(kii->_system,
@@ -366,9 +363,9 @@ static kii_code_t _start_task(kii_t* kii, uint32_t keep_alive_interval,
     return KII_ERR_OK;
 }
 
-kii_code_t kii_start_push_task(kii_t* kii, uint32_t keep_alive_interval, KII_PUSH_RECEIVED_CB callback, void* userdata)
+kii_code_t kii_start_push_task(kii_t* kii, uint32_t keep_alive_interval)
 {
-    return _start_task(kii, keep_alive_interval, callback, userdata, NULL);
+    return _start_task(kii, keep_alive_interval, NULL);
 }
 
 /* Whether each string of endpoint is terminated within its array. */
@@ -383,9 +380,7 @@ static bool _endpoint_terminated(const kii_mqtt_endpoint_t* endpoint)
 kii_code_t kii_start_mqtt_task_with_endpoint(
         kii_t* kii,
         const kii_mqtt_endpoint_t* endpoint,
-        uint32_t keep_alive_interval,
-        KII_PUSH_RECEIVED_CB callback,
-        void* userdata)
+        uint32_t keep_alive_interval)
 {
     if (endpoint == NULL) {
         return KII_ERR_FAIL;
@@ -396,7 +391,7 @@ kii_code_t kii_start_mqtt_task_with_endpoint(
     if (endpoint->host[0] == '\0' || endpoint->topic[0] == '\0') {
         return KII_ERR_FAIL;
     }
-    return _start_task(kii, keep_alive_interval, callback, userdata, endpoint);
+    return _start_task(kii, keep_alive_interval, endpoint);
 }
 
 bool _kii_mqtt_endpoint_terminated(const kii_mqtt_endpoint_t* endpoint)

@@ -14,11 +14,13 @@ inline void set_updater_needs(kii_t* kii, char* buff, size_t buff_size) {
     kii_set_http_socket(kii, cb::unused_socket());
 }
 
-// The same for the push task, which has MQTT's as well.
+// The same for the push task, which has MQTT's as well, and a message
+// callback.
 inline void set_push_needs(kii_t* kii, char* buff, size_t buff_size) {
     set_updater_needs(kii, buff, buff_size);
     kii_set_mqtt_buff(kii, buff, buff_size);
     kii_set_mqtt_socket(kii, cb::unused_socket());
+    kii_set_cb_mqtt_message(kii, cb::cb_push, NULL);
 }
 
 }

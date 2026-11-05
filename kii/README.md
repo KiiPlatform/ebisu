@@ -208,16 +208,26 @@ supplies the MQTT socket and a buffer for messages:
     kii_set_cb_task_continue(&kii, task_continue_cb, NULL);
     kii_set_cb_task_exit(&kii, task_exit_cb, NULL);
 
-    kii_code_t res = kii_start_push_task(&kii, 300, push_received_cb, NULL);
+    kii_set_cb_mqtt_message(&kii, message_cb, NULL);
+
+    kii_code_t res = kii_start_push_task(&kii, 300);
 ```
 
 ```c
-void push_received_cb(const char* message, size_t message_length, void* userdata)
+void message_cb(const kii_mqtt_message_t* message, void* userdata)
 {
-    /* The message as Kii Cloud sent it, in JSON. Not null-terminated. */
-    printf("%.*s\n", (int)message_length, message);
+    /* The payload as Kii Cloud sent it, in JSON. Not null-terminated. */
+    printf("%s: %.*s\n", message->topic,
+            (int)message->payload_length, message->payload);
 }
 ```
+
+- **Messages**: `kii_set_cb_mqtt_message()` sets the callback the task gives
+  each one to, which it needs. A `kii_mqtt_message_t` has the topic, terminated,
+  and the payload, which isn't, both good until the callback returns; the QoS
+  the message came at; whether the broker sent it as the topic's retained
+  message, or again, for one the task may have had before; and its packet
+  identifier at QoS 1.
 
 - **MQTT sockets**: blocking, with a send timeout, and a receive timeout the
   same as given to `kii_set_mqtt_to_sock_recv()`.
@@ -265,10 +275,10 @@ again.
 The task subscribes at QoS 0 by default, so a message sent while it is
 reconnecting is lost. With `kii_set_mqtt_qos(&kii, KII_MQTT_QOS_1)`, a message
 sent at QoS 1, such as a push message whose `"mqtt"` object has `"qos": 1`, is
-sent again until the task acknowledges it, once the push callback has returned:
-it can arrive twice. With `kii_set_mqtt_clean_session(&kii, false)` as well,
-the broker keeps the thing's session, and the QoS 1 messages sent while the task
-is away, reconnecting or stopped, until it connects again.
+sent again until the task acknowledges it, once the message callback has
+returned: it can arrive twice. With `kii_set_mqtt_clean_session(&kii, false)` as
+well, the broker keeps the thing's session, and the QoS 1 messages sent while
+the task is away, reconnecting or stopped, until it connects again.
 
 For a broker whose credentials the application has some other way,
 `kii_start_mqtt_task_with_endpoint()` starts the task with a

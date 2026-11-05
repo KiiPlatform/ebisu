@@ -30,8 +30,7 @@ TEST_CASE( "Simple test" ) {
     kii_set_system(&kii, khct::cb::delay_only_system());
 
     khct::cb::PushCtx push_ctx;
-    kii._cb_push_received = khct::cb::cb_push;
-    kii._push_data = &push_ctx;
+    kii_set_cb_mqtt_message(&kii, khct::cb::cb_push, &push_ctx);
 
     SECTION("kii_enable_insecure_http test") {
         REQUIRE(kii._khc._enable_insecure == 0);

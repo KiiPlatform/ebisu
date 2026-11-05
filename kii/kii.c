@@ -227,6 +227,11 @@ void kii_set_cb_mqtt_event(kii_t* kii, KII_CB_MQTT_EVENT cb, void* userdata) {
     kii->_mqtt_event_data = userdata;
 }
 
+void kii_set_cb_mqtt_message(kii_t* kii, KII_CB_MQTT_MESSAGE cb, void* userdata) {
+    kii->_cb_mqtt_message = cb;
+    kii->_mqtt_message_data = userdata;
+}
+
 void kii_set_cb_slist_resource(
         kii_t* kii,
         KHC_CB_SLIST_ALLOC cb_alloc,

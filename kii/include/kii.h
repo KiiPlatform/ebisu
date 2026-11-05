@@ -386,20 +386,6 @@ typedef enum kii_mqtt_event_t {
  */
 typedef void (*KII_CB_MQTT_EVENT)(kii_mqtt_event_t event, uint32_t detail, void* userdata);
 
-/**
- * \brief Called when received push message via MQTT.
- *
- * \param [in] message Received message.
- * You need to determine size of the message by message_length
- * argument since it may not be null terminated.
- * \param [in] message_length Length of the message.
- * \param [in] userdata Context object pointer given to kii_start_push_task().
- */
-typedef void (*KII_PUSH_RECEIVED_CB)(
-        const char* message,
-        size_t message_length,
-        void* userdata);
-
 /** \brief Qualities of service the push task can subscribe with. */
 typedef enum kii_mqtt_qos_t {
     /** \brief At most once, the default. A message the broker has no
@@ -409,6 +395,53 @@ typedef enum kii_mqtt_qos_t {
      * acknowledges it, so a message can arrive twice. */
     KII_MQTT_QOS_1
 } kii_mqtt_qos_t;
+
+/**
+ * \brief A message the MQTT task received: what its PUBLISH packet carried.
+ *
+ * The pointers are into the buffer set by kii_set_mqtt_buff().
+ */
+typedef struct kii_mqtt_message_t {
+    /** \brief The topic it was published on, terminated: the subscription's,
+     * or one it matches when it has wildcards. MQTT has it in UTF-8, not
+     * empty, and without wildcards or U+0000. */
+    const char* topic;
+    /** \brief The topic's length in bytes, without the terminator. */
+    size_t topic_length;
+    /** \brief The payload, as it was published. It may hold any byte, and
+     * isn't terminated. */
+    const char* payload;
+    /** \brief The payload's length in bytes. It may be 0. */
+    size_t payload_length;
+    /** \brief The QoS the broker sent it at. */
+    kii_mqtt_qos_t qos;
+    /** \brief Whether the broker sent it as the message it keeps for the
+     * topic, as it does when the subscription is made, rather than as it was
+     * published. It may have been published long before. */
+    bool retain;
+    /** \brief Whether the broker says it sent it before, without the task's
+     * acknowledging it, as it does on a new connection that keeps the session.
+     * Only at QoS 1. The callback may have had it already: the task
+     * acknowledges a message once the callback returns, and the connection can
+     * be lost before. */
+    bool dup;
+    /** \brief Its packet identifier at QoS 1, or 0 at QoS 0, which has none.
+     * Sent again, a message has the one it had. Once the task acknowledges a
+     * message, the broker may give its identifier to another. */
+    uint16_t packet_id;
+} kii_mqtt_message_t;
+
+/**
+ * \brief Called with each message the MQTT task receives.
+ *
+ * Called in the task. Once it returns, the task acknowledges the message if it
+ * is at QoS 1, and goes on receiving.
+ *
+ * \param [in] message The message. It, and what it points to, are good until
+ * the callback returns.
+ * \param [in] userdata Given to kii_set_cb_mqtt_message().
+ */
+typedef void (*KII_CB_MQTT_MESSAGE)(const kii_mqtt_message_t* message, void* userdata);
 
 /**
  * \brief A last will: the message the broker is to publish if the connection is
@@ -467,8 +500,8 @@ typedef struct kii_t {
     KII_CB_MQTT_EVENT _cb_mqtt_event; /**< \private */
     void* _mqtt_event_data; /**< \private */
 
-    KII_PUSH_RECEIVED_CB _cb_push_received; /**< \private */
-    void* _push_data; /**< \private */
+    KII_CB_MQTT_MESSAGE _cb_mqtt_message; /**< \private */
+    void* _mqtt_message_data; /**< \private */
 
 
     char* _mqtt_buffer; /**< \private */
@@ -1122,10 +1155,22 @@ kii_code_t kii_get_mqtt_endpoint(
         kii_mqtt_endpoint_t* endpoint);
 
 /**
+ * \brief Set the callback the MQTT task gives each message it receives.
+ *
+ * Required: kii_start_push_task() and kii_start_mqtt_task_with_endpoint()
+ * start no task without one. Set it before starting the task.
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] cb The callback.
+ * \param [in] userdata Given to cb.
+ */
+void kii_set_cb_mqtt_message(kii_t* kii, KII_CB_MQTT_MESSAGE cb, void* userdata);
+
+/**
  * \brief Start MQTT task and watch message arrival.
  *  After succeeded, asynchronous task is started and
- * cb_push is called when message is delivered to the
- * thing.
+ * the callback set by kii_set_cb_mqtt_message() is called when message is
+ * delivered to the thing.
  * The task is created by task_create of the system set by kii_set_system().
  * If there is none, or it fails to create the task, no task is started and
  * KII_ERR_CREATE_TASK is returned.
@@ -1145,23 +1190,20 @@ kii_code_t kii_get_mqtt_endpoint(
  * At most 65535, the largest MQTT can carry. It is taken as a uint32_t
  * rather than a uint16_t so that a larger value is turned away here rather
  * than cut down to its low 16 bits where the function is called.
- * \param [in] cb_push  Callback called when push message delivered.
- * \param [in] userdata Context object passed to cb_push.
  * \return kii_code_t. KII_ERR_FAIL, with no task started, if
- * keep_alive_interval_sec is larger than 65535, if cb_push, the system's
- * delay_ms, a socket or an operation of one, or a buffer it needs is not set, or
- * if the task of an earlier start is still running. That task runs until the
- * callback set by kii_set_cb_task_continue() ends it, or an error does, and has
- * finished by the time the callback set by kii_set_cb_task_exit() is called,
- * which may start it again. A task ended any other way, such as by killing its
- * thread, needs kii_init() before starting again. KII_ERR_CREATE_TASK if no
- * system with a task_create is set by kii_set_system(), or it fails.
+ * keep_alive_interval_sec is larger than 65535, if the message callback, the
+ * system's delay_ms, a socket or an operation of one, or a buffer it needs is
+ * not set, or if the task of an earlier start is still running. That task runs
+ * until the callback set by kii_set_cb_task_continue() ends it, or an error
+ * does, and has finished by the time the callback set by kii_set_cb_task_exit()
+ * is called, which may start it again. A task ended any other way, such as by
+ * killing its thread, needs kii_init() before starting again.
+ * KII_ERR_CREATE_TASK if no system with a task_create is set by
+ * kii_set_system(), or it fails.
  */
 kii_code_t kii_start_push_task(
 		kii_t* kii,
-        uint32_t keep_alive_interval_sec,
-		KII_PUSH_RECEIVED_CB cb_push,
-        void* userdata);
+        uint32_t keep_alive_interval_sec);
 
 /**
  * \brief Start the MQTT task with an endpoint of the application's.
@@ -1184,8 +1226,6 @@ kii_code_t kii_start_push_task(
  * and topic. The client identifier is the topic unless
  * kii_set_mqtt_client_id() sets another. Copied.
  * \param [in] keep_alive_interval_sec As for kii_start_push_task().
- * \param [in] cb_push Called with each message.
- * \param [in] userdata Given to cb_push.
  * \return kii_code_t. KII_ERR_TOO_LARGE_DATA if a string of endpoint isn't
  * terminated within its array, KII_ERR_FAIL if its host or topic is empty, or
  * as kii_start_push_task() for the rest, all with no task started.
@@ -1193,9 +1233,7 @@ kii_code_t kii_start_push_task(
 kii_code_t kii_start_mqtt_task_with_endpoint(
         kii_t* kii,
         const kii_mqtt_endpoint_t* endpoint,
-        uint32_t keep_alive_interval_sec,
-        KII_PUSH_RECEIVED_CB cb_push,
-        void* userdata);
+        uint32_t keep_alive_interval_sec);
 
 /**
  * \brief Set the client identifier CONNECT carries.

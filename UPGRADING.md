@@ -140,6 +140,38 @@ gone.** Delete the call. They stored a value nothing read, in 1.x as well, so
 this changes nothing at run time. An MQTT socket still needs a send timeout,
 which is the application's to set in its socket, as the samples do.
 
+**The push task's message callback is set on its own, and gets the whole
+message.** In 1.x `kii_start_push_task()` took the callback, which got the
+payload alone. In 3.0 `kii_set_cb_mqtt_message()` sets it, before the task is
+started, and it gets a `kii_mqtt_message_t`: the topic, the payload, the QoS, the
+retain and DUP flags, and the packet identifier. `KII_PUSH_RECEIVED_CB` is gone,
+with no alias.
+
+```c
+// 1.x
+void push_received_cb(const char* message, size_t message_length, void* userdata)
+{
+    handle(message, message_length);
+}
+...
+    kii_start_push_task(&kii, 300, push_received_cb, &ctx);
+
+// 3.0
+void message_cb(const kii_mqtt_message_t* message, void* userdata)
+{
+    handle(message->payload, message->payload_length);
+}
+...
+    kii_set_cb_mqtt_message(&kii, message_cb, &ctx);
+    kii_start_push_task(&kii, 300);
+```
+
+A call with the callback has two arguments too many for 3.0, which GCC and Clang
+refuse, as C++ does. A compiler that only warns, as MSVC does for C, builds a
+call that starts no task: without a message callback, `kii_start_push_task()`
+returns `KII_ERR_FAIL`, as it did for a `NULL` one. tio's push callback, set by
+`tio_handler_set_cb_push()`, still gets the payload alone.
+
 ### Values whose type changed
 
 These still compile. Check anything that depends on their width: format

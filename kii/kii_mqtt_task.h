@@ -39,6 +39,10 @@ typedef struct {
      */
     bool message_dup;
     /** \private
+     * Whether that PUBLISH has the RETAIN flag.
+     */
+    bool message_retain;
+    /** \private
      * Whether that PUBLISH came while waiting for SUBACK, which is waited
      * for again once it is read.
      */

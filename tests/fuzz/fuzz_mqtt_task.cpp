@@ -3,6 +3,7 @@
 #include <kii.h>
 #include <kii_mqtt_task.h>
 #include <stdlib.h>
+#include <string.h>
 #include <string>
 #include <vector>
 #include "fuzz_input.h"
@@ -69,11 +70,19 @@ bool task_continue(void*, void* userdata) {
     return ++((Task*)userdata)->states < MAX_STATES;
 }
 
-// Reads all it is given, for ASan to see the message's length is right.
-void on_push(const char* message, size_t length, void* userdata) {
+// Reads all it is given, for ASan to see the lengths are right. A message the
+// task should have refused, or that it gives wrongly, aborts.
+void on_push(const kii_mqtt_message_t* message, void* userdata) {
+    if (message->topic_length == 0 ||
+            strlen(message->topic) != message->topic_length ||
+            strpbrk(message->topic, "+#") != NULL ||
+            (message->qos == KII_MQTT_QOS_0) != (message->packet_id == 0) ||
+            (message->dup && message->qos != KII_MQTT_QOS_1)) {
+        abort();
+    }
     size_t sum = 0;
-    for (size_t i = 0; i < length; ++i) {
-        sum += (unsigned char)message[i];
+    for (size_t i = 0; i < message->payload_length; ++i) {
+        sum += (unsigned char)message->payload[i];
     }
     ((Task*)userdata)->received += sum;
 }
@@ -108,8 +117,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     kii_set_mqtt_socket(&kii, &task.base);
     kii_set_system(&kii, &system);
     kii_set_cb_task_continue(&kii, task_continue, &task);
-    kii._cb_push_received = on_push;
-    kii._push_data = &task;
+    kii_set_cb_mqtt_message(&kii, on_push, &task);
     kii._keep_alive_interval = 60;
 
     // As onboarding leaves it, so that the task goes straight to the broker.
