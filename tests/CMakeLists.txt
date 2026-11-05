@@ -20,7 +20,8 @@ endif()
 # Declares one CTest test per Catch2 binary.
 #
 # LABEL is what `ctest -L small` and `ctest -L large` select on: the small tests
-# are self-contained, the large ones talk to a live Kii application.
+# are self-contained, the large ones talk to a live Kii application, and the
+# broker ones, under `ctest -L broker`, to a Mosquitto broker.
 #
 # WORKING_DIR matters: the khc suite opens fixtures as "./data/resp-login.txt",
 # relative to the working directory. Each per-directory Makefile happened to run
@@ -117,4 +118,12 @@ else()
     message(STATUS
         "Large tests disabled: set APP_ID and DEFAULT_SITE in the environment, "
         "or -DEBISU_APP_ID=... -DEBISU_DEFAULT_SITE=..., to enable them")
+endif()
+
+# Against a broker that tests/broker_test/with_broker.py runs in a container,
+# so off unless asked for: `ctest --preset all` would otherwise fail without
+# one.
+option(EBISU_TEST_BROKER "Build the tests against a Mosquitto broker" OFF)
+if(EBISU_TEST_BROKER)
+    add_subdirectory(broker_test)
 endif()
