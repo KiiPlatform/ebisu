@@ -6,7 +6,7 @@ var searchData=
   ['send_3',['send',['../../../core/html/structebisu__socket__ops__t.html#adb543d912cc7f9758ed4713cfeed4666',1,'ebisu_socket_ops_t']]],
   ['server_20code_4',['Server code',['../index.html#autotoc_md7',1,'']]],
   ['sessions_5',['Sessions',['../index.html#autotoc_md2',1,'']]],
-  ['set_20up_20a_20tt_20kii_5ft_20tt_6',['Set up a &lt;tt&gt;kii_t&lt;/tt&gt;',['../index.html#autotoc_md0',1,'']]],
+  ['set_20up_20a_20kii_5ft_6',['Set up a &lt;span class=&quot;tt&quot;&gt;kii_t&lt;/span&gt;',['../index.html#autotoc_md0',1,'']]],
   ['size_7',['size',['../../../core/html/structebisu__strbuf__t.html#a0f33a1d98be1357c1aa03020b0d2fdad',1,'ebisu_strbuf_t']]],
   ['start_8',['start',['../../../jkii/html/structjkii__field__t.html#a01a5294845f38f7c7567059894426ab4',1,'jkii_field_t']]],
   ['string_9',['string',['../../../jkii/html/structjkii__field__t.html#a819930194ef418853ab716ad36cc01e6',1,'jkii_field_t']]]

@@ -6,5 +6,5 @@ var searchData=
   ['topic_5flength_3',['topic_length',['../structkii__mqtt__message__t.html#ad10c4f8d23312a049ce5b456b96fd429',1,'kii_mqtt_message_t']]],
   ['topic_5fname_4',['topic_name',['../structkii__topic__t.html#a2ea6785013916b715b151da705a5d54a',1,'kii_topic_t']]],
   ['ttl_5',['ttl',['../structkii__mqtt__endpoint__t.html#a5fb0661ad3c79d4fae5c061052a59f1b',1,'kii_mqtt_endpoint_t']]],
-  ['type_6',['type',['../../../jkii/html/structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841',1,'jkii_field_t::type'],['../../../jkii/html/structjkii__member__t.html#a57e03f0a189c7437759a3542520f57a2',1,'jkii_member_t::type'],['../../../jkii/html/structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d',1,'jkii_primitive_t::type']]]
+  ['type_6',['type',['../../../jkii/html/structjkii__primitive__t.html#a6638f757159547c319de5aedb377cc2d',1,'jkii_primitive_t::type'],['../../../jkii/html/structjkii__member__t.html#a57e03f0a189c7437759a3542520f57a2',1,'jkii_member_t::type'],['../../../jkii/html/structjkii__field__t.html#ab2b34feaeed6c4fc6364e3195cf1f841',1,'jkii_field_t::type']]]
 ];

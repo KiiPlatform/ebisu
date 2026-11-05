@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
-<tagfile doxygen_version="1.9.8">
+<tagfile doxygen_version="1.15.0">
   <compound kind="file">
     <name>jkii.h</name>
     <path>include/</path>
@@ -581,10 +581,10 @@
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>union jkii_field_t::@0</type>
+      <type>union jkii_field_t::@127223350332100055174261003103252246374273222270</type>
       <name>field_copy</name>
       <anchorfile>structjkii__field__t.html</anchorfile>
-      <anchor>a55106b066dcc6932972f6c88d95fc677</anchor>
+      <anchor>adc42070fce6fafbca7825a219e8a9928</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
@@ -674,10 +674,10 @@
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>union jkii_primitive_t::@1</type>
+      <type>union jkii_primitive_t::@000035347326124130261205203130314007344364062061</type>
       <name>value</name>
       <anchorfile>structjkii__primitive__t.html</anchorfile>
-      <anchor>a863c6fd9740d55c99d09e760179dd0d9</anchor>
+      <anchor>ae321e4983cf0badae2b219d96297daa4</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
