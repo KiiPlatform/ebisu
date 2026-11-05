@@ -165,11 +165,11 @@ void cb_exit(void* task_info, void* userdata)
     t->changed.notify_all();
 }
 
-void cb_push(const char* message, size_t message_length, void* userdata)
+void cb_push(const kii_mqtt_message_t* message, void* userdata)
 {
     MqttTest* t = (MqttTest*)userdata;
     std::lock_guard<std::mutex> lock(t->mutex);
-    t->received.push_back(std::string(message, message_length));
+    t->received.push_back(std::string(message->payload, message->payload_length));
     t->changed.notify_all();
 }
 
@@ -321,7 +321,8 @@ TEST_CASE("MQTT push from the broker")
     };
     const std::string run_id = std::to_string(kiiltest::current_time());
 
-    REQUIRE( kii_start_push_task(&kii, KEEP_ALIVE, cb_push, &t) == KII_ERR_OK );
+    kii_set_cb_mqtt_message(&kii, cb_push, &t);
+    REQUIRE( kii_start_push_task(&kii, KEEP_ALIVE) == KII_ERR_OK );
     StopTask stop_task{t};
 
     // It connects with the endpoint onboarding returned, and subscribes:
@@ -427,7 +428,8 @@ TEST_CASE("The MQTT task renews a token the server refuses")
     // the server on its way to connecting, the session renews the token for,
     // by onboarding again, and the task connects and subscribes.
     spoil(&session);
-    REQUIRE( kii_start_push_task(&kii, KEEP_ALIVE, cb_push, &t) == KII_ERR_OK );
+    kii_set_cb_mqtt_message(&kii, cb_push, &t);
+    REQUIRE( kii_start_push_task(&kii, KEEP_ALIVE) == KII_ERR_OK );
     StopTask stop_task{t};
     REQUIRE( wait_for(t, 120, [&t] {
         return t.count(KII_MQTT_ST_RECV_READY) > 0 || t.exited;
@@ -488,7 +490,8 @@ TEST_CASE("QoS 1 messages sent while the task is away arrive when it is back")
         return "{\"data\":{\"nonce\":\"" + nonce + "\"},\"mqtt\":{\"enabled\":true,\"qos\":1}}";
     };
 
-    REQUIRE( kii_start_push_task(&kii, KEEP_ALIVE, cb_push, &t) == KII_ERR_OK );
+    kii_set_cb_mqtt_message(&kii, cb_push, &t);
+    REQUIRE( kii_start_push_task(&kii, KEEP_ALIVE) == KII_ERR_OK );
     StopTask stop_task{t};
     REQUIRE( wait_for(t, 120, [&t] {
         return t.count(KII_MQTT_ST_RECV_READY) > 0 || t.exited;
@@ -536,7 +539,7 @@ TEST_CASE("QoS 1 messages sent while the task is away arrive when it is back")
         t.states.clear();
         t.received.clear();
     }
-    REQUIRE( kii_start_push_task(&kii, KEEP_ALIVE, cb_push, &t) == KII_ERR_OK );
+    REQUIRE( kii_start_push_task(&kii, KEEP_ALIVE) == KII_ERR_OK );
     REQUIRE( received(t, "away-" + run_id) );
     // Time for anything else the broker kept to arrive.
     std::this_thread::sleep_for(std::chrono::seconds(5));

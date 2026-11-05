@@ -402,7 +402,7 @@ ebisu_sock_code_t _mqtt_recv_remaining(kii_t* kii, unsigned long remaining_lengt
 // Whether the system has a monotonic clock, which then times the keep-alive.
 // Without one, the time is estimated by adding up the waits and receive
 // timeouts the task goes through, which misses the time spent elsewhere, such
-// as in the push callback.
+// as in the message callback.
 static bool _has_clock(const kii_t* kii)
 {
     return (kii->_system != NULL && kii->_system->ops->monotonic_ms != NULL);
@@ -521,6 +521,7 @@ void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
     state->remaining_message_size = 0;
     state->message_qos = 0;
     state->message_dup = false;
+    state->message_retain = false;
     state->awaiting_suback = false;
     state->pingresp_received = true;
     state->sock_connected = false;
@@ -830,6 +831,7 @@ void _mqtt_state_recv_suback(mqtt_state_t* state)
         state->remaining_message_size = fixed_header.remaining_length;
         state->message_qos = ((unsigned char)fixed_header.byte1 >> 1) & 0x03;
         state->message_dup = ((unsigned char)fixed_header.byte1 & 0x08) != 0;
+        state->message_retain = ((unsigned char)fixed_header.byte1 & 0x01) != 0;
         state->awaiting_suback = true;
         task_info->task_state = KII_MQTT_ST_RECV_MSG;
         return;
@@ -943,6 +945,7 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
             state->remaining_message_size = fh.remaining_length;
             state->message_qos = ((unsigned char)fh.byte1 >> 1) & 0x03;
             state->message_dup = ((unsigned char)fh.byte1 & 0x08) != 0;
+            state->message_retain = ((unsigned char)fh.byte1 & 0x01) != 0;
             task_info->task_state = KII_MQTT_ST_RECV_MSG;
             // Estimate worst case.
             _add_elapsed_ms(state, _to_recv_ms(kii));
@@ -1117,12 +1120,24 @@ void _mqtt_state_recv_msg(mqtt_state_t* state)
             _refuse_packet(state, KII_MQTT_EVENT_MESSAGE_MALFORMED, (uint32_t)remaining_message_size);
             return;
         }
-        char* body_ptr = kii->_mqtt_buffer + 2 + topic_size + id_size;
-        size_t body_length = remaining_message_size - topic_size - 2 - id_size;
-        kii->_cb_push_received(body_ptr, body_length, kii->_push_data);
+        kii_mqtt_message_t message;
+        message.payload = kii->_mqtt_buffer + 2 + topic_size + id_size;
+        message.payload_length = remaining_message_size - topic_size - 2 - id_size;
+        // Moved back over its length, the topic is terminated two bytes short
+        // of where it ended, so the packet identifier and the payload stay
+        // where they are.
+        memmove(kii->_mqtt_buffer, kii->_mqtt_buffer + 2, topic_size);
+        kii->_mqtt_buffer[topic_size] = '\0';
+        message.topic = kii->_mqtt_buffer;
+        message.topic_length = topic_size;
+        message.qos = state->message_qos == 1 ? KII_MQTT_QOS_1 : KII_MQTT_QOS_0;
+        message.retain = state->message_retain;
+        message.dup = state->message_dup;
+        message.packet_id = id;
+        kii->_cb_mqtt_message(&message, kii->_mqtt_message_data);
     }
-    // Once the push callback has returned, so that a message lost on its way to
-    // the application is sent again.
+    // Once the message callback has returned, so that a message lost on its
+    // way to the application is sent again.
     if (has_id && _mqtt_send_puback(kii, id) != EBISU_SOCK_OK) {
         _event(kii, KII_MQTT_EVENT_SEND_FAILED, KII_MQTT_ST_RECV_MSG);
         _reset_elapsed(state, 0);

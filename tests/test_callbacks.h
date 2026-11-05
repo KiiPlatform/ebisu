@@ -3,6 +3,9 @@
 #include <functional>
 #include <stdint.h>
 
+// kii.h's, declared here for the khc tests, which don't have kii.h.
+struct kii_mqtt_message_t;
+
 namespace khct {
 namespace cb {
 
@@ -225,12 +228,12 @@ inline size_t cb_header(char *buffer, size_t size, void *userdata) {
 }
 
 struct PushCtx {
-    std::function<void(const char *message, size_t message_length)> on_push;
+    std::function<void(const kii_mqtt_message_t* message)> on_push;
 };
 
-inline void cb_push(const char* message, size_t message_length, void *userdata) {
+inline void cb_push(const kii_mqtt_message_t* message, void *userdata) {
     PushCtx* ctx = (PushCtx*)(userdata);
-    ctx->on_push(message, message_length);
+    ctx->on_push(message);
 }
 }
 }

@@ -202,14 +202,14 @@ void tio_handler_enable_absolute_target(
     kii_enable_absolute_target(&handler->_kii, enable_absolute_target);
 }
 
-static void _cb_receive_push(const char* payload, size_t payload_length, void* userdata) {
+static void _cb_receive_push(const kii_mqtt_message_t* message, void* userdata) {
     tio_handler_t* handler = (tio_handler_t*)userdata;
     bool skip = false;
     if (handler->_cb_push != NULL) {
-        skip = handler->_cb_push(payload, payload_length, handler->_cb_push_data);
+        skip = handler->_cb_push(message->payload, message->payload_length, handler->_cb_push_data);
     }
     if (!skip) {
-        tio_code_t handle_res = _handle_command(handler, payload, payload_length, handler->_cb_action, handler->_cb_action_data);
+        tio_code_t handle_res = _handle_command(handler, message->payload, message->payload_length, handler->_cb_action, handler->_cb_action_data);
         if (handle_res != TIO_ERR_OK && handler->_cb_err != NULL) {
             handler->_cb_err(handle_res, "Failed to handle command", handler->_cb_err_data);
         }
@@ -313,11 +313,10 @@ tio_code_t tio_handler_start(
 
     handler->_cb_action = cb_action;
     handler->_cb_action_data = userdata;
+    kii_set_cb_mqtt_message(&handler->_kii, _cb_receive_push, (void*)handler);
     kii_code_t res = kii_start_push_task(
             &handler->_kii,
-            handler->_keep_alive_interval,
-            _cb_receive_push,
-            (void*)handler);
+            handler->_keep_alive_interval);
     return _tio_convert_code(res);
 }
 

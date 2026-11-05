@@ -86,8 +86,7 @@ TEST_CASE( "MQTT state test" ) {
     kii_set_system(&kii, khct::cb::delay_only_system());
 
     khct::cb::PushCtx push_ctx;
-    kii._cb_push_received = khct::cb::cb_push;
-    kii._push_data = &push_ctx;
+    kii_set_cb_mqtt_message(&kii, khct::cb::cb_push, &push_ctx);
 
     mqtt_state_t state;
 
@@ -424,10 +423,10 @@ TEST_CASE( "MQTT state test" ) {
     };
 
     bool call_push = false;
-    push_ctx.on_push = [=, &call_push](const char* message, size_t message_length) {
+    push_ctx.on_push = [=, &call_push](const kii_mqtt_message_t* message) {
         call_push = true;
-        REQUIRE( message_length == push_message.length() );
-        REQUIRE( strncmp(message, push_message.c_str(), message_length) == 0 );
+        REQUIRE( message->payload_length == push_message.length() );
+        REQUIRE( strncmp(message->payload, push_message.c_str(), message->payload_length) == 0 );
     };
 
     _mqtt_state_recv_msg(&state);
@@ -569,8 +568,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
     kii_set_system(&kii, khct::cb::delay_only_system());
 
     khct::cb::PushCtx push_ctx;
-    kii._cb_push_received = khct::cb::cb_push;
-    kii._push_data = &push_ctx;
+    kii_set_cb_mqtt_message(&kii, khct::cb::cb_push, &push_ctx);
 
     mqtt_state_t state;
 
@@ -1889,9 +1887,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         };
         bool call_push = false;
         size_t push_length = 0;
-        push_ctx.on_push = [&call_push, &push_length](const char* message, size_t message_length) {
+        push_ctx.on_push = [&call_push, &push_length](const kii_mqtt_message_t* message) {
             call_push = true;
-            push_length = message_length;
+            push_length = message->payload_length;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_MSG;
@@ -1914,9 +1912,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         };
         bool call_push = false;
         size_t push_length = 0;
-        push_ctx.on_push = [&call_push, &push_length](const char* message, size_t message_length) {
+        push_ctx.on_push = [&call_push, &push_length](const kii_mqtt_message_t* message) {
             call_push = true;
-            push_length = message_length;
+            push_length = message->payload_length;
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_MSG;
@@ -1937,7 +1935,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             return EBISU_SOCK_FAIL;
         };
         bool call_push = false;
-        push_ctx.on_push = [&call_push](const char* message, size_t message_length) {
+        push_ctx.on_push = [&call_push](const kii_mqtt_message_t* message) {
             call_push = true;
         };
 
@@ -1961,10 +1959,10 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         };
         bool call_push = false;
         const char* mqtt_buffer = state.kii->_mqtt_buffer;
-        push_ctx.on_push = [=, &call_push](const char* message, size_t message_length) {
+        push_ctx.on_push = [=, &call_push](const kii_mqtt_message_t* message) {
             call_push = true;
-            REQUIRE( message - mqtt_buffer == 5 );
-            REQUIRE( message_length == 0 );
+            REQUIRE( message->payload - mqtt_buffer == 5 );
+            REQUIRE( message->payload_length == 0 );
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_MSG;
@@ -1989,12 +1987,12 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         };
         bool call_push = false;
         const char* mqtt_buffer = state.kii->_mqtt_buffer;
-        push_ctx.on_push = [=, &call_push](const char* message, size_t message_length) {
+        push_ctx.on_push = [=, &call_push](const kii_mqtt_message_t* message) {
             call_push = true;
             // As an offset: Catch would print a char* by reading through it.
-            REQUIRE( message - mqtt_buffer == 2 + 200 );
-            REQUIRE( message_length == 2 );
-            REQUIRE( strncmp(message, "{}", 2) == 0 );
+            REQUIRE( message->payload - mqtt_buffer == 2 + 200 );
+            REQUIRE( message->payload_length == 2 );
+            REQUIRE( strncmp(message->payload, "{}", 2) == 0 );
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_MSG;
@@ -2017,7 +2015,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
             size_t served = 0;
             serve_stream(mqtt_ctx, packet + publish_packet("topic", "message"), served);
             int call_push = 0;
-            push_ctx.on_push = [&call_push](const char*, size_t) { ++call_push; };
+            push_ctx.on_push = [&call_push](const kii_mqtt_message_t*) { ++call_push; };
 
             state.info.task_state = KII_MQTT_ST_RECV_READY;
             _mqtt_state_recv_ready(&state);
@@ -2041,9 +2039,9 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         size_t served = 0;
         serve_stream(mqtt_ctx, stream, served);
         int call_push = 0;
-        push_ctx.on_push = [=, &call_push](const char* message, size_t message_length) {
+        push_ctx.on_push = [=, &call_push](const kii_mqtt_message_t* message) {
             ++call_push;
-            REQUIRE( std::string(message, message_length) == payload );
+            REQUIRE( std::string(message->payload, message->payload_length) == payload );
         };
 
         state.info.task_state = KII_MQTT_ST_RECV_READY;
@@ -2221,7 +2219,7 @@ TEST_CASE( "MQTT state abnormal tests" ) {
         // Topic length 5, the topic, and 3 of the 10 bytes of the body.
         recv_then_end_of_stream(mqtt_ctx, std::string("\x00\x05" "topic" "abc", 10), call_recv);
         bool call_push = false;
-        push_ctx.on_push = [&call_push](const char* message, size_t message_length) {
+        push_ctx.on_push = [&call_push](const kii_mqtt_message_t* message) {
             call_push = true;
         };
 
@@ -2644,8 +2642,7 @@ TEST_CASE( "kii_enable_insecure_mqtt test" ) {
     kii_set_system(&kii, khct::cb::delay_only_system());
 
     khct::cb::PushCtx push_ctx;
-    kii._cb_push_received = khct::cb::cb_push;
-    kii._push_data = &push_ctx;
+    kii_set_cb_mqtt_message(&kii, khct::cb::cb_push, &push_ctx);
 
     REQUIRE(kii._khc._enable_insecure == 0);
     REQUIRE(kii._insecure_mqtt == false);
@@ -2867,12 +2864,11 @@ TEST_CASE( "QoS 1 and a session the broker keeps" ) {
     std::vector<std::string> pushed;
     std::vector<std::string> sent_at_push;
     khct::cb::PushCtx push_ctx;
-    push_ctx.on_push = [&pushed, &sent_at_push, &sent](const char* message, size_t message_length) {
-        pushed.push_back(std::string(message, message_length));
+    push_ctx.on_push = [&pushed, &sent_at_push, &sent](const kii_mqtt_message_t* message) {
+        pushed.push_back(std::string(message->payload, message->payload_length));
         sent_at_push.push_back(sent);
     };
-    kii._cb_push_received = khct::cb::cb_push;
-    kii._push_data = &push_ctx;
+    kii_set_cb_mqtt_message(&kii, khct::cb::cb_push, &push_ctx);
 
     mqtt_state_t state;
     _init_mqtt_state(&kii, &state);
@@ -3106,7 +3102,7 @@ TEST_CASE( "kii_start_push_task reports a task it could not create" ) {
             return mock_task_create(name, entry, entry_param, &ctx);
         };
         kii_set_system(&kii, kii_sys.system());
-        CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        CHECK( kii_start_push_task(&kii, 300) == KII_ERR_OK );
         CHECK( ctx.calls == 1 );
         CHECK( ctx.name == KII_TASK_NAME_MQTT );
         CHECK( ctx.entry_param == &kii );
@@ -3119,12 +3115,12 @@ TEST_CASE( "kii_start_push_task reports a task it could not create" ) {
             return mock_task_create(name, entry, entry_param, &ctx);
         };
         kii_set_system(&kii, kii_sys.system());
-        CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_CREATE_TASK );
+        CHECK( kii_start_push_task(&kii, 300) == KII_ERR_CREATE_TASK );
         CHECK( ctx.calls == 1 );
     }
 
     SECTION("no task-create callback") {
-        CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_CREATE_TASK );
+        CHECK( kii_start_push_task(&kii, 300) == KII_ERR_CREATE_TASK );
     }
 }
 
@@ -3163,6 +3159,7 @@ TEST_CASE( "kii_start_push_task needs what the task uses" ) {
         { "MQTT close", [&] { mqtt_ctx.ops.close = NULL; } },
         { "buffer", [&] { kii_set_buff(&kii, NULL, 0); } },
         { "MQTT buffer", [&] { kii_set_mqtt_buff(&kii, NULL, 0); } },
+        { "message callback", [&] { kii_set_cb_mqtt_message(&kii, NULL, NULL); } },
     };
     const kii_t complete = kii;
     const ebisu_system_ops_t sys_ops = kii_sys.ops;
@@ -3171,7 +3168,7 @@ TEST_CASE( "kii_start_push_task needs what the task uses" ) {
     for (const auto& c : cases) {
         INFO("left out " << c.left_out);
         c.unset();
-        CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_FAIL );
+        CHECK( kii_start_push_task(&kii, 300) == KII_ERR_FAIL );
         CHECK( ctx.calls == 0 );
         kii = complete;
         kii_sys.ops = sys_ops;
@@ -3179,10 +3176,7 @@ TEST_CASE( "kii_start_push_task needs what the task uses" ) {
         mqtt_ctx.ops = mqtt_ops;
     }
 
-    CHECK( kii_start_push_task(&kii, 300, NULL, NULL) == KII_ERR_FAIL );
-    CHECK( ctx.calls == 0 );
-
-    CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_OK );
+    CHECK( kii_start_push_task(&kii, 300) == KII_ERR_OK );
     CHECK( ctx.calls == 1 );
 }
 
@@ -3197,7 +3191,7 @@ struct RestartCtx {
 
 static void restart_on_exit(void*, void* userdata) {
     RestartCtx* ctx = (RestartCtx*)userdata;
-    ctx->result = kii_start_push_task(ctx->kii, 300, khct::cb::cb_push, NULL);
+    ctx->result = kii_start_push_task(ctx->kii, 300);
 }
 
 // A second task would share the first's sockets and buffers. Its exit is where
@@ -3216,14 +3210,14 @@ TEST_CASE( "kii_start_push_task refuses while its task is running" ) {
     kii_set_system(&kii, kii_sys.system());
 
     SECTION("until it has ended") {
-        REQUIRE( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        REQUIRE( kii_start_push_task(&kii, 300) == KII_ERR_OK );
 
-        CHECK( kii_start_push_task(&kii, 60, khct::cb::cb_push, NULL) == KII_ERR_FAIL );
+        CHECK( kii_start_push_task(&kii, 60) == KII_ERR_FAIL );
         CHECK( ctx.calls == 1 );
         CHECK( kii._keep_alive_interval == 300 );
 
         ctx.entry(ctx.entry_param);
-        CHECK( kii_start_push_task(&kii, 60, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        CHECK( kii_start_push_task(&kii, 60) == KII_ERR_OK );
         CHECK( ctx.calls == 2 );
         CHECK( kii._keep_alive_interval == 60 );
     }
@@ -3231,7 +3225,7 @@ TEST_CASE( "kii_start_push_task refuses while its task is running" ) {
     SECTION("but not from its exit callback") {
         RestartCtx restart = { &kii, KII_ERR_FAIL };
         kii_set_cb_task_exit(&kii, restart_on_exit, &restart);
-        REQUIRE( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        REQUIRE( kii_start_push_task(&kii, 300) == KII_ERR_OK );
 
         ctx.entry(ctx.entry_param);
         CHECK( restart.result == KII_ERR_OK );
@@ -3240,14 +3234,14 @@ TEST_CASE( "kii_start_push_task refuses while its task is running" ) {
 
     SECTION("but not after a task that could not be created") {
         ctx.result = EBISU_TASKC_FAIL;
-        REQUIRE( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_CREATE_TASK );
+        REQUIRE( kii_start_push_task(&kii, 300) == KII_ERR_CREATE_TASK );
 
         ctx.result = EBISU_TASKC_OK;
-        CHECK( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        CHECK( kii_start_push_task(&kii, 300) == KII_ERR_OK );
     }
 
     SECTION("but not after kii_init()") {
-        REQUIRE( kii_start_push_task(&kii, 300, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        REQUIRE( kii_start_push_task(&kii, 300) == KII_ERR_OK );
 
         kii_init(&kii);
         CHECK( kii._push_task_running == false );
@@ -3402,7 +3396,7 @@ TEST_CASE( "MQTT keep-alive interval range" ) {
         for (const auto& c : cases) {
             INFO("keep-alive " << c.interval);
             call_task_create = 0;
-            CHECK( kii_start_push_task(&kii, c.interval, khct::cb::cb_push, NULL) == KII_ERR_OK );
+            CHECK( kii_start_push_task(&kii, c.interval) == KII_ERR_OK );
             CHECK( call_task_create == 1 );
             // The callback runs no task, which would have said so when it ended.
             kii._push_task_running = false;
@@ -3432,7 +3426,7 @@ TEST_CASE( "MQTT keep-alive interval range" ) {
             INFO("keep-alive " << interval);
             kii._keep_alive_interval = 300;
             call_task_create = 0;
-            CHECK( kii_start_push_task(&kii, interval, khct::cb::cb_push, NULL) == KII_ERR_FAIL );
+            CHECK( kii_start_push_task(&kii, interval) == KII_ERR_FAIL );
             CHECK( call_task_create == 0 );
             CHECK( kii._keep_alive_interval == 300 );
         }
@@ -4142,6 +4136,7 @@ TEST_CASE( "The MQTT task with an endpoint of the application's" ) {
     kii_t kii;
     kii_init(&kii);
     kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
+    kii_set_cb_mqtt_message(&kii, khct::cb::cb_push, NULL);
     strcpy(kii._author.author_id, "th.1");
     int tasks = 0;
     khct::cb::SystemCtx sys;
@@ -4174,7 +4169,7 @@ TEST_CASE( "The MQTT task with an endpoint of the application's" ) {
     endpoint.port_ssl = 8883;
 
     SECTION("starts with neither the HTTP socket nor the buffer, with a copy") {
-        REQUIRE( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        REQUIRE( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60) == KII_ERR_OK );
         CHECK( tasks == 1 );
         strcpy(endpoint.host, "changed");
         CHECK( strcmp(kii._mqtt_endpoint.host, "broker.example.com") == 0 );
@@ -4184,26 +4179,27 @@ TEST_CASE( "The MQTT task with an endpoint of the application's" ) {
     SECTION("refuses an endpoint that isn't one, starting nothing") {
         kii_mqtt_endpoint_t bad = endpoint;
         memset(bad.username, 'u', sizeof(bad.username));
-        CHECK( kii_start_mqtt_task_with_endpoint(&kii, &bad, 60, khct::cb::cb_push, NULL) == KII_ERR_TOO_LARGE_DATA );
+        CHECK( kii_start_mqtt_task_with_endpoint(&kii, &bad, 60) == KII_ERR_TOO_LARGE_DATA );
         bad = endpoint;
         memset(bad.host, 'h', sizeof(bad.host));
-        CHECK( kii_start_mqtt_task_with_endpoint(&kii, &bad, 60, khct::cb::cb_push, NULL) == KII_ERR_TOO_LARGE_DATA );
+        CHECK( kii_start_mqtt_task_with_endpoint(&kii, &bad, 60) == KII_ERR_TOO_LARGE_DATA );
         bad = endpoint;
         bad.host[0] = '\0';
-        CHECK( kii_start_mqtt_task_with_endpoint(&kii, &bad, 60, khct::cb::cb_push, NULL) == KII_ERR_FAIL );
+        CHECK( kii_start_mqtt_task_with_endpoint(&kii, &bad, 60) == KII_ERR_FAIL );
         bad = endpoint;
         bad.topic[0] = '\0';
-        CHECK( kii_start_mqtt_task_with_endpoint(&kii, &bad, 60, khct::cb::cb_push, NULL) == KII_ERR_FAIL );
-        CHECK( kii_start_mqtt_task_with_endpoint(&kii, NULL, 60, khct::cb::cb_push, NULL) == KII_ERR_FAIL );
-        CHECK( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 65536, khct::cb::cb_push, NULL) == KII_ERR_FAIL );
-        CHECK( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60, NULL, NULL) == KII_ERR_FAIL );
+        CHECK( kii_start_mqtt_task_with_endpoint(&kii, &bad, 60) == KII_ERR_FAIL );
+        CHECK( kii_start_mqtt_task_with_endpoint(&kii, NULL, 60) == KII_ERR_FAIL );
+        CHECK( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 65536) == KII_ERR_FAIL );
+        kii_set_cb_mqtt_message(&kii, NULL, NULL);
+        CHECK( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60) == KII_ERR_FAIL );
         CHECK( tasks == 0 );
     }
 
     SECTION("connects with it, whatever onboarding returned") {
         strcpy(kii._onboarded_thing_id, "th.1");
         strcpy(kii._onboarded_endpoint.host, "kii-broker");
-        REQUIRE( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        REQUIRE( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60) == KII_ERR_OK );
         mqtt_state_t state;
         _init_mqtt_state(&kii, &state);
         CHECK( state.info.task_state == KII_MQTT_ST_SOCK_CONNECT );
@@ -4215,13 +4211,13 @@ TEST_CASE( "The MQTT task with an endpoint of the application's" ) {
         kii_set_buff(&kii, buff, sizeof(buff));
         khct::cb::SockCtx http_ctx;
         kii_set_http_socket(&kii, http_ctx.socket());
-        REQUIRE( kii_start_push_task(&kii, 60, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        REQUIRE( kii_start_push_task(&kii, 60) == KII_ERR_OK );
         _init_mqtt_state(&kii, &state);
         CHECK( strcmp(state.endpoint.host, "kii-broker") == 0 );
     }
 
     SECTION("with the client identifier set, or the topic") {
-        REQUIRE( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        REQUIRE( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60) == KII_ERR_OK );
         mqtt_state_t state;
         _init_mqtt_state(&kii, &state);
         state.info.task_state = KII_MQTT_ST_SEND_CONNECT;
@@ -4245,7 +4241,7 @@ TEST_CASE( "The MQTT task with an endpoint of the application's" ) {
     SECTION("asks for new credentials when the broker refuses them") {
         CredentialsCtx creds;
         kii_set_cb_mqtt_credentials(&kii, give_credentials, &creds);
-        REQUIRE( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        REQUIRE( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60) == KII_ERR_OK );
         mqtt_state_t state;
         _init_mqtt_state(&kii, &state);
         const std::string refused("\x20\x02\x00\x05", 4);
@@ -4300,7 +4296,7 @@ TEST_CASE( "The MQTT task with an endpoint of the application's" ) {
 
     SECTION("goes on trying a broker it can't reach") {
         connect_ok = false;
-        REQUIRE( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60, khct::cb::cb_push, NULL) == KII_ERR_OK );
+        REQUIRE( kii_start_mqtt_task_with_endpoint(&kii, &endpoint, 60) == KII_ERR_OK );
         mqtt_state_t state;
         _init_mqtt_state(&kii, &state);
         for (int attempt = 0; attempt < 10; ++attempt) {
@@ -4453,9 +4449,8 @@ TEST_CASE( "The MQTT task tells the event callback why" ) {
     size_t served = 0;
 
     khct::cb::PushCtx push_ctx;
-    push_ctx.on_push = [](const char*, size_t) {};
-    kii._cb_push_received = khct::cb::cb_push;
-    kii._push_data = &push_ctx;
+    push_ctx.on_push = [](const kii_mqtt_message_t*) {};
+    kii_set_cb_mqtt_message(&kii, khct::cb::cb_push, &push_ctx);
 
     mqtt_state_t state;
     _init_mqtt_state(&kii, &state);
@@ -4658,8 +4653,7 @@ TEST_CASE( "The MQTT keep-alive is timed by the system's monotonic clock" ) {
     kii_set_system(&kii, sys.system());
 
     khct::cb::PushCtx push_ctx;
-    kii._cb_push_received = khct::cb::cb_push;
-    kii._push_data = &push_ctx;
+    kii_set_cb_mqtt_message(&kii, khct::cb::cb_push, &push_ctx);
 
     mqtt_state_t state;
     _init_mqtt_state(&kii, &state);
@@ -4672,7 +4666,7 @@ TEST_CASE( "The MQTT keep-alive is timed by the system's monotonic clock" ) {
             REQUIRE( *out > 0 );
             return EBISU_SOCK_OK;
         };
-        push_ctx.on_push = [&now_ms, due_ms](const char*, size_t) { now_ms += due_ms + 1; };
+        push_ctx.on_push = [&now_ms, due_ms](const kii_mqtt_message_t*) { now_ms += due_ms + 1; };
 
         state.info.task_state = KII_MQTT_ST_RECV_READY;
         _mqtt_state_recv_ready(&state);
@@ -4761,9 +4755,8 @@ TEST_CASE( "CONNACK, SUBACK and PINGRESP of another length are refused" ) {
 
     int pushes = 0;
     khct::cb::PushCtx push_ctx;
-    push_ctx.on_push = [&pushes](const char*, size_t) { ++pushes; };
-    kii._cb_push_received = khct::cb::cb_push;
-    kii._push_data = &push_ctx;
+    push_ctx.on_push = [&pushes](const kii_mqtt_message_t*) { ++pushes; };
+    kii_set_cb_mqtt_message(&kii, khct::cb::cb_push, &push_ctx);
 
     mqtt_state_t state;
     _init_mqtt_state(&kii, &state);
@@ -4978,11 +4971,10 @@ TEST_CASE( "What MQTT doesn't allow a broker to send is refused" ) {
 
     std::vector<std::string> pushed;
     khct::cb::PushCtx push_ctx;
-    push_ctx.on_push = [&pushed](const char* message, size_t length) {
-        pushed.emplace_back(message, length);
+    push_ctx.on_push = [&pushed](const kii_mqtt_message_t* message) {
+        pushed.emplace_back(message->payload, message->payload_length);
     };
-    kii._cb_push_received = khct::cb::cb_push;
-    kii._push_data = &push_ctx;
+    kii_set_cb_mqtt_message(&kii, khct::cb::cb_push, &push_ctx);
 
     mqtt_state_t state;
     _init_mqtt_state(&kii, &state);
@@ -5237,5 +5229,184 @@ TEST_CASE( "What MQTT doesn't allow a broker to send is refused" ) {
         }
         CHECK( taken > 0 );
         CHECK( taken < topics.size() );
+    }
+}
+
+// The callback got the payload alone: neither the topic, nor the flags, nor the
+// packet identifier reached the application.
+TEST_CASE( "The message callback gets what the PUBLISH carried" ) {
+    char mqtt_buff[64];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
+    kii_set_system(&kii, khct::cb::delay_only_system());
+    kii._keep_alive_interval = 300;
+
+    khct::cb::SockCtx mqtt_ctx;
+    std::string sent;
+    mqtt_ctx.on_send = [&sent](void*, const char* buffer, size_t length, size_t* out_sent_length) {
+        sent.append(buffer, length);
+        *out_sent_length = length;
+        return EBISU_SOCK_OK;
+    };
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
+    size_t served = 0;
+
+    // What the callback got, copied, as it is good only until the callback
+    // returns, with where its pointers pointed as offsets into the buffer.
+    struct Got {
+        std::string topic;
+        size_t topic_length;
+        bool topic_terminated;
+        long topic_at;
+        std::string payload;
+        long payload_at;
+        kii_mqtt_qos_t qos;
+        bool retain;
+        bool dup;
+        uint16_t packet_id;
+    };
+    std::vector<Got> got;
+    khct::cb::PushCtx push_ctx;
+    push_ctx.on_push = [&got, &mqtt_buff](const kii_mqtt_message_t* message) {
+        got.push_back({
+            std::string(message->topic, message->topic_length),
+            message->topic_length,
+            message->topic[message->topic_length] == '\0',
+            (long)(message->topic - mqtt_buff),
+            std::string(message->payload, message->payload_length),
+            (long)(message->payload - mqtt_buff),
+            message->qos,
+            message->retain,
+            message->dup,
+            message->packet_id });
+    };
+    kii_set_cb_mqtt_message(&kii, khct::cb::cb_push, &push_ctx);
+
+    mqtt_state_t state;
+    _init_mqtt_state(&kii, &state);
+    // A message as it comes while the task waits, read to its end, or while it
+    // waits for SUBACK.
+    auto receive = [&](const std::string& packet, kii_mqtt_task_state waiting) {
+        got.clear();
+        sent.clear();
+        served = 0;
+        serve_stream(mqtt_ctx, packet, served);
+        state.info.task_state = waiting;
+        if (waiting == KII_MQTT_ST_RECV_SUBACK) {
+            _mqtt_state_recv_suback(&state);
+        } else {
+            _mqtt_state_recv_ready(&state);
+        }
+        REQUIRE( state.info.task_state == KII_MQTT_ST_RECV_MSG );
+        _mqtt_state_recv_msg(&state);
+        CHECK( state.info.task_state == waiting );
+        CHECK( served == packet.length() );
+        REQUIRE( got.size() == 1 );
+        return got[0];
+    };
+    const kii_mqtt_task_state ready = KII_MQTT_ST_RECV_READY;
+
+    SECTION("at QoS 0") {
+        Got g = receive(publish_packet("devices/1", "{\"a\":1}"), ready);
+        CHECK( g.topic == "devices/1" );
+        CHECK( g.topic_length == 9 );
+        CHECK( g.topic_terminated );
+        CHECK( g.topic_at == 0 );
+        CHECK( g.payload == "{\"a\":1}" );
+        CHECK( g.payload_at == 2 + 9 );
+        CHECK( g.qos == KII_MQTT_QOS_0 );
+        CHECK( g.retain == false );
+        CHECK( g.dup == false );
+        CHECK( g.packet_id == 0 );
+        CHECK( sent.empty() );
+    }
+
+    SECTION("at QoS 1") {
+        Got g = receive(publish_qos1_packet("devices/1", 0x1234, "{}"), ready);
+        CHECK( g.topic == "devices/1" );
+        CHECK( g.topic_terminated );
+        CHECK( g.payload == "{}" );
+        CHECK( g.payload_at == 2 + 9 + 2 );
+        CHECK( g.qos == KII_MQTT_QOS_1 );
+        CHECK( g.retain == false );
+        CHECK( g.dup == false );
+        CHECK( g.packet_id == 0x1234 );
+        CHECK( sent == std::string("\x40\x02\x12\x34", 4) );
+    }
+
+    SECTION("retained, sent again, or both") {
+        std::string packet = publish_packet("t", "p");
+        packet[0] = 0x31;
+        Got g = receive(packet, ready);
+        CHECK( g.qos == KII_MQTT_QOS_0 );
+        CHECK( g.retain );
+        CHECK( g.dup == false );
+
+        g = receive(publish_qos1_packet("t", 7, "p", 0x33), ready);
+        CHECK( g.qos == KII_MQTT_QOS_1 );
+        CHECK( g.retain );
+        CHECK( g.dup == false );
+
+        g = receive(publish_qos1_packet("t", 7, "p", 0x3a), ready);
+        CHECK( g.retain == false );
+        CHECK( g.dup );
+        CHECK( g.packet_id == 7 );
+
+        g = receive(publish_qos1_packet("t", 7, "p", 0x3b), ready);
+        CHECK( g.retain );
+        CHECK( g.dup );
+    }
+
+    SECTION("before SUBACK") {
+        Got g = receive(publish_qos1_packet("t", 9, "p", 0x33), KII_MQTT_ST_RECV_SUBACK);
+        CHECK( g.topic == "t" );
+        CHECK( g.topic_terminated );
+        CHECK( g.payload == "p" );
+        CHECK( g.qos == KII_MQTT_QOS_1 );
+        CHECK( g.retain );
+        CHECK( g.dup == false );
+        CHECK( g.packet_id == 9 );
+
+        g = receive(publish_qos1_packet("t", 9, "p", 0x3a), KII_MQTT_ST_RECV_SUBACK);
+        CHECK( g.retain == false );
+        CHECK( g.dup );
+
+        g = receive(publish_packet("t", "p"), KII_MQTT_ST_RECV_SUBACK);
+        CHECK( g.qos == KII_MQTT_QOS_0 );
+        CHECK( g.retain == false );
+        CHECK( g.dup == false );
+        CHECK( g.packet_id == 0 );
+    }
+
+    // Terminated where its length was, and as far into the buffer as it goes.
+    SECTION("topics as short and as long as the buffer has room for") {
+        Got g = receive(publish_packet("t", ""), ready);
+        CHECK( g.topic == "t" );
+        CHECK( g.topic_terminated );
+        CHECK( g.payload.empty() );
+        CHECK( g.payload_at == 3 );
+
+        const std::string longest(sizeof(mqtt_buff) - 2, 'x');
+        g = receive(publish_packet(longest, ""), ready);
+        CHECK( g.topic == longest );
+        CHECK( g.topic_terminated );
+        CHECK( g.payload.empty() );
+        CHECK( g.payload_at == (long)sizeof(mqtt_buff) );
+
+        const std::string with_id(sizeof(mqtt_buff) - 4, 'y');
+        g = receive(publish_qos1_packet(with_id, 1, ""), ready);
+        CHECK( g.topic == with_id );
+        CHECK( g.topic_terminated );
+        CHECK( g.packet_id == 1 );
+        CHECK( g.payload_at == (long)sizeof(mqtt_buff) );
+    }
+
+    SECTION("a payload of any byte, with the topic's bytes in it") {
+        const std::string payload("\x00\x05topic\xff", 8);
+        Got g = receive(publish_packet("topic", payload), ready);
+        CHECK( g.topic == "topic" );
+        CHECK( g.topic_terminated );
+        CHECK( g.payload == payload );
     }
 }
