@@ -957,17 +957,26 @@ Functions</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca16fb05f3dca69f3fd9e3cebe5f79798d" name="a719bdf1a2b7209f8f03dd16a10b3677ca16fb05f3dca69f3fd9e3cebe5f79798d"></a>KII_MQTT_EVENT_SEND_FAILED&#160;</td><td class="fielddoc"><p>Sending to the broker failed. The detail is the task's state, a kii_mqtt_task_state, which says what it was sending. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca8e6b57e9fcd56bda99b528353dba54b5" name="a719bdf1a2b7209f8f03dd16a10b3677ca8e6b57e9fcd56bda99b528353dba54b5"></a>KII_MQTT_EVENT_RECV_FAILED&#160;</td><td class="fielddoc"><p>Receiving from the broker failed, or ended partway through a packet, the connection lost. The detail is the task's state. </p>
+<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca8e6b57e9fcd56bda99b528353dba54b5" name="a719bdf1a2b7209f8f03dd16a10b3677ca8e6b57e9fcd56bda99b528353dba54b5"></a>KII_MQTT_EVENT_RECV_FAILED&#160;</td><td class="fielddoc"><p>Receiving from the broker failed, or ended partway through a packet, the connection lost, or gave a remaining length MQTT doesn't allow: longer than four bytes, or than it takes. The detail is the task's state. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677cae87b6bd5ed17b00e613ca9c24c702181" name="a719bdf1a2b7209f8f03dd16a10b3677cae87b6bd5ed17b00e613ca9c24c702181"></a>KII_MQTT_EVENT_CLOSED_BY_BROKER&#160;</td><td class="fielddoc"><p>The broker closed the connection while the task waited for a message. The detail is 0. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca901d9cc417215185b34aef0cb3bc5bcf" name="a719bdf1a2b7209f8f03dd16a10b3677ca901d9cc417215185b34aef0cb3bc5bcf"></a>KII_MQTT_EVENT_UNEXPECTED_PACKET&#160;</td><td class="fielddoc"><p>A packet the task can't take where it came: anything but CONNACK first, anything but SUBACK or a message after SUBSCRIBE, SUBACK for another subscription, a message at QoS 2 or more, or a CONNACK, a SUBACK or a PINGRESP of another length than its type has. The detail is the packet's first byte, its type and flags. </p>
+<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca901d9cc417215185b34aef0cb3bc5bcf" name="a719bdf1a2b7209f8f03dd16a10b3677ca901d9cc417215185b34aef0cb3bc5bcf"></a>KII_MQTT_EVENT_UNEXPECTED_PACKET&#160;</td><td class="fielddoc"><p>A packet the task can't take where it came, or that MQTT 3.1.1 doesn't allow a broker to send, and the task reconnects: </p>
+<ul>
+<li>anything but CONNACK first, anything but SUBACK or a message after SUBSCRIBE, and anything but a message or PINGRESP after SUBACK;</li>
+<li>a packet whose type has other flags than MQTT gives it;</li>
+<li>a CONNACK, a SUBACK or a PINGRESP of another length than its type has;</li>
+<li>CONNACK's reserved acknowledge flags, or Session Present on a refusal or for a clean session;</li>
+<li>SUBACK for another subscription, or with a reserved return code or a QoS higher than asked for;</li>
+<li>a message at QoS 2 or more, or with DUP at QoS 0.</li>
+</ul>
+<p>The detail is the packet's first byte, its type and flags. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677caa7c34d9b4f2b2663a5f40f7f23926f26" name="a719bdf1a2b7209f8f03dd16a10b3677caa7c34d9b4f2b2663a5f40f7f23926f26"></a>KII_MQTT_EVENT_PING_TIMEOUT&#160;</td><td class="fielddoc"><p>A PINGREQ was still unanswered when the next was due. The detail is the keep-alive, in seconds. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca90377d211fd89f1201b720a4a3177077" name="a719bdf1a2b7209f8f03dd16a10b3677ca90377d211fd89f1201b720a4a3177077"></a>KII_MQTT_EVENT_MESSAGE_TOO_LARGE&#160;</td><td class="fielddoc"><p>A message too large for the buffer set by <a class="el" href="kii_8h.html#adb5bef6d077b15fca3195ef7d39681cd" title="Set buffer used to parse MQTT message.">kii_set_mqtt_buff()</a> was dropped. The detail is its length, after its fixed header. </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677cacc1daccd601a7c8e49bced451e9a3ec0" name="a719bdf1a2b7209f8f03dd16a10b3677cacc1daccd601a7c8e49bced451e9a3ec0"></a>KII_MQTT_EVENT_MESSAGE_MALFORMED&#160;</td><td class="fielddoc"><p>A message whose topic, or packet identifier, didn't fit in it was dropped. The detail is its length. </p>
+<tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677cacc1daccd601a7c8e49bced451e9a3ec0" name="a719bdf1a2b7209f8f03dd16a10b3677cacc1daccd601a7c8e49bced451e9a3ec0"></a>KII_MQTT_EVENT_MESSAGE_MALFORMED&#160;</td><td class="fielddoc"><p>A message whose topic, or packet identifier, didn't fit in it, or that MQTT doesn't allow: an empty topic, one with a wildcard, U+0000 or ill-formed UTF-8, or a packet identifier of 0. Of a message too large for the buffer, only the topic's length is checked. The task drops it and reconnects. The detail is its length. </p>
 </td></tr>
 </table>
 
@@ -4664,7 +4673,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="kii_8h.
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Wed Nov 4 2026 16:15:13 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
+Generated on Thu Nov 5 2026 08:02:07 for kii by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
 </small></address>
 </body>
 </html>
