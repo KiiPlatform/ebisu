@@ -123,6 +123,14 @@
       "execution": { "repeat": { "mode": "until-pass", "count": 2 } }
     },
     {
+      "name": "broker",
+      "inherits": "base",
+      "configurePreset": "debug",
+      "displayName": "Broker tests",
+      "description": "Against a Mosquitto broker: configure with -DEBISU_TEST_BROKER=ON, and run under tests/broker_test/with_broker.py",
+      "filter": { "include": { "label": "broker" } }
+    },
+    {
       "name": "all",
       "inherits": "base",
       "configurePreset": "debug",

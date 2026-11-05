@@ -98,6 +98,7 @@ Tests run through CTest, labelled by cost:
 ```
 ctest --preset small          # self-contained, parallel, no credentials
 ctest --preset large          # against a live Kii application
+ctest --preset broker         # against a Mosquitto broker, see below
 ctest --preset all
 ```
 
@@ -107,6 +108,17 @@ new test application is bootstrapped with `tests/large_test/initapp.sh`.
 Cross-compiled for 64-bit Windows with `cmake --preset mingw`, they run under
 wine with `ctest --preset large-mingw`, over the win32 sample's Winsock and
 Schannel callbacks in place of OpenSSL.
+
+The broker tests run the MQTT task, with an endpoint of their own, against a
+Mosquitto broker that `tests/broker_test/with_broker.py` starts in a container
+for the run, with docker, or with podman given `DOCKER=podman`. They need no
+credentials, and are configured with `-DEBISU_TEST_BROKER=ON`:
+
+```
+cmake --preset debug -DEBISU_TEST_BROKER=ON
+cmake --build --preset debug --target broker_test_kii
+tests/broker_test/with_broker.py ctest --preset broker
+```
 
 For 32-bit ARM Linux, armv7-a with hardware floating point, the toolchain file
 is `cmake/arm-linux-gnueabihf.cmake`, and the small tests run under qemu-arm.

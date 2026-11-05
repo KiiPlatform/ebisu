@@ -410,6 +410,47 @@ jobs:
           report_paths: "**/test-results/junit/*.xml"
           check_name: JUnit Test Report (${{ matrix.name }})
 
+  # The MQTT task against a Mosquitto broker of the run's own, in a container,
+  # under valgrind: what Kii Cloud's broker can't be made to do, or does only
+  # now and then. It needs no secrets, so forks' and Dependabot's runs have it
+  # too. See tests/broker_test/with_broker.py.
+  broker:
+    name: broker (Mosquitto 2.1, valgrind)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      checks: write # for the JUnit report
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Fetch tags
+        run: git fetch --unshallow --tags --force
+      - name: Setup build env
+        run: |
+          sudo apt-get -yq update
+          sudo apt-get -yq install g++ cmake libssl-dev git valgrind
+      - name: configure
+        run: cmake --preset debug -DEBISU_TEST_BROKER=ON -DEBISU_TEST_JUNIT=ON
+      - name: build
+        run: cmake --build --preset debug --target broker_test_kii
+      # -T memcheck needs --test-dir; see the build job.
+      - name: test (broker)
+        run: tests/broker_test/with_broker.py ctest --preset broker --test-dir build/debug -T memcheck
+      - name: valgrind's findings
+        # As in the large job.
+        if: failure()
+        run: |
+          for f in build/debug/Testing/Temporary/MemoryChecker.*.log; do
+            if [ -s "$f" ]; then echo "== $f"; cat "$f"; fi
+          done
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d # v6.6.1
+        if: success() || failure() # always run even if the previous step fails
+        with:
+          report_paths: "**/test-results/junit/*.xml"
+          check_name: JUnit Test Report (broker)
+
   # The embedded samples (GT202, CC3200) are built with their vendors'
   # tools, from the files their Makefiles copy, and not with CMake. Those SDKs
   # cannot be downloaded here, so this builds what of the samples is ebisu's as
