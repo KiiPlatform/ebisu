@@ -12,6 +12,7 @@
     <class kind="struct">kii_mqtt_endpoint_t</class>
     <class kind="struct">kii_object_id_t</class>
     <class kind="struct">kii_installation_id_t</class>
+    <class kind="struct">kii_mqtt_message_t</class>
     <class kind="struct">kii_mqtt_will_t</class>
     <class kind="struct">kii_t</class>
     <class kind="struct">kii_ti_firmware_version_t</class>
@@ -227,18 +228,25 @@
       <arglist>)(kii_mqtt_event_t event, uint32_t detail, void *userdata)</arglist>
     </member>
     <member kind="typedef">
-      <type>void(*</type>
-      <name>KII_PUSH_RECEIVED_CB</name>
-      <anchorfile>kii_8h.html</anchorfile>
-      <anchor>afeba27d97c92ad7a3a03374248eaeb14</anchor>
-      <arglist>)(const char *message, size_t message_length, void *userdata)</arglist>
-    </member>
-    <member kind="typedef">
       <type>enum kii_mqtt_qos_t</type>
       <name>kii_mqtt_qos_t</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a07529064920b8334cde333db7e3d5e32</anchor>
       <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct kii_mqtt_message_t</type>
+      <name>kii_mqtt_message_t</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>ad4e54c6c08d12b460f7a4fa8da449307</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>void(*</type>
+      <name>KII_CB_MQTT_MESSAGE</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>aee13b44218396cbc7a73270cdc2e8d1a</anchor>
+      <arglist>)(const kii_mqtt_message_t *message, void *userdata)</arglist>
     </member>
     <member kind="typedef">
       <type>struct kii_mqtt_will_t</type>
@@ -914,18 +922,25 @@
       <arglist>(kii_t *kii, const char *installation_id, kii_mqtt_endpoint_t *endpoint)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>kii_set_cb_mqtt_message</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a1a63b9c50417f35ee24d2258ab529e9d</anchor>
+      <arglist>(kii_t *kii, KII_CB_MQTT_MESSAGE cb, void *userdata)</arglist>
+    </member>
+    <member kind="function">
       <type>kii_code_t</type>
       <name>kii_start_push_task</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>ad3242ecc51a7aa640eb1ca7786a4a149</anchor>
-      <arglist>(kii_t *kii, uint32_t keep_alive_interval_sec, KII_PUSH_RECEIVED_CB cb_push, void *userdata)</arglist>
+      <anchor>a86504ef8fee1d1ca4ff5add143557912</anchor>
+      <arglist>(kii_t *kii, uint32_t keep_alive_interval_sec)</arglist>
     </member>
     <member kind="function">
       <type>kii_code_t</type>
       <name>kii_start_mqtt_task_with_endpoint</name>
       <anchorfile>kii_8h.html</anchorfile>
-      <anchor>a7403193a9455e7aea02dc4ef48265c70</anchor>
-      <arglist>(kii_t *kii, const kii_mqtt_endpoint_t *endpoint, uint32_t keep_alive_interval_sec, KII_PUSH_RECEIVED_CB cb_push, void *userdata)</arglist>
+      <anchor>a9a45e46fde50b06e7c42d74cabd9a853</anchor>
+      <arglist>(kii_t *kii, const kii_mqtt_endpoint_t *endpoint, uint32_t keep_alive_interval_sec)</arglist>
     </member>
     <member kind="function">
       <type>kii_code_t</type>
@@ -1345,6 +1360,66 @@
       <name>ttl</name>
       <anchorfile>structkii__mqtt__endpoint__t.html</anchorfile>
       <anchor>a5fb0661ad3c79d4fae5c061052a59f1b</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>kii_mqtt_message_t</name>
+    <filename>structkii__mqtt__message__t.html</filename>
+    <member kind="variable">
+      <type>const char *</type>
+      <name>topic</name>
+      <anchorfile>structkii__mqtt__message__t.html</anchorfile>
+      <anchor>a3d8d9ece36ca2c7a36a39a660566a642</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>size_t</type>
+      <name>topic_length</name>
+      <anchorfile>structkii__mqtt__message__t.html</anchorfile>
+      <anchor>ad10c4f8d23312a049ce5b456b96fd429</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>const char *</type>
+      <name>payload</name>
+      <anchorfile>structkii__mqtt__message__t.html</anchorfile>
+      <anchor>ad0329499d15d1dd4f9f1a591dbb2b62e</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>size_t</type>
+      <name>payload_length</name>
+      <anchorfile>structkii__mqtt__message__t.html</anchorfile>
+      <anchor>ad2024f318d6036f5a4bd265c1963dea8</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>kii_mqtt_qos_t</type>
+      <name>qos</name>
+      <anchorfile>structkii__mqtt__message__t.html</anchorfile>
+      <anchor>a889c3211a916431c3a6b045443756eb2</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>bool</type>
+      <name>retain</name>
+      <anchorfile>structkii__mqtt__message__t.html</anchorfile>
+      <anchor>a25d04d93ca29a1cdfc3957b17a684819</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>bool</type>
+      <name>dup</name>
+      <anchorfile>structkii__mqtt__message__t.html</anchorfile>
+      <anchor>a64293f303c77fb8eeee0a611a09f39f9</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>uint16_t</type>
+      <name>packet_id</name>
+      <anchorfile>structkii__mqtt__message__t.html</anchorfile>
+      <anchor>a3cc7df0f5b359c204377014644b94369</anchor>
       <arglist></arglist>
     </member>
   </compound>

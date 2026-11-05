@@ -6,5 +6,5 @@ var searchData=
   ['rest_20api_20calls_3',['Other REST API calls',['../index.html#autotoc_md8',1,'']]],
   ['result_4',['result',['../../../jkii/html/structjkii__field__t.html#a490735c809794c5f8c4c07c423b9b7e6',1,'jkii_field_t']]],
   ['results_5',['Results',['../index.html#autotoc_md9',1,'']]],
-  ['retain_6',['retain',['../structkii__mqtt__will__t.html#ad967f20d37b0a0ca970fed18e969f7f7',1,'kii_mqtt_will_t']]]
+  ['retain_6',['retain',['../structkii__mqtt__message__t.html#a25d04d93ca29a1cdfc3957b17a684819',1,'kii_mqtt_message_t::retain'],['../structkii__mqtt__will__t.html#ad967f20d37b0a0ca970fed18e969f7f7',1,'kii_mqtt_will_t::retain']]]
 ];
