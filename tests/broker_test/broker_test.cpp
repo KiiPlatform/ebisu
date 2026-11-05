@@ -1,9 +1,10 @@
 // The MQTT task, started with kii_start_mqtt_task_with_endpoint(), against a
 // Mosquitto broker of the run's own, which with_broker.py starts: what Kii
 // Cloud's broker can't be made to do, or does only now and then. Topics with
-// wildcards, retained messages, messages sent again as duplicates, sessions the
-// broker keeps, MQTT 3.1, refused credentials, the will, the keep-alive,
-// messages too large for the buffer, and the broker closing the connection.
+// wildcards, subscriptions the broker refuses, retained messages, messages sent
+// again as duplicates, sessions the broker keeps, MQTT 3.1, refused
+// credentials, the will, the keep-alive, messages too large for the buffer,
+// and the broker closing the connection.
 //
 // The task connects over the platform's socket, trusting the run's CA:
 // platform's Schannel port on Windows, and its OpenSSL port elsewhere. The task
@@ -688,6 +689,44 @@ TEST_CASE("A subscription with wildcards gets each message with its topic")
     check_message(t.received[4], base + "/empty", "", KII_MQTT_QOS_0, false, false);
     CHECK( t.count(KII_MQTT_EVENT_CONNACK, 0) == 1 );
     CHECK( t.count(KII_MQTT_EVENT_SUBACK, 0) == 1 );
+}
+
+TEST_CASE("A subscription the broker refuses is tried again, until the broker grants it")
+{
+    // Under ebisu/+/refused, which with_broker.py has the broker refuse.
+    const std::string topic = topic_of("refused");
+    Task t(topic, client_id_of("refused"));
+    REQUIRE( t.start() == KII_ERR_OK );
+    // The task reconnects and subscribes again each time.
+    REQUIRE( t.wait_for(30, [&t] { return t.count(KII_MQTT_EVENT_SUBACK, 0x80) >= 2 || t.exited; }) );
+    {
+        std::lock_guard<std::mutex> lock(t.mutex);
+        CHECK( !t.exited );
+        CHECK( t.count(KII_MQTT_EVENT_SUBACK) == t.count(KII_MQTT_EVENT_SUBACK, 0x80) );
+        CHECK( t.count(KII_MQTT_EVENT_CONNACK, 0) >= 2 );
+        CHECK( t.count(KII_MQTT_ST_RECV_READY) == 0 );
+    }
+
+    // Told to, through its dynamic security plugin's topic, the broker grants
+    // the next SUBSCRIBE. It closes the connections of the user's clients as it
+    // does, the administrator's too, so the message is published by another,
+    // connected once the task's subscription is granted.
+    {
+        Publisher admin("refused-admin");
+        REQUIRE( admin.publish("$CONTROL/dynamic-security/v1",
+                "{\"commands\":[{\"command\":\"addRoleACL\",\"rolename\":\"tests\","
+                "\"acltype\":\"subscribePattern\",\"topic\":\"" + topic + "\","
+                "\"priority\":20,\"allow\":true}]}", 1) );
+    }
+    REQUIRE( t.wait_ready() );
+    Publisher p("refused");
+    REQUIRE( p.publish(topic, "granted") );
+    REQUIRE( t.wait_received(1) );
+    std::lock_guard<std::mutex> lock(t.mutex);
+    check_message(t.received[0], topic, "granted", KII_MQTT_QOS_0, false, false);
+    CHECK( t.count(KII_MQTT_EVENT_SUBACK, 0) == 1 );
+    CHECK( t.count(KII_MQTT_EVENT_SUBACK, 0x80) >= 2 );
+    CHECK( t.connects.load() >= 3 );
 }
 
 TEST_CASE("A retained message is flagged when it comes with the subscription, and only then")
