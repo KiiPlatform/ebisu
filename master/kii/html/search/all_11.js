@@ -4,7 +4,7 @@ var searchData=
   ['scope_5fid_1',['scope_id',['../structkii__bucket__t.html#af5cdb5e5d4558d80a4196d7c91bc81be',1,'kii_bucket_t::scope_id'],['../structkii__topic__t.html#a194b3a3e1aefe07ba9662da0b4667c07',1,'kii_topic_t::scope_id']]],
   ['second_2',['second',['../../../core/html/structebisu__civil__time__t.html#a93d3b2af6194e4a47b6ff8800d0e1f89',1,'ebisu_civil_time_t']]],
   ['send_3',['send',['../../../core/html/structebisu__socket__ops__t.html#adb543d912cc7f9758ed4713cfeed4666',1,'ebisu_socket_ops_t']]],
-  ['server_20code_4',['Server code',['../index.html#autotoc_md7',1,'']]],
+  ['server_20code_4',['Server code',['../index.html#autotoc_md8',1,'']]],
   ['sessions_5',['Sessions',['../index.html#autotoc_md2',1,'']]],
   ['set_20up_20a_20kii_5ft_6',['Set up a &lt;span class=&quot;tt&quot;&gt;kii_t&lt;/span&gt;',['../index.html#autotoc_md0',1,'']]],
   ['size_7',['size',['../../../core/html/structebisu__strbuf__t.html#a0f33a1d98be1357c1aa03020b0d2fdad',1,'ebisu_strbuf_t']]],

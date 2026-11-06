@@ -608,6 +608,12 @@
       <arglist></arglist>
     </member>
     <member kind="enumvalue">
+      <name>KII_MQTT_ST_SEND_PUBLISH</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>afbdebbbeb8812da258f2c985a2b10db3ac3f230f6a3930978688f379028496fcc</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
       <name>KII_MQTT_ST_RECONNECT</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>afbdebbbeb8812da258f2c985a2b10db3adec6a548d8ad9577dc54cc1b3dda615f</anchor>
@@ -955,6 +961,20 @@
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a547c8e56022dc1ba57f3ee70776e65db</anchor>
       <arglist>(kii_t *kii, KII_CB_MQTT_CREDENTIALS cb, void *userdata)</arglist>
+    </member>
+    <member kind="function">
+      <type>kii_code_t</type>
+      <name>kii_mqtt_publish</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>acb549044e84222521934c23cc95ab84d</anchor>
+      <arglist>(kii_t *kii, const char *topic, const char *payload, size_t payload_length, kii_mqtt_qos_t qos, bool retain, uint32_t timeout_ms)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>kii_set_mqtt_lock</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>aa023d53ec93bc4842161df21fcb91900</anchor>
+      <arglist>(kii_t *kii, ebisu_lock_t *lock)</arglist>
     </member>
     <member kind="function">
       <type>kii_code_t</type>

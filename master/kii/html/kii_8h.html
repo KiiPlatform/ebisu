@@ -301,10 +301,11 @@ Enumerations</h2></td></tr>
 , <br />
 &#160;&#160;<a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3a133dbec03e4e77ddfd4df2f1abc988b3">KII_MQTT_ST_RECV_MSG</a>
 , <a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3ae28e87c388e298b2d6f575c0417b8a52">KII_MQTT_ST_SEND_PINGREQ</a>
+, <a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3ac3f230f6a3930978688f379028496fcc">KII_MQTT_ST_SEND_PUBLISH</a>
 , <a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3adec6a548d8ad9577dc54cc1b3dda615f">KII_MQTT_ST_RECONNECT</a>
-, <a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3acddcf8a4f850063b9fe95f0f88800b24">KII_MQTT_ST_ERR_EXIT</a>
 , <br />
-&#160;&#160;<a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3a82d610abc8b8d60b8aaabaa5c14df92d">KII_MQTT_ST_DISCONTINUED</a>
+&#160;&#160;<a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3acddcf8a4f850063b9fe95f0f88800b24">KII_MQTT_ST_ERR_EXIT</a>
+, <a class="el" href="#afbdebbbeb8812da258f2c985a2b10db3a82d610abc8b8d60b8aaabaa5c14df92d">KII_MQTT_ST_DISCONTINUED</a>
 <br />
  }</td></tr>
 <tr class="memdesc:afbdebbbeb8812da258f2c985a2b10db3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Represents MQTT task state.  <a href="#afbdebbbeb8812da258f2c985a2b10db3">More...</a><br /></td></tr>
@@ -405,6 +406,10 @@ Functions</h2></td></tr>
 <tr class="memdesc:aa38e08813014ca4c5751718863f5cf47"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the client identifier CONNECT carries.  <br /></td></tr>
 <tr class="memitem:a547c8e56022dc1ba57f3ee70776e65db" id="r_a547c8e56022dc1ba57f3ee70776e65db"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a547c8e56022dc1ba57f3ee70776e65db">kii_set_cb_mqtt_credentials</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="#a146369853075d06cc7978d24082b125d">KII_CB_MQTT_CREDENTIALS</a> cb, void *userdata)</td></tr>
 <tr class="memdesc:a547c8e56022dc1ba57f3ee70776e65db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the callback asked for new credentials when the broker refuses those of a task started with <a class="el" href="#a9a45e46fde50b06e7c42d74cabd9a853" title="Start the MQTT task with an endpoint of the application&#39;s.">kii_start_mqtt_task_with_endpoint()</a>.  <br /></td></tr>
+<tr class="memitem:acb549044e84222521934c23cc95ab84d" id="r_acb549044e84222521934c23cc95ab84d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acb549044e84222521934c23cc95ab84d">kii_mqtt_publish</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const char *topic, const char *payload, size_t payload_length, <a class="el" href="#a971acd03c2d0df621d7f60b0b4644dbb">kii_mqtt_qos_t</a> qos, bool retain, uint32_t timeout_ms)</td></tr>
+<tr class="memdesc:acb549044e84222521934c23cc95ab84d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Publish a message through the MQTT task, and wait until it is done.  <br /></td></tr>
+<tr class="memitem:aa023d53ec93bc4842161df21fcb91900" id="r_aa023d53ec93bc4842161df21fcb91900"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa023d53ec93bc4842161df21fcb91900">kii_set_mqtt_lock</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../core/html/structebisu__lock__t.html">ebisu_lock_t</a> *lock)</td></tr>
+<tr class="memdesc:aa023d53ec93bc4842161df21fcb91900"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the lock <a class="el" href="#acb549044e84222521934c23cc95ab84d" title="Publish a message through the MQTT task, and wait until it is done.">kii_mqtt_publish()</a> shares with the MQTT task.  <br /></td></tr>
 <tr class="memitem:a88de31a3b85076df9a58727d2ab63d7f" id="r_a88de31a3b85076df9a58727d2ab63d7f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a88de31a3b85076df9a58727d2ab63d7f">kii_execute_server_code_version</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const char *version, const char *endpoint_name, const char *params)</td></tr>
 <tr class="memdesc:a88de31a3b85076df9a58727d2ab63d7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute a specific version of server code.  <br /></td></tr>
 <tr class="memitem:a54c7ef600d31e8e1f6826dbaa2742b04" id="r_a54c7ef600d31e8e1f6826dbaa2742b04"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a54c7ef600d31e8e1f6826dbaa2742b04">kii_execute_server_code</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, const char *endpoint_name, const char *params)</td></tr>
@@ -853,9 +858,9 @@ Functions</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="a719bdf1a2b7209f8f03dd16a10b3677ca901d9cc417215185b34aef0cb3bc5bcf" name="a719bdf1a2b7209f8f03dd16a10b3677ca901d9cc417215185b34aef0cb3bc5bcf"></a>KII_MQTT_EVENT_UNEXPECTED_PACKET&#160;</td><td class="fielddoc"><p>A packet the task can't take where it came, or that MQTT 3.1.1 doesn't allow a broker to send, and the task reconnects: </p>
 <ul>
-<li>anything but CONNACK first, anything but SUBACK or a message after SUBSCRIBE, and anything but a message or PINGRESP after SUBACK;</li>
+<li>anything but CONNACK first, anything but SUBACK or a message after SUBSCRIBE, and anything but a message, PINGRESP, or the PUBACK of the message <a class="el" href="#acb549044e84222521934c23cc95ab84d" title="Publish a message through the MQTT task, and wait until it is done.">kii_mqtt_publish()</a> had sent at QoS 1, after SUBACK;</li>
 <li>a packet whose type has other flags than MQTT gives it;</li>
-<li>a CONNACK, a SUBACK or a PINGRESP of another length than its type has;</li>
+<li>a CONNACK, a SUBACK, a PINGRESP or a PUBACK of another length than its type has;</li>
 <li>CONNACK's reserved acknowledge flags, or Session Present on a refusal or for a clean session;</li>
 <li>SUBACK for another subscription, or with a reserved return code or a QoS higher than asked for;</li>
 <li>a message at QoS 2 or more, or with DUP at QoS 0.</li>
@@ -927,6 +932,8 @@ Functions</h2></td></tr>
 <tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3a133dbec03e4e77ddfd4df2f1abc988b3" name="afbdebbbeb8812da258f2c985a2b10db3a133dbec03e4e77ddfd4df2f1abc988b3"></a>KII_MQTT_ST_RECV_MSG&#160;</td><td class="fielddoc"><p>Receiving message published by Cloud. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3ae28e87c388e298b2d6f575c0417b8a52" name="afbdebbbeb8812da258f2c985a2b10db3ae28e87c388e298b2d6f575c0417b8a52"></a>KII_MQTT_ST_SEND_PINGREQ&#160;</td><td class="fielddoc"><p>Sending PINGREQ message. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3ac3f230f6a3930978688f379028496fcc" name="afbdebbbeb8812da258f2c985a2b10db3ac3f230f6a3930978688f379028496fcc"></a>KII_MQTT_ST_SEND_PUBLISH&#160;</td><td class="fielddoc"><p>Sending the message <a class="el" href="#acb549044e84222521934c23cc95ab84d" title="Publish a message through the MQTT task, and wait until it is done.">kii_mqtt_publish()</a> was given. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="afbdebbbeb8812da258f2c985a2b10db3adec6a548d8ad9577dc54cc1b3dda615f" name="afbdebbbeb8812da258f2c985a2b10db3adec6a548d8ad9577dc54cc1b3dda615f"></a>KII_MQTT_ST_RECONNECT&#160;</td><td class="fielddoc"><p>Re-establishing connection. </p>
 </td></tr>
@@ -1920,6 +1927,71 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 
 </div>
 </div>
+<a id="acb549044e84222521934c23cc95ab84d" name="acb549044e84222521934c23cc95ab84d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acb549044e84222521934c23cc95ab84d">&#9670;&#160;</a></span>kii_mqtt_publish()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="#a79eab5c5f48e03121033d6291619c7de">kii_code_t</a> kii_mqtt_publish </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *</td>          <td class="paramname"><span class="paramname"><em>kii</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>topic</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>payload</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>payload_length</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="#a971acd03c2d0df621d7f60b0b4644dbb">kii_mqtt_qos_t</a></td>          <td class="paramname"><span class="paramname"><em>qos</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>retain</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint32_t</td>          <td class="paramname"><span class="paramname"><em>timeout_ms</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Publish a message through the MQTT task, and wait until it is done. </p>
+<p>The task sends it on its connection, as the socket can't be used by two tasks at once. It does so once it is connected and subscribed, between receives: when the one under way returns, which with nothing arriving is when the timeout set by <a class="el" href="#a812b57be04fe37fc4a7ec66679f88db4" title="Set timeout of receiving data from socket user for MQTT(S).">kii_set_mqtt_to_sock_recv()</a> runs out. A shorter timeout has it sent sooner. While the task can't reach the broker, the message waits.</p>
+<p>At QoS 0, it is done once sent. At QoS 1, once the broker acknowledges it with PUBACK: if the connection is lost before, the task sends it again on the next, with DUP, so the broker may get it twice. Whether the broker takes it, and who receives it, is the broker's: one may acknowledge a message it drops, or close the connection. The same with MQTT 3.1 and 3.1.1.</p>
+<p>The task has one message at a time. A call made while another's message is not yet done waits for it first, within its own timeout_ms.</p>
+<p>Not to be called from the task, such as from its callbacks: it would wait for the task, which waits for the callback to return, until timeout_ms ran out.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance, whose task was started with <a class="el" href="#a86504ef8fee1d1ca4ff5add143557912" title="Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and the call...">kii_start_push_task()</a> or <a class="el" href="#a9a45e46fde50b06e7c42d74cabd9a853" title="Start the MQTT task with an endpoint of the application&#39;s.">kii_start_mqtt_task_with_endpoint()</a>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">topic</td><td>The topic, terminated: in UTF-8, not empty, without wildcards, and at most 65535 bytes. Read until the function returns. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">payload</td><td>The payload, payload_length bytes of any value. Read until the function returns. NULL if payload_length is 0. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">payload_length</td><td>The payload's length in bytes. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">qos</td><td>The quality of service. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">retain</td><td>Whether the broker is to keep it as the topic's retained message, which it sends whoever subscribes later. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">timeout_ms</td><td>How long to wait, in milliseconds, by the monotonic_ms of the system set by <a class="el" href="#a19398ca6a022a1025714df3ce49e4389" title="Set the system: tasks, delays and a monotonic clock.">kii_set_system()</a>, or by adding up the function's waits without one. A send under way when it runs out is waited for, as it reads topic and payload: that takes at most the socket's send timeout more. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="#a79eab5c5f48e03121033d6291619c7de" title="Error codes definition.">kii_code_t</a>. KII_ERR_OK once the message is done. KII_ERR_TIMEOUT if it isn't by timeout_ms: the task drops it, though one at QoS 1 sent before may have reached the broker, as what didn't come was its acknowledgement. KII_ERR_SOCK_SEND if sending one at QoS 0 failed: the broker may have got it or not, and it isn't sent again. KII_ERR_FAIL if no lock is set by <a class="el" href="#aa023d53ec93bc4842161df21fcb91900" title="Set the lock kii_mqtt_publish() shares with the MQTT task.">kii_set_mqtt_lock()</a>, or no system, if the task isn't running, or ends before the message is done, and, without sending anything, for a topic MQTT doesn't allow, a NULL payload of some length, or a qos that isn't one. KII_ERR_TOO_LARGE_DATA, sending nothing, for a topic longer than 65535 bytes, or a message longer than a PUBLISH can carry. </dd></dl>
+
+</div>
+</div>
 <a id="a63e7f18308e41bf8d558530cb52e55ee" name="a63e7f18308e41bf8d558530cb52e55ee"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a63e7f18308e41bf8d558530cb52e55ee">&#9670;&#160;</a></span>kii_patch_object()</h2>
 
@@ -2880,6 +2952,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 <p>Set buffer used to parse MQTT message. </p>
 <p>This method must be called and set valid buffer before calling method <a class="el" href="#a86504ef8fee1d1ca4ff5add143557912" title="Start MQTT task and watch message arrival. After succeeded, asynchronous task is started and the call...">kii_start_push_task()</a> The buffer is used to parse MQTT message.</p>
 <p>You can change the size of buffer depending on the request/ response size. It must be enough large to store whole message send by MQTT. Typically, 1024 bytes is enough. However it varies depending on your data schema used to define Commands. Avoid defining large Commands.</p>
+<p>The messages <a class="el" href="#acb549044e84222521934c23cc95ab84d" title="Publish a message through the MQTT task, and wait until it is done.">kii_mqtt_publish()</a> is given are sent through it too, a buffer's worth at a time, so it needn't hold them whole.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
@@ -2951,6 +3024,37 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>KII_ERR_TOO_LARGE_DATA, changing nothing, for one longer than 65535 bytes, which CONNECT can't carry. </dd></dl>
+
+</div>
+</div>
+<a id="aa023d53ec93bc4842161df21fcb91900" name="aa023d53ec93bc4842161df21fcb91900"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa023d53ec93bc4842161df21fcb91900">&#9670;&#160;</a></span>kii_set_mqtt_lock()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void kii_set_mqtt_lock </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *</td>          <td class="paramname"><span class="paramname"><em>kii</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="elRef" href="../../core/html/structebisu__lock__t.html">ebisu_lock_t</a> *</td>          <td class="paramname"><span class="paramname"><em>lock</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the lock <a class="el" href="#acb549044e84222521934c23cc95ab84d" title="Publish a message through the MQTT task, and wait until it is done.">kii_mqtt_publish()</a> shares with the MQTT task. </p>
+<p>Needed by <a class="el" href="#acb549044e84222521934c23cc95ab84d" title="Publish a message through the MQTT task, and wait until it is done.">kii_mqtt_publish()</a>. It is held only to look at or change the message the two share, never during a socket operation or a wait, and need not be recursive. Set it before starting the task.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">lock</td><td>The lock. It has to outlive the task, and any call of <a class="el" href="#acb549044e84222521934c23cc95ab84d" title="Publish a message through the MQTT task, and wait until it is done.">kii_mqtt_publish()</a>. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>

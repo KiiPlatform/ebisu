@@ -8,5 +8,6 @@ var searchData=
   ['port_5fssl_5',['port_ssl',['../structkii__mqtt__endpoint__t.html#a6014189c0f3ba23551adffa445ef367f',1,'kii_mqtt_endpoint_t']]],
   ['port_5ftcp_6',['port_tcp',['../structkii__mqtt__endpoint__t.html#a38eb17e4f01a30aaf90c02f0a9651d56',1,'kii_mqtt_endpoint_t']]],
   ['ptr_7',['ptr',['../../../core/html/structebisu__span__t.html#a6207e249a9dd0f045c9e77fd06a3876f',1,'ebisu_span_t']]],
-  ['push_8',['Push',['../index.html#autotoc_md4',1,'']]]
+  ['publishing_8',['Publishing',['../index.html#autotoc_md5',1,'']]],
+  ['push_9',['Push',['../index.html#autotoc_md4',1,'']]]
 ];
