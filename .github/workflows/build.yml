@@ -134,6 +134,10 @@ jobs:
   # That is how a memcmp reading past a string literal in the JSON parser
   # survived years of green MEMCHECK=1 builds.
   #
+  # And on 64-bit with -DEBISU_LOG=OFF, which no other job builds all of ebisu
+  # with: the libraries and the tests have to compile so without warnings, and
+  # the tests that check that a library built so logs nothing run only here.
+  #
   # Small tests only: they are deterministic and need no credentials, so these
   # jobs stay fast and never touch the live backend. The build job above runs
   # them under valgrind as well, on 64-bit.
@@ -173,6 +177,12 @@ jobs:
             variant: mingw
             preset: mingw
             test-preset: small-mingw
+          - name: small (64-bit, without logging)
+            bits: 64
+            variant: no-log
+            preset: debug
+            configure: -DEBISU_LOG=OFF
+            test-preset: small
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -219,7 +229,7 @@ jobs:
           command -v wineserver > /dev/null || sudo ln -s "$(dpkg -L wine64 | grep -m1 '/wineserver$')" /usr/local/bin/wineserver
           wineboot --init
       - name: configure
-        run: cmake --preset ${{ matrix.preset }}
+        run: cmake --preset ${{ matrix.preset }} ${{ matrix.configure }}
       - name: build
         run: cmake --build --preset ${{ matrix.preset }}
       - name: test (small)

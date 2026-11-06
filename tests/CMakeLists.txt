@@ -103,8 +103,8 @@ add_subdirectory(small_test)
 # Checked when it builds rather than by ctest: nothing in it runs.
 add_subdirectory(header_check)
 
-# The ports built without logging too, and a look for their messages in what
-# that builds.
+# The ports, khc, kii and tio built without logging too, and a look for their
+# messages in what that builds.
 if(EBISU_LOG)
     add_subdirectory(no_log)
 endif()

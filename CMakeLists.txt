@@ -10,10 +10,11 @@ set_git_version_and_generate_header()
 
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 # What ebisu logs itself: the ports' diagnostics, to the logger set on a socket
-# or to stderr. OFF leaves all of it out of the libraries, messages and all,
-# for a device short of flash, as defining EBISU_NO_LOG does in a build without
-# CMake. An application's loggers still take its own messages, and a socket's
-# last_error still says why an operation failed.
+# or to stderr, and khc's requests, kii's MQTT events and tio's failures, to the
+# logger set on each. OFF leaves all of it out of the libraries, messages and
+# all, for a device short of flash, as defining EBISU_NO_LOG does in a build
+# without CMake. An application's loggers still take its own messages, and a
+# socket's last_error still says why an operation failed.
 option(EBISU_LOG "Compile in what ebisu logs" ON)
 if(NOT EBISU_LOG)
     add_compile_definitions(EBISU_NO_LOG)
