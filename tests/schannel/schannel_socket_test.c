@@ -246,6 +246,12 @@ static int run_step(ebisu_schannel_socket_t* ctx, const char* host, uint16_t por
                 code_name(res), total, calls, (unsigned long long)hash,
                 timed_out);
         free(buf);
+    } else if (strncmp(step, "wait:", 5) == 0) {
+        uint32_t ms = (uint32_t)strtoul(step + 5, NULL, 10);
+        DWORD start = GetTickCount();
+        bool ready = ctx->base.ops->recv_wait(&ctx->base, ms);
+        DWORD elapsed = GetTickCount() - start;
+        printf("STEP wait %d ms=%lu\n", ready ? 1 : 0, (unsigned long)elapsed);
     } else if (strcmp(step, "close") == 0) {
         printf("STEP close %s\n", code_name(ctx->base.ops->close(&ctx->base)));
     } else {

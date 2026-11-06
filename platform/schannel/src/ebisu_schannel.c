@@ -153,6 +153,7 @@ static ebisu_sock_code_t schannel_recv(ebisu_socket_t* self, char* buffer,
 static ebisu_sock_code_t schannel_close(ebisu_socket_t* self);
 static bool schannel_recv_timed_out(ebisu_socket_t* self);
 static ebisu_sock_error_t schannel_last_error(ebisu_socket_t* self, long* out_detail);
+static bool schannel_recv_wait(ebisu_socket_t* self, uint32_t timeout_ms);
 
 static const ebisu_socket_ops_t schannel_ops = {
     schannel_connect,
@@ -160,7 +161,8 @@ static const ebisu_socket_ops_t schannel_ops = {
     schannel_recv,
     schannel_close,
     schannel_recv_timed_out,
-    schannel_last_error
+    schannel_last_error,
+    schannel_recv_wait
 };
 
 void ebisu_schannel_socket_init(
@@ -920,6 +922,29 @@ static ebisu_sock_error_t
     ebisu_schannel_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_schannel_socket_t, base);
     *out_detail = ctx->error_detail;
     return ctx->error;
+}
+
+/* What schannel_recv() would return without reading the socket comes first:
+   plaintext left from a record, the end of the stream, or the start of a
+   record, whose rest it waits for as it would anyway. Then select(), as
+   read_some() waits, which leaves the socket as it was. A failure of select(),
+   or no connection, is for schannel_recv() to report. */
+static bool
+    schannel_recv_wait(ebisu_socket_t* self, uint32_t timeout_ms)
+{
+    ebisu_schannel_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_schannel_socket_t, base);
+    if (ctx->recv_buf == NULL || ctx->plain_len > 0 || ctx->peer_closed ||
+            ctx->recv_len > 0) {
+        return true;
+    }
+    fd_set readable;
+    FD_ZERO(&readable);
+    FD_SET(ctx->socket, &readable);
+    struct timeval timeout;
+    timeout.tv_sec = (long)(timeout_ms / 1000);
+    timeout.tv_usec = (long)(timeout_ms % 1000) * 1000;
+    /* Winsock ignores the first argument. */
+    return select(0, &readable, NULL, NULL, &timeout) != 0;
 }
 
 /* Sends close_notify. Fails only if Schannel cannot make one. Not being able

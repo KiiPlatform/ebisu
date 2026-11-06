@@ -217,6 +217,57 @@ TEST_CASE( "The OpenSSL socket's recv takes a closed transport for the end of th
     CHECK( c.close_client() == EBISU_SOCK_OK );
 }
 
+// The MQTT task waits with it for a packet a little at a time, so that a
+// message given meanwhile is sent soon.
+TEST_CASE( "The OpenSSL socket's recv_wait waits for something for recv to return" ) {
+    Connection c;
+    ebisu_socket_t* sock = &c.client.base;
+    char buffer[16];
+    size_t received = 0;
+    // What a TLS 1.3 server sends after the handshake, which is no data: recv
+    // reads it, and times out.
+    CHECK( sock->ops->recv(sock, buffer, sizeof(buffer), &received) == EBISU_SOCK_FAIL );
+    REQUIRE( sock->ops->recv_timed_out(sock) );
+
+    SECTION("for its timeout, with nothing arriving, which leaves the connection as it was") {
+        const auto start = std::chrono::steady_clock::now();
+        CHECK( sock->ops->recv_wait(sock, 300) == false );
+        const auto waited = std::chrono::steady_clock::now() - start;
+        CHECK( waited >= std::chrono::milliseconds(290) );
+        CHECK( waited < std::chrono::milliseconds(2000) );
+
+        REQUIRE( SSL_write(c.server, "hello", 5) == 5 );
+        CHECK( sock->ops->recv_wait(sock, 10000) == true );
+        CHECK( sock->ops->recv(sock, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK );
+        CHECK( std::string(buffer, received) == "hello" );
+    }
+
+    SECTION("not for what it has decrypted and recv hasn't returned, which the socket no longer has") {
+        REQUIRE( SSL_write(c.server, "hello", 5) == 5 );
+        CHECK( sock->ops->recv(sock, buffer, 2, &received) == EBISU_SOCK_OK );
+        CHECK( received == 2 );
+        CHECK( sock->ops->recv_wait(sock, 0) == true );
+        CHECK( sock->ops->recv(sock, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK );
+        CHECK( std::string(buffer, received) == "llo" );
+    }
+
+    SECTION("not for the end of the stream") {
+        SSL_shutdown(c.server);
+        CHECK( sock->ops->recv_wait(sock, 10000) == true );
+        received = 1;
+        CHECK( sock->ops->recv(sock, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK );
+        CHECK( received == 0 );
+    }
+
+    SECTION("not for a transport that closed") {
+        c.close_server_socket();
+        CHECK( sock->ops->recv_wait(sock, 10000) == true );
+        received = 1;
+        CHECK( sock->ops->recv(sock, buffer, sizeof(buffer), &received) == EBISU_SOCK_OK );
+        CHECK( received == 0 );
+    }
+}
+
 // OpenSSL's documentation says SSL_shutdown() must not be called after this,
 // and when it is, it fails.
 TEST_CASE( "A connection that failed is closed without SSL_shutdown" ) {

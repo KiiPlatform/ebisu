@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <poll.h>
@@ -363,6 +364,7 @@ static ebisu_sock_code_t openssl_recv(ebisu_socket_t* self, char* buffer,
 static ebisu_sock_code_t openssl_close(ebisu_socket_t* self);
 static bool openssl_recv_timed_out(ebisu_socket_t* self);
 static ebisu_sock_error_t openssl_last_error(ebisu_socket_t* self, long* out_detail);
+static bool openssl_recv_wait(ebisu_socket_t* self, uint32_t timeout_ms);
 
 static const ebisu_socket_ops_t openssl_ops = {
     openssl_connect,
@@ -370,7 +372,8 @@ static const ebisu_socket_ops_t openssl_ops = {
     openssl_recv,
     openssl_close,
     openssl_recv_timed_out,
-    openssl_last_error
+    openssl_last_error,
+    openssl_recv_wait
 };
 
 /* Says why an operation failed, for last_error, and returns EBISU_SOCK_FAIL. */
@@ -997,6 +1000,27 @@ static bool
         return true;
     }
     return false;
+}
+
+/* What OpenSSL has read and decrypted, and not yet returned, is no longer on
+   the socket, where poll() looks: SSL_pending() counts it. A failure of poll(),
+   but for a signal, is for openssl_recv() to report. */
+static bool
+    openssl_recv_wait(ebisu_socket_t* self, uint32_t timeout_ms)
+{
+    ebisu_openssl_socket_t* ctx = EBISU_CONTAINER_OF(self, ebisu_openssl_socket_t, base);
+    if (SSL_pending(ctx->ssl) > 0) {
+        return true;
+    }
+    struct pollfd p;
+    p.fd = ctx->socket;
+    p.events = POLLIN;
+    p.revents = 0;
+    int ret = poll(&p, 1, timeout_ms > INT_MAX ? INT_MAX : (int)timeout_ms);
+    if (ret < 0 && errno == EINTR) {
+        return false;
+    }
+    return ret != 0;
 }
 
 static ebisu_sock_error_t

@@ -322,12 +322,13 @@ struct Task {
         Task* t;
     } lock_link;
 
-    Task(const std::string& topic, const std::string& client_id, size_t buff_size = 1024)
+    Task(const std::string& topic, const std::string& client_id, size_t buff_size = 1024,
+            unsigned int to_recv = TO_RECV)
         : buff(buff_size), client_id(client_id) {
         const Broker& b = broker();
-        init_platform_socket(&sock, TO_RECV, TO_SEND);
+        init_platform_socket(&sock, to_recv, TO_SEND);
         static const ebisu_socket_ops_t ops = {
-            cb_connect, cb_send, cb_recv, cb_close, cb_recv_timed_out, nullptr
+            cb_connect, cb_send, cb_recv, cb_close, cb_recv_timed_out, nullptr, cb_recv_wait
         };
         link.base.ops = &ops;
         link.t = this;
@@ -353,7 +354,7 @@ struct Task {
         kii_init(&kii);
         kii_set_mqtt_buff(&kii, buff.data(), buff.size());
         kii_set_mqtt_socket(&kii, &link.base);
-        kii_set_mqtt_to_sock_recv(&kii, TO_RECV);
+        kii_set_mqtt_to_sock_recv(&kii, to_recv);
         kii_set_system(&kii, system.get());
         // So that a reconnection takes a second or two.
         REQUIRE( kii_set_mqtt_retry_wait_max(&kii, 2) == KII_ERR_OK );
@@ -490,6 +491,16 @@ struct Task {
             return EBISU_SOCK_FAIL;
         }
         return t->sock.base.ops->recv(&t->sock.base, buffer, length_to_read, out_actual_length);
+    }
+
+    // A receive made to fail is one to make, as a lost connection has a
+    // socket's be.
+    static bool cb_recv_wait(ebisu_socket_t* self, uint32_t timeout_ms) {
+        Task* t = of(self);
+        if (t->fail_next_recv) {
+            return true;
+        }
+        return t->sock.base.ops->recv_wait(&t->sock.base, timeout_ms);
     }
 
     static bool cb_recv_timed_out(ebisu_socket_t* self) {
@@ -1230,4 +1241,34 @@ TEST_CASE("Without a task running, a message isn't published")
     CHECK( kii_mqtt_publish(&t.kii, topic_of("publish-stopped").c_str(), "x", 1, KII_MQTT_QOS_0, false, 1000) == KII_ERR_FAIL );
     std::lock_guard<std::mutex> lock(t.mutex);
     CHECK( t.publishes.empty() );
+}
+
+TEST_CASE("With a long receive timeout, the task publishes what it is given at once")
+{
+    // A receive with nothing arriving would last 10 seconds, and the message
+    // wait for it. The task waits for a packet a little at a time instead.
+    const unsigned int to_recv = 10;
+    const std::string base = topic_of("publish-soon");
+    Task sub(base + "/out", client_id_of("publish-soon-sub"));
+    REQUIRE( sub.start() == KII_ERR_OK );
+    REQUIRE( sub.wait_ready() );
+    Task t(base + "/in", client_id_of("publish-soon"), 1024, to_recv);
+    REQUIRE( t.start(60) == KII_ERR_OK );
+    REQUIRE( t.wait_ready() );
+
+    for (int i = 0; i < 4; ++i) {
+        // Idle, so that the task is waiting.
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        const std::string payload = std::to_string(i);
+        const auto start = std::chrono::steady_clock::now();
+        CHECK( kii_mqtt_publish(&t.kii, (base + "/out").c_str(), payload.data(), payload.size(),
+                    i % 2 == 0 ? KII_MQTT_QOS_0 : KII_MQTT_QOS_1, false, 30000) == KII_ERR_OK );
+        const auto took = std::chrono::steady_clock::now() - start;
+        INFO( "message " << i << " took " <<
+                std::chrono::duration_cast<std::chrono::milliseconds>(took).count() << " ms" );
+        CHECK( took < std::chrono::seconds(2) );
+    }
+    REQUIRE( sub.wait_received(4) );
+    std::lock_guard<std::mutex> lock(t.mutex);
+    CHECK( t.count(KII_MQTT_ST_RECONNECT) == 0 );
 }
