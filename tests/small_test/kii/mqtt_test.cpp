@@ -4736,6 +4736,107 @@ TEST_CASE( "The MQTT keep-alive is timed by the system's monotonic clock" ) {
 // as none, whatever remaining length the fixed header gave. After one that gave
 // another, the task read the next packet from the wrong byte, or the next
 // packet's bytes as the rest of this one.
+// What the task tells the event callback goes to kii's logger too, so that
+// an application logging what ebisu does needn't turn events into lines.
+// Built without logging, it logs nothing.
+TEST_CASE( "The MQTT task logs each event to kii's logger, and kii's khc logs to it" ) {
+    char buff[1024];
+    char mqtt_buff[256];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, buff, sizeof(buff));
+    kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
+    kii_set_system(&kii, khct::cb::delay_only_system());
+    kii._keep_alive_interval = 300;
+    strcpy(kii._author.author_id, "th.1");
+    strcpy(kii._author.access_token, "the-access-token");
+    khct::cb::LoggerCtx log;
+    CHECK( kii._logger == nullptr );
+    CHECK( kii._khc._logger == nullptr );
+    kii_set_logger(&kii, log.get());
+    CHECK( kii._khc._logger == log.get() );
+
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [](void*, const char*, uint16_t) { return EBISU_SOCK_FAIL; };
+    kii_set_http_socket(&kii, http_ctx.socket());
+    khct::cb::SockCtx mqtt_ctx;
+    mqtt_ctx.on_connect = [](void*, const char*, uint16_t) { return EBISU_SOCK_FAIL; };
+    mqtt_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return EBISU_SOCK_OK;
+    };
+    mqtt_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
+
+    mqtt_state_t state;
+    _init_mqtt_state(&kii, &state);
+    strcpy(state.ins_id.id, "ins.1");
+    strcpy(state.endpoint.host, "broker");
+    strcpy(state.endpoint.topic, "dummyTopic");
+    strcpy(state.endpoint.username, "dummyUser");
+    strcpy(state.endpoint.password, "dummyPassword");
+
+#ifndef EBISU_NO_LOG
+    size_t served = 0;
+    typedef khct::cb::LoggerCtx::Lines Lines;
+
+    SECTION("a request that failed, as khc logs it, then the event") {
+        _mqtt_state_install_push(&state);
+        REQUIRE( log.lines.size() == 2 );
+        CHECK( log.lines[0].first == EBISU_LOG_WARNING );
+        CHECK( log.lines[0].second.find("failed: KHC_ERR_SOCK_CONNECT") != std::string::npos );
+        CHECK( log.lines[1] == std::make_pair(EBISU_LOG_WARNING,
+                std::string("MQTT task: KII_MQTT_EVENT_INSTALL_FAILED, detail 0")) );
+        CHECK_FALSE( log.mentions("the-access-token") );
+    }
+
+    SECTION("connecting failed, as a warning") {
+        _mqtt_state_sock_connect(&state);
+        CHECK( log.lines == Lines{
+            { EBISU_LOG_WARNING, "MQTT task: KII_MQTT_EVENT_CONNECT_FAILED, detail 1" } } );
+    }
+
+    SECTION("CONNACK accepting as information, and refusing as a warning") {
+        serve_stream(mqtt_ctx, std::string("\x20\x02\x00\x00", 4), served);
+        _mqtt_state_recv_connack(&state);
+        served = 0;
+        serve_stream(mqtt_ctx, std::string("\x20\x02\x00\x05", 4), served);
+        _mqtt_state_recv_connack(&state);
+        CHECK( log.lines == Lines{
+            { EBISU_LOG_INFO, "MQTT task: KII_MQTT_EVENT_CONNACK, detail 0" },
+            { EBISU_LOG_WARNING, "MQTT task: KII_MQTT_EVENT_CONNACK, detail 5" } } );
+    }
+
+    SECTION("SUBACK granting as information, and refusing as a warning") {
+        kii_set_mqtt_qos(&kii, KII_MQTT_QOS_1);
+        serve_stream(mqtt_ctx, std::string("\x90\x03\x00\x01\x01", 5), served);
+        _mqtt_state_recv_suback(&state);
+        served = 0;
+        serve_stream(mqtt_ctx, std::string("\x90\x03\x00\x01\x80", 5), served);
+        _mqtt_state_recv_suback(&state);
+        CHECK( log.lines == Lines{
+            { EBISU_LOG_INFO, "MQTT task: KII_MQTT_EVENT_SUBACK, detail 1" },
+            { EBISU_LOG_WARNING, "MQTT task: KII_MQTT_EVENT_SUBACK, detail 128" } } );
+    }
+
+#else
+    SECTION("nothing, built without logging") {
+        _mqtt_state_install_push(&state);
+        _mqtt_state_sock_connect(&state);
+        CHECK( log.lines.empty() );
+    }
+#endif
+
+    SECTION("nothing without a logger") {
+        kii_set_logger(&kii, nullptr);
+        CHECK( kii._khc._logger == nullptr );
+        _mqtt_state_sock_connect(&state);
+        CHECK( log.lines.empty() );
+    }
+}
+
 TEST_CASE( "CONNACK, SUBACK and PINGRESP of another length are refused" ) {
     char mqtt_buff[256];
     kii_t kii;

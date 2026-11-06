@@ -8,6 +8,34 @@ extern "C"
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "khc.h"
+
+#ifdef EBISU_NO_LOG
+/* Built without logging, nothing is logged, and the arguments aren't
+   evaluated. */
+#define _khc_log(khc, level, ...) ((void)0)
+#define _khc_log_header(khc, direction, line, line_length) ((void)0)
+#define _khc_log_lines(khc, direction, lines) ((void)0)
+#else
+/* Logs a message with the logger set by khc_set_logger(), if any. */
+void _khc_log(khc* khc, ebisu_log_level_t level, const char* fmt, ...)
+#if defined(__GNUC__) || defined(__clang__)
+    __attribute__((format(printf, 3, 4)))
+#endif
+    ;
+
+/* Logs a line of a request's head, direction '>', or of a response's, '<', at
+   EBISU_LOG_DEBUG, without the credentials of a header that carries them. */
+void _khc_log_header(khc* khc, char direction, const char* line, size_t line_length);
+
+/* Logs each of lines, each ending with CRLF, up to an empty one or the end, as
+   _khc_log_header() does. */
+void _khc_log_lines(khc* khc, char direction, const char* lines);
+
+/* The name of a khc_code, such as "KHC_ERR_SOCK_CONNECT". */
+const char* _khc_code_name(khc_code code);
+#endif
+
 int _is_chunked_encoding(const char* header, size_t header_length);
 
 int _extract_content_length(const char* header, size_t header_length, size_t* out_content_length);

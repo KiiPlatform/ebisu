@@ -251,6 +251,11 @@ void message_cb(const kii_mqtt_message_t* message, void* userdata)
   receive failed, an unanswered PINGREQ, a message too large or malformed.
   Logging them is how to tell, in the field, a network that comes and goes from
   credentials the broker refuses.
+- **Logging**: optional, `kii_set_logger()` gives kii a logger, an
+  `ebisu_logger_t` of core. The task logs each event there, with its detail,
+  and khc each request and response, without credentials or bodies, as the
+  [khc README](https://github.com/KiiPlatform/ebisu/blob/master/khc/README.md#logging)
+  shows.
 
 After onboarding, the task connects with the MQTT endpoint onboarding returned.
 Otherwise it installs push and gets an endpoint from Kii Cloud first. A request

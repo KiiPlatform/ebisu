@@ -11,6 +11,7 @@ ebisu_add_test_suite(small_test_khc
         khc/header_parser_test.cpp
         khc/http_date_test.cpp
         khc/http_test.cpp
+        khc/logger_test.cpp
         khc/request_body_test.cpp
         khc/reset_test.cpp
         khc/response_chunk_test.cpp

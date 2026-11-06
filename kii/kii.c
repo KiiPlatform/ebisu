@@ -227,6 +227,11 @@ void kii_set_cb_mqtt_event(kii_t* kii, KII_CB_MQTT_EVENT cb, void* userdata) {
     kii->_mqtt_event_data = userdata;
 }
 
+void kii_set_logger(kii_t* kii, ebisu_logger_t* logger) {
+    kii->_logger = logger;
+    khc_set_logger(&kii->_khc, logger);
+}
+
 void kii_set_cb_mqtt_message(kii_t* kii, KII_CB_MQTT_MESSAGE cb, void* userdata) {
     kii->_cb_mqtt_message = cb;
     kii->_mqtt_message_data = userdata;

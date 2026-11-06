@@ -317,11 +317,34 @@ the library's source, which no server running properly sends. The time is as
 trustworthy as the connection it came through, so verify the server's
 certificate in the socket callbacks.
 
-## Tracing
+## Logging
 
-Configuring with `-DKHC_TRACE=ON` prints every request and response to
-stdout, headers and bodies included. That includes access tokens and
-passwords, so never enable it where its output is kept or shared.
+`khc_set_logger()` gives khc a logger, an `ebisu_logger_t` of core, to which it
+logs what it does. At `EBISU_LOG_DEBUG`, each request as it goes: the address
+it connected to, the request line, each header and how long the body is, and
+then the response's status line, each of its headers and how long its body is,
+as for this onboarding, some of whose headers are left out here:
+
+```
+connected to api-jp.kii.com:443
+> POST /thing-if/apps/0123abcd/onboardings HTTP/1.1
+> HOST: api-jp.kii.com
+> Authorization: Basic ***
+> Content-Type: application/vnd.kii.OnboardingWithVendorThingIDByThing+json
+> Content-Length: 87
+> Connection: Close
+> (a body of 87 bytes)
+< HTTP/1.1 200 OK
+< Content-Type: application/vnd.kii.OnboardingResponse+json
+< (a body of 412 bytes)
+```
+
+The credentials of `Authorization`, `Proxy-Authorization`, `Cookie` and
+`Set-Cookie` are left out, and what a body holds is never logged: tokens,
+passwords and MQTT credentials travel in them. At `EBISU_LOG_WARNING`, a
+request that failed, with its `khc_code`, and a connection that didn't close.
+kii's and tio's setters give their khc the logger. Built with `EBISU_NO_LOG`,
+khc logs nothing.
 
 ## Building
 

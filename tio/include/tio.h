@@ -501,6 +501,21 @@ void tio_handler_set_cb_mqtt_event(tio_handler_t* handler, KII_CB_MQTT_EVENT cb,
  * \param [in] userdata Context object pointer passed to cb_err.
  */
 void tio_handler_set_cb_err(tio_handler_t* handler, TIO_CB_ERR cb_err, void* userdata);
+
+/**
+ * \brief Set where the handler logs what it does.
+ *
+ * What kii_set_logger() says kii logs, for the handler's requests and its MQTT
+ * task: at EBISU_LOG_DEBUG, the steps of handling a command that fail, and at
+ * EBISU_LOG_WARNING, a command that couldn't be handled, as the error callback
+ * is told. Set it before starting the handler. Built with EBISU_NO_LOG, the
+ * handler logs nothing.
+ *
+ * \param [out] handler tio_handler_t instance.
+ * \param [in] logger The logger, or NULL for none. It has to outlive the
+ * handler's task.
+ */
+void tio_handler_set_logger(tio_handler_t* handler, ebisu_logger_t* logger);
 /**
  * \brief Set callback handles custom push message.
  *
@@ -968,6 +983,20 @@ void tio_updater_set_cb_task_exit(tio_updater_t* updater, KII_CB_TASK_EXIT cb_ex
  * \param [in] userdata Context object pointer passed to cb_err.
  */
 void tio_updater_set_cb_error(tio_updater_t* updater, TIO_CB_ERR cb_err, void* userdata);
+
+/**
+ * \brief Set where the updater logs what it does.
+ *
+ * What kii_set_logger() says kii logs, for the updater's requests, and, at
+ * EBISU_LOG_WARNING, a state that couldn't be uploaded, as the error callback
+ * is told. Set it before starting the updater. Built with EBISU_NO_LOG, the
+ * updater logs nothing.
+ *
+ * \param [out] updater tio_updater_t instance.
+ * \param [in] logger The logger, or NULL for none. It has to outlive the
+ * updater's task.
+ */
+void tio_updater_set_logger(tio_updater_t* updater, ebisu_logger_t* logger);
 
 /**
  * \brief Set buffer used to construct/ parse HTTP request/ response.

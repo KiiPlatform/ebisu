@@ -9,12 +9,6 @@ include(EbisuVersion)
 set_git_version_and_generate_header()
 
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-# Debugging output, so off unless asked for. KHC_TRACE prints every request and
-# response, headers and bodies included, to stdout; ctest shows a failing
-# test's output, so a test run that traces puts that output in its log.
-option(KHC_TRACE "Trace KHC activity to stdout" OFF)
-option(TIO_TRACE "Trace TIO activity to stdout" OFF)
-
 # What ebisu logs itself: the ports' diagnostics, to the logger set on a socket
 # or to stderr. OFF leaves all of it out of the libraries, messages and all,
 # for a device short of flash, as defining EBISU_NO_LOG does in a build without

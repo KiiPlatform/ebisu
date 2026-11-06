@@ -7,25 +7,6 @@
 #include "khc_state_impl.h"
 #include "khc_http_date.h"
 
-#ifdef KHC_TRACE
-static void _trace_dump(char prefix, char* buf, size_t len) {
-    for(int i=0;i<len;i++) {
-        if (buf[i] == '\r') {
-            printf("\n%c", prefix);
-        }
-        else if (buf[i]=='\n'){
-        }
-        else {
-            printf("%c", buf[i]);
-        }
-
-    }
-}
-
-static void _trace_op(char* op, int res) {
-    printf("* %s = %d\n", op, res);
-}
-#endif
 
 void khc_set_socket(khc* khc, ebisu_socket_t* socket)
 {
@@ -145,10 +126,8 @@ static void _closed_early(khc* khc) {
 void khc_state_connect(khc* khc) {
     const uint16_t port = khc->_enable_insecure ? 80:443;
     ebisu_sock_code_t con_res = khc->_socket->ops->connect(khc->_socket, khc->_host, port);
-    #ifdef KHC_TRACE
-    _trace_op("connect", con_res);
-    #endif
     if (con_res == EBISU_SOCK_OK) {
+        _khc_log(khc, EBISU_LOG_DEBUG, "connected to %s:%u", khc->_host, (unsigned)port);
         khc->_sent_length = 0;
         khc->_state = KHC_STATE_REQ_LINE;
         return;
@@ -205,9 +184,6 @@ void khc_state_req_line(khc* khc) {
     size_t sent_len = 0;
     ebisu_sock_code_t send_res = khc->_socket->ops->send(khc->_socket, send_pos, send_len, &sent_len);
     if (send_res == EBISU_SOCK_OK) {
-        #ifdef KHC_TRACE
-        _trace_dump('>', send_pos, sent_len);
-        #endif
         if (sent_len < send_len) {
             khc->_sent_length += sent_len;
             // retry.
@@ -215,14 +191,11 @@ void khc_state_req_line(khc* khc) {
         } else {
             khc->_sent_length = 0;
         }
+        // Without its CRLF.
+        _khc_log(khc, EBISU_LOG_DEBUG, "> %.*s", (int)(len - 2), request_line);
         khc->_state = KHC_STATE_REQ_HOST_HEADER;
         return;
     }
-    #ifdef KHC_TRACE
-    else {
-        _trace_op("send", send_res);
-    }
-    #endif
     if (send_res == EBISU_SOCK_AGAIN) {
         khc->_again = true;
         return;
@@ -245,9 +218,6 @@ void khc_state_req_host_header(khc* khc) {
     size_t sent_len = 0;
     ebisu_sock_code_t send_res = khc->_socket->ops->send(khc->_socket, send_pos, send_len, &sent_len);
     if (send_res == EBISU_SOCK_OK) {
-        #ifdef KHC_TRACE
-        _trace_dump('>', send_pos, sent_len);
-        #endif
         if (sent_len < send_len) {
             khc->_sent_length += sent_len;
             // retry.
@@ -255,15 +225,11 @@ void khc_state_req_host_header(khc* khc) {
         } else {
             khc->_sent_length = 0;
         }
+        _khc_log(khc, EBISU_LOG_DEBUG, "> %s%s", hdr_key, khc->_host);
         khc->_state = KHC_STATE_REQ_HEADER;
         khc->_current_req_header = khc->_req_headers;
         return;
     }
-    #ifdef KHC_TRACE
-    else {
-        _trace_op("send", send_res);
-    }
-    #endif
     if (send_res == EBISU_SOCK_AGAIN) {
         khc->_again = true;
         return;
@@ -303,9 +269,6 @@ void khc_state_req_header_send(khc* khc) {
     size_t sent_len = 0;
     ebisu_sock_code_t send_res = khc->_socket->ops->send(khc->_socket, send_pos, send_len, &sent_len);
     if (send_res == EBISU_SOCK_OK) {
-        #ifdef KHC_TRACE
-        _trace_dump('>', send_pos, sent_len);
-        #endif
         if (sent_len < send_len) {
             khc->_sent_length += sent_len;
             // retry.
@@ -313,14 +276,10 @@ void khc_state_req_header_send(khc* khc) {
         } else {
             khc->_sent_length = 0;
         }
+        _khc_log_header(khc, '>', line, strlen(line));
         khc->_state = KHC_STATE_REQ_HEADER_SEND_CRLF;
         return;
     }
-    #ifdef KHC_TRACE
-    else {
-        _trace_op("send", send_res);
-    }
-    #endif
     if (send_res == EBISU_SOCK_AGAIN) {
         khc->_again = true;
         return;
@@ -340,9 +299,6 @@ void khc_state_req_header_send_crlf(khc* khc) {
     size_t sent_len = 0;
     ebisu_sock_code_t send_res = khc->_socket->ops->send(khc->_socket, send_pos, send_len, &sent_len);
     if (send_res == EBISU_SOCK_OK) {
-        #ifdef KHC_TRACE
-        _trace_dump('>', send_pos, sent_len);
-        #endif
         if (sent_len < send_len) {
             khc->_sent_length += sent_len;
             // retry.
@@ -354,11 +310,6 @@ void khc_state_req_header_send_crlf(khc* khc) {
         khc->_state = KHC_STATE_REQ_HEADER;
         return;
     }
-    #ifdef KHC_TRACE
-    else {
-        _trace_op("send", send_res);
-    }
-    #endif
     if (send_res == EBISU_SOCK_AGAIN) {
         khc->_again = true;
         return;
@@ -415,9 +366,6 @@ void khc_state_req_header_end(khc* khc) {
     size_t sent_len = 0;
     ebisu_sock_code_t send_res = khc->_socket->ops->send(khc->_socket, send_pos, send_len, &sent_len);
     if (send_res == EBISU_SOCK_OK) {
-        #ifdef KHC_TRACE
-        _trace_dump('>', send_pos, sent_len);
-        #endif
         if (sent_len < send_len) {
             khc->_sent_length += sent_len;
             // retry.
@@ -425,11 +373,13 @@ void khc_state_req_header_end(khc* khc) {
         } else {
             khc->_sent_length = 0;
         }
+        _khc_log_lines(khc, '>', text);
         // A method without a body ends the request here: its headers say
         // nothing of one, so a body, or even the chunk ending an empty one,
         // would be taken for the start of another request.
         if (_has_req_body(khc)) {
             khc->_req_body_left = khc->_req_body_length;
+            khc->_req_body_sent = 0;
             khc->_state = KHC_STATE_REQ_BODY_READ;
         } else {
             khc->_resp_header_read_size = 0;
@@ -438,11 +388,6 @@ void khc_state_req_header_end(khc* khc) {
         khc->_read_req_end = false;
         return;
     }
-    #ifdef KHC_TRACE
-    else {
-        _trace_op("send", send_res);
-    }
-    #endif
     if (send_res == EBISU_SOCK_AGAIN) {
         khc->_again = true;
         return;
@@ -482,6 +427,7 @@ void khc_state_req_body_read(khc* khc) {
             return;
         }
         khc->_req_body_left -= got;
+        khc->_req_body_sent += got;
         khc->_read_size = got;
         khc->_read_req_end = khc->_req_body_left == 0;
         khc->_req_frame_start = 0;
@@ -510,6 +456,7 @@ void khc_state_req_body_read(khc* khc) {
     memcpy(&khc->_stream_buff[khc->_req_frame_start], line, line_len);
     memcpy(&data[got], "\r\n", 2);
     khc->_req_frame_size = line_len + got + 2;
+    khc->_req_body_sent += got;
     khc->_read_size = got;
     // The chunk of size 0 ends the body.
     khc->_read_req_end = got == 0;
@@ -544,9 +491,6 @@ void khc_state_req_body_send(khc* khc) {
     size_t sent_len = 0;
     ebisu_sock_code_t send_res = khc->_socket->ops->send(khc->_socket, send_pos, send_len, &sent_len);
     if (send_res == EBISU_SOCK_OK) {
-        #ifdef KHC_TRACE
-        _trace_dump('>', send_pos, sent_len);
-        #endif
         if (sent_len < send_len) {
             khc->_sent_length += sent_len;
             // retry.
@@ -555,6 +499,8 @@ void khc_state_req_body_send(khc* khc) {
             khc->_sent_length = 0;
         }
         if (khc->_read_req_end) {
+            _khc_log(khc, EBISU_LOG_DEBUG, "> (a body of %lu bytes)",
+                    (unsigned long)khc->_req_body_sent);
             khc->_resp_header_read_size = 0;
             khc->_state = KHC_STATE_RESP_STATUS_READ;
         } else {
@@ -562,11 +508,6 @@ void khc_state_req_body_send(khc* khc) {
         }
         return;
     }
-    #ifdef KHC_TRACE
-    else {
-        _trace_op("send", send_res);
-    }
-    #endif
     if (send_res == EBISU_SOCK_AGAIN) {
         khc->_again = true;
         return;
@@ -596,9 +537,6 @@ void khc_state_resp_status_read(khc* khc) {
     ebisu_sock_code_t read_res =
         khc->_socket->ops->recv(khc->_socket, &khc->_resp_header_buff[khc->_resp_header_read_size], read_req_size, &read_size);
     if (read_res == EBISU_SOCK_OK) {
-        #ifdef KHC_TRACE
-        _trace_dump('<', &khc->_resp_header_buff[khc->_resp_header_read_size], read_size);
-        #endif
         khc->_resp_header_read_size += read_size;
         khc->_resp_header_buff[khc->_resp_header_read_size] = '\0';
         if (read_size == 0) {
@@ -620,11 +558,6 @@ void khc_state_resp_status_read(khc* khc) {
         // Otherwise a read can end anywhere: read the rest of the line.
         return;
     }
-    #ifdef KHC_TRACE
-    else {
-        _trace_op("recv", read_res);
-    }
-    #endif
     if (read_res == EBISU_SOCK_AGAIN) {
         khc->_again = true;
         return;
@@ -700,6 +633,7 @@ void khc_state_resp_header_callback(khc* khc) {
             return;
         }
         khc->_resp_status_line_given = true;
+        _khc_log_header(khc, '<', khc->_resp_header_buff, header_size);
         _record_resp_date(khc, khc->_resp_header_buff, header_size);
 
         int chunked = _is_chunked_encoding(khc->_resp_header_buff, header_size);
@@ -770,9 +704,6 @@ void khc_state_resp_header_read(khc* khc) {
     ebisu_sock_code_t read_res =
         khc->_socket->ops->recv(khc->_socket, &khc->_resp_header_buff[khc->_resp_header_read_size], read_req_size, &read_size);
     if (read_res == EBISU_SOCK_OK) {
-        #ifdef KHC_TRACE
-        _trace_dump('<', &khc->_resp_header_buff[khc->_resp_header_read_size], read_size);
-        #endif
         khc->_resp_header_read_size += read_size;
         khc->_resp_header_buff[khc->_resp_header_read_size] = '\0';
         if (read_size == 0) {
@@ -785,11 +716,6 @@ void khc_state_resp_header_read(khc* khc) {
         khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
         return;
     }
-    #ifdef KHC_TRACE
-    else {
-        _trace_op("recv", read_res);
-    }
-    #endif
     if (read_res == EBISU_SOCK_AGAIN) {
         khc->_again = true;
         return;
@@ -827,9 +753,6 @@ void khc_state_resp_header_skip(khc* khc) {
             read_req_size,
             &read_size);
     if (read_res == EBISU_SOCK_OK) {
-        #ifdef KHC_TRACE
-        _trace_dump('<', &khc->_resp_header_buff[khc->_resp_header_read_size], read_size);
-        #endif
         khc->_resp_header_read_size += read_size;
         khc->_resp_header_buff[khc->_resp_header_read_size] = '\0';
         if (read_size == 0) {
@@ -866,11 +789,6 @@ void khc_state_resp_header_skip(khc* khc) {
         khc->_state = KHC_STATE_RESP_HEADER_CALLBACK;
         return;
     }
-    #ifdef KHC_TRACE
-    else {
-        _trace_op("recv", read_res);
-    }
-    #endif
     if (read_res == EBISU_SOCK_AGAIN) {
         khc->_again = true;
         return;
@@ -975,9 +893,6 @@ void khc_state_resp_body_read(khc* khc) {
     ebisu_sock_code_t read_res =
         khc->_socket->ops->recv(khc->_socket, khc->_stream_buff, khc->_stream_buff_size, &read_size);
     if (read_res == EBISU_SOCK_OK) {
-        #ifdef KHC_TRACE
-        _trace_dump('<', khc->_stream_buff, read_size);
-        #endif
         khc->_body_read_size = read_size;
         if (read_size == 0) {
             khc->_read_end = true;
@@ -987,11 +902,6 @@ void khc_state_resp_body_read(khc* khc) {
         khc->_state = KHC_STATE_RESP_BODY_CALLBACK;
         return;
     }
-    #ifdef KHC_TRACE
-    else {
-        _trace_op("recv", read_res);
-    }
-    #endif
     if (read_res == EBISU_SOCK_AGAIN) {
         khc->_again = true;
         return;
@@ -1068,9 +978,6 @@ void khc_state_resp_body_read_chunk_size(khc* khc) {
             remain,
             &read_size);
     if (read_res == EBISU_SOCK_OK) {
-        #ifdef KHC_TRACE
-        _trace_dump('<', &khc->_stream_buff[khc->_body_read_size], read_size);
-        #endif
         khc->_body_read_size += read_size;
         if (read_size == 0) {
             khc->_state = KHC_STATE_CLOSE;
@@ -1081,11 +988,6 @@ void khc_state_resp_body_read_chunk_size(khc* khc) {
         khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
         return;
     }
-    #ifdef KHC_TRACE
-    else {
-        _trace_op("recv", read_res);
-    }
-    #endif
     if (read_res == EBISU_SOCK_AGAIN) {
         khc->_again = true;
         return;
@@ -1111,6 +1013,7 @@ void khc_state_resp_body_parse_chunk_body(khc* khc) {
         return;
     }
     khc->_chunk_size_written += target_size;
+    khc->_resp_body_received += written;
     if (khc->_chunk_size > khc->_chunk_size_written) {
         if (khc->_resp_header_read_size > 0) {
             khc->_body_read_size = 0;
@@ -1136,9 +1039,6 @@ void khc_state_resp_body_read_chunk_body(khc* khc) {
             khc->_stream_buff_size,
             &read_size);
     if (read_res == EBISU_SOCK_OK) {
-        #ifdef KHC_TRACE
-        _trace_dump('<', khc->_stream_buff, read_size);
-        #endif
         if (read_size == 0) {
             khc->_state = KHC_STATE_CLOSE;
             khc->_result = KHC_ERR_SOCK_RECV;
@@ -1149,11 +1049,6 @@ void khc_state_resp_body_read_chunk_body(khc* khc) {
         khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_BODY;
         return;
     }
-    #ifdef KHC_TRACE
-    else {
-        _trace_op("recv", read_res);
-    }
-    #endif
     if (read_res == EBISU_SOCK_AGAIN) {
         khc->_again = true;
         return;
@@ -1195,9 +1090,6 @@ void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
                 tmp_size,
                 &read_size);
         if (read_res == EBISU_SOCK_OK) {
-            #ifdef KHC_TRACE
-            _trace_dump('<', tmp, read_size);
-            #endif
             if (read_size == 0) {
                 khc->_state = KHC_STATE_CLOSE;
                 khc->_result = KHC_ERR_SOCK_RECV;
@@ -1221,11 +1113,6 @@ void khc_state_resp_body_skip_chunk_body_crlf(khc* khc) {
             khc->_state = KHC_STATE_RESP_BODY_PARSE_CHUNK_SIZE;
             return;
         }
-        #ifdef KHC_TRACE
-        else {
-            _trace_op("recv", read_res);
-        }
-        #endif
         if (read_res == EBISU_SOCK_AGAIN) {
             khc->_again = true;
             return;
@@ -1277,9 +1164,6 @@ void khc_state_resp_body_skip_trailers(khc* khc) {
             khc->_stream_buff_size,
             &read_size);
     if (read_res == EBISU_SOCK_OK) {
-        #ifdef KHC_TRACE
-        _trace_dump('<', khc->_stream_buff, read_size);
-        #endif
         if (read_size == 0) {
             khc->_state = KHC_STATE_CLOSE;
             return;
@@ -1287,11 +1171,6 @@ void khc_state_resp_body_skip_trailers(khc* khc) {
         khc->_body_read_size = read_size;
         return;
     }
-    #ifdef KHC_TRACE
-    else {
-        _trace_op("recv", read_res);
-    }
-    #endif
     if (read_res == EBISU_SOCK_AGAIN) {
         khc->_again = true;
         return;
@@ -1306,9 +1185,6 @@ void khc_state_resp_body_skip_trailers(khc* khc) {
 
 void khc_state_close(khc* khc) {
     ebisu_sock_code_t close_res = khc->_socket->ops->close(khc->_socket);
-    #ifdef KHC_TRACE
-    _trace_op("close", close_res);
-    #endif
     if (close_res == EBISU_SOCK_OK) {
         khc->_state = KHC_STATE_FINISHED;
         return;

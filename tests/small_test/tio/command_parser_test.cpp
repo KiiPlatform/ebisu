@@ -143,6 +143,7 @@ TEST_CASE( "_parse_first_kv" ) {
 TEST_CASE( "_parse_action_object" ) {
     tio_action_t action;
     tio_handler_t handler;
+    tio_handler_init(&handler);
 
     // TODO: Add other types tests.
     SECTION("Object action") {
@@ -196,6 +197,7 @@ static_assert(std::is_same<
 
 TEST_CASE( "_parse_action integer values" ) {
     tio_handler_t handler;
+    tio_handler_init(&handler);
 
     const struct {
         const char* text;
@@ -278,6 +280,7 @@ static void cb_record_action(char* command_id, tio_action_t* action, void* names
 
 TEST_CASE( "_parse_command gives every action of every alias, in order" ) {
     tio_handler_t handler;
+    tio_handler_init(&handler);
     std::string command = "{\"commandID\":\"c1\",\"actions\":[";
     std::vector<std::string> expected;
     for (int a = 0; a < 3; ++a) {
@@ -299,6 +302,7 @@ TEST_CASE( "_parse_command gives every action of every alias, in order" ) {
 
 TEST_CASE( "_parse_command" ) {
     tio_handler_t handler;
+    tio_handler_init(&handler);
 
     SECTION("has 1 alias, 1 action") {
         const char command[] = "{\"commandID\":\"eed568b4-409c-11e9-b3ec-22000aad0899\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
@@ -714,6 +718,7 @@ static void cb_parsed_action_copy(char* command_id, tio_action_t* action, void* 
 
 TEST_CASE( "_parse_command primitive values" ) {
     tio_handler_t handler;
+    tio_handler_init(&handler);
 
     std::vector<tio_action_t> actions;
 
@@ -848,6 +853,7 @@ TEST_CASE( "_handle_command unquoted key" ) {
 
 TEST_CASE( "_parse_command unquoted key" ) {
     tio_handler_t handler;
+    tio_handler_init(&handler);
 
     int called = 0;
     const char command[] = "{commandID:\"cmd1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
@@ -879,6 +885,7 @@ static const char* const malformed_commands[] = {
 
 TEST_CASE( "_parse_command malformed commands" ) {
     tio_handler_t handler;
+    tio_handler_init(&handler);
     for (const char* command : malformed_commands) {
         CAPTURE( command );
         int called = 0;
@@ -919,4 +926,77 @@ TEST_CASE( "_handle_command malformed commands" ) {
         CHECK( !connected );
         CHECK( handler._kii._req_headers == nullptr );
     }
+}
+
+// The steps that fail were printed to stdout under TIO_TRACE, which nothing
+// set. They go to the handler's logger now, which its kii and khc log to.
+TEST_CASE( "The handler logs a step of handling a command that failed" ) {
+    tio_handler_t handler;
+    tio_handler_init(&handler);
+    khct::cb::LoggerCtx log;
+    tio_handler_set_logger(&handler, log.get());
+    CHECK( handler._kii._logger == log.get() );
+    CHECK( handler._kii._khc._logger == log.get() );
+
+    char kii_buff[2048];
+    kii_set_buff(&handler._kii, kii_buff, sizeof(kii_buff));
+    kii_set_app_id(&handler._kii, "appid");
+    kii_set_site(&handler._kii, "api.kii.com");
+    strcpy(handler._kii._author.author_id, "thingid");
+
+    khct::cb::SockCtx http_ctx;
+    http_ctx.on_connect = [](void*, const char*, unsigned int) { return EBISU_SOCK_OK; };
+    http_ctx.on_send = [](void*, const char*, size_t length, size_t* out_sent_length) {
+        *out_sent_length = length;
+        return EBISU_SOCK_OK;
+    };
+    size_t resp_pos = 0;
+    const std::string resp = "HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\n\r\n";
+    http_ctx.on_recv = [&resp_pos, &resp](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        size_t n = resp.size() - resp_pos;
+        if (n > length_to_read) { n = length_to_read; }
+        memcpy(buffer, resp.data() + resp_pos, n);
+        resp_pos += n;
+        *out_actual_length = n;
+        return EBISU_SOCK_OK;
+    };
+    http_ctx.on_close = [](void*) { return EBISU_SOCK_OK; };
+    kii_set_http_socket(&handler._kii, http_ctx.socket());
+    char resp_hdr_buff[512];
+    khc_set_resp_header_buff(&handler._kii._khc, resp_hdr_buff, sizeof(resp_hdr_buff));
+
+    int called = 0;
+    const std::string command =
+        "{\"commandID\":\"c1\",\"actions\":[{\"alias1\":[{\"turnPower\":true}]}]}";
+    CHECK( _handle_command(&handler, command.c_str(), command.length(), cb_action_ok, &called)
+            != TIO_ERR_OK );
+    CHECK( called == 1 );
+#ifndef EBISU_NO_LOG
+    // khc's lines of the request, then the step.
+    CHECK( log.has(EBISU_LOG_DEBUG, "< HTTP/1.1 500 Internal Server Error") );
+    CHECK( log.lines.back() == std::make_pair(EBISU_LOG_DEBUG,
+            std::string("kii_get_resp_status: 500")) );
+#else
+    // Built without logging, nothing.
+    CHECK( log.lines.empty() );
+#endif
+
+    SECTION("and nothing without a logger") {
+        log.lines.clear();
+        tio_handler_set_logger(&handler, nullptr);
+        resp_pos = 0;
+        CHECK( _handle_command(&handler, command.c_str(), command.length(), cb_action_ok, &called)
+                != TIO_ERR_OK );
+        CHECK( log.lines.empty() );
+    }
+}
+
+TEST_CASE( "The updater gives its kii and khc the logger" ) {
+    tio_updater_t updater;
+    tio_updater_init(&updater);
+    CHECK( updater._kii._logger == nullptr );
+    khct::cb::LoggerCtx log;
+    tio_updater_set_logger(&updater, log.get());
+    CHECK( updater._kii._logger == log.get() );
+    CHECK( updater._kii._khc._logger == log.get() );
 }
