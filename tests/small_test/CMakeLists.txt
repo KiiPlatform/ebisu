@@ -62,10 +62,29 @@ ebisu_add_test_suite(small_test_core
     LABEL small
     WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core
     SOURCES
+        core/log_test.cpp
         core/mem_test.cpp
         core/str_test.cpp
         core/time_test.cpp
     LINK ebisu_core_objs)
+
+# platform's loggers, which write to a file in the build tree, and send to a
+# server of the test's own on the loopback.
+if(TARGET ebisu_loggers)
+    set(small_test_loggers_sources
+        loggers/stdio_logger_test.cpp
+        loggers/syslog_udp_logger_test.cpp)
+    if(UNIX)
+        list(APPEND small_test_loggers_sources loggers/syslog_logger_test.cpp)
+    endif()
+    ebisu_add_test_suite(small_test_loggers
+        LABEL small
+        WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR}
+        SOURCES ${small_test_loggers_sources}
+        # Core's objects, as the other suites link them, so that a Windows
+        # build's test doesn't need its DLL.
+        LINK ebisu_loggers ebisu_core_objs Threads::Threads)
+endif()
 
 # platform's POSIX port, which needs threads and nothing else. Linux only, as
 # the test reads a thread's attributes with pthread_getattr_np().
