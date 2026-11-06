@@ -1,0 +1,78 @@
+# The runner's Ubuntu mirror has been slow at times, a hundred KB/s or less,
+# and the one apt falls back to no faster, so that downloading mingw-w64 and
+# wine, 330 MB, outlasted a job's timeout. With the packages kept in the
+# Actions cache, a job downloads from a mirror only the package lists, some
+# 20 MB, and the packages that changed since the cache was saved.
+name: apt-get install, cached
+description: Installs Ubuntu packages with apt-get, keeping them in the Actions cache.
+inputs:
+  packages:
+    description: The packages to install, separated by spaces.
+    required: true
+  options:
+    description: Options for apt-get install, such as --no-install-recommends.
+    required: false
+    default: ''
+  update:
+    description: Whether to update the package lists first, which a job's later installs needn't.
+    required: false
+    default: 'true'
+runs:
+  using: composite
+  steps:
+    # A cache for each set of packages and image. An image of its own starts
+    # from the last image's cache, as most of its packages are the same.
+    - name: Name the cache
+      id: key
+      shell: bash
+      env:
+        PACKAGES: ${{ inputs.packages }}
+        OPTIONS: ${{ inputs.options }}
+      run: |
+        hash=$(printf '%s\n' "$OPTIONS" $PACKAGES | sha256sum | cut -c1-16)
+        echo "prefix=apt-$ImageOS-$hash-" >> "$GITHUB_OUTPUT"
+        echo "key=apt-$ImageOS-$hash-$ImageVersion" >> "$GITHUB_OUTPUT"
+        mkdir -p ~/apt-archives/partial
+    - name: Restore the packages
+      id: restore
+      uses: actions/cache/restore@v6
+      with:
+        path: ~/apt-archives/*.deb
+        key: ${{ steps.key.outputs.key }}
+        restore-keys: ${{ steps.key.outputs.prefix }}
+    # apt-get takes what it needs from the cached packages, and keeps what it
+    # downloads with them. A download that stalls for 30 seconds goes to the
+    # next mirror, rather than after the default two minutes. autoclean then
+    # drops the packages no list has any more, superseded by newer ones, so
+    # that a cache that starts from another doesn't keep growing.
+    - name: Install the packages
+      id: install
+      shell: bash
+      env:
+        PACKAGES: ${{ inputs.packages }}
+        OPTIONS: ${{ inputs.options }}
+        UPDATE: ${{ inputs.update }}
+      run: |
+        apt=(sudo apt-get -yq
+             -o Dir::Cache::Archives="$HOME/apt-archives"
+             -o APT::Keep-Downloaded-Packages=true
+             -o APT::Sandbox::User=root
+             -o Acquire::Retries=3
+             -o Acquire::http::Timeout=30
+             -o Acquire::https::Timeout=30)
+        if [ "$UPDATE" = true ]; then
+          "${apt[@]}" update
+        fi
+        "${apt[@]}" install $OPTIONS $PACKAGES
+        "${apt[@]}" autoclean
+        if compgen -G "$HOME/apt-archives/*.deb" > /dev/null; then
+          echo "packages=true" >> "$GITHUB_OUTPUT"
+        fi
+    # Unless it was the cache this run restored, or there was nothing to
+    # download, as when the image has every package already.
+    - name: Save the packages
+      if: steps.restore.outputs.cache-hit != 'true' && steps.install.outputs.packages == 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: ~/apt-archives/*.deb
+        key: ${{ steps.key.outputs.key }}

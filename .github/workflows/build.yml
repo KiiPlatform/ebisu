@@ -24,9 +24,9 @@ jobs:
       - name: Fetch tags
         run: git fetch --unshallow --tags --force
       - name: Setup build env
-        run: |
-          sudo apt-get -yq update
-          sudo apt-get -yq install g++ doxygen cmake libssl-dev git valgrind rsync
+        uses: ./.github/actions/apt-install
+        with:
+          packages: g++ doxygen cmake libssl-dev git valgrind rsync
       # The same presets developers use, so CI cannot drift from them. Only the
       # JUnit reporting is CI-specific.
       - name: configure
@@ -179,9 +179,9 @@ jobs:
       - name: Fetch tags
         run: git fetch --unshallow --tags --force
       - name: Setup build env
-        run: |
-          sudo apt-get -yq update
-          sudo apt-get -yq install g++ cmake libssl-dev git ${{ matrix.bits == 32 && 'gcc-multilib g++-multilib' || '' }}
+        uses: ./.github/actions/apt-install
+        with:
+          packages: g++ cmake libssl-dev git ${{ matrix.bits == 32 && 'gcc-multilib g++-multilib' || '' }}
       # jkii's tests read numbers in a locale whose decimal point is a comma,
       # which the runner image lacks. Under wine, Windows has one already.
       - name: Generate a locale with a decimal comma
@@ -202,12 +202,18 @@ jobs:
       # certificates with openssl, and is left out of the build without them.
       # The runner image has both; they are named here so that it cannot
       # quietly stop running.
-      - name: Setup mingw-w64 and wine
+      - name: Install mingw-w64 and wine
+        if: matrix.variant == 'mingw'
+        uses: ./.github/actions/apt-install
+        with:
+          packages: g++-mingw-w64-x86-64-posix wine wine64 python3 openssl
+          options: --no-install-recommends
+          update: false
+      - name: Setup wine
         if: matrix.variant == 'mingw'
         env:
           WINEDEBUG: -all
         run: |
-          sudo apt-get -yq install --no-install-recommends g++-mingw-w64-x86-64-posix wine wine64 python3 openssl
           # Ubuntu 26.04's wine leaves wineserver out of the PATH, where
           # tls_test.py looks for it.
           command -v wineserver > /dev/null || sudo ln -s "$(dpkg -L wine64 | grep -m1 '/wineserver$')" /usr/local/bin/wineserver
@@ -236,9 +242,10 @@ jobs:
       - name: Fetch tags
         run: git fetch --unshallow --tags --force
       - name: Setup build env
-        run: |
-          sudo apt-get -yq update
-          sudo apt-get -yq install --no-install-recommends cmake clang libclang-rt-dev
+        uses: ./.github/actions/apt-install
+        with:
+          packages: cmake clang libclang-rt-dev
+          options: --no-install-recommends
       - name: configure
         run: cmake --preset fuzz
       - name: build
@@ -362,19 +369,25 @@ jobs:
       - name: Fetch tags
         run: git fetch --unshallow --tags --force
       - name: Setup build env
-        run: |
-          sudo apt-get -yq update
-          sudo apt-get -yq install g++ cmake git ${{ matrix.platform == 'linux' && 'libssl-dev valgrind' || '' }}
+        uses: ./.github/actions/apt-install
+        with:
+          packages: g++ cmake git ${{ matrix.platform == 'linux' && 'libssl-dev valgrind' || '' }}
       # As in the small job. Here the tests also check the server's certificate,
       # with wine's crypt32, which needs a prefix wineboot has finished: one
       # still being written refuses every certificate. wineserver -w waits for
       # it.
-      - name: Setup mingw-w64 and wine
+      - name: Install mingw-w64 and wine
+        if: matrix.platform == 'mingw'
+        uses: ./.github/actions/apt-install
+        with:
+          packages: g++-mingw-w64-x86-64-posix wine wine64
+          options: --no-install-recommends
+          update: false
+      - name: Setup wine
         if: matrix.platform == 'mingw'
         env:
           WINEDEBUG: -all
         run: |
-          sudo apt-get -yq install --no-install-recommends g++-mingw-w64-x86-64-posix wine wine64
           # As in the small job.
           command -v wineserver > /dev/null || sudo ln -s "$(dpkg -L wine64 | grep -m1 '/wineserver$')" /usr/local/bin/wineserver
           wineboot --init
@@ -447,17 +460,23 @@ jobs:
       - name: Fetch tags
         run: git fetch --unshallow --tags --force
       - name: Setup build env
-        run: |
-          sudo apt-get -yq update
-          sudo apt-get -yq install g++ cmake git ${{ matrix.platform == 'linux' && 'libssl-dev valgrind' || '' }}
+        uses: ./.github/actions/apt-install
+        with:
+          packages: g++ cmake git ${{ matrix.platform == 'linux' && 'libssl-dev valgrind' || '' }}
       # As in the large job. The tests add the run's CA to this prefix's root
       # store, and remove it when they end.
-      - name: Setup mingw-w64 and wine
+      - name: Install mingw-w64 and wine
+        if: matrix.platform == 'mingw'
+        uses: ./.github/actions/apt-install
+        with:
+          packages: g++-mingw-w64-x86-64-posix wine wine64
+          options: --no-install-recommends
+          update: false
+      - name: Setup wine
         if: matrix.platform == 'mingw'
         env:
           WINEDEBUG: -all
         run: |
-          sudo apt-get -yq install --no-install-recommends g++-mingw-w64-x86-64-posix wine wine64
           # Ubuntu 26.04's wine leaves wineserver out of the PATH.
           command -v wineserver > /dev/null || sudo ln -s "$(dpkg -L wine64 | grep -m1 '/wineserver$')" /usr/local/bin/wineserver
           wineboot --init
@@ -499,9 +518,10 @@ jobs:
       - name: Fetch tags
         run: git fetch --unshallow --tags --force
       - name: Setup build env
-        run: |
-          sudo apt-get -yq update
-          sudo apt-get -yq install --no-install-recommends cmake gcc-arm-none-eabi libnewlib-arm-none-eabi
+        uses: ./.github/actions/apt-install
+        with:
+          packages: cmake gcc-arm-none-eabi libnewlib-arm-none-eabi
+          options: --no-install-recommends
       # Only for the header CMake generates, to compare with the samples'.
       - name: configure
         run: cmake --preset debug -DBUILD_TESTING=OFF
@@ -613,9 +633,10 @@ jobs:
           # For git describe, which ebisu_version.h takes the version from.
           fetch-depth: 0
       - name: Setup build env
-        run: |
-          sudo apt-get -yq update
-          sudo apt-get -yq install --no-install-recommends cmake gcc-arm-none-eabi libnewlib-arm-none-eabi qemu-system-arm
+        uses: ./.github/actions/apt-install
+        with:
+          packages: cmake gcc-arm-none-eabi libnewlib-arm-none-eabi qemu-system-arm
+          options: --no-install-recommends
       - name: build with the clock's floor in 2040
         run: |
           cmake -B build-refused -D EBISU_SAMPLE_CLOCK_FLOOR=2208988800
