@@ -4,12 +4,6 @@ target_include_directories(ebisu_khc_objs
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
 target_link_libraries(ebisu_khc_objs PUBLIC ebisu_core_objs)
-if(KHC_TRACE)
-    # Used only by khc/src/khc_state_impl.c. Previously added with
-    # ADD_DEFINITIONS in three separate components, which meant the khc sources
-    # were compiled with it once per component.
-    target_compile_definitions(ebisu_khc_objs PRIVATE KHC_TRACE)
-endif()
 ebisu_configure_target(ebisu_khc_objs)
 
 add_library(khc $<TARGET_OBJECTS:ebisu_khc_objs>)

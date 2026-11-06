@@ -13,6 +13,7 @@ extern "C"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <ebisu_log.h>
 #include <ebisu_socket.h>
 #include <ebisu_system.h>
 /* The library is compiled with hidden visibility, so what this header declares
@@ -316,6 +317,10 @@ typedef struct khc {
     void* _continue_data; /**< \private **/
 
     ebisu_system_t* _system; /**< \private **/
+    /* Where what khc does is logged, or NULL. */
+    ebisu_logger_t* _logger; /**< \private **/
+    /* How much of the request's body has been read to send. */
+    size_t _req_body_sent; /**< \private **/
     /* How long a request may take, or 0 for no limit. */
     uint32_t _timeout_ms; /**< \private **/
     /* When the request being performed started, by the system's clock. */
@@ -472,6 +477,24 @@ khc_code khc_perform(khc* khc);
  * \param [in] system The system, or NULL. It has to outlive the requests.
  */
 void khc_set_system(khc* khc, ebisu_system_t* system);
+
+/**
+ * \brief Set where khc logs what it does.
+ *
+ * At EBISU_LOG_DEBUG, each request as it goes: when connected, the request
+ * line, each header, and how long the body is, then the response's status
+ * line, each of its headers, and how long its body is. The credentials of
+ * Authorization, Proxy-Authorization, Cookie and Set-Cookie are left out, and
+ * what a body holds is never logged, as tokens, passwords and MQTT credentials
+ * travel in them. At EBISU_LOG_WARNING, a request that fails, with its
+ * khc_code, and a connection that didn't close. khc_init(khc*) sets none, and
+ * the resets leave it. Built with EBISU_NO_LOG, khc logs nothing.
+ *
+ * \param [out] khc instance.
+ * \param [in] logger The logger, or NULL for none. It has to outlive the
+ * requests.
+ */
+void khc_set_logger(khc* khc, ebisu_logger_t* logger);
 
 /**
  * \brief Set how long a request may take.

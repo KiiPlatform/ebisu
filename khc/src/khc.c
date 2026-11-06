@@ -159,6 +159,16 @@ khc_code khc_perform(khc* khc) {
     }
 
     khc_code res = khc->_result;
+    if (res != KHC_ERR_OK) {
+        _khc_log(khc, EBISU_LOG_WARNING, "%s %s%s failed: %s", khc->_method, khc->_host,
+                khc->_path, _khc_code_name(res));
+    } else if (khc->_resp_body_received > 0) {
+        _khc_log(khc, EBISU_LOG_DEBUG, "< (a body of %lu bytes)",
+                (unsigned long)khc->_resp_body_received);
+    }
+    if (khc->_close_failed) {
+        _khc_log(khc, EBISU_LOG_WARNING, "closing the connection to %s failed", khc->_host);
+    }
     khc->_state = KHC_STATE_IDLE;
     khc->_result = KHC_ERR_OK;
 
@@ -181,6 +191,7 @@ void khc_init(khc* khc) {
     khc->_cb_continue = NULL;
     khc->_continue_data = NULL;
     khc->_system = NULL;
+    khc->_logger = NULL;
     khc->_timeout_ms = 0;
 
     // User settings.
@@ -218,6 +229,7 @@ void khc_reset_except_request(khc* khc) {
     khc->_read_size = 0;
     khc->_read_req_end = false;
     khc->_req_body_left = 0;
+    khc->_req_body_sent = 0;
     khc->_req_frame_start = 0;
     khc->_req_frame_size = 0;
     khc->_resp_header_read_size = 0;

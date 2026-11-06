@@ -1,7 +1,12 @@
+#include <ebisu_log.h>
 #include <ebisu_socket.h>
 #include <ebisu_system.h>
 #include <functional>
 #include <stdint.h>
+#include <stdio.h>
+#include <string>
+#include <utility>
+#include <vector>
 
 // kii.h's, declared here for the khc tests, which don't have kii.h.
 struct kii_mqtt_message_t;
@@ -240,6 +245,61 @@ inline size_t cb_header(char *buffer, size_t size, void *userdata) {
 struct PushCtx {
     std::function<void(const kii_mqtt_message_t* message)> on_push;
 };
+
+struct LoggerCtx;
+
+struct MockLogger {
+    ebisu_logger_t base;
+    LoggerCtx* owner;
+};
+
+void mock_log(ebisu_logger_t* self, ebisu_log_level_t level, const char* fmt, va_list args);
+
+// A logger that keeps each line it is given, with its level.
+struct LoggerCtx {
+    typedef std::vector<std::pair<ebisu_log_level_t, std::string>> Lines;
+    Lines lines;
+    ebisu_logger_ops_t ops;
+    MockLogger logger;
+
+    LoggerCtx() {
+        ops.log = mock_log;
+        logger.base.ops = &ops;
+        logger.owner = this;
+    }
+    LoggerCtx(const LoggerCtx&) = delete;
+    LoggerCtx& operator=(const LoggerCtx&) = delete;
+
+    ebisu_logger_t* get() {
+        return &logger.base;
+    }
+
+    bool has(ebisu_log_level_t level, const std::string& line) const {
+        for (const auto& l : lines) {
+            if (l.first == level && l.second == line) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Whether any line has part, at any level.
+    bool mentions(const std::string& part) const {
+        for (const auto& l : lines) {
+            if (l.second.find(part) != std::string::npos) {
+                return true;
+            }
+        }
+        return false;
+    }
+};
+
+inline void mock_log(ebisu_logger_t* self, ebisu_log_level_t level, const char* fmt, va_list args) {
+    LoggerCtx* ctx = reinterpret_cast<MockLogger*>(self)->owner;
+    char line[1024];
+    vsnprintf(line, sizeof(line), fmt, args);
+    ctx->lines.emplace_back(level, line);
+}
 
 inline void cb_push(const kii_mqtt_message_t* message, void *userdata) {
     PushCtx* ctx = (PushCtx*)(userdata);

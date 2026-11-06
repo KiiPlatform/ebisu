@@ -514,6 +514,7 @@ typedef struct kii_t {
 
     KII_CB_MQTT_EVENT _cb_mqtt_event; /**< \private */
     void* _mqtt_event_data; /**< \private */
+    ebisu_logger_t* _logger; /**< \private */
 
     KII_CB_MQTT_MESSAGE _cb_mqtt_message; /**< \private */
     void* _mqtt_message_data; /**< \private */
@@ -2005,6 +2006,24 @@ void kii_set_cb_task_exit(kii_t* kii, KII_CB_TASK_EXIT cb_exit, void* userdata);
  * \param [in] userdata Given to cb.
  */
 void kii_set_cb_mqtt_event(kii_t* kii, KII_CB_MQTT_EVENT cb, void* userdata);
+
+/**
+ * \brief Set where kii logs what it does.
+ *
+ * What khc logs of each request, as khc_set_logger(khc*, ebisu_logger_t*) says:
+ * at EBISU_LOG_DEBUG, the request's and the response's lines and headers,
+ * without credentials or bodies, and at EBISU_LOG_WARNING, a request that
+ * failed. And what the MQTT task tells the callback set by
+ * kii_set_cb_mqtt_event(), the event's name and its detail: at
+ * EBISU_LOG_INFO, a CONNACK or SUBACK that accepts, and at EBISU_LOG_WARNING
+ * every other event. kii_init() sets none. Set it before starting the task.
+ * Built with EBISU_NO_LOG, kii logs nothing.
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] logger The logger, or NULL for none. It has to outlive the
+ * requests and the task.
+ */
+void kii_set_logger(kii_t* kii, ebisu_logger_t* logger);
 /**
  * \brief Set khc_slist (linked list) resource allocators.
 

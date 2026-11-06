@@ -244,9 +244,12 @@ With CMake:
   `tio/README.ARM.mkd` are gone. `cmake/arm-linux-gnueabihf.cmake` cross-compiles
   for armv7-a with hard floating point; see Building in the
   [README](./README.md#building) for another ARM target.
-- `KHC_TRACE` is off by default, where 1.x had it on. Pass `-DKHC_TRACE=ON` to
-  get the trace back. `TIO_TRACE`, which no option set in 1.x, is an option now,
-  and off too.
+- `KHC_TRACE`, which 1.x had on and printed every request and response to
+  stdout, bodies, tokens and passwords included, is gone, as is `TIO_TRACE`.
+  `khc_set_logger()`, `kii_set_logger()`, `tio_handler_set_logger()` and
+  `tio_updater_set_logger()` take a logger instead: at `EBISU_LOG_DEBUG`, it
+  gets each request's and response's lines and headers, without credentials or
+  bodies.
 
 Linking:
 

@@ -147,6 +147,7 @@ struct Request {
         khc_enable_insecure(http, false);
         khc_enable_absolute_target(http, false);
         khc_set_system(http, NULL);
+        khc_set_logger(http, NULL);
         khc_set_timeout_ms(http, 0);
         khc_set_cb_continue(http, NULL, NULL);
         // A setting too: khc_init() makes it and resets keep it. There is no

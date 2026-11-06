@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <string.h>
 #include "tio.h"
 #include "kii.h"
@@ -126,6 +127,24 @@ void tio_handler_set_cb_err(
     handler->_cb_err_data = userdata;
 }
 
+void tio_handler_set_logger(tio_handler_t* handler, ebisu_logger_t* logger)
+{
+    kii_set_logger(&handler->_kii, logger);
+}
+
+#ifndef EBISU_NO_LOG
+void _tio_log(kii_t* kii, ebisu_log_level_t level, const char* fmt, ...)
+{
+    va_list args;
+    if (kii->_logger == NULL) {
+        return;
+    }
+    va_start(args, fmt);
+    kii->_logger->ops->log(kii->_logger, level, fmt, args);
+    va_end(args);
+}
+#endif
+
 void tio_handler_set_cb_push(
         tio_handler_t* handler,
         TIO_CB_PUSH cb_push,
@@ -210,6 +229,10 @@ static void _cb_receive_push(const kii_mqtt_message_t* message, void* userdata) 
     }
     if (!skip) {
         tio_code_t handle_res = _handle_command(handler, message->payload, message->payload_length, handler->_cb_action, handler->_cb_action_data);
+        if (handle_res != TIO_ERR_OK) {
+            _tio_log(&handler->_kii, EBISU_LOG_WARNING, "failed to handle a command: tio_code_t %d",
+                    (int)handle_res);
+        }
         if (handle_res != TIO_ERR_OK && handler->_cb_err != NULL) {
             handler->_cb_err(handle_res, "Failed to handle command", handler->_cb_err_data);
         }
@@ -383,6 +406,11 @@ void tio_updater_set_cb_error(
     updater->_cb_err_data = userdata;
 }
 
+void tio_updater_set_logger(tio_updater_t* updater, ebisu_logger_t* logger)
+{
+    kii_set_logger(&updater->_kii, logger);
+}
+
 void tio_updater_set_buff(
         tio_updater_t* updater,
         char* buff,
@@ -478,6 +506,8 @@ static void* _update_state(void* data) {
             kii_code_t res = _tio_updater_upload(updater);
             if (res != KII_ERR_OK) {
                 tio_code_t code = _tio_convert_code(res);
+                _tio_log(&updater->_kii, EBISU_LOG_WARNING,
+                        "failed to upload the state: tio_code_t %d", (int)code);
                 if (updater->_cb_err != NULL) {
                     updater->_cb_err(code, "Failed to upload state", updater->_cb_err_data);
                 }

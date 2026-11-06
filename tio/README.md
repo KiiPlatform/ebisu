@@ -705,6 +705,8 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
     - `tio_handler_start()` (`TIO_CB_ACTION` callback)
     - `tio_handler_set_cb_err()`
         (Optional. In case set the error handler for debugging, etc.)
+    - `tio_handler_set_logger()`
+        (Optional. The logger the handler's requests, its MQTT task's events and the steps of a command that fail are logged to.)
 
     This task uses buffers set by following APIs.
 
@@ -728,6 +730,8 @@ The name of tasks executed by `tio_handler_t` and `tio_updater_t` listed bellow.
     - `tio_updater_start()` (`TIO_CB_SIZE`, `TIO_CB_READ` callbacks.)
     - `tio_updater_set_cb_error()`
         (Optional. In case set the error handler for debugging, etc.)
+    - `tio_updater_set_logger()`
+        (Optional. The logger the updater's requests, and a state it couldn't upload, are logged to.)
 
     This task uses buffers set by following APIs.
 

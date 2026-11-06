@@ -5,12 +5,6 @@ target_include_directories(ebisu_tio_objs
     PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 target_link_libraries(ebisu_tio_objs
     PRIVATE ebisu_kii_objs ebisu_khc_objs ebisu_core_objs ebisu_jkii_objs)
-if(TIO_TRACE)
-    # Used only by tio/command_parser.c. This never took effect before: the
-    # option was declared as KHC_TRACE a second time by mistake, while the
-    # guard tested TIO_TRACE, which nothing defined.
-    target_compile_definitions(ebisu_tio_objs PRIVATE TIO_TRACE)
-endif()
 ebisu_configure_target(ebisu_tio_objs)
 
 # tio alone, linking kii and what kii links.
