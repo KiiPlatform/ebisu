@@ -786,6 +786,13 @@
       <anchor>a7d723df34a7a3ec7b0813d4949375fda</anchor>
       <arglist>)(ebisu_socket_t *self, long *out_detail)</arglist>
     </member>
+    <member kind="variable">
+      <type>bool(*</type>
+      <name>recv_wait</name>
+      <anchorfile>structebisu__socket__ops__t.html</anchorfile>
+      <anchor>a4b245d596fc7e2c6937a70794b6cd031</anchor>
+      <arglist>)(ebisu_socket_t *self, uint32_t timeout_ms)</arglist>
+    </member>
   </compound>
   <compound kind="struct">
     <name>ebisu_socket_t</name>

@@ -97,6 +97,8 @@ Data Fields</h2></td></tr>
 <tr class="memdesc:af8c5f0ab8132bb300aa61db25a4a8073"><td class="mdescLeft">&#160;</td><td class="mdescRight">Whether the last receive failed because its timeout ran out.  <br /></td></tr>
 <tr class="memitem:a7d723df34a7a3ec7b0813d4949375fda" id="r_a7d723df34a7a3ec7b0813d4949375fda"><td class="memItemLeft" align="right" valign="top"><a class="el" href="ebisu__socket_8h.html#a19f16391089f04ceb79936a6ecc26963">ebisu_sock_error_t</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7d723df34a7a3ec7b0813d4949375fda">last_error</a> )(<a class="el" href="structebisu__socket__t.html">ebisu_socket_t</a> *self, long *out_detail)</td></tr>
 <tr class="memdesc:a7d723df34a7a3ec7b0813d4949375fda"><td class="mdescLeft">&#160;</td><td class="mdescRight">Why the last operation that returned EBISU_SOCK_FAIL failed.  <br /></td></tr>
+<tr class="memitem:a4b245d596fc7e2c6937a70794b6cd031" id="r_a4b245d596fc7e2c6937a70794b6cd031"><td class="memItemLeft" align="right" valign="top">bool(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4b245d596fc7e2c6937a70794b6cd031">recv_wait</a> )(<a class="el" href="structebisu__socket__t.html">ebisu_socket_t</a> *self, uint32_t timeout_ms)</td></tr>
+<tr class="memdesc:a4b245d596fc7e2c6937a70794b6cd031"><td class="mdescLeft">&#160;</td><td class="mdescRight">Waits for recv to have something to return.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>What a socket does. </p>
@@ -220,6 +222,32 @@ Data Fields</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>true if the receive failed because its timeout ran out, false if it failed for any other reason. </dd></dl>
+
+</div>
+</div>
+<a id="a4b245d596fc7e2c6937a70794b6cd031" name="a4b245d596fc7e2c6937a70794b6cd031"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4b245d596fc7e2c6937a70794b6cd031">&#9670;&#160;</a></span>recv_wait</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool(* ebisu_socket_ops_t::recv_wait) (<a class="el" href="structebisu__socket__t.html">ebisu_socket_t</a> *self, uint32_t timeout_ms)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Waits for recv to have something to return. </p>
+<p>Optional, and asked only by the MQTT task, when kii_mqtt_publish() may give it a message to send: it waits for the next packet a little at a time, rather than in a recv that can last the receive timeout, so that a message given meanwhile is sent soon. Without it, the task waits in recv. It is called from the task that calls the other operations, never at the same time as one.</p>
+<p>It returns once recv would return without waiting: with data, counting what the socket has received and not yet returned, such as decrypted TLS data, with the end of the stream, or with a failure. Waiting must not change what recv then returns. It may return true for what turns out to be no data, such as a TLS record without any, or the start of a record: recv then waits, as it would have.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">self</td><td>The socket. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">timeout_ms</td><td>The longest to wait, in milliseconds. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true once recv would return without waiting, false if timeout_ms ran out first. </dd></dl>
 
 </div>
 </div>

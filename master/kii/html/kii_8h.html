@@ -127,6 +127,8 @@ Macros</h2></td></tr>
 <tr class="memitem:a48f058506a462a68bdf8fbd4c661accf" id="r_a48f058506a462a68bdf8fbd4c661accf"><td class="memItemLeft" align="right" valign="top"><a id="a48f058506a462a68bdf8fbd4c661accf" name="a48f058506a462a68bdf8fbd4c661accf"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>KII_TASK_NAME_MQTT</b>&#160;&#160;&#160;&quot;kii_mqtt_task&quot;</td></tr>
 <tr class="memdesc:a48f058506a462a68bdf8fbd4c661accf"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT task name. The name task_create of the system set by <a class="el" href="#a19398ca6a022a1025714df3ce49e4389" title="Set the system: tasks, delays and a monotonic clock.">kii_set_system()</a> is given. <br /></td></tr>
+<tr class="memitem:a4c873bd2d4508714a68d53124659f0d6" id="r_a4c873bd2d4508714a68d53124659f0d6"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4c873bd2d4508714a68d53124659f0d6">KII_MQTT_RECV_WAIT_TURN_MS</a>&#160;&#160;&#160;100</td></tr>
+<tr class="memdesc:a4c873bd2d4508714a68d53124659f0d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">How long, in milliseconds, the MQTT task waits for a packet at a time while <a class="el" href="#acb549044e84222521934c23cc95ab84d" title="Publish a message through the MQTT task, and wait until it is done.">kii_mqtt_publish()</a> may give it a message, with a socket that has recv_wait.  <br /></td></tr>
 <tr class="memitem:a954de624a9c08e935ab8ded034ee0b95" id="r_a954de624a9c08e935ab8ded034ee0b95"><td class="memItemLeft" align="right" valign="top"><a id="a954de624a9c08e935ab8ded034ee0b95" name="a954de624a9c08e935ab8ded034ee0b95"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>KII_AUTHOR_ID_MAX_SIZE</b>&#160;&#160;&#160;128</td></tr>
 <tr class="memdesc:a954de624a9c08e935ab8ded034ee0b95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Size of <a class="el" href="structkii__author__t.html#a7ef55277d3fc92e56bf79e3f1838891e" title="ID of the author.">kii_author_t::author_id</a>. <br /></td></tr>
@@ -523,6 +525,23 @@ Functions</h2></td></tr>
 
 <p>Size of the application ID field written by <a class="el" href="#a9bf8c483fe349d5d8cb7f417f8832b90" title="Set Application ID.">kii_set_app_id()</a>. </p>
 <p>A longer application ID is truncated to fit. </p>
+
+</div>
+</div>
+<a id="a4c873bd2d4508714a68d53124659f0d6" name="a4c873bd2d4508714a68d53124659f0d6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4c873bd2d4508714a68d53124659f0d6">&#9670;&#160;</a></span>KII_MQTT_RECV_WAIT_TURN_MS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define KII_MQTT_RECV_WAIT_TURN_MS&#160;&#160;&#160;100</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>How long, in milliseconds, the MQTT task waits for a packet at a time while <a class="el" href="#acb549044e84222521934c23cc95ab84d" title="Publish a message through the MQTT task, and wait until it is done.">kii_mqtt_publish()</a> may give it a message, with a socket that has recv_wait. </p>
+<p>The task sends a message given during a turn when the turn ends, so a shorter one has it sent sooner, and wakes the task more often. It can be defined otherwise when kii is built, as 1 or more. </p>
 
 </div>
 </div>
@@ -1972,7 +1991,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 </div><div class="memdoc">
 
 <p>Publish a message through the MQTT task, and wait until it is done. </p>
-<p>The task sends it on its connection, as the socket can't be used by two tasks at once. It does so once it is connected and subscribed, between receives: when the one under way returns, which with nothing arriving is when the timeout set by <a class="el" href="#a812b57be04fe37fc4a7ec66679f88db4" title="Set timeout of receiving data from socket user for MQTT(S).">kii_set_mqtt_to_sock_recv()</a> runs out. A shorter timeout has it sent sooner. While the task can't reach the broker, the message waits.</p>
+<p>The task sends it on its connection, as the socket can't be used by two tasks at once. It does so once it is connected and subscribed, between receives. With a socket that has recv_wait, the task waits for each packet KII_MQTT_RECV_WAIT_TURN_MS at a time, 100 milliseconds unless defined otherwise, and sends the message at the end of the turn. Without one, it sends it once the receive under way returns, which with nothing arriving is when the timeout set by <a class="el" href="#a812b57be04fe37fc4a7ec66679f88db4" title="Set timeout of receiving data from socket user for MQTT(S).">kii_set_mqtt_to_sock_recv()</a> runs out, so a shorter timeout has it sent sooner. While the task can't reach the broker, the message waits.</p>
 <p>At QoS 0, it is done once sent. At QoS 1, once the broker acknowledges it with PUBACK: if the connection is lost before, the task sends it again on the next, with DUP, so the broker may get it twice. Whether the broker takes it, and who receives it, is the broker's: one may acknowledge a message it drops, or close the connection. The same with MQTT 3.1 and 3.1.1.</p>
 <p>The task has one message at a time. A call made while another's message is not yet done waits for it first, within its own timeout_ms.</p>
 <p>Not to be called from the task, such as from its callbacks: it would wait for the task, which waits for the callback to return, until timeout_ms ran out.</p>
@@ -3147,6 +3166,7 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
 <p>Its recv returns EBISU_SOCK_FAIL when the receive timeout runs out with nothing received: the task takes EBISU_SOCK_OK with 0 bytes for the end of the stream, and connects again.</p>
 <p>While the task waits for the next message, an EBISU_SOCK_FAIL from recv comes routinely from the timeout on an idle connection, and also from a lost connection. Only the socket can tell which, so the task asks its recv_timed_out. If that returns false, the task closes the socket and connects again. If it returns true, the task goes on waiting, and sends PINGREQ when the keep-alive interval requires. If the socket has no recv_timed_out, every such EBISU_SOCK_FAIL is taken for a timeout. A lost connection is then noticed only when a PINGREQ cannot be sent or goes unanswered, so with a keep-alive interval of 0 it is not noticed at all.</p>
 <p>recv_timed_out is asked only in that wait. A receive that fails partway through a message, or while waiting for the broker to answer CONNECT or SUBSCRIBE, makes the task connect again whatever the cause.</p>
+<p>With a lock set by <a class="el" href="#aa023d53ec93bc4842161df21fcb91900" title="Set the lock kii_mqtt_publish() shares with the MQTT task.">kii_set_mqtt_lock()</a>, for <a class="el" href="#acb549044e84222521934c23cc95ab84d" title="Publish a message through the MQTT task, and wait until it is done.">kii_mqtt_publish()</a>, the task waits for the next message with the socket's recv_wait, if it has one, KII_MQTT_RECV_WAIT_TURN_MS at a time, and receives only once something has come. A message to publish then waits no longer than a turn.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>

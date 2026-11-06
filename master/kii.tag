@@ -26,6 +26,13 @@
     </member>
     <member kind="define">
       <type>#define</type>
+      <name>KII_MQTT_RECV_WAIT_TURN_MS</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a4c873bd2d4508714a68d53124659f0d6</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
       <name>KII_AUTHOR_ID_MAX_SIZE</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>a954de624a9c08e935ab8ded034ee0b95</anchor>
