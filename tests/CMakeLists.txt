@@ -103,8 +103,15 @@ add_subdirectory(small_test)
 # Checked when it builds rather than by ctest: nothing in it runs.
 add_subdirectory(header_check)
 
-# platform's Schannel port, run under wine.
-if(WIN32 AND CMAKE_CROSSCOMPILING_EMULATOR)
+# The ports built without logging too, and a look for their messages in what
+# that builds.
+if(EBISU_LOG)
+    add_subdirectory(no_log)
+endif()
+
+# platform's Schannel port, run under wine, whose test looks for what the port
+# logs.
+if(WIN32 AND CMAKE_CROSSCOMPILING_EMULATOR AND EBISU_LOG)
     add_subdirectory(schannel)
 endif()
 

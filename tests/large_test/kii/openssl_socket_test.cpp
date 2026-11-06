@@ -926,10 +926,12 @@ std::string stderr_of(const std::function<void()>& f)
     return out;
 }
 
+#ifndef EBISU_NO_LOG
 bool starts_with(const std::string& s, const std::string& prefix)
 {
     return s.compare(0, prefix.size(), prefix) == 0;
 }
+#endif
 
 bool has(const std::string& s, const std::string& part)
 {
@@ -938,6 +940,7 @@ bool has(const std::string& s, const std::string& part)
 
 }
 
+#ifndef EBISU_NO_LOG
 // The port printed why it failed with printf(), to stdout, where an
 // application running as a daemon had no say in where it went.
 TEST_CASE( "The OpenSSL socket says why it failed to its logger, or to stderr" ) {
@@ -992,3 +995,46 @@ TEST_CASE( "The OpenSSL socket says why it failed to its logger, or to stderr" )
         CHECK( err.find('\n', at) != std::string::npos );
     }
 }
+#else
+// Built without logging, it says why it failed through last_error alone.
+TEST_CASE( "The OpenSSL socket built without logging logs nothing, to its logger or to stderr" ) {
+    long detail = 0;
+
+    SECTION("a host that doesn't resolve") {
+        LogCtx log;
+        ebisu_openssl_socket_t sock;
+        ebisu_openssl_socket_init(&sock, 0, 0);
+        ebisu_openssl_socket_set_logger(&sock, log.get());
+        std::string err = stderr_of([&sock] {
+            CHECK( sock.base.ops->connect(&sock.base, "ebisu-test.invalid", 443) == EBISU_SOCK_FAIL );
+        });
+        CHECK_FALSE( has(err, "failed to") );
+        CHECK( log.messages.empty() );
+        CHECK( sock.base.ops->last_error(&sock.base, &detail) == EBISU_SOCK_ERROR_DNS );
+    }
+
+    SECTION("a certificate the socket doesn't trust") {
+        LocalServer server;
+        REQUIRE( server.listening );
+        LogCtx log;
+        ebisu_openssl_socket_t sock;
+        ebisu_openssl_socket_init(&sock, 5, 5);
+        ebisu_openssl_socket_set_logger(&sock, log.get());
+        std::string err = stderr_of([&sock, &server] {
+            CHECK( connect_to(&sock, server) == EBISU_SOCK_FAIL );
+        });
+        CHECK_FALSE( has(err, "server certificate") );
+        CHECK( log.messages.empty() );
+        CHECK( sock.base.ops->last_error(&sock.base, &detail) == EBISU_SOCK_ERROR_VERIFY );
+    }
+
+    SECTION("without a logger") {
+        ebisu_openssl_socket_t sock;
+        ebisu_openssl_socket_init(&sock, 0, 0);
+        std::string err = stderr_of([&sock] {
+            CHECK( sock.base.ops->connect(&sock.base, "ebisu-test.invalid", 443) == EBISU_SOCK_FAIL );
+        });
+        CHECK_FALSE( has(err, "failed to") );
+    }
+}
+#endif

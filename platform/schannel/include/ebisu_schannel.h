@@ -124,6 +124,9 @@ void ebisu_schannel_socket_set_clock(ebisu_schannel_socket_t* sock, ebisu_clock_
  * connect, a certificate refused and why, Schannel's or Winsock's error, with
  * the system's text for it. A receive that times out isn't one.
  *
+ * Built with EBISU_NO_LOG, as -DEBISU_LOG=OFF builds it, the socket logs
+ * nothing, to the logger or to stderr.
+ *
  * \param [out] sock The socket.
  * \param [in] logger The logger, which has to outlive the socket, or NULL for
  * stderr.

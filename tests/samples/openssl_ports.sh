@@ -68,8 +68,17 @@ g++ -std=c++11 "${tinc[@]}" -c /src/tests/large_test/kii/openssl_socket_test.cpp
 g++ -std=c++11 "${tinc[@]}" -c /src/tests/small_test/tio/posix_test.cpp -o posix_test.o
 g++ main.o openssl_test.o clock.o openssl.o "${libs[@]}" -o openssl_test
 g++ main.o posix_test.o posix.o -lpthread -o posix_test
+# And without logging, as -DEBISU_LOG=OFF builds it, whose test checks that
+# nothing is logged.
+gcc "${cflags[@]}" -DEBISU_NO_LOG "${inc[@]}" -c /src/platform/openssl/src/ebisu_openssl.c \
+    -o openssl_no_log.o
+g++ -std=c++11 -DEBISU_NO_LOG "${tinc[@]}" -c /src/tests/large_test/kii/openssl_socket_test.cpp \
+    -o openssl_no_log_test.o
+g++ main.o openssl_no_log_test.o clock.o openssl_no_log.o "${libs[@]}" -o openssl_no_log_test
 
 echo "OpenSSL port:"
 timeout 300 ./openssl_test
+echo "OpenSSL port, without logging:"
+timeout 300 ./openssl_no_log_test
 echo "POSIX port:"
 timeout 120 ./posix_test

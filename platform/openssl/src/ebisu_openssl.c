@@ -74,6 +74,13 @@ static void ensure_openssl(void)
 
 static int verify_callback(int preverify_ok, X509_STORE_CTX* store);
 
+#ifdef EBISU_NO_LOG
+/* Built without logging, a diagnostic is left out, its message too, and its
+   arguments aren't evaluated. */
+#define log_to(logger, level, ...) ((void)0)
+#define log_ssl_error(logger, what) ((void)0)
+#define log_ssl_failure(logger, what, ssl_error, saved_errno) ((void)0)
+#else
 #if defined(__GNUC__) || defined(__clang__)
 static void log_to(ebisu_logger_t* logger, ebisu_log_level_t level, const char* fmt, ...)
     __attribute__((format(printf, 3, 4)));
@@ -93,6 +100,16 @@ static void log_to(ebisu_logger_t* logger, ebisu_log_level_t level, const char* 
     }
     va_end(args);
 }
+
+/* Logs what failed with the first of OpenSSL's errors, which it takes off the
+   queue. */
+static void log_ssl_error(ebisu_logger_t* logger, const char* what)
+{
+    char sslErrStr[120];
+    ERR_error_string_n(ERR_get_error(), sslErrStr, 120);
+    log_to(logger, EBISU_LOG_ERROR, "failed to %s: %s", what, sslErrStr);
+}
+#endif
 
 /* The sessions of the last connections to a few hosts, each offered to the
    next connection to the same host and port to resume: the server may take it
@@ -488,6 +505,7 @@ static void clear_errors(void)
     errno = 0;
 }
 
+#ifndef EBISU_NO_LOG
 static void log_ssl_failure(ebisu_logger_t* logger, const char* what, int ssl_error,
         int saved_errno)
 {
@@ -495,13 +513,12 @@ static void log_ssl_failure(ebisu_logger_t* logger, const char* what, int ssl_er
         log_to(logger, EBISU_LOG_ERROR, "failed to %s: errno=%d: %s", what, saved_errno,
                 strerror(saved_errno));
     } else if (ssl_error == SSL_ERROR_SSL) {
-        char sslErrStr[120];
-        ERR_error_string_n(ERR_get_error(), sslErrStr, 120);
-        log_to(logger, EBISU_LOG_ERROR, "failed to %s: %s", what, sslErrStr);
+        log_ssl_error(logger, what);
     } else {
         log_to(logger, EBISU_LOG_ERROR, "failed to %s: SSL_get_error()=%d", what, ssl_error);
     }
 }
+#endif
 
 static int64_t monotonic_ms(void)
 {
@@ -890,9 +907,7 @@ static ebisu_sock_code_t
                 error = EBISU_SOCK_ERROR_TLS;
                 detail = (long)ERR_peek_error();
             }
-            char sslErrStr[120];
-            ERR_error_string_n(ERR_get_error(), sslErrStr, 120);
-            log_to(ctx->logger, EBISU_LOG_ERROR, "failed to connect: %s", sslErrStr);
+            log_ssl_error(ctx->logger, "connect");
         }
         goto fail;
     }
@@ -1048,9 +1063,7 @@ static ebisu_sock_code_t
         if (ret < 0) {
             int sslErr = SSL_get_error(ctx->ssl, ret);
             if (sslErr != SSL_ERROR_SYSCALL && sslErr != SSL_ERROR_ZERO_RETURN) {
-                char sslErrStr[120];
-                ERR_error_string_n(ERR_get_error(), sslErrStr, 120);
-                log_to(ctx->logger, EBISU_LOG_ERROR, "failed to shutdown: %s", sslErrStr);
+                log_ssl_error(ctx->logger, "shutdown");
                 shutdown_ok = 0;
             }
             /* Otherwise the peer closed the transport without a close_notify,

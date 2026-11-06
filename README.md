@@ -219,6 +219,13 @@ cmake -B build/small -DCMAKE_BUILD_TYPE=MinSizeRel -DBUILD_SHARED_LIBS=OFF \
     -DEBISU_MIN_SIZE=ON -DBUILD_TESTING=OFF
 ```
 
+`-DEBISU_LOG=OFF` leaves out what ebisu logs itself, the ports' diagnostics,
+their messages too: with GCC at `-Os` on x86-64, the OpenSSL port's code goes
+from 6.5 KB to 5.2 KB, and the Schannel port's from 7.1 KB to 5.3 KB. A build
+without CMake defines `EBISU_NO_LOG` for the same. A socket's `last_error`
+still says why an operation failed, and an application's loggers still take
+its own messages.
+
 `tests/samples/size_report.sh` builds the libraries each way and reports their
 size, and that of a thing for a Cortex-M3 linked against them, as CI does. For
 that thing, with GCC 13, `EBISU_MIN_SIZE` takes the text, code and constant

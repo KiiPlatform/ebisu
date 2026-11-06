@@ -15,6 +15,16 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(KHC_TRACE "Trace KHC activity to stdout" OFF)
 option(TIO_TRACE "Trace TIO activity to stdout" OFF)
 
+# What ebisu logs itself: the ports' diagnostics, to the logger set on a socket
+# or to stderr. OFF leaves all of it out of the libraries, messages and all,
+# for a device short of flash, as defining EBISU_NO_LOG does in a build without
+# CMake. An application's loggers still take its own messages, and a socket's
+# last_error still says why an operation failed.
+option(EBISU_LOG "Compile in what ebisu logs" ON)
+if(NOT EBISU_LOG)
+    add_compile_definitions(EBISU_NO_LOG)
+endif()
+
 # On by default so a warning cannot quietly return: the four fixed in #192 sat
 # unnoticed for years because the build target only ran doxygen and compiled
 # nothing.
