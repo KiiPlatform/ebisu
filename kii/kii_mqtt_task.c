@@ -37,6 +37,10 @@ static void _event(kii_t* kii, kii_mqtt_event_t event, uint32_t detail)
 #define PUBLISH_POLL_MS 10
 /* The longest remaining length four bytes can carry. */
 #define MQTT_REMAINING_LENGTH_MAX ((size_t)268435455UL)
+/* A turn of 0 would have the task wait for a packet without ever waiting. */
+#if KII_MQTT_RECV_WAIT_TURN_MS < 1
+#error "KII_MQTT_RECV_WAIT_TURN_MS must be 1 or more"
+#endif
 
 /* What CONNECT names the version of MQTT it speaks with: the protocol name,
  * and the protocol level. */
@@ -1111,6 +1115,32 @@ static uint32_t _to_recv_ms(const kii_t* kii)
     return kii->_mqtt_to_recv_sec * 1000;
 }
 
+// Waits for a packet to start arriving, a turn at a time, until the receive
+// timeout runs out or a message is given to send, which the task then sends
+// rather than wait on. Whether one is arriving, and how long it waited.
+static bool _mqtt_wait_for_packet(kii_t* kii, uint32_t* out_waited_ms)
+{
+    ebisu_socket_t* sock = kii->_mqtt_socket;
+    // 0 for none, as the socket has it.
+    const uint32_t to_recv_ms = _to_recv_ms(kii);
+    uint32_t waited_ms = 0;
+    for (;;) {
+        uint32_t turn_ms = KII_MQTT_RECV_WAIT_TURN_MS;
+        if (to_recv_ms > 0 && to_recv_ms - waited_ms < turn_ms) {
+            turn_ms = to_recv_ms - waited_ms;
+        }
+        if (sock->ops->recv_wait(sock, turn_ms)) {
+            *out_waited_ms = waited_ms;
+            return true;
+        }
+        waited_ms = waited_ms > UINT32_MAX - turn_ms ? UINT32_MAX : waited_ms + turn_ms;
+        if (_publish_queued(kii) || (to_recv_ms > 0 && waited_ms >= to_recv_ms)) {
+            *out_waited_ms = waited_ms;
+            return false;
+        }
+    }
+}
+
 void _mqtt_state_recv_ready(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
@@ -1132,6 +1162,16 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
     }
     if (_publish_take(kii)) {
         task_info->task_state = KII_MQTT_ST_SEND_PUBLISH;
+        return;
+    }
+    // Where a message can be given, and the socket can wait for a packet
+    // without receiving it, the message needn't wait for a receive that lasts
+    // up to its timeout. What the task waited counts as a receive that timed
+    // out would, with no wait after it, as it waited already.
+    uint32_t waited_ms = 0;
+    if (kii->_mqtt_lock != NULL && kii->_mqtt_socket->ops->recv_wait != NULL &&
+            !_mqtt_wait_for_packet(kii, &waited_ms)) {
+        _add_elapsed_ms(state, waited_ms);
         return;
     }
     kii_mqtt_fixed_header fh;

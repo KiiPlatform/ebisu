@@ -28,6 +28,19 @@ extern "C" {
  */
 #define KII_TASK_NAME_MQTT "kii_mqtt_task"
 
+/**
+ * \brief How long, in milliseconds, the MQTT task waits for a packet at a time
+ * while kii_mqtt_publish() may give it a message, with a socket that has
+ * recv_wait.
+ *
+ * The task sends a message given during a turn when the turn ends, so a
+ * shorter one has it sent sooner, and wakes the task more often. It can be
+ * defined otherwise when kii is built, as 1 or more.
+ */
+#ifndef KII_MQTT_RECV_WAIT_TURN_MS
+#define KII_MQTT_RECV_WAIT_TURN_MS 100
+#endif
+
 /* Sizes of the fixed buffers embedded in the types below. Each includes the
  * terminating null, so the longest value a field can hold is one less. */
 
@@ -1283,10 +1296,13 @@ void kii_set_cb_mqtt_credentials(kii_t* kii, KII_CB_MQTT_CREDENTIALS cb, void* u
  *
  * The task sends it on its connection, as the socket can't be used by two
  * tasks at once. It does so once it is connected and subscribed, between
- * receives: when the one under way returns, which with nothing arriving is
- * when the timeout set by kii_set_mqtt_to_sock_recv() runs out. A shorter
- * timeout has it sent sooner. While the task can't reach the broker, the
- * message waits.
+ * receives. With a socket that has recv_wait, the task waits for each packet
+ * KII_MQTT_RECV_WAIT_TURN_MS at a time, 100 milliseconds unless defined
+ * otherwise, and sends the message at the end of the turn. Without one,
+ * it sends it once the receive under way returns, which with nothing arriving
+ * is when the timeout set by kii_set_mqtt_to_sock_recv() runs out, so a
+ * shorter timeout has it sent sooner. While the task can't reach the broker,
+ * the message waits.
  *
  * At QoS 0, it is done once sent. At QoS 1, once the broker acknowledges it
  * with PUBACK: if the connection is lost before, the task sends it again on the
@@ -1838,6 +1854,11 @@ void kii_set_mqtt_clean_session(kii_t* kii, bool clean_session);
  * recv_timed_out is asked only in that wait. A receive that fails partway
  * through a message, or while waiting for the broker to answer CONNECT or
  * SUBSCRIBE, makes the task connect again whatever the cause.
+ *
+ * With a lock set by kii_set_mqtt_lock(), for kii_mqtt_publish(), the task
+ * waits for the next message with the socket's recv_wait, if it has one,
+ * KII_MQTT_RECV_WAIT_TURN_MS at a time, and receives only once something has
+ * come. A message to publish then waits no longer than a turn.
  *
  * \param [out] kii kii_t instance.
  * \param [in] socket The socket. It has to outlive the task.

@@ -23,6 +23,7 @@ ebisu_sock_code_t mock_recv(ebisu_socket_t* self, char* buffer, size_t length_to
 ebisu_sock_code_t mock_close(ebisu_socket_t* self);
 bool mock_recv_timed_out(ebisu_socket_t* self);
 ebisu_sock_error_t mock_last_error(ebisu_socket_t* self, long* out_detail);
+bool mock_recv_wait(ebisu_socket_t* self, uint32_t timeout_ms);
 
 // A socket whose operations call these. The first argument each gets is the
 // SockCtx. ops is the SockCtx's own, so a test may leave an operation out.
@@ -35,6 +36,9 @@ struct SockCtx {
     std::function<bool(void* socket_context)> on_recv_timed_out;
     // Unset, the socket can't tell why it failed.
     std::function<ebisu_sock_error_t(long* out_detail)> on_last_error;
+    // Called if ops.recv_wait is set to mock_recv_wait, which it isn't unless
+    // a test sets it.
+    std::function<bool(uint32_t timeout_ms)> on_recv_wait;
     ebisu_socket_ops_t ops;
     MockSocket sock;
 
@@ -45,6 +49,7 @@ struct SockCtx {
         ops.close = mock_close;
         ops.recv_timed_out = mock_recv_timed_out;
         ops.last_error = mock_last_error;
+        ops.recv_wait = NULL;
         sock.base.ops = &ops;
         sock.owner = this;
     }
@@ -88,6 +93,11 @@ inline bool mock_recv_timed_out(ebisu_socket_t* self) {
 inline ebisu_sock_error_t mock_last_error(ebisu_socket_t* self, long* out_detail) {
     SockCtx* ctx = sock_ctx_of(self);
     return ctx->on_last_error ? ctx->on_last_error(out_detail) : EBISU_SOCK_ERROR_NONE;
+}
+
+inline bool mock_recv_wait(ebisu_socket_t* self, uint32_t timeout_ms) {
+    SockCtx* ctx = sock_ctx_of(self);
+    return ctx->on_recv_wait(timeout_ms);
 }
 
 // A socket for what only has to be set, never used: calling it throws.

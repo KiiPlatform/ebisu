@@ -225,7 +225,9 @@ be called again with the same arguments.
   when the request ends, whether it succeeded or not. It is not called when
   connecting fails.
 
-`recv_timed_out`, the fifth, is for kii's MQTT task, and `khc` doesn't call it.
+`recv_timed_out`, the fifth, is for kii's MQTT task, and `khc` doesn't call it,
+nor `recv_wait`, the seventh, optional too, with which the MQTT task waits for
+a packet a little at a time while it may have a message to publish.
 `last_error`, the sixth, optional too, says why the last operation that returned
 `EBISU_SOCK_FAIL` failed: a host that didn't resolve, an address that refused,
 TLS, a certificate refused, a timeout, a peer that closed, each with a detail

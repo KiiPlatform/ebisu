@@ -142,6 +142,29 @@ typedef struct ebisu_socket_ops_t {
      * \return Why, or EBISU_SOCK_ERROR_NONE if the socket can't tell.
      */
     ebisu_sock_error_t (*last_error)(ebisu_socket_t* self, long* out_detail);
+
+    /** \brief Waits for recv to have something to return.
+     *
+     * Optional, and asked only by the MQTT task, when kii_mqtt_publish() may
+     * give it a message to send: it waits for the next packet a little at a
+     * time, rather than in a recv that can last the receive timeout, so that a
+     * message given meanwhile is sent soon. Without it, the task waits in recv.
+     * It is called from the task that calls the other operations, never at
+     * the same time as one.
+     *
+     * It returns once recv would return without waiting: with data, counting
+     * what the socket has received and not yet returned, such as decrypted
+     * TLS data, with the end of the stream, or with a failure. Waiting must not
+     * change what recv then returns. It may return true for what turns out to
+     * be no data, such as a TLS record without any, or the start of a record:
+     * recv then waits, as it would have.
+     *
+     * \param [in] self The socket.
+     * \param [in] timeout_ms The longest to wait, in milliseconds.
+     * \return true once recv would return without waiting, false if timeout_ms
+     * ran out first.
+     */
+    bool (*recv_wait)(ebisu_socket_t* self, uint32_t timeout_ms);
 } ebisu_socket_ops_t;
 
 /** \brief A socket.

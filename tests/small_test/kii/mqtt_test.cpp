@@ -5809,3 +5809,115 @@ TEST_CASE( "kii_mqtt_publish() has the task publish, one message at a time" ) {
 
     CHECK( held == 0 );
 }
+
+// A receive with nothing arriving lasts its timeout, so a message given then
+// waited that long. With a socket that can wait for a packet without receiving
+// it, the task waits a turn at a time, and sends the message at the next.
+TEST_CASE( "With a socket that can wait, the task waits for a packet a turn at a time" ) {
+    char mqtt_buff[256];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_mqtt_buff(&kii, mqtt_buff, sizeof(mqtt_buff));
+    kii_set_mqtt_to_sock_recv(&kii, 15);
+    kii._keep_alive_interval = 0;
+    khct::cb::LockCtx lock;
+    kii_set_mqtt_lock(&kii, lock.get());
+    int task_waits = 0;
+    khct::cb::SystemCtx sys;
+    sys.on_delay_ms = [&task_waits](uint32_t) { ++task_waits; };
+    sys.ops.monotonic_ms = NULL;
+    kii_set_system(&kii, sys.system());
+
+    khct::cb::SockCtx mqtt_ctx;
+    mqtt_ctx.ops.recv_wait = khct::cb::mock_recv_wait;
+    // The turns it waited, and in which one, from 1, a packet arrives, or a
+    // message is given to send.
+    std::vector<uint32_t> turns;
+    size_t packet_at = 0;
+    size_t message_at = 0;
+    mqtt_ctx.on_recv_wait = [&](uint32_t timeout_ms) {
+        turns.push_back(timeout_ms);
+        if (turns.size() == message_at) {
+            kii._mqtt_pub_state = KII_MQTT_PUB_QUEUED;
+        }
+        return turns.size() == packet_at;
+    };
+    int receives = 0;
+    const std::string pingresp("\xd0\x00", 2);
+    size_t served = 0;
+    mqtt_ctx.on_recv = [&](void*, char* buffer, size_t length_to_read, size_t* out_actual_length) {
+        ++receives;
+        if (served == pingresp.size()) {
+            return EBISU_SOCK_FAIL;
+        }
+        *out_actual_length = pingresp.copy(buffer, length_to_read, served);
+        served += *out_actual_length;
+        return EBISU_SOCK_OK;
+    };
+    kii_set_mqtt_socket(&kii, mqtt_ctx.socket());
+
+    mqtt_state_t state;
+    _init_mqtt_state(&kii, &state);
+    state.info.task_state = KII_MQTT_ST_RECV_READY;
+    // As kii is built. A packet or a message comes at the fourth turn at the
+    // latest, which has to be within the receive timeout.
+    const uint32_t turn = KII_MQTT_RECV_WAIT_TURN_MS;
+    REQUIRE( 4 * turn < 15000 );
+
+    SECTION("for the receive timeout, with nothing arriving, without receiving") {
+        _mqtt_state_recv_ready(&state);
+        // The last turn only as long as what is left of the timeout.
+        std::vector<uint32_t> expected(15000 / turn, turn);
+        if (15000 % turn != 0) {
+            expected.push_back(15000 % turn);
+        }
+        CHECK( turns == expected );
+        CHECK( receives == 0 );
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        // As a receive that timed out, with no wait after it.
+        CHECK( state.elapsed_time_ms == 15000 );
+        CHECK( task_waits == 0 );
+    }
+
+    SECTION("until a packet arrives, which it then receives") {
+        packet_at = 3;
+        state.pingresp_received = false;
+        _mqtt_state_recv_ready(&state);
+        CHECK( turns.size() == 3 );
+        CHECK( receives == 2 );
+        CHECK( state.pingresp_received );
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_READY );
+    }
+
+    SECTION("until a message is given, which it then sends") {
+        message_at = 4;
+        _mqtt_state_recv_ready(&state);
+        CHECK( turns.size() == 4 );
+        CHECK( receives == 0 );
+        CHECK( state.elapsed_time_ms == 4 * turn );
+        CHECK( task_waits == 0 );
+        CHECK( state.info.task_state == KII_MQTT_ST_RECV_READY );
+        _mqtt_state_recv_ready(&state);
+        CHECK( state.info.task_state == KII_MQTT_ST_SEND_PUBLISH );
+        CHECK( turns.size() == 4 );
+    }
+
+    SECTION("for ever without a receive timeout") {
+        kii_set_mqtt_to_sock_recv(&kii, 0);
+        packet_at = 1000;
+        _mqtt_state_recv_ready(&state);
+        CHECK( turns == std::vector<uint32_t>(1000, turn) );
+        CHECK( receives == 2 );
+    }
+
+    // Where no message can be given, it receives, as a socket without
+    // recv_wait does.
+    SECTION("not without a lock") {
+        kii_set_mqtt_lock(&kii, NULL);
+        state.pingresp_received = false;
+        _mqtt_state_recv_ready(&state);
+        CHECK( turns.empty() );
+        CHECK( receives == 2 );
+        CHECK( state.pingresp_received );
+    }
+}

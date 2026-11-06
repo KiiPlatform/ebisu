@@ -334,9 +334,14 @@ task starts:
 
 - **When it is sent**: the MQTT socket can't be used by two tasks at once, so
   the task sends the message between receives, once it is connected and
-  subscribed. A receive with nothing arriving lasts the timeout given to
-  `kii_set_mqtt_to_sock_recv()`, so a shorter one has messages sent sooner.
-  While the task reconnects, the message waits, up to the call's timeout.
+  subscribed. With a socket that has the optional `recv_wait`, as platform's
+  ports do, the task waits for each packet `KII_MQTT_RECV_WAIT_TURN_MS` at a
+  time, 100 milliseconds unless kii is built with it defined otherwise, and
+  sends the message at the end of the turn. A shorter turn has it sent sooner,
+  and wakes the task more often. Without `recv_wait`, a receive with nothing
+  arriving lasts the timeout given to `kii_set_mqtt_to_sock_recv()`, so a
+  shorter one has messages sent sooner. While the task reconnects, the message
+  waits, up to the call's timeout.
 - **One at a time**: a call made while another's message isn't done waits for
   it, within its own timeout.
 - **Twice, at QoS 1**: a message whose PUBACK a lost connection took is sent

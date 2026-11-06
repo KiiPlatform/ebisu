@@ -382,6 +382,14 @@ def recv_result(steps, i):
     return code, int(length), field(rest, 'timed_out'), int(field(rest, 'ms')), rest.split('data=', 1)[1]
 
 
+def wait_result(steps, i):
+    """(ready, ms) of steps[i], a wait step, or a tuple that matches nothing."""
+    name, rest = step(steps, i)
+    if name != 'wait':
+        return ('', -1)
+    return rest.split(' ')[0], int(field(rest, 'ms'))
+
+
 def run_tests(t, d):
     good = Server(os.path.join(d, 'good.pem'), os.path.join(d, 'good.key'))
     port = good.port
@@ -420,6 +428,33 @@ def run_tests(t, d):
             all(1900 <= x[3] <= 4000 for x in r[:2]) and r[2][::4] == ('OK', 'late\\n'), out)
     t.check('receive timeout: last_error TIMEOUT, and nothing logged',
             last_error(steps, 2) == ('TIMEOUT', '0') and 'LOG ' not in out, out)
+
+    # The MQTT task's wait in turns, so as to send what it is given meanwhile:
+    # recv_wait waits for its timeout, and leaves the data to come for recv.
+    out, steps = t.run(port, 10, 'connect', 'send:sleep 3000\\necho late\\n', 'wait:500', 'wait:10000',
+                       'recv:100', 'close')
+    w = [wait_result(steps, i) for i in (2, 3)]
+    t.check('recv_wait: false after its timeout of 500 ms, %s ms, then true when the data comes, %s ms later'
+            % (w[0][1], w[1][1]),
+            w[0][0] == '0' and 400 <= w[0][1] <= 2000 and w[1][0] == '1' and w[1][1] < 9000 and
+            recv_result(steps, 4)[::4] == ('OK', 'late\\n'), out)
+
+    out, steps = t.run(port, 10, 'connect', 'send:echo hello\\n', 'recv:2', 'wait:0', 'recv:100', 'close')
+    t.check('recv_wait: true at once for what is decrypted and not yet returned',
+            recv_result(steps, 2)[::4] == ('OK', 'he') and wait_result(steps, 3)[0] == '1' and
+            recv_result(steps, 4)[::4] == ('OK', 'llo\\n'), out)
+
+    out, steps = t.run(port, 10, 'connect', 'send:partial 3000 split record\\n', 'wait:10000', 'recv:100',
+                       'close')
+    w = wait_result(steps, 2)
+    t.check('recv_wait: true for half a record, whose rest recv waits for',
+            w[0] == '1' and w[1] < 2500 and recv_result(steps, 3)[::4] == ('OK', 'split record\\n'), out)
+
+    out, steps = t.run(port, 10, 'connect', 'send:close_notify bye\\n', 'recv:100', 'wait:10000',
+                       'recv:100', 'close')
+    t.check('recv_wait: true for the end of the stream',
+            recv_result(steps, 2)[::4] == ('OK', 'bye\\n') and wait_result(steps, 3)[0] == '1' and
+            wait_result(steps, 3)[1] < 5000 and recv_result(steps, 4)[:3] == ('OK', 0, '0'), out)
 
     out, steps = t.run(port, 2, 'connect', 'send:partial 5000 split record\\n', 'recv:100', 'recv:100',
                        'recv:100', 'close')
