@@ -46,6 +46,10 @@ set on.
   ISO 8601 timestamp.
 - **Loggers** (`ebisu_log.h`): `ebisu_logger_t` is where a port's diagnostics
   go, each with a level, such as the application's own log or syslog.
+  `ebisu_log()` logs a message of the application's through one, and
+  `ebisu_log_fanout_t` gives each message to several, such as `stderr` and a
+  syslog server. platform's `ebisu_loggers.h` has loggers to a stdio stream, to
+  syslog and to a syslog server over UDP.
 - **Clearing secrets** (`ebisu_mem.h`): `ebisu_secure_zero()` sets memory to 0
   in a way the compiler can't take for a store nothing reads, and leave out, as
   it may a `memset()` just before memory is freed or goes out of scope. ebisu

@@ -3,10 +3,10 @@
 #
 # The package's targets are ebisu::core, ebisu::khc, ebisu::jkii, ebisu::kii and
 # ebisu::tio, and, where they were built, ebisu::posix and ebisu::openssl, or
-# ebisu::win32 and ebisu::schannel on Windows, the ports. Each library holds its
-# own code alone, and its target, like its pkg-config file, brings in the ones
-# it links. Like the libraries, the headers are all installed in one directory,
-# which each target adds to the include path.
+# ebisu::win32 and ebisu::schannel on Windows, the ports, and ebisu::loggers.
+# Each library holds its own code alone, and its target, like its pkg-config
+# file, brings in the ones it links. Like the libraries, the headers are all
+# installed in one directory, which each target adds to the include path.
 
 include(CMakePackageConfigHelpers)
 
@@ -81,6 +81,17 @@ if(TARGET ebisu_win32)
     _ebisu_pkg_config(win32 ebisu_win32
         "Win32 port of ebisu: the system and locks on the Win32 API"
         REQUIRES ebisu-core)
+endif()
+if(TARGET ebisu_loggers)
+    set(loggers_description
+        "Loggers of ebisu: to a stdio stream, to syslog, and to a syslog server over UDP")
+    if(WIN32)
+        _ebisu_pkg_config(loggers ebisu_loggers "${loggers_description}"
+            REQUIRES ebisu-core LIBS -lws2_32)
+    else()
+        _ebisu_pkg_config(loggers ebisu_loggers "${loggers_description}"
+            REQUIRES ebisu-core)
+    endif()
 endif()
 if(TARGET ebisu_schannel)
     _ebisu_pkg_config(schannel ebisu_schannel

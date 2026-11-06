@@ -96,3 +96,35 @@ if(WIN32)
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
+
+# Loggers, for a system with a C library and sockets: to a stdio stream, to
+# syslog on POSIX, and to a syslog server over UDP, on POSIX and Windows alike.
+if(UNIX OR WIN32)
+    set(loggers_srcs
+        loggers/src/ebisu_loggers_format.c
+        loggers/src/ebisu_stdio_logger.c
+        loggers/src/ebisu_syslog_udp_logger.c)
+    if(UNIX)
+        list(APPEND loggers_srcs loggers/src/ebisu_syslog_logger.c)
+    endif()
+    add_library(ebisu_loggers STATIC ${loggers_srcs})
+    target_include_directories(ebisu_loggers
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/loggers/include>)
+    target_link_libraries(ebisu_loggers PUBLIC ebisu_core)
+    if(WIN32)
+        target_link_libraries(ebisu_loggers PUBLIC ws2_32)
+        target_compile_definitions(ebisu_loggers PRIVATE WIN32_LEAN_AND_MEAN)
+    else()
+        # Sockets, gethostname(), clock_gettime() and syslog() are POSIX, which
+        # glibc declares under -std=c99 only with _DEFAULT_SOURCE.
+        target_compile_definitions(ebisu_loggers PRIVATE _DEFAULT_SOURCE)
+    endif()
+    ebisu_configure_target(ebisu_loggers)
+    install(FILES loggers/include/ebisu_loggers.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+    # ebisu::loggers in the CMake package.
+    set_target_properties(ebisu_loggers PROPERTIES EXPORT_NAME loggers)
+    install(TARGETS ebisu_loggers EXPORT ebisu-targets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+endif()

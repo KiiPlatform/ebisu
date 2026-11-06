@@ -3,7 +3,8 @@
 `platform` holds the ports: the abstractions of
 [core](https://github.com/KiiPlatform/ebisu/blob/master/core/README.md), its
 sockets, system and locks, implemented for a kind of system each, from what
-that system provides.
+that system provides. It also holds loggers, for where a port's diagnostics
+and an application's own messages go.
 
 ## Ports
 
@@ -50,25 +51,56 @@ where what it needs is found, which links `libebisu_core`. Link one with
 The Linux sample uses the POSIX and OpenSSL ports, and the Windows sample the
 Win32 and Schannel ones.
 
-A daemon can send the OpenSSL port's diagnostics to syslog with a logger such as
-this one. `vsyslog()` isn't POSIX, but glibc, musl and the BSDs have it:
+The samples for FreeRTOS and ESP32 have implementations of their own, under
+`tio`.
+
+## Loggers
+
+`ebisu_loggers.h`, library `ebisu_loggers`, built on POSIX and on Windows, has
+loggers that take a port's diagnostics, or an application's own messages
+through core's `ebisu_log()`. Each has a level, the least important it writes,
+and drops what matters less, so a port can be given one at `EBISU_LOG_DEBUG`
+and another at `EBISU_LOG_ERROR` together, through core's `ebisu_log_fanout_t`.
+Each may be called from more than one task at once, and cuts a message longer
+than `EBISU_LOGGER_LINE_MAX`, 1024 bytes, short with `...`.
+
+- **To a stdio stream** (`ebisu_stdio_logger_t`): a line of the level and the
+  message, as in `error: failed to connect to example.com.`, to `stderr` or a
+  file, written with one call and flushed.
+- **To syslog** (`ebisu_syslog_logger_t`, on POSIX): `syslog()`, with a
+  facility and the severity of the level. `openlog()` is the application's to
+  call, if it wants to.
+- **To a syslog server over UDP** (`ebisu_syslog_udp_logger_t`): a datagram for
+  each message, formatted as RFC 5424 says, with the time to the millisecond,
+  the host's name, the application's and the process's identifier, and sent as
+  RFC 5426 does, to an IPv4 or IPv6 server looked up once, when the logger is
+  initialized. Sending never waits: what the socket can't take at once is
+  dropped, as is what the network loses.
 
 ```c
+#include <ebisu_loggers.h>
 #include <ebisu_openssl.h>
 #include <syslog.h>
 
-static void to_syslog(ebisu_logger_t* self, ebisu_log_level_t level,
-        const char* fmt, va_list args)
-{
-    static const int priorities[] = { LOG_ERR, LOG_WARNING, LOG_INFO, LOG_DEBUG };
-    vsyslog(priorities[level], fmt, args);
-}
+static ebisu_stdio_logger_t to_stderr;
+static ebisu_syslog_logger_t to_syslog;
+static ebisu_syslog_udp_logger_t to_server;
+static ebisu_logger_t* loggers[] = { &to_stderr.base, &to_syslog.base, &to_server.base };
+static ebisu_log_fanout_t logger;
 
-static const ebisu_logger_ops_t syslog_ops = { to_syslog };
-static ebisu_logger_t syslog_logger = { &syslog_ops };
+    ebisu_stdio_logger_init(&to_stderr, stderr, EBISU_LOG_WARNING);
+    ebisu_syslog_logger_init(&to_syslog, LOG_DAEMON, EBISU_LOG_INFO);
+    /* A server that can't be looked up leaves a logger that drops everything. */
+    ebisu_syslog_udp_logger_init(&to_server, "logs.example.com", 514, "my-device", 3,
+            EBISU_LOG_DEBUG);
+    ebisu_log_fanout_init(&logger, loggers, 3);
 
-    ebisu_openssl_socket_set_logger(&sock, &syslog_logger);
+    ebisu_openssl_socket_set_logger(&sock, &logger.base);
+    ebisu_log(&logger.base, EBISU_LOG_INFO, "started, version %s", "1.0");
+    ...
+    ebisu_syslog_udp_logger_close(&to_server);
 ```
 
-The samples for FreeRTOS and ESP32 have implementations of their own, under
-`tio`.
+The loggers' levels and the fan-out's array are set before they are used, and
+don't change: a logger of the application's that wraps one can decide at run
+time what it passes on.
