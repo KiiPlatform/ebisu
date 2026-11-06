@@ -32,6 +32,11 @@ static void _event(kii_t* kii, kii_mqtt_event_t event, uint32_t detail)
 /* A broker that cannot be reached after this many attempts may have moved, so
  * the task asks for the endpoint again. */
 #define MAX_CONNECT_FAILURES 8
+/* How often kii_mqtt_publish() looks at what the task has done with its
+ * message. */
+#define PUBLISH_POLL_MS 10
+/* The longest remaining length four bytes can carry. */
+#define MQTT_REMAINING_LENGTH_MAX ((size_t)268435455UL)
 
 /* What CONNECT names the version of MQTT it speaks with: the protocol name,
  * and the protocol level. */
@@ -252,6 +257,87 @@ ebisu_sock_code_t _mqtt_send_pingreq(kii_t* kii)
 static ebisu_sock_code_t _mqtt_send_disconnect(kii_t* kii)
 {
     return _mqtt_send_header_only(kii, (char)0xe0);
+}
+
+// Sends all of data, in as many sends as the socket takes.
+static ebisu_sock_code_t _mqtt_send_all(kii_t* kii, const char* data, size_t length)
+{
+    size_t total_sent = 0;
+    while (total_sent < length) {
+        size_t sent_len = 0;
+        ebisu_sock_code_t sock_err = kii->_mqtt_socket->ops->send(kii->_mqtt_socket,
+                data + total_sent, length - total_sent, &sent_len);
+        if (sock_err != EBISU_SOCK_OK) {
+            // Don't accept non-blocking socket when sock_err is EBISU_SOCK_AGAIN.
+            return EBISU_SOCK_FAIL;
+        }
+        total_sent += sent_len;
+    }
+    return EBISU_SOCK_OK;
+}
+
+// A packet on its way out through the MQTT buffer: what is put in it is sent
+// whenever it is full, and what is left when flushed, so that a packet that
+// fits takes one send, and one that doesn't needn't fit.
+typedef struct {
+    kii_t* kii;
+    size_t used;
+    ebisu_sock_code_t res;
+} mqtt_out_t;
+
+static void _mqtt_out_flush(mqtt_out_t* out)
+{
+    if (out->res == EBISU_SOCK_OK && out->used > 0) {
+        out->res = _mqtt_send_all(out->kii, out->kii->_mqtt_buffer, out->used);
+    }
+    out->used = 0;
+}
+
+static void _mqtt_out_put(mqtt_out_t* out, const char* data, size_t length)
+{
+    kii_t* kii = out->kii;
+    while (length > 0 && out->res == EBISU_SOCK_OK) {
+        if (out->used == kii->_mqtt_buffer_size) {
+            _mqtt_out_flush(out);
+        }
+        size_t n = kii->_mqtt_buffer_size - out->used;
+        if (n > length) {
+            n = length;
+        }
+        memcpy(kii->_mqtt_buffer + out->used, data, n);
+        out->used += n;
+        data += n;
+        length -= n;
+    }
+}
+
+// Sends the PUBLISH of message, which kii_mqtt_publish() checked MQTT can
+// carry.
+static ebisu_sock_code_t _mqtt_send_publish(kii_t* kii, const kii_mqtt_message_t* message)
+{
+    const size_t id_size = message->qos == KII_MQTT_QOS_1 ? 2 : 0;
+    // The fixed header, of up to five bytes, and the topic's length.
+    char head[7];
+    size_t i = 0;
+    head[i++] = (char)(0x30 | (message->dup ? 0x08 : 0x00) |
+            (message->qos == KII_MQTT_QOS_1 ? 0x02 : 0x00) | (message->retain ? 0x01 : 0x00));
+    i += _mqtt_encode(&head[i], 2 + message->topic_length + id_size + message->payload_length);
+    head[i++] = (char)(message->topic_length >> 8);
+    head[i++] = (char)(message->topic_length & 0xff);
+    char id[2];
+    id[0] = (char)(message->packet_id >> 8);
+    id[1] = (char)(message->packet_id & 0xff);
+
+    mqtt_out_t out;
+    out.kii = kii;
+    out.used = 0;
+    out.res = EBISU_SOCK_OK;
+    _mqtt_out_put(&out, head, i);
+    _mqtt_out_put(&out, message->topic, message->topic_length);
+    _mqtt_out_put(&out, id, id_size);
+    _mqtt_out_put(&out, message->payload, message->payload_length);
+    _mqtt_out_flush(&out);
+    return out.res;
 }
 
 // Reads the first byte of a fixed header, which holds the packet type, and
@@ -497,6 +583,132 @@ static bool _is_publish_topic(const char* topic, size_t size)
         i += len;
     }
     return true;
+}
+
+// What kii_mqtt_publish() and the task share is guarded by the lock set by
+// kii_set_mqtt_lock(). Without one, no call can give the task a message, so the
+// task finds none.
+static void _pub_lock(kii_t* kii)
+{
+    kii->_mqtt_lock->ops->lock(kii->_mqtt_lock);
+}
+
+static void _pub_unlock(kii_t* kii)
+{
+    kii->_mqtt_lock->ops->unlock(kii->_mqtt_lock);
+}
+
+void _kii_mqtt_publish_open(kii_t* kii, bool open)
+{
+    if (kii->_mqtt_lock == NULL) {
+        kii->_mqtt_pub_open = open;
+        return;
+    }
+    _pub_lock(kii);
+    kii->_mqtt_pub_open = open;
+    _pub_unlock(kii);
+}
+
+// Whether a message is waiting to be sent.
+static bool _publish_queued(kii_t* kii)
+{
+    if (kii->_mqtt_lock == NULL) {
+        return false;
+    }
+    _pub_lock(kii);
+    const bool queued = kii->_mqtt_pub_state == KII_MQTT_PUB_QUEUED;
+    _pub_unlock(kii);
+    return queued;
+}
+
+// Takes a message waiting to be sent, if there is one, so that its caller waits
+// for the send to end.
+static bool _publish_take(kii_t* kii)
+{
+    if (kii->_mqtt_lock == NULL) {
+        return false;
+    }
+    _pub_lock(kii);
+    const bool taken = kii->_mqtt_pub_state == KII_MQTT_PUB_QUEUED;
+    if (taken) {
+        kii->_mqtt_pub_state = KII_MQTT_PUB_SENDING;
+    }
+    _pub_unlock(kii);
+    return taken;
+}
+
+// Whether the message sent at QoS 1 awaits a PUBACK, its caller there or not.
+static bool _publish_awaits_puback(kii_t* kii)
+{
+    if (kii->_mqtt_lock == NULL) {
+        return false;
+    }
+    _pub_lock(kii);
+    const bool awaits = kii->_mqtt_pub_state == KII_MQTT_PUB_AWAITING_PUBACK ||
+        kii->_mqtt_pub_state == KII_MQTT_PUB_ABANDONED;
+    _pub_unlock(kii);
+    return awaits;
+}
+
+// Whether a PUBACK with packet identifier id acknowledges the message sent at
+// QoS 1, which is then done, or freed if its caller has gone.
+static bool _publish_acked(kii_t* kii, uint16_t id)
+{
+    if (kii->_mqtt_lock == NULL) {
+        return false;
+    }
+    _pub_lock(kii);
+    const uint8_t pub_state = kii->_mqtt_pub_state;
+    const bool acked = (pub_state == KII_MQTT_PUB_AWAITING_PUBACK ||
+            pub_state == KII_MQTT_PUB_ABANDONED) && kii->_mqtt_pub.packet_id == id;
+    if (acked && pub_state == KII_MQTT_PUB_AWAITING_PUBACK) {
+        kii->_mqtt_pub_result = KII_ERR_OK;
+        kii->_mqtt_pub_state = KII_MQTT_PUB_DONE;
+    } else if (acked) {
+        kii->_mqtt_pub_state = KII_MQTT_PUB_FREE;
+    }
+    _pub_unlock(kii);
+    return acked;
+}
+
+// On a connection the broker accepted, a message at QoS 1 that the last one
+// left unacknowledged is sent again, with DUP and its packet identifier, as
+// MQTT has a client do on a session the broker kept: on a clean session too,
+// as its caller waits for it to be acknowledged. One whose caller has gone is
+// dropped.
+static void _publish_reconnected(kii_t* kii)
+{
+    if (kii->_mqtt_lock == NULL) {
+        return;
+    }
+    _pub_lock(kii);
+    if (kii->_mqtt_pub_state == KII_MQTT_PUB_AWAITING_PUBACK) {
+        kii->_mqtt_pub.dup = true;
+        kii->_mqtt_pub_state = KII_MQTT_PUB_QUEUED;
+    } else if (kii->_mqtt_pub_state == KII_MQTT_PUB_ABANDONED) {
+        kii->_mqtt_pub_state = KII_MQTT_PUB_FREE;
+    }
+    _pub_unlock(kii);
+}
+
+// As the task ends: a message not yet done fails, and no call can give
+// another until the task is started again.
+static void _publish_close(kii_t* kii)
+{
+    if (kii->_mqtt_lock == NULL) {
+        kii->_mqtt_pub_open = false;
+        return;
+    }
+    _pub_lock(kii);
+    kii->_mqtt_pub_open = false;
+    const uint8_t pub_state = kii->_mqtt_pub_state;
+    if (pub_state == KII_MQTT_PUB_QUEUED || pub_state == KII_MQTT_PUB_AWAITING_PUBACK) {
+        kii->_mqtt_pub_result = KII_ERR_FAIL;
+        kii->_mqtt_pub_state = KII_MQTT_PUB_DONE;
+    } else if (pub_state == KII_MQTT_PUB_ABANDONED) {
+        kii->_mqtt_pub_state = KII_MQTT_PUB_FREE;
+    }
+    _pub_unlock(kii);
 }
 
 void _init_mqtt_state(kii_t* kii, mqtt_state_t* state)
@@ -782,6 +994,7 @@ void _mqtt_state_recv_connack(mqtt_state_t* state)
         // this: RECONNECT goes to SOCK_CONNECT inside the loop.
         state->pingresp_received = true;
         state->mqtt_connected = true;
+        _publish_reconnected(kii);
         task_info->task_state = KII_MQTT_ST_SEND_SUBSCRIBE;
     }
 }
@@ -917,6 +1130,10 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
         task_info->task_state = KII_MQTT_ST_SEND_PINGREQ;
         return;
     }
+    if (_publish_take(kii)) {
+        task_info->task_state = KII_MQTT_ST_SEND_PUBLISH;
+        return;
+    }
     kii_mqtt_fixed_header fh;
     size_t received = 0;
     ebisu_sock_code_t res = _mqtt_recv_fixed_header_byte1(kii, &fh, &received);
@@ -953,13 +1170,29 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
             // PINGRESP, its fixed header alone.
             state->pingresp_received = true;
             _add_elapsed_ms(state, ARRIVED_MSG_READ_TIME);
+        } else if ((unsigned char)fh.byte1 == 0x40 && fh.remaining_length == 2 &&
+                _publish_awaits_puback(kii)) {
+            // PUBACK, with the packet identifier of what it acknowledges.
+            char id[2];
+            if (_mqtt_recv_remaining(kii, sizeof(id), id) != EBISU_SOCK_OK) {
+                _event(kii, KII_MQTT_EVENT_RECV_FAILED, KII_MQTT_ST_RECV_READY);
+                _reset_elapsed(state, 0);
+                _delay_ms(kii, WAIT_MS);
+                task_info->task_state = KII_MQTT_ST_RECONNECT;
+                return;
+            }
+            if (!_publish_acked(kii, (uint16_t)((unsigned char)id[0] * 256 + (unsigned char)id[1]))) {
+                // Of no message the task sent and awaits it for.
+                _refuse_packet(state, KII_MQTT_EVENT_UNEXPECTED_PACKET, (unsigned char)fh.byte1);
+                return;
+            }
+            _add_elapsed_ms(state, ARRIVED_MSG_READ_TIME);
         } else {
-            // Nothing else comes to a client that has only subscribed, once
-            // its CONNACK and SUBACK have come: another CONNACK or SUBACK, an
-            // acknowledgement of nothing it sent, a packet only a client
-            // sends, or one of a reserved type. Nor does a PINGRESP with
-            // flags, or with more after it, which would otherwise be read as
-            // the next packet.
+            // Nothing else comes to the task, once its CONNACK and SUBACK have
+            // come: another CONNACK or SUBACK, an acknowledgement of nothing
+            // it sent, a packet only a client sends, or one of a reserved
+            // type. Nor does a PINGRESP or PUBACK with flags, or of another
+            // length, which would otherwise be read as the next packet.
             _refuse_packet(state, KII_MQTT_EVENT_UNEXPECTED_PACKET, (unsigned char)fh.byte1);
         }
     } else if (res == EBISU_SOCK_FAIL && _mqtt_sock_recv_lost(kii)) {
@@ -971,10 +1204,13 @@ void _mqtt_state_recv_ready(mqtt_state_t* state)
     } else {
         // No packet has started to arrive: the receive timed out, or returned
         // EBISU_SOCK_AGAIN, as it would in non-blocking mode.
-        // Just repeat same state after the wait.
+        // Just repeat same state after the wait, unless a message given while
+        // the task received is waiting to be sent.
         _add_elapsed_ms(state, _to_recv_ms(kii));
-        _add_elapsed_ms(state, WAIT_MS);
-        _delay_ms(kii, WAIT_MS);
+        if (!_publish_queued(kii)) {
+            _add_elapsed_ms(state, WAIT_MS);
+            _delay_ms(kii, WAIT_MS);
+        }
     }
 }
 
@@ -1178,6 +1414,38 @@ void _mqtt_state_send_pingreq(mqtt_state_t* state)
     }
 }
 
+void _mqtt_state_send_publish(mqtt_state_t* state)
+{
+    kii_t* kii = state->kii;
+    kii_mqtt_task_info* task_info = &state->info;
+    // Taken by _publish_take(), so its caller waits, and leaves the message as
+    // it is, while it is sent.
+    const ebisu_sock_code_t res = _mqtt_send_publish(kii, &kii->_mqtt_pub);
+    const bool qos1 = kii->_mqtt_pub.qos == KII_MQTT_QOS_1;
+    _pub_lock(kii);
+    if (res == EBISU_SOCK_OK && qos1) {
+        kii->_mqtt_pub_state = KII_MQTT_PUB_AWAITING_PUBACK;
+    } else if (qos1) {
+        // Part of it may have reached the broker: send it again, as MQTT has
+        // a client do, on the next connection.
+        kii->_mqtt_pub.dup = true;
+        kii->_mqtt_pub_state = KII_MQTT_PUB_QUEUED;
+    } else {
+        kii->_mqtt_pub_result = res == EBISU_SOCK_OK ? KII_ERR_OK : KII_ERR_SOCK_SEND;
+        kii->_mqtt_pub_state = KII_MQTT_PUB_DONE;
+    }
+    _pub_unlock(kii);
+    if (res != EBISU_SOCK_OK) {
+        _event(kii, KII_MQTT_EVENT_SEND_FAILED, KII_MQTT_ST_SEND_PUBLISH);
+        _reset_elapsed(state, 0);
+        _delay_ms(kii, WAIT_MS);
+        task_info->task_state = KII_MQTT_ST_RECONNECT;
+        return;
+    }
+    _add_elapsed_ms(state, MSG_SEND_TIME);
+    task_info->task_state = KII_MQTT_ST_RECV_READY;
+}
+
 void _mqtt_state_reconnect(mqtt_state_t* state)
 {
     kii_t* kii = state->kii;
@@ -1199,6 +1467,7 @@ const MQTT_STATE_HANDLER mqtt_state_handlers[] = {
     _mqtt_state_recv_ready,
     _mqtt_state_recv_msg,
     _mqtt_state_send_pingreq,
+    _mqtt_state_send_publish,
     _mqtt_state_reconnect,
 };
 
@@ -1244,11 +1513,130 @@ void* mqtt_start_task(void* sdata)
     // The task's copy of the endpoint, with its credentials.
     ebisu_secure_zero(&state.endpoint, sizeof(state.endpoint));
     // Before the callback, which may start the task again.
+    _publish_close(kii);
     kii->_push_task_running = false;
     if (kii->_cb_task_exit != NULL) {
         kii->_cb_task_exit(&state.info, kii->_task_exit_data);
     }
     return NULL;
+}
+
+// How long kii_mqtt_publish() has waited: by the monotonic clock if the system
+// has one, or by adding up its waits.
+typedef struct {
+    uint64_t start_ms;
+    uint64_t waited_ms;
+} publish_wait_t;
+
+static uint64_t _publish_waited_ms(const kii_t* kii, const publish_wait_t* wait)
+{
+    if (_has_clock(kii)) {
+        return kii->_system->ops->monotonic_ms(kii->_system) - wait->start_ms;
+    }
+    return wait->waited_ms;
+}
+
+static void _publish_wait(kii_t* kii, publish_wait_t* wait)
+{
+    _delay_ms(kii, PUBLISH_POLL_MS);
+    wait->waited_ms += PUBLISH_POLL_MS;
+}
+
+kii_code_t kii_mqtt_publish(
+        kii_t* kii,
+        const char* topic,
+        const char* payload,
+        size_t payload_length,
+        kii_mqtt_qos_t qos,
+        bool retain,
+        uint32_t timeout_ms)
+{
+    if (kii->_mqtt_lock == NULL || kii->_system == NULL ||
+            kii->_system->ops->delay_ms == NULL) {
+        return KII_ERR_FAIL;
+    }
+    if ((qos != KII_MQTT_QOS_0 && qos != KII_MQTT_QOS_1) || topic == NULL ||
+            (payload == NULL && payload_length > 0)) {
+        return KII_ERR_FAIL;
+    }
+    const size_t topic_length = strlen(topic);
+    if (topic_length > 65535) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+    if (!_is_publish_topic(topic, topic_length)) {
+        return KII_ERR_FAIL;
+    }
+    // The topic's length, the topic and, at QoS 1, the packet identifier come
+    // before the payload, in the remaining length.
+    const size_t id_size = qos == KII_MQTT_QOS_1 ? 2 : 0;
+    if (payload_length > MQTT_REMAINING_LENGTH_MAX - 2 - topic_length - id_size) {
+        return KII_ERR_TOO_LARGE_DATA;
+    }
+
+    publish_wait_t wait;
+    wait.start_ms = _has_clock(kii) ? kii->_system->ops->monotonic_ms(kii->_system) : 0;
+    wait.waited_ms = 0;
+    // Gives the task the message, once the one before is done with.
+    for (;;) {
+        _pub_lock(kii);
+        if (!kii->_mqtt_pub_open) {
+            _pub_unlock(kii);
+            return KII_ERR_FAIL;
+        }
+        if (kii->_mqtt_pub_state == KII_MQTT_PUB_FREE) {
+            kii_mqtt_message_t* message = &kii->_mqtt_pub;
+            message->topic = topic;
+            message->topic_length = topic_length;
+            message->payload = payload;
+            message->payload_length = payload_length;
+            message->qos = qos;
+            message->retain = retain;
+            message->dup = false;
+            message->packet_id = 0;
+            if (qos == KII_MQTT_QOS_1) {
+                // Not 0, which MQTT doesn't allow, nor 1, which SUBSCRIBE
+                // has.
+                const uint16_t last = kii->_mqtt_pub_last_id;
+                message->packet_id = (last < 2 || last == 65535) ? 2 : (uint16_t)(last + 1);
+                kii->_mqtt_pub_last_id = message->packet_id;
+            }
+            kii->_mqtt_pub_state = KII_MQTT_PUB_QUEUED;
+            _pub_unlock(kii);
+            break;
+        }
+        _pub_unlock(kii);
+        if (_publish_waited_ms(kii, &wait) >= timeout_ms) {
+            return KII_ERR_TIMEOUT;
+        }
+        _publish_wait(kii, &wait);
+    }
+    // Waits for the task to be done with it.
+    for (;;) {
+        const bool timed_out = _publish_waited_ms(kii, &wait) >= timeout_ms;
+        _pub_lock(kii);
+        const uint8_t pub_state = kii->_mqtt_pub_state;
+        if (pub_state == KII_MQTT_PUB_DONE ||
+                (timed_out && pub_state == KII_MQTT_PUB_QUEUED)) {
+            const kii_code_t res = pub_state == KII_MQTT_PUB_DONE ?
+                kii->_mqtt_pub_result : KII_ERR_TIMEOUT;
+            kii->_mqtt_pub_state = KII_MQTT_PUB_FREE;
+            kii->_mqtt_pub.topic = NULL;
+            kii->_mqtt_pub.payload = NULL;
+            _pub_unlock(kii);
+            return res;
+        }
+        if (timed_out && pub_state == KII_MQTT_PUB_AWAITING_PUBACK) {
+            // Its PUBACK may still come, which is then no surprise.
+            kii->_mqtt_pub_state = KII_MQTT_PUB_ABANDONED;
+            kii->_mqtt_pub.topic = NULL;
+            kii->_mqtt_pub.payload = NULL;
+            _pub_unlock(kii);
+            return KII_ERR_TIMEOUT;
+        }
+        // Being sent, which reads topic and payload, or not yet timed out.
+        _pub_unlock(kii);
+        _publish_wait(kii, &wait);
+    }
 }
 
 /* vim:set ts=4 sts=4 sw=4 et fenc=UTF-8 ff=unix: */

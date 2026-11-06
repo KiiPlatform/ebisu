@@ -232,6 +232,10 @@ void kii_set_cb_mqtt_message(kii_t* kii, KII_CB_MQTT_MESSAGE cb, void* userdata)
     kii->_mqtt_message_data = userdata;
 }
 
+void kii_set_mqtt_lock(kii_t* kii, ebisu_lock_t* lock) {
+    kii->_mqtt_lock = lock;
+}
+
 void kii_set_cb_slist_resource(
         kii_t* kii,
         KHC_CB_SLIST_ALLOC cb_alloc,

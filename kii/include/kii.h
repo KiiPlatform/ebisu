@@ -347,9 +347,11 @@ typedef enum kii_mqtt_event_t {
     /** \brief A packet the task can't take where it came, or that MQTT 3.1.1
      * doesn't allow a broker to send, and the task reconnects:
      * - anything but CONNACK first, anything but SUBACK or a message after
-     *   SUBSCRIBE, and anything but a message or PINGRESP after SUBACK;
+     *   SUBSCRIBE, and anything but a message, PINGRESP, or the PUBACK of the
+     *   message kii_mqtt_publish() had sent at QoS 1, after SUBACK;
      * - a packet whose type has other flags than MQTT gives it;
-     * - a CONNACK, a SUBACK or a PINGRESP of another length than its type has;
+     * - a CONNACK, a SUBACK, a PINGRESP or a PUBACK of another length than its
+     *   type has;
      * - CONNACK's reserved acknowledge flags, or Session Present on a refusal
      *   or for a clean session;
      * - SUBACK for another subscription, or with a reserved return code or a
@@ -524,6 +526,20 @@ typedef struct kii_t {
     /** \private The longest wait between the push task's attempts to reach
      * the cloud, in milliseconds, or 0 for five minutes. */
     uint32_t _mqtt_retry_wait_max_ms;
+    /** \private Guards what kii_mqtt_publish() and the task share, below. */
+    ebisu_lock_t* _mqtt_lock;
+    /** \private Whether kii_mqtt_publish() may give the task a message: from
+     * when the task is started until it ends. */
+    bool _mqtt_pub_open;
+    /** \private Where the message kii_mqtt_publish() gave the task is, one of
+     * kii_mqtt_task.h's KII_MQTT_PUB_ values. */
+    uint8_t _mqtt_pub_state;
+    /** \private That message. Its topic and payload are the caller's. */
+    kii_mqtt_message_t _mqtt_pub;
+    /** \private What kii_mqtt_publish() returns for it, once it is done. */
+    kii_code_t _mqtt_pub_result;
+    /** \private The packet identifier the last message at QoS 1 was given. */
+    uint16_t _mqtt_pub_last_id;
 
     char* _rw_buff; /**< \private */
     size_t _rw_buff_size; /**< \private */
@@ -1263,6 +1279,75 @@ kii_code_t kii_set_mqtt_client_id(kii_t* kii, const char* client_id);
 void kii_set_cb_mqtt_credentials(kii_t* kii, KII_CB_MQTT_CREDENTIALS cb, void* userdata);
 
 /**
+ * \brief Publish a message through the MQTT task, and wait until it is done.
+ *
+ * The task sends it on its connection, as the socket can't be used by two
+ * tasks at once. It does so once it is connected and subscribed, between
+ * receives: when the one under way returns, which with nothing arriving is
+ * when the timeout set by kii_set_mqtt_to_sock_recv() runs out. A shorter
+ * timeout has it sent sooner. While the task can't reach the broker, the
+ * message waits.
+ *
+ * At QoS 0, it is done once sent. At QoS 1, once the broker acknowledges it
+ * with PUBACK: if the connection is lost before, the task sends it again on the
+ * next, with DUP, so the broker may get it twice. Whether the broker takes it,
+ * and who receives it, is the broker's: one may acknowledge a message it drops,
+ * or close the connection. The same with MQTT 3.1 and 3.1.1.
+ *
+ * The task has one message at a time. A call made while another's message is
+ * not yet done waits for it first, within its own timeout_ms.
+ *
+ * Not to be called from the task, such as from its callbacks: it would wait for
+ * the task, which waits for the callback to return, until timeout_ms ran out.
+ *
+ * \param [in,out] kii kii_t instance, whose task was started with
+ * kii_start_push_task() or kii_start_mqtt_task_with_endpoint().
+ * \param [in] topic The topic, terminated: in UTF-8, not empty, without
+ * wildcards, and at most 65535 bytes. Read until the function returns.
+ * \param [in] payload The payload, payload_length bytes of any value. Read until
+ * the function returns. NULL if payload_length is 0.
+ * \param [in] payload_length The payload's length in bytes.
+ * \param [in] qos The quality of service.
+ * \param [in] retain Whether the broker is to keep it as the topic's retained
+ * message, which it sends whoever subscribes later.
+ * \param [in] timeout_ms How long to wait, in milliseconds, by the monotonic_ms of
+ * the system set by kii_set_system(), or by adding up the function's waits
+ * without one. A send under way when it runs out is waited for, as it reads
+ * topic and payload: that takes at most the socket's send timeout more.
+ * \return kii_code_t. KII_ERR_OK once the message is done.
+ * KII_ERR_TIMEOUT if it isn't by timeout_ms: the task drops it, though one at
+ * QoS 1 sent before may have reached the broker, as what didn't come was its
+ * acknowledgement. KII_ERR_SOCK_SEND if sending one at QoS 0 failed: the broker
+ * may have got it or not, and it isn't sent again. KII_ERR_FAIL if no lock is set
+ * by kii_set_mqtt_lock(), or no system, if the task isn't running, or ends
+ * before the message is done, and, without sending anything, for a topic MQTT
+ * doesn't allow, a NULL payload of some length, or a qos that isn't one.
+ * KII_ERR_TOO_LARGE_DATA, sending nothing, for a topic longer than 65535 bytes,
+ * or a message longer than a PUBLISH can carry.
+ */
+kii_code_t kii_mqtt_publish(
+        kii_t* kii,
+        const char* topic,
+        const char* payload,
+        size_t payload_length,
+        kii_mqtt_qos_t qos,
+        bool retain,
+        uint32_t timeout_ms);
+
+/**
+ * \brief Set the lock kii_mqtt_publish() shares with the MQTT task.
+ *
+ * Needed by kii_mqtt_publish(). It is held only to look at or change the
+ * message the two share, never during a socket operation or a wait, and need
+ * not be recursive. Set it before starting the task.
+ *
+ * \param [out] kii kii_t instance.
+ * \param [in] lock The lock. It has to outlive the task, and any call of
+ * kii_mqtt_publish().
+ */
+void kii_set_mqtt_lock(kii_t* kii, ebisu_lock_t* lock);
+
+/**
  * \brief Execute a specific version of server code.
  *
  * \param [in,out] kii kii_t instance.
@@ -1668,6 +1753,9 @@ void kii_set_http_socket(kii_t* kii, ebisu_socket_t* socket);
  * Typically, 1024 bytes is enough.
  * However it varies depending on your data schema used to define Commands.
  * Avoid defining large Commands.
+ *
+ * The messages kii_mqtt_publish() is given are sent through it too, a
+ * buffer's worth at a time, so it needn't hold them whole.
 
  * \param [out] kii kii_t instance.
  * \param [in] buff Pointer to the buffer.
@@ -2005,6 +2093,7 @@ typedef enum
     KII_MQTT_ST_RECV_READY, /**< \brief Ready to recieve message published by Cloud. */
     KII_MQTT_ST_RECV_MSG, /**< \brief Receiving message published by Cloud. */
     KII_MQTT_ST_SEND_PINGREQ, /**< \brief Sending PINGREQ message. */
+    KII_MQTT_ST_SEND_PUBLISH, /**< \brief Sending the message kii_mqtt_publish() was given. */
     KII_MQTT_ST_RECONNECT, /**< \brief Re-establishing connection. */
     KII_MQTT_ST_ERR_EXIT, /**< \brief Exiting due to un-recoverble error. */
     KII_MQTT_ST_DISCONTINUED, /**< \brief Task discontinued by the application . */

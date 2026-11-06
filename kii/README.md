@@ -5,7 +5,8 @@
 - authenticating the thing, by onboarding or logging in, and keeping its token
   valid through a session;
 - objects in buckets, with bodies of any size;
-- push messages over MQTT, from buckets, topics or straight to the thing;
+- push messages over MQTT, from buckets, topics or straight to the thing, and
+  messages the thing publishes over MQTT;
 - Thing-IF states and firmware versions;
 - server code, and any other REST API call.
 
@@ -316,6 +317,36 @@ What reaches the thing:
     res = kii_send_push_message(&kii, &topic,
             "{\"data\":{\"level\":\"high\"},\"mqtt\":{\"enabled\":true}}");
   ```
+
+### Publishing
+
+`kii_mqtt_publish()` publishes a message through the task, from any other task,
+and waits until it is done: sent, at QoS 0, or acknowledged by the broker's
+PUBACK, at QoS 1. It needs a lock, which `kii_set_mqtt_lock()` sets before the
+task starts:
+
+```c
+    kii_set_mqtt_lock(&kii, &lock.base);
+    ...
+    kii_code_t res = kii_mqtt_publish(&kii, "devices/1/state",
+            "{\"on\":true}", 11, KII_MQTT_QOS_1, false, 30000);
+```
+
+- **When it is sent**: the MQTT socket can't be used by two tasks at once, so
+  the task sends the message between receives, once it is connected and
+  subscribed. A receive with nothing arriving lasts the timeout given to
+  `kii_set_mqtt_to_sock_recv()`, so a shorter one has messages sent sooner.
+  While the task reconnects, the message waits, up to the call's timeout.
+- **One at a time**: a call made while another's message isn't done waits for
+  it, within its own timeout.
+- **Twice, at QoS 1**: a message whose PUBACK a lost connection took is sent
+  again, with DUP, on the next connection, so the broker can get it twice.
+- **Not from the task**: a call from the task's callbacks would wait for the
+  task, which waits for the callback, until the timeout runs out.
+
+Whether the broker takes the message, and who receives it, is the broker's: one
+may acknowledge a message it drops. Publishing is the same with MQTT 3.1 and
+3.1.1.
 
 ### Writing task callbacks
 

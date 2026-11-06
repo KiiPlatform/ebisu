@@ -48,6 +48,13 @@ function(ebisu_add_test_suite name)
         # matter. Variable length arrays in the libraries, where the length can
         # come from elsewhere, are a separate question tracked by -Wvla there.
         $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-vla-cxx-extension>)
+    # A suite can have more sections than the 32767 COFF allows an object, as
+    # mingw-w64's GCC 13 gives each of the inline functions Catch and the tests
+    # make one of its own: kii's MQTT suite does. The big object format has
+    # room for them.
+    if(MINGW)
+        target_compile_options(${name} PRIVATE -Wa,-mbig-obj)
+    endif()
     target_link_libraries(${name} PRIVATE ebisu_catch ${T_LINK})
     if(T_INCLUDES)
         target_include_directories(${name} PRIVATE ${T_INCLUDES})
