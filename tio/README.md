@@ -169,8 +169,15 @@ typedef struct ebisu_socket_ops_t {
             size_t* out_actual_length);
     ebisu_sock_code_t (*close)(ebisu_socket_t* self);
     bool (*recv_timed_out)(ebisu_socket_t* self);  /* Optional, MQTT only. */
+    ebisu_sock_error_t (*last_error)(ebisu_socket_t* self, long* out_detail);  /* Optional. */
+    bool (*recv_wait)(ebisu_socket_t* self, uint32_t timeout_ms);  /* Optional, not called by tio. */
 } ebisu_socket_ops_t;
 ```
+
+`last_error` says why the last operation that returned `EBISU_SOCK_FAIL` failed. From the error callback,
+`tio_handler_get_sock_error()` gives it for the handler's HTTP socket, and `tio_updater_get_sock_error()` for the
+updater's socket. `recv_wait` is for kii's MQTT task when it publishes, which `tio` doesn't have it do. Initialize a
+table whole, so that the operations it leaves out are `NULL`.
 
 An implementation embeds `ebisu_socket_t` in the struct holding the connection's state, and gets that back from
 `self` with `EBISU_CONTAINER_OF()`:
