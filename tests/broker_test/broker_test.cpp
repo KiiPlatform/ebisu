@@ -4,12 +4,13 @@
 // wildcards, subscriptions the broker refuses, retained messages, messages sent
 // again as duplicates, sessions the broker keeps, MQTT 3.1, refused
 // credentials, the will, the keep-alive, messages too large for the buffer,
-// and the broker closing the connection.
+// the broker closing the connection, and messages the task publishes with
+// kii_mqtt_publish().
 //
 // The task connects over the platform's socket, trusting the run's CA:
-// platform's Schannel port on Windows, and its OpenSSL port elsewhere. The task
-// only subscribes, so the messages are published by a client of the test's
-// own, below.
+// platform's Schannel port on Windows, and its OpenSSL port elsewhere. Most
+// messages are published by a client of the test's own, below, so that what
+// the task receives doesn't depend on what it sends.
 //
 // Each test case has topics and client identifiers of its own, under one the
 // run is named by, so that none sees another's messages or session.
@@ -306,8 +307,20 @@ struct Task {
     std::atomic<bool> fail_next_recv{false};
     // Makes the next PUBACK fail to be sent.
     std::atomic<bool> fail_next_puback{false};
+    // Makes the receive after the next PUBLISH at QoS 1 fail, so that the
+    // connection is lost before its PUBACK.
+    std::atomic<bool> fail_recv_after_publish{false};
+    // The first byte of each PUBLISH it sent, with its flags.
+    std::vector<unsigned char> publishes;
     // On the task's thread only: whether the last receive was made to fail.
     bool recv_made_to_fail = false;
+
+    // The lock kii_mqtt_publish() shares with the task.
+    std::mutex publish_mutex;
+    struct LockLink {
+        ebisu_lock_t base;
+        Task* t;
+    } lock_link;
 
     Task(const std::string& topic, const std::string& client_id, size_t buff_size = 1024)
         : buff(buff_size), client_id(client_id) {
@@ -318,6 +331,12 @@ struct Task {
         };
         link.base.ops = &ops;
         link.t = this;
+        static const ebisu_lock_ops_t lock_ops = {
+            [](ebisu_lock_t* self) { ((LockLink*)self)->t->publish_mutex.lock(); },
+            [](ebisu_lock_t* self) { ((LockLink*)self)->t->publish_mutex.unlock(); },
+        };
+        lock_link.base.ops = &lock_ops;
+        lock_link.t = this;
         system.keep = [this](std::thread task) { thread = std::move(task); };
 
         memset(&endpoint, 0, sizeof(endpoint));
@@ -343,6 +362,7 @@ struct Task {
         kii_set_cb_task_exit(&kii, cb_exit, this);
         kii_set_cb_mqtt_message(&kii, cb_message, this);
         kii_set_cb_mqtt_event(&kii, cb_event, this);
+        kii_set_mqtt_lock(&kii, &lock_link.base);
     }
     Task(const Task&) = delete;
     Task& operator=(const Task&) = delete;
@@ -447,6 +467,16 @@ struct Task {
         if (length > 0 && (unsigned char)buffer[0] == 0x10) {
             std::lock_guard<std::mutex> lock(t->mutex);
             t->connect_packets.push_back(std::string(buffer, std::min(length, (size_t)CONNECT_START)));
+        }
+        // The tests' messages fit in the buffer, so a PUBLISH takes one send.
+        if (length > 0 && ((unsigned char)buffer[0] & 0xf0) == 0x30) {
+            {
+                std::lock_guard<std::mutex> lock(t->mutex);
+                t->publishes.push_back((unsigned char)buffer[0]);
+            }
+            if (((unsigned char)buffer[0] & 0x06) == 0x02 && t->fail_recv_after_publish.exchange(false)) {
+                t->fail_next_recv = true;
+            }
         }
         return t->sock.base.ops->send(&t->sock.base, buffer, length, out_sent_length);
     }
@@ -1020,4 +1050,184 @@ TEST_CASE("A client taking the task's identifier closes the task's connection, a
     check_message(t.received[0], topic, "back", KII_MQTT_QOS_0, false, false);
     CHECK( t.count(KII_MQTT_EVENT_CLOSED_BY_BROKER) == 1 );
     CHECK( t.connects.load() == 2 );
+}
+
+TEST_CASE("The task publishes at QoS 0 and 1, with MQTT 3.1.1 and 3.1")
+{
+    const std::string base = topic_of("publish");
+    Task sub(base + "/out/#", client_id_of("publish-sub"));
+    kii_set_mqtt_qos(&sub.kii, KII_MQTT_QOS_1);
+    REQUIRE( sub.start() == KII_ERR_OK );
+    REQUIRE( sub.wait_ready() );
+
+    Task t(base + "/in", client_id_of("publish"));
+    std::string protocol;
+    SECTION("MQTT 3.1.1") {
+        protocol = std::string("\x00\x04MQTT\x04", 7);
+    }
+    SECTION("MQTT 3.1") {
+        kii_set_mqtt_version(&t.kii, KII_MQTT_VERSION_3_1);
+        protocol = std::string("\x00\x06MQIsdp\x03", 9);
+    }
+    REQUIRE( t.start() == KII_ERR_OK );
+    REQUIRE( t.wait_ready() );
+
+    const std::string binary("\0\x01\xff", 3);
+    CHECK( kii_mqtt_publish(&t.kii, (base + "/out/zero").c_str(), "zero", 4, KII_MQTT_QOS_0, false, 10000) == KII_ERR_OK );
+    CHECK( kii_mqtt_publish(&t.kii, (base + "/out/one").c_str(), "one", 3, KII_MQTT_QOS_1, false, 10000) == KII_ERR_OK );
+    CHECK( kii_mqtt_publish(&t.kii, (base + "/out/binary").c_str(), binary.data(), binary.size(), KII_MQTT_QOS_1, false, 10000) == KII_ERR_OK );
+    CHECK( kii_mqtt_publish(&t.kii, (base + "/out/empty").c_str(), nullptr, 0, KII_MQTT_QOS_0, false, 10000) == KII_ERR_OK );
+    // What it publishes to its own subscription comes back to it, as anyone's
+    // would.
+    CHECK( kii_mqtt_publish(&t.kii, (base + "/in").c_str(), "self", 4, KII_MQTT_QOS_0, false, 10000) == KII_ERR_OK );
+
+    REQUIRE( sub.wait_received(4) );
+    REQUIRE( t.wait_received(1) );
+    {
+        std::lock_guard<std::mutex> lock(sub.mutex);
+        REQUIRE( sub.received.size() == 4 );
+        // At the lower of the two QoS, the publisher's and the subscription's.
+        check_message(sub.received[0], base + "/out/zero", "zero", KII_MQTT_QOS_0, false, false);
+        check_message(sub.received[1], base + "/out/one", "one", KII_MQTT_QOS_1, false, false);
+        check_message(sub.received[2], base + "/out/binary", binary, KII_MQTT_QOS_1, false, false);
+        check_message(sub.received[3], base + "/out/empty", "", KII_MQTT_QOS_0, false, false);
+    }
+    std::lock_guard<std::mutex> lock(t.mutex);
+    check_message(t.received[0], base + "/in", "self", KII_MQTT_QOS_0, false, false);
+    CHECK( t.publishes == std::vector<unsigned char>({ 0x30, 0x32, 0x32, 0x30, 0x30 }) );
+    REQUIRE( t.connect_packets.size() == 1 );
+    CHECK( t.connect_packets[0].compare(2, protocol.size(), protocol) == 0 );
+    CHECK( t.count(KII_MQTT_ST_RECONNECT) == 0 );
+    CHECK( t.connects.load() == 1 );
+}
+
+TEST_CASE("A retained message the task publishes is kept for those who subscribe later")
+{
+    const std::string topic = topic_of("publish-retained");
+    Task t(topic + "/in", client_id_of("publish-retained"));
+    REQUIRE( t.start() == KII_ERR_OK );
+    REQUIRE( t.wait_ready() );
+    REQUIRE( kii_mqtt_publish(&t.kii, topic.c_str(), "kept", 4, KII_MQTT_QOS_1, true, 10000) == KII_ERR_OK );
+
+    Task later(topic, client_id_of("publish-retained-later"));
+    REQUIRE( later.start() == KII_ERR_OK );
+    REQUIRE( later.wait_received(1) );
+    {
+        std::lock_guard<std::mutex> lock(later.mutex);
+        check_message(later.received[0], topic, "kept", KII_MQTT_QOS_0, true, false);
+    }
+    // An empty one, which has the broker keep it no more.
+    REQUIRE( kii_mqtt_publish(&t.kii, topic.c_str(), nullptr, 0, KII_MQTT_QOS_1, true, 10000) == KII_ERR_OK );
+    std::lock_guard<std::mutex> lock(t.mutex);
+    CHECK( t.publishes == std::vector<unsigned char>({ 0x33, 0x33 }) );
+}
+
+TEST_CASE("Messages published from several threads at once are each sent once")
+{
+    const std::string base = topic_of("publish-threads");
+    Task sub(base + "/out/#", client_id_of("publish-threads-sub"));
+    kii_set_mqtt_qos(&sub.kii, KII_MQTT_QOS_1);
+    REQUIRE( sub.start() == KII_ERR_OK );
+    REQUIRE( sub.wait_ready() );
+    Task t(base + "/in", client_id_of("publish-threads"));
+    REQUIRE( t.start() == KII_ERR_OK );
+    REQUIRE( t.wait_ready() );
+
+    const int threads = 3;
+    const int each = 3;
+    std::vector<std::string> expected;
+    std::vector<kii_code_t> results(threads * each, KII_ERR_FAIL);
+    std::vector<std::thread> publishers;
+    for (int i = 0; i < threads; ++i) {
+        for (int j = 0; j < each; ++j) {
+            expected.push_back(std::to_string(i) + "-" + std::to_string(j));
+        }
+        publishers.emplace_back([&t, &base, &results, i] {
+            for (int j = 0; j < each; ++j) {
+                const std::string payload = std::to_string(i) + "-" + std::to_string(j);
+                // Each waits for the others' before it, one at a time.
+                results[i * each + j] = kii_mqtt_publish(&t.kii, (base + "/out/" + std::to_string(i)).c_str(),
+                        payload.data(), payload.size(), KII_MQTT_QOS_1, false, 60000);
+            }
+        });
+    }
+    for (std::thread& p : publishers) {
+        p.join();
+    }
+    CHECK( std::count(results.begin(), results.end(), KII_ERR_OK) == threads * each );
+
+    REQUIRE( sub.wait_received(threads * each) );
+    // Time for anything sent twice to come.
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::vector<std::string> got;
+    {
+        std::lock_guard<std::mutex> lock(sub.mutex);
+        for (const Received& r : sub.received) {
+            got.push_back(r.payload);
+            // Each thread's in the order it published them.
+            CHECK( r.topic == base + "/out/" + r.payload.substr(0, 1) );
+        }
+    }
+    std::sort(got.begin(), got.end());
+    std::sort(expected.begin(), expected.end());
+    CHECK( got == expected );
+    std::lock_guard<std::mutex> lock(t.mutex);
+    CHECK( t.publishes == std::vector<unsigned char>(threads * each, 0x32) );
+    CHECK( t.count(KII_MQTT_ST_RECONNECT) == 0 );
+}
+
+TEST_CASE("A message at QoS 1 whose PUBACK the lost connection took is sent again, with DUP")
+{
+    const std::string base = topic_of("publish-again");
+    Task sub(base + "/out", client_id_of("publish-again-sub"));
+    kii_set_mqtt_qos(&sub.kii, KII_MQTT_QOS_1);
+    REQUIRE( sub.start() == KII_ERR_OK );
+    REQUIRE( sub.wait_ready() );
+    Task t(base + "/in", client_id_of("publish-again"));
+    REQUIRE( t.start() == KII_ERR_OK );
+    REQUIRE( t.wait_ready() );
+
+    t.fail_recv_after_publish = true;
+    REQUIRE( kii_mqtt_publish(&t.kii, (base + "/out").c_str(), "again", 5, KII_MQTT_QOS_1, false, 30000) == KII_ERR_OK );
+    {
+        std::lock_guard<std::mutex> lock(t.mutex);
+        CHECK( t.publishes == std::vector<unsigned char>({ 0x32, 0x3a }) );
+        CHECK( t.count(KII_MQTT_EVENT_RECV_FAILED, KII_MQTT_ST_RECV_READY) == 1 );
+        CHECK( t.connects.load() == 2 );
+    }
+    // The broker had it before the connection was lost, and sends it on as
+    // often as it gets it.
+    REQUIRE( sub.wait_received(1) );
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::lock_guard<std::mutex> lock(sub.mutex);
+    CHECK( sub.received.size() <= 2 );
+    for (const Received& r : sub.received) {
+        check_message(r, base + "/out", "again", KII_MQTT_QOS_1, false, false);
+    }
+}
+
+TEST_CASE("A message the broker doesn't let the task publish is acknowledged all the same, and dropped")
+{
+    // Outside ebisu/, where with_broker.py's user may not publish.
+    const std::string topic = "elsewhere/" + run_name();
+    Task t(topic_of("publish-denied") + "/in", client_id_of("publish-denied"));
+    REQUIRE( t.start() == KII_ERR_OK );
+    REQUIRE( t.wait_ready() );
+    CHECK( kii_mqtt_publish(&t.kii, topic.c_str(), "no", 2, KII_MQTT_QOS_1, false, 10000) == KII_ERR_OK );
+    CHECK( kii_mqtt_publish(&t.kii, topic.c_str(), "no", 2, KII_MQTT_QOS_0, false, 10000) == KII_ERR_OK );
+    std::lock_guard<std::mutex> lock(t.mutex);
+    CHECK( t.count(KII_MQTT_ST_RECONNECT) == 0 );
+    CHECK( t.connects.load() == 1 );
+}
+
+TEST_CASE("Without a task running, a message isn't published")
+{
+    Task t(topic_of("publish-stopped"), client_id_of("publish-stopped"));
+    CHECK( kii_mqtt_publish(&t.kii, topic_of("publish-stopped").c_str(), "x", 1, KII_MQTT_QOS_0, false, 1000) == KII_ERR_FAIL );
+    REQUIRE( t.start() == KII_ERR_OK );
+    REQUIRE( t.wait_ready() );
+    t.end();
+    CHECK( kii_mqtt_publish(&t.kii, topic_of("publish-stopped").c_str(), "x", 1, KII_MQTT_QOS_0, false, 1000) == KII_ERR_FAIL );
+    std::lock_guard<std::mutex> lock(t.mutex);
+    CHECK( t.publishes.empty() );
 }

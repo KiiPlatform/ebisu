@@ -1,5 +1,7 @@
 // What a broker sends the push task, in an MQTT buffer of any size, after a
-// CONNACK and a SUBACK that let it through or that the input makes up.
+// CONNACK and a SUBACK that let it through or that the input makes up, while
+// the task publishes messages at the QoS the input says, and awaits their
+// PUBACKs.
 #include <kii.h>
 #include <kii_mqtt_task.h>
 #include <stdlib.h>
@@ -18,6 +20,10 @@ struct Task {
     FuzzSocket socket;
     int states;
     size_t received;
+    kii_t* kii;
+    // The QoS of each message given the task, by its bits, and how many.
+    unsigned int qos_bits;
+    int published;
 };
 
 ebisu_sock_code_t http_connect(ebisu_socket_t*, const char*, uint16_t) {
@@ -36,10 +42,16 @@ ebisu_sock_code_t mqtt_connect(ebisu_socket_t*, const char*, uint16_t) {
     return EBISU_SOCK_OK;
 }
 
-// The task sends each packet whole. A PUBACK of identifier 0 acknowledges a
-// message MQTT doesn't allow, which the task is to refuse.
-ebisu_sock_code_t mqtt_send(ebisu_socket_t*, const char* buffer, size_t length, size_t* out_sent_length) {
+// The task sends each packet whole, as here each fits in the buffer. A PUBACK
+// of identifier 0 acknowledges a message MQTT doesn't allow, which the task is
+// to refuse. A PUBLISH is sent only for the message given, while it is being
+// sent.
+ebisu_sock_code_t mqtt_send(ebisu_socket_t* self, const char* buffer, size_t length, size_t* out_sent_length) {
     if (length == 4 && buffer[0] == 0x40 && buffer[2] == 0 && buffer[3] == 0) {
+        abort();
+    }
+    if (length > 0 && ((unsigned char)buffer[0] & 0xf0) == 0x30 &&
+            ((Task*)self)->kii->_mqtt_pub_state != KII_MQTT_PUB_SENDING) {
         abort();
     }
     *out_sent_length = length;
@@ -62,12 +74,43 @@ ebisu_sock_code_t sock_close(ebisu_socket_t*) {
 void delay_ms(ebisu_system_t*, uint32_t) {
 }
 
+// The task alone uses it here.
+void no_lock(ebisu_lock_t*) {
+}
+
 const ebisu_socket_ops_t HTTP_OPS = { http_connect, http_send, http_recv, sock_close, NULL };
 const ebisu_socket_ops_t MQTT_OPS = { mqtt_connect, mqtt_send, mqtt_recv, sock_close, NULL };
 const ebisu_system_ops_t SYSTEM_OPS = { NULL, delay_ms, NULL };
+const ebisu_lock_ops_t LOCK_OPS = { no_lock, no_lock };
+
+// As a caller of kii_mqtt_publish() would, gives the task a message once the
+// last is done with, from one turn of its loop to the next.
+void give_message(Task* task) {
+    kii_t* kii = task->kii;
+    if (kii->_mqtt_pub_state == KII_MQTT_PUB_DONE) {
+        kii->_mqtt_pub_state = KII_MQTT_PUB_FREE;
+    }
+    if (kii->_mqtt_pub_state != KII_MQTT_PUB_FREE || task->published >= 32) {
+        return;
+    }
+    kii_mqtt_message_t* message = &kii->_mqtt_pub;
+    message->topic = "out";
+    message->topic_length = 3;
+    message->payload = "p";
+    message->payload_length = 1;
+    message->qos = (task->qos_bits >> task->published) & 1 ? KII_MQTT_QOS_1 : KII_MQTT_QOS_0;
+    message->retain = false;
+    message->dup = false;
+    // 2 and up, as kii_mqtt_publish() gives them.
+    message->packet_id = message->qos == KII_MQTT_QOS_1 ? (uint16_t)(2 + task->published % 4) : 0;
+    kii->_mqtt_pub_state = KII_MQTT_PUB_QUEUED;
+    ++task->published;
+}
 
 bool task_continue(void*, void* userdata) {
-    return ++((Task*)userdata)->states < MAX_STATES;
+    Task* task = (Task*)userdata;
+    give_message(task);
+    return ++task->states < MAX_STATES;
 }
 
 // Reads all it is given, for ASan to see the lengths are right. A message the
@@ -101,6 +144,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
         // Accepted and subscribed, to reach messages from the first run on.
         stream.assign("\x20\x02\x00\x00\x90\x03\x00\x01\x00", 9);
     }
+    unsigned int qos_bits = input.take();
+    qos_bits |= (unsigned int)input.take() << 8;
     stream.append((const char*)input.data, input.size);
 
     kii_t kii;
@@ -110,7 +155,12 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     kii_set_buff(&kii, http_buff.data(), http_buff.size());
     kii_set_mqtt_buff(&kii, mqtt_buff.data(), mqtt_buff.size());
 
-    Task task = { { &MQTT_OPS }, { (const uint8_t*)stream.data(), stream.size(), max_read, 0 }, 0, 0 };
+    Task task = { { &MQTT_OPS }, { (const uint8_t*)stream.data(), stream.size(), max_read, 0 }, 0, 0,
+        &kii, qos_bits, 0 };
+    ebisu_lock_t lock = { &LOCK_OPS };
+    kii_set_mqtt_lock(&kii, &lock);
+    // As a start of the task leaves it.
+    kii._mqtt_pub_open = true;
     ebisu_socket_t http = { &HTTP_OPS };
     ebisu_system_t system = { &SYSTEM_OPS };
     kii_set_http_socket(&kii, &http);

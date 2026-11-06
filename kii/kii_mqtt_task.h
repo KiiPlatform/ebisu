@@ -84,6 +84,31 @@ typedef struct {
     uint32_t connect_failures;
 } mqtt_state_t;
 
+/* Where the message kii_mqtt_publish() gave the task is, in
+ * kii_t::_mqtt_pub_state. The lock set by kii_set_mqtt_lock() guards it, and
+ * the message. */
+enum {
+    /* There is none: a call may give one. */
+    KII_MQTT_PUB_FREE,
+    /* Given, and waiting for the task to send it, or to send it again. */
+    KII_MQTT_PUB_QUEUED,
+    /* Being sent: the task reads its topic and payload, so the caller waits,
+     * even once its timeout has run out. */
+    KII_MQTT_PUB_SENDING,
+    /* Sent at QoS 1, and waiting for its PUBACK. */
+    KII_MQTT_PUB_AWAITING_PUBACK,
+    /* As KII_MQTT_PUB_AWAITING_PUBACK, but its caller timed out and returned:
+     * only its packet identifier is left, for the PUBACK that may still come.
+     * The next message waits for that, or for the next connection. */
+    KII_MQTT_PUB_ABANDONED,
+    /* Done, with kii_t::_mqtt_pub_result for its caller, which frees it. */
+    KII_MQTT_PUB_DONE
+};
+
+/* Opens or closes the task to kii_mqtt_publish(), as it is started or fails to
+ * be. */
+void _kii_mqtt_publish_open(kii_t* kii, bool open);
+
 void _init_mqtt_state(kii_t* kii, mqtt_state_t* state);
 
 /* Whether each string of endpoint is terminated within its array. */
@@ -101,7 +126,11 @@ void _mqtt_state_recv_suback(mqtt_state_t* state);
 void _mqtt_state_recv_ready(mqtt_state_t* state);
 void _mqtt_state_recv_msg(mqtt_state_t* state);
 void _mqtt_state_send_pingreq(mqtt_state_t* state);
+void _mqtt_state_send_publish(mqtt_state_t* state);
 void _mqtt_state_reconnect(mqtt_state_t* state);
+
+/* The handler of each state below KII_MQTT_ST_ERR_EXIT, by its value. */
+extern const MQTT_STATE_HANDLER mqtt_state_handlers[];
 
 void* mqtt_start_task(void* sdata);
 
