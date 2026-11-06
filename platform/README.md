@@ -29,7 +29,8 @@ where what it needs is found, which links `libebisu_core`. Link one with
   connections to a few hosts, and a connection offers the server the one for its
   host and port to resume, which saves most of the handshake when the server
   takes it. Its `last_error` says why an operation failed, which also goes to
-  the logger set with `ebisu_openssl_socket_set_logger()`, or to stderr, and
+  the logger set with `ebisu_openssl_socket_set_logger()`, or to stderr, unless
+  it is built with `-DEBISU_LOG=OFF`, and
   its `recv_wait` waits with `poll()`, after what OpenSSL has decrypted. Needs
   OpenSSL 1.0.2 or later, and POSIX threads.
 - **Win32** (`ebisu_win32.h`, library `ebisu_win32`): `ebisu_win32_system()`,
@@ -45,7 +46,8 @@ where what it needs is found, which links `libebisu_core`. Link one with
   with `select()`, so that a timeout leaves the connection usable, as its
   `recv_wait` waits too. Its
   `last_error` says why an operation failed, which also goes to the logger set
-  with `ebisu_schannel_socket_set_logger()`, or to stderr. Needs only what
+  with `ebisu_schannel_socket_set_logger()`, or to stderr, unless it is built
+  with `-DEBISU_LOG=OFF`. Needs only what
   Windows provides, `ws2_32`, `secur32` and `crypt32`, which it links.
 
 The Linux sample uses the POSIX and OpenSSL ports, and the Windows sample the

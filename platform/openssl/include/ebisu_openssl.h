@@ -182,6 +182,9 @@ void ebisu_openssl_socket_set_clock(ebisu_openssl_socket_t* sock, ebisu_clock_t*
  * times out isn't one. And at EBISU_LOG_DEBUG, a connection that resumed a
  * session.
  *
+ * Built with EBISU_NO_LOG, as -DEBISU_LOG=OFF builds it, the socket logs
+ * nothing, to the logger or to stderr.
+ *
  * \param [out] sock The socket.
  * \param [in] logger The logger, which has to outlive the socket, or NULL for
  * stderr, which gets the errors only.

@@ -59,6 +59,12 @@ typedef enum {
     DECRYPT_ERROR
 } decrypt_result_t;
 
+#ifdef EBISU_NO_LOG
+/* Built without logging, a diagnostic is left out, its message too, and its
+   arguments aren't evaluated. */
+#define log_to(logger, level, ...) ((void)0)
+#define log_code(ctx, code, ...) ((void)0)
+#else
 #if defined(__GNUC__) || defined(__clang__)
 static void log_to(ebisu_logger_t* logger, ebisu_log_level_t level, const char* fmt, ...)
     __attribute__((format(printf, 3, 4)));
@@ -104,6 +110,7 @@ static void log_code(ebisu_schannel_socket_t* ctx, unsigned long code, const cha
     log_to(ctx->logger, EBISU_LOG_ERROR, "%s: 0x%08lx%s%s", what, code,
             len > 0 ? " " : "", text);
 }
+#endif
 
 /* Says why the operation failing now failed, for last_error. */
 static void set_error(ebisu_schannel_socket_t* ctx, ebisu_sock_error_t error, long detail)
