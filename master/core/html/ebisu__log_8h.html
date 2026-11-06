@@ -79,7 +79,8 @@ $(function() {
   <div class="summary">
 <a href="#nested-classes">Data Structures</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
-<a href="#enum-members">Enumerations</a>  </div>
+<a href="#enum-members">Enumerations</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">ebisu_log.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -87,6 +88,7 @@ $(function() {
 <p>Where a port's diagnostics go.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;stdarg.h&gt;</code><br />
+<code>#include &lt;stddef.h&gt;</code><br />
 </div>
 <p><a href="ebisu__log_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -96,6 +98,8 @@ Data Structures</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">What a logger does.  <a href="structebisu__logger__ops__t.html#details">More...</a><br /></td></tr>
 <tr class="memitem:ebisu_5Flogger_5Ft" id="r_ebisu_5Flogger_5Ft"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structebisu__logger__t.html">ebisu_logger_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A logger: where diagnostics go, such as stderr, syslog or the device's own log.  <a href="structebisu__logger__t.html#details">More...</a><br /></td></tr>
+<tr class="memitem:ebisu_5Flog_5Ffanout_5Ft" id="r_ebisu_5Flog_5Ffanout_5Ft"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structebisu__log__fanout__t.html">ebisu_log_fanout_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A logger that gives each message to several others.  <a href="structebisu__log__fanout__t.html#details">More...</a><br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-typedef-members" class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
@@ -108,6 +112,8 @@ typedef struct ebisu_logger_t&#160;</td><td class="memItemRight" valign="bottom"
 <tr class="memitem:a6a4379602c0457f39fa3a4eef936cc32" id="r_a6a4379602c0457f39fa3a4eef936cc32"><td class="memItemLeft" align="right" valign="top"><a id="a6a4379602c0457f39fa3a4eef936cc32" name="a6a4379602c0457f39fa3a4eef936cc32"></a>
 typedef struct ebisu_logger_ops_t&#160;</td><td class="memItemRight" valign="bottom"><b>ebisu_logger_ops_t</b></td></tr>
 <tr class="memdesc:a6a4379602c0457f39fa3a4eef936cc32"><td class="mdescLeft">&#160;</td><td class="mdescRight">What a logger does. <br /></td></tr>
+<tr class="memitem:a9dd37a633c3f347ef4cab58eeb55f93b" id="r_a9dd37a633c3f347ef4cab58eeb55f93b"><td class="memItemLeft" align="right" valign="top">typedef struct ebisu_log_fanout_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9dd37a633c3f347ef4cab58eeb55f93b">ebisu_log_fanout_t</a></td></tr>
+<tr class="memdesc:a9dd37a633c3f347ef4cab58eeb55f93b"><td class="mdescLeft">&#160;</td><td class="mdescRight">A logger that gives each message to several others.  <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-enum-members" class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
@@ -117,10 +123,36 @@ Enumerations</h2></td></tr>
 , <a class="el" href="#a42e3fb546ca916214c4afd79eddce535a72cb7f90a0acc64fa2d563cefea16a7a">EBISU_LOG_DEBUG</a>
  }</td></tr>
 <tr class="memdesc:a42e3fb546ca916214c4afd79eddce535"><td class="mdescLeft">&#160;</td><td class="mdescRight">How much a message matters, most first.  <a href="#a42e3fb546ca916214c4afd79eddce535">More...</a><br /></td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a221be842a08c6b23d5083d8dad9ac203" id="r_a221be842a08c6b23d5083d8dad9ac203"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a221be842a08c6b23d5083d8dad9ac203">ebisu_log</a> (<a class="el" href="structebisu__logger__t.html">ebisu_logger_t</a> *logger, <a class="el" href="#a42e3fb546ca916214c4afd79eddce535">ebisu_log_level_t</a> level, const char *fmt,...)</td></tr>
+<tr class="memdesc:a221be842a08c6b23d5083d8dad9ac203"><td class="mdescLeft">&#160;</td><td class="mdescRight">Logs a message, with the logger's log.  <br /></td></tr>
+<tr class="memitem:a4ee7810e4c2a3c1949e7fa1c969ffa4f" id="r_a4ee7810e4c2a3c1949e7fa1c969ffa4f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4ee7810e4c2a3c1949e7fa1c969ffa4f">ebisu_log_fanout_init</a> (<a class="el" href="structebisu__log__fanout__t.html">ebisu_log_fanout_t</a> *fanout, <a class="el" href="structebisu__logger__t.html">ebisu_logger_t</a> *const *loggers, size_t count)</td></tr>
+<tr class="memdesc:a4ee7810e4c2a3c1949e7fa1c969ffa4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes a logger that gives each message to the loggers of an array, and makes base a logger of it.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Where a port's diagnostics go. </p>
-</div><a name="doc-enum-members" id="doc-enum-members"></a><h2 id="header-doc-enum-members" class="groupheader">Enumeration Type Documentation</h2>
+</div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Typedef Documentation</h2>
+<a id="a9dd37a633c3f347ef4cab58eeb55f93b" name="a9dd37a633c3f347ef4cab58eeb55f93b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9dd37a633c3f347ef4cab58eeb55f93b">&#9670;&#160;</a></span>ebisu_log_fanout_t</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef struct ebisu_log_fanout_t ebisu_log_fanout_t</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>A logger that gives each message to several others. </p>
+<p>Each of them is given every message, in the order of the array, and decides what to do with it, as platform's loggers do with a level of their own. So one logger set on a port can send its diagnostics to, say, stderr and syslog at once. It may be called from more than one task at once if each of them may. It depends on nothing of the system's, so it serves an embedded device too.</p>
+<p>Initialize with <a class="el" href="#a4ee7810e4c2a3c1949e7fa1c969ffa4f" title="Initializes a logger that gives each message to the loggers of an array, and makes base a logger of i...">ebisu_log_fanout_init()</a>. </p>
+
+</div>
+</div>
+<a name="doc-enum-members" id="doc-enum-members"></a><h2 id="header-doc-enum-members" class="groupheader">Enumeration Type Documentation</h2>
 <a id="a42e3fb546ca916214c4afd79eddce535" name="a42e3fb546ca916214c4afd79eddce535"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a42e3fb546ca916214c4afd79eddce535">&#9670;&#160;</a></span>ebisu_log_level_t</h2>
 
@@ -144,6 +176,85 @@ Enumerations</h2></td></tr>
 <tr><td class="fieldname"><a id="a42e3fb546ca916214c4afd79eddce535a72cb7f90a0acc64fa2d563cefea16a7a" name="a42e3fb546ca916214c4afd79eddce535a72cb7f90a0acc64fa2d563cefea16a7a"></a>EBISU_LOG_DEBUG&#160;</td><td class="fielddoc"><p>Detail for finding a fault. </p>
 </td></tr>
 </table>
+
+</div>
+</div>
+<a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Function Documentation</h2>
+<a id="a221be842a08c6b23d5083d8dad9ac203" name="a221be842a08c6b23d5083d8dad9ac203"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a221be842a08c6b23d5083d8dad9ac203">&#9670;&#160;</a></span>ebisu_log()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ebisu_log </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__logger__t.html">ebisu_logger_t</a> *</td>          <td class="paramname"><span class="paramname"><em>logger</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="#a42e3fb546ca916214c4afd79eddce535">ebisu_log_level_t</a></td>          <td class="paramname"><span class="paramname"><em>level</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>fmt</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>...</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Logs a message, with the logger's log. </p>
+<p>For an application to log messages of its own where a port logs its diagnostics.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">logger</td><td>The logger, or NULL, which drops the message. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">level</td><td>How much the message matters. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fmt</td><td>The message, as a printf format, with no newline at the end, followed by its arguments. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a4ee7810e4c2a3c1949e7fa1c969ffa4f" name="a4ee7810e4c2a3c1949e7fa1c969ffa4f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4ee7810e4c2a3c1949e7fa1c969ffa4f">&#9670;&#160;</a></span>ebisu_log_fanout_init()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ebisu_log_fanout_init </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__log__fanout__t.html">ebisu_log_fanout_t</a> *</td>          <td class="paramname"><span class="paramname"><em>fanout</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structebisu__logger__t.html">ebisu_logger_t</a> *const *</td>          <td class="paramname"><span class="paramname"><em>loggers</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t</td>          <td class="paramname"><span class="paramname"><em>count</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initializes a logger that gives each message to the loggers of an array, and makes base a logger of it. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">fanout</td><td>The logger. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">loggers</td><td>The loggers, of which NULL ones are skipped. The array and each logger in it have to outlive fanout, and the array can't change while fanout may be logging. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">count</td><td>How many there are. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>

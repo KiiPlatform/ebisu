@@ -282,6 +282,7 @@ Functions</h2></td></tr>
 
 <p>Sets where the socket's diagnostics go. </p>
 <p>Why an operation failed, at EBISU_LOG_ERROR: a host that didn't resolve or connect, a certificate rejected and why, OpenSSL's error. A receive that times out isn't one. And at EBISU_LOG_DEBUG, a connection that resumed a session.</p>
+<p>Built with EBISU_NO_LOG, as -DEBISU_LOG=OFF builds it, the socket logs nothing, to the logger or to stderr.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">sock</td><td>The socket. </td></tr>

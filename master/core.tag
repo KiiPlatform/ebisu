@@ -108,6 +108,7 @@
     <filename>ebisu__log_8h.html</filename>
     <class kind="struct">ebisu_logger_ops_t</class>
     <class kind="struct">ebisu_logger_t</class>
+    <class kind="struct">ebisu_log_fanout_t</class>
     <member kind="typedef">
       <type>enum ebisu_log_level_t</type>
       <name>ebisu_log_level_t</name>
@@ -127,6 +128,13 @@
       <name>ebisu_logger_ops_t</name>
       <anchorfile>ebisu__log_8h.html</anchorfile>
       <anchor>a6a4379602c0457f39fa3a4eef936cc32</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_log_fanout_t</type>
+      <name>ebisu_log_fanout_t</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>a9dd37a633c3f347ef4cab58eeb55f93b</anchor>
       <arglist></arglist>
     </member>
     <member kind="enumeration">
@@ -159,6 +167,20 @@
       <anchorfile>ebisu__log_8h.html</anchorfile>
       <anchor>a42e3fb546ca916214c4afd79eddce535a72cb7f90a0acc64fa2d563cefea16a7a</anchor>
       <arglist></arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_log</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>a221be842a08c6b23d5083d8dad9ac203</anchor>
+      <arglist>(ebisu_logger_t *logger, ebisu_log_level_t level, const char *fmt,...)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_log_fanout_init</name>
+      <anchorfile>ebisu__log_8h.html</anchorfile>
+      <anchor>a4ee7810e4c2a3c1949e7fa1c969ffa4f</anchor>
+      <arglist>(ebisu_log_fanout_t *fanout, ebisu_logger_t *const *loggers, size_t count)</arglist>
     </member>
   </compound>
   <compound kind="file">
@@ -716,6 +738,17 @@
       <name>ops</name>
       <anchorfile>structebisu__lock__t.html</anchorfile>
       <anchor>a71d30ddec61e4e6d4790bab56b4c0fa5</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_log_fanout_t</name>
+    <filename>structebisu__log__fanout__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_logger_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__log__fanout__t.html</anchorfile>
+      <anchor>ac8ac9936c9fe790257ec129b4cb5d635</anchor>
       <arglist></arglist>
     </member>
   </compound>
