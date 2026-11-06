@@ -206,7 +206,7 @@ value above `UINT32_MAX` is cut down before anything can check it.
 - The shared libraries export only what the public headers declare. Code that
   called anything else in them, such as `_extract_content_length()` or
   `_get_anonymous_token()`, no longer links.
-- `kii_t`, `tio_handler_t` and `tio_updater_t` are about 700 bytes larger on
+- `kii_t`, `tio_handler_t` and `tio_updater_t` are about 1 KB larger on
   x86-64, and `kii_author_t` goes from 256 to 384 bytes with `refresh_token`.
   Check any static memory or task stack that holds one.
 - A device that saved a `kii_author_t` as bytes can read 1.x's into a zeroed
