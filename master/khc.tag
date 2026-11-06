@@ -276,6 +276,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>khc_set_logger</name>
+      <anchorfile>khc_8h.html</anchorfile>
+      <anchor>a176015d9b2cad1a09e21f922da826730</anchor>
+      <arglist>(khc *khc, ebisu_logger_t *logger)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>khc_set_timeout_ms</name>
       <anchorfile>khc_8h.html</anchorfile>
       <anchor>afbc90a9006ee882364cfcf1790b5e4db</anchor>

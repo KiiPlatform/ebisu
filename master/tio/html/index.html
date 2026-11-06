@@ -530,6 +530,7 @@ Tasks executed by <span class="tt">tio_handler_t</span>.</h2>
 <li><span class="tt">tio_handler_set_system()</span> (<span class="tt">delay_ms</span>)</li>
 <li><span class="tt">tio_handler_start()</span> (<span class="tt">TIO_CB_ACTION</span> callback)</li>
 <li><span class="tt">tio_handler_set_cb_err()</span> (Optional. In case set the error handler for debugging, etc.)</li>
+<li><span class="tt">tio_handler_set_logger()</span> (Optional. The logger the handler's requests, its MQTT task's events and the steps of a command that fail are logged to.)</li>
 </ul>
 <p class="startli">This task uses buffers set by following APIs.</p><ul>
 <li><span class="tt">tio_handler_set_http_buff()</span></li>
@@ -549,6 +550,7 @@ Tasks executed by <span class="tt">tio_updater_t</span>.</h2>
 <li><span class="tt">tio_updater_set_system()</span> (<span class="tt">delay_ms</span>)</li>
 <li><span class="tt">tio_updater_start()</span> (<span class="tt">TIO_CB_SIZE</span>, <span class="tt">TIO_CB_READ</span> callbacks.)</li>
 <li><span class="tt">tio_updater_set_cb_error()</span> (Optional. In case set the error handler for debugging, etc.)</li>
+<li><span class="tt">tio_updater_set_logger()</span> (Optional. The logger the updater's requests, and a state it couldn't upload, are logged to.)</li>
 </ul>
 <p class="startli">This task uses buffers set by following APIs.</p><ul>
 <li><span class="tt">tio_updater_set_buff()</span></li>

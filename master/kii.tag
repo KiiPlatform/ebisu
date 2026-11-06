@@ -1202,6 +1202,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>kii_set_logger</name>
+      <anchorfile>kii_8h.html</anchorfile>
+      <anchor>a22bcc2607fdb5daa6ed0794f130f6228</anchor>
+      <arglist>(kii_t *kii, ebisu_logger_t *logger)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>kii_set_cb_slist_resource</name>
       <anchorfile>kii_8h.html</anchorfile>
       <anchor>af8d81eaeba5dfa0aceff7347e8f7419a</anchor>

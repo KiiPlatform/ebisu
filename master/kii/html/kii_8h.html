@@ -474,6 +474,8 @@ Functions</h2></td></tr>
 <tr class="memdesc:a5d4c80bb655870e967d5a90500bcda08"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback called right before exit of MQTT task.  <br /></td></tr>
 <tr class="memitem:a853c3e530701ed2821591d8e04572606" id="r_a853c3e530701ed2821591d8e04572606"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a853c3e530701ed2821591d8e04572606">kii_set_cb_mqtt_event</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="el" href="#a5cb747d170789f6d5beaf457af3dbee2">KII_CB_MQTT_EVENT</a> cb, void *userdata)</td></tr>
 <tr class="memdesc:a853c3e530701ed2821591d8e04572606"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the callback the MQTT task tells why it reconnects, waits or drops a message.  <br /></td></tr>
+<tr class="memitem:a22bcc2607fdb5daa6ed0794f130f6228" id="r_a22bcc2607fdb5daa6ed0794f130f6228"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a22bcc2607fdb5daa6ed0794f130f6228">kii_set_logger</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a> *logger)</td></tr>
+<tr class="memdesc:a22bcc2607fdb5daa6ed0794f130f6228"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set where kii logs what it does.  <br /></td></tr>
 <tr class="memitem:af8d81eaeba5dfa0aceff7347e8f7419a" id="r_af8d81eaeba5dfa0aceff7347e8f7419a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af8d81eaeba5dfa0aceff7347e8f7419a">kii_set_cb_slist_resource</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii, <a class="elRef" href="../../khc/html/khc_8h.html#a14e10ebf817cb0b1dc8dca9ce3794b9c">KHC_CB_SLIST_ALLOC</a> cb_alloc, <a class="elRef" href="../../khc/html/khc_8h.html#a32bafb6cf1da963a57d8a167efe9f833">KHC_CB_SLIST_FREE</a> cb_free, void *cb_alloc_data, void *cb_free_data)</td></tr>
 <tr class="memdesc:af8d81eaeba5dfa0aceff7347e8f7419a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set <a class="elRef" href="../../khc/html/structkhc__slist.html">khc_slist</a> (linked list) resource allocators.  <br /></td></tr>
 <tr class="memitem:a51c376c5e496e52aec2375a3ff70a885" id="r_a51c376c5e496e52aec2375a3ff70a885"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a51c376c5e496e52aec2375a3ff70a885">kii_get_etag</a> (<a class="el" href="structkii__t.html">kii_t</a> *kii)</td></tr>
@@ -2938,6 +2940,37 @@ const char*, const char*, const char*, bool)</a> and <a class="el" href="#aa6640
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">socket</td><td>The socket. It has to outlive kii, or be replaced first. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a22bcc2607fdb5daa6ed0794f130f6228" name="a22bcc2607fdb5daa6ed0794f130f6228"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a22bcc2607fdb5daa6ed0794f130f6228">&#9670;&#160;</a></span>kii_set_logger()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void kii_set_logger </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structkii__t.html">kii_t</a> *</td>          <td class="paramname"><span class="paramname"><em>kii</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="elRef" href="../../core/html/structebisu__logger__t.html">ebisu_logger_t</a> *</td>          <td class="paramname"><span class="paramname"><em>logger</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set where kii logs what it does. </p>
+<p>What khc logs of each request, as <a class="elRef" href="../../khc/html/khc_8h.html#a176015d9b2cad1a09e21f922da826730">khc_set_logger(khc*, ebisu_logger_t*)</a> says: at EBISU_LOG_DEBUG, the request's and the response's lines and headers, without credentials or bodies, and at EBISU_LOG_WARNING, a request that failed. And what the MQTT task tells the callback set by <a class="el" href="#a853c3e530701ed2821591d8e04572606" title="Set the callback the MQTT task tells why it reconnects, waits or drops a message.">kii_set_cb_mqtt_event()</a>, the event's name and its detail: at EBISU_LOG_INFO, a CONNACK or SUBACK that accepts, and at EBISU_LOG_WARNING every other event. <a class="el" href="#a7ba3ce1d86f6048b7b3fefba36056410" title="Initializes kii_t instance.">kii_init()</a> sets none. Set it before starting the task. Built with EBISU_NO_LOG, kii logs nothing.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">kii</td><td><a class="el" href="structkii__t.html" title="Stores data/ callbacks used by kii module.">kii_t</a> instance. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">logger</td><td>The logger, or NULL for none. It has to outlive the requests and the task. </td></tr>
   </table>
   </dd>
 </dl>
