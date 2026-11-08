@@ -6,7 +6,6 @@
 #define _KII_TASK_CALLBACK
 
 #include <stdbool.h>
-#include <stdint.h>
 
 /* The library is compiled with hidden visibility, so what this header declares
    is exactly what the shared object exports. */

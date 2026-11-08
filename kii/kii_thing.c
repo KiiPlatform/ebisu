@@ -1,6 +1,4 @@
 #include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "kii.h"
 #include "kii_impl.h"

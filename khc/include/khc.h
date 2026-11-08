@@ -12,7 +12,6 @@ extern "C"
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <ebisu_log.h>
 #include <ebisu_socket.h>
 #include <ebisu_system.h>

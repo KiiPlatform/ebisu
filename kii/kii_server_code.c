@@ -1,5 +1,3 @@
-#include <string.h>
-#include <stdlib.h>
 #include <ebisu_str.h>
 
 #include "kii.h"

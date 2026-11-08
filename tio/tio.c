@@ -1,4 +1,3 @@
-#include <string.h>
 #include "tio.h"
 #include "kii.h"
 #include "kii_task_callback.h"

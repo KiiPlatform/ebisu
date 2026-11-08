@@ -1,7 +1,5 @@
 #include <string.h>
-#include <stdio.h>
 #include <assert.h>
-#include <ctype.h>
 #include <stdint.h>
 
 #include "kii.h"
@@ -9,7 +7,6 @@
 #include "kii_mqtt_task.h"
 #include "kii_push_impl.h"
 #include "kii_impl.h"
-#include <ebisu_mem.h>
 
 
 kii_code_t kii_subscribe_bucket(kii_t* kii, const kii_bucket_t* bucket)

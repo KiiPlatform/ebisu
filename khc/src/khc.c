@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 #include "khc.h"
 #include "khc_impl.h"

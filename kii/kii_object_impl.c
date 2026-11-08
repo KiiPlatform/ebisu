@@ -1,4 +1,3 @@
-#include <string.h>
 #include "kii_object_impl.h"
 #include "kii_impl.h"
 #include "kii_req_impl.h"
