@@ -43,21 +43,53 @@ ebisu_add_test_suite(small_test_kii
     LINK ${EBISU_KII_OBJS} Threads::Threads
     INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/kii ${PROJECT_SOURCE_DIR}/kii)
 
+set(jkii_test_sources
+    jkii/src/jkii_double_test.cpp
+    jkii/src/jkii_escape_test.cpp
+    jkii/src/jkii_lines_test.cpp
+    jkii/src/jkii_primitive_test.cpp
+    jkii/src/jkii_test.cpp
+    jkii/src/jkii_unescape_test.cpp
+    jkii/src/jkii_writer_test.cpp
+    # An application's own coreJSON, beside jkii's.
+    jkii/src/app_core_json_test.cpp
+    ${PROJECT_SOURCE_DIR}/jkii/libs/coreJSON/core_json.c)
+
 ebisu_add_test_suite(small_test_jkii
     LABEL small
     WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/jkii
-    SOURCES
-        jkii/src/jkii_escape_test.cpp
-        jkii/src/jkii_lines_test.cpp
-        jkii/src/jkii_primitive_test.cpp
-        jkii/src/jkii_test.cpp
-        jkii/src/jkii_unescape_test.cpp
-        jkii/src/jkii_writer_test.cpp
-        # An application's own coreJSON, beside jkii's.
-        jkii/src/app_core_json_test.cpp
-        ${PROJECT_SOURCE_DIR}/jkii/libs/coreJSON/core_json.c
+    SOURCES ${jkii_test_sources}
     LINK ${EBISU_JKII_OBJS}
     INCLUDES ${PROJECT_SOURCE_DIR}/jkii/libs/coreJSON)
+
+# jkii again, reading doubles without strtod(), as -DEBISU_STRTOD=OFF builds it,
+# so that each build runs jkii's tests both ways. Built from jkii's sources,
+# with its include directories and definitions.
+get_target_property(jkii_dir ebisu_jkii_objs SOURCE_DIR)
+get_target_property(jkii_sources ebisu_jkii_objs SOURCES)
+set(jkii_no_strtod_sources "")
+foreach(source IN LISTS jkii_sources)
+    if(NOT IS_ABSOLUTE "${source}")
+        set(source "${jkii_dir}/${source}")
+    endif()
+    list(APPEND jkii_no_strtod_sources "${source}")
+endforeach()
+add_library(ebisu_jkii_no_strtod_objs OBJECT ${jkii_no_strtod_sources})
+target_include_directories(ebisu_jkii_no_strtod_objs
+    PRIVATE $<TARGET_PROPERTY:ebisu_jkii_objs,INCLUDE_DIRECTORIES>
+    INTERFACE $<TARGET_PROPERTY:ebisu_jkii_objs,INTERFACE_INCLUDE_DIRECTORIES>)
+target_compile_definitions(ebisu_jkii_no_strtod_objs
+    PRIVATE $<TARGET_PROPERTY:ebisu_jkii_objs,COMPILE_DEFINITIONS> EBISU_NO_STRTOD)
+target_link_libraries(ebisu_jkii_no_strtod_objs PUBLIC ebisu_core_objs)
+ebisu_configure_target(ebisu_jkii_no_strtod_objs)
+
+ebisu_add_test_suite(small_test_jkii_no_strtod
+    LABEL small
+    WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR}/jkii
+    SOURCES ${jkii_test_sources}
+    LINK ebisu_jkii_no_strtod_objs ebisu_core_objs
+    INCLUDES ${PROJECT_SOURCE_DIR}/jkii/libs/coreJSON
+    DEFINES EBISU_NO_STRTOD)
 
 ebisu_add_test_suite(small_test_core
     LABEL small

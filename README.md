@@ -228,6 +228,14 @@ khc's from 15.7 KB to 14.5 KB, kii's from 39.2 KB to 38.7 KB and tio's from
 socket's `last_error` still says why an operation failed, and an application's
 loggers still take its own messages.
 
+`-DEBISU_STRTOD=OFF` has jkii read a number with a fraction or an exponent with
+code of its own, rather than the C library's `strtod()`, which then stays out of
+a program, with the locale support it brings. A number of up to 15 digits with a
+power of ten within 10^22, as a device's readings are, reads exactly as
+`strtod()` reads it. A longer or more extreme one can be a few units in the last
+place off, and one that close to the largest double can be read as too large. A
+build without CMake defines `EBISU_NO_STRTOD` for the same.
+
 `tests/samples/size_report.sh` builds the libraries each way and reports their
 size, and that of a thing for a Cortex-M3 linked against them, as CI does. For
 that thing, with GCC 13, `EBISU_MIN_SIZE` takes the text, code and constant

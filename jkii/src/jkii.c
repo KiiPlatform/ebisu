@@ -6,8 +6,9 @@
 #include <math.h>
 #include <errno.h>
 #include <float.h>
-#include <ctype.h>
+#ifndef EBISU_NO_STRTOD
 #include <locale.h>
+#endif
 
 /* Some vendor libcs have an errno.h that declares neither errno nor the codes
  * jkii checks. Defined here, once, for the file that uses them: in a public
@@ -53,6 +54,10 @@ int errno;
 
 /* "+ 3" denotes '-', '.', '\0' */
 #define DOUBLEBUFSIZE DBL_MAX_10_EXP + 3
+
+/* A decimal digit, as JSON's are: not isdigit(), which a C library may look up
+ * in the locale's tables. */
+#define M_JKII_IS_DIGIT(c) ((c) >= '0' && (c) <= '9')
 
 typedef enum _jkii_parent_type_t {
     _JKII_PARENT_TYPE_OBJECT,
@@ -160,7 +165,7 @@ static int _jkii_is_all_digit(const char* buf, size_t buf_len)
     M_JKII_ASSERT(buf != NULL);
 
     for (i = 0; i < buf_len; ++i) {
-        if (isdigit((unsigned char)buf[i]) == 0) {
+        if (!M_JKII_IS_DIGIT(buf[i])) {
             return 0;
         }
     }
@@ -236,7 +241,7 @@ static int _jkii_is_double(const char* buf, size_t buf_len)
                 }
                 return 0;
             case parser_sts_integer:
-                if (isdigit((unsigned char)c)) {
+                if (M_JKII_IS_DIGIT(c)) {
                     continue;
                 }
                 if (c == '.') {
@@ -249,7 +254,7 @@ static int _jkii_is_double(const char* buf, size_t buf_len)
                 }
                 return 0;
             case parser_sts_decimal:
-                if (isdigit((unsigned char)c)) {
+                if (M_JKII_IS_DIGIT(c)) {
                     continue;
                 }
                 if (c == 'e' || c == 'E') {
@@ -258,13 +263,13 @@ static int _jkii_is_double(const char* buf, size_t buf_len)
                 }
                 return 0;
             case parser_sts_exp_start:
-                if (c == '-' || c == '+' || isdigit((unsigned char)c)) {
+                if (c == '-' || c == '+' || M_JKII_IS_DIGIT(c)) {
                     sts = parser_sts_exp;
                     continue;
                 }
                 return 0;
             case parser_sts_exp:
-                if (isdigit((unsigned char)c)) {
+                if (M_JKII_IS_DIGIT(c)) {
                     continue;
                 }
                 return 0;
@@ -487,6 +492,7 @@ static jkii_primitive_err_t _jkii_to_integer(
     return res;
 }
 
+#ifndef EBISU_NO_STRTOD
 /* Puts the locale's decimal point in place of the '.' in the number of len
  * bytes in buf, terminated, which holds size. strtod() reads the decimal point
  * the locale sets, a comma in many, while JSON's is always '.', so a program
@@ -556,6 +562,151 @@ static jkii_primitive_err_t _jkii_to_double(
     *out_double = value;
     return JKII_PRIMITIVE_ERR_OK;
 }
+#else
+/* Powers of ten a double holds exactly: 10^22 is the largest, as 5^22 is below
+ * 2^53. */
+static const double _jkii_exact_pow10[] = {
+    1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11,
+    1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20, 1e21, 1e22
+};
+/* 10 to the powers of two, for an exponent beyond those: a double's range is
+ * within 10^-512 to 10^512 of any 19 digits. */
+static const double _jkii_pow10_by_bit[] = {
+    1e1, 1e2, 1e4, 1e8, 1e16, 1e32, 1e64, 1e128, 1e256
+};
+
+/* The digits of a decimal number at s, up to len or what isn't one: as many as
+ * fit in an unsigned 64-bit integer, 19, with the power of ten that each
+ * further one before the point adds. Returns where they end. */
+static size_t _jkii_read_digits(
+        const char* s,
+        size_t len,
+        size_t i,
+        int fraction,
+        uint64_t* digits,
+        long* exp10)
+{
+    for (; i < len && M_JKII_IS_DIGIT(s[i]); ++i) {
+        if (*digits < UINT64_C(1000000000000000000)) {
+            *digits = *digits * 10 + (uint64_t)(s[i] - '0');
+            if (fraction) {
+                --*exp10;
+            }
+        } else if (!fraction) {
+            ++*exp10;
+        }
+    }
+    return i;
+}
+
+/* A JSON number as a double, without strtod(): its digits as an integer, and
+ * the power of ten they are scaled by. With 2^53 or fewer and a power within
+ * 10^-22 to 10^22, one multiplication or division of two exact doubles, which
+ * IEEE 754 rounds once, gives the double nearest the number, as strtod() does.
+ * Beyond, the scaling takes a few steps, each rounded, and the result can be a
+ * few units in the last place from it. So can a 32-bit x86 build's that
+ * computes on the x87, which rounds twice. Nothing of the locale's plays a
+ * part. */
+static jkii_primitive_err_t _jkii_to_double(
+        const char* s,
+        size_t len,
+        double* out_double)
+{
+    uint64_t digits = 0;
+    long exp10 = 0;
+    int negative = 0;
+    size_t i = 0;
+    size_t start = 0;
+    double value = 0;
+
+    M_JKII_ASSERT(out_double != NULL);
+
+    if (i < len && s[i] == '-') {
+        negative = 1;
+        ++i;
+    }
+    start = i;
+    i = _jkii_read_digits(s, len, i, 0, &digits, &exp10);
+    if (i == start) {
+        return JKII_PRIMITIVE_ERR_INVALID;
+    }
+    /* A point needn't have digits after it, as strtod() takes "1." too. */
+    if (i < len && s[i] == '.') {
+        i = _jkii_read_digits(s, len, i + 1, 1, &digits, &exp10);
+    }
+    if (i < len && (s[i] == 'e' || s[i] == 'E')) {
+        int exp_negative = 0;
+        long e = 0;
+        ++i;
+        if (i < len && (s[i] == '+' || s[i] == '-')) {
+            exp_negative = s[i] == '-';
+            ++i;
+        }
+        start = i;
+        for (; i < len && M_JKII_IS_DIGIT(s[i]); ++i) {
+            /* Beyond that, any digits make 0 or an infinity already. */
+            if (e < 100000) {
+                e = e * 10 + (s[i] - '0');
+            }
+        }
+        if (i == start) {
+            return JKII_PRIMITIVE_ERR_INVALID;
+        }
+        exp10 += exp_negative ? -e : e;
+    }
+    if (i != len) {
+        return JKII_PRIMITIVE_ERR_INVALID;
+    }
+
+    if (digits == 0) {
+        /* -0 is a number of its own, as strtod() reads it. */
+        *out_double = negative ? -0.0 : 0.0;
+        return JKII_PRIMITIVE_ERR_OK;
+    }
+    /* Zeros at the end of the digits, "1.50" or "1500", are a power of ten. And
+     * a power above 10^22 goes into the digits while they stay at 2^53 or below,
+     * so that 1e23 is 10 times 10^22. Either keeps the one exact operation. */
+    while (digits % 10 == 0) {
+        digits /= 10;
+        ++exp10;
+    }
+    while (exp10 > 22 && digits <= ((UINT64_C(1) << 53) / 10)) {
+        digits *= 10;
+        --exp10;
+    }
+    value = (double)digits;
+    if (digits <= (UINT64_C(1) << 53) && exp10 >= -22 && exp10 <= 22) {
+        value = exp10 < 0 ? value / _jkii_exact_pow10[-exp10] : value * _jkii_exact_pow10[exp10];
+    } else {
+        unsigned long n = (unsigned long)(exp10 < 0 ? -exp10 : exp10);
+        size_t k;
+        if (n >= 512) {
+            /* Beyond a double whatever the digits: 0, or an infinity. */
+            const double big = _jkii_pow10_by_bit[8];
+            value = exp10 < 0 ? value / big / big : value * big * big;
+            n = 0;
+        }
+        /* The smaller powers first, so that the value moves one way only and
+         * reaches 0 or an infinity only if the number is beyond a double. */
+        for (k = 0; n != 0; ++k, n >>= 1) {
+            if (n & 1) {
+                value = exp10 < 0 ? value / _jkii_pow10_by_bit[k] : value * _jkii_pow10_by_bit[k];
+            }
+        }
+    }
+    if (negative) {
+        value = -value;
+    }
+    *out_double = value;
+    if (value == 0) {
+        return JKII_PRIMITIVE_ERR_UNDERFLOW;
+    } else if (value - value != value - value) {
+        /* An infinity, which less itself is NaN. */
+        return JKII_PRIMITIVE_ERR_OVERFLOW;
+    }
+    return JKII_PRIMITIVE_ERR_OK;
+}
+#endif
 
 static int _jkii_to_boolean(
         const char* buf,

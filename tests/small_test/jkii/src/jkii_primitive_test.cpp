@@ -123,6 +123,17 @@ TEST_CASE("KiiJson, PrimitiveDoubleScientificCap")
     REQUIRE(100.0 == res.value.double_value);
 }
 
+// Built with EBISU_NO_STRTOD, jkii reads a number this large to within a few
+// units in the last place of what strtod() reads.
+static bool as_strtod_reads(double expect, double got)
+{
+#ifdef EBISU_NO_STRTOD
+    return fabs(got - expect) <= fabs(expect) * 8 * DBL_EPSILON;
+#else
+    return expect == got;
+#endif
+}
+
 TEST_CASE("KiiJson, PrimitiveDoubleMin")
 {
     char str_buff[64];
@@ -135,7 +146,7 @@ TEST_CASE("KiiJson, PrimitiveDoubleMin")
     REQUIRE(JKII_FIELD_TYPE_DOUBLE == res.type);
 
     double expect = strtod(str_buff, NULL);
-    REQUIRE(expect == res.value.double_value);
+    REQUIRE(as_strtod_reads(expect, res.value.double_value));
 }
 
 TEST_CASE("KiiJson, PrimitiveDoubleMax")
@@ -150,7 +161,7 @@ TEST_CASE("KiiJson, PrimitiveDoubleMax")
     REQUIRE(JKII_FIELD_TYPE_DOUBLE == res.type);
 
     double expect = strtod(str_buff, NULL);
-    REQUIRE(expect == res.value.double_value);
+    REQUIRE(as_strtod_reads(expect, res.value.double_value));
 }
 
 TEST_CASE("KiiJson, PrimitiveNull")
