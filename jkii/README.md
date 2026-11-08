@@ -181,7 +181,10 @@ if (jkii_writer_finish(&w, &len) == JKII_WRITE_OK) {
 ```
 
 Numbers are written without `printf`: integers of 64 bits, and doubles with a
-fixed number of decimals, with `.` whatever the locale. Objects and arrays nest
+fixed number of decimals, with `.` whatever the locale. They are read with
+`strtod()`, or, with `-DEBISU_STRTOD=OFF`, with jkii's own code, which is exact
+for numbers of up to 15 digits with a power of ten within 10^22 and a few units
+in the last place off beyond: see `jkii_parse_primitive()`. Objects and arrays nest
 up to `JKII_WRITER_MAX_DEPTH`, 16 unless defined otherwise for jkii and for
 everything using it.
 

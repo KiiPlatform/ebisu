@@ -19,6 +19,16 @@ option(EBISU_LOG "Compile in what ebisu logs" ON)
 if(NOT EBISU_LOG)
     add_compile_definitions(EBISU_NO_LOG)
 endif()
+# How jkii reads a JSON number with a fraction or an exponent: with the C
+# library's strtod(), correctly rounded, or, OFF, with code of jkii's own,
+# exact for the numbers a device exchanges and a few units in the last place
+# off for the longest or the most extreme. OFF leaves strtod() out of a
+# program, with the locale support it brings, as defining EBISU_NO_STRTOD does
+# in a build without CMake.
+option(EBISU_STRTOD "Read doubles with the C library's strtod()" ON)
+if(NOT EBISU_STRTOD)
+    add_compile_definitions(EBISU_NO_STRTOD)
+endif()
 
 # On by default so a warning cannot quietly return: the four fixed in #192 sat
 # unnoticed for years because the build target only ran doxygen and compiled
