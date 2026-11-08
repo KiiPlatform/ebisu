@@ -36,10 +36,9 @@ extern "C" {
  * server takes it. Why an operation failed, its last_error says: a host that
  * didn't resolve, with getaddrinfo()'s error, an address that refused, with
  * errno, a certificate rejected, with X509_V_ERR_*, another TLS failure, with
- * OpenSSL's error code, a timeout, or a peer that closed. It also
- * goes to the logger set by ebisu_openssl_socket_set_logger(), or to
- * stderr without one. OpenSSL 1.0.2 and later, initialized and made
- * thread-safe on first use.
+ * OpenSSL's error code, a timeout, or a peer that closed. It also goes to the
+ * logger set by ebisu_openssl_socket_set_logger(), if any. OpenSSL 1.0.2 and
+ * later, initialized and made thread-safe on first use.
  */
 typedef struct ebisu_openssl_socket_t {
     ebisu_socket_t base; /**< \brief What ebisu is given. */
@@ -66,7 +65,7 @@ typedef struct ebisu_openssl_socket_t {
     /** \private Whether the clock had the time, rather than its floor only,
      * when the connection was made. */
     bool time_exact;
-    /** \private Where diagnostics go, or NULL for stderr. */
+    /** \private Where diagnostics go, or NULL for nowhere. */
     ebisu_logger_t* logger;
     /** \private The port of the connection open, which the sessions the
      * server gives are kept under, with its host. */
@@ -183,11 +182,11 @@ void ebisu_openssl_socket_set_clock(ebisu_openssl_socket_t* sock, ebisu_clock_t*
  * session.
  *
  * Built with EBISU_NO_LOG, as -DEBISU_LOG=OFF builds it, the socket logs
- * nothing, to the logger or to stderr.
+ * nothing.
  *
  * \param [out] sock The socket.
- * \param [in] logger The logger, which has to outlive the socket, or NULL for
- * stderr, which gets the errors only.
+ * \param [in] logger The logger, which has to outlive the socket, or NULL, as
+ * the socket starts, for the diagnostics to go nowhere.
  */
 void ebisu_openssl_socket_set_logger(ebisu_openssl_socket_t* sock, ebisu_logger_t* logger);
 

@@ -5,7 +5,7 @@
 add_executable(win32app example.c)
 
 target_include_directories(win32app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(win32app PRIVATE ebisu_schannel ebisu_win32 tio)
+target_link_libraries(win32app PRIVATE ebisu_schannel ebisu_win32 ebisu_loggers tio)
 # gnu11 without -pedantic, like the linux sample: an application, built against
 # the Windows headers, which use Microsoft extensions such as nameless unions.
 # mingw-w64's headers mark those so that -pedantic lets them pass, and with

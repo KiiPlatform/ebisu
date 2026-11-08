@@ -14,6 +14,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <signal.h>
+#include <ebisu_loggers.h>
 #include <ebisu_openssl.h>
 #include <ebisu_posix.h>
 
@@ -221,11 +222,17 @@ int main(int argc, char** argv)
     ebisu_clock_init(&clock, ebisu_posix_system());
     ebisu_clock_set_lock(&clock, &clock_lock.base);
 
+    // Why a connection failed, to stderr: the sockets log nothing without a
+    // logger.
+    ebisu_stdio_logger_t to_stderr;
+    ebisu_stdio_logger_init(&to_stderr, stderr, EBISU_LOG_WARNING);
+
     tio_updater_t updater;
 
     ebisu_openssl_socket_t updater_http_ctx;
     ebisu_openssl_socket_init(&updater_http_ctx, TO_RECV_SEC, TO_SEND_SEC);
     ebisu_openssl_socket_set_clock(&updater_http_ctx, &clock);
+    ebisu_openssl_socket_set_logger(&updater_http_ctx, &to_stderr.base);
 
     updater_file_context_t updater_file_ctx;
 
@@ -242,10 +249,12 @@ int main(int argc, char** argv)
     ebisu_openssl_socket_t handler_http_ctx;
     ebisu_openssl_socket_init(&handler_http_ctx, TO_RECV_SEC, TO_SEND_SEC);
     ebisu_openssl_socket_set_clock(&handler_http_ctx, &clock);
+    ebisu_openssl_socket_set_logger(&handler_http_ctx, &to_stderr.base);
 
     ebisu_openssl_socket_t handler_mqtt_ctx;
     ebisu_openssl_socket_init(&handler_mqtt_ctx, TO_RECV_SEC, TO_SEND_SEC);
     ebisu_openssl_socket_set_clock(&handler_mqtt_ctx, &clock);
+    ebisu_openssl_socket_set_logger(&handler_mqtt_ctx, &to_stderr.base);
 
     char handler_http_buff[HANDLER_HTTP_BUFF_SIZE];
     memset(handler_http_buff, 0x00, sizeof(char) * HANDLER_HTTP_BUFF_SIZE);

@@ -254,6 +254,9 @@ static int run_step(ebisu_schannel_socket_t* ctx, const char* host, uint16_t por
         printf("STEP wait %d ms=%lu\n", ready ? 1 : 0, (unsigned long)elapsed);
     } else if (strcmp(step, "close") == 0) {
         printf("STEP close %s\n", code_name(ctx->base.ops->close(&ctx->base)));
+    } else if (strcmp(step, "nologger") == 0) {
+        ebisu_schannel_socket_set_logger(ctx, NULL);
+        printf("STEP nologger OK\n");
     } else {
         printf("unknown step %s\n", step);
         return 1;

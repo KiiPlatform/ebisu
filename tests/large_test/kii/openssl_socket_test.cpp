@@ -903,17 +903,17 @@ LogCtx::LogCtx()
     logger.owner = this;
 }
 
-// What f wrote to stderr.
-std::string stderr_of(const std::function<void()>& f)
+// What f wrote to stream, whose descriptor is fd.
+std::string written_to(FILE* stream, int fd, const std::function<void()>& f)
 {
-    fflush(stderr);
+    fflush(stream);
     FILE* captured = tmpfile();
     REQUIRE( captured != nullptr );
-    int saved = dup(2);
-    dup2(fileno(captured), 2);
+    int saved = dup(fd);
+    dup2(fileno(captured), fd);
     f();
-    fflush(stderr);
-    dup2(saved, 2);
+    fflush(stream);
+    dup2(saved, fd);
     close(saved);
     std::string out;
     rewind(captured);
@@ -926,7 +926,19 @@ std::string stderr_of(const std::function<void()>& f)
     return out;
 }
 
+// What f wrote to stderr.
+std::string stderr_of(const std::function<void()>& f)
+{
+    return written_to(stderr, 2, f);
+}
+
 #ifndef EBISU_NO_LOG
+// What f wrote to stdout. Catch writes there too, so f mustn't check.
+std::string stdout_of(const std::function<void()>& f)
+{
+    return written_to(stdout, 1, f);
+}
+
 bool starts_with(const std::string& s, const std::string& prefix)
 {
     return s.compare(0, prefix.size(), prefix) == 0;
@@ -942,8 +954,9 @@ bool has(const std::string& s, const std::string& part)
 
 #ifndef EBISU_NO_LOG
 // The port printed why it failed with printf(), to stdout, where an
-// application running as a daemon had no say in where it went.
-TEST_CASE( "The OpenSSL socket says why it failed to its logger, or to stderr" ) {
+// application running as a daemon had no say in where it went. Now it logs
+// only to a logger, as the rest of ebisu does.
+TEST_CASE( "The OpenSSL socket says why it failed to its logger, and nowhere without one" ) {
     SECTION("a host that doesn't resolve") {
         for (unsigned int timeout : { 5u, 0u }) {
             INFO( "connect timeout " << timeout );
@@ -982,17 +995,33 @@ TEST_CASE( "The OpenSSL socket says why it failed to its logger, or to stderr" )
         CHECK( starts_with(log.messages[0].second, "server certificate for localhost rejected: ") );
     }
 
-    SECTION("without a logger, to stderr") {
-        ebisu_openssl_socket_t sock;
-        ebisu_openssl_socket_init(&sock, 0, 0);
-        std::string err = stderr_of([&sock] {
-            CHECK( sock.base.ops->connect(&sock.base, "ebisu-test.invalid", 443) == EBISU_SOCK_FAIL );
+    SECTION("without a logger, nowhere") {
+        LocalServer server;
+        REQUIRE( server.listening );
+        ebisu_openssl_socket_t unresolved;
+        ebisu_openssl_socket_init(&unresolved, 0, 0);
+        ebisu_openssl_socket_t untrusted;
+        ebisu_openssl_socket_init(&untrusted, 5, 5);
+        ebisu_sock_code_t resolve = EBISU_SOCK_OK;
+        ebisu_sock_code_t trust = EBISU_SOCK_OK;
+        std::string out;
+        std::string err = stderr_of([&] {
+            out = stdout_of([&] {
+                resolve = unresolved.base.ops->connect(&unresolved.base, "ebisu-test.invalid", 443);
+                trust = connect_to(&untrusted, server);
+            });
         });
-        // A line of its own, whatever the emulator writes around it.
-        CHECK( has(err, "failed to look up ebisu-test.invalid: ") );
-        size_t at = err.find("failed to look up");
-        CHECK( (at == 0 || err[at - 1] == '\n') );
-        CHECK( err.find('\n', at) != std::string::npos );
+        CHECK( resolve == EBISU_SOCK_FAIL );
+        CHECK( trust == EBISU_SOCK_FAIL );
+        // Not empty, perhaps, as above.
+        CHECK_FALSE( has(err, "failed to") );
+        CHECK_FALSE( has(err, "server certificate") );
+        CHECK_FALSE( has(out, "failed to") );
+        CHECK_FALSE( has(out, "server certificate") );
+        // Why, last_error still says.
+        long detail = 0;
+        CHECK( unresolved.base.ops->last_error(&unresolved.base, &detail) == EBISU_SOCK_ERROR_DNS );
+        CHECK( untrusted.base.ops->last_error(&untrusted.base, &detail) == EBISU_SOCK_ERROR_VERIFY );
     }
 }
 #else
