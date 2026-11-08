@@ -459,6 +459,13 @@
       <arglist>(ebisu_strbuf_t *sb, int64_t v, unsigned int decimals)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>ebisu_strbuf_appendf</name>
+      <anchorfile>ebisu__str_8h.html</anchorfile>
+      <anchor>a1e2690d387c0c7b2bbc2d2fa2ea4f2e6</anchor>
+      <arglist>(ebisu_strbuf_t *sb, const char *fmt,...)</arglist>
+    </member>
+    <member kind="function">
       <type>char *</type>
       <name>ebisu_strbuf_room</name>
       <anchorfile>ebisu__str_8h.html</anchorfile>

@@ -148,6 +148,8 @@ Functions</h2></td></tr>
 <tr class="memdesc:a50eb363ffdf48b70bc9c10b28269496b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends bytes in lowercase hexadecimal, two digits for each: { 0x01, 0xab } is "01ab".  <br /></td></tr>
 <tr class="memitem:a2ea1b86908eeb1b2665b396219ddbbc1" id="r_a2ea1b86908eeb1b2665b396219ddbbc1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2ea1b86908eeb1b2665b396219ddbbc1">ebisu_strbuf_append_fixed</a> (<a class="el" href="structebisu__strbuf__t.html">ebisu_strbuf_t</a> *sb, int64_t v, unsigned int decimals)</td></tr>
 <tr class="memdesc:a2ea1b86908eeb1b2665b396219ddbbc1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends a scaled integer as a decimal number: (12345, 2) is "123.45", (-5, 2) is "-0.05" and (7, 0) is "7".  <br /></td></tr>
+<tr class="memitem:a1e2690d387c0c7b2bbc2d2fa2ea4f2e6" id="r_a1e2690d387c0c7b2bbc2d2fa2ea4f2e6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1e2690d387c0c7b2bbc2d2fa2ea4f2e6">ebisu_strbuf_appendf</a> (<a class="el" href="structebisu__strbuf__t.html">ebisu_strbuf_t</a> *sb, const char *fmt,...)</td></tr>
+<tr class="memdesc:a1e2690d387c0c7b2bbc2d2fa2ea4f2e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Appends a format, as snprintf() would, but only of strings: s, %.*s and %%.  <br /></td></tr>
 <tr class="memitem:aa73134d9c0c4cf2386aad8fdd4211ef4" id="r_aa73134d9c0c4cf2386aad8fdd4211ef4"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa73134d9c0c4cf2386aad8fdd4211ef4">ebisu_strbuf_room</a> (<a class="el" href="structebisu__strbuf__t.html">ebisu_strbuf_t</a> *sb, size_t *out_size)</td></tr>
 <tr class="memdesc:aa73134d9c0c4cf2386aad8fdd4211ef4"><td class="mdescLeft">&#160;</td><td class="mdescRight">The room after the string, for a function that writes into a buffer itself, such as an escaper or an encoder, to append there.  <br /></td></tr>
 <tr class="memitem:aa782a5b6f9dc243137899592ba3c7c80" id="r_aa782a5b6f9dc243137899592ba3c7c80"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa782a5b6f9dc243137899592ba3c7c80">ebisu_strbuf_commit</a> (<a class="el" href="structebisu__strbuf__t.html">ebisu_strbuf_t</a> *sb, size_t n)</td></tr>
@@ -933,6 +935,43 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in,out]</td><td class="paramname">sb</td><td>The builder. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">v</td><td>The integer. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a1e2690d387c0c7b2bbc2d2fa2ea4f2e6" name="a1e2690d387c0c7b2bbc2d2fa2ea4f2e6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1e2690d387c0c7b2bbc2d2fa2ea4f2e6">&#9670;&#160;</a></span>ebisu_strbuf_appendf()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ebisu_strbuf_appendf </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structebisu__strbuf__t.html">ebisu_strbuf_t</a> *</td>          <td class="paramname"><span class="paramname"><em>sb</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>fmt</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>...</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Appends a format, as snprintf() would, but only of strings: s, %.*s and %%. </p>
+<p>For a message made of strings, such as a request's path, without the C library's printf(), which on a small device can take more room than the code that calls it. s appends a string, NULL taken as "". %.*s appends as many bytes of one as its int argument says, or fewer, stopping at a NUL, as printf() does, and all of it for a negative int. %% appends a ''.</p>
+<p>The format is appended whole, or not at all: if it doesn't fit, or has another conversion, which it can't write, the builder fails and holds what it held before.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">sb</td><td>The builder. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">fmt</td><td>The format, followed by its arguments. </td></tr>
   </table>
   </dd>
 </dl>

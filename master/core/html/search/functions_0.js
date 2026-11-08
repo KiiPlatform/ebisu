@@ -30,11 +30,12 @@ var searchData=
   ['ebisu_5fstrbuf_5fappend_5fint_27',['ebisu_strbuf_append_int',['../ebisu__str_8h.html#a13a7a04399b6871f1503d0bc3011ec28',1,'ebisu_str.h']]],
   ['ebisu_5fstrbuf_5fappend_5fn_28',['ebisu_strbuf_append_n',['../ebisu__str_8h.html#afc58c3dfca8065f169584c6602b42ffe',1,'ebisu_str.h']]],
   ['ebisu_5fstrbuf_5fappend_5fuint_29',['ebisu_strbuf_append_uint',['../ebisu__str_8h.html#a8d70c5227e7f945ff82f85f030549958',1,'ebisu_str.h']]],
-  ['ebisu_5fstrbuf_5fcommit_30',['ebisu_strbuf_commit',['../ebisu__str_8h.html#aa782a5b6f9dc243137899592ba3c7c80',1,'ebisu_str.h']]],
-  ['ebisu_5fstrbuf_5finit_31',['ebisu_strbuf_init',['../ebisu__str_8h.html#a987edf454101a781081e9108d6b4fddc',1,'ebisu_str.h']]],
-  ['ebisu_5fstrbuf_5fok_32',['ebisu_strbuf_ok',['../ebisu__str_8h.html#accb5345552bbd23ed89c21bfe269aa8e',1,'ebisu_str.h']]],
-  ['ebisu_5fstrbuf_5froom_33',['ebisu_strbuf_room',['../ebisu__str_8h.html#aa73134d9c0c4cf2386aad8fdd4211ef4',1,'ebisu_str.h']]],
-  ['ebisu_5fstrlcpy_34',['ebisu_strlcpy',['../ebisu__str_8h.html#a9745d04f60b5f273f02d225029c110df',1,'ebisu_str.h']]],
-  ['ebisu_5ftime_5ffrom_5fcivil_35',['ebisu_time_from_civil',['../ebisu__time_8h.html#a5a0f3e53e949f6cad1134f58d1df632c',1,'ebisu_time.h']]],
-  ['ebisu_5ftime_5fto_5fcivil_36',['ebisu_time_to_civil',['../ebisu__time_8h.html#ac5e28e8f61669eb81df1ed85703267a6',1,'ebisu_time.h']]]
+  ['ebisu_5fstrbuf_5fappendf_30',['ebisu_strbuf_appendf',['../ebisu__str_8h.html#a1e2690d387c0c7b2bbc2d2fa2ea4f2e6',1,'ebisu_str.h']]],
+  ['ebisu_5fstrbuf_5fcommit_31',['ebisu_strbuf_commit',['../ebisu__str_8h.html#aa782a5b6f9dc243137899592ba3c7c80',1,'ebisu_str.h']]],
+  ['ebisu_5fstrbuf_5finit_32',['ebisu_strbuf_init',['../ebisu__str_8h.html#a987edf454101a781081e9108d6b4fddc',1,'ebisu_str.h']]],
+  ['ebisu_5fstrbuf_5fok_33',['ebisu_strbuf_ok',['../ebisu__str_8h.html#accb5345552bbd23ed89c21bfe269aa8e',1,'ebisu_str.h']]],
+  ['ebisu_5fstrbuf_5froom_34',['ebisu_strbuf_room',['../ebisu__str_8h.html#aa73134d9c0c4cf2386aad8fdd4211ef4',1,'ebisu_str.h']]],
+  ['ebisu_5fstrlcpy_35',['ebisu_strlcpy',['../ebisu__str_8h.html#a9745d04f60b5f273f02d225029c110df',1,'ebisu_str.h']]],
+  ['ebisu_5ftime_5ffrom_5fcivil_36',['ebisu_time_from_civil',['../ebisu__time_8h.html#a5a0f3e53e949f6cad1134f58d1df632c',1,'ebisu_time.h']]],
+  ['ebisu_5ftime_5fto_5fcivil_37',['ebisu_time_to_civil',['../ebisu__time_8h.html#ac5e28e8f61669eb81df1ed85703267a6',1,'ebisu_time.h']]]
 ];
