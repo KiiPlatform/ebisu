@@ -29,10 +29,9 @@ where what it needs is found, which links `libebisu_core`. Link one with
   connections to a few hosts, and a connection offers the server the one for its
   host and port to resume, which saves most of the handshake when the server
   takes it. Its `last_error` says why an operation failed, which also goes to
-  the logger set with `ebisu_openssl_socket_set_logger()`, or to stderr, unless
-  it is built with `-DEBISU_LOG=OFF`, and
-  its `recv_wait` waits with `poll()`, after what OpenSSL has decrypted. Needs
-  OpenSSL 1.0.2 or later, and POSIX threads.
+  the logger set with `ebisu_openssl_socket_set_logger()`, if any, unless it is
+  built with `-DEBISU_LOG=OFF`, and its `recv_wait` waits with `poll()`, after
+  what OpenSSL has decrypted. Needs OpenSSL 1.0.2 or later, and POSIX threads.
 - **Win32** (`ebisu_win32.h`, library `ebisu_win32`): `ebisu_win32_system()`,
   whose tasks are threads of their own, made with `_beginthreadex()`, whose
   delays are `Sleep()` and whose monotonic clock is `GetTickCount64()`, and
@@ -46,8 +45,8 @@ where what it needs is found, which links `libebisu_core`. Link one with
   with `select()`, so that a timeout leaves the connection usable, as its
   `recv_wait` waits too. Its
   `last_error` says why an operation failed, which also goes to the logger set
-  with `ebisu_schannel_socket_set_logger()`, or to stderr, unless it is built
-  with `-DEBISU_LOG=OFF`. Needs only what
+  with `ebisu_schannel_socket_set_logger()`, if any, unless it is built with
+  `-DEBISU_LOG=OFF`. Needs only what
   Windows provides, `ws2_32`, `secur32` and `crypt32`, which it links.
 
 The Linux sample uses the POSIX and OpenSSL ports, and the Windows sample the
@@ -65,6 +64,10 @@ and drops what matters less, so a port can be given one at `EBISU_LOG_DEBUG`
 and another at `EBISU_LOG_ERROR` together, through core's `ebisu_log_fanout_t`.
 Each may be called from more than one task at once, and cuts a message longer
 than `EBISU_LOGGER_LINE_MAX`, 1024 bytes, short with `...`.
+
+Nothing in ebisu logs until it is given a logger, the ports included, and
+`ebisu_log()` drops a message given none. To see a port's failures on stderr,
+give it an `ebisu_stdio_logger_t` on `stderr` at `EBISU_LOG_WARNING`.
 
 - **To a stdio stream** (`ebisu_stdio_logger_t`): a line of the level and the
   message, as in `error: failed to connect to example.com.`, to `stderr` or a

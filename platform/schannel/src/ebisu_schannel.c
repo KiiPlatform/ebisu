@@ -66,25 +66,12 @@ typedef enum {
 #define log_code(ctx, code, ...) ((void)0)
 #else
 #if defined(__GNUC__) || defined(__clang__)
-static void log_to(ebisu_logger_t* logger, ebisu_log_level_t level, const char* fmt, ...)
-    __attribute__((format(printf, 3, 4)));
 static void log_code(ebisu_schannel_socket_t* ctx, unsigned long code, const char* fmt, ...)
     __attribute__((format(printf, 3, 4)));
 #endif
 
-/* Sends a diagnostic to logger, or to stderr without one. */
-static void log_to(ebisu_logger_t* logger, ebisu_log_level_t level, const char* fmt, ...)
-{
-    va_list args;
-    va_start(args, fmt);
-    if (logger != NULL) {
-        logger->ops->log(logger, level, fmt, args);
-    } else if (level <= EBISU_LOG_WARNING) {
-        vfprintf(stderr, fmt, args);
-        fputc('\n', stderr);
-    }
-    va_end(args);
-}
+/* Sends a diagnostic to logger. Without one, it goes nowhere. */
+#define log_to(logger, level, ...) ebisu_log((logger), (level), __VA_ARGS__)
 
 /* Logs what failed with a Winsock, Win32, SSPI or certificate error code, and
    the system's text for it where there is one. */
@@ -92,6 +79,9 @@ static void log_code(ebisu_schannel_socket_t* ctx, unsigned long code, const cha
 {
     char what[320];
     va_list args;
+    if (ctx->logger == NULL) {
+        return;
+    }
     va_start(args, fmt);
     vsnprintf(what, sizeof(what), fmt, args);
     va_end(args);

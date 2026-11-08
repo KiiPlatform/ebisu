@@ -335,11 +335,13 @@ class Test:
         self.env = dict(os.environ, WINEPREFIX=prefix, WINEDEBUG='-all')
         self.failures = 0
 
-    def run(self, port, to_recv, *steps, host='localhost'):
+    def run(self, port, to_recv, *steps, host='localhost', stderr=False):
         """The output of schannel_socket_test.exe, and the STEP lines in it, split
-        into the step and the rest."""
+        into the step and the rest. With stderr, what it writes there is in the
+        output too."""
         out = subprocess.run([self.wine, self.exe, host, str(port), str(to_recv)] + list(steps),
-                             env=self.env, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                             env=self.env, stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT if stderr else subprocess.DEVNULL,
                              text=True, timeout=TIMEOUT).stdout.replace('\r', '')
         steps = [(line.split(' ', 2) + [''])[1:3] for line in out.splitlines() if line.startswith('STEP ')]
         return out, [tuple(s) for s in steps]
@@ -505,6 +507,15 @@ def run_tests(t, d):
                 'LOG error server certificate for localhost rejected' in out and error in out, out)
         t.check('certificate %s refused: last_error VERIFY, %s' % (name, error),
                 last_error(steps, 0) == ('VERIFY', error[2:]), out)
+
+    # Without a logger, the port writes nothing, to stdout or stderr, and
+    # last_error still says why.
+    srv = Server(os.path.join(d, 'self.pem'), os.path.join(d, 'self.key'))
+    out, steps = t.run(srv.port, 10, 'nologger', 'connect', 'close', stderr=True)
+    t.check('certificate refused without a logger: nothing written, last_error VERIFY',
+            step(steps, 0) == ('nologger', 'OK') and result_code(steps, 1) == ('connect', 'FAIL') and
+            'server certificate' not in out and '0x800b0109' not in out and
+            last_error(steps, 1) == ('VERIFY', '800b0109'), out)
 
     silent = Server(silent=True)
     out, steps = t.run(silent.port, 1, 'connect', 'close')

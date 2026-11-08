@@ -42,7 +42,7 @@ extern "C" {
  * Winsock error, a certificate refused, with the CERT_E_* or TRUST_E_* code, a
  * TLS failure, with the SSPI status, a timeout, or a peer that closed or reset
  * the connection, with the Winsock error if there is one. It also goes to the
- * logger set by ebisu_schannel_socket_set_logger(), or to stderr without one.
+ * logger set by ebisu_schannel_socket_set_logger(), if any.
  * Winsock has to have been started, with WSAStartup(), before the first
  * connection.
  */
@@ -81,7 +81,7 @@ typedef struct ebisu_schannel_socket_t {
     /* Whether the last receive failed because nothing arrived within
        to_recv, for recv_timed_out. */
     int recv_timed_out; /**< \private */
-    /* Where diagnostics go, or NULL for stderr. */
+    /* Where diagnostics go, or NULL for nowhere. */
     ebisu_logger_t* logger; /**< \private */
     /* Why the last operation that returned EBISU_SOCK_FAIL failed, for
        last_error, and more of it. */
@@ -125,11 +125,11 @@ void ebisu_schannel_socket_set_clock(ebisu_schannel_socket_t* sock, ebisu_clock_
  * the system's text for it. A receive that times out isn't one.
  *
  * Built with EBISU_NO_LOG, as -DEBISU_LOG=OFF builds it, the socket logs
- * nothing, to the logger or to stderr.
+ * nothing.
  *
  * \param [out] sock The socket.
- * \param [in] logger The logger, which has to outlive the socket, or NULL for
- * stderr.
+ * \param [in] logger The logger, which has to outlive the socket, or NULL, as
+ * the socket starts, for the diagnostics to go nowhere.
  */
 void ebisu_schannel_socket_set_logger(ebisu_schannel_socket_t* sock, ebisu_logger_t* logger);
 

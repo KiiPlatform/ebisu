@@ -9,7 +9,6 @@
 #include <netinet/in.h>
 #include <poll.h>
 #include <pthread.h>
-#include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -81,25 +80,8 @@ static int verify_callback(int preverify_ok, X509_STORE_CTX* store);
 #define log_ssl_error(logger, what) ((void)0)
 #define log_ssl_failure(logger, what, ssl_error, saved_errno) ((void)0)
 #else
-#if defined(__GNUC__) || defined(__clang__)
-static void log_to(ebisu_logger_t* logger, ebisu_log_level_t level, const char* fmt, ...)
-    __attribute__((format(printf, 3, 4)));
-#endif
-
-/* Sends a diagnostic to logger, or to stderr without one, where only what went
-   wrong goes: not a resumed session on every connection. */
-static void log_to(ebisu_logger_t* logger, ebisu_log_level_t level, const char* fmt, ...)
-{
-    va_list args;
-    va_start(args, fmt);
-    if (logger != NULL) {
-        logger->ops->log(logger, level, fmt, args);
-    } else if (level <= EBISU_LOG_WARNING) {
-        vfprintf(stderr, fmt, args);
-        fputc('\n', stderr);
-    }
-    va_end(args);
-}
+/* Sends a diagnostic to logger. Without one, it goes nowhere. */
+#define log_to(logger, level, ...) ebisu_log((logger), (level), __VA_ARGS__)
 
 /* Logs what failed with the first of OpenSSL's errors, which it takes off the
    queue. */
