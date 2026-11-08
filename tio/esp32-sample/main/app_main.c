@@ -14,6 +14,7 @@
 #include <protocol_examples_common.h>
 
 #include "sdkconfig.h"
+#include "header_pool.h"
 #include "sock_cb_esp32.h"
 #include "sys_cb_esp32.h"
 
@@ -23,14 +24,23 @@ static const char* TAG = "ebisu_sample";
 #define HANDLER_MQTT_BUFF_SIZE 2048
 #define HANDLER_KEEP_ALIVE_SEC 300
 #define UPDATER_HTTP_BUFF_SIZE 4096
+#define STREAM_BUFF_SIZE 1024
+#define RESP_HEADER_BUFF_SIZE 256
 
 #define TO_RECV_SEC 15
 #define TO_SEND_SEC 15
 
-/* Large, so not on app_main's stack. */
+/* Large, so not on app_main's stack. The handler and the updater run in tasks
+   of their own, so each has its own. */
 static char handler_http_buff[HANDLER_HTTP_BUFF_SIZE];
 static char handler_mqtt_buff[HANDLER_MQTT_BUFF_SIZE];
+static char handler_stream_buff[STREAM_BUFF_SIZE];
+static char handler_resp_header_buff[RESP_HEADER_BUFF_SIZE];
+static header_pool_t handler_headers;
 static char updater_http_buff[UPDATER_HTTP_BUFF_SIZE];
+static char updater_stream_buff[STREAM_BUFF_SIZE];
+static char updater_resp_header_buff[RESP_HEADER_BUFF_SIZE];
+static header_pool_t updater_headers;
 
 static tio_handler_t handler;
 static tio_updater_t updater;
@@ -154,6 +164,14 @@ static void init_handler(void)
 
     tio_handler_set_http_buff(&handler, handler_http_buff, sizeof(handler_http_buff));
     tio_handler_set_mqtt_buff(&handler, handler_mqtt_buff, sizeof(handler_mqtt_buff));
+    /* Otherwise each request would take these, and its headers, from the
+       heap. */
+    tio_handler_set_stream_buff(&handler, handler_stream_buff, sizeof(handler_stream_buff));
+    tio_handler_set_resp_header_buff(&handler, handler_resp_header_buff,
+            sizeof(handler_resp_header_buff));
+    header_pool_init(&handler_headers);
+    tio_handler_set_cb_slist_resource(&handler, header_pool_alloc, header_pool_free,
+            &handler_headers, &handler_headers);
     tio_handler_set_keep_alive_interval(&handler, HANDLER_KEEP_ALIVE_SEC);
 }
 
@@ -169,6 +187,12 @@ static void init_updater(void)
     tio_updater_set_socket(&updater, &updater_http_ctx.base);
 
     tio_updater_set_buff(&updater, updater_http_buff, sizeof(updater_http_buff));
+    tio_updater_set_stream_buff(&updater, updater_stream_buff, sizeof(updater_stream_buff));
+    tio_updater_set_resp_header_buff(&updater, updater_resp_header_buff,
+            sizeof(updater_resp_header_buff));
+    header_pool_init(&updater_headers);
+    tio_updater_set_cb_slist_resource(&updater, header_pool_alloc, header_pool_free,
+            &updater_headers, &updater_headers);
     tio_updater_set_interval(&updater, CONFIG_EBISU_SAMPLE_UPDATE_PERIOD);
 }
 

@@ -89,7 +89,8 @@ FetchContent_Declare(mbedtls
 FetchContent_MakeAvailable(freertos_kernel freertos_plus_tcp mbedtls)
 
 # The kernel, with the Cortex-M3 port and heap_3: pvPortMalloc() is the C
-# library's malloc(), which mbedTLS and ebisu allocate with too.
+# library's malloc(), which mbedTLS allocates with too. ebisu is given buffers
+# and a pool for its headers instead, in main.c.
 set(kernel ${freertos_kernel_SOURCE_DIR})
 add_library(freertos STATIC
     ${kernel}/event_groups.c
@@ -163,6 +164,7 @@ target_link_libraries(ebisu PUBLIC ebisu_version)
 
 add_executable(ebisu_freertos_sample
     main.c
+    header_pool.c
     log.c
     net.c
     random.c

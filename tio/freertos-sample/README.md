@@ -10,6 +10,8 @@ internet without privileges. CI runs it there against Kii Cloud.
 
 - [main.c](main.c): starts the network, then sets up tio as the [Linux
   sample](../linux-sample/example.c) does, with the settings CMake is given.
+- [header_pool.c](header_pool.c): a pool for the request headers, which with
+  the buffers main.c gives tio leaves ebisu nothing to take from the heap.
 - [sock_cb_freertos.c](sock_cb_freertos.c): the socket callbacks, mbedTLS over
   FreeRTOS-Plus-TCP's sockets. Their `last_error` says why one failed, from
   mbedTLS's error or FreeRTOS-Plus-TCP's, which the sample logs when
