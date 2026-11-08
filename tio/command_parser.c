@@ -4,7 +4,6 @@
 #include "jkii_utils.h"
 
 #include <ebisu_str.h>
-#include <stdlib.h>
 
 /* A step of handling a command that failed, with its code, at
    EBISU_LOG_DEBUG: the warning that the command failed says no more. */

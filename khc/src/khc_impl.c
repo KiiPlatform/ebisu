@@ -3,7 +3,6 @@
 #include <ebisu_str.h>
 #include <stdint.h>
 #include <string.h>
-#include <stdlib.h>
 
 typedef enum header_parser_sts {
     parse_key,

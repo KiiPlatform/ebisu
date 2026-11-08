@@ -14,7 +14,6 @@
 #include <ebisu_clock.h>
 #include <ebisu_log.h>
 #include <ebisu_socket.h>
-#include <stdbool.h>
 
 /* The library is compiled with hidden visibility, so what this header declares
    is exactly what a shared object built with it exports. */

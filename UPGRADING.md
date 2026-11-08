@@ -172,6 +172,12 @@ call that starts no task: without a message callback, `kii_start_push_task()`
 returns `KII_ERR_FAIL`, as it did for a `NULL` one. tio's push callback, set by
 `tio_handler_set_cb_push()`, still gets the payload alone.
 
+**`stdio.h` no longer comes with ebisu's headers.** In 1.x `khc.h`, which
+`kii.h` and `tio.h` include, included it without using it. In 3.0 it doesn't,
+so code that calls `printf()` or uses `FILE` with only ebisu's headers included
+has to include `stdio.h` itself. The compiler names each place, as an implicit
+declaration of the function.
+
 ### Values whose type changed
 
 These still compile. Check anything that depends on their width: format

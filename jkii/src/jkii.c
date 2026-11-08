@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <limits.h>
-#include <math.h>
 #include <errno.h>
 #include <float.h>
 #ifndef EBISU_NO_STRTOD

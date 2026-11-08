@@ -4,7 +4,6 @@
 #include "jkii_utils.h"
 #include <ebisu_mem.h>
 #include <ebisu_str.h>
-#include <string.h>
 
 kii_code_t _thing_auth(
         kii_t* kii,
