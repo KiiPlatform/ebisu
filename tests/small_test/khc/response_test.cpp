@@ -3,6 +3,8 @@
 #include "khc_state_impl.h"
 #include "http_test.h"
 #include "test_callbacks.h"
+#include <clocale>
+#include <ctype.h>
 #include <fstream>
 #include <functional>
 #include <stdint.h>
@@ -910,6 +912,39 @@ TEST_CASE( "A framing header too long for the buffer is too large" ) {
         CHECK( r.res == KHC_ERR_TOO_LARGE_DATA );
         CHECK( r.skipped == true );
     }
+}
+
+// Its name was compared with tolower() and toupper(), which follow the locale:
+// in a Turkish one, toupper('i') isn't 'I', so TRANSFER-ENCODING was skipped
+// as any other header, and its chunks read as the body.
+TEST_CASE( "A framing header too long for the buffer is too large whatever the locale" ) {
+    // Names of such locales on Linux, then on Windows.
+    const char* const names[] = {
+        "tr_TR.UTF-8", "tr_TR.utf8", "tr_TR", "Turkish_Turkey.1254", "Turkish", "tr-TR"
+    };
+    // Put back whatever happens, as the other tests expect the C locale.
+    struct Restore {
+        std::string saved;
+        ~Restore() { setlocale(LC_CTYPE, saved.c_str()); }
+    } restore = { setlocale(LC_CTYPE, NULL) };
+    const char* set = NULL;
+    for (const char* name : names) {
+        if (setlocale(LC_CTYPE, name) != NULL && toupper('i') != 'I') {
+            set = name;
+            break;
+        }
+    }
+    if (set == NULL) {
+        WARN("no locale whose toupper('i') isn't 'I' here, so this isn't tested");
+        return;
+    }
+    INFO("locale " << set);
+
+    HeaderResult r = perform_with_small_header_buffer(
+            "HTTP/1.1 200 OK\r\nTRANSFER-ENCODING:" + std::string(100, ' ') +
+            "chunked\r\n\r\n4\r\nbody\r\n0\r\n\r\n");
+    CHECK( r.res == KHC_ERR_TOO_LARGE_DATA );
+    CHECK( r.skipped == true );
 }
 
 // Each was called without checking, so one left out crashed the request.
