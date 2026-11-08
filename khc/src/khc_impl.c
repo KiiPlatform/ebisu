@@ -1,9 +1,9 @@
 #include "khc_impl.h"
 
+#include <ebisu_str.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include <ctype.h>
 
 typedef enum header_parser_sts {
     parse_key,
@@ -262,20 +262,17 @@ bool _is_status_line(const char* line, size_t line_length) {
     return line[least] == ' ' && _is_field_text(&line[least + 1], line_length - least - 1);
 }
 
+/* The name, before the colon, compared but for the case of ASCII letters: not
+   with tolower() and toupper(), which follow the locale, in which I and i
+   needn't be each other's case. In a Turkish one, glibc's toupper('i') is
+   'i'. */
 int _is_header_present(const char* header, const char* buff, size_t buff_size) {
-    int header_length = strlen(header);
-    for (int i = 0; i < buff_size; ++i) {
-        if (buff[i] == ':') {
-            return i == header_length;
-        }
-        if (i < header_length) {
-            char c = header[i];
-            if (buff[i] != tolower(c) && buff[i] != toupper(c)) {
-                break;
-            }
-        } else {
-            break;
-        }
+    const char* colon = memchr(buff, ':', buff_size);
+    ebisu_span_t name;
+    if (colon == NULL) {
+        return 0;
     }
-    return 0;
+    name.ptr = buff;
+    name.len = (size_t)(colon - buff);
+    return ebisu_span_eq_nocase(name, header) ? 1 : 0;
 }
