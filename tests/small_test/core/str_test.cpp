@@ -129,6 +129,74 @@ TEST_CASE("ebisu_strbuf_t appends whole, or fails and stays failed") {
     }
 }
 
+TEST_CASE("ebisu_strbuf_appendf appends strings by a format, whole or not at all") {
+    char buff[32];
+    ebisu_strbuf_t sb;
+    ebisu_strbuf_init(&sb, buff, sizeof(buff));
+    ebisu_strbuf_append(&sb, "GET ");
+
+    SECTION("%s, NULL taken as \"\"") {
+        // Through a volatile, so that GCC doesn't warn of a null %s, which
+        // printf() would take as undefined.
+        const char* volatile none = nullptr;
+        ebisu_strbuf_appendf(&sb, "/apps/%s/things/%s%s", "app1", "th.1", none);
+        CHECK(ebisu_strbuf_ok(&sb));
+        CHECK(std::string(buff) == "GET /apps/app1/things/th.1");
+        CHECK(sb.len == strlen(buff));
+    }
+    SECTION("%.*s, as many bytes as said, or fewer at a NUL, or all if negative") {
+        Exact name("powerOnXYZ");
+        ebisu_strbuf_appendf(&sb, "[%.*s|%.*s|%.*s]", 7, name.ptr(), 9, "ab", -1, "cd");
+        CHECK(ebisu_strbuf_ok(&sb));
+        CHECK(std::string(buff) == "GET [powerOn|ab|cd]");
+    }
+    SECTION("%% and text alone") {
+        ebisu_strbuf_appendf(&sb, "100%% %s", "done");
+        ebisu_strbuf_appendf(&sb, "!");
+        CHECK(ebisu_strbuf_ok(&sb));
+        CHECK(std::string(buff) == "GET 100% done!");
+    }
+    SECTION("what doesn't fit appends nothing, though its start would") {
+        ebisu_strbuf_appendf(&sb, "/apps/%s/%s", "app1", std::string(30, 'x').c_str());
+        CHECK_FALSE(ebisu_strbuf_ok(&sb));
+        CHECK(std::string(buff) == "GET ");
+        CHECK(sb.len == 4);
+        ebisu_strbuf_appendf(&sb, "%s", "x");
+        CHECK(std::string(buff) == "GET ");
+    }
+    SECTION("filling it exactly is fine") {
+        ebisu_strbuf_appendf(&sb, "%s", std::string(27, 'x').c_str());
+        CHECK(ebisu_strbuf_ok(&sb));
+        CHECK(sb.len == 31);
+    }
+    SECTION("another conversion, which it can't write, appends nothing and fails") {
+        ebisu_strbuf_appendf(&sb, "/apps/%s/%d", "app1", 7);
+        CHECK_FALSE(ebisu_strbuf_ok(&sb));
+        CHECK(std::string(buff) == "GET ");
+    }
+    SECTION("so does a '%' that ends the format") {
+        const char* fmt = "50%";
+        ebisu_strbuf_appendf(&sb, fmt, "");
+        CHECK_FALSE(ebisu_strbuf_ok(&sb));
+        CHECK(std::string(buff) == "GET ");
+    }
+}
+
+TEST_CASE("ebisu_strbuf_appendf with 0 and 1 byte buffers") {
+    ebisu_strbuf_t sb;
+    ebisu_strbuf_init(&sb, nullptr, 0);
+    ebisu_strbuf_appendf(&sb, "%s", "");
+    CHECK(ebisu_strbuf_ok(&sb));
+    ebisu_strbuf_appendf(&sb, "%s", "a");
+    CHECK_FALSE(ebisu_strbuf_ok(&sb));
+
+    char one[1];
+    ebisu_strbuf_init(&sb, one, sizeof(one));
+    ebisu_strbuf_appendf(&sb, "%s%%", "");
+    CHECK_FALSE(ebisu_strbuf_ok(&sb));
+    CHECK(one[0] == '\0');
+}
+
 TEST_CASE("ebisu_strbuf_t with 0 and 1 byte buffers") {
     ebisu_strbuf_t sb;
     ebisu_strbuf_init(&sb, nullptr, 0);

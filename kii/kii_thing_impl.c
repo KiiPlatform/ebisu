@@ -3,6 +3,7 @@
 #include "kii_req_impl.h"
 #include "jkii_utils.h"
 #include <ebisu_mem.h>
+#include <ebisu_str.h>
 #include <string.h>
 
 kii_code_t _thing_auth(
@@ -12,8 +13,10 @@ kii_code_t _thing_auth(
 {
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "POST");
-    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/api/apps/%s/oauth2/token", kii->_app_id);
-    if (path_len >= kii->_rw_buff_size) {
+    ebisu_strbuf_t path;
+    ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
+    ebisu_strbuf_appendf(&path, "/api/apps/%s/oauth2/token", kii->_app_id);
+    if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
     khc_set_path(&kii->_khc, kii->_rw_buff);
@@ -57,8 +60,10 @@ kii_code_t _thing_register(
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "POST");
 
-    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/api/apps/%s/things", kii->_app_id);
-    if (path_len >= kii->_rw_buff_size) {
+    ebisu_strbuf_t path;
+    ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
+    ebisu_strbuf_appendf(&path, "/api/apps/%s/things", kii->_app_id);
+    if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
     khc_set_path(&kii->_khc, kii->_rw_buff);
@@ -102,8 +107,10 @@ kii_code_t _thing_refresh(
 {
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "POST");
-    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/api/apps/%s/oauth2/token", kii->_app_id);
-    if (path_len >= kii->_rw_buff_size) {
+    ebisu_strbuf_t path;
+    ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
+    ebisu_strbuf_appendf(&path, "/api/apps/%s/oauth2/token", kii->_app_id);
+    if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
     khc_set_path(&kii->_khc, kii->_rw_buff);
@@ -132,17 +139,17 @@ kii_code_t _thing_refresh(
         return KII_ERR_TOO_LARGE_DATA;
     }
 
-    int content_len = snprintf(
-            kii->_rw_buff,
-            kii->_rw_buff_size,
+    ebisu_strbuf_t body;
+    ebisu_strbuf_init(&body, kii->_rw_buff, kii->_rw_buff_size);
+    ebisu_strbuf_appendf(&body,
             "{\"grant_type\":\"refresh_token\", \"refresh_token\":\"%s\"}",
             esc_token);
     ebisu_secure_zero(esc_token, sizeof(esc_token));
-    if (content_len >= kii->_rw_buff_size) {
+    if (!ebisu_strbuf_ok(&body)) {
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
-    kii->_rw_buff_req_size = content_len;
+    kii->_rw_buff_req_size = body.len;
 
     return _req_send(kii);
 }

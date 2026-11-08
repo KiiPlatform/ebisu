@@ -379,6 +379,21 @@ static bool cb_action_ok(
     return true;
 }
 
+// An action that returns data, and setTemp one that fails, with a message
+// that has to be escaped, and data of its own.
+static bool cb_action_with_data(
+        tio_action_t* action,
+        tio_action_err_t* err,
+        tio_action_result_data_t* data,
+        void* userdata) {
+    (void)userdata;
+    const bool fails = action->action_name_length == 7 &&
+        memcmp(action->action_name, "setTemp", 7) == 0;
+    strcpy(data->json, fails ? "{\"max\":30}" : "{\"temp\":23}");
+    strcpy(err->err_message, fails ? "too \"hot\"" : "");
+    return !fails;
+}
+
 TEST_CASE( "_handle_command action name length" ) {
     tio_handler_t handler;
     tio_handler_init(&handler);
@@ -449,6 +464,23 @@ TEST_CASE( "_handle_command action name length" ) {
                 "{\"alias1\":[{\"turnPower\":{\"succeeded\":true}},{\"setTemp\":{\"succeeded\":true}}]},"
                 "{\"alias2\":[{\"setMode\":{\"succeeded\":true}}]},"
                 "{\"alias3\":[{\"setSpeed\":{\"succeeded\":true}},{\"setSwing\":{\"succeeded\":true}}]}]}")
+                != std::string::npos );
+    }
+
+    SECTION("a result's data, and a failure's message, are written to the result body") {
+        std::string command =
+            "{\"commandID\":\"cmd1\",\"actions\":["
+            "{\"alias1\":[{\"turnPower\":true},{\"setTemp\":40}]}]}";
+        tio_code_t res = _handle_command(
+                &handler, command.c_str(), command.length(), cb_action_with_data, nullptr);
+
+        REQUIRE( res == TIO_ERR_OK );
+        INFO( sent );
+        CHECK( sent.find(
+                "{\"actionResults\":[{\"alias1\":["
+                "{\"turnPower\":{\"succeeded\":true,\"data\":{\"temp\":23}}},"
+                "{\"setTemp\":{\"succeeded\":false,\"errorMessage\":\"too \\\"hot\\\"\","
+                "\"data\":{\"max\":30}}}]}]}")
                 != std::string::npos );
     }
 

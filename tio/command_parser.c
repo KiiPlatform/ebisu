@@ -3,6 +3,7 @@
 #include "tio_impl.h"
 #include "jkii_utils.h"
 
+#include <ebisu_str.h>
 #include <stdlib.h>
 
 /* A step of handling a command that failed, with its code, at
@@ -237,12 +238,11 @@ static tio_code_t _start_result_request(
 {
     // Start making command result request.
     char command_result_path[256];
-    int path_len = snprintf(
-            command_result_path,
-            256,
-            "/thing-if/apps/%s/targets/thing:%s/commands/%s/action-results",
+    ebisu_strbuf_t path;
+    ebisu_strbuf_init(&path, command_result_path, sizeof(command_result_path));
+    ebisu_strbuf_appendf(&path, "/thing-if/apps/%s/targets/thing:%s/commands/%s/action-results",
             handler->_kii._app_id, handler->_kii._author.author_id, command_id);
-    if (path_len >= 256) {
+    if (!ebisu_strbuf_ok(&path)) {
         return TIO_ERR_TOO_LARGE_DATA;
     }
     kii_code_t s_res = kii_api_call_start(
@@ -311,29 +311,12 @@ static tio_code_t _append_action_result(
         return TIO_ERR_TOO_LARGE_DATA;
     }
     const int action_name_length = (int)action->action_name_length;
+    ebisu_strbuf_t result;
+    ebisu_strbuf_init(&result, work_buff, work_buff_size);
     if (succeeded)
     {
-        int len = snprintf(
-                work_buff, work_buff_size,
-                "%s{\"%.*s\":{\"succeeded\":true",
+        ebisu_strbuf_appendf(&result, "%s{\"%.*s\":{\"succeeded\":true",
                 comma, action_name_length, action->action_name);
-        len += 2; // length of "}}".
-        if (len >= work_buff_size)
-        {
-            return TIO_ERR_TOO_LARGE_DATA;
-        }
-        if (json_data_len > 0) {
-            len += json_data_len + 8;
-            if (len >= work_buff_size)
-            {
-                return TIO_ERR_TOO_LARGE_DATA;
-            }
-            strcat(work_buff, ",\"data\":");
-            strcat(work_buff, json_data);
-        }
-        strcat(work_buff, "}}");
-        kii_code_t res =  kii_api_call_append_body(&handler->_kii, work_buff, len);
-        return _tio_convert_code(res);
     }
     else
     {
@@ -354,35 +337,29 @@ static tio_code_t _append_action_result(
             if (esc_len < 0) {
                 return TIO_ERR_TOO_LARGE_DATA;
             }
-            int len = snprintf(temp_err, 128, ",\"errorMessage\":\"%s\"", esc_msg);
-            if (len >= 128)
+            ebisu_strbuf_t err;
+            ebisu_strbuf_init(&err, temp_err, sizeof(temp_err));
+            ebisu_strbuf_appendf(&err, ",\"errorMessage\":\"%s\"", esc_msg);
+            if (!ebisu_strbuf_ok(&err))
             {
                 return TIO_ERR_TOO_LARGE_DATA;
             }
             err_part = temp_err;
         }
-        int len = snprintf(
-                work_buff, work_buff_size,
-                "%s{\"%.*s\":{\"succeeded\":false%s",
+        ebisu_strbuf_appendf(&result, "%s{\"%.*s\":{\"succeeded\":false%s",
                 comma, action_name_length, action->action_name, err_part);
-        len += 2; // length of "}}".
-        if (len >= work_buff_size)
-        {
-            return TIO_ERR_TOO_LARGE_DATA;
-        }
-        if (json_data_len > 0) {
-            len += json_data_len + 8;
-            if (len >= work_buff_size)
-            {
-                return TIO_ERR_TOO_LARGE_DATA;
-            }
-            strcat(work_buff, ",\"data\":");
-            strcat(work_buff, json_data);
-        }
-        strcat(work_buff, "}}");
-        kii_code_t res = kii_api_call_append_body(&handler->_kii, work_buff, len);
-        return _tio_convert_code(res);
     }
+    if (json_data_len > 0) {
+        ebisu_strbuf_append(&result, ",\"data\":");
+        ebisu_strbuf_append(&result, json_data);
+    }
+    ebisu_strbuf_append(&result, "}}");
+    if (!ebisu_strbuf_ok(&result))
+    {
+        return TIO_ERR_TOO_LARGE_DATA;
+    }
+    kii_code_t res = kii_api_call_append_body(&handler->_kii, work_buff, result.len);
+    return _tio_convert_code(res);
 }
 
 //

@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -6,6 +5,7 @@
 #include "khc_impl.h"
 #include "khc_state_impl.h"
 #include "khc_http_date.h"
+#include <ebisu_str.h>
 
 
 void khc_set_socket(khc* khc, ebisu_socket_t* socket)
@@ -212,7 +212,9 @@ void khc_state_req_host_header(khc* khc) {
     const char hdr_key[] = "HOST: ";
     size_t hdr_len = strlen(hdr_key) + strlen(khc->_host) + 2;
     char buff[hdr_len + 1];
-    snprintf(buff, hdr_len + 1, "%s%s\r\n", hdr_key, khc->_host);
+    ebisu_strbuf_t line;
+    ebisu_strbuf_init(&line, buff, sizeof(buff));
+    ebisu_strbuf_appendf(&line, "%s%s\r\n", hdr_key, khc->_host);
     char* send_pos = &buff[khc->_sent_length];
     size_t send_len = strlen(send_pos);
     size_t sent_len = 0;
