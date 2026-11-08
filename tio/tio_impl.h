@@ -19,11 +19,7 @@ kii_code_t _tio_updater_upload(tio_updater_t* updater);
 #define _tio_log(kii, level, ...) ((void)0)
 #else
 /* Logs a message with the logger set on kii, if any. */
-void _tio_log(kii_t* kii, ebisu_log_level_t level, const char* fmt, ...)
-#if defined(__GNUC__) || defined(__clang__)
-    __attribute__((format(printf, 3, 4)))
-#endif
-    ;
+#define _tio_log(kii, level, ...) ebisu_log((kii)->_logger, (level), __VA_ARGS__)
 #endif
 
 #ifdef __cplusplus

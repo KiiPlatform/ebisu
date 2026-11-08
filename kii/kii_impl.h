@@ -6,6 +6,15 @@
 
 kii_code_t _convert_code(khc_code khc_c);
 
+#ifdef EBISU_NO_LOG
+/* Built without logging, nothing is logged, and the arguments aren't
+   evaluated. */
+#define _kii_log(kii, level, ...) ((void)0)
+#else
+/* Logs a message with the logger set by kii_set_logger(), if any. */
+#define _kii_log(kii, level, ...) ebisu_log((kii)->_logger, (level), __VA_ARGS__)
+#endif
+
 void _reset_buff(kii_t* kii);
 
 /* Resets khc for a new request, keeping the buffers set by

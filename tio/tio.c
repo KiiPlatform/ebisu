@@ -1,4 +1,3 @@
-#include <stdarg.h>
 #include <string.h>
 #include "tio.h"
 #include "kii.h"
@@ -131,19 +130,6 @@ void tio_handler_set_logger(tio_handler_t* handler, ebisu_logger_t* logger)
 {
     kii_set_logger(&handler->_kii, logger);
 }
-
-#ifndef EBISU_NO_LOG
-void _tio_log(kii_t* kii, ebisu_log_level_t level, const char* fmt, ...)
-{
-    va_list args;
-    if (kii->_logger == NULL) {
-        return;
-    }
-    va_start(args, fmt);
-    kii->_logger->ops->log(kii->_logger, level, fmt, args);
-    va_end(args);
-}
-#endif
 
 void tio_handler_set_cb_push(
         tio_handler_t* handler,
