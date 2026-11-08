@@ -149,6 +149,29 @@ void ebisu_strbuf_append_hex_bytes(ebisu_strbuf_t* sb, const uint8_t* bytes, siz
 void ebisu_strbuf_append_fixed(ebisu_strbuf_t* sb, int64_t v, unsigned int decimals);
 
 /**
+ * \brief Appends a format, as snprintf() would, but only of strings: %s, %.*s
+ * and %%.
+ *
+ * For a message made of strings, such as a request's path, without the C
+ * library's printf(), which on a small device can take more room than the
+ * code that calls it. %s appends a string, NULL taken as "". %.*s appends as
+ * many bytes of one as its int argument says, or fewer, stopping at a NUL, as
+ * printf() does, and all of it for a negative int. %% appends a '%'.
+ *
+ * The format is appended whole, or not at all: if it doesn't fit, or has
+ * another conversion, which it can't write, the builder fails and holds what
+ * it held before.
+ *
+ * \param [in,out] sb The builder.
+ * \param [in] fmt The format, followed by its arguments.
+ */
+void ebisu_strbuf_appendf(ebisu_strbuf_t* sb, const char* fmt, ...)
+#if defined(__GNUC__) || defined(__clang__)
+    __attribute__((format(printf, 2, 3)))
+#endif
+    ;
+
+/**
  * \brief The room after the string, for a function that writes into a buffer
  * itself, such as an escaper or an encoder, to append there.
  *

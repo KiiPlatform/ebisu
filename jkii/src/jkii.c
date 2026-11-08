@@ -1,5 +1,4 @@
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <limits.h>
@@ -526,10 +525,7 @@ static jkii_primitive_err_t _jkii_to_double(
     memset(buf, 0, sizeof(buf) / sizeof(buf[0]));
 
     if (buf_len <= target_size) {
-        char message[50];
-        snprintf(message, sizeof(message) / sizeof(message[0]),
-                "double string too long: %lu.", (unsigned long)target_size);
-      return JKII_PRIMITIVE_ERR_INVALID;
+        return JKII_PRIMITIVE_ERR_INVALID;
     }
     memcpy(buf, target, target_size);
     if (_jkii_localize_decimal_point(buf, buf_len, target_size) != 0) {

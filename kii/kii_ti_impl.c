@@ -2,6 +2,7 @@
 #include "kii_impl.h"
 #include "kii_req_impl.h"
 #include <ebisu_mem.h>
+#include <ebisu_str.h>
 #include <string.h>
 
 static kii_code_t _onboard_and_read(
@@ -20,8 +21,10 @@ static kii_code_t _onboard_and_read(
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "POST");
 
-    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/thing-if/apps/%s/onboardings", kii->_app_id);
-    if (path_len >= kii->_rw_buff_size) {
+    ebisu_strbuf_t path;
+    ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
+    ebisu_strbuf_appendf(&path, "/thing-if/apps/%s/onboardings", kii->_app_id);
+    if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
     khc_set_path(&kii->_khc, kii->_rw_buff);
@@ -60,29 +63,20 @@ static kii_code_t _onboard_and_read(
         return KII_ERR_TOO_LARGE_DATA;
     }
 
+    // The rest, after what _kii_body_append() wrote.
+    ebisu_strbuf_t rest;
+    ebisu_strbuf_init(&rest, &kii->_rw_buff[content_len], kii->_rw_buff_size - content_len);
     if (thing_properties != NULL) {
         // A JSON object, not a string: embedded as given, unlike the values
         // above, which are escaped to go between quotes.
-        content_len += snprintf(
-                &kii->_rw_buff[content_len],
-                kii->_rw_buff_size - content_len,
-                ",\"thingProperties\":%s",
-                thing_properties);
-        if (content_len >= kii->_rw_buff_size) {
-            _req_headers_free_all(kii);
-            return KII_ERR_TOO_LARGE_DATA;
-        }
+        ebisu_strbuf_appendf(&rest, ",\"thingProperties\":%s", thing_properties);
     }
-
-    content_len += snprintf(
-            &kii->_rw_buff[content_len],
-            kii->_rw_buff_size - content_len,
-            "}");
-    if (content_len >= kii->_rw_buff_size) {
+    ebisu_strbuf_append_char(&rest, '}');
+    if (!ebisu_strbuf_ok(&rest)) {
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
-    kii->_rw_buff_req_size = content_len;
+    kii->_rw_buff_req_size = content_len + rest.len;
 
     ret = _req_send(kii);
     if (ret != KII_ERR_OK) {
@@ -204,8 +198,10 @@ kii_code_t _put_firmware_version(
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "PUT");
 
-    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/thing-if/apps/%s/things/%s/firmware-version", kii->_app_id, kii->_author.author_id);
-    if (path_len >= kii->_rw_buff_size) {
+    ebisu_strbuf_t path;
+    ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
+    ebisu_strbuf_appendf(&path, "/thing-if/apps/%s/things/%s/firmware-version", kii->_app_id, kii->_author.author_id);
+    if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
     khc_set_path(&kii->_khc, kii->_rw_buff);
@@ -255,8 +251,10 @@ kii_code_t _get_firmware_version(
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "GET");
 
-    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/thing-if/apps/%s/things/%s/firmware-version", kii->_app_id, kii->_author.author_id);
-    if (path_len >= kii->_rw_buff_size) {
+    ebisu_strbuf_t path;
+    ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
+    ebisu_strbuf_appendf(&path, "/thing-if/apps/%s/things/%s/firmware-version", kii->_app_id, kii->_author.author_id);
+    if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
     khc_set_path(&kii->_khc, kii->_rw_buff);
@@ -323,8 +321,10 @@ kii_code_t _upload_state(
     }
     khc_set_method(&kii->_khc, method);
 
-    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size, "/thing-if/apps/%s/targets/thing:%s/%s", kii->_app_id, kii->_author.author_id, last_path_segment);
-    if (path_len >= kii->_rw_buff_size) {
+    ebisu_strbuf_t path;
+    ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
+    ebisu_strbuf_appendf(&path, "/thing-if/apps/%s/targets/thing:%s/%s", kii->_app_id, kii->_author.author_id, last_path_segment);
+    if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
     khc_set_path(&kii->_khc, kii->_rw_buff);

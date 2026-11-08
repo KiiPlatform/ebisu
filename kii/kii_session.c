@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <string.h>
 
 #include "kii.h"
@@ -7,6 +6,7 @@
 #include "kii_thing_impl.h"
 #include "kii_ti_impl.h"
 #include <ebisu_mem.h>
+#include <ebisu_str.h>
 
 /* Kii's own SDKs renew five minutes before expiry. Short-lived tokens get a
  * fifth of their lifetime instead, so they are not renewed as soon as issued. */
@@ -486,13 +486,14 @@ static bool _has_session_token(kii_t* kii)
 static kii_code_t _replace_auth_header(kii_t* kii)
 {
     char line[sizeof(_AUTH_HEADER_PREFIX) + KII_TOKEN_MAX_SIZE];
-    int len = snprintf(line, sizeof(line), "%s%s",
-            _AUTH_HEADER_PREFIX, kii->_author.access_token);
-    if (len < 0 || (size_t)len >= sizeof(line)) {
+    ebisu_strbuf_t sb;
+    ebisu_strbuf_init(&sb, line, sizeof(line));
+    ebisu_strbuf_appendf(&sb, "%s%s", _AUTH_HEADER_PREFIX, kii->_author.access_token);
+    if (!ebisu_strbuf_ok(&sb)) {
         ebisu_secure_zero(line, sizeof(line));
         return KII_ERR_TOO_LARGE_DATA;
     }
-    khc_slist* node = kii->_cb_slist_alloc(line, len, kii->_slist_alloc_data);
+    khc_slist* node = kii->_cb_slist_alloc(line, sb.len, kii->_slist_alloc_data);
     ebisu_secure_zero(line, sizeof(line));
     if (node == NULL) {
         return KII_ERR_ALLOCATION;

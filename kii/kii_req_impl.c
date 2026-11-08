@@ -1,6 +1,7 @@
 #include "kii_req_impl.h"
 #include "kii_session_impl.h"
 #include <ebisu_mem.h>
+#include <ebisu_str.h>
 #include <string.h>
 
 kii_code_t _set_bucket_path(
@@ -11,12 +12,12 @@ kii_code_t _set_bucket_path(
         const char* body)
 {
     char *scope_strs[] = { "", "users", "groups", "things" };
-    int path_len = 0;
+    ebisu_strbuf_t path;
+    ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
     switch(bucket->scope) {
         case KII_SCOPE_APP:
-            path_len = snprintf(
-                    kii->_rw_buff,
-                    kii->_rw_buff_size,
+            ebisu_strbuf_appendf(
+                    &path,
                     "/api/apps/%s/buckets/%s%s%s%s",
                     kii->_app_id,
                     bucket->bucket_name,
@@ -27,9 +28,8 @@ kii_code_t _set_bucket_path(
         case KII_SCOPE_USER:
         case KII_SCOPE_GROUP:
         case KII_SCOPE_THING:
-            path_len = snprintf(
-                    kii->_rw_buff,
-                    kii->_rw_buff_size,
+            ebisu_strbuf_appendf(
+                    &path,
                     "/api/apps/%s/%s/%s/buckets/%s%s%s%s",
                     kii->_app_id,
                     scope_strs[bucket->scope],
@@ -42,7 +42,7 @@ kii_code_t _set_bucket_path(
         default:
             return KII_ERR_FAIL;
     }
-    if (path_len >= kii->_rw_buff_size) {
+    if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     } else {
         khc_code ret = khc_set_path(&kii->_khc, kii->_rw_buff);
@@ -55,27 +55,27 @@ kii_code_t _set_bucket_path(
 }
 
 kii_code_t _set_bucket_subscription_path(kii_t* kii, const kii_bucket_t* bucket) {
-    int len = 0;
     const char* scope_strs[] = { "", "users", "groups", "things" };
+    ebisu_strbuf_t path;
+    ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
     switch (bucket->scope) {
         case KII_SCOPE_APP: {
-            const char path[] = "/api/apps/%s/buckets/%s/filters/all/push/subscriptions/things/%s";
-            len = snprintf(kii->_rw_buff, kii->_rw_buff_size, path, kii->_app_id, bucket->bucket_name, kii->_author.author_id);
+            ebisu_strbuf_appendf(&path, "/api/apps/%s/buckets/%s/filters/all/push/subscriptions/things/%s",
+                kii->_app_id, bucket->bucket_name, kii->_author.author_id);
             break;
         }
         case KII_SCOPE_USER:
         case KII_SCOPE_GROUP:
         case KII_SCOPE_THING: {
             const char* scope = scope_strs[bucket->scope];
-            const char path[] = "/api/apps/%s/%s/%s/buckets/%s/filters/all/push/subscriptions/things/%s";
-            len = snprintf(kii->_rw_buff, kii->_rw_buff_size, path,
+            ebisu_strbuf_appendf(&path, "/api/apps/%s/%s/%s/buckets/%s/filters/all/push/subscriptions/things/%s",
                 kii->_app_id, scope, bucket->scope_id, bucket->bucket_name, kii->_author.author_id);
             break;
         }
         default:
             return KII_ERR_FAIL;
     }
-    if (len >= kii->_rw_buff_size) {
+    if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
     khc_code kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
@@ -89,27 +89,26 @@ kii_code_t _set_topic_path(
         kii_t* kii,
         const kii_topic_t* topic)
 {
-    int len = 0;
     const char* scope_strs[] = { "", "users", "groups", "things" };
+    ebisu_strbuf_t path;
+    ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
     switch (topic->scope) {
         case KII_SCOPE_APP: {
-            const char path[] = "/api/apps/%s/topics/%s";
-            len = snprintf(kii->_rw_buff, kii->_rw_buff_size, path, kii->_app_id, topic->topic_name);
+            ebisu_strbuf_appendf(&path, "/api/apps/%s/topics/%s", kii->_app_id, topic->topic_name);
             break;
         }
         case KII_SCOPE_USER:
         case KII_SCOPE_GROUP:
         case KII_SCOPE_THING: {
             const char* scope = scope_strs[topic->scope];
-            const char path[] = "/api/apps/%s/%s/%s/topics/%s";
-            len = snprintf(kii->_rw_buff, kii->_rw_buff_size, path,
+            ebisu_strbuf_appendf(&path, "/api/apps/%s/%s/%s/topics/%s",
                 kii->_app_id, scope, topic->scope_id, topic->topic_name);
             break;
         }
         default:
             return KII_ERR_FAIL;
     }
-    if (len >= kii->_rw_buff_size) {
+    if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
     khc_code kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
@@ -120,27 +119,27 @@ kii_code_t _set_topic_path(
 }
 
 kii_code_t _set_topic_subscription_path(kii_t* kii, const kii_topic_t* topic) {
-    int len = 0;
     const char* scope_strs[] = { "", "users", "groups", "things" };
+    ebisu_strbuf_t path;
+    ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
     switch (topic->scope) {
         case KII_SCOPE_APP: {
-            const char path[] = "/api/apps/%s/topics/%s/push/subscriptions/things/%s";
-            len = snprintf(kii->_rw_buff, kii->_rw_buff_size, path, kii->_app_id, topic->topic_name, kii->_author.author_id);
+            ebisu_strbuf_appendf(&path, "/api/apps/%s/topics/%s/push/subscriptions/things/%s",
+                kii->_app_id, topic->topic_name, kii->_author.author_id);
             break;
         }
         case KII_SCOPE_USER:
         case KII_SCOPE_GROUP:
         case KII_SCOPE_THING: {
             const char* scope = scope_strs[topic->scope];
-            const char path[] = "/api/apps/%s/%s/%s/topics/%s/push/subscriptions/things/%s";
-            len = snprintf(kii->_rw_buff, kii->_rw_buff_size, path,
+            ebisu_strbuf_appendf(&path, "/api/apps/%s/%s/%s/topics/%s/push/subscriptions/things/%s",
                 kii->_app_id, scope, topic->scope_id, topic->topic_name, kii->_author.author_id);
             break;
         }
         default:
             return KII_ERR_FAIL;
     }
-    if (len >= kii->_rw_buff_size) {
+    if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
     khc_code kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
@@ -151,27 +150,26 @@ kii_code_t _set_topic_subscription_path(kii_t* kii, const kii_topic_t* topic) {
 }
 
 kii_code_t _set_topic_push_message_path(kii_t* kii, const kii_topic_t* topic) {
-    int len = 0;
     const char* scope_strs[] = { "", "users", "groups", "things" };
+    ebisu_strbuf_t path;
+    ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
     switch (topic->scope) {
         case KII_SCOPE_APP: {
-            const char path[] = "/api/apps/%s/topics/%s/push/messages";
-            len = snprintf(kii->_rw_buff, kii->_rw_buff_size, path, kii->_app_id, topic->topic_name);
+            ebisu_strbuf_appendf(&path, "/api/apps/%s/topics/%s/push/messages", kii->_app_id, topic->topic_name);
             break;
         }
         case KII_SCOPE_USER:
         case KII_SCOPE_GROUP:
         case KII_SCOPE_THING: {
             const char* scope = scope_strs[topic->scope];
-            const char path[] = "/api/apps/%s/%s/%s/topics/%s/push/messages";
-            len = snprintf(kii->_rw_buff, kii->_rw_buff_size, path,
+            ebisu_strbuf_appendf(&path, "/api/apps/%s/%s/%s/topics/%s/push/messages",
                 kii->_app_id, scope, topic->scope_id, topic->topic_name);
             break;
         }
         default:
             return KII_ERR_FAIL;
     }
-    if (len >= kii->_rw_buff_size) {
+    if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
     khc_code kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
@@ -182,9 +180,10 @@ kii_code_t _set_topic_push_message_path(kii_t* kii, const kii_topic_t* topic) {
 }
 
 kii_code_t _set_thing_push_message_path(kii_t* kii, const char* thing_id) {
-    const char path[] = "/api/apps/%s/things/%s/push/messages";
-    int len = snprintf(kii->_rw_buff, kii->_rw_buff_size, path, kii->_app_id, thing_id);
-    if (len >= kii->_rw_buff_size) {
+    ebisu_strbuf_t path;
+    ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
+    ebisu_strbuf_appendf(&path, "/api/apps/%s/things/%s/push/messages", kii->_app_id, thing_id);
+    if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
     khc_code kcode = khc_set_path(&kii->_khc, kii->_rw_buff);
@@ -244,19 +243,16 @@ kii_code_t _set_auth_header(kii_t* kii)
 kii_code_t _set_auth_bearer_token(kii_t* kii, const char* token)
 {
     if (strlen(token) > 0) {
-        kii->_rw_buff[0] = '\0';
-        int header_len = snprintf(
-                kii->_rw_buff,
-                kii->_rw_buff_size,
-                "Bearer %s",
-                token);
-        if (header_len >= kii->_rw_buff_size) {
+        ebisu_strbuf_t header;
+        ebisu_strbuf_init(&header, kii->_rw_buff, kii->_rw_buff_size);
+        ebisu_strbuf_appendf(&header, "Bearer %s", token);
+        if (!ebisu_strbuf_ok(&header)) {
             ebisu_secure_zero(kii->_rw_buff, kii->_rw_buff_size);
             return KII_ERR_TOO_LARGE_DATA;
         }
         kii_code_t res = kii_api_call_append_header(kii, "Authorization", kii->_rw_buff);
         // Not left for what the buffer holds next, which may be shorter.
-        ebisu_secure_zero(kii->_rw_buff, (size_t)header_len);
+        ebisu_secure_zero(kii->_rw_buff, header.len);
         return res;
     } else {
         // Nothing to do.
@@ -303,8 +299,10 @@ kii_code_t _set_auth_basic_app(kii_t* kii)
     // The app's ID authorizes the request. Its key isn't needed, so a
     // placeholder stands in for it.
     char credentials[KII_APP_ID_MAX_SIZE + sizeof(":dummy")];
-    int cred_len = snprintf(credentials, sizeof(credentials), "%s:dummy", kii->_app_id);
-    if (cred_len < 0 || (size_t)cred_len >= sizeof(credentials)) {
+    ebisu_strbuf_t cred;
+    ebisu_strbuf_init(&cred, credentials, sizeof(credentials));
+    ebisu_strbuf_appendf(&cred, "%s:dummy", kii->_app_id);
+    if (!ebisu_strbuf_ok(&cred)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
     static const char prefix[] = "Basic ";
@@ -312,7 +310,7 @@ kii_code_t _set_auth_basic_app(kii_t* kii)
         return KII_ERR_TOO_LARGE_DATA;
     }
     memcpy(kii->_rw_buff, prefix, sizeof(prefix));
-    if (_base64_encode(credentials, (size_t)cred_len, kii->_rw_buff + sizeof(prefix) - 1,
+    if (_base64_encode(credentials, cred.len, kii->_rw_buff + sizeof(prefix) - 1,
                 kii->_rw_buff_size - (sizeof(prefix) - 1)) < 0) {
         return KII_ERR_TOO_LARGE_DATA;
     }

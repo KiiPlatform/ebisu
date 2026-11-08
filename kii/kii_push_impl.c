@@ -3,6 +3,7 @@
 #include "kii_impl.h"
 #include "kii_req_impl.h"
 #include "kii.h"
+#include <ebisu_str.h>
 
 kii_code_t _install_push(
         kii_t* kii,
@@ -11,9 +12,10 @@ kii_code_t _install_push(
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "POST");
 
-    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size,
-            "/api/apps/%s/installations", kii->_app_id);
-    if (path_len >= kii->_rw_buff_size) {
+    ebisu_strbuf_t path;
+    ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
+    ebisu_strbuf_appendf(&path, "/api/apps/%s/installations", kii->_app_id);
+    if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
     khc_set_path(&kii->_khc, kii->_rw_buff);
@@ -45,14 +47,16 @@ kii_code_t _install_push(
     if (development) {
         flag = "true";
     }
-    int body_len = snprintf(kii->_rw_buff, kii->_rw_buff_size,
+    ebisu_strbuf_t body;
+    ebisu_strbuf_init(&body, kii->_rw_buff, kii->_rw_buff_size);
+    ebisu_strbuf_appendf(&body,
             "{\"deviceType\":\"MQTT\", \"development\": \"%s\"}",
             flag);
-    if (body_len >= kii->_rw_buff_size) {
+    if (!ebisu_strbuf_ok(&body)) {
         _req_headers_free_all(kii);
         return KII_ERR_TOO_LARGE_DATA;
     }
-    kii->_rw_buff_req_size = body_len;
+    kii->_rw_buff_req_size = body.len;
 
     return _req_send(kii);
 }
@@ -64,10 +68,10 @@ kii_code_t _get_mqtt_endpoint(
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "GET");
 
-    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size,
-            "/api/apps/%s/installations/%s/mqtt-endpoint",
-            kii->_app_id, installation_id);
-    if (path_len >= kii->_rw_buff_size) {
+    ebisu_strbuf_t path;
+    ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
+    ebisu_strbuf_appendf(&path, "/api/apps/%s/installations/%s/mqtt-endpoint", kii->_app_id, installation_id);
+    if (!ebisu_strbuf_ok(&path)) {
         return KII_ERR_TOO_LARGE_DATA;
     }
     khc_set_path(&kii->_khc, kii->_rw_buff);

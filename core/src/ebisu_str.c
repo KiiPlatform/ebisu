@@ -1,5 +1,6 @@
 #include "ebisu_str.h"
 
+#include <stdarg.h>
 #include <string.h>
 
 static const char _hex_digits[] = "0123456789abcdef";
@@ -187,6 +188,49 @@ void ebisu_strbuf_commit(ebisu_strbuf_t* sb, size_t n)
     /* The writer may have left anything there, its own NUL or none. */
     if (sb->size > 0) {
         sb->buff[sb->len] = '\0';
+    }
+}
+
+void ebisu_strbuf_appendf(ebisu_strbuf_t* sb, const char* fmt, ...)
+{
+    size_t start = sb->len;
+    va_list args;
+    if (sb->overflow) {
+        return;
+    }
+    va_start(args, fmt);
+    while (*fmt != '\0' && !sb->overflow) {
+        const char* percent = strchr(fmt, '%');
+        if (percent == NULL) {
+            ebisu_strbuf_append(sb, fmt);
+            break;
+        }
+        ebisu_strbuf_append_n(sb, fmt, (size_t)(percent - fmt));
+        if (percent[1] == 's') {
+            ebisu_strbuf_append(sb, va_arg(args, const char*));
+            fmt = percent + 2;
+        } else if (percent[1] == '.' && percent[2] == '*' && percent[3] == 's') {
+            int precision = va_arg(args, int);
+            const char* s = va_arg(args, const char*);
+            if (precision < 0) {
+                ebisu_strbuf_append(sb, s);
+            } else if (s != NULL) {
+                const char* nul = memchr(s, '\0', (size_t)precision);
+                ebisu_strbuf_append_n(sb, s, nul != NULL ? (size_t)(nul - s) : (size_t)precision);
+            }
+            fmt = percent + 4;
+        } else if (percent[1] == '%') {
+            ebisu_strbuf_append_char(sb, '%');
+            fmt = percent + 2;
+        } else {
+            /* A conversion this doesn't write, or a '%' that ends the format. */
+            sb->overflow = true;
+        }
+    }
+    va_end(args);
+    if (sb->overflow && sb->size > 0) {
+        sb->len = start;
+        sb->buff[start] = '\0';
     }
 }
 

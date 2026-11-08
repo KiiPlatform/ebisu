@@ -1,6 +1,6 @@
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <ebisu_str.h>
 
 #include "kii.h"
 #include "kii_impl.h"
@@ -19,13 +19,14 @@ static kii_code_t _execute_server_code(
     khc_set_host(&kii->_khc, kii->_app_host);
     khc_set_method(&kii->_khc, "POST");
 
-    int path_len = snprintf(kii->_rw_buff, kii->_rw_buff_size,
-            "/api/apps/%s/server-code/versions/%s/%s",
+    ebisu_strbuf_t path;
+    ebisu_strbuf_init(&path, kii->_rw_buff, kii->_rw_buff_size);
+    ebisu_strbuf_appendf(&path, "/api/apps/%s/server-code/versions/%s/%s",
             kii->_app_id, version, endpoint_name);
 
     // The version and the endpoint's name come from the application. Too long
     // for khc, the request would go without its path.
-    if (path_len >= kii->_rw_buff_size ||
+    if (!ebisu_strbuf_ok(&path) ||
             khc_set_path(&kii->_khc, kii->_rw_buff) != KHC_ERR_OK) {
         return KII_ERR_TOO_LARGE_DATA;
     }
