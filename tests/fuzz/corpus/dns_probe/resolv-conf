@@ -1,0 +1,8 @@
+# Generated
+search example.com
+options timeout:2
+nameserver 10.0.0.1 # router
+nameserver	::1
+nameserver fe80::1%eth0
+nameserver 0x7f.1
+nameserver 10.0.0.1

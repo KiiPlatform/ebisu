@@ -3,7 +3,8 @@
 #
 # The package's targets are ebisu::core, ebisu::khc, ebisu::jkii, ebisu::kii and
 # ebisu::tio, and, where they were built, ebisu::posix and ebisu::openssl, or
-# ebisu::win32 and ebisu::schannel on Windows, the ports, and ebisu::loggers.
+# ebisu::win32 and ebisu::schannel on Windows, the ports, ebisu::loggers, and
+# ebisu::dns_probe on POSIX.
 # Each library holds its own code alone, and its target, like its pkg-config
 # file, brings in the ones it links. Like the libraries, the headers are all
 # installed in one directory, which each target adds to the include path.
@@ -92,6 +93,11 @@ if(TARGET ebisu_loggers)
         _ebisu_pkg_config(loggers ebisu_loggers "${loggers_description}"
             REQUIRES ebisu-core)
     endif()
+endif()
+if(TARGET ebisu_dns_probe)
+    _ebisu_pkg_config(dns-probe ebisu_dns_probe
+        "DNS probe of ebisu: whether the system's name servers answer, before a lookup"
+        REQUIRES ebisu-core)
 endif()
 if(TARGET ebisu_schannel)
     _ebisu_pkg_config(schannel ebisu_schannel

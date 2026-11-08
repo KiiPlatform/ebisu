@@ -1,0 +1,6 @@
+nameserver fe80::1%lo
+nameserver 2001:db8::2%5
+nameserver fe80::3%
+nameserver ff02::4%no-such-if0
+nameserver fe80::5%4294967296
+nameserver 10.0.0.6

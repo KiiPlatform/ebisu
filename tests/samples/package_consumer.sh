@@ -18,6 +18,7 @@ libdir=$(dirname "$(find "$work/prefix" -name 'ebisu-kii.pc')")/..
 
 mkdir "$work/consumer"
 cat > "$work/consumer/main.c" <<'SOURCE'
+#include <ebisu_dns_probe.h>
 #include <ebisu_openssl.h>
 #include <ebisu_posix.h>
 #include <ebisu_version.h>
@@ -27,10 +28,12 @@ cat > "$work/consumer/main.c" <<'SOURCE'
 int main(void)
 {
     kii_t kii;
-    ebisu_openssl_socket_t sock;
+    ebisu_openssl_socket_t tls;
+    ebisu_dns_probe_socket_t sock;
     kii_init(&kii);
     kii_set_site(&kii, "api-jp.kii.com");
-    ebisu_openssl_socket_init(&sock, 5, 5);
+    ebisu_openssl_socket_init(&tls, 5, 5);
+    ebisu_dns_probe_socket_init(&sock, &tls.base, 3000);
     kii_set_http_socket(&kii, &sock.base);
     kii_set_system(&kii, ebisu_posix_system());
     printf("ebisu %s\n", EBISU_VERSION);
@@ -42,7 +45,7 @@ cmake_minimum_required(VERSION 3.15)
 project(consumer C)
 find_package(ebisu CONFIG REQUIRED)
 add_executable(consumer main.c)
-target_link_libraries(consumer PRIVATE ebisu::openssl ebisu::posix ebisu::kii)
+target_link_libraries(consumer PRIVATE ebisu::dns_probe ebisu::openssl ebisu::posix ebisu::kii)
 SOURCE
 
 cmake -S "$work/consumer" -B "$work/consumer/build" -DCMAKE_PREFIX_PATH="$work/prefix" > "$work/consumer.log" \
@@ -54,6 +57,6 @@ LD_LIBRARY_PATH="$libdir" "$work/consumer/build/consumer"
 # The ports first: they call into the library, which comes after them.
 PKG_CONFIG_PATH="$libdir/pkgconfig" pkg-config --modversion ebisu-kii
 cc "$work/consumer/main.c" -o "$work/consumer/consumer-pc" \
-    $(PKG_CONFIG_PATH="$libdir/pkgconfig" pkg-config --cflags --libs ebisu-openssl ebisu-posix ebisu-kii)
+    $(PKG_CONFIG_PATH="$libdir/pkgconfig" pkg-config --cflags --libs ebisu-dns-probe ebisu-openssl ebisu-posix ebisu-kii)
 echo "pkg-config:"
 LD_LIBRARY_PATH="$libdir" "$work/consumer/consumer-pc"

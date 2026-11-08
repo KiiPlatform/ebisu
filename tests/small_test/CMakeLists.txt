@@ -119,6 +119,16 @@ if(TARGET ebisu_loggers)
         LINK ebisu_loggers ebisu_core_objs Threads::Threads)
 endif()
 
+# platform's DNS probe, which asks servers of the test's own on the loopback.
+if(TARGET ebisu_dns_probe)
+    ebisu_add_test_suite(small_test_dns_probe
+        LABEL small
+        WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR}
+        SOURCES dns_probe/dns_probe_test.cpp
+        LINK ebisu_dns_probe ebisu_core_objs Threads::Threads
+        INCLUDES ${PROJECT_SOURCE_DIR}/platform/dns_probe/src)
+endif()
+
 # platform's POSIX port, which needs threads and nothing else. Linux only, as
 # the test reads a thread's attributes with pthread_getattr_np().
 if(TARGET ebisu_posix AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
