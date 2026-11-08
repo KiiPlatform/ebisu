@@ -28,9 +28,9 @@ void* _sbrk(ptrdiff_t increment)
     return previous;
 }
 
-/* Every task allocates: FreeRTOS's heap_3, mbedTLS and ebisu all call
-   malloc(). With the scheduler suspended, as heap_3 does around it, one at a
-   time. Never from an interrupt handler. */
+/* Every task allocates: FreeRTOS's heap_3 and mbedTLS call malloc(). With the
+   scheduler suspended, as heap_3 does around it, one at a time. Never from an
+   interrupt handler. */
 void __malloc_lock(struct _reent* reent)
 {
     (void)reent;

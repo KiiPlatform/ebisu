@@ -8,6 +8,9 @@ Ethernet QEMU emulates. CI runs it in QEMU against Kii Cloud.
 - [main/app_main.c](main/app_main.c): sets up tio as the [Linux
   sample](../linux-sample/example.c) does, with its settings from `idf.py
   menuconfig`.
+- [main/header_pool.c](main/header_pool.c): a pool for the request headers,
+  which with the buffers app_main.c gives tio leaves ebisu nothing to take from
+  the heap.
 - [main/sock_cb_esp32.c](main/sock_cb_esp32.c): the socket callbacks, on
   ESP-IDF's esp-tls, which uses mbedTLS over lwIP. Their `last_error` says why
   one failed, from what esp-tls keeps of it and mbedTLS's error, which the

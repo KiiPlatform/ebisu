@@ -352,6 +352,24 @@ Note that buffer for HTTP and MQTT must be isolated. Passing overlapping memory 
     tio_handler_set_mqtt_buff(handler, mqtt_buffer, mqtt_buffer_size);
 ```
 
+Each HTTP request also takes from the heap, unless they are set, a buffer for
+what it sends and receives, of 1024 bytes, and one for a response header, of
+256, and its headers one at a time. The [FreeRTOS](freertos-sample/main.c) and
+[ESP32](esp32-sample/main/app_main.c) samples set both buffers, and take the
+headers from a pool of their own,
+[header_pool.c](freertos-sample/header_pool.c), so that ebisu takes nothing
+from the heap:
+
+```c
+    tio_handler_set_stream_buff(handler, stream_buff, sizeof(stream_buff));
+    tio_handler_set_resp_header_buff(handler, resp_header_buff, sizeof(resp_header_buff));
+    header_pool_init(&headers);
+    tio_handler_set_cb_slist_resource(handler, header_pool_alloc, header_pool_free,
+            &headers, &headers);
+```
+
+The updater has the same setters, and needs buffers and a pool of its own.
+
 ### Set-up MQTT socket timeout.
 
 `tio_handler_t` needs socket timeout in seconds to send MQTT `PINGREQ` periodically.
