@@ -148,8 +148,8 @@ TEST_CASE("The UDP syslog logger sends each message as important as its level as
     Receiver server;
     REQUIRE(server.listening);
     ebisu_syslog_udp_logger_t logger;
-    REQUIRE(ebisu_syslog_udp_logger_init(&logger, "127.0.0.1", server.port, "ebisu-test", 1,
-            EBISU_LOG_INFO));
+    REQUIRE(ebisu_syslog_udp_logger_init(&logger, "127.0.0.1", server.port, nullptr,
+            "ebisu-test", 1, EBISU_LOG_INFO));
 #ifndef _WIN32
     // Sending never waits, and a program the application executes doesn't
     // get the socket.
@@ -211,8 +211,8 @@ TEST_CASE("The UDP syslog logger takes any facility, and an application without 
     Receiver server;
     REQUIRE(server.listening);
     ebisu_syslog_udp_logger_t logger;
-    REQUIRE(ebisu_syslog_udp_logger_init(&logger, "127.0.0.1", server.port, nullptr, 23,
-            EBISU_LOG_DEBUG));
+    REQUIRE(ebisu_syslog_udp_logger_init(&logger, "127.0.0.1", server.port, nullptr, nullptr,
+            23, EBISU_LOG_DEBUG));
     ebisu_log(&logger.base, EBISU_LOG_DEBUG, "resumed");
     Message message = parse(server.next());
     // Local use 7, 23, and debug, 7: the largest priority there is.
@@ -223,14 +223,36 @@ TEST_CASE("The UDP syslog logger takes any facility, and an application without 
 
     SECTION("or the longest name") {
         const std::string name(EBISU_SYSLOG_APP_NAME_MAX, 'n');
-        REQUIRE(ebisu_syslog_udp_logger_init(&logger, "127.0.0.1", server.port, name.c_str(), 0,
-                EBISU_LOG_DEBUG));
+        REQUIRE(ebisu_syslog_udp_logger_init(&logger, "127.0.0.1", server.port, nullptr,
+                name.c_str(), 0, EBISU_LOG_DEBUG));
         ebisu_log(&logger.base, EBISU_LOG_ERROR, "kernel");
         message = parse(server.next());
         CHECK(message.priority == 3);
         CHECK(message.app_name == name);
         ebisu_syslog_udp_logger_close(&logger);
     }
+}
+
+TEST_CASE("The UDP syslog logger sends the host name it is given, rather than the host's") {
+    Receiver server;
+    REQUIRE(server.listening);
+    ebisu_syslog_udp_logger_t logger;
+    std::string name = "device-0042";
+    SECTION("the longest") {
+        name = std::string(EBISU_SYSLOG_HOSTNAME_MAX, 'h');
+    }
+    SECTION("any printable ASCII") {
+        name = "!~";
+    }
+    REQUIRE(ebisu_syslog_udp_logger_init(&logger, "127.0.0.1", server.port, name.c_str(),
+            "ebisu-test", 1, EBISU_LOG_DEBUG));
+    ebisu_log(&logger.base, EBISU_LOG_INFO, "started");
+    Message message = parse(server.next());
+    CHECK(message.hostname == name);
+    CHECK(message.app_name == "ebisu-test");
+    CHECK(message.procid == std::to_string(pid()));
+    CHECK(message.msg == "started");
+    ebisu_syslog_udp_logger_close(&logger);
 }
 
 TEST_CASE("The UDP syslog logger sends to an IPv6 server") {
@@ -240,7 +262,7 @@ TEST_CASE("The UDP syslog logger sends to an IPv6 server") {
         return;
     }
     ebisu_syslog_udp_logger_t logger;
-    REQUIRE(ebisu_syslog_udp_logger_init(&logger, "::1", server.port, "ebisu-test", 1,
+    REQUIRE(ebisu_syslog_udp_logger_init(&logger, "::1", server.port, nullptr, "ebisu-test", 1,
             EBISU_LOG_DEBUG));
     ebisu_log(&logger.base, EBISU_LOG_INFO, "over IPv6");
     CHECK(parse(server.next()).msg == "over IPv6");
@@ -252,7 +274,9 @@ TEST_CASE("The UDP syslog logger refuses what RFC 5424 can't carry, and then dro
     REQUIRE(server.listening);
     ebisu_syslog_udp_logger_t logger;
     const std::string too_long(EBISU_SYSLOG_APP_NAME_MAX + 1, 'n');
+    const std::string hostname_too_long(EBISU_SYSLOG_HOSTNAME_MAX + 1, 'h');
     const char* host = "127.0.0.1";
+    const char* hostname_field = nullptr;
     const char* app_name = "ebisu-test";
     int facility = 1;
 
@@ -277,9 +301,24 @@ TEST_CASE("The UDP syslog logger refuses what RFC 5424 can't carry, and then dro
     SECTION("a name too long") {
         app_name = too_long.c_str();
     }
+    SECTION("an empty host name") {
+        hostname_field = "";
+    }
+    SECTION("a host name with a space") {
+        hostname_field = "device 0042";
+    }
+    SECTION("a host name with a control character") {
+        hostname_field = "device\x7f";
+    }
+    SECTION("a host name beyond ASCII") {
+        hostname_field = "device-\xc3\xa9";
+    }
+    SECTION("a host name too long") {
+        hostname_field = hostname_too_long.c_str();
+    }
 
-    CHECK_FALSE(ebisu_syslog_udp_logger_init(&logger, host, server.port, app_name, facility,
-            EBISU_LOG_DEBUG));
+    CHECK_FALSE(ebisu_syslog_udp_logger_init(&logger, host, server.port, hostname_field, app_name,
+            facility, EBISU_LOG_DEBUG));
     ebisu_log(&logger.base, EBISU_LOG_ERROR, "dropped");
     CHECK(server.next(300) == "");
     ebisu_syslog_udp_logger_close(&logger);
