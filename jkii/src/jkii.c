@@ -29,6 +29,7 @@ int errno;
 #endif
 
 #include <jkii.h>
+#include <ebisu_str.h>
 #include <jkii_utils.h>
 #include "jkii_core_json.h"
 
@@ -44,12 +45,6 @@ int errno;
 #define M_JKII_EQ_LITERAL(buf, buf_len, literal) \
     ((buf_len) == sizeof(literal) - 1 && \
      memcmp((buf), (literal), sizeof(literal) - 1) == 0)
-/* The longest an int64_t is in decimal, INT64_MIN, written out: how a
- * limits.h macro is spelled is up to the libc, and glibc's are hexadecimal. */
-#define INT64_MIN_STR "-9223372036854775808"
-/* With the terminator. An integer longer than that is out of range, since it
- * may not have leading zeros. */
-#define INT64BUFSIZE sizeof(INT64_MIN_STR)
 
 /* "+ 3" denotes '-', '.', '\0' */
 #define DOUBLEBUFSIZE DBL_MAX_10_EXP + 3
@@ -357,21 +352,17 @@ static jkii_primitive_err_t _jkii_to_int64(
         size_t target_size,
         int64_t* out_int64)
 {
-    char buf[INT64BUFSIZE];
-    char* endptr = NULL;
-    size_t buf_len = 0;
-    long long value = 0;
-    const char* digits = NULL;
-    size_t digits_len = 0;
+    const char* digits = target;
+    size_t digits_len = target_size;
+    int64_t value = 0;
 
     M_JKII_ASSERT(target != NULL);
     M_JKII_ASSERT(out_int64 != NULL);
 
     /* A JSON number has no leading zeros: 0 and -0 are numbers, 00, 007 and
-     * 010 are not. Checked before the length, so that a long run of zeros is
-     * not taken for an overflow. */
-    digits = target;
-    digits_len = target_size;
+     * 010 are not, though core's parser takes them. Nor has it a '+', which it
+     * takes too, but _jkii_is_integer() has let through only a '-' and
+     * digits. */
     if (digits_len > 0 && *digits == '-') {
         ++digits;
         --digits_len;
@@ -380,58 +371,22 @@ static jkii_primitive_err_t _jkii_to_int64(
         return JKII_PRIMITIVE_ERR_INVALID;
     }
 
-    buf_len = sizeof(buf) / sizeof(buf[0]);
-    memset(buf, 0, sizeof(buf) / sizeof(buf[0]));
-
-    if (buf_len <= target_size) {
+    /* Decimal, in an int64_t, without strtoll(), errno or a copy: digits of
+     * any length past the range are a range error, whose sign says which. */
+    switch (ebisu_parse_int(target, target_size, INT64_MIN, INT64_MAX, &value)) {
+    case EBISU_PARSE_OK:
+        *out_int64 = value;
+        return JKII_PRIMITIVE_ERR_OK;
+    case EBISU_PARSE_RANGE:
         if (*target == '-') {
             *out_int64 = INT64_MIN;
             return JKII_PRIMITIVE_ERR_UNDERFLOW;
         }
         *out_int64 = INT64_MAX;
         return JKII_PRIMITIVE_ERR_OVERFLOW;
-    }
-    memcpy(buf, target, target_size);
-
-    errno = 0;
-    /* JSON numbers are decimal. Base 0 would read 0x and a leading 0 as
-     * hexadecimal and octal, which the checks above leave strtoll no chance to
-     * do, but base 10 says so here. long long has at least 64 bits, so every
-     * int64_t is in its range, whatever the width of long. */
-    value = strtoll(buf, &endptr, 10);
-    if (endptr == buf) {
-        /* No digits, e.g. "-" or "". Whether strtoll says so in errno is up
-         * to the libc: BSD and macOS set EINVAL, glibc and newlib do not.
-         * Every libc leaves endptr at buf, so go by that. */
-        return JKII_PRIMITIVE_ERR_INVALID;
-    } else if (errno == ERANGE) {
-        /* Past the long long range: strtoll gives LLONG_MAX or LLONG_MIN, so
-         * the sign tells which. */
-        if (value < 0) {
-            *out_int64 = INT64_MIN;
-            return JKII_PRIMITIVE_ERR_UNDERFLOW;
-        }
-        *out_int64 = INT64_MAX;
-        return JKII_PRIMITIVE_ERR_OVERFLOW;
-    }
-
-    if (*endptr != '\0') {
+    default:
         return JKII_PRIMITIVE_ERR_INVALID;
     }
-
-#if LLONG_MAX > INT64_MAX
-    /* Within the long long range but not the int64_t one. */
-    if (value > INT64_MAX) {
-        *out_int64 = INT64_MAX;
-        return JKII_PRIMITIVE_ERR_OVERFLOW;
-    } else if (value < INT64_MIN) {
-        *out_int64 = INT64_MIN;
-        return JKII_PRIMITIVE_ERR_UNDERFLOW;
-    }
-#endif
-
-    *out_int64 = (int64_t)value;
-    return JKII_PRIMITIVE_ERR_OK;
 }
 
 /* Narrows the result of _jkii_to_int64() to an int32_t, saturating where it
