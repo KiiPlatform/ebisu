@@ -256,7 +256,7 @@ $(function() {
 <div class="fragment"><div class="line">connected to api-jp.kii.com:443</div>
 <div class="line">&gt; POST /thing-if/apps/0123abcd/onboardings HTTP/1.1</div>
 <div class="line">&gt; HOST: api-jp.kii.com</div>
-<div class="line">&gt; Authorization: Basic ***</div>
+<div class="line">&gt; Authorization: Basic MDEyM2FiY2Q6ZHVtbXk=</div>
 <div class="line">&gt; Content-Type: application/vnd.kii.OnboardingWithVendorThingIDByThing+json</div>
 <div class="line">&gt; Content-Length: 87</div>
 <div class="line">&gt; Connection: Close</div>
@@ -264,7 +264,7 @@ $(function() {
 <div class="line">&lt; HTTP/1.1 200 OK</div>
 <div class="line">&lt; Content-Type: application/vnd.kii.OnboardingResponse+json</div>
 <div class="line">&lt; (a body of 412 bytes)</div>
-</div><!-- fragment --><p>The credentials of <span class="tt">Authorization</span>, <span class="tt">Proxy-Authorization</span>, <span class="tt">Cookie</span> and <span class="tt">Set-Cookie</span> are left out, and what a body holds is never logged: tokens, passwords and MQTT credentials travel in them. At <span class="tt"><a class="elRef" href="../../core/html/ebisu__log_8h.html#a42e3fb546ca916214c4afd79eddce535a2ed83f71fe32b50977e89849e8edd219">EBISU_LOG_WARNING</a></span>, a request that failed, with its <span class="tt"><a class="el" href="khc_8h.html#a90be23875108e9a39942c3af90a6d789" title="Error codes.">khc_code</a></span>, and a connection that didn't close. kii's and tio's setters give their khc the logger. Built with <span class="tt">EBISU_NO_LOG</span>, khc logs nothing.</p>
+</div><!-- fragment --><p>The headers are logged as they are, the credentials of <span class="tt">Authorization</span> and cookies included, so a logger that takes <span class="tt"><a class="elRef" href="../../core/html/ebisu__log_8h.html#a42e3fb546ca916214c4afd79eddce535a72cb7f90a0acc64fa2d563cefea16a7a">EBISU_LOG_DEBUG</a></span> should write only where those would be safe. What a body holds is never logged. At <span class="tt"><a class="elRef" href="../../core/html/ebisu__log_8h.html#a42e3fb546ca916214c4afd79eddce535a2ed83f71fe32b50977e89849e8edd219">EBISU_LOG_WARNING</a></span>, a request that failed, with its <span class="tt"><a class="el" href="khc_8h.html#a90be23875108e9a39942c3af90a6d789" title="Error codes.">khc_code</a></span>, and a connection that didn't close. kii's and tio's setters give their khc the logger. Built with <span class="tt">EBISU_NO_LOG</span>, khc logs nothing.</p>
 <h1>Building</h1>
 <p><span class="tt"><a class="el" href="structkhc.html" title="khc object.">khc</a></span> is built as part of ebisu, as described in the <a href="https://github.com/KiiPlatform/ebisu/blob/master/README.md#building">top-level README</a>, as <span class="tt">libebisu_khc</span>, which links <span class="tt">libebisu_core</span>, and which <span class="tt">libebisu_kii</span> links. </p>
 </div></div><!-- PageDoc -->
