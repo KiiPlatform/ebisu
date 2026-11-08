@@ -1,4 +1,3 @@
-#include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -7,6 +6,7 @@
 #include "kii_mqtt_task.h"
 #include <ebisu_mem.h>
 #include "kii.h"
+#include "kii_impl.h"
 #include "kii_session_impl.h"
 
 static void _delay_ms(kii_t* kii, uint32_t msec)
@@ -36,20 +36,6 @@ static const char* const event_names[] = {
 typedef char event_names_has_each[
     sizeof(event_names) / sizeof(event_names[0]) == KII_MQTT_EVENT_MESSAGE_MALFORMED + 1 ? 1 : -1];
 
-static void _log_to(kii_t* kii, ebisu_log_level_t level, const char* fmt, ...)
-#if defined(__GNUC__) || defined(__clang__)
-    __attribute__((format(printf, 3, 4)))
-#endif
-    ;
-
-static void _log_to(kii_t* kii, ebisu_log_level_t level, const char* fmt, ...)
-{
-    va_list args;
-    va_start(args, fmt);
-    kii->_logger->ops->log(kii->_logger, level, fmt, args);
-    va_end(args);
-}
-
 // Logs an event with the logger set by kii_set_logger(), if any: a CONNACK
 // or a SUBACK that accepts as information, and every other event as a
 // warning, as each makes the task reconnect, wait or drop a message.
@@ -61,11 +47,11 @@ static void _log_event(kii_t* kii, kii_mqtt_event_t event, uint32_t detail)
         return;
     }
     if ((unsigned)event >= sizeof(event_names) / sizeof(event_names[0])) {
-        _log_to(kii, EBISU_LOG_WARNING, "MQTT task: event %d, detail %lu", (int)event,
+        _kii_log(kii, EBISU_LOG_WARNING, "MQTT task: event %d, detail %lu", (int)event,
                 (unsigned long)detail);
         return;
     }
-    _log_to(kii, accepted ? EBISU_LOG_INFO : EBISU_LOG_WARNING, "MQTT task: %s, detail %lu",
+    _kii_log(kii, accepted ? EBISU_LOG_INFO : EBISU_LOG_WARNING, "MQTT task: %s, detail %lu",
             event_names[event], (unsigned long)detail);
 }
 #endif

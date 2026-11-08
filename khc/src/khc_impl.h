@@ -18,11 +18,7 @@ extern "C"
 #define _khc_log_lines(khc, direction, lines) ((void)0)
 #else
 /* Logs a message with the logger set by khc_set_logger(), if any. */
-void _khc_log(khc* khc, ebisu_log_level_t level, const char* fmt, ...)
-#if defined(__GNUC__) || defined(__clang__)
-    __attribute__((format(printf, 3, 4)))
-#endif
-    ;
+#define _khc_log(khc, level, ...) ebisu_log((khc)->_logger, (level), __VA_ARGS__)
 
 /* Logs a line of a request's head, direction '>', or of a response's, '<', at
    EBISU_LOG_DEBUG, without the credentials of a header that carries them. */

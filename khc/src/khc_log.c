@@ -1,7 +1,6 @@
 #include "khc.h"
 #include "khc_impl.h"
 
-#include <stdarg.h>
 #include <string.h>
 
 void khc_set_logger(khc* khc, ebisu_logger_t* logger)
@@ -10,17 +9,6 @@ void khc_set_logger(khc* khc, ebisu_logger_t* logger)
 }
 
 #ifndef EBISU_NO_LOG
-void _khc_log(khc* khc, ebisu_log_level_t level, const char* fmt, ...)
-{
-    va_list args;
-    if (khc->_logger == NULL) {
-        return;
-    }
-    va_start(args, fmt);
-    khc->_logger->ops->log(khc->_logger, level, fmt, args);
-    va_end(args);
-}
-
 // Whether the name of length len is name, ignoring case, as header names are.
 static bool _is_name(const char* line, size_t len, const char* name)
 {
