@@ -248,8 +248,8 @@ With CMake:
   stdout, bodies, tokens and passwords included, is gone, as is `TIO_TRACE`.
   `khc_set_logger()`, `kii_set_logger()`, `tio_handler_set_logger()` and
   `tio_updater_set_logger()` take a logger instead: at `EBISU_LOG_DEBUG`, it
-  gets each request's and response's lines and headers, without credentials or
-  bodies.
+  gets each request's and response's lines and headers, credentials included,
+  but not their bodies.
 
 Linking:
 
