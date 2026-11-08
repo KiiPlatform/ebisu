@@ -2012,8 +2012,8 @@ void kii_set_cb_mqtt_event(kii_t* kii, KII_CB_MQTT_EVENT cb, void* userdata);
  *
  * What khc logs of each request, as khc_set_logger(khc*, ebisu_logger_t*) says:
  * at EBISU_LOG_DEBUG, the request's and the response's lines and headers,
- * without credentials or bodies, and at EBISU_LOG_WARNING, a request that
- * failed. And what the MQTT task tells the callback set by
+ * credentials included, but not their bodies, and at EBISU_LOG_WARNING, a
+ * request that failed. And what the MQTT task tells the callback set by
  * kii_set_cb_mqtt_event(), the event's name and its detail: at
  * EBISU_LOG_INFO, a CONNACK or SUBACK that accepts, and at EBISU_LOG_WARNING
  * every other event. kii_init() sets none. Set it before starting the task.

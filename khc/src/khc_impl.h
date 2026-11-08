@@ -21,8 +21,9 @@ extern "C"
 #define _khc_log(khc, level, ...) ebisu_log((khc)->_logger, (level), __VA_ARGS__)
 
 /* Logs a line of a request's head, direction '>', or of a response's, '<', at
-   EBISU_LOG_DEBUG, without the credentials of a header that carries them. */
-void _khc_log_header(khc* khc, char direction, const char* line, size_t line_length);
+   EBISU_LOG_DEBUG, as it is. */
+#define _khc_log_header(khc, direction, line, line_length) \
+    _khc_log((khc), EBISU_LOG_DEBUG, "%c %.*s", (direction), (int)(line_length), (line))
 
 /* Logs each of lines, each ending with CRLF, up to an empty one or the end, as
    _khc_log_header() does. */

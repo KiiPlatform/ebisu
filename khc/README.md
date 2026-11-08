@@ -329,7 +329,7 @@ as for this onboarding, some of whose headers are left out here:
 connected to api-jp.kii.com:443
 > POST /thing-if/apps/0123abcd/onboardings HTTP/1.1
 > HOST: api-jp.kii.com
-> Authorization: Basic ***
+> Authorization: Basic MDEyM2FiY2Q6ZHVtbXk=
 > Content-Type: application/vnd.kii.OnboardingWithVendorThingIDByThing+json
 > Content-Length: 87
 > Connection: Close
@@ -339,12 +339,12 @@ connected to api-jp.kii.com:443
 < (a body of 412 bytes)
 ```
 
-The credentials of `Authorization`, `Proxy-Authorization`, `Cookie` and
-`Set-Cookie` are left out, and what a body holds is never logged: tokens,
-passwords and MQTT credentials travel in them. At `EBISU_LOG_WARNING`, a
-request that failed, with its `khc_code`, and a connection that didn't close.
-kii's and tio's setters give their khc the logger. Built with `EBISU_NO_LOG`,
-khc logs nothing.
+The headers are logged as they are, the credentials of `Authorization` and
+cookies included, so a logger that takes `EBISU_LOG_DEBUG` should write only
+where those would be safe. What a body holds is never logged. At
+`EBISU_LOG_WARNING`, a request that failed, with its `khc_code`, and a
+connection that didn't close. kii's and tio's setters give their khc the logger.
+Built with `EBISU_NO_LOG`, khc logs nothing.
 
 ## Building
 

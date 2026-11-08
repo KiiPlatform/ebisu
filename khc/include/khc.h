@@ -483,10 +483,10 @@ void khc_set_system(khc* khc, ebisu_system_t* system);
  *
  * At EBISU_LOG_DEBUG, each request as it goes: when connected, the request
  * line, each header, and how long the body is, then the response's status
- * line, each of its headers, and how long its body is. The credentials of
- * Authorization, Proxy-Authorization, Cookie and Set-Cookie are left out, and
- * what a body holds is never logged, as tokens, passwords and MQTT credentials
- * travel in them. At EBISU_LOG_WARNING, a request that fails, with its
+ * line, each of its headers, and how long its body is. The headers are logged
+ * as they are, credentials and cookies included, so a logger that takes
+ * EBISU_LOG_DEBUG should write only where they would be safe. What a body
+ * holds is never logged. At EBISU_LOG_WARNING, a request that fails, with its
  * khc_code, and a connection that didn't close. khc_init(khc*) sets none, and
  * the resets leave it. Built with EBISU_NO_LOG, khc logs nothing.
  *

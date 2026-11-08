@@ -56,7 +56,7 @@ struct Fixture {
 }
 
 #ifndef EBISU_NO_LOG
-TEST_CASE( "khc logs each request and response, without credentials or bodies" ) {
+TEST_CASE( "khc logs each request and response, headers as they are but not bodies" ) {
     Fixture f;
     f.header("Authorization: Bearer the-access-token");
     f.header("Content-Type: application/json");
@@ -76,58 +76,39 @@ TEST_CASE( "khc logs each request and response, without credentials or bodies" )
         { EBISU_LOG_DEBUG, "connected to api.kii.com:443" },
         { EBISU_LOG_DEBUG, "> POST /api/apps/app1/onboardings HTTP/1.1" },
         { EBISU_LOG_DEBUG, "> HOST: api.kii.com" },
-        { EBISU_LOG_DEBUG, "> Authorization: Bearer ***" },
+        { EBISU_LOG_DEBUG, "> Authorization: Bearer the-access-token" },
         { EBISU_LOG_DEBUG, "> Content-Type: application/json" },
-        { EBISU_LOG_DEBUG, "> Cookie: ***" },
+        { EBISU_LOG_DEBUG, "> Cookie: session=the-cookie" },
         { EBISU_LOG_DEBUG, "> Content-Length: " + std::to_string(f.body.size()) },
         { EBISU_LOG_DEBUG, "> Connection: Close" },
         { EBISU_LOG_DEBUG, "> (a body of " + std::to_string(f.body.size()) + " bytes)" },
         { EBISU_LOG_DEBUG, "< HTTP/1.1 200 OK" },
-        { EBISU_LOG_DEBUG, "< Set-Cookie: ***" },
+        { EBISU_LOG_DEBUG, "< Set-Cookie: session=the-new-cookie" },
         { EBISU_LOG_DEBUG, "< Content-Type: application/json" },
         { EBISU_LOG_DEBUG, "< Content-Length: " + std::to_string(resp_body.size()) },
         { EBISU_LOG_DEBUG, "< (a body of " + std::to_string(resp_body.size()) + " bytes)" },
     };
     CHECK( f.log.lines == expected );
-    for (const char* secret : { "the-access-token", "the-cookie", "the-password",
-            "the-new-cookie", "the-new-token" }) {
+    // Neither body.
+    for (const char* secret : { "the-password", "the-new-token" }) {
         INFO( secret );
         CHECK_FALSE( f.log.mentions(secret) );
     }
 }
 
-TEST_CASE( "khc logs credentials of any form as hidden" ) {
+TEST_CASE( "khc logs a header line as it was sent, byte for byte" ) {
     Fixture f;
     khc_set_method(&f.http, "GET");
-    f.script.responses = { khct::http_response(200, "{}") };
-
-    SECTION("in a value of one word, which may be them") {
-        f.header("Authorization: the-credentials");
-        REQUIRE( khc_perform(&f.http) == KHC_ERR_OK );
-        CHECK( f.log.has(EBISU_LOG_DEBUG, "> Authorization: ***") );
-    }
-
-    SECTION("in a header named in another case, or for a proxy") {
-        f.header("authorization: basic the-credentials");
-        f.header("PROXY-AUTHORIZATION:Basic   the-credentials");
-        f.header("set-cookie: the-credentials");
-        REQUIRE( khc_perform(&f.http) == KHC_ERR_OK );
-        CHECK( f.log.has(EBISU_LOG_DEBUG, "> authorization: basic ***") );
-        CHECK( f.log.has(EBISU_LOG_DEBUG, "> PROXY-AUTHORIZATION: Basic ***") );
-        CHECK( f.log.has(EBISU_LOG_DEBUG, "> set-cookie: ***") );
-    }
-
-    SECTION("but not in a header whose name starts like one, or is the start of one") {
-        f.header("Authorization-Hint: shown");
-        f.header("Auth: shown");
-        f.header("Cook: shown");
-        REQUIRE( khc_perform(&f.http) == KHC_ERR_OK );
-        CHECK( f.log.has(EBISU_LOG_DEBUG, "> Authorization-Hint: shown") );
-        CHECK( f.log.has(EBISU_LOG_DEBUG, "> Auth: shown") );
-        CHECK( f.log.has(EBISU_LOG_DEBUG, "> Cook: shown") );
-    }
-
-    CHECK_FALSE( f.log.mentions("the-credentials") );
+    f.script.responses = { "HTTP/1.1 200 OK\r\n"
+        "set-cookie:a=b;  Path=/\r\n"
+        "Content-Length: 0\r\n"
+        "\r\n" };
+    f.header("PROXY-AUTHORIZATION:Basic   the-credentials");
+    f.header("authorization: the-credentials");
+    REQUIRE( khc_perform(&f.http) == KHC_ERR_OK );
+    CHECK( f.log.has(EBISU_LOG_DEBUG, "> PROXY-AUTHORIZATION:Basic   the-credentials") );
+    CHECK( f.log.has(EBISU_LOG_DEBUG, "> authorization: the-credentials") );
+    CHECK( f.log.has(EBISU_LOG_DEBUG, "< set-cookie:a=b;  Path=/") );
 }
 
 TEST_CASE( "khc logs how long a body of unknown length was, in chunks both ways" ) {
