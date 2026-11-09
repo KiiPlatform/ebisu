@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['year_0',['year',['../../../core/html/structebisu__civil__time__t.html#abb4eca81fdae088b09e6ca3cdd2bef5e',1,'ebisu_civil_time_t']]]
+  ['weekday_0',['weekday',['../../../core/html/structebisu__civil__time__t.html#af9b043a87c344be4a1cb12aabb3a8f79',1,'ebisu_civil_time_t']]]
 ];

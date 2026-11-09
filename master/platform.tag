@@ -1,6 +1,101 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
 <tagfile doxygen_version="1.15.0">
   <compound kind="file">
+    <name>ebisu_dns_probe.h</name>
+    <path>dns_probe/include/</path>
+    <filename>ebisu__dns__probe_8h.html</filename>
+    <class kind="struct">ebisu_dns_server_t</class>
+    <class kind="struct">ebisu_dns_probe_socket_t</class>
+    <member kind="define">
+      <type>#define</type>
+      <name>EBISU_DNS_PROBE_DETAIL_SIZE</name>
+      <anchorfile>ebisu__dns__probe_8h.html</anchorfile>
+      <anchor>a5674603bfeb9796aa2e38d94c7af80b9</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>enum ebisu_dns_probe_result_t</type>
+      <name>ebisu_dns_probe_result_t</name>
+      <anchorfile>ebisu__dns__probe_8h.html</anchorfile>
+      <anchor>a46187ce59f6e730e69c75fca926a8464</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_dns_server_t</type>
+      <name>ebisu_dns_server_t</name>
+      <anchorfile>ebisu__dns__probe_8h.html</anchorfile>
+      <anchor>ab8200e51096daf747464484e49ab3a25</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_dns_probe_socket_t</type>
+      <name>ebisu_dns_probe_socket_t</name>
+      <anchorfile>ebisu__dns__probe_8h.html</anchorfile>
+      <anchor>a287377415d3178c2eceab38b9f6c7da6</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumeration">
+      <type></type>
+      <name>ebisu_dns_probe_result_t</name>
+      <anchorfile>ebisu__dns__probe_8h.html</anchorfile>
+      <anchor>a4acf05f6db48f7f1298d0d1a62cd13b8</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_DNS_PROBE_ANSWERED</name>
+      <anchorfile>ebisu__dns__probe_8h.html</anchorfile>
+      <anchor>a4acf05f6db48f7f1298d0d1a62cd13b8ad82ff265013af3d97d2b7f0756c4f5ae</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_DNS_PROBE_NOT_NEEDED</name>
+      <anchorfile>ebisu__dns__probe_8h.html</anchorfile>
+      <anchor>a4acf05f6db48f7f1298d0d1a62cd13b8a14b07e791558ba0f7c5d4ce737bbe3e4</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="enumvalue">
+      <name>EBISU_DNS_PROBE_SILENT</name>
+      <anchorfile>ebisu__dns__probe_8h.html</anchorfile>
+      <anchor>a4acf05f6db48f7f1298d0d1a62cd13b8a4a29066f4e9277a5d2d7a053dc8dc696</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="function">
+      <type>ebisu_dns_probe_result_t</type>
+      <name>ebisu_dns_probe</name>
+      <anchorfile>ebisu__dns__probe_8h.html</anchorfile>
+      <anchor>a1cec13c6ea37fdb1b5542fe8d4de79d1</anchor>
+      <arglist>(const char *host, uint32_t timeout_ms, char *detail, size_t detail_size)</arglist>
+    </member>
+    <member kind="function">
+      <type>ebisu_dns_probe_result_t</type>
+      <name>ebisu_dns_probe_servers</name>
+      <anchorfile>ebisu__dns__probe_8h.html</anchorfile>
+      <anchor>ad3eb9b045566c64e1bcad35e00a245db</anchor>
+      <arglist>(const char *host, const ebisu_dns_server_t *servers, size_t count, uint32_t timeout_ms, char *detail, size_t detail_size)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_dns_probe_socket_init</name>
+      <anchorfile>ebisu__dns__probe_8h.html</anchorfile>
+      <anchor>a454033f6e9af7231756955b51229306e</anchor>
+      <arglist>(ebisu_dns_probe_socket_t *sock, ebisu_socket_t *inner, uint32_t timeout_ms)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_dns_probe_socket_set_servers</name>
+      <anchorfile>ebisu__dns__probe_8h.html</anchorfile>
+      <anchor>a0bdb2f4e19c931056900ef54071f5ab3</anchor>
+      <arglist>(ebisu_dns_probe_socket_t *sock, const ebisu_dns_server_t *servers, size_t count)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_dns_probe_socket_set_logger</name>
+      <anchorfile>ebisu__dns__probe_8h.html</anchorfile>
+      <anchor>a291c2266fc60fe785a8899bc070d9989</anchor>
+      <arglist>(ebisu_dns_probe_socket_t *sock, ebisu_logger_t *logger)</arglist>
+    </member>
+  </compound>
+  <compound kind="file">
     <name>ebisu_openssl.h</name>
     <path>openssl/include/</path>
     <filename>ebisu__openssl_8h.html</filename>
@@ -163,6 +258,35 @@
       <anchorfile>ebisu__win32_8h.html</anchorfile>
       <anchor>aa77cb4447ff9ac43260fc0622ba4b6fd</anchor>
       <arglist>(ebisu_win32_lock_t *lock)</arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_dns_probe_socket_t</name>
+    <filename>structebisu__dns__probe__socket__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_socket_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__dns__probe__socket__t.html</anchorfile>
+      <anchor>a4b59711f8e98c0aaa5f53a61c485aeac</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_dns_server_t</name>
+    <filename>structebisu__dns__server__t.html</filename>
+    <member kind="variable">
+      <type>const char *</type>
+      <name>address</name>
+      <anchorfile>structebisu__dns__server__t.html</anchorfile>
+      <anchor>a5c057c86f7efef4f0ced2a837f6394ed</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>uint16_t</type>
+      <name>port</name>
+      <anchorfile>structebisu__dns__server__t.html</anchorfile>
+      <anchor>a1933ddc8051925af2248dc370517f88a</anchor>
+      <arglist></arglist>
     </member>
   </compound>
   <compound kind="struct">

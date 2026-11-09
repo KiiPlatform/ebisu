@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['second_0',['second',['../../../core/html/structebisu__civil__time__t.html#a93d3b2af6194e4a47b6ff8800d0e1f89',1,'ebisu_civil_time_t']]],
-  ['send_1',['send',['../../../core/html/structebisu__socket__ops__t.html#adb543d912cc7f9758ed4713cfeed4666',1,'ebisu_socket_ops_t']]],
-  ['size_2',['size',['../../../core/html/structebisu__strbuf__t.html#a0f33a1d98be1357c1aa03020b0d2fdad',1,'ebisu_strbuf_t']]]
+  ['recv_0',['recv',['../../../core/html/structebisu__socket__ops__t.html#a28417969117e077e747944faac38efa8',1,'ebisu_socket_ops_t']]],
+  ['recv_5ftimed_5fout_1',['recv_timed_out',['../../../core/html/structebisu__socket__ops__t.html#af8c5f0ab8132bb300aa61db25a4a8073',1,'ebisu_socket_ops_t']]],
+  ['recv_5fwait_2',['recv_wait',['../../../core/html/structebisu__socket__ops__t.html#a4b245d596fc7e2c6937a70794b6cd031',1,'ebisu_socket_ops_t']]]
 ];
