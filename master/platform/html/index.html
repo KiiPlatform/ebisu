@@ -93,7 +93,7 @@ $(function() {
 <ul>
 <li><b>To a stdio stream</b> (<span class="tt">ebisu_stdio_logger_t</span>): a line of the level and the message, as in <span class="tt">error: failed to connect to example.com.</span>, to <span class="tt">stderr</span> or a file, written with one call and flushed.</li>
 <li><b>To syslog</b> (<span class="tt">ebisu_syslog_logger_t</span>, on POSIX): <span class="tt">syslog()</span>, with a facility and the severity of the level. <span class="tt">openlog()</span> is the application's to call, if it wants to.</li>
-<li><b>To a syslog server over UDP</b> (<span class="tt">ebisu_syslog_udp_logger_t</span>): a datagram for each message, formatted as RFC 5424 says, with the time to the millisecond, the host's name, the application's and the process's identifier, and sent as RFC 5426 does, to an IPv4 or IPv6 server looked up once, when the logger is initialized. Sending never waits: what the socket can't take at once is dropped, as is what the network loses.</li>
+<li><b>To a syslog server over UDP</b> (<span class="tt">ebisu_syslog_udp_logger_t</span>): a datagram for each message, formatted as RFC 5424 says, with the time to the millisecond, the host's name, the application's and the process's identifier, and sent as RFC 5426 does, to an IPv4 or IPv6 server looked up once, when the logger is initialized. The host's name can be another than the system's, such as a device's serial number, for a server to tell devices apart that all have the same. Sending never waits: what the socket can't take at once is dropped, as is what the network loses.</li>
 </ul>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;ebisu_loggers.h&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;<a class="code" href="ebisu__openssl_8h.html">ebisu_openssl.h</a>&gt;</span></div>
@@ -107,8 +107,9 @@ $(function() {
 <div class="line"> </div>
 <div class="line">    ebisu_stdio_logger_init(&amp;to_stderr, stderr, <a class="code hl_variableRef" href="../../core/html/ebisu__log_8h.html#a42e3fb546ca916214c4afd79eddce535a2ed83f71fe32b50977e89849e8edd219">EBISU_LOG_WARNING</a>);</div>
 <div class="line">    ebisu_syslog_logger_init(&amp;to_syslog, LOG_DAEMON, <a class="code hl_variableRef" href="../../core/html/ebisu__log_8h.html#a42e3fb546ca916214c4afd79eddce535ababfb518b73f6be08d795ad16c9b36aa">EBISU_LOG_INFO</a>);</div>
-<div class="line">    <span class="comment">/* A server that can&#39;t be looked up leaves a logger that drops everything. */</span></div>
-<div class="line">    ebisu_syslog_udp_logger_init(&amp;to_server, <span class="stringliteral">&quot;logs.example.com&quot;</span>, 514, <span class="stringliteral">&quot;my-device&quot;</span>, 3,</div>
+<div class="line">    <span class="comment">/* NULL for the host&#39;s name, as gethostname() gives it. A server that can&#39;t</span></div>
+<div class="line"><span class="comment">       be looked up leaves a logger that drops everything. */</span></div>
+<div class="line">    ebisu_syslog_udp_logger_init(&amp;to_server, <span class="stringliteral">&quot;logs.example.com&quot;</span>, 514, NULL, <span class="stringliteral">&quot;my-device&quot;</span>, 3,</div>
 <div class="line">            <a class="code hl_variableRef" href="../../core/html/ebisu__log_8h.html#a42e3fb546ca916214c4afd79eddce535a72cb7f90a0acc64fa2d563cefea16a7a">EBISU_LOG_DEBUG</a>);</div>
 <div class="line">    <a class="code hl_functionRef" href="../../core/html/ebisu__log_8h.html#a4ee7810e4c2a3c1949e7fa1c969ffa4f">ebisu_log_fanout_init</a>(&amp;logger, loggers, 3);</div>
 <div class="line"> </div>
