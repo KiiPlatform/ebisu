@@ -102,6 +102,11 @@ void ebisu_syslog_logger_init(
 #define EBISU_SYSLOG_APP_NAME_MAX 48
 
 /**
+ * \brief The longest host name a syslog message carries, as RFC 5424 has it.
+ */
+#define EBISU_SYSLOG_HOSTNAME_MAX 255
+
+/**
  * \brief A logger to a syslog server, over UDP, on POSIX and on Windows.
  *
  * Each message is a datagram of its own, formatted as RFC 5424 says and sent
@@ -111,8 +116,9 @@ void ebisu_syslog_logger_init(
  *
  * PRI is the logger's facility and the severity of the message's level, as
  * ebisu_syslog_logger_t has them, TIMESTAMP the system's time of day, in UTC to
- * the millisecond, HOSTNAME the host's name, as gethostname() gives it,
- * APP-NAME the application's name, and PROCID the process's identifier. A
+ * the millisecond, HOSTNAME the name the logger is given, or the host's, as
+ * gethostname() gives it, APP-NAME the application's name, and PROCID the
+ * process's identifier. A
  * message has no identifier and no structured data. The datagram is at most
  * EBISU_LOGGER_LINE_MAX bytes. A message less important than the logger's level
  * is dropped.
@@ -135,7 +141,7 @@ typedef struct ebisu_syslog_udp_logger_t {
     int _facility; /**< \private */
     ebisu_log_level_t _level; /**< \private */
     /** \private " HOSTNAME APP-NAME PROCID - - ", with its NUL. */
-    char _fields[1 + 255 + 1 + EBISU_SYSLOG_APP_NAME_MAX + 1 + 20 + 7];
+    char _fields[1 + EBISU_SYSLOG_HOSTNAME_MAX + 1 + EBISU_SYSLOG_APP_NAME_MAX + 1 + 20 + 7];
 } ebisu_syslog_udp_logger_t;
 
 /**
@@ -149,6 +155,11 @@ typedef struct ebisu_syslog_udp_logger_t {
  * \param [out] logger The logger.
  * \param [in] host The server's host name or address, IPv4 or IPv6.
  * \param [in] port Its port, 514 for syslog's.
+ * \param [in] hostname The HOSTNAME the server is sent, which it tells hosts
+ * apart by, 1 to EBISU_SYSLOG_HOSTNAME_MAX printable ASCII characters without
+ * spaces, such as a device's serial number where every device has the same
+ * host name, or NULL for the host's name, as gethostname() gives it, or none if
+ * it gives none RFC 5424 can carry.
  * \param [in] app_name The application's name, 1 to EBISU_SYSLOG_APP_NAME_MAX
  * printable ASCII characters without spaces, or NULL for none.
  * \param [in] facility The facility, as RFC 5424 numbers them, 0 to 23: 1 is
@@ -162,6 +173,7 @@ bool ebisu_syslog_udp_logger_init(
         ebisu_syslog_udp_logger_t* logger,
         const char* host,
         uint16_t port,
+        const char* hostname,
         const char* app_name,
         int facility,
         ebisu_log_level_t level);

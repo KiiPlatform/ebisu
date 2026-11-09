@@ -79,7 +79,9 @@ give it an `ebisu_stdio_logger_t` on `stderr` at `EBISU_LOG_WARNING`.
   each message, formatted as RFC 5424 says, with the time to the millisecond,
   the host's name, the application's and the process's identifier, and sent as
   RFC 5426 does, to an IPv4 or IPv6 server looked up once, when the logger is
-  initialized. Sending never waits: what the socket can't take at once is
+  initialized. The host's name can be another than the system's, such as a
+  device's serial number, for a server to tell devices apart that all have
+  the same. Sending never waits: what the socket can't take at once is
   dropped, as is what the network loses.
 
 ```c
@@ -95,8 +97,9 @@ static ebisu_log_fanout_t logger;
 
     ebisu_stdio_logger_init(&to_stderr, stderr, EBISU_LOG_WARNING);
     ebisu_syslog_logger_init(&to_syslog, LOG_DAEMON, EBISU_LOG_INFO);
-    /* A server that can't be looked up leaves a logger that drops everything. */
-    ebisu_syslog_udp_logger_init(&to_server, "logs.example.com", 514, "my-device", 3,
+    /* NULL for the host's name, as gethostname() gives it. A server that can't
+       be looked up leaves a logger that drops everything. */
+    ebisu_syslog_udp_logger_init(&to_server, "logs.example.com", 514, NULL, "my-device", 3,
             EBISU_LOG_DEBUG);
     ebisu_log_fanout_init(&logger, loggers, 3);
 

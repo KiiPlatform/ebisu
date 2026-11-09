@@ -24,9 +24,6 @@ typedef int socket_t;
 #define BAD_SOCKET (-1)
 #endif
 
-/* The longest host name RFC 5424 has a message carry. */
-#define HOSTNAME_MAX 255
-
 /* Whether s is 1 to max characters of printable US-ASCII without spaces, as
    the fields of RFC 5424's header are. */
 static bool is_header_field(const char* s, size_t max)
@@ -139,11 +136,12 @@ bool ebisu_syslog_udp_logger_init(
         ebisu_syslog_udp_logger_t* logger,
         const char* host,
         uint16_t port,
+        const char* hostname,
         const char* app_name,
         int facility,
         ebisu_log_level_t level)
 {
-    char hostname[HOSTNAME_MAX + 1];
+    char own_hostname[EBISU_SYSLOG_HOSTNAME_MAX + 1];
     char service[6];
     unsigned long pid;
     struct addrinfo hints;
@@ -167,25 +165,33 @@ bool ebisu_syslog_udp_logger_init(
     } else if (!is_header_field(app_name, EBISU_SYSLOG_APP_NAME_MAX)) {
         return false;
     }
+    if (hostname != NULL && !is_header_field(hostname, EBISU_SYSLOG_HOSTNAME_MAX)) {
+        return false;
+    }
 
 #ifdef _WIN32
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         return false;
     }
     pid = (unsigned long)GetCurrentProcessId();
-    if (gethostname(hostname, (int)sizeof(hostname)) != 0) {
-        hostname[0] = '\0';
-    }
 #else
     pid = (unsigned long)getpid();
-    if (gethostname(hostname, sizeof(hostname)) != 0) {
-        hostname[0] = '\0';
-    }
 #endif
-    /* gethostname() needn't terminate a name it cut short. */
-    hostname[HOSTNAME_MAX] = '\0';
-    if (!is_header_field(hostname, HOSTNAME_MAX)) {
-        snprintf(hostname, sizeof(hostname), "-");
+    if (hostname == NULL) {
+#ifdef _WIN32
+        int size = (int)sizeof(own_hostname);
+#else
+        size_t size = sizeof(own_hostname);
+#endif
+        if (gethostname(own_hostname, size) != 0) {
+            own_hostname[0] = '\0';
+        }
+        /* gethostname() needn't terminate a name it cut short. */
+        own_hostname[EBISU_SYSLOG_HOSTNAME_MAX] = '\0';
+        if (!is_header_field(own_hostname, EBISU_SYSLOG_HOSTNAME_MAX)) {
+            snprintf(own_hostname, sizeof(own_hostname), "-");
+        }
+        hostname = own_hostname;
     }
     snprintf(logger->_fields, sizeof(logger->_fields), " %s %s %lu - - ", hostname,
             app_name, pid);
