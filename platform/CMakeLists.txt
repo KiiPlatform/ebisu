@@ -60,6 +60,24 @@ if(UNIX)
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
             INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
     endif()
+
+    # The DNS probe: whether the name servers of /etc/resolv.conf answer, over
+    # BSD sockets, and a socket that asks before another connects.
+    add_library(ebisu_dns_probe STATIC dns_probe/src/ebisu_dns_probe.c)
+    target_include_directories(ebisu_dns_probe
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/dns_probe/include>)
+    target_link_libraries(ebisu_dns_probe PUBLIC ebisu_core)
+    # BSD sockets, poll() and clock_gettime() are POSIX, which glibc declares
+    # under -std=c99 only with _DEFAULT_SOURCE.
+    target_compile_definitions(ebisu_dns_probe PRIVATE _DEFAULT_SOURCE)
+    ebisu_configure_target(ebisu_dns_probe)
+    install(FILES dns_probe/include/ebisu_dns_probe.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+    # ebisu::dns_probe in the CMake package.
+    set_target_properties(ebisu_dns_probe PROPERTIES EXPORT_NAME dns_probe)
+    install(TARGETS ebisu_dns_probe EXPORT ebisu-targets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
 
 # The Windows ports: the system and a lock on the Win32 API, and TLS over

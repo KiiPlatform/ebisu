@@ -52,6 +52,10 @@ endif()
 if(TARGET ebisu_schannel)
   ebisu_check_no_log(ebisu_schannel "${port_messages}")
 endif()
+# That no name server answered, and that one answers again.
+if(TARGET ebisu_dns_probe)
+  ebisu_check_no_log(ebisu_dns_probe "failed to look up |answers again")
+endif()
 # A request khc makes and what it gets, kii's MQTT events, and what tio fails
 # at.
 ebisu_check_no_log(ebisu_khc_objs "connected to |a body of | failed")

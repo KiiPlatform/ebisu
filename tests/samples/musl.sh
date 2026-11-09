@@ -42,7 +42,7 @@ cmake -S /src -B /tmp/build -DCMAKE_BUILD_TYPE=Debug -DEBISU_BUILD_SAMPLES=ON \
     || { cat /tmp/configure.log; exit 1; }
 grep -E 'Found OpenSSL|EBISU_OPENSSL_USABLE' /tmp/configure.log || true
 cmake --build /tmp/build -j"$(nproc)"
-for target in ebisu_posix ebisu_openssl ebisu_loggers exampleapp; do
+for target in ebisu_posix ebisu_openssl ebisu_loggers ebisu_dns_probe exampleapp; do
     if ! grep -q "^$target\$" <(cmake --build /tmp/build --target help | sed -n 's/^\.\.\. //p'); then
         echo "$target was not built" >&2
         exit 1

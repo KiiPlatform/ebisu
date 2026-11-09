@@ -4,7 +4,8 @@
 [core](https://github.com/KiiPlatform/ebisu/blob/master/core/README.md), its
 sockets, system and locks, implemented for a kind of system each, from what
 that system provides. It also holds loggers, for where a port's diagnostics
-and an application's own messages go.
+and an application's own messages go, and a probe of the name servers, for a
+lookup not to wait for ones that don't answer.
 
 ## Ports
 
@@ -112,3 +113,43 @@ static ebisu_log_fanout_t logger;
 The loggers' levels and the fan-out's array are set before they are used, and
 don't change: a logger of the application's that wraps one can decide at run
 time what it passes on.
+
+## DNS probe
+
+`ebisu_dns_probe.h`, library `ebisu_dns_probe`, built on POSIX, asks whether
+the name servers answer before a host is looked up. `getaddrinfo()` can't be
+given a timeout: when the servers don't answer, a lookup waits for as long as
+the C library keeps asking them again, which can be minutes, and so does the
+task that looked up.
+
+`ebisu_dns_probe()` sends one query for the host to each server of
+`/etc/resolv.conf` in turn, as the C libraries read it, or 127.0.0.1 without
+one, until one answers, giving each the time it is given.
+`ebisu_dns_probe_servers()` asks the servers it is given instead. Any answer
+counts, that the name doesn't exist too: the probe tells only whether a server
+answers. A host that needs no server, an address or localhost, needs no probe.
+
+`ebisu_dns_probe_socket_t` probes before another socket connects, and fails the
+connect if no server answers, with `EBISU_SOCK_ERROR_DNS`, rather than have
+the other socket look the host up. The rest is the other socket's.
+
+```c
+#include <ebisu_dns_probe.h>
+#include <ebisu_openssl.h>
+
+static ebisu_openssl_socket_t tls;
+static ebisu_dns_probe_socket_t sock;
+
+    ebisu_openssl_socket_init(&tls, 30, 30);
+    /* Each server has 3 seconds to answer. */
+    ebisu_dns_probe_socket_init(&sock, &tls.base, 3000);
+    ebisu_dns_probe_socket_set_logger(&sock, &logger.base);
+    kii_set_http_socket(&kii, &sock.base);
+```
+
+`ebisu_syslog_udp_logger_init()` looks its server up too, once: probing the
+server's name first tells whether that lookup would wait.
+
+The probe is for a device whose lookups all go to the name servers. A name
+that `/etc/hosts` or another source has still needs a server to answer the
+probe.

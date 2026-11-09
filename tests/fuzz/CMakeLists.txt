@@ -27,3 +27,8 @@ ebisu_add_fuzzer(fuzz_mqtt_task
 ebisu_add_fuzzer(fuzz_tio_command
     LINK ${EBISU_TIO_OBJS}
     INCLUDES ${PROJECT_SOURCE_DIR}/tio)
+if(TARGET ebisu_dns_probe)
+    ebisu_add_fuzzer(fuzz_dns_probe
+        LINK ebisu_dns_probe ebisu_core_objs
+        INCLUDES ${PROJECT_SOURCE_DIR}/platform/dns_probe/src)
+endif()
