@@ -74,8 +74,11 @@ typedef struct ebisu_dns_server_t {
  * server a line repeats takes a place, but is asked once. An IPv6 address's
  * scope is read as ebisu_dns_server_t's is. A line with another scope is asked
  * without it where the probe is built with glibc, and skipped where it isn't,
- * as glibc and musl do. Without a server, or without the file, it is
- * 127.0.0.1, as for the C libraries.
+ * as glibc and musl do. So are the lines read: with glibc, split at spaces and
+ * tabs, and whole, however long, and otherwise split at what isspace() takes,
+ * a line longer than 254 bytes skipped. An address ends at a blank: a '#' or a
+ * ';' right after it makes it one no longer. Without a server, or without the
+ * file, it is 127.0.0.1, as for the C libraries.
  *
  * A name a lookup gets from elsewhere, such as /etc/hosts, still needs the
  * servers to answer: the probe tells only whether they do.

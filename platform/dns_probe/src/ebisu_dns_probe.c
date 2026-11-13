@@ -11,6 +11,7 @@
 #include <netinet/in.h>
 #include <poll.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <time.h>
@@ -31,25 +32,22 @@
 /* The port name servers listen on. */
 #define DNS_PORT 53
 
-/* What the C library does with a nameserver line whose IPv6 scope is neither an
-   interface's number nor a link-local address's interface: glibc asks the
-   server without the scope, and musl skips the line. */
-#ifdef __GLIBC__
-#define KEEP_BAD_SCOPE true
-#else
-#define KEEP_BAD_SCOPE false
-#endif
-
 static bool is_digit(char c)
 {
     return c >= '0' && c <= '9';
 }
 
-/* What isspace() takes in the C locale, which the C libraries split
-   /etc/resolv.conf's lines at. */
+/* What isspace() takes in the C locale. */
 static bool is_space(char c)
 {
     return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\v' || c == '\f';
+}
+
+/* What splits a line of /etc/resolv.conf: a space or a tab for glibc, and what
+   isspace() takes for musl. */
+static bool is_blank(char c, bool as_glibc)
+{
+    return as_glibc ? c == ' ' || c == '\t' : is_space(c);
 }
 
 static char to_lower(char c)
@@ -336,7 +334,7 @@ static bool same_server(const _ebisu_dns_addr_t* a, const _ebisu_dns_addr_t* b)
 }
 
 size_t _ebisu_dns_probe_parse_resolv_line(const char* line, size_t length,
-        _ebisu_dns_addr_t* servers, size_t count, size_t max, bool keep_bad_scope)
+        _ebisu_dns_addr_t* servers, size_t count, size_t max, bool as_glibc)
 {
     static const char keyword[] = "nameserver";
     const size_t keyword_length = sizeof(keyword) - 1;
@@ -345,19 +343,22 @@ size_t _ebisu_dns_probe_parse_resolv_line(const char* line, size_t length,
     /* The keyword at the start of the line, and blanks after it, as the C
        libraries have it. */
     if (count >= max || length <= keyword_length ||
-            memcmp(line, keyword, keyword_length) != 0 || !is_space(line[keyword_length])) {
+            memcmp(line, keyword, keyword_length) != 0 ||
+            !is_blank(line[keyword_length], as_glibc)) {
         return count;
     }
     start = keyword_length;
-    while (start < length && is_space(line[start])) {
+    while (start < length && is_blank(line[start], as_glibc)) {
         ++start;
     }
-    /* The address ends where a blank or a comment starts. */
+    /* The address ends where a blank starts, and what is after it is left. A
+       '#' or a ';' right after it is part of it, as for the C libraries, and
+       it then isn't one. */
     end = start;
-    while (end < length && !is_space(line[end]) && line[end] != ';' && line[end] != '#') {
+    while (end < length && !is_blank(line[end], as_glibc)) {
         ++end;
     }
-    if (!_ebisu_dns_probe_parse_address(line + start, end - start, DNS_PORT, keep_bad_scope,
+    if (!_ebisu_dns_probe_parse_address(line + start, end - start, DNS_PORT, as_glibc,
                 &servers[count])) {
         return count;
     }
@@ -365,7 +366,7 @@ size_t _ebisu_dns_probe_parse_resolv_line(const char* line, size_t length,
 }
 
 size_t _ebisu_dns_probe_parse_resolv_conf(const char* text, size_t length,
-        _ebisu_dns_addr_t* servers, size_t max, bool keep_bad_scope)
+        _ebisu_dns_addr_t* servers, size_t max, bool as_glibc)
 {
     size_t count = 0;
     size_t start = 0;
@@ -375,36 +376,61 @@ size_t _ebisu_dns_probe_parse_resolv_conf(const char* text, size_t length,
             ++end;
         }
         count = _ebisu_dns_probe_parse_resolv_line(text + start, end - start, servers, count,
-                max, keep_bad_scope);
+                max, as_glibc);
         start = end + 1;
     }
     return count;
 }
 
+/* The servers of file's lines, as glibc reads them: each whole, however long,
+   up to a NUL. */
+static size_t read_whole_lines(FILE* file, _ebisu_dns_addr_t* servers, size_t max)
+{
+    size_t count = 0;
+    char* line = NULL;
+    size_t size = 0;
+    while (getline(&line, &size, file) != -1) {
+        size_t length = strlen(line);
+        if (length > 0 && line[length - 1] == '\n') {
+            --length;
+        }
+        count = _ebisu_dns_probe_parse_resolv_line(line, length, servers, count, max, true);
+    }
+    free(line);
+    return count;
+}
+
+/* The servers of file's lines, as musl reads them: in a buffer of 256 bytes,
+   skipping a line longer than 254, its newline aside, which it can't tell from
+   one cut short, the last too. */
+static size_t read_short_lines(FILE* file, _ebisu_dns_addr_t* servers, size_t max)
+{
+    size_t count = 0;
+    char line[256];
+    while (fgets(line, sizeof(line), file) != NULL) {
+        size_t length = strlen(line);
+        if (length > 0 && line[length - 1] == '\n') {
+            --length;
+        } else if (!feof(file)) {
+            int c;
+            do {
+                c = fgetc(file);
+            } while (c != EOF && c != '\n');
+            continue;
+        }
+        count = _ebisu_dns_probe_parse_resolv_line(line, length, servers, count, max, false);
+    }
+    return count;
+}
+
 size_t _ebisu_dns_probe_read_servers(const char* path, _ebisu_dns_addr_t* servers,
-        size_t max)
+        size_t max, bool as_glibc)
 {
     size_t count = 0;
     FILE* file = fopen(path, "r");
     if (file != NULL) {
-        /* Longer than any nameserver line: what is cut off a longer one is
-           skipped. */
-        char line[256];
-        while (fgets(line, sizeof(line), file) != NULL) {
-            size_t length = strlen(line);
-            bool whole = length > 0 && line[length - 1] == '\n';
-            if (whole) {
-                --length;
-            }
-            count = _ebisu_dns_probe_parse_resolv_line(line, length, servers, count, max,
-                    KEEP_BAD_SCOPE);
-            if (!whole) {
-                int c;
-                do {
-                    c = fgetc(file);
-                } while (c != EOF && c != '\n');
-            }
-        }
+        count = as_glibc ? read_whole_lines(file, servers, max)
+            : read_short_lines(file, servers, max);
         fclose(file);
     }
     if (count == 0) {
@@ -645,7 +671,8 @@ ebisu_dns_probe_result_t ebisu_dns_probe(
     _ebisu_dns_addr_t servers[_EBISU_DNS_SERVERS_MAX];
     /* The file only for a host that needs a server. */
     size_t count = _ebisu_dns_probe_needs_lookup(host)
-        ? _ebisu_dns_probe_read_servers(RESOLV_CONF, servers, _EBISU_DNS_SERVERS_MAX) : 0;
+        ? _ebisu_dns_probe_read_servers(RESOLV_CONF, servers, _EBISU_DNS_SERVERS_MAX,
+                _EBISU_DNS_READ_AS_GLIBC) : 0;
     return _ebisu_dns_probe_ask_servers(host, servers, count, timeout_ms, detail, detail_size);
 }
 

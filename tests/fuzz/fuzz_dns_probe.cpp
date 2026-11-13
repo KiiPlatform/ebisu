@@ -19,10 +19,10 @@
 
 namespace {
 
-void check_resolv_conf(const std::vector<char>& text, bool keep_bad_scope) {
+void check_resolv_conf(const std::vector<char>& text, bool as_glibc) {
     _ebisu_dns_addr_t servers[_EBISU_DNS_SERVERS_MAX];
     size_t count = _ebisu_dns_probe_parse_resolv_conf(text.empty() ? nullptr : text.data(),
-            text.size(), servers, _EBISU_DNS_SERVERS_MAX, keep_bad_scope);
+            text.size(), servers, _EBISU_DNS_SERVERS_MAX, as_glibc);
     if (count > _EBISU_DNS_SERVERS_MAX) abort();
     for (size_t i = 0; i < count; ++i) {
         if (servers[i].port != 53) abort();
