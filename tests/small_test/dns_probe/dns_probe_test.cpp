@@ -211,12 +211,12 @@ std::string text_of(const _ebisu_dns_addr_t& server) {
     return text + " " + std::to_string(server.port);
 }
 
-// The servers of a resolv.conf, as text, read as musl does or, with
-// keep_bad_scope, as glibc does.
-std::vector<std::string> servers_of(const std::string& text, bool keep_bad_scope = false) {
+// The servers of a resolv.conf, as text, read as musl does or, with as_glibc,
+// as glibc does.
+std::vector<std::string> servers_of(const std::string& text, bool as_glibc = false) {
     _ebisu_dns_addr_t servers[_EBISU_DNS_SERVERS_MAX];
     size_t count = _ebisu_dns_probe_parse_resolv_conf(text.data(), text.size(), servers,
-            _EBISU_DNS_SERVERS_MAX, keep_bad_scope);
+            _EBISU_DNS_SERVERS_MAX, as_glibc);
     std::vector<std::string> out;
     for (size_t i = 0; i < count; ++i) {
         out.push_back(text_of(servers[i]));
@@ -293,9 +293,12 @@ struct TempFile {
     }
 };
 
-std::vector<std::string> read_servers(const char* path) {
+// The servers of the file at path, read as musl does or, with as_glibc, as glibc
+// does.
+std::vector<std::string> read_servers(const char* path, bool as_glibc) {
     _ebisu_dns_addr_t servers[_EBISU_DNS_SERVERS_MAX];
-    size_t count = _ebisu_dns_probe_read_servers(path, servers, _EBISU_DNS_SERVERS_MAX);
+    size_t count = _ebisu_dns_probe_read_servers(path, servers, _EBISU_DNS_SERVERS_MAX,
+            as_glibc);
     std::vector<std::string> out;
     for (size_t i = 0; i < count; ++i) {
         out.push_back(text_of(servers[i]));
@@ -551,13 +554,54 @@ TEST_CASE("A probe asks the servers of resolv.conf, as the C libraries read it")
             "nameserver 10.0.0.3\n") ==
             std::vector<std::string>{ "10.0.0.1 53", "::1 53", "10.0.0.2 53" });
 
-    SECTION("an address ended by a blank or a comment") {
+    SECTION("an address ended by a blank, a comment after it") {
+        for (bool as_glibc : { false, true }) {
+            INFO("as_glibc " << as_glibc);
+            CHECK(servers_of(
+                    "nameserver 10.0.0.1 # the router\n"
+                    "nameserver\t10.0.0.2\t;and\n"
+                    "nameserver \t 10.0.0.3   \n", as_glibc) ==
+                    std::vector<std::string>{ "10.0.0.1 53", "10.0.0.2 53", "10.0.0.3 53" });
+        }
+    }
+    SECTION("an address a comment touches skipped, as by the C libraries") {
+        for (bool as_glibc : { false, true }) {
+            INFO("as_glibc " << as_glibc);
+            CHECK(servers_of(
+                    "nameserver 10.0.0.1#the router\n"
+                    "nameserver 10.0.0.2;and\n"
+                    "nameserver ::3#\n"
+                    "nameserver 10.0.0.4\n", as_glibc) ==
+                    std::vector<std::string>{ "10.0.0.4 53" });
+        }
+    }
+    SECTION("a line split at what isspace() takes, as musl does") {
         CHECK(servers_of(
-                "nameserver 10.0.0.1 # the router\n"
-                "nameserver   10.0.0.2;and\n"
-                "nameserver 10.0.0.3#\r\n") ==
+                "nameserver 10.0.0.1\r\n"
+                "nameserver\v10.0.0.2\n"
+                "nameserver \f10.0.0.3\v\n") ==
                 std::vector<std::string>{ "10.0.0.1 53", "10.0.0.2 53", "10.0.0.3 53" });
-        CHECK(servers_of("nameserver 10.0.0.1\r\n") == std::vector<std::string>{ "10.0.0.1 53" });
+        CHECK(servers_of("nameserver 10.0.0.4\rx\n") ==
+                std::vector<std::string>{ "10.0.0.4 53" });
+        CHECK(servers_of("nameserver ::5\r\n") == std::vector<std::string>{ "::5 53" });
+    }
+    SECTION("a line split at spaces and tabs only, as glibc does") {
+        CHECK(servers_of(
+                "nameserver 10.0.0.1\r\n"
+                "nameserver\v10.0.0.2\n"
+                "nameserver \f10.0.0.3\n"
+                "nameserver 10.0.0.4\rx\n"
+                "nameserver ::5\r\n"
+                "nameserver 10.0.0.6 \r\n", true) ==
+                std::vector<std::string>{ "10.0.0.6 53" });
+        // What glibc doesn't split at is part of the scope, which it can't
+        // read, and the server is asked without it.
+        const auto iface = an_interface();
+        REQUIRE_FALSE(iface.first.empty());
+        const std::string line = "nameserver fe80::7%" + iface.first + "\r\n";
+        CHECK(servers_of(line, true) == std::vector<std::string>{ "fe80::7 53" });
+        CHECK(servers_of(line) == std::vector<std::string>{
+                "fe80::7%" + std::to_string(iface.second) + " 53" });
     }
     SECTION("in a form inet_aton() takes, as glibc does") {
         CHECK(servers_of("nameserver 127.1\n") == std::vector<std::string>{ "127.0.0.1 53" });
@@ -614,32 +658,74 @@ TEST_CASE("A probe asks the servers of resolv.conf, as the C libraries read it")
 }
 
 TEST_CASE("A probe asks the system's servers, 127.0.0.1 if there are none") {
-    CHECK(read_servers("/nonexistent/resolv.conf") == std::vector<std::string>{ "127.0.0.1 53" });
-
     TempFile none("# no servers\nsearch example.com\n");
     REQUIRE_FALSE(none.path.empty());
-    CHECK(read_servers(none.path.c_str()) == std::vector<std::string>{ "127.0.0.1 53" });
-
-    TempFile some("# " + std::string(1000, 'x') + " nameserver 10.0.0.8\n"
-            "nameserver 10.0.0.1 " + std::string(1000, 'y') + "\n"
+    // What is after the 255 bytes a long line's first read holds isn't a line
+    // of its own, and the last line needs no newline.
+    TempFile some("#" + std::string(254, 'x') + "nameserver 10.0.0.8\n"
+            "# " + std::string(1000, 'x') + " nameserver 10.0.0.9\n"
             "nameserver ::1\n"
             "nameserver 10.0.0.2");
     REQUIRE_FALSE(some.path.empty());
-    CHECK(read_servers(some.path.c_str()) ==
-            std::vector<std::string>{ "10.0.0.1 53", "::1 53", "10.0.0.2 53" });
+    for (bool as_glibc : { false, true }) {
+        INFO("as_glibc " << as_glibc);
+        CHECK(read_servers("/nonexistent/resolv.conf", as_glibc) ==
+                std::vector<std::string>{ "127.0.0.1 53" });
+        CHECK(read_servers(none.path.c_str(), as_glibc) ==
+                std::vector<std::string>{ "127.0.0.1 53" });
+        CHECK(read_servers(some.path.c_str(), as_glibc) ==
+                std::vector<std::string>{ "::1 53", "10.0.0.2 53" });
+        // Whatever this system has, there is one.
+        CHECK_FALSE(read_servers("/etc/resolv.conf", as_glibc).empty());
+    }
 
-    // A scope read as this system's C library does.
+    // A scope read as glibc does, and as musl does.
     TempFile scoped("nameserver fe80::1%no-such-if0\nnameserver 10.0.0.1\n");
     REQUIRE_FALSE(scoped.path.empty());
-#ifdef __GLIBC__
-    CHECK(read_servers(scoped.path.c_str()) ==
+    CHECK(read_servers(scoped.path.c_str(), true) ==
             std::vector<std::string>{ "fe80::1 53", "10.0.0.1 53" });
-#else
-    CHECK(read_servers(scoped.path.c_str()) == std::vector<std::string>{ "10.0.0.1 53" });
-#endif
+    CHECK(read_servers(scoped.path.c_str(), false) ==
+            std::vector<std::string>{ "10.0.0.1 53" });
+}
 
-    // Whatever this system has, there is one.
-    CHECK_FALSE(read_servers("/etc/resolv.conf").empty());
+TEST_CASE("A probe reads a long line of resolv.conf as the C libraries do") {
+    // 254 bytes, which musl's buffer of 256 holds with a newline, and 255,
+    // which it doesn't.
+    const std::string fits = "nameserver 10.0.0.1" + std::string(235, ' ');
+    const std::string too_long = "nameserver 10.0.0.2" + std::string(236, ' ');
+    REQUIRE(fits.size() == 254);
+    REQUIRE(too_long.size() == 255);
+    // An address after more blanks than that.
+    const std::string far = "nameserver" + std::string(300, '\t') + "10.0.0.3";
+
+    TempFile lines(fits + "\n" + too_long + "\n" + far + "\n");
+    REQUIRE_FALSE(lines.path.empty());
+    // musl skips a line its buffer doesn't hold, and glibc reads it whole.
+    CHECK(read_servers(lines.path.c_str(), false) == std::vector<std::string>{ "10.0.0.1 53" });
+    CHECK(read_servers(lines.path.c_str(), true) ==
+            std::vector<std::string>{ "10.0.0.1 53", "10.0.0.2 53", "10.0.0.3 53" });
+
+    // The last line, without a newline, as any other.
+    TempFile last_fits("nameserver 10.0.0.4\n" + fits);
+    TempFile last_too_long("nameserver 10.0.0.4\n" + too_long);
+    REQUIRE_FALSE(last_fits.path.empty());
+    REQUIRE_FALSE(last_too_long.path.empty());
+    CHECK(read_servers(last_fits.path.c_str(), false) ==
+            std::vector<std::string>{ "10.0.0.4 53", "10.0.0.1 53" });
+    CHECK(read_servers(last_too_long.path.c_str(), false) ==
+            std::vector<std::string>{ "10.0.0.4 53" });
+    CHECK(read_servers(last_too_long.path.c_str(), true) ==
+            std::vector<std::string>{ "10.0.0.4 53", "10.0.0.2 53" });
+}
+
+TEST_CASE("A probe reads resolv.conf as this system's C library does") {
+    // confstr() has a glibc version only for glibc.
+    char version[64] = "";
+#ifdef _CS_GNU_LIBC_VERSION
+    confstr(_CS_GNU_LIBC_VERSION, version, sizeof(version));
+#endif
+    INFO("version " << version);
+    CHECK(_EBISU_DNS_READ_AS_GLIBC == (strncmp(version, "glibc ", 6) == 0));
 }
 
 TEST_CASE("A probe reads an IPv6 address's scope as the C libraries do") {
