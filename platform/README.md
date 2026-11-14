@@ -121,8 +121,8 @@ time what it passes on.
 `ebisu_dns_probe.h`, library `ebisu_dns_probe`, built on POSIX, asks whether
 the name servers answer before a host is looked up. `getaddrinfo()` can't be
 given a timeout: when the servers don't answer, a lookup waits for as long as
-the C library keeps asking them again, which can be minutes, and so does the
-task that looked up.
+the C library keeps asking them again, and so does the task that looked up:
+how long is below.
 
 `ebisu_dns_probe()` sends one query for the host to each server of
 `/etc/resolv.conf` in turn, as the C libraries read it, or 127.0.0.1 without
@@ -155,3 +155,33 @@ server's name first tells whether that lookup would wait.
 The probe is for a device whose lookups all go to the name servers. A name
 that `/etc/hosts` or another source has still needs a server to answer the
 probe.
+
+### How long a lookup waits
+
+When the name servers don't answer, a lookup ends when the C library gives up
+on them. The UDP logger's init waits that long, and the OpenSSL port's thread
+for a host and port lasts that long. Timed with servers that never answer, and
+`/etc/resolv.conf`'s default options:
+
+| Servers                     | glibc 2.26, 2.39 | musl 1.1.24, 1.2.5 |
+|-----------------------------|------------------|--------------------|
+| 1                           | 10 s             | 5 s                |
+| 3                           | 28 s             | 5 s                |
+| 3, and 2 `search` domains   | 56 s             | 5 s                |
+
+glibc asks the servers one after the other, and a search list makes it ask
+them again. musl asks them all at once, and gives up after its timeout.
+
+`options timeout:1 attempts:1` in `/etc/resolv.conf` makes the wait 1 second
+for one server, with either library, for every program on the system. glibc
+also reads options from the environment variable `RES_OPTIONS`, for one
+program: `RES_OPTIONS="timeout:1 attempts:1"` makes three servers' wait 3
+seconds. musl doesn't read it, and glibc ignores it for a program that runs
+with more than its user's privileges: setuid, setgid, or given file
+capabilities, such as `cap_net_bind_service`. A shorter timeout fails a lookup
+whose server takes longer to answer, as one over a slow link can.
+
+With another source after `dns` on the `hosts:` line of `/etc/nsswitch.conf`,
+as `myhostname` or `files`, glibc goes on to it when the servers don't answer.
+The lookup then fails as for a name that doesn't exist, `EAI_NONAME`, where
+without one it fails with `EAI_AGAIN`.
