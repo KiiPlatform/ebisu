@@ -86,6 +86,31 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "EBISU_BUILD_SAMPLES": "ON"
       }
+    },
+    {
+      "name": "tidy",
+      "inherits": "base",
+      "displayName": "clang-tidy",
+      "description": "The libraries and the sample built with clang, each C file checked by clang-tidy with .clang-tidy's checks, the clang static analyzer's. A finding fails the build. Needs clang and clang-tidy",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_C_CLANG_TIDY": "clang-tidy",
+        "BUILD_TESTING": "OFF",
+        "EBISU_BUILD_SAMPLES": "ON"
+      }
+    },
+    {
+      "name": "analyzer",
+      "inherits": "base",
+      "displayName": "GCC -fanalyzer",
+      "description": "The libraries and the sample built with GCC's static analyzer, which follows paths through the code for leaks, double frees, use after free, null pointers and uninitialized values. A finding fails the build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_FLAGS": "-fanalyzer",
+        "BUILD_TESTING": "OFF",
+        "EBISU_BUILD_SAMPLES": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -95,7 +120,9 @@
     { "name": "fuzz", "configurePreset": "fuzz", "jobs": 0, "targets": ["ebisu_fuzzers"] },
     { "name": "debug-m32", "configurePreset": "debug-m32", "jobs": 0 },
     { "name": "asan-m32", "configurePreset": "asan-m32", "jobs": 0 },
-    { "name": "mingw", "configurePreset": "mingw", "jobs": 0 }
+    { "name": "mingw", "configurePreset": "mingw", "jobs": 0 },
+    { "name": "tidy", "configurePreset": "tidy", "jobs": 0 },
+    { "name": "analyzer", "configurePreset": "analyzer", "jobs": 0 }
   ],
   "testPresets": [
     {

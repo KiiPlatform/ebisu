@@ -153,7 +153,13 @@ ctest --preset small --test-dir build/debug -T memcheck  # under valgrind
 ctest --preset asan-small                         # under ASan and UBSan
 cmake --preset fuzz && cmake --build --preset fuzz && tests/fuzz/run.sh 60  # fuzz each target for 60 seconds, with clang
 cmake --preset debug -DEBISU_BUILD_SAMPLES=ON     # also build tio/linux-sample
+cmake --preset tidy && cmake --build --preset tidy          # clang-tidy, with .clang-tidy's checks
+cmake --preset analyzer && cmake --build --preset analyzer  # GCC's -fanalyzer
 ```
+
+The last two build the libraries and the Linux sample, without the tests, and
+fail on what each static analyzer finds, as CI does. CI also runs CodeQL, whose
+findings are on the repository's Security tab.
 
 ### Packaging
 

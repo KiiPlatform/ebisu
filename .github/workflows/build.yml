@@ -266,6 +266,40 @@ jobs:
       - name: fuzz
         run: tests/fuzz/run.sh 60
 
+  # Two static analyzers, each following paths through the C of the libraries
+  # and the Linux sample for what no test happens to take: leaks, double frees,
+  # use after free, null pointers, uninitialized values, a stream read after it
+  # failed. What either finds fails the build. Only the build runs: the tests
+  # are left out. CodeQL, in codeql.yml, looks for security flaws.
+  analyze:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: static analysis (clang-tidy)
+            preset: tidy
+            packages: cmake clang clang-tidy libssl-dev
+          - name: static analysis (GCC -fanalyzer)
+            preset: analyzer
+            packages: gcc cmake libssl-dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Fetch tags
+        run: git fetch --unshallow --tags --force
+      - name: Setup build env
+        uses: ./.github/actions/apt-install
+        with:
+          packages: ${{ matrix.packages }}
+          options: --no-install-recommends
+      - name: configure
+        run: cmake --preset ${{ matrix.preset }}
+      - name: build
+        run: cmake --build --preset ${{ matrix.preset }}
+
   # platform's OpenSSL port supports the OpenSSL of the target devices, which
   # no runner has: 1.0.2p and 1.1.1i are the oldest of each series they ship.
   # Here each is built from its release tarball, the ports against it, and

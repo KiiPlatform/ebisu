@@ -1,0 +1,62 @@
+name: CodeQL
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+  # For the pull request's check, which names the alerts it brings.
+  pull_request:
+    branches: [master]
+  # For the queries each CodeQL release adds, on code that hasn't changed.
+  schedule:
+    - cron: '17 5 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: CodeQL (${{ matrix.language }})
+    permissions:
+      contents: read
+      security-events: write # to upload the results
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The libraries and the Linux sample, as built without the tests,
+          # whose alerts would say nothing about the libraries.
+          - language: c-cpp
+            build-mode: manual
+          # The workflows, for what an untrusted input or action could do in
+          # them.
+          - language: actions
+            build-mode: none
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Fetch tags
+        if: matrix.build-mode == 'manual'
+        run: git fetch --unshallow --tags --force
+      - name: Setup build env
+        if: matrix.build-mode == 'manual'
+        uses: ./.github/actions/apt-install
+        with:
+          packages: cmake libssl-dev
+          options: --no-install-recommends
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          queries: security-extended
+      - name: build
+        if: matrix.build-mode == 'manual'
+        run: |
+          cmake -S . -B build/codeql -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=OFF -DEBISU_BUILD_SAMPLES=ON
+          cmake --build build/codeql -j "$(nproc)"
+      - name: Analyze
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}
