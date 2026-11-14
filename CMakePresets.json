@@ -111,6 +111,20 @@
         "BUILD_TESTING": "OFF",
         "EBISU_BUILD_SAMPLES": "ON"
       }
+    },
+    {
+      "name": "coverage",
+      "inherits": "base",
+      "displayName": "Coverage",
+      "description": "Debug, the C instrumented for gcov, for gcovr to report what the tests run of the libraries, as gcovr.cfg says. The counts are updated atomically, as the tests run tasks of their own. The large tests are built for the OpenSSL port's, which need no application, with a placeholder one. Needs GCC and gcovr",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_FLAGS": "--coverage -fprofile-update=atomic",
+        "CMAKE_EXE_LINKER_FLAGS": "--coverage",
+        "CMAKE_SHARED_LINKER_FLAGS": "--coverage",
+        "EBISU_APP_ID": "unused",
+        "EBISU_DEFAULT_SITE": "unused.invalid"
+      }
     }
   ],
   "buildPresets": [
@@ -122,7 +136,8 @@
     { "name": "asan-m32", "configurePreset": "asan-m32", "jobs": 0 },
     { "name": "mingw", "configurePreset": "mingw", "jobs": 0 },
     { "name": "tidy", "configurePreset": "tidy", "jobs": 0 },
-    { "name": "analyzer", "configurePreset": "analyzer", "jobs": 0 }
+    { "name": "analyzer", "configurePreset": "analyzer", "jobs": 0 },
+    { "name": "coverage", "configurePreset": "coverage", "jobs": 0 }
   ],
   "testPresets": [
     {
@@ -217,6 +232,15 @@
       "filter": { "include": { "label": "large" } },
       "environment": { "WINEDEBUG": "-all" },
       "execution": { "repeat": { "mode": "until-pass", "count": 2 } }
+    },
+    {
+      "name": "coverage",
+      "inherits": "base",
+      "configurePreset": "coverage",
+      "displayName": "Small tests, for coverage",
+      "description": "The small tests of the coverage build, in parallel",
+      "filter": { "include": { "label": "small" } },
+      "execution": { "jobs": 0 }
     }
   ]
 }

@@ -300,6 +300,53 @@ jobs:
       - name: build
         run: cmake --build --preset ${{ matrix.preset }}
 
+  # What the small tests and the OpenSSL port's own run of the libraries' code,
+  # as gcovr.cfg says: the totals and each file's in the job's summary, and
+  # each line in the coverage-report artifact. It reports and fails on no
+  # figure. The large tests, which need the application and its secrets, are
+  # left out, and so is what only they run.
+  coverage:
+    name: coverage (small tests, OpenSSL port)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Fetch tags
+        run: git fetch --unshallow --tags --force
+      - name: Setup build env
+        uses: ./.github/actions/apt-install
+        with:
+          packages: g++ cmake libssl-dev gcovr
+      - name: Generate the locales the tests use
+        run: sudo locale-gen de_DE.UTF-8 tr_TR.UTF-8
+      - name: configure
+        run: cmake --preset coverage
+      - name: build
+        run: cmake --build --preset coverage
+      - name: test (small)
+        run: ctest --preset coverage
+      - name: test (OpenSSL port)
+        working-directory: tests/large_test/kii
+        run: ../../../build/coverage/tests/large_test/large_test_kii -# '[#openssl_socket_test]'
+      - name: report
+        run: |
+          mkdir -p build/coverage/coverage-report
+          gcovr build/coverage --print-summary --txt build/coverage/coverage.txt \
+              --html-details build/coverage/coverage-report/index.html
+          {
+            echo '## Coverage'
+            echo
+            echo '```'
+            cat build/coverage/coverage.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload the report
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: build/coverage/coverage-report
+
   # platform's OpenSSL port supports the OpenSSL of the target devices, which
   # no runner has: 1.0.2p and 1.1.1i are the oldest of each series they ship.
   # Here each is built from its release tarball, the ports against it, and
