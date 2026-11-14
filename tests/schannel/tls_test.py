@@ -10,6 +10,10 @@ Wine's root store is the CA bundle of the system it runs on, so the test makes
 a CA of its own with the openssl command and a wine prefix of its own, whose
 root store it adds the CA to. Nothing outside a temporary directory is touched.
 
+Wine looks hosts up with the C library's getaddrinfo(), so the tests of the
+connect timeout hold lookups back with lookup_gate.c, built with the system's
+C compiler and preloaded into wine. Without a compiler, they are skipped.
+
     tls_test.py <schannel_socket_test.exe> [--wine <wine>] [--workdir <directory>]
 """
 import argparse
@@ -27,6 +31,8 @@ import threading
 import time
 
 TIMEOUT = 120
+
+HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 def fnv1a(data):
@@ -328,21 +334,42 @@ class Server:
         return None
 
 
+def build_lookup_gate(d):
+    """lookup_gate.c built for the system wine runs on, or None without a C
+    compiler for it. Not $CC, which may well be mingw-w64's."""
+    cc = shutil.which('cc') or shutil.which('gcc')
+    if cc is None:
+        return None
+    gate = os.path.join(d, 'lookup_gate.so')
+    subprocess.run([cc, '-shared', '-fPIC', '-o', gate, os.path.join(HERE, 'lookup_gate.c'), '-ldl'],
+                   check=True)
+    return gate
+
+
 class Test:
-    def __init__(self, exe, wine, prefix):
+    def __init__(self, exe, wine, prefix, gate):
         self.exe = exe
         self.wine = wine
         self.env = dict(os.environ, WINEPREFIX=prefix, WINEDEBUG='-all')
+        self.gate = gate
         self.failures = 0
 
-    def run(self, port, to_recv, *steps, host='localhost', stderr=False):
+    def run(self, port, to_recv, *steps, host='localhost', stderr=False, gated=False, timeout=TIMEOUT):
         """The output of schannel_socket_test.exe, and the STEP lines in it, split
         into the step and the rest. With stderr, what it writes there is in the
-        output too."""
-        out = subprocess.run([self.wine, self.exe, host, str(port), str(to_recv)] + list(steps),
-                             env=self.env, stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT if stderr else subprocess.DEVNULL,
-                             text=True, timeout=TIMEOUT).stdout.replace('\r', '')
+        output too. With gated, its lookups go through lookup_gate.c. Killed
+        after timeout seconds, it fails the checks of the steps it didn't
+        finish, rather than stop the test."""
+        env = dict(self.env, LD_PRELOAD=self.gate) if gated else self.env
+        try:
+            out = subprocess.run([self.wine, self.exe, host, str(port), str(to_recv)] + list(steps),
+                                 env=env, stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT if stderr else subprocess.DEVNULL,
+                                 text=True, timeout=timeout).stdout
+        except subprocess.TimeoutExpired as e:
+            out = e.stdout.decode() if isinstance(e.stdout, bytes) else e.stdout or ''
+            out += '\nkilled after %d s\n' % timeout
+        out = out.replace('\r', '')
         steps = [(line.split(' ', 2) + [''])[1:3] for line in out.splitlines() if line.startswith('STEP ')]
         return out, [tuple(s) for s in steps]
 
@@ -384,6 +411,11 @@ def recv_result(steps, i):
     return code, int(length), field(rest, 'timed_out'), int(field(rest, 'ms')), rest.split('data=', 1)[1]
 
 
+def connect_ms(steps, i):
+    """How long the connect of steps[i] took, or -1."""
+    return int(field(step(steps, i)[1], 'ms') or -1)
+
+
 def wait_result(steps, i):
     """(ready, ms) of steps[i], a wait step, or a tuple that matches nothing."""
     name, rest = step(steps, i)
@@ -399,7 +431,7 @@ def run_tests(t, d):
     n = len(good.ends)
     out, steps = t.run(port, 5, 'connect', 'send:echo hello\\n', 'recv:100', 'close')
     t.check('round trip, TLS version %s' % (good.versions[-1] if good.versions else None),
-            step(steps, 0) == ('connect', 'OK') and step(steps, 1) == ('send', 'OK 11') and
+            result_code(steps, 0) == ('connect', 'OK') and step(steps, 1) == ('send', 'OK 11') and
             recv_result(steps, 2)[::4] == ('OK', 'hello\\n') and step(steps, 3) == ('close', 'OK'), out)
     t.check('close sends close_notify', good.end(n) == 'close_notify', out + '\nserver: %s' % good.end(n))
 
@@ -497,7 +529,7 @@ def run_tests(t, d):
     big = Server(os.path.join(d, 'big.pem'), os.path.join(d, 'big.key'))
     out, steps = t.run(big.port, 10, 'connect', 'send:echo hello\\n', 'recv:100', 'close')
     t.check('certificate larger than a record',
-            step(steps, 0) == ('connect', 'OK') and recv_result(steps, 2)[::4] == ('OK', 'hello\\n'), out)
+            result_code(steps, 0) == ('connect', 'OK') and recv_result(steps, 2)[::4] == ('OK', 'hello\\n'), out)
 
     for name, error in (('self', '0x800b0109'), ('wrongname', '0x800b010f'), ('expired', '0x800b0101')):
         srv = Server(os.path.join(d, name + '.pem'), os.path.join(d, name + '.key'))
@@ -540,6 +572,56 @@ def run_tests(t, d):
     t.check('host that does not resolve: last_error DNS',
             result_code(steps, 0) == ('connect', 'FAIL') and last_error(steps, 0)[0] == 'DNS', out)
 
+    # A listener with a full backlog drops the SYNs of another connection, as
+    # an address that doesn't answer does.
+    full = socket.socket()
+    full.bind(('127.0.0.1', 0))
+    full.listen(0)
+    fillers = []
+    for _ in range(2):
+        filler = socket.socket()
+        filler.setblocking(False)
+        filler.connect_ex(full.getsockname())
+        fillers.append(filler)
+    out, steps = t.run(full.getsockname()[1], 1, 'to_connect:1', 'connect', 'close', host='127.0.0.1',
+                       timeout=30)
+    t.check('address that does not answer: connect FAILs after the connect timeout, %s ms' % connect_ms(steps, 1),
+            result_code(steps, 1) == ('connect', 'FAIL') and 900 <= connect_ms(steps, 1) <= 3000 and
+            'LOG error failed to connect to 127.0.0.1' in out, out)
+    t.check('address that does not answer: last_error TIMEOUT, with WSAETIMEDOUT',
+            last_error(steps, 1) == ('TIMEOUT', '274c'), out)
+    for filler in fillers:
+        filler.close()
+    full.close()
+
+    if t.gate is None:
+        print('skipped: the lookup timeout, without a C compiler to build lookup_gate.c with', flush=True)
+        return
+    # <ms>.lookup-gate.invalid is looked up as localhost, ms milliseconds later.
+    out, steps = t.run(port, 1, 'to_connect:1', 'connect', 'pause:3000', 'host:localhost', 'connect', 'close',
+                       host='3000.lookup-gate.invalid', gated=True)
+    t.check('lookup that outlasts the connect timeout: connect FAILs after the timeout, %s ms' % connect_ms(steps, 1),
+            result_code(steps, 1) == ('connect', 'FAIL') and 900 <= connect_ms(steps, 1) <= 2500 and
+            'LOG error failed to look up 3000.lookup-gate.invalid in time.' in out, out)
+    t.check('lookup that outlasts the connect timeout: last_error TIMEOUT',
+            last_error(steps, 1) == ('TIMEOUT', '0'), out)
+    t.check('lookup given up on ends while the socket connects again',
+            result_code(steps, 4) == ('connect', 'OK') and step(steps, 5) == ('close', 'OK'), out)
+
+    # The certificate is issued for localhost, not the name connected to: the
+    # lookup ended, and the connect went on to the handshake.
+    out, steps = t.run(port, 1, 'to_connect:5', 'connect', 'close', host='1000.lookup-gate.invalid', gated=True)
+    t.check('lookup that ends within the connect timeout: connects, %s ms' % connect_ms(steps, 1),
+            last_error(steps, 1) == ('VERIFY', '800b010f') and connect_ms(steps, 1) >= 1000, out)
+
+    out, steps = t.run(port, 1, 'to_connect:0', 'connect', 'close', host='2500.lookup-gate.invalid', gated=True)
+    t.check('connect timeout 0: the lookup takes as long as it does, %s ms' % connect_ms(steps, 1),
+            last_error(steps, 1) == ('VERIFY', '800b010f') and connect_ms(steps, 1) >= 2500, out)
+
+    out, steps = t.run(port, 1, 'to_send:1', 'connect', 'close', host='3000.lookup-gate.invalid', gated=True)
+    t.check('send timeout bounds the lookup, without a connect timeout set, %s ms' % connect_ms(steps, 1),
+            last_error(steps, 1) == ('TIMEOUT', '0') and 900 <= connect_ms(steps, 1) <= 2500, out)
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
@@ -565,7 +647,7 @@ def main():
         if 'trusted' not in out:
             print('cannot add the test CA to the wine prefix: ' + out)
             return 1
-        t = Test(args.exe, args.wine, prefix)
+        t = Test(args.exe, args.wine, prefix, build_lookup_gate(tmp))
         run_tests(t, tmp)
         print('%d failed' % t.failures)
         return 1 if t.failures else 0

@@ -10,7 +10,7 @@
  *       Runs the steps in order on one ebisu_schannel_socket_t, printing a line
  *       starting with "STEP" for each, and what the socket logs on lines of
  *       their own, starting with "LOG" and the level:
- *       connect          connect
+ *       connect          connect, and how long it took
  *       send:<text>      send until all of text is sent; \n in
  *                        text stands for a newline
  *       sendbig:<n>      send until n bytes are sent
@@ -19,6 +19,10 @@
  *       drain:<n>        recv into an n-byte buffer until it fails
  *                        or returns 0 bytes, and the FNV-1a hash of it all
  *       close            close
+ *       host:<host>      connect to host from now on
+ *       to_send:<s>      init the socket again, with s for its send timeout
+ *       to_connect:<s>   set the connect timeout
+ *       pause:<ms>       sleep for ms milliseconds
  *
  *       After a connect, send or recv that fails, last_error is printed too,
  *       as error=<name> detail=<hex>.
@@ -163,14 +167,16 @@ static void print_escaped(const char* data, size_t len)
     }
 }
 
-static int run_step(ebisu_schannel_socket_t* ctx, const char* host, uint16_t port,
-        const char* step)
+static int run_step(ebisu_schannel_socket_t* ctx, const char** host, uint16_t port,
+        unsigned int to_recv, const char* step)
 {
     if (strcmp(step, "connect") == 0) {
-        ebisu_sock_code_t res = ctx->base.ops->connect(&ctx->base, host, port);
+        DWORD start = GetTickCount();
+        ebisu_sock_code_t res = ctx->base.ops->connect(&ctx->base, *host, port);
+        DWORD elapsed = GetTickCount() - start;
         printf("STEP connect %s", code_name(res));
         print_last_error(ctx, res);
-        printf("\n");
+        printf(" ms=%lu\n", (unsigned long)elapsed);
     } else if (strncmp(step, "send:", 5) == 0) {
         size_t len = 0;
         char* text = (char*)malloc(strlen(step));
@@ -257,6 +263,19 @@ static int run_step(ebisu_schannel_socket_t* ctx, const char* host, uint16_t por
     } else if (strcmp(step, "nologger") == 0) {
         ebisu_schannel_socket_set_logger(ctx, NULL);
         printf("STEP nologger OK\n");
+    } else if (strncmp(step, "host:", 5) == 0) {
+        *host = step + 5;
+        printf("STEP host OK\n");
+    } else if (strncmp(step, "to_send:", 8) == 0) {
+        ebisu_schannel_socket_init(ctx, to_recv, (unsigned int)strtoul(step + 8, NULL, 10));
+        ebisu_schannel_socket_set_logger(ctx, &stdout_logger);
+        printf("STEP to_send OK\n");
+    } else if (strncmp(step, "to_connect:", 11) == 0) {
+        ebisu_schannel_socket_set_connect_timeout(ctx, (unsigned int)strtoul(step + 11, NULL, 10));
+        printf("STEP to_connect OK\n");
+    } else if (strncmp(step, "pause:", 6) == 0) {
+        Sleep((DWORD)strtoul(step + 6, NULL, 10));
+        printf("STEP pause OK\n");
     } else {
         printf("unknown step %s\n", step);
         return 1;
@@ -282,11 +301,13 @@ int main(int argc, char** argv)
         return 1;
     }
     ebisu_schannel_socket_t ctx;
-    ebisu_schannel_socket_init(&ctx, (unsigned int)atoi(argv[3]), 10);
+    unsigned int to_recv = (unsigned int)atoi(argv[3]);
+    ebisu_schannel_socket_init(&ctx, to_recv, 10);
     ebisu_schannel_socket_set_logger(&ctx, &stdout_logger);
+    const char* host = argv[1];
     int result = 0;
     for (int i = 4; i < argc && result == 0; ++i) {
-        result = run_step(&ctx, argv[1], (uint16_t)atoi(argv[2]), argv[i]);
+        result = run_step(&ctx, &host, (uint16_t)atoi(argv[2]), to_recv, argv[i]);
     }
     WSACleanup();
     return result;
