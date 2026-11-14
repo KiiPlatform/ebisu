@@ -533,22 +533,31 @@ static int wait_for(int fd, short events, int64_t deadline_ms)
     }
 }
 
-/* A lookup on a thread of its own, which the connecting task waits for no
-   longer than its timeout. A task that gives up leaves it to finish and free
-   what they share by itself. */
-typedef struct {
-    pthread_mutex_t mutex;
+/* A lookup on a thread of its own, which a connecting task waits for no longer
+   than its timeout. A task that gives up leaves it running, to free what they
+   share by itself once done, and a task that looks the same host and port up
+   meanwhile waits for it too, rather than start another: however often
+   connects time out on a lookup that doesn't end, they leave one thread
+   waiting for it. Its addresses are shared by the tasks that waited for them,
+   and freed with the last. */
+typedef struct lookup_t {
     /* Signalled once the lookup is done. */
     pthread_cond_t done_cond;
-    /* Two while both use it, then one, then none, when it is freed. */
+    /* The thread, until it is done, and each task waiting for it or using its
+       addresses. Freed at none. */
     int users;
     char host[256];
     char service[8];
-    /* Set with the mutex held. */
     int done;
     int error;
     struct addrinfo* result;
+    /* The next of the lookups still running. */
+    struct lookup_t* next;
 } lookup_t;
+
+/* Guards every lookup_t, and the list of those still running. */
+static pthread_mutex_t lookups_mutex = PTHREAD_MUTEX_INITIALIZER;
+static lookup_t* running_lookups = NULL;
 
 /* Initializes cond to time its waits by the monotonic clock, as the deadlines
    are, so that setting the time of day doesn't move them. 0 on success. */
@@ -572,8 +581,8 @@ static int init_done_cond(pthread_cond_t* cond)
 #endif
 }
 
-/* Waits, with lookup's mutex held, until it is done or deadline_ms passes. 1
-   when it is done, 0 when the deadline passed first. */
+/* Waits, with lookups_mutex held, until lookup is done or deadline_ms passes.
+   1 when it is done, 0 when the deadline passed first. */
 static int wait_for_lookup(lookup_t* lookup, int64_t deadline_ms)
 {
     while (!lookup->done) {
@@ -585,29 +594,27 @@ static int wait_for_lookup(lookup_t* lookup, int64_t deadline_ms)
 #ifdef __APPLE__
         ts.tv_sec = (time_t)(left / 1000);
         ts.tv_nsec = (long)(left % 1000) * 1000000;
-        pthread_cond_timedwait_relative_np(&lookup->done_cond, &lookup->mutex, &ts);
+        pthread_cond_timedwait_relative_np(&lookup->done_cond, &lookups_mutex, &ts);
 #else
         ts.tv_sec = (time_t)(deadline_ms / 1000);
         ts.tv_nsec = (long)(deadline_ms % 1000) * 1000000;
-        pthread_cond_timedwait(&lookup->done_cond, &lookup->mutex, &ts);
+        pthread_cond_timedwait(&lookup->done_cond, &lookups_mutex, &ts);
 #endif
     }
     return 1;
 }
 
-static void release_lookup(lookup_t* lookup)
+/* Drops a user of lookup, with lookups_mutex held, and frees it after the
+   last. */
+static void drop_user(lookup_t* lookup)
 {
-    pthread_mutex_lock(&lookup->mutex);
-    int users = --lookup->users;
-    pthread_mutex_unlock(&lookup->mutex);
-    if (users > 0) {
+    if (--lookup->users > 0) {
         return;
     }
     if (lookup->result != NULL) {
         freeaddrinfo(lookup->result);
     }
     pthread_cond_destroy(&lookup->done_cond);
-    pthread_mutex_destroy(&lookup->mutex);
     free(lookup);
 }
 
@@ -620,21 +627,66 @@ static void* run_lookup(void* arg)
     hints.ai_socktype = SOCK_STREAM;
     struct addrinfo* result = NULL;
     int error = getaddrinfo(lookup->host, lookup->service, &hints, &result);
-    pthread_mutex_lock(&lookup->mutex);
+    pthread_mutex_lock(&lookups_mutex);
     lookup->error = error;
     lookup->result = result;
     lookup->done = 1;
-    pthread_cond_signal(&lookup->done_cond);
-    pthread_mutex_unlock(&lookup->mutex);
-    release_lookup(lookup);
+    /* Done, so that a task looking the host up from now on starts again. */
+    for (lookup_t** at = &running_lookups; *at != NULL; at = &(*at)->next) {
+        if (*at == lookup) {
+            *at = lookup->next;
+            break;
+        }
+    }
+    pthread_cond_broadcast(&lookup->done_cond);
+    drop_user(lookup);
+    pthread_mutex_unlock(&lookups_mutex);
     return NULL;
 }
 
-/* The host's addresses, NULL if it couldn't be looked up by deadline_ms, or
-   ever if that is 0. */
-static struct addrinfo* look_up(const char* host, uint16_t port, int64_t deadline_ms,
-        ebisu_logger_t* logger, ebisu_sock_error_t* out_error, long* out_detail)
+/* The running lookup of host and service, with a user more, or a new one, with
+   the thread and the task for users, or NULL if it can't be started. With
+   lookups_mutex held. */
+static lookup_t* join_lookup(const char* host, const char* service)
 {
+    lookup_t* lookup;
+    for (lookup = running_lookups; lookup != NULL; lookup = lookup->next) {
+        if (strcmp(lookup->host, host) == 0 && strcmp(lookup->service, service) == 0) {
+            ++lookup->users;
+            return lookup;
+        }
+    }
+    lookup = (lookup_t*)calloc(1, sizeof(lookup_t));
+    if (lookup == NULL) {
+        return NULL;
+    }
+    if (init_done_cond(&lookup->done_cond) != 0) {
+        free(lookup);
+        return NULL;
+    }
+    lookup->users = 2;
+    strcpy(lookup->host, host);
+    strcpy(lookup->service, service);
+    pthread_t thread;
+    if (pthread_create(&thread, NULL, run_lookup, lookup) != 0) {
+        pthread_cond_destroy(&lookup->done_cond);
+        free(lookup);
+        return NULL;
+    }
+    pthread_detach(thread);
+    lookup->next = running_lookups;
+    running_lookups = lookup;
+    return lookup;
+}
+
+/* The host's addresses, NULL if they couldn't be looked up by deadline_ms, or
+   ever if that is 0. They are freed with free_addresses(), and *out_lookup,
+   which it takes too. */
+static struct addrinfo* look_up(const char* host, uint16_t port, int64_t deadline_ms,
+        ebisu_logger_t* logger, lookup_t** out_lookup, ebisu_sock_error_t* out_error,
+        long* out_detail)
+{
+    *out_lookup = NULL;
     *out_error = EBISU_SOCK_ERROR_OTHER;
     *out_detail = 0;
     char service[8];
@@ -661,45 +713,46 @@ static struct addrinfo* look_up(const char* host, uint16_t port, int64_t deadlin
         *out_error = EBISU_SOCK_ERROR_DNS;
         return NULL;
     }
-    lookup_t* lookup = (lookup_t*)calloc(1, sizeof(lookup_t));
+    pthread_mutex_lock(&lookups_mutex);
+    lookup_t* lookup = join_lookup(host, service);
     if (lookup == NULL) {
+        pthread_mutex_unlock(&lookups_mutex);
         return NULL;
     }
-    if (init_done_cond(&lookup->done_cond) != 0) {
-        free(lookup);
-        return NULL;
-    }
-    pthread_mutex_init(&lookup->mutex, NULL);
-    lookup->users = 2;
-    strcpy(lookup->host, host);
-    strcpy(lookup->service, service);
-    pthread_t thread;
-    if (pthread_create(&thread, NULL, run_lookup, lookup) != 0) {
-        lookup->users = 1;
-        release_lookup(lookup);
-        return NULL;
-    }
-    pthread_detach(thread);
-
-    struct addrinfo* result = NULL;
-    pthread_mutex_lock(&lookup->mutex);
     int done = wait_for_lookup(lookup, deadline_ms);
     int error = lookup->error;
-    if (done && error == 0) {
-        result = lookup->result;
-        lookup->result = NULL;
+    if (!done || error != 0) {
+        drop_user(lookup);
+        lookup = NULL;
     }
-    pthread_mutex_unlock(&lookup->mutex);
+    pthread_mutex_unlock(&lookups_mutex);
     if (!done) {
         log_to(logger, EBISU_LOG_ERROR, "failed to look up %s in time.", host);
         *out_error = EBISU_SOCK_ERROR_TIMEOUT;
-    } else if (error != 0) {
+        return NULL;
+    }
+    if (error != 0) {
         log_to(logger, EBISU_LOG_ERROR, "failed to look up %s: %s", host, gai_strerror(error));
         *out_error = EBISU_SOCK_ERROR_DNS;
         *out_detail = error;
+        return NULL;
     }
-    release_lookup(lookup);
-    return result;
+    /* Read, not changed, by the tasks that share them, until the last frees
+       them. */
+    *out_lookup = lookup;
+    return lookup->result;
+}
+
+/* Frees addresses look_up() gave, with the lookup it gave them from. */
+static void free_addresses(struct addrinfo* addrs, lookup_t* lookup)
+{
+    if (lookup == NULL) {
+        freeaddrinfo(addrs);
+        return;
+    }
+    pthread_mutex_lock(&lookups_mutex);
+    drop_user(lookup);
+    pthread_mutex_unlock(&lookups_mutex);
 }
 
 /* Connects sock to addr by deadline_ms, or whenever TCP gives up if that is
@@ -750,7 +803,9 @@ static int connect_to_host(const char* host, uint16_t port, unsigned int timeout
 {
     int64_t timeout_ms = (int64_t)timeout_s * 1000;
     int64_t deadline_ms = timeout_ms > 0 ? monotonic_ms() + timeout_ms : 0;
-    struct addrinfo* addrs = look_up(host, port, deadline_ms, logger, out_error, out_detail);
+    lookup_t* lookup = NULL;
+    struct addrinfo* addrs = look_up(host, port, deadline_ms, logger, &lookup, out_error,
+            out_detail);
     if (addrs == NULL) {
         return -1;
     }
@@ -777,7 +832,7 @@ static int connect_to_host(const char* host, uint16_t port, unsigned int timeout
         close(sock);
         sock = -1;
     }
-    freeaddrinfo(addrs);
+    free_addresses(addrs, lookup);
     if (sock < 0) {
         log_to(logger, EBISU_LOG_ERROR, "failed to connect to %s.", host);
     }

@@ -146,6 +146,13 @@ void ebisu_openssl_socket_init(
  * the lookup, and each attempt to connect to an address, but not the TLS
  * handshake, which the receive and send timeouts bound.
  *
+ * getaddrinfo() can't be given a timeout: a lookup the timeout cuts short goes
+ * on, on a thread of its own, for as long as the system's resolver takes. A
+ * connect to the same host and port meanwhile, of any socket, waits for that
+ * lookup, within its own timeout, rather than start another: lookups that
+ * don't end leave a thread for each host and port, however often connects
+ * time out on them.
+ *
  * \param [out] sock The socket.
  * \param [in] seconds 0 for no bound: the lookup takes as long as the system's
  * resolver does, and an attempt as long as the system's TCP does.

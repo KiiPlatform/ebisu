@@ -23,7 +23,9 @@ where what it needs is found, which links `libebisu_core`. Link one with
   encryption, Mozilla's intermediate list, and checking the
   server's certificate at an `ebisu_clock_t`'s time. It looks the host up with
   `getaddrinfo()` and tries each of its addresses, IPv6 and IPv4, both within
-  its connect timeout. Its connections share one
+  its connect timeout. A lookup the timeout cuts short goes on on a thread of
+  its own, which later connects to the same host and port wait for rather than
+  look it up again. Its connections share one
   `SSL_CTX`: the system's CA certificates, or those of an
   `ebisu_openssl_tls_t` set up with a CA file or directory, for a device
   without the system's. The `SSL_CTX` keeps the TLS sessions of the last

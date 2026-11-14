@@ -45,8 +45,10 @@ else()
     set(large_test_common ${CMAKE_CURRENT_SOURCE_DIR}/secure_socket_impl.cpp)
     set(large_test_socket_libs ebisu_openssl)
     set(large_test_socket_includes ${PROJECT_SOURCE_DIR}/kii/include)
-    # Needs no backend, only OpenSSL, which the small suites don't link.
+    # Needs no backend, only OpenSSL, which the small suites don't link, and
+    # dlsym(), with which its getaddrinfo() calls the C library's.
     set(large_test_kii_openssl kii/openssl_socket_test.cpp)
+    set(large_test_kii_openssl_libs ${CMAKE_DL_LIBS})
 endif()
 
 ebisu_add_test_suite(large_test_khc
@@ -81,7 +83,8 @@ ebisu_add_test_suite(large_test_kii
         kii/ti_test.cpp
         ${large_test_kii_openssl}
         ${large_test_common}
-    LINK ${EBISU_KII_OBJS} ${large_test_socket_libs} Threads::Threads
+    LINK ${EBISU_KII_OBJS} ${large_test_socket_libs} ${large_test_kii_openssl_libs}
+        Threads::Threads
     INCLUDES
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/kii

@@ -25,6 +25,9 @@
 #include <vector>
 #include <netdb.h>
 #include <stdarg.h>
+#include <dlfcn.h>
+#include <pthread.h>
+#include <atomic>
 
 namespace {
 
@@ -1067,3 +1070,170 @@ TEST_CASE( "The OpenSSL socket built without logging logs nothing, to its logger
     }
 }
 #endif
+
+namespace {
+
+// The lookups the C library's getaddrinfo() is let do for hosts in this
+// domain, which a test holds back while it keeps the gate closed, as a lookup
+// waits on name servers that don't answer.
+const char GATED_DOMAIN[] = ".lookup-gate.invalid";
+
+pthread_mutex_t gate_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t gate_cond = PTHREAD_COND_INITIALIZER;
+bool gate_closed = false;
+// Lookups of the domain started, and those held back still.
+int gated_lookups = 0;
+int gated_waiting = 0;
+
+bool is_gated(const char* host)
+{
+    size_t length = strlen(host);
+    size_t domain = sizeof(GATED_DOMAIN) - 1;
+    return length > domain && strcmp(host + length - domain, GATED_DOMAIN) == 0;
+}
+
+typedef int (*getaddrinfo_t)(const char*, const char*, const struct addrinfo*,
+        struct addrinfo**);
+
+getaddrinfo_t libc_getaddrinfo()
+{
+    static getaddrinfo_t libc = (getaddrinfo_t)dlsym(RTLD_NEXT, "getaddrinfo");
+    return libc;
+}
+
+// Closes the gate while it lives, and opens it again once the lookups it held
+// back have gone through.
+struct ClosedGate {
+    ClosedGate() { close(); }
+
+    ~ClosedGate() { open(); }
+
+    void close()
+    {
+        pthread_mutex_lock(&gate_mutex);
+        gate_closed = true;
+        pthread_mutex_unlock(&gate_mutex);
+    }
+
+    void open()
+    {
+        pthread_mutex_lock(&gate_mutex);
+        gate_closed = false;
+        pthread_cond_broadcast(&gate_cond);
+        while (gated_waiting > 0) {
+            pthread_cond_wait(&gate_cond, &gate_mutex);
+        }
+        pthread_mutex_unlock(&gate_mutex);
+    }
+
+    int lookups()
+    {
+        pthread_mutex_lock(&gate_mutex);
+        int count = gated_lookups;
+        pthread_mutex_unlock(&gate_mutex);
+        return count;
+    }
+};
+
+ebisu_sock_code_t connect_within(ebisu_openssl_socket_t* sock, unsigned int timeout,
+        const char* host, uint16_t port)
+{
+    ebisu_openssl_socket_init(sock, 0, 0);
+    ebisu_openssl_socket_set_connect_timeout(sock, timeout);
+    return sock->base.ops->connect(&sock->base, host, port);
+}
+
+}
+
+// The one the port calls, rather than the C library's, which it hands what the
+// gate doesn't hold back, and the lookups it held back once it opens, for the
+// loopback.
+extern "C" int getaddrinfo(const char* host, const char* service,
+        const struct addrinfo* hints, struct addrinfo** out)
+{
+    if (host == nullptr || !is_gated(host)) {
+        return libc_getaddrinfo()(host, service, hints, out);
+    }
+    pthread_mutex_lock(&gate_mutex);
+    ++gated_lookups;
+    ++gated_waiting;
+    while (gate_closed) {
+        pthread_cond_wait(&gate_cond, &gate_mutex);
+    }
+    int ret = libc_getaddrinfo()("127.0.0.1", service, hints, out);
+    --gated_waiting;
+    pthread_cond_broadcast(&gate_cond);
+    pthread_mutex_unlock(&gate_mutex);
+    return ret;
+}
+
+// A connect that gave up on a lookup left it running on its thread, as
+// getaddrinfo() can't be stopped, and the next connect started another: where
+// the name servers didn't answer, each connect left a thread waiting.
+TEST_CASE( "The OpenSSL socket doesn't look a host up again while a lookup of it runs" ) {
+    const uint16_t port = closed_port();
+    ClosedGate gate;
+    const int before = gate.lookups();
+    ebisu_openssl_socket_t sock;
+    long detail = 0;
+    for (int i = 0; i < 3; ++i) {
+        INFO( "connect " << i );
+        CHECK( connect_within(&sock, 1, "a.lookup-gate.invalid", port) == EBISU_SOCK_FAIL );
+        CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_TIMEOUT );
+    }
+    CHECK( gate.lookups() - before == 1 );
+
+    // Another host, or another port, is looked up by itself.
+    CHECK( connect_within(&sock, 1, "b.lookup-gate.invalid", port) == EBISU_SOCK_FAIL );
+    CHECK( connect_within(&sock, 1, "a.lookup-gate.invalid", (uint16_t)(port ^ 1)) ==
+            EBISU_SOCK_FAIL );
+    CHECK( gate.lookups() - before == 3 );
+
+    // Let through, the lookup gives the loopback, where nothing listens.
+    gate.open();
+    CHECK( connect_within(&sock, 5, "a.lookup-gate.invalid", port) == EBISU_SOCK_FAIL );
+    CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_CONNECT );
+
+    // Done, a lookup isn't waited for again: the next is one of its own.
+    gate.close();
+    const int done = gate.lookups();
+    CHECK( connect_within(&sock, 1, "a.lookup-gate.invalid", port) == EBISU_SOCK_FAIL );
+    CHECK( last_error(&sock, &detail) == EBISU_SOCK_ERROR_TIMEOUT );
+    CHECK( gate.lookups() - done == 1 );
+}
+
+TEST_CASE( "OpenSSL sockets waiting on a running lookup take its addresses when it ends" ) {
+    const uint16_t port = closed_port();
+    ClosedGate gate;
+    const int before = gate.lookups();
+    ebisu_openssl_socket_t first;
+    CHECK( connect_within(&first, 1, "c.lookup-gate.invalid", port) == EBISU_SOCK_FAIL );
+
+    // Sockets of other tasks, which wait for the lookup the first gave up on.
+    const int count = 4;
+    std::vector<ebisu_sock_code_t> codes(count, EBISU_SOCK_OK);
+    std::vector<ebisu_sock_error_t> errors(count, EBISU_SOCK_ERROR_NONE);
+    std::vector<std::thread> tasks;
+    auto start = std::chrono::steady_clock::now();
+    for (int i = 0; i < count; ++i) {
+        tasks.emplace_back([&codes, &errors, i, port] {
+            ebisu_openssl_socket_t sock;
+            codes[i] = connect_within(&sock, 10, "c.lookup-gate.invalid", port);
+            long detail = 0;
+            errors[i] = sock.base.ops->last_error(&sock.base, &detail);
+        });
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    CHECK( gate.lookups() - before == 1 );
+    gate.open();
+    for (auto& task : tasks) {
+        task.join();
+    }
+    auto elapsed = std::chrono::steady_clock::now() - start;
+    for (int i = 0; i < count; ++i) {
+        INFO( "task " << i );
+        CHECK( codes[i] == EBISU_SOCK_FAIL );
+        CHECK( errors[i] == EBISU_SOCK_ERROR_CONNECT );
+    }
+    CHECK( std::chrono::duration_cast<std::chrono::seconds>(elapsed).count() < 8 );
+}
