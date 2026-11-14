@@ -161,6 +161,16 @@ The last two build the libraries and the Linux sample, without the tests, and
 fail on what each static analyzer finds, as CI does. CI also runs CodeQL, whose
 findings are on the repository's Security tab.
 
+What the tests run of the libraries' code, with GCC and gcovr, as CI reports
+it: the small tests, and the OpenSSL port's own, which need no application.
+
+```
+cmake --preset coverage && cmake --build --preset coverage
+ctest --preset coverage
+(cd tests/large_test/kii && ../../../build/coverage/tests/large_test/large_test_kii -# '[#openssl_socket_test]')
+gcovr build/coverage --html-details build/coverage/coverage-report/index.html
+```
+
 ### Packaging
 
 The libraries are built as strict ISO C99, `-std=c99 -pedantic-errors`, and
