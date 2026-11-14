@@ -37,19 +37,22 @@ extern "C" {
  * recv_timed_out tells from a lost connection, and leaves the connection as it
  * was. One serves one connection at a time, and is used again for the next once
  * closed. Why an operation failed, its last_error says: a host that didn't
- * resolve, with getaddrinfo()'s error, an address that refused, with the
+ * resolve, with GetAddrInfoExW()'s error, an address that refused, with the
  * Winsock error, a certificate refused, with the CERT_E_* or TRUST_E_* code, a
  * TLS failure, with the SSPI status, a timeout, or a peer that closed or reset
  * the connection, with the Winsock error if there is one. It also goes to the
  * logger set by ebisu_schannel_socket_set_logger(), if any.
  * Winsock has to have been started, with WSAStartup(), before the first
- * connection.
+ * connection. Needs Windows 8 or later, for a lookup that can be cancelled.
  */
 typedef struct ebisu_schannel_socket_t {
     ebisu_socket_t base; /**< \brief What ebisu is given. */
     /* Receive and send timeouts in seconds; 0 waits for ever. */
     unsigned int to_recv; /**< \private */
     unsigned int to_send; /**< \private */
+    /* Bounds looking up the host, and each attempt to connect to an address,
+       in seconds; 0 waits for ever. */
+    unsigned int to_connect; /**< \private */
     /* The time the server's certificate is checked at, or NULL for the
        system's. See ebisu_clock_t. */
     ebisu_clock_t* clock; /**< \private */
@@ -98,12 +101,31 @@ typedef struct ebisu_schannel_socket_t {
  * \param [out] sock The socket.
  * \param [in] to_recv Receive timeout in seconds, 0 for none. For MQTT, the
  * one given to kii_set_mqtt_to_sock_recv().
- * \param [in] to_send Send timeout in seconds, 0 for none.
+ * \param [in] to_send Send timeout in seconds, 0 for none. It bounds looking
+ * up the host and each attempt to connect too, unless
+ * ebisu_schannel_socket_set_connect_timeout() sets another.
  */
 void ebisu_schannel_socket_init(
         ebisu_schannel_socket_t* sock,
         unsigned int to_recv,
         unsigned int to_send);
+
+/**
+ * \brief Sets how long connecting may take.
+ *
+ * The host is looked up with GetAddrInfoExW(), and its addresses tried in the
+ * order it gives them, IPv6 and IPv4, until one connects. The timeout bounds
+ * the lookup, and each attempt to connect to an address, but not the TLS
+ * handshake, which the receive and send timeouts bound. A lookup the timeout
+ * cuts short is cancelled, with GetAddrInfoExCancel(), and the connect fails
+ * with EBISU_SOCK_ERROR_TIMEOUT.
+ *
+ * \param [out] sock The socket.
+ * \param [in] seconds 0 for no bound: the lookup takes as long as the system's
+ * resolver does, and an attempt as long as the system's TCP does.
+ */
+void ebisu_schannel_socket_set_connect_timeout(ebisu_schannel_socket_t* sock,
+        unsigned int seconds);
 
 /**
  * \brief Sets the clock the server's certificate is checked at the time of.

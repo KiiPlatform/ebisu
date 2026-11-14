@@ -43,14 +43,16 @@ where what it needs is found, which links `libebisu_core`. Link one with
   `ebisu_schannel_socket_t`, TLS over Winsock 2 with Schannel, through SSPI,
   checking the server's certificate itself with crypt32, at an
   `ebisu_clock_t`'s time: a chain to a root in the Windows root store, valid
-  for server authentication, issued for the host. It drives Schannel itself,
-  keeping what it has received but not yet returned, and waits for a receive
-  with `select()`, so that a timeout leaves the connection usable, as its
-  `recv_wait` waits too. Its
-  `last_error` says why an operation failed, which also goes to the logger set
-  with `ebisu_schannel_socket_set_logger()`, if any, unless it is built with
-  `-DEBISU_LOG=OFF`. Needs only what
-  Windows provides, `ws2_32`, `secur32` and `crypt32`, which it links.
+  for server authentication, issued for the host. It looks the host up with
+  `GetAddrInfoExW()` and tries each of its addresses, IPv6 and IPv4, both
+  within its connect timeout, and cancels a lookup the timeout cuts short. It
+  drives Schannel itself, keeping what it has received but not yet returned,
+  and waits for a receive with `select()`, so that a timeout leaves the
+  connection usable, as its `recv_wait` waits too. Its `last_error` says why
+  an operation failed, which also goes to the logger set with
+  `ebisu_schannel_socket_set_logger()`, if any, unless it is built with
+  `-DEBISU_LOG=OFF`. Needs Windows 8 or later, and only what it provides,
+  `ws2_32`, `secur32` and `crypt32`, which it links.
 
 The Linux sample uses the POSIX and OpenSSL ports, and the Windows sample the
 Win32 and Schannel ones.
@@ -185,3 +187,8 @@ With another source after `dns` on the `hosts:` line of `/etc/nsswitch.conf`,
 as `myhostname` or `files`, glibc goes on to it when the servers don't answer.
 The lookup then fails as for a name that doesn't exist, `EAI_NONAME`, where
 without one it fails with `EAI_AGAIN`.
+
+On Windows Server 2025, a lookup whose one server never answered ended after
+12 seconds, and failed as for a name that doesn't exist, `WSAHOST_NOT_FOUND`.
+The Schannel port's connect timeout cuts it short: the lookup is cancelled,
+and the connect fails with `EBISU_SOCK_ERROR_TIMEOUT`.

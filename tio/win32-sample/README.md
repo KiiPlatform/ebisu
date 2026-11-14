@@ -61,6 +61,9 @@ time.
 not yet returned between calls: TLS records come apart and together in any
 pieces TCP likes, and the MQTT task reads one byte at a time.
 
+- A connect looks the host up with `GetAddrInfoExW()` and tries its addresses
+  in turn. `TO_SEND_SEC`, the send timeout, bounds the lookup and each attempt,
+  and a lookup it cuts short is cancelled.
 - The handshake sends the host name as SNI. The protocol versions are those
   the system enables; with `SCHANNEL_CRED` that is TLS 1.2 at most.
 - The server certificate must chain to a root in the Windows root store, be
@@ -97,3 +100,8 @@ TLS servers on 127.0.0.1 whose ciphertext the script controls, covering large
 and fragmented records, timeouts, resets, close_notify and refused
 certificates. It needs Python 3.9 or later and the `openssl` command, makes a
 wine prefix of its own under the build directory and removes it afterwards.
+For the connect timeout, it holds lookups back with
+[`lookup_gate.c`](../../tests/schannel/lookup_gate.c), which it builds with
+the system's C compiler and preloads into wine, whose Winsock looks hosts up
+with the C library's `getaddrinfo()`; without a compiler, those tests are
+skipped.
