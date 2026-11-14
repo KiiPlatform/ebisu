@@ -220,6 +220,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>ebisu_schannel_socket_set_connect_timeout</name>
+      <anchorfile>ebisu__schannel_8h.html</anchorfile>
+      <anchor>a8046578a6e5f4aece44baa818cfa4ba4</anchor>
+      <arglist>(ebisu_schannel_socket_t *sock, unsigned int seconds)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>ebisu_schannel_socket_set_clock</name>
       <anchorfile>ebisu__schannel_8h.html</anchorfile>
       <anchor>abc316edc7cfd99ae6f132654e184b24e</anchor>
