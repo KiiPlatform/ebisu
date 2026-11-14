@@ -117,7 +117,9 @@ int _mqtt_encode(char* buf, unsigned long remaining_length)
 int _mqtt_decode(char* buf, unsigned long* remaining_length)
 {
     int i = 0;
-    int multiplier = 1;
+    /* Of the type it adds to: 127 times 128 cubed fits in a 32-bit int, but
+       not in a 16-bit one. */
+    unsigned long multiplier = 1;
     *remaining_length = 0;
     do
     {

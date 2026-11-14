@@ -1,0 +1,22 @@
+# The checks of the tidy preset, which CI builds: the clang static analyzer's,
+# which follow paths through the code for null pointers, leaks, use after
+# free, uninitialized values, a stream used after it failed, and the like.
+# Each finding is an error.
+#
+# Left out, as they flag code that is as meant:
+# - insecureAPI.strcpy, which flags every strcpy(), the length checked or not;
+# - insecureAPI.DeprecatedOrUnsafeBufferHandling, which flags memcpy(),
+#   snprintf() and the like for not being C11 Annex K's _s functions, which
+#   few C libraries have;
+# - optin.performance.Padding, which would order the fields of public structs
+#   by size, and their order is part of the ABI.
+Checks: >
+  -*,
+  clang-analyzer-*,
+  -clang-analyzer-security.insecureAPI.strcpy,
+  -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
+  -clang-analyzer-optin.performance.Padding
+WarningsAsErrors: '*'
+# ebisu's own headers too, for their inline functions. System headers are
+# never checked.
+HeaderFilterRegex: '.*'
