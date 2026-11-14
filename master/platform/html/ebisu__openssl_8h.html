@@ -251,6 +251,7 @@ Functions</h2></td></tr>
 
 <p>Sets how long connecting may take. </p>
 <p>The host is looked up with getaddrinfo(), and its addresses tried in the order it gives them, IPv6 and IPv4, until one connects. The timeout bounds the lookup, and each attempt to connect to an address, but not the TLS handshake, which the receive and send timeouts bound.</p>
+<p>getaddrinfo() can't be given a timeout: a lookup the timeout cuts short goes on, on a thread of its own, for as long as the system's resolver takes. A connect to the same host and port meanwhile, of any socket, waits for that lookup, within its own timeout, rather than start another: lookups that don't end leave a thread for each host and port, however often connects time out on them.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[out]</td><td class="paramname">sock</td><td>The socket. </td></tr>
