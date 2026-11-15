@@ -83,6 +83,17 @@ TEST_CASE("jkii reads a double as strtod() does, or within a few units in the la
             check_as_strtod(s, beyond_ulps);
         }
     }
+    SECTION("below the smallest normal double, down to the smallest double") {
+        // strtod() may say ERANGE for them, but they're doubles all the same.
+        for (const char* s : { "2.225073858507201e-308", "1e-310", "-1e-310", "1.5e-323",
+                "4.9406564584124654e-324", "5e-324", "-5e-324" }) {
+            check_as_strtod(s, beyond_ulps);
+        }
+        double d = 0;
+        REQUIRE(read_double("1e-310", &d) == JKII_PRIMITIVE_ERR_OK);
+        CHECK(d > 0);
+        CHECK(d < DBL_MIN);
+    }
     SECTION("the largest double") {
         double d = 0;
         jkii_primitive_err_t res = read_double("1.7976931348623157e308", &d);
@@ -118,6 +129,7 @@ TEST_CASE("jkii says a double too large or too small for one is so") {
     CHECK(read_double("-1e309", &d) == JKII_PRIMITIVE_ERR_OVERFLOW);
     CHECK(read_double("1.5e100000", &d) == JKII_PRIMITIVE_ERR_OVERFLOW);
     CHECK(read_double("1e-400", &d) == JKII_PRIMITIVE_ERR_UNDERFLOW);
+    CHECK(read_double("2e-324", &d) == JKII_PRIMITIVE_ERR_UNDERFLOW);
     CHECK(read_double("-1e-99999", &d) == JKII_PRIMITIVE_ERR_UNDERFLOW);
     CHECK(read_double("0.5e", &d) == JKII_PRIMITIVE_ERR_INVALID);
     CHECK(read_double("0.5e+", &d) == JKII_PRIMITIVE_ERR_INVALID);
@@ -149,6 +161,19 @@ TEST_CASE("jkii reads random doubles as strtod() does, or within a few units") {
             if (with_point.size() < 40) {
                 check_as_strtod(with_point, exact_ulps);
             }
+        }
+    }
+    SECTION("any double below the smallest normal one") {
+        std::uniform_real_distribution<double> unit(1.0, 10.0);
+        std::uniform_int_distribution<int> power(-323, -309);
+        std::uniform_int_distribution<int> precision(1, 17);
+        for (int n = 0; n < 2000; ++n) {
+            double v = unit(rng) * pow(10.0, power(rng));
+            if (v == 0 || v >= DBL_MIN) {
+                continue;
+            }
+            snprintf(buff, sizeof(buff), "%.*e", precision(rng) - 1, n % 2 ? -v : v);
+            check_as_strtod(buff, beyond_ulps);
         }
     }
     SECTION("any double, written with 17 digits, or fewer") {
