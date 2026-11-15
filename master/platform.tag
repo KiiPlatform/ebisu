@@ -138,6 +138,69 @@
     </member>
   </compound>
   <compound kind="file">
+    <name>ebisu_mbedtls.h</name>
+    <path>mbedtls/include/</path>
+    <filename>ebisu__mbedtls_8h.html</filename>
+    <class kind="struct">ebisu_mbedtls_tls_t</class>
+    <class kind="struct">ebisu_mbedtls_socket_t</class>
+    <member kind="typedef">
+      <type>struct ebisu_mbedtls_tls_t</type>
+      <name>ebisu_mbedtls_tls_t</name>
+      <anchorfile>ebisu__mbedtls_8h.html</anchorfile>
+      <anchor>aae2211f4880481ca89ebeda2c81f08f0</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_mbedtls_socket_t</type>
+      <name>ebisu_mbedtls_socket_t</name>
+      <anchorfile>ebisu__mbedtls_8h.html</anchorfile>
+      <anchor>ad23c56f0dfcb307ef1af753279523f9e</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>ebisu_mbedtls_tls_init</name>
+      <anchorfile>ebisu__mbedtls_8h.html</anchorfile>
+      <anchor>af86d53b56ce8eaf362a6f4617b495920</anchor>
+      <arglist>(ebisu_mbedtls_tls_t *tls, const unsigned char *ca, size_t ca_size)</arglist>
+    </member>
+    <member kind="function">
+      <type>mbedtls_ssl_config *</type>
+      <name>ebisu_mbedtls_tls_config</name>
+      <anchorfile>ebisu__mbedtls_8h.html</anchorfile>
+      <anchor>a9bc64be69d423f56fc0fef57934cba8e</anchor>
+      <arglist>(ebisu_mbedtls_tls_t *tls)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_mbedtls_tls_free</name>
+      <anchorfile>ebisu__mbedtls_8h.html</anchorfile>
+      <anchor>ab86dbd0f0ac75ceb587fd8b19128aaa0</anchor>
+      <arglist>(ebisu_mbedtls_tls_t *tls)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_mbedtls_socket_init</name>
+      <anchorfile>ebisu__mbedtls_8h.html</anchorfile>
+      <anchor>a01d7f2e770693bad198923c60da99a51</anchor>
+      <arglist>(ebisu_mbedtls_socket_t *sock, ebisu_socket_t *transport, ebisu_mbedtls_tls_t *tls)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_mbedtls_socket_set_clock</name>
+      <anchorfile>ebisu__mbedtls_8h.html</anchorfile>
+      <anchor>a5a585d6e421c64c646b6ffb83fa5b2bc</anchor>
+      <arglist>(ebisu_mbedtls_socket_t *sock, ebisu_clock_t *clock)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_mbedtls_socket_set_logger</name>
+      <anchorfile>ebisu__mbedtls_8h.html</anchorfile>
+      <anchor>a96077bf9eb7956f90a0a92643fe6c2c3</anchor>
+      <arglist>(ebisu_mbedtls_socket_t *sock, ebisu_logger_t *logger)</arglist>
+    </member>
+  </compound>
+  <compound kind="file">
     <name>ebisu_openssl.h</name>
     <path>openssl/include/</path>
     <filename>ebisu__openssl_8h.html</filename>
@@ -431,6 +494,21 @@
       <anchor>a549e7f1155eb676165b93500e2c66397</anchor>
       <arglist></arglist>
     </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_mbedtls_socket_t</name>
+    <filename>structebisu__mbedtls__socket__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_socket_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__mbedtls__socket__t.html</anchorfile>
+      <anchor>a6cbf4a51e723d4380e00db08a9572a14</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_mbedtls_tls_t</name>
+    <filename>structebisu__mbedtls__tls__t.html</filename>
   </compound>
   <compound kind="struct">
     <name>ebisu_openssl_socket_t</name>
