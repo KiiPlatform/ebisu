@@ -709,7 +709,6 @@ static int _jkii_get_target(
     const char* retval = NULL;
     size_t path_len = strlen(path);
     size_t target_len = 0;
-    int before_is_bash_slash = 0;
     int ret = -1;
 
     M_JKII_ASSERT(path != NULL);
@@ -721,19 +720,16 @@ static int _jkii_get_target(
         goto exit;
     }
 
-    /* get length of target. */
+    /* get length of target: up to the next '/', a backslash escaping the
+       character after it, '/' or another backslash among them, which are
+       taken together. */
     start = path + 1;
-    for (before_is_bash_slash = 0, target_len = 0, retval = start;
-            *retval != '\0'; ++retval) {
-        if (*retval == '/' && before_is_bash_slash == 0) {
-            break;
-        } else if (*retval == '\\') {
-            before_is_bash_slash = 1;
-        } else {
-            before_is_bash_slash = 0;
+    for (target_len = 0, retval = start; *retval != '\0' && *retval != '/';
+            ++retval, ++target_len) {
+        if (*retval == '\\' && retval[1] != '\0') {
+            ++retval;
+            ++target_len;
         }
-        ++target_len;
-
     }
     if (*retval == '\0') {
         retval = NULL;

@@ -1657,6 +1657,52 @@ TEST_CASE("KiiJson, GetByValidPathBesideInvalid") {
     CHECK(4 == fields[5].field_copy.int_value);
 }
 
+// A backslash in a path escapes the one character after it, a backslash
+// too: one that ends a segment leaves the '/' after it to start the next.
+TEST_CASE("KiiJson, PathEscapesOneCharacterEach") {
+    struct Case {
+        const char* json;
+        const char* path;
+        int value;
+    };
+    const Case cases[] = {
+        // A key that ends with a backslash, then another segment.
+        { "{\"a\\\\\" : {\"b\" : 1}}", "/a\\\\/b", 1 },
+        // Two such keys.
+        { "{\"a\\\\\" : {\"b\\\\\" : {\"c\" : 2}}}", "/a\\\\/b\\\\/c", 2 },
+        // A backslash inside a key.
+        { "{\"y\\\\z\" : 3}", "/y\\\\z", 3 },
+        // A backslash, then an escaped '/', in one key, then another segment.
+        { "{\"x\\\\/\" : {\"y\" : 4}}", "/x\\\\\\//y", 4 },
+        // Escaped '/', '[' and ']', each then another segment.
+        { "{\"a/b\" : {\"c\" : 5}}", "/a\\/b/c", 5 },
+        { "{\"[0]\" : {\"d\" : 6}}", "/\\[0\\]/d", 6 },
+    };
+    for (const Case& c : cases) {
+        INFO(c.json << " " << c.path);
+        jkii_field_t fields[2];
+        memset(fields, 0x00, sizeof(fields));
+        fields[0].path = c.path;
+        fields[0].type = JKII_FIELD_TYPE_INTEGER;
+        CHECK(jkii_parse(c.json, strlen(c.json), fields) == JKII_ERR_OK);
+        CHECK(fields[0].result == JKII_FIELD_ERR_OK);
+        CHECK(fields[0].field_copy.int_value == c.value);
+    }
+
+    // A key that ends with a backslash, as the last segment: the object.
+    const char json[] = "{\"a\\\\\" : {\"b\" : 1}}";
+    char copy[16];
+    jkii_field_t fields[2];
+    memset(fields, 0x00, sizeof(fields));
+    fields[0].path = "/a\\\\";
+    fields[0].type = JKII_FIELD_TYPE_OBJECT;
+    fields[0].field_copy.string = copy;
+    fields[0].field_copy_buff_size = sizeof(copy);
+    CHECK(jkii_parse(json, strlen(json), fields) == JKII_ERR_OK);
+    CHECK(fields[0].result == JKII_FIELD_ERR_OK);
+    CHECK(std::string(copy) == "{\"b\" : 1}");
+}
+
 TEST_CASE("KiiJson, PushRetrieveEndpoint") {
     const char json_string[] =
         "{"
