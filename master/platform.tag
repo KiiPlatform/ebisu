@@ -96,6 +96,48 @@
     </member>
   </compound>
   <compound kind="file">
+    <name>ebisu_freertos.h</name>
+    <path>freertos/include/</path>
+    <filename>ebisu__freertos_8h.html</filename>
+    <class kind="struct">ebisu_freertos_system_t</class>
+    <class kind="struct">ebisu_freertos_lock_t</class>
+    <member kind="typedef">
+      <type>struct ebisu_freertos_system_t</type>
+      <name>ebisu_freertos_system_t</name>
+      <anchorfile>ebisu__freertos_8h.html</anchorfile>
+      <anchor>a35bfb21cbea1c9141c665e33fd0e4c75</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="typedef">
+      <type>struct ebisu_freertos_lock_t</type>
+      <name>ebisu_freertos_lock_t</name>
+      <anchorfile>ebisu__freertos_8h.html</anchorfile>
+      <anchor>a170cb77d0d6ef3f250c4bc3b29ad34ec</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_freertos_system_init</name>
+      <anchorfile>ebisu__freertos_8h.html</anchorfile>
+      <anchor>a31721b1ab26bec50b321fac698b0dd0f</anchor>
+      <arglist>(ebisu_freertos_system_t *system, configSTACK_DEPTH_TYPE stack_depth, UBaseType_t priority)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>ebisu_freertos_lock_init</name>
+      <anchorfile>ebisu__freertos_8h.html</anchorfile>
+      <anchor>a08120ee945a8e4de0160b0a869bbc575</anchor>
+      <arglist>(ebisu_freertos_lock_t *lock)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>ebisu_freertos_lock_destroy</name>
+      <anchorfile>ebisu__freertos_8h.html</anchorfile>
+      <anchor>ac3b0ccbdcbdeb00894abd9cdea75a8a1</anchor>
+      <arglist>(ebisu_freertos_lock_t *lock)</arglist>
+    </member>
+  </compound>
+  <compound kind="file">
     <name>ebisu_openssl.h</name>
     <path>openssl/include/</path>
     <filename>ebisu__openssl_8h.html</filename>
@@ -365,6 +407,28 @@
       <name>port</name>
       <anchorfile>structebisu__dns__server__t.html</anchorfile>
       <anchor>a1933ddc8051925af2248dc370517f88a</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_freertos_lock_t</name>
+    <filename>structebisu__freertos__lock__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_lock_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__freertos__lock__t.html</anchorfile>
+      <anchor>a017427891531d58a5bd74caeee7b1b25</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>ebisu_freertos_system_t</name>
+    <filename>structebisu__freertos__system__t.html</filename>
+    <member kind="variable">
+      <type>ebisu_system_t</type>
+      <name>base</name>
+      <anchorfile>structebisu__freertos__system__t.html</anchorfile>
+      <anchor>a549e7f1155eb676165b93500e2c66397</anchor>
       <arglist></arglist>
     </member>
   </compound>
