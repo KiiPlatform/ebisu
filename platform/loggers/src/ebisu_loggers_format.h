@@ -26,4 +26,10 @@ size_t _ebisu_loggers_format(
         const char* fmt,
         va_list args);
 
+/* The system's time of day, as RFC 5424 and RFC 3339 have a timestamp: UTC, to
+   the millisecond, as in 2026-11-15T07:46:05.123Z, 24 bytes. "-", RFC 5424's
+   for a value unknown, if the system has none. In out, of size bytes, which is
+   terminated. */
+void _ebisu_loggers_timestamp(char* out, size_t size);
+
 #endif /* _EBISU_LOGGERS_FORMAT */

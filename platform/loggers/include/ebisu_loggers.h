@@ -70,7 +70,9 @@ void ebisu_stdio_logger_init(
  * \brief A logger to a file it keeps under a size, on POSIX and on Windows.
  *
  * Each message is a line of its level and itself, as ebisu_stdio_logger_t
- * writes it. A message less important than the logger's level is dropped.
+ * writes it, after the system's time of day if
+ * ebisu_file_logger_set_timestamps() asks for it. A message less important
+ * than the logger's level is dropped.
  * When a line would take the file past its size, the file is first renamed
  * to its path with ".1" after it, which replaces the one there, and a new one
  * is started: what the device keeps of its log is at most twice the size, and
@@ -95,6 +97,8 @@ typedef struct ebisu_file_logger_t {
     size_t _max_bytes; /**< \private */
     ebisu_log_level_t _level; /**< \private */
     ebisu_lock_t* _lock; /**< \private */
+    /** \private Whether each line starts with the time of day. */
+    bool _timestamps;
     /** \private The path, or empty once closed. */
     char _path[EBISU_FILE_LOGGER_PATH_MAX];
 } ebisu_file_logger_t;
@@ -123,6 +127,25 @@ bool ebisu_file_logger_init(
         size_t max_bytes,
         ebisu_log_level_t level,
         ebisu_lock_t* lock);
+
+/**
+ * \brief Sets whether each line starts with the time it is written.
+ *
+ * The system's time of day, in UTC to the millisecond, as RFC 3339 has it, and
+ * a space, as in "2026-11-15T07:46:05.123Z error: failed to connect.", or "-"
+ * and a space if the system has no time. It is taken as the line is written,
+ * under the logger's lock, so that the times of a file's lines are in order,
+ * unless the system's clock is set back. The line, with it, is at most
+ * EBISU_LOGGER_LINE_MAX bytes still. Without it, as the logger starts, a line
+ * is as ebisu_stdio_logger_t's.
+ *
+ * Only before the logger logs, from the task that initialized it, as for its
+ * other settings.
+ *
+ * \param [in,out] logger The logger.
+ * \param [in] timestamps Whether each line starts with the time.
+ */
+void ebisu_file_logger_set_timestamps(ebisu_file_logger_t* logger, bool timestamps);
 
 /**
  * \brief Closes a logger to a file, which drops every message after.

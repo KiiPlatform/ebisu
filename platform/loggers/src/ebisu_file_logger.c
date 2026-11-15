@@ -39,8 +39,33 @@ static void rotate(ebisu_file_logger_t* logger)
     open_file(logger, "wb");
 }
 
+/* Room before a line for its timestamp, 24 bytes, and the space after it. */
+#define TIMESTAMP_ROOM 25
+
+/* The time of day before the line at start in line, under the lock, and where
+   the line starts with it. "-" if the system has no time, or gave more than
+   there is room for. */
+static size_t put_timestamp(char* line, size_t start)
+{
+    /* Room for any int and long the format could be given, as GCC checks for,
+       though a timestamp takes 24 bytes. */
+    char timestamp[96];
+    size_t length;
+    _ebisu_loggers_timestamp(timestamp, sizeof(timestamp));
+    length = strlen(timestamp);
+    if (length + 1 > start) {
+        timestamp[0] = '-';
+        length = 1;
+    }
+    memcpy(line + start - length - 1, timestamp, length);
+    line[start - 1] = ' ';
+    return start - length - 1;
+}
+
 /* The line is formatted before the lock is taken, as in the stdio logger, so
-   that the tasks wait only for each other's writes. */
+   that the tasks wait only for each other's writes. With timestamps, the room
+   for one is kept before it, and filled under the lock, so that the lines'
+   times are in the order the lines are. */
 static void file_log(
         ebisu_logger_t* self,
         ebisu_log_level_t level,
@@ -50,21 +75,26 @@ static void file_log(
     ebisu_file_logger_t* logger = EBISU_CONTAINER_OF(self, ebisu_file_logger_t, base);
     /* The line, newline included, and its NUL. */
     char line[EBISU_LOGGER_LINE_MAX + 1];
+    size_t start = logger->_timestamps ? TIMESTAMP_ROOM : 0;
     size_t length;
     if (_EBISU_LOGGERS_DROPS(logger->_level, level)) {
         return;
     }
     length = strlen(_ebisu_loggers_level_names[level]);
-    memcpy(line, _ebisu_loggers_level_names[level], length);
-    memcpy(line + length, ": ", 2);
+    memcpy(line + start, _ebisu_loggers_level_names[level], length);
+    memcpy(line + start + length, ": ", 2);
     /* Room for the newline. */
-    length = _ebisu_loggers_format(line, sizeof(line) - 1, length + 2, fmt, args);
+    length = _ebisu_loggers_format(line, sizeof(line) - 1, start + length + 2, fmt, args);
     line[length++] = '\n';
     line[length] = '\0';
 
     if (logger->_lock != NULL) {
         logger->_lock->ops->lock(logger->_lock);
     }
+    if (start > 0) {
+        start = put_timestamp(line, start);
+    }
+    length -= start;
     if (logger->_file == NULL && logger->_path[0] != '\0') {
         open_file(logger, "ab");
     }
@@ -73,7 +103,7 @@ static void file_log(
         rotate(logger);
     }
     if (logger->_file != NULL) {
-        size_t written = fwrite(line, 1, length, logger->_file);
+        size_t written = fwrite(line + start, 1, length, logger->_file);
         fflush(logger->_file);
         logger->_size += written;
     }
@@ -100,6 +130,7 @@ bool ebisu_file_logger_init(
     logger->_max_bytes = max_bytes;
     logger->_level = level;
     logger->_lock = lock;
+    logger->_timestamps = false;
     logger->_path[0] = '\0';
     /* Room for ".1" after it. */
     if (length == 0 || length + 2 >= sizeof(logger->_path)) {
@@ -108,6 +139,11 @@ bool ebisu_file_logger_init(
     memcpy(logger->_path, path, length + 1);
     open_file(logger, "ab");
     return logger->_file != NULL;
+}
+
+void ebisu_file_logger_set_timestamps(ebisu_file_logger_t* logger, bool timestamps)
+{
+    logger->_timestamps = timestamps;
 }
 
 void ebisu_file_logger_close(ebisu_file_logger_t* logger)
