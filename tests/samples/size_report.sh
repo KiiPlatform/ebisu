@@ -10,8 +10,10 @@
 #   EBISU_MIN_SIZE and without strtod(), EBISU_STRTOD=OFF.
 #
 # Text is code and constant data, what takes flash; data and bss take RAM.
-# Nothing is checked: the sizes are for reading, in the log and, in GitHub
-# Actions, in the job's summary.
+# The sizes are for reading, in the log and, in GitHub Actions, in the job's
+# summary. What is checked is that the Cortex-M3 programs have no global offset
+# table, which position-independent code would take, and their start-up code
+# would have to fill.
 #
 # Usage: size_report.sh   (the Cortex-M3 part needs arm-none-eabi-gcc)
 set -euo pipefail
@@ -162,6 +164,10 @@ EOF
             -Wl,--gc-sections -Wl,--fatal-warnings "$work/$name/thing.o" "$work/$name/header_pool.o" \
             -L "$work/$name/prefix/lib" -lebisu_tio -lebisu_kii -lebisu_khc -lebisu_jkii \
             -lebisu_core -o "$work/$name/thing.elf"
+        if arm-none-eabi-objdump -h "$work/$name/thing.elf" | grep -q ' \.got '; then
+            echo "$name: the program has a global offset table" >&2
+            exit 1
+        fi
         size "$work/$name/thing.elf" | awk 'NR > 1 { print $1, $2, $3 }'
     }
     {

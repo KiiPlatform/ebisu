@@ -243,7 +243,11 @@ For a device short of flash, `-DEBISU_MIN_SIZE=ON` compiles the libraries with
 A program linking the static libraries has to pass it to its own link, as most
 embedded builds already do. The static libraries are also built without
 position-independent code, unless `-DCMAKE_POSITION_INDEPENDENT_CODE=ON` asks
-for it, say to link them into a shared library of the application's.
+for it, say to link them into a shared library of the application's. They are
+without it on a target that has no shared libraries too, as a microcontroller
+without an operating system, `CMAKE_SYSTEM_NAME` `Generic`, whatever
+`EBISU_MIN_SIZE` says: there, it would only take a global offset table, which
+the program's linker script and start-up code would have to place and fill.
 CMake's `-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON` adds link-time optimization,
 and a program linking the static libraries then links with `-flto` too:
 

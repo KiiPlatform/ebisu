@@ -118,8 +118,15 @@ function(ebisu_configure_target tgt)
   endif()
   # Every object may end up inside a shared library, including the ones that
   # reach it indirectly through $<TARGET_OBJECTS:...>, unless EBISU_MIN_SIZE
-  # builds them all static.
-  #
+  # builds them all static, or the target has no shared libraries, as a
+  # microcontroller without an operating system doesn't, CMAKE_SYSTEM_NAME
+  # Generic. There, position-independent code would only take a global offset
+  # table, which a program's linker script and start-up code would have to
+  # place and fill, as the FreeRTOS sample's don't.
+  get_property(shared_libs GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
+  if(NOT shared_libs AND NOT CMAKE_POSITION_INDEPENDENT_CODE)
+    set(pic OFF)
+  endif()
   # Hidden by default, so the shared objects export what the public headers
   # declare and nothing else. Being non-static because a helper is called from
   # another translation unit is not the same as being part of the ABI, and
