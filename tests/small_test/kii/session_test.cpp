@@ -687,6 +687,23 @@ TEST_CASE( "Only requests carrying the session's token are renewed" ) {
             CHECK( platform.updates.empty() );
         }
     }
+
+    SECTION("server code with the application's credentials") {
+        Platform platform;
+        kii_session_t session;
+        init_session(&session, &platform);
+        kii_author_t author = make_author("th.1", "at1", "rt1");
+        kii_session_set_author(&session, &author);
+        REQUIRE( kii_set_session(&c.kii, &session) == KII_ERR_OK );
+
+        c.http.requests.clear();
+        c.http.responses = { REFUSED };
+        CHECK( kii_execute_server_code_with_app_auth(&c.kii, NULL, "ep", "{}") == KII_ERR_RESP_STATUS );
+        REQUIRE( c.http.requests.size() == 1 );
+        CHECK( contains(c.http.requests[0], "Authorization: Basic ") );
+        CHECK_FALSE( contains(c.http.requests[0], "Bearer at1") );
+        CHECK( platform.updates.empty() );
+    }
 }
 
 TEST_CASE( "Responses that do not refuse the token reach the caller whole" ) {

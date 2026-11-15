@@ -1418,6 +1418,27 @@ kii_code_t kii_execute_server_code_with_token(
         const char* access_token);
 
 /**
+ * \brief Execute server code with the application's credentials.
+ *
+ * Instead of a token, the request carries the application's own credentials,
+ * as Basic authorization of the application's ID, as thing-interaction
+ * onboarding sends them: for an endpoint that takes them. A session never
+ * renews or replaces anything for it.
+ *
+ * \param [in,out] kii kii_t instance.
+ * \param [in] version Version identifier to be used during execution, or NULL
+ * for the current one.
+ * \param [in] endpoint_name Name of the endpoint to be executed.
+ * \param [in] params Parameters given to endpoint. Expect JSON object.
+ * \return kii_code_t
+ */
+kii_code_t kii_execute_server_code_with_app_auth(
+        kii_t* kii,
+        const char* version,
+        const char* endpoint_name,
+        const char* params);
+
+/**
  * \brief Execute onboarding.
 
  * Note: input params other than vendor_thing_id and password are ignored after the first registration.

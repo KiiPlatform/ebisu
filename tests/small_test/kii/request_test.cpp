@@ -409,6 +409,36 @@ TEST_CASE( "Server code runs with the token given, or none" ) {
     CHECK( count_in(script.requests[2], "Authorization") == 0 );
 }
 
+// As thing-interaction onboarding authorizes itself: Basic, of the
+// application's ID and a placeholder for its key, "dummyAppID:dummy".
+TEST_CASE( "Server code runs with the application's credentials" ) {
+    char kii_buff[4096];
+    kii_t kii;
+    kii_init(&kii);
+    kii_set_site(&kii, "api.kii.com");
+    kii_set_app_id(&kii, "dummyAppID");
+    kii_set_buff(&kii, kii_buff, sizeof(kii_buff));
+    strcpy(kii._author.author_id, "th.1");
+    strcpy(kii._author.access_token, "thing-token");
+    khct::HttpScript script;
+    script.attach(&kii);
+    const std::string ok = "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n{}";
+    script.responses = { ok, ok };
+
+    REQUIRE( kii_execute_server_code_with_app_auth(&kii, NULL, "ep", "{\"a\":1}") == KII_ERR_OK );
+    const std::string& current = script.requests[0];
+    CHECK( current.find("POST /api/apps/dummyAppID/server-code/versions/current/ep HTTP/1.1\r\n") == 0 );
+    CHECK( count_in(current, "Authorization: Basic ZHVtbXlBcHBJRDpkdW1teQ==\r\n") == 1 );
+    CHECK( count_in(current, "Authorization") == 1 );
+    CHECK( count_in(current, "thing-token") == 0 );
+    CHECK( count_in(current, "X-Kii-Appid: dummyAppID\r\n") == 1 );
+    CHECK( current.substr(current.size() - 7) == "{\"a\":1}" );
+
+    REQUIRE( kii_execute_server_code_with_app_auth(&kii, "v2", "ep", "{}") == KII_ERR_OK );
+    CHECK( script.requests[1].find("POST /api/apps/dummyAppID/server-code/versions/v2/ep HTTP/1.1\r\n") == 0 );
+    CHECK( count_in(script.requests[1], "Authorization: Basic ZHVtbXlBcHBJRDpkdW1teQ==\r\n") == 1 );
+}
+
 // Every body went chunked, which some intermediaries handle poorly, though kii
 // had the length of the ones it holds whole in its buffer.
 TEST_CASE( "A body kii holds whole goes with its length, a streamed one chunked" ) {

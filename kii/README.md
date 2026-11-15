@@ -401,7 +401,9 @@ The result is in the buffer, `kii_get_resp_body_length()` bytes long.
 `kii_execute_server_code_version()` runs a given version of the code. Both send
 the token of the thing `kii` acts as. `kii_execute_server_code_with_token()`
 sends another instead, an application administrator's or a user's, or none, for
-an endpoint that runs without one. A session never renews or replaces it.
+an endpoint that runs without one. `kii_execute_server_code_with_app_auth()`
+sends the application's own credentials, Basic authorization of its ID, as
+onboarding does. A session never renews or replaces either.
 
 ## Other REST API calls
 
