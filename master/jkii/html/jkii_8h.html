@@ -439,7 +439,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Parse JSON string.</p>
-<p>The string has to be one JSON object or array, after whitespace if any, and before whitespace if any: valid JSON, as ECMA-404 has it, which is checked whole, nesting objects and arrays at most 32 levels deep. Nothing is allocated, and the string is not changed.</p>
+<p>The string has to be one JSON object or array, after whitespace if any, and before whitespace if any: valid JSON, as ECMA-404 has it, which is checked whole, nesting objects and arrays at most 32 levels deep. Nothing is allocated, and the string is not changed. Anything else is jkii_parse_err_t#JKII_ERR_INVALID_INPUT, and each field's <a class="el" href="structjkii__field__t.html#a490735c809794c5f8c4c07c423b9b7e6">jkii_field_t::result</a> jkii_field_err_t#JKII_FIELD_ERR_NOT_FOUND.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">json_string</td><td>of JSON string. </td></tr>
