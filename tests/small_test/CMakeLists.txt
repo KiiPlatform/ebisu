@@ -99,12 +99,14 @@ ebisu_add_test_suite(small_test_core
         core/mem_test.cpp
         core/str_test.cpp
         core/time_test.cpp
-    LINK ebisu_core_objs)
+    # Threads for the loggers' tests that log from several tasks at once.
+    LINK ebisu_core_objs Threads::Threads)
 
 # platform's loggers, which write to a file in the build tree, and send to a
 # server of the test's own on the loopback.
 if(TARGET ebisu_loggers)
     set(small_test_loggers_sources
+        loggers/file_logger_test.cpp
         loggers/stdio_logger_test.cpp
         loggers/syslog_udp_logger_test.cpp)
     if(UNIX)

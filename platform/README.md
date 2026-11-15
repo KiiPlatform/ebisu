@@ -92,6 +92,12 @@ give it an `ebisu_stdio_logger_t` on `stderr` at `EBISU_LOG_WARNING`.
 - **To a stdio stream** (`ebisu_stdio_logger_t`): a line of the level and the
   message, as in `error: failed to connect to example.com.`, to `stderr` or a
   file, written with one call and flushed.
+- **To a file kept under a size** (`ebisu_file_logger_t`): the same lines, to a
+  file at a path. When a line would take it past its size, the file is renamed
+  to its path with `.1` after it, which replaces the one there, and a new one
+  started, so that a device's flash holds at most twice the size, and the last
+  of the log. The line is formatted before the lock it is given is taken, and
+  written, counted and the file renamed under it.
 - **To syslog** (`ebisu_syslog_logger_t`, on POSIX): `syslog()`, with a
   facility and the severity of the level. `openlog()` is the application's to
   call, if it wants to.
@@ -130,8 +136,37 @@ static ebisu_log_fanout_t logger;
 ```
 
 The loggers' levels and the fan-out's array are set before they are used, and
-don't change: a logger of the application's that wraps one can decide at run
-time what it passes on.
+don't change. Core's `ebisu_log_level_filter_t` wraps any logger in a level that
+can change while it logs, as from a server's configuration, which
+`ebisu_log_level_parse()` reads the name of. Core's `ebisu_log_slot_t` is a place
+in the array for a logger that can be put in, changed or taken out while tasks
+log through it: a logger to a syslog server, changed for one to another server,
+or with another host name, by initializing the new one, putting it in, and
+closing the old one, which no message is going to once the change returns; or
+taken out while the application doesn't want its logs sent.
+
+```c
+static ebisu_posix_lock_t lock;
+static ebisu_log_slot_t remote;
+static ebisu_log_level_filter_t filtered;
+static ebisu_logger_t* loggers[] = { &to_stderr.base, &remote.base };
+static ebisu_log_fanout_t all;
+static ebisu_syslog_udp_logger_t servers[2];
+
+    ebisu_posix_lock_init(&lock);
+    ebisu_log_slot_init(&remote, &lock.base);
+    ebisu_log_fanout_init(&all, loggers, 2);
+    ebisu_log_level_filter_init(&filtered, &all.base, EBISU_LOG_INFO, &lock.base);
+
+    /* Later, from any task. */
+    ebisu_log_level_filter_set_level(&filtered, EBISU_LOG_DEBUG);
+    ebisu_syslog_udp_logger_init(&servers[1], "logs.example.com", 514, host_name, "my-device",
+            3, EBISU_LOG_DEBUG);
+    ebisu_logger_t* old = ebisu_log_slot_set(&remote, &servers[1].base);
+    if (old != NULL) {
+        ebisu_syslog_udp_logger_close(&servers[0]);
+    }
+```
 
 ## DNS probe
 
