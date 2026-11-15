@@ -3,24 +3,7 @@
 
 #include <ebisu_object.h>
 
-#ifdef _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <iphlpapi.h>
-#else
-#include <arpa/inet.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <net/if.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <poll.h>
-#include <sys/socket.h>
-#include <time.h>
-#include <unistd.h>
-#endif
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #ifdef EBISU_NO_LOG
@@ -32,57 +15,9 @@
 #define log_to(logger, level, ...) ebisu_log((logger), (level), __VA_ARGS__)
 #endif
 
-#ifndef _WIN32
-/* Where the system's lookups find their name servers. */
-#define RESOLV_CONF "/etc/resolv.conf"
-#endif
-
-/* The port name servers listen on. */
-#define DNS_PORT 53
-
-/* Room for an interface's name, with its NUL. On Windows, as if_indextoname()
-   asks: mingw-w64's IF_NAMESIZE names NDIS_IF_MAX_STRING_SIZE, which its
-   headers leave undefined here. */
-#ifdef _WIN32
-#define IFACE_NAME_SIZE (IF_MAX_STRING_SIZE + 1)
-#else
-#define IFACE_NAME_SIZE IF_NAMESIZE
-#endif
-
-static bool is_digit(char c)
-{
-    return c >= '0' && c <= '9';
-}
-
-/* What isspace() takes in the C locale. */
-static bool is_space(char c)
-{
-    return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\v' || c == '\f';
-}
-
-/* What splits a line of /etc/resolv.conf: a space or a tab for glibc, and what
-   isspace() takes for musl. */
-static bool is_blank(char c, bool as_glibc)
-{
-    return as_glibc ? c == ' ' || c == '\t' : is_space(c);
-}
-
 static char to_lower(char c)
 {
     return c >= 'A' && c <= 'Z' ? (char)(c - 'A' + 'a') : c;
-}
-
-/* The value of the digit c, as a hexadecimal one, or -1. */
-static int digit_value(char c)
-{
-    if (is_digit(c)) {
-        return c - '0';
-    }
-    c = to_lower(c);
-    if (c >= 'a' && c <= 'f') {
-        return c - 'a' + 10;
-    }
-    return -1;
 }
 
 /* Whether a query can carry host, and if so its length without a trailing
@@ -187,677 +122,57 @@ static bool is_localhost(const char* host, size_t length)
 
 bool _ebisu_dns_probe_needs_lookup(const char* host)
 {
-    _ebisu_dns_addr_t addr;
+    ebisu_dns_addr_t addr;
     size_t length;
     if (host == NULL || !is_carried(host, &length)) {
         return false;
     }
     /* An address, an IPv6 one with any scope too, which the C libraries either
        take or refuse at once. */
-    if (_ebisu_dns_probe_parse_address(host, strlen(host), 0, true, &addr)) {
+    if (ebisu_dns_parse_address(NULL, host, strlen(host), 0, true, &addr)) {
         return false;
     }
     return !is_localhost(host, length);
 }
 
-bool _ebisu_dns_probe_parse_ipv4(const char* s, size_t length, unsigned char out[4])
-{
-    uint32_t parts[4];
-    size_t count = 0;
-    size_t i = 0;
-    uint32_t value;
-    /* Up to 4 numbers, each decimal, octal after a 0 or hexadecimal after 0x,
-       between dots. */
-    for (;;) {
-        uint32_t base = 10;
-        bool digits = false;
-        if (i == length || !is_digit(s[i])) {
-            return false;
-        }
-        value = 0;
-        if (s[i] == '0') {
-            ++i;
-            if (i < length && (s[i] == 'x' || s[i] == 'X')) {
-                base = 16;
-                ++i;
-            } else {
-                base = 8;
-                digits = true;
-            }
-        }
-        for (; i < length; ++i) {
-            int digit = digit_value(s[i]);
-            if (digit < 0 || (uint32_t)digit >= base) {
-                break;
-            }
-            if (value > (UINT32_MAX - (uint32_t)digit) / base) {
-                return false;
-            }
-            value = value * base + (uint32_t)digit;
-            digits = true;
-        }
-        if (!digits) {
-            return false;
-        }
-        parts[count++] = value;
-        if (i < length && s[i] == '.' && count < 4) {
-            ++i;
-        } else {
-            break;
-        }
-    }
-    if (i != length) {
-        return false;
-    }
-    /* The last number fills the bytes the others leave. */
-    for (i = 0; i + 1 < count; ++i) {
-        if (parts[i] > 0xff) {
-            return false;
-        }
-    }
-    if (count < 4 && parts[count - 1] > (UINT32_MAX >> (8 * (count - 1)))) {
-        return false;
-    }
-    if (count == 4 && parts[3] > 0xff) {
-        return false;
-    }
-    value = parts[count - 1];
-    for (i = 0; i + 1 < count; ++i) {
-        value |= parts[i] << (8 * (3 - i));
-    }
-    out[0] = (unsigned char)(value >> 24);
-    out[1] = (unsigned char)((value >> 16) & 0xff);
-    out[2] = (unsigned char)((value >> 8) & 0xff);
-    out[3] = (unsigned char)(value & 0xff);
-    return true;
-}
-
-/* Whether the IPv6 address bytes is link-local, unicast or multicast: the
-   addresses whose scope both C libraries take an interface's name for. */
-static bool is_link_local(const unsigned char bytes[16])
-{
-    return (bytes[0] == 0xfe && (bytes[1] & 0xc0) == 0x80) ||
-        (bytes[0] == 0xff && (bytes[1] & 0x0f) == 0x02);
-}
-
-/* The scope s, of length bytes without a NUL, of the IPv6 address in out, in
-   its scope_id. Whether it is one: an interface's number, in decimal digits
-   only, or, for a link-local address, an interface's name. */
-static bool parse_scope(const char* s, size_t length, _ebisu_dns_addr_t* out)
-{
-    char name[IFACE_NAME_SIZE];
-    uint32_t value = 0;
-    size_t i;
-    if (length == 0) {
-        return false;
-    }
-    for (i = 0; i < length && is_digit(s[i]); ++i) {
-        uint32_t digit = (uint32_t)(s[i] - '0');
-        if (value > (UINT32_MAX - digit) / 10) {
-            return false;
-        }
-        value = value * 10 + digit;
-    }
-    if (i == length) {
-        out->scope_id = value;
-        return true;
-    }
-    if (!is_link_local(out->bytes) || length >= sizeof(name)) {
-        return false;
-    }
-    memcpy(name, s, length);
-    name[length] = '\0';
-    out->scope_id = if_nametoindex(name);
-    return out->scope_id != 0;
-}
-
-bool _ebisu_dns_probe_parse_address(const char* s, size_t length, uint16_t port,
-        bool keep_bad_scope, _ebisu_dns_addr_t* out)
-{
-    char text[INET6_ADDRSTRLEN];
-    const char* scope;
-    size_t address_length;
-    memset(out, 0, sizeof(*out));
-    out->port = port;
-    if (_ebisu_dns_probe_parse_ipv4(s, length, out->bytes)) {
-        out->family = AF_INET;
-        return true;
-    }
-    if (length == 0 || memchr(s, '\0', length) != NULL) {
-        return false;
-    }
-    scope = (const char*)memchr(s, '%', length);
-    address_length = scope != NULL ? (size_t)(scope - s) : length;
-    if (address_length == 0 || address_length >= sizeof(text)) {
-        return false;
-    }
-    memcpy(text, s, address_length);
-    text[address_length] = '\0';
-    if (inet_pton(AF_INET6, text, out->bytes) != 1) {
-        return false;
-    }
-    out->family = AF_INET6;
-    /* Left out, its scope_id is still 0. */
-    if (scope != NULL && !parse_scope(scope + 1, length - address_length - 1, out)) {
-        return keep_bad_scope;
-    }
-    return true;
-}
-
-static bool same_server(const _ebisu_dns_addr_t* a, const _ebisu_dns_addr_t* b)
+static bool same_server(const ebisu_dns_addr_t* a, const ebisu_dns_addr_t* b)
 {
     return a->family == b->family && a->port == b->port && a->scope_id == b->scope_id &&
         memcmp(a->bytes, b->bytes, sizeof(a->bytes)) == 0;
 }
 
-size_t _ebisu_dns_probe_parse_resolv_line(const char* line, size_t length,
-        _ebisu_dns_addr_t* servers, size_t count, size_t max, bool as_glibc)
-{
-    static const char keyword[] = "nameserver";
-    const size_t keyword_length = sizeof(keyword) - 1;
-    size_t start;
-    size_t end;
-    /* The keyword at the start of the line, and blanks after it, as the C
-       libraries have it. */
-    if (count >= max || length <= keyword_length ||
-            memcmp(line, keyword, keyword_length) != 0 ||
-            !is_blank(line[keyword_length], as_glibc)) {
-        return count;
-    }
-    start = keyword_length;
-    while (start < length && is_blank(line[start], as_glibc)) {
-        ++start;
-    }
-    /* The address ends where a blank starts, and what is after it is left. A
-       '#' or a ';' right after it is part of it, as for the C libraries, and
-       it then isn't one. */
-    end = start;
-    while (end < length && !is_blank(line[end], as_glibc)) {
-        ++end;
-    }
-    if (!_ebisu_dns_probe_parse_address(line + start, end - start, DNS_PORT, as_glibc,
-                &servers[count])) {
-        return count;
-    }
-    return count + 1;
-}
-
-size_t _ebisu_dns_probe_parse_resolv_conf(const char* text, size_t length,
-        _ebisu_dns_addr_t* servers, size_t max, bool as_glibc)
-{
-    size_t count = 0;
-    size_t start = 0;
-    while (start < length) {
-        size_t end = start;
-        while (end < length && text[end] != '\n') {
-            ++end;
-        }
-        count = _ebisu_dns_probe_parse_resolv_line(text + start, end - start, servers, count,
-                max, as_glibc);
-        start = end + 1;
-    }
-    return count;
-}
-
-#ifndef _WIN32
-/* The servers of file's lines, as glibc reads them: each whole, however long,
-   up to a NUL. */
-static size_t read_whole_lines(FILE* file, _ebisu_dns_addr_t* servers, size_t max)
-{
-    size_t count = 0;
-    char* line = NULL;
-    size_t size = 0;
-    while (getline(&line, &size, file) != -1) {
-        size_t length = strlen(line);
-        if (length > 0 && line[length - 1] == '\n') {
-            --length;
-        }
-        count = _ebisu_dns_probe_parse_resolv_line(line, length, servers, count, max, true);
-    }
-    free(line);
-    return count;
-}
-
-/* The servers of file's lines, as musl reads them: in a buffer of 256 bytes,
-   skipping a line longer than 254, its newline aside, which it can't tell from
-   one cut short, the last too. */
-static size_t read_short_lines(FILE* file, _ebisu_dns_addr_t* servers, size_t max)
-{
-    size_t count = 0;
-    char line[256];
-    while (fgets(line, sizeof(line), file) != NULL) {
-        size_t length = strlen(line);
-        if (length > 0 && line[length - 1] == '\n') {
-            --length;
-        } else if (!feof(file)) {
-            int c;
-            do {
-                c = fgetc(file);
-            } while (c != EOF && c != '\n');
-            continue;
-        }
-        count = _ebisu_dns_probe_parse_resolv_line(line, length, servers, count, max, false);
-    }
-    return count;
-}
-
-size_t _ebisu_dns_probe_read_servers(const char* path, _ebisu_dns_addr_t* servers,
-        size_t max, bool as_glibc)
-{
-    size_t count = 0;
-    FILE* file = fopen(path, "r");
-    if (file != NULL) {
-        count = as_glibc ? read_whole_lines(file, servers, max)
-            : read_short_lines(file, servers, max);
-        fclose(file);
-    }
-    if (count == 0) {
-        static const unsigned char loopback[4] = { 127, 0, 0, 1 };
-        memset(&servers[0], 0, sizeof(servers[0]));
-        servers[0].family = AF_INET;
-        memcpy(servers[0].bytes, loopback, sizeof(loopback));
-        servers[0].port = DNS_PORT;
-        count = 1;
-    }
-    return count;
-}
-
-/* The servers the system's lookups ask, as many as max. */
-static size_t system_servers(_ebisu_dns_addr_t* servers, size_t max)
-{
-    return _ebisu_dns_probe_read_servers(RESOLV_CONF, servers, max, _EBISU_DNS_READ_AS_GLIBC);
-}
-#else
-/* The placeholders fec0:0:0:ffff::1, ::2 and ::3, site-local, which Windows
-   lists as the name servers of an adapter without an IPv6 one of its own, and
-   which nothing answers on. */
-static bool is_placeholder(const unsigned char bytes[16])
-{
-    static const unsigned char prefix[15] = {
-        0xfe, 0xc0, 0, 0, 0, 0, 0xff, 0xff, 0, 0, 0, 0, 0, 0, 0
-    };
-    return memcmp(bytes, prefix, sizeof(prefix)) == 0 && bytes[15] >= 1 && bytes[15] <= 3;
-}
-
-size_t _ebisu_dns_probe_adapter_servers(const IP_ADAPTER_ADDRESSES* adapters,
-        _ebisu_dns_addr_t* servers, size_t max)
-{
-    size_t count = 0;
-    const IP_ADAPTER_ADDRESSES* adapter;
-    for (adapter = adapters; adapter != NULL && count < max; adapter = adapter->Next) {
-        const IP_ADAPTER_DNS_SERVER_ADDRESS* dns;
-        if (adapter->OperStatus != IfOperStatusUp) {
-            continue;
-        }
-        for (dns = adapter->FirstDnsServerAddress; dns != NULL && count < max;
-                dns = dns->Next) {
-            const SOCKADDR* sa = dns->Address.lpSockaddr;
-            _ebisu_dns_addr_t server;
-            size_t i;
-            if (sa == NULL) {
-                continue;
-            }
-            memset(&server, 0, sizeof(server));
-            server.port = DNS_PORT;
-            if (sa->sa_family == AF_INET &&
-                    dns->Address.iSockaddrLength >= (INT)sizeof(SOCKADDR_IN)) {
-                server.family = AF_INET;
-                memcpy(server.bytes, &((const SOCKADDR_IN*)sa)->sin_addr, 4);
-            } else if (sa->sa_family == AF_INET6 &&
-                    dns->Address.iSockaddrLength >= (INT)sizeof(SOCKADDR_IN6)) {
-                const SOCKADDR_IN6* in6 = (const SOCKADDR_IN6*)sa;
-                server.family = AF_INET6;
-                memcpy(server.bytes, &in6->sin6_addr, 16);
-                server.scope_id = in6->sin6_scope_id;
-                if (is_placeholder(server.bytes)) {
-                    continue;
-                }
-            } else {
-                continue;
-            }
-            /* Adapters often share their servers: each takes one place. */
-            for (i = 0; i < count && !same_server(&servers[i], &server); ++i) {
-            }
-            if (i == count) {
-                servers[count++] = server;
-            }
-        }
-    }
-    return count;
-}
-
-/* The servers the system's lookups ask, as many as max, from the adapters
-   GetAdaptersAddresses() gives. */
-static size_t system_servers(_ebisu_dns_addr_t* servers, size_t max)
-{
-    const ULONG flags = GAA_FLAG_SKIP_UNICAST | GAA_FLAG_SKIP_ANYCAST |
-        GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_FRIENDLY_NAME;
-    ULONG size = 16 * 1024;
-    int tries;
-    /* Adapters that come meanwhile can make the size it asked for too small
-       again. */
-    for (tries = 0; tries < 3; ++tries) {
-        IP_ADAPTER_ADDRESSES* adapters = (IP_ADAPTER_ADDRESSES*)malloc(size);
-        ULONG ret;
-        if (adapters == NULL) {
-            return 0;
-        }
-        ret = GetAdaptersAddresses(AF_UNSPEC, flags, NULL, adapters, &size);
-        if (ret == NO_ERROR) {
-            size_t count = _ebisu_dns_probe_adapter_servers(adapters, servers, max);
-            free(adapters);
-            return count;
-        }
-        free(adapters);
-        if (ret != ERROR_BUFFER_OVERFLOW) {
-            return 0;
-        }
-    }
-    return 0;
-}
-#endif
-
-/* In microseconds, for a wait never to end before the time given, as one
-   counted from a time cut to the millisecond could. */
-static int64_t monotonic_us(void)
-{
-#ifdef _WIN32
-    LARGE_INTEGER frequency;
-    LARGE_INTEGER now;
-    QueryPerformanceFrequency(&frequency);
-    QueryPerformanceCounter(&now);
-    return (int64_t)(now.QuadPart / frequency.QuadPart * 1000000 +
-            now.QuadPart % frequency.QuadPart * 1000000 / frequency.QuadPart);
-#else
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (int64_t)ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
-#endif
-}
-
 /* An identifier for each probe, for its answer to be told from other
-   datagrams: different for each in a row, and for each process. */
+   datagrams: different for each in a row, and, where the address of a static
+   differs from process to process, for each process. */
 static uint16_t next_id(void)
 {
-    unsigned int n;
-    unsigned int pid;
-#ifdef _WIN32
-    static volatile LONG probes;
-    n = (unsigned int)InterlockedIncrement(&probes) - 1u;
-    pid = (unsigned int)GetCurrentProcessId();
-#else
     static unsigned int probes;
+    unsigned int n;
+    unsigned int salt = (unsigned int)((uintptr_t)&probes >> 4);
 #if defined(__GNUC__) || defined(__clang__)
     n = __atomic_fetch_add(&probes, 1u, __ATOMIC_RELAXED);
 #else
+    /* Two probes at once may take the same, which only makes their answers
+       harder to tell from a stray datagram on another socket. */
     n = probes++;
-#endif
-    pid = (unsigned int)getpid();
 #endif
     /* An odd factor, so that 65536 probes in a row have each an identifier of
        its own. */
-    return (uint16_t)((n * 40503u + pid * 2654435761u) & 0xffff);
+    return (uint16_t)((n * 40503u + salt * 2654435761u) & 0xffff);
 }
 
-/* What the system's error code error is, in out, of size bytes. */
-static void error_text(int error, char* out, size_t size)
+/* ebisu_dns_is_answer_t for a query with the identifier userdata points to. */
+static bool answers_query(const unsigned char* datagram, size_t length, void* userdata)
 {
-#ifdef _WIN32
-    DWORD length = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-            NULL, (DWORD)error, 0, out, (DWORD)size, NULL);
-    while (length > 0 && (out[length - 1] == '\r' || out[length - 1] == '\n' ||
-                out[length - 1] == ' ' || out[length - 1] == '.')) {
-        --length;
-    }
-    if (length == 0) {
-        snprintf(out, size, "error %d", error);
-    } else {
-        out[length] = '\0';
-    }
-#else
-    snprintf(out, size, "%s", strerror(error));
-#endif
-}
-
-/* What a server did with the query. */
-typedef enum {
-    ASKED_ANSWERED,
-    ASKED_TIMEOUT,
-    /* The system was told nothing listens there, as ICMP's port unreachable
-       says. */
-    ASKED_REFUSED,
-    /* The query couldn't be sent: no socket, no route. */
-    ASKED_FAILED
-} asked_t;
-
-#ifndef _WIN32
-/* Sends query, with id, to server, and waits timeout_ms for its answer. What it
-   did, with errno in out_errno for ASKED_FAILED. */
-static asked_t ask(const _ebisu_dns_addr_t* server, const unsigned char* query,
-        size_t query_length, uint16_t id, uint32_t timeout_ms, int* out_errno)
-{
-    struct sockaddr_storage addr;
-    socklen_t addr_length;
-    int64_t deadline_us;
-    asked_t asked;
-    int flags;
-    int sock;
-
-    memset(&addr, 0, sizeof(addr));
-    if (server->family == AF_INET) {
-        struct sockaddr_in* in = (struct sockaddr_in*)&addr;
-        in->sin_family = AF_INET;
-        in->sin_port = htons(server->port);
-        memcpy(&in->sin_addr, server->bytes, 4);
-        addr_length = sizeof(*in);
-    } else {
-        struct sockaddr_in6* in6 = (struct sockaddr_in6*)&addr;
-        in6->sin6_family = AF_INET6;
-        in6->sin6_port = htons(server->port);
-        memcpy(&in6->sin6_addr, server->bytes, 16);
-        in6->sin6_scope_id = server->scope_id;
-        addr_length = sizeof(*in6);
-    }
-
-    *out_errno = 0;
-    sock = socket(server->family, SOCK_DGRAM, 0);
-    if (sock < 0) {
-        *out_errno = errno;
-        return ASKED_FAILED;
-    }
-    /* Connected, so that only the server's datagrams are received, and its
-       port unreachable is told: ECONNREFUSED. Not waiting but in poll(), and
-       not inherited by a program another task executes meanwhile. */
-    flags = fcntl(sock, F_GETFL);
-    if (flags == -1 || fcntl(sock, F_SETFL, flags | O_NONBLOCK) == -1 ||
-            fcntl(sock, F_SETFD, FD_CLOEXEC) == -1 ||
-            connect(sock, (struct sockaddr*)&addr, addr_length) != 0 ||
-            send(sock, query, query_length, 0) < 0) {
-        *out_errno = errno;
-        close(sock);
-        return *out_errno == ECONNREFUSED ? ASKED_REFUSED : ASKED_FAILED;
-    }
-
-    deadline_us = monotonic_us() + (int64_t)timeout_ms * 1000;
-    for (;;) {
-        unsigned char datagram[512];
-        struct pollfd p;
-        /* In milliseconds, rounded up. */
-        int64_t left = (deadline_us - monotonic_us() + 999) / 1000;
-        ssize_t received;
-        int ready;
-        if (left <= 0) {
-            asked = ASKED_TIMEOUT;
-            break;
-        }
-        p.fd = sock;
-        p.events = POLLIN;
-        p.revents = 0;
-        ready = poll(&p, 1, left > 60000 ? 60000 : (int)left);
-        if (ready == 0 || (ready < 0 && errno == EINTR)) {
-            continue;
-        }
-        if (ready < 0) {
-            *out_errno = errno;
-            asked = ASKED_FAILED;
-            break;
-        }
-        received = recv(sock, datagram, sizeof(datagram), 0);
-        if (received < 0) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
-                continue;
-            }
-            *out_errno = errno;
-            asked = errno == ECONNREFUSED ? ASKED_REFUSED : ASKED_FAILED;
-            break;
-        }
-        if (_ebisu_dns_probe_is_answer(datagram, (size_t)received, id)) {
-            asked = ASKED_ANSWERED;
-            break;
-        }
-    }
-    close(sock);
-    return asked;
-}
-
-#else
-/* ICMP's port unreachable, which Winsock reports on a UDP socket as a reset. */
-static bool is_refused(int error)
-{
-    return error == WSAECONNRESET || error == WSAECONNREFUSED;
-}
-
-/* Sends query, with id, to server, and waits timeout_ms for its answer. What it
-   did, with the Winsock error in out_errno for ASKED_FAILED. */
-static asked_t ask(const _ebisu_dns_addr_t* server, const unsigned char* query,
-        size_t query_length, uint16_t id, uint32_t timeout_ms, int* out_errno)
-{
-    struct sockaddr_storage addr;
-    int addr_length;
-    int64_t deadline_us;
-    asked_t asked;
-    u_long nonblocking = 1;
-    SOCKET sock;
-
-    memset(&addr, 0, sizeof(addr));
-    if (server->family == AF_INET) {
-        struct sockaddr_in* in = (struct sockaddr_in*)&addr;
-        in->sin_family = AF_INET;
-        in->sin_port = htons(server->port);
-        memcpy(&in->sin_addr, server->bytes, 4);
-        addr_length = (int)sizeof(*in);
-    } else {
-        struct sockaddr_in6* in6 = (struct sockaddr_in6*)&addr;
-        in6->sin6_family = AF_INET6;
-        in6->sin6_port = htons(server->port);
-        memcpy(&in6->sin6_addr, server->bytes, 16);
-        in6->sin6_scope_id = server->scope_id;
-        addr_length = (int)sizeof(*in6);
-    }
-
-    *out_errno = 0;
-    sock = socket(server->family, SOCK_DGRAM, 0);
-    if (sock == INVALID_SOCKET) {
-        *out_errno = WSAGetLastError();
-        return ASKED_FAILED;
-    }
-    /* Connected, so that only the server's datagrams are received, and its
-       port unreachable is told. Not waiting but in select(). */
-    if (ioctlsocket(sock, FIONBIO, &nonblocking) != 0 ||
-            connect(sock, (struct sockaddr*)&addr, addr_length) != 0 ||
-            send(sock, (const char*)query, (int)query_length, 0) == SOCKET_ERROR) {
-        *out_errno = WSAGetLastError();
-        closesocket(sock);
-        return is_refused(*out_errno) ? ASKED_REFUSED : ASKED_FAILED;
-    }
-
-    deadline_us = monotonic_us() + (int64_t)timeout_ms * 1000;
-    for (;;) {
-        unsigned char datagram[512];
-        fd_set readable;
-        struct timeval wait;
-        /* In milliseconds, rounded up. */
-        int64_t left = (deadline_us - monotonic_us() + 999) / 1000;
-        int received;
-        int ready;
-        if (left <= 0) {
-            asked = ASKED_TIMEOUT;
-            break;
-        }
-        if (left > 60000) {
-            left = 60000;
-        }
-        FD_ZERO(&readable);
-        FD_SET(sock, &readable);
-        wait.tv_sec = (long)(left / 1000);
-        wait.tv_usec = (long)(left % 1000) * 1000;
-        /* Winsock ignores the first argument. */
-        ready = select(0, &readable, NULL, NULL, &wait);
-        if (ready == 0) {
-            continue;
-        }
-        if (ready == SOCKET_ERROR) {
-            *out_errno = WSAGetLastError();
-            asked = ASKED_FAILED;
-            break;
-        }
-        received = recv(sock, (char*)datagram, (int)sizeof(datagram), 0);
-        if (received == SOCKET_ERROR) {
-            int error = WSAGetLastError();
-            if (error == WSAEWOULDBLOCK) {
-                continue;
-            }
-            if (error == WSAEMSGSIZE) {
-                /* Longer than the buffer, which holds its start: the header
-                   is enough to tell an answer. */
-                received = (int)sizeof(datagram);
-            } else {
-                *out_errno = error;
-                asked = is_refused(error) ? ASKED_REFUSED : ASKED_FAILED;
-                break;
-            }
-        }
-        if (_ebisu_dns_probe_is_answer(datagram, (size_t)received, id)) {
-            asked = ASKED_ANSWERED;
-            break;
-        }
-    }
-    closesocket(sock);
-    return asked;
-}
-#endif
-
-/* Room for a server as format_server() writes it, with its NUL. */
-#define SERVER_TEXT_SIZE (1 + INET6_ADDRSTRLEN + 1 + IFACE_NAME_SIZE + 2 + 5)
-
-/* server as "address:port", or "[address]:port" or "[address%scope]:port" for
-   IPv6, its scope the interface's name, or its number without one. */
-static void format_server(const _ebisu_dns_addr_t* server, char* out, size_t size)
-{
-    char text[INET6_ADDRSTRLEN];
-    char scope[1 + IFACE_NAME_SIZE];
-    if (inet_ntop(server->family, server->bytes, text, sizeof(text)) == NULL) {
-        snprintf(text, sizeof(text), "?");
-    }
-    scope[0] = '\0';
-    if (server->scope_id != 0) {
-        char name[IFACE_NAME_SIZE];
-        if (if_indextoname(server->scope_id, name) != NULL) {
-            snprintf(scope, sizeof(scope), "%%%s", name);
-        } else {
-            snprintf(scope, sizeof(scope), "%%%lu", (unsigned long)server->scope_id);
-        }
-    }
-    snprintf(out, size, server->family == AF_INET6 ? "[%s%s]:%u" : "%s%s:%u", text, scope,
-            (unsigned int)server->port);
+    return _ebisu_dns_probe_is_answer(datagram, length, *(const uint16_t*)userdata);
 }
 
 /* Asks each of count servers in turn, as addresses in addrs, but one an
    earlier one repeats, or as given in given, until one answers. detail has
    room for at least its NUL. */
-static ebisu_dns_probe_result_t ask_each(const char* host, const _ebisu_dns_addr_t* addrs,
-        const ebisu_dns_server_t* given, size_t count, uint32_t timeout_ms, char* detail,
-        size_t detail_size)
+static ebisu_dns_probe_result_t ask_each(ebisu_dns_t* dns, const char* host,
+        const ebisu_dns_addr_t* addrs, const ebisu_dns_server_t* given, size_t count,
+        uint32_t timeout_ms, char* detail, size_t detail_size)
 {
     unsigned char query[_EBISU_DNS_QUERY_MAX];
     uint16_t id = next_id();
@@ -865,9 +180,9 @@ static ebisu_dns_probe_result_t ask_each(const char* host, const _ebisu_dns_addr
     size_t i;
     snprintf(detail, detail_size, "no server to ask");
     for (i = 0; i < count; ++i) {
-        _ebisu_dns_addr_t server;
-        char name[SERVER_TEXT_SIZE];
-        int error;
+        ebisu_dns_addr_t server;
+        char name[EBISU_DNS_ADDRESS_TEXT_SIZE + 64];
+        char why[128];
         if (given == NULL) {
             /* The C libraries ask a server again where it is repeated, which
                tells nothing more. */
@@ -879,36 +194,36 @@ static ebisu_dns_probe_result_t ask_each(const char* host, const _ebisu_dns_addr
                 continue;
             }
             server = addrs[i];
-        } else if (given[i].address == NULL || !_ebisu_dns_probe_parse_address(
+        } else if (given[i].address == NULL || !ebisu_dns_parse_address(dns,
                 given[i].address, strlen(given[i].address), given[i].port, false, &server)) {
             snprintf(detail, detail_size, "%s isn't an address",
                     given[i].address != NULL ? given[i].address : "NULL");
             continue;
         }
-        format_server(&server, name, sizeof(name));
-        switch (ask(&server, query, query_length, id, timeout_ms, &error)) {
-        case ASKED_ANSWERED:
+        ebisu_dns_format_address(dns, &server, name, sizeof(name));
+        why[0] = '\0';
+        switch (dns->ops->ask(dns, &server, query, query_length, timeout_ms, answers_query, &id,
+                    why, sizeof(why))) {
+        case EBISU_DNS_ASKED_ANSWERED:
             snprintf(detail, detail_size, "%s answered", name);
             return EBISU_DNS_PROBE_ANSWERED;
-        case ASKED_TIMEOUT:
+        case EBISU_DNS_ASKED_TIMEOUT:
             snprintf(detail, detail_size, "%s didn't answer in time", name);
             break;
-        case ASKED_REFUSED:
+        case EBISU_DNS_ASKED_REFUSED:
             snprintf(detail, detail_size, "%s refused: nothing listens there", name);
             break;
-        default: {
-            char text[128];
-            error_text(error, text, sizeof(text));
-            snprintf(detail, detail_size, "%s failed: %s", name, text);
+        default:
+            why[sizeof(why) - 1] = '\0';
+            snprintf(detail, detail_size, "%s failed: %s", name, why);
             break;
-        }
         }
     }
     return EBISU_DNS_PROBE_SILENT;
 }
 
-ebisu_dns_probe_result_t _ebisu_dns_probe_ask_servers(const char* host,
-        const _ebisu_dns_addr_t* servers, size_t count, uint32_t timeout_ms, char* detail,
+ebisu_dns_probe_result_t _ebisu_dns_probe_ask_servers(ebisu_dns_t* dns, const char* host,
+        const ebisu_dns_addr_t* servers, size_t count, uint32_t timeout_ms, char* detail,
         size_t detail_size)
 {
     char no_detail[1];
@@ -920,23 +235,29 @@ ebisu_dns_probe_result_t _ebisu_dns_probe_ask_servers(const char* host,
         snprintf(detail, detail_size, "no lookup needed");
         return EBISU_DNS_PROBE_NOT_NEEDED;
     }
-    return ask_each(host, servers, NULL, count, timeout_ms, detail, detail_size);
+    return ask_each(dns, host, servers, NULL, count, timeout_ms, detail, detail_size);
 }
 
 ebisu_dns_probe_result_t ebisu_dns_probe(
+        ebisu_dns_t* dns,
         const char* host,
         uint32_t timeout_ms,
         char* detail,
         size_t detail_size)
 {
-    _ebisu_dns_addr_t servers[_EBISU_DNS_SERVERS_MAX];
+    ebisu_dns_addr_t servers[_EBISU_DNS_SERVERS_MAX];
     /* The system's servers only for a host that needs one. */
     size_t count = _ebisu_dns_probe_needs_lookup(host)
-        ? system_servers(servers, _EBISU_DNS_SERVERS_MAX) : 0;
-    return _ebisu_dns_probe_ask_servers(host, servers, count, timeout_ms, detail, detail_size);
+        ? dns->ops->servers(dns, servers, _EBISU_DNS_SERVERS_MAX) : 0;
+    if (count > _EBISU_DNS_SERVERS_MAX) {
+        count = _EBISU_DNS_SERVERS_MAX;
+    }
+    return _ebisu_dns_probe_ask_servers(dns, host, servers, count, timeout_ms, detail,
+            detail_size);
 }
 
 ebisu_dns_probe_result_t ebisu_dns_probe_servers(
+        ebisu_dns_t* dns,
         const char* host,
         const ebisu_dns_server_t* servers,
         size_t count,
@@ -953,7 +274,7 @@ ebisu_dns_probe_result_t ebisu_dns_probe_servers(
         snprintf(detail, detail_size, "no lookup needed");
         return EBISU_DNS_PROBE_NOT_NEEDED;
     }
-    return ask_each(host, NULL, servers, servers != NULL ? count : 0, timeout_ms, detail,
+    return ask_each(dns, host, NULL, servers, servers != NULL ? count : 0, timeout_ms, detail,
             detail_size);
 }
 
@@ -964,9 +285,9 @@ static ebisu_sock_code_t probe_connect(ebisu_socket_t* self, const char* host, u
     if (!sock->_connecting) {
         char detail[EBISU_DNS_PROBE_DETAIL_SIZE];
         ebisu_dns_probe_result_t result = sock->_servers != NULL
-            ? ebisu_dns_probe_servers(host, sock->_servers, sock->_server_count,
+            ? ebisu_dns_probe_servers(sock->_dns, host, sock->_servers, sock->_server_count,
                     sock->_timeout_ms, detail, sizeof(detail))
-            : ebisu_dns_probe(host, sock->_timeout_ms, detail, sizeof(detail));
+            : ebisu_dns_probe(sock->_dns, host, sock->_timeout_ms, detail, sizeof(detail));
         sock->_silent = result == EBISU_DNS_PROBE_SILENT;
         if (sock->_silent) {
             ++sock->_failures;
@@ -1026,7 +347,8 @@ static ebisu_sock_error_t probe_last_error(ebisu_socket_t* self, long* out_detai
 {
     ebisu_dns_probe_socket_t* sock = EBISU_CONTAINER_OF(self, ebisu_dns_probe_socket_t, base);
     if (sock->_silent) {
-        *out_detail = EAI_AGAIN;
+        *out_detail = sock->_dns->ops->no_answer_error != NULL
+            ? sock->_dns->ops->no_answer_error(sock->_dns) : 0;
         return EBISU_SOCK_ERROR_DNS;
     }
     if (sock->_inner->ops->last_error != NULL) {
@@ -1063,12 +385,14 @@ static const ebisu_socket_ops_t probe_socket_ops[4] = {
 void ebisu_dns_probe_socket_init(
         ebisu_dns_probe_socket_t* sock,
         ebisu_socket_t* inner,
+        ebisu_dns_t* dns,
         uint32_t timeout_ms)
 {
     int ops = (inner->ops->recv_timed_out != NULL ? 1 : 0) +
         (inner->ops->recv_wait != NULL ? 2 : 0);
     sock->base.ops = &probe_socket_ops[ops];
     sock->_inner = inner;
+    sock->_dns = dns;
     sock->_timeout_ms = timeout_ms;
     sock->_servers = NULL;
     sock->_server_count = 0;

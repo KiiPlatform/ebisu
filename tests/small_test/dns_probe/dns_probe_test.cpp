@@ -2,6 +2,13 @@
 #include <catch.hpp>
 #include <ebisu_dns_probe.h>
 #include "ebisu_dns_probe_impl.h"
+#ifdef _WIN32
+#include <ebisu_win32.h>
+#include "ebisu_win32_dns_impl.h"
+#else
+#include <ebisu_posix.h>
+#include "ebisu_posix_dns_impl.h"
+#endif
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -83,6 +90,28 @@ bool readable(fd_t fd, int ms) {
     timeout.tv_usec = (ms % 1000) * 1000;
     return select((int)fd + 1, &set, nullptr, nullptr, &timeout) > 0;
 }
+
+// The system's name servers, as the platform's port has them.
+ebisu_dns_t* system_dns() {
+#ifdef _WIN32
+    return ebisu_win32_dns();
+#else
+    return ebisu_posix_dns();
+#endif
+}
+
+#ifndef _WIN32
+// s, of length bytes, as an IPv4 address, as core reads one, in out.
+bool parse_ipv4(const char* s, size_t length, unsigned char out[4]) {
+    ebisu_dns_addr_t addr;
+    if (!ebisu_dns_parse_address(nullptr, s, length, 0, false, &addr) ||
+            addr.family != EBISU_DNS_IPV4) {
+        return false;
+    }
+    memcpy(out, addr.bytes, 4);
+    return true;
+}
+#endif
 
 std::string query_for(const char* host, uint16_t id) {
     unsigned char out[_EBISU_DNS_QUERY_MAX];
@@ -256,9 +285,10 @@ std::string at(uint16_t port) {
 
 // A server as text: its address, with its scope's number if it has one, and
 // its port.
-std::string text_of(const _ebisu_dns_addr_t& server) {
+std::string text_of(const ebisu_dns_addr_t& server) {
     char address[INET6_ADDRSTRLEN];
-    inet_ntop(server.family, server.bytes, address, sizeof(address));
+    inet_ntop(server.family == EBISU_DNS_IPV4 ? AF_INET : AF_INET6, server.bytes, address,
+            sizeof(address));
     std::string text = address;
     if (server.scope_id != 0) {
         text += "%" + std::to_string(server.scope_id);
@@ -270,8 +300,8 @@ std::string text_of(const _ebisu_dns_addr_t& server) {
 // The servers of a resolv.conf, as text, read as musl does or, with as_glibc,
 // as glibc does.
 std::vector<std::string> servers_of(const std::string& text, bool as_glibc = false) {
-    _ebisu_dns_addr_t servers[_EBISU_DNS_SERVERS_MAX];
-    size_t count = _ebisu_dns_probe_parse_resolv_conf(text.data(), text.size(), servers,
+    ebisu_dns_addr_t servers[_EBISU_DNS_SERVERS_MAX];
+    size_t count = _ebisu_posix_dns_parse_resolv_conf(text.data(), text.size(), servers,
             _EBISU_DNS_SERVERS_MAX, as_glibc);
     std::vector<std::string> out;
     for (size_t i = 0; i < count; ++i) {
@@ -352,8 +382,8 @@ struct TempFile {
 // The servers of the file at path, read as musl does or, with as_glibc, as glibc
 // does.
 std::vector<std::string> read_servers(const char* path, bool as_glibc) {
-    _ebisu_dns_addr_t servers[_EBISU_DNS_SERVERS_MAX];
-    size_t count = _ebisu_dns_probe_read_servers(path, servers, _EBISU_DNS_SERVERS_MAX,
+    ebisu_dns_addr_t servers[_EBISU_DNS_SERVERS_MAX];
+    size_t count = _ebisu_posix_dns_read_servers(path, servers, _EBISU_DNS_SERVERS_MAX,
             as_glibc);
     std::vector<std::string> out;
     for (size_t i = 0; i < count; ++i) {
@@ -581,7 +611,7 @@ TEST_CASE("A probe reads IPv4 addresses as inet_aton() does") {
         INFO(s);
         unsigned char ours[4];
         in_addr theirs;
-        bool parsed = _ebisu_dns_probe_parse_ipv4(s, strlen(s), ours);
+        bool parsed = parse_ipv4(s, strlen(s), ours);
         REQUIRE(parsed == (inet_aton(s, &theirs) != 0));
         if (parsed) {
             CHECK(memcmp(ours, &theirs.s_addr, 4) == 0);
@@ -593,11 +623,11 @@ TEST_CASE("A probe reads IPv4 addresses as inet_aton() does") {
     for (const char* s : { "4294967296", "0x100000000", "1.99999999999999999999",
             "99999999999999999999" }) {
         INFO(s);
-        CHECK_FALSE(_ebisu_dns_probe_parse_ipv4(s, strlen(s), out));
+        CHECK_FALSE(parse_ipv4(s, strlen(s), out));
     }
     // Of the length given, not up to a NUL.
-    CHECK(_ebisu_dns_probe_parse_ipv4("10.0.0.1x", 8, out));
-    CHECK_FALSE(_ebisu_dns_probe_parse_ipv4("10.0.0.1", 9, out));
+    CHECK(parse_ipv4("10.0.0.1x", 8, out));
+    CHECK_FALSE(parse_ipv4("10.0.0.1", 9, out));
 }
 
 TEST_CASE("A probe asks the servers of resolv.conf, as the C libraries read it") {
@@ -784,7 +814,7 @@ TEST_CASE("A probe reads resolv.conf as this system's C library does") {
     confstr(_CS_GNU_LIBC_VERSION, version, sizeof(version));
 #endif
     INFO("version " << version);
-    CHECK(_EBISU_DNS_READ_AS_GLIBC == (strncmp(version, "glibc ", 6) == 0));
+    CHECK(_EBISU_POSIX_DNS_READ_AS_GLIBC == (strncmp(version, "glibc ", 6) == 0));
 }
 
 TEST_CASE("A probe reads an IPv6 address's scope as the C libraries do") {
@@ -793,13 +823,13 @@ TEST_CASE("A probe reads an IPv6 address's scope as the C libraries do") {
     const std::string name = iface.first;
     // Its scope, if s is an IPv6 address.
     auto scope_of = [](const std::string& s, bool keep_bad_scope, uint32_t* out) {
-        _ebisu_dns_addr_t addr;
+        ebisu_dns_addr_t addr;
         addr.scope_id = 99;
-        if (!_ebisu_dns_probe_parse_address(s.data(), s.size(), 53, keep_bad_scope, &addr)) {
+        if (!ebisu_dns_parse_address(system_dns(), s.data(), s.size(), 53, keep_bad_scope, &addr)) {
             return false;
         }
         *out = addr.scope_id;
-        return addr.family == AF_INET6 && addr.port == 53;
+        return addr.family == EBISU_DNS_IPV6 && addr.port == 53;
     };
     // Read as musl does, then as glibc does.
     const bool readings[] = { false, true };
@@ -860,10 +890,10 @@ TEST_CASE("A probe reads an IPv6 address's scope as the C libraries do") {
         }
     }
     // Of the length given, not up to a NUL.
-    _ebisu_dns_addr_t addr;
-    CHECK(_ebisu_dns_probe_parse_address("fe80::1%12", 9, 53, false, &addr));
+    ebisu_dns_addr_t addr;
+    CHECK(ebisu_dns_parse_address(system_dns(), "fe80::1%12", 9, 53, false, &addr));
     CHECK(addr.scope_id == 1);
-    CHECK_FALSE(_ebisu_dns_probe_parse_address("fe80::1%1\0", 10, 53, true, &addr));
+    CHECK_FALSE(ebisu_dns_parse_address(system_dns(), "fe80::1%1\0", 10, 53, true, &addr));
 }
 
 TEST_CASE("A probe asks a server repeated in resolv.conf once") {
@@ -871,22 +901,22 @@ TEST_CASE("A probe asks a server repeated in resolv.conf once") {
     FakeServer server(FakeServer::ANSWER);
     REQUIRE(silent.listening);
     REQUIRE(server.listening);
-    _ebisu_dns_addr_t servers[3];
-    REQUIRE(_ebisu_dns_probe_parse_address("127.0.0.1", 9, silent.port, false, &servers[0]));
+    ebisu_dns_addr_t servers[3];
+    REQUIRE(ebisu_dns_parse_address(system_dns(), "127.0.0.1", 9, silent.port, false, &servers[0]));
     servers[1] = servers[0];
     // The same address on another port is another server.
-    REQUIRE(_ebisu_dns_probe_parse_address("127.0.0.1", 9, server.port, false, &servers[2]));
+    REQUIRE(ebisu_dns_parse_address(system_dns(), "127.0.0.1", 9, server.port, false, &servers[2]));
     char detail[EBISU_DNS_PROBE_DETAIL_SIZE];
-    CHECK(_ebisu_dns_probe_ask_servers("example.com", servers, 3, 300, detail,
+    CHECK(_ebisu_dns_probe_ask_servers(system_dns(), "example.com", servers, 3, 300, detail,
             sizeof(detail)) == EBISU_DNS_PROBE_ANSWERED);
     CHECK(std::string(detail) == at(server.port) + " answered");
     CHECK(silent.received().size() == 1);
     CHECK(server.received().size() == 1);
 
-    CHECK(_ebisu_dns_probe_ask_servers("127.0.0.1", servers, 3, 300, detail, sizeof(detail)) ==
+    CHECK(_ebisu_dns_probe_ask_servers(system_dns(), "127.0.0.1", servers, 3, 300, detail, sizeof(detail)) ==
             EBISU_DNS_PROBE_NOT_NEEDED);
     CHECK(std::string(detail) == "no lookup needed");
-    CHECK(_ebisu_dns_probe_ask_servers("example.com", servers, 3, 300, nullptr, 0) ==
+    CHECK(_ebisu_dns_probe_ask_servers(system_dns(), "example.com", servers, 3, 300, nullptr, 0) ==
             EBISU_DNS_PROBE_ANSWERED);
 
     SECTION("but the same address on another interface is another server") {
@@ -897,12 +927,12 @@ TEST_CASE("A probe asks a server repeated in resolv.conf once") {
         }
         // The loopback's address, which a scope doesn't change the way to.
         const std::string on_interface = "::1%" + std::to_string(an_interface().second);
-        _ebisu_dns_addr_t two[2];
-        REQUIRE(_ebisu_dns_probe_parse_address(on_interface.data(), on_interface.size(),
+        ebisu_dns_addr_t two[2];
+        REQUIRE(ebisu_dns_parse_address(system_dns(), on_interface.data(), on_interface.size(),
                 silent6.port, false, &two[0]));
         REQUIRE(two[0].scope_id != 0);
-        REQUIRE(_ebisu_dns_probe_parse_address("::1", 3, silent6.port, false, &two[1]));
-        CHECK(_ebisu_dns_probe_ask_servers("example.com", two, 2, 300, detail,
+        REQUIRE(ebisu_dns_parse_address(system_dns(), "::1", 3, silent6.port, false, &two[1]));
+        CHECK(_ebisu_dns_probe_ask_servers(system_dns(), "example.com", two, 2, 300, detail,
                 sizeof(detail)) == EBISU_DNS_PROBE_SILENT);
         CHECK(silent6.received().size() == 2);
     }
@@ -918,17 +948,17 @@ TEST_CASE("A probe asks no server for a host that needs none, and none without s
 
     for (const char* host : { "127.0.0.1", "::1", "localhost", "" }) {
         INFO(host);
-        CHECK(ebisu_dns_probe_servers(host, servers, 1, 1000, detail, sizeof(detail)) ==
+        CHECK(ebisu_dns_probe_servers(system_dns(), host, servers, 1, 1000, detail, sizeof(detail)) ==
                 EBISU_DNS_PROBE_NOT_NEEDED);
         CHECK(std::string(detail) == "no lookup needed");
-        CHECK(ebisu_dns_probe(host, 1000, detail, sizeof(detail)) == EBISU_DNS_PROBE_NOT_NEEDED);
+        CHECK(ebisu_dns_probe(system_dns(), host, 1000, detail, sizeof(detail)) == EBISU_DNS_PROBE_NOT_NEEDED);
     }
     CHECK(server.received().empty());
 
-    CHECK(ebisu_dns_probe_servers("example.com", servers, 0, 1000, detail, sizeof(detail)) ==
+    CHECK(ebisu_dns_probe_servers(system_dns(), "example.com", servers, 0, 1000, detail, sizeof(detail)) ==
             EBISU_DNS_PROBE_SILENT);
     CHECK(std::string(detail) == "no server to ask");
-    CHECK(ebisu_dns_probe_servers("example.com", nullptr, 1, 1000, detail, sizeof(detail)) ==
+    CHECK(ebisu_dns_probe_servers(system_dns(), "example.com", nullptr, 1, 1000, detail, sizeof(detail)) ==
             EBISU_DNS_PROBE_SILENT);
     CHECK(server.received().empty());
 }
@@ -940,7 +970,7 @@ TEST_CASE("A probe asks a server") {
         FakeServer server(FakeServer::ANSWER);
         REQUIRE(server.listening);
         const ebisu_dns_server_t servers[] = { { "127.0.0.1", server.port } };
-        CHECK(ebisu_dns_probe_servers("example.com", servers, 1, 5000, detail,
+        CHECK(ebisu_dns_probe_servers(system_dns(), "example.com", servers, 1, 5000, detail,
                 sizeof(detail)) == EBISU_DNS_PROBE_ANSWERED);
         CHECK(std::string(detail) == at(server.port) + " answered");
         std::vector<std::string> queries = server.received();
@@ -950,7 +980,7 @@ TEST_CASE("A probe asks a server") {
         CHECK(queries[0] == query_for("example.com", id));
 
         SECTION("with another identifier for the next query") {
-            CHECK(ebisu_dns_probe_servers("example.com", servers, 1, 5000, nullptr, 0) ==
+            CHECK(ebisu_dns_probe_servers(system_dns(), "example.com", servers, 1, 5000, nullptr, 0) ==
                     EBISU_DNS_PROBE_ANSWERED);
             queries = server.received();
             REQUIRE(queries.size() == 2);
@@ -958,7 +988,7 @@ TEST_CASE("A probe asks a server") {
         }
         SECTION("cutting the detail short to fit") {
             char shorter[8];
-            CHECK(ebisu_dns_probe_servers("example.com", servers, 1, 5000, shorter,
+            CHECK(ebisu_dns_probe_servers(system_dns(), "example.com", servers, 1, 5000, shorter,
                     sizeof(shorter)) == EBISU_DNS_PROBE_ANSWERED);
             CHECK(std::string(shorter) == "127.0.0");
         }
@@ -967,7 +997,7 @@ TEST_CASE("A probe asks a server") {
         FakeServer server(FakeServer::OTHERS_FIRST);
         REQUIRE(server.listening);
         const ebisu_dns_server_t servers[] = { { "127.0.0.1", server.port } };
-        CHECK(ebisu_dns_probe_servers("example.com", servers, 1, 5000, detail,
+        CHECK(ebisu_dns_probe_servers(system_dns(), "example.com", servers, 1, 5000, detail,
                 sizeof(detail)) == EBISU_DNS_PROBE_ANSWERED);
         CHECK(std::string(detail) == at(server.port) + " answered");
     }
@@ -976,7 +1006,7 @@ TEST_CASE("A probe asks a server") {
         REQUIRE(server.listening);
         const ebisu_dns_server_t servers[] = { { "127.0.0.1", server.port } };
         auto start = std::chrono::steady_clock::now();
-        CHECK(ebisu_dns_probe_servers("example.com", servers, 1, 1000, detail,
+        CHECK(ebisu_dns_probe_servers(system_dns(), "example.com", servers, 1, 1000, detail,
                 sizeof(detail)) == EBISU_DNS_PROBE_SILENT);
         int64_t took = elapsed_ms(start);
         CHECK(took >= 1000);
@@ -989,7 +1019,7 @@ TEST_CASE("A probe asks a server") {
         REQUIRE(server.listening);
         const ebisu_dns_server_t servers[] = { { "127.0.0.1", server.port } };
         auto start = std::chrono::steady_clock::now();
-        CHECK(ebisu_dns_probe_servers("example.com", servers, 1, 300, detail,
+        CHECK(ebisu_dns_probe_servers(system_dns(), "example.com", servers, 1, 300, detail,
                 sizeof(detail)) == EBISU_DNS_PROBE_SILENT);
         int64_t took = elapsed_ms(start);
         CHECK(took >= 300);
@@ -1002,7 +1032,7 @@ TEST_CASE("A probe asks a server") {
         REQUIRE(port != 0);
         const ebisu_dns_server_t servers[] = { { "127.0.0.1", port } };
         auto start = std::chrono::steady_clock::now();
-        CHECK(ebisu_dns_probe_servers("example.com", servers, 1, 5000, detail,
+        CHECK(ebisu_dns_probe_servers(system_dns(), "example.com", servers, 1, 5000, detail,
                 sizeof(detail)) == EBISU_DNS_PROBE_SILENT);
         if (refusal_is_told()) {
             CHECK(elapsed_ms(start) < 5000);
@@ -1013,15 +1043,15 @@ TEST_CASE("A probe asks a server") {
     }
     SECTION("which isn't an address") {
         const ebisu_dns_server_t servers[] = { { "dns.example.com", 53 } };
-        CHECK(ebisu_dns_probe_servers("example.com", servers, 1, 300, detail,
+        CHECK(ebisu_dns_probe_servers(system_dns(), "example.com", servers, 1, 300, detail,
                 sizeof(detail)) == EBISU_DNS_PROBE_SILENT);
         CHECK(std::string(detail) == "dns.example.com isn't an address");
         const ebisu_dns_server_t none[] = { { nullptr, 53 } };
-        CHECK(ebisu_dns_probe_servers("example.com", none, 1, 300, detail,
+        CHECK(ebisu_dns_probe_servers(system_dns(), "example.com", none, 1, 300, detail,
                 sizeof(detail)) == EBISU_DNS_PROBE_SILENT);
         CHECK(std::string(detail) == "NULL isn't an address");
         const ebisu_dns_server_t scoped[] = { { "fe80::1%no-such-if0", 53 } };
-        CHECK(ebisu_dns_probe_servers("example.com", scoped, 1, 300, detail,
+        CHECK(ebisu_dns_probe_servers(system_dns(), "example.com", scoped, 1, 300, detail,
                 sizeof(detail)) == EBISU_DNS_PROBE_SILENT);
         CHECK(std::string(detail) == "fe80::1%no-such-if0 isn't an address");
     }
@@ -1035,7 +1065,7 @@ TEST_CASE("A probe asks a server over IPv6") {
     }
     const ebisu_dns_server_t servers[] = { { "::1", server.port } };
     char detail[EBISU_DNS_PROBE_DETAIL_SIZE];
-    CHECK(ebisu_dns_probe_servers("example.com", servers, 1, 5000, detail, sizeof(detail)) ==
+    CHECK(ebisu_dns_probe_servers(system_dns(), "example.com", servers, 1, 5000, detail, sizeof(detail)) ==
             EBISU_DNS_PROBE_ANSWERED);
     CHECK(std::string(detail) == "[::1]:" + std::to_string(server.port) + " answered");
 }
@@ -1058,14 +1088,14 @@ TEST_CASE("A probe asks a link-local server on its interface") {
         const std::string scoped = std::string(address) + "%" + scope;
         INFO(scoped);
         const ebisu_dns_server_t servers[] = { { scoped.c_str(), server.port } };
-        CHECK(ebisu_dns_probe_servers("example.com", servers, 1, 5000, detail,
+        CHECK(ebisu_dns_probe_servers(system_dns(), "example.com", servers, 1, 5000, detail,
                 sizeof(detail)) == EBISU_DNS_PROBE_ANSWERED);
         CHECK(std::string(detail) ==
                 "[" + std::string(address) + "%" + name + "]:" + port + " answered");
     }
     // Without its interface, a link-local address can't be asked.
     const ebisu_dns_server_t unscoped[] = { { address, server.port } };
-    CHECK(ebisu_dns_probe_servers("example.com", unscoped, 1, 5000, detail, sizeof(detail)) ==
+    CHECK(ebisu_dns_probe_servers(system_dns(), "example.com", unscoped, 1, 5000, detail, sizeof(detail)) ==
             EBISU_DNS_PROBE_SILENT);
     CHECK(std::string(detail) ==
             "[" + std::string(address) + "]:" + port + " failed: " + strerror(EINVAL));
@@ -1089,7 +1119,7 @@ TEST_CASE("A probe asks the servers in turn, until one answers") {
             { "127.0.0.1", silent_too.port }
         };
         auto start = std::chrono::steady_clock::now();
-        CHECK(ebisu_dns_probe_servers("example.com", servers, 3, 300, detail,
+        CHECK(ebisu_dns_probe_servers(system_dns(), "example.com", servers, 3, 300, detail,
                 sizeof(detail)) == EBISU_DNS_PROBE_ANSWERED);
         CHECK(elapsed_ms(start) >= 300);
         CHECK(std::string(detail) == at(answering.port) + " answered");
@@ -1104,7 +1134,7 @@ TEST_CASE("A probe asks the servers in turn, until one answers") {
             { "nowhere", 53 }, { "127.0.0.1", unused_port() }, { "127.0.0.1", answering.port }
         };
         auto start = std::chrono::steady_clock::now();
-        CHECK(ebisu_dns_probe_servers("example.com", servers, 3, 5000, detail,
+        CHECK(ebisu_dns_probe_servers(system_dns(), "example.com", servers, 3, 5000, detail,
                 sizeof(detail)) == EBISU_DNS_PROBE_ANSWERED);
         if (refusal_is_told()) {
             CHECK(elapsed_ms(start) < 5000);
@@ -1116,7 +1146,7 @@ TEST_CASE("A probe asks the servers in turn, until one answers") {
             { "127.0.0.1", silent.port }, { "127.0.0.1", silent_too.port }
         };
         auto start = std::chrono::steady_clock::now();
-        CHECK(ebisu_dns_probe_servers("example.com", servers, 2, 300, detail,
+        CHECK(ebisu_dns_probe_servers(system_dns(), "example.com", servers, 2, 300, detail,
                 sizeof(detail)) == EBISU_DNS_PROBE_SILENT);
         int64_t took = elapsed_ms(start);
         CHECK(took >= 2 * 300);
@@ -1127,7 +1157,7 @@ TEST_CASE("A probe asks the servers in turn, until one answers") {
     }
     SECTION("none for an address") {
         const ebisu_dns_server_t servers[] = { { "127.0.0.1", silent.port } };
-        CHECK(ebisu_dns_probe_servers("10.0.0.1", servers, 1, 300, detail, sizeof(detail)) ==
+        CHECK(ebisu_dns_probe_servers(system_dns(), "10.0.0.1", servers, 1, 300, detail, sizeof(detail)) ==
                 EBISU_DNS_PROBE_NOT_NEEDED);
         CHECK(silent.received().empty());
     }
@@ -1139,7 +1169,7 @@ TEST_CASE("A probing socket connects the socket inside when a server answers") {
     const ebisu_dns_server_t servers[] = { { "127.0.0.1", server.port } };
     Inner inner(true, true);
     ebisu_dns_probe_socket_t sock;
-    ebisu_dns_probe_socket_init(&sock, &inner.sock.base, 5000);
+    ebisu_dns_probe_socket_init(&sock, &inner.sock.base, system_dns(), 5000);
     ebisu_dns_probe_socket_set_servers(&sock, servers, 1);
     const ebisu_socket_ops_t* ops = sock.base.ops;
 
@@ -1209,7 +1239,7 @@ TEST_CASE("A probing socket doesn't connect when no server answers") {
     Lines logger = { { &keep_line_ops }, &lines };
     Inner inner(true, true);
     ebisu_dns_probe_socket_t sock;
-    ebisu_dns_probe_socket_init(&sock, &inner.sock.base, 200);
+    ebisu_dns_probe_socket_init(&sock, &inner.sock.base, system_dns(), 200);
     ebisu_dns_probe_socket_set_servers(&sock, servers, 1);
     ebisu_dns_probe_socket_set_logger(&sock, &logger.base);
     const ebisu_socket_ops_t* ops = sock.base.ops;
@@ -1262,7 +1292,7 @@ TEST_CASE("A probing socket has recv_timed_out and recv_wait if the socket insid
     for (int with = 0; with < 4; ++with) {
         Inner inner((with & 1) != 0, (with & 2) != 0);
         ebisu_dns_probe_socket_t sock;
-        ebisu_dns_probe_socket_init(&sock, &inner.sock.base, 1000);
+        ebisu_dns_probe_socket_init(&sock, &inner.sock.base, system_dns(), 1000);
         INFO(with);
         CHECK((sock.base.ops->recv_timed_out != nullptr) == ((with & 1) != 0));
         CHECK((sock.base.ops->recv_wait != nullptr) == ((with & 2) != 0));
@@ -1272,7 +1302,7 @@ TEST_CASE("A probing socket has recv_timed_out and recv_wait if the socket insid
     SECTION("and tells nothing of a failure the socket inside can't") {
         Inner inner(false, false, false);
         ebisu_dns_probe_socket_t sock;
-        ebisu_dns_probe_socket_init(&sock, &inner.sock.base, 1000);
+        ebisu_dns_probe_socket_init(&sock, &inner.sock.base, system_dns(), 1000);
         inner.connect_codes = { EBISU_SOCK_FAIL };
         CHECK(sock.base.ops->connect(&sock.base, "10.0.0.1", 443) == EBISU_SOCK_FAIL);
         long detail = 1;
@@ -1341,8 +1371,8 @@ struct Adapters {
     }
 
     std::vector<std::string> asked(size_t max = _EBISU_DNS_SERVERS_MAX) {
-        std::vector<_ebisu_dns_addr_t> found(max);
-        size_t count = _ebisu_dns_probe_adapter_servers(linked(), found.data(), max);
+        std::vector<ebisu_dns_addr_t> found(max);
+        size_t count = _ebisu_win32_dns_adapter_servers(linked(), found.data(), max);
         std::vector<std::string> out;
         for (size_t i = 0; i < count; ++i) {
             out.push_back(text_of(found[i]));

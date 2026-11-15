@@ -135,19 +135,28 @@ time what it passes on.
 
 ## DNS probe
 
-`ebisu_dns_probe.h`, library `ebisu_dns_probe`, built on POSIX and on Windows,
-asks whether the name servers answer before a host is looked up. `getaddrinfo()` can't be
-given a timeout: when the servers don't answer, a lookup waits for as long as
-the C library keeps asking them again, and so does the task that looked up:
-how long is below.
+`ebisu_dns_probe.h`, library `ebisu_dns_probe`, asks whether the name servers
+answer before a host is looked up. `getaddrinfo()` can't be given a timeout:
+when the servers don't answer, a lookup waits for as long as the C library
+keeps asking them again, and so does the task that looked up: how long is
+below.
 
-`ebisu_dns_probe()` sends one query for the host to each server of
-`/etc/resolv.conf` in turn, as the C libraries read it, or 127.0.0.1 without
-one, until one answers, giving each the time it is given. On Windows, the
-servers are those of the network adapters that are up, as
-`GetAdaptersAddresses()` lists them, but the placeholders `fec0:0:0:ffff::1` to
-`::3`, which Windows lists for an adapter without an IPv6 server; without any,
-none is asked.
+The probe needs nothing of the system's itself: it asks the name servers an
+`ebisu_dns_t` of core's lists, as that has them asked. The POSIX and Win32
+ports have the system's:
+
+- `ebisu_posix_dns()`: the servers of `/etc/resolv.conf`, as the C libraries
+  read it, or 127.0.0.1 without one, asked over BSD sockets;
+- `ebisu_win32_dns()`: those of the network adapters that are up, as
+  `GetAdaptersAddresses()` lists them, but the placeholders `fec0:0:0:ffff::1`
+  to `::3`, which Windows lists for an adapter without an IPv6 server, asked
+  over Winsock. Without any, none is.
+
+An application on another system, such as one with lwIP, implements the two
+operations that matter, `servers` and `ask`, and the probe works there too.
+
+`ebisu_dns_probe()` sends one query for the host to each of the first 3
+servers in turn, until one answers, giving each the time it is given.
 `ebisu_dns_probe_servers()` asks the servers it is given instead. Any answer
 counts, that the name doesn't exist too: the probe tells only whether a server
 answers. A host that needs no server, an address or localhost, needs no probe.
@@ -160,13 +169,14 @@ any: the OpenSSL or Schannel port's, or the POSIX or Win32 port's of plain TCP.
 ```c
 #include <ebisu_dns_probe.h>
 #include <ebisu_openssl.h>
+#include <ebisu_posix.h>
 
 static ebisu_openssl_socket_t tls;
 static ebisu_dns_probe_socket_t sock;
 
     ebisu_openssl_socket_init(&tls, 30, 30);
     /* Each server has 3 seconds to answer. */
-    ebisu_dns_probe_socket_init(&sock, &tls.base, 3000);
+    ebisu_dns_probe_socket_init(&sock, &tls.base, ebisu_posix_dns(), 3000);
     ebisu_dns_probe_socket_set_logger(&sock, &logger.base);
     kii_set_http_socket(&kii, &sock.base);
 ```

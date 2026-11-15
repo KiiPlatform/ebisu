@@ -1,11 +1,12 @@
 /**
  * @file ebisu_dns_probe.h
  * @brief Whether the system's name servers answer, asked before a lookup that
- * can't be bounded, on POSIX and on Windows.
+ * can't be bounded.
  */
 #ifndef _EBISU_DNS_PROBE
 #define _EBISU_DNS_PROBE
 
+#include <ebisu_dns.h>
 #include <ebisu_log.h>
 #include <ebisu_socket.h>
 #include <stdbool.h>
@@ -43,9 +44,10 @@ typedef enum ebisu_dns_probe_result_t {
  * \brief A name server to ask.
  */
 typedef struct ebisu_dns_server_t {
-    /** \brief Its address: IPv4, in any form inet_aton() takes, or IPv6,
-     * with a scope after a '%' or without, an interface's number or, for a
-     * link-local address, its name, as in "fe80::1%eth0". */
+    /** \brief Its address, as ebisu_dns_parse_address() reads it: IPv4, in
+     * any form inet_aton() takes, or IPv6, with a scope after a '%' or
+     * without, an interface's number or, for a link-local address, its name,
+     * as in "fe80::1%eth0". */
     const char* address;
     uint16_t port; /**< \brief Its port, 53 for DNS. */
 } ebisu_dns_server_t;
@@ -69,28 +71,16 @@ typedef struct ebisu_dns_server_t {
  * too: nothing is looked up, only whether a server answers. A datagram that
  * isn't the answer to the query is skipped.
  *
- * The servers are those of the first 3 nameserver lines of /etc/resolv.conf
- * whose address is one, in order, on port 53, as the C libraries take them. A
- * server a line repeats takes a place, but is asked once. An IPv6 address's
- * scope is read as ebisu_dns_server_t's is. A line with another scope is asked
- * without it where the probe is built with glibc, and skipped where it isn't,
- * as glibc and musl do. So are the lines read: with glibc, split at spaces and
- * tabs, and whole, however long, and otherwise split at what isspace() takes,
- * a line longer than 254 bytes skipped. An address ends at a blank: a '#' or a
- * ';' right after it makes it one no longer. Without a server, or without the
- * file, it is 127.0.0.1, as for the C libraries.
- *
- * On Windows, the servers are those of the network adapters that are up, as
- * GetAdaptersAddresses() gives them, in its order: IPv4 and IPv6, with an IPv6
- * one's scope, but one an earlier adapter has too, and the placeholders
- * fec0:0:0:ffff::1 to ::3, which Windows lists for an adapter without an IPv6
- * server and which nothing answers on. The first 3 are asked. Without any, none
- * is, and the result is EBISU_DNS_PROBE_SILENT for a host that needs one.
- * Winsock has to have been started, with WSAStartup().
+ * The servers are the first 3 of those dns's servers gives, as the system's
+ * lookups ask them: a server repeated takes a place, but is asked once. Each is
+ * asked with dns's ask. platform's ports have the system's: ebisu_posix_dns(),
+ * the servers of /etc/resolv.conf over BSD sockets, as the C libraries read
+ * it, and ebisu_win32_dns(), those of the network adapters over Winsock 2.
  *
  * A name a lookup gets from elsewhere, such as /etc/hosts, still needs the
  * servers to answer: the probe tells only whether they do.
  *
+ * \param [in] dns The system's name servers, and how one is asked.
  * \param [in] host The host to be looked up.
  * \param [in] timeout_ms How long each server has to answer, in milliseconds.
  * \param [out] detail For a log, what happened: which server answered, or what
@@ -101,6 +91,7 @@ typedef struct ebisu_dns_server_t {
  * \return What it found.
  */
 ebisu_dns_probe_result_t ebisu_dns_probe(
+        ebisu_dns_t* dns,
         const char* host,
         uint32_t timeout_ms,
         char* detail,
@@ -111,9 +102,12 @@ ebisu_dns_probe_result_t ebisu_dns_probe(
  *
  * As ebisu_dns_probe() does the system's.
  *
+ * \param [in] dns How a server is asked, and an interface's number for a
+ * scope's name.
  * \param [in] host The host to be looked up.
- * \param [in] servers The servers, asked in turn. One whose address isn't one,
- * a scope too, is skipped.
+ * \param [in] servers The servers, asked in turn, read as
+ * ebisu_dns_parse_address() reads them, without keep_bad_scope. One whose
+ * address isn't one, a scope too, is skipped.
  * \param [in] count How many there are. With none, the result is
  * EBISU_DNS_PROBE_SILENT for a host that needs one.
  * \param [in] timeout_ms How long each server has to answer, in milliseconds.
@@ -122,6 +116,7 @@ ebisu_dns_probe_result_t ebisu_dns_probe(
  * \return What it found.
  */
 ebisu_dns_probe_result_t ebisu_dns_probe_servers(
+        ebisu_dns_t* dns,
         const char* host,
         const ebisu_dns_server_t* servers,
         size_t count,
@@ -135,9 +130,9 @@ ebisu_dns_probe_result_t ebisu_dns_probe_servers(
  *
  * Its connect probes as ebisu_dns_probe() does, then has the other socket
  * connect, unless no server answered: then it fails, without the other socket
- * connecting, and its last_error is EBISU_SOCK_ERROR_DNS, with EAI_AGAIN,
- * getaddrinfo()'s error for a resolver that didn't answer, which on Windows is
- * WSATRY_AGAIN. A connect the other
+ * connecting, and its last_error is EBISU_SOCK_ERROR_DNS, with the resolver's
+ * error for one that didn't answer, as dns's no_answer_error has it: EAI_AGAIN
+ * for platform's ports, which on Windows is WSATRY_AGAIN. A connect the other
  * socket goes on with, after EBISU_SOCK_AGAIN, isn't probed again. Close
  * closes the other socket, or does nothing if it didn't connect.
  *
@@ -154,6 +149,7 @@ ebisu_dns_probe_result_t ebisu_dns_probe_servers(
 typedef struct ebisu_dns_probe_socket_t {
     ebisu_socket_t base; /**< \brief What ebisu is given. */
     ebisu_socket_t* _inner; /**< \private The socket that connects. */
+    ebisu_dns_t* _dns; /**< \private The name servers. */
     uint32_t _timeout_ms; /**< \private */
     /** \private The servers asked, or NULL for the system's. */
     const ebisu_dns_server_t* _servers;
@@ -177,11 +173,15 @@ typedef struct ebisu_dns_probe_socket_t {
  * \param [out] sock The socket.
  * \param [in] inner The socket that connects, initialized, whose operations
  * sock takes: it has to outlive sock.
+ * \param [in] dns The system's name servers, and how one is asked, as
+ * ebisu_posix_dns() or ebisu_win32_dns() gives them, which have to outlive
+ * sock.
  * \param [in] timeout_ms How long each server has to answer, in milliseconds.
  */
 void ebisu_dns_probe_socket_init(
         ebisu_dns_probe_socket_t* sock,
         ebisu_socket_t* inner,
+        ebisu_dns_t* dns,
         uint32_t timeout_ms);
 
 /**

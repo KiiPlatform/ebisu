@@ -1,10 +1,12 @@
 /**
  * @file ebisu_posix.h
- * @brief The system, a lock and a socket of plain TCP on POSIX.
+ * @brief The system, a lock, a socket of plain TCP and the name servers on
+ * POSIX.
  */
 #ifndef _EBISU_POSIX
 #define _EBISU_POSIX
 
+#include <ebisu_dns.h>
 #include <ebisu_log.h>
 #include <ebisu_socket.h>
 #include <ebisu_system.h>
@@ -147,6 +149,29 @@ void ebisu_posix_tcp_socket_set_connect_timeout(ebisu_posix_tcp_socket_t* sock,
  */
 void ebisu_posix_tcp_socket_set_logger(ebisu_posix_tcp_socket_t* sock,
         ebisu_logger_t* logger);
+
+/**
+ * \brief The name servers on POSIX, for platform's DNS probe.
+ *
+ * The servers are those of the nameserver lines of /etc/resolv.conf whose
+ * address is one, in order, on port 53, as the C libraries take them: an IPv6
+ * address's scope is read as ebisu_dns_parse_address() reads it, an
+ * interface's name by if_nametoindex(), and a line with another scope is taken
+ * without it where the port is built with glibc, and skipped where it isn't,
+ * as glibc and musl do. So are the lines read: with glibc, split at spaces and
+ * tabs, and whole, however long, and otherwise split at what isspace() takes,
+ * a line longer than 254 bytes skipped. An address ends at a blank: a '#' or a
+ * ';' right after it makes it one no longer. Without a server, or without the
+ * file, it is 127.0.0.1, as for the C libraries.
+ *
+ * A server is asked over a UDP socket connected to it, so that its port
+ * unreachable is told. A scope is said as its interface's name, by
+ * if_indextoname(), and no server answering is EAI_AGAIN, as for
+ * getaddrinfo(). They have no state, so this serves everything.
+ *
+ * \return The name servers.
+ */
+ebisu_dns_t* ebisu_posix_dns(void);
 
 #ifdef __cplusplus
 }
