@@ -2159,6 +2159,52 @@ TEST_CASE("KiiJson, NoFieldFoundInInvalidInput") {
     }
 }
 
+// A number with a fraction or an exponent is read as a double up to 310
+// characters, DBL_MAX_10_EXP + 2, with strtod() or without. A longer one is
+// JSON, but not one jkii reads: jkii_parse() refuses the string, as it
+// refuses one that isn't JSON, leaving no field reading as found.
+TEST_CASE("KiiJson, NumberLongerThanJkiiReads") {
+    for (size_t length : { (size_t)310, (size_t)311, (size_t)312, (size_t)400 }) {
+        INFO("a number of " << length << " characters");
+        const std::string number = "1." + std::string(length - 2, '0');
+        const std::string json = "{\"a\":1,\"d\":" + number + ",\"b\":2}";
+        const bool read = length <= 310;
+        jkii_field_t fields[4];
+        memset(fields, 0x00, sizeof(fields));
+        fields[0].name = "a";
+        fields[0].type = JKII_FIELD_TYPE_INTEGER;
+        fields[1].name = "d";
+        fields[1].type = JKII_FIELD_TYPE_DOUBLE;
+        fields[2].name = "b";
+        fields[2].type = JKII_FIELD_TYPE_ANY;
+
+        jkii_parse_err_t res = jkii_parse(json.data(), json.size(), fields);
+        if (read) {
+            CHECK(res == JKII_ERR_OK);
+            CHECK(fields[1].result == JKII_FIELD_ERR_OK);
+            CHECK(fields[1].field_copy.double_value == 1.0);
+        } else {
+            CHECK(res == JKII_ERR_INVALID_INPUT);
+            for (int i = 0; i < 3; ++i) {
+                CHECK(fields[i].result == JKII_FIELD_ERR_NOT_FOUND);
+            }
+        }
+
+        jkii_primitive_t p;
+        CHECK(jkii_parse_primitive(number.data(), number.size(), &p) ==
+                (read ? JKII_PRIMITIVE_ERR_OK : JKII_PRIMITIVE_ERR_INVALID));
+
+        // Iterated over, it is a member of no type jkii reads.
+        jkii_member_iter_t iter;
+        memset(&iter, 0, sizeof(iter));
+        jkii_member_t m;
+        REQUIRE(jkii_next_member(json.data(), json.size(), &iter, &m) == JKII_ERR_OK);
+        REQUIRE(jkii_next_member(json.data(), json.size(), &iter, &m) == JKII_ERR_OK);
+        CHECK(m.type == (read ? JKII_FIELD_TYPE_DOUBLE : JKII_FIELD_TYPE_ANY));
+        CHECK(m.value_length == length);
+    }
+}
+
 // coreJSON's JSON_MAX_DEPTH, 32 by default, keeps how deep its checks go
 // bounded, on a stack that may be small.
 TEST_CASE("KiiJson, NestingDeeperThan32IsInvalid") {

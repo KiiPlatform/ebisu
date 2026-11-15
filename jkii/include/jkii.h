@@ -309,7 +309,9 @@ typedef struct jkii_field_t {
  * checked whole, nesting objects and arrays at most 32 levels deep. Nothing
  * is allocated, and the string is not changed. Anything else is
  * jkii_parse_err_t#JKII_ERR_INVALID_INPUT, and each field's
- * jkii_field_t#result jkii_field_err_t#JKII_FIELD_ERR_NOT_FOUND.
+ * jkii_field_t#result jkii_field_err_t#JKII_FIELD_ERR_NOT_FOUND. So is a
+ * field whose value is a number of more than 310 characters, DBL_MAX_10_EXP +
+ * 2, with a fraction or an exponent: JSON, but longer than jkii reads.
  *
  *  \param [in] json_string of JSON string.
  *  \param [in] json_string_len of JSON string.
@@ -337,7 +339,9 @@ typedef struct jkii_member_t {
     /** Length of jkii_member_t#value. */
     size_t value_length;
     /** The value's type, a number's as jkii_field_t#type has it: an integer's
-     * follows its value. */
+     * follows its value. A number with a fraction or an exponent longer than
+     * jkii reads, which jkii_parse() refuses, is
+     * jkii_field_type_t#JKII_FIELD_TYPE_ANY. */
     jkii_field_type_t type;
 } jkii_member_t;
 
